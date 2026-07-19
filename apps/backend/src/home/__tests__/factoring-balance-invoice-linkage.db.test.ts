@@ -1300,6 +1300,10 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
 
     // Append-only restore: INSERT a new effective-dated version (cannot un-void).
     // Distinct effective_from — UNIQUE (tenant, vendor, code, effective_from).
+    // MUST be its OWN transaction: the immutability-rejection UPDATE below aborts its transaction, and a
+    // COMMIT after an aborted statement silently becomes a ROLLBACK in Postgres — so sharing one bypass()
+    // block would discard this INSERT and leave the restored version un-persisted (the version would then
+    // resolve as missing_faro_agreement_binding, not the intended effective binding).
     const restoredId = randomUUID();
     await bypass(companyId, async () => {
       await db.query(
@@ -1322,7 +1326,10 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
         `,
         [restoredId, voidedVersionId]
       );
-      // Term rewrite on the voided historical version remains blocked.
+    });
+    // Term rewrite on the voided historical version remains blocked — isolated txn so the raised error
+    // (which aborts its own transaction) cannot roll back the committed append-only restore above.
+    await bypass(companyId, async () => {
       await expect(
         db.query(
           `UPDATE factoring.canonical_factor_agreements

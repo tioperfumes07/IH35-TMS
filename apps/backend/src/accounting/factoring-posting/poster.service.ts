@@ -1171,6 +1171,9 @@ export async function postFactoringCustomerPaymentEvent(input: PostFactoringCust
       source_transaction_type: "factoring_customer_payment",
       memo,
       expected_legs: expectedLegs,
+      // Event-scope: a prior partial payment's JE (different amount@date) is a SIBLING event, never this
+      // payment's repair candidate — so a second distinct partial posts instead of failing exact-shape.
+      event_key: eventKey,
     });
     if (candidate.kind === "ambiguous") return { gate: "repair_ambiguous" as const };
     if (candidate.kind === "invalid") return { gate: "repair_candidate_invalid" as const };
@@ -1495,12 +1498,19 @@ export async function postFactoringReleaseEvent(input: PostFactoringReleaseInput
  * Exact linked outstanding Faro liability (role legs) — never guessed from mutable status.
  * @param excludeJournalEntryId — when re-validating inside afterInsertBeforeCommit, exclude the
  *   in-flight settlement JE so its own debit legs do not zero out outstanding before the check.
+ * @param beforeDateExclusive — when computing a HISTORICAL balance (e.g. the default-interest opening
+ *   for a given accrual day), bound to postings whose entry_date is strictly BEFORE this date. This makes
+ *   the opening the balance at the START of the accrual day: same-day and later customer payments do NOT
+ *   reduce that day's interest base (contract), and a historical accrual's opening is reproducible under
+ *   repair even after later payments land — so validateLifecycleJeExactShape no longer spuriously fails
+ *   with an opening mismatch. Omit (NULL) for the live, as-of-now outstanding balance.
  */
 async function linkedOutstandingLiabilityCents(
   client: DbClient,
   operatingCompanyId: string,
   factoringAdvanceId: string,
-  excludeJournalEntryId?: string | null
+  excludeJournalEntryId?: string | null,
+  beforeDateExclusive?: string | null
 ): Promise<number> {
   const notReversed = await liveJournalEntryNotReversedSql(client);
   const res = await client.query<{ outstanding: string }>(
@@ -1531,6 +1541,7 @@ async function linkedOutstandingLiabilityCents(
          AND je.status = 'posted'
          AND je.voided_at IS NULL
          AND ($3::uuid IS NULL OR je.id IS DISTINCT FROM $3::uuid)
+         AND ($4::date IS NULL OR je.entry_date < $4::date)
          ${notReversed}
          AND NOT EXISTS (
                SELECT 1
@@ -1548,7 +1559,7 @@ async function linkedOutstandingLiabilityCents(
                   )
              )
     `,
-    [operatingCompanyId, factoringAdvanceId, excludeJournalEntryId ?? null]
+    [operatingCompanyId, factoringAdvanceId, excludeJournalEntryId ?? null, beforeDateExclusive ?? null]
   );
   return Number(res.rows[0]?.outstanding ?? 0);
 }
@@ -2126,20 +2137,26 @@ export type PostFactoringDefaultInterestAccrualInput = {
 };
 
 /**
- * Contractual default-interest opening = unpaid Faro liability after payments/chargebacks.
- * Optionally exclude an in-flight / already-posted interest JE so its credit is not in the base.
+ * Contractual default-interest opening = unpaid Faro liability at the START of the accrual day, i.e. the
+ * balance from postings dated strictly BEFORE the accrual date (funding + prior-day interest − prior
+ * payments/chargebacks). Same-day and later customer payments do NOT reduce that day's interest base
+ * (they reduce the next day), so the opening is stable and reproducible under repair even after later
+ * payments land. Optionally also exclude an in-flight / already-posted interest JE so its own credit is
+ * not in the base (belt-and-suspenders with the date bound, which already excludes the same-dated JE).
  */
 async function defaultInterestOpeningFromOutstandingLiability(
   client: DbClient,
   operatingCompanyId: string,
   factoringAdvanceId: string,
-  excludeJournalEntryId?: string | null
+  excludeJournalEntryId?: string | null,
+  beforeDateExclusive?: string | null
 ): Promise<number> {
   return linkedOutstandingLiabilityCents(
     client,
     operatingCompanyId,
     factoringAdvanceId,
-    excludeJournalEntryId
+    excludeJournalEntryId,
+    beforeDateExclusive
   );
 }
 
@@ -2274,13 +2291,17 @@ export async function postFactoringDefaultInterestAccrualEvent(
       return { gate: "already_posted" as const };
     }
 
-    // Lock so concurrent customer payments cannot race the interest base.
+    // Prepare-phase lock (this short txn only) — the authoritative lock is re-taken and held THROUGH the
+    // JE write in afterLifecycleBeforeCommit below, so a concurrent payment cannot leave a stale credit.
     await lockFactoringAdvanceForSettlement(client, input.operating_company_id, input.factoring_advance_id);
-    // Opening = exact linked outstanding liability AFTER payments (never stale prior-accrual / face).
+    // Opening = liability at the START of the accrual day (postings dated strictly before accrualDate):
+    // funding + prior-day interest − prior payments/chargebacks. Same-day/later payments do not reduce it.
     const opening = await defaultInterestOpeningFromOutstandingLiability(
       client,
       input.operating_company_id,
-      input.factoring_advance_id
+      input.factoring_advance_id,
+      null,
+      accrualDate
     );
     if (opening <= 0) return { gate: "zero_amount" as const };
 
@@ -2389,12 +2410,16 @@ export async function postFactoringDefaultInterestAccrualEvent(
         journalEntryId = candidate.journal_entry_id;
       }
 
-      // Opening = unpaid liability AFTER payments, EXCLUDING today's interest credit.
+      // Opening = liability at the START of the accrual day (postings dated strictly before accrualDate),
+      // excluding today's own interest credit. Date-bounding is what makes this REPAIR reproduce the
+      // historical opening even after later customer payments landed — no spurious opening mismatch, and
+      // same-day idempotent re-entry still validates (same-day payments never reduce that day's base).
       const opening = await defaultInterestOpeningFromOutstandingLiability(
         client,
         input.operating_company_id,
         input.factoring_advance_id,
-        journalEntryId
+        journalEntryId,
+        accrualDate
       );
       const expectedInterest = Math.round(opening * FACTORING_DEFAULT_INTEREST_DAILY_RATE);
       const expectedClosing = opening + expectedInterest;
@@ -2475,6 +2500,25 @@ export async function postFactoringDefaultInterestAccrualEvent(
     event_key: `default_interest:${prepared.accrualDate}`,
     expected_legs: interestExpectedLegs,
     afterLifecycleBeforeCommit: async (client, journalEntryId) => {
+      // Lock THROUGH the JE write (the prepare-phase lock was released at that short txn's commit) and
+      // re-validate the interest base inside THIS posting txn — same concurrent-settlement contract the
+      // customer-payment path enforces. A back-dated payment/chargeback (entry_date < accrualDate) landing
+      // between prepare and post would change the day's opening; if so we fail closed and roll back rather
+      // than commit a stale interest credit. Same-day/later payments correctly do not affect this base.
+      await lockFactoringAdvanceForSettlement(client, input.operating_company_id, input.factoring_advance_id);
+      const revalidatedOpening = await defaultInterestOpeningFromOutstandingLiability(
+        client,
+        input.operating_company_id,
+        input.factoring_advance_id,
+        journalEntryId,
+        prepared.accrualDate
+      );
+      const revalidatedInterest = Math.round(revalidatedOpening * FACTORING_DEFAULT_INTEREST_DAILY_RATE);
+      if (revalidatedOpening !== prepared.opening || revalidatedInterest !== prepared.interest) {
+        throw new Error(
+          `factoring_default_interest_base_changed_under_lock: opening ${prepared.opening}->${revalidatedOpening} interest ${prepared.interest}->${revalidatedInterest}`
+        );
+      }
       // Record the accrual (ledger + connectivity: accrual → JE → advance). ON CONFLICT no-ops so a retry
       // after the JE posted but before this insert committed will not double-insert.
       await client.query(

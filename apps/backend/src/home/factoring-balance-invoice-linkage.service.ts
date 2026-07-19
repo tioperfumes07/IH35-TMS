@@ -325,27 +325,42 @@ export async function resolveCanonicalActiveFactor(
   );
 
   if (bindings.rows.length === 0) {
-    // Distinguish never-seeded vs seeded-but-outside-effective-window (still never sole-factor Faro).
-    const anyBinding = await client.query<{ n: string; future_n: string; expired_n: string }>(
+    // Distinguish never-seeded / VOIDED-current (→ missing) vs a merely not-yet/expired live binding
+    // (→ not_effective). Classifier ordering law (PR #2724 CR VETO): a VOID/archive of the binding that
+    // WOULD be effective as-of the date means the agreement is gone → missing_faro_agreement_binding.
+    // A stale future/expired sibling row (e.g. an earlier ambiguity-test leftover) must NEVER short-circuit
+    // that void→missing verdict. Only a *non-voided* out-of-window binding, with NO voided-current binding,
+    // yields faro_agreement_not_effective.
+    const anyBinding = await client.query<{
+      live_future_n: string;
+      live_expired_n: string;
+      voided_current_n: string;
+    }>(
       `
         SELECT
-          COUNT(*)::text AS n,
-          COUNT(*) FILTER (WHERE effective_from > $2::date)::text AS future_n,
           COUNT(*) FILTER (
-            WHERE effective_to IS NOT NULL AND effective_to < $2::date
-          )::text AS expired_n
+            WHERE voided_at IS NULL AND effective_from > $2::date
+          )::text AS live_future_n,
+          COUNT(*) FILTER (
+            WHERE voided_at IS NULL AND effective_to IS NOT NULL AND effective_to < $2::date
+          )::text AS live_expired_n,
+          COUNT(*) FILTER (
+            WHERE voided_at IS NOT NULL
+              AND effective_from <= $2::date
+              AND (effective_to IS NULL OR effective_to >= $2::date)
+          )::text AS voided_current_n
         FROM factoring.canonical_factor_agreements
         WHERE tenant_id = $1::uuid
           AND agreement_code = $3
-          AND voided_at IS NULL
       `,
       [operatingCompanyId, asOf, FARO_FULL_RECOURSE_AGREEMENT_CODE]
     );
-    const n = Number(anyBinding.rows[0]?.n ?? 0);
-    const futureN = Number(anyBinding.rows[0]?.future_n ?? 0);
-    const expiredN = Number(anyBinding.rows[0]?.expired_n ?? 0);
+    const liveFutureN = Number(anyBinding.rows[0]?.live_future_n ?? 0);
+    const liveExpiredN = Number(anyBinding.rows[0]?.live_expired_n ?? 0);
+    const voidedCurrentN = Number(anyBinding.rows[0]?.voided_current_n ?? 0);
+    // Void/archive of the as-of binding wins: it is missing, not merely "not yet / expired".
     let reason = "missing_faro_agreement_binding";
-    if (n > 0 && (futureN > 0 || expiredN > 0)) {
+    if (voidedCurrentN === 0 && (liveFutureN > 0 || liveExpiredN > 0)) {
       reason = "faro_agreement_not_effective";
     }
     return {

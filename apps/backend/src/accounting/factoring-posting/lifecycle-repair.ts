@@ -242,6 +242,17 @@ export async function findStrictLifecycleRepairCandidate(
     /** When provided, candidate must match exact role/D/C/amount legs. */
     expected_legs?: ExpectedLifecycleLeg[];
     expected_entry_date?: string | null;
+    /**
+     * Event identity for MULTI-INSTANCE lifecycle events (e.g. sequential partial
+     * `factoring_customer_payment`s, per-day `factoring_default_interest`). When provided, a JE that
+     * already owns a deterministic posting key for a DIFFERENT event_key (same advance + source type) is
+     * NOT a repair candidate for THIS event — it belongs to a sibling event and must not be matched (then
+     * fail exact-shape) merely because it shares the advance + source type. The deterministic posting-key
+     * lookup (findLifecyclePostingKeyJe) already resolves the same-event re-post; this scopes the repair
+     * fallback so a first $40k payment JE is never treated as an invalid candidate for a second $30k
+     * payment. Omit (NULL) for singleton events (funding) — fully backward compatible.
+     */
+    event_key?: string | null;
   }
 ): Promise<LifecycleRepairCandidate> {
   const expectedStatus = opts.expected_status ?? "posted";
@@ -303,6 +314,21 @@ export async function findStrictLifecycleRepairCandidate(
                 WHERE jep.journal_entry_uuid = je.id
                   AND jep.operating_company_id = je.operating_company_id
              )
+         -- Multi-instance event scoping: a JE already keyed to a DIFFERENT event_key (sibling partial
+         -- payment / different accrual day) is not this event's repair candidate. NULL event_key
+         -- (singleton events like funding) leaves behavior unchanged.
+         AND (
+               $5::text IS NULL
+               OR NOT EXISTS (
+                     SELECT 1
+                       FROM accounting.factoring_lifecycle_posting_keys plk
+                      WHERE plk.journal_entry_id = je.id
+                        AND plk.operating_company_id = je.operating_company_id
+                        AND plk.factoring_advance_id = $3::uuid
+                        AND plk.source_transaction_type = $2
+                        AND plk.event_key <> $5::text
+                  )
+             )
        ORDER BY je.created_at ASC, je.id ASC
     `,
     [
@@ -310,6 +336,7 @@ export async function findStrictLifecycleRepairCandidate(
       opts.source_transaction_type,
       opts.factoring_advance_id,
       expectedStatus,
+      opts.event_key ?? null,
     ]
   );
 
