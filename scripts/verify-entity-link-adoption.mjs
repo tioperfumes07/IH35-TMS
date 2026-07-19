@@ -2,21 +2,21 @@
 /**
  * Syntactic EntityLink adoption ratchet.
  *
- * This guard intentionally does not infer alias semantics. Outside a recognized link element,
- * directly rendered id-shaped properties and opaque bare identifier/helper expressions are
- * non-canonical findings. Existing findings are ratcheted; new code should render IDs through
- * a direct EntityLink/Link/NavLink/a expression. Canonical conditional/short-circuit link
- * expressions are accepted.
+ * This guard does not infer arbitrary alias semantics. It resolves only same-file lexical
+ * declarations and direct helper returns. Outside a recognized link element, directly rendered
+ * id-shaped properties and those narrowly resolved aliases/helpers are non-canonical findings.
+ * Existing finding keys are ratcheted per file/rule; new code should render IDs through a direct
+ * EntityLink/Link/NavLink/a expression. Canonical conditional/short-circuit links are accepted.
  */
 import fs from "node:fs";
 import path from "node:path";
+import crypto from "node:crypto";
 import ts from "typescript";
 
 const ROOT = process.cwd();
 const FRONTEND_ROOT = path.join(ROOT, "apps/frontend/src");
+const BASELINE_FILE = path.join(ROOT, "scripts/entity-link-adoption-baseline.json");
 const SKIP_RE = /(\/__tests__\/|\.test\.(tsx|ts)$|\.deprecated\.|test-setup\.ts$)/;
-const LEGACY_BASELINE = 76;
-const CANONICAL_EXPRESSION_BASELINE = 7839;
 const ID_NAME_RE = /(^|_)id$|[a-z]Id$/;
 const LINK_TAGS = new Set(["EntityLink", "Link", "NavLink", "a"]);
 
@@ -39,6 +39,11 @@ function walkFiles(dir) {
     else if (/\.tsx$/.test(entry.name) && !SKIP_RE.test(absolute.replaceAll("\\", "/"))) files.push(absolute);
   }
   return files;
+}
+
+function walk(root, visit) {
+  visit(root);
+  ts.forEachChild(root, (child) => walk(child, visit));
 }
 
 function propertyName(node) {
@@ -90,36 +95,77 @@ function isCanonicalLinkExpression(node, sf) {
   return false;
 }
 
-function containsIdProperty(node) {
-  let found = false;
-  function visit(candidate) {
-    const name = propertyName(candidate);
-    if (name && ID_NAME_RE.test(name)) found = true;
-    ts.forEachChild(candidate, visit);
-  }
-  visit(node);
-  return found;
+function isDirectIdProperty(node) {
+  const name = propertyName(node);
+  return Boolean(name && ID_NAME_RE.test(name));
 }
 
-function legacyCandidate(expr) {
-  if (ts.isIdentifier(expr)) return ID_NAME_RE.test(expr.text);
-  const name = propertyName(expr);
-  if (name) return ID_NAME_RE.test(name);
-  if (ts.isParenthesizedExpression(expr)) return legacyCandidate(expr.expression);
-  if (
-    ts.isBinaryExpression(expr) &&
-    [ts.SyntaxKind.BarBarToken, ts.SyntaxKind.QuestionQuestionToken].includes(expr.operatorToken.kind)
-  ) {
-    return legacyCandidate(expr.left);
+function enclosingFunction(node) {
+  for (let current = node.parent; current; current = current.parent) {
+    if (ts.isFunctionLike(current)) return current;
+  }
+  return null;
+}
+
+function enclosingLexicalScope(node) {
+  for (let current = node.parent; current; current = current.parent) {
+    if (ts.isBlock(current) || ts.isSourceFile(current)) return current;
+  }
+  return null;
+}
+
+function isInside(node, container) {
+  for (let current = node; current; current = current.parent) {
+    if (current === container) return true;
   }
   return false;
 }
 
-function canonicalCandidate(expr, sf) {
+function lexicalDeclarations(sf, identifier) {
+  const useFunction = enclosingFunction(identifier);
+  const candidates = [];
+  walk(sf, (node) => {
+    if (
+      ts.isVariableDeclaration(node) &&
+      ts.isIdentifier(node.name) &&
+      node.name.text === identifier.text &&
+      node.initializer &&
+      node.pos < identifier.pos &&
+      enclosingFunction(node) === useFunction
+    ) {
+      const scope = enclosingLexicalScope(node);
+      if (scope && isInside(identifier, scope)) candidates.push(node);
+    }
+  });
+  return candidates.sort((a, b) => b.pos - a.pos);
+}
+
+function lexicalFunctions(sf, identifier) {
+  const useFunction = enclosingFunction(identifier);
+  const candidates = [];
+  walk(sf, (node) => {
+    if (
+      ts.isFunctionDeclaration(node) &&
+      node.name?.text === identifier.text &&
+      node.body &&
+      (enclosingFunction(node) === useFunction || enclosingFunction(node) === null)
+    ) {
+      const scope = enclosingLexicalScope(node);
+      if (scope && isInside(identifier, scope)) candidates.push(node);
+    }
+  });
+  return candidates.sort((a, b) => b.pos - a.pos);
+}
+
+function directReturnExpression(fn) {
+  if (!fn.body || !ts.isBlock(fn.body)) return null;
+  const returns = fn.body.statements.filter(ts.isReturnStatement);
+  return returns.length === 1 ? returns[0].expression ?? null : null;
+}
+
+function resolvedIdReason(expr, sf, seen = new Set()) {
   if (isCanonicalLinkExpression(expr, sf)) return null;
-  if (containsIdProperty(expr)) return "direct-id";
-  if (ts.isIdentifier(expr)) return "opaque-alias";
-  if (ts.isCallExpression(expr)) return "opaque-helper";
+  if (isDirectIdProperty(expr)) return "direct-id";
   if (
     ts.isParenthesizedExpression(expr) ||
     ts.isAsExpression(expr) ||
@@ -127,13 +173,43 @@ function canonicalCandidate(expr, sf) {
     ts.isNonNullExpression(expr) ||
     ts.isSatisfiesExpression(expr)
   ) {
-    return canonicalCandidate(expr.expression, sf);
+    return resolvedIdReason(expr.expression, sf, seen);
   }
-  if (
-    ts.isBinaryExpression(expr) ||
-    ts.isConditionalExpression(expr)
-  ) {
-    return "opaque-branch";
+  if (ts.isIdentifier(expr)) {
+    if (ID_NAME_RE.test(expr.text)) return "named-id";
+    const token = `variable:${expr.text}:${expr.pos}`;
+    if (seen.has(token)) return null;
+    seen.add(token);
+    const declaration = lexicalDeclarations(sf, expr)[0];
+    return declaration?.initializer && resolvedIdReason(declaration.initializer, sf, seen)
+      ? "alias-id"
+      : null;
+  }
+  if (ts.isCallExpression(expr)) {
+    if (expr.arguments.some((argument) => resolvedIdReason(argument, sf, new Set(seen)))) {
+      return "helper-id-argument";
+    }
+    if (ts.isIdentifier(expr.expression)) {
+      const fn = lexicalFunctions(sf, expr.expression)[0];
+      const returned = fn && directReturnExpression(fn);
+      if (returned && resolvedIdReason(returned, sf, new Set(seen))) return "helper-returned-id";
+    }
+  }
+  if (ts.isConditionalExpression(expr)) {
+    return resolvedIdReason(expr.whenTrue, sf, new Set(seen)) ||
+      resolvedIdReason(expr.whenFalse, sf, new Set(seen))
+      ? "branch-id"
+      : null;
+  }
+  if (ts.isBinaryExpression(expr)) {
+    const renderedReason =
+      expr.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken
+        ? resolvedIdReason(expr.right, sf, new Set(seen))
+        : resolvedIdReason(expr.left, sf, new Set(seen)) ||
+          resolvedIdReason(expr.right, sf, new Set(seen));
+    return renderedReason
+      ? "branch-id"
+      : null;
   }
   return null;
 }
@@ -144,16 +220,27 @@ function enclosingTag(expression, sf) {
   return null;
 }
 
-export function scanSource(file, source, mode = "canonical") {
+function normalizeExpression(node, sf) {
+  return node.getText(sf).replace(/\s+/g, " ").trim();
+}
+
+function enclosingFunctionName(node) {
+  const fn = enclosingFunction(node);
+  if (!fn) return "(top-level)";
+  if ("name" in fn && fn.name && ts.isIdentifier(fn.name)) return fn.name.text;
+  const parent = fn.parent;
+  if (ts.isVariableDeclaration(parent) && ts.isIdentifier(parent.name)) return parent.name.text;
+  return "(anonymous)";
+}
+
+export function scanSource(file, source) {
   const sf = parse(file, source);
   const findings = [];
   function visit(node) {
     if (ts.isJsxExpression(node) && node.expression && !ts.isJsxAttribute(node.parent)) {
       const tag = enclosingTag(node, sf);
       if (!tag || !LINK_TAGS.has(tag)) {
-        const reason = mode === "legacy"
-          ? (legacyCandidate(node.expression) ? "legacy-id" : null)
-          : canonicalCandidate(node.expression, sf);
+        const reason = resolvedIdReason(node.expression, sf);
         if (reason) {
           const position = sf.getLineAndCharacterOfPosition(node.getStart(sf));
           findings.push({
@@ -161,6 +248,8 @@ export function scanSource(file, source, mode = "canonical") {
             line: position.line + 1,
             tag: tag ?? "(fragment/expression)",
             reason,
+            scope: enclosingFunctionName(node),
+            expression: normalizeExpression(node.expression, sf),
             text: node.getText(sf).replace(/\s+/g, " ").trim().slice(0, 100),
           });
         }
@@ -172,10 +261,39 @@ export function scanSource(file, source, mode = "canonical") {
   return findings;
 }
 
-function scanTree(mode) {
+function scanTree() {
   return walkFiles(FRONTEND_ROOT).flatMap((file) =>
-    scanSource(file, fs.readFileSync(file, "utf8"), mode),
+    scanSource(file, fs.readFileSync(file, "utf8")),
   );
+}
+
+function findingKey(finding) {
+  return [finding.file, finding.scope, finding.tag, finding.reason, finding.expression].join("|");
+}
+
+function findingFingerprint(finding) {
+  return crypto.createHash("sha256").update(findingKey(finding)).digest("hex");
+}
+
+function findingCounts(findings) {
+  const counts = {};
+  const labels = new Map();
+  for (const finding of findings) {
+    const key = findingFingerprint(finding);
+    const label = findingKey(finding);
+    if (labels.has(key) && labels.get(key) !== label) {
+      throw new Error(`finding fingerprint collision: ${key}`);
+    }
+    labels.set(key, label);
+    counts[key] = (counts[key] ?? 0) + 1;
+  }
+  return Object.fromEntries(Object.entries(counts).sort(([a], [b]) => a.localeCompare(b)));
+}
+
+function newFindingKeys(current, baseline) {
+  return Object.entries(current)
+    .filter(([key, count]) => count > (baseline[key] ?? 0))
+    .map(([key, count]) => ({ key, count, baseline: baseline[key] ?? 0 }));
 }
 
 function runSelftest() {
@@ -204,36 +322,58 @@ function runSelftest() {
       if (expected !== "throws") problems.push(`${name}: unexpectedly failed parsing`);
     }
   }
+  const baseline = findingCounts(scanSource("baseline.tsx", `const A=({row})=><td>{row.vendor_id}</td>`));
+  const offsetCurrent = findingCounts(scanSource("baseline.tsx", `const A=({row})=><td>{row.driver_id}</td>`));
+  if (Object.keys(baseline).length !== 1 || Object.keys(offsetCurrent).length !== 1 || newFindingKeys(offsetCurrent, baseline).length !== 1) {
+    problems.push("offset-cancellation: remove-one/add-different must fail even when total count is unchanged");
+  }
   if (problems.length) {
     console.error(`verify:entity-link-adoption --selftest FAIL\n${problems.join("\n")}`);
     process.exit(1);
   }
-  console.log(`verify:entity-link-adoption --selftest PASS ${cases.length} canonical syntax cases`);
+  console.log(`verify:entity-link-adoption --selftest PASS ${cases.length} canonical syntax cases + offset-cancellation reject`);
 }
 
 function main() {
   if (process.argv.includes("--selftest")) return runSelftest();
-  let legacy;
-  let canonical;
+  let findings;
   try {
-    legacy = scanTree("legacy");
-    canonical = scanTree("canonical");
+    findings = scanTree();
   } catch (error) {
     console.error(`verify:entity-link-adoption FAIL — ${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
   }
-  console.log(
-    `verify:entity-link-adoption scanned ${legacy.length} legacy (max ${LEGACY_BASELINE}) and ` +
-      `${canonical.length} canonical-expression findings (max ${CANONICAL_EXPRESSION_BASELINE})`,
-  );
-  if (legacy.length > LEGACY_BASELINE || canonical.length > CANONICAL_EXPRESSION_BASELINE) {
-    for (const finding of canonical) {
-      console.error(`  ${finding.file}:${finding.line} <${finding.tag}> [${finding.reason}] ${finding.text}`);
-    }
-    console.error("verify:entity-link-adoption FAIL — canonical syntax ratchet increased");
+  const current = findingCounts(findings);
+  if (process.argv.includes("--print-baseline")) {
+    process.stdout.write(`${JSON.stringify({ version: 1, findings: current }, null, 2)}\n`);
+    return;
+  }
+  if (!fs.existsSync(BASELINE_FILE)) {
+    console.error("verify:entity-link-adoption FAIL — scripts/entity-link-adoption-baseline.json is missing");
     process.exit(1);
   }
-  console.log("verify:entity-link-adoption PASS — syntactic ratchets preserved (no alias-semantics claim)");
+  let baselineDocument;
+  try {
+    baselineDocument = JSON.parse(fs.readFileSync(BASELINE_FILE, "utf8"));
+  } catch (error) {
+    console.error(`verify:entity-link-adoption FAIL — baseline parse failed: ${error instanceof Error ? error.message : String(error)}`);
+    process.exit(1);
+  }
+  if (baselineDocument?.version !== 1 || !baselineDocument.findings || typeof baselineDocument.findings !== "object") {
+    console.error("verify:entity-link-adoption FAIL — baseline must have version 1 and a findings object");
+    process.exit(1);
+  }
+  const additions = newFindingKeys(current, baselineDocument.findings);
+  console.log(`verify:entity-link-adoption scanned ${findings.length} narrow ID findings across ${Object.keys(current).length} stable keys`);
+  if (additions.length) {
+    for (const addition of additions) {
+      const finding = findings.find((candidate) => findingFingerprint(candidate) === addition.key);
+      console.error(`  NEW ${addition.key} count=${addition.count} baseline=${addition.baseline} ${finding ? findingKey(finding) : ""}`);
+    }
+    console.error("verify:entity-link-adoption FAIL — new per-file/per-rule finding key detected");
+    process.exit(1);
+  }
+  console.log("verify:entity-link-adoption PASS — no new stable finding keys (removals cannot offset additions)");
 }
 
 main();

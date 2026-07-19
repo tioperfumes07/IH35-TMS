@@ -1428,14 +1428,17 @@ Status: LOCKED (non-financial guard/spec wiring plus behavior tests; no runtime 
 
 - Existing entity references must use the shared `EntityLink` producer where a real target route exists.
 - Named deep-link surfaces must use canonical direct `EntityLink`, `navigate`, `searchParams.get`,
-  resolver-return, and registered `Route` forms. Aliases, wrappers, reassignment, and dynamic route/counter
-  expressions are outside the contract and fail with a canonical-style error.
+  resolver-return, and registered `Route` forms in the exact exported top-level production component,
+  exact column/map renderer, or direct exported `ROUTES` mount. Nested/dead functions, lexical shadows,
+  aliases, wrappers, reassignment, and dynamic renderer/route expressions cannot satisfy the contract.
 - Static guards enforce only these narrow source structures and fail closed on missing files, parse errors,
   obsolete expense routes, or a regression above the locked syntactic-adoption baselines. They do not claim
   to prove arbitrary JavaScript aliasing, callback execution, or control/data flow.
 - Comments, documentation text, and inert string constants must never satisfy a guard assertion.
-- The home-fleet route must retain its direct mounted route, `withCompanyScope` callback, company GUC,
-  relation check, scoped DISTINCT query, captured result, and returned `samsara_live` property.
+- The home-fleet route must retain its direct `app.get` statement inside the exported top-level
+  `registerReportsLibraryRoutes` function and its exact executable handler/try path: direct
+  `withCompanyScope` callback, company GUC, relation check, scoped DISTINCT query, captured result, and
+  returned `samsara_live` property. Nested helpers, dead route wrappers, and dead proof functions do not count.
 - Behavior-level tests against production modules are the primary proof: Fastify injection proves counter
   response/scoping/zero behavior; React/router tests render and click producers and exercise consumers.
 - Every guard includes table-driven `--selftest` plants covering every historical VETO and canonical controls.
@@ -1443,7 +1446,10 @@ Status: LOCKED (non-financial guard/spec wiring plus behavior tests; no runtime 
   `package.json`, `.github/workflows/locked-guards.yml`, or `.github/workflows/ci.yml`.
 
 ### Guards (Rule 17)
-- `scripts/verify-entity-link-adoption.mjs` — syntactic direct-ID/opaque-expression non-regression ratchets.
+- `scripts/verify-entity-link-adoption.mjs` — narrow direct-ID plus lexically scoped alias/helper detection;
+  stable SHA-256 per-file/scope/rule/expression finding keys make each addition fail independently, so removing
+  one finding cannot offset a different addition. Generic uncertain expressions are not baseline findings.
+- `scripts/entity-link-adoption-baseline.json` — versioned stable finding-key/count baseline.
 - `scripts/verify-entitylink-deep-links.mjs` — strict direct producer/resolver/route/consumer source contract.
 - `scripts/verify-94-live-counter-linkage.mjs` — strict canonical Samsara counter route source contract.
 - `apps/backend/src/reports/library.routes.live-counter.test.ts` — production Fastify route behavior.

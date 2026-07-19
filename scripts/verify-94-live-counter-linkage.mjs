@@ -35,48 +35,76 @@ function walk(root, visit) {
   ts.forEachChild(root, (child) => walk(child, visit));
 }
 
-function directRouteCallback(sf) {
-  let callback = null;
-  walk(sf, (node) => {
+function isExported(node) {
+  return Boolean(node.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword));
+}
+
+function topLevelRegisterFunction(sf) {
+  const matches = sf.statements.filter(
+    (node) =>
+      ts.isFunctionDeclaration(node) &&
+      node.name?.text === "registerReportsLibraryRoutes" &&
+      isExported(node),
+  );
+  return matches.length === 1 ? matches[0] : null;
+}
+
+function directRouteCallback(register) {
+  if (!register.body) return null;
+  const matches = register.body.statements.flatMap((statement) => {
+    if (!ts.isExpressionStatement(statement) || !ts.isCallExpression(statement.expression)) return [];
+    const call = statement.expression;
     if (
-      ts.isCallExpression(node) &&
-      ts.isPropertyAccessExpression(node.expression) &&
-      ts.isIdentifier(node.expression.expression) &&
-      node.expression.expression.text === "app" &&
-      node.expression.name.text === "get" &&
-      stringLiteral(node.arguments[0]) === ROUTE
+      !ts.isPropertyAccessExpression(call.expression) ||
+      !ts.isIdentifier(call.expression.expression) ||
+      call.expression.expression.text !== "app" ||
+      call.expression.name.text !== "get" ||
+      stringLiteral(call.arguments[0]) !== ROUTE
     ) {
-      const candidate = node.arguments[1];
-      if (candidate && (ts.isArrowFunction(candidate) || ts.isFunctionExpression(candidate))) {
-        callback = candidate;
-      }
+      return [];
     }
+    const candidate = call.arguments[1];
+    return candidate &&
+      (ts.isArrowFunction(candidate) || ts.isFunctionExpression(candidate)) &&
+      ts.isBlock(candidate.body)
+      ? [candidate]
+      : [];
   });
-  return callback;
+  return matches.length === 1 ? matches[0] : null;
 }
 
 function directScopedCallback(route) {
-  let callback = null;
-  let snapshotDeclaration = null;
-  walk(route, (node) => {
-    if (
-      ts.isVariableDeclaration(node) &&
+  if (!ts.isBlock(route.body)) return { callback: null, snapshotDeclaration: null, handlerBlock: null };
+  const tryStatements = route.body.statements.filter(ts.isTryStatement);
+  const handlerBlock = tryStatements.length === 1 ? tryStatements[0].tryBlock : route.body;
+  const matches = [];
+  for (const statement of handlerBlock.statements) {
+    if (!ts.isVariableStatement(statement)) continue;
+    for (const node of statement.declarationList.declarations) {
+      if (
       ts.isIdentifier(node.name) &&
       node.name.text === "snapshot" &&
       node.initializer &&
       ts.isAwaitExpression(node.initializer) &&
       ts.isCallExpression(node.initializer.expression) &&
       ts.isIdentifier(node.initializer.expression.expression) &&
-      node.initializer.expression.expression.text === "withCompanyScope"
+      node.initializer.expression.expression.text === "withCompanyScope" &&
+      node.initializer.expression.arguments.length === 3
     ) {
       const candidate = node.initializer.expression.arguments[2];
-      if (candidate && (ts.isArrowFunction(candidate) || ts.isFunctionExpression(candidate))) {
-        snapshotDeclaration = node;
-        callback = candidate;
+        if (
+          candidate &&
+          (ts.isArrowFunction(candidate) || ts.isFunctionExpression(candidate)) &&
+          ts.isBlock(candidate.body)
+        ) {
+          matches.push({ callback: candidate, snapshotDeclaration: node, handlerBlock });
+        }
       }
     }
-  });
-  return { callback, snapshotDeclaration };
+  }
+  return matches.length === 1
+    ? matches[0]
+    : { callback: null, snapshotDeclaration: null, handlerBlock: null };
 }
 
 function directQueryCall(node, receiver, sqlFragment) {
@@ -124,12 +152,16 @@ export function assertLiveCounterSource(file, source) {
   }
 
   const failures = [];
-  const route = directRouteCallback(sf);
+  const register = topLevelRegisterFunction(sf);
+  if (!register) {
+    return [`${file}: require exactly one exported top-level registerReportsLibraryRoutes function`];
+  }
+  const route = directRouteCallback(register);
   if (!route) {
     return [`${file}: use canonical direct app.get("${ROUTE}", async (...) => ...) form; route aliases/wrappers are forbidden`];
   }
 
-  const { callback: scoped, snapshotDeclaration } = directScopedCallback(route);
+  const { callback: scoped, snapshotDeclaration, handlerBlock } = directScopedCallback(route);
   if (!scoped || !snapshotDeclaration || !ts.isBlock(scoped.body)) {
     return [`${file}: use canonical const snapshot = await withCompanyScope(..., async (client) => { ... }) form; aliases/wrappers are forbidden`];
   }
@@ -141,33 +173,54 @@ export function assertLiveCounterSource(file, source) {
     failures.push(`${file}: canonical scoped callback parameter must be named client`);
   }
 
-  const routeText = route.getText(sf);
-  const scopedText = scoped.body.getText(sf);
-  if (!/\breturn\s+snapshot\s*;/.test(routeText)) {
+  const routeReturns = handlerBlock.statements.filter(ts.isReturnStatement);
+  if (
+    routeReturns.length !== 1 ||
+    !routeReturns[0].expression ||
+    !ts.isIdentifier(routeReturns[0].expression) ||
+    routeReturns[0].expression.text !== "snapshot"
+  ) {
     failures.push(`${file}: canonical route must directly return snapshot`);
   }
   if (assignmentCount(route, "snapshot") !== 0) {
     failures.push(`${file}: snapshot reassignment is forbidden; keep the canonical direct return`);
   }
-  if (!/\bconst\s+companyId\s*=\s*query\.data\.operating_company_id\s*;/.test(scopedText)) {
+  const directVariable = (name) =>
+    scoped.body.statements.flatMap((statement) =>
+      ts.isVariableStatement(statement)
+        ? statement.declarationList.declarations.filter(
+          (declaration) => ts.isIdentifier(declaration.name) && declaration.name.text === name,
+        )
+        : [],
+    );
+  const companyDeclarations = directVariable("companyId");
+  if (
+    companyDeclarations.length !== 1 ||
+    companyDeclarations[0].initializer?.getText(sf) !== "query.data.operating_company_id"
+  ) {
     failures.push(`${file}: canonical companyId must directly bind query.data.operating_company_id`);
   }
 
-  let gucCall = false;
-  let relationIf = null;
-  let liveQueryDeclaration = null;
-  let finalReturn = null;
-  walk(scoped.body, (node) => {
-    if (directQueryCall(node, "client", "set_config('app.operating_company_id', $1, true)")) {
-      const args = node.arguments[1];
-      gucCall =
-        Boolean(args) &&
-        ts.isArrayLiteralExpression(args) &&
-        args.elements.length === 1 &&
-        ts.isIdentifier(args.elements[0]) &&
-        args.elements[0].text === "companyId";
-    }
+  const gucStatements = scoped.body.statements.filter((statement) => {
     if (
+      !ts.isExpressionStatement(statement) ||
+      !ts.isAwaitExpression(statement.expression) ||
+      !directQueryCall(statement.expression.expression, "client", "set_config('app.operating_company_id', $1, true)")
+    ) {
+      return false;
+    }
+    const args = statement.expression.expression.arguments[1];
+    return (
+      Boolean(args) &&
+      ts.isArrayLiteralExpression(args) &&
+      args.elements.length === 1 &&
+      ts.isIdentifier(args.elements[0]) &&
+      args.elements[0].text === "companyId"
+    );
+  });
+  const gucCall = gucStatements.length === 1;
+  const relationStatements = scoped.body.statements.filter(
+    (node) =>
       ts.isIfStatement(node) &&
       ts.isAwaitExpression(node.expression) &&
       ts.isCallExpression(node.expression.expression) &&
@@ -176,20 +229,30 @@ export function assertLiveCounterSource(file, source) {
       ts.isIdentifier(node.expression.expression.arguments[0]) &&
       node.expression.expression.arguments[0].text === "client" &&
       stringLiteral(node.expression.expression.arguments[1]) === RELATION
-    ) {
-      relationIf = node;
-    }
-    if (
-      ts.isVariableDeclaration(node) &&
+  );
+  const relationIf = relationStatements.length === 1 ? relationStatements[0] : null;
+  const liveQueryDeclarations =
+    relationIf && ts.isBlock(relationIf.thenStatement)
+      ? relationIf.thenStatement.statements.flatMap((statement) =>
+        ts.isVariableStatement(statement)
+          ? statement.declarationList.declarations.filter(
+            (node) =>
       ts.isIdentifier(node.name) &&
       node.name.text === "samsaraRes" &&
       node.initializer &&
       ts.isAwaitExpression(node.initializer) &&
-      directQueryCall(node.initializer.expression, "client", "FROM integrations.samsara_vehicles")
-    ) {
-      liveQueryDeclaration = node;
-    }
-    if (ts.isReturnStatement(node) && ts.isObjectLiteralExpression(node.expression)) {
+              directQueryCall(node.initializer.expression, "client", "FROM integrations.samsara_vehicles"),
+          )
+          : [],
+      )
+      : [];
+  const liveQueryDeclaration = liveQueryDeclarations.length === 1 ? liveQueryDeclarations[0] : null;
+  const directReturns = scoped.body.statements.filter(
+    (node) => ts.isReturnStatement(node) && ts.isObjectLiteralExpression(node.expression),
+  );
+  let finalReturn = null;
+  if (directReturns.length === 1) {
+    const node = directReturns[0];
       const property = node.expression.properties.find(
         (candidate) =>
           ts.isPropertyAssignment(candidate) &&
@@ -203,8 +266,7 @@ export function assertLiveCounterSource(file, source) {
       ) {
         finalReturn = node;
       }
-    }
-  });
+  }
 
   if (!gucCall) {
     failures.push(`${file}: canonical scoped client must directly set app.operating_company_id from companyId`);
@@ -212,7 +274,7 @@ export function assertLiveCounterSource(file, source) {
   if (!relationIf) {
     failures.push(`${file}: canonical direct await relationExists(client, "${RELATION}") branch is required`);
   }
-  if (!liveQueryDeclaration || !relationIf || liveQueryDeclaration.pos < relationIf.thenStatement.pos || liveQueryDeclaration.end > relationIf.thenStatement.end) {
+  if (!liveQueryDeclaration || !relationIf) {
     failures.push(`${file}: canonical samsaraRes query must be directly inside the Samsara relation true branch`);
   } else {
     const sql = stringLiteral(
@@ -226,12 +288,29 @@ export function assertLiveCounterSource(file, source) {
       if (!requirement[0].test(sql)) failures.push(`${file}: canonical Samsara SQL must ${requirement[1]}`);
     }
   }
-  if (!/\blet\s+samsaraLive\s*=\s*0\s*;/.test(scopedText)) {
+  const counterDeclarations = directVariable("samsaraLive");
+  if (
+    counterDeclarations.length !== 1 ||
+    counterDeclarations[0].parent.flags & ts.NodeFlags.Const ||
+    counterDeclarations[0].initializer?.getText(sf) !== "0"
+  ) {
     failures.push(`${file}: canonical counter must initialize directly to zero`);
   }
-  if (
-    !/\bsamsaraLive\s*=\s*Number\s*\(\s*\(\s*samsaraRes\.rows\[0\]\s+as\s+\{\s*samsara_live\?\s*:\s*string\s*\}\s*\|\s*undefined\s*\)\?\.samsara_live\s*\?\?\s*0\s*\)\s*;/.test(scopedText)
-  ) {
+  const primaryCounterAssignments =
+    relationIf && ts.isBlock(relationIf.thenStatement)
+      ? relationIf.thenStatement.statements.filter(
+        (statement) =>
+          ts.isExpressionStatement(statement) &&
+          ts.isBinaryExpression(statement.expression) &&
+          statement.expression.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+          ts.isIdentifier(statement.expression.left) &&
+          statement.expression.left.text === "samsaraLive" &&
+          /^samsaraLive\s*=\s*Number\s*\(\s*\(\s*samsaraRes\.rows\[0\]\s+as\s+\{\s*samsara_live\?\s*:\s*string\s*\}\s*\|\s*undefined\s*\)\?\.samsara_live\s*\?\?\s*0\s*\)$/.test(
+            statement.expression.getText(sf),
+          ),
+      )
+      : [];
+  if (primaryCounterAssignments.length !== 1) {
     failures.push(`${file}: canonical counter must directly assign Number(samsaraRes.rows[0]?.samsara_live ?? 0); aliases/dynamic values are forbidden`);
   }
   if (assignmentCount(scoped.body, "client") !== 0 || assignmentCount(scoped.body, "samsaraRes") !== 0) {
@@ -292,6 +371,8 @@ function runSelftest() {
   const good = canonicalFixture();
   const invalid = [
     ["route-alias", good.replace("app.get(", "const get = app.get; get(")],
+    ["dead-route-wrapper", good.replace(`app.get("${ROUTE}",`, `if (false) { app.get("${ROUTE}",`).replace("      });\n    }\n  ", "      }); }\n    }\n  ")],
+    ["nested-route-helper", good.replace(`app.get("${ROUTE}",`, `function mountDecoy() { app.get("${ROUTE}",`).replace("      });\n    }\n  ", "      }); }\n    }\n  ")],
     ["scope-alias", good.replace("await withCompanyScope(", "await scoped(")],
     ["reassigned-snapshot", good.replace("return snapshot;", "snapshot = fake; return snapshot;")],
     ["reassigned-query-result", good.replace("const samsaraRes =", "let samsaraRes =").replace("samsaraLive = Number", "samsaraRes = fake; samsaraLive = Number")],
@@ -299,10 +380,22 @@ function runSelftest() {
     ["hardcoded-return", good.replace("samsara_live: samsaraLive", "samsara_live: 999")],
     ["overwritten-counter", good.replace("return { samsara_live", "samsaraLive = 999; return { samsara_live")],
     ["wrong-company-guc", good.replace("[companyId]", "[otherCompanyId]")],
+    ["dead-guc-helper", good.replace(
+      `await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);`,
+      `async function deadProof() { await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]); }`,
+    )],
     ["dead-relation", good.replace(`if (await relationExists(client, "${RELATION}"))`, `if (false && await relationExists(client, "${RELATION}"))`)],
     ["wrong-relation", good.replace(RELATION, "integrations.other")],
     ["query-outside-branch", good.replace(`if (await relationExists(client, "${RELATION}")) {`, `if (await relationExists(client, "${RELATION}")) {}\n{`)],
     ["unknown-query-wrapper", good.replace("await client.query(`SELECT count", "await runQuery(client, `SELECT count")],
+    ["nested-counter-proof", good.replace(
+      "samsaraLive = Number((samsaraRes.rows[0] as { samsara_live?: string } | undefined)?.samsara_live ?? 0);",
+      "function deadCounterProof() { samsaraLive = Number((samsaraRes.rows[0] as { samsara_live?: string } | undefined)?.samsara_live ?? 0); } samsaraLive = 999;",
+    )],
+    ["dead-proof-actual-999", good.replace(
+      "return { samsara_live: samsaraLive };",
+      "function deadProof() { return { samsara_live: samsaraLive }; } return { samsara_live: 999 };",
+    )],
     ["parse-error", `${good}\nconst broken = {`],
   ];
   const problems = [];

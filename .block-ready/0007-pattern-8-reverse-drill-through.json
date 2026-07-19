@@ -28,6 +28,7 @@
     "apps/frontend/src/pages/accounting/__tests__/reverse-drill-through.behavior.test.tsx",
     "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
     "scripts/.guard-exempt.json",
+    "scripts/entity-link-adoption-baseline.json",
     "scripts/verify-entity-link-adoption.mjs",
     "scripts/verify-entitylink-deep-links.mjs",
     "scripts/verify-94-live-counter-linkage.mjs",
@@ -40,13 +41,13 @@
       "check": "all three guards pass normally and with table-driven --selftest corpora covering valid controls, every VETO plant, and fresh metamorphic variants"
     },
     {
-      "check": "EntityLink adoption keeps the 76-finding legacy ratchet plus an exact 7,839-finding canonical-syntax ratchet; parse errors or any increase fail; no arbitrary alias-semantics claim"
+      "check": "EntityLink adoption uses a stable SHA-256 finding-key baseline for narrow direct IDs plus lexically scoped aliases/helpers; every new key/count fails independently, so removing one finding cannot offset adding another"
     },
     {
-      "check": "deep-link guard restricts named files to direct canonical producer/resolver/registered-route/immutable-consumer forms; production React/router behavior tests prove exact IDs and paths"
+      "check": "deep-link guard binds to each exact exported top-level component, exact renderer path, and direct ROUTES mount; nested/dead/dynamic renderers or routes and lexical-shadow bindings fail; React/router tests prove exact IDs and paths"
     },
     {
-      "check": "94-live guard restricts the production handler to its direct canonical route/scoped-client/GUC/relation/query/return form; Fastify injection proves query-result response, zero fallback, and company isolation"
+      "check": "94-live guard binds to the exported top-level register function and direct home-fleet app.get executable handler path; nested/dead GUC/query/return proofs cannot satisfy it; Fastify injection proves query-result response, zero fallback, and company isolation"
     },
     {
       "check": "unique verify-steps 915/916/917 auto-discover all three guards; guard-wired reports them fully wired"

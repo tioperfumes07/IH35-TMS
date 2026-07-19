@@ -40,12 +40,29 @@ function walk(root, visit) {
   ts.forEachChild(root, (child) => walk(child, visit));
 }
 
-function findFunction(sf, name) {
-  let found = null;
-  walk(sf, (node) => {
-    if (ts.isFunctionDeclaration(node) && node.name?.text === name) found = node;
-  });
-  return found;
+function stringLiteral(node) {
+  return ts.isStringLiteralLike(node) || ts.isNoSubstitutionTemplateLiteral(node) ? node.text : null;
+}
+
+function isExported(node) {
+  return Boolean(node.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword));
+}
+
+function topLevelExportedFunction(sf, name) {
+  const matches = sf.statements.filter(
+    (node) =>
+      ts.isFunctionDeclaration(node) &&
+      node.name?.text === name &&
+      isExported(node),
+  );
+  return matches.length === 1 ? matches[0] : null;
+}
+
+function hasNestedFunctionBoundary(node, root) {
+  for (let current = node.parent; current && current !== root; current = current.parent) {
+    if (ts.isFunctionLike(current)) return true;
+  }
+  return false;
 }
 
 function jsxAttribute(node, name, sf) {
@@ -89,6 +106,24 @@ function hasLiteralDeadAncestor(node, root) {
   return false;
 }
 
+function hasDynamicBranchAncestor(node, root) {
+  for (let current = node.parent; current && current !== root; current = current.parent) {
+    if (
+      ts.isConditionalExpression(current) ||
+      ts.isIfStatement(current) ||
+      (ts.isBinaryExpression(current) &&
+        [
+          ts.SyntaxKind.AmpersandAmpersandToken,
+          ts.SyntaxKind.BarBarToken,
+          ts.SyntaxKind.QuestionQuestionToken,
+        ].includes(current.operatorToken.kind))
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function hasDirectEntityLink(sf, root, kind, id) {
   let found = false;
   walk(root, (node) => {
@@ -97,6 +132,8 @@ function hasDirectEntityLink(sf, root, kind, id) {
       node.tagName.getText(sf) === "EntityLink" &&
       jsxAttribute(node, "kind", sf) === kind &&
       jsxAttribute(node, "id", sf) === id &&
+      !hasNestedFunctionBoundary(node, root) &&
+      !hasDynamicBranchAncestor(node, root) &&
       !hasLiteralDeadAncestor(node, root)
     ) {
       found = true;
@@ -141,6 +178,7 @@ function hasDirectNavigation(sf, root, sourceType, idExpression) {
         attribute &&
         ts.isJsxAttribute(attribute) &&
         attribute.name.text === "onClick" &&
+        !hasNestedFunctionBoundary(arrow, root) &&
         !hasLiteralDeadAncestor(node, root)
       ) {
         found = true;
@@ -151,9 +189,12 @@ function hasDirectNavigation(sf, root, sourceType, idExpression) {
 }
 
 function directSearchParamBinding(sf, root, binding, parameter) {
+  if (!root.body || !ts.isBlock(root.body)) return false;
   let declarations = 0;
   let assignments = 0;
-  walk(root, (node) => {
+  for (const statement of root.body.statements) {
+    if (!ts.isVariableStatement(statement)) continue;
+    for (const node of statement.declarationList.declarations) {
     if (
       ts.isVariableDeclaration(node) &&
       ts.isIdentifier(node.name) &&
@@ -171,6 +212,9 @@ function directSearchParamBinding(sf, root, binding, parameter) {
     ) {
       declarations += 1;
     }
+    }
+  }
+  walk(root.body, (node) => {
     if (
       ts.isBinaryExpression(node) &&
       node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
@@ -184,10 +228,12 @@ function directSearchParamBinding(sf, root, binding, parameter) {
 }
 
 function directSearchParamsHook(root) {
-  let found = false;
-  walk(root, (node) => {
-    if (
-      ts.isVariableDeclaration(node) &&
+  if (!root.body || !ts.isBlock(root.body)) return false;
+  let count = 0;
+  for (const statement of root.body.statements) {
+    if (!ts.isVariableStatement(statement)) continue;
+    for (const node of statement.declarationList.declarations) {
+      if (
       ts.isArrayBindingPattern(node.name) &&
       node.name.elements.length >= 1 &&
       ts.isBindingElement(node.name.elements[0]) &&
@@ -199,39 +245,69 @@ function directSearchParamsHook(root) {
       node.initializer.expression.text === "useSearchParams" &&
       node.initializer.arguments.length === 0
     ) {
-      found = true;
+        count += 1;
+      }
     }
-  });
-  return found;
+  }
+  return count === 1;
 }
 
 function directResolverCase(sf) {
-  const resolver = findFunction(sf, "resolveEntityRoute");
+  const resolver = topLevelExportedFunction(sf, "resolveEntityRoute");
   if (!resolver) return false;
-  let found = false;
-  walk(resolver, (node) => {
-    if (
+  if (!resolver.body) return false;
+  const switches = resolver.body.statements.filter(ts.isSwitchStatement);
+  if (switches.length !== 1) return false;
+  const found = switches[0].caseBlock.clauses.filter(
+    (node) =>
       ts.isCaseClause(node) &&
       ts.isStringLiteralLike(node.expression) &&
       node.expression.text === "expense" &&
       node.statements.length === 1 &&
       ts.isReturnStatement(node.statements[0]) &&
-      node.statements[0].expression?.getText(sf) === "`/accounting/expenses/list?expense_id=${id}`"
-    ) {
-      found = true;
-    }
-  });
-  return found;
+      node.statements[0].expression?.getText(sf) === "`/accounting/expenses/list?expense_id=${id}`",
+  );
+  return found.length === 1;
 }
 
 function directRoute(sf, routePath, component) {
-  let found = false;
-  walk(sf, (node) => {
+  const routesDeclaration = sf.statements.find(
+    (node) =>
+      ts.isVariableStatement(node) &&
+      isExported(node) &&
+      node.declarationList.declarations.some(
+        (declaration) => ts.isIdentifier(declaration.name) && declaration.name.text === "ROUTES",
+      ),
+  );
+  if (!routesDeclaration) return false;
+  const declaration = routesDeclaration.declarationList.declarations.find(
+    (candidate) => ts.isIdentifier(candidate.name) && candidate.name.text === "ROUTES",
+  );
+  let initializer = declaration?.initializer;
+  while (
+    initializer &&
+    (ts.isParenthesizedExpression(initializer) ||
+      ts.isAsExpression(initializer) ||
+      ts.isSatisfiesExpression(initializer))
+  ) {
+    initializer = initializer.expression;
+  }
+  if (
+    !initializer ||
+    !ts.isCallExpression(initializer) ||
+    !ts.isPropertyAccessExpression(initializer.expression) ||
+    initializer.expression.getText(sf) !== "React.Children.toArray" ||
+    initializer.arguments.length !== 1 ||
+    !ts.isJsxFragment(initializer.arguments[0])
+  ) {
+    return false;
+  }
+  const fragment = initializer.arguments[0];
+  const matches = fragment.children.filter((node) => {
     if (
       (ts.isJsxSelfClosingElement(node) || ts.isJsxOpeningElement(node)) &&
       node.tagName.getText(sf) === "Route" &&
-      jsxAttribute(node, "path", sf) === routePath &&
-      !hasLiteralDeadAncestor(node, sf)
+      jsxAttribute(node, "path", sf) === routePath
     ) {
       const element = node.attributes.properties.find(
         (candidate) => ts.isJsxAttribute(candidate) && candidate.name.text === "element",
@@ -240,20 +316,99 @@ function directRoute(sf, routePath, component) {
         element &&
         ts.isJsxAttribute(element) &&
         ts.isJsxExpression(element.initializer) &&
-        element.initializer.expression
+        element.initializer.expression &&
+        ts.isJsxElement(element.initializer.expression) &&
+        element.initializer.expression.openingElement.tagName.getText(sf) === "ProtectedRoute"
       ) {
-        walk(element.initializer.expression, (candidate) => {
-          if (
-            (ts.isJsxSelfClosingElement(candidate) || ts.isJsxOpeningElement(candidate)) &&
-            candidate.tagName.getText(sf) === component
-          ) {
-            found = true;
-          }
-        });
+        const children = element.initializer.expression.children.filter(
+          (child) => !ts.isJsxText(child) || child.text.trim() !== "",
+        );
+        return (
+          children.length === 1 &&
+          ts.isJsxSelfClosingElement(children[0]) &&
+          children[0].tagName.getText(sf) === component
+        );
       }
     }
+    return false;
   });
-  return found;
+  return matches.length === 1;
+}
+
+function directExpenseColumnRenderer(sf, component) {
+  if (!component.body) return false;
+  const columnsStatement = component.body.statements.find(
+    (statement) =>
+      ts.isVariableStatement(statement) &&
+      statement.declarationList.declarations.some(
+        (declaration) => ts.isIdentifier(declaration.name) && declaration.name.text === "columns",
+      ),
+  );
+  const declaration = columnsStatement?.declarationList.declarations.find(
+    (candidate) => ts.isIdentifier(candidate.name) && candidate.name.text === "columns",
+  );
+  if (!declaration?.initializer || !ts.isArrayLiteralExpression(declaration.initializer)) return false;
+  const expenseColumns = declaration.initializer.elements.filter((element) => {
+    if (!ts.isObjectLiteralExpression(element)) return false;
+    return element.properties.some(
+      (property) =>
+        ts.isPropertyAssignment(property) &&
+        property.name.getText(sf) === "key" &&
+        stringLiteral(property.initializer) === "expense_number",
+    );
+  });
+  if (expenseColumns.length !== 1) return false;
+  const renderer = expenseColumns[0].properties.find(
+    (property) => ts.isPropertyAssignment(property) && property.name.getText(sf) === "render",
+  );
+  if (
+    !renderer ||
+    !ts.isPropertyAssignment(renderer) ||
+    !ts.isArrowFunction(renderer.initializer) ||
+    renderer.initializer.parameters.length !== 1 ||
+    renderer.initializer.parameters[0].name.getText(sf) !== "r"
+  ) {
+    return false;
+  }
+  const body = renderer.initializer.body;
+  return (
+    ts.isJsxSelfClosingElement(body) &&
+    body.tagName.getText(sf) === "EntityLink" &&
+    jsxAttribute(body, "kind", sf) === "expense" &&
+    jsxAttribute(body, "id", sf) === "r.id"
+  );
+}
+
+function directWorkOrderExpenseRenderer(sf, component) {
+  let matches = 0;
+  walk(component.body, (node) => {
+    if (
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      node.expression.name.text === "map" &&
+      node.expression.expression.getText(sf) === "linkedFinancialsQ.data.expenses" &&
+      node.arguments.length === 1 &&
+      ts.isArrowFunction(node.arguments[0]) &&
+      node.arguments[0].parameters.length === 1 &&
+      node.arguments[0].parameters[0].name.getText(sf) === "expense"
+    ) {
+      const renderer = node.arguments[0];
+      let directLinks = 0;
+      walk(renderer.body, (candidate) => {
+        if (
+          (ts.isJsxSelfClosingElement(candidate) || ts.isJsxOpeningElement(candidate)) &&
+          candidate.tagName.getText(sf) === "EntityLink" &&
+          jsxAttribute(candidate, "kind", sf) === "expense" &&
+          jsxAttribute(candidate, "id", sf) === "expense.id" &&
+          !hasNestedFunctionBoundary(candidate, renderer)
+        ) {
+          directLinks += 1;
+        }
+      });
+      if (directLinks === 1) matches += 1;
+    }
+  });
+  return matches === 1;
 }
 
 function hasObsoleteExpenseRoute(sf) {
@@ -284,7 +439,7 @@ export function assertContracts(sources) {
     }
   }
 
-  const invoice = parsed.invoice && findFunction(parsed.invoice, "InvoiceDetailPage");
+  const invoice = parsed.invoice && topLevelExportedFunction(parsed.invoice, "InvoiceDetailPage");
   if (!invoice || !hasDirectEntityLink(parsed.invoice, invoice, "customer", "invoice.customer_id")) {
     failures.push("InvoiceDetailPage: use direct unconditional <EntityLink kind=\"customer\" id={invoice.customer_id} ... />; aliases/wrappers are forbidden");
   }
@@ -292,12 +447,12 @@ export function assertContracts(sources) {
     failures.push("InvoiceDetailPage: use direct inline onClick={() => navigate(canonical invoice audit URL)}; aliases/wrappers are forbidden");
   }
 
-  const payment = parsed.payment && findFunction(parsed.payment, "PaymentDetailPage");
+  const payment = parsed.payment && topLevelExportedFunction(parsed.payment, "PaymentDetailPage");
   if (!payment || !hasDirectNavigation(parsed.payment, payment, "customer_payment", "payment.id")) {
     failures.push("PaymentDetailPage: use direct inline onClick={() => navigate(canonical customer-payment audit URL)}; aliases/wrappers are forbidden");
   }
 
-  const audit = parsed.audit && findFunction(parsed.audit, "AccountingAuditTrailPage");
+  const audit = parsed.audit && topLevelExportedFunction(parsed.audit, "AccountingAuditTrailPage");
   if (!audit || !directSearchParamsHook(audit)) {
     failures.push("AccountingAuditTrailPage: use direct const [searchParams] = useSearchParams()");
   }
@@ -308,22 +463,22 @@ export function assertContracts(sources) {
     failures.push("AccountingAuditTrailPage: bind immutable sourceIdParam directly from searchParams.get(\"source_id\")");
   }
 
-  const faults = parsed.faults && findFunction(parsed.faults, "FaultDraftsPage");
+  const faults = parsed.faults && topLevelExportedFunction(parsed.faults, "FaultDraftsPage");
   if (!faults || !directSearchParamsHook(faults) || !directSearchParamBinding(parsed.faults, faults, "deepLinkUnitId", "unit_id")) {
     failures.push("FaultDraftsPage: bind immutable deepLinkUnitId directly from searchParams.get(\"unit_id\")");
   }
 
-  const expenses = parsed.expensesList && findFunction(parsed.expensesList, "ExpensesListPage");
+  const expenses = parsed.expensesList && topLevelExportedFunction(parsed.expensesList, "ExpensesListPage");
   if (!expenses || !directSearchParamsHook(expenses) || !directSearchParamBinding(parsed.expensesList, expenses, "deepLinkExpenseId", "expense_id")) {
     failures.push("ExpensesListPage: bind immutable deepLinkExpenseId directly from searchParams.get(\"expense_id\")");
   }
-  if (!expenses || !hasDirectEntityLink(parsed.expensesList, expenses, "expense", "r.id")) {
-    failures.push("ExpensesListPage: use direct <EntityLink kind=\"expense\" id={r.id} ... /> in the canonical column renderer");
+  if (!expenses || !directExpenseColumnRenderer(parsed.expensesList, expenses)) {
+    failures.push("ExpensesListPage: exported component must use the exact expense_number column render: (r) => <EntityLink kind=\"expense\" id={r.id} ... />");
   }
 
-  const wo = parsed.woDetail && findFunction(parsed.woDetail, "WorkOrderDetailPage");
-  if (!wo || !hasDirectEntityLink(parsed.woDetail, wo, "expense", "expense.id")) {
-    failures.push("WorkOrderDetailPage: use direct <EntityLink kind=\"expense\" id={expense.id} ... /> in the linked-expense row");
+  const wo = parsed.woDetail && topLevelExportedFunction(parsed.woDetail, "WorkOrderDetailPage");
+  if (!wo || !directWorkOrderExpenseRenderer(parsed.woDetail, wo)) {
+    failures.push("WorkOrderDetailPage: exported component must directly render the expense EntityLink inside linkedFinancialsQ.data.expenses.map");
   }
   if (!parsed.entityLink || !directResolverCase(parsed.entityLink)) {
     failures.push("EntityLink: expense resolver must directly return `/accounting/expenses/list?expense_id=${id}`");
@@ -337,7 +492,7 @@ export function assertContracts(sources) {
       ["/accounting/expenses/list", "ExpensesListPage"],
     ]) {
       if (!directRoute(parsed.manifest, routePath, component)) {
-        failures.push(`manifest: use direct unconditional <Route path="${routePath}" element={<${component} />} />`);
+        failures.push(`manifest: ROUTES must directly mount <Route path="${routePath}" element={<ProtectedRoute><${component} /></ProtectedRoute>} />`);
       }
     }
   }
@@ -350,14 +505,14 @@ export function assertContracts(sources) {
 
 function canonicalSources() {
   return {
-    invoice: `function InvoiceDetailPage(){return <><EntityLink kind="customer" id={invoice.customer_id}/><button onClick={()=>navigate(\`/accounting/audit-trail?source_type=invoice&source_id=\${encodeURIComponent(invoice.id)}\`)}/></>}`,
-    payment: `function PaymentDetailPage(){return <button onClick={()=>navigate(\`/accounting/audit-trail?source_type=customer_payment&source_id=\${encodeURIComponent(payment.id)}\`)}/>}`,
-    audit: `function AccountingAuditTrailPage(){const [searchParams]=useSearchParams();const sourceTypeParam=searchParams.get("source_type");const sourceIdParam=searchParams.get("source_id");return <span>{sourceTypeParam}{sourceIdParam}</span>}`,
-    faults: `function FaultDraftsPage(){const [searchParams]=useSearchParams();const deepLinkUnitId=searchParams.get("unit_id");return <span>{deepLinkUnitId}</span>}`,
-    entityLink: `function resolveEntityRoute(kind,id){switch(kind){case "expense":return \`/accounting/expenses/list?expense_id=\${id}\`;}}`,
-    expensesList: `function ExpensesListPage(){const [searchParams]=useSearchParams();const deepLinkExpenseId=searchParams.get("expense_id");return <><EntityLink kind="expense" id={r.id}/><span>{deepLinkExpenseId}</span></>}`,
-    woDetail: `function WorkOrderDetailPage(){return <EntityLink kind="expense" id={expense.id}/>}`,
-    manifest: `const ROUTES=<><Route path="/accounting/invoices/:id" element={<InvoiceDetailPage />}/><Route path="/accounting/payments/:id" element={<PaymentDetailPage />}/><Route path="/accounting/audit-trail" element={<AccountingAuditTrailPage />}/><Route path="/accounting/expenses/list" element={<ExpensesListPage />}/></>`,
+    invoice: `export function InvoiceDetailPage(){return <><EntityLink kind="customer" id={invoice.customer_id}/><button onClick={()=>navigate(\`/accounting/audit-trail?source_type=invoice&source_id=\${encodeURIComponent(invoice.id)}\`)}/></>}`,
+    payment: `export function PaymentDetailPage(){return <button onClick={()=>navigate(\`/accounting/audit-trail?source_type=customer_payment&source_id=\${encodeURIComponent(payment.id)}\`)}/>}`,
+    audit: `export function AccountingAuditTrailPage(){const [searchParams]=useSearchParams();const sourceTypeParam=searchParams.get("source_type");const sourceIdParam=searchParams.get("source_id");return <span>{sourceTypeParam}{sourceIdParam}</span>}`,
+    faults: `export function FaultDraftsPage(){const [searchParams]=useSearchParams();const deepLinkUnitId=searchParams.get("unit_id");return <span>{deepLinkUnitId}</span>}`,
+    entityLink: `export function resolveEntityRoute(kind,id){switch(kind){case "expense":return \`/accounting/expenses/list?expense_id=\${id}\`;}}`,
+    expensesList: `export function ExpensesListPage(){const [searchParams]=useSearchParams();const deepLinkExpenseId=searchParams.get("expense_id");const columns=[{key:"expense_number",render:(r)=><EntityLink kind="expense" id={r.id}/>}];return <span>{deepLinkExpenseId}{columns.length}</span>}`,
+    woDetail: `export function WorkOrderDetailPage(){return <>{linkedFinancialsQ.data.expenses.map((expense)=><EntityLink kind="expense" id={expense.id}/>)}</>}`,
+    manifest: `export const ROUTES=React.Children.toArray(<><Route path="/accounting/invoices/:id" element={<ProtectedRoute><InvoiceDetailPage /></ProtectedRoute>}/><Route path="/accounting/payments/:id" element={<ProtectedRoute><PaymentDetailPage /></ProtectedRoute>}/><Route path="/accounting/audit-trail" element={<ProtectedRoute><AccountingAuditTrailPage /></ProtectedRoute>}/><Route path="/accounting/expenses/list" element={<ProtectedRoute><ExpensesListPage /></ProtectedRoute>}/></>)`,
   };
 }
 
@@ -365,14 +520,19 @@ function runSelftest() {
   const good = canonicalSources();
   const cases = [
     ["dead-renderer", { ...good, invoice: good.invoice.replace("<EntityLink", "{false && <EntityLink").replace("/><button", "/>}<button") }, "InvoiceDetailPage"],
+    ["nested-renderer", { ...good, invoice: good.invoice.replace("return <>", `function Decoy(){return <EntityLink kind="customer" id={invoice.customer_id}/>};return <>`).replace("<EntityLink kind=\"customer\" id={invoice.customer_id}/><button", "<span/><button") }, "InvoiceDetailPage"],
+    ["dynamic-renderer", { ...good, invoice: good.invoice.replace("<EntityLink kind=\"customer\" id={invoice.customer_id}/>", "{flag ? <EntityLink kind=\"customer\" id={invoice.customer_id}/> : <span/>}") }, "InvoiceDetailPage"],
     ["overwritten-param", { ...good, audit: good.audit.replace("const sourceIdParam=", "let sourceIdParam=").replace(";return", ";sourceIdParam=\"wrong\";return") }, "sourceIdParam"],
-    ["route-alias", { ...good, manifest: good.manifest.replace("<Route path=\"/accounting/expenses/list\" element={<ExpensesListPage />}/>", "{expenseRoute}") }, "/accounting/expenses/list"],
+    ["lexical-shadow-param", { ...good, audit: good.audit.replace("const sourceIdParam=searchParams.get(\"source_id\");", "function Decoy(){const sourceIdParam=searchParams.get(\"source_id\");return sourceIdParam}") }, "sourceIdParam"],
+    ["route-alias", { ...good, manifest: good.manifest.replace("<Route path=\"/accounting/expenses/list\" element={<ProtectedRoute><ExpensesListPage /></ProtectedRoute>}/>", "{expenseRoute}") }, "/accounting/expenses/list"],
+    ["dead-route", { ...good, manifest: good.manifest.replace("<Route path=\"/accounting/expenses/list\" element={<ProtectedRoute><ExpensesListPage /></ProtectedRoute>}/>", "{false && <Route path=\"/accounting/expenses/list\" element={<ProtectedRoute><ExpensesListPage /></ProtectedRoute>}/>}") }, "/accounting/expenses/list"],
+    ["dynamic-route", { ...good, manifest: good.manifest.replace("<ExpensesListPage />", "{flag ? <ExpensesListPage /> : <InvoiceDetailPage />}") }, "/accounting/expenses/list"],
     ["id-alias", { ...good, invoice: good.invoice.replace("id={invoice.customer_id}", "id={customerId}") }, "EntityLink"],
     ["navigate-alias", { ...good, invoice: good.invoice.replace("navigate(`", "go(`") }, "audit URL"],
     ["wrong-invoice-id", { ...good, invoice: good.invoice.replace("invoice.id", "invoice.customer_id") }, "audit URL"],
     ["wrong-payment-id", { ...good, payment: good.payment.replace("payment.id", "payment.customer_id") }, "audit URL"],
     ["wrong-query-name", { ...good, faults: good.faults.replace("\"unit_id\"", "\"driver_id\"") }, "deepLinkUnitId"],
-    ["obsolete-route", { ...good, woDetail: `function WorkOrderDetailPage(){navigate(\`/accounting/expenses?expense_id=\${expense.id}\`);return <EntityLink kind="expense" id={expense.id}/>} ` }, "obsolete"],
+    ["obsolete-route", { ...good, woDetail: `export function WorkOrderDetailPage(){navigate(\`/accounting/expenses?expense_id=\${expense.id}\`);return <>{linkedFinancialsQ.data.expenses.map((expense)=><EntityLink kind="expense" id={expense.id}/>)}</>} ` }, "obsolete"],
     ["parse-error", { ...good, invoice: `${good.invoice}{` }, "parse failed"],
   ];
   const problems = [];
