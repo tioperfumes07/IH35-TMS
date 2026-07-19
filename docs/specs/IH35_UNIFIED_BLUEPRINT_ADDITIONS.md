@@ -1485,3 +1485,85 @@ Status: LOCKED (non-financial guard/spec wiring plus behavior tests; relation-fa
 - `scripts/verify-steps/931-verify-entitylink-deep-links.mjs`
 - `scripts/verify-steps/932-verify-94-live-counter-linkage.mjs`
 
+---
+
+## 18. Delivery revenue recognition — two-event latch, materiality, maker/checker, entity scope
+
+Source: Owner/CPA ruling, chat 2026-07-19
+Status: LOCKED (governance/design record only — no executable financial code, no migration, no
+money-flag flip; reuse the existing poster, write no new GL math)
+Relevant block: Accounting revenue-recognition governance — **financial cluster → build-and-HOLD**;
+owner `JORGE-APPROVED` + owner Neon-apply + CPA sign-off required before any posting change ships
+
+This section refines, and does **not** contradict, the CPA Answers Integration Phase 1 lock (§ above,
+"TMS ACCRUAL recognition event = canonical load delivery"): the two-event latch below is the exact
+posting mechanics of that same delivery-recognition event, plus the invoice-time reclass, materiality,
+approval, and entity-scope controls around it.
+
+### 1. Two-event latch (ASC 606) — LOCKED
+
+- **Event 1 — earn (recognition):** at load status `delivered` OR `delivered_pending_docs` →
+  **DR Unbilled Revenue / CR Line-Haul Income.**
+- **Event 2 — invoice/bill gate:** at load status `completed_docs_received` (POD) →
+  **DR A/R / CR Unbilled.**
+- **Do NOT combine into a single POD+delivered recognition gate.** The earn event and the
+  billing-readiness event are two distinct GL postings, not one. (POD/invoice creation remains
+  billing/factoring readiness only, per the existing lock — it never moves the accrual recognition
+  event itself.)
+- **Reversible if status reverts** (e.g. `delivered` → un-delivered / dispute): the Event-1 posting
+  reverses in step with the status reversal — never left standing against a load that is no longer
+  delivered.
+- **POD via `docs.files`** — proof-of-delivery evidence for the Event-2 gate is sourced from the
+  documents subsystem, not a free-text flag.
+
+### 2. Materiality — LOCKED
+
+- Threshold is **per-entity, configurable, never hardcoded**, and has **NO permissive default** — it
+  **must be explicitly set** before the control can evaluate (no "0 means unlimited" / no silent pass).
+- Evaluate **both** a single-correction test **and** a cumulative-for-period test; **either** breach
+  escalates to **CPA / restatement** review — it is not an either/or convenience check.
+- The threshold value, the user who set it, and its effective date are **stored and audited** — never
+  an in-memory constant.
+
+### 3. Maker/checker — LOCKED
+
+- **Automated delivery/POD recognition posts** = system-poster generated, **SOD-A exempt** (no human
+  maker to separate from), and **audited** like every other GL posting.
+- **Manual closed-period corrections** require **second-user approval**: a **non-blocking alert** fires
+  on submission; **reject → void** (never silently dropped, never force-applied).
+- **Owner acting alone** is acceptable **only** with compensating controls, and **only** with a
+  **break-glass second approver** drawn from **Admin or Accountant**.
+- **Approval pool:** Owner / Admin / Accountant — no other role may serve as maker or checker for this
+  control.
+
+### 4. Entity scope — LOCKED
+
+- **TRANSP** — seed **Unbilled Revenue** and **enable first** (TRANSP is the entity with freight loads
+  today).
+- **USMCA** — seed **Unbilled Revenue + Deferred Revenue**, but the feature stays **flagged dormant**
+  until USMCA actually has loads (per the existing "0 balances, TMS-only, isolated until July 2026
+  launch" entity lock).
+- **TRK is EXCLUDED from the freight delivery lifecycle** — TRK is the **lease lessor** (`42000-LEASE`),
+  not a freight carrier. Do **not** seed freight Unbilled/Deferred Revenue for TRK and do **not** wire
+  the delivery trigger to TRK loads (TRK has none in the freight sense).
+
+### Flag + governance gate (LOCKED)
+
+- Any posting flag for this recognition mechanism defaults **OFF**, is **per-entity**, and stays in the
+  **financial cluster → build-and-HOLD** lane: owner `JORGE-APPROVED` + owner Neon-apply + Neon
+  balanced-entry proof are required **before enable** — same ceremony as every other money-posting flag
+  (FIN-18 / FIN-22 / FIN-21 pattern above).
+
+### Canonical surfaces updated in this phase
+
+- `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` (this section)
+- `.claude/skills/ih35-cpa-accounting-decisions/SKILL.md` (§5 pointer)
+
+### Guard (Rule 17)
+
+- `scripts/verify-revenue-recognition-two-event-latch-decisions.mjs`
+- `scripts/verify-steps/933-verify-revenue-recognition-two-event-latch-decisions.mjs`
+- Fails if this section's four locked anchors (two-event latch accounts, materiality no-permissive-default,
+  maker/checker pool, TRK freight-lifecycle exclusion) go missing from this file or from the SKILL.md
+  pointer, or if either surface reintroduces a single combined POD+delivered recognition gate.
+
