@@ -3,13 +3,14 @@
   "status": "HOLD",
   "classification": "FINANCIAL",
   "phase": "tier1",
-  "task": "PR #2705 replaces host-UTC accounting date defaults with one transaction-scoped company business date and makes driver-settlement cancellation atomic across canonical posting reversals, bills, bill payments, bank balance, driver bills, operational deductions, deduction buckets, GL reconciliation, settlement state, and audit. It reuses existing posting, journal-entry reversal, bill void, and deduction bucket reversal services; adds no GL math, schema, migration, QBO write-back, or flag change.",
+  "task": "PR #2705 replaces host-UTC accounting date defaults with one transaction-scoped company business date and makes driver-settlement cancellation atomic across canonical posting reversals, bills, bill payments, bank balance, driver bills, operational deductions, deduction buckets, GL reconciliation, settlement state, and audit. It reuses existing posting, journal-entry reversal, bill void, and deduction bucket reversal services; adds no GL math, schema, migration, QBO write-back, or flag change. Full block-ready exposed a persistent-Redis test-isolation defect in the bulk rate-limit test; that test now uses a unique valid user key so its first consume cannot inherit another run's fixed-key state.",
   "branch": "hold/0091-g6-1-business-date-20260718",
   "lane": "B",
   "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
   "source_file": "0091-g6-1.txt",
   "allowed_files": [
     ".block-ready/0091-g6-1.json",
+    "apps/backend/src/bulk/bulk-update.factory.test.ts",
     "apps/backend/src/accounting/__tests__/bills-void-in-client.test.ts",
     "apps/backend/src/accounting/bills.service.ts",
     "apps/backend/src/accounting/financial-today-company-tz.test.ts",
@@ -66,6 +67,10 @@
     {
       "kind": "guard",
       "check": "verify-acct-posting-business-date and verify-settlement-reversal-atomicity both pass with planted-failure selftests; verify-je-void-reverses-not-voids and fail-closed wrapper behavioral tests pass. Rule-17 verify-steps are auto-discovered."
+    },
+    {
+      "kind": "test-isolation",
+      "check": "bulk-update.factory rate-limit test uses a unique valid user key; its first Redis consume no longer depends on persistent fixed-key state from a prior local-CI run."
     },
     {
       "kind": "live",
