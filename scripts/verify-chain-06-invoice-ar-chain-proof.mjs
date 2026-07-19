@@ -55,24 +55,193 @@ function stripSqlComments(sql) {
     .replace(/--[^\n]*/g, "\n");
 }
 
+/** Skip whitespace in SQL body; returns new index. */
+function skipWs(body, i) {
+  while (i < body.length && /\s/.test(body[i])) i += 1;
+  return i;
+}
+
+/**
+ * Parse one SQL scalar value starting at `i` (string / bool / number / NULL / ident).
+ * String concatenations via `||` collapse to a single string value.
+ * Returns { value, kind: 'string'|'bool'|'other', end }.
+ */
+function parseSqlScalar(body, i) {
+  i = skipWs(body, i);
+  if (i >= body.length) return { value: null, kind: "other", end: i };
+
+  if (body[i] === "'") {
+    let s = "";
+    let j = i + 1;
+    while (j < body.length) {
+      if (body[j] === "'" && body[j + 1] === "'") {
+        s += "'";
+        j += 2;
+        continue;
+      }
+      if (body[j] === "'") {
+        j += 1;
+        break;
+      }
+      s += body[j];
+      j += 1;
+    }
+    j = skipWs(body, j);
+    while (body.slice(j, j + 2) === "||") {
+      j = skipWs(body, j + 2);
+      const next = parseSqlScalar(body, j);
+      if (next.kind === "string") s += next.value;
+      j = next.end;
+      j = skipWs(body, j);
+    }
+    return { value: s, kind: "string", end: j };
+  }
+
+  const bool = body.slice(i).match(/^(true|false)\b/i);
+  if (bool) {
+    return {
+      value: bool[1].toLowerCase() === "true",
+      kind: "bool",
+      end: i + bool[1].length,
+    };
+  }
+
+  const nul = body.slice(i).match(/^null\b/i);
+  if (nul) return { value: null, kind: "other", end: i + nul[0].length };
+
+  const num = body.slice(i).match(/^-?\d+(\.\d+)?\b/);
+  if (num) return { value: num[0], kind: "other", end: i + num[0].length };
+
+  // Bare identifier / function call — skip conservatively to next comma/paren.
+  let j = i;
+  let depth = 0;
+  while (j < body.length) {
+    const ch = body[j];
+    if (ch === "(") {
+      depth += 1;
+      j += 1;
+      continue;
+    }
+    if (ch === ")") {
+      if (depth === 0) break;
+      depth -= 1;
+      j += 1;
+      continue;
+    }
+    if ((ch === "," || ch === ";") && depth === 0) break;
+    j += 1;
+  }
+  return { value: body.slice(i, j).trim(), kind: "other", end: j };
+}
+
+/** Parse `(a, b, c)` tuple values; returns { values, end } or null. */
+function parseParenTuple(body, i) {
+  i = skipWs(body, i);
+  if (body[i] !== "(") return null;
+  i += 1;
+  const values = [];
+  i = skipWs(body, i);
+  if (body[i] === ")") return { values, end: i + 1 };
+  while (i < body.length) {
+    const v = parseSqlScalar(body, i);
+    values.push(v);
+    i = skipWs(body, v.end);
+    if (body[i] === ",") {
+      i += 1;
+      continue;
+    }
+    if (body[i] === ")") return { values, end: i + 1 };
+    break;
+  }
+  return null;
+}
+
+/**
+ * Extract column name list after INSERT INTO lib.feature_flags, if present.
+ * Returns { cols: string[]|null, end } where end is index after optional `(...)`.
+ */
+function parseInsertColumnList(body, i) {
+  i = skipWs(body, i);
+  if (body[i] !== "(") return { cols: null, end: i };
+  const tuple = parseParenTuple(body, i);
+  if (!tuple) return { cols: null, end: i };
+  const cols = tuple.values.map((v) => String(v.value || "").toLowerCase().trim());
+  return { cols, end: tuple.end };
+}
+
+/**
+ * Default column order when INSERT omits an explicit list (matches CHAIN-06 seeds).
+ */
+const DEFAULT_FEATURE_FLAG_COLS = ["flag_key", "description", "default_enabled"];
+
+/**
+ * Yield every `INSERT INTO lib.feature_flags` statement's (flag_key → default_enabled)
+ * bindings. SELECT decoys, comments, and unrelated-table INSERTs are ignored.
+ *
+ * Fail-closed semantics for money flags: if multiple matching tuples exist, any
+ * `true` wins; otherwise the last parsed boolean for that key is returned.
+ */
+function* iterFeatureFlagInsertDefaults(sql) {
+  const body = stripSqlComments(sql);
+  const insertRe = /INSERT\s+INTO\s+lib\.feature_flags\b/gi;
+  let m;
+  while ((m = insertRe.exec(body)) !== null) {
+    let i = m.index + m[0].length;
+    const { cols: explicitCols, end: afterCols } = parseInsertColumnList(body, i);
+    i = afterCols;
+    i = skipWs(body, i);
+    const valuesKw = body.slice(i).match(/^VALUES\b/i);
+    if (!valuesKw) continue;
+    i += valuesKw[0].length;
+
+    const cols = explicitCols && explicitCols.length > 0 ? explicitCols : DEFAULT_FEATURE_FLAG_COLS;
+    const keyIdx = cols.indexOf("flag_key");
+    const enabledIdx = cols.indexOf("default_enabled");
+    if (keyIdx < 0 || enabledIdx < 0) continue;
+
+    // Parse one or more value tuples until ON CONFLICT / ; / end.
+    while (i < body.length) {
+      i = skipWs(body, i);
+      if (/^ON\s+CONFLICT\b/i.test(body.slice(i)) || body[i] === ";") break;
+      if (body[i] !== "(") break;
+      const tuple = parseParenTuple(body, i);
+      if (!tuple) break;
+      i = tuple.end;
+      const keyVal = tuple.values[keyIdx];
+      const enVal = tuple.values[enabledIdx];
+      if (keyVal?.kind === "string" && enVal?.kind === "bool") {
+        yield { flagKey: keyVal.value, defaultEnabled: enVal.value === true };
+      }
+      i = skipWs(body, i);
+      if (body[i] === ",") {
+        i += 1;
+        continue;
+      }
+      break;
+    }
+  }
+}
+
 /**
  * Parse lib.feature_flags INSERT default_enabled for a flag_key.
- * Expects column order (flag_key, description, default_enabled) as used by CHAIN-06 migrations.
+ *
+ * Only binds to actual `INSERT INTO lib.feature_flags (...) VALUES (...)` tuples.
+ * Respects explicit column order; handles multi-row VALUES lists.
+ * Comments / SELECT decoys / unrelated-table INSERTs never satisfy or mask.
+ *
  * Returns true | false | null (unparseable / absent).
+ * Fail-closed: any matching INSERT tuple with default_enabled=true → true.
  */
 export function parseFeatureFlagDefaultEnabled(sql, flagKey) {
-  const body = stripSqlComments(sql);
-  const keyLit = `'${flagKey}'`;
-  let from = 0;
-  while (from < body.length) {
-    const idx = body.indexOf(keyLit, from);
-    if (idx < 0) return null;
-    const afterKey = body.slice(idx + keyLit.length);
-    // , '<description>', true|false
-    const m = afterKey.match(/^\s*,\s*'((?:[^']|'')*)'\s*,\s*(true|false)\b/s);
-    if (m) return m[2] === "true";
-    from = idx + keyLit.length;
+  let sawFalse = false;
+  let sawTrue = false;
+  for (const row of iterFeatureFlagInsertDefaults(sql)) {
+    if (row.flagKey !== flagKey) continue;
+    if (row.defaultEnabled === true) sawTrue = true;
+    else sawFalse = true;
   }
+  if (sawTrue) return true;
+  if (sawFalse) return false;
   return null;
 }
 
@@ -374,6 +543,9 @@ export async function postFactoringChargebackEvent() {
     journalEntries: `// planted: JE spine helpers deliberately absent`,
     invoiceArFlagMigration: `
 -- Default OFF (comment must not count)
+SELECT 'INVOICE_AR_GL_POSTING_ENABLED','decoy',false;
+INSERT INTO other.feature_flags (flag_key, description, default_enabled)
+VALUES ('INVOICE_AR_GL_POSTING_ENABLED', 'wrong table', false);
 INSERT INTO lib.feature_flags (flag_key, description, default_enabled)
 VALUES (
   'INVOICE_AR_GL_POSTING_ENABLED',
@@ -383,10 +555,11 @@ VALUES (
 `,
     factoringFlagMigration: `
 -- false in a comment only
+SELECT 'FACTORING_GL_POSTING_ENABLED','decoy',false;
 INSERT INTO lib.feature_flags (flag_key, description, default_enabled)
 VALUES (
   'FACTORING_GL_POSTING_ENABLED',
-  'planted ON — comment must not satisfy parser',
+  'planted ON — comment/SELECT decoy must not satisfy parser',
   true
 );
 `,

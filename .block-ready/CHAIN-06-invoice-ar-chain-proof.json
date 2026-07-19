@@ -23,7 +23,7 @@
   "guard_required": true,
   "acceptance": [
     {
-      "check": "STATIC FAIL-CLOSED: verify-chain-06-invoice-ar-chain-proof (+ --selftest) parses money-flag INSERT default_enabled literals (rejects true; comments ignored), proves poster lifecycle/entity GUC/subledger/reserve/JE audit+source-link/load-customer-factor surface markers, and plants every CRITICAL_PLANTED_VIOLATIONS code independently."
+      "check": "STATIC FAIL-CLOSED: verify-chain-06-invoice-ar-chain-proof (+ --selftest) parses money-flag default_enabled only from INSERT INTO lib.feature_flags (...) VALUES (...) tuples (explicit column order + multi-row; rejects true; comments/SELECT decoys/unrelated-table INSERTs cannot mask), proves poster lifecycle/entity GUC/subledger/reserve/JE audit+source-link/load-customer-factor surface markers, and plants every CRITICAL_PLANTED_VIOLATIONS code independently (SELECT decoy false before INSERT true for both money flags)."
     },
     {
       "check": "Rule-17 verify-steps 920–923 auto-discover the new chain proof plus existing ar-subledger, factoring-ar-tieout, and secured-borrowing guards (IDs globally free vs main + open PRs #2714/#2716/#2717). No package.json/CI hotfile thrash. Guard-exempt removals only after valid wiring."

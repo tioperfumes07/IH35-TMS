@@ -364,6 +364,86 @@ describe("CHAIN-06 invoice→A/R→Faro chain-proof behavioral matrix (mocked se
     expect(mockCreateJournalEntry).not.toHaveBeenCalled();
   });
 
+  it("parseFeatureFlagDefaultEnabled: INSERT-scoped — comments/SELECT/unrelated/multi-row/column-order", async () => {
+    const mod = await import("../../../../../../scripts/verify-chain-06-invoice-ar-chain-proof.mjs");
+    const { parseFeatureFlagDefaultEnabled } = mod;
+    const FLAG_I = "INVOICE_AR_GL_POSTING_ENABLED";
+    const FLAG_F = "FACTORING_GL_POSTING_ENABLED";
+
+    // Comments claiming false must not mask a real INSERT true.
+    expect(
+      parseFeatureFlagDefaultEnabled(
+        `-- default_enabled false\n/* false */\nINSERT INTO lib.feature_flags (flag_key, description, default_enabled)\nVALUES ('${FLAG_F}', 'x', true);`,
+        FLAG_F
+      )
+    ).toBe(true);
+
+    // SELECT decoy false before real lib.feature_flags INSERT true → true (decoy cannot win).
+    expect(
+      parseFeatureFlagDefaultEnabled(
+        `SELECT '${FLAG_I}','decoy',false;\nINSERT INTO lib.feature_flags (flag_key, description, default_enabled)\nVALUES ('${FLAG_I}', 'planted', true);`,
+        FLAG_I
+      )
+    ).toBe(true);
+    expect(
+      parseFeatureFlagDefaultEnabled(
+        `SELECT '${FLAG_F}','decoy',false;\nINSERT INTO lib.feature_flags (flag_key, description, default_enabled)\nVALUES ('${FLAG_F}', 'planted', true);`,
+        FLAG_F
+      )
+    ).toBe(true);
+
+    // Unrelated-table INSERT false does not bind; absent lib.feature_flags → null.
+    expect(
+      parseFeatureFlagDefaultEnabled(
+        `INSERT INTO other.feature_flags (flag_key, description, default_enabled)\nVALUES ('${FLAG_I}', 'wrong table', false);`,
+        FLAG_I
+      )
+    ).toBeNull();
+    // Unrelated false must not mask a later real INSERT true.
+    expect(
+      parseFeatureFlagDefaultEnabled(
+        `INSERT INTO staging.flags (flag_key, description, default_enabled)\nVALUES ('${FLAG_I}', 'decoy', false);\nINSERT INTO lib.feature_flags (flag_key, description, default_enabled)\nVALUES ('${FLAG_I}', 'real', true);`,
+        FLAG_I
+      )
+    ).toBe(true);
+
+    // Multi-row VALUES: bind the matching flag_key tuple (not a sibling false).
+    expect(
+      parseFeatureFlagDefaultEnabled(
+        `INSERT INTO lib.feature_flags (flag_key, description, default_enabled)\nVALUES\n  ('OTHER_FLAG', 'sibling', false),\n  ('${FLAG_F}', 'target', true),\n  ('YET_ANOTHER', 'tail', false);`,
+        FLAG_F
+      )
+    ).toBe(true);
+    expect(
+      parseFeatureFlagDefaultEnabled(
+        `INSERT INTO lib.feature_flags (flag_key, description, default_enabled)\nVALUES\n  ('${FLAG_I}', 'off', false),\n  ('OTHER_FLAG', 'on', true);`,
+        FLAG_I
+      )
+    ).toBe(false);
+
+    // Explicit column order: default_enabled before flag_key.
+    expect(
+      parseFeatureFlagDefaultEnabled(
+        `INSERT INTO lib.feature_flags (default_enabled, flag_key, description)\nVALUES (true, '${FLAG_I}', 'reordered');`,
+        FLAG_I
+      )
+    ).toBe(true);
+    expect(
+      parseFeatureFlagDefaultEnabled(
+        `INSERT INTO lib.feature_flags (default_enabled, description, flag_key)\nVALUES (false, 'reordered off', '${FLAG_F}');`,
+        FLAG_F
+      )
+    ).toBe(false);
+
+    // Canonical OFF seed still parses false.
+    expect(
+      parseFeatureFlagDefaultEnabled(
+        `INSERT INTO lib.feature_flags (flag_key, description, default_enabled)\nVALUES ('${FLAG_I}', 'x', false);`,
+        FLAG_I
+      )
+    ).toBe(false);
+  });
+
   it("planted guard failure: executable --selftest + collectFailures plant every critical code", async () => {
     const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../../../../");
     const selftest = spawnSync(
@@ -377,29 +457,20 @@ describe("CHAIN-06 invoice→A/R→Faro chain-proof behavioral matrix (mocked se
     const mod = await import("../../../../../../scripts/verify-chain-06-invoice-ar-chain-proof.mjs");
     const { collectFailures, parseFeatureFlagDefaultEnabled, CRITICAL_PLANTED_VIOLATIONS } = mod;
 
-    // Comment-only "false" must NOT parse as default OFF.
-    expect(
-      parseFeatureFlagDefaultEnabled(
-        `-- default_enabled false\nINSERT INTO lib.feature_flags (flag_key, description, default_enabled)\nVALUES ('FACTORING_GL_POSTING_ENABLED', 'x', true);`,
-        "FACTORING_GL_POSTING_ENABLED"
-      )
-    ).toBe(true);
-    expect(
-      parseFeatureFlagDefaultEnabled(
-        `INSERT INTO lib.feature_flags (flag_key, description, default_enabled)\nVALUES ('INVOICE_AR_GL_POSTING_ENABLED', 'x', false);`,
-        "INVOICE_AR_GL_POSTING_ENABLED"
-      )
-    ).toBe(false);
-
-    // Re-run the planted bad fixture path via the same checker the CLI selftest uses.
+    // Selftest plant shape: SELECT decoy false MUST NOT mask INSERT true for either money flag.
     const badSqlTrue = `
+SELECT 'INVOICE_AR_GL_POSTING_ENABLED','decoy',false;
 INSERT INTO lib.feature_flags (flag_key, description, default_enabled)
 VALUES ('INVOICE_AR_GL_POSTING_ENABLED', 'planted', true);
 `;
     const badSqlFactorTrue = `
+SELECT 'FACTORING_GL_POSTING_ENABLED','decoy',false;
 INSERT INTO lib.feature_flags (flag_key, description, default_enabled)
 VALUES ('FACTORING_GL_POSTING_ENABLED', 'planted', true);
 `;
+    expect(parseFeatureFlagDefaultEnabled(badSqlTrue, "INVOICE_AR_GL_POSTING_ENABLED")).toBe(true);
+    expect(parseFeatureFlagDefaultEnabled(badSqlFactorTrue, "FACTORING_GL_POSTING_ENABLED")).toBe(true);
+
     const planted = collectFailures({
       poster: `
 export async function postFactoringAdvanceEvent() {
@@ -435,5 +506,12 @@ export async function postFactoringChargebackEvent() {
     for (const code of CRITICAL_PLANTED_VIOLATIONS) {
       expect(planted, `missing planted violation ${code}`).toEqual(expect.arrayContaining([code]));
     }
+    // Explicit default-ON codes for both money flags (SELECT decoy must not suppress).
+    expect(planted).toEqual(expect.arrayContaining([
+      "invoice_ar_flag_default_enabled_true",
+      "invoice_ar_flag_must_default_off",
+      "factoring_flag_default_enabled_true",
+      "factoring_flag_must_default_off",
+    ]));
   });
 });
