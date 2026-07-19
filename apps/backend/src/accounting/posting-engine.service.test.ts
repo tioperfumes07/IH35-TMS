@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 type QueryCall = { sql: string; values?: unknown[] };
 
@@ -24,6 +24,10 @@ function createMockClient(handler: (sql: string, values?: unknown[]) => { rows: 
 describe("posting engine service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("rejects ineligible invoice status (draft) with zero posting inserts", async () => {
@@ -300,5 +304,114 @@ describe("posting engine service", () => {
     await expect(promise).rejects.toMatchObject({ code: "INVOICE_LINE_REVENUE_UNRESOLVED", qbo_item_id: "unmapped-item" });
     // No revenue/AR posting lines were written — refused to post.
     expect(calls.some((c) => c.sql.includes("INSERT INTO accounting.journal_entry_postings"))).toBe(false);
+  });
+
+  it("reverses a closed-period source on the current company business date and preserves dimensions", async () => {
+    vi.useFakeTimers();
+    // 2026-07-19T02:00Z = 2026-07-18 21:00 America/Chicago.
+    vi.setSystemTime(new Date("2026-07-19T02:00:00Z"));
+    const insertedLines: unknown[][] = [];
+    let reversalEntryDate: unknown;
+    const { client } = createMockClient((sql, values) => {
+      if (sql.includes("FROM accounting.posting_batches") && values?.[1]) {
+        const key = String(values[1]);
+        if (key.endsWith(":-:initial_post")) {
+          return { rows: [{ id: "11111111-1111-4111-8111-111111111111", batch_status: "posted" }] };
+        }
+        return { rows: [] };
+      }
+      if (sql.includes("SELECT id::text AS posting_id")) {
+        return { rows: [{ posting_id: "22222222-2222-4222-8222-222222222222", journal_entry_uuid: "33333333-3333-4333-8333-333333333333" }] };
+      }
+      if (sql.includes("SELECT id::text, account_id::text")) {
+        return {
+          rows: [
+            {
+              id: "22222222-2222-4222-8222-222222222222",
+              account_id: "44444444-4444-4444-8444-444444444444",
+              class_id: "55555555-5555-4555-8555-555555555555",
+              entity_uuid: "66666666-6666-4666-8666-666666666666",
+              debit_or_credit: "debit",
+              amount_cents: 500,
+              description: "original",
+            },
+            {
+              id: "77777777-7777-4777-8777-777777777777",
+              account_id: "88888888-8888-4888-8888-888888888888",
+              class_id: null,
+              entity_uuid: null,
+              debit_or_credit: "credit",
+              amount_cents: 500,
+              description: "original",
+            },
+          ],
+        };
+      }
+      if (sql.includes("SELECT je.entry_date::text")) return { rows: [{ entry_date: "2026-06-15" }] };
+      if (sql.includes("closed_period_cutoff")) return { rows: [{ cutoff: "2026-06-30" }] };
+      if (sql.includes("INSERT INTO accounting.posting_batches")) return { rows: [{ id: "99999999-9999-4999-8999-999999999999" }] };
+      if (sql.includes("INSERT INTO accounting.journal_entries")) {
+        reversalEntryDate = values?.[1];
+        return { rows: [{ id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" }] };
+      }
+      if (sql.includes("INSERT INTO accounting.journal_entry_postings")) {
+        if (values) insertedLines.push(values);
+        return { rows: [{ id: `bbbbbbbb-bbbb-4bbb-8bbb-${String(insertedLines.length).padStart(12, "0")}` }] };
+      }
+      return { rows: [] };
+    });
+
+    const mod = await import("./posting-engine.service.js");
+    const result = await mod.reversePostedSourceTransactionInClientTx(
+      client,
+      {
+        operating_company_id: "2cf17ad1-c728-4f54-a930-d6beed95eb37",
+        source_transaction_type: "bill",
+        source_transaction_id: "9f943015-e3d2-4f1f-8732-c0ef4bbd25fc",
+      },
+      { userId: "cd9d01fe-a90d-4cd2-a96d-f6a443f7debc" },
+      "2026-07-18"
+    );
+
+    expect(result.result).toBe("reversed");
+    expect(reversalEntryDate).toBe("2026-07-18");
+    expect(insertedLines).toHaveLength(2);
+    expect(insertedLines[0]?.[4]).toBe("55555555-5555-4555-8555-555555555555");
+    expect(insertedLines[0]?.[5]).toBe("66666666-6666-4666-8666-666666666666");
+    expect(insertedLines[0]?.[6]).toBe("credit");
+  });
+
+  it("uses the same deterministic reversal key for lookup and insert, so retry returns the existing reversal", async () => {
+    const { client, calls } = createMockClient((sql, values) => {
+      if (sql.includes("FROM accounting.posting_batches") && String(values?.[1]).endsWith(":-:initial_post")) {
+        return { rows: [{ id: "11111111-1111-4111-8111-111111111111", batch_status: "reversed" }] };
+      }
+      if (sql.includes("FROM accounting.posting_batches") && String(values?.[1]).endsWith(":-:reversal")) {
+        return { rows: [{ id: "22222222-2222-4222-8222-222222222222", batch_status: "posted" }] };
+      }
+      if (sql.includes("SELECT id::text AS posting_id")) {
+        return { rows: [{ posting_id: "33333333-3333-4333-8333-333333333333", journal_entry_uuid: "44444444-4444-4444-8444-444444444444" }] };
+      }
+      return { rows: [] };
+    });
+
+    const mod = await import("./posting-engine.service.js");
+    const result = await mod.reversePostedSourceTransactionInClientTx(
+      client,
+      {
+        operating_company_id: "2cf17ad1-c728-4f54-a930-d6beed95eb37",
+        source_transaction_type: "bill",
+        source_transaction_id: "9f943015-e3d2-4f1f-8732-c0ef4bbd25fc",
+      },
+      { userId: "cd9d01fe-a90d-4cd2-a96d-f6a443f7debc" },
+      "2026-07-18"
+    );
+
+    expect(result.journal_entry_id).toBe("44444444-4444-4444-8444-444444444444");
+    expect(calls.some((c) => c.sql.includes("INSERT INTO accounting.posting_batches"))).toBe(false);
+    const lookupKeys = calls
+      .filter((c) => c.sql.includes("FROM accounting.posting_batches"))
+      .map((c) => String(c.values?.[1]));
+    expect(lookupKeys).toContain("ih35:posting-mvp:v1:2cf17ad1-c728-4f54-a930-d6beed95eb37:bill:9f943015-e3d2-4f1f-8732-c0ef4bbd25fc:-:reversal");
   });
 });

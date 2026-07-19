@@ -1,10 +1,16 @@
-import { describe, it, expect } from "vitest";
+import { beforeEach, describe, it, expect, vi } from "vitest";
 import { canVoidCancel } from "../../lib/authz/void-cancel-authz.js";
 import {
   executeVoidCancel,
   isVoidCancelEntitySupported,
   knownVoidCancelEntities,
 } from "../void-cancel-executors.js";
+
+const reverseSettlement = vi.hoisted(() => vi.fn());
+vi.mock("../../accounting/settlement-posting/settlement-bill-payment-posting.service.js", () => ({
+  reverseSettlementBillPaymentInClientTx: reverseSettlement,
+}));
+vi.mock("../../lib/company-business-date.js", () => ({ companyBusinessDate: () => "2026-07-18" }));
 
 // A tiny SQL-routing mock client (same style as the maintenance-posting poster tests). Each handler is
 // matched by a substring of the SQL; unmatched queries throw so the test fails loud on an unexpected query.
@@ -30,6 +36,7 @@ const OCI = "11111111-1111-1111-1111-111111111111";
 const WO = "22222222-2222-2222-2222-222222222222";
 const APPROVER = "33333333-3333-3333-3333-333333333333";
 const REQUESTER = "44444444-4444-4444-4444-444444444444";
+const SETTLEMENT = "55555555-5555-4555-8555-555555555555";
 
 describe("governance void/cancel — dispatch map", () => {
   it("wires work_order + VOID-EVERYWHERE PR-3 surfaces; 'load' registers as unsupported (no silent no-op)", () => {
@@ -155,4 +162,49 @@ describe("governance void/cancel — maker/checker gates", () => {
     expect(canApprove("Administrator", REQUESTER, APPROVER)).toBe(true);
     expect(canApprove("Accountant", REQUESTER, APPROVER)).toBe(true);
   });
+});
+
+describe("governance void/cancel — atomic driver-settlement cancellation", () => {
+  beforeEach(() => {
+    reverseSettlement.mockReset();
+    reverseSettlement.mockResolvedValue({
+      result: "reversed", settlement_id: SETTLEMENT,
+      run_id: "66666666-6666-4666-8666-666666666666",
+    });
+  });
+
+  it("uses the outer transaction client and one business date for GL/subledgers and settlement state", async () => {
+    const { client, seen } = mockClient([
+      { match: (s) => s.includes("to_regclass('driver_finance.driver_settlements')"), rows: [{ ok: true }] },
+      { match: (s) => s.includes("FROM driver_finance.driver_settlements"), rows: [{ status: "final" }] },
+      { match: (s) => s.includes("UPDATE driver_finance.driver_settlements"), rows: [{ id: SETTLEMENT }] },
+      { match: (s) => s.includes("audit.append_event"), rows: [] },
+    ]);
+    const result = await executeVoidCancel("driver_settlement", {
+      client: client as never, operatingCompanyId: OCI, entityId: SETTLEMENT,
+      action: "cancel", userId: APPROVER, reason: "approved correction",
+    });
+    expect(result).toEqual({ kind: "ok", reversing_entry_ref: "66666666-6666-4666-8666-666666666666" });
+    expect(reverseSettlement).toHaveBeenCalledWith(
+      client,
+      { operatingCompanyId: OCI, settlementId: SETTLEMENT, reason: "approved correction" },
+      { userId: APPROVER },
+      "2026-07-18"
+    );
+    expect(seen.some((sql) => sql.includes("UPDATE driver_finance.driver_settlements"))).toBe(true);
+  });
+
+  it("does not cancel the outer settlement when any inner reversal/subledger leg fails", async () => {
+    const { client, seen } = mockClient([
+      { match: (s) => s.includes("to_regclass('driver_finance.driver_settlements')"), rows: [{ ok: true }] },
+      { match: (s) => s.includes("FROM driver_finance.driver_settlements"), rows: [{ status: "final" }] },
+    ]);
+    reverseSettlement.mockRejectedValue(new Error("bank_account_not_found_for_payment"));
+    await expect(executeVoidCancel("driver_settlement", {
+      client: client as never, operatingCompanyId: OCI, entityId: SETTLEMENT,
+      action: "cancel", userId: APPROVER, reason: "approved correction",
+    })).rejects.toThrow("bank_account_not_found_for_payment");
+    expect(seen.some((sql) => sql.includes("UPDATE driver_finance.driver_settlements"))).toBe(false);
+  });
+
 });

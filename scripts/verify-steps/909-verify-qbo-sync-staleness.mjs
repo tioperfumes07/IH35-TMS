@@ -1,6 +1,11 @@
 export default {
   name: "verify:qbo-sync-staleness",
   run(ctx) {
-    ctx.run("node", ["scripts/verify-qbo-sync-staleness.mjs"]);
+    if (ctx.run("node", ["scripts/verify-qbo-sync-staleness.mjs"]) !== 0) {
+      throw new Error("verify-qbo-sync-staleness failed");
+    }
+    if (ctx.run("node", ["scripts/verify-qbo-sync-staleness.mjs", "--selftest"]) !== 0) {
+      throw new Error("verify-qbo-sync-staleness selftest failed");
+    }
   },
 };

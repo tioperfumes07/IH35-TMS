@@ -19,8 +19,10 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../../../test-helpers/db-fixture.js";
 import { TEST_ENCRYPTION_KEY } from "../../../../test-helpers/constants.js";
-import { postSettlementBillPayment, type SettlementBillPaymentResult } from "../settlement-bill-payment-posting.service.js";
+import { postSettlementBillPayment, reverseSettlementBillPayment, type SettlementBillPaymentResult } from "../settlement-bill-payment-posting.service.js";
 import { upsertDriverEscrowAccountLink, upsertDriverAdvanceAccountLink } from "../../driver-subaccount-provision.service.js";
+import { companyBusinessDate } from "../../../lib/company-business-date.js";
+import { executeVoidCancel } from "../../../governance/void-cancel-executors.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -72,6 +74,7 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
   const grossCents = [52500, 48000, 51000]; // 1,515.00 total
   const advanceCents = 20000;
   const escrowCents = 7500; // total deductions 275.00 -> net 1,240.00
+  const deductionBucketIds = [randomUUID(), randomUUID()];
   let settlementId = "";
 
   async function bypass(fn: () => Promise<void>) {
@@ -121,6 +124,91 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
     );
     return rows.map((r) => r.je_id).filter((id): id is string => Boolean(id));
   }
+  async function resolveReversalJournalEntryIds(originalJeIds: string[]): Promise<string[]> {
+    if (originalJeIds.length === 0) return [];
+    const rows = await read<{ je_id: string }>(
+      `SELECT DISTINCT rev.journal_entry_uuid::text AS je_id
+         FROM accounting.journal_entry_postings orig
+         JOIN accounting.journal_entry_postings rev ON rev.reversal_of_line_id = orig.id
+        WHERE orig.journal_entry_uuid = ANY($1::uuid[])
+       UNION
+       SELECT DISTINCT rev.journal_entry_uuid::text AS je_id
+         FROM accounting.transaction_source_links tsl
+         JOIN accounting.journal_entry_postings rev ON rev.id = tsl.journal_entry_posting_id
+        WHERE tsl.operating_company_id=$2::uuid
+          AND tsl.linked_object_type='journal_entry'
+          AND tsl.linked_object_id = ANY($3::text[])
+          AND tsl.relationship_role='reversal_of'`,
+      [originalJeIds, companyId, originalJeIds]
+    );
+    return rows.map((r) => r.je_id);
+  }
+  async function cancellationSnapshot() {
+    const glBillIds = await resolveGlBillIds();
+    const originalJeIds = await resolveOwnJournalEntryIds();
+    const [run] = await read<{ status: string }>(
+      `SELECT status FROM driver_finance.driver_settlement_gl_runs WHERE settlement_id=$1::uuid`,
+      [settlementId]
+    );
+    const [settlement] = await read<{ status: string }>(
+      `SELECT status FROM driver_finance.driver_settlements WHERE id=$1::uuid`,
+      [settlementId]
+    );
+    const [payments] = await read<{ active: string; voided: string }>(
+      `SELECT COUNT(*) FILTER (WHERE revoked_at IS NULL)::text AS active,
+              COUNT(*) FILTER (WHERE revoked_at IS NOT NULL)::text AS voided
+         FROM accounting.bill_payments WHERE bill_id = ANY($1::uuid[])`,
+      [glBillIds]
+    );
+    const bills = await read<{ id: string; status: string; paid_cents: string; revoked_at: string | null }>(
+      `SELECT id::text, status, paid_cents::text, revoked_at::text
+         FROM accounting.bills WHERE id = ANY($1::uuid[]) ORDER BY id`,
+      [glBillIds]
+    );
+    const [bank] = await read<{ current_balance_cents: string }>(
+      `SELECT current_balance_cents::text FROM banking.bank_accounts WHERE id=$1::uuid`,
+      [dipBankId]
+    );
+    const driverBills = await read<{ id: string; status: string; settlement_id: string | null }>(
+      `SELECT id::text, status, settled_in_settlement_id::text AS settlement_id
+         FROM driver_finance.driver_bills WHERE id = ANY($1::uuid[]) ORDER BY id`,
+      [billIds]
+    );
+    const deductions = await read<{
+      id: string;
+      status: string;
+      settlement_id: string | null;
+      remaining: string;
+    }>(
+      `SELECT id::text, status, applied_to_settlement_id::text AS settlement_id,
+              remaining_balance_cents::text AS remaining
+         FROM driver_finance.driver_settlement_deductions
+        WHERE operating_company_id=$1::uuid AND driver_id=$2::uuid ORDER BY id`,
+      [companyId, driverId]
+    );
+    const buckets = await read<{
+      id: string;
+      deducted: string;
+      remaining: string;
+      installments: number;
+      status: string;
+    }>(
+      `SELECT id::text, deducted_to_date_cents::text AS deducted,
+              remaining_balance_cents::text AS remaining, installments_applied AS installments, status
+         FROM driver_finance.driver_deduction_buckets
+        WHERE id = ANY($1::uuid[]) ORDER BY id`,
+      [deductionBucketIds]
+    );
+    const [events] = await read<{ count: string }>(
+      `SELECT COUNT(*)::text AS count FROM driver_finance.driver_deduction_bucket_events
+        WHERE settlement_id=$1::uuid AND event_type='reversal'`,
+      [settlementId]
+    );
+    return {
+      run, settlement, payments, bills, bank, driverBills, deductions, buckets, events,
+      reversalIds: (await resolveReversalJournalEntryIds(originalJeIds)).sort(),
+    };
+  }
   // FLAKE FIX: USER-scoped override (user_uuid = this file's UNIQUE actor), NOT tenant-scoped. The shared
   // TRANSP company (ensureIntegrationPrerequisites) is handed to every integration test, so a tenant-scoped
   // SETTLEMENT_GL_POSTING_ENABLED override on it is clobberable by a parallel sibling suite toggling the same
@@ -164,11 +252,20 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
       }
       // advance recovery (-> driver's OWN cash-advance asset) + escrow withhold (-> driver's OWN escrow liab)
       await db.query(
+        `INSERT INTO driver_finance.driver_deduction_buckets
+           (id, operating_company_id, driver_id, bucket_type, is_recurring, charged_to_date_cents,
+            deducted_to_date_cents, remaining_balance_cents, installments_applied, status, created_by_user_id)
+         VALUES ($1::uuid,$3::uuid,$4::uuid,'advance',false,$5,$5,0,1,'completed',$6::uuid),
+                ($2::uuid,$3::uuid,$4::uuid,'escrow',false,$7,$7,0,1,'completed',$6::uuid)`,
+        [deductionBucketIds[0], deductionBucketIds[1], companyId, driverId, advanceCents, userId, escrowCents]
+      );
+      await db.query(
         `INSERT INTO driver_finance.driver_settlement_deductions
-           (operating_company_id, driver_id, deduction_type, amount_cents, reason, status, applied_to_settlement_id, created_by_user_id)
-         VALUES ($1::uuid,$2::uuid,'cash_advance_repayment',$3,'advance recovery','applied',$4::uuid,$5::uuid),
-                ($1::uuid,$2::uuid,'driver_bond',$6,'escrow withhold','applied',$4::uuid,$5::uuid)`,
-        [companyId, driverId, advanceCents, settlementId, userId, escrowCents]
+           (operating_company_id, driver_id, deduction_type, amount_cents, reason, status,
+            remaining_balance_cents, bucket_id, applied_to_settlement_id, created_by_user_id)
+         VALUES ($1::uuid,$2::uuid,'cash_advance_repayment',$3,'advance recovery','applied',0,$6::uuid,$4::uuid,$5::uuid),
+                ($1::uuid,$2::uuid,'driver_bond',$7,'escrow withhold','applied',0,$8::uuid,$4::uuid,$5::uuid)`,
+        [companyId, driverId, advanceCents, settlementId, userId, deductionBucketIds[0], escrowCents, deductionBucketIds[1]]
       );
     });
   }
@@ -282,6 +379,8 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
       // Resolve BEFORE the cleanup transaction (resolveGlBillIds/read run their own BEGIN/COMMIT — must
       // not nest inside the bypass() transaction below).
       const glBillIds = settlementId ? await resolveGlBillIds() : [];
+      const originalJeIds = settlementId ? await resolveOwnJournalEntryIds() : [];
+      const reversalJeIds = settlementId ? await resolveReversalJournalEntryIds(originalJeIds) : [];
       await db.query("SELECT pg_advisory_lock(4200000001)");
       await bypass(async () => {
         await db.query(`DELETE FROM driver_finance.driver_settlement_gl_bills WHERE settlement_id = $1::uuid`, [settlementId]);
@@ -296,9 +395,13 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
         await db.query(`DELETE FROM accounting.bill_lines WHERE bill_id = ANY($1::uuid[])`, [glBillIds]);
         // the deduction JE has no source_transaction_type='bill*'; delete via memo match
         await db.query(`DELETE FROM accounting.journal_entry_postings jep USING accounting.journal_entries je WHERE je.id=jep.journal_entry_uuid AND je.operating_company_id=$1::uuid AND je.memo LIKE $2`, [companyId, `Settlement S-${suffix}%`]);
+        await db.query(`DELETE FROM accounting.journal_entry_postings WHERE journal_entry_uuid = ANY($1::uuid[])`, [reversalJeIds]);
+        await db.query(`DELETE FROM accounting.journal_entries WHERE id = ANY($1::uuid[])`, [reversalJeIds]);
         await db.query(`DELETE FROM accounting.journal_entries WHERE operating_company_id=$1::uuid AND (memo LIKE $2 OR memo LIKE $3)`, [companyId, `%S-${suffix}%`, `%Bill %`]);
         await db.query(`DELETE FROM accounting.bills WHERE operating_company_id=$1::uuid AND id = ANY($2::uuid[])`, [companyId, glBillIds]);
-        await db.query(`DELETE FROM driver_finance.driver_settlement_deductions WHERE applied_to_settlement_id = $1::uuid`, [settlementId]);
+        await db.query(`DELETE FROM driver_finance.driver_deduction_bucket_events WHERE bucket_id = ANY($1::uuid[])`, [deductionBucketIds]);
+        await db.query(`DELETE FROM driver_finance.driver_settlement_deductions WHERE operating_company_id=$1::uuid AND driver_id=$2::uuid`, [companyId, driverId]);
+        await db.query(`DELETE FROM driver_finance.driver_deduction_buckets WHERE id = ANY($1::uuid[])`, [deductionBucketIds]);
         await db.query(`DELETE FROM driver_finance.driver_bills WHERE operating_company_id=$1::uuid AND driver_id=$2::uuid`, [companyId, driverId]);
         await db.query(`DELETE FROM driver_finance.driver_settlements WHERE id = $1::uuid`, [settlementId]);
         // mdata.loads has no DELETE RLS policy (FORCE RLS, void-not-delete architecture) — a hard DELETE
@@ -465,5 +568,203 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
     const glBillIds = await resolveGlBillIds();
     const billCount = await read<{ c: string }>(`SELECT count(*)::text AS c FROM accounting.bills WHERE id = ANY($1::uuid[])`, [glBillIds]);
     expect(Number(billCount[0]!.c)).toBe(3);
+  });
+
+  it("(d) outer audit failure rolls back every GL, subledger, deduction, bucket, and settlement leg", async () => {
+    const before = await cancellationSnapshot();
+    await db.query("BEGIN");
+    try {
+      await db.query("SET LOCAL app.bypass_rls = 'lucia'");
+      await db.query("SELECT set_config('app.current_user_id', $1, true)", [userId]);
+      await db.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+      const injectedClient = {
+        query: async (sql: string, values?: unknown[]) => {
+          if (sql.includes("audit.append_event") && values?.[0] === "driver_finance.driver_settlement.voided") {
+            throw new Error("injected_outer_audit_failure");
+          }
+          return db.query(sql, values);
+        },
+      };
+      await expect(
+        executeVoidCancel("driver_settlement", {
+          client: injectedClient as never,
+          operatingCompanyId: companyId,
+          entityId: settlementId,
+          action: "cancel",
+          userId,
+          reason: "real transaction rollback proof",
+        })
+      ).rejects.toThrow("injected_outer_audit_failure");
+    } finally {
+      await db.query("ROLLBACK");
+    }
+    expect(await cancellationSnapshot()).toEqual(before);
+  });
+
+  it("(e) CPA veto: concurrent/retried reversal is atomic, idempotent, linked, and whole-settlement net-zero", async () => {
+    const originalJeIds = await resolveOwnJournalEntryIds();
+    expect(originalJeIds).toHaveLength(7); // 3 bills + 3 cash payments + 1 deduction JE
+
+    // Two concurrent attempts serialize on driver_settlement_gl_runs FOR UPDATE. Exactly one performs
+    // the reversal; the other observes status='reversed'. No duplicate source or deduction reversal JEs.
+    const [revA, revB] = await Promise.all([
+      reverseSettlementBillPayment(
+        { operatingCompanyId: companyId, settlementId, reason: "test concurrent reversal A" },
+        { userId }
+      ),
+      reverseSettlementBillPayment(
+        { operatingCompanyId: companyId, settlementId, reason: "test concurrent reversal B" },
+        { userId }
+      ),
+    ]);
+    expect([revA.result, revB.result].sort()).toEqual(["nothing_to_reverse", "reversed"]);
+
+    const run = await read<{ status: string }>(
+      `SELECT status FROM driver_finance.driver_settlement_gl_runs WHERE settlement_id=$1::uuid LIMIT 1`,
+      [settlementId]
+    );
+    expect(run[0]!.status).toBe("reversed");
+
+    const glBillIds = await resolveGlBillIds();
+    const expectedPayments = await read<{ linked_payment_count: string }>(
+      `SELECT (
+          COUNT(cash_bill_payment_id) + COUNT(deduction_bill_payment_id)
+        )::text AS linked_payment_count
+         FROM driver_finance.driver_settlement_gl_bills
+        WHERE operating_company_id=$1::uuid AND settlement_id=$2::uuid`,
+      [companyId, settlementId]
+    );
+    const restoredPayments = await read<{ total: string; active: string }>(
+      `SELECT COUNT(*)::text AS total, COUNT(*) FILTER (WHERE revoked_at IS NULL)::text AS active
+         FROM accounting.bill_payments
+        WHERE operating_company_id=$1::uuid AND bill_id = ANY($2::uuid[])`,
+      [companyId, glBillIds]
+    );
+    // This fixture links three cash payments and one allocated deduction payment. Derive the
+    // expectation from the canonical linkage rows so allocation changes cannot create a magic-number test.
+    expect(Number(expectedPayments[0]!.linked_payment_count)).toBe(4);
+    expect(Number(restoredPayments[0]!.total)).toBe(Number(expectedPayments[0]!.linked_payment_count));
+    expect(Number(restoredPayments[0]!.active)).toBe(0);
+
+    const restoredBills = await read<{ total: string; nonvoid: string; paid_cents: string }>(
+      `SELECT COUNT(*)::text AS total, COUNT(*) FILTER (WHERE revoked_at IS NULL)::text AS nonvoid,
+              COALESCE(SUM(paid_cents),0)::text AS paid_cents
+         FROM accounting.bills
+        WHERE operating_company_id=$1::uuid AND id = ANY($2::uuid[])`,
+      [companyId, glBillIds]
+    );
+    expect(Number(restoredBills[0]!.total)).toBe(3);
+    expect(Number(restoredBills[0]!.nonvoid)).toBe(0);
+    expect(Number(restoredBills[0]!.paid_cents)).toBe(0);
+
+    const restoredDriverBills = await read<{ status: string; settled_in_settlement_id: string | null }>(
+      `SELECT status, settled_in_settlement_id::text
+         FROM driver_finance.driver_bills
+        WHERE operating_company_id=$1::uuid AND id = ANY($2::uuid[]) ORDER BY id`,
+      [companyId, billIds]
+    );
+    expect(restoredDriverBills).toHaveLength(3);
+    expect(restoredDriverBills.every((row) => row.status === "open" && row.settled_in_settlement_id === null)).toBe(true);
+
+    const restoredDeductions = await read<{
+      status: string;
+      applied_to_settlement_id: string | null;
+      amount_cents: string;
+      remaining_balance_cents: string;
+    }>(
+      `SELECT status, applied_to_settlement_id::text, amount_cents::text, remaining_balance_cents::text
+         FROM driver_finance.driver_settlement_deductions
+        WHERE operating_company_id=$1::uuid AND driver_id=$2::uuid
+        ORDER BY id`,
+      [companyId, driverId]
+    );
+    expect(restoredDeductions).toHaveLength(2);
+    expect(restoredDeductions.every((row) =>
+      row.status === "pending" &&
+      row.applied_to_settlement_id === null &&
+      Number(row.remaining_balance_cents) === Number(row.amount_cents)
+    )).toBe(true);
+    expect(restoredDeductions.reduce((sum, row) => sum + Number(row.amount_cents), 0)).toBe(27500);
+
+    const restoredBuckets = await read<{
+      deducted_to_date_cents: string;
+      remaining_balance_cents: string;
+      installments_applied: number;
+      status: string;
+    }>(
+      `SELECT deducted_to_date_cents::text, remaining_balance_cents::text, installments_applied, status
+         FROM driver_finance.driver_deduction_buckets
+        WHERE id = ANY($1::uuid[])
+        ORDER BY id`,
+      [deductionBucketIds]
+    );
+    expect(restoredBuckets).toHaveLength(2);
+    expect(restoredBuckets.every((row) =>
+      Number(row.deducted_to_date_cents) === 0 &&
+      Number(row.remaining_balance_cents) > 0 &&
+      row.installments_applied === 0 &&
+      row.status === "active"
+    )).toBe(true);
+
+    const bank = await read<{ current_balance_cents: string }>(
+      `SELECT current_balance_cents::text FROM banking.bank_accounts
+        WHERE id=$1::uuid AND operating_company_id=$2::uuid`,
+      [dipBankId, companyId]
+    );
+    expect(Number(bank[0]!.current_balance_cents)).toBe(10_000_000);
+
+    const reversalJeIds = await resolveReversalJournalEntryIds(originalJeIds);
+    expect(reversalJeIds).toHaveLength(7);
+    expect(new Set(reversalJeIds).size).toBe(7);
+
+    // All seven legs use the coherent canonical policy. This fixture's original period is open, so
+    // every reversal stays on the original date (closed-period behavior is covered deterministically
+    // in posting-engine.service.test.ts and void.service tests).
+    const dates = await read<{ original_date: string; reversal_date: string }>(
+      `SELECT orig.entry_date::text AS original_date, rev.entry_date::text AS reversal_date
+         FROM accounting.journal_entries orig
+         JOIN accounting.journal_entry_postings op ON op.journal_entry_uuid=orig.id
+         JOIN accounting.journal_entry_postings rp ON rp.reversal_of_line_id=op.id
+         JOIN accounting.journal_entries rev ON rev.id=rp.journal_entry_uuid
+        WHERE orig.id = ANY($1::uuid[])
+        GROUP BY orig.id, orig.entry_date, rev.id, rev.entry_date`,
+      [originalJeIds]
+    );
+    expect(dates.every((row) => row.reversal_date === row.original_date)).toBe(true);
+
+    // Whole-settlement equal-and-opposite at account+class+entity grain — not merely standalone JE balance.
+    const allJeIds = [...originalJeIds, ...reversalJeIds];
+    const residual = await read<{ nonzero_dimensions: string; absolute_residual_cents: string }>(
+      `WITH dimensional AS (
+         SELECT account_id, class_id, entity_uuid,
+                SUM(CASE WHEN debit_or_credit='debit' THEN amount_cents ELSE -amount_cents END)::bigint AS residual_cents
+           FROM accounting.journal_entry_postings
+          WHERE operating_company_id=$1::uuid AND journal_entry_uuid = ANY($2::uuid[])
+          GROUP BY account_id, class_id, entity_uuid
+       )
+       SELECT COUNT(*) FILTER (WHERE residual_cents<>0)::text AS nonzero_dimensions,
+              COALESCE(SUM(ABS(residual_cents)),0)::text AS absolute_residual_cents
+         FROM dimensional`,
+      [companyId, allJeIds]
+    );
+    expect(Number(residual[0]!.nonzero_dimensions)).toBe(0);
+    expect(Number(residual[0]!.absolute_residual_cents)).toBe(0);
+
+    // A later retry is a no-op and cannot add another JE.
+    const retry = await reverseSettlementBillPayment(
+      { operatingCompanyId: companyId, settlementId, reason: "retry after commit" },
+      { userId }
+    );
+    expect(retry.result).toBe("nothing_to_reverse");
+    expect(await resolveReversalJournalEntryIds(originalJeIds)).toHaveLength(7);
+    const reversalEvents = await read<{ count: string }>(
+      `SELECT COUNT(*)::text AS count
+         FROM driver_finance.driver_deduction_bucket_events
+        WHERE operating_company_id=$1::uuid
+          AND settlement_id=$2::uuid
+          AND event_type='reversal'`,
+      [companyId, settlementId]
+    );
+    expect(Number(reversalEvents[0]!.count)).toBe(2);
   });
 });

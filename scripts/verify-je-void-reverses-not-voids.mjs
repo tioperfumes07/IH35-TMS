@@ -36,7 +36,11 @@ export function extractFn(src, marker) {
 /** The SHARED helper must carry the reverse-not-flip + bidirectional-linkage mechanics and never flip. */
 export function checkHelperMechanics(body) {
   const errs = [];
-  if (!/throw new Error\(\s*["']journal_entry_already_reversed["']\s*\)/.test(body)) errs.push("helper: does not block double-reversal (throw 'journal_entry_already_reversed')");
+  const blocksDuplicateByThrow = /throw new Error\(\s*["']journal_entry_already_reversed["']\s*\)/.test(body);
+  const returnsExistingReversal = /if\s*\(\s*existingReversal\s*\)\s*\{\s*return\s*\{/.test(body);
+  if (!blocksDuplicateByThrow && !returnsExistingReversal) {
+    errs.push("helper: does not block double-reversal (must throw or return deterministic existingReversal)");
+  }
   if (!/postVoidReversal\s*\(/.test(body)) errs.push("helper: does not call postVoidReversal() to create the reversing JE");
   if (!/reversed_by_je_id\s*=\s*\$/.test(body)) errs.push("helper: does not set reversed_by_je_id on the original (linkage)");
   if (!/reverses_je_id\s*=\s*\$/.test(body)) errs.push("helper: does not set reverses_je_id on the reversal (linkage)");
@@ -57,7 +61,7 @@ export function checkCallerReverseNotFlip(body, name) {
 if (process.argv.includes("--selftest")) {
   const helperGood =
     `export async function reverseJournalEntryNoFlip() {\n` +
-    `  if (hasLinkage && existing.reversed_by_je_id) throw new Error("journal_entry_already_reversed");\n` +
+    `  if (existingReversal) { return { reversal: existingReversal }; }\n` +
     `  const reversal = await postVoidReversal(client, {}, {});\n` +
     `  await client.query('UPDATE ... SET reversed_by_je_id = $2 ...');\n` +
     `  await client.query('UPDATE ... SET reverses_je_id = $2 ...');\n` +

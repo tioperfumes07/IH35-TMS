@@ -79,13 +79,24 @@ describe("G6-1 static guard — no UTC financial 'today' in accounting date defa
     "escrow/service.ts",
     "amortization-posting/amortization-posting.service.ts",
     "vendor-credits.routes.ts",
+    // 0091-g6-1 (remaining): the settlement reversal deduction JE entry_date must be the company
+    // business date, never the UTC calendar day.
+    "settlement-posting/settlement-bill-payment-posting.service.ts",
   ];
 
   for (const rel of guardedFiles) {
     it(`${rel} computes financial 'today' via companyBusinessDate, not UTC`, () => {
       const src = readFileSync(resolve(here, rel), "utf8");
       expect(src).not.toContain(UTC_TODAY);
-      expect(src).toContain("companyBusinessDate");
+      if (rel === "settlement-posting/settlement-bill-payment-posting.service.ts") {
+          // The settlement orchestrator passes one transaction-scoped date through canonical helpers.
+          expect(src).toContain("voidBillPaymentInClientTx");
+          expect(src).toContain("voidBillInClientTx");
+        expect(src).toContain("reverseJournalEntryNoFlip");
+          expect(src).toContain("currentBusinessDate");
+      } else {
+        expect(src).toContain("companyBusinessDate");
+      }
     });
   }
 });

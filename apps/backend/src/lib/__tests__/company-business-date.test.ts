@@ -23,4 +23,31 @@ describe("company-business-date", () => {
     const justAfterCentralMidnight = new Date("2026-06-30T05:01:00Z"); // 2026-06-30 00:01 CDT
     expect(companyBusinessDate(justAfterCentralMidnight)).toBe("2026-06-30");
   });
+
+  // 0091-g6-1 DST hardening: the UTC↔Central offset differs by season (CDT = UTC-5 summer,
+  // CST = UTC-6 winter). A fixed -5h assumption would post the wrong day for half the year.
+  it("uses the winter CST offset (UTC-6), not a fixed summer offset, at the evening boundary", () => {
+    // 2026-01-15T05:30:00Z === 2026-01-14 23:30 America/Chicago (CST, UTC-6).
+    // The UTC date is the 15th; the company business date must be the 14th. Under CDT (-5)
+    // this instant would be 00:30 on the 15th — proving the offset is resolved per-season.
+    const winterEvening = new Date("2026-01-15T05:30:00Z");
+    expect(companyBusinessDate(winterEvening)).toBe("2026-01-14");
+  });
+
+  it("handles the spring-forward transition (CST→CDT) at the Central day boundary", () => {
+    // Spring forward: 2026-03-08 02:00 CST → 03:00 CDT. Just before local midnight that day is
+    // still CST (UTC-6): 2026-03-08T05:30:00Z === 2026-03-07 23:30 CST → business date 03-07.
+    const beforeSpringForward = new Date("2026-03-08T05:30:00Z");
+    expect(companyBusinessDate(beforeSpringForward)).toBe("2026-03-07");
+    // After the jump the offset is CDT (UTC-5): 2026-03-08T18:00:00Z === 2026-03-08 13:00 CDT.
+    const afterSpringForward = new Date("2026-03-08T18:00:00Z");
+    expect(companyBusinessDate(afterSpringForward)).toBe("2026-03-08");
+  });
+
+  it("handles the fall-back transition (CDT→CST) at the Central day boundary", () => {
+    // Fall back: 2026-11-01 02:00 CDT → 01:00 CST. Evening of 11-01 is CST (UTC-6):
+    // 2026-11-02T05:30:00Z === 2026-11-01 23:30 CST → business date 11-01, not the UTC 11-02.
+    const fallBackEvening = new Date("2026-11-02T05:30:00Z");
+    expect(companyBusinessDate(fallBackEvening)).toBe("2026-11-01");
+  });
 });

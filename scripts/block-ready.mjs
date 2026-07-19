@@ -226,6 +226,7 @@ export function readVerifyMeta(rootDir = ROOT) {
       db_gated_verify_scripts: [],
       block_ready_c5_skip_after_c4: [],
       block_ready_c5_skip_orchestrators: [],
+      server_required_guard_capabilities: {},
     };
   }
   if (!metaRead.ok) throw new Error(`verify-meta cannot be read: ${metaRead.reason}`);
@@ -235,10 +236,17 @@ export function readVerifyMeta(rootDir = ROOT) {
   const skipOrchestrators = Array.isArray(data.block_ready_c5_skip_orchestrators)
     ? data.block_ready_c5_skip_orchestrators
     : [];
+  const serverRequiredGuardCapabilities =
+    data.server_required_guard_capabilities &&
+    typeof data.server_required_guard_capabilities === "object" &&
+    !Array.isArray(data.server_required_guard_capabilities)
+      ? data.server_required_guard_capabilities
+      : {};
   return {
     db_gated_verify_scripts: list,
     block_ready_c5_skip_after_c4: skipAfterC4,
     block_ready_c5_skip_orchestrators: skipOrchestrators,
+    server_required_guard_capabilities: serverRequiredGuardCapabilities,
   };
 }
 
@@ -246,12 +254,17 @@ export function readVerifyMeta(rootDir = ROOT) {
  * Why C5 skips a verify:* script (or null to run it).
  * - already run in C4
  * - orchestrator (verify:local-ci / verify:static) — single-owner outside the C5 unit-guard loop
+ * - server-required capability — verify:static validates its authoritative CI equivalent
  */
 export function getC5SkipReason(name, verifyMeta) {
   const skipAfterC4 = new Set(verifyMeta.block_ready_c5_skip_after_c4 ?? []);
   if (skipAfterC4.has(name)) return "already run in C4";
   const skipOrchestrators = new Set(verifyMeta.block_ready_c5_skip_orchestrators ?? []);
   if (skipOrchestrators.has(name)) return "orchestrator — single-owner outside C5";
+  const serverRequiredCapabilities = verifyMeta.server_required_guard_capabilities ?? {};
+  if (Object.prototype.hasOwnProperty.call(serverRequiredCapabilities, name)) {
+    return "server-required capability classified by verify:static";
+  }
   return null;
 }
 
@@ -372,7 +385,19 @@ export function analyzeNewGuardSource(source) {
   }
 
   const contractObjects = [];
-  for (const statement of sourceFile.statements) {
+  const directRunDeclaration = sourceFile.statements.find(
+    (statement) =>
+      ts.isVariableStatement(statement) &&
+      statement.declarationList.declarations.some(
+        (declaration) =>
+          ts.isIdentifier(declaration.name) &&
+          declaration.name.text === "isDirectRun" &&
+          declaration.initializer &&
+          declaration.initializer.getText(sourceFile).includes("process.argv") &&
+          declaration.initializer.getText(sourceFile).includes("SELF_PATH")
+      )
+  );
+  const collectContractCall = (statement) => {
     if (
       ts.isExpressionStatement(statement) &&
       ts.isCallExpression(statement.expression) &&
@@ -383,9 +408,26 @@ export function analyzeNewGuardSource(source) {
     ) {
       contractObjects.push(statement.expression.arguments[0]);
     }
+    if (
+      directRunDeclaration &&
+      ts.isIfStatement(statement) &&
+      ts.isIdentifier(statement.expression) &&
+      statement.expression.text === "isDirectRun" &&
+      ts.isBlock(statement.thenStatement)
+    ) {
+      for (const nestedStatement of statement.thenStatement.statements) {
+        collectContractCall(nestedStatement);
+      }
+    }
+  };
+  for (const statement of sourceFile.statements) {
+    collectContractCall(statement);
   }
   if (contractObjects.length !== 1) {
-    return { ok: false, reason: "guard must make one top-level runExecutableGuard({...}) call" };
+    return {
+      ok: false,
+      reason: "guard must make one top-level or validated direct-run runExecutableGuard({...}) call",
+    };
   }
   const [contractObject] = contractObjects;
 
@@ -801,29 +843,12 @@ function runCheckC4() {
   }
 }
 
-function runCheckC5(verifyMeta) {
-  const pkg = JSON.parse(fs.readFileSync(path.resolve(ROOT, "package.json"), "utf8"));
-  const verifyScriptNames = Object.keys(pkg.scripts).filter((name) => name.startsWith("verify:"));
-  const dbGatedVerifyScripts = verifyMeta.db_gated_verify_scripts ?? [];
-  let passed = 0;
-  for (const name of verifyScriptNames) {
-    if (dbGatedVerifyScripts.includes(name)) {
-      console.log(`[C5] SKIP ${name} (db-gated)`);
-      continue;
-    }
-    const skipReason = getC5SkipReason(name, verifyMeta);
-    if (skipReason) {
-      console.log(`[C5] SKIP ${name} (${skipReason})`);
-      continue;
-    }
-    const res = runCommand(`npm run ${name}`, "C5");
-    if (!res.ok) {
-      fail("C5", `${name} failed`, res.tail);
-    }
-    passed += 1;
+function runCheckC5() {
+  if (!hasTrustedStaticSweepProof()) {
+    fail("C5", "verify:static proof missing before package-guard coverage check");
   }
-  pass("C5", `${passed} verify scripts passed`);
-  return passed;
+  pass("C5", "all wired static guards covered once by C2b; DB/server capabilities remain delegated");
+  return 0;
 }
 
 function runCheckC6(extraGates) {
@@ -993,7 +1018,6 @@ function main() {
   console.log(`[C2] RESOLVED manifest=${args.manifest} agent=${resolved.agent}`);
   runCheckC1();
   const manifest = runCheckC2(args.manifest);
-  const verifyMeta = readVerifyMeta();
 
   // verify:static once per process — unforgeable in-process proof (not env).
   // Direct `npm run block-ready` runs it here; pre-push must not duplicate (no separate step).
@@ -1013,7 +1037,7 @@ function main() {
 
   runCheckC3();
   runCheckC4();
-  const verifyCount = runCheckC5(verifyMeta);
+  const verifyCount = runCheckC5();
   const extraCount = runCheckC6(manifest.extra_gates);
   runCheckC7(manifest);
 

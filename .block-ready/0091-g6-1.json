@@ -1,17 +1,105 @@
 {
   "block_id": "0091-g6-1",
-  "status": "NEEDS-VERIFY",
+  "status": "HOLD",
   "classification": "FINANCIAL",
   "phase": "tier1",
+  "task": "PR #2705 replaces host-UTC accounting date defaults with one transaction-scoped company business date and makes driver-settlement cancellation atomic across canonical posting reversals, bills, bill payments, bank balance, driver bills, operational deductions, deduction buckets, GL reconciliation, settlement state, and audit. It reuses existing posting, journal-entry reversal, bill void, and deduction bucket reversal services; adds no GL math, schema, migration, QBO write-back, or flag change. Full block-ready also exposed external Redis state in a bulk test, an IFTA guard that demanded non-final Q3 rates before the official 2026-09-04 posting date, and C5 re-running stale/unwired and server-only package aliases after the authoritative static sweep. Those changes isolate the test, follow the official IFTA 2026-2028 final-rate calendar, and make C5 consume #2709's in-process static proof without duplicate local adjudication.",
+  "branch": "hold/0091-g6-1-business-date-20260718",
+  "lane": "B",
   "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
   "source_file": "0091-g6-1.txt",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    ".block-ready/0091-g6-1.json",
+    "apps/backend/src/bulk/bulk-update.factory.test.ts",
+    "apps/backend/src/accounting/__tests__/bills-void-in-client.test.ts",
+    "apps/backend/src/accounting/bills.service.ts",
+    "apps/backend/src/accounting/financial-today-company-tz.test.ts",
+    "apps/backend/src/accounting/journal-entries.service.ts",
+    "apps/backend/src/accounting/posting-engine.service.test.ts",
+    "apps/backend/src/accounting/posting-engine.service.ts",
+    "apps/backend/src/accounting/settlement-posting/__tests__/settlement-bill-payment-posting.db.test.ts",
+    "apps/backend/src/accounting/settlement-posting/__tests__/settlement-bill-payment-reversal.test.ts",
+    "apps/backend/src/accounting/settlement-posting/bucket-ledger.service.ts",
+    "apps/backend/src/accounting/settlement-posting/settlement-bill-payment-posting.service.ts",
+    "apps/backend/src/accounting/settlement-posting/settlement-bill-payment.math.ts",
+    "apps/backend/src/accounting/settlement-posting/settlement-posting.service.ts",
+    "apps/backend/src/governance/__tests__/void-cancel-requests.test.ts",
+    "apps/backend/src/governance/void-cancel-executors.ts",
+    "apps/backend/src/lib/__tests__/company-business-date.test.ts",
+    "scripts/__tests__/block-ready.test.mjs",
+    "scripts/__tests__/verify-step-fail-closed-907-909.test.mjs",
+    "scripts/block-ready.mjs",
+    "scripts/verify-acct-posting-business-date.mjs",
+    "scripts/verify-block-ready-c5-no-duplicate-arch-design.mjs",
+    "scripts/verify-je-void-reverses-not-voids.mjs",
+    "scripts/verify-ifta-tax-rates-current.mjs",
+    "scripts/verify-settlement-reversal-atomicity.mjs",
+    "scripts/verify-steps/907-verify-invoice-pickup-sort.mjs",
+    "scripts/verify-steps/909-verify-acct-posting-business-date.mjs",
+    "scripts/verify-steps/909-verify-qbo-sync-staleness.mjs",
+    "scripts/verify-steps/910-verify-settlement-reversal-atomicity.mjs"
   ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true,
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "kind": "behavior",
+      "check": "One companyBusinessDate is captured per cancellation transaction and passed to every canonical reversal leg; explicit dates remain unchanged; UTC-midnight and DST behavior is deterministic."
+    },
+    {
+      "kind": "atomicity",
+      "check": "Any GL, payment, bill, bank, driver-bill, deduction, bucket, settlement, or outer-audit failure rolls back the complete cancellation. A real PostgreSQL test injects the outer audit failure and compares every before/after state."
+    },
+    {
+      "kind": "deduction",
+      "check": "Attached driver_settlement_deductions are row-locked, detached exactly once, restored to pending with remaining_balance_cents=amount_cents, and their linked buckets are reversed exactly once through reverseDeductionFromBucket."
+    },
+    {
+      "kind": "reconciliation",
+      "check": "Before status transition, restored deduction count and amount agree with original and reversal deduction GL, all original/reversal journal entries net to zero by account/class/entity, and bill/payment/bank/driver-bill subledgers are fully restored."
+    },
+    {
+      "kind": "test",
+      "check": "Isolated fresh PostgreSQL migration plus settlement-bill-payment-posting.db.test.ts: 5 tests passed, including dynamic 4-linked-payment expectation, concurrent retry/idempotency, deduction/bucket restoration, and outer rollback."
+    },
+    {
+      "kind": "test",
+      "check": "Focused backend run: 6 files/51 tests passed; final settlement-bill-payment-reversal.test.ts rerun after the deduction tie-out assertion: 4 tests passed; backend typecheck passed."
+    },
+    {
+      "kind": "guard",
+      "check": "verify-acct-posting-business-date and verify-settlement-reversal-atomicity both pass with planted-failure selftests; verify-je-void-reverses-not-voids and fail-closed wrapper behavioral tests pass. Rule-17 verify-steps are auto-discovered."
+    },
+    {
+      "kind": "test-isolation",
+      "check": "bulk-update.factory rate-limit test explicitly mocks Redis unavailable and uses a unique valid user key; it deterministically verifies the in-memory fallback without external or persistent Redis state."
+    },
+    {
+      "kind": "pipeline",
+      "check": "block-ready C2b runs the authoritative static sweep once and mints an in-process proof; C5 requires that proof and does not rerun stale/unwired, DB-gated, or server-only package aliases. Required GitHub contexts remain authoritative."
+    },
+    {
+      "kind": "compliance-guard",
+      "check": "IFTA rate freshness requires the latest two officially finalized quarters using IFTA Inc.'s 2026-2028 posting calendar; on 2026-07-18 that is Q2/Q1, while the provisional Q3 matrix is not final until 2026-09-04."
+    },
+    {
+      "kind": "live",
+      "check": "UNVERIFIED on Neon and production by design. No Neon mutation, deployment, live row proof, or flag change was performed. CI on the corrected pushed SHA and fresh owner approval remain required."
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "linkage": "Existing entity-scoped paths only: driver_finance.driver_settlements -> driver_settlement_gl_runs -> driver_settlement_gl_bills -> driver_bills/accounting.bills/accounting.bill_payments; driver_settlement_deductions -> driver_deduction_buckets -> driver_deduction_bucket_events; accounting.journal_entries -> accounting.journal_entry_postings. Existing transaction-aware bank-account mutation is reused. No new table, FK, route, display ID, or cross-entity linkage is introduced.",
+  "schema": "No schema or migration change. No DDL, backfill, RLS policy, grant, enum, column, index, or held migration is added or applied.",
+  "flags": "No feature flag or posting flag is added, enabled, disabled, or otherwise changed.",
+  "hold": "TIER-1 FINANCIAL BUILD-AND-HOLD. PR #2705 must remain draft and unmerged. Prior approval cannot authorize these material corrections; a fresh JORGE-APPROVED decision after independent CPA/code review and green CI is required. No Neon apply is part of this branch.",
+  "owner_live_gates": [
+    "Independent CPA/accounting re-review passes the corrected SHA.",
+    "Independent code review passes the corrected SHA with no unresolved high-severity finding.",
+    "All required GitHub checks pass on the corrected SHA.",
+    "Owner supplies fresh JORGE-APPROVED after those reviews; the branch is not self-merged.",
+    "Any requested Neon/live proof is owner-authorized and performed separately; current live status remains UNVERIFIED."
+  ],
+  "deferred": [],
+  "note": "Manifest evidence records only commands actually run locally. It does not claim CI, Neon, deployment, production, owner approval, or live-data PASS."
 }

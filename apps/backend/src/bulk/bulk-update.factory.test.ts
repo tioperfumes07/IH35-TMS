@@ -1,8 +1,13 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
+import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
+
+vi.mock("../middleware/rate-limit.js", () => ({
+  getRateLimiterRedis: () => null,
+}));
 import {
   assertBulkActionAllowed,
   DEFAULT_BULK_MAX_IDS,
@@ -125,7 +130,9 @@ describe("bulk rate limit", () => {
   });
 
   it("returns 429 with retry_after_seconds when called too soon", async () => {
-    const userId = "66666666-6666-4666-8666-666666666666";
+    // Redis-backed CI rate-limit state can outlive a Vitest process. A fixed key makes the first
+    // consume depend on a previous run; a unique valid user key keeps this test deterministic.
+    const userId = randomUUID();
     const reply = {
       header: vi.fn(),
       code: vi.fn().mockReturnThis(),
