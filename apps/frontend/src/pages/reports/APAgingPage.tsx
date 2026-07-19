@@ -13,6 +13,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useUrlSort } from "../../hooks/useUrlSort";
+import { apAgingBillsListHref, apAgingVendorProfileHref } from "./agingDrillThrough";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -217,27 +218,44 @@ export function APAgingPage() {
         sortDirection={sortDirection}
         onSortChange={onSortChange}
         emptyText="No rows"
+        // RPT-PAR-1: row drill → bills with open balance (has_balance; includes partial).
+        // Pay now + Vendor AP profile kept additively (same has_balance list for pay).
         onRowClick={(r) => {
           if (!isVendorUuid(r.vendor_id)) {
             pushToast("This row is not linked to a vendor master record. Resolve vendor UUID on bills first.", "info");
             return;
           }
-          navigate(`/vendors/${r.vendor_id}?tab=ap`);
+          navigate(apAgingBillsListHref(r.vendor_id));
         }}
         rowActions={(r) => (
           <div className="flex flex-wrap justify-end gap-1">
             <Button
               size="sm"
               variant="secondary"
+              aria-label={`Pay now for ${r.vendor_name}`}
               onClick={() => {
                 if (!isVendorUuid(r.vendor_id)) {
                   pushToast("This row is not linked to a vendor master record. Resolve vendor UUID on bills first.", "info");
                   return;
                 }
-                navigate(`/accounting/bills?vendor_id=${r.vendor_id}&status=unpaid`);
+                navigate(apAgingBillsListHref(r.vendor_id));
               }}
             >
               Pay now
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              aria-label={`Open vendor profile for ${r.vendor_name}`}
+              onClick={() => {
+                if (!isVendorUuid(r.vendor_id)) {
+                  pushToast("This row is not linked to a vendor master record. Resolve vendor UUID on bills first.", "info");
+                  return;
+                }
+                navigate(apAgingVendorProfileHref(r.vendor_id));
+              }}
+            >
+              Vendor profile
             </Button>
             <Button size="sm" variant="secondary" disabled onClick={() => pushToast("Scheduled payments ship Phase 6+", "info")}>
               Schedule payment

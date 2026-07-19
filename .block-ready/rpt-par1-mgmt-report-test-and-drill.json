@@ -1,17 +1,54 @@
 {
   "block_id": "rpt-par1-mgmt-report-test-and-drill",
-  "status": "PARTIAL",
+  "status": "BUILD",
   "classification": "FINANCIAL",
   "phase": "tier3",
-  "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
+  "task": "RPT-PAR-1 defect fix: server-side invoices has_balance before LIMIT; A/R+A/P aging drill via has_balance=true (not client with_balance / unpaid-only); A/R Open invoices keyboard action; bidirectional invoice searchParams sync; BillsPage consumes has_balance; tests + Rule-17 guard. No schema/migration/posting/GL changes.",
+  "branch": "cursor/management-report-drill-through-tests-ad9d",
+  "lane": "CLOUD",
+  "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS) + adversarial review defects on PR #2712",
   "source_file": "rpt-par1-mgmt-report-test-and-drill.txt",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    "apps/frontend/src/pages/reports/ManagementReportPackagePage.tsx",
+    "apps/frontend/src/pages/reports/ARAgingPage.tsx",
+    "apps/frontend/src/pages/reports/APAgingPage.tsx",
+    "apps/frontend/src/pages/reports/agingDrillThrough.ts",
+    "apps/frontend/src/pages/reports/__tests__/**",
+    "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
+    "apps/frontend/src/pages/accounting/BillsPage.tsx",
+    "apps/frontend/src/pages/accounting/__tests__/InvoicesListPage.statusDeeplink.test.tsx",
+    "apps/frontend/src/pages/accounting/__tests__/BillsPage.hasBalanceDeeplink.test.tsx",
+    "apps/frontend/src/api/accounting.ts",
+    "apps/backend/src/accounting/invoices.routes.ts",
+    "apps/backend/src/accounting/__tests__/invoices-has-balance-filter.test.ts",
+    "apps/backend/src/accounting/__tests__/invoices-list-entity-scope.test.ts",
+    "apps/frontend/src/routes/manifest.tsx",
+    "apps/frontend/src/components/home/__tests__/QboSyncHealthCard.test.tsx",
+    "scripts/verify-mgmt-report-aging-drill.mjs",
+    "scripts/verify-steps/927-verify-mgmt-report-aging-drill.mjs",
+    "scripts/__tests__/verify-mgmt-report-aging-drill.test.mjs",
+    ".block-ready/rpt-par1-mgmt-report-test-and-drill.json"
   ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "GET /accounting/invoices accepts has_balance and filters amount_open>0 + aging-compatible statuses BEFORE LIMIT/OFFSET; returns truthful total/has_more"
+    },
+    {
+      "check": "A/R aging row click + Open invoices use /accounting/invoices?customer_id=&has_balance=true; Customer profile preserved; Enter/Space tests"
+    },
+    {
+      "check": "A/P aging row click + Pay now use /accounting/bills?vendor_id=&has_balance=true (not unpaid-only); Vendor profile preserved"
+    },
+    {
+      "check": "InvoicesListPage bidirectionally syncs customer_id/status/has_balance with searchParams; no client-only with_balance page slice"
+    },
+    {
+      "check": "Rule-17 auto-discovered guard scripts/verify-mgmt-report-aging-drill.mjs + verify-steps/927 + --selftest fail-closed"
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "No schema/migration/posting/GL changes. Additive list filter + UI drill + tests + static guard only. Keep draft/HOLD — do not merge."
 }

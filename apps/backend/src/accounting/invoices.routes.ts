@@ -22,7 +22,11 @@ const listQuerySchema = companyQuerySchema.extend({
   customer_id: z.string().uuid().optional(),
   from_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   to_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  // Aging / open-AR drill: filter full entity set by open balance BEFORE LIMIT/OFFSET
+  // (mirrors accounting bills has_balance). Excludes draft/voided; includes sent/partial/etc.
+  has_balance: z.coerce.boolean().optional(),
   limit: z.coerce.number().int().min(1).max(500).default(100),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 const createBodySchema = z.object({
@@ -133,32 +137,58 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
     const query = listQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     const q = query.data;
-    const rows = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
-      const where: string[] = ["i.operating_company_id = $1"];
+    const listed = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
+      // Extra filters only — entity predicates are SQL literals in BOTH count + list templates
+      // (verify-mdata-entity-scope scans template text; interpolated JS where-clauses alone are insufficient).
+      const extraWhere: string[] = [];
       const values: unknown[] = [q.operating_company_id];
       if (q.status) {
         values.push(q.status);
-        where.push(`i.status = $${values.length}`);
+        extraWhere.push(`i.status = $${values.length}`);
       }
       if (q.customer_id) {
         values.push(q.customer_id);
-        where.push(`i.customer_id = $${values.length}`);
+        extraWhere.push(`i.customer_id = $${values.length}`);
       }
       if (q.search) {
         values.push(`%${q.search}%`);
         const idx = values.length;
-        where.push(`(i.display_id ILIKE $${idx} OR c.customer_name ILIKE $${idx})`);
+        extraWhere.push(`(i.display_id ILIKE $${idx} OR c.customer_name ILIKE $${idx})`);
       }
       if (q.from_date) {
         values.push(q.from_date);
-        where.push(`i.issue_date >= $${values.length}::date`);
+        extraWhere.push(`i.issue_date >= $${values.length}::date`);
       }
       if (q.to_date) {
         values.push(q.to_date);
-        where.push(`i.issue_date <= $${values.length}::date`);
+        extraWhere.push(`i.issue_date <= $${values.length}::date`);
       }
+      // has_balance: aging-compatible open AR — apply BEFORE LIMIT/OFFSET so pagination is truthful.
+      if (q.has_balance) {
+        extraWhere.push("COALESCE(i.amount_open_cents, 0) > 0");
+        extraWhere.push("i.voided_at IS NULL");
+        extraWhere.push("i.status NOT IN ('draft', 'void', 'voided', 'paid')");
+      }
+      // Same extra filters for COUNT and LIST (bind indices identical until LIMIT/OFFSET appended).
+      const extraSql = extraWhere.length ? `AND ${extraWhere.join(" AND ")}` : "";
+      const countRes = await client.query(
+        `
+          SELECT COUNT(*)::int AS total
+          FROM accounting.invoices i
+          JOIN mdata.customers c
+            ON c.id = i.customer_id
+           AND c.operating_company_id = i.operating_company_id
+           AND c.operating_company_id = $1
+          WHERE i.operating_company_id = $1
+            ${extraSql}
+        `,
+        values
+      );
+      const total = Number(countRes.rows[0]?.total ?? 0);
       values.push(q.limit);
       const limitIdx = values.length;
+      values.push(q.offset);
+      const offsetIdx = values.length;
       const res = await client.query(
         `
           SELECT
@@ -169,22 +199,37 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
             l.customer_chargeback_reason AS source_load_chargeback_reason,
             (
               SELECT COUNT(*)
-              FROM accounting.invoice_lines l
-              WHERE l.invoice_id = i.id
+              FROM accounting.invoice_lines il
+              WHERE il.invoice_id = i.id
             )::int AS line_count
           FROM accounting.invoices i
-          JOIN mdata.customers c ON c.id = i.customer_id
+          JOIN mdata.customers c
+            ON c.id = i.customer_id
+           AND c.operating_company_id = i.operating_company_id
+           AND c.operating_company_id = $1
           LEFT JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
-          LEFT JOIN mdata.loads l ON l.id = i.source_load_id
-          WHERE ${where.join(" AND ")}
+          LEFT JOIN mdata.loads l
+            ON l.id = i.source_load_id
+           AND l.operating_company_id = i.operating_company_id
+          WHERE i.operating_company_id = $1
+            ${extraSql}
           ORDER BY i.issue_date DESC, i.created_at DESC
           LIMIT $${limitIdx}
+          OFFSET $${offsetIdx}
         `,
         values
       );
-      return res.rows;
+      return { rows: res.rows, total };
     });
-    return { invoices: rows };
+    const invoices = listed.rows;
+    const total = listed.total;
+    return {
+      invoices,
+      total,
+      limit: q.limit,
+      offset: q.offset,
+      has_more: q.offset + invoices.length < total,
+    };
   });
 
   app.get("/api/v1/accounting/invoices/:id", async (req, reply) => {

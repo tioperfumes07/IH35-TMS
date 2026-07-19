@@ -1,5 +1,5 @@
 import { formatDateUS } from "../../lib/formatDate";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -26,8 +26,9 @@ import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { useToast } from "../../components/Toast";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
-// INVOICE-LISTFILTER-01: real InvoiceStatus values go to the backend `status` param; the pseudo-values
-// ("not_sent" / "with_balance") are QBO-style client-side derived filters over already-fetched rows.
+// INVOICE-LISTFILTER-01: real InvoiceStatus values go to the backend `status` param.
+// "with_balance" is a UI label for server-side has_balance=true (aging-compatible open AR).
+// "not_sent" remains a client-side derived filter over the fetched page (no server contract).
 // NOTE: QBO's "Viewed" filter is intentionally NOT offered — accounting.invoices has no read-receipt /
 // viewed_at tracking field, so a "Viewed" option would silently return nothing (do not fabricate).
 type InvoiceListFilter = "" | InvoiceStatus | "not_sent" | "with_balance";
@@ -53,9 +54,26 @@ function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
 }
 
+function invoiceFilterFromSearchParams(searchParams: URLSearchParams): {
+  customerId: string;
+  status: InvoiceListFilter;
+  hasBalance: boolean;
+} {
+  const customerId = searchParams.get("customer_id") ?? "";
+  const hasBalanceParam = searchParams.get("has_balance") === "true";
+  const statusRaw = searchParams.get("status") ?? "";
+  // Legacy deep-link status=with_balance → treat as has_balance (UI still shows "With balance").
+  const hasBalance = hasBalanceParam || statusRaw === "with_balance";
+  let status: InvoiceListFilter = "";
+  if (hasBalance) status = "with_balance";
+  else if (statusRaw === "not_sent") status = "not_sent";
+  else if (isRealInvoiceStatus(statusRaw)) status = statusRaw;
+  return { customerId, status, hasBalance };
+}
+
 export function InvoicesListPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
@@ -64,12 +82,55 @@ export function InvoicesListPage() {
   const [factoredModalOpen, setFactoredModalOpen] = useState(false);
   const [pendingIds, setPendingIds] = useState<string[]>([]);
   const [batchId, setBatchId] = useState("");
-  const [status, setStatus] = useState<InvoiceListFilter>("");
-  // Mirror BillsPage vendor_id deep-link: Customers "New transaction" → ?customer_id=
-  const [customerId, setCustomerId] = useState(() => searchParams.get("customer_id") ?? "");
+  // Bidirectional URL sync: customer_id / status / has_balance are searchParams-driven so
+  // same-route updates and browser back/forward stay truthful (no local-only stale seed).
+  const { customerId, status, hasBalance } = invoiceFilterFromSearchParams(searchParams);
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+
+  // One-shot migrate legacy ?status=with_balance → ?has_balance=true (replace, no history spam).
+  useEffect(() => {
+    if (searchParams.get("status") !== "with_balance") return;
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("status");
+        next.set("has_balance", "true");
+        return next;
+      },
+      { replace: true }
+    );
+  }, [searchParams, setSearchParams]);
+
+  function setCustomerId(next: string) {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next) params.set("customer_id", next);
+        else params.delete("customer_id");
+        return params;
+      },
+      { replace: true }
+    );
+  }
+
+  function setStatus(next: InvoiceListFilter) {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        params.delete("status");
+        params.delete("has_balance");
+        if (next === "with_balance") {
+          params.set("has_balance", "true");
+        } else if (next) {
+          params.set("status", next);
+        }
+        return params;
+      },
+      { replace: true }
+    );
+  }
 
   // Customer picker options — pass limit:200 (endpoint defaults to 50, would silently truncate).
   const customersQuery = useQuery({
@@ -90,26 +151,34 @@ export function InvoicesListPage() {
   const [tableResetKey, setTableResetKey] = useState(0);
 
   const query = useQuery({
-    queryKey: ["accounting", "invoices", selectedCompanyId, status, customerId, search, fromDate, toDate],
+    queryKey: ["accounting", "invoices", selectedCompanyId, status, hasBalance, customerId, search, fromDate, toDate],
     queryFn: () =>
       listInvoices(selectedCompanyId!, {
-        // Only real statuses hit the backend; pseudo-filters (not_sent/with_balance) apply client-side below.
         status: isRealInvoiceStatus(status) ? status : undefined,
+        has_balance: hasBalance || undefined,
         customer_id: customerId || undefined,
         search: search || undefined,
         from_date: fromDate || undefined,
         to_date: toDate || undefined,
-      }).then((res) => res.invoices),
+      }),
     enabled: Boolean(selectedCompanyId),
   });
 
   const invoices = useMemo(() => {
-    const all = query.data ?? [];
-    // Client-side QBO pseudo-filters over the fetched page.
+    const all = query.data?.invoices ?? [];
+    // Client-side QBO pseudo-filter only for not_sent (no server contract).
+    // with_balance / has_balance is server-filtered before LIMIT — do not re-slice a page.
     if (status === "not_sent") return all.filter((row) => row.status === "draft" || !row.sent_at);
-    if (status === "with_balance") return all.filter((row) => Number(row.amount_open_cents ?? 0) > 0);
     return all;
-  }, [query.data, status]);
+  }, [query.data?.invoices, status]);
+
+  const listMeta = useMemo(
+    () => ({
+      total: query.data?.total,
+      hasMore: query.data?.has_more,
+    }),
+    [query.data?.total, query.data?.has_more]
+  );
 
   const runInvoiceBulk = async (action: "mark_sent" | "mark_factored", payload?: Record<string, unknown>) => {
     if (!selectedCompanyId) {
@@ -263,7 +332,11 @@ export function InvoicesListPage() {
       <div className="mt-2 flex items-center gap-3 text-xs text-gray-600">
         <span>Total billed: {money(totals.total)}</span>
         <span>Open: {money(totals.open)}</span>
-        <span>Rows: {invoices.length}</span>
+        <span>
+          Rows: {invoices.length}
+          {typeof listMeta.total === "number" ? ` of ${listMeta.total}` : ""}
+          {listMeta.hasMore ? " (more available)" : ""}
+        </span>
       </div>
     </DataPanel>
   );
