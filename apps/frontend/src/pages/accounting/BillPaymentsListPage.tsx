@@ -16,6 +16,7 @@ import { BillDetailPanel } from "./BillDetailPanel";
 import { PayBillModal } from "./PayBillModal";
 import { CCPaymentModal } from "./bill-payments/CCPaymentModal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useUrlSort } from "../../hooks/useUrlSort";
 
 // BANKREC-LISTSTATUS-01: read-only badge derived from bank.reconciliation_matches (server-side).
 // matched = green check, unmatched = neutral. Additive column only.
@@ -119,17 +120,19 @@ export function BillPaymentsListPage() {
   const [voidTarget, setVoidTarget] = useState<string | null>(null);
 
   const canVoid = user?.role === "Owner";
+  // BANK-SORT-ROLLOUT-ACCT: ?sort=&dir= URL persistence (same as Bills/Expenses).
+  const { sortKey, sortDirection, onSortChange } = useUrlSort();
 
   const columns = useMemo<ParityColumn<BillPayment>[]>(
     () => [
       { key: "payment_date", label: "Payment date", sortable: true, render: (row) => formatDateUS(row.payment_date) },
       { key: "amount_cents", label: "Amount", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => money(row.amount_cents) },
       { key: "payment_method", label: "Method", sortable: true },
-      { key: "bill_id", label: "Bill ID", render: (row) => <EntityLink kind="bill" id={row.bill_id} label={row.bill_id.slice(0, 8)} /> },
-      { key: "vendor_id", label: "Vendor ID", render: (row) => <EntityLink kind="vendor" id={row.vendor_id} /> },
-      { key: "reference_number", label: "Reference", render: (row) => row.reference_number ?? row.check_number ?? "-" },
-      { key: "memo", label: "Memo", render: (row) => row.memo ?? "-" },
-      { key: "is_reconciled", label: "Reconciled", render: (row) => <ReconciledBadge isReconciled={row.is_reconciled} /> },
+      { key: "bill_id", label: "Bill ID", sortable: true, render: (row) => <EntityLink kind="bill" id={row.bill_id} label={row.bill_id.slice(0, 8)} /> },
+      { key: "vendor_id", label: "Vendor ID", sortable: true, render: (row) => <EntityLink kind="vendor" id={row.vendor_id} /> },
+      { key: "reference_number", label: "Reference", sortable: true, sortValue: (row) => row.reference_number ?? row.check_number ?? "", render: (row) => row.reference_number ?? row.check_number ?? "-" },
+      { key: "memo", label: "Memo", sortable: true, sortValue: (row) => row.memo ?? "", render: (row) => row.memo ?? "-" },
+      { key: "is_reconciled", label: "Reconciled", sortable: true, sortValue: (row) => (row.is_reconciled ? 1 : 0), render: (row) => <ReconciledBadge isReconciled={row.is_reconciled} /> },
       {
         key: "actions",
         label: "Actions",
@@ -257,6 +260,9 @@ export function BillPaymentsListPage() {
         exportFilename="bill-payments"
         storageKey="bill-payments-list"
         initialPageSize={50}
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSortChange={onSortChange}
         emptyText="No bill payments found."
       />
 
