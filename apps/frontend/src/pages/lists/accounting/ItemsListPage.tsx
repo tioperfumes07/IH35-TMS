@@ -14,6 +14,7 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { Button } from "../../../components/Button";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { useUrlSort } from "../../../hooks/useUrlSort";
 import { ItemEditorModal } from "./ItemEditorModal";
 import { ItemsCatalog } from "../../accounting/ItemsCatalog";
 
@@ -32,6 +33,9 @@ export function ItemsListPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const qc = useQueryClient();
+  // BANK-SORT-ROLLOUT-ACCT: every visible column header sorts ASC/DESC; sort persists in the URL
+  // (?sort=&dir=) so it survives reload / is shareable, same as ExpensesListPage.
+  const { sortKey, sortDirection, onSortChange } = useUrlSort();
   const [search, setSearch] = useState("");
   const [groupByCategory, setGroupByCategory] = useState(true);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
@@ -200,6 +204,9 @@ export function ItemsListPage() {
                       rowActions={rowActions}
                       storageKey="items-list"
                       emptyText="No items."
+                      sortKey={sortKey}
+                      sortDirection={sortDirection}
+                      onSortChange={onSortChange}
                     />
                   ) : null}
                 </div>
@@ -217,6 +224,9 @@ export function ItemsListPage() {
           filterBar={filterBar}
           storageKey="items-list"
           emptyText="No items found."
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSortChange={onSortChange}
         />
       )}
 
