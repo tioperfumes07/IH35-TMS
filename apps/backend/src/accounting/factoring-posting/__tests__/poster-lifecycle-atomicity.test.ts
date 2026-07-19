@@ -367,9 +367,17 @@ describe("factoring poster — atomic lifecycle source links", () => {
     shapeLegs: ShapeLeg[];
     shapeLegsAlt?: ShapeLeg[];
     keyJeIds?: { repay?: string; return?: string; single?: string };
+    /**
+     * entry_date of the already-posted JE(s). The chargeback repair path enforces
+     * `expected_entry_date` (a valid same-date JE is the only legitimate already_posted
+     * candidate — a JE booked on a different date must NOT be silently re-attached).
+     * Must equal the repaired event's economic date.
+     */
+    entryDate?: string;
   }) {
     let shapeCalls = 0;
     const singleKey = opts.keyJeIds?.single ?? "existing-je";
+    const jeEntryDate = opts.entryDate ?? null;
     mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
       if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
       if (sql.includes("SAVEPOINT") || sql.includes("RELEASE SAVEPOINT") || sql.includes("ROLLBACK TO SAVEPOINT")) {
@@ -396,7 +404,15 @@ describe("factoring poster — atomic lifecycle source links", () => {
       }
       if (sql.includes("FROM accounting.journal_entries") && sql.includes("status::text AS status")) {
         return {
-          rows: [{ id: "existing-je", status: "posted", reverses_je_id: null, reversed_by_je_id: null }],
+          rows: [
+            {
+              id: "existing-je",
+              status: "posted",
+              entry_date: jeEntryDate,
+              reverses_je_id: null,
+              reversed_by_je_id: null,
+            },
+          ],
         };
       }
       if (sql.includes("chart_of_accounts_roles") && sql.includes("AS role")) {
@@ -510,6 +526,10 @@ describe("factoring poster — atomic lifecycle source links", () => {
   it("chargeback already_posted repairs repay+return links; return afterRepair is same txn", async () => {
     alreadyPostedAdvanceMocks({
       keyJeIds: { repay: "je-repay", return: "je-return" },
+      // charged_back_at_iso 2026-02-01T00:00Z resolves to America/Chicago business
+      // date 2026-01-31 — the repair's expected_entry_date. The already-posted JE
+      // must carry that same economic date to be a valid repair candidate.
+      entryDate: "2026-01-31",
       shapeLegs: [
         {
           role: "factoring_advance_liability",
