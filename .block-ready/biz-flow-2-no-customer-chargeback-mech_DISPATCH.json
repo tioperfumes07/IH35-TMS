@@ -1,17 +1,18 @@
 {
-  "block_id": "biz-flow-2-no-customer-chargeback-mech_DISPATCH",
-  "status": "NEEDS-VERIFY",
-  "classification": "FINANCIAL",
-  "phase": "tier1",
-  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
-  "source_file": "044_biz-flow-2-no-customer-chargeback-mech_DISPATCH.txt",
-  "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED (owner-ceremony). No delete."
-  ],
-  "acceptance": [
-    {
-      "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): Auto-create a customer invoice adjustment when a driver-caused expense should be billed back to the customer"
-    }
-  ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+ "block_id": "biz-flow-2-no-customer-chargeback-mech_DISPATCH",
+ "status": "NEEDS-VERIFY",
+ "classification": "FINANCIAL",
+ "phase": "tier1",
+ "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
+ "source_file": "044_biz-flow-2-no-customer-chargeback-mech_DISPATCH.txt",
+ "allowed_files": [
+  "additive only; ALTER/CREATE on existing financial tables = PROTECTED (owner-ceremony). No delete."
+ ],
+ "acceptance": [
+  {
+   "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): Auto-create a customer invoice adjustment when a driver-caused expense should be billed back to the customer"
+  }
+ ],
+ "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check.",
+ "duplicate_of": "[DUPLICATE 2026-07-19 triage] bf1-driver-fault-liability-deduction Same fix as bf1-driver-fault-liability-deduction: mdata.loads.customer_chargeback_requested/driver_fault/amount_cents/reason fields + settlement-contract"
 }

@@ -1,17 +1,18 @@
 {
-  "block_id": "PHASE2_LUMPER_gated-off-expense_VERIFY",
-  "status": "NEEDS-VERIFY",
-  "classification": "FINANCIAL",
-  "phase": "money-wiring",
-  "source": "MASTER-6 authored dispatch (02-MONEY-WIRING-P1-P3)",
-  "source_file": "PHASE2_LUMPER_gated-off-expense_VERIFY.txt",
-  "allowed_files": [
-    "authored dispatch — LANE LOCK not explicit; scope per 02-MONEY-WIRING-P1-P3"
-  ],
-  "acceptance": [
-    {
-      "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): Lumper expense->GL and rebill-to-customer exist but are gated OFF (LUMPER_LIFECYCLE_ENABLED); confirm a we-pay lumper books an expense"
-    }
-  ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+ "block_id": "PHASE2_LUMPER_gated-off-expense_VERIFY",
+ "status": "NEEDS-VERIFY",
+ "classification": "FINANCIAL",
+ "phase": "money-wiring",
+ "source": "MASTER-6 authored dispatch (02-MONEY-WIRING-P1-P3)",
+ "source_file": "PHASE2_LUMPER_gated-off-expense_VERIFY.txt",
+ "allowed_files": [
+  "authored dispatch \u2014 LANE LOCK not explicit; scope per 02-MONEY-WIRING-P1-P3"
+ ],
+ "acceptance": [
+  {
+   "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): Lumper expense->GL and rebill-to-customer exist but are gated OFF (LUMPER_LIFECYCLE_ENABLED); confirm a we-pay lumper books an expense"
+  }
+ ],
+ "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check.",
+ "superseded_by": "[RESOLVED 2026-07-19 triage]  lumperPostingJournal (unit-tested 6/6 pass) posts DR expense/CR bank for a we-pay lumper via the existing unflagged poster/category-map; only extra lifecycle features are behind LUMPER_LIFEC"
 }

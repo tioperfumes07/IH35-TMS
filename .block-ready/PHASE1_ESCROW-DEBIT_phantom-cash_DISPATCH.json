@@ -1,17 +1,18 @@
 {
-  "block_id": "PHASE1_ESCROW-DEBIT_phantom-cash_DISPATCH",
-  "status": "NEEDS-VERIFY",
-  "classification": "FINANCIAL",
-  "phase": "money-wiring",
-  "source": "MASTER-6 authored dispatch (02-MONEY-WIRING-P1-P3)",
-  "source_file": "PHASE1_ESCROW-DEBIT_phantom-cash_DISPATCH.txt",
-  "allowed_files": [
-    "authored dispatch — LANE LOCK not explicit; scope per 02-MONEY-WIRING-P1-P3"
-  ],
-  "acceptance": [
-    {
-      "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): Driver-bond escrow deposit debits cash_clearing (re-adds cash never received) instead of net-pay/settlement expense"
-    }
-  ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+ "block_id": "PHASE1_ESCROW-DEBIT_phantom-cash_DISPATCH",
+ "status": "NEEDS-VERIFY",
+ "classification": "FINANCIAL",
+ "phase": "money-wiring",
+ "source": "MASTER-6 authored dispatch (02-MONEY-WIRING-P1-P3)",
+ "source_file": "PHASE1_ESCROW-DEBIT_phantom-cash_DISPATCH.txt",
+ "allowed_files": [
+  "authored dispatch \u2014 LANE LOCK not explicit; scope per 02-MONEY-WIRING-P1-P3"
+ ],
+ "acceptance": [
+  {
+   "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): Driver-bond escrow deposit debits cash_clearing (re-adds cash never received) instead of net-pay/settlement expense"
+  }
+ ],
+ "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check.",
+ "superseded_by": "[RESOLVED 2026-07-19 triage]  Old payroll settlement engine (depositEscrow debiting cash_clearing) is RETIRED \u2014 routes now 308-redirect; canonical settlement-bill-payment-posting.service.ts credits driver's own escrow li"
 }

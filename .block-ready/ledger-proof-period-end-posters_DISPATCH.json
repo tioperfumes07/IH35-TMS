@@ -1,17 +1,18 @@
 {
-  "block_id": "ledger-proof-period-end-posters_DISPATCH",
-  "status": "NEEDS-VERIFY",
-  "classification": "FINANCIAL",
-  "phase": "tier1",
-  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
-  "source_file": "113_ledger-proof-period-end-posters_DISPATCH.txt",
-  "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED (owner-ceremony). No delete."
-  ],
-  "acceptance": [
-    {
-      "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): Build a write-proof harness for period-end posters (depreciation, prepaid amortization, revenue recognition, ASC 842 lease) on a Neon branch"
-    }
-  ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+ "block_id": "ledger-proof-period-end-posters_DISPATCH",
+ "status": "NEEDS-VERIFY",
+ "classification": "FINANCIAL",
+ "phase": "tier1",
+ "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
+ "source_file": "113_ledger-proof-period-end-posters_DISPATCH.txt",
+ "allowed_files": [
+  "additive only; ALTER/CREATE on existing financial tables = PROTECTED (owner-ceremony). No delete."
+ ],
+ "acceptance": [
+  {
+   "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): Build a write-proof harness for period-end posters (depreciation, prepaid amortization, revenue recognition, ASC 842 lease) on a Neon branch"
+  }
+ ],
+ "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check.",
+ "superseded_by": "[NOISE 2026-07-19 triage]  sweep NOISE"
 }

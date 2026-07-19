@@ -1,17 +1,18 @@
 {
-  "block_id": "PHASE2_BILLLINE-LOADID_no-per-load-attribution_DISPATCH",
-  "status": "NEEDS-VERIFY",
-  "classification": "FINANCIAL",
-  "phase": "money-wiring",
-  "source": "MASTER-6 authored dispatch (02-MONEY-WIRING-P1-P3)",
-  "source_file": "PHASE2_BILLLINE-LOADID_no-per-load-attribution_DISPATCH.txt",
-  "allowed_files": [
-    "authored dispatch — LANE LOCK not explicit; scope per 02-MONEY-WIRING-P1-P3"
-  ],
-  "acceptance": [
-    {
-      "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): accounting.bill_lines has no load_id (asymmetric with expense_lines) -> bills can't attribute per-load cost; no fuel/toll load gate"
-    }
-  ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+ "block_id": "PHASE2_BILLLINE-LOADID_no-per-load-attribution_DISPATCH",
+ "status": "NEEDS-VERIFY",
+ "classification": "FINANCIAL",
+ "phase": "money-wiring",
+ "source": "MASTER-6 authored dispatch (02-MONEY-WIRING-P1-P3)",
+ "source_file": "PHASE2_BILLLINE-LOADID_no-per-load-attribution_DISPATCH.txt",
+ "allowed_files": [
+  "authored dispatch \u2014 LANE LOCK not explicit; scope per 02-MONEY-WIRING-P1-P3"
+ ],
+ "acceptance": [
+  {
+   "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): accounting.bill_lines has no load_id (asymmetric with expense_lines) -> bills can't attribute per-load cost; no fuel/toll load gate"
+  }
+ ],
+ "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check.",
+ "superseded_by": "[RESOLVED 2026-07-19 triage]  Migration 202607200000_bill_lines_load_id.sql adds accounting.bill_lines.load_id FK; scripts/verify-bill-lines-load-id.mjs PASS."
 }
