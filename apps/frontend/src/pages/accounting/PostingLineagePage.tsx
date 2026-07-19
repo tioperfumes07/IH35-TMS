@@ -3,6 +3,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { getAccountingSourceLineage, type AccountingSourceLineageRow } from "../../api/accounting";
 import { Button } from "../../components/Button";
+import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner";
@@ -85,6 +86,7 @@ function PostingEntityLink({
 }
 
 export function PostingLineagePage() {
+  const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [sourceType, setSourceType] = useState("");
@@ -98,6 +100,8 @@ export function PostingLineagePage() {
         source_transaction_id: input.sourceId,
         limit: 500,
       }),
+    onError: (err) =>
+      pushToast(err instanceof Error ? err.message : "Failed to load posting lineage", "error"),
   });
 
   const totals = useMemo(() => {
