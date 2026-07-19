@@ -32,16 +32,16 @@
   ],
   "acceptance": [
     {
-      "check": "all three guards pass normally and with planted --selftest fixtures that reject comment/string decoys"
+      "check": "all three guards pass normally and with table-driven --selftest corpora covering valid controls, every VETO plant, and fresh metamorphic variants"
     },
     {
       "check": "EntityLink adoption is fail-closed with a 76-finding origin/main baseline ratchet; parse errors or any increase fail"
     },
     {
-      "check": "deep-link guard proves executable producer → resolver → registered route → consumer semantics"
+      "check": "deep-link guard proves executable producer → resolver → registered route → consumed query/path semantics with constant-folded reachability"
     },
     {
-      "check": "94-live guard proves executable relation check and company-scoped DISTINCT local_unit_id SQL"
+      "check": "94-live guard causally proves scoped client + company GUC + relation true branch + DISTINCT local_unit_id query result → returned samsara_live"
     },
     {
       "check": "unique verify-steps 915/916/917 auto-discover all three guards; guard-wired reports them fully wired"
