@@ -1,6 +1,7 @@
 import {
   FmcsaPermanentError,
   FmcsaRetryableError,
+  mergeFmcsaRetryableCooldown,
   parseRetryAfterMs,
 } from "./fmcsa-http-errors.js";
 
@@ -296,7 +297,8 @@ async function fetchSaferSnapshot(type: LookupType, value: string): Promise<Carr
  * 2. SAFER miss + mobile retryable (429/5xx/network) → throw retryable (never null).
  * 3. SAFER miss + mobile permanent (non-404 4xx) → throw permanent (never stamp not-found).
  * 4. Both authoritative misses (404 / no records) → null.
- * 5. SAFER typed error wins over a stored mobile error when SAFER itself fails.
+ * 5. When SAFER itself fails retryable: SAFER status/message wins, but Retry-After is
+ *    max(mobile, SAFER) so outbox never under-honors the stricter cooldown.
  */
 async function lookupCarrier(type: LookupType, value: string): Promise<CarrierResult | null> {
   const normalized = normalizeLookupValue(type, value);
@@ -325,7 +327,10 @@ async function lookupCarrier(type: LookupType, value: string): Promise<CarrierRe
     if (mobilePermanent) throw mobilePermanent;
     return null;
   } catch (error) {
-    if (error instanceof FmcsaRetryableError) throw error;
+    if (error instanceof FmcsaRetryableError) {
+      // Aggregate cooldown across sources; preferred status/message = SAFER (thrown error).
+      throw mergeFmcsaRetryableCooldown(error, mobileRetryable);
+    }
     if (error instanceof FmcsaPermanentError) throw error;
     if (mobileRetryable) throw mobileRetryable;
     if (mobilePermanent) throw mobilePermanent;
@@ -341,4 +346,9 @@ export function lookupCarrierByMC(mcNumber: string) {
   return lookupCarrier("mc", mcNumber);
 }
 
-export { FmcsaPermanentError, FmcsaRetryableError, parseRetryAfterMs } from "./fmcsa-http-errors.js";
+export {
+  FmcsaPermanentError,
+  FmcsaRetryableError,
+  mergeFmcsaRetryableCooldown,
+  parseRetryAfterMs,
+} from "./fmcsa-http-errors.js";

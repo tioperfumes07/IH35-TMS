@@ -1,4 +1,5 @@
 import os from "node:os";
+import type { PoolClient } from "pg";
 import { pool } from "../auth/db.js";
 import { retryAfterMsFromError } from "../lib/fmcsa-http-errors.js";
 import { isPermanentDeliveryError } from "./delivery-errors.js";
@@ -113,8 +114,34 @@ export class OutboxProcessor {
     if (events.length === 0) return;
     this.log("claimed outbox batch", { count: events.length, instanceId: this.instanceId });
 
+    // Fail-closed per claimed event: pool.connect() / process failures must NOT abort
+    // the sibling loop (avoids 5-minute lock abandonment for the rest of the batch).
     for (const event of events) {
+      await this.processClaimedEvent(event);
+    }
+  }
+
+  /**
+   * Per-event boundary covering connection acquisition + delivery + retry scheduling.
+   * Never rethrows — siblings in the claimed batch always continue.
+   */
+  private async processClaimedEvent(event: ClaimedEvent) {
+    try {
       await this.processEvent(event);
+    } catch (error) {
+      this.log("per-event boundary caught unexpected failure", {
+        eventId: event.id,
+        error: String((error as Error)?.message ?? error),
+      });
+      try {
+        await this.scheduleRetryViaPoolQuery(event, error as Error);
+      } catch (scheduleError) {
+        this.log("per-event boundary schedule failed; unlock fallback", {
+          eventId: event.id,
+          error: String((scheduleError as Error)?.message ?? scheduleError),
+        });
+        await this.unlockClaimedEventBestEffort(event, error as Error);
+      }
     }
   }
 
@@ -137,7 +164,16 @@ export class OutboxProcessor {
       return;
     }
 
-    const client = await pool.connect();
+    let client: PoolClient;
+    try {
+      client = await pool.connect();
+    } catch (connectError) {
+      // Connection acquisition is inside the per-event boundary — schedule retry without
+      // abandoning siblings. Uses pool.query (one-shot) when dedicated clients are unavailable.
+      await this.scheduleRetryViaPoolQuery(event, connectError as Error);
+      return;
+    }
+
     try {
       await client.query("BEGIN");
       const result = await handler.deliver(event.payload, {
@@ -179,6 +215,95 @@ export class OutboxProcessor {
       await this.markRetryOrFailure(event, error as Error);
     } finally {
       client.release();
+    }
+  }
+
+  /**
+   * Bounded fallback when pool.connect() fails (or outer boundary catches): schedule retry /
+   * unlock via pool.query so claimed-row semantics stay consistent without a dedicated client.
+   * Does not weaken SKIP LOCKED / idempotency — only advances retry_count + clears this lock.
+   */
+  private async scheduleRetryViaPoolQuery(event: ClaimedEvent, error: Error) {
+    const nextRetryCount = Number(event.retry_count ?? 0) + 1;
+    const exhausted = nextRetryCount >= MAX_RETRIES;
+    const errorMessage = String(error?.message ?? error);
+    const delayMs = retryDelayMs(nextRetryCount, error);
+    const nextRetryAt = new Date(Date.now() + delayMs).toISOString();
+    const releaseOnExhaust = exhausted ? releaseDedupeSqlFragment(event.event_type) : "";
+
+    try {
+      await pool.query(
+        `
+          UPDATE outbox.events
+          SET retry_count = $2,
+              next_retry_at = CASE WHEN $3 THEN next_retry_at ELSE $4::timestamptz END,
+              failed_at = CASE WHEN $3 THEN now() ELSE failed_at END,
+              last_error = left($5, 2000),
+              locked_at = NULL,
+              locked_by = NULL,
+              updated_at = now()
+              ${releaseOnExhaust}
+          WHERE id = $1
+        `,
+        [event.id, nextRetryCount, exhausted, nextRetryAt, errorMessage]
+      );
+      try {
+        await pool.query(`SELECT audit.append_event($1, $2, $3::jsonb, NULL, $4)`, [
+          exhausted ? "outbox.event.failed" : "outbox.event.retried",
+          "warning",
+          JSON.stringify({
+            outbox_event_id: event.id,
+            event_type: event.event_type,
+            retry_count: nextRetryCount,
+            next_retry_at: exhausted ? null : nextRetryAt,
+            retry_delay_ms: delayMs,
+            retry_after_ms: retryAfterMsFromError(error),
+            error: errorMessage,
+            instance_id: this.instanceId,
+            connect_boundary_fallback: true,
+            max_attempts_exhausted: exhausted,
+            ...this.tenantMeta(event.payload),
+          }),
+          "BT-2-OUTBOX-PROCESSOR",
+        ]);
+      } catch {
+        /* audit best-effort — retry state already persisted */
+      }
+      this.log("outbox retry scheduled via pool.query fallback", {
+        eventId: event.id,
+        exhausted,
+        nextRetryCount,
+        error: errorMessage,
+      });
+    } catch (scheduleError) {
+      this.log("pool.query retry schedule failed", {
+        eventId: event.id,
+        error: String((scheduleError as Error)?.message ?? scheduleError),
+      });
+      await this.unlockClaimedEventBestEffort(event, error);
+    }
+  }
+
+  /** Last-resort unlock so the event is not stuck until the 5-minute stale reclaim. */
+  private async unlockClaimedEventBestEffort(event: ClaimedEvent, error: Error) {
+    try {
+      await pool.query(
+        `
+          UPDATE outbox.events
+          SET locked_at = NULL,
+              locked_by = NULL,
+              last_error = left($2, 2000),
+              updated_at = now()
+          WHERE id = $1
+            AND locked_by = $3
+        `,
+        [event.id, String(error?.message ?? error), this.instanceId]
+      );
+    } catch (unlockError) {
+      this.log("unlock fallback failed; stale-lock reclaim remains", {
+        eventId: event.id,
+        error: String((unlockError as Error)?.message ?? unlockError),
+      });
     }
   }
 
@@ -256,6 +381,19 @@ export class OutboxProcessor {
   }
 
   private async markRetryOrFailure(event: ClaimedEvent, error: Error) {
+    let client: PoolClient | null = null;
+    try {
+      client = await pool.connect();
+    } catch (connectError) {
+      await this.scheduleRetryViaPoolQuery(
+        event,
+        new Error(
+          `retry-schedule connect failed: ${String((connectError as Error)?.message ?? connectError)}; prior: ${String(error?.message ?? error)}`
+        )
+      );
+      return;
+    }
+
     const nextRetryCount = Number(event.retry_count ?? 0) + 1;
     const exhausted = nextRetryCount >= MAX_RETRIES;
     const errorMessage = String(error?.message ?? error);
@@ -263,7 +401,6 @@ export class OutboxProcessor {
     const nextRetryAt = new Date(Date.now() + delayMs).toISOString();
     const releaseOnExhaust = exhausted ? releaseDedupeSqlFragment(event.event_type) : "";
 
-    const client = await pool.connect();
     try {
       await client.query("BEGIN");
       await client.query(
@@ -311,6 +448,7 @@ export class OutboxProcessor {
     } catch (updateError) {
       await client.query("ROLLBACK").catch(() => undefined);
       this.log("failed to update retry state", { eventId: event.id, error: String((updateError as Error)?.message ?? updateError) });
+      await this.scheduleRetryViaPoolQuery(event, error).catch(() => undefined);
     } finally {
       client.release();
     }

@@ -184,6 +184,36 @@ describe("fmcsa-client HTTP taxonomy", () => {
     expect(saferHits).toBe(1);
   });
 
+  it("aggregates max Retry-After when mobile cooldown > SAFER (SAFER status wins)", async () => {
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("mobile.fmcsa")) return jsonResponse(429, {}, { "retry-after": "120" });
+      return htmlResponse(429, "<html>rl</html>", { "retry-after": "15" });
+    }) as typeof fetch;
+    const { lookupCarrierByMC } = await import("../fmcsa-client.js");
+    await expect(lookupCarrierByMC("12345")).rejects.toMatchObject({
+      name: "FmcsaRetryableError",
+      status: 429,
+      message: expect.stringMatching(/safer/i),
+      retryAfterMs: 120_000,
+    });
+  });
+
+  it("aggregates max Retry-After when SAFER cooldown > mobile (SAFER status wins)", async () => {
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("mobile.fmcsa")) return jsonResponse(429, {}, { "retry-after": "10" });
+      return htmlResponse(503, "<html>unavailable</html>", { "retry-after": "90" });
+    }) as typeof fetch;
+    const { lookupCarrierByMC } = await import("../fmcsa-client.js");
+    await expect(lookupCarrierByMC("12345")).rejects.toMatchObject({
+      name: "FmcsaRetryableError",
+      status: 503,
+      message: expect.stringMatching(/safer/i),
+      retryAfterMs: 90_000,
+    });
+  });
+
   it("may try alternate SAFER query_param only after authoritative 404 miss", async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);

@@ -170,5 +170,72 @@ describe("OutboxProcessor FMCSA verify durability behavior", () => {
     expect(src).toMatch(/locked_at < now\(\) - interval '5 minutes'/);
     expect(src).toMatch(/OUTBOX_CLAIM_IS_GLOBAL_ARCHITECTURAL/);
     expect(src).toMatch(/payload\.operating_company_id/);
+    expect(src).toMatch(/processClaimedEvent/);
+    expect(src).toMatch(/scheduleRetryViaPoolQuery/);
+  });
+
+  it("connect failure on first claimed event schedules retry via pool.query and still processes siblings", async () => {
+    const batch = [
+      { ...BASE_EVENT, id: "evt-a" },
+      { ...BASE_EVENT, id: "evt-b" },
+      { ...BASE_EVENT, id: "evt-c" },
+    ];
+    poolQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("WITH picked AS")) return { rows: batch };
+      return { rows: [] };
+    });
+    let connectN = 0;
+    connect.mockImplementation(async () => {
+      connectN += 1;
+      if (connectN === 1) throw new Error("connect ECONNREFUSED");
+      return makeClient();
+    });
+    deliver.mockResolvedValue({ message: "ok" });
+
+    const { OutboxProcessor } = await import("../processor.js");
+    const processor = new OutboxProcessor();
+    await (processor as unknown as { pollAndProcessBatch: () => Promise<void> }).pollAndProcessBatch();
+
+    expect(deliver).toHaveBeenCalledTimes(2);
+    const deliveredIds = deliver.mock.calls.map((c) => {
+      // deliver(payload, ctx) — ctx.eventId
+      return (c[1] as { eventId?: string })?.eventId;
+    });
+    expect(deliveredIds).toEqual(["evt-b", "evt-c"]);
+    const scheduleSql = poolQuery.mock.calls.map((c) => String(c[0])).join("\n");
+    expect(scheduleSql).toMatch(/retry_count/);
+    expect(scheduleSql).toMatch(/locked_at = NULL/);
+    const scheduleParams = poolQuery.mock.calls.find((c) => String(c[0]).includes("retry_count = $2"));
+    expect(scheduleParams?.[1]?.[0]).toBe("evt-a");
+  });
+
+  it("connect failure on middle claimed event does not abandon later siblings (no 5-minute batch abort)", async () => {
+    const batch = [
+      { ...BASE_EVENT, id: "evt-1" },
+      { ...BASE_EVENT, id: "evt-2" },
+      { ...BASE_EVENT, id: "evt-3" },
+    ];
+    poolQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("WITH picked AS")) return { rows: batch };
+      return { rows: [] };
+    });
+    let connectN = 0;
+    connect.mockImplementation(async () => {
+      connectN += 1;
+      // First event succeeds (connect #1); second event's delivery connect fails (#2).
+      if (connectN === 2) throw new Error("connect timeout");
+      return makeClient();
+    });
+    deliver.mockResolvedValue({ message: "ok" });
+
+    const { OutboxProcessor } = await import("../processor.js");
+    const processor = new OutboxProcessor();
+    await (processor as unknown as { pollAndProcessBatch: () => Promise<void> }).pollAndProcessBatch();
+
+    expect(deliver).toHaveBeenCalledTimes(2);
+    const eventIds = deliver.mock.calls.map((c) => (c[1] as { eventId?: string })?.eventId);
+    expect(eventIds).toContain("evt-1");
+    expect(eventIds).toContain("evt-3");
+    expect(eventIds).not.toContain("evt-2");
   });
 });

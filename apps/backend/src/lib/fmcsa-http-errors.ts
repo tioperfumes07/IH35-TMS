@@ -77,3 +77,31 @@ export function retryAfterMsFromError(error: unknown): number | null {
   if (value == null || !Number.isFinite(value)) return null;
   return clampRetryAfterMs(value);
 }
+
+/**
+ * Aggregate retry cooldown when mobile + SAFER both signal retryable.
+ * `preferred` wins for status/message (SAFER when both fail); Retry-After is max(...)
+ * so outbox never under-sleeps the stricter provider cooldown.
+ */
+export function mergeFmcsaRetryableCooldown(
+  preferred: FmcsaRetryableError,
+  other: FmcsaRetryableError | null | undefined
+): FmcsaRetryableError {
+  if (!other) return preferred;
+  const a = preferred.retryAfterMs;
+  const b = other.retryAfterMs;
+  if (a == null && b == null) return preferred;
+  if (a == null) {
+    return new FmcsaRetryableError(preferred.message, {
+      status: preferred.status,
+      retryAfterMs: b == null ? null : clampRetryAfterMs(b),
+    });
+  }
+  if (b == null) return preferred;
+  const maxMs = Math.max(clampRetryAfterMs(a), clampRetryAfterMs(b));
+  if (maxMs === clampRetryAfterMs(a)) return preferred;
+  return new FmcsaRetryableError(preferred.message, {
+    status: preferred.status,
+    retryAfterMs: maxMs,
+  });
+}

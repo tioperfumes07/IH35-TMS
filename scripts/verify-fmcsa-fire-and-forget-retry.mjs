@@ -574,6 +574,25 @@ export function collectFailures(sources) {
   if (!/if\s*\(\s*mobileRetryable\s*\)\s*throw\s+mobileRetryable/.test(fmcsaClient)) {
     failures.push("fmcsa-client must rethrow mobileRetryable when SAFER returns null (no 429→null collapse)");
   }
+  // Dual-source retryable: SAFER status/message preferred, Retry-After = max(mobile, SAFER).
+  if (!/mergeFmcsaRetryableCooldown/.test(fmcsaClient) && !/mergeFmcsaRetryableCooldown/.test(httpErrors)) {
+    failures.push("fmcsa-client/http-errors must mergeFmcsaRetryableCooldown across mobile+SAFER retryable");
+  }
+  if (!/mergeFmcsaRetryableCooldown\s*\(\s*error\s*,\s*mobileRetryable\s*\)/.test(fmcsaClient)) {
+    failures.push("lookupCarrier must mergeFmcsaRetryableCooldown(saferError, mobileRetryable) — never drop max Retry-After");
+  }
+  {
+    const mergeSrc = sources.httpErrors;
+    if (!/Math\.max/.test(mergeSrc) || !/mergeFmcsaRetryableCooldown/.test(mergeSrc)) {
+      failures.push("mergeFmcsaRetryableCooldown must take Math.max of Retry-After values");
+    }
+  }
+  if (!/processClaimedEvent/.test(processor) || !/scheduleRetryViaPoolQuery/.test(processor)) {
+    failures.push("processor must processClaimedEvent + scheduleRetryViaPoolQuery (per-event connect boundary)");
+  }
+  if (!/for\s*\(\s*const\s+event\s+of\s+events\s*\)\s*\{\s*await\s+this\.processClaimedEvent/.test(processor)) {
+    failures.push("processor batch loop must await processClaimedEvent per event (no sibling abandonment)");
+  }
   if (!/if\s*\(\s*mobilePermanent\s*\)\s*throw\s+mobilePermanent/.test(fmcsaClient)) {
     failures.push("fmcsa-client must rethrow mobilePermanent when SAFER misses (no permanent→not-found collapse)");
   }
@@ -916,6 +935,28 @@ function selftest() {
       }),
       expect: (f) =>
         f.some((x) => /continue after SAFER retryable|throw typed retryable|lastRetryable|honor Retry-After/i.test(x)),
+    },
+    {
+      name: "cooldown loss: throw SAFER retryable without mergeFmcsaRetryableCooldown",
+      mutate: (s) => ({
+        ...s,
+        fmcsaClient: s.fmcsaClient.replace(
+          /throw\s+mergeFmcsaRetryableCooldown\s*\(\s*error\s*,\s*mobileRetryable\s*\)\s*;/,
+          "throw error;"
+        ),
+      }),
+      expect: (f) => f.some((x) => /mergeFmcsaRetryableCooldown|max Retry-After|cooldown/i.test(x)),
+    },
+    {
+      name: "batch loop calls processEvent directly (sibling abandonment)",
+      mutate: (s) => ({
+        ...s,
+        processor: s.processor.replace(
+          /await\s+this\.processClaimedEvent\s*\(\s*event\s*\)\s*;/g,
+          "await this.processEvent(event);"
+        ),
+      }),
+      expect: (f) => f.some((x) => /processClaimedEvent|sibling abandonment|per-event/i.test(x)),
     },
   ];
 
