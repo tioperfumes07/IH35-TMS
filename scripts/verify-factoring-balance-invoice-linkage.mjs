@@ -44,6 +44,8 @@ const PATHS = {
   posterAtomicityTest: "apps/backend/src/accounting/factoring-posting/__tests__/poster-lifecycle-atomicity.test.ts",
   lifecycleRepairTest: "apps/backend/src/accounting/factoring-posting/__tests__/lifecycle-repair.test.ts",
   cpaVetoTest: "apps/backend/src/accounting/factoring-posting/__tests__/cpa-veto-eb06028d-remediation.test.ts",
+  conn2Test: "apps/backend/src/accounting/factoring-posting/__tests__/conn2-ar-subledger-and-reserve-tracker.test.ts",
+  posterDiLifecycleTest: "apps/backend/src/accounting/factoring-posting/__tests__/poster-default-interest-lifecycle.test.ts",
   day95Test: "apps/backend/src/accounting/factoring-posting/__tests__/default-interest-day95-recourse.test.ts",
   chain06DbTest: "apps/backend/src/accounting/factoring-posting/__tests__/chain-06-factoring-ar-tieout.db.test.ts",
   companyDateTest: "apps/backend/src/lib/__tests__/company-business-date.test.ts",
@@ -87,10 +89,16 @@ export function checker(sources) {
     const stripped = stripCommentsKeepStrings(sources[key], { sql: key === "migration" });
     if (!stripped.includes(text)) failures.push(code);
   };
-  /** Identifier must appear in executable code body (ignores dead string-literal-only decoys). */
+  /**
+   * Identifier must appear in executable code OR SQL template bodies.
+   * Dead unused string-literal-only decoys (`const x = "ident"`) do NOT satisfy this —
+   * stringLiterals are ignored; only code skeleton + sqlTemplates count.
+   */
   const requireIdent = (key, ident, code) => {
-    const codeBody = toExecutableSemantics(sources[key] ?? "").code;
-    if (!codeBody.includes(ident)) failures.push(code);
+    const sem = toExecutableSemantics(sources[key] ?? "");
+    const inCode = sem.code.includes(ident);
+    const inSql = (sem.sqlTemplates ?? []).some((s) => String(s).includes(ident));
+    if (!inCode && !inSql) failures.push(code);
   };
   const forbidExec = (key, re, code) => {
     const stripped = stripCommentsKeepStrings(sources[key], { sql: key === "migration" || key === "dbTest" });
@@ -254,7 +262,6 @@ export function checker(sources) {
     "poster_chargeback_lock_before_keys_missing"
   );
   requireExec("poster", "expected_entry_date: accrualDate", "poster_di_repair_expected_entry_date_missing");
-  requireExec("poster", "accrual_date < $3::date", "poster_di_prior_closing_before_date_missing");
   requireExec("lifecycleRepair", "expected_entry_date", "lifecycle_repair_expected_entry_date_missing");
   requireExec("faroCsvTest", "rejected Faro agreement leaves zero durable CSV rows", "faro_csv_test_reject_no_rows_missing");
   requireExec("faroCsvTest", "as-of statement/economic date", "faro_csv_test_statement_date_agreement_missing");
@@ -262,7 +269,29 @@ export function checker(sources) {
   requireExec("cpaVetoTest", "repair_candidate_wrong_entry_date", "cpa_veto_test_di_wrong_entry_date_missing");
   requireExec("cpaVetoTest", "concurrent duplicate retries under row lock", "cpa_veto_test_chargeback_concurrent_missing");
   requireExec("cpaVetoTest", "wrong accrual amount vs contractual math", "cpa_veto_test_di_wrong_amount_missing");
-  // Dead string-literal decoy must not satisfy identifier plants (CR eb06028d).
+  // CPA VETO 36946df7 follow-on — cumulative paid + liability interest base + agreement immutability.
+  requireIdent("poster", "linkedCustomerPaymentPaidCents", "poster_cumulative_paid_helper_missing");
+  requireIdent("poster", "defaultInterestOpeningFromOutstandingLiability", "poster_di_opening_from_liability_missing");
+  requireExec("poster", "factoring_customer_payment_over_invoice_face: paid=", "poster_cumulative_paid_over_face_missing");
+  forbidExec(
+    "poster",
+    /applyCustomerPaymentSubledgerRelief\([\s\S]{0,120}amountCents/,
+    "poster_must_not_pass_latest_allocation_as_paid"
+  );
+  requireExec("conn2Test", "multi-payment cumulative", "conn2_test_multi_payment_cumulative_missing");
+  requireExec(
+    "posterDiLifecycleTest",
+    "post-payment interest base",
+    "poster_di_test_post_payment_base_missing"
+  );
+  requireExec("migration", "prevent_canonical_factor_agreement_term_mutation", "migration_agreement_term_immutability_missing");
+  requireExec("migration", "trg_canonical_factor_agreements_terms_immutable", "migration_agreement_immutability_trigger_missing");
+  requireExec("migration", "ADD COLUMN IF NOT EXISTS voided_at", "migration_agreement_voided_at_missing");
+  requireExec("migration", "canonical_factor_agreement_terms_immutable", "migration_agreement_immutable_exception_missing");
+  requireIdent("service", "voided_at", "service_must_exclude_voided_agreements");
+  requireExec("service", "a.voided_at IS NULL", "service_agreement_void_filter_missing");
+  requireExec("dbTest", "canonical_factor_agreement_terms_immutable", "db_test_agreement_term_immutability_missing");
+  // Dead string-literal decoy must not satisfy identifier plants (CR eb06028d / 36946df7).
   requireIdent("poster", "resolveCanonicalEntryDate", "poster_date_resolver_ident_missing");
   requireExec("journalEntries", "createJournalEntryOnClient", "journal_entries_on_client_missing");
   requireExec("journalEntries", "afterInsertBeforeCommit", "journal_entries_after_insert_hook_missing");
@@ -377,6 +406,10 @@ export function checker(sources) {
   requireText("additions", "upsertFaroDailyImportOnClient", "additions_missing_csv_atomic_upsert");
   requireText("additions", "ensureDefaultInterestAccruedThroughDate", "additions_missing_di_catchup");
   requireText("additions", "repairChargebackAlreadyPosted", "additions_missing_chargeback_lock_repair");
+  requireText("additions", "36946df7", "additions_missing_36946df7_veto");
+  requireText("additions", "linkedCustomerPaymentPaidCents", "additions_missing_cumulative_paid");
+  requireText("additions", "defaultInterestOpeningFromOutstandingLiability", "additions_missing_di_liability_base");
+  requireText("additions", "prevent_canonical_factor_agreement_term_mutation", "additions_missing_agreement_immutability");
 
   // Tests — fixture IDs, plants, isolation, CPA negatives
   requireExec("cpaVetoTest", "policy_overpayment", "cpa_veto_test_overpayment_missing");
@@ -479,11 +512,18 @@ function createBadFixture(good) {
       .replace(/liveJournalEntryNotReversedSql/g, "liveSomethingElse")
       .replace(/requireEffectiveFaroFullRecourseAgreement/g, "requireSomethingElse")
       .replace(/FactoringLifecyclePostingKeyRaceError/g, "SomeOtherRaceError")
-      .replace(/resolveCanonicalEntryDate/g, "resolveSomethingElse") +
+      .replace(/resolveCanonicalEntryDate/g, "resolveSomethingElse")
+      .replace(/linkedCustomerPaymentPaidCents/g, "linkedSomethingElse")
+      .replace(/defaultInterestOpeningFromOutstandingLiability/g, "defaultInterestSomethingElse")
+      .replace(/repairChargebackAlreadyPosted/g, "repairSomethingElse") +
     '\nconst _dead_decoy_policy = "policy_overpayment";\n' +
     '\nconst _dead_decoy_shape = "validateLifecycleJeExactShape";\n' +
+    '\nconst _dead_decoy_paid = "linkedCustomerPaymentPaidCents";\n' +
+    '\nconst _dead_decoy_di_open = "defaultInterestOpeningFromOutstandingLiability";\n' +
+    '\nconst _dead_decoy_repair = "repairChargebackAlreadyPosted";\n' +
     "\nconst allocated = Math.min(inv.total_cents, allocations.get(inv.id) ?? 0);\n" +
-    "\nfunction resolveCanonicalEntryDate(){ return companyBusinessDate(); }\n";
+    "\nfunction resolveCanonicalEntryDate(){ return companyBusinessDate(); }\n" +
+    "\nasync function applyCustomerPaymentSubledgerRelief(client, opco, advanceId, amountCents) { void amountCents; }\n";
   bad.faroCsv =
     String(good.faroCsv ?? "")
       .replace(/upsertFaroDailyImportOnClient/g, "upsertSomethingElse")
@@ -497,12 +537,16 @@ function createBadFixture(good) {
       .replace(/requireEffectiveFaroFullRecourseAgreement/g, "requireSomethingElse")
       .replace(/ensureDefaultInterestAccruedThroughDate/g, "ensureSomethingElse");
   bad.poster =
-    String(bad.poster)
-      .replace(/repairChargebackAlreadyPosted/g, "repairSomethingElse")
-      .replace(/SAVEPOINT factoring_chargeback_je_create/g, "SAVEPOINT something_else");
+    String(bad.poster).replace(/SAVEPOINT factoring_chargeback_je_create/g, "SAVEPOINT something_else");
+  bad.migration =
+    String(bad.migration)
+      .replace(/prevent_canonical_factor_agreement_term_mutation/g, "prevent_something_else")
+      .replace(/trg_canonical_factor_agreements_terms_immutable/g, "trg_something_else")
+      .replace(/ADD COLUMN IF NOT EXISTS voided_at/g, "ADD COLUMN IF NOT EXISTS something_else");
   bad.service =
     String(bad.service) +
     "\nconst legal = row.legal_name; /TRANSPORTATION/i.test(legal);\n";
+  bad.service = String(bad.service).replace(/a\.voided_at IS NULL/g, "a.something_else IS NULL");
   return bad;
 }
 
@@ -531,6 +575,11 @@ if (isDirectRun) {
       "migration_missing_force_rls",
       "service_must_not_clamp_with_math_max",
       "service_must_not_infer_legal_name",
+      "poster_cumulative_paid_helper_missing",
+      "poster_di_opening_from_liability_missing",
+      "poster_must_not_pass_latest_allocation_as_paid",
+      "migration_agreement_term_immutability_missing",
+      "service_agreement_void_filter_missing",
     ],
   });
 }

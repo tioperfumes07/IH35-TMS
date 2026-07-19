@@ -44,7 +44,7 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
   const suffix = randomUUID().slice(0, 8);
   const vendorId = randomUUID();
   const factorProfileId = randomUUID();
-  const faroAgreementId = randomUUID();
+  let faroAgreementId = randomUUID();
   const otherVendorId = randomUUID();
   const customerId = randomUUID();
   const otherCustomerId = randomUUID();
@@ -1249,6 +1249,95 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
         [faroAgreementId]
       );
     });
+  });
+
+  it("canonical_factor_agreement_terms_immutable: fee_rate rewrite blocked; void/archive excludes from as-of", async () => {
+    const voidedVersionId = faroAgreementId;
+
+    // Retroactive term mutation must fail — posters attribute history to immutable versions.
+    await bypass(companyId, async () => {
+      await expect(
+        db.query(
+          `UPDATE factoring.canonical_factor_agreements
+              SET fee_rate_tier1 = 0.0999
+            WHERE id = $1::uuid`,
+          [voidedVersionId]
+        )
+      ).rejects.toThrow(/canonical_factor_agreement_terms_immutable/);
+    });
+
+    // effective_to close remains allowed (append-only versioning window close).
+    await bypass(companyId, async () => {
+      await db.query(
+        `UPDATE factoring.canonical_factor_agreements
+            SET effective_to = '2026-12-31'
+          WHERE id = $1::uuid`,
+        [voidedVersionId]
+      );
+      await db.query(
+        `UPDATE factoring.canonical_factor_agreements
+            SET effective_to = NULL
+          WHERE id = $1::uuid`,
+        [voidedVersionId]
+      );
+    });
+
+    // Void/archive excludes the version from as-of Faro resolution (no silent rewrite).
+    await bypass(companyId, async () => {
+      await db.query(
+        `UPDATE factoring.canonical_factor_agreements
+            SET voided_at = now(), voided_by_user_id = $2::uuid
+          WHERE id = $1::uuid`,
+        [voidedVersionId, TEST_OWNER_USER_ID]
+      );
+    });
+    const missing = await computeFactoringBalanceInvoiceLinkage(await scopedClient(), {
+      operatingCompanyId: companyId,
+      asOfBusinessDate: "2026-07-19",
+    });
+    expect(missing.status).toBe("unverifiable");
+    expect(missing.unverifiable_reason).toBe("missing_faro_agreement_binding");
+
+    // Append-only restore: INSERT a new effective-dated version (cannot un-void).
+    // Distinct effective_from — UNIQUE (tenant, vendor, code, effective_from).
+    const restoredId = randomUUID();
+    await bypass(companyId, async () => {
+      await db.query(
+        `
+          INSERT INTO factoring.canonical_factor_agreements (
+            id, tenant_id, factor_profile_id, factor_vendor_id, agreement_code,
+            effective_from, effective_to, is_full_recourse,
+            fee_rate_tier1, fee_rate_tier2, reserve_rate,
+            repurchase_term_days, grace_days, repurchase_deadline_days,
+            default_interest_daily_rate, created_by_user_id
+          )
+          SELECT
+            $1::uuid, tenant_id, factor_profile_id, factor_vendor_id, agreement_code,
+            '2026-01-01'::date, NULL, is_full_recourse,
+            fee_rate_tier1, fee_rate_tier2, reserve_rate,
+            repurchase_term_days, grace_days, repurchase_deadline_days,
+            default_interest_daily_rate, created_by_user_id
+          FROM factoring.canonical_factor_agreements
+          WHERE id = $2::uuid
+        `,
+        [restoredId, voidedVersionId]
+      );
+      // Term rewrite on the voided historical version remains blocked.
+      await expect(
+        db.query(
+          `UPDATE factoring.canonical_factor_agreements
+              SET fee_rate_tier1 = 0.0500
+            WHERE id = $1::uuid`,
+          [voidedVersionId]
+        )
+      ).rejects.toThrow(/canonical_factor_agreement_terms_immutable/);
+    });
+    faroAgreementId = restoredId;
+    const ok = await computeFactoringBalanceInvoiceLinkage(await scopedClient(), {
+      operatingCompanyId: companyId,
+      asOfBusinessDate: "2026-07-19",
+    });
+    expect(["ok", "empty", "accounting_exception"]).toContain(ok.status);
   });
 
   it("wrong Faro profile terms → faro_agreement_terms_mismatch", async () => {

@@ -316,6 +316,7 @@ export async function resolveCanonicalActiveFactor(
        AND v.deactivated_at IS NULL
       WHERE a.tenant_id = $1::uuid
         AND a.agreement_code = $2
+        AND a.voided_at IS NULL
         AND a.effective_from <= $3::date
         AND (a.effective_to IS NULL OR a.effective_to >= $3::date)
       ORDER BY a.effective_from DESC, a.id::text ASC
@@ -336,6 +337,7 @@ export async function resolveCanonicalActiveFactor(
         FROM factoring.canonical_factor_agreements
         WHERE tenant_id = $1::uuid
           AND agreement_code = $3
+          AND voided_at IS NULL
       `,
       [operatingCompanyId, asOf, FARO_FULL_RECOURSE_AGREEMENT_CODE]
     );

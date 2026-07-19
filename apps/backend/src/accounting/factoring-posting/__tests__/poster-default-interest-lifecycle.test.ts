@@ -65,8 +65,17 @@ const ACTOR = "33333333-3333-4333-8333-333333333333";
 
 type AccrualState = { exists?: boolean; lastClosing?: number | null };
 
-function installDefaults(opts: { flagOn?: boolean; accrual?: AccrualState } = {}) {
+function installDefaults(
+  opts: {
+    flagOn?: boolean;
+    accrual?: AccrualState;
+    outstandingLiabilityCents?: number;
+    ledgerPaidCents?: number;
+  } = {}
+) {
   const flagOn = opts.flagOn ?? true;
+  const outstandingLiabilityCents = opts.outstandingLiabilityCents ?? 500000;
+  const ledgerPaidCents = opts.ledgerPaidCents ?? 0;
   mockQuery.mockReset();
   mockIsEnabled.mockReset();
   mockCreateJournalEntry.mockReset();
@@ -98,8 +107,13 @@ function installDefaults(opts: { flagOn?: boolean; accrual?: AccrualState } = {}
     if (sql.includes("SAVEPOINT") || sql.includes("RELEASE SAVEPOINT") || sql.includes("ROLLBACK TO SAVEPOINT")) return { rows: [] };
     if (sql.includes("FOR UPDATE")) return { rows: [{ id: "locked" }] };
     if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
+    // Cumulative ledger-backed customer payments (amount_paid_cents authority).
+    if (sql.includes("AS paid") && sql.includes("factoring_customer_payment")) {
+      return { rows: [{ paid: String(ledgerPaidCents) }] };
+    }
+    // Interest opening base = exact linked outstanding liability (after payments).
     if (sql.includes("AS outstanding")) {
-      return { rows: [{ outstanding: "500000" }] };
+      return { rows: [{ outstanding: String(outstandingLiabilityCents) }] };
     }
     if (sql.includes("factoring_lifecycle_posting_keys")) {
       if (sql.includes("INSERT")) return { rows: [{ journal_entry_id: "je-1" }] };
@@ -250,8 +264,9 @@ describe("Faro factoring — default-interest + full lifecycle (Net $5,000)", ()
     expect(sum(p, "debit")).toBe(sum(p, "credit"));
   });
 
-  it("DAY-41 ACCRUAL: COMPOUNDS off the prior closing 500,335 → interest 335 → closing 500,670", async () => {
-    installDefaults({ accrual: { exists: false, lastClosing: 500335 } });
+  it("DAY-41 ACCRUAL: COMPOUNDS off outstanding liability 500,335 → interest 335 → closing 500,670", async () => {
+    // Outstanding liability already includes day-40 interest credit (no intervening payments).
+    installDefaults({ accrual: { exists: false }, outstandingLiabilityCents: 500335 });
     const res = await postFactoringDefaultInterestAccrualEvent({
       operating_company_id: OPCO,
       factoring_advance_id: ADVANCE,
@@ -263,6 +278,28 @@ describe("Faro factoring — default-interest + full lifecycle (Net $5,000)", ()
     expect(res.closing_balance_cents).toBe(500670);
     const p = postingsFromCall(0);
     expect(leg(p, "default_interest_expense")).toMatchObject({ amount_cents: 335 });
+  });
+
+  it("post-payment interest base: $100 payment reduces opening from 500000 → 400000 (not stale face)", async () => {
+    installDefaults({ accrual: { exists: false }, outstandingLiabilityCents: 400000 });
+    const res = await postFactoringDefaultInterestAccrualEvent({
+      operating_company_id: OPCO,
+      factoring_advance_id: ADVANCE,
+      actor_user_id: ACTOR,
+      accrual_date_iso: "2026-02-16",
+    });
+    expect(res.posted).toBe(true);
+    // round(400000 * 0.00067) = 268 — would be 335 if stale invoice face were used.
+    expect(res.closing_balance_cents).toBe(400268);
+    const p = postingsFromCall(0);
+    expect(leg(p, "default_interest_expense")).toMatchObject({
+      debit_or_credit: "debit",
+      amount_cents: 268,
+    });
+    expect(leg(p, "factoring_advance_liability")).toMatchObject({
+      debit_or_credit: "credit",
+      amount_cents: 268,
+    });
   });
 
   it("ACCRUAL before grace (day 30): NO-OP (before_grace)", async () => {
@@ -303,7 +340,7 @@ describe("Faro factoring — default-interest + full lifecycle (Net $5,000)", ()
   });
 
   it("CUSTOMER PAYS: Dr Liability 5,000 / Cr A/R 5,000 (the only A/R decrease)", async () => {
-    installDefaults();
+    installDefaults({ ledgerPaidCents: 500000 });
     const res = await postFactoringCustomerPaymentEvent({
       operating_company_id: OPCO,
       factoring_advance_id: ADVANCE,

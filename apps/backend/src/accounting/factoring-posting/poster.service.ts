@@ -344,32 +344,66 @@ async function loadAdvanceInvoices(
   return res.rows.map((r) => ({ id: r.id, total_cents: Number(r.total_cents ?? 0), voided_at: r.voided_at }));
 }
 
-// Deterministic SET (never an increment) — re-running with the same amountCents produces the identical
-// final state, so this is safe to call both after a fresh JE post AND as a self-heal on an
-// `already_posted` re-entry. Allocates proportionally across the advance's (non-voided) invoices with the
-// SAME allocateByProportion used elsewhere in this file (no new math) so a multi-invoice advance splits
-// correctly instead of double/under-crediting any one invoice.
+/**
+ * Cumulative ledger-backed customer payments against an advance (AR-credit legs).
+ * Authoritative for amount_paid_cents — never the latest allocation alone.
+ */
+async function linkedCustomerPaymentPaidCents(
+  client: DbClient,
+  operatingCompanyId: string,
+  factoringAdvanceId: string
+): Promise<number> {
+  const notReversed = await liveJournalEntryNotReversedSql(client);
+  const res = await client.query<{ paid: string }>(
+    `
+      SELECT COALESCE(SUM(jep.amount_cents), 0)::text AS paid
+        FROM accounting.journal_entry_postings jep
+        JOIN accounting.journal_entries je
+          ON je.id = jep.journal_entry_uuid
+         AND je.operating_company_id = jep.operating_company_id
+        JOIN accounting.chart_of_accounts_roles r
+          ON r.account_id = jep.account_id
+         AND r.operating_company_id = jep.operating_company_id
+         AND r.is_active = true
+         AND r.role = 'ar_control'
+       WHERE jep.operating_company_id = $1::uuid
+         AND jep.source_transaction_id = $2::text
+         AND jep.source_transaction_type = 'factoring_customer_payment'
+         AND jep.debit_or_credit = 'credit'
+         AND je.status = 'posted'
+         AND je.voided_at IS NULL
+         ${notReversed}
+    `,
+    [operatingCompanyId, factoringAdvanceId]
+  );
+  return Number(res.rows[0]?.paid ?? 0);
+}
+
+// Deterministic SET from CUMULATIVE ledger-backed payments (never latest-allocation overwrite).
+// Safe on fresh post AND already_posted repair: re-reading the JE sum yields the same paid total.
 async function applyCustomerPaymentSubledgerRelief(
   client: DbClient,
   operatingCompanyId: string,
-  factoringAdvanceId: string,
-  amountCents: number
+  factoringAdvanceId: string
 ): Promise<void> {
-  if (amountCents <= 0) return;
-  const invoices = (await loadAdvanceInvoices(client, operatingCompanyId, factoringAdvanceId)).filter((inv) => !inv.voided_at);
-  // No linked invoices: nothing to sync on the subledger (GL already posted). Over-face
-  // validation applies only when invoices exist — never Math.min-clamp allocations.
+  const invoices = (await loadAdvanceInvoices(client, operatingCompanyId, factoringAdvanceId)).filter(
+    (inv) => !inv.voided_at
+  );
+  // No linked invoices: nothing to sync on the subledger (GL already posted).
   if (invoices.length === 0) return;
 
+  const paidTotal = await linkedCustomerPaymentPaidCents(client, operatingCompanyId, factoringAdvanceId);
+  if (paidTotal <= 0) return;
+
   const invoiceFace = invoices.reduce((acc, inv) => acc + inv.total_cents, 0);
-  if (amountCents > invoiceFace) {
+  if (paidTotal > invoiceFace) {
     throw new Error(
-      `factoring_customer_payment_over_invoice_face: amount=${amountCents} face=${invoiceFace}`
+      `factoring_customer_payment_over_invoice_face: paid=${paidTotal} face=${invoiceFace}`
     );
   }
 
   const allocations = allocateByProportion(
-    amountCents,
+    paidTotal,
     invoices.map((inv) => ({ invoice_id: inv.id, total_cents: inv.total_cents }))
   );
 
@@ -1190,8 +1224,7 @@ export async function postFactoringCustomerPaymentEvent(input: PostFactoringCust
         await applyCustomerPaymentSubledgerRelief(
           client,
           input.operating_company_id,
-          input.factoring_advance_id,
-          amount
+          input.factoring_advance_id
         );
       },
     });
@@ -1237,11 +1270,11 @@ export async function postFactoringCustomerPaymentEvent(input: PostFactoringCust
       if (amount > outstanding) {
         throw new Error(`factoring_customer_payment_overpayment: amount=${amount} outstanding=${outstanding}`);
       }
+      // amount_paid_cents = cumulative ledger-backed paid (includes this JE), not latest allocation.
       await applyCustomerPaymentSubledgerRelief(
         client,
         input.operating_company_id,
-        input.factoring_advance_id,
-        amount
+        input.factoring_advance_id
       );
     },
   });
@@ -2080,11 +2113,10 @@ export async function postFactoringChargebackEvent(input: PostFactoringChargebac
 //
 //   Compounding is deterministic + idempotent via accounting.factoring_default_interest_accruals: exactly
 //   ONE row per (advance, accrual_date), carrying opening → interest → closing. The opening balance for a
-//   given day = the PRIOR accrual's closing balance (compounded), or the pledged Net (invoice_total_cents)
-//   for the first charged day. A re-run for a day already accrued no-ops (already_posted). The accrual cron
-//   drives one call per (outstanding advance, missing day) in ascending date order, so each day compounds
-//   off the committed prior row. Interest only accrues while the advance is still funded-and-unpaid
-//   (status 'advanced'); once the customer pays the factor (reserve_held) or it recourses, accrual stops.
+//   given day = exact linked outstanding factoring_advance_liability BEFORE that day's interest credit
+//   (funding + prior interest − customer payments − chargebacks). NEVER prior-accrual closing / invoice
+//   face alone — intervening customer-payment liability debits must reduce the interest base. A re-run
+//   for a day already accrued no-ops (already_posted). Interest only accrues while status is 'advanced'.
 // ---------------------------------------------------------------------------------------------------
 export type PostFactoringDefaultInterestAccrualInput = {
   operating_company_id: string;
@@ -2093,40 +2125,22 @@ export type PostFactoringDefaultInterestAccrualInput = {
   accrual_date_iso: string; // the calendar day interest is charged for (America/Chicago)
 };
 
-async function lastAccrualClosingBalance(
+/**
+ * Contractual default-interest opening = unpaid Faro liability after payments/chargebacks.
+ * Optionally exclude an in-flight / already-posted interest JE so its credit is not in the base.
+ */
+async function defaultInterestOpeningFromOutstandingLiability(
   client: DbClient,
   operatingCompanyId: string,
   factoringAdvanceId: string,
-  /** When set, ignore accruals on/after this date (recompute opening for that day). */
-  beforeDateExclusive?: string | null
-): Promise<number | null> {
-  const res = await client.query<{ closing_balance_cents: string }>(
-    beforeDateExclusive
-      ? `
-      SELECT closing_balance_cents::text AS closing_balance_cents
-      FROM accounting.factoring_default_interest_accruals
-      WHERE operating_company_id = $1::uuid
-        AND factoring_advance_id = $2::uuid
-        AND is_active = true
-        AND accrual_date < $3::date
-      ORDER BY accrual_date DESC
-      LIMIT 1
-    `
-      : `
-      SELECT closing_balance_cents::text AS closing_balance_cents
-      FROM accounting.factoring_default_interest_accruals
-      WHERE operating_company_id = $1::uuid
-        AND factoring_advance_id = $2::uuid
-        AND is_active = true
-      ORDER BY accrual_date DESC
-      LIMIT 1
-    `,
-    beforeDateExclusive
-      ? [operatingCompanyId, factoringAdvanceId, beforeDateExclusive]
-      : [operatingCompanyId, factoringAdvanceId]
+  excludeJournalEntryId?: string | null
+): Promise<number> {
+  return linkedOutstandingLiabilityCents(
+    client,
+    operatingCompanyId,
+    factoringAdvanceId,
+    excludeJournalEntryId
   );
-  const raw = res.rows[0]?.closing_balance_cents;
-  return raw == null ? null : Number(raw);
 }
 
 async function loadDefaultInterestAccrualRow(
@@ -2260,9 +2274,14 @@ export async function postFactoringDefaultInterestAccrualEvent(
       return { gate: "already_posted" as const };
     }
 
-    // Compounding: opening = prior accrual's closing, else the pledged Net (the outstanding liability).
-    const priorClosing = await lastAccrualClosingBalance(client, input.operating_company_id, input.factoring_advance_id);
-    const opening = priorClosing ?? Number(advance.invoice_total_cents ?? 0);
+    // Lock so concurrent customer payments cannot race the interest base.
+    await lockFactoringAdvanceForSettlement(client, input.operating_company_id, input.factoring_advance_id);
+    // Opening = exact linked outstanding liability AFTER payments (never stale prior-accrual / face).
+    const opening = await defaultInterestOpeningFromOutstandingLiability(
+      client,
+      input.operating_company_id,
+      input.factoring_advance_id
+    );
     if (opening <= 0) return { gate: "zero_amount" as const };
 
     const interest = Math.round(opening * FACTORING_DEFAULT_INTEREST_DAILY_RATE);
@@ -2318,18 +2337,7 @@ export async function postFactoringDefaultInterestAccrualEvent(
         return { kind: "advance_not_found" as const };
       }
       const dayIndex = dayIndexBetween(advance.advanced_at, accrualDate);
-      const priorClosing = await lastAccrualClosingBalance(
-        client,
-        input.operating_company_id,
-        input.factoring_advance_id,
-        accrualDate
-      );
-      const opening = priorClosing ?? Number(advance.invoice_total_cents ?? 0);
-      const expectedInterest = Math.round(opening * FACTORING_DEFAULT_INTEREST_DAILY_RATE);
-      const expectedClosing = opening + expectedInterest;
-      if (expectedInterest <= 0) {
-        return { kind: "repair_candidate_invalid" as const, reason: "zero_amount" };
-      }
+      await lockFactoringAdvanceForSettlement(client, input.operating_company_id, input.factoring_advance_id);
 
       const accrualRow = await loadDefaultInterestAccrualRow(
         client,
@@ -2339,6 +2347,59 @@ export async function postFactoringDefaultInterestAccrualEvent(
       );
       if (!accrualRow) {
         return { kind: "repair_candidate_invalid" as const, reason: "missing_accrual_row" };
+      }
+
+      const keyJe = await findLifecyclePostingKeyJe(client, {
+        operating_company_id: input.operating_company_id,
+        factoring_advance_id: input.factoring_advance_id,
+        source_transaction_type: "factoring_default_interest",
+        event_key: `default_interest:${accrualDate}`,
+      });
+      let journalEntryId = keyJe ?? accrualRow.journal_entry_id;
+      const memo = `Factoring default interest ${advance.display_id} day ${dayIndex} (${accrualDate})`;
+      // Resolve JE first (posting key / accrual / strict candidate) so we can exclude it from liability.
+      if (!journalEntryId) {
+        const provisionalLegs: ExpectedLifecycleLeg[] = [
+          {
+            role: "default_interest_expense",
+            debit_or_credit: "debit",
+            amount_cents: accrualRow.interest_cents,
+          },
+          {
+            role: "factoring_advance_liability",
+            debit_or_credit: "credit",
+            amount_cents: accrualRow.interest_cents,
+          },
+        ];
+        const candidate = await findStrictLifecycleRepairCandidate(client, {
+          operating_company_id: input.operating_company_id,
+          factoring_advance_id: input.factoring_advance_id,
+          source_transaction_type: "factoring_default_interest",
+          memo,
+          expected_legs: provisionalLegs,
+          expected_entry_date: accrualDate,
+        });
+        if (candidate.kind === "ambiguous") return { kind: "repair_ambiguous" as const };
+        if (candidate.kind !== "unique" || !candidate.journal_entry_id) {
+          return {
+            kind: "repair_candidate_invalid" as const,
+            reason: candidate.reason ?? "missing_repair_candidate",
+          };
+        }
+        journalEntryId = candidate.journal_entry_id;
+      }
+
+      // Opening = unpaid liability AFTER payments, EXCLUDING today's interest credit.
+      const opening = await defaultInterestOpeningFromOutstandingLiability(
+        client,
+        input.operating_company_id,
+        input.factoring_advance_id,
+        journalEntryId
+      );
+      const expectedInterest = Math.round(opening * FACTORING_DEFAULT_INTEREST_DAILY_RATE);
+      const expectedClosing = opening + expectedInterest;
+      if (expectedInterest <= 0) {
+        return { kind: "repair_candidate_invalid" as const, reason: "zero_amount" };
       }
       if (
         accrualRow.interest_cents !== expectedInterest ||
@@ -2356,39 +2417,6 @@ export async function postFactoringDefaultInterestAccrualEvent(
           amount_cents: expectedInterest,
         },
       ];
-      const memo = `Factoring default interest ${advance.display_id} day ${dayIndex} (${accrualDate})`;
-      const keyJe = await findLifecyclePostingKeyJe(client, {
-        operating_company_id: input.operating_company_id,
-        factoring_advance_id: input.factoring_advance_id,
-        source_transaction_type: "factoring_default_interest",
-        event_key: `default_interest:${accrualDate}`,
-      });
-      const journalEntryId = keyJe ?? accrualRow.journal_entry_id;
-      if (!journalEntryId) {
-        // Accrual row without JE — try strict candidate; reject if missing/invalid.
-        const candidate = await findStrictLifecycleRepairCandidate(client, {
-          operating_company_id: input.operating_company_id,
-          factoring_advance_id: input.factoring_advance_id,
-          source_transaction_type: "factoring_default_interest",
-          memo,
-          expected_legs: expectedLegs,
-          expected_entry_date: accrualDate,
-        });
-        if (candidate.kind === "ambiguous") return { kind: "repair_ambiguous" as const };
-        if (candidate.kind !== "unique" || !candidate.journal_entry_id) {
-          return {
-            kind: "repair_candidate_invalid" as const,
-            reason: candidate.reason ?? "missing_repair_candidate",
-          };
-        }
-        await attachFactoringLifecycleSourceLinksStrict(client, {
-          operating_company_id: input.operating_company_id,
-          journal_entry_id: candidate.journal_entry_id,
-          factoring_advance_id: input.factoring_advance_id,
-          source_transaction_type: "factoring_default_interest",
-        });
-        return { kind: "already_posted" as const, journal_entry_id: candidate.journal_entry_id };
-      }
 
       const shape = await validateLifecycleJeExactShape(client, {
         operating_company_id: input.operating_company_id,

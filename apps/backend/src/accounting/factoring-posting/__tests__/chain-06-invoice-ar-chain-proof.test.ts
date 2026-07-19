@@ -156,6 +156,9 @@ function installDefaults() {
     if (sql.includes("SAVEPOINT") || sql.includes("RELEASE SAVEPOINT") || sql.includes("ROLLBACK TO SAVEPOINT")) return { rows: [] };
     if (sql.includes("FOR UPDATE")) return { rows: [{ id: "locked" }] };
     if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
+    if (sql.includes("AS paid") && sql.includes("factoring_customer_payment")) {
+      return { rows: [{ paid: "100000" }] };
+    }
     if (sql.includes("AS outstanding")) {
       return { rows: [{ outstanding: "100000" }] };
     }
@@ -320,6 +323,9 @@ describe("CHAIN-06 invoice→A/R→Faro chain-proof behavioral matrix (mocked se
     if (sql.includes("factoring_lifecycle_posting_keys")) {
       if (sql.includes("INSERT")) return { rows: [{ journal_entry_id: "je-1" }] };
       return { rows: [] };
+    }
+    if (sql.includes("AS paid") && sql.includes("factoring_customer_payment")) {
+      return { rows: [{ paid: "100000" }] };
     }
     if (sql.includes("AS outstanding")) {
       return { rows: [{ outstanding: "100000" }] };

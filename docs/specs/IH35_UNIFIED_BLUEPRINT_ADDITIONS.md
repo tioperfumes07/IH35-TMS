@@ -1623,6 +1623,32 @@ reserve (not status); (5) TRANSP/Faro identity fail-closed; (6) FORCE RLS Owner/
     `already_posted` — never race into zero-outstanding
     `policy_partial_or_ambiguous_recourse`.
 
+### CPA VETO amendments (append-only 2026-07-19 — exact head `36946df7`)
+26. **Cumulative ledger-backed `amount_paid_cents`.** Partial customer payments
+    must SET `accounting.invoices.amount_paid_cents` from
+    `linkedCustomerPaymentPaidCents` (SUM of AR-credit legs with
+    `source_transaction_type = 'factoring_customer_payment'`, live JE only) —
+    never overwrite with the latest allocation alone. Prove: $40 then $30 →
+    $70 paid (`conn2` multi-payment cumulative test).
+27. **Default-interest opening = outstanding liability after payments.**
+    `defaultInterestOpeningFromOutstandingLiability` →
+    `linkedOutstandingLiabilityCents` (exclude today’s interest JE on repair).
+    Forbidden: prior-accrual closing / invoice face as the compounding base
+    while intervening customer-payment liability debits exist. Prove:
+    post-payment interest base ($100 payment → opening 400000 → interest 268).
+28. **Faro CSV agreement as-of statement date remains atomic with persist**
+    (retained from `36946df7` / amendment 22): reject before
+    `upsertFaroDailyImportOnClient`; zero durable rows on failure.
+29. **`canonical_factor_agreements` terms are historically immutable.**
+    Additive migration controls: `voided_at` / `voided_by_user_id` +
+    `prevent_canonical_factor_agreement_term_mutation` trigger
+    (`trg_canonical_factor_agreements_terms_immutable`). Allowed: `effective_to`
+    window close + void/archive. Forbidden: retroactive rewrite of fee/rate/
+    term/identity columns used by posters. New versions = INSERT. Resolvers
+    exclude `voided_at IS NOT NULL`. Guard:
+    `verify-factoring-balance-invoice-linkage` uses `requireIdent` / SQL-template
+    semantics and planted dead-string decoys.
+
 
 ## 16. Accounting Home — Pending approvals ↔ GL linkage (0280-15)
 

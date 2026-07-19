@@ -178,6 +178,9 @@ function installDefaults(opts: { alreadyPosted?: boolean } = {}) {
       }
       return { rows: [{ id: "line-1" }] };
     }
+    if (sql.includes("AS paid") && sql.includes("factoring_customer_payment")) {
+      return { rows: [{ paid: "500000" }] };
+    }
     if (sql.includes("FROM accounting.invoices") && !sql.includes("UPDATE")) {
       return { rows: [{ id: "inv-1", total_cents: "500000", amount_paid_cents: "0", voided_at: null }] };
     }

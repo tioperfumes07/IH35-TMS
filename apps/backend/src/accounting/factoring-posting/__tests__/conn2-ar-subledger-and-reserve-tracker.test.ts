@@ -55,14 +55,17 @@ const INVOICE_B = { id: "aaaaaaaa-0000-4000-8000-000000000002", total_cents: "20
 
 let updateCalls: Array<{ sql: string; values: unknown[] }>;
 let insertMovementCalls: Array<{ sql: string; values: unknown[] }>;
+/** Cumulative ledger-backed customer payments returned by linkedCustomerPaymentPaidCents mock. */
+let ledgerPaidCents: number;
 
-function installDefaults() {
+function installDefaults(opts?: { ledgerPaidCents?: number; outstanding?: string }) {
   mockQuery.mockReset();
   mockIsEnabled.mockReset();
   mockCreateJournalEntry.mockReset();
   mockResolveRoleAccount.mockReset();
   updateCalls = [];
   insertMovementCalls = [];
+  ledgerPaidCents = opts?.ledgerPaidCents ?? 0;
 
   mockIsEnabled.mockResolvedValue(true);
   mockResolveRoleAccount.mockImplementation(async (_c: unknown, _o: string, role: string) => role);
@@ -88,8 +91,12 @@ function installDefaults() {
     if (sql.includes("SAVEPOINT") || sql.includes("RELEASE SAVEPOINT") || sql.includes("ROLLBACK TO SAVEPOINT")) return { rows: [] };
     if (sql.includes("FOR UPDATE")) return { rows: [{ id: "locked" }] };
     if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
+    // Cumulative ledger-backed paid (AR credits) — authoritative for amount_paid_cents.
+    if (sql.includes("AS paid") && sql.includes("factoring_customer_payment")) {
+      return { rows: [{ paid: String(ledgerPaidCents) }] };
+    }
     if (sql.includes("AS outstanding")) {
-      return { rows: [{ outstanding: "500000" }] };
+      return { rows: [{ outstanding: opts?.outstanding ?? "500000" }] };
     }
     if (sql.includes("factoring_lifecycle_posting_keys")) {
       if (sql.includes("INSERT")) return { rows: [{ journal_entry_id: "je-1" }] };
@@ -152,6 +159,7 @@ beforeEach(() => installDefaults());
 
 describe("CONN-2 — AR subledger relief (CHAIN-06 §5/§7-A fix)", () => {
   it("customer-payment event allocates the paid amount across the advance's invoices and closes them", async () => {
+    installDefaults({ ledgerPaidCents: 500000 });
     const result = await postFactoringCustomerPaymentEvent({
       operating_company_id: OPCO,
       factoring_advance_id: ADVANCE,
@@ -171,6 +179,7 @@ describe("CONN-2 — AR subledger relief (CHAIN-06 §5/§7-A fix)", () => {
   });
 
   it("customer-payment event allocates a PARTIAL amount proportionally (no new math — reuses allocateByProportion)", async () => {
+    installDefaults({ ledgerPaidCents: 250000 });
     await postFactoringCustomerPaymentEvent({
       operating_company_id: OPCO,
       factoring_advance_id: ADVANCE,
@@ -182,6 +191,111 @@ describe("CONN-2 — AR subledger relief (CHAIN-06 §5/§7-A fix)", () => {
     expect(byId.get(INVOICE_A.id)).toBe(150000);
     expect(byId.get(INVOICE_B.id)).toBe(100000);
     expect((byId.get(INVOICE_A.id) ?? 0) + (byId.get(INVOICE_B.id) ?? 0)).toBe(250000);
+  });
+
+  it("multi-payment cumulative: $40 then $30 → amount_paid_cents = $70 (not latest overwrite)", async () => {
+    const SINGLE = { id: "aaaaaaaa-0000-4000-8000-000000000099", total_cents: "10000", voided_at: null };
+    // Payment 1: $40
+    installDefaults({ ledgerPaidCents: 4000, outstanding: "10000" });
+    mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+      if (sql.includes("set_config(") || sql.includes("SAVEPOINT") || sql.includes("RELEASE") || sql.includes("ROLLBACK TO")) {
+        return { rows: [] };
+      }
+      if (sql.includes("FOR UPDATE")) return { rows: [{ id: "locked" }] };
+      if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
+      if (sql.includes("AS paid") && sql.includes("factoring_customer_payment")) {
+        return { rows: [{ paid: String(ledgerPaidCents) }] };
+      }
+      if (sql.includes("AS outstanding")) return { rows: [{ outstanding: "10000" }] };
+      if (sql.includes("factoring_lifecycle_posting_keys")) {
+        if (sql.includes("INSERT")) return { rows: [{ journal_entry_id: "je-p1" }] };
+        return { rows: [] };
+      }
+      if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
+        return {
+          rows: [
+            {
+              id: ADVANCE,
+              display_id: "FAC-0001",
+              status: "advanced",
+              invoice_total_cents: 10000,
+              advance_amount_cents: 9700,
+              reserve_amount_cents: 150,
+              factor_fee_cents: 150,
+              release_amount_cents: 0,
+              submitted_at: "2026-01-05T00:00:00.000Z",
+              advanced_at: "2026-01-07T00:00:00.000Z",
+              collected_at: null,
+              released_at: null,
+            },
+          ],
+        };
+      }
+      if (sql.includes("total_cents::text") && sql.includes("FROM accounting.invoices")) {
+        return { rows: [SINGLE] };
+      }
+      if (sql.trim().startsWith("UPDATE accounting.invoices")) {
+        updateCalls.push({ sql, values: values ?? [] });
+        return { rows: [] };
+      }
+      if (sql.includes("FROM accounting.journal_entries")) return { rows: [] };
+      if (sql.includes("UPDATE accounting.journal_entry_postings")) return { rows: [] };
+      if (sql.includes("FROM accounting.journal_entry_postings")) {
+        // Conflict / shape probes must be empty; bare listing may return a posting id.
+        if (sql.includes("LIMIT 1") && (sql.includes("NOT (") || sql.includes("IS DISTINCT FROM"))) {
+          return { rows: [] };
+        }
+        return { rows: [{ id: "line-1" }] };
+      }
+      if (sql.includes("AS ok") && sql.includes("journal_entry_uuid")) return { rows: [{ ok: true }] };
+      if (sql.includes("INSERT INTO accounting.transaction_source_links")) return { rows: [] };
+      return { rows: [] };
+    });
+
+    const p1 = await postFactoringCustomerPaymentEvent({
+      operating_company_id: OPCO,
+      factoring_advance_id: ADVANCE,
+      actor_user_id: ACTOR,
+      amount_cents: 4000,
+      paid_at_iso: "2026-02-01",
+    });
+    expect(p1.posted).toBe(true);
+    expect(updateCalls[0]?.values[1]).toBe(4000);
+
+    // Payment 2: $30 — ledger cumulative $70 (must NOT overwrite to 3000).
+    updateCalls = [];
+    ledgerPaidCents = 7000;
+    mockCreateJournalEntry.mockClear();
+    mockCreateJournalEntry.mockImplementation(async (...args: unknown[]) => {
+      const options = (args.length >= 4 ? args[3] : args[2]) as
+        | { afterInsertBeforeCommit?: (client: { query: typeof mockQuery }, header: { id: string }) => Promise<void> }
+        | undefined;
+      const client = args.length >= 4 ? (args[0] as { query: typeof mockQuery }) : { query: mockQuery };
+      const header = { id: "je-p2" };
+      if (options?.afterInsertBeforeCommit) await options.afterInsertBeforeCommit(client, header);
+      return header;
+    });
+    // Outstanding after $40 paid = $60; second payment $30 OK.
+    const prevImpl = mockQuery.getMockImplementation()!;
+    mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+      if (sql.includes("AS outstanding")) return { rows: [{ outstanding: "6000" }] };
+      if (sql.includes("factoring_lifecycle_posting_keys") && sql.includes("INSERT")) {
+        return { rows: [{ journal_entry_id: "je-p2" }] };
+      }
+      if (sql.includes("factoring_lifecycle_posting_keys") && !sql.includes("INSERT")) return { rows: [] };
+      return prevImpl(sql, values);
+    });
+
+    const p2 = await postFactoringCustomerPaymentEvent({
+      operating_company_id: OPCO,
+      factoring_advance_id: ADVANCE,
+      actor_user_id: ACTOR,
+      amount_cents: 3000,
+      paid_at_iso: "2026-02-02",
+    });
+    expect(p2.posted).toBe(true);
+    expect(updateCalls).toHaveLength(1);
+    expect(updateCalls[0]?.values[1]).toBe(7000); // cumulative $70, not latest $30
   });
 
   it("chargeback event flips linked invoices to 'factored' status (removed from ar_aging) without touching amount_paid_cents", async () => {

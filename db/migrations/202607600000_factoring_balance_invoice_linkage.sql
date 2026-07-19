@@ -218,6 +218,68 @@ BEGIN
   GRANT USAGE ON SCHEMA factoring TO ih35_app;
   GRANT SELECT, INSERT, UPDATE ON factoring.canonical_factor_agreements TO ih35_app;
   REVOKE DELETE ON factoring.canonical_factor_agreements FROM ih35_app;
+
+  -- Append-only / effective-dated versioning (CPA VETO): void archive columns + term immutability.
+  -- New agreement versions = INSERT with new effective_from; close prior via effective_to / voided_at.
+  -- Retroactive rewrite of fee/rate/term columns used by posters is FORBIDDEN.
+  ALTER TABLE factoring.canonical_factor_agreements
+    ADD COLUMN IF NOT EXISTS voided_at timestamptz;
+  ALTER TABLE factoring.canonical_factor_agreements
+    ADD COLUMN IF NOT EXISTS voided_by_user_id uuid REFERENCES identity.users(id);
+
+  COMMENT ON COLUMN factoring.canonical_factor_agreements.voided_at IS
+    'Archive/void timestamp — voided rows are excluded from as-of Faro resolution. Terms remain immutable.';
+
+  CREATE OR REPLACE FUNCTION factoring.prevent_canonical_factor_agreement_term_mutation()
+  RETURNS trigger
+  LANGUAGE plpgsql
+  AS $trg$
+  BEGIN
+    IF TG_OP = 'UPDATE' THEN
+      -- Allowed mutations: close window (effective_to), void/archive, audit actor — never terms/identity.
+      IF NEW.tenant_id IS DISTINCT FROM OLD.tenant_id
+         OR NEW.factor_profile_id IS DISTINCT FROM OLD.factor_profile_id
+         OR NEW.factor_vendor_id IS DISTINCT FROM OLD.factor_vendor_id
+         OR NEW.agreement_code IS DISTINCT FROM OLD.agreement_code
+         OR NEW.effective_from IS DISTINCT FROM OLD.effective_from
+         OR NEW.is_full_recourse IS DISTINCT FROM OLD.is_full_recourse
+         OR NEW.fee_rate_tier1 IS DISTINCT FROM OLD.fee_rate_tier1
+         OR NEW.fee_rate_tier2 IS DISTINCT FROM OLD.fee_rate_tier2
+         OR NEW.reserve_rate IS DISTINCT FROM OLD.reserve_rate
+         OR NEW.repurchase_term_days IS DISTINCT FROM OLD.repurchase_term_days
+         OR NEW.grace_days IS DISTINCT FROM OLD.grace_days
+         OR NEW.repurchase_deadline_days IS DISTINCT FROM OLD.repurchase_deadline_days
+         OR NEW.default_interest_daily_rate IS DISTINCT FROM OLD.default_interest_daily_rate
+         OR NEW.created_at IS DISTINCT FROM OLD.created_at
+         OR NEW.created_by_user_id IS DISTINCT FROM OLD.created_by_user_id
+         OR NEW.id IS DISTINCT FROM OLD.id
+      THEN
+        RAISE EXCEPTION 'canonical_factor_agreement_terms_immutable: historical Faro terms cannot be rewritten — insert a new effective-dated version or void/archive'
+          USING ERRCODE = 'integrity_constraint_violation';
+      END IF;
+      -- Once voided, freeze further mutations (except no-op).
+      IF OLD.voided_at IS NOT NULL AND (
+           NEW.voided_at IS DISTINCT FROM OLD.voided_at
+           OR NEW.voided_by_user_id IS DISTINCT FROM OLD.voided_by_user_id
+           OR NEW.effective_to IS DISTINCT FROM OLD.effective_to
+         ) THEN
+        RAISE EXCEPTION 'canonical_factor_agreement_already_voided: cannot mutate a voided agreement version'
+          USING ERRCODE = 'integrity_constraint_violation';
+      END IF;
+    END IF;
+    RETURN NEW;
+  END
+  $trg$;
+
+  DROP TRIGGER IF EXISTS trg_canonical_factor_agreements_terms_immutable
+    ON factoring.canonical_factor_agreements;
+  CREATE TRIGGER trg_canonical_factor_agreements_terms_immutable
+    BEFORE UPDATE ON factoring.canonical_factor_agreements
+    FOR EACH ROW
+    EXECUTE FUNCTION factoring.prevent_canonical_factor_agreement_term_mutation();
+
+  COMMENT ON FUNCTION factoring.prevent_canonical_factor_agreement_term_mutation() IS
+    '0280-05 CPA: block retroactive rewrite of Faro agreement terms; allow effective_to close + voided_at archive only.';
 END
 $faro_agreement$;
 

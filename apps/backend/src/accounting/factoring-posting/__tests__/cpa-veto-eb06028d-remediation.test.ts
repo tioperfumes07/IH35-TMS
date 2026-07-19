@@ -527,7 +527,9 @@ describe("default-interest already_posted — exact expected JE repair (reject i
 
   it("rejects wrong accrual amount vs contractual math (repair_candidate_invalid)", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
-      if (sql.includes("set_config(")) return { rows: [] };
+      if (sql.includes("set_config(") || sql.includes("FOR UPDATE")) {
+        return { rows: sql.includes("FOR UPDATE") ? [{ id: ADVANCE }] : [] };
+      }
       if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
       if (sql.includes("AS outstanding")) return { rows: [{ outstanding: "500000" }] };
       if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
@@ -565,7 +567,9 @@ describe("default-interest already_posted — exact expected JE repair (reject i
 
   it("rejects missing accrual row on already_posted path", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
-      if (sql.includes("set_config(")) return { rows: [] };
+      if (sql.includes("set_config(") || sql.includes("FOR UPDATE")) {
+        return { rows: sql.includes("FOR UPDATE") ? [{ id: ADVANCE }] : [] };
+      }
       if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
       if (sql.includes("AS outstanding")) return { rows: [{ outstanding: "500000" }] };
       if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
@@ -594,7 +598,9 @@ describe("default-interest already_posted — exact expected JE repair (reject i
 
   it("rejects JE with wrong entry_date vs accrual date", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
-      if (sql.includes("set_config(")) return { rows: [] };
+      if (sql.includes("set_config(") || sql.includes("FOR UPDATE")) {
+        return { rows: sql.includes("FOR UPDATE") ? [{ id: ADVANCE }] : [] };
+      }
       if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
       if (sql.includes("AS outstanding")) return { rows: [{ outstanding: "500000" }] };
       if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
