@@ -1371,3 +1371,53 @@ Canonical detail: `docs/specs/TMS-QBO-PARALLEL-BOOKS.md` + CPA skill. Layers are
 - Fails on stale invoice-create recognition wording in the canonical decision docs above (including the financial unblock packet).
 - Protects the sanitized Phase-1 decision anchors (delivery definition, dual-basis crosswalk, ASC 470-60 wording, full Faro mechanics, CoA children, entity books, CoA export facts) without `package.json` / CI workflow hot-file edits.
 
+
+## 16. Accounting Home — Pending approvals ↔ GL linkage (0280-15)
+
+Source: Owner cloud dispatch 2026-07-19 (`0280-15-pending-approvals-gl-linkage`)  
+Status: LOCKED (read-only control; financial HOLD — no self-merge)  
+Implementation: Accounting Core Block 23/67  
+Adversarial fix (2026-07-19): eliminate phantom period-close warning source; honest
+`control_available=false` until a migrated JE approval record exists.
+
+### Problem
+`pending_journal_approvals` on Accounting Home was a bare `COUNT(*)` of a
+**nonexistent** table (never migrated). That invented approvals and told the
+operator nothing about which governed GL accounts were affected.
+
+### Locked read model
+- **Route:** `GET /api/v1/accounting/role-home/pending-approvals?operating_company_id=&limit=&offset=`
+  (rate-limited: max 120 / 1 minute).
+- **Canonical sources (migrations only):** `accounting.journal_entries` (0092 —
+  status `posted|voided`, `voided_at`), reversal linkage (`reverses_je_id` /
+  `reversed_by_je_id` from 202607340000), `accounting.journal_entry_postings`,
+  `catalogs.accounts`, `accounting.chart_of_accounts_roles`.
+- **No phantom sources:** never read or allowlist a nonexistent period-close
+  warning table.
+- **Capability:** JE approval control is available only when a **migration-proven**
+  approval-status column exists on `journal_entries`. Today that set is empty →
+  `control_available: false`, `pending_journal_approvals: 0`, and an explicit
+  `approval_control_unavailable` exception (never empty success, never fabricated
+  approval rows).
+- **When control is available:** pending rows load from JE approval-status;
+  voided/reversed originals are excluded (`voided_at`, `status=voided`,
+  `reverses_je_id`, `reversed_by_je_id`); amounts in integer cents; governed CoA
+  roles joined; deterministic `ORDER BY created_at ASC NULLS LAST, id ASC`.
+- **Actors:** creator + required approver from canonical columns only as
+  `{ user_id, role }` — **no** email/phone PII. Missing approver →
+  `required_approver: null` + `assignment_unresolved`. **Never** invent
+  Owner / Administrator / `role-only`.
+- **Drill:** `forward_drill.href` / `reverse_drill.href` =
+  `/accounting/journal-entries/${id}` (detail route actually consumed; no
+  invented query params).
+- **Home KPI:** `pending_journal_approvals` counts linked pending approvals only
+  (0 when control unavailable).
+- **UI:** Accounting Home pending panel preserved additively; surfaces control
+  unavailable state.
+- **Out of scope:** posting, mutation, schema DDL, new GL math, migrations
+  (lane occupied).
+
+### Guard (Rule 17)
+- `scripts/verify-pending-approvals-gl-linkage.mjs`
+- `scripts/verify-steps/914-verify-pending-approvals-gl-linkage.mjs`
+

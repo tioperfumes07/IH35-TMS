@@ -20,7 +20,8 @@ Give the Accounting role a dedicated home dashboard focused on AR/AP aging, peri
 |-------|--------|
 | `ar_aging` / `ap_aging` | Existing aging services (bucket cents) |
 | `period_close` | `accounting.periods` open row |
-| `pending_journal_approvals` | `accounting.period_close_warnings` count |
+| `pending_journal_approvals` | Count of **linked** pending journal-approval items from `GET /api/v1/accounting/role-home/pending-approvals` (0280-15). When no migrated JE approval record exists: `control_available=false`, count `0`, exception `approval_control_unavailable` (never invent approvals from phantom tables). |
+| `pending-approvals` list | Read-only JE/GL linkage when control available: journal id/display, status/risk/reason, governed CoA accounts, creator + required approver (canonical only; else `assignment_unresolved`), integer-cent debit/credit, direct `/accounting/journal-entries/${id}` drill. Voided/reversed excluded. |
 | `qbo.outbox_depth` | `integrations.qbo_sync_queue` pending/in_flight |
 | `qbo.last_sync_at` | Latest synced queue row |
 | `early_pay_discounts_expiring_this_week` | Open bills with payment-term discount window |
