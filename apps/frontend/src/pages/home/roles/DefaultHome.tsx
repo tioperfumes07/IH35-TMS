@@ -25,6 +25,7 @@ import { FleetSnapshotPanel } from "../../../components/home/FleetSnapshotPanel"
 import { DriverDaySummaryCard } from "../../../components/home/DriverDaySummaryCard";
 import { QboSyncHealthCard } from "../../../components/home/QboSyncHealthCard";
 import { VendorMappingIntegrityCard } from "../../../components/home/VendorMappingIntegrityCard";
+import { RevenueDiscrepancyDrill } from "../../../components/home/RevenueDiscrepancyDrill";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AttentionList } from "../AttentionList";
 import { FleetUtilizationGauge } from "../charts/FleetUtilizationGauge";
@@ -246,27 +247,63 @@ export function DefaultHome({ auth }: Props) {
       </div>
 
       <section className="kpi-grid order-3 grid grid-cols-1 gap-2 md:grid-cols-2 lg:order-1 lg:grid-cols-3">
-        <HomeKpiCard
-          label="Today's Revenue"
-          to="/reports"
-          number={tr ? formatUsdFromCents(tr.revenue_cents) : "—"}
-          isLoading={todayRevenueQuery.isLoading}
-          isError={todayRevenueQuery.isError}
-          error={todayRevenueQuery.error}
-          onRetry={() => void todayRevenueQuery.refetch()}
-          delta={
-            tr != null && tr.delta_pct_vs_yesterday != null && Number.isFinite(tr.delta_pct_vs_yesterday) ? (
-              <span
-                className={`inline-flex rounded px-1.5 py-0.5 font-semibold ${
-                  tr.delta_pct_vs_yesterday >= 0 ? "bg-slate-100 text-slate-700" : "bg-red-100 text-red-800"
-                }`}
-              >
-                {tr.delta_pct_vs_yesterday >= 0 ? "↑ " : "↓ "}
-                {Math.abs(tr.delta_pct_vs_yesterday).toFixed(1)}% vs yesterday
-              </span>
-            ) : null
-          }
-        />
+        <div>
+          <HomeKpiCard
+            label="Today's Revenue"
+            to="/reports"
+            number={
+              tr == null
+                ? "—"
+                : tr.status === "unverifiable"
+                  ? "Unverifiable"
+                  : tr.revenue_cents == null
+                    ? "—"
+                    : formatUsdFromCents(tr.revenue_cents)
+            }
+            isLoading={todayRevenueQuery.isLoading}
+            isError={todayRevenueQuery.isError}
+            error={todayRevenueQuery.error}
+            onRetry={() => void todayRevenueQuery.refetch()}
+            subtext={
+              tr == null ? null : tr.status === "unverifiable" ? (
+                <span>
+                  Invoice↔GL linkage unverifiable
+                  {tr.unverifiable_reason ? `: ${tr.unverifiable_reason}` : ""}
+                </span>
+              ) : (
+                <span>
+                  Invoice basis (pre-tax)
+                  {typeof tr.gl_posted_revenue_cents === "number"
+                    ? ` · GL posted ${formatUsdFromCents(tr.gl_posted_revenue_cents)}`
+                    : ""}
+                  {typeof tr.discrepancy_count === "number" && tr.discrepancy_count > 0
+                    ? ` · ${tr.discrepancy_count} ${tr.discrepancy_count === 1 ? "discrepancy" : "discrepancies"}`
+                    : ""}
+                </span>
+              )
+            }
+            delta={
+              tr != null && tr.delta_pct_vs_yesterday != null && Number.isFinite(tr.delta_pct_vs_yesterday) ? (
+                <span
+                  className={`inline-flex rounded px-1.5 py-0.5 font-semibold ${
+                    tr.delta_pct_vs_yesterday >= 0 ? "bg-slate-100 text-slate-700" : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  {tr.delta_pct_vs_yesterday >= 0 ? "↑ " : "↓ "}
+                  {Math.abs(tr.delta_pct_vs_yesterday).toFixed(1)}% vs yesterday
+                </span>
+              ) : null
+            }
+          />
+          {tr && tr.status !== "unverifiable" ? (
+            <RevenueDiscrepancyDrill
+              invoices={tr.drill?.mismatched_invoices}
+              journals={tr.drill?.mismatched_journal_entries}
+              discrepancyCount={tr.discrepancy_count}
+              discrepancyCents={tr.discrepancy_cents}
+            />
+          ) : null}
+        </div>
         <HomeKpiCard
           label="Open Loads"
           to="/dispatch?view=loads"

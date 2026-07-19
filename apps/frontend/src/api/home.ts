@@ -269,8 +269,48 @@ export async function fetchHomeVendorMappingIntegrity(companyId: string): Promis
 
 /* —— T11.19 KPI + chart payloads (backend routes may ship incrementally). */
 
+export type HomeRevenueBasisMeta = {
+  label: "invoice_basis" | "gl_posted" | string;
+  source: string;
+  recognition: string;
+  governed_accounts?: string;
+};
+
+export type HomeRevenueInvoiceDrill = {
+  invoice_id: string;
+  display_id: string | null;
+  recognition_date: string;
+  invoice_revenue_cents: number;
+  gl_revenue_cents: number;
+  journal_entry_ids: string[];
+  reason: string;
+  href: string;
+};
+
+export type HomeRevenueJournalDrill = {
+  journal_entry_id: string;
+  entry_date: string;
+  gl_revenue_cents: number;
+  invoice_id: string | null;
+  account_ids: string[];
+  reason: string;
+  href: string;
+};
+
 export type HomeTodayRevenue = {
-  revenue_cents: number;
+  /** Null when linkage is unverifiable — never treat as $0. */
+  revenue_cents: number | null;
+  invoice_basis_cents?: number;
+  gl_posted_revenue_cents?: number;
+  status?: "ok" | "empty" | "unverifiable";
+  unverifiable_reason?: string | null;
+  basis?: { invoice: HomeRevenueBasisMeta; gl: HomeRevenueBasisMeta };
+  discrepancy_count?: number;
+  discrepancy_cents?: number;
+  drill?: {
+    mismatched_invoices: HomeRevenueInvoiceDrill[];
+    mismatched_journal_entries: HomeRevenueJournalDrill[];
+  };
   yesterday_revenue_cents?: number;
   delta_pct_vs_yesterday?: number | null;
 };
@@ -303,7 +343,22 @@ export type HomeFactoringBalance = {
   invoices_factored: number;
 };
 
-export type HomeWeeklyRevenuePoint = { date: string; revenue_cents: number };
+export type HomeWeeklyRevenuePoint = {
+  date: string;
+  revenue_cents: number;
+  invoice_basis_cents?: number;
+  gl_posted_revenue_cents?: number;
+};
+
+export type HomeWeeklyRevenueResult = {
+  days: HomeWeeklyRevenuePoint[];
+  status?: "ok" | "empty" | "unverifiable";
+  basis?: { invoice: HomeRevenueBasisMeta; gl: HomeRevenueBasisMeta };
+  invoice_basis_cents?: number;
+  gl_posted_revenue_cents?: number;
+  discrepancy_count?: number;
+  discrepancy_cents?: number;
+};
 
 export type HomeWoStatusCount = {
   status: "draft" | "open" | "in_progress" | "awaiting_parts" | "completed" | "cancelled";
@@ -353,8 +408,58 @@ function num(raw: unknown, fallback = 0): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
-export async function fetchHomeTodayRevenue(companyId: string): Promise<HomeTodayRevenue> {
-  const raw = await apiRequest<Record<string, unknown>>(withCompany("/api/v1/home/today-revenue", companyId));
+function coerceRevenueDrill(raw: Record<string, unknown>): HomeTodayRevenue["drill"] {
+  const drill = raw.drill;
+  if (!drill || typeof drill !== "object") return undefined;
+  const d = drill as {
+    mismatched_invoices?: unknown;
+    mismatched_journal_entries?: unknown;
+  };
+  const invoices = Array.isArray(d.mismatched_invoices)
+    ? d.mismatched_invoices.flatMap((row): HomeRevenueInvoiceDrill[] => {
+        if (!row || typeof row !== "object") return [];
+        const o = row as Record<string, unknown>;
+        if (typeof o.invoice_id !== "string" || typeof o.href !== "string") return [];
+        return [
+          {
+            invoice_id: o.invoice_id,
+            display_id: typeof o.display_id === "string" ? o.display_id : null,
+            recognition_date: typeof o.recognition_date === "string" ? o.recognition_date : "",
+            invoice_revenue_cents: num(o.invoice_revenue_cents),
+            gl_revenue_cents: num(o.gl_revenue_cents),
+            journal_entry_ids: Array.isArray(o.journal_entry_ids)
+              ? o.journal_entry_ids.filter((x): x is string => typeof x === "string")
+              : [],
+            reason: typeof o.reason === "string" ? o.reason : "missing_je",
+            href: o.href,
+          },
+        ];
+      })
+    : [];
+  const journals = Array.isArray(d.mismatched_journal_entries)
+    ? d.mismatched_journal_entries.flatMap((row): HomeRevenueJournalDrill[] => {
+        if (!row || typeof row !== "object") return [];
+        const o = row as Record<string, unknown>;
+        if (typeof o.journal_entry_id !== "string" || typeof o.href !== "string") return [];
+        return [
+          {
+            journal_entry_id: o.journal_entry_id,
+            entry_date: typeof o.entry_date === "string" ? o.entry_date : "",
+            gl_revenue_cents: num(o.gl_revenue_cents),
+            invoice_id: typeof o.invoice_id === "string" ? o.invoice_id : null,
+            account_ids: Array.isArray(o.account_ids)
+              ? o.account_ids.filter((x): x is string => typeof x === "string")
+              : [],
+            reason: typeof o.reason === "string" ? o.reason : "unlinked_gl_revenue",
+            href: o.href,
+          },
+        ];
+      })
+    : [];
+  return { mismatched_invoices: invoices, mismatched_journal_entries: journals };
+}
+
+function coerceTodayRevenuePayload(raw: Record<string, unknown>): HomeTodayRevenue {
   let delta: number | null | undefined;
   if (raw.delta_pct_vs_yesterday === null) delta = null;
   else if (raw.delta_pct_vs_yesterday === undefined) delta = undefined;
@@ -362,11 +467,65 @@ export async function fetchHomeTodayRevenue(companyId: string): Promise<HomeToda
     const d = Number(raw.delta_pct_vs_yesterday);
     delta = Number.isFinite(d) ? d : undefined;
   }
+  // 0280-02: unverifiable → revenue_cents null (never coerce to fabricated $0).
+  const revenueRaw = raw.revenue_cents;
+  const revenue_cents =
+    revenueRaw === null || revenueRaw === undefined
+      ? null
+      : Number.isFinite(Number(revenueRaw))
+        ? Number(revenueRaw)
+        : null;
+  const status =
+    raw.status === "ok" || raw.status === "empty" || raw.status === "unverifiable"
+      ? raw.status
+      : undefined;
   return {
-    revenue_cents: num(raw.revenue_cents),
+    revenue_cents,
+    invoice_basis_cents: raw.invoice_basis_cents !== undefined ? num(raw.invoice_basis_cents) : undefined,
+    gl_posted_revenue_cents: raw.gl_posted_revenue_cents !== undefined ? num(raw.gl_posted_revenue_cents) : undefined,
+    status,
+    unverifiable_reason:
+      typeof raw.unverifiable_reason === "string"
+        ? raw.unverifiable_reason
+        : raw.unverifiable_reason === null
+          ? null
+          : undefined,
+    basis: raw.basis && typeof raw.basis === "object" ? (raw.basis as HomeTodayRevenue["basis"]) : undefined,
+    discrepancy_count: raw.discrepancy_count !== undefined ? num(raw.discrepancy_count) : undefined,
+    discrepancy_cents: raw.discrepancy_cents !== undefined ? num(raw.discrepancy_cents) : undefined,
+    drill: coerceRevenueDrill(raw),
     yesterday_revenue_cents: raw.yesterday_revenue_cents !== undefined ? num(raw.yesterday_revenue_cents) : undefined,
     delta_pct_vs_yesterday: delta,
   };
+}
+
+/**
+ * Today revenue — prefers typed 200 `{ status: "unverifiable" }`.
+ * Also maps legacy/alternate 422 with `error=revenue_gl_linkage_unverifiable` to the same shape.
+ * Transport/auth/5xx stay as thrown ApiError (never labeled schema-unverifiable).
+ */
+export async function fetchHomeTodayRevenue(companyId: string): Promise<HomeTodayRevenue> {
+  const path = withCompany("/api/v1/home/today-revenue", companyId);
+  try {
+    const raw = await apiRequest<Record<string, unknown>>(path);
+    return coerceTodayRevenuePayload(raw);
+  } catch (err) {
+    if (
+      err instanceof ApiError &&
+      err.status === 422 &&
+      err.data &&
+      typeof err.data === "object" &&
+      (err.data as { error?: string }).error === "revenue_gl_linkage_unverifiable"
+    ) {
+      return coerceTodayRevenuePayload({
+        ...(err.data as Record<string, unknown>),
+        status: "unverifiable",
+        revenue_cents: null,
+      });
+    }
+    // Real non-2xx (401/403/500/…) — do not fabricate unverifiable.
+    throw err;
+  }
 }
 
 export async function fetchHomeOpenLoadsCount(companyId: string): Promise<HomeOpenLoadsCount> {
@@ -419,9 +578,9 @@ export async function fetchHomeFactoringBalance(companyId: string): Promise<Home
   };
 }
 
-function coerceWeeklyRevenue(raw: unknown): HomeWeeklyRevenuePoint[] {
-  // Backend (home-widgets) returns { days: [{ date, cents }], totalCents }. Also accept a bare
-  // array / { rows } / { points } with revenue_cents for forward-compat.
+function coerceWeeklyRevenue(raw: unknown): HomeWeeklyRevenueResult {
+  // Backend (home-widgets) returns { days: [{ date, cents, invoice_basis_cents, gl_posted_revenue_cents }], … }.
+  // Also accept a bare array / { rows } / { points } with revenue_cents for forward-compat.
   const list: unknown[] = Array.isArray(raw)
     ? raw
     : raw && typeof raw === "object" && Array.isArray((raw as { days?: unknown }).days)
@@ -431,23 +590,68 @@ function coerceWeeklyRevenue(raw: unknown): HomeWeeklyRevenuePoint[] {
         : raw && typeof raw === "object" && Array.isArray((raw as { points?: unknown }).points)
           ? ((raw as { points: unknown[] }).points ?? [])
           : [];
-  return list
-    .map((row) => {
-      if (!row || typeof row !== "object") return null;
-      const o = row as Record<string, unknown>;
-      const date = typeof o.date === "string" ? o.date : "";
-      // backend sends `cents`; accept `revenue_cents` too.
-      const revenue_cents = o.revenue_cents !== undefined ? num(o.revenue_cents) : num(o.cents);
-      if (!date) return null;
-      return { date, revenue_cents };
-    })
-    .filter((x): x is HomeWeeklyRevenuePoint => x !== null);
+  const days: HomeWeeklyRevenuePoint[] = list.flatMap((row) => {
+    if (!row || typeof row !== "object") return [];
+    const o = row as Record<string, unknown>;
+    const date = typeof o.date === "string" ? o.date : "";
+    // backend sends `cents` (invoice basis); accept `revenue_cents` too.
+    const revenue_cents = o.revenue_cents !== undefined ? num(o.revenue_cents) : num(o.cents);
+    if (!date) return [];
+    const point: HomeWeeklyRevenuePoint = {
+      date,
+      revenue_cents,
+      invoice_basis_cents: o.invoice_basis_cents !== undefined ? num(o.invoice_basis_cents) : revenue_cents,
+    };
+    if (o.gl_posted_revenue_cents !== undefined) {
+      point.gl_posted_revenue_cents = num(o.gl_posted_revenue_cents);
+    }
+    return [point];
+  });
+
+  const obj = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : null;
+  const status =
+    obj?.status === "ok" || obj?.status === "empty" || obj?.status === "unverifiable" ? obj.status : undefined;
+  return {
+    days,
+    status,
+    basis: obj?.basis && typeof obj.basis === "object" ? (obj.basis as HomeWeeklyRevenueResult["basis"]) : undefined,
+    invoice_basis_cents: obj?.invoice_basis_cents !== undefined ? num(obj.invoice_basis_cents) : undefined,
+    gl_posted_revenue_cents: obj?.gl_posted_revenue_cents !== undefined ? num(obj.gl_posted_revenue_cents) : undefined,
+    discrepancy_count: obj?.discrepancy_count !== undefined ? num(obj.discrepancy_count) : undefined,
+    discrepancy_cents: obj?.discrepancy_cents !== undefined ? num(obj.discrepancy_cents) : undefined,
+  };
+}
+
+async function fetchWeeklyRevenueRaw(companyId: string, days: number): Promise<unknown> {
+  const path = withCompany(`/api/v1/home/weekly-revenue?days=${encodeURIComponent(String(days))}`, companyId);
+  try {
+    return await apiRequest<unknown>(path);
+  } catch (err) {
+    if (
+      err instanceof ApiError &&
+      err.status === 422 &&
+      err.data &&
+      typeof err.data === "object" &&
+      (err.data as { error?: string }).error === "revenue_gl_linkage_unverifiable"
+    ) {
+      return {
+        ...(err.data as Record<string, unknown>),
+        status: "unverifiable",
+        days: [],
+        revenue_cents: null,
+      };
+    }
+    throw err;
+  }
 }
 
 export async function fetchHomeWeeklyRevenue(companyId: string, days = 7): Promise<HomeWeeklyRevenuePoint[]> {
-  const path = withCompany(`/api/v1/home/weekly-revenue?days=${encodeURIComponent(String(days))}`, companyId);
-  const raw = await apiRequest<unknown>(path);
-  return coerceWeeklyRevenue(raw);
+  return coerceWeeklyRevenue(await fetchWeeklyRevenueRaw(companyId, days)).days;
+}
+
+/** Full weekly payload including dual-basis / discrepancy metadata (0280-02). */
+export async function fetchHomeWeeklyRevenueDetailed(companyId: string, days = 7): Promise<HomeWeeklyRevenueResult> {
+  return coerceWeeklyRevenue(await fetchWeeklyRevenueRaw(companyId, days));
 }
 
 const WO_STATUSES = ["draft", "open", "in_progress", "awaiting_parts", "completed", "cancelled"] as const;

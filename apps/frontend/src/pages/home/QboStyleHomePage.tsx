@@ -29,8 +29,23 @@ import { fetchHomeCashPosition, fetchHomeTodayRevenue } from "../../api/home";
 import { fetchAccountingRoleHome } from "../../api/accountingHome";
 import { getBankingTiles } from "../../api/banking";
 
+/** Money formatter — never labels transport/5xx as Unverifiable. */
 function fmt$(cents: number): string {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(cents / 100);
+}
+
+/** Today-revenue display: typed schema unverifiable ≠ query isError/5xx. */
+export function formatTodayRevenueDisplay(input: {
+  isLoading: boolean;
+  isError: boolean;
+  status?: "ok" | "empty" | "unverifiable" | string;
+  revenueCents: number | null | undefined;
+}): { kind: "loading" | "error" | "unverifiable" | "ok"; text: string } {
+  if (input.isLoading) return { kind: "loading", text: "" };
+  if (input.isError) return { kind: "error", text: "Unable to load revenue" };
+  if (input.status === "unverifiable") return { kind: "unverifiable", text: "Unverifiable" };
+  if (input.revenueCents == null) return { kind: "ok", text: fmt$(0) };
+  return { kind: "ok", text: fmt$(input.revenueCents) };
 }
 
 function fmtPct(pct: number | null | undefined): string {
@@ -112,8 +127,15 @@ export function QboStyleHomePage({ auth }: Props) {
   const qboOutbox = acct?.qbo.outbox_depth ?? 0;
   const qboFailed = acct?.qbo.failed_outbox_count ?? 0;
 
-  const revenueCents = revenueQuery.data?.revenue_cents ?? 0;
-  const deltaVsYesterday = revenueQuery.data?.delta_pct_vs_yesterday;
+  // 0280-02: typed status=unverifiable ≠ transport/5xx (isError).
+  const revenueDisplay = formatTodayRevenueDisplay({
+    isLoading: revenueQuery.isLoading,
+    isError: revenueQuery.isError,
+    status: revenueQuery.data?.status,
+    revenueCents: revenueQuery.data?.revenue_cents,
+  });
+  const deltaVsYesterday =
+    revenueDisplay.kind === "ok" ? revenueQuery.data?.delta_pct_vs_yesterday : undefined;
 
   const visibleFeed = BUSINESS_FEED_CARDS.filter((c) => !dismissedCards.has(c.id));
 
@@ -242,12 +264,39 @@ export function QboStyleHomePage({ auth }: Props) {
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Profit &amp; Loss</p>
               <Link to="/reports" className="text-xs text-slate-700 hover:underline">Analyze →</Link>
             </div>
-            {revenueQuery.isLoading ? (
-              <div className="h-20 animate-pulse rounded-sm bg-gray-100" />
+            {revenueDisplay.kind === "loading" ? (
+              <div className="h-20 animate-pulse rounded-sm bg-gray-100" data-testid="qbo-revenue-loading" />
+            ) : revenueDisplay.kind === "error" ? (
+              <div className="space-y-2" data-testid="qbo-revenue-error">
+                <p className="flex items-center gap-1.5 text-sm font-medium text-red-700">
+                  <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  {revenueDisplay.text}
+                </p>
+                <p className="text-xs text-slate-500">Request failed — not a schema linkage gap.</p>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-800 hover:bg-slate-50"
+                  onClick={() => void revenueQuery.refetch()}
+                  data-testid="qbo-revenue-retry"
+                >
+                  <RefreshCw className="h-3 w-3" aria-hidden="true" />
+                  Retry
+                </button>
+              </div>
+            ) : revenueDisplay.kind === "unverifiable" ? (
+              <div data-testid="qbo-revenue-unverifiable">
+                <p className="text-2xl font-semibold text-gray-900">{revenueDisplay.text}</p>
+                <p className="mt-1 text-xs text-slate-600">
+                  Invoice↔GL linkage unverifiable
+                  {revenueQuery.data?.unverifiable_reason
+                    ? `: ${revenueQuery.data.unverifiable_reason}`
+                    : ""}
+                </p>
+              </div>
             ) : (
               <>
-                <div className="flex items-end gap-2">
-                  <p className="text-2xl font-semibold text-gray-900">{fmt$(revenueCents)}</p>
+                <div className="flex items-end gap-2" data-testid="qbo-revenue-ok">
+                  <p className="text-2xl font-semibold text-gray-900">{revenueDisplay.text}</p>
                   {deltaVsYesterday != null && (
                     <span className={`mb-1 flex items-center gap-0.5 text-xs font-semibold ${deltaVsYesterday >= 0 ? "text-slate-600" : "text-red-600"}`}>
                       {deltaVsYesterday >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
@@ -255,11 +304,11 @@ export function QboStyleHomePage({ auth }: Props) {
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-slate-600">Net revenue today</p>
+                <p className="text-xs text-slate-600">Net revenue today (invoice basis, pre-tax)</p>
                 <div className="mt-3 space-y-1">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Income</span>
-                    <span className="font-medium text-gray-900">{fmt$(revenueCents)}</span>
+                    <span className="font-medium text-gray-900">{revenueDisplay.text}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">A/R outstanding</span>
@@ -365,7 +414,7 @@ export function QboStyleHomePage({ auth }: Props) {
         <div className="flex items-center gap-2 text-xs text-slate-500">
           <DollarSign className="h-3.5 w-3.5" />
           <span>
-            Cash position: <span className="font-medium text-gray-600">{fmt$(cashQuery.data.balance_cents)}</span>
+            Cash position: <span className="font-medium text-gray-600">{fmt$(cashQuery.data.balance_cents ?? 0)}</span>
             {cashQuery.data.last_reconciled_at
               ? ` · Last reconciled ${new Date(cashQuery.data.last_reconciled_at).toLocaleDateString()}`
               : " · Not yet reconciled"}

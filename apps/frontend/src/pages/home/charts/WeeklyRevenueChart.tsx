@@ -54,6 +54,7 @@ export function WeeklyRevenueChart({ operatingCompanyId }: Props) {
   return (
     <div className="home-recharts-print w-full">
       <h3 className="mb-2 text-sm font-semibold text-slate-900">Weekly revenue</h3>
+      <p className="mb-2 text-[11px] text-slate-500">Invoice basis (GL posted available per-day on API)</p>
       <ResponsiveContainer width="100%" height={240}>
         <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -66,10 +67,10 @@ export function WeeklyRevenueChart({ operatingCompanyId }: Props) {
             }
           />
           <Tooltip
-            formatter={(value) => [formatUsdFromCents(Math.round(Number(value) * 100)), "Revenue"]}
+            formatter={(value) => [formatUsdFromCents(Math.round(Number(value) * 100)), "Invoice basis"]}
             labelFormatter={(l) => `Day ${l}`}
           />
-          <Line type="monotone" dataKey="revenue_dollars" stroke={LINE_COLOR} strokeWidth={2} dot={{ r: 3 }} name="Revenue" />
+          <Line type="monotone" dataKey="revenue_dollars" stroke={LINE_COLOR} strokeWidth={2} dot={{ r: 3 }} name="Invoice basis" />
         </LineChart>
       </ResponsiveContainer>
     </div>

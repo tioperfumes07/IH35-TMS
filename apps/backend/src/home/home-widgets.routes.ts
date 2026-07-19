@@ -7,6 +7,28 @@ import {
 } from "../kpi/canonical-kpis.js";
 import { getOpenLoadsBreakdown } from "../dispatch/active-loads-count.js";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
+import {
+  computeRevenueGlLinkage,
+  todayRevenueWindow,
+  weeklyRevenueWindow,
+  type RevenueGlLinkageResult,
+} from "./revenue-gl-linkage.service.js";
+
+function revenuePayload(result: RevenueGlLinkageResult) {
+  return {
+    status: result.status,
+    unverifiable_reason: result.unverifiable_reason,
+    period: result.period,
+    basis: result.basis,
+    invoice_basis_cents: result.invoice_basis_cents,
+    gl_posted_revenue_cents: result.gl_posted_revenue_cents,
+    // Backward-compat headline — null when unverifiable (never fabricate $0).
+    revenue_cents: result.revenue_cents,
+    discrepancy_count: result.discrepancy_count,
+    discrepancy_cents: result.discrepancy_cents,
+    drill: result.drill,
+  };
+}
 
 function officeRole(role: string) {
   return role !== "Driver";
@@ -29,35 +51,42 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
     const parsed = daysQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
 
-    const payload = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
-      try {
-        const rel = await client.query(`SELECT to_regclass('accounting.invoices') IS NOT NULL AS ok`);
-        if (!rel.rows[0]?.ok) return { days: [] as Array<{ date: string; cents: number }>, totalCents: 0 };
-
-        const res = await client.query(
-          `
-            SELECT issue_date::text AS d,
-                   COALESCE(SUM(total_cents), 0)::text AS cents
-            FROM accounting.invoices
-            WHERE operating_company_id = $1::uuid
-              AND issue_date >= (CURRENT_DATE - ($2::int * interval '1 day'))
-            GROUP BY issue_date
-            ORDER BY issue_date ASC
-          `,
-          [parsed.data.operating_company_id, parsed.data.days]
-        );
-        const days = res.rows.map((r: { d?: unknown; cents?: unknown }) => ({
-          date: String(r.d),
-          cents: Number(r.cents ?? 0),
-        }));
-        const totalCents = days.reduce((sum: number, row: { cents: number }) => sum + row.cents, 0);
-        return { days, totalCents };
-      } catch {
-        return { days: [], totalCents: 0 };
+    // 0280-02: dual-basis invoice + GL linkage (no silent swallow → fabricated empty week).
+    const { fromDate, toDate } = weeklyRevenueWindow(parsed.data.days);
+    try {
+      const result = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) =>
+        computeRevenueGlLinkage(client, {
+          operatingCompanyId: parsed.data.operating_company_id,
+          fromDate,
+          toDate,
+        })
+      );
+      // Typed 200 unverifiable — never conflate schema linkage gaps with transport/auth/5xx.
+      if (result.status === "unverifiable") {
+        return {
+          ...revenuePayload(result),
+          days: [],
+          totalCents: null,
+          error: "revenue_gl_linkage_unverifiable",
+        };
       }
-    });
-
-    return payload;
+      return {
+        ...revenuePayload(result),
+        days: result.days.map((d) => ({
+          date: d.date,
+          cents: d.cents,
+          invoice_basis_cents: d.invoice_basis_cents,
+          gl_posted_revenue_cents: d.gl_posted_revenue_cents,
+        })),
+        totalCents: result.invoice_basis_cents,
+      };
+    } catch (err) {
+      req.log.error({ err }, "home.weekly-revenue linkage failed");
+      return reply.code(500).send({
+        error: "revenue_gl_linkage_failed",
+        message: err instanceof Error ? err.message : "unknown_error",
+      });
+    }
   });
 
   app.get("/api/v1/home/wo-status-counts", async (req, reply) => {
@@ -155,26 +184,31 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
     const parsed = companyQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
 
-    return await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
-      try {
-        const rel = await client.query(`SELECT to_regclass('accounting.invoices') IS NOT NULL AS ok`);
-        if (!rel.rows[0]?.ok) return { revenue_cents: 0 };
-
-        const res = await client.query(
-          `
-            SELECT COALESCE(SUM(total_cents), 0)::text AS cents
-            FROM accounting.invoices
-            WHERE operating_company_id = $1::uuid
-              AND issue_date = CURRENT_DATE
-          `,
-          [parsed.data.operating_company_id]
-        );
-        // revenue_cents to match the frontend tile (api/home.ts fetchHomeTodayRevenue).
-        return { revenue_cents: Number(res.rows[0]?.cents ?? 0) };
-      } catch {
-        return { revenue_cents: 0 };
+    // 0280-02: dual-basis invoice + GL linkage (company TZ; no silent swallow → fabricated $0).
+    const { fromDate, toDate } = todayRevenueWindow();
+    try {
+      const result = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) =>
+        computeRevenueGlLinkage(client, {
+          operatingCompanyId: parsed.data.operating_company_id,
+          fromDate,
+          toDate,
+        })
+      );
+      // Typed 200 unverifiable — never conflate schema linkage gaps with transport/auth/5xx.
+      if (result.status === "unverifiable") {
+        return {
+          ...revenuePayload(result),
+          error: "revenue_gl_linkage_unverifiable",
+        };
       }
-    });
+      return revenuePayload(result);
+    } catch (err) {
+      req.log.error({ err }, "home.today-revenue linkage failed");
+      return reply.code(500).send({
+        error: "revenue_gl_linkage_failed",
+        message: err instanceof Error ? err.message : "unknown_error",
+      });
+    }
   });
 
   app.get("/api/v1/home/open-loads-count", async (req, reply) => {
