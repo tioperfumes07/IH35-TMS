@@ -8,6 +8,11 @@ import {
   loadCapabilityPolicy,
   validateCapabilitySkip,
 } from "./push-gate-capability-policy.mjs";
+import {
+  VLCI_ENV,
+  isLocalVerifyDatabaseUrl,
+  validateOwnershipProof,
+} from "./vlci-lifecycle.mjs";
 
 export const GATE_RESULT_CATEGORIES = Object.freeze({
   PASS: "pass",
@@ -50,9 +55,9 @@ export function behindOriginMainCount(root) {
   return Number(runGitOrThrow(["rev-list", "--count", "HEAD..origin/main"], { cwd: root }) || "0");
 }
 
-function runStep(command, label, root) {
+function runStep(command, label, root, env = process.env) {
   console.log(`[branch:precheck-push] RUN ${label}: ${command}`);
-  const res = spawnSync(command, { cwd: root, shell: true, encoding: "utf8", env: process.env });
+  const res = spawnSync(command, { cwd: root, shell: true, encoding: "utf8", env });
   const merged = `${res.stdout ?? ""}\n${res.stderr ?? ""}`.trim();
   if (res.status === 0) return { ok: true, category: GATE_RESULT_CATEGORIES.PASS };
   return {
@@ -78,10 +83,86 @@ export function buildPrecheckSteps(root) {
   ];
 }
 
-export function detectLocalCapabilities(env = process.env) {
-  return {
-    database: Boolean(env.DATABASE_URL?.trim() || env.DATABASE_DIRECT_URL?.trim()),
-  };
+/**
+ * Probe that a local-verify Postgres endpoint accepts TCP.
+ * Sync (child) so precheck capability detection stays synchronous.
+ * Never treats URL-string presence alone as proof.
+ */
+export function probeLocalVerifyTcp(url, { timeoutMs = 750, run = spawnSync } = {}) {
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+  const host = parsed.hostname;
+  if (host !== "localhost" && host !== "127.0.0.1") return false;
+  const port = Number(parsed.port || "5432");
+  if (!Number.isInteger(port) || port <= 0) return false;
+  const script = `
+const net = require("node:net");
+const host = ${JSON.stringify(host)};
+const port = ${JSON.stringify(port)};
+const timeoutMs = ${JSON.stringify(timeoutMs)};
+const socket = net.connect({ host, port }, () => {
+  socket.end();
+  process.exit(0);
+});
+socket.on("error", () => process.exit(1));
+setTimeout(() => {
+  socket.destroy();
+  process.exit(1);
+}, timeoutMs);
+`;
+  const res = run(process.execPath, ["-e", script], {
+    encoding: "utf8",
+    timeout: timeoutMs + 500,
+  });
+  return res.status === 0;
+}
+
+/**
+ * Database capability is true ONLY when:
+ *   1) an owned VLCI / local-CI lifecycle proof is present in the process env, OR
+ *   2) a local-verify URL is present in the process env AND a TCP probe validates it.
+ * A non-empty DATABASE_URL string (e.g. stale Neon from `.env`) is NEVER enough.
+ */
+export function detectLocalCapabilities(env = process.env, options = {}) {
+  const root = options.root ?? (() => {
+    try {
+      return repoRoot();
+    } catch {
+      return process.cwd();
+    }
+  })();
+  const probe =
+    typeof options.probeTcp === "function"
+      ? options.probeTcp
+      : (url) => probeLocalVerifyTcp(url, { run: options.run });
+
+  const owned = validateOwnershipProof(env, {
+    repoRoot: root,
+    requireBindings: true,
+    isAlive: options.isAlive,
+  });
+  if (owned.ok === true) {
+    return { database: true, databaseSource: "vlci-owned" };
+  }
+
+  const candidates = [env.DATABASE_URL, env.DATABASE_DIRECT_URL, env[VLCI_ENV.DATABASE_URL]]
+    .filter((value) => typeof value === "string" && value.trim() !== "")
+    .map((value) => value.trim());
+
+  for (const url of candidates) {
+    if (!isLocalVerifyDatabaseUrl(url, env, { repoRoot: root, isAlive: options.isAlive })) {
+      continue;
+    }
+    if (probe(url)) {
+      return { database: true, databaseSource: "local-ci-validated" };
+    }
+  }
+
+  return { database: false, databaseSource: null };
 }
 
 export function preflightStep(step, capabilities, policy) {
@@ -117,6 +198,7 @@ export function preflightStep(step, capabilities, policy) {
 
 export function runPrecheckPush(options = {}) {
   const root = options.root ?? repoRoot();
+  const env = options.env ?? process.env;
   const branch = options.branch ?? currentBranch(root);
   if (!isFeatureBranch(branch)) {
     return {
@@ -154,7 +236,7 @@ export function runPrecheckPush(options = {}) {
     };
   }
   if (!options.skipFetch) {
-    const fetch = runStep("git fetch origin", "git-fetch", root);
+    const fetch = runStep("git fetch origin", "git-fetch", root, env);
     if (!fetch.ok) {
       return {
         ...fetch,
@@ -174,16 +256,23 @@ export function runPrecheckPush(options = {}) {
     };
   }
 
-  if (!process.env.GITHUB_BASE_SHA && !process.env.BRANCH_FRESH_BASE_SHA) {
-    process.env.GITHUB_BASE_SHA = runGitOrThrow(["merge-base", "HEAD", "origin/main"], { cwd: root });
+  if (!env.GITHUB_BASE_SHA && !env.BRANCH_FRESH_BASE_SHA) {
+    env.GITHUB_BASE_SHA = runGitOrThrow(["merge-base", "HEAD", "origin/main"], { cwd: root });
   }
 
   const steps =
     options.steps ??
-    (process.env.BRANCH_PRECHECK_STEPS_JSON
-      ? JSON.parse(process.env.BRANCH_PRECHECK_STEPS_JSON)
+    (env.BRANCH_PRECHECK_STEPS_JSON
+      ? JSON.parse(env.BRANCH_PRECHECK_STEPS_JSON)
       : buildPrecheckSteps(root));
-  const capabilities = options.capabilities ?? detectLocalCapabilities();
+  const capabilities =
+    options.capabilities ??
+    detectLocalCapabilities(env, {
+      root,
+      probeTcp: options.probeTcp,
+      isAlive: options.isAlive,
+      run: options.run,
+    });
   const needsCapabilityPolicy = steps.some(
     (step) => (step.requiredCapabilities ?? []).length > 0
   );
@@ -208,7 +297,7 @@ export function runPrecheckPush(options = {}) {
       skippedCapabilities.push({ step: step.label, ...preflight });
       continue;
     }
-    const result = runStep(step.command, step.label, root);
+    const result = runStep(step.command, step.label, root, env);
     if (!result.ok) {
       console.error(
         `branch:precheck-push FAIL category=${result.category} at step: ${step.label}`
@@ -227,7 +316,7 @@ export function runPrecheckPush(options = {}) {
   // block-ready owns verify:static in-process. If it was capability-skipped, run static once here
   // so push still has static coverage — never duplicate when block-ready already ran.
   if (!blockReadyRan && steps.some((s) => s.label === "block-ready")) {
-    const staticResult = runStep("node scripts/verify-static.mjs", "verify-static-fallback", root);
+    const staticResult = runStep("node scripts/verify-static.mjs", "verify-static-fallback", root, env);
     if (!staticResult.ok) {
       console.error(
         `branch:precheck-push FAIL category=${staticResult.category} at step: verify-static-fallback`

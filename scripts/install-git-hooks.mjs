@@ -26,7 +26,13 @@ function ensurePrePushHookFile() {
   if (!fs.existsSync(HUSKY_DIR)) {
     fs.mkdirSync(HUSKY_DIR, { recursive: true });
   }
+  // Never shell-source repository `.env` here — stale DATABASE_URL is not a
+  // capability and must not diverge from direct `npm run branch:precheck-push`.
   const script = `#!/usr/bin/env sh
+# Pre-push runs branch:precheck-push with the SAME process environment as a direct
+# \`npm run branch:precheck-push\`. Do NOT source repository \`.env\` here — a stale
+# DATABASE_URL string is not a database capability and must not override the parent
+# shell (Rule 18 / CURSOR-PIPELINE-REPAIR P0-1).
 npm run branch:precheck-push
 `;
   fs.writeFileSync(PRE_PUSH_PATH, script, "utf8");
