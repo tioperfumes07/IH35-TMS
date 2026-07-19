@@ -37,19 +37,22 @@
       "check": "all three guards pass normally and with table-driven --selftest corpora covering valid controls, every VETO plant, and fresh metamorphic variants"
     },
     {
-      "check": "EntityLink adoption traces lexically scoped/version-ordered ordinary, destructured, computed-key, and multi-hop aliases, and requires exact structural-location baseline equality; extras, inflation, removals, same-function moves, and cancellation all fail"
+      "check": "EntityLink adoption conservatively merges reaching ID/safe definitions across if/else, ternary, loop, and switch control flow while accepting complete unconditional branch sanitization; it traces scoped ordinary/destructured/computed/multi-hop aliases and requires exact structural-location baseline equality"
     },
     {
       "check": "deep-link guard and real ROUTES test require exactly one protected invoice/payment/expense/audit route bound to the exact React.lazy module/export; conflicting/canonical duplicates and wrong imports fail"
     },
     {
-      "check": "94-live guard rejects every direct/compound/increment/destructuring samsaraLive write beyond its canonical declaration/query assignment; Fastify proves fifth-company isolation and zero when mdata.units exists but Samsara does not"
+      "check": "94-live guard recursively rejects nested object/array/rest/default/computed destructuring writes plus every other samsaraLive write beyond its canonical declaration/query assignment; Fastify scenarios inject the production route to prove arbitrary-company isolation, executable SQL, and zero when mdata.units exists but Samsara does not"
     },
     {
       "check": "unique verify-steps 930/931/932 auto-discover all guard selftests and focused backend/frontend behavior tests; direct step plants prove nonzero test failures propagate through runStep; manifest extra_gates contains only valid npm script name verify:pre-commit"
     },
     {
       "check": "allowed_files covers both deleted historical verify-step paths 915-917 and replacement paths 930-932 so exact origin/main diff scope is auditable"
+    },
+    {
+      "check": "real-ROUTES audit-row behavior clicks Source lineage, preserves the exact audit URL, executes the exact lineage request, and proves row expansion does not win; removing stopPropagation fails"
     },
     {
       "check": "package.json and workflow hot files unchanged; no tab, schema, migration, or financial changes; obsolete mdata.units live-counter fallback is removed so relation-false deterministically returns zero"

@@ -210,40 +210,125 @@ function destructuredAssignmentWrite(left, identifier, sf) {
   return null;
 }
 
-function lexicalValueBeforeUse(sf, identifier) {
+function directAssignmentWrite(expression, identifier, declaration, sf) {
+  if (
+    !ts.isBinaryExpression(expression) ||
+    expression.operatorToken.kind !== ts.SyntaxKind.EqualsToken
+  ) {
+    return null;
+  }
+  if (
+    ts.isIdentifier(expression.left) &&
+    expression.left.text === identifier.text &&
+    lexicalDeclarations(sf, expression.left)[0] === declaration
+  ) {
+    return { expression: expression.right, directId: false };
+  }
+  const destructured = destructuredAssignmentWrite(expression.left, identifier, sf);
+  return destructured?.target && lexicalDeclarations(sf, destructured.target)[0] === declaration
+    ? { expression: destructured.expression, directId: destructured.directId }
+    : null;
+}
+
+function descriptorKey(value, sf) {
+  return value.directId
+    ? "direct-id"
+    : value.expression
+      ? `expression:${value.expression.getText(sf)}`
+      : "unknown";
+}
+
+function mergeValues(values, sf) {
+  const unique = new Map();
+  for (const value of values) unique.set(descriptorKey(value, sf), value);
+  return [...unique.values()];
+}
+
+function applyExpressionFlow(values, expression, identifier, declaration, sf) {
+  const direct = directAssignmentWrite(expression, identifier, declaration, sf);
+  if (direct) return [direct];
+  if (ts.isParenthesizedExpression(expression)) {
+    return applyExpressionFlow(values, expression.expression, identifier, declaration, sf);
+  }
+  if (ts.isConditionalExpression(expression)) {
+    return mergeValues([
+      ...applyExpressionFlow(values, expression.whenTrue, identifier, declaration, sf),
+      ...applyExpressionFlow(values, expression.whenFalse, identifier, declaration, sf),
+    ], sf);
+  }
+  if (
+    ts.isBinaryExpression(expression) &&
+    [ts.SyntaxKind.AmpersandAmpersandToken, ts.SyntaxKind.BarBarToken, ts.SyntaxKind.QuestionQuestionToken]
+      .includes(expression.operatorToken.kind)
+  ) {
+    return mergeValues([
+      ...values,
+      ...applyExpressionFlow(values, expression.right, identifier, declaration, sf),
+    ], sf);
+  }
+  return values;
+}
+
+function applyStatementFlow(values, statement, identifier, declaration, sf) {
+  if (ts.isExpressionStatement(statement)) {
+    return applyExpressionFlow(values, statement.expression, identifier, declaration, sf);
+  }
+  if (ts.isBlock(statement)) {
+    return statement.statements.reduce(
+      (current, child) => applyStatementFlow(current, child, identifier, declaration, sf),
+      values,
+    );
+  }
+  if (ts.isIfStatement(statement)) {
+    const thenValues = applyStatementFlow(values, statement.thenStatement, identifier, declaration, sf);
+    const elseValues = statement.elseStatement
+      ? applyStatementFlow(values, statement.elseStatement, identifier, declaration, sf)
+      : values;
+    return mergeValues([...thenValues, ...elseValues], sf);
+  }
+  if (
+    ts.isForStatement(statement) ||
+    ts.isForInStatement(statement) ||
+    ts.isForOfStatement(statement) ||
+    ts.isWhileStatement(statement) ||
+    ts.isDoStatement(statement)
+  ) {
+    return mergeValues([
+      ...values,
+      ...applyStatementFlow(values, statement.statement, identifier, declaration, sf),
+    ], sf);
+  }
+  if (ts.isSwitchStatement(statement)) {
+    const branchValues = statement.caseBlock.clauses.flatMap((clause) =>
+      clause.statements.reduce(
+        (current, child) => applyStatementFlow(current, child, identifier, declaration, sf),
+        values,
+      ),
+    );
+    const hasDefault = statement.caseBlock.clauses.some(ts.isDefaultClause);
+    return mergeValues(hasDefault ? branchValues : [...values, ...branchValues], sf);
+  }
+  return values;
+}
+
+function lexicalValuesBeforeUse(sf, identifier) {
   const declaration = lexicalDeclarations(sf, identifier)[0];
-  if (!declaration) return null;
+  if (!declaration) return [];
   const initialWrite = bindingWrite(declaration, sf);
-  const writes = initialWrite
-    ? [{ position: declaration.getStart(sf), ...initialWrite }]
-    : [];
   const bindingScope = enclosingLexicalScope(declaration);
-  if (!bindingScope) return initialWrite;
-  walk(bindingScope, (node) => {
-    if (
-      ts.isBinaryExpression(node) &&
-      node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
-      node.getStart(sf) < identifier.getStart(sf) &&
-      (
-        (ts.isIdentifier(node.left) &&
-          node.left.text === identifier.text &&
-          lexicalDeclarations(sf, node.left)[0] === declaration) ||
-        (() => {
-          const destructured = destructuredAssignmentWrite(node.left, identifier, sf);
-          return Boolean(destructured?.target && lexicalDeclarations(sf, destructured.target)[0] === declaration);
-        })()
-      )
-    ) {
-      const destructured = destructuredAssignmentWrite(node.left, identifier, sf);
-      writes.push({
-        position: node.getStart(sf),
-        expression: destructured ? destructured.expression : node.right,
-        directId: destructured?.directId ?? false,
-      });
-    }
-  });
-  writes.sort((a, b) => b.position - a.position);
-  return writes[0] ?? null;
+  if (!bindingScope || !ts.isBlock(bindingScope)) return initialWrite ? [initialWrite] : [];
+  let values = initialWrite ? [initialWrite] : [];
+  for (const statement of bindingScope.statements) {
+    if (statement.getEnd() <= declaration.getStart(sf)) continue;
+    if (statement.getStart(sf) >= identifier.getStart(sf) || isInside(identifier, statement)) break;
+    values = applyStatementFlow(values, statement, identifier, declaration, sf);
+  }
+  return mergeValues(values, sf);
+}
+
+function lexicalValueBeforeUse(sf, identifier) {
+  const values = lexicalValuesBeforeUse(sf, identifier);
+  return values.length === 1 ? values[0] : null;
 }
 
 function lexicalFunctions(sf, identifier) {
@@ -286,8 +371,10 @@ function resolvedIdReason(expr, sf, seen = new Set()) {
     const token = `variable:${expr.text}:${expr.pos}`;
     if (seen.has(token)) return null;
     seen.add(token);
-    const value = lexicalValueBeforeUse(sf, expr);
-    return value && (value.directId || (value.expression && resolvedIdReason(value.expression, sf, seen)))
+    const values = lexicalValuesBeforeUse(sf, expr);
+    return values.some(
+      (value) => value.directId || (value.expression && resolvedIdReason(value.expression, sf, new Set(seen))),
+    )
       ? "alias-id"
       : null;
   }
@@ -465,6 +552,15 @@ function runSelftest() {
     ["multi-hop-destructured-alias", `const T=({row})=>{const {vendor_id:first}=row;const value=first;return <td>{value}</td>}`, 1],
     ["multi-hop-computed-key-alias", `const T=({row})=>{const first="vendor_id";const key=first;const value=row[key];return <td>{value}</td>}`, 1],
     ["multi-hop-later-destructured", `const T=({row})=>{let first;({vendor_id:first}=row);const value=first;return <td>{value}</td>}`, 1],
+    ["conditional-sanitization", `const T=({row,flag})=>{let value=row.vendor_id;if(flag)value="safe";return <td>{value}</td>}`, 1],
+    ["if-else-reaching-id", `const T=({row,flag})=>{let value="safe";if(flag)value=row.vendor_id;else value="safe";return <td>{value}</td>}`, 1],
+    ["if-else-all-sanitized", `const T=({row,flag})=>{let value=row.vendor_id;if(flag)value="safe-a";else value="safe-b";return <td>{value}</td>}`, 0],
+    ["ternary-reaching-id", `const T=({row,flag})=>{let value="safe";flag?(value=row.vendor_id):(value="safe");return <td>{value}</td>}`, 1],
+    ["ternary-all-sanitized", `const T=({row,flag})=>{let value=row.vendor_id;flag?(value="safe-a"):(value="safe-b");return <td>{value}</td>}`, 0],
+    ["loop-reaching-id", `const T=({row,flag})=>{let value="safe";while(flag){value=row.vendor_id}return <td>{value}</td>}`, 1],
+    ["loop-conditional-sanitization", `const T=({row,flag})=>{let value=row.vendor_id;while(flag){value="safe"}return <td>{value}</td>}`, 1],
+    ["switch-reaching-id", `const T=({row,mode})=>{let value="safe";switch(mode){case "id":value=row.vendor_id;break;case "safe":value="safe";break;default:value="safe"}return <td>{value}</td>}`, 1],
+    ["switch-all-sanitized", `const T=({row,mode})=>{let value=row.vendor_id;switch(mode){case "a":value="safe-a";break;case "b":value="safe-b";break;default:value="safe-c"}return <td>{value}</td>}`, 0],
     ["helper-returned-id", `function pick(row){return row.vendor_id}const T=({row})=><td>{pick(row)}</td>`, 1],
     ["helper-with-id-argument", `const T=({row})=><td>{show(row.vendor_id)}</td>`, 1],
     ["direct-entity-link", `const T=({row})=><td><EntityLink kind="vendor" id={row.vendor_id}/></td>`, 0],

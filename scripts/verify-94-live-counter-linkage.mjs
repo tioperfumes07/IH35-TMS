@@ -328,19 +328,38 @@ function assignmentCount(root, identifier) {
 function destructuringTargetContains(node, identifier) {
   let target = node;
   while (ts.isParenthesizedExpression(target)) target = target.expression;
+  if (ts.isIdentifier(target)) return target.text === identifier;
+  if (
+    ts.isBinaryExpression(target) &&
+    target.operatorToken.kind === ts.SyntaxKind.EqualsToken
+  ) {
+    return destructuringTargetContains(target.left, identifier);
+  }
   if (ts.isObjectLiteralExpression(target)) {
     return target.properties.some(
       (property) =>
         (ts.isPropertyAssignment(property) &&
-          ts.isIdentifier(property.initializer) &&
-          property.initializer.text === identifier) ||
-        (ts.isShorthandPropertyAssignment(property) && property.name.text === identifier),
+          destructuringTargetContains(property.initializer, identifier)) ||
+        (ts.isShorthandPropertyAssignment(property) && property.name.text === identifier) ||
+        (ts.isSpreadAssignment(property) &&
+          destructuringTargetContains(property.expression, identifier)),
     );
   }
   if (ts.isArrayLiteralExpression(target)) {
-    return target.elements.some((element) => ts.isIdentifier(element) && element.text === identifier);
+    return target.elements.some((element) =>
+      ts.isSpreadElement(element)
+        ? destructuringTargetContains(element.expression, identifier)
+        : destructuringTargetContains(element, identifier),
+    );
   }
   return false;
+}
+
+function bindingPatternContains(name, identifier) {
+  if (ts.isIdentifier(name)) return name.text === identifier;
+  return name.elements.some((element) =>
+    ts.isOmittedExpression(element) ? false : bindingPatternContains(element.name, identifier),
+  );
 }
 
 function collectIdentifierWrites(root, identifier) {
@@ -352,7 +371,7 @@ function collectIdentifierWrites(root, identifier) {
         (ts.isIdentifier(node.name) && node.name.text === identifier) ||
         (
           (ts.isObjectBindingPattern(node.name) || ts.isArrayBindingPattern(node.name)) &&
-          node.name.elements.some((element) => ts.isIdentifier(element.name) && element.name.text === identifier)
+          bindingPatternContains(node.name, identifier)
         )
       )
     ) {
@@ -666,6 +685,12 @@ function runSelftest() {
     ["later-destructured-counter", good.replace("return { samsara_live", "({ value: samsaraLive } = payload);\n          return { samsara_live")],
     ["conditional-destructured-counter", good.replace("return { samsara_live", "if (companyId === fifthCompany) ({ value: samsaraLive } = payload);\n          return { samsara_live")],
     ["destructured-counter-declaration", good.replace("let samsaraLive = 0;", "let samsaraLive = 0;\n          const { value: samsaraLive } = payload;")],
+    ["nested-object-destructured-counter", good.replace("return { samsara_live", "({ outer: { inner: samsaraLive } } = payload);\n          return { samsara_live")],
+    ["nested-array-destructured-counter", good.replace("return { samsara_live", "([first, [samsaraLive]] = payload);\n          return { samsara_live")],
+    ["rest-destructured-counter", good.replace("return { samsara_live", "({ value, ...samsaraLive } = payload);\n          return { samsara_live")],
+    ["default-destructured-counter", good.replace("return { samsara_live", "({ value: samsaraLive = 0 } = payload);\n          return { samsara_live")],
+    ["computed-nested-destructured-counter", good.replace("return { samsara_live", "({ [outerKey]: { [innerKey]: samsaraLive } } = payload);\n          return { samsara_live")],
+    ["nested-destructured-counter-declaration", good.replace("let samsaraLive = 0;", "let samsaraLive = 0;\n          const { outer: { inner: samsaraLive } } = payload;")],
     ["dead-proof-actual-999", good.replace(
       "return { samsara_live: samsaraLive };",
       "function deadProof() { return { samsara_live: samsaraLive }; } return { samsara_live: 999 };",

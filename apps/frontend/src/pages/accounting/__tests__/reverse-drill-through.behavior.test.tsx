@@ -17,6 +17,7 @@ const COMPANY_ID = "00000000-0000-4000-8000-000000000099";
 const apiMocks = vi.hoisted(() => ({
   getInvoice: vi.fn(),
   getPayment: vi.fn(),
+  getAccountingSourceLineage: vi.fn(),
   listAccountingAuditTrail: vi.fn(),
   listCoaAccountsForJe: vi.fn(),
   listExpenses: vi.fn(),
@@ -49,6 +50,7 @@ vi.mock("../../../api/accounting", async (importOriginal) => {
     ...actual,
     getInvoice: apiMocks.getInvoice,
     getPayment: apiMocks.getPayment,
+    getAccountingSourceLineage: apiMocks.getAccountingSourceLineage,
     listAccountingAuditTrail: apiMocks.listAccountingAuditTrail,
     listCoaAccountsForJe: apiMocks.listCoaAccountsForJe,
     listExpenses: apiMocks.listExpenses,
@@ -153,6 +155,7 @@ describe("reverse drill-through production behavior", () => {
     vi.clearAllMocks();
     apiMocks.getInvoice.mockResolvedValue(invoiceFixture());
     apiMocks.getPayment.mockResolvedValue(paymentFixture());
+    apiMocks.getAccountingSourceLineage.mockResolvedValue({ rows: [] });
     apiMocks.listCoaAccountsForJe.mockResolvedValue({ accounts: [] });
     apiMocks.listAccountingAuditTrail.mockResolvedValue({ events: [], next_cursor: null });
     apiMocks.listExpenses.mockResolvedValue({ rows: [], total: 0 });
@@ -261,6 +264,55 @@ describe("reverse drill-through production behavior", () => {
         }),
       );
     });
+  });
+
+  it("keeps the exact audit route when Source lineage is clicked inside a row", async () => {
+    const user = userEvent.setup();
+    apiMocks.listAccountingAuditTrail.mockResolvedValue({
+      events: [{
+        id: "audit-row-1",
+        occurred_at: "2026-07-05T12:00:00.000Z",
+        event_class: "accounting.posting_line_created",
+        operating_company_id: COMPANY_ID,
+        journal_entry_id: "je-1",
+        posting_batch_id: null,
+        source_transaction_type: "invoice",
+        source_transaction_id: "inv-row-777",
+        source_transaction_line_id: null,
+        account_id: "acct-1",
+        account_number: "1100",
+        account_name: "Accounts Receivable",
+        debit_or_credit: "debit",
+        amount_cents: 12_500,
+        description: "Invoice posting",
+        before_state_json: null,
+        after_state_json: { posted: true },
+      }],
+      next_cursor: null,
+    });
+    renderManifestAt(
+      "/accounting/audit-trail?source_type=invoice&source_id=inv-row-777",
+    );
+
+    const lineageButton = await screen.findByRole("button", { name: "Source lineage" });
+    const competingRowNavigation = vi.fn();
+    document.addEventListener("click", competingRowNavigation);
+    await user.click(lineageButton);
+    document.removeEventListener("click", competingRowNavigation);
+
+    expect(screen.getByTestId("location")).toHaveTextContent(
+      "/accounting/audit-trail?source_type=invoice&source_id=inv-row-777",
+    );
+    expect(competingRowNavigation).not.toHaveBeenCalled();
+    expect(apiMocks.getAccountingSourceLineage).toHaveBeenCalledWith(
+      COMPANY_ID,
+      {
+        source_transaction_type: "invoice",
+        source_transaction_id: "inv-row-777",
+      },
+    );
+    expect(await screen.findByText(/Source lineage: invoice/)).toBeInTheDocument();
+    expect(screen.queryByText("Before state")).not.toBeInTheDocument();
   });
 
   it("renders an exact expense EntityLink and consumes expense_id on the production list", async () => {

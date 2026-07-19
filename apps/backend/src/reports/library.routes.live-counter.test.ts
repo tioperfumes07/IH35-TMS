@@ -7,6 +7,8 @@ const COMPANY_B = "22222222-2222-4222-8222-222222222222";
 const COMPANY_C = "33333333-3333-4333-8333-333333333333";
 const COMPANY_D = "44444444-4444-4444-8444-444444444444";
 const COMPANY_E = "55555555-5555-4555-8555-555555555555";
+const COMPANY_F = "66666666-6666-4666-8666-666666666666";
+const COMPANY_G = "77777777-7777-4777-8777-777777777777";
 
 function stripSqlComments(sql: string) {
   let output = "";
@@ -265,6 +267,16 @@ describe("reports home fleet Samsara live counter", () => {
   });
 
   it("rejects a hardcoded SELECT whose required semantics exist only in comments", async () => {
+    mocks.countByCompany.set(COMPANY_F, "71");
+    const routeResponse = await request(COMPANY_F);
+    expect(routeResponse.statusCode).toBe(200);
+    expect(routeResponse.json()).toMatchObject({ samsara_live: 71 });
+    const executedCounterSql = mocks.query.mock.calls.find(([sql]) =>
+      String(sql).includes("FROM integrations.samsara_vehicles"),
+    )?.[0];
+    expect(executedCounterSql).toBeDefined();
+    expect(() => parseExecutableCounterSql(String(executedCounterSql))).not.toThrow();
+
     const decoySql = `
       SELECT '999' AS samsara_live
       /* SELECT count(DISTINCT local_unit_id)::text AS samsara_live
@@ -280,6 +292,21 @@ describe("reports home fleet Samsara live counter", () => {
   });
 
   it("rejects a no-op GUC query whose set_config call exists only in a comment", async () => {
+    mocks.countByCompany.set(COMPANY_G, "29");
+    const routeResponse = await request(COMPANY_G);
+    expect(routeResponse.statusCode).toBe(200);
+    expect(routeResponse.json()).toMatchObject({ samsara_live: 29 });
+    expect(
+      mocks.query.mock.calls.some(
+        ([sql, params]) =>
+          /^SELECT\s+set_config\b/i.test(
+            stripSqlComments(String(sql)).replace(/\s+/g, " ").trim(),
+          ) &&
+          Array.isArray(params) &&
+          params[0] === COMPANY_G,
+      ),
+    ).toBe(true);
+
     await expect(
       mocks.query(
         "SELECT 1 /* set_config('app.operating_company_id', $1, true) */",

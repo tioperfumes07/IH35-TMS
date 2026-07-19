@@ -1453,9 +1453,11 @@ Status: LOCKED (non-financial guard/spec wiring plus behavior tests; relation-fa
   six-hour freshness predicate. Tokens present only in SQL or JavaScript comments never satisfy the contract.
 - Behavior-level tests against production modules are the primary proof: Fastify injection proves counter
   response/scoping/fifth-arbitrary-company behavior and proves that an existing `mdata.units` relation cannot
-  reintroduce a fallback when Samsara is absent; React/router tests mount all four guarded paths through the
+  reintroduce a fallback when Samsara is absent. SQL-decoy scenarios also inject the production handler before
+  probing fail-closed test SQL, so company/result mutations in the actual route are killed. React/router tests mount all four guarded paths through the
   real `ROUTES`, assert exactly one protected registration per path, resolve real lazy imports, click producers,
-  and exercise consumers.
+  and exercise consumers. The audit-row behavior test clicks `Source lineage` through the real audit route,
+  asserts the exact location and lineage request, and proves `stopPropagation` prevents the row expansion from winning.
 - Every guard includes table-driven `--selftest` plants covering every historical VETO and canonical controls.
 - CI wiring is additive through unique auto-discovered `scripts/verify-steps/<NNN>-*.mjs` entries. Each step
   runs the production guard, its selftest, and the relevant focused behavior test, and its own planted-failure
@@ -1465,6 +1467,8 @@ Status: LOCKED (non-financial guard/spec wiring plus behavior tests; relation-fa
 ### Guards (Rule 17)
 - `scripts/verify-entity-link-adoption.mjs` — narrow direct-ID plus lexically scoped/version-ordered
   declaration, ordinary/destructured later-assignment, computed-key, multi-hop alias, and helper detection;
+  reaching definitions merge conservatively across if/else, ternary, loop, and switch branches, so a possible
+  ID path remains tainted while complete unconditional sanitization across every branch is accepted;
   exact SHA-256 per-file/scope/structural-location/rule/
   expression finding-key/count equality rejects additions, removals, same-function moves, inflated counts,
   unknown hashes, and cancellation. Structural paths use AST ancestry and ordinals, not raw line numbers.
