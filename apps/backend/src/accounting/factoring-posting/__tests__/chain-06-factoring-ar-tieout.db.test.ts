@@ -416,9 +416,13 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
     } catch {
       /* best-effort cleanup */
     }
-    await db
-      .query("SELECT pg_advisory_unlock($1::bigint)", [FARO_CANONICAL_AGREEMENT_TEST_LOCK_KEY])
-      .catch(() => {});
+    // try/catch — never client.query().catch() (verify:aggregate-savepoints scans this tree;
+    // this file also embeds the literal "withCurrentUser" in the lock-order source guard).
+    try {
+      await db.query("SELECT pg_advisory_unlock($1::bigint)", [FARO_CANONICAL_AGREEMENT_TEST_LOCK_KEY]);
+    } catch {
+      /* best-effort unlock */
+    }
     await db.end();
   });
 
