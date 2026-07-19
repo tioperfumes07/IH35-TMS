@@ -150,7 +150,13 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
     const { limit, offset, status, search, operating_company_id } = parsedQuery.data;
 
-    const equipment = await withCurrentUser(authUser.uuid, async (client) => {
+    // 0091-g9-h6 (trailer follow-up): COUNT(*) over the same filtered/scoped set so the trailer
+    // management list can page past limit=50. Additive response — `equipment` unchanged for
+    // existing consumers; `total`/`has_more`/`limit`/`offset` size a truthful pager.
+    // Schema note: mdata.equipment has NO operating_company_id column — entity scope is the
+    // owner_company_id / currently_leased_to_company_id pair (same as units; never invent a
+    // phantom operating_company_id filter on this table).
+    const result = await withCurrentUser(authUser.uuid, async (client) => {
       const values: unknown[] = [];
       const filters: string[] = [];
       if (status) {
@@ -166,14 +172,24 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
       // its RLS is identity/role-scoped, so scope by the owner/leased pair. ALWAYS bind it — resolve
       // the company from the param or user context so equipment from another entity never leaks.
       const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, operating_company_id);
-      if (!scopedCompanyId) return [];
+      if (!scopedCompanyId) return { rows: [], total: 0 };
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
       values.push(scopedCompanyId);
       const ownerLeasedIdx = values.length;
       filters.push(`(owner_company_id = $${ownerLeasedIdx} OR currently_leased_to_company_id = $${ownerLeasedIdx})`);
+      const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
+
+      // Snapshot filter params for the count so LIMIT/OFFSET never ride on the total query
+      // (same filtered/scoped dataset as items; distinct from the paged SELECT binding).
+      const filterValues = values.slice();
+      const countRes = await client.query<{ total: number }>(
+        `SELECT count(*)::int AS total FROM mdata.equipment ${whereClause}`,
+        filterValues
+      );
+      const total = Number(countRes.rows[0]?.total ?? 0);
+
       values.push(limit);
       values.push(offset);
-      const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
       const res = await client.query(
         `
           SELECT
@@ -199,15 +215,22 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
             updated_by_user_id
           FROM mdata.equipment
           ${whereClause}
-          ORDER BY created_at DESC
+          ORDER BY created_at DESC, id ASC
           LIMIT $${values.length - 1}
           OFFSET $${values.length}
         `,
         values
       );
-      return res.rows;
+      return { rows: res.rows, total };
     });
-    return { equipment };
+
+    return {
+      equipment: result.rows,
+      total: result.total,
+      limit,
+      offset,
+      has_more: offset + result.rows.length < result.total,
+    };
   });
 
   app.post("/api/v1/mdata/equipment", async (req, reply) => {
