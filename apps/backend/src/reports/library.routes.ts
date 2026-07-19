@@ -36,13 +36,18 @@ const HOME_REPORT_CACHE_MS = 30_000;
 const homeAttentionReportCache = new Map<string, { exp: number; body: unknown }>();
 const homeFleetReportCache = new Map<string, { exp: number; body: unknown }>();
 
+type Queryable = {
+  query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }>;
+};
+
 export async function registerReportsLibraryRoutes(app: FastifyInstance) {
-  async function relationExists(client: any, qualifiedName: string) {
+  // 0277-any-type-reports-library-routes: DB helpers use Queryable, not an untyped client.
+  async function relationExists(client: Queryable, qualifiedName: string) {
     const res = await client.query(`SELECT to_regclass($1) AS rel`, [qualifiedName]);
     return Boolean(res.rows[0]?.rel);
   }
 
-  async function columnExists(client: any, schema: string, table: string, column: string) {
+  async function columnExists(client: Queryable, schema: string, table: string, column: string) {
     const res = await client.query(
       `
         SELECT 1
