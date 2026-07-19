@@ -28,7 +28,7 @@
   ],
   "runtime_path": "src",
   "db_required": true,
-  "guard_required": true,
+  "guard_required": false,
   "extra_gates": [
     "verify:shared-coa-role-tests-serialized"
   ],
@@ -37,5 +37,5 @@
       "check": "ap_control-seeding db.tests use canonical isolated-company.ts; settlement GLOBAL bindings lock+fail-loud restore; verify-shared-coa-role-tests-serialized selftest PASS; stress + settlement suites parallel-stable; no product GL/migration change; QboSync/verify-local-ci Debian churn removed (fixed on main #2709)"
     }
   ],
-  "note": "Test hygiene only. Helper is canonical for #2717 integration (codePrefix/legalNamePrefix/grantUserId); do not overwrite #2717 bank-transaction-splits.service.ts product code."
+  "note": "Test hygiene only. Helper is canonical for #2717 integration (codePrefix/legalNamePrefix/grantUserId); do not overwrite #2717 bank-transaction-splits.service.ts product code. guard_required=false because this block strengthens the already-wired verify-shared-coa-role-tests-serialized guard (+ GLOBAL bindings lock/restore checks) rather than adding a new scripts/verify-*.mjs."
 }
