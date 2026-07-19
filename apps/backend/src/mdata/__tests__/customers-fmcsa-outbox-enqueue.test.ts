@@ -26,4 +26,19 @@ describe("customers.routes FMCSA durable enqueue (no fire-and-forget)", () => {
     expect(src).toMatch(/retryable:\s*true/);
     expect(src).not.toMatch(/catch\s*\([^)]*\)\s*\{\s*return reply\.send\(\{\s*customer/);
   });
+
+  it("authorized FMCSA/write routes declare Fastify config.rateLimit (CodeQL #1162)", () => {
+    // Canonical pattern: named RL_* const with config.rateLimit, passed as route options.
+    expect(src).toMatch(/const RL_FMCSA_VERIFY\s*=\s*\{[\s\S]*?rateLimit\s*:/);
+    expect(src).toMatch(/const RL_WRITE\s*=\s*\{[\s\S]*?rateLimit\s*:/);
+    expect(src).toMatch(
+      /\.post\(\s*["'`]\/api\/v1\/mdata\/customers\/:id\/verify-fmcsa["'`]\s*,\s*RL_FMCSA_VERIFY\s*,/
+    );
+    expect(src).toMatch(
+      /\.patch\(\s*["'`]\/api\/v1\/mdata\/customers\/:id["'`]\s*,\s*RL_WRITE\s*,/
+    );
+    expect(src).toMatch(
+      /\.post\(\s*["'`]\/api\/v1\/mdata\/customers["'`]\s*,\s*RL_WRITE\s*,/
+    );
+  });
 });

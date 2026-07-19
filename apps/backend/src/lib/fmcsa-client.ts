@@ -295,17 +295,27 @@ async function fetchSaferSnapshot(type: LookupType, value: string): Promise<Carr
   return null;
 }
 
+/**
+ * Dual-source precedence (mobile → SAFER):
+ * 1. Either source returns carrier data → use it (mobile short-circuit; else SAFER).
+ * 2. SAFER miss + mobile retryable (429/5xx/network) → throw retryable (never null).
+ * 3. SAFER miss + mobile permanent (non-404 4xx) → throw permanent (never stamp not-found).
+ * 4. Both authoritative misses (404 / no records) → null.
+ * 5. SAFER typed error wins over a stored mobile error when SAFER itself fails.
+ */
 async function lookupCarrier(type: LookupType, value: string): Promise<CarrierResult | null> {
   const normalized = normalizeLookupValue(type, value);
   if (!normalized) return null;
 
   let mobileRetryable: FmcsaRetryableError | null = null;
+  let mobilePermanent: FmcsaPermanentError | null = null;
   try {
     const mobile = await fetchFmcsMobile(type, normalized);
     if (mobile) return mobile;
   } catch (error) {
     if (error instanceof FmcsaPermanentError) {
-      // Mobile permanent 4xx — still try SAFER before failing closed.
+      // Still try SAFER for an authoritative hit; preserve permanent if SAFER misses.
+      mobilePermanent = error;
     } else if (error instanceof FmcsaRetryableError) {
       mobileRetryable = error;
     } else {
@@ -315,16 +325,15 @@ async function lookupCarrier(type: LookupType, value: string): Promise<CarrierRe
 
   try {
     const safer = await fetchSaferSnapshot(type, normalized);
-    // Authoritative SAFER hit wins. If SAFER has no record but mobile was
-    // rate-limited / 5xx / network, do NOT collapse that into null not-found
-    // (would poison fmcsa_last_checked_at / suppress retries).
     if (safer) return safer;
     if (mobileRetryable) throw mobileRetryable;
+    if (mobilePermanent) throw mobilePermanent;
     return null;
   } catch (error) {
     if (error instanceof FmcsaRetryableError) throw error;
     if (error instanceof FmcsaPermanentError) throw error;
     if (mobileRetryable) throw mobileRetryable;
+    if (mobilePermanent) throw mobilePermanent;
     wrapNetworkError(error);
   }
 }

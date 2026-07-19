@@ -479,7 +479,13 @@ function normalizeCustomerType(input: "broker" | "direct" | "direct_shipper" | n
 }
 
 export async function registerCustomerRoutes(app: FastifyInstance) {
-  app.get("/api/v1/mdata/customers", async (req, reply) => {
+  // Per-route opt-in (@fastify/rate-limit global:false). Required for CodeQL
+  // js/missing-rate-limiting on authorized handlers (alert #1162).
+  const RL_READ = { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } } as const;
+  const RL_WRITE = { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } } as const;
+  const RL_FMCSA_VERIFY = { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } } as const;
+
+  app.get("/api/v1/mdata/customers", RL_READ, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
@@ -590,7 +596,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     return { customers: result.rows, total: result.total };
   });
 
-  app.post("/api/v1/mdata/customers", async (req, reply) => {
+  app.post("/api/v1/mdata/customers", RL_WRITE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -763,7 +769,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/mdata/customers/:id", async (req, reply) => {
+  app.get("/api/v1/mdata/customers/:id", RL_READ, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -788,7 +794,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     return mapCustomerRow(row, canReadTaxId(authUser.role));
   });
 
-  app.get("/api/v1/mdata/customers/:id/detail", async (req, reply) => {
+  app.get("/api/v1/mdata/customers/:id/detail", RL_READ, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -882,7 +888,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     return { customer: mapCustomerRow(row, canReadTaxId(authUser.role)) };
   });
 
-  app.patch("/api/v1/mdata/customers/:id", async (req, reply) => {
+  app.patch("/api/v1/mdata/customers/:id", RL_WRITE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -1154,7 +1160,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/mdata/customers/:id/verify-fmcsa", async (req, reply) => {
+  app.post("/api/v1/mdata/customers/:id/verify-fmcsa", RL_FMCSA_VERIFY, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!canForceFmcsaVerify(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -1202,7 +1208,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/mdata/customers/:id/classifications", async (req, reply) => {
+  app.get("/api/v1/mdata/customers/:id/classifications", RL_READ, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -1235,7 +1241,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     return reply.send({ classifications });
   });
 
-  app.post("/api/v1/mdata/customers/:id/deactivate", async (req, reply) => {
+  app.post("/api/v1/mdata/customers/:id/deactivate", RL_WRITE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });

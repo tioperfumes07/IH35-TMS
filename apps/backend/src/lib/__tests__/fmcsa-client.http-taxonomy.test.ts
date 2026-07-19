@@ -86,4 +86,51 @@ describe("fmcsa-client HTTP taxonomy", () => {
       retryAfterMs: 8_000,
     });
   });
+
+  it("does not collapse mobile permanent into not-found when SAFER misses", async () => {
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("mobile.fmcsa")) return jsonResponse(403);
+      return htmlResponse(200, "<html>No records found</html>");
+    }) as typeof fetch;
+    const { lookupCarrierByMC } = await import("../fmcsa-client.js");
+    await expect(lookupCarrierByMC("12345")).rejects.toMatchObject({
+      name: "FmcsaPermanentError",
+      status: 403,
+    });
+  });
+
+  it("prefers authoritative SAFER hit over prior mobile permanent", async () => {
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("mobile.fmcsa")) return jsonResponse(403);
+      // Plain-text labels match parseSaferSnapshotHtml capturePlain patterns.
+      return htmlResponse(
+        200,
+        [
+          "Legal Name: Acme Trucking LLC",
+          "DBA Name: Acme",
+          "Physical Address: 1 Main St Laredo, TX 78040",
+          "Phone: (555) 555-0100",
+          "USDOT Number: 1234567",
+          "MC/MX/FF Number(s): MC-999999",
+          "Operating Authority Status: Active",
+        ].join("\n")
+      );
+    }) as typeof fetch;
+    const { lookupCarrierByMC } = await import("../fmcsa-client.js");
+    const result = await lookupCarrierByMC("999999");
+    expect(result?.legal_name).toMatch(/Acme/i);
+    expect(result?.usdot_number).toBe("1234567");
+  });
+
+  it("both-source authoritative 404 remains null (not permanent)", async () => {
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("mobile.fmcsa")) return jsonResponse(404);
+      return htmlResponse(404);
+    }) as typeof fetch;
+    const { lookupCarrierByMC } = await import("../fmcsa-client.js");
+    await expect(lookupCarrierByMC("12345")).resolves.toBeNull();
+  });
 });
