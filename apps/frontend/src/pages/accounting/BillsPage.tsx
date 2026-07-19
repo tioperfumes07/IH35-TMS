@@ -186,19 +186,33 @@ export function BillsPage() {
   // EntityLink kind="bill" still prefers /accounting/bills/:id (BillDetailPage); this covers list deep-links.
   const deepLinkBillId = searchParams.get("bill_id");
   const [highlightedBillId, setHighlightedBillId] = useState<string | null>(() => deepLinkBillId);
-  // RPT-155: honor a deep link's ?status=&vendor_id= (e.g. A/P Aging "Pay now") as the initial filter
-  // so a drill-through from another module lands pre-filtered instead of on the unfiltered "All open items" view.
+  // RPT-155 / RPT-PAR-1: honor deep-link ?status=&vendor_id=&has_balance= so A/P Aging drill
+  // (has_balance=true — includes partial) and legacy Pay-now unpaid land pre-filtered.
   const STATUS_FILTER_VALUES = new Set(["unpaid", "partial", "paid", "voided"]);
   const initialStatus = searchParams.get("status");
   const [status, setStatus] = useState<"" | BillStatus | "unpaid">(
     initialStatus && STATUS_FILTER_VALUES.has(initialStatus) ? (initialStatus as BillStatus | "unpaid") : ""
   );
+  const hasBalance = searchParams.get("has_balance") === "true";
   // BILLS-DATERANGE-01: From/To bill_date filter (server-side via listBills date_from/date_to).
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   // BILLS-VENDORFILTER-01: server-side vendor filter (listBills already accepts vendor_id).
-  const [vendorId, setVendorId] = useState(() => searchParams.get("vendor_id") ?? "");
+  // Keep vendor_id URL-synced for aging drill same-route / back-forward.
+  const vendorId = searchParams.get("vendor_id") ?? "";
   const [allocationBillId, setAllocationBillId] = useState<string | null>(() => deepLinkBillId);
+
+  function setVendorId(next: string) {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next) params.set("vendor_id", next);
+        else params.delete("vendor_id");
+        return params;
+      },
+      { replace: true }
+    );
+  }
 
   useEffect(() => {
     if (!deepLinkBillId) return;
@@ -221,11 +235,12 @@ export function BillsPage() {
   );
 
   const billsQuery = useQuery({
-    queryKey: ["accounting", "bills", companyId, status, category, dateFrom, dateTo, vendorId],
+    queryKey: ["accounting", "bills", companyId, status, hasBalance, category, dateFrom, dateTo, vendorId],
     queryFn: () =>
       listBills(companyId, {
         include_balance: true,
         status: status || undefined,
+        has_balance: hasBalance || undefined,
         vendor_id: vendorId || undefined,
         date_from: dateFrom || undefined,
         date_to: dateTo || undefined,

@@ -214,11 +214,19 @@ export function ARAgingPage() {
         loading={query.isPending || (query.isFetching && filtered.length === 0)}
         storageKey="ar-aging"
         emptyText="No rows"
-        // RPT-PAR-1: row drill → open invoices for this customer (aging/status context).
-        // Customer billing profile kept additively via row action (never delete).
+        // RPT-PAR-1: row drill → open invoices for this customer (server has_balance).
+        // Open invoices + Customer profile kept as keyboard-reachable additive row actions.
         onRowClick={(r) => navigate(arAgingInvoiceListHref(r.customer_id))}
         rowActions={(r) => (
           <div className="flex flex-wrap justify-end gap-1">
+            <Button
+              size="sm"
+              variant="secondary"
+              aria-label={`Open invoices for ${r.customer_name}`}
+              onClick={() => navigate(arAgingInvoiceListHref(r.customer_id))}
+            >
+              Open invoices
+            </Button>
             <Button
               size="sm"
               variant="secondary"

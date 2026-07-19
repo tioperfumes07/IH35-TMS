@@ -3,10 +3,10 @@
   "status": "BUILD",
   "classification": "FINANCIAL",
   "phase": "tier3",
-  "task": "RPT-PAR-1: add behavioral tests for ManagementReportPackagePage; fix A/R and A/P aging row drill-through to invoice/bill lists filtered by customer/vendor + existing status contracts (with_balance / unpaid); preserve Customer profile, Vendor profile, and Pay-now additively; seed InvoicesListPage ?status= deep-link; Rule-17 auto-discovered fail-closed guard + selftest. No schema/migration/posting/GL changes.",
+  "task": "RPT-PAR-1 defect fix: server-side invoices has_balance before LIMIT; A/R+A/P aging drill via has_balance=true (not client with_balance / unpaid-only); A/R Open invoices keyboard action; bidirectional invoice searchParams sync; BillsPage consumes has_balance; tests + Rule-17 guard. No schema/migration/posting/GL changes.",
   "branch": "cursor/management-report-drill-through-tests-ad9d",
   "lane": "CLOUD",
-  "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
+  "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS) + adversarial review defects on PR #2712",
   "source_file": "rpt-par1-mgmt-report-test-and-drill.txt",
   "allowed_files": [
     "apps/frontend/src/pages/reports/ManagementReportPackagePage.tsx",
@@ -15,7 +15,12 @@
     "apps/frontend/src/pages/reports/agingDrillThrough.ts",
     "apps/frontend/src/pages/reports/__tests__/**",
     "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
+    "apps/frontend/src/pages/accounting/BillsPage.tsx",
     "apps/frontend/src/pages/accounting/__tests__/InvoicesListPage.statusDeeplink.test.tsx",
+    "apps/frontend/src/pages/accounting/__tests__/BillsPage.hasBalanceDeeplink.test.tsx",
+    "apps/frontend/src/api/accounting.ts",
+    "apps/backend/src/accounting/invoices.routes.ts",
+    "apps/backend/src/accounting/__tests__/invoices-has-balance-filter.test.ts",
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/home/__tests__/QboSyncHealthCard.test.tsx",
     "scripts/verify-mgmt-report-aging-drill.mjs",
@@ -29,20 +34,20 @@
   "extra_gates": [],
   "acceptance": [
     {
-      "check": "ManagementReportPackagePage behavioral tests cover packages, entity scoping, keyboard/a11y, and existing ?type= route contract"
+      "check": "GET /accounting/invoices accepts has_balance and filters amount_open>0 + aging-compatible statuses BEFORE LIMIT/OFFSET; returns truthful total/has_more"
     },
     {
-      "check": "A/R aging row click drills to /accounting/invoices?customer_id=&status=with_balance; Customer profile row action preserved"
+      "check": "A/R aging row click + Open invoices use /accounting/invoices?customer_id=&has_balance=true; Customer profile preserved; Enter/Space tests"
     },
     {
-      "check": "A/P aging row click drills to /accounting/bills?vendor_id=&status=unpaid; Pay now + Vendor profile preserved additively"
+      "check": "A/P aging row click + Pay now use /accounting/bills?vendor_id=&has_balance=true (not unpaid-only); Vendor profile preserved"
     },
     {
-      "check": "InvoicesListPage honors ?status= deep-link (with_balance) so AR drill lands filtered; no invented query params"
+      "check": "InvoicesListPage bidirectionally syncs customer_id/status/has_balance with searchParams; no client-only with_balance page slice"
     },
     {
       "check": "Rule-17 auto-discovered guard scripts/verify-mgmt-report-aging-drill.mjs + verify-steps/912 + --selftest fail-closed"
     }
   ],
-  "note": "No schema/migration/posting/GL changes. Additive UI drill + tests + static guard only. QboSyncHealthCard test timer pin unblocks verify:static wall-clock flake on main."
+  "note": "No schema/migration/posting/GL changes. Additive list filter + UI drill + tests + static guard only. Keep draft/HOLD — do not merge."
 }

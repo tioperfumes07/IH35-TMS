@@ -76,7 +76,7 @@ describe("APAgingPage drill-through", () => {
     expect(reportsApi.getApAgingReport).toHaveBeenCalledWith(COMPANY_ID, expect.any(String));
   });
 
-  it("row click drills to unpaid bills list filtered by vendor", async () => {
+  it("row click drills to has_balance bills list filtered by vendor", async () => {
     const user = userEvent.setup();
     render(wrap(<APAgingPage />));
     await waitFor(() => expect(screen.getByText("Loves Travel Stops")).toBeInTheDocument());
@@ -84,7 +84,7 @@ describe("APAgingPage drill-through", () => {
     expect(mockNavigate).toHaveBeenCalledWith(apAgingBillsListHref(VENDOR_ID));
   });
 
-  it("Pay now remains and targets the same unpaid bills list (keyboard)", async () => {
+  it("Pay now remains and targets the has_balance bills list (keyboard)", async () => {
     const user = userEvent.setup();
     render(wrap(<APAgingPage />));
     await waitFor(() => expect(screen.getByText("Loves Travel Stops")).toBeInTheDocument());
@@ -93,6 +93,8 @@ describe("APAgingPage drill-through", () => {
     expect(payNow).toHaveFocus();
     await user.keyboard("{Enter}");
     expect(mockNavigate).toHaveBeenCalledWith(apAgingBillsListHref(VENDOR_ID));
+    expect(apAgingBillsListHref(VENDOR_ID)).toContain("has_balance=true");
+    expect(apAgingBillsListHref(VENDOR_ID)).not.toContain("status=unpaid");
   });
 
   it("Vendor profile row action preserves AP profile entry (keyboard Space)", async () => {

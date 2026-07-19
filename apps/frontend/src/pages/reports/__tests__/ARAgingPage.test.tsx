@@ -78,11 +78,36 @@ describe("ARAgingPage drill-through", () => {
     expect(reportsApi.getArAgingReport).toHaveBeenCalledWith(COMPANY_ID, expect.any(String));
   });
 
-  it("row click drills to invoice list filtered by customer + with_balance", async () => {
+  it("row click drills to invoice list filtered by customer + has_balance", async () => {
     const user = userEvent.setup();
     render(wrap(<ARAgingPage />));
     await waitFor(() => expect(screen.getByText("Acme Freight")).toBeInTheDocument());
     await user.click(screen.getByText("Acme Freight"));
+    expect(mockNavigate).toHaveBeenCalledWith(arAgingInvoiceListHref(CUSTOMER_ID));
+    expect(arAgingInvoiceListHref(CUSTOMER_ID)).toContain("has_balance=true");
+  });
+
+  it("Open invoices row action is keyboard-reachable (Enter) without nested row conflict", async () => {
+    const user = userEvent.setup();
+    render(wrap(<ARAgingPage />));
+    await waitFor(() => expect(screen.getByText("Acme Freight")).toBeInTheDocument());
+    mockNavigate.mockClear();
+    const openInvoices = screen.getByRole("button", { name: /Open invoices for Acme Freight/i });
+    openInvoices.focus();
+    expect(openInvoices).toHaveFocus();
+    await user.keyboard("{Enter}");
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+    expect(mockNavigate).toHaveBeenCalledWith(arAgingInvoiceListHref(CUSTOMER_ID));
+  });
+
+  it("Open invoices row action activates with Space", async () => {
+    const user = userEvent.setup();
+    render(wrap(<ARAgingPage />));
+    await waitFor(() => expect(screen.getByText("Acme Freight")).toBeInTheDocument());
+    mockNavigate.mockClear();
+    const openInvoices = screen.getByRole("button", { name: /Open invoices for Acme Freight/i });
+    openInvoices.focus();
+    await user.keyboard(" ");
     expect(mockNavigate).toHaveBeenCalledWith(arAgingInvoiceListHref(CUSTOMER_ID));
   });
 

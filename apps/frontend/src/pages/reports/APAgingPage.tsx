@@ -218,8 +218,8 @@ export function APAgingPage() {
         sortDirection={sortDirection}
         onSortChange={onSortChange}
         emptyText="No rows"
-        // RPT-PAR-1: row drill → unpaid bills for this vendor (same contract as Pay now).
-        // Vendor AP profile kept additively via row action (never delete).
+        // RPT-PAR-1: row drill → bills with open balance (has_balance; includes partial).
+        // Pay now + Vendor AP profile kept additively (same has_balance list for pay).
         onRowClick={(r) => {
           if (!isVendorUuid(r.vendor_id)) {
             pushToast("This row is not linked to a vendor master record. Resolve vendor UUID on bills first.", "info");

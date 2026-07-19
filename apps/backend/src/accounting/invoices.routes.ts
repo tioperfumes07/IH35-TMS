@@ -22,7 +22,11 @@ const listQuerySchema = companyQuerySchema.extend({
   customer_id: z.string().uuid().optional(),
   from_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   to_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  // Aging / open-AR drill: filter full entity set by open balance BEFORE LIMIT/OFFSET
+  // (mirrors accounting bills has_balance). Excludes draft/voided; includes sent/partial/etc.
+  has_balance: z.coerce.boolean().optional(),
   limit: z.coerce.number().int().min(1).max(500).default(100),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 const createBodySchema = z.object({
@@ -133,7 +137,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
     const query = listQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     const q = query.data;
-    const rows = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
+    const listed = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
       const where: string[] = ["i.operating_company_id = $1"];
       const values: unknown[] = [q.operating_company_id];
       if (q.status) {
@@ -157,8 +161,27 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         values.push(q.to_date);
         where.push(`i.issue_date <= $${values.length}::date`);
       }
+      // has_balance: aging-compatible open AR — apply BEFORE LIMIT/OFFSET so pagination is truthful.
+      if (q.has_balance) {
+        where.push("COALESCE(i.amount_open_cents, 0) > 0");
+        where.push("i.voided_at IS NULL");
+        where.push("i.status NOT IN ('draft', 'void', 'voided', 'paid')");
+      }
+      const whereSql = where.join(" AND ");
+      const countRes = await client.query(
+        `
+          SELECT COUNT(*)::int AS total
+          FROM accounting.invoices i
+          JOIN mdata.customers c ON c.id = i.customer_id
+          WHERE ${whereSql}
+        `,
+        values
+      );
+      const total = Number(countRes.rows[0]?.total ?? 0);
       values.push(q.limit);
       const limitIdx = values.length;
+      values.push(q.offset);
+      const offsetIdx = values.length;
       const res = await client.query(
         `
           SELECT
@@ -176,15 +199,24 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
           JOIN mdata.customers c ON c.id = i.customer_id
           LEFT JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
           LEFT JOIN mdata.loads l ON l.id = i.source_load_id
-          WHERE ${where.join(" AND ")}
+          WHERE ${whereSql}
           ORDER BY i.issue_date DESC, i.created_at DESC
           LIMIT $${limitIdx}
+          OFFSET $${offsetIdx}
         `,
         values
       );
-      return res.rows;
+      return { rows: res.rows, total };
     });
-    return { invoices: rows };
+    const invoices = listed.rows;
+    const total = listed.total;
+    return {
+      invoices,
+      total,
+      limit: q.limit,
+      offset: q.offset,
+      has_more: q.offset + invoices.length < total,
+    };
   });
 
   app.get("/api/v1/accounting/invoices/:id", async (req, reply) => {

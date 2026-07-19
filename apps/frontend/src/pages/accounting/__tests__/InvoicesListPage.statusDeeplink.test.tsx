@@ -1,7 +1,15 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
-import type { ReactElement } from "react";
-import { MemoryRouter } from "react-router-dom";
+import userEvent from "@testing-library/user-event";
+import type { ReactElement, ReactNode } from "react";
+import {
+  MemoryRouter,
+  Route,
+  Routes,
+  createMemoryRouter,
+  RouterProvider,
+  useLocation,
+} from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as accountingApi from "../../../api/accounting";
 import * as mdataApi from "../../../api/mdata";
@@ -10,6 +18,7 @@ import { InvoicesListPage } from "../InvoicesListPage";
 
 const COMPANY_ID = "00000000-0000-4000-8000-000000000099";
 const CUSTOMER_ID = "11111111-1111-4111-8111-111111111111";
+const CUSTOMER_B = "22222222-2222-4222-8222-222222222222";
 
 vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: COMPANY_ID }),
@@ -23,11 +32,50 @@ vi.mock("../../../components/shared/EntityLink", () => ({
   EntityLink: ({ label }: { label: string }) => <span>{label}</span>,
 }));
 
+vi.mock("../../../components/shared/SelectCombobox", () => ({
+  SelectCombobox: ({
+    value,
+    onChange,
+    children,
+    className,
+  }: {
+    value?: string;
+    onChange?: (e: { target: { value: string } }) => void;
+    children?: ReactNode;
+    className?: string;
+  }) => (
+    <select
+      className={className}
+      value={value ?? ""}
+      onChange={(e) => onChange?.({ target: { value: e.target.value } })}
+    >
+      {children}
+    </select>
+  ),
+}));
+
+function LocationProbe() {
+  const loc = useLocation();
+  return <div data-testid="location-search">{loc.search}</div>;
+}
+
 function wrap(ui: ReactElement, initialEntry: string) {
   return (
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
       <ToastProvider>
-        <MemoryRouter initialEntries={[initialEntry]}>{ui}</MemoryRouter>
+        <MemoryRouter initialEntries={[initialEntry]}>
+          <Routes>
+            <Route
+              path="/accounting/invoices"
+              element={
+                <>
+                  <LocationProbe />
+                  {ui}
+                </>
+              }
+            />
+          </Routes>
+        </MemoryRouter>
       </ToastProvider>
     </QueryClientProvider>
   );
@@ -62,30 +110,37 @@ function invoice(partial: Record<string, unknown>) {
   };
 }
 
-describe("InvoicesListPage status deep-link (A/R aging contract)", () => {
+describe("InvoicesListPage has_balance deep-link + URL sync (A/R aging contract)", () => {
   beforeEach(() => {
-    vi.spyOn(mdataApi, "listCustomers").mockResolvedValue({ customers: [] } as never);
+    vi.spyOn(mdataApi, "listCustomers").mockResolvedValue({
+      customers: [
+        { id: CUSTOMER_ID, customer_name: "Acme Freight" },
+        { id: CUSTOMER_B, customer_name: "Beta Logistics" },
+      ],
+    } as never);
     vi.spyOn(accountingApi, "listInvoices").mockResolvedValue({
       invoices: [
         invoice({ id: "inv-open", display_id: "INV-1", status: "sent", amount_open_cents: 12_500 }),
         invoice({
-          id: "inv-paid",
-          display_id: "INV-2",
-          status: "paid",
-          amount_open_cents: 0,
-          amount_paid_cents: 9_999,
-          total_cents: 9_999,
-          subtotal_cents: 9_999,
+          id: "inv-partial",
+          display_id: "INV-3",
+          status: "partial",
+          amount_open_cents: 4_000,
+          amount_paid_cents: 8_500,
         }),
       ],
+      total: 2,
+      limit: 100,
+      offset: 0,
+      has_more: false,
     } as never);
   });
 
-  it("honors ?customer_id=&status=with_balance without inventing params", async () => {
+  it("honors ?customer_id=&has_balance=true via server filter (not client with_balance page slice)", async () => {
     render(
       wrap(
         <InvoicesListPage />,
-        `/accounting/invoices?customer_id=${CUSTOMER_ID}&status=with_balance`
+        `/accounting/invoices?customer_id=${CUSTOMER_ID}&has_balance=true`
       )
     );
 
@@ -94,16 +149,112 @@ describe("InvoicesListPage status deep-link (A/R aging contract)", () => {
         COMPANY_ID,
         expect.objectContaining({
           customer_id: CUSTOMER_ID,
-          // with_balance is client-side — must NOT be sent as a backend status
+          has_balance: true,
           status: undefined,
         })
       );
     });
 
-    // Combobox input value reflects the deep-linked aging context.
     expect(await screen.findByDisplayValue("With balance")).toBeInTheDocument();
-
     await waitFor(() => expect(screen.getByText("INV-1")).toBeInTheDocument());
-    expect(screen.queryByText("INV-2")).not.toBeInTheDocument();
+    expect(screen.getByText(/Rows: 2 of 2/)).toBeInTheDocument();
+  });
+
+  it("migrates legacy ?status=with_balance to has_balance=true and calls server has_balance", async () => {
+    render(
+      wrap(
+        <InvoicesListPage />,
+        `/accounting/invoices?customer_id=${CUSTOMER_ID}&status=with_balance`
+      )
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("location-search").textContent).toContain("has_balance=true");
+      expect(screen.getByTestId("location-search").textContent).not.toContain("status=with_balance");
+    });
+
+    await waitFor(() => {
+      expect(accountingApi.listInvoices).toHaveBeenCalledWith(
+        COMPANY_ID,
+        expect.objectContaining({
+          customer_id: CUSTOMER_ID,
+          has_balance: true,
+        })
+      );
+    });
+  });
+
+  it("writes status/has_balance/customer_id bidirectionally into searchParams on filter change", async () => {
+    const user = userEvent.setup();
+    render(wrap(<InvoicesListPage />, `/accounting/invoices?customer_id=${CUSTOMER_ID}&has_balance=true`));
+
+    await waitFor(() => expect(accountingApi.listInvoices).toHaveBeenCalled());
+    const statusSelect = await screen.findByDisplayValue("With balance");
+    await user.selectOptions(statusSelect, "sent");
+
+    await waitFor(() => {
+      const q = screen.getByTestId("location-search").textContent ?? "";
+      expect(q).toContain("status=sent");
+      expect(q).not.toContain("has_balance=true");
+      expect(q).toContain(`customer_id=${CUSTOMER_ID}`);
+    });
+
+    await waitFor(() => {
+      expect(accountingApi.listInvoices).toHaveBeenCalledWith(
+        COMPANY_ID,
+        expect.objectContaining({
+          status: "sent",
+          has_balance: undefined,
+          customer_id: CUSTOMER_ID,
+        })
+      );
+    });
+  });
+
+  it("re-reads searchParams on same-route query change (popstate / back-forward)", async () => {
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/accounting/invoices",
+          element: (
+            <>
+              <LocationProbe />
+              <InvoicesListPage />
+            </>
+          ),
+        },
+      ],
+      { initialEntries: [`/accounting/invoices?customer_id=${CUSTOMER_ID}&has_balance=true`] }
+    );
+
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(accountingApi.listInvoices).toHaveBeenCalledWith(
+        COMPANY_ID,
+        expect.objectContaining({ has_balance: true, customer_id: CUSTOMER_ID })
+      );
+    });
+
+    await router.navigate(`/accounting/invoices?customer_id=${CUSTOMER_B}&status=partial`);
+
+    await waitFor(() => {
+      expect(accountingApi.listInvoices).toHaveBeenCalledWith(
+        COMPANY_ID,
+        expect.objectContaining({
+          customer_id: CUSTOMER_B,
+          status: "partial",
+          has_balance: undefined,
+        })
+      );
+    });
+    expect(await screen.findByDisplayValue("Partial")).toBeInTheDocument();
+    expect(screen.getByTestId("location-search").textContent).toContain("status=partial");
   });
 });
