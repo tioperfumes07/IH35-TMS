@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
+import { useUrlSort } from "../../hooks/useUrlSort";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import {
   getFixedAssets, getFixedAssetDetail,
@@ -109,6 +110,7 @@ export function FixedAssetsPage() {
   const [offset, setOffset] = useState(0);
   const [detailId, setDetailId] = useState<string | null>(null);
   const limit = 50;
+  const { sortKey, sortDirection, onSortChange } = useUrlSort();
 
   const assetsQuery = useQuery({
     queryKey: ["fixed-assets", operatingCompanyId, statusFilter, offset],
@@ -160,6 +162,8 @@ export function FixedAssetsPage() {
       {
         key: "owner_company_name",
         label: "Owner",
+        sortable: true,
+        sortValue: (row) => (row.is_owner_operated ? "Self" : (row.owner_company_name ?? "Leased-in")),
         render: (row) => (row.is_owner_operated ? "Self" : (row.owner_company_name ?? "Leased-in")),
       },
       {
@@ -218,6 +222,9 @@ export function FixedAssetsPage() {
         storageKey="fixed-assets-list"
         initialPageSize={limit}
         emptyText="No fixed assets found."
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSortChange={onSortChange}
       />
 
       {total > limit && (
