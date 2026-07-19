@@ -161,7 +161,7 @@ describe("0280-05 factoring-balance-invoice-linkage service", () => {
       PROBE_OK,
       (sql) =>
         sql.includes("FROM org.companies")
-          ? { rows: [{ code: "USMCA-1", legal_name: "USMCA Logistics" }] }
+          ? { rows: [{ code: "USMCA-1" }] }
           : null,
     ]);
     const result = await computeFactoringBalanceInvoiceLinkage(client, {
@@ -170,6 +170,21 @@ describe("0280-05 factoring-balance-invoice-linkage service", () => {
     expect(result.status).toBe("unverifiable");
     expect(result.unverifiable_reason).toBe("faro_contract_entity_mismatch");
     expect(result.outstanding_liability_cents).toBeNull();
+  });
+
+  it("never infers Faro contract entity from legal_name alone", async () => {
+    const client = mockClient([
+      PROBE_OK,
+      (sql) =>
+        sql.includes("FROM org.companies")
+          ? { rows: [{ code: "TRK", legal_name: "IH 35 TRANSPORTATION Spoof" }] }
+          : null,
+    ]);
+    const result = await computeFactoringBalanceInvoiceLinkage(client, {
+      operatingCompanyId: "00000000-0000-4000-8000-000000000098",
+    });
+    expect(result.status).toBe("unverifiable");
+    expect(result.unverifiable_reason).toBe("faro_contract_entity_mismatch");
   });
 
   it("RTS-only sole factor is NEVER labeled Faro without owner-seeded agreement", async () => {

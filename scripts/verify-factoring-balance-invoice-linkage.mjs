@@ -50,12 +50,17 @@ function readRel(rel) {
   return fs.readFileSync(abs, "utf8");
 }
 
-function execCode(src) {
-  return toExecutableSemantics(src ?? "").code;
-}
-
-function execSqlTemplates(src) {
-  return toExecutableSemantics(src ?? "").sqlTemplates.join("\n");
+function stripCommentsKeepStrings(src, { sql = false } = {}) {
+  let s = String(src ?? "");
+  // Block comments first (TS docblocks + SQL /* */).
+  s = s.replace(/\/\*[\s\S]*?\*\//g, "");
+  if (sql) {
+    s = s.replace(/--.*$/gm, "");
+  } else {
+    // Line comments — keep `https://` URLs.
+    s = s.replace(/(^|[^:])\/\/.*$/gm, "$1");
+  }
+  return s;
 }
 
 export function checker(sources) {
@@ -63,22 +68,18 @@ export function checker(sources) {
   const requireText = (key, text, code) => {
     if (!sources[key] || !sources[key].includes(text)) failures.push(code);
   };
+  // Executable-only evidence = comment-stripped source (string literals kept).
+  // Rejects `-- decoy: factoring_advance_liability` / `// decoy` while accepting real code + strings.
+  // Never fall back to raw full-source includes (comment decoys).
   const requireExec = (key, text, code) => {
-    const codeBody = execCode(sources[key]);
-    const sqlBody = execSqlTemplates(sources[key]);
-    if (!codeBody.includes(text) && !sqlBody.includes(text) && !(sources[key] ?? "").includes(text)) {
-      const stripped = String(sources[key] ?? "")
-        .replace(/--.*$/gm, "")
-        .replace(/\/\*[\s\S]*?\*\//g, "");
-      if (!stripped.includes(text)) failures.push(code);
-    }
+    const stripped = stripCommentsKeepStrings(sources[key], { sql: key === "migration" });
+    if (!stripped.includes(text)) failures.push(code);
   };
   const forbidExec = (key, re, code) => {
-    const stripped = String(sources[key] ?? "")
-      .replace(/--.*$/gm, "")
-      .replace(/\/\*[\s\S]*?\*\//g, "");
-    const codeBody = execCode(sources[key]);
-    if (re.test(codeBody) || re.test(stripped)) failures.push(code);
+    const stripped = stripCommentsKeepStrings(sources[key], { sql: key === "migration" || key === "dbTest" });
+    // Also forbid when present in executable-semantics code (defense in depth).
+    const codeBody = toExecutableSemantics(sources[key] ?? "").code;
+    if (re.test(stripped) || re.test(codeBody)) failures.push(code);
   };
 
   for (const [key, rel] of Object.entries(PATHS)) {
@@ -112,6 +113,11 @@ export function checker(sources) {
   forbidExec("service", /Math\.max\(\s*0\s*,/, "service_must_not_clamp_with_math_max");
   // Never label a generic sole factor as Faro (old WITH candidates sole-vendor path).
   forbidExec("service", /WITH candidates AS/, "service_must_not_sole_factor_candidates_cte");
+  // Canonical entity code only — forbid legal_name / TRANSPORTATION string inference.
+  forbidExec("service", /\blegal_name\b/i, "service_must_not_infer_legal_name");
+  requireExec("service", "isTranspContractEntityCode", "service_must_use_canonical_entity_code_helper");
+  forbidExec("service", /\/TRANSPORTATION\/i/, "service_must_not_regex_legal_transportation");
+  forbidExec("service", /\/IH\\s\*35\/i/, "service_must_not_regex_legal_ih35");
 
   // Routes — liability headline, no silent zero, no net
   requireExec("routes", "computeFactoringBalanceInvoiceLinkage", "routes_must_call_linkage_service");
@@ -156,13 +162,19 @@ export function checker(sources) {
   requireExec("poster", "createJournalEntry(", "poster_must_post_via_createJournalEntry");
   requireExec("poster", "suppressSideEffects: true", "poster_must_suppress_side_effects_until_commit");
   requireExec("poster", "afterInsertBeforeCommit", "poster_must_attach_links_before_commit");
+  requireExec("poster", "repairFactoringLifecycleSourceLinksOnClient", "poster_on_client_repair_missing");
   requireExec("poster", "repairFactoringLifecycleSourceLinks", "poster_already_posted_repair_missing");
+  requireExec("poster", "afterRepair", "poster_already_posted_atomic_after_repair_missing");
   requireExec("poster", "ensureOpenPeriod", "poster_closed_period_gate_missing");
   requireExec("poster", "failAfterJeBeforeLifecycleLinks", "poster_inject_failure_hook_missing");
   requireExec("poster", "factoring_customer_payment", "poster_customer_payment_source_missing");
   requireExec("poster", "factoring_reserve_release", "poster_reserve_release_source_missing");
   requireExec("poster", "factoring_chargeback", "poster_chargeback_source_missing");
   requireExec("poster", "FACTORING_GL_POSTING", "poster_flag_gate_present");
+  // Every lifecycle path must post via the atomic helper or funding's inline createJournalEntry+.
+  requireExec("poster", "postFactoringCustomerPaymentEvent", "poster_customer_payment_fn_missing");
+  requireExec("poster", "postFactoringReleaseEvent", "poster_release_fn_missing");
+  requireExec("poster", "postFactoringChargebackEvent", "poster_chargeback_fn_missing");
   requireExec("journalEntries", "createJournalEntryOnClient", "journal_entries_on_client_missing");
   requireExec("journalEntries", "afterInsertBeforeCommit", "journal_entries_after_insert_hook_missing");
   requireExec("journalEntries", "suppressSideEffects", "journal_entries_suppress_side_effects_missing");
@@ -170,55 +182,43 @@ export function checker(sources) {
   requireExec("posterAtomicityTest", "injected_failure_between_je_and_lifecycle_links", "atomicity_test_inject_missing");
   requireExec("posterAtomicityTest", "already_posted path repairs", "atomicity_test_repair_missing");
 
-  // Migration — FORCE RLS, security_invoker, per-advance source linkage, signed (no GREATEST clamp)
+  // Migration — hold marker may live in header comments; structural DDL is executable-only.
   requireText("migration", "DO NOT RUN ON PROD", "migration_missing_hold_marker");
-  requireText("migration", "FORCE ROW LEVEL SECURITY", "migration_missing_force_rls");
-  requireText("migration", "factoring_advances_entity_insert", "migration_missing_insert_policy");
-  requireText("migration", "factoring_advances_entity_update", "migration_missing_update_policy");
-  requireText("migration", "Owner", "migration_missing_owner_role_gate");
-  requireText("migration", "Administrator", "migration_missing_admin_role_gate");
-  requireText("migration", "REVOKE DELETE", "migration_missing_revoke_delete");
-  requireText("migration", "security_invoker", "migration_missing_security_invoker");
-  requireText("migration", "COUNT(DISTINCT i.id)", "migration_missing_distinct_invoice_count");
-  requireText("migration", "factoring_advance_liability", "migration_missing_liability_role");
-  requireText("migration", "factor_reserve_held", "migration_missing_reserve_role");
-  requireText("migration", "source_transaction_type", "migration_missing_source_txn_join");
-  requireText("migration", "transaction_source_links", "migration_missing_tsl_join");
-  requireText("migration", "factoring_customer_payment", "migration_missing_settlement_source");
-  requireText("migration", "factoring_chargeback", "migration_missing_recourse_source");
-  requireText("migration", "factoring_reserve_release", "migration_missing_release_source");
-  requireText("migration", "app.factoring_balance_as_of", "migration_missing_as_of_guc");
-  requireText("migration", "outstanding_liability_signed_cents", "migration_missing_signed_liability");
-  requireText("migration", "orphan_liability_role_cents", "migration_missing_orphan_counter");
-  requireText("migration", "HELD_MIGRATION_PREREQUISITE_MISSING", "migration_missing_prereq_fail_closed");
-  requireText("migration", "202607340000_je_reversal_linkage", "migration_missing_prereq_reference");
-  requireText("migration", "canonical_factor_agreements", "migration_missing_faro_agreement_table");
-  requireText("migration", "FARO_FULL_RECOURSE_V1", "migration_missing_faro_agreement_code");
-  requireText("migration", "never invent", "migration_must_declare_no_invented_uuids");
+  requireExec("migration", "FORCE ROW LEVEL SECURITY", "migration_missing_force_rls");
+  requireExec("migration", "factoring_advances_entity_insert", "migration_missing_insert_policy");
+  requireExec("migration", "factoring_advances_entity_update", "migration_missing_update_policy");
+  requireExec("migration", "factoring_advances_factor_vendor_same_entity_fkey", "migration_missing_same_entity_advance_fk");
+  requireExec("migration", "canonical_factor_agreements_vendor_same_entity_fkey", "migration_missing_same_entity_agreement_vendor_fk");
+  requireExec("migration", "canonical_factor_agreements_profile_same_entity_fkey", "migration_missing_same_entity_agreement_profile_fk");
+  requireExec("migration", "CREATE OR REPLACE VIEW", "migration_must_use_create_or_replace_view");
+  requireExec("migration", "DISTINCT ON (jep.id)", "migration_missing_posting_dedup");
+  requireExec("migration", "Owner", "migration_missing_owner_role_gate");
+  requireExec("migration", "Administrator", "migration_missing_admin_role_gate");
+  requireExec("migration", "REVOKE DELETE", "migration_missing_revoke_delete");
+  requireExec("migration", "security_invoker", "migration_missing_security_invoker");
+  requireExec("migration", "COUNT(DISTINCT i.id)", "migration_missing_distinct_invoice_count");
+  requireExec("migration", "factoring_advance_liability", "migration_missing_liability_role");
+  requireExec("migration", "factor_reserve_held", "migration_missing_reserve_role");
+  requireExec("migration", "source_transaction_type", "migration_missing_source_txn_join");
+  requireExec("migration", "transaction_source_links", "migration_missing_tsl_join");
+  requireExec("migration", "factoring_customer_payment", "migration_missing_settlement_source");
+  requireExec("migration", "factoring_chargeback", "migration_missing_recourse_source");
+  requireExec("migration", "factoring_reserve_release", "migration_missing_release_source");
+  requireExec("migration", "app.factoring_balance_as_of", "migration_missing_as_of_guc");
+  requireExec("migration", "outstanding_liability_signed_cents", "migration_missing_signed_liability");
+  requireExec("migration", "orphan_liability_role_cents", "migration_missing_orphan_counter");
+  requireExec("migration", "HELD_MIGRATION_PREREQUISITE_MISSING", "migration_missing_prereq_fail_closed");
+  requireExec("migration", "202607340000_je_reversal_linkage", "migration_missing_prereq_reference");
+  requireExec("migration", "canonical_factor_agreements", "migration_missing_faro_agreement_table");
+  requireExec("migration", "FARO_FULL_RECOURSE_V1", "migration_missing_faro_agreement_code");
   forbidExec("migration", /DROP\s+TABLE/i, "migration_must_be_additive");
   forbidExec("migration", /DROP\s+COLUMN/i, "migration_must_not_drop_column");
-  // Only allowed destructive DDL: DROP VIEW IF EXISTS views.factoring_balance_invoice_linkage (reshape).
-  {
-    const stripped = String(sources.migration ?? "")
-      .replace(/--.*$/gm, "")
-      .replace(/\/\*[\s\S]*?\*\//g, "");
-    const drops = [...stripped.matchAll(/DROP\s+VIEW\s+IF\s+EXISTS\s+([a-z0-9_."]+)/gi)];
-    for (const m of drops) {
-      const target = String(m[1] ?? "").replace(/"/g, "").toLowerCase();
-      if (target !== "views.factoring_balance_invoice_linkage") {
-        failures.push("migration_unexpected_drop_view");
-      }
-    }
-    if (/DROP\s+VIEW\s+(?!IF\s+EXISTS)/i.test(stripped)) {
-      failures.push("migration_drop_view_must_use_if_exists");
-    }
-  }
+  forbidExec("migration", /DROP\s+VIEW/i, "migration_must_not_drop_view");
   forbidExec("migration", /status\s+IN\s*\(\s*'reserve_held'/i, "migration_must_not_settle_via_status");
   forbidExec("migration", /ILIKE\s*'%faro%'/i, "migration_must_not_vendor_name_match");
   forbidExec("migration", /GREATEST\s*\(\s*0\s*,/i, "migration_must_not_clamp_greatest");
   forbidExec("migration", /ORDER BY COUNT\(\*\) DESC/, "migration_must_not_majority_inference");
   // Completeness must require liability role legs — bare reserve_movements→JE is insufficient.
-  requireText("migration", "factoring_advance_liability", "migration_funding_requires_liability_role");
   {
     const stripped = String(sources.migration ?? "")
       .replace(/--.*$/gm, "")
@@ -248,6 +248,9 @@ export function checker(sources) {
   requireText("additions", "afterInsertBeforeCommit", "additions_missing_atomic_links");
   requireText("additions", "HELD_MIGRATION_PREREQUISITE_MISSING", "additions_missing_prereq");
   requireText("additions", "accounting_exception", "additions_missing_accounting_exception");
+  requireText("additions", "same-entity", "additions_missing_same_entity");
+  requireText("additions", "CREATE OR REPLACE VIEW", "additions_missing_create_or_replace");
+  requireText("additions", "isTranspContractEntityCode", "additions_missing_canonical_entity_code");
 
   // Tests — fixture IDs, plants, isolation, CPA negatives
   requireExec("dbTest", "canonicalInvoiceDisplayId", "db_test_canonical_invoice_display_helper");
@@ -321,13 +324,21 @@ function createBadFixture(good) {
     "\noutstanding_cents: num(raw.reserveCents ?? raw.outstanding_cents),\n";
   bad.dbTest = String(good.dbTest) + "\n`INV-FBL-${n()}`\n";
   bad.migration =
-    String(good.migration).replace(/FORCE ROW LEVEL SECURITY/g, "ENABLE ROW LEVEL SECURITY") +
+    String(good.migration)
+      .replace(/FORCE ROW LEVEL SECURITY/g, "ENABLE ROW LEVEL SECURITY")
+      .replace(/CREATE OR REPLACE VIEW/g, "CREATE VIEW") +
+    "\n-- comment decoy only: FORCE ROW LEVEL SECURITY\n" +
     "\n-- comment decoy only: factoring_advance_liability\n" +
+    "\n-- comment decoy only: CREATE OR REPLACE VIEW\n" +
     "\nWHERE status IN ('reserve_held', 'collected', 'released')\n" +
     "\nGREATEST(0, liability_credits_cents - liability_debits)\n" +
     "\nILIKE '%faro%'\n" +
-    "\nORDER BY COUNT(*) DESC\n";
+    "\nORDER BY COUNT(*) DESC\n" +
+    "\nDROP VIEW IF EXISTS views.factoring_balance_invoice_linkage;\n";
   bad.poster = String(good.poster).replace(/createFactoringJournalEntryAtomically/g, "createSomethingElse");
+  bad.service =
+    String(bad.service) +
+    "\nconst legal = row.legal_name; /TRANSPORTATION/i.test(legal);\n";
   return bad;
 }
 
@@ -352,7 +363,10 @@ if (isDirectRun) {
       "fe_must_not_headline_reserve",
       "migration_must_not_settle_via_status",
       "migration_must_not_clamp_greatest",
+      "migration_must_not_drop_view",
+      "migration_missing_force_rls",
       "service_must_not_clamp_with_math_max",
+      "service_must_not_infer_legal_name",
     ],
   });
 }

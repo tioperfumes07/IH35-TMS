@@ -386,26 +386,45 @@ async function findJournalEntryIdByMemo(
   return res.rows[0]?.id ?? null;
 }
 
+/** In-client repair — caller owns the transaction (already_posted self-heal must be atomic with siblings). */
+export async function repairFactoringLifecycleSourceLinksOnClient(
+  client: DbClient,
+  opts: {
+    operating_company_id: string;
+    memo: string;
+    factoring_advance_id: string;
+    source_transaction_type: FactoringLifecycleSourceType;
+  }
+): Promise<{ journal_entry_id: string | null; repaired: boolean }> {
+  const journalEntryId = await findJournalEntryIdByMemo(client, opts.operating_company_id, opts.memo);
+  if (!journalEntryId) return { journal_entry_id: null, repaired: false };
+  await attachFactoringLifecycleSourceLinks(client, {
+    operating_company_id: opts.operating_company_id,
+    journal_entry_id: journalEntryId,
+    factoring_advance_id: opts.factoring_advance_id,
+    source_transaction_type: opts.source_transaction_type,
+  });
+  return { journal_entry_id: journalEntryId, repaired: true };
+}
+
 /** Validate + idempotently repair missing lifecycle source links for an already-posted factoring JE. */
 export async function repairFactoringLifecycleSourceLinks(opts: {
   operating_company_id: string;
   memo: string;
   factoring_advance_id: string;
   source_transaction_type: FactoringLifecycleSourceType;
+  /** Optional same-txn side effects after repair (subledger sync, etc.). */
+  afterRepair?: (client: DbClient, journalEntryId: string | null) => Promise<void>;
 }): Promise<{ journal_entry_id: string | null; repaired: boolean }> {
   return withLuciaBypass(async (client: DbClient) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
       opts.operating_company_id,
     ]);
-    const journalEntryId = await findJournalEntryIdByMemo(client, opts.operating_company_id, opts.memo);
-    if (!journalEntryId) return { journal_entry_id: null, repaired: false };
-    await attachFactoringLifecycleSourceLinks(client, {
-      operating_company_id: opts.operating_company_id,
-      journal_entry_id: journalEntryId,
-      factoring_advance_id: opts.factoring_advance_id,
-      source_transaction_type: opts.source_transaction_type,
-    });
-    return { journal_entry_id: journalEntryId, repaired: true };
+    const result = await repairFactoringLifecycleSourceLinksOnClient(client, opts);
+    if (opts.afterRepair) {
+      await opts.afterRepair(client, result.journal_entry_id);
+    }
+    return result;
   });
 }
 
@@ -634,16 +653,20 @@ export async function postFactoringCustomerPaymentEvent(input: PostFactoringCust
   if (prepared.gate === "flag_off") return FLAG_OFF;
   if (prepared.gate === "advance_not_found") return { posted: false, reason: "advance_not_found" };
   if (prepared.gate === "already_posted") {
-    // CHAIN-06 §5/§7-A + 0280-05: self-heal subledger AND missing lifecycle source links.
+    // CHAIN-06 §5/§7-A + 0280-05: repair links + subledger relief in ONE txn (atomic self-heal).
     await repairFactoringLifecycleSourceLinks({
       operating_company_id: input.operating_company_id,
       memo: prepared.memo,
       factoring_advance_id: input.factoring_advance_id,
       source_transaction_type: "factoring_customer_payment",
-    });
-    await withLuciaBypass(async (client: DbClient) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
-      await applyCustomerPaymentSubledgerRelief(client, input.operating_company_id, input.factoring_advance_id, amount);
+      afterRepair: async (client) => {
+        await applyCustomerPaymentSubledgerRelief(
+          client,
+          input.operating_company_id,
+          input.factoring_advance_id,
+          amount
+        );
+      },
     });
     return { posted: false, reason: "already_posted" };
   }
@@ -859,26 +882,31 @@ export async function postFactoringChargebackEvent(input: PostFactoringChargebac
       },
       factoring_advance_id: input.factoring_advance_id,
       source_transaction_type: "factoring_chargeback",
+      afterLifecycleBeforeCommit: async (client) => {
+        // Same txn as return JE: subledger relief cannot orphan from the receivable leg.
+        await applyChargebackSubledgerRelief(
+          client,
+          input.operating_company_id,
+          input.factoring_advance_id
+        );
+      },
     });
     anyPosted = true;
     lastJeId = created.id;
   } else if (prepared.returnPostings.length > 0 && prepared.returnExists) {
+    // already_posted return JE: repair links + subledger relief atomically.
     await repairFactoringLifecycleSourceLinks({
       operating_company_id: input.operating_company_id,
       memo: prepared.returnMemo,
       factoring_advance_id: input.factoring_advance_id,
       source_transaction_type: "factoring_chargeback",
-    });
-  }
-
-  // CHAIN-06 §5/§7-A fix: the (B) leg above removes the receivable from trade A/R (ar_control) — sync the
-  // subledger accordingly. Runs whenever this advance HAS a recoursed-AR leg (returnPostings non-empty),
-  // whether the JE was just created OR already existed (returnExists) — idempotent status flip, so this
-  // also self-heals a prior run that posted the JE but crashed before this sync.
-  if (prepared.returnPostings.length > 0) {
-    await withLuciaBypass(async (client: DbClient) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
-      await applyChargebackSubledgerRelief(client, input.operating_company_id, input.factoring_advance_id);
+      afterRepair: async (client) => {
+        await applyChargebackSubledgerRelief(
+          client,
+          input.operating_company_id,
+          input.factoring_advance_id
+        );
+      },
     });
   }
 

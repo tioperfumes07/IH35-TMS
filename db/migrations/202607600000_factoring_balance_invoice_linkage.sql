@@ -78,11 +78,15 @@ BEGIN
     RETURN;
   END IF;
 
+  -- Same-entity composite FK target for factor profiles (tenant_id, id).
+  CREATE UNIQUE INDEX IF NOT EXISTS uq_factoring_factor_tenant_id
+    ON factoring.factor (tenant_id, id);
+
   CREATE TABLE IF NOT EXISTS factoring.canonical_factor_agreements (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id uuid NOT NULL REFERENCES org.companies(id),
-    factor_profile_id uuid NOT NULL REFERENCES factoring.factor(id),
-    factor_vendor_id uuid NOT NULL REFERENCES mdata.vendors(id),
+    factor_profile_id uuid NOT NULL,
+    factor_vendor_id uuid NOT NULL,
     agreement_code text NOT NULL
       CHECK (agreement_code = 'FARO_FULL_RECOURSE_V1'),
     effective_from date NOT NULL,
@@ -108,6 +112,29 @@ BEGIN
     CHECK (effective_to IS NULL OR effective_to >= effective_from),
     UNIQUE (tenant_id, factor_vendor_id, agreement_code, effective_from)
   );
+
+  -- Same-entity composite FKs (reject cross-opco vendor/profile binding).
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+     WHERE conname = 'canonical_factor_agreements_vendor_same_entity_fkey'
+       AND conrelid = 'factoring.canonical_factor_agreements'::regclass
+  ) THEN
+    ALTER TABLE factoring.canonical_factor_agreements
+      ADD CONSTRAINT canonical_factor_agreements_vendor_same_entity_fkey
+      FOREIGN KEY (tenant_id, factor_vendor_id)
+      REFERENCES mdata.vendors (operating_company_id, id);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+     WHERE conname = 'canonical_factor_agreements_profile_same_entity_fkey'
+       AND conrelid = 'factoring.canonical_factor_agreements'::regclass
+  ) THEN
+    ALTER TABLE factoring.canonical_factor_agreements
+      ADD CONSTRAINT canonical_factor_agreements_profile_same_entity_fkey
+      FOREIGN KEY (tenant_id, factor_profile_id)
+      REFERENCES factoring.factor (tenant_id, id);
+  END IF;
 
   CREATE INDEX IF NOT EXISTS idx_canonical_factor_agreements_tenant_asof
     ON factoring.canonical_factor_agreements (tenant_id, agreement_code, effective_from DESC);
@@ -142,6 +169,16 @@ BEGIN
         AND identity.current_user_role() = ANY (
           ARRAY['Owner'::identity.role_enum, 'Administrator'::identity.role_enum]
         )
+        AND EXISTS (
+          SELECT 1 FROM mdata.vendors v
+          WHERE v.id = factor_vendor_id
+            AND v.operating_company_id = tenant_id
+        )
+        AND EXISTS (
+          SELECT 1 FROM factoring.factor fp
+          WHERE fp.id = factor_profile_id
+            AND fp.tenant_id = tenant_id
+        )
       )
     );
 
@@ -164,6 +201,16 @@ BEGIN
         tenant_id::text = current_setting('app.operating_company_id', true)
         AND identity.current_user_role() = ANY (
           ARRAY['Owner'::identity.role_enum, 'Administrator'::identity.role_enum]
+        )
+        AND EXISTS (
+          SELECT 1 FROM mdata.vendors v
+          WHERE v.id = factor_vendor_id
+            AND v.operating_company_id = tenant_id
+        )
+        AND EXISTS (
+          SELECT 1 FROM factoring.factor fp
+          WHERE fp.id = factor_profile_id
+            AND fp.tenant_id = tenant_id
         )
       )
     );
@@ -200,6 +247,20 @@ BEGIN
       OR operating_company_id::text = current_setting('app.operating_company_id', true)
     );
 
+  -- Same-entity composite FK: factor vendor must belong to the advance's operating company.
+  IF to_regclass('mdata.vendors') IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1 FROM pg_constraint
+        WHERE conname = 'factoring_advances_factor_vendor_same_entity_fkey'
+          AND conrelid = 'accounting.factoring_advances'::regclass
+     ) THEN
+    ALTER TABLE accounting.factoring_advances
+      ADD CONSTRAINT factoring_advances_factor_vendor_same_entity_fkey
+      FOREIGN KEY (operating_company_id, factoring_company_vendor_id)
+      REFERENCES mdata.vendors (operating_company_id, id)
+      ON DELETE RESTRICT;
+  END IF;
+
   CREATE POLICY factoring_advances_entity_insert
     ON accounting.factoring_advances
     FOR INSERT
@@ -210,6 +271,11 @@ BEGIN
         operating_company_id::text = current_setting('app.operating_company_id', true)
         AND identity.current_user_role() = ANY (
           ARRAY['Owner'::identity.role_enum, 'Administrator'::identity.role_enum]
+        )
+        AND EXISTS (
+          SELECT 1 FROM mdata.vendors v
+          WHERE v.id = factoring_company_vendor_id
+            AND v.operating_company_id = accounting.factoring_advances.operating_company_id
         )
       )
     );
@@ -234,6 +300,11 @@ BEGIN
         AND identity.current_user_role() = ANY (
           ARRAY['Owner'::identity.role_enum, 'Administrator'::identity.role_enum]
         )
+        AND EXISTS (
+          SELECT 1 FROM mdata.vendors v
+          WHERE v.id = factoring_company_vendor_id
+            AND v.operating_company_id = accounting.factoring_advances.operating_company_id
+        )
       )
     );
 
@@ -247,17 +318,14 @@ CREATE SCHEMA IF NOT EXISTS views;
 
 DO $view$
 BEGIN
-  -- Column reshape on HOLD draft: DROP VIEW IF EXISTS only for THIS view (CREATE OR REPLACE cannot
-  -- rename columns). Additive-only elsewhere — never DROP TABLE/COLUMN. Guard forbids DROP TABLE.
-  EXECUTE 'DROP VIEW IF EXISTS views.factoring_balance_invoice_linkage';
-
+  -- Dependency-safe: CREATE OR REPLACE VIEW only (append-stable column list; no view drop).
   IF to_regclass('accounting.factoring_advances') IS NULL
      OR to_regclass('accounting.invoices') IS NULL
      OR to_regclass('accounting.journal_entry_postings') IS NULL
      OR to_regclass('accounting.journal_entries') IS NULL
      OR to_regclass('accounting.chart_of_accounts_roles') IS NULL THEN
     EXECUTE $EMPTY$
-      CREATE VIEW views.factoring_balance_invoice_linkage
+      CREATE OR REPLACE VIEW views.factoring_balance_invoice_linkage
       WITH (security_invoker = true) AS
       SELECT
         NULL::uuid AS operating_company_id,
@@ -283,7 +351,7 @@ BEGIN
     $EMPTY$;
   ELSE
     EXECUTE $LIVE$
-      CREATE VIEW views.factoring_balance_invoice_linkage
+      CREATE OR REPLACE VIEW views.factoring_balance_invoice_linkage
       WITH (security_invoker = true) AS
       WITH as_of AS (
         SELECT COALESCE(
@@ -301,10 +369,11 @@ BEGIN
           AND je.reversed_by_je_id IS NULL
           AND je.entry_date <= a.d
       ),
-      -- Authoritative advance↔posting link: source_transaction_* OR TSL only.
+      -- Authoritative advance↔posting link with source/TSL consistency + DISTINCT ON dedup.
+      -- Disagreeing source_* vs TSL fails closed (excluded). Multi-TSL rows never multiply legs.
       -- Bare factoring_reserve_movements→JE is NOT sufficient (code-review VETO #2).
       advance_linked_postings AS (
-        SELECT
+        SELECT DISTINCT ON (jep.id)
           fa.id AS factoring_advance_id,
           fa.operating_company_id,
           fa.factoring_company_vendor_id AS factor_vendor_id,
@@ -329,6 +398,13 @@ BEGIN
          AND tsl.operating_company_id = jep.operating_company_id
          AND tsl.linked_object_type = 'factoring_advance'
          AND tsl.linked_object_id = fa.id::text
+         AND tsl.relationship_role IN (
+           'factoring_advance',
+           'factoring_customer_payment',
+           'factoring_reserve_release',
+           'factoring_chargeback',
+           'factoring_default_interest'
+         )
         WHERE fa.advanced_at IS NOT NULL
           AND fa.status <> 'voided'
           AND (
@@ -341,13 +417,24 @@ BEGIN
                 'factoring_default_interest'
               )
               AND jep.source_transaction_id = fa.id::text
+              AND (
+                tsl.id IS NULL
+                OR (
+                  tsl.linked_object_id = fa.id::text
+                  AND tsl.relationship_role = jep.source_transaction_type
+                )
+              )
             )
-            OR tsl.id IS NOT NULL
+            OR (
+              (jep.source_transaction_type IS NULL OR jep.source_transaction_type = '')
+              AND tsl.id IS NOT NULL
+            )
           )
           AND COALESCE(
             NULLIF(jep.source_transaction_type, ''),
             tsl.relationship_role
           ) IS NOT NULL
+        ORDER BY jep.id, tsl.created_at NULLS LAST
       ),
       liability_legs AS (
         SELECT alp.*
@@ -428,17 +515,31 @@ BEGIN
               (
                 jep.source_transaction_type IN ('factoring_advance', 'factoring_default_interest')
                 AND jep.source_transaction_id = fa.id::text
+                AND NOT EXISTS (
+                  SELECT 1
+                  FROM accounting.transaction_source_links bad
+                  WHERE bad.journal_entry_posting_id = jep.id
+                    AND bad.operating_company_id = jep.operating_company_id
+                    AND bad.linked_object_type = 'factoring_advance'
+                    AND (
+                      bad.linked_object_id <> fa.id::text
+                      OR bad.relationship_role IS DISTINCT FROM jep.source_transaction_type
+                    )
+                )
               )
-              OR EXISTS (
-                SELECT 1
-                FROM accounting.transaction_source_links tsl
-                WHERE tsl.journal_entry_posting_id = jep.id
-                  AND tsl.operating_company_id = jep.operating_company_id
-                  AND tsl.linked_object_type = 'factoring_advance'
-                  AND tsl.linked_object_id = fa.id::text
-                  AND tsl.relationship_role IN (
-                    'factoring_funding', 'factoring_advance', 'factoring_default_interest'
-                  )
+              OR (
+                (jep.source_transaction_type IS NULL OR jep.source_transaction_type = '')
+                AND EXISTS (
+                  SELECT 1
+                  FROM accounting.transaction_source_links tsl
+                  WHERE tsl.journal_entry_posting_id = jep.id
+                    AND tsl.operating_company_id = jep.operating_company_id
+                    AND tsl.linked_object_type = 'factoring_advance'
+                    AND tsl.linked_object_id = fa.id::text
+                    AND tsl.relationship_role IN (
+                      'factoring_funding', 'factoring_advance', 'factoring_default_interest'
+                    )
+                )
               )
             )
         )
@@ -464,15 +565,29 @@ BEGIN
                 (
                   jep.source_transaction_type = 'factoring_advance'
                   AND jep.source_transaction_id = fa.id::text
+                  AND NOT EXISTS (
+                    SELECT 1
+                    FROM accounting.transaction_source_links bad
+                    WHERE bad.journal_entry_posting_id = jep.id
+                      AND bad.operating_company_id = jep.operating_company_id
+                      AND bad.linked_object_type = 'factoring_advance'
+                      AND (
+                        bad.linked_object_id <> fa.id::text
+                        OR bad.relationship_role IS DISTINCT FROM jep.source_transaction_type
+                      )
+                  )
                 )
-                OR EXISTS (
-                  SELECT 1
-                  FROM accounting.transaction_source_links tsl
-                  WHERE tsl.journal_entry_posting_id = jep.id
-                    AND tsl.operating_company_id = jep.operating_company_id
-                    AND tsl.linked_object_type = 'factoring_advance'
-                    AND tsl.linked_object_id = fa.id::text
-                    AND tsl.relationship_role IN ('factoring_funding', 'factoring_advance', 'factoring_reserve_held')
+                OR (
+                  (jep.source_transaction_type IS NULL OR jep.source_transaction_type = '')
+                  AND EXISTS (
+                    SELECT 1
+                    FROM accounting.transaction_source_links tsl
+                    WHERE tsl.journal_entry_posting_id = jep.id
+                      AND tsl.operating_company_id = jep.operating_company_id
+                      AND tsl.linked_object_type = 'factoring_advance'
+                      AND tsl.linked_object_id = fa.id::text
+                      AND tsl.relationship_role IN ('factoring_funding', 'factoring_advance', 'factoring_reserve_held')
+                  )
                 )
               )
           )

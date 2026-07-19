@@ -192,8 +192,9 @@ function agreementTermsMatchLockedFaro(row: {
 }
 
 /**
- * TRANSP contract entity + owner-seeded Faro agreement (effective-dated).
- * Never labels a generic sole factor as Faro. No majority / display-name / invented UUIDs.
+ * TRANSP contract entity (canonical company code only) + owner-seeded Faro agreement.
+ * Never labels a generic sole factor as Faro. No majority / display-name / legal-name /
+ * invented UUIDs.
  */
 export async function resolveFaroFactorIdentity(
   client: DbClient,
@@ -203,15 +204,20 @@ export async function resolveFaroFactorIdentity(
   return resolveCanonicalActiveFactor(client, operatingCompanyId, asOfBusinessDate);
 }
 
+/** Canonical Faro contract entity gate — company.code prefix only (never legal_name inference). */
+export function isTranspContractEntityCode(code: string | null | undefined): boolean {
+  return /^TRANSP\b/i.test(String(code ?? ""));
+}
+
 export async function resolveCanonicalActiveFactor(
   client: DbClient,
   operatingCompanyId: string,
   asOfBusinessDate?: string
 ): Promise<ActiveFactorIdentity> {
   const asOf = asOfBusinessDate ?? companyBusinessDate();
-  const company = await client.query<{ code: string; legal_name: string }>(
+  const company = await client.query<{ code: string }>(
     `
-      SELECT code, legal_name
+      SELECT code
       FROM org.companies
       WHERE id = $1::uuid
         AND is_active = true
@@ -233,11 +239,7 @@ export async function resolveCanonicalActiveFactor(
     };
   }
   const code = String(row.code ?? "");
-  const legal = String(row.legal_name ?? "");
-  const isTranspContractEntity =
-    /^TRANSP\b/i.test(code) ||
-    (/TRANSPORTATION/i.test(legal) && /IH\s*35/i.test(legal));
-  if (!isTranspContractEntity) {
+  if (!isTranspContractEntityCode(code)) {
     return {
       ok: false,
       reason: "faro_contract_entity_mismatch",

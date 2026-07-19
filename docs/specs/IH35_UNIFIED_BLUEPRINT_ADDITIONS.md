@@ -1462,8 +1462,7 @@ reserve (not status); (5) TRANSP/Faro identity fail-closed; (6) FORCE RLS Owner/
 7. **Independent code-review VETO (same day, head `bb8b80f9f`):** bare
    `factoring_reserve_movements` → empty/unrelated JE must NOT satisfy funding
    completeness; require live liability/reserve role legs + lifecycle source/
-   TSL. `DROP VIEW IF EXISTS` allowed only for
-   `views.factoring_balance_invoice_linkage` reshape (never DROP TABLE/COLUMN).
+   TSL.
 
 ### Guard (Rule 17 — auto-discovered)
 - `scripts/verify-factoring-balance-invoice-linkage.mjs`
@@ -1504,6 +1503,26 @@ reserve (not status); (5) TRANSP/Faro identity fail-closed; (6) FORCE RLS Owner/
    (never silently skip reverse-exclusion semantics).
 4. **Closed-period negative.** Factoring JE creation gates via shared
    `ensureOpenPeriod` (`PERIOD_LOCKED` when `entry_date <= closed_period_cutoff`).
+
+### CPA / code-review VETO amendments (append-only 2026-07-19 — head `964b4ca4b`+)
+5. **Canonical entity code only.** Faro contract entity gate =
+   `isTranspContractEntityCode(company.code)` (`/^TRANSP\b/i`). **Forbidden:**
+   `legal_name` / TRANSPORTATION / IH35 string inference.
+6. **Same-entity composite factor enforcement.**
+   `factoring_advances_factor_vendor_same_entity_fkey` +
+   `canonical_factor_agreements_vendor_same_entity_fkey` +
+   `canonical_factor_agreements_profile_same_entity_fkey` + Owner/Admin write
+   policies with EXISTS same-entity checks. Cross-opco vendor/profile writes fail closed.
+7. **Join dedup + source/TSL consistency.** View uses `DISTINCT ON (jep.id)` and
+   excludes postings where `source_transaction_*` disagrees with TSL
+   (`linked_object_id` / `relationship_role`).
+8. **Dependency-safe view DDL.** `CREATE OR REPLACE VIEW` only — never `DROP VIEW`.
+9. **Atomic already_posted.** Funding / customer payment / reserve release /
+   chargeback / default-interest already_posted paths repair via
+   `repairFactoringLifecycleSourceLinksOnClient` with `afterRepair` sibling
+   side effects (subledger) in the **same** transaction.
+10. **Guard executable evidence only.** No raw comment/string marker acceptance;
+    planted FORCE-RLS / GREATEST / DROP VIEW / legal_name decoys must fail.
 
 
 ## 16. Accounting Home — Pending approvals ↔ GL linkage (0280-15)

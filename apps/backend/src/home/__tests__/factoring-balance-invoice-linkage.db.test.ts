@@ -1289,8 +1289,8 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
   it("held migration 202607600000 fails closed without 202607340000 reversal columns", async () => {
     const fs = await import("node:fs");
     const sql = fs.readFileSync(FACTORING_BALANCE_MIGRATION, "utf8");
-    expect(sql).toMatch(/HELD_MIGRATION_PREREQUISITE_MISSING/);
-    expect(sql).toMatch(/202607340000_je_reversal_linkage/);
+    expect(sql.includes("HELD_MIGRATION_PREREQUISITE_MISSING")).toBe(true);
+    expect(sql.includes("202607340000_je_reversal_linkage")).toBe(true);
     const prereqMatch = sql.match(/DO \$prereq\$[\s\S]*?END\s*\$prereq\$;/i);
     expect(prereqMatch).toBeTruthy();
     // DDL requires table owner — temporarily drop app role for this rolled-back probe.
@@ -1308,7 +1308,7 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
         await db.query(prereqMatch![0]);
       } catch (e) {
         failed = true;
-        expect(String((e as Error).message ?? e)).toMatch(/HELD_MIGRATION_PREREQUISITE_MISSING/);
+        expect(String((e as Error).message ?? e)).toContain("HELD_MIGRATION_PREREQUISITE_MISSING");
       }
       expect(failed).toBe(true);
     } finally {

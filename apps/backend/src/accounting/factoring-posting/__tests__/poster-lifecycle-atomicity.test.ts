@@ -8,6 +8,9 @@ import {
   __posterAtomicityTestHooks,
   attachFactoringLifecycleSourceLinks,
   postFactoringAdvanceEvent,
+  postFactoringCustomerPaymentEvent,
+  postFactoringReleaseEvent,
+  postFactoringChargebackEvent,
   repairFactoringLifecycleSourceLinks,
 } from "../poster.service.js";
 
@@ -151,7 +154,7 @@ describe("factoring poster — atomic lifecycle source links", () => {
         factoring_advance_id: ADVANCE,
         actor_user_id: ACTOR,
       })
-    ).rejects.toThrow(/injected_failure_between_je_and_lifecycle_links/);
+    ).rejects.toThrow("injected_failure_between_je_and_lifecycle_links");
     expect(mockCreateJournalEntry).toHaveBeenCalledTimes(1);
     expect(mockEnqueueSideEffects).not.toHaveBeenCalled();
     expect(mockWriteTsl).not.toHaveBeenCalled();
@@ -230,5 +233,87 @@ describe("factoring poster — atomic lifecycle source links", () => {
       source_transaction_type: "factoring_advance",
     });
     expect(repaired).toEqual({ journal_entry_id: null, repaired: false });
+  });
+
+  function advanceRow() {
+    return {
+      id: ADVANCE,
+      display_id: "FAC-0001",
+      invoice_total_cents: 100000,
+      advance_amount_cents: 97000,
+      reserve_amount_cents: 1500,
+      factor_fee_cents: 1500,
+      release_amount_cents: 0,
+      submitted_at: "2026-01-05T00:00:00.000Z",
+      advanced_at: "2026-01-07T00:00:00.000Z",
+      collected_at: "2026-01-20T00:00:00.000Z",
+      released_at: "2026-01-25T00:00:00.000Z",
+      status: "advanced",
+    };
+  }
+
+  function alreadyPostedAdvanceMocks() {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+      if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
+        return { rows: [advanceRow()] };
+      }
+      if (sql.includes("FROM accounting.journal_entries") && sql.includes("memo = $2")) {
+        return { rows: [{ id: "existing-je" }] };
+      }
+      if (sql.includes("UPDATE accounting.journal_entry_postings")) return { rows: [] };
+      if (sql.includes("FROM accounting.journal_entry_postings")) {
+        return { rows: [{ id: "line-1" }] };
+      }
+      if (sql.includes("UPDATE accounting.invoices")) return { rows: [] };
+      return { rows: [] };
+    });
+  }
+
+  it("customer payment already_posted repairs links + subledger in one withLuciaBypass txn", async () => {
+    alreadyPostedAdvanceMocks();
+    const luciaCallsBefore = mockWithLuciaBypass.mock.calls.length;
+    const res = await postFactoringCustomerPaymentEvent({
+      operating_company_id: OPCO,
+      factoring_advance_id: ADVANCE,
+      actor_user_id: ACTOR,
+      amount_cents: 50000,
+      paid_at_iso: "2026-01-20T00:00:00.000Z",
+    });
+    expect(res).toMatchObject({ posted: false, reason: "already_posted" });
+    expect(mockCreateJournalEntry).not.toHaveBeenCalled();
+    expect(mockWriteTsl).toHaveBeenCalled();
+    // prepared gate + single atomic repair (not separate repair then subledger txns)
+    expect(mockWithLuciaBypass.mock.calls.length - luciaCallsBefore).toBeLessThanOrEqual(2);
+  });
+
+  it("reserve release already_posted repairs lifecycle links without new JE", async () => {
+    alreadyPostedAdvanceMocks();
+    const res = await postFactoringReleaseEvent({
+      operating_company_id: OPCO,
+      factoring_advance_id: ADVANCE,
+      actor_user_id: ACTOR,
+      release_amount_cents: 1500,
+      released_at_iso: "2026-01-25T00:00:00.000Z",
+    });
+    expect(res).toMatchObject({ posted: false, reason: "already_posted" });
+    expect(mockCreateJournalEntry).not.toHaveBeenCalled();
+    expect(mockWriteTsl).toHaveBeenCalled();
+  });
+
+  it("chargeback already_posted repairs repay+return links; return afterRepair is same txn", async () => {
+    alreadyPostedAdvanceMocks();
+    const res = await postFactoringChargebackEvent({
+      operating_company_id: OPCO,
+      factoring_advance_id: ADVANCE,
+      actor_user_id: ACTOR,
+      chargeback_amount_cents: 100000,
+      default_interest_cents: 0,
+      recoursed_ar_cents: 100000,
+      charged_back_at_iso: "2026-02-01T00:00:00.000Z",
+    });
+    expect(res).toMatchObject({ posted: false, reason: "already_posted" });
+    expect(mockCreateJournalEntry).not.toHaveBeenCalled();
+    expect(mockWriteTsl).toHaveBeenCalled();
   });
 });
