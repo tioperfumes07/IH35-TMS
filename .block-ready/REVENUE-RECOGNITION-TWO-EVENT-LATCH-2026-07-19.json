@@ -1,0 +1,40 @@
+{
+  "block_id": "REVENUE-RECOGNITION-TWO-EVENT-LATCH-2026-07-19",
+  "status": "BUILD",
+  "classification": "DOCS",
+  "phase": "CPA-ANSWERS-INTEGRATION",
+  "task": "Docs-only PR permanently recording owner-locked delivery revenue recognition decisions (LOCKED 2026-07-19): two-event latch (ASC 606) — Event 1 earn at delivered/delivered_pending_docs (DR Unbilled Revenue / CR Line-Haul Income), Event 2 invoice/bill gate at completed_docs_received/POD (DR A/R / CR Unbilled), never one combined POD+delivered gate, reversible on status revert, POD via docs.files; materiality per-entity/configurable/no-permissive-default with single-correction AND cumulative-for-period escalation to CPA/restatement, audited threshold/setter/effective-date; maker/checker (system-poster automated posts SOD-A exempt + audited; manual closed-period corrections need second-user approval from Owner/Admin/Accountant pool, reject->void, owner-alone requires break-glass second approver); entity scope (TRANSP seeds Unbilled + enables first, USMCA seeds Unbilled+Deferred flagged dormant until loads, TRK excluded as lease lessor/42000-LEASE with no freight Unbilled/Deferred and no delivery trigger); flag default OFF per-entity behind financial HOLD/JORGE-APPROVED + Neon proof. Appends a dated section to IH35_UNIFIED_BLUEPRINT_ADDITIONS.md and adds a short pointer in the CPA SKILL.md revenue section (§5). No executable financial code, no migration, no money-flag flip, no package.json/CI workflow edits (Rule 17 guard added via auto-discovered verify-step only).",
+  "branch": "docs/2026-07-19-revenue-recognition-locked-decisions",
+  "lane": "GOVERNANCE",
+  "allowed_files": [
+    ".block-ready/REVENUE-RECOGNITION-TWO-EVENT-LATCH-2026-07-19.json",
+    "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
+    ".claude/skills/ih35-cpa-accounting-decisions/SKILL.md",
+    "scripts/verify-revenue-recognition-two-event-latch-decisions.mjs",
+    "scripts/verify-steps/933-verify-revenue-recognition-two-event-latch-decisions.mjs"
+  ],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "Two-event latch locked: Event 1 delivered/delivered_pending_docs -> DR Unbilled Revenue / CR Line-Haul Income; Event 2 completed_docs_received (POD) -> DR A/R / CR Unbilled; never one combined gate; reversible on status revert; POD via docs.files"
+    },
+    {
+      "check": "Materiality locked: per-entity, configurable, no permissive default; single-correction AND cumulative-for-period; either breach escalates CPA/restatement; threshold/setter/effective-date audited"
+    },
+    {
+      "check": "Maker/checker locked: automated delivery/POD posts are system-poster/SOD-A-exempt/audited; manual closed-period corrections require second-user approval (Owner/Admin/Accountant pool), reject->void; owner-alone requires break-glass second approver"
+    },
+    {
+      "check": "Entity scope locked: TRANSP seeds Unbilled + enables first; USMCA seeds Unbilled+Deferred flagged dormant until loads; TRK excluded (lease lessor, 42000-LEASE, no freight Unbilled/Deferred, no delivery trigger)"
+    },
+    {
+      "check": "Flag default OFF per-entity behind financial HOLD/JORGE-APPROVED + Neon proof before enable"
+    },
+    {
+      "check": "verify-revenue-recognition-two-event-latch-decisions PASS + --selftest PASS; verify-cpa-answers-phase1-decisions PASS + --selftest PASS (no regression); no package.json/CI workflow hot-file edits"
+    }
+  ]
+}

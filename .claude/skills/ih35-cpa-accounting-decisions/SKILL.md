@@ -106,6 +106,18 @@ asset) / **Factoring Recoursed Invoices**. ASC 860 control-test nuance applies; 
   delivery recognition does **not** redefine cash recognition.
 - POD approval and invoice creation are **billing/factoring readiness** only — they do **not** move the
   accrual recognition event (stale “invoice-create recognition” wording is a defect).
+- **Two-event latch (LOCKED 2026-07-19 — posting mechanics of this same delivery event):** Event 1 earn at
+  `delivered`/`delivered_pending_docs` → **DR Unbilled Revenue / CR Line-Haul Income**; Event 2 invoice
+  gate at `completed_docs_received` (POD) → **DR A/R / CR Unbilled** — never one combined POD+delivered
+  gate; reversible if status reverts. Materiality is per-entity/configurable/no-permissive-default
+  (single-correction + cumulative-for-period, either breach escalates CPA/restatement). Maker/checker:
+  automated posts are system-poster/SOD-A-exempt/audited; manual closed-period corrections need
+  second-user approval (Owner/Admin/Accountant pool), reject→void. Entity scope: TRANSP seeds Unbilled +
+  enables first; USMCA seeds Unbilled+Deferred flagged dormant until loads; **TRK excluded** (lease
+  lessor, `42000-LEASE` — no freight Unbilled/Deferred, no delivery trigger). Flag default OFF,
+  per-entity, financial HOLD/JORGE-APPROVED + Neon proof before enable. Full detail:
+  `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` § "Delivery revenue recognition — two-event latch,
+  materiality, maker/checker, entity scope".
 - Uncategorized + daily cleanup remains the hygiene rule.
 
 ## 6. Chart of Accounts (additive structure — never delete/rename existing)
