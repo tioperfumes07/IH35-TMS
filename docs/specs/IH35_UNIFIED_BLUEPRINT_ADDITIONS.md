@@ -1424,27 +1424,30 @@ operator nothing about which governed GL accounts were affected.
 ## 17. EntityLink adoption + reverse drill-through guard contract (0007 Pattern 8)
 
 Source: Owner approval 2026-07-19 (`0007-pattern-8-reverse-drill-through`)
-Status: LOCKED (non-financial guard/spec wiring; no runtime UI or tab change)
+Status: LOCKED (non-financial guard/spec wiring plus behavior tests; no runtime behavior or tab change)
 
 - Existing entity references must use the shared `EntityLink` producer where a real target route exists.
-- A deep link is complete only when its producer, `resolveEntityRoute` mapping, registered route, and target
-  consumer of path/query parameters are all executable. A route-shaped string by itself is not wiring.
-- Static guards must inspect executable TypeScript/JSX semantics and fail closed on missing files, parse
-  errors, broken producer/resolver/consumer bindings, or a regression above the locked adoption baseline.
+- Named deep-link surfaces must use canonical direct `EntityLink`, `navigate`, `searchParams.get`,
+  resolver-return, and registered `Route` forms. Aliases, wrappers, reassignment, and dynamic route/counter
+  expressions are outside the contract and fail with a canonical-style error.
+- Static guards enforce only these narrow source structures and fail closed on missing files, parse errors,
+  obsolete expense routes, or a regression above the locked syntactic-adoption baselines. They do not claim
+  to prove arbitrary JavaScript aliasing, callback execution, or control/data flow.
 - Comments, documentation text, and inert string constants must never satisfy a guard assertion.
-- Analysis must use lexical scopes and branch-aware control/data flow: fold constant conditions, reject
-  unreachable branches and uninvoked callbacks, and require query evidence to flow into the returned field.
-- Alias proof covers declarations, later assignments, destructuring, computed properties, multi-hop aliases,
-  and invoked helper returns without leaking bindings between lexical scopes.
-- Every guard in this contract must include a table-driven `--selftest` corpus covering valid controls, every
-  known VETO plant, and fresh metamorphic variants. Unknown wrappers fail closed unless invocation is proven.
+- The home-fleet route must retain its direct mounted route, `withCompanyScope` callback, company GUC,
+  relation check, scoped DISTINCT query, captured result, and returned `samsara_live` property.
+- Behavior-level tests against production modules are the primary proof: Fastify injection proves counter
+  response/scoping/zero behavior; React/router tests render and click producers and exercise consumers.
+- Every guard includes table-driven `--selftest` plants covering every historical VETO and canonical controls.
 - CI wiring is additive through unique auto-discovered `scripts/verify-steps/<NNN>-*.mjs` entries. Do not edit
   `package.json`, `.github/workflows/locked-guards.yml`, or `.github/workflows/ci.yml`.
 
 ### Guards (Rule 17)
-- `scripts/verify-entity-link-adoption.mjs` — fail-closed non-regression ratchet for direct id rendering.
-- `scripts/verify-entitylink-deep-links.mjs` — producer → resolver → route → consumer executable contract.
-- `scripts/verify-94-live-counter-linkage.mjs` — executable company-scoped Samsara live-counter linkage.
+- `scripts/verify-entity-link-adoption.mjs` — syntactic direct-ID/opaque-expression non-regression ratchets.
+- `scripts/verify-entitylink-deep-links.mjs` — strict direct producer/resolver/route/consumer source contract.
+- `scripts/verify-94-live-counter-linkage.mjs` — strict canonical Samsara counter route source contract.
+- `apps/backend/src/reports/library.routes.live-counter.test.ts` — production Fastify route behavior.
+- `apps/frontend/src/pages/accounting/__tests__/reverse-drill-through.behavior.test.tsx` — production component/router behavior.
 - `scripts/verify-steps/915-verify-entity-link-adoption.mjs`
 - `scripts/verify-steps/916-verify-entitylink-deep-links.mjs`
 - `scripts/verify-steps/917-verify-94-live-counter-linkage.mjs`

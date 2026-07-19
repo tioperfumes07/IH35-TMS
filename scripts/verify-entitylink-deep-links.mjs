@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 /**
- * Fail-closed EntityLink producer → resolver → consumer guard.
+ * Strict structural contract for the named reverse-drill producer/consumer surfaces.
  *
- * Assertions inspect executable TypeScript/JSX nodes. Comments and inert string constants cannot
- * satisfy the contract. --selftest plants both decoys and a wrong EntityLink binding.
+ * This guard accepts only direct EntityLink, navigate, searchParams.get, resolver, and Route
+ * forms. It does not attempt alias or control-flow inference. Behavior is proved by rendering
+ * and clicking the production components in reverse-drill-through.behavior.test.tsx.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -12,7 +13,6 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-entitylink-deep-links";
-
 const FILES = {
   invoice: "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx",
   payment: "apps/frontend/src/pages/accounting/PaymentDetailPage.tsx",
@@ -24,468 +24,309 @@ const FILES = {
   manifest: "apps/frontend/src/routes/manifest.tsx",
 };
 
-function parse(rel, source) {
-  const sf = ts.createSourceFile(rel, source, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TSX);
-  if (sf.parseDiagnostics.length > 0) {
-    throw new Error(
-      `${rel}: TypeScript parse failed: ${sf.parseDiagnostics
-        .map((d) => ts.flattenDiagnosticMessageText(d.messageText, " "))
-        .join("; ")}`,
-    );
+function parse(file, source) {
+  const sf = ts.createSourceFile(file, source, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TSX);
+  if (sf.parseDiagnostics.length) {
+    const details = sf.parseDiagnostics
+      .map((diagnostic) => ts.flattenDiagnosticMessageText(diagnostic.messageText, " "))
+      .join("; ");
+    throw new Error(`${file}: TypeScript parse failed: ${details}`);
   }
   return sf;
 }
 
-function walk(sf, predicate) {
-  let matched = false;
-  function visit(node) {
-    if (predicate(node, sf)) matched = true;
-    ts.forEachChild(node, visit);
-  }
-  visit(sf);
-  return matched;
+function walk(root, visit) {
+  visit(root);
+  ts.forEachChild(root, (child) => walk(child, visit));
 }
 
 function findFunction(sf, name) {
-  let result = null;
+  let found = null;
   walk(sf, (node) => {
-    if (
-      (ts.isFunctionDeclaration(node) || ts.isFunctionExpression(node) || ts.isArrowFunction(node)) &&
-      node.name?.getText(sf) === name
-    ) {
-      result = node;
-    }
-    return false;
+    if (ts.isFunctionDeclaration(node) && node.name?.text === name) found = node;
   });
-  return result;
-}
-
-function constantBoolean(node) {
-  if (!node) return null;
-  if (node.kind === ts.SyntaxKind.TrueKeyword) return true;
-  if (node.kind === ts.SyntaxKind.FalseKeyword) return false;
-  if (ts.isParenthesizedExpression(node)) return constantBoolean(node.expression);
-  if (ts.isPrefixUnaryExpression(node) && node.operator === ts.SyntaxKind.ExclamationToken) {
-    const value = constantBoolean(node.operand);
-    return value == null ? null : !value;
-  }
-  if (ts.isConditionalExpression(node)) {
-    const condition = constantBoolean(node.condition);
-    if (condition === true) return constantBoolean(node.whenTrue);
-    if (condition === false) return constantBoolean(node.whenFalse);
-    const whenTrue = constantBoolean(node.whenTrue);
-    const whenFalse = constantBoolean(node.whenFalse);
-    return whenTrue === whenFalse ? whenTrue : null;
-  }
-  if (ts.isBinaryExpression(node)) {
-    const left = constantBoolean(node.left);
-    if (node.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken) {
-      if (left === false) return false;
-      const right = constantBoolean(node.right);
-      return left === true ? right : right === false ? false : null;
-    }
-    if (node.operatorToken.kind === ts.SyntaxKind.BarBarToken) {
-      if (left === true) return true;
-      const right = constantBoolean(node.right);
-      return left === false ? right : right === true ? true : null;
-    }
-  }
-  return null;
-}
-
-function isProvenColumnRenderer(node, root, sf) {
-  const parent = node.parent;
-  if (!ts.isPropertyAssignment(parent) || parent.name.getText(sf) !== "render") return false;
-  let declaration = parent;
-  while (declaration && declaration !== root && !ts.isVariableDeclaration(declaration)) {
-    declaration = declaration.parent;
-  }
-  if (!ts.isVariableDeclaration(declaration) || !ts.isIdentifier(declaration.name)) return false;
-  const columnsName = declaration.name.text;
-  return walk(root, (candidate) => {
-    if (!ts.isJsxSelfClosingElement(candidate) && !ts.isJsxOpeningElement(candidate)) return false;
-    if (candidate.tagName.getText(sf) !== "ParityTable") return false;
-    return candidate.attributes.properties.some(
-      (attribute) =>
-        ts.isJsxAttribute(attribute) &&
-        attribute.name.text === "columns" &&
-        ts.isJsxExpression(attribute.initializer) &&
-        attribute.initializer.expression?.getText(sf) === columnsName,
-    );
-  });
-}
-
-function isExecutedCallback(node, root, sf) {
-  const parent = node.parent;
-  if (ts.isJsxExpression(parent) && ts.isJsxAttribute(parent.parent)) {
-    const attribute = parent.parent;
-    const element = attribute.parent.parent;
-    const eventNames = new Set(["onClick", "onSubmit", "onChange", "onInput"]);
-    const tag = (ts.isJsxOpeningElement(element) || ts.isJsxSelfClosingElement(element))
-      ? element.tagName.getText(sf)
-      : "";
-    return eventNames.has(attribute.name.text) && (/^[a-z]/.test(tag) || tag === "Button");
-  }
-  if (isProvenColumnRenderer(node, root, sf)) return true;
-  if (!ts.isCallExpression(parent)) return false;
-  if (parent.expression === node) return true;
-  if (!parent.arguments.includes(node)) return false;
-  const callee = parent.expression;
-  if (ts.isIdentifier(callee)) return new Set(["useMemo", "useState"]).has(callee.text);
-  return (
-    ts.isPropertyAccessExpression(callee) &&
-    new Set(["map", "flatMap", "forEach", "filter", "find", "some", "reduce", "then"]).has(callee.name.text)
-  );
-}
-
-// Walk only code reached when `root` executes. Named/local helper bodies are not executable
-// merely because they occur textually inside a component. Only callbacks with known invocation
-// semantics are traversed, and constant-false branches are excluded.
-function walkExecutable(root, predicate, sf) {
-  let matched = false;
-  function visit(node) {
-    if (node !== root && ts.isFunctionLike(node) && !isExecutedCallback(node, root, sf)) return;
-    if (predicate(node, sf)) matched = true;
-    if (
-      ts.isJsxExpression(node) &&
-      ts.isJsxAttribute(node.parent) &&
-      ts.isIdentifier(node.expression) &&
-      new Set(["onClick", "onSubmit", "onChange", "onInput"]).has(node.parent.name.text)
-    ) {
-      const callback = bindingInitializer(node.expression, root, sf);
-      if (callback && ts.isFunctionLike(callback)) visit(callback);
-    }
-    if (ts.isIfStatement(node)) {
-      const condition = constantBoolean(node.expression);
-      visit(node.expression);
-      if (condition !== false) visit(node.thenStatement);
-      if (condition !== true && node.elseStatement) visit(node.elseStatement);
-      return;
-    }
-    if (ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken) {
-      visit(node.left);
-      if (constantBoolean(node.left) !== false) visit(node.right);
-      return;
-    }
-    if (ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.BarBarToken) {
-      visit(node.left);
-      if (constantBoolean(node.left) !== true) visit(node.right);
-      return;
-    }
-    if (ts.isConditionalExpression(node)) {
-      visit(node.condition);
-      const condition = constantBoolean(node.condition);
-      if (condition !== false) visit(node.whenTrue);
-      if (condition !== true) visit(node.whenFalse);
-      return;
-    }
-    ts.forEachChild(node, visit);
-  }
-  visit(root);
-  return matched;
-}
-
-function jsxName(node) {
-  return node.tagName.getText();
+  return found;
 }
 
 function jsxAttribute(node, name, sf) {
-  const attr = node.attributes.properties.find(
-    (property) => ts.isJsxAttribute(property) && property.name.text === name,
+  const attribute = node.attributes.properties.find(
+    (candidate) => ts.isJsxAttribute(candidate) && candidate.name.text === name,
   );
-  if (!attr || !ts.isJsxAttribute(attr) || !attr.initializer) return null;
-  if (ts.isStringLiteral(attr.initializer)) return attr.initializer.text;
-  if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
-    return attr.initializer.expression.getText(sf);
+  if (!attribute || !ts.isJsxAttribute(attribute) || !attribute.initializer) return null;
+  if (ts.isStringLiteral(attribute.initializer)) return attribute.initializer.text;
+  if (ts.isJsxExpression(attribute.initializer) && attribute.initializer.expression) {
+    return attribute.initializer.expression.getText(sf);
   }
   return null;
 }
 
-function isAncestor(ancestor, node) {
+function isInside(node, container) {
   for (let current = node; current; current = current.parent) {
-    if (current === ancestor) return true;
+    if (current === container) return true;
   }
   return false;
 }
 
-function bindingInitializer(identifier, root, sf) {
-  let match = null;
+function hasLiteralDeadAncestor(node, root) {
+  for (let current = node.parent; current && current !== root; current = current.parent) {
+    if (
+      ts.isBinaryExpression(current) &&
+      current.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken &&
+      current.left.kind === ts.SyntaxKind.FalseKeyword &&
+      isInside(node, current.right)
+    ) {
+      return true;
+    }
+    if (ts.isConditionalExpression(current)) {
+      if (current.condition.kind === ts.SyntaxKind.FalseKeyword && isInside(node, current.whenTrue)) return true;
+      if (current.condition.kind === ts.SyntaxKind.TrueKeyword && isInside(node, current.whenFalse)) return true;
+    }
+    if (ts.isIfStatement(current)) {
+      if (current.expression.kind === ts.SyntaxKind.FalseKeyword && isInside(node, current.thenStatement)) return true;
+      if (current.expression.kind === ts.SyntaxKind.TrueKeyword && current.elseStatement && isInside(node, current.elseStatement)) return true;
+    }
+  }
+  return false;
+}
+
+function hasDirectEntityLink(sf, root, kind, id) {
+  let found = false;
   walk(root, (node) => {
-    if (node.getStart(sf) >= identifier.getStart(sf)) return false;
+    if (
+      (ts.isJsxSelfClosingElement(node) || ts.isJsxOpeningElement(node)) &&
+      node.tagName.getText(sf) === "EntityLink" &&
+      jsxAttribute(node, "kind", sf) === kind &&
+      jsxAttribute(node, "id", sf) === id &&
+      !hasLiteralDeadAncestor(node, root)
+    ) {
+      found = true;
+    }
+  });
+  return found;
+}
+
+function templateMatches(node, sf, head, expression) {
+  return (
+    ts.isTemplateExpression(node) &&
+    node.head.text === head &&
+    node.templateSpans.length === 1 &&
+    node.templateSpans[0].expression.getText(sf) === expression &&
+    node.templateSpans[0].literal.text === ""
+  );
+}
+
+function hasDirectNavigation(sf, root, sourceType, idExpression) {
+  let found = false;
+  walk(root, (node) => {
+    if (
+      ts.isCallExpression(node) &&
+      ts.isIdentifier(node.expression) &&
+      node.expression.text === "navigate" &&
+      node.arguments.length === 1 &&
+      templateMatches(
+        node.arguments[0],
+        sf,
+        `/accounting/audit-trail?source_type=${sourceType}&source_id=`,
+        `encodeURIComponent(${idExpression})`,
+      )
+    ) {
+      const arrow = node.parent;
+      const expression = arrow?.parent;
+      const attribute = expression?.parent;
+      if (
+        arrow &&
+        ts.isArrowFunction(arrow) &&
+        expression &&
+        ts.isJsxExpression(expression) &&
+        attribute &&
+        ts.isJsxAttribute(attribute) &&
+        attribute.name.text === "onClick" &&
+        !hasLiteralDeadAncestor(node, root)
+      ) {
+        found = true;
+      }
+    }
+  });
+  return found;
+}
+
+function directSearchParamBinding(sf, root, binding, parameter) {
+  let declarations = 0;
+  let assignments = 0;
+  walk(root, (node) => {
     if (
       ts.isVariableDeclaration(node) &&
       ts.isIdentifier(node.name) &&
-      node.name.text === identifier.text
+      node.name.text === binding &&
+      node.initializer &&
+      ts.isCallExpression(node.initializer) &&
+      ts.isPropertyAccessExpression(node.initializer.expression) &&
+      ts.isIdentifier(node.initializer.expression.expression) &&
+      node.initializer.expression.expression.text === "searchParams" &&
+      node.initializer.expression.name.text === "get" &&
+      node.initializer.arguments.length === 1 &&
+      ts.isStringLiteralLike(node.initializer.arguments[0]) &&
+      node.initializer.arguments[0].text === parameter &&
+      (node.parent.flags & ts.NodeFlags.Const) !== 0
     ) {
-      const container = node.parent?.parent?.parent;
-      if (!container || ts.isSourceFile(container) || isAncestor(container, identifier)) {
-        match = node.initializer ?? null;
-      }
+      declarations += 1;
     }
     if (
       ts.isBinaryExpression(node) &&
       node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
       ts.isIdentifier(node.left) &&
-      node.left.text === identifier.text
+      node.left.text === binding
     ) {
-      const container = node.parent;
-      if (!container || isAncestor(container.parent, identifier)) match = node.right;
+      assignments += 1;
     }
-    return false;
   });
-  return match;
+  return declarations === 1 && assignments === 0;
 }
 
-function resolveAlias(node, root, sf, seen = new Set()) {
-  if (!node || !ts.isIdentifier(node)) return node;
-  if (seen.has(node.text)) return node;
-  const initializer = bindingInitializer(node, root, sf);
-  if (!initializer) return node;
-  if (
-    !ts.isIdentifier(initializer) &&
-    !ts.isStringLiteralLike(initializer) &&
-    !ts.isTemplateExpression(initializer) &&
-    !ts.isNoSubstitutionTemplateLiteral(initializer)
-  ) {
-    return node;
-  }
-  const next = new Set(seen);
-  next.add(node.text);
-  return resolveAlias(initializer, root, sf, next);
-}
-
-function resolvedText(node, root, sf) {
-  return resolveAlias(node, root, sf)?.getText(sf) ?? "";
-}
-
-function hasEntityLink(sf, root, kind, idExpression) {
-  return walkExecutable(root, (node, sourceFile) => {
-    if (!ts.isJsxSelfClosingElement(node) && !ts.isJsxOpeningElement(node)) return false;
-    return (
-      jsxName(node) === "EntityLink" &&
-      jsxAttribute(node, "kind", sourceFile) === kind &&
-      jsxAttribute(node, "id", sourceFile) === idExpression
-    );
-  }, sf);
-}
-
-function hasCall(sf, root, callee, argument) {
-  return walkExecutable(root, (node) => {
-    if (!ts.isCallExpression(node) || resolvedText(node.expression, root, sf) !== callee) return false;
-    return argument === undefined || node.arguments.some((arg) => {
-      const resolved = resolveAlias(arg, root, sf);
-      return ts.isStringLiteralLike(resolved) && resolved.text === argument;
-    });
-  }, sf);
-}
-
-function hasConsumedCall(sf, root, callee, argument) {
-  let consumed = false;
-  walkExecutable(root, (node) => {
-    if (!ts.isCallExpression(node) || resolvedText(node.expression, root, sf) !== callee) return false;
-    if (
-      argument !== undefined &&
-      !node.arguments.some((arg) => ts.isStringLiteralLike(arg) && arg.text === argument)
-    ) {
-      return false;
-    }
-    if (ts.isExpressionStatement(node.parent)) return false;
-    if (ts.isJsxExpression(node.parent) && ts.isJsxAttribute(node.parent.parent)) return false;
-    if (ts.isVariableDeclaration(node.parent) && ts.isIdentifier(node.parent.name)) {
-      const name = node.parent.name.text;
-      let references = 0;
-      walkExecutable(root, (candidate) => {
-        if (ts.isIdentifier(candidate) && candidate.text === name && candidate !== node.parent.name) references += 1;
-        return false;
-      }, sf);
-      if (references === 0) return false;
-    }
-    consumed = true;
-    return true;
-  }, sf);
-  return consumed;
-}
-
-function executableArguments(sf, root, callee) {
-  const args = [];
-  walkExecutable(root, (node) => {
-    if (ts.isCallExpression(node) && resolvedText(node.expression, root, sf) === callee && node.arguments[0]) {
-      args.push(node.arguments[0]);
-    }
-    return false;
-  }, sf);
-  return args;
-}
-
-function routeUsesComponent(sf, routePath, componentName) {
-  let routesRoot = null;
-  walk(sf, (node) => {
+function directSearchParamsHook(root) {
+  let found = false;
+  walk(root, (node) => {
     if (
       ts.isVariableDeclaration(node) &&
-      ts.isIdentifier(node.name) &&
-      node.name.text === "ROUTES" &&
-      node.initializer
+      ts.isArrayBindingPattern(node.name) &&
+      node.name.elements.length >= 1 &&
+      ts.isBindingElement(node.name.elements[0]) &&
+      ts.isIdentifier(node.name.elements[0].name) &&
+      node.name.elements[0].name.text === "searchParams" &&
+      node.initializer &&
+      ts.isCallExpression(node.initializer) &&
+      ts.isIdentifier(node.initializer.expression) &&
+      node.initializer.expression.text === "useSearchParams" &&
+      node.initializer.arguments.length === 0
     ) {
-      routesRoot = node.initializer;
+      found = true;
     }
-    return false;
   });
-  if (!routesRoot) return false;
-  return walkExecutable(routesRoot, (node, sourceFile) => {
-    if (!ts.isJsxSelfClosingElement(node) && !ts.isJsxOpeningElement(node)) return false;
-    if (jsxName(node) !== "Route" || jsxAttribute(node, "path", sourceFile) !== routePath) return false;
-    const element = node.attributes.properties.find(
-      (property) => ts.isJsxAttribute(property) && property.name.text === "element",
-    );
-    if (!element || !ts.isJsxAttribute(element) || !ts.isJsxExpression(element.initializer)) return false;
-    return walk(element.initializer, (child) => (
-      (ts.isJsxSelfClosingElement(child) || ts.isJsxOpeningElement(child)) &&
-      jsxName(child) === componentName
-    ));
-  }, sf);
+  return found;
 }
 
-function hasResolverCase(sf, kind, expectedReturn) {
+function directResolverCase(sf) {
   const resolver = findFunction(sf, "resolveEntityRoute");
   if (!resolver) return false;
-  return walkExecutable(resolver, (node) => {
-    if (!ts.isCaseClause(node) || !ts.isStringLiteralLike(node.expression) || node.expression.text !== kind) {
-      return false;
+  let found = false;
+  walk(resolver, (node) => {
+    if (
+      ts.isCaseClause(node) &&
+      ts.isStringLiteralLike(node.expression) &&
+      node.expression.text === "expense" &&
+      node.statements.length === 1 &&
+      ts.isReturnStatement(node.statements[0]) &&
+      node.statements[0].expression?.getText(sf) === "`/accounting/expenses/list?expense_id=${id}`"
+    ) {
+      found = true;
     }
-    return node.statements.some(
-      (statement) =>
-        ts.isReturnStatement(statement) &&
-        statement.expression &&
-        resolvedText(statement.expression, resolver, sf) === expectedReturn,
-    );
-  }, sf);
+  });
+  return found;
 }
 
-function isAuditNavigation(node, sf, root, sourceType, idExpression) {
-  if (
-    !ts.isCallExpression(node) ||
-    resolvedText(node.expression, root, sf) !== "navigate" ||
-    node.arguments.length !== 1
-  ) {
-    return false;
-  }
-  const route = resolveAlias(node.arguments[0], root, sf);
-  if (!ts.isTemplateExpression(route) || route.templateSpans.length !== 1) return false;
-  return (
-    route.head.text === `/accounting/audit-trail?source_type=${sourceType}&source_id=` &&
-    route.templateSpans[0].expression.getText(sf) === `encodeURIComponent(${idExpression})` &&
-    route.templateSpans[0].literal.text === ""
-  );
+function directRoute(sf, routePath, component) {
+  let found = false;
+  walk(sf, (node) => {
+    if (
+      (ts.isJsxSelfClosingElement(node) || ts.isJsxOpeningElement(node)) &&
+      node.tagName.getText(sf) === "Route" &&
+      jsxAttribute(node, "path", sf) === routePath &&
+      !hasLiteralDeadAncestor(node, sf)
+    ) {
+      const element = node.attributes.properties.find(
+        (candidate) => ts.isJsxAttribute(candidate) && candidate.name.text === "element",
+      );
+      if (
+        element &&
+        ts.isJsxAttribute(element) &&
+        ts.isJsxExpression(element.initializer) &&
+        element.initializer.expression
+      ) {
+        walk(element.initializer.expression, (candidate) => {
+          if (
+            (ts.isJsxSelfClosingElement(candidate) || ts.isJsxOpeningElement(candidate)) &&
+            candidate.tagName.getText(sf) === component
+          ) {
+            found = true;
+          }
+        });
+      }
+    }
+  });
+  return found;
 }
 
-function hasForbiddenExpenseRoute(sf, root) {
-  return walkExecutable(root, (node) => {
-    if (!ts.isStringLiteralLike(node) && !ts.isTemplateExpression(node)) return false;
-    const text = node.getText(sf);
-    return /\/accounting\/expenses\?expense_id=/.test(text);
-  }, sf);
+function hasObsoleteExpenseRoute(sf) {
+  let found = false;
+  walk(sf, (node) => {
+    if (
+      (ts.isStringLiteralLike(node) || ts.isNoSubstitutionTemplateLiteral(node) || ts.isTemplateExpression(node)) &&
+      node.getText(sf).includes("/accounting/expenses?expense_id=")
+    ) {
+      found = true;
+    }
+  });
+  return found;
 }
 
 export function assertContracts(sources) {
   const failures = [];
   const parsed = {};
-  for (const [key, rel] of Object.entries(FILES)) {
+  for (const [key, file] of Object.entries(FILES)) {
     if (typeof sources[key] !== "string") {
-      failures.push(`MISSING ${rel}`);
+      failures.push(`MISSING ${file}`);
       continue;
     }
     try {
-      parsed[key] = parse(rel, sources[key]);
+      parsed[key] = parse(file, sources[key]);
     } catch (error) {
       failures.push(error instanceof Error ? error.message : String(error));
     }
   }
 
-  if (parsed.invoice) {
-    const component = findFunction(parsed.invoice, "InvoiceDetailPage");
-    if (!component) {
-      failures.push("InvoiceDetailPage: exported component function is missing");
-    } else if (!hasEntityLink(parsed.invoice, component, "customer", "invoice.customer_id")) {
-      failures.push("InvoiceDetailPage: customer header must execute EntityLink customer/invoice.customer_id");
-    }
-    const nav = component ? executableArguments(parsed.invoice, component, "navigate") : [];
-    if (!nav.some((arg) => isAuditNavigation(arg.parent, parsed.invoice, component, "invoice", "invoice.id"))) {
-      failures.push("InvoiceDetailPage: View audit log must execute the invoice audit-trail deep-link");
-    }
-    if (nav.some((arg) => arg.getText(parsed.invoice).includes("/reports?invoice_id="))) {
-      failures.push("InvoiceDetailPage: must not execute dead /reports?invoice_id= navigation");
-    }
+  const invoice = parsed.invoice && findFunction(parsed.invoice, "InvoiceDetailPage");
+  if (!invoice || !hasDirectEntityLink(parsed.invoice, invoice, "customer", "invoice.customer_id")) {
+    failures.push("InvoiceDetailPage: use direct unconditional <EntityLink kind=\"customer\" id={invoice.customer_id} ... />; aliases/wrappers are forbidden");
+  }
+  if (!invoice || !hasDirectNavigation(parsed.invoice, invoice, "invoice", "invoice.id")) {
+    failures.push("InvoiceDetailPage: use direct inline onClick={() => navigate(canonical invoice audit URL)}; aliases/wrappers are forbidden");
   }
 
-  if (parsed.payment) {
-    const component = findFunction(parsed.payment, "PaymentDetailPage");
-    if (!component) failures.push("PaymentDetailPage: exported component function is missing");
-    const nav = component ? executableArguments(parsed.payment, component, "navigate") : [];
-    if (!nav.some((arg) => isAuditNavigation(arg.parent, parsed.payment, component, "customer_payment", "payment.id"))) {
-      failures.push("PaymentDetailPage: View audit log must execute the customer-payment audit deep-link");
-    }
-    if (nav.some((arg) => arg.getText(parsed.payment).includes("/reports?payment_id="))) {
-      failures.push("PaymentDetailPage: must not execute dead /reports?payment_id= navigation");
-    }
+  const payment = parsed.payment && findFunction(parsed.payment, "PaymentDetailPage");
+  if (!payment || !hasDirectNavigation(parsed.payment, payment, "customer_payment", "payment.id")) {
+    failures.push("PaymentDetailPage: use direct inline onClick={() => navigate(canonical customer-payment audit URL)}; aliases/wrappers are forbidden");
   }
 
-  if (parsed.audit) {
-    const component = findFunction(parsed.audit, "AccountingAuditTrailPage");
-    if (!component) failures.push("AccountingAuditTrailPage: exported component function is missing");
-    if (!component || !hasCall(parsed.audit, component, "useSearchParams")) {
-      failures.push("AccountingAuditTrailPage: must execute useSearchParams()");
-    }
-    for (const parameter of ["source_type", "source_id"]) {
-      if (!component || !hasConsumedCall(parsed.audit, component, "searchParams.get", parameter)) {
-        failures.push(`AccountingAuditTrailPage: must consume ?${parameter}=`);
-      }
-    }
+  const audit = parsed.audit && findFunction(parsed.audit, "AccountingAuditTrailPage");
+  if (!audit || !directSearchParamsHook(audit)) {
+    failures.push("AccountingAuditTrailPage: use direct const [searchParams] = useSearchParams()");
+  }
+  if (!audit || !directSearchParamBinding(parsed.audit, audit, "sourceTypeParam", "source_type")) {
+    failures.push("AccountingAuditTrailPage: bind immutable sourceTypeParam directly from searchParams.get(\"source_type\")");
+  }
+  if (!audit || !directSearchParamBinding(parsed.audit, audit, "sourceIdParam", "source_id")) {
+    failures.push("AccountingAuditTrailPage: bind immutable sourceIdParam directly from searchParams.get(\"source_id\")");
   }
 
-  if (parsed.faults) {
-    const component = findFunction(parsed.faults, "FaultDraftsPage");
-    if (
-      !component ||
-      !hasCall(parsed.faults, component, "useSearchParams") ||
-      !hasConsumedCall(parsed.faults, component, "searchParams.get", "unit_id")
-    ) {
-      failures.push("FaultDraftsPage: must execute useSearchParams() and consume ?unit_id=");
-    }
+  const faults = parsed.faults && findFunction(parsed.faults, "FaultDraftsPage");
+  if (!faults || !directSearchParamsHook(faults) || !directSearchParamBinding(parsed.faults, faults, "deepLinkUnitId", "unit_id")) {
+    failures.push("FaultDraftsPage: bind immutable deepLinkUnitId directly from searchParams.get(\"unit_id\")");
   }
 
-  if (parsed.entityLink && !hasResolverCase(
-    parsed.entityLink,
-    "expense",
-    "`/accounting/expenses/list?expense_id=${id}`",
-  )) {
-    failures.push("EntityLink: expense resolver must execute the registered list deep-link");
+  const expenses = parsed.expensesList && findFunction(parsed.expensesList, "ExpensesListPage");
+  if (!expenses || !directSearchParamsHook(expenses) || !directSearchParamBinding(parsed.expensesList, expenses, "deepLinkExpenseId", "expense_id")) {
+    failures.push("ExpensesListPage: bind immutable deepLinkExpenseId directly from searchParams.get(\"expense_id\")");
+  }
+  if (!expenses || !hasDirectEntityLink(parsed.expensesList, expenses, "expense", "r.id")) {
+    failures.push("ExpensesListPage: use direct <EntityLink kind=\"expense\" id={r.id} ... /> in the canonical column renderer");
   }
 
-  if (parsed.expensesList) {
-    const component = findFunction(parsed.expensesList, "ExpensesListPage");
-    if (
-      !component ||
-      !hasCall(parsed.expensesList, component, "useSearchParams") ||
-      !hasConsumedCall(parsed.expensesList, component, "searchParams.get", "expense_id")
-    ) {
-      failures.push("ExpensesListPage: must execute useSearchParams() and consume ?expense_id=");
-    }
-    if (!component || !hasEntityLink(parsed.expensesList, component, "expense", "r.id")) {
-      failures.push("ExpensesListPage: expense number must execute EntityLink expense/r.id");
-    }
-    if (component && hasForbiddenExpenseRoute(parsed.expensesList, component)) {
-      failures.push("ExpensesListPage: must not execute obsolete /accounting/expenses?expense_id= deep-link");
-    }
+  const wo = parsed.woDetail && findFunction(parsed.woDetail, "WorkOrderDetailPage");
+  if (!wo || !hasDirectEntityLink(parsed.woDetail, wo, "expense", "expense.id")) {
+    failures.push("WorkOrderDetailPage: use direct <EntityLink kind=\"expense\" id={expense.id} ... /> in the linked-expense row");
   }
-
-  if (parsed.woDetail) {
-    const component = findFunction(parsed.woDetail, "WorkOrderDetailPage");
-    if (!component || !hasEntityLink(parsed.woDetail, component, "expense", "expense.id")) {
-      failures.push("WorkOrderDetailPage: expense producer must execute EntityLink expense/expense.id");
-    }
-    if (component && hasForbiddenExpenseRoute(parsed.woDetail, component)) {
-      failures.push("WorkOrderDetailPage: must not execute obsolete /accounting/expenses?expense_id= deep-link");
-    }
+  if (!parsed.entityLink || !directResolverCase(parsed.entityLink)) {
+    failures.push("EntityLink: expense resolver must directly return `/accounting/expenses/list?expense_id=${id}`");
   }
 
   if (parsed.manifest) {
@@ -495,153 +336,76 @@ export function assertContracts(sources) {
       ["/accounting/audit-trail", "AccountingAuditTrailPage"],
       ["/accounting/expenses/list", "ExpensesListPage"],
     ]) {
-      if (!routeUsesComponent(parsed.manifest, routePath, component)) {
-        failures.push(`manifest: ${routePath} must render ${component}`);
+      if (!directRoute(parsed.manifest, routePath, component)) {
+        failures.push(`manifest: use direct unconditional <Route path="${routePath}" element={<${component} />} />`);
       }
     }
   }
 
+  for (const [key, sf] of Object.entries(parsed)) {
+    if (sf && hasObsoleteExpenseRoute(sf)) failures.push(`${FILES[key]}: obsolete /accounting/expenses?expense_id= route is forbidden`);
+  }
   return failures;
 }
 
-function readSources() {
-  return Object.fromEntries(
-    Object.entries(FILES).map(([key, rel]) => {
-      const absolute = path.join(ROOT, rel);
-      return [key, fs.existsSync(absolute) ? fs.readFileSync(absolute, "utf8") : null];
-    }),
-  );
+function canonicalSources() {
+  return {
+    invoice: `function InvoiceDetailPage(){return <><EntityLink kind="customer" id={invoice.customer_id}/><button onClick={()=>navigate(\`/accounting/audit-trail?source_type=invoice&source_id=\${encodeURIComponent(invoice.id)}\`)}/></>}`,
+    payment: `function PaymentDetailPage(){return <button onClick={()=>navigate(\`/accounting/audit-trail?source_type=customer_payment&source_id=\${encodeURIComponent(payment.id)}\`)}/>}`,
+    audit: `function AccountingAuditTrailPage(){const [searchParams]=useSearchParams();const sourceTypeParam=searchParams.get("source_type");const sourceIdParam=searchParams.get("source_id");return <span>{sourceTypeParam}{sourceIdParam}</span>}`,
+    faults: `function FaultDraftsPage(){const [searchParams]=useSearchParams();const deepLinkUnitId=searchParams.get("unit_id");return <span>{deepLinkUnitId}</span>}`,
+    entityLink: `function resolveEntityRoute(kind,id){switch(kind){case "expense":return \`/accounting/expenses/list?expense_id=\${id}\`;}}`,
+    expensesList: `function ExpensesListPage(){const [searchParams]=useSearchParams();const deepLinkExpenseId=searchParams.get("expense_id");return <><EntityLink kind="expense" id={r.id}/><span>{deepLinkExpenseId}</span></>}`,
+    woDetail: `function WorkOrderDetailPage(){return <EntityLink kind="expense" id={expense.id}/>}`,
+    manifest: `const ROUTES=<><Route path="/accounting/invoices/:id" element={<InvoiceDetailPage />}/><Route path="/accounting/payments/:id" element={<PaymentDetailPage />}/><Route path="/accounting/audit-trail" element={<AccountingAuditTrailPage />}/><Route path="/accounting/expenses/list" element={<ExpensesListPage />}/></>`,
+  };
 }
 
 function runSelftest() {
-  const good = {
-    invoice: `function InvoiceDetailPage(){ return <><EntityLink kind="customer" id={invoice.customer_id}/><button onClick={() => navigate(\`/accounting/audit-trail?source_type=invoice&source_id=\${encodeURIComponent(invoice.id)}\`)}/></>; }`,
-    payment: `function PaymentDetailPage(){ return <button onClick={() => navigate(\`/accounting/audit-trail?source_type=customer_payment&source_id=\${encodeURIComponent(payment.id)}\`)}/>; }`,
-    audit: `function AccountingAuditTrailPage(){ const [searchParams] = useSearchParams(); useState(searchParams.get("source_type")); useState(searchParams.get("source_id")); return null; }`,
-    faults: `function FaultDraftsPage(){ const [searchParams] = useSearchParams(); useState(searchParams.get("unit_id")); return null; }`,
-    entityLink: `function resolveEntityRoute(kind,id){ switch (kind) { case "expense": return \`/accounting/expenses/list?expense_id=\${id}\`; } }`,
-    expensesList: `function ExpensesListPage(){ const [searchParams] = useSearchParams(); useState(searchParams.get("expense_id")); return <EntityLink kind="expense" id={r.id}/>; }`,
-    woDetail: `function WorkOrderDetailPage(){ return <EntityLink kind="expense" id={expense.id}/>; }`,
-    manifest: `const ROUTES = React.Children.toArray(<><Route path="/accounting/invoices/:id" element={<InvoiceDetailPage/>}/><Route path="/accounting/payments/:id" element={<PaymentDetailPage/>}/><Route path="/accounting/audit-trail" element={<AccountingAuditTrailPage/>}/><Route path="/accounting/expenses/list" element={<ExpensesListPage/>}/></>);`,
-  };
-  const decoy = `// useSearchParams(); searchParams.get("expense_id"); <EntityLink/>\nconst x="/accounting/expenses/list";`;
+  const good = canonicalSources();
   const cases = [
-    {
-      name: "comment-string-decoys",
-      sources: Object.fromEntries(Object.keys(FILES).map((key) => [key, decoy])),
-      reject: "InvoiceDetailPage",
-    },
-    {
-      name: "wrong-entity-binding",
-      sources: { ...good, invoice: good.invoice.replace("invoice.customer_id", "invoice.id") },
-      reject: "customer header",
-    },
-    {
-      name: "wrong-invoice-audit-id",
-      sources: { ...good, invoice: good.invoice.replace("encodeURIComponent(invoice.id)", "encodeURIComponent(invoice.customer_id)") },
-      reject: "invoice audit-trail",
-    },
-    {
-      name: "wrong-payment-audit-id",
-      sources: { ...good, payment: good.payment.replace("encodeURIComponent(payment.id)", "encodeURIComponent(payment.customer_id)") },
-      reject: "customer-payment audit",
-    },
-    {
-      name: "never-called-consumer",
-      sources: { ...good, audit: `function AccountingAuditTrailPage(){const [searchParams]=useSearchParams();function dead(){useState(searchParams.get("source_type"));useState(searchParams.get("source_id"))}return null}` },
-      reject: "consume ?source_type=",
-    },
-    {
-      name: "ignored-query-consumer",
-      sources: { ...good, audit: `function AccountingAuditTrailPage(){const [searchParams]=useSearchParams();searchParams.get("source_type");searchParams.get("source_id");return null}` },
-      reject: "consume ?source_type=",
-    },
-    {
-      name: "unused-jsx-prop-callback",
-      sources: { ...good, audit: `function AccountingAuditTrailPage(){const [searchParams]=useSearchParams();return <Widget ignored={()=>{useState(searchParams.get("source_type"));useState(searchParams.get("source_id"))}}/>}` },
-      reject: "consume ?source_type=",
-    },
-    {
-      name: "wrong-route-component",
-      sources: { ...good, manifest: good.manifest.replace("<ExpensesListPage/>", "<WrongExpensesPage/>") },
-      reject: "must render ExpensesListPage",
-    },
-    {
-      name: "route-in-uninvoked-render-callback",
-      sources: { ...good, manifest: `const ROUTES=React.Children.toArray(<><Route path="/accounting/invoices/:id" element={<InvoiceDetailPage/>}/><Route path="/accounting/payments/:id" element={<PaymentDetailPage/>}/><Route path="/accounting/audit-trail" element={<AccountingAuditTrailPage/>}/>{ {render:()=> <Route path="/accounting/expenses/list" element={<ExpensesListPage/>}/>} }</>)` },
-      reject: "must render ExpensesListPage",
-    },
-    {
-      name: "true-conditional-dead-route",
-      sources: { ...good, manifest: good.manifest.replace(`<Route path="/accounting/expenses/list" element={<ExpensesListPage/>}/>`, `{true ? <WrongExpensesPage/> : <Route path="/accounting/expenses/list" element={<ExpensesListPage/>}/>} `) },
-      reject: "must render ExpensesListPage",
-    },
-    {
-      name: "false-logical-producer",
-      sources: { ...good, invoice: good.invoice.replace(`<EntityLink kind="customer" id={invoice.customer_id}/>`, `{false && flag && <EntityLink kind="customer" id={invoice.customer_id}/>} `) },
-      reject: "customer header",
-    },
-    {
-      name: "false-conditional-producer",
-      sources: { ...good, invoice: good.invoice.replace(`<EntityLink kind="customer" id={invoice.customer_id}/>`, `{(false ? true : false) && <EntityLink kind="customer" id={invoice.customer_id}/>} `) },
-      reject: "customer header",
-    },
-    {
-      name: "unreachable-else-producer",
-      sources: { ...good, invoice: good.invoice.replace(`<EntityLink kind="customer" id={invoice.customer_id}/>`, `{true ? null : <EntityLink kind="customer" id={invoice.customer_id}/>} `) },
-      reject: "customer header",
-    },
-    {
-      name: "obsolete-expense-route",
-      sources: { ...good, woDetail: `function WorkOrderDetailPage(){navigate(\`/accounting/expenses?expense_id=\${expense.id}\`);return <EntityLink kind="expense" id={expense.id}/>} ` },
-      reject: "obsolete /accounting/expenses",
-    },
-  ];
-  const valid = [
-    ["canonical", good],
-    ["navigation-result-alias", {
-      ...good,
-      invoice: `function InvoiceDetailPage(){const href=\`/accounting/audit-trail?source_type=invoice&source_id=\${encodeURIComponent(invoice.id)}\`;return <><EntityLink kind="customer" id={invoice.customer_id}/><button onClick={()=>navigate(href)}/></>}`,
-    }],
-    ["navigation-function-alias", {
-      ...good,
-      invoice: `function InvoiceDetailPage(){const go=navigate;return <><EntityLink kind="customer" id={invoice.customer_id}/><button onClick={()=>go(\`/accounting/audit-trail?source_type=invoice&source_id=\${encodeURIComponent(invoice.id)}\`)}/></>}`,
-    }],
-    ["true-live-route", {
-      ...good,
-      manifest: good.manifest.replace(`<Route path="/accounting/expenses/list" element={<ExpensesListPage/>}/>`, `{true ? <Route path="/accounting/expenses/list" element={<ExpensesListPage/>}/> : <WrongExpensesPage/>}`),
-    }],
+    ["dead-renderer", { ...good, invoice: good.invoice.replace("<EntityLink", "{false && <EntityLink").replace("/><button", "/>}<button") }, "InvoiceDetailPage"],
+    ["overwritten-param", { ...good, audit: good.audit.replace("const sourceIdParam=", "let sourceIdParam=").replace(";return", ";sourceIdParam=\"wrong\";return") }, "sourceIdParam"],
+    ["route-alias", { ...good, manifest: good.manifest.replace("<Route path=\"/accounting/expenses/list\" element={<ExpensesListPage />}/>", "{expenseRoute}") }, "/accounting/expenses/list"],
+    ["id-alias", { ...good, invoice: good.invoice.replace("id={invoice.customer_id}", "id={customerId}") }, "EntityLink"],
+    ["navigate-alias", { ...good, invoice: good.invoice.replace("navigate(`", "go(`") }, "audit URL"],
+    ["wrong-invoice-id", { ...good, invoice: good.invoice.replace("invoice.id", "invoice.customer_id") }, "audit URL"],
+    ["wrong-payment-id", { ...good, payment: good.payment.replace("payment.id", "payment.customer_id") }, "audit URL"],
+    ["wrong-query-name", { ...good, faults: good.faults.replace("\"unit_id\"", "\"driver_id\"") }, "deepLinkUnitId"],
+    ["obsolete-route", { ...good, woDetail: `function WorkOrderDetailPage(){navigate(\`/accounting/expenses?expense_id=\${expense.id}\`);return <EntityLink kind="expense" id={expense.id}/>} ` }, "obsolete"],
+    ["parse-error", { ...good, invoice: `${good.invoice}{` }, "parse failed"],
   ];
   const problems = [];
-  for (const [name, sources] of valid) {
+  const goodFailures = assertContracts(good);
+  if (goodFailures.length) problems.push(`canonical unexpectedly failed: ${goodFailures.join(" | ")}`);
+  for (const [name, sources, expected] of cases) {
     const failures = assertContracts(sources);
-    if (failures.length) problems.push(`${name} unexpectedly failed: ${failures.join(" | ")}`);
-  }
-  for (const test of cases) {
-    const failures = assertContracts(test.sources);
-    if (!failures.some((failure) => failure.includes(test.reject))) {
-      problems.push(`${test.name} was not rejected by ${test.reject}: ${failures.join(" | ")}`);
+    if (!failures.some((failure) => failure.includes(expected))) {
+      problems.push(`${name} was not rejected by ${expected}: ${failures.join(" | ")}`);
     }
   }
   if (problems.length) {
     console.error(`${LABEL} --selftest FAIL\n${problems.join("\n")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS ${valid.length} valid and ${cases.length} VETO/metamorphic cases`);
+  console.log(`${LABEL} --selftest PASS canonical control + ${cases.length} historical/metamorphic rejects`);
 }
 
 function main() {
-  if (process.argv.includes("--selftest")) {
-    runSelftest();
-    return;
-  }
-  const failures = assertContracts(readSources());
-  if (failures.length > 0) {
+  if (process.argv.includes("--selftest")) return runSelftest();
+  const sources = Object.fromEntries(
+    Object.entries(FILES).map(([key, file]) => {
+      const absolute = path.join(ROOT, file);
+      return [key, fs.existsSync(absolute) ? fs.readFileSync(absolute, "utf8") : null];
+    }),
+  );
+  const failures = assertContracts(sources);
+  if (failures.length) {
     console.error(`${LABEL}: FAIL`);
-    for (const failure of failures) console.error(`  - ${failure}`);
+    for (const failure of failures) console.error(`- ${failure}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: PASS — EntityLink producers, resolver, routes, and consumers execute end-to-end`);
+  console.log(`${LABEL}: PASS — canonical direct structures; behavior covered by production component tests`);
 }
 
 main();

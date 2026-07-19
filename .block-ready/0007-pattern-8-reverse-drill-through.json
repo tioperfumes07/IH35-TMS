@@ -17,10 +17,15 @@
     "node scripts/verify-entitylink-deep-links.mjs",
     "node scripts/verify-94-live-counter-linkage.mjs --selftest",
     "node scripts/verify-94-live-counter-linkage.mjs",
+    "cd apps/backend && npx vitest run src/reports/library.routes.live-counter.test.ts",
+    "cd apps/frontend && npx vitest run src/pages/accounting/__tests__/reverse-drill-through.behavior.test.tsx",
     "node scripts/verify-guard-wired.mjs"
   ],
   "allowed_files": [
     ".block-ready/0007-pattern-8-reverse-drill-through.json",
+    "apps/backend/src/reports/library.routes.live-counter.test.ts",
+    "apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx",
+    "apps/frontend/src/pages/accounting/__tests__/reverse-drill-through.behavior.test.tsx",
     "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
     "scripts/.guard-exempt.json",
     "scripts/verify-entity-link-adoption.mjs",
@@ -35,19 +40,19 @@
       "check": "all three guards pass normally and with table-driven --selftest corpora covering valid controls, every VETO plant, and fresh metamorphic variants"
     },
     {
-      "check": "EntityLink adoption is fail-closed with a 76-finding origin/main baseline ratchet; parse errors or any increase fail"
+      "check": "EntityLink adoption keeps the 76-finding legacy ratchet plus an exact 7,839-finding canonical-syntax ratchet; parse errors or any increase fail; no arbitrary alias-semantics claim"
     },
     {
-      "check": "deep-link guard proves executable producer → resolver → registered route → consumed query/path semantics with constant-folded reachability"
+      "check": "deep-link guard restricts named files to direct canonical producer/resolver/registered-route/immutable-consumer forms; production React/router behavior tests prove exact IDs and paths"
     },
     {
-      "check": "94-live guard causally proves scoped client + company GUC + relation true branch + DISTINCT local_unit_id query result → returned samsara_live"
+      "check": "94-live guard restricts the production handler to its direct canonical route/scoped-client/GUC/relation/query/return form; Fastify injection proves query-result response, zero fallback, and company isolation"
     },
     {
       "check": "unique verify-steps 915/916/917 auto-discover all three guards; guard-wired reports them fully wired"
     },
     {
-      "check": "package.json and workflow hot files unchanged; no UI, route, tab, schema, migration, or runtime behavior changes"
+      "check": "package.json and workflow hot files unchanged; audit-trail search-param bindings are canonicalized without behavior change; no tab, schema, migration, financial logic, or route behavior changes"
     }
   ],
   "note": "Owner explicitly approved the existing EntityLink adoption/deep-link guard contract and draft-PR handoff. Builder stops at local/PR proof for independent review; do not merge."

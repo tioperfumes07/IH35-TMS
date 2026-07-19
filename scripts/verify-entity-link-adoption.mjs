@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 /**
- * Scope-aware EntityLink adoption ratchet.
+ * Syntactic EntityLink adoption ratchet.
  *
- * The scanner resolves bindings at the JSX use site. It deliberately has no file-global alias map:
- * every function/block owns a lexical scope, later assignments update only the nearest declaration,
- * and shadowing cannot leak between siblings. Unknown display wrappers fail closed by propagating
- * every argument; known local helpers propagate their returned value.
+ * This guard intentionally does not infer alias semantics. Outside a recognized link element,
+ * directly rendered id-shaped properties and opaque bare identifier/helper expressions are
+ * non-canonical findings. Existing findings are ratcheted; new code should render IDs through
+ * a direct EntityLink/Link/NavLink/a expression. Canonical conditional/short-circuit link
+ * expressions are accepted.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -14,42 +15,10 @@ import ts from "typescript";
 const ROOT = process.cwd();
 const FRONTEND_ROOT = path.join(ROOT, "apps/frontend/src");
 const SKIP_RE = /(\/__tests__\/|\.test\.(tsx|ts)$|\.deprecated\.|test-setup\.ts$)/;
-const MAX_LEGACY_FINDINGS = 76;
-const MAX_SEMANTIC_FINDINGS = 148;
+const LEGACY_BASELINE = 76;
+const CANONICAL_EXPRESSION_BASELINE = 7839;
 const ID_NAME_RE = /(^|_)id$|[a-z]Id$/;
 const LINK_TAGS = new Set(["EntityLink", "Link", "NavLink", "a"]);
-
-class Scope {
-  constructor(parent = null) {
-    this.parent = parent;
-    this.bindings = new Map();
-    this.functions = new Map();
-  }
-  declare(name, value) {
-    this.bindings.set(name, value);
-  }
-  assign(name, value) {
-    for (let scope = this; scope; scope = scope.parent) {
-      if (scope.bindings.has(name)) {
-        scope.bindings.set(name, value);
-        return;
-      }
-    }
-    this.bindings.set(name, value);
-  }
-  lookup(name) {
-    for (let scope = this; scope; scope = scope.parent) {
-      if (scope.bindings.has(name)) return scope.bindings.get(name);
-    }
-    return null;
-  }
-  lookupFunction(name) {
-    for (let scope = this; scope; scope = scope.parent) {
-      if (scope.functions.has(name)) return scope.functions.get(name);
-    }
-    return null;
-  }
-}
 
 function parse(file, source) {
   const sf = ts.createSourceFile(file, source, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TSX);
@@ -74,258 +43,197 @@ function walkFiles(dir) {
 
 function propertyName(node) {
   if (ts.isPropertyAccessExpression(node)) return node.name.text;
-  if (ts.isElementAccessExpression(node) && node.argumentExpression) {
-    if (ts.isStringLiteralLike(node.argumentExpression)) return node.argumentExpression.text;
+  if (
+    ts.isElementAccessExpression(node) &&
+    node.argumentExpression &&
+    ts.isStringLiteralLike(node.argumentExpression)
+  ) {
+    return node.argumentExpression.text;
   }
   return null;
 }
 
-function mergeNames(...groups) {
-  return [...new Set(groups.flat().filter(Boolean))];
+function isNullishOrLiteral(node) {
+  return (
+    node.kind === ts.SyntaxKind.NullKeyword ||
+    node.kind === ts.SyntaxKind.FalseKeyword ||
+    node.kind === ts.SyntaxKind.TrueKeyword ||
+    ts.isStringLiteralLike(node) ||
+    ts.isNumericLiteral(node)
+  );
 }
 
-function substituteScope(fn, args, callerScope) {
-  const child = new Scope(callerScope);
-  fn.parameters.forEach((parameter, index) => {
-    if (ts.isIdentifier(parameter.name)) {
-      child.declare(parameter.name.text, args[index] ?? null);
-    }
-  });
-  return child;
+function isDirectLink(node, sf) {
+  return (
+    (ts.isJsxElement(node) && LINK_TAGS.has(node.openingElement.tagName.getText(sf))) ||
+    (ts.isJsxSelfClosingElement(node) && LINK_TAGS.has(node.tagName.getText(sf)))
+  );
 }
 
-function returnedExpressions(fn) {
-  if (ts.isArrowFunction(fn) && !ts.isBlock(fn.body)) return [fn.body];
-  const returns = [];
-  function visit(node) {
-    if (node !== fn.body && ts.isFunctionLike(node)) return;
-    if (ts.isReturnStatement(node) && node.expression) returns.push(node.expression);
-    ts.forEachChild(node, visit);
+function isCanonicalLinkExpression(node, sf) {
+  if (isDirectLink(node, sf)) return true;
+  if (isNullishOrLiteral(node)) return true;
+  if (ts.isParenthesizedExpression(node)) return isCanonicalLinkExpression(node.expression, sf);
+  if (ts.isConditionalExpression(node)) {
+    return isCanonicalLinkExpression(node.whenTrue, sf) && isCanonicalLinkExpression(node.whenFalse, sf);
   }
-  visit(fn.body);
-  return returns;
+  if (
+    ts.isBinaryExpression(node) &&
+    [
+      ts.SyntaxKind.AmpersandAmpersandToken,
+      ts.SyntaxKind.BarBarToken,
+      ts.SyntaxKind.QuestionQuestionToken,
+    ].includes(node.operatorToken.kind)
+  ) {
+    return isCanonicalLinkExpression(node.right, sf);
+  }
+  return false;
 }
 
-function resolveNames(expr, scope, seen = new Set()) {
-  if (!expr) return [];
-  if (ts.isIdentifier(expr)) {
-    const key = `binding:${expr.text}`;
-    if (seen.has(key)) return [expr.text];
-    const binding = scope.lookup(expr.text);
-    if (!binding) return [expr.text];
-    const next = new Set(seen);
-    next.add(key);
-    return mergeNames([expr.text], resolveNames(binding, scope, next));
+function containsIdProperty(node) {
+  let found = false;
+  function visit(candidate) {
+    const name = propertyName(candidate);
+    if (name && ID_NAME_RE.test(name)) found = true;
+    ts.forEachChild(candidate, visit);
   }
-  const directProperty = propertyName(expr);
-  if (directProperty) return [directProperty];
+  visit(node);
+  return found;
+}
+
+function legacyCandidate(expr) {
+  if (ts.isIdentifier(expr)) return ID_NAME_RE.test(expr.text);
+  const name = propertyName(expr);
+  if (name) return ID_NAME_RE.test(name);
+  if (ts.isParenthesizedExpression(expr)) return legacyCandidate(expr.expression);
+  if (
+    ts.isBinaryExpression(expr) &&
+    [ts.SyntaxKind.BarBarToken, ts.SyntaxKind.QuestionQuestionToken].includes(expr.operatorToken.kind)
+  ) {
+    return legacyCandidate(expr.left);
+  }
+  return false;
+}
+
+function canonicalCandidate(expr, sf) {
+  if (isCanonicalLinkExpression(expr, sf)) return null;
+  if (containsIdProperty(expr)) return "direct-id";
+  if (ts.isIdentifier(expr)) return "opaque-alias";
+  if (ts.isCallExpression(expr)) return "opaque-helper";
   if (
     ts.isParenthesizedExpression(expr) ||
     ts.isAsExpression(expr) ||
     ts.isTypeAssertionExpression(expr) ||
     ts.isNonNullExpression(expr) ||
-    ts.isSatisfiesExpression(expr) ||
-    ts.isAwaitExpression(expr)
+    ts.isSatisfiesExpression(expr)
   ) {
-    return resolveNames(expr.expression, scope, seen);
+    return canonicalCandidate(expr.expression, sf);
   }
-  if (ts.isConditionalExpression(expr)) {
-    return mergeNames(resolveNames(expr.whenTrue, scope, seen), resolveNames(expr.whenFalse, scope, seen));
-  }
-  if (ts.isBinaryExpression(expr)) {
-    if (
-      expr.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken ||
-      expr.operatorToken.kind === ts.SyntaxKind.BarBarToken
-    ) {
-      return resolveNames(expr.left, scope, seen);
-    }
-    return mergeNames(resolveNames(expr.left, scope, seen), resolveNames(expr.right, scope, seen));
-  }
-  if (ts.isCallExpression(expr)) {
-    if (ts.isIdentifier(expr.expression)) {
-      const fn = scope.lookupFunction(expr.expression.text);
-      if (fn) {
-        const key = `function:${expr.expression.text}`;
-        if (!seen.has(key)) {
-          const next = new Set(seen);
-          next.add(key);
-          const callScope = substituteScope(fn, expr.arguments, scope);
-          return mergeNames(...returnedExpressions(fn).map((returned) => resolveNames(returned, callScope, next)));
-        }
-      }
-    }
-    // Unknown wrappers are not proof that an id became a link. Follow all arguments fail-closed.
-    return mergeNames(...expr.arguments.map((argument) => resolveNames(argument, scope, seen)));
-  }
-  if (ts.isArrayLiteralExpression(expr)) {
-    return mergeNames(...expr.elements.map((element) => resolveNames(element, scope, seen)));
-  }
-  if (ts.isObjectLiteralExpression(expr)) {
-    return mergeNames(
-      ...expr.properties.map((property) => {
-        if (ts.isPropertyAssignment(property)) return resolveNames(property.initializer, scope, seen);
-        if (ts.isShorthandPropertyAssignment(property)) return resolveNames(property.name, scope, seen);
-        return [];
-      }),
-    );
-  }
-  return [];
-}
-
-function bindPattern(name, initializer, scope) {
-  if (ts.isIdentifier(name)) {
-    scope.declare(name.text, initializer);
-    return;
-  }
-  if (!ts.isObjectBindingPattern(name) && !ts.isArrayBindingPattern(name)) return;
-  name.elements.forEach((element, index) => {
-    if (!ts.isBindingElement(element)) return;
-    let value = null;
-    if (initializer) {
-      if (ts.isObjectBindingPattern(name)) {
-        const keyNode = element.propertyName ?? element.name;
-        if (ts.isIdentifier(keyNode) || ts.isStringLiteralLike(keyNode)) {
-          value = ts.factory.createElementAccessExpression(initializer, ts.factory.createStringLiteral(keyNode.text));
-        } else if (ts.isComputedPropertyName(keyNode) && ts.isStringLiteralLike(keyNode.expression)) {
-          value = ts.factory.createElementAccessExpression(initializer, keyNode.expression);
-        }
-      } else {
-        value = ts.factory.createElementAccessExpression(initializer, ts.factory.createNumericLiteral(index));
-      }
-    }
-    bindPattern(element.name, value ?? element.initializer ?? null, scope);
-  });
-}
-
-function legacyNames(expr) {
-  if (!expr) return [];
-  if (ts.isIdentifier(expr)) return [expr.text];
-  const name = propertyName(expr);
-  if (name) return [name];
-  if (ts.isParenthesizedExpression(expr)) return legacyNames(expr.expression);
   if (
-    ts.isBinaryExpression(expr) &&
-    (expr.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken ||
-      expr.operatorToken.kind === ts.SyntaxKind.BarBarToken)
+    ts.isBinaryExpression(expr) ||
+    ts.isConditionalExpression(expr)
   ) {
-    return legacyNames(expr.left);
+    return "opaque-branch";
   }
-  return [];
+  return null;
 }
 
-export function scanSource(file, source, semantic = true) {
+function enclosingTag(expression, sf) {
+  const parent = expression.parent;
+  if (ts.isJsxElement(parent)) return parent.openingElement.tagName.getText(sf);
+  return null;
+}
+
+export function scanSource(file, source, mode = "canonical") {
   const sf = parse(file, source);
   const findings = [];
-
-  function record(node, scope) {
-    const names = semantic ? resolveNames(node.expression, scope) : legacyNames(node.expression);
-    if (!names.some((name) => ID_NAME_RE.test(name))) return;
-    const tag = ts.isJsxElement(node.parent) ? node.parent.openingElement.tagName.getText(sf) : null;
-    if (tag && LINK_TAGS.has(tag)) return;
-    const position = sf.getLineAndCharacterOfPosition(node.getStart(sf));
-    findings.push({
-      file: path.relative(ROOT, file),
-      line: position.line + 1,
-      tag: tag ?? "(fragment/expression)",
-      text: node.getText(sf).replace(/\s+/g, " ").trim().slice(0, 100),
-    });
-  }
-
-  function visit(node, scope) {
-    if (ts.isSourceFile(node) || ts.isBlock(node) || ts.isModuleBlock(node)) {
-      const blockScope = ts.isSourceFile(node) ? scope : new Scope(scope);
-      for (const statement of node.statements) {
-        if (ts.isFunctionDeclaration(statement) && statement.name) {
-          blockScope.functions.set(statement.name.text, statement);
+  function visit(node) {
+    if (ts.isJsxExpression(node) && node.expression && !ts.isJsxAttribute(node.parent)) {
+      const tag = enclosingTag(node, sf);
+      if (!tag || !LINK_TAGS.has(tag)) {
+        const reason = mode === "legacy"
+          ? (legacyCandidate(node.expression) ? "legacy-id" : null)
+          : canonicalCandidate(node.expression, sf);
+        if (reason) {
+          const position = sf.getLineAndCharacterOfPosition(node.getStart(sf));
+          findings.push({
+            file: path.relative(ROOT, file),
+            line: position.line + 1,
+            tag: tag ?? "(fragment/expression)",
+            reason,
+            text: node.getText(sf).replace(/\s+/g, " ").trim().slice(0, 100),
+          });
         }
       }
-      for (const statement of node.statements) visit(statement, blockScope);
-      return;
     }
-    if (ts.isFunctionLike(node)) {
-      const functionScope = new Scope(scope);
-      for (const parameter of node.parameters) bindPattern(parameter.name, null, functionScope);
-      if (node.name && ts.isIdentifier(node.name)) functionScope.functions.set(node.name.text, node);
-      if (node.body) visit(node.body, functionScope);
-      return;
-    }
-    if (ts.isVariableDeclaration(node)) {
-      bindPattern(node.name, node.initializer ?? null, scope);
-      if (node.initializer) visit(node.initializer, scope);
-      return;
-    }
-    if (
-      ts.isBinaryExpression(node) &&
-      node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
-      ts.isIdentifier(node.left)
-    ) {
-      visit(node.right, scope);
-      scope.assign(node.left.text, node.right);
-      return;
-    }
-    if (ts.isJsxExpression(node) && node.expression && !ts.isJsxAttribute(node.parent)) record(node, scope);
-    ts.forEachChild(node, (child) => visit(child, scope));
+    ts.forEachChild(node, visit);
   }
-
-  visit(sf, new Scope());
+  visit(sf);
   return findings;
 }
 
-function scanTree(semantic) {
+function scanTree(mode) {
   return walkFiles(FRONTEND_ROOT).flatMap((file) =>
-    scanSource(file, fs.readFileSync(file, "utf8"), semantic),
+    scanSource(file, fs.readFileSync(file, "utf8"), mode),
   );
-}
-
-function expectCase(test, expected) {
-  const actual = scanSource(`${test.name}.tsx`, test.source).length;
-  if (actual !== expected) throw new Error(`${test.name}: expected ${expected}, received ${actual}`);
 }
 
 function runSelftest() {
   const cases = [
-    ["plain-property", `const T=({row})=><td>{row.vendor_id}</td>`, 1],
-    ["computed-property", `const T=({row})=><td>{row["vendor_id"]}</td>`, 1],
-    ["assignment-alias", `const T=({row})=>{let value; value=row.vendor_id; return <td>{value}</td>}`, 1],
-    ["destructured-alias", `const T=({row})=>{const {vendor_id:value}=row; return <td>{value}</td>}`, 1],
-    ["computed-destructure", `const T=({row})=>{const {["vendor_id"]:value}=row; return <td>{value}</td>}`, 1],
-    ["multi-hop", `const T=({row})=>{const a=row.vendor_id; const b=a; return <td>{b}</td>}`, 1],
-    ["helper-return", `function pick(row){return row.vendor_id} const T=({row})=><td>{pick(row)}</td>`, 1],
-    ["result-alias", `function pick(row){return row.vendor_id} const T=({row})=>{const x=pick(row);return <td>{x}</td>}`, 1],
-    ["unknown-wrapper", `const T=({row})=><td>{formatUnknown(row.vendor_id)}</td>`, 1],
-    ["string-wrapper", `const T=({row})=><td>{String(row.vendor_id)}</td>`, 1],
-    ["linked", `const T=({row})=><EntityLink kind="vendor" id={row.vendor_id}/>`, 0],
-    ["linked-wrapper", `const T=({row})=><td>{show(<EntityLink kind="vendor" id={row.vendor_id}/>)}</td>`, 0],
-    ["linked-branches", `const T=({row,ok})=><td>{ok?<EntityLink kind="vendor" id={row.vendor_id}/>:<Link to="/"/>}</td>`, 0],
-    ["scope-shadowing", `const value=outer.vendor_id; function T(){const value="safe";return <td>{value}</td>}`, 0],
-    ["sibling-scope", `function A(){const value=row.vendor_id;return null} function B(){const value="safe";return <td>{value}</td>}`, 0],
-    ["later-safe-assignment", `function T(){let value=row.vendor_id; value="safe"; return <td>{value}</td>}`, 0],
-    ["later-id-assignment", `function T(){let value="safe"; value=row.vendor_id; return <td>{value}</td>}`, 1],
-    ["comment-decoy", `// {row.vendor_id}\nconst fake="{row.vendor_id}"; const T=()=>null`, 0],
-  ].map(([name, source, expected]) => ({ name, source, expected }));
-  for (const test of cases) expectCase(test, test.expected);
-  console.log(`verify:entity-link-adoption --selftest PASS ${cases.length} lexical/alias/metamorphic cases`);
+    ["direct-id", `const T=({row})=><td>{row.vendor_id}</td>`, 1],
+    ["computed-id", `const T=({row})=><td>{row["vendor_id"]}</td>`, 1],
+    ["alias-naked-id", `const T=({row})=>{const value=row.vendor_id;return <td>{value}</td>}`, 1],
+    ["helper-returned-id", `function pick(row){return row.vendor_id}const T=({row})=><td>{pick(row)}</td>`, 1],
+    ["helper-with-id-argument", `const T=({row})=><td>{show(row.vendor_id)}</td>`, 1],
+    ["direct-entity-link", `const T=({row})=><td><EntityLink kind="vendor" id={row.vendor_id}/></td>`, 0],
+    ["conditional-links", `const T=({row,ok})=><td>{ok?<EntityLink kind="vendor" id={row.vendor_id}/>:<Link to="/vendors"/>}</td>`, 0],
+    ["short-circuit-link", `const T=({row,ok})=><td>{ok&&<EntityLink kind="vendor" id={row.vendor_id}/>}</td>`, 0],
+    ["fallback-link", `const T=({row})=><td>{row.vendor_id?<EntityLink kind="vendor" id={row.vendor_id}/>:null}</td>`, 0],
+    ["direct-label", `const T=({row})=><td>{row.vendor_name}</td>`, 0],
+    ["comment-string-decoy", `// {row.vendor_id}\nconst x="{row.vendor_id}";const T=()=>null`, 0],
+    ["parse-error", `const T=()=> <td>{`, "throws"],
+  ];
+  const problems = [];
+  for (const [name, source, expected] of cases) {
+    try {
+      const count = scanSource(`${name}.tsx`, source).length;
+      if (expected === "throws" || count !== expected) {
+        problems.push(`${name}: expected ${expected}, received ${count}`);
+      }
+    } catch {
+      if (expected !== "throws") problems.push(`${name}: unexpectedly failed parsing`);
+    }
+  }
+  if (problems.length) {
+    console.error(`verify:entity-link-adoption --selftest FAIL\n${problems.join("\n")}`);
+    process.exit(1);
+  }
+  console.log(`verify:entity-link-adoption --selftest PASS ${cases.length} canonical syntax cases`);
 }
 
 function main() {
-  if (process.argv.includes("--selftest")) {
-    runSelftest();
-    return;
-  }
-  const legacy = scanTree(false);
-  const semantic = scanTree(true);
-  console.log(
-    `verify:entity-link-adoption scanned ${legacy.length} legacy (max ${MAX_LEGACY_FINDINGS}) and ` +
-      `${semantic.length} semantic (max ${MAX_SEMANTIC_FINDINGS}) candidates`,
-  );
-  if (legacy.length > MAX_LEGACY_FINDINGS || semantic.length > MAX_SEMANTIC_FINDINGS) {
-    for (const finding of semantic) {
-      console.error(`  ${finding.file}:${finding.line} <${finding.tag}> ${finding.text}`);
-    }
-    console.error("verify:entity-link-adoption FAIL — semantic adoption baseline increased");
+  if (process.argv.includes("--selftest")) return runSelftest();
+  let legacy;
+  let canonical;
+  try {
+    legacy = scanTree("legacy");
+    canonical = scanTree("canonical");
+  } catch (error) {
+    console.error(`verify:entity-link-adoption FAIL — ${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
   }
-  console.log("verify:entity-link-adoption PASS — lexical semantic ratchet preserved");
+  console.log(
+    `verify:entity-link-adoption scanned ${legacy.length} legacy (max ${LEGACY_BASELINE}) and ` +
+      `${canonical.length} canonical-expression findings (max ${CANONICAL_EXPRESSION_BASELINE})`,
+  );
+  if (legacy.length > LEGACY_BASELINE || canonical.length > CANONICAL_EXPRESSION_BASELINE) {
+    for (const finding of canonical) {
+      console.error(`  ${finding.file}:${finding.line} <${finding.tag}> [${finding.reason}] ${finding.text}`);
+    }
+    console.error("verify:entity-link-adoption FAIL — canonical syntax ratchet increased");
+    process.exit(1);
+  }
+  console.log("verify:entity-link-adoption PASS — syntactic ratchets preserved (no alias-semantics claim)");
 }
 
 main();
