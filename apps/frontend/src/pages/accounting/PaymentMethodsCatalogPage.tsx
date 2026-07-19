@@ -106,6 +106,7 @@ export function PaymentMethodsCatalogPage() {
       pushToast("Payment method voided", "success");
       invalidate();
     },
+    onError: (err) => pushToast(err instanceof Error ? err.message : "Void failed", "error"),
   });
 
   return (
