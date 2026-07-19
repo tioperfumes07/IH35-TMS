@@ -103,7 +103,7 @@ export async function findStrictLifecycleRepairCandidate(
                     OR (
                       jep.source_transaction_type IS NOT NULL
                       AND jep.source_transaction_type <> ''
-                      AND tsl.relationship_role IS DISTINCT FROM jep.source_transaction_type
+                      AND tsl.relationship_role IS DISTINCT FROM (jep.source_transaction_type)
                     )
                   )
              )
