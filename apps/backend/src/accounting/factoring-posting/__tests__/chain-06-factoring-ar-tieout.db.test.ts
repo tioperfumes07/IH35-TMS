@@ -36,6 +36,7 @@ import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../../../test-helpers/db-fixture.js";
 import { TEST_OWNER_USER_ID, TEST_ENCRYPTION_KEY } from "../../../../test-helpers/constants.js";
 import {
+  loadExactLinkedChargebackAmounts,
   postFactoringAdvanceEvent,
   postFactoringChargebackEvent,
   postFactoringCustomerPaymentEvent,
@@ -102,6 +103,8 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
   let companyId: string;
   const suffix = randomUUID().slice(0, 6);
   const vendorId = randomUUID();
+  const customerId = randomUUID();
+  const invoiceIds: string[] = [];
   const advanceIds: string[] = [];
   const displayIds: string[] = [];
   const journalEntryIds: string[] = [];
@@ -135,7 +138,14 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
     return id;
   };
 
-  async function seedAdvance(opts: { invoiceTotalCents: number; advanceCents: number; reserveCents: number; feeCents: number }): Promise<{ id: string; displayId: string }> {
+  async function seedAdvance(opts: {
+    invoiceTotalCents: number;
+    advanceCents: number;
+    reserveCents: number;
+    feeCents: number;
+    /** When true, seed a linked unpaid invoice so exact recoursed A/R is defined (full-recourse gate). */
+    withLinkedInvoice?: boolean;
+  }): Promise<{ id: string; displayId: string }> {
     const id = randomUUID();
     const displayId = `T06-ADV-${suffix}-${advanceIds.length + 1}`;
     await bypass(async () => {
@@ -147,6 +157,18 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
          VALUES ($1::uuid,$2::uuid,$3::uuid,$4,'advanced',$5,90,$6,8,$7,2,$8,now())`,
         [id, companyId, vendorId, displayId, opts.invoiceTotalCents, opts.advanceCents, opts.reserveCents, opts.feeCents]
       );
+      if (opts.withLinkedInvoice) {
+        const invId = randomUUID();
+        const invDisplay = `INV-${String(9000 + advanceIds.length).padStart(4, "0")}-${String(advanceIds.length + 1).padStart(5, "0")}`;
+        await db.query(
+          `INSERT INTO accounting.invoices
+             (id, operating_company_id, customer_id, display_id, issue_date, due_date,
+              subtotal_cents, tax_cents, total_cents, status, factoring_advance_id, factoring_status)
+           VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,$5,0,$5,'factored',$6::uuid,'advanced')`,
+          [invId, companyId, customerId, invDisplay, opts.invoiceTotalCents, id]
+        );
+        invoiceIds.push(invId);
+      }
     });
     advanceIds.push(id);
     displayIds.push(displayId);
@@ -207,6 +229,11 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
         `INSERT INTO mdata.vendors (id, operating_company_id, vendor_name, vendor_type) VALUES ($1::uuid,$2::uuid,$3,'Other')`,
         [vendorId, companyId, `Chain-06 Test Factor ${suffix}`]
       );
+      await db.query(
+        `INSERT INTO mdata.customers (id, operating_company_id, customer_name, factoring_company_vendor_id)
+         VALUES ($1::uuid,$2::uuid,$3,$4::uuid)`,
+        [customerId, companyId, `Chain-06 Test Customer ${suffix}`, vendorId]
+      );
       // Ensure the flag is ON via per-entity override so the real poster functions actually post
       // (default is OFF — CLAUDE.md money-flag convention). Cleaned up in afterAll.
       await db.query(
@@ -255,7 +282,11 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
         await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key='FACTORING_GL_POSTING_ENABLED' AND operating_company_id=$1::uuid`, [companyId]);
         await db.query(`DELETE FROM accounting.journal_entry_postings WHERE journal_entry_uuid IN (SELECT id FROM accounting.journal_entries WHERE memo LIKE $1)`, [`%${suffix}%`]);
         await db.query(`DELETE FROM accounting.journal_entries WHERE memo LIKE $1`, [`%${suffix}%`]);
+        if (invoiceIds.length) {
+          await db.query(`DELETE FROM accounting.invoices WHERE id = ANY($1::uuid[])`, [invoiceIds]);
+        }
         await db.query(`DELETE FROM accounting.factoring_advances WHERE id = ANY($1::uuid[])`, [advanceIds]);
+        await db.query(`DELETE FROM mdata.customers WHERE id = $1::uuid`, [customerId]);
         await db.query(`DELETE FROM mdata.vendors WHERE id = $1::uuid`, [vendorId]);
         await db.query(`DELETE FROM integrations.qbo_sync_queue WHERE operating_company_id=$1::uuid AND entity_type='journal_entry' AND entity_id = ANY($2::uuid[])`, [companyId, journalEntryIds]);
         await db.query(`DELETE FROM integrations.qbo_connections WHERE operating_company_id=$1::uuid AND realm_id=$2`, [companyId, `TEST-REALM-T06-${suffix}`]);
@@ -320,18 +351,32 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
   });
 
   it("Leg C — funding -> chargeback lifecycle ALSO round-trips the liability to zero (customer never paid)", async () => {
-    const { id: advanceId, displayId } = await seedAdvance({ invoiceTotalCents: 50_000, advanceCents: 45_000, reserveCents: 4_000, feeCents: 1_000 });
-    const funded = await postFactoringAdvanceEvent({ operating_company_id: companyId, factoring_advance_id: advanceId, actor_user_id: TEST_OWNER_USER_ID });
+    const { id: advanceId, displayId } = await seedAdvance({
+      invoiceTotalCents: 50_000,
+      advanceCents: 45_000,
+      reserveCents: 4_000,
+      feeCents: 1_000,
+      withLinkedInvoice: true,
+    });
+    const funded = await postFactoringAdvanceEvent({
+      operating_company_id: companyId,
+      factoring_advance_id: advanceId,
+      actor_user_id: TEST_OWNER_USER_ID,
+    });
     expect(funded.posted).toBe(true);
+    // Full recourse only — amounts must equal exact linked outstanding liability + invoice A/R.
+    const exact = await loadExactLinkedChargebackAmounts(companyId, advanceId);
+    expect(exact.liability_cents).toBeGreaterThan(0);
+    expect(exact.recoursed_ar_cents).toBe(50_000);
     const chargedBack = await postFactoringChargebackEvent({
       operating_company_id: companyId,
       factoring_advance_id: advanceId,
       actor_user_id: TEST_OWNER_USER_ID,
-      chargeback_amount_cents: 50_000, // repay Faro the full advance
+      chargeback_amount_cents: exact.liability_cents,
       default_interest_cents: 0,
-      recoursed_ar_cents: 50_000,
+      recoursed_ar_cents: exact.recoursed_ar_cents,
     });
-    expect(chargedBack.posted).toBe(true);
+    expect(chargedBack).toMatchObject({ posted: true });
     await markTerminal(advanceId, "recourse_returned");
 
     const rows = await scopedRead(ASSERTIONS.legC_liabilityRoundTrip([displayId]), [[displayId]]);

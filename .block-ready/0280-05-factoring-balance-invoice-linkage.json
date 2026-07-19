@@ -29,6 +29,7 @@
     "apps/backend/src/accounting/factoring-posting/__tests__/poster-default-interest-lifecycle.test.ts",
     "apps/backend/src/accounting/factoring-posting/__tests__/conn2-ar-subledger-and-reserve-tracker.test.ts",
     "apps/backend/src/accounting/factoring-posting/__tests__/chain-06-invoice-ar-chain-proof.test.ts",
+    "apps/backend/src/accounting/factoring-posting/__tests__/chain-06-factoring-ar-tieout.db.test.ts",
     "apps/backend/src/accounting/factoring-posting/__tests__/lifecycle-repair.test.ts",
     "apps/backend/src/accounting/factoring-posting/__tests__/default-interest-day95-recourse.test.ts",
     "apps/backend/src/factoring/faro-csv-import.ts",
