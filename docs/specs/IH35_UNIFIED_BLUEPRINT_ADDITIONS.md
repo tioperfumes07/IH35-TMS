@@ -1519,8 +1519,10 @@ reserve (not status); (5) TRANSP/Faro identity fail-closed; (6) FORCE RLS Owner/
 8. **Dependency-safe view DDL.** `CREATE OR REPLACE VIEW` only — never `DROP VIEW`.
 9. **Atomic already_posted.** Funding / customer payment / reserve release /
    chargeback / default-interest already_posted paths repair via
-   `repairFactoringLifecycleSourceLinksOnClient` with `afterRepair` sibling
-   side effects (subledger) in the **same** transaction.
+   `repairFactoringLifecycleSourceLinks` / `OnClient` with `afterRepair` sibling
+   side effects in the **same** transaction (customer-payment/chargeback
+   subledger relief; funding `reserve_held` / release `reserve_released`
+   movements).
 10. **Guard executable evidence only.** No raw comment/string marker acceptance;
     planted FORCE-RLS / GREATEST / DROP VIEW / legal_name decoys must fail.
 

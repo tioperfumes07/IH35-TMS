@@ -85,8 +85,8 @@ BEGIN
   CREATE TABLE IF NOT EXISTS factoring.canonical_factor_agreements (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id uuid NOT NULL REFERENCES org.companies(id),
-    factor_profile_id uuid NOT NULL,
-    factor_vendor_id uuid NOT NULL,
+    factor_profile_id uuid NOT NULL REFERENCES factoring.factor(id),
+    factor_vendor_id uuid NOT NULL REFERENCES mdata.vendors(id),
     agreement_code text NOT NULL
       CHECK (agreement_code = 'FARO_FULL_RECOURSE_V1'),
     effective_from date NOT NULL,

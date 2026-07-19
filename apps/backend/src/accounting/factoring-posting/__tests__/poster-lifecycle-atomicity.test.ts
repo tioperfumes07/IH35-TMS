@@ -160,7 +160,8 @@ describe("factoring poster — atomic lifecycle source links", () => {
     expect(mockWriteTsl).not.toHaveBeenCalled();
   });
 
-  it("already_posted path repairs missing lifecycle source links (idempotent, no new JE)", async () => {
+  it("already_posted path repairs missing lifecycle source links + reserve_held (idempotent, no new JE)", async () => {
+    let reserveInserts = 0;
     mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
       if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
       if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
@@ -190,6 +191,10 @@ describe("factoring poster — atomic lifecycle source links", () => {
       if (sql.includes("FROM accounting.journal_entry_postings")) {
         return { rows: [{ id: "line-1" }] };
       }
+      if (sql.includes("INSERT INTO accounting.factoring_reserve_movements")) {
+        reserveInserts += 1;
+        return { rows: [] };
+      }
       return { rows: [] };
     });
 
@@ -201,6 +206,7 @@ describe("factoring poster — atomic lifecycle source links", () => {
     expect(res).toMatchObject({ posted: false, reason: "already_posted" });
     expect(mockCreateJournalEntry).not.toHaveBeenCalled();
     expect(mockWriteTsl).toHaveBeenCalled();
+    expect(reserveInserts).toBe(1);
   });
 
   it("attachFactoringLifecycleSourceLinks is idempotent via TSL write helper", async () => {
@@ -287,8 +293,26 @@ describe("factoring poster — atomic lifecycle source links", () => {
     expect(mockWithLuciaBypass.mock.calls.length - luciaCallsBefore).toBeLessThanOrEqual(2);
   });
 
-  it("reserve release already_posted repairs lifecycle links without new JE", async () => {
-    alreadyPostedAdvanceMocks();
+  it("reserve release already_posted repairs lifecycle links + reserve_released without new JE", async () => {
+    let reserveInserts = 0;
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+      if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
+        return { rows: [advanceRow()] };
+      }
+      if (sql.includes("FROM accounting.journal_entries") && sql.includes("memo = $2")) {
+        return { rows: [{ id: "existing-je" }] };
+      }
+      if (sql.includes("UPDATE accounting.journal_entry_postings")) return { rows: [] };
+      if (sql.includes("FROM accounting.journal_entry_postings")) {
+        return { rows: [{ id: "line-1" }] };
+      }
+      if (sql.includes("INSERT INTO accounting.factoring_reserve_movements")) {
+        reserveInserts += 1;
+        return { rows: [] };
+      }
+      return { rows: [] };
+    });
     const res = await postFactoringReleaseEvent({
       operating_company_id: OPCO,
       factoring_advance_id: ADVANCE,
@@ -299,6 +323,7 @@ describe("factoring poster — atomic lifecycle source links", () => {
     expect(res).toMatchObject({ posted: false, reason: "already_posted" });
     expect(mockCreateJournalEntry).not.toHaveBeenCalled();
     expect(mockWriteTsl).toHaveBeenCalled();
+    expect(reserveInserts).toBe(1);
   });
 
   it("chargeback already_posted repairs repay+return links; return afterRepair is same txn", async () => {

@@ -519,8 +519,10 @@ export async function postFactoringAdvanceEvent(input: PostFactoringAdvanceInput
     }
 
     const memo = `Factoring funding ${advance.display_id}`;
+    const entryDate = (input.advanced_at_iso ?? advance.advanced_at ?? advance.submitted_at ?? new Date().toISOString()).slice(0, 10);
     if (await journalEntryExistsByMemo(client, input.operating_company_id, memo)) {
-      return { gate: "already_posted" as const, memo };
+      // Carry reserve/entryDate so already_posted repair can restore reserve_held in the same txn.
+      return { gate: "already_posted" as const, memo, reserve, entryDate };
     }
 
     // Resolve every account per-entity, fail-closed. NO ar_control at funding (borrowing keeps A/R).
@@ -528,8 +530,6 @@ export async function postFactoringAdvanceEvent(input: PostFactoringAdvanceInput
     const reserveAccountId = await resolveRoleAccount(client, input.operating_company_id, "factor_reserve_held");
     const feeAccountId = await resolveRoleAccount(client, input.operating_company_id, "factor_fee_expense");
     const liabilityAccountId = await resolveRoleAccount(client, input.operating_company_id, "factoring_advance_liability");
-
-    const entryDate = (input.advanced_at_iso ?? advance.advanced_at ?? advance.submitted_at ?? new Date().toISOString()).slice(0, 10);
 
     const postings: Array<{ account_id: string; debit_or_credit: "debit" | "credit"; amount_cents: number; description: string }> = [];
     if (cash > 0) postings.push({ account_id: cashAccountId, debit_or_credit: "debit", amount_cents: cash, description: `${memo} — cash advanced` });
@@ -553,6 +553,18 @@ export async function postFactoringAdvanceEvent(input: PostFactoringAdvanceInput
       memo: prepared.memo,
       factoring_advance_id: input.factoring_advance_id,
       source_transaction_type: "factoring_advance",
+      afterRepair: async (client, journalEntryId) => {
+        if (!journalEntryId || prepared.reserve <= 0) return;
+        await recordReserveMovement(
+          client,
+          input.operating_company_id,
+          input.factoring_advance_id,
+          "held",
+          prepared.reserve,
+          prepared.entryDate,
+          journalEntryId
+        );
+      },
     });
     return { posted: false, reason: "already_posted" };
   }
@@ -724,7 +736,7 @@ export async function postFactoringReleaseEvent(input: PostFactoringReleaseInput
     const entryDate = (input.released_at_iso ?? advance.released_at ?? new Date().toISOString()).slice(0, 10);
     const memo = `Factoring reserve release ${advance.display_id} (${releaseAmount}@${entryDate})`;
     if (await journalEntryExistsByMemo(client, input.operating_company_id, memo)) {
-      return { gate: "already_posted" as const, memo };
+      return { gate: "already_posted" as const, memo, entryDate };
     }
 
     const cashAccountId = await resolveRoleAccount(client, input.operating_company_id, "cash_clearing");
@@ -749,6 +761,18 @@ export async function postFactoringReleaseEvent(input: PostFactoringReleaseInput
       memo: prepared.memo,
       factoring_advance_id: input.factoring_advance_id,
       source_transaction_type: "factoring_reserve_release",
+      afterRepair: async (client, journalEntryId) => {
+        if (!journalEntryId) return;
+        await recordReserveMovement(
+          client,
+          input.operating_company_id,
+          input.factoring_advance_id,
+          "released",
+          releaseAmount,
+          prepared.entryDate,
+          journalEntryId
+        );
+      },
     });
     return { posted: false, reason: "already_posted" };
   }
