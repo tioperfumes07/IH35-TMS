@@ -1,17 +1,42 @@
 {
   "block_id": "acct-fmcsa-fire-and-forget-retry",
+  "branch": "cursor/fmcsa-fire-and-forget-retry-7d2d",
   "status": "PENDING",
   "classification": "FINANCIAL",
   "phase": "tier2",
   "source": "MASTER-6 authored dispatch (05-TIER2-BLOCKS)",
   "source_file": "acct-fmcsa-fire-and-forget-retry.txt",
+  "task": "Replace silent void verifyCustomerWithSafer on customer create/update with durable outbox.events enqueue (ON CONFLICT dedupe_key WHERE NOT NULL), typed FMCSA 429/5xx/network + Retry-After fail-fast (no alternate SAFER hammering), PermanentDeliveryError on malformed UUID before DB, tenant-scoped handler, manual verify 503 retryable, Rule-17 guard+selftest. No additive migration; FINANCIAL HOLD; no GL/QBO.",
+  "priority": "P0",
+  "module": "mdata-fmcsa",
+  "db_required": true,
+  "guard_required": true,
+  "runtime_path": "src",
+  "extra_gates": [],
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    "apps/backend/src/mdata/customers.routes.ts",
+    "apps/backend/src/mdata/__tests__/customers-fmcsa-outbox-enqueue.test.ts",
+    "apps/backend/src/integrations/fmcsa/**",
+    "apps/backend/src/lib/fmcsa-client.ts",
+    "apps/backend/src/lib/fmcsa-http-errors.ts",
+    "apps/backend/src/lib/__tests__/fmcsa-*.test.ts",
+    "apps/backend/src/outbox/**",
+    "scripts/verify-fmcsa-fire-and-forget-retry.mjs",
+    "scripts/verify-steps/913-verify-fmcsa-fire-and-forget-retry.mjs",
+    "scripts/__tests__/verify-fmcsa-fire-and-forget-retry.test.mjs",
+    "scripts/verify-no-circular-dependencies.mjs",
+    ".block-ready/acct-fmcsa-fire-and-forget-retry.json"
   ],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "ON CONFLICT (dedupe_key) WHERE dedupe_key IS NOT NULL; terminal release enables lifetime re-enqueue; no probe-only TOCTOU"
+    },
+    {
+      "check": "fmcsa-client typed 429/5xx/network + Retry-After; first SAFER retryable stops alternate query_param; no last_checked on non-authoritative; manual 503 retryable"
+    },
+    {
+      "check": "global claim documented; handler payload company scope + canonical UUID fail-fast; audit enqueue/dedupe/retry/fail; Rule-17 selftest plants; db concurrent dedupe"
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "No additive migration — lifetime uniqueness reconciled by clearing dedupe_key on terminal for FMCSA events only (0212 index retained). FINANCIAL HOLD; no GL/QBO."
 }

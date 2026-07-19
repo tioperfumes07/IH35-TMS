@@ -1,3 +1,10 @@
+import {
+  FmcsaPermanentError,
+  FmcsaRetryableError,
+  mergeFmcsaRetryableCooldown,
+  parseRetryAfterMs,
+} from "./fmcsa-http-errors.js";
+
 type LookupType = "usdot" | "mc";
 
 export type CarrierResult = {
@@ -33,7 +40,10 @@ function normalizeLookupValue(type: LookupType, value: string) {
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs = FMCSA_TIMEOUT_MS): Promise<T> {
   return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error("FMCSA timeout")), timeoutMs);
+    const timeout = setTimeout(
+      () => reject(new FmcsaRetryableError("FMCSA timeout", { status: null })),
+      timeoutMs
+    );
     promise
       .then((result) => {
         clearTimeout(timeout);
@@ -191,15 +201,63 @@ function parseSaferSnapshotHtml(html: string): CarrierResult | null {
   };
 }
 
+function classifyHttpStatus(
+  status: number,
+  source: "mobile" | "safer",
+  retryAfterHeader: string | null
+): "not_found" | "retryable" | "permanent" | "ok_continue" {
+  if (status === 404) return "not_found";
+  if (status === 429) return "retryable";
+  if (status >= 500) return "retryable";
+  if (status >= 400 && status < 500) return "permanent";
+  if (!Number.isFinite(status) || status < 200 || status >= 300) {
+    // Non-2xx that isn't 4xx/5xx (e.g. 3xx without follow) — treat as permanent for safety.
+    void source;
+    void retryAfterHeader;
+    return "permanent";
+  }
+  return "ok_continue";
+}
+
+function throwForRetryable(status: number, source: "mobile" | "safer", retryAfterHeader: string | null): never {
+  const retryAfterMs = parseRetryAfterMs(retryAfterHeader);
+  throw new FmcsaRetryableError(
+    status === 429
+      ? `FMCSA ${source} rate limited (429)`
+      : `FMCSA ${source} service error ${status}`,
+    { status, retryAfterMs }
+  );
+}
+
+function throwForPermanent(status: number, source: "mobile" | "safer"): never {
+  throw new FmcsaPermanentError(`FMCSA ${source} client error ${status}`, { status });
+}
+
+function wrapNetworkError(error: unknown): never {
+  if (error instanceof FmcsaRetryableError || error instanceof FmcsaPermanentError) throw error;
+  const message = String((error as Error)?.message ?? error);
+  throw new FmcsaRetryableError(`FMCSA network failure: ${message}`, { status: null });
+}
+
+async function fetchJsonResponse(url: string, accept: string): Promise<Response> {
+  try {
+    return await withTimeout(fetch(url, { method: "GET", headers: { Accept: accept } }));
+  } catch (error) {
+    wrapNetworkError(error);
+  }
+}
+
 async function fetchFmcsMobile(type: LookupType, value: string): Promise<CarrierResult | null> {
   const normalized = normalizeLookupValue(type, value);
   const route = type === "usdot" ? `/carriers/${encodeURIComponent(normalized)}` : `/carriers/docket-number/${encodeURIComponent(normalized)}`;
   const query = FMCSA_MOBILE_KEY ? `?webKey=${encodeURIComponent(FMCSA_MOBILE_KEY)}` : "";
-  const response = await withTimeout(fetch(`${FMCSA_MOBILE_BASE}${route}${query}`, { method: "GET", headers: { Accept: "application/json" } }));
 
-  if (response.status === 404) return null;
-  if (response.status >= 500) throw new Error(`FMCSA mobile service error ${response.status}`);
-  if (!response.ok) return null;
+  const response = await fetchJsonResponse(`${FMCSA_MOBILE_BASE}${route}${query}`, "application/json");
+
+  const kind = classifyHttpStatus(response.status, "mobile", response.headers.get("retry-after"));
+  if (kind === "not_found") return null;
+  if (kind === "retryable") throwForRetryable(response.status, "mobile", response.headers.get("retry-after"));
+  if (kind === "permanent") throwForPermanent(response.status, "mobile");
 
   const payload = (await response.json()) as unknown;
   return parseMobileResult(payload);
@@ -207,36 +265,77 @@ async function fetchFmcsMobile(type: LookupType, value: string): Promise<Carrier
 
 async function fetchSaferSnapshot(type: LookupType, value: string): Promise<CarrierResult | null> {
   const normalized = normalizeLookupValue(type, value);
+  // Alternate query_param is only for authoritative miss (404 / no-record HTML).
+  // Provider retryable (429 / 5xx / network) must stop this attempt immediately so
+  // outbox can honor Retry-After — never hammer the alternate SAFER endpoint.
   const queryParams = type === "usdot" ? ["USDOT", "MC_MX"] : ["MC_MX", "USDOT"];
+
   for (const queryParam of queryParams) {
     const url = `${FMCSA_SAFER_BASE}?searchtype=ANY&query_type=queryCarrierSnapshot&query_param=${encodeURIComponent(queryParam)}&query_string=${encodeURIComponent(normalized)}`;
-    const response = await withTimeout(fetch(url, { method: "GET", headers: { Accept: "text/html" } }));
+    const response = await fetchJsonResponse(url, "text/html");
 
-    if (response.status === 404) continue;
-    if (response.status >= 500) throw new Error(`FMCSA SAFER service error ${response.status}`);
-    if (!response.ok) continue;
+    const kind = classifyHttpStatus(response.status, "safer", response.headers.get("retry-after"));
+    if (kind === "not_found") continue;
+    if (kind === "retryable") {
+      // Fail-fast: throw typed retryable with Retry-After (no alternate SAFER request).
+      throwForRetryable(response.status, "safer", response.headers.get("retry-after"));
+    }
+    if (kind === "permanent") throwForPermanent(response.status, "safer");
 
     const html = await response.text();
     if (/no records found|unable to locate|record inactive/i.test(html)) continue;
     const parsed = parseSaferSnapshotHtml(html);
     if (parsed) return parsed;
   }
+
   return null;
 }
 
+/**
+ * Dual-source precedence (mobile → SAFER):
+ * 1. Either source returns carrier data → use it (mobile short-circuit; else SAFER).
+ * 2. SAFER miss + mobile retryable (429/5xx/network) → throw retryable (never null).
+ * 3. SAFER miss + mobile permanent (non-404 4xx) → throw permanent (never stamp not-found).
+ * 4. Both authoritative misses (404 / no records) → null.
+ * 5. When SAFER itself fails retryable: SAFER status/message wins, but Retry-After is
+ *    max(mobile, SAFER) so outbox never under-honors the stricter cooldown.
+ */
 async function lookupCarrier(type: LookupType, value: string): Promise<CarrierResult | null> {
   const normalized = normalizeLookupValue(type, value);
   if (!normalized) return null;
 
+  let mobileRetryable: FmcsaRetryableError | null = null;
+  let mobilePermanent: FmcsaPermanentError | null = null;
   try {
     const mobile = await fetchFmcsMobile(type, normalized);
     if (mobile) return mobile;
   } catch (error) {
-    if ((error as Error).message === "FMCSA timeout") throw error;
-    // fall through to SAFER snapshot
+    if (error instanceof FmcsaPermanentError) {
+      // Still try SAFER for an authoritative hit; preserve permanent if SAFER misses.
+      mobilePermanent = error;
+    } else if (error instanceof FmcsaRetryableError) {
+      mobileRetryable = error;
+    } else {
+      wrapNetworkError(error);
+    }
   }
 
-  return fetchSaferSnapshot(type, normalized);
+  try {
+    const safer = await fetchSaferSnapshot(type, normalized);
+    if (safer) return safer;
+    if (mobileRetryable) throw mobileRetryable;
+    if (mobilePermanent) throw mobilePermanent;
+    return null;
+  } catch (error) {
+    if (error instanceof FmcsaRetryableError) {
+      // Aggregate cooldown across sources; preferred status/message = SAFER (thrown error).
+      throw mergeFmcsaRetryableCooldown(error, mobileRetryable);
+    }
+    if (error instanceof FmcsaPermanentError) throw error;
+    if (mobileRetryable) throw mobileRetryable;
+    if (mobilePermanent) throw mobilePermanent;
+    wrapNetworkError(error);
+  }
 }
 
 export function lookupCarrierByUSDOT(usdot: string) {
@@ -246,3 +345,10 @@ export function lookupCarrierByUSDOT(usdot: string) {
 export function lookupCarrierByMC(mcNumber: string) {
   return lookupCarrier("mc", mcNumber);
 }
+
+export {
+  FmcsaPermanentError,
+  FmcsaRetryableError,
+  mergeFmcsaRetryableCooldown,
+  parseRetryAfterMs,
+} from "./fmcsa-http-errors.js";

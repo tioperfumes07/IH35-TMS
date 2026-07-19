@@ -4,6 +4,15 @@ import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import {
+  buildFmcsaLookupFingerprint,
+  enqueueFmcsaCustomerVerifyRequested,
+} from "../integrations/fmcsa/fmcsa-customer-verify-chain.service.js";
+import {
+  isFmcsaPermanentError,
+  isRetryableFmcsaError,
+  retryAfterMsFromError,
+} from "../integrations/fmcsa/errors.js";
 import { verifyCustomerWithSafer } from "../integrations/fmcsa/safer.service.js";
 import { decrypt, encrypt } from "../lib/encryption.js";
 import { sendZodValidation } from "../lib/zod-http-error.js";
@@ -470,7 +479,13 @@ function normalizeCustomerType(input: "broker" | "direct" | "direct_shipper" | n
 }
 
 export async function registerCustomerRoutes(app: FastifyInstance) {
-  app.get("/api/v1/mdata/customers", async (req, reply) => {
+  // Per-route opt-in (@fastify/rate-limit global:false). Required for CodeQL
+  // js/missing-rate-limiting on authorized handlers (alert #1162).
+  const RL_READ = { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } } as const;
+  const RL_WRITE = { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } } as const;
+  const RL_FMCSA_VERIFY = { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } } as const;
+
+  app.get("/api/v1/mdata/customers", RL_READ, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
@@ -581,7 +596,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     return { customers: result.rows, total: result.total };
   });
 
-  app.post("/api/v1/mdata/customers", async (req, reply) => {
+  app.post("/api/v1/mdata/customers", RL_WRITE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -721,13 +736,22 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
           customer_id: String(row.id),
           operation: "create",
         });
+        // Durable outbox enqueue (same txn): create stays responsive; SAFER retries via OutboxProcessor.
+        await enqueueFmcsaCustomerVerifyRequested(client, {
+          operating_company_id: String(row.operating_company_id),
+          customer_id: String(row.id),
+          actor_user_id: authUser.uuid,
+          trigger: "create",
+          lookup_fingerprint: buildFmcsaLookupFingerprint(
+            (row.mc_number as string | null | undefined) ?? null,
+            (row.dot_number as string | null | undefined) ?? null
+          ),
+        });
         return {
           customerId: row.id as string,
           customer: mapCustomerRow(row, canReadTaxId(authUser.role)),
         };
       });
-      // Fire-and-forget: creation must not block on FMCSA transient failures.
-      void verifyCustomerWithSafer({ customerId: created.customerId, actorUserId: authUser.uuid });
       return reply.code(201).send(created.customer);
     } catch (err) {
       if ((err as { code?: string }).code === "23505") {
@@ -745,7 +769,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/mdata/customers/:id", async (req, reply) => {
+  app.get("/api/v1/mdata/customers/:id", RL_READ, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -770,7 +794,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     return mapCustomerRow(row, canReadTaxId(authUser.role));
   });
 
-  app.get("/api/v1/mdata/customers/:id/detail", async (req, reply) => {
+  app.get("/api/v1/mdata/customers/:id/detail", RL_READ, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -864,7 +888,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     return { customer: mapCustomerRow(row, canReadTaxId(authUser.role)) };
   });
 
-  app.patch("/api/v1/mdata/customers/:id", async (req, reply) => {
+  app.patch("/api/v1/mdata/customers/:id", RL_WRITE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -1109,16 +1133,26 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
           operation: "update",
         });
 
+        const shouldReverify =
+          ("mc_number" in b && (existingRow.mc_number ?? null) !== (b.mc_number ?? null)) ||
+          ("dot_number" in b && (existingRow.dot_number ?? null) !== (b.dot_number ?? null));
+        if (shouldReverify) {
+          // Durable outbox enqueue (same txn): update stays responsive; SAFER retries via OutboxProcessor.
+          await enqueueFmcsaCustomerVerifyRequested(client, {
+            operating_company_id: String(updatedRow.operating_company_id),
+            customer_id: String(updatedRow.id),
+            actor_user_id: authUser.uuid,
+            trigger: "update",
+            lookup_fingerprint: buildFmcsaLookupFingerprint(
+              (updatedRow.mc_number as string | null | undefined) ?? null,
+              (updatedRow.dot_number as string | null | undefined) ?? null
+            ),
+          });
+        }
+
         return updatedRow;
       });
       if (!updated) return reply.code(404).send({ error: "mdata_customer_not_found" });
-      const shouldReverify =
-        ("mc_number" in b && (existingRow.mc_number ?? null) !== (b.mc_number ?? null)) ||
-        ("dot_number" in b && (existingRow.dot_number ?? null) !== (b.dot_number ?? null));
-      if (shouldReverify) {
-        // Fire-and-forget: update path remains available even if FMCSA is down.
-        void verifyCustomerWithSafer({ customerId: updated.id as string, actorUserId: authUser.uuid });
-      }
       return mapCustomerRow(updated, canReadTaxId(authUser.role));
     } catch (err) {
       if ((err as { code?: string }).code === "23505") return reply.code(409).send({ error: "mdata_customer_conflict" });
@@ -1126,23 +1160,55 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/mdata/customers/:id/verify-fmcsa", async (req, reply) => {
+  app.post("/api/v1/mdata/customers/:id/verify-fmcsa", RL_FMCSA_VERIFY, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!canForceFmcsaVerify(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = detailQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const result = await verifyCustomerWithSafer({
-      customerId: parsedParams.data.id,
-      actorUserId: authUser.uuid,
-      force: true,
-    });
-    if (!result.customer) return reply.code(404).send({ error: "mdata_customer_not_found" });
-    return reply.send({ customer: mapCustomerRow(result.customer as Record<string, unknown>, canReadTaxId(authUser.role)) });
+    const operatingCompanyId = await withCurrentUser(authUser.uuid, async (client) =>
+      resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id)
+    );
+
+    try {
+      const result = await verifyCustomerWithSafer({
+        customerId: parsedParams.data.id,
+        actorUserId: authUser.uuid,
+        force: true,
+        operatingCompanyId: operatingCompanyId ?? undefined,
+      });
+      if (!result.customer) return reply.code(404).send({ error: "mdata_customer_not_found" });
+      return reply.send({
+        customer: mapCustomerRow(result.customer as Record<string, unknown>, canReadTaxId(authUser.role)),
+        verify_status: result.reason,
+      });
+    } catch (error) {
+      if (isRetryableFmcsaError(error)) {
+        const retryAfterMs = retryAfterMsFromError(error);
+        // Truthful operator-visible retryable failure — do NOT pretend verification completed.
+        return reply.code(503).send({
+          error: "fmcsa_verify_retryable",
+          retryable: true,
+          message: String((error as Error).message ?? error),
+          retry_after_ms: retryAfterMs,
+          ...(retryAfterMs != null ? { "retry-after": Math.ceil(retryAfterMs / 1000) } : {}),
+        });
+      }
+      if (isFmcsaPermanentError(error)) {
+        return reply.code(422).send({
+          error: "fmcsa_verify_permanent",
+          retryable: false,
+          message: String((error as Error).message ?? error),
+        });
+      }
+      throw error;
+    }
   });
 
-  app.get("/api/v1/mdata/customers/:id/classifications", async (req, reply) => {
+  app.get("/api/v1/mdata/customers/:id/classifications", RL_READ, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -1175,7 +1241,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     return reply.send({ classifications });
   });
 
-  app.post("/api/v1/mdata/customers/:id/deactivate", async (req, reply) => {
+  app.post("/api/v1/mdata/customers/:id/deactivate", RL_WRITE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
