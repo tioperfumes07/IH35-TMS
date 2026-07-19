@@ -40,7 +40,7 @@
       "check": "EntityLink adoption conservatively merges reaching ID/safe definitions across if/else, ternary, loop, and switch control flow while accepting complete unconditional branch sanitization; it traces scoped ordinary/destructured/computed/multi-hop aliases and requires exact structural-location baseline equality"
     },
     {
-      "check": "deep-link guard and real ROUTES test require exactly one protected invoice/payment/expense/audit route bound to the exact React.lazy module/export; conflicting/canonical duplicates and wrong imports fail"
+      "check": "deep-link guard and real ROUTES test require exactly one protected invoice/payment/expense/audit route bound to the exact React.lazy module/export; the unique invoice audit control prevents default/stops propagation before navigating, and conflicting routes, wrong imports, or propagation removal fail"
     },
     {
       "check": "94-live guard recursively rejects nested object/array/rest/default/computed destructuring writes plus every other samsaraLive write beyond its canonical declaration/query assignment; Fastify scenarios inject the production route to prove arbitrary-company isolation, executable SQL, and zero when mdata.units exists but Samsara does not"

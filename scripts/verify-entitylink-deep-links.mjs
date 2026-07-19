@@ -152,8 +152,8 @@ function templateMatches(node, sf, head, expression) {
   );
 }
 
-function hasDirectNavigation(sf, root, sourceType, idExpression) {
-  let found = false;
+function hasDirectNavigation(sf, root, sourceType, idExpression, requirePropagationControl = false) {
+  let matches = 0;
   walk(root, (node) => {
     if (
       ts.isCallExpression(node) &&
@@ -167,7 +167,8 @@ function hasDirectNavigation(sf, root, sourceType, idExpression) {
         `encodeURIComponent(${idExpression})`,
       )
     ) {
-      const arrow = node.parent;
+      let arrow = node.parent;
+      while (arrow && arrow !== root && !ts.isArrowFunction(arrow)) arrow = arrow.parent;
       const expression = arrow?.parent;
       const attribute = expression?.parent;
       if (
@@ -182,11 +183,47 @@ function hasDirectNavigation(sf, root, sourceType, idExpression) {
         !hasDynamicBranchAncestor(attribute, root) &&
         !hasLiteralDeadAncestor(node, root)
       ) {
-        found = true;
+        if (requirePropagationControl) {
+          const eventParameter =
+            arrow.parameters.length === 1 &&
+            ts.isIdentifier(arrow.parameters[0].name) &&
+            arrow.parameters[0].name.text === "event";
+          const statements = ts.isBlock(arrow.body) ? [...arrow.body.statements] : [];
+          const directEventCall = (statement, method) =>
+            ts.isExpressionStatement(statement) &&
+            ts.isCallExpression(statement.expression) &&
+            ts.isPropertyAccessExpression(statement.expression.expression) &&
+            ts.isIdentifier(statement.expression.expression.expression) &&
+            statement.expression.expression.expression.text === "event" &&
+            statement.expression.expression.name.text === method &&
+            statement.expression.arguments.length === 0;
+          const directNavigate =
+            statements.length === 3 &&
+            ts.isExpressionStatement(statements[2]) &&
+            statements[2].expression === node;
+          const control = attribute.parent?.parent;
+          const exactLabel =
+            ts.isJsxOpeningElement(control) &&
+            ts.isJsxElement(control.parent) &&
+            control.parent.children.some(
+              (child) => ts.isJsxText(child) && child.text.trim() === "View audit log",
+            );
+          if (
+            eventParameter &&
+            directEventCall(statements[0], "preventDefault") &&
+            directEventCall(statements[1], "stopPropagation") &&
+            directNavigate &&
+            exactLabel
+          ) {
+            matches += 1;
+          }
+        } else {
+          matches += 1;
+        }
       }
     }
   });
-  return found;
+  return matches === 1;
 }
 
 function directSearchParamBinding(sf, root, binding, parameter) {
@@ -566,8 +603,8 @@ export function assertContracts(sources) {
   if (!invoice || !hasDirectEntityLink(parsed.invoice, invoice, "customer", "invoice.customer_id")) {
     failures.push("InvoiceDetailPage: use direct unconditional <EntityLink kind=\"customer\" id={invoice.customer_id} ... />; aliases/wrappers are forbidden");
   }
-  if (!invoice || !hasDirectNavigation(parsed.invoice, invoice, "invoice", "invoice.id")) {
-    failures.push("InvoiceDetailPage: use direct inline onClick={() => navigate(canonical invoice audit URL)}; aliases/wrappers are forbidden");
+  if (!invoice || !hasDirectNavigation(parsed.invoice, invoice, "invoice", "invoice.id", true)) {
+    failures.push("InvoiceDetailPage: use one direct View audit log onClick={(event) => { event.preventDefault(); event.stopPropagation(); navigate(canonical invoice audit URL); }}; aliases/wrappers are forbidden");
   }
 
   const payment = parsed.payment && topLevelExportedFunction(parsed.payment, "PaymentDetailPage");
@@ -639,7 +676,7 @@ export function assertContracts(sources) {
 
 function canonicalSources() {
   return {
-    invoice: `export function InvoiceDetailPage(){return <><EntityLink kind="customer" id={invoice.customer_id}/><button onClick={()=>navigate(\`/accounting/audit-trail?source_type=invoice&source_id=\${encodeURIComponent(invoice.id)}\`)}/></>}`,
+    invoice: `export function InvoiceDetailPage(){return <><EntityLink kind="customer" id={invoice.customer_id}/><button onClick={(event)=>{event.preventDefault();event.stopPropagation();navigate(\`/accounting/audit-trail?source_type=invoice&source_id=\${encodeURIComponent(invoice.id)}\`);}}>View audit log</button></>}`,
     payment: `export function PaymentDetailPage(){return <button onClick={()=>navigate(\`/accounting/audit-trail?source_type=customer_payment&source_id=\${encodeURIComponent(payment.id)}\`)}/>}`,
     audit: `export function AccountingAuditTrailPage(){const [searchParams]=useSearchParams();const sourceTypeParam=searchParams.get("source_type");const sourceIdParam=searchParams.get("source_id");const [sourceType,setSourceType]=useState(()=>sourceTypeParam ?? "");const [sourceId,setSourceId]=useState(()=>sourceIdParam ?? "");const eventQuery=useInfiniteQuery({queryFn:({pageParam})=>listAccountingAuditTrail(companyId,{source_transaction_type:sourceType.trim() || undefined,source_transaction_id:sourceId.trim() || undefined})});return <span>{sourceType}{sourceId}{eventQuery.data}</span>}`,
     faults: `export function FaultDraftsPage(){const [searchParams]=useSearchParams();const deepLinkUnitId=searchParams.get("unit_id");return <span>{deepLinkUnitId}</span>}`,
@@ -658,6 +695,9 @@ function runSelftest() {
     ["dynamic-renderer", { ...good, invoice: good.invoice.replace("<EntityLink kind=\"customer\" id={invoice.customer_id}/>", "{flag ? <EntityLink kind=\"customer\" id={invoice.customer_id}/> : <span/>}") }, "InvoiceDetailPage"],
     ["dead-navigation-button", { ...good, invoice: good.invoice.replace("<button onClick", "{false && <button onClick").replace("`)}/></>}", "`)}/>}</>}") }, "audit URL"],
     ["dynamic-navigation-button", { ...good, invoice: good.invoice.replace("<button onClick", "{flag ? <button onClick").replace("`)}/></>}", "`)} /> : <span />}</>}") }, "audit URL"],
+    ["missing-invoice-prevent-default", { ...good, invoice: good.invoice.replace("event.preventDefault();", "") }, "preventDefault"],
+    ["missing-invoice-stop-propagation", { ...good, invoice: good.invoice.replace("event.stopPropagation();", "") }, "stopPropagation"],
+    ["duplicate-invoice-audit-control", { ...good, invoice: good.invoice.replace("</>}", `<button onClick={(event)=>{event.preventDefault();event.stopPropagation();navigate(\`/accounting/audit-trail?source_type=invoice&source_id=\${encodeURIComponent(invoice.id)}\`);}}>View audit log</button></>}`) }, "View audit log"],
     ["overwritten-param", { ...good, audit: good.audit.replace("const sourceIdParam=", "let sourceIdParam=").replace(";const [sourceType", ";sourceIdParam=\"wrong\";const [sourceType") }, "sourceIdParam"],
     ["lexical-shadow-param", { ...good, audit: good.audit.replace("const sourceIdParam=searchParams.get(\"source_id\");", "function Decoy(){const sourceIdParam=searchParams.get(\"source_id\");return sourceIdParam}") }, "sourceIdParam"],
     ["wrong-initialized-state-dead-param", { ...good, audit: good.audit.replace("useState(()=>sourceIdParam ?? \"\")", "useState(()=>\"wrong\")").replace("return <span>", "function deadProof(){const [sourceId]=useState(()=>sourceIdParam ?? \"\");return sourceId}return <span>") }, "directly initialize"],

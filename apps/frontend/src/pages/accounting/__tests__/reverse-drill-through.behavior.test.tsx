@@ -217,10 +217,21 @@ describe("reverse drill-through production behavior", () => {
       "href",
       "/customers/customer-44",
     );
-    await user.click(screen.getByRole("button", { name: "View audit log" }));
-    expect(screen.getByTestId("location")).toHaveTextContent(
-      "/accounting/audit-trail?source_type=invoice&source_id=inv-100",
-    );
+    const auditControls = await screen.findAllByRole("button", { name: "View audit log" });
+    expect(auditControls).toHaveLength(1);
+    const parentRowHandler = vi.fn();
+    document.addEventListener("click", parentRowHandler);
+    try {
+      await user.click(auditControls[0]);
+      await waitFor(() => {
+        expect(screen.getByTestId("location")).toHaveTextContent(
+          "/accounting/audit-trail?source_type=invoice&source_id=inv-100",
+        );
+      });
+    } finally {
+      document.removeEventListener("click", parentRowHandler);
+    }
+    expect(parentRowHandler).not.toHaveBeenCalled();
   });
 
   it("mounts the payment module through real ROUTES and preserves exact click navigation", async () => {

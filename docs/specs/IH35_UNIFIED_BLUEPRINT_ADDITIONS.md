@@ -1431,6 +1431,9 @@ Status: LOCKED (non-financial guard/spec wiring plus behavior tests; relation-fa
   resolver-return, and registered `Route` forms in the exact exported top-level production component,
   exact column/map renderer, or direct exported `ROUTES` mount. Nested/dead functions, lexical shadows,
   aliases, wrappers, reassignment, and dynamic renderer/route expressions cannot satisfy the contract.
+- The invoice `View audit log` producer is a single unambiguous direct control. Its handler executes
+  `preventDefault()` and `stopPropagation()` before the canonical `navigate(...)` call so an enclosing
+  row/control cannot overwrite the audit destination.
 - Each guarded `ROUTES` component binding must resolve to the exact canonical `React.lazy` module path and
   export, and each invoice/payment/expense/audit path must occur exactly once under `ProtectedRoute`.
   Conflicting duplicate paths fail even when one route is canonical. The audit consumer must initialize rendered state from the direct query-param bindings and pass
@@ -1456,7 +1459,8 @@ Status: LOCKED (non-financial guard/spec wiring plus behavior tests; relation-fa
   reintroduce a fallback when Samsara is absent. SQL-decoy scenarios also inject the production handler before
   probing fail-closed test SQL, so company/result mutations in the actual route are killed. React/router tests mount all four guarded paths through the
   real `ROUTES`, assert exactly one protected registration per path, resolve real lazy imports, click producers,
-  and exercise consumers. The audit-row behavior test clicks `Source lineage` through the real audit route,
+  and exercise consumers. The real-ROUTES invoice test awaits the final exact audit URL and asserts a competing
+  parent row handler was not invoked; removing propagation control fails. The audit-row behavior test clicks `Source lineage` through the real audit route,
   asserts the exact location and lineage request, and proves `stopPropagation` prevents the row expansion from winning.
 - Every guard includes table-driven `--selftest` plants covering every historical VETO and canonical controls.
 - CI wiring is additive through unique auto-discovered `scripts/verify-steps/<NNN>-*.mjs` entries. Each step
