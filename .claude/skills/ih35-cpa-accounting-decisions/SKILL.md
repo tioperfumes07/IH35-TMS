@@ -106,18 +106,7 @@ asset) / **Factoring Recoursed Invoices**. ASC 860 control-test nuance applies; 
   delivery recognition does **not** redefine cash recognition.
 - POD approval and invoice creation are **billing/factoring readiness** only — they do **not** move the
   accrual recognition event (stale “invoice-create recognition” wording is a defect).
-- **Two-event latch (LOCKED 2026-07-19 — posting mechanics of this same delivery event):** Event 1 earn at
-  `delivered`/`delivered_pending_docs` → **DR Unbilled Revenue / CR Line-Haul Income**; Event 2 invoice
-  gate at `completed_docs_received` (POD) → **DR A/R / CR Unbilled** — never one combined POD+delivered
-  gate; reversible if status reverts. Materiality is per-entity/configurable/no-permissive-default
-  (single-correction + cumulative-for-period, either breach escalates CPA/restatement). Maker/checker:
-  automated posts are system-poster/SOD-A-exempt/audited; manual closed-period corrections need
-  second-user approval (Owner/Admin/Accountant pool), reject→void. Entity scope: TRANSP seeds Unbilled +
-  enables first; USMCA seeds Unbilled+Deferred flagged dormant until loads; **TRK excluded** (lease
-  lessor, `42000-LEASE` — no freight Unbilled/Deferred, no delivery trigger). Flag default OFF,
-  per-entity, financial HOLD/JORGE-APPROVED + Neon proof before enable. Full detail:
-  `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` § "Delivery revenue recognition — two-event latch,
-  materiality, maker/checker, entity scope".
+- **Two-event latch (LOCKED — OWNER, 2026-07-19):** point-in-time at delivery is a **defensible practical simplification** of ASC 606 over-transit (`606-10-25-27`), **not the only correct method**. Event 1 earn at `delivered`/`delivered_pending_docs` → **DR Unbilled Revenue / CR Line-Haul Income**; Event 2 bill at `completed_docs_received` (POD) → **DR A/R / CR Unbilled Revenue** — never one combined POD+delivered gate; reversible if status reverts. **HARD PREREQUISITE:** seed Unbilled Revenue for TRANSP+USMCA (`JORGE-APPROVED` + Neon proof) before `REVENUE_RECOGNITION_POST_ENABLED` may flip — flipping without the account = runtime 500; no "done" without the account existing. Entity scope: TRANSP seed+enable first; USMCA seed Unbilled+Deferred dormant until loads; **TRK: EXCLUDED** (`42000-LEASE`). Materiality per-entity/configurable/**no permissive default** (single-correction AND cumulative-for-period). Maker/checker: automated = system/SOD-A-exempt; closed-period corrections = Owner/Admin/Accountant second-user, reject→void. Reconciliation: TMS delivery vs QBO invoice gap is a **KNOWN reconciling item** ("TMS unbilled revenue not yet in QBO"), never an error. Reporting: Unbilled Revenue report (earned-not-billed by load, aged, clearing to A/R) linked to `mdata.loads`. Boundary: multi-obligation/bundled → NetSuite-grade + SSP allocation; long lanes / material cutoff → revisit over-transit. Flag default OFF; no QBO write-back. Full detail: `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` §18 "Revenue Recognition — Delivery Two-Event Latch (LOCKED — OWNER, 2026-07-19)".
 - Uncategorized + daily cleanup remains the hygiene rule.
 
 ## 6. Chart of Accounts (additive structure — never delete/rename existing)
