@@ -1,6 +1,6 @@
 {
   "block_id": "pre-push-env-isolation",
-  "branch": "fix/pre-push-env-isolation",
+  "branch": "cursor/pre-push-database-capability-8094",
   "status": "BUILD",
   "classification": "NON-FINANCIAL (CI tooling / pre-push env isolation)",
   "phase": "PIPELINE-TRUTH",
