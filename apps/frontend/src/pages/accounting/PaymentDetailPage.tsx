@@ -15,6 +15,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { PaymentApplyModal } from "./PaymentApplyModal";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { useToast } from "../../components/Toast";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -25,6 +26,7 @@ export function PaymentDetailPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
+  const { pushToast } = useToast();
   const [applyOpen, setApplyOpen] = useState(false);
 
   const detailQuery = useQuery({
@@ -63,6 +65,7 @@ export function PaymentDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoice"] });
       setApplyOpen(false);
     },
+    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to apply payment"), "error"),
   });
 
   const unapplyMutation = useMutation({
@@ -72,6 +75,7 @@ export function PaymentDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "payments"] });
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoice"] });
     },
+    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to unapply payment"), "error"),
   });
 
   const voidMutation = useMutation({
@@ -81,6 +85,7 @@ export function PaymentDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "payments"] });
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoice"] });
     },
+    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to void payment"), "error"),
   });
 
   const [voidOpen, setVoidOpen] = useState(false);
