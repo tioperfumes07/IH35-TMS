@@ -134,6 +134,8 @@ export function CreateMultipleBillsPage() {
       if (result.ok > 0) pushToast(`Created ${result.ok} bill(s)`, "success");
       if (result.failed.length > 0) pushToast(`${result.failed.length} row(s) failed`, "error");
     },
+    onError: (error) =>
+      pushToast(String((error as Error)?.message ?? "Failed to create bills"), "error"),
   });
 
   const totalUsd = useMemo(
