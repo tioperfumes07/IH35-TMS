@@ -21,6 +21,7 @@
     "docs/specs/BRANCH-TOOLING.md",
     ".block-ready/pre-push-env-isolation.json",
     "docs/trackers/block-reconciliation-data.json",
+    "docs/trackers/program-phase-manifest.json",
     "docs/trackers/BLOCK-RECONCILIATION-2026-07-19.md",
     "docs/trackers/exports/IH35-TMS-BLOCK-RECONCILIATION-2026-07-19.xlsx"
   ],
