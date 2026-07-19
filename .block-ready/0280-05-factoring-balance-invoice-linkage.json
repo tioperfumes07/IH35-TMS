@@ -45,6 +45,7 @@
     "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
     "scripts/verify-factoring-balance-invoice-linkage.mjs",
     "scripts/verify-steps/929-verify-factoring-balance-invoice-linkage.mjs",
+    "scripts/canonical-relations.json",
     "docs/schema-parity-baseline.json",
     ".block-ready/0280-05-factoring-balance-invoice-linkage.json"
   ],

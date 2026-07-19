@@ -325,7 +325,7 @@ BEGIN
   CREATE TABLE IF NOT EXISTS accounting.factoring_lifecycle_posting_keys (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     operating_company_id uuid NOT NULL REFERENCES org.companies(id),
-    factoring_advance_id uuid NOT NULL,
+    factoring_advance_id uuid NOT NULL REFERENCES accounting.factoring_advances(id),
     source_transaction_type text NOT NULL
       CHECK (source_transaction_type IN (
         'factoring_advance',
@@ -342,6 +342,19 @@ BEGIN
 
   CREATE INDEX IF NOT EXISTS idx_factoring_lifecycle_posting_keys_je
     ON accounting.factoring_lifecycle_posting_keys (operating_company_id, journal_entry_id);
+
+  -- Idempotent FK backfill when table was created before the inline REFERENCES landed.
+  IF to_regclass('accounting.factoring_advances') IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1 FROM pg_constraint
+       WHERE conrelid = 'accounting.factoring_lifecycle_posting_keys'::regclass
+         AND contype = 'f'
+         AND conname = 'factoring_lifecycle_posting_keys_factoring_advance_id_fkey'
+     ) THEN
+    ALTER TABLE accounting.factoring_lifecycle_posting_keys
+      ADD CONSTRAINT factoring_lifecycle_posting_keys_factoring_advance_id_fkey
+      FOREIGN KEY (factoring_advance_id) REFERENCES accounting.factoring_advances(id);
+  END IF;
 
   ALTER TABLE accounting.factoring_lifecycle_posting_keys ENABLE ROW LEVEL SECURITY;
   ALTER TABLE accounting.factoring_lifecycle_posting_keys FORCE ROW LEVEL SECURITY;
