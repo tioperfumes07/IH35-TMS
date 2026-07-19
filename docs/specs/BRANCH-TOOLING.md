@@ -179,13 +179,25 @@ git push --force-with-lease origin <feature-branch>
   `npm run branch:precheck-push` must see the same process environment (Rule 18 /
   `CURSOR-PIPELINE-REPAIR-WORKORDER` P0-1). A stale `DATABASE_URL` string in `.env`
   (e.g. bad Neon password) is not a database capability and must not override the parent shell.
-- **Database capability law:** capability is true only when supplied by an **owned ephemeral
-  VLCI / local-CI lifecycle** (lock + token + bindings) **or** a **validated** local-verify
-  connection (CI `:54329/ih35_verify` with a live TCP probe). Mere URL-string presence never
-  authorizes. When capability is absent, `block-ready` skips only via the named server-required
-  equivalent `ci / build-typecheck` (fail-closed policy). No `HUSKY=0` / `--no-verify` bypass.
-- Regression lock: `scripts/verify-pre-push-env-isolation.mjs` (+ verify-steps/912) and
-  behavioral tests in `scripts/__tests__/branch-precheck-push.test.mjs`.
+- **Database capability law:** capability is true only when a **real, authenticated `ih35_verify`
+  Postgres** answers — supplied by an **owned ephemeral VLCI / local-CI lifecycle** (lock + token +
+  bindings) **or** a **validated** local-verify connection (CI `:54329/ih35_verify`). In BOTH cases
+  a live **authenticated `pg` identity probe** must connect on a loopback host and assert
+  `current_database() = 'ih35_verify'` (a database name that never exists in production, where
+  `current_database()` is `neondb`). A bare TCP acceptor (no pg handshake), the wrong database,
+  wrong credentials, or any non-local / production URL all return **false** — the probe never opens
+  a socket to a non-loopback endpoint. Mere URL-string presence never authorizes, and a lock that
+  claims ownership of a database that is not actually live/`ih35_verify` fails closed. When
+  capability is absent, `block-ready` skips only via the named server-required equivalent
+  `ci / build-typecheck` (fail-closed policy). No `HUSKY=0` / `--no-verify` bypass.
+- **Closed all-gates bypass (Rule 18 P0-1):** the production CLI ignores `BRANCH_PRECHECK_STEPS_JSON`
+  and `IH35_BRANCH_TOOLING_SKIP_FETCH`. Gate steps come only from the built-in chain (or a direct
+  test function option), and the freshness `git fetch origin` always runs. No user-settable
+  environment variable can empty the step list or skip the fetch. `BRANCH_PRECHECK_STEPS_JSON=[]` +
+  `IH35_BRANCH_TOOLING_SKIP_FETCH=1` no longer reports `READY TO PUSH` with zero substantive checks.
+- Regression lock: `scripts/verify-pre-push-env-isolation.mjs` (+ verify-steps/926) and
+  behavioral tests in `scripts/__tests__/branch-precheck-push.test.mjs` (planted fake-TCP,
+  wrong-`current_database`, wrong-credentials, and env-bypass cases), run unconditionally by CI.
 
 ## Safety rules enforced
 

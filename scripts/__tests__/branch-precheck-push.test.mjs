@@ -1,16 +1,18 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import net from "node:net";
 import os from "node:os";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { attachBareOrigin, initFixtureRepo, runGitOrThrow, writeAndCommit } from "./fixtures/branch-tooling/git-fixture.mjs";
 import {
   GATE_RESULT_CATEGORIES,
+  buildPrecheckSteps,
   detectLocalCapabilities,
   preflightStep,
+  probeVerifyDatabaseIdentity,
+  resolvePrecheckSteps,
   runPrecheckPush,
 } from "../branch-precheck-push.mjs";
 import { VLCI_ENV, createOwnerSession } from "../vlci-lifecycle.mjs";
@@ -18,13 +20,12 @@ import { VLCI_ENV, createOwnerSession } from "../vlci-lifecycle.mjs";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const scriptPath = path.resolve(root, "scripts/branch-precheck-push.mjs");
 const prePushHookPath = path.resolve(root, ".husky/pre-push");
+const mockPgServerPath = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "fixtures/branch-tooling/mock-pg-server.mjs"
+);
 const HOSTILE_NEON_URL =
   "postgresql://neondb_owner:BAD_PASSWORD_NOT_REAL@ep-hostile-stale.us-east-2.aws.neon.tech/neondb?sslmode=require";
-const minimalSteps = JSON.stringify([
-  { label: "build-backend", command: "npm run build:backend" },
-  { label: "verify:fixture-pass", command: "npm run verify:fixture-pass" },
-  { label: "block-ready", command: "npm run block-ready" },
-]);
 const validCapabilityPolicy = {
   equivalents: { database: "ci / build-typecheck" },
   serverRequiredContexts: new Set(["ci / build-typecheck"]),
@@ -50,21 +51,41 @@ function cleanChildEnv(extra = {}) {
   return env;
 }
 
-function listenLocalTcp() {
-  const server = net.createServer((socket) => socket.end());
+// The DB identity probe validates capability with a SYNCHRONOUS spawnSync child. spawnSync freezes
+// this test's event loop, so any mock that answers the probe MUST live in a separate process — an
+// in-process listener would be frozen and every probe would "pass" only by timing out (a fake
+// green). We start the wire-protocol mock as its own process and wait (async) for its port BEFORE
+// invoking the sync probe.
+function startMockPgServer({ mode = "ok" } = {}) {
+  const child = spawn(process.execPath, [mockPgServerPath], {
+    env: { ...process.env, MOCK_MODE: mode },
+    stdio: ["ignore", "pipe", "pipe"],
+  });
   return new Promise((resolve, reject) => {
-    server.once("error", reject);
-    server.listen(0, "127.0.0.1", () => {
-      const { port } = server.address();
+    let buf = "";
+    const onData = (chunk) => {
+      buf += chunk.toString();
+      const m = buf.match(/MOCK_PG_PORT=(\d+)/);
+      if (!m) return;
+      child.stdout.off("data", onData);
+      const port = Number(m[1]);
       resolve({
         port,
         url: `postgresql://verify:verify@127.0.0.1:${port}/ih35_verify`,
         close: () =>
-          new Promise((closeResolve) => {
-            server.close(() => closeResolve());
+          new Promise((r) => {
+            child.once("exit", () => r());
+            child.kill("SIGKILL");
           }),
       });
-    });
+    };
+    child.stdout.on("data", onData);
+    child.once("error", reject);
+    const guard = setTimeout(() => {
+      child.kill("SIGKILL");
+      reject(new Error("mock pg server did not report a port in time"));
+    }, 5000);
+    if (typeof guard.unref === "function") guard.unref();
   });
 }
 
@@ -73,19 +94,7 @@ function stubVerifyStaticFallback(dir) {
   fs.writeFileSync(path.join(dir, "scripts/verify-static.mjs"), "process.exit(0);\n", "utf8");
 }
 
-function runScript(args, env) {
-  return spawnSync("node", [scriptPath, ...args], {
-    encoding: "utf8",
-    env: {
-      ...process.env,
-      BRANCH_PRECHECK_STEPS_JSON: minimalSteps,
-      IH35_BRANCH_TOOLING_SKIP_FETCH: "1",
-      ...env,
-    },
-  });
-}
-
-function writeMinimalPackage(dir) {
+function writeMinimalPackage(dir, { buildBackendExit = 0 } = {}) {
   fs.mkdirSync(path.join(dir, "apps/frontend"), { recursive: true });
   fs.writeFileSync(
     path.join(dir, "apps/frontend/tsconfig.json"),
@@ -99,8 +108,7 @@ function writeMinimalPackage(dir) {
         name: "fixture",
         private: true,
         scripts: {
-          "build:backend": "node -e \"process.exit(0)\"",
-          "verify:fixture-pass": "node -e \"process.exit(0)\"",
+          "build:backend": `node -e "process.exit(${buildBackendExit})"`,
           "block-ready": "node -e \"process.exit(0)\"",
         },
       },
@@ -111,12 +119,33 @@ function writeMinimalPackage(dir) {
   );
 }
 
-function makeFeatureRepo() {
+function writeCapabilityPolicyFixture(dir) {
+  // Minimal, valid capability-policy inputs so the production CLI chain (whose built-in block-ready
+  // step declares requiredCapabilities:["database"]) can LOAD its policy without throwing. Empty
+  // server_required_live_status_checks means loadCapabilityPolicy makes no `gh` network call.
+  fs.mkdirSync(path.join(dir, "scripts"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "scripts/verify-meta.json"), "{}\n", "utf8");
+  fs.mkdirSync(path.join(dir, ".github"), { recursive: true });
+  fs.writeFileSync(path.join(dir, ".github/branch-protection-config.json"), "{}\n", "utf8");
+}
+
+function makeFeatureRepo(options = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ih35-precheck-"));
   initFixtureRepo(dir);
-  writeMinimalPackage(dir);
+  writeMinimalPackage(dir, options);
+  writeCapabilityPolicyFixture(dir);
   fs.writeFileSync(path.join(dir, "README.md"), "main\n", "utf8");
-  runGitOrThrow(["add", "README.md", "package.json", "apps/frontend/tsconfig.json"], { cwd: dir });
+  runGitOrThrow(
+    [
+      "add",
+      "README.md",
+      "package.json",
+      "apps/frontend/tsconfig.json",
+      "scripts/verify-meta.json",
+      ".github/branch-protection-config.json",
+    ],
+    { cwd: dir }
+  );
   runGitOrThrow(["commit", "-m", "main"], { cwd: dir });
   runGitOrThrow(["branch", "-M", "main"], { cwd: dir });
   attachBareOrigin(dir);
@@ -125,12 +154,18 @@ function makeFeatureRepo() {
   return dir;
 }
 
+function markerWriteCommand(markerPath) {
+  const script = `require("fs").writeFileSync(${JSON.stringify(markerPath)}, "ran")`;
+  return `node -e ${JSON.stringify(script)}`;
+}
+
+// ── Branch / freshness / dirty / conflict guards (in-process; steps only via function options) ──────
 test("refuses main branch", () => {
   const dir = makeFeatureRepo();
   runGitOrThrow(["checkout", "main"], { cwd: dir });
-  const run = runScript([], { IH35_BRANCH_TOOLING_ROOT: dir });
-  assert.equal(run.status, 1);
-  assert.match(run.stderr, /not on a feature branch/);
+  const result = runPrecheckPush({ root: dir, skipFetch: true, steps: [] });
+  assert.equal(result.ok, false);
+  assert.equal(result.category, GATE_RESULT_CATEGORIES.BRANCH);
 });
 
 test("refuses when behind origin/main", () => {
@@ -139,33 +174,29 @@ test("refuses when behind origin/main", () => {
   writeAndCommit(dir, "ahead.txt", "ahead\n", "main moved");
   runGitOrThrow(["push", "origin", "main"], { cwd: dir });
   runGitOrThrow(["checkout", "feat/precheck"], { cwd: dir });
-  const run = runScript([], { IH35_BRANCH_TOOLING_ROOT: dir });
-  assert.equal(run.status, 1);
-  assert.match(run.stderr, /behind origin\/main/);
+  const result = runPrecheckPush({ root: dir, skipFetch: true, steps: [] });
+  assert.equal(result.ok, false);
+  assert.equal(result.category, GATE_RESULT_CATEGORIES.FRESHNESS);
 });
 
-test("runs verify chain and prints ready", () => {
+test("runs verify chain and reports ready", () => {
   const dir = makeFeatureRepo();
-  const run = runScript([], { IH35_BRANCH_TOOLING_ROOT: dir });
-  assert.equal(run.status, 0, run.stderr);
-  assert.match(run.stdout, /READY TO PUSH: feat\/precheck/);
+  const passSteps = [
+    { label: "build-backend", command: 'node -e "process.exit(0)"' },
+    { label: "block-ready", command: 'node -e "process.exit(0)"' },
+  ];
+  const result = runPrecheckPush({ root: dir, skipFetch: true, steps: passSteps });
+  assert.equal(result.ok, true, result.reason);
+  assert.match(result.message, /READY TO PUSH: feat\/precheck/);
 });
 
 test("surfaces failing verify step", () => {
   const dir = makeFeatureRepo();
-  const pkgPath = path.join(dir, "package.json");
-  const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
-  pkg.scripts["verify:fixture-fail"] = "node -e \"process.exit(1)\"";
-  fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2), "utf8");
-  runGitOrThrow(["add", "package.json"], { cwd: dir });
-  runGitOrThrow(["commit", "-m", "add failing fixture"], { cwd: dir });
-  const failSteps = JSON.stringify([
-    { label: "verify:fixture-fail", command: "npm run verify:fixture-fail" },
-  ]);
-  const run = runScript([], { IH35_BRANCH_TOOLING_ROOT: dir, BRANCH_PRECHECK_STEPS_JSON: failSteps });
-  assert.equal(run.status, 1);
-  assert.match(run.stderr, /category=test/);
-  assert.match(run.stderr, /verify:fixture-fail/);
+  const failSteps = [{ label: "verify:fixture-fail", command: 'node -e "process.exit(1)"' }];
+  const result = runPrecheckPush({ root: dir, skipFetch: true, steps: failSteps });
+  assert.equal(result.ok, false);
+  assert.equal(result.category, GATE_RESULT_CATEGORIES.TEST);
+  assert.equal(result.step, "verify:fixture-fail");
 });
 
 test("classifies dirty trees as a hard dirty failure", () => {
@@ -189,6 +220,7 @@ test("classifies unresolved merge conflicts as a hard conflict failure", () => {
   assert.equal(result.category, GATE_RESULT_CATEGORIES.CONFLICT);
 });
 
+// ── Capability preflight policy ─────────────────────────────────────────────────────────────────────
 test("skips a missing database only with a named server-required CI equivalent", () => {
   const result = preflightStep(
     {
@@ -227,10 +259,57 @@ test("unknown or unwired capability equivalent is a hard capability failure", ()
   assert.match(result.reason, /declares "ci \/ build-typecheck", not requested "unknown \/ check"/);
 });
 
+// ── Real pg identity probe: fake-TCP / wrong-schema / wrong-auth / correct ──────────────────────────
+test("raw TCP listener is not a verify database capability", async () => {
+  const server = await startMockPgServer({ mode: "raw" });
+  try {
+    // A bare TCP acceptor speaks no Postgres protocol → pg handshake fails → probe false.
+    assert.equal(probeVerifyDatabaseIdentity(server.url, { timeoutMs: 2000 }), false);
+    // Dead port and remote/prod URL are also false (prod is refused before any connection).
+    assert.equal(
+      probeVerifyDatabaseIdentity("postgresql://verify:verify@127.0.0.1:1/ih35_verify", { timeoutMs: 1000 }),
+      false
+    );
+    assert.equal(probeVerifyDatabaseIdentity(HOSTILE_NEON_URL, { timeoutMs: 1000 }), false);
+  } finally {
+    await server.close();
+  }
+});
+
+test("wrong current_database is not a verify database capability", async () => {
+  const server = await startMockPgServer({ mode: "wrongdb" });
+  try {
+    // Authenticated real pg handshake succeeds, but current_database() !== 'ih35_verify' → false.
+    assert.equal(probeVerifyDatabaseIdentity(server.url, { timeoutMs: 2000 }), false);
+  } finally {
+    await server.close();
+  }
+});
+
+test("wrong credentials are not a verify database capability", async () => {
+  const server = await startMockPgServer({ mode: "authfail" });
+  try {
+    // Server rejects authentication (28P01) → pg connect rejects → probe false.
+    assert.equal(probeVerifyDatabaseIdentity(server.url, { timeoutMs: 2000 }), false);
+  } finally {
+    await server.close();
+  }
+});
+
+test("authenticated ih35_verify identity is a verify database capability", async () => {
+  const server = await startMockPgServer({ mode: "ok" });
+  try {
+    assert.equal(probeVerifyDatabaseIdentity(server.url, { timeoutMs: 2000 }), true);
+  } finally {
+    await server.close();
+  }
+});
+
+// ── detectLocalCapabilities: string presence never authorizes; only a live authenticated probe does ──
 test("stale Neon DATABASE_URL string alone is never a database capability", () => {
   const caps = detectLocalCapabilities(
     { DATABASE_URL: HOSTILE_NEON_URL, DATABASE_DIRECT_URL: HOSTILE_NEON_URL },
-    { root, probeTcp: () => true }
+    { root, probeDb: () => true }
   );
   assert.equal(caps.database, false);
   assert.equal(caps.databaseSource, null);
@@ -243,21 +322,21 @@ test("OWNED=1 without VLCI ownership proof is never a database capability", () =
       [VLCI_ENV.INHERIT]: "1",
       DATABASE_URL: "postgresql://v@127.0.0.1:55432/ih35_verify",
     },
-    { root, probeTcp: () => true }
+    { root, probeDb: () => true }
   );
   assert.equal(caps.database, false);
 });
 
-test("CI local-verify URL requires a validated TCP connection", () => {
+test("CI local-verify URL requires a validated authenticated connection", () => {
   const dead = detectLocalCapabilities(
     { DATABASE_URL: "postgresql://verify:verify@127.0.0.1:54329/ih35_verify" },
-    { root, probeTcp: () => false }
+    { root, probeDb: () => false }
   );
   assert.equal(dead.database, false);
 
   const live = detectLocalCapabilities(
     { DATABASE_URL: "postgresql://verify:verify@127.0.0.1:54329/ih35_verify" },
-    { root, probeTcp: () => true }
+    { root, probeDb: () => true }
   );
   assert.equal(live.database, true);
   assert.equal(live.databaseSource, "local-ci-validated");
@@ -272,10 +351,10 @@ test("owned VLCI lifecycle env is a database capability without relying on URL-s
   session.updateBindings({ dataDir, port: 55321, database: "ih35_verify", url });
   try {
     const env = session.childEnv(cleanChildEnv());
-    // Strip free-form URL; ownership proof alone must authorize.
+    // Strip free-form URL; ownership proof selects the owned url, live probe (mocked) confirms it.
     delete env.DATABASE_URL;
     delete env.DATABASE_DIRECT_URL;
-    const caps = detectLocalCapabilities(env, { root: vlciRoot, probeTcp: () => false });
+    const caps = detectLocalCapabilities(env, { root: vlciRoot, probeDb: () => true });
     assert.equal(caps.database, true);
     assert.equal(caps.databaseSource, "vlci-owned");
   } finally {
@@ -284,11 +363,50 @@ test("owned VLCI lifecycle env is a database capability without relying on URL-s
   }
 });
 
-function markerWriteCommand(markerPath) {
-  const script = `require("fs").writeFileSync(${JSON.stringify(markerPath)}, "ran")`;
-  return `node -e ${JSON.stringify(script)}`;
-}
+test("owned VLCI lock without a live ih35_verify database is not a capability", () => {
+  const vlciRoot = fs.mkdtempSync(path.join(os.tmpdir(), "ih35-vlci-dead-"));
+  const session = createOwnerSession(vlciRoot);
+  const dataDir = path.join(session.tempRoot, "pgdata-dead");
+  fs.mkdirSync(dataDir, { mode: 0o700 });
+  const url = "postgresql://v@127.0.0.1:55323/ih35_verify";
+  session.updateBindings({ dataDir, port: 55323, database: "ih35_verify", url });
+  try {
+    const env = session.childEnv(cleanChildEnv());
+    // Ownership proof passes, but the owned database is not actually live → probe false → fail closed.
+    const caps = detectLocalCapabilities(env, { root: vlciRoot, probeDb: () => false });
+    assert.equal(caps.database, false);
+    assert.equal(caps.databaseSource, null);
+  } finally {
+    session.release();
+    fs.rmSync(vlciRoot, { recursive: true, force: true });
+  }
+});
 
+test("owned VLCI session with a live mock ih35_verify server passes the real pg identity probe", async () => {
+  const server = await startMockPgServer({ mode: "ok" });
+  const vlciRoot = fs.mkdtempSync(path.join(os.tmpdir(), "ih35-vlci-live-"));
+  const session = createOwnerSession(vlciRoot);
+  const dataDir = path.join(session.tempRoot, "pgdata-live");
+  fs.mkdirSync(dataDir, { mode: 0o700 });
+  session.updateBindings({
+    dataDir,
+    port: server.port,
+    database: "ih35_verify",
+    url: server.url,
+  });
+  try {
+    // No injected probe → uses the REAL probeVerifyDatabaseIdentity against the live mock server.
+    const caps = detectLocalCapabilities(session.childEnv(cleanChildEnv()), { root: vlciRoot });
+    assert.equal(caps.database, true);
+    assert.equal(caps.databaseSource, "vlci-owned");
+  } finally {
+    session.release();
+    fs.rmSync(vlciRoot, { recursive: true, force: true });
+    await server.close();
+  }
+});
+
+// ── Precheck integration: stale env skips block-ready; owned context runs it ────────────────────────
 test("precheck with stale Neon env skips block-ready via server-required CI equivalent", () => {
   const dir = makeFeatureRepo();
   stubVerifyStaticFallback(dir);
@@ -309,7 +427,7 @@ test("precheck with stale Neon env skips block-ready via server-required CI equi
     steps,
     capabilityPolicy: validCapabilityPolicy,
     env: cleanChildEnv({ DATABASE_URL: HOSTILE_NEON_URL }),
-    probeTcp: () => true,
+    probeDb: () => true,
   });
   assert.equal(result.ok, true, result.reason);
   assert.equal(fs.existsSync(marker), false, "block-ready must not run on stale Neon URL");
@@ -340,6 +458,8 @@ test("explicitly inherited owned ephemeral DB context still runs DB gates", () =
       steps,
       capabilityPolicy: validCapabilityPolicy,
       env: session.childEnv(cleanChildEnv()),
+      // Owned lifecycle authorizes the url; the live-DB probe is mocked up (real DB not spun here).
+      probeDb: () => true,
     });
     assert.equal(result.ok, true, result.reason);
     assert.equal(fs.readFileSync(marker, "utf8"), "ran");
@@ -349,6 +469,7 @@ test("explicitly inherited owned ephemeral DB context still runs DB gates", () =
   }
 });
 
+// ── Hook / env isolation ────────────────────────────────────────────────────────────────────────────
 test("actual pre-push hook does not source hostile .env or override parent env", () => {
   const dir = makeFeatureRepo();
   const hostileUrl = HOSTILE_NEON_URL;
@@ -415,46 +536,37 @@ fs.writeFileSync(fileURLToPath(new URL("./env-dump.json", import.meta.url)), JSO
   assert.deepEqual(directDump, hookDump, "hook and direct precheck must see identical env");
 });
 
-test("validated local-ci TCP probe marks database capability for CI verify URL", async () => {
-  const listener = await listenLocalTcp();
-  try {
-    // Prove the real TCP probe path: CI-port URL shape uses isLocalVerifyDatabaseUrl(:54329).
-    // Host a temporary accept on 54329 only if free; otherwise mock is unnecessary — unit test
-    // above covers probe true/false. Here prove probeLocalVerifyTcp against a live listener via
-    // owned dynamic port + detectLocalCapabilities ownership path still green with real TCP up.
-    const vlciRoot = fs.mkdtempSync(path.join(os.tmpdir(), "ih35-vlci-tcp-"));
-    const session = createOwnerSession(vlciRoot);
-    const dataDir = path.join(session.tempRoot, "pgdata-tcp");
-    fs.mkdirSync(dataDir, { mode: 0o700 });
-    session.updateBindings({
-      dataDir,
-      port: listener.port,
-      database: "ih35_verify",
-      url: listener.url,
-    });
-    try {
-      const caps = detectLocalCapabilities(session.childEnv(cleanChildEnv()), {
-        root: vlciRoot,
-      });
-      assert.equal(caps.database, true);
-      assert.equal(caps.databaseSource, "vlci-owned");
-    } finally {
-      session.release();
-      fs.rmSync(vlciRoot, { recursive: true, force: true });
-    }
-  } finally {
-    await listener.close();
-  }
+// ── Closed all-gates bypass: env can neither inject nor empty gate steps, nor skip fetch ────────────
+test("environment BRANCH_PRECHECK_STEPS_JSON cannot inject or empty gate steps", () => {
+  const builtin = buildPrecheckSteps(root);
+  // No caller option → the full built-in production chain, regardless of any env.
+  assert.deepEqual(resolvePrecheckSteps({}, root), builtin);
+  assert.ok(builtin.length >= 3, "built-in chain must not be empty");
+  // Only a direct caller option (tests) may inject steps.
+  const injected = [{ label: "x", command: 'node -e "process.exit(0)"' }];
+  assert.deepEqual(resolvePrecheckSteps({ steps: injected }, root), injected);
+  // resolvePrecheckSteps takes no env argument at all — env is structurally unable to influence it.
+  assert.ok(resolvePrecheckSteps.length <= 2);
 });
 
-test("real TCP probe accepts live local listener and rejects dead port", async () => {
-  const { probeLocalVerifyTcp } = await import("../branch-precheck-push.mjs");
-  const listener = await listenLocalTcp();
-  try {
-    assert.equal(probeLocalVerifyTcp(listener.url), true);
-    assert.equal(probeLocalVerifyTcp("postgresql://verify:verify@127.0.0.1:1/ih35_verify"), false);
-    assert.equal(probeLocalVerifyTcp(HOSTILE_NEON_URL), false);
-  } finally {
-    await listener.close();
-  }
+test("production CLI ignores BRANCH_PRECHECK_STEPS_JSON and IH35_BRANCH_TOOLING_SKIP_FETCH bypass", () => {
+  // Fixture whose real build:backend gate fails — if the CLI honored the empty-step + skip-fetch
+  // bypass it would print READY and exit 0. It must instead run the real chain and fail closed.
+  const dir = makeFeatureRepo({ buildBackendExit: 1 });
+  const run = spawnSync("node", [scriptPath], {
+    encoding: "utf8",
+    env: {
+      ...cleanChildEnv(),
+      IH35_BRANCH_TOOLING_ROOT: dir,
+      BRANCH_PRECHECK_STEPS_JSON: "[]",
+      IH35_BRANCH_TOOLING_SKIP_FETCH: "1",
+      PATH: process.env.PATH,
+      HOME: process.env.HOME,
+      npm_config_cache: process.env.npm_config_cache,
+    },
+  });
+  assert.notEqual(run.status, 0, "CLI must not succeed under an empty-step/skip-fetch bypass");
+  const combined = `${run.stdout}\n${run.stderr}`;
+  assert.doesNotMatch(combined, /READY TO PUSH/, "empty-step bypass must not short-circuit to READY");
+  assert.match(combined, /build-backend/, "the real built-in gate chain must have executed");
 });

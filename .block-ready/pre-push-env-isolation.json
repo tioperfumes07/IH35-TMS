@@ -1,10 +1,10 @@
 {
   "block_id": "pre-push-env-isolation",
-  "branch": "cursor/pre-push-database-capability-8094",
+  "branch": "cursor/pipeline-corrective-pre-push-926",
   "status": "BUILD",
   "classification": "NON-FINANCIAL (CI tooling / pre-push env isolation)",
   "phase": "PIPELINE-TRUTH",
-  "task": "Root-cause fix: husky pre-push must not shell-source repository .env; database capability requires owned VLCI lifecycle or validated local-CI connection \u2014 never a bare DATABASE_URL string. Hook and direct branch:precheck-push must share the same capability detection.",
+  "task": "Corrective follow-up to #2720: rename verify-step 912 -> globally-free 926; replace the bare TCP capability probe with a real authenticated pg identity connection proving current_database()='ih35_verify' on a loopback server (raw TCP / wrong database / wrong credentials / non-local prod URL all false); wire the branch:precheck-push behavioral suite UNCONDITIONALLY into verify-steps/926; close the BRANCH_PRECHECK_STEPS_JSON=[] + IH35_BRANCH_TOOLING_SKIP_FETCH=1 all-gates bypass in the production CLI. Preserve the stale-.env fix and server-required CI equivalent fail-closed skip. No HUSKY/--no-verify/env bypass; no package/CI hotfiles (Rule 17 auto-discovery).",
   "priority": "P0",
   "module": "ci-tooling",
   "db_required": false,
@@ -18,32 +18,32 @@
     "scripts/__tests__/branch-precheck-push.test.mjs",
     "scripts/verify-pre-push-env-isolation.mjs",
     "scripts/verify-steps/912-verify-pre-push-env-isolation.mjs",
+    "scripts/verify-steps/926-verify-pre-push-env-isolation.mjs",
     "docs/specs/BRANCH-TOOLING.md",
-    ".block-ready/pre-push-env-isolation.json",
-    "docs/trackers/block-reconciliation-data.json",
-    "docs/trackers/program-phase-manifest.json",
-    "docs/trackers/BLOCK-RECONCILIATION-2026-07-19.md",
-    "docs/trackers/exports/IH35-TMS-BLOCK-RECONCILIATION-2026-07-19.xlsx"
+    ".block-ready/pre-push-env-isolation.json"
   ],
   "acceptance": [
     {
-      "check": ".husky/pre-push does not source repository .env; install-git-hooks regenerates the same"
+      "check": "verify-step renamed 912 -> globally-free 926; verify-pre-push-env-isolation.mjs FILES.verifyStep points at 926"
     },
     {
-      "check": "detectLocalCapabilities is false for stale Neon URL string even when probe mocked true"
+      "check": "detectLocalCapabilities uses probeVerifyDatabaseIdentity: an authenticated pg connection asserting current_database()='ih35_verify'; a raw TCP listener, wrong database, wrong credentials, or a non-local/prod URL is false"
     },
     {
-      "check": "owned VLCI lifecycle env marks database capability; block-ready runs"
+      "check": ".husky/pre-push does not source repository .env; install-git-hooks regenerates the same (preserved)"
     },
     {
-      "check": "stale Neon env skips block-ready only via named server-required ci / build-typecheck"
+      "check": "stale Neon env skips block-ready only via named server-required ci / build-typecheck (preserved)"
     },
     {
-      "check": "spawned actual pre-push hook ignores hostile .env and matches direct precheck parent env"
+      "check": "production CLI ignores BRANCH_PRECHECK_STEPS_JSON and IH35_BRANCH_TOOLING_SKIP_FETCH; resolvePrecheckSteps takes steps only from a caller option or the built-in chain; git fetch always runs"
     },
     {
-      "check": "verify-pre-push-env-isolation + verify-steps/912 (Rule 17; no package/CI hotfiles)"
+      "check": "branch-precheck-push.test.mjs is run UNCONDITIONALLY by verify-steps/926 (executed by verify:pre-commit / CI build-typecheck), with planted fake-TCP / wrong-current_database / wrong-credentials / env-bypass tests"
+    },
+    {
+      "check": "verify-pre-push-env-isolation + verify-steps/926 (Rule 17; no package/CI hotfiles)"
     }
   ],
-  "note": "Discovered after #2709 merge: git push hook sourced stale .env DATABASE_URL (neondb_owner bad password), falsely marked DB available, ran block-ready C4 and failed \u2014 while direct npm run branch:precheck-push correctly reported no capability and READY."
+  "note": "Follow-up to #2720. #2720 stopped husky pre-push from shell-sourcing .env and stopped a bare DATABASE_URL string counting as capability, but (a) landed the verify-step at globally-colliding number 912, (b) proved DB capability with only a bare TCP connect (a raw listener or a wrong/prod database could satisfy it), (c) left the behavioral suite behind an env flag CI never set, and (d) still allowed BRANCH_PRECHECK_STEPS_JSON=[] + IH35_BRANCH_TOOLING_SKIP_FETCH=1 to report READY TO PUSH with zero substantive checks. This block fixes all four at the root."
 }
