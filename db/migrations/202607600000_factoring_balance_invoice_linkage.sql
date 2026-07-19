@@ -98,7 +98,8 @@ CREATE SCHEMA IF NOT EXISTS views;
 
 DO $view$
 BEGIN
-  -- Column shape changed vs prior HOLD draft — DROP then CREATE (CREATE OR REPLACE cannot rename cols).
+  -- Column reshape on HOLD draft: DROP VIEW IF EXISTS only for THIS view (CREATE OR REPLACE cannot
+  -- rename columns). Additive-only elsewhere — never DROP TABLE/COLUMN. Guard forbids DROP TABLE.
   EXECUTE 'DROP VIEW IF EXISTS views.factoring_balance_invoice_linkage';
 
   IF to_regclass('accounting.factoring_advances') IS NULL
@@ -151,7 +152,8 @@ BEGIN
           AND je.reversed_by_je_id IS NULL
           AND je.entry_date <= a.d
       ),
-      -- Authoritative advance↔posting link: source_transaction_* OR TSL OR reserve_movements JE.
+      -- Authoritative advance↔posting link: source_transaction_* OR TSL only.
+      -- Bare factoring_reserve_movements→JE is NOT sufficient (code-review VETO #2).
       advance_linked_postings AS (
         SELECT
           fa.id AS factoring_advance_id,
@@ -165,12 +167,7 @@ BEGIN
           jep.source_transaction_type,
           COALESCE(
             NULLIF(jep.source_transaction_type, ''),
-            tsl.relationship_role,
-            CASE m.movement_type
-              WHEN 'held' THEN 'factoring_advance'
-              WHEN 'released' THEN 'factoring_reserve_release'
-              ELSE NULL
-            END
+            tsl.relationship_role
           ) AS lifecycle_source
         FROM accounting.factoring_advances fa
         JOIN accounting.journal_entry_postings jep
@@ -183,11 +180,6 @@ BEGIN
          AND tsl.operating_company_id = jep.operating_company_id
          AND tsl.linked_object_type = 'factoring_advance'
          AND tsl.linked_object_id = fa.id::text
-        LEFT JOIN accounting.factoring_reserve_movements m
-          ON m.journal_entry_id = jep.journal_entry_uuid
-         AND m.factoring_advance_id = fa.id
-         AND m.operating_company_id = fa.operating_company_id
-         AND m.is_active = true
         WHERE fa.advanced_at IS NOT NULL
           AND fa.status <> 'voided'
           AND (
@@ -202,8 +194,11 @@ BEGIN
               AND jep.source_transaction_id = fa.id::text
             )
             OR tsl.id IS NOT NULL
-            OR m.id IS NOT NULL
           )
+          AND COALESCE(
+            NULLIF(jep.source_transaction_type, ''),
+            tsl.relationship_role
+          ) IS NOT NULL
       ),
       liability_legs AS (
         SELECT alp.*
@@ -263,6 +258,8 @@ BEGIN
         WHERE fa.advanced_at IS NOT NULL
           AND fa.status <> 'voided'
       ),
+      -- Funding completeness: MUST have a live liability CREDIT leg with advance lifecycle source.
+      -- A reserve_movements row pointing at an empty/unrelated JE is NOT sufficient (code-review VETO #2).
       funding_artifact AS (
         SELECT DISTINCT fa.id AS factoring_advance_id, fa.operating_company_id, fa.factoring_company_vendor_id AS factor_vendor_id
         FROM factor_advances fa
@@ -278,69 +275,57 @@ BEGIN
            AND r.role = 'factoring_advance_liability'
           WHERE jep.operating_company_id = fa.operating_company_id
             AND jep.debit_or_credit = 'credit'
-            AND jep.source_transaction_type IN ('factoring_advance', 'factoring_default_interest')
-            AND jep.source_transaction_id = fa.id::text
-        )
-        OR EXISTS (
-          SELECT 1
-          FROM accounting.transaction_source_links tsl
-          JOIN accounting.journal_entry_postings jep ON jep.id = tsl.journal_entry_posting_id
-          JOIN live_je je ON je.id = jep.journal_entry_uuid
-           AND je.operating_company_id = jep.operating_company_id
-          JOIN accounting.chart_of_accounts_roles r
-            ON r.account_id = jep.account_id
-           AND r.operating_company_id = jep.operating_company_id
-           AND r.is_active = true
-           AND r.role = 'factoring_advance_liability'
-          WHERE tsl.operating_company_id = fa.operating_company_id
-            AND tsl.linked_object_type = 'factoring_advance'
-            AND tsl.linked_object_id = fa.id::text
-            AND tsl.relationship_role IN ('factoring_funding', 'factoring_advance')
-            AND jep.debit_or_credit = 'credit'
-        )
-        OR EXISTS (
-          SELECT 1
-          FROM accounting.factoring_reserve_movements m
-          JOIN live_je je ON je.id = m.journal_entry_id
-           AND je.operating_company_id = m.operating_company_id
-          WHERE m.factoring_advance_id = fa.id
-            AND m.operating_company_id = fa.operating_company_id
-            AND m.movement_type = 'held'
-            AND m.is_active = true
-            AND m.journal_entry_id IS NOT NULL
+            AND (
+              (
+                jep.source_transaction_type IN ('factoring_advance', 'factoring_default_interest')
+                AND jep.source_transaction_id = fa.id::text
+              )
+              OR EXISTS (
+                SELECT 1
+                FROM accounting.transaction_source_links tsl
+                WHERE tsl.journal_entry_posting_id = jep.id
+                  AND tsl.operating_company_id = jep.operating_company_id
+                  AND tsl.linked_object_type = 'factoring_advance'
+                  AND tsl.linked_object_id = fa.id::text
+                  AND tsl.relationship_role IN (
+                    'factoring_funding', 'factoring_advance', 'factoring_default_interest'
+                  )
+              )
+            )
         )
       ),
+      -- Reserve-held completeness: live reserve DEBIT leg with advance lifecycle source (not bare movement→JE).
       reserve_held_artifact AS (
         SELECT DISTINCT fa.id AS factoring_advance_id, fa.operating_company_id, fa.factoring_company_vendor_id AS factor_vendor_id
         FROM factor_advances fa
         WHERE fa.reserve_amount_cents > 0
-          AND (
-            EXISTS (
-              SELECT 1
-              FROM accounting.journal_entry_postings jep
-              JOIN live_je je ON je.id = jep.journal_entry_uuid
-               AND je.operating_company_id = jep.operating_company_id
-              JOIN accounting.chart_of_accounts_roles r
-                ON r.account_id = jep.account_id
-               AND r.operating_company_id = jep.operating_company_id
-               AND r.is_active = true
-               AND r.role = 'factor_reserve_held'
-              WHERE jep.operating_company_id = fa.operating_company_id
-                AND jep.debit_or_credit = 'debit'
-                AND jep.source_transaction_type = 'factoring_advance'
-                AND jep.source_transaction_id = fa.id::text
-            )
-            OR EXISTS (
-              SELECT 1
-              FROM accounting.factoring_reserve_movements m
-              JOIN live_je je ON je.id = m.journal_entry_id
-               AND je.operating_company_id = m.operating_company_id
-              WHERE m.factoring_advance_id = fa.id
-                AND m.operating_company_id = fa.operating_company_id
-                AND m.movement_type = 'held'
-                AND m.is_active = true
-                AND m.journal_entry_id IS NOT NULL
-            )
+          AND EXISTS (
+            SELECT 1
+            FROM accounting.journal_entry_postings jep
+            JOIN live_je je ON je.id = jep.journal_entry_uuid
+             AND je.operating_company_id = jep.operating_company_id
+            JOIN accounting.chart_of_accounts_roles r
+              ON r.account_id = jep.account_id
+             AND r.operating_company_id = jep.operating_company_id
+             AND r.is_active = true
+             AND r.role = 'factor_reserve_held'
+            WHERE jep.operating_company_id = fa.operating_company_id
+              AND jep.debit_or_credit = 'debit'
+              AND (
+                (
+                  jep.source_transaction_type = 'factoring_advance'
+                  AND jep.source_transaction_id = fa.id::text
+                )
+                OR EXISTS (
+                  SELECT 1
+                  FROM accounting.transaction_source_links tsl
+                  WHERE tsl.journal_entry_posting_id = jep.id
+                    AND tsl.operating_company_id = jep.operating_company_id
+                    AND tsl.linked_object_type = 'factoring_advance'
+                    AND tsl.linked_object_id = fa.id::text
+                    AND tsl.relationship_role IN ('factoring_funding', 'factoring_advance', 'factoring_reserve_held')
+                )
+              )
           )
       ),
       invoice_roll AS (

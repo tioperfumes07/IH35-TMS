@@ -614,6 +614,57 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
     expect(other.outstanding_liability_cents).toBeNull();
   });
 
+  it("unbacked reserve_movements→empty JE must NOT satisfy funding completeness", async () => {
+    const emptyJe = randomUUID();
+    const bareAdvance = randomUUID();
+    await bypass(companyId, async () => {
+      await db.query(
+        `INSERT INTO accounting.factoring_advances
+           (id, operating_company_id, factoring_company_vendor_id, display_id, status,
+            invoice_total_cents, advance_rate_pct, advance_amount_cents, reserve_pct, reserve_amount_cents,
+            factor_fee_pct, factor_fee_cents, advanced_at)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,'advanced',50000,97,48500,1.5,750,1.5,750,now())`,
+        [bareAdvance, companyId, vendorId, `FA-BARE-${n()}`]
+      );
+      // Empty/unrelated JE (cash↔cash) with NO liability source legs.
+      await db.query(
+        `INSERT INTO accounting.journal_entries
+           (id, operating_company_id, entry_date, memo, status, source)
+         VALUES ($1::uuid,$2::uuid,CURRENT_DATE,$3,'posted','auto')`,
+        [emptyJe, companyId, `Empty JE for bare movement ${suffix}`]
+      );
+      await db.query(
+        `INSERT INTO accounting.journal_entry_postings
+           (operating_company_id, journal_entry_uuid, line_sequence, account_id,
+            debit_or_credit, amount_cents, description, idempotency_key)
+         VALUES
+           ($1::uuid,$2::uuid,1,$3::uuid,'debit',1,'noop',$5),
+           ($1::uuid,$2::uuid,2,$4::uuid,'credit',1,'noop',$6)`,
+        [companyId, emptyJe, cashAcct, arAcct, `${emptyJe}:1`, `${emptyJe}:2`]
+      );
+      await db.query(
+        `INSERT INTO accounting.factoring_reserve_movements
+           (operating_company_id, factoring_advance_id, movement_type, amount_cents, movement_date, journal_entry_id)
+         VALUES ($1::uuid,$2::uuid,'held',750,CURRENT_DATE,$3::uuid)`,
+        [companyId, bareAdvance, emptyJe]
+      );
+    });
+    const client = await scopedClient();
+    const result = await computeFactoringBalanceInvoiceLinkage(client, { operatingCompanyId: companyId });
+    expect(result.status).toBe("unverifiable");
+    expect(result.unverifiable_reason).toBe("incomplete_funding_je_artifacts");
+    expect(result.outstanding_liability_cents).toBeNull();
+    await bypass(companyId, async () => {
+      await db.query(`UPDATE accounting.factoring_advances SET status = 'voided' WHERE id = $1::uuid`, [
+        bareAdvance,
+      ]);
+      await db.query(
+        `UPDATE accounting.journal_entries SET status = 'voided', voided_at = now() WHERE id = $1::uuid`,
+        [emptyJe]
+      );
+    });
+  });
+
   it("orphan/unrelated role-account JE must not inflate Faro liability", async () => {
     const orphanJe = randomUUID();
     await bypass(companyId, async () => {

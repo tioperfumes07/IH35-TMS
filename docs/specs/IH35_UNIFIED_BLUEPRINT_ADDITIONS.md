@@ -1457,6 +1457,11 @@ reserve (not status); (5) TRANSP/Faro identity fail-closed; (6) FORCE RLS Owner/
    remains default OFF.
 6. **FE/Home.** `fetchHomeFactoringBalance` + DefaultHome/OwnerHome preserve
    null/unverifiable/accounting_exception — never coerce to `$0`.
+7. **Independent code-review VETO (same day, head `bb8b80f9f`):** bare
+   `factoring_reserve_movements` → empty/unrelated JE must NOT satisfy funding
+   completeness; require live liability/reserve role legs + lifecycle source/
+   TSL. `DROP VIEW IF EXISTS` allowed only for
+   `views.factoring_balance_invoice_linkage` reshape (never DROP TABLE/COLUMN).
 
 ### Guard (Rule 17 — auto-discovered)
 - `scripts/verify-factoring-balance-invoice-linkage.mjs`

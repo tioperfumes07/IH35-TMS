@@ -169,10 +169,38 @@ export function checker(sources) {
   requireText("migration", "outstanding_liability_signed_cents", "migration_missing_signed_liability");
   requireText("migration", "orphan_liability_role_cents", "migration_missing_orphan_counter");
   forbidExec("migration", /DROP\s+TABLE/i, "migration_must_be_additive");
+  forbidExec("migration", /DROP\s+COLUMN/i, "migration_must_not_drop_column");
+  // Only allowed destructive DDL: DROP VIEW IF EXISTS views.factoring_balance_invoice_linkage (reshape).
+  {
+    const stripped = String(sources.migration ?? "")
+      .replace(/--.*$/gm, "")
+      .replace(/\/\*[\s\S]*?\*\//g, "");
+    const drops = [...stripped.matchAll(/DROP\s+VIEW\s+IF\s+EXISTS\s+([a-z0-9_."]+)/gi)];
+    for (const m of drops) {
+      const target = String(m[1] ?? "").replace(/"/g, "").toLowerCase();
+      if (target !== "views.factoring_balance_invoice_linkage") {
+        failures.push("migration_unexpected_drop_view");
+      }
+    }
+    if (/DROP\s+VIEW\s+(?!IF\s+EXISTS)/i.test(stripped)) {
+      failures.push("migration_drop_view_must_use_if_exists");
+    }
+  }
   forbidExec("migration", /status\s+IN\s*\(\s*'reserve_held'/i, "migration_must_not_settle_via_status");
   forbidExec("migration", /ILIKE\s*'%faro%'/i, "migration_must_not_vendor_name_match");
   forbidExec("migration", /GREATEST\s*\(\s*0\s*,/i, "migration_must_not_clamp_greatest");
   forbidExec("migration", /ORDER BY COUNT\(\*\) DESC/, "migration_must_not_majority_inference");
+  // Completeness must require liability role legs — bare reserve_movements→JE is insufficient.
+  requireText("migration", "factoring_advance_liability", "migration_funding_requires_liability_role");
+  {
+    const stripped = String(sources.migration ?? "")
+      .replace(/--.*$/gm, "")
+      .replace(/\/\*[\s\S]*?\*\//g, "");
+    const fundingBlock = stripped.match(/funding_artifact AS \(([\s\S]*?)\),\s*reserve_held_artifact/i);
+    if (fundingBlock && /factoring_reserve_movements/.test(fundingBlock[1])) {
+      failures.push("migration_funding_must_not_trust_bare_reserve_movement");
+    }
+  }
 
   if (!sources.held.includes("202607600000_factoring_balance_invoice_linkage.sql")) {
     failures.push("held_registry_missing_migration");
@@ -199,6 +227,8 @@ export function checker(sources) {
   requireExec("dbTest", "debit_liability_anomaly", "db_test_debit_anomaly");
   requireExec("dbTest", "reserve_over_release", "db_test_reserve_over_release");
   requireExec("dbTest", "Dispatcher", "db_test_unauthorized_rls_write");
+  requireExec("dbTest", "unbacked reserve_movements", "db_test_unbacked_reserve_movement");
+  requireExec("dbTest", "incomplete_funding_je_artifacts", "db_test_incomplete_funding_reason");
   forbidExec("dbTest", /INV-FBL-|INV-FBO-/, "db_test_must_not_seed_malformed_invoice_display_id");
   requireExec("serviceTest", "connection_reset", "service_test_planted_failure");
   requireExec("serviceTest", "incomplete_funding_je_artifacts", "service_test_incomplete");
