@@ -1594,6 +1594,35 @@ reserve (not status); (5) TRANSP/Faro identity fail-closed; (6) FORCE RLS Owner/
     posting keys **before** status rejection and fully repair invoice
     `factoring_status` / subledger / audit.
 
+### CPA VETO amendments (append-only 2026-07-19 — exact head `4f44dfbc`)
+22. **Faro CSV persistence + authoritative agreement are atomic.**
+    `commitFaroCsvImport` resolves `resolveFaroCsvStatementDate` (no today/UTC
+    salvage; future → `policy_future_statement_date`) then, in one
+    `withCurrentUser` txn, validates `requireEffectiveFaroFullRecourseAgreement`
+    **as-of the statement/economic date** and only then calls
+    `upsertFaroDailyImportOnClient`. RTS / partial / missing / expired /
+    ambiguous / future agreement rejects **before** any durable import row
+    (txn rollback → zero rows).
+23. **Default-interest `already_posted` is exact-shape repair.** Recompute
+    contractual opening/interest/closing; require matching accrual row amounts;
+    validate JE legs, amount, source identity, entity, and
+    `expected_entry_date` via `validateLifecycleJeExactShape`. Missing /
+    wrong-amount / wrong-date / reversed candidates →
+    `repair_candidate_invalid` (never soft-success).
+24. **Accrue contractual default interest through statement date before CSV
+    chargeback.** `ensureDefaultInterestAccruedThroughDate` reuses the
+    canonical poster/math (`accrueThroughDateForAdvance` /
+    `postFactoringDefaultInterestAccrualEvent`) so missed cron cannot understate
+    liability. Chargeback then posts with `default_interest_cents: 0` against
+    exact linked liability (interest already compounded). **Forbidden:**
+    duplicate GL interest math in the CSV importer.
+25. **Chargeback idempotency under row lock.** `FOR UPDATE` on the advance
+    **before** posting-key / status / outstanding checks;
+    `repairChargebackAlreadyPosted` + `SAVEPOINT factoring_chargeback_je_create`.
+    Concurrent duplicate retries serialize and return validated
+    `already_posted` — never race into zero-outstanding
+    `policy_partial_or_ambiguous_recourse`.
+
 
 ## 16. Accounting Home — Pending approvals ↔ GL linkage (0280-15)
 

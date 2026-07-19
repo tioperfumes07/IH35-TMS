@@ -140,9 +140,112 @@ async function accrueThroughDateForAdvance(
       accrual_date_iso: cursor,
     });
     if (res.posted) posted += 1;
+    // already_posted / before_grace / not_outstanding are non-fatal for catch-up; invalid repair fails closed.
+    if (
+      res.reason === "repair_candidate_invalid" ||
+      res.reason === "repair_ambiguous" ||
+      res.reason === "policy_invalid_entry_date" ||
+      res.reason === "policy_faro_agreement"
+    ) {
+      throw new Error(`factoring_default_interest_catchup_failed:${res.reason}`);
+    }
     cursor = addDays(cursor, 1);
   }
   return posted;
+}
+
+/**
+ * Catch contractual default interest through `as_of` for ONE advance (reuse poster math — no duplicate GL).
+ * Used by Faro CSV chargeback so missed cron cannot understate liability vs statement date.
+ */
+export async function ensureDefaultInterestAccruedThroughDate(input: {
+  operating_company_id: string;
+  factoring_advance_id: string;
+  as_of_date_iso: string;
+  actor_user_id?: string;
+}): Promise<{ flag_off: boolean; accruals_posted: number }> {
+  const asOf = ymd(input.as_of_date_iso);
+  const actorUserId = input.actor_user_id ?? SYSTEM_ACTOR_ID;
+
+  type Loaded =
+    | { kind: "flag_off" }
+    | { kind: "skip" }
+    | { kind: "advance"; advance: OutstandingAdvance };
+
+  const loaded = await withLuciaBypass(async (client: DbClient): Promise<Loaded> => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+      input.operating_company_id,
+    ]);
+    if (!(await companyPostingEnabled(client, input.operating_company_id))) {
+      return { kind: "flag_off" };
+    }
+    const faro = await requireEffectiveFaroFullRecourseAgreement(
+      client,
+      input.operating_company_id,
+      asOf
+    );
+    if (!faro.ok) {
+      throw new Error(`factoring_default_interest_catchup_failed:policy_faro_agreement`);
+    }
+    const res = await client.query<{
+      id: string;
+      display_id: string;
+      invoice_total_cents: string;
+      advanced_at: string;
+      day_index: string;
+      last_accrual_date: string | null;
+      factoring_company_vendor_id: string;
+      status: string;
+    }>(
+      `
+        SELECT
+          fa.id::text,
+          fa.display_id,
+          fa.invoice_total_cents::text AS invoice_total_cents,
+          fa.advanced_at::text AS advanced_at,
+          (($2::date) - ((fa.advanced_at AT TIME ZONE 'America/Chicago')::date))::text AS day_index,
+          (
+            SELECT MAX(a.accrual_date)::text
+              FROM accounting.factoring_default_interest_accruals a
+             WHERE a.operating_company_id = fa.operating_company_id
+               AND a.factoring_advance_id = fa.id
+               AND a.is_active = true
+          ) AS last_accrual_date,
+          fa.factoring_company_vendor_id::text AS factoring_company_vendor_id,
+          fa.status::text AS status
+        FROM accounting.factoring_advances fa
+       WHERE fa.id = $3::uuid
+         AND fa.operating_company_id = $1::uuid
+       LIMIT 1
+      `,
+      [input.operating_company_id, asOf, input.factoring_advance_id]
+    );
+    const row = res.rows[0];
+    if (!row?.advanced_at || row.status !== "advanced") return { kind: "skip" };
+    if (row.factoring_company_vendor_id !== faro.vendorId) return { kind: "skip" };
+    return {
+      kind: "advance",
+      advance: {
+        id: row.id,
+        display_id: row.display_id,
+        invoice_total_cents: Number(row.invoice_total_cents ?? 0),
+        advanced_at: row.advanced_at,
+        day_index: Number(row.day_index ?? 0),
+        last_accrual_date: row.last_accrual_date,
+      },
+    };
+  });
+
+  if (loaded.kind === "flag_off") return { flag_off: true, accruals_posted: 0 };
+  if (loaded.kind === "skip") return { flag_off: false, accruals_posted: 0 };
+
+  const posted = await accrueThroughDateForAdvance(
+    input.operating_company_id,
+    loaded.advance,
+    asOf,
+    actorUserId
+  );
+  return { flag_off: false, accruals_posted: posted };
 }
 
 export type AccrualTickSummary = { flag_off: boolean; advances_scanned: number; accruals_posted: number };

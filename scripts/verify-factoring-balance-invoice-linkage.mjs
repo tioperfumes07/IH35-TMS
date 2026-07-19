@@ -39,6 +39,8 @@ const PATHS = {
   faroGate: "apps/backend/src/accounting/factoring-posting/faro-agreement-gate.ts",
   defaultInterest: "apps/backend/src/accounting/factoring-posting/default-interest.service.ts",
   faroCsv: "apps/backend/src/factoring/faro-csv-import.ts",
+  faroCsvTest: "apps/backend/src/factoring/faro-csv-import.test.ts",
+  dataInfra: "apps/backend/src/data-infra/data-infra.service.ts",
   posterAtomicityTest: "apps/backend/src/accounting/factoring-posting/__tests__/poster-lifecycle-atomicity.test.ts",
   lifecycleRepairTest: "apps/backend/src/accounting/factoring-posting/__tests__/lifecycle-repair.test.ts",
   cpaVetoTest: "apps/backend/src/accounting/factoring-posting/__tests__/cpa-veto-eb06028d-remediation.test.ts",
@@ -234,6 +236,32 @@ export function checker(sources) {
   requireIdent("faroCsv", "requireEffectiveFaroFullRecourseAgreement", "faro_csv_must_use_agreement_gate");
   forbidExec("faroCsv", /ORDER BY COUNT\(\*\) DESC/, "faro_csv_must_not_customer_majority");
   requireExec("faroCsv", "policy_faro_agreement", "faro_csv_fail_closed_missing");
+  // CPA VETO 4f44dfbc — atomic CSV + statement-date Faro + DI catch-up before chargeback.
+  requireIdent("faroCsv", "upsertFaroDailyImportOnClient", "faro_csv_must_persist_on_client_txn");
+  requireIdent("faroCsv", "resolveFaroCsvStatementDate", "faro_csv_statement_date_resolver_missing");
+  requireIdent("faroCsv", "ensureDefaultInterestAccruedThroughDate", "faro_csv_must_accrue_di_before_chargeback");
+  requireExec("faroCsv", "policy_future_statement_date", "faro_csv_future_statement_policy_missing");
+  requireExec("faroCsv", "policy_missing_statement_date", "faro_csv_missing_statement_policy_missing");
+  requireExec("faroCsv", "asOfStatementDate", "faro_csv_agreement_as_of_statement_missing");
+  requireIdent("dataInfra", "upsertFaroDailyImportOnClient", "data_infra_on_client_upsert_missing");
+  requireIdent("defaultInterest", "ensureDefaultInterestAccruedThroughDate", "default_interest_catchup_export_missing");
+  requireIdent("poster", "repairChargebackAlreadyPosted", "poster_chargeback_repair_helper_missing");
+  requireExec("poster", "SAVEPOINT factoring_chargeback_je_create", "poster_chargeback_savepoint_missing");
+  // Chargeback must lock the advance before posting-key / status / outstanding rejection.
+  requireExec(
+    "poster",
+    "await lockFactoringAdvanceForSettlement(client, input.operating_company_id, input.factoring_advance_id)",
+    "poster_chargeback_lock_before_keys_missing"
+  );
+  requireExec("poster", "expected_entry_date: accrualDate", "poster_di_repair_expected_entry_date_missing");
+  requireExec("poster", "accrual_date < $3::date", "poster_di_prior_closing_before_date_missing");
+  requireExec("lifecycleRepair", "expected_entry_date", "lifecycle_repair_expected_entry_date_missing");
+  requireExec("faroCsvTest", "rejected Faro agreement leaves zero durable CSV rows", "faro_csv_test_reject_no_rows_missing");
+  requireExec("faroCsvTest", "as-of statement/economic date", "faro_csv_test_statement_date_agreement_missing");
+  requireExec("faroCsvTest", "ensureDefaultInterestAccruedThroughDate runs before exact liability load", "faro_csv_test_missed_cron_order_missing");
+  requireExec("cpaVetoTest", "repair_candidate_wrong_entry_date", "cpa_veto_test_di_wrong_entry_date_missing");
+  requireExec("cpaVetoTest", "concurrent duplicate retries under row lock", "cpa_veto_test_chargeback_concurrent_missing");
+  requireExec("cpaVetoTest", "wrong accrual amount vs contractual math", "cpa_veto_test_di_wrong_amount_missing");
   // Dead string-literal decoy must not satisfy identifier plants (CR eb06028d).
   requireIdent("poster", "resolveCanonicalEntryDate", "poster_date_resolver_ident_missing");
   requireExec("journalEntries", "createJournalEntryOnClient", "journal_entries_on_client_missing");
@@ -345,6 +373,10 @@ export function checker(sources) {
   requireText("additions", "validateLifecycleJeExactShape", "additions_missing_exact_shape");
   requireText("additions", "policy_invalid_entry_date", "additions_missing_invalid_date");
   requireText("additions", "requireEffectiveFaroFullRecourseAgreement", "additions_missing_faro_gate_posting");
+  requireText("additions", "4f44dfbc", "additions_missing_4f44dfbc_veto");
+  requireText("additions", "upsertFaroDailyImportOnClient", "additions_missing_csv_atomic_upsert");
+  requireText("additions", "ensureDefaultInterestAccruedThroughDate", "additions_missing_di_catchup");
+  requireText("additions", "repairChargebackAlreadyPosted", "additions_missing_chargeback_lock_repair");
 
   // Tests — fixture IDs, plants, isolation, CPA negatives
   requireExec("cpaVetoTest", "policy_overpayment", "cpa_veto_test_overpayment_missing");
@@ -396,6 +428,7 @@ export function checker(sources) {
   requireText("manifest", "apps/backend/src/accounting/journal-entries.service.ts", "manifest_journal_entries_not_listed");
   requireText("manifest", "db/migrations/202607600000_factoring_balance_invoice_linkage.sql", "manifest_migration_not_listed");
   requireText("manifest", "scripts/verify-factoring-balance-invoice-linkage.mjs", "manifest_guard_not_listed");
+  requireText("manifest", "apps/backend/src/data-infra/data-infra.service.ts", "manifest_data_infra_not_listed");
 
   return failures;
 }
@@ -452,11 +485,21 @@ function createBadFixture(good) {
     "\nconst allocated = Math.min(inv.total_cents, allocations.get(inv.id) ?? 0);\n" +
     "\nfunction resolveCanonicalEntryDate(){ return companyBusinessDate(); }\n";
   bad.faroCsv =
-    String(good.faroCsv ?? "") +
+    String(good.faroCsv ?? "")
+      .replace(/upsertFaroDailyImportOnClient/g, "upsertSomethingElse")
+      .replace(/ensureDefaultInterestAccruedThroughDate/g, "ensureSomethingElse")
+      .replace(/resolveFaroCsvStatementDate/g, "resolveSomethingElse") +
     "\nORDER BY COUNT(*) DESC\n";
+  bad.dataInfra =
+    String(good.dataInfra ?? "").replace(/upsertFaroDailyImportOnClient/g, "upsertSomethingElse");
   bad.defaultInterest =
     String(good.defaultInterest ?? "")
-      .replace(/requireEffectiveFaroFullRecourseAgreement/g, "requireSomethingElse");
+      .replace(/requireEffectiveFaroFullRecourseAgreement/g, "requireSomethingElse")
+      .replace(/ensureDefaultInterestAccruedThroughDate/g, "ensureSomethingElse");
+  bad.poster =
+    String(bad.poster)
+      .replace(/repairChargebackAlreadyPosted/g, "repairSomethingElse")
+      .replace(/SAVEPOINT factoring_chargeback_je_create/g, "SAVEPOINT something_else");
   bad.service =
     String(bad.service) +
     "\nconst legal = row.legal_name; /TRANSPORTATION/i.test(legal);\n";

@@ -103,6 +103,8 @@ function installDefaults(opts: { flagOn?: boolean; accrual?: AccrualState } = {}
     }
     if (sql.includes("factoring_lifecycle_posting_keys")) {
       if (sql.includes("INSERT")) return { rows: [{ journal_entry_id: "je-1" }] };
+      // already_posted repair looks up the posting-key JE for the accrual day.
+      if (opts.accrual?.exists) return { rows: [{ journal_entry_id: "je-di-1" }] };
       return { rows: [] };
     }
     if (sql.includes("AS ok") && sql.includes("journal_entry_uuid") && sql.includes("= COALESCE")) {
@@ -131,18 +133,70 @@ function installDefaults(opts: { flagOn?: boolean; accrual?: AccrualState } = {}
         ],
       };
     }
+    // Exact accrual row load (already_posted repair) — must precede bare exists probe.
+    if (
+      sql.includes("factoring_default_interest_accruals") &&
+      sql.includes("interest_cents::text") &&
+      sql.includes("accrual_date = $3::date")
+    ) {
+      if (!opts.accrual?.exists) return { rows: [] };
+      // Day-40 contractual math on Net $5,000: interest 335, opening 500000, closing 500335.
+      return {
+        rows: [
+          {
+            interest_cents: "335",
+            opening_balance_cents: "500000",
+            closing_balance_cents: "500335",
+            journal_entry_id: "je-di-1",
+          },
+        ],
+      };
+    }
     // accrual-exists-for-day probe
     if (sql.includes("factoring_default_interest_accruals") && sql.includes("accrual_date = $3::date")) {
       return { rows: opts.accrual?.exists ? [{ id: "acc-x" }] : [] };
     }
-    // last accrual closing balance
+    // last accrual closing balance (optional beforeDateExclusive filter)
     if (sql.includes("factoring_default_interest_accruals") && sql.includes("ORDER BY accrual_date DESC")) {
       const c = opts.accrual?.lastClosing;
       return { rows: c == null ? [] : [{ closing_balance_cents: String(c) }] };
     }
     if (sql.includes("INSERT INTO accounting.factoring_default_interest_accruals")) return { rows: [] };
     if (sql.includes("FROM accounting.journal_entries")) {
+      if (opts.accrual?.exists) {
+        return {
+          rows: [
+            {
+              id: "je-di-1",
+              status: "posted",
+              entry_date: "2026-02-16",
+              reverses_je_id: null,
+              reversed_by_je_id: null,
+            },
+          ],
+        };
+      }
       return { rows: [] };
+    }
+    if (sql.includes("chart_of_accounts_roles") && opts.accrual?.exists) {
+      return {
+        rows: [
+          {
+            role: "default_interest_expense",
+            debit_or_credit: "debit",
+            amount_cents: "335",
+            source_transaction_type: "factoring_default_interest",
+            source_transaction_id: ADVANCE,
+          },
+          {
+            role: "factoring_advance_liability",
+            debit_or_credit: "credit",
+            amount_cents: "335",
+            source_transaction_type: "factoring_default_interest",
+            source_transaction_id: ADVANCE,
+          },
+        ],
+      };
     }
     if (false && sql.includes("FROM accounting.journal_entries") && sql.includes("memo = $2")) return { rows: [] };
     return { rows: [] };
@@ -229,7 +283,8 @@ describe("Faro factoring — default-interest + full lifecycle (Net $5,000)", ()
       operating_company_id: OPCO,
       factoring_advance_id: ADVANCE,
       actor_user_id: ACTOR,
-      accrual_date_iso: "2026-02-16T00:00:00.000Z",
+      // Plain YYYY-MM-DD — avoid UTC midnight → prior Chicago calendar day on repair expected_entry_date.
+      accrual_date_iso: "2026-02-16",
     });
     expect(res).toMatchObject({ posted: false, reason: "already_posted" });
     expect(mockCreateJournalEntry).not.toHaveBeenCalled();

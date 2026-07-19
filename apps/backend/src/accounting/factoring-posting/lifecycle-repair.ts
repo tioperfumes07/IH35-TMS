@@ -87,6 +87,8 @@ export async function validateLifecycleJeExactShape(
     source_transaction_type: FactoringLifecycleSourceType;
     expected_legs: ExpectedLifecycleLeg[];
     expected_status?: string;
+    /** When set, JE entry_date must equal this YYYY-MM-DD (default-interest / settlement dates). */
+    expected_entry_date?: string | null;
   }
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
   const expectedStatus = opts.expected_status ?? "posted";
@@ -101,6 +103,7 @@ export async function validateLifecycleJeExactShape(
   const header = await client.query<{
     id: string;
     status: string;
+    entry_date: string | null;
     reverses_je_id: string | null;
     reversed_by_je_id: string | null;
   }>(
@@ -109,6 +112,7 @@ export async function validateLifecycleJeExactShape(
       SELECT
         je.id::text AS id,
         je.status::text AS status,
+        je.entry_date::text AS entry_date,
         je.reverses_je_id::text AS reverses_je_id,
         je.reversed_by_je_id::text AS reversed_by_je_id
         FROM accounting.journal_entries je
@@ -120,6 +124,7 @@ export async function validateLifecycleJeExactShape(
       SELECT
         je.id::text AS id,
         je.status::text AS status,
+        je.entry_date::text AS entry_date,
         NULL::text AS reverses_je_id,
         NULL::text AS reversed_by_je_id
         FROM accounting.journal_entries je
@@ -134,6 +139,12 @@ export async function validateLifecycleJeExactShape(
   if (je.status !== expectedStatus) return { ok: false, reason: "repair_candidate_invalid_status" };
   if (je.reverses_je_id || je.reversed_by_je_id) {
     return { ok: false, reason: "repair_candidate_reversed" };
+  }
+  if (opts.expected_entry_date) {
+    const entryYmd = (je.entry_date ?? "").slice(0, 10);
+    if (entryYmd !== opts.expected_entry_date.slice(0, 10)) {
+      return { ok: false, reason: "repair_candidate_wrong_entry_date" };
+    }
   }
 
   const legs = await client.query<{
@@ -230,6 +241,7 @@ export async function findStrictLifecycleRepairCandidate(
     expected_status?: string;
     /** When provided, candidate must match exact role/D/C/amount legs. */
     expected_legs?: ExpectedLifecycleLeg[];
+    expected_entry_date?: string | null;
   }
 ): Promise<LifecycleRepairCandidate> {
   const expectedStatus = opts.expected_status ?? "posted";
@@ -318,6 +330,7 @@ export async function findStrictLifecycleRepairCandidate(
         source_transaction_type: opts.source_transaction_type,
         expected_legs: opts.expected_legs,
         expected_status: expectedStatus,
+        expected_entry_date: opts.expected_entry_date,
       });
       if (!shape.ok) {
         return { kind: "invalid", journal_entry_id: null, reason: shape.reason };
@@ -391,6 +404,7 @@ export async function findStrictLifecycleRepairCandidate(
           source_transaction_type: opts.source_transaction_type,
           expected_legs: opts.expected_legs,
           expected_status: expectedStatus,
+          expected_entry_date: opts.expected_entry_date,
         });
         if (!shape.ok) {
           return { kind: "invalid", journal_entry_id: null, reason: shape.reason };

@@ -9,6 +9,7 @@ import {
   postFactoringCustomerPaymentEvent,
   postFactoringReleaseEvent,
   postFactoringChargebackEvent,
+  postFactoringDefaultInterestAccrualEvent,
 } from "../poster.service.js";
 import {
   validateLifecycleJeExactShape,
@@ -486,6 +487,477 @@ describe("chargeback — reversed funding excluded from eligibility", () => {
     });
     expect(res).toEqual({ posted: false, reason: "policy_partial_or_ambiguous_recourse" });
     expect(mockCreateJournalEntry).not.toHaveBeenCalled();
+  });
+});
+
+describe("default-interest already_posted — exact expected JE repair (reject invalid)", () => {
+  beforeEach(() => {
+    mockQuery.mockReset();
+    mockIsEnabled.mockResolvedValue(true);
+    mockFaroGate.mockResolvedValue({
+      ok: true,
+      vendorId: "faro-v",
+      vendorName: "Faro",
+      agreementId: "agr-1",
+      factorProfileId: "fp-1",
+      companyCode: "TRANSP",
+      asOf: "2026-02-16",
+    });
+    mockAdvanceBound.mockResolvedValue(true);
+    mockResolveRoleAccount.mockImplementation(async (_c: unknown, _o: string, role: string) => `acct-${role}`);
+    mockCreateJournalEntry.mockReset();
+  });
+
+  function advanceRow() {
+    return {
+      id: ADVANCE,
+      display_id: "FAC-0001",
+      status: "advanced",
+      invoice_total_cents: 500000,
+      advance_amount_cents: 492500,
+      reserve_amount_cents: 7500,
+      factor_fee_cents: 7500,
+      release_amount_cents: 0,
+      submitted_at: "2026-01-05T00:00:00.000Z",
+      advanced_at: "2026-01-07T00:00:00.000Z",
+      collected_at: null,
+      released_at: null,
+    };
+  }
+
+  it("rejects wrong accrual amount vs contractual math (repair_candidate_invalid)", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("set_config(")) return { rows: [] };
+      if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
+      if (sql.includes("AS outstanding")) return { rows: [{ outstanding: "500000" }] };
+      if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
+        return { rows: [advanceRow()] };
+      }
+      if (sql.includes("interest_cents::text") && sql.includes("factoring_default_interest_accruals")) {
+        return {
+          rows: [
+            {
+              interest_cents: "999", // wrong vs round(500000*0.00067)=335
+              opening_balance_cents: "500000",
+              closing_balance_cents: "500999",
+              journal_entry_id: "je-di",
+            },
+          ],
+        };
+      }
+      if (sql.includes("factoring_default_interest_accruals") && sql.includes("accrual_date = $3::date")) {
+        return { rows: [{ id: "acc-1" }] };
+      }
+      if (sql.includes("factoring_default_interest_accruals") && sql.includes("ORDER BY accrual_date DESC")) {
+        return { rows: [] };
+      }
+      return { rows: [] };
+    });
+    const res = await postFactoringDefaultInterestAccrualEvent({
+      operating_company_id: OPCO,
+      factoring_advance_id: ADVANCE,
+      actor_user_id: ACTOR,
+      accrual_date_iso: "2026-02-16",
+    });
+    expect(res).toEqual({ posted: false, reason: "repair_candidate_invalid" });
+    expect(mockCreateJournalEntry).not.toHaveBeenCalled();
+  });
+
+  it("rejects missing accrual row on already_posted path", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("set_config(")) return { rows: [] };
+      if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
+      if (sql.includes("AS outstanding")) return { rows: [{ outstanding: "500000" }] };
+      if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
+        return { rows: [advanceRow()] };
+      }
+      // Exists probe true, then load row empty — inconsistent / missing repair candidate.
+      if (sql.includes("interest_cents::text") && sql.includes("factoring_default_interest_accruals")) {
+        return { rows: [] };
+      }
+      if (sql.includes("factoring_default_interest_accruals") && sql.includes("accrual_date = $3::date")) {
+        return { rows: [{ id: "acc-1" }] };
+      }
+      if (sql.includes("factoring_default_interest_accruals") && sql.includes("ORDER BY accrual_date DESC")) {
+        return { rows: [] };
+      }
+      return { rows: [] };
+    });
+    const res = await postFactoringDefaultInterestAccrualEvent({
+      operating_company_id: OPCO,
+      factoring_advance_id: ADVANCE,
+      actor_user_id: ACTOR,
+      accrual_date_iso: "2026-02-16",
+    });
+    expect(res).toEqual({ posted: false, reason: "repair_candidate_invalid" });
+  });
+
+  it("rejects JE with wrong entry_date vs accrual date", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("set_config(")) return { rows: [] };
+      if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
+      if (sql.includes("AS outstanding")) return { rows: [{ outstanding: "500000" }] };
+      if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
+        return { rows: [advanceRow()] };
+      }
+      if (sql.includes("interest_cents::text") && sql.includes("factoring_default_interest_accruals")) {
+        return {
+          rows: [
+            {
+              interest_cents: "335",
+              opening_balance_cents: "500000",
+              closing_balance_cents: "500335",
+              journal_entry_id: "je-di",
+            },
+          ],
+        };
+      }
+      if (sql.includes("factoring_default_interest_accruals") && sql.includes("accrual_date = $3::date")) {
+        return { rows: [{ id: "acc-1" }] };
+      }
+      if (sql.includes("factoring_default_interest_accruals") && sql.includes("ORDER BY accrual_date DESC")) {
+        return { rows: [] };
+      }
+      if (sql.includes("factoring_lifecycle_posting_keys") && !sql.includes("INSERT")) {
+        return { rows: [{ journal_entry_id: "je-di" }] };
+      }
+      if (sql.includes("FROM accounting.journal_entries")) {
+        return {
+          rows: [
+            {
+              id: "je-di",
+              status: "posted",
+              entry_date: "2026-02-15", // wrong day
+              reverses_je_id: null,
+              reversed_by_je_id: null,
+            },
+          ],
+        };
+      }
+      if (sql.includes("chart_of_accounts_roles")) {
+        return {
+          rows: [
+            {
+              role: "default_interest_expense",
+              debit_or_credit: "debit",
+              amount_cents: "335",
+              source_transaction_type: "factoring_default_interest",
+              source_transaction_id: ADVANCE,
+            },
+            {
+              role: "factoring_advance_liability",
+              debit_or_credit: "credit",
+              amount_cents: "335",
+              source_transaction_type: "factoring_default_interest",
+              source_transaction_id: ADVANCE,
+            },
+          ],
+        };
+      }
+      if (sql.includes("AS ok") && sql.includes("journal_entry_uuid")) return { rows: [{ ok: true }] };
+      return { rows: [] };
+    });
+    const res = await postFactoringDefaultInterestAccrualEvent({
+      operating_company_id: OPCO,
+      factoring_advance_id: ADVANCE,
+      actor_user_id: ACTOR,
+      accrual_date_iso: "2026-02-16",
+    });
+    expect(res).toEqual({ posted: false, reason: "repair_candidate_invalid" });
+  });
+
+  it("validateLifecycleJeExactShape rejects wrong expected_entry_date", async () => {
+    const query = vi.fn(async (sql: string) => {
+      if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
+      if (sql.includes("FROM accounting.journal_entries")) {
+        return {
+          rows: [
+            {
+              id: "je-1",
+              status: "posted",
+              entry_date: "2026-02-15",
+              reverses_je_id: null,
+              reversed_by_je_id: null,
+            },
+          ],
+        };
+      }
+      return { rows: [] };
+    });
+    const shape = await validateLifecycleJeExactShape(
+      { query },
+      {
+        operating_company_id: OPCO,
+        journal_entry_id: "je-1",
+        factoring_advance_id: ADVANCE,
+        source_transaction_type: "factoring_default_interest",
+        expected_entry_date: "2026-02-16",
+        expected_legs: [
+          { role: "default_interest_expense", debit_or_credit: "debit", amount_cents: 335 },
+          { role: "factoring_advance_liability", debit_or_credit: "credit", amount_cents: 335 },
+        ],
+      }
+    );
+    expect(shape).toEqual({ ok: false, reason: "repair_candidate_wrong_entry_date" });
+  });
+});
+
+describe("chargeback — concurrent duplicate retries under row lock → already_posted", () => {
+  beforeEach(() => {
+    mockQuery.mockReset();
+    mockIsEnabled.mockResolvedValue(true);
+    mockCreateJournalEntry.mockReset();
+    mockFaroGate.mockResolvedValue({
+      ok: true,
+      vendorId: "faro-v",
+      vendorName: "Faro",
+      agreementId: "agr-1",
+      factorProfileId: null,
+      companyCode: "TRANSP",
+      asOf: "2026-04-01",
+    });
+    mockAdvanceBound.mockResolvedValue(true);
+    mockResolveRoleAccount.mockImplementation(async (_c: unknown, _o: string, role: string) => `acct-${role}`);
+  });
+
+  it("posting keys found under FOR UPDATE repair to already_posted (not zero-outstanding policy)", async () => {
+    let sawForUpdate = false;
+    let keyReads = 0;
+    let shapeCalls = 0;
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("set_config(") || sql.includes("SAVEPOINT") || sql.includes("RELEASE") || sql.includes("ROLLBACK TO")) {
+        return { rows: [] };
+      }
+      if (sql.includes("FOR UPDATE")) {
+        sawForUpdate = true;
+        return { rows: [{ id: ADVANCE }] };
+      }
+      if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
+      if (sql.includes("factoring_lifecycle_posting_keys") && !sql.includes("INSERT")) {
+        expect(sawForUpdate).toBe(true);
+        keyReads += 1;
+        return { rows: [{ journal_entry_id: keyReads % 2 === 1 ? "je-repay" : "je-return" }] };
+      }
+      if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
+        return {
+          rows: [
+            {
+              id: ADVANCE,
+              display_id: "FAC-0001",
+              // Status already flipped — without lock+keys this looked like zero-outstanding policy.
+              status: "recourse_returned",
+              invoice_total_cents: 100000,
+              advance_amount_cents: 97000,
+              reserve_amount_cents: 1500,
+              factor_fee_cents: 1500,
+              release_amount_cents: 0,
+              submitted_at: "2026-01-05T00:00:00.000Z",
+              advanced_at: "2026-01-07T00:00:00.000Z",
+              collected_at: null,
+              released_at: null,
+            },
+          ],
+        };
+      }
+      if (sql.includes("AS outstanding")) return { rows: [{ outstanding: "0" }] };
+      if (sql.includes("FROM accounting.journal_entries")) {
+        return {
+          rows: [
+            {
+              id: "je-x",
+              status: "posted",
+              entry_date: "2026-04-01",
+              reverses_je_id: null,
+              reversed_by_je_id: null,
+            },
+          ],
+        };
+      }
+      if (sql.includes("chart_of_accounts_roles")) {
+        shapeCalls += 1;
+        if (shapeCalls % 2 === 1) {
+          return {
+            rows: [
+              {
+                role: "factoring_advance_liability",
+                debit_or_credit: "debit",
+                amount_cents: "100000",
+                source_transaction_type: "factoring_chargeback",
+                source_transaction_id: ADVANCE,
+              },
+              {
+                role: "cash_clearing",
+                debit_or_credit: "credit",
+                amount_cents: "100000",
+                source_transaction_type: "factoring_chargeback",
+                source_transaction_id: ADVANCE,
+              },
+            ],
+          };
+        }
+        return {
+          rows: [
+            {
+              role: "factoring_recoursed_ar",
+              debit_or_credit: "debit",
+              amount_cents: "100000",
+              source_transaction_type: "factoring_chargeback",
+              source_transaction_id: ADVANCE,
+            },
+            {
+              role: "ar_control",
+              debit_or_credit: "credit",
+              amount_cents: "100000",
+              source_transaction_type: "factoring_chargeback",
+              source_transaction_id: ADVANCE,
+            },
+          ],
+        };
+      }
+      if (sql.includes("AS ok") && sql.includes("journal_entry_uuid")) return { rows: [{ ok: true }] };
+      if (sql.includes("UPDATE accounting.")) return { rows: [] };
+      if (sql.includes("SELECT jep.id") && sql.includes("LIMIT 1")) return { rows: [] };
+      return { rows: [] };
+    });
+
+    const res = await postFactoringChargebackEvent({
+      operating_company_id: OPCO,
+      factoring_advance_id: ADVANCE,
+      actor_user_id: ACTOR,
+      chargeback_amount_cents: 100000,
+      default_interest_cents: 0,
+      recoursed_ar_cents: 100000,
+      charged_back_at_iso: "2026-04-01",
+    });
+    expect(res).toMatchObject({ posted: false, reason: "already_posted" });
+    expect(mockCreateJournalEntry).not.toHaveBeenCalled();
+    expect(sawForUpdate).toBe(true);
+  });
+
+  it("posting-key race loser rolls savepoint and returns validated already_posted", async () => {
+    let createCalls = 0;
+    mockCreateJournalEntry.mockImplementation(async (...args: unknown[]) => {
+      createCalls += 1;
+      const options = (args.length >= 4 ? args[3] : args[2]) as
+        | { afterInsertBeforeCommit?: (c: { query: typeof mockQuery }, h: { id: string }) => Promise<void> }
+        | undefined;
+      const client = args.length >= 4 ? (args[0] as { query: typeof mockQuery }) : { query: mockQuery };
+      const header = { id: `je-new-${createCalls}` };
+      if (options?.afterInsertBeforeCommit) await options.afterInsertBeforeCommit(client, header);
+      return header;
+    });
+
+    let keyInserts = 0;
+    let postRaceKeyReads = 0;
+    let shapeCalls = 0;
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("set_config(") || sql.includes("SAVEPOINT") || sql.includes("RELEASE") || sql.includes("ROLLBACK TO")) {
+        return { rows: [] };
+      }
+      if (sql.includes("FOR UPDATE")) return { rows: [{ id: ADVANCE }] };
+      if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
+      if (sql.includes("factoring_lifecycle_posting_keys") && sql.includes("INSERT")) {
+        keyInserts += 1;
+        // First claim loses the race (ON CONFLICT DO NOTHING → no RETURNING row).
+        if (keyInserts === 1) return { rows: [] };
+        return { rows: [{ journal_entry_id: "je-new-1" }] };
+      }
+      if (sql.includes("factoring_lifecycle_posting_keys") && !sql.includes("INSERT")) {
+        if (createCalls === 0) return { rows: [] };
+        postRaceKeyReads += 1;
+        return { rows: [{ journal_entry_id: postRaceKeyReads % 2 === 1 ? "je-win-repay" : "je-win-return" }] };
+      }
+      if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
+        return {
+          rows: [
+            {
+              id: ADVANCE,
+              display_id: "FAC-0001",
+              status: "advanced",
+              invoice_total_cents: 100000,
+              advance_amount_cents: 97000,
+              reserve_amount_cents: 1500,
+              factor_fee_cents: 1500,
+              release_amount_cents: 0,
+              submitted_at: "2026-01-05T00:00:00.000Z",
+              advanced_at: "2026-01-07T00:00:00.000Z",
+              collected_at: null,
+              released_at: null,
+            },
+          ],
+        };
+      }
+      if (sql.includes("AS outstanding")) return { rows: [{ outstanding: "100000" }] };
+      if (sql.includes("FROM accounting.journal_entries")) {
+        return {
+          rows: [
+            {
+              id: "je-win",
+              status: "posted",
+              entry_date: "2026-04-01",
+              reverses_je_id: null,
+              reversed_by_je_id: null,
+            },
+          ],
+        };
+      }
+      if (sql.includes("chart_of_accounts_roles")) {
+        shapeCalls += 1;
+        if (shapeCalls % 2 === 1) {
+          return {
+            rows: [
+              {
+                role: "factoring_advance_liability",
+                debit_or_credit: "debit",
+                amount_cents: "100000",
+                source_transaction_type: "factoring_chargeback",
+                source_transaction_id: ADVANCE,
+              },
+              {
+                role: "cash_clearing",
+                debit_or_credit: "credit",
+                amount_cents: "100000",
+                source_transaction_type: "factoring_chargeback",
+                source_transaction_id: ADVANCE,
+              },
+            ],
+          };
+        }
+        return {
+          rows: [
+            {
+              role: "factoring_recoursed_ar",
+              debit_or_credit: "debit",
+              amount_cents: "100000",
+              source_transaction_type: "factoring_chargeback",
+              source_transaction_id: ADVANCE,
+            },
+            {
+              role: "ar_control",
+              debit_or_credit: "credit",
+              amount_cents: "100000",
+              source_transaction_type: "factoring_chargeback",
+              source_transaction_id: ADVANCE,
+            },
+          ],
+        };
+      }
+      if (sql.includes("AS ok") && sql.includes("journal_entry_uuid")) return { rows: [{ ok: true }] };
+      if (sql.includes("SELECT jep.id") && sql.includes("LIMIT 1")) return { rows: [] };
+      if (sql.includes("UPDATE accounting.")) return { rows: [] };
+      return { rows: [] };
+    });
+
+    const res = await postFactoringChargebackEvent({
+      operating_company_id: OPCO,
+      factoring_advance_id: ADVANCE,
+      actor_user_id: ACTOR,
+      chargeback_amount_cents: 100000,
+      default_interest_cents: 0,
+      recoursed_ar_cents: 100000,
+      charged_back_at_iso: "2026-04-01",
+    });
+    expect(res).toMatchObject({ posted: false, reason: "already_posted" });
   });
 });
 

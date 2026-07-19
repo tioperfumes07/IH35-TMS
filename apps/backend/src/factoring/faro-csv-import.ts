@@ -1,13 +1,16 @@
-import { upsertFaroDailyImport } from "../data-infra/data-infra.service.js";
+import { upsertFaroDailyImportOnClient } from "../data-infra/data-infra.service.js";
 import { postReserveMovement } from "./reserve.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { requireEffectiveFaroFullRecourseAgreement } from "../accounting/factoring-posting/faro-agreement-gate.js";
+import { ensureDefaultInterestAccruedThroughDate } from "../accounting/factoring-posting/default-interest.service.js";
 import {
   FACTORING_GL_POSTING_FLAG,
+  FactoringEntryDateError,
   loadExactLinkedChargebackAmounts,
   postFactoringAdvanceEvent,
   postFactoringChargebackEvent,
+  resolveCanonicalEntryDate,
 } from "../accounting/factoring-posting/poster.service.js";
 
 export const FARO_CSV_REQUIRED_HEADERS = [
@@ -46,7 +49,10 @@ export class FaroCsvImportError extends Error {
       | "missing_headers"
       | "empty_csv"
       | "commit_failed"
-      | "policy_faro_agreement",
+      | "policy_faro_agreement"
+      | "policy_invalid_statement_date"
+      | "policy_future_statement_date"
+      | "policy_missing_statement_date",
     message: string
   ) {
     super(message);
@@ -176,7 +182,8 @@ export function parseFaroCsv(csvText: string): FaroCsvParseResult {
 
   if (lines.length === 0) throw new FaroCsvImportError("invalid_csv", "No invoice rows found in CSV");
 
-  const statementDate = lines[0]?.due_on ?? new Date().toISOString().slice(0, 10);
+  // Economic/statement date from parsed due_on when present — never invent UTC "today".
+  const statementDate = lines.find((l) => l.due_on)?.due_on;
   return { headers, lines, statement_date: statementDate };
 }
 
@@ -184,12 +191,44 @@ type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
 };
 
-/** Authoritative Faro full-recourse vendor — never customer-majority / sole-factor inference. */
-async function resolveActiveFactorId(client: Queryable, companyId: string): Promise<string | null> {
+/** Resolve CSV statement/economic date — fail closed; never salvage to today. */
+export function resolveFaroCsvStatementDate(
+  supplied?: string | null,
+  parsed?: string | null
+): string {
+  try {
+    const ymd = resolveCanonicalEntryDate(supplied, parsed);
+    if (ymd > companyBusinessDate()) {
+      throw new FaroCsvImportError(
+        "policy_future_statement_date",
+        `Faro CSV statement date ${ymd} is in the future vs company business date — refuse import`
+      );
+    }
+    return ymd;
+  } catch (e) {
+    if (e instanceof FaroCsvImportError) throw e;
+    if (e instanceof FactoringEntryDateError) {
+      throw new FaroCsvImportError(
+        e.reason === "policy_missing_entry_date"
+          ? "policy_missing_statement_date"
+          : "policy_invalid_statement_date",
+        e.message
+      );
+    }
+    throw e;
+  }
+}
+
+/** Authoritative Faro full-recourse vendor as-of statement/economic date — never today fallback. */
+async function resolveActiveFactorId(
+  client: Queryable,
+  companyId: string,
+  asOfStatementDate: string
+): Promise<string | null> {
   const gate = await requireEffectiveFaroFullRecourseAgreement(
     client as never,
     companyId,
-    companyBusinessDate()
+    asOfStatementDate
   );
   if (!gate.ok) return null;
   return gate.vendorId;
@@ -381,49 +420,76 @@ export async function commitFaroCsvImport(input: {
   sourceFilename?: string;
 }) {
   const parsed = parseFaroCsv(input.csvText);
-  const statementDate = input.statementDate ?? parsed.statement_date ?? new Date().toISOString().slice(0, 10);
+  // Statement/economic date BEFORE any durable write — no today/UTC salvage.
+  const statementDate = resolveFaroCsvStatementDate(input.statementDate, parsed.statement_date);
   const statementReference = input.statementReference ?? "faro-csv";
 
-  const importResult = await upsertFaroDailyImport(input.userId, {
-    operatingCompanyId: input.operatingCompanyId,
-    statementDate,
-    statementReference,
-    sourceFilename: input.sourceFilename,
-    notes: "Imported via Faro CSV upload (P5-T22)",
-    lines: parsed.lines,
-  });
-
   const { withCurrentUser } = await import("../auth/db.js");
-  const { sideEffects, advanceActuals, postingEnabled } = await withCurrentUser(input.userId, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operatingCompanyId]);
-    const factorId = await resolveActiveFactorId(client, input.operatingCompanyId);
-    if (!factorId) {
-      throw new FaroCsvImportError(
-        "policy_faro_agreement",
-        "No effective TRANSP/Faro full-recourse agreement — refuse Faro CSV import (RTS/partial/missing/expired/ambiguous fail closed)"
+  // Atomic: Faro agreement as-of statement date + CSV persistence + invoice/reserve side effects.
+  // Rejected agreement/RTS/partial/expired/future rolls back — zero durable import rows.
+  const { importResult, sideEffects, advanceActuals, postingEnabled } = await withCurrentUser(
+    input.userId,
+    async (client) => {
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operatingCompanyId]);
+      const factorId = await resolveActiveFactorId(client, input.operatingCompanyId, statementDate);
+      if (!factorId) {
+        throw new FaroCsvImportError(
+          "policy_faro_agreement",
+          `No effective TRANSP/Faro full-recourse agreement as-of ${statementDate} — refuse Faro CSV import (RTS/partial/missing/expired/ambiguous/future fail closed)`
+        );
+      }
+      const importResult = await upsertFaroDailyImportOnClient(client, input.userId, {
+        operatingCompanyId: input.operatingCompanyId,
+        statementDate,
+        statementReference,
+        sourceFilename: input.sourceFilename,
+        notes: "Imported via Faro CSV upload (P5-T22)",
+        lines: parsed.lines,
+      });
+      const effects = await applyInvoiceAndReserveUpdates(
+        client,
+        input.operatingCompanyId,
+        parsed.lines,
+        factorId
       );
+      const actuals = await aggregateFaroActualsByAdvance(client, input.operatingCompanyId, parsed.lines);
+      const enabled = await isEnabled(client, FACTORING_GL_POSTING_FLAG, {
+        operating_company_id: input.operatingCompanyId,
+      });
+      return {
+        importResult,
+        sideEffects: effects,
+        advanceActuals: actuals,
+        postingEnabled: enabled,
+      };
     }
-    const effects = await applyInvoiceAndReserveUpdates(client, input.operatingCompanyId, parsed.lines, factorId);
-    // Reconciliation point 2 (at funding): aggregate FARO's actuals per advance for variance flagging + the
-    // funding-post trigger. Read-only here (posting happens after this tx, via the flag-gated poster).
-    const actuals = await aggregateFaroActualsByAdvance(client, input.operatingCompanyId, parsed.lines);
-    const enabled = await isEnabled(client, FACTORING_GL_POSTING_FLAG, { operating_company_id: input.operatingCompanyId });
-    return { sideEffects: effects, advanceActuals: actuals, postingEnabled: enabled };
-  });
+  );
 
   const variances = advanceActuals.map(toVariance);
 
-  // FUNDING + CHARGEBACK post triggers — only when the per-entity flag is ON (default OFF => inert). The
-  // poster itself re-checks the flag and is idempotent, so this is safe even if the flag flips between the
-  // read and the call. The DATA aggregation/variance above runs regardless of the flag (correct either way).
-  const funding_posts: Array<{ factoring_advance_id: string; posted: boolean; reason?: string; journal_entry_id?: string }> = [];
-  const chargeback_posts: Array<{ factoring_advance_id: string; posted: boolean; reason?: string; journal_entry_id?: string; chargeback_amount_cents: number }> = [];
+  // FUNDING + CHARGEBACK post triggers — only when the per-entity flag is ON (default OFF => inert).
+  const funding_posts: Array<{
+    factoring_advance_id: string;
+    posted: boolean;
+    reason?: string;
+    journal_entry_id?: string;
+  }> = [];
+  const chargeback_posts: Array<{
+    factoring_advance_id: string;
+    posted: boolean;
+    reason?: string;
+    journal_entry_id?: string;
+    chargeback_amount_cents: number;
+    default_interest_accruals_posted?: number;
+  }> = [];
   if (postingEnabled) {
     for (const a of advanceActuals) {
-      // FUNDING: gate on completeness. Posting funding for a partial batch would credit a too-small
-      // liability (the poster's liability leg is the FULL net invoice). Wait until every invoice arrives.
       if (!isAdvanceComplete(a)) {
-        funding_posts.push({ factoring_advance_id: a.factoring_advance_id, posted: false, reason: "incomplete_advance" });
+        funding_posts.push({
+          factoring_advance_id: a.factoring_advance_id,
+          posted: false,
+          reason: "incomplete_advance",
+        });
       } else {
         const result = await postFactoringAdvanceEvent({
           operating_company_id: input.operatingCompanyId,
@@ -434,7 +500,7 @@ export async function commitFaroCsvImport(input: {
             invoice_total_cents: a.actual_gross_cents,
             reserve_cents: a.actual_reserve_cents,
             fee_cents: a.actual_fee_cents,
-            ach_cents: 0, // FARO CSV carries no ACH/transaction-fee column; supply via funding_figures when available.
+            ach_cents: 0,
           },
         });
         funding_posts.push({
@@ -445,9 +511,15 @@ export async function commitFaroCsvImport(input: {
         });
       }
 
-      // CHARGEBACK: independent of batch completeness. Full recourse only — CSV amount must equal
-      // exact linked outstanding liability; recoursed A/R from linked invoices (no defaults / partial).
+      // CHARGEBACK: accrue contractual default interest through statement date first (missed-cron
+      // completion) via canonical poster math — then exact linked liability includes compounded interest.
       if (a.actual_chargeback_cents > 0) {
+        const accrued = await ensureDefaultInterestAccruedThroughDate({
+          operating_company_id: input.operatingCompanyId,
+          factoring_advance_id: a.factoring_advance_id,
+          as_of_date_iso: statementDate,
+          actor_user_id: input.userId,
+        });
         const exact = await loadExactLinkedChargebackAmounts(
           input.operatingCompanyId,
           a.factoring_advance_id
@@ -462,6 +534,7 @@ export async function commitFaroCsvImport(input: {
             posted: false,
             reason: "policy_partial_or_ambiguous_recourse",
             chargeback_amount_cents: a.actual_chargeback_cents,
+            default_interest_accruals_posted: accrued.accruals_posted,
           });
         } else {
           const cb = await postFactoringChargebackEvent({
@@ -470,7 +543,7 @@ export async function commitFaroCsvImport(input: {
             actor_user_id: input.userId,
             charged_back_at_iso: statementDate,
             chargeback_amount_cents: exact.liability_cents,
-            default_interest_cents: 0,
+            default_interest_cents: 0, // already compounded into liability via canonical accrual
             recoursed_ar_cents: exact.recoursed_ar_cents,
           });
           chargeback_posts.push({
@@ -479,6 +552,7 @@ export async function commitFaroCsvImport(input: {
             reason: cb.reason,
             journal_entry_id: cb.journal_entry_id,
             chargeback_amount_cents: exact.liability_cents,
+            default_interest_accruals_posted: accrued.accruals_posted,
           });
         }
       }
@@ -487,6 +561,7 @@ export async function commitFaroCsvImport(input: {
 
   return {
     import_id: importResult.id,
+    statement_date: statementDate,
     line_count: parsed.lines.length,
     ...sideEffects,
     factoring_gl_posting_enabled: postingEnabled,
