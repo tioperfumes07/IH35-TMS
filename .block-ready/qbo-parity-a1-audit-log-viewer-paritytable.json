@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-audit-log-viewer-paritytable",
+  "branch": "fix/audit-log-viewer-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable + ListErrorState)",
+  "phase": "OPS-FE",
+  "task": "Migrate AuditLogViewer from hand-rolled <table> to shared ParityTable (sort/resize/gear + onRowClick AuditEventCard drill-down); replace ad-hoc red banner with ListErrorState. Guard + verify-step 1038 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + CODER-BUILD tbl-standard-raw-table-sweep-incomplete / qbo-parity-a1",
+  "source_file": "qbo-parity-a1-audit-log-viewer-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-audit-log-viewer-paritytable.json",
+    "apps/frontend/src/pages/admin/audit-log/AuditLogViewer.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-audit-log-viewer-uses-paritytable.mjs",
+    "scripts/verify-steps/1038-verify-audit-log-viewer-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "AuditLogViewer.tsx uses ParityTable (no hand-rolled <table>/<thead>); columns When/Event class/Severity/Actor/Source preserved; onRowClick + AuditEventCard preserved; server pagination preserved; ListErrorState on failure; verify-audit-log-viewer-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1038 wired (Rule 17); tracker marks AuditLogViewer migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 — AuditLogViewer surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17)."
+}
