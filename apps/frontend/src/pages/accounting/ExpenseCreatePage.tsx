@@ -8,9 +8,10 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 /**
- * Canonical create route for expenses (`/accounting/expenses`).
+ * Create-only alias for expenses (`/accounting/expenses/new`).
+ * Canonical browse is `/accounting/expenses` (ExpensesListPage + Create drawer).
  * Owner chrome lock: form opens in a QBO-like right-side ParityDrawer over the accounting shell.
- * The additive `/accounting/expenses/new` alias renders this same page; close returns to the list.
+ * Close returns to the list.
  */
 export function ExpenseCreatePage() {
   const navigate = useNavigate();
