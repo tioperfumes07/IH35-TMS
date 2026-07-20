@@ -10,7 +10,7 @@
  *  1. CreateExpenseModal.tsx imports + renders ParityDrawer (not Modal).
  *  2. CreateBillModal.tsx imports + renders ParityDrawer (not Modal).
  *  3. Both reuse canonical forms (RecordExpenseForm / VendorBillForm).
- *  4. Accounting Expenses group primary href is /list; bare is create; /new is route-only alias.
+ *  4. Accounting Expenses group primary href is /list; bare is list; /new is route-only create alias.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -70,7 +70,7 @@ export function assertMaintenanceParityDrawer({ expense, bill, subnav, routes })
     const childrenOrder =
       /label:\s*["']Expenses List["'],\s*path:\s*["']\/accounting\/expenses\/list["'][\s\S]{0,180}?label:\s*["']Expenses["'],\s*path:\s*["']\/accounting\/expenses["']/;
     if (!childrenOrder.test(itemBlock)) {
-      failures.push('subnav-manifest: dropdown must expose "Expenses List" then "Expenses" creator');
+      failures.push('subnav-manifest: dropdown must expose "Expenses List" then "Expenses"');
     }
     if (/\/accounting\/expenses\/new/.test(itemBlock) || /\/accounting\/expenses\/new/.test(flatBlock)) {
       failures.push("subnav-manifest: legacy /new alias must not be exposed in rendered/retained UI metadata");
@@ -79,7 +79,7 @@ export function assertMaintenanceParityDrawer({ expense, bill, subnav, routes })
       !/label:\s*["']Expenses List["'],\s*to:\s*["']\/accounting\/expenses\/list["']/.test(flatBlock)
       || !/label:\s*["']Expenses["'],\s*to:\s*["']\/accounting\/expenses["']/.test(flatBlock)
     ) {
-      failures.push("subnav-manifest: flat metadata must retain list then canonical creator");
+      failures.push("subnav-manifest: flat metadata must retain list then Expenses");
     }
   }
 
@@ -89,8 +89,8 @@ export function assertMaintenanceParityDrawer({ expense, bill, subnav, routes })
     if (!routeR("/accounting/expenses/list", "ExpensesListPage").test(routes)) {
       failures.push("routes: /accounting/expenses/list must render ExpensesListPage");
     }
-    if (!routeR("/accounting/expenses", "ExpenseCreatePage").test(routes)) {
-      failures.push("routes: /accounting/expenses must render ExpenseCreatePage");
+    if (!routeR("/accounting/expenses", "ExpensesListPage").test(routes)) {
+      failures.push("routes: /accounting/expenses must render ExpensesListPage");
     }
     if (!routeR("/accounting/expenses/new", "ExpenseCreatePage").test(routes)) {
       failures.push("routes: /accounting/expenses/new must remain mounted as an additive alias");
@@ -124,7 +124,7 @@ function selftest() {
     routes: `
       path="/accounting/expenses/new" element={<ExpenseCreatePage />}
       path="/accounting/expenses/list" element={<ExpensesListPage />}
-      path="/accounting/expenses" element={<ExpenseCreatePage />}
+      path="/accounting/expenses" element={<ExpensesListPage />}
     `,
   };
   const reversed = {
@@ -171,5 +171,5 @@ if (failures.length) {
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log(`${LABEL}: OK — Maintenance drawers preserved; /list browses; bare creates; /new is route-only`);
+console.log(`${LABEL}: OK — Maintenance drawers preserved; /list browses; bare lists; /new is route-only`);
 process.exit(0);

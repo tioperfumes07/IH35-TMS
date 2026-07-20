@@ -189,7 +189,7 @@ export function ExpensesListPage() {
       }
     >
       {/* Create = QBO-like right ParityDrawer (owner chrome). /accounting/expenses is the canonical
-          creator hub; /accounting/expenses/new remains an additive alias to the same page. */}
+          list; /accounting/expenses/new remains an additive create alias; /list is an additive list alias. */}
       <RecordExpenseModal
         open={createOpen}
         operatingCompanyId={companyId}

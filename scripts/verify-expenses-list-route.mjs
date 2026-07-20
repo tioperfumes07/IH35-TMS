@@ -2,10 +2,10 @@
 /**
  * verify-expenses-list-route — lock the owner-approved browse/create route split.
  *
- * Canonical contract:
- *   - /accounting/expenses/list renders ExpensesListPage and is every ID-less browse/view target.
- *   - /accounting/expenses renders ExpenseCreatePage and is every canonical create target.
- *   - /accounting/expenses/new remains mounted as an additive legacy create alias.
+ * Canonical contract (browse-first):
+ *   - /accounting/expenses renders ExpensesListPage (canonical list; create via + Create drawer).
+ *   - /accounting/expenses/list remains an additive list alias.
+ *   - /accounting/expenses/new remains an additive ExpenseCreatePage alias.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -42,11 +42,11 @@ function manifestRouteErrors(
     }
   }
   if (checkBare) {
-    if (!routeR("/accounting/expenses", "ExpenseCreatePage").test(manifest)) {
-      errors.push("manifest: /accounting/expenses must render ExpenseCreatePage");
+    if (!routeR("/accounting/expenses", "ExpensesListPage").test(manifest)) {
+      errors.push("manifest: /accounting/expenses must render ExpensesListPage");
     }
-    if (routeR("/accounting/expenses", "ExpensesListPage").test(manifest)) {
-      errors.push("manifest: reversed regression — bare /accounting/expenses renders the list");
+    if (routeR("/accounting/expenses", "ExpenseCreatePage").test(manifest)) {
+      errors.push("manifest: reversed regression — bare /accounting/expenses renders create wizard");
     }
   }
   if (
@@ -212,11 +212,11 @@ function wrongDestinationErrors(sources) {
     for (const { label, route } of pairs) {
       const isBrowse = /\b(?:view|browse|list)\b/i.test(label);
       const isCreate = /\b(?:create|record)\b/i.test(label) || label === "Expense";
-      if (isBrowse && route === "/accounting/expenses") {
-        errors.push(`${name}: browse/view/list label "${label}" must not target bare creator`);
+      if (isBrowse && route === "/accounting/expenses/new") {
+        errors.push(`${name}: browse/view/list label "${label}" must not target create alias /new`);
       }
       if (isCreate && route !== "/accounting/expenses") {
-        errors.push(`${name}: create/record label "${label}" must target canonical bare creator`);
+        errors.push(`${name}: create/record label "${label}" must target canonical list /accounting/expenses`);
       }
     }
   }
@@ -249,11 +249,11 @@ export function assertExpensesListRoute({
       continue;
     }
     if (!okRe.test(src)) {
-      errors.push(`${name}: create entry must target canonical /accounting/expenses`);
+      errors.push(`${name}: create entry must target canonical list /accounting/expenses`);
     }
     if (/create_expense[^]*?["']\/accounting\/expenses\/new["']/.test(src)
       || /label:\s*["'](?:Record expense|Expense)["'],\s*to:\s*["']\/accounting\/expenses\/new["']/.test(src)) {
-      errors.push(`${name}: canonical create entry must not use the legacy /new alias`);
+      errors.push(`${name}: create entry must not use the /new wizard deep-link`);
     }
   }
 
@@ -265,7 +265,7 @@ export function assertExpensesListRoute({
     const orderedChildren =
       /label:\s*["']Expenses List["'],\s*path:\s*["']\/accounting\/expenses\/list["'],\s*section:\s*["']expenses["'][\s\S]{0,180}?label:\s*["']Expenses["'],\s*path:\s*["']\/accounting\/expenses["'],\s*section:\s*["']expenses["']/;
     if (!orderedChildren.test(itemBlock)) {
-      errors.push("subnav-manifest: expense children must expose list first and Expenses creator second");
+      errors.push("subnav-manifest: expense children must expose list first and Expenses second");
     }
     if (!/label:\s*GROUP_LABELS\.expenses,\s*href:\s*["']\/accounting\/expenses\/list["']/.test(subnavManifest)) {
       errors.push("subnav-manifest: Expenses group href must be /accounting/expenses/list");
@@ -275,7 +275,7 @@ export function assertExpensesListRoute({
       /label:\s*["']Expenses["'],\s*to:\s*["']\/accounting\/expenses["']/,
     ]) {
       if (!expected.test(flatBlock)) {
-        errors.push("subnav-manifest: retained flat metadata must preserve list then canonical creator");
+        errors.push("subnav-manifest: retained flat metadata must preserve list then Expenses");
         break;
       }
     }
@@ -329,7 +329,7 @@ function selftest() {
   const goodManifest = `
     path="/accounting/expenses/new" element={<ProtectedRoute><ExpenseCreatePage /></ProtectedRoute>}
     path="/accounting/expenses/list" element={<ProtectedRoute><ExpensesListPage /></ProtectedRoute>}
-    path="/accounting/expenses" element={<ProtectedRoute><ExpenseCreatePage /></ProtectedRoute>}
+    path="/accounting/expenses" element={<ProtectedRoute><ExpensesListPage /></ProtectedRoute>}
   `;
   const childrenBlock = `
     export const SUBNAV_ITEMS = [
@@ -363,8 +363,8 @@ function selftest() {
     'path="/accounting/expenses/list" element={<ProtectedRoute><ExpenseCreatePage /></ProtectedRoute>}',
   );
   const bareOnlyManifest = goodManifest.replace(
-    'path="/accounting/expenses" element={<ProtectedRoute><ExpenseCreatePage /></ProtectedRoute>}',
     'path="/accounting/expenses" element={<ProtectedRoute><ExpensesListPage /></ProtectedRoute>}',
+    'path="/accounting/expenses" element={<ProtectedRoute><ExpenseCreatePage /></ProtectedRoute>}',
   );
   const isolated = [
     [
@@ -375,7 +375,7 @@ function selftest() {
     [
       "bare manifest component only",
       { ...good, manifest: bareOnlyManifest },
-      "/accounting/expenses must render ExpenseCreatePage",
+      "/accounting/expenses must render ExpensesListPage",
     ],
     ["Topbar create alias", { ...good, topbar: good.topbar.replace('expenses"]', 'expenses/new"]') }, "Topbar"],
     ["home create alias", { ...good, home: good.home.replace('to: "/accounting/expenses"', 'to: "/accounting/expenses/new"') }, "CREATE_ACTIONS"],
@@ -400,7 +400,7 @@ function selftest() {
     }
   }
   const globalBrowse = wrongDestinationErrors({
-    sample: `{ label: "Browse expenses", to: "/accounting/expenses" }`,
+    sample: `{ label: "Browse expenses", to: "/accounting/expenses/new" }`,
   });
   const globalCreate = wrongDestinationErrors({
     sample: `{ label: "Record expense", to: "/accounting/expenses/new" }`,
@@ -411,7 +411,7 @@ function selftest() {
         "View expenses",
       icon: { name: "receipt" },
       to:
-        "/accounting/expenses"
+        "/accounting/expenses/new"
     }`,
   });
   const multilineCreateList = wrongDestinationErrors({
@@ -434,7 +434,7 @@ function selftest() {
   const validMultiline = wrongDestinationErrors({
     sample: `
       // { label: "View expenses", to: "/accounting/expenses" }
-      const routeDeclaration = { path: "/accounting/expenses", element: <ExpenseCreatePage /> };
+      const routeDeclaration = { path: "/accounting/expenses", element: <ExpensesListPage /> };
       const browse = {
         label:
           "View expenses",
@@ -511,5 +511,5 @@ if (errors.length) {
   for (const e of errors) console.error(`  - ${e}`);
   process.exit(1);
 }
-console.log(`${LABEL}: OK — /list browses; bare /accounting/expenses creates; /new remains an alias`);
+console.log(`${LABEL}: OK — bare /accounting/expenses lists; /list alias; /new create alias`);
 process.exit(0);

@@ -3765,7 +3765,7 @@ export const ROUTES = React.Children.toArray(
           path="/accounting/expenses"
           element={
             <ProtectedRoute>
-              <ExpenseCreatePage />
+              <ExpensesListPage />
             </ProtectedRoute>
           }
         />
