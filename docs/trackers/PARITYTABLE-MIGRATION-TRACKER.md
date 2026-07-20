@@ -872,4 +872,13 @@ manual expand rows. Migrated to shared `ParityTable` (sort + resize + gear +
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/audit/AuditTrailPage.tsx` | pages/audit |
+## qbo-parity-a1 — trailer-profile PlatesTable (this PR)
+Trailer profile plates grid was a hand-rolled `<table>` (Country/Jurisdiction/Plate/
+Expiration). Migrated to shared `ParityTable` (sort + resize + gear + CSV export).
+`tp-plates-table` testid preserved. Guard:
+`scripts/verify-trailer-plates-uses-paritytable.mjs` via verify-step 1031.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/vehicle-profile/RecentActivitySection.tsx` | components/vehicle-profile |
 
