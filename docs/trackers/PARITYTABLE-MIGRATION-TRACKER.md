@@ -458,7 +458,7 @@ verify-step 1035.
 | `apps/frontend/src/pages/admin/LaunchToggles.tsx` | pending |
 | `apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/pages/admin/audit-log/AuditLogViewer.tsx` | pending |
-| `apps/frontend/src/pages/admin/feature-flags/FeatureFlagsManager.tsx` | pending |
+| `apps/frontend/src/pages/admin/feature-flags/FeatureFlagsManager.tsx` | migrated (fix/feature-flags-manager-paritytable) |
 
 ### pages/audit (2)
 
@@ -1069,3 +1069,14 @@ Guard: `scripts/verify-booking-gap-report-uses-paritytable.mjs` via verify-step 
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/reports/BookingGapReport.tsx` | pages/reports |
+## qbo-parity-a1 — FeatureFlagsManager (this PR)
+Owner feature-flags admin was a hand-rolled `<table>` with no list-outage chrome on
+query failure. Migrated to shared `ParityTable` (sort + resize + gear) and replaced
+load failure with `ListErrorState` + Retry. Columns Key / Default / Rollout % /
+Overrides / Actions preserved 1:1; per-entity-only notice, create-flag form, tenant
+override picker, and Tenant override ON action unchanged.
+Guard: `scripts/verify-feature-flags-manager-uses-paritytable.mjs` via verify-step **1076**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/admin/feature-flags/FeatureFlagsManager.tsx` | pages/admin |

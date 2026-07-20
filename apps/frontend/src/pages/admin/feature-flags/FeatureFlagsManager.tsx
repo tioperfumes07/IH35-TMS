@@ -3,6 +3,8 @@ import { useMemo, useState } from "react";
 import { useAuth } from "../../../auth/useAuth";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { Button } from "../../../components/Button";
+import { ListErrorState } from "../../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import {
   createFeatureFlag,
   deleteFeatureFlagOverride,
@@ -11,6 +13,23 @@ import {
   updateFeatureFlag,
 } from "../../../lib/feature-flags-client";
 import { listMyCompanies } from "../../../api/org";
+
+type OverrideRow = {
+  uuid: string;
+  flag_key: string;
+  operating_company_id: string | null;
+  user_uuid: string | null;
+  enabled: boolean;
+};
+
+type FlagRow = {
+  flag_key: string;
+  description: string | null;
+  default_enabled: boolean;
+  rollout_pct: number;
+  per_entity_only?: boolean;
+  overrides: OverrideRow[];
+};
 
 export function FeatureFlagsManager() {
   const auth = useAuth();
@@ -82,7 +101,7 @@ export function FeatureFlagsManager() {
   });
 
   const overridesByFlag = useMemo(() => {
-    const map = new Map<string, Array<{ uuid: string; flag_key: string; operating_company_id: string | null; user_uuid: string | null; enabled: boolean }>>();
+    const map = new Map<string, OverrideRow[]>();
     for (const row of query.data?.overrides ?? []) {
       const list = map.get(row.flag_key) ?? [];
       list.push(row);
@@ -90,6 +109,130 @@ export function FeatureFlagsManager() {
     }
     return map;
   }, [query.data?.overrides]);
+
+  const rows: FlagRow[] = useMemo(
+    () =>
+      (query.data?.flags ?? []).map((flag) => ({
+        ...flag,
+        overrides: overridesByFlag.get(flag.flag_key) ?? [],
+      })),
+    [query.data?.flags, overridesByFlag],
+  );
+
+  const columns: Array<ParityColumn<FlagRow>> = useMemo(
+    () => [
+      {
+        key: "flag_key",
+        label: "Key",
+        sortable: true,
+        render: (row) => (
+          <>
+            <div className="font-medium text-gray-900">{row.flag_key}</div>
+            <div className="text-xs text-gray-500">{row.description ?? "—"}</div>
+          </>
+        ),
+      },
+      {
+        key: "default_enabled",
+        label: "Default",
+        sortable: true,
+        sortValue: (row) => (row.per_entity_only ? -1 : row.default_enabled ? 1 : 0),
+        render: (row) =>
+          row.per_entity_only ? (
+            <span className="text-xs text-gray-600" data-testid="per-entity-only-notice">
+              Per-entity only — enable via a tenant override. Global default / rollout do not apply.
+            </span>
+          ) : (
+            <input
+              type="checkbox"
+              checked={row.default_enabled}
+              onChange={(e) =>
+                updateMutation.mutate({ flagKey: row.flag_key, default_enabled: e.target.checked })
+              }
+            />
+          ),
+      },
+      {
+        key: "rollout_pct",
+        label: "Rollout %",
+        sortable: true,
+        sortValue: (row) => (row.per_entity_only ? -1 : Number(row.rollout_pct ?? 0)),
+        render: (row) =>
+          row.per_entity_only ? (
+            <span className="text-xs text-gray-400">—</span>
+          ) : (
+            <>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={Number(row.rollout_pct ?? 0)}
+                onChange={(e) =>
+                  updateMutation.mutate({ flagKey: row.flag_key, rollout_pct: Number(e.target.value) })
+                }
+              />
+              <div className="text-xs text-gray-600">{Number(row.rollout_pct ?? 0).toFixed(0)}%</div>
+            </>
+          ),
+      },
+      {
+        key: "overrides",
+        label: "Overrides",
+        sortable: true,
+        sortValue: (row) => row.overrides.length,
+        render: (row) => (
+          <ul className="space-y-1 text-xs">
+            {row.overrides.map((override) => (
+              <li key={override.uuid} className="flex items-center gap-2">
+                <span>
+                  {override.user_uuid
+                    ? `user ${override.user_uuid.slice(0, 8)}…`
+                    : `tenant ${override.operating_company_id?.slice(0, 8)}…`}
+                  {" → "}
+                  {override.enabled ? "on" : "off"}
+                </span>
+                <button
+                  type="button"
+                  className="text-red-600 underline"
+                  onClick={() => deleteOverrideMutation.mutate(override.uuid)}
+                >
+                  remove
+                </button>
+              </li>
+            ))}
+            {row.overrides.length === 0 ? <li className="text-gray-400">none</li> : null}
+          </ul>
+        ),
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        sortable: false,
+        alwaysVisible: true,
+        render: (row) => (
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              const operatingCompanyId = tenantOverrideCompanyId.trim();
+              if (!operatingCompanyId) {
+                setError("operating_company_id required for tenant override");
+                return;
+              }
+              overrideMutation.mutate({
+                flag_key: row.flag_key,
+                operating_company_id: operatingCompanyId,
+                enabled: true,
+              });
+            }}
+          >
+            Tenant override ON
+          </Button>
+        ),
+      },
+    ],
+    [deleteOverrideMutation, overrideMutation, tenantOverrideCompanyId, updateMutation],
+  );
 
   if (!allowed) {
     return (
@@ -145,110 +288,25 @@ export function FeatureFlagsManager() {
 
       <section className="rounded-sm border border-gray-200 bg-white p-4">
         <h2 className="mb-3 text-sm font-semibold text-gray-900">Flags</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="border-b text-left text-xs uppercase tracking-wide text-gray-500">
-                <th className="px-2 py-2">Key</th>
-                <th className="px-2 py-2">Default</th>
-                <th className="px-2 py-2">Rollout %</th>
-                <th className="px-2 py-2">Overrides</th>
-                <th className="px-2 py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(query.data?.flags ?? []).map((flag) => {
-                const overrides = overridesByFlag.get(flag.flag_key) ?? [];
-                const perEntityOnly = Boolean(flag.per_entity_only);
-                return (
-                  <tr key={flag.flag_key} className="border-b align-top">
-                    <td className="px-2 py-2">
-                      <div className="font-medium text-gray-900">{flag.flag_key}</div>
-                      <div className="text-xs text-gray-500">{flag.description ?? "—"}</div>
-                    </td>
-                    {perEntityOnly ? (
-                      <td className="px-2 py-2 text-xs text-gray-600" colSpan={2} data-testid="per-entity-only-notice">
-                        Per-entity only — enable via a tenant override. Global default / rollout do not apply.
-                      </td>
-                    ) : (
-                      <>
-                        <td className="px-2 py-2">
-                          <input
-                            type="checkbox"
-                            checked={flag.default_enabled}
-                            onChange={(e) =>
-                              updateMutation.mutate({ flagKey: flag.flag_key, default_enabled: e.target.checked })
-                            }
-                          />
-                        </td>
-                        <td className="px-2 py-2">
-                          <input
-                            type="range"
-                            min={0}
-                            max={100}
-                            value={Number(flag.rollout_pct ?? 0)}
-                            onChange={(e) =>
-                              updateMutation.mutate({ flagKey: flag.flag_key, rollout_pct: Number(e.target.value) })
-                            }
-                          />
-                          <div className="text-xs text-gray-600">{Number(flag.rollout_pct ?? 0).toFixed(0)}%</div>
-                        </td>
-                      </>
-                    )}
-                    <td className="px-2 py-2">
-                      <ul className="space-y-1 text-xs">
-                        {overrides.map((row) => (
-                          <li key={row.uuid} className="flex items-center gap-2">
-                            <span>
-                              {row.user_uuid ? `user ${row.user_uuid.slice(0, 8)}…` : `tenant ${row.operating_company_id?.slice(0, 8)}…`}
-                              {" → "}
-                              {row.enabled ? "on" : "off"}
-                            </span>
-                            <button
-                              type="button"
-                              className="text-red-600 underline"
-                              onClick={() => deleteOverrideMutation.mutate(row.uuid)}
-                            >
-                              remove
-                            </button>
-                          </li>
-                        ))}
-                        {overrides.length === 0 ? <li className="text-gray-400">none</li> : null}
-                      </ul>
-                    </td>
-                    <td className="px-2 py-2">
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() => {
-                          const operatingCompanyId = tenantOverrideCompanyId.trim();
-                          if (!operatingCompanyId) {
-                            setError("operating_company_id required for tenant override");
-                            return;
-                          }
-                          overrideMutation.mutate({
-                            flag_key: flag.flag_key,
-                            operating_company_id: operatingCompanyId,
-                            enabled: true,
-                          });
-                        }}
-                      >
-                        Tenant override ON
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
-              {(query.data?.flags ?? []).length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-2 py-4 text-sm text-gray-500">
-                    No flags yet.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
+        {query.isError ? (
+          <ListErrorState
+            title="Couldn't load feature flags"
+            status={0}
+            message={(query.error as Error)?.message}
+            onRetry={() => void query.refetch()}
+          />
+        ) : (
+          <ParityTable
+            rows={rows}
+            columns={columns}
+            rowKey={(row) => row.flag_key}
+            loading={query.isLoading}
+            storageKey="admin-feature-flags"
+            emptyText="No flags yet."
+            tableTestId="feature-flags-table"
+            rowTestId={(row) => `feature-flags-row-${row.flag_key}`}
+          />
+        )}
       </section>
     </div>
   );
