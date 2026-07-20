@@ -11,6 +11,8 @@ export type SettlementListRow = {
   period_start: string;
   period_end: string;
   status: SettlementStatus;
+  /** Distinct loads linked via settlement_lines → driver_bills.load_id */
+  load_count: number;
   gross_pay: number;
   deductions_total: number;
   net_pay: number;

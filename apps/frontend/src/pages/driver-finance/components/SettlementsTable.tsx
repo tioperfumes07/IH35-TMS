@@ -27,12 +27,11 @@ function statusClass(status: SettlementListRow["status"]) {
   return "bg-gray-100 text-gray-700";
 }
 
-// "Loads" has no real per-row field yet (renders a static "—" below) and "Action" is a pure
-// action column — both exempt from sort, same carve-out class as GLOBAL-SORT-RULE's action columns.
+// "Action" is a pure action column — exempt from sort (GLOBAL-SORT-RULE carve-out).
 const SETTLEMENT_COLUMNS: Array<{ key: string; label: string; sortable: boolean }> = [
   { key: "driver", label: "Driver", sortable: true },
   { key: "period", label: "Period", sortable: true },
-  { key: "loads", label: "Loads", sortable: false },
+  { key: "loads", label: "Loads", sortable: true },
   { key: "gross", label: "Gross", sortable: true },
   { key: "deductions", label: "Deductions", sortable: true },
   { key: "net_pay", label: "Net Pay", sortable: true },
@@ -53,6 +52,7 @@ function settlementSortValue(row: SettlementListRow, key: string): string | numb
   switch (key) {
     case "driver": return row.driver_full_name ?? null;
     case "period": return row.period_start ?? null;
+    case "loads": return Number(row.load_count ?? 0);
     case "gross": return Number(row.gross_pay ?? 0);
     case "deductions": return Number(row.deductions_total ?? 0);
     case "net_pay": return Number(row.net_pay ?? 0);
@@ -103,7 +103,7 @@ export function SettlementsTable({ rows, onOpen }: Props) {
                 <div className="text-[10px] text-gray-500"><EntityLink kind="driver" id={row.driver_id} label={row.driver_display_id} /></div>
               </td>
               <td className="px-2 py-1">{row.period_start} → {row.period_end}</td>
-              <td className="px-2 py-1">—</td>
+              <td className="px-2 py-1 tabular-nums">{Number(row.load_count ?? 0)}</td>
               <td className="px-2 py-1">${Number(row.gross_pay ?? 0).toFixed(2)}</td>
               <td className="px-2 py-1">${Number(row.deductions_total ?? 0).toFixed(2)}</td>
               <td className="px-2 py-1 font-semibold text-green-700">${Number(row.net_pay ?? 0).toFixed(2)}</td>
