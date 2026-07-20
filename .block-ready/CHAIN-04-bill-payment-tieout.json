@@ -1,0 +1,35 @@
+{
+  "block_id": "CHAIN-04-bill-payment-tieout",
+  "status": "NEEDS-VERIFY",
+  "classification": "FINANCIAL",
+  "phase": "program",
+  "source": "docs/blocks/HOLD-02-CHAIN-04-bill-payment-tieout-design.md (source-rank 'program'=4 OUTRANKS .block-ready=3, so the reconciler keeps the program row and this entry loses de-dup for REPORTING. It still gives acceptance[] an enforceable home because G2 scans .block-ready directly, forward-only. Correcting the REPORTED status requires a GUARD-verified entry in docs/trackers/block-status-overrides.json.)",
+  "source_file": "HOLD-02-CHAIN-04-bill-payment-tieout-design.md",
+  "task": "Bill-payment tie-out. Registered so its criteria become machine-checkable. The source doc names ZERO file paths (pure prose), which is why it was structurally unmeasurable — a block with no signature files is auto-classified AUDIT-NOTE and drops out of the counter entirely. allowed_files below are the real bill-payment GL surfaces, verified present on main this session. CRITICAL: the recorded evidence is '[verified 2026-07-12] code-guard passes ... but 0 open bills on TRANSP'. This is a DATA gap, not a code gap — the wrong fix here is to build more code.",
+  "branch": "feat/task4-acceptance-criteria-6-financial-blocks",
+  "allowed_files": [
+    "apps/backend/src/accounting/bill-payment-gl.service.ts",
+    "apps/backend/src/accounting/bill-payment-gl.routes.ts",
+    "apps/backend/src/accounting/vendor-bill-payments.routes.ts"
+  ],
+  "acceptance": [
+    {
+      "kind": "code",
+      "assert": "bill-payment-gl.service.ts posts through the existing posting engine (postSourceTransaction) and writes NO new GL math."
+    },
+    {
+      "kind": "data",
+      "assert": "PROD count of accounting.bills with an open balance, and of accounting.bill_payments applied against them, per entity.",
+      "zero_count_means": "PENDING (data-empty) — NOT done, NOT a code defect. Recorded evidence 2026-07-12 was 0 open bills on TRANSP: the tie-out has never had anything to tie out. A code-presence-only classifier will print DONE here; that is the fake-green this criterion exists to block.",
+      "verified_by": "GUARD (RLS-immune probe, per-entity GUC; a 0 must be re-run with a positive control before it is treated as a real negative)"
+    },
+    {
+      "kind": "live",
+      "assert": "One real bill payment ties out end-to-end: bill -> bill_payment -> balanced JE -> GL/register, debits equal credits, and the AP subledger agrees with the GL control account to the cent."
+    }
+  ],
+  "linkage": "accounting.bills -> accounting.bill_payments -> accounting.journal_entries -> catalogs.accounts (AP control) <-> mdata.vendors <-> banking.bank_transactions <-> audit.row_changes. Every diesel/roadside expense must FK to a load.",
+  "db_required": true,
+  "guard_required": true,
+  "note": "FINANCIAL CLUSTER — owner ratifies; GUARD verifies against prod. Registration only. This block needs a GUARD-verified override row so the report stops reading DONE off pure code presence while the tables are empty."
+}
