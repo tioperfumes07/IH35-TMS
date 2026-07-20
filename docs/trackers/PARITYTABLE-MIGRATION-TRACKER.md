@@ -574,7 +574,7 @@ verify-step 1035.
 | `apps/frontend/src/pages/drivers/DriverImportModal.tsx` | pending |
 | `apps/frontend/src/pages/drivers/DriverLayoverHistory.tsx` | pending |
 | `apps/frontend/src/pages/drivers/DriversTable.tsx` | pending |
-| `apps/frontend/src/pages/drivers/components/DriverDqfPanel.tsx` | pending |
+| `apps/frontend/src/pages/drivers/components/DriverDqfPanel.tsx` | PR pending — ParityTable + ListErrorState (guard step 1071) |
 
 ### pages/factoring (9) — financial-hold
 
