@@ -320,7 +320,7 @@ verify-step 1035.
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/components/reports/FrequentlyRunTable.tsx` | migrated (qbo-parity-a1) |
-| `apps/frontend/src/components/reports/LaneDetailModal.tsx` | pending |
+| `apps/frontend/src/components/reports/LaneDetailModal.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/reports/ifta/Step1MileageReview.tsx` | pending |
 | `apps/frontend/src/components/reports/ifta/Step2FuelReview.tsx` | pending |
 | `apps/frontend/src/components/reports/ifta/Step3JurisdictionCalc.tsx` | pending |
@@ -894,3 +894,13 @@ Guard: `scripts/verify-trailer-reefer-uses-paritytable.mjs` via verify-step 1044
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/components/trailer-profile/TrailerReeferSection.tsx` | components/trailer-profile |
+
+## qbo-parity-a1 — LaneDetailModal (this PR)
+Reports lane profitability drill-down loads grid was a hand-rolled `<table>`. Migrated to
+shared `ParityTable` (sort + resize + gear). Columns Load / Date / Revenue / Driver pay /
+Fuel / Maint. / Profit / Miles / Margin preserved 1:1; Load stays an `EntityLink`. Guard:
+`scripts/verify-lane-detail-modal-uses-paritytable.mjs` via verify-step **1049**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/reports/LaneDetailModal.tsx` | components/reports |
