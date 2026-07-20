@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
@@ -19,16 +18,29 @@ const TABS: { id: HubTab; label: string }[] = [
   { id: "scheduler", label: "Driver Scheduler" },
   { id: "leave_requests", label: "Leave Requests" },
 ];
+const HUB_TAB_IDS = new Set<string>(TABS.map((t) => t.id));
+
+function parseDriverHubTab(raw: string | null): HubTab {
+  if (raw && HUB_TAB_IDS.has(raw)) return raw as HubTab;
+  return "overview";
+}
 
 export function DriverHubPage() {
   const { selectedCompanyId } = useCompanyContext();
   const { user } = useAuth();
   const companyId = selectedCompanyId ?? "";
   const canReview = REVIEW_ROLES.includes(String(user?.role ?? ""));
-  const [tab, setTab] = useState<HubTab>("overview");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = parseDriverHubTab(searchParams.get("tab"));
+  const setTab = (next: HubTab) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "overview") params.delete("tab");
+    else params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-testid="driver-hub-page">
       <PageHeader
         title="Driver Hub"
         subtitle="Driver overview, scheduling, and leave"
