@@ -5,7 +5,7 @@ import { ListErrorState } from "../components/ListErrorState";
 import { customerQualityKind, customerQualityClass } from "../lib/quality-badge";
 import { formatUsdCents } from "../lib/money";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { listInvoices } from "../api/accounting";
 import { ApiError } from "../api/client";
 import { createCustomer, getCustomerBillingSummary, listCustomers, listPaymentTermOptions, type Customer, type CustomerBillingSummary } from "../api/mdata";
@@ -58,6 +58,12 @@ const CUSTOMER_TABS: Array<{ id: CustomerTabId; label: string }> = [
   { id: "conversations", label: "Conversations" },
   { id: "coi_requests", label: "COI Requests" },
 ];
+const CUSTOMER_TAB_IDS = new Set<string>(CUSTOMER_TABS.map((t) => t.id));
+
+export function parseCustomerDetailTab(raw: string | null): CustomerTabId {
+  if (raw && CUSTOMER_TAB_IDS.has(raw)) return raw as CustomerTabId;
+  return "transaction_list";
+}
 
 function fmtMoney(cents: number | null | undefined) {
   return formatUsdCents(cents);
@@ -169,7 +175,14 @@ export function CustomersPage() {
   const setSortByName = (value: "name_asc" | "name_desc") => {
     onUrlSortChange("name", value === "name_desc" ? "desc" : "asc");
   };
-  const [activeTab, setActiveTab] = useState<CustomerTabId>("transaction_list");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = parseCustomerDetailTab(searchParams.get("tab"));
+  const setActiveTab = (next: CustomerTabId) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "transaction_list") params.delete("tab");
+    else params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
