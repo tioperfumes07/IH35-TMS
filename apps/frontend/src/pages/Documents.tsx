@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getDownloadUrl, listFileCategories, listFiles, type DocsFile } from "../api/docs";
 import { listUsers } from "../api/identity";
 import { useAuth } from "../auth/useAuth";
+import { useCompanyContext } from "../contexts/CompanyContext";
 import { Button } from "../components/Button";
 import { Combobox } from "../components/Combobox";
 import { DataTable } from "../components/DataTable";
@@ -35,6 +36,7 @@ function entityLabel(file: DocsFile) {
 
 export function DocumentsPage() {
   const { user } = useAuth();
+  const { selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [entityTypeFilter, setEntityTypeFilter] = useState<string | null>("all");
@@ -132,6 +134,7 @@ export function DocumentsPage() {
       />
       {uploadOpen ? (
         <UploadModal
+          operatingCompanyId={selectedCompanyId ?? undefined}
           onClose={() => setUploadOpen(false)}
           onUploadSuccess={() => {
             setUploadOpen(false);
