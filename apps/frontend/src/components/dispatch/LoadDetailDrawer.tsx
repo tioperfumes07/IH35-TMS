@@ -155,6 +155,8 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
   });
 
   const load = loadQuery.data;
+  // d-02: Cancel Load is only for persisted, non-cancelled loads — unsaved/loading/not-found get plain Close.
+  const canCancelPersistedLoad = Boolean(load && load.status !== "cancelled");
   const assignmentHistoryQuery = useQuery({
     queryKey: ["dispatch", "assignment-history", loadId, load?.operating_company_id],
     queryFn: () => getDispatchAssignmentHistory(loadId as string, load?.operating_company_id as string),
@@ -702,9 +704,15 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
         </div>
 
         <footer className="sticky bottom-0 flex items-center justify-between border-t border-gray-200 bg-white p-4">
-          <Button type="button" variant="danger" size="sm" onClick={() => setCancelOpen(true)} disabled={!load || load.status === "cancelled"}>
-            Cancel Load
-          </Button>
+          {canCancelPersistedLoad ? (
+            <Button type="button" variant="danger" size="sm" onClick={() => setCancelOpen(true)}>
+              Cancel Load
+            </Button>
+          ) : (
+            <Button type="button" variant="secondary" size="sm" onClick={onClose}>
+              Close
+            </Button>
+          )}
           <div className="flex gap-2">
             <Button
               type="button"
