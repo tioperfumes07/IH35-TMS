@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -8,10 +9,24 @@ import { LiveDutyTab } from "./tabs/LiveDutyTab";
 import { UnidentifiedTab } from "./tabs/UnidentifiedTab";
 import { ViolationsTab } from "./tabs/ViolationsTab";
 
+const ELD_TAB_IDS = new Set<string>(ELD_TABS_CONFIG.map((tab) => tab.id));
+
+export function parseEldTab(raw: string | null): EldTabId {
+  if (raw && ELD_TAB_IDS.has(raw)) return raw as EldTabId;
+  return "live-duty";
+}
+
 export function EldPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [activeTab, setActiveTab] = useState<EldTabId>("live-duty");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = parseEldTab(searchParams.get("tab"));
+  const setActiveTab = (next: EldTabId) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "live-duty") params.delete("tab");
+    else params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
   const activeConfig = useMemo(
     () => ELD_TABS_CONFIG.find((tab) => tab.id === activeTab) ?? ELD_TABS_CONFIG[0],
     [activeTab],
