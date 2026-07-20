@@ -1,17 +1,34 @@
 {
   "block_id": "0441-mod11-deadhead-phantom-fuel-columns",
-  "status": "PARTIAL",
-  "classification": "FINANCIAL",
-  "phase": "tier2",
-  "source": "MASTER-6 authored dispatch (05-TIER2-BLOCKS)",
-  "source_file": "0441-mod11-deadhead-phantom-fuel-columns.txt",
+  "branch": "fix/0441-mod11-deadhead-phantom-fuel-columns",
+  "status": "IN_PROGRESS",
+  "classification": "ADDITIVE",
+  "phase": "ops-nonstop",
+  "task": "0441-mod11: deadhead fuel cost uses real fuel.fuel_transactions columns; remove allowlist phantoms; no silent .catch",
+  "source": "CODER-BUILD-INSTRUCTIONS-2026-07-19.md",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    ".block-ready/0441-mod11-deadhead-phantom-fuel-columns.json",
+    "apps/backend/src/reports/deadhead.service.ts",
+    "apps/backend/__tests__/reports/deadhead.test.ts",
+    "scripts/verify-sql-column-existence.allowlist.json",
+    "scripts/verify-deadhead-fuel-columns-real.mjs",
+    "scripts/verify-steps/1013-verify-deadhead-fuel-columns-real.mjs"
   ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "hold": false,
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "deadhead.service.ts uses ft.transaction_at + SUM(ft.total_cost) with report totalMiles; no ft.total_miles/transaction_date; no blanket .catch"
+    },
+    {
+      "check": "deadhead phantom keys removed from verify-sql-column-existence.allowlist.json; column-existence guard PASS"
+    },
+    {
+      "check": "scripts/verify-deadhead-fuel-columns-real.mjs PASS (+ --selftest); wired via verify-steps/1013"
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "GATED-no read-only report query fix. TARGET_TABLES already includes fuel.fuel_transactions (#2839); this removes the allowlisted phantom + silent catch. No migration."
 }
