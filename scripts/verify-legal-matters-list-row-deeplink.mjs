@@ -35,8 +35,8 @@ export function check({ listPage, entityLink, manifest }) {
     if (!/onRowClick\s*=/.test(listPage)) {
       f.push(`${LIST_PAGE}: must wire ParityTable onRowClick to open matter detail`);
     }
-    if (!/navigate\s*\(\s*[`'"]\/legal\/matters\/\$\{/.test(listPage)) {
-      f.push(`${LIST_PAGE}: onRowClick must navigate to /legal/matters/\${row.id}`);
+    if (!/matterDetailPath\(/.test(listPage) || !/if \(path\) navigate\(path\)/.test(listPage)) {
+      f.push(`${LIST_PAGE}: onRowClick must navigate via matterDetailPath UUID guard`);
     }
     if (!/kind\s*=\s*["']matter["']/.test(listPage) || !/EntityLink/.test(listPage)) {
       f.push(`${LIST_PAGE}: matter number column must use EntityLink kind="matter"`);
@@ -83,7 +83,13 @@ if (process.argv.includes("--selftest")) {
     import { useNavigate } from "react-router-dom";
     import { EntityLink } from "../../../components/shared/EntityLink";
     <EntityLink kind="matter" id={String(row.id ?? "")} label={String(row.matter_number ?? "")} />
-    onRowClick={(row) => navigate(\`/legal/matters/\${String(row.id ?? "")}\`)}
+    onRowClick={(row) => {
+      const path = matterDetailPath(String(row.id ?? ""));
+      if (path) navigate(path);
+    }}
+    function matterDetailPath(id) {
+      return \`/legal/matters/\${id}\`;
+    }
   `;
   const goodEntity = `
     case "matter":
@@ -96,7 +102,7 @@ if (process.argv.includes("--selftest")) {
     [
       "missing onRowClick caught",
       check({
-        listPage: goodList.replace(/onRowClick\s*=\{[^}]+\}/, ""),
+        listPage: goodList.replace("onRowClick={(row)", "onRowClickDisabled={(row)"),
         entityLink: goodEntity,
         manifest: goodManifest,
       }).some((x) => x.includes("onRowClick")),
@@ -104,10 +110,10 @@ if (process.argv.includes("--selftest")) {
     [
       "missing navigate path caught",
       check({
-        listPage: goodList.replace("/legal/matters/", "/legal/matters"),
+        listPage: goodList.replace("if (path) navigate(path)", "if (path) return"),
         entityLink: goodEntity,
         manifest: goodManifest,
-      }).some((x) => x.includes("/legal/matters/${row.id}")),
+      }).some((x) => x.includes("matterDetailPath UUID guard")),
     ],
     [
       "missing EntityLink matter caught",

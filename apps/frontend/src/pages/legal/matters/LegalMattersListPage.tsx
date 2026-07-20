@@ -11,6 +11,13 @@ import { LegalModuleTabs } from "../LegalModuleTabs";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { formatDateUS } from "../../../lib/formatDate";
 
+const MATTER_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function matterDetailPath(id: string): string | null {
+  const normalized = id.trim();
+  return MATTER_ID_RE.test(normalized) ? `/legal/matters/${normalized}` : null;
+}
+
 function daysUntil(dateStr: unknown) {
   if (!dateStr || typeof dateStr !== "string") return null;
   const d = new Date(dateStr);
@@ -100,7 +107,10 @@ export function LegalMattersListPage() {
           rows={rows}
           columns={columns}
           rowKey={(row) => String(row.id ?? "")}
-          onRowClick={(row) => navigate(`/legal/matters/${String(row.id ?? "")}`)}
+          onRowClick={(row) => {
+            const path = matterDetailPath(String(row.id ?? ""));
+            if (path) navigate(path);
+          }}
           // Settled-only empty (LIST-EMPTY-1 invariant): see LegalPoliciesPage for the same pattern.
           loading={listQuery.isPending || (listQuery.isFetching && rows.length === 0)}
           storageKey="legal-matters"
