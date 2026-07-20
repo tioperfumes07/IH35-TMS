@@ -1,0 +1,25 @@
+{
+  "block_id": "995-program-tracker-tabs-url-sync",
+  "branch": "fix/program-tracker-tabs-url-sync-v2",
+  "phase": "OPS-FE",
+  "task": "Program Tracker tabs URL sync via useSearchParams (?tab=)",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/995-program-tracker-tabs-url-sync.json",
+    "apps/frontend/src/pages/program/ProgramTrackerPage.tsx",
+    "scripts/verify-program-tracker-tabs-url-sync.mjs",
+    "scripts/verify-steps/995-verify-program-tracker-tabs-url-sync.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [
+    "verify-program-tracker-tabs-url-sync"
+  ],
+  "status": "IN_PROGRESS",
+  "acceptance": [
+    {
+      "check": "ProgramTrackerPage syncs Pending/In Progress/Completed/Sequence/By Module to ?tab=; default pending omits param; scripts/verify-program-tracker-tabs-url-sync.mjs PASS."
+    }
+  ]
+}

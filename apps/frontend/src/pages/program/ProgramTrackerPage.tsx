@@ -1,11 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
 import { ListErrorState } from "../../components/ListErrorState";
 import { getProgramTracker, type ProgramTracker, type TrackerPhase, type TrackerBlockRow, type Tab } from "../../api/program-tracker";
 
 const CT = "America/Chicago";
+
+/** UI tabs on Program Tracker (API `Tab` also has `not_counted`, which is not a sub-nav tab). */
+type TrackerTabId = "pending" | "in_progress" | "completed" | "sequence" | "modules";
+const TRACKER_TAB_IDS = new Set<string>(["pending", "in_progress", "completed", "sequence", "modules"]);
+
+export function parseProgramTrackerTab(raw: string | null): TrackerTabId {
+  if (raw && TRACKER_TAB_IDS.has(raw)) return raw as TrackerTabId;
+  return "pending";
+}
 
 // Real Central-Time stamps only — never hardcoded/now() (§0). All timestamps come from the server; unknown → "—".
 function ctDateTime(iso: string | null | undefined): string {
@@ -232,8 +242,15 @@ function ByModuleView({ data, moved }: { data: ProgramTracker; moved: Set<string
 }
 
 function TrackerBody({ data, moved }: { data: ProgramTracker; moved: Set<string> }) {
-  const [tab, setTab] = useState<Tab | "sequence" | "modules">("pending");
-  const tabs: { key: Tab | "sequence" | "modules"; label: string; count?: number }[] = [
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = parseProgramTrackerTab(searchParams.get("tab"));
+  const setTab = (next: TrackerTabId) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "pending") params.delete("tab");
+    else params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
+  const tabs: { key: TrackerTabId; label: string; count?: number }[] = [
     { key: "pending", label: "Pending", count: data.view_counts.pending },
     { key: "in_progress", label: "In Progress", count: data.view_counts.in_progress },
     { key: "completed", label: "Completed", count: data.view_counts.completed },
