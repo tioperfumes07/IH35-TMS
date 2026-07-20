@@ -17,6 +17,7 @@ import {
   type InsurancePolicyUnit,
 } from "../../api/insurance";
 import { Button } from "../../components/Button";
+import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatUsdCents } from "../../lib/money";
@@ -178,17 +179,12 @@ export function PolicyDetail() {
 
   return (
     <div className="space-y-4">
-      <header className="rounded-sm border border-gray-200 bg-white p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <button type="button" className="text-xs text-slate-700 underline" onClick={() => navigate("/safety/insurance/policies")}>
-              Back to policies
-            </button>
-            <h2 className="mt-1 text-lg font-semibold text-slate-900">Policy {policy.policy_number}</h2>
-            <p className="mt-1 text-xs text-slate-600">
-              {policy.insurer_name} · {policy.coverage_type} · {policy.status}
-            </p>
-          </div>
+      <PageHeader
+        backHref="/safety/insurance/policies"
+        breadcrumb={["Insurance", "Policies", policy.policy_number]}
+        title={`Policy ${policy.policy_number}`}
+        subtitle={`${policy.insurer_name} · ${policy.coverage_type} · ${policy.status}`}
+        actions={
           <div className="flex items-center gap-2">
             <Button size="sm" variant="secondary" onClick={openEditPanel}>
               Edit / Update
@@ -197,54 +193,54 @@ export function PolicyDetail() {
               Archive
             </Button>
           </div>
-        </div>
+        }
+      />
 
-        {editing ? (
-          <div className="mt-3 grid gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3 md:grid-cols-4">
-            <label className="text-xs font-semibold text-slate-600">
-              Status
-              <select
-                className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                value={status}
-                onChange={(event) => setStatus(event.target.value as InsurancePolicyStatus)}
-              >
-                <option value="active">Active</option>
-                <option value="pending">Pending</option>
-                <option value="expired">Expired</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </label>
-            <label className="text-xs font-semibold text-slate-600">
-              Effective date
-              <DatePicker
-                className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                value={effectiveDate}
-                onChange={(next) => setEffectiveDate(next)}
-              />
-            </label>
-            <label className="text-xs font-semibold text-slate-600">
-              Expiry date
-              <DatePicker
-                className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                value={expiryDate}
-                onChange={(next) => setExpiryDate(next)}
-              />
-            </label>
-            <div className="flex items-end gap-2">
-              <Button
-                size="sm"
-                loading={updateMutation.isPending}
-                onClick={() => updateMutation.mutate({ status, effective_date: effectiveDate, expiry_date: expiryDate })}
-              >
-                Save
-              </Button>
-              <Button size="sm" variant="tertiary" onClick={() => setEditing(false)}>
-                Cancel
-              </Button>
-            </div>
+      {editing ? (
+        <div className="grid gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3 md:grid-cols-4">
+          <label className="text-xs font-semibold text-slate-600">
+            Status
+            <select
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              value={status}
+              onChange={(event) => setStatus(event.target.value as InsurancePolicyStatus)}
+            >
+              <option value="active">Active</option>
+              <option value="pending">Pending</option>
+              <option value="expired">Expired</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </label>
+          <label className="text-xs font-semibold text-slate-600">
+            Effective date
+            <DatePicker
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              value={effectiveDate}
+              onChange={(next) => setEffectiveDate(next)}
+            />
+          </label>
+          <label className="text-xs font-semibold text-slate-600">
+            Expiry date
+            <DatePicker
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              value={expiryDate}
+              onChange={(next) => setExpiryDate(next)}
+            />
+          </label>
+          <div className="flex items-end gap-2">
+            <Button
+              size="sm"
+              loading={updateMutation.isPending}
+              onClick={() => updateMutation.mutate({ status, effective_date: effectiveDate, expiry_date: expiryDate })}
+            >
+              Save
+            </Button>
+            <Button size="sm" variant="tertiary" onClick={() => setEditing(false)}>
+              Cancel
+            </Button>
           </div>
-        ) : null}
-      </header>
+        </div>
+      ) : null}
 
       <section className="rounded-sm border border-gray-200 bg-white p-4">
         <h3 className="text-sm font-semibold text-slate-900">Units Assigned</h3>
