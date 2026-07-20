@@ -21,9 +21,9 @@ sort, and the lock-account control — never drop or reorder.
 ## Rollup
 | Status | Count |
 | --- | --- |
-| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable + LoadHistoryTab + vehicle PlatesTable + vehicle ComplianceSection + DriverDaySummaryCard + StopReasoningTable + EntityAuditHistoryTab + AuditTrailPage) | 24 |
+| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable + LoadHistoryTab + vehicle PlatesTable + vehicle ComplianceSection + DriverDaySummaryCard + StopReasoningTable + EntityAuditHistoryTab + AuditTrailPage + trailer PlatesTable) | 25 |
 | financial-hold (Jorge-gated) | 99 |
-| pending (non-financial, future batches) | 176 |
+| pending (non-financial, future batches) | 175 |
 | **hand-rolled total (original)** | **300** |
 
 > Note: ParityTable was already consumed by ~16 surfaces before this batch (not counted above — those were never hand-rolled).
@@ -336,7 +336,7 @@ verify-step 1035.
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/components/trailer-profile/PlatesTable.tsx` | pending |
+| `apps/frontend/src/components/trailer-profile/PlatesTable.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/trailer-profile/TrailerReeferSection.tsx` | pending |
 
 ### components/vehicle-profile (3 remaining)
@@ -840,16 +840,16 @@ Guard: `scripts/verify-error-monitor-uses-paritytable.mjs` via verify-step 1036.
 | --- | --- |
 | `apps/frontend/src/pages/admin/ErrorMonitor.tsx` | pages/admin |
 
-## qbo-parity-a1 — RecentActivitySection (this PR)
-Vehicle profile recent-activity feed (loads / status changes / work orders) was a
-hand-rolled `<table>` with manual Prev/Next paging. Migrated to shared `ParityTable`
-(sort + resize + gear + built-in paging); tab filterBar + Record preview column +
-`No records.` empty text preserved. Guard:
-`scripts/verify-vehicle-recent-activity-uses-paritytable.mjs` via verify-step 1030.
+## qbo-parity-a1 — trailer-profile PlatesTable (this PR)
+Trailer profile plates grid was a hand-rolled `<table>` (Country/Jurisdiction/Plate/
+Expiration). Migrated to shared `ParityTable` (sort + resize + gear + CSV export).
+`tp-plates-table` testid preserved. Guard:
+`scripts/verify-trailer-plates-uses-paritytable.mjs` via verify-step 1039.
 
 | File | Module |
 | --- | --- |
-| `apps/frontend/src/components/vehicle-profile/RecentActivitySection.tsx` | components/vehicle-profile |
+| `apps/frontend/src/components/trailer-profile/PlatesTable.tsx` | components/trailer-profile |
+
 ## qbo-parity-a1 — DriverDaySummaryCard (home)
 Home "Driver day-summaries" grid was a hand-rolled `<table>` with a bare red outage
 banner. Migrated to shared `ParityTable` (sort + resize + gear) and replaced the
