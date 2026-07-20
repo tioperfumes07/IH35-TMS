@@ -34,6 +34,7 @@ import { FaroCSVUploadWidget } from "../../components/factoring/FaroCSVUploadWid
 import { DriverAutocomplete } from "../../components/factoring/DriverAutocomplete";
 import { VendorMergeDiffPreview } from "../../components/factoring/VendorMergeDiffPreview";
 import { DeactivateFactorConfirmModal } from "../../components/factoring/DeactivateFactorConfirmModal";
+import { DuplicateVendorsBanner } from "../../components/factoring/DuplicateVendorsBanner";
 import { apiRequest } from "../../api/client";
 import { FACTORING_TAB_PATH, factoringTabFromPath } from "../../router/route-manifest";
 
@@ -238,6 +239,8 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
           </div>
         }
       />
+
+      {companyId ? <DuplicateVendorsBanner companyId={companyId} /> : null}
 
       <div className="grid gap-2 md:grid-cols-4">
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
