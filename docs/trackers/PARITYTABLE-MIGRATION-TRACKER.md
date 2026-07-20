@@ -850,6 +850,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/units/UnitPermitsTab.tsx` | pending |
 | `apps/frontend/src/pages/units/UnitDriverHistoryStrip.tsx` | pending |
 | `apps/frontend/src/pages/units/UnitTollTagsTab.tsx` | pending |
+| `apps/frontend/src/pages/units/UnitTollTagsTab.tsx` | migrated |
 
 ### pages/vendors (1)
 
@@ -1296,3 +1297,14 @@ critical expiry alert, and Archive action preserved. Guard:
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/units/UnitPermitsTab.tsx` | pages/units |
+## qbo-parity-a1 — UnitTollTagsTab (this PR)
+Unit detail toll-tags tab was a hand-rolled `<table>` with manual loading/empty
+states. Migrated to shared `ParityTable` (sort + resize + gear); `ListErrorState` +
+Retry on query failure (no false-empty on outage). Columns Network / Tag # /
+Activated / Balance / Monthly / Status preserved 1:1; low-balance amber highlight +
+Low badge and TxTAG · EZ-Pass · I-Pass header preserved. Guard:
+`scripts/verify-unit-toll-tags-uses-paritytable.mjs` via verify-step **1091**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/units/UnitTollTagsTab.tsx` | pages/units |
