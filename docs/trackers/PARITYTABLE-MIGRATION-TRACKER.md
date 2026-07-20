@@ -21,7 +21,7 @@ sort, and the lock-account control — never drop or reorder.
 ## Rollup
 | Status | Count |
 | --- | --- |
-| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationLogPanel) | 14 |
+| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel) | 15 |
 | financial-hold (Jorge-gated) | 99 |
 | pending (non-financial, future batches) | 187 |
 | **hand-rolled total (original)** | **300** |
@@ -103,6 +103,16 @@ Recipient/Status). Migrated to shared `ParityTable` (sort + resize + gear + CSV 
 | --- | --- |
 | `apps/frontend/src/components/compliance/NotificationLogPanel.tsx` | components/compliance |
 
+## qbo-parity-a1 — NotificationRulesPanel (this PR)
+Compliance notification rules grid: hand-rolled `<table>` (Credential/Scope/Days Before/
+Channels/Recipients + Archive). Migrated to shared `ParityTable` (sort + resize + gear).
+`compliance-rules-panel` testid preserved. Guard:
+`scripts/verify-notification-rules-uses-paritytable.mjs` via verify-step 1024.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/compliance/NotificationRulesPanel.tsx` | components/compliance |
+
 ## Remaining hand-rolled inventory (by module)
 
 ### components/DataTable.tsx (1)
@@ -154,6 +164,9 @@ Recipient/Status). Migrated to shared `ParityTable` (sort + resize + gear + CSV 
 | --- | --- |
 | `apps/frontend/src/components/compliance/NotificationLogPanel.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/compliance/NotificationRulesPanel.tsx` | pending |
+
+| `apps/frontend/src/components/compliance/NotificationLogPanel.tsx` | pending |
+| `apps/frontend/src/components/compliance/NotificationRulesPanel.tsx` | migrated (qbo-parity-a1) |
 
 ### components/customers (1)
 
