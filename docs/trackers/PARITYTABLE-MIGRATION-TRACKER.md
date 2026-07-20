@@ -770,7 +770,7 @@ verify-step 1035.
 | `apps/frontend/src/pages/safety/IdvrPage.tsx` | pending |
 | `apps/frontend/src/pages/safety/IntegrityAlertsPage.tsx` | pending |
 | `apps/frontend/src/pages/safety/InternalFinesPage.tsx` | pending |
-| `apps/frontend/src/pages/safety/PositionHistoryPage.tsx` | pending |
+| `apps/frontend/src/pages/safety/PositionHistoryPage.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/pages/safety/SafetyEventsPage.tsx` | pending |
 | `apps/frontend/src/pages/safety/components/IntegrityAlertsTab.tsx` | pending |
 | `apps/frontend/src/pages/safety/components/SafetyEventsTable.tsx` | pending |
@@ -1113,3 +1113,14 @@ Edit/Save/Cancel/Deactivate unchanged. Guard:
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/insurance/TypeCatalogAdmin.tsx` | pages/insurance |
+## qbo-parity-a1 — PositionHistoryPage (this PR)
+Safety Integrity position history was a hand-rolled `<table>` plus a separate mobile card
+layout with manual loading/empty rows. Migrated to shared `ParityTable` (sort + resize +
+gear + CSV export); `ListErrorState` + Retry on outage. Columns Timestamp / Action / Unit /
+Position / Part / Actor / Notes preserved 1:1; unit/action filters + server Previous/Next
+pagination preserved. Guard: `scripts/verify-position-history-uses-paritytable.mjs` via
+verify-step **1069**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/safety/PositionHistoryPage.tsx` | pages/safety |

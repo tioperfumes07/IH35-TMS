@@ -1,0 +1,28 @@
+{
+  "block_id": "qbo-parity-a1-position-history-paritytable",
+  "branch": "fix/position-history-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable + ListErrorState)",
+  "phase": "SAFETY-FE",
+  "task": "Migrate Safety PositionHistoryPage from hand-rolled <table> + mobile cards to shared ParityTable (sort/resize/gear); add ListErrorState on query failure; preserve unit/action filters + server Previous/Next pagination. Guard + verify-step 1069 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + qbo-parity-a1",
+  "source_file": "qbo-parity-a1-position-history-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-position-history-paritytable.json",
+    "apps/frontend/src/pages/safety/PositionHistoryPage.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/entity-link-adoption-baseline.json",
+    "scripts/verify-position-history-uses-paritytable.mjs",
+    "scripts/verify-steps/1069-verify-position-history-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "PositionHistoryPage.tsx uses ParityTable (no hand-rolled <table>/<thead>); ListErrorState on failure; columns Timestamp/Action/Unit/Position/Part/Actor/Notes + filters + Previous/Next preserved; verify-position-history-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1069 wired (Rule 17); tracker marks PositionHistoryPage migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 — PositionHistoryPage surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17). verify-step 1069."
+}
