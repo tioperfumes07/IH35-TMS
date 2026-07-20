@@ -21,9 +21,9 @@ sort, and the lock-account control — never drop or reorder.
 ## Rollup
 | Status | Count |
 | --- | --- |
-| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable) | 12 |
+| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage) | 13 |
 | financial-hold (Jorge-gated) | 99 |
-| pending (non-financial, future batches) | 189 |
+| pending (non-financial, future batches) | 188 |
 | **hand-rolled total (original)** | **300** |
 
 > Note: ParityTable was already consumed by ~16 surfaces before this batch (not counted above — those were never hand-rolled).
@@ -82,6 +82,16 @@ Guard: `scripts/verify-asset-list-table-uses-paritytable.mjs` via verify-step 10
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/components/assets/AssetListTable.tsx` | components/assets |
+
+## qbo-parity-a1 — ActivityLogPage (this PR)
+Owner/SuperAdmin audit activity stream was a hand-rolled `<table>` with a bare red outage banner.
+Migrated to shared `ParityTable` (sort + resize + gear + `renderExpanded` full payload JSON) and
+replaced the ad-hoc error div with `ListErrorState` + Retry. Columns preserved 1:1.
+Guard: `scripts/verify-activity-log-uses-paritytable.mjs` via verify-step 1023.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/admin/ActivityLogPage.tsx` | pages/admin |
 
 ## Remaining hand-rolled inventory (by module)
 
@@ -316,7 +326,7 @@ Guard: `scripts/verify-asset-list-table-uses-paritytable.mjs` via verify-step 10
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/admin/ActivityLogPage.tsx` | pending |
+| `apps/frontend/src/pages/admin/ActivityLogPage.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/pages/admin/ErrorMonitor.tsx` | pending |
 | `apps/frontend/src/pages/admin/LaunchToggles.tsx` | pending |
 | `apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx` | pending |

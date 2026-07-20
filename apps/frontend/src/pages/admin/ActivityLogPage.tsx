@@ -1,8 +1,10 @@
-import { Fragment, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAdminActivity, type AdminActivityItem } from "../../api/admin-activity";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function formatEntity(row: AdminActivityItem): string {
   const type = row.entity_type?.trim();
@@ -12,6 +14,44 @@ function formatEntity(row: AdminActivityItem): string {
   if (id) return id;
   return "—";
 }
+
+const COLUMNS: Array<ParityColumn<AdminActivityItem>> = [
+  {
+    key: "created_at",
+    label: "Time",
+    sortable: true,
+    sortValue: (row) => new Date(row.created_at).getTime(),
+    render: (row) => (
+      <span className="whitespace-nowrap text-gray-800">{new Date(row.created_at).toLocaleString()}</span>
+    ),
+  },
+  {
+    key: "actor_email",
+    label: "Actor",
+    sortable: true,
+    sortValue: (row) => row.actor_email ?? row.actor_user_id ?? "",
+    render: (row) => <span className="text-gray-800">{row.actor_email ?? row.actor_user_id ?? "—"}</span>,
+  },
+  {
+    key: "action",
+    label: "Action",
+    sortable: true,
+    render: (row) => <span className="font-mono text-[11px] text-gray-900">{row.action}</span>,
+  },
+  {
+    key: "entity_type",
+    label: "Entity",
+    sortable: true,
+    sortValue: (row) => formatEntity(row),
+    render: (row) => <span className="text-gray-800">{formatEntity(row)}</span>,
+  },
+  {
+    key: "payload_preview",
+    label: "Payload preview",
+    sortable: true,
+    render: (row) => <span className="font-mono text-[11px] text-gray-700">{row.payload_preview}</span>,
+  },
+];
 
 export function ActivityLogPage() {
   const auth = useAuth();
@@ -27,7 +67,6 @@ export function ActivityLogPage() {
     entityType: "",
     since: "",
   });
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const queryKey = useMemo(
     () => ["admin-activity", applied.actorUserId, applied.action, applied.entityType, applied.since],
@@ -133,55 +172,34 @@ export function ActivityLogPage() {
       </div>
 
       {activityQuery.isError ? (
-        <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-800">Failed to load activity log.</div>
-      ) : null}
-
-      <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full divide-y divide-gray-200 text-left text-xs">
-          <thead className="bg-gray-50 text-[11px] uppercase tracking-wide text-gray-600">
-            <tr>
-              <th className="px-3 py-2">Time</th>
-              <th className="px-3 py-2">Actor</th>
-              <th className="px-3 py-2">Action</th>
-              <th className="px-3 py-2">Entity</th>
-              <th className="px-3 py-2">Payload preview</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {rows.map((row) => {
-              const open = Boolean(expanded[row.id]);
-              return (
-                <Fragment key={row.id}>
-                  <tr className="cursor-pointer hover:bg-gray-50" onClick={() => setExpanded((prev) => ({ ...prev, [row.id]: !open }))}>
-                    <td className="whitespace-nowrap px-3 py-2 text-gray-800">{new Date(row.created_at).toLocaleString()}</td>
-                    <td className="px-3 py-2 text-gray-800">{row.actor_email ?? row.actor_user_id ?? "—"}</td>
-                    <td className="px-3 py-2 font-mono text-[11px] text-gray-900">{row.action}</td>
-                    <td className="px-3 py-2 text-gray-800">{formatEntity(row)}</td>
-                    <td className="px-3 py-2 font-mono text-[11px] text-gray-700">{row.payload_preview}</td>
-                  </tr>
-                  {open ? (
-                    <tr className="bg-gray-50">
-                      <td colSpan={5} className="px-3 py-3">
-                        <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Full payload (JSON)</div>
-                        <pre className="mt-2 max-h-[420px] overflow-auto whitespace-pre-wrap wrap-break-word rounded-sm border border-gray-200 bg-white p-3 text-[11px] text-gray-900">
-                          {JSON.stringify(row.payload ?? {}, null, 2)}
-                        </pre>
-                      </td>
-                    </tr>
-                  ) : null}
-                </Fragment>
-              );
-            })}
-            {!activityQuery.isLoading && rows.length === 0 ? (
-              <tr>
-                <td className="px-3 py-4 text-sm text-gray-600" colSpan={5}>
-                  No audit rows matched these filters.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+        <ListErrorState
+          title="Couldn't load activity log"
+          status={0}
+          message={(activityQuery.error as Error)?.message}
+          onRetry={() => void activityQuery.refetch()}
+        />
+      ) : (
+        <div className="overflow-auto rounded-sm border border-gray-200 bg-white p-2">
+          <ParityTable
+            rows={rows}
+            columns={COLUMNS}
+            rowKey={(row) => row.id}
+            loading={activityQuery.isLoading}
+            storageKey="admin-activity-log"
+            emptyText="No audit rows matched these filters."
+            tableTestId="admin-activity-log-table"
+            rowTestId={(row) => `admin-activity-log-row-${row.id}`}
+            renderExpanded={(row) => (
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Full payload (JSON)</div>
+                <pre className="mt-2 max-h-[420px] overflow-auto whitespace-pre-wrap wrap-break-word rounded-sm border border-gray-200 bg-white p-3 text-[11px] text-gray-900">
+                  {JSON.stringify(row.payload ?? {}, null, 2)}
+                </pre>
+              </div>
+            )}
+          />
+        </div>
+      )}
     </div>
   );
 }
