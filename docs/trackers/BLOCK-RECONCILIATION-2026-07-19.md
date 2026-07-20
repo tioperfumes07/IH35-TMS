@@ -2,20 +2,20 @@
 
 **DONE** = verified on main (branch merged or all signature files present).  **NEEDS-VERIFY** = weak signal (title-match / partial files / self-report), not trusted until GUARD confirms.  **PENDING** = needs build.  **PENDING (GATED)** = financial/locked, needs Jorge's gate first.
 
-**Verified against `origin/main` (9947 files) + 2630 merged PRs.** A block is **DONE only if its branch merged OR all its signature files are present on main** — those are the only evidence. Weak signals (PR-title token match, partial files, a doc's own "shipped/done" self-report, a prior hardcoded built-claim) are **NEEDS-VERIFY** — not trusted until GUARD confirms. Nothing reads as DONE that wasn't really verified.
+**Verified against `origin/main` (9977 files) + 2646 merged PRs.** A block is **DONE only if its branch merged OR all its signature files are present on main** — those are the only evidence. Weak signals (PR-title token match, partial files, a doc's own "shipped/done" self-report, a prior hardcoded built-claim) are **NEEDS-VERIFY** — not trusted until GUARD confirms. Nothing reads as DONE that wasn't really verified.
 
 ## Counts
 - **PENDING**: 6
 - **PENDING (GATED)**: 28
-- **NEEDS-VERIFY**: 61
-- **DONE**: 587
-- **AUDIT-NOTE**: 504
+- **NEEDS-VERIFY**: 62
+- **DONE**: 588
+- **AUDIT-NOTE**: 453
 
-## Universe — why 1186 blocks (the "456 vs 294 .block-ready" gap, explained)
+## Universe — why 1137 blocks (the "456 vs 294 .block-ready" gap, explained)
 The reconciler spans **5 sources**, de-duped by **unique block_id** and **excluding retired duplicates** — the block count is the union, **not** the raw `.block-ready` file count.
 - Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by UNIQUE block_id, EXCLUDING files with EXPLICIT retirement markers (_DUP/_STALE/_SUPERSEDED underscore suffixes, status superseded/duplicate/dup/stale, or superseded_by/duplicate_of). Hyphen descriptive …-stale/…-duplicate live defect IDs are NOT retired by filename alone. So the block count is neither the raw .block-ready file count nor inflated by duplicate/retired registrations.
-- **`.block-ready/*.json` files on disk:** 1363 (of which **350 retired** dup/stale/superseded are excluded → **1013 active**)
-- **By source (after de-dup):** .block-ready: 1012 · program: 61 · enterprise-29: 29 · accounting: 27 · gap-spec: 57
+- **`.block-ready/*.json` files on disk:** 1364 (of which **400 retired** dup/stale/superseded are excluded → **964 active**)
+- **By source (after de-dup):** .block-ready: 963 · program: 61 · enterprise-29: 29 · accounting: 27 · gap-spec: 57
 
 ## Delta — blocks added since 2026-06-16 (today's work, now counted)
 Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no new blocks were registered.
@@ -101,6 +101,7 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | CONN-1-plaid-reconcile-commit | NEEDS-VERIFY | 💰 | T1 |  | program | [verified 2026-07-12] code-guard passes + reuses the CHAIN-05-proven posting engine, but 0 reconciliation sessions on TR |
 | CONN-3-relay-internal-bank | NEEDS-VERIFY | 💰 | T1 | #2521 | program | PR #2521 title-match only, unverified |
 | consolidate-distributed-modules-fuel-tasks-fin | NEEDS-VERIFY | 💰 |  | #2453 | .block-ready | [verified 2026-07-12] agent: PR #2135 docs-only, no code/migration touched |
+| d-02-cancel-load-shown-on-unsaved-load | NEEDS-VERIFY | 💰 |  | #2778 | .block-ready | PR #2778 title-match only, unverified |
 | DOC-15-QBO-TOKEN-AUTOREFRESH | NEEDS-VERIFY | 💰 |  |  | .block-ready | [verified 2026-07-11] merged #2366; awaiting post-deploy hourly-tick refresh proof |
 | DOC-16-RECON-INPROCESS-SCHEDULER | NEEDS-VERIFY | 💰 |  | #2367 | .block-ready | [verified 2026-07-11] PR #2367; awaiting first accounting.recon_runs row |
 | f-02-jump-to-tab-nonstandard | NEEDS-VERIFY | 💰 |  | #2673 | .block-ready | PR #2673 title-match only, unverified |
@@ -168,6 +169,7 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | 0441-mod4-dispatch-ocr-queue-no-reprocess-ui | DONE | 💰 |  | #2664 | .block-ready | PR #2664 merged 2026-07-17 |
 | 0441-mod5-suspend-non-atomic | DONE |  |  |  | .block-ready | all 6 file(s) on main |
 | 0441-mod6-insurance-units-assets-id-mi_DISPATCH | DONE | 💰 |  | #2662 | .block-ready | PR #2662 merged 2026-07-17 |
+| 972-anomaly-alerts-url-sync | DONE |  |  | #2777 | .block-ready | PR #2777 merged 2026-07-20 |
 | A1-AUDIT-SPINE-LINK-COLUMNS | DONE | 💰 |  | #884 | .block-ready | PR #884 merged 2026-06-11 |
 | A2-AUDIT-EMIT-DISPATCH | DONE |  |  | #886 | .block-ready | [verified 2026-07-12] block own verify-*.mjs guard passes on main (built+wired) |
 | A3-AUDIT-EMIT-MAINTENANCE | DONE |  |  | #888 | .block-ready | [verified 2026-07-12] block own verify-*.mjs guard passes on main (built+wired) |
@@ -749,7 +751,6 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | 0010-f15-plaid-amex-wf-error-status | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0010-f2-unscoped-financial-tables | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0010-f3-rls-missing-force | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0010-f6-phantom-write-targets-whatsapp-sms-qbo | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0033-audit-schema-manifest-tool | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0033-verify-fk-integrity-guard | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0091-b1-3-bill-unit-allocation-delete-not-void_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -776,13 +777,11 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | 0091-m-lists-1 | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0091-m-lists-2 | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0091-m-woid-1 | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0091-repo-public | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0219-nested-modals | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0242-no-auto-customer-charge-on-cancellation | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0242-no-auto-equipment-log-on-transfer | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0242-no-auto-escrow-deduction-driver-fault-can | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0243-b1-2-factor-reserve-default-liability-fal | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0243-b3-1-legacy-wo-create-endpoint-malformed- | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0243-b3-3-fuel-g18-trigger-hard-delete-gap | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0243-c1-1-orphaned-payroll-settlement-engine | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0243-c1-3-three-dead-end-buttons | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -804,7 +803,6 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | 0243-g11-5-period-close-no-reopen_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0243-g11-7-factoring-reserve-two-place_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0243-g2-2-operating-company-id-trusted-raw-ten | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0243-g3-5-csp-report-only-samsara-placeholder- | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0243-g4-deploy-smoke-fixed-unit-test-owner | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0243-g4-idem1-money-routes-off-allowli_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0243-g4-tx1-source-gl-two-transactions_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -814,7 +812,6 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | 0243-g9-h1-settlement-double-pay-race | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0243-g9-h4-load-status-advisory-not-enforced | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0243-g9-m-eight-workflow-status-defects | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0243-h1-3-csp-report-only-no-healthcheckpath-b | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0243-h2-2-stale-backend-lockfile-unshipped-cve | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0243-h2-3-lucia-deprecated-auth-lib | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0243-h3-2-three-posting-flags-unprotected_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -841,7 +838,6 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | 0251-gap9-charge-line-audit-trail | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0252-audit136-hr-policy-tracking | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0252-audit139-performance-management | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0252-audit140-compensation-structure | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0252-audit141-benefits-administration | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0252-audit142-engagement-tracking | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0252-audit143-turnover-analysis | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -857,20 +853,9 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | 0257-audit-87 | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0257-audit-88 | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0258-audit-112 | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0270-no-auto-driver-status-from-safety-events | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0270-no-auto-driver-termination-walkoff-noshow | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0270-no-auto-equipment-log-update-duplicate | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0270-no-auto-escrow-deduction-safety-events | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0275-audit171-data-quality-monitoring | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0275-audit173-data-privacy-compliance | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0275-audit174-data-security-hardening | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0275-audit177-data-integration-monitoring | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0275-audit178-master-data-governance | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0275-audit181-data-lineage-tracking | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0275-audit182-data-profiling-system | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0275-audit183-data-catalog-system | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0275-audit184-data-dictionary-system | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0275-audit185-data-model-documentation | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0277-any-type-reports-library-routes | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0277-csrf-tokens-recommendation | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0277-error-swallowing-rollback-catch | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -886,7 +871,6 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | 0280-27-widget-audit-trail-logging | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0280-28-api-response-zod-validation | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0280-29-legacy-fallback-tests | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0280-30-error-context-detail | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0280-32-revenue-to-customer-linkage | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0280-42-wo-to-expense-flow | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0285-acct-gap2-no-auto-invoice-send | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -920,10 +904,8 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | 0441-mod12-docs-lowest-uuid-company-bug-live | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0441-mod12-eld-export-pdf-window-print | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0441-mod12-eld-module-fake-stub | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0441-mod12-eld-orphaned-under-safety-permanent | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0441-mod12-legal-no-reverse-drill-through | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0441-mod13-coa-merge-no-gl-repoint_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0441-mod13-compliance-structural-drift-fmcsa-u | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0441-mod13-compliance-tabs-local-usestate-not- | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0441-mod13-form425c-exhibit-c-opening-balance- | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0441-mod13-inventory-accounting-none_DESIGN | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -958,10 +940,8 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | 0441-mod5-settlements-card-deprecated-table | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0441-mod5-teams-tab-unreachable | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0441-mod6-accident-edit-500-status-silent-fail | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0441-mod6-accident-police-claim-numbers-unboun | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0441-mod6-damage-insurance-worker-unregistered | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0441-mod6-hos-create-violation-mislabeled-link | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0441-mod6-hos-dashboard-silent-per-driver-catc | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0441-mod6-hos-exceptions-archived-stub | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0441-mod6-hos-violations-source-enum-mismatch | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0441-mod6-hos-violations-void-hardcoded-reason | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -981,7 +961,6 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | 0441-mod8-tx-fields-captured-not-sent | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0441-mod9-coi-duplicated-feature-unequal | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0441-mod9-create-trailer-no-manual-path | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0441-mod9-create-unit-only-via-maintenance-veh | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0441-mod9-customer-taxonomy-mismatch | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0441-mod9-customers-list-12-tabs-9-stubs | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0441-mod9-fleet-insurance-summary-never-render | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -1003,11 +982,9 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | 0473-2-5-trial-balance-002-cosmetic_CLEANUP | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0473-2-7-bank-transactions-uncategorized-plaid | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0490-critical-g11-1-deduction-consent-template | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0490-critical-idempotency-posting-engine-vendo | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0490-critical-users3-owner-mint-approval-path | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0490-new3-c2-1-detectitemsdrift-scoping | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0490-section-c-2-reporting-vs-reports-drift | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0490-structural-fix-asset-identity-fragmentati | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0490-structural-fix-liability-deduction-fk-spi | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0518-r09-plaid-amex-wf-error | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0518-r10-qbo-sync-workers-off-mirror-stale | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -1018,7 +995,6 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | 0519-at1-245-tables-missing-created-by-user-id | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0519-at2-no-db-enforced-sod | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0519-bk1-plaid-amex-wf-error | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| 0519-co1-0-compliance-notification-rules-confi | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0519-co2-unassigned-drivers-hos-gap | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0519-dc2-maint-schema-144-rows-active-alongsid | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0519-dq1-driver-dummy-test-record-in-prod | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -1034,23 +1010,16 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | 0519-sf1-82-drivers-0-settlements | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | a-03-expenses-fullpage-form-not-list-drawer | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | a-05-bills-no-page-level-create-button | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| a-06-save-button-not-above-fold | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | audit-spine-a1-a9-emit-coverage-task | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | audit10-payroll-automation-tax-withhol_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| audit16-budget-tracking-system | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| audit17-procurement-purchase-order-system | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| audit18-treasury-management | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | audit19-ma-due-diligence-framework | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | audit2-internal-controls-approval-workflow | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | audit20-dividend-tracking-system | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| audit21-capex-tracking-approval | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | audit23-royalty-tracking-system | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | audit24-franchise-tracking-system | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | audit25-fx-rate-hedging-translation | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| audit3-external-audit-prep-workflow | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | audit4-tax-return-automation | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | audit5-fraud-anomaly-detection | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| audit6-sox-ifrs-compliance-dashboard | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | audit7-cost-center-tracking | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | audit8-revenue-leakage-detection | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | audit9-expense-validation-duplicate-detection | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -1070,7 +1039,6 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | biz-flow-1-termination-not-linked-to-load | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | biz-flow-3-no-auto-escrow-deduction-driver-fau | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | biz-flow-3-no-cancellation-deduction-linkage | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| biz-flow-4-no-escrow-deduction-cash-advance | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | biz-flow-6-no-automatic-invoice-sending | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | biz-flow-6-payment-application-manual_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | biz-flow-7-no-automatic-team-assignment | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -1078,9 +1046,7 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | biz-flow-8-no-transfer-notifications | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | biz-flow-9-no-automatic-driver-status-update-s | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | biz-flow-9-no-automatic-escrow-deduction-safet | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| biz-flow-9-no-automatic-notifications-safety-e | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | bl-04-no-rate-con-pdf-generation | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| block5-coa-new-account-type-detail-org_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | bnk-03-no-last-reconciled-no-beginning-balance | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | ci1-build-typecheck-flake-root-cause-and-guard | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | coder-32-migration-drift-prod-triage-pending | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -1091,13 +1057,11 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | custvend-par1-g3-customer-statement-en_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | custvend-par1-vendor-credits-no-ui | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | d-01-new-load-overview-http-400 | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| d-02-cancel-load-shown-on-unsaved-load | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | d-04-settlements-board-redirect-notice | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | daily-tms-qbo-reconciliation-cadence | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | db249-finance-schema-naming-drift | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | db249-index-optimization-3 | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | db5-resize-removal-directive-vs-current-lock | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| dbwiring-qbo-customers-vendors-accounts-split- | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | dh-01-driver-hub-overview-stub | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | dip-mor-pre-post-petition-ap-split | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | dispatch-board-db2-db7-fixes | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -1123,7 +1087,6 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | factoring-coder-directive-item-c-unconfirmed | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | factoring-g3-debtor-credit-check-decision-note | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | fh-unit-allocation-ui-view-missing | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| fin23-qbo-reconcile-modify-captures-harness-ex | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | fk-cancellation-deductions-0289 | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | fk-equipment-transfer-log-0289 | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | fk-escrow-termination-0289 | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -1150,8 +1113,6 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | flow9-safety-event-auto-notifications | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | flow9-safety-event-no-auto-status-escrow-notif | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | gated-blocks-conn-plaid-relay-edi | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| gated-blocks-misc-disp-wizard-wo-ent-audit-fh- | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| gated-blocks-usmca-launch-gate | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | global-column-resize-sort-parity-table-phase-a | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | h-03-open-queue-navy-cta | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | h-04-kpi-sublabel-contrast | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -1163,24 +1124,19 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | ifta-sales-tax-booking-location-confirm | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | import-1v2-trk-full-coa-equity | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | import-4v2-gl-detail-hardened | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| import-5-qbo-import-ui | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | insurance-2-breadcrumb-desync | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| intercompany-trk-transp-consolidation-decision | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | law-of-land-entitylink-reverse-drill-adoption | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | ledger-write-proof-operational-not-found | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | linkage-safety-event-no-driver-status-update | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | linkage-walkoff-no-auto-termination | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | load-cancellations-fk-per-entity-repoi_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| migrate-faro-to-rts | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | module-catalog-26-modules-unfinished-sweep | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | module25-required-docs-ruleset-per-entity | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | notif-b-android-block | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | owner-batch-s2-units-value-catalog | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| p1-analytics-systems | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | p1-apm | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | p1-caching-strategy | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | p1-compression | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| p1-dashboard-implementation | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | p1-data-encryption-at-rest | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | p1-error-handling | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | p1-logging-system | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -1202,12 +1158,10 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | PHASE2_LOAD-INVOICE_no-auto-ar_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | PHASE2_RECON-COLLECTOR_frozen-feed_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | phase8-audit161-api-audit | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| phase8-audit165-analytics-general | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | public-audit-log-partitions-no-rls | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | qbo-parity-a1-paritytable-universal-adoption | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | qbo-parity-resizable-columns-everywhere | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | qbo-realtime-webhook-sync | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| remediation-t4.1-duplicate-schema-consolidatio | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | repair-e-escrow-return-and-tieouts-des_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | ruling-3-driver-escrow-current-vs-long_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | ruling-4-embezzlement-reclass-off-ar-q_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -1219,7 +1173,6 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | safety-dot-fields-and-driver-create-fix | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | safety2-cert-expiry-nav-distinct-route | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | settlement-posting-design-doc-missing_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| skill-update-additions-2026-07-03-verbatim-com | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | sweep-fix-17-27-fixture-names-and-pager | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | sweep-g11-1-deduction-consent-template_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | sweepfix1727-8 | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -1229,9 +1182,7 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | systemic-pattern-r2-verify-bytes-guard | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | tbl-standard-raw-table-sweep-incomplete | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | threewayaudit-biz02-qbo-sync-workers-stale | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| twice-daily-mandatory-checkin-compliance-featu | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | users-invited-status-distinct-from-active | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| users-par-1-permission-matrix | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | usmca-banking-ingestion-dedup | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | usmca-unhide-entity-switcher | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | vend1-pagination-total-vs-length | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |

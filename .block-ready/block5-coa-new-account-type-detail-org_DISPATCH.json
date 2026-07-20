@@ -1,17 +1,18 @@
 {
-  "block_id": "block5-coa-new-account-type-detail-org_DISPATCH",
-  "status": "NEEDS-VERIFY",
-  "classification": "FINANCIAL",
-  "phase": "tier1",
-  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
-  "source_file": "087_block5-coa-new-account-type-detail-org_DISPATCH.txt",
-  "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED (owner-ceremony). No delete."
-  ],
-  "acceptance": [
-    {
-      "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): CoA New-Account creator: grouped Account Type picker + filtered Detail Type picker sourced from catalog, persist detail_type_id FK on catalo"
-    }
-  ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+ "block_id": "block5-coa-new-account-type-detail-org_DISPATCH",
+ "status": "NEEDS-VERIFY",
+ "classification": "FINANCIAL",
+ "phase": "tier1",
+ "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
+ "source_file": "087_block5-coa-new-account-type-detail-org_DISPATCH.txt",
+ "allowed_files": [
+  "additive only; ALTER/CREATE on existing financial tables = PROTECTED (owner-ceremony). No delete."
+ ],
+ "acceptance": [
+  {
+   "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): CoA New-Account creator: grouped Account Type picker + filtered Detail Type picker sourced from catalog, persist detail_type_id FK on catalo"
+  }
+ ],
+ "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check.",
+ "superseded_by": "[DELIBERATE-LOCK corpus] Do NOT add a catalogs.accounts.detail_type_id FK to the Block-4 per-entity detail_types catalog. Detail Type is QBO AccountSubType (src auto-memory coa-detail-type-is-account-s)"
 }
