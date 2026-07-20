@@ -1,10 +1,17 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { IftaFiling } from "../../../api/reports-ifta";
+import { ParityTable, type ParityColumn } from "../../parity/ParityTable";
 
 type Props = {
   filing: IftaFiling;
   onSaveOverrides: (overrides: Record<string, number>) => Promise<void>;
   saving?: boolean;
+};
+
+type FuelRow = {
+  state: string;
+  aggregated: number;
+  override: string;
 };
 
 function fmtNum(value: number) {
@@ -13,12 +20,16 @@ function fmtNum(value: number) {
 
 export function Step2FuelReview({ filing, onSaveOverrides, saving }: Props) {
   const data = filing.filing_data;
-  const states = [
-    ...new Set([
-      ...Object.keys(data.fuel_by_jurisdiction ?? {}),
-      ...Object.keys(data.fuel_overrides ?? {}),
-    ]),
-  ].sort();
+  const states = useMemo(
+    () =>
+      [
+        ...new Set([
+          ...Object.keys(data.fuel_by_jurisdiction ?? {}),
+          ...Object.keys(data.fuel_overrides ?? {}),
+        ]),
+      ].sort(),
+    [data.fuel_by_jurisdiction, data.fuel_overrides],
+  );
 
   const [draftOverrides, setDraftOverrides] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
@@ -28,6 +39,53 @@ export function Step2FuelReview({ filing, onSaveOverrides, saving }: Props) {
     }
     return initial;
   });
+
+  const rows = useMemo<FuelRow[]>(
+    () =>
+      states.map((state) => ({
+        state,
+        aggregated: Number(data.fuel_by_jurisdiction?.[state] ?? 0),
+        override: draftOverrides[state] ?? "",
+      })),
+    [states, data.fuel_by_jurisdiction, draftOverrides],
+  );
+
+  const columns = useMemo<ParityColumn<FuelRow>[]>(
+    () => [
+      {
+        key: "state",
+        label: "State",
+        sortable: true,
+        cellClass: "font-medium",
+      },
+      {
+        key: "aggregated",
+        label: "Aggregated gallons",
+        sortable: true,
+        render: (row) => fmtNum(row.aggregated),
+      },
+      {
+        key: "override",
+        label: "Override gallons",
+        sortable: true,
+        sortValue: (row) => Number(row.override),
+        render: (row) => (
+          <input
+            type="number"
+            min={0}
+            step="0.1"
+            className="w-28 rounded-sm border border-slate-300 px-2 py-1"
+            value={draftOverrides[row.state] ?? ""}
+            onChange={(event) =>
+              setDraftOverrides((prev) => ({ ...prev, [row.state]: event.target.value }))
+            }
+            data-testid={`ifta-fuel-override-${row.state}`}
+          />
+        ),
+      },
+    ],
+    [draftOverrides],
+  );
 
   const save = async () => {
     const fuel_overrides: Record<string, number> = {};
@@ -49,55 +107,24 @@ export function Step2FuelReview({ filing, onSaveOverrides, saving }: Props) {
         <p className="text-xs text-slate-800">Per-jurisdiction fuel purchased from fuel card transactions.</p>
       </div>
       <div className="space-y-2 px-3 py-3 text-xs">
-        <div className="overflow-x-auto rounded-sm border border-slate-200">
-          <table className="min-w-full text-left">
-            <thead className="bg-slate-50 text-slate-600">
-              <tr>
-                <th className="px-2 py-1.5 font-semibold">State</th>
-                <th className="px-2 py-1.5 font-semibold">Aggregated gallons</th>
-                <th className="px-2 py-1.5 font-semibold">Override gallons</th>
-              </tr>
-            </thead>
-            <tbody>
-              {states.length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="px-2 py-3 text-slate-500">
-                    No fuel data for this quarter.
-                  </td>
-                </tr>
-              ) : null}
-              {states.map((state) => (
-                <tr key={state} className="border-t border-slate-100">
-                  <td className="px-2 py-1.5 font-medium">{state}</td>
-                  <td className="px-2 py-1.5">{fmtNum(Number(data.fuel_by_jurisdiction?.[state] ?? 0))}</td>
-                  <td className="px-2 py-1.5">
-                    <input
-                      type="number"
-                      min={0}
-                      step="0.1"
-                      className="w-28 rounded-sm border border-slate-300 px-2 py-1"
-                      value={draftOverrides[state] ?? ""}
-                      onChange={(event) =>
-                        setDraftOverrides((prev) => ({ ...prev, [state]: event.target.value }))
-                      }
-                      data-testid={`ifta-fuel-override-${state}`}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            {states.length > 0 ? (
-              <tfoot>
-                <tr className="border-t border-slate-200 bg-slate-50 font-semibold">
-                  <td className="px-2 py-1.5">Total</td>
-                  <td colSpan={2} className="px-2 py-1.5">
-                    {fmtNum(total)}
-                  </td>
-                </tr>
-              </tfoot>
-            ) : null}
-          </table>
-        </div>
+        <ParityTable
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.state}
+          storageKey="ifta-step2-fuel"
+          emptyText="No fuel data for this quarter."
+          initialPageSize={60}
+          pageSizeOptions={[15, 50, 60, 100]}
+          exportFilename="ifta-fuel-review"
+          tableTestId="ifta-step2-fuel-table"
+          rowTestId={(row) => `ifta-step2-fuel-row-${row.state}`}
+        />
+        {states.length > 0 ? (
+          <div className="flex justify-end rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs font-semibold text-slate-900">
+            <span className="mr-4">Total</span>
+            <span>{fmtNum(total)}</span>
+          </div>
+        ) : null}
         <button
           type="button"
           className="rounded-sm border border-slate-400 bg-slate-100 px-3 py-1.5 font-semibold text-slate-900 disabled:opacity-50"
