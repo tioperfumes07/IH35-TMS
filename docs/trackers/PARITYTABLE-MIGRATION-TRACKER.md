@@ -1046,6 +1046,19 @@ gallons summary are preserved. Guard:
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/reports/ifta/IFTAStepGallons.tsx` | pages/reports/ifta |
+## qbo-parity-a1 — CreateWOSectionReconcile (this PR)
+Maintenance Create Work Order vendor-invoice reconcile was a hand-rolled
+`<table>`. Migrated to shared `ParityTable` (sort + resize + gear). Columns
+blank label / WO total / Invoice total / Variance preserved 1:1; editable Parts
+and Labor invoice totals, dollar-prefix inputs, variance math, and the hard
+Create tie gate are unchanged. `ListErrorState` is not applicable because this
+component has no query or other asynchronous list source. Guard:
+`scripts/verify-create-wo-reconcile-uses-paritytable.mjs` via verify-step
+**1056**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/maintenance/components/CreateWOSectionReconcile.tsx` | pages/maintenance |
 ## qbo-parity-a1 — BookingGapReport (this PR)
 Dispatcher booking-gap analytics was a hand-rolled `<table>` with manual loading/empty
 states. Migrated to shared `ParityTable` (sort + resize + gear); `ListErrorState` +
