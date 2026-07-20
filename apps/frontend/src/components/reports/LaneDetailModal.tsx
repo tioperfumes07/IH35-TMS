@@ -1,6 +1,8 @@
+import { useMemo } from "react";
 import type { LaneProfitabilityLane, LaneProfitabilityLoadDetail } from "../../api/reports";
 import { formatDateUS } from "../../lib/formatDate";
 import { Modal } from "../Modal";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { EntityLink } from "../shared/EntityLink";
 
 function money(cents: number) {
@@ -20,7 +22,70 @@ type Props = {
   onClose: () => void;
 };
 
+const LOAD_COLUMNS: Array<ParityColumn<LaneProfitabilityLoadDetail>> = [
+  {
+    key: "load_number",
+    label: "Load",
+    sortable: true,
+    render: (load) => (
+      <EntityLink kind="load" id={load.load_id} label={load.load_number ?? load.load_id.slice(0, 8)} />
+    ),
+  },
+  {
+    key: "created_at",
+    label: "Date",
+    sortable: true,
+    sortValue: (load) => new Date(load.created_at).getTime(),
+    render: (load) => formatDateUS(load.created_at),
+  },
+  {
+    key: "revenue_cents",
+    label: "Revenue",
+    sortable: true,
+    render: (load) => money(load.revenue_cents),
+  },
+  {
+    key: "driver_pay_cents",
+    label: "Driver pay",
+    sortable: true,
+    render: (load) => money(load.driver_pay_cents),
+  },
+  {
+    key: "fuel_cost_cents",
+    label: "Fuel",
+    sortable: true,
+    render: (load) => money(load.fuel_cost_cents),
+  },
+  {
+    key: "maintenance_cost_cents",
+    label: "Maint.",
+    sortable: true,
+    render: (load) => money(load.maintenance_cost_cents),
+  },
+  {
+    key: "gross_profit_cents",
+    label: "Profit",
+    sortable: true,
+    render: (load) => money(load.gross_profit_cents),
+  },
+  {
+    key: "miles",
+    label: "Miles",
+    sortable: true,
+    render: (load) => load.miles,
+  },
+  {
+    key: "margin_pct",
+    label: "Margin",
+    sortable: true,
+    sortValue: (load) => load.margin_pct ?? Number.NEGATIVE_INFINITY,
+    render: (load) => pct(load.margin_pct),
+  },
+];
+
 export function LaneDetailModal({ open, lane, loads, loading, onClose }: Props) {
+  const columns = useMemo(() => LOAD_COLUMNS, []);
+
   if (!open || !lane) return null;
 
   const corridor = `${lane.origin_city}, ${lane.origin_state} → ${lane.destination_city}, ${lane.destination_state}`;
@@ -28,40 +93,17 @@ export function LaneDetailModal({ open, lane, loads, loading, onClose }: Props) 
   return (
     <Modal open={open} title="Lane drill-down" onClose={onClose}>
       <p className="mb-3 text-sm text-gray-600">{corridor}</p>
-      {loading ? <p className="text-sm text-gray-600">Loading loads…</p> : null}
-      {!loading && loads.length === 0 ? <p className="text-sm text-gray-600">No loads in this lane for the selected period.</p> : null}
-      {!loading && loads.length > 0 ? (
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 text-left text-xs uppercase text-gray-600">
-            <tr>
-              <th className="px-3 py-2">Load</th>
-              <th className="px-3 py-2">Date</th>
-              <th className="px-3 py-2">Revenue</th>
-              <th className="px-3 py-2">Driver pay</th>
-              <th className="px-3 py-2">Fuel</th>
-              <th className="px-3 py-2">Maint.</th>
-              <th className="px-3 py-2">Profit</th>
-              <th className="px-3 py-2">Miles</th>
-              <th className="px-3 py-2">Margin</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loads.map((load) => (
-              <tr key={load.load_id} className="border-t border-gray-100">
-                <td className="px-3 py-2 font-medium"><EntityLink kind="load" id={load.load_id} label={load.load_number ?? load.load_id.slice(0, 8)} /></td>
-                <td className="px-3 py-2">{formatDateUS(load.created_at)}</td>
-                <td className="px-3 py-2">{money(load.revenue_cents)}</td>
-                <td className="px-3 py-2">{money(load.driver_pay_cents)}</td>
-                <td className="px-3 py-2">{money(load.fuel_cost_cents)}</td>
-                <td className="px-3 py-2">{money(load.maintenance_cost_cents)}</td>
-                <td className="px-3 py-2">{money(load.gross_profit_cents)}</td>
-                <td className="px-3 py-2">{load.miles}</td>
-                <td className="px-3 py-2">{pct(load.margin_pct)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : null}
+      <ParityTable
+        storageKey="reports-lane-detail-loads"
+        tableTestId="lane-detail-loads"
+        columns={columns}
+        rows={loads}
+        rowKey={(load) => load.load_id}
+        loading={loading}
+        emptyText="No loads in this lane for the selected period."
+        initialPageSize={25}
+        pageSizeOptions={[10, 25, 50]}
+      />
     </Modal>
   );
 }

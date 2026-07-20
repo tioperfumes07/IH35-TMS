@@ -272,13 +272,13 @@ verify-step 1035.
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/components/customers/FreeTimeDetentionEditor.tsx` | pending |
+| `apps/frontend/src/components/customers/FreeTimeDetentionEditor.tsx` | migrated (qbo-parity-a1) |
 
 ### components/dispatch (2)
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/components/dispatch/AccessorialEditor.tsx` | pending |
+| `apps/frontend/src/components/dispatch/AccessorialEditor.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/dispatch/DispatchList.tsx` | pending |
 
 ### components/driver-profile (3)
@@ -286,7 +286,7 @@ verify-step 1035.
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/components/driver-profile/DocumentsSection.tsx` | pending |
-| `apps/frontend/src/components/driver-profile/SettlementsSection.tsx` | pending |
+| `apps/frontend/src/components/driver-profile/SettlementsSection.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/driver-profile/TrainingRecordsSection.tsx` | pending |
 
 ### components/drivers (3 remaining)
@@ -320,7 +320,7 @@ verify-step 1035.
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/components/insurance/PolicyCreateWizard.tsx` | pending |
+| `apps/frontend/src/components/insurance/PolicyCreateWizard.tsx` | migrated (qbo-parity-a1) |
 
 ### components/lists (1) — financial-hold
 
@@ -341,6 +341,8 @@ verify-step 1035.
 | --- | --- |
 | `apps/frontend/src/components/reports/FrequentlyRunTable.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/reports/LaneDetailModal.tsx` | pending |
+| `apps/frontend/src/components/reports/ifta/Step1MileageReview.tsx` | migrated (qbo-parity-a1) |
+| `apps/frontend/src/components/reports/LaneDetailModal.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/reports/ifta/Step1MileageReview.tsx` | pending |
 | `apps/frontend/src/components/reports/ifta/Step2FuelReview.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/reports/ifta/Step3JurisdictionCalc.tsx` | pending |
@@ -930,6 +932,16 @@ Guard: `scripts/verify-qbo-vendor-linkage-uses-paritytable.mjs` via verify-step 
 | `apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx` | pages/admin |
 
 
+## qbo-parity-a1 — FreeTimeDetentionEditor (this PR)
+Customer Billing free-time/detention terms history was a hand-rolled `<table>`.
+Migrated to shared `ParityTable` (sort + resize + gear) and replaced bare red error
+lines with `ListErrorState` + Retry on terms and history query failure. Columns
+Recorded / Free Time / Rate / Currency / Approval preserved 1:1. Guard:
+`scripts/verify-freetime-detention-uses-paritytable.mjs` via verify-step **1046**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/customers/FreeTimeDetentionEditor.tsx` | components/customers |
 ## qbo-parity-a1 — CatalogTable (this PR)
 Lists GenericCatalogPage grid was a hand-rolled `<table>` wrapped in BulkActionBar /
 TableSelection. Migrated to shared `ParityTable` (sort + resize + gear + selectable batch
@@ -950,6 +962,58 @@ Guard: `scripts/verify-trailer-reefer-uses-paritytable.mjs` via verify-step 1044
 | --- | --- |
 | `apps/frontend/src/components/trailer-profile/TrailerReeferSection.tsx` | components/trailer-profile |
 
+## qbo-parity-a1 — SettlementsSection (this PR)
+Driver-profile Settlements last-4-weeks grid was a hand-rolled `<table>`. Migrated to
+shared `ParityTable` (sort + resize + gear). Columns Week ending / Gross / Net preserved
+1:1; YTD tiles + Auto-pay + Full settlements link unchanged. Guard:
+`scripts/verify-driver-settlements-section-uses-paritytable.mjs` via verify-step **1048**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/driver-profile/SettlementsSection.tsx` | components/driver-profile |
+## qbo-parity-a1 — AccessorialEditor (this PR)
+Book-load accessorial charge grid was a hand-rolled `<table>` with inline editors.
+Migrated to shared `ParityTable` (sort + resize + gear + row Remove action) and added
+`ListErrorState` on additional-charges catalog failure. Columns Code / Description /
+Amount ($) / Taxable + Create charge / detention·layover·lumper seeds preserved 1:1.
+Guard: `scripts/verify-accessorial-editor-uses-paritytable.mjs` via verify-step **1047**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/dispatch/AccessorialEditor.tsx` | components/dispatch |
+## qbo-parity-a1 — PolicyCreateWizard (this PR)
+Insurance Create-Policy wizard Step 4 bill-schedule preview was a hand-rolled
+`<table>` (Bill # / Amount / Per vehicle / mo). Migrated to shared `ParityTable`
+(sort + resize + gear). Columns preserved 1:1; 4-step wizard behavior, vehicle
+selection, premium math, and `+ Create policy + schedule N bills` unchanged.
+Coverage-type catalog + units list query outages now surface `ListErrorState` +
+Retry (no false-empty). Guard:
+`scripts/verify-policy-create-wizard-uses-paritytable.mjs` via verify-step 1054.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/insurance/PolicyCreateWizard.tsx` | components/insurance |
+## qbo-parity-a1 — IFTA Step1MileageReview (this PR)
+IFTA quarterly preparer Step 1 mileage review was a hand-rolled `<table>`
+(State / Aggregated miles / Override miles) with inline override inputs.
+Migrated to shared `ParityTable` (sort + resize + gear). Columns + override
+number inputs (`ifta-miles-override-*`) + Save + Total summary preserved 1:1.
+Form-only surface (filing prop + save callback — no query failure path, no
+`ListErrorState`). Operational IFTA filing review, not GL posting.
+Guard: `scripts/verify-ifta-step1-mileage-uses-paritytable.mjs` via verify-step 1051.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/reports/ifta/Step1MileageReview.tsx` | components/reports/ifta |
+## qbo-parity-a1 — LaneDetailModal (this PR)
+Reports lane profitability drill-down loads grid was a hand-rolled `<table>`. Migrated to
+shared `ParityTable` (sort + resize + gear). Columns Load / Date / Revenue / Driver pay /
+Fuel / Maint. / Profit / Miles / Margin preserved 1:1; Load stays an `EntityLink`. Guard:
+`scripts/verify-lane-detail-modal-uses-paritytable.mjs` via verify-step **1049**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/reports/LaneDetailModal.tsx` | components/reports |
 ## qbo-parity-a1 — Step2FuelReview (this PR)
 IFTA Step 2 fuel review was a hand-rolled `<table>` with per-jurisdiction override
 inputs and a Total footer. Migrated to shared `ParityTable` (sort + resize + gear +
@@ -972,6 +1036,29 @@ Cost ¢ preserved 1:1; Clock in + manual book range unchanged. Guard:
 | --- | --- |
 | `apps/frontend/src/components/maintenance/LaborTracker.tsx` | components/maintenance |
 
+## qbo-parity-a1 — IFTAStepGallons (this PR)
+IFTA preparation Step 2 state-gallons grid was a hand-rolled `<table>`. Migrated
+to shared `ParityTable` (sort + resize + gear). Columns State / Gallons / Source /
+Breakdown and the aggregate action, empty state, last-aggregated timestamp, and total
+gallons summary are preserved. Guard:
+`scripts/verify-ifta-step-gallons-uses-paritytable.mjs` via verify-step **1059**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/reports/ifta/IFTAStepGallons.tsx` | pages/reports/ifta |
+## qbo-parity-a1 — CreateWOSectionReconcile (this PR)
+Maintenance Create Work Order vendor-invoice reconcile was a hand-rolled
+`<table>`. Migrated to shared `ParityTable` (sort + resize + gear). Columns
+blank label / WO total / Invoice total / Variance preserved 1:1; editable Parts
+and Labor invoice totals, dollar-prefix inputs, variance math, and the hard
+Create tie gate are unchanged. `ListErrorState` is not applicable because this
+component has no query or other asynchronous list source. Guard:
+`scripts/verify-create-wo-reconcile-uses-paritytable.mjs` via verify-step
+**1056**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/maintenance/components/CreateWOSectionReconcile.tsx` | pages/maintenance |
 ## qbo-parity-a1 — BookingGapReport (this PR)
 Dispatcher booking-gap analytics was a hand-rolled `<table>` with manual loading/empty
 states. Migrated to shared `ParityTable` (sort + resize + gear); `ListErrorState` +

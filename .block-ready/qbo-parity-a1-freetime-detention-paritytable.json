@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-freetime-detention-paritytable",
+  "branch": "fix/freetime-detention-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable + ListErrorState)",
+  "phase": "OPS-FE",
+  "task": "Migrate FreeTimeDetentionEditor terms history from hand-rolled <table> to shared ParityTable; ListErrorState on terms/history query failure. Preserve Recorded/Free Time/Rate/Currency/Approval. Guard + verify-step 1046 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + qbo-parity-a1",
+  "source_file": "qbo-parity-a1-freetime-detention-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-freetime-detention-paritytable.json",
+    "apps/frontend/src/components/customers/FreeTimeDetentionEditor.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-freetime-detention-uses-paritytable.mjs",
+    "scripts/verify-steps/1046-verify-freetime-detention-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "FreeTimeDetentionEditor uses ParityTable (no hand-rolled <table>); ListErrorState on terms/history failure; columns preserved; verify-step 1046 wired; tracker append + inventory migrated."
+    }
+  ],
+  "note": "GATED: no. verify-step 1046. No package.json / CI hotfile edits (Rule 17)."
+}

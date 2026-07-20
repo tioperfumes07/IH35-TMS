@@ -8,9 +8,12 @@ import {
   type InsuranceCoverageType,
 } from "../../api/insurance";
 import { listUnits } from "../../api/mdata";
+import { ListErrorState } from "../ListErrorState";
 import { Modal } from "../Modal";
 import { MoneyInput } from "../forms/MoneyInput";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { useToast } from "../Toast";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 import { useCostPerVehicle } from "./useCostPerVehicle";
 import { formatUsdCents } from "../../lib/money";
 
@@ -47,6 +50,12 @@ type Step3 = {
   down_payment: string;
   term_months: string;
   allocation_method: AllocationMethod;
+};
+
+type BillPreviewRow = {
+  bill_number: number;
+  amount_cents: number;
+  per_vehicle_cents: number | null;
 };
 
 const ALLOCATION_LABELS: Record<AllocationMethod, string> = {
@@ -193,6 +202,45 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
 
   const formatMoney = (cents: number) => formatUsdCents(cents);
 
+  const billPreviewRows = useMemo((): BillPreviewRow[] => {
+    const perVehicle =
+      costInfo.costPerVehiclePerMonthCents.length > 0
+        ? (costInfo.costPerVehiclePerMonthCents[0] ?? 0)
+        : null;
+    return billPreview.map((amount, i) => ({
+      bill_number: i + 1,
+      amount_cents: amount,
+      per_vehicle_cents: perVehicle,
+    }));
+  }, [billPreview, costInfo.costPerVehiclePerMonthCents]);
+
+  const billPreviewColumns = useMemo(
+    (): Array<ParityColumn<BillPreviewRow>> => [
+      {
+        key: "bill_number",
+        label: "Bill #",
+        sortable: true,
+        render: (row) => row.bill_number,
+      },
+      {
+        key: "amount_cents",
+        label: "Amount",
+        sortable: true,
+        render: (row) => (
+          <span className="font-medium text-slate-800">{formatUsdCents(row.amount_cents)}</span>
+        ),
+      },
+      {
+        key: "per_vehicle_cents",
+        label: "Per vehicle / mo",
+        sortable: true,
+        render: (row) =>
+          row.per_vehicle_cents == null ? "—" : formatUsdCents(row.per_vehicle_cents),
+      },
+    ],
+    [],
+  );
+
   const validateStep1 = () => {
     const errors: Partial<Record<keyof Step1, string>> = {};
     if (!step1.insurer_name.trim()) errors.insurer_name = "Insurer name is required.";
@@ -285,18 +333,27 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
               />
             </Field>
             <Field label="Coverage Type *" error={step1Errors.coverage_type}>
-              <select
-                className="w-full rounded-sm border border-gray-300 px-2 py-1"
-                value={step1.coverage_type}
-                onChange={(e) => setStep1((s) => ({ ...s, coverage_type: e.target.value }))}
-              >
-                <option value="">Select type</option>
-                {(typesQuery.data ?? []).map((t) => (
-                  <option key={t.id} value={t.code}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
+              {typesQuery.isError ? (
+                <ListErrorState
+                  title="Couldn't load coverage types"
+                  {...formatQueryErrorDetail(typesQuery.error)}
+                  onRetry={() => void typesQuery.refetch()}
+                  className="py-4"
+                />
+              ) : (
+                <select
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                  value={step1.coverage_type}
+                  onChange={(e) => setStep1((s) => ({ ...s, coverage_type: e.target.value }))}
+                >
+                  <option value="">Select type</option>
+                  {(typesQuery.data ?? []).map((t) => (
+                    <option key={t.id} value={t.code}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </Field>
             <Field label="Status">
               <select
@@ -374,7 +431,14 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
               <p className="text-xs text-slate-700">Select at least one vehicle to continue.</p>
             )}
             <div className="max-h-52 overflow-y-auto rounded-sm border border-gray-200 p-2">
-              {unitsQuery.isLoading ? (
+              {unitsQuery.isError ? (
+                <ListErrorState
+                  title="Couldn't load units"
+                  {...formatQueryErrorDetail(unitsQuery.error)}
+                  onRetry={() => void unitsQuery.refetch()}
+                  className="py-4"
+                />
+              ) : unitsQuery.isLoading ? (
                 <p className="text-xs text-slate-500">Loading units...</p>
               ) : filteredUnits.length === 0 ? (
                 <p className="text-xs text-slate-500">No units match the current filter.</p>
@@ -492,29 +556,18 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
             <p className="text-xs font-semibold text-slate-700">
               Bill schedule — {billPreview.length} monthly bills
             </p>
-            <div className="max-h-48 overflow-x-auto overflow-y-auto rounded-sm border border-gray-200 bg-white">
-              <table className="min-w-full text-left text-xs">
-                <thead className="bg-gray-50 text-slate-500">
-                  <tr>
-                    <th className="px-3 py-1.5 font-medium">Bill #</th>
-                    <th className="px-3 py-1.5 font-medium">Amount</th>
-                    <th className="px-3 py-1.5 font-medium">Per vehicle / mo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {billPreview.map((amount, i) => (
-                    <tr key={i} className="border-t border-gray-100">
-                      <td className="px-3 py-1.5 text-slate-700">{i + 1}</td>
-                      <td className="px-3 py-1.5 font-medium text-slate-800">{formatMoney(amount)}</td>
-                      <td className="px-3 py-1.5 text-slate-600">
-                        {costInfo.costPerVehiclePerMonthCents.length > 0
-                          ? formatMoney(costInfo.costPerVehiclePerMonthCents[0] ?? 0)
-                          : "—"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="max-h-48 overflow-y-auto">
+              <ParityTable<BillPreviewRow>
+                columns={billPreviewColumns}
+                rows={billPreviewRows}
+                rowKey={(row) => String(row.bill_number)}
+                emptyText="Enter premium and term to preview bills."
+                storageKey="insurance-policy-create-bill-schedule"
+                tableTestId="policy-create-bill-schedule"
+                pageSizeOptions={[12, 24, 60, 120]}
+                initialPageSize={12}
+                stickyHeader
+              />
             </div>
           </div>
         )}
