@@ -5,14 +5,52 @@ import { apiRequest } from "../../api/client";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
 import { formatDateUS } from "../../lib/formatDate";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 
-type Plate = { id: string; country: string; jurisdiction: string; plate_number: string; expiration?: string | null; status: string };
+type Plate = {
+  id: string;
+  country: string;
+  jurisdiction: string;
+  plate_number: string;
+  expiration?: string | null;
+  status: string;
+};
 
 function platesUrl(unitId: string, companyId: string, plateId?: string) {
   const base = `/api/v1/mdata/units/${unitId}/plates`;
   const qs = `operating_company_id=${encodeURIComponent(companyId)}`;
   return plateId ? `${base}/${plateId}?${qs}` : `${base}?${qs}`;
 }
+
+const COLUMNS: Array<ParityColumn<Plate>> = [
+  {
+    key: "country",
+    label: "Country",
+    sortable: true,
+  },
+  {
+    key: "jurisdiction",
+    label: "Jurisdiction",
+    sortable: true,
+  },
+  {
+    key: "plate_number",
+    label: "Plate #",
+    sortable: true,
+  },
+  {
+    key: "expiration",
+    label: "Expiration",
+    sortable: true,
+    sortValue: (row) => row.expiration ?? "",
+    render: (row) => (row.expiration ? formatDateUS(row.expiration) || "—" : "—"),
+  },
+  {
+    key: "status",
+    label: "Status",
+    sortable: true,
+  },
+];
 
 export function PlatesTable({ unitId, companyId, plates }: { unitId: string; companyId: string; plates: Plate[] }) {
   const qc = useQueryClient();
@@ -52,34 +90,27 @@ export function PlatesTable({ unitId, companyId, plates }: { unitId: string; com
           + Create Plate
         </Button>
       </div>
-      <table className="min-w-full text-xs">
-        <thead>
-          <tr className="text-left text-gray-500">
-            <th className="px-2 py-1">Country</th>
-            <th className="px-2 py-1">Jurisdiction</th>
-            <th className="px-2 py-1">Plate #</th>
-            <th className="px-2 py-1">Expiration</th>
-            <th className="px-2 py-1">Status</th>
-            <th className="px-2 py-1" />
-          </tr>
-        </thead>
-        <tbody>
-          {plates.map((p) => (
-            <tr key={p.id} className="border-t border-gray-100">
-              <td className="px-2 py-1">{p.country}</td>
-              <td className="px-2 py-1">{p.jurisdiction}</td>
-              <td className="px-2 py-1">{p.plate_number}</td>
-              <td className="px-2 py-1">{p.expiration ? formatDateUS(p.expiration) || "—" : "—"}</td>
-              <td className="px-2 py-1">{p.status}</td>
-              <td className="px-2 py-1">
-                <button type="button" className="text-slate-700 underline" onClick={() => archiveMutation.mutate(p.id)}>
-                  Archive
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <ParityTable
+        rows={plates}
+        columns={COLUMNS}
+        rowKey={(row) => row.id}
+        loading={false}
+        storageKey="vehicle-profile-plates"
+        emptyText="No plates on file."
+        exportFilename="vehicle-plates"
+        tableTestId="vp-plates-parity-table"
+        rowTestId={(row) => `vp-plates-row-${row.id}`}
+        rowActions={(row) => (
+          <button
+            type="button"
+            className="text-slate-700 underline"
+            onClick={() => archiveMutation.mutate(row.id)}
+            disabled={archiveMutation.isPending}
+          >
+            Archive
+          </button>
+        )}
+      />
       <Modal open={open} title="Add plate" onClose={() => setOpen(false)}>
         <div className="space-y-2 text-sm">
           <select className="w-full border px-2 py-1" value={country} onChange={(e) => setCountry(e.target.value as "US" | "MX")}>

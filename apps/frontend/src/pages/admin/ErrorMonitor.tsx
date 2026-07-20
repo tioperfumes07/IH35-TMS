@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { resolveApiUrl } from "../../api/client";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type BufferedErrorRecord = {
   ts: number;
@@ -10,6 +12,8 @@ type BufferedErrorRecord = {
   message: string;
   detail?: Record<string, unknown>;
 };
+
+type ErrorRow = BufferedErrorRecord & { id: string };
 
 async function fetchRecentErrors(): Promise<{ errors: BufferedErrorRecord[] }> {
   const res = await fetch(resolveApiUrl("/api/v1/admin/error-monitor/recent"), { credentials: "include" });
@@ -26,6 +30,45 @@ function formatTs(ts: number): string {
   }
 }
 
+const COLUMNS: Array<ParityColumn<ErrorRow>> = [
+  {
+    key: "ts",
+    label: "Time",
+    sortable: true,
+    sortValue: (row) => row.ts,
+    render: (row) => (
+      <span className="whitespace-nowrap font-mono text-[11px] text-gray-700">{formatTs(row.ts)}</span>
+    ),
+  },
+  {
+    key: "kind",
+    label: "Kind",
+    sortable: true,
+    render: (row) => (
+      <span
+        className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+          row.kind === "server" ? "bg-red-50 text-red-800" : "bg-slate-100 text-slate-700"
+        }`}
+      >
+        {row.kind}
+      </span>
+    ),
+  },
+  {
+    key: "message",
+    label: "Message",
+    sortable: true,
+    render: (row) => <span className="text-gray-800">{row.message}</span>,
+  },
+  {
+    key: "detail",
+    label: "Detail",
+    sortable: true,
+    sortValue: (row) => (row.detail ? 1 : 0),
+    render: (row) => <span className="text-gray-700">{row.detail ? "Available" : "—"}</span>,
+  },
+];
+
 export function ErrorMonitorPage() {
   const auth = useAuth();
   const allowed = auth.user?.role === "Owner";
@@ -37,8 +80,10 @@ export function ErrorMonitorPage() {
     refetchInterval: 15_000,
   });
 
-  const rows = query.data?.errors ?? [];
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const rows: ErrorRow[] = useMemo(
+    () => (query.data?.errors ?? []).map((row, idx) => ({ ...row, id: `${row.ts}-${idx}` })),
+    [query.data?.errors],
+  );
 
   const counts = useMemo(() => {
     let client = 0;
@@ -63,70 +108,39 @@ export function ErrorMonitorPage() {
     <div className="space-y-4">
       <PageHeader title="Error monitor" subtitle={`Buffered errors — client: ${counts.client}, server: ${counts.server}`} />
 
-      {query.isLoading ? <p className="text-sm text-gray-600">Loading…</p> : null}
       {query.isError ? (
-        <p className="text-sm text-red-700">Failed to load errors ({String((query.error as Error)?.message ?? query.error)}).</p>
-      ) : null}
-
-      <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-left text-xs text-gray-800">
-          <thead className="bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
-            <tr>
-              <th className="px-3 py-2">Time</th>
-              <th className="px-3 py-2">Kind</th>
-              <th className="px-3 py-2">Message</th>
-              <th className="px-3 py-2">Detail</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length ? (
-              rows.map((row, idx) => {
-                const key = `${row.ts}-${idx}`;
-                const open = Boolean(expanded[key]);
-                return (
-                  <tr key={key} className="border-t border-gray-100 align-top">
-                    <td className="whitespace-nowrap px-3 py-2 font-mono text-[11px] text-gray-700">{formatTs(row.ts)}</td>
-                    <td className="px-3 py-2">
-                      <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                          row.kind === "server" ? "bg-red-50 text-red-800" : "bg-slate-100 text-slate-700"
-                        }`}
-                      >
-                        {row.kind}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2">{row.message}</td>
-                    <td className="px-3 py-2">
-                      {row.detail ? (
-                        <button
-                          type="button"
-                          className="text-xs text-slate-700 underline"
-                          onClick={() => setExpanded((s) => ({ ...s, [key]: !open }))}
-                        >
-                          {open ? "Hide" : "Show"}
-                        </button>
-                      ) : (
-                        "—"
-                      )}
-                      {open && row.detail ? (
-                        <pre className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap rounded-sm bg-gray-50 p-2 text-[11px] text-gray-800">
-                          {JSON.stringify(row.detail, null, 2)}
-                        </pre>
-                      ) : null}
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
-              <tr>
-                <td className="px-3 py-4 text-sm text-gray-600" colSpan={4}>
-                  No buffered errors yet (this resets on process restart).
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+        <ListErrorState
+          title="Couldn't load error monitor"
+          status={0}
+          message={(query.error as Error)?.message}
+          onRetry={() => void query.refetch()}
+        />
+      ) : (
+        <div className="overflow-auto rounded-sm border border-gray-200 bg-white p-2">
+          <ParityTable
+            rows={rows}
+            columns={COLUMNS}
+            rowKey={(row) => row.id}
+            loading={query.isLoading}
+            storageKey="admin-error-monitor"
+            emptyText="No buffered errors yet (this resets on process restart)."
+            tableTestId="admin-error-monitor-table"
+            rowTestId={(row) => `admin-error-monitor-row-${row.id}`}
+            renderExpanded={(row) =>
+              row.detail ? (
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Detail (JSON)</div>
+                  <pre className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap rounded-sm border border-gray-200 bg-white p-3 text-[11px] text-gray-800">
+                    {JSON.stringify(row.detail, null, 2)}
+                  </pre>
+                </div>
+              ) : (
+                <span className="text-xs text-gray-500">No detail payload for this error.</span>
+              )
+            }
+          />
+        </div>
+      )}
     </div>
   );
 }

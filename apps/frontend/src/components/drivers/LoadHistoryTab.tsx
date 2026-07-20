@@ -1,15 +1,74 @@
 import { useQuery } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useState } from "react";
-import { listDispatchAssignmentHistory } from "../../api/dispatch";
+import {
+  listDispatchAssignmentHistory,
+  type DispatchAssignmentHistoryRow,
+} from "../../api/dispatch";
 import { Button } from "../Button";
 import { ListErrorState } from "../ListErrorState";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { EntityLink } from "../shared/EntityLink";
 
 type Props = {
   driverId: string;
   operatingCompanyId: string;
 };
+
+const COLUMNS: Array<ParityColumn<DispatchAssignmentHistoryRow>> = [
+  {
+    key: "load_number",
+    label: "Load #",
+    sortable: true,
+    render: (row) => (
+      <EntityLink
+        kind="load"
+        id={row.load_id}
+        label={row.load_number ?? row.load_id}
+        data-testid={`driver-load-history-load-${row.id}`}
+      />
+    ),
+  },
+  {
+    key: "assigned_at",
+    label: "Assigned At",
+    sortable: true,
+    render: (row) => new Date(row.assigned_at).toLocaleString(),
+  },
+  { key: "assignment_method", label: "Method", sortable: true },
+  {
+    key: "previous_driver_name",
+    label: "Previous Driver",
+    sortable: true,
+    render: (row) => (
+      <EntityLink
+        kind="driver"
+        id={row.previous_driver_id}
+        label={row.previous_driver_name ?? undefined}
+        data-testid={`driver-load-history-prev-driver-${row.id}`}
+      />
+    ),
+  },
+  {
+    key: "new_driver_name",
+    label: "New Driver",
+    sortable: true,
+    render: (row) => (
+      <EntityLink
+        kind="driver"
+        id={row.new_driver_id}
+        label={row.new_driver_name ?? undefined}
+        data-testid={`driver-load-history-new-driver-${row.id}`}
+      />
+    ),
+  },
+  {
+    key: "reason_code",
+    label: "Reason",
+    sortable: true,
+    render: (row) => row.reason_code ?? row.notes ?? "—",
+  },
+];
 
 export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
   const [fromDate, setFromDate] = useState("");
@@ -30,36 +89,6 @@ export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-3" data-testid="driver-load-history-tab">
-      <div className="flex flex-wrap items-end gap-2">
-        <label className="text-xs text-gray-600">
-          From
-          <DatePicker
-            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
-            value={fromDate}
-            onChange={(next) => setFromDate(next)}
-            data-testid="driver-load-history-filter-from"
-          />
-        </label>
-        <label className="text-xs text-gray-600">
-          To
-          <DatePicker
-            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
-            value={toDate}
-            onChange={(next) => setToDate(next)}
-            data-testid="driver-load-history-filter-to"
-          />
-        </label>
-        <Button
-          size="sm"
-          variant="secondary"
-          data-testid="driver-load-history-refresh"
-          onClick={() => void historyQ.refetch()}
-        >
-          Refresh
-        </Button>
-      </div>
-
-      {historyQ.isLoading ? <p className="text-sm text-gray-500">Loading load history…</p> : null}
       {historyQ.isError ? (
         <div data-testid="driver-load-history-error">
           <ListErrorState
@@ -69,63 +98,48 @@ export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
             onRetry={() => void historyQ.refetch()}
           />
         </div>
-      ) : null}
-
-      {!historyQ.isLoading && !historyQ.isError && rows.length === 0 ? (
-        <p className="text-sm text-gray-500" data-testid="driver-load-history-empty">
-          No load assignment history for this driver.
-        </p>
-      ) : null}
-
-      {!historyQ.isError && rows.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-xs" data-testid="driver-load-history-table">
-            <thead>
-              <tr className="border-b text-left text-gray-600">
-                <th className="py-2 pr-3">Load #</th>
-                <th className="py-2 pr-3">Assigned At</th>
-                <th className="py-2 pr-3">Method</th>
-                <th className="py-2 pr-3">Previous Driver</th>
-                <th className="py-2 pr-3">New Driver</th>
-                <th className="py-2">Reason</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.id} className="border-b align-top" data-testid={`driver-load-history-row-${row.id}`}>
-                  <td className="py-2 pr-3 font-medium">
-                    <EntityLink
-                      kind="load"
-                      id={row.load_id}
-                      label={row.load_number ?? row.load_id}
-                      data-testid={`driver-load-history-load-${row.id}`}
-                    />
-                  </td>
-                  <td className="py-2 pr-3 whitespace-nowrap">{new Date(row.assigned_at).toLocaleString()}</td>
-                  <td className="py-2 pr-3">{row.assignment_method}</td>
-                  <td className="py-2 pr-3">
-                    <EntityLink
-                      kind="driver"
-                      id={row.previous_driver_id}
-                      label={row.previous_driver_name ?? undefined}
-                      data-testid={`driver-load-history-prev-driver-${row.id}`}
-                    />
-                  </td>
-                  <td className="py-2 pr-3">
-                    <EntityLink
-                      kind="driver"
-                      id={row.new_driver_id}
-                      label={row.new_driver_name ?? undefined}
-                      data-testid={`driver-load-history-new-driver-${row.id}`}
-                    />
-                  </td>
-                  <td className="py-2">{row.reason_code ?? row.notes ?? "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : null}
+      ) : (
+        <ParityTable
+          columns={COLUMNS}
+          rows={rows}
+          rowKey={(row) => row.id}
+          loading={historyQ.isLoading}
+          emptyText="No load assignment history for this driver."
+          storageKey="driver-load-history"
+          tableTestId="driver-load-history-table"
+          rowTestId={(row) => `driver-load-history-row-${row.id}`}
+          filterBar={
+            <div className="flex flex-wrap items-end gap-2">
+              <label className="text-xs text-gray-600">
+                From
+                <DatePicker
+                  className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                  value={fromDate}
+                  onChange={(next) => setFromDate(next)}
+                  data-testid="driver-load-history-filter-from"
+                />
+              </label>
+              <label className="text-xs text-gray-600">
+                To
+                <DatePicker
+                  className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                  value={toDate}
+                  onChange={(next) => setToDate(next)}
+                  data-testid="driver-load-history-filter-to"
+                />
+              </label>
+              <Button
+                size="sm"
+                variant="secondary"
+                data-testid="driver-load-history-refresh"
+                onClick={() => void historyQ.refetch()}
+              >
+                Refresh
+              </Button>
+            </div>
+          }
+        />
+      )}
     </div>
   );
 }

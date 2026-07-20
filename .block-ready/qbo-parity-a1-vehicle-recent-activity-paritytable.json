@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-vehicle-recent-activity-paritytable",
+  "branch": "fix/vehicle-recent-activity-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable migration)",
+  "phase": "OPS-FE",
+  "task": "Migrate vehicle-profile RecentActivitySection from hand-rolled <table> to shared ParityTable QBO grammar; preserve Loads/Status/Work orders tabs + Record preview column + No records. empty. Guard + verify-step 1026 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+  "source_file": "qbo-parity-a1-vehicle-recent-activity-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-vehicle-recent-activity-paritytable.json",
+    "apps/frontend/src/components/vehicle-profile/RecentActivitySection.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-vehicle-recent-activity-uses-paritytable.mjs",
+    "scripts/verify-steps/1026-verify-vehicle-recent-activity-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "RecentActivitySection.tsx uses ParityTable (no hand-rolled <table>/<thead>); Record column + Loads/Status changes/Work orders tabs preserved; emptyText No records.; data-testid vehicle-recent-activity preserved; verify-vehicle-recent-activity-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1026 wired (Rule 17); tracker marks RecentActivitySection migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17)."
+}
