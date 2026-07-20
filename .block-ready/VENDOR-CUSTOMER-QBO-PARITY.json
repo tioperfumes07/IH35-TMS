@@ -1,15 +1,16 @@
 {
-  "block_id": "VENDOR-CUSTOMER-QBO-PARITY",
-  "status": "BUILD",
-  "classification": "NON-FINANCIAL",
-  "phase": "VISUAL-REMAINDER",
-  "task": "Full QBO-parity create panels + profiles (uploaded spec)",
-  "branch": "feat/qbo-parity-customers-vendors",
-  "allowed_files": [
-    ".block-ready/_markers/VENDOR-CUSTOMER-QBO-PARITY.done"
-  ],
-  "runtime_path": "apps/frontend/src",
-  "db_required": false,
-  "guard_required": false,
-  "extra_gates": []
+ "block_id": "VENDOR-CUSTOMER-QBO-PARITY",
+ "status": "BUILD",
+ "classification": "NON-FINANCIAL",
+ "phase": "VISUAL-REMAINDER",
+ "task": "Full QBO-parity create panels + profiles (uploaded spec)",
+ "branch": "feat/qbo-parity-customers-vendors",
+ "allowed_files": [
+  ".block-ready/_markers/VENDOR-CUSTOMER-QBO-PARITY.done"
+ ],
+ "runtime_path": "apps/frontend/src",
+ "db_required": false,
+ "guard_required": false,
+ "extra_gates": [],
+ "superseded_by": "[RESOLVED 2026-07-19 triage]  verify-vendor-create-profile.mjs, verify-qbo-parity-customers.mjs, verify-qbo-parity-vendors.mjs all PASS \u2014 create panels + profile tabs built for both vendor and customer."
 }

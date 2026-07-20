@@ -1,17 +1,18 @@
 {
-  "block_id": "0257-audit-78",
-  "status": "NEEDS-VERIFY",
-  "classification": "FINANCIAL",
-  "phase": "tier3",
-  "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
-  "source_file": "0257-audit-78.txt",
-  "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
-  ],
-  "acceptance": [
-    {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
-    }
-  ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+ "block_id": "0257-audit-78",
+ "status": "NEEDS-VERIFY",
+ "classification": "FINANCIAL",
+ "phase": "tier3",
+ "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
+ "source_file": "0257-audit-78.txt",
+ "allowed_files": [
+  "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+ ],
+ "acceptance": [
+  {
+   "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+  }
+ ],
+ "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check.",
+ "superseded_by": "[NOISE 2026-07-19 triage]  sweep NOISE"
 }

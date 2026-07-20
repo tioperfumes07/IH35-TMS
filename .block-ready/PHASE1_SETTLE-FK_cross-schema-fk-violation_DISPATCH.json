@@ -1,17 +1,18 @@
 {
-  "block_id": "PHASE1_SETTLE-FK_cross-schema-fk-violation_DISPATCH",
-  "status": "NEEDS-VERIFY",
-  "classification": "FINANCIAL",
-  "phase": "money-wiring",
-  "source": "MASTER-6 authored dispatch (02-MONEY-WIRING-P1-P3)",
-  "source_file": "PHASE1_SETTLE-FK_cross-schema-fk-violation_DISPATCH.txt",
-  "allowed_files": [
-    "canonical = driver_finance.* only; NEVER write payroll.*/settlement.*. Additive; no delete. Tier-1; build-and-hold."
-  ],
-  "acceptance": [
-    {
-      "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): Settlement post FK-violates because the LIVE writer is on the RETIRE table (payroll) — fix the WRITER onto canonical driver_finance, do NOT repoint the FK to payroll"
-    }
-  ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+ "block_id": "PHASE1_SETTLE-FK_cross-schema-fk-violation_DISPATCH",
+ "status": "NEEDS-VERIFY",
+ "classification": "FINANCIAL",
+ "phase": "money-wiring",
+ "source": "MASTER-6 authored dispatch (02-MONEY-WIRING-P1-P3)",
+ "source_file": "PHASE1_SETTLE-FK_cross-schema-fk-violation_DISPATCH.txt",
+ "allowed_files": [
+  "canonical = driver_finance.* only; NEVER write payroll.*/settlement.*. Additive; no delete. Tier-1; build-and-hold."
+ ],
+ "acceptance": [
+  {
+   "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): Settlement post FK-violates because the LIVE writer is on the RETIRE table (payroll) \u2014 fix the WRITER onto canonical driver_finance, do NOT repoint the FK to payroll"
+  }
+ ],
+ "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check.",
+ "superseded_by": "[RESOLVED 2026-07-19 triage]  scripts/verify-canonical-table-writes.mjs (built to catch PR #2314's payroll RETIRE-table FK) PASSES; settlement-engine.ts writes only to driver_finance.settlement_lines."
 }

@@ -1,17 +1,18 @@
 {
-  "block_id": "0519-s1-maint-schema-fragmentation_DISPATCH",
-  "status": "NEEDS-VERIFY",
-  "classification": "FINANCIAL",
-  "phase": "tier1",
-  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
-  "source_file": "118_0519-s1-maint-schema-fragmentation_DISPATCH.txt",
-  "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED (owner-ceremony). No delete."
-  ],
-  "acceptance": [
-    {
-      "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): S1: maint + maintenance schema split — two schemas writing maintenance data, consolidation needed"
-    }
-  ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+ "block_id": "0519-s1-maint-schema-fragmentation_DISPATCH",
+ "status": "NEEDS-VERIFY",
+ "classification": "FINANCIAL",
+ "phase": "tier1",
+ "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
+ "source_file": "118_0519-s1-maint-schema-fragmentation_DISPATCH.txt",
+ "allowed_files": [
+  "additive only; ALTER/CREATE on existing financial tables = PROTECTED (owner-ceremony). No delete."
+ ],
+ "acceptance": [
+  {
+   "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): S1: maint + maintenance schema split \u2014 two schemas writing maintenance data, consolidation needed"
+  }
+ ],
+ "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check.",
+ "duplicate_of": "[DUPLICATE 2026-07-19 triage] 0519-dc2-maint-schema-144-rows-active-alongsid Same underlying finding as 0519-dc2 (maint.* vs maintenance.* schema coexistence); identical evidence, still open."
 }

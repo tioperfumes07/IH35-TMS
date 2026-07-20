@@ -1,17 +1,18 @@
 {
-  "block_id": "form425c-case-number-export-validation-gap",
-  "status": "PENDING",
-  "classification": "FINANCIAL",
-  "phase": "tier2",
-  "source": "MASTER-6 authored dispatch (05-TIER2-BLOCKS)",
-  "source_file": "form425c-case-number-export-validation-gap.txt",
-  "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
-  ],
-  "acceptance": [
-    {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
-    }
-  ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+ "block_id": "form425c-case-number-export-validation-gap",
+ "status": "PENDING",
+ "classification": "FINANCIAL",
+ "phase": "tier2",
+ "source": "MASTER-6 authored dispatch (05-TIER2-BLOCKS)",
+ "source_file": "form425c-case-number-export-validation-gap.txt",
+ "allowed_files": [
+  "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+ ],
+ "acceptance": [
+  {
+   "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+  }
+ ],
+ "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check.",
+ "superseded_by": "[RESOLVED 2026-07-19 triage]  isInvalidCaseNumber() in form-425c-pdf.ts, enforced at generateForm425CPdf (line136) and mark-filed route (form-425c.routes.ts:872); dedicated test form-425c-case-number.test.ts."
 }

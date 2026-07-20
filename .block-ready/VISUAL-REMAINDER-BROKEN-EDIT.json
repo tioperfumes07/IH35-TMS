@@ -1,15 +1,16 @@
 {
-  "block_id": "VISUAL-REMAINDER-BROKEN-EDIT",
-  "status": "BUILD",
-  "classification": "NON-FINANCIAL",
-  "phase": "VISUAL-REMAINDER",
-  "task": "Fix 3 broken edit/dropdown controls",
-  "branch": "fix/visual-remainder-broken-edit",
-  "allowed_files": [
-    ".block-ready/_markers/VISUAL-REMAINDER-BROKEN-EDIT.done"
-  ],
-  "runtime_path": "apps/frontend/src",
-  "db_required": false,
-  "guard_required": false,
-  "extra_gates": []
+ "block_id": "VISUAL-REMAINDER-BROKEN-EDIT",
+ "status": "BUILD",
+ "classification": "NON-FINANCIAL",
+ "phase": "VISUAL-REMAINDER",
+ "task": "Fix 3 broken edit/dropdown controls",
+ "branch": "fix/visual-remainder-broken-edit",
+ "allowed_files": [
+  ".block-ready/_markers/VISUAL-REMAINDER-BROKEN-EDIT.done"
+ ],
+ "runtime_path": "apps/frontend/src",
+ "db_required": false,
+ "guard_required": false,
+ "extra_gates": [],
+ "superseded_by": "[RESOLVED 2026-07-19 triage]  PR #2180 merged ('disable broken Edit buttons with informative toasts') + done-marker VISUAL-REMAINDER-BROKEN-EDIT.done present."
 }
