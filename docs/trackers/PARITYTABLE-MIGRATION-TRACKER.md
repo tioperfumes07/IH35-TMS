@@ -342,6 +342,7 @@ verify-step 1035.
 | `apps/frontend/src/components/reports/FrequentlyRunTable.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/reports/LaneDetailModal.tsx` | pending |
 | `apps/frontend/src/components/reports/ifta/Step1MileageReview.tsx` | migrated (qbo-parity-a1) |
+| `apps/frontend/src/components/reports/LaneDetailModal.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/reports/ifta/Step1MileageReview.tsx` | pending |
 | `apps/frontend/src/components/reports/ifta/Step2FuelReview.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/reports/ifta/Step3JurisdictionCalc.tsx` | pending |
@@ -1004,6 +1005,15 @@ Guard: `scripts/verify-ifta-step1-mileage-uses-paritytable.mjs` via verify-step 
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/components/reports/ifta/Step1MileageReview.tsx` | components/reports/ifta |
+## qbo-parity-a1 — LaneDetailModal (this PR)
+Reports lane profitability drill-down loads grid was a hand-rolled `<table>`. Migrated to
+shared `ParityTable` (sort + resize + gear). Columns Load / Date / Revenue / Driver pay /
+Fuel / Maint. / Profit / Miles / Margin preserved 1:1; Load stays an `EntityLink`. Guard:
+`scripts/verify-lane-detail-modal-uses-paritytable.mjs` via verify-step **1049**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/reports/LaneDetailModal.tsx` | components/reports |
 ## qbo-parity-a1 — Step2FuelReview (this PR)
 IFTA Step 2 fuel review was a hand-rolled `<table>` with per-jurisdiction override
 inputs and a Total footer. Migrated to shared `ParityTable` (sort + resize + gear +

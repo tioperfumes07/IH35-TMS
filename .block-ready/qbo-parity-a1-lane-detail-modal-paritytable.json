@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-lane-detail-modal-paritytable",
+  "branch": "fix/lane-detail-modal-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable)",
+  "phase": "OPS-FE",
+  "task": "Migrate LaneDetailModal loads grid to ParityTable. Preserve Load/Date/Revenue/Driver pay/Fuel/Maint./Profit/Miles/Margin + EntityLink. Guard verify-step 1049 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + qbo-parity-a1",
+  "source_file": "qbo-parity-a1-lane-detail-modal-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-lane-detail-modal-paritytable.json",
+    "apps/frontend/src/components/reports/LaneDetailModal.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-lane-detail-modal-uses-paritytable.mjs",
+    "scripts/verify-steps/1049-verify-lane-detail-modal-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "LaneDetailModal uses ParityTable; columns preserved; EntityLink on Load; verify-step 1049; tracker append."
+    }
+  ],
+  "note": "GATED: no. verify-step 1049. Rule 17. Skipped CostBreakdownBox (shared bill/expense/WO nested form)."
+}
