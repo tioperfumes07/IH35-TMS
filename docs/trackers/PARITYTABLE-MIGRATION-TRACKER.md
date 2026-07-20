@@ -497,7 +497,6 @@ verify-step 1035.
 | --- | --- |
 | `apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx` | pending |
 | `apps/frontend/src/pages/compliance/Form2290Filings.tsx` | pending |
-| `apps/frontend/src/pages/compliance/HosTrackerSection.tsx` | pending |
 | `apps/frontend/src/pages/compliance/HosViewerSection.tsx` | pending |
 
 ### pages/customers (4)
@@ -982,3 +981,15 @@ Guard: `scripts/verify-booking-gap-report-uses-paritytable.mjs` via verify-step 
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/reports/BookingGapReport.tsx` | pages/reports |
+
+## qbo-parity-a1 — HosTrackerSection (this PR)
+Compliance HOS Tracker roster was a hand-rolled `<table>` with a bare red outage
+message. Migrated to shared `ParityTable` (sort + resize + gear) and replaced the
+ad-hoc error with `ListErrorState` + Retry. Columns Driver / Unit / Status / Drive /
+Shift / Cycle / Driven (cyc) preserved 1:1; duty-state display, numeric alignment,
+unavailable-row treatment, date strip, KPI cards, and cycle-detail drawer preserved.
+Guard: `scripts/verify-hos-tracker-uses-paritytable.mjs` via verify-step **1065**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/compliance/HosTrackerSection.tsx` | pages/compliance |

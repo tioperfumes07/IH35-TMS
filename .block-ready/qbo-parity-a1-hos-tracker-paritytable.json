@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-hos-tracker-paritytable",
+  "branch": "fix/hos-tracker-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable + ListErrorState)",
+  "phase": "OPS-FE",
+  "task": "Migrate compliance HosTrackerSection from a hand-rolled table + bare error message to shared ParityTable (sort/resize/gear) + ListErrorState. Preserve Driver/Unit/Status/Drive/Shift/Cycle/Driven (cyc), date strip, KPI cards, duty display, unavailable rows, and cycle-detail drawer. Guard + verify-step 1065 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + qbo-parity-a1",
+  "source_file": "qbo-parity-a1-hos-tracker-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-hos-tracker-paritytable.json",
+    "apps/frontend/src/pages/compliance/HosTrackerSection.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-hos-tracker-uses-paritytable.mjs",
+    "scripts/verify-steps/1065-verify-hos-tracker-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "HosTrackerSection.tsx uses ParityTable (no hand-rolled <table>/<thead>) and ListErrorState + Retry on query failure; columns Driver/Unit/Status/Drive/Shift/Cycle/Driven (cyc), storageKey=compliance-hos-tracker, no-active-drivers copy, date strip, KPI cards, unavailable-row treatment, and row-click cycle drawer are preserved; verify-hos-tracker-uses-paritytable.mjs PASS (+ --selftest); verify-step 1065 wired; tracker inventory removes HosTrackerSection pending row and appends migrated section without a rollup hand table."
+    }
+  ],
+  "note": "GATED: no (pure frontend compliance UI). Incremental qbo-parity-a1 — HosTrackerSection only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17). Never re-add the tracker rollup hand table."
+}
