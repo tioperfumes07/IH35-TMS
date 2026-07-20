@@ -808,3 +808,14 @@ Guard: `scripts/verify-vehicle-documents-uses-paritytable.mjs` via verify-step 1
 | --- | --- |
 | `apps/frontend/src/components/vehicle-profile/DocumentsSection.tsx` | components/vehicle-profile |
 
+## qbo-parity-a1 — ErrorMonitorPage (this PR)
+Owner error-monitor buffered stream was a hand-rolled `<table>` with a bare red
+outage line. Migrated to shared `ParityTable` (sort + resize + gear +
+`renderExpanded` detail JSON) and replaced the ad-hoc error with `ListErrorState`
++ Retry. Columns Time/Kind/Message/Detail preserved 1:1.
+Guard: `scripts/verify-error-monitor-uses-paritytable.mjs` via verify-step 1036.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/admin/ErrorMonitor.tsx` | pages/admin |
+

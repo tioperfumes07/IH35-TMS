@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-error-monitor-paritytable",
+  "branch": "fix/error-monitor-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable + ListErrorState)",
+  "phase": "OPS-FE",
+  "task": "Migrate Admin ErrorMonitorPage from hand-rolled <table> to shared ParityTable (sort/resize/gear + renderExpanded detail JSON); replace ad-hoc red banner with ListErrorState. Guard + verify-step 1036 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + qbo-parity-a1",
+  "source_file": "qbo-parity-a1-error-monitor-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-error-monitor-paritytable.json",
+    "apps/frontend/src/pages/admin/ErrorMonitor.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-error-monitor-uses-paritytable.mjs",
+    "scripts/verify-steps/1036-verify-error-monitor-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "ErrorMonitor.tsx uses ParityTable (no hand-rolled <table>/<thead>); ListErrorState on load failure; columns Time/Kind/Message/Detail + tableTestId=admin-error-monitor-table + emptyText + renderExpanded preserved; verify-error-monitor-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1036 wired (Rule 17); tracker marks ErrorMonitor migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 — ErrorMonitorPage surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17). verify-step 1036 (≥1035 free; 1035 claimed by entity-audit)."
+}
