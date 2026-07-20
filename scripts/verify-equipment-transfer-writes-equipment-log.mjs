@@ -1,0 +1,120 @@
+#!/usr/bin/env node
+/**
+ * 0242 / biz-flow-8 — equipment transfer completion must INSERT mdata.equipment_log.
+ *
+ * Static source guard (Rule 17): asserts the canonical dual-confirm inbound path and the
+ * legacy mdata transfer finalize/confirm paths write equipment_log in the same function
+ * that UPDATEs mdata.equipment.assigned_driver_id.
+ *
+ * Schema note: mdata.equipment_log.event_type CHECK allows only
+ * Coupled|Uncoupled|Moved|StatusChange|MaintenanceStart|MaintenanceEnd|Note — transfers
+ * use 'Moved' (no migration; columns already exist).
+ */
+import fs from "node:fs";
+import path from "node:path";
+
+const ROOT = process.cwd();
+const failures = [];
+
+function fail(message) {
+  failures.push(message);
+}
+
+function read(relativePath) {
+  const absolutePath = path.join(ROOT, relativePath);
+  if (!fs.existsSync(absolutePath)) {
+    fail(`MISSING: ${relativePath}`);
+    return "";
+  }
+  return fs.readFileSync(absolutePath, "utf8");
+}
+
+function extractFunctionRegion(source, functionName) {
+  const startRe = new RegExp(`(?:export\\s+)?async\\s+function\\s+${functionName}\\b`);
+  const match = startRe.exec(source);
+  if (!match) return "";
+  const start = match.index;
+  const rest = source.slice(start + match[0].length);
+  const nextFn = /(?:export\s+)?async\s+function\s+\w+/.exec(rest);
+  const end = nextFn ? start + match[0].length + nextFn.index : source.length;
+  return source.slice(start, end);
+}
+
+function assertTransferCompletionWritesLog(relativePath, functionName, opts = {}) {
+  const source = read(relativePath);
+  if (!source) return;
+  const body = extractFunctionRegion(source, functionName);
+  if (!body) {
+    fail(`${relativePath}: could not extract function ${functionName}`);
+    return;
+  }
+  if (!/UPDATE\s+mdata\.equipment[\s\S]*assigned_driver_id/.test(body)) {
+    fail(`${relativePath}::${functionName}: missing UPDATE mdata.equipment SET assigned_driver_id`);
+  }
+  const hasInlineInsert = /INSERT\s+INTO\s+mdata\.equipment_log/.test(body);
+  const hasHelperCall = /insertEquipmentTransferLog\s*\(/.test(body);
+  if (!hasInlineInsert && !hasHelperCall) {
+    fail(
+      `${relativePath}::${functionName}: missing INSERT INTO mdata.equipment_log (or insertEquipmentTransferLog call) in same function`
+    );
+  }
+  if (opts.requireMovedLiteral) {
+    const search = hasInlineInsert ? body : source;
+    if (!/'Moved'/.test(search)) {
+      fail(`${relativePath}::${functionName}: equipment_log event_type must be 'Moved' (CHECK-safe)`);
+    }
+  }
+}
+
+assertTransferCompletionWritesLog(
+  "apps/backend/src/dispatch/equipment-transfer/dual-confirm.service.ts",
+  "confirmInbound",
+  { requireMovedLiteral: true }
+);
+assertTransferCompletionWritesLog(
+  "apps/backend/src/mdata/equipment-transfer.service.ts",
+  "confirmTransfer",
+  { requireMovedLiteral: true }
+);
+assertTransferCompletionWritesLog(
+  "apps/backend/src/mdata/equipment-transfer.service.ts",
+  "finalizeDualAckTransfer",
+  { requireMovedLiteral: true }
+);
+
+const legacy = read("apps/backend/src/mdata/equipment-transfer.service.ts");
+if (legacy) {
+  const helper = extractFunctionRegion(legacy, "insertEquipmentTransferLog");
+  if (!helper || !/INSERT\s+INTO\s+mdata\.equipment_log/.test(helper)) {
+    fail(
+      "apps/backend/src/mdata/equipment-transfer.service.ts: insertEquipmentTransferLog must INSERT INTO mdata.equipment_log"
+    );
+  }
+  if (helper && !/'Moved'/.test(helper)) {
+    fail(
+      "apps/backend/src/mdata/equipment-transfer.service.ts: insertEquipmentTransferLog must use event_type 'Moved'"
+    );
+  }
+}
+
+const dual = read("apps/backend/src/dispatch/equipment-transfer/dual-confirm.service.ts");
+if (dual && /INSERT\s+INTO\s+mdata\.equipment_log/.test(dual) && !/'Moved'/.test(dual)) {
+  fail(
+    "apps/backend/src/dispatch/equipment-transfer/dual-confirm.service.ts: equipment_log INSERT must use event_type 'Moved'"
+  );
+}
+
+const dualTest = read("apps/backend/src/dispatch/equipment-transfer/__tests__/dual-confirm.test.ts");
+if (dualTest && !/INSERT INTO mdata\.equipment_log/.test(dualTest)) {
+  fail("dual-confirm.test.ts: missing assertion for INSERT INTO mdata.equipment_log");
+}
+
+if (failures.length > 0) {
+  console.error("verify-equipment-transfer-writes-equipment-log — FAILED");
+  for (const entry of failures) {
+    console.error(`  x ${entry}`);
+  }
+  process.exit(1);
+}
+
+console.log("verify-equipment-transfer-writes-equipment-log — OK");

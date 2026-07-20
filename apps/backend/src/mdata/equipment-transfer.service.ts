@@ -133,12 +133,13 @@ export async function confirmTransfer(
       const transferRes = await client.query<{
         id: string;
         equipment_id: string;
+        from_driver_id: string | null;
         to_driver_id: string;
         status: string;
         expires_at: string;
       }>(
         `
-          SELECT id, equipment_id, to_driver_id, status, expires_at::text
+          SELECT id, equipment_id, from_driver_id, to_driver_id, status, expires_at::text
           FROM mdata.equipment_transfers
           WHERE id = $1
             AND operating_company_id = $2
@@ -178,6 +179,13 @@ export async function confirmTransfer(
         `,
         [transfer.equipment_id, input.confirming_driver_id]
       );
+      const equipmentLogId = await insertEquipmentTransferLog(client, userId, {
+        equipmentId: transfer.equipment_id,
+        transferId: input.transfer_id,
+        fromDriverId: transfer.from_driver_id,
+        toDriverId: input.confirming_driver_id,
+        operatingCompanyId: input.operating_company_id,
+      });
       await appendCrudAudit(
         client,
         userId,
@@ -188,6 +196,7 @@ export async function confirmTransfer(
           operating_company_id: input.operating_company_id,
           equipment_id: transfer.equipment_id,
           to_driver_id: input.confirming_driver_id,
+          equipment_log_id: equipmentLogId || undefined,
         },
         "info",
         "P5-F5-EQUIPMENT-TRANSFER"
@@ -297,6 +306,62 @@ async function loadPendingTransfer(
   return transfer;
 }
 
+/** Append mdata.equipment_log on transfer completion (0242). event_type CHECK has no 'transfer'. */
+async function insertEquipmentTransferLog(
+  client: Parameters<Parameters<typeof withCurrentUser>[1]>[0],
+  userId: string,
+  args: {
+    equipmentId: string;
+    transferId: string;
+    fromDriverId: string | null;
+    toDriverId: string;
+    operatingCompanyId: string;
+  }
+): Promise<string> {
+  const notes = [
+    "Equipment transfer completed:",
+    `transfer=${args.transferId}`,
+    args.fromDriverId ? `from_driver=${args.fromDriverId}` : null,
+    `to_driver=${args.toDriverId}`,
+    `operating_company_id=${args.operatingCompanyId}`,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const logRes = await client.query<{ id: string }>(
+    `
+      INSERT INTO mdata.equipment_log (
+        equipment_id, event_type, event_at, notes, created_by_user_id, updated_by_user_id
+      ) VALUES (
+        $1::uuid, 'Moved', now(), $2::text, $3::uuid, $3::uuid
+      )
+      RETURNING id::text AS id
+    `,
+    [args.equipmentId, notes, userId]
+  );
+  const equipmentLogId = String(logRes.rows[0]?.id ?? "");
+  if (equipmentLogId) {
+    await appendCrudAudit(
+      client,
+      userId,
+      "mdata.equipment_log.created",
+      {
+        resource_id: equipmentLogId,
+        resource_type: "mdata.equipment_log",
+        id: equipmentLogId,
+        equipment_id: args.equipmentId,
+        event_type: "Moved",
+        transfer_id: args.transferId,
+        from_driver_id: args.fromDriverId,
+        to_driver_id: args.toDriverId,
+        operating_company_id: args.operatingCompanyId,
+      },
+      "info",
+      "P5-F5-EQUIPMENT-TRANSFER"
+    );
+  }
+  return equipmentLogId;
+}
+
 async function finalizeDualAckTransfer(
   client: Parameters<Parameters<typeof withCurrentUser>[1]>[0],
   userId: string,
@@ -312,6 +377,13 @@ async function finalizeDualAckTransfer(
     `UPDATE mdata.equipment SET assigned_driver_id = $2, updated_at = now() WHERE id = $1`,
     [transfer.equipment_id, receivingDriverId]
   );
+  const equipmentLogId = await insertEquipmentTransferLog(client, userId, {
+    equipmentId: String(transfer.equipment_id),
+    transferId: String(transfer.id),
+    fromDriverId: transfer.from_driver_id ? String(transfer.from_driver_id) : null,
+    toDriverId: receivingDriverId,
+    operatingCompanyId,
+  });
   await appendCrudAudit(
     client,
     userId,
@@ -323,6 +395,7 @@ async function finalizeDualAckTransfer(
       equipment_id: transfer.equipment_id,
       to_driver_id: receivingDriverId,
       wf047_dual_ack: true,
+      equipment_log_id: equipmentLogId || undefined,
     },
     "info",
     "P5-F5-EQUIPMENT-TRANSFER"
