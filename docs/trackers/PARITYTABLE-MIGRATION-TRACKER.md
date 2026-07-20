@@ -840,7 +840,7 @@ verify-step 1035.
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/portal/PortalDashboardPage.tsx` | pending |
+| `apps/frontend/src/portal/PortalDashboardPage.tsx` | migrated (qbo-parity-a1) |
 
 ## qbo-parity-a1 — vehicle DocumentsSection (this PR)
 Vehicle profile documents list was a hand-rolled `<table>`. Migrated to shared
@@ -1069,3 +1069,15 @@ Guard: `scripts/verify-booking-gap-report-uses-paritytable.mjs` via verify-step 
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/reports/BookingGapReport.tsx` | pages/reports |
+
+## qbo-parity-a1 — PortalDashboardPage (this PR)
+Shipper portal "Your loads" dashboard was a hand-rolled `<table>` with a bare red
+outage line. Migrated to shared `ParityTable` (sort + resize + gear + CSV export)
+and replaced the ad-hoc error with `ListErrorState` + Retry. Columns Load # / Route /
+Status / Progress preserved 1:1; load detail links, progress StatusBadge, 30s
+auto-refresh, and empty copy preserved.
+Guard: `scripts/verify-portal-dashboard-uses-paritytable.mjs` via verify-step **1094**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/portal/PortalDashboardPage.tsx` | portal |
