@@ -170,7 +170,7 @@ export function ReserveDashboard() {
                 {(historyQuery.data?.movements ?? []).map((row) => (
                   <tr key={row.id}>
                     <td className="px-2 py-2">{asDateTime(row.created_at)}</td>
-                    <td className={`px-2 py-2 text-right ${row.signed_amount_cents >= 0 ? "text-green-700" : "text-red-700"}`}>
+                    <td className={`px-2 py-2 text-right ${row.signed_amount_cents >= 0 ? "text-slate-700" : "text-red-700"}`}>
                       {asMoney(row.signed_amount_cents)}
                     </td>
                     <td className="px-2 py-2 text-right font-medium">{asMoney(row.running_balance_cents)}</td>

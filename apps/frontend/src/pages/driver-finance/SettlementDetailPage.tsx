@@ -425,7 +425,7 @@ export function SettlementDetailPage() {
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        className="rounded-sm bg-green-600 px-2 py-1 text-xs text-white"
+                        className="rounded-sm bg-slate-600 px-2 py-1 text-xs text-white"
                         onClick={() =>
                           void markSettlementCleared(settlementId)
                             .then(() => {

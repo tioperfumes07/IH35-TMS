@@ -243,7 +243,7 @@ export function SettlementCloseArrivalPage() {
                   </div>
                   <div className="mt-1 flex items-center justify-between text-[11px] text-gray-600">
                     <span>Current escrow balance: {formatUsd(currentEscrowTotal)}</span>
-                    <span className={escrowToCap === 0 ? "font-semibold text-amber-700" : ""}>
+                    <span className={escrowToCap === 0 ? "font-semibold text-slate-700" : ""}>
                       {escrowToCap === 0 ? "At cap" : `${formatUsd(escrowToCap)} to cap`}
                     </span>
                   </div>
@@ -359,7 +359,7 @@ export function SettlementCloseArrivalPage() {
               <div className="flex items-center justify-end gap-2 border-t border-gray-200 pt-3">
                 {!canClose ? <span className="text-xs text-gray-500">Your role cannot close settlements.</span> : null}
                 {isMaker ? (
-                  <span className="text-xs text-amber-700">You opened this settlement — a different approver must close it (maker ≠ checker).</span>
+                  <span className="text-xs text-slate-700">You opened this settlement — a different approver must close it (maker ≠ checker).</span>
                 ) : null}
                 <Button
                   disabled={!canSubmitClose || closeMut.isPending}

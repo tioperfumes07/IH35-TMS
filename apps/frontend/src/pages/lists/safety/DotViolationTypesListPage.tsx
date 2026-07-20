@@ -22,7 +22,7 @@ const CATEGORY_LABELS: Record<DotBasicCategory, string> = {
 function severityBadgeClass(weight: number | null) {
   if (weight == null) return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500";
   if (weight <= 3) return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
-  if (weight <= 6) return "rounded-sm bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800";
+  if (weight <= 6) return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-800";
   return "rounded-sm bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700";
 }
 

@@ -69,14 +69,14 @@ export function SettlementProfitabilityCard({ loadId, operatingCompanyId, curren
   const netLabel = formatProfitCents(d.net_profit_cents);
 
   const variantBg: Record<typeof variant, string> = {
-    positive: "bg-green-50 border-green-200",
+    positive: "bg-slate-50 border-slate-200",
     breakeven: "bg-slate-100 border-slate-200",
     negative: "bg-red-50 border-red-200",
     loading: "bg-gray-50 border-gray-200",
     unavailable: "bg-gray-50 border-gray-200",
   };
   const variantText: Record<typeof variant, string> = {
-    positive: "text-green-800",
+    positive: "text-slate-800",
     breakeven: "text-slate-700",
     negative: "text-red-700",
     loading: "text-gray-500",
