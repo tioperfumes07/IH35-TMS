@@ -216,6 +216,17 @@ verify-step 1035.
 | --- | --- |
 | `apps/frontend/src/components/audit/EntityAuditHistoryTab.tsx` | components/audit |
 
+## qbo-parity-a1 — UnitDriverHistoryStrip (this PR)
+Unit/driver assignment history strip (driver detail + unit contexts) was a hand-rolled
+`<table>` with no query-error surface. Migrated to shared `ParityTable`
+(sort + resize + gear) with `ListErrorState` + Retry. Columns Unit / Driver / Started /
+Ended / Source preserved 1:1; dynamic title + Last N days chrome preserved.
+Guard: `scripts/verify-unit-driver-history-strip-uses-paritytable.mjs` via verify-step 1086.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/units/UnitDriverHistoryStrip.tsx` | pages/units |
+
 ## Remaining hand-rolled inventory (by module)
 
 ### components/DataTable.tsx (1)
@@ -819,7 +830,7 @@ verify-step 1035.
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/units/UnitDriverHistoryStrip.tsx` | pending |
+| `apps/frontend/src/pages/units/UnitDriverHistoryStrip.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/pages/units/UnitPermitsTab.tsx` | pending |
 | `apps/frontend/src/pages/units/UnitTollTagsTab.tsx` | pending |
 
