@@ -48,7 +48,9 @@ export function check({ listPage, entityLink, manifest }) {
 
   if (!entityLink) {
     f.push(`${ENTITY_LINK}: missing`);
-  } else if (!/case\s+["']matter["']\s*:[\s\S]*?\/legal\/matters\/\$\{id\}/.test(entityLink)) {
+  } else if (
+    !/case\s+["']matter["']\s*:\s*return\s+`\/legal\/matters\/\$\{id\}`/.test(entityLink)
+  ) {
     f.push(`${ENTITY_LINK}: resolveEntityRoute(matter) must return /legal/matters/:id`);
   }
 
