@@ -1,26 +1,26 @@
 {
  "date": "2026-07-20",
- "generated_at_iso": "2026-07-20T22:37:04.856Z",
+ "generated_at_iso": "2026-07-20T23:39:02.828Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
   "NEEDS-VERIFY": 63,
-  "DONE": 642,
+  "DONE": 653,
   "AUDIT-NOTE": 425
  },
  "universe": {
-  "total_blocks_after_dedup": 1164,
+  "total_blocks_after_dedup": 1175,
   "by_source_after_dedup": {
-   ".block-ready": 992,
+   ".block-ready": 1003,
    "program": 61,
    "enterprise-29": 29,
    "accounting": 25,
    "gap-spec": 57
   },
   "raw_file_counts": {
-   ".block-ready (*.json files)": 1345,
+   ".block-ready (*.json files)": 1356,
    ".block-ready retired (dup/stale/superseded, excluded)": 348,
-   ".block-ready active (counted)": 997
+   ".block-ready active (counted)": 1008
   },
   "note": "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by UNIQUE block_id, EXCLUDING files with EXPLICIT retirement markers (_DUP/_STALE/_SUPERSEDED underscore suffixes, status superseded/duplicate/dup/stale, or superseded_by/duplicate_of). Hyphen descriptive …-stale/…-duplicate live defect IDs are NOT retired by filename alone. So the block count is neither the raw .block-ready file count nor inflated by duplicate/retired registrations."
  },
@@ -6791,6 +6791,17 @@
    "pr": 1916
   },
   {
+   "id": "qbo-parity-a1-accessorial-editor-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 file(s) on main",
+   "name": "Migrate AccessorialEditor charge grid from hand-rolled <table> to ParityTable; ListErrorState on catalog failure. Preser",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "qbo-parity-a1-activity-log-paritytable",
    "source": ".block-ready",
    "fin": true,
@@ -6879,6 +6890,28 @@
    "pr": 2881
   },
   {
+   "id": "qbo-parity-a1-driver-hub-reporting-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 file(s) on main",
+   "name": "Migrate home DriverHubReportingPage by-driver grid from hand-rolled <table> + bare red banner to shared ParityTable (sor",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "qbo-parity-a1-driver-settlements-section-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 file(s) on main",
+   "name": "Migrate driver-profile SettlementsSection last-4-weeks grid to ParityTable. Preserve Week ending/Gross/Net + YTD tiles +",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "qbo-parity-a1-entity-audit-history-paritytable",
    "source": ".block-ready",
    "fin": true,
@@ -6901,6 +6934,17 @@
    "pr": 2883
   },
   {
+   "id": "qbo-parity-a1-freetime-detention-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 file(s) on main",
+   "name": "Migrate FreeTimeDetentionEditor terms history from hand-rolled <table> to shared ParityTable; ListErrorState on terms/hi",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "qbo-parity-a1-frequently-run-paritytable",
    "source": ".block-ready",
    "fin": true,
@@ -6910,6 +6954,61 @@
    "name": "Migrate FrequentlyRunTable (Reports Home) from hand-rolled <table> to shared ParityTable QBO grammar; preserve Report/Fi",
    "registered_on": null,
    "pr": 2864
+  },
+  {
+   "id": "qbo-parity-a1-hos-tracker-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 file(s) on main",
+   "name": "Migrate compliance HosTrackerSection from a hand-rolled table + bare error message to shared ParityTable (sort/resize/ge",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "qbo-parity-a1-hos-viewer-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 file(s) on main",
+   "name": "Migrate compliance HosViewerSection duty-segment grid from a hand-rolled <table> + bare error state to shared ParityTabl",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "qbo-parity-a1-ifta-step-miles-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 file(s) on main",
+   "name": "Migrate IFTAStepMiles (pages/reports/ifta preparer Step 1) from hand-rolled <table> to shared ParityTable (sort/resize/g",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "qbo-parity-a1-ifta-step-tax-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 file(s) on main",
+   "name": "Migrate IFTAStepTax from hand-rolled <table> to shared ParityTable QBO grammar; preserve State/Miles/Taxable gal/Paid ga",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "qbo-parity-a1-ifta-step1-mileage-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 file(s) on main",
+   "name": "Migrate IFTA Step1MileageReview from hand-rolled <table> to shared ParityTable (sort/resize/gear). Preserve State / Aggr",
+   "registered_on": null,
+   "pr": null
   },
   {
    "id": "qbo-parity-a1-ifta-step2-fuel-paritytable",
@@ -6932,6 +7031,17 @@
    "name": "Migrate LaborTracker entries grid to ParityTable; ListErrorState on load failure. Preserve ID/Actor/Start/End/Min/Cost ¢",
    "registered_on": null,
    "pr": 2913
+  },
+  {
+   "id": "qbo-parity-a1-lane-detail-modal-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 file(s) on main",
+   "name": "Migrate LaneDetailModal loads grid to ParityTable. Preserve Load/Date/Revenue/Driver pay/Fuel/Maint./Profit/Miles/Margin",
+   "registered_on": null,
+   "pr": null
   },
   {
    "id": "qbo-parity-a1-load-history-paritytable",
@@ -6998,6 +7108,17 @@
    "name": "Migrate admin QboVendorLinkagePage drivers + assets grids from hand-rolled <table> to shared ParityTable QBO grammar wit",
    "registered_on": null,
    "pr": 2897
+  },
+  {
+   "id": "qbo-parity-a1-safety-events-table-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 4 file(s) on main",
+   "name": "Migrate SafetyEventsTable from hand-rolled <table> to shared ParityTable (sort/resize/gear + selectable batchActions). P",
+   "registered_on": null,
+   "pr": null
   },
   {
    "id": "qbo-parity-a1-stop-reasoning-paritytable",
@@ -12865,6 +12986,30 @@
  ],
  "merged_prs": [
   {
+   "number": 2942,
+   "title": "batch: 8 ParityTable migrations, round 2 (integration)",
+   "mergedAt": "2026-07-20T23:38:13Z",
+   "branch": "integration/paritytable-batch-9"
+  },
+  {
+   "number": 2938,
+   "title": "batch: 8 ParityTable migrations (integration — collapses the shared-tracker treadmill)",
+   "mergedAt": "2026-07-20T22:59:04Z",
+   "branch": "integration/paritytable-batch-8"
+  },
+  {
+   "number": 2935,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-20T23:02:09Z",
+   "branch": "chore/tracker-artifacts-sync-29784434243"
+  },
+  {
+   "number": 2934,
+   "title": "docs(design): money-route idempotency — close 4 gaps AND invert the fail-open default",
+   "mergedAt": "2026-07-20T23:01:53Z",
+   "branch": "design/money-route-idempotency-fail-closed"
+  },
+  {
    "number": 2922,
    "title": "fix(reports): migrate CancellationsReportPage to ParityTable",
    "mergedAt": "2026-07-20T22:35:40Z",
@@ -12887,6 +13032,12 @@
    "title": "fix(ifta): migrate Step3 jurisdiction grid to ParityTable",
    "mergedAt": "2026-07-20T18:02:29Z",
    "branch": "fix/ifta-step3-jurisdiction-paritytable"
+  },
+  {
+   "number": 2915,
+   "title": "feat(guard): reject block-status overrides that upgrade toward DONE without live evidence",
+   "mergedAt": "2026-07-20T23:02:01Z",
+   "branch": "feat/guard-override-downgrade-only"
   },
   {
    "number": 2914,
@@ -16433,39 +16584,9 @@
    "title": "feat(reports): RPT-PAR-1 — management report packages + account drilldowns",
    "mergedAt": "2026-07-07T21:29:58Z",
    "branch": "feat/rpt-par-1-management-reports"
-  },
-  {
-   "number": 2279,
-   "title": "USERS-PAR-1: User permission matrix design doc",
-   "mergedAt": "2026-07-07T18:19:57Z",
-   "branch": "docs/users-permission-matrix"
-  },
-  {
-   "number": 2278,
-   "title": "fix(factoring): FACT-FIX-1 — profile truth + TEST-vendor guard + modal edit form",
-   "mergedAt": "2026-07-07T21:47:10Z",
-   "branch": "fix/factoring-profile-truth"
-  },
-  {
-   "number": 2277,
-   "title": "fix(qbo-picker): vendor picker reads canonical mdata.vendors (fixes c…",
-   "mergedAt": "2026-07-07T17:36:58Z",
-   "branch": "fix/qbo-picker-canonical-repoint"
-  },
-  {
-   "number": 2276,
-   "title": "Feat/qbo parity sweep batch2",
-   "mergedAt": "2026-07-07T17:44:03Z",
-   "branch": "feat/qbo-parity-sweep-batch2"
-  },
-  {
-   "number": 2275,
-   "title": "feat(ui): QBO-parity ParityTable sweep — batch 1 (Customers + dispatch/safety/compliance + vendors/customers)",
-   "mergedAt": "2026-07-07T15:24:31Z",
-   "branch": "feat/qbo-parity-table-sweep-clean"
   }
  ],
- "merged_pr_total": 2757,
+ "merged_pr_total": 2762,
  "hold_for_jorge": [
   {
    "number": 2718,
