@@ -21,3 +21,17 @@ scripts/entity-isolation-allowlist.json merge=json-union
 #     existing lines; keep it that way.)
 package.json                            merge=json-union
 .github/workflows/locked-guards.yml     merge=union
+
+# PARITYTABLE TRACKER TREADMILL KILLER (2026-07-20): every ParityTable migration PR appends a section
+# to this one shared tracker, so whichever PR merged first conflicted EVERY other open ParityTable PR
+# on it — PRs then went stale, were closed, and were re-opened as fresh duplicates (#2882/#2891,
+# #2892/#2874, #2893/#2896 …), which is what produced the duplicate-PR churn.
+#   PRECONDITION (do not skip): `union` is LINE-BASED and is only correct on an APPEND-ONLY file. This
+#   file qualifies ONLY because its Rollup counts were converted to DERIVED in the same commit that
+#   added this rule. Before that change the rollup was edited in place by every PR, and union-merging
+#   it would have kept BOTH sides of each count line — silently duplicating rows rather than
+#   conflicting. That corruption had already accumulated by hand-resolve: 12 rollup rows instead of 4,
+#   with three contradictory `pending` values. If anyone re-introduces an edited-in-place count or
+#   any other mutable line here, REMOVE this union rule in the same PR or the corruption returns
+#   silently — a duplicated row is not a merge failure, so CI will not catch it.
+docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md  merge=union
