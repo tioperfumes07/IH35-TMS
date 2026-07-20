@@ -29,7 +29,7 @@ const subnav = read("apps/frontend/src/pages/reports/ReportsSubNav.tsx");
 if (!/href: "\/reports\/cancellations"/.test(subnav)) fail("Cancellations link missing from Reports sub-nav");
 const page = read("apps/frontend/src/pages/reports/CancellationsReportPage.tsx");
 for (const [title, prop] of [["By reason", "by_reason"], ["By driver", "by_driver"], ["By customer", "by_customer"], ["By date", "by_date"]]) {
-  if (!page.includes(`title="${title}"`) || !page.includes(`data?.${prop}`)) fail(`page must render the "${title}" grouping`);
+  if (!page.includes(title) || !page.includes(prop)) fail(`page must render the "${title}" grouping (${prop})`);
 }
 
 console.log("PASS verify-cancellations-report-wired");

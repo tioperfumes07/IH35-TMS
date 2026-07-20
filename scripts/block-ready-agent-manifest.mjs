@@ -81,10 +81,37 @@ export function resolveBlockReadyManifest(options = {}) {
     );
   }
   if (branchMatches.length > 1) {
+    // MULTI-BLOCK BRANCH (fix 2026-07-20): one branch legitimately registering several
+    // .block-ready manifests is a SET, not an ambiguity. This previously threw
+    // unconditionally — even for callers that passed allowAggregate:true — which was
+    // inconsistent with the branchMatches.length === 0 path above, which has always
+    // degraded to aggregate for exactly those callers.
+    //
+    // Why it mattered: verify-pre-commit.mjs calls this with allowAggregate:true at
+    // IMPORT time (line 13), before a single guard is constructed. So registering N
+    // blocks on one branch made this throw and took down the ENTIRE ~250-guard suite,
+    // with an error message that never mentions guards. Same failure class as the
+    // known BLOCK_ID import-time crash: a manifest-resolution failure masquerading as
+    // total verification loss. Aggregate mode already means "run every verify-step",
+    // which is precisely the correct behavior for a branch carrying multiple blocks.
+    //
+    // BLOCK_ID still selects a single manifest when set (handled earlier), and callers
+    // that do NOT opt into aggregate still get the hard error.
+    if (options.allowAggregate === true) {
+      return {
+        agent: null,
+        manifest: null,
+        worktreePath,
+        resolution: "aggregate",
+        reason: `branch "${branch}" registers ${branchMatches.length} blocks (${branchMatches
+          .map(({ relativePath }) => relativePath)
+          .join(", ")}); running all verify-steps`,
+      };
+    }
     throw new Error(
       `ambiguous exact branch "${branch}" matches: ${branchMatches
         .map(({ relativePath }) => relativePath)
-        .join(", ")}`
+        .join(", ")}; set BLOCK_ID to an exact manifest id or pass allowAggregate`
     );
   }
   return {
