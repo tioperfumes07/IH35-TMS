@@ -1,26 +1,26 @@
 {
  "date": "2026-07-20",
- "generated_at_iso": "2026-07-20T17:40:27.270Z",
+ "generated_at_iso": "2026-07-20T18:21:37.684Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
   "NEEDS-VERIFY": 63,
-  "DONE": 639,
+  "DONE": 641,
   "AUDIT-NOTE": 429
  },
  "universe": {
-  "total_blocks_after_dedup": 1165,
+  "total_blocks_after_dedup": 1167,
   "by_source_after_dedup": {
-   ".block-ready": 991,
+   ".block-ready": 993,
    "program": 61,
    "enterprise-29": 29,
    "accounting": 27,
    "gap-spec": 57
   },
   "raw_file_counts": {
-   ".block-ready (*.json files)": 1392,
+   ".block-ready (*.json files)": 1394,
    ".block-ready retired (dup/stale/superseded, excluded)": 400,
-   ".block-ready active (counted)": 992
+   ".block-ready active (counted)": 994
   },
   "note": "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by UNIQUE block_id, EXCLUDING files with EXPLICIT retirement markers (_DUP/_STALE/_SUPERSEDED underscore suffixes, status superseded/duplicate/dup/stale, or superseded_by/duplicate_of). Hyphen descriptive …-stale/…-duplicate live defect IDs are NOT retired by filename alone. So the block count is neither the raw .block-ready file count nor inflated by duplicate/retired registrations."
  },
@@ -6899,6 +6899,28 @@
    "pr": 2864
   },
   {
+   "id": "qbo-parity-a1-ifta-step2-fuel-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2917 merged 2026-07-20",
+   "name": "Migrate Step2FuelReview (IFTA fuel review) from hand-rolled <table> to shared ParityTable QBO grammar; preserve State/Ag",
+   "registered_on": null,
+   "pr": 2917
+  },
+  {
+   "id": "qbo-parity-a1-labor-tracker-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2913 merged 2026-07-20",
+   "name": "Migrate LaborTracker entries grid to ParityTable; ListErrorState on load failure. Preserve ID/Actor/Start/End/Min/Cost ¢",
+   "registered_on": null,
+   "pr": 2913
+  },
+  {
    "id": "qbo-parity-a1-load-history-paritytable",
    "source": ".block-ready",
    "fin": true,
@@ -12874,10 +12896,52 @@
  ],
  "merged_prs": [
   {
+   "number": 2921,
+   "title": "fix(reports): BookingGapReport → ParityTable (verify-step 1057)",
+   "mergedAt": "2026-07-20T18:20:48Z",
+   "branch": "fix/booking-gap-report-paritytable"
+  },
+  {
+   "number": 2917,
+   "title": "fix(ifta): migrate Step2 fuel review to ParityTable",
+   "mergedAt": "2026-07-20T18:20:30Z",
+   "branch": "fix/ifta-step2-fuel-paritytable"
+  },
+  {
+   "number": 2916,
+   "title": "fix(ifta): migrate Step3 jurisdiction grid to ParityTable",
+   "mergedAt": "2026-07-20T18:02:29Z",
+   "branch": "fix/ifta-step3-jurisdiction-paritytable"
+  },
+  {
+   "number": 2914,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-20T18:05:04Z",
+   "branch": "chore/tracker-artifacts-sync-29764520776"
+  },
+  {
+   "number": 2913,
+   "title": "fix(maint): LaborTracker → ParityTable (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T18:02:21Z",
+   "branch": "fix/labor-tracker-paritytable"
+  },
+  {
+   "number": 2907,
+   "title": "docs(design): settlement double-pay — row lock + state-guarded UPDATE",
+   "mergedAt": "2026-07-20T18:02:12Z",
+   "branch": "design/settlement-double-pay-row-lock-state-guard"
+  },
+  {
    "number": 2903,
    "title": "fix(ci): land tracker-artifact refresh via PR instead of a direct push to main",
    "mergedAt": "2026-07-20T17:35:34Z",
    "branch": "fix/tracker-bot-pr-based-flow"
+  },
+  {
+   "number": 2902,
+   "title": "fix(ci): enforce tracker-artifact freshness in CI only, warn locally",
+   "mergedAt": "2026-07-20T18:00:46Z",
+   "branch": "fix/tracker-freshness-ci-only-enforcement"
   },
   {
    "number": 2898,
@@ -13046,6 +13110,12 @@
    "title": "fix(ui): §7 palette financial ratchet to zero (0441-mod8)",
    "mergedAt": "2026-07-20T12:31:16Z",
    "branch": "fix/section7-palette-ratchet-batch3"
+  },
+  {
+   "number": 2855,
+   "title": "chore(deps): Bump the production-dependencies group across 1 directory with 14 updates",
+   "mergedAt": "2026-07-20T18:05:31Z",
+   "branch": "dependabot/npm_and_yarn/production-dependencies-8bcdaf814c"
   },
   {
    "number": 2854,
@@ -16424,57 +16494,9 @@
    "title": "EntityLink sweep 9: expense # (ExpensesListPage) + unit (GeofenceBreachesTab) + driver (ReturnToDuty RTD list)",
    "mergedAt": "2026-07-07T08:08:24Z",
    "branch": "feat/entity-link-sweep-9-final"
-  },
-  {
-   "number": 2270,
-   "title": "EntityLink drill-through: bill (VendorDetail A/P) + load (LaneDetailModal)",
-   "mergedAt": "2026-07-07T07:42:48Z",
-   "branch": "feat/entity-link-sweep-8-misc"
-  },
-  {
-   "number": 2269,
-   "title": "feat: EntityLink drill-through sweep — safety pages (driver UUID cells)",
-   "mergedAt": "2026-07-07T07:26:56Z",
-   "branch": "feat/entity-link-sweep-6-safety"
-  },
-  {
-   "number": 2268,
-   "title": "feat: EntityLink drill-through for asset_id (unit) in InsuranceClaimsTab",
-   "mergedAt": "2026-07-07T07:35:53Z",
-   "branch": "feat/entity-link-sweep-5-insurance"
-  },
-  {
-   "number": 2267,
-   "title": "feat: EntityLink sweep — maintenance module drill-through (WO, unit, driver, load)",
-   "mergedAt": "2026-07-07T07:16:12Z",
-   "branch": "feat/entity-link-sweep-4-maintenance"
-  },
-  {
-   "number": 2266,
-   "title": "feat: EntityLink drill-through for journal_entry_id in AccountRegister audit events",
-   "mergedAt": "2026-07-07T06:58:35Z",
-   "branch": "feat/entity-link-sweep-3-account-register"
-  },
-  {
-   "number": 2265,
-   "title": "feat: EntityLink sweep — InternalFinesPage driver + AbandonmentQueuePage load/driver",
-   "mergedAt": "2026-07-07T06:50:55Z",
-   "branch": "feat/entity-link-sweep-2"
-  },
-  {
-   "number": 2264,
-   "title": "feat: EntityLink sweep — safety/maintenance/reports/banking/register drill-through (11 files)",
-   "mergedAt": "2026-07-07T06:31:24Z",
-   "branch": "feat/entity-link-sweep-safety-reports-maintenance"
-  },
-  {
-   "number": 2263,
-   "title": "feat: BillDetailPage + /accounting/bills/:id route + EntityLink bill drill-through",
-   "mergedAt": "2026-07-07T06:03:33Z",
-   "branch": "feat/bill-detail-page-and-entity-link-bill"
   }
  ],
- "merged_pr_total": 2745,
+ "merged_pr_total": 2753,
  "hold_for_jorge": [
   {
    "number": 2718,
