@@ -21,7 +21,7 @@ sort, and the lock-account control — never drop or reorder.
 ## Rollup
 | Status | Count |
 | --- | --- |
-| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel) | 15 |
+| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable) | 16 |
 | financial-hold (Jorge-gated) | 99 |
 | pending (non-financial, future batches) | 187 |
 | **hand-rolled total (original)** | **300** |
@@ -93,7 +93,7 @@ Guard: `scripts/verify-activity-log-uses-paritytable.mjs` via verify-step 1023.
 | --- | --- |
 | `apps/frontend/src/pages/admin/ActivityLogPage.tsx` | pages/admin |
 
-## qbo-parity-a1 — NotificationLogPanel (this PR)
+## qbo-parity-a1 — NotificationLogPanel
 Compliance notification log: hand-rolled `<table>` (Sent/Credential/Owner Type/Channel/
 Recipient/Status). Migrated to shared `ParityTable` (sort + resize + gear + CSV export).
 `compliance-log-panel` testid preserved. Guard:
@@ -103,7 +103,7 @@ Recipient/Status). Migrated to shared `ParityTable` (sort + resize + gear + CSV 
 | --- | --- |
 | `apps/frontend/src/components/compliance/NotificationLogPanel.tsx` | components/compliance |
 
-## qbo-parity-a1 — NotificationRulesPanel (this PR)
+## qbo-parity-a1 — NotificationRulesPanel
 Compliance notification rules grid: hand-rolled `<table>` (Credential/Scope/Days Before/
 Channels/Recipients + Archive). Migrated to shared `ParityTable` (sort + resize + gear).
 `compliance-rules-panel` testid preserved. Guard:
@@ -112,6 +112,17 @@ Channels/Recipients + Archive). Migrated to shared `ParityTable` (sort + resize 
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/components/compliance/NotificationRulesPanel.tsx` | components/compliance |
+
+## qbo-parity-a1 — OperationsHistoryTable (this PR)
+Drivers hub operations-depth history (12 sub-views sharing one table) was a hand-rolled
+`<table>` that false-emptied on query failure. Migrated to shared `ParityTable`
+(sort + resize + gear) with `ListErrorState` + Retry. `EntityLink` via
+`OperationsColumn.entityKind` and server Previous/Next pagination preserved.
+Guard: `scripts/verify-ops-history-uses-paritytable.mjs` via verify-step 1026.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/drivers/OperationsHistoryTable.tsx` | components/drivers |
 
 ## Remaining hand-rolled inventory (by module)
 
@@ -196,7 +207,7 @@ Channels/Recipients + Archive). Migrated to shared `ParityTable` (sort + resize 
 | `apps/frontend/src/components/drivers/AuditHistoryTab.tsx` | pending |
 | `apps/frontend/src/components/drivers/EarningsTab.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/drivers/LoadHistoryTab.tsx` | pending |
-| `apps/frontend/src/components/drivers/OperationsHistoryTable.tsx` | pending |
+| `apps/frontend/src/components/drivers/OperationsHistoryTable.tsx` | migrated (qbo-parity-a1) |
 
 ### components/factoring (1) — financial-hold
 

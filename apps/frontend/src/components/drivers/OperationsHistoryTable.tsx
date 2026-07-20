@@ -1,6 +1,8 @@
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 import { apiRequest } from "../../api/client";
+import { ListErrorState } from "../ListErrorState";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { EntityLink, type EntityKind } from "../shared/EntityLink";
 
 export type OperationsColumn = {
@@ -16,9 +18,11 @@ export type OperationsColumn = {
   idKey?: string;
 };
 
+type OperationsRow = Record<string, unknown>;
+
 type PagedResponse = {
   sub_view: string;
-  rows: Array<Record<string, unknown>>;
+  rows: OperationsRow[];
   page: number;
   page_size: number;
   total: number;
@@ -40,7 +44,7 @@ function formatCell(value: unknown): string {
   return String(value);
 }
 
-function renderCell(row: Record<string, unknown>, column: OperationsColumn) {
+function renderCell(row: OperationsRow, column: OperationsColumn) {
   if (column.entityKind) {
     const idValue = row[column.idKey ?? column.key];
     const id = idValue == null ? null : String(idValue);
@@ -71,6 +75,34 @@ export function OperationsHistoryTable({ driverId, operatingCompanyId, subView, 
   const total = query.data?.total ?? 0;
   const hasMore = query.data?.has_more ?? false;
 
+  // Stable keys for ParityTable (rowKey is (row) => string — no index arg).
+  const keyedRows = useMemo(
+    () =>
+      rows.map((row, index) => ({
+        ...row,
+        __rowKey: String(row.uuid ?? `${subView}-${page}-${index}`),
+      })),
+    [rows, subView, page]
+  );
+
+  const parityColumns = useMemo<Array<ParityColumn<OperationsRow>>>(
+    () =>
+      columns.map((column) => ({
+        key: column.key,
+        label: column.label,
+        sortable: true,
+        sortValue: (row) => {
+          const value = row[column.key];
+          if (value === null || value === undefined || value === "") return null;
+          if (typeof value === "number") return value;
+          if (typeof value === "boolean") return value ? 1 : 0;
+          return String(value);
+        },
+        render: (row) => renderCell(row, column),
+      })),
+    [columns]
+  );
+
   return (
     <div className="space-y-2" data-testid={`driver-operations-${subView}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -81,45 +113,29 @@ export function OperationsHistoryTable({ driverId, operatingCompanyId, subView, 
         <span className="rounded-sm bg-gray-100 px-2 py-1 text-xs text-gray-600">{total} record(s)</span>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200">
-        <table className="w-full text-left text-xs">
-          <thead>
-            <tr className="border-b border-gray-200 bg-gray-50">
-              {columns.map((column) => (
-                <th key={column.key} className="px-2 py-1.5 font-semibold text-gray-700">
-                  {column.label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {query.isLoading ? (
-              <tr>
-                <td className="px-2 py-2 text-gray-500" colSpan={columns.length}>
-                  Loading…
-                </td>
-              </tr>
-            ) : null}
-            {!query.isLoading &&
-              rows.map((row, index) => (
-                <tr key={String(row.uuid ?? index)} className="border-b border-gray-100">
-                  {columns.map((column) => (
-                    <td key={column.key} className="px-2 py-1.5 text-gray-800">
-                      {renderCell(row, column)}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            {!query.isLoading && rows.length === 0 ? (
-              <tr>
-                <td className="px-2 py-2 text-gray-500" colSpan={columns.length}>
-                  No records found for this driver.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load operations history"
+          status={0}
+          message={(query.error as Error)?.message}
+          onRetry={() => void query.refetch()}
+        />
+      ) : (
+        <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white p-2">
+          <ParityTable
+            rows={keyedRows}
+            columns={parityColumns}
+            rowKey={(row) => String(row.__rowKey)}
+            loading={query.isLoading}
+            storageKey={`driver-operations-${subView}`}
+            emptyText="No records found for this driver."
+            initialPageSize={25}
+            pageSizeOptions={[25]}
+            tableTestId={`driver-operations-${subView}-table`}
+            rowTestId={(row) => `driver-operations-${subView}-row-${String(row.__rowKey)}`}
+          />
+        </div>
+      )}
 
       <div className="flex items-center justify-end gap-2 text-xs">
         <button
