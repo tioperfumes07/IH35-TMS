@@ -27,14 +27,14 @@ function main() {
   const tabsTest = read(paths.tabsTest);
   const failures = [];
 
-  if (/const \[activeTab\]\s*=\s*useState/.test(driversPage)) {
-    failures.push("DriversPage must destructure setActiveTab — const [activeTab] without setter is dead");
+  if (/const \[activeTab,\s*setActiveTab\]\s*=\s*useState/.test(driversPage)) {
+    failures.push("DriversPage must sync drivers|teams view via ?view= (useSearchParams), not local useState");
   }
-  if (!/const \[activeTab,\s*setActiveTab\]\s*=\s*useState<"drivers"\s*\|\s*"teams">/.test(driversPage)) {
-    failures.push("DriversPage must declare [activeTab, setActiveTab] for drivers|teams view toggle");
+  if (!/parseDriversHomeView\s*\(\s*searchParams\s*\)/.test(driversPage)) {
+    failures.push("DriversPage must derive active view from parseDriversHomeView(searchParams)");
   }
-  if (!driversPage.includes('setActiveTab(id)')) {
-    failures.push("DriversPage must wire setActiveTab in the Drivers/Teams tab onChange handler");
+  if (!/setDriversHomeView/.test(driversPage)) {
+    failures.push("DriversPage must wire setDriversHomeView for Drivers/Teams tab onChange handler");
   }
   if (!driversPage.includes('{ id: "teams", label: "Teams" }')) {
     failures.push("DriversPage must render a visible Teams tab control");

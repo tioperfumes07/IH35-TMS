@@ -43,6 +43,8 @@ import {
   DRIVERS_MODULE_NAV_PATHS,
   DRIVERS_SUBNAV,
   parseDriverListStatus,
+  parseDriversHomeView,
+  type DriversHomeViewId,
   type DriversListStatusId,
   type DriversSubnavId,
 } from "../components/drivers/DRIVERS_TABS_CONFIG";
@@ -125,7 +127,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
   const { selectedCompanyId } = useCompanyContext();
   const [search, setSearch] = useState("");
   const driverListStatus = useMemo(() => parseDriverListStatus(searchParams), [searchParams]);
-  const [activeTab, setActiveTab] = useState<"drivers" | "teams">("drivers");
+  const activeTab = useMemo(() => parseDriversHomeView(searchParams), [searchParams]);
   const subnavTab = useMemo(
     () => (initialSubnav ?? driversSubtabFromPath(location.pathname)) as DriversSubnavId,
     [initialSubnav, location.pathname]
@@ -410,6 +412,19 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
     );
   };
 
+  const setDriversHomeView = (next: DriversHomeViewId) => {
+    setSearchParams(
+      (prev) => {
+        const nextParams = new URLSearchParams(prev);
+        // Drivers roster is the default home view — omit ?view= when on Drivers.
+        if (next === "drivers") nextParams.delete("view");
+        else nextParams.set("view", next);
+        return nextParams;
+      },
+      { replace: false }
+    );
+  };
+
   return (
     <div className="space-y-3">
       <PageHeader
@@ -465,7 +480,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
         className="-mx-2"
         activeId={activeTab}
         onChange={(id) => {
-          if (id === "drivers" || id === "teams") setActiveTab(id);
+          if (id === "drivers" || id === "teams") setDriversHomeView(id);
         }}
         tabs={[
           { id: "drivers", label: "Drivers" },

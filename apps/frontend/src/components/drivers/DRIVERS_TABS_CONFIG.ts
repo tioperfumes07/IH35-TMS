@@ -59,3 +59,12 @@ export function parseDriverListStatus(searchParams: URLSearchParams): DriversLis
     ? (raw as DriversListStatusId)
     : "active";
 }
+
+/** Secondary Drivers home view (`?view=` on `/drivers`). Default = drivers roster. */
+export const DRIVERS_HOME_VIEW_IDS = ["drivers", "teams"] as const;
+export type DriversHomeViewId = (typeof DRIVERS_HOME_VIEW_IDS)[number];
+
+export function parseDriversHomeView(searchParams: URLSearchParams): DriversHomeViewId {
+  const raw = (searchParams.get("view") ?? "drivers").toLowerCase();
+  return (DRIVERS_HOME_VIEW_IDS as readonly string[]).includes(raw) ? (raw as DriversHomeViewId) : "drivers";
+}
