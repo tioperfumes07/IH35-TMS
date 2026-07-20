@@ -124,6 +124,17 @@ Guard: `scripts/verify-ops-history-uses-paritytable.mjs` via verify-step 1026.
 | --- | --- |
 | `apps/frontend/src/components/drivers/OperationsHistoryTable.tsx` | components/drivers |
 
+## qbo-parity-a1 — EntityAuditHistoryTab (this PR)
+Shared entity audit history (vendor/customer/driver/unit/load/WO) was a hand-rolled
+`<table>` with a bare red outage banner. Migrated to shared `ParityTable`
+(sort + resize + gear + `renderExpanded` Before→After `ChangesDiff`) and replaced
+the ad-hoc error div with `ListErrorState` + Retry. Columns preserved 1:1.
+Guard: `scripts/verify-entity-audit-history-uses-paritytable.mjs` via verify-step 1031.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/audit/EntityAuditHistoryTab.tsx` | components/audit |
+
 ## Remaining hand-rolled inventory (by module)
 
 ### components/DataTable.tsx (1)
@@ -161,7 +172,7 @@ Guard: `scripts/verify-ops-history-uses-paritytable.mjs` via verify-step 1026.
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/components/audit/AuditHistoryTab.tsx` | pending |
-| `apps/frontend/src/components/audit/EntityAuditHistoryTab.tsx` | pending |
+| `apps/frontend/src/components/audit/EntityAuditHistoryTab.tsx` | migrated (qbo-parity-a1) |
 
 ### components/catalogs (1)
 
