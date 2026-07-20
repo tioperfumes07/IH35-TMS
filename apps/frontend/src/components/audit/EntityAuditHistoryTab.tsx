@@ -1,10 +1,11 @@
-// @vitest-environment jsdom
 import { useQuery } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useState, useMemo } from "react";
-import { ChevronDown, ChevronUp, Download, AlertTriangle } from "lucide-react";
+import { Download, AlertTriangle } from "lucide-react";
 import { listAuditEvents, type AuditEventListItem } from "../../api/audit";
 import { Button } from "../Button";
+import { ListErrorState } from "../ListErrorState";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 
 interface EntityAuditHistoryTabProps {
   operatingCompanyId: string;
@@ -57,59 +58,58 @@ function ChangesDiff({ changes }: { changes?: Record<string, { old: unknown; new
   );
 }
 
-type EventWithPayload = AuditEventListItem & { payload?: { changes?: Record<string, { old: unknown; new: unknown }>; reason?: string } };
+type EventWithPayload = AuditEventListItem & {
+  payload?: { changes?: Record<string, { old: unknown; new: unknown }>; reason?: string };
+};
 
-function EventRow({ event }: { event: EventWithPayload }) {
-  const [expanded, setExpanded] = useState(false);
-
-  return (
-    <>
-      <tr className="border-b hover:bg-gray-50">
-        <td className="px-3 py-2 text-xs whitespace-nowrap">{formatWhen(event.created_at)}</td>
-        <td className="px-3 py-2 text-xs">{event.actor_email || event.actor_user_id?.slice(0, 8) || "—"}</td>
-        <td className="px-3 py-2 text-xs">
-          <span
-            className={`inline-block px-2 py-0.5 rounded text-[10px] font-medium ${
-              event.severity === "error"
-                ? "bg-red-100 text-red-700"
-                : event.severity === "warn"
-                ? "bg-yellow-100 text-yellow-700"
-                : "bg-gray-100 text-gray-700"
-            }`}
-          >
-            {event.event_type}
-          </span>
-        </td>
-        <td className="px-3 py-2 text-xs text-gray-600">{event.summary || "—"}</td>
-        <td className="px-3 py-2 text-xs text-gray-500">{event.source || "—"}</td>
-        <td className="px-3 py-2">
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="p-1 hover:bg-gray-200 rounded-sm"
-            aria-label={expanded ? "Collapse" : "Expand"}
-          >
-            {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </button>
-        </td>
-      </tr>
-      {expanded && (
-        <tr className="bg-gray-50">
-          <td colSpan={6} className="px-3 py-3">
-            <div className="text-xs">
-              <div className="font-medium text-gray-700 mb-2">Before → After</div>
-              <ChangesDiff changes={event.payload?.changes} />
-              {event.payload?.reason && (
-                <div className="mt-2 text-gray-600">
-                  <span className="font-medium">Reason:</span> {event.payload.reason}
-                </div>
-              )}
-            </div>
-          </td>
-        </tr>
-      )}
-    </>
-  );
-}
+const COLUMNS: Array<ParityColumn<EventWithPayload>> = [
+  {
+    key: "created_at",
+    label: "When",
+    sortable: true,
+    sortValue: (row) => new Date(row.created_at).getTime(),
+    render: (row) => <span className="whitespace-nowrap">{formatWhen(row.created_at)}</span>,
+  },
+  {
+    key: "actor_email",
+    label: "Who",
+    sortable: true,
+    sortValue: (row) => row.actor_email || row.actor_user_id || "",
+    render: (row) => <>{row.actor_email || row.actor_user_id?.slice(0, 8) || "—"}</>,
+  },
+  {
+    key: "event_type",
+    label: "Action",
+    sortable: true,
+    render: (row) => (
+      <span
+        className={`inline-block px-2 py-0.5 rounded text-[10px] font-medium ${
+          row.severity === "error"
+            ? "bg-red-100 text-red-700"
+            : row.severity === "warn"
+              ? "bg-yellow-100 text-yellow-700"
+              : "bg-gray-100 text-gray-700"
+        }`}
+      >
+        {row.event_type}
+      </span>
+    ),
+  },
+  {
+    key: "summary",
+    label: "Summary",
+    sortable: true,
+    sortValue: (row) => row.summary || "",
+    render: (row) => <span className="text-gray-600">{row.summary || "—"}</span>,
+  },
+  {
+    key: "source",
+    label: "Source",
+    sortable: true,
+    sortValue: (row) => row.source || "",
+    render: (row) => <span className="text-gray-500">{row.source || "—"}</span>,
+  },
+];
 
 export function EntityAuditHistoryTab({ operatingCompanyId, entityType, entityId }: EntityAuditHistoryTabProps) {
   const [eventTypeFilter, setEventTypeFilter] = useState("");
@@ -124,7 +124,19 @@ export function EntityAuditHistoryTab({ operatingCompanyId, entityType, entityId
   const toIso = toDate ? new Date(`${toDate}T23:59:59`).toISOString() : undefined;
 
   const auditQuery = useQuery({
-    queryKey: ["entity-audit-events", entityType, entityId, operatingCompanyId, eventTypeFilter, fromIso, toIso, actorFilter, statusFilter, sourceFilter, voidsOnly],
+    queryKey: [
+      "entity-audit-events",
+      entityType,
+      entityId,
+      operatingCompanyId,
+      eventTypeFilter,
+      fromIso,
+      toIso,
+      actorFilter,
+      statusFilter,
+      sourceFilter,
+      voidsOnly,
+    ],
     queryFn: () =>
       listAuditEvents({
         operatingCompanyId,
@@ -142,7 +154,10 @@ export function EntityAuditHistoryTab({ operatingCompanyId, entityType, entityId
     enabled: Boolean(entityId) && Boolean(operatingCompanyId),
   });
 
-  const events = useMemo(() => auditQuery.data?.events ?? [], [auditQuery.data]);
+  const events = useMemo(
+    () => (auditQuery.data?.events ?? []) as EventWithPayload[],
+    [auditQuery.data]
+  );
 
   const exportCSV = () => {
     if (!events.length) return;
@@ -154,7 +169,10 @@ export function EntityAuditHistoryTab({ operatingCompanyId, entityType, entityId
       Source: e.source || "—",
     }));
     const headers = Object.keys(rows[0]);
-    const csv = [headers.join(","), ...rows.map((r) => headers.map((h) => `"${String((r as Record<string, string>)[h] ?? "")}"`).join(","))].join("\n");
+    const csv = [
+      headers.join(","),
+      ...rows.map((r) => headers.map((h) => `"${String((r as Record<string, string>)[h] ?? "")}"`).join(",")),
+    ].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -169,134 +187,140 @@ export function EntityAuditHistoryTab({ operatingCompanyId, entityType, entityId
     return Array.from(unique).sort();
   }, [events]);
 
+  const filterBar = (
+    <div className="flex flex-wrap items-center gap-2 p-3 bg-gray-50 rounded-sm border">
+      <label className="text-xs text-gray-600">
+        From
+        <DatePicker
+          className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
+          value={fromDate}
+          onChange={(next) => setFromDate(next)}
+        />
+      </label>
+      <label className="text-xs text-gray-600">
+        To
+        <DatePicker
+          className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
+          value={toDate}
+          onChange={(next) => setToDate(next)}
+        />
+      </label>
+      <label className="text-xs text-gray-600">
+        Event type
+        <select
+          className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
+          value={eventTypeFilter}
+          onChange={(e) => setEventTypeFilter(e.target.value)}
+        >
+          <option value="">All</option>
+          {eventTypeOptions.map((value) => (
+            <option key={value} value={value}>
+              {value}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="text-xs text-gray-600">
+        Actor
+        <input
+          type="text"
+          placeholder="Email or ID"
+          className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm w-32"
+          value={actorFilter}
+          onChange={(e) => setActorFilter(e.target.value)}
+        />
+      </label>
+      <label className="text-xs text-gray-600">
+        Status
+        <select
+          className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          {STATUS_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="text-xs text-gray-600">
+        Source
+        <select
+          className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
+          value={sourceFilter}
+          onChange={(e) => setSourceFilter(e.target.value)}
+        >
+          {SOURCE_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button
+        type="button"
+        onClick={() => setVoidsOnly((v) => !v)}
+        className={`text-xs px-2 py-1 rounded border flex items-center gap-1 mt-4 ${
+          voidsOnly ? "bg-red-100 border-red-300 text-red-700" : "bg-white hover:bg-gray-100"
+        }`}
+      >
+        <AlertTriangle size={12} />
+        Voids & Reversals
+      </button>
+      <div className="flex-1" />
+      <Button size="sm" variant="secondary" onClick={() => void auditQuery.refetch()}>
+        Refresh
+      </Button>
+      <Button size="sm" variant="secondary" onClick={exportCSV} disabled={!events.length}>
+        <Download size={14} className="mr-1" />
+        Export CSV
+      </Button>
+    </div>
+  );
+
   return (
     <div className="space-y-4" data-testid={`${entityType}-audit-history-tab`}>
-      {/* QBO-style Filter Bar */}
-      <div className="flex flex-wrap items-center gap-2 p-3 bg-gray-50 rounded-sm border">
-        <label className="text-xs text-gray-600">
-          From
-          <DatePicker
-            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
-            value={fromDate}
-            onChange={(next) => setFromDate(next)}
+      {auditQuery.isError ? (
+        <>
+          {filterBar}
+          <ListErrorState
+            title="Couldn't load audit history"
+            status={0}
+            message={(auditQuery.error as Error)?.message}
+            onRetry={() => void auditQuery.refetch()}
           />
-        </label>
-        <label className="text-xs text-gray-600">
-          To
-          <DatePicker
-            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
-            value={toDate}
-            onChange={(next) => setToDate(next)}
-          />
-        </label>
-        <label className="text-xs text-gray-600">
-          Event type
-          <select
-            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
-            value={eventTypeFilter}
-            onChange={(e) => setEventTypeFilter(e.target.value)}
-          >
-            <option value="">All</option>
-            {eventTypeOptions.map((value) => (
-              <option key={value} value={value}>{value}</option>
-            ))}
-          </select>
-        </label>
-        <label className="text-xs text-gray-600">
-          Actor
-          <input
-            type="text"
-            placeholder="Email or ID"
-            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm w-32"
-            value={actorFilter}
-            onChange={(e) => setActorFilter(e.target.value)}
-          />
-        </label>
-        <label className="text-xs text-gray-600">
-          Status
-          <select
-            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </label>
-        <label className="text-xs text-gray-600">
-          Source
-          <select
-            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
-            value={sourceFilter}
-            onChange={(e) => setSourceFilter(e.target.value)}
-          >
-            {SOURCE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </label>
-        <button
-          onClick={() => setVoidsOnly((v) => !v)}
-          className={`text-xs px-2 py-1 rounded border flex items-center gap-1 mt-4 ${
-            voidsOnly ? "bg-red-100 border-red-300 text-red-700" : "bg-white hover:bg-gray-100"
-          }`}
-        >
-          <AlertTriangle size={12} />
-          Voids & Reversals
-        </button>
-        <div className="flex-1" />
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => void auditQuery.refetch()}
-        >
-          Refresh
-        </Button>
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={exportCSV}
-          disabled={!events.length}
-        >
-          <Download size={14} className="mr-1" />
-          Export CSV
-        </Button>
-      </div>
-
-      {auditQuery.isLoading ? (
-        <div className="text-sm text-gray-500 p-4">Loading audit history...</div>
-      ) : auditQuery.isError ? (
-        <div className="text-sm text-red-600 p-4">Failed to load audit history</div>
-      ) : !events.length ? (
-        <div className="text-sm text-gray-500 p-4">No audit events found for this record.</div>
+        </>
       ) : (
-        <div className="overflow-x-auto border rounded-sm">
-          <table className="w-full text-left">
-            <thead className="bg-gray-100 border-b">
-              <tr>
-                <th className="px-3 py-2 text-xs font-medium text-gray-700">When</th>
-                <th className="px-3 py-2 text-xs font-medium text-gray-700">Who</th>
-                <th className="px-3 py-2 text-xs font-medium text-gray-700">Action</th>
-                <th className="px-3 py-2 text-xs font-medium text-gray-700">Summary</th>
-                <th className="px-3 py-2 text-xs font-medium text-gray-700">Source</th>
-                <th className="px-3 py-2 text-xs font-medium text-gray-700 w-8" />
-              </tr>
-            </thead>
-            <tbody>
-              {events.map((event) => (
-                <EventRow key={event.id} event={event as EventWithPayload} />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable
+          rows={events}
+          columns={COLUMNS}
+          rowKey={(row) => row.id}
+          loading={auditQuery.isLoading}
+          storageKey={`entity-audit-history-${entityType}`}
+          emptyText="No audit events found for this record."
+          filterBar={filterBar}
+          tableTestId={`${entityType}-audit-history-table`}
+          rowTestId={(row) => `${entityType}-audit-history-row-${row.id}`}
+          renderExpanded={(event) => (
+            <div className="text-xs">
+              <div className="font-medium text-gray-700 mb-2">Before → After</div>
+              <ChangesDiff changes={event.payload?.changes} />
+              {event.payload?.reason ? (
+                <div className="mt-2 text-gray-600">
+                  <span className="font-medium">Reason:</span> {event.payload.reason}
+                </div>
+              ) : null}
+            </div>
+          )}
+        />
       )}
 
-      {auditQuery.data && auditQuery.data.total_count > 200 && (
+      {auditQuery.data && auditQuery.data.total_count > 200 ? (
         <div className="text-xs text-gray-500">
           Showing {events.length} of {auditQuery.data.total_count} events. Refine filters to narrow results.
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

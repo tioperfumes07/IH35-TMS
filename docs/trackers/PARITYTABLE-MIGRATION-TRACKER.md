@@ -829,4 +829,15 @@ hand-rolled `<table>` with manual Prev/Next paging. Migrated to shared `ParityTa
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/components/vehicle-profile/RecentActivitySection.tsx` | components/vehicle-profile |
+## qbo-parity-a1 — EntityAuditHistoryTab (this PR)
+Shared entity audit history tab (vendor/customer/driver/unit/load/WO) was a hand-rolled
+`<table>` with a bare red outage banner. Migrated to shared `ParityTable`
+(sort + resize + gear + `renderExpanded` Before→After `ChangesDiff`) and replaced the
+ad-hoc error div with `ListErrorState` + Retry. Columns When/Who/Action/Summary/Source
+preserved 1:1. Guard: `scripts/verify-entity-audit-history-uses-paritytable.mjs` via
+verify-step 1035.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/audit/EntityAuditHistoryTab.tsx` | components/audit |
 

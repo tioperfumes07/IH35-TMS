@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-entity-audit-history-paritytable",
+  "branch": "fix/qbo-parity-a1-entity-audit-v2",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable + ListErrorState)",
+  "phase": "OPS-FE",
+  "task": "Migrate EntityAuditHistoryTab from hand-rolled <table> to shared ParityTable (sort/resize/gear + renderExpanded Before\u2192After); replace ad-hoc red banner with ListErrorState. Guard + verify-step 1035 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + CODER-BUILD tbl-standard-raw-table-sweep-incomplete / qbo-parity-a1",
+  "source_file": "qbo-parity-a1-entity-audit-history-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-entity-audit-history-paritytable.json",
+    "apps/frontend/src/components/audit/EntityAuditHistoryTab.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-entity-audit-history-uses-paritytable.mjs",
+    "scripts/verify-steps/1035-verify-entity-audit-history-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "EntityAuditHistoryTab.tsx uses ParityTable (no hand-rolled <table>/<thead>); columns When/Who/Action/Summary/Source preserved; renderExpanded keeps ChangesDiff Before\u2192After; ListErrorState on failure; emptyText preserved; verify-entity-audit-history-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1035 wired (Rule 17); tracker marks EntityAuditHistoryTab migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 \u2014 EntityAuditHistoryTab surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17)."
+}
