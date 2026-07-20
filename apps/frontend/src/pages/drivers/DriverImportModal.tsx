@@ -1,5 +1,11 @@
-import { useRef, useState } from "react";
-import { importDriversCsv, type DriverImportResponse } from "../../api/mdata";
+import { useMemo, useRef, useState } from "react";
+import {
+  importDriversCsv,
+  type DriverImportResponse,
+  type DriverImportSampleRow,
+} from "../../api/mdata";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 
 type Props = {
@@ -8,6 +14,47 @@ type Props = {
   onImported: () => void;
 };
 
+const KLASS_LABEL: Record<string, string> = {
+  will_create: "New",
+  dup_existing: "Already in roster",
+  dup_in_file: "Duplicate in file",
+  invalid: "Skipped",
+};
+
+const PREVIEW_COLUMNS: Array<ParityColumn<DriverImportSampleRow>> = [
+  {
+    key: "name",
+    label: "Name",
+    sortable: true,
+    sortValue: (row) => `${row.first_name} ${row.last_name}`.trim(),
+    render: (row) => `${row.first_name} ${row.last_name}`.trim() || "—",
+  },
+  {
+    key: "hire_date",
+    label: "Hire",
+    sortable: true,
+    render: (row) => row.hire_date ?? "—",
+  },
+  {
+    key: "termination_date",
+    label: "Term",
+    sortable: true,
+    render: (row) => row.termination_date ?? "—",
+  },
+  {
+    key: "status",
+    label: "Status",
+    sortable: true,
+  },
+  {
+    key: "klass",
+    label: "Result",
+    sortable: true,
+    sortValue: (row) => KLASS_LABEL[row.klass] ?? row.klass,
+    render: (row) => `${KLASS_LABEL[row.klass] ?? row.klass}${row.reason ? ` · ${row.reason}` : ""}`,
+  },
+];
+
 // Driver Master Contacts List importer. Preview (no writes) → review counts → commit.
 export function DriverImportModal({ companyId, onClose, onImported }: Props) {
   const { pushToast } = useToast();
@@ -15,15 +62,20 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState<DriverImportResponse | null>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const columns = useMemo(() => PREVIEW_COLUMNS, []);
 
   async function runPreview() {
     if (!file || !companyId) return;
     setBusy(true);
+    setPreviewError(null);
     try {
       const res = await importDriversCsv(file, companyId, "preview");
       setPreview(res);
     } catch (error) {
-      pushToast(String((error as Error).message || "Preview failed"), "error");
+      const message = String((error as Error).message || "Preview failed");
+      setPreview(null);
+      setPreviewError(message);
     } finally {
       setBusy(false);
     }
@@ -45,12 +97,7 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
   }
 
   const s = preview?.summary;
-  const klassLabel: Record<string, string> = {
-    will_create: "New",
-    dup_existing: "Already in roster",
-    dup_in_file: "Duplicate in file",
-    invalid: "Skipped",
-  };
+  const sampleRows = preview?.sample ?? [];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
@@ -73,18 +120,29 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
             onChange={(e) => {
               setFile(e.target.files?.[0] ?? null);
               setPreview(null);
+              setPreviewError(null);
             }}
             className="text-xs"
           />
           <button
             type="button"
-            onClick={runPreview}
+            onClick={() => void runPreview()}
             disabled={!file || busy || !companyId}
             className="min-h-11 rounded-sm border border-slate-300 px-3 text-xs text-slate-700 hover:bg-gray-50 disabled:opacity-40"
           >
-            {busy && !preview ? "Previewing…" : "Preview"}
+            {busy && !preview && !previewError ? "Previewing…" : "Preview"}
           </button>
         </div>
+
+        {previewError ? (
+          <ListErrorState
+            title="Couldn't preview driver import"
+            status={0}
+            message={previewError}
+            onRetry={() => void runPreview()}
+            className="py-6"
+          />
+        ) : null}
 
         {s ? (
           <div className="space-y-3">
@@ -104,32 +162,17 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
               ))}
             </div>
 
-            {preview?.sample && preview.sample.length > 0 ? (
-              <div className="max-h-56 overflow-x-auto overflow-y-auto rounded-sm border border-gray-200">
-                <table className="w-full text-left text-[11px]">
-                  <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-500">
-                    <tr>
-                      <th className="px-2 py-1">Name</th>
-                      <th className="px-2 py-1">Hire</th>
-                      <th className="px-2 py-1">Term</th>
-                      <th className="px-2 py-1">Status</th>
-                      <th className="px-2 py-1">Result</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {preview.sample.map((r) => (
-                      <tr key={r.rowNumber} className="border-t border-gray-100">
-                        <td className="px-2 py-1 text-slate-800">{`${r.first_name} ${r.last_name}`.trim() || "—"}</td>
-                        <td className="px-2 py-1 text-slate-600">{r.hire_date ?? "—"}</td>
-                        <td className="px-2 py-1 text-slate-600">{r.termination_date ?? "—"}</td>
-                        <td className="px-2 py-1 text-slate-600">{r.status}</td>
-                        <td className="px-2 py-1 text-slate-600">{klassLabel[r.klass] ?? r.klass}{r.reason ? ` · ${r.reason}` : ""}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : null}
+            <ParityTable
+              storageKey="driver-import-preview"
+              tableTestId="driver-import-preview-sample"
+              columns={columns}
+              rows={sampleRows}
+              rowKey={(row) => String(row.rowNumber)}
+              loading={busy && !previewError}
+              emptyText="No preview rows returned for this file."
+              initialPageSize={10}
+              pageSizeOptions={[10, 25, 50]}
+            />
 
             <div className="flex items-center justify-end gap-2">
               <button type="button" onClick={onClose} className="min-h-11 rounded-sm border border-slate-300 px-3 text-xs text-slate-700 hover:bg-gray-50">
@@ -137,7 +180,7 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
               </button>
               <button
                 type="button"
-                onClick={runCommit}
+                onClick={() => void runCommit()}
                 disabled={busy || s.will_create === 0}
                 className="min-h-11 rounded-sm bg-[#1f2a44] px-3 text-xs font-medium text-white hover:bg-[#0f1729] disabled:opacity-40"
               >

@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-driver-import-modal-paritytable",
+  "branch": "fix/driver-import-modal-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable)",
+  "phase": "OPS-FE",
+  "task": "Migrate DriverImportModal preview grid to ParityTable. Preserve Name/Hire/Term/Status/Result + summary cards. ListErrorState on preview failure. Guard verify-step 1079 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + qbo-parity-a1",
+  "source_file": "qbo-parity-a1-driver-import-modal-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-driver-import-modal-paritytable.json",
+    "apps/frontend/src/pages/drivers/DriverImportModal.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-driver-import-modal-uses-paritytable.mjs",
+    "scripts/verify-steps/1079-verify-driver-import-modal-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "DriverImportModal uses ParityTable; columns preserved; ListErrorState on preview failure; verify-step 1079; tracker append."
+    }
+  ],
+  "note": "GATED: no. verify-step 1079. Rule 17. Non-financial driver roster import preview only."
+}

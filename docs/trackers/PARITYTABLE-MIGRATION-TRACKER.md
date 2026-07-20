@@ -605,6 +605,8 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | --- | --- |
 | `apps/frontend/src/pages/drivers/DriverImportModal.tsx` | pending |
 | `apps/frontend/src/pages/drivers/DriverLayoverHistory.tsx` | migrated |
+| `apps/frontend/src/pages/drivers/DriverImportModal.tsx` | migrated (fix/driver-import-modal-paritytable) |
+| `apps/frontend/src/pages/drivers/DriverLayoverHistory.tsx` | pending |
 | `apps/frontend/src/pages/drivers/DriversTable.tsx` | pending |
 | `apps/frontend/src/pages/drivers/components/DriverDqfPanel.tsx` | PR pending — ParityTable + ListErrorState (guard step 1071) |
 
@@ -1273,3 +1275,13 @@ drill-through unchanged. Guard:
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/safety/driver-scoring/DriverScoreDetail.tsx` | pages/safety/driver-scoring |
+## qbo-parity-a1 — DriverImportModal (this PR)
+Drivers Master Contacts CSV import preview was a hand-rolled `<table>` inside the modal.
+Migrated to shared `ParityTable` (sort + resize + gear). Columns Name / Hire / Term /
+Status / Result preserved 1:1; preview summary cards + commit gate unchanged.
+`ListErrorState` + Retry on preview failure (no toast-only outage). Guard:
+`scripts/verify-driver-import-modal-uses-paritytable.mjs` via verify-step **1079**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/drivers/DriverImportModal.tsx` | pages/drivers |
