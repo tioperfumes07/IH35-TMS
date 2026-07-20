@@ -143,7 +143,7 @@ export async function listAssignmentHistoryGlobal(
           pu.unit_number AS previous_unit_number,
           nu.unit_number AS new_unit_number
         FROM dispatch.load_assignment_history h
-        JOIN mdata.loads l ON l.id = h.load_id
+        JOIN mdata.loads l ON l.id = h.load_id AND l.operating_company_id = $1
         LEFT JOIN mdata.drivers pd ON pd.id = h.previous_driver_id
         LEFT JOIN mdata.drivers nd ON nd.id = h.new_driver_id
         LEFT JOIN mdata.units pu ON pu.id = h.previous_unit_id
