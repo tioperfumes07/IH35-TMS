@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { FormEvent } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   getNotificationPreferences,
@@ -8,10 +8,14 @@ import {
   type NotificationChannelKey,
 } from "../../api/notification-preferences";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { TimePicker } from "../../components/forms/TimePicker";
 
 const CHANNELS: NotificationChannelKey[] = ["email", "sms", "whatsapp", "in_app"];
+
+type EventPrefRow = { event: string };
 
 function labelForChannel(ch: NotificationChannelKey): string {
   if (ch === "in_app") return "In-app";
@@ -101,27 +105,83 @@ export function NotificationPreferencesPage() {
           return next;
         });
       },
-    [events]
+    [events],
   );
 
-  function setCell(ev: string, ch: NotificationChannelKey, value: boolean) {
+  const setCell = useCallback((ev: string, ch: NotificationChannelKey, value: boolean) => {
     setMatrix((m) => {
       if (!m) return m;
       return { ...m, [ev]: { ...m[ev], [ch]: value } };
     });
-  }
+  }, []);
+
+  const eventRows = useMemo<EventPrefRow[]>(() => events.map((event) => ({ event })), [events]);
+
+  const eventColumns = useMemo<ParityColumn<EventPrefRow>[]>(() => {
+    const checkboxCol = (ch: NotificationChannelKey): ParityColumn<EventPrefRow> => ({
+      key: ch,
+      label:
+        ch === "email"
+          ? "Email"
+          : ch === "sms"
+            ? "Sms"
+            : ch === "whatsapp"
+              ? "Whatsapp"
+              : "In-app",
+      className: "text-center",
+      cellClass: "text-center",
+      render: (row) => (
+        <input
+          type="checkbox"
+          checked={Boolean(matrix?.[row.event]?.[ch])}
+          onChange={(e) => setCell(row.event, ch, e.target.checked)}
+          aria-label={`${row.event} ${ch}`}
+        />
+      ),
+    });
+    return [
+      {
+        key: "event",
+        label: "Event",
+        sortable: true,
+        render: (row) => <span className="font-mono text-[11px] text-slate-800">{row.event}</span>,
+      },
+      checkboxCol("email"),
+      checkboxCol("sms"),
+      checkboxCol("whatsapp"),
+      checkboxCol("in_app"),
+    ];
+  }, [matrix, setCell]);
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     saveMutation.mutate();
   }
 
-  if (prefsQuery.isLoading || !channels || !matrix) {
-    return <div className="text-sm text-gray-600">Loading notification preferences…</div>;
+  if (prefsQuery.isError) {
+    return (
+      <div className="mx-auto max-w-5xl space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-lg font-semibold text-slate-900">Notifications</h1>
+            <p className="text-sm text-slate-600">Choose channels and quiet hours. Owner timezone applies to quiet hours.</p>
+          </div>
+          <Link to="/settings" className="text-sm text-slate-700 hover:underline">
+            ← Back to profile
+          </Link>
+        </div>
+        <ListErrorState
+          title="Couldn't load notification preferences"
+          status={0}
+          message={(prefsQuery.error as Error)?.message}
+          onRetry={() => void prefsQuery.refetch()}
+        />
+      </div>
+    );
   }
 
-  if (prefsQuery.isError) {
-    return <div className="text-sm text-red-600">Could not load preferences.</div>;
+  if (prefsQuery.isLoading || !channels || !matrix) {
+    return <div className="text-sm text-gray-600">Loading notification preferences…</div>;
   }
 
   return (
@@ -154,37 +214,18 @@ export function NotificationPreferencesPage() {
           </div>
         </section>
 
-        <section className="overflow-x-auto rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
+        <section className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
           <h2 className="text-sm font-semibold text-slate-800">By event type</h2>
-          <table className="mt-3 min-w-full text-xs">
-            <thead>
-              <tr className="border-b border-slate-200 text-left text-slate-500">
-                <th className="py-2 pr-3">Event</th>
-                {CHANNELS.map((ch) => (
-                  <th key={ch} className="px-1 py-2">
-                    {labelForChannel(ch)}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {events.map((ev) => (
-                <tr key={ev} className="border-b border-slate-100">
-                  <td className="py-2 pr-3 font-mono text-[11px] text-slate-800">{ev}</td>
-                  {CHANNELS.map((ch) => (
-                    <td key={ch} className="px-1 py-1 text-center">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(matrix[ev]?.[ch])}
-                        onChange={(e) => setCell(ev, ch, e.target.checked)}
-                        aria-label={`${ev} ${ch}`}
-                      />
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="mt-3">
+            <ParityTable
+              rows={eventRows}
+              columns={eventColumns}
+              rowKey={(row) => row.event}
+              storageKey="notification-preferences-events"
+              emptyText="No notification events configured."
+              density="compact"
+            />
+          </div>
         </section>
 
         <section className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">

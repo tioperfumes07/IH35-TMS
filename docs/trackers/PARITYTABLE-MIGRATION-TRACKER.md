@@ -826,7 +826,7 @@ Guard: `scripts/verify-unit-driver-history-strip-uses-paritytable.mjs` via verif
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/settings/NotificationPreferencesPage.tsx` | pending |
+| `apps/frontend/src/pages/settings/NotificationPreferencesPage.tsx` | migrated (fix/notification-preferences-paritytable) |
 
 ### pages/tasks (3)
 
@@ -1248,3 +1248,13 @@ verify-step **1084**.
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx` | pages/safety/drug-alcohol |
+## qbo-parity-a1 — NotificationPreferencesPage (this PR)
+Settings notification preferences was a hand-rolled `<table>` for the per-event channel
+matrix. Migrated to shared `ParityTable` (sort + resize + gear); `ListErrorState` +
+Retry preserved on outage. Columns Event / Email / Sms / Whatsapp / In-app preserved 1:1;
+channel master toggles + quiet hours + Save/Reset preserved.
+Guard: `scripts/verify-notification-preferences-uses-paritytable.mjs` via verify-step **1085**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/settings/NotificationPreferencesPage.tsx` | pages/settings |
