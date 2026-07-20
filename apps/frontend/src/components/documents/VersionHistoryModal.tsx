@@ -14,6 +14,7 @@ type VersionHistoryModalProps = {
   entityType: FileEntityType;
   entityId: string;
   entityName: string;
+  operatingCompanyId?: string;
   onClose: () => void;
   onVersionUploaded: () => void;
 };
@@ -36,6 +37,7 @@ export function VersionHistoryModal({
   entityType,
   entityId,
   entityName,
+  operatingCompanyId,
   onClose,
   onVersionUploaded,
 }: VersionHistoryModalProps) {
@@ -139,6 +141,7 @@ export function VersionHistoryModal({
           entityId={entityId}
           entityName={entityName}
           parentFileId={rootFileId}
+          operatingCompanyId={operatingCompanyId}
           onClose={() => setUploadVersionOpen(false)}
           onUploadSuccess={() => {
             setUploadVersionOpen(false);

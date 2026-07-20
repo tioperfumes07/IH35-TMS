@@ -300,6 +300,7 @@ export function DocumentsTab({ entityType, entityId, entityName, operatingCompan
           entityType={entityType}
           entityId={entityId}
           entityName={entityName}
+          operatingCompanyId={operatingCompanyId}
           onClose={() => setSelectedVersionFile(null)}
           onVersionUploaded={() => {
             void queryClient.invalidateQueries({ queryKey: ["docs-files", entityType, entityId] });
