@@ -60,6 +60,8 @@ import { registerVoidCancelRequestRoutes } from "./governance/void-cancel-reques
 import { registerIdentityApplicantRoutes } from "./identity/applicants.routes.js";
 import { registerAccountingCatalogRoutes } from "./catalogs/accounting/index.js";
 import { registerDriverCatalogRoutes } from "./catalogs/driver/index.js";
+import { registerSafetyDocRoutes } from "./safetydoc/safetydoc.routes.js";
+import { registerDriverAlertRoutes } from "./driveralert/driveralert.routes.js";
 import { registerFleetCatalogRoutes } from "./catalogs/fleet/index.js";
 import { registerGenericCatalogRoutes } from "./catalogs/generic-catalog.routes.js";
 import { registerStubCatalogPurgeRoutes } from "./catalogs/stub-catalog-purge.routes.js";
@@ -756,6 +758,8 @@ async function main() {
   await registerDriverProfileRoutes(app);
   await registerDriverReturningDetectionRoutes(app);
   await registerDriverSafetyEventsRoutes(app);
+  await registerSafetyDocRoutes(app);
+  await registerDriverAlertRoutes(app);
   await registerDispatcherSafetyEventsRoutes(app);
   await registerCustomerContactRoutes(app);
   await registerCustomerQualityEventsRoutes(app);
