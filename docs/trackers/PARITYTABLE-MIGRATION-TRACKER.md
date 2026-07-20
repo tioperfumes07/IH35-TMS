@@ -869,7 +869,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/portal/PortalDashboardPage.tsx` | pending |
+| `apps/frontend/src/portal/PortalDashboardPage.tsx` | migrated (qbo-parity-a1) |
 
 ## qbo-parity-a1 — vehicle DocumentsSection (this PR)
 Vehicle profile documents list was a hand-rolled `<table>`. Migrated to shared
@@ -1308,3 +1308,14 @@ Low badge and TxTAG · EZ-Pass · I-Pass header preserved. Guard:
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/units/UnitTollTagsTab.tsx` | pages/units |
+## qbo-parity-a1 — PortalDashboardPage (this PR)
+Shipper portal "Your loads" dashboard was a hand-rolled `<table>` with a bare red
+outage line. Migrated to shared `ParityTable` (sort + resize + gear + CSV export)
+and replaced the ad-hoc error with `ListErrorState` + Retry. Columns Load # / Route /
+Status / Progress preserved 1:1; load detail links, progress StatusBadge, 30s
+auto-refresh, and empty copy preserved.
+Guard: `scripts/verify-portal-dashboard-uses-paritytable.mjs` via verify-step **1094**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/portal/PortalDashboardPage.tsx` | portal |
