@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-driver-hub-reporting-paritytable",
+  "branch": "fix/driver-hub-reporting-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable + ListErrorState)",
+  "phase": "OPS-FE",
+  "task": "Migrate home DriverHubReportingPage by-driver grid from hand-rolled <table> + bare red banner to shared ParityTable (sort/resize/gear) + ListErrorState. Preserve Driver/Total/Approved/Denied/Approval %/Time-to-view/Time-to-approve/Approved volume + Export CSV + summary cards + not_computed chrome. Guard + verify-step 1055 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + qbo-parity-a1",
+  "source_file": "qbo-parity-a1-driver-hub-reporting-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-driver-hub-reporting-paritytable.json",
+    "apps/frontend/src/pages/home/DriverHubReportingPage.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-driver-hub-reporting-uses-paritytable.mjs",
+    "scripts/verify-steps/1055-verify-driver-hub-reporting-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "DriverHubReportingPage.tsx uses ParityTable (no hand-rolled <table>/<thead>); ListErrorState on query failure; columns Driver/Total/Approved/Denied/Approval %/Time-to-view/Time-to-approve/Approved volume + storageKey=driver-hub-reporting-by-driver + tableTestId=driver-hub-reporting-table + Export CSV + summary cards preserved; verify-driver-hub-reporting-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1055 wired (Rule 17); tracker marks DriverHubReportingPage migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 — DriverHubReportingPage surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17). verify-step 1055."
+}
