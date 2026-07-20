@@ -521,7 +521,7 @@ verify-step 1035.
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/dev/BulkDemoPage.tsx` | pending |
+| `apps/frontend/src/pages/dev/BulkDemoPage.tsx` | migrated (fix/bulk-demo-paritytable) |
 
 ### pages/dispatch (21)
 
@@ -1178,3 +1178,14 @@ preserved 1:1; bulk_call_id filter + click-to-filter preserved. Guard:
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/audit/AuditEventsList.tsx` | pages/audit |
+## qbo-parity-a1 — BulkDemoPage (this PR)
+Dev-only bulk-components demo was a hand-rolled `<table>` with manual pager and
+legacy TableSelection/BulkActionBar chrome. Migrated to shared `ParityTable`
+(sort + resize + gear + select-all + batch bar). Columns Name / Status preserved
+1:1; BulkActionModal + BulkProgressDialog + mock bulkUpdate call unchanged.
+Mock static rows (no query failure path → no ListErrorState). Guard:
+`scripts/verify-bulk-demo-uses-paritytable.mjs` via verify-step **1078**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/dev/BulkDemoPage.tsx` | pages/dev |
