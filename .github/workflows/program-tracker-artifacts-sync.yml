@@ -15,8 +15,12 @@ name: program-tracker-artifacts-sync
 # DEPLOY COST: every commit to `main` is a prod deploy (§1.1). That is why:
 #   • the schedule is modest (every 6h, NOT the board-sync 20-min cadence), and
 #   • the push trigger fires ONLY on block-SOURCE paths (.block-ready/**, docs/blocks/**), never on the output
-#     artifacts under docs/trackers/** — so the auto-commit can never re-trigger this workflow (no loop), and
-#   • the auto-commit carries `[skip ci]`.
+#     artifacts under docs/trackers/** — so the landed refresh can never re-trigger this workflow (no loop).
+#
+# HISTORICAL NOTE (corrected 2026-07-20): this job used to auto-commit with a skip-CI directive and push
+# straight to `main`. That could NEVER land — a direct push cannot satisfy the 4 required status checks, and
+# the skip directive guaranteed they never ran (GH013, every run). It now lands via PR; see the detailed
+# rationale on the landing steps below.
 # The separate program-board-sync.yml stays commit-free (writes to R2); this workflow is the ONLY committer,
 # and it commits ONLY the two tracker JSON artifacts.
 
@@ -38,6 +42,7 @@ concurrency:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   sync:
@@ -69,19 +74,101 @@ jobs:
         # `registered` flags from the live .block-ready set (documented fallback in the generator).
         run: node scripts/gen-program-phase-manifest.mjs
 
-      - name: Auto-commit refreshed tracker artifacts (only if changed)
+      # ----------------------------------------------------------------------
+      # PR-BASED LANDING (2026-07-20 root-cause fix — replaces direct push to main)
+      #
+      # WHY THE OLD DIRECT PUSH COULD NEVER LAND:
+      #   `hold-merge-gate` (ruleset 17935054) requires 4 status checks on main.
+      #   A DIRECT push must already have those checks passing on the pushed
+      #   commit — impossible for a brand-new commit — and the bot additionally
+      #   marked its commit with a skip-CI directive, guaranteeing they never
+      #   ran. Result: `GH013 ... 4 of 4 required status checks are expected`,
+      #   push declined, EVERY run. The artifacts then aged past the 12h window
+      #   and verify-tracker-artifacts-fresh went red repo-wide.
+      #
+      #   Removing the skip-CI directive alone does NOT fix it: a direct push
+      #   cannot satisfy required checks either way. The unit of change on a
+      #   protected branch has to be a PR.
+      #
+      # WHY NOT A RULESET BYPASS ACTOR:
+      #   That is a permanent hole in the merge gate of a repo holding live
+      #   financial data, for an automated pusher. Rejected by the owner and
+      #   GUARD (2026-07-20). PR-based keeps every commit to main check-verified.
+      #
+      # ⚠ TOKEN REQUIREMENT — THIS IS LOAD-BEARING:
+      #   Events created with the default GITHUB_TOKEN do NOT trigger workflow
+      #   runs (GitHub's recursion guard). A PR opened with GITHUB_TOKEN would
+      #   therefore get ZERO checks, the 4 required checks would never run, and
+      #   auto-merge would never fire — reproducing the identical deadlock in a
+      #   new shape, while LOOKING correct.
+      #   So this job requires TRACKER_BOT_TOKEN (fine-grained PAT: contents RW +
+      #   pull-requests RW on this repo). The preflight below FAILS LOUDLY when
+      #   it is missing rather than silently degrading into that deadlock.
+      # ----------------------------------------------------------------------
+      - name: Preflight — require a PR-capable token (fail loudly, never deadlock silently)
+        env:
+          TRACKER_BOT_TOKEN: ${{ secrets.TRACKER_BOT_TOKEN }}
         run: |
+          if [ -z "$TRACKER_BOT_TOKEN" ]; then
+            echo "::error title=TRACKER_BOT_TOKEN missing::This workflow cannot land its refresh."
+            echo "A PR opened with the default GITHUB_TOKEN does not trigger workflow runs, so the 4"
+            echo "required status checks would never run and the PR could never merge."
+            echo "FIX: create a fine-grained PAT (contents: read+write, pull-requests: read+write on"
+            echo "this repo) and add it as the repository secret TRACKER_BOT_TOKEN."
+            exit 1
+          fi
+          echo "TRACKER_BOT_TOKEN present — PR-based landing enabled."
+
+      - name: Open a PR with the refreshed tracker artifacts (only if changed)
+        env:
+          GH_TOKEN: ${{ secrets.TRACKER_BOT_TOKEN }}
+        run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
           # Stage ONLY the two tracker artifacts — never the dated .md / .xlsx side-outputs, never anything else.
           git add docs/trackers/block-reconciliation-data.json docs/trackers/program-phase-manifest.json
           if git diff --cached --quiet; then
             echo "[program-tracker-artifacts-sync] no changes — tracker artifacts already fresh"
             exit 0
           fi
-          # --no-verify: this bot commit runs on `main`, but `npm ci` above installs husky, whose pre-push
-          # `branch:precheck-push` hard-fails ("not on a feature branch") and blocked every scheduled push
-          # (the artifacts committed but never landed). Husky hooks are local-dev guardrails; CI is the
-          # authoritative gate (see ih35-tms-standards §3.4). Bypass them for this generated-artifact push.
-          git commit --no-verify -m "chore(tracker): auto-refresh reconcile + phase-manifest artifacts [skip ci]"
-          git push --no-verify origin HEAD:main
+
+          BRANCH="chore/tracker-artifacts-sync-${{ github.run_id }}"
+          git checkout -b "$BRANCH"
+
+          # NO skip-CI directive in this message, in ANY form. The whole point is that
+          # checks MUST run on this commit. A skip directive anywhere in the message
+          # (subject OR body) is honored by GitHub and silently re-creates the deadlock.
+          # --no-verify: husky is installed by `npm ci` above and its pre-push refuses
+          # non-feature-branch/dirty states; CI is the authoritative gate (standards §3.4).
+          git commit --no-verify -m "chore(tracker): auto-refresh reconcile + phase-manifest artifacts"
+
+          # Push with the PAT explicitly. actions/checkout persists GITHUB_TOKEN credentials, and events
+          # attributed to GITHUB_TOKEN do not trigger workflow runs — the branch and the PR must both be
+          # attributed to the PAT so the required checks actually run on this PR.
+          git push --no-verify \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$BRANCH"
+
+          PR_URL=$(gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "chore(tracker): auto-refresh reconcile + phase-manifest artifacts" \
+            --body "Automated refresh of the two committed Program Tracker artifacts.
+
+          Generated by \`program-tracker-artifacts-sync\` (run ${{ github.run_id }}) from:
+          - \`npm run reconcile:blocks\`
+          - \`node scripts/gen-program-phase-manifest.mjs\`
+
+          Generated artifacts only — no source, schema, or financial change (NON-FINANCIAL).
+
+          Lands via PR rather than a direct push because \`main\` requires 4 status checks,
+          which a direct push can never satisfy. Auto-merge is enabled: this merges itself
+          **only after those required checks pass**, so no commit reaches main unverified.")
+
+          echo "opened: $PR_URL"
+
+          # Auto-merge is gated on the required checks — it is NOT an unconditional merge,
+          # and it is not an agent polling loop. If checks fail, the PR simply stays open.
+          gh pr merge --auto --squash "$PR_URL"
+          echo "auto-merge armed (squash, gated on required checks)"
