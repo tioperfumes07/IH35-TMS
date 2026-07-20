@@ -1,7 +1,39 @@
+import { useMemo } from "react";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
+
 function cents(n: unknown) {
   const v = Number(n ?? 0);
   return `$${(v / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
+
+type WeekRow = {
+  week_ending: string;
+  gross: unknown;
+  net: unknown;
+};
+
+const WEEK_COLUMNS: Array<ParityColumn<WeekRow>> = [
+  {
+    key: "week_ending",
+    label: "Week ending",
+    sortable: true,
+    render: (row) => String(row.week_ending || "—"),
+  },
+  {
+    key: "gross",
+    label: "Gross",
+    sortable: true,
+    sortValue: (row) => Number(row.gross ?? 0),
+    render: (row) => cents(row.gross),
+  },
+  {
+    key: "net",
+    label: "Net",
+    sortable: true,
+    sortValue: (row) => Number(row.net ?? 0),
+    render: (row) => cents(row.net),
+  },
+];
 
 export function SettlementsSection({
   settlements,
@@ -16,7 +48,17 @@ export function SettlementsSection({
   autoPaySaving?: boolean;
   onAutoPayChange?: (enabled: boolean) => void;
 }) {
-  const weeks = (settlements.last_4_weeks as Array<Record<string, unknown>>) ?? [];
+  const weeks = useMemo((): WeekRow[] => {
+    const raw = (settlements.last_4_weeks as Array<Record<string, unknown>>) ?? [];
+    return raw.map((w) => ({
+      week_ending: String(w.week_ending ?? ""),
+      gross: w.gross,
+      net: w.net,
+    }));
+  }, [settlements.last_4_weeks]);
+
+  const columns = useMemo(() => WEEK_COLUMNS, []);
+
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -47,32 +89,18 @@ export function SettlementsSection({
           <div className="font-semibold">{cents(settlements.lifetime_with_company)}</div>
         </div>
       </div>
-      <table className="mt-3 w-full text-left text-xs">
-        <thead>
-          <tr className="text-gray-500">
-            <th>Week ending</th>
-            <th>Gross</th>
-            <th>Net</th>
-          </tr>
-        </thead>
-        <tbody>
-          {weeks.length === 0 ? (
-            <tr>
-              <td colSpan={3} className="py-2 text-gray-500">
-                No recent settlements.
-              </td>
-            </tr>
-          ) : (
-            weeks.map((w) => (
-              <tr key={String(w.week_ending)} className="border-t border-gray-100">
-                <td className="py-1">{String(w.week_ending ?? "—")}</td>
-                <td>{cents(w.gross)}</td>
-                <td>{cents(w.net)}</td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+      <div className="mt-3">
+        <ParityTable
+          storageKey="driver-profile-settlements-weeks"
+          tableTestId="driver-settlements-weeks"
+          columns={columns}
+          rows={weeks}
+          rowKey={(row) => row.week_ending || "empty"}
+          emptyText="No recent settlements."
+          initialPageSize={10}
+          pageSizeOptions={[5, 10, 20]}
+        />
+      </div>
     </section>
   );
 }

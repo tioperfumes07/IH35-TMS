@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-driver-settlements-section-paritytable",
+  "branch": "fix/driver-settlements-section-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable)",
+  "phase": "OPS-FE",
+  "task": "Migrate driver-profile SettlementsSection last-4-weeks grid to ParityTable. Preserve Week ending/Gross/Net + YTD tiles + auto-pay. Guard verify-step 1048 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + qbo-parity-a1",
+  "source_file": "qbo-parity-a1-driver-settlements-section-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-driver-settlements-section-paritytable.json",
+    "apps/frontend/src/components/driver-profile/SettlementsSection.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-driver-settlements-section-uses-paritytable.mjs",
+    "scripts/verify-steps/1048-verify-driver-settlements-section-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "SettlementsSection uses ParityTable; columns Week ending/Gross/Net; verify-step 1048; tracker append."
+    }
+  ],
+  "note": "GATED: no. verify-step 1048. Rule 17."
+}

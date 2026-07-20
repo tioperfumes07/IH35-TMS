@@ -286,7 +286,7 @@ verify-step 1035.
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/components/driver-profile/DocumentsSection.tsx` | pending |
-| `apps/frontend/src/components/driver-profile/SettlementsSection.tsx` | pending |
+| `apps/frontend/src/components/driver-profile/SettlementsSection.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/driver-profile/TrainingRecordsSection.tsx` | pending |
 
 ### components/drivers (3 remaining)
@@ -960,6 +960,15 @@ Guard: `scripts/verify-trailer-reefer-uses-paritytable.mjs` via verify-step 1044
 | --- | --- |
 | `apps/frontend/src/components/trailer-profile/TrailerReeferSection.tsx` | components/trailer-profile |
 
+## qbo-parity-a1 — SettlementsSection (this PR)
+Driver-profile Settlements last-4-weeks grid was a hand-rolled `<table>`. Migrated to
+shared `ParityTable` (sort + resize + gear). Columns Week ending / Gross / Net preserved
+1:1; YTD tiles + Auto-pay + Full settlements link unchanged. Guard:
+`scripts/verify-driver-settlements-section-uses-paritytable.mjs` via verify-step **1048**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/driver-profile/SettlementsSection.tsx` | components/driver-profile |
 ## qbo-parity-a1 — Step2FuelReview (this PR)
 IFTA Step 2 fuel review was a hand-rolled `<table>` with per-jurisdiction override
 inputs and a Total footer. Migrated to shared `ParityTable` (sort + resize + gear +
