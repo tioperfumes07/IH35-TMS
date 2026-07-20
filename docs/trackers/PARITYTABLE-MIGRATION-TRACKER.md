@@ -43,19 +43,10 @@ echo "migrated:  $(( $(sed -n "1,$((INV_START-1))p" "$F" | grep -c '^| `apps/fro
 echo "remaining: $(sed -n "$INV_START,${INV_END}p" "$F" | grep -c '^| `apps/frontend/src/')"
 ```
 
-**As of 2026-07-20:** migrated **28** · remaining in inventory **290** (of which 99 are
+**As of 2026-07-20:** migrated **30** · remaining in inventory **290** (of which 99 are
 `financial-hold`, Jorge-gated per CLAUDE.md §1.4). The historical "300 hand-rolled total" is
 approximate — ParityTable was already consumed by ~16 surfaces that were never hand-rolled, so
 `migrated + remaining` does not reconcile to it and never did.
-## Rollup
-| Status | Count |
-| --- | --- |
-| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable + LoadHistoryTab + vehicle PlatesTable + vehicle ComplianceSection + DriverDaySummaryCard + StopReasoningTable + EntityAuditHistoryTab + AuditTrailPage + trailer PlatesTable + QboVendorLinkagePage + TrailerReeferSection) | 27 |
-| financial-hold (Jorge-gated) | 99 |
-| pending (non-financial, future batches) | 174 |
-| **hand-rolled total (original)** | **300** |
-
-> Note: ParityTable was already consumed by ~16 surfaces before this batch (not counted above — those were never hand-rolled).
 
 ## Batch 1 — migrated (this PR)
 Added two **additive** props to `ParityTable` — `tableTestId` and `rowTestId` — so a migrated page keeps the container/row `data-testid` hooks its former hand-rolled table carried (existing unit tests pass unchanged).
