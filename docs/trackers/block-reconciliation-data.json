@@ -1,26 +1,26 @@
 {
  "date": "2026-07-20",
- "generated_at_iso": "2026-07-20T15:58:08.662Z",
+ "generated_at_iso": "2026-07-20T18:03:13.317Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
   "NEEDS-VERIFY": 63,
-  "DONE": 634,
+  "DONE": 640,
   "AUDIT-NOTE": 429
  },
  "universe": {
-  "total_blocks_after_dedup": 1160,
+  "total_blocks_after_dedup": 1166,
   "by_source_after_dedup": {
-   ".block-ready": 986,
+   ".block-ready": 992,
    "program": 61,
    "enterprise-29": 29,
    "accounting": 27,
    "gap-spec": 57
   },
   "raw_file_counts": {
-   ".block-ready (*.json files)": 1387,
+   ".block-ready (*.json files)": 1393,
    ".block-ready retired (dup/stale/superseded, excluded)": 400,
-   ".block-ready active (counted)": 987
+   ".block-ready active (counted)": 993
   },
   "note": "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by UNIQUE block_id, EXCLUDING files with EXPLICIT retirement markers (_DUP/_STALE/_SUPERSEDED underscore suffixes, status superseded/duplicate/dup/stale, or superseded_by/duplicate_of). Hyphen descriptive …-stale/…-duplicate live defect IDs are NOT retired by filename alone. So the block count is neither the raw .block-ready file count nor inflated by duplicate/retired registrations."
  },
@@ -6822,6 +6822,17 @@
    "pr": 2888
   },
   {
+   "id": "qbo-parity-a1-audit-trail-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2898 merged 2026-07-20",
+   "name": "Migrate AuditTrailPage universal spine event log from hand-rolled <table> to shared ParityTable QBO grammar + ListErrorS",
+   "registered_on": null,
+   "pr": 2898
+  },
+  {
    "id": "qbo-parity-a1-compliance-table-paritytable",
    "source": ".block-ready",
    "fin": true,
@@ -6855,6 +6866,17 @@
    "pr": 2881
   },
   {
+   "id": "qbo-parity-a1-entity-audit-history-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2896 merged 2026-07-20",
+   "name": "Migrate EntityAuditHistoryTab to ParityTable + ListErrorState. Guard verify-step 1035 (Rule 17).",
+   "registered_on": null,
+   "pr": 2896
+  },
+  {
    "id": "qbo-parity-a1-error-monitor-paritytable",
    "source": ".block-ready",
    "fin": true,
@@ -6875,6 +6897,17 @@
    "name": "Migrate FrequentlyRunTable (Reports Home) from hand-rolled <table> to shared ParityTable QBO grammar; preserve Report/Fi",
    "registered_on": null,
    "pr": 2864
+  },
+  {
+   "id": "qbo-parity-a1-labor-tracker-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2913 merged 2026-07-20",
+   "name": "Migrate LaborTracker entries grid to ParityTable; ListErrorState on load failure. Preserve ID/Actor/Start/End/Min/Cost ¢",
+   "registered_on": null,
+   "pr": 2913
   },
   {
    "id": "qbo-parity-a1-load-history-paritytable",
@@ -6932,6 +6965,17 @@
    "pr": 2843
   },
   {
+   "id": "qbo-parity-a1-qbo-vendor-linkage-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2897 merged 2026-07-20",
+   "name": "Migrate admin QboVendorLinkagePage drivers + assets grids from hand-rolled <table> to shared ParityTable QBO grammar wit",
+   "registered_on": null,
+   "pr": 2897
+  },
+  {
    "id": "qbo-parity-a1-stop-reasoning-paritytable",
    "source": ".block-ready",
    "fin": true,
@@ -6941,6 +6985,28 @@
    "name": "Migrate fuel planner StopReasoningTable from hand-rolled <table> to shared ParityTable (sort/resize/gear). Preserve colu",
    "registered_on": null,
    "pr": 2885
+  },
+  {
+   "id": "qbo-parity-a1-trailer-plates-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 file(s) on main",
+   "name": "Migrate trailer-profile PlatesTable from hand-rolled <table> to shared ParityTable QBO grammar. Guard + verify-step 1039",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "qbo-parity-a1-trailer-reefer-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2892 merged 2026-07-20",
+   "name": "Migrate TrailerReeferSection hours history from hand-rolled <table> to shared ParityTable (sort/resize/gear); add ListEr",
+   "registered_on": null,
+   "pr": 2892
   },
   {
    "id": "qbo-parity-a1-vehicle-compliance-paritytable",
@@ -12819,6 +12885,78 @@
  ],
  "merged_prs": [
   {
+   "number": 2916,
+   "title": "fix(ifta): migrate Step3 jurisdiction grid to ParityTable",
+   "mergedAt": "2026-07-20T18:02:29Z",
+   "branch": "fix/ifta-step3-jurisdiction-paritytable"
+  },
+  {
+   "number": 2913,
+   "title": "fix(maint): LaborTracker → ParityTable (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T18:02:21Z",
+   "branch": "fix/labor-tracker-paritytable"
+  },
+  {
+   "number": 2907,
+   "title": "docs(design): settlement double-pay — row lock + state-guarded UPDATE",
+   "mergedAt": "2026-07-20T18:02:12Z",
+   "branch": "design/settlement-double-pay-row-lock-state-guard"
+  },
+  {
+   "number": 2903,
+   "title": "fix(ci): land tracker-artifact refresh via PR instead of a direct push to main",
+   "mergedAt": "2026-07-20T17:35:34Z",
+   "branch": "fix/tracker-bot-pr-based-flow"
+  },
+  {
+   "number": 2902,
+   "title": "fix(ci): enforce tracker-artifact freshness in CI only, warn locally",
+   "mergedAt": "2026-07-20T18:00:46Z",
+   "branch": "fix/tracker-freshness-ci-only-enforcement"
+  },
+  {
+   "number": 2898,
+   "title": "fix(audit): AuditTrailPage → ParityTable + ListErrorState (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T16:28:42Z",
+   "branch": "fix/audit-trail-paritytable"
+  },
+  {
+   "number": 2897,
+   "title": "fix(admin): QboVendorLinkagePage → ParityTable (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T16:56:43Z",
+   "branch": "fix/qbo-vendor-linkage-paritytable"
+  },
+  {
+   "number": 2896,
+   "title": "fix(audit): EntityAuditHistoryTab → ParityTable (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T16:07:04Z",
+   "branch": "fix/qbo-parity-a1-entity-audit-history"
+  },
+  {
+   "number": 2895,
+   "title": "feat(accounting): add Unbilled Revenue contract-asset accounts (ASC 606)",
+   "mergedAt": "2026-07-20T16:57:50Z",
+   "branch": "feat/unbilled-revenue-accounts"
+  },
+  {
+   "number": 2894,
+   "title": "chore(trackers): refresh block-reconciliation + phase-manifest artifacts",
+   "mergedAt": "2026-07-20T17:36:29Z",
+   "branch": "chore/refresh-tracker-artifacts"
+  },
+  {
+   "number": 2892,
+   "title": "fix(trailers): TrailerReeferSection → ParityTable (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T17:14:12Z",
+   "branch": "fix/trailer-reefer-paritytable"
+  },
+  {
+   "number": 2891,
+   "title": "fix(trailers): PlatesTable ParityTable (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T16:40:54Z",
+   "branch": "fix/tp-plates-pt-1784560903"
+  },
+  {
    "number": 2888,
    "title": "fix(admin): AuditLogViewer → ParityTable (qbo-parity-a1)",
    "mergedAt": "2026-07-20T15:49:26Z",
@@ -12853,6 +12991,12 @@
    "title": "fix(vehicles): DocumentsSection → ParityTable (qbo-parity-a1)",
    "mergedAt": "2026-07-20T14:38:29Z",
    "branch": "fix/vehicle-documents-paritytable"
+  },
+  {
+   "number": 2877,
+   "title": "docs(design): load revenue capture — auto-invoice + TONU AR (owner-gated design)",
+   "mergedAt": "2026-07-20T15:58:03Z",
+   "branch": "design/load-revenue-capture-auto-invoice-tonu"
   },
   {
    "number": 2875,
@@ -16339,87 +16483,9 @@
    "title": "feat: EntityLink sweep — maintenance module drill-through (WO, unit, driver, load)",
    "mergedAt": "2026-07-07T07:16:12Z",
    "branch": "feat/entity-link-sweep-4-maintenance"
-  },
-  {
-   "number": 2266,
-   "title": "feat: EntityLink drill-through for journal_entry_id in AccountRegister audit events",
-   "mergedAt": "2026-07-07T06:58:35Z",
-   "branch": "feat/entity-link-sweep-3-account-register"
-  },
-  {
-   "number": 2265,
-   "title": "feat: EntityLink sweep — InternalFinesPage driver + AbandonmentQueuePage load/driver",
-   "mergedAt": "2026-07-07T06:50:55Z",
-   "branch": "feat/entity-link-sweep-2"
-  },
-  {
-   "number": 2264,
-   "title": "feat: EntityLink sweep — safety/maintenance/reports/banking/register drill-through (11 files)",
-   "mergedAt": "2026-07-07T06:31:24Z",
-   "branch": "feat/entity-link-sweep-safety-reports-maintenance"
-  },
-  {
-   "number": 2263,
-   "title": "feat: BillDetailPage + /accounting/bills/:id route + EntityLink bill drill-through",
-   "mergedAt": "2026-07-07T06:03:33Z",
-   "branch": "feat/bill-detail-page-and-entity-link-bill"
-  },
-  {
-   "number": 2262,
-   "title": "fix(drivers): finish module — Operations-views 500 column-drift, endorsement_h UI, visuals + linkage",
-   "mergedAt": "2026-07-07T04:05:17Z",
-   "branch": "fix/drivers-module-finish"
-  },
-  {
-   "number": 2261,
-   "title": "[HOLD-FOR-JORGE — TIER 1] banking GL posting completion (transfer/CC post, post-as-bill paid-in-full, advance recovery, split re-post guard) — flags OFF",
-   "mergedAt": "2026-07-07T06:03:09Z",
-   "branch": "feat/banking-gl-posting-completion-HELD"
-  },
-  {
-   "number": 2260,
-   "title": "feat: EntityLink drill-through for settlement/load/journal_entry/driver IDs (Batches 3-4)",
-   "mergedAt": "2026-07-07T03:38:05Z",
-   "branch": "feat/entity-link-settlement-load-ids"
-  },
-  {
-   "number": 2259,
-   "title": "feat(linkage): EntityLink drill-through in dispatch/drivers/fleet id cells",
-   "mergedAt": "2026-07-07T03:11:58Z",
-   "branch": "feat/linkage-adopt-entitylink-dispatch-drivers-fleet"
-  },
-  {
-   "number": 2258,
-   "title": "feat: adopt EntityLink/Link drill-through in DispatchBoard + FleetTable",
-   "mergedAt": "2026-07-07T02:31:00Z",
-   "branch": "feat/entity-link-dispatch-fleet-adoption"
-  },
-  {
-   "number": 2257,
-   "title": "feat: adopt EntityLink in accounting module tables",
-   "mergedAt": "2026-07-07T02:19:44Z",
-   "branch": "feat/entity-link-accounting-adoption"
-  },
-  {
-   "number": 2256,
-   "title": "[HOLD-FOR-JORGE] feat(linkage): reverse-link read endpoints (driver advances, customer invoices, JE source-links)",
-   "mergedAt": "2026-07-07T05:17:26Z",
-   "branch": "feat/linkage-reverse-link-endpoints"
-  },
-  {
-   "number": 2255,
-   "title": "[HOLD-FOR-JORGE] feat: reverse-link drill-through endpoints (4 of 5)",
-   "mergedAt": "2026-07-07T05:17:14Z",
-   "branch": "feat/reverse-link-endpoints"
-  },
-  {
-   "number": 2253,
-   "title": "feat(linkage): shared EntityLink drill-through component + banking adoption + report-only adoption guard",
-   "mergedAt": "2026-07-07T01:39:59Z",
-   "branch": "feat/linkage-entitylink-foundation"
   }
  ],
- "merged_pr_total": 2736,
+ "merged_pr_total": 2749,
  "hold_for_jorge": [
   {
    "number": 2718,
