@@ -506,10 +506,10 @@ verify-step 1035.
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/customers/CustomerCOITab.tsx` | pending |
+| `apps/frontend/src/pages/customers/CustomerCOITab.tsx` | migrated (qbo-parity-a1 via CoiTab) |
 | `apps/frontend/src/pages/customers/CustomersListView.tsx` | pending |
 | `apps/frontend/src/pages/customers/components/PortalUsersTab.tsx` | pending |
-| `apps/frontend/src/pages/customers/tabs/CoiRequestsTab.tsx` | pending |
+| `apps/frontend/src/pages/customers/tabs/CoiRequestsTab.tsx` | migrated (qbo-parity-a1 via CoiTab) |
 
 ### pages/daily-tasks (1)
 
@@ -1200,3 +1200,16 @@ original groups and order, and template-detail query failures now use retryable
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/legal/templates/LegalTemplateDetailPage.tsx` | pages/legal |
+## qbo-parity-a1 — CoiTab (this PR)
+Shared customer COI requests grid (Customers list `CustomerCOITab` list-preview +
+CustomerDetail `CoiRequestsTab` full-page) was already on `ParityTable` but still
+surfaced a bare red outage banner. Replaced with `ListErrorState` + Retry and
+guarded the shared `CoiTab` surface. Columns Requested/Status/Expires/Document/Notes
+(list-preview) and Date/Requester User/Policy Reference/Insurer Email/Status/Action
+(full-page) preserved 1:1; status filter + Create COI modal + inline update preserved.
+Guard: `scripts/verify-customer-coi-uses-paritytable.mjs` via verify-step **1083**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/customers/CoiTab.tsx` | pages/customers |
+
