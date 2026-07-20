@@ -259,7 +259,7 @@ verify-step 1035.
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/components/catalogs/CatalogTable.tsx` | pending |
+| `apps/frontend/src/components/catalogs/CatalogTable.tsx` | migrated (qbo-parity-a1) |
 
 ### components/compliance (0 remaining)
 
@@ -342,6 +342,8 @@ verify-step 1035.
 | `apps/frontend/src/components/reports/FrequentlyRunTable.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/reports/LaneDetailModal.tsx` | pending |
 | `apps/frontend/src/components/reports/ifta/Step1MileageReview.tsx` | pending |
+| `apps/frontend/src/components/reports/ifta/Step2FuelReview.tsx` | migrated (qbo-parity-a1) |
+| `apps/frontend/src/components/reports/ifta/Step3JurisdictionCalc.tsx` | pending |
 | `apps/frontend/src/components/reports/ifta/Step2FuelReview.tsx` | pending |
 | `apps/frontend/src/components/reports/ifta/Step3JurisdictionCalc.tsx` | migrated (qbo-parity-a1) |
 
@@ -730,7 +732,7 @@ verify-step 1035.
 | `apps/frontend/src/pages/reports/APAgingPage.tsx` | pending |
 | `apps/frontend/src/pages/reports/ARAgingPage.tsx` | pending |
 | `apps/frontend/src/pages/reports/BalanceSheetPage.tsx` | pending |
-| `apps/frontend/src/pages/reports/BookingGapReport.tsx` | pending |
+| `apps/frontend/src/pages/reports/BookingGapReport.tsx` | migrated (fix/booking-gap-report-paritytable) |
 | `apps/frontend/src/pages/reports/CancellationsReportPage.tsx` | pending |
 | `apps/frontend/src/pages/reports/CashFlowStatementPage.tsx` | pending |
 | `apps/frontend/src/pages/reports/CustomerProfitabilityPage.tsx` | pending |
@@ -893,6 +895,17 @@ manual expand rows. Migrated to shared `ParityTable` (sort + resize + gear +
 | --- | --- |
 | `apps/frontend/src/pages/audit/AuditTrailPage.tsx` | pages/audit |
 
+## qbo-parity-a1 — CancellationsReportPage (this PR)
+Reports → Cancellations analytics had four hand-rolled bucket `<table>`s (reason /
+driver / customer / date). Migrated all four to shared `ParityTable` (sort + resize +
+gear + CSV export). Columns Count / Billable / Charges preserved 1:1; KPI summary
+cards and date-range filters preserved. Guard:
+`scripts/verify-cancellations-report-uses-paritytable.mjs` via verify-step 1058.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/reports/CancellationsReportPage.tsx` | pages/reports |
+
 ## qbo-parity-a1 — Step3JurisdictionCalc (this PR)
 IFTA Step 3 jurisdiction tax grid was a hand-rolled `<table>` with a rates-source link,
 fleet MPG header, and total net tax footer. Migrated to shared `ParityTable` (sort + resize +
@@ -916,6 +929,17 @@ Guard: `scripts/verify-qbo-vendor-linkage-uses-paritytable.mjs` via verify-step 
 | --- | --- |
 | `apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx` | pages/admin |
 
+
+## qbo-parity-a1 — CatalogTable (this PR)
+Lists GenericCatalogPage grid was a hand-rolled `<table>` wrapped in BulkActionBar /
+TableSelection. Migrated to shared `ParityTable` (sort + resize + gear + selectable batch
+actions + row Edit/Archive). Search + Active/Inactive/All filterBar, selection cap 200,
+and emptyText preserved 1:1. Guard: `scripts/verify-catalog-table-uses-paritytable.mjs`
+via verify-step **1045**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/catalogs/CatalogTable.tsx` | components/catalogs |
 ## qbo-parity-a1 — TrailerReeferSection (this PR)
 Trailer reefer hours log was a hand-rolled `<table>`. Migrated to shared
 `ParityTable` (sort + resize + gear). Columns preserved 1:1; reefer hours entry
@@ -935,6 +959,17 @@ shared `ParityTable` (sort + resize + gear). Columns Week ending / Gross / Net p
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/components/driver-profile/SettlementsSection.tsx` | components/driver-profile |
+## qbo-parity-a1 — Step2FuelReview (this PR)
+IFTA Step 2 fuel review was a hand-rolled `<table>` with per-jurisdiction override
+inputs and a Total footer. Migrated to shared `ParityTable` (sort + resize + gear +
+CSV export). Columns State / Aggregated gallons / Override gallons preserved 1:1;
+override number inputs + `ifta-fuel-override-*` testids + Save fuel overrides + Total
+summary preserved. Guard: `scripts/verify-ifta-step2-fuel-uses-paritytable.mjs` via
+verify-step 1052.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/reports/ifta/Step2FuelReview.tsx` | components/reports/ifta |
 ## qbo-parity-a1 — LaborTracker (this PR)
 Maintenance WO labor entries grid was a hand-rolled `<table>`. Migrated to shared
 `ParityTable` (sort + resize + gear + row Stop/Rate/Remove actions) and added
@@ -945,3 +980,14 @@ Cost ¢ preserved 1:1; Clock in + manual book range unchanged. Guard:
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/components/maintenance/LaborTracker.tsx` | components/maintenance |
+
+## qbo-parity-a1 — BookingGapReport (this PR)
+Dispatcher booking-gap analytics was a hand-rolled `<table>` with manual loading/empty
+states. Migrated to shared `ParityTable` (sort + resize + gear); `ListErrorState` +
+Retry preserved on outage. Columns Rank / Dispatcher / Loads / Avg Gap (h) / P50 (h) /
+P90 (h) preserved 1:1; week/month/quarter period toggle + rank row highlight preserved.
+Guard: `scripts/verify-booking-gap-report-uses-paritytable.mjs` via verify-step **1057**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/reports/BookingGapReport.tsx` | pages/reports |

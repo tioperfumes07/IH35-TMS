@@ -1,0 +1,42 @@
+{
+  "block_id": "BLOCK-02-DRIVER-ESCROW-DESIGN",
+  "status": "NEEDS-VERIFY",
+  "classification": "FINANCIAL",
+  "phase": "accounting",
+  "source": "docs/accounting/BLOCK-02-DRIVER-ESCROW-DESIGN.md (source-rank 'accounting'=2; this .block-ready entry ranks 3 and therefore WINS de-dup, giving the block an enforceable acceptance[] home under G2)",
+  "source_file": "BLOCK-02-DRIVER-ESCROW-DESIGN.md",
+  "task": "Driver escrow separation (escrow = LIABILITY, never an expense). Registered so its acceptance criteria become machine-checkable. ROOT CAUSE of its permanent 'partial 5/6 artifacts — unverified' status: the source doc names apps/backend/src/payroll/driver-settlement.service.ts, which no longer exists — it was RENAMED to driver-settlement.service.deprecated.ts during the payroll.* -> driver_finance.* canonicalization (skill section 10b canonical map: driver_finance.* CANONICAL, payroll.* RETIRE). The reconciler can never see 6/6 while a signature file points at a deliberately retired path, so the block was structurally frozen, not actually incomplete. allowed_files below point at the CANONICAL driver-finance surfaces, all verified present on main this session.",
+  "branch": "feat/task4-acceptance-criteria-6-financial-blocks",
+  "allowed_files": [
+    "apps/backend/src/driver-finance/escrow-separation.service.ts",
+    "apps/backend/src/driver-finance/escrow-separation.routes.ts",
+    "apps/backend/src/accounting/driver-subaccount-provision.service.ts",
+    "scripts/verify-driver-escrow-separation-90day-gate.mjs"
+  ],
+  "acceptance": [
+    {
+      "kind": "guard",
+      "script": "scripts/verify-driver-escrow-separation-90day-gate.mjs",
+      "wired_into": "package.json verify:* + verify:static sweep",
+      "assert": "guard --selftest passes and the 90-day separation gate is asserted, not skipped"
+    },
+    {
+      "kind": "code",
+      "assert": "escrow-separation.service.ts credits/debits the Driver Escrow LIABILITY account (QBO-1150040187) and NEVER an expense account; no new GL math (reuses the existing posting engine)."
+    },
+    {
+      "kind": "data",
+      "assert": "PROD row-count of driver escrow ledger entries attributable to escrow-separation.service.ts.",
+      "zero_count_means": "PENDING — code is present but the path has never executed. A 0-count MUST NOT be reported as DONE or green. Escrow is owner-money; an unexercised escrow path is unproven, not complete.",
+      "verified_by": "GUARD (RLS-immune probe; set app.operating_company_id per entity or counts read 0 from masking)"
+    },
+    {
+      "kind": "live",
+      "assert": "One real escrow draw observed end-to-end: settlement pay debited FIRST, escrow touched only for the shortfall (locked decision 9.3, pay-first-then-escrow), single charge per event (no double-charge from the migration-0094 trigger racing the app chargeback)."
+    }
+  ],
+  "linkage": "driver_finance escrow <-> mdata.drivers <-> driver settlement pay <-> Driver Escrow LIABILITY account in catalogs.accounts <-> audit.row_changes. Escrow return = 60-90 day return-on-separation net of open claims (locked decision 9.4).",
+  "db_required": true,
+  "guard_required": true,
+  "note": "FINANCIAL CLUSTER — owner ratifies; GUARD verifies against prod. Registered by the builder to give the criteria an enforceable home; NOT a claim that the block is built. The data + live criteria are deliberately written so an empty table reads PENDING, never green."
+}
