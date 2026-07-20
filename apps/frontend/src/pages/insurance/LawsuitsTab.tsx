@@ -95,7 +95,7 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
           Statuses: {LAWSUIT_STATUS_FILTERS.filter((option) => option.value).map((option) => option.label).join(", ")}
         </span>
         <Button type="button" size="sm" onClick={() => setCreateOpen((prev) => !prev)}>
-          {createOpen ? "Cancel" : "+ Lawsuit"}
+          {createOpen ? "Cancel" : "+ Create lawsuit"}
         </Button>
       </div>
 

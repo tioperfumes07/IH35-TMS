@@ -66,7 +66,7 @@ describe("LawsuitsTab create lawsuit modal", () => {
     const user = userEvent.setup();
     render(wrap(<LawsuitsTab />));
 
-    await user.click(await screen.findByRole("button", { name: /\+ Lawsuit/i }));
+    await user.click(await screen.findByRole("button", { name: /\+ Create lawsuit/i }));
     await screen.findByRole("heading", { name: /Create Lawsuit/i });
 
     const caseNumberInput = screen.getByLabelText(/Case Number/i);
@@ -77,7 +77,7 @@ describe("LawsuitsTab create lawsuit modal", () => {
       expect(screen.queryByRole("heading", { name: /Create Lawsuit/i })).toBeNull();
     });
 
-    await user.click(screen.getByRole("button", { name: /\+ Lawsuit/i }));
+    await user.click(screen.getByRole("button", { name: /\+ Create lawsuit/i }));
     await screen.findByRole("heading", { name: /Create Lawsuit/i });
     expect(screen.getByLabelText(/Case Number/i)).toHaveValue("");
     expect(insuranceApiMocks.createLawsuit).not.toHaveBeenCalled();

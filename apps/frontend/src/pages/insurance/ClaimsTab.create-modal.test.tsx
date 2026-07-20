@@ -72,7 +72,7 @@ describe("ClaimsTab create claim modal", () => {
     const user = userEvent.setup();
     render(wrap(<ClaimsTab />));
 
-    await user.click(await screen.findByRole("button", { name: /\+ Claim/i }));
+    await user.click(await screen.findByRole("button", { name: /\+ Create claim/i }));
     await screen.findByRole("heading", { name: /Create Claim/i });
 
     const claimNumberInput = screen.getByLabelText(/Claim Number/i);
@@ -83,7 +83,7 @@ describe("ClaimsTab create claim modal", () => {
       expect(screen.queryByRole("heading", { name: /Create Claim/i })).toBeNull();
     });
 
-    await user.click(screen.getByRole("button", { name: /\+ Claim/i }));
+    await user.click(screen.getByRole("button", { name: /\+ Create claim/i }));
     await screen.findByRole("heading", { name: /Create Claim/i });
     expect(screen.getByLabelText(/Claim Number/i)).toHaveValue("");
     expect(insuranceApiMocks.createClaim).not.toHaveBeenCalled();
