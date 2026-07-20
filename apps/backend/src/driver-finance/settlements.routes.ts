@@ -137,7 +137,14 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
             s.payment_cleared_at,
             s.payment_bank_reference,
             s.payment_bounced_reason,
-            s.payment_method
+            s.payment_method,
+            (
+              SELECT COUNT(DISTINCT db.load_id)::int
+              FROM driver_finance.settlement_lines sl
+              JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
+              WHERE sl.settlement_id = s.id
+                AND db.load_id IS NOT NULL
+            ) AS load_count
           FROM views.driver_settlement_with_debt v
           JOIN driver_finance.driver_settlements s ON s.id = v.id
           WHERE ${where.join(" AND ")}
@@ -153,6 +160,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
           const debt = await recomputeDebtSync(client, String(row.driver_id));
           return {
             ...row,
+            load_count: Number(row.load_count ?? 0),
             live_debt_flag: debt?.total_active_debt == null ? null : Number(debt.total_active_debt),
             debt_computed_at: debt?.computed_at ?? null,
           };
@@ -209,7 +217,14 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
             s.payment_cleared_at,
             s.payment_bank_reference,
             s.payment_bounced_reason,
-            s.payment_method
+            s.payment_method,
+            (
+              SELECT COUNT(DISTINCT db.load_id)::int
+              FROM driver_finance.settlement_lines sl
+              JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
+              WHERE sl.settlement_id = s.id
+                AND db.load_id IS NOT NULL
+            ) AS load_count
           FROM views.driver_settlement_with_debt v
           JOIN driver_finance.driver_settlements s ON s.id = v.id
           WHERE ${where.join(" AND ")}
@@ -223,6 +238,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
           const debt = await recomputeDebtSync(client, String(row.driver_id));
           return {
             ...row,
+            load_count: Number(row.load_count ?? 0),
             live_debt_flag: debt?.total_active_debt == null ? null : Number(debt.total_active_debt),
             debt_computed_at: debt?.computed_at ?? null,
           };

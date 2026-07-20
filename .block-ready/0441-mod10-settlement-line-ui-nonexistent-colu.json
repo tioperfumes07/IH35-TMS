@@ -1,17 +1,37 @@
 {
   "block_id": "0441-mod10-settlement-line-ui-nonexistent-colu",
-  "status": "PENDING",
-  "classification": "FINANCIAL",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (list aggregate + FE display)",
   "phase": "tier1",
-  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
+  "branch": "fix/0441-mod10-settlement-loads-column",
+  "task": "Wire SettlementsTable Loads column to real per-settlement load_count",
+  "source": "CODER-BUILD-INSTRUCTIONS-2026-07-19.md",
   "source_file": "0441-mod10-settlement-line-ui-nonexistent-colu.txt",
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [
+    "verify:pre-commit"
+  ],
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    ".block-ready/0441-mod10-settlement-line-ui-nonexistent-colu.json",
+    "apps/backend/src/driver-finance/settlements.routes.ts",
+    "apps/frontend/src/api/driverFinance.ts",
+    "apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx",
+    "apps/frontend/src/components/drivers/__tests__/EarningsTab.test.tsx",
+    "scripts/verify-settlements-table-no-phantom-loads.mjs",
+    "scripts/verify-steps/1015-verify-settlements-table-no-phantom-loads.mjs"
   ],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "GET /api/v1/driver-finance/settlements (and /drivers/:id/settlements) returns load_count = COUNT(DISTINCT driver_bills.load_id) via settlement_lines"
+    },
+    {
+      "check": "SettlementsTable Loads column renders row.load_count (no phantom — / 'no real per-row field yet')"
+    },
+    {
+      "check": "scripts/verify-settlements-table-no-phantom-loads.mjs PASS (+ --selftest); wired via verify-steps/1015"
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "GATED-no pure display gap. No migration, no GL posting, no schema change. Read-only aggregate on existing FKs."
 }
