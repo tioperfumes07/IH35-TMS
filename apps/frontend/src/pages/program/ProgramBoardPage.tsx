@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
@@ -54,6 +55,23 @@ export function reviewTag(raw: string | undefined): "proceed-on-row" | "needs-yo
 }
 
 type TabId = "focus" | "all" | "pending" | "owner" | "dispatch" | "audit" | "merged" | "hold" | "questions" | "ideas";
+const PROGRAM_BOARD_TAB_IDS = new Set<string>([
+  "focus",
+  "all",
+  "pending",
+  "owner",
+  "dispatch",
+  "audit",
+  "merged",
+  "hold",
+  "questions",
+  "ideas",
+]);
+
+export function parseProgramBoardTab(raw: string | null): TabId {
+  if (raw && PROGRAM_BOARD_TAB_IDS.has(raw)) return raw as TabId;
+  return "focus";
+}
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "focus", label: "Focus" },
@@ -288,7 +306,14 @@ function liveStateChip(state: string | undefined): { bg: string; fg: string; lab
 export function ProgramBoardPage() {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<TabId>("focus");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = parseProgramBoardTab(searchParams.get("tab"));
+  const setTab = (next: TabId) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "focus") params.delete("tab");
+    else params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
   const [filter, setFilter] = useState("");
   // Debounced copy of the filter that drives the row-table filtering (typing stays responsive on 160+ rows).
   const [debouncedFilter, setDebouncedFilter] = useState("");
