@@ -4,9 +4,12 @@
  * NEW component — rendered at /safety/drug-alcohol via SafetyGroupNav (tab already registered).
  * Consumes /api/safety/drug-alcohol/* endpoints (additive, separate from compliance module).
  */
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { TestSchedulingPanel } from "./TestSchedulingPanel";
 import { RandomPoolDashboard } from "./RandomPoolDashboard";
 
@@ -53,38 +56,6 @@ async function fetchPositives(companyId: string): Promise<TestRecord[]> {
   return data.tests;
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function EnrollmentRow({ enrollment }: { enrollment: Enrollment }) {
-  return (
-    <tr className="border-b border-gray-100 text-xs">
-      <td className="py-1.5 pr-3 font-mono text-[11px] text-slate-500">
-        <EntityLink kind="driver" id={enrollment.driver_uuid} label={enrollment.driver_uuid.slice(0, 8) + "…"} />
-      </td>
-      <td className="py-1.5 pr-3">{enrollment.consortium_name}</td>
-      <td className="py-1.5 text-slate-600">{enrollment.enrolled_at}</td>
-    </tr>
-  );
-}
-
-function PositiveRow({ test }: { test: TestRecord }) {
-  return (
-    <tr className="border-b border-gray-100 text-xs">
-      <td className="py-1.5 pr-3 font-mono text-[11px] text-slate-500">
-        <EntityLink kind="driver" id={test.driver_uuid} label={test.driver_uuid.slice(0, 8) + "…"} />
-      </td>
-      <td className="py-1.5 pr-3 capitalize">{test.test_type.replace(/_/g, " ")}</td>
-      <td className="py-1.5 pr-3 capitalize">{test.test_kind}</td>
-      <td className="py-1.5">
-        <span className="rounded-sm bg-red-50 px-1.5 py-0.5 text-[10px] font-medium text-red-700">
-          positive
-        </span>
-      </td>
-      <td className="py-1.5 text-slate-500">{test.collected_at?.slice(0, 10) ?? "—"}</td>
-    </tr>
-  );
-}
-
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export function DrugAlcoholProgramTab() {
@@ -105,6 +76,67 @@ export function DrugAlcoholProgramTab() {
 
   const enrollmentRows = enrollmentsQ.data ?? [];
   const positiveRows = positivesQ.data ?? [];
+
+  const enrollmentColumns = useMemo<ParityColumn<Enrollment>[]>(
+    () => [
+      {
+        key: "driver_uuid",
+        label: "Driver",
+        sortable: true,
+        render: (enrollment) => (
+          <EntityLink
+            kind="driver"
+            id={enrollment.driver_uuid}
+            label={enrollment.driver_uuid.slice(0, 8) + "…"}
+          />
+        ),
+      },
+      { key: "consortium_name", label: "Consortium", sortable: true },
+      { key: "enrolled_at", label: "Enrolled", sortable: true },
+    ],
+    [],
+  );
+
+  const positiveColumns = useMemo<ParityColumn<TestRecord>[]>(
+    () => [
+      {
+        key: "driver_uuid",
+        label: "Driver",
+        sortable: true,
+        render: (test) => (
+          <EntityLink kind="driver" id={test.driver_uuid} label={test.driver_uuid.slice(0, 8) + "…"} />
+        ),
+      },
+      {
+        key: "test_type",
+        label: "Type",
+        sortable: true,
+        render: (test) => <span className="capitalize">{test.test_type.replace(/_/g, " ")}</span>,
+      },
+      {
+        key: "test_kind",
+        label: "Kind",
+        sortable: true,
+        render: (test) => <span className="capitalize">{test.test_kind}</span>,
+      },
+      {
+        key: "result",
+        label: "Result",
+        render: () => (
+          <span className="rounded-sm bg-red-50 px-1.5 py-0.5 text-[10px] font-medium text-red-700">
+            positive
+          </span>
+        ),
+      },
+      {
+        key: "collected_at",
+        label: "Collected",
+        sortable: true,
+        render: (test) => test.collected_at?.slice(0, 10) ?? "—",
+      },
+    ],
+    [],
+  );
 
   if (!companyId) {
     return (
@@ -127,29 +159,23 @@ export function DrugAlcoholProgramTab() {
           ) : null}
         </h2>
 
-        {enrollmentsQ.isLoading ? (
-          <p className="text-xs text-slate-500">Loading…</p>
-        ) : enrollmentsQ.isError ? (
-          <p className="text-xs text-red-600">Failed to load enrollments.</p>
-        ) : enrollmentRows.length === 0 ? (
-          <p className="text-xs text-slate-500">No active consortium enrollments.</p>
+        {enrollmentsQ.isError ? (
+          <ListErrorState
+            title="Couldn't load consortium enrollments"
+            status={0}
+            message={(enrollmentsQ.error as Error)?.message}
+            onRetry={() => void enrollmentsQ.refetch()}
+          />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="text-[11px] uppercase tracking-wide text-slate-500">
-                  <th className="pb-1 pr-3 font-medium">Driver</th>
-                  <th className="pb-1 pr-3 font-medium">Consortium</th>
-                  <th className="pb-1 font-medium">Enrolled</th>
-                </tr>
-              </thead>
-              <tbody>
-                {enrollmentRows.map((e) => (
-                  <EnrollmentRow key={e.uuid} enrollment={e} />
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ParityTable<Enrollment>
+            columns={enrollmentColumns}
+            rows={enrollmentRows}
+            rowKey={(enrollment) => enrollment.uuid}
+            loading={enrollmentsQ.isLoading}
+            emptyText="No active consortium enrollments."
+            storageKey="safety-da-program-enrollments"
+            exportFilename="da-program-enrollments"
+          />
         )}
       </section>
 
@@ -164,31 +190,23 @@ export function DrugAlcoholProgramTab() {
           ) : null}
         </h2>
 
-        {positivesQ.isLoading ? (
-          <p className="text-xs text-red-500">Loading…</p>
-        ) : positivesQ.isError ? (
-          <p className="text-xs text-red-700">Failed to load positive results.</p>
-        ) : positiveRows.length === 0 ? (
-          <p className="text-xs text-red-700">No open positive results. All clear.</p>
+        {positivesQ.isError ? (
+          <ListErrorState
+            title="Couldn't load positive results"
+            status={0}
+            message={(positivesQ.error as Error)?.message}
+            onRetry={() => void positivesQ.refetch()}
+          />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="text-[11px] uppercase tracking-wide text-red-700">
-                  <th className="pb-1 pr-3 font-medium">Driver</th>
-                  <th className="pb-1 pr-3 font-medium">Type</th>
-                  <th className="pb-1 pr-3 font-medium">Kind</th>
-                  <th className="pb-1 pr-3 font-medium">Result</th>
-                  <th className="pb-1 font-medium">Collected</th>
-                </tr>
-              </thead>
-              <tbody>
-                {positiveRows.map((t) => (
-                  <PositiveRow key={t.uuid} test={t} />
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ParityTable<TestRecord>
+            columns={positiveColumns}
+            rows={positiveRows}
+            rowKey={(test) => test.uuid}
+            loading={positivesQ.isLoading}
+            emptyText="No open positive results. All clear."
+            storageKey="safety-da-program-positives"
+            exportFilename="da-program-positives"
+          />
         )}
       </section>
 

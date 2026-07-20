@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-drug-alcohol-program-paritytable",
+  "branch": "fix/drug-alcohol-program-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable + ListErrorState)",
+  "phase": "OPS-FE",
+  "task": "Migrate DrugAlcoholProgramTab enrollments + positive-result queue from hand-rolled <table> to shared ParityTable (sort/resize/gear); add ListErrorState on fetch failure (no false-empty). Preserve Driver/Consortium/Enrolled and Driver/Type/Kind/Result/Collected columns + section headings + empty states. Guard + verify-step 1084 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + qbo-parity-a1",
+  "source_file": "qbo-parity-a1-drug-alcohol-program-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-drug-alcohol-program-paritytable.json",
+    "apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-drug-alcohol-program-uses-paritytable.mjs",
+    "scripts/verify-steps/1084-verify-drug-alcohol-program-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "DrugAlcoholProgramTab.tsx uses ≥2 ParityTable surfaces (enrollments + positives); no hand-rolled <table>/<thead>; ListErrorState on both query failures; EntityLink driver drill-through; columns Driver/Consortium/Enrolled + Driver/Type/Kind/Result/Collected preserved; verify-drug-alcohol-program-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1084 wired (Rule 17); tracker marks DrugAlcoholProgramTab migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 — DrugAlcoholProgramTab surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17). verify-step 1084."
+}
