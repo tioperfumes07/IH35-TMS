@@ -3,6 +3,8 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { useState } from "react";
 import { listDispatchAssignmentHistory } from "../../api/dispatch";
 import { Button } from "../Button";
+import { ListErrorState } from "../ListErrorState";
+import { EntityLink } from "../shared/EntityLink";
 
 type Props = {
   driverId: string;
@@ -59,43 +61,69 @@ export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
 
       {historyQ.isLoading ? <p className="text-sm text-gray-500">Loading load history…</p> : null}
       {historyQ.isError ? (
-        <p className="text-sm text-red-600" data-testid="driver-load-history-error">
-          Unable to load assignment history.
-        </p>
+        <div data-testid="driver-load-history-error">
+          <ListErrorState
+            title="Couldn't load assignment history"
+            status={0}
+            message={(historyQ.error as Error)?.message}
+            onRetry={() => void historyQ.refetch()}
+          />
+        </div>
       ) : null}
 
-      {!historyQ.isLoading && rows.length === 0 ? (
+      {!historyQ.isLoading && !historyQ.isError && rows.length === 0 ? (
         <p className="text-sm text-gray-500" data-testid="driver-load-history-empty">
           No load assignment history for this driver.
         </p>
       ) : null}
 
-      {rows.length > 0 ? (
+      {!historyQ.isError && rows.length > 0 ? (
         <div className="overflow-x-auto">
-        <table className="min-w-full text-xs" data-testid="driver-load-history-table">
-          <thead>
-            <tr className="border-b text-left text-gray-600">
-              <th className="py-2 pr-3">Load #</th>
-              <th className="py-2 pr-3">Assigned At</th>
-              <th className="py-2 pr-3">Method</th>
-              <th className="py-2 pr-3">Previous Driver</th>
-              <th className="py-2 pr-3">New Driver</th>
-              <th className="py-2">Reason</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id} className="border-b align-top" data-testid={`driver-load-history-row-${row.id}`}>
-                <td className="py-2 pr-3 font-medium">{row.load_number ?? row.load_id}</td>
-                <td className="py-2 pr-3 whitespace-nowrap">{new Date(row.assigned_at).toLocaleString()}</td>
-                <td className="py-2 pr-3">{row.assignment_method}</td>
-                <td className="py-2 pr-3">{row.previous_driver_name ?? "—"}</td>
-                <td className="py-2 pr-3">{row.new_driver_name ?? "—"}</td>
-                <td className="py-2">{row.reason_code ?? row.notes ?? "—"}</td>
+          <table className="min-w-full text-xs" data-testid="driver-load-history-table">
+            <thead>
+              <tr className="border-b text-left text-gray-600">
+                <th className="py-2 pr-3">Load #</th>
+                <th className="py-2 pr-3">Assigned At</th>
+                <th className="py-2 pr-3">Method</th>
+                <th className="py-2 pr-3">Previous Driver</th>
+                <th className="py-2 pr-3">New Driver</th>
+                <th className="py-2">Reason</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.id} className="border-b align-top" data-testid={`driver-load-history-row-${row.id}`}>
+                  <td className="py-2 pr-3 font-medium">
+                    <EntityLink
+                      kind="load"
+                      id={row.load_id}
+                      label={row.load_number ?? row.load_id}
+                      data-testid={`driver-load-history-load-${row.id}`}
+                    />
+                  </td>
+                  <td className="py-2 pr-3 whitespace-nowrap">{new Date(row.assigned_at).toLocaleString()}</td>
+                  <td className="py-2 pr-3">{row.assignment_method}</td>
+                  <td className="py-2 pr-3">
+                    <EntityLink
+                      kind="driver"
+                      id={row.previous_driver_id}
+                      label={row.previous_driver_name ?? undefined}
+                      data-testid={`driver-load-history-prev-driver-${row.id}`}
+                    />
+                  </td>
+                  <td className="py-2 pr-3">
+                    <EntityLink
+                      kind="driver"
+                      id={row.new_driver_id}
+                      label={row.new_driver_name ?? undefined}
+                      data-testid={`driver-load-history-new-driver-${row.id}`}
+                    />
+                  </td>
+                  <td className="py-2">{row.reason_code ?? row.notes ?? "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       ) : null}
     </div>

@@ -843,6 +843,10 @@ export type DispatchAssignmentHistoryRow = {
   notes: string | null;
   assigned_at: string;
   load_number: string | null;
+  previous_driver_id: string | null;
+  new_driver_id: string | null;
+  previous_unit_id: string | null;
+  new_unit_id: string | null;
   previous_driver_name: string | null;
   new_driver_name: string | null;
   previous_unit_number: string | null;
