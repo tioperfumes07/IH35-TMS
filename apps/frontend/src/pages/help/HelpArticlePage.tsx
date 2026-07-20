@@ -1,13 +1,51 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { getHelpArticle } from "../../help/helpCenterContent";
 
+type HelpFeedback = "up" | "down";
+
+/** localStorage key — article slug is the stable id (frontend-only Help). */
+export function helpFeedbackStorageKey(articleId: string): string {
+  return `help_feedback:${articleId}`;
+}
+
+function readHelpFeedback(articleId: string): HelpFeedback | null {
+  if (!articleId || typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(helpFeedbackStorageKey(articleId));
+    if (raw === "up" || raw === "down") return raw;
+  } catch {
+    // private / blocked storage
+  }
+  return null;
+}
+
+function writeHelpFeedback(articleId: string, value: HelpFeedback): void {
+  if (!articleId || typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(helpFeedbackStorageKey(articleId), value);
+  } catch {
+    // private / blocked storage
+  }
+}
+
 export function HelpArticlePage() {
   const { slug = "" } = useParams();
   const article = useMemo(() => getHelpArticle(slug), [slug]);
-  const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
+  const articleKey = article?.slug ?? slug;
+  const [feedback, setFeedback] = useState<HelpFeedback | null>(() => readHelpFeedback(articleKey));
+
+  // Restore when navigating between articles (same page component, new slug).
+  useEffect(() => {
+    setFeedback(readHelpFeedback(articleKey));
+  }, [articleKey]);
+
+  const chooseFeedback = (value: HelpFeedback) => {
+    setFeedback(value);
+    writeHelpFeedback(articleKey, value);
+  };
 
   if (!article) {
     return (
@@ -34,7 +72,7 @@ export function HelpArticlePage() {
           <button
             type="button"
             className="rounded-sm border border-gray-300 px-3 py-1 text-sm focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
-            onClick={() => setFeedback("up")}
+            onClick={() => chooseFeedback("up")}
             aria-pressed={feedback === "up"}
           >
             Yes
@@ -42,7 +80,7 @@ export function HelpArticlePage() {
           <button
             type="button"
             className="rounded-sm border border-gray-300 px-3 py-1 text-sm focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
-            onClick={() => setFeedback("down")}
+            onClick={() => chooseFeedback("down")}
             aria-pressed={feedback === "down"}
           >
             No

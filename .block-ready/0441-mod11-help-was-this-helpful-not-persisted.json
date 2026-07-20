@@ -1,17 +1,27 @@
 {
   "block_id": "0441-mod11-help-was-this-helpful-not-persisted",
-  "status": "PENDING",
-  "classification": "FINANCIAL",
-  "phase": "tier3",
+  "branch": "fix/help-feedback-localstorage",
+  "phase": "OPS-FE",
+  "task": "Help article Was this helpful? persist Yes/No to localStorage (help_feedback:<slug>)",
+  "classification": "ADDITIVE",
+  "status": "IN_PROGRESS",
   "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
   "source_file": "0441-mod11-help-was-this-helpful-not-persisted.txt",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    ".block-ready/0441-mod11-help-was-this-helpful-not-persisted.json",
+    "apps/frontend/src/pages/help/HelpArticlePage.tsx",
+    "scripts/verify-help-feedback-persisted.mjs",
+    "scripts/verify-steps/1006-verify-help-feedback-persisted.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [
+    "verify-help-feedback-persisted"
   ],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "HelpArticlePage persists Yes/No to localStorage key help_feedback:<slug>, restores on mount; no backend Help routes; scripts/verify-help-feedback-persisted.mjs PASS."
     }
-  ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  ]
 }
