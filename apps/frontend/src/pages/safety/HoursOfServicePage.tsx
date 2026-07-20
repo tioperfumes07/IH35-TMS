@@ -152,9 +152,10 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
           type="button"
           className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white"
           data-testid="safety-hos-create-violation"
+          aria-label="Create HOS violation"
           onClick={() => setCreateOpen(true)}
         >
-          + Create violation
+          + Create
         </button>
       </div>
 
@@ -243,7 +244,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
             )}
           </div>
           <div className="border-t border-gray-100 px-3 py-2 text-[11px] text-slate-500">
-            Log new violations with <span className="font-semibold text-slate-700">+ Create violation</span> above, or manage the full list on{" "}
+            Log new HOS violations with <span className="font-semibold text-slate-700">+ Create</span> above, or manage the full list on{" "}
             <Link to="/safety/hos-violations" className="font-semibold text-slate-700 hover:underline">
               /safety/hos-violations
             </Link>
