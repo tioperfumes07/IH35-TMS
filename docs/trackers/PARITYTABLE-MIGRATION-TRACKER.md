@@ -21,9 +21,14 @@ sort, and the lock-account control — never drop or reorder.
 ## Rollup
 | Status | Count |
 | --- | --- |
-| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable + LoadHistoryTab + vehicle PlatesTable + vehicle ComplianceSection + DriverDaySummaryCard) | 21 |
+| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable + LoadHistoryTab + vehicle PlatesTable + vehicle ComplianceSection + DriverDaySummaryCard + StopReasoningTable + EntityAuditHistoryTab) | 23 |
+| financial-hold (Jorge-gated) | 99 |
+| pending (non-financial, future batches) | 179 |
+| **hand-rolled total (original)** | **300** |
 | financial-hold (Jorge-gated) | 99 |
 | pending (non-financial, future batches) | 180 |
+| financial-hold (Jorge-gated) | 99 |
+| pending (non-financial, future batches) | 183 |
 | financial-hold (Jorge-gated) | 99 |
 | **hand-rolled total (original)** | **300** |
 
@@ -175,6 +180,28 @@ Guard: `scripts/verify-load-history-tab-uses-paritytable.mjs` via verify-step 10
 | --- | --- |
 | `apps/frontend/src/components/drivers/LoadHistoryTab.tsx` | components/drivers |
 
+## qbo-parity-a1 — StopReasoningTable (this PR)
+Fuel planner recommended-stop reasoning grid was a hand-rolled `<table>`. Migrated to
+shared `ParityTable` (sort + resize + gear). Columns #/Station/State/Mile/$/gal/Gallons/
+Why This Stop/HOS preserved 1:1; skipped-stop strike + `bg-red-50` retained.
+Guard: `scripts/verify-stop-reasoning-table-uses-paritytable.mjs` via verify-step 1041.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/fuel/components/StopReasoningTable.tsx` | pages/fuel |
+
+## qbo-parity-a1 — EntityAuditHistoryTab (this PR)
+Shared entity audit history tab (vendor/customer/driver/unit/load/WO) was a hand-rolled
+`<table>` with a bare red outage banner. Migrated to shared `ParityTable`
+(sort + resize + gear + `renderExpanded` Before→After `ChangesDiff`) and replaced the
+ad-hoc error div with `ListErrorState` + Retry. Columns When/Who/Action/Summary/Source
+preserved 1:1. Guard: `scripts/verify-entity-audit-history-uses-paritytable.mjs` via
+verify-step 1035.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/audit/EntityAuditHistoryTab.tsx` | components/audit |
+
 ## Remaining hand-rolled inventory (by module)
 
 ### components/DataTable.tsx (1)
@@ -212,7 +239,7 @@ Guard: `scripts/verify-load-history-tab-uses-paritytable.mjs` via verify-step 10
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/components/audit/AuditHistoryTab.tsx` | pending |
-| `apps/frontend/src/components/audit/EntityAuditHistoryTab.tsx` | pending |
+| `apps/frontend/src/components/audit/EntityAuditHistoryTab.tsx` | migrated (qbo-parity-a1) |
 
 ### components/catalogs (1)
 
@@ -567,7 +594,7 @@ Guard: `scripts/verify-load-history-tab-uses-paritytable.mjs` via verify-step 10
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/pages/fuel/FuelTransactionsTable.tsx` | pending |
-| `apps/frontend/src/pages/fuel/components/StopReasoningTable.tsx` | pending |
+| `apps/frontend/src/pages/fuel/components/StopReasoningTable.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/pages/fuel/fraud-alerts/FraudAlertsList.tsx` | pending |
 
 ### pages/home (1)

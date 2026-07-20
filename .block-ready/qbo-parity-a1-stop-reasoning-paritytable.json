@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-stop-reasoning-paritytable",
+  "branch": "fix/fuel-stop-reasoning-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable)",
+  "phase": "OPS-FE",
+  "task": "Migrate fuel planner StopReasoningTable from hand-rolled <table> to shared ParityTable (sort/resize/gear). Preserve columns + skipped-stop styling. Guard + verify-step 1041 (Rule 17).",
+  "source": "ops gated-no prefer fuel FE leftover; docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + qbo-parity-a1",
+  "source_file": "qbo-parity-a1-stop-reasoning-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-stop-reasoning-paritytable.json",
+    "apps/frontend/src/pages/fuel/components/StopReasoningTable.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-stop-reasoning-table-uses-paritytable.mjs",
+    "scripts/verify-steps/1041-verify-stop-reasoning-table-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "StopReasoningTable.tsx uses ParityTable (no hand-rolled <table>/<thead>); columns #/Station/State/Mile/$/gal/Gallons/Why This Stop/HOS preserved; skipped strike + bg-red-50 retained; emptyText preserved; verify-stop-reasoning-table-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1041 wired (Rule 17); tracker marks StopReasoningTable migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 — StopReasoningTable surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17)."
+}
