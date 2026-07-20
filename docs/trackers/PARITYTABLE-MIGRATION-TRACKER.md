@@ -21,11 +21,10 @@ sort, and the lock-account control — never drop or reorder.
 ## Rollup
 | Status | Count |
 | --- | --- |
-| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable + LoadHistoryTab + vehicle PlatesTable) | 19 |
+| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable + LoadHistoryTab + vehicle PlatesTable + vehicle ComplianceSection) | 20 |
 | financial-hold (Jorge-gated) | 99 |
-| pending (non-financial, future batches) | 182 |
+| pending (non-financial, future batches) | 181 |
 | financial-hold (Jorge-gated) | 99 |
-| pending (non-financial, future batches) | 183 |
 | **hand-rolled total (original)** | **300** |
 
 > Note: ParityTable was already consumed by ~16 surfaces before this batch (not counted above — those were never hand-rolled).
@@ -135,7 +134,7 @@ Guard: `scripts/verify-frequently-run-table-uses-paritytable.mjs` via verify-ste
 | --- | --- |
 | `apps/frontend/src/components/reports/FrequentlyRunTable.tsx` | components/reports |
 
-## qbo-parity-a1 — vehicle-profile PlatesTable (this PR)
+## qbo-parity-a1 — vehicle-profile PlatesTable (on main)
 Vehicle profile plates grid was a hand-rolled `<table>` (Country/Jurisdiction/Plate #/
 Expiration/Status) with Archive + Create Plate. Migrated to shared `ParityTable`
 (sort + resize + gear + CSV export + `rowActions` Archive). `vp-plates-table` testid
@@ -144,6 +143,17 @@ preserved. Guard: `scripts/verify-vehicle-plates-uses-paritytable.mjs` via verif
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/components/vehicle-profile/PlatesTable.tsx` | components/vehicle-profile |
+
+## qbo-parity-a1 — vehicle ComplianceSection (this PR)
+Vehicle profile Compliance registration-plates list was a hand-rolled `<table>`.
+Migrated to shared `ParityTable` (sort + resize + gear). Columns Country /
+Jurisdiction / Expiration preserved 1:1; US/MX insurance + DOT/SCT/PITA/IFTA
+summary chrome preserved; plates grid still only renders when plates exist.
+Guard: `scripts/verify-vehicle-compliance-uses-paritytable.mjs` via verify-step 1040.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/vehicle-profile/ComplianceSection.tsx` | components/vehicle-profile |
 
 ## qbo-parity-a1 — OperationsHistoryTable (on main)
 Drivers hub operations-depth history (12 sub-views sharing one table) was a hand-rolled
@@ -312,7 +322,7 @@ Guard: `scripts/verify-load-history-tab-uses-paritytable.mjs` via verify-step 10
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/components/vehicle-profile/ComplianceSection.tsx` | pending |
+| `apps/frontend/src/components/vehicle-profile/ComplianceSection.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/vehicle-profile/DocumentsSection.tsx` | pending |
 | `apps/frontend/src/components/vehicle-profile/PlatesTable.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/vehicle-profile/RecentActivitySection.tsx` | pending |
