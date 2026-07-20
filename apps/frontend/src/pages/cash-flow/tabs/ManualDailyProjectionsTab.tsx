@@ -89,7 +89,7 @@ function ProjectionPanel({
   const [form, setForm] = useState<RowForm>(emptyRow());
   const [showMore, setShowMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const accent = direction === "income" ? "text-emerald-700" : "text-red-700";
+  const accent = direction === "income" ? "text-slate-700" : "text-red-700";
   const columns = MDP_COLUMNS[direction];
 
   const saveMutation = useMutation({
@@ -297,15 +297,15 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
           <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Expected Income</p>
-          <p className="mt-1 text-lg font-semibold text-emerald-700">{fmtCents(totalIncome)}</p>
+          <p className="mt-1 text-lg font-semibold text-slate-700">{fmtCents(totalIncome)}</p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
           <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Expected Expenses</p>
           <p className="mt-1 text-lg font-semibold text-red-700">{fmtCents(totalExpense)}</p>
         </div>
-        <div className={`rounded-lg border px-4 py-3 ${netPositive ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"}`}>
+        <div className={`rounded-lg border px-4 py-3 ${netPositive ? "border-slate-200 bg-slate-50" : "border-red-200 bg-red-50"}`}>
           <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Predicted Net</p>
-          <p className={`mt-1 text-lg font-semibold ${netPositive ? "text-emerald-700" : "text-red-700"}`}>{fmtCents(net)}</p>
+          <p className={`mt-1 text-lg font-semibold ${netPositive ? "text-slate-700" : "text-red-700"}`}>{fmtCents(net)}</p>
         </div>
       </div>
 
