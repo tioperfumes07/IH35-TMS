@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   listPreFlightDvirQueue,
@@ -21,13 +21,26 @@ const TABS: Array<{ key: DvirSeverityLevel; label: string }> = [
   { key: "minor", label: "Minor" },
   { key: "observation", label: "Observations" },
 ];
+const TAB_IDS = new Set<string>(TABS.map((t) => t.key));
+
+export function parsePreFlightDvirTab(raw: string | null): DvirSeverityLevel {
+  if (raw && TAB_IDS.has(raw)) return raw as DvirSeverityLevel;
+  return "major";
+}
 
 export function PreFlightDvirQueue() {
   const { selectedCompanyId, companies } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? companies[0]?.id ?? "";
   const { pushToast } = useToast();
   const qc = useQueryClient();
-  const [tab, setTab] = useState<DvirSeverityLevel>("major");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = parsePreFlightDvirTab(searchParams.get("tab"));
+  const setTab = (next: DvirSeverityLevel) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "major") params.delete("tab");
+    else params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
 
   // FLAGGED (QA-sweep): the `/api/v1/maintenance/pre-flight-dvir/*` backend (queue + severity +
   // route-to-WO) is not built yet — it needs a dedicated maintenance block (auto-WO creation is
