@@ -5,6 +5,7 @@
  * math here; the gating + disabled-save live in the parent so the validation checklist stays the source of
  * truth. §7 palette only (navy/slate + the single red for the blocking variance).
  */
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 function toCents(dollars: number): number {
   return Math.round((Number.isFinite(dollars) ? dollars : 0) * 100);
@@ -22,6 +23,17 @@ type Props = {
   invoiceLaborInput: string;
   onInvoicePartsChange: (v: string) => void;
   onInvoiceLaborChange: (v: string) => void;
+};
+
+type ReconcileRow = {
+  id: "parts" | "labor";
+  label: string;
+  woTotalCents: number;
+  invoiceInput: string;
+  onInvoiceChange: (value: string) => void;
+  varianceCents: number;
+  isTied: boolean;
+  inputTestId: string;
 };
 
 export function CreateWOSectionReconcile({
@@ -42,59 +54,95 @@ export function CreateWOSectionReconcile({
   const laborOk = laborVar === 0;
   const tied = partsOk && laborOk;
 
-  const row = (
-    label: string,
-    woC: number,
-    input: string,
-    onChange: (v: string) => void,
-    variance: number,
-    ok: boolean,
-    testid: string
-  ) => (
-    <tr className="border-t border-slate-200">
-      <td className="px-2 py-1 font-medium text-slate-700">{label}</td>
-      <td className="px-2 py-1 text-right tabular-nums text-slate-900">{fmt(woC)}</td>
-      <td className="px-2 py-1 text-right">
-        {/* SYS-MONEY STEP 2: vendor-invoice total inputs carry a $ prefix like every other money field
-            (was bare "0.00"). $ overlay + pl-4; the numeric value/onChange contract is unchanged. */}
+  const rows: ReconcileRow[] = [
+    {
+      id: "parts",
+      label: "Parts",
+      woTotalCents: woPartsC,
+      invoiceInput: invoicePartsInput,
+      onInvoiceChange: onInvoicePartsChange,
+      varianceCents: partsVar,
+      isTied: partsOk,
+      inputTestId: "invoice-parts-input",
+    },
+    {
+      id: "labor",
+      label: "Labor",
+      woTotalCents: woLaborC,
+      invoiceInput: invoiceLaborInput,
+      onInvoiceChange: onInvoiceLaborChange,
+      varianceCents: laborVar,
+      isTied: laborOk,
+      inputTestId: "invoice-labor-input",
+    },
+  ];
+
+  const columns: Array<ParityColumn<ReconcileRow>> = [
+    {
+      key: "label",
+      label: " ",
+      alwaysVisible: true,
+      render: (row) => <span className="font-medium text-slate-700">{row.label}</span>,
+    },
+    {
+      key: "woTotalCents",
+      label: "WO total",
+      sortable: true,
+      className: "text-right",
+      cellClass: "text-right tabular-nums text-slate-900",
+      render: (row) => fmt(row.woTotalCents),
+    },
+    {
+      key: "invoiceInput",
+      label: "Invoice total",
+      className: "text-right",
+      cellClass: "text-right",
+      render: (row) => (
+        // SYS-MONEY STEP 2: vendor-invoice total inputs retain the $ prefix and numeric value/onChange contract.
         <div className="relative inline-block w-28 align-middle">
           <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-500">$</span>
           <input
             type="number"
             step="0.01"
             min="0"
-            data-testid={testid}
-            value={input}
-            onChange={(e) => onChange(e.target.value)}
+            data-testid={row.inputTestId}
+            value={row.invoiceInput}
+            onChange={(event) => row.onInvoiceChange(event.target.value)}
             className="h-7 w-full rounded-sm border border-gray-300 pl-4 pr-2 text-right text-xs tabular-nums"
             placeholder="0.00"
           />
         </div>
-      </td>
-      <td className={`px-2 py-1 text-right tabular-nums font-semibold ${ok ? "text-slate-500" : "text-[#A32D2D]"}`}>
-        {ok ? "tie" : fmt(variance)}
-      </td>
-    </tr>
-  );
+      ),
+    },
+    {
+      key: "varianceCents",
+      label: "Variance",
+      sortable: true,
+      className: "text-right",
+      cellClass: "text-right tabular-nums font-semibold",
+      render: (row) => (
+        <span className={row.isTied ? "text-slate-500" : "text-[#A32D2D]"}>
+          {row.isTied ? "tie" : fmt(row.varianceCents)}
+        </span>
+      ),
+    },
+  ];
 
   return (
     <section data-testid="wo-vendor-invoice-reconcile" className="rounded-sm border border-slate-300 bg-slate-50 p-2 text-xs">
       <div className="mb-1 font-semibold text-[#1F2A44]">Vendor Invoice Reconcile</div>
-      <div className="overflow-x-auto">
-      <table className="w-full min-w-[360px] border-collapse">
-        <thead>
-          <tr className="text-[10px] uppercase tracking-wide text-slate-500">
-            <th className="px-2 py-0.5 text-left font-semibold"> </th>
-            <th className="px-2 py-0.5 text-right font-semibold">WO total</th>
-            <th className="px-2 py-0.5 text-right font-semibold">Invoice total</th>
-            <th className="px-2 py-0.5 text-right font-semibold">Variance</th>
-          </tr>
-        </thead>
-        <tbody>
-          {row("Parts", woPartsC, invoicePartsInput, onInvoicePartsChange, partsVar, partsOk, "invoice-parts-input")}
-          {row("Labor", woLaborC, invoiceLaborInput, onInvoiceLaborChange, laborVar, laborOk, "invoice-labor-input")}
-        </tbody>
-      </table>
+      <div className="min-w-[360px] overflow-x-auto">
+        <ParityTable<ReconcileRow>
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.id}
+          density="ultra"
+          pageSizeOptions={[2]}
+          initialPageSize={2}
+          storageKey="maintenance-create-wo-vendor-invoice-reconcile"
+          tableTestId="wo-vendor-invoice-reconcile-table"
+          stickyHeader={false}
+        />
       </div>
       {tied ? (
         <div data-testid="reconcile-status-ok" className="mt-1 text-[11px] font-semibold text-slate-600">

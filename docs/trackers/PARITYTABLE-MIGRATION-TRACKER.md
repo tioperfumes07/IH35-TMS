@@ -936,3 +936,17 @@ Cost ¢ preserved 1:1; Clock in + manual book range unchanged. Guard:
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/components/maintenance/LaborTracker.tsx` | components/maintenance |
+
+## qbo-parity-a1 — CreateWOSectionReconcile (this PR)
+Maintenance Create Work Order vendor-invoice reconcile was a hand-rolled
+`<table>`. Migrated to shared `ParityTable` (sort + resize + gear). Columns
+blank label / WO total / Invoice total / Variance preserved 1:1; editable Parts
+and Labor invoice totals, dollar-prefix inputs, variance math, and the hard
+Create tie gate are unchanged. `ListErrorState` is not applicable because this
+component has no query or other asynchronous list source. Guard:
+`scripts/verify-create-wo-reconcile-uses-paritytable.mjs` via verify-step
+**1056**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/maintenance/components/CreateWOSectionReconcile.tsx` | pages/maintenance |
