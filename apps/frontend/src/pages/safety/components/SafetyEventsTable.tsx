@@ -130,7 +130,7 @@ export function SafetyEventsTable({ rows, onOpenAccident, loading }: Props) {
             className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50"
             onClick={() => pushToast("Bulk archive is not available yet — no backend endpoint.", "info")}
           >
-            Archive (coming soon)
+            Archive
           </button>
         </>
       )}
