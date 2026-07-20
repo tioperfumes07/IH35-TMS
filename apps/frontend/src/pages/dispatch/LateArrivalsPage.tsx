@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { listLateArrivalDispatchLoads } from "../../api/dispatch";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
@@ -33,7 +35,8 @@ export function LateArrivalsPage() {
   type LateArrivalRow = (typeof loads)[number];
 
   // Migrated to the shared QBO-parity grid — columns, order, load deep-link, and the ETA signal
-  // badge are preserved verbatim (§7 additive-only).
+  // badge are preserved verbatim (§7 additive-only). Load drill-through uses EntityLink (canonical
+  // /dispatch/loads/:id) — not a query-param board bookmark.
   const columns: Array<ParityColumn<LateArrivalRow>> = [
     {
       key: "load_number",
@@ -41,9 +44,7 @@ export function LateArrivalsPage() {
       sortable: true,
       className: "font-medium",
       render: (load) => (
-        <Link to={`/dispatch?load_id=${encodeURIComponent(load.id)}`} className="text-slate-700 hover:underline">
-          {load.load_number}
-        </Link>
+        <EntityLink kind="load" id={load.id} label={load.load_number} data-testid={`late-arrival-load-${load.id}`} />
       ),
     },
     { key: "customer_name", label: "Customer", sortable: true, render: (load) => load.customer_name ?? "—" },
@@ -88,15 +89,24 @@ export function LateArrivalsPage() {
         }
       />
 
-      <ParityTable<LateArrivalRow>
-        columns={columns}
-        rows={loads}
-        rowKey={(load) => load.id}
-        loading={lateQ.isLoading}
-        emptyText="No late arrivals right now."
-        storageKey="dispatch-late-arrivals"
-        exportFilename="late-arrivals"
-      />
+      {lateQ.isError ? (
+        <ListErrorBanner
+          message="Failed to load late arrivals."
+          onRetry={() => void lateQ.refetch()}
+        />
+      ) : null}
+
+      {!lateQ.isError ? (
+        <ParityTable<LateArrivalRow>
+          columns={columns}
+          rows={loads}
+          rowKey={(load) => load.id}
+          loading={lateQ.isLoading}
+          emptyText="No late arrivals right now."
+          storageKey="dispatch-late-arrivals"
+          exportFilename="late-arrivals"
+        />
+      ) : null}
     </div>
   );
 }
