@@ -30,8 +30,6 @@ export function check({ surface, api, routes }) {
     for (const marker of [
       "filter-driver",
       "filter-unit",
-      "filter-date-from",
-      "filter-date-to",
       "listFilters",
       "listSafetyIncidents(operatingCompanyId, config.incidentType, listFilters)",
     ]) {
@@ -39,6 +37,13 @@ export function check({ surface, api, routes }) {
         f.push(`${SURFACE}: must include ${marker}`);
       }
     }
+    // s-04 AccidentsPage-parity testids (preferred) OR legacy pageTestId-prefixed markers from S-08.
+    const hasFrom =
+      surface.includes("safety-incidents-from-date") || surface.includes("filter-date-from");
+    const hasTo =
+      surface.includes("safety-incidents-to-date") || surface.includes("filter-date-to");
+    if (!hasFrom) f.push(`${SURFACE}: must include safety-incidents-from-date (or filter-date-from)`);
+    if (!hasTo) f.push(`${SURFACE}: must include safety-incidents-to-date (or filter-date-to)`);
     if (!/useListState\s*\(\s*listQuery/.test(surface)) {
       f.push(`${SURFACE}: must keep useListState(listQuery, …) for empty/loading`);
     }
@@ -98,8 +103,8 @@ if (process.argv.includes("--selftest")) {
     const listState = useListState(listQuery, rows.length === 0);
     data-testid={\`\${config.pageTestId}-filter-driver\`}
     data-testid={\`\${config.pageTestId}-filter-unit\`}
-    data-testid={\`\${config.pageTestId}-filter-date-from\`}
-    data-testid={\`\${config.pageTestId}-filter-date-to\`}
+    data-testid="safety-incidents-from-date"
+    data-testid="safety-incidents-to-date"
   `;
   const goodApi = `
     export type SafetyIncidentListFilters = { driver_id?: string; unit_id?: string; date_from?: string; date_to?: string };
@@ -124,6 +129,18 @@ if (process.argv.includes("--selftest")) {
   const ok = check({ surface: goodSurface, api: goodApi, routes: goodRoutes });
   if (ok.length) {
     console.error(`${LABEL} SELFTEST FAIL:\n${ok.map((e) => `  - ${e}`).join("\n")}`);
+    process.exit(1);
+  }
+  // Legacy pageTestId-prefixed date markers must still pass (S-08 shipped shape).
+  const legacyOk = check({
+    surface: goodSurface
+      .replace('data-testid="safety-incidents-from-date"', 'data-testid={`${config.pageTestId}-filter-date-from`}')
+      .replace('data-testid="safety-incidents-to-date"', 'data-testid={`${config.pageTestId}-filter-date-to`}'),
+    api: goodApi,
+    routes: goodRoutes,
+  });
+  if (legacyOk.length) {
+    console.error(`${LABEL} SELFTEST FAIL (legacy):\n${legacyOk.map((e) => `  - ${e}`).join("\n")}`);
     process.exit(1);
   }
   console.log(`${LABEL} SELFTEST PASS`);

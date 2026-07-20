@@ -1,17 +1,42 @@
 {
   "block_id": "s-04-no-from-to-date-range-safety-lists",
-  "status": "PENDING",
-  "classification": "FINANCIAL",
-  "phase": "tier3",
-  "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
-  "source_file": "s-04-no-from-to-date-range-safety-lists.txt",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "safety",
+  "task": "s-04: AccidentsPage-parity From/To DatePickers on SafetyIncidentsClusterSurface (damage-reports / trailer-interchange) with safety-incidents-from-date / to-date testids, wired to date_from/date_to list query params (backend already accepts them via S-08).",
+  "branch": "fix/s-04-safety-lists-date-range",
+  "lane": "ops",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    "apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx",
+    "scripts/verify-safety-lists-date-range-parity.mjs",
+    "scripts/verify-steps/1003-verify-safety-lists-date-range-parity.mjs",
+    "scripts/verify-safety-incident-list-filters.mjs",
+    ".block-ready/s-04-no-from-to-date-range-safety-lists.json"
   ],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "kind": "mounted",
+      "component": "apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx",
+      "note": "List header exposes From/To DatePickers with data-testid safety-incidents-from-date and safety-incidents-to-date"
+    },
+    {
+      "kind": "wired",
+      "assert": "fromDate/toDate map to date_from/date_to on listSafetyIncidents; GET /api/v1/safety/incidents filters incident_at"
+    },
+    {
+      "kind": "guard",
+      "script": "scripts/verify-safety-lists-date-range-parity.mjs",
+      "step": "scripts/verify-steps/1003-verify-safety-lists-date-range-parity.mjs"
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "linkage": "N/A — list filter UI only; reads safety.incidents via existing list route; no schema/FK change",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [
+    "node scripts/verify-safety-lists-date-range-parity.mjs --selftest",
+    "node scripts/verify-safety-lists-date-range-parity.mjs",
+    "node scripts/verify-safety-incident-list-filters.mjs --selftest",
+    "node scripts/verify-safety-incident-list-filters.mjs"
+  ],
+  "runtime_path": "src"
 }
