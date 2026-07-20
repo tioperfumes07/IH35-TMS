@@ -2,9 +2,9 @@
 /**
  * 0441-mod9-coi-duplicated-feature-unequal (vocab slice)
  *
- * Both live COI surfaces must use locked "+ Create" primary vocabulary — never
- * "Request COI" / "Request New COI" / "Create Request" / "Submit Request".
- * Full component consolidation is deferred; this guard prevents vocab regression.
+ * Shared CoiTab (and any remaining wrappers) must use locked "+ Create" primary
+ * vocabulary — never "Request COI" / "Request New COI" / "Create Request" /
+ * "Submit Request".
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -14,6 +14,7 @@ const ROOT = process.cwd();
 const LABEL = "verify:coi-create-vocab";
 
 const paths = {
+  coiTab: path.join(ROOT, "apps/frontend/src/pages/customers/CoiTab.tsx"),
   coiRequestsTab: path.join(ROOT, "apps/frontend/src/pages/customers/tabs/CoiRequestsTab.tsx"),
   customerCoiTab: path.join(ROOT, "apps/frontend/src/pages/customers/CustomerCOITab.tsx"),
 };
@@ -31,24 +32,19 @@ function read(filePath) {
   return fs.readFileSync(filePath, "utf8");
 }
 
-/** @param {{ coiRequestsTab: string; customerCoiTab: string }} sources */
-export function collectFailures({ coiRequestsTab, customerCoiTab }) {
+/** @param {{ coiTab: string; coiRequestsTab: string; customerCoiTab: string }} sources */
+export function collectFailures({ coiTab, coiRequestsTab, customerCoiTab }) {
   const failures = [];
 
-  if (!coiRequestsTab.includes("+ Create COI")) {
-    failures.push("CoiRequestsTab primary CTA must say + Create COI");
+  if (!coiTab.includes("+ Create COI")) {
+    failures.push("CoiTab primary CTA must say + Create COI");
   }
-  if (!coiRequestsTab.includes("+ Create")) {
-    failures.push("CoiRequestsTab modal submit must say + Create");
-  }
-  if (!customerCoiTab.includes("+ Create COI")) {
-    failures.push("CustomerCOITab primary CTA must say + Create COI");
-  }
-  if (!customerCoiTab.includes("+ Create")) {
-    failures.push("CustomerCOITab inline submit must say + Create");
+  if (!coiTab.includes("+ Create")) {
+    failures.push("CoiTab submit must say + Create");
   }
 
   for (const [rel, src] of [
+    ["CoiTab.tsx", coiTab],
     ["CoiRequestsTab.tsx", coiRequestsTab],
     ["CustomerCOITab.tsx", customerCoiTab],
   ]) {
@@ -64,6 +60,7 @@ export function collectFailures({ coiRequestsTab, customerCoiTab }) {
 
 function selftest() {
   const good = collectFailures({
+    coiTab: read(paths.coiTab),
     coiRequestsTab: read(paths.coiRequestsTab),
     customerCoiTab: read(paths.customerCoiTab),
   });
@@ -73,7 +70,8 @@ function selftest() {
   }
 
   const planted = collectFailures({
-    coiRequestsTab: read(paths.coiRequestsTab).replace("+ Create COI", "Request New COI"),
+    coiTab: read(paths.coiTab).replace("+ Create COI", "Request New COI"),
+    coiRequestsTab: read(paths.coiRequestsTab),
     customerCoiTab: read(paths.customerCoiTab),
   });
   if (!planted.some((f) => f.includes("Request New COI"))) {
@@ -85,6 +83,7 @@ function selftest() {
 
 function main() {
   const failures = collectFailures({
+    coiTab: read(paths.coiTab),
     coiRequestsTab: read(paths.coiRequestsTab),
     customerCoiTab: read(paths.customerCoiTab),
   });
@@ -95,7 +94,7 @@ function main() {
     process.exit(1);
   }
 
-  console.log(`${LABEL} OK — both COI surfaces use + Create vocabulary`);
+  console.log(`${LABEL} OK — shared CoiTab uses + Create vocabulary`);
 }
 
 const isMain = path.resolve(process.argv[1] ?? "") === path.resolve(new URL(import.meta.url).pathname);
