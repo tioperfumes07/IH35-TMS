@@ -780,7 +780,7 @@ verify-step 1035.
 | `apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerRequestInboxPage.tsx` | pending |
 | `apps/frontend/src/pages/safety/driver-scoring/DriverScoreDetail.tsx` | pending |
 | `apps/frontend/src/pages/safety/driver-scoring/DriverScoringTab.tsx` | pending |
-| `apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx` | pending |
+| `apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx` | migrated (fix/drug-alcohol-program-paritytable) |
 | `apps/frontend/src/pages/safety/drug-alcohol/RandomPoolDashboard.tsx` | pending |
 | `apps/frontend/src/pages/safety/eld/EldAuditTrailViewer.tsx` | pending |
 | `apps/frontend/src/pages/safety/expiry-tracking/ExpiryDashboard.tsx` | pending |
@@ -1069,3 +1069,17 @@ Guard: `scripts/verify-booking-gap-report-uses-paritytable.mjs` via verify-step 
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/reports/BookingGapReport.tsx` | pages/reports |
+
+## qbo-parity-a1 — DrugAlcoholProgramTab (this PR)
+Safety Drug & Alcohol Program tab had two hand-rolled `<table>` grids (consortium
+enrollments + positive-result SAP queue). Migrated both to shared `ParityTable`
+(sort + resize + gear + CSV export); `ListErrorState` + Retry on each query
+failure (no false-empty). Columns Driver / Consortium / Enrolled and Driver /
+Type / Kind / Result / Collected preserved 1:1 with `EntityLink` driver
+drill-through; section headings + count badges + empty states unchanged.
+Guard: `scripts/verify-drug-alcohol-program-uses-paritytable.mjs` via
+verify-step **1084**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx` | pages/safety/drug-alcohol |
