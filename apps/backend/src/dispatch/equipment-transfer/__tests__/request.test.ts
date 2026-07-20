@@ -27,13 +27,16 @@ function mockClient(handlers: Array<[string | RegExp, Record<string, unknown>[]]
 }
 
 describe("equipment transfer request service (GAP-37)", () => {
-  it("initiateTransfer inserts pending_outbound row and audits", async () => {
+  it("initiateTransfer inserts pending_outbound row, audits, and notifies to_driver", async () => {
     const client = mockClient([
       ["FROM mdata.drivers", [{ id: FROM_DRIVER }, { id: TO_DRIVER }]],
       ["FROM mdata.equipment", [{ id: EQUIPMENT }]],
       ["FROM dispatch.equipment_transfer_requests", []],
       ["INSERT INTO dispatch.equipment_transfer_requests", [{ uuid: REQUEST_UUID }]],
       ["audit.append_event", []],
+      ["INSERT INTO outbox.events", []],
+      ["to_regclass('pwa.driver_notifications')", [{ ok: true }]],
+      ["INSERT INTO pwa.driver_notifications", []],
     ]);
 
     const uuid = await initiateTransfer(client, USER, {
@@ -47,6 +50,10 @@ describe("equipment transfer request service (GAP-37)", () => {
 
     expect(uuid).toBe(REQUEST_UUID);
     expect(client.query.mock.calls.some((c) => c[1]?.[0] === "dispatch.equipment_transfer.initiated")).toBe(true);
+    const outboxCall = client.query.mock.calls.find((c) => String(c[0]).includes("INSERT INTO outbox.events"));
+    expect(outboxCall?.[1]?.[0]).toBe("dispatch.equipment_transfer.requested");
+    const outboxPayload = JSON.parse(String(outboxCall?.[1]?.[1] ?? "{}"));
+    expect(outboxPayload.driver_uuid).toBe(TO_DRIVER);
   });
 
   it("initiateTransfer rejects duplicate active transfer", async () => {
@@ -79,14 +86,30 @@ describe("equipment transfer request service (GAP-37)", () => {
     expect(client.query.mock.calls[0]?.[1]?.[2]).toBe("pending_outbound");
   });
 
-  it("cancelTransfer marks active request cancelled", async () => {
+  it("cancelTransfer marks active request cancelled and notifies from_driver", async () => {
     const client = mockClient([
-      ["UPDATE dispatch.equipment_transfer_requests", [{ uuid: REQUEST_UUID }]],
+      [
+        "UPDATE dispatch.equipment_transfer_requests",
+        [{
+          uuid: REQUEST_UUID,
+          from_driver_uuid: FROM_DRIVER,
+          equipment_uuid: EQUIPMENT,
+          equipment_kind: "trailer",
+          transfer_location: "Yard A",
+        }],
+      ],
       ["audit.append_event", []],
+      ["INSERT INTO outbox.events", []],
+      ["to_regclass('pwa.driver_notifications')", [{ ok: true }]],
+      ["INSERT INTO pwa.driver_notifications", []],
     ]);
 
     const ok = await cancelTransfer(client, USER, COMPANY, REQUEST_UUID);
     expect(ok).toBe(true);
+    const outboxCall = client.query.mock.calls.find((c) => String(c[0]).includes("INSERT INTO outbox.events"));
+    expect(outboxCall?.[1]?.[0]).toBe("dispatch.equipment_transfer.rejected");
+    const outboxPayload = JSON.parse(String(outboxCall?.[1]?.[1] ?? "{}"));
+    expect(outboxPayload.driver_uuid).toBe(FROM_DRIVER);
   });
 
   it("setTransferCompanyScope sets app.operating_company_id for RLS", async () => {

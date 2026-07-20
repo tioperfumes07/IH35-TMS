@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { Button } from "../../components/Button";
@@ -25,6 +25,13 @@ import {
 // money posting.
 
 type ReportTab = "pl" | "bs" | "tb";
+
+const REPORT_TAB_IDS = new Set<string>(["pl", "bs", "tb"]);
+
+export function parseFinancialStatementsTab(raw: string | null): ReportTab {
+  if (raw && REPORT_TAB_IDS.has(raw)) return raw as ReportTab;
+  return "pl";
+}
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -75,7 +82,14 @@ export function FinancialStatementsPage() {
   const companyId = selectedCompanyId ?? "";
   const { enabled, loading: flagLoading } = useFeatureFlag(FINANCE_STATEMENTS_UI_FLAG, companyId);
 
-  const [tab, setTab] = useState<ReportTab>("pl");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = parseFinancialStatementsTab(searchParams.get("tab"));
+  const setTab = (next: ReportTab) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "pl") params.delete("tab");
+    else params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
   const [basis, setBasis] = useState<AccountingBasis>("accrual");
   const [period, setPeriod] = useState(currentMonthRange);
   const [applied, setApplied] = useState(currentMonthRange);

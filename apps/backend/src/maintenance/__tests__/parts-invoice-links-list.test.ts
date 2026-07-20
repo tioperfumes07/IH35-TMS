@@ -32,4 +32,12 @@ describe("parts-invoice-links assignment list (inventory honesty)", () => {
     expect(source).toMatch(/app\.post\(\s*"\/api\/v1\/maintenance\/work-orders\/:id\/parts-invoice-links"/);
     expect(source).toMatch(/app\.delete\(\s*"\/api\/v1\/maintenance\/parts-invoice-links\/:id"/);
   });
+
+  it("exposes GET /api/v1/maintenance/units/:unitId/parts-history reverse drill", () => {
+    expect(source).toMatch(
+      /app\.get\(\s*"\/api\/v1\/maintenance\/units\/:unitId\/parts-history"/
+    );
+    expect(source).toMatch(/wo\.unit_id = \$2/);
+    expect(source).toMatch(/owner_company_id = \$2 OR currently_leased_to_company_id = \$2/);
+  });
 });

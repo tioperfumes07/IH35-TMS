@@ -1,5 +1,6 @@
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
+import { enqueueEquipmentTransferNotify } from "./notify.js";
 
 export type Queryable = {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
@@ -112,6 +113,19 @@ export async function initiateTransfer(
     "info",
     BLOCK_ID
   );
+
+  // Notify receiving driver (to_driver) that a transfer was requested.
+  await enqueueEquipmentTransferNotify(client, {
+    eventType: "dispatch.equipment_transfer.requested",
+    operatingCompanyId: input.operating_company_id,
+    transferUuid: uuid,
+    driverUuid: input.to_driver_uuid,
+    title: "Equipment transfer requested",
+    message: `A ${input.equipment_kind} transfer at ${input.transfer_location} is waiting for your confirmation.`,
+    equipmentUuid: input.equipment_uuid,
+    equipmentKind: input.equipment_kind,
+  });
+
   return uuid;
 }
 
@@ -159,7 +173,7 @@ export async function cancelTransfer(
       WHERE uuid = $1::uuid
         AND operating_company_id = $2::uuid
         AND status IN ('pending_outbound', 'outbound_confirmed', 'inbound_confirmed')
-      RETURNING uuid::text
+      RETURNING uuid::text, from_driver_uuid::text, equipment_uuid::text, equipment_kind, transfer_location
     `,
     [requestUuid, operatingCompanyId]
   );
@@ -172,6 +186,22 @@ export async function cancelTransfer(
     "info",
     BLOCK_ID
   );
+
+  // Reject/cancel → notify initiator / from_driver.
+  const fromDriverUuid = res.rows[0].from_driver_uuid ? String(res.rows[0].from_driver_uuid) : "";
+  if (fromDriverUuid) {
+    await enqueueEquipmentTransferNotify(client, {
+      eventType: "dispatch.equipment_transfer.rejected",
+      operatingCompanyId,
+      transferUuid: requestUuid,
+      driverUuid: fromDriverUuid,
+      title: "Equipment transfer cancelled",
+      message: `The ${String(res.rows[0].equipment_kind ?? "equipment")} transfer was cancelled.`,
+      equipmentUuid: res.rows[0].equipment_uuid ? String(res.rows[0].equipment_uuid) : null,
+      equipmentKind: res.rows[0].equipment_kind ? String(res.rows[0].equipment_kind) : null,
+    });
+  }
+
   return true;
 }
 

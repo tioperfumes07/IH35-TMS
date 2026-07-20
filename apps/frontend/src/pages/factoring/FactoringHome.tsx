@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { deactivateFactoring, getFactoringChargebacksFees, getFactoringRecoursePipeline, getFactoringStatementsSettings, getFactoringSummary } from "../../api/factoring";
@@ -34,6 +34,7 @@ import { FaroCSVUploadWidget } from "../../components/factoring/FaroCSVUploadWid
 import { DriverAutocomplete } from "../../components/factoring/DriverAutocomplete";
 import { VendorMergeDiffPreview } from "../../components/factoring/VendorMergeDiffPreview";
 import { DeactivateFactorConfirmModal } from "../../components/factoring/DeactivateFactorConfirmModal";
+import { DuplicateVendorsBanner } from "../../components/factoring/DuplicateVendorsBanner";
 import { apiRequest } from "../../api/client";
 import { FACTORING_TAB_PATH, factoringTabFromPath } from "../../router/route-manifest";
 
@@ -220,12 +221,26 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
         subtitle="Deep-dive workspace for recourse pipeline, chargebacks, fees, and settings"
         actions={
           <div className="flex items-center gap-2">
+            {/*
+              FACT-PAR1: Submit-to-Factor is NOT an arch-design Factoring sub-tab
+              (design lists Recourse Pipeline / Chargebacks & Fees / Statements & Settings).
+              Reachable via deep-link button — does not change SUBNAV tab count (Rule 05).
+            */}
+            <Link
+              to="/factoring/submit"
+              className="inline-flex items-center rounded-sm border border-slate-300 bg-white px-2.5 py-2 text-xs font-medium text-slate-800 hover:bg-slate-50"
+              data-testid="factoring-submit-to-factor-link"
+            >
+              Submit to Factor
+            </Link>
             <Button size="sm" variant="secondary" onClick={() => void queryClient.invalidateQueries({ queryKey: ["factoring"] })}>
               Refresh
             </Button>
           </div>
         }
       />
+
+      {companyId ? <DuplicateVendorsBanner companyId={companyId} /> : null}
 
       <div className="grid gap-2 md:grid-cols-4">
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">

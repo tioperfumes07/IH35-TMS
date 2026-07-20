@@ -1,5 +1,6 @@
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
+import { enqueueEquipmentTransferNotify } from "./notify.js";
 import { setTransferCompanyScope, type Queryable } from "./request.service.js";
 
 const BLOCK_ID = "GAP-37-EQUIPMENT-DUAL-CONFIRM";
@@ -20,7 +21,8 @@ export async function confirmOutbound(
 ): Promise<ConfirmResult> {
   const row = await client.query(
     `
-      SELECT uuid::text, from_driver_uuid::text, status
+      SELECT uuid::text, from_driver_uuid::text, to_driver_uuid::text, equipment_uuid::text,
+             equipment_kind, status
       FROM dispatch.equipment_transfer_requests
       WHERE uuid = $1::uuid AND operating_company_id = $2::uuid
       LIMIT 1
@@ -58,6 +60,19 @@ export async function confirmOutbound(
     "info",
     BLOCK_ID
   );
+
+  // Confirm → notify initiator / from_driver.
+  await enqueueEquipmentTransferNotify(client, {
+    eventType: "dispatch.equipment_transfer.confirmed",
+    operatingCompanyId,
+    transferUuid: requestUuid,
+    driverUuid: String(req.from_driver_uuid),
+    title: "Equipment transfer outbound confirmed",
+    message: `Outbound confirmation recorded for your ${String(req.equipment_kind ?? "equipment")} transfer.`,
+    equipmentUuid: req.equipment_uuid ? String(req.equipment_uuid) : null,
+    equipmentKind: req.equipment_kind ? String(req.equipment_kind) : null,
+  });
+
   return { kind: "ok", uuid: requestUuid };
 }
 
@@ -109,6 +124,31 @@ export async function confirmInbound(
     [req.equipment_uuid, operatingCompanyId, req.to_driver_uuid]
   );
 
+  // Domain equipment activity log (0242 / biz-flow-8). event_type CHECK only allows
+  // Coupled|Uncoupled|Moved|StatusChange|MaintenanceStart|MaintenanceEnd|Note — use Moved
+  // for driver reassignment; from/to drivers live in notes (table has no driver columns).
+  const logRes = await client.query(
+    `
+      INSERT INTO mdata.equipment_log (
+        equipment_id, event_type, event_at, notes, created_by_user_id, updated_by_user_id
+      ) VALUES (
+        $1::uuid,
+        'Moved',
+        now(),
+        $2::text,
+        $3::uuid,
+        $3::uuid
+      )
+      RETURNING id::text
+    `,
+    [
+      req.equipment_uuid,
+      `Equipment transfer completed: transfer_request=${requestUuid} from_driver=${req.from_driver_uuid} to_driver=${req.to_driver_uuid} operating_company_id=${operatingCompanyId}`,
+      userId,
+    ]
+  );
+  const equipmentLogId = String(logRes.rows[0]?.id ?? "");
+
   await appendCrudAudit(
     client as never,
     userId,
@@ -139,10 +179,46 @@ export async function confirmInbound(
       equipment_uuid: req.equipment_uuid,
       assigned_driver_uuid: req.to_driver_uuid,
       operating_company_id: operatingCompanyId,
+      equipment_log_id: equipmentLogId || undefined,
     },
     "info",
     BLOCK_ID
   );
+
+  if (equipmentLogId) {
+    await appendCrudAudit(
+      client as never,
+      userId,
+      "mdata.equipment_log.created",
+      {
+        resource_id: equipmentLogId,
+        resource_type: "mdata.equipment_log",
+        id: equipmentLogId,
+        equipment_id: req.equipment_uuid,
+        event_type: "Moved",
+        transfer_request_uuid: requestUuid,
+        from_driver_uuid: req.from_driver_uuid,
+        to_driver_uuid: req.to_driver_uuid,
+        operating_company_id: operatingCompanyId,
+      },
+      "info",
+      BLOCK_ID
+    );
+  }
+
+  // Confirm (completed) → notify initiator / from_driver.
+  if (req.from_driver_uuid) {
+    await enqueueEquipmentTransferNotify(client, {
+      eventType: "dispatch.equipment_transfer.confirmed",
+      operatingCompanyId,
+      transferUuid: requestUuid,
+      driverUuid: String(req.from_driver_uuid),
+      title: "Equipment transfer completed",
+      message: `Inbound confirmation completed; equipment was transferred successfully.`,
+      equipmentUuid: req.equipment_uuid ? String(req.equipment_uuid) : null,
+      equipmentKind: null,
+    });
+  }
 
   return { kind: "ok", uuid: requestUuid };
 }

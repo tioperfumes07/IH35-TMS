@@ -54,14 +54,20 @@ export function NewVendorDrawerForm({ operatingCompanyId, onCreated, onClose }: 
     if (!displayName) { pushToast("Vendor display name is required.", "error"); return; }
     setSaving(true);
     try {
-      // QB-STD-5: canonical mdata.vendors — survives reload. Mirror fields (mobile, website,
-      // printOnChecks, city, state, zip) are held back until migration 202607110230 lands.
+      // QB-STD-5: canonical mdata.vendors — survives reload.
+      // city/state/website/print_on_check_name/postal_code: wired after migration 202607110230.
+      // mobile: UI-only — mdata.vendors has no mobile column; do not phantom-write.
       const res = await createVendor({
         name: displayName,
         vendor_type: form.vendorType,
         email: form.email.trim() || undefined,
         phone: form.phone.trim() || undefined,
         address: form.addressLine1.trim() || undefined,
+        city: form.city.trim() || undefined,
+        state: form.state.trim() || undefined,
+        postal_code: form.zip.trim() || undefined,
+        website: form.website.trim() || undefined,
+        print_on_check_name: form.printOnChecks.trim() || undefined,
         operating_company_id: operatingCompanyId,
       });
       onCreated({ id: String(res.id), label: displayName });
@@ -111,6 +117,7 @@ export function NewVendorDrawerForm({ operatingCompanyId, onCreated, onClose }: 
         </label>
         <label className="block">
           <span className="text-xs font-medium text-gray-700">Mobile</span>
+          {/* Collected for future column; intentionally omitted from createVendor() — no mdata.vendors.mobile. */}
           <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={form.mobile} onChange={(e) => set("mobile", e.target.value)} />
         </label>
       </div>

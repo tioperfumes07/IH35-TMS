@@ -1,17 +1,39 @@
 {
   "block_id": "0441-mod13-inventory-part-to-unit-none",
-  "status": "PENDING",
-  "classification": "FINANCIAL",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
   "phase": "tier3",
-  "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
-  "source_file": "0441-mod13-inventory-part-to-unit-none.txt",
+  "branch": "fix/unit-parts-history-reverse-drill",
+  "task": "Unit parts-history reverse drill: GET units/:unitId/parts-history + Parts Used on VehicleProfilePage",
+  "source": "CODER-BUILD-INSTRUCTIONS-2026-07-19.md",
+  "source_file": "0441-mod13-inventory-part-to-unit-none",
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    ".block-ready/0441-mod13-inventory-part-to-unit-none.json",
+    "apps/backend/src/maintenance/parts-invoice-links.routes.ts",
+    "apps/backend/src/maintenance/__tests__/parts-invoice-links-list.test.ts",
+    "apps/frontend/src/api/maintenance.ts",
+    "apps/frontend/src/components/vehicle-profile/UnitPartsHistorySection.tsx",
+    "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx",
+    "scripts/verify-unit-parts-history-reverse-drill.mjs",
+    "scripts/verify-steps/146-verify-unit-parts-history-reverse-drill.mjs"
   ],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "GET /api/v1/maintenance/units/:unitId/parts-history joins parts_invoice_links → work_orders WHERE wo.unit_id = :unitId, entity-scoped"
+    },
+    {
+      "check": "VehicleProfilePage renders Parts Used (UnitPartsHistorySection) alongside ServiceTimeline"
+    },
+    {
+      "check": "No new migration; linkage via existing work_orders.unit_id"
+    },
+    {
+      "check": "verify-unit-parts-history-reverse-drill.mjs PASS (route + VehicleProfilePage references); Rule 17 verify-step only"
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "Not gated. Builder stops at PR; do not merge. Do not touch #2776 or accounting GL."
 }

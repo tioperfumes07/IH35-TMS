@@ -28,6 +28,7 @@ import {
 import { ReeferSection } from "../../components/vehicle-profile/ReeferSection";
 import { FinancialUnitPLSection } from "../../components/vehicle-profile/FinancialUnitPLSection";
 import { ServiceTimeline } from "../../components/maintenance/ServiceTimeline";
+import { UnitPartsHistorySection } from "../../components/vehicle-profile/UnitPartsHistorySection";
 import { RecentActivitySection } from "../../components/vehicle-profile/RecentActivitySection";
 import { DocumentsSection } from "../../components/vehicle-profile/DocumentsSection";
 import { PhotoGallery } from "../../components/vehicle-profile/PhotoGallery";
@@ -35,6 +36,7 @@ import { ActionBar } from "../../components/vehicle-profile/ActionBar";
 import { BackhaulSuggestionsWidget } from "../../components/reports/BackhaulSuggestionsWidget";
 import { EditVehicleModal } from "../../components/fleet/EditVehicleModal";
 import { EntityAuditHistoryTab } from "../../components/audit/EntityAuditHistoryTab";
+import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
 
 export type UnitProfileAggregate = {
   unit: Record<string, unknown>;
@@ -246,6 +248,8 @@ export function VehicleProfilePage() {
             <div className="mt-3">
               <ServiceTimeline companyId={companyId} unitId={id} />
             </div>
+            {/* Reverse drill-through: parts_invoice_links → work_orders.unit_id (0441-mod13-inventory-part-to-unit-none) */}
+            <UnitPartsHistorySection unitId={id} companyId={companyId} />
           </div>
           <div data-testid="vp-section-6-compliance">
             <ComplianceSection compliance={profile.compliance} />
@@ -295,6 +299,14 @@ export function VehicleProfilePage() {
             photosSlot={<PhotoGallery photos={(profile.photos ?? []) as Parameters<typeof PhotoGallery>[0]["photos"]} />}
             onUploaded={() => void profileQuery.refetch()}
           />
+          </div>
+          <div data-testid="vp-section-10b-legal-matters">
+            <LegalMattersReverseSection
+              operatingCompanyId={companyId}
+              filter={{ unit_id: id }}
+              contextLabel="this unit"
+              data-testid="vehicle-profile-legal-matters"
+            />
           </div>
           <div data-testid="vp-section-11-action-bar">
             <ActionBar

@@ -34,6 +34,8 @@ const listQuerySchema = operatingCompanyQuerySchema.extend({
   severity: z.string().trim().optional(),
   type: z.string().trim().optional(),
   related_driver_id: z.string().uuid().optional(),
+  unit_id: z.string().uuid().optional(),
+  insurance_claim_id: z.string().uuid().optional(),
 });
 
 const matterIdParamsSchema = z.object({
@@ -103,6 +105,8 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
         severity: parsed.data.severity,
         type: parsed.data.type,
         related_driver_id: parsed.data.related_driver_id,
+        unit_id: parsed.data.unit_id,
+        insurance_claim_id: parsed.data.insurance_claim_id,
         requesterUserId: authUser.uuid,
         requesterRole: String(authUser.role ?? ""),
       })

@@ -27,12 +27,26 @@ function withCompany(path: string, operatingCompanyId: string, params: Record<st
 }
 
 export const legalMattersApi = {
-  list(operatingCompanyId: string, filters: { status?: string; severity?: string; type?: string; related_driver_id?: string } = {}) {
+  list(
+    operatingCompanyId: string,
+    filters: {
+      status?: string;
+      severity?: string;
+      type?: string;
+      related_driver_id?: string;
+      /** Filter legal.matters.unit_id (fleet reverse drill-through). */
+      unit_id?: string;
+      /** Filter legal.matters.insurance_claim_id (insurance reverse drill-through). */
+      insurance_claim_id?: string;
+    } = {}
+  ) {
     const params: Record<string, string> = {};
     if (filters.status) params.status = filters.status;
     if (filters.severity) params.severity = filters.severity;
     if (filters.type) params.type = filters.type;
     if (filters.related_driver_id) params.related_driver_id = filters.related_driver_id;
+    if (filters.unit_id) params.unit_id = filters.unit_id;
+    if (filters.insurance_claim_id) params.insurance_claim_id = filters.insurance_claim_id;
     return apiRequest<{ matters: LegalMatterRow[] }>(withCompany("/api/v1/legal/matters", operatingCompanyId, params));
   },
 

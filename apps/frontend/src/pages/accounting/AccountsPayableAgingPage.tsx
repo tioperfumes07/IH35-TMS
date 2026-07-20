@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { TableControls, TableSearch, TableHeaderCell, useTableController, type TableColumn } from "../../components/table";
@@ -10,6 +10,15 @@ import { formatDateUS } from "../../lib/formatDate";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { companyToday } from "../../lib/businessDate";
+
+type ApAgingView = "by_vendor" | "by_type";
+
+const AP_AGING_VIEW_IDS = new Set<string>(["by_vendor", "by_type"]);
+
+export function parseApAgingView(raw: string | null): ApAgingView {
+  if (raw && AP_AGING_VIEW_IDS.has(raw)) return raw as ApAgingView;
+  return "by_vendor";
+}
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -71,9 +80,15 @@ export function AccountsPayableAgingPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [asOf, setAsOf] = useState(today());
-  const [view, setView] = useState<"by_vendor" | "by_type">("by_vendor");
-  const [typeFilter, setTypeFilter] = useState<ApAgingDisplayGroup | "all">("all");
-  const [search, setSearch] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = parseApAgingView(searchParams.get("view"));
+  const setView = (next: ApAgingView) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "by_vendor") params.delete("view");
+    else params.set("view", next);
+    setSearchParams(params, { replace: true });
+  };
+  const [typeFilter, setTypeFilter] = useState<ApAgingDisplayGroup | "all">("all");  const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(GROUP_ORDER));
 
   const query = useQuery({

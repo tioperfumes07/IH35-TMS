@@ -97,9 +97,12 @@ export function VendorsPage() {
     queryKey: ["vendors", "page", companyId],
     // VEND-1: load the FULL vendor roster (the client-side table paginates/searches over it); without an
     // explicit limit the endpoint returns only the default 50.
-    queryFn: () => listVendors({ operating_company_id: companyId, limit: 5000, active_company_only: true }).then((result) => result.vendors),
+    // PAGER-SERVERTOTAL-01: keep server `total` (COUNT) — never derive pager totalCount from .length.
+    queryFn: () => listVendors({ operating_company_id: companyId, limit: 5000, active_company_only: true }),
     enabled: Boolean(companyId),
   });
+  const vendorsRoster = vendorsQuery.data?.vendors ?? [];
+  const vendorsServerTotal = vendorsQuery.data?.total ?? 0;
   const balancesQuery = useQuery({
     queryKey: ["accounting", "vendor-balances", companyId],
     queryFn: () => listVendorBalances(companyId, { all: true }),
@@ -116,23 +119,23 @@ export function VendorsPage() {
   // Soft-delete (Active/Inactive) list filter — canonical deactivated_at semantics,
   // mirroring the Driver Deactivate pattern. Defaults to Active.
   const visibleVendors = useMemo(() => {
-    let all = vendorsQuery.data ?? [];
+    let all = vendorsRoster;
     if (listStatus === "inactive") all = all.filter((vendor) => vendor.deactivated_at != null);
     else if (listStatus !== "all") all = all.filter((vendor) => vendor.deactivated_at == null);
     // V8 roster filter — applied here so the sidebar + count + selection stay in sync.
     if (rosterCategory) all = all.filter((vendor) => (vendor.vendor_category ?? "") === rosterCategory);
     return all;
-  }, [vendorsQuery.data, listStatus, rosterCategory]);
+  }, [vendorsRoster, listStatus, rosterCategory]);
 
   // V8 — distinct categories present across the full roster (before the category filter), sorted.
   const categoryOptions = useMemo(() => {
     const set = new Set<string>();
-    for (const vendor of vendorsQuery.data ?? []) {
+    for (const vendor of vendorsRoster) {
       const c = (vendor.vendor_category ?? "").trim();
       if (c) set.add(c);
     }
     return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [vendorsQuery.data]);
+  }, [vendorsRoster]);
 
   const vendorsSorted = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -311,7 +314,7 @@ export function VendorsPage() {
         <VendorListSidebar
           vendors={visibleVendors}
           status={vendorsStatus}
-          totalCount={vendorsSorted.length}
+          totalCount={vendorsServerTotal}
           page={sidebarPage}
           pageSize={sidebarPageSize}
           search={search}

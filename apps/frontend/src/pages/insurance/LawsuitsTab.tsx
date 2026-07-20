@@ -11,6 +11,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { useListState } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
 
 type Props = {
   operatingCompanyId?: string;
@@ -42,6 +43,7 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
   const queryClient = useQueryClient();
   const companyId = operatingCompanyId ?? selectedCompanyId ?? "";
   const [createOpen, setCreateOpen] = useState(false);
+  const [selectedLawsuitId, setSelectedLawsuitId] = useState<string | null>(null);
 
   const query = useQuery({
     queryKey: ["insurance-lawsuits", companyId || "none", claimId ?? "all"],
@@ -65,11 +67,32 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
   }
 
   const rows = query.data ?? [];
+  const selectedLawsuit = rows.find((r) => r.id === selectedLawsuitId) ?? null;
+  // Prefer explicit claimId prop (filtered tab), else the selected lawsuit's claim.
+  const legalClaimId = claimId || selectedLawsuit?.claim_id || null;
 
   const columns = useMemo<ParityColumn<InsuranceLawsuit>[]>(
     () => [
-      { key: "case_number", label: "Case #", sortable: true, render: (lawsuit) => <span className="font-medium text-gray-800">{lawsuit.case_number}</span> },
-      { key: "status", label: "Status", sortable: true, render: (lawsuit) => <StatusBadge variant={lawsuitStatusVariant(lawsuit.status)}>{lawsuit.status}</StatusBadge> },
+      {
+        key: "case_number",
+        label: "Case #",
+        sortable: true,
+        render: (lawsuit) => (
+          <button
+            type="button"
+            className="font-medium text-slate-700 underline"
+            onClick={() => setSelectedLawsuitId(lawsuit.id)}
+          >
+            {lawsuit.case_number}
+          </button>
+        ),
+      },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        render: (lawsuit) => <StatusBadge variant={lawsuitStatusVariant(lawsuit.status)}>{lawsuit.status}</StatusBadge>,
+      },
       {
         key: "claim_id",
         label: "Claim",
@@ -99,6 +122,19 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
         </Button>
       </div>
 
+      {legalClaimId ? (
+        <div className="mb-3">
+          <LegalMattersReverseSection
+            operatingCompanyId={companyId}
+            filter={{ insurance_claim_id: legalClaimId }}
+            contextLabel="this lawsuit's claim"
+            data-testid="insurance-lawsuit-legal-matters"
+          />
+        </div>
+      ) : selectedLawsuitId ? (
+        <p className="mb-3 text-xs text-gray-500">Selected lawsuit has no linked claim — cannot reverse-link legal matters.</p>
+      ) : null}
+
       {query.isError ? (
         <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">Failed to load lawsuits.</div>
       ) : null}
@@ -110,6 +146,7 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
         loading={listState.isLoading}
         storageKey="insurance-lawsuits"
         emptyText="No lawsuits found."
+        rowClassName={(lawsuit) => (selectedLawsuitId === lawsuit.id ? "bg-slate-100" : "")}
       />
       <LawsuitCreateModal
         open={createOpen}

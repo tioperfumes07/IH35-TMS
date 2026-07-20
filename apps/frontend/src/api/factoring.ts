@@ -459,3 +459,21 @@ export function createLetterOfRelease(
     }
   );
 }
+
+export type DuplicateVendorPair = {
+  from_vendor_id: string;
+  from_vendor_name: string;
+  to_vendor_id: string;
+  to_vendor_name: string;
+  similarity: number;
+};
+
+/** GET /api/v1/factoring/scan-duplicate-vendors — fuzzy name pairs for merge review. */
+export function scanDuplicateVendors(companyId: string, driverId?: string) {
+  return apiRequest<{ pairs: DuplicateVendorPair[] }>(
+    `/api/v1/factoring/scan-duplicate-vendors?${query({
+      operating_company_id: companyId,
+      driver_id: driverId,
+    })}`
+  );
+}

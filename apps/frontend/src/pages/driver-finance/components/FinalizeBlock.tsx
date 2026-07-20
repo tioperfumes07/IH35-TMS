@@ -21,7 +21,7 @@ export function FinalizeBlock({ checked, pendingAcks, staleDebt, onCheckedChange
 
   return (
     <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
-      <label className="flex items-start gap-2 rounded-sm border border-amber-200 bg-amber-50 px-2 py-2">
+      <label className="flex items-start gap-2 rounded-sm border border-slate-200 bg-slate-50 px-2 py-2">
         <input type="checkbox" checked={checked} onChange={(event) => onCheckedChange(event.target.checked)} />
         <span>
           I have reviewed active debt, pending acknowledgments, and deductions applied this period.
@@ -40,7 +40,7 @@ export function FinalizeBlock({ checked, pendingAcks, staleDebt, onCheckedChange
         </Button>
         <Button size="sm" onClick={onFinalize} disabled={blocked}>Finalize Settlement</Button>
       </div>
-      <div className={`mt-2 ${blocked ? "text-amber-700" : "text-green-700"}`}>{reason}</div>
+      <div className={`mt-2 ${blocked ? "text-slate-700" : "text-slate-600"}`}>{reason}</div>
     </div>
   );
 }

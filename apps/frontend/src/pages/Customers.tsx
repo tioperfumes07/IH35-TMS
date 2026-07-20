@@ -259,16 +259,19 @@ export function CustomersPage() {
     queryKey: ["customers", "page", companyId],
     // CUST-1: load the FULL customer roster (the client-side table below paginates/searches over it).
     // Without an explicit limit the endpoint returns only the default 50, hiding the rest of the roster.
-    queryFn: () => listCustomers({ operating_company_id: companyId, limit: 5000, active_company_only: true }).then((result) => result.customers),
+    // PAGER-SERVERTOTAL-01: keep server `total` (COUNT) — never derive pager totalCount from .length.
+    queryFn: () => listCustomers({ operating_company_id: companyId, limit: 5000, active_company_only: true }),
     enabled: Boolean(companyId),
   });
+  const customersRoster = customersQuery.data?.customers ?? [];
+  const customersServerTotal = customersQuery.data?.total ?? 0;
   // D1-4: eligible parents for the create form = active, TOP-LEVEL customers (never a sub-customer).
   const parentCustomerOptions = useMemo(
     () =>
-      (customersQuery.data ?? [])
+      customersRoster
         .filter((c) => !c.parent_customer_id && c.status !== "inactive" && !c.deactivated_at)
         .map((c) => ({ id: c.id, name: c.name, customer_code: c.customer_code })),
-    [customersQuery.data]
+    [customersRoster]
   );
   const allInvoicesQuery = useQuery({
     queryKey: ["accounting", "invoices", "all", companyId],
@@ -291,15 +294,15 @@ export function CustomersPage() {
   // Soft-delete (Active/Inactive) list filter — canonical deactivated_at semantics,
   // mirroring the Driver Deactivate pattern. Defaults to Active.
   const visibleCustomers = useMemo(() => {
-    let all = customersQuery.data ?? [];
+    let all = customersRoster;
     if (listStatus === "inactive") all = all.filter((customer) => customer.deactivated_at != null);
     else if (listStatus !== "all") all = all.filter((customer) => customer.deactivated_at == null);
     // V8 roster filters — applied here so BOTH the sidebar (visibleCustomers) and the
-    // customersSorted consumers (list view, totalCount, selection) stay in sync.
+    // customersSorted consumers (list view, selection) stay in sync.
     if (rosterType) all = all.filter((customer) => customer.customer_type === rosterType);
     if (rosterCreditStatus) all = all.filter((customer) => customer.status === rosterCreditStatus);
     return all;
-  }, [customersQuery.data, listStatus, rosterType, rosterCreditStatus]);
+  }, [customersRoster, listStatus, rosterType, rosterCreditStatus]);
 
   const customersSorted = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -476,7 +479,7 @@ export function CustomersPage() {
         <CustomerListSidebar
           customers={visibleCustomers}
           status={customersStatus}
-          totalCount={customersSorted.length}
+          totalCount={customersServerTotal}
           page={sidebarPage}
           pageSize={sidebarPageSize}
           search={search}
