@@ -2,8 +2,8 @@
  "schema": "program-phase-manifest/v1",
  "source": "MASTER-6 authored build sequence + live .block-ready registration flags",
  "authored_total": 935,
- "registered_total": 930,
- "not_registered_total": 5,
+ "registered_total": 891,
+ "not_registered_total": 44,
  "phases": [
   {
    "n": 1,
@@ -193,7 +193,7 @@
    "key": "tier1",
    "label": "Tier-1 remainder",
    "authored_total": 273,
-   "registered_count": 271,
+   "registered_count": 241,
    "blocks": [
     {
      "id": "0008-b-canonical-deduction-store",
@@ -467,8 +467,7 @@
     },
     {
      "id": "02_0008-a-gl-flags-settlement-lease-off_SUPERSEDED",
-     "registered": true,
-     "block_ready_key": "0008-a-gl-flags-settlement-lease-off_SUPERSEDED"
+     "registered": false
     },
     {
      "id": "0394-qbo-sync-one-shot-not-recurring",
@@ -492,8 +491,7 @@
     },
     {
      "id": "043_bill-status-vocab-partial-vs-partially_DUP",
-     "registered": true,
-     "block_ready_key": "bill-status-vocab-partial-vs-partially_DUP"
+     "registered": false
     },
     {
      "id": "0441-mod10-autodeductionpolicies-fully-dead",
@@ -593,12 +591,12 @@
     {
      "id": "045_biz-flow-3-no-auto-customer-charge-on-_DUP",
      "registered": true,
-     "block_ready_key": "biz-flow-3-no-auto-customer-charge-on-_DUP"
+     "block_ready_key": "biz-flow-3-no-auto-escrow-deduction-driver-fau"
     },
     {
      "id": "046_biz-flow-3-no-cancellation-billing-lin_DUP",
      "registered": true,
-     "block_ready_key": "biz-flow-3-no-cancellation-billing-lin_DUP"
+     "block_ready_key": "biz-flow-3-no-cancellation-deduction-linkage"
     },
     {
      "id": "0473-1-1-default-revenue-account-unmapped-line",
@@ -637,8 +635,7 @@
     },
     {
      "id": "048_catalog-create-split-brain-qbo-mirror_DUP",
-     "registered": true,
-     "block_ready_key": "catalog-create-split-brain-qbo-mirror_DUP"
+     "registered": false
     },
     {
      "id": "0490-critical-g11-1-deduction-consent-template",
@@ -747,8 +744,7 @@
     },
     {
      "id": "054_inbound-qbo-bill-sync-ap-gap_DUP",
-     "registered": true,
-     "block_ready_key": "inbound-qbo-bill-sync-ap-gap_DUP"
+     "registered": false
     },
     {
      "id": "055_p0-catalogs-accounts-company-scoped_DUP",
@@ -767,8 +763,7 @@
     },
     {
      "id": "058_usmca-posting-enable-hold_SUPERSEDED",
-     "registered": true,
-     "block_ready_key": "usmca-posting-enable-hold_SUPERSEDED"
+     "registered": false
     },
     {
      "id": "059_0008-d-abandonment-pay-first-then-escr_DISPATCH",
@@ -792,18 +787,15 @@
     },
     {
      "id": "062_0010-f5-bank-txn-uncategorized_DUP",
-     "registered": true,
-     "block_ready_key": "0010-f5-bank-txn-uncategorized_DUP"
+     "registered": false
     },
     {
      "id": "063_0010-f9-nullable-assumed-key-columns_DUP",
-     "registered": true,
-     "block_ready_key": "0010-f9-nullable-assumed-key-columns_DUP"
+     "registered": false
     },
     {
      "id": "064_0091-flag-lease_SUPERSEDED",
-     "registered": true,
-     "block_ready_key": "0091-flag-lease_SUPERSEDED"
+     "registered": false
     },
     {
      "id": "065_0091-g4-tx1_DUP",
@@ -811,8 +803,7 @@
     },
     {
      "id": "066_0243-d2-2-g18-load-fk-not-enforced-ven_DUP",
-     "registered": true,
-     "block_ready_key": "0243-d2-2-g18-load-fk-not-enforced-ven_DUP"
+     "registered": false
     },
     {
      "id": "067_0243-g11-7-factoring-reserve-two-place_DISPATCH",
@@ -836,8 +827,7 @@
     },
     {
      "id": "070_0251-gap15-load-completion-invoice-tri_DUP",
-     "registered": true,
-     "block_ready_key": "0251-gap15-load-completion-invoice-tri_DUP"
+     "registered": false
     },
     {
      "id": "071_0251-gap20-driverbill-settlement-link_DISPATCH",
@@ -846,13 +836,11 @@
     },
     {
      "id": "072_0251-gap6-linehaul-revenue-gl_DUP",
-     "registered": true,
-     "block_ready_key": "0251-gap6-linehaul-revenue-gl_DUP"
+     "registered": false
     },
     {
      "id": "073_0441-mod2-g18-no-load-field_DUP",
-     "registered": true,
-     "block_ready_key": "0441-mod2-g18-no-load-field_DUP"
+     "registered": false
     },
     {
      "id": "074_0441-mod7-invoices-plaintext-audit-log_DISPATCH",
@@ -866,8 +854,7 @@
     },
     {
      "id": "076_0473-1-3-insider-receivables-misclassi_DUP",
-     "registered": true,
-     "block_ready_key": "0473-1-3-insider-receivables-misclassi_DUP"
+     "registered": false
     },
     {
      "id": "077_0473-1-9-driver-settlement-net-pay-mod_DISPATCH",
@@ -876,8 +863,7 @@
     },
     {
      "id": "078_0490-g6-4-bills-nullable-amount-cents-_DUP",
-     "registered": true,
-     "block_ready_key": "0490-g6-4-bills-nullable-amount-cents-_DUP"
+     "registered": false
     },
     {
      "id": "079_0519-fl1-2649-bank-tx-uncategorized_DISPATCH",
@@ -896,13 +882,11 @@
     },
     {
      "id": "081_bf5-load-settlement-driver-pay-gl_DUP",
-     "registered": true,
-     "block_ready_key": "bf5-load-settlement-driver-pay-gl_DUP"
+     "registered": false
     },
     {
      "id": "082_bf6-bill-line-items-load-id_DUP",
-     "registered": true,
-     "block_ready_key": "bf6-bill-line-items-load-id_DUP"
+     "registered": false
     },
     {
      "id": "083_bf9b-wo-cost-unit-load-allocation-gl_DISPATCH",
@@ -916,13 +900,12 @@
     },
     {
      "id": "085_biz-flow-3-approval-workflow-no-downst_DUP",
-     "registered": true,
-     "block_ready_key": "biz-flow-3-approval-workflow-no-downst_DUP"
+     "registered": false
     },
     {
      "id": "086_biz-flow-6-no-automatic-gl-posting-tms_DUP",
      "registered": true,
-     "block_ready_key": "biz-flow-6-no-automatic-gl-posting-tms_DUP"
+     "block_ready_key": "biz-flow-6-no-automatic-invoice-sending"
     },
     {
      "id": "087_block5-coa-new-account-type-detail-org_DISPATCH",
@@ -941,8 +924,7 @@
     },
     {
      "id": "08_0091-e1-1-qbo-mirror-home_DUPLICATE",
-     "registered": true,
-     "block_ready_key": "0091-e1-1-qbo-mirror-home_DUPLICATE"
+     "registered": false
     },
     {
      "id": "090_dispatch-sweep-gap-28_DUP",
@@ -972,7 +954,7 @@
     {
      "id": "095_fk-cancellation-billing-0289_DUP",
      "registered": true,
-     "block_ready_key": "fk-cancellation-billing-0289_DUP"
+     "block_ready_key": "fk-cancellation-deductions-0289"
     },
     {
      "id": "096_known-catalogs-accounts-global-not-per_DUP",
@@ -981,8 +963,7 @@
     },
     {
      "id": "097_linkage-cancellation-to-invoice-charge_DUP",
-     "registered": true,
-     "block_ready_key": "linkage-cancellation-to-invoice-charge_DUP"
+     "registered": false
     },
     {
      "id": "098_load-cancellations-fk-per-entity-repoi_DISPATCH",
@@ -1006,8 +987,7 @@
     },
     {
      "id": "101_repair-program-settlement-consent-gate_DUP",
-     "registered": true,
-     "block_ready_key": "repair-program-settlement-consent-gate_DUP"
+     "registered": false
     },
     {
      "id": "102_ruling-4-embezzlement-reclass-off-ar-q_DISPATCH",
@@ -1016,8 +996,7 @@
     },
     {
      "id": "103_sweep-flag-lease-golive-review_SUPERSEDED",
-     "registered": true,
-     "block_ready_key": "sweep-flag-lease-golive-review_SUPERSEDED"
+     "registered": false
     },
     {
      "id": "104_sweep-g11-1-deduction-consent-template_DISPATCH",
@@ -1026,8 +1005,7 @@
     },
     {
      "id": "105_0008-g4-vendor-namespace-canonical_DUP",
-     "registered": true,
-     "block_ready_key": "0008-g4-vendor-namespace-canonical_DUP"
+     "registered": false
     },
     {
      "id": "106_0010-f7-unapplied-migration-files-0392_DISPATCH",
@@ -1061,7 +1039,7 @@
     {
      "id": "111_biz-flow-5-dual-deduction-systems_DUP",
      "registered": true,
-     "block_ready_key": "biz-flow-5-dual-deduction-systems_DUP"
+     "block_ready_key": "flow5-dual-deduction-systems-consolidate"
     },
     {
      "id": "112_custvend-par1-g3-customer-statement-en_DISPATCH",
@@ -1075,8 +1053,7 @@
     },
     {
      "id": "114_0091-g4-idem1_DUP",
-     "registered": true,
-     "block_ready_key": "0091-g4-idem1_DUP"
+     "registered": false
     },
     {
      "id": "115_0441-mod8-mark-transfer-404-silent_DISPATCH",
@@ -1085,8 +1062,7 @@
     },
     {
      "id": "116_0518-r04-10-orphaned-migration-files-4_DUP",
-     "registered": true,
-     "block_ready_key": "0518-r04-10-orphaned-migration-files-4_DUP"
+     "registered": false
     },
     {
      "id": "117_0518-r06-70of145-tables-rls-not-forced_STALE",
@@ -1110,13 +1086,11 @@
     },
     {
      "id": "120_bf9c-fuel-load-g18-writer_DUP",
-     "registered": true,
-     "block_ready_key": "bf9c-fuel-load-g18-writer_DUP"
+     "registered": false
     },
     {
      "id": "12_0243-b1-3_DUPLICATE",
-     "registered": true,
-     "block_ready_key": "0243-b1-3_DUPLICATE"
+     "registered": false
     },
     {
      "id": "13_0243-d1-2-vendors-split-two-tables_DISPATCH",
@@ -1125,13 +1099,11 @@
     },
     {
      "id": "14_0243-e1-1_DUPLICATE",
-     "registered": true,
-     "block_ready_key": "0243-e1-1_DUPLICATE"
+     "registered": false
     },
     {
      "id": "15_0243-flag-lease-on-despite-engine_SUPERSEDED-WITH-RESIDUAL",
-     "registered": true,
-     "block_ready_key": "0243-flag-lease-on-despite-engine_SUPERSEDED-WITH-RESIDUAL"
+     "registered": false
     },
     {
      "id": "16_0243-flag-live-all-9-gl-flags-on_DONE",
@@ -1150,8 +1122,7 @@
     },
     {
      "id": "19_0243-g6-4_DUPLICATE-plus-dualmoney",
-     "registered": true,
-     "block_ready_key": "0243-g6-4_DUPLICATE-plus-dualmoney"
+     "registered": false
     },
     {
      "id": "20_0243-g9-h6-coa-list-cap_DISPATCH",
@@ -1255,8 +1226,7 @@
     },
     {
      "id": "40_0490-settlement-unflagged_DUPLICATE",
-     "registered": true,
-     "block_ready_key": "0490-settlement-unflagged_DUPLICATE"
+     "registered": false
     },
     {
      "id": "audit-spine-a1-a9-emit-coverage-task",
@@ -1565,7 +1535,7 @@
    "key": "tier2",
    "label": "Tier-2",
    "authored_total": 206,
-   "registered_count": 205,
+   "registered_count": 204,
    "blocks": [
     {
      "id": "0007-pattern-5-split-brain-engines",
@@ -2103,8 +2073,7 @@
     },
     {
      "id": "audit25-fx-rate-hedging-translation",
-     "registered": true,
-     "block_ready_key": "audit25-fx-rate-hedging-translation"
+     "registered": false
     },
     {
      "id": "audit4-tax-return-automation",
@@ -2603,7 +2572,7 @@
    "key": "tier3",
    "label": "Tier-3 (UI / docs / tests — ship on green)",
    "authored_total": 423,
-   "registered_count": 423,
+   "registered_count": 415,
    "blocks": [
     {
      "id": "0007-pattern-1-unmounted-backend",
@@ -3147,13 +3116,11 @@
     },
     {
      "id": "0265-audit196-marketing-strategy-tracking",
-     "registered": true,
-     "block_ready_key": "0265-audit196-marketing-strategy-tracking"
+     "registered": false
     },
     {
      "id": "0265-audit197-digital-marketing-tracking",
-     "registered": true,
-     "block_ready_key": "0265-audit197-digital-marketing-tracking"
+     "registered": false
     },
     {
      "id": "0265-audit198-content-tracking",
@@ -3172,8 +3139,7 @@
     },
     {
      "id": "0265-audit201-email-marketing",
-     "registered": true,
-     "block_ready_key": "0265-audit201-email-marketing"
+     "registered": false
     },
     {
      "id": "0265-audit202-website-analytics",
@@ -3187,8 +3153,7 @@
     },
     {
      "id": "0265-audit205-brand-audit",
-     "registered": true,
-     "block_ready_key": "0265-audit205-brand-audit"
+     "registered": false
     },
     {
      "id": "0270-no-auto-equipment-log-update-duplicate",
@@ -3862,18 +3827,15 @@
     },
     {
      "id": "audit20-dividend-tracking-system",
-     "registered": true,
-     "block_ready_key": "audit20-dividend-tracking-system"
+     "registered": false
     },
     {
      "id": "audit23-royalty-tracking-system",
-     "registered": true,
-     "block_ready_key": "audit23-royalty-tracking-system"
+     "registered": false
     },
     {
      "id": "audit24-franchise-tracking-system",
-     "registered": true,
-     "block_ready_key": "audit24-franchise-tracking-system"
+     "registered": false
     },
     {
      "id": "audit3-external-audit-prep-workflow",
@@ -3882,8 +3844,7 @@
     },
     {
      "id": "audit6-sox-ifrs-compliance-dashboard",
-     "registered": true,
-     "block_ready_key": "audit6-sox-ifrs-compliance-dashboard"
+     "registered": false
     },
     {
      "id": "banking-grid-sort-resize-rows-per-page",
@@ -4298,7 +4259,7 @@
     {
      "id": "phase12-audit215-esg-reporting",
      "registered": true,
-     "block_ready_key": "phase12-audit215-esg-reporting"
+     "block_ready_key": "phase12-audit210-energy"
     },
     {
      "id": "phase13-audit216-banking-industry",
