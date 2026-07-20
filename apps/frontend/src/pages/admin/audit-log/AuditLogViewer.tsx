@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listAuditViewerEvents, type AuditViewerEvent } from "../../../api/audit";
 import { useAuth } from "../../../auth/useAuth";
@@ -7,6 +7,8 @@ import { PageHeader } from "../../../components/layout/PageHeader";
 import { Button } from "../../../components/Button";
 import { AuditEventCard } from "../../../components/audit/AuditEventCard";
 import { SuperAdminNav } from "../../../components/admin/SuperAdminNav";
+import { ListErrorState } from "../../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 const PAGE_SIZE = 100;
 
@@ -20,6 +22,54 @@ function fmtDate(iso: string) {
   const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? iso : d.toLocaleString();
 }
+
+const COLUMNS: Array<ParityColumn<AuditViewerEvent>> = [
+  {
+    key: "created_at",
+    label: "When",
+    sortable: true,
+    sortValue: (row) => new Date(row.created_at).getTime(),
+    render: (row) => (
+      <span className="whitespace-nowrap text-gray-700">{fmtDate(row.created_at)}</span>
+    ),
+  },
+  {
+    key: "event_class",
+    label: "Event class",
+    sortable: true,
+    render: (row) => <span className="font-mono text-gray-900">{row.event_class}</span>,
+  },
+  {
+    key: "severity",
+    label: "Severity",
+    sortable: true,
+    render: (row) => (
+      <span
+        className={`inline-block rounded-sm px-1.5 py-0.5 text-[10px] font-bold ${SEVERITY_BADGE[row.severity] ?? "bg-gray-100 text-gray-700"}`}
+      >
+        {row.severity}
+      </span>
+    ),
+  },
+  {
+    key: "actor_email",
+    label: "Actor",
+    sortable: true,
+    sortValue: (row) => row.actor_email ?? row.actor_user_id ?? "",
+    render: (row) => (
+      <span className="text-gray-600">
+        {row.actor_email ?? (row.actor_user_id ? `uid:${row.actor_user_id.slice(0, 8)}…` : "—")}
+      </span>
+    ),
+  },
+  {
+    key: "source",
+    label: "Source",
+    sortable: true,
+    sortValue: (row) => row.source ?? "",
+    render: (row) => <span className="text-gray-500">{row.source ?? "—"}</span>,
+  },
+];
 
 export function AuditLogViewer() {
   const auth = useAuth();
@@ -70,6 +120,8 @@ export function AuditLogViewer() {
     enabled: Boolean(allowed && companyId),
   });
 
+  const rows = useMemo(() => query.data?.events ?? [], [query.data?.events]);
+
   function applyFilters() {
     setApplied({
       entityType,
@@ -100,6 +152,10 @@ export function AuditLogViewer() {
     setApplied((prev) => ({ ...prev, offset: newOffset }));
   }
 
+  function handleRowClick(row: AuditViewerEvent) {
+    setSelectedEvent((prev) => (prev?.id === row.id ? null : row));
+  }
+
   if (!allowed) {
     return (
       <div className="space-y-3 p-4">
@@ -110,7 +166,6 @@ export function AuditLogViewer() {
     );
   }
 
-  const rows = query.data?.events ?? [];
   const totalCount = query.data?.total_count ?? 0;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
   const currentPage = Math.floor(applied.offset / PAGE_SIZE) + 1;
@@ -213,49 +268,28 @@ export function AuditLogViewer() {
       </div>
 
       {/* Results table */}
-      <div className="overflow-hidden rounded-sm border border-gray-200 bg-white">
-        {query.isLoading && <div className="p-4 text-sm text-gray-500">Loading…</div>}
-        {query.isError && (
-          <div className="p-4 text-sm text-red-600">Failed to load. Check filters and try again.</div>
-        )}
-        {!query.isLoading && !query.isError && rows.length === 0 && (
-          <div className="p-4 text-sm text-gray-500">No audit events found.</div>
-        )}
-        {rows.length > 0 && (
-          <table className="w-full text-left text-xs">
-            <thead className="bg-gray-50 text-[10px] font-semibold uppercase tracking-wider text-gray-600">
-              <tr>
-                <th className="px-3 py-2">When</th>
-                <th className="px-3 py-2">Event class</th>
-                <th className="px-3 py-2">Severity</th>
-                <th className="px-3 py-2">Actor</th>
-                <th className="px-3 py-2">Source</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row: AuditViewerEvent) => (
-                <tr
-                  key={row.id}
-                  className="cursor-pointer border-t border-gray-100 hover:bg-gray-50"
-                  onClick={() => setSelectedEvent(selectedEvent?.id === row.id ? null : row)}
-                >
-                  <td className="whitespace-nowrap px-3 py-2 text-gray-700">{fmtDate(row.created_at)}</td>
-                  <td className="px-3 py-2 font-mono text-gray-900">{row.event_class}</td>
-                  <td className="px-3 py-2">
-                    <span className={`inline-block rounded-sm px-1.5 py-0.5 text-[10px] font-bold ${SEVERITY_BADGE[row.severity] ?? "bg-gray-100 text-gray-700"}`}>
-                      {row.severity}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 text-gray-600">
-                    {row.actor_email ?? (row.actor_user_id ? `uid:${row.actor_user_id.slice(0, 8)}…` : "—")}
-                  </td>
-                  <td className="px-3 py-2 text-gray-500">{row.source ?? "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load audit log"
+          status={0}
+          message={(query.error as Error)?.message}
+          onRetry={() => void query.refetch()}
+        />
+      ) : (
+        <div className="overflow-hidden rounded-sm border border-gray-200 bg-white p-2">
+          <ParityTable
+            rows={rows}
+            columns={COLUMNS}
+            rowKey={(row) => row.id}
+            loading={query.isLoading}
+            storageKey="audit-log-viewer"
+            emptyText="No audit events found."
+            tableTestId="audit-log-viewer-table"
+            rowTestId={(row) => `audit-log-viewer-row-${row.id}`}
+            onRowClick={handleRowClick}
+          />
+        </div>
+      )}
 
       {/* Event detail card */}
       {selectedEvent && (
