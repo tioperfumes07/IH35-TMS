@@ -4,8 +4,10 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { listDispatchAssignmentHistory } from "../../api/dispatch";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 export function AssignmentHistoryPage() {
@@ -35,26 +37,33 @@ export function AssignmentHistoryPage() {
   const rows = historyQ.data?.rows ?? [];
   type AssignmentHistoryRow = (typeof rows)[number];
 
-  // Migrated to the shared QBO-parity grid — columns, order, and the load deep-link are preserved
-  // verbatim (§7 additive-only).
+  // Migrated to the shared QBO-parity grid — columns/order preserved; id cells use EntityLink
+  // (Law of the Land reverse drill-through) instead of plain text / ad-hoc Link.
   const columns: Array<ParityColumn<AssignmentHistoryRow>> = [
     { key: "assigned_at", label: "Assigned at", sortable: true, render: (row) => new Date(row.assigned_at).toLocaleString() },
     {
       key: "load_number",
       label: "Load",
       sortable: true,
-      render: (row) =>
-        row.load_id ? (
-          <Link to={`/dispatch?load_id=${encodeURIComponent(row.load_id)}`} className="text-slate-700 hover:underline">
-            {row.load_number ?? row.load_id}
-          </Link>
-        ) : (
-          row.load_number ?? "—"
-        ),
+      render: (row) => (
+        <EntityLink kind="load" id={row.load_id} label={row.load_number ?? row.load_id} />
+      ),
     },
     { key: "assignment_method", label: "Method", sortable: true },
-    { key: "previous_driver_name", label: "Previous driver", render: (row) => row.previous_driver_name ?? "—" },
-    { key: "new_driver_name", label: "New driver", render: (row) => row.new_driver_name ?? "—" },
+    {
+      key: "previous_driver_name",
+      label: "Previous driver",
+      render: (row) => (
+        <EntityLink kind="driver" id={row.previous_driver_id} label={row.previous_driver_name ?? undefined} />
+      ),
+    },
+    {
+      key: "new_driver_name",
+      label: "New driver",
+      render: (row) => (
+        <EntityLink kind="driver" id={row.new_driver_id} label={row.new_driver_name ?? undefined} />
+      ),
+    },
     { key: "reason_code", label: "Reason", render: (row) => row.reason_code ?? row.notes ?? "—" },
   ];
 
@@ -98,18 +107,27 @@ export function AssignmentHistoryPage() {
         </div>
       </section>
 
-      <ParityTable<AssignmentHistoryRow>
-        columns={columns}
-        rows={rows}
-        rowKey={(row) => row.id}
-        loading={historyQ.isLoading}
-        emptyText="No assignment history for current filters."
-        storageKey="dispatch-assignment-history"
-        exportFilename="assignment-history"
-      />
+      {historyQ.isError ? (
+        <ListErrorState
+          title="Couldn't load assignment history"
+          status={0}
+          message={(historyQ.error as Error)?.message}
+          onRetry={() => void historyQ.refetch()}
+        />
+      ) : (
+        <ParityTable<AssignmentHistoryRow>
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.id}
+          loading={historyQ.isLoading}
+          emptyText="No assignment history for current filters."
+          storageKey="dispatch-assignment-history"
+          exportFilename="assignment-history"
+        />
+      )}
 
       <div className="flex justify-end">
-        <Button size="sm" variant="secondary" onClick={() => historyQ.refetch()}>
+        <Button size="sm" variant="secondary" onClick={() => void historyQ.refetch()}>
           Refresh
         </Button>
       </div>

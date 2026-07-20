@@ -1,0 +1,30 @@
+{
+  "block_id": "entitylink-driver-load-history",
+  "branch": "fix/driver-load-history-entitylink",
+  "status": "IN_PROGRESS",
+  "classification": "ADDITIVE",
+  "phase": "tier3",
+  "task": "Driver Load History + Dispatch Assignment History: expose driver ids from assignment-history API, EntityLink kind=load/driver drill-through, ListErrorState on query failure (no false-empty)",
+  "source": "ops gated-no prefer FE EntityLink gaps + mandatory error states; MASTER-6 entitylink-reverse-drill-incomplete + systemic-pattern-mandatory-error-states",
+  "source_file": "entitylink-driver-load-history.txt",
+  "allowed_files": [
+    ".block-ready/entitylink-driver-load-history.json",
+    "apps/backend/src/dispatch/arch-tabs.service.ts",
+    "apps/frontend/src/api/dispatch.ts",
+    "apps/frontend/src/components/drivers/LoadHistoryTab.tsx",
+    "apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx",
+    "scripts/verify-driver-load-history-entitylink.mjs",
+    "scripts/verify-steps/1021-verify-driver-load-history-entitylink.mjs"
+  ],
+  "runtime_path": "apps/frontend",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": ["verify-driver-load-history-entitylink"],
+  "hold": false,
+  "acceptance": [
+    {
+      "check": "listAssignmentHistoryGlobal SELECT returns previous_driver_id + new_driver_id; LoadHistoryTab + AssignmentHistoryPage render EntityLink kind=load/driver; ListErrorState on isError; empty gated off isError; verify-step 1021 PASS. No migration. Rule 17."
+    }
+  ],
+  "note": "FE+thin dispatch SELECT (no schema). GATED-no. Does not overlap #2841/#2847/#2850."
+}
