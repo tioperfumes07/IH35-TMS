@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-ops-history-paritytable",
+  "branch": "fix/ops-history-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable + ListErrorState)",
+  "phase": "OPS-FE",
+  "task": "Migrate Drivers OperationsHistoryTable (12 operations-depth sub-views) from hand-rolled <table> to shared ParityTable (sort/resize/gear); add ListErrorState on query failure; preserve EntityLink entityKind columns + server Previous/Next pagination. Guard + verify-step 1026 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + CODER-BUILD tbl-standard-raw-table-sweep-incomplete / qbo-parity-a1",
+  "source_file": "qbo-parity-a1-ops-history-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-ops-history-paritytable.json",
+    "apps/frontend/src/components/drivers/OperationsHistoryTable.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-ops-history-uses-paritytable.mjs",
+    "scripts/verify-steps/1026-verify-ops-history-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "OperationsHistoryTable.tsx uses ParityTable (no hand-rolled <table>/<thead>); EntityLink entityKind preserved; ListErrorState on failure; emptyText + Previous/Next preserved; verify-ops-history-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1026 wired (Rule 17); tracker marks OperationsHistoryTable migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 \u2014 OperationsHistoryTable surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17). verify-step 1026 (1025 taken by NotificationLogPanel on main)."
+}
