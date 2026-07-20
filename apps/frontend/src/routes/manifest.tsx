@@ -318,6 +318,7 @@ const CSAFmcsaTrendPage = React.lazy(() => import("../pages/safety/CSAScore").th
 const AnomalyAlertsPage = React.lazy(() => import("../pages/safety/anomaly/AnomalyAlertsPage").then((m) => ({ default: m.AnomalyAlertsPage })));
 const PhotoComparisonPage = React.lazy(() => import("../pages/safety/photo-comparison/PhotoComparisonPage").then((m) => ({ default: m.PhotoComparisonPage })));
 const SessionDetailPage = React.lazy(() => import("../pages/safety/photo-comparison/SessionDetailPage").then((m) => ({ default: m.SessionDetailPage })));
+const IdvrDetailPage = React.lazy(() => import("../pages/safety/IdvrDetailPage").then((m) => ({ default: m.IdvrDetailPage })));
 const FeatureFlagsManager = React.lazy(() => import("../pages/admin/feature-flags/FeatureFlagsManager").then((m) => ({ default: m.FeatureFlagsManager })));
 const ObservabilityPage = React.lazy(() => import("../pages/admin/ObservabilityPage").then((m) => ({ default: m.ObservabilityPage })));
 const UnitDetail = React.lazy(() => import("../pages/units/UnitDetail").then((m) => ({ default: m.UnitDetail })));
@@ -1469,6 +1470,8 @@ export const ROUTES = React.Children.toArray(
           <Route path="hos-violations" element={<HOSViolationsTab />} />
           <Route path="idvr" element={<IDVRTab />} />
           <Route path="/safety/idvr" element={<IDVRTab />} />
+          <Route path="idvr/:id" element={<IdvrDetailPage />} />
+          <Route path="/safety/idvr/:id" element={<IdvrDetailPage />} />
           <Route path="dot-inspections" element={<DOTInspectionsTab />} />
           <Route path="driver-scoring" element={<DriverScoringTab />} />
           <Route path="csa-score" element={<CSAScoreTab />} />

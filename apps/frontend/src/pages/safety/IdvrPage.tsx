@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { getSafetyDvirSubmissions } from "../../api/safety";
@@ -13,6 +14,7 @@ type Props = {
 type DvirRow = Record<string, unknown>;
 
 export function IdvrPage({ operatingCompanyId }: Props) {
+  const navigate = useNavigate();
   const [driverFilter, setDriverFilter] = useState("");
   const [unitFilter, setUnitFilter] = useState("");
   const [fromDate, setFromDate] = useState("");
@@ -97,6 +99,10 @@ export function IdvrPage({ operatingCompanyId }: Props) {
         exportFilename="dvir-submissions"
         tableTestId="idvr-table"
         rowTestId={(row) => `idvr-row-${String(row.id)}`}
+        onRowClick={(row) => {
+          const id = String(row.id ?? "").trim();
+          if (id) navigate(`/safety/idvr/${encodeURIComponent(id)}`);
+        }}
         filterBar={
           <div className="flex flex-wrap items-end gap-3">
             <label className="text-[11px] text-slate-600">
