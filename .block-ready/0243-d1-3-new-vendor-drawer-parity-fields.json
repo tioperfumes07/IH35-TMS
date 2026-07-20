@@ -1,0 +1,24 @@
+{
+  "block_id": "0243-d1-3-new-vendor-drawer-parity-fields",
+  "branch": "fix/new-vendor-drawer-parity-fields",
+  "phase": "OPS-FE",
+  "task": "Wire NewVendorDrawerForm createVendor() to send city/state/website/print_on_check_name/postal_code (backend already accepts after 202607110230); no mobile phantom write",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/0243-d1-3-new-vendor-drawer-parity-fields.json",
+    "apps/frontend/src/components/parity/drawers/NewVendorDrawerForm.tsx",
+    "scripts/verify-vendor-drawer-fields-not-dropped.mjs",
+    "scripts/verify-steps/148-verify-vendor-drawer-fields-not-dropped.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "status": "IN_PROGRESS",
+  "acceptance": [
+    {
+      "check": "NewVendorDrawerForm createVendor() payload includes city, state, website, print_on_check_name, postal_code; never sends mobile; scripts/verify-vendor-drawer-fields-not-dropped.mjs PASS (+ --selftest); verify-steps/148 wired (Rule 17)."
+    }
+  ],
+  "note": "Closes non-gated half of 0243-d1-3. Mobile column remains gated/unaddressed — UI surfaces honestly, no migration. No #2776 / GL / migrations."
+}
