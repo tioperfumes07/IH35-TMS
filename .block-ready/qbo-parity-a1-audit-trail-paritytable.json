@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-audit-trail-paritytable",
+  "branch": "fix/audit-trail-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable migration)",
+  "phase": "OPS-FE",
+  "task": "Migrate AuditTrailPage universal spine event log from hand-rolled <table> to shared ParityTable QBO grammar + ListErrorState. Guard + verify-step 1043 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+  "source_file": "qbo-parity-a1-audit-trail-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-audit-trail-paritytable.json",
+    "apps/frontend/src/pages/audit/AuditTrailPage.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-audit-trail-uses-paritytable.mjs",
+    "scripts/verify-steps/1043-verify-audit-trail-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "AuditTrailPage.tsx uses ParityTable; no hand-rolled <table>/<thead>; columns When/Event type/Actor/Entity/Source preserved; renderExpanded payload detail preserved; ListErrorState + Retry on query failure; verify-audit-trail-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1043 wired (Rule 17)."
+    }
+  ],
+  "note": "GATED: no (pure FE). No migrations. No package.json / locked-guards / ci.yml edits (Rule 17)."
+}
