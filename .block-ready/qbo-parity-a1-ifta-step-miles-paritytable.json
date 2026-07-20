@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-ifta-step-miles-paritytable",
+  "branch": "fix/ifta-step-miles-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable)",
+  "phase": "OPS-FE",
+  "task": "Migrate IFTAStepMiles (pages/reports/ifta preparer Step 1) from hand-rolled <table> to shared ParityTable (sort/resize/gear). Preserve State / Miles / Source columns + aggregate action + last-aggregated stamp + total. Guard + verify-step 1060 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + qbo-parity-a1; IFTA operational preparer (not GL posting)",
+  "source_file": "qbo-parity-a1-ifta-step-miles-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-ifta-step-miles-paritytable.json",
+    "apps/frontend/src/pages/reports/ifta/IFTAStepMiles.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-ifta-step-miles-uses-paritytable.mjs",
+    "scripts/verify-steps/1060-verify-ifta-step-miles-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "IFTAStepMiles.tsx uses ParityTable (no hand-rolled <table>/<thead>); columns State / Miles / Source preserved; Run Step 1 aggregate + last-aggregated + Total summary retained; verify-ifta-step-miles-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1060 wired (Rule 17); tracker marks IFTAStepMiles migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 — pages/reports/ifta/IFTAStepMiles surface only (NOT components/reports/ifta Step1MileageReview). No migrations. No package.json / locked-guards / ci.yml edits (Rule 17)."
+}

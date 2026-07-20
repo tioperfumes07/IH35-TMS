@@ -3,8 +3,14 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { getInboxReporting, type InboxReportingData } from "../../api/driverInboxReporting";
+import {
+  getInboxReporting,
+  type InboxReportingData,
+  type InboxReportingDriverRow,
+} from "../../api/driverInboxReporting";
 import { formatUsdCents } from "../../lib/money";
 
 function isoDaysAgo(days: number): string {
@@ -69,6 +75,71 @@ function exportCsv(data: InboxReportingData) {
   URL.revokeObjectURL(url);
 }
 
+const DRIVER_REPORTING_COLUMNS: Array<ParityColumn<InboxReportingDriverRow>> = [
+  {
+    key: "driver_name",
+    label: "Driver",
+    sortable: true,
+    render: (r) => <span className="text-[#1f2a44]">{r.driver_name}</span>,
+  },
+  {
+    key: "total_requests",
+    label: "Total",
+    sortable: true,
+    className: "text-right",
+    cellClass: "text-right",
+    render: (r) => r.total_requests,
+  },
+  {
+    key: "approved",
+    label: "Approved",
+    sortable: true,
+    className: "text-right",
+    cellClass: "text-right text-[#334155]",
+    render: (r) => r.approved,
+  },
+  {
+    key: "denied",
+    label: "Denied",
+    sortable: true,
+    className: "text-right",
+    cellClass: "text-right",
+    render: (r) => r.denied,
+  },
+  {
+    key: "approval_rate_pct",
+    label: "Approval %",
+    sortable: true,
+    className: "text-right",
+    cellClass: "text-right",
+    render: (r) => fmtPct(r.approval_rate_pct),
+  },
+  {
+    key: "avg_time_to_view_seconds",
+    label: "Time-to-view",
+    sortable: true,
+    className: "text-right",
+    cellClass: "text-right",
+    render: (r) => fmtSeconds(r.avg_time_to_view_seconds),
+  },
+  {
+    key: "avg_time_to_approve_seconds",
+    label: "Time-to-approve",
+    sortable: true,
+    className: "text-right",
+    cellClass: "text-right",
+    render: (r) => fmtSeconds(r.avg_time_to_approve_seconds),
+  },
+  {
+    key: "approved_advance_cents",
+    label: "Approved volume",
+    sortable: true,
+    className: "text-right",
+    cellClass: "text-right",
+    render: (r) => fmtCents(r.approved_advance_cents),
+  },
+];
+
 export function DriverHubReportingPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -120,7 +191,12 @@ export function DriverHubReportingPage() {
       ) : query.isLoading ? (
         <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading…</div>
       ) : query.isError ? (
-        <div className="rounded-sm border border-red-200 bg-red-50 p-4 text-sm text-red-700">Could not load reporting.</div>
+        <ListErrorState
+          title="Could not load reporting."
+          status={0}
+          message={(query.error as Error)?.message}
+          onRetry={() => void query.refetch()}
+        />
       ) : data ? (
         <>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-7">
@@ -133,39 +209,17 @@ export function DriverHubReportingPage() {
             <Card label="Approved volume" value={fmtCents(data.summary.total_approved_advance_cents)} />
           </div>
 
-          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-            <table className="w-full text-xs">
-              <thead className="bg-gray-50 text-[#6B7280]">
-                <tr>
-                  <th className="px-2 py-1.5 text-left font-semibold">Driver</th>
-                  <th className="px-2 py-1.5 text-right font-semibold">Total</th>
-                  <th className="px-2 py-1.5 text-right font-semibold">Approved</th>
-                  <th className="px-2 py-1.5 text-right font-semibold">Denied</th>
-                  <th className="px-2 py-1.5 text-right font-semibold">Approval %</th>
-                  <th className="px-2 py-1.5 text-right font-semibold">Time-to-view</th>
-                  <th className="px-2 py-1.5 text-right font-semibold">Time-to-approve</th>
-                  <th className="px-2 py-1.5 text-right font-semibold">Approved volume</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.by_driver.length === 0 ? (
-                  <tr><td colSpan={8} className="px-2 py-4 text-center text-gray-500">No requests in this period.</td></tr>
-                ) : (
-                  data.by_driver.map((r) => (
-                    <tr key={r.driver_id} className="border-t border-gray-100">
-                      <td className="px-2 py-1.5 text-left text-[#1f2a44]">{r.driver_name}</td>
-                      <td className="px-2 py-1.5 text-right">{r.total_requests}</td>
-                      <td className="px-2 py-1.5 text-right text-[#334155]">{r.approved}</td>
-                      <td className="px-2 py-1.5 text-right">{r.denied}</td>
-                      <td className="px-2 py-1.5 text-right">{fmtPct(r.approval_rate_pct)}</td>
-                      <td className="px-2 py-1.5 text-right">{fmtSeconds(r.avg_time_to_view_seconds)}</td>
-                      <td className="px-2 py-1.5 text-right">{fmtSeconds(r.avg_time_to_approve_seconds)}</td>
-                      <td className="px-2 py-1.5 text-right">{fmtCents(r.approved_advance_cents)}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+          <div className="rounded-sm border border-gray-200 bg-white p-2">
+            <ParityTable
+              rows={data.by_driver}
+              columns={DRIVER_REPORTING_COLUMNS}
+              rowKey={(r) => r.driver_id}
+              storageKey="driver-hub-reporting-by-driver"
+              emptyText="No requests in this period."
+              tableTestId="driver-hub-reporting-table"
+              rowTestId={(r) => `driver-hub-reporting-row-${r.driver_id}`}
+              initialPageSize={50}
+            />
           </div>
 
           {data.not_computed.length > 0 ? (

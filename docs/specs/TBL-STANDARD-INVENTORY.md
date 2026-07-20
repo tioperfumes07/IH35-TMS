@@ -76,7 +76,6 @@ ADDITIVE, zero feature loss; route + sidebar + endpoint UNCHANGED.
   - `lists/safety/InternalFineReasonsListPage.tsx`
   - `payroll-integration/PayrollAggregateTable.tsx`
   - `reports/runners/RunnerTable.tsx`
-  - `safety/components/SafetyEventsTable.tsx`
   - `vendors/VendorsListView.tsx`
   - `work-orders/WorkOrdersConsoleListPage.tsx`
 
@@ -94,7 +93,7 @@ Drivers.tsx, Documents.tsx, Users.tsx, drivers/SettlementDisputeList, inventory/
 maintenance suite (ArrivingSoonPage, RoadServiceList, ServiceLocationPage, components/WorkOrdersTable,
 PartsInventoryTable, InTransitIssuesTable, SevereRepairOosTab, MaintenanceDamageRegisterTab,
 drivers/DriversMasterDataPage, parts/PartsMasterDataPage, vehicles/VehiclesMasterDataPage, vendors/VendorsPage,
-DriverReportsQueuePage) + safety/components/DrugAlcoholTable, safety/components/TrainingTable.
+DriverReportsQueuePage) + safety/components/DrugAlcoholTable, safety/components/SafetyEventsTable, safety/components/TrainingTable.
 
 ## Acceptance for the sweep
 Per surface: renders via shared DataTable; alignment + page-size + sort/resize correct; every pre-existing

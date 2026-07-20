@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-hos-viewer-paritytable",
+  "branch": "fix/hos-viewer-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable + ListErrorState)",
+  "phase": "OPS-FE",
+  "task": "Migrate compliance HosViewerSection duty-segment grid from a hand-rolled <table> + bare error state to shared ParityTable (sort/resize/gear/export) + ListErrorState. Preserve Duty status/Start (CT)/End (CT)/Duration, duty-color markers, driver/date controls, HOS clocks, totals, and no-ELD-data copy. Guard + verify-step 1066 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + qbo-parity-a1",
+  "source_file": "qbo-parity-a1-hos-viewer-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-hos-viewer-paritytable.json",
+    "apps/frontend/src/pages/compliance/HosViewerSection.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-hos-viewer-uses-paritytable.mjs",
+    "scripts/verify-steps/1066-verify-hos-viewer-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "HosViewerSection.tsx uses ParityTable (no hand-rolled <table>/<thead>) and ListErrorState on HOS query failure; columns Duty status/Start (CT)/End (CT)/Duration, duty-color markers, storageKey=compliance-hos-viewer-segments, tableTestId=compliance-hos-viewer-segments-table, CSV export, driver/date controls, HOS clock cards, totals, and no-ELD-data state are preserved; verify-hos-viewer-uses-paritytable.mjs PASS (+ --selftest); verify-step 1066 wired (Rule 17); tracker marks HosViewerSection migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 — HosViewerSection surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17). verify-step 1066 is unused and auto-discovered."
+}

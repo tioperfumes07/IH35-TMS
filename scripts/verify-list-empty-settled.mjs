@@ -104,7 +104,12 @@ const MIGRATED = [
   { file: "apps/frontend/src/pages/safety/FinesPage.tsx", empties: ["No fines found."] },
   { file: "apps/frontend/src/pages/safety/IdvrPage.tsx", empties: ["No DVIR submissions found for the selected filters."] },
   { file: "apps/frontend/src/pages/safety/PositionHistoryPage.tsx", empties: ["No position history records found"] },
-  { file: "apps/frontend/src/pages/safety/SafetyEventsPage.tsx", empties: ["No safety events found.", "No notes yet."] },
+  // "No safety events found." moved from the page into the ParityTable emptyText of the extracted
+  // SafetyEventsTable child during the ParityTable migration; it still renders. Guard entry split to
+  // match the new location (per paritytable-conversion-trips-static-guards — update the guard, never
+  // weaken it). Both literals remain asserted; "No notes yet." stayed on the page.
+  { file: "apps/frontend/src/pages/safety/SafetyEventsPage.tsx", empties: ["No notes yet."] },
+  { file: "apps/frontend/src/pages/safety/components/SafetyEventsTable.tsx", empties: ["No safety events found."] },
   { file: "apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx", empties: ["No records found."] },
   { file: "apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx", empties: ["No records found."] },
   { file: "apps/frontend/src/pages/safety/tabs/ComplaintsTab.tsx", empties: ["No complaints found."] },

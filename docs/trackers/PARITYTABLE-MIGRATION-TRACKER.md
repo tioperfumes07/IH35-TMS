@@ -194,6 +194,17 @@ Guard: `scripts/verify-load-history-tab-uses-paritytable.mjs` via verify-step 10
 | --- | --- |
 | `apps/frontend/src/components/drivers/LoadHistoryTab.tsx` | components/drivers |
 
+## qbo-parity-a1 — SafetyEventsTable (this PR)
+Safety events bulk-select grid was a hand-rolled `<table>` with BulkActionBar +
+TableSelection. Migrated to shared `ParityTable` (sort + resize + gear +
+selectable + batchActions). Columns Date/Driver/Unit/Type/Severity/Source/Action/
+Status preserved 1:1; bulk export + archive stub retained; maxSelectable 200.
+Guard: `scripts/verify-safety-events-table-uses-paritytable.mjs` via verify-step 1068.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/safety/components/SafetyEventsTable.tsx` | pages/safety |
+
 ## qbo-parity-a1 — StopReasoningTable (this PR)
 Fuel planner recommended-stop reasoning grid was a hand-rolled `<table>`. Migrated to
 shared `ParityTable` (sort + resize + gear). Columns #/Station/State/Mile/$/gal/Gallons/
@@ -499,8 +510,9 @@ verify-step 1035.
 | --- | --- |
 | `apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx` | pending |
 | `apps/frontend/src/pages/compliance/Form2290Filings.tsx` | pending |
-| `apps/frontend/src/pages/compliance/HosTrackerSection.tsx` | pending |
 | `apps/frontend/src/pages/compliance/HosViewerSection.tsx` | pending |
+| `apps/frontend/src/pages/compliance/HosTrackerSection.tsx` | pending |
+| `apps/frontend/src/pages/compliance/HosViewerSection.tsx` | migrated (fix/hos-viewer-paritytable) |
 
 ### pages/customers (4)
 
@@ -619,7 +631,7 @@ verify-step 1035.
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/home/DriverHubReportingPage.tsx` | pending |
+| `apps/frontend/src/pages/home/DriverHubReportingPage.tsx` | migrated (qbo-parity-a1) |
 
 ### pages/insurance (6)
 
@@ -755,6 +767,7 @@ verify-step 1035.
 | `apps/frontend/src/pages/reports/audit/AuditReportPage.tsx` | pending |
 | `apps/frontend/src/pages/reports/ifta/IFTAStepGallons.tsx` | pending |
 | `apps/frontend/src/pages/reports/ifta/IFTAStepMiles.tsx` | pending |
+| `apps/frontend/src/pages/reports/ifta/IFTAStepMiles.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/pages/reports/ifta/IFTAStepTax.tsx` | pending |
 | `apps/frontend/src/pages/reports/runners/RunnerTable.tsx` | pending |
 
@@ -774,7 +787,7 @@ verify-step 1035.
 | `apps/frontend/src/pages/safety/PositionHistoryPage.tsx` | pending |
 | `apps/frontend/src/pages/safety/SafetyEventsPage.tsx` | pending |
 | `apps/frontend/src/pages/safety/components/IntegrityAlertsTab.tsx` | pending |
-| `apps/frontend/src/pages/safety/components/SafetyEventsTable.tsx` | pending |
+| `apps/frontend/src/pages/safety/components/SafetyEventsTable.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx` | pending |
 | `apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerGridPage.tsx` | pending |
 | `apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerRequestInboxPage.tsx` | pending |
@@ -1069,3 +1082,84 @@ Guard: `scripts/verify-booking-gap-report-uses-paritytable.mjs` via verify-step 
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/reports/BookingGapReport.tsx` | pages/reports |
+## qbo-parity-a1 — DriverHubReportingPage (this PR)
+Driver Inbox Reporting by-driver grid was a hand-rolled `<table>` with a bare red
+outage banner. Migrated to shared `ParityTable` (sort + resize + gear) and replaced
+the ad-hoc error with `ListErrorState` + Retry. Columns Driver / Total / Approved /
+Denied / Approval % / Time-to-view / Time-to-approve / Approved volume preserved 1:1;
+summary cards + Export CSV + not_computed chrome preserved. Guard:
+`scripts/verify-driver-hub-reporting-uses-paritytable.mjs` via verify-step **1055**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/home/DriverHubReportingPage.tsx` | pages/home |
+
+## qbo-parity-a1 — IFTAStepTax (this PR)
+IFTA preparation Step 3 tax grid was a hand-rolled `<table>` with a tfoot total row.
+Migrated to shared `ParityTable` (sort + resize + gear + CSV export). Columns State /
+Miles / Taxable gal / Paid gal / Net gal / Rate / Tax/Credit preserved 1:1; calculate
+action, last-calculated timestamp, credit green styling, and total net tax summary
+preserved. Guard: `scripts/verify-ifta-step-tax-uses-paritytable.mjs` via verify-step **1061**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/reports/ifta/IFTAStepTax.tsx` | pages/reports/ifta |
+
+## qbo-parity-a1 — AuditReportPage (this PR)
+The shared, display-only audit-report grid was a hand-rolled `<table>` used by user,
+module, maintenance, deduction, void/reversal, period-close, and financial-change
+audit reports. Migrated it to `ParityTable` (sort + resize + gear + density) while
+preserving the five columns, filter inputs, CSV export, and server-side report
+pagination. This change does not create, edit, void, post, or otherwise mutate GL
+records. Guard: `scripts/verify-audit-report-page-uses-paritytable.mjs` via
+verify-step **1063**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/reports/audit/AuditReportPage.tsx` | pages/reports/audit |
+
+## qbo-parity-a1 — RunnerTable (this PR)
+The reusable report-runner results grid was a hand-rolled `<table>`. Migrated to shared
+`ParityTable` (sort + resize + gear + paging) while preserving every configuration-driven
+column, order, alignment, currency/percent/number/date formatting, optional `onSort`
+callback, per-report preference key, id/index row-key fallback, and empty-state copy.
+Guard: `scripts/verify-runner-table-uses-paritytable.mjs` via verify-step **1062**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/reports/runners/RunnerTable.tsx` | pages/reports/runners |
+
+## qbo-parity-a1 — IFTAStepMiles (this PR)
+IFTA quarterly preparer Step 1 state miles (`pages/reports/ifta/IFTAStepMiles`) was a
+hand-rolled `<table>` with aggregate action + last-aggregated stamp + total footer.
+Migrated to shared `ParityTable` (sort + resize + gear). Columns State / Miles / Source
+preserved 1:1; Run Step 1 aggregate + last aggregated + Total summary retained.
+Guard: `scripts/verify-ifta-step-miles-uses-paritytable.mjs` via verify-step **1060**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/reports/ifta/IFTAStepMiles.tsx` | pages/reports/ifta |
+
+## qbo-parity-a1 — HosTrackerSection (this PR)
+Compliance HOS Tracker roster was a hand-rolled `<table>` with a bare red outage
+message. Migrated to shared `ParityTable` (sort + resize + gear) and replaced the
+ad-hoc error with `ListErrorState` + Retry. Columns Driver / Unit / Status / Drive /
+Shift / Cycle / Driven (cyc) preserved 1:1; duty-state display, numeric alignment,
+unavailable-row treatment, date strip, KPI cards, and cycle-detail drawer preserved.
+Guard: `scripts/verify-hos-tracker-uses-paritytable.mjs` via verify-step **1065**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/compliance/HosTrackerSection.tsx` | pages/compliance |
+
+## qbo-parity-a1 — HosViewerSection (this PR)
+Compliance HOS Viewer duty-segment log was a hand-rolled `<table>` with a bare outage
+message. Migrated it to shared `ParityTable` (sort + resize + gear + CSV export) and
+replaced the bare failure state with `ListErrorState` + Retry. Columns Duty status /
+Start (CT) / End (CT) / Duration, duty-color markers, driver/date controls, HOS clock
+cards, per-status totals, and no-ELD-data copy are preserved. Guard:
+`scripts/verify-hos-viewer-uses-paritytable.mjs` via verify-step **1066**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/compliance/HosViewerSection.tsx` | pages/compliance |
