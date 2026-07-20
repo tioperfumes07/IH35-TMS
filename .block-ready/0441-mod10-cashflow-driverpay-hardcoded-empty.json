@@ -1,17 +1,27 @@
 {
   "block_id": "0441-mod10-cashflow-driverpay-hardcoded-empty",
-  "status": "PENDING",
-  "classification": "FINANCIAL",
+  "branch": "fix/0441-mod10-cashflow-driverpay",
+  "status": "IN_PROGRESS",
+  "classification": "ADDITIVE",
   "phase": "tier1",
-  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
+  "task": "0441-mod10: cash-flow daily prediction emits kind:driver_pay from queued/sent_to_bank settlements (read-only forecast, no GL/migration)",
+  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS) + CODER-BUILD-INSTRUCTIONS-2026-07-19",
   "source_file": "0441-mod10-cashflow-driverpay-hardcoded-empty.txt",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    ".block-ready/0441-mod10-cashflow-driverpay-hardcoded-empty.json",
+    "apps/backend/src/cash-flow/cash-flow.service.ts",
+    "scripts/verify-cash-flow-driver-pay-populated.mjs",
+    "scripts/verify-steps/1008-verify-cash-flow-driver-pay-populated.mjs"
   ],
+  "runtime_path": "backend",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": ["verify-cash-flow-driver-pay-populated"],
+  "hold": false,
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "cash-flow.service.ts constructs expense items with kind: \"driver_pay\" from driver_finance.driver_settlements where payment_state IN (queued, sent_to_bank) bucketed by COALESCE(bank_settle_date, payment_sent_at::date, payment_queued_at::date). No migration / no GL write. Guard scripts/verify-cash-flow-driver-pay-populated.mjs + verify-step 1008 PASS."
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "Tracker GATED: no — forecast display only. Classification ADDITIVE (not FINANCIAL cluster): read-only settlement query, no accounting.* write, no db/migrations, no catalogs.accounts touch."
 }

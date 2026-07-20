@@ -18,6 +18,9 @@
  *   payments     → accounting.payments(payment_date, amount_cents, voided_at)
  *   bank txns    → banking.bank_transactions (is_credit, amount_cents, transaction_date)
  *   adjustments  → accounting.cash_flow_adjustments (already correct)
+ *   settlements  → driver_finance.driver_settlements (net_pay dollars, payment_state,
+ *                  bank_settle_date / payment_sent_at / payment_queued_at) — READ-ONLY
+ *                  cash-out forecast rows (kind: driver_pay). No GL writes.
  */
 import type pg from "pg";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
@@ -194,15 +197,52 @@ export async function getDailyPrediction(
     basis: CONFIRMED_STATUSES.has(row.status) ? "Confirmed" : "Predicted",
   }));
 
-  // Driver pay accrued on delivery date.
-  // NOTE: driver earnings live in driver_finance.settlement_lines, which links
-  // to a settlement (settlement_id), NOT directly to a load — there is no
-  // settlement_lines.load_id in this schema. Per-load delivery-date accrual
-  // therefore needs the settlement→load mapping, which is not resolved here.
-  // Degrade gracefully (no driver-pay lines) rather than crash or post a wrong
-  // join. TODO(cash-flow): wire per-load driver pay via the settlement→load
-  // link once confirmed. Wrapped so any future query error is non-fatal.
+  // Driver pay cash-out forecast (0441-mod10-cashflow-driverpay-hardcoded-empty).
+  // Emit kind:"driver_pay" for settlements already queued / sent_to_bank whose
+  // expected bank date falls on `date`. net_pay is stored as dollars (numeric);
+  // convert to cents in SQL. READ-ONLY — no GL / settlement mutation.
+  // Per-load delivery-date accrual remains a separate future enhancement
+  // (settlement_lines lack load_id; first_load_id is available on the settlement).
   const expenseItems: ExpenseLineItem[] = [];
+
+  const driverPayRows = await client.query<{
+    display_id: string | null;
+    driver_name: string;
+    amount_cents: number;
+    first_load_id: string | null;
+  }>(
+    `
+    SELECT
+      s.display_id,
+      TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, ''))) AS driver_name,
+      ROUND(COALESCE(s.net_pay, 0) * 100)::int AS amount_cents,
+      s.first_load_id::text AS first_load_id
+    FROM driver_finance.driver_settlements s
+    LEFT JOIN mdata.drivers d ON d.id = s.driver_id
+    WHERE s.operating_company_id = $1
+      AND s.reversed_at IS NULL
+      AND COALESCE(s.payment_state, 'unpaid') IN ('queued', 'sent_to_bank')
+      AND COALESCE(
+        s.bank_settle_date,
+        (s.payment_sent_at AT TIME ZONE 'UTC')::date,
+        (s.payment_queued_at AT TIME ZONE 'UTC')::date
+      ) = $2::date
+      AND COALESCE(s.net_pay, 0) > 0
+    ORDER BY s.display_id ASC NULLS LAST, driver_name ASC
+    `,
+    [operatingCompanyId, date]
+  );
+
+  for (const row of driverPayRows.rows) {
+    const name = row.driver_name.trim() || "Driver";
+    const idLabel = row.display_id?.trim() || "settlement";
+    expenseItems.push({
+      label: `Driver Pay — ${idLabel} — ${name}`,
+      amount_cents: row.amount_cents,
+      kind: "driver_pay",
+      ...(row.first_load_id ? { load_id: row.first_load_id } : {}),
+    });
+  }
 
   // Bills due on this date (AP bills: insurance, fuel, factoring, etc.).
   // accounting.bills already tracks paid_cents, so remaining is computed directly.
