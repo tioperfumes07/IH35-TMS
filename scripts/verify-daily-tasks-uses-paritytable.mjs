@@ -1,0 +1,94 @@
+#!/usr/bin/env node
+/**
+ * Locks the Daily Tasks list to shared ParityTable grammar and a retryable
+ * query-error state. The original six columns and row test IDs must remain.
+ */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const LABEL = "verify-daily-tasks-uses-paritytable";
+const PAGE = "apps/frontend/src/pages/daily-tasks/DailyTasksPage.tsx";
+const REQUIRED_LABELS = ["Task", "Status", "Assignee", "Due", "Timestamps", "Actions"];
+
+function assertMigrated(source) {
+  const errors = [];
+  if (!source.includes('from "../../components/parity/ParityTable"')) {
+    errors.push(`${PAGE}: must import ParityTable from components/parity/ParityTable`);
+  }
+  if (!source.includes('from "../../components/ListErrorState"')) {
+    errors.push(`${PAGE}: must import ListErrorState`);
+  }
+  if ((source.match(/<ParityTable\b/g) ?? []).length < 1) {
+    errors.push(`${PAGE}: expected ≥1 <ParityTable>`);
+  }
+  if ((source.match(/<ListErrorState\b/g) ?? []).length < 1) {
+    errors.push(`${PAGE}: expected retryable <ListErrorState>`);
+  }
+  if (/<table[\s>]/.test(source) || /<thead[\s>]/.test(source)) {
+    errors.push(`${PAGE}: must not contain a hand-rolled table`);
+  }
+  for (const label of REQUIRED_LABELS) {
+    if (!source.includes(`label: "${label}"`)) {
+      errors.push(`${PAGE}: missing preserved column label: ${label}`);
+    }
+  }
+  if (!source.includes('storageKey="daily-tasks"')) {
+    errors.push(`${PAGE}: must set storageKey="daily-tasks"`);
+  }
+  if (!source.includes('rowTestId={(task) => `task-row-${task.id}`}')) {
+    errors.push(`${PAGE}: must preserve task-row data-testid hooks`);
+  }
+  if (!source.includes("task.is_overdue ?")) {
+    errors.push(`${PAGE}: must preserve overdue row highlighting`);
+  }
+  return errors;
+}
+
+function selftest() {
+  const good = `
+    import { ListErrorState } from "../../components/ListErrorState";
+    import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+    const columns: ParityColumn<Task>[] = [
+      { key: "title", label: "Task" },
+      { key: "status", label: "Status" },
+      { key: "assignee", label: "Assignee" },
+      { key: "due_at", label: "Due" },
+      { key: "created_at", label: "Timestamps" },
+      { key: "actions", label: "Actions" },
+    ];
+    export function DailyTasksPage() {
+      return <>{task.is_overdue ? "Overdue" : null}<ListErrorState /><ParityTable storageKey="daily-tasks" rowTestId={(task) => \`task-row-\${task.id}\`} columns={columns} /></>;
+    }
+  `;
+  const bad = `export function DailyTasksPage() { return <table><thead><tr><th>Task</th></tr></thead></table>; }`;
+  const goodErrors = assertMigrated(good);
+  const badErrors = assertMigrated(bad);
+  if (goodErrors.length) {
+    console.error(`${LABEL} --selftest FAIL good fixture:`, goodErrors);
+    process.exit(1);
+  }
+  if (badErrors.length < 4) {
+    console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
+    process.exit(1);
+  }
+  console.log(`${LABEL} --selftest PASS`);
+}
+
+function main() {
+  if (process.argv.includes("--selftest")) {
+    selftest();
+    return;
+  }
+  const source = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+  const errors = assertMigrated(source);
+  if (errors.length) {
+    console.error(`FAIL ${LABEL}:`);
+    for (const error of errors) console.error(`  - ${error}`);
+    process.exit(1);
+  }
+  console.log(`OK ${LABEL}: ${PAGE} uses ParityTable with ListErrorState; six task columns preserved.`);
+}
+
+main();

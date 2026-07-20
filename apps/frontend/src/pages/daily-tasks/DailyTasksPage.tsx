@@ -15,10 +15,13 @@ import {
 import { listUsers } from "../../api/identity";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
 import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type TaskViewId = "my" | "team" | "created";
@@ -137,6 +140,7 @@ export function DailyTasksPage() {
     team: viewQueries[1]?.data?.tasks?.length ?? 0,
     created: viewQueries[2]?.data?.tasks?.length ?? 0,
   };
+  const activeQuery = viewQueries[VIEW_ORDER.indexOf(view)];
   const overdueCount = (viewQueries[1]?.data?.tasks ?? []).filter((row) => row.is_overdue).length;
 
   const detailTask = useMemo(() => {
@@ -210,6 +214,93 @@ export function DailyTasksPage() {
   };
 
   const currentTimeZone = new Intl.DateTimeFormat().resolvedOptions().timeZone || "Local time";
+  const columns = useMemo<ParityColumn<DailyTask>[]>(
+    () => [
+      {
+        key: "title",
+        label: "Task",
+        sortable: true,
+        render: (task) => (
+          <div className="flex items-start gap-2">
+            <ListChecks className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+            <div>
+              <button type="button" className="text-left font-semibold text-slate-900 hover:underline" onClick={() => setDetailTaskId(task.id)}>
+                {task.title}
+              </button>
+              {task.description ? <p className="mt-0.5 text-slate-600">{task.description}</p> : null}
+              <div className="mt-1 flex flex-wrap items-center gap-1">
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${priorityBadge(task.priority)}`}>
+                  {task.priority.toUpperCase()}
+                </span>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">{STATUS_STEPS[task.status]}</span>
+                {task.is_overdue ? <span className="rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-semibold text-white">Overdue</span> : null}
+              </div>
+            </div>
+          </div>
+        ),
+      },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        render: (task) => (
+          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusBadge(task.status)}`}>{task.status.toUpperCase()}</span>
+        ),
+      },
+      {
+        key: "assigned_to_email",
+        label: "Assignee",
+        sortable: true,
+        sortValue: (task) => task.assigned_to_email || task.assigned_to_user_id,
+        render: (task) => (
+          <div className="inline-flex items-center gap-1 text-slate-700">
+            <UserRound className="h-3.5 w-3.5" />
+            <span>{task.assigned_to_email || task.assigned_to_user_id}</span>
+          </div>
+        ),
+      },
+      { key: "due_at", label: "Due", sortable: true, render: (task) => formatDateTime(task.due_at) },
+      {
+        key: "created_at",
+        label: "Timestamps",
+        sortable: true,
+        render: (task) => (
+          <div className="text-slate-700">
+            <div>Created: {formatDateTime(task.created_at)}</div>
+            {task.accepted_at ? <div>Accepted: {formatDateTime(task.accepted_at)}</div> : null}
+            {task.completed_at ? <div>Completed: {formatDateTime(task.completed_at)}</div> : null}
+          </div>
+        ),
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        alwaysVisible: true,
+        render: (task) => {
+          const canAccept = task.status === "created" && task.assigned_to_user_id === userId;
+          const canComplete = task.status === "accepted" && task.assigned_to_user_id === userId;
+          return (
+            <div className="flex flex-wrap gap-1">
+              {canAccept ? (
+                <Button size="sm" type="button" loading={acceptMut.isPending} onClick={() => acceptMut.mutate(task.id)}>
+                  Accept
+                </Button>
+              ) : null}
+              {canComplete ? (
+                <Button size="sm" type="button" loading={completeMut.isPending} onClick={() => completeMut.mutate(task.id)}>
+                  Complete
+                </Button>
+              ) : null}
+              <Button size="sm" variant="secondary" type="button" onClick={() => setDetailTaskId(task.id)}>
+                Details
+              </Button>
+            </div>
+          );
+        },
+      },
+    ],
+    [acceptMut.isPending, completeMut.isPending, userId],
+  );
 
   return (
     <div className="space-y-3">
@@ -261,95 +352,28 @@ export function DailyTasksPage() {
         <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-sm text-slate-700">Select an operating company first.</div>
       ) : null}
 
-      <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
-        <table className="min-w-full text-left text-xs">
-          <thead className="border-b border-slate-200 bg-slate-50 text-[11px] uppercase tracking-wide text-slate-600">
-            <tr>
-              <th className="px-3 py-2">Task</th>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">Assignee</th>
-              <th className="px-3 py-2">Due</th>
-              <th className="px-3 py-2">Timestamps</th>
-              <th className="px-3 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {activeRows.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-3 py-6 text-center text-sm text-slate-500">
-                  No tasks in this view.
-                </td>
-              </tr>
-            ) : null}
-            {activeRows.map((task) => {
-              const canAccept = task.status === "created" && task.assigned_to_user_id === userId;
-              const canComplete = task.status === "accepted" && task.assigned_to_user_id === userId;
-              return (
-                <tr
-                  key={task.id}
-                  data-testid={`task-row-${task.id}`}
-                  className={`border-b border-slate-100 align-top ${task.is_overdue ? "bg-red-50/60" : "bg-white"}`}
-                >
-                  <td className="px-3 py-2">
-                    <div className="flex items-start gap-2">
-                      <ListChecks className="mt-0.5 h-4 w-4 text-slate-500" />
-                      <div>
-                        <button type="button" className="text-left font-semibold text-slate-900 hover:underline" onClick={() => setDetailTaskId(task.id)}>
-                          {task.title}
-                        </button>
-                        {task.description ? <p className="mt-0.5 text-slate-600">{task.description}</p> : null}
-                        <div className="mt-1 flex flex-wrap items-center gap-1">
-                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${priorityBadge(task.priority)}`}>
-                            {task.priority.toUpperCase()}
-                          </span>
-                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">{STATUS_STEPS[task.status]}</span>
-                          {task.is_overdue ? (
-                            <span className="rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-semibold text-white">Overdue</span>
-                          ) : null}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-3 py-2">
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusBadge(task.status)}`}>{task.status.toUpperCase()}</span>
-                  </td>
-                  <td className="px-3 py-2">
-                    <div className="inline-flex items-center gap-1 text-slate-700">
-                      <UserRound className="h-3.5 w-3.5" />
-                      <span>{task.assigned_to_email || task.assigned_to_user_id}</span>
-                    </div>
-                  </td>
-                  <td className="px-3 py-2">
-                    <div>{formatDateTime(task.due_at)}</div>
-                  </td>
-                  <td className="px-3 py-2 text-slate-700">
-                    <div>Created: {formatDateTime(task.created_at)}</div>
-                    {task.accepted_at ? <div>Accepted: {formatDateTime(task.accepted_at)}</div> : null}
-                    {task.completed_at ? <div>Completed: {formatDateTime(task.completed_at)}</div> : null}
-                  </td>
-                  <td className="px-3 py-2">
-                    <div className="flex flex-wrap gap-1">
-                      {canAccept ? (
-                        <Button size="sm" type="button" loading={acceptMut.isPending} onClick={() => acceptMut.mutate(task.id)}>
-                          Accept
-                        </Button>
-                      ) : null}
-                      {canComplete ? (
-                        <Button size="sm" type="button" loading={completeMut.isPending} onClick={() => completeMut.mutate(task.id)}>
-                          Complete
-                        </Button>
-                      ) : null}
-                      <Button size="sm" variant="secondary" type="button" onClick={() => setDetailTaskId(task.id)}>
-                        Details
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      {activeQuery?.isError ? (
+        <div className="rounded-sm border border-slate-200 bg-white">
+          <ListErrorState
+            title={`Couldn't load ${VIEW_LABEL[view].toLowerCase()}`}
+            {...formatQueryErrorDetail(activeQuery.error)}
+            onRetry={() => void activeQuery.refetch()}
+          />
+        </div>
+      ) : (
+        <ParityTable
+          rows={activeRows}
+          columns={columns}
+          rowKey={(task) => task.id}
+          loading={activeQuery?.isPending ?? false}
+          storageKey="daily-tasks"
+          emptyText="No tasks in this view."
+          exportFilename="daily-tasks"
+          tableTestId="daily-tasks-table"
+          rowTestId={(task) => `task-row-${task.id}`}
+          rowClassName={(task) => (task.is_overdue ? "bg-red-50/60" : "")}
+        />
+      )}
 
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Quick Create Task">
         <div className="space-y-3 text-xs">

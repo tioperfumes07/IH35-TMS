@@ -515,7 +515,7 @@ verify-step 1035.
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/daily-tasks/DailyTasksPage.tsx` | pending |
+| `apps/frontend/src/pages/daily-tasks/DailyTasksPage.tsx` | migrated (fix/daily-tasks-paritytable) |
 
 ### pages/dev (1)
 
@@ -1091,3 +1091,15 @@ Activate/Deactivate toggle preserved. Guard:
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/operations/GeofencesPage.tsx` | pages/operations |
+## qbo-parity-a1 — DailyTasksPage (this PR)
+
+Daily Tasks was a hand-rolled six-column task grid. Migrated to shared
+`ParityTable` (sort + resize + gear + CSV export + paging) and now renders
+`ListErrorState` with Retry when the selected task view fails. Task / Status /
+Assignee / Due / Timestamps / Actions, overdue highlighting, task row test IDs,
+and Accept / Complete / Details actions are preserved. Guard:
+`scripts/verify-daily-tasks-uses-paritytable.mjs` via verify-step **1070**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/daily-tasks/DailyTasksPage.tsx` | pages/daily-tasks |
