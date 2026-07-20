@@ -1,0 +1,38 @@
+{
+  "block_id": "STMT-2-opening-balances",
+  "status": "PENDING (GATED)",
+  "classification": "FINANCIAL",
+  "phase": "program",
+  "source": "docs/blocks/ACCOUNTING-FINANCE-CONNECTIONS/STMT-2-opening-balances.txt (source-rank 'program'=4 OUTRANKS .block-ready=3 — reconciler keeps the program row; this entry gives acceptance[] an enforceable home under G2, REPORTED status corrected via a GUARD-verified override.)",
+  "source_file": "STMT-2-opening-balances.txt",
+  "task": "Owner-entered opening balances per entity -> balanced opening JE. Registered so its criteria become machine-checkable; the source doc names ZERO file paths. Source doc STATUS: 'Tier 1 (writes opening equity/balances to the GL). STOPS for Jorge. GATED on Jorge's figures.' Recorded evidence: PR #2227 TITLE-MATCH ONLY. ANCHOR (owner-final 2026-07-16, Ch.11 fresh-start): opening balances = QBO Balance Sheet as of 03/31/2026 PER ENTITY (Ch.11 approved end of March 2026), TMS posts live in parallel from 04/01/2026. Re-syncable until the owner LOCKS the figures — the accountant's embezzlement cleanup keeps re-syncing into provisional balances, so any imported figure is PROVISIONAL until the owner says otherwise.",
+  "branch": "feat/task4-acceptance-criteria-6-financial-blocks",
+  "allowed_files": [
+    "apps/backend/src/accounting/opening-balance-import/opening-balance-import.service.ts",
+    "apps/backend/src/accounting/opening-balance-import/opening-balance-import.routes.ts"
+  ],
+  "acceptance": [
+    {
+      "kind": "code",
+      "assert": "Per-entity opening-balance entry producing a BALANCED opening JE (debits = credits to the cent). Reverse-never-delete. No new GL math — reuses the existing posting engine."
+    },
+    {
+      "kind": "design",
+      "assert": "Opening Balance Equity is a TEMPORARY CLEARING account and is expected to net ~0. A PERMANENT OBE balance is a DEFECT, and the OBE -> Retained Earnings reclass must be planned, not left resident."
+    },
+    {
+      "kind": "data",
+      "assert": "PROD count of opening-balance JEs per entity as of the 03/31/2026 anchor, plus a debits-equals-credits tie-out.",
+      "zero_count_means": "PENDING — no opening balances posted. PR #2227 is a title-match only. A 0-count MUST read PENDING; opening balances are the foundation every downstream statement rests on, so a false DONE here silently invalidates the Balance Sheet.",
+      "verified_by": "GUARD (RLS-immune probe, per-entity GUC, positive control)"
+    },
+    {
+      "kind": "live",
+      "assert": "Owner-entered figures produce a balanced opening JE per entity that ties to the QBO Balance Sheet as of 03/31/2026 TO THE CENT. OWNER-ENTERED ONLY — an agent NEVER enters or posts opening balances (section 1.4/1.6). Builder and GUARD verify the tie-out; they do not supply the figures."
+    }
+  ],
+  "linkage": "accounting.journal_entries (opening JE) <-> catalogs.accounts (incl. Opening Balance Equity) <-> org.companies per entity <-> audit.row_changes. Feeds every statement: Balance Sheet, Trial Balance, registers. USMCA has no QuickBooks and is TMS-authoritative from day one — it is never part of the clone/reconcile.",
+  "db_required": true,
+  "guard_required": true,
+  "note": "FINANCIAL CLUSTER, TIER 1, GATED ON THE OWNER'S FIGURES — the hardest gate in the repo. Opening balances are owner-entered only. Registration only; no build, no figures, no posting."
+}

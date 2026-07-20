@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-catalog-table-paritytable",
+  "branch": "fix/catalog-table-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable)",
+  "phase": "OPS-FE",
+  "task": "Migrate CatalogTable from hand-rolled <table> + BulkActionBar/TableSelection to shared ParityTable (sort/resize/gear/selectable batch + row actions). Preserve search/status filters, Archive/Restore/Edit, selection cap 200, emptyText. Guard + verify-step 1045 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + qbo-parity-a1",
+  "source_file": "qbo-parity-a1-catalog-table-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-catalog-table-paritytable.json",
+    "apps/frontend/src/components/catalogs/CatalogTable.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-catalog-table-uses-paritytable.mjs",
+    "scripts/verify-steps/1045-verify-catalog-table-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "CatalogTable.tsx uses ParityTable (no hand-rolled <table>/<thead>); selectable + Archive selected + Edit/Archive rowActions + filterBar + tableTestId=catalog-table; verify-catalog-table-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1045 wired (Rule 17); tracker marks CatalogTable migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 — CatalogTable surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17). verify-step 1045 (1044 reserved by open #2892 TrailerReefer)."
+}
