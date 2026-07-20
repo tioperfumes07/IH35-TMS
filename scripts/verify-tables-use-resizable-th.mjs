@@ -15,6 +15,38 @@ const REQUIRED_RESIZABLE_SURFACES = [
 
 const failures = [];
 
+function runnerUsesResizableHeader(source) {
+  const parityImport =
+    /import\s*\{[^}]*\bParityTable\b[^}]*\}\s*from\s*["'][^"']*\/components\/parity\/ParityTable["']/s;
+  return (
+    source.includes("ResizableTh") ||
+    source.includes("TableHeaderCell") ||
+    (parityImport.test(source) && /<ParityTable\b/.test(source))
+  );
+}
+
+const plantedFixtures = [
+  { name: "ResizableTh", source: "const header = <ResizableTh />;", expected: true },
+  { name: "TableHeaderCell", source: "const header = <TableHeaderCell />;", expected: true },
+  {
+    name: "ParityTable",
+    source:
+      'import { ParityTable } from "../../../components/parity/ParityTable";\nconst table = <ParityTable />;',
+    expected: true,
+  },
+  {
+    name: "comment-only ParityTable",
+    source: "// import ParityTable from components/parity/ParityTable\n// <ParityTable />",
+    expected: false,
+  },
+  { name: "plain table", source: "const table = <table />;", expected: false },
+];
+for (const fixture of plantedFixtures) {
+  if (runnerUsesResizableHeader(fixture.source) !== fixture.expected) {
+    failures.push(`guard selftest (${fixture.name} fixture returned ${!fixture.expected})`);
+  }
+}
+
 for (const rel of REQUIRED_RESIZABLE_SURFACES) {
   const full = path.join(repoRoot, rel);
   if (!fs.existsSync(full)) {
@@ -22,11 +54,10 @@ for (const rel of REQUIRED_RESIZABLE_SURFACES) {
     continue;
   }
   const source = fs.readFileSync(full, "utf8");
-  // RunnerTable must keep a resizable header — either the legacy ResizableTh OR the shared
-  // TableHeaderCell (GLOBAL-TABLE-CONTROLS rollout swapped ResizableTh → TableHeaderCell,
-  // which provides the same drag-resize + persisted widths via useTablePref).
-  if (rel.endsWith("RunnerTable.tsx") && !source.includes("ResizableTh") && !source.includes("TableHeaderCell")) {
-    failures.push(`${rel} (must use ResizableTh or the shared TableHeaderCell)`);
+  // RunnerTable must keep a resizable header through one of the shared implementations:
+  // legacy ResizableTh, GLOBAL-TABLE-CONTROLS TableHeaderCell, or QBO-parity ParityTable.
+  if (rel.endsWith("RunnerTable.tsx") && !runnerUsesResizableHeader(source)) {
+    failures.push(`${rel} (must use ResizableTh, TableHeaderCell, or ParityTable)`);
   }
 }
 

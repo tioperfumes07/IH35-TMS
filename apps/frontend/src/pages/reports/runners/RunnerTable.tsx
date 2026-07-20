@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { TableHeaderCell, useTablePref } from "../../../components/table";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import type { RunnerColumn } from "./runner-config";
 
 type Props = {
@@ -25,91 +25,75 @@ function formatCell(value: unknown, format: RunnerColumn["format"]) {
   return String(value);
 }
 
-export function RunnerTable({ columns, rows, onSort, tableId = "reports-runner" }: Props) {
-  const [sortKey, setSortKey] = useState<string>("");
-  const [direction, setDirection] = useState<"asc" | "desc" | "none">("none");
-  const { widths, setColumnWidth } = useTablePref(tableId, { pageSize: 50 });
-  const colWidth = (key: string) => widths[key] ?? 140;
-
-  const sortedRows = useMemo(() => {
-    if (!sortKey || direction === "none") return rows;
-    const next = [...rows];
-    next.sort((a, b) => {
-      const av = a[sortKey];
-      const bv = b[sortKey];
-      const an = Number(av);
-      const bn = Number(bv);
-      const cmp = Number.isFinite(an) && Number.isFinite(bn) ? an - bn : String(av ?? "").localeCompare(String(bv ?? ""));
-      return direction === "asc" ? cmp : -cmp;
-    });
-    return next;
-  }, [rows, sortKey, direction]);
-
-  function toggleSort(key: string) {
-    if (sortKey !== key) {
-      setSortKey(key);
-      setDirection("asc");
-      onSort?.(key);
-      return;
-    }
-    if (direction === "asc") {
-      setDirection("desc");
-      onSort?.(key);
-      return;
-    }
-    if (direction === "desc") {
-      setDirection("none");
-      return;
-    }
-    setDirection("asc");
-    onSort?.(key);
+function sortValue(value: unknown, format: RunnerColumn["format"]): string | number | null {
+  if (value == null || value === "") return null;
+  if (format === "currency" || format === "percent" || format === "number") {
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue) ? numericValue : String(value);
   }
+  if (format === "date") {
+    const timestamp = new Date(String(value)).getTime();
+    return Number.isNaN(timestamp) ? String(value) : timestamp;
+  }
+  return String(value);
+}
+
+type ParityRunnerRow = {
+  record: Record<string, unknown>;
+  rowKey: string;
+};
+
+export function RunnerTable({ columns, rows, onSort, tableId = "reports-runner" }: Props) {
+  const [sortKey, setSortKey] = useState("");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  const parityRows = useMemo<ParityRunnerRow[]>(
+    () =>
+      rows.map((record, index) => ({
+        record,
+        rowKey: String(record.id ?? index),
+      })),
+    [rows],
+  );
+
+  const parityColumns = useMemo<ParityColumn<ParityRunnerRow>[]>(
+    () =>
+      columns.map((column) => {
+        const alignment =
+          column.align === "right"
+            ? "text-right"
+            : column.align === "center"
+              ? "text-center"
+              : "text-left";
+        return {
+          key: column.key,
+          label: column.label,
+          sortable: Boolean(column.sortable),
+          className: alignment,
+          cellClass: alignment,
+          sortValue: (row) => sortValue(row.record[column.key], column.format),
+          render: (row) => formatCell(row.record[column.key], column.format),
+        };
+      }),
+    [columns],
+  );
 
   return (
-    <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white" data-resizable-table={tableId}>
-      <table className="min-w-full text-left text-xs">
-        <thead className="bg-slate-50">
-          <tr className="border-b border-slate-200 text-slate-600">
-            {columns.map((column) => (
-              <TableHeaderCell
-                key={column.key}
-                columnKey={column.key}
-                label={column.label}
-                sortable={Boolean(column.sortable)}
-                sortKey={direction === "none" ? null : sortKey}
-                sortDir={direction === "none" ? "asc" : direction}
-                onToggleSort={toggleSort}
-                width={colWidth(column.key)}
-                onResize={setColumnWidth}
-                className={`font-semibold ${column.align === "right" ? "text-right" : column.align === "center" ? "text-center" : ""}`}
-              />
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {sortedRows.length === 0 ? (
-            <tr>
-              <td colSpan={columns.length} className="px-3 py-4 text-center text-slate-500">
-                No results for these filters
-              </td>
-            </tr>
-          ) : (
-            sortedRows.map((row, rowIndex) => (
-              <tr key={String(row.id ?? rowIndex)} className={`border-b border-slate-100 ${rowIndex % 2 === 0 ? "bg-white" : "bg-slate-50/40"}`}>
-                {columns.map((column) => (
-                  <td
-                    key={column.key}
-                    style={{ width: colWidth(column.key), maxWidth: colWidth(column.key) }}
-                    className={`truncate px-3 py-2 text-slate-700 ${column.align === "right" ? "text-right" : column.align === "center" ? "text-center" : "text-left"}`}
-                  >
-                    {formatCell(row[column.key], column.format)}
-                  </td>
-                ))}
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
+    <ParityTable
+      columns={parityColumns}
+      rows={parityRows}
+      rowKey={(row) => row.rowKey}
+      storageKey={tableId}
+      initialPageSize={50}
+      pageSizeOptions={[50, 100, 300]}
+      emptyText="No results for these filters"
+      sortKey={sortKey}
+      sortDirection={sortDirection}
+      onSortChange={(key, direction) => {
+        setSortKey(key);
+        setSortDirection(direction);
+        onSort?.(key);
+      }}
+    />
   );
 }
