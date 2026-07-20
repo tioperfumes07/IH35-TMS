@@ -245,7 +245,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
           <div className="mt-1 text-gray-600">Auto-suggest default: 4 weekly installments.</div>
         </div>
 
-        {abovePolicyWarn ? <div className="mt-3 rounded-sm border border-amber-300 bg-amber-50 p-2 text-amber-800">{abovePolicyWarn}</div> : null}
+        {abovePolicyWarn ? <div className="mt-3 rounded-sm border border-slate-300 bg-slate-50 p-2 text-slate-800">{abovePolicyWarn}</div> : null}
 
         <div className="mt-4 flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>

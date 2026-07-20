@@ -52,7 +52,7 @@ export function OwnerApprovalPortalPage() {
   const req = data?.request;
   const rec = data?.recommendation ?? "low";
   const recTone =
-    rec === "high" ? "bg-red-100 text-red-900" : rec === "medium" ? "bg-amber-100 text-amber-900" : "bg-green-100 text-green-900";
+    rec === "high" ? "bg-red-100 text-red-900" : rec === "medium" ? "bg-slate-100 text-slate-900" : "bg-slate-100 text-slate-700";
 
   async function onApprove() {
     if (!token) return;
@@ -92,7 +92,7 @@ export function OwnerApprovalPortalPage() {
 
         {loading ? <p className="text-sm text-slate-600">Loading…</p> : null}
         {error && !done ? <p className="text-sm text-red-600">Could not open this approval ({error}).</p> : null}
-        {done ? <p className="rounded-sm border border-green-200 bg-green-50 p-3 text-sm text-green-900">{done}</p> : null}
+        {done ? <p className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-sm text-slate-900">{done}</p> : null}
 
         {data && !done ? (
           <>

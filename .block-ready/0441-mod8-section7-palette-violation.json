@@ -3,8 +3,8 @@
   "status": "BUILD",
   "classification": "NON-FINANCIAL",
   "phase": "tier3",
-  "branch": "fix/section7-palette-ratchet-liabilities-ca",
-  "task": "Incremental §7 palette ratchet: liabilities + cash-advances + driver-finance notice surfaces → slate tokens; BASELINE 135→111",
+  "branch": "fix/section7-palette-ratchet-batch2",
+  "task": "Incremental §7 palette ratchet batch2: driver-finance + factoring + cash-advances notices + payment-method/CC gates → slate tokens; BASELINE 111→68",
   "source": "CODER-BUILD-INSTRUCTIONS-2026-07-19.md",
   "source_file": "0441-mod8-section7-palette-violation",
   "runtime_path": "src",
@@ -13,23 +13,30 @@
   "extra_gates": [],
   "allowed_files": [
     ".block-ready/0441-mod8-section7-palette-violation.json",
-    "apps/frontend/src/pages/liabilities/components/LiabilitiesTable.tsx",
-    "apps/frontend/src/pages/cash-advances/components/CashAdvancesTable.tsx",
-    "apps/frontend/src/pages/driver-finance/components/PendingAckNotice.tsx",
-    "apps/frontend/src/pages/driver-finance/components/FinalizeBlock.tsx",
-    "apps/frontend/src/pages/driver-finance/components/NetPaySummary.tsx",
+    "apps/frontend/src/pages/driver-finance/OwnerApprovalPortalPage.tsx",
+    "apps/frontend/src/pages/driver-finance/EscrowDeductionsPendingTab.tsx",
+    "apps/frontend/src/pages/driver-finance/CashAdvanceRequestsPage.tsx",
+    "apps/frontend/src/pages/driver-finance/components/DeductionsSection.tsx",
+    "apps/frontend/src/pages/driver-finance/components/EarningsSection.tsx",
+    "apps/frontend/src/pages/driver-finance/components/EscrowVisualizer.tsx",
+    "apps/frontend/src/pages/cash-advances/components/CreateAdvanceModal.tsx",
+    "apps/frontend/src/pages/liabilities/components/LiabilitiesKpiRow.tsx",
+    "apps/frontend/src/pages/factoring/SubmissionWorkqueue.tsx",
+    "apps/frontend/src/pages/factoring/SubmissionQueue.tsx",
+    "apps/frontend/src/pages/accounting/PaymentMethodsCatalogPage.tsx",
+    "apps/frontend/src/pages/accounting/bill-payments/CCPaymentModal.tsx",
     "scripts/verify-section7-palette-financial.mjs"
   ],
   "acceptance": [
     {
-      "check": "Off-palette amber/emerald/green/yellow status classes removed from the five listed FE components (red for failed/civil_fine retained)"
+      "check": "Off-palette amber/emerald/green/yellow status classes removed from listed FE surfaces (red for high-risk/recourse/missing docs retained)"
     },
     {
-      "check": "verify-section7-palette-financial.mjs BASELINE ratcheted downward 135→111; script PASS at new baseline"
+      "check": "verify-section7-palette-financial.mjs BASELINE ratcheted downward 111→68; script PASS at new baseline"
     },
     {
-      "check": "Banking tree remains 0 off-palette (already clean); no package.json / CI workflow edits (Rule 17)"
+      "check": "No package.json / CI workflow edits (Rule 17)"
     }
   ],
-  "note": "Incremental ratchet only — not zero. Builder stops at PR; do not merge. Financial UI §7 recolor batch under ops FE lane."
+  "note": "Incremental ratchet only — not zero. Ops FE §7 recolor batch2."
 }

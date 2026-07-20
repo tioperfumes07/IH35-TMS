@@ -56,7 +56,7 @@ export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSave
         <MoneyInput valueDollars={amountDollars ? Number(amountDollars) : null} onChangeDollars={(d) => setAmountDollars(d == null ? "" : String(d))} ariaLabel="Payment amount (USD)" className="w-full" />
         <DatePicker className="h-9 w-full rounded-sm border px-2 text-[13px]" value={paymentDate} onChange={setPaymentDate} />
         {CC_BILL_PAYMENT_GATED ? (
-          <div className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          <div className="rounded-sm border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-800">
             <span className="font-semibold">CC bill payment gated.</span> Submit is disabled pending financial-cluster approval. Contact Jorge to enable.
           </div>
         ) : null}
