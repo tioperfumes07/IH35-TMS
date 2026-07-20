@@ -1,7 +1,10 @@
+import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { CertExpiryBadge } from "../../components/safety/CertExpiryBadge";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 
 type UnitPermit = {
@@ -53,8 +56,64 @@ export function UnitPermitsTab({ unitId, companyId }: UnitPermitsTabProps) {
     onError: () => pushToast("Failed to archive permit", "error"),
   });
 
-  const alertByPermit = new Map(
-    (permitsQuery.data?.expiry_alerts ?? []).map((alert) => [alert.permit_uuid, alert.severity])
+  const alertByPermit = useMemo(
+    () =>
+      new Map(
+        (permitsQuery.data?.expiry_alerts ?? []).map((alert) => [alert.permit_uuid, alert.severity])
+      ),
+    [permitsQuery.data?.expiry_alerts]
+  );
+
+  const rows = permitsQuery.data?.permits ?? [];
+
+  const columns = useMemo<Array<ParityColumn<UnitPermit>>>(
+    () => [
+      {
+        key: "permit_type",
+        label: "Type",
+        sortable: true,
+        render: (permit) => <span className="font-medium capitalize text-gray-900">{permit.permit_type}</span>,
+      },
+      { key: "issuing_state", label: "State", sortable: true, render: (permit) => permit.issuing_state },
+      { key: "permit_number", label: "Number", sortable: true, render: (permit) => permit.permit_number },
+      {
+        key: "expiration_date",
+        label: "Expires",
+        sortable: true,
+        render: (permit) => (
+          <>
+            <CertExpiryBadge label="Expiry" expiresAt={permit.expiration_date} />
+            {alertByPermit.get(permit.uuid) === "critical" ? (
+              <span className="ml-1 text-[10px] font-semibold text-red-600">Critical</span>
+            ) : null}
+          </>
+        ),
+      },
+      {
+        key: "cost",
+        label: "Cost",
+        sortable: true,
+        render: (permit) => (permit.cost ? `$${permit.cost}` : "—"),
+      },
+      {
+        key: "actions",
+        label: "",
+        alwaysVisible: true,
+        render: (permit) => (
+          <div className="text-right">
+            <Button
+              size="sm"
+              variant="secondary"
+              loading={deleteMutation.isPending}
+              onClick={() => deleteMutation.mutate(permit.uuid)}
+            >
+              Archive
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [alertByPermit, deleteMutation]
   );
 
   return (
@@ -63,50 +122,30 @@ export function UnitPermitsTab({ unitId, companyId }: UnitPermitsTabProps) {
         <h3 className="text-sm font-semibold text-gray-900">Unit Permits</h3>
         <span className="text-xs text-gray-500">Oversize · Overweight · Hazmat</span>
       </div>
-      {permitsQuery.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading permits...</p> : null}
-      <div className="mt-2 overflow-auto">
-        <table className="min-w-full text-left text-xs">
-          <thead className="bg-gray-50 text-[11px] uppercase text-gray-600">
-            <tr>
-              <th className="px-2 py-2">Type</th>
-              <th className="px-2 py-2">State</th>
-              <th className="px-2 py-2">Number</th>
-              <th className="px-2 py-2">Expires</th>
-              <th className="px-2 py-2">Cost</th>
-              <th className="px-2 py-2" />
-            </tr>
-          </thead>
-          <tbody>
-            {(permitsQuery.data?.permits ?? []).map((permit) => (
-              <tr key={permit.uuid} className="border-b border-gray-100">
-                <td className="px-2 py-2 font-medium capitalize text-gray-900">{permit.permit_type}</td>
-                <td className="px-2 py-2">{permit.issuing_state}</td>
-                <td className="px-2 py-2">{permit.permit_number}</td>
-                <td className="px-2 py-2">
-                  <CertExpiryBadge label="Expiry" expiresAt={permit.expiration_date} />
-                  {alertByPermit.get(permit.uuid) === "critical" ? (
-                    <span className="ml-1 text-[10px] font-semibold text-red-600">Critical</span>
-                  ) : null}
-                </td>
-                <td className="px-2 py-2">{permit.cost ? `$${permit.cost}` : "—"}</td>
-                <td className="px-2 py-2 text-right">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    loading={deleteMutation.isPending}
-                    onClick={() => deleteMutation.mutate(permit.uuid)}
-                  >
-                    Archive
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {!permitsQuery.isLoading && (permitsQuery.data?.permits.length ?? 0) === 0 ? (
-        <p className="mt-2 text-xs text-gray-500">No active permits on file for this unit.</p>
-      ) : null}
+
+      {permitsQuery.isError ? (
+        <div className="mt-2" data-testid="unit-permits-error">
+          <ListErrorState
+            title="Couldn't load unit permits"
+            status={0}
+            message={(permitsQuery.error as Error)?.message}
+            onRetry={() => void permitsQuery.refetch()}
+          />
+        </div>
+      ) : (
+        <div className="mt-2">
+          <ParityTable
+            columns={columns}
+            rows={rows}
+            rowKey={(permit) => permit.uuid}
+            loading={permitsQuery.isLoading}
+            storageKey="unit-permits"
+            tableTestId="unit-permits-table"
+            rowTestId={(permit) => `unit-permits-row-${permit.uuid}`}
+            emptyText="No active permits on file for this unit."
+          />
+        </div>
+      )}
     </section>
   );
 }

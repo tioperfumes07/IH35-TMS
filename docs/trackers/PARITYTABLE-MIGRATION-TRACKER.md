@@ -848,6 +848,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | --- | --- |
 | `apps/frontend/src/pages/units/UnitDriverHistoryStrip.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/pages/units/UnitPermitsTab.tsx` | pending |
+| `apps/frontend/src/pages/units/UnitDriverHistoryStrip.tsx` | pending |
 | `apps/frontend/src/pages/units/UnitTollTagsTab.tsx` | pending |
 
 ### pages/vendors (1)
@@ -1285,3 +1286,13 @@ Status / Result preserved 1:1; preview summary cards + commit gate unchanged.
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/drivers/DriverImportModal.tsx` | pages/drivers |
+## qbo-parity-a1 — UnitPermitsTab (this PR)
+Unit detail Permits tab was a hand-rolled `<table>` with manual loading/empty states.
+Migrated to shared `ParityTable` (sort + resize + gear); `ListErrorState` + Retry on
+outage. Columns Type / State / Number / Expires / Cost preserved 1:1; CertExpiryBadge,
+critical expiry alert, and Archive action preserved. Guard:
+`scripts/verify-unit-permits-tab-uses-paritytable.mjs` via verify-step **1090**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/units/UnitPermitsTab.tsx` | pages/units |
