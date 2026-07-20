@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   getFuelReconciliation,
   rematchFuelTxnToGps,
@@ -37,15 +37,35 @@ const FLAG_META: Record<FuelReconciliationFlag, { label: string }> = {
   unmatched: { label: "unmatched" },
 };
 
+type FuelReconTab = "card" | "wo";
+const FUEL_RECON_TAB_IDS = ["card", "wo"] as const;
+
+function parseFuelReconTab(searchParams: URLSearchParams): FuelReconTab {
+  const raw = (searchParams.get("tab") ?? "card").toLowerCase();
+  return (FUEL_RECON_TAB_IDS as readonly string[]).includes(raw) ? (raw as FuelReconTab) : "card";
+}
+
 export function FuelReconciliationPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
   const [period, setPeriod] = useState(defaultRange);
   const [applied, setApplied] = useState(defaultRange);
-  const [tab, setTab] = useState<"card" | "wo">("card");
+  const tab = useMemo(() => parseFuelReconTab(searchParams), [searchParams]);
+  const setTab = (next: FuelReconTab) => {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next === "card") params.delete("tab");
+        else params.set("tab", next);
+        return params;
+      },
+      { replace: true },
+    );
+  };
   const [matchOpen, setMatchOpen] = useState(false);
   const [matchNote, setMatchNote] = useState("");
 
