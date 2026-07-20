@@ -100,12 +100,12 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedHint, setSavedHint] = useState(false);
-  // S-08: list filters (driver/unit/date range) — local state like IdvrPage / AccidentsPage;
-  // useListState below still drives loading/empty/error for the filtered query result.
+  // S-08 + s-04: list filters (driver/unit/from–to) — AccidentsPage-parity local state;
+  // date range is sent as date_from/date_to query params (backend list route).
   const [driverFilter, setDriverFilter] = useState("");
   const [unitFilter, setUnitFilter] = useState("");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   const typedFields = config.typedFields;
   const has = (key: IncidentFieldKey) => COMMON_FIELDS.includes(key) || typedFields.includes(key);
@@ -114,10 +114,10 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
     () => ({
       driver_id: driverFilter.trim() || undefined,
       unit_id: unitFilter.trim() || undefined,
-      date_from: dateFrom || undefined,
-      date_to: dateTo || undefined,
+      date_from: fromDate || undefined,
+      date_to: toDate || undefined,
     }),
-    [driverFilter, unitFilter, dateFrom, dateTo]
+    [driverFilter, unitFilter, fromDate, toDate]
   );
 
   const listQuery = useQuery({
@@ -170,6 +170,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
     return map;
   }, [fleetRows]);
 
+  // Server already applies date_from/date_to (+ driver/unit) — no second client filter.
   const rows = listQuery.data?.incidents ?? [];
   // LIST-EMPTY: the empty message renders only after the incidents query settles.
   const listState = useListState(listQuery, rows.length === 0);
@@ -332,24 +333,24 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
         <label className="text-[11px] text-slate-600">
           From
           <DatePicker
-            value={dateFrom}
-            onChange={setDateFrom}
+            value={fromDate}
+            onChange={setFromDate}
             className="mt-1 block min-h-12 w-full rounded-sm border border-gray-200 px-2 text-xs"
-            max={dateTo || undefined}
-            data-testid={`${config.pageTestId}-filter-date-from`}
+            max={toDate || undefined}
+            data-testid="safety-incidents-from-date"
           />
         </label>
         <label className="text-[11px] text-slate-600">
           To
           <DatePicker
-            value={dateTo}
-            onChange={setDateTo}
+            value={toDate}
+            onChange={setToDate}
             className="mt-1 block min-h-12 w-full rounded-sm border border-gray-200 px-2 text-xs"
-            min={dateFrom || undefined}
-            data-testid={`${config.pageTestId}-filter-date-to`}
+            min={fromDate || undefined}
+            data-testid="safety-incidents-to-date"
           />
         </label>
-        {driverFilter || unitFilter || dateFrom || dateTo ? (
+        {driverFilter || unitFilter || fromDate || toDate ? (
           <button
             type="button"
             className="rounded-full border border-gray-300 px-2 py-0.5 text-[11px] text-slate-500 hover:bg-gray-100"
@@ -357,8 +358,8 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             onClick={() => {
               setDriverFilter("");
               setUnitFilter("");
-              setDateFrom("");
-              setDateTo("");
+              setFromDate("");
+              setToDate("");
             }}
           >
             Clear
