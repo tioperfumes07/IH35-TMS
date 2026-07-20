@@ -35,8 +35,16 @@ function main() {
   if (!hosPage.includes("getDriverHosDetail") || !hosPage.includes("/safety/hos-violations")) {
     failures.push("HoursOfServicePage.tsx must read CAP-11 HOS detail and link violations tab");
   }
-  if (!hosPage.includes("+ Create violation")) {
-    failures.push("HoursOfServicePage.tsx must use + Create violation vocabulary");
+  if (
+    !/data-testid="safety-hos-create-violation"[\s\S]{0,400}>\s*\+\s*Create\s*</.test(hosPage) ||
+    !/aria-label="Create HOS violation"/.test(hosPage)
+  ) {
+    failures.push(
+      "HoursOfServicePage.tsx must expose modal create as + Create button with aria-label Create HOS violation",
+    );
+  }
+  if (/>\s*\+\s*Create violation\s*</i.test(hosPage)) {
+    failures.push("HoursOfServicePage.tsx primary CTA must be + Create (repo button law), not + Create violation");
   }
   if (hosPage.includes("+ New") || hosPage.includes("+ Add ")) {
     failures.push("HoursOfServicePage.tsx must not use non-canonical + New / + Add vocabulary");
