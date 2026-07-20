@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createForm425CReport,
@@ -29,6 +29,12 @@ import { ProfilesTab } from "./tabs/ProfilesTab";
 import { QBImportTab } from "./tabs/QBImportTab";
 
 type TabId = "profile" | "qb" | "form" | "merge" | "history";
+const FORM425C_TAB_IDS = new Set<string>(["profile", "qb", "form", "merge", "history"]);
+
+export function parseForm425CTab(raw: string | null): TabId {
+  if (raw && FORM425C_TAB_IDS.has(raw)) return raw as TabId;
+  return "profile";
+}
 
 const TABS: Array<{ id: TabId; label: string }> = [
   { id: "profile", label: "Profiles & Defaults" },
@@ -112,7 +118,14 @@ export function Form425CHome() {
   const { pushToast } = useToast();
   const companyId = selectedCompanyId ?? "";
 
-  const [tab, setTab] = useState<TabId>("profile");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = parseForm425CTab(searchParams.get("tab"));
+  const setTab = (next: TabId) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "profile") params.delete("tab");
+    else params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
   const [activeCompany, setActiveCompany] = useState<CompanyKey>("trucking");
   const [month, setMonth] = useState(new Date().getMonth());
   const [year, setYear] = useState(new Date().getFullYear());
