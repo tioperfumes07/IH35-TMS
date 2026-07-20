@@ -895,6 +895,17 @@ manual expand rows. Migrated to shared `ParityTable` (sort + resize + gear +
 | --- | --- |
 | `apps/frontend/src/pages/audit/AuditTrailPage.tsx` | pages/audit |
 
+## qbo-parity-a1 — CancellationsReportPage (this PR)
+Reports → Cancellations analytics had four hand-rolled bucket `<table>`s (reason /
+driver / customer / date). Migrated all four to shared `ParityTable` (sort + resize +
+gear + CSV export). Columns Count / Billable / Charges preserved 1:1; KPI summary
+cards and date-range filters preserved. Guard:
+`scripts/verify-cancellations-report-uses-paritytable.mjs` via verify-step 1058.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/reports/CancellationsReportPage.tsx` | pages/reports |
+
 ## qbo-parity-a1 — Step3JurisdictionCalc (this PR)
 IFTA Step 3 jurisdiction tax grid was a hand-rolled `<table>` with a rates-source link,
 fleet MPG header, and total net tax footer. Migrated to shared `ParityTable` (sort + resize +
