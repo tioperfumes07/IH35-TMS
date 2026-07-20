@@ -168,6 +168,8 @@ export async function listMatters(
     severity?: string | undefined;
     type?: string | undefined;
     related_driver_id?: string | undefined;
+    unit_id?: string | undefined;
+    insurance_claim_id?: string | undefined;
     requesterUserId: string;
     requesterRole: string;
   }
@@ -194,6 +196,14 @@ export async function listMatters(
   if (args.related_driver_id) {
     values.push(args.related_driver_id);
     where.push(`m.related_driver_id = $${values.length}`);
+  }
+  if (args.unit_id) {
+    values.push(args.unit_id);
+    where.push(`m.unit_id = $${values.length}`);
+  }
+  if (args.insurance_claim_id) {
+    values.push(args.insurance_claim_id);
+    where.push(`m.insurance_claim_id = $${values.length}`);
   }
   const orderRank = severityRankSql();
   const sql = `
