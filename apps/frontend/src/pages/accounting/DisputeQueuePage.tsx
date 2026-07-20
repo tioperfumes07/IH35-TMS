@@ -9,6 +9,7 @@ import {
 import { ApiError } from "../../api/client";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -61,8 +62,10 @@ function DecideModal({
 }) {
   const [decision, setDecision] = useState<"approved" | "denied">("approved");
   const [resolutionText, setResolutionText] = useState("");
-  const [adjustmentDollars, setAdjustmentDollars] = useState(
-    row.claimed_adjustment_cents != null ? String(Number(row.claimed_adjustment_cents) / 100) : "",
+  const [adjustmentCents, setAdjustmentCents] = useState<number | null>(
+    row.claimed_adjustment_cents != null && Number.isFinite(Number(row.claimed_adjustment_cents))
+      ? Number(row.claimed_adjustment_cents)
+      : null,
   );
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -74,11 +77,10 @@ function DecideModal({
       }
       let adjustment_cents: number | undefined;
       if (decision === "approved") {
-        const dollars = Number(adjustmentDollars);
-        if (!Number.isFinite(dollars) || dollars <= 0) {
+        if (adjustmentCents == null || !Number.isFinite(adjustmentCents) || adjustmentCents <= 0) {
           throw new Error("Approved decisions require a positive adjustment amount.");
         }
-        adjustment_cents = Math.round(dollars * 100);
+        adjustment_cents = Math.round(adjustmentCents);
       }
       return decideDispute(row.id, {
         operating_company_id: operatingCompanyId,
@@ -130,13 +132,11 @@ function DecideModal({
         {decision === "approved" ? (
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Adjustment (USD)
-            <input
-              type="number"
-              min="0.01"
-              step="0.01"
-              value={adjustmentDollars}
-              onChange={(e) => setAdjustmentDollars(e.target.value)}
-              className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+            <MoneyInput
+              valueCents={adjustmentCents}
+              onChangeCents={setAdjustmentCents}
+              ariaLabel="Adjustment amount (USD)"
+              className="h-9 w-full rounded-sm border border-gray-300 text-[13px]"
             />
           </label>
         ) : null}
