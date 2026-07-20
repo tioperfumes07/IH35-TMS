@@ -14,5 +14,13 @@
   "runtime_path": "src",
   "db_required": false,
   "guard_required": true,
-  "extra_gates": ["verify-anomaly-alerts-url-sync"]
+  "extra_gates": [
+    "verify-anomaly-alerts-url-sync"
+  ],
+  "status": "IN_PROGRESS",
+  "acceptance": [
+    {
+      "check": "AnomalyAlertsPage and AnomalyDashboard sync in-page filters/tabs to URL search params; scripts/verify-anomaly-alerts-url-sync.mjs PASS; routes reachable in manifest."
+    }
+  ]
 }
