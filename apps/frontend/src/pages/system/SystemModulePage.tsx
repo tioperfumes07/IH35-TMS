@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
@@ -30,6 +30,12 @@ export const SYSTEM_TABS = [
 ] as const;
 
 type SystemTabId = (typeof SYSTEM_TABS)[number]["id"];
+const SYSTEM_TAB_IDS = new Set<string>(SYSTEM_TABS.map((t) => t.id));
+
+export function parseSystemTab(raw: string | null): SystemTabId {
+  if (raw && SYSTEM_TAB_IDS.has(raw)) return raw as SystemTabId;
+  return "overview";
+}
 
 const CT = "America/Chicago";
 const LAUNCH_COMMAND = "claude --project IH35-TMS";
@@ -609,7 +615,14 @@ function ClaudeCoderTab({ data }: { data: SystemData }) {
 // ---- page shell -----------------------------------------------------------------------------------
 
 export function SystemModulePage() {
-  const [tab, setTab] = useState<SystemTabId>("overview");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = parseSystemTab(searchParams.get("tab"));
+  const setTab = (next: SystemTabId) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "overview") params.delete("tab");
+    else params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
   const { selectedCompanyId } = useCompanyContext();
   const data = useSystemData(selectedCompanyId);
 
