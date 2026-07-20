@@ -13,7 +13,7 @@ Owner asked for agree/disagree + settle contested Neon numbers.
 | 0257-audit-88 keep OPEN | **AGREE** |
 | 174/177/181 = decline new platform | **AGREE** |
 | audit171 → BUILD (lightweight DQ) | **AGREE** — prod DQ is real |
-| D order: RECON-COLLECTOR → MOR → SoD(break-glass) | **AGREE with nuance below** |
+| D order: RECON → MOR → flow5; SoD DEFER-WITH-TRIGGER | **AGREE** — OWNER-APPROVED 2026-07-19; §1.4 per-item gate still stands |
 | E / F / G as grouped | **AGREE** |
 | Rev-rec: decision closed (#2733); impl prereqs open | **AGREE** — do not flip flag until Unbilled CoA + earn-first path |
 | Fresh chat for financial D builds | **AGREE** — good hardline |
@@ -55,11 +55,13 @@ Do **not** claim “all twice-daily recon is dark” — some recon_runs still f
 1. **A** — DECLINE enterprise noise **except** `0275-audit171` → **BUILD (gated, small DQ monitor)**  
 2. **B** — no blanket CLOSE; bf10b **SPLIT**; 0257 **OPEN**; 174/177/181 decline-new-platform  
 3. **C** — DEFER/DECLINE nice-to-haves as grouped  
-4. **D** (gated, design-first):  
+4. **D** OWNER-APPROVED scope+order (gated, design-first; **§1.4 per-item diff/SQL still required**):  
    1. RECON-COLLECTOR / `qbo_remote_counts` unfreeze (+ money-recon health proof)  
    2. MOR pre/post-petition A/P  
-   3. SoD-on-JEs **with break-glass**  
-   4. then flow5 (§9.1 execute) · flow2 · ruling-3 · module25 · P4 · accessorial (extend canonical) · 0518-r18 · 0091-m-factor-1 · **audit171**  
+   3. flow5 (§9.1 execute)  
+   4. then flow2 · ruling-3 · module25 · P4 · accessorial · 0518-r18 · 0091-m-factor-1 · **audit171**  
+   5. `0519-at2` SoD = **DEFER-WITH-TRIGGER** (not build-now)  
+5b. **Fleet status integrity (new, AUTHORITATIVE):** `InService` + `deactivated_at` set = **45** total / **4** non-sample — real contradiction; track as DQ/cleanup (gated if write).  
 5. **E** KEEP-AS-IS all 4  
 6. **F** frontend queue now (non-financial)  
 7. **G** owner-enter / cleanup  

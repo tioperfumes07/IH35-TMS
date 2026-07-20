@@ -590,7 +590,7 @@ Summary: DECLINE 17 · BUILD 15 · KEEP 3 · CLOSE 2 · FOLLOW 2 · CONSOLIDATE 
 **BUILD (15)**
 - **0275-audit171-data-quality-monitoring** [platform] — BUILD (gated, small) — RECLASSIFIED from DECLINE per GUARD: prod reads found REAL DQ problems (78 mis-flagged drivers, 16 blank CDL, 100% blank hire_date). A lightweight DQ monitor would have caught these. Build it (gated), not noise.
 - **0441-mod6-idvr-row-not-clickable-session-fake-** [platform] — BUILD (frontend, non-financial) — make iDVR rows clickable to their detail. Just ship it.
-- **0519-at2-no-db-enforced-sod** [accounting] — BUILD (gated) — DB-enforced segregation-of-duties (approver != poster on JEs/posting_batches) is a real audit-grade internal control; given the embezzlement history this is worth building. Financial-gated.
+- **0519-at2-no-db-enforced-sod** [accounting] — DEFER-WITH-TRIGGER (OWNER-APPROVED 2026-07-19) — build only when a lender/auditor/insurer forces it OR a 2nd approver exists. Hard maker≠checker locks out a sole approver. Not in the build-now D top tier.
 - **P4-01_SAFETY-INSURANCE-LINK_DISPATCH** [dispatch] — BUILD (gated) — link safety events <-> insurance policies/claims (Law-of-the-Land connectivity). Design-doc first, additive FK.
 - **P4-03_UNIT-IDENTITY_DISPATCH** [dispatch] — BUILD (gated) — additive unit-identity bridge FK; requires 0-orphan proof on ci-migration-test first.
 - **P4-04_SAFETY-COST-GL_DISPATCH** [dispatch] — BUILD (gated) — safety cost -> GL posting path. CPA design first.
@@ -684,12 +684,14 @@ Merged frontend(self): #2739-#2746,#2734,#2737,#2749-#2758(sort),CI #2747/#2748,
 - Phone: **74** Active with `000-000-0000` — GUARD 2 superseded.
 - `qbo_remote_counts`: FROZEN since **2026-06-03** (3 rows, vendors only) — RECON-COLLECTOR #1 is real.
 - `recon_runs`: NOT fully dark (131 rows; newest 2026-07-20; includes `am_bank_count` 2026-07-19) — do not claim all recon is off.
+- Units status integrity: `status='InService' AND deactivated_at IS NOT NULL` = **45** total / **4** non-sample (Cursor Neon 2026-07-19) — real contradiction; DQ cleanup (gated if write).
 
 **OWNER-APPROVED 2026-07-19** — Jorge approved the D scope + priority order per GUARD recommendation. Per-item diff+SQL gate (§1.4) still stands before each merge (not a deferral — company protection). **Convergence update:** `0519-at2` DB-enforced SoD is DEFER-WITH-TRIGGER (build only when a lender/auditor/insurer forces it OR a 2nd approver exists — single-user-lockout risk), NOT build-now #3; promote flow5 into the top tier. Execution should start in a FRESH session (each D item is financial-cluster).
 
-- #1 PHASE2_RECON-COLLECTOR unfreeze — the twice-daily reconciliation IS the parallel-books safety net; if frozen (qbo_remote_counts frozen 2026-06-03), safety is dark NOW. Fix first.
+- #1 PHASE2_RECON-COLLECTOR unfreeze — `qbo_remote_counts` frozen since 2026-06-03 (verified). Restore collector + prove money TMS↔QBO recon health (`recon_runs` still partially active — do not claim all recon dark).
 - #2 dip-mor pre/post-petition A/P split — Ch.11 MOR legal requirement (ties to TRK 6/5/25 & TRANSP 10/3/25 petition dates).
-- #3 0519-at2 DB-enforced SoD — WITH break-glass / second-approver (a hard maker≠checker would lock out the sole approver). GUARD note.
-- then: flow5 (execute lockdown §9.1 — kill RETIRE deduction paths) · flow2 · ruling-3 · module25 · P4-01/03/04/05/06/07 (design-first) · PHASE2_ACCESSORIAL (extend canonical engine, not divergent) · 0518-r18 · 0091-m-factor-1 · audit171 DQ-monitor.
+- #3 flow5 — execute lockdown §9.1 (canonical `driver_finance.driver_settlement_deductions`; retire duplicate paths).
+- then (design-first, still §1.4 per merge): flow2 · ruling-3 · module25 · P4-01/03/04/05/06/07 · PHASE2_ACCESSORIAL (extend canonical engine, not divergent) · 0518-r18 · 0091-m-factor-1 · audit171 DQ-monitor.
+- DEFER-WITH-TRIGGER: `0519-at2` DB SoD — only when lender/auditor/insurer forces it OR a 2nd approver exists (single-user lockout). Not build-now.
 
 **Endorsed as grouped (both):** A DECLINE (minus audit171) · C DEFER/DECLINE the enterprise nice-to-haves · E KEEP-AS-IS all 4 · F frontend queue · G owner-enter/cleanup.
