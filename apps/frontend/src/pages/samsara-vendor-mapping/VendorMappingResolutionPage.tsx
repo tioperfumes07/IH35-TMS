@@ -10,6 +10,8 @@ import {
 } from "../../api/samsara-vendor-mapping";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 type ActionDraft =
@@ -34,6 +36,10 @@ type ActionDraft =
       similarity_score: number;
     };
 
+type UnmappedRow = VendorMappingIntegrityIssue["unmapped_drivers"][number] & { _rowId: string };
+type DuplicateRow = VendorMappingIntegrityIssue["duplicate_mapping"][number] & { _rowId: string };
+type MismatchRow = VendorMappingIntegrityIssue["name_mismatch"][number] & { _rowId: string };
+
 function toErrorMessage(error: unknown) {
   if (error instanceof ApiError) {
     if (typeof error.data === "string") return error.data;
@@ -57,6 +63,10 @@ function splitCsv(raw: string) {
 function totalsText(payload?: VendorMappingIntegrityIssue) {
   if (!payload) return "No issues loaded";
   return `${payload.totals.total_issues} issues (${payload.totals.unmapped_drivers} unmapped, ${payload.totals.duplicate_mapping} duplicate, ${payload.totals.name_mismatch} mismatch)`;
+}
+
+function integrityErrorStatus(error: unknown) {
+  return error instanceof ApiError ? error.status : 0;
 }
 
 export function VendorMappingResolutionPage() {
@@ -108,6 +118,130 @@ export function VendorMappingResolutionPage() {
   });
 
   const payload = integrityQuery.data;
+
+  const unmappedRows = useMemo(
+    (): UnmappedRow[] =>
+      (payload?.unmapped_drivers ?? []).map((row) => ({
+        ...row,
+        _rowId: `${row.samsara_driver_id}:${row.reason}`,
+      })),
+    [payload?.unmapped_drivers],
+  );
+
+  const duplicateRows = useMemo(
+    (): DuplicateRow[] =>
+      (payload?.duplicate_mapping ?? []).map((row) => ({
+        ...row,
+        _rowId: row.samsara_driver_id,
+      })),
+    [payload?.duplicate_mapping],
+  );
+
+  const mismatchRows = useMemo(
+    (): MismatchRow[] =>
+      (payload?.name_mismatch ?? []).map((row) => ({
+        ...row,
+        _rowId: `${row.samsara_driver_id}:${row.qbo_vendor_id}`,
+      })),
+    [payload?.name_mismatch],
+  );
+
+  const unmappedColumns = useMemo((): Array<ParityColumn<UnmappedRow>> => {
+    return [
+      { key: "samsara_driver_id", label: "Samsara driver", sortable: true },
+      { key: "driver_name", label: "Name", sortable: true },
+      { key: "reason", label: "Reason", sortable: true },
+      {
+        key: "action",
+        label: "Action",
+        alwaysVisible: true,
+        render: (row) => (
+          <Button
+            onClick={() =>
+              setDraft({
+                type: "link",
+                samsara_driver_id: row.samsara_driver_id,
+                qbo_vendor_id: "",
+                label: `Link ${row.driver_name}`,
+              })
+            }
+          >
+            Resolve
+          </Button>
+        ),
+      },
+    ];
+  }, []);
+
+  const duplicateColumns = useMemo((): Array<ParityColumn<DuplicateRow>> => {
+    return [
+      { key: "samsara_driver_id", label: "Samsara driver", sortable: true },
+      { key: "vendor_count", label: "Vendor count", sortable: true },
+      {
+        key: "qbo_vendor_ids",
+        label: "Vendor ids",
+        sortable: true,
+        sortValue: (row) => row.qbo_vendor_ids.join(", "),
+        render: (row) => row.qbo_vendor_ids.join(", "),
+      },
+      {
+        key: "action",
+        label: "Action",
+        alwaysVisible: true,
+        render: (row) => (
+          <Button
+            onClick={() =>
+              setDraft({
+                type: "dedupe",
+                samsara_driver_id: row.samsara_driver_id,
+                canonical_qbo_vendor_id: row.qbo_vendor_ids[0] ?? "",
+                deprecated_qbo_vendor_ids_csv: row.qbo_vendor_ids.slice(1).join(","),
+                label: `Dedupe ${row.samsara_driver_id}`,
+              })
+            }
+          >
+            Resolve
+          </Button>
+        ),
+      },
+    ];
+  }, []);
+
+  const mismatchColumns = useMemo((): Array<ParityColumn<MismatchRow>> => {
+    return [
+      { key: "samsara_driver_id", label: "Samsara driver", sortable: true },
+      { key: "samsara_name", label: "Samsara name", sortable: true },
+      { key: "qbo_vendor_name", label: "QBO vendor name", sortable: true },
+      {
+        key: "similarity_score",
+        label: "Score",
+        sortable: true,
+        sortValue: (row) => row.similarity_score,
+        render: (row) => row.similarity_score.toFixed(3),
+      },
+      {
+        key: "action",
+        label: "Action",
+        alwaysVisible: true,
+        render: (row) => (
+          <Button
+            onClick={() =>
+              setDraft({
+                type: "confirm",
+                samsara_driver_id: row.samsara_driver_id,
+                qbo_vendor_id: row.qbo_vendor_id,
+                label: `Confirm ${row.samsara_driver_id}`,
+                similarity_score: row.similarity_score,
+              })
+            }
+          >
+            Resolve
+          </Button>
+        ),
+      },
+    ];
+  }, []);
+
   const preview = useMemo(() => {
     if (!draft) return null;
     if (draft.type === "link") {
@@ -132,158 +266,67 @@ export function VendorMappingResolutionPage() {
     <div className="space-y-4 p-4">
       <PageHeader title="Samsara Vendor Mapping Resolution" subtitle="Resolve unmapped, duplicate, and drifted driver-to-vendor mappings" />
       {!companyId ? <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-700">Select an operating company.</div> : null}
+
       {integrityQuery.isError ? (
-        <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          Failed to load vendor mapping integrity.
-          <button className="ml-2 underline" type="button" onClick={() => void integrityQuery.refetch()}>
-            Retry
-          </button>
-        </div>
-      ) : null}
+        <ListErrorState
+          title="Couldn't load vendor mapping integrity"
+          status={integrityErrorStatus(integrityQuery.error)}
+          message={(integrityQuery.error as Error)?.message}
+          onRetry={() => void integrityQuery.refetch()}
+        />
+      ) : (
+        <>
+          <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-600">{totalsText(payload)}</div>
 
-      <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-600">{totalsText(payload)}</div>
+          <section className="rounded-sm border border-slate-200 bg-white">
+            <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">Unmapped drivers</div>
+            <div className="overflow-x-auto p-2">
+              <ParityTable<UnmappedRow>
+                columns={unmappedColumns}
+                rows={unmappedRows}
+                rowKey={(row) => row._rowId}
+                loading={integrityQuery.isLoading}
+                emptyText="No unmapped drivers."
+                storageKey="vendor-mapping-resolution-unmapped"
+                exportFilename="vendor-mapping-unmapped"
+                tableTestId="vendor-mapping-unmapped-table"
+              />
+            </div>
+          </section>
 
-      <section className="rounded-sm border border-slate-200 bg-white">
-        <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">Unmapped drivers</div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-slate-50 text-[11px] font-semibold uppercase text-slate-600">
-              <tr>
-                <th className="px-3 py-2">Samsara driver</th>
-                <th className="px-3 py-2">Name</th>
-                <th className="px-3 py-2">Reason</th>
-                <th className="px-3 py-2">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(payload?.unmapped_drivers ?? []).map((row) => (
-                <tr key={`${row.samsara_driver_id}:${row.reason}`} className="border-t border-slate-100">
-                  <td className="px-3 py-2 text-slate-700">{row.samsara_driver_id}</td>
-                  <td className="px-3 py-2 text-slate-700">{row.driver_name}</td>
-                  <td className="px-3 py-2 text-slate-600">{row.reason}</td>
-                  <td className="px-3 py-2">
-                    <Button
-                      onClick={() =>
-                        setDraft({
-                          type: "link",
-                          samsara_driver_id: row.samsara_driver_id,
-                          qbo_vendor_id: "",
-                          label: `Link ${row.driver_name}`,
-                        })
-                      }
-                    >
-                      Resolve
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-              {!integrityQuery.isLoading && (payload?.unmapped_drivers.length ?? 0) === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-3 py-2 text-slate-500">
-                    No unmapped drivers.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-      </section>
+          <section className="rounded-sm border border-slate-200 bg-white">
+            <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">Duplicate mappings</div>
+            <div className="overflow-x-auto p-2">
+              <ParityTable<DuplicateRow>
+                columns={duplicateColumns}
+                rows={duplicateRows}
+                rowKey={(row) => row._rowId}
+                loading={integrityQuery.isLoading}
+                emptyText="No duplicate mappings."
+                storageKey="vendor-mapping-resolution-duplicate"
+                exportFilename="vendor-mapping-duplicate"
+                tableTestId="vendor-mapping-duplicate-table"
+              />
+            </div>
+          </section>
 
-      <section className="rounded-sm border border-slate-200 bg-white">
-        <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">Duplicate mappings</div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-slate-50 text-[11px] font-semibold uppercase text-slate-600">
-              <tr>
-                <th className="px-3 py-2">Samsara driver</th>
-                <th className="px-3 py-2">Vendor count</th>
-                <th className="px-3 py-2">Vendor ids</th>
-                <th className="px-3 py-2">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(payload?.duplicate_mapping ?? []).map((row) => (
-                <tr key={row.samsara_driver_id} className="border-t border-slate-100">
-                  <td className="px-3 py-2 text-slate-700">{row.samsara_driver_id}</td>
-                  <td className="px-3 py-2 text-slate-700">{row.vendor_count}</td>
-                  <td className="px-3 py-2 text-slate-600">{row.qbo_vendor_ids.join(", ")}</td>
-                  <td className="px-3 py-2">
-                    <Button
-                      onClick={() =>
-                        setDraft({
-                          type: "dedupe",
-                          samsara_driver_id: row.samsara_driver_id,
-                          canonical_qbo_vendor_id: row.qbo_vendor_ids[0] ?? "",
-                          deprecated_qbo_vendor_ids_csv: row.qbo_vendor_ids.slice(1).join(","),
-                          label: `Dedupe ${row.samsara_driver_id}`,
-                        })
-                      }
-                    >
-                      Resolve
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-              {!integrityQuery.isLoading && (payload?.duplicate_mapping.length ?? 0) === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-3 py-2 text-slate-500">
-                    No duplicate mappings.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section className="rounded-sm border border-slate-200 bg-white">
-        <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">Name mismatch</div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-slate-50 text-[11px] font-semibold uppercase text-slate-600">
-              <tr>
-                <th className="px-3 py-2">Samsara driver</th>
-                <th className="px-3 py-2">Samsara name</th>
-                <th className="px-3 py-2">QBO vendor name</th>
-                <th className="px-3 py-2">Score</th>
-                <th className="px-3 py-2">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(payload?.name_mismatch ?? []).map((row) => (
-                <tr key={`${row.samsara_driver_id}:${row.qbo_vendor_id}`} className="border-t border-slate-100">
-                  <td className="px-3 py-2 text-slate-700">{row.samsara_driver_id}</td>
-                  <td className="px-3 py-2 text-slate-700">{row.samsara_name}</td>
-                  <td className="px-3 py-2 text-slate-700">{row.qbo_vendor_name}</td>
-                  <td className="px-3 py-2 text-slate-600">{row.similarity_score.toFixed(3)}</td>
-                  <td className="px-3 py-2">
-                    <Button
-                      onClick={() =>
-                        setDraft({
-                          type: "confirm",
-                          samsara_driver_id: row.samsara_driver_id,
-                          qbo_vendor_id: row.qbo_vendor_id,
-                          label: `Confirm ${row.samsara_driver_id}`,
-                          similarity_score: row.similarity_score,
-                        })
-                      }
-                    >
-                      Resolve
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-              {!integrityQuery.isLoading && (payload?.name_mismatch.length ?? 0) === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-3 py-2 text-slate-500">
-                    No name mismatches.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-      </section>
+          <section className="rounded-sm border border-slate-200 bg-white">
+            <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">Name mismatch</div>
+            <div className="overflow-x-auto p-2">
+              <ParityTable<MismatchRow>
+                columns={mismatchColumns}
+                rows={mismatchRows}
+                rowKey={(row) => row._rowId}
+                loading={integrityQuery.isLoading}
+                emptyText="No name mismatches."
+                storageKey="vendor-mapping-resolution-name-mismatch"
+                exportFilename="vendor-mapping-name-mismatch"
+                tableTestId="vendor-mapping-name-mismatch-table"
+              />
+            </div>
+          </section>
+        </>
+      )}
 
       {draft ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
