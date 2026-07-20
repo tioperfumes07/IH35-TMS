@@ -38,6 +38,7 @@ import { colors } from "../design/tokens";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { CreateDriverModal } from "../components/drivers/CreateDriverModal";
 import { DriversListPage } from "./drivers/DriversListPage";
+import { AutoDeductionPoliciesPanel } from "./drivers/AutoDeductionPolicies";
 import {
   DRIVERS_LIST_STATUS_TABS,
   DRIVERS_MODULE_NAV_PATHS,
@@ -630,25 +631,35 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
           {subnavTab === "settlements" || subnavTab === "pre_settlements" ? (
             <PreSettlementsPanel rows={settlementsReadyRows} loading={settlementsQuery.isLoading} />
           ) : null}
-          {subnavTab === "cash_advances" || subnavTab === "deductions" ? (
-            <DataPanel title="Debt Alert · before any payment" accentColor={colors.crit.strong}>
-              {debtAlertRows.map((row) => (
-                <DataPanelRow key={row.driver_id}>
-                  <span>
-                    <EntityLink kind="driver" id={isUuid(row.driver_id) ? row.driver_id : null} label={row.driver_name} /> ·{" "}
-                    {row.reasons.slice(0, 2).join(" + ")}
-                  </span>
-                  <span className="text-red-600">-{formatMoney(row.total)}</span>
+          {subnavTab === "cash_advances" ? (
+            <div data-testid="drivers-cash-advances-debt-alert">
+              <DataPanel title="Debt Alert · before any payment" accentColor={colors.crit.strong}>
+                {debtAlertRows.map((row) => (
+                  <DataPanelRow key={row.driver_id}>
+                    <span>
+                      <EntityLink kind="driver" id={isUuid(row.driver_id) ? row.driver_id : null} label={row.driver_name} /> ·{" "}
+                      {row.reasons.slice(0, 2).join(" + ")}
+                    </span>
+                    <span className="text-red-600">-{formatMoney(row.total)}</span>
+                  </DataPanelRow>
+                ))}
+                {debtAlertRows.length === 0 ? (
+                  <p className="px-2 py-2 text-xs text-gray-500">No outstanding cash advance, repair, damage, or late-arrival debt.</p>
+                ) : null}
+                <DataPanelRow>
+                  <span className="font-semibold">Total outstanding</span>
+                  <span className="font-semibold text-red-700">-{formatMoney(totalDriversOwe)}</span>
                 </DataPanelRow>
-              ))}
-              {debtAlertRows.length === 0 ? (
-                <p className="px-2 py-2 text-xs text-gray-500">No outstanding cash advance, repair, damage, or late-arrival debt.</p>
-              ) : null}
-              <DataPanelRow>
-                <span className="font-semibold">Total outstanding</span>
-                <span className="font-semibold text-red-700">-{formatMoney(totalDriversOwe)}</span>
-              </DataPanelRow>
-            </DataPanel>
+              </DataPanel>
+            </div>
+          ) : null}
+          {subnavTab === "deductions" ? (
+            <div className="space-y-2" data-testid="drivers-deductions-panel">
+              <p className="px-1 text-xs text-gray-600">
+                Settlement auto-deduction policies (amount, type, hold/resume, remaining balance). Cash-advance debt alerts live under Cash advances.
+              </p>
+              <AutoDeductionPoliciesPanel />
+            </div>
           ) : null}
           {subnavTab === "permits" ? (
             <DataPanel title="Permit / Document Expirations" accentColor={colors.warn.strong}>

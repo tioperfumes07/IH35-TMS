@@ -440,7 +440,7 @@ Canonical config: `apps/frontend/src/components/drivers/DRIVERS_TABS_CONFIG.ts` 
 | `cash_advances` | Cash advances | Debt-alert panel (advances + liabilities) | Phase 3 ✅ T11.11 |
 | `permits` | Permits | Permit/document expirations | Phase 1 ✅ |
 | `pay_rate_templates` | Pay rate templates | Pointer to Lists pay templates | Phase 3 (T11.14) |
-| `deductions` | Deductions | Debt-alert panel (shared with cash advances) | Phase 3 ✅ |
+| `deductions` | Deductions | Auto-deduction policies panel (distinct from Cash advances debt alert) | Phase 3 ✅ |
 | `leave` | Leave | On-leave / available summary | Phase 1 ✅ |
 
 **Module nav surfaces (2):** `/drivers` hub + `/driver-finance/cash-advance-requests` (linked from module subnav and sidebar flyout).
