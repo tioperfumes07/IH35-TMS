@@ -21,7 +21,9 @@ sort, and the lock-account control — never drop or reorder.
 ## Rollup
 | Status | Count |
 | --- | --- |
-| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable + LoadHistoryTab) | 18 |
+| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable + LoadHistoryTab + vehicle PlatesTable) | 19 |
+| financial-hold (Jorge-gated) | 99 |
+| pending (non-financial, future batches) | 182 |
 | financial-hold (Jorge-gated) | 99 |
 | pending (non-financial, future batches) | 183 |
 | **hand-rolled total (original)** | **300** |
@@ -123,7 +125,7 @@ Columns When/Actor/Event/Summary/Details preserved 1:1. Guard:
 | --- | --- |
 | `apps/frontend/src/components/drivers/AuditHistoryTab.tsx` | components/drivers |
 
-## qbo-parity-a1 — FrequentlyRunTable (this PR)
+## qbo-parity-a1 — FrequentlyRunTable (on main)
 Reports Home "Frequently run" list was a hand-rolled `<table>`. Migrated to shared
 `ParityTable` (sort + resize + gear). Columns Report / Filters / Runs preserved 1:1;
 Report name stays a Run button; stub P4/P5 badges preserved.
@@ -133,7 +135,17 @@ Guard: `scripts/verify-frequently-run-table-uses-paritytable.mjs` via verify-ste
 | --- | --- |
 | `apps/frontend/src/components/reports/FrequentlyRunTable.tsx` | components/reports |
 
-## qbo-parity-a1 — OperationsHistoryTable (this PR)
+## qbo-parity-a1 — vehicle-profile PlatesTable (this PR)
+Vehicle profile plates grid was a hand-rolled `<table>` (Country/Jurisdiction/Plate #/
+Expiration/Status) with Archive + Create Plate. Migrated to shared `ParityTable`
+(sort + resize + gear + CSV export + `rowActions` Archive). `vp-plates-table` testid
+preserved. Guard: `scripts/verify-vehicle-plates-uses-paritytable.mjs` via verify-step 1029.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/vehicle-profile/PlatesTable.tsx` | components/vehicle-profile |
+
+## qbo-parity-a1 — OperationsHistoryTable (on main)
 Drivers hub operations-depth history (12 sub-views sharing one table) was a hand-rolled
 `<table>` that false-emptied on query failure. Migrated to shared `ParityTable`
 (sort + resize + gear) with `ListErrorState` + Retry. `EntityLink` via
@@ -296,13 +308,13 @@ Guard: `scripts/verify-load-history-tab-uses-paritytable.mjs` via verify-step 10
 | `apps/frontend/src/components/trailer-profile/PlatesTable.tsx` | pending |
 | `apps/frontend/src/components/trailer-profile/TrailerReeferSection.tsx` | pending |
 
-### components/vehicle-profile (4)
+### components/vehicle-profile (3 remaining)
 
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/components/vehicle-profile/ComplianceSection.tsx` | pending |
 | `apps/frontend/src/components/vehicle-profile/DocumentsSection.tsx` | pending |
-| `apps/frontend/src/components/vehicle-profile/PlatesTable.tsx` | pending |
+| `apps/frontend/src/components/vehicle-profile/PlatesTable.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/vehicle-profile/RecentActivitySection.tsx` | pending |
 
 ### pages/CustomerDetail.tsx (1)
