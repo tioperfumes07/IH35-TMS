@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../components/shared/EntityLink";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../api/client";
@@ -30,6 +30,13 @@ import { useCompanyContext } from "../contexts/CompanyContext";
 import { UserActivityTab } from "../components/users/UserActivityTab";
 
 type Tab = "profile" | "companies" | "safety" | "activity";
+
+const USER_DETAIL_TAB_IDS = new Set<string>(["profile", "companies", "safety", "activity"]);
+
+export function parseUserDetailTab(raw: string | null): Tab {
+  if (raw && USER_DETAIL_TAB_IDS.has(raw)) return raw as Tab;
+  return "profile";
+}
 
 function eventTypeLabel(eventType: DispatcherErrorReason["event_type"]) {
   return eventType.replaceAll("_", " ");
@@ -73,7 +80,14 @@ export function UserDetailPage() {
   const { selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<Tab>("profile");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = parseUserDetailTab(searchParams.get("tab"));
+  const setTab = (next: Tab) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "profile") params.delete("tab");
+    else params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
   const [showVoided, setShowVoided] = useState(false);
   const [addEventOpen, setAddEventOpen] = useState(false);
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
