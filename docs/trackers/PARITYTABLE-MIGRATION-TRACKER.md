@@ -787,3 +787,14 @@ Guard: `scripts/verify-load-history-tab-uses-paritytable.mjs` via verify-step 10
 | --- | --- |
 | `apps/frontend/src/portal/PortalDashboardPage.tsx` | pending |
 
+## qbo-parity-a1 — vehicle DocumentsSection (this PR)
+Vehicle profile documents list was a hand-rolled `<table>`. Migrated to shared
+`ParityTable` (sort + resize + gear). Columns Type / Name / Expiration / Uploaded
+preserved 1:1; expiration urgency coloring + UploadModal entity scoping +
+`vp-docs-upload-button` preserved.
+Guard: `scripts/verify-vehicle-documents-uses-paritytable.mjs` via verify-step 1037.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/vehicle-profile/DocumentsSection.tsx` | components/vehicle-profile |
+
