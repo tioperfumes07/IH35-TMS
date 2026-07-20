@@ -323,7 +323,7 @@ verify-step 1035.
 | `apps/frontend/src/components/reports/LaneDetailModal.tsx` | pending |
 | `apps/frontend/src/components/reports/ifta/Step1MileageReview.tsx` | pending |
 | `apps/frontend/src/components/reports/ifta/Step2FuelReview.tsx` | pending |
-| `apps/frontend/src/components/reports/ifta/Step3JurisdictionCalc.tsx` | pending |
+| `apps/frontend/src/components/reports/ifta/Step3JurisdictionCalc.tsx` | migrated (qbo-parity-a1) |
 
 ### components/shared (2)
 
@@ -872,6 +872,17 @@ manual expand rows. Migrated to shared `ParityTable` (sort + resize + gear +
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/audit/AuditTrailPage.tsx` | pages/audit |
+
+## qbo-parity-a1 — Step3JurisdictionCalc (this PR)
+IFTA Step 3 jurisdiction tax grid was a hand-rolled `<table>` with a rates-source link,
+fleet MPG header, and total net tax footer. Migrated to shared `ParityTable` (sort + resize +
+gear + CSV export). Columns State/Miles/Fuel gal/Rate/gal/Net taxable gal/Tax owed preserved
+1:1; `data-ifta-step="3"` marker + empty prep copy + total net tax summary preserved. Guard:
+`scripts/verify-ifta-step3-jurisdiction-uses-paritytable.mjs` via verify-step 1053.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/reports/ifta/Step3JurisdictionCalc.tsx` | components/reports/ifta |
 
 ## qbo-parity-a1 — QboVendorLinkagePage (this PR)
 Admin QBO vendor/class linkage (Drivers + Assets tabs) was two hand-rolled `<table>` grids
