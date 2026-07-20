@@ -11,6 +11,7 @@
     ".block-ready/qbo-parity-a1-audit-trail-paritytable.json",
     "apps/frontend/src/pages/audit/AuditTrailPage.tsx",
     "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/entity-link-adoption-baseline.json",
     "scripts/verify-audit-trail-uses-paritytable.mjs",
     "scripts/verify-steps/1043-verify-audit-trail-uses-paritytable.mjs"
   ],
