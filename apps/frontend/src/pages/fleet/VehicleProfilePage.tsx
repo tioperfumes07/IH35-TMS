@@ -36,6 +36,7 @@ import { ActionBar } from "../../components/vehicle-profile/ActionBar";
 import { BackhaulSuggestionsWidget } from "../../components/reports/BackhaulSuggestionsWidget";
 import { EditVehicleModal } from "../../components/fleet/EditVehicleModal";
 import { EntityAuditHistoryTab } from "../../components/audit/EntityAuditHistoryTab";
+import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
 
 export type UnitProfileAggregate = {
   unit: Record<string, unknown>;
@@ -298,6 +299,14 @@ export function VehicleProfilePage() {
             photosSlot={<PhotoGallery photos={(profile.photos ?? []) as Parameters<typeof PhotoGallery>[0]["photos"]} />}
             onUploaded={() => void profileQuery.refetch()}
           />
+          </div>
+          <div data-testid="vp-section-10b-legal-matters">
+            <LegalMattersReverseSection
+              operatingCompanyId={companyId}
+              filter={{ unit_id: id }}
+              contextLabel="this unit"
+              data-testid="vehicle-profile-legal-matters"
+            />
           </div>
           <div data-testid="vp-section-11-action-bar">
             <ActionBar
