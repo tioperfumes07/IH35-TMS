@@ -1,14 +1,22 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { legalMattersApi, type LegalMatterListRow } from "../../../api/legal-matters";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { formatDateUS } from "../../../lib/formatDate";
+
+const MATTER_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function matterDetailPath(id: string): string | null {
+  const normalized = id.trim();
+  return MATTER_ID_RE.test(normalized) ? `/legal/matters/${normalized}` : null;
+}
 
 function daysUntil(dateStr: unknown) {
   if (!dateStr || typeof dateStr !== "string") return null;
@@ -19,6 +27,7 @@ function daysUntil(dateStr: unknown) {
 }
 
 export function LegalMattersListPage() {
+  const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [status, setStatus] = useState("");
@@ -40,7 +49,19 @@ export function LegalMattersListPage() {
 
   const columns = useMemo<ParityColumn<LegalMatterListRow>[]>(
     () => [
-      { key: "matter_number", label: "Number", sortable: true, render: (row) => <span className="font-mono text-xs">{String(row.matter_number ?? "")}</span> },
+      {
+        key: "matter_number",
+        label: "Number",
+        sortable: true,
+        render: (row) => (
+          <EntityLink
+            kind="matter"
+            id={String(row.id ?? "")}
+            label={String(row.matter_number ?? "")}
+            className="font-mono text-xs"
+          />
+        ),
+      },
       { key: "type", label: "Type", sortable: true, render: (row) => String(row.type ?? "") },
       { key: "status", label: "Status", sortable: true, render: (row) => String(row.status ?? "") },
       { key: "severity", label: "Severity", sortable: true, render: (row) => String(row.severity ?? "") },
@@ -59,16 +80,6 @@ export function LegalMattersListPage() {
             </span>
           );
         },
-      },
-      {
-        key: "actions",
-        label: "",
-        alwaysVisible: true,
-        render: (row) => (
-          <Link to={`/legal/matters/${String(row.id ?? "")}`} className="text-xs text-slate-700">
-            Open
-          </Link>
-        ),
       },
     ],
     [],
@@ -96,6 +107,10 @@ export function LegalMattersListPage() {
           rows={rows}
           columns={columns}
           rowKey={(row) => String(row.id ?? "")}
+          onRowClick={(row) => {
+            const path = matterDetailPath(String(row.id ?? ""));
+            if (path) navigate(path);
+          }}
           // Settled-only empty (LIST-EMPTY-1 invariant): see LegalPoliciesPage for the same pattern.
           loading={listQuery.isPending || (listQuery.isFetching && rows.length === 0)}
           storageKey="legal-matters"
