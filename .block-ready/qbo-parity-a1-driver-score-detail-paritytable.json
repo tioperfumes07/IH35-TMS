@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-driver-score-detail-paritytable",
+  "branch": "fix/driver-score-detail-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable + ListErrorState)",
+  "phase": "OPS-FE",
+  "task": "Migrate safety DriverScoreDetail 12-period breakdown from hand-rolled <table> to shared ParityTable (sort/resize/gear) + ListErrorState on trend query failure. Preserve Period/Score/Rank/Brakes/Accel/Speeding (s)/Lane columns, sparkline, latest stats, and harsh-event timeline. Guard + verify-step 1087 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + qbo-parity-a1",
+  "source_file": "qbo-parity-a1-driver-score-detail-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-driver-score-detail-paritytable.json",
+    "apps/frontend/src/pages/safety/driver-scoring/DriverScoreDetail.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-driver-score-detail-uses-paritytable.mjs",
+    "scripts/verify-steps/1087-verify-driver-score-detail-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "DriverScoreDetail.tsx uses ParityTable (no hand-rolled <table>/<thead>); ListErrorState on trend query failure; columns Period/Score/Rank/Brakes/Accel/Speeding (s)/Lane + storageKey=safety-driver-score-detail-periods + tableTestId=driver-score-detail-periods-table + sparkline + latest stats + harsh-event timeline preserved; verify-driver-score-detail-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1087 wired (Rule 17); tracker marks DriverScoreDetail migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 — DriverScoreDetail surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17). verify-step 1087."
+}

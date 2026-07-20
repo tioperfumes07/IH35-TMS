@@ -799,7 +799,7 @@ Guard: `scripts/verify-unit-driver-history-strip-uses-paritytable.mjs` via verif
 | `apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx` | migrated (#1088) |
 | `apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerGridPage.tsx` | pending |
 | `apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerRequestInboxPage.tsx` | pending |
-| `apps/frontend/src/pages/safety/driver-scoring/DriverScoreDetail.tsx` | pending |
+| `apps/frontend/src/pages/safety/driver-scoring/DriverScoreDetail.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/pages/safety/driver-scoring/DriverScoringTab.tsx` | pending |
 | `apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx` | migrated (fix/drug-alcohol-program-paritytable) |
 | `apps/frontend/src/pages/safety/drug-alcohol/RandomPoolDashboard.tsx` | pending |
@@ -1258,3 +1258,14 @@ Guard: `scripts/verify-notification-preferences-uses-paritytable.mjs` via verify
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/settings/NotificationPreferencesPage.tsx` | pages/settings |
+## qbo-parity-a1 — DriverScoreDetail (this PR)
+Safety driver-score detail 12-period breakdown was a hand-rolled `<table>`.
+Migrated to shared `ParityTable` (sort + resize + gear); `ListErrorState` + Retry on
+trend query failure. Columns Period / Score / Rank / Brakes / Accel / Speeding (s) / Lane
+preserved 1:1; sparkline, latest-stats grid, and harsh-event timeline + dashcam
+drill-through unchanged. Guard:
+`scripts/verify-driver-score-detail-uses-paritytable.mjs` via verify-step **1087**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/safety/driver-scoring/DriverScoreDetail.tsx` | pages/safety/driver-scoring |
