@@ -21,9 +21,9 @@ sort, and the lock-account control — never drop or reorder.
 ## Rollup
 | Status | Count |
 | --- | --- |
-| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable + LoadHistoryTab + vehicle PlatesTable + vehicle ComplianceSection + DriverDaySummaryCard + StopReasoningTable + EntityAuditHistoryTab + AuditTrailPage + trailer PlatesTable) | 25 |
+| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable + LoadHistoryTab + vehicle PlatesTable + vehicle ComplianceSection + DriverDaySummaryCard + StopReasoningTable + EntityAuditHistoryTab + AuditTrailPage + trailer PlatesTable + QboVendorLinkagePage) | 26 |
 | financial-hold (Jorge-gated) | 99 |
-| pending (non-financial, future batches) | 175 |
+| pending (non-financial, future batches) | 174 |
 | **hand-rolled total (original)** | **300** |
 
 > Note: ParityTable was already consumed by ~16 surfaces before this batch (not counted above — those were never hand-rolled).
@@ -432,7 +432,7 @@ verify-step 1035.
 | `apps/frontend/src/pages/admin/ActivityLogPage.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/pages/admin/ErrorMonitor.tsx` | pending |
 | `apps/frontend/src/pages/admin/LaunchToggles.tsx` | pending |
-| `apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx` | pending |
+| `apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/pages/admin/audit-log/AuditLogViewer.tsx` | pending |
 | `apps/frontend/src/pages/admin/feature-flags/FeatureFlagsManager.tsx` | pending |
 
@@ -872,4 +872,16 @@ manual expand rows. Migrated to shared `ParityTable` (sort + resize + gear +
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/audit/AuditTrailPage.tsx` | pages/audit |
+
+## qbo-parity-a1 — QboVendorLinkagePage (this PR)
+Admin QBO vendor/class linkage (Drivers + Assets tabs) was two hand-rolled `<table>` grids
+with no outage chrome on query failure. Migrated both to shared `ParityTable`
+(sort + resize + gear) and added `ListErrorState` + Retry per tab. Driver columns
+Driver / Current Vendor / Status / Actions and asset columns Unit / QBO Class / Actions
+preserved 1:1; filter bar + auto-link high-confidence action preserved.
+Guard: `scripts/verify-qbo-vendor-linkage-uses-paritytable.mjs` via verify-step 1042.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx` | pages/admin |
 
