@@ -115,7 +115,8 @@ function DecideModal({
       <div className="w-full max-w-lg space-y-3 rounded-sm border border-gray-200 bg-white p-4 shadow-lg">
         <h2 className="text-base font-semibold text-gray-900">Decide dispute</h2>
         <p className="text-xs text-gray-600">
-          {row.driver_name ?? "Driver"} · {row.settlement_display_id ?? row.settlement_id.slice(0, 8)} · claimed{" "}
+          {row.driver_name ?? "Driver"} ·{" "}
+          <EntityLink kind="settlement" id={row.settlement_id} label={row.settlement_display_id ?? row.settlement_id} /> · claimed{" "}
           {money(row.claimed_adjustment_cents)}
         </p>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
@@ -205,7 +206,7 @@ export function DisputeQueuePage() {
         label: "Settlement",
         sortable: true,
         render: (row) => (
-          <EntityLink kind="settlement" id={row.settlement_id} label={row.settlement_display_id ?? row.settlement_id.slice(0, 8)} />
+          <EntityLink kind="settlement" id={row.settlement_id} label={row.settlement_display_id ?? row.settlement_id} />
         ),
       },
       {
