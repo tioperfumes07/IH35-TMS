@@ -2,8 +2,9 @@
 // GLOBAL-TABLE-ALIGNMENT guard (UX Block A, Jorge LOCKED option 2).
 // Fails if:
 //   1) the shared table components stop supporting per-column align (`align`/`numeric` + resolveAlign), or
-//   2) a known numeric column (Drive / Shift / Break / Cycle hours) is centered instead of right-aligned
-//      in the shared component path (i.e. its column def lost `numeric`/`align:"right"`).
+//   2) a known numeric column (Drive / Shift / Break / Cycle hours) is not right-aligned
+//      in its shared component path (`numeric:true` in TableHeaderCell tables or matching
+//      `className` + `cellClass` in ParityTable).
 // This is the static regression guard required by the constitution: every bug fix / locked decision
 // gets a CI guard so it can't silently regress.
 import fs from "node:fs";
@@ -48,7 +49,7 @@ must("apps/frontend/src/components/table/ColumnChooser.tsx", colChooser, "align 
 must("apps/frontend/src/components/table/ColumnChooser.tsx", colChooser, "numeric on TableColumn", /numeric\?:\s*boolean/);
 
 // --- 2. Known numeric (HH:MM hours) columns must be marked numeric, not left to center ---
-// Fleet Live HOS board (drives off the shared TableHeaderCell via column defs).
+// Fleet Live HOS board (migrated to ParityTable; header + data alignment are column classes).
 const fleet = read("apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx");
 const FLEET_HOUR_KEYS = [
   ["drive_remaining_min", "Drive Rem"],
@@ -57,14 +58,15 @@ const FLEET_HOUR_KEYS = [
   ["cycle_remaining_min", "Cycle Rem"],
 ];
 for (const [key, human] of FLEET_HOUR_KEYS) {
-  // The column object for this key must carry numeric: true (so header right-aligns; centered = fail).
-  const re = new RegExp(`key:\\s*"${key}"[^}]*numeric:\\s*true`);
-  if (!re.test(fleet)) {
-    fail(`FleetHosBoardSection: "${human}" (${key}) column must be marked numeric:true (right-aligned), not centered`);
+  const start = fleet.indexOf(`key: "${key}"`);
+  const end = start >= 0 ? fleet.indexOf("\n  },", start) : -1;
+  const column = start >= 0 ? fleet.slice(start, end >= 0 ? end : start + 800) : "";
+  if (!/className:\s*"text-right"/.test(column) || !/cellClass:\s*"text-right tabular-nums"/.test(column)) {
+    fail(`FleetHosBoardSection: "${human}" (${key}) ParityTable header + cell must be right-aligned with tabular numerals`);
   }
 }
-// The shared header must receive the alignment, or the header won't follow the data.
-must("apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx", fleet, "numeric passed to TableHeaderCell", /numeric=\{c\.numeric\}/);
+must("apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx", fleet, "ParityTable import", /components\/parity\/ParityTable/);
+must("apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx", fleet, "ParityTable usage", /<ParityTable\b/);
 
 // Compliance HOS Tracker (local table — numeric HH:MM headers must be right-aligned to match data).
 const hos = read("apps/frontend/src/pages/compliance/HosTrackerSection.tsx");

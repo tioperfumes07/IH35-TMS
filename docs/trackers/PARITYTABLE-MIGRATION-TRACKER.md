@@ -497,7 +497,7 @@ verify-step 1035.
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx` | pending |
+| `apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/pages/compliance/Form2290Filings.tsx` | pending |
 | `apps/frontend/src/pages/compliance/HosTrackerSection.tsx` | pending |
 | `apps/frontend/src/pages/compliance/HosViewerSection.tsx` | pending |
@@ -1069,3 +1069,16 @@ Guard: `scripts/verify-booking-gap-report-uses-paritytable.mjs` via verify-step 
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/reports/BookingGapReport.tsx` | pages/reports |
+
+## qbo-parity-a1 — FleetHosBoardSection (this PR)
+Compliance Live Fleet HOS used separate hand-rolled live and offline/stale `<table>`
+grids plus manual paging and query-error text. Migrated both grids to shared
+`ParityTable` (sort + resize + gear + paging) and added retryable `ListErrorState`.
+All 14 live columns, the five offline columns, row unit-detail drill-through, live
+search/count, refresh, Excel export, seven-day stale segregation, and neutral stale /
+low-clock emphasis remain intact. Guard:
+`scripts/verify-fleet-hos-board-uses-paritytable.mjs` via verify-step **1064**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx` | pages/compliance |

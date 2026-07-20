@@ -7,13 +7,8 @@ import {
   downloadFleetLocationHosXlsx,
   type FleetLocationHosRow,
 } from "../../api/reports";
-import {
-  TableControls,
-  Paginator,
-  TableHeaderCell,
-  useTableController,
-  type TableColumn,
-} from "../../components/table";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatClockTimeCT } from "../../lib/businessDate";
 
 function hmm(min: number | null): string {
@@ -67,53 +62,179 @@ export function partitionFleetByFreshness(
   return { live, offline };
 }
 
-// GLOBAL-TABLE-CONTROLS: every column sortable (click asc→desc→off) + resizable (drag edge, persists per user).
+// GLOBAL-TABLE-CONTROLS: every data column sortable and resizable via the shared ParityTable grammar.
 // "LAST UPDATE" (the real position date+time) replaces the confusing standalone "MIN AGO" as the prominent
 // staleness signal; min-ago is kept only as a muted relative hint inside that cell.
 // GLOBAL-TABLE-ALIGNMENT (Block A): numeric columns (speed/heading + the four HOS HH:MM clocks)
-// marked `numeric` so the shared TableHeaderCell right-aligns the HEADER over the right-aligned
-// tabular-nums data cells below. Text columns stay default (center).
-const FLEET_HOS_COLUMNS: TableColumn[] = [
-  { key: "unit_number", label: "Unit", alwaysVisible: true },
-  { key: "driver_name", label: "Driver" },
-  { key: "city", label: "City" },
-  { key: "state", label: "State" },
-  { key: "speed_mph", label: "Speed", numeric: true },
-  { key: "heading_deg", label: "Heading", numeric: true },
-  { key: "engine_state", label: "Engine" },
-  { key: "last_update", label: "Last Update (Laredo)" },
-  { key: "drive_remaining_min", label: "Drive Rem (11h)", numeric: true },
-  { key: "window_remaining_min", label: "Shift Rem (14h)", numeric: true },
-  { key: "break_remaining_min", label: "Break Rem", numeric: true },
-  { key: "cycle_remaining_min", label: "Cycle Rem (70h)", numeric: true },
-  { key: "hos_status", label: "HOS" },
-  { key: "map", label: "Map" },
+// right-align the header and cells through matching column classes.
+const FLEET_HOS_COLUMNS: ParityColumn<FleetLocationHosRow>[] = [
+  {
+    key: "unit_number",
+    label: "Unit",
+    alwaysVisible: true,
+    sortable: true,
+    cellClass: "font-medium",
+    render: (row) => row.unit_number ?? "—",
+  },
+  {
+    key: "driver_name",
+    label: "Driver",
+    sortable: true,
+    render: (row) => (
+      <span className={row.driver_name ? "" : "text-slate-400 italic"}>
+        {row.driver_name ?? "Not assigned"}
+      </span>
+    ),
+  },
+  {
+    key: "city",
+    label: "City",
+    sortable: true,
+    render: (row) => (
+      <span className={row.city ? "" : "text-slate-400"} title={row.formatted_location ?? undefined}>
+        {row.city ?? "—"}
+      </span>
+    ),
+  },
+  {
+    key: "state",
+    label: "State",
+    sortable: true,
+    render: (row) => <span className={row.state ? "" : "text-slate-400"}>{row.state ?? "—"}</span>,
+  },
+  {
+    key: "speed_mph",
+    label: "Speed",
+    sortable: true,
+    className: "text-right",
+    cellClass: "text-right tabular-nums",
+    sortValue: (row) => (row.speed_mph == null ? null : Number(row.speed_mph)),
+    render: (row) => num(row.speed_mph),
+  },
+  {
+    key: "heading_deg",
+    label: "Heading",
+    sortable: true,
+    className: "text-right",
+    cellClass: "text-right tabular-nums",
+    sortValue: (row) => (row.heading_deg == null ? null : Number(row.heading_deg)),
+    render: (row) => num(row.heading_deg),
+  },
+  {
+    key: "engine_state",
+    label: "Engine",
+    sortable: true,
+    render: (row) => row.engine_state ?? "—",
+  },
+  {
+    key: "last_update",
+    label: "Last Update (Laredo)",
+    sortable: true,
+    sortValue: (row) => row.captured_at_utc,
+    render: (row) => (
+      <span className={`whitespace-nowrap ${row.stale ? "font-semibold text-slate-700" : ""}`}>
+        {row.captured_at_local ?? "—"}
+        {row.minutes_since_fix != null ? (
+          <span className="ml-1 text-[10px] text-slate-400">({row.minutes_since_fix} min ago)</span>
+        ) : null}
+      </span>
+    ),
+  },
+  {
+    key: "drive_remaining_min",
+    label: "Drive Rem (11h)",
+    sortable: true,
+    className: "text-right",
+    cellClass: "text-right tabular-nums",
+    render: (row) => (
+      <span className={row.drive_remaining_min != null && row.drive_remaining_min < HOS_WARN_MIN ? "font-semibold text-slate-700" : ""}>
+        {hmm(row.drive_remaining_min)}
+      </span>
+    ),
+  },
+  {
+    key: "window_remaining_min",
+    label: "Shift Rem (14h)",
+    sortable: true,
+    className: "text-right",
+    cellClass: "text-right tabular-nums",
+    render: (row) => (
+      <span className={row.window_remaining_min != null && row.window_remaining_min < HOS_WARN_MIN ? "font-semibold text-slate-700" : ""}>
+        {hmm(row.window_remaining_min)}
+      </span>
+    ),
+  },
+  {
+    key: "break_remaining_min",
+    label: "Break Rem",
+    sortable: true,
+    className: "text-right",
+    cellClass: "text-right tabular-nums",
+    render: (row) => hmm(row.break_remaining_min),
+  },
+  {
+    key: "cycle_remaining_min",
+    label: "Cycle Rem (70h)",
+    sortable: true,
+    className: "text-right",
+    cellClass: "text-right tabular-nums",
+    render: (row) => hmm(row.cycle_remaining_min),
+  },
+  {
+    key: "hos_status",
+    label: "HOS",
+    sortable: true,
+    render: (row) => (
+      <span className={row.hos_status === "unavailable" ? "text-slate-400 italic" : ""}>
+        {row.hos_status ?? "—"}
+      </span>
+    ),
+  },
+  {
+    key: "map",
+    label: "Map",
+    render: (row) =>
+      row.lat != null && row.lng != null ? (
+        <a
+          className="text-slate-700 hover:underline"
+          href={`https://www.google.com/maps?q=${row.lat},${row.lng}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(event) => event.stopPropagation()}
+        >
+          map
+        </a>
+      ) : (
+        "—"
+      ),
+  },
 ];
 
 function fleetHosSearchText(r: FleetLocationHosRow): string {
   return [r.unit_number, r.driver_name, r.city, r.state].filter(Boolean).join(" ");
 }
 
-// Per-column sort value — sorts the FULL dataset (not just the visible page). Timestamps sort by ISO string
-// (chronological); numeric HOS/telemetry sort numerically; "map" is presentation-only (not sortable).
-function fleetHosSortValue(r: FleetLocationHosRow, key: string): string | number | null {
-  switch (key) {
-    case "unit_number": return r.unit_number ?? null;
-    case "driver_name": return r.driver_name ?? null;
-    case "city": return r.city ?? null;
-    case "state": return r.state ?? null;
-    case "speed_mph": return r.speed_mph ?? null;
-    case "heading_deg": return r.heading_deg ?? null;
-    case "engine_state": return r.engine_state ?? null;
-    case "last_update": return r.captured_at_utc ?? null;
-    case "drive_remaining_min": return r.drive_remaining_min ?? null;
-    case "window_remaining_min": return r.window_remaining_min ?? null;
-    case "break_remaining_min": return r.break_remaining_min ?? null;
-    case "cycle_remaining_min": return r.cycle_remaining_min ?? null;
-    case "hos_status": return r.hos_status ?? null;
-    default: return null;
-  }
-}
+const OFFLINE_FLEET_HOS_COLUMNS: ParityColumn<FleetLocationHosRow>[] = [
+  FLEET_HOS_COLUMNS[0],
+  FLEET_HOS_COLUMNS[1],
+  FLEET_HOS_COLUMNS[2],
+  FLEET_HOS_COLUMNS[3],
+  {
+    key: "last_update",
+    label: "Last Update (Laredo)",
+    sortable: true,
+    sortValue: (row) => row.captured_at_utc,
+    cellClass: "font-semibold text-slate-700",
+    render: (row) => (
+      <span className="whitespace-nowrap">
+        {row.captured_at_local ?? "Never reported"}
+        {row.minutes_since_fix != null ? (
+          <span className="ml-1 text-[10px] font-normal text-slate-400">({row.minutes_since_fix} min ago)</span>
+        ) : null}
+      </span>
+    ),
+  },
+];
 
 export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyId: string }) {
   const companyId = operatingCompanyId;
@@ -128,22 +249,18 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
   });
 
   const [showOffline, setShowOffline] = useState(false);
+  const [search, setSearch] = useState("");
 
   const allRows = query.data?.rows ?? [];
   // COMPLIANCE-1: default view = only units reporting within the freshness threshold; years/weeks-
   // stale (or never-reported) units are segregated into the collapsible group below.
   const { live: liveRows, offline: offlineRows } = useMemo(() => partitionFleetByFreshness(allRows), [allRows]);
-
-  const table = useTableController<FleetLocationHosRow>({
-    rows: liveRows,
-    columns: FLEET_HOS_COLUMNS,
-    tableKey: "compliance-fleet-hos",
-    searchText: fleetHosSearchText,
-    sortValue: fleetHosSortValue,
-    defaultPageSize: 50,
-  });
-  const isVisible = (key: string) => table.isColumnVisible(key);
-  const pageRows = table.paged;
+  const filteredLiveRows = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    return needle
+      ? liveRows.filter((row) => fleetHosSearchText(row).toLowerCase().includes(needle))
+      : liveRows;
+  }, [liveRows, search]);
 
   return (
     <section data-testid="compliance-section-fleet-hos">
@@ -152,119 +269,52 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
         <p className="text-xs text-slate-500">Every vehicle Samsara reports, its current driver, and HOS clocks (refreshes every 5 min).</p>
       </div>
 
-      <TableControls
-        search={table.search}
-        onSearchChange={table.setSearch}
-        searchPlaceholder="Search unit, driver, city…"
-        filteredCount={table.filteredCount}
-        totalCount={liveRows.length}
-        columns={FLEET_HOS_COLUMNS}
-        hidden={table.hidden}
-        onToggleColumn={table.toggleColumn}
-        pageSize={table.pageSize}
-        onPageSizeChange={table.setPageSize}
-      >
-        <span className="text-xs text-slate-500">
-          {query.data?.generated_at ? `as of ${formatClockTimeCT(query.data.generated_at)} CT` : ""}
-        </span>
-        <div className="ml-auto flex gap-2">
-          <Button type="button" variant="secondary" onClick={() => void query.refetch()}>
-            Refresh
-          </Button>
-          <Button type="button" variant="secondary" onClick={() => void downloadFleetLocationHosXlsx(companyId).catch(() => undefined)}>
-            ⬇ Export (Excel)
-          </Button>
-        </div>
-      </TableControls>
-
-      {query.isLoading ? (
-        <div className="px-3 py-6 text-sm text-slate-500">Loading fleet HOS…</div>
-      ) : query.isError ? (
-        <div className="px-3 py-6 text-sm text-red-600">Failed to load fleet HOS.</div>
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load fleet HOS"
+          status={0}
+          message={(query.error as Error)?.message}
+          onRetry={() => void query.refetch()}
+        />
       ) : (
-        <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
-          <table className="w-full table-fixed text-left text-xs">
-            <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-slate-500">
-              <tr>
-                {FLEET_HOS_COLUMNS.filter((c) => isVisible(c.key)).map((c) => (
-                  <TableHeaderCell
-                    key={c.key}
-                    columnKey={c.key}
-                    label={c.label}
-                    sortable={c.key !== "map"}
-                    sortKey={table.sortKey}
-                    sortDir={table.sortDir}
-                    onToggleSort={table.toggleSort}
-                    width={table.widths[c.key]}
-                    onResize={table.setColumnWidth}
-                    align={c.align}
-                    numeric={c.numeric}
-                  />
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {pageRows.map((r: FleetLocationHosRow) => (
-                <tr
-                  key={r.unit_id}
-                  onClick={() => navigate(`/fleet/units/${r.unit_id}`)}
-                  className={`cursor-pointer border-t border-slate-100 hover:bg-slate-50 ${r.stale ? "bg-slate-100" : ""}`}
-                  title="Open unit detail"
-                >
-                  {isVisible("unit_number") ? <td className="px-2 py-1.5 font-medium">{r.unit_number ?? "—"}</td> : null}
-                  {isVisible("driver_name") ? (
-                    <td className={`px-2 py-1.5 ${r.driver_name ? "" : "text-slate-400 italic"}`}>{r.driver_name ?? "Not assigned"}</td>
-                  ) : null}
-                  {isVisible("city") ? (
-                    <td className={`px-2 py-1.5 ${r.city ? "" : "text-slate-400"}`} title={r.formatted_location ?? undefined}>{r.city ?? "—"}</td>
-                  ) : null}
-                  {isVisible("state") ? <td className={`px-2 py-1.5 ${r.state ? "" : "text-slate-400"}`}>{r.state ?? "—"}</td> : null}
-                  {isVisible("speed_mph") ? <td className="px-2 py-1.5 text-right tabular-nums">{num(r.speed_mph)}</td> : null}
-                  {isVisible("heading_deg") ? <td className="px-2 py-1.5 text-right tabular-nums">{num(r.heading_deg)}</td> : null}
-                  {isVisible("engine_state") ? <td className="px-2 py-1.5">{r.engine_state ?? "—"}</td> : null}
-                  {isVisible("last_update") ? (
-                    <td className={`px-2 py-1.5 whitespace-nowrap ${r.stale ? "font-semibold text-slate-700" : ""}`}>
-                      {r.captured_at_local ?? "—"}
-                      {r.minutes_since_fix != null ? (
-                        <span className="ml-1 text-[10px] text-slate-400">({r.minutes_since_fix} min ago)</span>
-                      ) : null}
-                    </td>
-                  ) : null}
-                  {isVisible("drive_remaining_min") ? (
-                    <td className={`px-2 py-1.5 text-right tabular-nums ${r.drive_remaining_min != null && r.drive_remaining_min < HOS_WARN_MIN ? "text-slate-700 font-semibold" : ""}`}>
-                      {hmm(r.drive_remaining_min)}
-                    </td>
-                  ) : null}
-                  {isVisible("window_remaining_min") ? (
-                    <td className={`px-2 py-1.5 text-right tabular-nums ${r.window_remaining_min != null && r.window_remaining_min < HOS_WARN_MIN ? "text-slate-700 font-semibold" : ""}`}>
-                      {hmm(r.window_remaining_min)}
-                    </td>
-                  ) : null}
-                  {isVisible("break_remaining_min") ? <td className="px-2 py-1.5 text-right tabular-nums">{hmm(r.break_remaining_min)}</td> : null}
-                  {isVisible("cycle_remaining_min") ? <td className="px-2 py-1.5 text-right tabular-nums">{hmm(r.cycle_remaining_min)}</td> : null}
-                  {isVisible("hos_status") ? (
-                    <td className={`px-2 py-1.5 ${r.hos_status === "unavailable" ? "text-slate-400 italic" : ""}`}>{r.hos_status ?? "—"}</td>
-                  ) : null}
-                  {isVisible("map") ? (
-                    <td className="px-2 py-1.5">
-                      {r.lat != null && r.lng != null ? (
-                        <a className="text-slate-700 hover:underline" href={`https://www.google.com/maps?q=${r.lat},${r.lng}`} target="_blank" rel="noopener noreferrer">
-                          map
-                        </a>
-                      ) : "—"}
-                    </td>
-                  ) : null}
-                </tr>
-              ))}
-              {pageRows.length === 0 ? (
-                <tr><td colSpan={FLEET_HOS_COLUMNS.length} className="px-3 py-6 text-center text-slate-500">No reporting vehicles.</td></tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable
+          rows={filteredLiveRows}
+          columns={FLEET_HOS_COLUMNS}
+          rowKey={(row) => row.unit_id}
+          loading={query.isLoading}
+          onRowClick={(row) => navigate(`/fleet/units/${row.unit_id}`)}
+          rowClassName={(row) => (row.stale ? "bg-slate-100" : "")}
+          storageKey="compliance-fleet-hos"
+          emptyText="No reporting vehicles."
+          initialPageSize={50}
+          tableTestId="compliance-fleet-hos-table"
+          filterBar={
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search unit, driver, city…"
+                className="rounded-sm border border-slate-300 px-2 py-1 text-sm"
+              />
+              <span className="text-xs text-slate-500">
+                {filteredLiveRows.length} of {liveRows.length}
+              </span>
+              <span className="text-xs text-slate-500">
+                {query.data?.generated_at ? `as of ${formatClockTimeCT(query.data.generated_at)} CT` : ""}
+              </span>
+              <div className="ml-auto flex gap-2">
+                <Button type="button" variant="secondary" onClick={() => void query.refetch()}>
+                  Refresh
+                </Button>
+                <Button type="button" variant="secondary" onClick={() => void downloadFleetLocationHosXlsx(companyId).catch(() => undefined)}>
+                  Export (Excel)
+                </Button>
+              </div>
+            </div>
+          }
+        />
       )}
-
-      <Paginator page={table.page} pageCount={table.pageCount} onPageChange={table.setPage} />
 
       {offlineRows.length > 0 ? (
         <div className="mt-4" data-testid="compliance-fleet-hos-offline">
@@ -281,39 +331,17 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
             </span>
           </button>
           {showOffline ? (
-            <div className="mt-2 overflow-x-auto rounded-sm border border-slate-200 bg-white">
-              <table className="w-full table-fixed text-left text-xs">
-                <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-slate-500">
-                  <tr>
-                    <th className="px-2 py-1.5">Unit</th>
-                    <th className="px-2 py-1.5">Driver</th>
-                    <th className="px-2 py-1.5">City</th>
-                    <th className="px-2 py-1.5">State</th>
-                    <th className="px-2 py-1.5">Last Update (Laredo)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {offlineRows.map((r) => (
-                    <tr
-                      key={r.unit_id}
-                      onClick={() => navigate(`/fleet/units/${r.unit_id}`)}
-                      className="cursor-pointer border-t border-slate-100 hover:bg-slate-50"
-                      title="Open unit detail"
-                    >
-                      <td className="px-2 py-1.5 font-medium">{r.unit_number ?? "—"}</td>
-                      <td className={`px-2 py-1.5 ${r.driver_name ? "" : "text-slate-400 italic"}`}>{r.driver_name ?? "Not assigned"}</td>
-                      <td className={`px-2 py-1.5 ${r.city ? "" : "text-slate-400"}`}>{r.city ?? "—"}</td>
-                      <td className={`px-2 py-1.5 ${r.state ? "" : "text-slate-400"}`}>{r.state ?? "—"}</td>
-                      <td className="px-2 py-1.5 whitespace-nowrap font-semibold text-slate-700">
-                        {r.captured_at_local ?? "Never reported"}
-                        {r.minutes_since_fix != null ? (
-                          <span className="ml-1 text-[10px] font-normal text-slate-400">({r.minutes_since_fix} min ago)</span>
-                        ) : null}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="mt-2">
+              <ParityTable
+                rows={offlineRows}
+                columns={OFFLINE_FLEET_HOS_COLUMNS}
+                rowKey={(row) => row.unit_id}
+                onRowClick={(row) => navigate(`/fleet/units/${row.unit_id}`)}
+                storageKey="compliance-fleet-hos-offline"
+                emptyText="No offline or stale vehicles."
+                initialPageSize={50}
+                tableTestId="compliance-fleet-hos-offline-table"
+              />
             </div>
           ) : null}
         </div>
