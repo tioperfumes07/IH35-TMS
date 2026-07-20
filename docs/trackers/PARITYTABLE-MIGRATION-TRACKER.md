@@ -1103,3 +1103,14 @@ verify-step **1063**.
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/reports/audit/AuditReportPage.tsx` | pages/reports/audit |
+
+## qbo-parity-a1 — RunnerTable (this PR)
+The reusable report-runner results grid was a hand-rolled `<table>`. Migrated to shared
+`ParityTable` (sort + resize + gear + paging) while preserving every configuration-driven
+column, order, alignment, currency/percent/number/date formatting, optional `onSort`
+callback, per-report preference key, id/index row-key fallback, and empty-state copy.
+Guard: `scripts/verify-runner-table-uses-paritytable.mjs` via verify-step **1062**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/reports/runners/RunnerTable.tsx` | pages/reports/runners |
