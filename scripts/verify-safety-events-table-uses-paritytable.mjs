@@ -50,8 +50,13 @@ function assertMigrated(src) {
   if (!src.includes("Export Selected")) {
     errors.push(`${PAGE}: must preserve Export Selected bulk action label`);
   }
-  if (!src.includes("Archive (coming soon)")) {
-    errors.push(`${PAGE}: must preserve Archive (coming soon) bulk action stub`);
+  // The Archive bulk-action affordance must be preserved, but NOT via the literal
+  // "Archive (coming soon)" — that copy is forbidden in rendered JSX by verify-no-prod-stubs,
+  // and asserting it here put the two guards in direct conflict (main shipped a guard requiring
+  // copy another guard forbade). Assert the disabled affordance via its compliant tooltip instead;
+  // the button label is "Archive" and the tooltip explains it is not yet backed by an endpoint.
+  if (!src.includes("Bulk archive is not available yet")) {
+    errors.push(`${PAGE}: must preserve the disabled Archive bulk-action affordance (tooltip "Bulk archive is not available yet")`);
   }
   if (!src.includes("maxSelectable={200}")) {
     errors.push(`${PAGE}: must preserve maxSelectable={200} bulk cap`);
@@ -80,7 +85,7 @@ function selftest() {
       emptyText="No safety events found."
       selectable
       maxSelectable={200}
-      batchActions={() => <>Export Selected Archive (coming soon) Open accident</>}
+      batchActions={() => <>Export Selected <button disabled title="Bulk archive is not available yet — no backend endpoint.">Archive</button> Open accident</>}
     />
   `;
   const bad = `
