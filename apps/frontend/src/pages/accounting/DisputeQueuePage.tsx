@@ -36,10 +36,11 @@ function money(cents: number | null | undefined) {
 
 function statusPill(status: string) {
   const base = "rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide";
-  if (status === "submitted") return `${base} border border-amber-200 bg-amber-50 text-amber-800`;
-  if (status === "under_review") return `${base} border border-slate-200 bg-slate-100 text-slate-700`;
-  if (status === "approved") return `${base} border border-emerald-200 bg-emerald-50 text-emerald-800`;
-  if (status === "denied") return `${base} border border-rose-200 bg-rose-50 text-rose-800`;
+  // §7 financial UI: slate status pills only (red reserved for delete/Accident).
+  if (status === "denied") return `${base} border border-slate-200 bg-slate-100 text-slate-700`;
+  if (status === "submitted" || status === "under_review" || status === "approved") {
+    return `${base} border border-slate-200 bg-slate-100 text-slate-700`;
+  }
   return `${base} border border-slate-200 bg-slate-50 text-slate-700`;
 }
 
