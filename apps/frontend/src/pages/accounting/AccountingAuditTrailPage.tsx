@@ -15,6 +15,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useUrlSort } from "../../hooks/useUrlSort";
 import { formatUsdCents } from "../../lib/money";
 
 function fmtMoneyCents(value: number) {
@@ -105,6 +106,8 @@ export function AccountingAuditTrailPage() {
   const [accountId, setAccountId] = useState("");
   const [lineageRows, setLineageRows] = useState<AccountingSourceLineageRow[] | null>(null);
   const [lineageKey, setLineageKey] = useState<{ source_transaction_type: string; source_transaction_id: string } | null>(null);
+  // BANK-SORT-ROLLOUT-ACCT — audit event list sort persists in ?sort=&dir= via useUrlSort.
+  const { sortKey, sortDirection, onSortChange } = useUrlSort();
 
   const accountsQuery = useInfiniteQuery({
     queryKey: ["accounting-audit-trail-accounts"],
@@ -158,6 +161,7 @@ export function AccountingAuditTrailPage() {
       {
         key: "source_transaction_type",
         label: "Source",
+        sortable: true,
         render: (row) => (
           <>
             {row.source_transaction_type ?? "—"}
@@ -177,6 +181,7 @@ export function AccountingAuditTrailPage() {
       {
         key: "account_number",
         label: "Account",
+        sortable: true,
         render: (row) => (
           <>
             {row.account_number ?? "—"} {row.account_name ? `- ${row.account_name}` : ""}
@@ -222,21 +227,23 @@ export function AccountingAuditTrailPage() {
 
   const lineageColumns = useMemo<ParityColumn<AccountingSourceLineageRow>[]>(
     () => [
-      { key: "occurred_at", label: "Occurred", render: (row) => fmtDate(row.occurred_at) },
-      { key: "journal_entry_id", label: "JE", render: (row) => <EntityLink kind="journal_entry" id={row.journal_entry_id} label={row.journal_entry_id?.slice(0, 8)} /> },
+      { key: "occurred_at", label: "Occurred", sortable: true, render: (row) => fmtDate(row.occurred_at) },
+      { key: "journal_entry_id", label: "JE", sortable: true, render: (row) => <EntityLink kind="journal_entry" id={row.journal_entry_id} label={row.journal_entry_id?.slice(0, 8)} /> },
       {
         key: "account_number",
         label: "Account",
+        sortable: true,
         render: (row) => (
           <>
             {row.account_number ?? "—"} {row.account_name ? `- ${row.account_name}` : ""}
           </>
         ),
       },
-      { key: "amount_cents", label: "Amount", render: (row) => `${row.debit_or_credit.toUpperCase()} ${fmtMoneyCents(row.amount_cents)}` },
+      { key: "amount_cents", label: "Amount", sortable: true, render: (row) => `${row.debit_or_credit.toUpperCase()} ${fmtMoneyCents(row.amount_cents)}` },
       {
         key: "linked_object_type",
         label: "Linked object",
+        sortable: true,
         render: (row) => (
           <>
             {row.linked_object_type ?? "—"}
@@ -322,6 +329,9 @@ export function AccountingAuditTrailPage() {
         loading={eventQuery.isPending || (eventQuery.isFetching && events.length === 0)}
         filterBar={filterBar}
         storageKey="accounting-audit-trail"
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSortChange={onSortChange}
         renderExpanded={(row) => (
           <div className="grid gap-2 md:grid-cols-2">
             <div>

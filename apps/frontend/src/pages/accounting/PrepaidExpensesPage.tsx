@@ -13,6 +13,7 @@ import {
 } from "../../api/prepaid-expenses";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { useUrlSort } from "../../hooks/useUrlSort";
 
 const fmtCents = (c: number) => formatUsdCents(c);
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
@@ -195,6 +196,7 @@ export function PrepaidExpensesPage() {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const limit = 50;
+  const { sortKey, sortDirection, onSortChange } = useUrlSort();
 
   const listQuery = useQuery({
     queryKey: ["prepaid-expenses", operatingCompanyId, statusFilter, offset],
@@ -237,11 +239,13 @@ export function PrepaidExpensesPage() {
       {
         key: "remaining",
         label: "Remaining",
+        sortable: true,
+        sortValue: (row) => row.total_amount_cents - row.amortized_cents,
         className: "text-right",
         cellClass: "text-right tabular-nums text-gray-500",
         render: (row) => fmtCents(row.total_amount_cents - row.amortized_cents),
       },
-      { key: "pending_periods", label: "Pending", className: "text-center", cellClass: "text-center text-gray-500", render: (row) => row.pending_periods },
+      { key: "pending_periods", label: "Pending", sortable: true, className: "text-center", cellClass: "text-center text-gray-500", render: (row) => row.pending_periods },
       {
         key: "status",
         label: "Status",
@@ -307,6 +311,9 @@ export function PrepaidExpensesPage() {
         storageKey="prepaid-expenses-list"
         initialPageSize={limit}
         emptyText="No prepaid expenses found."
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSortChange={onSortChange}
       />
 
       {total > limit && (

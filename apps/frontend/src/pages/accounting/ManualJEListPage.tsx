@@ -13,6 +13,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ManualJEModal } from "./ManualJEModal";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useUrlSort } from "../../hooks/useUrlSort";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../components/shared/EntityLink";
 
@@ -29,6 +30,7 @@ export function ManualJEListPage() {
   const { user } = useAuth();
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
+  const { sortKey, sortDirection, onSortChange } = useUrlSort();
 
   const [status, setStatus] = useState<JournalEntryStatus | "all">("all");
   const [source, setSource] = useState<JournalEntrySource | "all">("all");
@@ -78,6 +80,7 @@ export function ManualJEListPage() {
         key: "id",
         label: "JE",
         sortable: true,
+        sortValue: (entry) => entry.id,
         render: (entry) => (
           <EntityLink
             kind="journal_entry"
@@ -88,7 +91,7 @@ export function ManualJEListPage() {
         ),
       },
       { key: "entry_date", label: "Date", sortable: true, render: (entry) => formatDateUS(entry.entry_date) },
-      { key: "memo", label: "Memo", sortable: true, render: (entry) => humanMemo(entry.memo) },
+      { key: "memo", label: "Memo", sortable: true, sortValue: (entry) => entry.memo ?? "", render: (entry) => humanMemo(entry.memo) },
       { key: "source", label: "Source", sortable: true },
       { key: "status", label: "Status", sortable: true },
       { key: "debit_total_cents", label: "Debits", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (entry) => `$${((entry.debit_total_cents ?? 0) / 100).toFixed(2)}` },
@@ -162,6 +165,9 @@ export function ManualJEListPage() {
         storageKey="manual-je-list"
         initialPageSize={PAGE_SIZE}
         pageSizeOptions={[PAGE_SIZE]}
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSortChange={onSortChange}
         emptyText="No journal entries found."
       />
 

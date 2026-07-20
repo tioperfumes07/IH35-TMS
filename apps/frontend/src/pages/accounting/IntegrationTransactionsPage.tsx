@@ -8,6 +8,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getIntegrationTransactions, type IntegrationTxnItem } from "../../api/integration-transactions";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { useUrlSort } from "../../hooks/useUrlSort";
 
 const fmtCents = (c: number | null) => (c == null ? "—" : formatUsdCents(c));
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
@@ -36,6 +37,8 @@ export function IntegrationTransactionsPage() {
   const [syncStatus, setSyncStatus] = useState("");
   const [entityType, setEntityType] = useState("");
   const [search, setSearch] = useState("");
+  // BANK-SORT-ROLLOUT-ACCT: sort persists in URL (?sort=&dir=) via useUrlSort + ParityTable controlled sort.
+  const { sortKey, sortDirection, onSortChange } = useUrlSort();
 
   const txnQuery = useQuery({
     queryKey: ["integration-transactions", operatingCompanyId, syncStatus, entityType, search],
@@ -59,6 +62,7 @@ export function IntegrationTransactionsPage() {
       key: "date",
       label: "Date",
       sortable: true,
+      sortValue: (row) => row.bank_transaction?.txn_date ?? row.created_at ?? "",
       render: (row) => <span className="whitespace-nowrap text-gray-700">{fmtDate(row.bank_transaction?.txn_date ?? row.created_at)}</span>,
     },
     {
@@ -74,6 +78,8 @@ export function IntegrationTransactionsPage() {
     {
       key: "description",
       label: "Description / Merchant",
+      sortable: true,
+      sortValue: (row) => row.bank_transaction?.merchant_name || row.bank_transaction?.description || "",
       render: (row) => (
         <span className="block max-w-xs truncate text-gray-800">
           {row.bank_transaction?.merchant_name || row.bank_transaction?.description || <span className="text-gray-400 italic">—</span>}
@@ -86,6 +92,12 @@ export function IntegrationTransactionsPage() {
       sortable: true,
       className: "text-right",
       cellClass: "text-right tabular-nums",
+      sortValue: (row) => {
+        const bt = row.bank_transaction;
+        if (!bt) return 0;
+        const cents = bt.amount_cents ?? 0;
+        return bt.is_credit ? cents : -cents;
+      },
       render: (row) => {
         const bt = row.bank_transaction;
         if (!bt) return <span className="whitespace-nowrap">—</span>;
@@ -136,6 +148,11 @@ export function IntegrationTransactionsPage() {
     {
       key: "linked_to",
       label: "Linked To",
+      sortable: true,
+      sortValue: (row) => {
+        const bt = row.bank_transaction;
+        return bt?.matched_load_id || bt?.matched_bill_id || "";
+      },
       render: (row) => {
         const bt = row.bank_transaction;
         return (
@@ -192,6 +209,9 @@ export function IntegrationTransactionsPage() {
           storageKey="integration-transactions"
           exportFilename="integration-transactions"
           initialPageSize={50}
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSortChange={onSortChange}
           emptyText="No integration transactions found."
         />
       ) : null}

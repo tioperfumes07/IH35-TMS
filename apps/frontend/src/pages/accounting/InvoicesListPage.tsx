@@ -25,6 +25,7 @@ import { BulkActionModal, BulkProgressDialog } from "../../components/bulk";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { useToast } from "../../components/Toast";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useUrlSort } from "../../hooks/useUrlSort";
 
 // INVOICE-LISTFILTER-01: real InvoiceStatus values go to the backend `status` param.
 // "with_balance" is a UI label for server-side has_balance=true (aging-compatible open AR).
@@ -78,6 +79,7 @@ export function InvoicesListPage() {
   const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
   const bulk = useEntityBulkAction();
+  const { sortKey, sortDirection, onSortChange } = useUrlSort();
   const [sentModalOpen, setSentModalOpen] = useState(false);
   const [factoredModalOpen, setFactoredModalOpen] = useState(false);
   const [pendingIds, setPendingIds] = useState<string[]>([]);
@@ -235,6 +237,7 @@ export function InvoicesListPage() {
         key: "customer_name",
         label: "Customer",
         sortable: true,
+        sortValue: (row) => row.customer_name ?? row.customer_id,
         render: (row) => (
           <span title={row.customer_name ?? undefined} className="single-line-name">
             <EntityLink kind="customer" id={row.customer_id} label={row.customer_name ?? row.customer_id} />
@@ -247,6 +250,8 @@ export function InvoicesListPage() {
       {
         key: "source_load_chargeback_requested",
         label: "Chargeback flag",
+        sortable: true,
+        sortValue: (row) => (row.source_load_chargeback_requested ? 1 : 0),
         render: (row) =>
           row.source_load_chargeback_requested ? (
             <span className="rounded-sm border border-slate-300 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700">
@@ -261,12 +266,16 @@ export function InvoicesListPage() {
       {
         key: "source_load_id",
         label: "Load #",
+        sortable: true,
+        sortValue: (row) => row.source_load_id ?? "",
         render: (row) =>
           row.source_load_id ? <EntityLink kind="load" id={row.source_load_id} label={row.source_load_id.slice(0, 8)} /> : "—",
       },
       {
         key: "memo",
         label: "Memo",
+        sortable: true,
+        sortValue: (row) => row.internal_notes ?? row.customer_notes ?? "",
         render: (row) => {
           const memo = row.internal_notes ?? row.customer_notes;
           return (
@@ -383,6 +392,9 @@ export function InvoicesListPage() {
         exportFilename="invoices"
         storageKey="invoices-list"
         initialPageSize={50}
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSortChange={onSortChange}
         selectable
         maxSelectable={200}
         onSelectionCapExceeded={() => pushToast("You can select up to 200 invoices at once.", "error")}

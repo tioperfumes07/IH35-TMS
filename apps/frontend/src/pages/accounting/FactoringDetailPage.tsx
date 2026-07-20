@@ -24,6 +24,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { FactorReserveCard } from "./FactorReserveCard";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useUrlSort } from "../../hooks/useUrlSort";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -47,6 +48,8 @@ export function FactoringDetailPage() {
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
+  // BANK-SORT-ROLLOUT-ACCT: linked-invoice grid sort persists in URL (?sort=&dir=).
+  const { sortKey, sortDirection, onSortChange } = useUrlSort();
 
   const [action, setAction] = useState<ActionKind | null>(null);
   const [notes, setNotes] = useState("");
@@ -242,6 +245,9 @@ export function FactoringDetailPage() {
           emptyText="No invoices linked to this factoring batch."
           density="compact"
           storageKey="factoring-detail-invoices"
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSortChange={onSortChange}
         />
       </DataPanel>
       {selectedCompanyId ? <FactorReserveCard operatingCompanyId={selectedCompanyId} /> : null}

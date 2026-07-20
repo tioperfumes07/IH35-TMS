@@ -9,6 +9,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner";
 import { formatUsdCents } from "../../lib/money";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useUrlSort } from "../../hooks/useUrlSort";
 
 function formatMoney(cents: number) {
   return formatUsdCents(cents);
@@ -92,6 +93,8 @@ export function PostingLineagePage() {
   const [sourceType, setSourceType] = useState("");
   const [sourceId, setSourceId] = useState("");
   const [submitted, setSubmitted] = useState<{ sourceType: string; sourceId: string } | null>(null);
+  // BANK-SORT-ROLLOUT-ACCT: ?sort=&dir= URL persistence.
+  const { sortKey, sortDirection, onSortChange } = useUrlSort();
 
   const lineageQuery = useMutation({
     mutationFn: (input: { sourceType: string; sourceId: string }) =>
@@ -129,6 +132,7 @@ export function PostingLineagePage() {
       {
         key: "journal_entry_id",
         label: "JE",
+        sortable: true,
         render: (row) => (
           <EntityLink kind="journal_entry" id={row.journal_entry_id} label={row.journal_entry_id?.slice(0, 8)} />
         ),
@@ -136,12 +140,15 @@ export function PostingLineagePage() {
       {
         key: "posting_batch_id",
         label: "Posting batch",
+        sortable: true,
+        sortValue: (row) => row.posting_batch_id ?? "",
         render: (row) => row.posting_batch_id ?? "—",
       },
       {
         key: "account_number",
         label: "Account",
         sortable: true,
+        sortValue: (row) => `${row.account_number ?? ""} ${row.account_name ?? ""}`.trim(),
         render: (row) => (
           <>
             {row.account_number ?? "—"} {row.account_name ? `- ${row.account_name}` : ""}
@@ -163,6 +170,8 @@ export function PostingLineagePage() {
       {
         key: "linked_object_type",
         label: "Linked object",
+        sortable: true,
+        sortValue: (row) => `${row.linked_object_type ?? ""} ${row.linked_object_id ?? ""} ${row.relationship_role ?? ""}`.trim(),
         render: (row) => (
           <>
             {row.linked_object_type ?? "—"}
@@ -267,6 +276,9 @@ export function PostingLineagePage() {
           loading={lineageQuery.isPending}
           storageKey="accounting-posting-lineage"
           exportFilename="posting-lineage"
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSortChange={onSortChange}
           emptyText="No posting lineage rows found for this source transaction."
         />
       ) : null}

@@ -17,6 +17,7 @@ import { RecordPaymentModal } from "./RecordPaymentModal";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useUrlSort } from "../../hooks/useUrlSort";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -37,6 +38,8 @@ export function InvoiceDetailPage() {
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
+  // BANK-SORT-ROLLOUT-ACCT: invoice line grid sort persists in URL (?sort=&dir=).
+  const { sortKey, sortDirection, onSortChange } = useUrlSort();
   const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
   // M-1: inline QBO money entry for invoice lines (replaces window.prompt). unit_amount stays CENTS.
   const [newLineDesc, setNewLineDesc] = useState("");
@@ -136,9 +139,9 @@ export function InvoiceDetailPage() {
   const lineColumns: Array<ParityColumn<InvoiceLine>> = [
     { key: "line_type", label: "Type", sortable: true },
     { key: "description", label: "Description", sortable: true },
-    { key: "quantity", label: "Qty" },
-    { key: "unit_amount_cents", label: "Unit", render: (line) => money(line.unit_amount_cents) },
-    { key: "line_total_cents", label: "Total", render: (line) => money(line.line_total_cents) },
+    { key: "quantity", label: "Qty", sortable: true },
+    { key: "unit_amount_cents", label: "Unit", sortable: true, render: (line) => money(line.unit_amount_cents) },
+    { key: "line_total_cents", label: "Total", sortable: true, render: (line) => money(line.line_total_cents) },
     {
       key: "actions",
       label: "Actions",
@@ -386,6 +389,9 @@ export function InvoiceDetailPage() {
           emptyText="No lines yet."
           density="compact"
           storageKey="invoice-detail-lines"
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSortChange={onSortChange}
         />
       </DataPanel>
 

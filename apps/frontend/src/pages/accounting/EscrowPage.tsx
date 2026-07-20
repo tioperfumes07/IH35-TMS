@@ -7,6 +7,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useUrlSort } from "../../hooks/useUrlSort";
 import { EscrowDeductionsPendingTab } from "../driver-finance/EscrowDeductionsPendingTab";
 
 type EscrowViewTab = "accounts" | "pending";
@@ -29,6 +30,13 @@ export function EscrowPage() {
   // abandonment deductions awaiting Owner decision) — distinct from the accounts/postings ledger
   // below (EscrowPage's original content, kept byte-for-byte under the "Accounts" tab).
   const [viewTab, setViewTab] = useState<EscrowViewTab>("accounts");
+  // BANK-SORT-ROLLOUT-ACCT — accounts + postings tables persist sort in URL via useUrlSort.
+  const { sortKey, sortDirection, onSortChange } = useUrlSort();
+  const {
+    sortKey: postingSortKey,
+    sortDirection: postingSortDirection,
+    onSortChange: onPostingSortChange,
+  } = useUrlSort({ key: "post_sort", dir: "post_dir" });
 
   const accountsQuery = useQuery({
     queryKey: ["accounting", "escrow", "accounts", companyId],
@@ -54,6 +62,7 @@ export function EscrowPage() {
       {
         key: "holder_id",
         label: "Holder",
+        sortable: true,
         render: (row) =>
           row.holder_type === "driver" ? (
             <EntityLink kind="driver" id={row.holder_id} />
@@ -81,6 +90,7 @@ export function EscrowPage() {
       {
         key: "source_type",
         label: "Source",
+        sortable: true,
         render: (row) => (
           <>
             {row.source_type}
@@ -91,6 +101,7 @@ export function EscrowPage() {
       {
         key: "linked_journal_entry_id",
         label: "Journal entry",
+        sortable: true,
         render: (row) => <EntityLink kind="journal_entry" id={row.linked_journal_entry_id ?? undefined} label={row.linked_journal_entry_id ? row.linked_journal_entry_id.slice(0, 8) : "—"} />,
       },
     ],
@@ -143,6 +154,9 @@ export function EscrowPage() {
               }}
               rowClassName={(row) => (selectedAccountId === row.id ? "bg-slate-100" : "")}
               storageKey="escrow-accounts"
+              sortKey={sortKey}
+              sortDirection={sortDirection}
+              onSortChange={onSortChange}
               emptyText="No escrow accounts found."
             />
           )}
@@ -160,6 +174,9 @@ export function EscrowPage() {
               rowKey={(row) => row.id}
               loading={postingsQuery.isPending}
               storageKey="escrow-postings"
+              sortKey={postingSortKey}
+              sortDirection={postingSortDirection}
+              onSortChange={onPostingSortChange}
               emptyText="No escrow postings found for this account."
             />
           ) : null}
