@@ -1,17 +1,32 @@
 {
   "block_id": "0441-mod3-fuel-fraud-detector-cron-never-invok",
-  "status": "PENDING",
-  "classification": "FINANCIAL",
+  "branch": "fix/fuel-fraud-detector-worker-wired",
+  "status": "BUILD",
+  "classification": "NON_FINANCIAL",
   "phase": "tier2",
-  "source": "MASTER-6 authored dispatch (05-TIER2-BLOCKS)",
+  "source": "CODER-BUILD-INSTRUCTIONS-2026-07-19",
   "source_file": "0441-mod3-fuel-fraud-detector-cron-never-invok.txt",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    "apps/backend/src/index.ts",
+    "apps/backend/src/jobs/fuel-fraud-detector-worker.ts",
+    "scripts/verify-fuel-fraud-detector-worker-registered.mjs",
+    "scripts/verify-steps/993-verify-fuel-fraud-detector-worker-registered.mjs",
+    ".block-ready/0441-mod3-fuel-fraud-detector-cron-never-invok.json"
   ],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "kind": "mounted",
+      "check": "initializeFuelFraudDetectorWorker is imported and called from apps/backend/src/index.ts alongside other workers."
+    },
+    {
+      "kind": "effective",
+      "check": "Worker defaults OFF unless ENABLE_FUEL_FRAUD_DETECTOR_WORKER=true (no alert/insert cron unless opted in)."
+    },
+    {
+      "kind": "guard",
+      "script": "scripts/verify-fuel-fraud-detector-worker-registered.mjs",
+      "wired_into": "verify-pre-commit (verify-steps/993)"
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "Wire dead fuel-fraud-detector cron initializer; Rule 17 verify-steps only — no package.json / locked-guards / ci.yml."
 }
