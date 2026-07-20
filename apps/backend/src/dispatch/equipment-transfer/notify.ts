@@ -1,4 +1,6 @@
-import type { Queryable } from "./request.service.js";
+export type Queryable = {
+  query: (sql: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
+};
 
 export type EquipmentTransferNotifyEvent =
   | "dispatch.equipment_transfer.requested"
