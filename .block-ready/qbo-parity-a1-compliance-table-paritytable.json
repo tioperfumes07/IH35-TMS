@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-compliance-table-paritytable",
+  "branch": "fix/compliance-table-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable migration)",
+  "phase": "OPS-FE",
+  "task": "Migrate ComplianceTable (dashboard Overview credentials grid) from hand-rolled <table> to shared ParityTable QBO grammar; EntityLink owner Name for driver/unit/trailer. Guard + verify-step 1019 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + CODER-BUILD entitylink-reverse-drill-incomplete",
+  "source_file": "qbo-parity-a1-compliance-table-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-compliance-table-paritytable.json",
+    "apps/frontend/src/components/compliance/ComplianceTable.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-compliance-table-uses-paritytable.mjs",
+    "scripts/verify-steps/1019-verify-compliance-table-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "ComplianceTable.tsx uses ParityTable (no hand-rolled <table>/<thead>); columns Type/Owner/Name/Expiration/Days/Severity/Action preserved; filterBar keeps Type/Owner selects + Export CSV; Name uses EntityLink for driver/unit/trailer; data-testid compliance-table-panel preserved; verify-compliance-table-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1019 wired (Rule 17); tracker marks ComplianceTable migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 + EntityLink gap. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17)."
+}
