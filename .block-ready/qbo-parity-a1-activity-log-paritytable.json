@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-activity-log-paritytable",
+  "branch": "fix/activity-log-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable + ListErrorState)",
+  "phase": "OPS-FE",
+  "task": "Migrate Admin ActivityLogPage from hand-rolled <table> to shared ParityTable (sort/resize/gear + renderExpanded payload); replace ad-hoc red banner with ListErrorState. Guard + verify-step 1023 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + CODER-BUILD tbl-standard-raw-table-sweep-incomplete / qbo-parity-a1",
+  "source_file": "qbo-parity-a1-activity-log-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-activity-log-paritytable.json",
+    "apps/frontend/src/pages/admin/ActivityLogPage.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-activity-log-uses-paritytable.mjs",
+    "scripts/verify-steps/1023-verify-activity-log-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "ActivityLogPage.tsx uses ParityTable (no hand-rolled <table>/<thead>); columns Time/Actor/Action/Entity/Payload preview preserved; renderExpanded keeps full payload JSON; ListErrorState on failure; emptyText preserved; verify-activity-log-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1023 wired (Rule 17); tracker marks ActivityLogPage migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 — ActivityLogPage surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17)."
+}
