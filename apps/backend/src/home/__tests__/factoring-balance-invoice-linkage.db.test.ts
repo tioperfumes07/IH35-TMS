@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
+import { companyBusinessDate } from "../../lib/company-business-date.js";
 import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
 import {
   FARO_CANONICAL_AGREEMENT_TEST_LOCK_KEY,
@@ -35,6 +36,17 @@ const FACTORING_BALANCE_MIGRATION = path.join(
   REPO_ROOT,
   "db/migrations/202607600000_factoring_balance_invoice_linkage.sql"
 );
+
+// Root-cause fix (CI red 9/9 during ~UTC 00:00-06:00, i.e. after ~7pm Central): the CI
+// postgres:16-alpine service has no TZ set, so its session TimeZone defaults to UTC and
+// bare `CURRENT_DATE` resolves to the UTC calendar date. The service under test (and the
+// view's as-of boundary) key off `companyBusinessDate()` — the America/Chicago calendar
+// date. Nightly, once UTC has rolled to "tomorrow" while Chicago is still "today", fixture
+// rows dated via `CURRENT_DATE` land one day ahead of the Chicago as-of cutoff and get
+// excluded from `live_je`, flipping every advance to missing-funding-artifact. Bind an
+// explicit Chicago-business-date fixture date instead of relying on the DB session's
+// (unspecified, environment-dependent) local calendar date.
+const TODAY = companyBusinessDate();
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -227,8 +239,8 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
     await db.query(
       `INSERT INTO accounting.journal_entries
          (id, operating_company_id, entry_date, memo, status, source)
-       VALUES ($1::uuid,$2::uuid,COALESCE($4::date, CURRENT_DATE),$3,'posted','auto')`,
-      [opts.jeId, opts.opco, opts.memo, opts.entryDate ?? null]
+       VALUES ($1::uuid,$2::uuid,$4::date,$3,'posted','auto')`,
+      [opts.jeId, opts.opco, opts.memo, opts.entryDate ?? TODAY]
     );
     for (const line of opts.lines) {
       const sourceType = line.sourceAdvanceId
@@ -709,8 +721,8 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
       await db.query(
         `INSERT INTO accounting.journal_entries
            (id, operating_company_id, entry_date, memo, status, source)
-         VALUES ($1::uuid,$2::uuid,CURRENT_DATE,$3,'posted','auto')`,
-        [emptyJe, companyId, `Empty JE for bare movement ${suffix}`]
+         VALUES ($1::uuid,$2::uuid,$4::date,$3,'posted','auto')`,
+        [emptyJe, companyId, `Empty JE for bare movement ${suffix}`, TODAY]
       );
       await db.query(
         `INSERT INTO accounting.journal_entry_postings
