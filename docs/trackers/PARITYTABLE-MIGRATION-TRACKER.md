@@ -21,9 +21,9 @@ sort, and the lock-account control — never drop or reorder.
 ## Rollup
 | Status | Count |
 | --- | --- |
-| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable) | 17 |
+| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable + LoadHistoryTab) | 18 |
 | financial-hold (Jorge-gated) | 99 |
-| pending (non-financial, future batches) | 184 |
+| pending (non-financial, future batches) | 183 |
 | **hand-rolled total (original)** | **300** |
 
 > Note: ParityTable was already consumed by ~16 surfaces before this batch (not counted above — those were never hand-rolled).
@@ -143,6 +143,15 @@ Guard: `scripts/verify-ops-history-uses-paritytable.mjs` via verify-step 1026.
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/components/drivers/OperationsHistoryTable.tsx` | components/drivers |
+## qbo-parity-a1 — LoadHistoryTab (this PR)
+Drivers hub Load History tab: hand-rolled `<table>` (Load # / Assigned At / Method /
+Previous Driver / New Driver / Reason) with date filters. Migrated to shared `ParityTable`
+(sort + resize + gear + filterBar); EntityLink + ListErrorState preserved 1:1.
+Guard: `scripts/verify-load-history-tab-uses-paritytable.mjs` via verify-step 1032.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/drivers/LoadHistoryTab.tsx` | components/drivers |
 
 ## Remaining hand-rolled inventory (by module)
 
@@ -189,14 +198,11 @@ Guard: `scripts/verify-ops-history-uses-paritytable.mjs` via verify-step 1026.
 | --- | --- |
 | `apps/frontend/src/components/catalogs/CatalogTable.tsx` | pending |
 
-### components/compliance (1 remaining)
+### components/compliance (0 remaining)
 
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/components/compliance/NotificationLogPanel.tsx` | migrated (qbo-parity-a1) |
-| `apps/frontend/src/components/compliance/NotificationRulesPanel.tsx` | pending |
-
-| `apps/frontend/src/components/compliance/NotificationLogPanel.tsx` | pending |
 | `apps/frontend/src/components/compliance/NotificationRulesPanel.tsx` | migrated (qbo-parity-a1) |
 
 ### components/customers (1)
@@ -220,13 +226,13 @@ Guard: `scripts/verify-ops-history-uses-paritytable.mjs` via verify-step 1026.
 | `apps/frontend/src/components/driver-profile/SettlementsSection.tsx` | pending |
 | `apps/frontend/src/components/driver-profile/TrainingRecordsSection.tsx` | pending |
 
-### components/drivers (4)
+### components/drivers (3 remaining)
 
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/components/drivers/AuditHistoryTab.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/drivers/EarningsTab.tsx` | migrated (qbo-parity-a1) |
-| `apps/frontend/src/components/drivers/LoadHistoryTab.tsx` | pending |
+| `apps/frontend/src/components/drivers/LoadHistoryTab.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/drivers/OperationsHistoryTable.tsx` | migrated (qbo-parity-a1) |
 
 ### components/factoring (1) — financial-hold
