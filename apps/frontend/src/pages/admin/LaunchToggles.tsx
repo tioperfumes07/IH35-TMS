@@ -1,9 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../api/client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type LaunchToggle = {
   operating_company_id: string;
@@ -68,6 +70,102 @@ export function LaunchTogglesPage() {
     onError: (err) => setError(String((err as Error)?.message ?? err)),
   });
 
+  const rows = togglesQuery.data?.toggles ?? [];
+
+  const columns = useMemo((): Array<ParityColumn<LaunchToggle>> => {
+    return [
+      {
+        key: "carrier",
+        label: "Carrier",
+        sortable: true,
+        sortValue: (row) => row.short_name || row.legal_name || row.company_code,
+        render: (row) => (
+          <>
+            <div className="font-medium">{row.short_name || row.legal_name}</div>
+            <div className="text-xs text-gray-500">{row.company_code}</div>
+          </>
+        ),
+      },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        sortValue: (row) => (row.is_active ? "Launched" : "Hidden"),
+        render: (row) =>
+          row.is_active ? (
+            <span className="rounded-sm bg-green-100 px-2 py-0.5 text-xs text-green-800">Launched</span>
+          ) : (
+            <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-xs text-amber-900">Hidden</span>
+          ),
+      },
+      {
+        key: "last_action",
+        label: "Last action",
+        sortable: true,
+        sortValue: (row) => row.launched_at ?? row.rollback_at ?? "",
+        render: (row) => (
+          <div className="text-xs text-gray-600">
+            {row.launched_at ? (
+              <div>
+                Launched {new Date(row.launched_at).toLocaleString()}
+                {row.launched_by_email ? ` by ${row.launched_by_email}` : null}
+              </div>
+            ) : row.rollback_at ? (
+              <div>Rolled back {new Date(row.rollback_at).toLocaleString()}</div>
+            ) : (
+              <span>—</span>
+            )}
+            {row.notes ? <div className="mt-1 italic">{row.notes}</div> : null}
+          </div>
+        ),
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        alwaysVisible: true,
+        render: (row) =>
+          !row.is_active ? (
+            <Button
+              type="button"
+              className="h-8 px-3 text-xs"
+              disabled={actionMutation.isPending}
+              onClick={() => {
+                if (!window.confirm(`Launch ${row.company_code} for office users with access?`)) return;
+                setPendingId(row.operating_company_id);
+                void actionMutation.mutateAsync({
+                  carrierId: row.operating_company_id,
+                  action: "launch",
+                });
+              }}
+            >
+              {pendingId === row.operating_company_id && actionMutation.isPending ? "Launching…" : "Launch"}
+            </Button>
+          ) : (
+            <Button
+              variant="secondary"
+              type="button"
+              className="h-8 px-3 text-xs"
+              disabled={actionMutation.isPending}
+              onClick={() => {
+                if (
+                  !window.confirm(`Rollback ${row.company_code}? This hides the carrier from the switcher again.`)
+                ) {
+                  return;
+                }
+                setPendingId(row.operating_company_id);
+                void actionMutation.mutateAsync({
+                  carrierId: row.operating_company_id,
+                  action: "rollback",
+                });
+              }}
+            >
+              {pendingId === row.operating_company_id && actionMutation.isPending ? "Rolling back…" : "Rollback"}
+            </Button>
+          ),
+      },
+    ];
+  }, [actionMutation, pendingId]);
+
   if (!allowed) {
     return (
       <div className="p-6">
@@ -96,92 +194,27 @@ export function LaunchTogglesPage() {
         />
       </label>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
-            <tr>
-              <th className="px-3 py-2">Carrier</th>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">Last action</th>
-              <th className="px-3 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(togglesQuery.data?.toggles ?? []).map((toggle) => (
-              <tr key={toggle.operating_company_id} className="border-t border-gray-100">
-                <td className="px-3 py-3">
-                  <div className="font-medium">{toggle.short_name || toggle.legal_name}</div>
-                  <div className="text-xs text-gray-500">{toggle.company_code}</div>
-                </td>
-                <td className="px-3 py-3">
-                  {toggle.is_active ? (
-                    <span className="rounded-sm bg-green-100 px-2 py-0.5 text-xs text-green-800">Launched</span>
-                  ) : (
-                    <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-xs text-amber-900">Hidden</span>
-                  )}
-                </td>
-                <td className="px-3 py-3 text-xs text-gray-600">
-                  {toggle.launched_at ? (
-                    <div>
-                      Launched {new Date(toggle.launched_at).toLocaleString()}
-                      {toggle.launched_by_email ? ` by ${toggle.launched_by_email}` : null}
-                    </div>
-                  ) : toggle.rollback_at ? (
-                    <div>Rolled back {new Date(toggle.rollback_at).toLocaleString()}</div>
-                  ) : (
-                    <span>—</span>
-                  )}
-                  {toggle.notes ? <div className="mt-1 italic">{toggle.notes}</div> : null}
-                </td>
-                <td className="px-3 py-3">
-                  {!toggle.is_active ? (
-                    <Button
-                      type="button"
-                      className="h-8 px-3 text-xs"
-                      disabled={actionMutation.isPending}
-                      onClick={() => {
-                        if (!window.confirm(`Launch ${toggle.company_code} for office users with access?`)) return;
-                        setPendingId(toggle.operating_company_id);
-                        void actionMutation.mutateAsync({
-                          carrierId: toggle.operating_company_id,
-                          action: "launch",
-                        });
-                      }}
-                    >
-                      {pendingId === toggle.operating_company_id && actionMutation.isPending ? "Launching…" : "Launch"}
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="secondary"
-                      type="button"
-                      className="h-8 px-3 text-xs"
-                      disabled={actionMutation.isPending}
-                      onClick={() => {
-                        if (
-                          !window.confirm(
-                            `Rollback ${toggle.company_code}? This hides the carrier from the switcher again.`
-                          )
-                        ) {
-                          return;
-                        }
-                        setPendingId(toggle.operating_company_id);
-                        void actionMutation.mutateAsync({
-                          carrierId: toggle.operating_company_id,
-                          action: "rollback",
-                        });
-                      }}
-                    >
-                      {pendingId === toggle.operating_company_id && actionMutation.isPending
-                        ? "Rolling back…"
-                        : "Rollback"}
-                    </Button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {togglesQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load launch toggles"
+          status={0}
+          message={(togglesQuery.error as Error)?.message}
+          onRetry={() => void togglesQuery.refetch()}
+        />
+      ) : (
+        <div className="overflow-auto rounded-sm border border-gray-200 bg-white p-2">
+          <ParityTable
+            rows={rows}
+            columns={columns}
+            rowKey={(row) => row.operating_company_id}
+            loading={togglesQuery.isLoading}
+            storageKey="admin-launch-toggles"
+            emptyText="No carriers configured for launch toggles."
+            tableTestId="admin-launch-toggles-table"
+            rowTestId={(row) => `admin-launch-toggles-row-${row.operating_company_id}`}
+          />
+        </div>
+      )}
     </div>
   );
 }
