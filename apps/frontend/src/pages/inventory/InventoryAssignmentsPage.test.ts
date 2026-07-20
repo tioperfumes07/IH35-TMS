@@ -6,8 +6,10 @@ describe("InventoryAssignmentsPage honesty (audit 08-INVENTORY)", () => {
   it("no longer mirrors Purchase History (stock list import + table)", () => {
     expect(assignments).not.toMatch(/from ["'].*PartsInventoryTable["']/);
     expect(assignments).not.toMatch(/import \{[^}]*listPartsInventory[^}]*\}/);
-    expect(purchases).toMatch(/listPartsInventory/);
-    expect(purchases).toMatch(/PartsInventoryTable/);
+    // Purchases must stay honest — no stock twin (0441-mod13)
+    expect(purchases).not.toMatch(/listPartsInventory/);
+    expect(purchases).not.toMatch(/PartsInventoryTable/);
+    expect(purchases).toMatch(/inventory-purchases-honest-empty|not yet tracked/i);
   });
 
   it("loads the real assignment trail API (parts-invoice-links SoR)", () => {
