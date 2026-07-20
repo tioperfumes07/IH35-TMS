@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { TrendingUp } from "lucide-react";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
@@ -11,11 +11,28 @@ import { CASH_FORECAST_ENABLED_FLAG } from "../../api/forecast";
 
 type CashFlowTabId = "daily_prediction" | "actual_vs_projected" | "manual_daily_projections";
 
+const ALL_TAB_IDS = new Set<CashFlowTabId>(["daily_prediction", "actual_vs_projected", "manual_daily_projections"]);
+
+function parseCashFlowTab(raw: string | null, allowManual: boolean): CashFlowTabId {
+  if (raw && ALL_TAB_IDS.has(raw as CashFlowTabId)) {
+    if (raw === "manual_daily_projections" && !allowManual) return "daily_prediction";
+    return raw as CashFlowTabId;
+  }
+  return "daily_prediction";
+}
+
 export function CashFlowPage() {
-  const [activeTab, setActiveTab] = useState<CashFlowTabId>("daily_prediction");
+  const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   // Block F: the hand-entered tab only appears once its OFF-by-default flag is on.
   const { enabled: manualForecastEnabled } = useFeatureFlag(CASH_FORECAST_ENABLED_FLAG, selectedCompanyId ?? undefined);
+  const activeTab = parseCashFlowTab(searchParams.get("tab"), Boolean(manualForecastEnabled));
+  const setActiveTab = (next: CashFlowTabId) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "daily_prediction") params.delete("tab");
+    else params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
   const TABS: { id: CashFlowTabId; label: string }[] = [
     { id: "daily_prediction", label: "Projected (Auto)" },
     { id: "actual_vs_projected", label: "Actual vs Projected" },
@@ -35,7 +52,7 @@ export function CashFlowPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-testid="cash-flow-page">
       <PageHeader
         title="Cash Flow"
         subtitle="Forward-looking daily cash position — predicted income and expenses"
