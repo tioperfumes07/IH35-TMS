@@ -642,7 +642,7 @@ verify-step 1035.
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/legal/contracts/LeaseToOwnCreatorModal.tsx` | pending |
+| `apps/frontend/src/pages/legal/contracts/LeaseToOwnCreatorModal.tsx` | done — fleet picker and per-truck terms migrated to ParityTable; `verify-lease-to-own-creator-uses-paritytable.mjs` via verify-step 1082 |
 | `apps/frontend/src/pages/legal/contracts/LegalContractInstancesPage.tsx` | pending |
 | `apps/frontend/src/pages/legal/matters/LegalMattersListPage.tsx` | pending |
 | `apps/frontend/src/pages/legal/templates/LegalTemplateDetailPage.tsx` | pending |

@@ -9,6 +9,8 @@ import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { useToast } from "../../../components/Toast";
 
 type Props = {
@@ -19,6 +21,9 @@ type Props = {
 };
 
 type TruckTerms = { lienholder: string; balance_owed: string; monthly_lease_amount: string; payment_due_date: string };
+
+type FleetPickerRow = LeaseToOwnFleetUnit & { selected: boolean };
+type PerTruckTermsRow = { unit: LeaseToOwnFleetUnit; terms: TruckTerms };
 
 const STEPS = ["Parties & Terms", "Vehicles", "Per-truck Terms", "Preview & Save"] as const;
 
@@ -96,6 +101,88 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
   const selectedList = useMemo(
     () => units.filter((u) => selected[u.id]).map((u, i) => ({ unit: u, terms: selected[u.id], sort: i })),
     [units, selected],
+  );
+  const fleetRows = useMemo<FleetPickerRow[]>(
+    () => filteredUnits.map((unit) => ({ ...unit, selected: Boolean(selected[unit.id]) })),
+    [filteredUnits, selected],
+  );
+  const fleetColumns = useMemo<ParityColumn<FleetPickerRow>[]>(
+    () => [
+      {
+        key: "selected",
+        label: "Select",
+        alwaysVisible: true,
+        render: (row) => (
+          <input
+            type="checkbox"
+            aria-label={`Select unit ${row.unit_number}`}
+            checked={row.selected}
+            onChange={() => toggleUnit(row)}
+          />
+        ),
+      },
+      { key: "unit_number", label: "Unit", sortable: true, alwaysVisible: true },
+      { key: "vin", label: "VIN", sortable: true, render: (row) => <span className="font-mono text-xs">{row.vin}</span> },
+      {
+        key: "make_model_year",
+        label: "Make/Model/Yr",
+        sortable: true,
+        sortValue: (row) => [row.make, row.model, row.year].filter(Boolean).join(" "),
+        render: (row) => [row.make, row.model, row.year].filter(Boolean).join(" "),
+      },
+      {
+        key: "owner_label",
+        label: "Owner",
+        sortable: true,
+        render: (row) => <span className="rounded-sm bg-slate-100 px-1 text-xs">{row.owner_label ?? "—"}</span>,
+      },
+      { key: "status", label: "Status", sortable: true, render: (row) => <span className="text-xs">{row.status}</span> },
+    ],
+    [],
+  );
+  const perTruckTermsRows = useMemo<PerTruckTermsRow[]>(
+    () => selectedList.map(({ unit, terms: truckTerms }) => ({ unit, terms: truckTerms })),
+    [selectedList],
+  );
+  const perTruckTermsColumns = useMemo<ParityColumn<PerTruckTermsRow>[]>(
+    () => [
+      {
+        key: "unit",
+        label: "Unit",
+        alwaysVisible: true,
+        sortValue: (row) => row.unit.unit_number,
+        render: (row) => (
+          <>
+            {row.unit.unit_number} <span className="text-xs text-slate-500">{[row.unit.make, row.unit.model, row.unit.year].filter(Boolean).join(" ")}</span>
+          </>
+        ),
+      },
+      {
+        key: "lienholder",
+        label: "Lienholder",
+        sortValue: (row) => row.terms.lienholder,
+        render: (row) => <input className="w-28 rounded-sm border px-1" value={row.terms.lienholder} onChange={(event) => setTruckTerm(row.unit.id, "lienholder", event.target.value)} />,
+      },
+      {
+        key: "balance_owed",
+        label: "Balance owed",
+        sortValue: (row) => Number(row.terms.balance_owed) || 0,
+        render: (row) => <MoneyInput className="w-28" valueDollars={row.terms.balance_owed ? Number(row.terms.balance_owed) : null} onChangeDollars={(d) => setTruckTerm(row.unit.id, "balance_owed", d == null ? "" : String(d))} ariaLabel={`Balance owed for ${row.unit.unit_number} (USD)`} />,
+      },
+      {
+        key: "monthly_lease_amount",
+        label: "Monthly lease",
+        sortValue: (row) => Number(row.terms.monthly_lease_amount) || 0,
+        render: (row) => <MoneyInput className="w-28" valueDollars={row.terms.monthly_lease_amount ? Number(row.terms.monthly_lease_amount) : null} onChangeDollars={(d) => setTruckTerm(row.unit.id, "monthly_lease_amount", d == null ? "" : String(d))} ariaLabel={`Monthly lease for ${row.unit.unit_number} (USD)`} />,
+      },
+      {
+        key: "payment_due_date",
+        label: "Due date",
+        sortValue: (row) => row.terms.payment_due_date,
+        render: (row) => <input className="w-24 rounded-sm border px-1" value={row.terms.payment_due_date} onChange={(event) => setTruckTerm(row.unit.id, "payment_due_date", event.target.value)} placeholder="1st" />,
+      },
+    ],
+    [],
   );
 
   const filledVariables = useMemo(() => {
@@ -224,46 +311,34 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
           <div className="space-y-2">
             <input className="w-full rounded-sm border px-2 py-1 text-sm" placeholder="Search unit #, VIN, make, model…" value={search} onChange={(e) => setSearch(e.target.value)} />
             <p className="text-xs text-slate-500">{selectedList.length} selected · {filteredUnits.length} shown</p>
-            <div className="max-h-72 overflow-x-auto overflow-y-auto rounded-sm border">
-              <table className="min-w-full text-sm">
-                <thead className="bg-slate-50"><tr><th className="p-1"></th><th className="p-1 text-left">Unit</th><th className="p-1 text-left">VIN</th><th className="p-1 text-left">Make/Model/Yr</th><th className="p-1 text-left">Owner</th><th className="p-1 text-left">Status</th></tr></thead>
-                <tbody>
-                  {filteredUnits.map((u) => (
-                    <tr key={u.id} className="border-t">
-                      <td className="p-1"><input type="checkbox" checked={Boolean(selected[u.id])} onChange={() => toggleUnit(u)} /></td>
-                      <td className="p-1">{u.unit_number}</td>
-                      <td className="p-1 font-mono text-xs">{u.vin}</td>
-                      <td className="p-1">{[u.make, u.model, u.year].filter(Boolean).join(" ")}</td>
-                      <td className="p-1"><span className="rounded-sm bg-slate-100 px-1 text-xs">{u.owner_label ?? "—"}</span></td>
-                      <td className="p-1 text-xs">{u.status}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {fleetQuery.isLoading && <p className="text-xs text-slate-500">Loading fleet…</p>}
+            {fleetQuery.isError ? (
+              <ListErrorState title="Couldn't load eligible fleet" status={0} message={(fleetQuery.error as Error)?.message} onRetry={() => void fleetQuery.refetch()} />
+            ) : (
+              <ParityTable<FleetPickerRow>
+                columns={fleetColumns}
+                rows={fleetRows}
+                rowKey={(row) => row.id}
+                loading={fleetQuery.isLoading}
+                storageKey="legal-lease-to-own-fleet-picker"
+                emptyText="No eligible fleet units found for this owner."
+                initialPageSize={15}
+                tableTestId="lease-to-own-fleet-picker"
+              />
+            )}
           </div>
         )}
 
         {/* Step 3 — Per-truck terms */}
         {stepIdx === 2 && (
-          <div className="max-h-80 overflow-x-auto overflow-y-auto rounded-sm border">
-            <table className="min-w-full text-sm">
-              <thead className="bg-slate-50"><tr><th className="p-1 text-left">Unit</th><th className="p-1 text-left">Lienholder</th><th className="p-1 text-left">Balance owed</th><th className="p-1 text-left">Monthly lease</th><th className="p-1 text-left">Due date</th></tr></thead>
-              <tbody>
-                {selectedList.map(({ unit, terms: t }) => (
-                  <tr key={unit.id} className="border-t">
-                    <td className="p-1">{unit.unit_number} <span className="text-xs text-slate-500">{[unit.make, unit.model, unit.year].filter(Boolean).join(" ")}</span></td>
-                    <td className="p-1"><input className="w-28 rounded-sm border px-1" value={t.lienholder} onChange={(e) => setTruckTerm(unit.id, "lienholder", e.target.value)} /></td>
-                    <td className="p-1"><MoneyInput className="w-28" valueDollars={t.balance_owed ? Number(t.balance_owed) : null} onChangeDollars={(d) => setTruckTerm(unit.id, "balance_owed", d == null ? "" : String(d))} ariaLabel="Balance owed (USD)" /></td>
-                    <td className="p-1"><MoneyInput className="w-28" valueDollars={t.monthly_lease_amount ? Number(t.monthly_lease_amount) : null} onChangeDollars={(d) => setTruckTerm(unit.id, "monthly_lease_amount", d == null ? "" : String(d))} ariaLabel="Monthly lease (USD)" /></td>
-                    <td className="p-1"><input className="w-24 rounded-sm border px-1" value={t.payment_due_date} onChange={(e) => setTruckTerm(unit.id, "payment_due_date", e.target.value)} placeholder="1st" /></td>
-                  </tr>
-                ))}
-                {selectedList.length === 0 && <tr><td colSpan={5} className="p-3 text-center text-sm text-slate-500">Select vehicles in step 2 first.</td></tr>}
-              </tbody>
-            </table>
-          </div>
+          <ParityTable<PerTruckTermsRow>
+            columns={perTruckTermsColumns}
+            rows={perTruckTermsRows}
+            rowKey={(row) => row.unit.id}
+            storageKey="legal-lease-to-own-per-truck-terms"
+            emptyText="Select vehicles in step 2 first."
+            initialPageSize={15}
+            tableTestId="lease-to-own-per-truck-terms"
+          />
         )}
 
         {/* Step 4 — Preview & Save */}
