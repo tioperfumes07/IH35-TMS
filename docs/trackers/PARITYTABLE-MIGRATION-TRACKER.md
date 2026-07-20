@@ -21,10 +21,9 @@ sort, and the lock-account control — never drop or reorder.
 ## Rollup
 | Status | Count |
 | --- | --- |
-| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable + LoadHistoryTab + vehicle PlatesTable + vehicle ComplianceSection) | 20 |
+| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable + LoadHistoryTab + vehicle PlatesTable + vehicle ComplianceSection + EntityAuditHistoryTab) | 21 |
 | financial-hold (Jorge-gated) | 99 |
-| pending (non-financial, future batches) | 181 |
-| financial-hold (Jorge-gated) | 99 |
+| pending (non-financial, future batches) | 180 |
 | **hand-rolled total (original)** | **300** |
 
 > Note: ParityTable was already consumed by ~16 surfaces before this batch (not counted above — those were never hand-rolled).
@@ -212,7 +211,7 @@ Guard: `scripts/verify-load-history-tab-uses-paritytable.mjs` via verify-step 10
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/components/audit/AuditHistoryTab.tsx` | pending |
-| `apps/frontend/src/components/audit/EntityAuditHistoryTab.tsx` | pending |
+| `apps/frontend/src/components/audit/EntityAuditHistoryTab.tsx` | migrated (qbo-parity-a1) |
 
 ### components/catalogs (1)
 
