@@ -322,7 +322,7 @@ verify-step 1035.
 | `apps/frontend/src/components/reports/FrequentlyRunTable.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/reports/LaneDetailModal.tsx` | pending |
 | `apps/frontend/src/components/reports/ifta/Step1MileageReview.tsx` | pending |
-| `apps/frontend/src/components/reports/ifta/Step2FuelReview.tsx` | pending |
+| `apps/frontend/src/components/reports/ifta/Step2FuelReview.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/reports/ifta/Step3JurisdictionCalc.tsx` | pending |
 
 ### components/shared (2)
@@ -894,3 +894,15 @@ Guard: `scripts/verify-trailer-reefer-uses-paritytable.mjs` via verify-step 1044
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/components/trailer-profile/TrailerReeferSection.tsx` | components/trailer-profile |
+
+## qbo-parity-a1 — Step2FuelReview (this PR)
+IFTA Step 2 fuel review was a hand-rolled `<table>` with per-jurisdiction override
+inputs and a Total footer. Migrated to shared `ParityTable` (sort + resize + gear +
+CSV export). Columns State / Aggregated gallons / Override gallons preserved 1:1;
+override number inputs + `ifta-fuel-override-*` testids + Save fuel overrides + Total
+summary preserved. Guard: `scripts/verify-ifta-step2-fuel-uses-paritytable.mjs` via
+verify-step 1052.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/reports/ifta/Step2FuelReview.tsx` | components/reports/ifta |
