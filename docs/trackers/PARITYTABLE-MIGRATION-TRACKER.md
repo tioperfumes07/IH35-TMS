@@ -823,7 +823,7 @@ Guard: `scripts/verify-error-monitor-uses-paritytable.mjs` via verify-step 1036.
 Trailer profile plates grid was a hand-rolled `<table>` (Country/Jurisdiction/Plate/
 Expiration). Migrated to shared `ParityTable` (sort + resize + gear + CSV export).
 `tp-plates-table` testid preserved. Guard:
-`scripts/verify-trailer-plates-uses-paritytable.mjs` via verify-step 1034.
+`scripts/verify-trailer-plates-uses-paritytable.mjs` via verify-step 1031.
 
 | File | Module |
 | --- | --- |
