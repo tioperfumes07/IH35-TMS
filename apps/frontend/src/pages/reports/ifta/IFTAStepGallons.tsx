@@ -1,5 +1,7 @@
+import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getIftaPreparation, runIftaAggregateGallons } from "../../../api/ifta";
+import { getIftaPreparation, runIftaAggregateGallons, type IftaPreparation } from "../../../api/ifta";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 type Props = {
   operatingCompanyId: string;
@@ -7,6 +9,8 @@ type Props = {
   quarter: number;
   year: number;
 };
+
+type StateGallonsRow = NonNullable<IftaPreparation["state_gallons"]>[number];
 
 function fmtNum(value: number, digits = 1) {
   return value.toLocaleString(undefined, { maximumFractionDigits: digits });
@@ -29,6 +33,35 @@ export function IFTAStepGallons({ operatingCompanyId, preparationId, quarter, ye
 
   const rows = prepQuery.data?.state_gallons ?? [];
   const total = rows.reduce((sum, row) => sum + Number(row.override_gallons ?? row.gallons ?? 0), 0);
+  const columns = useMemo<ParityColumn<StateGallonsRow>[]>(
+    () => [
+      { key: "state", label: "State", sortable: true, render: (row) => <span className="font-medium">{row.state}</span> },
+      {
+        key: "gallons",
+        label: "Gallons",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        sortValue: (row) => Number(row.override_gallons ?? row.gallons ?? 0),
+        render: (row) => fmtNum(Number(row.override_gallons ?? row.gallons ?? 0)),
+      },
+      { key: "source", label: "Source", sortable: true, cellClass: "text-slate-600" },
+      {
+        key: "breakdown",
+        label: "Breakdown",
+        sortValue: (row) =>
+          Array.isArray(row.source_records)
+            ? row.source_records.map((record) => record.source).join(", ")
+            : "",
+        cellClass: "text-slate-500",
+        render: (row) =>
+          Array.isArray(row.source_records)
+            ? row.source_records.map((record) => `${record.source}: ${fmtNum(Number(record.gallons ?? 0), 2)}`).join(" · ")
+            : "—",
+      },
+    ],
+    [],
+  );
 
   return (
     <section className="rounded-sm border border-slate-200 bg-white">
@@ -48,48 +81,15 @@ export function IFTAStepGallons({ operatingCompanyId, preparationId, quarter, ye
         {prepQuery.data?.gallons_aggregated_at ? (
           <p className="text-slate-600">Last aggregated: {new Date(prepQuery.data.gallons_aggregated_at).toLocaleString()}</p>
         ) : null}
-        <div className="overflow-x-auto rounded-sm border border-slate-200">
-          <table className="min-w-full text-left">
-            <thead className="bg-slate-50 text-slate-600">
-              <tr>
-                <th className="px-2 py-1.5 font-semibold">State</th>
-                <th className="px-2 py-1.5 font-semibold">Gallons</th>
-                <th className="px-2 py-1.5 font-semibold">Source</th>
-                <th className="px-2 py-1.5 font-semibold">Breakdown</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-2 py-3 text-slate-500">
-                    No gallons aggregated yet — run Step 2.
-                  </td>
-                </tr>
-              ) : null}
-              {rows.map((row) => (
-                <tr key={row.state} className="border-t border-slate-100">
-                  <td className="px-2 py-1.5 font-medium">{row.state}</td>
-                  <td className="px-2 py-1.5">{fmtNum(Number(row.override_gallons ?? row.gallons ?? 0))}</td>
-                  <td className="px-2 py-1.5 text-slate-600">{row.source}</td>
-                  <td className="px-2 py-1.5 text-slate-500">
-                    {Array.isArray(row.source_records)
-                      ? row.source_records.map((rec) => `${rec.source}: ${fmtNum(Number(rec.gallons ?? 0), 2)}`).join(" · ")
-                      : "—"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            {rows.length > 0 ? (
-              <tfoot>
-                <tr className="border-t border-slate-200 bg-slate-50 font-semibold">
-                  <td className="px-2 py-1.5">Total</td>
-                  <td className="px-2 py-1.5">{fmtNum(total)}</td>
-                  <td className="px-2 py-1.5" colSpan={2} />
-                </tr>
-              </tfoot>
-            ) : null}
-          </table>
-        </div>
+        <ParityTable
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.state}
+          loading={prepQuery.isPending || (prepQuery.isFetching && rows.length === 0)}
+          emptyText="No gallons aggregated yet — run Step 2."
+          storageKey="ifta-step-gallons"
+        />
+        {rows.length > 0 ? <p className="text-right font-semibold text-slate-900">Total gallons: {fmtNum(total)}</p> : null}
       </div>
     </section>
   );
