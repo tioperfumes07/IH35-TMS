@@ -1,26 +1,26 @@
 {
- "date": "2026-07-19",
- "generated_at_iso": "2026-07-20T02:59:25.709Z",
+ "date": "2026-07-20",
+ "generated_at_iso": "2026-07-20T17:36:35.334Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
-  "NEEDS-VERIFY": 62,
-  "DONE": 588,
-  "AUDIT-NOTE": 453
+  "NEEDS-VERIFY": 63,
+  "DONE": 639,
+  "AUDIT-NOTE": 429
  },
  "universe": {
-  "total_blocks_after_dedup": 1137,
+  "total_blocks_after_dedup": 1165,
   "by_source_after_dedup": {
-   ".block-ready": 963,
+   ".block-ready": 991,
    "program": 61,
    "enterprise-29": 29,
    "accounting": 27,
    "gap-spec": 57
   },
   "raw_file_counts": {
-   ".block-ready (*.json files)": 1364,
+   ".block-ready (*.json files)": 1392,
    ".block-ready retired (dup/stale/superseded, excluded)": 400,
-   ".block-ready active (counted)": 964
+   ".block-ready active (counted)": 992
   },
   "note": "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by UNIQUE block_id, EXCLUDING files with EXPLICIT retirement markers (_DUP/_STALE/_SUPERSEDED underscore suffixes, status superseded/duplicate/dup/stale, or superseded_by/duplicate_of). Hyphen descriptive …-stale/…-duplicate live defect IDs are NOT retired by filename alone. So the block count is neither the raw .block-ready file count nor inflated by duplicate/retired registrations."
  },
@@ -748,6 +748,17 @@
    "pr": 2367
   },
   {
+   "id": "f-01-fuel-home-stub",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2829 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2829
+  },
+  {
    "id": "f-02-jump-to-tab-nonstandard",
    "source": ".block-ready",
    "fin": true,
@@ -1308,6 +1319,17 @@
    "pr": 2711
   },
   {
+   "id": "0243-d1-3-new-vendor-drawer-parity-fields",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2822 merged 2026-07-20",
+   "name": "Wire NewVendorDrawerForm createVendor() to send city/state/website/print_on_check_name/postal_code (backend already acce",
+   "registered_on": null,
+   "pr": 2822
+  },
+  {
    "id": "0243-d4-1-samsara-webhook-driver-pairing-equip",
    "source": ".block-ready",
    "fin": true,
@@ -1418,6 +1440,61 @@
    "pr": 2713
   },
   {
+   "id": "0441-mod10-cashflow-driverpay-hardcoded-empty",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2837 merged 2026-07-20",
+   "name": "",
+   "registered_on": null,
+   "pr": 2837
+  },
+  {
+   "id": "0441-mod10-settlement-line-ui-nonexistent-colu",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2844 merged 2026-07-20",
+   "name": "Wire SettlementsTable Loads column to real per-settlement load_count",
+   "registered_on": null,
+   "pr": 2844
+  },
+  {
+   "id": "0441-mod11-deadhead-phantom-fuel-columns",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2845 merged 2026-07-20",
+   "name": "0441-mod11: deadhead fuel cost uses real fuel.fuel_transactions columns; remove allowlist phantoms; no silent .catch",
+   "registered_on": null,
+   "pr": 2845
+  },
+  {
+   "id": "0441-mod11-help-was-this-helpful-not-persisted",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2833 merged 2026-07-20",
+   "name": "Help article Was this helpful? persist Yes/No to localStorage (help_feedback:<slug>)",
+   "registered_on": null,
+   "pr": 2833
+  },
+  {
+   "id": "0441-mod12-eld-export-pdf-window-print",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2847 merged 2026-07-20",
+   "name": "Replace ELD Audit Trail Export PDF window.print() with real puppeteer PDF download",
+   "registered_on": null,
+   "pr": 2847
+  },
+  {
    "id": "0441-mod12-legal-8of10-pages-omit-breadcrumb",
    "source": ".block-ready",
    "fin": true,
@@ -1427,6 +1504,39 @@
    "name": "",
    "registered_on": null,
    "pr": 2611
+  },
+  {
+   "id": "0441-mod13-inventory-part-to-unit-none",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2819 merged 2026-07-20",
+   "name": "Unit parts-history reverse drill: GET units/:unitId/parts-history + Parts Used on VehicleProfilePage",
+   "registered_on": null,
+   "pr": 2819
+  },
+  {
+   "id": "0441-mod3-fuel-fraud-detector-cron-never-invok",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2814 merged 2026-07-20",
+   "name": "",
+   "registered_on": null,
+   "pr": 2814
+  },
+  {
+   "id": "0441-mod4-dispatch-chat-no-attachment-upload",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2842 merged 2026-07-20",
+   "name": "Wire Dispatch Chat composer attachment upload (presign → R2 → commit into chat.attachments)",
+   "registered_on": null,
+   "pr": 2842
   },
   {
    "id": "0441-mod4-dispatch-ocr-queue-no-reprocess-ui",
@@ -1440,6 +1550,17 @@
    "pr": 2664
   },
   {
+   "id": "0441-mod5-deductions-tab-wrong-content",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2840 merged 2026-07-20",
+   "name": "Split Drivers hub cash_advances vs deductions subnav: Debt Alert stays on Cash advances only; Deductions renders AutoDed",
+   "registered_on": null,
+   "pr": 2840
+  },
+  {
    "id": "0441-mod5-suspend-non-atomic",
    "source": ".block-ready",
    "fin": false,
@@ -1451,6 +1572,17 @@
    "pr": null
   },
   {
+   "id": "0441-mod6-insurance-no-driver-accident-link",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2831 merged 2026-07-20",
+   "name": "Render claim-graph reverse accidents/incidents as visible links in ClaimsTab (parity with lawsuits/matters)",
+   "registered_on": null,
+   "pr": 2831
+  },
+  {
    "id": "0441-mod6-insurance-units-assets-id-mi_DISPATCH",
    "source": ".block-ready",
    "fin": true,
@@ -1460,6 +1592,50 @@
    "name": "",
    "registered_on": null,
    "pr": 2662
+  },
+  {
+   "id": "0441-mod7-dispute-queue-stub",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2841 merged 2026-07-20",
+   "name": "",
+   "registered_on": null,
+   "pr": 2841
+  },
+  {
+   "id": "0441-mod8-section7-palette-violation",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2856 merged 2026-07-20",
+   "name": "§7 palette ratchet residual financial UI → slate tokens; BASELINE 30→0; wire verify-step 1022",
+   "registered_on": null,
+   "pr": 2856
+  },
+  {
+   "id": "0441-mod9-coi-duplicated-feature-unequal",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2824 merged 2026-07-20",
+   "name": "",
+   "registered_on": null,
+   "pr": 2824
+  },
+  {
+   "id": "1001-program-tracker-tabs-url-sync",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2820 merged 2026-07-20",
+   "name": "Program Tracker tabs URL sync via useSearchParams (?tab=)",
+   "registered_on": null,
+   "pr": 2820
   },
   {
    "id": "972-anomaly-alerts-url-sync",
@@ -1767,6 +1943,17 @@
    "pr": 1923
   },
   {
+   "id": "at-risk-queue-error-entitylink",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2869 merged 2026-07-20",
+   "name": "systemic-pattern-mandatory-error-states + EntityLink (one surface): AtRiskQueuePage must surface loadsQ failures via Lis",
+   "registered_on": null,
+   "pr": 2869
+  },
+  {
    "id": "BANK-18-DESIGNVIEW-QBO-PARITY",
    "source": ".block-ready",
    "fin": true,
@@ -1864,6 +2051,17 @@
    "name": "Transactions view palette + bulk wiring",
    "registered_on": null,
    "pr": 1917
+  },
+  {
+   "id": "biz-flow-8-no-transfer-notifications",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2821 merged 2026-07-20",
+   "name": "Equipment transfer request/confirm/reject must notify drivers via existing outbox + PWA inbox pattern. Closes duplicate ",
+   "registered_on": null,
+   "pr": 2821
   },
   {
    "id": "BK7-INLINE-CREATE-DRAWERS",
@@ -2544,6 +2742,17 @@
    "pr": 694
   },
   {
+   "id": "bnk-03-no-last-reconciled-no-beginning-balance",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2834 merged 2026-07-20",
+   "name": "bnk-03: recon workspace header — Beginning balance / Ending balance / Last reconciled (UI-only from reconciliation_sessi",
+   "registered_on": null,
+   "pr": 2834
+  },
+  {
    "id": "BUG-ADD-USER-INERT",
    "source": ".block-ready",
    "fin": false,
@@ -3189,6 +3398,17 @@
    "pr": 688
   },
   {
+   "id": "dispatch-sweep-gap-25",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2812 merged 2026-07-20",
+   "name": "Wire Active Driver Set routes + recompute worker into apps/backend/src/index.ts (built-but-never-registered)",
+   "registered_on": null,
+   "pr": 2812
+  },
+  {
    "id": "DOC-17-DEFINITION-OF-DONE",
    "source": ".block-ready",
    "fin": true,
@@ -3530,6 +3750,17 @@
    "pr": 906
   },
   {
+   "id": "entitylink-driver-load-history",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2854 merged 2026-07-20",
+   "name": "Driver Load History + Dispatch Assignment History: expose driver ids from assignment-history API, EntityLink kind=load/d",
+   "registered_on": null,
+   "pr": 2854
+  },
+  {
    "id": "expenses-list-route-still-shows-create-wizard",
    "source": ".block-ready",
    "fin": true,
@@ -3552,6 +3783,17 @@
    "pr": 2278
   },
   {
+   "id": "fact-fix1-duplicate-vendors-banner",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2813 merged 2026-07-20",
+   "name": "",
+   "registered_on": null,
+   "pr": 2813
+  },
+  {
    "id": "FACT-PAR-1",
    "source": ".block-ready",
    "fin": true,
@@ -3572,6 +3814,17 @@
    "name": "",
    "registered_on": null,
    "pr": 2282
+  },
+  {
+   "id": "fact-par1-submissionqueue-unrouted",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2816 merged 2026-07-20",
+   "name": "FACT-PAR1: route SubmissionQueue at /factoring/submit + FactoringHome deep-link (no SUBNAV tab / no arch-design tab-coun",
+   "registered_on": null,
+   "pr": 2816
   },
   {
    "id": "FEAT-ACCOUNT-REGISTER-D5",
@@ -6099,6 +6352,17 @@
    "pr": null
   },
   {
+   "id": "insurance-2-breadcrumb-desync",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2830 merged 2026-07-20",
+   "name": "Replace PolicyDetail bespoke Back-to-policies button with shared layout PageHeader (Safety pattern); keep Edit/Update + ",
+   "registered_on": null,
+   "pr": 2830
+  },
+  {
    "id": "ITEM-13-CEREMONY-VALIDATE-FKS",
    "source": ".block-ready",
    "fin": true,
@@ -6141,6 +6405,17 @@
    "name": "Item 18 (vendor namespace): accounting.bills references vendors via two soft TEXT keys (vendor_id, vendor_uuid), NEITHER",
    "registered_on": null,
    "pr": 2333
+  },
+  {
+   "id": "late-arrivals-error-entitylink",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2861 merged 2026-07-20",
+   "name": "LateArrivalsPage: ListErrorBanner on query failure (no empty-table false-empty) + EntityLink kind=load for row drill-thr",
+   "registered_on": null,
+   "pr": 2861
   },
   {
    "id": "LOCKDOWN-ENFORCEMENT-GUARDS",
@@ -6514,6 +6789,259 @@
    "pr": 1916
   },
   {
+   "id": "qbo-parity-a1-activity-log-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2858 merged 2026-07-20",
+   "name": "Migrate Admin ActivityLogPage from hand-rolled <table> to shared ParityTable (sort/resize/gear + renderExpanded payload)",
+   "registered_on": null,
+   "pr": 2858
+  },
+  {
+   "id": "qbo-parity-a1-asset-list-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2850 merged 2026-07-20",
+   "name": "Migrate AssetListTable from hand-rolled <table> to ParityTable; wire AssetsWorkspacePage to real GET /api/v1/assets (not",
+   "registered_on": null,
+   "pr": 2850
+  },
+  {
+   "id": "qbo-parity-a1-audit-log-viewer-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2888 merged 2026-07-20",
+   "name": "Migrate AuditLogViewer from hand-rolled <table> to shared ParityTable (sort/resize/gear + onRowClick AuditEventCard dril",
+   "registered_on": null,
+   "pr": 2888
+  },
+  {
+   "id": "qbo-parity-a1-audit-trail-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2898 merged 2026-07-20",
+   "name": "Migrate AuditTrailPage universal spine event log from hand-rolled <table> to shared ParityTable QBO grammar + ListErrorS",
+   "registered_on": null,
+   "pr": 2898
+  },
+  {
+   "id": "qbo-parity-a1-compliance-table-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2848 merged 2026-07-20",
+   "name": "Migrate ComplianceTable (dashboard Overview credentials grid) from hand-rolled <table> to shared ParityTable QBO grammar",
+   "registered_on": null,
+   "pr": 2848
+  },
+  {
+   "id": "qbo-parity-a1-driver-audit-history-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2863 merged 2026-07-20",
+   "name": "Migrate Drivers AuditHistoryTab from hand-rolled <table> to shared ParityTable (sort/resize/gear + renderExpanded payloa",
+   "registered_on": null,
+   "pr": 2863
+  },
+  {
+   "id": "qbo-parity-a1-driver-day-summary-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2881 merged 2026-07-20",
+   "name": "Migrate home DriverDaySummaryCard from hand-rolled <table> + bare error banner to shared ParityTable (sort/resize/gear) ",
+   "registered_on": null,
+   "pr": 2881
+  },
+  {
+   "id": "qbo-parity-a1-entity-audit-history-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2896 merged 2026-07-20",
+   "name": "Migrate EntityAuditHistoryTab to ParityTable + ListErrorState. Guard verify-step 1035 (Rule 17).",
+   "registered_on": null,
+   "pr": 2896
+  },
+  {
+   "id": "qbo-parity-a1-error-monitor-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2883 merged 2026-07-20",
+   "name": "Migrate Admin ErrorMonitorPage from hand-rolled <table> to shared ParityTable (sort/resize/gear + renderExpanded detail ",
+   "registered_on": null,
+   "pr": 2883
+  },
+  {
+   "id": "qbo-parity-a1-frequently-run-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2864 merged 2026-07-20",
+   "name": "Migrate FrequentlyRunTable (Reports Home) from hand-rolled <table> to shared ParityTable QBO grammar; preserve Report/Fi",
+   "registered_on": null,
+   "pr": 2864
+  },
+  {
+   "id": "qbo-parity-a1-load-history-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2868 merged 2026-07-20",
+   "name": "Migrate LoadHistoryTab from hand-rolled <table> to ParityTable. Guard + verify-step 1032 (Rule 17; open PRs hold ≤1028).",
+   "registered_on": null,
+   "pr": 2868
+  },
+  {
+   "id": "qbo-parity-a1-notification-log-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2860 merged 2026-07-20",
+   "name": "Migrate NotificationLogPanel from hand-rolled <table> to ParityTable. Guard + verify-step 1025 (Rule 17; 1021/1022 reser",
+   "registered_on": null,
+   "pr": 2860
+  },
+  {
+   "id": "qbo-parity-a1-notification-rules-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2859 merged 2026-07-20",
+   "name": "Migrate NotificationRulesPanel from hand-rolled <table> to ParityTable. Guard + verify-step 1024 (Rule 17).",
+   "registered_on": null,
+   "pr": 2859
+  },
+  {
+   "id": "qbo-parity-a1-ops-history-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2862 merged 2026-07-20",
+   "name": "Migrate Drivers OperationsHistoryTable (12 operations-depth sub-views) from hand-rolled <table> to shared ParityTable (s",
+   "registered_on": null,
+   "pr": 2862
+  },
+  {
+   "id": "qbo-parity-a1-paritytable-universal-adoption",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2843 merged 2026-07-20",
+   "name": "Migrate Drivers EarningsTab (settlements + liabilities tables) from hand-rolled <table> to shared ParityTable QBO gramma",
+   "registered_on": null,
+   "pr": 2843
+  },
+  {
+   "id": "qbo-parity-a1-qbo-vendor-linkage-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2897 merged 2026-07-20",
+   "name": "Migrate admin QboVendorLinkagePage drivers + assets grids from hand-rolled <table> to shared ParityTable QBO grammar wit",
+   "registered_on": null,
+   "pr": 2897
+  },
+  {
+   "id": "qbo-parity-a1-stop-reasoning-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2885 merged 2026-07-20",
+   "name": "Migrate fuel planner StopReasoningTable from hand-rolled <table> to shared ParityTable (sort/resize/gear). Preserve colu",
+   "registered_on": null,
+   "pr": 2885
+  },
+  {
+   "id": "qbo-parity-a1-trailer-plates-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 file(s) on main",
+   "name": "Migrate trailer-profile PlatesTable from hand-rolled <table> to shared ParityTable QBO grammar. Guard + verify-step 1039",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "qbo-parity-a1-trailer-reefer-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2892 merged 2026-07-20",
+   "name": "Migrate TrailerReeferSection hours history from hand-rolled <table> to shared ParityTable (sort/resize/gear); add ListEr",
+   "registered_on": null,
+   "pr": 2892
+  },
+  {
+   "id": "qbo-parity-a1-vehicle-compliance-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2880 merged 2026-07-20",
+   "name": "Migrate vehicle-profile ComplianceSection registration-plates list from hand-rolled <table> to shared ParityTable QBO gr",
+   "registered_on": null,
+   "pr": 2880
+  },
+  {
+   "id": "qbo-parity-a1-vehicle-documents-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2879 merged 2026-07-20",
+   "name": "Migrate vehicle-profile DocumentsSection from hand-rolled <table> to shared ParityTable QBO grammar; preserve Type/Name/",
+   "registered_on": null,
+   "pr": 2879
+  },
+  {
+   "id": "qbo-parity-a1-vehicle-plates-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2865 merged 2026-07-20",
+   "name": "Migrate vehicle-profile PlatesTable from hand-rolled <table> to ParityTable. Guard + verify-step 1029 (Rule 17; 1024–102",
+   "registered_on": null,
+   "pr": 2865
+  },
+  {
+   "id": "qbo-parity-a1-vehicle-recent-activity-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2867 merged 2026-07-20",
+   "name": "Migrate vehicle-profile RecentActivitySection from hand-rolled <table> to shared ParityTable QBO grammar; preserve Loads",
+   "registered_on": null,
+   "pr": 2867
+  },
+  {
    "id": "qbo-parity-name-plus-type-option-labels",
    "source": ".block-ready",
    "fin": true,
@@ -6667,6 +7195,17 @@
    "pr": 2306
   },
   {
+   "id": "s-04-no-from-to-date-range-safety-lists",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2835 merged 2026-07-20",
+   "name": "s-04: AccidentsPage-parity From/To DatePickers on SafetyIncidentsClusterSurface (damage-reports / trailer-interchange) w",
+   "registered_on": null,
+   "pr": 2835
+  },
+  {
    "id": "s-06-log-event-no-time-field",
    "source": ".block-ready",
    "fin": false,
@@ -6676,6 +7215,17 @@
    "name": "",
    "registered_on": null,
    "pr": 2630
+  },
+  {
+   "id": "s-08-no-driver-unit-type-date-filters-incident",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2815 merged 2026-07-20",
+   "name": "S-08: driver/unit/date_from/date_to filters on SafetyIncidentsClusterSurface + backend GET list params",
+   "registered_on": null,
+   "pr": 2815
   },
   {
    "id": "SAFE-W3",
@@ -6826,6 +7376,28 @@
    "name": "Consolidated fixes for the modules 17-27 sweep defects. PR A ships the code fixes with regression tests; PR B (owner-gat",
    "registered_on": "2026-07-02",
    "pr": 1798
+  },
+  {
+   "id": "systemic-pattern-column-drift-guard",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2839 merged 2026-07-20",
+   "name": "systemic-pattern-column-drift-guard: extend TARGET_TABLES (16→29) + coverage ratchet + allowlist new phantoms",
+   "registered_on": null,
+   "pr": 2839
+  },
+  {
+   "id": "systemic-pattern-mandatory-error-states-dispatch-alerts",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2846 merged 2026-07-20",
+   "name": "systemic-pattern-mandatory-error-states one surface: DispatchAlertsPage must surface query failures via ListErrorBanner ",
+   "registered_on": null,
+   "pr": 2846
   },
   {
    "id": "TASKS-PLANNER-REDESIGN-V3",
@@ -9154,17 +9726,6 @@
    "pr": null
   },
   {
-   "id": "0441-mod10-cashflow-driverpay-hardcoded-empty",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "0441-mod10-cashflow-income-loadid-plaintext",
    "source": ".block-ready",
    "fin": true,
@@ -9220,29 +9781,7 @@
    "pr": null
   },
   {
-   "id": "0441-mod10-settlement-line-ui-nonexistent-colu",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "0441-mod10-three-settlement-dispute-backends",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0441-mod11-deadhead-phantom-fuel-columns",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -9298,17 +9837,6 @@
   },
   {
    "id": "0441-mod11-geofence-recon-green-on-failed-fetc",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0441-mod11-help-was-this-helpful-not-persisted",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -9385,17 +9913,6 @@
    "pr": null
   },
   {
-   "id": "0441-mod12-eld-export-pdf-window-print",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "0441-mod12-eld-module-fake-stub",
    "source": ".block-ready",
    "fin": true,
@@ -9452,17 +9969,6 @@
   },
   {
    "id": "0441-mod13-inventory-accounting-none_DESIGN",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0441-mod13-inventory-part-to-unit-none",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -9583,17 +10089,6 @@
    "pr": null
   },
   {
-   "id": "0441-mod3-fuel-fraud-detector-cron-never-invok",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "0441-mod3-fuel-loves-prices-isolated",
    "source": ".block-ready",
    "fin": true,
@@ -9617,17 +10112,6 @@
   },
   {
    "id": "0441-mod4-dispatch-cancellation-reasons-decoy-",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0441-mod4-dispatch-chat-no-attachment-upload",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -9705,17 +10189,6 @@
   },
   {
    "id": "0441-mod5-border-creds-no-edit",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0441-mod5-deductions-tab-wrong-content",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -9869,17 +10342,6 @@
    "pr": null
   },
   {
-   "id": "0441-mod6-insurance-no-driver-accident-link",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "0441-mod6-spawn-liability-fake-stub",
    "source": ".block-ready",
    "fin": true,
@@ -9892,17 +10354,6 @@
   },
   {
    "id": "0441-mod7-bill-subnav-filters-not-creators_UI",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0441-mod7-dispute-queue-stub",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -9990,29 +10441,7 @@
    "pr": null
   },
   {
-   "id": "0441-mod8-section7-palette-violation",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "0441-mod8-tx-fields-captured-not-sent",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0441-mod9-coi-duplicated-feature-unequal",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -10936,17 +11365,6 @@
    "pr": null
   },
   {
-   "id": "biz-flow-8-no-transfer-notifications",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "biz-flow-9-no-automatic-driver-status-update-s",
    "source": ".block-ready",
    "fin": true,
@@ -10970,17 +11388,6 @@
   },
   {
    "id": "bl-04-no-rate-con-pdf-generation",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "bnk-03-no-last-reconciled-no-beginning-balance",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -11222,17 +11629,6 @@
    "pr": null
   },
   {
-   "id": "dispatch-sweep-gap-25",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "dp-03-cdl-expires-blank",
    "source": ".block-ready",
    "fin": true,
@@ -11310,28 +11706,6 @@
    "pr": null
   },
   {
-   "id": "f-01-fuel-home-stub",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "fact-fix1-duplicate-vendors-banner",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "fact-par-1-factoring-submission-gating",
    "source": ".block-ready",
    "fin": true,
@@ -11344,17 +11718,6 @@
   },
   {
    "id": "fact-par-1-submission-workflow",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "fact-par1-submissionqueue-unrouted",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -11827,17 +12190,6 @@
    "pr": null
   },
   {
-   "id": "insurance-2-breadcrumb-desync",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "law-of-land-entitylink-reverse-drill-adoption",
    "source": ".block-ready",
    "fin": true,
@@ -12212,17 +12564,6 @@
    "pr": null
   },
   {
-   "id": "qbo-parity-a1-paritytable-universal-adoption",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "qbo-parity-resizable-columns-everywhere",
    "source": ".block-ready",
    "fin": true,
@@ -12279,28 +12620,6 @@
   },
   {
    "id": "s-02-insurance-sidebar-not-standalone",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "s-04-no-from-to-date-range-safety-lists",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "s-08-no-driver-unit-type-date-filters-incident",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -12389,17 +12708,6 @@
   },
   {
    "id": "sweepfix1727-8",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "systemic-pattern-column-drift-guard",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -12566,10 +12874,592 @@
  ],
  "merged_prs": [
   {
+   "number": 2903,
+   "title": "fix(ci): land tracker-artifact refresh via PR instead of a direct push to main",
+   "mergedAt": "2026-07-20T17:35:34Z",
+   "branch": "fix/tracker-bot-pr-based-flow"
+  },
+  {
+   "number": 2898,
+   "title": "fix(audit): AuditTrailPage → ParityTable + ListErrorState (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T16:28:42Z",
+   "branch": "fix/audit-trail-paritytable"
+  },
+  {
+   "number": 2897,
+   "title": "fix(admin): QboVendorLinkagePage → ParityTable (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T16:56:43Z",
+   "branch": "fix/qbo-vendor-linkage-paritytable"
+  },
+  {
+   "number": 2896,
+   "title": "fix(audit): EntityAuditHistoryTab → ParityTable (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T16:07:04Z",
+   "branch": "fix/qbo-parity-a1-entity-audit-history"
+  },
+  {
+   "number": 2895,
+   "title": "feat(accounting): add Unbilled Revenue contract-asset accounts (ASC 606)",
+   "mergedAt": "2026-07-20T16:57:50Z",
+   "branch": "feat/unbilled-revenue-accounts"
+  },
+  {
+   "number": 2892,
+   "title": "fix(trailers): TrailerReeferSection → ParityTable (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T17:14:12Z",
+   "branch": "fix/trailer-reefer-paritytable"
+  },
+  {
+   "number": 2891,
+   "title": "fix(trailers): PlatesTable ParityTable (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T16:40:54Z",
+   "branch": "fix/tp-plates-pt-1784560903"
+  },
+  {
+   "number": 2888,
+   "title": "fix(admin): AuditLogViewer → ParityTable (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T15:49:26Z",
+   "branch": "fix/audit-log-viewer-paritytable"
+  },
+  {
+   "number": 2885,
+   "title": "fix(fuel): StopReasoningTable ParityTable (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T15:55:26Z",
+   "branch": "fix/fuel-stop-reasoning-paritytable"
+  },
+  {
+   "number": 2883,
+   "title": "fix(admin): ErrorMonitor → ParityTable + ListErrorState (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T15:07:44Z",
+   "branch": "fix/error-monitor-paritytable"
+  },
+  {
+   "number": 2881,
+   "title": "fix(home): DriverDaySummaryCard → ParityTable + ListErrorState (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T15:41:23Z",
+   "branch": "fix/driver-day-summary-paritytable"
+  },
+  {
+   "number": 2880,
+   "title": "fix(vehicles): ComplianceSection plates → ParityTable (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T14:45:35Z",
+   "branch": "fix/vehicle-compliance-paritytable"
+  },
+  {
+   "number": 2879,
+   "title": "fix(vehicles): DocumentsSection → ParityTable (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T14:38:29Z",
+   "branch": "fix/vehicle-documents-paritytable"
+  },
+  {
+   "number": 2877,
+   "title": "docs(design): load revenue capture — auto-invoice + TONU AR (owner-gated design)",
+   "mergedAt": "2026-07-20T15:58:03Z",
+   "branch": "design/load-revenue-capture-auto-invoice-tonu"
+  },
+  {
+   "number": 2875,
+   "title": "fix(compliance): mount dark W3B driver-alert + W4A safety-doc routes",
+   "mergedAt": "2026-07-20T15:30:33Z",
+   "branch": "fix/mount-dead-compliance-routes-w3b-w4a"
+  },
+  {
+   "number": 2869,
+   "title": "fix(dispatch): AtRiskQueue ListErrorState + EntityLink load",
+   "mergedAt": "2026-07-20T14:01:55Z",
+   "branch": "fix/at-risk-query-error-entitylink"
+  },
+  {
+   "number": 2868,
+   "title": "fix(drivers): LoadHistoryTab → ParityTable (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T14:16:24Z",
+   "branch": "fix/load-history-paritytable"
+  },
+  {
+   "number": 2867,
+   "title": "fix(vehicles): RecentActivitySection → ParityTable (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T15:20:24Z",
+   "branch": "fix/vehicle-recent-activity-paritytable"
+  },
+  {
+   "number": 2865,
+   "title": "fix(vehicles): PlatesTable ParityTable (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T14:27:37Z",
+   "branch": "fix/vehicle-plates-paritytable"
+  },
+  {
+   "number": 2864,
+   "title": "fix(reports): FrequentlyRunTable ParityTable (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T13:51:58Z",
+   "branch": "fix/frequently-run-paritytable"
+  },
+  {
+   "number": 2863,
+   "title": "fix(drivers): AuditHistoryTab → ParityTable + ListErrorState (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T13:38:51Z",
+   "branch": "fix/driver-audit-history-paritytable"
+  },
+  {
+   "number": 2862,
+   "title": "fix(drivers): OperationsHistoryTable ParityTable + ListErrorState (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T13:25:22Z",
+   "branch": "fix/ops-history-paritytable"
+  },
+  {
+   "number": 2861,
+   "title": "fix(dispatch): late arrivals ListErrorBanner + EntityLink load",
+   "mergedAt": "2026-07-20T13:26:02Z",
+   "branch": "fix/late-arrivals-error-entitylink"
+  },
+  {
+   "number": 2860,
+   "title": "fix(compliance): NotificationLogPanel ParityTable (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T12:58:00Z",
+   "branch": "fix/notification-log-paritytable"
+  },
+  {
+   "number": 2859,
+   "title": "fix(compliance): NotificationRulesPanel → ParityTable (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T13:10:56Z",
+   "branch": "fix/notification-rules-paritytable"
+  },
+  {
+   "number": 2858,
+   "title": "fix(admin): ActivityLog ParityTable + ListErrorState (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T12:41:37Z",
+   "branch": "fix/activity-log-paritytable"
+  },
+  {
+   "number": 2857,
+   "title": "fix(guards): renumber deadhead verify-step 1019→1021 (Rule 17)",
+   "mergedAt": "2026-07-20T12:58:21Z",
+   "branch": "fix/renumber-deadhead-verify-step-1021"
+  },
+  {
+   "number": 2856,
+   "title": "fix(ui): §7 palette financial ratchet to zero (0441-mod8)",
+   "mergedAt": "2026-07-20T12:31:16Z",
+   "branch": "fix/section7-palette-ratchet-batch3"
+  },
+  {
+   "number": 2854,
+   "title": "fix(linkage): EntityLink assignment history load/driver drill-through",
+   "mergedAt": "2026-07-20T12:44:20Z",
+   "branch": "fix/driver-load-history-entitylink"
+  },
+  {
+   "number": 2853,
+   "title": "chore(deps): Bump the development-dependencies group with 6 updates",
+   "mergedAt": "2026-07-20T12:26:12Z",
+   "branch": "dependabot/npm_and_yarn/development-dependencies-4080cf4738"
+  },
+  {
+   "number": 2852,
+   "title": "chore(ci): Bump actions/setup-node from 6 to 7",
+   "mergedAt": "2026-07-20T12:22:00Z",
+   "branch": "dependabot/github_actions/actions/setup-node-7"
+  },
+  {
+   "number": 2851,
+   "title": "fix(guards): renumber deadhead verify-step 1013→1019 (Rule 17)",
+   "mergedAt": "2026-07-20T12:09:49Z",
+   "branch": "fix/renumber-deadhead-verify-step-1019"
+  },
+  {
+   "number": 2850,
+   "title": "fix(assets): AssetListTable ParityTable + real assets API (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T12:25:36Z",
+   "branch": "fix/asset-list-paritytable"
+  },
+  {
+   "number": 2848,
+   "title": "fix(compliance): migrate ComplianceTable to ParityTable (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T12:09:06Z",
+   "branch": "fix/compliance-table-paritytable"
+  },
+  {
+   "number": 2847,
+   "title": "fix(safety): real ELD audit PDF export (0441-mod12)",
+   "mergedAt": "2026-07-20T12:11:29Z",
+   "branch": "fix/0441-mod12-eld-export-pdf"
+  },
+  {
+   "number": 2846,
+   "title": "fix(dispatch): surface alerts query errors (mandatory error states)",
+   "mergedAt": "2026-07-20T12:10:40Z",
+   "branch": "fix/dispatch-alerts-query-error-states"
+  },
+  {
+   "number": 2845,
+   "title": "fix(reports): deadhead fuel uses real columns (0441-mod11)",
+   "mergedAt": "2026-07-20T11:54:57Z",
+   "branch": "fix/0441-mod11-deadhead-phantom-fuel-columns"
+  },
+  {
+   "number": 2844,
+   "title": "fix(settlements): wire Loads column to load_count (0441-mod10)",
+   "mergedAt": "2026-07-20T11:54:01Z",
+   "branch": "fix/0441-mod10-settlement-loads-column"
+  },
+  {
+   "number": 2843,
+   "title": "fix(ui): migrate Drivers EarningsTab to ParityTable (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T11:52:18Z",
+   "branch": "fix/qbo-parity-earnings-tab-paritytable"
+  },
+  {
+   "number": 2842,
+   "title": "fix(chat): wire dispatch chat attachment upload (0441-mod4)",
+   "mergedAt": "2026-07-20T11:42:44Z",
+   "branch": "fix/0441-mod4-dispatch-chat-attachment"
+  },
+  {
+   "number": 2841,
+   "title": "fix(accounting): wire settlement dispute queue UI (0441-mod7)",
+   "mergedAt": "2026-07-20T12:24:31Z",
+   "branch": "fix/0441-mod7-dispute-queue-stub"
+  },
+  {
+   "number": 2840,
+   "title": "fix(drivers): distinct deductions tab (0441-mod5)",
+   "mergedAt": "2026-07-20T11:41:21Z",
+   "branch": "fix/0441-mod5-deductions-tab-distinct"
+  },
+  {
+   "number": 2839,
+   "title": "fix(ci): extend sql-column-existence TARGET_TABLES (systemic-pattern-column-drift)",
+   "mergedAt": "2026-07-20T11:36:06Z",
+   "branch": "fix/systemic-pattern-column-drift"
+  },
+  {
+   "number": 2838,
+   "title": "fix(ui): §7 palette ratchet accounting/cash-flow (0441-mod8)",
+   "mergedAt": "2026-07-20T11:35:28Z",
+   "branch": "fix/0441-mod8-section7-palette-ratchet-acct"
+  },
+  {
+   "number": 2837,
+   "title": "fix(cash-flow): emit driver_pay predictions (0441-mod10)",
+   "mergedAt": "2026-07-20T11:20:44Z",
+   "branch": "fix/0441-mod10-cashflow-driverpay-emit"
+  },
+  {
+   "number": 2835,
+   "title": "fix(safety): AccidentsPage-parity from/to on incident lists (s-04)",
+   "mergedAt": "2026-07-20T11:05:34Z",
+   "branch": "fix/s-04-safety-lists-date-range"
+  },
+  {
+   "number": 2834,
+   "title": "fix(banking): recon balance header (bnk-03)",
+   "mergedAt": "2026-07-20T11:04:29Z",
+   "branch": "fix/bnk-03-recon-balance-header"
+  },
+  {
+   "number": 2833,
+   "title": "fix(help): persist Was this helpful? to localStorage (0441-mod11)",
+   "mergedAt": "2026-07-20T11:03:45Z",
+   "branch": "fix/help-feedback-localstorage"
+  },
+  {
+   "number": 2832,
+   "title": "fix(ui): §7 palette ratchet batch2 driver-finance/factoring (0441-mod8)",
+   "mergedAt": "2026-07-20T11:02:05Z",
+   "branch": "fix/section7-palette-ratchet-batch2"
+  },
+  {
+   "number": 2831,
+   "title": "fix(insurance): claim reverse accident/incident drill links",
+   "mergedAt": "2026-07-20T11:01:48Z",
+   "branch": "fix/insurance-claims-reverse-accidents"
+  },
+  {
+   "number": 2830,
+   "title": "fix(insurance): PolicyDetail shared PageHeader (insurance-2-breadcrumb-desync)",
+   "mergedAt": "2026-07-20T11:00:41Z",
+   "branch": "fix/insurance-policy-pageheader"
+  },
+  {
+   "number": 2829,
+   "title": "fix(fuel): wire Home tab dashboard KPIs (f-01)",
+   "mergedAt": "2026-07-20T05:42:51Z",
+   "branch": "fix/fuel-home-dashboard-kpis"
+  },
+  {
+   "number": 2828,
+   "title": "fix(inventory): honest Purchase History empty (0441-mod13)",
+   "mergedAt": "2026-07-20T05:35:36Z",
+   "branch": "fix/inventory-purchases-honesty"
+  },
+  {
+   "number": 2827,
+   "title": "fix(ui): §7 palette ratchet liabilities/cash-advances/driver-finance (0441-mod8)",
+   "mergedAt": "2026-07-20T05:51:13Z",
+   "branch": "fix/section7-palette-ratchet-liabilities-ca"
+  },
+  {
+   "number": 2826,
+   "title": "fix(customers-vendors): server COUNT for list pager totalCount",
+   "mergedAt": "2026-07-20T05:53:04Z",
+   "branch": "fix/vendors-customers-pager-total-count"
+  },
+  {
+   "number": 2825,
+   "title": "fix(dispatch): write mdata.equipment_log on transfer completion",
+   "mergedAt": "2026-07-20T06:11:45Z",
+   "branch": "fix/equipment-transfer-writes-equipment-log"
+  },
+  {
+   "number": 2824,
+   "title": "fix(customers): consolidate COI tabs into shared CoiTab",
+   "mergedAt": "2026-07-20T05:20:13Z",
+   "branch": "fix/coi-single-shared-component"
+  },
+  {
+   "number": 2823,
+   "title": "docs(lockdown): §9.9 ALL GL posting flags ON for TRANSP+TRK+USMCA — owner-decided 2026-07-20",
+   "mergedAt": "2026-07-20T11:05:42Z",
+   "branch": "docs/lease-flags-owner-confirm-2026-07-20"
+  },
+  {
+   "number": 2822,
+   "title": "fix(vendors): wire NewVendorDrawerForm QBO parity fields into create payload",
+   "mergedAt": "2026-07-20T05:18:09Z",
+   "branch": "fix/new-vendor-drawer-parity-fields"
+  },
+  {
+   "number": 2821,
+   "title": "fix(dispatch): equipment transfer driver notifications",
+   "mergedAt": "2026-07-20T05:14:06Z",
+   "branch": "fix/equipment-transfer-notifications"
+  },
+  {
+   "number": 2820,
+   "title": "fix(program-tracker): sync Program Tracker tabs to ?tab= (Ops F)",
+   "mergedAt": "2026-07-20T06:27:08Z",
+   "branch": "fix/program-tracker-tabs-url-sync-v2"
+  },
+  {
+   "number": 2819,
+   "title": "fix(fleet): unit parts-history reverse drill (0441-mod13)",
+   "mergedAt": "2026-07-20T05:14:15Z",
+   "branch": "fix/unit-parts-history-reverse-drill"
+  },
+  {
+   "number": 2818,
+   "title": "fix(legal): fleet+insurance reverse drill-through (0441-mod12)",
+   "mergedAt": "2026-07-20T05:53:13Z",
+   "branch": "fix/legal-reverse-drill-fleet-insurance"
+  },
+  {
+   "number": 2817,
+   "title": "fix(inventory): parts vendor_id picker + EntityLink (0441-mod13)",
+   "mergedAt": "2026-07-20T05:55:49Z",
+   "branch": "fix/parts-inventory-vendor-link"
+  },
+  {
+   "number": 2816,
+   "title": "fix(factoring): route SubmissionQueue at /factoring/submit (FACT-PAR1)",
+   "mergedAt": "2026-07-20T05:09:43Z",
+   "branch": "fix/fact-par1-submissionqueue-routed"
+  },
+  {
+   "number": 2815,
+   "title": "fix(safety): S-08 incident list driver/unit/date filters",
+   "mergedAt": "2026-07-20T05:50:18Z",
+   "branch": "fix/s-08-safety-incident-filters"
+  },
+  {
+   "number": 2814,
+   "title": "fix(fuel): wire fuel fraud detector worker (default OFF)",
+   "mergedAt": "2026-07-20T04:58:03Z",
+   "branch": "fix/fuel-fraud-detector-worker-wired"
+  },
+  {
+   "number": 2813,
+   "title": "fix(factoring): duplicate vendors dismissible banner",
+   "mergedAt": "2026-07-20T05:51:10Z",
+   "branch": "fix/fact-fix1-duplicate-vendors-banner"
+  },
+  {
+   "number": 2812,
+   "title": "fix(samsara): wire active-driver-set worker + routes (dispatch-sweep-gap-25)",
+   "mergedAt": "2026-07-20T04:46:28Z",
+   "branch": "fix/dispatch-sweep-gap-25-active-driver-set-wired"
+  },
+  {
+   "number": 2810,
+   "title": "fix(fuel-recon): honest disabled Save link until matcher POST",
+   "mergedAt": "2026-07-20T04:41:54Z",
+   "branch": "ops/fuel-recon-manual-match-honest"
+  },
+  {
+   "number": 2809,
+   "title": "fix(drivers): register auto-deductions and team-splits routes",
+   "mergedAt": "2026-07-20T04:46:03Z",
+   "branch": "ops/drivers-auto-deductions-team-splits-routes"
+  },
+  {
+   "number": 2808,
+   "title": "fix(accounting): canonical /expenses renders ExpensesListPage",
+   "mergedAt": "2026-07-20T04:40:48Z",
+   "branch": "ops/expenses-canonical-route-list"
+  },
+  {
+   "number": 2807,
+   "title": "fix(factoring): Factoring index tabs URL sync (Ops F)",
+   "mergedAt": "2026-07-20T04:43:12Z",
+   "branch": "ops/factoring-index-tabs-url-sync"
+  },
+  {
+   "number": 2806,
+   "title": "fix(program-tracker): Program Tracker tabs URL sync (Ops F)",
+   "mergedAt": "2026-07-20T06:55:44Z",
+   "branch": "ops/program-tracker-tabs-url-sync"
+  },
+  {
+   "number": 2805,
+   "title": "fix(ap-aging): A/P Aging view URL sync (Ops F)",
+   "mergedAt": "2026-07-20T06:40:33Z",
+   "branch": "ops/ap-aging-view-url-sync"
+  },
+  {
+   "number": 2804,
+   "title": "fix(qbo-vendor-linkage): QBO Vendor Linkage tabs URL sync (Ops F)",
+   "mergedAt": "2026-07-20T04:41:10Z",
+   "branch": "ops/qbo-vendor-linkage-tabs-url-sync"
+  },
+  {
+   "number": 2803,
+   "title": "fix(financial-statements): Financial Statements tabs URL sync (Ops F)",
+   "mergedAt": "2026-07-20T05:34:02Z",
+   "branch": "ops/financial-statements-tabs-url-sync"
+  },
+  {
+   "number": 2802,
+   "title": "fix(preflight-dvir): Pre-Flight DVIR tabs URL sync (Ops F)",
+   "mergedAt": "2026-07-20T04:25:28Z",
+   "branch": "ops/preflight-dvir-tabs-url-sync"
+  },
+  {
+   "number": 2801,
+   "title": "fix(cash-advances): Cash Advances tabs URL sync (Ops F)",
+   "mergedAt": "2026-07-20T04:57:01Z",
+   "branch": "ops/cash-advances-tabs-url-sync"
+  },
+  {
+   "number": 2800,
+   "title": "fix(profitability): Profitability tabs URL sync (Ops F)",
+   "mergedAt": "2026-07-20T04:25:42Z",
+   "branch": "ops/profitability-tabs-url-sync"
+  },
+  {
+   "number": 2799,
+   "title": "fix(daily-tasks): Daily Tasks view URL sync (Ops F)",
+   "mergedAt": "2026-07-20T04:22:29Z",
+   "branch": "ops/daily-tasks-view-url-sync"
+  },
+  {
+   "number": 2798,
+   "title": "fix(user-detail): User Detail tabs URL sync (Ops F)",
+   "mergedAt": "2026-07-20T04:24:51Z",
+   "branch": "ops/user-detail-tabs-url-sync"
+  },
+  {
+   "number": 2797,
+   "title": "docs(trackers): Cursor-ready build instructions — 280 open findings (Law-of-the-Land bound)",
+   "mergedAt": "2026-07-20T04:21:15Z",
+   "branch": "docs/coder-build-instructions-2026-07-19"
+  },
+  {
+   "number": 2796,
+   "title": "fix(qbo-reconcile): QBO Reconcile tabs ?tab= URL sync (Ops F)",
+   "mergedAt": "2026-07-20T03:50:03Z",
+   "branch": "ops/qbo-reconcile-tabs-url-sync"
+  },
+  {
+   "number": 2795,
+   "title": "fix(vendors): Vendor detail tabs ?tab= URL sync (Ops F)",
+   "mergedAt": "2026-07-20T03:50:01Z",
+   "branch": "ops/vendors-detail-tabs-url-sync"
+  },
+  {
+   "number": 2794,
+   "title": "fix(customers): Customer detail tabs ?tab= URL sync (Ops F)",
+   "mergedAt": "2026-07-20T03:49:59Z",
+   "branch": "ops/customers-detail-tabs-url-sync"
+  },
+  {
+   "number": 2793,
+   "title": "fix(form425c): Form 425C tabs ?tab= URL sync (Ops F)",
+   "mergedAt": "2026-07-20T04:06:17Z",
+   "branch": "ops/form425c-tabs-url-sync"
+  },
+  {
+   "number": 2792,
+   "title": "fix(system): System module tabs ?tab= URL sync (Ops F)",
+   "mergedAt": "2026-07-20T03:44:33Z",
+   "branch": "ops/system-tabs-url-sync"
+  },
+  {
+   "number": 2791,
+   "title": "fix(program): Program Board tabs ?tab= URL sync (Ops F)",
+   "mergedAt": "2026-07-20T03:49:25Z",
+   "branch": "ops/program-board-tabs-url-sync"
+  },
+  {
+   "number": 2790,
+   "title": "fix(legal): Matter detail tabs ?tab= URL sync (Ops F)",
+   "mergedAt": "2026-07-20T03:31:28Z",
+   "branch": "ops/legal-matter-detail-tabs-url-sync"
+  },
+  {
+   "number": 2789,
+   "title": "fix(safety): Integrity Alerts tabs ?tab= URL sync (Ops F)",
+   "mergedAt": "2026-07-20T03:45:31Z",
+   "branch": "ops/integrity-alerts-tabs-url-sync"
+  },
+  {
+   "number": 2788,
+   "title": "fix(docs): Documents entity tabs ?tab= URL sync (Ops F)",
+   "mergedAt": "2026-07-20T03:46:23Z",
+   "branch": "ops/docs-entity-tabs-url-sync"
+  },
+  {
+   "number": 2787,
+   "title": "fix(eld): ELD subnav ?tab= URL sync (Ops F)",
+   "mergedAt": "2026-07-20T03:21:50Z",
+   "branch": "ops/eld-tabs-url-sync"
+  },
+  {
+   "number": 2786,
+   "title": "fix(ci): renumber insurance type-catalog verify-step 962→976",
+   "mergedAt": "2026-07-20T03:21:45Z",
+   "branch": "ops/fix-962-collision"
+  },
+  {
+   "number": 2785,
+   "title": "chore(trackers): 2nd retirement pass — apply owner decisions (504→453 audit-notes)",
+   "mergedAt": "2026-07-20T03:15:08Z",
+   "branch": "chore/audit-note-purge-2-decisions-2026-07-19"
+  },
+  {
    "number": 2784,
    "title": "fix(insurance): TypeCatalogAdmin §7 + Create type labels (punchlist 230)",
    "mergedAt": "2026-07-20T02:55:51Z",
    "branch": "ops/insurance-type-catalog-create-vocab"
+  },
+  {
+   "number": 2783,
+   "title": "fix(factoring): FactorAdmin primary CTA + Create Factor",
+   "mergedAt": "2026-07-20T03:19:43Z",
+   "branch": "ops/factor-admin-create-vocab"
+  },
+  {
+   "number": 2782,
+   "title": "fix(insurance): §7 vocab on Claims/Lawsuits create CTAs",
+   "mergedAt": "2026-07-20T03:08:45Z",
+   "branch": "ops/insurance-create-vocab"
   },
   {
    "number": 2781,
@@ -12594,6 +13484,12 @@
    "title": "ops(fe): URL-sync anomaly alerts tab and severity filters",
    "mergedAt": "2026-07-20T02:17:29Z",
    "branch": "ops/anomaly-alerts-url-sync"
+  },
+  {
+   "number": 2776,
+   "title": "fix(recon): D-#1 restore QBO remote-count feed (RLS bypass escape on qbo_connections)",
+   "mergedAt": "2026-07-20T11:18:55Z",
+   "branch": "design/d1-recon-collector-unfreeze"
   },
   {
    "number": 2775,
@@ -15576,597 +16472,9 @@
    "title": "fix(drivers): finish module — Operations-views 500 column-drift, endorsement_h UI, visuals + linkage",
    "mergedAt": "2026-07-07T04:05:17Z",
    "branch": "fix/drivers-module-finish"
-  },
-  {
-   "number": 2261,
-   "title": "[HOLD-FOR-JORGE — TIER 1] banking GL posting completion (transfer/CC post, post-as-bill paid-in-full, advance recovery, split re-post guard) — flags OFF",
-   "mergedAt": "2026-07-07T06:03:09Z",
-   "branch": "feat/banking-gl-posting-completion-HELD"
-  },
-  {
-   "number": 2260,
-   "title": "feat: EntityLink drill-through for settlement/load/journal_entry/driver IDs (Batches 3-4)",
-   "mergedAt": "2026-07-07T03:38:05Z",
-   "branch": "feat/entity-link-settlement-load-ids"
-  },
-  {
-   "number": 2259,
-   "title": "feat(linkage): EntityLink drill-through in dispatch/drivers/fleet id cells",
-   "mergedAt": "2026-07-07T03:11:58Z",
-   "branch": "feat/linkage-adopt-entitylink-dispatch-drivers-fleet"
-  },
-  {
-   "number": 2258,
-   "title": "feat: adopt EntityLink/Link drill-through in DispatchBoard + FleetTable",
-   "mergedAt": "2026-07-07T02:31:00Z",
-   "branch": "feat/entity-link-dispatch-fleet-adoption"
-  },
-  {
-   "number": 2257,
-   "title": "feat: adopt EntityLink in accounting module tables",
-   "mergedAt": "2026-07-07T02:19:44Z",
-   "branch": "feat/entity-link-accounting-adoption"
-  },
-  {
-   "number": 2256,
-   "title": "[HOLD-FOR-JORGE] feat(linkage): reverse-link read endpoints (driver advances, customer invoices, JE source-links)",
-   "mergedAt": "2026-07-07T05:17:26Z",
-   "branch": "feat/linkage-reverse-link-endpoints"
-  },
-  {
-   "number": 2255,
-   "title": "[HOLD-FOR-JORGE] feat: reverse-link drill-through endpoints (4 of 5)",
-   "mergedAt": "2026-07-07T05:17:14Z",
-   "branch": "feat/reverse-link-endpoints"
-  },
-  {
-   "number": 2253,
-   "title": "feat(linkage): shared EntityLink drill-through component + banking adoption + report-only adoption guard",
-   "mergedAt": "2026-07-07T01:39:59Z",
-   "branch": "feat/linkage-entitylink-foundation"
-  },
-  {
-   "number": 2252,
-   "title": "chore(frontend): orphan-triage batch 12 — archive Workflow-B, wire CashGlSetup, baseline→0",
-   "mergedAt": "2026-07-07T01:37:38Z",
-   "branch": "chore/orphan-triage-batch-12"
-  },
-  {
-   "number": 2251,
-   "title": "fix(banking): QBO parity — inline +Add on Category/Payee/Item, QB calendar, resizable columns, uniform KPI tiles",
-   "mergedAt": "2026-07-07T01:41:23Z",
-   "branch": "fix/banking-categorize-qbo-parity-inline-add-calendar-resize"
-  },
-  {
-   "number": 2249,
-   "title": "fix(banking): wire Banking Home bank-account rows + KPI tiles + factoring/escrow boxes to their drill-downs",
-   "mergedAt": "2026-07-07T00:34:08Z",
-   "branch": "fix/banking-home-linkage-kpis-rows"
-  },
-  {
-   "number": 2248,
-   "title": "chore(frontend): orphan-triage batch 11 — delete 12 dead, allowlist 3",
-   "mergedAt": "2026-07-07T00:44:15Z",
-   "branch": "chore/orphan-triage-batch-11"
-  },
-  {
-   "number": 2247,
-   "title": "fix(safety): gate SafetyEventsTable empty state on loading prop",
-   "mergedAt": "2026-07-07T00:21:38Z",
-   "branch": "fix/safety-events-table-false-empty"
-  },
-  {
-   "number": 2246,
-   "title": "fix(wiring): wire 8 orphan components + visual improvements (batch 2 resync)",
-   "mergedAt": "2026-07-07T00:19:22Z",
-   "branch": "fix/wire-targets-batch2-resync"
-  },
-  {
-   "number": 2245,
-   "title": "chore(frontend): orphan-triage batch 10 — delete 9 dead, allowlist 9 guard-protected",
-   "mergedAt": "2026-07-06T23:34:15Z",
-   "branch": "chore/orphan-triage-batch-10"
-  },
-  {
-   "number": 2244,
-   "title": "[HOLD-FOR-JORGE — TIER 1] orphan-triage F1 — wire accounting/finance orphan UI (flags OFF)",
-   "mergedAt": "2026-07-06T21:19:06Z",
-   "branch": "chore/orphan-triage-F1-accounting-HELD"
-  },
-  {
-   "number": 2243,
-   "title": "chore(frontend): orphan-triage batch 05 (dispatch)",
-   "mergedAt": "2026-07-06T21:52:52Z",
-   "branch": "chore/orphan-triage-batch-05"
-  },
-  {
-   "number": 2242,
-   "title": "chore(frontend): orphan-triage batch 08 (maint+misc)",
-   "mergedAt": "2026-07-06T21:32:24Z",
-   "branch": "chore/orphan-triage-batch-08"
-  },
-  {
-   "number": 2241,
-   "title": "chore(frontend): orphan-triage batch 06 (catalogs/lists/parity)",
-   "mergedAt": "2026-07-06T20:19:34Z",
-   "branch": "chore/orphan-triage-batch-06"
-  },
-  {
-   "number": 2240,
-   "title": "chore(frontend): orphan-triage batch 09 (safety)",
-   "mergedAt": "2026-07-06T21:17:28Z",
-   "branch": "chore/orphan-triage-batch-09"
-  },
-  {
-   "number": 2239,
-   "title": "chore(frontend): orphan-triage batch 04 (safety)",
-   "mergedAt": "2026-07-06T20:15:40Z",
-   "branch": "chore/orphan-triage-batch-04"
-  },
-  {
-   "number": 2238,
-   "title": "chore(frontend): orphan-triage batch 07 (reports)",
-   "mergedAt": "2026-07-06T20:23:14Z",
-   "branch": "chore/orphan-triage-batch-07"
-  },
-  {
-   "number": 2237,
-   "title": "chore(frontend): orphan-triage batch 03",
-   "mergedAt": "2026-07-06T20:15:09Z",
-   "branch": "chore/orphan-triage-batch-03"
-  },
-  {
-   "number": 2236,
-   "title": "chore(frontend): orphan-triage batch 02",
-   "mergedAt": "2026-07-06T20:14:26Z",
-   "branch": "chore/orphan-triage-batch-02"
-  },
-  {
-   "number": 2235,
-   "title": "chore(frontend): orphan-triage batch 01 — wire 8, delete 3 dead, keep 1 pair",
-   "mergedAt": "2026-07-06T19:25:36Z",
-   "branch": "chore/orphan-triage-batch-01"
-  },
-  {
-   "number": 2234,
-   "title": "[HOLD-FOR-JORGE — TIER 1] banking Categorize: wire Match-accept + Transfer From/To picker + CC-payment inline (reuse gated posters, flags OFF)",
-   "mergedAt": "2026-07-06T19:04:58Z",
-   "branch": "feat/banking-categorize-financial-actions-HELD"
-  },
-  {
-   "number": 2233,
-   "title": "fix(banking): wire Categorize panel to real match-candidates engine + picker show-on-focus/empty-state",
-   "mergedAt": "2026-07-06T19:02:29Z",
-   "branch": "fix/banking-categorize-match-rewire-picker-ux"
-  },
-  {
-   "number": 2232,
-   "title": "chore(tbl-standard): migrate customers/dispatch/drivers list surfaces to shared DataTable",
-   "mergedAt": "2026-07-06T23:16:51Z",
-   "branch": "feat/tbl-standard-batch2-customers-dispatch-drivers"
-  },
-  {
-   "number": 2231,
-   "title": "chore(tbl-standard): migrate audit/fuel/dispatch list surfaces to shared DataTable",
-   "mergedAt": "2026-07-06T18:18:49Z",
-   "branch": "feat/tbl-standard-batch-audit-fuel-dispatch"
-  },
-  {
-   "number": 2230,
-   "title": "[HOLD-FOR-JORGE — TIER 1] Bank-account per-entity HIDE/EXCLUDE (flag OFF)",
-   "mergedAt": "2026-07-06T19:10:44Z",
-   "branch": "feat/bank-account-entity-hide"
-  },
-  {
-   "number": 2229,
-   "title": "Fix/wire behind stub batch2",
-   "mergedAt": "2026-07-06T17:37:44Z",
-   "branch": "fix/wire-behind-stub-batch2"
-  },
-  {
-   "number": 2228,
-   "title": "chore(git): json-union merge driver — kill the baseline/held-migrations conflict treadmill",
-   "mergedAt": "2026-07-06T17:19:17Z",
-   "branch": "chore/git-merge-driver-registry-files"
-  },
-  {
-   "number": 2227,
-   "title": "[HOLD-FOR-JORGE — TIER 1] STMT-2: TRANSP opening-balance importer (read-only preview, flag OFF)",
-   "mergedAt": "2026-07-06T18:46:29Z",
-   "branch": "feat/stmt-2-opening-balance-importer"
-  },
-  {
-   "number": 2226,
-   "title": "[HOLD-FOR-JORGE — TIER 1] BLOCK-17/24: 1099-NEC/1042-S annual generation + general tax-document PDF engine (flag OFF)",
-   "mergedAt": "2026-07-06T18:58:52Z",
-   "branch": "feat/block17-24-tax-document-engine"
-  },
-  {
-   "number": 2225,
-   "title": "[HOLD-FOR-JORGE — TIER 1] BLOCK-03: IFTA TRIP=practical-miles-less-personal-conveyance methodology + jurisdiction tax-rate catalog (flag OFF)",
-   "mergedAt": "2026-07-06T18:26:05Z",
-   "branch": "feat/block-03-ifta-trip-methodology"
-  },
-  {
-   "number": 2224,
-   "title": "[HOLD-FOR-JORGE — TIER 1] AF-4/AF-2/AF-7: A/P import scaffold + QBO drift detect-only fix + money-control flags",
-   "mergedAt": "2026-07-06T18:11:54Z",
-   "branch": "feat/af2-af4-af7-financial-design-hold"
-  },
-  {
-   "number": 2223,
-   "title": "[HOLD-FOR-JORGE — TIER 1] CONN-2: Faro reserve tracker + AR-subledger divergence fix (flag OFF)",
-   "mergedAt": "2026-07-06T17:40:11Z",
-   "branch": "feat/conn-2-faro-reserve-tracker-and-ar-subledger-fix"
-  },
-  {
-   "number": 2222,
-   "title": "[HOLD-FOR-JORGE — TIER 1] BLOCK-02: driver escrow >=90-day post-separation return path (flag OFF)",
-   "mergedAt": "2026-07-06T16:33:05Z",
-   "branch": "feat/block-02-driver-escrow-separation-return"
-  },
-  {
-   "number": 2221,
-   "title": "docs(audit): CHAIN-08 TRANSP demo/seed data audit — list only, no purge",
-   "mergedAt": "2026-07-06T15:42:13Z",
-   "branch": "docs/chain-08-transp-demo-data-audit"
-  },
-  {
-   "number": 2220,
-   "title": "[HOLD-FOR-JORGE — TIER 1] CHAIN-05: live bank-feed tie-out design + read-only chain-integrity guard",
-   "mergedAt": "2026-07-06T15:51:09Z",
-   "branch": "docs/chain-05-bank-feed-live-proof"
-  },
-  {
-   "number": 2219,
-   "title": "[HOLD-FOR-JORGE — TIER 1] AF-1 confirm + AF-5: catalogs.journal_entry_types real catalog",
-   "mergedAt": "2026-07-06T16:51:17Z",
-   "branch": "feat/af1-af5-entity-coa-stub-catalogs-hold"
-  },
-  {
-   "number": 2218,
-   "title": "docs(db-audit): verify cash-flow module is live and wired (no rebuild)",
-   "mergedAt": "2026-07-06T15:34:40Z",
-   "branch": "docs/cash-flow-module-verify"
-  },
-  {
-   "number": 2217,
-   "title": "docs(db-audit): TBL-STANDARD (DB) sweep vs live entity-isolation guard",
-   "mergedAt": "2026-07-06T15:34:32Z",
-   "branch": "docs/tbl-standard-db-sweep"
-  },
-  {
-   "number": 2216,
-   "title": "docs(recon-00): canonical RECON-00 architecture pointer",
-   "mergedAt": "2026-07-06T15:34:22Z",
-   "branch": "docs/recon-00-architecture"
-  },
-  {
-   "number": 2215,
-   "title": "[HOLD-FOR-JORGE — TIER 1] CHAIN-07: settlement-payment GUC-order regression guard (verified 500 already fixed)",
-   "mergedAt": "2026-07-06T15:30:00Z",
-   "branch": "fix/chain-07-settlement-payment-guc-order-guard"
-  },
-  {
-   "number": 2213,
-   "title": "chore(deps): Bump plaid from 42.2.0 to 43.0.0",
-   "mergedAt": "2026-07-06T13:23:10Z",
-   "branch": "dependabot/npm_and_yarn/plaid-43.0.0"
-  },
-  {
-   "number": 2212,
-   "title": "chore(deps): Bump puppeteer from 24.43.1 to 25.3.0",
-   "mergedAt": "2026-07-06T13:47:23Z",
-   "branch": "dependabot/npm_and_yarn/puppeteer-25.3.0"
-  },
-  {
-   "number": 2211,
-   "title": "chore(deps): Bump @types/node from 20.19.43 to 26.1.0",
-   "mergedAt": "2026-07-06T13:48:25Z",
-   "branch": "dependabot/npm_and_yarn/types/node-26.1.0"
-  },
-  {
-   "number": 2210,
-   "title": "chore(deps): Bump the production-dependencies group with 5 updates",
-   "mergedAt": "2026-07-06T13:48:28Z",
-   "branch": "dependabot/npm_and_yarn/production-dependencies-fa54d6df74"
-  },
-  {
-   "number": 2209,
-   "title": "chore(deps): Bump the development-dependencies group with 3 updates",
-   "mergedAt": "2026-07-06T13:48:32Z",
-   "branch": "dependabot/npm_and_yarn/development-dependencies-be7bffbb5a"
-  },
-  {
-   "number": 2208,
-   "title": "chore(ci): Bump actions/checkout from 4 to 7",
-   "mergedAt": "2026-07-06T13:48:35Z",
-   "branch": "dependabot/github_actions/actions/checkout-7"
-  },
-  {
-   "number": 2207,
-   "title": "chore(ci): Bump actions/setup-node from 4 to 6",
-   "mergedAt": "2026-07-06T13:48:39Z",
-   "branch": "dependabot/github_actions/actions/setup-node-6"
-  },
-  {
-   "number": 2206,
-   "title": "fix(migrations): checksum override for 202607080000 — UNBLOCKS PROD DEPLOY",
-   "mergedAt": "2026-07-06T08:01:48Z",
-   "branch": "fix/checksum-override-080000"
-  },
-  {
-   "number": 2204,
-   "title": "fix(ci): canonical entity-isolation allowlist (unblocks PR backlog)",
-   "mergedAt": "2026-07-06T07:39:31Z",
-   "branch": "fix/entity-isolation-allowlist-canonical"
-  },
-  {
-   "number": 2203,
-   "title": "WIRE-BEHIND-STUB: build Photo Comparison page with sessions list",
-   "mergedAt": "2026-07-06T08:39:41Z",
-   "branch": "fix/wire-behind-stub-batch3"
-  },
-  {
-   "number": 2202,
-   "title": "WIRE-BEHIND-STUB: mount DamageReportDetail in damage reports drawer",
-   "mergedAt": "2026-07-06T08:39:38Z",
-   "branch": "fix/wire-behind-stub-batch2"
-  },
-  {
-   "number": 2201,
-   "title": "WIRE-BEHIND-STUB: mount InspectionScoreBadge, CargoSensorTimeline",
-   "mergedAt": "2026-07-06T08:25:23Z",
-   "branch": "fix/wire-behind-stub-batch1"
-  },
-  {
-   "number": 2200,
-   "title": "fix(hos/samsara/eld): Central Time display sweep + HOS write-path unit_id parity",
-   "mergedAt": "2026-07-06T06:03:26Z",
-   "branch": "fix/hos-samsara-eld-wiring-ct-audit"
-  },
-  {
-   "number": 2199,
-   "title": "feat(vendors,customers): VENDOR-CUSTOMER-QBO-PARITY — close vendor/customer QBO field gaps",
-   "mergedAt": "2026-07-06T13:48:14Z",
-   "branch": "feat/vendor-customer-qbo-parity"
-  },
-  {
-   "number": 2198,
-   "title": "[HOLD-FOR-JORGE — TIER 1] BANK-SPLIT-1: bank-transaction split + Driver/Unit/Trailer/Load linkage",
-   "mergedAt": "2026-07-06T16:32:49Z",
-   "branch": "feat/banking-split-and-linkage"
-  },
-  {
-   "number": 2197,
-   "title": "WIRE-NOW: add sidebar links for CSA Mitigation, Anomaly Alerts; route UnitDetail",
-   "mergedAt": "2026-07-06T07:33:50Z",
-   "branch": "fix/wire-targets-batch7"
-  },
-  {
-   "number": 2196,
-   "title": "fix(ci): refresh entity-isolation remediation_backlog (7 now-compliant tables)",
-   "mergedAt": "2026-07-06T05:08:28Z",
-   "branch": "fix/entity-isolation-backlog-refresh"
-  },
-  {
-   "number": 2195,
-   "title": "WIRE-NOW: add sidebar links for MaintenanceServicesCatalog, LateArrivalReport",
-   "mergedAt": "2026-07-06T07:31:53Z",
-   "branch": "fix/wire-targets-batch6"
-  },
-  {
-   "number": 2194,
-   "title": "WIRE-NOW: add sidebar links for LaunchReadinessPage, QboVendorLinkagePage, TripProfitability",
-   "mergedAt": "2026-07-06T06:47:22Z",
-   "branch": "fix/wire-targets-batch5"
-  },
-  {
-   "number": 2193,
-   "title": "WIRE-NOW: BrakeWearDashboard, TireWearDashboard, PreFlightDvirQueue to MaintenanceHome",
-   "mergedAt": "2026-07-06T07:43:16Z",
-   "branch": "fix/wire-targets-batch4"
-  },
-  {
-   "number": 2192,
-   "title": "[HOLD-FOR-JORGE — SCHEMA CHANGE] HOS-FANOUT + HOS-PRC-DATA + HOS-PRC2: certified Samsara ELD as HOS source of truth",
-   "mergedAt": "2026-07-06T06:49:35Z",
-   "branch": "feat/hos-fanout-certified-eld"
-  },
-  {
-   "number": 2191,
-   "title": "WIRE-NOW: CustomsTimePill to BorderCrossingHistoryPage",
-   "mergedAt": "2026-07-06T06:51:21Z",
-   "branch": "fix/wire-targets-batch3"
-  },
-  {
-   "number": 2190,
-   "title": "docs: LOCKED enterprise + accounting decisions 2026-07-05",
-   "mergedAt": "2026-07-06T06:11:19Z",
-   "branch": "docs/enterprise-accounting-decisions"
-  },
-  {
-   "number": 2188,
-   "title": "[HOLD-FOR-JORGE — TIER 1] CHAIN-04 + CHAIN-06 tie-out proofs (read-only, no schema change)",
-   "mergedAt": "2026-07-06T16:06:53Z",
-   "branch": "feat/chain-04-06-tieout-proofs"
-  },
-  {
-   "number": 2187,
-   "title": "WIRE-NOW: DispatcherPerformanceCard + AnomalyAlertsPage",
-   "mergedAt": "2026-07-06T06:45:14Z",
-   "branch": "fix/wire-targets-remaining"
-  },
-  {
-   "number": 2186,
-   "title": "[HOLD-FOR-JORGE — TIER 1] VOID-EVERYWHERE PR-3: wire expense/JE/payment/bill_payment/driver_settlement into the shared void/cancel layer",
-   "mergedAt": "2026-07-06T16:06:45Z",
-   "branch": "feat/void-everywhere-shared-layer"
-  },
-  {
-   "number": 2185,
-   "title": "Fix/visual dead controls",
-   "mergedAt": "2026-07-06T06:46:39Z",
-   "branch": "fix/visual-dead-controls"
-  },
-  {
-   "number": 2184,
-   "title": "Fix/visual layout",
-   "mergedAt": "2026-07-06T06:44:03Z",
-   "branch": "fix/visual-layout"
-  },
-  {
-   "number": 2182,
-   "title": "[HOLD-FOR-JORGE — TIER 1] CHAIN-07: settlement payment-finalize company scope (500 fix)",
-   "mergedAt": "2026-07-06T05:18:18Z",
-   "branch": "fix/chain-07-settlement-payment-company-scope"
-  },
-  {
-   "number": 2181,
-   "title": "[HOLD-FOR-JORGE — TIER 1] Relay fuel-transaction ingest (storage-only, flag OFF)",
-   "mergedAt": "2026-07-06T07:39:02Z",
-   "branch": "feat/relay-fuel-ingest-recovered"
-  },
-  {
-   "number": 2180,
-   "title": "Fix/visual broken edit",
-   "mergedAt": "2026-07-06T06:05:38Z",
-   "branch": "fix/visual-broken-edit"
-  },
-  {
-   "number": 2179,
-   "title": "docs(accounting): BLOCK-01 fixed-asset depreciation design + reconciliation",
-   "mergedAt": "2026-07-06T15:28:24Z",
-   "branch": "docs/depreciation-block01-design"
-  },
-  {
-   "number": 2178,
-   "title": "docs(tax): BLOCK-17/24 design — 1099-NEC/1042-S generation + tax-document PDF engine",
-   "mergedAt": "2026-07-06T06:11:23Z",
-   "branch": "docs/1099-taxdoc-block17-design"
-  },
-  {
-   "number": 2177,
-   "title": "docs(ifta): BLOCK-03 quarterly fuel-tax design (design-only, build-and-hold)",
-   "mergedAt": "2026-07-06T04:27:48Z",
-   "branch": "docs/ifta-block03-design"
-  },
-  {
-   "number": 2176,
-   "title": "feat(ui): §7 back-arrows + breadcrumbs on 23 report pages (VISUAL-REMAINDER)",
-   "mergedAt": "2026-07-06T06:03:49Z",
-   "branch": "fix/visual-back-arrows"
-  },
-  {
-   "number": 2175,
-   "title": "fix(reports): cash-flow statement table wrapper uses overflow-x-auto",
-   "mergedAt": "2026-07-06T04:27:45Z",
-   "branch": "feat/cash-flow-module"
-  },
-  {
-   "number": 2174,
-   "title": "fix(driver-ops): B11/B12 column-drift + accident-status removal",
-   "mergedAt": "2026-07-06T03:51:39Z",
-   "branch": "fix/b11-b12-driver-ops-column-drift"
-  },
-  {
-   "number": 2173,
-   "title": "feat(ci-guards): permanent entity-isolation guard (TRANSP/TRK/USMCA never touch each other)",
-   "mergedAt": "2026-07-06T03:51:35Z",
-   "branch": "feat/verify-entity-isolation-guard"
-  },
-  {
-   "number": 2172,
-   "title": "[HOLD-FOR-JORGE — TIER 1] P2 DB-audit: civil_fines void-not-delete + maintenance RLS gap + escrow_ledger FK design",
-   "mergedAt": "2026-07-06T06:46:51Z",
-   "branch": "design/p2-integrity-fixes"
-  },
-  {
-   "number": 2171,
-   "title": "[HOLD-FOR-JORGE — TIER 1] P4 DB-audit: operating_company_id TEXT -> uuid+FK (all 7 tables)",
-   "mergedAt": "2026-07-06T04:01:06Z",
-   "branch": "design/p4-text-opco-to-uuid"
-  },
-  {
-   "number": 2169,
-   "title": "fix(audit): repair silently-broken spine-emit (valid event_type/subject_type, placeholder casts) + fail-loud logging",
-   "mergedAt": "2026-07-06T03:06:34Z",
-   "branch": "fix/audit-spine-emit-silent-failures"
-  },
-  {
-   "number": 2168,
-   "title": "[BACKEND] A10 fuel transactions list read-model for FuelTransactionsTable (non-financial, read-only)",
-   "mergedAt": "2026-07-06T02:54:57Z",
-   "branch": "feat/a10-fuel-transactions-list-api"
-  },
-  {
-   "number": 2167,
-   "title": "[BACKEND] A9 rate-con PDF read-model for load detail (non-financial, read-only)",
-   "mergedAt": "2026-07-06T02:54:37Z",
-   "branch": "feat/a9-load-detail-ratecon-readmodel"
-  },
-  {
-   "number": 2166,
-   "title": "[BACKEND] A9 dispatch load-row trailer read-model (non-financial, read-only)",
-   "mergedAt": "2026-07-06T02:47:22Z",
-   "branch": "feat/a9-dispatch-trailer-readmodel"
-  },
-  {
-   "number": 2165,
-   "title": "[HOLD-FOR-JORGE — TIER 1] P0 prerequisite — reconcile events.log_event GUC so FORCE RLS becomes safe",
-   "mergedAt": "2026-07-06T02:39:39Z",
-   "branch": "fix/event-log-guc-reconcile"
-  },
-  {
-   "number": 2164,
-   "title": "[HOLD-FOR-JORGE — TIER 1] P0 design + audit-log RLS migrations (verify-first, DO NOT RUN)",
-   "mergedAt": "2026-07-06T02:00:55Z",
-   "branch": "design/p0-audit-log-rls"
-  },
-  {
-   "number": 2163,
-   "title": "[FIX] register USMCA activation routes in index.ts (were built but unmounted → 404)",
-   "mergedAt": "2026-07-06T01:50:14Z",
-   "branch": "fix/register-usmca-activation-routes"
-  },
-  {
-   "number": 2162,
-   "title": "[CLEANUP] remove 2 verified-dead UI primitives + guard against sidebar-flyout regression",
-   "mergedAt": "2026-07-06T02:09:48Z",
-   "branch": "chore/remove-dead-ui-primitives"
-  },
-  {
-   "number": 2161,
-   "title": "[HOLD-FOR-JORGE] wire Recurring Bills feature (list+create routes+nav; register cron if missing; no deletions)",
-   "mergedAt": "2026-07-06T02:12:43Z",
-   "branch": "feat/wire-recurring-bills"
-  },
-  {
-   "number": 2160,
-   "title": "[HOLD-FOR-JORGE] wire ChartOfAccountsSyncPanel into live CoA page (read/reconcile, no write-back, no deletions)",
-   "mergedAt": "2026-07-06T01:41:53Z",
-   "branch": "feat/wire-coa-sync-panel"
-  },
-  {
-   "number": 2159,
-   "title": "[HOLD-FOR-JORGE] wire real per-load FactoringTab into load drawer (replace Block-7 stub, no deletions)",
-   "mergedAt": "2026-07-06T01:41:46Z",
-   "branch": "feat/wire-real-factoring-tab"
-  },
-  {
-   "number": 2158,
-   "title": "docs(audit): Claude Coder 2 — table-wiring + live DB reconciliation",
-   "mergedAt": "2026-07-06T02:03:59Z",
-   "branch": "docs/claude-audit-table-wiring-2026-07-05"
-  },
-  {
-   "number": 2157,
-   "title": "[WIRE] connect MaintenanceServicesCatalog to its declared route /lists/maintenance/services-catalog (no deletions)",
-   "mergedAt": "2026-07-06T01:27:17Z",
-   "branch": "feat/wire-maintenance-services-catalog"
   }
  ],
- "merged_pr_total": 2646,
+ "merged_pr_total": 2744,
  "hold_for_jorge": [
   {
    "number": 2718,
