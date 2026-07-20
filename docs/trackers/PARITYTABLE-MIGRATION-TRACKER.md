@@ -47,6 +47,13 @@ echo "remaining: $(sed -n "$INV_START,${INV_END}p" "$F" | grep -c '^| `apps/fron
 `financial-hold`, Jorge-gated per CLAUDE.md §1.4). The historical "300 hand-rolled total" is
 approximate — ParityTable was already consumed by ~16 surfaces that were never hand-rolled, so
 `migrated + remaining` does not reconcile to it and never did.
+## Rollup
+| Status | Count |
+| --- | --- |
+| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable + LoadHistoryTab + vehicle PlatesTable + vehicle ComplianceSection + DriverDaySummaryCard + StopReasoningTable + EntityAuditHistoryTab + AuditTrailPage + trailer PlatesTable + QboVendorLinkagePage + TrailerReeferSection) | 27 |
+| financial-hold (Jorge-gated) | 99 |
+| pending (non-financial, future batches) | 174 |
+| **hand-rolled total (original)** | **300** |
 
 > Note: ParityTable was already consumed by ~16 surfaces before this batch (not counted above — those were never hand-rolled).
 
@@ -359,7 +366,7 @@ verify-step 1035.
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/components/trailer-profile/PlatesTable.tsx` | migrated (qbo-parity-a1) |
-| `apps/frontend/src/components/trailer-profile/TrailerReeferSection.tsx` | pending |
+| `apps/frontend/src/components/trailer-profile/TrailerReeferSection.tsx` | migrated (qbo-parity-a1) |
 
 ### components/vehicle-profile (3 remaining)
 
@@ -454,7 +461,7 @@ verify-step 1035.
 | `apps/frontend/src/pages/admin/ActivityLogPage.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/pages/admin/ErrorMonitor.tsx` | pending |
 | `apps/frontend/src/pages/admin/LaunchToggles.tsx` | pending |
-| `apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx` | pending |
+| `apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/pages/admin/audit-log/AuditLogViewer.tsx` | pending |
 | `apps/frontend/src/pages/admin/feature-flags/FeatureFlagsManager.tsx` | pending |
 
@@ -895,3 +902,24 @@ manual expand rows. Migrated to shared `ParityTable` (sort + resize + gear +
 | --- | --- |
 | `apps/frontend/src/pages/audit/AuditTrailPage.tsx` | pages/audit |
 
+## qbo-parity-a1 — QboVendorLinkagePage (this PR)
+Admin QBO vendor/class linkage (Drivers + Assets tabs) was two hand-rolled `<table>` grids
+with no outage chrome on query failure. Migrated both to shared `ParityTable`
+(sort + resize + gear) and added `ListErrorState` + Retry per tab. Driver columns
+Driver / Current Vendor / Status / Actions and asset columns Unit / QBO Class / Actions
+preserved 1:1; filter bar + auto-link high-confidence action preserved.
+Guard: `scripts/verify-qbo-vendor-linkage-uses-paritytable.mjs` via verify-step 1042.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx` | pages/admin |
+
+## qbo-parity-a1 — TrailerReeferSection (this PR)
+Trailer reefer hours log was a hand-rolled `<table>`. Migrated to shared
+`ParityTable` (sort + resize + gear). Columns preserved 1:1; reefer hours entry
+chrome + entity scoping preserved.
+Guard: `scripts/verify-trailer-reefer-uses-paritytable.mjs` via verify-step 1044.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/trailer-profile/TrailerReeferSection.tsx` | components/trailer-profile |
