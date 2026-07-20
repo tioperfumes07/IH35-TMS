@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../components/forms/DatePicker";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { listBills, listVendorBalances } from "../api/accounting";
 import { listVendors, type VendorOption } from "../api/mdata";
 import { vendorQualityKind, vendorQualityClass } from "../lib/quality-badge";
@@ -29,6 +29,13 @@ const VENDOR_TABS: Array<{ id: VendorTabId; label: string }> = [
   { id: "vendor_details", label: "Vendor Details" },
   { id: "notes", label: "Notes" },
 ];
+const VENDOR_TAB_IDS = new Set<string>(VENDOR_TABS.map((t) => t.id));
+
+export function parseVendorDetailTab(raw: string | null): VendorTabId {
+  if (raw && VENDOR_TAB_IDS.has(raw)) return raw as VendorTabId;
+  return "transaction_list";
+}
+
 
 function fmtMoney(cents: number | null | undefined) {
   return formatUsdCents(cents);
@@ -60,7 +67,14 @@ export function VendorsPage() {
   const setSortByName = (value: "name_asc" | "name_desc") => {
     onUrlSortChange("name", value === "name_desc" ? "desc" : "asc");
   };
-  const [activeTab, setActiveTab] = useState<VendorTabId>("transaction_list");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = parseVendorDetailTab(searchParams.get("tab"));
+  const setActiveTab = (next: VendorTabId) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "transaction_list") params.delete("tab");
+    else params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
   const [selectedVendorId, setSelectedVendorId] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
