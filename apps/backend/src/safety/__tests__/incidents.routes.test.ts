@@ -69,7 +69,7 @@ describe("safety incidents routes (A23-7)", () => {
 
   it("GET /api/v1/safety/incidents lists by incident_type", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
-      if (sql.includes("SET LOCAL")) return { rows: [], rowCount: 0 };
+      if (sql.includes("SET LOCAL") || sql.includes("set_config")) return { rows: [], rowCount: 0 };
       return {
         rows: [{ id: INCIDENT_ID, incident_type: "damage_report", location: "Yard A" }],
         rowCount: 1,
@@ -83,6 +83,36 @@ describe("safety incidents routes (A23-7)", () => {
     expect(res.json()).toEqual({
       incidents: [{ id: INCIDENT_ID, incident_type: "damage_report", location: "Yard A" }],
     });
+  });
+
+  it("GET /api/v1/safety/incidents applies driver_id/unit_id/date_from/date_to filters (S-08)", async () => {
+    const DRIVER = "33333333-3333-4333-8333-333333333333";
+    const UNIT = "44444444-4444-4444-8444-444444444444";
+    let seenSql = "";
+    let seenParams: unknown[] = [];
+    mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+      if (sql.includes("SET LOCAL") || sql.includes("set_config")) return { rows: [], rowCount: 0 };
+      if (sql.includes("FROM safety.incidents")) {
+        seenSql = sql;
+        seenParams = values ?? [];
+        return { rows: [], rowCount: 0 };
+      }
+      return { rows: [], rowCount: 0 };
+    });
+    const res = await app.inject({
+      method: "GET",
+      url:
+        `/api/v1/safety/incidents?operating_company_id=${COMPANY}` +
+        `&incident_type=damage_report&driver_id=${DRIVER}&unit_id=${UNIT}` +
+        `&date_from=2026-01-01&date_to=2026-01-31`,
+    });
+    expect(res.statusCode).toBe(200);
+    expect(seenSql).toContain("i.driver_id");
+    expect(seenSql).toContain("i.unit_id");
+    expect(seenSql).toMatch(/incident_at/);
+    expect(seenParams).toEqual(
+      expect.arrayContaining([COMPANY, "damage_report", DRIVER, UNIT, "2026-01-01", "2026-01-31"])
+    );
   });
 
   it("GET /api/v1/safety/incidents/:id returns incident detail", async () => {

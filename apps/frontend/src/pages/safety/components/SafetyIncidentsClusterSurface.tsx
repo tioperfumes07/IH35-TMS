@@ -100,13 +100,29 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedHint, setSavedHint] = useState(false);
+  // S-08: list filters (driver/unit/date range) — local state like IdvrPage / AccidentsPage;
+  // useListState below still drives loading/empty/error for the filtered query result.
+  const [driverFilter, setDriverFilter] = useState("");
+  const [unitFilter, setUnitFilter] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   const typedFields = config.typedFields;
   const has = (key: IncidentFieldKey) => COMMON_FIELDS.includes(key) || typedFields.includes(key);
 
+  const listFilters = useMemo(
+    () => ({
+      driver_id: driverFilter.trim() || undefined,
+      unit_id: unitFilter.trim() || undefined,
+      date_from: dateFrom || undefined,
+      date_to: dateTo || undefined,
+    }),
+    [driverFilter, unitFilter, dateFrom, dateTo]
+  );
+
   const listQuery = useQuery({
-    queryKey: ["safety", "incidents", config.incidentType, operatingCompanyId],
-    queryFn: () => listSafetyIncidents(operatingCompanyId, config.incidentType),
+    queryKey: ["safety", "incidents", config.incidentType, operatingCompanyId, listFilters],
+    queryFn: () => listSafetyIncidents(operatingCompanyId, config.incidentType, listFilters),
     enabled: Boolean(operatingCompanyId),
   });
 
@@ -273,6 +289,81 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
         >
           {config.createLabel}
         </Button>
+      </div>
+
+      <div
+        className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white px-3 py-2"
+        data-testid={`${config.pageTestId}-filters`}
+      >
+        <label className="text-[11px] text-slate-600">
+          Driver
+          <select
+            className="mt-1 block h-8 min-w-[10rem] rounded-sm border border-gray-200 px-2 text-xs"
+            value={driverFilter}
+            onChange={(event) => setDriverFilter(event.target.value)}
+            data-testid={`${config.pageTestId}-filter-driver`}
+            aria-label="Filter by driver"
+          >
+            <option value="">All drivers</option>
+            {drivers.map((d) => (
+              <option key={String(d.id)} value={String(d.id)}>
+                {`${d.first_name ?? ""} ${d.last_name ?? ""}`.trim() || String(d.id)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-[11px] text-slate-600">
+          Unit
+          <select
+            className="mt-1 block h-8 min-w-[8rem] rounded-sm border border-gray-200 px-2 text-xs"
+            value={unitFilter}
+            onChange={(event) => setUnitFilter(event.target.value)}
+            data-testid={`${config.pageTestId}-filter-unit`}
+            aria-label="Filter by unit"
+          >
+            <option value="">All units</option>
+            {unitOptions.map((u) => (
+              <option key={str(u.id)} value={str(u.id)}>
+                {str(u.unit_number) || str(u.id)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-[11px] text-slate-600">
+          From
+          <DatePicker
+            value={dateFrom}
+            onChange={setDateFrom}
+            className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
+            max={dateTo || undefined}
+            data-testid={`${config.pageTestId}-filter-date-from`}
+          />
+        </label>
+        <label className="text-[11px] text-slate-600">
+          To
+          <DatePicker
+            value={dateTo}
+            onChange={setDateTo}
+            className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
+            min={dateFrom || undefined}
+            data-testid={`${config.pageTestId}-filter-date-to`}
+          />
+        </label>
+        {driverFilter || unitFilter || dateFrom || dateTo ? (
+          <button
+            type="button"
+            className="rounded-full border border-gray-300 px-2 py-0.5 text-[11px] text-slate-500 hover:bg-gray-100"
+            data-testid={`${config.pageTestId}-filter-clear`}
+            onClick={() => {
+              setDriverFilter("");
+              setUnitFilter("");
+              setDateFrom("");
+              setDateTo("");
+            }}
+          >
+            Clear
+          </button>
+        ) : null}
       </div>
 
       <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">

@@ -13,6 +13,17 @@ const companyQuerySchema = z.object({
 
 const listQuerySchema = companyQuerySchema.extend({
   incident_type: incidentTypeSchema,
+  driver_id: z.string().uuid().optional(),
+  unit_id: z.string().uuid().optional(),
+  // YYYY-MM-DD inclusive bounds on incident_at (date portion).
+  date_from: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  date_to: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   limit: z.coerce.number().int().min(1).max(500).default(200),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -78,17 +89,40 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
     if (!query.success) return sendValidationError(reply, query.error);
 
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const params: unknown[] = [query.data.operating_company_id, query.data.incident_type];
+      const filters: string[] = ["i.operating_company_id = $1", "i.incident_type = $2"];
+
+      if (query.data.driver_id) {
+        params.push(query.data.driver_id);
+        filters.push(`i.driver_id = $${params.length}`);
+      }
+      if (query.data.unit_id) {
+        params.push(query.data.unit_id);
+        filters.push(`i.unit_id = $${params.length}`);
+      }
+      if (query.data.date_from) {
+        params.push(query.data.date_from);
+        filters.push(`(i.incident_at AT TIME ZONE 'UTC')::date >= $${params.length}::date`);
+      }
+      if (query.data.date_to) {
+        params.push(query.data.date_to);
+        filters.push(`(i.incident_at AT TIME ZONE 'UTC')::date <= $${params.length}::date`);
+      }
+
+      params.push(query.data.limit, query.data.offset);
+      const limitIdx = params.length - 1;
+      const offsetIdx = params.length;
+
       const res = await client.query(
         `
           SELECT i.*, u.unit_number
           FROM safety.incidents i
           LEFT JOIN mdata.units u ON u.id = i.unit_id
-          WHERE i.operating_company_id = $1
-            AND i.incident_type = $2
+          WHERE ${filters.join("\n            AND ")}
           ORDER BY i.incident_at DESC
-          LIMIT $3 OFFSET $4
+          LIMIT $${limitIdx} OFFSET $${offsetIdx}
         `,
-        [query.data.operating_company_id, query.data.incident_type, query.data.limit, query.data.offset]
+        params
       );
       return res.rows;
     });
