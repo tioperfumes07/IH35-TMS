@@ -21,7 +21,7 @@ sort, and the lock-account control — never drop or reorder.
 ## Rollup
 | Status | Count |
 | --- | --- |
-| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable + LoadHistoryTab + vehicle PlatesTable + vehicle ComplianceSection + DriverDaySummaryCard + StopReasoningTable + EntityAuditHistoryTab + AuditTrailPage + trailer PlatesTable + QboVendorLinkagePage) | 26 |
+| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable + LoadHistoryTab + vehicle PlatesTable + vehicle ComplianceSection + DriverDaySummaryCard + StopReasoningTable + EntityAuditHistoryTab + AuditTrailPage + trailer PlatesTable + QboVendorLinkagePage + TrailerReeferSection) | 27 |
 | financial-hold (Jorge-gated) | 99 |
 | pending (non-financial, future batches) | 174 |
 | **hand-rolled total (original)** | **300** |
@@ -337,7 +337,7 @@ verify-step 1035.
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/components/trailer-profile/PlatesTable.tsx` | migrated (qbo-parity-a1) |
-| `apps/frontend/src/components/trailer-profile/TrailerReeferSection.tsx` | pending |
+| `apps/frontend/src/components/trailer-profile/TrailerReeferSection.tsx` | migrated (qbo-parity-a1) |
 
 ### components/vehicle-profile (3 remaining)
 
@@ -885,3 +885,12 @@ Guard: `scripts/verify-qbo-vendor-linkage-uses-paritytable.mjs` via verify-step 
 | --- | --- |
 | `apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx` | pages/admin |
 
+## qbo-parity-a1 — TrailerReeferSection (this PR)
+Trailer reefer hours log was a hand-rolled `<table>`. Migrated to shared
+`ParityTable` (sort + resize + gear). Columns preserved 1:1; reefer hours entry
+chrome + entity scoping preserved.
+Guard: `scripts/verify-trailer-reefer-uses-paritytable.mjs` via verify-step 1044.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/trailer-profile/TrailerReeferSection.tsx` | components/trailer-profile |
