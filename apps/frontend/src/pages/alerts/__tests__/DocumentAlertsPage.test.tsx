@@ -13,11 +13,11 @@ vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: COMPANY }),
 }));
 
-function wrap(ui: React.ReactElement) {
+function wrap(ui: React.ReactElement, initialEntry = "/") {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
     <QueryClientProvider client={client}>
-      <MemoryRouter>{ui}</MemoryRouter>
+      <MemoryRouter initialEntries={[initialEntry]}>{ui}</MemoryRouter>
     </QueryClientProvider>
   );
 }
@@ -105,5 +105,10 @@ describe("DocumentAlertsPage (A24-9)", () => {
     await screen.findByTestId("rule-editor-cdl");
     await user.click(screen.getByTestId("save-rule-cdl"));
     await waitFor(() => expect(documentAlertsApi.updateDocumentAlertRule).toHaveBeenCalled());
+  });
+
+  it("deep-links Rules via ?tab=rules", async () => {
+    render(wrap(<DocumentAlertsPage />, "/alerts/documents?tab=rules"));
+    expect(await screen.findByTestId("rule-editor-cdl")).toBeInTheDocument();
   });
 });
