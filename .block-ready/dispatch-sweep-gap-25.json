@@ -1,17 +1,24 @@
 {
   "block_id": "dispatch-sweep-gap-25",
-  "status": "PARTIAL",
-  "classification": "FINANCIAL",
-  "phase": "tier2",
-  "source": "MASTER-6 authored dispatch (05-TIER2-BLOCKS)",
-  "source_file": "dispatch-sweep-gap-25.txt",
+  "branch": "fix/dispatch-sweep-gap-25-active-driver-set-wired",
+  "phase": "OPS-BACKEND",
+  "task": "Wire Active Driver Set routes + recompute worker into apps/backend/src/index.ts (built-but-never-registered)",
+  "classification": "ADDITIVE",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    ".block-ready/dispatch-sweep-gap-25.json",
+    "apps/backend/src/index.ts",
+    "scripts/verify-active-driver-set-worker-registered.mjs",
+    "scripts/verify-steps/992-verify-active-driver-set-worker-registered.mjs"
   ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "status": "IN_PROGRESS",
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "index.ts imports + calls registerActiveDriverSetRoutes(app) and initializeActiveDriverSetRecomputeWorker(app); verify-steps/992 + verify-active-driver-set-worker-registered.mjs PASS (including planted selftest)."
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "Non-gated wiring-only fix. No financial/migrations/accounting.* schema touch. Sources already on main; bootstrap was missing."
 }
