@@ -568,7 +568,11 @@ function MaintenanceTabRoute({ tabId }: { tabId: MaintenanceTabId }) {
   return <MaintenanceHomePage initialTab={tabId} />;
 }
 
-function DriversSubtabRoute({ subnav }: { subnav: DriversSubnavId | "disputes" }) {
+function DriversSubtabRoute({
+  subnav,
+}: {
+  subnav: DriversSubnavId | "disputes" | "auto_deductions" | "team_splits";
+}) {
   return <DriversPage initialSubnav={subnav} />;
 }
 
@@ -857,6 +861,22 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DriversSubtabRoute subnav="deductions" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drivers/auto-deductions"
+          element={
+            <ProtectedRoute>
+              <DriversSubtabRoute subnav="auto_deductions" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drivers/team-splits"
+          element={
+            <ProtectedRoute>
+              <DriversSubtabRoute subnav="team_splits" />
             </ProtectedRoute>
           }
         />
