@@ -77,7 +77,7 @@ export function CashForecastPage() {
       key: "projected_balance",
       label: "Projected balance",
       render: (week) => (
-        <span className={`font-semibold ${week.projected_balance < 0 ? "text-red-700" : "text-emerald-700"}`}>
+        <span className={`font-semibold ${week.projected_balance < 0 ? "text-red-700" : "text-slate-700"}`}>
           {money(week.projected_balance)}
         </span>
       ),

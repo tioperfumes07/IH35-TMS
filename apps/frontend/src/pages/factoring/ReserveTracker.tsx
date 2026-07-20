@@ -325,7 +325,7 @@ export function ReserveTracker() {
               {(fc60.data?.schedule ?? []).map((row) => (
                 <tr key={`${row.release_date}-${row.source_movement_count}`}>
                   <td className="px-2 py-2">{fmtD(row.release_date)}</td>
-                  <td className="px-2 py-2 text-right font-medium text-emerald-700">
+                  <td className="px-2 py-2 text-right font-medium text-slate-700">
                     {fmtM(row.projected_release_cents)}
                   </td>
                   <td className="px-2 py-2 text-right">{row.source_movement_count}</td>
@@ -394,7 +394,7 @@ export function ReserveTracker() {
                     <td className="px-2 py-2">{row.reason}</td>
                     <td
                       className={`px-2 py-2 text-right font-medium ${
-                        row.signed_amount_cents >= 0 ? "text-emerald-700" : "text-red-700"
+                        row.signed_amount_cents >= 0 ? "text-slate-700" : "text-red-700"
                       }`}
                     >
                       {fmtM(row.signed_amount_cents)}

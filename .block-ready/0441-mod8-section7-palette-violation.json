@@ -3,8 +3,8 @@
   "status": "BUILD",
   "classification": "NON-FINANCIAL",
   "phase": "tier3",
-  "branch": "fix/0441-mod8-section7-palette-ratchet-acct",
-  "task": "Incremental \u00a77 palette ratchet accounting/cash-flow: PrepaidExpenses, RevenueRecognition, ManualDailyProjections, FixedAssets, IntegrationTransactions, Receipts, DailyPrediction \u2192 slate tokens; BASELINE 68\u219230",
+  "branch": "fix/section7-palette-ratchet-batch3",
+  "task": "§7 palette ratchet residual financial UI → slate tokens; BASELINE 30→0; wire verify-step 1022",
   "source": "CODER-BUILD-INSTRUCTIONS-2026-07-19.md",
   "source_file": "0441-mod8-section7-palette-violation",
   "runtime_path": "src",
@@ -13,25 +13,36 @@
   "extra_gates": [],
   "allowed_files": [
     ".block-ready/0441-mod8-section7-palette-violation.json",
-    "apps/frontend/src/pages/accounting/PrepaidExpensesPage.tsx",
-    "apps/frontend/src/pages/accounting/RevenueRecognitionPage.tsx",
-    "apps/frontend/src/pages/accounting/FixedAssetsPage.tsx",
-    "apps/frontend/src/pages/accounting/IntegrationTransactionsPage.tsx",
-    "apps/frontend/src/pages/accounting/ReceiptsPage.tsx",
-    "apps/frontend/src/pages/cash-flow/tabs/ManualDailyProjectionsTab.tsx",
-    "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx",
-    "scripts/verify-section7-palette-financial.mjs"
+    "apps/frontend/src/pages/cash-flow/tabs/ActualVsProjectedTab.tsx",
+    "apps/frontend/src/pages/finance/FinancialStatementsPage.tsx",
+    "apps/frontend/src/components/dispatch/tabs/SettlementProfitabilityCard.tsx",
+    "apps/frontend/src/pages/accounting/AccountRegisterPage.tsx",
+    "apps/frontend/src/pages/accounting/PeriodComparisonPage.tsx",
+    "apps/frontend/src/pages/lists/safety/CompanyViolationTypesListPage.tsx",
+    "apps/frontend/src/pages/lists/safety/ComplaintTypesListPage.tsx",
+    "apps/frontend/src/pages/lists/safety/DotViolationTypesListPage.tsx",
+    "apps/frontend/src/pages/driver-finance/SettlementCloseArrivalPage.tsx",
+    "apps/frontend/src/pages/factoring/ReserveTracker.tsx",
+    "apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx",
+    "apps/frontend/src/pages/accounting/CashForecastPage.tsx",
+    "apps/frontend/src/pages/accounting/PostingLineagePage.tsx",
+    "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
+    "apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx",
+    "apps/frontend/src/pages/factoring/BatchDetail.tsx",
+    "apps/frontend/src/pages/factoring/ReserveDashboard.tsx",
+    "scripts/verify-section7-palette-financial.mjs",
+    "scripts/verify-steps/1022-verify-section7-palette-financial.mjs"
   ],
   "acceptance": [
     {
-      "check": "Off-palette amber/emerald/green/yellow status classes removed from listed accounting/cash-flow surfaces (red retained for negative/error)"
+      "check": "Off-palette amber/emerald/green/yellow status classes removed from remaining financial UI surfaces (red/rose retained for negative/error)"
     },
     {
-      "check": "verify-section7-palette-financial.mjs BASELINE ratcheted downward 68\u219230; script PASS at new baseline"
+      "check": "verify-section7-palette-financial.mjs BASELINE ratcheted downward 30→0; script PASS at new baseline"
     },
     {
-      "check": "No package.json / CI workflow edits (Rule 17)"
+      "check": "verify-steps/1022-verify-section7-palette-financial.mjs wires the guard (Rule 17; no package.json / CI workflow edits)"
     }
   ],
-  "note": "Incremental ratchet only \u2014 not zero. Ops FE \u00a77 recolor accounting/cash-flow batch."
+  "note": "Financial §7 palette ratchet complete (baseline 0). Ops FE lane."
 }

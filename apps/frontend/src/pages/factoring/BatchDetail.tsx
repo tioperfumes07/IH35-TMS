@@ -75,7 +75,7 @@ export function BatchDetail({ batchId, companyId }: { batchId: string; companyId
                   <td className="px-2 py-2">{new Date(movement.created_at).toLocaleString()}</td>
                   <td className="px-2 py-2">{movement.reason}</td>
                   <td className="px-2 py-2 capitalize">{movement.direction}</td>
-                  <td className={`px-2 py-2 text-right ${movement.signed_amount_cents >= 0 ? "text-green-700" : "text-red-700"}`}>
+                  <td className={`px-2 py-2 text-right ${movement.signed_amount_cents >= 0 ? "text-slate-700" : "text-red-700"}`}>
                     {movement.signed_amount_cents >= 0 ? "+" : "-"}
                     {asMoney(Math.abs(movement.signed_amount_cents))}
                   </td>
