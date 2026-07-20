@@ -1,0 +1,130 @@
+import { useQuery } from "@tanstack/react-query";
+import { Link, useParams } from "react-router-dom";
+import { getSafetyDvirDetail } from "../../api/safety";
+import { useCompanyContext } from "../../contexts/CompanyContext";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+
+type DefectRow = Record<string, unknown>;
+
+export function IdvrDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const { selectedCompanyId } = useCompanyContext();
+  const companyId = selectedCompanyId ?? "";
+
+  const detailQ = useQuery({
+    queryKey: ["safety", "dvir-detail", companyId, id],
+    queryFn: () => getSafetyDvirDetail(id!, companyId),
+    enabled: Boolean(companyId && id),
+  });
+
+  const submission = detailQ.data?.submission;
+  const defects = (detailQ.data?.defects ?? []) as DefectRow[];
+
+  const defectColumns: Array<ParityColumn<DefectRow>> = [
+    { key: "component", label: "Component", render: (row) => String(row.component ?? row.area ?? "—") },
+    { key: "description", label: "Description", render: (row) => String(row.description ?? row.defect_description ?? "—") },
+    { key: "severity", label: "Severity", render: (row) => String(row.severity ?? row.defect_severity ?? "—") },
+    {
+      key: "is_major",
+      label: "Major",
+      render: (row) => (row.is_major === true || row.major === true ? "Yes" : "No"),
+    },
+  ];
+
+  if (!id) {
+    return <div className="p-4 text-sm text-red-600">DVIR id required.</div>;
+  }
+
+  if (!companyId) {
+    return <div className="rounded-sm border bg-white p-4 text-sm">Select an operating company.</div>;
+  }
+
+  if (detailQ.isLoading) {
+    return <div className="p-4 text-sm text-slate-500" data-testid="idvr-detail-loading">Loading DVIR…</div>;
+  }
+
+  if (detailQ.isError || !submission) {
+    return (
+      <div className="space-y-3 p-4" data-testid="idvr-detail-missing">
+        <Link to="/safety/idvr" className="text-xs font-semibold text-[#1f2a44] underline">
+          ← Back to Vehicle Inspections
+        </Link>
+        <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          DVIR submission not found.
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3 p-4" data-testid="idvr-detail-page">
+      <div className="flex items-center justify-between gap-3">
+        <Link to="/safety/idvr" className="text-xs font-semibold text-[#1f2a44] underline" data-testid="idvr-detail-back">
+          ← Back to Vehicle Inspections
+        </Link>
+      </div>
+
+      <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
+        <div className="text-sm font-semibold text-slate-800">DVIR detail</div>
+        <div className="text-[11px] text-slate-500">Office view of a driver PWA vehicle inspection submission.</div>
+      </div>
+
+      <dl className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 text-xs sm:grid-cols-2" data-testid="idvr-detail-summary">
+        <div>
+          <dt className="text-slate-500">Submitted</dt>
+          <dd className="font-medium text-slate-800">
+            {String(submission.submitted_at ?? "").slice(0, 16).replace("T", " ") || "—"}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-slate-500">Type</dt>
+          <dd className="font-medium text-slate-800">{String(submission.type ?? "—").replace("_", " ")}</dd>
+        </div>
+        <div>
+          <dt className="text-slate-500">Driver</dt>
+          <dd className="font-medium text-slate-800">
+            <EntityLink
+              kind="driver"
+              id={submission.driver_id as string | undefined}
+              label={submission.driver_name as string | undefined}
+            />
+          </dd>
+        </div>
+        <div>
+          <dt className="text-slate-500">Unit</dt>
+          <dd className="font-medium text-slate-800">
+            <EntityLink
+              kind="unit"
+              id={submission.unit_id as string | undefined}
+              label={(submission.unit_number as string | undefined) ?? undefined}
+            />
+          </dd>
+        </div>
+        <div>
+          <dt className="text-slate-500">Severity</dt>
+          <dd className="font-medium text-slate-800">{String(submission.defect_severity ?? "none")}</dd>
+        </div>
+        <div>
+          <dt className="text-slate-500">Follow-up WO</dt>
+          <dd className="font-medium text-slate-800">
+            <EntityLink
+              kind="work_order"
+              id={submission.follow_up_wo_id as string | undefined}
+              label={submission.follow_up_wo_id ? "Open WO" : undefined}
+            />
+          </dd>
+        </div>
+      </dl>
+
+      <ParityTable<DefectRow>
+        columns={defectColumns}
+        rows={defects}
+        rowKey={(row) => String(row.id ?? `${row.component}-${row.description}`)}
+        emptyText="No defects recorded on this submission."
+        storageKey="safety-idvr-detail-defects"
+        tableTestId="idvr-detail-defects-table"
+      />
+    </div>
+  );
+}
