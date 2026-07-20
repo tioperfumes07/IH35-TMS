@@ -1090,3 +1090,16 @@ preserved. Guard: `scripts/verify-ifta-step-tax-uses-paritytable.mjs` via verify
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/reports/ifta/IFTAStepTax.tsx` | pages/reports/ifta |
+
+## qbo-parity-a1 — AuditReportPage (this PR)
+The shared, display-only audit-report grid was a hand-rolled `<table>` used by user,
+module, maintenance, deduction, void/reversal, period-close, and financial-change
+audit reports. Migrated it to `ParityTable` (sort + resize + gear + density) while
+preserving the five columns, filter inputs, CSV export, and server-side report
+pagination. This change does not create, edit, void, post, or otherwise mutate GL
+records. Guard: `scripts/verify-audit-report-page-uses-paritytable.mjs` via
+verify-step **1063**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/reports/audit/AuditReportPage.tsx` | pages/reports/audit |
