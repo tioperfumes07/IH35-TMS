@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { formatDateUS } from "../../../lib/formatDate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -15,6 +15,8 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { companyToday } from "../../../lib/businessDate";
 import { useListState } from "../../../components/list-state";
+import { ListErrorState } from "../../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { formatUsdCents } from "../../../lib/money";
 import { DamageReportDetail } from "../damage-reports/DamageReportDetail";
 
@@ -176,11 +178,11 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
   const listState = useListState(listQuery, rows.length === 0);
   const detail = createMode ? selected : detailQuery.data?.incident ?? selected;
 
-  const openRow = (row: DraftState) => {
+  const openRow = useCallback((row: DraftState) => {
     setSelected(row);
     setDrawerOpen(true);
     setSavedHint(false);
-  };
+  }, []);
 
   const closeDrawer = () => {
     setDrawerOpen(false);
@@ -269,6 +271,54 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
     const keys = detail?.photo_keys;
     return Array.isArray(keys) ? keys.length : 0;
   }, [detail]);
+
+  // Migrated to shared QBO-parity grid — columns, order, and per-row detail action preserved (§7 additive-only).
+  const incidentColumns = useMemo<Array<ParityColumn<DraftState>>>(
+    () => [
+      {
+        key: "incident_at",
+        label: "Date",
+        sortable: true,
+        render: (row) => formatDateUS(row.incident_at as string | undefined),
+      },
+      {
+        key: "driver_id",
+        label: "Driver",
+        sortable: true,
+        render: (row) =>
+          row.driver_id ? driverNameById.get(String(row.driver_id)) || "—" : "—",
+      },
+      {
+        key: "unit_id",
+        label: "Unit",
+        sortable: true,
+        render: (row) =>
+          str(row.unit_number) || (row.unit_id ? unitNumberById.get(String(row.unit_id)) : "") || "—",
+      },
+      {
+        key: "location",
+        label: "Location",
+        sortable: true,
+        render: (row) => str(row.location) || "—",
+      },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        render: (row) => str(row.status) || "open",
+      },
+      {
+        key: "action",
+        label: "Action",
+        render: (row) => (
+          <button type="button" className="text-slate-700 underline" onClick={() => openRow(row)}>
+            {config.detailLabel}
+          </button>
+        ),
+      },
+    ],
+    [config.detailLabel, driverNameById, openRow, unitNumberById]
+  );
 
   const inputCls = "mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs";
 
@@ -367,52 +417,26 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
         ) : null}
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-xs" data-testid={`${config.pageTestId}-table`}>
-          <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
-            <tr>
-              <th className="px-2 py-1 text-left">Date</th>
-              <th className="px-2 py-1 text-left">Driver</th>
-              <th className="px-2 py-1 text-left">Unit</th>
-              <th className="px-2 py-1 text-left">Location</th>
-              <th className="px-2 py-1 text-left">Status</th>
-              <th className="px-2 py-1 text-left">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => {
-              const driverName = row.driver_id ? driverNameById.get(String(row.driver_id)) : "";
-              const unitNumber =
-                str(row.unit_number) || (row.unit_id ? unitNumberById.get(String(row.unit_id)) : "");
-              return (
-                <tr
-                  key={String(row.id)}
-                  className="border-t border-gray-100"
-                  data-testid={`${config.pageTestId}-row-${String(row.id)}`}
-                >
-                  <td className="px-2 py-1">{formatDateUS(row.incident_at)}</td>
-                  <td className="px-2 py-1">{driverName || "—"}</td>
-                  <td className="px-2 py-1">{unitNumber || "—"}</td>
-                  <td className="px-2 py-1">{str(row.location) || "—"}</td>
-                  <td className="px-2 py-1">{str(row.status) || "open"}</td>
-                  <td className="px-2 py-1">
-                    <button type="button" className="text-slate-700 underline" onClick={() => openRow(row)}>
-                      {config.detailLabel}
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-            {listState.isEmpty ? (
-              <tr>
-                <td colSpan={6} className="px-2 py-3 text-center text-slate-500">
-                  No records found.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      {listQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load incidents"
+          status={0}
+          message={(listQuery.error as Error)?.message}
+          onRetry={() => void listQuery.refetch()}
+        />
+      ) : (
+        <ParityTable<DraftState>
+          columns={incidentColumns}
+          rows={rows}
+          rowKey={(row) => String(row.id)}
+          loading={listState.isLoading}
+          emptyText="No records found."
+          storageKey={`safety-incidents-cluster-${config.incidentType}`}
+          exportFilename={`safety-incidents-${config.incidentType}`}
+          tableTestId={`${config.pageTestId}-table`}
+          rowTestId={(row) => `${config.pageTestId}-row-${String(row.id)}`}
+        />
+      )}
 
       {drawerOpen ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid={`${config.pageTestId}-drawer`}>

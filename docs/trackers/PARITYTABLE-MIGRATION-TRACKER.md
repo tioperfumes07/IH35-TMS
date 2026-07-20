@@ -796,7 +796,7 @@ Guard: `scripts/verify-unit-driver-history-strip-uses-paritytable.mjs` via verif
 | `apps/frontend/src/pages/safety/SafetyEventsPage.tsx` | pending |
 | `apps/frontend/src/pages/safety/components/IntegrityAlertsTab.tsx` | pending |
 | `apps/frontend/src/pages/safety/components/SafetyEventsTable.tsx` | pending |
-| `apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx` | pending |
+| `apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx` | migrated (#1088) |
 | `apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerGridPage.tsx` | pending |
 | `apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerRequestInboxPage.tsx` | pending |
 | `apps/frontend/src/pages/safety/driver-scoring/DriverScoreDetail.tsx` | pending |
