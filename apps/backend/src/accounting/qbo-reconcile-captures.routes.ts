@@ -87,7 +87,7 @@ export async function registerQboReconcileCapturesRoutes(app: FastifyInstance) {
       const [connection, health, lastPolledAt] = await Promise.all([
         getQboConnectionSummary(client, query.data.operating_company_id),
         getQboSyncHealth(client),
-        getLastRemoteCountAt(client),
+        getLastRemoteCountAt(client, query.data.operating_company_id),
       ]);
       const queueDepth = health.reduce((sum, h) => sum + (h.pending_count ?? 0), 0);
       const driftCount = health.filter((h) => h.drift === "drift").length;

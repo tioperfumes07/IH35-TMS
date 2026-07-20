@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { withLuciaBypass } from "../auth/db.js";
 import { routeFindingAlert } from "./alert-routing.service.js";
+import { qboRemoteCountEntityTypes } from "../integrations/qbo/remote-count-collector.js";
 
 type Integration = "qbo" | "samsara";
 type MirrorCategory = "refdata_static" | "transactional" | "identity_mapping";
@@ -831,15 +832,42 @@ export async function runReconciliationCategoryTick(integration: Integration, mi
     // the reconciler is comparing against dead data. Surface it as critical — but do NOT throw; the tick
     // can still run against whatever counts exist.
     if (integration === "qbo") {
-      const stale = await client.query<{ is_stale: boolean | null; newest: string | null }>(
-        `SELECT (max(collected_at) IS NULL OR max(collected_at) < now() - interval '25 hours') AS is_stale,
-                max(collected_at)::text AS newest
-           FROM accounting.qbo_remote_counts`
+      // RECON-NOCONN stale-feed guard, D-#1 corrected to be PER (operating_company_id, entity_type).
+      //
+      // The prior form was `SELECT max(collected_at) FROM accounting.qbo_remote_counts` with NO
+      // operating_company_id predicate. Under withLuciaBypass that spans TRANSP + TRK + USMCA, so one
+      // entity's fresh feed MASKS another entity's dead feed — and the books of the three entities are
+      // never consolidated. It was also blind per entity_type: prod held rows for exactly one of five
+      // types (qbo_vendors), and a global MAX reported that as "fresh" while four types had never been
+      // collected at all. Both blind spots are closed by the CROSS JOIN below, which enumerates the
+      // expected (company, entity_type) grid and reports every cell that is stale OR never collected.
+      //
+      // Still deliberately non-throwing: the tick runs against whatever counts exist, but each stale
+      // cell now raises its own critical audit event naming the entity and the type.
+      const staleCells = await client.query<{ opco: string; entity_type: string; newest: string | null }>(
+        `
+          SELECT c.opco::text AS opco,
+                 e.entity_type,
+                 max(r.collected_at)::text AS newest
+            FROM unnest($1::uuid[])  AS c(opco)
+            CROSS JOIN unnest($2::text[]) AS e(entity_type)
+            LEFT JOIN accounting.qbo_remote_counts r
+                   ON r.operating_company_id = c.opco
+                  AND r.entity_type = e.entity_type
+           GROUP BY c.opco, e.entity_type
+          HAVING max(r.collected_at) IS NULL
+              OR max(r.collected_at) < now() - interval '25 hours'
+        `,
+        [companies, qboRemoteCountEntityTypes()]
       );
-      if (stale.rows[0]?.is_stale) {
+
+      for (const cell of staleCells.rows) {
         await appendAuditEvent(client, "reconciliation.qbo.remote_counts_stale", "critical", {
           mirror_category: mirrorCategory,
-          newest_collected_at: stale.rows[0]?.newest ?? null,
+          operating_company_id: cell.opco,
+          entity_type: cell.entity_type,
+          newest_collected_at: cell.newest,
+          never_collected: cell.newest === null,
         });
       }
     }
