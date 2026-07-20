@@ -808,3 +808,36 @@ Guard: `scripts/verify-vehicle-documents-uses-paritytable.mjs` via verify-step 1
 | --- | --- |
 | `apps/frontend/src/components/vehicle-profile/DocumentsSection.tsx` | components/vehicle-profile |
 
+## qbo-parity-a1 — FrequentlyRunTable (this PR)
+Reports Home "Frequently run" list was a hand-rolled `<table>`. Migrated to shared
+`ParityTable` (sort + resize + gear). Columns Report / Filters / Runs preserved 1:1;
+Report name stays a Run button; stub P4/P5 badges preserved.
+Guard: `scripts/verify-frequently-run-table-uses-paritytable.mjs` via verify-step 1028.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/reports/FrequentlyRunTable.tsx` | components/reports |
+
+## qbo-parity-a1 — OperationsHistoryTable (this PR)
+Drivers hub operations-depth history (12 sub-views sharing one table) was a hand-rolled
+`<table>` that false-emptied on query failure. Migrated to shared `ParityTable`
+(sort + resize + gear) with `ListErrorState` + Retry. `EntityLink` via
+`OperationsColumn.entityKind` and server Previous/Next pagination preserved.
+Guard: `scripts/verify-ops-history-uses-paritytable.mjs` via verify-step 1026.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/drivers/OperationsHistoryTable.tsx` | components/drivers |
+
+## qbo-parity-a1 — EntityAuditHistoryTab (this PR)
+Shared entity audit history tab (vendor/customer/driver/unit/load/WO) was a hand-rolled
+`<table>` with a bare red outage banner. Migrated to shared `ParityTable`
+(sort + resize + gear + `renderExpanded` Before→After `ChangesDiff`) and replaced the
+ad-hoc error div with `ListErrorState` + Retry. Columns When/Who/Action/Summary/Source
+preserved 1:1. Guard: `scripts/verify-entity-audit-history-uses-paritytable.mjs` via
+verify-step 1035.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/audit/EntityAuditHistoryTab.tsx` | components/audit |
+
