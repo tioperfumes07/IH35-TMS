@@ -14,6 +14,7 @@
     "apps/frontend/src/components/drivers/LoadHistoryTab.tsx",
     "apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx",
     "apps/frontend/src/pages/dispatch/__tests__/ArchTabPages.test.tsx",
+    "scripts/entity-link-adoption-baseline.json",
     "scripts/verify-driver-load-history-entitylink.mjs",
     "scripts/verify-steps/1021-verify-driver-load-history-entitylink.mjs"
   ],
