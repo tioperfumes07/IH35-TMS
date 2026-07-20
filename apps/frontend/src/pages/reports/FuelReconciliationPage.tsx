@@ -291,7 +291,10 @@ export function FuelReconciliationPage() {
       ) : null}
 
       <Modal open={matchOpen} onClose={() => setMatchOpen(false)} title="Manual match (link)">
-        <p className="text-sm text-gray-600">Pair a card line to a WO entry. Full matcher UI ships with Block V data services.</p>
+        <p className="text-sm text-gray-600">
+          Pair a card line to a WO entry. Persistence ships with the Block V matcher service — saving is
+          disabled until that POST exists (no fake success).
+        </p>
         <label className="mt-2 block text-xs text-gray-600">
           Notes
           <textarea className="mt-1 w-full rounded-sm border border-gray-300 p-2 text-sm" rows={3} value={matchNote} onChange={(e) => setMatchNote(e.target.value)} />
@@ -301,10 +304,9 @@ export function FuelReconciliationPage() {
             Close
           </Button>
           <Button
-            onClick={() => {
-              setMatchOpen(false);
-              setMatchNote("");
-            }}
+            disabled
+            title="Manual match save is not available yet — no persistence endpoint"
+            aria-disabled="true"
           >
             Save link
           </Button>
