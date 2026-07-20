@@ -10,11 +10,19 @@ vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
 }));
 
-function renderPage() {
+vi.mock("../HosTrackerSection", () => ({
+  HosTrackerSection: () => <div data-testid="compliance-section-hos-tracker">HOS Tracker</div>,
+}));
+
+vi.mock("../../safety/tabs/HOSViolationsTab", () => ({
+  HOSViolationsTab: () => <div data-testid="compliance-section-violations">Violations</div>,
+}));
+
+function renderPage(initialEntry = "/compliance") {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <MemoryRouter initialEntries={["/compliance"]}>
+      <MemoryRouter initialEntries={[initialEntry]}>
         <Routes>
           <Route path="/compliance" element={<ComplianceDashboardPage />} />
         </Routes>
@@ -81,5 +89,17 @@ describe("ComplianceDashboardPage", () => {
     expect(screen.getByTestId("compliance-section-log")).toBeTruthy();
     expect(screen.getByTestId("compliance-summary-cards")).toBeTruthy();
     expect(screen.getByTestId("compliance-table-panel")).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Overview" }).getAttribute("aria-selected")).toBe("true");
+  });
+
+  it("deep-links via ?tab= and writes tab into the URL on click", async () => {
+    const user = userEvent.setup();
+    renderPage("/compliance?tab=hos_tracker");
+    expect(await screen.findByTestId("compliance-section-hos-tracker")).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "HOS Tracker" }).getAttribute("aria-selected")).toBe("true");
+
+    await user.click(screen.getByRole("tab", { name: "Overview" }));
+    expect(await screen.findByTestId("compliance-section-summary")).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Overview" }).getAttribute("aria-selected")).toBe("true");
   });
 });
