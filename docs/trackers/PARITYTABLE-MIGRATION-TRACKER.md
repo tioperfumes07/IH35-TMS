@@ -498,7 +498,7 @@ verify-step 1035.
 | `apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx` | pending |
 | `apps/frontend/src/pages/compliance/Form2290Filings.tsx` | pending |
 | `apps/frontend/src/pages/compliance/HosTrackerSection.tsx` | pending |
-| `apps/frontend/src/pages/compliance/HosViewerSection.tsx` | pending |
+| `apps/frontend/src/pages/compliance/HosViewerSection.tsx` | migrated (fix/hos-viewer-paritytable) |
 
 ### pages/customers (4)
 
@@ -982,3 +982,15 @@ Guard: `scripts/verify-booking-gap-report-uses-paritytable.mjs` via verify-step 
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/reports/BookingGapReport.tsx` | pages/reports |
+
+## qbo-parity-a1 — HosViewerSection (this PR)
+Compliance HOS Viewer duty-segment log was a hand-rolled `<table>` with a bare outage
+message. Migrated it to shared `ParityTable` (sort + resize + gear + CSV export) and
+replaced the bare failure state with `ListErrorState` + Retry. Columns Duty status /
+Start (CT) / End (CT) / Duration, duty-color markers, driver/date controls, HOS clock
+cards, per-status totals, and no-ELD-data copy are preserved. Guard:
+`scripts/verify-hos-viewer-uses-paritytable.mjs` via verify-step **1066**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/compliance/HosViewerSection.tsx` | pages/compliance |
