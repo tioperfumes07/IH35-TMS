@@ -1,5 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { apiRequest } from "../../api/client";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatUsd } from "../../lib/money";
 
 type UnitTollTag = {
@@ -43,7 +46,69 @@ export function UnitTollTagsTab({ unitId, companyId }: UnitTollTagsTabProps) {
     enabled: Boolean(unitId && companyId),
   });
 
-  const lowBalanceIds = new Set((tagsQuery.data?.low_balance_tags ?? []).map((tag) => tag.uuid));
+  const lowBalanceIds = useMemo(
+    () => new Set((tagsQuery.data?.low_balance_tags ?? []).map((tag) => tag.uuid)),
+    [tagsQuery.data?.low_balance_tags]
+  );
+
+  const columns = useMemo<Array<ParityColumn<UnitTollTag>>>(
+    () => [
+      {
+        key: "tag_network",
+        label: "Network",
+        sortable: true,
+        sortValue: (row) => row.tag_network,
+        render: (row) => <span className="font-medium uppercase text-gray-900">{row.tag_network}</span>,
+      },
+      {
+        key: "tag_number",
+        label: "Tag #",
+        sortable: true,
+        sortValue: (row) => row.tag_number,
+      },
+      {
+        key: "activated_at",
+        label: "Activated",
+        sortable: true,
+        sortValue: (row) => row.activated_at,
+      },
+      {
+        key: "balance_current",
+        label: "Balance",
+        sortable: true,
+        sortValue: (row) => Number(row.balance_current ?? NaN),
+        render: (row) => (
+          <>
+            <span className={lowBalanceIds.has(row.uuid) ? "font-semibold text-amber-700" : ""}>
+              {formatMoney(row.balance_current)}
+            </span>
+            {lowBalanceIds.has(row.uuid) ? (
+              <span className="ml-1 rounded-sm bg-amber-100 px-1 py-0.5 text-[10px] font-semibold text-amber-800">
+                Low
+              </span>
+            ) : null}
+          </>
+        ),
+      },
+      {
+        key: "monthly_fee",
+        label: "Monthly",
+        sortable: true,
+        sortValue: (row) => Number(row.monthly_fee ?? NaN),
+        render: (row) => formatMoney(row.monthly_fee),
+      },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        sortValue: (row) => (row.deactivated_at ? "Deactivated" : "Active"),
+        render: (row) => (row.deactivated_at ? "Deactivated" : "Active"),
+      },
+    ],
+    [lowBalanceIds]
+  );
+
+  const rows = tagsQuery.data?.toll_tags ?? [];
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-toll-tags-tab">
@@ -51,45 +116,30 @@ export function UnitTollTagsTab({ unitId, companyId }: UnitTollTagsTabProps) {
         <h3 className="text-sm font-semibold text-gray-900">Toll Tags</h3>
         <span className="text-xs text-gray-500">TxTAG · EZ-Pass · I-Pass</span>
       </div>
-      {tagsQuery.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading toll tags...</p> : null}
-      <div className="mt-2 overflow-auto">
-        <table className="min-w-full text-left text-xs">
-          <thead className="bg-gray-50 text-[11px] uppercase text-gray-600">
-            <tr>
-              <th className="px-2 py-2">Network</th>
-              <th className="px-2 py-2">Tag #</th>
-              <th className="px-2 py-2">Activated</th>
-              <th className="px-2 py-2">Balance</th>
-              <th className="px-2 py-2">Monthly</th>
-              <th className="px-2 py-2">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(tagsQuery.data?.toll_tags ?? []).map((tag) => (
-              <tr key={tag.uuid} className="border-b border-gray-100">
-                <td className="px-2 py-2 font-medium uppercase text-gray-900">{tag.tag_network}</td>
-                <td className="px-2 py-2">{tag.tag_number}</td>
-                <td className="px-2 py-2">{tag.activated_at}</td>
-                <td className="px-2 py-2">
-                  <span className={lowBalanceIds.has(tag.uuid) ? "font-semibold text-amber-700" : ""}>
-                    {formatMoney(tag.balance_current)}
-                  </span>
-                  {lowBalanceIds.has(tag.uuid) ? (
-                    <span className="ml-1 rounded-sm bg-amber-100 px-1 py-0.5 text-[10px] font-semibold text-amber-800">
-                      Low
-                    </span>
-                  ) : null}
-                </td>
-                <td className="px-2 py-2">{formatMoney(tag.monthly_fee)}</td>
-                <td className="px-2 py-2">{tag.deactivated_at ? "Deactivated" : "Active"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {!tagsQuery.isLoading && (tagsQuery.data?.toll_tags.length ?? 0) === 0 ? (
-        <p className="mt-2 text-xs text-gray-500">No toll tags assigned to this unit.</p>
-      ) : null}
+      {tagsQuery.isError ? (
+        <div className="mt-2" data-testid="unit-toll-tags-error">
+          <ListErrorState
+            title="Couldn't load toll tags"
+            status={(tagsQuery.error as { status?: number })?.status ?? 0}
+            message={(tagsQuery.error as Error)?.message}
+            onRetry={() => void tagsQuery.refetch()}
+          />
+        </div>
+      ) : (
+        <div className="mt-2">
+          <ParityTable
+            columns={columns}
+            rows={rows}
+            rowKey={(row) => row.uuid}
+            loading={tagsQuery.isLoading}
+            storageKey="unit-toll-tags"
+            tableTestId="unit-toll-tags-table"
+            rowTestId={(row) => `unit-toll-tags-row-${row.uuid}`}
+            emptyText="No toll tags assigned to this unit."
+            exportFilename="unit-toll-tags"
+          />
+        </div>
+      )}
     </section>
   );
 }

@@ -821,7 +821,7 @@ verify-step 1035.
 | --- | --- |
 | `apps/frontend/src/pages/units/UnitDriverHistoryStrip.tsx` | pending |
 | `apps/frontend/src/pages/units/UnitPermitsTab.tsx` | pending |
-| `apps/frontend/src/pages/units/UnitTollTagsTab.tsx` | pending |
+| `apps/frontend/src/pages/units/UnitTollTagsTab.tsx` | migrated |
 
 ### pages/vendors (1)
 
@@ -1069,3 +1069,14 @@ Guard: `scripts/verify-booking-gap-report-uses-paritytable.mjs` via verify-step 
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/reports/BookingGapReport.tsx` | pages/reports |
+## qbo-parity-a1 — UnitTollTagsTab (this PR)
+Unit detail toll-tags tab was a hand-rolled `<table>` with manual loading/empty
+states. Migrated to shared `ParityTable` (sort + resize + gear); `ListErrorState` +
+Retry on query failure (no false-empty on outage). Columns Network / Tag # /
+Activated / Balance / Monthly / Status preserved 1:1; low-balance amber highlight +
+Low badge and TxTAG · EZ-Pass · I-Pass header preserved. Guard:
+`scripts/verify-unit-toll-tags-uses-paritytable.mjs` via verify-step **1091**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/units/UnitTollTagsTab.tsx` | pages/units |
