@@ -159,12 +159,22 @@ export async function getThreadMessages(
             ca.status                 AS cash_advance_status,
             ca.requested_amount_cents AS cash_advance_amount_cents,
             ack.id                    AS ack_message_id,
-            ack.server_ts             AS acked_at
+            ack.server_ts             AS acked_at,
+            att.id                    AS attachment_id,
+            att.r2_key                AS attachment_r2_key,
+            att.sha256                AS attachment_sha256,
+            att.mime_type             AS attachment_mime_type,
+            att.size_bytes            AS attachment_size_bytes,
+            att.doc_type              AS attachment_doc_type,
+            att.upload_completed_at   AS attachment_upload_completed_at
      FROM chat.messages m
      LEFT JOIN driver_finance.cash_advance_requests ca
        ON ca.id = m.cash_advance_request_id AND ca.operating_company_id = m.operating_company_id
      LEFT JOIN chat.messages ack
        ON ack.references_message_id = m.id AND ack.msg_type = 'confirmation_ack' AND ack.status = 'active'
+     LEFT JOIN chat.attachments att
+       ON att.message_id = m.id AND att.operating_company_id = m.operating_company_id
+         AND att.upload_completed_at IS NOT NULL
      WHERE m.thread_id = $1 AND m.seq > $2 ORDER BY m.seq ASC LIMIT $3`,
     [threadId, opts.after_seq ?? 0, limit],
   );
@@ -274,4 +284,98 @@ export async function advanceReceipt(
 /** Presign an R2 upload for a chat attachment (upload-then-commit: the message/attachment commits only after upload). */
 export function attachmentR2Key(operatingCompanyId: string, threadId: string, sha256: string, ext: string): string {
   return `chat/${operatingCompanyId}/${threadId}/${sha256}.${ext}`;
+}
+
+const ATTACHMENT_MIME = new Set(["image/jpeg", "image/png", "image/heic", "image/webp", "application/pdf"]);
+
+export type CommitAttachmentInput = {
+  thread_id: string;
+  operating_company_id?: string;
+  sender: ChatSender;
+  client_key: string;
+  content_sha256: string;
+  r2_key: string;
+  sha256: string;
+  mime_type: string;
+  size_bytes: number;
+  body?: string | null;
+  doc_type?: "bol" | "pod" | "receipt" | "lumper" | "other" | null;
+};
+
+/**
+ * Upload-then-commit: after the client PUTs bytes to the presigned R2 key, commit a photo/document
+ * message + chat.attachments row in one txn (schema already exists — no migration).
+ */
+export async function commitAttachment(
+  client: Client,
+  input: CommitAttachmentInput,
+  eventSubject: { subject_type: "load" | "driver"; subject_id: string },
+): Promise<{ message: Record<string, unknown>; attachment: Record<string, unknown>; deduped: boolean }> {
+  if (!ATTACHMENT_MIME.has(input.mime_type)) throw new Error("unsupported_mime_type");
+  if (!Number.isFinite(input.size_bytes) || input.size_bytes <= 0 || input.size_bytes > 26_214_400) {
+    throw new Error("invalid_size_bytes");
+  }
+  const expectedPrefix = `chat/`;
+  if (!input.r2_key.startsWith(expectedPrefix) || !input.r2_key.includes(input.sha256)) {
+    throw new Error("r2_key_mismatch");
+  }
+
+  const msgType: PostMessageInput["msg_type"] = input.mime_type === "application/pdf" ? "document" : "photo";
+  const posted = await postMessage(
+    client,
+    {
+      thread_id: input.thread_id,
+      operating_company_id: input.operating_company_id,
+      sender: input.sender,
+      msg_type: msgType,
+      body: input.body ?? null,
+      client_key: input.client_key,
+      content_sha256: input.content_sha256,
+    },
+    eventSubject,
+  );
+
+  const messageId = posted.message.id as string;
+  const operatingCompanyId = posted.message.operating_company_id as string;
+
+  // Idempotent: a retried commit with the same client_key returns the existing attachment.
+  const existingAtt = await client.query(
+    `SELECT id, message_id, operating_company_id, document_id, r2_key, sha256, mime_type, size_bytes,
+            doc_type, upload_completed_at, created_at
+     FROM chat.attachments WHERE message_id = $1 LIMIT 1`,
+    [messageId],
+  );
+  if (existingAtt.rows[0]) {
+    return { message: posted.message, attachment: existingAtt.rows[0], deduped: posted.deduped };
+  }
+
+  const inserted = await client.query(
+    `INSERT INTO chat.attachments
+       (message_id, operating_company_id, r2_key, sha256, mime_type, size_bytes, doc_type, upload_completed_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7, now())
+     RETURNING id, message_id, operating_company_id, document_id, r2_key, sha256, mime_type, size_bytes,
+               doc_type, upload_completed_at, created_at`,
+    [
+      messageId,
+      operatingCompanyId,
+      input.r2_key,
+      input.sha256,
+      input.mime_type,
+      input.size_bytes,
+      input.doc_type ?? null,
+    ],
+  );
+  return { message: posted.message, attachment: inserted.rows[0], deduped: false };
+}
+
+export async function getAttachmentForDownload(
+  client: Client,
+  attachmentId: string,
+): Promise<{ id: string; r2_key: string; mime_type: string; sha256: string } | null> {
+  const res = await client.query<{ id: string; r2_key: string; mime_type: string; sha256: string }>(
+    `SELECT id, r2_key, mime_type, sha256 FROM chat.attachments
+     WHERE id = $1 AND upload_completed_at IS NOT NULL LIMIT 1`,
+    [attachmentId],
+  );
+  return res.rows[0] ?? null;
 }

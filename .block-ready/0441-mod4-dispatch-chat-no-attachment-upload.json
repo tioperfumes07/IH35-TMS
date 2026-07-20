@@ -1,17 +1,34 @@
 {
   "block_id": "0441-mod4-dispatch-chat-no-attachment-upload",
-  "status": "PENDING",
-  "classification": "FINANCIAL",
-  "phase": "tier2",
-  "source": "MASTER-6 authored dispatch (05-TIER2-BLOCKS)",
-  "source_file": "0441-mod4-dispatch-chat-no-attachment-upload.txt",
+  "branch": "fix/0441-mod4-dispatch-chat-attachment",
+  "status": "IN_PROGRESS",
+  "classification": "ADDITIVE",
+  "phase": "ops-nonstop",
+  "task": "Wire Dispatch Chat composer attachment upload (presign → R2 → commit into chat.attachments)",
+  "source": "CODER-BUILD-INSTRUCTIONS-2026-07-19.md",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    ".block-ready/0441-mod4-dispatch-chat-no-attachment-upload.json",
+    "apps/backend/src/chat/chat.routes.ts",
+    "apps/backend/src/chat/chat.service.ts",
+    "apps/frontend/src/api/chat.ts",
+    "apps/frontend/src/pages/chat/DispatchChatPage.tsx",
+    "scripts/verify-dispatch-chat-attachment-upload-wired.mjs",
+    "scripts/verify-steps/1013-verify-dispatch-chat-attachment-upload-wired.mjs"
   ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "DispatchChatPage composer has file input + uploadChatAttachment (presign → R2 PUT → commit) producing photo/document messages"
+    },
+    {
+      "check": "POST /api/v1/chat/attachments/commit INSERTs chat.attachments after R2 verify; getThreadMessages returns attachment_* fields; download-url wired"
+    },
+    {
+      "check": "scripts/verify-dispatch-chat-attachment-upload-wired.mjs PASS (+ --selftest); wired via verify-steps/1013 (Rule 17 — no package.json/CI edit)"
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "GATED-no FE defect. Reuses existing chat.attachments schema + R2/docs uploadFileToR2. No migration, no GL/mdata writes."
 }
