@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-trailer-plates-paritytable",
+  "branch": "fix/trailer-plates-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable migration)",
+  "phase": "OPS-FE",
+  "task": "Migrate trailer-profile PlatesTable from hand-rolled <table> to shared ParityTable QBO grammar. Guard + verify-step 1031 (Rule 17; 1026 reserved by open #2862).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+  "source_file": "qbo-parity-a1-trailer-plates-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-trailer-plates-paritytable.json",
+    "apps/frontend/src/components/trailer-profile/PlatesTable.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-trailer-plates-uses-paritytable.mjs",
+    "scripts/verify-steps/1031-verify-trailer-plates-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "PlatesTable.tsx uses ≥1 ParityTable; no hand-rolled <table>/<thead>; columns Country/Jurisdiction/Plate/Expiration preserved; tp-plates-table testid preserved; verify-trailer-plates-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1031 wired (Rule 17); tracker marks trailer-profile PlatesTable migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental adoption of qbo-parity-a1 — one surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17)."
+}
