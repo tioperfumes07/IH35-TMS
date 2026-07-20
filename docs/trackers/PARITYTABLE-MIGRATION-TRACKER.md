@@ -617,7 +617,7 @@ verify-step 1035.
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/home/DriverHubReportingPage.tsx` | pending |
+| `apps/frontend/src/pages/home/DriverHubReportingPage.tsx` | migrated (qbo-parity-a1) |
 
 ### pages/insurance (6)
 
@@ -960,3 +960,14 @@ Guard: `scripts/verify-booking-gap-report-uses-paritytable.mjs` via verify-step 
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/reports/BookingGapReport.tsx` | pages/reports |
+## qbo-parity-a1 — DriverHubReportingPage (this PR)
+Driver Inbox Reporting by-driver grid was a hand-rolled `<table>` with a bare red
+outage banner. Migrated to shared `ParityTable` (sort + resize + gear) and replaced
+the ad-hoc error with `ListErrorState` + Retry. Columns Driver / Total / Approved /
+Denied / Approval % / Time-to-view / Time-to-approve / Approved volume preserved 1:1;
+summary cards + Export CSV + not_computed chrome preserved. Guard:
+`scripts/verify-driver-hub-reporting-uses-paritytable.mjs` via verify-step **1055**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/home/DriverHubReportingPage.tsx` | pages/home |
