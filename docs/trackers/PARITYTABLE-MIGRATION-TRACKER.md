@@ -936,3 +936,14 @@ Cost ¢ preserved 1:1; Clock in + manual book range unchanged. Guard:
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/components/maintenance/LaborTracker.tsx` | components/maintenance |
+
+## qbo-parity-a1 — IFTAStepGallons (this PR)
+IFTA preparation Step 2 state-gallons grid was a hand-rolled `<table>`. Migrated
+to shared `ParityTable` (sort + resize + gear). Columns State / Gallons / Source /
+Breakdown and the aggregate action, empty state, last-aggregated timestamp, and total
+gallons summary are preserved. Guard:
+`scripts/verify-ifta-step-gallons-uses-paritytable.mjs` via verify-step **1059**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/reports/ifta/IFTAStepGallons.tsx` | pages/reports/ifta |
