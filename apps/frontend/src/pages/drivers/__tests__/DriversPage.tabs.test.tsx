@@ -189,21 +189,27 @@ describe("DriversPage list status tabs", () => {
 
   it("Teams tab switches to the teams roster and + Create Team", async () => {
     const user = userEvent.setup();
-    renderDriversAt("/drivers");
+    const router = renderDriversAt("/drivers");
     await screen.findByRole("button", { name: "+ Create Driver" });
     await user.click(screen.getByRole("button", { name: /^teams$/i }));
+    expect(await screen.findByRole("button", { name: "+ Create Team" })).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("Search by name")).toBeNull();
+    expect(router.state.location.search).toContain("view=teams");
+  });
+
+  it("?view=teams deep link opens Teams roster", async () => {
+    renderDriversAt("/drivers?view=teams");
     expect(await screen.findByRole("button", { name: "+ Create Team" })).toBeInTheDocument();
     expect(screen.queryByPlaceholderText("Search by name")).toBeNull();
   });
 
   it("Drivers tab returns to the roster from Teams view", async () => {
     const user = userEvent.setup();
-    renderDriversAt("/drivers");
-    await screen.findByRole("button", { name: "+ Create Driver" });
-    await user.click(screen.getByRole("button", { name: /^teams$/i }));
+    const router = renderDriversAt("/drivers?view=teams");
     await screen.findByRole("button", { name: "+ Create Team" });
     await user.click(screen.getByRole("button", { name: /^drivers$/i }));
     expect(await screen.findByPlaceholderText("Search by name")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "+ Create Team" })).toBeNull();
+    expect(router.state.location.search).not.toContain("view=");
   });
 });
