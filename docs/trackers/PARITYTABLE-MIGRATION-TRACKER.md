@@ -1189,3 +1189,14 @@ Mock static rows (no query failure path → no ListErrorState). Guard:
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/dev/BulkDemoPage.tsx` | pages/dev |
+## qbo-parity-a1 — LegalTemplateDetailPage (this PR)
+Legal template detail's Version history and append-only Audit log grids were hand-rolled
+`<table>` implementations. Migrated both to shared `ParityTable` (sort + resize + gear);
+the audit event payload remains expandable, all six existing columns remain in their
+original groups and order, and template-detail query failures now use retryable
+`ListErrorState`. Guard:
+`scripts/verify-legal-template-detail-uses-paritytable.mjs` via verify-step **1080**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/legal/templates/LegalTemplateDetailPage.tsx` | pages/legal |

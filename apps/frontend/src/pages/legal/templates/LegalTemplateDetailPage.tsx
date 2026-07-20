@@ -2,12 +2,17 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../../api/client";
-import { legalTemplatesApi } from "../../../api/legal-templates";
+import { legalTemplatesApi, type LegalTemplateDetail } from "../../../api/legal-templates";
 import { Button } from "../../../components/Button";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { formatDateTimeUS } from "../../../lib/formatDate";
+
+type TemplateVersion = NonNullable<LegalTemplateDetail["versions"]>[number];
+type TemplateAuditEvent = NonNullable<LegalTemplateDetail["audit_log"]>[number];
 
 function parseError(error: unknown, fallback: string): string {
   if (error instanceof ApiError) {
@@ -17,6 +22,36 @@ function parseError(error: unknown, fallback: string): string {
   if (error instanceof Error) return error.message;
   return fallback;
 }
+
+const VERSION_COLUMNS: Array<ParityColumn<TemplateVersion>> = [
+  { key: "version", label: "Version", sortable: true },
+  { key: "status", label: "Status", sortable: true },
+  {
+    key: "updated_at",
+    label: "Updated",
+    sortable: true,
+    sortValue: (row) => new Date(row.updated_at).getTime(),
+    render: (row) => formatDateTimeUS(row.updated_at),
+  },
+];
+
+const AUDIT_LOG_COLUMNS: Array<ParityColumn<TemplateAuditEvent>> = [
+  {
+    key: "created_at",
+    label: "When",
+    sortable: true,
+    sortValue: (row) => new Date(row.created_at).getTime(),
+    render: (row) => formatDateTimeUS(row.created_at),
+  },
+  { key: "event_type", label: "Event", sortable: true },
+  {
+    key: "actor_name",
+    label: "Actor",
+    sortable: true,
+    sortValue: (row) => row.actor_name ?? row.actor_user_id ?? "system",
+    render: (row) => row.actor_name ?? row.actor_user_id ?? "system",
+  },
+];
 
 export function LegalTemplateDetailPage() {
   const navigate = useNavigate();
@@ -169,10 +204,19 @@ export function LegalTemplateDetailPage() {
     return (
       <div className="space-y-3">
         <BackArrowHeader backTo="/legal/templates" breadcrumb={["Legal", "Templates"]} title="Template Detail" />
-        <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-800">Failed to load template detail.</div>
+        <ListErrorState
+          title="Couldn't load template detail"
+          status={query.error instanceof ApiError ? query.error.status : 0}
+          message={parseError(query.error, "Failed to load template detail.")}
+          onRetry={() => void query.refetch()}
+          className="rounded-sm border border-amber-200 bg-amber-50"
+        />
       </div>
     );
   }
+
+  const versionRows = template.versions ?? [];
+  const auditLogRows = template.audit_log ?? [];
 
   return (
     <div className="space-y-3">
@@ -326,26 +370,14 @@ export function LegalTemplateDetailPage() {
 
         <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-3">
           <div className="text-xs font-semibold uppercase text-gray-500">Version history</div>
-          <div className="max-h-44 overflow-auto rounded-sm border border-gray-200">
-            <table className="min-w-full text-xs">
-              <thead className="bg-gray-50 text-gray-600">
-                <tr>
-                  <th className="px-2 py-1 text-left">Version</th>
-                  <th className="px-2 py-1 text-left">Status</th>
-                  <th className="px-2 py-1 text-left">Updated</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(template.versions ?? []).map((row) => (
-                  <tr key={row.id} className="border-t border-gray-100">
-                    <td className="px-2 py-1">{row.version}</td>
-                    <td className="px-2 py-1">{row.status}</td>
-                    <td className="px-2 py-1">{new Date(row.updated_at).toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ParityTable
+            rows={versionRows}
+            columns={VERSION_COLUMNS}
+            rowKey={(row) => row.id}
+            storageKey="legal-template-version-history"
+            emptyText="No prior versions."
+            initialPageSize={15}
+          />
 
           <label className="block text-xs font-semibold text-gray-600">
             Variable schema (JSON)
@@ -385,26 +417,19 @@ export function LegalTemplateDetailPage() {
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 text-xs font-semibold uppercase text-gray-500">Audit log</div>
-        <div className="max-h-56 overflow-auto rounded-sm border border-gray-200">
-          <table className="min-w-full text-xs">
-            <thead className="bg-gray-50 text-gray-600">
-              <tr>
-                <th className="px-2 py-1 text-left">When</th>
-                <th className="px-2 py-1 text-left">Event</th>
-                <th className="px-2 py-1 text-left">Actor</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(template.audit_log ?? []).map((row) => (
-                <tr key={row.id} className="border-t border-gray-100">
-                  <td className="px-2 py-1">{new Date(row.created_at).toLocaleString()}</td>
-                  <td className="px-2 py-1">{row.event_type}</td>
-                  <td className="px-2 py-1">{row.actor_name ?? row.actor_user_id ?? "system"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable
+          rows={auditLogRows}
+          columns={AUDIT_LOG_COLUMNS}
+          rowKey={(row) => String(row.id)}
+          storageKey="legal-template-audit-log"
+          emptyText="No audit events recorded."
+          initialPageSize={15}
+          renderExpanded={(row) => (
+            <pre className="overflow-auto bg-slate-50 p-3 text-xs text-slate-700">
+              {JSON.stringify(row.event_payload, null, 2)}
+            </pre>
+          )}
+        />
       </div>
 
       {submitError ? <div className="rounded-sm border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-800">{submitError}</div> : null}
