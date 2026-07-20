@@ -23,7 +23,7 @@ sort, and the lock-account control — never drop or reorder.
 | --- | --- |
 | migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable + LoadHistoryTab + vehicle PlatesTable + vehicle ComplianceSection + DriverDaySummaryCard) | 21 |
 | financial-hold (Jorge-gated) | 99 |
-| pending (non-financial, future batches) | 181 |
+| pending (non-financial, future batches) | 180 |
 | financial-hold (Jorge-gated) | 99 |
 | **hand-rolled total (original)** | **300** |
 
@@ -840,4 +840,14 @@ hand-rolled `<table>` with manual Prev/Next paging. Migrated to shared `ParityTa
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/components/vehicle-profile/RecentActivitySection.tsx` | components/vehicle-profile |
+## qbo-parity-a1 — DriverDaySummaryCard (home)
+Home "Driver day-summaries" grid was a hand-rolled `<table>` with a bare red outage
+banner. Migrated to shared `ParityTable` (sort + resize + gear) and replaced the
+ad-hoc error with `ListErrorState` + Retry. Columns Driver / Miles / On-duty hrs /
+Fuel stops / On-time / Late preserved 1:1; DatePicker + no-HOS empty copy preserved.
+Guard: `scripts/verify-driver-day-summary-uses-paritytable.mjs` via verify-step 1038.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/home/DriverDaySummaryCard.tsx` | components/home |
 
