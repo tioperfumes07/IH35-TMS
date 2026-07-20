@@ -124,7 +124,7 @@ export function TypeCatalogAdmin() {
       </header>
 
       <section className="rounded-sm border border-gray-200 bg-white p-4">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-600">Add Type</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-600">+ Create type</h3>
         <div className="mt-2 grid gap-2 md:grid-cols-5">
           <label className="text-xs font-semibold text-slate-600">
             Code
@@ -160,7 +160,7 @@ export function TypeCatalogAdmin() {
           </label>
           <div className="flex items-end">
             <Button size="sm" onClick={() => createMutation.mutate()} loading={createMutation.isPending} disabled={!newName.trim()}>
-              Add type
+              + Create type
             </Button>
           </div>
         </div>
