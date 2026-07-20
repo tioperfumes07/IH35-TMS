@@ -464,7 +464,7 @@ verify-step 1035.
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/audit/AuditEventsList.tsx` | pending |
+| `apps/frontend/src/pages/audit/AuditEventsList.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/pages/audit/AuditTrailPage.tsx` | migrated (qbo-parity-a1) |
 
 ### pages/banking (9) — financial-hold
@@ -1168,3 +1168,13 @@ low-clock emphasis remain intact. Guard:
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx` | pages/compliance |
+## qbo-parity-a1 — AuditEventsList (this PR)
+Bulk-call forensic audit events list was on legacy `DataTable` + `dataTableErrorState`.
+Migrated to shared `ParityTable` (sort + resize + gear + renderExpanded payload JSON);
+`ListErrorState` + Retry on outage. Columns When / Event / Actor / Bulk Call / Source
+preserved 1:1; bulk_call_id filter + click-to-filter preserved. Guard:
+`scripts/verify-audit-events-list-uses-paritytable.mjs` via verify-step **1077**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/audit/AuditEventsList.tsx` | pages/audit |
