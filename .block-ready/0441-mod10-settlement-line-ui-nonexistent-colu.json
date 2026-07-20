@@ -18,6 +18,7 @@
     "apps/backend/src/driver-finance/settlements.routes.ts",
     "apps/frontend/src/api/driverFinance.ts",
     "apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx",
+    "apps/frontend/src/components/drivers/__tests__/EarningsTab.test.tsx",
     "scripts/verify-settlements-table-no-phantom-loads.mjs",
     "scripts/verify-steps/1015-verify-settlements-table-no-phantom-loads.mjs"
   ],
