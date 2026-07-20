@@ -636,7 +636,7 @@ verify-step 1035.
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/integrations/edi/EdiTransactionLog.tsx` | pending |
+| `apps/frontend/src/pages/integrations/edi/EdiTransactionLog.tsx` | migrated (fix/edi-transaction-log-paritytable) |
 
 ### pages/legal (5)
 
@@ -1069,3 +1069,14 @@ Guard: `scripts/verify-booking-gap-report-uses-paritytable.mjs` via verify-step 
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/reports/BookingGapReport.tsx` | pages/reports |
+
+## qbo-parity-a1 — EdiTransactionLog (this PR)
+EDI transaction log was a hand-rolled `<table>` with no outage handling. Migrated to
+shared `ParityTable` (sort + resize + gear + CSV export); `ListErrorState` + Retry on
+outage. Columns Type / Dir / Status / Control # / Received preserved 1:1; status filter,
+raw EDI viewer side panel, row selection, and `edi-transaction-log` testid preserved.
+Guard: `scripts/verify-edi-transaction-log-uses-paritytable.mjs` via verify-step **1074**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/integrations/edi/EdiTransactionLog.tsx` | pages/integrations |
