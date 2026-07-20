@@ -752,7 +752,7 @@ verify-step 1035.
 | `apps/frontend/src/pages/reports/TrialBalancePage.tsx` | pending |
 | `apps/frontend/src/pages/reports/audit/AuditReportPage.tsx` | pending |
 | `apps/frontend/src/pages/reports/ifta/IFTAStepGallons.tsx` | pending |
-| `apps/frontend/src/pages/reports/ifta/IFTAStepMiles.tsx` | pending |
+| `apps/frontend/src/pages/reports/ifta/IFTAStepMiles.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/pages/reports/ifta/IFTAStepTax.tsx` | pending |
 | `apps/frontend/src/pages/reports/runners/RunnerTable.tsx` | pending |
 
@@ -960,3 +960,14 @@ Guard: `scripts/verify-booking-gap-report-uses-paritytable.mjs` via verify-step 
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/reports/BookingGapReport.tsx` | pages/reports |
+
+## qbo-parity-a1 — IFTAStepMiles (this PR)
+IFTA quarterly preparer Step 1 state miles (`pages/reports/ifta/IFTAStepMiles`) was a
+hand-rolled `<table>` with aggregate action + last-aggregated stamp + total footer.
+Migrated to shared `ParityTable` (sort + resize + gear). Columns State / Miles / Source
+preserved 1:1; Run Step 1 aggregate + last aggregated + Total summary retained.
+Guard: `scripts/verify-ifta-step-miles-uses-paritytable.mjs` via verify-step **1060**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/reports/ifta/IFTAStepMiles.tsx` | pages/reports/ifta |
