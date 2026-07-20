@@ -4,7 +4,7 @@
   "status": "BUILD",
   "classification": "NON-FINANCIAL (pure frontend ParityTable + ListErrorState)",
   "phase": "OPS-FE",
-  "task": "Migrate Drivers AuditHistoryTab from hand-rolled <table> to shared ParityTable (sort/resize/gear + renderExpanded payload); replace bare red error with ListErrorState. Guard + verify-step 1026 (Rule 17).",
+  "task": "Migrate Drivers AuditHistoryTab from hand-rolled <table> to shared ParityTable (sort/resize/gear + renderExpanded payload); replace bare red error with ListErrorState. Guard + verify-step 1027 (Rule 17).",
   "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + CODER-BUILD tbl-standard-raw-table-sweep-incomplete / qbo-parity-a1",
   "source_file": "qbo-parity-a1-driver-audit-history-paritytable",
   "allowed_files": [
@@ -12,7 +12,7 @@
     "apps/frontend/src/components/drivers/AuditHistoryTab.tsx",
     "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
     "scripts/verify-driver-audit-history-uses-paritytable.mjs",
-    "scripts/verify-steps/1026-verify-driver-audit-history-uses-paritytable.mjs"
+    "scripts/verify-steps/1027-verify-driver-audit-history-uses-paritytable.mjs"
   ],
   "runtime_path": "src",
   "db_required": false,
@@ -20,7 +20,7 @@
   "extra_gates": [],
   "acceptance": [
     {
-      "check": "AuditHistoryTab.tsx uses ParityTable (no hand-rolled <table>/<thead>); columns When/Actor/Event/Summary/Details preserved; renderExpanded keeps payload diff; ListErrorState on failure; emptyText preserved; verify-driver-audit-history-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1026 wired (Rule 17); tracker marks AuditHistoryTab migrated."
+      "check": "AuditHistoryTab.tsx uses ParityTable (no hand-rolled <table>/<thead>); columns When/Actor/Event/Summary/Details preserved; renderExpanded keeps payload diff; ListErrorState on failure; emptyText preserved; verify-driver-audit-history-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1027 wired (Rule 17); tracker marks AuditHistoryTab migrated."
     }
   ],
   "note": "GATED: no (pure FE). Incremental qbo-parity-a1 — Drivers AuditHistoryTab surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17)."
