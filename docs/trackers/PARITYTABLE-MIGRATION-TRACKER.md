@@ -21,7 +21,7 @@ sort, and the lock-account control — never drop or reorder.
 ## Rollup
 | Status | Count |
 | --- | --- |
-| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable) | 17 |
+| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable + DocumentsSection) | 18 |
 | financial-hold (Jorge-gated) | 99 |
 | pending (non-financial, future batches) | 184 |
 | **hand-rolled total (original)** | **300** |
@@ -132,6 +132,16 @@ Guard: `scripts/verify-frequently-run-table-uses-paritytable.mjs` via verify-ste
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/components/reports/FrequentlyRunTable.tsx` | components/reports |
+
+## qbo-parity-a1 — DocumentsSection (vehicle profile)
+Vehicle profile Documents list was a hand-rolled `<table>`. Migrated to shared
+`ParityTable` (sort + resize + gear). Columns Type / Name / Expiration / Uploaded
+preserved 1:1; `+ Upload` + `UploadModal` unit + viewed-company scoping preserved.
+Guard: `scripts/verify-vehicle-docs-uses-paritytable.mjs` via verify-step 1037.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/vehicle-profile/DocumentsSection.tsx` | components/vehicle-profile |
 
 ## qbo-parity-a1 — OperationsHistoryTable (this PR)
 Drivers hub operations-depth history (12 sub-views sharing one table) was a hand-rolled
@@ -295,7 +305,7 @@ Guard: `scripts/verify-ops-history-uses-paritytable.mjs` via verify-step 1026.
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/components/vehicle-profile/ComplianceSection.tsx` | pending |
-| `apps/frontend/src/components/vehicle-profile/DocumentsSection.tsx` | pending |
+| `apps/frontend/src/components/vehicle-profile/DocumentsSection.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/vehicle-profile/PlatesTable.tsx` | pending |
 | `apps/frontend/src/components/vehicle-profile/RecentActivitySection.tsx` | pending |
 

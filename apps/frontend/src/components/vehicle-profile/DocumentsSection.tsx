@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { UploadModal } from "../documents/UploadModal";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 
 type DocRow = {
   file_id: string;
@@ -40,11 +41,41 @@ export function DocumentsSection({
   onUploaded?: () => void;
 }) {
   const [uploadOpen, setUploadOpen] = useState(false);
+
+  const columns: Array<ParityColumn<DocRow>> = [
+    {
+      key: "category",
+      label: "Type",
+      sortable: true,
+      render: (row) => row.category ?? "—",
+    },
+    {
+      key: "name",
+      label: "Name",
+      sortable: true,
+      render: (row) => row.name,
+    },
+    {
+      key: "expiration_date",
+      label: "Expiration",
+      sortable: true,
+      render: (row) => (
+        <span className={expColor(row.expiration_date)}>{row.expiration_date ?? "—"}</span>
+      ),
+    },
+    {
+      key: "uploaded_at",
+      label: "Uploaded",
+      sortable: true,
+      render: (row) => row.uploaded_at?.slice(0, 10) ?? "—",
+    },
+  ];
+
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-gray-800">Documents</h2>
-        {/* DOCS-fix: this used to be a static <a href="/docs?entity_id=..."> deep link, but
+        {/* DOCS-FIX: this used to be a static <a href="/docs?entity_id=..."> deep link, but
             DocsHomePage never reads entity_id from the query string (only entity TYPE), so the
             link landed on the unfiltered company-wide library with no way to upload scoped to
             this unit — a dead drill-through. Wire a real, entity-linked upload using the same
@@ -72,34 +103,18 @@ export function DocumentsSection({
         />
       ) : null}
       {photosSlot}
-      <table className="mt-3 w-full text-left text-xs">
-        <thead>
-          <tr className="text-gray-500">
-            <th className="pb-1">Type</th>
-            <th>Name</th>
-            <th>Expiration</th>
-            <th>Uploaded</th>
-          </tr>
-        </thead>
-        <tbody>
-          {documents.length === 0 ? (
-            <tr>
-              <td colSpan={4} className="py-2 text-gray-500">
-                No documents linked.
-              </td>
-            </tr>
-          ) : (
-            documents.map((d) => (
-              <tr key={d.file_id} className="border-t border-gray-100">
-                <td className="py-1">{d.category ?? "—"}</td>
-                <td>{d.name}</td>
-                <td className={expColor(d.expiration_date)}>{d.expiration_date ?? "—"}</td>
-                <td>{d.uploaded_at?.slice(0, 10) ?? "—"}</td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+      <div className="mt-3">
+        <ParityTable
+          rows={documents}
+          columns={columns}
+          rowKey={(row) => row.file_id}
+          storageKey="vehicle-profile-documents"
+          emptyText="No documents linked."
+          tableTestId="vp-documents-table"
+          rowTestId={(row) => `vp-documents-row-${row.file_id}`}
+          initialPageSize={25}
+        />
+      </div>
     </section>
   );
 }
