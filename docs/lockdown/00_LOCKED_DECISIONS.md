@@ -72,12 +72,11 @@ Phase 5 of `CODER-BLOCK_Legal-Template-Library.md`).
   trail, `legal.contract_instance_links` + handoff event, and the "signed-auth-on-file?" gate.
   **Finance owns** the engines: **FIN-22** = lease ASC 842 classification + schedule + lease GL;
   **FIN-18** = deduction math + settlement→GL. Legal builds NEITHER engine.
-- **Flip-readiness gate:** `SETTLEMENT_GL_POSTING_ENABLED` (FIN-18) / `AMORTIZATION_GL_POSTING_ENABLED` (FIN-21) never flip ON until
-  the owning Finance engine is built + Neon-unit-tested (balanced JE, correct ASC 842, deduction
-  refuses without signed-auth link) + Neon-branch end-to-end verified. Flipping =
-  Tier-1, never self-merged (owner does the flip; posting-flag enablement is the OWNER's decision, not a CPA gate).
-  FIN-18/FIN-22 are REQUIRED, not optional — the engine is never orphaned.
-  **`LEASE_GL_POSTING_ENABLED` (FIN-22): owner-decided ON** for TRANSP + TRK + USMCA (see §9.9) — no longer in this gate.
+- **Flip-readiness gate (SUPERSEDED 2026-07-20 by owner decision — see §9.9):** posting-flag enablement is the
+  OWNER's decision, not a CPA gate. Jorge ruled **"flags on … on all"** (2026-07-20, in chat): **ALL GL posting
+  flags are ON for all three operating companies (TRANSP + TRK + USMCA)** — already live in prod. The engines
+  (FIN-18 settlement, FIN-21 amortization, FIN-22 lease) remain REQUIRED (never orphaned); the prior
+  "never flip until engine-built + CPA-confirmed" gate no longer holds — the owner has flipped them on.
 
 ## 7. QBO-PARITY UI SYSTEM (locked 2026-06-08)
 See `docs/specs/qbo-parity/QBO_PARITY_UI_SYSTEM.md` (design law).
@@ -130,7 +129,7 @@ Locked by the owner while triaging the shared 130-finding audit. Source of truth
 
 9.8 **Never delete — ARCHIVE only.** Everything stays findable in the log + audits (§7 additive-only).
 
-9.9 **GL posting flags:** `SETTLEMENT_GL_POSTING_ENABLED` → **OFF per-entity** until Repairs A+B land (owner-confirmed 2026-07-04; posting-flag enablement is the OWNER's decision, not a CPA gate). **`LEASE_GL_POSTING_ENABLED` → ON for all three operating companies (TRANSP + TRK + USMCA) — owner-decided 2026-07-20 (Jorge, in chat: "flags on", "it's my decision").** This supersedes the 2026-07-04 "lease OFF" line and reconciles the canon to production: all three already carry `lib.feature_flag_overrides` rows `LEASE_GL_POSTING_ENABLED=true` (set 07-04 / 07-05 / 07-11, verified live on Neon `br-fancy-credit-akjnd07a` 2026-07-20). Do NOT flip any of the three lease overrides OFF without a new owner line. Flag-key default remains OFF (per-entity-only); only the three entity overrides are ON. This ruling is LEASE-only — it grants NO permission to flip SETTLEMENT, FACTORING, or any other posting flag. The other GL flags remain as previously set.
+9.9 **GL posting flags — ALL ON, owner-decided 2026-07-20.** Jorge ruled in chat **"flags on … on all"** / **"it's my decision"** (posting-flag enablement is the OWNER's call, not a CPA gate). **ALL GL posting flags are ON for all three operating companies (TRANSP + TRK + USMCA)** — `AMORTIZATION`, `BANK_FEED`, `BANK_TX_SPLIT`, `BILL`, `BILL_PAYMENT`, `CUSTOMER_PAYMENT`, `DRIVER_ADVANCE`, `EXPENSE`, `FACTORING`, `GL_POSTING_ENABLED`, `INVOICE_AR`, `LEASE`, `PROPERTY_TAX`, `SETTLEMENT`, `TRANSFER`. This supersedes the 2026-07-04 "SETTLEMENT + LEASE OFF until CPA" line and the flip-readiness gate above. **Verified live on Neon `br-fancy-credit-akjnd07a` (2026-07-20):** all three entities carry `lib.feature_flag_overrides` rows `=true` for every posting flag listed. Do NOT flip any of these OFF without a new owner line. Flag-key defaults remain OFF (per-entity overrides drive the ON state).
 
 ## 10. ACCOUNTING SUB-NAV = APPROVED GROUPED CLICK-OPEN DROPDOWNS (locked — supersedes flat clean-tabs)
 - The Accounting module top-bar sub-nav is the **APPROVED grouped click-open dropdown** row per
