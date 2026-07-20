@@ -112,7 +112,7 @@ function DecideModal({
   });
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-black/40 p-4" role="dialog" aria-modal="true">
       <div className="w-full max-w-lg space-y-3 rounded-sm border border-gray-200 bg-white p-4 shadow-lg">
         <h2 className="text-base font-semibold text-gray-900">Decide dispute</h2>
         <p className="text-xs text-gray-600">
