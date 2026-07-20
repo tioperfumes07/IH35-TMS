@@ -21,9 +21,9 @@ sort, and the lock-account control — never drop or reorder.
 ## Rollup
 | Status | Count |
 | --- | --- |
-| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage) | 13 |
+| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationLogPanel) | 14 |
 | financial-hold (Jorge-gated) | 99 |
-| pending (non-financial, future batches) | 188 |
+| pending (non-financial, future batches) | 187 |
 | **hand-rolled total (original)** | **300** |
 
 > Note: ParityTable was already consumed by ~16 surfaces before this batch (not counted above — those were never hand-rolled).
@@ -93,6 +93,16 @@ Guard: `scripts/verify-activity-log-uses-paritytable.mjs` via verify-step 1023.
 | --- | --- |
 | `apps/frontend/src/pages/admin/ActivityLogPage.tsx` | pages/admin |
 
+## qbo-parity-a1 — NotificationLogPanel (this PR)
+Compliance notification log: hand-rolled `<table>` (Sent/Credential/Owner Type/Channel/
+Recipient/Status). Migrated to shared `ParityTable` (sort + resize + gear + CSV export).
+`compliance-log-panel` testid preserved. Guard:
+`scripts/verify-notification-log-uses-paritytable.mjs` via verify-step 1025.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/compliance/NotificationLogPanel.tsx` | components/compliance |
+
 ## Remaining hand-rolled inventory (by module)
 
 ### components/DataTable.tsx (1)
@@ -138,11 +148,11 @@ Guard: `scripts/verify-activity-log-uses-paritytable.mjs` via verify-step 1023.
 | --- | --- |
 | `apps/frontend/src/components/catalogs/CatalogTable.tsx` | pending |
 
-### components/compliance (2 remaining)
+### components/compliance (1 remaining)
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/components/compliance/NotificationLogPanel.tsx` | pending |
+| `apps/frontend/src/components/compliance/NotificationLogPanel.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/compliance/NotificationRulesPanel.tsx` | pending |
 
 ### components/customers (1)

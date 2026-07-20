@@ -1,3 +1,5 @@
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
+
 type LogEntry = {
   id: string;
   sent_at: string;
@@ -11,36 +13,56 @@ type LogEntry = {
 
 type Props = { entries: LogEntry[] };
 
+const COLUMNS: Array<ParityColumn<LogEntry>> = [
+  {
+    key: "sent_at",
+    label: "Sent",
+    sortable: true,
+    sortValue: (row) => row.sent_at,
+    render: (row) => new Date(row.sent_at).toLocaleString(),
+  },
+  {
+    key: "credential_type",
+    label: "Credential",
+    sortable: true,
+  },
+  {
+    key: "entity_type",
+    label: "Owner Type",
+    sortable: true,
+  },
+  {
+    key: "channel",
+    label: "Channel",
+    sortable: true,
+  },
+  {
+    key: "recipient",
+    label: "Recipient",
+    sortable: true,
+  },
+  {
+    key: "status",
+    label: "Status",
+    sortable: true,
+  },
+];
+
 export function NotificationLogPanel({ entries }: Props) {
   return (
-    <div data-testid="compliance-log-panel">
-      <h3 className="mb-3 text-lg font-semibold">Notification Log</h3>
-      <div className="overflow-x-auto">
-      <table className="min-w-full border text-sm">
-        <thead>
-          <tr className="bg-slate-100 text-left">
-            <th className="p-2">Sent</th>
-            <th className="p-2">Credential</th>
-            <th className="p-2">Owner Type</th>
-            <th className="p-2">Channel</th>
-            <th className="p-2">Recipient</th>
-            <th className="p-2">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {entries.map((entry) => (
-            <tr key={entry.id} className="border-t">
-              <td className="p-2">{new Date(entry.sent_at).toLocaleString()}</td>
-              <td className="p-2">{entry.credential_type}</td>
-              <td className="p-2">{entry.entity_type}</td>
-              <td className="p-2">{entry.channel}</td>
-              <td className="p-2">{entry.recipient}</td>
-              <td className="p-2">{entry.status}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      </div>
+    <div className="space-y-3" data-testid="compliance-log-panel">
+      <h3 className="text-lg font-semibold">Notification Log</h3>
+      <ParityTable
+        rows={entries}
+        columns={COLUMNS}
+        rowKey={(row) => row.id}
+        loading={false}
+        storageKey="compliance-notification-log"
+        emptyText="No notification log entries."
+        exportFilename="compliance-notification-log"
+        tableTestId="compliance-notification-log-table"
+        rowTestId={(row) => `compliance-notification-log-${row.id}`}
+      />
     </div>
   );
 }
