@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -20,10 +21,23 @@ type IntegrityAlertRow = Record<string, unknown>;
 type IntegrityAlertRuleRow = Record<string, unknown>;
 
 type PageTab = "inbox" | "rules";
+const INTEGRITY_TAB_IDS = new Set<string>(["inbox", "rules"]);
+
+export function parseIntegrityAlertsTab(raw: string | null): PageTab {
+  if (raw && INTEGRITY_TAB_IDS.has(raw)) return raw as PageTab;
+  return "inbox";
+}
 
 export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
-  const [pageTab, setPageTab] = useState<PageTab>("inbox");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const pageTab = parseIntegrityAlertsTab(searchParams.get("tab"));
+  const setPageTab = (next: PageTab) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "inbox") params.delete("tab");
+    else params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
   const [category, setCategory] = useState("");
   const [severity, setSeverity] = useState("");
   const [status, setStatus] = useState("");
