@@ -1,17 +1,27 @@
 {
   "block_id": "0441-mod5-deductions-tab-wrong-content",
-  "status": "PENDING",
-  "classification": "FINANCIAL",
-  "phase": "tier3",
-  "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
-  "source_file": "0441-mod5-deductions-tab-wrong-content.txt",
+  "branch": "fix/0441-mod5-deductions-tab-distinct",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend display)",
+  "phase": "OPS-FE",
+  "task": "Split Drivers hub cash_advances vs deductions subnav: Debt Alert stays on Cash advances only; Deductions renders AutoDeductionPoliciesPanel. Arch design tab purpose updated. Guard + verify-step 1012 (Rule 17).",
+  "source": "docs/trackers/CODER-BUILD-INSTRUCTIONS-2026-07-19.md",
+  "source_file": "0441-mod5-deductions-tab-wrong-content",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    ".block-ready/0441-mod5-deductions-tab-wrong-content.json",
+    "apps/frontend/src/pages/Drivers.tsx",
+    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
+    "scripts/verify-drivers-deductions-tab-distinct.mjs",
+    "scripts/verify-steps/1012-verify-drivers-deductions-tab-distinct.mjs"
   ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "Drivers.tsx cash_advances-only Debt Alert; deductions-only AutoDeductionPoliciesPanel + data-testid drivers-deductions-panel; no shared OR condition; verify-drivers-deductions-tab-distinct.mjs PASS (+ --selftest); verify-steps/1012 wired (Rule 17); arch design deductions purpose updated."
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "GATED: no (pure FE). No migrations. No package.json / locked-guards / ci.yml edits (Rule 17)."
 }
