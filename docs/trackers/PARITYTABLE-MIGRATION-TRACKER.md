@@ -630,7 +630,6 @@ verify-step 1035.
 | `apps/frontend/src/pages/insurance/LawsuitsTab.tsx` | pending |
 | `apps/frontend/src/pages/insurance/PaymentScheduleTab.tsx` | pending |
 | `apps/frontend/src/pages/insurance/PolicyDetail.tsx` | pending |
-| `apps/frontend/src/pages/insurance/TypeCatalogAdmin.tsx` | pending |
 
 ### pages/integrations (1)
 
@@ -1103,3 +1102,14 @@ and Accept / Complete / Details actions are preserved. Guard:
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/daily-tasks/DailyTasksPage.tsx` | pages/daily-tasks |
+## qbo-parity-a1 — TypeCatalogAdmin (this PR)
+Insurance type catalog admin grid was a hand-rolled `<table>` with inline edit and
+deactivate actions. Migrated to shared `ParityTable` (sort + resize + gear);
+`ListErrorState` on catalog query failure (never false-empty). Columns Code / Name /
+Description / Sort / Status / Actions preserved 1:1; + Create type form and
+Edit/Save/Cancel/Deactivate unchanged. Guard:
+`scripts/verify-type-catalog-admin-uses-paritytable.mjs` via verify-step **1073**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/insurance/TypeCatalogAdmin.tsx` | pages/insurance |
