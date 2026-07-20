@@ -259,7 +259,7 @@ verify-step 1035.
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/components/catalogs/CatalogTable.tsx` | pending |
+| `apps/frontend/src/components/catalogs/CatalogTable.tsx` | migrated (qbo-parity-a1) |
 
 ### components/compliance (0 remaining)
 
@@ -918,6 +918,17 @@ Guard: `scripts/verify-qbo-vendor-linkage-uses-paritytable.mjs` via verify-step 
 | --- | --- |
 | `apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx` | pages/admin |
 
+
+## qbo-parity-a1 — CatalogTable (this PR)
+Lists GenericCatalogPage grid was a hand-rolled `<table>` wrapped in BulkActionBar /
+TableSelection. Migrated to shared `ParityTable` (sort + resize + gear + selectable batch
+actions + row Edit/Archive). Search + Active/Inactive/All filterBar, selection cap 200,
+and emptyText preserved 1:1. Guard: `scripts/verify-catalog-table-uses-paritytable.mjs`
+via verify-step **1045**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/catalogs/CatalogTable.tsx` | components/catalogs |
 ## qbo-parity-a1 — TrailerReeferSection (this PR)
 Trailer reefer hours log was a hand-rolled `<table>`. Migrated to shared
 `ParityTable` (sort + resize + gear). Columns preserved 1:1; reefer hours entry
