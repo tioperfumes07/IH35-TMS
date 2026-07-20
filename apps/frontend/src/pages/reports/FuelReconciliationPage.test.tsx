@@ -3,7 +3,7 @@ import { ToastProvider } from "../../components/Toast";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes, createMemoryRouter, RouterProvider } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../api/client";
 import * as reportsApi from "../../api/reports";
@@ -21,12 +21,16 @@ vi.mock("../../contexts/CompanyContext", () => ({
   }),
 }));
 
-function wrap(ui: ReactElement) {
+function wrap(ui: ReactElement, initialEntry = "/reports/fuel-reconciliation") {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
     <QueryClientProvider client={qc}>
       <ToastProvider>
-        <MemoryRouter>{ui}</MemoryRouter>
+        <MemoryRouter initialEntries={[initialEntry]}>
+          <Routes>
+            <Route path="/reports/fuel-reconciliation" element={ui} />
+          </Routes>
+        </MemoryRouter>
       </ToastProvider>
     </QueryClientProvider>
   );
@@ -64,7 +68,9 @@ const sample: FuelReconciliationResponse = {
   unmatched_card_transactions: [
     { transaction_id: "c1", transaction_date: "2026-01-05", amount_cents: 500, merchant_name: "FuelCo", gps_match_confidence: "no_match" },
   ],
-  unmatched_wo_entries: [] as {
+  unmatched_wo_entries: [
+    { wo_id: "w1", wo_number: "WO-1", wo_date: "2026-01-06", amount_cents: 300, unit_number: "T-99" },
+  ] as {
     wo_id: string;
     wo_number: string;
     wo_date: string;
@@ -119,5 +125,33 @@ describe("FuelReconciliationPage", () => {
         transaction_id: "c1",
       });
     });
+  });
+
+  it("clicking Unmatched WO Entries sets ?tab=wo", async () => {
+    const user = userEvent.setup();
+    const router = createMemoryRouter(
+      [{ path: "/reports/fuel-reconciliation", element: <FuelReconciliationPage /> }],
+      { initialEntries: ["/reports/fuel-reconciliation"] },
+    );
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={qc}>
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
+      </QueryClientProvider>,
+    );
+    await screen.findByText("FuelCo");
+    await user.click(screen.getByRole("button", { name: /unmatched wo entries/i }));
+    await waitFor(() => {
+      expect(screen.getByText("WO-1")).toBeInTheDocument();
+    });
+    expect(router.state.location.search).toContain("tab=wo");
+  });
+
+  it("honors ?tab=wo on initial load", async () => {
+    render(wrap(<FuelReconciliationPage />, "/reports/fuel-reconciliation?tab=wo"));
+    expect(await screen.findByText("WO-1")).toBeInTheDocument();
+    expect(screen.queryByText("FuelCo")).toBeNull();
   });
 });
