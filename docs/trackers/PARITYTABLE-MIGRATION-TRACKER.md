@@ -150,7 +150,7 @@ Guard: `scripts/verify-ops-history-uses-paritytable.mjs` via verify-step 1026.
 Drivers hub Load History tab: hand-rolled `<table>` (Load # / Assigned At / Method /
 Previous Driver / New Driver / Reason) with date filters. Migrated to shared `ParityTable`
 (sort + resize + gear + filterBar); EntityLink + ListErrorState preserved 1:1.
-Guard: `scripts/verify-load-history-tab-uses-paritytable.mjs` via verify-step 1029.
+Guard: `scripts/verify-load-history-tab-uses-paritytable.mjs` via verify-step 1032.
 
 | File | Module |
 | --- | --- |
@@ -235,10 +235,8 @@ Guard: `scripts/verify-load-history-tab-uses-paritytable.mjs` via verify-step 10
 | --- | --- |
 | `apps/frontend/src/components/drivers/AuditHistoryTab.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/drivers/EarningsTab.tsx` | migrated (qbo-parity-a1) |
-| `apps/frontend/src/components/drivers/LoadHistoryTab.tsx` | pending |
-| `apps/frontend/src/components/drivers/OperationsHistoryTable.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/drivers/LoadHistoryTab.tsx` | migrated (qbo-parity-a1) |
-| `apps/frontend/src/components/drivers/OperationsHistoryTable.tsx` | pending |
+| `apps/frontend/src/components/drivers/OperationsHistoryTable.tsx` | migrated (qbo-parity-a1) |
 
 ### components/factoring (1) — financial-hold
 
