@@ -18,15 +18,35 @@ sort, and the lock-account control — never drop or reorder.
   payroll-integration, form425c, ap). Per CLAUDE.md §1.4 these are **Jorge-gated — do not migrate autonomously**.
 - **pending** — non-financial, eligible for a future migration batch.
 
-## Rollup
-| Status | Count |
-| --- | --- |
-| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable + LoadHistoryTab + vehicle PlatesTable + vehicle ComplianceSection + DriverDaySummaryCard + StopReasoningTable + EntityAuditHistoryTab + AuditTrailPage + trailer PlatesTable + QboVendorLinkagePage + TrailerReeferSection) | 27 |
-| financial-hold (Jorge-gated) | 99 |
-| pending (non-financial, future batches) | 174 |
-| **hand-rolled total (original)** | **300** |
+## Rollup — DERIVED, never hand-edited
 
-> Note: ParityTable was already consumed by ~16 surfaces before this batch (not counted above — those were never hand-rolled).
+> **Do NOT add a hand-maintained count table here.** Every migration PR used to edit the same count
+> lines, so those lines conflicted on every concurrent merge; each hand-resolve left another duplicate
+> row behind. By 2026-07-20 this section had grown to **12 rows instead of 4**, carrying three
+> contradictory `pending` values (179 / 180 / 183) and a `migrated` count of 23 when the real figure
+> was **27** — the four sections appended below the inventory block were never counted. The numbers
+> were both corrupt and silently wrong, which is why they are now derived instead of typed.
+>
+> This section is what made the file a merge-conflict magnet. Keeping it derived is what keeps the
+> `merge=union` driver in `.gitattributes` safe: union is line-based and only correct on an
+> **append-only** file. Re-introducing an edited-in-place count would resurrect both the conflicts
+> and the duplicate-row corruption.
+
+Counts are derived from the file itself — run:
+
+```sh
+F=docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md
+INV_START=$(grep -n '^## Remaining hand-rolled inventory' "$F" | cut -d: -f1)
+INV_END=$(awk -v s="$INV_START" 'NR>s && /^## /{print NR-1; exit}' "$F")
+echo "migrated:  $(( $(sed -n "1,$((INV_START-1))p" "$F" | grep -c '^| `apps/frontend/src/') \
+                  + $(sed -n "$((INV_END+1)),\$p" "$F" | grep -c '^| `apps/frontend/src/') ))"
+echo "remaining: $(sed -n "$INV_START,${INV_END}p" "$F" | grep -c '^| `apps/frontend/src/')"
+```
+
+**As of 2026-07-20:** migrated **30** · remaining in inventory **290** (of which 99 are
+`financial-hold`, Jorge-gated per CLAUDE.md §1.4). The historical "300 hand-rolled total" is
+approximate — ParityTable was already consumed by ~16 surfaces that were never hand-rolled, so
+`migrated + remaining` does not reconcile to it and never did.
 
 ## Batch 1 — migrated (this PR)
 Added two **additive** props to `ParityTable` — `tableTestId` and `rowTestId` — so a migrated page keeps the container/row `data-testid` hooks its former hand-rolled table carried (existing unit tests pass unchanged).
