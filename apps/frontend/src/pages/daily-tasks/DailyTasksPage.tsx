@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, CheckCircle2, Clock3, ListChecks, UserRound } from "lucide-react";
 import {
@@ -23,11 +24,17 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 type TaskViewId = "my" | "team" | "created";
 
 const VIEW_ORDER: TaskViewId[] = ["my", "team", "created"];
+const VIEW_IDS = new Set<string>(VIEW_ORDER);
 const VIEW_LABEL: Record<TaskViewId, string> = {
   my: "My Tasks",
   team: "Team Tasks",
   created: "Created by Me",
 };
+
+export function parseDailyTasksView(raw: string | null): TaskViewId {
+  if (raw && VIEW_IDS.has(raw)) return raw as TaskViewId;
+  return "my";
+}
 
 const PRIORITY_OPTIONS: Array<{ value: CreateDailyTaskPayload["priority"]; label: string }> = [
   { value: "low", label: "Low" },
@@ -82,7 +89,14 @@ export function DailyTasksPage() {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
 
-  const [view, setView] = useState<TaskViewId>("my");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = parseDailyTasksView(searchParams.get("view"));
+  const setView = (next: TaskViewId) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "my") params.delete("view");
+    else params.set("view", next);
+    setSearchParams(params, { replace: true });
+  };
   const [createOpen, setCreateOpen] = useState(false);
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
 
