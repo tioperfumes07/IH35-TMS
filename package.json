@@ -415,6 +415,8 @@
     "verify:sidebar-contract": "node scripts/verify-sidebar-contract.mjs",
     "verify:canonical-home-route": "node scripts/verify-canonical-home-route.mjs",
     "verify:block-acceptance": "node scripts/verify-block-acceptance.mjs",
+    "verify:block-status-overrides-downgrade-only": "node scripts/verify-block-status-overrides-downgrade-only.mjs",
+    "verify:block-status-overrides-downgrade-only:selftest": "node scripts/verify-block-status-overrides-downgrade-only.mjs --selftest",
     "verify:cashflow-module": "node scripts/verify-cashflow-module.mjs",
     "verify:insurance-financial-writes": "node scripts/verify-insurance-financial-writes.mjs",
     "verify:sidebar-route-resolution": "node scripts/verify-sidebar-route-resolution.mjs",
