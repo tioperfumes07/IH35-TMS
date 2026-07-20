@@ -1,17 +1,27 @@
 {
   "block_id": "qbo-parity-a1-paritytable-universal-adoption",
-  "status": "PARTIAL",
-  "classification": "FINANCIAL",
-  "phase": "tier3",
-  "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
-  "source_file": "qbo-parity-a1-paritytable-universal-adoption.txt",
+  "branch": "fix/qbo-parity-earnings-tab-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable migration)",
+  "phase": "OPS-FE",
+  "task": "Migrate Drivers EarningsTab (settlements + liabilities tables) from hand-rolled <table> to shared ParityTable QBO grammar. One high-traffic surface toward universal adoption. Guard + verify-step 1016 (Rule 17).",
+  "source": "docs/trackers/CODER-BUILD-INSTRUCTIONS-2026-07-19.md",
+  "source_file": "qbo-parity-a1-paritytable-universal-adoption",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    ".block-ready/qbo-parity-a1-paritytable-universal-adoption.json",
+    "apps/frontend/src/components/drivers/EarningsTab.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-earnings-tab-uses-paritytable.mjs",
+    "scripts/verify-steps/1016-verify-earnings-tab-uses-paritytable.mjs"
   ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "EarningsTab.tsx uses ≥2 ParityTable surfaces; no hand-rolled <table>/<thead>; settlement columns Period/Gross/Deductions/Net pay/Status and liability columns Type/Source/Original/Paid/Balance/Status preserved; rowTestIds driver-earnings-settlement-* and driver-earnings-liability-* preserved; verify-earnings-tab-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1016 wired (Rule 17); tracker marks EarningsTab migrated."
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "GATED: no (pure FE). Incremental adoption of qbo-parity-a1 — one surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17)."
 }
