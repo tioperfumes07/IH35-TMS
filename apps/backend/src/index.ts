@@ -44,6 +44,8 @@ import { initializeBorderCrossingDetectorWorker } from "./jobs/border-crossing-d
 import { registerSamsaraVehicleDriverPairingRoutes } from "./integrations/samsara/vehicle-driver-pairing/routes.js";
 import { initializeVehicleDriverPairingWorker } from "./jobs/vehicle-driver-pairing-worker.js";
 import { initializeAutoStatusSwitchWorker } from "./jobs/auto-status-switch-worker.js";
+import { registerActiveDriverSetRoutes } from "./integrations/samsara/active-driver-set/routes.js";
+import { initializeActiveDriverSetRecomputeWorker } from "./jobs/active-driver-set-recompute.js";
 import { registerQboForensicAdminRoutes } from "./integrations/qbo/forensic-admin.routes.js";
 import { registerQboSyncAdminRoutes } from "./integrations/qbo/qbo-sync-admin.routes.js";
 import { registerQboVendorLinkageRoutes } from "./integrations/qbo/qbo-vendor-linkage.routes.js";
@@ -671,6 +673,7 @@ async function main() {
   await registerProgramBoardRoutes(app);
   await registerSamsaraHosReadinessRoutes(app);
   await registerSamsaraVehicleDriverPairingRoutes(app);
+  await registerActiveDriverSetRoutes(app);
   await registerIntegrationHealthRoutes(app);
   await registerSamsaraVendorMappingIntegrityRoutes(app);
   await registerSamsaraVendorMappingActionsRoutes(app);
@@ -1294,6 +1297,13 @@ async function main() {
     app.log.info("[STARTUP] vehicle-driver-pairing-worker initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] vehicle-driver-pairing-worker failed");
+  }
+
+  try {
+    initializeActiveDriverSetRecomputeWorker(app);
+    app.log.info("[STARTUP] active-driver-set-recompute worker initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] active-driver-set-recompute worker failed");
   }
 
   try {
