@@ -31,7 +31,7 @@
 4. **[GATED] flow5** — execute lockdown §9.1 (collapse the duplicate deduction paths onto `driver_finance.driver_settlement_deductions`).
 
 ## VERIFY BEFORE BUILDING (flagged, need a check first)
-- `LEASE_GL_POSTING_ENABLED` flipped ON for TRK (PR #2143) vs locked-decision §9.9 "OFF until CPA-verify" — confirm intended before trusting lease GL postings.
+- ~~`LEASE_GL_POSTING_ENABLED` ON (scope)~~ — **RESOLVED 2026-07-20:** owner confirmed **"3-lease on yes"** then **"yes leases on all companies"** → TRANSP + TRK + USMCA ON. Canonical lock updated in `docs/lockdown/00_LOCKED_DECISIONS.md` §9.9. Live Neon already has all three overrides `enabled=true` (verified with `app.bypass_rls='lucia'`). Coder: do **not** flip any of the three OFF; do **not** chase as drift. SETTLEMENT stays OFF until CPA.
 - Any ticket marked UNVERIFIABLE needs a gated prod read.
 
 ---
@@ -255,11 +255,11 @@ Totals: 49 findings — 31 STILL-OPEN / 15 ALREADY-FIXED / 3 UNVERIFIABLE. GATED
 ---
 
 ### 0473-1-8-tk-transp-lease-asc842  [accounting]  GATED?(yes)
-- STATE: STILL-OPEN, with a DOC DRIFT found — `LEASE_GL_POSTING_ENABLED` is per-entity-only in `apps/backend/src/lib/feature-flags/service.ts:53` and design doc `docs/specs/LEGAL-FINANCE-OWNERSHIP-AND-FLIP-READINESS.md:43,64` says default OFF pending CPA-verify. But migration `202607052300_per_entity_posting_flag_golive.sql:114` (merged, PR #2143) seeds an ON override for `TRK`, citing "Owner (Jorge) approved" — dated one day AFTER `docs/lockdown/00_LOCKED_DECISIONS.md:132` §9.9 (2026-07-04) says "OFF per-entity until CPA-verify."
-- ROOT CAUSE: The flag was flipped ON for TRK via owner approval alone; no CPA/counsel ASC 842 confirmation is cited for that specific flip, and it contradicts the locked §9.9 ruling — a live doc/decision drift per §9.
+- STATE: **OWNER-RESOLVED (flag half) 2026-07-20** — Jorge confirmed `LEASE_GL_POSTING_ENABLED` ON for **all companies** ("3-lease on yes" → **"yes leases on all companies"**). Doc drift closed in `docs/lockdown/00_LOCKED_DECISIONS.md` §9.9. Live Neon already has TRANSP + TRK + USMCA overrides `enabled=true` (bypass-verified) — **no further migration required to "turn on"**; do **not** flip any OFF. Residual (optional paperwork): CPA/counsel ASC 842 common-control / useful-life confirmation — not a reason to disable lease posting after this owner line.
+- ROOT CAUSE (historical): §9.9 (2026-07-04) said lease OFF until CPA; go-live `202607052300` only seeded TRK ON; prod later had all three ON while docs lagged until owner re-confirmed 2026-07-20.
 - FILES: docs/lockdown/00_LOCKED_DECISIONS.md (§9.9); db/migrations/202607052300_per_entity_posting_flag_golive.sql; apps/backend/src/accounting/lease-asc842/lease-posting.service.ts
-- FIX STEPS: 1) Surface the drift to Jorge directly: which document is canonical — the PR #2143 approval or §9.9's "OFF until CPA-verify"? 2) If CPA-verify happened out-of-band, record it in writing (amend §9.9). 3) If flipped prematurely, get owner OK to disable TRK's override until sign-off lands, or accept the risk in writing.
-- GUARD: verify-lease-gl-posting-flag-cpa-signoff.mjs — fail if a migration seeds a `LEASE_GL_POSTING_ENABLED` ON override without a matching dated CPA-signoff reference in the same file or a linked doc.
+- FIX STEPS: **None for the flag** (prod already matches owner intent). Optional: file CPA ASC 842 confirmation when counsel returns it. Never self-flip SETTLEMENT/FACTORING.
+- GUARD: N/A for disable; if adding a guard, assert TRANSP/TRK/USMCA lease overrides remain enabled=true when present (do not invent a "must be OFF" check).
 
 ---
 
