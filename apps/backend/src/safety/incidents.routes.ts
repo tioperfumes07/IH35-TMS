@@ -117,7 +117,7 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
         `
           SELECT i.*, u.unit_number
           FROM safety.incidents i
-          LEFT JOIN mdata.units u ON u.id = i.unit_id
+          LEFT JOIN mdata.units u ON u.id = i.unit_id AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)
           WHERE ${filters.join("\n            AND ")}
           ORDER BY i.incident_at DESC
           LIMIT $${limitIdx} OFFSET $${offsetIdx}
