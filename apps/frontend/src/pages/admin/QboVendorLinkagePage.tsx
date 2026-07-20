@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   linkDriverQboVendor,
@@ -17,13 +18,27 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type TabKey = "drivers" | "assets";
 
+const QBO_VENDOR_LINKAGE_TAB_IDS = new Set<string>(["drivers", "assets"]);
+
+export function parseQboVendorLinkageTab(raw: string | null): TabKey {
+  if (raw && QBO_VENDOR_LINKAGE_TAB_IDS.has(raw)) return raw as TabKey;
+  return "drivers";
+}
+
 export function QboVendorLinkagePage() {
   const { selectedCompanyId } = useCompanyContext();
   const auth = useAuth();
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
-  const [activeTab, setActiveTab] = useState<TabKey>("drivers");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = parseQboVendorLinkageTab(searchParams.get("tab"));
+  const setActiveTab = (next: TabKey) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "drivers") params.delete("tab");
+    else params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
   const [filter, setFilter] = useState<"all" | "linked" | "unlinked">("all");
   const [linkageTarget, setLinkageTarget] = useState<{ entityType: "driver" | "asset"; entityId: string; name: string; currentQboVendorId?: string | null } | null>(null);
   const [classByUnit, setClassByUnit] = useState<Record<string, string>>({});
