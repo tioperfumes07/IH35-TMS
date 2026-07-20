@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-ifta-step2-fuel-paritytable",
+  "branch": "fix/ifta-step2-fuel-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable migration — IFTA operational filing review)",
+  "phase": "OPS-FE",
+  "task": "Migrate Step2FuelReview (IFTA fuel review) from hand-rolled <table> to shared ParityTable QBO grammar; preserve State/Aggregated gallons/Override gallons + override inputs + Save + Total. Guard + verify-step 1052 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + CODER-BUILD tbl-standard-raw-table-sweep-incomplete / qbo-parity-a1",
+  "source_file": "qbo-parity-a1-ifta-step2-fuel-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-ifta-step2-fuel-paritytable.json",
+    "apps/frontend/src/components/reports/ifta/Step2FuelReview.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-ifta-step2-fuel-uses-paritytable.mjs",
+    "scripts/verify-steps/1052-verify-ifta-step2-fuel-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "Step2FuelReview.tsx uses ParityTable (no hand-rolled <table>/<thead>); columns State/Aggregated gallons/Override gallons preserved; override number inputs + Save fuel overrides + Total summary preserved; verify-ifta-step2-fuel-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1052 wired (Rule 17); tracker marks Step2FuelReview migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE; IFTA filing review is operational, not financial posting). Incremental qbo-parity-a1 — Step2FuelReview surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17)."
+}

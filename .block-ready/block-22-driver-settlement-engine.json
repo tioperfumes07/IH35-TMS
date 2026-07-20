@@ -1,0 +1,49 @@
+{
+  "block_id": "block-22-driver-settlement-engine",
+  "status": "NEEDS-VERIFY",
+  "classification": "FINANCIAL",
+  "phase": "accounting",
+  "source": "docs/accounting/block-22-driver-settlement-engine.md (source-rank 'accounting'=2; this entry ranks 3 and WINS de-dup, giving acceptance[] an enforceable home under G2)",
+  "source_file": "block-22-driver-settlement-engine.md",
+  "task": "Driver settlement engine. Registered so its acceptance criteria become machine-checkable. SAME ROOT CAUSE as BLOCK-02: the source doc names apps/backend/src/payroll/driver-settlement.service.ts, which was RENAMED to driver-settlement.service.deprecated.ts in the payroll.* -> driver_finance.* canonicalization, so the reconciler could never see 4/4 and the block sat at 'partial 3/4 artifacts — unverified' indefinitely. Frozen by a stale path, not incomplete. allowed_files point at the CANONICAL driver-finance engine surfaces, verified present on main this session. NOTE: drivers are hired Mexican-B1 1099 contractors — settlement pay is a WAGE/FEE, never a percentage of customer linehaul (linehaul is company revenue).",
+  "branch": "feat/task4-acceptance-criteria-6-financial-blocks",
+  "allowed_files": [
+    "apps/backend/src/driver-finance/settlement-engine.ts",
+    "apps/backend/src/driver-finance/settlements.service.ts",
+    "apps/backend/src/driver-finance/settlement-payment.service.ts",
+    "scripts/verify-driver-settlement-tenant-scope.mjs",
+    "scripts/verify-driver-settlement-uses-bill-not-je.mjs"
+  ],
+  "acceptance": [
+    {
+      "kind": "guard",
+      "script": "scripts/verify-driver-settlement-tenant-scope.mjs",
+      "wired_into": "package.json verify:* + verify:static sweep",
+      "assert": "guard --selftest passes; settlement reads/writes are operating_company_id-scoped"
+    },
+    {
+      "kind": "guard",
+      "script": "scripts/verify-driver-settlement-uses-bill-not-je.mjs",
+      "wired_into": "package.json verify:* + verify:static sweep",
+      "assert": "settlement posts via the BILL path, not a hand-rolled journal entry"
+    },
+    {
+      "kind": "code",
+      "assert": "Deductions are written to the CANONICAL store driver_finance.driver_settlement_deductions and stamped applied_to_settlement_id (locked decision 9.1). The retired settlement_lines auto_deduction path is NOT used — the FIN-18 poster never reads it, so writing there silently overpays drivers."
+    },
+    {
+      "kind": "data",
+      "assert": "PROD row-count of driver_finance.driver_settlement_deductions rows carrying applied_to_settlement_id.",
+      "zero_count_means": "PENDING — the canonical deduction store has never been written. A 0-count here is the exact signature of the silent-overpay defect and MUST NOT read as DONE.",
+      "verified_by": "GUARD (RLS-immune probe; per-entity GUC required)"
+    },
+    {
+      "kind": "live",
+      "assert": "One real settlement observed: net-pay floor resolves at the 5% DEFAULT and is per-settlement editable (locked decision 9.2 — corrects the stale 10% record); recovery order is pay-first-then-escrow (9.3)."
+    }
+  ],
+  "linkage": "driver_finance.settlement_lines -> driver_settlements <-> mdata.drivers <-> accounting bill/bill-payment <-> catalogs.accounts <-> audit.row_changes. RETIRE targets payroll.driver_settlements / payroll.driver_settlement_line_items / settlement.* are read-only during retirement — never a new write or FK (guard G4).",
+  "db_required": true,
+  "guard_required": true,
+  "note": "FINANCIAL CLUSTER — owner ratifies; GUARD verifies against prod. Registration only; NOT a claim the block is built. Related open defect (separate design memo, Task 5): settlement-payment.service.ts markPaidManually has no FOR UPDATE row lock and no state-guarded WHERE — the idempotency latch survives only in the retired .deprecated.ts."
+}

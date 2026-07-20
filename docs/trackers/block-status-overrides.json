@@ -576,6 +576,18 @@
       "status": "NEEDS-VERIFY",
       "evidence": "code-guard passes + reuses the CHAIN-05-proven posting engine, but 0 reconciliation sessions on TRANSP to exercise — live-proof deferred to first real reconcile-commit. No fake session created.",
       "verified_on": "2026-07-12"
+    },
+    {
+      "id": "BLOCK-02-DRIVER-ESCROW-DESIGN",
+      "status": "NEEDS-VERIFY",
+      "evidence": "NOT A VERDICT — anti-fake-green downgrade. Registering this block pointed allowed_files at canonical driver-finance files that all exist, so the code-presence classifier auto-promoted it to DONE. Escrow posting is UNVERIFIED against prod data. Awaiting GUARD live verification; GUARD replaces this row with the real verdict.",
+      "verified_on": "2026-07-20"
+    },
+    {
+      "id": "block-22-driver-settlement-engine",
+      "status": "NEEDS-VERIFY",
+      "evidence": "NOT A VERDICT — anti-fake-green downgrade. Same cause: all signature files present on main auto-promoted this to DONE off code presence alone. driver_finance.driver_settlement_deductions population is UNVERIFIED against prod. Awaiting GUARD live verification.",
+      "verified_on": "2026-07-20"
     }
   ]
 }
