@@ -1,33 +1,30 @@
-# IH35-TMS — FINAL CODER HANDOFF · 2026-07-19
-_One document. Everything from this session + all agent findings. Hand to Cursor/Coder._
+# IH35-TMS — FINAL CODER HANDOFF · 2026-07-19 (v2, cross-reviewed)
+_Reconciled across GUARD (prod-access) + Cursor (live-main re-verify). §12 = cross-review deltas. Hand to Cursor/Coder._
 
-## PROVENANCE (how each fact was verified)
-- **LIVE-REPO (me, this session):** block counts via `npm run reconcile:blocks` on current main; migrations/routes/components read directly; decision citations from lockdown/specs/memory. 
-- **TRIAGE (16 fresh sonnet passes on live main + 2026-07-16 adversarial sweep):** the 792 dispositions; unknowns labeled UNVERIFIED, never guessed.
-- **RELAYED-GUARD (Claude agent w/ authorized Neon access):** all prod-DB counts in §7. NOT independently re-verified by me (prod is gated §1.5).
-- Nothing here touched the ledger/schema/migrations. Financial/schema/flag changes below are GATED — owner-approve + GUARD live-verify, never self-merge.
+## PROVENANCE
+- **LIVE-REPO (GUARD):** reconcile:blocks on main; migrations/routes/components read directly; decisions cited from lockdown/specs/memory.
+- **TRIAGE:** 16 fresh passes on main + 2026-07-16 adversarial sweep (caught 25% fake-green). Unknowns = UNVERIFIED, never guessed.
+- **RELAYED-GUARD:** prod-DB counts in §7 — Neon reads by GUARD; some CONTESTED by Cursor's re-read (see §12). Not adjudicated here.
+- **GATE (§1.4):** every BUILD touching accounting.*/catalogs.*/mdata.*/migrations/posting/flags = owner signs diff+SQL before merge. Not a deferral — company protection.
 
-## 1. TRUE COUNTS (live `reconcile:blocks`, main, post-purge)
+## 1. TRUE COUNTS (live reconcile:blocks, post-purge)
 | metric | value |
 |---|---|
-| TO BUILD | 34 (6 PENDING + 28 PENDING-GATED) |
+| TO BUILD | 34 (6+28 gated) |
 | NEEDS-VERIFY | 61 |
-| DONE (merged on main; NOT = verified) | 587 |
+| DONE (merged ≠ verified) | 587 |
 | AUDIT-NOTE remaining | 504 (was 792) |
-| purged this session | 287 |
+| purged | 287 |
 | total blocks | 1186 (was 1473) |
-| merged-PR spine | 2621 |
-
-TWO AXES (stop conflating): **34 build tickets** (measurable) vs **~418 open audit findings** (the '408'). Do not sum.
 
 ## 2. THE 34 TO BUILD
-**6 PENDING (build now):** accounting-2-ap-aging-qbo-mirror-population · AF-8-payroll-bridge · CHAIN-08/chain-08 TRANSP demo-data purge (pre-go-live) · driverprofile-1-companion-tier1-rls-hardening · fk-safety-events-driver-status-0289
-**28 PENDING-GATED (need owner gate then build):** AF-1 entity-COA fix · AF-2 QBO drift · AF-4 A/P bills migration (~$1.18M) · AF-5 34 stub-catalogs · AF-7 money controls · CHAIN-06 invoice→AR · CHAIN-07 settlements 500+GL · CONN-4 EDI · FH-VERIFY finance-hub 1-8 · STMT-3 1099+425C · VOID-VERIFY · FIX-05 banking-split · ITEM-02 excel-upload RLS · BLOCK-01 depreciation · BLOCK-02 driver-escrow · BLOCK-03 IFTA · BLOCK-17 W2/1099 · BLOCK-19 audit-hash · BLOCK-24 1099-annual · BLOCK-25 consolidation · HOS-FANOUT-03-08 · HOS-MAP-samsara · HOS-PRC-DATA · HOS-PRC2 · DISP-WIZARD-edit-load · DISP-WO-modal · ENT-AUDIT · USMCA-LAUNCH
+**6 PENDING:** accounting-2-ap-aging-qbo-mirror-population · AF-8-payroll-bridge · CHAIN-08 demo-purge · driverprofile-1-rls · fk-safety-events-driver-status-0289
+**28 GATED:** AF-1/2/4/5/7 · CHAIN-06/07 · CONN-4 · FH-VERIFY · STMT-3 · VOID-VERIFY · FIX-05 · ITEM-02 · BLOCK-01/02/03/17/19/24/25 · HOS-FANOUT/MAP/PRC/PRC2 · DISP-WIZARD/WO · ENT-AUDIT · USMCA-LAUNCH
 
-## 3. AUDIT-NOTE PURGE (PR #2762) — 287 retired, reversible, evidence-tagged
-NOISE 116 · RESOLVED 148 · DUPLICATE 23. Markers: superseded_by/duplicate_of (git-reversible, nothing deleted). Held for confirm: 79 (fresh=resolved vs stale sweep=open, prose-only).
+## 3. PURGE (PR #2762) — 287 retired, reversible
+NOISE 116 · RESOLVED 148 · DUPLICATE 23. Reversible markers, nothing deleted. Held for confirm: 79.
 
-## 4. REMAINING OPEN BACKLOG — 418 findings, by module (the real work)
+## 4. OPEN BACKLOG — 418 findings by module (NOTE: not yet reconciled against the 60 decided in §9A — see §12)
 
 ### dispatch (85)
 - `0008-d-abandonment-pay-first-then-escr_DISPATCH` — grep -i escrow returns ZERO hits in abandonment.service.ts (369 lines) / abandonment.routes.ts; pay-first-then-escrow-shortfall logic entirely absent.
@@ -489,221 +486,207 @@ NOISE 116 · RESOLVED 148 · DUPLICATE 23. Markers: superseded_by/duplicate_of (
 ### legal (1)
 - `0441-mod12-legal-no-reverse-drill-through` — Matter detail page has forward EntityLinks out to driver/unit/claim, but grep for legal-matter references in driver/fleet/insurance frontend pages returns nothi
 
-## 5. NOTABLE FINANCIAL BUGS (still-open, precise)
-- settlement-payment.routes.ts never registered → payment-status panel 404s in prod
-- HoldDeductionModal sends settlement-line id but backend updates deduction_schedule → holds silently no-op
-- QBO CDC omits Purchase/Deposit/Transfer → bank-transaction pull missing
+## 5. NOTABLE FINANCIAL BUGS (still-open)
+- settlement-payment.routes.ts never registered → payment-status panel 404 in prod
+- HoldDeductionModal sends settlement-line id but backend updates deduction_schedule → holds no-op
+- QBO **CDC poll** omits Purchase/Deposit/Transfer (qbo-cdc.service.ts:7) → bank-txn CDC ingest incomplete [NOTE: separate from recon-register which DOES cover all 6]
 - auto-deduction policy apply() only called from its own test → deductions never reduce settlements
 - 0441-mod2-wo-split-brain: two live WO-numbering route sets
-- 0441-mod6-spawn-liability-fake-stub: returns null liability id
+- 0441-mod6-spawn-liability-fake-stub: null liability id
 - 0441-mod11-profit-per-truck-cron-double-count: fan-out JOIN over-counts
-- 0441-mod2-csv-import-mileage-phantom: writes phantom mdata.units.mileage
-- settlement double-pay race: no compare-and-set guard
-- load_stops DELETE grant still live to app role
-- VENDOR-CUSTOMER-QBO-PARITY: default_ap_account_qbo_id zero frontend refs
+- 0441-mod2-csv-import-mileage-phantom: phantom mdata.units.mileage
+- settlement double-pay race: no compare-and-set
+- load_stops DELETE grant still live
 
-## 6. REVENUE-RECOGNITION LOCK — conflict to resolve before flag flip (GATED)
-Locked (#2733/#2735): two-event latch — at delivery DR Unbilled Revenue/CR Line-Haul Income; at billing DR A/R/CR Unbilled. Verified NetSuite-grade for single-obligation freight; surpasses QBO. **CONFLICT:** merged accounting.revenue_recognition schema+poster model DEFERRED revenue (bill-first, opposite direction); revenue_contracts has deferred_revenue_account_id+ar_account_id but NO unbilled/contract-asset column (grep of db/migrations = zero). **Prereqs before REVENUE_RECOGNITION_POST_ENABLED flips:** (1) seed Unbilled Revenue account TRANSP+USMCA (none exist); (2) new migration adding unbilled/contract-asset account + earn-first posting path; (3) fix flag wiring 0243-h3-2 (isEnabled() called w/o operating_company_id → global-only).
+## 6. REVENUE-RECOGNITION — DECISION LOCKED (#2733/#2735); IMPLEMENTATION prereqs OPEN
+DECISION is CLOSED: two-event latch, point-in-time-at-delivery (owner ruling #2733). Do NOT reopen the decision. What remains OPEN is the IMPLEMENTATION (not a reopened decision): merged accounting.revenue_recognition schema+poster model DEFERRED revenue (bill-first, opposite direction); revenue_contracts has deferred_revenue_account_id+ar_account_id but NO unbilled/contract-asset column (db/migrations grep=zero). **Before REVENUE_RECOGNITION_POST_ENABLED flips (all gated):** (1) seed Unbilled Revenue acct TRANSP+USMCA (none exist); (2) migration adding unbilled/contract-asset acct + earn-first posting path; (3) fix flag wiring 0243-h3-2 (isEnabled w/o operating_company_id → global-only).
 
-## 7. NEON PROD READS — RELAYED-GUARD (br-fancy-credit-akjnd07a, RLS-bypass, 2026-07-19)
-_Verified by the GUARD agent with authorized prod access; not independently re-verified by me._
-
-| item | prod result | disposition |
+## 7. NEON PROD READS — RELAYED-GUARD (some CONTESTED — see §12)
+| item | GUARD result | disposition |
 |---|---|---|
-| 0519-sf1 settlements | 165/165 active drivers have 0 settlements | OWNER CONFIRM: settlements done in QBO for now (CPA #57)? If yes → EXPECTED; if TMS engine should've run → gap |
-| 0519-ma1 PM schedules | 0/50 active units have active PM schedule (186 total) | OWNER: is PM scheduling expected live in TMS yet? |
-| dp-04 hire date | 165/165 active drivers blank hire_date | GAP if required; backfill on HR timeline (mdata write, gated) |
-| 0519-dq3 blank CDL | 16 active drivers no cdl_number | REAL DQ (compliance) → cleanup (gated) |
-| is_sample_data mis-flag | 78 active drivers flagged sample; 73 have REAL Mexican CDLs, 0 Samsara logins | CONFIRMED your uploaded B1 roster MIS-FLAGGED → un-flag real ones (mdata write, gated) |
-| 0519-dq1 test driver | 4 active test/dummy names | purge/rename (gated) |
-| 0519-dq2 placeholder phone | 2 active placeholder phone | minor cleanup (gated) |
-| banking 'disconnected' | 5 stale is_active=false duplicate rows (1 BoA USMCA, 4 WF TRK); BoA absent for TRANSP/TRK | NOT broken feeds — archive 5 stale rows; ensure balance/recon filter is_active=true. BoA closed in trucking = correct |
-| 0519-dq4/fl-01 fleet VIN | 0 blank; all 50 active units complete | CLOSE — clean |
-| GL flags | all 15 GL-posting flags ENABLED on all 3 entities | CLOSE — correct-by-design (parallel-books cutover); do NOT re-flag |
-| PHASE0 deploy-drift | prod=cb8055b fresh deploy | confirm cb8055b==origin/main HEAD (moves w/ merges) |
-| 0519-mig2 migrations-no-file | 688 ledger rows / 688 files | CURSOR: comm -23 ledger vs ls db/migrations; left-only=applied-no-file; never delete ledger rows |
+| 0519-sf1 settlements | 165/165 active 0 settlements | OWNER CONFIRM QBO-side (CPA #57) |
+| 0519-ma1 PM schedules | GUARD:0/50 · CURSOR:30 rows,4/82 InService — CONTESTED | RE-RUN once (see §12) |
+| dp-04 hire date | 165/165 blank | GAP if required (mdata, gated) |
+| 0519-dq3 blank CDL | 16 active no cdl | REAL DQ → cleanup (gated) |
+| is_sample_data | 78 flagged; 73 real Mexican CDLs, 0 Samsara | MIS-FLAGGED real B1 roster → un-flag (gated) |
+| 0519-dq2 phone | GUARD:2 · CURSOR:74 (000-000-0000) — CONTESTED | RE-RUN once (see §12) |
+| banking disconnected | 5 stale is_active=false dup rows; BoA absent TRANSP/TRK | archive dups; recon filter is_active=true; BoA closed=correct |
+| fleet VIN | 0 blank 50/50 | CLOSE clean |
+| GL flags | 15 ON all 3 entities | CLOSE correct-by-design; don't re-flag |
+| deploy-drift | prod=cb8055b fresh | confirm ==origin/main HEAD |
+| 0519-mig2 | 688 ledger/688 files | CURSOR comm -23; never delete ledger rows |
 
-## 8. THE 66 UNVERIFIED — full disposition
-- **PROD (32):** closed by GUARD in §7 where listed; remaining prod-reads run same way (RLS-bypass count). Data-quality writes are mdata → gated.
-- **LIVE-APP (10):** 3 VISUAL-REMAINDER = RESOLVED (commits on main, PRs #2180/#2184/#2185 merged, verified via git merge-base --is-ancestor). 0441-mod13-compliance-tabs-local-usestate = STILL-OPEN (ComplianceDashboardPage.tsx:71 useState not URL-synced → migrate to searchParams). Repo/tooling: compliance-violations-tab-hardcoded (grep eld/tabs/ViolationsTab.tsx), p1-circular-dependencies (npx madge --circular), module-catalog-sweep (per-module parity, or drop). CHROME+axe (2 only): 0518-r15-a11y (axe across 30 routes), h-04-kpi-sublabel-contrast (OwnerHome.tsx:409). bf9b-wo-cost = underspecified → re-author/drop.
-- **UNIDENTIFIABLE (24):** no locatable artifact. CURSOR: one locate attempt each (grep + to_regclass + route table); found → verify; not found → OWNER drop-or-keep.
+## 8. THE 66 UNVERIFIED
+- **PROD (32):** GUARD closed §7 items; rest same RLS-bypass method. DQ writes = mdata, gated.
+- **LIVE-APP (10):** 3 VISUAL-REMAINDER content on main (RESOLVED; verify by CONTENT — commit-sha ancestry is fragile post-rewrite; LAYOUT's .block-ready superseded_by is empty = tracker cleanup). compliance-tabs-local-usestate=OPEN (ComplianceDashboardPage.tsx:71→searchParams). Repo/tooling: violations-tab-hardcoded (grep eld/tabs/ViolationsTab.tsx), p1-circular-dependencies (npx madge), module-catalog-sweep. CHROME+axe (2): 0518-r15-a11y, h-04-kpi-contrast. bf9b=re-author/drop.
+- **UNIDENTIFIABLE (24):** no artifact — one locate attempt each, else OWNER drop/keep.
 
 ## 9. THE 108 OWNER-DECISIONS
-### 9A — ALREADY ANSWERED in corpus (60) — tracker just needs updating
-- **biz-flow-4-no-escrow-deduction-cash-advance** [DELIBERATE-LOCK] — Owner-locked I3: driver escrow is a held-in-trust LIABILITY; the settlement pay-run only CONTRIBUTES to it (up to the $2,000 cap) and NEVER releases/draws it during the p  _(src: apps/backend/src/driver-finance/escrow-resolver.service.ts:1-4 (I3 LOCKED comment + ESCROW_CAP_CENTS))_
-- **0285-df-gap2-dual-deduction-systems** [DECIDED] — Canonical deduction store = driver_finance.driver_settlement_deductions (the only store the FIN-18 GL poster reads); retire the settlement_lines auto_deduction path AND t  _(src: docs/lockdown/00_LOCKED_DECISIONS.md §9.1 (also docs/specs/ACCOUNTING-ARCHITECTURE.md:167 and memory audit-fix-decisions-2026-07-04.md item B))_
-- **PHASE2_BILLLINE-LOADID_no-per-load-attribution_DISPATCH** [DECIDED] — Scope was already decided and built: add accounting.bill_lines.load_id FK -> mdata.loads for per-load cost attribution. PR #2330 (P2-BILLLINE-LOADID) merged 2026-07-11; t  _(src: docs/trackers/BLOCK-RECONCILIATION-2026-07-19.md:625 (P2-BILLLINE-LOADID-bill-lines-load-id, DONE, PR #2330) and memory session-2026-07-11-enforcement-layer-shipped.md)_
-- **0091-repo-public** [DELIBERATE-LOCK] — Flipping GitHub repo visibility is an access-control/permissions change, which is explicitly prohibited for an agent to perform itself — it must be directed to Jorge to d  _(src: CLAUDE.md §1.6 (lines 52-54, "Prohibited outright": "changing access controls or sharing/permissions... direct Jorge to do it himself"))_
-- **intercompany-trk-transp-consolidation-decision** [DELIBERATE-LOCK] — No consolidated/combined reporting ever, by design. TRANSP/TRK/USMCA financials are always presented per-entity, independent, never combined. Intercompany is handled only  _(src: memory revenue-recognition-at-delivery-and-no-consolidation.md (OWNER CORRECTION 2026-07-18, item 2), cross-referenced with memory bank-transaction-metadata-decisions-0441-mod8.md)_
-- **fk-escrow-termination-0289** [DECIDED] — Escrow release-on-separation is keyed off the driver's termination_date directly (release_scheduled_at = termination_date + release_claims_window_days, per-driver 45/60/9  _(src: docs/specs/B9-ESCROW-DESIGN.md:43,97 (also memory enterprise-feature-decisions-2026-07-05.md updating the return window to >=90d))_
-- **0285-df-gap1-no-escrow-for-cash-advances** [DECIDED] — Cash-advance shortfalls follow the same rule as walkoff/abandonment recovery: PAY FIRST, escrow only as a last resort if pay is insufficient (single charge per event, no   _(src: memory audit-fix-decisions-2026-07-04.md item D, plus apps/backend/src/driver-finance/escrow-resolver.service.ts:1-4 (I3 LOCKED))_
-- **0243-g11-10-month-close-checklist-unsatisfiabl** [DECIDED] — Remediation is already specced: change the month-close gate from 'zero overdue' (arComplete/apComplete requiring 0 overdue) to a reviewed/acknowledged sign-off mechanism   _(src: docs/specs/0243-financial-migration-cluster-design-2026-07-11.md:141-144 (B5 · 0243-g11-10 — month-close checklist unsatisfiable))_
-- **ruling-4-embezzlement-reclass-off-ar-q_DISPATCH** [DECIDED] — The CPA/owner ruling is the opposite of 'reclass off A/R': the Ignacio Muñoz + Anarely Alcazar 'Unauthorized Expenses' balances (~$423.7k) are KEPT as receivables (modele  _(src: memory opening-balance-and-recon-decisions-2026-07-02.md lines 23 and 29 (Jorge 2026-07-02 locked))_
-- **0251-gap12-commodity-equipment-mapping** [DECIDED] — Design already specified: add catalogs commodity column requires_equipment (CHECK IN dry_van/reefer/flatbed/tanker/none); dispatch's equipment-selection validation gate r  _(src: docs/specs/0251-commodity-product-catalog-design.md lines 4,14,26,39,44-45 (gap12))_
-- **P4-02_LEGAL-LINK_DISPATCH** [DECIDED] — Option B ownership boundary already locked: Legal module owns the link + handoff only (legal.contract_instance_links rows with link_type in driver/employee/... , the exec  _(src: docs/specs/LEGAL-FINANCE-OWNERSHIP-AND-FLIP-READINESS.md (LOCKED Option B) and memory legal-finance-ownership-option-b.md)_
-- **bf7-cash-advance-recovery-engine** [DECIDED] — Same governing rule as 0285-df-gap1: recovery is PAY-FIRST via the net-pay floor (5% default, editable per settlement; up to full final check on termination), with escrow  _(src: memory audit-fix-decisions-2026-07-04.md items C and D, plus apps/backend/src/driver-finance/escrow-resolver.service.ts:1-4 (I3 LOCKED))_
-- **0008-g3-qbo-mirror-canonical_DISPATCH** [DECIDED] — mdata.qbo_* is the canonical QBO mirror; repoint the accounting.qbo_* writers onto it (retire the accounting.qbo_* copy). Step 1 (naming the canonical) is decided; remain  _(src: docs/lockdown/00_LOCKED_DECISIONS.md §9.6 (also memory audit-fix-decisions-2026-07-04.md item G and schema-canonicalization-verdicts.md))_
-- **usmca-unhide-entity-switcher** [DECIDED] — USMCA stays hidden/unlaunched (is_active gate intentional) until its July 2026 launch date; it is TMS-authoritative from day one with no QuickBooks and is never part of t  _(src: CLAUDE.md §6 ("USMCA ... launches July 2026, hidden until then") and docs/lockdown/00_LOCKED_DECISIONS.md §8.5 ("USMCA has no QuickBooks → it is TMS-authoritative from day one (2026), never part of the clone/reconcile"))_
-- **h-03-open-queue-navy-cta** [DECIDED] — the navy 'Open queue' CTA is correct as-is; green is reserved exclusively for the Class pill and green/yellow section bands are explicitly forbidden, so the CTA should NO  _(src: CLAUDE.md §7 ("Palette LOCKED ... --green-pill #d1fae5 (Class pill only) ... No yellow/green section bands"))_
-- **PHASE1_BILLPAY-GL_bank-mutated-no-JE_DISPATCH** [DECIDED] — not a code gap — the paid-in-full bill+bill_payment model (Post-as-bill creates a PAID bill + bank-credit payment) is the owner-approved GL treatment, gated behind BILL_G  _(src: auto-memory banking-posting-flags-go-nogo-2026-07-06.md (2026-07-07 UPDATE))_
-- **0473-1-1-default-revenue-account-unmapped-line** [DECIDED] — default freight-revenue account = NONE/hard-fail: revenue credit resolves per-invoice-line to the item's mapped QBO income account; an unmapped line HARD FAILS and never   _(src: auto-memory void-cancel-governance-policy.md, "ACCOUNTING-1 / QBO decisions LOCKED (Jorge \"follow your best recommendation\", 2026-06-30)" section)_
-- **0008-h-create-bill-line-items-load-id_DISPATCH** [DECIDED] — schema design is already ruled: accounting.bill_lines.load_id is additive, nullable, FK's to the canonical hub mdata.loads(id) (mirroring accounting.expense_lines.load_id  _(src: db/migrations/202607200000_bill_lines_load_id.sql (header comment + body))_
-- **0473-1-6-wo-void-reversal-grain** [DECIDED] — whole-bill grain is the ruled design — a WO void reverses its whole linked bill as one net-zero reversing JE (both entries retained), reusing the existing void engine (ac  _(src: auto-memory void-cancel-governance-policy.md ("Reuse the existing void engine ... at the bill grain (a WO reverses its whole linked bill = one net-zero reversing JE)"))_
-- **p1-data-encryption-at-rest** [DECIDED] — a formal key-management/rotation policy exists: the encryption key MUST be rotated annually, with key versions tracked in the audit log, and a rotation runbook is a go-li  _(src: docs/specs/IH35_CURSOR_BUILD_SPEC_V3.md MUST 3.6.3 ("...MUST be rotated annually per Part 5.6, with key versions tracked in the audit log per Part 4.7.2.3") and its go-live checklist line ("BANKING_PII_ENCRYPTION_KEY rotation procedure documented"))_
-- **import-5-qbo-import-ui** [DELIBERATE-LOCK] — IMPORT-5 (the QBO-import UI) is a defined, sequenced block of the 6-block historical-import program, intentionally held behind QBO_HISTORICAL_IMPORT_ENABLED (default OFF)  _(src: docs/trackers/2026-07-02-module-sweep-17-28/import-program-v2/00-READ-FIRST-import-program-v2.txt (sequencing line "→ IMPORT-5 (v1, unchanged + STALE state rendering)" + "QBO_HISTORICAL_IMPORT_ENABLED default OFF · owner-triggered only"))_
-- **factoring-asc860-cpa-control-test-open** [DECIDED] — the ASC 860 three-part control test has been applied to the actual executed Faro agreement terms (full recourse via mandatory day-95 repurchase, personal guaranty, UCC fi  _(src: auto-memory faro-factoring-contract-terms.md ("ACCOUNTING TREATMENT = SECURED BORROWING (ASC 860) ... fails ASC 860 sale condition #3 → secured borrowing. Matches the CPA lock."))_
-- **ifta-sales-tax-booking-location-confirm** [DECIDED] — sales tax = none on line-haul freight — interstate/cross-border freight transportation is ruled not TX-sales-taxable, so no sales-tax module/posting is required on freigh  _(src: auto-memory opening-balance-and-recon-decisions-2026-07-02.md ("5. Sales tax: none — interstate/cross-border freight transportation is not TX-sales-taxable. No sales-tax module on line-haul."))_
-- **PHASE2_LOAD-INVOICE_no-auto-ar_DISPATCH** [DECIDED] — revenue/A-R recognition is ruled to trigger AT DELIVERY, not at invoice-create — this supersedes the earlier invoice-create-triggers-AR framing and directly answers when   _(src: auto-memory revenue-recognition-at-delivery-and-no-consolidation.md ("Revenue recognition = AT DELIVERY ... supersedes the earlier locked wording 'Revenue recognized at invoice-create'"))_
-- **0282-p0-catalogs-accounts-scope_PARTIAL** [DECIDED] — catalogs.accounts is ruled to be physically entity-partitioned per operating_company_id ("Path B"), not a single shared cross-entity ledger — Jorge approved Path B 2026-0  _(src: auto-memory multi-entity-coa-path-b.md ("Jorge approved Path B (2026-06-15): physically entity-partition catalogs.accounts because the 3 entities are independent legal entities ... that share nothing") and auto-memory gl-ledger-map.md)_
-- **0441-mod6-insurance-no-driver-accident-link** [DECIDED] — The forward-link migration (202607410000_claim_crossmodule_fks.sql, paired with 202607250000 + 202607240000) is already authored and correct; per CLAUDE.md §1.3/§1.4 (fin  _(src: CLAUDE.md §1.3/§1.4; db/migrations/202607410000_claim_crossmodule_fks.sql:30-32; memory/held-migration-merge-runs-on-prod.md; docs/trackers/backlog-verify/safety.md:37)_
-- **0242-no-auto-customer-charge-on-cancellation** [DECIDED] — Full design is written: add nullable FK dispatch.load_cancellations.billed_invoice_id -> accounting.invoices(id); on approval, when billable_to_customer=true and cancella  _(src: docs/specs/repairs/REPAIR-F-CANCELLATION-BILLING-DEDUCTION-LINKAGE-DESIGN.md (sections A and B, lines 41-58))_
-- **0277-csrf-tokens-recommendation** [DECIDED] — Not a build gap: the Origin/Referer allow-list CSRF guard (G3-1) is already built, registered, and tested; the finding is an audit-note overclaim, not an unresolved owner  _(src: docs/trackers/backlog-verify/insurance.md:12; apps/backend/src/middleware/csrf-origin-guard.ts + apps/backend/src/index.ts:430,638)_
-- **audit25-fx-rate-hedging-translation** [DECIDED] — No dedicated FX/hedging module is needed: home currency is locked as USD, with MXN handled via FX gain/loss + home-currency adjustment under ASC 830 — this is the full FX  _(src: memory/opening-balance-and-recon-decisions-2026-07-02.md:15; .claude/skills/ih35-cpa-accounting-decisions/resources/locked-decisions-reference.md:16; docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md:173)_
-- **gated-blocks-conn-plaid-relay-edi** [DECIDED] — Not 'unbuilt': CONN-1 Plaid (and the paired CONN-3 items) are code-complete and registered; they sit HELD in db/migrations/.held-migrations.json awaiting the standing own  _(src: CLAUDE.md §1.3/§1.4; docs/trackers/backlog-verify/qbo-recon.md:23; db/migrations/.held-migrations.json)_
-- **0243-g6-2-vendor-create-no-dedup-guard** [DECIDED] — Full remediation is designed and partially built: app-level case-insensitive, entity-scoped dedup (assertUniqueVendorFields / vendorNameConflictExists, already live in ve  _(src: docs/specs/0243-financial-migration-cluster-design-2026-07-11.md:61-68 (A3 · 0243-g6-2); apps/backend/src/mdata/vendors.routes.ts:156-173)_
+### 9A — ALREADY ANSWERED (60) — WARNING: 'decided' ≠ 'built'; tracker NOT yet updated (§12)
+- **biz-flow-4-no-escrow-deduction-cash-advance** [DELIBERATE-LOCK] — Owner-locked I3: driver escrow is a held-in-trust LIABILITY; the settlement pay-run only CONTRIBUTES to it (up to the $2,000 cap) and NEVER releases/draws it du  _(src: apps/backend/src/driver-finance/escrow-resolver.service.ts:1-4 (I3 LOCKED comment + ESCROW_CAP_CENTS))_
+- **0285-df-gap2-dual-deduction-systems** [DECIDED] — Canonical deduction store = driver_finance.driver_settlement_deductions (the only store the FIN-18 GL poster reads); retire the settlement_lines auto_deduction   _(src: docs/lockdown/00_LOCKED_DECISIONS.md §9.1 (also docs/specs/ACCOUNTING-ARCHITECTURE.md:167 and memory audit-fix-decisions-2026-07-04.md item B))_
+- **PHASE2_BILLLINE-LOADID_no-per-load-attribution_DISPATCH** [DECIDED] — Scope was already decided and built: add accounting.bill_lines.load_id FK -> mdata.loads for per-load cost attribution. PR #2330 (P2-BILLLINE-LOADID) merged 202  _(src: docs/trackers/BLOCK-RECONCILIATION-2026-07-19.md:625 (P2-BILLLINE-LOADID-bill-lines-load-id, DONE, PR #2330) and memory session-2026-07-11-enforcement-layer-shipped.md)_
+- **0091-repo-public** [DELIBERATE-LOCK] — Flipping GitHub repo visibility is an access-control/permissions change, which is explicitly prohibited for an agent to perform itself — it must be directed to   _(src: CLAUDE.md §1.6 (lines 52-54, "Prohibited outright": "changing access controls or sharing/permissions... direct Jorge to do it himself"))_
+- **intercompany-trk-transp-consolidation-decision** [DELIBERATE-LOCK] — No consolidated/combined reporting ever, by design. TRANSP/TRK/USMCA financials are always presented per-entity, independent, never combined. Intercompany is ha  _(src: memory revenue-recognition-at-delivery-and-no-consolidation.md (OWNER CORRECTION 2026-07-18, item 2), cross-referenced with memory bank-transaction-metadata-decisions-0441-mod8.md)_
+- **fk-escrow-termination-0289** [DECIDED] — Escrow release-on-separation is keyed off the driver's termination_date directly (release_scheduled_at = termination_date + release_claims_window_days, per-driv  _(src: docs/specs/B9-ESCROW-DESIGN.md:43,97 (also memory enterprise-feature-decisions-2026-07-05.md updating the return window to >=90d))_
+- **0285-df-gap1-no-escrow-for-cash-advances** [DECIDED] — Cash-advance shortfalls follow the same rule as walkoff/abandonment recovery: PAY FIRST, escrow only as a last resort if pay is insufficient (single charge per   _(src: memory audit-fix-decisions-2026-07-04.md item D, plus apps/backend/src/driver-finance/escrow-resolver.service.ts:1-4 (I3 LOCKED))_
+- **0243-g11-10-month-close-checklist-unsatisfiabl** [DECIDED] — Remediation is already specced: change the month-close gate from 'zero overdue' (arComplete/apComplete requiring 0 overdue) to a reviewed/acknowledged sign-off   _(src: docs/specs/0243-financial-migration-cluster-design-2026-07-11.md:141-144 (B5 · 0243-g11-10 — month-close checklist unsatisfiable))_
+- **ruling-4-embezzlement-reclass-off-ar-q_DISPATCH** [DECIDED] — The CPA/owner ruling is the opposite of 'reclass off A/R': the Ignacio Muñoz + Anarely Alcazar 'Unauthorized Expenses' balances (~$423.7k) are KEPT as receivabl  _(src: memory opening-balance-and-recon-decisions-2026-07-02.md lines 23 and 29 (Jorge 2026-07-02 locked))_
+- **0251-gap12-commodity-equipment-mapping** [DECIDED] — Design already specified: add catalogs commodity column requires_equipment (CHECK IN dry_van/reefer/flatbed/tanker/none); dispatch's equipment-selection validat  _(src: docs/specs/0251-commodity-product-catalog-design.md lines 4,14,26,39,44-45 (gap12))_
+- **P4-02_LEGAL-LINK_DISPATCH** [DECIDED] — Option B ownership boundary already locked: Legal module owns the link + handoff only (legal.contract_instance_links rows with link_type in driver/employee/...   _(src: docs/specs/LEGAL-FINANCE-OWNERSHIP-AND-FLIP-READINESS.md (LOCKED Option B) and memory legal-finance-ownership-option-b.md)_
+- **bf7-cash-advance-recovery-engine** [DECIDED] — Same governing rule as 0285-df-gap1: recovery is PAY-FIRST via the net-pay floor (5% default, editable per settlement; up to full final check on termination), w  _(src: memory audit-fix-decisions-2026-07-04.md items C and D, plus apps/backend/src/driver-finance/escrow-resolver.service.ts:1-4 (I3 LOCKED))_
+- **0008-g3-qbo-mirror-canonical_DISPATCH** [DECIDED] — mdata.qbo_* is the canonical QBO mirror; repoint the accounting.qbo_* writers onto it (retire the accounting.qbo_* copy). Step 1 (naming the canonical) is decid  _(src: docs/lockdown/00_LOCKED_DECISIONS.md §9.6 (also memory audit-fix-decisions-2026-07-04.md item G and schema-canonicalization-verdicts.md))_
+- **usmca-unhide-entity-switcher** [DECIDED] — USMCA stays hidden/unlaunched (is_active gate intentional) until its July 2026 launch date; it is TMS-authoritative from day one with no QuickBooks and is never  _(src: CLAUDE.md §6 ("USMCA ... launches July 2026, hidden until then") and docs/lockdown/00_LOCKED_DECISIONS.md §8.5 ("USMCA has no QuickBooks → it is TMS-authoritative from day one (2026), never part of the clone/reconcile"))_
+- **h-03-open-queue-navy-cta** [DECIDED] — the navy 'Open queue' CTA is correct as-is; green is reserved exclusively for the Class pill and green/yellow section bands are explicitly forbidden, so the CTA  _(src: CLAUDE.md §7 ("Palette LOCKED ... --green-pill #d1fae5 (Class pill only) ... No yellow/green section bands"))_
+- **PHASE1_BILLPAY-GL_bank-mutated-no-JE_DISPATCH** [DECIDED] — not a code gap — the paid-in-full bill+bill_payment model (Post-as-bill creates a PAID bill + bank-credit payment) is the owner-approved GL treatment, gated beh  _(src: auto-memory banking-posting-flags-go-nogo-2026-07-06.md (2026-07-07 UPDATE))_
+- **0473-1-1-default-revenue-account-unmapped-line** [DECIDED] — default freight-revenue account = NONE/hard-fail: revenue credit resolves per-invoice-line to the item's mapped QBO income account; an unmapped line HARD FAILS   _(src: auto-memory void-cancel-governance-policy.md, "ACCOUNTING-1 / QBO decisions LOCKED (Jorge \"follow your best recommendation\", 2026-06-30)" section)_
+- **0008-h-create-bill-line-items-load-id_DISPATCH** [DECIDED] — schema design is already ruled: accounting.bill_lines.load_id is additive, nullable, FK's to the canonical hub mdata.loads(id) (mirroring accounting.expense_lin  _(src: db/migrations/202607200000_bill_lines_load_id.sql (header comment + body))_
+- **0473-1-6-wo-void-reversal-grain** [DECIDED] — whole-bill grain is the ruled design — a WO void reverses its whole linked bill as one net-zero reversing JE (both entries retained), reusing the existing void   _(src: auto-memory void-cancel-governance-policy.md ("Reuse the existing void engine ... at the bill grain (a WO reverses its whole linked bill = one net-zero reversing JE)"))_
+- **p1-data-encryption-at-rest** [DECIDED] — a formal key-management/rotation policy exists: the encryption key MUST be rotated annually, with key versions tracked in the audit log, and a rotation runbook   _(src: docs/specs/IH35_CURSOR_BUILD_SPEC_V3.md MUST 3.6.3 ("...MUST be rotated annually per Part 5.6, with key versions tracked in the audit log per Part 4.7.2.3") and its go-live checklist line ("BANKING_PII_ENCRYPTION_KEY rotation procedure documented"))_
+- **import-5-qbo-import-ui** [DELIBERATE-LOCK] — IMPORT-5 (the QBO-import UI) is a defined, sequenced block of the 6-block historical-import program, intentionally held behind QBO_HISTORICAL_IMPORT_ENABLED (de  _(src: docs/trackers/2026-07-02-module-sweep-17-28/import-program-v2/00-READ-FIRST-import-program-v2.txt (sequencing line "→ IMPORT-5 (v1, unchanged + STALE state rendering)" + "QBO_HISTORICAL_IMPORT_ENABLED default OFF · owner-triggered only"))_
+- **factoring-asc860-cpa-control-test-open** [DECIDED] — the ASC 860 three-part control test has been applied to the actual executed Faro agreement terms (full recourse via mandatory day-95 repurchase, personal guaran  _(src: auto-memory faro-factoring-contract-terms.md ("ACCOUNTING TREATMENT = SECURED BORROWING (ASC 860) ... fails ASC 860 sale condition #3 → secured borrowing. Matches the CPA lock."))_
+- **ifta-sales-tax-booking-location-confirm** [DECIDED] — sales tax = none on line-haul freight — interstate/cross-border freight transportation is ruled not TX-sales-taxable, so no sales-tax module/posting is required  _(src: auto-memory opening-balance-and-recon-decisions-2026-07-02.md ("5. Sales tax: none — interstate/cross-border freight transportation is not TX-sales-taxable. No sales-tax module on line-haul."))_
+- **PHASE2_LOAD-INVOICE_no-auto-ar_DISPATCH** [DECIDED] — revenue/A-R recognition is ruled to trigger AT DELIVERY, not at invoice-create — this supersedes the earlier invoice-create-triggers-AR framing and directly ans  _(src: auto-memory revenue-recognition-at-delivery-and-no-consolidation.md ("Revenue recognition = AT DELIVERY ... supersedes the earlier locked wording 'Revenue recognized at invoice-create'"))_
+- **0282-p0-catalogs-accounts-scope_PARTIAL** [DECIDED] — catalogs.accounts is ruled to be physically entity-partitioned per operating_company_id ("Path B"), not a single shared cross-entity ledger — Jorge approved Pat  _(src: auto-memory multi-entity-coa-path-b.md ("Jorge approved Path B (2026-06-15): physically entity-partition catalogs.accounts because the 3 entities are independent legal entities ... that share nothing") and auto-memory gl-ledger-map.md)_
+- **0441-mod6-insurance-no-driver-accident-link** [DECIDED] — The forward-link migration (202607410000_claim_crossmodule_fks.sql, paired with 202607250000 + 202607240000) is already authored and correct; per CLAUDE.md §1.3  _(src: CLAUDE.md §1.3/§1.4; db/migrations/202607410000_claim_crossmodule_fks.sql:30-32; memory/held-migration-merge-runs-on-prod.md; docs/trackers/backlog-verify/safety.md:37)_
+- **0242-no-auto-customer-charge-on-cancellation** [DECIDED] — Full design is written: add nullable FK dispatch.load_cancellations.billed_invoice_id -> accounting.invoices(id); on approval, when billable_to_customer=true an  _(src: docs/specs/repairs/REPAIR-F-CANCELLATION-BILLING-DEDUCTION-LINKAGE-DESIGN.md (sections A and B, lines 41-58))_
+- **0277-csrf-tokens-recommendation** [DECIDED] — Not a build gap: the Origin/Referer allow-list CSRF guard (G3-1) is already built, registered, and tested; the finding is an audit-note overclaim, not an unreso  _(src: docs/trackers/backlog-verify/insurance.md:12; apps/backend/src/middleware/csrf-origin-guard.ts + apps/backend/src/index.ts:430,638)_
+- **audit25-fx-rate-hedging-translation** [DECIDED] — No dedicated FX/hedging module is needed: home currency is locked as USD, with MXN handled via FX gain/loss + home-currency adjustment under ASC 830 — this is t  _(src: memory/opening-balance-and-recon-decisions-2026-07-02.md:15; .claude/skills/ih35-cpa-accounting-decisions/resources/locked-decisions-reference.md:16; docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md:173)_
+- **gated-blocks-conn-plaid-relay-edi** [DECIDED] — Not 'unbuilt': CONN-1 Plaid (and the paired CONN-3 items) are code-complete and registered; they sit HELD in db/migrations/.held-migrations.json awaiting the st  _(src: CLAUDE.md §1.3/§1.4; docs/trackers/backlog-verify/qbo-recon.md:23; db/migrations/.held-migrations.json)_
+- **0243-g6-2-vendor-create-no-dedup-guard** [DECIDED] — Full remediation is designed and partially built: app-level case-insensitive, entity-scoped dedup (assertUniqueVendorFields / vendorNameConflictExists, already   _(src: docs/specs/0243-financial-migration-cluster-design-2026-07-11.md:61-68 (A3 · 0243-g6-2); apps/backend/src/mdata/vendors.routes.ts:156-173)_
 - **0091-d1-2** [DECIDED] — Canonical AP truth is mdata.vendors; mdata.qbo_vendors is a mirror — writers on the qbo_vendors side should be repointed to the canonical table.  _(src: docs/specs/0091-CLUSTER-DISPOSITION-AND-FINANCIAL-DESIGN-2026-07-11.md:151-153 ('d1-2'))_
-- **users-par-1-permission-matrix** [DELIBERATE-LOCK] — Intentionally design-only: the permission-matrix build is explicitly gated — 'Jorge approves before any build block is cut' — so the absence of a live PermissionMatrix im  _(src: docs/specs/USER-PERMISSION-MATRIX.md:3,5 ('Block: USERS-PAR-1 ... Status: DESIGN ONLY — Jorge approves before any build block is cut'))_
-- **0252-audit146-workplace-safety-osha** [DECIDED] — A design/prioritization decision exists: the HR cluster plan scopes an OSHA workplace-safety dashboard layered over the existing safety.incidents/dvir tables (new hr.osha  _(src: docs/specs/0252-hr-people-cluster-design-2026-07-12.md lines 57, 72, 96-97, 123)_
-- **PHASE2_CANCEL-TONU_billable-cancellation-no-charge_DISPATCH** [DECIDED] — Same underlying gap as biz-flow-3-no-auto-customer-charge-on-cancellation: REPAIR-F's design section B specifies the customer-charge leg (one invoice via existing invoice  _(src: docs/specs/repairs/REPAIR-F-CANCELLATION-BILLING-DEDUCTION-LINKAGE-DESIGN.md sections A/B (lines 12, 41-58); docs/trackers/financial-block-buildability.csv:816)_
-- **flow5-escrow-limited-to-driver-bonds** [DECIDED] — Not limited by design: the canonical successor engine (settlement-bill-payment-posting.service.ts) already implements pay-first-then-escrow generically for ALL deduction   _(src: docs/specs/repairs/REPAIR-A-DEDUCTION-LEDGER-DESIGN.md; docs/trackers/MASTER-MANIFEST-2026-07-10.json id biz-flow-5-escrow-only-driver-bonds; memory/driver-escrow-is-liability.md)_
-- **events-event-log-force-rls-still-blocked** [DECIDED] — Nothing left to design: the FORCE RLS migration (202607510000_events_audit_log_entity_isolation.sql) is authored correctly and its GUC prerequisite has landed; remaining   _(src: db/migrations/202607510000_events_audit_log_entity_isolation.sql:24; docs/trackers/backlog-verify/platform.md:70; CLAUDE.md §1.3/§1.4)_
-- **factoring-asc860-determination-memo** [DECIDED] — The determination itself is locked even though a standalone memo file doesn't exist: Faro factoring is GAAP secured borrowing (ASC 860) despite 'sale' contract language,   _(src: docs/lockdown/00_LOCKED_DECISIONS.md §8.6; memory/faro-factoring-contract-terms.md lines 38-41; memory/cpa-locked-decisions-2026-07-01.md line 25)_
-- **migrate-faro-to-rts** [DELIBERATE-LOCK] — Faro is the current factor; migration to RTS is a named future plan with no committed timeline/spec today — absence of RTS integration code is the intended current state,  _(src: docs/lockdown/00_LOCKED_DECISIONS.md §8.6 ('Faro today → RTS planned') + CLAUDE.md §6)_
-- **wo-cancellation-reasons-fold-into-void-cancel-** [DECIDED] — Yes, fold: catalogs.wo_cancellation_reasons (6 rows, WO-specific) is to be mapped/backfilled into the unified per-entity catalogs.void_cancel_reasons and the old table ar  _(src: auto-memory void-cancel-governance-policy.md ('SEPARATE cleanup PR ... fold wo_cancellation_reasons (6 rows) into void_cancel_reasons ... Doc+guard locked in MULTI-ENTITY-SEPARATION.md'); confirmed tracked as open work in docs/trackers/MASTER-MANIFEST-2026-07-10.md:2922-2924)_
-- **0251-gap2-vendor-gl-linkage** [DECIDED] — Already built, not a gap: mdata.vendors.default_expense_account_id (FK to catalogs.accounts, ON DELETE SET NULL) exists per migration 202607110230_vendor_qbo_parity.sql,   _(src: db/migrations/202607110230_vendor_qbo_parity.sql:9,22,27 + docs/specs/0251-book-load-financial-linkages-design.md ('Related already-satisfied blocks: gap2 (vendor GL FK ✅ mdata.vendors.default_expense_account_id)') + docs/specs/0251-charge-code-gl-catalog-design.md:57)_
-- **bf4-load-invoice-ar-factoring-payment** [DECIDED] — Customer-payment posting (source_transaction_type='customer_payment') is intentionally LIVE/unguarded via applyPayment/posting-engine.service.ts — AR does clear on paymen  _(src: docs/specs/qbo-parity/CHAIN-06-INVOICE-AR-POSTING-DESIGN.md §7 ('The customer-payment leg stays as-is since it is already live via applyPayment') + apps/backend/src/accounting/posting-engine.service.ts:10,1544)_
-- **0473-1-10-year-end-close-retained-earnings-asc** [DECIDED] — Year-end retained-earnings close is already designed and implemented: when period_end is Dec 31, close aggregates posted postings joined to catalogs.accounts and clears I  _(src: docs/specs/IH35_ARCHITECTURAL_DESIGN.md:902 ('Year-end retained earnings JE') + apps/backend/src/accounting/period-close-retained-earnings.service.ts (implementation exists))_
-- **hiring-bypass-and-safety-contract-alerts** [DECIDED] — Hiring bypass IS intended: a new driver may be hired with the signed-contract requirement bypassed IF the contract will be uploaded later ('contract pending upload/sign'   _(src: auto-memory driver-hiring-contract-spec.md (Jorge 2026-07-05): 'Hiring bypass: ... allow hire with a contract pending upload/sign state, upload/sign later' + 'Alerts/reminders ... live on the SAFETY page')_
-- **dispatch-sweep-gap-26** [DELIBERATE-LOCK] — Intentional 'estimate only' design, not a defect: the Dispatch Sheet's 'Estimated trip pay' is deliberately sourced from mdata.loads.rate_total_cents (with an explicit fo  _(src: apps/backend/src/dispatch/dispatch-sheet.routes.ts:163-226 (grossFootnote comment) + docs/trackers/MASTER-MANIFEST-2026-07-10.md:1407-1409 ('the doc's ask (pull from GL) conflicts with the intentional estimate only design'))_
-- **expand-escrow-non-bond-deductions** [DECIDED] — Escrow deduction types are already specified beyond load-abandonment: the driver escrow (a liability) is returned 60-90 days after separation net of deductions for vehicl  _(src: auto-memory driver-escrow-is-liability.md (Jorge-confirmed 2026-06-30: 'net of deductions for vehicle damage, late fees, and fines') + auto-memory finance-engine-decisions-locked.md E4 ('Q1 = BUCKETED — a SEPARATE balance per deduction type (cash advance, damage chargeback, lease, insurance, …)'))_
-- **public-audit-log-partitions-no-rls** [DECIDED] — The fix is already authored (an idempotent RLS-enable+FORCE+WORM-preserving migration for public.audit_log/audit_log_partitioned) and simply awaits the standard financial  _(src: CLAUDE.md §1.4 (financial-cluster migrations never self-merge) + docs/trackers/MASTER-MANIFEST-2026-07-10.md:3127 + db/migrations/202606080940_block26_partition_hot_tables.sql (creates the tables the fix targets))_
-- **PHASE1_BILL-GL_create-bill-never-posts_DISPATCH** [DECIDED] — Bill creation intentionally never posts a GL entry today — this is the locked default-OFF state shared by all money-posting flags (incl. BILL_GL_POSTING_ENABLED), pending  _(src: CLAUDE.md §1.4 ('Default env flags OFF') + auto-memory finance-engine-decisions-locked.md ('All ... money flags stay OFF until CPA sign-off and a Neon balanced-entry test') + docs/trackers/MASTER-MANIFEST-2026-07-10.md:1265 ('GL posting is flag-gated (BILL_GL_POSTING_ENABLED, EXPENSE_GL_POSTING_ENABLED...)'))_
-- **0490-section-c-2-reporting-vs-reports-drift** [DECIDED] — reporting.* is the canonical schema for scheduled reports (migrate reports.* rows in, archive the old) — the guard script's DEPRECATED list is the thing that's stale/wron  _(src: docs/lockdown/00_LOCKED_DECISIONS.md:126 (§9.6 Schema canonicals) + auto-memory audit-fix-decisions-2026-07-04.md item G (owner-locked 2026-07-04); scripts/verify-no-deprecated-schema-creates.mjs:25 needs to be fixed to match, not the other way around)_
-- **block5-coa-new-account-type-detail-org_DISPATCH** [DELIBERATE-LOCK] — Do NOT add a catalogs.accounts.detail_type_id FK to the Block-4 per-entity detail_types catalog. Detail Type is QBO AccountSubType, stored as catalogs.accounts.account_su  _(src: auto-memory coa-detail-type-is-account-subtype.md (DECIDED 2026-07-01, Block 5 / COA-ACCT-DETAIL-01))_
-- **audit10-payroll-automation-tax-withhol_DISPATCH** [DECIDED] — Driver settlements (driver_finance.*, 1099) and QBO Payroll (W-2 office staff) are two deliberately separate systems by design — B9 explicitly states driver escrow/settle  _(src: docs/specs/B9-ESCROW-DESIGN.md:12)_
-- **0251-gap3-vendor-invoice-linkage** [DECIDED] — The factor IS modeled as a vendor (mdata.vendors), not a separate factoring.factor concept: gap1's approved design adds mdata.loads.factoring_vendor_id uuid REFERENCES md  _(src: docs/specs/0251-book-load-financial-linkages-design.md §1-2 (gap1/gap3))_
-- **gated-blocks-usmca-launch-gate** [DELIBERATE-LOCK] — USMCA-LAUNCH is intentionally gated on entity-independence completion (the 142-wall + P1/P4 + guards), not a fixed date; once that completion bar is met every function tu  _(src: auto-memory enterprise-feature-decisions-2026-07-05.md ('USMCA-LAUNCH: gated on entity-independence completion...Not a fixed date'))_
-- **0251-gap13-commodity-rate-matrix** [DECIDED] — A proposed schema already exists: catalogs.commodity_rate_matrix (product_id, origin_zone, dest_zone, equipment, rate_cents, basis), to be read by the rate-quote path as   _(src: docs/specs/0251-commodity-product-catalog-design.md (gap13, lines ~5,33,46,50))_
-- **db5-resize-removal-directive-vs-current-lock** [DECIDED] — DB-5 ('remove resizable columns app-wide') is RETRACTED/PARKED as of 2026-06-28 — GUARD + Jorge confirmed the stop was correct. Do NOT remove column-resize; the shipped/e  _(src: auto-memory db5-resize-removal-parked.md)_
-- **0252-audit140-compensation-structure** [DELIBERATE-LOCK] — Internal-employee compensation-structure/pay-equity benchmarking is explicitly scoped OUT and marked 'Defer' — driver pay is out of scope (1099 settlements, not benchmark  _(src: docs/specs/0252-hr-people-cluster-design-2026-07-12.md lines 62, 117 (0252-audit140 row: 'Low...Defer' / 'DESIGN-ONLY...office comp unspecced'))_
-- **0473-1-8-tk-transp-lease-asc842** [DECIDED] — The underlying classification is already locked: Option A operating lease (TRK books/depreciates the truck 5-yr straight-line, books lease payments as rental income) — ac  _(src: auto-memory finance-engine-decisions-locked.md (B1/B2/B5, 'FIN-22 (#1650) SHIPPED 2026-06-29'))_
-- **P4-08_WO-DOUBLE-BILL_VERIFY** [DECIDED] — Already dispositioned as OWNER-GATED with a documented remediation path (not silently deferred): root-cause fix = a UNIQUE(linked_work_order_uuid) partial index (financia  _(src: docs/trackers/DEFERRED-ITEMS.md §F (P4-08 WO→bill double-bill risk, lines 124-134))_
-- **biz-flow-5-escrow-only-driver-bonds** [DECIDED] — The 'bonds-only' framing is refuted by the locked architecture itself: recovery ordering is pay-first-then-escrow GENERICALLY for every deduction bucket (advance, damage   _(src: docs/lockdown/00_LOCKED_DECISIONS.md:130-131 (§9.3 Recovery ordering, §9.4 Escrow return) + docs/specs/ACCOUNTING-ARCHITECTURE.md:171)_
-- **s-12-log-event-button-navy-cta** [DECIDED] — The '+ Log Event' bg-[#1F2A44] CTA is already palette-compliant — #1F2A44 IS the one locked navy token, and navy is an approved CTA color under the §7 palette lock. No dr  _(src: CLAUDE.md:178 (§7 Palette LOCKED: --navy #1f2a44))_
+- **users-par-1-permission-matrix** [DELIBERATE-LOCK] — Intentionally design-only: the permission-matrix build is explicitly gated — 'Jorge approves before any build block is cut' — so the absence of a live Permissio  _(src: docs/specs/USER-PERMISSION-MATRIX.md:3,5 ('Block: USERS-PAR-1 ... Status: DESIGN ONLY — Jorge approves before any build block is cut'))_
+- **0252-audit146-workplace-safety-osha** [DECIDED] — A design/prioritization decision exists: the HR cluster plan scopes an OSHA workplace-safety dashboard layered over the existing safety.incidents/dvir tables (n  _(src: docs/specs/0252-hr-people-cluster-design-2026-07-12.md lines 57, 72, 96-97, 123)_
+- **PHASE2_CANCEL-TONU_billable-cancellation-no-charge_DISPATCH** [DECIDED] — Same underlying gap as biz-flow-3-no-auto-customer-charge-on-cancellation: REPAIR-F's design section B specifies the customer-charge leg (one invoice via existi  _(src: docs/specs/repairs/REPAIR-F-CANCELLATION-BILLING-DEDUCTION-LINKAGE-DESIGN.md sections A/B (lines 12, 41-58); docs/trackers/financial-block-buildability.csv:816)_
+- **flow5-escrow-limited-to-driver-bonds** [DECIDED] — Not limited by design: the canonical successor engine (settlement-bill-payment-posting.service.ts) already implements pay-first-then-escrow generically for ALL   _(src: docs/specs/repairs/REPAIR-A-DEDUCTION-LEDGER-DESIGN.md; docs/trackers/MASTER-MANIFEST-2026-07-10.json id biz-flow-5-escrow-only-driver-bonds; memory/driver-escrow-is-liability.md)_
+- **events-event-log-force-rls-still-blocked** [DECIDED] — Nothing left to design: the FORCE RLS migration (202607510000_events_audit_log_entity_isolation.sql) is authored correctly and its GUC prerequisite has landed;   _(src: db/migrations/202607510000_events_audit_log_entity_isolation.sql:24; docs/trackers/backlog-verify/platform.md:70; CLAUDE.md §1.3/§1.4)_
+- **factoring-asc860-determination-memo** [DECIDED] — The determination itself is locked even though a standalone memo file doesn't exist: Faro factoring is GAAP secured borrowing (ASC 860) despite 'sale' contract   _(src: docs/lockdown/00_LOCKED_DECISIONS.md §8.6; memory/faro-factoring-contract-terms.md lines 38-41; memory/cpa-locked-decisions-2026-07-01.md line 25)_
+- **migrate-faro-to-rts** [DELIBERATE-LOCK] — Faro is the current factor; migration to RTS is a named future plan with no committed timeline/spec today — absence of RTS integration code is the intended curr  _(src: docs/lockdown/00_LOCKED_DECISIONS.md §8.6 ('Faro today → RTS planned') + CLAUDE.md §6)_
+- **wo-cancellation-reasons-fold-into-void-cancel-** [DECIDED] — Yes, fold: catalogs.wo_cancellation_reasons (6 rows, WO-specific) is to be mapped/backfilled into the unified per-entity catalogs.void_cancel_reasons and the ol  _(src: auto-memory void-cancel-governance-policy.md ('SEPARATE cleanup PR ... fold wo_cancellation_reasons (6 rows) into void_cancel_reasons ... Doc+guard locked in MULTI-ENTITY-SEPARATION.md'); confirmed tracked as open work in docs/trackers/MASTER-MANIFEST-2026-07-10.md:2922-2924)_
+- **0251-gap2-vendor-gl-linkage** [DECIDED] — Already built, not a gap: mdata.vendors.default_expense_account_id (FK to catalogs.accounts, ON DELETE SET NULL) exists per migration 202607110230_vendor_qbo_pa  _(src: db/migrations/202607110230_vendor_qbo_parity.sql:9,22,27 + docs/specs/0251-book-load-financial-linkages-design.md ('Related already-satisfied blocks: gap2 (vendor GL FK ✅ mdata.vendors.default_expense_account_id)') + docs/specs/0251-charge-code-gl-catalog-design.md:57)_
+- **bf4-load-invoice-ar-factoring-payment** [DECIDED] — Customer-payment posting (source_transaction_type='customer_payment') is intentionally LIVE/unguarded via applyPayment/posting-engine.service.ts — AR does clear  _(src: docs/specs/qbo-parity/CHAIN-06-INVOICE-AR-POSTING-DESIGN.md §7 ('The customer-payment leg stays as-is since it is already live via applyPayment') + apps/backend/src/accounting/posting-engine.service.ts:10,1544)_
+- **0473-1-10-year-end-close-retained-earnings-asc** [DECIDED] — Year-end retained-earnings close is already designed and implemented: when period_end is Dec 31, close aggregates posted postings joined to catalogs.accounts an  _(src: docs/specs/IH35_ARCHITECTURAL_DESIGN.md:902 ('Year-end retained earnings JE') + apps/backend/src/accounting/period-close-retained-earnings.service.ts (implementation exists))_
+- **hiring-bypass-and-safety-contract-alerts** [DECIDED] — Hiring bypass IS intended: a new driver may be hired with the signed-contract requirement bypassed IF the contract will be uploaded later ('contract pending upl  _(src: auto-memory driver-hiring-contract-spec.md (Jorge 2026-07-05): 'Hiring bypass: ... allow hire with a contract pending upload/sign state, upload/sign later' + 'Alerts/reminders ... live on the SAFETY page')_
+- **dispatch-sweep-gap-26** [DELIBERATE-LOCK] — Intentional 'estimate only' design, not a defect: the Dispatch Sheet's 'Estimated trip pay' is deliberately sourced from mdata.loads.rate_total_cents (with an e  _(src: apps/backend/src/dispatch/dispatch-sheet.routes.ts:163-226 (grossFootnote comment) + docs/trackers/MASTER-MANIFEST-2026-07-10.md:1407-1409 ('the doc's ask (pull from GL) conflicts with the intentional estimate only design'))_
+- **expand-escrow-non-bond-deductions** [DECIDED] — Escrow deduction types are already specified beyond load-abandonment: the driver escrow (a liability) is returned 60-90 days after separation net of deductions   _(src: auto-memory driver-escrow-is-liability.md (Jorge-confirmed 2026-06-30: 'net of deductions for vehicle damage, late fees, and fines') + auto-memory finance-engine-decisions-locked.md E4 ('Q1 = BUCKETED — a SEPARATE balance per deduction type (cash advance, damage chargeback, lease, insurance, …)'))_
+- **public-audit-log-partitions-no-rls** [DECIDED] — The fix is already authored (an idempotent RLS-enable+FORCE+WORM-preserving migration for public.audit_log/audit_log_partitioned) and simply awaits the standard  _(src: CLAUDE.md §1.4 (financial-cluster migrations never self-merge) + docs/trackers/MASTER-MANIFEST-2026-07-10.md:3127 + db/migrations/202606080940_block26_partition_hot_tables.sql (creates the tables the fix targets))_
+- **PHASE1_BILL-GL_create-bill-never-posts_DISPATCH** [DECIDED] — Bill creation intentionally never posts a GL entry today — this is the locked default-OFF state shared by all money-posting flags (incl. BILL_GL_POSTING_ENABLED  _(src: CLAUDE.md §1.4 ('Default env flags OFF') + auto-memory finance-engine-decisions-locked.md ('All ... money flags stay OFF until CPA sign-off and a Neon balanced-entry test') + docs/trackers/MASTER-MANIFEST-2026-07-10.md:1265 ('GL posting is flag-gated (BILL_GL_POSTING_ENABLED, EXPENSE_GL_POSTING_ENABLED...)'))_
+- **0490-section-c-2-reporting-vs-reports-drift** [DECIDED] — reporting.* is the canonical schema for scheduled reports (migrate reports.* rows in, archive the old) — the guard script's DEPRECATED list is the thing that's   _(src: docs/lockdown/00_LOCKED_DECISIONS.md:126 (§9.6 Schema canonicals) + auto-memory audit-fix-decisions-2026-07-04.md item G (owner-locked 2026-07-04); scripts/verify-no-deprecated-schema-creates.mjs:25 needs to be fixed to match, not the other way around)_
+- **block5-coa-new-account-type-detail-org_DISPATCH** [DELIBERATE-LOCK] — Do NOT add a catalogs.accounts.detail_type_id FK to the Block-4 per-entity detail_types catalog. Detail Type is QBO AccountSubType, stored as catalogs.accounts.  _(src: auto-memory coa-detail-type-is-account-subtype.md (DECIDED 2026-07-01, Block 5 / COA-ACCT-DETAIL-01))_
+- **audit10-payroll-automation-tax-withhol_DISPATCH** [DECIDED] — Driver settlements (driver_finance.*, 1099) and QBO Payroll (W-2 office staff) are two deliberately separate systems by design — B9 explicitly states driver esc  _(src: docs/specs/B9-ESCROW-DESIGN.md:12)_
+- **0251-gap3-vendor-invoice-linkage** [DECIDED] — The factor IS modeled as a vendor (mdata.vendors), not a separate factoring.factor concept: gap1's approved design adds mdata.loads.factoring_vendor_id uuid REF  _(src: docs/specs/0251-book-load-financial-linkages-design.md §1-2 (gap1/gap3))_
+- **gated-blocks-usmca-launch-gate** [DELIBERATE-LOCK] — USMCA-LAUNCH is intentionally gated on entity-independence completion (the 142-wall + P1/P4 + guards), not a fixed date; once that completion bar is met every f  _(src: auto-memory enterprise-feature-decisions-2026-07-05.md ('USMCA-LAUNCH: gated on entity-independence completion...Not a fixed date'))_
+- **0251-gap13-commodity-rate-matrix** [DECIDED] — A proposed schema already exists: catalogs.commodity_rate_matrix (product_id, origin_zone, dest_zone, equipment, rate_cents, basis), to be read by the rate-quot  _(src: docs/specs/0251-commodity-product-catalog-design.md (gap13, lines ~5,33,46,50))_
+- **db5-resize-removal-directive-vs-current-lock** [DECIDED] — DB-5 ('remove resizable columns app-wide') is RETRACTED/PARKED as of 2026-06-28 — GUARD + Jorge confirmed the stop was correct. Do NOT remove column-resize; the  _(src: auto-memory db5-resize-removal-parked.md)_
+- **0252-audit140-compensation-structure** [DELIBERATE-LOCK] — Internal-employee compensation-structure/pay-equity benchmarking is explicitly scoped OUT and marked 'Defer' — driver pay is out of scope (1099 settlements, not  _(src: docs/specs/0252-hr-people-cluster-design-2026-07-12.md lines 62, 117 (0252-audit140 row: 'Low...Defer' / 'DESIGN-ONLY...office comp unspecced'))_
+- **0473-1-8-tk-transp-lease-asc842** [DECIDED] — The underlying classification is already locked: Option A operating lease (TRK books/depreciates the truck 5-yr straight-line, books lease payments as rental in  _(src: auto-memory finance-engine-decisions-locked.md (B1/B2/B5, 'FIN-22 (#1650) SHIPPED 2026-06-29'))_
+- **P4-08_WO-DOUBLE-BILL_VERIFY** [DECIDED] — Already dispositioned as OWNER-GATED with a documented remediation path (not silently deferred): root-cause fix = a UNIQUE(linked_work_order_uuid) partial index  _(src: docs/trackers/DEFERRED-ITEMS.md §F (P4-08 WO→bill double-bill risk, lines 124-134))_
+- **biz-flow-5-escrow-only-driver-bonds** [DECIDED] — The 'bonds-only' framing is refuted by the locked architecture itself: recovery ordering is pay-first-then-escrow GENERICALLY for every deduction bucket (advanc  _(src: docs/lockdown/00_LOCKED_DECISIONS.md:130-131 (§9.3 Recovery ordering, §9.4 Escrow return) + docs/specs/ACCOUNTING-ARCHITECTURE.md:171)_
+- **s-12-log-event-button-navy-cta** [DECIDED] — The '+ Log Event' bg-[#1F2A44] CTA is already palette-compliant — #1F2A44 IS the one locked navy token, and navy is an approved CTA color under the §7 palette l  _(src: CLAUDE.md:178 (§7 Palette LOCKED: --navy #1f2a44))_
 
-### 9B — GENUINELY UNDECIDED (48) — with GUARD recommendation
-- **0285-acct-gap3-manual-payment-application** [accounting]
-  - REC: KEEP MANUAL (decide-as-is) — manual payment application is correct/safer than auto-apply for now; revisit only if volume demands. Close as decided.
-- **0519-at2-no-db-enforced-sod** [accounting]
-  - REC: BUILD (gated) — DB-enforced segregation-of-duties (approver != poster on JEs/posting_batches) is a real audit-grade internal control; given the embezzlement history this is worth building. Financial-gated.
-- **audit16-budget-tracking-system** [accounting]
-  - REC: DEFER — not core; use QBO budgets if needed. Low priority.
-- **audit17-procurement-purchase-order-system** [accounting]
-  - REC: DEFER — bills + vendors cover AP; a PO system is premature for your size.
-- **audit18-treasury-management** [accounting]
-  - REC: DECLINE — banking module covers cash; treasury management is enterprise-scale, N/A.
-- **audit21-capex-tracking-approval** [accounting]
-  - REC: DEFER — fixed-assets module exists; add capex approval only if you want a formal gate.
-- **audit3-external-audit-prep-workflow** [accounting]
-  - REC: DEFER — audit.row_changes + source-links exist; build a workpaper/audit-prep workflow only when a real exam/audit is scheduled.
-- **audit6-sox-ifrs-compliance-dashboard** [accounting]
-  - REC: DECLINE — private SMB, not SOX-regulated, US-GAAP not IFRS. Not applicable.
-- **dip-mor-pre-post-petition-ap-split** [accounting]
-  - REC: BUILD (gated, HIGH) — Ch.11 Monthly Operating Report REQUIRES pre/post-petition A/P split. This is a bankruptcy-reporting obligation, not optional. Design + migration, owner/CPA-gated.
-- **flow2-customer-chargeback-driver-expense** [accounting]
-  - REC: BUILD (gated) — when a customer chargeback is driver-fault, route it to a driver expense/deduction per your driver-fault-liability model (bf1). Cross-module linkage.
-- **sweepfix1727-8** [banking]
-  - REC: BUILD (frontend, non-financial) — repoint the /finance route from the stub FinanceOverviewPage to the real Finance Hub. Just ship it.
-- **0257-audit-88** [compliance]
-  - REC: CLOSE (RESOLVED) — border-crossing/customs module exists and is wired (border-crossing-wizard.routes.ts + history). Finding is stale.
-- **P4-01_SAFETY-INSURANCE-LINK_DISPATCH** [dispatch]
-  - REC: (no rec)
-- **P4-03_UNIT-IDENTITY_DISPATCH** [dispatch]
-  - REC: (no rec)
-- **P4-04_SAFETY-COST-GL_DISPATCH** [dispatch]
-  - REC: (no rec)
-- **P4-05_DAMAGE-CLAIM-FK_DISPATCH** [dispatch]
-  - REC: (no rec)
-- **P4-06_WO-FK_DISPATCH** [dispatch]
-  - REC: (no rec)
-- **P4-07_PARTS-GL_DISPATCH** [dispatch]
-  - REC: (no rec)
-- **PHASE2_ACCESSORIAL-REVENUE_divergent-engine_DISPATCH** [dispatch]
-  - REC: (no rec)
-- **PHASE2_RECON-COLLECTOR_frozen-feed_DISPATCH** [dispatch]
-  - REC: (no rec)
-- **0518-r18-schema-fragmentation-8-dup-pairs** [factoring]
-  - REC: FOLLOW DESIGN (gated) — execute the existing SCHEMA-CANONICALIZATION-VERDICTS-2026-06-28 doc (fold bank->banking etc.). Schema migration, gated.
-- **factoring-g3-debtor-credit-check-decision-note** [factoring]
-  - REC: DEFER — Faro provides credit today; build debtor-credit-check only after the Faro->RTS migration. Enhancement, not a defect.
-- **module25-required-docs-ruleset-per-entity** [factoring]
-  - REC: BUILD (gated) — per-entity required-docs ruleset (TRANSP vs TRK vs USMCA differ). Real compliance need; additive.
-- **0275-audit171-data-quality-monitoring** [platform]
-  - REC: DECLINE — no MDM rules-engine needed at single-carrier scale; the concrete DQ gaps (blank CDL/phone/hire-date, mis-flagged roster) are handled by the prod-read cleanup list, not a monitoring platform.
-- **0275-audit174-data-security-hardening** [platform]
-  - REC: CLOSE (mostly done) — field-level encryption (lib/encryption.ts), append-only audit.row_changes, and RLS already exist; DECLINE a separate 'hardening dashboard'.
-- **0275-audit177-data-integration-monitoring** [platform]
-  - REC: CLOSE — integration_sync_log (0175) exists and is written by 8 files; DECLINE a dedicated dashboard.
-- **0275-audit178-master-data-governance** [platform]
-  - REC: DECLINE — no enterprise MDM platform needed; mdata.* + RLS is the governance.
-- **0275-audit181-data-lineage-tracking** [platform]
-  - REC: CLOSE/DECLINE — audit.row_changes + accounting.transaction_source_links already give lineage; no separate system.
-- **0275-audit182-data-profiling-system** [platform]
-  - REC: DECLINE — not applicable at your scale.
-- **0275-audit183-data-catalog-system** [platform]
-  - REC: DECLINE — db/migrations + docs/specs are the catalog.
-- **0275-audit184-data-dictionary-system** [platform]
-  - REC: DECLINE — schema + specs are the dictionary.
-- **0275-audit185-data-model-documentation** [platform]
-  - REC: DECLINE — 73 schemas/540+ tables are self-documenting via migrations; no live model-monitoring dashboard needed.
-- **0441-mod13-form425c-exhibit-c-opening-balance-** [platform]
-  - REC: OWNER-ENTER (gated) — Form 425C Exhibit C opening balance is owner-entered only. You enter it; agent never posts opening balances.
-- **0441-mod13-notifications-module-not-fully-audi** [platform]
-  - REC: AUDIT or DROP — route to a notifications-module parity sweep, or drop if not a priority.
-- **0441-mod5-retention-excludes-critical-truncate** [platform]
-  - REC: RE-AUTHOR or DROP — underspecified (doc-retention truncation); no locatable target. Re-author with specifics or drop as noise.
-- **0441-mod6-idvr-row-not-clickable-session-fake-** [platform]
-  - REC: (no rec)
-- **0473-2-5-trial-balance-002-cosmetic_CLEANUP** [platform]
-  - REC: (no rec)
-- **p1-analytics-systems** [platform]
-  - REC: DECLINE — no product-analytics SDK; you hold financial/legal-evidence data (privacy). Financial analytics already exist as accounting reports.
-- **p1-dashboard-implementation** [platform]
-  - REC: CLOSE — Home/OwnerHome/QboStyleHome already shipped; DECLINE the generic 200-hr line.
-- **phase8-audit165-analytics-general** [platform]
-  - REC: DECLINE — operational analytics (booking-gap, late-arrival, home KPIs) already exist.
-- **0091-m-factor-1** [qbo-recon]
-  - REC: FIX (gated) — factoring-virtual.routes.ts:49 reads current_reserve_balance with NO write path (dead column). Either wire the write path or remove the dead read. Financial, gated.
-- **bf10b-qbo-recon-six-types** [qbo-recon]
-  - REC: CLOSE (likely RESOLVED) — recon-cron.service.ts:64-73 already declares all 6 QBO register sources; the '2 of 6' claim is stale. Verify live then close.
-- **0270-no-auto-driver-status-from-safety-events** [safety]
-  - REC: DECLINE auto (keep explicit) — the explicit-termination path is already wired; auto-changing driver status from safety events risks false triggers. Keep manual/explicit, or add an approval gate.
-- **0278-safety-gap1-auto-driver-status** [safety]
-  - REC: DUPLICATE of 0270 — same ruling: keep explicit-only. Close as duplicate.
-- **0270-no-auto-escrow-deduction-safety-events** [settlements]
-  - REC: DECLINE auto (gated) — escrow is held-in-trust liability; auto-deducting on a safety event is legally risky. Keep manual/approval-gated deductions only.
-- **0473-1-9-driver-settlement-net-pay-mod_DISPATCH** [settlements]
-  - REC: (no rec)
-- **flow5-dual-deduction-systems-consolidate** [settlements]
-  - REC: CONSOLIDATE (gated) — collapse onto canonical driver_finance.driver_settlement_deductions per lockdown §9.1; retire the duplicate deduction paths. Same ruling as 0285-df-gap2.
-- **ruling-3-driver-escrow-current-vs-long_DISPATCH** [settlements]
-  - REC: (no rec)
+### 9B — DECIDED DISPOSITIONS (48) — GUARD ruling, owner-delegated + cross-reviewed
+Summary: DECLINE 17 · BUILD 15 · KEEP 3 · CLOSE 2 · FOLLOW 2 · CONSOLIDATE 2 · OWNER-ENTER 1 · CLEAN UP 1 · FIX 1 · SPLIT 1 · AUDIT 1 · RE-AUTHOR 1 · DUPLICATE 1
 
-## 10. LANDMINES / STANDING NOTES
-- reconcile:blocks snapshot goes stale — re-run for current numbers (was 07-12 stale all session).
-- AUDIT-NOTE = registry prose in allowed_files (no file paths) → unmeasurable by counter; verify vs code/live.
-- DONE in reconcile = merged, NOT verified.
-- board:sync to R2 needs creds; committed block-reconciliation-data.json is what the live board reads for counts.
-- 0091-repo-public: repo visibility flagged; owner-only action (agent-prohibited §1.6) — owner disregarded.
-- Any cleanup writing accounting.*/catalogs.*/mdata.* or flipping a flag = financial cluster → owner-approve + GUARD live-verify, never self-merge.
+**BUILD (15)**
+- **0275-audit171-data-quality-monitoring** [platform] — BUILD (gated, small) — RECLASSIFIED from DECLINE per GUARD: prod reads found REAL DQ problems (78 mis-flagged drivers, 16 blank CDL, 100% blank hire_date). A lightweight DQ monitor would have caught these. Build it (gated), not noise.
+- **0441-mod6-idvr-row-not-clickable-session-fake-** [platform] — BUILD (frontend, non-financial) — make iDVR rows clickable to their detail. Just ship it.
+- **0519-at2-no-db-enforced-sod** [accounting] — BUILD (gated) — DB-enforced segregation-of-duties (approver != poster on JEs/posting_batches) is a real audit-grade internal control; given the embezzlement history this is worth building. Financial-gated.
+- **P4-01_SAFETY-INSURANCE-LINK_DISPATCH** [dispatch] — BUILD (gated) — link safety events <-> insurance policies/claims (Law-of-the-Land connectivity). Design-doc first, additive FK.
+- **P4-03_UNIT-IDENTITY_DISPATCH** [dispatch] — BUILD (gated) — additive unit-identity bridge FK; requires 0-orphan proof on ci-migration-test first.
+- **P4-04_SAFETY-COST-GL_DISPATCH** [dispatch] — BUILD (gated) — safety cost -> GL posting path. CPA design first.
+- **P4-05_DAMAGE-CLAIM-FK_DISPATCH** [dispatch] — BUILD (gated) — damage-claim FK; 0-orphan pre-migration proof required.
+- **P4-06_WO-FK_DISPATCH** [dispatch] — BUILD (gated) — work-order FK; 0-orphan + FK validated on ci-migration-test.
+- **P4-07_PARTS-GL_DISPATCH** [dispatch] — BUILD (gated) — part receipt -> inventory-asset JE, WO consumption posting. Needs CPA/owner design (inventory-accounting method).
+- **PHASE2_RECON-COLLECTOR_frozen-feed_DISPATCH** [dispatch] — BUILD/FIX (gated, HIGH) — the reconciliation collector feed is frozen; recon is your safety net and must run twice-daily per CPA. Fix priority.
+- **dip-mor-pre-post-petition-ap-split** [accounting] — BUILD (gated, HIGH) — Ch.11 Monthly Operating Report REQUIRES pre/post-petition A/P split. This is a bankruptcy-reporting obligation, not optional. Design + migration, owner/CPA-gated.
+- **factoring-g3-debtor-credit-check-decision-note** [factoring] — BUILD (gated) — Faro provides debtor credit data TODAY, so build the debtor-credit-check surface now against Faro; not blocked by the future RTS migration. Real risk-control value for booking decisions.
+- **flow2-customer-chargeback-driver-expense** [accounting] — BUILD (gated) — when a customer chargeback is driver-fault, route it to a driver expense/deduction per your driver-fault-liability model (bf1). Cross-module linkage.
+- **module25-required-docs-ruleset-per-entity** [factoring] — BUILD (gated) — per-entity required-docs ruleset (TRANSP vs TRK vs USMCA differ). Real compliance need; additive.
+- **sweepfix1727-8** [banking] — BUILD (frontend, non-financial) — repoint the /finance route from the stub FinanceOverviewPage to the real Finance Hub. Just ship it.
+
+**SPLIT (1)**
+- **bf10b-qbo-recon-six-types** [qbo-recon] — SPLIT (verified) — recon-register (recon-cron QboRegisterSources) covers all 6 = RESOLVED. BUT CDC poll omits Purchase/Deposit/Transfer (qbo-cdc.service.ts:7 CDC_ENTITIES) = SEPARATE OPEN BUG (bank-txn CDC ingest incomplete). Keep CDC gap OPEN → gated fix (add 3 entities).
+
+**FIX (1)**
+- **0091-m-factor-1** [qbo-recon] — FIX (gated) — factoring-virtual.routes.ts:49 reads current_reserve_balance with NO write path (dead column). Either wire the write path or remove the dead read. Financial, gated.
+
+**CONSOLIDATE (2)**
+- **PHASE2_ACCESSORIAL-REVENUE_divergent-engine_DISPATCH** [dispatch] — CONSOLIDATE (gated) — do NOT build a divergent accessorial-revenue engine; extend the canonical revenue engine. Name allowed_files first.
+- **flow5-dual-deduction-systems-consolidate** [settlements] — CONSOLIDATE (gated) — collapse onto canonical driver_finance.driver_settlement_deductions per lockdown §9.1; retire the duplicate deduction paths. Same ruling as 0285-df-gap2.
+
+**FOLLOW (2)**
+- **0518-r18-schema-fragmentation-8-dup-pairs** [factoring] — FOLLOW DESIGN (gated) — execute the existing SCHEMA-CANONICALIZATION-VERDICTS-2026-06-28 doc (fold bank->banking etc.). Schema migration, gated.
+- **ruling-3-driver-escrow-current-vs-long_DISPATCH** [settlements] — FOLLOW CPA (gated) — reclassify Damage-Claim Escrow (QBO-1150040187) from OtherLongTermLiabilities to a CURRENT liability if expected to settle within 12 months. Owner/CPA ruling.
+
+**CLOSE (2)**
+- **audit3-external-audit-prep-workflow** [accounting] — CLOSE — auditor-grade traceability is ALREADY met: audit.row_changes (append-only) + accounting.transaction_source_links give full drill-through. A separate 'workpaper' workflow is not required for CPA/auditor review. Not a deferral — the requirement is satisfied.
+- **p1-dashboard-implementation** [platform] — CLOSE — Home/OwnerHome/QboStyleHome already shipped; DECLINE the generic 200-hr line.
+
+**DECLINE (17)**
+- **0270-no-auto-driver-status-from-safety-events** [safety] — DECLINE auto (keep explicit) — the explicit-termination path is already wired; auto-changing driver status from safety events risks false triggers. Keep manual/explicit, or add an approval gate.
+- **0270-no-auto-escrow-deduction-safety-events** [settlements] — DECLINE auto (gated) — escrow is held-in-trust liability; auto-deducting on a safety event is legally risky. Keep manual/approval-gated deductions only.
+- **0275-audit174-data-security-hardening** [platform] — DECLINE new platform (do NOT mark resolved-built) — field-encryption+audit.row_changes+RLS already exist; no new hardening platform needed. Capability partial, not a shipped 'resolved'.
+- **0275-audit177-data-integration-monitoring** [platform] — DECLINE new platform — integration_sync_log(0175) exists; no new dashboard. Not 'resolved-built'.
+- **0275-audit178-master-data-governance** [platform] — DECLINE — no enterprise MDM platform needed; mdata.* + RLS is the governance.
+- **0275-audit181-data-lineage-tracking** [platform] — DECLINE new platform — lineage via audit.row_changes + transaction_source_links (GUARD offered prod spot-verify). No new platform; don't mark resolved-built.
+- **0275-audit182-data-profiling-system** [platform] — DECLINE — not applicable at your scale.
+- **0275-audit183-data-catalog-system** [platform] — DECLINE — db/migrations + docs/specs are the catalog.
+- **0275-audit184-data-dictionary-system** [platform] — DECLINE — schema + specs are the dictionary.
+- **0275-audit185-data-model-documentation** [platform] — DECLINE — 73 schemas/540+ tables are self-documenting via migrations; no live model-monitoring dashboard needed.
+- **audit16-budget-tracking-system** [accounting] — DECLINE — budgeting is QuickBooks' domain (your system of record through cutover); a TMS budget module duplicates it and adds no operational value for a carrier. Out of scope by design.
+- **audit17-procurement-purchase-order-system** [accounting] — DECLINE — formal PO/procurement is manufacturing/retail-ERP (NetSuite-style). For a carrier, accounting.bills + mdata.vendors IS the correct AP model. Out of scope by design.
+- **audit18-treasury-management** [accounting] — DECLINE — banking module covers cash; treasury management is enterprise-scale, N/A.
+- **audit21-capex-tracking-approval** [accounting] — DECLINE as a separate feature — capex approval folds into the DB-enforced SoD control (0519-at2) applied to fixed-asset posting; no standalone capex module. Covered, not deferred.
+- **audit6-sox-ifrs-compliance-dashboard** [accounting] — DECLINE — private SMB, not SOX-regulated, US-GAAP not IFRS. Not applicable.
+- **p1-analytics-systems** [platform] — DECLINE — no product-analytics SDK; you hold financial/legal-evidence data (privacy). Financial analytics already exist as accounting reports.
+- **phase8-audit165-analytics-general** [platform] — DECLINE — operational analytics (booking-gap, late-arrival, home KPIs) already exist.
+
+**KEEP (3)**
+- **0257-audit-88** [compliance] — KEEP OPEN — Cursor flags HTS-vs-'module-exists' contradiction; border-crossing routes exist but the specific finding needs verify. Do not close yet.
+- **0285-acct-gap3-manual-payment-application** [accounting] — KEEP MANUAL (decide-as-is) — manual payment application is correct/safer than auto-apply for now; revisit only if volume demands. Close as decided.
+- **0473-1-9-driver-settlement-net-pay-mod_DISPATCH** [settlements] — KEEP 5% FLOOR (decided) — code already enforces DEFAULT_NET_PAY_FLOOR_PCT=0.05 (locked). Confirm settlement-module scope, else close.
+
+**OWNER-ENTER (1)**
+- **0441-mod13-form425c-exhibit-c-opening-balance-** [platform] — OWNER-ENTER (gated) — Form 425C Exhibit C opening balance is owner-entered only. You enter it; agent never posts opening balances.
+
+**CLEAN UP (1)**
+- **0473-2-5-trial-balance-002-cosmetic_CLEANUP** [platform] — CLEAN UP (gated) — the $0.02 Dr/Cr is a posted+reversed TEST invoice artifact; purge the test invoice so TB is clean. Accounting write, gated.
+
+**DUPLICATE (1)**
+- **0278-safety-gap1-auto-driver-status** [safety] — DUPLICATE of 0270 — same ruling: keep explicit-only. Close as duplicate.
+
+**RE-AUTHOR (1)**
+- **0441-mod5-retention-excludes-critical-truncate** [platform] — RE-AUTHOR or DROP — underspecified (doc-retention truncation); no locatable target. Re-author with specifics or drop as noise.
+
+**AUDIT (1)**
+- **0441-mod13-notifications-module-not-fully-audi** [platform] — AUDIT or DROP — route to a notifications-module parity sweep, or drop if not a priority.
+
+## 10. LANDMINES
+- reconcile:blocks snapshot goes stale — re-run for current numbers.
+- AUDIT-NOTE = prose allowed_files (no paths) → unmeasurable; verify vs code/live.
+- DONE=merged, NOT verified.
+- Any accounting.*/catalogs.*/mdata.*/flag write = financial cluster → owner-approve + GUARD verify, never self-merge.
 
 ## 11. PRs THIS SESSION
-- Merged frontend (self, on green): #2739-#2746, #2734,#2737,#2749,#2750,#2751,#2753,#2755,#2758; CI #2747,#2748; #2742 fixed.
-- Merged owner-gated (not me): #2724, #2733/#2735 (rev-rec lock), #2725-#2732.
-- OPEN frontend URL-sort (safe on green): #2754,#2756,#2757,#2759,#2760,#2761,#2763.
-- OPEN this session: #2752 (recon regen, superseded), **#2762 (purge + refreshed counts + this handoff)**.
+Merged frontend(self): #2739-#2746,#2734,#2737,#2749-#2758(sort),CI #2747/#2748,#2742 fixed. Owner-gated(not GUARD): #2724,#2733/#2735,#2725-#2732. OPEN sort: #2754/#2756/#2757/#2759/#2760/#2761/#2763. OPEN: #2752(superseded), **#2762(purge+counts+this doc)**.
 
+## 12. CROSS-REVIEW RECONCILIATION (GUARD + Cursor) — the deltas that matter
+**Corrections both reviewers forced (applied above):**
+- bf10b: SPLIT — recon-register covers 6 (resolved) but CDC poll omits Purchase/Deposit/Transfer (qbo-cdc.service.ts:7) = separate OPEN bug. My earlier 'CLOSE' was wrong.
+- 0257-audit-88: KEEP OPEN (Cursor: HTS-vs-module contradiction) — not closed.
+- 0275-audit174/177/181: DECLINE **new platform** — NOT 'resolved-built' (capability partial). Framing corrected.
+- 0275-audit171 (DQ-monitoring): MOVED from DECLINE → BUILD(gated) — prod found real DQ (78 mis-flagged, 16 blank CDL, 100% blank hire_date); a monitor would have caught them.
+- 60 'decided' are NOT yet reflected in §4 backlog (~38 still show OPEN) AND decided≠built — tracker reconciliation is a remaining task, not done.
+- VISUAL-REMAINDER: verify by CONTENT not commit-sha. My clone: merge-base --is-ancestor = TRUE for all 3; Cursor's checkout: fails (history rewrite). Both agree the fix CONTENT is on main. LAYOUT's superseded_by marker is empty = tracker cleanup.
 
----
+**CONTESTED prod numbers (GUARD vs Cursor) — need ONE authoritative re-run, that wins:**
+- PM schedules: GUARD 0/50 vs Cursor 30 rows /4-of-82 InService.
+- Placeholder phone: GUARD 2 vs Cursor 74 (000-000-0000).
 
-**Cursor adversarial overlay (required reading before acting on §7 Neon or Group B CLOSE):** [`CODER-FINAL-HANDOFF-CURSOR-VERIFY-2026-07-19.md`](./CODER-FINAL-HANDOFF-CURSOR-VERIFY-2026-07-19.md)
+**D (BUILD-gated) PRIORITY ORDER (both reviewers) — design-first, each gated:**
+- #1 PHASE2_RECON-COLLECTOR unfreeze — the twice-daily reconciliation IS the parallel-books safety net; if frozen (qbo_remote_counts frozen 2026-06-03), safety is dark NOW. Fix first.
+- #2 dip-mor pre/post-petition A/P split — Ch.11 MOR legal requirement (ties to TRK 6/5/25 & TRANSP 10/3/25 petition dates).
+- #3 0519-at2 DB-enforced SoD — WITH break-glass / second-approver (a hard maker≠checker would lock out the sole approver). GUARD note.
+- then: flow5 (execute lockdown §9.1 — kill RETIRE deduction paths) · flow2 · ruling-3 · module25 · P4-01/03/04/05/06/07 (design-first) · PHASE2_ACCESSORIAL (extend canonical engine, not divergent) · 0518-r18 · 0091-m-factor-1 · audit171 DQ-monitor.
+
+**Endorsed as grouped (both):** A DECLINE (minus audit171) · C DEFER/DECLINE the enterprise nice-to-haves · E KEEP-AS-IS all 4 · F frontend queue · G owner-enter/cleanup.
