@@ -28,6 +28,7 @@ import {
 import { ReeferSection } from "../../components/vehicle-profile/ReeferSection";
 import { FinancialUnitPLSection } from "../../components/vehicle-profile/FinancialUnitPLSection";
 import { ServiceTimeline } from "../../components/maintenance/ServiceTimeline";
+import { UnitPartsHistorySection } from "../../components/vehicle-profile/UnitPartsHistorySection";
 import { RecentActivitySection } from "../../components/vehicle-profile/RecentActivitySection";
 import { DocumentsSection } from "../../components/vehicle-profile/DocumentsSection";
 import { PhotoGallery } from "../../components/vehicle-profile/PhotoGallery";
@@ -246,6 +247,8 @@ export function VehicleProfilePage() {
             <div className="mt-3">
               <ServiceTimeline companyId={companyId} unitId={id} />
             </div>
+            {/* Reverse drill-through: parts_invoice_links → work_orders.unit_id (0441-mod13-inventory-part-to-unit-none) */}
+            <UnitPartsHistorySection unitId={id} companyId={companyId} />
           </div>
           <div data-testid="vp-section-6-compliance">
             <ComplianceSection compliance={profile.compliance} />

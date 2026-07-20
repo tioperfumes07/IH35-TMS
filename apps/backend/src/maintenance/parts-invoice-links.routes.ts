@@ -7,6 +7,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 
 const querySchema = z.object({ operating_company_id: z.string().uuid() });
 const woParamsSchema = z.object({ id: z.string().uuid() });
+const unitParamsSchema = z.object({ unitId: z.string().uuid() });
 const linkParamsSchema = z.object({ id: z.string().uuid() });
 const createLinkSchema = z.object({
   vendor_id: z.string().uuid(),
@@ -83,6 +84,71 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
 
     return { rows };
   });
+
+  /**
+   * Unit reverse drill-through: parts consumed on work orders for a single unit.
+   * Join path: parts_invoice_links → work_orders WHERE wo.unit_id = :unitId (no new FK/migration).
+   */
+  app.get(
+    "/api/v1/maintenance/units/:unitId/parts-history",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = authed(req, reply);
+      if (!user) return;
+      const params = unitParamsSchema.safeParse(req.params ?? {});
+      if (!params.success) return reply.code(400).send({ error: "validation_error", details: params.error.flatten() });
+      const query = querySchema.safeParse(req.query ?? {});
+      if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+
+      const rows = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
+        const unitRes = await client.query(
+          `SELECT id::text AS id FROM mdata.units
+           WHERE id = $1 AND (owner_company_id = $2 OR currently_leased_to_company_id = $2)
+           LIMIT 1`,
+          [params.data.unitId, query.data.operating_company_id]
+        );
+        if (!unitRes.rows[0]) return { notFound: true as const };
+
+        const res = await client.query(
+          `
+            SELECT
+              pil.id::text AS id,
+              pil.operating_company_id::text AS operating_company_id,
+              pil.work_order_id::text AS work_order_id,
+              wo.display_id AS work_order_display_id,
+              wo.unit_id::text AS unit_id,
+              u.unit_number AS unit_number,
+              pil.parts_inventory_id::text AS parts_inventory_id,
+              pil.part_description,
+              pi.part_number,
+              pil.qty_used,
+              pil.vendor_id::text AS vendor_id,
+              v.vendor_name AS vendor_name,
+              pil.vendor_invoice_number,
+              pil.vendor_invoice_amount::float8 AS vendor_invoice_amount,
+              pil.created_at,
+              pil.created_by_user_id::text AS created_by_user_id
+            FROM maintenance.parts_invoice_links pil
+            INNER JOIN maintenance.work_orders wo
+              ON wo.id = pil.work_order_id
+             AND wo.operating_company_id = pil.operating_company_id
+            LEFT JOIN mdata.units u ON u.id = wo.unit_id
+            LEFT JOIN mdata.vendors v ON v.id = pil.vendor_id
+            LEFT JOIN maintenance.parts_inventory pi ON pi.id = pil.parts_inventory_id
+            WHERE pil.operating_company_id = $1
+              AND wo.unit_id = $2
+            ORDER BY pil.created_at DESC
+            LIMIT 500
+          `,
+          [query.data.operating_company_id, params.data.unitId]
+        );
+        return { rows: res.rows };
+      });
+
+      if ("notFound" in rows) return reply.code(404).send({ error: "unit_not_found" });
+      return { rows: rows.rows };
+    }
+  );
 
   app.post("/api/v1/maintenance/work-orders/:id/parts-invoice-links", async (req, reply) => {
     const user = authed(req, reply);
