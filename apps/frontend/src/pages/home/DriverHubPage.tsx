@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useMemo } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
@@ -12,7 +12,8 @@ import { DriverSchedulerRequestInboxPage } from "../safety/driver-scheduler/Driv
 // canReviewCashAdvanceRequest gate: Owner/Administrator/Manager/Accountant/Dispatcher).
 const REVIEW_ROLES = ["Owner", "Administrator", "Manager", "Accountant", "Dispatcher"];
 
-type HubTab = "overview" | "scheduler" | "leave_requests";
+const HUB_TAB_IDS = ["overview", "scheduler", "leave_requests"] as const;
+type HubTab = (typeof HUB_TAB_IDS)[number];
 
 const TABS: { id: HubTab; label: string }[] = [
   { id: "overview", label: "Overview" },
@@ -20,12 +21,30 @@ const TABS: { id: HubTab; label: string }[] = [
   { id: "leave_requests", label: "Leave Requests" },
 ];
 
+function parseHubTab(searchParams: URLSearchParams): HubTab {
+  const raw = searchParams.get("tab");
+  return (HUB_TAB_IDS as readonly string[]).includes(raw ?? "") ? (raw as HubTab) : "overview";
+}
+
 export function DriverHubPage() {
   const { selectedCompanyId } = useCompanyContext();
   const { user } = useAuth();
   const companyId = selectedCompanyId ?? "";
   const canReview = REVIEW_ROLES.includes(String(user?.role ?? ""));
-  const [tab, setTab] = useState<HubTab>("overview");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = useMemo(() => parseHubTab(searchParams), [searchParams]);
+
+  const setTab = (next: HubTab) => {
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        if (next === "overview") p.delete("tab");
+        else p.set("tab", next);
+        return p;
+      },
+      { replace: true },
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -43,7 +62,13 @@ export function DriverHubPage() {
           ) : undefined
         }
       />
-      <SecondaryNavTabs tabs={TABS} activeId={tab} onChange={(id) => setTab(id as HubTab)} />
+      <SecondaryNavTabs
+        tabs={TABS}
+        activeId={tab}
+        onChange={(id) => {
+          if ((HUB_TAB_IDS as readonly string[]).includes(id)) setTab(id as HubTab);
+        }}
+      />
       {/* Reuse the existing Safety Driver Scheduler + Leave Requests components (no rebuild). */}
       {tab === "overview" && <DriverInbox companyId={companyId} canReview={canReview} />}
       {tab === "scheduler" && <DriverSchedulerGridPage />}
