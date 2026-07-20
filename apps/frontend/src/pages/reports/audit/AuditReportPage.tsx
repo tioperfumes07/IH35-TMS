@@ -1,16 +1,60 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { Button } from "../../../components/Button";
 import { fetchAuditReport, type AuditReportParams, type AuditReportRow } from "../../../api/auditReports";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 const PAGE_SIZE = 100;
 
 function formatDate(iso: string) {
   try { return new Date(iso).toLocaleString(); } catch { return iso; }
 }
+
+type AuditReportTableRow = AuditReportRow & { row_key: string };
+
+const AUDIT_REPORT_COLUMNS: Array<ParityColumn<AuditReportTableRow>> = [
+  {
+    key: "occurred_at",
+    label: "Date/Time",
+    sortable: true,
+    sortValue: (row) => new Date(row.occurred_at).getTime(),
+    render: (row) => <span className="whitespace-nowrap text-gray-500">{formatDate(row.occurred_at)}</span>,
+  },
+  {
+    key: "event_type",
+    label: "Event Type",
+    sortable: true,
+    render: (row) => <span className="font-mono text-gray-700">{row.event_type}</span>,
+  },
+  {
+    key: "subject_type",
+    label: "Subject",
+    sortable: true,
+    sortValue: (row) => `${row.subject_type ?? ""}:${row.subject_id ?? ""}`,
+    render: (row) => (
+      <span className="text-gray-500">
+        {row.subject_type ?? "—"}
+        {row.subject_id ? ` · ${row.subject_id.slice(0, 8)}…` : ""}
+      </span>
+    ),
+  },
+  {
+    key: "actor_email",
+    label: "Actor",
+    sortable: true,
+    sortValue: (row) => row.actor_email ?? row.actor_user_id ?? "",
+    render: (row) => <span className="text-gray-500">{row.actor_email ?? row.actor_user_id?.slice(0, 8) ?? "—"}</span>,
+  },
+  {
+    key: "source",
+    label: "Source",
+    sortable: true,
+    render: (row) => <span className="text-gray-400">{row.source ?? "—"}</span>,
+  },
+];
 
 function rowsToCsv(rows: AuditReportRow[], title: string): string {
   const headers = ["occurred_at", "event_type", "subject_type", "subject_id", "actor_email", "source"];
@@ -73,7 +117,11 @@ export function AuditReportPage({ title, subtitle, endpoint, extraParams, showMo
     enabled: Boolean(companyId),
   });
 
-  const rows = query.data?.rows ?? [];
+  const rows = useMemo(() => query.data?.rows ?? [], [query.data?.rows]);
+  const tableRows = useMemo<AuditReportTableRow[]>(
+    () => rows.map((row, index) => ({ ...row, row_key: `${row.occurred_at}:${row.event_type}:${row.subject_id ?? ""}:${index}` })),
+    [rows],
+  );
   const totalCount = query.data?.total_count ?? 0;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
   const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
@@ -85,74 +133,63 @@ export function AuditReportPage({ title, subtitle, endpoint, extraParams, showMo
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start justify-between">
+      <div>
         <PageHeader title={title} subtitle={subtitle} backHref={backHref} breadcrumb={breadcrumb} />
-        <Button size="sm" variant="secondary" onClick={handleCsvExport} disabled={rows.length === 0}>
-          Export CSV
-        </Button>
       </div>
 
-      <div className="flex flex-wrap gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3">
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-gray-500">From</label>
-          <DatePicker value={from} onChange={(next) => { setFrom(next); setOffset(0); }}
-            className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-gray-500">To</label>
-          <DatePicker value={to} onChange={(next) => { setTo(next); setOffset(0); }}
-            className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
-        </div>
-        {showModuleFilter && (
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-500">Module</label>
-            <input type="text" value={moduleFilter} placeholder="e.g. dispatch"
-              onChange={(e) => { setModuleFilter(e.target.value); setOffset(0); }}
-              className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
-          </div>
-        )}
-        {showDriverFilter && (
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-500">Driver ID</label>
-            <input type="text" value={driverFilter} placeholder="UUID"
-              onChange={(e) => { setDriverFilter(e.target.value); setOffset(0); }}
-              className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
-          </div>
-        )}
-      </div>
+      <div className="text-xs text-gray-400">{totalCount} record{totalCount !== 1 ? "s" : ""}</div>
 
-      {query.isLoading && <div className="py-8 text-center text-sm text-gray-400">Loading…</div>}
+      {!query.isError && (
+        <ParityTable
+          rows={tableRows}
+          columns={AUDIT_REPORT_COLUMNS}
+          rowKey={(row) => row.row_key}
+          loading={query.isLoading}
+          storageKey="audit-report-page"
+          emptyText="No records for the selected filters."
+          tableTestId="audit-report-table"
+          toolbar={
+            <Button size="sm" variant="secondary" onClick={handleCsvExport} disabled={rows.length === 0}>
+              Export CSV
+            </Button>
+          }
+          filterBar={
+            <div className="flex flex-wrap gap-2">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-500">From</label>
+                <DatePicker value={from} onChange={(next) => { setFrom(next); setOffset(0); }}
+                  className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-500">To</label>
+                <DatePicker value={to} onChange={(next) => { setTo(next); setOffset(0); }}
+                  className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
+              </div>
+              {showModuleFilter && (
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-gray-500">Module</label>
+                  <input type="text" value={moduleFilter} placeholder="e.g. dispatch"
+                    onChange={(e) => { setModuleFilter(e.target.value); setOffset(0); }}
+                    className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
+                </div>
+              )}
+              {showDriverFilter && (
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-gray-500">Driver ID</label>
+                  <input type="text" value={driverFilter} placeholder="UUID"
+                    onChange={(e) => { setDriverFilter(e.target.value); setOffset(0); }}
+                    className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
+                </div>
+              )}
+            </div>
+          }
+        />
+      )}
+
       {query.isError && <div className="py-4 text-center text-sm text-red-500">Failed to load report.</div>}
 
-      {!query.isLoading && !query.isError && (
+      {!query.isError && (
         <>
-          <div className="text-xs text-gray-400">{totalCount} record{totalCount !== 1 ? "s" : ""}</div>
-          <div className="overflow-x-auto rounded-sm border border-gray-200">
-            <table className="min-w-full text-xs">
-              <thead className="bg-gray-50 text-left">
-                <tr>
-                  {["Date/Time", "Event Type", "Subject", "Actor", "Source"].map((h) => (
-                    <th key={h} className="border-b border-gray-200 px-3 py-2 font-medium text-gray-600">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.length === 0 && (
-                  <tr><td colSpan={5} className="px-3 py-6 text-center text-gray-400">No records for the selected filters.</td></tr>
-                )}
-                {rows.map((r, i) => (
-                  <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="whitespace-nowrap px-3 py-2 text-gray-500">{formatDate(r.occurred_at)}</td>
-                    <td className="px-3 py-2 font-mono text-gray-700">{r.event_type}</td>
-                    <td className="px-3 py-2 text-gray-500">{r.subject_type ?? "—"}{r.subject_id ? ` · ${r.subject_id.slice(0, 8)}…` : ""}</td>
-                    <td className="px-3 py-2 text-gray-500">{r.actor_email ?? r.actor_user_id?.slice(0, 8) ?? "—"}</td>
-                    <td className="px-3 py-2 text-gray-400">{r.source ?? "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
           {totalPages > 1 && (
             <div className="flex items-center gap-2">
               <Button size="sm" variant="secondary" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}>Prev</Button>

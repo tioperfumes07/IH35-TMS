@@ -183,8 +183,6 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
       return true;
     });
   }, [allRows, typeFilter, driverFilter, unitFilter, fromDate, toDate]);
-  // LIST-EMPTY: each empty message renders only after its own query settles.
-  const listState = useListState(eventsQuery, allRows.length === 0);
   // Bulk-select + CSV export table (SafetyEventsTable) — adapt the v2 events-log row shape onto the
   // table's generic field names. Detail remains one click away via the existing side panel.
   const bulkTableRows = useMemo(
@@ -367,19 +365,11 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
         </div>
       </div>
 
-      {listState.isEmpty ? (
-        <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-          <table className="min-w-[980px] w-full text-left text-xs">
-            <tbody>
-              <tr>
-                <td className="px-2 py-4 text-center text-gray-500">No safety events found.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <SafetyEventsTable rows={bulkTableRows} loading={eventsQuery.isPending || eventsQuery.isFetching} onOpenAccident={(row) => setSelectedEventId(String(row.id))} />
-      )}
+      <SafetyEventsTable
+        rows={bulkTableRows}
+        loading={eventsQuery.isPending || eventsQuery.isFetching}
+        onOpenAccident={(row) => setSelectedEventId(String(row.id))}
+      />
 
       {selectedEventId ? (
         <div className="fixed inset-y-0 right-0 z-40 w-full max-w-md border-l border-gray-200 bg-white p-4 shadow-xl">

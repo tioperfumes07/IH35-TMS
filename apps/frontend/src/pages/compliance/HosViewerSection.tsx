@@ -2,8 +2,17 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Combobox, type ComboboxOption } from "../../components/Combobox";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { listDrivers } from "../../api/mdata";
-import { getHosDaily, getHosDailyRoster, DUTY_LABEL, DUTY_COLOR, type HosDutyStatus } from "../../api/hosTracker";
+import {
+  getHosDaily,
+  getHosDailyRoster,
+  DUTY_LABEL,
+  DUTY_COLOR,
+  type HosDutyStatus,
+  type HosSegment,
+} from "../../api/hosTracker";
 import { companyToday } from "../../lib/businessDate";
 
 // SAFETY-1: the HOS date filter defaults to the current duty day in the CARRIER timezone
@@ -107,6 +116,46 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
   const selectedName = options.find((o) => o.value === driverId)?.label ?? "driver";
   const daily = dailyQ.data;
   const verdict = daily?.clocks ? STATUS_VERDICT[daily.clocks.status] ?? STATUS_VERDICT.ok : null;
+  const segmentColumns = useMemo<ParityColumn<HosSegment>[]>(
+    () => [
+      {
+        key: "duty_status",
+        label: "Duty status",
+        sortable: true,
+        render: (segment) => (
+          <span className="inline-flex items-center gap-1.5 font-medium text-slate-800">
+            <span
+              className="inline-block h-[8px] w-[8px] rounded-full"
+              style={{ background: DUTY_COLOR[segment.duty_status] }}
+            />
+            {DUTY_LABEL[segment.duty_status]}
+          </span>
+        ),
+      },
+      {
+        key: "start_utc",
+        label: "Start (CT)",
+        sortable: true,
+        render: (segment) => clockTime(segment.start_utc),
+        cellClass: "text-center font-mono tabular-nums",
+      },
+      {
+        key: "end_utc",
+        label: "End (CT)",
+        sortable: true,
+        render: (segment) => clockTime(segment.end_utc),
+        cellClass: "text-center font-mono tabular-nums",
+      },
+      {
+        key: "minutes",
+        label: "Duration",
+        sortable: true,
+        render: (segment) => hmm(segment.minutes),
+        cellClass: "text-right font-mono tabular-nums",
+      },
+    ],
+    []
+  );
 
   return (
     <section data-testid="compliance-section-hos-viewer">
@@ -159,7 +208,12 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
         ) : dailyQ.isLoading ? (
           <div className="space-y-1">{[0, 1, 2, 3, 4].map((i) => <div key={i} className="h-[26px] animate-pulse rounded-sm bg-slate-100" />)}</div>
         ) : dailyQ.isError ? (
-          <div className="rounded-sm border border-slate-200 bg-white px-4 py-10 text-center text-sm text-red-600">Failed to load the ELD log for {selectedName}.</div>
+          <ListErrorState
+            title={`Couldn't load the ELD log for ${selectedName}.`}
+            status={0}
+            message={(dailyQ.error as Error)?.message}
+            onRetry={() => void dailyQ.refetch()}
+          />
         ) : !daily || daily.available === false || (daily.segments?.length ?? 0) === 0 ? (
           <div className="rounded-sm border border-slate-200 bg-white px-4 py-12 text-center">
             <div className="text-sm font-semibold text-slate-700">No ELD data</div>
@@ -188,32 +242,16 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
             </div>
 
             {/* Duty-segment ELD log (the day's timeline) */}
-            <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
-              <table className="w-full text-left text-[11px]">
-                <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-slate-500">
-                  <tr>
-                    {["Duty status", "Start (CT)", "End (CT)", "Duration"].map((h) => (
-                      <th key={h} className="whitespace-nowrap px-2 py-1.5">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {daily.segments.map((s, i) => (
-                    <tr key={`${s.start_utc}-${i}`} className="border-t border-slate-100">
-                      <td className="px-2 py-1.5">
-                        <span className="inline-flex items-center gap-1.5 font-medium text-slate-800">
-                          <span className="inline-block h-[8px] w-[8px] rounded-full" style={{ background: DUTY_COLOR[s.duty_status] }} />
-                          {DUTY_LABEL[s.duty_status]}
-                        </span>
-                      </td>
-                      <td className="px-2 py-1.5 text-center font-mono tabular-nums">{clockTime(s.start_utc)}</td>
-                      <td className="px-2 py-1.5 text-center font-mono tabular-nums">{clockTime(s.end_utc)}</td>
-                      <td className="px-2 py-1.5 text-right font-mono tabular-nums">{hmm(s.minutes)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ParityTable<HosSegment>
+              columns={segmentColumns}
+              rows={daily.segments}
+              rowKey={(segment) => `${segment.start_utc}-${segment.end_utc}-${segment.duty_status}`}
+              storageKey="compliance-hos-viewer-segments"
+              tableTestId="compliance-hos-viewer-segments-table"
+              exportFilename="hos-viewer-duty-segments"
+              initialPageSize={15}
+              emptyText="No ELD duty-status segments for this date."
+            />
 
             {/* Per-status daily totals */}
             <div className="flex flex-wrap gap-2">

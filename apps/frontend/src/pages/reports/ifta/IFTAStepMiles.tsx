@@ -1,11 +1,19 @@
+import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getIftaPreparation, runIftaAggregateMiles } from "../../../api/ifta";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 type Props = {
   operatingCompanyId: string;
   preparationId: string;
   quarter: number;
   year: number;
+};
+
+type StateMilesRow = {
+  state: string;
+  miles: number;
+  source: string;
 };
 
 function fmtNum(value: number, digits = 1) {
@@ -27,8 +35,45 @@ export function IFTAStepMiles({ operatingCompanyId, preparationId, quarter, year
     },
   });
 
-  const rows = prepQuery.data?.state_miles ?? [];
-  const total = rows.reduce((sum, row) => sum + Number(row.override_miles ?? row.miles ?? 0), 0);
+  const rows = useMemo<StateMilesRow[]>(
+    () =>
+      (prepQuery.data?.state_miles ?? []).map((row) => ({
+        state: row.state,
+        miles: Number(row.override_miles ?? row.miles ?? 0),
+        source: row.source,
+      })),
+    [prepQuery.data?.state_miles],
+  );
+
+  const columns = useMemo<Array<ParityColumn<StateMilesRow>>>(
+    () => [
+      {
+        key: "state",
+        label: "State",
+        sortable: true,
+        alwaysVisible: true,
+        cellClass: "font-medium",
+        render: (row) => row.state,
+      },
+      {
+        key: "miles",
+        label: "Miles",
+        sortable: true,
+        sortValue: (row) => row.miles,
+        render: (row) => fmtNum(row.miles),
+      },
+      {
+        key: "source",
+        label: "Source",
+        sortable: true,
+        cellClass: "text-slate-600",
+        render: (row) => row.source,
+      },
+    ],
+    [],
+  );
+
+  const total = rows.reduce((sum, row) => sum + row.miles, 0);
 
   return (
     <section className="rounded-sm border border-slate-200 bg-white">
@@ -48,42 +93,22 @@ export function IFTAStepMiles({ operatingCompanyId, preparationId, quarter, year
         {prepQuery.data?.miles_aggregated_at ? (
           <p className="text-slate-600">Last aggregated: {new Date(prepQuery.data.miles_aggregated_at).toLocaleString()}</p>
         ) : null}
-        <div className="overflow-x-auto rounded-sm border border-slate-200">
-          <table className="min-w-full text-left">
-            <thead className="bg-slate-50 text-slate-600">
-              <tr>
-                <th className="px-2 py-1.5 font-semibold">State</th>
-                <th className="px-2 py-1.5 font-semibold">Miles</th>
-                <th className="px-2 py-1.5 font-semibold">Source</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="px-2 py-3 text-slate-500">
-                    No miles aggregated yet — run Step 1.
-                  </td>
-                </tr>
-              ) : null}
-              {rows.map((row) => (
-                <tr key={row.state} className="border-t border-slate-100">
-                  <td className="px-2 py-1.5 font-medium">{row.state}</td>
-                  <td className="px-2 py-1.5">{fmtNum(Number(row.override_miles ?? row.miles ?? 0))}</td>
-                  <td className="px-2 py-1.5 text-slate-600">{row.source}</td>
-                </tr>
-              ))}
-            </tbody>
-            {rows.length > 0 ? (
-              <tfoot>
-                <tr className="border-t border-slate-200 bg-slate-50 font-semibold">
-                  <td className="px-2 py-1.5">Total</td>
-                  <td className="px-2 py-1.5">{fmtNum(total)}</td>
-                  <td className="px-2 py-1.5" />
-                </tr>
-              </tfoot>
-            ) : null}
-          </table>
-        </div>
+        <ParityTable
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.state}
+          storageKey="ifta-step-miles"
+          emptyText="No miles aggregated yet — run Step 1."
+          density="compact"
+          tableTestId="ifta-step-miles-table"
+          initialPageSize={100}
+          pageSizeOptions={[15, 50, 100, 300]}
+        />
+        {rows.length > 0 ? (
+          <div className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 font-semibold text-slate-900">
+            Total: {fmtNum(total)}
+          </div>
+        ) : null}
       </div>
     </section>
   );
