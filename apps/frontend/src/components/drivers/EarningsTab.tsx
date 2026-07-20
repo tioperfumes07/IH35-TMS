@@ -5,12 +5,15 @@ import { cashAdvanceRequestsOfficeApi } from "../../api/cashAdvanceRequests";
 import { getDebtSummary, listSettlements, type SettlementListRow } from "../../api/driverFinance";
 import { getLiabilitiesByDriver } from "../../api/liabilities";
 import { Button } from "../Button";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { useLiveDebt } from "../../pages/driver-finance/hooks/useLiveDebt";
 
 type Props = {
   driverId: string;
   operatingCompanyId: string;
 };
+
+type LiabilityRow = Record<string, unknown>;
 
 function money(value: number) {
   return `$${Number(value ?? 0).toFixed(2)}`;
@@ -30,6 +33,83 @@ function isYtdSettlement(row: SettlementListRow, year: number) {
   const end = new Date(row.period_end);
   return !Number.isNaN(end.getTime()) && end.getFullYear() === year;
 }
+
+const SETTLEMENT_COLUMNS: Array<ParityColumn<SettlementListRow>> = [
+  {
+    key: "period",
+    label: "Period",
+    sortable: true,
+    sortValue: (row) => row.period_end,
+    render: (row) => `${row.period_start} → ${row.period_end}`,
+  },
+  {
+    key: "gross_pay",
+    label: "Gross",
+    sortable: true,
+    render: (row) => money(Number(row.gross_pay ?? 0)),
+  },
+  {
+    key: "deductions_total",
+    label: "Deductions",
+    sortable: true,
+    render: (row) => money(Number(row.deductions_total ?? 0)),
+  },
+  {
+    key: "net_pay",
+    label: "Net pay",
+    sortable: true,
+    cellClass: "font-semibold text-green-700",
+    render: (row) => money(Number(row.net_pay ?? 0)),
+  },
+  {
+    key: "status",
+    label: "Status",
+    sortable: true,
+  },
+];
+
+const LIABILITY_COLUMNS: Array<ParityColumn<LiabilityRow>> = [
+  {
+    key: "type",
+    label: "Type",
+    sortable: true,
+    render: (row) => String(row.type ?? "—"),
+  },
+  {
+    key: "source_description",
+    label: "Source",
+    sortable: true,
+    render: (row) => String(row.source_description ?? "—"),
+  },
+  {
+    key: "original_amount",
+    label: "Original",
+    sortable: true,
+    sortValue: (row) => Number(row.original_amount ?? 0),
+    render: (row) => money(Number(row.original_amount ?? 0)),
+  },
+  {
+    key: "paid_to_date",
+    label: "Paid",
+    sortable: true,
+    sortValue: (row) => Number(row.paid_to_date ?? 0),
+    render: (row) => money(Number(row.paid_to_date ?? 0)),
+  },
+  {
+    key: "current_balance",
+    label: "Balance",
+    sortable: true,
+    sortValue: (row) => Number(row.current_balance ?? 0),
+    cellClass: "font-semibold",
+    render: (row) => money(Number(row.current_balance ?? 0)),
+  },
+  {
+    key: "status",
+    label: "Status",
+    sortable: true,
+    render: (row) => String(row.display_status ?? row.status ?? "active"),
+  },
+];
 
 export function EarningsTab({ driverId, operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
@@ -177,75 +257,32 @@ export function EarningsTab({ driverId, operatingCompanyId }: Props) {
             View all settlements →
           </Link>
         </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-[720px] w-full text-left text-xs">
-            <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
-              <tr>
-                {["Period", "Gross", "Deductions", "Net pay", "Status"].map((heading) => (
-                  <th key={heading} className="px-2 py-1">
-                    {heading}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {lastFourSettlements.map((row) => (
-                <tr key={row.id} className="border-t border-gray-100" data-testid={`driver-earnings-settlement-${row.id}`}>
-                  <td className="px-2 py-1">
-                    {row.period_start} → {row.period_end}
-                  </td>
-                  <td className="px-2 py-1">{money(Number(row.gross_pay ?? 0))}</td>
-                  <td className="px-2 py-1">{money(Number(row.deductions_total ?? 0))}</td>
-                  <td className="px-2 py-1 font-semibold text-green-700">{money(Number(row.net_pay ?? 0))}</td>
-                  <td className="px-2 py-1">{row.status}</td>
-                </tr>
-              ))}
-              {lastFourSettlements.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-2 py-3 text-center text-gray-500">
-                    No settlements for this driver yet.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable
+          columns={SETTLEMENT_COLUMNS}
+          rows={lastFourSettlements}
+          rowKey={(row) => row.id}
+          loading={settlementsQuery.isPending}
+          storageKey="driver-earnings-last-settlements"
+          emptyText="No settlements for this driver yet."
+          initialPageSize={10}
+          pageSizeOptions={[10, 25, 50]}
+          rowTestId={(row) => `driver-earnings-settlement-${row.id}`}
+        />
       </div>
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <h3 className="mb-2 text-sm font-semibold text-gray-900">Active liabilities</h3>
-        <div className="overflow-x-auto">
-          <table className="min-w-[900px] w-full text-left text-xs">
-            <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
-              <tr>
-                {["Type", "Source", "Original", "Paid", "Balance", "Status"].map((heading) => (
-                  <th key={heading} className="px-2 py-1">
-                    {heading}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {liabilities.map((row) => (
-                <tr key={String(row.id)} className="border-t border-gray-100" data-testid={`driver-earnings-liability-${String(row.id)}`}>
-                  <td className="px-2 py-1">{String(row.type ?? "—")}</td>
-                  <td className="px-2 py-1">{String(row.source_description ?? "—")}</td>
-                  <td className="px-2 py-1">{money(Number(row.original_amount ?? 0))}</td>
-                  <td className="px-2 py-1">{money(Number(row.paid_to_date ?? 0))}</td>
-                  <td className="px-2 py-1 font-semibold">{money(Number(row.current_balance ?? 0))}</td>
-                  <td className="px-2 py-1">{String(row.display_status ?? row.status ?? "active")}</td>
-                </tr>
-              ))}
-              {liabilities.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-2 py-3 text-center text-gray-500">
-                    No active liabilities for this driver.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable
+          columns={LIABILITY_COLUMNS}
+          rows={liabilities}
+          rowKey={(row) => String(row.id)}
+          loading={liabilitiesQuery.isPending}
+          storageKey="driver-earnings-active-liabilities"
+          emptyText="No active liabilities for this driver."
+          initialPageSize={25}
+          pageSizeOptions={[10, 25, 50, 100]}
+          rowTestId={(row) => `driver-earnings-liability-${String(row.id)}`}
+        />
       </div>
 
       {/* ARCHIVE (A24-5): prior placeholder copy lived inline in DriverDetail.tsx — Sunset 2026-09-01 */}

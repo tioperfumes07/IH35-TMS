@@ -21,9 +21,9 @@ sort, and the lock-account control — never drop or reorder.
 ## Rollup
 | Status | Count |
 | --- | --- |
-| migrated (batch 1 + GLOBAL-COLS-01) | 9 |
+| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab) | 10 |
 | financial-hold (Jorge-gated) | 99 |
-| pending (non-financial, future batches) | 192 |
+| pending (non-financial, future batches) | 191 |
 | **hand-rolled total (original)** | **300** |
 
 > Note: ParityTable was already consumed by ~16 surfaces before this batch (not counted above — those were never hand-rolled).
@@ -52,6 +52,16 @@ shared `ParityTable` grammar `AccountingAuditTrailPage.tsx`'s lineage lookup alr
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/accounting/PostingLineagePage.tsx` | pages/accounting |
+
+## qbo-parity-a1 — EarningsTab (this PR)
+Drivers hub Earnings/Debt tab (high-traffic shared component on `DriverDetail`): last-4
+settlements + active liabilities were hand-rolled `<table>`s. Migrated both to shared
+`ParityTable` (sort + resize + gear + emptyText). Columns + `data-testid` row hooks preserved
+1:1. Guard: `scripts/verify-earnings-tab-uses-paritytable.mjs` via verify-step 1016.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/drivers/EarningsTab.tsx` | components/drivers |
 
 ## Remaining hand-rolled inventory (by module)
 
@@ -132,7 +142,7 @@ shared `ParityTable` grammar `AccountingAuditTrailPage.tsx`'s lineage lookup alr
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/components/drivers/AuditHistoryTab.tsx` | pending |
-| `apps/frontend/src/components/drivers/EarningsTab.tsx` | pending |
+| `apps/frontend/src/components/drivers/EarningsTab.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/drivers/LoadHistoryTab.tsx` | pending |
 | `apps/frontend/src/components/drivers/OperationsHistoryTable.tsx` | pending |
 
