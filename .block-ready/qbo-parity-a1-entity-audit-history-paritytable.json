@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-entity-audit-history-paritytable",
+  "branch": "fix/qbo-parity-a1-entity-audit-history",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable + ListErrorState)",
+  "phase": "OPS-FE",
+  "task": "Migrate EntityAuditHistoryTab to ParityTable + ListErrorState. Guard verify-step 1035 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md / qbo-parity-a1",
+  "source_file": "qbo-parity-a1-entity-audit-history-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-entity-audit-history-paritytable.json",
+    "apps/frontend/src/components/audit/EntityAuditHistoryTab.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-entity-audit-history-uses-paritytable.mjs",
+    "scripts/verify-steps/1035-verify-entity-audit-history-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "EntityAuditHistoryTab uses ParityTable + ListErrorState; verify-step 1035 PASS"
+    }
+  ],
+  "note": "GATED: no. No migrations. Rule 17."
+}

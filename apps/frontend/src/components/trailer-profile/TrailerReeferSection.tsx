@@ -1,12 +1,42 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   createMaintenanceReeferHoursLogEntry,
   fetchMaintenanceReeferHoursSnapshot,
   updateMaintenanceReeferSpecs,
+  type MaintenanceReeferHoursLogRow,
 } from "../../api/maintenance";
+import { ListErrorState } from "../ListErrorState";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 
 type ReeferSnapshot = Awaited<ReturnType<typeof fetchMaintenanceReeferHoursSnapshot>>;
+
+const HISTORY_COLUMNS: Array<ParityColumn<MaintenanceReeferHoursLogRow>> = [
+  {
+    key: "recorded_at",
+    label: "Recorded",
+    sortable: true,
+    sortValue: (row) => new Date(row.recorded_at).getTime(),
+    render: (row) => String(row.recorded_at ?? "").slice(0, 16),
+  },
+  {
+    key: "hours_reading",
+    label: "Hours",
+    sortable: true,
+    render: (row) => row.hours_reading,
+  },
+  {
+    key: "source_label",
+    label: "Source",
+    sortable: true,
+  },
+  {
+    key: "notes",
+    label: "Notes",
+    sortable: true,
+    render: (row) => row.notes || "—",
+  },
+];
 
 export function TrailerReeferSection({
   trailerId,
@@ -53,10 +83,27 @@ export function TrailerReeferSection({
     },
   });
 
+  const historyColumns = useMemo(() => HISTORY_COLUMNS, []);
+
   if (snapshotQ.isLoading) {
     return (
       <section className="rounded-sm border border-gray-200 bg-white p-4" data-testid="tp-reefer-a19-slot">
         <p className="text-xs text-gray-500">Loading reefer hours…</p>
+      </section>
+    );
+  }
+
+  if (snapshotQ.isError) {
+    const err = snapshotQ.error as { status?: number; message?: string } | null;
+    return (
+      <section className="rounded-sm border border-gray-200 bg-white p-4" data-testid="tp-reefer-a19-slot">
+        <h2 className="text-sm font-semibold text-gray-800">Reefer hours tracking</h2>
+        <ListErrorState
+          title="Couldn't load reefer hours"
+          status={typeof err?.status === "number" ? err.status : 0}
+          message={err?.message}
+          onRetry={() => void snapshotQ.refetch()}
+        />
       </section>
     );
   }
@@ -146,30 +193,18 @@ export function TrailerReeferSection({
 
       <div className="mt-4">
         <h3 className="text-xs font-semibold text-gray-700">Hours history</h3>
-        {history.length === 0 ? (
-          <p className="mt-1 text-xs text-gray-500">No readings yet — record manually or run Samsara ingest.</p>
-        ) : (
-          <table className="mt-2 w-full text-left text-xs" data-testid="reefer-hours-history">
-            <thead>
-              <tr className="border-b text-gray-500">
-                <th className="py-1 pr-2">Recorded</th>
-                <th className="py-1 pr-2">Hours</th>
-                <th className="py-1 pr-2">Source</th>
-                <th className="py-1">Notes</th>
-              </tr>
-            </thead>
-            <tbody>
-              {history.map((row) => (
-                <tr key={String(row.id)} className="border-b border-gray-100">
-                  <td className="py-1 pr-2">{String(row.recorded_at ?? "").slice(0, 16)}</td>
-                  <td className="py-1 pr-2">{row.hours_reading}</td>
-                  <td className="py-1 pr-2">{row.source_label}</td>
-                  <td className="py-1">{row.notes || "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+        <div className="mt-2">
+          <ParityTable
+            storageKey="trailer-reefer-hours-history"
+            tableTestId="reefer-hours-history"
+            columns={historyColumns}
+            rows={history}
+            rowKey={(row) => String(row.id)}
+            emptyText="No readings yet — record manually or run Samsara ingest."
+            initialPageSize={20}
+            pageSizeOptions={[10, 20, 50]}
+          />
+        </div>
       </div>
     </section>
   );
