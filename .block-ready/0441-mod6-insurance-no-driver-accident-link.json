@@ -1,17 +1,31 @@
 {
   "block_id": "0441-mod6-insurance-no-driver-accident-link",
-  "status": "PARTIAL",
-  "classification": "FINANCIAL",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (frontend reverse-drill UI + guard only)",
   "phase": "tier1",
+  "branch": "fix/insurance-claims-reverse-accidents",
+  "task": "Render claim-graph reverse accidents/incidents as visible links in ClaimsTab (parity with lawsuits/matters)",
   "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
   "source_file": "0441-mod6-insurance-no-driver-accident-link.txt",
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [
+    "verify:pre-commit"
+  ],
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    ".block-ready/0441-mod6-insurance-no-driver-accident-link.json",
+    "apps/frontend/src/pages/insurance/ClaimsTab.tsx",
+    "scripts/verify-insurance-claims-reverse-accident-incident.mjs",
+    "scripts/verify-steps/1004-verify-insurance-claims-reverse-accident-incident.mjs"
   ],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "ClaimsTab maps graph.reverse.accidents and graph.reverse.incidents into visible Link rows (same pattern as lawsuits/matters)"
+    },
+    {
+      "check": "scripts/verify-insurance-claims-reverse-accident-incident.mjs passes (--selftest + live file) via verify-steps/1004"
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "Forward accident_report_id Link already existed; this block closes the reverse-graph render gap only. Schema FKs remain owner Neon ceremony (separate)."
 }

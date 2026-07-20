@@ -222,6 +222,32 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                 {graph.reverse.matters.map((m) => (
                   <EntityLink key={m.id} kind="matter" id={m.id} label={m.matter_number} className="mr-2 text-slate-700 underline" />
                 ))}
+                {graph.reverse.accidents.map((a) => (
+                  <Link
+                    key={a.id}
+                    className="mr-2 text-slate-700 underline"
+                    to="/safety/accidents"
+                    data-testid={`claim-reverse-accident-${a.id}`}
+                  >
+                    Accident {a.id.slice(0, 8)}
+                  </Link>
+                ))}
+                {graph.reverse.incidents.map((i) => (
+                  <Link
+                    key={i.id}
+                    className="mr-2 text-slate-700 underline"
+                    to={
+                      i.incident_type === "trailer_interchange"
+                        ? "/safety/trailer-interchanges"
+                        : i.incident_type === "cargo_claim"
+                          ? "/safety/cargo-claims"
+                          : "/safety/damage-reports"
+                    }
+                    data-testid={`claim-reverse-incident-${i.id}`}
+                  >
+                    Incident {i.incident_type ?? i.id.slice(0, 8)}
+                  </Link>
+                ))}
                 {graph.reverse.accidents.length === 0 &&
                 graph.reverse.lawsuits.length === 0 &&
                 graph.reverse.matters.length === 0 &&
