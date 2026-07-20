@@ -697,7 +697,7 @@ verify-step 1035.
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/operations/GeofencesPage.tsx` | pending |
+| `apps/frontend/src/pages/operations/GeofencesPage.tsx` | migrated (fix/geofences-paritytable) |
 
 ### pages/payroll-integration (1) — financial-hold
 
@@ -1069,3 +1069,14 @@ Guard: `scripts/verify-booking-gap-report-uses-paritytable.mjs` via verify-step 
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/reports/BookingGapReport.tsx` | pages/reports |
+## qbo-parity-a1 — GeofencesPage (this PR)
+Operations telematics geofences list was a hand-rolled `<table>` with loading-only
+failure chrome. Migrated to shared `ParityTable` (sort + resize + gear + CSV export)
+and added `ListErrorState` + Retry on geofences query failure. Columns Label / Kind /
+Linked ref / Vertices / Status / Action preserved 1:1; polygon create form +
+Activate/Deactivate toggle preserved. Guard:
+`scripts/verify-geofences-page-uses-paritytable.mjs` via verify-step **1072**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/operations/GeofencesPage.tsx` | pages/operations |
