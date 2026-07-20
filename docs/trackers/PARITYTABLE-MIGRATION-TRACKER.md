@@ -521,7 +521,7 @@ verify-step 1035.
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/dev/BulkDemoPage.tsx` | pending |
+| `apps/frontend/src/pages/dev/BulkDemoPage.tsx` | migrated (fix/bulk-demo-paritytable) |
 
 ### pages/dispatch (21)
 
@@ -1069,3 +1069,14 @@ Guard: `scripts/verify-booking-gap-report-uses-paritytable.mjs` via verify-step 
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/reports/BookingGapReport.tsx` | pages/reports |
+## qbo-parity-a1 — BulkDemoPage (this PR)
+Dev-only bulk-components demo was a hand-rolled `<table>` with manual pager and
+legacy TableSelection/BulkActionBar chrome. Migrated to shared `ParityTable`
+(sort + resize + gear + select-all + batch bar). Columns Name / Status preserved
+1:1; BulkActionModal + BulkProgressDialog + mock bulkUpdate call unchanged.
+Mock static rows (no query failure path → no ListErrorState). Guard:
+`scripts/verify-bulk-demo-uses-paritytable.mjs` via verify-step **1078**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/dev/BulkDemoPage.tsx` | pages/dev |
