@@ -1,0 +1,32 @@
+{
+  "block_id": "qbo-parity-a1-fleet-hos-board-paritytable",
+  "branch": "fix/fleet-hos-board-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend compliance ParityTable migration)",
+  "phase": "OPS-FE",
+  "task": "Migrate compliance FleetHosBoardSection live + offline grids from hand-rolled tables to shared ParityTable; preserve filters, controls, drill-through, stale segregation, and add ListErrorState. Add guard + verify-step 1064 under Rule 17.",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+  "source_file": "qbo-parity-a1-fleet-hos-board-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-fleet-hos-board-paritytable.json",
+    "apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx",
+    "apps/frontend/src/pages/compliance/FleetHosBoardSection.test.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-fleet-hos-board-uses-paritytable.mjs",
+    "scripts/verify-steps/1064-verify-fleet-hos-board-uses-paritytable.mjs",
+    "scripts/verify-table-alignment.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "FleetHosBoardSection uses shared ParityTable for live and offline/stale grids with no hand-rolled table markup; all columns, search/count, refresh, Excel export, stale segregation, row drill-through, neutral status emphasis, loading/empty states, and retryable ListErrorState are preserved."
+    },
+    {
+      "check": "verify-fleet-hos-board-uses-paritytable.mjs PASS and --selftest PASS; verify-step 1064 wired through ctx.run; verify-table-alignment supports the ParityTable alignment contract; tracker inventory row is migrated (qbo-parity-a1) without a hand-maintained rollup table."
+    }
+  ],
+  "note": "GATED: no (pure FE). One component only. No migrations. No package.json / locked-guards.yml / ci.yml edits (Rule 17)."
+}

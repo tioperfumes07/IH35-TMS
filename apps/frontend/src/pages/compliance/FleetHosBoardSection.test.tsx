@@ -80,6 +80,17 @@ describe("Live Fleet freshness view-model (COMPLIANCE-1)", () => {
 });
 
 describe("FleetHosBoardSection", () => {
+  it("surfaces query failures through retryable ListErrorState", async () => {
+    getFleetLocationHos.mockRejectedValueOnce(new Error("Fleet HOS unavailable"));
+
+    renderSection();
+
+    expect(await screen.findByText("Couldn't load fleet HOS")).toBeInTheDocument();
+    expect(screen.getByText("Error: Fleet HOS unavailable")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+    expect(screen.queryByText("No reporting vehicles.")).not.toBeInTheDocument();
+  });
+
   it("renders the real (STRING-typed) fleet row without throwing the section", async () => {
     // The live fleet-location-hos row shape GUARD captured: speed/lat/lng/heading come back as STRINGS.
     getFleetLocationHos.mockResolvedValueOnce({
