@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   archiveComplianceRule,
@@ -43,6 +44,12 @@ const COMPLIANCE_TABS: { id: ComplianceTab; label: string }[] = [
   { id: "hos_history", label: "HOS History" },
   { id: "required_docs", label: "Required Documents" },
 ];
+const COMPLIANCE_TAB_IDS = new Set<string>(COMPLIANCE_TABS.map((t) => t.id));
+
+function parseComplianceTab(raw: string | null): ComplianceTab {
+  if (raw && COMPLIANCE_TAB_IDS.has(raw)) return raw as ComplianceTab;
+  return "filings";
+}
 
 function exportCsv(rows: ComplianceCredential[]) {
   const header = ["type", "owner_type", "owner_name", "expiration_date", "days_until_expiration", "severity"];
@@ -65,10 +72,18 @@ export function ComplianceDashboardPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [severityFilter, setSeverityFilter] = useState<ComplianceSeverity | null>(null);
   const [typeFilter, setTypeFilter] = useState("");
   const [ownerTypeFilter, setOwnerTypeFilter] = useState("");
-  const [tab, setTab] = useState<ComplianceTab>("filings");
+  const tab = parseComplianceTab(searchParams.get("tab"));
+
+  const setTab = (next: ComplianceTab) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "filings") params.delete("tab");
+    else params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
 
   const summaryQ = useQuery({
     queryKey: ["compliance-summary", companyId],
