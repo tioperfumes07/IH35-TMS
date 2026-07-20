@@ -300,7 +300,7 @@ verify-step 1035.
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/components/insurance/PolicyCreateWizard.tsx` | pending |
+| `apps/frontend/src/components/insurance/PolicyCreateWizard.tsx` | migrated (qbo-parity-a1) |
 
 ### components/lists (1) — financial-hold
 
@@ -894,3 +894,16 @@ Guard: `scripts/verify-trailer-reefer-uses-paritytable.mjs` via verify-step 1044
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/components/trailer-profile/TrailerReeferSection.tsx` | components/trailer-profile |
+
+## qbo-parity-a1 — PolicyCreateWizard (this PR)
+Insurance Create-Policy wizard Step 4 bill-schedule preview was a hand-rolled
+`<table>` (Bill # / Amount / Per vehicle / mo). Migrated to shared `ParityTable`
+(sort + resize + gear). Columns preserved 1:1; 4-step wizard behavior, vehicle
+selection, premium math, and `+ Create policy + schedule N bills` unchanged.
+Coverage-type catalog + units list query outages now surface `ListErrorState` +
+Retry (no false-empty). Guard:
+`scripts/verify-policy-create-wizard-uses-paritytable.mjs` via verify-step 1054.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/insurance/PolicyCreateWizard.tsx` | components/insurance |
