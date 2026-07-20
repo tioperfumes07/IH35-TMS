@@ -21,9 +21,9 @@ sort, and the lock-account control — never drop or reorder.
 ## Rollup
 | Status | Count |
 | --- | --- |
-| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab) | 10 |
+| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable) | 11 |
 | financial-hold (Jorge-gated) | 99 |
-| pending (non-financial, future batches) | 191 |
+| pending (non-financial, future batches) | 190 |
 | **hand-rolled total (original)** | **300** |
 
 > Note: ParityTable was already consumed by ~16 surfaces before this batch (not counted above — those were never hand-rolled).
@@ -62,6 +62,16 @@ settlements + active liabilities were hand-rolled `<table>`s. Migrated both to s
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/components/drivers/EarningsTab.tsx` | components/drivers |
+
+## qbo-parity-a1 — ComplianceTable (this PR)
+Compliance dashboard Overview credentials grid: hand-rolled `<table>` with Type/Owner
+filters + CSV export. Migrated to shared `ParityTable` (sort + resize + gear + filterBar).
+Owner Name cells use `EntityLink` for driver/unit/trailer. Columns + `compliance-table-panel`
+testid preserved. Guard: `scripts/verify-compliance-table-uses-paritytable.mjs` via verify-step 1019.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/compliance/ComplianceTable.tsx` | components/compliance |
 
 ## Remaining hand-rolled inventory (by module)
 
@@ -108,11 +118,10 @@ settlements + active liabilities were hand-rolled `<table>`s. Migrated both to s
 | --- | --- |
 | `apps/frontend/src/components/catalogs/CatalogTable.tsx` | pending |
 
-### components/compliance (3)
+### components/compliance (2 remaining)
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/components/compliance/ComplianceTable.tsx` | pending |
 | `apps/frontend/src/components/compliance/NotificationLogPanel.tsx` | pending |
 | `apps/frontend/src/components/compliance/NotificationRulesPanel.tsx` | pending |
 
