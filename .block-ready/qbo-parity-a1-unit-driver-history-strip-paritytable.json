@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-unit-driver-history-strip-paritytable",
+  "branch": "fix/unit-driver-history-strip-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable migration)",
+  "phase": "OPS-FE",
+  "task": "Migrate UnitDriverHistoryStrip from hand-rolled <table> to ParityTable + ListErrorState. Guard + verify-step 1086 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + qbo-parity-a1-paritytable-universal-adoption",
+  "source_file": "qbo-parity-a1-paritytable-universal-adoption",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-unit-driver-history-strip-paritytable.json",
+    "apps/frontend/src/pages/units/UnitDriverHistoryStrip.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-unit-driver-history-strip-uses-paritytable.mjs",
+    "scripts/verify-steps/1086-verify-unit-driver-history-strip-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "UnitDriverHistoryStrip.tsx uses ParityTable + ListErrorState; no hand-rolled <table>/<thead>; columns Unit/Driver/Started/Ended/Source preserved; dynamic title + Last N days chrome preserved; verify-unit-driver-history-strip-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1086 wired (Rule 17); tracker marks UnitDriverHistoryStrip migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 — UnitDriverHistoryStrip surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17)."
+}

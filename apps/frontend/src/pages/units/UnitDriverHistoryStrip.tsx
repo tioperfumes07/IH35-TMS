@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { listVehicleDriverHistory } from "../../api/vehicleDriverPairing";
+import { listVehicleDriverHistory, type VehicleDriverHistoryRow } from "../../api/vehicleDriverPairing";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function formatDateTime(value: string | null) {
   if (!value) return "Current";
@@ -8,6 +10,38 @@ function formatDateTime(value: string | null) {
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString();
 }
+
+const COLUMNS: Array<ParityColumn<VehicleDriverHistoryRow>> = [
+  {
+    key: "unit_number",
+    label: "Unit",
+    sortable: true,
+    render: (row) => <span className="font-medium text-gray-900">{row.unit_number}</span>,
+  },
+  {
+    key: "driver_name",
+    label: "Driver",
+    sortable: true,
+    render: (row) => row.driver_name ?? "Unassigned",
+  },
+  {
+    key: "started_at",
+    label: "Started",
+    sortable: true,
+    render: (row) => formatDateTime(row.started_at),
+  },
+  {
+    key: "ended_at",
+    label: "Ended",
+    sortable: true,
+    render: (row) => formatDateTime(row.ended_at),
+  },
+  {
+    key: "source",
+    label: "Source",
+    sortable: true,
+  },
+];
 
 type UnitDriverHistoryStripProps = {
   operatingCompanyId: string;
@@ -36,40 +70,38 @@ export function UnitDriverHistoryStrip({ operatingCompanyId, unitId, driverId, d
     return "Driver assignment history";
   }, [driverId, unitId]);
 
+  const rows = historyQuery.data?.rows ?? [];
+
   return (
-    <section className="rounded-sm border border-gray-200 bg-white p-3">
+    <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-driver-history-strip">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
         <span className="text-xs text-gray-500">Last {days} days</span>
       </div>
-      {historyQuery.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading history...</p> : null}
-      <div className="mt-2 overflow-auto">
-        <table className="min-w-full text-left text-xs">
-          <thead className="bg-gray-50 text-[11px] uppercase text-gray-600">
-            <tr>
-              <th className="px-2 py-2">Unit</th>
-              <th className="px-2 py-2">Driver</th>
-              <th className="px-2 py-2">Started</th>
-              <th className="px-2 py-2">Ended</th>
-              <th className="px-2 py-2">Source</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(historyQuery.data?.rows ?? []).map((row) => (
-              <tr key={row.id} className="border-b border-gray-100">
-                <td className="px-2 py-2 font-medium text-gray-900">{row.unit_number}</td>
-                <td className="px-2 py-2">{row.driver_name ?? "Unassigned"}</td>
-                <td className="px-2 py-2">{formatDateTime(row.started_at)}</td>
-                <td className="px-2 py-2">{formatDateTime(row.ended_at)}</td>
-                <td className="px-2 py-2">{row.source}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {!historyQuery.isLoading && (historyQuery.data?.rows.length ?? 0) === 0 ? (
-        <p className="mt-2 text-xs text-gray-500">No assignment windows found for this period.</p>
-      ) : null}
+      {historyQuery.isError ? (
+        <div className="mt-2" data-testid="unit-driver-history-error">
+          <ListErrorState
+            title="Couldn't load driver assignment history"
+            status={0}
+            message={(historyQuery.error as Error)?.message}
+            onRetry={() => void historyQuery.refetch()}
+          />
+        </div>
+      ) : (
+        <div className="mt-2">
+          <ParityTable
+            columns={COLUMNS}
+            rows={rows}
+            rowKey={(row) => row.id}
+            loading={historyQuery.isLoading}
+            emptyText="No assignment windows found for this period."
+            storageKey="unit-driver-history"
+            tableTestId="unit-driver-history-table"
+            rowTestId={(row) => `unit-driver-history-row-${row.id}`}
+            initialPageSize={25}
+          />
+        </div>
+      )}
     </section>
   );
 }
