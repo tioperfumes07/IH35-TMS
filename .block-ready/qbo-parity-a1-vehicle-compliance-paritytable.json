@@ -4,7 +4,7 @@
   "status": "BUILD",
   "classification": "NON-FINANCIAL (pure frontend ParityTable migration)",
   "phase": "OPS-FE",
-  "task": "Migrate vehicle-profile ComplianceSection registration-plates list from hand-rolled <table> to shared ParityTable QBO grammar; preserve Country/Jurisdiction/Expiration + insurance/DOT/SCT/PITA/IFTA summary chrome. Guard + verify-step 1039 (Rule 17).",
+  "task": "Migrate vehicle-profile ComplianceSection registration-plates list from hand-rolled <table> to shared ParityTable QBO grammar; preserve Country/Jurisdiction/Expiration + insurance/DOT/SCT/PITA/IFTA summary chrome. Guard + verify-step 1040 (Rule 17).",
   "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + CODER-BUILD tbl-standard-raw-table-sweep-incomplete / qbo-parity-a1",
   "source_file": "qbo-parity-a1-vehicle-compliance-paritytable",
   "allowed_files": [
@@ -12,7 +12,7 @@
     "apps/frontend/src/components/vehicle-profile/ComplianceSection.tsx",
     "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
     "scripts/verify-vehicle-compliance-uses-paritytable.mjs",
-    "scripts/verify-steps/1039-verify-vehicle-compliance-uses-paritytable.mjs"
+    "scripts/verify-steps/1040-verify-vehicle-compliance-uses-paritytable.mjs"
   ],
   "runtime_path": "src",
   "db_required": false,
@@ -20,7 +20,7 @@
   "extra_gates": [],
   "acceptance": [
     {
-      "check": "ComplianceSection.tsx uses ParityTable for registration_plates (no hand-rolled <table>/<thead>); columns Country/Jurisdiction/Expiration preserved; US/MX insurance + DOT/SCT/PITA/IFTA summary preserved; verify-vehicle-compliance-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1039 wired (Rule 17); tracker marks vehicle ComplianceSection migrated."
+      "check": "ComplianceSection.tsx uses ParityTable for registration_plates (no hand-rolled <table>/<thead>); columns Country/Jurisdiction/Expiration preserved; US/MX insurance + DOT/SCT/PITA/IFTA summary preserved; verify-vehicle-compliance-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1040 wired (Rule 17); tracker marks vehicle ComplianceSection migrated."
     }
   ],
   "note": "GATED: no (pure FE). Incremental qbo-parity-a1 — vehicle ComplianceSection plates surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17)."
