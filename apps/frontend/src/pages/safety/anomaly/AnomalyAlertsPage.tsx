@@ -1,15 +1,35 @@
+import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../../../auth/useAuth";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AnomalyDashboard } from "./AnomalyDashboard";
 import { RuleEditor } from "./RuleEditor";
-import { useState } from "react";
+
+type TabId = "alerts" | "rules";
+
+function parseTab(raw: string | null, isOwner: boolean): TabId {
+  if (raw === "rules" && isOwner) return "rules";
+  return "alerts";
+}
 
 export function AnomalyAlertsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const auth = useAuth();
   const companyId = selectedCompanyId ?? "";
   const isOwner = auth.user?.role === "Owner";
-  const [tab, setTab] = useState<"alerts" | "rules">("alerts");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = parseTab(searchParams.get("tab"), isOwner);
+
+  const setTab = (next: TabId) => {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next === "alerts") params.delete("tab");
+        else params.set("tab", next);
+        return params;
+      },
+      { replace: true },
+    );
+  };
 
   return (
     <div className="space-y-3 p-4">
