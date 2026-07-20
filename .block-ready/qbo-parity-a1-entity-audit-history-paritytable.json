@@ -1,6 +1,6 @@
 {
   "block_id": "qbo-parity-a1-entity-audit-history-paritytable",
-  "branch": "fix/qbo-parity-a1-entity-audit-history",
+  "branch": "fix/qbo-parity-a1-entity-audit-v2",
   "status": "BUILD",
   "classification": "NON-FINANCIAL (pure frontend ParityTable + ListErrorState)",
   "phase": "OPS-FE",
