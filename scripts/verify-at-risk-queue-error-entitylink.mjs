@@ -23,7 +23,7 @@ const LABEL = "verify-at-risk-queue-error-entitylink";
 const FILES = {
   page: "apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx",
   test: "apps/frontend/src/pages/dispatch/__tests__/AtRiskQueuePage.test.tsx",
-  step: "scripts/verify-steps/1030-verify-at-risk-queue-error-entitylink.mjs",
+  step: "scripts/verify-steps/1033-verify-at-risk-queue-error-entitylink.mjs",
 };
 
 /** Pure checks — takes text so --selftest can inject fixtures. */
