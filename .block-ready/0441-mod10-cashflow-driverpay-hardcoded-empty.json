@@ -1,17 +1,23 @@
 {
   "block_id": "0441-mod10-cashflow-driverpay-hardcoded-empty",
-  "status": "PENDING",
-  "classification": "FINANCIAL",
-  "phase": "tier1",
-  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
-  "source_file": "0441-mod10-cashflow-driverpay-hardcoded-empty.txt",
+  "branch": "fix/0441-mod10-cashflow-driverpay-emit",
+  "status": "IN_PROGRESS",
+  "classification": "ADDITIVE",
+  "phase": "ops-nonstop",
+  "source": "CODER-BUILD-INSTRUCTIONS-2026-07-19.md",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    ".block-ready/0441-mod10-cashflow-driverpay-hardcoded-empty.json",
+    "apps/backend/src/cash-flow/cash-flow.service.ts",
+    "scripts/verify-cash-flow-driver-pay-populated.mjs",
+    "scripts/verify-steps/1011-verify-cash-flow-driver-pay-populated.mjs"
   ],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "getDailyPrediction constructs kind:\"driver_pay\" expense rows from driver_finance.driver_settlements (queued/sent_to_bank or scheduled settle dates)"
+    },
+    {
+      "check": "scripts/verify-cash-flow-driver-pay-populated.mjs PASS (+ --selftest); wired via verify-steps/1011"
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "GATED-no read-only cash-flow prediction display. No migration, no GL posting, no schema change."
 }
