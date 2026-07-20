@@ -216,6 +216,18 @@ verify-step 1035.
 | --- | --- |
 | `apps/frontend/src/components/audit/EntityAuditHistoryTab.tsx` | components/audit |
 
+## qbo-parity-a1 — DocsHomePage (this PR)
+Documents home (`/docs`) foundation list was a hand-rolled `<table>` with a local empty
+state and no query-outage surface. Migrated to shared `ParityTable` (sort + resize + gear +
+filterBar + CSV export) and replaced silent failure with `ListErrorState` + Retry. Columns
+File/Type/Entity/Size/Expires/Uploaded preserved 1:1; KPI drill-down filters, entity tabs,
+UploadModal `operatingCompanyId` scoping, and server-side Previous/Next pagination retained.
+Guard: `scripts/verify-docs-home-page-uses-paritytable.mjs` via verify-step 1081.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/docs/DocsHomePage.tsx` | pages/docs |
+
 ## Remaining hand-rolled inventory (by module)
 
 ### components/DataTable.tsx (1)
@@ -549,11 +561,11 @@ verify-step 1035.
 | `apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx` | pending |
 | `apps/frontend/src/pages/dispatch/planners/UnifiedTimelinePlanner.tsx` | pending |
 
-### pages/docs (1)
+### pages/docs (0 remaining)
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/docs/DocsHomePage.tsx` | pending |
+| `apps/frontend/src/pages/docs/DocsHomePage.tsx` | migrated (qbo-parity-a1) |
 
 ### pages/driver-finance (7) — financial-hold
 
