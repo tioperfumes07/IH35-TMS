@@ -572,7 +572,7 @@ verify-step 1035.
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/pages/drivers/DriverImportModal.tsx` | pending |
-| `apps/frontend/src/pages/drivers/DriverLayoverHistory.tsx` | pending |
+| `apps/frontend/src/pages/drivers/DriverLayoverHistory.tsx` | migrated |
 | `apps/frontend/src/pages/drivers/DriversTable.tsx` | pending |
 | `apps/frontend/src/pages/drivers/components/DriverDqfPanel.tsx` | pending |
 
@@ -1069,3 +1069,14 @@ Guard: `scripts/verify-booking-gap-report-uses-paritytable.mjs` via verify-step 
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/reports/BookingGapReport.tsx` | pages/reports |
+
+## qbo-parity-a1 — DriverLayoverHistory (this PR)
+Driver layover history was a hand-rolled `<table>` with manual loading and empty states.
+Migrated to shared `ParityTable` (sort + resize + gear); `ListErrorState` + Retry now
+surfaces query failures. Columns Started / Ended / Hours / Billable / Per Diem, date-range
+filters, billable toggle, and per-diem eligibility remain preserved 1:1. Guard:
+`scripts/verify-driver-layover-history-uses-paritytable.mjs` via verify-step **1067**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/drivers/DriverLayoverHistory.tsx` | pages/drivers |
