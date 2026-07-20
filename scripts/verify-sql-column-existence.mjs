@@ -48,15 +48,28 @@ const TARGET_TABLES = new Set([
   "mdata.equipment",
   "mdata.loads",
   "mdata.load_stops",
+  "mdata.qbo_vendors",
+  "mdata.qbo_customers",
   "banking.bank_transactions",
   "banking.bank_accounts",
+  "banking.reconciliation_sessions",
   "accounting.bills",
   "accounting.bill_payments",
   "accounting.payments",
   "accounting.invoices",
+  "accounting.journal_entries",
+  "accounting.expenses",
   "catalogs.accounts",
   "driver_finance.settlement_lines",
   "driver_finance.driver_settlements",
+  "driver_finance.driver_settlement_deductions",
+  "driver_finance.deduction_schedule",
+  "maintenance.work_orders",
+  "maintenance.work_order_lines",
+  "dispatch.equipment_transfer_requests",
+  "fuel.fuel_transactions",
+  "safety.incidents",
+  "identity.users",
 ]);
 
 // Identifiers that appear in column position but are NOT columns — SQL keywords / functions / literals.
@@ -206,7 +219,15 @@ function runGuard() {
     for (const v of found) console.error(`  - ${v.file}: ${v.table}.${v.column}  (${v.ctx})`);
     process.exit(1);
   }
-  console.log(`verify-sql-column-existence OK — every checked column on ${TARGET_TABLES.size} curated tables exists in the baseline.`);
+  // Coverage ratchet (systemic-pattern-column-drift-guard): TARGET_TABLES must not shrink.
+  const MIN_TARGET_TABLES = 29;
+  if (TARGET_TABLES.size < MIN_TARGET_TABLES) {
+    console.error(
+      `verify-sql-column-existence FAILED — TARGET_TABLES coverage shrank: ${TARGET_TABLES.size} < min ${MIN_TARGET_TABLES}. Ratchet only upward.`
+    );
+    process.exit(1);
+  }
+  console.log(`verify-sql-column-existence OK — every checked column on ${TARGET_TABLES.size} curated tables exists in the baseline (min coverage ${MIN_TARGET_TABLES}).`);
 }
 
 function selftest() {

@@ -1,17 +1,28 @@
 {
   "block_id": "systemic-pattern-column-drift-guard",
-  "status": "PENDING",
-  "classification": "FINANCIAL",
+  "branch": "fix/systemic-pattern-column-drift",
+  "status": "IN_PROGRESS",
+  "classification": "ADDITIVE",
   "phase": "tier3",
-  "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
+  "task": "systemic-pattern-column-drift-guard: extend TARGET_TABLES (16→29) + coverage ratchet + allowlist new phantoms",
+  "source": "CODER-BUILD-INSTRUCTIONS-2026-07-19 + MASTER-6",
   "source_file": "systemic-pattern-column-drift-guard.txt",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    ".block-ready/systemic-pattern-column-drift-guard.json",
+    "scripts/verify-sql-column-existence.mjs",
+    "scripts/verify-sql-column-existence.allowlist.json",
+    "scripts/verify-sql-column-existence-coverage.mjs",
+    "scripts/verify-steps/1012-verify-sql-column-existence-coverage.mjs"
   ],
+  "runtime_path": "scripts",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": ["verify-sql-column-existence", "verify-sql-column-existence-coverage"],
+  "hold": false,
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "TARGET_TABLES ≥ 29 including maintenance/dispatch/fuel/safety/identity/accounting.journal_entries; MIN_TARGET_TABLES ratchet in verify-sql-column-existence.mjs; new phantom findings frozen in allowlist; verify-step 1012 PASS. No migration."
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "CI tooling only. Newly surfaced phantoms are allowlisted as ratchet backlog (same pattern as the original 16-table allowlist) — not silent skips of the guard."
 }
