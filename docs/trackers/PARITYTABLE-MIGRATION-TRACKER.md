@@ -855,3 +855,4 @@ Guard: `scripts/verify-driver-day-summary-uses-paritytable.mjs` via verify-step 
 | --- | --- |
 | `apps/frontend/src/components/home/DriverDaySummaryCard.tsx` | components/home |
 
+
