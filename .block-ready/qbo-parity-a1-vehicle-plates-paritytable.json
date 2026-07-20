@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-vehicle-plates-paritytable",
+  "branch": "fix/vehicle-plates-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable migration)",
+  "phase": "OPS-FE",
+  "task": "Migrate vehicle-profile PlatesTable from hand-rolled <table> to ParityTable. Guard + verify-step 1029 (Rule 17; 1024–1027 reserved by open PRs #2859/#2861/#2862/#2863/#2864).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + qbo-parity-a1-paritytable-universal-adoption",
+  "source_file": "qbo-parity-a1-paritytable-universal-adoption",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-vehicle-plates-paritytable.json",
+    "apps/frontend/src/components/vehicle-profile/PlatesTable.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-vehicle-plates-uses-paritytable.mjs",
+    "scripts/verify-steps/1029-verify-vehicle-plates-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "vehicle-profile/PlatesTable.tsx uses ParityTable; no hand-rolled <table>/<thead>; columns Country/Jurisdiction/Plate #/Expiration/Status preserved; Archive via rowActions; data-testid vp-plates-table kept; verify-vehicle-plates-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1029 wired (Rule 17); tracker marks vehicle PlatesTable migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 — vehicle-profile PlatesTable surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17)."
+}
