@@ -5,9 +5,9 @@ type Props = {
 };
 
 function statusPill(status: string) {
-  if (status === "pending_approval") return "bg-amber-100 text-amber-700";
+  if (status === "pending_approval") return "bg-slate-100 text-slate-700";
   if (status === "approved") return "bg-slate-100 text-slate-700";
-  if (status === "disbursed") return "bg-green-100 text-green-700";
+  if (status === "disbursed") return "bg-slate-100 text-slate-700";
   if (status === "failed") return "bg-red-100 text-red-700";
   if (status === "reversed") return "bg-gray-100 text-gray-700";
   return "bg-gray-100 text-gray-700";
@@ -51,7 +51,7 @@ export function CashAdvancesTable({ rows, onOpenDetail, onMarkDisbursed }: Props
                       View Detail
                     </button>
                     {status !== "disbursed" && status !== "reversed" ? (
-                      <button type="button" className="text-green-700 underline" onClick={() => onMarkDisbursed(row)}>
+                      <button type="button" className="text-slate-700 underline" onClick={() => onMarkDisbursed(row)}>
                         Mark Disbursed
                       </button>
                     ) : null}
