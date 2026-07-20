@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCashAdvanceDetail, getCashAdvancesKpis, listCashAdvances } from "../../api/cashAdvances";
 import { Button } from "../../components/Button";
@@ -17,11 +18,26 @@ const SUBNAV = [
   ["Paid Off", "paid_off"],
 ] as const;
 
+type CashAdvancesTab = (typeof SUBNAV)[number][1];
+const TAB_IDS = new Set<string>(SUBNAV.map(([, value]) => value));
+
+export function parseCashAdvancesTab(raw: string | null): CashAdvancesTab {
+  if (raw && TAB_IDS.has(raw)) return raw as CashAdvancesTab;
+  return "all";
+}
+
 export function CashAdvancesHomePage() {
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
-  const [tab, setTab] = useState<(typeof SUBNAV)[number][1]>("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = parseCashAdvancesTab(searchParams.get("tab"));
+  const setTab = (next: CashAdvancesTab) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "all") params.delete("tab");
+    else params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
