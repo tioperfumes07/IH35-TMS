@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
+import { companyBusinessDate } from "../../lib/company-business-date.js";
 import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
 import {
   FARO_CANONICAL_AGREEMENT_TEST_LOCK_KEY,
@@ -224,11 +225,16 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
       seq: number;
     }>;
   }) {
+    // Never default entry_date to Postgres CURRENT_DATE (UTC on CI). The view filters
+    // live_je with entry_date <= America/Chicago companyBusinessDate — between 00:00–05:00 UTC
+    // CURRENT_DATE is "tomorrow" vs Chicago and every funding JE falls out of as-of →
+    // incomplete_funding_je_artifacts (fleet-wide build-typecheck red after UTC midnight).
+    const entryDate = opts.entryDate ?? companyBusinessDate();
     await db.query(
       `INSERT INTO accounting.journal_entries
          (id, operating_company_id, entry_date, memo, status, source)
-       VALUES ($1::uuid,$2::uuid,COALESCE($4::date, CURRENT_DATE),$3,'posted','auto')`,
-      [opts.jeId, opts.opco, opts.memo, opts.entryDate ?? null]
+       VALUES ($1::uuid,$2::uuid,$4::date,$3,'posted','auto')`,
+      [opts.jeId, opts.opco, opts.memo, entryDate]
     );
     for (const line of opts.lines) {
       const sourceType = line.sourceAdvanceId
@@ -625,6 +631,22 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
     expect(INVOICE_DISPLAY_ID_RE.test(letterSegment)).toBe(false);
   });
 
+  it("fixture contract: JE entry_date defaults to companyBusinessDate (not Postgres CURRENT_DATE/UTC)", async () => {
+    // Planted UTC-midnight landmine: view live_je requires entry_date <= America/Chicago as-of.
+    const asOf = companyBusinessDate();
+    expect(asOf).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    const probe = await bypass(companyId, async () => {
+      const r = await db.query<{ entry_date: string }>(
+        `SELECT entry_date::text AS entry_date
+           FROM accounting.journal_entries
+          WHERE id = $1::uuid`,
+        [fundingJeMulti]
+      );
+      return r.rows[0]?.entry_date ?? null;
+    });
+    expect(probe).toBe(asOf);
+  });
+
   it("fixture contract: malformed invoice display_id fails invoices_display_id_check", async () => {
     const badId = randomUUID();
     const badDisplay = ["INV", "FBL", n()].join("-");
@@ -709,8 +731,8 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
       await db.query(
         `INSERT INTO accounting.journal_entries
            (id, operating_company_id, entry_date, memo, status, source)
-         VALUES ($1::uuid,$2::uuid,CURRENT_DATE,$3,'posted','auto')`,
-        [emptyJe, companyId, `Empty JE for bare movement ${suffix}`]
+         VALUES ($1::uuid,$2::uuid,$4::date,$3,'posted','auto')`,
+        [emptyJe, companyId, `Empty JE for bare movement ${suffix}`, companyBusinessDate()]
       );
       await db.query(
         `INSERT INTO accounting.journal_entry_postings
