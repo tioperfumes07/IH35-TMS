@@ -81,6 +81,32 @@ export function resolveBlockReadyManifest(options = {}) {
     );
   }
   if (branchMatches.length > 1) {
+    // A branch that registers N blocks is a VALID SET, not an ambiguity (2026-07-20).
+    // Root cause this fixes: `allowAggregate` was honored on the !branch and
+    // length===0 paths but NOT here, so a caller that had explicitly opted into
+    // aggregate tolerance (verify-pre-commit passes allowAggregate: true) still got a
+    // hard throw. One logical change spanning several blocks — e.g. registering the 6
+    // financial doc-source blocks — was therefore unlandable except by splitting it
+    // into N branches, which hides the trap for the next multi-block registration.
+    //
+    // Mirrors the length===0 aggregate path exactly: no single manifest is selected,
+    // so consumers fall back to running EVERY verify-step — which is the correct,
+    // conservative behavior for a branch touching N blocks (never fewer checks).
+    // `manifests` is additive; existing consumers branch on `manifest` being null.
+    if (options.allowAggregate === true) {
+      return {
+        agent: null,
+        manifest: null,
+        worktreePath,
+        resolution: "aggregate",
+        reason: `trusted branch "${branch}" registers ${branchMatches.length} blocks: ${branchMatches
+          .map(({ relativePath }) => relativePath)
+          .join(", ")}`,
+        manifests: branchMatches.map(({ relativePath }) => relativePath),
+      };
+    }
+    // Callers that did NOT opt into aggregate stay fail-closed, unchanged. BLOCK_ID
+    // remains the way to select exactly one manifest on such a branch.
     throw new Error(
       `ambiguous exact branch "${branch}" matches: ${branchMatches
         .map(({ relativePath }) => relativePath)
