@@ -106,7 +106,7 @@ export function SettlementsTable({ rows, onOpen }: Props) {
               <td className="px-2 py-1 tabular-nums">{Number(row.load_count ?? 0)}</td>
               <td className="px-2 py-1">${Number(row.gross_pay ?? 0).toFixed(2)}</td>
               <td className="px-2 py-1">${Number(row.deductions_total ?? 0).toFixed(2)}</td>
-              <td className="px-2 py-1 font-semibold text-green-700">${Number(row.net_pay ?? 0).toFixed(2)}</td>
+              <td className="px-2 py-1 font-semibold text-slate-700">${Number(row.net_pay ?? 0).toFixed(2)}</td>
               <td className="px-2 py-1"><span className={`rounded-full px-2 py-0.5 ${statusClass(row.status)}`}>{row.status}</span></td>
               <td className="px-2 py-1">
                 {typeof row.live_debt_flag === "number" && row.live_debt_flag > 0 ? (

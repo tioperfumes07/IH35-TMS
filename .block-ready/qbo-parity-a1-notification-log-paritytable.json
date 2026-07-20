@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-notification-log-paritytable",
+  "branch": "fix/notification-log-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable migration)",
+  "phase": "OPS-FE",
+  "task": "Migrate NotificationLogPanel from hand-rolled <table> to ParityTable. Guard + verify-step 1025 (Rule 17; 1021/1022 reserved by open PRs).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + qbo-parity-a1-paritytable-universal-adoption",
+  "source_file": "qbo-parity-a1-paritytable-universal-adoption",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-notification-log-paritytable.json",
+    "apps/frontend/src/components/compliance/NotificationLogPanel.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-notification-log-uses-paritytable.mjs",
+    "scripts/verify-steps/1025-verify-notification-log-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "NotificationLogPanel.tsx uses ParityTable; no hand-rolled <table>/<thead>; columns Sent/Credential/Owner Type/Channel/Recipient/Status preserved; data-testid compliance-log-panel kept; verify-notification-log-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1025 wired (Rule 17); tracker marks NotificationLogPanel migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 — NotificationLogPanel surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17)."
+}

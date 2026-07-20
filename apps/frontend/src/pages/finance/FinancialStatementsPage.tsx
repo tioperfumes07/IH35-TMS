@@ -325,7 +325,7 @@ export function FinancialStatementsPage() {
               <div className="rounded-sm border border-slate-200 bg-white px-3 py-2">
                 <div className="flex items-center justify-between text-sm font-semibold">
                   <span>Net income</span>
-                  <span className={plQuery.data.net_income < 0 ? "text-rose-700" : "text-emerald-700"}>{money(plQuery.data.net_income)}</span>
+                  <span className={plQuery.data.net_income < 0 ? "text-rose-700" : "text-slate-700"}>{money(plQuery.data.net_income)}</span>
                 </div>
               </div>
             </>
@@ -483,8 +483,8 @@ export function FinancialStatementsPage() {
 }
 
 function SummaryCard({ label, value, tone }: { label: string; value: string; tone?: "positive" | "negative" }) {
-  const border = tone === "negative" ? "border-rose-300" : tone === "positive" ? "border-emerald-200" : "border-slate-200";
-  const text = tone === "negative" ? "text-rose-700" : tone === "positive" ? "text-emerald-700" : "text-slate-900";
+  const border = tone === "negative" ? "border-rose-300" : tone === "positive" ? "border-slate-200" : "border-slate-200";
+  const text = tone === "negative" ? "text-rose-700" : tone === "positive" ? "text-slate-700" : "text-slate-900";
   return (
     <div className={`rounded-sm border bg-white px-3 py-2 ${border}`}>
       <div className="text-[11px] font-semibold uppercase text-slate-500">{label}</div>

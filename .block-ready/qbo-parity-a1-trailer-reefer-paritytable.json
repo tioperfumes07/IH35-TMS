@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-trailer-reefer-paritytable",
+  "branch": "fix/trailer-reefer-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable + ListErrorState)",
+  "phase": "OPS-FE",
+  "task": "Migrate TrailerReeferSection hours history from hand-rolled <table> to shared ParityTable (sort/resize/gear); add ListErrorState on snapshot failure (no false-empty). Preserve Recorded/Hours/Source/Notes + reefer-hours-history testid + manual Record hours. Guard + verify-step 1044 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + qbo-parity-a1",
+  "source_file": "qbo-parity-a1-trailer-reefer-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-trailer-reefer-paritytable.json",
+    "apps/frontend/src/components/trailer-profile/TrailerReeferSection.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-trailer-reefer-uses-paritytable.mjs",
+    "scripts/verify-steps/1044-verify-trailer-reefer-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "TrailerReeferSection.tsx uses ParityTable (no hand-rolled <table>/<thead>); ListErrorState on snapshot failure; columns Recorded/Hours/Source/Notes + tableTestId=reefer-hours-history + emptyText + Record hours preserved; verify-trailer-reefer-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1044 wired (Rule 17); tracker marks TrailerReeferSection migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 — TrailerReeferSection surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17). verify-step 1044 (≥1044 free)."
+}

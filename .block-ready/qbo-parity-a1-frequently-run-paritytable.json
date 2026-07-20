@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-frequently-run-paritytable",
+  "branch": "fix/frequently-run-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable migration)",
+  "phase": "OPS-FE",
+  "task": "Migrate FrequentlyRunTable (Reports Home) from hand-rolled <table> to shared ParityTable QBO grammar; preserve Report/Filters/Runs + Run button + stub P4/P5 badges. Guard + verify-step 1028 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + CODER-BUILD tbl-standard-raw-table-sweep-incomplete / qbo-parity-a1",
+  "source_file": "qbo-parity-a1-frequently-run-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-frequently-run-paritytable.json",
+    "apps/frontend/src/components/reports/FrequentlyRunTable.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-frequently-run-table-uses-paritytable.mjs",
+    "scripts/verify-steps/1028-verify-frequently-run-table-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "FrequentlyRunTable.tsx uses ParityTable (no hand-rolled <table>/<thead>); columns Report/Filters/Runs preserved; onRun Report button + stub P4/P5 badges preserved; emptyText preserved; verify-frequently-run-table-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1028 wired (Rule 17); tracker marks FrequentlyRunTable migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 — FrequentlyRunTable surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17)."
+}

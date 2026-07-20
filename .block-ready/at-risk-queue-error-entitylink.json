@@ -1,0 +1,27 @@
+{
+  "block_id": "at-risk-queue-error-entitylink",
+  "branch": "fix/at-risk-query-error-entitylink",
+  "status": "IN_PROGRESS",
+  "classification": "ADDITIVE",
+  "phase": "tier3",
+  "task": "systemic-pattern-mandatory-error-states + EntityLink (one surface): AtRiskQueuePage must surface loadsQ failures via ListErrorState (not false-empty) and use EntityLink kind=load",
+  "source": "ops gated-no prefer non-ParityTable FE; MASTER-6 systemic-pattern-mandatory-error-states + Law of the Land EntityLink",
+  "allowed_files": [
+    ".block-ready/at-risk-queue-error-entitylink.json",
+    "apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx",
+    "apps/frontend/src/pages/dispatch/__tests__/AtRiskQueuePage.test.tsx",
+    "scripts/verify-at-risk-queue-error-entitylink.mjs",
+    "scripts/verify-steps/1033-verify-at-risk-queue-error-entitylink.mjs"
+  ],
+  "runtime_path": "apps/frontend",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": ["verify-at-risk-queue-error-entitylink"],
+  "hold": false,
+  "acceptance": [
+    {
+      "check": "AtRiskQueuePage ListErrorState on loadsQ.isError; EntityLink kind=load; emptyText not shown on error; vitest covers failure+retry+href; verify-step 1033 PASS. No migration. Rule 17."
+    }
+  ],
+  "note": "FE-only. Avoids open ParityTable scopes #2861-2867. Driver/unit stay name-only (API has no driver_id/unit_id on AtRiskLoadRow)."
+}

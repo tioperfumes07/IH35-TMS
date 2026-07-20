@@ -94,8 +94,8 @@ export function PeriodComparisonPage() {
                 <td className="px-3 py-2 text-gray-900">{row.account}</td>
                 <td className="px-3 py-2">{money(row.period_1_amount)}</td>
                 <td className="px-3 py-2">{money(row.period_2_amount)}</td>
-                <td className={`px-3 py-2 font-semibold ${row.variance_cents < 0 ? "text-red-700" : "text-emerald-700"}`}>{money(row.variance_cents)}</td>
-                <td className={`px-3 py-2 font-semibold ${row.variance_pct != null && row.variance_pct < 0 ? "text-red-700" : "text-emerald-700"}`}>
+                <td className={`px-3 py-2 font-semibold ${row.variance_cents < 0 ? "text-red-700" : "text-slate-700"}`}>{money(row.variance_cents)}</td>
+                <td className={`px-3 py-2 font-semibold ${row.variance_pct != null && row.variance_pct < 0 ? "text-red-700" : "text-slate-700"}`}>
                   {row.variance_pct == null ? "n/a" : `${row.variance_pct.toFixed(2)}%`}
                 </td>
                 <td className="px-3 py-2">

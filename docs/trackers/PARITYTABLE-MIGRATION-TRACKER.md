@@ -21,9 +21,9 @@ sort, and the lock-account control — never drop or reorder.
 ## Rollup
 | Status | Count |
 | --- | --- |
-| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable) | 12 |
+| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable + LoadHistoryTab + vehicle PlatesTable + vehicle ComplianceSection + DriverDaySummaryCard + StopReasoningTable + EntityAuditHistoryTab + AuditTrailPage + trailer PlatesTable + QboVendorLinkagePage + TrailerReeferSection) | 27 |
 | financial-hold (Jorge-gated) | 99 |
-| pending (non-financial, future batches) | 189 |
+| pending (non-financial, future batches) | 174 |
 | **hand-rolled total (original)** | **300** |
 
 > Note: ParityTable was already consumed by ~16 surfaces before this batch (not counted above — those were never hand-rolled).
@@ -83,6 +83,119 @@ Guard: `scripts/verify-asset-list-table-uses-paritytable.mjs` via verify-step 10
 | --- | --- |
 | `apps/frontend/src/components/assets/AssetListTable.tsx` | components/assets |
 
+## qbo-parity-a1 — ActivityLogPage (this PR)
+Owner/SuperAdmin audit activity stream was a hand-rolled `<table>` with a bare red outage banner.
+Migrated to shared `ParityTable` (sort + resize + gear + `renderExpanded` full payload JSON) and
+replaced the ad-hoc error div with `ListErrorState` + Retry. Columns preserved 1:1.
+Guard: `scripts/verify-activity-log-uses-paritytable.mjs` via verify-step 1023.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/admin/ActivityLogPage.tsx` | pages/admin |
+
+## qbo-parity-a1 — NotificationLogPanel
+Compliance notification log: hand-rolled `<table>` (Sent/Credential/Owner Type/Channel/
+Recipient/Status). Migrated to shared `ParityTable` (sort + resize + gear + CSV export).
+`compliance-log-panel` testid preserved. Guard:
+`scripts/verify-notification-log-uses-paritytable.mjs` via verify-step 1025.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/compliance/NotificationLogPanel.tsx` | components/compliance |
+
+## qbo-parity-a1 — NotificationRulesPanel
+Compliance notification rules grid: hand-rolled `<table>` (Credential/Scope/Days Before/
+Channels/Recipients + Archive). Migrated to shared `ParityTable` (sort + resize + gear).
+`compliance-rules-panel` testid preserved. Guard:
+`scripts/verify-notification-rules-uses-paritytable.mjs` via verify-step 1024.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/compliance/NotificationRulesPanel.tsx` | components/compliance |
+## qbo-parity-a1 — AuditHistoryTab (on main)
+Drivers hub Audit History tab was a hand-rolled `<table>` with a bare red outage line and a
+custom Expand/Hide details cell. Migrated to shared `ParityTable` (sort + resize + gear +
+`renderExpanded` payload diff) and replaced the ad-hoc error with `ListErrorState` + Retry.
+Columns When/Actor/Event/Summary/Details preserved 1:1. Guard:
+`scripts/verify-driver-audit-history-uses-paritytable.mjs` via verify-step 1027.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/drivers/AuditHistoryTab.tsx` | components/drivers |
+
+## qbo-parity-a1 — FrequentlyRunTable (on main)
+Reports Home "Frequently run" list was a hand-rolled `<table>`. Migrated to shared
+`ParityTable` (sort + resize + gear). Columns Report / Filters / Runs preserved 1:1;
+Report name stays a Run button; stub P4/P5 badges preserved.
+Guard: `scripts/verify-frequently-run-table-uses-paritytable.mjs` via verify-step 1028.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/reports/FrequentlyRunTable.tsx` | components/reports |
+
+## qbo-parity-a1 — vehicle-profile PlatesTable (on main)
+Vehicle profile plates grid was a hand-rolled `<table>` (Country/Jurisdiction/Plate #/
+Expiration/Status) with Archive + Create Plate. Migrated to shared `ParityTable`
+(sort + resize + gear + CSV export + `rowActions` Archive). `vp-plates-table` testid
+preserved. Guard: `scripts/verify-vehicle-plates-uses-paritytable.mjs` via verify-step 1029.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/vehicle-profile/PlatesTable.tsx` | components/vehicle-profile |
+
+## qbo-parity-a1 — vehicle ComplianceSection (this PR)
+Vehicle profile Compliance registration-plates list was a hand-rolled `<table>`.
+Migrated to shared `ParityTable` (sort + resize + gear). Columns Country /
+Jurisdiction / Expiration preserved 1:1; US/MX insurance + DOT/SCT/PITA/IFTA
+summary chrome preserved; plates grid still only renders when plates exist.
+Guard: `scripts/verify-vehicle-compliance-uses-paritytable.mjs` via verify-step 1040.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/vehicle-profile/ComplianceSection.tsx` | components/vehicle-profile |
+
+## qbo-parity-a1 — OperationsHistoryTable (on main)
+Drivers hub operations-depth history (12 sub-views sharing one table) was a hand-rolled
+`<table>` that false-emptied on query failure. Migrated to shared `ParityTable`
+(sort + resize + gear) with `ListErrorState` + Retry. `EntityLink` via
+`OperationsColumn.entityKind` and server Previous/Next pagination preserved.
+Guard: `scripts/verify-ops-history-uses-paritytable.mjs` via verify-step 1026.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/drivers/OperationsHistoryTable.tsx` | components/drivers |
+## qbo-parity-a1 — LoadHistoryTab (this PR)
+Drivers hub Load History tab: hand-rolled `<table>` (Load # / Assigned At / Method /
+Previous Driver / New Driver / Reason) with date filters. Migrated to shared `ParityTable`
+(sort + resize + gear + filterBar); EntityLink + ListErrorState preserved 1:1.
+Guard: `scripts/verify-load-history-tab-uses-paritytable.mjs` via verify-step 1032.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/drivers/LoadHistoryTab.tsx` | components/drivers |
+
+## qbo-parity-a1 — StopReasoningTable (this PR)
+Fuel planner recommended-stop reasoning grid was a hand-rolled `<table>`. Migrated to
+shared `ParityTable` (sort + resize + gear). Columns #/Station/State/Mile/$/gal/Gallons/
+Why This Stop/HOS preserved 1:1; skipped-stop strike + `bg-red-50` retained.
+Guard: `scripts/verify-stop-reasoning-table-uses-paritytable.mjs` via verify-step 1041.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/fuel/components/StopReasoningTable.tsx` | pages/fuel |
+
+## qbo-parity-a1 — EntityAuditHistoryTab (this PR)
+Shared entity audit history tab (vendor/customer/driver/unit/load/WO) was a hand-rolled
+`<table>` with a bare red outage banner. Migrated to shared `ParityTable`
+(sort + resize + gear + `renderExpanded` Before→After `ChangesDiff`) and replaced the
+ad-hoc error div with `ListErrorState` + Retry. Columns When/Who/Action/Summary/Source
+preserved 1:1. Guard: `scripts/verify-entity-audit-history-uses-paritytable.mjs` via
+verify-step 1035.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/audit/EntityAuditHistoryTab.tsx` | components/audit |
+
 ## Remaining hand-rolled inventory (by module)
 
 ### components/DataTable.tsx (1)
@@ -120,7 +233,7 @@ Guard: `scripts/verify-asset-list-table-uses-paritytable.mjs` via verify-step 10
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/components/audit/AuditHistoryTab.tsx` | pending |
-| `apps/frontend/src/components/audit/EntityAuditHistoryTab.tsx` | pending |
+| `apps/frontend/src/components/audit/EntityAuditHistoryTab.tsx` | migrated (qbo-parity-a1) |
 
 ### components/catalogs (1)
 
@@ -128,12 +241,12 @@ Guard: `scripts/verify-asset-list-table-uses-paritytable.mjs` via verify-step 10
 | --- | --- |
 | `apps/frontend/src/components/catalogs/CatalogTable.tsx` | pending |
 
-### components/compliance (2 remaining)
+### components/compliance (0 remaining)
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/components/compliance/NotificationLogPanel.tsx` | pending |
-| `apps/frontend/src/components/compliance/NotificationRulesPanel.tsx` | pending |
+| `apps/frontend/src/components/compliance/NotificationLogPanel.tsx` | migrated (qbo-parity-a1) |
+| `apps/frontend/src/components/compliance/NotificationRulesPanel.tsx` | migrated (qbo-parity-a1) |
 
 ### components/customers (1)
 
@@ -156,14 +269,14 @@ Guard: `scripts/verify-asset-list-table-uses-paritytable.mjs` via verify-step 10
 | `apps/frontend/src/components/driver-profile/SettlementsSection.tsx` | pending |
 | `apps/frontend/src/components/driver-profile/TrainingRecordsSection.tsx` | pending |
 
-### components/drivers (4)
+### components/drivers (3 remaining)
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/components/drivers/AuditHistoryTab.tsx` | pending |
+| `apps/frontend/src/components/drivers/AuditHistoryTab.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/drivers/EarningsTab.tsx` | migrated (qbo-parity-a1) |
-| `apps/frontend/src/components/drivers/LoadHistoryTab.tsx` | pending |
-| `apps/frontend/src/components/drivers/OperationsHistoryTable.tsx` | pending |
+| `apps/frontend/src/components/drivers/LoadHistoryTab.tsx` | migrated (qbo-parity-a1) |
+| `apps/frontend/src/components/drivers/OperationsHistoryTable.tsx` | migrated (qbo-parity-a1) |
 
 ### components/factoring (1) — financial-hold
 
@@ -181,7 +294,7 @@ Guard: `scripts/verify-asset-list-table-uses-paritytable.mjs` via verify-step 10
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/components/home/DriverDaySummaryCard.tsx` | pending |
+| `apps/frontend/src/components/home/DriverDaySummaryCard.tsx` | migrated (qbo-parity-a1) |
 
 ### components/insurance (1)
 
@@ -206,7 +319,7 @@ Guard: `scripts/verify-asset-list-table-uses-paritytable.mjs` via verify-step 10
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/components/reports/FrequentlyRunTable.tsx` | pending |
+| `apps/frontend/src/components/reports/FrequentlyRunTable.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/reports/LaneDetailModal.tsx` | pending |
 | `apps/frontend/src/components/reports/ifta/Step1MileageReview.tsx` | pending |
 | `apps/frontend/src/components/reports/ifta/Step2FuelReview.tsx` | pending |
@@ -223,16 +336,16 @@ Guard: `scripts/verify-asset-list-table-uses-paritytable.mjs` via verify-step 10
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/components/trailer-profile/PlatesTable.tsx` | pending |
-| `apps/frontend/src/components/trailer-profile/TrailerReeferSection.tsx` | pending |
+| `apps/frontend/src/components/trailer-profile/PlatesTable.tsx` | migrated (qbo-parity-a1) |
+| `apps/frontend/src/components/trailer-profile/TrailerReeferSection.tsx` | migrated (qbo-parity-a1) |
 
-### components/vehicle-profile (4)
+### components/vehicle-profile (3 remaining)
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/components/vehicle-profile/ComplianceSection.tsx` | pending |
+| `apps/frontend/src/components/vehicle-profile/ComplianceSection.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/vehicle-profile/DocumentsSection.tsx` | pending |
-| `apps/frontend/src/components/vehicle-profile/PlatesTable.tsx` | pending |
+| `apps/frontend/src/components/vehicle-profile/PlatesTable.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/vehicle-profile/RecentActivitySection.tsx` | pending |
 
 ### pages/CustomerDetail.tsx (1)
@@ -316,10 +429,10 @@ Guard: `scripts/verify-asset-list-table-uses-paritytable.mjs` via verify-step 10
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/admin/ActivityLogPage.tsx` | pending |
+| `apps/frontend/src/pages/admin/ActivityLogPage.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/pages/admin/ErrorMonitor.tsx` | pending |
 | `apps/frontend/src/pages/admin/LaunchToggles.tsx` | pending |
-| `apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx` | pending |
+| `apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/pages/admin/audit-log/AuditLogViewer.tsx` | pending |
 | `apps/frontend/src/pages/admin/feature-flags/FeatureFlagsManager.tsx` | pending |
 
@@ -328,7 +441,7 @@ Guard: `scripts/verify-asset-list-table-uses-paritytable.mjs` via verify-step 10
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/pages/audit/AuditEventsList.tsx` | pending |
-| `apps/frontend/src/pages/audit/AuditTrailPage.tsx` | pending |
+| `apps/frontend/src/pages/audit/AuditTrailPage.tsx` | migrated (qbo-parity-a1) |
 
 ### pages/banking (9) — financial-hold
 
@@ -475,7 +588,7 @@ Guard: `scripts/verify-asset-list-table-uses-paritytable.mjs` via verify-step 10
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/pages/fuel/FuelTransactionsTable.tsx` | pending |
-| `apps/frontend/src/pages/fuel/components/StopReasoningTable.tsx` | pending |
+| `apps/frontend/src/pages/fuel/components/StopReasoningTable.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/pages/fuel/fraud-alerts/FraudAlertsList.tsx` | pending |
 
 ### pages/home (1)
@@ -705,3 +818,79 @@ Guard: `scripts/verify-asset-list-table-uses-paritytable.mjs` via verify-step 10
 | --- | --- |
 | `apps/frontend/src/portal/PortalDashboardPage.tsx` | pending |
 
+## qbo-parity-a1 — vehicle DocumentsSection (this PR)
+Vehicle profile documents list was a hand-rolled `<table>`. Migrated to shared
+`ParityTable` (sort + resize + gear). Columns Type / Name / Expiration / Uploaded
+preserved 1:1; expiration urgency coloring + UploadModal entity scoping +
+`vp-docs-upload-button` preserved.
+Guard: `scripts/verify-vehicle-documents-uses-paritytable.mjs` via verify-step 1037.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/vehicle-profile/DocumentsSection.tsx` | components/vehicle-profile |
+
+## qbo-parity-a1 — ErrorMonitorPage (this PR)
+Owner error-monitor buffered stream was a hand-rolled `<table>` with a bare red
+outage line. Migrated to shared `ParityTable` (sort + resize + gear +
+`renderExpanded` detail JSON) and replaced the ad-hoc error with `ListErrorState`
++ Retry. Columns Time/Kind/Message/Detail preserved 1:1.
+Guard: `scripts/verify-error-monitor-uses-paritytable.mjs` via verify-step 1036.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/admin/ErrorMonitor.tsx` | pages/admin |
+
+## qbo-parity-a1 — trailer-profile PlatesTable (this PR)
+Trailer profile plates grid was a hand-rolled `<table>` (Country/Jurisdiction/Plate/
+Expiration). Migrated to shared `ParityTable` (sort + resize + gear + CSV export).
+`tp-plates-table` testid preserved. Guard:
+`scripts/verify-trailer-plates-uses-paritytable.mjs` via verify-step 1039.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/trailer-profile/PlatesTable.tsx` | components/trailer-profile |
+
+## qbo-parity-a1 — DriverDaySummaryCard (home)
+Home "Driver day-summaries" grid was a hand-rolled `<table>` with a bare red outage
+banner. Migrated to shared `ParityTable` (sort + resize + gear) and replaced the
+ad-hoc error with `ListErrorState` + Retry. Columns Driver / Miles / On-duty hrs /
+Fuel stops / On-time / Late preserved 1:1; DatePicker + no-HOS empty copy preserved.
+Guard: `scripts/verify-driver-day-summary-uses-paritytable.mjs` via verify-step 1038.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/home/DriverDaySummaryCard.tsx` | components/home |
+
+## qbo-parity-a1 — AuditTrailPage (this PR)
+Universal spine audit trail was a hand-rolled `<table>` with a bare red outage line and
+manual expand rows. Migrated to shared `ParityTable` (sort + resize + gear +
+`renderExpanded` payload/correlation detail) and replaced the ad-hoc error with
+`ListErrorState` + Retry. Columns When / Event type / Actor / Entity / Source preserved
+1:1; server offset pagination preserved. Guard:
+`scripts/verify-audit-trail-uses-paritytable.mjs` via verify-step 1043.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/audit/AuditTrailPage.tsx` | pages/audit |
+
+## qbo-parity-a1 — QboVendorLinkagePage (this PR)
+Admin QBO vendor/class linkage (Drivers + Assets tabs) was two hand-rolled `<table>` grids
+with no outage chrome on query failure. Migrated both to shared `ParityTable`
+(sort + resize + gear) and added `ListErrorState` + Retry per tab. Driver columns
+Driver / Current Vendor / Status / Actions and asset columns Unit / QBO Class / Actions
+preserved 1:1; filter bar + auto-link high-confidence action preserved.
+Guard: `scripts/verify-qbo-vendor-linkage-uses-paritytable.mjs` via verify-step 1042.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx` | pages/admin |
+
+## qbo-parity-a1 — TrailerReeferSection (this PR)
+Trailer reefer hours log was a hand-rolled `<table>`. Migrated to shared
+`ParityTable` (sort + resize + gear). Columns preserved 1:1; reefer hours entry
+chrome + entity scoping preserved.
+Guard: `scripts/verify-trailer-reefer-uses-paritytable.mjs` via verify-step 1044.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/trailer-profile/TrailerReeferSection.tsx` | components/trailer-profile |

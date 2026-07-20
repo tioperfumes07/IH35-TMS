@@ -7,22 +7,35 @@ import {
   listDriverQboMappingStatus,
   listQboVendorSuggestions,
   listUnits,
+  type DriverQboMappingStatus,
 } from "../../api/mdata";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { VendorLinkageModal } from "../../components/qbo/VendorLinkageModal";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type TabKey = "drivers" | "assets";
 
+type UnitLinkageRow = {
+  id: string;
+  unit_number: string;
+  qbo_class_id: string | null;
+};
+
 const QBO_VENDOR_LINKAGE_TAB_IDS = new Set<string>(["drivers", "assets"]);
 
 export function parseQboVendorLinkageTab(raw: string | null): TabKey {
   if (raw && QBO_VENDOR_LINKAGE_TAB_IDS.has(raw)) return raw as TabKey;
   return "drivers";
+}
+
+function driverDisplayName(row: DriverQboMappingStatus): string {
+  return `${row.last_name}, ${row.first_name}`;
 }
 
 export function QboVendorLinkagePage() {
@@ -40,7 +53,12 @@ export function QboVendorLinkagePage() {
     setSearchParams(params, { replace: true });
   };
   const [filter, setFilter] = useState<"all" | "linked" | "unlinked">("all");
-  const [linkageTarget, setLinkageTarget] = useState<{ entityType: "driver" | "asset"; entityId: string; name: string; currentQboVendorId?: string | null } | null>(null);
+  const [linkageTarget, setLinkageTarget] = useState<{
+    entityType: "driver" | "asset";
+    entityId: string;
+    name: string;
+    currentQboVendorId?: string | null;
+  } | null>(null);
   const [classByUnit, setClassByUnit] = useState<Record<string, string>>({});
 
   const canManage = auth.user?.role === "Owner" || auth.user?.role === "Administrator";
@@ -63,6 +81,122 @@ export function QboVendorLinkagePage() {
     if (filter === "unlinked") return source.filter((row) => !row.linked);
     return source;
   }, [driversQuery.data?.rows, filter]);
+
+  const unitRows = useMemo((): UnitLinkageRow[] => {
+    return (unitsQuery.data?.units ?? [])
+      .map((unitRaw) => {
+        const unit = unitRaw as { id?: string; unit_number?: string; qbo_class_id?: string | null };
+        if (!unit.id) return null;
+        return {
+          id: unit.id,
+          unit_number: unit.unit_number ?? unit.id,
+          qbo_class_id: unit.qbo_class_id ?? null,
+        };
+      })
+      .filter((row): row is UnitLinkageRow => row !== null);
+  }, [unitsQuery.data?.units]);
+
+  const driverColumns = useMemo((): Array<ParityColumn<DriverQboMappingStatus>> => {
+    return [
+      {
+        key: "driver",
+        label: "Driver",
+        sortable: true,
+        sortValue: (row) => driverDisplayName(row),
+        render: (row) => driverDisplayName(row),
+      },
+      {
+        key: "qbo_vendor_id",
+        label: "Current Vendor",
+        sortable: true,
+        sortValue: (row) => row.qbo_vendor_id ?? "",
+        render: (row) => row.qbo_vendor_id ?? "-",
+      },
+      {
+        key: "linked",
+        label: "Status",
+        sortable: true,
+        sortValue: (row) => (row.linked ? "Linked" : "Unlinked"),
+        render: (row) => (row.linked ? "Linked" : "Unlinked"),
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        alwaysVisible: true,
+        render: (row) => (
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() =>
+              setLinkageTarget({
+                entityType: "driver",
+                entityId: row.id,
+                name: `${row.first_name} ${row.last_name}`,
+                currentQboVendorId: row.qbo_vendor_id,
+              })
+            }
+          >
+            {row.qbo_vendor_id ? "Edit Linkage" : "Link to Existing"}
+          </Button>
+        ),
+      },
+    ];
+  }, []);
+
+  const unitColumns = useMemo((): Array<ParityColumn<UnitLinkageRow>> => {
+    return [
+      {
+        key: "unit_number",
+        label: "Unit",
+        sortable: true,
+      },
+      {
+        key: "qbo_class_id",
+        label: "QBO Class",
+        sortable: true,
+        sortValue: (row) => row.qbo_class_id ?? "",
+        render: (row) => row.qbo_class_id ?? "-",
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        alwaysVisible: true,
+        render: (row) => (
+          <div className="flex items-center gap-2">
+            <input
+              value={classByUnit[row.id] ?? row.qbo_class_id ?? ""}
+              onChange={(event) => setClassByUnit((current) => ({ ...current, [row.id]: event.target.value }))}
+              className="h-7 rounded-sm border border-gray-300 px-2 text-xs"
+              placeholder="QBO class id"
+            />
+            <Button
+              size="sm"
+              onClick={() => {
+                const qboClassId = (classByUnit[row.id] ?? row.qbo_class_id ?? "").trim();
+                if (!qboClassId) {
+                  pushToast("Enter QBO class id", "error");
+                  return;
+                }
+                void linkUnitQboClass(row.id, {
+                  operating_company_id: companyId,
+                  qbo_class_id: qboClassId,
+                  reason: "manual_asset_link",
+                  force: true,
+                })
+                  .then(() => {
+                    pushToast("Unit linked", "success");
+                    void queryClient.invalidateQueries({ queryKey: ["qbo-vendor-linkage", "units", companyId] });
+                  })
+                  .catch((e) => pushToast(String((e as Error)?.message ?? "Link failed"), "error"));
+              }}
+            >
+              Link to Existing
+            </Button>
+          </div>
+        ),
+      },
+    ];
+  }, [classByUnit, companyId, pushToast, queryClient]);
 
   async function autoLinkHighConfidence() {
     const candidates = (driversQuery.data?.rows ?? []).filter((row) => !row.qbo_vendor_id);
@@ -123,100 +257,47 @@ export function QboVendorLinkagePage() {
               Auto-Link High Confidence (&gt; 0.9)
             </Button>
           </div>
-          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-            <table className="min-w-full text-left text-xs">
-              <thead className="bg-gray-50">
-                <tr className="text-gray-600">
-                  <th className="px-3 py-2 font-semibold">Driver</th>
-                  <th className="px-3 py-2 font-semibold">Current Vendor</th>
-                  <th className="px-3 py-2 font-semibold">Status</th>
-                  <th className="px-3 py-2 font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.id} className="border-t border-gray-100">
-                    <td className="px-3 py-2">{row.last_name}, {row.first_name}</td>
-                    <td className="px-3 py-2">{row.qbo_vendor_id ?? "-"}</td>
-                    <td className="px-3 py-2">{row.linked ? "Linked" : "Unlinked"}</td>
-                    <td className="px-3 py-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() =>
-                          setLinkageTarget({
-                            entityType: "driver",
-                            entityId: row.id,
-                            name: `${row.first_name} ${row.last_name}`,
-                            currentQboVendorId: row.qbo_vendor_id,
-                          })
-                        }
-                      >
-                        {row.qbo_vendor_id ? "Edit Linkage" : "Link to Existing"}
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {driversQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load driver vendor linkage"
+              status={0}
+              message={(driversQuery.error as Error)?.message}
+              onRetry={() => void driversQuery.refetch()}
+            />
+          ) : (
+            <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white p-2">
+              <ParityTable
+                rows={rows}
+                columns={driverColumns}
+                rowKey={(row) => row.id}
+                loading={driversQuery.isLoading}
+                storageKey="qbo-vendor-linkage-drivers"
+                emptyText="No drivers match this filter."
+                tableTestId="qbo-vendor-linkage-drivers-table"
+                rowTestId={(row) => `qbo-vendor-linkage-driver-row-${row.id}`}
+              />
+            </div>
+          )}
         </div>
+      ) : unitsQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load unit class linkage"
+          status={0}
+          message={(unitsQuery.error as Error)?.message}
+          onRetry={() => void unitsQuery.refetch()}
+        />
       ) : (
-        <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-gray-50">
-              <tr className="text-gray-600">
-                <th className="px-3 py-2 font-semibold">Unit</th>
-                <th className="px-3 py-2 font-semibold">QBO Class</th>
-                <th className="px-3 py-2 font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(unitsQuery.data?.units ?? []).map((unitRaw) => {
-                const unit = unitRaw as { id?: string; unit_number?: string; qbo_class_id?: string | null };
-                if (!unit.id) return null;
-                return (
-                  <tr key={unit.id} className="border-t border-gray-100">
-                    <td className="px-3 py-2">{unit.unit_number ?? unit.id}</td>
-                    <td className="px-3 py-2">{unit.qbo_class_id ?? "-"}</td>
-                    <td className="px-3 py-2">
-                      <div className="flex items-center gap-2">
-                        <input
-                          value={classByUnit[unit.id] ?? unit.qbo_class_id ?? ""}
-                          onChange={(event) => setClassByUnit((current) => ({ ...current, [unit.id!]: event.target.value }))}
-                          className="h-7 rounded-sm border border-gray-300 px-2 text-xs"
-                          placeholder="QBO class id"
-                        />
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            const qboClassId = (classByUnit[unit.id!] ?? unit.qbo_class_id ?? "").trim();
-                            if (!qboClassId) {
-                              pushToast("Enter QBO class id", "error");
-                              return;
-                            }
-                            void linkUnitQboClass(unit.id!, {
-                              operating_company_id: companyId,
-                              qbo_class_id: qboClassId,
-                              reason: "manual_asset_link",
-                              force: true,
-                            })
-                              .then(() => {
-                                pushToast("Unit linked", "success");
-                                void queryClient.invalidateQueries({ queryKey: ["qbo-vendor-linkage", "units", companyId] });
-                              })
-                              .catch((e) => pushToast(String((e as Error)?.message ?? "Link failed"), "error"));
-                          }}
-                        >
-                          Link to Existing
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white p-2">
+          <ParityTable
+            rows={unitRows}
+            columns={unitColumns}
+            rowKey={(row) => row.id}
+            loading={unitsQuery.isLoading}
+            storageKey="qbo-vendor-linkage-assets"
+            emptyText="No units found."
+            tableTestId="qbo-vendor-linkage-assets-table"
+            rowTestId={(row) => `qbo-vendor-linkage-unit-row-${row.id}`}
+          />
         </div>
       )}
 

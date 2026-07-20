@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-vehicle-documents-paritytable",
+  "branch": "fix/vehicle-documents-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable migration)",
+  "phase": "OPS-FE",
+  "task": "Migrate vehicle-profile DocumentsSection from hand-rolled <table> to shared ParityTable QBO grammar; preserve Type/Name/Expiration/Uploaded + UploadModal entity scoping + vp-docs-upload-button. Guard + verify-step 1037 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + CODER-BUILD tbl-standard-raw-table-sweep-incomplete / qbo-parity-a1",
+  "source_file": "qbo-parity-a1-vehicle-documents-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-vehicle-documents-paritytable.json",
+    "apps/frontend/src/components/vehicle-profile/DocumentsSection.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-vehicle-documents-uses-paritytable.mjs",
+    "scripts/verify-steps/1037-verify-vehicle-documents-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "DocumentsSection.tsx uses ParityTable (no hand-rolled <table>/<thead>); columns Type/Name/Expiration/Uploaded preserved; UploadModal + vp-docs-upload-button preserved; emptyText preserved; verify-vehicle-documents-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1037 wired (Rule 17); tracker marks vehicle-profile DocumentsSection migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 — vehicle DocumentsSection surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17). Avoids open PRs #2865-2876 / #2855."
+}

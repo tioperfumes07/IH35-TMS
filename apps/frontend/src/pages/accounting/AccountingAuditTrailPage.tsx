@@ -193,7 +193,7 @@ export function AccountingAuditTrailPage() {
         label: "Amount",
         sortable: true,
         render: (row) => (
-          <span className={row.debit_or_credit === "debit" ? "text-emerald-700" : "text-red-700"}>
+          <span className={row.debit_or_credit === "debit" ? "text-slate-700" : "text-red-700"}>
             {row.debit_or_credit.toUpperCase()} {fmtMoneyCents(row.amount_cents)}
           </span>
         ),

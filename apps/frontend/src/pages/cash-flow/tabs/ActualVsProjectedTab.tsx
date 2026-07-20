@@ -59,7 +59,7 @@ function VarianceCell({ variance_cents, variance_pct }: { variance_cents: number
   const pos = variance_cents > 0;
   const zero = variance_cents === 0;
   return (
-    <div className={`flex flex-col items-end ${zero ? "text-gray-500" : pos ? "text-emerald-700" : "text-red-700"}`}>
+    <div className={`flex flex-col items-end ${zero ? "text-gray-500" : pos ? "text-slate-700" : "text-red-700"}`}>
       <span className="font-semibold">{formatCents(variance_cents, { sign: true })}</span>
       <span className="text-xs">{formatPct(variance_pct)}</span>
     </div>
@@ -140,7 +140,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
                     Act: <strong>{formatCents(card.actual)}</strong>
                   </span>
                 </div>
-                <div className={`mt-1 flex items-center gap-1 text-base font-bold ${pos ? "text-emerald-700" : "text-red-700"}`}>
+                <div className={`mt-1 flex items-center gap-1 text-base font-bold ${pos ? "text-slate-700" : "text-red-700"}`}>
                   {pos ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                   {formatCents(varCents, { sign: true })}
                   <span className="ml-1 text-sm font-medium">{formatPct(card.pct)}</span>
@@ -214,7 +214,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
                     <td className="px-4 py-3 text-right">
                       <VarianceCell variance_cents={g.expenses.variance_cents} variance_pct={g.expenses.variance_pct} />
                     </td>
-                    <td className={`px-4 py-3 text-right font-bold ${netPos ? "text-emerald-700" : "text-red-700"}`}>
+                    <td className={`px-4 py-3 text-right font-bold ${netPos ? "text-slate-700" : "text-red-700"}`}>
                       {formatCents(netActual, { sign: true })}
                     </td>
                   </tr>

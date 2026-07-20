@@ -2,8 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { listAtRiskDispatchLoads } from "../../api/dispatch";
+import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
@@ -31,6 +33,7 @@ export function AtRiskQueuePage() {
   // Migrated to the shared QBO-parity grid — columns, order, load deep-link, and the ETA signal badge
   // are preserved verbatim (§7 additive-only). Declared BEFORE the `!companyId` early return below so
   // the hook call is unconditional (Rules of Hooks — companyId can change between renders).
+  // Load cell uses EntityLink (Law of the Land reverse drill-through) instead of ad-hoc Link.
   const columns = useMemo<ParityColumn<AtRiskRow>[]>(
     () => [
       {
@@ -38,11 +41,7 @@ export function AtRiskQueuePage() {
         label: "Load",
         sortable: true,
         className: "font-medium",
-        render: (load) => (
-          <Link to={`/dispatch?load_id=${encodeURIComponent(load.id)}`} className="text-slate-700 hover:underline">
-            {load.load_number}
-          </Link>
-        ),
+        render: (load) => <EntityLink kind="load" id={load.id} label={load.load_number ?? load.id} />,
       },
       { key: "customer_name", label: "Customer", sortable: true, render: (load) => load.customer_name ?? "—" },
       { key: "driver_name", label: "Driver", sortable: true, render: (load) => load.driver_name ?? "—" },
@@ -82,15 +81,24 @@ export function AtRiskQueuePage() {
         }
       />
 
-      <ParityTable<AtRiskRow>
-        columns={columns}
-        rows={loads}
-        rowKey={(load) => load.id}
-        loading={loadsQ.isLoading}
-        emptyText="No at-risk loads right now."
-        storageKey="dispatch-at-risk-queue"
-        exportFilename="at-risk-queue"
-      />
+      {loadsQ.isError ? (
+        <ListErrorState
+          title="Couldn't load at-risk queue"
+          status={0}
+          message={(loadsQ.error as Error)?.message}
+          onRetry={() => void loadsQ.refetch()}
+        />
+      ) : (
+        <ParityTable<AtRiskRow>
+          columns={columns}
+          rows={loads}
+          rowKey={(load) => load.id}
+          loading={loadsQ.isLoading}
+          emptyText="No at-risk loads right now."
+          storageKey="dispatch-at-risk-queue"
+          exportFilename="at-risk-queue"
+        />
+      )}
     </div>
   );
 }

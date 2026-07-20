@@ -261,7 +261,7 @@ export function PostingLineagePage() {
           </div>
           <div className="mt-1 text-xs text-slate-600">
             Debit {formatMoney(totals.debit)} · Credit {formatMoney(totals.credit)} ·{" "}
-            <span className={totals.balanced ? "text-emerald-700" : "text-red-700"}>
+            <span className={totals.balanced ? "text-slate-700" : "text-red-700"}>
               {totals.balanced ? "Balanced" : "Out of balance"}
             </span>
           </div>

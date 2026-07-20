@@ -411,7 +411,7 @@ export function AccountRegisterPage() {
                 <button type="button" onClick={resetFilters} className="text-[12px] font-medium text-gray-500 underline">
                   Reset
                 </button>
-                <button type="button" onClick={() => setFilterOpen(false)} className="text-[12px] font-semibold text-green-700">
+                <button type="button" onClick={() => setFilterOpen(false)} className="text-[12px] font-semibold text-slate-700">
                   Done
                 </button>
               </div>
@@ -444,7 +444,7 @@ export function AccountRegisterPage() {
             key={v}
             type="button"
             onClick={() => setView(v)}
-            className={`px-3 py-1.5 font-semibold ${view === v ? "border-b-2 border-green-600 text-gray-900" : "text-gray-500"}`}
+            className={`px-3 py-1.5 font-semibold ${view === v ? "border-b-2 border-slate-600 text-gray-900" : "text-gray-500"}`}
           >
             {v === "register" ? "Register" : "Audit history"}
           </button>

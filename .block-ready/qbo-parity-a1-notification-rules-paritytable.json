@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-notification-rules-paritytable",
+  "branch": "fix/notification-rules-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable migration)",
+  "phase": "OPS-FE",
+  "task": "Migrate NotificationRulesPanel from hand-rolled <table> to ParityTable. Guard + verify-step 1024 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md (NotificationRulesPanel pending)",
+  "source_file": "qbo-parity-a1-paritytable-universal-adoption",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-notification-rules-paritytable.json",
+    "apps/frontend/src/components/compliance/NotificationRulesPanel.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-notification-rules-uses-paritytable.mjs",
+    "scripts/verify-steps/1024-verify-notification-rules-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "NotificationRulesPanel.tsx uses ParityTable; no hand-rolled <table>/<thead>; columns Credential/Scope/Days Before/Channels/Recipients preserved with Archive action; data-testid compliance-rules-panel kept; verify-notification-rules-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1024 wired (Rule 17); tracker marks NotificationRulesPanel migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 — NotificationRulesPanel surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17). Avoids open scopes #2854/#2856/#2857."
+}
