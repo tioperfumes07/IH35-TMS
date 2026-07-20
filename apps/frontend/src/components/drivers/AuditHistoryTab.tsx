@@ -48,44 +48,6 @@ const STATUS_OPTIONS = [
   { value: "inactive", label: "Inactive" },
 ];
 
-const COLUMNS: Array<ParityColumn<DriverAuditEvent>> = [
-  {
-    key: "created_at",
-    label: "When",
-    sortable: true,
-    sortValue: (row) => new Date(row.created_at).getTime(),
-    render: (row) => <span className="whitespace-nowrap text-gray-800">{formatWhen(row.created_at)}</span>,
-  },
-  {
-    key: "actor_email",
-    label: "Actor",
-    sortable: true,
-    sortValue: (row) => row.actor_email ?? row.actor_user_id ?? "",
-    render: (row) => <span className="text-gray-800">{row.actor_email ?? row.actor_user_id ?? "—"}</span>,
-  },
-  {
-    key: "event_type",
-    label: "Event",
-    sortable: true,
-    render: (row) => <span className="font-mono text-[11px] text-gray-900">{row.event_type}</span>,
-  },
-  {
-    key: "summary",
-    label: "Summary",
-    sortable: true,
-    render: (row) => <span className="text-gray-800">{row.summary}</span>,
-  },
-  {
-    key: "details",
-    label: "Details",
-    render: (row) => (
-      <span className="block max-w-[12rem] truncate font-mono text-[10px] text-gray-600">
-        {payloadDiff(row.payload).split("\n")[0]}
-      </span>
-    ),
-  },
-];
-
 export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
   const [eventTypeFilter, setEventTypeFilter] = useState("");
   const [fromDate, setFromDate] = useState("");
@@ -94,6 +56,7 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
   const [statusFilter, setStatusFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
   const [voidsOnly, setVoidsOnly] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const fromIso = fromDate ? new Date(`${fromDate}T00:00:00`).toISOString() : undefined;
   const toIso = toDate ? new Date(`${toDate}T23:59:59`).toISOString() : undefined;
@@ -138,6 +101,65 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
     const unique = new Set(events.map((row) => row.event_type));
     return Array.from(unique).sort();
   }, [events]);
+
+  const columns: Array<ParityColumn<DriverAuditEvent>> = useMemo(
+    () => [
+      {
+        key: "created_at",
+        label: "When",
+        sortable: true,
+        sortValue: (row) => new Date(row.created_at).getTime(),
+        render: (row) => <span className="whitespace-nowrap text-gray-800">{formatWhen(row.created_at)}</span>,
+      },
+      {
+        key: "actor_email",
+        label: "Actor",
+        sortable: true,
+        sortValue: (row) => row.actor_email ?? row.actor_user_id ?? "",
+        render: (row) => <span className="text-gray-800">{row.actor_email ?? row.actor_user_id ?? "—"}</span>,
+      },
+      {
+        key: "event_type",
+        label: "Event",
+        sortable: true,
+        render: (row) => <span className="font-mono text-[11px] text-gray-900">{row.event_type}</span>,
+      },
+      {
+        key: "summary",
+        label: "Summary",
+        sortable: true,
+        render: (row) => <span className="text-gray-800">{row.summary}</span>,
+      },
+      {
+        key: "details",
+        label: "Details",
+        render: (row) => {
+          const expanded = expandedId === row.id;
+          return (
+            <div>
+              <button
+                type="button"
+                className="text-slate-700 underline"
+                data-testid={`driver-audit-expand-${row.id}`}
+                onClick={() => setExpandedId(expanded ? null : row.id)}
+              >
+                {expanded ? "Hide" : "Expand"}
+              </button>
+              {expanded ? (
+                <pre
+                  className="mt-2 max-h-48 overflow-auto rounded-sm bg-gray-50 p-2 text-[10px]"
+                  data-testid={`driver-audit-diff-${row.id}`}
+                >
+                  {payloadDiff(row.payload)}
+                </pre>
+              ) : null}
+            </div>
+          );
+        },
+      },
+    ],
+    [expandedId]
+  );
 
   return (
     <div className="space-y-3" data-testid="driver-audit-history-tab">
@@ -254,24 +276,30 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
         />
       ) : (
         <div className="overflow-auto rounded-sm border border-gray-200 bg-white p-2">
-          <ParityTable
-            rows={events}
-            columns={COLUMNS}
-            rowKey={(row) => row.id}
-            loading={auditQuery.isLoading}
-            storageKey="driver-audit-history"
-            emptyText="No audit events for this driver."
-            tableTestId="driver-audit-table"
-            rowTestId={(row) => `driver-audit-row-${row.id}`}
-            renderExpanded={(row) => (
-              <pre
-                className="max-h-48 overflow-auto rounded-sm bg-gray-50 p-2 text-[10px]"
-                data-testid={`driver-audit-diff-${row.id}`}
-              >
-                {payloadDiff(row.payload)}
-              </pre>
-            )}
-          />
+          {!auditQuery.isLoading && events.length === 0 ? (
+            <p className="px-2 py-3 text-center text-[11px] text-gray-500" data-testid="driver-audit-empty">
+              No audit events for this driver.
+            </p>
+          ) : (
+            <ParityTable
+              rows={events}
+              columns={columns}
+              rowKey={(row) => row.id}
+              loading={auditQuery.isLoading}
+              storageKey="driver-audit-history"
+              emptyText="No audit events for this driver."
+              tableTestId="driver-audit-table"
+              rowTestId={(row) => `driver-audit-row-${row.id}`}
+              renderExpanded={(row) => (
+                <pre
+                  className="max-h-48 overflow-auto rounded-sm bg-gray-50 p-2 text-[10px]"
+                  data-testid={`driver-audit-diff-expanded-${row.id}`}
+                >
+                  {payloadDiff(row.payload)}
+                </pre>
+              )}
+            />
+          )}
         </div>
       )}
     </div>
