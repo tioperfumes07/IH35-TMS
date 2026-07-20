@@ -753,7 +753,6 @@ verify-step 1035.
 | `apps/frontend/src/pages/reports/audit/AuditReportPage.tsx` | pending |
 | `apps/frontend/src/pages/reports/ifta/IFTAStepGallons.tsx` | pending |
 | `apps/frontend/src/pages/reports/ifta/IFTAStepMiles.tsx` | pending |
-| `apps/frontend/src/pages/reports/ifta/IFTAStepTax.tsx` | pending |
 | `apps/frontend/src/pages/reports/runners/RunnerTable.tsx` | pending |
 
 ### pages/safety (32)
@@ -960,3 +959,14 @@ Guard: `scripts/verify-booking-gap-report-uses-paritytable.mjs` via verify-step 
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/reports/BookingGapReport.tsx` | pages/reports |
+
+## qbo-parity-a1 — IFTAStepTax (this PR)
+IFTA preparation Step 3 tax grid was a hand-rolled `<table>` with a tfoot total row.
+Migrated to shared `ParityTable` (sort + resize + gear + CSV export). Columns State /
+Miles / Taxable gal / Paid gal / Net gal / Rate / Tax/Credit preserved 1:1; calculate
+action, last-calculated timestamp, credit green styling, and total net tax summary
+preserved. Guard: `scripts/verify-ifta-step-tax-uses-paritytable.mjs` via verify-step **1061**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/reports/ifta/IFTAStepTax.tsx` | pages/reports/ifta |

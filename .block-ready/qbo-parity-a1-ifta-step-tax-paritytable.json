@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-ifta-step-tax-paritytable",
+  "branch": "fix/ifta-step-tax-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable migration — IFTA operational filing review)",
+  "phase": "OPS-FE",
+  "task": "Migrate IFTAStepTax from hand-rolled <table> to shared ParityTable QBO grammar; preserve State/Miles/Taxable gal/Paid gal/Net gal/Rate/Tax/Credit + calculate action + total net tax. Guard + verify-step 1061 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + CODER-BUILD tbl-standard-raw-table-sweep-incomplete / qbo-parity-a1",
+  "source_file": "qbo-parity-a1-ifta-step-tax-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-ifta-step-tax-paritytable.json",
+    "apps/frontend/src/pages/reports/ifta/IFTAStepTax.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-ifta-step-tax-uses-paritytable.mjs",
+    "scripts/verify-steps/1061-verify-ifta-step-tax-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "IFTAStepTax.tsx uses ParityTable (no hand-rolled <table>/<thead>); columns State/Miles/Taxable gal/Paid gal/Net gal/Rate/Tax/Credit preserved; calculate action + last-calculated timestamp + total net tax summary preserved; verify-ifta-step-tax-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1061 wired (Rule 17); tracker marks IFTAStepTax migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE; IFTA filing review is operational, not financial posting). Incremental qbo-parity-a1 — IFTAStepTax surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17)."
+}
