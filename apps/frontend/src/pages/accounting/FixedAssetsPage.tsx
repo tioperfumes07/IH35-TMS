@@ -46,13 +46,13 @@ function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 text-sm">
           <div><div className="text-xs text-gray-500">Cost</div><div className="tabular-nums">{fmtCents(detail.purchase_price_cents)}</div></div>
           <div><div className="text-xs text-gray-500">Salvage</div><div className="tabular-nums">{fmtCents(detail.salvage_value_cents)}</div></div>
-          <div><div className="text-xs text-gray-500">Depr. to date</div><div className="tabular-nums text-emerald-700">{fmtCents(detail.depreciation_to_date_cents)}</div></div>
+          <div><div className="text-xs text-gray-500">Depr. to date</div><div className="tabular-nums text-slate-700">{fmtCents(detail.depreciation_to_date_cents)}</div></div>
           <div><div className="text-xs text-gray-500">Net book value</div><div className="tabular-nums font-semibold">{fmtCents(detail.net_book_value_cents)}</div></div>
         </div>
 
         <div className="mb-4">
           <div className="flex justify-between text-xs text-gray-500 mb-1"><span>Depreciated</span><span>{pct}%</span></div>
-          <div className="h-2 rounded-full bg-gray-200"><div className="h-2 rounded-full bg-emerald-500 transition-all" style={{ width: `${Math.min(100, pct)}%` }} /></div>
+          <div className="h-2 rounded-full bg-gray-200"><div className="h-2 rounded-full bg-slate-500 transition-all" style={{ width: `${Math.min(100, pct)}%` }} /></div>
         </div>
 
         {detail.disposal && (
@@ -148,7 +148,7 @@ export function FixedAssetsPage() {
         label: "Depr. to date",
         sortable: true,
         className: "text-right",
-        cellClass: "text-right tabular-nums text-emerald-700",
+        cellClass: "text-right tabular-nums text-slate-700",
         render: (row) => fmtCents(row.depreciation_to_date_cents),
       },
       {
@@ -183,7 +183,7 @@ export function FixedAssetsPage() {
   const filterBar = (
     <div className="flex flex-wrap gap-2 items-center">
       <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setOffset(0); }}
-        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-emerald-500">
+        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500">
         <option value="">All statuses</option>
         <option value="active">Active</option>
         <option value="fully_depreciated">Fully Depreciated</option>

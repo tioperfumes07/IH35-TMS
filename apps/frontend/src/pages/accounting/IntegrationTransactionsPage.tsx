@@ -102,7 +102,7 @@ export function IntegrationTransactionsPage() {
         const bt = row.bank_transaction;
         if (!bt) return <span className="whitespace-nowrap">—</span>;
         return (
-          <span className={`whitespace-nowrap ${bt.is_credit ? "text-emerald-700" : "text-gray-800"}`}>
+          <span className={`whitespace-nowrap ${bt.is_credit ? "text-slate-700" : "text-gray-800"}`}>
             {bt.is_credit ? "+" : "-"}{fmtCents(bt.amount_cents)}
           </span>
         );
@@ -171,17 +171,17 @@ export function IntegrationTransactionsPage() {
       <input
         type="search" aria-label="Search transactions by description or QBO ID" placeholder="Search description, QBO ID…" value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm w-56 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm w-56 focus:outline-hidden focus:ring-1 focus:ring-slate-500"
       />
       <select aria-label="Filter by sync status" value={syncStatus} onChange={(e) => setSyncStatus(e.target.value)}
-        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-emerald-500">
+        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500">
         <option value="">All statuses</option>
         {(["pending","in_flight","synced","failed","blocked"] as const).map((s) => (
           <option key={s} value={s}>{s}</option>
         ))}
       </select>
       <select aria-label="Filter by entity type" value={entityType} onChange={(e) => setEntityType(e.target.value)}
-        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-emerald-500">
+        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500">
         <option value="">All types</option>
         {Object.entries(ENTITY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
       </select>

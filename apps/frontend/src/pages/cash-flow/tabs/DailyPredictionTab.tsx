@@ -160,11 +160,11 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
           <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Predicted Net</p>
           <div className="mt-1 flex items-center gap-1">
             {netPositive ? (
-              <TrendingUp className="h-5 w-5 text-emerald-600" />
+              <TrendingUp className="h-5 w-5 text-slate-600" />
             ) : (
               <TrendingDown className="h-5 w-5 text-red-600" />
             )}
-            <p className={`text-xl font-bold ${netPositive ? "text-emerald-700" : "text-red-700"}`}>
+            <p className={`text-xl font-bold ${netPositive ? "text-slate-700" : "text-red-700"}`}>
               {isLoading ? "—" : formatCents(net, { sign: true })}
             </p>
           </div>
@@ -347,7 +347,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
       {!isLoading && data && (
         <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-5 py-4">
           <span className="text-sm font-semibold text-gray-700">Predicted net cash flow for {fmtDate(date)}</span>
-          <span className={`text-2xl font-bold ${netPositive ? "text-emerald-700" : "text-red-700"}`}>
+          <span className={`text-2xl font-bold ${netPositive ? "text-slate-700" : "text-red-700"}`}>
             {formatCents(net, { sign: true })}
           </span>
         </div>
@@ -382,7 +382,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                     <span className="text-xs text-gray-400">
                       {new Date(entry.date + "T00:00:00Z").toLocaleDateString("en-US", { month: "numeric", day: "numeric" })}
                     </span>
-                    <span className={`mt-1 text-xs font-bold ${pos ? "text-emerald-600" : "text-red-600"}`}>
+                    <span className={`mt-1 text-xs font-bold ${pos ? "text-slate-600" : "text-red-600"}`}>
                       {formatCompactUsd(entry.predicted_net_cents)}
                     </span>
                   </button>

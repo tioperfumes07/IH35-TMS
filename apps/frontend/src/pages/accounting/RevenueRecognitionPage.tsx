@@ -31,7 +31,7 @@ function ObligationBlock({ ob }: { ob: RevenueObligation }) {
           <span className="ml-2 text-xs text-gray-500">({titleize(ob.recognition_method)})</span>
         </div>
         <div className="text-xs text-gray-600">
-          Allocated {fmtCents(ob.allocated_price_cents)} · Recognized <span className="text-emerald-700">{fmtCents(ob.recognized_to_date_cents)}</span> · Deferred {fmtCents(ob.remaining_deferred_cents)}
+          Allocated {fmtCents(ob.allocated_price_cents)} · Recognized <span className="text-slate-700">{fmtCents(ob.recognized_to_date_cents)}</span> · Deferred {fmtCents(ob.remaining_deferred_cents)}
         </div>
       </div>
       {ob.schedule_note && <p className="px-3 py-2 text-xs text-gray-500">{ob.schedule_note}</p>}
@@ -79,13 +79,13 @@ function DetailPanel({ detail, onClose }: { detail: RevenueContractDetail; onClo
 
         <div className="grid grid-cols-3 gap-3 mb-3 text-sm">
           <div><div className="text-xs text-gray-500">Transaction price</div><div className="tabular-nums">{fmtCents(detail.transaction_price_cents)}</div></div>
-          <div><div className="text-xs text-gray-500">Recognized to date</div><div className="tabular-nums text-emerald-700">{fmtCents(detail.recognized_to_date_cents)}</div></div>
+          <div><div className="text-xs text-gray-500">Recognized to date</div><div className="tabular-nums text-slate-700">{fmtCents(detail.recognized_to_date_cents)}</div></div>
           <div><div className="text-xs text-gray-500">Deferred balance</div><div className="tabular-nums font-semibold">{fmtCents(detail.deferred_balance_cents)}</div></div>
         </div>
 
         <div className="mb-4">
           <div className="flex justify-between text-xs text-gray-500 mb-1"><span>Recognized</span><span>{pct}%</span></div>
-          <div className="h-2 rounded-full bg-gray-200"><div className="h-2 rounded-full bg-emerald-500 transition-all" style={{ width: `${Math.min(100, pct)}%` }} /></div>
+          <div className="h-2 rounded-full bg-gray-200"><div className="h-2 rounded-full bg-slate-500 transition-all" style={{ width: `${Math.min(100, pct)}%` }} /></div>
         </div>
 
         <div className="mb-3 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
@@ -148,7 +148,7 @@ export function RevenueRecognitionPage() {
 
       <div className="flex flex-wrap gap-2 mb-4 items-center">
         <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setOffset(0); }}
-          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-emerald-500">
+          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500">
           <option value="">All statuses</option>
           <option value="draft">Draft</option>
           <option value="active">Active</option>
@@ -187,7 +187,7 @@ export function RevenueRecognitionPage() {
                   <td className="px-3 py-2 whitespace-nowrap text-gray-600 capitalize">{titleize(row.source_type)}</td>
                   <td className="px-3 py-2 whitespace-nowrap text-gray-600">{fmtDate(row.contract_date)}</td>
                   <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums">{fmtCents(row.transaction_price_cents)}</td>
-                  <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-emerald-700">{fmtCents(row.recognized_to_date_cents)}</td>
+                  <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-slate-700">{fmtCents(row.recognized_to_date_cents)}</td>
                   <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums font-semibold">{fmtCents(row.deferred_balance_cents)}</td>
                   <td className="px-3 py-2 whitespace-nowrap text-center text-gray-600">{row.obligation_count}</td>
                   <td className="px-3 py-2 whitespace-nowrap">

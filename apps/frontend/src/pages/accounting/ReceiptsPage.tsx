@@ -64,7 +64,7 @@ function ReceiptDetailPanel({ id, companyId, onClose }: { id: string; companyId:
             <div className="flex gap-2"><span className="text-gray-500 w-28 shrink-0">Date</span><span>{fmtDate(data.source.date)}</span></div>
             <hr />
             <a href={data.download_url} target="_blank" rel="noreferrer"
-              className="inline-block rounded-sm bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">
+              className="inline-block rounded-sm bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
               Download Receipt ↗
             </a>
           </div>
@@ -164,9 +164,9 @@ export function ReceiptsPage() {
     <div className="flex flex-wrap gap-2 items-center">
       <input type="search" aria-label="Search receipts by filename or notes" placeholder="Search filename, notes…" value={search}
         onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
-        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm w-56 focus:outline-hidden focus:ring-1 focus:ring-emerald-500" />
+        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm w-56 focus:outline-hidden focus:ring-1 focus:ring-slate-500" />
       <select aria-label="Filter receipts by source" value={entityType} onChange={(e) => { setEntityType(e.target.value as "" | "expense" | "bill"); setOffset(0); }}
-        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-emerald-500">
+        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500">
         <option value="">All sources</option>
         <option value="expense">Expenses</option>
         <option value="bill">Bills</option>

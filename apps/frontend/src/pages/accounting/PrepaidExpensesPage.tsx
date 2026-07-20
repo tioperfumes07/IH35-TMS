@@ -47,7 +47,7 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
             <span>{pct}%</span>
           </div>
           <div className="h-2 rounded-full bg-gray-200">
-            <div className="h-2 rounded-full bg-emerald-500 transition-all" style={{ width: `${pct}%` }} />
+            <div className="h-2 rounded-full bg-slate-500 transition-all" style={{ width: `${pct}%` }} />
           </div>
         </div>
 
@@ -132,24 +132,24 @@ function CreateModal({ companyId, onClose, onCreated }: { companyId: string; onC
         <div className="space-y-3 text-sm">
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-0.5">Description *</label>
-            <input className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+            <input className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-slate-500"
               value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder="e.g. Annual insurance premium" />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-0.5">Asset Number</label>
-            <input className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+            <input className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-slate-500"
               value={form.asset_number} onChange={(e) => setForm({ ...form, asset_number: e.target.value })} placeholder="Optional" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-0.5">Purchase Date *</label>
-              <DatePicker className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+              <DatePicker className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-slate-500"
                 value={form.purchase_date} onChange={(next) => setForm({ ...form, purchase_date: next })} />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-0.5">Amortization Start *</label>
-              <DatePicker className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+              <DatePicker className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-slate-500"
                 value={form.start_date} onChange={(next) => setForm({ ...form, start_date: next })} />
             </div>
           </div>
@@ -165,7 +165,7 @@ function CreateModal({ companyId, onClose, onCreated }: { companyId: string; onC
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-0.5">Periods (months) *</label>
               <input type="number" min="1" max="360"
-                className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-slate-500"
                 value={form.periods} onChange={(e) => setForm({ ...form, periods: e.target.value })} />
             </div>
           </div>
@@ -178,7 +178,7 @@ function CreateModal({ companyId, onClose, onCreated }: { companyId: string; onC
         <div className="flex justify-end gap-2 mt-5">
           <button onClick={onClose} className="rounded-sm border border-gray-300 px-4 py-1.5 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
           <button onClick={() => mutation.mutate()} disabled={!valid || mutation.isPending}
-            className="rounded-sm bg-emerald-700 px-4 py-1.5 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50">
+            className="rounded-sm bg-slate-700 px-4 py-1.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50">
             {mutation.isPending ? "Creating…" : "Create"}
           </button>
         </div>
@@ -233,7 +233,7 @@ export function PrepaidExpensesPage() {
         label: "Amortized",
         sortable: true,
         className: "text-right",
-        cellClass: "text-right tabular-nums text-emerald-700",
+        cellClass: "text-right tabular-nums text-slate-700",
         render: (row) => fmtCents(row.amortized_cents),
       },
       {
@@ -271,7 +271,7 @@ export function PrepaidExpensesPage() {
   const filterBar = (
     <div className="flex flex-wrap gap-2 items-center">
       <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setOffset(0); }}
-        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-emerald-500">
+        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500">
         <option value="">All statuses</option>
         <option value="active">Active</option>
         <option value="fully_amortized">Fully Amortized</option>
@@ -287,7 +287,7 @@ export function PrepaidExpensesPage() {
       subtitle="Prepaid assets and amortization schedules"
       actions={
         <button onClick={() => setShowCreate(true)}
-          className="rounded-sm bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-800">
+          className="rounded-sm bg-slate-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-slate-800">
           + Create Prepaid
         </button>
       }
