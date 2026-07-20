@@ -126,11 +126,24 @@ export async function getQboConnectionSummary(
   };
 }
 
-/** Latest remote-count collection timestamp (proxy for "last QBO poll"). */
-export async function getLastRemoteCountAt(client: QueryClient): Promise<string | null> {
+/**
+ * Latest remote-count collection timestamp for ONE operating company (proxy for "last QBO poll").
+ *
+ * D-#1: the operating_company_id predicate is explicit rather than inherited from ambient RLS.
+ * Today every caller runs inside withCompanyScope, so the FORCE-RLS policy on
+ * accounting.qbo_remote_counts already scopes this correctly — but a future caller running under
+ * withLuciaBypass would silently span TRANSP + TRK + USMCA and return another entity's timestamp as
+ * this entity's "last polled". Entity scope is stated, not assumed.
+ */
+export async function getLastRemoteCountAt(
+  client: QueryClient,
+  operatingCompanyId: string
+): Promise<string | null> {
   const res = await client.query(
     `SELECT max(collected_at) AS last_collected_at
-       FROM accounting.qbo_remote_counts`,
+       FROM accounting.qbo_remote_counts
+      WHERE operating_company_id = $1::uuid`,
+    [operatingCompanyId],
   );
   return (res.rows[0]?.last_collected_at as string) ?? null;
 }

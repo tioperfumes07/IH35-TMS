@@ -10,8 +10,18 @@ let initialized = false;
 async function runCollectorTick(app: FastifyInstance, runMode: "delta" | "full") {
   const companies = await listQboConnectedOperatingCompanies();
   if (companies.length === 0) {
-    app.log.info({ runMode }, "[QBO_REMOTE_COUNT_COLLECTOR] no active QBO connections");
-    return;
+    // D-#1 NO-GREEN-ON-NO-DATA: this branch previously returned cleanly, so wrapBackgroundJobTick
+    // recorded SUCCESS and _system.background_jobs reported the collector healthy while it collected
+    // nothing — for 47 days, across 4 ticks/day, with zero failures ever logged. A reconciliation
+    // feed that cannot see a single connection has NOT succeeded; it has failed to run. Throwing
+    // makes wrapBackgroundJobTick record the failure (+ Sentry), matching the honest sibling
+    // behaviour already in reconciliation-worker.service.ts. Never restore the silent return.
+    throw new Error(
+      `QBO remote-count collector cannot run (${runMode}): 0 visible qbo_connections. ` +
+        `If connections exist but are not visible, this is RLS masking under withLuciaBypass — ` +
+        `verify integrations.qbo_connections policy carries the app.bypass_rls escape. ` +
+        `If genuinely disconnected, re-authorize at /admin/forensic-review.`
+    );
   }
 
   for (const operatingCompanyId of companies) {
