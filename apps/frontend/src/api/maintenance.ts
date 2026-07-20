@@ -724,6 +724,13 @@ export function listPartsAssignments(operatingCompanyId: string) {
   ).then((result) => result.rows);
 }
 
+/** Unit reverse drill-through — parts used on WOs for a unit via work_orders.unit_id. */
+export function listUnitPartsHistory(unitId: string, operatingCompanyId: string) {
+  return apiRequest<{ rows: PartsAssignmentRow[] }>(
+    `/api/v1/maintenance/units/${encodeURIComponent(unitId)}/parts-history?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  ).then((result) => result.rows);
+}
+
 export function adjustPartsInventory(
   rowId: string,
   operatingCompanyId: string,
