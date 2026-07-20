@@ -298,7 +298,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
         <label className="text-[11px] text-slate-600">
           Driver
           <select
-            className="mt-1 block h-8 min-w-[10rem] rounded-sm border border-gray-200 px-2 text-xs"
+            className="mt-1 block min-h-12 min-w-[10rem] rounded-sm border border-gray-200 px-2 text-xs"
             value={driverFilter}
             onChange={(event) => setDriverFilter(event.target.value)}
             data-testid={`${config.pageTestId}-filter-driver`}
@@ -307,7 +307,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             <option value="">All drivers</option>
             {drivers.map((d) => (
               <option key={String(d.id)} value={String(d.id)}>
-                {`${d.first_name ?? ""} ${d.last_name ?? ""}`.trim() || String(d.id)}
+                {`${d.first_name ?? ""} ${d.last_name ?? ""}`.trim() || "Driver"}
               </option>
             ))}
           </select>
@@ -315,7 +315,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
         <label className="text-[11px] text-slate-600">
           Unit
           <select
-            className="mt-1 block h-8 min-w-[8rem] rounded-sm border border-gray-200 px-2 text-xs"
+            className="mt-1 block min-h-12 min-w-[8rem] rounded-sm border border-gray-200 px-2 text-xs"
             value={unitFilter}
             onChange={(event) => setUnitFilter(event.target.value)}
             data-testid={`${config.pageTestId}-filter-unit`}
@@ -324,7 +324,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             <option value="">All units</option>
             {unitOptions.map((u) => (
               <option key={str(u.id)} value={str(u.id)}>
-                {str(u.unit_number) || str(u.id)}
+                {str(u.unit_number) || "Unit"}
               </option>
             ))}
           </select>
@@ -334,7 +334,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
           <DatePicker
             value={dateFrom}
             onChange={setDateFrom}
-            className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
+            className="mt-1 block min-h-12 w-full rounded-sm border border-gray-200 px-2 text-xs"
             max={dateTo || undefined}
             data-testid={`${config.pageTestId}-filter-date-from`}
           />
@@ -344,7 +344,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
           <DatePicker
             value={dateTo}
             onChange={setDateTo}
-            className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
+            className="mt-1 block min-h-12 w-full rounded-sm border border-gray-200 px-2 text-xs"
             min={dateFrom || undefined}
             data-testid={`${config.pageTestId}-filter-date-to`}
           />
@@ -463,7 +463,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                     <option value="">—</option>
                     {drivers.map((d) => (
                       <option key={String(d.id)} value={String(d.id)}>
-                        {`${d.first_name ?? ""} ${d.last_name ?? ""}`.trim() || String(d.id)}
+                        {`${d.first_name ?? ""} ${d.last_name ?? ""}`.trim() || "Driver"}
                       </option>
                     ))}
                   </select>
@@ -488,7 +488,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                     <option value="">—</option>
                     {unitOptions.map((u) => (
                       <option key={String(u.id)} value={String(u.id)}>
-                        {str(u.unit_number) || String(u.id)}
+                        {str(u.unit_number) || "Unit"}
                       </option>
                     ))}
                   </select>
