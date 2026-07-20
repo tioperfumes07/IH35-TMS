@@ -341,6 +341,7 @@ verify-step 1035.
 | --- | --- |
 | `apps/frontend/src/components/reports/FrequentlyRunTable.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/reports/LaneDetailModal.tsx` | pending |
+| `apps/frontend/src/components/reports/ifta/Step1MileageReview.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/reports/ifta/Step1MileageReview.tsx` | pending |
 | `apps/frontend/src/components/reports/ifta/Step2FuelReview.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/reports/ifta/Step3JurisdictionCalc.tsx` | pending |
@@ -991,6 +992,18 @@ Retry (no false-empty). Guard:
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/components/insurance/PolicyCreateWizard.tsx` | components/insurance |
+## qbo-parity-a1 — IFTA Step1MileageReview (this PR)
+IFTA quarterly preparer Step 1 mileage review was a hand-rolled `<table>`
+(State / Aggregated miles / Override miles) with inline override inputs.
+Migrated to shared `ParityTable` (sort + resize + gear). Columns + override
+number inputs (`ifta-miles-override-*`) + Save + Total summary preserved 1:1.
+Form-only surface (filing prop + save callback — no query failure path, no
+`ListErrorState`). Operational IFTA filing review, not GL posting.
+Guard: `scripts/verify-ifta-step1-mileage-uses-paritytable.mjs` via verify-step 1051.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/reports/ifta/Step1MileageReview.tsx` | components/reports/ifta |
 ## qbo-parity-a1 — Step2FuelReview (this PR)
 IFTA Step 2 fuel review was a hand-rolled `<table>` with per-jurisdiction override
 inputs and a Total footer. Migrated to shared `ParityTable` (sort + resize + gear +

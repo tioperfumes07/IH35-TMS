@@ -1,10 +1,16 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { IftaFiling } from "../../../api/reports-ifta";
+import { ParityTable, type ParityColumn } from "../../parity/ParityTable";
 
 type Props = {
   filing: IftaFiling;
   onSaveOverrides: (overrides: Record<string, number>) => Promise<void>;
   saving?: boolean;
+};
+
+type MileageRow = {
+  state: string;
+  aggregatedMiles: number;
 };
 
 function fmtNum(value: number) {
@@ -13,12 +19,16 @@ function fmtNum(value: number) {
 
 export function Step1MileageReview({ filing, onSaveOverrides, saving }: Props) {
   const data = filing.filing_data;
-  const states = [
-    ...new Set([
-      ...Object.keys(data.miles_by_jurisdiction ?? {}),
-      ...Object.keys(data.miles_overrides ?? {}),
-    ]),
-  ].sort();
+  const states = useMemo(
+    () =>
+      [
+        ...new Set([
+          ...Object.keys(data.miles_by_jurisdiction ?? {}),
+          ...Object.keys(data.miles_overrides ?? {}),
+        ]),
+      ].sort(),
+    [data.miles_by_jurisdiction, data.miles_overrides],
+  );
 
   const [draftOverrides, setDraftOverrides] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
@@ -28,6 +38,55 @@ export function Step1MileageReview({ filing, onSaveOverrides, saving }: Props) {
     }
     return initial;
   });
+
+  const rows = useMemo<MileageRow[]>(
+    () =>
+      states.map((state) => ({
+        state,
+        aggregatedMiles: Number(data.miles_by_jurisdiction?.[state] ?? 0),
+      })),
+    [states, data.miles_by_jurisdiction],
+  );
+
+  const columns: Array<ParityColumn<MileageRow>> = useMemo(
+    () => [
+      {
+        key: "state",
+        label: "State",
+        sortable: true,
+        alwaysVisible: true,
+        cellClass: "font-medium",
+        render: (row) => row.state,
+      },
+      {
+        key: "aggregatedMiles",
+        label: "Aggregated miles",
+        sortable: true,
+        sortValue: (row) => row.aggregatedMiles,
+        render: (row) => fmtNum(row.aggregatedMiles),
+      },
+      {
+        key: "overrideMiles",
+        label: "Override miles",
+        sortable: false,
+        alwaysVisible: true,
+        render: (row) => (
+          <input
+            type="number"
+            min={0}
+            step="0.1"
+            className="w-28 rounded-sm border border-slate-300 px-2 py-1"
+            value={draftOverrides[row.state] ?? ""}
+            onChange={(event) =>
+              setDraftOverrides((prev) => ({ ...prev, [row.state]: event.target.value }))
+            }
+            data-testid={`ifta-miles-override-${row.state}`}
+          />
+        ),
+      },
+    ],
+    [draftOverrides],
+  );
 
   const save = async () => {
     const miles_overrides: Record<string, number> = {};
@@ -49,55 +108,22 @@ export function Step1MileageReview({ filing, onSaveOverrides, saving }: Props) {
         <p className="text-xs text-slate-800">Per-jurisdiction miles from dispatch loads + state crossings. Override when needed.</p>
       </div>
       <div className="space-y-2 px-3 py-3 text-xs">
-        <div className="overflow-x-auto rounded-sm border border-slate-200">
-          <table className="min-w-full text-left">
-            <thead className="bg-slate-50 text-slate-600">
-              <tr>
-                <th className="px-2 py-1.5 font-semibold">State</th>
-                <th className="px-2 py-1.5 font-semibold">Aggregated miles</th>
-                <th className="px-2 py-1.5 font-semibold">Override miles</th>
-              </tr>
-            </thead>
-            <tbody>
-              {states.length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="px-2 py-3 text-slate-500">
-                    No mileage data for this quarter.
-                  </td>
-                </tr>
-              ) : null}
-              {states.map((state) => (
-                <tr key={state} className="border-t border-slate-100">
-                  <td className="px-2 py-1.5 font-medium">{state}</td>
-                  <td className="px-2 py-1.5">{fmtNum(Number(data.miles_by_jurisdiction?.[state] ?? 0))}</td>
-                  <td className="px-2 py-1.5">
-                    <input
-                      type="number"
-                      min={0}
-                      step="0.1"
-                      className="w-28 rounded-sm border border-slate-300 px-2 py-1"
-                      value={draftOverrides[state] ?? ""}
-                      onChange={(event) =>
-                        setDraftOverrides((prev) => ({ ...prev, [state]: event.target.value }))
-                      }
-                      data-testid={`ifta-miles-override-${state}`}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            {states.length > 0 ? (
-              <tfoot>
-                <tr className="border-t border-slate-200 bg-slate-50 font-semibold">
-                  <td className="px-2 py-1.5">Total</td>
-                  <td colSpan={2} className="px-2 py-1.5">
-                    {fmtNum(total)}
-                  </td>
-                </tr>
-              </tfoot>
-            ) : null}
-          </table>
-        </div>
+        <ParityTable
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.state}
+          storageKey="ifta-step1-mileage-review"
+          emptyText="No mileage data for this quarter."
+          density="compact"
+          tableTestId="ifta-step1-mileage-table"
+          initialPageSize={100}
+          pageSizeOptions={[15, 50, 100, 300]}
+        />
+        {states.length > 0 ? (
+          <div className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 font-semibold text-slate-900">
+            Total: {fmtNum(total)}
+          </div>
+        ) : null}
         <button
           type="button"
           className="rounded-sm border border-slate-400 bg-slate-100 px-3 py-1.5 font-semibold text-slate-900 disabled:opacity-50"
