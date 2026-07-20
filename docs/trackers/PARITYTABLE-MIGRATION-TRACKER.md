@@ -455,7 +455,7 @@ verify-step 1035.
 | --- | --- |
 | `apps/frontend/src/pages/admin/ActivityLogPage.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/pages/admin/ErrorMonitor.tsx` | pending |
-| `apps/frontend/src/pages/admin/LaunchToggles.tsx` | pending |
+| `apps/frontend/src/pages/admin/LaunchToggles.tsx` | migrated (fix/launch-toggles-paritytable) |
 | `apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/pages/admin/audit-log/AuditLogViewer.tsx` | pending |
 | `apps/frontend/src/pages/admin/feature-flags/FeatureFlagsManager.tsx` | pending |
@@ -1069,3 +1069,14 @@ Guard: `scripts/verify-booking-gap-report-uses-paritytable.mjs` via verify-step 
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/reports/BookingGapReport.tsx` | pages/reports |
+## qbo-parity-a1 — LaunchTogglesPage (this PR)
+Owner launch-toggles carrier grid was a hand-rolled `<table>` with no query-outage
+surface. Migrated to shared `ParityTable` (sort + resize + gear) and added
+`ListErrorState` + Retry on load failure. Columns Carrier / Status / Last action /
+Actions preserved 1:1; Launch + Rollback confirm flows, optional launch notes, and
+mutation error banner unchanged. Guard:
+`scripts/verify-launch-toggles-uses-paritytable.mjs` via verify-step **1075**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/admin/LaunchToggles.tsx` | pages/admin |
