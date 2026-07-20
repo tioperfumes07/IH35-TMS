@@ -226,7 +226,7 @@ export function FactorAdmin() {
             Assign Customer
           </Button>
           <Button size="sm" onClick={() => setShowAddFactorModal(true)}>
-            Add Factor
+            + Create Factor
           </Button>
         </div>
       </div>
