@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
   legalMattersApi,
   type LegalMatterDeadline,
@@ -26,6 +26,12 @@ import {
 } from "./LegalMatterFormFields";
 
 type Tab = "overview" | "timeline" | "documents" | "deadlines" | "notes";
+const LEGAL_MATTER_TAB_IDS = new Set<string>(["overview", "timeline", "documents", "deadlines", "notes"]);
+
+export function parseLegalMatterTab(raw: string | null): Tab {
+  if (raw && LEGAL_MATTER_TAB_IDS.has(raw)) return raw as Tab;
+  return "overview";
+}
 
 function fieldOrDash(value: unknown): string {
   if (value === null || value === undefined || value === "") return "—";
@@ -40,7 +46,14 @@ export function LegalMatterDetailPage() {
   const { pushToast } = useToast();
   const qc = useQueryClient();
   const admin = user?.role === "Owner" || user?.role === "Administrator";
-  const [tab, setTab] = useState<Tab>("overview");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = parseLegalMatterTab(searchParams.get("tab"));
+  const setTab = (next: Tab) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "overview") params.delete("tab");
+    else params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
   const [eventType, setEventType] = useState("note");
   const [eventBody, setEventBody] = useState("{}");
   const [dlType, setDlType] = useState("response");
