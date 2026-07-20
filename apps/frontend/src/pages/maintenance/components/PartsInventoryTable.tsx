@@ -1,10 +1,14 @@
 import { useMemo, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { adjustPartsInventory, listPartsInventory, recordPartsPurchase, type PartsInventoryRow } from "../../../api/maintenance";
+import { listVendors } from "../../../api/mdata";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+import { vendorReferenceOption } from "../../../components/parity/referenceOptionLabels";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 type Props = {
@@ -12,20 +16,63 @@ type Props = {
   rows: PartsInventoryRow[];
 };
 
+type PurchaseForm = {
+  part_description: string;
+  qty_received: number;
+  vendor_id: string;
+  vendor_invoice_number: string;
+  purchase_amount: number;
+  location: string;
+};
+
+const EMPTY_PURCHASE: PurchaseForm = {
+  part_description: "",
+  qty_received: 1,
+  vendor_id: "",
+  vendor_invoice_number: "",
+  purchase_amount: 0,
+  location: "",
+};
+
 export function PartsInventoryTable({ companyId, rows }: Props) {
   const queryClient = useQueryClient();
   const [openPurchase, setOpenPurchase] = useState(false);
   const [search, setSearch] = useState("");
-  const [form, setForm] = useState({ part_description: "", qty_received: 1, vendor_invoice_number: "", purchase_amount: 0, location: "" });
+  const [form, setForm] = useState<PurchaseForm>(EMPTY_PURCHASE);
   const [adjustRow, setAdjustRow] = useState<PartsInventoryRow | null>(null);
   const [deltaQty, setDeltaQty] = useState(0);
   const [reason, setReason] = useState<"used" | "discarded" | "shrinkage" | "recount">("recount");
 
+  const vendorsQuery = useQuery({
+    queryKey: ["mdata", "vendors", companyId, "parts-inventory"],
+    queryFn: () => listVendors({ operating_company_id: companyId, status: "active", limit: 500 }),
+    enabled: Boolean(companyId),
+  });
+  const vendorOptions = useMemo(
+    () => (vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption),
+    [vendorsQuery.data?.vendors],
+  );
+  const vendorNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const v of vendorsQuery.data?.vendors ?? []) {
+      map.set(v.id, v.name);
+    }
+    return map;
+  }, [vendorsQuery.data?.vendors]);
+
   const purchaseMutation = useMutation({
-    mutationFn: () => recordPartsPurchase(companyId, form),
+    mutationFn: () =>
+      recordPartsPurchase(companyId, {
+        part_description: form.part_description,
+        qty_received: form.qty_received,
+        vendor_id: form.vendor_id || undefined,
+        vendor_invoice_number: form.vendor_invoice_number || undefined,
+        purchase_amount: form.purchase_amount,
+        location: form.location || undefined,
+      }),
     onSuccess: async () => {
       setOpenPurchase(false);
-      setForm({ part_description: "", qty_received: 1, vendor_invoice_number: "", purchase_amount: 0, location: "" });
+      setForm(EMPTY_PURCHASE);
       await queryClient.invalidateQueries({ queryKey: ["maintenance", "parts-inventory", companyId] });
     },
   });
@@ -47,15 +94,26 @@ export function PartsInventoryTable({ companyId, rows }: Props) {
     const q = search.trim().toLowerCase();
     if (!q) return rows;
     return rows.filter((r) =>
-      [r.part_description, r.last_purchase_invoice_number, r.location].some((v) => String(v ?? "").toLowerCase().includes(q)),
+      [r.part_description, r.last_purchase_invoice_number, r.location, r.vendor_id, vendorNameById.get(r.vendor_id ?? "")].some(
+        (v) => String(v ?? "").toLowerCase().includes(q),
+      ),
     );
-  }, [rows, search]);
+  }, [rows, search, vendorNameById]);
 
-  // Parts are not a linkable entity (no part-detail route), so there are no record-cell links here —
-  // this is the universal-list upgrade (sort/gear/pagination/resize/sticky/export/filter) + Adjust-Qty.
   const columns: Array<ParityColumn<PartsInventoryRow>> = [
     { key: "part_description", label: "Part", sortable: true },
     { key: "on_hand_qty", label: "On Hand", sortable: true },
+    {
+      key: "vendor_id",
+      label: "Vendor",
+      sortable: true,
+      render: (row) =>
+        row.vendor_id ? (
+          <EntityLink kind="vendor" id={row.vendor_id} label={vendorNameById.get(row.vendor_id) ?? row.vendor_id.slice(0, 8)} />
+        ) : (
+          "—"
+        ),
+    },
     { key: "last_purchase_invoice_number", label: "Last Invoice", render: (row) => row.last_purchase_invoice_number ?? "—" },
     { key: "location", label: "Location", sortable: true, render: (row) => row.location ?? "—" },
   ];
@@ -67,7 +125,7 @@ export function PartsInventoryTable({ companyId, rows }: Props) {
   );
 
   return (
-    <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
+    <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="parts-inventory-table">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">Parts Inventory</h3>
         <Button size="sm" onClick={() => setOpenPurchase(true)}>+ Record Purchase</Button>
@@ -84,7 +142,7 @@ export function PartsInventoryTable({ companyId, rows }: Props) {
         filterBar={
           <input
             className="min-h-12 w-full max-w-xs rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
-            placeholder="Search part / invoice / location…"
+            placeholder="Search part / vendor / invoice / location…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -93,15 +151,53 @@ export function PartsInventoryTable({ companyId, rows }: Props) {
 
       <Modal open={openPurchase} onClose={() => setOpenPurchase(false)} title="Record Purchase">
         <div className="space-y-2">
-          <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" placeholder="Part description" value={form.part_description} onChange={(e) => setForm((v) => ({ ...v, part_description: e.target.value }))} />
+          <input
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            placeholder="Part description"
+            value={form.part_description}
+            onChange={(e) => setForm((v) => ({ ...v, part_description: e.target.value }))}
+          />
+          <label className="block text-xs font-semibold text-gray-700">
+            Vendor
+            <div className="mt-1" data-testid="parts-inventory-vendor-picker">
+              <ReferenceSelect
+                value={form.vendor_id || null}
+                onChange={(next) => setForm((v) => ({ ...v, vendor_id: next ?? "" }))}
+                options={vendorOptions}
+                createKind="vendor"
+                operatingCompanyId={companyId}
+                placeholder="Select vendor…"
+                onOptionCreated={(opt) => {
+                  setForm((v) => ({ ...v, vendor_id: opt.value }));
+                  void vendorsQuery.refetch();
+                }}
+              />
+            </div>
+          </label>
           <div className="grid grid-cols-2 gap-2">
-            <input className="h-8 rounded-sm border border-gray-300 px-2 text-sm" type="number" min={1} value={form.qty_received} onChange={(e) => setForm((v) => ({ ...v, qty_received: Number(e.target.value || 1) }))} />
-            <input className="h-8 rounded-sm border border-gray-300 px-2 text-sm" placeholder="Invoice #" value={form.vendor_invoice_number} onChange={(e) => setForm((v) => ({ ...v, vendor_invoice_number: e.target.value }))} />
+            <input
+              className="h-8 rounded-sm border border-gray-300 px-2 text-sm"
+              type="number"
+              min={1}
+              value={form.qty_received}
+              onChange={(e) => setForm((v) => ({ ...v, qty_received: Number(e.target.value || 1) }))}
+            />
+            <input
+              className="h-8 rounded-sm border border-gray-300 px-2 text-sm"
+              placeholder="Invoice #"
+              value={form.vendor_invoice_number}
+              onChange={(e) => setForm((v) => ({ ...v, vendor_invoice_number: e.target.value }))}
+            />
           </div>
           <div className="grid grid-cols-2 gap-2">
             {/* M-1: dollars-mode QBO money entry; backend purchase_amount = numeric(10,2) DOLLARS, byte-for-byte. */}
             <MoneyInput valueDollars={form.purchase_amount} onChangeDollars={(d) => setForm((v) => ({ ...v, purchase_amount: d ?? 0 }))} ariaLabel="Purchase amount" />
-            <input className="h-8 rounded-sm border border-gray-300 px-2 text-sm" placeholder="Location" value={form.location} onChange={(e) => setForm((v) => ({ ...v, location: e.target.value }))} />
+            <input
+              className="h-8 rounded-sm border border-gray-300 px-2 text-sm"
+              placeholder="Location"
+              value={form.location}
+              onChange={(e) => setForm((v) => ({ ...v, location: e.target.value }))}
+            />
           </div>
           <Button onClick={() => purchaseMutation.mutate()} disabled={!form.part_description.trim() || purchaseMutation.isPending}>
             Save Purchase
