@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getHosDailyRoster, DUTY_LABEL, DUTY_COLOR, type HosRosterDriver } from "../../api/hosTracker";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { companyToday } from "../../lib/businessDate";
 
 // SAFETY-1: the roster date defaults to the current duty day in the CARRIER timezone
@@ -73,6 +75,85 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
     { label: "Unavailable", value: c.unavailable, cls: "text-slate-500" },
   ];
 
+  const columns = useMemo<ParityColumn<HosRosterDriver>[]>(
+    () => [
+      {
+        key: "driver_name",
+        label: "Driver",
+        sortable: true,
+        render: (driver) => (
+          <span className="font-medium text-slate-900">{driver.driver_name ?? "—"}</span>
+        ),
+      },
+      {
+        key: "unit_number",
+        label: "Unit",
+        sortable: true,
+        cellClass: "font-mono",
+        render: (driver) => driver.unit_number ?? "—",
+      },
+      {
+        key: "current_duty_status",
+        label: "Status",
+        sortable: true,
+        render: (driver) => {
+          const verdict = driverVerdict(driver);
+          const dot = driver.current_duty_status
+            ? DUTY_COLOR[driver.current_duty_status]
+            : "#94A3B8";
+          return (
+            <span className={`inline-flex items-center gap-1 font-semibold ${verdict.cls}`}>
+              <span
+                className="inline-block h-[7px] w-[7px] rounded-full"
+                style={{ background: driver.available ? dot : "#94A3B8" }}
+              />
+              {driver.available && driver.current_duty_status
+                ? DUTY_LABEL[driver.current_duty_status]
+                : verdict.label}
+            </span>
+          );
+        },
+      },
+      {
+        key: "drive_remaining_min",
+        label: "Drive",
+        sortable: true,
+        className: "text-right tabular-nums",
+        cellClass: "text-right font-mono tabular-nums",
+        sortValue: (driver) => driver.clocks?.drive_remaining_min,
+        render: (driver) => (driver.clocks ? hmm(driver.clocks.drive_remaining_min) : "—"),
+      },
+      {
+        key: "window_remaining_min",
+        label: "Shift",
+        sortable: true,
+        className: "text-right tabular-nums",
+        cellClass: "text-right font-mono tabular-nums",
+        sortValue: (driver) => driver.clocks?.window_remaining_min,
+        render: (driver) => (driver.clocks ? hmm(driver.clocks.window_remaining_min) : "—"),
+      },
+      {
+        key: "cycle_remaining_min",
+        label: "Cycle",
+        sortable: true,
+        className: "text-right tabular-nums",
+        cellClass: "text-right font-mono tabular-nums",
+        sortValue: (driver) => driver.clocks?.cycle_remaining_min,
+        render: (driver) => (driver.clocks ? hmm(driver.clocks.cycle_remaining_min) : "—"),
+      },
+      {
+        key: "driven_cycle_min",
+        label: "Driven (cyc)",
+        sortable: true,
+        className: "text-right tabular-nums",
+        cellClass: "text-right font-mono tabular-nums",
+        render: (driver) =>
+          driver.driven_cycle_min != null ? hmm(driver.driven_cycle_min) : "—",
+      },
+    ],
+    [],
+  );
+
   return (
     <section data-testid="compliance-section-hos-tracker">
       {/* Section band */}
@@ -111,68 +192,27 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
           ))}
         </div>
 
-        {/* Body — Block 03 (ELD timeline) renders above this; Block 04 replaces this summary with the dense
-            sortable+resizable table. For now: an honest per-driver summary from the canonical roster. */}
-        {rosterQ.isLoading ? (
-          <div className="space-y-1">
-            {[0, 1, 2, 3].map((i) => <div key={i} className="h-[28px] animate-pulse rounded-sm bg-slate-100" />)}
-          </div>
-        ) : rosterQ.isError ? (
-          <div className="px-3 py-6 text-sm text-red-600">Failed to load HOS roster.</div>
+        {rosterQ.isError ? (
+          <ListErrorState
+            title="Couldn't load HOS roster"
+            status={0}
+            message={(rosterQ.error as Error)?.message}
+            onRetry={() => void rosterQ.refetch()}
+          />
         ) : (
-          <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
-            <table className="w-full text-left text-[11px]">
-              <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-slate-500">
-                {/* GLOBAL-TABLE-ALIGNMENT (Block A): this section uses a local table (not the shared
-                    DataTable/TableHeaderCell), so the numeric HH:MM headers (Drive/Shift/Cycle/Driven)
-                    are right-aligned here to sit over the already right-aligned tabular-nums data cells.
-                    Text columns (Driver/Unit/Status) stay default left here as in the row markup. */}
-                <tr>
-                  {[
-                    { label: "Driver", numeric: false },
-                    { label: "Unit", numeric: false },
-                    { label: "Status", numeric: false },
-                    { label: "Drive", numeric: true },
-                    { label: "Shift", numeric: true },
-                    { label: "Cycle", numeric: true },
-                    { label: "Driven (cyc)", numeric: true },
-                  ].map((h) => (
-                    <th key={h.label} className={`px-2 py-1.5 whitespace-nowrap ${h.numeric ? "text-right tabular-nums" : ""}`}>{h.label}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {(roster?.drivers ?? []).map((d) => {
-                  const verdict = driverVerdict(d);
-                  const dot = d.current_duty_status ? DUTY_COLOR[d.current_duty_status] : "#94A3B8";
-                  return (
-                    <tr
-                      key={d.driver_id}
-                      onClick={() => setSelectedDriver(d)}
-                      className={`cursor-pointer border-t border-slate-100 hover:bg-slate-50 ${d.available ? "" : "opacity-70"}`}
-                      title="Open HOS cycle detail"
-                    >
-                      <td className="px-2 py-1.5 font-medium text-slate-900">{d.driver_name ?? "—"}</td>
-                      <td className="px-2 py-1.5 font-mono">{d.unit_number ?? "—"}</td>
-                      <td className="px-2 py-1.5">
-                        <span className={`inline-flex items-center gap-1 font-semibold ${verdict.cls}`}>
-                          <span className="inline-block h-[7px] w-[7px] rounded-full" style={{ background: d.available ? dot : "#94A3B8" }} />
-                          {d.available && d.current_duty_status ? DUTY_LABEL[d.current_duty_status] : verdict.label}
-                        </span>
-                      </td>
-                      <td className="px-2 py-1.5 text-right font-mono tabular-nums">{d.clocks ? hmm(d.clocks.drive_remaining_min) : "—"}</td>
-                      <td className="px-2 py-1.5 text-right font-mono tabular-nums">{d.clocks ? hmm(d.clocks.window_remaining_min) : "—"}</td>
-                      <td className="px-2 py-1.5 text-right font-mono tabular-nums">{d.clocks ? hmm(d.clocks.cycle_remaining_min) : "—"}</td>
-                      <td className="px-2 py-1.5 text-right font-mono tabular-nums">{d.driven_cycle_min != null ? hmm(d.driven_cycle_min) : "—"}</td>
-                    </tr>
-                  );
-                })}
-                {roster && roster.drivers.length === 0 ? (
-                  <tr><td colSpan={7} className="px-3 py-6 text-center text-slate-500">No active drivers.</td></tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
+          <ParityTable
+            rows={roster?.drivers ?? []}
+            columns={columns}
+            rowKey={(driver) => driver.driver_id}
+            loading={rosterQ.isLoading || (rosterQ.isFetching && !roster)}
+            onRowClick={setSelectedDriver}
+            rowClassName={(driver) =>
+              `cursor-pointer hover:bg-slate-50 ${driver.available ? "" : "opacity-70"}`
+            }
+            storageKey="compliance-hos-tracker"
+            emptyText="No active drivers."
+            tableTestId="compliance-hos-tracker-table"
+          />
         )}
       </div>
       {selectedDriver ? (
