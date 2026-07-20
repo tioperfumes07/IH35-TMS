@@ -11,6 +11,7 @@ import { listPositionHistory, type PositionHistoryRecord } from "../../api/posit
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 function formatDateTime(isoString: string): string {
   return new Date(isoString).toLocaleString();
@@ -84,7 +85,11 @@ export default function PositionHistoryPage() {
         sortValue: (row) => row.unit_number ?? row.unit_id,
         render: (row) => (
           <div>
-            <div>{row.unit_number || row.unit_id}</div>
+            <EntityLink
+              kind="unit"
+              id={row.unit_id}
+              label={row.unit_number ?? row.unit_id}
+            />
             {row.unit_license_plate ? <div className="text-xs text-gray-500">{row.unit_license_plate}</div> : null}
           </div>
         ),
@@ -120,7 +125,14 @@ export default function PositionHistoryPage() {
         label: "Actor",
         sortable: true,
         sortValue: (row) => row.actor_name ?? row.actor_id,
-        render: (row) => <span className="text-gray-900">{row.actor_name || row.actor_id}</span>,
+        render: (row) =>
+          row.actor_name ? (
+            <span className="text-gray-900">{row.actor_name}</span>
+          ) : row.actor_id ? (
+            <span className="font-mono text-xs text-gray-900">{row.actor_id}</span>
+          ) : (
+            <span className="text-gray-400">—</span>
+          ),
       },
       {
         key: "notes",

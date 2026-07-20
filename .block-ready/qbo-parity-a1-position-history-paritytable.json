@@ -11,6 +11,7 @@
     ".block-ready/qbo-parity-a1-position-history-paritytable.json",
     "apps/frontend/src/pages/safety/PositionHistoryPage.tsx",
     "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/entity-link-adoption-baseline.json",
     "scripts/verify-position-history-uses-paritytable.mjs",
     "scripts/verify-steps/1069-verify-position-history-uses-paritytable.mjs"
   ],

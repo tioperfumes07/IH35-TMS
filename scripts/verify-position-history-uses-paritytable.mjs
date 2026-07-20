@@ -57,6 +57,9 @@ function assertMigrated(src) {
   if (!src.includes('data-testid="mobile-optimized-table"')) {
     errors.push(`${PAGE}: must keep mobile-optimized-table testid wrapper`);
   }
+  if (!src.includes("EntityLink")) {
+    errors.push(`${PAGE}: must use EntityLink for unit drill-through`);
+  }
   return errors;
 }
 
@@ -64,10 +67,11 @@ function selftest() {
   const good = `
     import { ListErrorState } from "../../components/ListErrorState";
     import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+    import { EntityLink } from "../../components/shared/EntityLink";
     const columns = [
       { key: "action_at", label: "Timestamp" },
       { key: "action", label: "Action" },
-      { key: "unit_id", label: "Unit" },
+      { key: "unit_id", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id} label={row.unit_number} /> },
       { key: "position_code", label: "Position" },
       { key: "part_number", label: "Part" },
       { key: "actor_id", label: "Actor" },
