@@ -12,7 +12,7 @@
     "apps/backend/__tests__/reports/deadhead.test.ts",
     "scripts/verify-sql-column-existence.allowlist.json",
     "scripts/verify-deadhead-fuel-columns-real.mjs",
-    "scripts/verify-steps/1013-verify-deadhead-fuel-columns-real.mjs"
+    "scripts/verify-steps/1019-verify-deadhead-fuel-columns-real.mjs"
   ],
   "runtime_path": "src",
   "db_required": false,
@@ -27,7 +27,7 @@
       "check": "deadhead phantom keys removed from verify-sql-column-existence.allowlist.json; column-existence guard PASS"
     },
     {
-      "check": "scripts/verify-deadhead-fuel-columns-real.mjs PASS (+ --selftest); wired via verify-steps/1013"
+      "check": "scripts/verify-deadhead-fuel-columns-real.mjs PASS (+ --selftest); wired via verify-steps/1019"
     }
   ],
   "note": "GATED-no read-only report query fix. TARGET_TABLES already includes fuel.fuel_transactions (#2839); this removes the allowlisted phantom + silent catch. No migration."

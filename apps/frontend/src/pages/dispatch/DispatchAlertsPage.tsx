@@ -5,9 +5,11 @@ import { listLateArrivalDispatchLoads } from "../../api/dispatch";
 import { getIntransitTriageQueue } from "../../api/maintenance";
 import { getSafetyAccidents } from "../../api/safety";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
-function formatCount(n: number | null): string {
+function formatCount(n: number | null, isError: boolean): string {
+  if (isError) return "Error";
   if (n === null) return "—";
   return String(n);
 }
@@ -55,40 +57,45 @@ export function DispatchAlertsPage() {
     ],
   });
 
+  const anyQueryError = Boolean(companyId) && [accidentsQ, cashQ, lateQ, intransitQ].some((q) => q.isError);
+
   const accidentCount =
-    !companyId || accidentsQ.isLoading ? null : accidentsQ.isError ? null : openAccidentsCount(accidentsQ.data?.accidents ?? []);
+    !companyId || accidentsQ.isLoading || accidentsQ.isError ? null : openAccidentsCount(accidentsQ.data?.accidents ?? []);
 
   const cashCount =
-    !companyId || cashQ.isLoading ? null : cashQ.isError ? null : (cashQ.data?.requests.length ?? null);
+    !companyId || cashQ.isLoading || cashQ.isError ? null : (cashQ.data?.requests.length ?? null);
 
-  const lateCount =
-    !companyId || lateQ.isLoading ? null : lateQ.isError ? null : (lateQ.data?.count ?? null);
+  const lateCount = !companyId || lateQ.isLoading || lateQ.isError ? null : (lateQ.data?.count ?? null);
 
   const intransitCount =
-    !companyId || intransitQ.isLoading ? null : intransitQ.isError ? null : (intransitQ.data?.issues.length ?? null);
+    !companyId || intransitQ.isLoading || intransitQ.isError ? null : (intransitQ.data?.issues.length ?? null);
 
   const cards = [
     {
       title: "Accidents (open)",
       count: accidentCount,
+      isError: accidentsQ.isError,
       to: "/safety",
       subtitle: "Safety · accident reports",
     },
     {
       title: "Cash advance requests",
       count: cashCount,
+      isError: cashQ.isError,
       to: "/driver-finance/cash-advance-requests",
       subtitle: "Pending office review",
     },
     {
       title: "Late arrivals",
       count: lateCount,
+      isError: lateQ.isError,
       to: "/dispatch/alerts/late-arrivals",
       subtitle: "ETA past schedule + grace · drill-down list",
     },
     {
       title: "In-transit issues",
       count: intransitCount,
+      isError: intransitQ.isError,
       to: "/maintenance",
       subtitle: "Maintenance in-transit triage queue",
     },
@@ -98,6 +105,17 @@ export function DispatchAlertsPage() {
     <div className="space-y-4" data-testid="dispatch-alerts-page">
       <PageHeader title="Dispatch alerts" subtitle="Live counts where endpoints exist · placeholders show —" />
       {!companyId ? <p className="text-sm text-slate-700">Select an operating company to load counts.</p> : null}
+      {anyQueryError ? (
+        <ListErrorBanner
+          message="Failed to load one or more dispatch alert counts."
+          onRetry={() => {
+            void accidentsQ.refetch();
+            void cashQ.refetch();
+            void lateQ.refetch();
+            void intransitQ.refetch();
+          }}
+        />
+      ) : null}
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((c) => (
           <Link
@@ -106,7 +124,11 @@ export function DispatchAlertsPage() {
             className="rounded-lg border border-gray-200 bg-white p-4 shadow-xs transition hover:border-slate-300 hover:shadow-sm"
           >
             <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">{c.title}</div>
-            <div className="mt-2 text-3xl font-bold tabular-nums text-gray-900">{formatCount(c.count)}</div>
+            <div
+              className={`mt-2 text-3xl font-bold tabular-nums ${c.isError ? "text-red-700" : "text-gray-900"}`}
+            >
+              {formatCount(c.count, c.isError)}
+            </div>
             <p className="mt-1 text-xs text-gray-600">{c.subtitle}</p>
           </Link>
         ))}

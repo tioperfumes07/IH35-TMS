@@ -1,17 +1,34 @@
 {
   "block_id": "0441-mod12-eld-export-pdf-window-print",
-  "status": "PENDING",
-  "classification": "FINANCIAL",
-  "phase": "tier3",
-  "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
-  "source_file": "0441-mod12-eld-export-pdf-window-print.txt",
+  "branch": "fix/0441-mod12-eld-export-pdf",
+  "status": "IN_PROGRESS",
+  "classification": "ADDITIVE",
+  "phase": "ops-nonstop",
+  "task": "Replace ELD Audit Trail Export PDF window.print() with real puppeteer PDF download",
+  "source": "CODER-BUILD-INSTRUCTIONS-2026-07-19.md",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    ".block-ready/0441-mod12-eld-export-pdf-window-print.json",
+    "apps/backend/src/safety/eld-audit-trail/eld-audit-pdf-renderer.service.ts",
+    "apps/backend/src/safety/eld-audit-trail/__tests__/eld-audit-pdf-renderer.test.ts",
+    "apps/backend/src/safety/eld-audit-trail/routes.ts",
+    "apps/frontend/src/pages/safety/eld/EldAuditTrailViewer.tsx",
+    "scripts/verify-eld-audit-pdf-is-real-export.mjs",
+    "scripts/verify-steps/1018-verify-eld-audit-pdf-is-real-export.mjs"
   ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "GET /api/safety/eld/audit-trail/export.pdf returns application/pdf via puppeteer page.pdf (reuse existing puppeteer dep)"
+    },
+    {
+      "check": "EldAuditTrailViewer Export PDF for DOT fetches export.pdf blob download — no window.print()/popup.print()"
+    },
+    {
+      "check": "scripts/verify-eld-audit-pdf-is-real-export.mjs PASS (+ --selftest); wired via verify-steps/1018 (Rule 17 — no package.json/CI edit)"
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "GATED-no safety FE/BE defect. No migration. Empty hos_log_edits source still returns honest empty history; export stays disabled until edits exist."
 }
