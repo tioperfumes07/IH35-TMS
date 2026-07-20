@@ -918,9 +918,29 @@ export async function addAccidentPhoto(id: string, companyId: string, file: File
 
 export type SafetyIncidentType = "damage_report" | "trailer_interchange" | "cargo_claim";
 
-export function listSafetyIncidents(companyId: string, incidentType: SafetyIncidentType) {
+export type SafetyIncidentListFilters = {
+  driver_id?: string;
+  unit_id?: string;
+  date_from?: string;
+  date_to?: string;
+};
+
+export function listSafetyIncidents(
+  companyId: string,
+  incidentType: SafetyIncidentType,
+  filters: SafetyIncidentListFilters = {}
+) {
+  const qs = new URLSearchParams();
+  // q() already embeds operating_company_id; append remaining list filters.
+  if (filters.driver_id) qs.set("driver_id", filters.driver_id);
+  if (filters.unit_id) qs.set("unit_id", filters.unit_id);
+  if (filters.date_from) qs.set("date_from", filters.date_from);
+  if (filters.date_to) qs.set("date_to", filters.date_to);
+  const extra = qs.toString();
   return apiRequest<{ incidents: Array<Record<string, unknown>> }>(
-    `/api/v1/safety/incidents?${q(companyId)}&incident_type=${encodeURIComponent(incidentType)}`
+    `/api/v1/safety/incidents?${q(companyId)}&incident_type=${encodeURIComponent(incidentType)}${
+      extra ? `&${extra}` : ""
+    }`
   );
 }
 
