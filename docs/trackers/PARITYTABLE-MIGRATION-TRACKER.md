@@ -21,9 +21,9 @@ sort, and the lock-account control — never drop or reorder.
 ## Rollup
 | Status | Count |
 | --- | --- |
-| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab) | 16 |
+| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable) | 17 |
 | financial-hold (Jorge-gated) | 99 |
-| pending (non-financial, future batches) | 186 |
+| pending (non-financial, future batches) | 184 |
 | **hand-rolled total (original)** | **300** |
 
 > Note: ParityTable was already consumed by ~16 surfaces before this batch (not counted above — those were never hand-rolled).
@@ -112,13 +112,26 @@ Channels/Recipients + Archive). Migrated to shared `ParityTable` (sort + resize 
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/components/compliance/NotificationRulesPanel.tsx` | components/compliance |
-## qbo-parity-a1 — AuditHistoryTab (this PR)
+## qbo-parity-a1 — AuditHistoryTab (on main)
 Drivers hub Audit History tab was a hand-rolled `<table>` with a bare red outage line and a
 custom Expand/Hide details cell. Migrated to shared `ParityTable` (sort + resize + gear +
 `renderExpanded` payload diff) and replaced the ad-hoc error with `ListErrorState` + Retry.
 Columns When/Actor/Event/Summary/Details preserved 1:1. Guard:
-`scripts/verify-driver-audit-history-uses-paritytable.mjs` via verify-step 1026.
+`scripts/verify-driver-audit-history-uses-paritytable.mjs` via verify-step 1027.
+
+| File | Module |
+| --- | --- |
 | `apps/frontend/src/components/drivers/AuditHistoryTab.tsx` | components/drivers |
+
+## qbo-parity-a1 — FrequentlyRunTable (this PR)
+Reports Home "Frequently run" list was a hand-rolled `<table>`. Migrated to shared
+`ParityTable` (sort + resize + gear). Columns Report / Filters / Runs preserved 1:1;
+Report name stays a Run button; stub P4/P5 badges preserved.
+Guard: `scripts/verify-frequently-run-table-uses-paritytable.mjs` via verify-step 1028.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/reports/FrequentlyRunTable.tsx` | components/reports |
 
 ## qbo-parity-a1 — OperationsHistoryTable (this PR)
 Drivers hub operations-depth history (12 sub-views sharing one table) was a hand-rolled
@@ -257,7 +270,7 @@ Guard: `scripts/verify-ops-history-uses-paritytable.mjs` via verify-step 1026.
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/components/reports/FrequentlyRunTable.tsx` | pending |
+| `apps/frontend/src/components/reports/FrequentlyRunTable.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/reports/LaneDetailModal.tsx` | pending |
 | `apps/frontend/src/components/reports/ifta/Step1MileageReview.tsx` | pending |
 | `apps/frontend/src/components/reports/ifta/Step2FuelReview.tsx` | pending |
