@@ -5,8 +5,8 @@ import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useListState } from "../../components/list-state";
-import { DataTable } from "../../components/DataTable";
-import { dataTableErrorState } from "../../lib/tableError";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function bulkCallPreview(id: string | null | undefined): string {
   if (!id) return "—";
@@ -47,6 +47,61 @@ export function AuditEventsList() {
   const rows = eventsQuery.data?.events ?? [];
   // Empty message renders only once the events query settles, never mid-fetch.
   const listState = useListState(eventsQuery, rows.length === 0);
+
+  const columns = useMemo<Array<ParityColumn<AuditEventListItem>>>(
+    () => [
+      {
+        key: "created_at",
+        label: "When",
+        sortable: true,
+        sortValue: (row) => new Date(row.created_at).getTime(),
+        render: (row) => new Date(row.created_at).toLocaleString(),
+      },
+      {
+        key: "event_type",
+        label: "Event",
+        sortable: true,
+        render: (row) => <span className="font-medium text-gray-900">{row.event_type}</span>,
+      },
+      {
+        key: "actor_email",
+        label: "Actor",
+        sortable: true,
+        sortValue: (row) => row.actor_email ?? row.actor_user_id ?? "",
+        render: (row) => row.actor_email ?? row.actor_user_id ?? "—",
+      },
+      {
+        key: "bulk_call_id",
+        label: "Bulk Call",
+        sortable: true,
+        sortValue: (row) => row.bulk_call_id ?? "",
+        render: (row) =>
+          row.bulk_call_id ? (
+            <button
+              type="button"
+              className="font-mono text-slate-700 underline"
+              title={row.bulk_call_id}
+              onClick={(e) => {
+                e.stopPropagation();
+                setBulkCallId(row.bulk_call_id ?? "");
+                setAppliedBulkCallId(row.bulk_call_id ?? "");
+              }}
+            >
+              {bulkCallPreview(row.bulk_call_id)}
+            </button>
+          ) : (
+            "—"
+          ),
+      },
+      {
+        key: "source",
+        label: "Source",
+        sortable: true,
+        render: (row) => row.source ?? "—",
+      },
+    ],
+    []
+  );
 
   if (!allowed) {
     return (
@@ -94,54 +149,36 @@ export function AuditEventsList() {
         </div>
       </div>
 
-      <DataTable
-        rows={rows}
-        tableKey="audit-events-list"
-        rowKey={(row) => row.id}
-        loading={listState.isLoading}
-        errorState={dataTableErrorState(eventsQuery.error, () => void eventsQuery.refetch())}
-        // Settled-only empty text (LIST-EMPTY-1): only supplied once listState resolves to "empty",
-        // never during loading/error, so DataTable's own gate never flashes a false empty.
-        emptyText={listState.isEmpty ? "No audit events found." : undefined}
-        columns={[
-          {
-            key: "created_at",
-            label: "When",
-            sortable: true,
-            numeric: true,
-            render: (row) => new Date(row.created_at).toLocaleString(),
-          },
-          { key: "event_type", label: "Event", sortable: true, cellClass: "font-medium text-gray-900" },
-          {
-            key: "actor_email",
-            label: "Actor",
-            sortable: true,
-            render: (row) => row.actor_email ?? row.actor_user_id ?? "—",
-          },
-          {
-            key: "bulk_call_id",
-            label: "Bulk Call",
-            sortable: true,
-            render: (row: AuditEventListItem) =>
-              row.bulk_call_id ? (
-                <button
-                  type="button"
-                  className="font-mono text-slate-700 underline"
-                  title={row.bulk_call_id}
-                  onClick={() => {
-                    setBulkCallId(row.bulk_call_id ?? "");
-                    setAppliedBulkCallId(row.bulk_call_id ?? "");
-                  }}
-                >
-                  {bulkCallPreview(row.bulk_call_id)}
-                </button>
-              ) : (
-                "—"
-              ),
-          },
-          { key: "source", label: "Source", sortable: true, render: (row) => row.source ?? "—" },
-        ]}
-      />
+      {eventsQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load audit events"
+          status={0}
+          message={(eventsQuery.error as Error)?.message}
+          onRetry={() => void eventsQuery.refetch()}
+        />
+      ) : (
+        <div className="overflow-auto rounded-sm border border-gray-200 bg-white p-2">
+          <ParityTable
+            rows={rows}
+            columns={columns}
+            rowKey={(row) => row.id}
+            loading={listState.isLoading}
+            storageKey="audit-events-list"
+            // Settled-only empty text (LIST-EMPTY-1): only supplied once listState resolves to "empty",
+            // never during loading/error, so ParityTable's own gate never flashes a false empty.
+            emptyText={listState.isEmpty ? "No audit events found." : undefined}
+            tableTestId="audit-events-list-table"
+            renderExpanded={(row) => (
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Payload (JSON)</div>
+                <pre className="mt-2 max-h-[420px] overflow-auto whitespace-pre-wrap wrap-break-word rounded-sm border border-gray-200 bg-white p-3 text-[11px] text-gray-900">
+                  {JSON.stringify(row.payload ?? {}, null, 2)}
+                </pre>
+              </div>
+            )}
+          />
+        </div>
+      )}
     </div>
   );
 }
