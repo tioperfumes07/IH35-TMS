@@ -1,6 +1,6 @@
 {
  "date": "2026-07-19",
- "generated_at_iso": "2026-07-19T23:32:05.658Z",
+ "generated_at_iso": "2026-07-20T00:33:43.543Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
@@ -13105,6 +13105,60 @@
  ],
  "merged_prs": [
   {
+   "number": 2763,
+   "title": "fix(accounting): Customer + Vendor Detail URL sort persistence",
+   "mergedAt": "2026-07-19T23:47:50Z",
+   "branch": "fix/customer-vendor-detail-url-sort"
+  },
+  {
+   "number": 2761,
+   "title": "fix(accounting): Items list URL sort persistence",
+   "mergedAt": "2026-07-19T23:49:20Z",
+   "branch": "fix/items-list-url-sort"
+  },
+  {
+   "number": 2760,
+   "title": "fix(accounting): Bill Detail URL sort persistence",
+   "mergedAt": "2026-07-19T23:49:15Z",
+   "branch": "fix/bill-detail-url-sort"
+  },
+  {
+   "number": 2759,
+   "title": "fix(accounting): Factoring Detail + Invoice Detail URL sort",
+   "mergedAt": "2026-07-19T23:51:25Z",
+   "branch": "fix/factoring-invoice-detail-url-sort"
+  },
+  {
+   "number": 2758,
+   "title": "fix(accounting): Account Register URL sort persistence",
+   "mergedAt": "2026-07-19T23:32:31Z",
+   "branch": "fix/account-register-url-sort"
+  },
+  {
+   "number": 2757,
+   "title": "fix(accounting): Escrow + Audit Trail URL sort",
+   "mergedAt": "2026-07-19T23:47:39Z",
+   "branch": "fix/escrow-audittrail-url-sort"
+  },
+  {
+   "number": 2756,
+   "title": "fix(accounting): Receipts + Integration Transactions URL sort",
+   "mergedAt": "2026-07-19T23:45:47Z",
+   "branch": "fix/receipts-integration-url-sort"
+  },
+  {
+   "number": 2755,
+   "title": "fix(accounting): Invoices + Manual JE list URL sort persistence",
+   "mergedAt": "2026-07-19T23:31:58Z",
+   "branch": "fix/invoices-manualje-url-sort"
+  },
+  {
+   "number": 2754,
+   "title": "fix(accounting): Posting Lineage URL sort persistence",
+   "mergedAt": "2026-07-19T23:47:34Z",
+   "branch": "fix/posting-lineage-url-sort"
+  },
+  {
    "number": 2753,
    "title": "fix(accounting): Prepaid Expenses + Fixed Assets URL sort",
    "mergedAt": "2026-07-19T23:30:51Z",
@@ -16649,63 +16703,9 @@
    "title": "[HOLD-FOR-JORGE] feat(factoring): wire customer-payment poster + daily default-interest accrual (0.067%/day after day 35) + day-95 recourse auto-trigger (Faro c",
    "mergedAt": "2026-07-05T21:16:12Z",
    "branch": "feat/factoring-interest-recourse"
-  },
-  {
-   "number": 2139,
-   "title": "fix(security): logout invalidates server-side session through the Lucia session-provider seam (H2-3 follow-up)",
-   "mergedAt": "2026-07-05T19:51:30Z",
-   "branch": "fix/h2-3-logout-invalidate-session"
-  },
-  {
-   "number": 2138,
-   "title": "[HOLD-FOR-JORGE] feat(settlements): Bill+BillPayment posting engine — per-load bills, per-driver deduction accounts, 5% editable floor, hire-consent, pay-first-",
-   "mergedAt": "2026-07-05T23:21:53Z",
-   "branch": "feat/settlement-bill-payment-posting"
-  },
-  {
-   "number": 2137,
-   "title": "fix(program-board): refresh live via R2 snapshot — stop the every-20-min auto-commit prod-deploy storm",
-   "mergedAt": "2026-07-05T23:30:54Z",
-   "branch": "fix/program-board-r2-live"
-  },
-  {
-   "number": 2136,
-   "title": "[HOLD-FOR-JORGE] feat(driver-accounts): per-driver escrow (year-agnostic 'Driver Escrow' parent, name+hire-date) + wire/store both sub-account ids on hire (no o",
-   "mergedAt": "2026-07-05T20:48:55Z",
-   "branch": "feat/driver-accounts-escrow-wire"
-  },
-  {
-   "number": 2135,
-   "title": "docs(architecture): consolidated ARCHITECTURE-BLUEPRINT-2026-07-05 guardrail + per-block linkage checklist",
-   "mergedAt": "2026-07-05T19:11:20Z",
-   "branch": "docs/architecture-blueprint-guardrail"
-  },
-  {
-   "number": 2134,
-   "title": "fix(security): G2-2 validate operating_company_id via membership resolver on all money/dispatch routes",
-   "mergedAt": "2026-07-05T21:44:01Z",
-   "branch": "fix/g2-2-opco-resolver"
-  },
-  {
-   "number": 2133,
-   "title": "chore(deps): Bump the npm_and_yarn group across 2 directories with 2 updates",
-   "mergedAt": "2026-07-05T23:21:47Z",
-   "branch": "dependabot/npm_and_yarn/apps/driver-pwa/npm_and_yarn-149e96449a"
-  },
-  {
-   "number": 2132,
-   "title": "fix(reliability): G10-M MED defects (audit-hash signing, row_changes triggers, stalled-queue reaper)",
-   "mergedAt": "2026-07-05T22:51:39Z",
-   "branch": "fix/g10-m-reliability"
-  },
-  {
-   "number": 2131,
-   "title": "fix(workflow): G9-M workflow/status defects (auto-pay statuses, load-number 500, bulk set_status)",
-   "mergedAt": "2026-07-05T18:35:06Z",
-   "branch": "fix/g9m-workflow-status"
   }
  ],
- "merged_pr_total": 2621,
+ "merged_pr_total": 2630,
  "hold_for_jorge": [
   {
    "number": 2718,
