@@ -1,0 +1,29 @@
+{
+  "block_id": "qbo-parity-a1-safety-events-table-paritytable",
+  "branch": "fix/safety-events-table-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable)",
+  "phase": "OPS-FE",
+  "task": "Migrate SafetyEventsTable from hand-rolled <table> to shared ParityTable (sort/resize/gear + selectable batchActions). Preserve columns + bulk export/archive stub. Guard + verify-step 1068 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + qbo-parity-a1",
+  "source_file": "qbo-parity-a1-safety-events-table-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-safety-events-table-paritytable.json",
+    "apps/frontend/src/pages/safety/components/SafetyEventsTable.tsx",
+    "apps/frontend/src/pages/safety/SafetyEventsPage.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "docs/specs/TBL-STANDARD-INVENTORY.md",
+    "scripts/verify-safety-events-table-uses-paritytable.mjs",
+    "scripts/verify-steps/1068-verify-safety-events-table-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "SafetyEventsTable.tsx uses ParityTable (no hand-rolled <table>/<thead>); columns Date/Driver/Unit/Type/Severity/Source/Action/Status preserved; bulk export + archive stub retained; verify-safety-events-table-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1068 wired (Rule 17); tracker marks SafetyEventsTable migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 — SafetyEventsTable surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17)."
+}

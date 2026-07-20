@@ -194,6 +194,17 @@ Guard: `scripts/verify-load-history-tab-uses-paritytable.mjs` via verify-step 10
 | --- | --- |
 | `apps/frontend/src/components/drivers/LoadHistoryTab.tsx` | components/drivers |
 
+## qbo-parity-a1 — SafetyEventsTable (this PR)
+Safety events bulk-select grid was a hand-rolled `<table>` with BulkActionBar +
+TableSelection. Migrated to shared `ParityTable` (sort + resize + gear +
+selectable + batchActions). Columns Date/Driver/Unit/Type/Severity/Source/Action/
+Status preserved 1:1; bulk export + archive stub retained; maxSelectable 200.
+Guard: `scripts/verify-safety-events-table-uses-paritytable.mjs` via verify-step 1068.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/safety/components/SafetyEventsTable.tsx` | pages/safety |
+
 ## qbo-parity-a1 — StopReasoningTable (this PR)
 Fuel planner recommended-stop reasoning grid was a hand-rolled `<table>`. Migrated to
 shared `ParityTable` (sort + resize + gear). Columns #/Station/State/Mile/$/gal/Gallons/
@@ -775,7 +786,7 @@ verify-step 1035.
 | `apps/frontend/src/pages/safety/PositionHistoryPage.tsx` | pending |
 | `apps/frontend/src/pages/safety/SafetyEventsPage.tsx` | pending |
 | `apps/frontend/src/pages/safety/components/IntegrityAlertsTab.tsx` | pending |
-| `apps/frontend/src/pages/safety/components/SafetyEventsTable.tsx` | pending |
+| `apps/frontend/src/pages/safety/components/SafetyEventsTable.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx` | pending |
 | `apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerGridPage.tsx` | pending |
 | `apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerRequestInboxPage.tsx` | pending |
