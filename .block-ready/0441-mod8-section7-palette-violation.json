@@ -1,17 +1,35 @@
 {
   "block_id": "0441-mod8-section7-palette-violation",
-  "status": "PENDING",
-  "classification": "FINANCIAL",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
   "phase": "tier3",
-  "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
-  "source_file": "0441-mod8-section7-palette-violation.txt",
+  "branch": "fix/section7-palette-ratchet-liabilities-ca",
+  "task": "Incremental §7 palette ratchet: liabilities + cash-advances + driver-finance notice surfaces → slate tokens; BASELINE 135→111",
+  "source": "CODER-BUILD-INSTRUCTIONS-2026-07-19.md",
+  "source_file": "0441-mod8-section7-palette-violation",
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    ".block-ready/0441-mod8-section7-palette-violation.json",
+    "apps/frontend/src/pages/liabilities/components/LiabilitiesTable.tsx",
+    "apps/frontend/src/pages/cash-advances/components/CashAdvancesTable.tsx",
+    "apps/frontend/src/pages/driver-finance/components/PendingAckNotice.tsx",
+    "apps/frontend/src/pages/driver-finance/components/FinalizeBlock.tsx",
+    "apps/frontend/src/pages/driver-finance/components/NetPaySummary.tsx",
+    "scripts/verify-section7-palette-financial.mjs"
   ],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "Off-palette amber/emerald/green/yellow status classes removed from the five listed FE components (red for failed/civil_fine retained)"
+    },
+    {
+      "check": "verify-section7-palette-financial.mjs BASELINE ratcheted downward 135→111; script PASS at new baseline"
+    },
+    {
+      "check": "Banking tree remains 0 off-palette (already clean); no package.json / CI workflow edits (Rule 17)"
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "Incremental ratchet only — not zero. Builder stops at PR; do not merge. Financial UI §7 recolor batch under ops FE lane."
 }
