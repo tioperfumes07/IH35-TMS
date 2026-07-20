@@ -819,3 +819,14 @@ Guard: `scripts/verify-error-monitor-uses-paritytable.mjs` via verify-step 1036.
 | --- | --- |
 | `apps/frontend/src/pages/admin/ErrorMonitor.tsx` | pages/admin |
 
+## qbo-parity-a1 — RecentActivitySection (this PR)
+Vehicle profile recent-activity feed (loads / status changes / work orders) was a
+hand-rolled `<table>` with manual Prev/Next paging. Migrated to shared `ParityTable`
+(sort + resize + gear + built-in paging); tab filterBar + Record preview column +
+`No records.` empty text preserved. Guard:
+`scripts/verify-vehicle-recent-activity-uses-paritytable.mjs` via verify-step 1030.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/vehicle-profile/RecentActivitySection.tsx` | components/vehicle-profile |
+
