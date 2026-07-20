@@ -508,23 +508,29 @@ export async function getDeadheadReport(
       ? aggregated.reduce((acc, row) => acc + (row.deadhead_pct ?? 0), 0) / aggregated.length
       : null;
 
-  const fuelRes = await client.query(
-    `
-      SELECT
-        CASE
-          WHEN COALESCE(SUM(ft.total_miles), 0) > 0
-          THEN ROUND(SUM(ft.total_cost) / NULLIF(SUM(ft.total_miles), 0) * 100)::bigint
-          ELSE 45
-        END AS fuel_cost_per_mile_cents
-      FROM fuel.fuel_transactions ft
-      WHERE ft.operating_company_id = $1::uuid
-        AND ft.transaction_date >= $2::date
-        AND ft.transaction_date <= $3::date
-    `,
-    [operatingCompanyId, bounds.start, bounds.end]
-  ).catch(() => ({ rows: [{ fuel_cost_per_mile_cents: 45 }] }));
-
-  const fuelCpm = num(fuelRes.rows[0]?.fuel_cost_per_mile_cents) || 45;
+  // Fuel $/mi for deadhead cost estimate.
+  // fuel.fuel_transactions has total_cost + transaction_at — NOT total_miles / transaction_date
+  // (those phantoms 42703'd and were swallowed by .catch → hard-coded 45¢ forever).
+  // Miles denominator = this report's load-derived totalMiles (already computed above).
+  let fuelCpm = 45;
+  if (totalMiles > 0) {
+    const fuelRes = await client.query<{ total_fuel_cost: string }>(
+      `
+        SELECT COALESCE(SUM(ft.total_cost), 0)::text AS total_fuel_cost
+        FROM fuel.fuel_transactions ft
+        WHERE ft.operating_company_id = $1::uuid
+          AND ft.transaction_at >= $2::date
+          AND ft.transaction_at < ($3::date + INTERVAL '1 day')
+          AND ft.archived_at IS NULL
+      `,
+      [operatingCompanyId, bounds.start, bounds.end]
+    );
+    const totalFuelCost = num(fuelRes.rows[0]?.total_fuel_cost);
+    if (totalFuelCost > 0) {
+      // total_cost is dollars; *100 / miles → cents per mile
+      fuelCpm = Math.round((totalFuelCost / totalMiles) * 100);
+    }
+  }
   const estimatedCostCents = Math.round(totalDeadhead * fuelCpm * 1.4);
 
   let weekly_trend: DeadheadReportResponse["weekly_trend"];

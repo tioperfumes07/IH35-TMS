@@ -62,8 +62,6 @@
     "apps/backend/src/payroll-integration/tms-settlements-pull.ts#driver_finance.driver_settlements.total_deductions_cents",
     "apps/backend/src/qbo/sync-conflict-detection.routes.ts#mdata.qbo_customers.raw_payload",
     "apps/backend/src/qbo/sync-conflict-detection.routes.ts#mdata.qbo_vendors.raw_payload",
-    "apps/backend/src/reports/deadhead.service.ts#fuel.fuel_transactions.total_miles",
-    "apps/backend/src/reports/deadhead.service.ts#fuel.fuel_transactions.transaction_date",
     "apps/backend/src/reports/form-425c/exhibits/exhibit-f-supporting-docs.ts#accounting.bills.soft_deleted_at",
     "apps/backend/src/reports/form-425c/exhibits/exhibit-f-supporting-docs.ts#accounting.bills.total_cents",
     "apps/backend/src/reports/form-425c/exhibits/exhibit-f-supporting-docs.ts#accounting.invoices.invoice_date",

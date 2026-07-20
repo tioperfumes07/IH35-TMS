@@ -31,6 +31,17 @@ describe("deadhead service and routes", () => {
     assert.match(src, /getBackhaulSuggestions/);
   });
 
+  it("uses real fuel.fuel_transactions columns for cost-per-mile (no phantoms / no silent catch)", () => {
+    const src = fs.readFileSync(path.join(here, "../../src/reports/deadhead.service.ts"), "utf8");
+    assert.match(src, /fuel\.fuel_transactions/);
+    assert.match(src, /ft\.transaction_at/);
+    assert.match(src, /ft\.total_cost/);
+    assert.match(src, /totalMiles/);
+    assert.doesNotMatch(src, /ft\.total_miles/);
+    assert.doesNotMatch(src, /ft\.transaction_date/);
+    assert.doesNotMatch(src, /fuel_cost_per_mile_cents:\s*45/);
+  });
+
   it("registers deadhead report routes", () => {
     const routes = fs.readFileSync(path.join(here, "../../src/reports/deadhead.routes.ts"), "utf8");
     assert.match(routes, /\/api\/v1\/reports\/deadhead/);
