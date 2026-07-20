@@ -110,7 +110,7 @@ export function EscrowDeductionsPendingTab() {
       <PageHeader title="Escrow Deductions Pending Review" subtitle="Auto-proposed abandonment deductions requiring Owner decision." />
 
       {!isOwner ? (
-        <div className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        <div className="rounded-sm border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900">
           Owner approval required.
         </div>
       ) : null}
@@ -242,7 +242,7 @@ export function EscrowDeductionsPendingTab() {
                 </Button>
                 <Button
                   size="sm"
-                  className="border-amber-500! bg-amber-500! hover:bg-amber-600!"
+                  className="border-slate-700! bg-slate-700! hover:bg-slate-800!"
                   disabled={!isOwner}
                   loading={approveMutation.isPending}
                   onClick={() => void approveMutation.mutateAsync()}

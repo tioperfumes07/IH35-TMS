@@ -23,7 +23,7 @@ function StatusPill({ status }: { status: string | null }) {
   const label = status ? (STATUS_LABEL[status] ?? status) : "—";
   const colorClass =
     status === "advanced" || status === "collected" || status === "released"
-      ? "bg-green-100 text-green-800"
+      ? "bg-slate-100 text-slate-700"
       : status === "recourse_returned" || status === "disputed"
         ? "bg-red-100 text-red-700"
         : "bg-slate-100 text-slate-600";
@@ -35,7 +35,7 @@ function RecourseRisk({ item }: { item: WorkqueueItem }) {
   if (days == null) return <span className="text-slate-300">—</span>;
   if (days < 0) return <span className="font-semibold text-red-600">Expired</span>;
   if (days <= 14) return <span className="font-semibold text-red-500">{days}d</span>;
-  if (days <= 30) return <span className="font-semibold text-amber-600">{days}d</span>;
+  if (days <= 30) return <span className="font-semibold text-slate-600">{days}d</span>;
   return <span className="text-slate-500">{days}d</span>;
 }
 
