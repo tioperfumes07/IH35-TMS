@@ -3,6 +3,8 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { useMemo, useState } from "react";
 import { listDriverAuditEvents, type DriverAuditEvent } from "../../api/audit";
 import { Button } from "../Button";
+import { ListErrorState } from "../ListErrorState";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { Download, AlertTriangle } from "lucide-react";
 
 type Props = {
@@ -46,6 +48,44 @@ const STATUS_OPTIONS = [
   { value: "inactive", label: "Inactive" },
 ];
 
+const COLUMNS: Array<ParityColumn<DriverAuditEvent>> = [
+  {
+    key: "created_at",
+    label: "When",
+    sortable: true,
+    sortValue: (row) => new Date(row.created_at).getTime(),
+    render: (row) => <span className="whitespace-nowrap text-gray-800">{formatWhen(row.created_at)}</span>,
+  },
+  {
+    key: "actor_email",
+    label: "Actor",
+    sortable: true,
+    sortValue: (row) => row.actor_email ?? row.actor_user_id ?? "",
+    render: (row) => <span className="text-gray-800">{row.actor_email ?? row.actor_user_id ?? "—"}</span>,
+  },
+  {
+    key: "event_type",
+    label: "Event",
+    sortable: true,
+    render: (row) => <span className="font-mono text-[11px] text-gray-900">{row.event_type}</span>,
+  },
+  {
+    key: "summary",
+    label: "Summary",
+    sortable: true,
+    render: (row) => <span className="text-gray-800">{row.summary}</span>,
+  },
+  {
+    key: "details",
+    label: "Details",
+    render: (row) => (
+      <span className="block max-w-[12rem] truncate font-mono text-[10px] text-gray-600">
+        {payloadDiff(row.payload).split("\n")[0]}
+      </span>
+    ),
+  },
+];
+
 export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
   const [eventTypeFilter, setEventTypeFilter] = useState("");
   const [fromDate, setFromDate] = useState("");
@@ -54,7 +94,6 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
   const [statusFilter, setStatusFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
   const [voidsOnly, setVoidsOnly] = useState(false);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const fromIso = fromDate ? new Date(`${fromDate}T00:00:00`).toISOString() : undefined;
   const toIso = toDate ? new Date(`${toDate}T23:59:59`).toISOString() : undefined;
@@ -206,63 +245,35 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
         </Button>
       </div>
 
-      {auditQuery.isLoading ? <p className="text-sm text-gray-500">Loading audit history…</p> : null}
       {auditQuery.isError ? (
-        <p className="text-sm text-red-600" data-testid="driver-audit-error">
-          Unable to load audit history.
-        </p>
-      ) : null}
-
-      {!auditQuery.isLoading && events.length === 0 ? (
-        <p className="text-sm text-gray-500" data-testid="driver-audit-empty">
-          No audit events for this driver.
-        </p>
-      ) : null}
-
-      {events.length > 0 ? (
-        <table className="min-w-full text-xs" data-testid="driver-audit-table">
-          <thead>
-            <tr className="border-b text-left text-gray-600">
-              <th className="py-2 pr-3">When</th>
-              <th className="py-2 pr-3">Actor</th>
-              <th className="py-2 pr-3">Event</th>
-              <th className="py-2 pr-3">Summary</th>
-              <th className="py-2">Details</th>
-            </tr>
-          </thead>
-          <tbody>
-            {events.map((row) => {
-              const expanded = expandedId === row.id;
-              return (
-                <tr key={row.id} className="border-b align-top" data-testid={`driver-audit-row-${row.id}`}>
-                  <td className="py-2 pr-3 whitespace-nowrap">{formatWhen(row.created_at)}</td>
-                  <td className="py-2 pr-3">{row.actor_email ?? row.actor_user_id ?? "—"}</td>
-                  <td className="py-2 pr-3 font-mono text-[11px]">{row.event_type}</td>
-                  <td className="py-2 pr-3">{row.summary}</td>
-                  <td className="py-2">
-                    <button
-                      type="button"
-                      className="text-slate-700 underline"
-                      data-testid={`driver-audit-expand-${row.id}`}
-                      onClick={() => setExpandedId(expanded ? null : row.id)}
-                    >
-                      {expanded ? "Hide" : "Expand"}
-                    </button>
-                    {expanded ? (
-                      <pre
-                        className="mt-2 max-h-48 overflow-auto rounded-sm bg-gray-50 p-2 text-[10px]"
-                        data-testid={`driver-audit-diff-${row.id}`}
-                      >
-                        {payloadDiff(row.payload)}
-                      </pre>
-                    ) : null}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      ) : null}
+        <ListErrorState
+          title="Couldn't load audit history"
+          status={0}
+          message={(auditQuery.error as Error)?.message ?? "Unable to load audit history."}
+          onRetry={() => void auditQuery.refetch()}
+        />
+      ) : (
+        <div className="overflow-auto rounded-sm border border-gray-200 bg-white p-2">
+          <ParityTable
+            rows={events}
+            columns={COLUMNS}
+            rowKey={(row) => row.id}
+            loading={auditQuery.isLoading}
+            storageKey="driver-audit-history"
+            emptyText="No audit events for this driver."
+            tableTestId="driver-audit-table"
+            rowTestId={(row) => `driver-audit-row-${row.id}`}
+            renderExpanded={(row) => (
+              <pre
+                className="max-h-48 overflow-auto rounded-sm bg-gray-50 p-2 text-[10px]"
+                data-testid={`driver-audit-diff-${row.id}`}
+              >
+                {payloadDiff(row.payload)}
+              </pre>
+            )}
+          />
+        </div>
+      )}
     </div>
   );
 }
