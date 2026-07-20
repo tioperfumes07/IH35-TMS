@@ -1,0 +1,28 @@
+{
+  "block_id": "systemic-pattern-mandatory-error-states-dispatch-alerts",
+  "branch": "fix/dispatch-alerts-query-error-states",
+  "status": "IN_PROGRESS",
+  "classification": "ADDITIVE",
+  "phase": "tier3",
+  "task": "systemic-pattern-mandatory-error-states one surface: DispatchAlertsPage must surface query failures via ListErrorBanner + Error card labels (not collapse to —)",
+  "source": "ops gated-no prefer FE; MASTER-6 systemic-pattern-mandatory-error-states",
+  "source_file": "systemic-pattern-mandatory-error-states.txt",
+  "allowed_files": [
+    ".block-ready/systemic-pattern-mandatory-error-states-dispatch-alerts.json",
+    "apps/frontend/src/pages/dispatch/DispatchAlertsPage.tsx",
+    "apps/frontend/src/pages/dispatch/__tests__/DispatchAlertsPage.test.tsx",
+    "scripts/verify-dispatch-alerts-query-error.mjs",
+    "scripts/verify-steps/1017-verify-dispatch-alerts-query-error.mjs"
+  ],
+  "runtime_path": "apps/frontend",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": ["verify-dispatch-alerts-query-error"],
+  "hold": false,
+  "acceptance": [
+    {
+      "check": "DispatchAlertsPage imports ListErrorBanner; anyQueryError shows retryable banner; failed cards render Error not —; vitest covers failure path; verify-step 1017 PASS. No migration. Rule 17."
+    }
+  ],
+  "note": "FE-only adoption of mandatory error states on one remaining surface that still swallowed isError into em-dash placeholders."
+}
