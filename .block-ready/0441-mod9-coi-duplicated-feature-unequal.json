@@ -1,17 +1,30 @@
 {
   "block_id": "0441-mod9-coi-duplicated-feature-unequal",
-  "status": "PENDING",
-  "classification": "FINANCIAL",
+  "branch": "fix/coi-single-shared-component",
+  "status": "BUILD",
+  "classification": "NON_FINANCIAL",
   "phase": "tier3",
-  "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
+  "source": "CODER-BUILD-INSTRUCTIONS-2026-07-19",
   "source_file": "0441-mod9-coi-duplicated-feature-unequal.txt",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    "apps/frontend/src/pages/customers/CoiTab.tsx",
+    "apps/frontend/src/pages/customers/CustomerCOITab.tsx",
+    "apps/frontend/src/pages/customers/tabs/CoiRequestsTab.tsx",
+    "scripts/verify-coi-single-component.mjs",
+    "scripts/verify-coi-create-vocab.mjs",
+    "scripts/verify-steps/149-verify-coi-single-component.mjs",
+    ".block-ready/0441-mod9-coi-duplicated-feature-unequal.json"
   ],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "kind": "mounted",
+      "check": "Customers.tsx keeps CustomerCOITab (list-preview) and CustomerDetail.tsx keeps CoiRequestsTab (full-page); both wrappers mount shared CoiTab."
+    },
+    {
+      "kind": "guard",
+      "script": "scripts/verify-coi-single-component.mjs",
+      "wired_into": "verify-pre-commit (verify-steps/149)"
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "Consolidate duplicate COI tab implementations into shared CoiTab; Rule 17 verify-steps only — no package.json / locked-guards / ci.yml. GATED-no; no migrations/GL."
 }
