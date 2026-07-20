@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-qbo-vendor-linkage-paritytable",
+  "branch": "fix/qbo-vendor-linkage-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable migration)",
+  "phase": "OPS-FE",
+  "task": "Migrate admin QboVendorLinkagePage drivers + assets grids from hand-rolled <table> to shared ParityTable QBO grammar with ListErrorState on query failure. Guard + verify-step 1042 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+  "source_file": "qbo-parity-a1-qbo-vendor-linkage-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-qbo-vendor-linkage-paritytable.json",
+    "apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-qbo-vendor-linkage-uses-paritytable.mjs",
+    "scripts/verify-steps/1042-verify-qbo-vendor-linkage-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "QboVendorLinkagePage.tsx uses ≥2 ParityTable surfaces (drivers + assets tabs); no hand-rolled <table>/<thead>; driver columns Driver/Current Vendor/Status/Actions and asset columns Unit/QBO Class/Actions preserved; ListErrorState on driversQuery/unitsQuery failure; verify-qbo-vendor-linkage-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1042 wired (Rule 17); tracker marks QboVendorLinkagePage migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental adoption of qbo-parity-a1 — one surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17)."
+}
