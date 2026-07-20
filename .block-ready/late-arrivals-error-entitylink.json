@@ -1,0 +1,27 @@
+{
+  "block_id": "late-arrivals-error-entitylink",
+  "branch": "fix/late-arrivals-error-entitylink",
+  "status": "IN_PROGRESS",
+  "classification": "ADDITIVE",
+  "phase": "tier3",
+  "task": "LateArrivalsPage: ListErrorBanner on query failure (no empty-table false-empty) + EntityLink kind=load for row drill-through",
+  "source": "ops gated-no prefer FE; dispatch error-state + EntityLink elsewhere (not assignment-history)",
+  "allowed_files": [
+    ".block-ready/late-arrivals-error-entitylink.json",
+    "apps/frontend/src/pages/dispatch/LateArrivalsPage.tsx",
+    "apps/frontend/src/pages/dispatch/__tests__/LateArrivalsPage.test.tsx",
+    "scripts/verify-late-arrivals-error-entitylink.mjs",
+    "scripts/verify-steps/1024-verify-late-arrivals-error-entitylink.mjs"
+  ],
+  "runtime_path": "apps/frontend",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": ["verify-late-arrivals-error-entitylink"],
+  "hold": false,
+  "acceptance": [
+    {
+      "check": "LateArrivalsPage imports ListErrorBanner; lateQ.isError hides ParityTable and shows retryable banner; load column uses EntityLink kind=load; vitest covers both paths; verify-step 1024 PASS. No migration. Rule 17."
+    }
+  ],
+  "note": "FE-only. Avoids open scopes #2854 EntityLink assignment-history, #2857–#2860, #2855 deps."
+}
