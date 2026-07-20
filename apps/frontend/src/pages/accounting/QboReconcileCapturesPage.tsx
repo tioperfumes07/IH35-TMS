@@ -2,6 +2,7 @@
 // Surfaces sync health, modify captures (changes made directly in QBO), and conflicts/alerts.
 // No resolve/apply: this page only reads and displays. Gated behind QBO_RECONCILE_UI_ENABLED.
 import { useState, type ReactNode } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
@@ -86,6 +87,12 @@ function TmsEntityLink({
 }
 
 type Tab = "overview" | "captures" | "conflicts" | "runs" | "exceptions";
+const QBO_RECONCILE_TAB_IDS = new Set<string>(["overview", "captures", "conflicts", "runs", "exceptions"]);
+
+export function parseQboReconcileTab(raw: string | null): Tab {
+  if (raw && QBO_RECONCILE_TAB_IDS.has(raw)) return raw as Tab;
+  return "overview";
+}
 
 function OverviewTab({ companyId }: { companyId: string }) {
   const { data, isLoading, isError } = useQuery({
@@ -480,7 +487,14 @@ export function QboReconcileCapturesPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { enabled, loading: flagLoading } = useFeatureFlag(FLAG, companyId || undefined);
-  const [tab, setTab] = useState<Tab>("overview");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = parseQboReconcileTab(searchParams.get("tab"));
+  const setTab = (next: Tab) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "overview") params.delete("tab");
+    else params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
 
   if (!flagLoading && !enabled) {
     return (
