@@ -1,5 +1,6 @@
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
+import { enqueueEquipmentTransferNotify } from "./notify.js";
 import { setTransferCompanyScope, type Queryable } from "./request.service.js";
 
 const BLOCK_ID = "GAP-37-EQUIPMENT-DUAL-CONFIRM";
@@ -20,7 +21,8 @@ export async function confirmOutbound(
 ): Promise<ConfirmResult> {
   const row = await client.query(
     `
-      SELECT uuid::text, from_driver_uuid::text, status
+      SELECT uuid::text, from_driver_uuid::text, to_driver_uuid::text, equipment_uuid::text,
+             equipment_kind, status
       FROM dispatch.equipment_transfer_requests
       WHERE uuid = $1::uuid AND operating_company_id = $2::uuid
       LIMIT 1
@@ -58,6 +60,19 @@ export async function confirmOutbound(
     "info",
     BLOCK_ID
   );
+
+  // Confirm → notify initiator / from_driver.
+  await enqueueEquipmentTransferNotify(client, {
+    eventType: "dispatch.equipment_transfer.confirmed",
+    operatingCompanyId,
+    transferUuid: requestUuid,
+    driverUuid: String(req.from_driver_uuid),
+    title: "Equipment transfer outbound confirmed",
+    message: `Outbound confirmation recorded for your ${String(req.equipment_kind ?? "equipment")} transfer.`,
+    equipmentUuid: req.equipment_uuid ? String(req.equipment_uuid) : null,
+    equipmentKind: req.equipment_kind ? String(req.equipment_kind) : null,
+  });
+
   return { kind: "ok", uuid: requestUuid };
 }
 
@@ -143,6 +158,20 @@ export async function confirmInbound(
     "info",
     BLOCK_ID
   );
+
+  // Confirm (completed) → notify initiator / from_driver.
+  if (req.from_driver_uuid) {
+    await enqueueEquipmentTransferNotify(client, {
+      eventType: "dispatch.equipment_transfer.confirmed",
+      operatingCompanyId,
+      transferUuid: requestUuid,
+      driverUuid: String(req.from_driver_uuid),
+      title: "Equipment transfer completed",
+      message: `Inbound confirmation completed; equipment was transferred successfully.`,
+      equipmentUuid: req.equipment_uuid ? String(req.equipment_uuid) : null,
+      equipmentKind: null,
+    });
+  }
 
   return { kind: "ok", uuid: requestUuid };
 }
