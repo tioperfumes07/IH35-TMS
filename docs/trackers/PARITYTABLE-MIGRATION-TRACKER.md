@@ -21,15 +21,9 @@ sort, and the lock-account control — never drop or reorder.
 ## Rollup
 | Status | Count |
 | --- | --- |
-| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable + LoadHistoryTab + vehicle PlatesTable + vehicle ComplianceSection + DriverDaySummaryCard + StopReasoningTable) | 22 |
-| financial-hold (Jorge-gated) | 99 |
-| pending (non-financial, future batches) | 179 |
-| **hand-rolled total (original)** | **300** |
+| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable + LoadHistoryTab + vehicle PlatesTable + vehicle ComplianceSection + EntityAuditHistoryTab) | 21 |
 | financial-hold (Jorge-gated) | 99 |
 | pending (non-financial, future batches) | 180 |
-| financial-hold (Jorge-gated) | 99 |
-| pending (non-financial, future batches) | 183 |
-| financial-hold (Jorge-gated) | 99 |
 | **hand-rolled total (original)** | **300** |
 
 > Note: ParityTable was already consumed by ~16 surfaces before this batch (not counted above — those were never hand-rolled).
@@ -180,16 +174,6 @@ Guard: `scripts/verify-load-history-tab-uses-paritytable.mjs` via verify-step 10
 | --- | --- |
 | `apps/frontend/src/components/drivers/LoadHistoryTab.tsx` | components/drivers |
 
-## qbo-parity-a1 — StopReasoningTable (this PR)
-Fuel planner recommended-stop reasoning grid was a hand-rolled `<table>`. Migrated to
-shared `ParityTable` (sort + resize + gear). Columns #/Station/State/Mile/$/gal/Gallons/
-Why This Stop/HOS preserved 1:1; skipped-stop strike + `bg-red-50` retained.
-Guard: `scripts/verify-stop-reasoning-table-uses-paritytable.mjs` via verify-step 1041.
-
-| File | Module |
-| --- | --- |
-| `apps/frontend/src/pages/fuel/components/StopReasoningTable.tsx` | pages/fuel |
-
 ## Remaining hand-rolled inventory (by module)
 
 ### components/DataTable.tsx (1)
@@ -227,7 +211,7 @@ Guard: `scripts/verify-stop-reasoning-table-uses-paritytable.mjs` via verify-ste
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/components/audit/AuditHistoryTab.tsx` | pending |
-| `apps/frontend/src/components/audit/EntityAuditHistoryTab.tsx` | pending |
+| `apps/frontend/src/components/audit/EntityAuditHistoryTab.tsx` | migrated (qbo-parity-a1) |
 
 ### components/catalogs (1)
 
@@ -288,7 +272,7 @@ Guard: `scripts/verify-stop-reasoning-table-uses-paritytable.mjs` via verify-ste
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/components/home/DriverDaySummaryCard.tsx` | migrated (qbo-parity-a1) |
+| `apps/frontend/src/components/home/DriverDaySummaryCard.tsx` | pending |
 
 ### components/insurance (1)
 
@@ -582,7 +566,7 @@ Guard: `scripts/verify-stop-reasoning-table-uses-paritytable.mjs` via verify-ste
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/pages/fuel/FuelTransactionsTable.tsx` | pending |
-| `apps/frontend/src/pages/fuel/components/StopReasoningTable.tsx` | migrated (qbo-parity-a1) |
+| `apps/frontend/src/pages/fuel/components/StopReasoningTable.tsx` | pending |
 | `apps/frontend/src/pages/fuel/fraud-alerts/FraudAlertsList.tsx` | pending |
 
 ### pages/home (1)
@@ -844,14 +828,15 @@ hand-rolled `<table>` with manual Prev/Next paging. Migrated to shared `ParityTa
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/components/vehicle-profile/RecentActivitySection.tsx` | components/vehicle-profile |
-## qbo-parity-a1 — DriverDaySummaryCard (home)
-Home "Driver day-summaries" grid was a hand-rolled `<table>` with a bare red outage
-banner. Migrated to shared `ParityTable` (sort + resize + gear) and replaced the
-ad-hoc error with `ListErrorState` + Retry. Columns Driver / Miles / On-duty hrs /
-Fuel stops / On-time / Late preserved 1:1; DatePicker + no-HOS empty copy preserved.
-Guard: `scripts/verify-driver-day-summary-uses-paritytable.mjs` via verify-step 1038.
+## qbo-parity-a1 — EntityAuditHistoryTab (this PR)
+Shared entity audit history tab (vendor/customer/driver/unit/load/WO) was a hand-rolled
+`<table>` with a bare red outage banner. Migrated to shared `ParityTable`
+(sort + resize + gear + `renderExpanded` Before→After `ChangesDiff`) and replaced the
+ad-hoc error div with `ListErrorState` + Retry. Columns When/Who/Action/Summary/Source
+preserved 1:1. Guard: `scripts/verify-entity-audit-history-uses-paritytable.mjs` via
+verify-step 1042.
 
 | File | Module |
 | --- | --- |
-| `apps/frontend/src/components/home/DriverDaySummaryCard.tsx` | components/home |
+| `apps/frontend/src/components/audit/EntityAuditHistoryTab.tsx` | components/audit |
 
