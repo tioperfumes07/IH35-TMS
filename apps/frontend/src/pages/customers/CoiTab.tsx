@@ -13,6 +13,7 @@ import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { StatusBadge } from "../../components/layout/StatusBadge";
+import { ListErrorState } from "../../components/ListErrorState";
 import { Modal } from "../../components/Modal";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
@@ -251,9 +252,15 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
       {!isFullPage && requestOpen ? createFormFields : null}
 
       {query.isError ? (
-        <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">Failed to load COI requests.</div>
+        <ListErrorState
+          title="Couldn't load COI requests"
+          status={query.error instanceof ApiError ? query.error.status : 0}
+          message={(query.error as Error)?.message}
+          onRetry={() => void query.refetch()}
+        />
       ) : null}
 
+      {!query.isError ? (
       <ParityTable<InsuranceCoiRequest>
         rows={requests}
         rowKey={(request) => request.id}
@@ -372,6 +379,7 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
               ]
         }
       />
+      ) : null}
 
       {selected ? (
         <div className="mt-3 grid gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3 md:grid-cols-2">
