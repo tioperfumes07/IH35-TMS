@@ -829,11 +829,10 @@ verify-step 1035.
 | --- | --- |
 | `apps/frontend/src/pages/vendors/VendorsListView.tsx` | pending |
 
-### pages/work-orders (2)
+### pages/work-orders (1)
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/work-orders/WOTimeTrackingPanel.tsx` | pending |
 | `apps/frontend/src/pages/work-orders/WorkOrdersConsoleListPage.tsx` | pending |
 
 ### portal/PortalDashboardPage.tsx (1)
@@ -1069,3 +1068,14 @@ Guard: `scripts/verify-booking-gap-report-uses-paritytable.mjs` via verify-step 
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/reports/BookingGapReport.tsx` | pages/reports |
+
+## qbo-parity-a1 — WOTimeTrackingPanel (this PR)
+WO detail labor-time entries grid was a hand-rolled `<table>`. Migrated to shared
+`ParityTable` (sort + resize + gear + row Stop/Rate/Remove actions) and added
+`ListErrorState` on entries query failure. Columns ID / Actor / Start / End / Min /
+Cost ¢ preserved 1:1; Start timer + manual entry unchanged. Guard:
+`scripts/verify-wo-time-tracking-uses-paritytable.mjs` via verify-step **1092**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/work-orders/WOTimeTrackingPanel.tsx` | pages/work-orders |
