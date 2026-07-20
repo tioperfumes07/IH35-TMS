@@ -1,26 +1,26 @@
 {
  "date": "2026-07-19",
- "generated_at_iso": "2026-07-20T00:33:43.543Z",
+ "generated_at_iso": "2026-07-20T02:59:25.709Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
-  "NEEDS-VERIFY": 61,
-  "DONE": 587,
-  "AUDIT-NOTE": 504
+  "NEEDS-VERIFY": 62,
+  "DONE": 588,
+  "AUDIT-NOTE": 453
  },
  "universe": {
-  "total_blocks_after_dedup": 1186,
+  "total_blocks_after_dedup": 1137,
   "by_source_after_dedup": {
-   ".block-ready": 1012,
+   ".block-ready": 963,
    "program": 61,
    "enterprise-29": 29,
    "accounting": 27,
    "gap-spec": 57
   },
   "raw_file_counts": {
-   ".block-ready (*.json files)": 1363,
-   ".block-ready retired (dup/stale/superseded, excluded)": 350,
-   ".block-ready active (counted)": 1013
+   ".block-ready (*.json files)": 1364,
+   ".block-ready retired (dup/stale/superseded, excluded)": 400,
+   ".block-ready active (counted)": 964
   },
   "note": "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by UNIQUE block_id, EXCLUDING files with EXPLICIT retirement markers (_DUP/_STALE/_SUPERSEDED underscore suffixes, status superseded/duplicate/dup/stale, or superseded_by/duplicate_of). Hyphen descriptive …-stale/…-duplicate live defect IDs are NOT retired by filename alone. So the block count is neither the raw .block-ready file count nor inflated by duplicate/retired registrations."
  },
@@ -713,6 +713,17 @@
    "name": "",
    "registered_on": null,
    "pr": 2453
+  },
+  {
+   "id": "d-02-cancel-load-shown-on-unsaved-load",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2778 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2778
   },
   {
    "id": "DOC-15-QBO-TOKEN-AUTOREFRESH",
@@ -1449,6 +1460,17 @@
    "name": "",
    "registered_on": null,
    "pr": 2662
+  },
+  {
+   "id": "972-anomaly-alerts-url-sync",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2777 merged 2026-07-20",
+   "name": "AnomalyAlertsPage tab + AnomalyDashboard severity URL sync via useSearchParams",
+   "registered_on": null,
+   "pr": 2777
   },
   {
    "id": "A1-AUDIT-SPINE-LINK-COLUMNS",
@@ -7702,17 +7724,6 @@
    "pr": null
   },
   {
-   "id": "0010-f6-phantom-write-targets-whatsapp-sms-qbo",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "0033-audit-schema-manifest-tool",
    "source": ".block-ready",
    "fin": true,
@@ -7999,17 +8010,6 @@
    "pr": null
   },
   {
-   "id": "0091-repo-public",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "0219-nested-modals",
    "source": ".block-ready",
    "fin": true,
@@ -8055,17 +8055,6 @@
   },
   {
    "id": "0243-b1-2-factor-reserve-default-liability-fal",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0243-b3-1-legacy-wo-create-endpoint-malformed-",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -8307,17 +8296,6 @@
    "pr": null
   },
   {
-   "id": "0243-g3-5-csp-report-only-samsara-placeholder-",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "0243-g4-deploy-smoke-fixed-unit-test-owner",
    "source": ".block-ready",
    "fin": true,
@@ -8407,17 +8385,6 @@
   },
   {
    "id": "0243-g9-m-eight-workflow-status-defects",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0243-h1-3-csp-report-only-no-healthcheckpath-b",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -8714,17 +8681,6 @@
    "pr": null
   },
   {
-   "id": "0252-audit140-compensation-structure",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "0252-audit141-benefits-administration",
    "source": ".block-ready",
    "fin": true,
@@ -8890,17 +8846,6 @@
    "pr": null
   },
   {
-   "id": "0270-no-auto-driver-status-from-safety-events",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "0270-no-auto-driver-termination-walkoff-noshow",
    "source": ".block-ready",
    "fin": true,
@@ -8923,117 +8868,7 @@
    "pr": null
   },
   {
-   "id": "0270-no-auto-escrow-deduction-safety-events",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0275-audit171-data-quality-monitoring",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "0275-audit173-data-privacy-compliance",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0275-audit174-data-security-hardening",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0275-audit177-data-integration-monitoring",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0275-audit178-master-data-governance",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0275-audit181-data-lineage-tracking",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0275-audit182-data-profiling-system",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0275-audit183-data-catalog-system",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0275-audit184-data-dictionary-system",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0275-audit185-data-model-documentation",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -9199,17 +9034,6 @@
   },
   {
    "id": "0280-29-legacy-fallback-tests",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0280-30-error-context-detail",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -9583,17 +9407,6 @@
    "pr": null
   },
   {
-   "id": "0441-mod12-eld-orphaned-under-safety-permanent",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "0441-mod12-legal-no-reverse-drill-through",
    "source": ".block-ready",
    "fin": true,
@@ -9606,17 +9419,6 @@
   },
   {
    "id": "0441-mod13-coa-merge-no-gl-repoint_DISPATCH",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0441-mod13-compliance-structural-drift-fmcsa-u",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -10001,17 +9803,6 @@
    "pr": null
   },
   {
-   "id": "0441-mod6-accident-police-claim-numbers-unboun",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "0441-mod6-damage-insurance-worker-unregistered",
    "source": ".block-ready",
    "fin": true,
@@ -10024,17 +9815,6 @@
   },
   {
    "id": "0441-mod6-hos-create-violation-mislabeled-link",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0441-mod6-hos-dashboard-silent-per-driver-catc",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -10244,17 +10024,6 @@
   },
   {
    "id": "0441-mod9-create-trailer-no-manual-path",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0441-mod9-create-unit-only-via-maintenance-veh",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -10496,17 +10265,6 @@
    "pr": null
   },
   {
-   "id": "0490-critical-idempotency-posting-engine-vendo",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "0490-critical-users3-owner-mint-approval-path",
    "source": ".block-ready",
    "fin": true,
@@ -10530,17 +10288,6 @@
   },
   {
    "id": "0490-section-c-2-reporting-vs-reports-drift",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0490-structural-fix-asset-identity-fragmentati",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -10651,17 +10398,6 @@
   },
   {
    "id": "0519-bk1-plaid-amex-wf-error",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0519-co1-0-compliance-notification-rules-confi",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -10837,17 +10573,6 @@
    "pr": null
   },
   {
-   "id": "a-06-save-button-not-above-fold",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "audit-spine-a1-a9-emit-coverage-task",
    "source": ".block-ready",
    "fin": true,
@@ -10860,39 +10585,6 @@
   },
   {
    "id": "audit10-payroll-automation-tax-withhol_DISPATCH",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "audit16-budget-tracking-system",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "audit17-procurement-purchase-order-system",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "audit18-treasury-management",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -10936,17 +10628,6 @@
    "pr": null
   },
   {
-   "id": "audit21-capex-tracking-approval",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "audit23-royalty-tracking-system",
    "source": ".block-ready",
    "fin": true,
@@ -10980,17 +10661,6 @@
    "pr": null
   },
   {
-   "id": "audit3-external-audit-prep-workflow",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "audit4-tax-return-automation",
    "source": ".block-ready",
    "fin": true,
@@ -11003,17 +10673,6 @@
   },
   {
    "id": "audit5-fraud-anomaly-detection",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "audit6-sox-ifrs-compliance-dashboard",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -11233,17 +10892,6 @@
    "pr": null
   },
   {
-   "id": "biz-flow-4-no-escrow-deduction-cash-advance",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "biz-flow-6-no-automatic-invoice-sending",
    "source": ".block-ready",
    "fin": true,
@@ -11321,29 +10969,7 @@
    "pr": null
   },
   {
-   "id": "biz-flow-9-no-automatic-notifications-safety-e",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "bl-04-no-rate-con-pdf-generation",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "block5-coa-new-account-type-detail-org_DISPATCH",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -11464,17 +11090,6 @@
    "pr": null
   },
   {
-   "id": "d-02-cancel-load-shown-on-unsaved-load",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "d-04-settlements-board-redirect-notice",
    "source": ".block-ready",
    "fin": true,
@@ -11520,17 +11135,6 @@
   },
   {
    "id": "db5-resize-removal-directive-vs-current-lock",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "dbwiring-qbo-customers-vendors-accounts-split-",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -11806,17 +11410,6 @@
   },
   {
    "id": "fh-unit-allocation-ui-view-missing",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "fin23-qbo-reconcile-modify-captures-harness-ex",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -12113,28 +11706,6 @@
    "pr": null
   },
   {
-   "id": "gated-blocks-misc-disp-wizard-wo-ent-audit-fh-",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "gated-blocks-usmca-launch-gate",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "global-column-resize-sort-parity-table-phase-a",
    "source": ".block-ready",
    "fin": true,
@@ -12256,29 +11827,7 @@
    "pr": null
   },
   {
-   "id": "import-5-qbo-import-ui",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "insurance-2-breadcrumb-desync",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "intercompany-trk-transp-consolidation-decision",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -12344,17 +11893,6 @@
    "pr": null
   },
   {
-   "id": "migrate-faro-to-rts",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "module-catalog-26-modules-unfinished-sweep",
    "source": ".block-ready",
    "fin": true,
@@ -12399,17 +11937,6 @@
    "pr": null
   },
   {
-   "id": "p1-analytics-systems",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "p1-apm",
    "source": ".block-ready",
    "fin": true,
@@ -12433,17 +11960,6 @@
   },
   {
    "id": "p1-compression",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "p1-dashboard-implementation",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -12685,17 +12201,6 @@
    "pr": null
   },
   {
-   "id": "phase8-audit165-analytics-general",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "public-audit-log-partitions-no-rls",
    "source": ".block-ready",
    "fin": true,
@@ -12730,17 +12235,6 @@
   },
   {
    "id": "qbo-realtime-webhook-sync",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "remediation-t4.1-duplicate-schema-consolidatio",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -12872,17 +12366,6 @@
    "pr": null
   },
   {
-   "id": "skill-update-additions-2026-07-03-verbatim-com",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "sweep-fix-17-27-fixture-names-and-pager",
    "source": ".block-ready",
    "fin": true,
@@ -12982,29 +12465,7 @@
    "pr": null
   },
   {
-   "id": "twice-daily-mandatory-checkin-compliance-featu",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "users-invited-status-distinct-from-active",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "users-par-1-permission-matrix",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -13105,10 +12566,106 @@
  ],
  "merged_prs": [
   {
+   "number": 2784,
+   "title": "fix(insurance): TypeCatalogAdmin §7 + Create type labels (punchlist 230)",
+   "mergedAt": "2026-07-20T02:55:51Z",
+   "branch": "ops/insurance-type-catalog-create-vocab"
+  },
+  {
+   "number": 2781,
+   "title": "fix(ci): factoring-balance JE dates use companyBusinessDate (UTC midnight flake)",
+   "mergedAt": "2026-07-20T01:48:48Z",
+   "branch": "ops/fix-factoring-balance-asof-flake"
+  },
+  {
+   "number": 2779,
+   "title": "fix(reports): sync fuel reconciliation unmatched tabs to URL",
+   "mergedAt": "2026-07-20T02:15:20Z",
+   "branch": "ops/fuel-recon-tab-url"
+  },
+  {
+   "number": 2778,
+   "title": "fix(dispatch): Close instead of Cancel Load on unsaved drawer (d-02)",
+   "mergedAt": "2026-07-20T02:53:10Z",
+   "branch": "ops/cancel-load-draft-close"
+  },
+  {
+   "number": 2777,
+   "title": "ops(fe): URL-sync anomaly alerts tab and severity filters",
+   "mergedAt": "2026-07-20T02:17:29Z",
+   "branch": "ops/anomaly-alerts-url-sync"
+  },
+  {
+   "number": 2775,
+   "title": "fix(alerts): sync Document Alerts tabs to ?tab= URL",
+   "mergedAt": "2026-07-20T02:10:22Z",
+   "branch": "ops/document-alerts-tab-url-v2"
+  },
+  {
+   "number": 2774,
+   "title": "fix(frontend): sync Drivers/Teams view to ?view= URL param",
+   "mergedAt": "2026-07-20T02:17:24Z",
+   "branch": "ops/drivers-teams-view-url"
+  },
+  {
+   "number": 2773,
+   "title": "fix(docs): thread selectedCompanyId into bare UploadModal callers",
+   "mergedAt": "2026-07-20T02:17:19Z",
+   "branch": "ops/docs-upload-company-scope"
+  },
+  {
+   "number": 2772,
+   "title": "fix(qbo): sync QBO Sync Status tabs to ?tab= URL",
+   "mergedAt": "2026-07-20T02:17:14Z",
+   "branch": "ops/qbo-sync-status-tab-url"
+  },
+  {
+   "number": 2771,
+   "title": "fix(cash-flow): sync Cash Flow tabs to ?tab= URL",
+   "mergedAt": "2026-07-20T02:17:10Z",
+   "branch": "ops/cash-flow-tab-url"
+  },
+  {
+   "number": 2770,
+   "title": "fix(home): sync Driver Hub tabs to ?tab= URL",
+   "mergedAt": "2026-07-20T02:17:05Z",
+   "branch": "ops/driver-hub-tab-url"
+  },
+  {
+   "number": 2767,
+   "title": "fix(safety): lock HOS create CTA as modal button",
+   "mergedAt": "2026-07-20T02:12:55Z",
+   "branch": "ops/hos-violation-link-label"
+  },
+  {
+   "number": 2766,
+   "title": "fix(legal): wire Legal matters list row deeplink",
+   "mergedAt": "2026-07-20T02:12:49Z",
+   "branch": "ops/legal-matters-row-deeplink"
+  },
+  {
+   "number": 2765,
+   "title": "fix(compliance): sync dashboard tabs to ?tab= URL",
+   "mergedAt": "2026-07-20T02:12:44Z",
+   "branch": "ops/compliance-tabs-url-sync"
+  },
+  {
+   "number": 2764,
+   "title": "fix(safety): IDVR row clickable → DVIR detail",
+   "mergedAt": "2026-07-20T02:17:00Z",
+   "branch": "ops/idvr-row-clickable"
+  },
+  {
    "number": 2763,
    "title": "fix(accounting): Customer + Vendor Detail URL sort persistence",
    "mergedAt": "2026-07-19T23:47:50Z",
    "branch": "fix/customer-vendor-detail-url-sort"
+  },
+  {
+   "number": 2762,
+   "title": "chore(trackers): purge 287 resolved/noise/duplicate audit-notes + refresh counts (2026-07-19)",
+   "mergedAt": "2026-07-20T02:37:29Z",
+   "branch": "chore/audit-note-purge-2026-07-19"
   },
   {
    "number": 2761,
@@ -16607,105 +16164,9 @@
    "title": "[WIRE] connect MaintenanceServicesCatalog to its declared route /lists/maintenance/services-catalog (no deletions)",
    "mergedAt": "2026-07-06T01:27:17Z",
    "branch": "feat/wire-maintenance-services-catalog"
-  },
-  {
-   "number": 2156,
-   "title": "[CI] fix orphan-guard .js/.jsx import resolver (drop false-positive live files from baseline)",
-   "mergedAt": "2026-07-06T01:03:58Z",
-   "branch": "chore/archive-dead-duplicate-components-batch1"
-  },
-  {
-   "number": 2155,
-   "title": "chore(ci): orphan/dead frontend component guard (baseline burn-down)",
-   "mergedAt": "2026-07-06T00:34:51Z",
-   "branch": "chore/orphan-component-guard"
-  },
-  {
-   "number": 2154,
-   "title": "fix(banking): rate-limit two categorization drill-through GET routes (CodeQL js/missing-rate-limiting, from #2150)",
-   "mergedAt": "2026-07-05T23:59:45Z",
-   "branch": "fix/banking-categorization-ratelimit-codeql"
-  },
-  {
-   "number": 2152,
-   "title": "[HOLD-FOR-JORGE] Business-Property Allocation — TX property-tax rendition (Compliance) + accrual/payment poster (flag OFF)",
-   "mergedAt": "2026-07-06T02:19:48Z",
-   "branch": "feat/business-property-tax-rendition"
-  },
-  {
-   "number": 2151,
-   "title": "[HOLD-FOR-JORGE] Settlement contract-terms engine — MPG/referral bonuses + late-delivery/fine deductions + immediate reimbursement (flag OFF)",
-   "mergedAt": "2026-07-06T01:00:43Z",
-   "branch": "feat/settlement-contract-terms"
-  },
-  {
-   "number": 2150,
-   "title": "[HOLD-FOR-JORGE] feat(banking): expense categorization driver/unit/trip + driver auto-deduction (fine→driver→settlement) + catalog linkage (item/category/payee/",
-   "mergedAt": "2026-07-05T22:39:17Z",
-   "branch": "feat/banking-categorize-driver-unit-trip-autodeduction"
-  },
-  {
-   "number": 2149,
-   "title": "feat(compliance): cross-module Compliance & Filings dashboard (IFTA/2290/IRP/permits/driver-compliance) + Home 'due' widget — aggregates all, drill-through, eac",
-   "mergedAt": "2026-07-05T22:00:26Z",
-   "branch": "feat/compliance-filings-dashboard"
-  },
-  {
-   "number": 2148,
-   "title": "[HOLD-FOR-JORGE] fix(integrity): add missing FKs — samsara_fault_code_history→unit/WO, D&A records→driver (+ border-crossing if not done by #2126)",
-   "mergedAt": "2026-07-05T22:03:53Z",
-   "branch": "fix/integrity-fk-orphan-closures"
-  },
-  {
-   "number": 2147,
-   "title": "[HOLD-FOR-JORGE] feat(legal): driver hire contract v2 — Mexican cross-border contractor framing + cabotage/C-TPAT/insurance/HOS/DVIR clauses + §40.27/New-Prime/",
-   "mergedAt": "2026-07-05T21:35:58Z",
-   "branch": "feat/driver-hire-contract-v2"
-  },
-  {
-   "number": 2146,
-   "title": "[HOLD-FOR-JORGE] feat(legal): owner-operator lease agreement template (FMCSA Part 376 truth-in-leasing, EN/ES, Texas law) — future use",
-   "mergedAt": "2026-07-05T21:39:39Z",
-   "branch": "feat/owner-operator-lease-template"
-  },
-  {
-   "number": 2145,
-   "title": "[HOLD-FOR-JORGE] feat(legal): bilingual (EN/ES) driver hiring contract template — escrow $25/trip, 90d return, at-fault deductible, 60d clawback, app/accident/t",
-   "mergedAt": "2026-07-05T22:02:10Z",
-   "branch": "feat/driver-hire-contract"
-  },
-  {
-   "number": 2144,
-   "title": "[HOLD-FOR-JORGE] fix(driver-finance): deduction consent satisfied by signed HIRE CONTRACT (unblocks deduction posting; no separate e-sign per lock)",
-   "mergedAt": "2026-07-05T21:36:03Z",
-   "branch": "fix/g11-1-hire-contract-consent"
-  },
-  {
-   "number": 2143,
-   "title": "[HOLD-FOR-JORGE] chore(flags): per-entity posting-flag go-live — USMCA + TRK ON (entity-restricted), TRANSP per-engine (applies after engines deploy)",
-   "mergedAt": "2026-07-05T21:36:06Z",
-   "branch": "chore/per-entity-posting-flag-golive"
-  },
-  {
-   "number": 2142,
-   "title": "[HOLD-FOR-JORGE] fix(accounting): close 4 GL-posting kill-switch bypasses — gate maintenance-bill / MVP-route / recurring-bill / customer-payment behind per-ent",
-   "mergedAt": "2026-07-05T21:36:08Z",
-   "branch": "feat/gl-killswitch-gate"
-  },
-  {
-   "number": 2141,
-   "title": "[HOLD-FOR-JORGE] feat(lease): FIN-22 operating-lease posting engine (ASC 842, TRK entity, flag OFF)",
-   "mergedAt": "2026-07-05T21:27:50Z",
-   "branch": "feat/fin22-lease-posting-routes-hold"
-  },
-  {
-   "number": 2140,
-   "title": "[HOLD-FOR-JORGE] feat(factoring): wire customer-payment poster + daily default-interest accrual (0.067%/day after day 35) + day-95 recourse auto-trigger (Faro c",
-   "mergedAt": "2026-07-05T21:16:12Z",
-   "branch": "feat/factoring-interest-recourse"
   }
  ],
- "merged_pr_total": 2630,
+ "merged_pr_total": 2646,
  "hold_for_jorge": [
   {
    "number": 2718,
