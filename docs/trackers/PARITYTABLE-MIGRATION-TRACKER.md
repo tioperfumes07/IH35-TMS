@@ -312,7 +312,7 @@ verify-step 1035.
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/components/maintenance/LaborTracker.tsx` | pending |
+| `apps/frontend/src/components/maintenance/LaborTracker.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/maintenance/PositionedPartPicker.tsx` | pending |
 
 ### components/reports (5)
@@ -894,3 +894,14 @@ Guard: `scripts/verify-trailer-reefer-uses-paritytable.mjs` via verify-step 1044
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/components/trailer-profile/TrailerReeferSection.tsx` | components/trailer-profile |
+
+## qbo-parity-a1 — LaborTracker (this PR)
+Maintenance WO labor entries grid was a hand-rolled `<table>`. Migrated to shared
+`ParityTable` (sort + resize + gear + row Stop/Rate/Remove actions) and added
+`ListErrorState` on entries query failure. Columns ID / Actor / Start / End / Min /
+Cost ¢ preserved 1:1; Clock in + manual book range unchanged. Guard:
+`scripts/verify-labor-tracker-uses-paritytable.mjs` via verify-step **1050**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/maintenance/LaborTracker.tsx` | components/maintenance |

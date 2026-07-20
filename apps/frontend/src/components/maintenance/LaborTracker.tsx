@@ -11,6 +11,8 @@ import {
 } from "../../api/woTimeEntries";
 import { listMaintenanceLaborCodes } from "../../api/maintenance";
 import { Button } from "../Button";
+import { ListErrorState } from "../ListErrorState";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { useToast } from "../Toast";
 import { useAuth } from "../../auth/useAuth";
 import { SelectCombobox } from "../shared/SelectCombobox";
@@ -140,51 +142,50 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
 
   const isOwnerAdmin = auth.user?.role === "Owner" || auth.user?.role === "Administrator";
 
-  const renderRow = (row: WoTimeEntryRow) => {
-    const id = String(row.id ?? "");
-    const started = row.started_at ? String(row.started_at) : "";
-    const ended = row.ended_at ? String(row.ended_at) : "open";
-    const mins = row.duration_minutes != null ? String(row.duration_minutes) : "—";
-    const cost = row.computed_labor_cost_cents != null ? String(row.computed_labor_cost_cents) : "—";
-    const rate = row.labor_rate_cents_per_hour != null ? String(row.labor_rate_cents_per_hour) : "";
-    return (
-      <tr key={id} className="border-b border-gray-100 text-[12px]">
-        <td className="py-2 pr-2 font-mono text-[11px]">{id.slice(0, 8)}…</td>
-        <td className="py-2 pr-2">{String(row.actor_kind ?? "")}</td>
-        <td className="py-2 pr-2 text-xs text-slate-600">{started}</td>
-        <td className="py-2 pr-2 text-xs text-slate-600">{ended}</td>
-        <td className="py-2 pr-2">{mins}</td>
-        <td className="py-2 pr-2">{cost}</td>
-        <td className="py-2 pr-2 text-right">
-          {!row.ended_at ? (
-            <Button type="button" size="sm" variant="secondary" onClick={() => void stopMut.mutateAsync(id)} disabled={stopMut.isPending}>
-              Stop
-            </Button>
-          ) : null}
-          {isOwnerAdmin ? (
-            <span className="ml-2 inline-flex gap-2">
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                onClick={() => {
-                  const next = window.prompt("Labor rate (cents/hour)", rate || "0");
-                  if (next === null) return;
-                  void patchMut.mutateAsync({ entryId: id, labor_rate_cents_per_hour: Number(next) });
-                }}
-                disabled={patchMut.isPending}
-              >
-                Rate
-              </Button>
-              <Button type="button" size="sm" variant="danger" onClick={() => void deleteMut.mutateAsync(id)} disabled={deleteMut.isPending}>
-                Remove
-              </Button>
-            </span>
-          ) : null}
-        </td>
-      </tr>
-    );
-  };
+  const columns = useMemo((): Array<ParityColumn<WoTimeEntryRow>> => {
+    return [
+      {
+        key: "id",
+        label: "ID",
+        sortable: true,
+        render: (row) => <span className="font-mono text-[11px]">{String(row.id ?? "").slice(0, 8)}…</span>,
+      },
+      {
+        key: "actor_kind",
+        label: "Actor",
+        sortable: true,
+        render: (row) => String(row.actor_kind ?? ""),
+      },
+      {
+        key: "started_at",
+        label: "Start",
+        sortable: true,
+        sortValue: (row) => (row.started_at ? Date.parse(String(row.started_at)) : 0),
+        render: (row) => (row.started_at ? String(row.started_at) : ""),
+      },
+      {
+        key: "ended_at",
+        label: "End",
+        sortable: true,
+        sortValue: (row) => (row.ended_at ? Date.parse(String(row.ended_at)) : Number.POSITIVE_INFINITY),
+        render: (row) => (row.ended_at ? String(row.ended_at) : "open"),
+      },
+      {
+        key: "duration_minutes",
+        label: "Min",
+        sortable: true,
+        render: (row) => (row.duration_minutes != null ? String(row.duration_minutes) : "—"),
+      },
+      {
+        key: "computed_labor_cost_cents",
+        label: "Cost ¢",
+        sortable: true,
+        render: (row) => (row.computed_labor_cost_cents != null ? String(row.computed_labor_cost_cents) : "—"),
+      },
+    ];
+  }, []);
+
+  const entriesErr = entriesQuery.error as { status?: number; message?: string } | null;
 
   return (
     <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm" data-testid="maint-labor-tracker">
@@ -270,22 +271,60 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
         {runningLabel}
       </div>
 
-      <div className="mt-4 overflow-auto" data-testid="maint-labor-entries-table">
-        <table className="min-w-full border-collapse text-left">
-          <thead className="text-[11px] uppercase tracking-wide text-slate-500">
-            <tr>
-              <th className="border-b border-gray-200 py-2 pr-2">ID</th>
-              <th className="border-b border-gray-200 py-2 pr-2">Actor</th>
-              <th className="border-b border-gray-200 py-2 pr-2">Start</th>
-              <th className="border-b border-gray-200 py-2 pr-2">End</th>
-              <th className="border-b border-gray-200 py-2 pr-2">Min</th>
-              <th className="border-b border-gray-200 py-2 pr-2">Cost ¢</th>
-              <th className="border-b border-gray-200 py-2 pr-2 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>{entries.map(renderRow)}</tbody>
-        </table>
-        {!entriesQuery.isLoading && entries.length === 0 ? <div className="py-3 text-xs text-slate-500">No time entries yet.</div> : null}
+      <div className="mt-4" data-testid="maint-labor-entries-table">
+        {entriesQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load labor entries"
+            status={typeof entriesErr?.status === "number" ? entriesErr.status : 0}
+            message={entriesErr?.message}
+            onRetry={() => void entriesQuery.refetch()}
+          />
+        ) : (
+          <ParityTable
+            storageKey="maint-labor-tracker-entries"
+            tableTestId="maint-labor-entries-parity"
+            columns={columns}
+            rows={entries}
+            rowKey={(row) => String(row.id ?? "")}
+            loading={entriesQuery.isLoading}
+            emptyText="No time entries yet."
+            initialPageSize={25}
+            pageSizeOptions={[10, 25, 50]}
+            rowActions={(row) => {
+              const id = String(row.id ?? "");
+              const rate = row.labor_rate_cents_per_hour != null ? String(row.labor_rate_cents_per_hour) : "";
+              return (
+                <span className="inline-flex flex-wrap justify-end gap-2">
+                  {!row.ended_at ? (
+                    <Button type="button" size="sm" variant="secondary" onClick={() => void stopMut.mutateAsync(id)} disabled={stopMut.isPending}>
+                      Stop
+                    </Button>
+                  ) : null}
+                  {isOwnerAdmin ? (
+                    <>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          const next = window.prompt("Labor rate (cents/hour)", rate || "0");
+                          if (next === null) return;
+                          void patchMut.mutateAsync({ entryId: id, labor_rate_cents_per_hour: Number(next) });
+                        }}
+                        disabled={patchMut.isPending}
+                      >
+                        Rate
+                      </Button>
+                      <Button type="button" size="sm" variant="danger" onClick={() => void deleteMut.mutateAsync(id)} disabled={deleteMut.isPending}>
+                        Remove
+                      </Button>
+                    </>
+                  ) : null}
+                </span>
+              );
+            }}
+          />
+        )}
       </div>
     </div>
   );
