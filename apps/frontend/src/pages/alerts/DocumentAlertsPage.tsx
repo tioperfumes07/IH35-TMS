@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   acknowledgeDocumentAlert,
   evaluateDocumentAlerts,
@@ -125,11 +125,24 @@ function InboxRow({
   );
 }
 
+type DocumentAlertsTab = "inbox" | "rules";
+
+function parseDocumentAlertsTab(raw: string | null): DocumentAlertsTab {
+  return raw === "rules" ? "rules" : "inbox";
+}
+
 export function DocumentAlertsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<"inbox" | "rules">("inbox");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = parseDocumentAlertsTab(searchParams.get("tab"));
+  const setTab = (next: DocumentAlertsTab) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "inbox") params.delete("tab");
+    else params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
 
   const inboxQuery = useQuery({
     queryKey: ["drivers", "document-alerts", "inbox", companyId],
