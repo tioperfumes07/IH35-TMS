@@ -124,6 +124,31 @@ export async function confirmInbound(
     [req.equipment_uuid, operatingCompanyId, req.to_driver_uuid]
   );
 
+  // Domain equipment activity log (0242 / biz-flow-8). event_type CHECK only allows
+  // Coupled|Uncoupled|Moved|StatusChange|MaintenanceStart|MaintenanceEnd|Note — use Moved
+  // for driver reassignment; from/to drivers live in notes (table has no driver columns).
+  const logRes = await client.query(
+    `
+      INSERT INTO mdata.equipment_log (
+        equipment_id, event_type, event_at, notes, created_by_user_id, updated_by_user_id
+      ) VALUES (
+        $1::uuid,
+        'Moved',
+        now(),
+        $2::text,
+        $3::uuid,
+        $3::uuid
+      )
+      RETURNING id::text
+    `,
+    [
+      req.equipment_uuid,
+      `Equipment transfer completed: transfer_request=${requestUuid} from_driver=${req.from_driver_uuid} to_driver=${req.to_driver_uuid} operating_company_id=${operatingCompanyId}`,
+      userId,
+    ]
+  );
+  const equipmentLogId = String(logRes.rows[0]?.id ?? "");
+
   await appendCrudAudit(
     client as never,
     userId,
@@ -154,10 +179,32 @@ export async function confirmInbound(
       equipment_uuid: req.equipment_uuid,
       assigned_driver_uuid: req.to_driver_uuid,
       operating_company_id: operatingCompanyId,
+      equipment_log_id: equipmentLogId || undefined,
     },
     "info",
     BLOCK_ID
   );
+
+  if (equipmentLogId) {
+    await appendCrudAudit(
+      client as never,
+      userId,
+      "mdata.equipment_log.created",
+      {
+        resource_id: equipmentLogId,
+        resource_type: "mdata.equipment_log",
+        id: equipmentLogId,
+        equipment_id: req.equipment_uuid,
+        event_type: "Moved",
+        transfer_request_uuid: requestUuid,
+        from_driver_uuid: req.from_driver_uuid,
+        to_driver_uuid: req.to_driver_uuid,
+        operating_company_id: operatingCompanyId,
+      },
+      "info",
+      BLOCK_ID
+    );
+  }
 
   // Confirm (completed) → notify initiator / from_driver.
   if (req.from_driver_uuid) {

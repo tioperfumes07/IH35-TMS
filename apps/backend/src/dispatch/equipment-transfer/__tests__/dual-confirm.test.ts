@@ -62,7 +62,8 @@ describe("equipment transfer dual-confirm service (GAP-37)", () => {
     expect(result.kind).toBe("driver_mismatch");
   });
 
-  it("confirmInbound completes transfer, reassigns equipment, and notifies from_driver", async () => {
+  it("confirmInbound completes transfer, reassigns equipment, writes equipment_log, notifies from_driver, and links audit chain", async () => {
+    const equipmentLogId = "ffffffff-ffff-4fff-8fff-ffffffffffff";
     const client = mockClient([
       [
         "FROM dispatch.equipment_transfer_requests",
@@ -77,6 +78,7 @@ describe("equipment transfer dual-confirm service (GAP-37)", () => {
       ],
       ["UPDATE dispatch.equipment_transfer_requests", [{ uuid: REQUEST_UUID }]],
       ["UPDATE mdata.equipment", []],
+      ["INSERT INTO mdata.equipment_log", [{ id: equipmentLogId }]],
       ["audit.append_event", []],
       ["INSERT INTO outbox.events", []],
       ["to_regclass('pwa.driver_notifications')", [{ ok: true }]],
@@ -88,8 +90,14 @@ describe("equipment transfer dual-confirm service (GAP-37)", () => {
 
     const equipmentUpdate = client.query.mock.calls.find((c) => String(c[0]).includes("UPDATE mdata.equipment"));
     expect(equipmentUpdate?.[1]).toEqual([EQUIPMENT, COMPANY, TO_DRIVER]);
+    const logInsert = client.query.mock.calls.find((c) => String(c[0]).includes("INSERT INTO mdata.equipment_log"));
+    expect(logInsert).toBeTruthy();
+    expect(logInsert?.[1]?.[0]).toBe(EQUIPMENT);
+    expect(String(logInsert?.[1]?.[1])).toContain(`from_driver=${FROM_DRIVER}`);
+    expect(String(logInsert?.[1]?.[1])).toContain(`to_driver=${TO_DRIVER}`);
     expect(client.query.mock.calls.some((c) => c[1]?.[0] === "dispatch.equipment_transfer.inbound_confirmed")).toBe(true);
     expect(client.query.mock.calls.some((c) => c[1]?.[0] === "dispatch.equipment_transfer.completed")).toBe(true);
+    expect(client.query.mock.calls.some((c) => c[1]?.[0] === "mdata.equipment_log.created")).toBe(true);
     const outboxCall = client.query.mock.calls.find((c) => String(c[0]).includes("INSERT INTO outbox.events"));
     expect(outboxCall?.[1]?.[0]).toBe("dispatch.equipment_transfer.confirmed");
     const outboxPayload = JSON.parse(String(outboxCall?.[1]?.[1] ?? "{}"));
