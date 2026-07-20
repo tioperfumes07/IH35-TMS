@@ -455,6 +455,19 @@ export function checker(sources) {
   requireExec("dbTest", "Dispatcher", "db_test_unauthorized_rls_write");
   requireExec("dbTest", "unbacked reserve_movements", "db_test_unbacked_reserve_movement");
   requireExec("dbTest", "incomplete_funding_je_artifacts", "db_test_incomplete_funding_reason");
+  // UTC-midnight flake: CI Postgres CURRENT_DATE is UTC; view as-of is America/Chicago.
+  // insertBalancedJe must default entry_date via companyBusinessDate(), never CURRENT_DATE.
+  requireExec("dbTest", "companyBusinessDate", "db_test_company_business_date_import");
+  requireExec(
+    "dbTest",
+    "JE entry_date defaults to companyBusinessDate",
+    "db_test_je_entry_date_asof_fixture_contract"
+  );
+  forbidExec(
+    "dbTest",
+    /COALESCE\(\s*\$4::date\s*,\s*CURRENT_DATE\s*\)/,
+    "db_test_must_not_default_je_entry_date_to_utc_current_date"
+  );
   forbidExec("dbTest", /INV-FBL-|INV-FBO-/, "db_test_must_not_seed_malformed_invoice_display_id");
   // Orphan must never assert status ok.
   forbidExec("dbTest", /orphan[\s\S]{0,400}status\)\.toBe\("ok"\)/, "db_test_must_not_accept_orphan_as_ok");
@@ -507,7 +520,10 @@ function createBadFixture(good) {
   bad.feApi =
     String(good.feApi) +
     "\noutstanding_cents: num(raw.reserveCents ?? raw.outstanding_cents),\n";
-  bad.dbTest = String(good.dbTest) + "\n`INV-FBL-${n()}`\n";
+  bad.dbTest =
+    String(good.dbTest).replace(/companyBusinessDate/g, "utcCurrentDateSomethingElse") +
+    "\n`INV-FBL-${n()}`\n" +
+    "\nCOALESCE($4::date, CURRENT_DATE)\n";
   bad.migration =
     String(good.migration)
       .replace(/FORCE ROW LEVEL SECURITY/g, "ENABLE ROW LEVEL SECURITY")
@@ -590,6 +606,8 @@ if (isDirectRun) {
       "routes_must_not_read_superseded_summary",
       "service_liability_role_missing",
       "db_test_must_not_seed_malformed_invoice_display_id",
+      "db_test_must_not_default_je_entry_date_to_utc_current_date",
+      "db_test_company_business_date_import",
       "fe_must_not_headline_reserve",
       "migration_must_not_settle_via_status",
       "migration_must_not_clamp_greatest",
