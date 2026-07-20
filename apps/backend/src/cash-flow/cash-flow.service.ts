@@ -194,15 +194,66 @@ export async function getDailyPrediction(
     basis: CONFIRMED_STATUSES.has(row.status) ? "Confirmed" : "Predicted",
   }));
 
-  // Driver pay accrued on delivery date.
-  // NOTE: driver earnings live in driver_finance.settlement_lines, which links
-  // to a settlement (settlement_id), NOT directly to a load — there is no
-  // settlement_lines.load_id in this schema. Per-load delivery-date accrual
-  // therefore needs the settlement→load mapping, which is not resolved here.
-  // Degrade gracefully (no driver-pay lines) rather than crash or post a wrong
-  // join. TODO(cash-flow): wire per-load driver pay via the settlement→load
-  // link once confirmed. Wrapped so any future query error is non-fatal.
+  // Driver pay cash-outflow predictions (0441-mod10-cashflow-driverpay-hardcoded-empty).
+  // Emit kind:"driver_pay" for settlements queued / sent_to_bank, or scheduled via
+  // bank_settle_date / period_end. net_pay is dollars (numeric(14,2)) → cents for UI.
+  // Read-only; no GL/posting. Wrapped so a driver_finance query error is non-fatal.
   const expenseItems: ExpenseLineItem[] = [];
+  try {
+    const driverPayRows = await client.query<{
+      id: string;
+      display_id: string | null;
+      driver_name: string;
+      load_id: string | null;
+      amount_cents: number;
+    }>(
+      `
+      SELECT
+        s.id::text,
+        s.display_id,
+        COALESCE(
+          NULLIF(TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, ''))), ''),
+          'Driver'
+        ) AS driver_name,
+        s.first_load_id::text AS load_id,
+        ROUND(COALESCE(s.net_pay, 0) * 100)::int AS amount_cents
+      FROM driver_finance.driver_settlements s
+      LEFT JOIN mdata.drivers d ON d.id = s.driver_id
+      WHERE s.operating_company_id = $1
+        AND s.reversed_at IS NULL
+        AND COALESCE(s.net_pay, 0) > 0
+        AND COALESCE(s.payment_state, 'unpaid') NOT IN ('cleared', 'manual_paid', 'bounced')
+        AND (
+          COALESCE(s.payment_state, 'unpaid') IN ('queued', 'sent_to_bank')
+          OR s.bank_settle_date IS NOT NULL
+          OR (
+            COALESCE(s.payment_state, 'unpaid') = 'unpaid'
+            AND s.status IN ('locked', 'final', 'approved', 'posted')
+          )
+        )
+        AND COALESCE(
+          s.bank_settle_date,
+          s.payment_sent_at::date,
+          s.payment_queued_at::date,
+          s.period_end
+        ) = $2::date
+      ORDER BY s.display_id ASC NULLS LAST, s.id ASC
+      `,
+      [operatingCompanyId, date]
+    );
+
+    for (const row of driverPayRows.rows) {
+      const sid = row.display_id?.trim() || row.id.slice(0, 8);
+      expenseItems.push({
+        label: `Driver Pay — ${sid} · ${row.driver_name}`,
+        amount_cents: row.amount_cents,
+        kind: "driver_pay",
+        load_id: row.load_id ?? undefined,
+      });
+    }
+  } catch {
+    // Degrade: omit driver_pay lines rather than fail the whole daily prediction.
+  }
 
   // Bills due on this date (AP bills: insurance, fuel, factoring, etc.).
   // accounting.bills already tracks paid_cents, so remaining is computed directly.
@@ -335,19 +386,44 @@ async function buildSevenDayStrip(
     d.setUTCDate(d.getUTCDate() + i);
     const dateStr = d.toISOString().slice(0, 10);
 
-    // Lightweight net: gross load income - remaining bills due, no opening balance.
+    // Lightweight net: gross load income - (bills due + driver pay outflows), no opening balance.
     const netRow = await client.query<{ income_cents: number; expense_cents: number }>(
       `
       SELECT
         COALESCE(${incomeSubquery}, 0)::int AS income_cents,
-        COALESCE((
-          SELECT SUM(GREATEST(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0), 0))
-          FROM accounting.bills b
-          WHERE b.operating_company_id = $1
-            AND b.due_date::date = $2::date
-            AND b.status <> 'paid'
-            AND ${notVoidedSql("b")}
-        ), 0)::int AS expense_cents
+        (
+          COALESCE((
+            SELECT SUM(GREATEST(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0), 0))
+            FROM accounting.bills b
+            WHERE b.operating_company_id = $1
+              AND b.due_date::date = $2::date
+              AND b.status <> 'paid'
+              AND ${notVoidedSql("b")}
+          ), 0)
+          +
+          COALESCE((
+            SELECT SUM(ROUND(COALESCE(s.net_pay, 0) * 100)::bigint)
+            FROM driver_finance.driver_settlements s
+            WHERE s.operating_company_id = $1
+              AND s.reversed_at IS NULL
+              AND COALESCE(s.net_pay, 0) > 0
+              AND COALESCE(s.payment_state, 'unpaid') NOT IN ('cleared', 'manual_paid', 'bounced')
+              AND (
+                COALESCE(s.payment_state, 'unpaid') IN ('queued', 'sent_to_bank')
+                OR s.bank_settle_date IS NOT NULL
+                OR (
+                  COALESCE(s.payment_state, 'unpaid') = 'unpaid'
+                  AND s.status IN ('locked', 'final', 'approved', 'posted')
+                )
+              )
+              AND COALESCE(
+                s.bank_settle_date,
+                s.payment_sent_at::date,
+                s.payment_queued_at::date,
+                s.period_end
+              ) = $2::date
+          ), 0)
+        )::int AS expense_cents
       `,
       [operatingCompanyId, dateStr]
     );
