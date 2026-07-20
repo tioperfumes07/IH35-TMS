@@ -1,26 +1,26 @@
 {
  "date": "2026-07-20",
- "generated_at_iso": "2026-07-20T17:40:27.270Z",
+ "generated_at_iso": "2026-07-20T22:59:55.069Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
   "NEEDS-VERIFY": 63,
-  "DONE": 639,
-  "AUDIT-NOTE": 429
+  "DONE": 647,
+  "AUDIT-NOTE": 425
  },
  "universe": {
-  "total_blocks_after_dedup": 1165,
+  "total_blocks_after_dedup": 1169,
   "by_source_after_dedup": {
-   ".block-ready": 991,
+   ".block-ready": 997,
    "program": 61,
    "enterprise-29": 29,
-   "accounting": 27,
+   "accounting": 25,
    "gap-spec": 57
   },
   "raw_file_counts": {
-   ".block-ready (*.json files)": 1392,
-   ".block-ready retired (dup/stale/superseded, excluded)": 400,
-   ".block-ready active (counted)": 992
+   ".block-ready (*.json files)": 1350,
+   ".block-ready retired (dup/stale/superseded, excluded)": 348,
+   ".block-ready active (counted)": 1002
   },
   "note": "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by UNIQUE block_id, EXCLUDING files with EXPLICIT retirement markers (_DUP/_STALE/_SUPERSEDED underscore suffixes, status superseded/duplicate/dup/stale, or superseded_by/duplicate_of). Hyphen descriptive …-stale/…-duplicate live defect IDs are NOT retired by filename alone. So the block count is neither the raw .block-ready file count nor inflated by duplicate/retired registrations."
  },
@@ -644,23 +644,25 @@
   },
   {
    "id": "BLOCK-02-DRIVER-ESCROW-DESIGN",
-   "source": "accounting",
+   "source": ".block-ready",
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "partial 5/6 artifact(s) on main — unverified",
-   "name": "BLOCK-02-DRIVER-ESCROW-DESIGN",
-   "pr": null
+   "evidence": "[verified 2026-07-20] NOT A VERDICT — anti-fake-green downgrade. Registering this block pointed allowed_files at canonic",
+   "name": "Driver escrow separation (escrow = LIABILITY, never an expense). Registered so its acceptance criteria become machine-ch",
+   "registered_on": null,
+   "pr": 2905
   },
   {
    "id": "block-22-driver-settlement-engine",
-   "source": "accounting",
+   "source": ".block-ready",
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "partial 3/4 artifact(s) on main — unverified",
-   "name": "block-22-driver-settlement-engine",
-   "pr": null
+   "evidence": "[verified 2026-07-20] NOT A VERDICT — anti-fake-green downgrade. Same cause: all signature files present on main auto-pr",
+   "name": "Driver settlement engine. Registered so its acceptance criteria become machine-checkable. SAME ROOT CAUSE as BLOCK-02: t",
+   "registered_on": null,
+   "pr": 2905
   },
   {
    "id": "C7-ACCT-SUBNAV-CHROME",
@@ -6789,6 +6791,17 @@
    "pr": 1916
   },
   {
+   "id": "qbo-parity-a1-accessorial-editor-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 file(s) on main",
+   "name": "Migrate AccessorialEditor charge grid from hand-rolled <table> to ParityTable; ListErrorState on catalog failure. Preser",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "qbo-parity-a1-activity-log-paritytable",
    "source": ".block-ready",
    "fin": true,
@@ -6833,6 +6846,17 @@
    "pr": 2898
   },
   {
+   "id": "qbo-parity-a1-catalog-table-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2906 merged 2026-07-20",
+   "name": "Migrate CatalogTable from hand-rolled <table> + BulkActionBar/TableSelection to shared ParityTable (sort/resize/gear/sel",
+   "registered_on": null,
+   "pr": 2906
+  },
+  {
    "id": "qbo-parity-a1-compliance-table-paritytable",
    "source": ".block-ready",
    "fin": true,
@@ -6866,6 +6890,17 @@
    "pr": 2881
   },
   {
+   "id": "qbo-parity-a1-driver-settlements-section-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 file(s) on main",
+   "name": "Migrate driver-profile SettlementsSection last-4-weeks grid to ParityTable. Preserve Week ending/Gross/Net + YTD tiles +",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "qbo-parity-a1-entity-audit-history-paritytable",
    "source": ".block-ready",
    "fin": true,
@@ -6888,6 +6923,17 @@
    "pr": 2883
   },
   {
+   "id": "qbo-parity-a1-freetime-detention-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 file(s) on main",
+   "name": "Migrate FreeTimeDetentionEditor terms history from hand-rolled <table> to shared ParityTable; ListErrorState on terms/hi",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "qbo-parity-a1-frequently-run-paritytable",
    "source": ".block-ready",
    "fin": true,
@@ -6897,6 +6943,50 @@
    "name": "Migrate FrequentlyRunTable (Reports Home) from hand-rolled <table> to shared ParityTable QBO grammar; preserve Report/Fi",
    "registered_on": null,
    "pr": 2864
+  },
+  {
+   "id": "qbo-parity-a1-ifta-step1-mileage-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 file(s) on main",
+   "name": "Migrate IFTA Step1MileageReview from hand-rolled <table> to shared ParityTable (sort/resize/gear). Preserve State / Aggr",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "qbo-parity-a1-ifta-step2-fuel-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2917 merged 2026-07-20",
+   "name": "Migrate Step2FuelReview (IFTA fuel review) from hand-rolled <table> to shared ParityTable QBO grammar; preserve State/Ag",
+   "registered_on": null,
+   "pr": 2917
+  },
+  {
+   "id": "qbo-parity-a1-labor-tracker-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #2913 merged 2026-07-20",
+   "name": "Migrate LaborTracker entries grid to ParityTable; ListErrorState on load failure. Preserve ID/Actor/Start/End/Min/Cost ¢",
+   "registered_on": null,
+   "pr": 2913
+  },
+  {
+   "id": "qbo-parity-a1-lane-detail-modal-paritytable",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 file(s) on main",
+   "name": "Migrate LaneDetailModal loads grid to ParityTable. Preserve Load/Date/Revenue/Driver pay/Fuel/Maint./Profit/Miles/Margin",
+   "registered_on": null,
+   "pr": null
   },
   {
    "id": "qbo-parity-a1-load-history-paritytable",
@@ -11046,50 +11136,6 @@
    "pr": null
   },
   {
-   "id": "audit20-dividend-tracking-system",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "audit23-royalty-tracking-system",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "audit24-franchise-tracking-system",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "audit25-fx-rate-hedging-translation",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "audit4-tax-return-automation",
    "source": ".block-ready",
    "fin": true,
@@ -12874,10 +12920,76 @@
  ],
  "merged_prs": [
   {
+   "number": 2938,
+   "title": "batch: 8 ParityTable migrations (integration — collapses the shared-tracker treadmill)",
+   "mergedAt": "2026-07-20T22:59:04Z",
+   "branch": "integration/paritytable-batch-8"
+  },
+  {
+   "number": 2922,
+   "title": "fix(reports): migrate CancellationsReportPage to ParityTable",
+   "mergedAt": "2026-07-20T22:35:40Z",
+   "branch": "fix/cancellations-report-paritytable"
+  },
+  {
+   "number": 2921,
+   "title": "fix(reports): BookingGapReport → ParityTable (verify-step 1057)",
+   "mergedAt": "2026-07-20T18:20:48Z",
+   "branch": "fix/booking-gap-report-paritytable"
+  },
+  {
+   "number": 2917,
+   "title": "fix(ifta): migrate Step2 fuel review to ParityTable",
+   "mergedAt": "2026-07-20T18:20:30Z",
+   "branch": "fix/ifta-step2-fuel-paritytable"
+  },
+  {
+   "number": 2916,
+   "title": "fix(ifta): migrate Step3 jurisdiction grid to ParityTable",
+   "mergedAt": "2026-07-20T18:02:29Z",
+   "branch": "fix/ifta-step3-jurisdiction-paritytable"
+  },
+  {
+   "number": 2914,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-20T18:05:04Z",
+   "branch": "chore/tracker-artifacts-sync-29764520776"
+  },
+  {
+   "number": 2913,
+   "title": "fix(maint): LaborTracker → ParityTable (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T18:02:21Z",
+   "branch": "fix/labor-tracker-paritytable"
+  },
+  {
+   "number": 2907,
+   "title": "docs(design): settlement double-pay — row lock + state-guarded UPDATE",
+   "mergedAt": "2026-07-20T18:02:12Z",
+   "branch": "design/settlement-double-pay-row-lock-state-guard"
+  },
+  {
+   "number": 2906,
+   "title": "fix(catalogs): CatalogTable → ParityTable (qbo-parity-a1)",
+   "mergedAt": "2026-07-20T22:35:25Z",
+   "branch": "fix/catalog-table-paritytable"
+  },
+  {
+   "number": 2905,
+   "title": "feat(registry): author real acceptance criteria for the 6 financial doc-source blocks",
+   "mergedAt": "2026-07-20T22:35:09Z",
+   "branch": "feat/task4-acceptance-criteria-6-financial-blocks"
+  },
+  {
    "number": 2903,
    "title": "fix(ci): land tracker-artifact refresh via PR instead of a direct push to main",
    "mergedAt": "2026-07-20T17:35:34Z",
    "branch": "fix/tracker-bot-pr-based-flow"
+  },
+  {
+   "number": 2902,
+   "title": "fix(ci): enforce tracker-artifact freshness in CI only, warn locally",
+   "mergedAt": "2026-07-20T18:00:46Z",
+   "branch": "fix/tracker-freshness-ci-only-enforcement"
   },
   {
    "number": 2898,
@@ -12970,6 +13082,12 @@
    "branch": "fix/mount-dead-compliance-routes-w3b-w4a"
   },
   {
+   "number": 2873,
+   "title": "chore(trackers): registry cleanup phase 1 — remove 56 duplicate/superseded/irrelevant blocks",
+   "mergedAt": "2026-07-20T22:35:17Z",
+   "branch": "chore/registry-cleanup-phase1-dedup"
+  },
+  {
    "number": 2869,
    "title": "fix(dispatch): AtRiskQueue ListErrorState + EntityLink load",
    "mergedAt": "2026-07-20T14:01:55Z",
@@ -13046,6 +13164,12 @@
    "title": "fix(ui): §7 palette financial ratchet to zero (0441-mod8)",
    "mergedAt": "2026-07-20T12:31:16Z",
    "branch": "fix/section7-palette-ratchet-batch3"
+  },
+  {
+   "number": 2855,
+   "title": "chore(deps): Bump the production-dependencies group across 1 directory with 14 updates",
+   "mergedAt": "2026-07-20T18:05:31Z",
+   "branch": "dependabot/npm_and_yarn/production-dependencies-8bcdaf814c"
   },
   {
    "number": 2854,
@@ -16394,87 +16518,9 @@
    "title": "Feat/qbo parity sweep batch2",
    "mergedAt": "2026-07-07T17:44:03Z",
    "branch": "feat/qbo-parity-sweep-batch2"
-  },
-  {
-   "number": 2275,
-   "title": "feat(ui): QBO-parity ParityTable sweep — batch 1 (Customers + dispatch/safety/compliance + vendors/customers)",
-   "mergedAt": "2026-07-07T15:24:31Z",
-   "branch": "feat/qbo-parity-table-sweep-clean"
-  },
-  {
-   "number": 2274,
-   "title": "fix(drawers): repoint NewAccountDrawerForm to canonical catalogs.accounts (gated, financial)",
-   "mergedAt": "2026-07-07T15:02:40Z",
-   "branch": "fix/drawer-splitbrain-account-financial"
-  },
-  {
-   "number": 2273,
-   "title": "fix(drawers): repoint vendor/service/class inline-create to canonical tables (split-brain)",
-   "mergedAt": "2026-07-07T15:02:24Z",
-   "branch": "fix/drawer-splitbrain-vendor-service-class"
-  },
-  {
-   "number": 2272,
-   "title": "PAR-FIX-1+2: ReferenceSelect QBO standard (first-row add) + inline-create split-brain fix",
-   "mergedAt": "2026-07-07T15:02:16Z",
-   "branch": "fix/par-referenceselect-qbo-standard-and-splitbrain"
-  },
-  {
-   "number": 2271,
-   "title": "EntityLink sweep 9: expense # (ExpensesListPage) + unit (GeofenceBreachesTab) + driver (ReturnToDuty RTD list)",
-   "mergedAt": "2026-07-07T08:08:24Z",
-   "branch": "feat/entity-link-sweep-9-final"
-  },
-  {
-   "number": 2270,
-   "title": "EntityLink drill-through: bill (VendorDetail A/P) + load (LaneDetailModal)",
-   "mergedAt": "2026-07-07T07:42:48Z",
-   "branch": "feat/entity-link-sweep-8-misc"
-  },
-  {
-   "number": 2269,
-   "title": "feat: EntityLink drill-through sweep — safety pages (driver UUID cells)",
-   "mergedAt": "2026-07-07T07:26:56Z",
-   "branch": "feat/entity-link-sweep-6-safety"
-  },
-  {
-   "number": 2268,
-   "title": "feat: EntityLink drill-through for asset_id (unit) in InsuranceClaimsTab",
-   "mergedAt": "2026-07-07T07:35:53Z",
-   "branch": "feat/entity-link-sweep-5-insurance"
-  },
-  {
-   "number": 2267,
-   "title": "feat: EntityLink sweep — maintenance module drill-through (WO, unit, driver, load)",
-   "mergedAt": "2026-07-07T07:16:12Z",
-   "branch": "feat/entity-link-sweep-4-maintenance"
-  },
-  {
-   "number": 2266,
-   "title": "feat: EntityLink drill-through for journal_entry_id in AccountRegister audit events",
-   "mergedAt": "2026-07-07T06:58:35Z",
-   "branch": "feat/entity-link-sweep-3-account-register"
-  },
-  {
-   "number": 2265,
-   "title": "feat: EntityLink sweep — InternalFinesPage driver + AbandonmentQueuePage load/driver",
-   "mergedAt": "2026-07-07T06:50:55Z",
-   "branch": "feat/entity-link-sweep-2"
-  },
-  {
-   "number": 2264,
-   "title": "feat: EntityLink sweep — safety/maintenance/reports/banking/register drill-through (11 files)",
-   "mergedAt": "2026-07-07T06:31:24Z",
-   "branch": "feat/entity-link-sweep-safety-reports-maintenance"
-  },
-  {
-   "number": 2263,
-   "title": "feat: BillDetailPage + /accounting/bills/:id route + EntityLink bill drill-through",
-   "mergedAt": "2026-07-07T06:03:33Z",
-   "branch": "feat/bill-detail-page-and-entity-link-bill"
   }
  ],
- "merged_pr_total": 2745,
+ "merged_pr_total": 2758,
  "hold_for_jorge": [
   {
    "number": 2718,
