@@ -1,6 +1,7 @@
 // CHAT-3 — office dispatch-chat API client. Mirrors the CHAT-2 backend
 // (apps/backend/src/chat/chat.routes.ts). Transport v1 = polling (react-query refetchInterval).
 import { apiRequest } from "./client";
+import { uploadFileToR2 } from "./docs";
 
 export type ChatThread = {
   id: string;
@@ -32,7 +33,23 @@ export type ChatMessage = {
   cash_advance_amount_cents?: number | null;
   ack_message_id?: string | null;
   acked_at?: string | null;
+  // Attachment enrichment (upload-then-commit):
+  attachment_id?: string | null;
+  attachment_r2_key?: string | null;
+  attachment_sha256?: string | null;
+  attachment_mime_type?: string | null;
+  attachment_size_bytes?: number | null;
+  attachment_doc_type?: "bol" | "pod" | "receipt" | "lumper" | "other" | null;
+  attachment_upload_completed_at?: string | null;
 };
+
+const CHAT_ATTACHMENT_MIME = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/heic",
+  "image/webp",
+  "application/pdf",
+]);
 
 export function newClientKey(): string {
   return typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `ck-${Date.now()}-${Math.floor(Math.random() * 1e9)}`;
@@ -42,6 +59,11 @@ export function newClientKey(): string {
 export async function contentSha256(body: string): Promise<string> {
   const data = new TextEncoder().encode(body);
   const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+export async function fileSha256(file: Blob): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
   return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
@@ -93,5 +115,91 @@ export function advanceChatReceipt(messageId: string, operating_company_id: stri
   return apiRequest<{ ok: true }>(`/api/v1/chat/messages/${messageId}/receipt`, {
     method: "POST",
     body: { operating_company_id, participant_id, state },
+  });
+}
+
+export function presignChatAttachment(
+  operating_company_id: string,
+  thread_id: string,
+  sha256: string,
+  mime_type: string,
+) {
+  return apiRequest<{ r2_key: string; url: string; expires_in_seconds: number; bucket: string }>(
+    "/api/v1/chat/attachments/presign",
+    {
+      method: "POST",
+      body: { operating_company_id, thread_id, sha256, mime_type },
+    },
+  );
+}
+
+export function commitChatAttachment(
+  operating_company_id: string,
+  args: {
+    thread_id: string;
+    client_key: string;
+    content_sha256: string;
+    r2_key: string;
+    sha256: string;
+    mime_type: string;
+    size_bytes: number;
+    body?: string | null;
+    doc_type?: "bol" | "pod" | "receipt" | "lumper" | "other" | null;
+  },
+) {
+  return apiRequest<{ message: ChatMessage; attachment: { id: string }; deduped: boolean }>(
+    "/api/v1/chat/attachments/commit",
+    {
+      method: "POST",
+      body: { operating_company_id, ...args },
+    },
+  );
+}
+
+export function getChatAttachmentDownloadUrl(attachmentId: string, operating_company_id: string) {
+  return apiRequest<{
+    attachment_id: string;
+    mime_type: string;
+    sha256: string;
+    url: string;
+    expires_in_seconds: number;
+  }>(
+    `/api/v1/chat/attachments/${attachmentId}/download-url?operating_company_id=${encodeURIComponent(operating_company_id)}`,
+  );
+}
+
+/**
+ * Upload-then-commit a chat attachment: sha256 → chat presign → R2 PUT (docs helper) → commit.
+ * Reuses the existing R2 PUT path; no new storage stack.
+ */
+export async function uploadChatAttachment(
+  operating_company_id: string,
+  thread_id: string,
+  file: File,
+  opts: { body?: string | null; doc_type?: "bol" | "pod" | "receipt" | "lumper" | "other" | null } = {},
+) {
+  const mime = (file.type || "").toLowerCase();
+  if (!CHAT_ATTACHMENT_MIME.has(mime)) {
+    throw new Error(`unsupported_mime_type:${mime || "unknown"}`);
+  }
+  if (file.size <= 0 || file.size > 26_214_400) {
+    throw new Error("invalid_size_bytes");
+  }
+  const sha256 = await fileSha256(file);
+  const clientKey = newClientKey();
+  const caption = opts.body?.trim() || file.name || (mime === "application/pdf" ? "Document" : "Photo");
+  const contentHash = await contentSha256(caption);
+  const presigned = await presignChatAttachment(operating_company_id, thread_id, sha256, mime);
+  await uploadFileToR2(presigned.url, file, mime);
+  return commitChatAttachment(operating_company_id, {
+    thread_id,
+    client_key: clientKey,
+    content_sha256: contentHash,
+    r2_key: presigned.r2_key,
+    sha256,
+    mime_type: mime,
+    size_bytes: file.size,
+    body: caption,
+    doc_type: opts.doc_type ?? "other",
   });
 }

@@ -7,9 +7,10 @@ import { z } from "zod";
 import { currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireDriverSession } from "../driver/auth.js";
-import { generatePresignedUploadUrl, isR2Configured } from "../storage/r2-client.js";
+import { generatePresignedUploadUrl, generatePresignedDownloadUrl, isR2Configured, verifyObjectExists } from "../storage/r2-client.js";
 import {
   getOrCreateLoadThread, listThreads, getThreadMessages, postMessage, advanceReceipt, attachmentR2Key,
+  commitAttachment, getAttachmentForDownload,
   type ChatSender,
 } from "./chat.service.js";
 
@@ -33,6 +34,17 @@ const presignSchema = ocSchema.extend({
   thread_id: z.string().uuid(),
   sha256: z.string().min(1).max(128),
   mime_type: z.enum(["image/jpeg", "image/png", "image/heic", "image/webp", "application/pdf"]),
+});
+const commitAttachmentSchema = ocSchema.extend({
+  thread_id: z.string().uuid(),
+  client_key: z.string().min(1).max(128),
+  content_sha256: z.string().min(1).max(128),
+  r2_key: z.string().min(1).max(512),
+  sha256: z.string().min(1).max(128),
+  mime_type: z.enum(["image/jpeg", "image/png", "image/heic", "image/webp", "application/pdf"]),
+  size_bytes: z.number().int().positive().max(26_214_400),
+  body: z.string().max(8000).nullable().optional(),
+  doc_type: z.enum(["bol", "pod", "receipt", "lumper", "other"]).nullable().optional(),
 });
 
 type Client = Parameters<Parameters<typeof withCompanyScope>[2]>[0];
@@ -110,6 +122,60 @@ export async function registerChatRoutes(app: FastifyInstance) {
     const r2Key = attachmentR2Key(p.data.operating_company_id, p.data.thread_id, p.data.sha256, ext);
     const presigned = await generatePresignedUploadUrl(r2Key, p.data.mime_type);
     return reply.send({ r2_key: r2Key, ...presigned });
+  });
+
+  // Upload-then-commit: client PUTs to the presigned URL first, then commits message + chat.attachments.
+  app.post("/api/v1/chat/attachments/commit", RL_WRITE, async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentAuthUser(req, reply); if (!user) return;
+    if (!isR2Configured()) return reply.code(503).send({ error: "storage_unavailable" });
+    const p = commitAttachmentSchema.safeParse(req.body ?? {}); if (!p.success) return validationError(reply, p.error);
+    const exists = await verifyObjectExists(p.data.r2_key);
+    if (!exists) return reply.code(409).send({ error: "upload_not_found_in_storage" });
+    try {
+      const out = await withCompanyScope(String(user.uuid), p.data.operating_company_id, async (client: Client) => {
+        const subject = await resolveEventSubject(client, p.data.thread_id);
+        const sender: ChatSender = { party_type: "office", office_user_id: String(user.uuid) };
+        return commitAttachment(client, {
+          thread_id: p.data.thread_id,
+          operating_company_id: p.data.operating_company_id,
+          sender,
+          client_key: p.data.client_key,
+          content_sha256: p.data.content_sha256,
+          r2_key: p.data.r2_key,
+          sha256: p.data.sha256,
+          mime_type: p.data.mime_type,
+          size_bytes: p.data.size_bytes,
+          body: p.data.body ?? null,
+          doc_type: p.data.doc_type ?? null,
+        }, subject);
+      });
+      return reply.send(out);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "commit_failed";
+      if (msg === "thread_not_found") return reply.code(404).send({ error: msg });
+      if (msg === "unsupported_mime_type" || msg === "invalid_size_bytes" || msg === "r2_key_mismatch") {
+        return reply.code(400).send({ error: msg });
+      }
+      throw err;
+    }
+  });
+
+  app.get("/api/v1/chat/attachments/:id/download-url", RL, async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentAuthUser(req, reply); if (!user) return;
+    if (!isR2Configured()) return reply.code(503).send({ error: "storage_unavailable" });
+    const p = ocSchema.safeParse(req.query ?? {}); if (!p.success) return validationError(reply, p.error);
+    const attachmentId = (req.params as { id: string }).id;
+    const att = await withCompanyScope(String(user.uuid), p.data.operating_company_id, (client: Client) =>
+      getAttachmentForDownload(client, attachmentId));
+    if (!att) return reply.code(404).send({ error: "attachment_not_found" });
+    const signed = await generatePresignedDownloadUrl(att.r2_key);
+    return reply.send({
+      attachment_id: att.id,
+      mime_type: att.mime_type,
+      sha256: att.sha256,
+      url: signed.url,
+      expires_in_seconds: signed.expires_in_seconds,
+    });
   });
 
   // ── Driver PWA ───────────────────────────────────────────────────────────
