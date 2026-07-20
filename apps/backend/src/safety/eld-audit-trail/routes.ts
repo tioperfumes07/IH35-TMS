@@ -8,6 +8,7 @@ import {
   getEditHistory,
   getRecentEditHistory,
 } from "./viewer.service.js";
+import { renderEldAuditPdf } from "./eld-audit-pdf-renderer.service.js";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 
 const companyQuerySchema = z.object({
@@ -62,6 +63,34 @@ export async function registerEldAuditTrailRoutes(app: FastifyInstance) {
       pdf_payload: buildDotAuditPdfPayload(history),
     });
   });
+
+  // Real PDF download for DOT (0441-mod12) — puppeteer bytes, not browser window.print().
+  app.get(
+    "/api/safety/eld/audit-trail/export.pdf",
+    { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      assertReadOnlySurface(req.method);
+      const user = authUser(req, reply);
+      if (!user) return;
+      const parsed = auditTrailQuerySchema.safeParse(req.query ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
+      }
+
+      const history = await withCompanyScope(user.uuid, parsed.data.operating_company_id, (client) =>
+        getEditHistory(client, parsed.data.operating_company_id, parsed.data.driver, parsed.data.from, parsed.data.to)
+      );
+      if (history.edits.length === 0) {
+        return reply.code(404).send({ error: "eld_audit_trail_empty", message: "No ELD edits in the selected period" });
+      }
+
+      const pdf = await renderEldAuditPdf(buildDotAuditPdfPayload(history));
+      return reply
+        .header("Content-Type", pdf.mimeType)
+        .header("Content-Disposition", `attachment; filename="${pdf.filename}"`)
+        .send(pdf.pdfBuffer);
+    }
+  );
 
   app.get("/api/safety/eld/audit-trail/driver/:uuid/recent", async (req, reply) => {
     assertReadOnlySurface(req.method);

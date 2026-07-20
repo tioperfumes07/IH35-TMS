@@ -1,14 +1,14 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { Download } from "lucide-react";
-import { apiRequest } from "../../../api/client";
+import { ApiError, apiRequest, resolveApiUrl } from "../../../api/client";
 import { listDrivers } from "../../../api/mdata";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { EldEditHistoryTimeline, type EldEditHistoryEntry } from "../../../components/safety/EldEditHistoryTimeline";
-import { formatDateUS, formatDateTimeUS } from "../../../lib/formatDate";
+import { useToast } from "../../../components/Toast";
 import { companyToday, addDaysIso } from "../../../lib/businessDate";
 
 type EldAuditTrailResponse = {
@@ -40,13 +40,47 @@ function defaultToDate() {
   return companyToday();
 }
 
+async function downloadEldAuditPdf(params: {
+  operatingCompanyId: string;
+  driverUuid: string;
+  from: string;
+  to: string;
+}) {
+  const qs = new URLSearchParams({
+    operating_company_id: params.operatingCompanyId,
+    driver: params.driverUuid,
+    from: params.from,
+    to: params.to,
+  });
+  const response = await fetch(resolveApiUrl(`/api/safety/eld/audit-trail/export.pdf?${qs.toString()}`), {
+    method: "GET",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    const isJson = response.headers.get("content-type")?.includes("application/json");
+    const payload = isJson ? await response.json() : await response.text();
+    throw new ApiError(response.status, payload);
+  }
+  const blob = await response.blob();
+  const disposition = response.headers.get("Content-Disposition") ?? "";
+  const match = /filename="([^"]+)"/.exec(disposition);
+  const filename = match?.[1] ?? `ELD_Edit_History_${params.to}.pdf`;
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
 export function EldAuditTrailViewer() {
   const { selectedCompanyId } = useCompanyContext();
+  const { pushToast } = useToast();
   const companyId = selectedCompanyId ?? "";
-  const printRef = useRef<HTMLDivElement>(null);
   const [driverUuid, setDriverUuid] = useState("");
   const [from, setFrom] = useState(defaultFromDate);
   const [to, setTo] = useState(defaultToDate);
+  const [exporting, setExporting] = useState(false);
 
   const driversQuery = useQuery({
     queryKey: ["mdata", "drivers", companyId],
@@ -80,51 +114,17 @@ export function EldAuditTrailViewer() {
   );
 
   const exportPdf = () => {
-    if (!historyQuery.data) return;
-    const popup = window.open("", "_blank", "noopener,noreferrer,width=900,height=700");
-    if (!popup) return;
-    const payload = historyQuery.data.pdf_payload;
-    const rows = payload.edits
-      .map(
-        (edit) => `
-          <tr>
-            <td>${formatDateTimeUS(edit.edited_at)} CT</td>
-            <td>${edit.field_name}</td>
-            <td>${edit.before_state ?? ""}</td>
-            <td>${edit.after_state ?? ""}</td>
-            <td>${edit.edited_by}</td>
-            <td>${edit.reason}</td>
-          </tr>
-        `
-      )
-      .join("");
-    popup.document.write(`
-      <html>
-        <head><title>${payload.title}</title></head>
-        <body>
-          <h1>${payload.title}</h1>
-          <p>Driver: ${payload.driver_name ?? payload.driver_uuid}</p>
-          <p>Period: ${formatDateUS(payload.period.from)} to ${formatDateUS(payload.period.to)}</p>
-          <p>Generated: ${formatDateTimeUS(payload.generated_at)} CT</p>
-          <p>${payload.fmcsa_notice}</p>
-          <table border="1" cellpadding="6" cellspacing="0" width="100%">
-            <thead>
-              <tr>
-                <th>Edited At</th>
-                <th>Field</th>
-                <th>Before</th>
-                <th>After</th>
-                <th>Edited By</th>
-                <th>Reason</th>
-              </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </body>
-      </html>
-    `);
-    popup.document.close();
-    setTimeout(() => popup.print(), 500);
+    if (!companyId || !driverUuid || !historyQuery.data?.edits.length) return;
+    setExporting(true);
+    void downloadEldAuditPdf({
+      operatingCompanyId: companyId,
+      driverUuid,
+      from,
+      to,
+    })
+      .then(() => pushToast("ELD audit PDF downloaded", "success"))
+      .catch((error: Error) => pushToast(error.message || "Failed to export ELD audit PDF", "error"))
+      .finally(() => setExporting(false));
   };
 
   if (!companyId) {
@@ -141,9 +141,14 @@ export function EldAuditTrailViewer() {
           { label: "ELD Audit Trail" },
         ]}
         actions={
-          <Button variant="secondary" onClick={exportPdf} disabled={!historyQuery.data?.edits.length}>
+          <Button
+            variant="secondary"
+            onClick={exportPdf}
+            disabled={!historyQuery.data?.edits.length || exporting}
+            data-testid="eld-audit-export-pdf"
+          >
             <Download className="mr-1 inline h-4 w-4" />
-            Export PDF for DOT
+            {exporting ? "Exporting…" : "Export PDF for DOT"}
           </Button>
         }
       />
@@ -184,7 +189,7 @@ export function EldAuditTrailViewer() {
         </div>
       </section>
 
-      <section ref={printRef} className="p-4 print:border-0">
+      <section className="p-4 print:border-0">
         {historyQuery.isLoading ? <p className="text-sm text-gray-500">Loading edit history…</p> : null}
         {driverUuid && !historyQuery.isLoading ? (
           historyQuery.data?.edits.length ? (
