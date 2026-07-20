@@ -21,15 +21,9 @@ sort, and the lock-account control — never drop or reorder.
 ## Rollup
 | Status | Count |
 | --- | --- |
-| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable + LoadHistoryTab + vehicle PlatesTable + vehicle ComplianceSection + DriverDaySummaryCard + StopReasoningTable + EntityAuditHistoryTab) | 23 |
+| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable + ActivityLogPage + NotificationRulesPanel + NotificationLogPanel + OperationsHistoryTable + AuditHistoryTab + FrequentlyRunTable + LoadHistoryTab + vehicle PlatesTable + vehicle ComplianceSection + DriverDaySummaryCard + StopReasoningTable + EntityAuditHistoryTab + AuditTrailPage) | 24 |
 | financial-hold (Jorge-gated) | 99 |
-| pending (non-financial, future batches) | 179 |
-| **hand-rolled total (original)** | **300** |
-| financial-hold (Jorge-gated) | 99 |
-| pending (non-financial, future batches) | 180 |
-| financial-hold (Jorge-gated) | 99 |
-| pending (non-financial, future batches) | 183 |
-| financial-hold (Jorge-gated) | 99 |
+| pending (non-financial, future batches) | 176 |
 | **hand-rolled total (original)** | **300** |
 
 > Note: ParityTable was already consumed by ~16 surfaces before this batch (not counted above — those were never hand-rolled).
@@ -447,7 +441,7 @@ verify-step 1035.
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/pages/audit/AuditEventsList.tsx` | pending |
-| `apps/frontend/src/pages/audit/AuditTrailPage.tsx` | pending |
+| `apps/frontend/src/pages/audit/AuditTrailPage.tsx` | migrated (qbo-parity-a1) |
 
 ### pages/banking (9) — financial-hold
 
@@ -866,4 +860,16 @@ Guard: `scripts/verify-driver-day-summary-uses-paritytable.mjs` via verify-step 
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/components/home/DriverDaySummaryCard.tsx` | components/home |
+
+## qbo-parity-a1 — AuditTrailPage (this PR)
+Universal spine audit trail was a hand-rolled `<table>` with a bare red outage line and
+manual expand rows. Migrated to shared `ParityTable` (sort + resize + gear +
+`renderExpanded` payload/correlation detail) and replaced the ad-hoc error with
+`ListErrorState` + Retry. Columns When / Event type / Actor / Entity / Source preserved
+1:1; server offset pagination preserved. Guard:
+`scripts/verify-audit-trail-uses-paritytable.mjs` via verify-step 1043.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/audit/AuditTrailPage.tsx` | pages/audit |
 

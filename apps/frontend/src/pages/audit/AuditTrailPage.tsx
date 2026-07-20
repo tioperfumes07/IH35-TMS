@@ -1,8 +1,10 @@
-import { Fragment, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listSpineEvents, type SpineEvent } from "../../api/audit";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 const PAGE_SIZE = 100;
 
@@ -50,6 +52,97 @@ function downloadCSV(events: SpineEvent[]) {
   URL.revokeObjectURL(url);
 }
 
+const COLUMNS: Array<ParityColumn<SpineEvent>> = [
+  {
+    key: "occurred_at",
+    label: "When",
+    sortable: true,
+    sortValue: (row) => new Date(row.occurred_at).getTime(),
+    render: (row) => <span className="whitespace-nowrap text-gray-700">{fmtDate(row.occurred_at)}</span>,
+  },
+  {
+    key: "event_type",
+    label: "Event type",
+    sortable: true,
+    render: (row) => <span className="font-mono text-gray-900">{row.event_type}</span>,
+  },
+  {
+    key: "actor_email",
+    label: "Actor",
+    sortable: true,
+    sortValue: (row) => row.actor_email ?? row.actor_user_id ?? "",
+    render: (row) => (
+      <span className="text-gray-600">
+        {row.actor_email ?? (row.actor_user_id ? `uid:${row.actor_user_id.slice(0, 8)}…` : "—")}
+      </span>
+    ),
+  },
+  {
+    key: "subject_type",
+    label: "Entity",
+    sortable: true,
+    sortValue: (row) => `${row.subject_type ?? ""}:${row.subject_id ?? ""}`,
+    render: (row) => (
+      <span className="text-gray-600">
+        {row.subject_type ?? "—"}
+        {row.subject_id ? <span className="ml-1 font-mono text-gray-400">{row.subject_id.slice(0, 8)}…</span> : null}
+      </span>
+    ),
+  },
+  {
+    key: "source_table",
+    label: "Source",
+    sortable: true,
+    sortValue: (row) => row.source_table ?? row.source ?? "",
+    render: (row) => {
+      const link = sourceLink(row);
+      if (link) {
+        return (
+          <a
+            href={link}
+            className="text-[#16A34A] underline hover:text-[#15803d]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {row.source_table}
+          </a>
+        );
+      }
+      return <span className="text-gray-400">{row.source_table ?? row.source ?? "—"}</span>;
+    },
+  },
+];
+
+function ExpandedEventDetail({ row }: { row: SpineEvent }) {
+  return (
+    <div className="grid gap-3 text-xs md:grid-cols-2">
+      <div>
+        <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Payload</div>
+        <pre className="max-h-48 overflow-auto rounded-sm border border-gray-100 bg-white p-2 text-[11px] leading-tight">
+          {JSON.stringify(row.payload, null, 2)}
+        </pre>
+      </div>
+      <div className="space-y-2">
+        {row.correlation_id ? (
+          <div>
+            <span className="font-semibold text-gray-500">Correlation ID: </span>
+            <span className="font-mono text-gray-700">{row.correlation_id}</span>
+          </div>
+        ) : null}
+        {row.source_reference_id ? (
+          <div>
+            <span className="font-semibold text-gray-500">Source ref: </span>
+            <span className="font-mono text-gray-700">{row.source_reference_id}</span>
+          </div>
+        ) : null}
+        <div>
+          <span className="font-semibold text-gray-500">Event ID: </span>
+          <span className="font-mono text-gray-700">{row.event_id}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function AuditTrailPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -64,7 +157,6 @@ export function AuditTrailPage() {
   const [toDate, setToDate] = useState("");
 
   const [applied, setApplied] = useState({ module: "", action: "", entityType: "", entityId: "", actorUserId: "", correlationId: "", from: "", to: "", offset: 0 });
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   const query = useQuery({
     queryKey: ["audit-trail", companyId, ...Object.values(applied)],
@@ -85,6 +177,8 @@ export function AuditTrailPage() {
     enabled: Boolean(companyId),
   });
 
+  const rows = useMemo(() => query.data?.events ?? [], [query.data?.events]);
+
   function applyFilters() {
     setApplied({ module, action, entityType, entityId, actorUserId, correlationId, from: fromDate, to: toDate, offset: 0 });
   }
@@ -95,15 +189,6 @@ export function AuditTrailPage() {
     setApplied({ module: "", action: "", entityType: "", entityId: "", actorUserId: "", correlationId: "", from: "", to: "", offset: 0 });
   }
 
-  function toggleExpand(id: string) {
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) { next.delete(id); } else { next.add(id); }
-      return next;
-    });
-  }
-
-  const rows = query.data?.events ?? [];
   const totalCount = query.data?.total_count ?? 0;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
   const currentPage = Math.floor(applied.offset / PAGE_SIZE) + 1;
@@ -159,70 +244,28 @@ export function AuditTrailPage() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        {query.isLoading && <div className="p-4 text-sm text-gray-500">Loading…</div>}
-        {query.isError && <div className="p-4 text-sm text-red-600">Failed to load audit trail.</div>}
-        {!query.isLoading && !query.isError && rows.length === 0 && (
-          <div className="p-4 text-sm text-gray-500">No events found.</div>
-        )}
-        {rows.length > 0 && (
-          <table className="w-full text-left text-xs">
-            <thead className="bg-gray-50 text-[10px] font-semibold uppercase tracking-wider text-gray-600">
-              <tr>
-                <th className="w-4 px-2 py-2" />
-                <th className="px-3 py-2">When</th>
-                <th className="px-3 py-2">Event type</th>
-                <th className="px-3 py-2">Actor</th>
-                <th className="px-3 py-2">Entity</th>
-                <th className="px-3 py-2">Source</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row: SpineEvent) => {
-                const link = sourceLink(row);
-                const open = expandedIds.has(row.event_id);
-                return (
-                  <Fragment key={row.event_id}>
-                    <tr className="cursor-pointer border-t border-gray-100 hover:bg-gray-50" onClick={() => toggleExpand(row.event_id)}>
-                      <td className="px-2 py-2 text-gray-400 select-none">{open ? "▾" : "▸"}</td>
-                      <td className="whitespace-nowrap px-3 py-2 text-gray-700">{fmtDate(row.occurred_at)}</td>
-                      <td className="px-3 py-2 font-mono text-gray-900">{row.event_type}</td>
-                      <td className="px-3 py-2 text-gray-600">{row.actor_email ?? (row.actor_user_id ? `uid:${row.actor_user_id.slice(0, 8)}…` : "—")}</td>
-                      <td className="px-3 py-2 text-gray-600">
-                        {row.subject_type ?? "—"}
-                        {row.subject_id ? <span className="ml-1 font-mono text-gray-400">{row.subject_id.slice(0, 8)}…</span> : null}
-                      </td>
-                      <td className="px-3 py-2">
-                        {link
-                          ? <a href={link} className="text-[#16A34A] underline hover:text-[#15803d]" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>{row.source_table}</a>
-                          : <span className="text-gray-400">{row.source_table ?? row.source ?? "—"}</span>}
-                      </td>
-                    </tr>
-                    {open && (
-                      <tr className="border-t border-gray-100 bg-gray-50">
-                        <td />
-                        <td colSpan={5} className="px-3 py-3">
-                          <div className="grid gap-3 text-xs md:grid-cols-2">
-                            <div>
-                              <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Payload</div>
-                              <pre className="max-h-48 overflow-auto rounded-sm border border-gray-100 bg-white p-2 text-[11px] leading-tight">{JSON.stringify(row.payload, null, 2)}</pre>
-                            </div>
-                            <div className="space-y-2">
-                              {row.correlation_id && <div><span className="font-semibold text-gray-500">Correlation ID: </span><span className="font-mono text-gray-700">{row.correlation_id}</span></div>}
-                              {row.source_reference_id && <div><span className="font-semibold text-gray-500">Source ref: </span><span className="font-mono text-gray-700">{row.source_reference_id}</span></div>}
-                              <div><span className="font-semibold text-gray-500">Event ID: </span><span className="font-mono text-gray-700">{row.event_id}</span></div>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </Fragment>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load audit trail"
+          status={0}
+          message={(query.error as Error)?.message ?? "Failed to load audit trail."}
+          onRetry={() => void query.refetch()}
+        />
+      ) : (
+        <div className="overflow-hidden rounded-sm border border-gray-200 bg-white p-2">
+          <ParityTable
+            rows={rows}
+            columns={COLUMNS}
+            rowKey={(row) => row.event_id}
+            loading={query.isLoading}
+            storageKey="audit-trail-page"
+            emptyText="No events found."
+            tableTestId="audit-trail-table"
+            rowTestId={(row) => `audit-trail-row-${row.event_id}`}
+            renderExpanded={(row) => <ExpandedEventDetail row={row} />}
+          />
+        </div>
+      )}
 
       {totalPages > 1 && (
         <div className="flex items-center gap-3 text-sm">
