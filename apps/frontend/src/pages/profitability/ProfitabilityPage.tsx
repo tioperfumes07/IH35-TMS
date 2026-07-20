@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ByLaneView } from "./ByLaneView";
 import { ByTypeView } from "./ByTypeView";
@@ -9,8 +10,28 @@ import { FilterBar } from "./FilterBar";
 
 type Tab = "lane" | "type" | "customer" | "load";
 
+const TABS: { id: Tab; label: string }[] = [
+  { id: "lane", label: "By Lane" },
+  { id: "type", label: "By Type" },
+  { id: "customer", label: "By Customer" },
+  { id: "load", label: "By Load" },
+];
+const TAB_IDS = new Set<string>(TABS.map((t) => t.id));
+
+export function parseProfitabilityTab(raw: string | null): Tab {
+  if (raw && TAB_IDS.has(raw)) return raw as Tab;
+  return "lane";
+}
+
 export function ProfitabilityPage() {
-  const [activeTab, setActiveTab] = useState<Tab>("lane");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = parseProfitabilityTab(searchParams.get("tab"));
+  const setActiveTab = (next: Tab) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "lane") params.delete("tab");
+    else params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
   const [filters, setFilters] = useState({
     dateFrom: "2026-05-01",
     dateTo: "2026-06-01",
@@ -18,13 +39,6 @@ export function ProfitabilityPage() {
     customerId: undefined as string | undefined,
     laneKey: undefined as string | undefined,
   });
-
-  const tabs: { id: Tab; label: string }[] = [
-    { id: "lane", label: "By Lane" },
-    { id: "type", label: "By Type" },
-    { id: "customer", label: "By Customer" },
-    { id: "load", label: "By Load" },
-  ];
 
   return (
     <div className="space-y-4">
@@ -36,7 +50,7 @@ export function ProfitabilityPage() {
 
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-6" aria-label="Profitability">
-          {tabs.map((tab) => {
+          {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
               <button
