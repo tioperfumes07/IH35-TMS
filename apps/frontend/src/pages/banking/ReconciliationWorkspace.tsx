@@ -4,11 +4,13 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import {
   completeReconciliationSession,
+  getReconciliationSessions,
   getReconciliationWorkspace,
   matchReconciliationTransaction,
   startReconciliationSession,
   unmatchReconciliationTransaction,
   type PlaidBankTransaction,
+  type ReconciliationSession,
 } from "../../api/banking";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -38,6 +40,33 @@ function candidateEntityKind(eventType: CandidateEvent["event_type"]) {
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+}
+
+function formatReconciledDate(iso: string | null | undefined) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+}
+
+/** Prior closed session for this account — beginning = its statement_balance_cents (QBO carry). */
+function priorReconciledSession(
+  completed: ReconciliationSession[],
+  bankAccountId: string,
+  periodStart: string | null | undefined
+): ReconciliationSession | null {
+  const forAccount = completed.filter((s) => s.bank_account_id === bankAccountId);
+  const beforePeriod = periodStart
+    ? forAccount.filter((s) => String(s.period_end ?? "") < String(periodStart))
+    : forAccount;
+  const pool = beforePeriod.length > 0 ? beforePeriod : forAccount;
+  if (pool.length === 0) return null;
+  return [...pool].sort((a, b) => {
+    const ta = a.reconciled_at ? Date.parse(a.reconciled_at) : 0;
+    const tb = b.reconciled_at ? Date.parse(b.reconciled_at) : 0;
+    if (tb !== ta) return tb - ta;
+    return String(b.period_end ?? "").localeCompare(String(a.period_end ?? ""));
+  })[0] ?? null;
 }
 
 function computeSummary(transactions: PlaidBankTransaction[], statementBalanceCents: number) {
@@ -101,6 +130,14 @@ export function ReconciliationWorkspacePage() {
     queryKey: ["banking", "reconciliation-workspace", sessionId, companyId],
     queryFn: () => getReconciliationWorkspace(sessionId, companyId),
     enabled: Boolean(sessionId && companyId),
+  });
+
+  // bnk-03: prior closed session supplies beginning balance + last-reconciled date
+  // (carry prior statement_balance_cents — no dedicated beginning column on sessions).
+  const sessionsQuery = useQuery({
+    queryKey: ["banking", "reconciliation-sessions", companyId],
+    queryFn: () => getReconciliationSessions(companyId),
+    enabled: Boolean(companyId),
   });
 
   useEffect(() => {
@@ -176,6 +213,35 @@ export function ReconciliationWorkspacePage() {
       session?.period_end
   );
 
+  const balanceHeader = useMemo(() => {
+    const bankId = session?.bank_account_id || effectiveBankAccountId;
+    if (!bankId) return null;
+    const prior = priorReconciledSession(
+      sessionsQuery.data?.completed_sessions ?? [],
+      bankId,
+      session?.period_start ?? (periodStart || undefined)
+    );
+    const endingCents =
+      session?.statement_balance_cents != null
+        ? Number(session.statement_balance_cents)
+        : statementBalanceInput != null
+          ? Math.round(Number(statementBalanceInput) * 100)
+          : null;
+    return {
+      beginningCents: prior?.statement_balance_cents != null ? Number(prior.statement_balance_cents) : 0,
+      endingCents,
+      lastReconciledAt: prior?.reconciled_at ?? null,
+    };
+  }, [
+    session?.bank_account_id,
+    session?.period_start,
+    session?.statement_balance_cents,
+    effectiveBankAccountId,
+    sessionsQuery.data?.completed_sessions,
+    periodStart,
+    statementBalanceInput,
+  ]);
+
   return (
     <div className="space-y-4">
       <PageHeader
@@ -206,6 +272,30 @@ export function ReconciliationWorkspacePage() {
           </div>
         }
       />
+
+      {balanceHeader ? (
+        <div
+          className="grid grid-cols-1 gap-3 rounded-sm border border-gray-200 bg-white px-4 py-3 sm:grid-cols-3"
+          data-testid="recon-balance-header"
+        >
+          <div>
+            <div className="text-[11px] uppercase tracking-wide text-gray-500">Beginning balance</div>
+            <div className="text-sm font-semibold text-gray-900">{money(balanceHeader.beginningCents)}</div>
+          </div>
+          <div>
+            <div className="text-[11px] uppercase tracking-wide text-gray-500">Ending balance</div>
+            <div className="text-sm font-semibold text-gray-900">
+              {balanceHeader.endingCents != null ? money(balanceHeader.endingCents) : "—"}
+            </div>
+          </div>
+          <div>
+            <div className="text-[11px] uppercase tracking-wide text-gray-500">Last reconciled</div>
+            <div className="text-sm font-semibold text-gray-900">
+              {formatReconciledDate(balanceHeader.lastReconciledAt)}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <PrintOrientationDialog
         open={printDialogOpen}
