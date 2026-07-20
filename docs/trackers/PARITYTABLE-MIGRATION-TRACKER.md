@@ -252,7 +252,7 @@ verify-step 1035.
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/components/customers/FreeTimeDetentionEditor.tsx` | pending |
+| `apps/frontend/src/components/customers/FreeTimeDetentionEditor.tsx` | migrated (qbo-parity-a1) |
 
 ### components/dispatch (2)
 
@@ -885,3 +885,14 @@ Guard: `scripts/verify-qbo-vendor-linkage-uses-paritytable.mjs` via verify-step 
 | --- | --- |
 | `apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx` | pages/admin |
 
+
+## qbo-parity-a1 — FreeTimeDetentionEditor (this PR)
+Customer Billing free-time/detention terms history was a hand-rolled `<table>`.
+Migrated to shared `ParityTable` (sort + resize + gear) and replaced bare red error
+lines with `ListErrorState` + Retry on terms and history query failure. Columns
+Recorded / Free Time / Rate / Currency / Approval preserved 1:1. Guard:
+`scripts/verify-freetime-detention-uses-paritytable.mjs` via verify-step **1046**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/customers/FreeTimeDetentionEditor.tsx` | components/customers |

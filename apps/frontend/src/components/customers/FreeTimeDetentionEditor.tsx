@@ -4,6 +4,8 @@ import { apiRequest } from "../../api/client";
 import { Button } from "../Button";
 import { MoneyInput } from "../forms/MoneyInput";
 import { DataPanel } from "../layout/DataPanel";
+import { ListErrorState } from "../ListErrorState";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 
 type CustomerFreeTimeTerms = {
   customer_uuid: string;
@@ -33,6 +35,39 @@ function formatTimestamp(value: string | null | undefined): string {
   if (Number.isNaN(date.getTime())) return "Not set";
   return date.toLocaleString();
 }
+
+const HISTORY_COLUMNS: Array<ParityColumn<CustomerTermsHistoryRow>> = [
+  {
+    key: "recorded_at",
+    label: "Recorded",
+    sortable: true,
+    sortValue: (row) => new Date(row.recorded_at).getTime(),
+    render: (row) => formatTimestamp(row.recorded_at),
+  },
+  {
+    key: "free_time_minutes",
+    label: "Free Time",
+    sortable: true,
+    render: (row) => row.free_time_minutes,
+  },
+  {
+    key: "detention_rate_per_hour",
+    label: "Rate",
+    sortable: true,
+    render: (row) => row.detention_rate_per_hour,
+  },
+  {
+    key: "detention_currency",
+    label: "Currency",
+    sortable: true,
+  },
+  {
+    key: "detention_requires_approval",
+    label: "Approval",
+    sortable: true,
+    render: (row) => (row.detention_requires_approval ? "Required" : "Not required"),
+  },
+];
 
 export function FreeTimeDetentionEditor(props: {
   customerUuid: string;
@@ -101,12 +136,21 @@ export function FreeTimeDetentionEditor(props: {
     );
   }, [detentionCurrency, detentionRatePerHour, detentionRequiresApproval, freeTimeMinutes, termsQuery.data]);
 
+  const historyColumns = useMemo(() => HISTORY_COLUMNS, []);
+  const historyErr = historyQuery.error as { status?: number; message?: string } | null;
+  const termsErr = termsQuery.error as { status?: number; message?: string } | null;
+
   return (
     <div className="grid gap-3 lg:grid-cols-2">
       <DataPanel title="Free Time + Detention Terms">
         {termsQuery.isLoading ? <p className="text-xs text-gray-500">Loading terms...</p> : null}
         {termsQuery.isError ? (
-          <p className="text-xs text-red-700">Failed to load terms. Retry from Billing tab refresh.</p>
+          <ListErrorState
+            title="Couldn't load free-time terms"
+            status={typeof termsErr?.status === "number" ? termsErr.status : 0}
+            message={termsErr?.message}
+            onRetry={() => void termsQuery.refetch()}
+          />
         ) : null}
         {termsQuery.data ? (
           <div className="space-y-2 text-sm">
@@ -173,37 +217,26 @@ export function FreeTimeDetentionEditor(props: {
 
       <DataPanel title="Terms History">
         {historyQuery.isLoading ? <p className="text-xs text-gray-500">Loading history...</p> : null}
-        {historyQuery.isError ? <p className="text-xs text-red-700">Failed to load history.</p> : null}
-        {historyQuery.data && historyQuery.data.length > 0 ? (
-          <div className="max-h-72 overflow-y-auto">
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-gray-200 text-gray-600">
-                  <th className="px-2 py-1.5 font-semibold">Recorded</th>
-                  <th className="px-2 py-1.5 font-semibold">Free Time</th>
-                  <th className="px-2 py-1.5 font-semibold">Rate</th>
-                  <th className="px-2 py-1.5 font-semibold">Currency</th>
-                  <th className="px-2 py-1.5 font-semibold">Approval</th>
-                </tr>
-              </thead>
-              <tbody>
-                {historyQuery.data.map((row) => (
-                  <tr key={row.uuid} className="border-b border-gray-100">
-                    <td className="px-2 py-1.5 text-gray-700">{formatTimestamp(row.recorded_at)}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{row.free_time_minutes}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{row.detention_rate_per_hour}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{row.detention_currency}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{row.detention_requires_approval ? "Required" : "Not required"}</td>
-                  </tr>
-                ))}
-              </tbody>
-              </table>
-            </div>
-          </div>
+        {historyQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load terms history"
+            status={typeof historyErr?.status === "number" ? historyErr.status : 0}
+            message={historyErr?.message}
+            onRetry={() => void historyQuery.refetch()}
+          />
         ) : null}
-        {historyQuery.data && historyQuery.data.length === 0 ? (
-          <p className="text-xs text-gray-500">No term changes captured yet.</p>
+        {historyQuery.data ? (
+          <ParityTable
+            storageKey="customer-freetime-detention-history"
+            tableTestId="customer-terms-history"
+            columns={historyColumns}
+            rows={historyQuery.data}
+            rowKey={(row) => row.uuid}
+            emptyText="No term changes captured yet."
+            initialPageSize={25}
+            pageSizeOptions={[10, 25, 50]}
+            loading={historyQuery.isLoading}
+          />
         ) : null}
       </DataPanel>
     </div>
