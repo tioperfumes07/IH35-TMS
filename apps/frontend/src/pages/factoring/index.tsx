@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { BatchWizard } from "./BatchWizard";
 import { FactorAdmin } from "./FactorAdmin";
 import { ReserveDashboard } from "./ReserveDashboard";
@@ -14,9 +14,22 @@ const SUBNAV: { id: TabId; label: string }[] = [
   { id: "factors", label: "Factors" },
   { id: "reserves", label: "Reserves" },
 ];
+const TAB_IDS = new Set<string>(SUBNAV.map((t) => t.id));
+
+export function parseFactoringIndexTab(raw: string | null): TabId {
+  if (raw && TAB_IDS.has(raw)) return raw as TabId;
+  return "submit_to_factor";
+}
 
 export function FactoringIndexPage() {
-  const [tab, setTab] = useState<TabId>("submit_to_factor");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = parseFactoringIndexTab(searchParams.get("tab"));
+  const setTab = (next: TabId) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "submit_to_factor") params.delete("tab");
+    else params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
 
   return (
     <div className="space-y-3">
