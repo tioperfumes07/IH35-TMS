@@ -9,8 +9,10 @@ import {
   getBankReconWorklist,
   getCoaAccounts,
   getPlaidBankAccounts,
+  getReconciliationSessions,
   manualBankReconMatch,
   rejectBankReconMatch,
+  type ReconciliationSession,
 } from "../../api/banking";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -22,6 +24,32 @@ import { useToast } from "../../components/Toast";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+}
+
+function formatReconciledDate(iso: string | null | undefined) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+}
+
+function priorReconciledSession(
+  completed: ReconciliationSession[],
+  bankAccountId: string,
+  periodStart: string | null | undefined
+): ReconciliationSession | null {
+  const forAccount = completed.filter((s) => s.bank_account_id === bankAccountId);
+  const beforePeriod = periodStart
+    ? forAccount.filter((s) => String(s.period_end ?? "") < String(periodStart))
+    : forAccount;
+  const pool = beforePeriod.length > 0 ? beforePeriod : forAccount;
+  if (pool.length === 0) return null;
+  return [...pool].sort((a, b) => {
+    const ta = a.reconciled_at ? Date.parse(a.reconciled_at) : 0;
+    const tb = b.reconciled_at ? Date.parse(b.reconciled_at) : 0;
+    if (tb !== ta) return tb - ta;
+    return String(b.period_end ?? "").localeCompare(String(a.period_end ?? ""));
+  })[0] ?? null;
 }
 
 type AutoMatchCandidate = BankReconWorklistPayload["auto_matched_candidates"][number];
@@ -69,6 +97,33 @@ export function BankReconciliationPage() {
     enabled: Boolean(selectedCompanyId && accountId && periodStart && periodEnd),
   });
 
+  // bnk-03: beginning = prior reconciled session's statement_balance_cents; last-reconciled from reconciled_at.
+  const sessionsQuery = useQuery({
+    queryKey: ["banking", "reconciliation-sessions", selectedCompanyId],
+    queryFn: () => getReconciliationSessions(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
+  });
+
+  const balanceHeader = useMemo(() => {
+    if (!accountId) return null;
+    const completed = sessionsQuery.data?.completed_sessions ?? [];
+    const open = sessionsQuery.data?.open_sessions ?? [];
+    const prior = priorReconciledSession(completed, accountId, periodStart || undefined);
+    const openForPeriod =
+      open.find(
+        (s) =>
+          s.bank_account_id === accountId &&
+          (!periodStart || String(s.period_start) === String(periodStart)) &&
+          (!periodEnd || String(s.period_end) === String(periodEnd))
+      ) ?? open.find((s) => s.bank_account_id === accountId);
+    return {
+      beginningCents: prior?.statement_balance_cents != null ? Number(prior.statement_balance_cents) : 0,
+      endingCents:
+        openForPeriod?.statement_balance_cents != null ? Number(openForPeriod.statement_balance_cents) : null,
+      lastReconciledAt: prior?.reconciled_at ?? null,
+    };
+  }, [accountId, periodStart, periodEnd, sessionsQuery.data?.completed_sessions, sessionsQuery.data?.open_sessions]);
+
   const selectedRow = useMemo(() => {
     const all = [...(worklistQuery.data?.unmatched_transactions ?? []), ...(worklistQuery.data?.auto_matched_candidates ?? [])];
     return all.find((row) => row.id === selectedTxId) ?? null;
@@ -113,6 +168,30 @@ export function BankReconciliationPage() {
         title="Bank Reconciliation"
         subtitle="Review unmatched transactions, accept/reject auto matches, and close reconciled periods."
       />
+
+      {balanceHeader ? (
+        <div
+          className="grid grid-cols-1 gap-3 rounded-sm border border-gray-200 bg-white px-4 py-3 sm:grid-cols-3"
+          data-testid="recon-balance-header"
+        >
+          <div>
+            <div className="text-[11px] uppercase tracking-wide text-gray-500">Beginning balance</div>
+            <div className="text-sm font-semibold text-gray-900">{money(balanceHeader.beginningCents)}</div>
+          </div>
+          <div>
+            <div className="text-[11px] uppercase tracking-wide text-gray-500">Ending balance</div>
+            <div className="text-sm font-semibold text-gray-900">
+              {balanceHeader.endingCents != null ? money(balanceHeader.endingCents) : "—"}
+            </div>
+          </div>
+          <div>
+            <div className="text-[11px] uppercase tracking-wide text-gray-500">Last reconciled</div>
+            <div className="text-sm font-semibold text-gray-900">
+              {formatReconciledDate(balanceHeader.lastReconciledAt)}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-5">
         <SelectCombobox value={accountId} onChange={(event) => setAccountId(event.target.value)} className="text-sm">
