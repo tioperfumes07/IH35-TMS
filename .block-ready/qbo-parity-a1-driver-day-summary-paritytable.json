@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-driver-day-summary-paritytable",
+  "branch": "fix/driver-day-summary-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable + ListErrorState)",
+  "phase": "OPS-FE",
+  "task": "Migrate home DriverDaySummaryCard from hand-rolled <table> + bare error banner to shared ParityTable (sort/resize/gear) + ListErrorState. Preserve Driver/Miles/On-duty hrs/Fuel stops/On-time/Late + DatePicker + no-HOS empty copy + on-time/late colors. Guard + verify-step 1038 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + qbo-parity-a1",
+  "source_file": "qbo-parity-a1-driver-day-summary-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-driver-day-summary-paritytable.json",
+    "apps/frontend/src/components/home/DriverDaySummaryCard.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-driver-day-summary-uses-paritytable.mjs",
+    "scripts/verify-steps/1038-verify-driver-day-summary-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "DriverDaySummaryCard.tsx uses ParityTable (no hand-rolled <table>/<thead>); ListErrorState on query failure; columns Driver/Miles/On-duty hrs/Fuel stops/On-time/Late + storageKey=home-driver-day-summary + tableTestId=home-driver-day-summary-table + DatePicker + no-HOS empty copy + emerald/amber colors preserved; verify-driver-day-summary-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1038 wired (Rule 17); tracker marks DriverDaySummaryCard migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 — DriverDaySummaryCard surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17). verify-step 1038 (≥1036 free; avoids open #2865-2870/#2872-2876/#2855 and #2879/#2880)."
+}
