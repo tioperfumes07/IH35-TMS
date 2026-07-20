@@ -175,17 +175,6 @@ Guard: `scripts/verify-load-history-tab-uses-paritytable.mjs` via verify-step 10
 | --- | --- |
 | `apps/frontend/src/components/drivers/LoadHistoryTab.tsx` | components/drivers |
 
-## qbo-parity-a1 — DriverDaySummaryCard (home)
-Home "Driver day-summaries" grid was a hand-rolled `<table>` with a bare red outage
-banner. Migrated to shared `ParityTable` (sort + resize + gear) and replaced the
-ad-hoc error with `ListErrorState` + Retry. Columns Driver / Miles / On-duty hrs /
-Fuel stops / On-time / Late preserved 1:1; DatePicker + no-HOS empty copy preserved.
-Guard: `scripts/verify-driver-day-summary-uses-paritytable.mjs` via verify-step 1038.
-
-| File | Module |
-| --- | --- |
-| `apps/frontend/src/components/home/DriverDaySummaryCard.tsx` | components/home |
-
 ## Remaining hand-rolled inventory (by module)
 
 ### components/DataTable.tsx (1)
