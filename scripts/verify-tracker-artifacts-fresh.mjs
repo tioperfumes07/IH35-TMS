@@ -19,6 +19,24 @@
 // commit timestamps can't be trusted, so the guard DEGRADES TO PASS rather than
 // false-fail. Tune the window with TRACKER_ARTIFACT_MAX_LAG_SEC.
 //
+// ENFORCEMENT IS CI-ONLY (2026-07-20 root-cause fix)
+// ----------------------------------------------------------------------------
+// This is a TIME-BASED guard: it fails on wall-clock drift of a bot-maintained
+// artifact, NOT on anything in the pushing developer's diff. It was reachable
+// from `verify:static` (which runs every scripts/verify-*.mjs and gates any
+// guard referenced by a workflow), so once the sync bot stalled, EVERY local
+// push in the repo failed — on a condition no developer could fix and that
+// their change did not cause. That is a repo-wide time bomb, and it drove
+// reflexive `--no-verify` pushes, which is a far worse outcome than the
+// staleness it was policing.
+//
+// Fix: enforcement (non-zero exit) happens ONLY in CI, where the artifact's
+// freshness is actually actionable and where the standards make CI the
+// authoritative gate. Locally the SAME check still runs and still prints the
+// SAME staleness report — as a WARNING, exit 0. The guard is not weakened:
+// locked-guards.yml still hard-fails on stale artifacts in CI. Override with
+// TRACKER_ARTIFACT_ENFORCE=1 (force enforce) or =0 (force warn-only).
+//
 // Self-test:  node scripts/verify-tracker-artifacts-fresh.mjs --selftest
 // LINKAGE: N/A (reporting/enforcement infra). Additive only.
 // ============================================================================
@@ -45,6 +63,22 @@ const MAX_LAG_SEC = Number(process.env.TRACKER_ARTIFACT_MAX_LAG_SEC) || DEFAULT_
 export function isStale(reconTs, blockTs, maxLagSec) {
   if (reconTs == null || blockTs == null) return false;
   return blockTs - reconTs > maxLagSec;
+}
+
+/**
+ * Is a detected staleness a hard FAIL (exit 1) or a warning (exit 0)?
+ * Pure + unit-tested by --selftest.
+ *
+ * CI  → enforce. Freshness is actionable there and CI is the authoritative gate.
+ * local → warn. A developer cannot fix bot-artifact drift, and blocking their
+ *         unrelated push only manufactures `--no-verify` habits.
+ * TRACKER_ARTIFACT_ENFORCE explicitly overrides either way ("1"/"0").
+ */
+export function shouldEnforce(env = process.env) {
+  const override = env.TRACKER_ARTIFACT_ENFORCE;
+  if (override === "1") return true;
+  if (override === "0") return false;
+  return Boolean(env.CI || env.GITHUB_ACTIONS);
 }
 
 function git(args) {
@@ -106,6 +140,13 @@ if (process.argv.includes("--selftest")) {
     ["boundary (exactly maxLag) → not stale", isStale(1000 * H, 1012 * H, 12 * H) === false],
     ["null reconTs → degrade to not stale", isStale(null, 1020 * H, 12 * H) === false],
     ["null blockTs → degrade to not stale", isStale(1000 * H, null, 12 * H) === false],
+    // Enforcement policy (the 2026-07-20 CI-only fix) — staleness DETECTION is unchanged;
+    // only the exit code differs by environment, so the guard cannot be silently defanged in CI.
+    ["CI=true → enforce", shouldEnforce({ CI: "true" }) === true],
+    ["GITHUB_ACTIONS=true → enforce", shouldEnforce({ GITHUB_ACTIONS: "true" }) === true],
+    ["local (no CI env) → warn only", shouldEnforce({}) === false],
+    ["explicit ENFORCE=1 locally → enforce", shouldEnforce({ TRACKER_ARTIFACT_ENFORCE: "1" }) === true],
+    ["explicit ENFORCE=0 in CI → warn only", shouldEnforce({ CI: "true", TRACKER_ARTIFACT_ENFORCE: "0" }) === false],
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
@@ -121,8 +162,18 @@ const isMainModule = process.argv[1] && path.resolve(process.argv[1]) === fileUR
 if (isMainModule) {
   const failures = run();
   if (failures.length) {
-    console.error("verify:tracker-artifacts-fresh FAIL:");
-    for (const f of failures) console.error("  ✗ " + f);
-    process.exit(1);
+    const enforcing = shouldEnforce();
+    if (enforcing) {
+      console.error("verify:tracker-artifacts-fresh FAIL:");
+      for (const f of failures) console.error("  ✗ " + f);
+      process.exit(1);
+    }
+    // Same report, no exit code. CI (locked-guards.yml) remains the hard gate.
+    console.warn("verify:tracker-artifacts-fresh WARN (local; CI enforces):");
+    for (const f of failures) console.warn("  ! " + f);
+    console.warn(
+      "  → Not blocking this push: bot-artifact staleness is not caused by your change.\n" +
+        "    Set TRACKER_ARTIFACT_ENFORCE=1 to make this a hard failure locally."
+    );
   }
 }
