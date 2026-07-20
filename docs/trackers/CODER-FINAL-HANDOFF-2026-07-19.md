@@ -685,6 +685,8 @@ Merged frontend(self): #2739-#2746,#2734,#2737,#2749-#2758(sort),CI #2747/#2748,
 - `qbo_remote_counts`: FROZEN since **2026-06-03** (3 rows, vendors only) — RECON-COLLECTOR #1 is real.
 - `recon_runs`: NOT fully dark (131 rows; newest 2026-07-20; includes `am_bank_count` 2026-07-19) — do not claim all recon is off.
 
+**OWNER-APPROVED 2026-07-19** — Jorge approved the D scope + priority order per GUARD recommendation. Per-item diff+SQL gate (§1.4) still stands before each merge (not a deferral — company protection). **Convergence update:** `0519-at2` DB-enforced SoD is DEFER-WITH-TRIGGER (build only when a lender/auditor/insurer forces it OR a 2nd approver exists — single-user-lockout risk), NOT build-now #3; promote flow5 into the top tier. Execution should start in a FRESH session (each D item is financial-cluster).
+
 - #1 PHASE2_RECON-COLLECTOR unfreeze — the twice-daily reconciliation IS the parallel-books safety net; if frozen (qbo_remote_counts frozen 2026-06-03), safety is dark NOW. Fix first.
 - #2 dip-mor pre/post-petition A/P split — Ch.11 MOR legal requirement (ties to TRK 6/5/25 & TRANSP 10/3/25 petition dates).
 - #3 0519-at2 DB-enforced SoD — WITH break-glass / second-approver (a hard maker≠checker would lock out the sole approver). GUARD note.
