@@ -29,8 +29,12 @@ export function computeFailures(files) {
   if (/from ["'].*PartsInventoryTable["']/.test(assignments) || /listPartsInventory/.test(assignments)) {
     errors.push("InventoryAssignmentsPage must not use PartsInventoryTable / listPartsInventory (Purchase History twin)");
   }
-  if (!/listPartsInventory/.test(purchases) || !/PartsInventoryTable/.test(purchases)) {
-    errors.push("InventoryPurchasesPage must keep stock-list Purchase History (never delete)");
+  // Purchases door stays; must NOT twin stock (0441-mod13 / HOLD-INVENTORY-PURCHASE-HISTORY-SOR).
+  if (/\blistPartsInventory\b/.test(purchases) || /<PartsInventoryTable\b/.test(purchases) || /from ["'][^"']*PartsInventoryTable["']/.test(purchases)) {
+    errors.push("InventoryPurchasesPage must not twin stock via listPartsInventory / PartsInventoryTable");
+  }
+  if (!/InventoryPurchasesPage|Purchase History|inventory-purchases-honest-empty|not yet tracked/i.test(purchases)) {
+    errors.push("InventoryPurchasesPage door must remain (honest empty / Purchase History label)");
   }
   if (!/listPartsAssignments/.test(assignments) || !/parts-assignments/.test(assignments)) {
     errors.push("InventoryAssignmentsPage must load listPartsAssignments / parts-assignments SoR");
@@ -54,18 +58,23 @@ function selftest() {
       <EntityLink kind="unit" id={r.unit_id} />
     `,
     purchases: `
-      import { listPartsInventory } from "../../api/...";
-      <PartsInventoryTable />
-      export function InventoryPurchasesPage() { /* Purchase History */ }
+      export function InventoryPurchasesPage() {
+        return <section data-testid="inventory-purchases-honest-empty">not yet tracked</section>;
+      }
     `,
   };
   const badTwin = {
     ...good,
     assignments: `import { listPartsInventory } from "x"; import { PartsInventoryTable } from "y";`,
   };
+  const badPurchasesTwin = {
+    ...good,
+    purchases: `import { listPartsInventory } from "x"; <PartsInventoryTable /> export function InventoryPurchasesPage() {}`,
+  };
   const cases = [
     { name: "honest assignments", input: good, expectPass: true },
     { name: "assignments twin of purchases", input: badTwin, expectPass: false },
+    { name: "purchases stock twin", input: badPurchasesTwin, expectPass: false },
   ];
   let ok = true;
   for (const c of cases) {
