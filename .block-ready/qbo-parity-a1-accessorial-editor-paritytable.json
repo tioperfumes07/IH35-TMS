@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-accessorial-editor-paritytable",
+  "branch": "fix/accessorial-editor-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable + ListErrorState)",
+  "phase": "OPS-FE",
+  "task": "Migrate AccessorialEditor charge grid from hand-rolled <table> to ParityTable; ListErrorState on catalog failure. Preserve Code/Description/Amount/Taxable + Create charge + seeds + Remove. Guard verify-step 1047 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + qbo-parity-a1",
+  "source_file": "qbo-parity-a1-accessorial-editor-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-accessorial-editor-paritytable.json",
+    "apps/frontend/src/components/dispatch/AccessorialEditor.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-accessorial-editor-uses-paritytable.mjs",
+    "scripts/verify-steps/1047-verify-accessorial-editor-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "AccessorialEditor uses ParityTable (no hand-rolled table); ListErrorState on catalog failure; columns + Create charge preserved; verify-step 1047; tracker append."
+    }
+  ],
+  "note": "GATED: no. verify-step 1047. Rule 17."
+}

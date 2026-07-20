@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { additionalChargesCatalogClient } from "../../api/catalogs-dispatch";
 import { SelectCombobox } from "../shared/SelectCombobox";
 import { MoneyInput } from "../forms/MoneyInput";
+import { ListErrorState } from "../ListErrorState";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import {
   createEmptyAccessorialRow,
   seedAccessorialRow,
@@ -92,6 +94,72 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
     onRowsChange(rows.filter((row) => row.id !== id));
   }
 
+  const columns = useMemo((): Array<ParityColumn<AccessorialRow>> => {
+    return [
+      {
+        key: "code",
+        label: "Code",
+        sortable: true,
+        render: (row) => (
+          <SelectCombobox
+            value={row.code}
+            onChange={(event) => handleCodeChange(row.id, event.target.value)}
+            className="h-7 w-full min-w-28 text-xs"
+          >
+            <option value="">{catalogQuery.isLoading ? "Loading codes…" : "Select code"}</option>
+            {catalogOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </SelectCombobox>
+        ),
+      },
+      {
+        key: "description",
+        label: "Description",
+        sortable: true,
+        render: (row) => (
+          <input
+            type="text"
+            value={row.description}
+            onChange={(event) => onRowsChange(updateRow(rows, row.id, { description: event.target.value }))}
+            className="h-7 w-full rounded-sm border border-gray-300 px-2 text-xs"
+          />
+        ),
+      },
+      {
+        key: "amount_cents",
+        label: "Amount ($)",
+        sortable: true,
+        cellClass: "text-right",
+        render: (row) => (
+          <MoneyInput
+            valueCents={row.amount_cents}
+            onChangeCents={(c) => onRowsChange(updateRow(rows, row.id, { amount_cents: Math.max(0, c ?? 0) }))}
+            className="ml-auto w-24"
+            ariaLabel="Accessorial amount"
+          />
+        ),
+      },
+      {
+        key: "taxable",
+        label: "Taxable",
+        sortable: true,
+        cellClass: "text-center",
+        render: (row) => (
+          <input
+            type="checkbox"
+            checked={row.taxable}
+            onChange={(event) => onRowsChange(updateRow(rows, row.id, { taxable: event.target.checked }))}
+          />
+        ),
+      },
+    ];
+  }, [catalogOptions, catalogQuery.isLoading, onRowsChange, rows]);
+
+  const catalogErr = catalogQuery.error as { status?: number; message?: string } | null;
+
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
@@ -117,71 +185,30 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
         </span>
       </div>
 
-      {rows.length === 0 ? (
-        <p className="text-[10px] text-gray-500">No accessorial charges yet. Use + Create charge or quick seeds (detention · layover · lumper).</p>
-      ) : (
-        <div className="overflow-hidden rounded-sm border border-gray-200">
-          <table className="w-full border-collapse text-xs">
-            <thead>
-              <tr className="border-b border-gray-100 bg-[#f7f8fa] text-left text-[9px] font-semibold uppercase tracking-wide text-gray-500">
-                <th className="px-2 py-1">Code</th>
-                <th className="px-2 py-1">Description</th>
-                <th className="px-2 py-1 text-right">Amount ($)</th>
-                <th className="px-2 py-1 text-center">Taxable</th>
-                <th className="px-2 py-1 w-16" />
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.id} className="border-b border-gray-50">
-                  <td className="px-2 py-1">
-                    <SelectCombobox
-                      value={row.code}
-                      onChange={(event) => handleCodeChange(row.id, event.target.value)}
-                      className="h-7 w-full min-w-28 text-xs"
-                    >
-                      <option value="">{catalogQuery.isLoading ? "Loading codes…" : "Select code"}</option>
-                      {catalogOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </SelectCombobox>
-                  </td>
-                  <td className="px-2 py-1">
-                    <input
-                      type="text"
-                      value={row.description}
-                      onChange={(event) => onRowsChange(updateRow(rows, row.id, { description: event.target.value }))}
-                      className="h-7 w-full rounded-sm border border-gray-300 px-2 text-xs"
-                    />
-                  </td>
-                  <td className="px-2 py-1 text-right">
-                    <MoneyInput
-                      valueCents={row.amount_cents}
-                      onChangeCents={(c) => onRowsChange(updateRow(rows, row.id, { amount_cents: Math.max(0, c ?? 0) }))}
-                      className="ml-auto w-24"
-                      ariaLabel="Accessorial amount"
-                    />
-                  </td>
-                  <td className="px-2 py-1 text-center">
-                    <input
-                      type="checkbox"
-                      checked={row.taxable}
-                      onChange={(event) => onRowsChange(updateRow(rows, row.id, { taxable: event.target.checked }))}
-                    />
-                  </td>
-                  <td className="px-2 py-1 text-right">
-                    <button type="button" className="text-[10px] text-red-700 hover:underline" onClick={() => handleRemove(row.id)}>
-                      Remove
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {catalogQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load accessorial codes"
+          status={typeof catalogErr?.status === "number" ? catalogErr.status : 0}
+          message={catalogErr?.message}
+          onRetry={() => void catalogQuery.refetch()}
+        />
+      ) : null}
+
+      <ParityTable
+        storageKey="dispatch-accessorial-editor"
+        tableTestId="accessorial-editor-table"
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => row.id}
+        emptyText="No accessorial charges yet. Use + Create charge or quick seeds (detention · layover · lumper)."
+        initialPageSize={50}
+        pageSizeOptions={[25, 50, 100]}
+        rowActions={(row) => (
+          <button type="button" className="text-[10px] text-red-700 hover:underline" onClick={() => handleRemove(row.id)}>
+            Remove
+          </button>
+        )}
+      />
     </div>
   );
 }

@@ -258,7 +258,7 @@ verify-step 1035.
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/components/dispatch/AccessorialEditor.tsx` | pending |
+| `apps/frontend/src/components/dispatch/AccessorialEditor.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/components/dispatch/DispatchList.tsx` | pending |
 
 ### components/driver-profile (3)
@@ -894,3 +894,14 @@ Guard: `scripts/verify-trailer-reefer-uses-paritytable.mjs` via verify-step 1044
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/components/trailer-profile/TrailerReeferSection.tsx` | components/trailer-profile |
+
+## qbo-parity-a1 — AccessorialEditor (this PR)
+Book-load accessorial charge grid was a hand-rolled `<table>` with inline editors.
+Migrated to shared `ParityTable` (sort + resize + gear + row Remove action) and added
+`ListErrorState` on additional-charges catalog failure. Columns Code / Description /
+Amount ($) / Taxable + Create charge / detention·layover·lumper seeds preserved 1:1.
+Guard: `scripts/verify-accessorial-editor-uses-paritytable.mjs` via verify-step **1047**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/dispatch/AccessorialEditor.tsx` | components/dispatch |
