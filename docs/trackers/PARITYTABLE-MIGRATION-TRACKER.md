@@ -778,7 +778,7 @@ verify-step 1035.
 | `apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx` | pending |
 | `apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerGridPage.tsx` | pending |
 | `apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerRequestInboxPage.tsx` | pending |
-| `apps/frontend/src/pages/safety/driver-scoring/DriverScoreDetail.tsx` | pending |
+| `apps/frontend/src/pages/safety/driver-scoring/DriverScoreDetail.tsx` | migrated (qbo-parity-a1) |
 | `apps/frontend/src/pages/safety/driver-scoring/DriverScoringTab.tsx` | pending |
 | `apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx` | pending |
 | `apps/frontend/src/pages/safety/drug-alcohol/RandomPoolDashboard.tsx` | pending |
@@ -1069,3 +1069,15 @@ Guard: `scripts/verify-booking-gap-report-uses-paritytable.mjs` via verify-step 
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/reports/BookingGapReport.tsx` | pages/reports |
+
+## qbo-parity-a1 — DriverScoreDetail (this PR)
+Safety driver-score detail 12-period breakdown was a hand-rolled `<table>`.
+Migrated to shared `ParityTable` (sort + resize + gear); `ListErrorState` + Retry on
+trend query failure. Columns Period / Score / Rank / Brakes / Accel / Speeding (s) / Lane
+preserved 1:1; sparkline, latest-stats grid, and harsh-event timeline + dashcam
+drill-through unchanged. Guard:
+`scripts/verify-driver-score-detail-uses-paritytable.mjs` via verify-step **1087**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/safety/driver-scoring/DriverScoreDetail.tsx` | pages/safety/driver-scoring |

@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listDriverSafetyTrend, listDriverScoreEvents, type DriverSafetyScoreRow } from "../../../api/safety";
+import { ListErrorState } from "../../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { HarshEventDetail } from "../HarshEventDetail";
 
 type Props = {
@@ -55,6 +57,63 @@ export function DriverScoreDetail({ companyId, driverUuid, driverName, onClose }
   const periods = trendQuery.data?.periods ?? [];
   const latest = useMemo(() => (periods.length > 0 ? periods[periods.length - 1] : null), [periods]);
 
+  const periodColumns = useMemo<ParityColumn<DriverSafetyScoreRow>[]>(
+    () => [
+      {
+        key: "period",
+        label: "Period",
+        sortable: true,
+        sortValue: (row) => row.period_start,
+        render: (row) => `${row.period_start} → ${row.period_end}`,
+      },
+      {
+        key: "composite_score",
+        label: "Score",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (row) => row.composite_score?.toFixed(1) ?? "N/A",
+      },
+      {
+        key: "rank_in_fleet",
+        label: "Rank",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (row) => row.rank_in_fleet ?? "—",
+      },
+      {
+        key: "harsh_brake_count",
+        label: "Brakes",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+      },
+      {
+        key: "hard_accel_count",
+        label: "Accel",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+      },
+      {
+        key: "speeding_seconds",
+        label: "Speeding (s)",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+      },
+      {
+        key: "lane_departure_count",
+        label: "Lane",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+      },
+    ],
+    [],
+  );
+
   // Harsh-event timeline (raw telematics events behind the composite score) + per-event dashcam
   // clip drill-through — ports the standalone event view so a reviewer can go from "score dropped"
   // straight to "here's the clip" without leaving the driver's detail panel.
@@ -78,68 +137,52 @@ export function DriverScoreDetail({ companyId, driverUuid, driverName, onClose }
         </button>
       </div>
 
-      <TrendChart periods={periods} />
+      {trendQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load driver score history"
+          status={0}
+          message={(trendQuery.error as Error)?.message}
+          onRetry={() => void trendQuery.refetch()}
+        />
+      ) : (
+        <>
+          <TrendChart periods={periods} />
 
-      {latest ? (
-        <div className="grid grid-cols-2 gap-2 text-xs md:grid-cols-4">
-          <div className="rounded-sm border border-slate-100 p-2">
-            <div className="text-slate-500">Latest score</div>
-            <div className="font-semibold">{latest.composite_score?.toFixed(1) ?? "N/A"}</div>
-          </div>
-          <div className="rounded-sm border border-slate-100 p-2">
-            <div className="text-slate-500">Fleet rank</div>
-            <div className="font-semibold">{latest.rank_in_fleet ?? "—"}</div>
-          </div>
-          <div className="rounded-sm border border-slate-100 p-2">
-            <div className="text-slate-500">Miles</div>
-            <div className="font-semibold">{latest.miles_driven.toFixed(0)}</div>
-          </div>
-          <div className="rounded-sm border border-slate-100 p-2">
-            <div className="text-slate-500">Period</div>
-            <div className="font-semibold">
-              {latest.period_start} → {latest.period_end}
+          {latest ? (
+            <div className="grid grid-cols-2 gap-2 text-xs md:grid-cols-4">
+              <div className="rounded-sm border border-slate-100 p-2">
+                <div className="text-slate-500">Latest score</div>
+                <div className="font-semibold">{latest.composite_score?.toFixed(1) ?? "N/A"}</div>
+              </div>
+              <div className="rounded-sm border border-slate-100 p-2">
+                <div className="text-slate-500">Fleet rank</div>
+                <div className="font-semibold">{latest.rank_in_fleet ?? "—"}</div>
+              </div>
+              <div className="rounded-sm border border-slate-100 p-2">
+                <div className="text-slate-500">Miles</div>
+                <div className="font-semibold">{latest.miles_driven.toFixed(0)}</div>
+              </div>
+              <div className="rounded-sm border border-slate-100 p-2">
+                <div className="text-slate-500">Period</div>
+                <div className="font-semibold">
+                  {latest.period_start} → {latest.period_end}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      ) : null}
+          ) : null}
 
-      <div className="overflow-x-auto rounded-sm border border-slate-100">
-        <table className="min-w-full text-xs">
-          <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
-            <tr>
-              <th className="px-2 py-1 text-left">Period</th>
-              <th className="px-2 py-1 text-right">Score</th>
-              <th className="px-2 py-1 text-right">Rank</th>
-              <th className="px-2 py-1 text-right">Brakes</th>
-              <th className="px-2 py-1 text-right">Accel</th>
-              <th className="px-2 py-1 text-right">Speeding (s)</th>
-              <th className="px-2 py-1 text-right">Lane</th>
-            </tr>
-          </thead>
-          <tbody>
-            {periods.map((row) => (
-              <tr key={`${row.period_start}-${row.period_end}`} className="border-t border-gray-100">
-                <td className="px-2 py-1">
-                  {row.period_start} → {row.period_end}
-                </td>
-                <td className="px-2 py-1 text-right">{row.composite_score?.toFixed(1) ?? "N/A"}</td>
-                <td className="px-2 py-1 text-right">{row.rank_in_fleet ?? "—"}</td>
-                <td className="px-2 py-1 text-right">{row.harsh_brake_count}</td>
-                <td className="px-2 py-1 text-right">{row.hard_accel_count}</td>
-                <td className="px-2 py-1 text-right">{row.speeding_seconds}</td>
-                <td className="px-2 py-1 text-right">{row.lane_departure_count}</td>
-              </tr>
-            ))}
-            {periods.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-2 py-3 text-center text-slate-500">
-                  No historical periods stored for this driver.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+          <ParityTable<DriverSafetyScoreRow>
+            columns={periodColumns}
+            rows={periods}
+            rowKey={(row) => `${row.period_start}-${row.period_end}`}
+            loading={trendQuery.isLoading}
+            emptyText="No historical periods stored for this driver."
+            storageKey="safety-driver-score-detail-periods"
+            exportFilename="driver-score-detail-periods"
+            tableTestId="driver-score-detail-periods-table"
+          />
+        </>
+      )}
 
       <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
         <div className="flex items-center justify-between">
