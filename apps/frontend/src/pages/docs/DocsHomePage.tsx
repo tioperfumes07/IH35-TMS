@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { getDocsFoundationKpis, listDocsFoundation, type DocsFoundationRow, type FileEntityType } from "../../api/docs";
@@ -7,7 +8,9 @@ import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { UploadModal } from "../../components/documents/UploadModal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
-const ENTITY_TABS: Array<{ id: FileEntityType | "all"; label: string }> = [
+type DocsEntityTabId = FileEntityType | "all";
+
+const ENTITY_TABS: Array<{ id: DocsEntityTabId; label: string }> = [
   { id: "all", label: "All Entities" },
   { id: "driver", label: "Drivers" },
   { id: "customer", label: "Customers" },
@@ -15,6 +18,12 @@ const ENTITY_TABS: Array<{ id: FileEntityType | "all"; label: string }> = [
   { id: "unit", label: "Units" },
   { id: "equipment", label: "Equipment" },
 ];
+const DOCS_ENTITY_TAB_IDS = new Set<string>(ENTITY_TABS.map((tab) => tab.id));
+
+export function parseDocsEntityTab(raw: string | null): DocsEntityTabId {
+  if (raw && DOCS_ENTITY_TAB_IDS.has(raw)) return raw as DocsEntityTabId;
+  return "all";
+}
 
 function fmtDate(value: string | null) {
   if (!value) return "—";
@@ -34,7 +43,14 @@ function fmtFileSize(sizeBytes: string) {
 export function DocsHomePage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [activeTab, setActiveTab] = useState<FileEntityType | "all">("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = parseDocsEntityTab(searchParams.get("tab"));
+  const setActiveTab = (next: DocsEntityTabId) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "all") params.delete("tab");
+    else params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
   const [typeFilter, setTypeFilter] = useState("");
   const [expiresBefore, setExpiresBefore] = useState("");
   /** KPI drill-down filters — lockstep with GET /api/v1/docs/kpis predicates (server-side; list is paginated). */
@@ -152,7 +168,7 @@ export function DocsHomePage() {
         tabs={ENTITY_TABS.map((tab) => ({ id: tab.id, label: tab.label }))}
         activeId={activeTab}
         onChange={(next) => {
-          setActiveTab(next as FileEntityType | "all");
+          setActiveTab(next as DocsEntityTabId);
           setPage(1);
         }}
       />
