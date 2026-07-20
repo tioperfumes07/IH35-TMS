@@ -1,4 +1,5 @@
 import { Fragment, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
@@ -54,7 +55,14 @@ export function QBOSyncStatusDashboardPage() {
   const [timeRange, setTimeRange] = useState<"1h" | "24h" | "7d" | "30d">("24h");
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
-  const [activeTab, setActiveTab] = useState<"runs" | "conflicts">("runs");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") === "conflicts" ? "conflicts" : "runs";
+  const setActiveTab = (next: "runs" | "conflicts") => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "runs") params.delete("tab");
+    else params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
 
   const runsQuery = useQuery({
     queryKey: ["qbo", "sync-runs", companyId, status, kind, timeRange, search],
