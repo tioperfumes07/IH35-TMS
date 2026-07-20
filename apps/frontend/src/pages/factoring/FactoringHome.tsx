@@ -227,7 +227,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
             */}
             <Link
               to="/factoring/submit"
-              className="inline-flex h-8 items-center rounded-sm border border-slate-300 bg-white px-2.5 text-xs font-medium text-slate-800 hover:bg-slate-50"
+              className="inline-flex items-center rounded-sm border border-slate-300 bg-white px-2.5 py-2 text-xs font-medium text-slate-800 hover:bg-slate-50"
               data-testid="factoring-submit-to-factor-link"
             >
               Submit to Factor
