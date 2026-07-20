@@ -505,11 +505,11 @@ DECISION is CLOSED: two-event latch, point-in-time-at-delivery (owner ruling #27
 | item | GUARD result | disposition |
 |---|---|---|
 | 0519-sf1 settlements | 165/165 active 0 settlements | OWNER CONFIRM QBO-side (CPA #57) |
-| 0519-ma1 PM schedules | GUARD:0/50 · CURSOR:30 rows,4/82 InService — CONTESTED | RE-RUN once (see §12) |
+| 0519-ma1 PM schedules | **AUTHORITATIVE (Cursor Neon 2026-07-19):** 30 active PM rows; **4/82 InService** covered (186 units). GUARD 0/50 superseded. | GAP = incomplete coverage, not absence |
 | dp-04 hire date | 165/165 blank | GAP if required (mdata, gated) |
 | 0519-dq3 blank CDL | 16 active no cdl | REAL DQ → cleanup (gated) |
 | is_sample_data | 78 flagged; 73 real Mexican CDLs, 0 Samsara | MIS-FLAGGED real B1 roster → un-flag (gated) |
-| 0519-dq2 phone | GUARD:2 · CURSOR:74 (000-000-0000) — CONTESTED | RE-RUN once (see §12) |
+| 0519-dq2 phone | **AUTHORITATIVE:** **74** Active with `000-000-0000` (0 blank). GUARD 2 superseded. | Cleanup scope = 74 zero-phones |
 | banking disconnected | 5 stale is_active=false dup rows; BoA absent TRANSP/TRK | archive dups; recon filter is_active=true; BoA closed=correct |
 | fleet VIN | 0 blank 50/50 | CLOSE clean |
 | GL flags | 15 ON all 3 entities | CLOSE correct-by-design; don't re-flag |
@@ -679,11 +679,12 @@ Merged frontend(self): #2739-#2746,#2734,#2737,#2749-#2758(sort),CI #2747/#2748,
 - 60 'decided' are NOT yet reflected in §4 backlog (~38 still show OPEN) AND decided≠built — tracker reconciliation is a remaining task, not done.
 - VISUAL-REMAINDER: verify by CONTENT not commit-sha. My clone: merge-base --is-ancestor = TRUE for all 3; Cursor's checkout: fails (history rewrite). Both agree the fix CONTENT is on main. LAYOUT's superseded_by marker is empty = tracker cleanup.
 
-**CONTESTED prod numbers (GUARD vs Cursor) — need ONE authoritative re-run, that wins:**
-- PM schedules: GUARD 0/50 vs Cursor 30 rows /4-of-82 InService.
-- Placeholder phone: GUARD 2 vs Cursor 74 (000-000-0000).
+**AUTHORITATIVE prod settle (Cursor Neon 2026-07-19, RLS bypass):**
+- PM: **30** active `pm_schedules`; **4/82 InService** covered — GUARD 0/50 superseded.
+- Phone: **74** Active with `000-000-0000` — GUARD 2 superseded.
+- `qbo_remote_counts`: FROZEN since **2026-06-03** (3 rows, vendors only) — RECON-COLLECTOR #1 is real.
+- `recon_runs`: NOT fully dark (131 rows; newest 2026-07-20; includes `am_bank_count` 2026-07-19) — do not claim all recon is off.
 
-**D (BUILD-gated) PRIORITY ORDER (both reviewers) — design-first, each gated:**
 - #1 PHASE2_RECON-COLLECTOR unfreeze — the twice-daily reconciliation IS the parallel-books safety net; if frozen (qbo_remote_counts frozen 2026-06-03), safety is dark NOW. Fix first.
 - #2 dip-mor pre/post-petition A/P split — Ch.11 MOR legal requirement (ties to TRK 6/5/25 & TRANSP 10/3/25 petition dates).
 - #3 0519-at2 DB-enforced SoD — WITH break-glass / second-approver (a hard maker≠checker would lock out the sole approver). GUARD note.
