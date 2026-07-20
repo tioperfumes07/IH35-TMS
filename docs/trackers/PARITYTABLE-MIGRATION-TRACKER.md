@@ -730,7 +730,7 @@ verify-step 1035.
 | `apps/frontend/src/pages/reports/APAgingPage.tsx` | pending |
 | `apps/frontend/src/pages/reports/ARAgingPage.tsx` | pending |
 | `apps/frontend/src/pages/reports/BalanceSheetPage.tsx` | pending |
-| `apps/frontend/src/pages/reports/BookingGapReport.tsx` | pending |
+| `apps/frontend/src/pages/reports/BookingGapReport.tsx` | migrated (fix/booking-gap-report-paritytable) |
 | `apps/frontend/src/pages/reports/CancellationsReportPage.tsx` | pending |
 | `apps/frontend/src/pages/reports/CashFlowStatementPage.tsx` | pending |
 | `apps/frontend/src/pages/reports/CustomerProfitabilityPage.tsx` | pending |
@@ -936,3 +936,14 @@ Cost ¢ preserved 1:1; Clock in + manual book range unchanged. Guard:
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/components/maintenance/LaborTracker.tsx` | components/maintenance |
+
+## qbo-parity-a1 — BookingGapReport (this PR)
+Dispatcher booking-gap analytics was a hand-rolled `<table>` with manual loading/empty
+states. Migrated to shared `ParityTable` (sort + resize + gear); `ListErrorState` +
+Retry preserved on outage. Columns Rank / Dispatcher / Loads / Avg Gap (h) / P50 (h) /
+P90 (h) preserved 1:1; week/month/quarter period toggle + rank row highlight preserved.
+Guard: `scripts/verify-booking-gap-report-uses-paritytable.mjs` via verify-step **1057**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/reports/BookingGapReport.tsx` | pages/reports |

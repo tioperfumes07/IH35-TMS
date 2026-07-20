@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ReportsSubNav } from "./ReportsSubNav";
 
 interface DispatcherStats {
@@ -26,7 +27,7 @@ function periodDates(p: Period): { from: string; to: string } {
 function rowColor(rank: number, total: number): string {
   if (total < 2) return "";
   if (rank === 1) return "bg-green-50";
-  if (rank === total) return "bg-amber-50"; // amber — no public shaming
+  if (rank === total) return "bg-amber-50";
   return "";
 }
 
@@ -37,7 +38,7 @@ export function BookingGapReport() {
   const [period, setPeriod] = useState<Period>("week");
   const { from, to } = periodDates(period);
 
-  const { data, isLoading, isError, error, refetch } = useQuery<{ data: { dispatchers: DispatcherStats[] } }>({
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery<{ data: { dispatchers: DispatcherStats[] } }>({
     queryKey: ["booking-gap", operatingCompanyId, from, to],
     queryFn: async () => {
       const res = await fetch(
@@ -51,6 +52,54 @@ export function BookingGapReport() {
   });
 
   const dispatchers = data?.data?.dispatchers ?? [];
+
+  const columns = useMemo<ParityColumn<DispatcherStats>[]>(
+    () => [
+      {
+        key: "rank",
+        label: "Rank",
+        sortable: true,
+        render: (row) => <span className="font-medium">#{row.rank}</span>,
+      },
+      {
+        key: "dispatcher_label",
+        label: "Dispatcher",
+        sortable: true,
+      },
+      {
+        key: "loads_counted",
+        label: "Loads",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+      },
+      {
+        key: "avg_gap_hours",
+        label: "Avg Gap (h)",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (row) => row.avg_gap_hours.toFixed(1),
+      },
+      {
+        key: "p50_gap_hours",
+        label: "P50 (h)",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (row) => row.p50_gap_hours.toFixed(1),
+      },
+      {
+        key: "p90_gap_hours",
+        label: "P90 (h)",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (row) => row.p90_gap_hours.toFixed(1),
+      },
+    ],
+    []
+  );
 
   return (
     <div className="space-y-4">
@@ -84,8 +133,6 @@ export function BookingGapReport() {
         productive). Excludes gaps &gt;24h (weekends/planned downtime).
       </p>
 
-      {isLoading && <p className="text-gray-400">Loading...</p>}
-
       {isError && (
         <ListErrorState
           title="Couldn't load booking gap report"
@@ -95,40 +142,16 @@ export function BookingGapReport() {
         />
       )}
 
-      {!isLoading && !isError && dispatchers.length === 0 && (
-        <p className="text-gray-400">No data available for this period.</p>
-      )}
-
-      {dispatchers.length > 0 && (
-        <div className="overflow-x-auto">
-        <table className="w-full text-sm border-collapse">
-          <thead>
-            <tr className="bg-gray-50">
-              <th className="text-left px-3 py-2 border-b">Rank</th>
-              <th className="text-left px-3 py-2 border-b">Dispatcher</th>
-              <th className="text-right px-3 py-2 border-b">Loads</th>
-              <th className="text-right px-3 py-2 border-b">Avg Gap (h)</th>
-              <th className="text-right px-3 py-2 border-b">P50 (h)</th>
-              <th className="text-right px-3 py-2 border-b">P90 (h)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {dispatchers.map((d) => (
-              <tr
-                key={d.dispatcher_id ?? d.dispatcher_label}
-                className={`border-b ${rowColor(d.rank, dispatchers.length)}`}
-              >
-                <td className="px-3 py-2 font-medium">#{d.rank}</td>
-                <td className="px-3 py-2">{d.dispatcher_label}</td>
-                <td className="px-3 py-2 text-right">{d.loads_counted}</td>
-                <td className="px-3 py-2 text-right">{d.avg_gap_hours.toFixed(1)}</td>
-                <td className="px-3 py-2 text-right">{d.p50_gap_hours.toFixed(1)}</td>
-                <td className="px-3 py-2 text-right">{d.p90_gap_hours.toFixed(1)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        </div>
+      {!isError && (
+        <ParityTable
+          rows={dispatchers}
+          columns={columns}
+          rowKey={(row) => row.dispatcher_id ?? row.dispatcher_label}
+          loading={isLoading || (isFetching && dispatchers.length === 0)}
+          storageKey="booking-gap-report"
+          emptyText="No data available for this period."
+          rowClassName={(row) => rowColor(row.rank, dispatchers.length)}
+        />
       )}
     </div>
   );
