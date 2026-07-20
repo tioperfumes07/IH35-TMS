@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../../api/client";
 import { Button } from "../../../components/Button";
 import { MobileOptimizedTable } from "../../../components/shared/MobileOptimizedTable";
@@ -8,9 +8,27 @@ type Props = { operatingCompanyId: string };
 
 type AlertRow = Record<string, unknown>;
 
+const SEVERITY_VALUES = new Set(["critical", "high", "warn"]);
+
+function parseSeverity(raw: string | null): string {
+  return raw && SEVERITY_VALUES.has(raw) ? raw : "";
+}
+
 export function AnomalyDashboard({ operatingCompanyId }: Props) {
   const qc = useQueryClient();
-  const [severity, setSeverity] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const severity = parseSeverity(searchParams.get("severity"));
+  const setSeverity = (next: string) => {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (!next) params.delete("severity");
+        else params.set("severity", next);
+        return params;
+      },
+      { replace: true },
+    );
+  };
   const q = useQuery({
     queryKey: ["anomaly-alerts", operatingCompanyId, severity],
     enabled: Boolean(operatingCompanyId),
