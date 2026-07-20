@@ -1,17 +1,28 @@
 {
   "block_id": "fact-par1-submissionqueue-unrouted",
-  "status": "PENDING",
-  "classification": "FINANCIAL",
-  "phase": "tier2",
-  "source": "MASTER-6 authored dispatch (05-TIER2-BLOCKS)",
-  "source_file": "fact-par1-submissionqueue-unrouted.txt",
+  "branch": "fix/fact-par1-submissionqueue-routed",
+  "phase": "OPS-FE",
+  "task": "FACT-PAR1: route SubmissionQueue at /factoring/submit + FactoringHome deep-link (no SUBNAV tab / no arch-design tab-count change)",
+  "classification": "ADDITIVE",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    ".block-ready/fact-par1-submissionqueue-unrouted.json",
+    "apps/frontend/src/pages/factoring/FactoringHome.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "apps/frontend/src/router/route-manifest.ts",
+    "scripts/verify-factoring-submission-queue-routed.mjs",
+    "scripts/verify-steps/995-verify-factoring-submission-queue-routed.mjs"
   ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [
+    "verify-factoring-submission-queue-routed"
+  ],
+  "status": "IN_PROGRESS",
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "SubmissionQueue imported + mounted at /factoring/submit in routes/manifest.tsx; FactoringHome deep-link present; SUBNAV unchanged; ROUTE_MANIFEST includes /factoring/submit; scripts/verify-factoring-submission-queue-routed.mjs PASS; verify-step 995 wired."
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "arch_design_decision": "IH35_ARCHITECTURAL_DESIGN Factoring sub-tabs are Recourse Pipeline / Chargebacks & Fees / Statements & Settings — no Submit to Factor tab. Used header deep-link + dedicated route instead of adding a SUBNAV tab (Rule 05)."
 }

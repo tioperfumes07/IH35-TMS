@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { deactivateFactoring, getFactoringChargebacksFees, getFactoringRecoursePipeline, getFactoringStatementsSettings, getFactoringSummary } from "../../api/factoring";
@@ -220,6 +220,18 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
         subtitle="Deep-dive workspace for recourse pipeline, chargebacks, fees, and settings"
         actions={
           <div className="flex items-center gap-2">
+            {/*
+              FACT-PAR1: Submit-to-Factor is NOT an arch-design Factoring sub-tab
+              (design lists Recourse Pipeline / Chargebacks & Fees / Statements & Settings).
+              Reachable via deep-link button — does not change SUBNAV tab count (Rule 05).
+            */}
+            <Link
+              to="/factoring/submit"
+              className="inline-flex h-8 items-center rounded-sm border border-slate-300 bg-white px-2.5 text-xs font-medium text-slate-800 hover:bg-slate-50"
+              data-testid="factoring-submit-to-factor-link"
+            >
+              Submit to Factor
+            </Link>
             <Button size="sm" variant="secondary" onClick={() => void queryClient.invalidateQueries({ queryKey: ["factoring"] })}>
               Refresh
             </Button>

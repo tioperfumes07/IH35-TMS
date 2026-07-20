@@ -144,6 +144,9 @@ const BatchDetail = React.lazy(() => import("../pages/factoring/BatchDetail").th
 const FactorAdmin = React.lazy(() => import("../pages/factoring/FactorAdmin").then((m) => ({ default: m.FactorAdmin })));
 const ReserveDashboard = React.lazy(() => import("../pages/factoring/ReserveDashboard").then((m) => ({ default: m.ReserveDashboard })));
 const FaroImportPage = React.lazy(() => import("../pages/factoring/FaroImportPage").then((m) => ({ default: m.FaroImportPage })));
+const SubmissionQueue = React.lazy(() =>
+  import("../pages/factoring/SubmissionQueue").then((m) => ({ default: m.SubmissionQueue }))
+);
 const VehicleProfilePage = React.lazy(() => import("../pages/fleet/VehicleProfilePage").then((m) => ({ default: m.VehicleProfilePage })));
 const FleetHomePage = React.lazy(() => import("../pages/fleet/FleetHomePage").then((m) => ({ default: m.FleetHomePage })));
 const TrailerProfilePage = React.lazy(() => import("../pages/fleet/TrailerProfilePage").then((m) => ({ default: m.TrailerProfilePage })));
@@ -1972,6 +1975,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <FactoringHomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/submit"
+          element={
+            <ProtectedRoute>
+              <SubmissionQueue />
             </ProtectedRoute>
           }
         />
