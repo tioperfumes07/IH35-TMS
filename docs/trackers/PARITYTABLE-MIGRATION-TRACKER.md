@@ -216,6 +216,17 @@ verify-step 1035.
 | --- | --- |
 | `apps/frontend/src/components/audit/EntityAuditHistoryTab.tsx` | components/audit |
 
+## qbo-parity-a1 — VendorMappingResolutionPage (this PR)
+Samsara vendor mapping resolution (unmapped / duplicate / name-mismatch) was three
+hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to shared
+`ParityTable` (sort + resize + gear + CSV export) and replaced the ad-hoc error div with
+`ListErrorState` + Retry. Columns preserved 1:1 per section. Guard:
+`scripts/verify-vendor-mapping-resolution-uses-paritytable.mjs` via verify-step 1089.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/samsara-vendor-mapping/VendorMappingResolutionPage.tsx` | pages/samsara-vendor-mapping |
+
 ## Remaining hand-rolled inventory (by module)
 
 ### components/DataTable.tsx (1)
@@ -794,12 +805,6 @@ verify-step 1035.
 | `apps/frontend/src/pages/safety/tabs/EscrowRecordTab.tsx` | pending |
 | `apps/frontend/src/pages/safety/tabs/HOSViolationsTab.tsx` | pending |
 | `apps/frontend/src/pages/safety/tabs/IntegrityReportsTab.tsx` | pending |
-
-### pages/samsara-vendor-mapping (1)
-
-| File | Status |
-| --- | --- |
-| `apps/frontend/src/pages/samsara-vendor-mapping/VendorMappingResolutionPage.tsx` | pending |
 
 ### pages/settings (1)
 
