@@ -16,16 +16,18 @@
     "apps/frontend/src/pages/dispatch/__tests__/ArchTabPages.test.tsx",
     "scripts/entity-link-adoption-baseline.json",
     "scripts/verify-driver-load-history-entitylink.mjs",
-    "scripts/verify-steps/1021-verify-driver-load-history-entitylink.mjs"
+    "scripts/verify-steps/1023-verify-driver-load-history-entitylink.mjs"
   ],
   "runtime_path": "apps/frontend",
   "db_required": false,
   "guard_required": true,
-  "extra_gates": ["verify-driver-load-history-entitylink"],
+  "extra_gates": [
+    "verify-driver-load-history-entitylink"
+  ],
   "hold": false,
   "acceptance": [
     {
-      "check": "listAssignmentHistoryGlobal SELECT returns previous_driver_id + new_driver_id; LoadHistoryTab + AssignmentHistoryPage render EntityLink kind=load/driver; ListErrorState on isError; empty gated off isError; verify-step 1021 PASS. No migration. Rule 17."
+      "check": "listAssignmentHistoryGlobal SELECT returns previous_driver_id + new_driver_id; LoadHistoryTab + AssignmentHistoryPage render EntityLink kind=load/driver; ListErrorState on isError; empty gated off isError; verify-step 1023 PASS. No migration. Rule 17."
     }
   ],
   "note": "FE+thin dispatch SELECT (no schema). GATED-no. Does not overlap #2841/#2847/#2850."
