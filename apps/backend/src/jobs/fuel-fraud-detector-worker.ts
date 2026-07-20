@@ -118,8 +118,12 @@ export function initializeFuelFraudDetectorWorker(app: FastifyInstance): void {
   if (initialized) return;
   initialized = true;
 
-  if (process.env.ENABLE_FUEL_FRAUD_DETECTOR_WORKER === "false") {
-    app.log.info("Fuel fraud detector worker disabled via ENABLE_FUEL_FRAUD_DETECTOR_WORKER=false");
+  // Default OFF — worker inserts fuel.fraud_alerts and can dispatch critical notifications.
+  // Opt in explicitly: ENABLE_FUEL_FRAUD_DETECTOR_WORKER=true
+  if ((process.env.ENABLE_FUEL_FRAUD_DETECTOR_WORKER ?? "false").trim() !== "true") {
+    app.log.info(
+      "Fuel fraud detector worker disabled (default OFF; set ENABLE_FUEL_FRAUD_DETECTOR_WORKER=true to enable)"
+    );
     return;
   }
 
