@@ -1,3 +1,5 @@
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
+
 type Rule = {
   id: string;
   credential_type: string;
@@ -15,6 +17,57 @@ type Props = {
 };
 
 export function NotificationRulesPanel({ rules, onCreate, onArchive }: Props) {
+  const columns: Array<ParityColumn<Rule>> = [
+    {
+      key: "credential_type",
+      label: "Credential",
+      sortable: true,
+    },
+    {
+      key: "entity_scope",
+      label: "Scope",
+      sortable: true,
+    },
+    {
+      key: "notify_days_before",
+      label: "Days Before",
+      sortable: true,
+      sortValue: (row) => (row.notify_days_before ?? []).join(","),
+      render: (row) => (row.notify_days_before ?? []).join(", ") || "—",
+    },
+    {
+      key: "channel",
+      label: "Channels",
+      sortable: true,
+      sortValue: (row) => (row.channel ?? []).join(","),
+      render: (row) => (row.channel ?? []).join(", ") || "—",
+    },
+    {
+      key: "recipient_emails",
+      label: "Recipients",
+      sortable: true,
+      sortValue: (row) => (row.recipient_emails ?? []).join(","),
+      render: (row) => (row.recipient_emails ?? []).join(", ") || "—",
+    },
+    {
+      key: "actions",
+      label: "",
+      alwaysVisible: true,
+      render: (row) => (
+        <button
+          type="button"
+          className="text-red-700 underline"
+          onClick={(event) => {
+            event.stopPropagation();
+            onArchive(row.id);
+          }}
+        >
+          Archive
+        </button>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-3" data-testid="compliance-rules-panel">
       <div className="flex items-center justify-between">
@@ -23,36 +76,14 @@ export function NotificationRulesPanel({ rules, onCreate, onArchive }: Props) {
           Create Rule
         </button>
       </div>
-      <div className="overflow-x-auto">
-      <table className="min-w-full border text-sm">
-        <thead>
-          <tr className="bg-slate-100 text-left">
-            <th className="p-2">Credential</th>
-            <th className="p-2">Scope</th>
-            <th className="p-2">Days Before</th>
-            <th className="p-2">Channels</th>
-            <th className="p-2">Recipients</th>
-            <th className="p-2" />
-          </tr>
-        </thead>
-        <tbody>
-          {rules.map((rule) => (
-            <tr key={rule.id} className="border-t">
-              <td className="p-2">{rule.credential_type}</td>
-              <td className="p-2">{rule.entity_scope}</td>
-              <td className="p-2">{(rule.notify_days_before ?? []).join(", ") || "—"}</td>
-              <td className="p-2">{(rule.channel ?? []).join(", ") || "—"}</td>
-              <td className="p-2">{(rule.recipient_emails ?? []).join(", ") || "—"}</td>
-              <td className="p-2">
-                <button type="button" className="text-red-700 underline" onClick={() => onArchive(rule.id)}>
-                  Archive
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      </div>
+      <ParityTable
+        columns={columns}
+        rows={rules}
+        rowKey={(row) => row.id}
+        storageKey="compliance-notification-rules"
+        emptyText="No notification rules."
+        tableTestId="compliance-rules-table"
+      />
     </div>
   );
 }
