@@ -21,9 +21,9 @@ sort, and the lock-account control — never drop or reorder.
 ## Rollup
 | Status | Count |
 | --- | --- |
-| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable) | 11 |
+| migrated (batch 1 + GLOBAL-COLS-01 + EarningsTab + ComplianceTable + AssetListTable) | 12 |
 | financial-hold (Jorge-gated) | 99 |
-| pending (non-financial, future batches) | 190 |
+| pending (non-financial, future batches) | 189 |
 | **hand-rolled total (original)** | **300** |
 
 > Note: ParityTable was already consumed by ~16 surfaces before this batch (not counted above — those were never hand-rolled).
@@ -73,6 +73,16 @@ testid preserved. Guard: `scripts/verify-compliance-table-uses-paritytable.mjs` 
 | --- | --- |
 | `apps/frontend/src/components/compliance/ComplianceTable.tsx` | components/compliance |
 
+## qbo-parity-a1 — AssetListTable (this PR)
+Assets workspace register was a hand-rolled `<table>` fed by a nonexistent `/api/v1/assets/list`
+endpoint that silently fell back to demo rows. Migrated the grid to shared `ParityTable` and
+wired the page to real `GET /api/v1/assets` + `ListErrorState`. Columns preserved 1:1.
+Guard: `scripts/verify-asset-list-table-uses-paritytable.mjs` via verify-step 1020.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/assets/AssetListTable.tsx` | components/assets |
+
 ## Remaining hand-rolled inventory (by module)
 
 ### components/DataTable.tsx (1)
@@ -103,7 +113,7 @@ testid preserved. Guard: `scripts/verify-compliance-table-uses-paritytable.mjs` 
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/components/assets/AssetListTable.tsx` | pending |
+| `apps/frontend/src/components/assets/AssetListTable.tsx` | migrated (qbo-parity-a1) |
 
 ### components/audit (2)
 

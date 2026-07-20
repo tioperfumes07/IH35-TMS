@@ -1,0 +1,28 @@
+{
+  "block_id": "qbo-parity-a1-asset-list-paritytable",
+  "branch": "fix/asset-list-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable + honest list load)",
+  "phase": "OPS-FE",
+  "task": "Migrate AssetListTable from hand-rolled <table> to ParityTable; wire AssetsWorkspacePage to real GET /api/v1/assets (not nonexistent /list) with ListErrorState instead of demo FALLBACK_ROWS. Guard + verify-step 1020 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + AssetsWorkspacePage wrong-endpoint false-empty",
+  "source_file": "qbo-parity-a1-paritytable-universal-adoption",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-asset-list-paritytable.json",
+    "apps/frontend/src/components/assets/AssetListTable.tsx",
+    "apps/frontend/src/pages/assets/AssetsWorkspacePage.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-asset-list-table-uses-paritytable.mjs",
+    "scripts/verify-steps/1020-verify-asset-list-table-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "AssetListTable.tsx uses ParityTable; no hand-rolled <table>/<thead>; columns Unit/Type/Lifecycle/Driver/Assigned load/Location/Utilization preserved; AssetsWorkspacePage fetches /api/v1/assets? and maps payload.assets; ListErrorState on failure; no FALLBACK_ROWS; verify-asset-list-table-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1020 wired (Rule 17); tracker marks AssetListTable migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 — AssetListTable surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17)."
+}

@@ -1,3 +1,4 @@
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import type { AssetLifecycle, AssetRow } from "./types";
 
 type Props = {
@@ -19,53 +20,76 @@ function LifecyclePill({ value }: { value: AssetLifecycle }) {
   );
 }
 
+const COLUMNS: Array<ParityColumn<AssetRow>> = [
+  {
+    key: "unit_number",
+    label: "Unit",
+    sortable: true,
+    render: (row) => (
+      <div>
+        <p className="font-medium text-gray-900">{row.unit_number}</p>
+        <p className="text-xs text-gray-500">{row.vin || "VIN pending"}</p>
+      </div>
+    ),
+  },
+  {
+    key: "kind",
+    label: "Type",
+    sortable: true,
+    render: (row) => <span className="capitalize text-gray-700">{row.kind}</span>,
+  },
+  {
+    key: "lifecycle",
+    label: "Lifecycle",
+    sortable: true,
+    render: (row) => <LifecyclePill value={row.lifecycle} />,
+  },
+  {
+    key: "assigned_driver_name",
+    label: "Driver",
+    sortable: true,
+    render: (row) => row.assigned_driver_name || "Unassigned",
+  },
+  {
+    key: "assigned_load_display",
+    label: "Assigned load",
+    sortable: true,
+    render: (row) => row.assigned_load_display || "—",
+  },
+  {
+    key: "location_label",
+    label: "Location",
+    sortable: true,
+    render: (row) => row.location_label || "—",
+  },
+  {
+    key: "utilization_score",
+    label: "Utilization",
+    sortable: true,
+    sortValue: (row) => row.utilization_score ?? -1,
+    cellClass: "text-right tabular-nums",
+    render: (row) => (row.utilization_score == null ? "—" : `${Math.round(row.utilization_score)}%`),
+  },
+];
+
 export function AssetListTable({ rows, isLoading }: Props) {
   return (
     <section className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
       <header className="border-b border-gray-200 px-3 py-2">
         <h2 className="text-sm font-semibold text-gray-900">Asset register</h2>
       </header>
-      {isLoading ? (
-        <p className="px-3 py-8 text-sm text-gray-500">Loading assets…</p>
-      ) : rows.length === 0 ? (
-        <p className="px-3 py-8 text-sm text-gray-500">No assets found for this filter.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full border-collapse text-sm">
-            <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
-              <tr>
-                <th className="px-3 py-2">Unit</th>
-                <th className="px-3 py-2">Type</th>
-                <th className="px-3 py-2">Lifecycle</th>
-                <th className="px-3 py-2">Driver</th>
-                <th className="px-3 py-2">Assigned load</th>
-                <th className="px-3 py-2">Location</th>
-                <th className="px-3 py-2 text-right">Utilization</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.id} className="border-t border-gray-100">
-                  <td className="px-3 py-2">
-                    <p className="font-medium text-gray-900">{row.unit_number}</p>
-                    <p className="text-xs text-gray-500">{row.vin || "VIN pending"}</p>
-                  </td>
-                  <td className="px-3 py-2 capitalize text-gray-700">{row.kind}</td>
-                  <td className="px-3 py-2">
-                    <LifecyclePill value={row.lifecycle} />
-                  </td>
-                  <td className="px-3 py-2 text-gray-700">{row.assigned_driver_name || "Unassigned"}</td>
-                  <td className="px-3 py-2 text-gray-700">{row.assigned_load_display || "—"}</td>
-                  <td className="px-3 py-2 text-gray-700">{row.location_label || "—"}</td>
-                  <td className="px-3 py-2 text-right tabular-nums text-gray-900">
-                    {row.utilization_score == null ? "—" : `${Math.round(row.utilization_score)}%`}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <div className="p-2">
+        <ParityTable
+          rows={rows}
+          columns={COLUMNS}
+          rowKey={(row) => row.id}
+          loading={isLoading}
+          storageKey="assets-register-list"
+          emptyText="No assets found for this filter."
+          tableTestId="assets-register-table"
+          rowTestId={(row) => `assets-register-row-${row.id}`}
+        />
+      </div>
     </section>
   );
 }

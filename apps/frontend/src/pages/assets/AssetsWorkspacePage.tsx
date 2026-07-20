@@ -1,38 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { resolveApiUrl } from "../../api/client";
 import { Link } from "react-router-dom";
-import { OFFLINE_PREVIEW_BANNER } from "../../lib/prodEmptyStateCopy";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AssetFiltersBar } from "../../components/assets/AssetFiltersBar";
 import { AssetListTable } from "../../components/assets/AssetListTable";
 import { AssetSummaryCards } from "../../components/assets/AssetSummaryCards";
-import type { AssetLifecycle, AssetRow, AssetSummary } from "../../components/assets/types";
-
-const FALLBACK_ROWS: AssetRow[] = [
-  {
-    id: "asset-demo-tractor-1",
-    unit_number: "TRK-112",
-    vin: "1FTRX18W3XNA12345",
-    kind: "tractor",
-    lifecycle: "active",
-    assigned_driver_name: "J. Salinas",
-    assigned_load_display: "LD-20414",
-    location_label: "Dallas, TX",
-    utilization_score: 91,
-  },
-  {
-    id: "asset-demo-trailer-1",
-    unit_number: "TRL-533",
-    vin: "5TDAA1AA3XS000533",
-    kind: "trailer",
-    lifecycle: "maintenance",
-    assigned_driver_name: null,
-    assigned_load_display: null,
-    location_label: "Shop A · Laredo",
-    utilization_score: 48,
-  },
-];
+import type { AssetKind, AssetLifecycle, AssetRow, AssetSummary } from "../../components/assets/types";
 
 const EMPTY_SUMMARY: AssetSummary = {
   total_assets: 0,
@@ -40,6 +15,42 @@ const EMPTY_SUMMARY: AssetSummary = {
   maintenance_assets: 0,
   out_of_service_assets: 0,
 };
+
+type BackendAsset = {
+  id: string;
+  unit_code?: string | null;
+  asset_type?: string | null;
+  vin?: string | null;
+  status?: string | null;
+};
+
+type FetchError = Error & { status?: number };
+
+function mapKind(assetType: string | null | undefined): AssetKind {
+  if (assetType === "tractor") return "tractor";
+  if (assetType === "dry_van" || assetType === "reefer" || assetType === "flatbed") return "trailer";
+  return "other";
+}
+
+function mapLifecycle(status: string | null | undefined): AssetLifecycle {
+  if (status === "sold" || status === "retired") return "out_of_service";
+  if (status === "in_repair" || status === "damaged") return "maintenance";
+  return "active";
+}
+
+function mapBackendAsset(row: BackendAsset): AssetRow {
+  return {
+    id: row.id,
+    unit_number: row.unit_code?.trim() || row.id.slice(0, 8),
+    vin: row.vin ?? null,
+    kind: mapKind(row.asset_type),
+    lifecycle: mapLifecycle(row.status),
+    assigned_driver_name: null,
+    assigned_load_display: null,
+    location_label: null,
+    utilization_score: null,
+  };
+}
 
 function summarize(rows: AssetRow[]): AssetSummary {
   return {
@@ -51,11 +62,16 @@ function summarize(rows: AssetRow[]): AssetSummary {
 }
 
 async function fetchAssetRows(companyId: string): Promise<AssetRow[]> {
-  const params = new URLSearchParams({ operating_company_id: companyId, limit: "250" });
-  const response = await fetch(resolveApiUrl(`/api/v1/assets/list?${params.toString()}`), { credentials: "include" });
-  if (!response.ok) throw new Error(`asset list request failed (${response.status})`);
-  const payload = (await response.json()) as { rows?: AssetRow[] };
-  return payload.rows ?? [];
+  // Real list route is GET /api/v1/assets (max limit 200).
+  const params = new URLSearchParams({ operating_company_id: companyId, limit: "200" });
+  const response = await fetch(resolveApiUrl(`/api/v1/assets?${params.toString()}`), { credentials: "include" });
+  if (!response.ok) {
+    const err: FetchError = new Error(`asset list request failed (${response.status})`);
+    err.status = response.status;
+    throw err;
+  }
+  const payload = (await response.json()) as { assets?: BackendAsset[] };
+  return (payload.assets ?? []).map(mapBackendAsset);
 }
 
 export function AssetsWorkspacePage() {
@@ -63,28 +79,32 @@ export function AssetsWorkspacePage() {
   const companyId = selectedCompanyId ?? "";
   const [rows, setRows] = useState<AssetRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [sourceMode, setSourceMode] = useState<"live" | "fallback">("live");
+  const [loadError, setLoadError] = useState<FetchError | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
   const [lifecycle, setLifecycle] = useState<AssetLifecycle | "all">("all");
   const [search, setSearch] = useState("");
+
+  const retry = useCallback(() => setReloadToken((n) => n + 1), []);
 
   useEffect(() => {
     if (!companyId) {
       setRows([]);
-      setSourceMode("fallback");
+      setLoadError(null);
+      setIsLoading(false);
       return;
     }
     let cancelled = false;
     setIsLoading(true);
+    setLoadError(null);
     fetchAssetRows(companyId)
       .then((liveRows) => {
         if (cancelled) return;
         setRows(liveRows);
-        setSourceMode("live");
       })
-      .catch(() => {
+      .catch((err: unknown) => {
         if (cancelled) return;
-        setRows(FALLBACK_ROWS);
-        setSourceMode("fallback");
+        setRows([]);
+        setLoadError(err instanceof Error ? (err as FetchError) : new Error(String(err)));
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -92,7 +112,7 @@ export function AssetsWorkspacePage() {
     return () => {
       cancelled = true;
     };
-  }, [companyId]);
+  }, [companyId, reloadToken]);
 
   const visibleRows = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -137,15 +157,20 @@ export function AssetsWorkspacePage() {
         </p>
       ) : null}
 
-      {sourceMode === "fallback" ? (
-        <p className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-700">
-          {OFFLINE_PREVIEW_BANNER}
-        </p>
-      ) : null}
-
-      <AssetSummaryCards summary={rows.length ? summary : EMPTY_SUMMARY} />
-      <AssetFiltersBar lifecycle={lifecycle} search={search} onLifecycleChange={setLifecycle} onSearchChange={setSearch} />
-      <AssetListTable rows={visibleRows} isLoading={isLoading} />
+      {loadError ? (
+        <ListErrorState
+          title="Couldn't load assets"
+          status={loadError.status ?? 0}
+          message={loadError.message}
+          onRetry={retry}
+        />
+      ) : (
+        <>
+          <AssetSummaryCards summary={rows.length ? summary : EMPTY_SUMMARY} />
+          <AssetFiltersBar lifecycle={lifecycle} search={search} onLifecycleChange={setLifecycle} onSearchChange={setSearch} />
+          <AssetListTable rows={visibleRows} isLoading={isLoading} />
+        </>
+      )}
     </div>
   );
 }
