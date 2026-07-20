@@ -17,9 +17,25 @@
 // docs/accounting `allBuilt:true` hardcode previously all printed DONE — overstating built. They are now
 // NEEDS-VERIFY. Strong signals (branch merged / all signature files present) are UNCHANGED.
 //
-// Sources reconciled (every block, none missing):
-//   (A) .block-ready/*.json     — block registry (allowed_files = signature files; branch = its PR)
-//   (B) docs/blocks/**/*.txt    — program queue (human-curated STATUS lines)
+// Sources reconciled (every block, none missing) — FIVE, not two (comment corrected 2026-07-20: it listed
+// only (A) and (B) while the code below has long scanned all five, which made the block counts look wrong
+// to anyone auditing from this header):
+//   (A) .block-ready/*.json        — block registry (allowed_files = signature files; branch = its PR)
+//   (B) docs/blocks/**/*.txt|md    — program queue (human-curated STATUS lines)
+//   (C) docs/accounting/block-*.md — financial posting-engine blocks
+//   (D) docs/dispatch/**           — enterprise-29 dispatch blocks
+//   (E) docs/specs/gap-*.md        — gap specs (forward Phase 4-7 work)
+//
+// De-dup: by UPPERCASED block_id, keeping the HIGHER source rank —
+//   SRC_RANK = { program: 4, ".block-ready": 3, "enterprise-29": 2, accounting: 2, "gap-spec": 1 }
+// So a .block-ready entry OVERRIDES an accounting/gap-spec doc of the same id, but a program doc
+// OVERRIDES a .block-ready entry. Human-verified verdicts in docs/trackers/block-status-overrides.json
+// are applied AFTER de-dup and take precedence over everything above.
+//
+// NOTE ON acceptance[]: this reconciler does NOT read acceptance[] at all. That field lives only in
+// .block-ready/*.json and is enforced by guard G2 (scripts/verify-block-acceptance.mjs), forward-only.
+// A block can therefore carry real acceptance criteria that this report never reflects — which is why
+// code-present/data-empty blocks need an override row to avoid printing DONE off file presence alone.
 //
 // Outputs:
 //   docs/trackers/BLOCK-RECONCILIATION-<date>.md          (full per-block table)

@@ -105,14 +105,24 @@ function loadRepositoryFixture() {
     const full = path.join(BR_DIR, file);
     registry[file] = JSON.parse(fs.readFileSync(full, "utf8"));
   }
-  const retiredSamples = {};
-  for (const file of [
-    "0008-g4-vendor-namespace-canonical_DUP.json",
-    "0008-a-gl-flags-settlement-lease-off_SUPERSEDED.json",
-    "0010-f11-jep-duplicate-idempotency-gro_STALE.json",
-  ]) {
-    retiredSamples[file] = JSON.parse(fs.readFileSync(path.join(BR_DIR, file), "utf8"));
-  }
+  // INLINE FIXTURES (2026-07-20). These previously readFileSync'd three real
+  // .block-ready entries to prove the retirement markers are detected. That made a
+  // GUARD depend on production registry files remaining on disk forever — so the
+  // owner-authorized registry cleanup (#2873, 56 duplicate/superseded/irrelevant
+  // entries) deleted them and this guard died with ENOENT at module load, taking the
+  // whole verify:pre-commit suite down with it (same failure shape as the multi-block
+  // manifest crash fixed in step 1060).
+  //
+  // The checker only asserts isRetiredBlockFile(file, json) === true for these, so the
+  // FILENAME carries the signal and the body is incidental. Inlining them tests exactly
+  // the same thing, deterministically, and cannot be broken by a legitimate deletion.
+  // This matches the negative cases immediately below in checker(), which have always
+  // been inline literals.
+  const retiredSamples = {
+    "0008-g4-vendor-namespace-canonical_DUP.json": { status: "PENDING" },
+    "0008-a-gl-flags-settlement-lease-off_SUPERSEDED.json": { status: "PENDING" },
+    "0010-f11-jep-duplicate-idempotency-gro_STALE.json": { status: "PENDING" },
+  };
   const artifact = JSON.parse(read("docs/trackers/block-reconciliation-data.json"));
   return {
     liveIds: [...CONFIRMED_LIVE_HYPHEN_DEFECT_IDS],

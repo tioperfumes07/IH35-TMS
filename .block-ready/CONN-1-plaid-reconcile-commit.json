@@ -1,0 +1,35 @@
+{
+  "block_id": "CONN-1-plaid-reconcile-commit",
+  "status": "PENDING (GATED)",
+  "classification": "FINANCIAL",
+  "phase": "program",
+  "source": "docs/blocks/ACCOUNTING-FINANCE-CONNECTIONS/CONN-1-plaid-reconcile-commit.txt (source-rank 'program'=4 OUTRANKS .block-ready=3 — the reconciler keeps the program row; this entry gives acceptance[] an enforceable home under G2, and the REPORTED status is corrected via a GUARD-verified override row.)",
+  "source_file": "CONN-1-plaid-reconcile-commit.txt",
+  "task": "Enable/verify the bank reconcile COMMIT path (Plaid feed -> matched session -> post matches -> lock). Registered so its criteria become machine-checkable; the source doc names ZERO file paths and was therefore unmeasurable. Source doc STATUS is explicitly 'VERIFY+FLAG / BUILD. Tier 1 on the commit (writes the GL/reconciliation). STOPS for Jorge.' — so this is OWNER-GATED build work, not a verification of something already finished. Recorded evidence: code-guard passes but 0 reconciliation sessions exist.",
+  "branch": "feat/task4-acceptance-criteria-6-financial-blocks",
+  "allowed_files": [
+    "apps/backend/src/accounting/bank-recon/recon-worklist.service.ts",
+    "apps/backend/src/accounting/bank-recon/match.service.ts",
+    "apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts"
+  ],
+  "acceptance": [
+    {
+      "kind": "code",
+      "assert": "The commit path reuses the existing banking/reconciliation surfaces and the existing posting engine; additive-only; per-entity scoped; reversible (void-not-delete)."
+    },
+    {
+      "kind": "data",
+      "assert": "PROD count of open reconciliation sessions and of populated bank reconciliation match rows, per entity.",
+      "zero_count_means": "PENDING — the commit path has never executed. Recorded evidence 2026-07-12 was 0 reconciliation sessions. A guard that passes on code shape while 0 sessions exist proves nothing about the commit; that combination MUST read PENDING, never DONE.",
+      "verified_by": "GUARD (RLS-immune probe, per-entity GUC, positive control before trusting any 0)"
+    },
+    {
+      "kind": "live",
+      "assert": "An OWNER-APPROVED reconciliation session commits: matches post, session locks, entries tie to the GL/register, and the result is reversible. Owner-gated (Tier 1, writes GL) — the builder never runs this."
+    }
+  ],
+  "linkage": "banking.bank_transactions <-> bank reconciliation sessions/matches <-> accounting.journal_entries <-> catalogs.accounts <-> audit.row_changes; per operating_company_id.",
+  "db_required": true,
+  "guard_required": true,
+  "note": "FINANCIAL CLUSTER, TIER 1 (writes GL) — STOPS for owner. Status recorded as PENDING (GATED), which is the honest state: gated build work, not a nearly-done block. Registration only; no build performed."
+}

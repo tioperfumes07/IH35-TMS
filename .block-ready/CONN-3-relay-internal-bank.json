@@ -1,0 +1,39 @@
+{
+  "block_id": "CONN-3-relay-internal-bank",
+  "status": "PENDING (GATED)",
+  "classification": "FINANCIAL",
+  "phase": "program",
+  "source": "docs/blocks/ACCOUNTING-FINANCE-CONNECTIONS/CONN-3-relay-internal-bank.txt (source-rank 'program'=4 OUTRANKS .block-ready=3 — reconciler keeps the program row; this entry gives acceptance[] an enforceable home under G2, REPORTED status corrected via a GUARD-verified override.)",
+  "source_file": "CONN-3-relay-internal-bank.txt",
+  "task": "Relay internal-bank (pre-funded bank; withdrawals = same-day debit) + diesel-code -> approve -> post as expense. Registered so its criteria become machine-checkable; the source doc names ZERO file paths. Source doc STATUS: 'VERIFY-STATE (design-done #956). Tier 1 on posting. STOPS for Jorge.' and flags that the live header shows 'Relay: not configured' — CONFIG vs UNBUILT is explicitly unresolved and must be settled before any build. Recorded evidence: PR #2521 TITLE-MATCH ONLY — i.e. no artifact evidence at all, the weakest possible signal.",
+  "branch": "feat/task4-acceptance-criteria-6-financial-blocks",
+  "allowed_files": [
+    "apps/backend/src/integrations/relay-payments/relay-wallet-bank-feed.service.ts",
+    "apps/backend/src/integrations/relay-payments/relay-fuel-ingest.service.ts",
+    "apps/backend/src/integrations/relay-payments/relay-wallet-bank-feed-backfill.routes.ts"
+  ],
+  "acceptance": [
+    {
+      "kind": "design",
+      "assert": "RESOLVE FIRST, before any build: is 'Relay: not configured' a CONFIG state or genuinely unbuilt surface? The source doc marks this RESPOND-BEFORE-CODE. Building on the wrong answer is the documented failure mode here."
+    },
+    {
+      "kind": "code",
+      "assert": "Pre-funded internal bank; withdrawals post a same-day debit; diesel-code flow code -> approve -> expense posts through the existing posting engine (no new GL math); per-entity; reversible."
+    },
+    {
+      "kind": "data",
+      "assert": "PROD count of Relay wallet bank-feed transactions ingested and of diesel-code approvals posted as expense, per entity.",
+      "zero_count_means": "PENDING — never exercised. PR #2521 is a title-match only, so there is currently NO evidence of any kind beyond a PR name; a 0-count plus a title-match MUST read PENDING and must never be promoted to DONE.",
+      "verified_by": "GUARD (RLS-immune probe, per-entity GUC, positive control)"
+    },
+    {
+      "kind": "live",
+      "assert": "One real diesel code approved and posted as an expense FK'd to its load (every diesel/roadside expense must FK to a load), tying to the GL/register. Owner-gated (Tier 1 on posting)."
+    }
+  ],
+  "linkage": "Relay wallet <-> banking.bank_transactions <-> accounting expense/bill <-> catalogs.accounts <-> mdata.loads (diesel expense MUST FK to a load) <-> mdata.units <-> audit.row_changes. Relay/personal-card deposits classify as owner loan/capital, not revenue.",
+  "db_required": true,
+  "guard_required": true,
+  "note": "FINANCIAL CLUSTER, TIER 1 — STOPS for owner. Status PENDING (GATED) is the honest state given title-match-only evidence. Registration only; no build, and the config-vs-unbuilt question is deliberately the FIRST acceptance item."
+}
