@@ -758,7 +758,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/payroll-integration/PayrollAggregateTable.tsx` | financial-hold |
+| `apps/frontend/src/pages/payroll-integration/PayrollAggregateTable.tsx` | migrated (verify-step 1111) |
 
 ### pages/profitability (4) — financial-hold
 
