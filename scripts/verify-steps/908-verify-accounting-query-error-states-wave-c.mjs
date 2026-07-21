@@ -18,7 +18,7 @@ export default {
     ];
 
     for (const [command, args, label] of commands) {
-      const status = ctx.run(command, args);
+      const status = ctx.runAllowFailure(command, args);
       if (status !== 0) {
         throw new Error(`verify-accounting-query-error-states-wave-c ${label} failed with exit ${status}`);
       }

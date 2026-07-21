@@ -1,17 +1,17 @@
 export default {
   name: "verify-schema-parity-determinism",
   run(ctx) {
-    const normalStatus = ctx.run("node", ["scripts/verify-schema-parity-determinism.mjs"]);
+    const normalStatus = ctx.runAllowFailure("node", ["scripts/verify-schema-parity-determinism.mjs"]);
     if (normalStatus !== 0) {
       throw new Error(`verify-schema-parity-determinism failed with status ${normalStatus}`);
     }
 
-    const selftestStatus = ctx.run("node", ["scripts/verify-schema-parity-determinism.mjs", "--selftest"]);
+    const selftestStatus = ctx.runAllowFailure("node", ["scripts/verify-schema-parity-determinism.mjs", "--selftest"]);
     if (selftestStatus !== 0) {
       throw new Error(`verify-schema-parity-determinism --selftest failed with status ${selftestStatus}`);
     }
 
-    const wrapperTestStatus = ctx.run("node", [
+    const wrapperTestStatus = ctx.runAllowFailure("node", [
       "--test",
       "scripts/__tests__/verify-schema-parity-determinism-step.test.mjs",
     ]);
