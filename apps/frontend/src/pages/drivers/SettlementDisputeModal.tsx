@@ -72,8 +72,9 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
       pushToast("Driver, settlement, and claimed amount are required", "error");
       return;
     }
-    if (description.trim().length < 10) {
-      pushToast("Description must be at least 10 characters", "error");
+    if (description.trim().length < 20) {
+      // Canonical dispute table (driver_finance.driver_settlement_disputes) enforces >=20 trimmed chars.
+      pushToast("Description must be at least 20 characters", "error");
       return;
     }
 
@@ -180,7 +181,7 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
             className="min-h-24 w-full rounded-sm border border-gray-300 px-2 py-1"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Explain what is wrong with this settlement (min 10 characters)"
+            placeholder="Explain what is wrong with this settlement (min 20 characters)"
           />
         </label>
 

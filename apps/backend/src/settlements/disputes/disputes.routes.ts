@@ -6,6 +6,11 @@ import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { createCorrectiveJournalEntry } from "../../driver-finance/settlement-dispute.service.js";
 
+// P2e convergence (FOUNDATION-FIRST): these routes keep the CLOSURE-5 plural API contract
+// (paths, payload shape, dispute_type + status vocabulary) but the storage is the canonical
+// driver_finance.driver_settlement_disputes — the RETIRE table settlements.settlement_disputes
+// has zero live writers after this change. Entry points stay (never-delete law); internals share.
+
 const disputeTypeSchema = z.enum([
   "missing_line",
   "incorrect_rate",
@@ -21,7 +26,9 @@ const createDisputeBodySchema = z.object({
   driver_id: z.string().uuid(),
   dispute_type: disputeTypeSchema,
   claimed_amount_cents: z.number().int().positive(),
-  description: z.string().trim().min(10),
+  // Canonical table CHECK requires >=20 trimmed chars (blueprint P5-E2); the old plural
+  // minimum of 10 would violate it, so the contract tightens to the canonical law.
+  description: z.string().trim().min(20),
   evidence_doc_ids: z.array(z.string().uuid()).optional(),
 });
 
@@ -68,7 +75,75 @@ function mapKnownError(error: unknown) {
   return { code: 500 as const, error: "settlement_dispute_operation_failed", message: msg };
 }
 
-const CLOSED_STATUSES = new Set(["approved", "denied", "partial"]);
+// ---- vocabulary mapping (plural CLOSURE-5 contract <-> canonical P5-E2 storage) ----
+
+type PluralType = z.infer<typeof disputeTypeSchema>;
+type PluralStatus = z.infer<typeof disputeStatusSchema>;
+
+/** Nearest canonical dispute_category for each plural dispute_type. The original plural
+ * value is preserved verbatim in legacy_dispute_type, so nothing is dropped. */
+const TYPE_TO_CATEGORY: Record<PluralType, string> = {
+  missing_line: "missing_pay",
+  incorrect_rate: "wrong_rate",
+  duplicate_deduction: "wrong_deduction",
+  wrong_unit: "other",
+  other: "other",
+};
+
+const PLURAL_TO_CANONICAL_STATUS: Record<PluralStatus, string> = {
+  submitted: "open",
+  in_review: "under_review",
+  approved: "resolved_in_favor",
+  denied: "resolved_rejected",
+  partial: "partially_resolved",
+};
+
+const CANONICAL_TO_PLURAL_STATUS: Record<string, string> = {
+  open: "submitted",
+  under_review: "in_review",
+  resolved_in_favor: "approved",
+  resolved_rejected: "denied",
+  partially_resolved: "partial",
+  // canonical-only status passes through unchanged (opened via the canonical surface)
+  withdrawn: "withdrawn",
+};
+
+function toPluralStatus(canonicalStatus: unknown) {
+  const key = String(canonicalStatus ?? "");
+  return CANONICAL_TO_PLURAL_STATUS[key] ?? key;
+}
+
+const CLOSED_CANONICAL_STATUSES = new Set([
+  "resolved_in_favor",
+  "resolved_rejected",
+  "partially_resolved",
+  "withdrawn",
+]);
+
+/** Columns selected for the plural API responses, aliased to the CLOSURE-5 contract names. */
+const PLURAL_CONTRACT_COLUMNS = `
+  d.id,
+  d.settlement_id,
+  d.driver_id,
+  COALESCE(d.legacy_dispute_type, d.dispute_category) AS dispute_type,
+  d.dispute_category,
+  d.disputed_amount_cents AS claimed_amount_cents,
+  d.dispute_description AS description,
+  d.evidence_doc_ids,
+  d.status,
+  d.resolution_amount_cents,
+  d.resolution_notes,
+  d.reviewed_by_user_id,
+  d.reviewed_at,
+  d.resolution_journal_entry_id AS qbo_adjustment_je_id,
+  d.opened_at,
+  d.created_at,
+  d.updated_at
+`;
+
+function mapRowStatusToPlural<T extends { status?: unknown }>(row: T): T {
+  return { ...row, status: toPluralStatus(row.status) };
+}
 
 export async function createSettlementDispute(
   userId: string,
@@ -93,25 +168,32 @@ export async function createSettlementDispute(
 
     const insertRes = await client.query<{ id: string }>(
       `
-        INSERT INTO settlements.settlement_disputes (
+        INSERT INTO driver_finance.driver_settlement_disputes (
+          operating_company_id,
           settlement_id,
           driver_id,
-          dispute_type,
-          claimed_amount_cents,
-          description,
+          dispute_category,
+          legacy_dispute_type,
+          dispute_description,
+          disputed_amount_cents,
           evidence_doc_ids,
+          opened_by_driver,
+          opened_by_user_id,
           status
         )
-        VALUES ($1::uuid, $2::uuid, $3, $4::bigint, $5, $6::uuid[], 'submitted')
+        VALUES ($1::uuid, $2::uuid, $3::uuid, $4, $5, $6, $7::bigint, $8::uuid[], false, $9::uuid, 'open')
         RETURNING id
       `,
       [
+        input.operating_company_id,
         settlementId,
         input.driver_id,
+        TYPE_TO_CATEGORY[input.dispute_type],
         input.dispute_type,
-        input.claimed_amount_cents,
         input.description,
+        input.claimed_amount_cents,
         input.evidence_doc_ids ?? null,
+        userId,
       ]
     );
 
@@ -120,7 +202,12 @@ export async function createSettlementDispute(
       client,
       userId,
       "settlements.settlement_dispute.created",
-      { resource_type: "settlements.settlement_disputes", resource_id: disputeId },
+      {
+        resource_type: "driver_finance.driver_settlement_disputes",
+        resource_id: disputeId,
+        operating_company_id: input.operating_company_id,
+        legacy_dispute_type: input.dispute_type,
+      },
       "info",
       "P5-T13-DISPUTES"
     );
@@ -134,15 +221,10 @@ export async function listSettlementDisputes(userId: string, query: z.infer<type
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.operating_company_id]);
 
     const values: unknown[] = [query.operating_company_id];
-    const filters: string[] = [
-      `EXISTS (
-        SELECT 1 FROM driver_finance.driver_settlements s
-        WHERE s.id = d.settlement_id AND s.operating_company_id = $1::uuid
-      )`,
-    ];
+    const filters: string[] = [`d.operating_company_id = $1::uuid`];
 
     if (query.status) {
-      values.push(query.status);
+      values.push(PLURAL_TO_CANONICAL_STATUS[query.status]);
       filters.push(`d.status = $${values.length}`);
     }
     if (query.driver_id) {
@@ -157,10 +239,10 @@ export async function listSettlementDisputes(userId: string, query: z.infer<type
     const rowsRes = await client.query(
       `
         SELECT
-          d.*,
+          ${PLURAL_CONTRACT_COLUMNS},
           dr.first_name || ' ' || dr.last_name AS driver_name,
           s.display_id AS settlement_display_id
-        FROM settlements.settlement_disputes d
+        FROM driver_finance.driver_settlement_disputes d
         JOIN mdata.drivers dr ON dr.id = d.driver_id
         JOIN driver_finance.driver_settlements s ON s.id = d.settlement_id
         WHERE ${filters.join(" AND ")}
@@ -173,14 +255,14 @@ export async function listSettlementDisputes(userId: string, query: z.infer<type
     const countRes = await client.query<{ total: string }>(
       `
         SELECT COUNT(*)::text AS total
-        FROM settlements.settlement_disputes d
+        FROM driver_finance.driver_settlement_disputes d
         WHERE ${filters.join(" AND ")}
       `,
       values.slice(0, values.length - 2)
     );
 
     return {
-      disputes: rowsRes.rows,
+      disputes: rowsRes.rows.map((row) => mapRowStatusToPlural(row as { status?: unknown })),
       total: Number(countRes.rows[0]?.total ?? 0),
       limit: query.limit,
       offset: query.offset,
@@ -207,23 +289,29 @@ export async function reviewSettlementDispute(
       claimed_amount_cents: string | number;
     }>(
       `
-        SELECT d.id, d.settlement_id, d.driver_id, d.status, d.claimed_amount_cents
-        FROM settlements.settlement_disputes d
-        JOIN driver_finance.driver_settlements s ON s.id = d.settlement_id
+        SELECT d.id, d.settlement_id, d.driver_id, d.status, d.disputed_amount_cents AS claimed_amount_cents
+        FROM driver_finance.driver_settlement_disputes d
         WHERE d.id = $2::uuid
-          AND s.operating_company_id = $1::uuid
-        FOR UPDATE OF d
+          AND d.operating_company_id = $1::uuid
+        FOR UPDATE
       `,
       [input.operating_company_id, disputeId]
     );
     const dispute = disputeRes.rows[0];
     if (!dispute) throw new Error("E_NOT_FOUND");
-    if (CLOSED_STATUSES.has(String(dispute.status))) throw new Error("E_CLOSED_IMMUTABLE");
+    if (CLOSED_CANONICAL_STATUSES.has(String(dispute.status))) throw new Error("E_CLOSED_IMMUTABLE");
 
     const nextStatus = input.status;
     if (nextStatus === "in_review") {
       await client.query(
-        `UPDATE settlements.settlement_disputes SET status = 'in_review', reviewed_by_user_id = $2::uuid, reviewed_at = now() WHERE id = $1::uuid`,
+        `
+          UPDATE driver_finance.driver_settlement_disputes
+          SET status = 'under_review',
+              reviewed_by_user_id = $2::uuid,
+              reviewed_at = now(),
+              updated_at = now()
+          WHERE id = $1::uuid
+        `,
         [disputeId, userId]
       );
       return { id: disputeId, status: "in_review" as const };
@@ -268,19 +356,22 @@ export async function reviewSettlementDispute(
 
     await client.query(
       `
-        UPDATE settlements.settlement_disputes
+        UPDATE driver_finance.driver_settlement_disputes
         SET status = $3,
             resolution_amount_cents = $4::bigint,
             resolution_notes = $5,
             reviewed_by_user_id = $6::uuid,
-            reviewed_at = now(),
-            qbo_adjustment_je_id = $7::uuid
+            reviewed_at = COALESCE(reviewed_at, now()),
+            resolution_journal_entry_id = $7::uuid,
+            closed_at = now(),
+            updated_at = now()
         WHERE id = $1::uuid
+          AND operating_company_id = $2::uuid
       `,
       [
         disputeId,
         input.operating_company_id,
-        nextStatus,
+        PLURAL_TO_CANONICAL_STATUS[nextStatus],
         resolutionAmountCents || null,
         input.resolution_notes.trim(),
         userId,
@@ -293,9 +384,10 @@ export async function reviewSettlementDispute(
       userId,
       "settlements.settlement_dispute.reviewed",
       {
-        resource_type: "settlements.settlement_disputes",
+        resource_type: "driver_finance.driver_settlement_disputes",
         resource_id: disputeId,
         status: nextStatus,
+        canonical_status: PLURAL_TO_CANONICAL_STATUS[nextStatus],
         qbo_adjustment_je_id: journalEntryId,
       },
       "warning",
