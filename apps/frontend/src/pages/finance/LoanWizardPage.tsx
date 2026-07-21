@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import {
   FINANCE_HUB_LOAN_WIZARD_FLAG,
   previewLoanWizard,
@@ -11,6 +12,45 @@ import {
 const dollars = (cents: number) =>
   (cents / 100).toLocaleString(undefined, { style: "currency", currency: "USD" });
 const toCents = (s: string) => Math.round((Number(s) || 0) * 100);
+
+/**
+ * Display row for the opening-JE preview table. `debit`/`credit` are the SAME pre-formatted
+ * strings the hand-rolled table rendered (dollars() when the side matches, "" otherwise) —
+ * display-only migration, no amount math changed. The Totals row is appended as the last row
+ * exactly as before (columns are non-sortable so line order and the trailing Totals row are
+ * preserved 1:1).
+ */
+type OpeningJeRow = {
+  id: string;
+  description: string;
+  debit: string;
+  credit: string;
+  isTotals: boolean;
+};
+
+const OPENING_JE_COLUMNS: Array<ParityColumn<OpeningJeRow>> = [
+  {
+    key: "description",
+    label: "Description",
+    render: (r) => (
+      <span className={r.isTotals ? "font-medium text-slate-700" : "text-slate-600"}>{r.description}</span>
+    ),
+  },
+  {
+    key: "debit",
+    label: "Debit",
+    className: "text-right",
+    cellClass: "text-right",
+    render: (r) => <span className={r.isTotals ? "font-medium text-slate-700" : undefined}>{r.debit}</span>,
+  },
+  {
+    key: "credit",
+    label: "Credit",
+    className: "text-right",
+    cellClass: "text-right",
+    render: (r) => <span className={r.isTotals ? "font-medium text-slate-700" : undefined}>{r.credit}</span>,
+  },
+];
 
 export function LoanWizardPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -168,23 +208,32 @@ export function LoanWizardPage() {
               </div>
               <div>
                 <div className="font-medium text-slate-700">Opening journal entry</div>
-                <div className="overflow-x-auto">
-                <table className="mt-1 w-full text-xs">
-                  <tbody>
-                    {preview.opening_journal_entry.lines.map((l, i) => (
-                      <tr key={i} className="border-b border-slate-100">
-                        <td className="py-1 text-slate-600">{l.description}</td>
-                        <td className="py-1 text-right">{l.debit_or_credit === "debit" ? dollars(l.amount_cents) : ""}</td>
-                        <td className="py-1 text-right">{l.debit_or_credit === "credit" ? dollars(l.amount_cents) : ""}</td>
-                      </tr>
-                    ))}
-                    <tr className="font-medium text-slate-700">
-                      <td className="py-1">Totals</td>
-                      <td className="py-1 text-right">{dollars(preview.opening_journal_entry.debit_total_cents)}</td>
-                      <td className="py-1 text-right">{dollars(preview.opening_journal_entry.credit_total_cents)}</td>
-                    </tr>
-                  </tbody>
-                </table>
+                <div className="mt-1">
+                  <ParityTable
+                    columns={OPENING_JE_COLUMNS}
+                    rows={[
+                      ...preview.opening_journal_entry.lines.map(
+                        (l, i): OpeningJeRow => ({
+                          id: `line-${i}`,
+                          description: l.description,
+                          debit: l.debit_or_credit === "debit" ? dollars(l.amount_cents) : "",
+                          credit: l.debit_or_credit === "credit" ? dollars(l.amount_cents) : "",
+                          isTotals: false,
+                        }),
+                      ),
+                      {
+                        id: "totals",
+                        description: "Totals",
+                        debit: dollars(preview.opening_journal_entry.debit_total_cents),
+                        credit: dollars(preview.opening_journal_entry.credit_total_cents),
+                        isTotals: true,
+                      },
+                    ]}
+                    rowKey={(r) => r.id}
+                    storageKey="loan-wizard-opening-je"
+                    tableTestId="loan-wizard-opening-je-table"
+                    emptyText="No journal lines in preview."
+                  />
                 </div>
               </div>
               <p className="text-xs text-slate-400">
