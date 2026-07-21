@@ -1,26 +1,26 @@
 {
  "date": "2026-07-21",
- "generated_at_iso": "2026-07-21T12:45:25.614Z",
+ "generated_at_iso": "2026-07-21T13:23:24.445Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
   "NEEDS-VERIFY": 63,
-  "DONE": 667,
+  "DONE": 668,
   "AUDIT-NOTE": 425
  },
  "universe": {
-  "total_blocks_after_dedup": 1189,
+  "total_blocks_after_dedup": 1190,
   "by_source_after_dedup": {
-   ".block-ready": 1017,
+   ".block-ready": 1018,
    "program": 61,
    "enterprise-29": 29,
    "accounting": 25,
    "gap-spec": 57
   },
   "raw_file_counts": {
-   ".block-ready (*.json files)": 1370,
+   ".block-ready (*.json files)": 1371,
    ".block-ready retired (dup/stale/superseded, excluded)": 348,
-   ".block-ready active (counted)": 1022
+   ".block-ready active (counted)": 1023
   },
   "note": "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by UNIQUE block_id, EXCLUDING files with EXPLICIT retirement markers (_DUP/_STALE/_SUPERSEDED underscore suffixes, status superseded/duplicate/dup/stale, or superseded_by/duplicate_of). Hyphen descriptive …-stale/…-duplicate live defect IDs are NOT retired by filename alone. So the block count is neither the raw .block-ready file count nor inflated by duplicate/retired registrations."
  },
@@ -6737,6 +6737,17 @@
    "pr": 3082
   },
   {
+   "id": "paritytable-a4-external-sort",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #3086 merged 2026-07-21",
+   "name": "Add OPTIONAL sortMode?: \"internal\" | \"external\" to ParityTable. Default \"internal\" = today's byte-identical internal sor",
+   "registered_on": null,
+   "pr": 3086
+  },
+  {
    "id": "PERF-BUDGET-RAISE",
    "source": ".block-ready",
    "fin": true,
@@ -13140,6 +13151,30 @@
  ],
  "merged_prs": [
   {
+   "number": 3086,
+   "title": "feat(parity): ParityTable A4 — optional external-sort passthrough",
+   "mergedAt": "2026-07-21T13:22:21Z",
+   "branch": "feat/paritytable-external-sort-passthrough"
+  },
+  {
+   "number": 3085,
+   "title": "[HOLD] fix(settlements): P2b/P2f converge team-splits facade onto mdata.driver_teams",
+   "mergedAt": "2026-07-21T13:19:45Z",
+   "branch": "fix/team-splits-converge-mdata-teams"
+  },
+  {
+   "number": 3084,
+   "title": "[HOLD] fix(settlements): P2a — auto-deductions materialize into driver_settlement_deductions sub-ledger",
+   "mergedAt": "2026-07-21T13:06:35Z",
+   "branch": "fix/auto-deductions-subledger"
+  },
+  {
+   "number": 3083,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-21T12:59:31Z",
+   "branch": "chore/tracker-artifacts-sync-29831377108"
+  },
+  {
    "number": 3082,
    "title": "feat(parity): ParityTable A3 — optional controlled pagination props",
    "mergedAt": "2026-07-21T12:44:33Z",
@@ -16714,34 +16749,22 @@
    "title": "docs(skill): §10 LINKAGE LAW + canonical wiring into the auto-loaded standards skill (permanence)",
    "mergedAt": "2026-07-11T01:59:30Z",
    "branch": "docs/skill-add-linkage-law"
-  },
-  {
-   "number": 2321,
-   "title": "feat(guard): G4 verify-canonical-table-writes — write/FK to a RETIRE table fails CI (would've caught #2314)",
-   "mergedAt": "2026-07-11T02:51:27Z",
-   "branch": "feat/guard-canonical-table-writes"
-  },
-  {
-   "number": 2320,
-   "title": "docs(settlement): canonical-engine decision + retirement plan (Tier-1 0091-c1-1, design only) — HOLD",
-   "mergedAt": "2026-07-11T01:56:05Z",
-   "branch": "design/settlement-engine-single-source"
-  },
-  {
-   "number": 2319,
-   "title": "fix(posting): no silent flag-gated no-op posting (Tier-1 0007) — HOLD, financial",
-   "mergedAt": "2026-07-11T01:55:57Z",
-   "branch": "fix/no-silent-noop-posting"
-  },
-  {
-   "number": 2318,
-   "title": "feat(guard): G3 verify-guard-wired — no guard can exist unwired (silent fake-green)",
-   "mergedAt": "2026-07-11T01:55:49Z",
-   "branch": "feat/guard-guard-wired"
   }
  ],
- "merged_pr_total": 2799,
+ "merged_pr_total": 2803,
  "hold_for_jorge": [
+  {
+   "number": 3085,
+   "title": "[HOLD] fix(settlements): P2b/P2f converge team-splits facade onto mdata.driver_teams",
+   "mergedAt": "2026-07-21T13:19:45Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3084,
+   "title": "[HOLD] fix(settlements): P2a — auto-deductions materialize into driver_settlement_deductions sub-ledger",
+   "mergedAt": "2026-07-21T13:06:35Z",
+   "category": "HOLD"
+  },
   {
    "number": 3079,
    "title": "[HOLD] fix(driver-finance): settlement double-pay TOCTOU — CAS + row lock + idempotency latch on all 5 payment transitions (Phase 2)",
