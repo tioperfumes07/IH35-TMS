@@ -9,7 +9,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { companyToday } from "../../lib/businessDate";
 import {
   getPrepaidExpenses, getPrepaidExpenseDetail, createPrepaidExpense,
-  type PrepaidAssetListItem, type PrepaidAssetDetail,
+  type PrepaidAssetListItem, type PrepaidAssetDetail, type PrepaidAmortRow,
 } from "../../api/prepaid-expenses";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -23,6 +23,34 @@ const STATUS_COLOR: Record<string, string> = {
   fully_amortized: "bg-slate-100 text-slate-700",
   voided: "bg-red-100 text-red-700",
 };
+
+// Amortization-schedule columns (SchedulePanel) — display-only 1:1 port of the former
+// hand-rolled table: same labels, order, formatting, and the EntityLink JE drill-through.
+const SCHEDULE_COLUMNS: ParityColumn<PrepaidAmortRow>[] = [
+  { key: "period_number", label: "#", sortable: true, cellClass: "text-gray-500", render: (row) => row.period_number },
+  { key: "period_date", label: "Period Date", sortable: true, cellClass: "whitespace-nowrap", render: (row) => fmtDate(row.period_date) },
+  { key: "amount_cents", label: "Amount", sortable: true, cellClass: "text-right tabular-nums", render: (row) => fmtCents(row.amount_cents) },
+  { key: "remaining_balance_cents", label: "Remaining", sortable: true, cellClass: "text-right tabular-nums text-gray-500", render: (row) => fmtCents(row.remaining_balance_cents) },
+  {
+    key: "posted",
+    label: "Posted",
+    sortable: true,
+    sortValue: (row) => (row.posted ? 1 : 0),
+    render: (row) =>
+      row.posted
+        ? <span className="inline-block rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">Posted</span>
+        : <span className="inline-block rounded-sm bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">Pending</span>,
+  },
+  {
+    key: "posted_journal_entry_id",
+    label: "JE",
+    sortable: true,
+    cellClass: "font-mono text-gray-400",
+    render: (row) => (
+      <EntityLink kind="journal_entry" id={row.posted_journal_entry_id} label={row.posted_journal_entry_id ? row.posted_journal_entry_id.slice(0, 8) + "…" : undefined} />
+    ),
+  },
+];
 
 function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClose: () => void }) {
   const pct = detail.total_amount_cents > 0
@@ -61,34 +89,19 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
           </div>
         )}
 
-        <div className="overflow-y-auto overflow-x-auto flex-1 rounded-sm border border-gray-200">
-          <table className="min-w-full text-xs divide-y divide-gray-200">
-            <thead className="bg-gray-50 sticky top-0">
-              <tr>
-                {["#","Period Date","Amount","Remaining","Posted","JE"].map((h) => (
-                  <th key={h} className="px-3 py-2 text-left font-semibold text-gray-600 uppercase tracking-wide">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
-              {detail.schedule.map((row) => (
-                <tr key={row.id} className={row.posted ? "bg-slate-50" : "hover:bg-gray-50"}>
-                  <td className="px-3 py-1.5 text-gray-500">{row.period_number}</td>
-                  <td className="px-3 py-1.5 whitespace-nowrap">{fmtDate(row.period_date)}</td>
-                  <td className="px-3 py-1.5 text-right tabular-nums">{fmtCents(row.amount_cents)}</td>
-                  <td className="px-3 py-1.5 text-right tabular-nums text-gray-500">{fmtCents(row.remaining_balance_cents)}</td>
-                  <td className="px-3 py-1.5">
-                    {row.posted
-                      ? <span className="inline-block rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">Posted</span>
-                      : <span className="inline-block rounded-sm bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">Pending</span>}
-                  </td>
-                  <td className="px-3 py-1.5 font-mono text-gray-400">
-                    <EntityLink kind="journal_entry" id={row.posted_journal_entry_id} label={row.posted_journal_entry_id ? row.posted_journal_entry_id.slice(0, 8) + "…" : undefined} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="overflow-y-auto flex-1">
+          <ParityTable<PrepaidAmortRow>
+            columns={SCHEDULE_COLUMNS}
+            rows={detail.schedule}
+            rowKey={(row) => row.id}
+            rowClassName={(row) => (row.posted ? "bg-slate-50" : "hover:bg-gray-50")}
+            storageKey="prepaid-expense-schedule"
+            tableTestId="prepaid-expense-schedule-table"
+            density="compact"
+            initialPageSize={12}
+            pageSizeOptions={[12, 60, 120, 360]}
+            emptyText="No schedule periods."
+          />
         </div>
       </div>
     </div>
