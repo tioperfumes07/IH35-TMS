@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
+import { ListErrorState } from "../../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { getActualVsProjected, type ActualVsProjectedResult, type AvpLineItem } from "../../../api/cashFlow";
 import { addDaysIso, companyToday } from "../../../lib/businessDate";
 import { formatUsdCents } from "../../../lib/money";
@@ -66,15 +68,95 @@ function VarianceCell({ variance_cents, variance_pct }: { variance_cents: number
   );
 }
 
+// Column order/formatting preserved 1:1 from the former hand-rolled table markup (display-only migration).
+const COLUMNS: Array<ParityColumn<RowGroup>> = [
+  {
+    key: "date",
+    label: "Date",
+    sortable: true,
+    className: "text-left",
+    render: (g) => (
+      <span className="font-medium text-gray-900">
+        {new Date(g.date + "T00:00:00Z").toLocaleDateString("en-US", {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+        })}
+      </span>
+    ),
+  },
+  {
+    key: "projected_income",
+    label: "Projected Income",
+    sortable: true,
+    className: "text-right",
+    sortValue: (g) => g.income.projected_cents,
+    render: (g) => <span className="text-gray-700">{formatCents(g.income.projected_cents)}</span>,
+  },
+  {
+    key: "actual_income",
+    label: "Actual Income",
+    sortable: true,
+    className: "text-right",
+    sortValue: (g) => g.income.actual_cents,
+    render: (g) => <span className="text-gray-700">{formatCents(g.income.actual_cents)}</span>,
+  },
+  {
+    key: "income_variance",
+    label: "Income Variance",
+    sortable: true,
+    className: "text-right",
+    sortValue: (g) => g.income.variance_cents,
+    render: (g) => <VarianceCell variance_cents={g.income.variance_cents} variance_pct={g.income.variance_pct} />,
+  },
+  {
+    key: "projected_expenses",
+    label: "Projected Exp.",
+    sortable: true,
+    className: "text-right",
+    sortValue: (g) => g.expenses.projected_cents,
+    render: (g) => <span className="text-gray-700">{formatCents(g.expenses.projected_cents)}</span>,
+  },
+  {
+    key: "actual_expenses",
+    label: "Actual Exp.",
+    sortable: true,
+    className: "text-right",
+    sortValue: (g) => g.expenses.actual_cents,
+    render: (g) => <span className="text-gray-700">{formatCents(g.expenses.actual_cents)}</span>,
+  },
+  {
+    key: "expense_variance",
+    label: "Exp. Variance",
+    sortable: true,
+    className: "text-right",
+    sortValue: (g) => g.expenses.variance_cents,
+    render: (g) => <VarianceCell variance_cents={g.expenses.variance_cents} variance_pct={g.expenses.variance_pct} />,
+  },
+  {
+    key: "net",
+    label: "Net",
+    sortable: true,
+    className: "text-right",
+    sortValue: (g) => g.net.actual_cents,
+    render: (g) => (
+      <span className={`font-bold ${g.net.actual_cents >= 0 ? "text-slate-700" : "text-red-700"}`}>
+        {formatCents(g.net.actual_cents, { sign: true })}
+      </span>
+    ),
+  },
+];
+
 export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
   const [from, setFrom] = useState<string>(sevenDaysAgoIso());
   const [to, setTo] = useState<string>(todayIso());
 
-  const { data, isLoading, isError } = useQuery<ActualVsProjectedResult>({
+  const avpQ = useQuery<ActualVsProjectedResult>({
     queryKey: ["cash-flow-avp", operatingCompanyId, from, to],
     queryFn: () => getActualVsProjected(operatingCompanyId, from, to),
     enabled: !!operatingCompanyId && from <= to,
   });
+  const { data, isLoading, isError } = avpQ;
 
   const groups = data ? groupByDate(data.lines) : [];
   const acc = data?.accuracy_summary;
@@ -151,78 +233,25 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
         </div>
       )}
 
-      {isError && (
-        <div className="rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          Failed to load data. Check your connection.
-        </div>
-      )}
-
       {/* Per-line table */}
-      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
-        <table className="w-full min-w-[640px] text-sm">
-          <thead>
-            <tr className="border-b border-gray-100 bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
-              <th className="px-4 py-3 text-left">Date</th>
-              <th className="px-4 py-3 text-right">Projected Income</th>
-              <th className="px-4 py-3 text-right">Actual Income</th>
-              <th className="px-4 py-3 text-right">Income Variance</th>
-              <th className="px-4 py-3 text-right">Projected Exp.</th>
-              <th className="px-4 py-3 text-right">Actual Exp.</th>
-              <th className="px-4 py-3 text-right">Exp. Variance</th>
-              <th className="px-4 py-3 text-right">Net</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {isLoading &&
-              [1, 2, 3, 4, 5].map((i) => (
-                <tr key={i}>
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map((j) => (
-                    <td key={j} className="px-4 py-3">
-                      <div className="h-4 animate-pulse rounded-sm bg-gray-100" />
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            {!isLoading && groups.length === 0 && (
-              <tr>
-                <td colSpan={8} className="py-12 text-center">
-                  <Minus className="mx-auto mb-2 size-8 text-gray-300" />
-                  <p className="text-sm text-gray-500">No data for the selected date range.</p>
-                </td>
-              </tr>
-            )}
-            {!isLoading &&
-              groups.map((g) => {
-                const netActual = g.net.actual_cents;
-                const netPos = netActual >= 0;
-                return (
-                  <tr key={g.date} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-900">
-                      {new Date(g.date + "T00:00:00Z").toLocaleDateString("en-US", {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </td>
-                    <td className="px-4 py-3 text-right text-gray-700">{formatCents(g.income.projected_cents)}</td>
-                    <td className="px-4 py-3 text-right text-gray-700">{formatCents(g.income.actual_cents)}</td>
-                    <td className="px-4 py-3 text-right">
-                      <VarianceCell variance_cents={g.income.variance_cents} variance_pct={g.income.variance_pct} />
-                    </td>
-                    <td className="px-4 py-3 text-right text-gray-700">{formatCents(g.expenses.projected_cents)}</td>
-                    <td className="px-4 py-3 text-right text-gray-700">{formatCents(g.expenses.actual_cents)}</td>
-                    <td className="px-4 py-3 text-right">
-                      <VarianceCell variance_cents={g.expenses.variance_cents} variance_pct={g.expenses.variance_pct} />
-                    </td>
-                    <td className={`px-4 py-3 text-right font-bold ${netPos ? "text-slate-700" : "text-red-700"}`}>
-                      {formatCents(netActual, { sign: true })}
-                    </td>
-                  </tr>
-                );
-              })}
-          </tbody>
-        </table>
-      </div>
+      {isError ? (
+        <ListErrorState
+          title="Couldn't load actual vs projected data"
+          status={0}
+          message={(avpQ.error as Error)?.message}
+          onRetry={() => void avpQ.refetch()}
+        />
+      ) : (
+        <ParityTable
+          columns={COLUMNS}
+          rows={groups}
+          rowKey={(g) => g.date}
+          loading={isLoading}
+          emptyText="No data for the selected date range."
+          storageKey="cash-flow-avp"
+          tableTestId="cash-flow-avp-table"
+        />
+      )}
     </div>
   );
 }
