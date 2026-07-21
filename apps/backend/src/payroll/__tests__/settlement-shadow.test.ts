@@ -29,7 +29,7 @@ describe("A3-3 runSettlementShadow — read-only, computes both paths", () => {
     const client = {
       query: vi.fn(async (sql: string) => {
         sqls.push(sql);
-        if (sql.includes("FROM payroll.driver_settlements")) {
+        if (sql.includes("FROM driver_finance.driver_settlements")) {
           return { rows: [{ id: "s1", driver_id: "d1", gross_cents: "100000" }] };
         }
         if (sql.includes("FROM driver_finance.cash_advance_requests")) return { rows: [{ deductions_cents: "150000" }] };

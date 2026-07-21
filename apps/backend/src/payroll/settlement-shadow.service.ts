@@ -71,13 +71,16 @@ export async function runSettlementShadow(
   client: DbClient,
   args: { operatingCompanyId: string; periodStart: string; periodEnd: string }
 ): Promise<ShadowReport> {
+  // P2c reader repoint (settlement engine collapse): shadow-compare runs over the CANONICAL
+  // driver_finance header (the RETIRE payroll ledger is 0 rows and receives no writes). The
+  // canonical header stores dollars (numeric gross_pay); this comparison works in cents.
   const settlementsRes = await client.query<{ id: string; driver_id: string; gross_cents: string | number }>(
     `
-      SELECT id::text, driver_id::text, gross_cents::bigint AS gross_cents
-      FROM payroll.driver_settlements
+      SELECT id::text, driver_id::text, ROUND(gross_pay * 100)::bigint AS gross_cents
+      FROM driver_finance.driver_settlements
       WHERE operating_company_id = $1::uuid
-        AND pay_period_start = $2::date
-        AND pay_period_end = $3::date
+        AND period_start = $2::date
+        AND period_end = $3::date
       ORDER BY created_at ASC, id ASC
     `,
     [args.operatingCompanyId, args.periodStart, args.periodEnd]

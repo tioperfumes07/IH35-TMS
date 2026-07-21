@@ -361,34 +361,41 @@ export async function buildDriverAggregate(
     () =>
       client.query(
         `
+          -- P2c reader repoint (settlement engine collapse): canonical driver_finance header only.
+          -- Canonical stores DOLLARS (numeric gross_pay/deductions_total/net_pay); this API contract
+          -- is CENTS, so each amount converts via ROUND(x * 100). Void semantics map to the canonical
+          -- domain: status <> 'cancelled' AND reversed_at IS NULL (payroll used status <> 'void').
           WITH ytd AS (
             SELECT
-              COALESCE(SUM(gross_cents), 0)::bigint AS ytd_gross,
-              COALESCE(SUM(deductions_cents), 0)::bigint AS ytd_deductions,
-              COALESCE(SUM(net_cents), 0)::bigint AS ytd_net
-            FROM payroll.driver_settlements
+              COALESCE(SUM(ROUND(gross_pay * 100)), 0)::bigint AS ytd_gross,
+              COALESCE(SUM(ROUND(deductions_total * 100)), 0)::bigint AS ytd_deductions,
+              COALESCE(SUM(ROUND(net_pay * 100)), 0)::bigint AS ytd_net
+            FROM driver_finance.driver_settlements
             WHERE driver_id = $1::uuid
               AND operating_company_id = $2::uuid
-              AND pay_period_end >= date_trunc('year', CURRENT_DATE)::date
-              AND status <> 'void'
+              AND period_end >= date_trunc('year', CURRENT_DATE)::date
+              AND status <> 'cancelled'
+              AND reversed_at IS NULL
           ),
           lifetime AS (
-            SELECT COALESCE(SUM(net_cents), 0)::bigint AS lifetime_with_company
-            FROM payroll.driver_settlements
+            SELECT COALESCE(SUM(ROUND(net_pay * 100)), 0)::bigint AS lifetime_with_company
+            FROM driver_finance.driver_settlements
             WHERE driver_id = $1::uuid
               AND operating_company_id = $2::uuid
-              AND status <> 'void'
+              AND status <> 'cancelled'
+              AND reversed_at IS NULL
           ),
           weeks AS (
             SELECT
-              pay_period_end::text AS week_ending,
-              gross_cents::bigint AS gross,
-              net_cents::bigint AS net
-            FROM payroll.driver_settlements
+              period_end::text AS week_ending,
+              ROUND(gross_pay * 100)::bigint AS gross,
+              ROUND(net_pay * 100)::bigint AS net
+            FROM driver_finance.driver_settlements
             WHERE driver_id = $1::uuid
               AND operating_company_id = $2::uuid
-              AND status <> 'void'
-            ORDER BY pay_period_end DESC
+              AND status <> 'cancelled'
+              AND reversed_at IS NULL
+            ORDER BY period_end DESC
             LIMIT 4
           )
           SELECT
