@@ -652,6 +652,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/finance/AmortizationPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/finance/AmortizationPage.tsx` | migrated (verify-step 1134) — display-only schedule grid; owner-greenlit UI-only migration; calculator inputs untouched |
 | `apps/frontend/src/pages/finance/ArApAgingPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/finance/ArApAgingPage.tsx` | migrated (verify-step 1135) — display-only; owner-greenlit UI-only migration |
 | `apps/frontend/src/pages/finance/CalculatorPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/finance/FinancialStatementsPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/finance/LoanWizardPage.tsx` | financial-hold |
@@ -1474,3 +1475,20 @@ the `wo-linked-financials` section wrapper preserved. Guard:
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx` | pages/maintenance |
+
+## qbo-parity-a1 — ArApAgingPage (this PR)
+FIN-20 AR/AP aging report (read-only, `AR_AP_AGING_UI_ENABLED`-gated) had three
+hand-rolled `<table>` grids: the A/R-by-customer + A/P-by-vendor main aging grid
+(with a Grand-total `tfoot`) and the per-row open-invoices / open-bills drill
+panels. Owner-greenlit **display-only** migration — no posting/mutation logic, no
+API/query change, cents math untouched. All grids moved to shared `ParityTable`
+(sort + resize + gear + density); the row-click drill became the standard ▸
+`renderExpanded` toggle; the Grand-total row is preserved 1:1 (same labels +
+`fmtCents` values) as a totals strip under the grid; the page-level Export CSV /
+Print actions and historical as-of note are unchanged; query errors now render
+`ListErrorState` with retry. Guard:
+`scripts/verify-arap-aging-page-uses-paritytable.mjs` via verify-step **1135**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/finance/ArApAgingPage.tsx` | pages/finance |
