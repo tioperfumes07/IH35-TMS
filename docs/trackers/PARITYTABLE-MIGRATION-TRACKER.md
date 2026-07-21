@@ -467,7 +467,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/accounting/EscrowPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/ExpenseCategoryMapPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/FactorReconciliationPage.tsx` | migrated (verify-step 1151) |
-| `apps/frontend/src/pages/accounting/FactorReserveCard.tsx` | financial-hold |
+| `apps/frontend/src/pages/accounting/FactorReserveCard.tsx` | migrated (verify-step 1169) |
 | `apps/frontend/src/pages/accounting/FactoringDetailPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/FactoringListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/FixedAssetsPage.tsx` | financial-hold |
