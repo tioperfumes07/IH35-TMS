@@ -4,11 +4,12 @@ import { ApiError } from "../../../api/client";
 import { getAccountTypeCatalog } from "../../../api/account-type-catalog";
 import { detailTypesCatalogClient, type DetailTypeRow } from "../../../api/detail-types-catalog";
 import { Button } from "../../../components/Button";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { Modal } from "../../../components/Modal";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
-import { useListState } from "../../../components/list-state";
 
 type StatusFilter = "true" | "false" | "all";
 
@@ -43,7 +44,57 @@ export function DetailTypesListPage() {
     enabled: Boolean(companyId),
   });
   const rows = listQuery.data?.rows ?? [];
-  const listState = useListState(listQuery, rows.length === 0);
+
+  // Column order preserved 1:1 from the former hand-rolled table markup.
+  const columns = useMemo<Array<ParityColumn<DetailTypeRow>>>(() => [
+    {
+      key: "account_type_id",
+      label: "Account Type",
+      sortable: true,
+      sortValue: (row) => typeLabel.get(row.account_type_id) ?? "",
+      render: (row) => <span className="text-slate-700">{typeLabel.get(row.account_type_id) ?? "—"}</span>,
+    },
+    {
+      key: "name",
+      label: "Detail Type",
+      sortable: true,
+      render: (row) => <span className="font-medium text-slate-800">{row.name}</span>,
+    },
+    {
+      key: "code",
+      label: "Code",
+      sortable: true,
+      render: (row) => <span className="text-xs text-slate-600">{row.code || "—"}</span>,
+    },
+    {
+      key: "is_system",
+      label: "Source",
+      sortable: true,
+      sortValue: (row) => (row.is_system ? "System (locked)" : "Custom"),
+      render: (row) => (
+        <span className={`rounded-sm px-2 py-0.5 text-[10px] font-semibold ${row.is_system ? "bg-slate-100 text-slate-600" : "bg-slate-200 text-slate-800"}`}>
+          {row.is_system ? "System (locked)" : "Custom"}
+        </span>
+      ),
+    },
+    {
+      key: "sort_order",
+      label: "Order",
+      sortable: true,
+      render: (row) => <span className="text-slate-700">{row.sort_order}</span>,
+    },
+    {
+      key: "is_active",
+      label: "Status",
+      sortable: true,
+      sortValue: (row) => (row.is_active ? "Active" : "Inactive"),
+      render: (row) => (
+        <span className={`rounded-sm px-2 py-0.5 text-[10px] font-semibold ${row.is_active ? "bg-slate-100 text-slate-700" : "bg-slate-100 text-slate-600"}`}>
+          {row.is_active ? "Active" : "Inactive"}
+        </span>
+      ),
+    },
+  ], [typeLabel]);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["detail-types"] });
   const createMutation = useMutation({
@@ -101,53 +152,29 @@ export function DetailTypesListPage() {
         </label>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
-            <tr>
-              <th className="px-3 py-2 text-left">Account Type</th>
-              <th className="px-3 py-2 text-left">Detail Type</th>
-              <th className="px-3 py-2 text-left">Code</th>
-              <th className="px-3 py-2 text-left">Source</th>
-              <th className="px-3 py-2 text-left">Order</th>
-              <th className="px-3 py-2 text-left">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr
-                key={row.id}
-                className={`border-t border-gray-100 ${row.is_system ? "" : "cursor-pointer hover:bg-gray-50"}`}
-                onClick={() => { if (row.is_system) return; setSubmitError(""); setActiveRow(row); setModalMode("edit"); }}
-              >
-                <td className="px-3 py-2 text-slate-700">{typeLabel.get(row.account_type_id) ?? "—"}</td>
-                <td className="px-3 py-2 font-medium text-slate-800">{row.name}</td>
-                <td className="px-3 py-2 text-xs text-slate-600">{row.code || "—"}</td>
-                <td className="px-3 py-2">
-                  <span className={`rounded-sm px-2 py-0.5 text-[10px] font-semibold ${row.is_system ? "bg-slate-100 text-slate-600" : "bg-slate-200 text-slate-800"}`}>
-                    {row.is_system ? "System (locked)" : "Custom"}
-                  </span>
-                </td>
-                <td className="px-3 py-2 text-slate-700">{row.sort_order}</td>
-                <td className="px-3 py-2">
-                  <span className={`rounded-sm px-2 py-0.5 text-[10px] font-semibold ${row.is_active ? "bg-slate-100 text-slate-700" : "bg-slate-100 text-slate-600"}`}>
-                    {row.is_active ? "Active" : "Inactive"}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {!companyId ? (
-          <div className="px-3 py-6 text-sm text-slate-600">Select a company to view detail types.</div>
-        ) : listQuery.isLoading ? (
-          <div className="px-3 py-6 text-sm text-gray-500">Loading detail types…</div>
-        ) : listQuery.isError ? (
-          <div className="px-3 py-6 text-sm text-red-600">Failed to load detail types.</div>
-        ) : listState.isEmpty ? (
-          <div className="px-3 py-6 text-sm text-gray-500">No detail types found.</div>
-        ) : null}
-      </div>
+      {!companyId ? (
+        <div className="rounded-sm border border-gray-200 bg-white px-3 py-6 text-sm text-slate-600">Select a company to view detail types.</div>
+      ) : listQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load detail types"
+          status={listQuery.error instanceof ApiError ? listQuery.error.status : 0}
+          message={listQuery.error instanceof Error ? listQuery.error.message : undefined}
+          onRetry={() => void listQuery.refetch()}
+          className="rounded-sm border border-gray-200 bg-white"
+        />
+      ) : (
+        <ParityTable
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.id}
+          loading={listQuery.isLoading}
+          emptyText="No detail types found."
+          storageKey="detail-types-list"
+          tableTestId="detail-types-table"
+          onRowClick={(row) => { if (row.is_system) return; setSubmitError(""); setActiveRow(row); setModalMode("edit"); }}
+          rowClassName={(row) => (row.is_system ? "cursor-default" : "")}
+        />
+      )}
 
       <DetailTypeModal
         open={modalMode !== null}

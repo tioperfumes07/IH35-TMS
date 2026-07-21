@@ -710,6 +710,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/lists/accounting/AccountingCatalogListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/accounting/AccountingCatalogListPage.tsx` | migrated (verify-step 1103) |
 | `apps/frontend/src/pages/lists/accounting/DetailTypesListPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/lists/accounting/DetailTypesListPage.tsx` | migrated (verify-step 1104) — display-only; owner-greenlit UI-only migration |
 | `apps/frontend/src/pages/lists/accounting/QBOBulkLinkPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/components/QboSyncHealthCard.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/dispatch/DispatchCatalogListPage.tsx` | financial-hold |
