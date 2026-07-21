@@ -644,7 +644,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/finance/ArApAgingPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/finance/CalculatorPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/finance/FinancialStatementsPage.tsx` | financial-hold |
-| `apps/frontend/src/pages/finance/LoanWizardPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/finance/LoanWizardPage.tsx` | migrated (verify-step 1137) |
 
 ### pages/form425c (2) — financial-hold
 
