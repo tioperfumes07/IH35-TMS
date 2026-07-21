@@ -455,6 +455,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/accounting/AccountTypeCatalogPage.tsx` | migrated (verify-step 1143) |
 | `apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/AccountsPayableAgingPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/accounting/AccountsPayableAgingPage.tsx` | migrated (verify-step 1147) — display-only; owner-greenlit UI-only migration; By Vendor Type grouped rollup stays hand-rolled (no ParityTable grouped-subtotal grammar) |
 | `apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/BillsPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/CashForecastPage.tsx` | financial-hold |
@@ -1497,3 +1498,26 @@ Print actions and historical as-of note are unchanged; query errors now render
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/finance/ArApAgingPage.tsx` | pages/finance |
+## qbo-parity-a1 — AccountsPayableAgingPage (this PR)
+Accounting-module A/P aging report (/accounting/accounts-payable, read-only — TMS
+bills are the canonical A/P subledger). Owner-greenlit **display-only** migration —
+no posting/mutation logic, no API/query change, cents math untouched. The By Vendor
+grid moved from the hand-rolled `<table>` + useTableController/TableHeaderCell/
+TableControls stack to shared `ParityTable` (sort + resize + gear + density + pager);
+the same 8 columns in the same order (Vendor / Vendor type / Current / 1-30 / 31-60 /
+61-90 / 91+ / Total) with the vendor + "Open bills" deep-links, type chip, and the
+61-90 / 91+ red flags preserved 1:1. URL-persisted sort (?sort=/?dir=,
+BANK-SORT-ROLLOUT-ACCT-AP2) now flows through ParityTable's controlled-sort props
+(verify-ap-aging-url-sort.mjs updated to lock the ParityTable wiring — same contract,
+new mechanism). The TOTAL `tfoot` values are preserved 1:1 as a totals strip under
+the grid (same pattern as ArApAgingPage, verify-step 1135). Query errors render
+`ListErrorState` + Retry instead of a bare red banner; the honest mirror-provenance
+empty states, QBO-mirror strip, Export/Print, Basis label, and ?view= URL sync are
+unchanged. The **By Vendor Type grouped rollup stays hand-rolled** (GroupBlock
+expand/collapse + per-group subtotal rows — ParityTable has no grouped-subtotal
+grammar; migrating it would change the display). Guard:
+`scripts/verify-accounts-payable-aging-page-uses-paritytable.mjs` via verify-step **1147**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/accounting/AccountsPayableAgingPage.tsx` | pages/accounting |
