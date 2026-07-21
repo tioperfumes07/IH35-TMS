@@ -346,6 +346,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/components/factoring/FaroCSVUploadWidget.tsx` | financial-hold |
+| `apps/frontend/src/components/factoring/FaroCSVUploadWidget.tsx` | migrated (verify-step 1133) — display-only preview table; owner-greenlit UI-only migration |
 
 ### components/forms (1)
 
