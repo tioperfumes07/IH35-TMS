@@ -1,0 +1,27 @@
+{
+  "block_id": "paritytable-a4-external-sort",
+  "branch": "feat/paritytable-external-sort-passthrough",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend shared-component API extension)",
+  "phase": "FOUNDATION-FIRST P6 / ParityTable Phase A4",
+  "task": "Add OPTIONAL sortMode?: \"internal\" | \"external\" to ParityTable. Default \"internal\" = today's byte-identical internal sort for ~130 call sites. \"external\" + controlled sort (onSortChange present) = identity passthrough: ParityTable never reorders rows, only paints the sort chevron from sortKey/sortDirection and fires onSortChange on header clicks — the caller owns row order (server-side sort, or a pre-sorted pipeline like bankTxnSortGroup's sort→group→page). \"external\" without onSortChange falls back to internal (external requires controlled sort). Guard + verify-step 1188 (Rule 17). Unblocks BankingTransactionsDesignView Phase B (CI-guarded money-in/out band ordering must not be re-sorted).",
+  "source": "FOUNDATION-FIRST work order Priority 6 — ParityTable Phase A, extension A4 (ONE prop-family per PR; builds on A1 PR #3069 and A2 PR #3074; independent of A3 PR #3082 — based on origin/main)",
+  "source_file": "paritytable-a4-external-sort",
+  "allowed_files": [
+    ".block-ready/paritytable-a4-external-sort.json",
+    "apps/frontend/src/components/parity/ParityTable.tsx",
+    "apps/frontend/src/components/parity/ParityTable.test.tsx",
+    "scripts/verify-paritytable-external-sort.mjs",
+    "scripts/verify-steps/1188-verify-paritytable-external-sort.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "ParityTable exposes OPTIONAL sortMode?: \"internal\" | \"external\" defaulting to \"internal\"; omitting = byte-identical current internal sort for ~130 call sites; sortMode=\"external\" + controlled sort short-circuits the sortedRows useMemo to the identity rows (no copy, no .sort) BEFORE any sort work; header clicks still fire onSortChange with the asc/desc toggle and the chevron still paints from sortKey/sortDirection; \"external\" without onSortChange falls back to internal; pagination/groupBy/expansion/selection/density/export untouched; unit tests cover external identity order, header-click notify-without-reorder, omitted-default regression pin, explicit internal, and the uncontrolled-external fallback; verify-paritytable-external-sort.mjs PASS (+ --selftest with planted identity-after-sort violation); verify-steps/1188 wired (Rule 17); npx tsc -b green."
+    }
+  ],
+  "note": "GATED: no (pure FE, additive API). Migration-free. No package.json / locked-guards / ci.yml edits (Rule 17). BankingTransactionsDesignView is NOT migrated in this PR — Phase B remains blocked on A3 (controlled pagination, PR #3082) + A5 (controlled selection)."
+}

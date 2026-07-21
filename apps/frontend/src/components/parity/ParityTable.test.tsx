@@ -546,4 +546,124 @@ describe("ParityTable (A1 grammar)", () => {
       expect(screen.queryByText("Per page")).toBeNull();
     });
   });
+
+  // External-sort passthrough (Phase A4) — identity path for caller-owned order
+  // (server-side sort or a pre-sorted pipeline like bankTxnSortGroup).
+  describe("external-sort passthrough (A4)", () => {
+    // Deliberately NOT in "name" order: internal sort on sortKey="name" asc would flip these.
+    const unorderedRows: Row[] = [
+      { id: "2", name: "Bravo", amount: "$20" },
+      { id: "1", name: "Alpha", amount: "$10" },
+    ];
+
+    /** First data-cell text of every rendered data row (skips the header row). */
+    const renderedNameOrder = () =>
+      screen
+        .getAllByRole("row")
+        .slice(1)
+        .map((tr) => tr.textContent ?? "")
+        .map((text) => (text.includes("Alpha") ? "Alpha" : text.includes("Bravo") ? "Bravo" : text));
+
+    it('external + controlled: rows stay in INPUT order even when sortKey would reorder them internally', () => {
+      render(
+        <ParityTable<Row>
+          columns={columns}
+          rows={unorderedRows}
+          rowKey={(r) => r.id}
+          sortMode="external"
+          sortKey="name"
+          sortDirection="asc"
+          onSortChange={() => {}}
+        />,
+      );
+      // Identity passthrough: Bravo first, exactly as provided (internal mode would put Alpha first).
+      expect(renderedNameOrder()).toEqual(["Bravo", "Alpha"]);
+      // The sort indicator still paints from sortKey/sortDirection.
+      const nameHeader = screen.getAllByRole("columnheader").find((th) => th.textContent?.includes("Name"));
+      expect(nameHeader?.textContent).toContain("▲");
+    });
+
+    it("external + controlled: header click fires onSortChange but row order does not change without a parent update", () => {
+      const onSortChange = vi.fn();
+      const { rerender } = render(
+        <ParityTable<Row>
+          columns={columns}
+          rows={unorderedRows}
+          rowKey={(r) => r.id}
+          sortMode="external"
+          sortKey="name"
+          sortDirection="asc"
+          onSortChange={onSortChange}
+        />,
+      );
+      // The header button's text is "Name▲" while the chevron paints, so match by prefix.
+      fireEvent.click(screen.getByRole("button", { name: /^Name/ }));
+      // asc → desc toggle is reported to the owner…
+      expect(onSortChange).toHaveBeenCalledWith("name", "desc");
+      // …but the table itself never reorders — still the caller's input order.
+      expect(renderedNameOrder()).toEqual(["Bravo", "Alpha"]);
+
+      // Owner applies the new order + direction → the table follows the props verbatim.
+      rerender(
+        <ParityTable<Row>
+          columns={columns}
+          rows={[unorderedRows[1], unorderedRows[0]]}
+          rowKey={(r) => r.id}
+          sortMode="external"
+          sortKey="name"
+          sortDirection="desc"
+          onSortChange={onSortChange}
+        />,
+      );
+      expect(renderedNameOrder()).toEqual(["Alpha", "Bravo"]);
+      const nameHeader = screen.getAllByRole("columnheader").find((th) => th.textContent?.includes("Name"));
+      expect(nameHeader?.textContent).toContain("▼");
+    });
+
+    it("omitted sortMode keeps today's internal sort (regression pin for ~130 call sites)", () => {
+      render(
+        <ParityTable<Row>
+          columns={columns}
+          rows={unorderedRows}
+          rowKey={(r) => r.id}
+          sortKey="name"
+          sortDirection="asc"
+          onSortChange={() => {}}
+        />,
+      );
+      // Internal (default) mode sorts by name asc: Alpha before Bravo.
+      expect(renderedNameOrder()).toEqual(["Alpha", "Bravo"]);
+    });
+
+    it('explicit sortMode="internal" sorts exactly like the omitted default', () => {
+      render(
+        <ParityTable<Row>
+          columns={columns}
+          rows={unorderedRows}
+          rowKey={(r) => r.id}
+          sortMode="internal"
+          sortKey="name"
+          sortDirection="asc"
+          onSortChange={() => {}}
+        />,
+      );
+      expect(renderedNameOrder()).toEqual(["Alpha", "Bravo"]);
+    });
+
+    it('sortMode="external" WITHOUT onSortChange falls back to internal (external requires controlled sort)', () => {
+      render(
+        <ParityTable<Row>
+          columns={columns}
+          rows={unorderedRows}
+          rowKey={(r) => r.id}
+          sortMode="external"
+        />,
+      );
+      // Uncontrolled: no sortKey yet → input order; a header click must still sort INTERNALLY
+      // (the fallback), because without onSortChange nobody could ever apply an order.
+      expect(renderedNameOrder()).toEqual(["Bravo", "Alpha"]);
+      fireEvent.click(screen.getByText("Name"));
+      expect(renderedNameOrder()).toEqual(["Alpha", "Bravo"]);
+    });
+  });
 });
