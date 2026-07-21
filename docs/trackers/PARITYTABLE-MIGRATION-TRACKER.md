@@ -627,7 +627,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/pages/factoring/BatchDetail.tsx` | financial-hold |
-| `apps/frontend/src/pages/factoring/BatchWizard.tsx` | financial-hold |
+| `apps/frontend/src/pages/factoring/BatchWizard.tsx` | migrated (verify-step 1132) — owner-greenlit UI-only; step-1 candidate selection-list chrome only (Pick checkbox + asMoney rendering preserved 1:1; draft/submit mutation handlers untouched); `verify-batch-wizard-uses-paritytable.mjs` |
 | `apps/frontend/src/pages/factoring/ChargebacksTable.tsx` | financial-hold |
 | `apps/frontend/src/pages/factoring/FactorAdmin.tsx` | financial-hold |
 | `apps/frontend/src/pages/factoring/FactoringHome.tsx` | financial-hold |
