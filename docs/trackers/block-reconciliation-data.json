@@ -1,26 +1,26 @@
 {
  "date": "2026-07-21",
- "generated_at_iso": "2026-07-21T03:51:12.294Z",
+ "generated_at_iso": "2026-07-21T07:47:54.876Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
   "NEEDS-VERIFY": 63,
-  "DONE": 663,
+  "DONE": 664,
   "AUDIT-NOTE": 425
  },
  "universe": {
-  "total_blocks_after_dedup": 1185,
+  "total_blocks_after_dedup": 1186,
   "by_source_after_dedup": {
-   ".block-ready": 1013,
+   ".block-ready": 1014,
    "program": 61,
    "enterprise-29": 29,
    "accounting": 25,
    "gap-spec": 57
   },
   "raw_file_counts": {
-   ".block-ready (*.json files)": 1366,
+   ".block-ready (*.json files)": 1367,
    ".block-ready retired (dup/stale/superseded, excluded)": 348,
-   ".block-ready active (counted)": 1018
+   ".block-ready active (counted)": 1019
   },
   "note": "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by UNIQUE block_id, EXCLUDING files with EXPLICIT retirement markers (_DUP/_STALE/_SUPERSEDED underscore suffixes, status superseded/duplicate/dup/stale, or superseded_by/duplicate_of). Hyphen descriptive …-stale/…-duplicate live defect IDs are NOT retired by filename alone. So the block count is neither the raw .block-ready file count nor inflated by duplicate/retired registrations."
  },
@@ -1308,6 +1308,17 @@
    "name": "PR #2705 replaces host-UTC accounting date defaults with one transaction-scoped company business date and makes driver-s",
    "registered_on": null,
    "pr": 2705
+  },
+  {
+   "id": "0091-g7-1",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #3068 merged 2026-07-21",
+   "name": "Phase 4 pre-work (0091-g7-1): transition-matrix pinning test for settlement-payment allowedTransitions. Test-only; pins ",
+   "registered_on": null,
+   "pr": 3068
   },
   {
    "id": "0091-g9-h6",
@@ -13096,6 +13107,84 @@
  ],
  "merged_prs": [
   {
+   "number": 3068,
+   "title": "test(driver-finance): pin settlement payment transition matrix (0091-g7-1)",
+   "mergedAt": "2026-07-21T07:46:58Z",
+   "branch": "test/settlement-payment-transition-matrix"
+  },
+  {
+   "number": 3067,
+   "title": "docs(settlement): Phase 0 re-verification + canonicalization-drop audit",
+   "mergedAt": "2026-07-21T06:57:51Z",
+   "branch": "docs/settlement-phase0-reverify"
+  },
+  {
+   "number": 3066,
+   "title": "fix(accounting): PrepaidExpensesPage → ParityTable (clean recreation of #3063)",
+   "mergedAt": "2026-07-21T06:22:15Z",
+   "branch": "fix/prepaid-expenses-clean"
+  },
+  {
+   "number": 3065,
+   "title": "fix(accounting): migrate BillsPage table to ParityTable (verify-step 1170)",
+   "mergedAt": "2026-07-21T06:16:46Z",
+   "branch": "fix/bills-page-paritytable"
+  },
+  {
+   "number": 3064,
+   "title": "batch: 3 financial-UI ParityTable migrations (wave cont.)",
+   "mergedAt": "2026-07-21T06:12:42Z",
+   "branch": "integration/fin-ui-batch5"
+  },
+  {
+   "number": 3060,
+   "title": "fix(accounting): RecurringBillList + JournalEntryDetailPage → ParityTable (clean recreation of #3052/#3053)",
+   "mergedAt": "2026-07-21T05:57:27Z",
+   "branch": "fix/accounting-orphans-clean"
+  },
+  {
+   "number": 3058,
+   "title": "batch: 3 accounting/banking UI ParityTable migrations (financial-UI wave)",
+   "mergedAt": "2026-07-21T05:51:59Z",
+   "branch": "integration/banking-batch"
+  },
+  {
+   "number": 3051,
+   "title": "fix(factoring): ChargebacksTable + RecoursePipelineTable → ParityTable (clean recreation of #3011/#3013)",
+   "mergedAt": "2026-07-21T05:44:04Z",
+   "branch": "fix/factoring-tables-clean"
+  },
+  {
+   "number": 3050,
+   "title": "docs(design): charge-code/commodity GL mapping — corrects stale §4.4 premise",
+   "mergedAt": "2026-07-21T05:30:46Z",
+   "branch": "design/charge-code-commodity-gl-mapping"
+  },
+  {
+   "number": 3049,
+   "title": "fix(accounting): ExpenseCategoryMapPage → ParityTable (clean recreation of #3032)",
+   "mergedAt": "2026-07-21T05:20:00Z",
+   "branch": "fix/expense-category-map-clean"
+  },
+  {
+   "number": 3048,
+   "title": "batch: 12 accounting/banking UI ParityTable migrations (owner-approved financial-UI wave)",
+   "mergedAt": "2026-07-21T05:05:58Z",
+   "branch": "integration/financial-ui-batch4"
+  },
+  {
+   "number": 3046,
+   "title": "batch: 29 financial-module UI ParityTable migrations (owner-approved 'GO')",
+   "mergedAt": "2026-07-21T04:47:05Z",
+   "branch": "integration/financial-ui-batch3"
+  },
+  {
+   "number": 3036,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-21T05:07:11Z",
+   "branch": "chore/tracker-artifacts-sync-29799584045"
+  },
+  {
    "number": 3001,
    "title": "batch: 3 QBO-list ParityTable migrations (integration)",
    "mergedAt": "2026-07-21T02:07:05Z",
@@ -16616,87 +16705,9 @@
    "title": "fix(visual-sweep): SYS-DATE/SYS-01/SYS-05 root fixes (47 files → shared DatePicker)",
    "mergedAt": "2026-07-10T18:12:47Z",
    "branch": "fix/visual-sweep-vs-a"
-  },
-  {
-   "number": 2304,
-   "title": "fix(maintenance): visual sweep vs-c — M-01, M-05, M-07, M-08, M-09",
-   "mergedAt": "2026-07-10T18:34:12Z",
-   "branch": "fix/visual-sweep-vs-c"
-  },
-  {
-   "number": 2303,
-   "title": "feat(accounting): list pages to ParityTable QBO grammar",
-   "mergedAt": "2026-07-10T14:51:37Z",
-   "branch": "feat/accounting-list-pages-qbo"
-  },
-  {
-   "number": 2302,
-   "title": "feat(accounting): bill/invoice detail pages to QBO design",
-   "mergedAt": "2026-07-08T03:36:10Z",
-   "branch": "feat/accounting-detail-pages-qbo"
-  },
-  {
-   "number": 2301,
-   "title": "feat(accounting): remaining workflow pages to ParityTable",
-   "mergedAt": "2026-07-10T15:05:21Z",
-   "branch": "feat/accounting-workflow-qbo"
-  },
-  {
-   "number": 2300,
-   "title": "chore(reconciler): fix RECON-00 branch field to match actual merged PR branch",
-   "mergedAt": "2026-07-10T14:29:33Z",
-   "branch": "chore/recon-00-branch-fix"
-  },
-  {
-   "number": 2299,
-   "title": "feat(accounting): transaction editors to approved QBO design",
-   "mergedAt": "2026-07-08T02:22:35Z",
-   "branch": "feat/txn-editors-qbo"
-  },
-  {
-   "number": 2298,
-   "title": "feat(accounting): Account Register to approved QBO design",
-   "mergedAt": "2026-07-10T14:29:23Z",
-   "branch": "feat/account-register-qbo"
-  },
-  {
-   "number": 2297,
-   "title": "[HOLD-FOR-JORGE — TIER 1] fix(test): re-seed ap_control inside splits it-block to guard afterAll clobber",
-   "mergedAt": "2026-07-08T03:31:39Z",
-   "branch": "fix/test-splits-ap-control-isolation"
-  },
-  {
-   "number": 2296,
-   "title": "feat(dispatch): TBL-STANDARD — sort+resize headers on Dispatch load table",
-   "mergedAt": "2026-07-08T01:55:48Z",
-   "branch": "feat/tbl-standard-dispatch-load-table"
-  },
-  {
-   "number": 2295,
-   "title": "chore(reconciler): CASH-FLOW-MODULE block proof — add allowed_files",
-   "mergedAt": "2026-07-08T01:50:23Z",
-   "branch": "chore/cash-flow-module-block-proof"
-  },
-  {
-   "number": 2294,
-   "title": "fix(factoring): replace raw UUID inputs with searchable pickers (equipment loans)",
-   "mergedAt": "2026-07-08T01:33:51Z",
-   "branch": "fix/factoring-uuid-pickers"
-  },
-  {
-   "number": 2293,
-   "title": "[HOLD-FOR-JORGE — TIER 1] fix(test): ap_control DO NOTHING → DO UPDATE in bill-payment-gl-posting test",
-   "mergedAt": "2026-07-08T01:45:28Z",
-   "branch": "fix/bill-payment-gl-ap-control-test-isolation"
-  },
-  {
-   "number": 2292,
-   "title": "feat(telematics): HOS-MAP driver→Samsara ID preview UI (read-only)",
-   "mergedAt": "2026-07-10T14:29:14Z",
-   "branch": "feat/hos-map-driver-samsara-preview"
   }
  ],
- "merged_pr_total": 2774,
+ "merged_pr_total": 2787,
  "hold_for_jorge": [
   {
    "number": 2718,
