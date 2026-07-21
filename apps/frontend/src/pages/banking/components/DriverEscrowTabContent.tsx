@@ -7,12 +7,16 @@ import {
   getEscrowDriverTimeline,
   type EscrowDriverTimelineRow,
 } from "../../../api/banking";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { formatDateUS } from "../../../lib/formatDate";
 import { RegisterToolbar } from "./RegisterToolbar";
 import { useListState } from "../../../components/list-state";
 
 const ESCROW_VIRTUAL_ACCOUNT_ID = "00000000-0000-0000-0000-000000000056";
+
+type EscrowLedgerRow = Record<string, unknown>;
 
 type Props = {
   operatingCompanyId: string;
@@ -89,6 +93,32 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
   const escrowLedgerQuery = selectedDriverId ? driverTimelineQuery : accountLedgerQuery;
   const listState = useListState(escrowLedgerQuery, tableRows.length === 0);
 
+  // Display-only ParityTable migration: column order (Date / Description / Deposits / Withdrawals /
+  // Status / Category), amount formatting ($X.XX with em-dash for zero), sign handling (deposits
+  // slate, withdrawals red), and the Doc-18 defect #12 driver drill-through are preserved 1:1 from
+  // the former hand-rolled table markup.
+  const columns = useMemo<ParityColumn<EscrowLedgerRow>[]>(
+    () => [
+      { key: "txn_date", label: "Date", render: (row) => formatDateUS(row.txn_date) },
+      { key: "description", label: "Description", render: (row) => String(row.description ?? "") },
+      {
+        key: "deposits",
+        label: "Deposits",
+        cellClass: "text-slate-700",
+        render: (row) => (Number(row.deposits ?? 0) > 0 ? `$${Number(row.deposits ?? 0).toFixed(2)}` : "—"),
+      },
+      {
+        key: "withdrawals",
+        label: "Withdrawals",
+        cellClass: "text-red-700",
+        render: (row) => (Number(row.withdrawals ?? 0) > 0 ? `$${Number(row.withdrawals ?? 0).toFixed(2)}` : "—"),
+      },
+      { key: "status", label: "Status", render: (row) => String(row.status ?? "synced") },
+      { key: "category", label: "Category", render: (row) => String(row.category ?? "escrow") },
+    ],
+    [],
+  );
+
   return (
     <div className="space-y-3">
       <div className="rounded-sm border border-gray-200 bg-white p-3">
@@ -151,53 +181,36 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
           }}
         />
 
-        <div className="mt-2 overflow-x-auto rounded-sm border border-gray-200 bg-white">
-          <table className="min-w-[1050px] w-full text-left">
-            <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
-              <tr>
-                <th className="px-2 py-1">Date</th>
-                <th className="px-2 py-1">Description</th>
-                <th className="px-2 py-1">Deposits</th>
-                <th className="px-2 py-1">Withdrawals</th>
-                <th className="px-2 py-1">Status</th>
-                <th className="px-2 py-1">Category</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tableRows.map((row) => {
-                const rowDriverId = String(row.driver_id ?? "");
-                // Doc-18 defect #12 — a register row must never be a dead click: drill through to the
-                // driver the escrow movement belongs to (same target the "Ledger scope" driver link
-                // above uses). Rows without a resolvable driver stay inert rather than faking a link.
-                const openable = Boolean(rowDriverId);
-                return (
-                  <tr
-                    key={String(row.id ?? "")}
-                    className={`border-t border-gray-100 text-xs ${openable ? "cursor-pointer hover:bg-slate-50" : ""}`}
-                    onClick={openable ? () => navigate(`/drivers/${rowDriverId}`) : undefined}
-                  >
-                    <td className="px-2 py-1">{formatDateUS(row.txn_date)}</td>
-                    <td className="px-2 py-1">{String(row.description ?? "")}</td>
-                    <td className="px-2 py-1 text-slate-700">
-                      {Number(row.deposits ?? 0) > 0 ? `$${Number(row.deposits ?? 0).toFixed(2)}` : "—"}
-                    </td>
-                    <td className="px-2 py-1 text-red-700">
-                      {Number(row.withdrawals ?? 0) > 0 ? `$${Number(row.withdrawals ?? 0).toFixed(2)}` : "—"}
-                    </td>
-                    <td className="px-2 py-1">{String(row.status ?? "synced")}</td>
-                    <td className="px-2 py-1">{String(row.category ?? "escrow")}</td>
-                  </tr>
-                );
-              })}
-              {listState.isEmpty ? (
-                <tr>
-                  <td colSpan={6} className="px-2 py-3 text-center text-xs text-gray-500">
-                    No escrow ledger rows found for this filter.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
+        {listState.isError ? (
+          <div className="mt-2">
+            <ListErrorBanner
+              message="Failed to load the escrow ledger. Try refreshing."
+              onRetry={() => void escrowLedgerQuery.refetch()}
+            />
+          </div>
+        ) : null}
+
+        <div className="mt-2">
+          <ParityTable
+            columns={columns}
+            rows={tableRows}
+            rowKey={(row) => String(row.id ?? "")}
+            loading={listState.isLoading}
+            storageKey="banking-driver-escrow-ledger"
+            tableTestId="driver-escrow-ledger-table"
+            // Settled-only empty text (LIST-EMPTY-1): supplied once listState resolves to "empty",
+            // never mid-fetch, so ParityTable's own gate never flashes a false empty.
+            emptyText={listState.isEmpty ? "No escrow ledger rows found for this filter." : undefined}
+            // Doc-18 defect #12 — a register row must never be a dead click: drill through to the
+            // driver the escrow movement belongs to (same target the "Ledger scope" driver link
+            // above uses). Rows without a resolvable driver stay inert rather than faking a link.
+            onRowClick={(row) => {
+              const rowDriverId = String(row.driver_id ?? "");
+              if (!rowDriverId) return;
+              navigate(`/drivers/${rowDriverId}`);
+            }}
+            rowClassName={(row) => (String(row.driver_id ?? "") ? "" : "cursor-default")}
+          />
         </div>
       </div>
     </div>
