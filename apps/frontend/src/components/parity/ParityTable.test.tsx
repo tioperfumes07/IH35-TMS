@@ -65,6 +65,112 @@ describe("ParityTable (A1 grammar)", () => {
     expect(screen.getByText("Batch edit")).toBeInTheDocument();
   });
 
+  // Controlled selection (Phase A5) — mirrors A1 controlled-expansion / A3 controlled-pagination.
+  describe("controlled selection (A5)", () => {
+    it("uncontrolled default is unchanged: omitting selectedKeys/onSelectionChange keeps internal Set selection", () => {
+      render(
+        <ParityTable<Row>
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r.id}
+          selectable
+          batchActions={(selected) => (
+            <span data-testid="batch-ids">{selected.map((r) => r.id).join(",")}</span>
+          )}
+        />,
+      );
+      const checkboxes = screen.getAllByLabelText("Select row");
+      fireEvent.click(checkboxes[0]);
+      expect(screen.getByText("1 selected")).toBeInTheDocument();
+      expect(screen.getByTestId("batch-ids")).toHaveTextContent("1");
+      expect((checkboxes[0] as HTMLInputElement).checked).toBe(true);
+      fireEvent.click(checkboxes[1]);
+      expect(screen.getByText("2 selected")).toBeInTheDocument();
+      expect(screen.getByTestId("batch-ids")).toHaveTextContent("1,2");
+    });
+
+    it("controlled mode: toggle row fires onSelectionChange with next keys; does not change checkboxes without prop update", () => {
+      const onSelectionChange = vi.fn();
+      const { rerender } = render(
+        <ParityTable<Row>
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r.id}
+          selectable
+          selectedKeys={[]}
+          onSelectionChange={onSelectionChange}
+          batchActions={(selected) => (
+            <span data-testid="batch-ids">{selected.map((r) => r.id).join(",")}</span>
+          )}
+        />,
+      );
+      const checkboxes = screen.getAllByLabelText("Select row");
+      expect((checkboxes[0] as HTMLInputElement).checked).toBe(false);
+      expect(screen.queryByText("selected")).toBeNull();
+
+      fireEvent.click(checkboxes[0]);
+      expect(onSelectionChange).toHaveBeenCalledWith(["1"]);
+      // Controlled: checkbox stays unchecked until the owner updates selectedKeys.
+      expect((checkboxes[0] as HTMLInputElement).checked).toBe(false);
+      expect(screen.queryByText("1 selected")).toBeNull();
+
+      rerender(
+        <ParityTable<Row>
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r.id}
+          selectable
+          selectedKeys={["1"]}
+          onSelectionChange={onSelectionChange}
+          batchActions={(selected) => (
+            <span data-testid="batch-ids">{selected.map((r) => r.id).join(",")}</span>
+          )}
+        />,
+      );
+      expect((screen.getAllByLabelText("Select row")[0] as HTMLInputElement).checked).toBe(true);
+      expect(screen.getByText("1 selected")).toBeInTheDocument();
+      expect(screen.getByTestId("batch-ids")).toHaveTextContent("1");
+
+      // Clearing via selectedKeys={[]} must work (caller clears after bulk action).
+      rerender(
+        <ParityTable<Row>
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r.id}
+          selectable
+          selectedKeys={[]}
+          onSelectionChange={onSelectionChange}
+        />,
+      );
+      expect((screen.getAllByLabelText("Select row")[0] as HTMLInputElement).checked).toBe(false);
+      expect(screen.queryByText("1 selected")).toBeNull();
+    });
+
+    it("controlled select-all on page respects maxSelectable and fires onSelectionCapExceeded", () => {
+      const onSelectionChange = vi.fn();
+      const onSelectionCapExceeded = vi.fn();
+      render(
+        <ParityTable<Row>
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r.id}
+          selectable
+          selectedKeys={[]}
+          onSelectionChange={onSelectionChange}
+          maxSelectable={1}
+          onSelectionCapExceeded={onSelectionCapExceeded}
+        />,
+      );
+      fireEvent.click(screen.getByLabelText("Select all on page"));
+      expect(onSelectionCapExceeded).toHaveBeenCalledWith(2);
+      expect(onSelectionChange).not.toHaveBeenCalled();
+      // Cap exceeded is a no-op — checkboxes stay unchecked without a prop update.
+      for (const cb of screen.getAllByLabelText("Select row")) {
+        expect((cb as HTMLInputElement).checked).toBe(false);
+      }
+    });
+  });
+
   // Universal-list contract (spec 01) additions.
   it("renders the filter-bar slot", () => {
     render(
