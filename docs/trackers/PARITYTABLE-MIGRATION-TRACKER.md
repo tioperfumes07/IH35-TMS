@@ -712,6 +712,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/lists/accounting/DetailTypesListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/accounting/DetailTypesListPage.tsx` | migrated (verify-step 1104) — display-only; owner-greenlit UI-only migration |
 | `apps/frontend/src/pages/lists/accounting/QBOBulkLinkPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/lists/accounting/QBOBulkLinkPage.tsx` | migrated (verify-step 1112) |
 | `apps/frontend/src/pages/lists/components/QboSyncHealthCard.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/dispatch/DispatchCatalogListPage.tsx` | migrated — display-only ParityTable migration (owner greenlit); `verify-dispatch-catalog-list-uses-paritytable.mjs` via verify-step 1106 |
 | `apps/frontend/src/pages/lists/components/QboSyncHealthCard.tsx` | migrated (verify-step 1110) |
@@ -775,14 +776,14 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/qbo/QBOSyncStatusDashboardPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/qbo/QBOSyncStatusDashboardPage.tsx` | migrated (verify-step 1113) |
 
 ### pages/qbo-sync-detail (2) — financial-hold
 
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/pages/qbo-sync-detail/ConflictsTab.tsx` | financial-hold |
-| `apps/frontend/src/pages/qbo-sync-detail/QboSyncDetailPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/qbo-sync-detail/QboSyncDetailPage.tsx` | migrated (verify-step 1114) |
 
 ### pages/reports (26)
 
