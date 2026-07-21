@@ -2,29 +2,31 @@
 /**
  * verify-banking-grid-sort-resize-rows-per-page.mjs
  *
- * Block: banking-grid-sort-resize-rows-per-page (tier-3, backlog id in
- * docs/trackers/backlog-verify/accounting.md + .block-ready/banking-grid-sort-resize-rows-per-page.json).
+ * Block: banking-grid-sort-resize-rows-per-page (tier-3).
  *
- * Backlog evidence said "every TableHeaderCell instance still hardcodes sortable={false}" on
- * apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx. That claim is now
- * stale — the Date/Description/Amount(+Spent/Received)/Payee headers are real clickable asc/desc
- * sort, wired into the tableRows sort → group → page pipeline (bankTxnSortGroup.ts), alongside the
- * existing resizable-column (useTablePref) and rows-per-page (viewSettings.pageSize) controls.
+ * SAFETY PROPERTIES (unchanged intent; shape remapped for BankingTx Phase B ParityTable shell):
+ *   1. SORT REAL, NOT THEATER — date/description/amount(+spent/received)/payee columns are
+ *      sortable ParityColumn defs, wired through controlled sort (sortKey/sortDirection/
+ *      onSortChange) + sortMode="external", AND tableRows still performs a real .sort() keyed
+ *      off sortBy (the CI-guarded bankTxnSortGroup pipeline owns order; ParityTable never reorders).
+ *   2. RESIZE PRESERVED — ParityTable enableColumnResize is on (drag-to-resize with storageKey
+ *      persistence). Mapped from the prior TableHeaderCell onResize/width + useTablePref pair.
+ *   3. ROWS-PER-PAGE PRESERVED — the page-size picker (`viewSettings.pageSize`, the
+ *      [50,75,100,200,300] option set with a `setViewSettings` click handler) still exists in
+ *      the existing toolbar chrome (ParityTable hidePager keeps that chrome as owner).
  *
- * This guard locks that state so none of the three pillars can silently regress:
- *   1. SORT REAL, NOT THEATER — date/description/amount-or-spent/payee headers are sortable (no
- *      `sortable={false}`) AND `tableRows` actually re-sorts on `sortBy` (a real `.sort()` keyed off
- *      `sortBy.dir`/`sortBy.key`, not a static no-op) AND clicking the same column flips asc<->desc.
- *   2. RESIZE PRESERVED — those same sortable header cells still carry `onResize={setTxColWidth}` /
- *      `width={txColWidth(...)}` (the shared TableHeaderCell/useTablePref pattern).
- *   3. ROWS-PER-PAGE PRESERVED — the page-size picker (`viewSettings.pageSize`, the [50,75,100,200,300]
- *      option set with a `setViewSettings` click handler) still exists.
+ * Old → new mapping:
+ *   TableHeaderCell columnKey="X" + sortKey={sortBy.key} + onToggleSort
+ *     → ParityColumn { key: "X", sortable: true } + sortKey/onSortChange/sortMode="external"
+ *   onResize={setTxColWidth} / width={txColWidth(...)} / useTablePref
+ *     → enableColumnResize + storageKey="banking-transactions"
+ *   viewSettings.pageSize [50,75,100,200,300] — unchanged location (toolbar settings)
  *
  * Usage:
- *   node scripts/verify-banking-grid-sort-resize-rows-per-page.mjs            # scan the real file
- *   node scripts/verify-banking-grid-sort-resize-rows-per-page.mjs --selftest # pure-logic selftest
+ *   node scripts/verify-banking-grid-sort-resize-rows-per-page.mjs
+ *   node scripts/verify-banking-grid-sort-resize-rows-per-page.mjs --selftest
  *
- * LINKAGE: N/A (frontend-only regression guard; no schema/table/route touched). Additive only.
+ * LINKAGE: N/A (frontend-only regression guard). Additive only.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -41,45 +43,49 @@ function stripComments(src) {
     .replace(/(^|[^:])\/\/[^\n]*/g, "$1");
 }
 
-/** Pull the `<TableHeaderCell columnKey="X" ... />` block for one column so checks stay column-scoped. */
-function headerBlock(src, columnKey) {
-  const re = new RegExp(`<TableHeaderCell\\s+columnKey="${columnKey}"[\\s\\S]*?/>`);
+/**
+ * Window around a ParityColumn def. Require `label:` after the key so we don't match
+ * unrelated state like `useState({ key: "date", dir: "desc" })`.
+ */
+function columnWindow(src, columnKey) {
+  const re = new RegExp(`key:\\s*"${columnKey}"\\s*,\\s*label:\\s*"[^"]+"[\\s\\S]{0,120}`);
   return (src.match(re) ?? [""])[0];
 }
 
-const SORT_RESIZE_COLUMNS = ["date", "description", "amount", "payee"];
+const SORT_COLUMNS = ["date", "description", "amount", "payee"];
 
 /** The assertions, each a predicate over the comment-stripped source. */
 export function checksFor(src) {
-  const headers = Object.fromEntries(SORT_RESIZE_COLUMNS.map((k) => [k, headerBlock(src, k)]));
+  const cols = Object.fromEntries(SORT_COLUMNS.map((k) => [k, columnWindow(src, k)]));
 
-  const headerExistsAndSortable = SORT_RESIZE_COLUMNS.every(
-    (k) => headers[k].length > 0 && !/sortable=\{false\}/.test(headers[k])
+  const headerExistsAndSortable = SORT_COLUMNS.every(
+    (k) => cols[k].length > 0 && /sortable:\s*true/.test(cols[k]) && !/sortable:\s*false/.test(cols[k])
   );
-  const headerWiredToSortState = SORT_RESIZE_COLUMNS.every(
-    (k) => /sortKey=\{sortBy\.key\}/.test(headers[k]) && /onToggleSort=\{onToggleSortCol\}/.test(headers[k])
-  );
-  const headerResizePreserved = SORT_RESIZE_COLUMNS.every(
-    (k) => /onResize=\{setTxColWidth\}/.test(headers[k]) && /width=\{txColWidth\(/.test(headers[k])
-  );
+  const headerWiredToSortState =
+    /sortKey=\{sortBy\.key\}/.test(src) &&
+    /sortDirection=\{sortBy\.dir\}/.test(src) &&
+    /onSortChange=\{/.test(src) &&
+    /sortMode="external"/.test(src);
+
+  const headerResizePreserved =
+    /enableColumnResize/.test(src) && /storageKey="banking-transactions"/.test(src);
 
   return {
-    // Pillar 1a — the 4 columns exist and are real sortable headers (no sortable={false} escape hatch).
+    // Pillar 1a — the 4 columns exist as sortable ParityColumn defs.
     headerExistsAndSortable,
-    // Pillar 1b — those headers are actually wired to the live sort state + toggle handler.
+    // Pillar 1b — those headers are wired to controlled + external sort (indicators only).
     headerWiredToSortState,
-    // Pillar 1c — toggling the SAME key flips asc<->desc (not a fresh default every click).
+    // Pillar 1c — toggling the SAME key flips asc<->desc (register-owned toggleSort).
     toggleFlipsDirection: /prev\.key === key\s*\?\s*\{\s*key,\s*dir:\s*prev\.dir === "asc" \? "desc" : "asc"\s*\}/.test(
       src
     ),
-    // Pillar 1d — tableRows performs a REAL sort keyed off sortBy (not UI-only theater): the sort
-    // direction is derived from sortBy.dir and at least date/description/amount are real sort keys.
+    // Pillar 1d — tableRows performs a REAL sort keyed off sortBy (not UI-only theater).
     tableRowsRealSort:
       /const sortDir = sortBy\.dir === "asc" \? 1 : -1/.test(src) &&
       /return \[\.\.\.filtered\]\.sort\(\(a, b\) => \{/.test(src) &&
       /sortBy\.key === "description"/.test(src) &&
       /sortBy\.key === "amount"/.test(src),
-    // Pillar 2 — resize is preserved on every sortable header (shared TableHeaderCell/useTablePref pair).
+    // Pillar 2 — resize preserved via ParityTable enableColumnResize + storageKey.
     headerResizePreserved,
     // Pillar 3 — rows-per-page picker preserved (viewSettings.pageSize + the option set + setter).
     rowsPerPagePreserved:
@@ -90,11 +96,14 @@ export function checksFor(src) {
 }
 
 const CHECK_LABELS = {
-  headerExistsAndSortable: "date/description/amount/payee headers exist and are sortable (no sortable={false})",
-  headerWiredToSortState: "those headers are wired to sortKey={sortBy.key} + onToggleSort={onToggleSortCol}",
+  headerExistsAndSortable:
+    "date/description/amount/payee ParityColumns exist and are sortable: true (no sortable:false)",
+  headerWiredToSortState:
+    "ParityTable controlled sort wired (sortKey/sortDirection/onSortChange) + sortMode=\"external\"",
   toggleFlipsDirection: "clicking the active sort column flips asc<->desc (not always resetting)",
   tableRowsRealSort: "tableRows performs a real sortBy-keyed .sort() (not UI-only sort theater)",
-  headerResizePreserved: "sortable headers still carry onResize/width (column resize preserved)",
+  headerResizePreserved:
+    "ParityTable enableColumnResize + storageKey=\"banking-transactions\" (column resize preserved)",
   rowsPerPagePreserved: "rows-per-page picker (viewSettings.pageSize) preserved",
 };
 
@@ -115,7 +124,7 @@ export function run() {
     return { ok: false, offenders };
   }
   console.log(
-    "[verify-banking-grid-sort-resize-rows-per-page] PASS — real sort + resize + rows-per-page all locked"
+    "[verify-banking-grid-sort-resize-rows-per-page] PASS — real sort + ParityTable resize + rows-per-page all locked"
   );
   return { ok: true, offenders: [] };
 }
@@ -126,10 +135,10 @@ export function check() {
 
 function selftest() {
   const good = `
+    import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
     const [sortBy, setSortBy] = useState({ key: "date", dir: "desc" });
     const toggleSort = (key) =>
       setSortBy((prev) => (prev.key === key ? { key, dir: prev.dir === "asc" ? "desc" : "asc" } : { key, dir: key === "date" ? "desc" : "asc" }));
-    const onToggleSortCol = (key) => toggleSort(key);
     const tableRows = useMemo(() => {
       const filtered = source.filter((tx) => true);
       const sortDir = sortBy.dir === "asc" ? 1 : -1;
@@ -145,18 +154,30 @@ function selftest() {
         return 0;
       });
     }, [sortBy]);
-    <TableHeaderCell columnKey="date" label="Date" sortKey={sortBy.key} sortDir={sortBy.dir} onToggleSort={onToggleSortCol} width={txColWidth("date")} onResize={setTxColWidth} />
-    <TableHeaderCell columnKey="description" label="Full bank description" sortKey={sortBy.key} sortDir={sortBy.dir} onToggleSort={onToggleSortCol} width={txColWidth("description")} onResize={setTxColWidth} />
-    <TableHeaderCell columnKey="amount" label="Amount" sortKey={sortBy.key} sortDir={sortBy.dir} onToggleSort={onToggleSortCol} width={txColWidth("amount")} onResize={setTxColWidth} />
-    <TableHeaderCell columnKey="payee" label="Payee" sortKey={sortBy.key} sortDir={sortBy.dir} onToggleSort={onToggleSortCol} width={txColWidth("payee")} onResize={setTxColWidth} />
+    const parityColumns = [
+      { key: "date", label: "Date", sortable: true, render: () => null },
+      { key: "description", label: "Full bank description", sortable: true, render: () => null },
+      { key: "amount", label: "Amount", sortable: true, render: () => null },
+      { key: "payee", label: "Payee", sortable: true, render: () => null },
+    ];
+    <ParityTable
+      columns={parityColumns}
+      sortKey={sortBy.key}
+      sortDirection={sortBy.dir}
+      onSortChange={(key, direction) => setSortBy({ key, dir: direction })}
+      sortMode="external"
+      enableColumnResize
+      storageKey="banking-transactions"
+      hidePager
+    />
     {([50, 75, 100, 200, 300] as const).map((size) => (
       <button onClick={() => setViewSettings((prev) => ({ ...prev, pageSize: size }))}>{size}</button>
     ))}
     <p>{viewSettings.pageSize}</p>
   `;
   const badHardcodedFalse = good.replace(
-    '<TableHeaderCell columnKey="date" label="Date" sortKey={sortBy.key}',
-    '<TableHeaderCell columnKey="date" label="Date" sortable={false} sortKey={sortBy.key}'
+    '{ key: "date", label: "Date", sortable: true',
+    '{ key: "date", label: "Date", sortable: false'
   );
   const badUiOnlyTheater = good
     .replace(/const sortDir = sortBy\.dir === "asc" \? 1 : -1;[\s\S]*?\}, \[sortBy\]\);/, "const tableRows = source;")
@@ -164,7 +185,7 @@ function selftest() {
       'const toggleSort = (key) =>\n      setSortBy((prev) => (prev.key === key ? { key, dir: prev.dir === "asc" ? "desc" : "asc" } : { key, dir: key === "date" ? "desc" : "asc" }));',
       'const toggleSort = (key) => setSortBy({ key, dir: "asc" });'
     );
-  const badNoResize = good.replace(/ onResize=\{setTxColWidth\}/g, "");
+  const badNoResize = good.replace(/enableColumnResize/, "").replace(/storageKey="banking-transactions"/, 'storageKey="other"');
   const badNoPageSize = good.replace(/\[50, 75, 100, 200, 300\] as const/, "[10, 25] as const");
 
   const g = checksFor(stripComments(good));
@@ -177,7 +198,7 @@ function selftest() {
   for (const key of Object.keys(CHECK_LABELS)) {
     if (!g[key]) failures.push(`good fixture should PASS ${key}`);
   }
-  if (bFalse.headerExistsAndSortable) failures.push("sortable={false} fixture should FAIL headerExistsAndSortable");
+  if (bFalse.headerExistsAndSortable) failures.push("sortable:false fixture should FAIL headerExistsAndSortable");
   if (bTheater.tableRowsRealSort) failures.push("UI-only-theater fixture should FAIL tableRowsRealSort");
   if (bTheater.toggleFlipsDirection) failures.push("UI-only-theater fixture should FAIL toggleFlipsDirection");
   if (bNoResize.headerResizePreserved) failures.push("no-resize fixture should FAIL headerResizePreserved");

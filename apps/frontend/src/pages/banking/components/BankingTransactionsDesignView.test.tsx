@@ -278,7 +278,11 @@ describe("BankingTransactionsDesignView date formatting", () => {
     })).toEqual({ spent: 0, received: 4550 });
 
     expect(await screen.findByText("For review · 2")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Received" }));
+    // Amount-filter "Received" (not the ParityTable sortable column header of the same name).
+    const amountFilterReceived = screen
+      .getAllByRole("button", { name: "Received" })
+      .find((btn) => btn.className.includes("px-2.5") || btn.closest(".inline-flex"));
+    fireEvent.click(amountFilterReceived ?? screen.getAllByRole("button", { name: "Received" })[0]);
     expect(screen.getByText("1-1 of 1")).toBeInTheDocument();
     expect(screen.getByText("Page 1 of 1")).toBeInTheDocument();
     expect(screen.getByText("$45.50")).toBeInTheDocument();
@@ -371,6 +375,52 @@ describe("BankingTransactionsDesignView date formatting", () => {
 // onChange(newId) (parent looked up newId in the still-stale classesQuery.data, found nothing, and
 // reset className to ""). Regression guard: after create, the Class cell must show the new name
 // without a reselect/reload.
+describe("BankingTransactionsDesignView ParityTable Phase B shell", () => {
+  it("renders the register through shared ParityTable with month band + toolbar pager", async () => {
+    vi.mocked(bankingApi.getPlaidCompanyTransactions).mockResolvedValue({
+      transactions: [tx("tx-parity-1", "acct-1", 2500, "2026-05-17T00:00:00.000Z", "Parity shell txn")],
+    });
+
+    render(
+      wrap(
+        <BankingTransactionsDesignView
+          companyId="company-1"
+          accounts={[
+            {
+              id: "acct-1",
+              operating_company_id: "company-1",
+              institution_name: "Chase",
+              account_name: "Operating",
+              account_mask: "1234",
+              account_type: "depository",
+              current_balance_cents: 100000,
+              available_balance_cents: 100000,
+              currency_code: "USD",
+              is_active: true,
+              sync_status: "active",
+              last_synced_at: null,
+              plaid_item_id: "item-1",
+              created_at: "2026-05-01T00:00:00.000Z",
+              updated_at: "2026-05-01T00:00:00.000Z",
+            },
+          ]}
+          selectedAccountId="acct-1"
+          onSelectAccount={() => {}}
+          onManageConnections={() => {}}
+          onDataChanged={() => {}}
+        />
+      )
+    );
+
+    expect(await screen.findByTestId("banking-transactions-parity-table")).toBeInTheDocument();
+    expect(await screen.findByText("Parity shell txn")).toBeInTheDocument();
+    expect(screen.getByText("May 2026 (1)")).toBeInTheDocument();
+    // Toolbar pager chrome stays (hidePager on ParityTable) — same labels the prior register used.
+    expect(screen.getByText("1-1 of 1")).toBeInTheDocument();
+    expect(screen.getByText("Page 1 of 1")).toBeInTheDocument();
+  });
+});
+
 describe("BankingTransactionsDesignView inline class create (FIX-4)", () => {
   it("keeps the new class label after inline create, without needing a reselect", async () => {
     vi.mocked(bankingApi.getPlaidCompanyTransactions).mockResolvedValue({

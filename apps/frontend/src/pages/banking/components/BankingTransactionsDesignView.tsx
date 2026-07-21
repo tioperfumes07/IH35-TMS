@@ -1,7 +1,7 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { ChevronDown, ChevronRight, Download, MessageSquare, Paperclip, Printer, Settings } from "lucide-react";
+import { Download, MessageSquare, Paperclip, Printer, Settings } from "lucide-react";
 import {
   categorizeBankTransaction,
   categorizeTransactionsBulk,
@@ -25,7 +25,6 @@ import {
 } from "./relayFuelLineBreakdown";
 import { PrintOrientationDialog, applyPrintOrientationStyles } from "./PrintOrientationDialog";
 import { BulkActionBar } from "../../../components/bulk/BulkActionBar";
-import { TableSelectionHeader } from "../../../components/bulk/TableSelection";
 import { ActionButton } from "../../../components/shared/ActionButton";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 import { Button } from "../../../components/Button";
@@ -45,8 +44,8 @@ import { buildBankingTransactionsXlsx } from "./banking-transactions-xlsx";
 import { RecordTransferModal } from "../RecordTransferModal";
 import { RecordCCPaymentModal } from "../RecordCCPaymentModal";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { DatePicker } from "../../../components/forms/DatePicker";
-import { TableHeaderCell, useTablePref } from "../../../components/table";
 import {
   buildPagedBankTxnGroups,
   type BankTxnGroupMode,
@@ -462,29 +461,12 @@ export function BankingTransactionsDesignView({
   const [sortBy, setSortBy] = useState<BankTxnSort>({ key: "date", dir: "desc" });
   const toggleSort = (key: BankTxnSort["key"]) =>
     setSortBy((prev) => (prev.key === key ? { key, dir: prev.dir === "asc" ? "desc" : "asc" } : { key, dir: key === "date" ? "desc" : "asc" }));
-  // Resizable columns (QBO parity) — reuses the shared TableHeaderCell/useTablePref pair (the current
-  // repo-wide resizable-header standard: RunnerTable.tsx, VendorsListView.tsx, AccountsPayableAgingPage.tsx,
-  // FleetTable.tsx) rather than the older, effectively-unused ResizableTable/ResizableTh. Widths persist
-  // per-user via localStorage under the "banking-transactions" table key.
-  const { widths: txColWidths, setColumnWidth: setTxColWidth } = useTablePref("banking-transactions", { pageSize: 50 });
-  const TX_COLUMN_DEFAULTS: Record<string, number> = {
-    date: 90,
-    description: 220,
-    amount: 130,
-    spent: 90,
-    received: 90,
-    balance: 100,
-    fromTo: 150,
-    customer: 130,
-    productService: 130,
-    checkNo: 100,
-    payee: 130,
-    className: 100,
-    location: 110,
-    matchCategorize: 110,
-    action: 150,
-  };
-  const txColWidth = (key: string) => txColWidths[key] ?? TX_COLUMN_DEFAULTS[key] ?? 120;
+  // Phase B (ParityTable swap): the page still OWNS the sort state (sortBy) and its asc/desc flip —
+  // ParityTable runs in controlled + sortMode="external" mode, so header clicks land here and the
+  // CI-guarded bankTxnSortGroup pipeline (sort FULL set → group → page) stays the single sorter.
+  // Column drag-resize moved from the old TableHeaderCell/useTablePref pair onto ParityTable's
+  // built-in enableColumnResize (default ON) with widths persisted under storageKey
+  // "banking-transactions" (paritytable:banking-transactions in localStorage).
   const onToggleSortCol = (key: string) => toggleSort(key as BankTxnSort["key"]);
 
   const tableRows = useMemo(() => {
@@ -629,11 +611,37 @@ export function BankingTransactionsDesignView({
   const pageRangeStart = pagedGroups.totalRows === 0 ? 0 : pageStartIndex + 1;
   const pageRangeEnd =
     pagedGroups.totalRows === 0 ? 0 : Math.min(pageStartIndex + viewSettings.pageSize, pagedGroups.totalRows);
-  const pageRowIds = useMemo(() => pagedRows.map((tx) => tx.id), [pagedRows]);
+  // Phase B (ParityTable groupBy wiring): the pipeline already computed each row's band on THIS page
+  // (month key or money_in/money_out) — map row id → band key + band key → band title so ParityTable's
+  // A2 groupBy can paint the same bands without re-deriving (rows arrive pre-ordered, never re-sorted).
+  const rowGroupKeyById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const group of groupedRows) {
+      for (const tx of group.rows) map.set(tx.id, group.monthKey);
+    }
+    return map;
+  }, [groupedRows]);
+  const groupTitleByKey = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const group of groupedRows) map.set(group.monthKey, group.title);
+    return map;
+  }, [groupedRows]);
   const bulkSelection = useBulkSelection({
     cap: 200,
     onCapExceeded: (error) => pushToast(error.message, "error"),
   });
+  // A5 controlled selection: useBulkSelection stays the source of truth (200 cap + BulkActionBar);
+  // ParityTable's checkboxes read/write it through selectedKeys/onSelectionChange.
+  const paritySelectedKeys = useMemo(() => [...bulkSelection.selectedIds], [bulkSelection.selectedIds]);
+  // A2 controlled collapse: derive the collapsed band-key set from the existing collapse state
+  // (collapsedAllGroupings + per-band collapsedMonths) so "Collapse all groupings" keeps working.
+  const parityCollapsedKeys = useMemo(
+    () =>
+      groupedRows
+        .filter((group) => collapsedAllGroupings || collapsedMonths[group.monthKey] === true)
+        .map((group) => group.monthKey),
+    [collapsedAllGroupings, collapsedMonths, groupedRows]
+  );
 
   // Running balance ("Balance" column), computed over the FULL account ledger — not the visible page —
   // so each row shows its true post-transaction balance even when the view is filtered or paginated.
@@ -923,6 +931,1045 @@ export function BankingTransactionsDesignView({
       return;
     }
     void exportTransactionsToExcel(rows, "banking-transactions-selected.xlsx");
+  }
+
+  // Phase B — ParityTable column defs. Sortable keys stay wired through controlled sort
+  // (sortKey/sortDirection/onSortChange) + sortMode="external"; the bankTxnSortGroup pipeline
+  // owns the actual order. Labels and visibility match the prior TableHeaderCell headers.
+  const parityColumns = useMemo((): Array<ParityColumn<PlaidBankTransaction>> => {
+    const cols: Array<ParityColumn<PlaidBankTransaction>> = [
+      {
+        key: "date",
+        label: "Date",
+        sortable: true,
+        className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+        render: (tx) => {
+          const expanded = expandedTxId === tx.id;
+          if (viewSettings.editableDateField && expanded) {
+            return (
+              <div onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
+                <DatePicker
+                  value={tx.transaction_date.slice(0, 10)}
+                  disabled={!isManualBankTransaction(tx)}
+                  className="w-32"
+                  onChange={(next) => {
+                    if (!next || !isManualBankTransaction(tx) || next === tx.transaction_date.slice(0, 10)) return;
+                    void updateBankTransactionDate(tx.id, companyId, next)
+                      .then(() => {
+                        pushToast("Transaction date updated", "success");
+                        void transactionsQuery.refetch();
+                      })
+                      .catch((error: unknown) => {
+                        pushToast(String((error as Error)?.message ?? "Could not update date"), "error");
+                      });
+                  }}
+                />
+              </div>
+            );
+          }
+          return formatBankTransactionDate(tx.transaction_date);
+        },
+      },
+      {
+        key: "description",
+        label: "Full bank description",
+        sortable: true,
+        className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+        render: (tx) => (
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="truncate text-gray-900">{transactionLabel(tx)}</p>
+              {tx.relay_fuel_lines && tx.relay_fuel_lines.length > 0 ? (
+                <p
+                  className="mt-0.5 truncate text-[11px] text-gray-500"
+                  title={formatRelayFuelBreakdownSummary(tx.relay_fuel_lines, (c) => USD.format(c / 100))}
+                >
+                  {formatRelayFuelBreakdownSummary(tx.relay_fuel_lines, (c) => USD.format(c / 100))}
+                </p>
+              ) : null}
+              {!isRelayWalletAccount &&
+                (tx.categorization_unit_id ||
+                  tx.categorization_driver_id ||
+                  tx.categorization_load_id ||
+                  tx.matched_load_id ||
+                  tx.matched_settlement_id ||
+                  tx.categorization_trailer_id) && (
+                  <div
+                    className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px]"
+                    onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
+                  >
+                    {tx.categorization_unit_id ? (
+                      <EntityLink
+                        kind="unit"
+                        id={tx.categorization_unit_id}
+                        label={tx.categorization_unit_number || "Unit"}
+                      />
+                    ) : null}
+                    {tx.categorization_trailer_id ? (
+                      <EntityLink
+                        kind="trailer"
+                        id={tx.categorization_trailer_id}
+                        label={tx.categorization_trailer_number || "Trailer"}
+                      />
+                    ) : null}
+                    {tx.categorization_driver_id ? (
+                      <EntityLink
+                        kind="driver"
+                        id={tx.categorization_driver_id}
+                        label={tx.categorization_driver_name || "Driver"}
+                      />
+                    ) : null}
+                    {tx.categorization_load_id || tx.matched_load_id ? (
+                      <EntityLink
+                        kind="load"
+                        id={tx.categorization_load_id || tx.matched_load_id}
+                        label={tx.categorization_load_number || "Trip"}
+                      />
+                    ) : null}
+                    {tx.matched_settlement_id ? (
+                      <EntityLink kind="settlement" id={tx.matched_settlement_id} label="Settlement" />
+                    ) : null}
+                  </div>
+                )}
+            </div>
+            <div className="inline-flex items-center gap-1 text-gray-400">
+              <button
+                type="button"
+                disabled
+                aria-label="Attach file (not available for bank transactions)"
+                title="Attachments aren't supported on bank feed rows yet — attach the receipt to the Bill or Expense this transaction posts to."
+                className="cursor-not-allowed opacity-60"
+              >
+                <Paperclip className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                disabled
+                aria-label="Add note (not available here)"
+                title="Notes aren't editable from this grid yet."
+                className="cursor-not-allowed opacity-60"
+              >
+                <MessageSquare className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        ),
+      },
+    ];
+
+    if (isRelayWalletAccount) {
+      cols.push(
+        {
+          key: "driver",
+          label: "Driver",
+          sortable: true,
+          className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+          cellClass: "truncate text-gray-700",
+          render: (tx) =>
+            tx.categorization_driver_id ? (
+              <span onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
+                <EntityLink
+                  kind="driver"
+                  id={tx.categorization_driver_id}
+                  label={tx.categorization_driver_name || "Driver"}
+                />
+              </span>
+            ) : (
+              "—"
+            ),
+        },
+        {
+          key: "truck",
+          label: "Truck",
+          sortable: true,
+          className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+          cellClass: "truncate text-gray-700",
+          render: (tx) =>
+            tx.categorization_unit_id ? (
+              <span onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
+                <EntityLink
+                  kind="unit"
+                  id={tx.categorization_unit_id}
+                  label={tx.categorization_unit_number || "Truck"}
+                />
+              </span>
+            ) : (
+              "—"
+            ),
+        },
+        {
+          key: "load",
+          label: "Load",
+          sortable: true,
+          className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+          cellClass: "truncate text-gray-700",
+          render: (tx) =>
+            tx.categorization_load_id || tx.matched_load_id ? (
+              <span onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
+                <EntityLink
+                  kind="load"
+                  id={tx.categorization_load_id || tx.matched_load_id!}
+                  label={tx.categorization_load_number || "Load"}
+                />
+              </span>
+            ) : (
+              "—"
+            ),
+        }
+      );
+    }
+
+    if (viewSettings.showAmountsInOneColumn) {
+      cols.push({
+        key: "amount",
+        label: "Amount",
+        sortable: true,
+        className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+        render: (tx) => {
+          const { spent, received } = spentReceived(tx);
+          return (
+            <span className={spent > 0 ? "text-red-700" : "text-slate-700"}>
+              {spent > 0 ? `-${USD.format(spent / 100)}` : received > 0 ? USD.format(received / 100) : "—"}
+            </span>
+          );
+        },
+      });
+    } else {
+      cols.push(
+        {
+          key: "spent",
+          label: "Spent",
+          sortable: true,
+          className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+          cellClass: "text-red-700",
+          render: (tx) => {
+            const { spent } = spentReceived(tx);
+            return spent > 0 ? USD.format(spent / 100) : "—";
+          },
+        },
+        {
+          key: "received",
+          label: "Received",
+          sortable: true,
+          className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+          cellClass: "text-slate-700",
+          render: (tx) => {
+            const { received } = spentReceived(tx);
+            return received > 0 ? USD.format(received / 100) : "—";
+          },
+        }
+      );
+    }
+
+    cols.push(
+      {
+        key: "balance",
+        label: "Balance",
+        sortable: true,
+        className: `font-semibold normal-case text-[10px] uppercase tracking-wide ${sortBy.key !== "date" ? "text-gray-300" : ""}`,
+        cellClass: "whitespace-nowrap text-right tabular-nums",
+        render: (tx) => {
+          const bal = runningBalanceById.get(tx.id);
+          return (
+            <span
+              className={
+                sortBy.key !== "date" ? "text-gray-300" : bal != null && bal < 0 ? "text-red-700" : "text-gray-900"
+              }
+            >
+              {bal == null ? "—" : USD.format(bal / 100)}
+            </span>
+          );
+        },
+      },
+      {
+        key: "fromTo",
+        label: "From/To",
+        sortable: true,
+        className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+        cellClass: "truncate text-gray-700",
+        render: (tx) => computeFromTo(tx, getDraft(tx)) || "—",
+      },
+      {
+        key: "customer",
+        label: "Customer",
+        sortable: true,
+        className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+        cellClass: "truncate text-gray-700",
+        render: (tx) => {
+          const draft = getDraft(tx);
+          return draft.customerId ? (
+            <EntityLink kind="customer" id={draft.customerId} label={draft.customerProject || "—"} />
+          ) : (
+            draft.customerProject || "—"
+          );
+        },
+      },
+      {
+        key: "productService",
+        label: "Product/Service",
+        sortable: true,
+        className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+        cellClass: "truncate text-gray-700",
+        render: (tx) => getDraft(tx).productService || "—",
+      }
+    );
+
+    if (viewSettings.showCheckNo) {
+      cols.push({
+        key: "checkNo",
+        label: "Check No.",
+        sortable: true,
+        className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+        cellClass: "truncate text-gray-700",
+        render: (tx) => getDraft(tx).checkNo || "—",
+      });
+    }
+    if (viewSettings.showPayee) {
+      cols.push({
+        key: "payee",
+        label: "Payee",
+        sortable: true,
+        className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+        cellClass: "truncate text-gray-700",
+        render: (tx) => {
+          const draft = getDraft(tx);
+          return draft.vendorId ? (
+            <EntityLink kind="vendor" id={draft.vendorId} label={draft.payee || "—"} />
+          ) : (
+            draft.payee || "—"
+          );
+        },
+      });
+    }
+    if (viewSettings.showClass) {
+      cols.push({
+        key: "className",
+        label: "Class",
+        sortable: true,
+        className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+        cellClass: "truncate text-gray-700",
+        render: (tx) => getDraft(tx).className || "—",
+      });
+    }
+    if (viewSettings.showLocation) {
+      cols.push({
+        key: "location",
+        label: "Location",
+        sortable: true,
+        className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+        cellClass: "truncate text-gray-700",
+        render: (tx) => getDraft(tx).location || "—",
+      });
+    }
+
+    cols.push(
+      {
+        key: "matchCategorize",
+        label: "Match/Categorize",
+        sortable: true,
+        className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+        render: (tx) => (
+          <span className="rounded-sm bg-gray-100 px-2 py-1 text-[11px] text-gray-700">
+            {getDraft(tx).mode === "match" ? "Match" : "Categorize"}
+          </span>
+        ),
+      },
+      {
+        key: "action",
+        label: "Action",
+        sortable: true,
+        className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+        render: (tx) => {
+          const menuOpen = actionMenuTxId === tx.id;
+          return (
+            <div
+              className="relative flex items-center justify-end gap-1"
+              onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
+            >
+              <ActionButton
+                className="h-7 px-2 text-[11px]"
+                onClick={() => void postTransaction(tx)}
+                disabled={postingTxId === tx.id}
+              >
+                {postingTxId === tx.id ? "Posting..." : "Post"}
+              </ActionButton>
+              <button
+                type="button"
+                className="rounded-sm border border-gray-300 px-1.5 py-1 text-xs text-gray-700 hover:bg-gray-50"
+                onClick={() => setActionMenuTxId((cur) => (cur === tx.id ? null : tx.id))}
+              >
+                ▾
+              </button>
+              {menuOpen ? (
+                <div className="absolute right-0 top-7 z-20 min-w-[220px] rounded-sm border border-gray-200 bg-white shadow-md">
+                  <button
+                    type="button"
+                    className="block w-full border-b border-gray-100 px-3 py-2 text-left text-xs hover:bg-gray-50"
+                    onClick={() => {
+                      setActionMenuTxId(null);
+                      setMatchDrawerTxId(tx.id);
+                    }}
+                  >
+                    Accept match (reconcile)
+                  </button>
+                  <button
+                    type="button"
+                    className="block w-full border-b border-gray-100 px-3 py-2 text-left text-xs hover:bg-gray-50"
+                    onClick={() => {
+                      setActionMenuTxId(null);
+                      setSplitTx(tx);
+                    }}
+                  >
+                    Split
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="action-create-backdated-check"
+                    className="block w-full border-b border-gray-100 px-3 py-2 text-left text-xs hover:bg-gray-50"
+                    onClick={() => openBackdatedCheckFlow(tx)}
+                  >
+                    Create backdated check
+                  </button>
+                  <Link
+                    to="/banking/categorization-rules"
+                    className="block border-b border-gray-100 px-3 py-2 text-xs hover:bg-gray-50"
+                    onClick={() => setActionMenuTxId(null)}
+                  >
+                    Create rule
+                  </Link>
+                  <button
+                    type="button"
+                    className="block w-full px-3 py-2 text-left text-xs text-red-700 hover:bg-red-50"
+                    onClick={() => {
+                      setActionMenuTxId(null);
+                      void excludeTransaction(tx);
+                    }}
+                    disabled={excludingTxId === tx.id}
+                  >
+                    {excludingTxId === tx.id ? "excluding..." : "Exclude"}
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          );
+        },
+      }
+    );
+
+    return cols;
+  }, [
+    actionMenuTxId,
+    companyId,
+    excludingTxId,
+    expandedTxId,
+    isRelayWalletAccount,
+    postingTxId,
+    pushToast,
+    runningBalanceById,
+    sortBy.key,
+    transactionsQuery,
+    viewSettings.editableDateField,
+    viewSettings.showAmountsInOneColumn,
+    viewSettings.showCheckNo,
+    viewSettings.showClass,
+    viewSettings.showLocation,
+    viewSettings.showPayee,
+    drafts,
+    coaQuery.data?.accounts,
+    accounts,
+    selectedAccount,
+  ]);
+
+  function renderExpandedRegisterRow(tx: PlaidBankTransaction) {
+    const { spent, received } = spentReceived(tx);
+    const draft = getDraft(tx);
+    return (
+      <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+        <div className="p-1">
+          <p className="mb-2 text-xs font-semibold text-gray-900">{transactionLabel(tx)}</p>
+          {viewSettings.showBankDetails ? (
+            <div className="mb-2 grid grid-cols-1 gap-1 text-xs text-gray-600 md:grid-cols-2">
+              <div>Date: {formatBankTransactionDate(tx.transaction_date)}</div>
+              <div>Account: {selectedAccount?.account_name || "—"}</div>
+              <div>Spent: {spent > 0 ? USD.format(spent / 100) : "—"}</div>
+              <div>Received: {received > 0 ? USD.format(received / 100) : "—"}</div>
+            </div>
+          ) : null}
+          {tx.relay_fuel_lines && tx.relay_fuel_lines.length > 0 ? (
+            <div className="mb-2">
+              <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-700">
+                Fuel breakdown (Relay)
+              </p>
+              <ul className="space-y-0.5 text-xs text-gray-800">
+                {buildRelayFuelBreakdown(tx.relay_fuel_lines).map((row) => (
+                  <li key={row.key} className="flex justify-between gap-3 tabular-nums">
+                    <span>
+                      {row.label}
+                      {row.volume_label ? <span className="text-gray-500"> · {row.volume_label}</span> : null}
+                    </span>
+                    <span>{USD.format(row.amount_cents / 100)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          <div className="mb-2 flex items-center gap-2">
+            <button
+              type="button"
+              className={`rounded-sm px-2 py-1 text-xs ${draft.mode === "match" ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-700"}`}
+              onClick={() => {
+                setDraft(tx, { mode: "match" });
+                setExpandedTxId(tx.id);
+                requestAnimationFrame(() =>
+                  matchPaneRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+                );
+              }}
+            >
+              Match
+            </button>
+            <button
+              type="button"
+              className={`rounded-sm px-2 py-1 text-xs ${draft.mode === "categorize" ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-700"}`}
+              onClick={() => setDraft(tx, { mode: "categorize" })}
+            >
+              Categorize
+            </button>
+          </div>
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            <label className="text-xs text-gray-600">
+              Transaction type
+              <SelectCombobox
+                className="mt-0.5 w-full"
+                value={draft.transactionType}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setDraft(tx, { transactionType: value });
+                  if (value === "Transfer") setTransferModalTx(tx);
+                  if (value === "CC Payment") setCcPaymentModalTx(tx);
+                }}
+              >
+                <option value="Money in">Money in</option>
+                <option value="Money out">Money out</option>
+                <option value="Transfer">Transfer</option>
+                <option value="CC Payment">CC Payment</option>
+                <option value="Expense">Expense</option>
+              </SelectCombobox>
+            </label>
+            <label className="text-xs text-gray-600">
+              Payee (vendor)
+              <div className="mt-0.5">
+                <ReferenceSelect
+                  value={draft.vendorId || null}
+                  onChange={(vid) => {
+                    const v = (vendorsQuery.data ?? []).find((x) => x.id === vid);
+                    setDraft(tx, { vendorId: vid ?? "", ...(v ? { payee: v.name } : {}) });
+                  }}
+                  options={(vendorsQuery.data ?? []).map((v) => ({ value: v.id, label: v.name }))}
+                  createKind="vendor"
+                  operatingCompanyId={companyId}
+                  placeholder="Select payee (vendor)"
+                  onOptionCreated={(opt) => {
+                    void vendorsQuery.refetch();
+                    setDraft(tx, { payee: opt.label });
+                  }}
+                />
+              </div>
+            </label>
+            <label className="text-xs text-gray-600">
+              Check No.
+              <input
+                className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                value={draft.checkNo}
+                onChange={(event) => setDraft(tx, { checkNo: event.target.value })}
+              />
+            </label>
+            <label className="text-xs text-gray-600 md:col-span-2">
+              From/To
+              {draft.transactionType === "Transfer" ? (
+                <div className="mt-0.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <SelectCombobox
+                    className="w-full"
+                    aria-label="Transfer from account"
+                    value={draft.fromAccountId || selectedAccount?.id || ""}
+                    onChange={(event) => {
+                      const fromAccountId = event.target.value;
+                      const fromLabel =
+                        transferBankOptions.find((a) => a.id === fromAccountId)?.label ?? "From";
+                      const toLabel =
+                        transferBankOptions.find((a) => a.id === draft.toAccountId)?.label ?? "To";
+                      setDraft(tx, {
+                        fromAccountId,
+                        fromTo: draft.toAccountId ? `${fromLabel} → ${toLabel}` : fromLabel,
+                      });
+                    }}
+                  >
+                    <option value="">From account…</option>
+                    {transferBankOptions.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.label}
+                      </option>
+                    ))}
+                  </SelectCombobox>
+                  <SelectCombobox
+                    className="w-full"
+                    aria-label="Transfer to account"
+                    value={draft.toAccountId}
+                    onChange={(event) => {
+                      const toAccountId = event.target.value;
+                      const fromId = draft.fromAccountId || selectedAccount?.id || "";
+                      const fromLabel =
+                        transferBankOptions.find((a) => a.id === fromId)?.label ?? "From";
+                      const toLabel =
+                        transferBankOptions.find((a) => a.id === toAccountId)?.label ?? "To";
+                      setDraft(tx, {
+                        toAccountId,
+                        fromTo: toAccountId ? `${fromLabel} → ${toLabel}` : fromLabel,
+                      });
+                    }}
+                  >
+                    <option value="">To account…</option>
+                    {transferBankOptions
+                      .filter((a) => a.id !== (draft.fromAccountId || selectedAccount?.id))
+                      .map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.label}
+                        </option>
+                      ))}
+                  </SelectCombobox>
+                  <button
+                    type="button"
+                    className="text-left text-[11px] text-slate-600 underline sm:col-span-2"
+                    onClick={() => setTransferModalTx(tx)}
+                  >
+                    Open full Transfer dialog (amount / memo / post)
+                  </button>
+                </div>
+              ) : draft.transactionType === "CC Payment" ? (
+                <button
+                  type="button"
+                  className="mt-0.5 block w-full rounded-sm border border-gray-300 px-2 py-1 text-left text-sm hover:bg-gray-50"
+                  onClick={() => setCcPaymentModalTx(tx)}
+                >
+                  {draft.fromTo || "Select CC payment details…"}
+                </button>
+              ) : (
+                <span
+                  className="mt-0.5 block w-full px-2 py-1 text-sm text-gray-500"
+                  title="Derived from the category / payee you select — not a free-text field."
+                >
+                  {computeFromTo(tx, draft) || "Auto — set by the category / payee"}
+                </span>
+              )}
+            </label>
+            <label className="text-xs text-gray-600">
+              Category (Chart of Accounts)
+              <div className="mt-0.5">
+                <ReferenceSelect
+                  value={draft.accountId || null}
+                  onChange={(v) => setDraft(tx, { accountId: v ?? "" })}
+                  options={(coaQuery.data?.accounts ?? []).map((account) => ({
+                    value: account.id,
+                    label: account.account_name,
+                    type: account.account_number ? String(account.account_number) : undefined,
+                  }))}
+                  createKind="category"
+                  operatingCompanyId={companyId}
+                  placeholder="Select category account"
+                  onOptionCreated={() => void coaQuery.refetch()}
+                />
+              </div>
+            </label>
+            <label className="text-xs text-gray-600">
+              Class
+              <div className="mt-0.5">
+                <ReferenceSelect
+                  value={draft.classId || null}
+                  onChange={(cid) => {
+                    const c = (classesQuery.data ?? []).find((x) => x.id === cid);
+                    setDraft(tx, { classId: cid ?? "", ...(c ? { className: c.display_name } : {}) });
+                  }}
+                  options={(classesQuery.data ?? []).map((c: AccountingCatalogRow) => ({
+                    value: c.id,
+                    label: c.display_name,
+                  }))}
+                  createKind="class"
+                  addNewLabel="+ Add new class"
+                  operatingCompanyId={companyId}
+                  placeholder="Select class"
+                  onOptionCreated={(opt) => {
+                    void classesQuery.refetch();
+                    setDraft(tx, { className: opt.label });
+                  }}
+                />
+              </div>
+            </label>
+            <label className="text-xs text-gray-600">
+              Location
+              <input
+                className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                value={draft.location}
+                onChange={(event) => setDraft(tx, { location: event.target.value })}
+              />
+            </label>
+            <label className="text-xs text-gray-600">
+              Item (Products &amp; Services)
+              <div className="mt-0.5">
+                <ReferenceSelect
+                  value={draft.itemId || null}
+                  onChange={(iid) => {
+                    const item = (itemsQuery.data ?? []).find((x) => x.id === iid);
+                    const m = (item?.metadata ?? {}) as Record<string, unknown>;
+                    const itemAccount =
+                      (typeof m.default_expense_account_id === "string" && m.default_expense_account_id) ||
+                      (typeof m.default_income_account_id === "string" && m.default_income_account_id) ||
+                      "";
+                    setDraft(tx, {
+                      itemId: iid ?? "",
+                      ...(item ? { productService: item.display_name ?? "" } : {}),
+                      accountId: draft.accountId || (itemAccount as string) || "",
+                    });
+                  }}
+                  options={(itemsQuery.data ?? []).map((it: AccountingCatalogRow) => ({
+                    value: it.id,
+                    label: it.display_name,
+                  }))}
+                  createKind="service"
+                  addNewLabel="+ Add new product/service"
+                  operatingCompanyId={companyId}
+                  placeholder="Select item"
+                  onOptionCreated={(opt) => {
+                    void itemsQuery.refetch();
+                    setDraft(tx, { productService: opt.label });
+                  }}
+                />
+              </div>
+            </label>
+            <label className="text-xs text-gray-600">
+              Customer/project
+              <div className="mt-0.5">
+                <ReferenceSelect
+                  value={draft.customerId || null}
+                  onChange={(cid) => {
+                    const c = (customersQuery.data ?? []).find((x) => x.id === cid);
+                    setDraft(tx, { customerId: cid ?? "", customerProject: c?.name ?? "" });
+                  }}
+                  options={(customersQuery.data ?? []).map((c) => ({ value: c.id, label: c.name }))}
+                  createKind="customer"
+                  operatingCompanyId={companyId}
+                  placeholder="Select customer"
+                  onOptionCreated={(opt) => {
+                    void customersQuery.refetch();
+                    setDraft(tx, { customerProject: opt.label });
+                  }}
+                />
+              </div>
+            </label>
+            <label className="flex items-center gap-2 text-xs text-gray-700">
+              <input
+                type="checkbox"
+                checked={draft.billable}
+                onChange={(event) => setDraft(tx, { billable: event.target.checked })}
+              />
+              Billable
+            </label>
+          </div>
+          <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-4">
+            <div className="text-xs text-gray-600">
+              Driver
+              <div className="mt-0.5">
+                <DriverAutocomplete
+                  companyId={companyId}
+                  value={draft.driverId}
+                  limit={200}
+                  onChange={(driverId, driverName) => setDraft(tx, { driverId, driverName: driverName ?? "" })}
+                />
+              </div>
+              {draft.driverId ? (
+                <div className="mt-0.5 flex items-center gap-2 text-[11px]">
+                  <EntityLink kind="driver" id={draft.driverId} label={draft.driverName || "Driver"} />
+                  <button
+                    type="button"
+                    className="text-slate-700 underline"
+                    onClick={() => setDraft(tx, { driverId: "", driverName: "", recoverFromDriver: false })}
+                  >
+                    Clear
+                  </button>
+                </div>
+              ) : null}
+            </div>
+            <div className="text-xs text-gray-600">
+              Unit (truck)
+              <div className="mt-0.5">
+                <UnitAutocomplete
+                  companyId={companyId}
+                  value={draft.unitId}
+                  onChange={(unitId, unitName) => setDraft(tx, { unitId, unitName })}
+                />
+              </div>
+              {draft.unitId ? (
+                <div className="mt-0.5 flex items-center gap-2 text-[11px]">
+                  <EntityLink kind="unit" id={draft.unitId} label={draft.unitName || "Unit"} />
+                  <button
+                    type="button"
+                    className="text-slate-700 underline"
+                    onClick={() => setDraft(tx, { unitId: "", unitName: "" })}
+                  >
+                    Clear
+                  </button>
+                </div>
+              ) : null}
+            </div>
+            <div className="text-xs text-gray-600">
+              Trailer
+              <div className="mt-0.5">
+                <TrailerAutocomplete
+                  companyId={companyId}
+                  value={draft.trailerId}
+                  onChange={(trailerId, trailerName) => setDraft(tx, { trailerId, trailerName })}
+                />
+              </div>
+              {draft.trailerId ? (
+                <div className="mt-0.5 flex items-center gap-2 text-[11px]">
+                  <EntityLink kind="trailer" id={draft.trailerId} label={draft.trailerName || "Trailer"} />
+                  <button
+                    type="button"
+                    className="text-slate-700 underline"
+                    onClick={() => setDraft(tx, { trailerId: "", trailerName: "" })}
+                  >
+                    Clear
+                  </button>
+                </div>
+              ) : null}
+            </div>
+            <div className="text-xs text-gray-600">
+              Trip (load)
+              <div className="mt-0.5">
+                <LoadAutocomplete
+                  companyId={companyId}
+                  value={draft.loadId}
+                  onChange={(loadId, loadName) => setDraft(tx, { loadId, loadName })}
+                />
+              </div>
+              {draft.loadId ? (
+                <div className="mt-0.5 flex items-center gap-2 text-[11px]">
+                  <EntityLink kind="load" id={draft.loadId} label={draft.loadName || "Trip"} />
+                  <button
+                    type="button"
+                    className="text-slate-700 underline"
+                    onClick={() => setDraft(tx, { loadId: "", loadName: "" })}
+                  >
+                    Clear
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          </div>
+          {draft.driverId ? (
+            <div className="mt-2 rounded-sm border border-gray-200 bg-gray-50 px-2 py-1.5">
+              <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={draft.recoverFromDriver}
+                  onChange={(event) => setDraft(tx, { recoverFromDriver: event.target.checked })}
+                />
+                Recover from driver (auto-deduction on settlement)
+              </label>
+              {draft.recoverFromDriver ? (
+                <label className="mt-1.5 block text-xs text-gray-600">
+                  Recovery type
+                  <SelectCombobox
+                    className="mt-0.5 w-full"
+                    value={draft.recoverDeductionType}
+                    onChange={(event) => setDraft(tx, { recoverDeductionType: event.target.value })}
+                  >
+                    {RECOVER_DEDUCTION_TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </SelectCombobox>
+                </label>
+              ) : null}
+            </div>
+          ) : null}
+          <label className="mt-2 block text-xs text-gray-600">
+            Memo
+            <textarea
+              className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              rows={3}
+              value={draft.memo}
+              onChange={(event) => setDraft(tx, { memo: event.target.value })}
+            />
+          </label>
+          {viewSettings.showTagsField ? (
+            <label className="mt-2 block text-xs text-gray-600">
+              Tags
+              <input
+                className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                value={draft.tags}
+                onChange={(event) => setDraft(tx, { tags: event.target.value })}
+              />
+            </label>
+          ) : null}
+          <div className="mt-2 rounded-sm border border-dashed border-gray-300 bg-gray-50 px-3 py-4 text-center text-xs text-gray-500">
+            Files drag/drop area
+          </div>
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <Button type="button" variant="secondary" onClick={() => setSplitTx(tx)}>
+              Split
+            </Button>
+            <div className="flex gap-2">
+              <Button type="button" variant="secondary" onClick={() => setExpandedTxId(null)}>
+                Cancel
+              </Button>
+              <Button type="button" onClick={() => void postTransaction(tx)} disabled={postingTxId === tx.id}>
+                {postingTxId === tx.id ? "Posting..." : "Post"}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div ref={matchPaneRef} className="border-t border-gray-200 pt-2 lg:border-t-0 lg:border-l lg:pl-3 lg:pt-0">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Match candidates</p>
+          <p className="mt-0.5 text-[11px] text-gray-500">
+            Recommended matches (±7 days) from live ledger data. If none fit, Search all like QuickBooks.
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <input
+              type="search"
+              value={matchDraftQ}
+              onChange={(e) => setMatchDraftQ(e.target.value)}
+              placeholder="Search payee, memo, ref…"
+              className="h-7 min-w-[140px] flex-1 rounded-sm border border-gray-300 px-2 text-xs"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  setMatchSearchQ(matchDraftQ.trim());
+                  setMatchSearchAll(true);
+                }
+              }}
+            />
+            <button
+              type="button"
+              data-testid="inline-match-search-all"
+              className={`rounded-sm border px-2 py-1 text-[11px] ${matchSearchAll ? "border-slate-800 bg-slate-900 text-white" : "border-gray-300 text-gray-700"}`}
+              onClick={() => {
+                setMatchSearchQ(matchDraftQ.trim());
+                setMatchSearchAll(true);
+              }}
+            >
+              Search all
+            </button>
+            <button
+              type="button"
+              className="rounded-sm border border-gray-300 px-2 py-1 text-[11px] text-gray-700"
+              onClick={() => setMatchDrawerTxId(tx.id)}
+            >
+              Open match drawer
+            </button>
+          </div>
+          {matchCandidatesQuery.isLoading ? <p className="mt-2 text-sm text-gray-500">Loading match candidates...</p> : null}
+          {matchCandidatesQuery.isError ? (
+            <p className="mt-2 text-sm text-red-700">Could not load match candidates.</p>
+          ) : null}
+          {!matchCandidatesQuery.isLoading &&
+          !matchCandidatesQuery.isError &&
+          (matchCandidatesQuery.data?.candidates ?? []).length === 0 ? (
+            <p className="mt-2 text-sm text-gray-500">No match candidates found for this transaction.</p>
+          ) : null}
+          <div className="mt-2 space-y-1.5">
+            {[...(matchCandidatesQuery.data?.candidates ?? [])]
+              .sort((a, b) => b.match_score - a.match_score)
+              .map((candidate: BankMatchCandidate) => (
+                <div
+                  key={`${tx.id}-mc-${candidate.ledger_entry_kind}-${candidate.ledger_entry_id}`}
+                  className="rounded-sm border border-gray-100 px-2 py-1.5 text-xs"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      {MATCH_CANDIDATE_ENTITY_KIND[candidate.ledger_entry_kind] ? (
+                        <EntityLink
+                          kind={MATCH_CANDIDATE_ENTITY_KIND[candidate.ledger_entry_kind]!}
+                          id={candidate.ledger_entry_id}
+                          label={MATCH_CANDIDATE_KIND_LABELS[candidate.ledger_entry_kind]}
+                          className="inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700 hover:underline"
+                        />
+                      ) : (
+                        <span className="inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700">
+                          {MATCH_CANDIDATE_KIND_LABELS[candidate.ledger_entry_kind]}
+                        </span>
+                      )}
+                      {candidate.auto_match ? (
+                        <span className="inline-flex items-center rounded-sm bg-slate-800 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
+                          Best match
+                        </span>
+                      ) : null}
+                    </div>
+                    <span className="shrink-0 font-semibold text-gray-900">
+                      {formatUsdCents(Math.abs(Number(candidate.amount_cents ?? 0)))}
+                    </span>
+                  </div>
+                  <div className="mt-1 truncate text-gray-700" title={candidate.memo}>
+                    {candidate.memo?.trim() ? candidate.memo : "—"}
+                  </div>
+                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-gray-500">
+                    <span>Date: {String(candidate.event_date ?? "").slice(0, 10) || "—"}</span>
+                    <span>Amount gap: {formatUsdCents(Math.abs(Number(candidate.amount_gap_cents ?? 0)))}</span>
+                    <span>Date gap: {candidate.date_gap_days}d</span>
+                    <span>Score: {candidate.match_score.toFixed(3)}</span>
+                  </div>
+                </div>
+              ))}
+          </div>
+
+          <div className="mt-3 border-t border-gray-100 pt-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+              Similar past categorizations
+            </p>
+            {!viewSettings.enableSuggestedCategorization ? (
+              <p className="mt-1 text-xs text-gray-500">Suggested categorization disabled in view settings.</p>
+            ) : null}
+            {viewSettings.enableSuggestedCategorization && suggestionsQuery.isLoading ? (
+              <p className="mt-1 text-xs text-gray-500">Loading suggestions...</p>
+            ) : null}
+            {viewSettings.enableSuggestedCategorization &&
+            !suggestionsQuery.isLoading &&
+            (suggestionsQuery.data?.suggestions ?? []).length === 0 ? (
+              <p className="mt-1 text-xs text-gray-500">No similar past categorizations found.</p>
+            ) : null}
+            <div className="mt-1 space-y-1">
+              {(suggestionsQuery.data?.suggestions ?? []).slice(0, 6).map((suggestion, index) => (
+                <button
+                  key={`${tx.id}-s-${index}`}
+                  type="button"
+                  className="block w-full rounded-sm border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
+                  onClick={() => {
+                    const suggestedKind = String(suggestion.category ?? suggestion.kind ?? "").trim();
+                    const suggestedAccountId = String(
+                      suggestion.gl_account_id ?? suggestion.coa_account_id ?? suggestion.account_id ?? ""
+                    );
+                    if (!suggestedKind && !suggestedAccountId) {
+                      pushToast("This suggestion has no category to apply.", "error");
+                      return;
+                    }
+                    void categorizeBankTransaction(tx.id, companyId, {
+                      category_kind: suggestedKind || "Matched",
+                      gl_account_id: suggestedAccountId || undefined,
+                    })
+                      .then(() => {
+                        pushToast("Transaction matched", "success");
+                        onDataChanged();
+                      })
+                      .catch((error) => pushToast(String((error as Error).message || "Match failed"), "error"));
+                  }}
+                >
+                  {String(suggestion.category ?? suggestion.kind ?? "candidate")} · {String(suggestion.id ?? "")}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -1363,1213 +2410,72 @@ export function BankingTransactionsDesignView({
         ])}
       />
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-[1150px] w-full table-fixed text-left text-[12px]">
-          <thead className="bg-gray-50 text-[10px] font-semibold uppercase tracking-wide text-gray-600">
-            <tr>
-              <th className="px-1 py-2" style={{ width: 36 }}>
-                <TableSelectionHeader
-                  selectedIds={bulkSelection.selectedIds}
-                  pageRowIds={pageRowIds}
-                  onSelectionChange={bulkSelection.setSelectedIds}
-                  cap={bulkSelection.cap}
-                />
-              </th>
-              {/* Resizable columns (QBO parity) — shared TableHeaderCell + useTablePref (drag the right
-              edge; widths persist per-user). */}
-              <TableHeaderCell
-                columnKey="date"
-                label="Date"
-                sortKey={sortBy.key}
-                sortDir={sortBy.dir}
-                onToggleSort={onToggleSortCol}
-                width={txColWidth("date")}
-                onResize={setTxColWidth}
-                className="font-semibold normal-case text-[10px] uppercase tracking-wide"
-              />
-              <TableHeaderCell
-                columnKey="description"
-                label="Full bank description"
-                sortKey={sortBy.key}
-                sortDir={sortBy.dir}
-                onToggleSort={onToggleSortCol}
-                width={txColWidth("description")}
-                onResize={setTxColWidth}
-                className="font-semibold normal-case text-[10px] uppercase tracking-wide"
-              />
-              {isRelayWalletAccount ? (
-                <>
-                  <TableHeaderCell
-                    columnKey="driver"
-                    label="Driver"
-                    sortKey={sortBy.key}
-                    sortDir={sortBy.dir}
-                    onToggleSort={onToggleSortCol}
-                    width={txColWidth("driver") || 110}
-                    onResize={setTxColWidth}
-                    className="font-semibold normal-case text-[10px] uppercase tracking-wide"
-                  />
-                  <TableHeaderCell
-                    columnKey="truck"
-                    label="Truck"
-                    sortKey={sortBy.key}
-                    sortDir={sortBy.dir}
-                    onToggleSort={onToggleSortCol}
-                    width={txColWidth("truck") || 90}
-                    onResize={setTxColWidth}
-                    className="font-semibold normal-case text-[10px] uppercase tracking-wide"
-                  />
-                  <TableHeaderCell
-                    columnKey="load"
-                    label="Load"
-                    sortKey={sortBy.key}
-                    sortDir={sortBy.dir}
-                    onToggleSort={onToggleSortCol}
-                    width={txColWidth("load") || 90}
-                    onResize={setTxColWidth}
-                    className="font-semibold normal-case text-[10px] uppercase tracking-wide"
-                  />
-                </>
-              ) : null}
-              {viewSettings.showAmountsInOneColumn ? (
-                <TableHeaderCell
-                  columnKey="amount"
-                  label="Amount"
-                  sortKey={sortBy.key}
-                  sortDir={sortBy.dir}
-                  onToggleSort={onToggleSortCol}
-                  width={txColWidth("amount")}
-                  onResize={setTxColWidth}
-                  className="font-semibold normal-case text-[10px] uppercase tracking-wide"
-                />
-              ) : (
-                <>
-                  <TableHeaderCell
-                    columnKey="spent"
-                    label="Spent"
-                    sortKey={sortBy.key}
-                    sortDir={sortBy.dir}
-                    onToggleSort={onToggleSortCol}
-                    width={txColWidth("spent")}
-                    onResize={setTxColWidth}
-                    className="font-semibold normal-case text-[10px] uppercase tracking-wide"
-                  />
-                  <TableHeaderCell
-                    columnKey="received"
-                    label="Received"
-                    sortKey={sortBy.key}
-                    sortDir={sortBy.dir}
-                    onToggleSort={onToggleSortCol}
-                    width={txColWidth("received")}
-                    onResize={setTxColWidth}
-                    className="font-semibold normal-case text-[10px] uppercase tracking-wide"
-                  />
-                </>
-              )}
-              <TableHeaderCell
-                columnKey="balance"
-                label="Balance"
-                sortKey={sortBy.key}
-                sortDir={sortBy.dir}
-                onToggleSort={onToggleSortCol}
-                width={txColWidth("balance")}
-                onResize={setTxColWidth}
-                align="right"
-                className={`font-semibold normal-case text-[10px] uppercase tracking-wide ${sortBy.key !== "date" ? "text-gray-300" : ""}`}
-              />
-              <TableHeaderCell
-                columnKey="fromTo"
-                label="From/To"
-                sortKey={sortBy.key}
-                sortDir={sortBy.dir}
-                onToggleSort={onToggleSortCol}
-                width={txColWidth("fromTo")}
-                onResize={setTxColWidth}
-                className="font-semibold normal-case text-[10px] uppercase tracking-wide"
-              />
-              <TableHeaderCell
-                columnKey="customer"
-                label="Customer"
-                sortKey={sortBy.key}
-                sortDir={sortBy.dir}
-                onToggleSort={onToggleSortCol}
-                width={txColWidth("customer")}
-                onResize={setTxColWidth}
-                className="font-semibold normal-case text-[10px] uppercase tracking-wide"
-              />
-              <TableHeaderCell
-                columnKey="productService"
-                label="Product/Service"
-                sortKey={sortBy.key}
-                sortDir={sortBy.dir}
-                onToggleSort={onToggleSortCol}
-                width={txColWidth("productService")}
-                onResize={setTxColWidth}
-                className="font-semibold normal-case text-[10px] uppercase tracking-wide"
-              />
-              {viewSettings.showCheckNo ? (
-                <TableHeaderCell
-                  columnKey="checkNo"
-                  label="Check No."
-                  sortKey={sortBy.key}
-                  sortDir={sortBy.dir}
-                  onToggleSort={onToggleSortCol}
-                  width={txColWidth("checkNo")}
-                  onResize={setTxColWidth}
-                  className="font-semibold normal-case text-[10px] uppercase tracking-wide"
-                />
-              ) : null}
-              {viewSettings.showPayee ? (
-                <TableHeaderCell
-                  columnKey="payee"
-                  label="Payee"
-                  sortKey={sortBy.key}
-                  sortDir={sortBy.dir}
-                  onToggleSort={onToggleSortCol}
-                  width={txColWidth("payee")}
-                  onResize={setTxColWidth}
-                  className="font-semibold normal-case text-[10px] uppercase tracking-wide"
-                />
-              ) : null}
-              {viewSettings.showClass ? (
-                <TableHeaderCell
-                  columnKey="className"
-                  label="Class"
-                  sortKey={sortBy.key}
-                  sortDir={sortBy.dir}
-                  onToggleSort={onToggleSortCol}
-                  width={txColWidth("className")}
-                  onResize={setTxColWidth}
-                  className="font-semibold normal-case text-[10px] uppercase tracking-wide"
-                />
-              ) : null}
-              {viewSettings.showLocation ? (
-                <TableHeaderCell
-                  columnKey="location"
-                  label="Location"
-                  sortKey={sortBy.key}
-                  sortDir={sortBy.dir}
-                  onToggleSort={onToggleSortCol}
-                  width={txColWidth("location")}
-                  onResize={setTxColWidth}
-                  className="font-semibold normal-case text-[10px] uppercase tracking-wide"
-                />
-              ) : null}
-              <TableHeaderCell
-                columnKey="matchCategorize"
-                label="Match/Categorize"
-                sortKey={sortBy.key}
-                sortDir={sortBy.dir}
-                onToggleSort={onToggleSortCol}
-                width={txColWidth("matchCategorize")}
-                onResize={setTxColWidth}
-                className="font-semibold normal-case text-[10px] uppercase tracking-wide"
-              />
-              <TableHeaderCell
-                columnKey="action"
-                label="Action"
-                sortKey={sortBy.key}
-                sortDir={sortBy.dir}
-                onToggleSort={onToggleSortCol}
-                width={txColWidth("action")}
-                onResize={setTxColWidth}
-                className="font-semibold normal-case text-[10px] uppercase tracking-wide"
-              />
-            </tr>
-          </thead>
-          <tbody>
-            {transactionsQuery.isLoading ? (
-              <tr>
-                <td className="px-3 py-4 text-sm text-gray-500" colSpan={16}>
-                  Loading Plaid transactions...
-                </td>
-              </tr>
-            ) : null}
-            {!transactionsQuery.isLoading && pagedRows.length === 0 ? (
-              <tr>
-                <td className="px-3 py-4 text-sm text-gray-500" colSpan={16}>
-                  No transactions for selected account and filters.
-                </td>
-              </tr>
-            ) : null}
-            {groupedRows.map((group) => {
-              const isGroupCollapsed =
-                showGroupHeaders && (collapsedAllGroupings || collapsedMonths[group.monthKey] === true);
-              return (
-                <Fragment key={group.monthKey}>
-                  {showGroupHeaders ? (
-                    <tr className="border-t border-gray-200 bg-[#F8F8F4]">
-                      <td colSpan={16} className="px-2 py-1.5">
-                        <button
-                          type="button"
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-gray-700"
-                          onClick={() => setCollapsedMonths((prev) => ({ ...prev, [group.monthKey]: !prev[group.monthKey] }))}
-                        >
-                          {isGroupCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                          {group.title} ({group.rows.length})
-                        </button>
-                      </td>
-                    </tr>
-                  ) : null}
-                  {isGroupCollapsed
-                    ? null
-                    : group.rows.map((tx) => {
-                        const { spent, received } = spentReceived(tx);
-                        const expanded = expandedTxId === tx.id;
-                        const menuOpen = actionMenuTxId === tx.id;
-                        const draft = getDraft(tx);
-                        return (
-                          <Fragment key={tx.id}>
-                  <tr
-                    className="cursor-pointer border-t border-gray-100 text-sm hover:bg-gray-50"
-                    onClick={() => setExpandedTxId((cur) => (cur === tx.id ? null : tx.id))}
-                  >
-                    <td className="px-1 py-2 align-top" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        checked={bulkSelection.isSelected(tx.id)}
-                        onChange={() => bulkSelection.toggleRow(tx.id)}
-                        aria-label={`Select transaction ${tx.id}`}
-                      />
-                    </td>
-                    <td className="px-1 py-2 align-top text-gray-700">
-                      {viewSettings.editableDateField && expanded ? (
-                        // Doc-18 GAP B: QB-style calendar. A MANUAL (hand-entered) transaction's date is now
-                        // editable via PATCH /api/v1/banking/transactions/:id; bank-fed rows stay locked
-                        // (disabled) since their date reflects the feed and the backend rejects the edit.
-                        <div onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
-                          <DatePicker
-                            value={tx.transaction_date.slice(0, 10)}
-                            disabled={!isManualBankTransaction(tx)}
-                            className="w-32"
-                            onChange={(next) => {
-                              if (!next || !isManualBankTransaction(tx) || next === tx.transaction_date.slice(0, 10)) return;
-                              void updateBankTransactionDate(tx.id, companyId, next)
-                                .then(() => {
-                                  pushToast("Transaction date updated", "success");
-                                  void transactionsQuery.refetch();
-                                })
-                                .catch((error: unknown) => {
-                                  pushToast(String((error as Error)?.message ?? "Could not update date"), "error");
-                                });
-                            }}
-                          />
-                        </div>
-                      ) : (
-                        formatBankTransactionDate(tx.transaction_date)
-                      )}
-                    </td>
-                    <td className="px-1 py-2 align-top">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="truncate text-gray-900">{transactionLabel(tx)}</p>
-                          {tx.relay_fuel_lines && tx.relay_fuel_lines.length > 0 ? (
-                            <p className="mt-0.5 truncate text-[11px] text-gray-500" title={formatRelayFuelBreakdownSummary(tx.relay_fuel_lines, (c) => USD.format(c / 100))}>
-                              {formatRelayFuelBreakdownSummary(tx.relay_fuel_lines, (c) => USD.format(c / 100))}
-                            </p>
-                          ) : null}
-                          {!isRelayWalletAccount &&
-                            (tx.categorization_unit_id ||
-                              tx.categorization_driver_id ||
-                              tx.categorization_load_id ||
-                              tx.matched_load_id ||
-                              tx.matched_settlement_id ||
-                              tx.categorization_trailer_id) && (
-                            <div
-                              className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px]"
-                              onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
-                            >
-                              {tx.categorization_unit_id ? (
-                                <EntityLink
-                                  kind="unit"
-                                  id={tx.categorization_unit_id}
-                                  label={tx.categorization_unit_number || "Unit"}
-                                />
-                              ) : null}
-                              {tx.categorization_trailer_id ? (
-                                <EntityLink
-                                  kind="trailer"
-                                  id={tx.categorization_trailer_id}
-                                  label={tx.categorization_trailer_number || "Trailer"}
-                                />
-                              ) : null}
-                              {tx.categorization_driver_id ? (
-                                <EntityLink
-                                  kind="driver"
-                                  id={tx.categorization_driver_id}
-                                  label={tx.categorization_driver_name || "Driver"}
-                                />
-                              ) : null}
-                              {(tx.categorization_load_id || tx.matched_load_id) ? (
-                                <EntityLink
-                                  kind="load"
-                                  id={tx.categorization_load_id || tx.matched_load_id}
-                                  label={tx.categorization_load_number || "Trip"}
-                                />
-                              ) : null}
-                              {tx.matched_settlement_id ? (
-                                <EntityLink kind="settlement" id={tx.matched_settlement_id} label="Settlement" />
-                              ) : null}
-                            </div>
-                          )}
-                        </div>
-                        <div className="inline-flex items-center gap-1 text-gray-400">
-                          {/* Honest-disabled: bank transactions are not a supported attachments
-                          entity_type (attachments.routes.ts enum), so there is no attach flow to wire
-                          here yet. Kept visible (never deleted) + disabled with the reason, not a fake
-                          click. Attach a receipt on the Bill/Expense the transaction posts to instead. */}
-                          <button
-                            type="button"
-                            disabled
-                            aria-label="Attach file (not available for bank transactions)"
-                            title="Attachments aren't supported on bank feed rows yet — attach the receipt to the Bill or Expense this transaction posts to."
-                            className="cursor-not-allowed opacity-60"
-                          >
-                            <Paperclip className="h-4 w-4" />
-                          </button>
-                          {/* Honest-disabled: inline per-row notes have no editor wired in this grid yet. */}
-                          <button
-                            type="button"
-                            disabled
-                            aria-label="Add note (not available here)"
-                            title="Notes aren't editable from this grid yet."
-                            className="cursor-not-allowed opacity-60"
-                          >
-                            <MessageSquare className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </td>
-                    {isRelayWalletAccount ? (
-                      <>
-                        <td
-                          className="truncate px-1 py-2 align-top text-gray-700"
-                          onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
-                        >
-                          {tx.categorization_driver_id ? (
-                            <EntityLink
-                              kind="driver"
-                              id={tx.categorization_driver_id}
-                              label={tx.categorization_driver_name || "Driver"}
-                            />
-                          ) : (
-                            "—"
-                          )}
-                        </td>
-                        <td
-                          className="truncate px-1 py-2 align-top text-gray-700"
-                          onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
-                        >
-                          {tx.categorization_unit_id ? (
-                            <EntityLink
-                              kind="unit"
-                              id={tx.categorization_unit_id}
-                              label={tx.categorization_unit_number || "Truck"}
-                            />
-                          ) : (
-                            "—"
-                          )}
-                        </td>
-                        <td
-                          className="truncate px-1 py-2 align-top text-gray-700"
-                          onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
-                        >
-                          {tx.categorization_load_id || tx.matched_load_id ? (
-                            <EntityLink
-                              kind="load"
-                              id={tx.categorization_load_id || tx.matched_load_id!}
-                              label={tx.categorization_load_number || "Load"}
-                            />
-                          ) : (
-                            "—"
-                          )}
-                        </td>
-                      </>
-                    ) : null}
-                    {viewSettings.showAmountsInOneColumn ? (
-                      <td className={`px-1 py-2 align-top ${spent > 0 ? "text-red-700" : "text-slate-700"}`}>
-                        {spent > 0 ? `-${USD.format(spent / 100)}` : received > 0 ? USD.format(received / 100) : "—"}
-                      </td>
-                    ) : (
-                      <>
-                        <td className="px-1 py-2 align-top text-red-700">{spent > 0 ? USD.format(spent / 100) : "—"}</td>
-                        <td className="px-1 py-2 align-top text-slate-700">{received > 0 ? USD.format(received / 100) : "—"}</td>
-                      </>
-                    )}
-                    {(() => {
-                      const bal = runningBalanceById.get(tx.id);
-                      return (
-                        <td className={`whitespace-nowrap px-1 py-2 text-right align-top tabular-nums ${sortBy.key !== "date" ? "text-gray-300" : bal != null && bal < 0 ? "text-red-700" : "text-gray-900"}`}>
-                          {bal == null ? "—" : USD.format(bal / 100)}
-                        </td>
-                      );
-                    })()}
-                    <td className="truncate px-1 py-2 align-top text-gray-700">{computeFromTo(tx, draft) || "—"}</td>
-                    <td className="truncate px-1 py-2 align-top text-gray-700">
-                      {draft.customerId ? (
-                        <EntityLink kind="customer" id={draft.customerId} label={draft.customerProject || "—"} />
-                      ) : (
-                        draft.customerProject || "—"
-                      )}
-                    </td>
-                    <td className="truncate px-1 py-2 align-top text-gray-700">{draft.productService || "—"}</td>
-                    {viewSettings.showCheckNo ? <td className="truncate px-1 py-2 align-top text-gray-700">{draft.checkNo || "—"}</td> : null}
-                    {viewSettings.showPayee ? (
-                      <td className="truncate px-1 py-2 align-top text-gray-700">
-                        {draft.vendorId ? (
-                          <EntityLink kind="vendor" id={draft.vendorId} label={draft.payee || "—"} />
-                        ) : (
-                          draft.payee || "—"
-                        )}
-                      </td>
-                    ) : null}
-                    {viewSettings.showClass ? <td className="truncate px-1 py-2 align-top text-gray-700">{draft.className || "—"}</td> : null}
-                    {viewSettings.showLocation ? <td className="truncate px-1 py-2 align-top text-gray-700">{draft.location || "—"}</td> : null}
-                    <td className="px-1 py-2 align-top">
-                      <span className="rounded-sm bg-gray-100 px-2 py-1 text-[11px] text-gray-700">
-                        {draft.mode === "match" ? "Match" : "Categorize"}
-                      </span>
-                    </td>
-                    <td className="px-1 py-2 align-top" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-                      <div className="relative flex items-center justify-end gap-1">
-                        <ActionButton className="h-7 px-2 text-[11px]" onClick={() => void postTransaction(tx)} disabled={postingTxId === tx.id}>
-                          {postingTxId === tx.id ? "Posting..." : "Post"}
-                        </ActionButton>
-                        <button
-                          type="button"
-                          className="rounded-sm border border-gray-300 px-1.5 py-1 text-xs text-gray-700 hover:bg-gray-50"
-                          onClick={() => setActionMenuTxId((cur) => (cur === tx.id ? null : tx.id))}
-                        >
-                          ▾
-                        </button>
-                        {menuOpen ? (
-                          <div className="absolute right-0 top-7 z-20 min-w-[220px] rounded-sm border border-gray-200 bg-white shadow-md">
-                            {/* HELD financial-actions wiring: reuses the orphaned MatchDrawer (already-built
-                            getMatchCandidates + acceptBankReconMatch, reconcile-commit — link-and-clear for
-                            an exact-amount match, or a balanced variance JE via acceptMatchWithResolveDifference;
-                            both gated, no new GL math here). */}
-                            <button
-                              type="button"
-                              className="block w-full border-b border-gray-100 px-3 py-2 text-left text-xs hover:bg-gray-50"
-                              onClick={() => {
-                                setActionMenuTxId(null);
-                                setMatchDrawerTxId(tx.id);
-                              }}
-                            >
-                              Accept match (reconcile)
-                            </button>
-                            {/* BANK-SPLIT-1: the real, persisted, balanced N-line split (banking.bank_transaction_splits,
-                            migration 202607110100, HELD). Opens the QBO-style Split transaction popup. */}
-                            <button
-                              type="button"
-                              className="block w-full border-b border-gray-100 px-3 py-2 text-left text-xs hover:bg-gray-50"
-                              onClick={() => {
-                                setActionMenuTxId(null);
-                                setSplitTx(tx);
-                              }}
-                            >
-                              Split
-                            </button>
-                            <button
-                              type="button"
-                              data-testid="action-create-backdated-check"
-                              className="block w-full border-b border-gray-100 px-3 py-2 text-left text-xs hover:bg-gray-50"
-                              onClick={() => openBackdatedCheckFlow(tx)}
-                            >
-                              Create backdated check
-                            </button>
-                            <Link
-                              to="/banking/categorization-rules"
-                              className="block border-b border-gray-100 px-3 py-2 text-xs hover:bg-gray-50"
-                              onClick={() => setActionMenuTxId(null)}
-                            >
-                              Create rule
-                            </Link>
-                            <button
-                              type="button"
-                              className="block w-full px-3 py-2 text-left text-xs text-red-700 hover:bg-red-50"
-                              onClick={() => {
-                                setActionMenuTxId(null);
-                                void excludeTransaction(tx);
-                              }}
-                              disabled={excludingTxId === tx.id}
-                            >
-                              {excludingTxId === tx.id ? "excluding..." : "Exclude"}
-                            </button>
-                          </div>
-                        ) : null}
-                      </div>
-                    </td>
-                  </tr>
-                  {expanded ? (
-                    <tr key={`${tx.id}-expanded`} className="border-t border-gray-100 bg-gray-50">
-                      <td className="px-3 py-3" colSpan={16}>
-                        <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
-                          <div className="p-1">
-                            <p className="mb-2 text-xs font-semibold text-gray-900">{transactionLabel(tx)}</p>
-                            {viewSettings.showBankDetails ? (
-                              <div className="mb-2 grid grid-cols-1 gap-1 text-xs text-gray-600 md:grid-cols-2">
-                                <div>Date: {formatBankTransactionDate(tx.transaction_date)}</div>
-                                <div>Account: {selectedAccount?.account_name || "—"}</div>
-                                <div>Spent: {spent > 0 ? USD.format(spent / 100) : "—"}</div>
-                                <div>Received: {received > 0 ? USD.format(received / 100) : "—"}</div>
-                              </div>
-                            ) : null}
-                            {tx.relay_fuel_lines && tx.relay_fuel_lines.length > 0 ? (
-                              <div className="mb-2">
-                                <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-700">
-                                  Fuel breakdown (Relay)
-                                </p>
-                                <ul className="space-y-0.5 text-xs text-gray-800">
-                                  {buildRelayFuelBreakdown(tx.relay_fuel_lines).map((row) => (
-                                    <li key={row.key} className="flex justify-between gap-3 tabular-nums">
-                                      <span>
-                                        {row.label}
-                                        {row.volume_label ? (
-                                          <span className="text-gray-500"> · {row.volume_label}</span>
-                                        ) : null}
-                                      </span>
-                                      <span>{USD.format(row.amount_cents / 100)}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            ) : null}
-                            <div className="mb-2 flex items-center gap-2">
-                              <button
-                                type="button"
-                                className={`rounded-sm px-2 py-1 text-xs ${draft.mode === "match" ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-700"}`}
-                                  onClick={() => {
-                                    // DEFECT-7 — Match previously only flipped the mode badge; the ranked
-                                    // candidates never surfaced on click. Now it also expands this row (so
-                                    // matchCandidatesQuery loads) and scrolls the candidates pane into view.
-                                    setDraft(tx, { mode: "match" });
-                                    setExpandedTxId(tx.id);
-                                    requestAnimationFrame(() =>
-                                      matchPaneRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })
-                                    );
-                                  }}
-                              >
-                                Match
-                              </button>
-                              <button
-                                type="button"
-                                className={`rounded-sm px-2 py-1 text-xs ${draft.mode === "categorize" ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-700"}`}
-                                  onClick={() => setDraft(tx, { mode: "categorize" })}
-                              >
-                                Categorize
-                              </button>
-                            </div>
-                            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                              <label className="text-xs text-gray-600">
-                                Transaction type
-                                <SelectCombobox
-                                  className="mt-0.5 w-full"
-                                  value={draft.transactionType}
-                                  onChange={(event) => {
-                                    const value = event.target.value;
-                                    setDraft(tx, { transactionType: value });
-                                    // HELD financial-actions wiring: Transfer/CC Payment open the existing,
-                                    // fully-built RecordTransferModal / RecordCCPaymentModal (gated posters —
-                                    // createTransfer / recordCcPayment) pre-seeded from this row, instead of
-                                    // duplicating a third transfer/CC-payment picker inline.
-                                    if (value === "Transfer") setTransferModalTx(tx);
-                                    if (value === "CC Payment") setCcPaymentModalTx(tx);
-                                  }}
-                                >
-                                  <option value="Money in">Money in</option>
-                                  <option value="Money out">Money out</option>
-                                  <option value="Transfer">Transfer</option>
-                                  <option value="CC Payment">CC Payment</option>
-                                  <option value="Expense">Expense</option>
-                                </SelectCombobox>
-                              </label>
-                              <label className="text-xs text-gray-600">
-                                Payee (vendor)
-                                <div className="mt-0.5">
-                                  {/* QBO parity — inline "+ Add new vendor" (ReferenceSelect, A2 keystone).
-                                  Doc-18 GAP A (2026-07-11): the split-brain is CLOSED. QuickCreateEntityModal
-                                  createKind="vendor" writes the CANONICAL mdata.vendors (createVendor → POST
-                                  /api/v1/mdata/vendors → INSERT INTO mdata.vendors), the SAME table this list
-                                  reads — so the new vendor persists and re-appears after refetch/reload
-                                  (QB-STD-5). Regression-guarded by scripts/verify-inline-create-writes-canonical.mjs.
-                                  (Earlier this comment claimed the create landed in the mdata.qbo_vendors mirror —
-                                  that was stale: the canonical fix already shipped in QuickCreateEntityModal.) */}
-                                  <ReferenceSelect
-                                    value={draft.vendorId || null}
-                                    onChange={(vid) => {
-                                      const v = (vendorsQuery.data ?? []).find((x) => x.id === vid);
-                                      setDraft(tx, { vendorId: vid ?? "", ...(v ? { payee: v.name } : {}) });
-                                    }}
-                                    options={(vendorsQuery.data ?? []).map((v) => ({ value: v.id, label: v.name }))}
-                                    createKind="vendor"
-                                    operatingCompanyId={companyId}
-                                    placeholder="Select payee (vendor)"
-                                    onOptionCreated={(opt) => {
-                                      void vendorsQuery.refetch();
-                                      setDraft(tx, { payee: opt.label });
-                                    }}
-                                  />
-                                </div>
-                              </label>
-                              <label className="text-xs text-gray-600">
-                                Check No.
-                                <input
-                                  className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
-                                  value={draft.checkNo}
-                                  onChange={(event) => setDraft(tx, { checkNo: event.target.value })}
-                                />
-                              </label>
-                              <label className="text-xs text-gray-600 md:col-span-2">
-                                From/To
-                                {draft.transactionType === "Transfer" ? (
-                                  <div className="mt-0.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                                    <SelectCombobox
-                                      className="w-full"
-                                      aria-label="Transfer from account"
-                                      value={draft.fromAccountId || selectedAccount?.id || ""}
-                                      onChange={(event) => {
-                                        const fromAccountId = event.target.value;
-                                        const fromLabel =
-                                          transferBankOptions.find((a) => a.id === fromAccountId)?.label ?? "From";
-                                        const toLabel =
-                                          transferBankOptions.find((a) => a.id === draft.toAccountId)?.label ?? "To";
-                                        setDraft(tx, {
-                                          fromAccountId,
-                                          fromTo: draft.toAccountId ? `${fromLabel} → ${toLabel}` : fromLabel,
-                                        });
-                                      }}
-                                    >
-                                      <option value="">From account…</option>
-                                      {transferBankOptions.map((a) => (
-                                        <option key={a.id} value={a.id}>
-                                          {a.label}
-                                        </option>
-                                      ))}
-                                    </SelectCombobox>
-                                    <SelectCombobox
-                                      className="w-full"
-                                      aria-label="Transfer to account"
-                                      value={draft.toAccountId}
-                                      onChange={(event) => {
-                                        const toAccountId = event.target.value;
-                                        const fromId = draft.fromAccountId || selectedAccount?.id || "";
-                                        const fromLabel =
-                                          transferBankOptions.find((a) => a.id === fromId)?.label ?? "From";
-                                        const toLabel =
-                                          transferBankOptions.find((a) => a.id === toAccountId)?.label ?? "To";
-                                        setDraft(tx, {
-                                          toAccountId,
-                                          fromTo: toAccountId ? `${fromLabel} → ${toLabel}` : fromLabel,
-                                        });
-                                      }}
-                                    >
-                                      <option value="">To account…</option>
-                                      {transferBankOptions
-                                        .filter((a) => a.id !== (draft.fromAccountId || selectedAccount?.id))
-                                        .map((a) => (
-                                          <option key={a.id} value={a.id}>
-                                            {a.label}
-                                          </option>
-                                        ))}
-                                    </SelectCombobox>
-                                    <button
-                                      type="button"
-                                      className="text-left text-[11px] text-slate-600 underline sm:col-span-2"
-                                      onClick={() => setTransferModalTx(tx)}
-                                    >
-                                      Open full Transfer dialog (amount / memo / post)
-                                    </button>
-                                  </div>
-                                ) : draft.transactionType === "CC Payment" ? (
-                                  <button
-                                    type="button"
-                                    className="mt-0.5 block w-full rounded-sm border border-gray-300 px-2 py-1 text-left text-sm hover:bg-gray-50"
-                                    onClick={() => setCcPaymentModalTx(tx)}
-                                  >
-                                    {draft.fromTo || "Select CC payment details…"}
-                                  </button>
-                                ) : (
-                                  // B-A4: From/To for a money-in/out categorization is DERIVED (BANK → the
-                                  // category / payee you pick), per the locked FIX-04 decision — it is not a
-                                  // free-text field. The old editable input only updated local draft state and
-                                  // was dropped before persistence, so it read as an unwired input. Show the
-                                  // derived value read-only instead.
-                                  <span
-                                    className="mt-0.5 block w-full px-2 py-1 text-sm text-gray-500"
-                                    title="Derived from the category / payee you select — not a free-text field."
-                                  >
-                                    {computeFromTo(tx, draft) || "Auto — set by the category / payee"}
-                                  </span>
-                                )}
-                              </label>
-                              <label className="text-xs text-gray-600">
-                                Category (Chart of Accounts)
-                                <div className="mt-0.5">
-                                  {/* QBO parity — inline "+ Add new category" (creates a GL account via the
-                                  existing ReferenceSelect/QuickCreateEntityModal "category" flow). */}
-                                  <ReferenceSelect
-                                    value={draft.accountId || null}
-                                    onChange={(v) => setDraft(tx, { accountId: v ?? "" })}
-                                    options={(coaQuery.data?.accounts ?? []).map((account) => ({
-                                      value: account.id,
-                                      label: account.account_name,
-                                      type: account.account_number ? String(account.account_number) : undefined,
-                                    }))}
-                                    createKind="category"
-                                    operatingCompanyId={companyId}
-                                    placeholder="Select category account"
-                                    onOptionCreated={() => void coaQuery.refetch()}
-                                  />
-                                </div>
-                              </label>
-                              <label className="text-xs text-gray-600">
-                                Class
-                                <div className="mt-0.5">
-                                  {/* #5 QBO parity — inline "+ Add new class" (ReferenceSelect, A2 keystone).
-                                  createKind="class" creates through QuickCreateEntityModal into the CANONICAL
-                                  catalogs.classes table this list reads from (classesCatalogClient →
-                                  POST /api/v1/catalogs/accounting/classes → INSERT INTO catalogs.classes,
-                                  entity-scoped under FORCE-RLS), so a new class persists + reselects after
-                                  reload (QB-STD-5). A Class is a reporting DIMENSION, not a GL account — NON-
-                                  financial (like Item → catalogs.items). Was a bare free-text <input>; the
-                                  earlier "class backend-blocked" tracker note is stale (the create route is live). */}
-                                  <ReferenceSelect
-                                    value={draft.classId || null}
-                                    onChange={(cid) => {
-                                      // FIX-4 (2026-07-14): mirror the vendor pattern above — only overwrite
-                                      // className when the lookup resolves. On inline "+ Add new class", this
-                                      // onChange fires right after ReferenceSelect.handleCreated's
-                                      // onOptionCreated (which already set className from the created option's
-                                      // label); classesQuery.data is still stale at that instant (the new
-                                      // record lives in ReferenceSelect's local `created` state, not the query
-                                      // yet), so an unconditional `c?.display_name ?? ""` wiped the label back
-                                      // to "" immediately after it was set. Omitting the key when the lookup
-                                      // misses preserves whatever className is already in the draft.
-                                      const c = (classesQuery.data ?? []).find((x) => x.id === cid);
-                                      setDraft(tx, { classId: cid ?? "", ...(c ? { className: c.display_name } : {}) });
-                                    }}
-                                    options={(classesQuery.data ?? []).map((c: AccountingCatalogRow) => ({ value: c.id, label: c.display_name }))}
-                                    createKind="class"
-                                    addNewLabel="+ Add new class"
-                                    operatingCompanyId={companyId}
-                                    placeholder="Select class"
-                                    onOptionCreated={(opt) => {
-                                      void classesQuery.refetch();
-                                      setDraft(tx, { className: opt.label });
-                                    }}
-                                  />
-                                </div>
-                              </label>
-                              <label className="text-xs text-gray-600">
-                                Location
-                                <input
-                                  className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
-                                  value={draft.location}
-                                  onChange={(event) => setDraft(tx, { location: event.target.value })}
-                                />
-                              </label>
-                              <label className="text-xs text-gray-600">
-                                Item (Products &amp; Services)
-                                <div className="mt-0.5">
-                                  {/* QBO parity — inline "+ Add new product/service" reuses ReferenceSelect's
-                                  "service" create kind (InlineCreateDrawer → NewServiceDrawerForm), the kind
-                                  purpose-built for this exact field (BK7). Doc-18 GAP A (2026-07-11): the
-                                  split-brain is CLOSED. NewServiceDrawerForm writes the CANONICAL catalogs.items
-                                  (itemsCatalogClient.create → POST /api/v1/catalogs/accounting/items → INSERT
-                                  INTO catalogs.items), the SAME table this list reads — so the new item persists
-                                  into the catalog and re-appears after refetch/reload (QB-STD-5). Regression-guarded
-                                  by scripts/verify-inline-create-writes-canonical.mjs. (Earlier this comment claimed
-                                  the create landed in the mdata.qbo_items mirror — that was stale.) */}
-                                  <ReferenceSelect
-                                    value={draft.itemId || null}
-                                    onChange={(iid) => {
-                                      const item = (itemsQuery.data ?? []).find((x) => x.id === iid);
-                                      // An Item carries its own account mapping (PR #1716): default the Category
-                                      // account from the item's expense/income account when none is chosen yet, so
-                                      // an item line still posts to the right account without re-picking it.
-                                      const m = (item?.metadata ?? {}) as Record<string, unknown>;
-                                      const itemAccount =
-                                        (typeof m.default_expense_account_id === "string" && m.default_expense_account_id) ||
-                                        (typeof m.default_income_account_id === "string" && m.default_income_account_id) ||
-                                        "";
-                                      setDraft(tx, {
-                                        itemId: iid ?? "",
-                                        ...(item ? { productService: item.display_name ?? "" } : {}),
-                                        accountId: draft.accountId || (itemAccount as string) || "",
-                                      });
-                                    }}
-                                    options={(itemsQuery.data ?? []).map((it: AccountingCatalogRow) => ({ value: it.id, label: it.display_name }))}
-                                    createKind="service"
-                                    addNewLabel="+ Add new product/service"
-                                    operatingCompanyId={companyId}
-                                    placeholder="Select item"
-                                    onOptionCreated={(opt) => {
-                                      void itemsQuery.refetch();
-                                      setDraft(tx, { productService: opt.label });
-                                    }}
-                                  />
-                                </div>
-                              </label>
-                              <label className="text-xs text-gray-600">
-                                Customer/project
-                                <div className="mt-0.5">
-                                  {/* DEFECT-10 — QBO parity: inline "+ Add new customer" (ReferenceSelect,
-                                  A2 keystone) to match Payee/Category/Product-Service. createKind="customer"
-                                  creates through QuickCreateEntityModal into the canonical mdata.customers
-                                  table the list reads from, so a new customer persists + reselects after
-                                  reload. */}
-                                  <ReferenceSelect
-                                    value={draft.customerId || null}
-                                    onChange={(cid) => {
-                                      const c = (customersQuery.data ?? []).find((x) => x.id === cid);
-                                      setDraft(tx, { customerId: cid ?? "", customerProject: c?.name ?? "" });
-                                    }}
-                                    options={(customersQuery.data ?? []).map((c) => ({ value: c.id, label: c.name }))}
-                                    createKind="customer"
-                                    operatingCompanyId={companyId}
-                                    placeholder="Select customer"
-                                    onOptionCreated={(opt) => {
-                                      void customersQuery.refetch();
-                                      setDraft(tx, { customerProject: opt.label });
-                                    }}
-                                  />
-                                </div>
-                              </label>
-                              <label className="flex items-center gap-2 text-xs text-gray-700">
-                                <input
-                                  type="checkbox"
-                                  checked={draft.billable}
-                                  onChange={(event) => setDraft(tx, { billable: event.target.checked })}
-                                />
-                                Billable
-                              </label>
-                            </div>
-                            {/* BLOCK-6b dimensions: Driver + Unit (truck) + Trip (load) the transaction belongs
-                                to — tags for full cross-module linkage + drill-through (forward: this txn shows
-                                them; reverse: each shows this expense). */}
-                            <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-4">
-                              <div className="text-xs text-gray-600">
-                                Driver
-                                <div className="mt-0.5">
-                                  <DriverAutocomplete
-                                    companyId={companyId}
-                                    value={draft.driverId}
-                                    limit={200}
-                                    onChange={(driverId, driverName) =>
-                                      setDraft(tx, { driverId, driverName: driverName ?? "" })
-                                    }
-                                  />
-                                </div>
-                                {draft.driverId ? (
-                                  <div className="mt-0.5 flex items-center gap-2 text-[11px]">
-                                    <EntityLink kind="driver" id={draft.driverId} label={draft.driverName || "Driver"} />
-                                    <button
-                                      type="button"
-                                      className="text-slate-700 underline"
-                                      onClick={() => setDraft(tx, { driverId: "", driverName: "", recoverFromDriver: false })}
-                                    >
-                                      Clear
-                                    </button>
-                                  </div>
-                                ) : null}
-                              </div>
-                              <div className="text-xs text-gray-600">
-                                Unit (truck)
-                                <div className="mt-0.5">
-                                  <UnitAutocomplete
-                                    companyId={companyId}
-                                    value={draft.unitId}
-                                    onChange={(unitId, unitName) => setDraft(tx, { unitId, unitName })}
-                                  />
-                                </div>
-                                {draft.unitId ? (
-                                  <div className="mt-0.5 flex items-center gap-2 text-[11px]">
-                                    <EntityLink kind="unit" id={draft.unitId} label={draft.unitName || "Unit"} />
-                                    <button
-                                      type="button"
-                                      className="text-slate-700 underline"
-                                      onClick={() => setDraft(tx, { unitId: "", unitName: "" })}
-                                    >
-                                      Clear
-                                    </button>
-                                  </div>
-                                ) : null}
-                              </div>
-                              <div className="text-xs text-gray-600">
-                                Trailer
-                                <div className="mt-0.5">
-                                  <TrailerAutocomplete
-                                    companyId={companyId}
-                                    value={draft.trailerId}
-                                    onChange={(trailerId, trailerName) => setDraft(tx, { trailerId, trailerName })}
-                                  />
-                                </div>
-                                {draft.trailerId ? (
-                                  <div className="mt-0.5 flex items-center gap-2 text-[11px]">
-                                    <EntityLink kind="trailer" id={draft.trailerId} label={draft.trailerName || "Trailer"} />
-                                    <button
-                                      type="button"
-                                      className="text-slate-700 underline"
-                                      onClick={() => setDraft(tx, { trailerId: "", trailerName: "" })}
-                                    >
-                                      Clear
-                                    </button>
-                                  </div>
-                                ) : null}
-                              </div>
-                              <div className="text-xs text-gray-600">
-                                Trip (load)
-                                <div className="mt-0.5">
-                                  <LoadAutocomplete
-                                    companyId={companyId}
-                                    value={draft.loadId}
-                                    onChange={(loadId, loadName) => setDraft(tx, { loadId, loadName })}
-                                  />
-                                </div>
-                                {draft.loadId ? (
-                                  <div className="mt-0.5 flex items-center gap-2 text-[11px]">
-                                    <EntityLink kind="load" id={draft.loadId} label={draft.loadName || "Trip"} />
-                                    <button
-                                      type="button"
-                                      className="text-slate-700 underline"
-                                      onClick={() => setDraft(tx, { loadId: "", loadName: "" })}
-                                    >
-                                      Clear
-                                    </button>
-                                  </div>
-                                ) : null}
-                              </div>
-                            </div>
-                            {/* BLOCK-6b driver AUTO-DEDUCTION: when the paid expense BELONGS to the tagged driver
-                                (e.g. a fine the company paid), recover it from the driver's settlement. Creates a
-                                recoverable driver_settlement_deductions row behind the OFF-by-default
-                                BANK_DRIVER_EXPENSE_DEDUCTION_ENABLED flag (consent-gated, load_id direct). Only
-                                offered once a driver is tagged. */}
-                            {draft.driverId ? (
-                              <div className="mt-2 rounded-sm border border-gray-200 bg-gray-50 px-2 py-1.5">
-                                <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
-                                  <input
-                                    type="checkbox"
-                                    checked={draft.recoverFromDriver}
-                                    onChange={(event) => setDraft(tx, { recoverFromDriver: event.target.checked })}
-                                  />
-                                  Recover from driver (auto-deduction on settlement)
-                                </label>
-                                {draft.recoverFromDriver ? (
-                                  <label className="mt-1.5 block text-xs text-gray-600">
-                                    Recovery type
-                                    <SelectCombobox
-                                      className="mt-0.5 w-full"
-                                      value={draft.recoverDeductionType}
-                                      onChange={(event) => setDraft(tx, { recoverDeductionType: event.target.value })}
-                                    >
-                                      {RECOVER_DEDUCTION_TYPES.map((t) => (
-                                        <option key={t} value={t}>
-                                          {t}
-                                        </option>
-                                      ))}
-                                    </SelectCombobox>
-                                  </label>
-                                ) : null}
-                              </div>
-                            ) : null}
-                            <label className="mt-2 block text-xs text-gray-600">
-                              Memo
-                              <textarea
-                                className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
-                                rows={3}
-                                value={draft.memo}
-                                onChange={(event) => setDraft(tx, { memo: event.target.value })}
-                              />
-                            </label>
-                            {viewSettings.showTagsField ? (
-                              <label className="mt-2 block text-xs text-gray-600">
-                                Tags
-                                <input
-                                  className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
-                                  value={draft.tags}
-                                  onChange={(event) => setDraft(tx, { tags: event.target.value })}
-                                />
-                              </label>
-                            ) : null}
-                            <div className="mt-2 rounded-sm border border-dashed border-gray-300 bg-gray-50 px-3 py-4 text-center text-xs text-gray-500">
-                              Files drag/drop area
-                            </div>
-                            {/* DEFECT-1 — QBO parity: Split sits at the BOTTOM-LEFT of the categorize
-                            footer (opposite Post), not only inside the row ▾ menu. Opens the same
-                            multi-line BankTransactionSplitModal via setSplitTx. */}
-                            <div className="mt-2 flex items-center justify-between gap-2">
-                              <Button type="button" variant="secondary" onClick={() => setSplitTx(tx)}>
-                                Split
-                              </Button>
-                              <div className="flex gap-2">
-                                <Button type="button" variant="secondary" onClick={() => setExpandedTxId(null)}>
-                                  Cancel
-                                </Button>
-                                <Button type="button" onClick={() => void postTransaction(tx)} disabled={postingTxId === tx.id}>
-                                  {postingTxId === tx.id ? "Posting..." : "Post"}
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
+      <ParityTable
+        tableTestId="banking-transactions-parity-table"
+        columns={parityColumns}
+        rows={pagedRows}
+        rowKey={(tx) => tx.id}
+        loading={transactionsQuery.isLoading}
+        emptyText="No transactions for selected account and filters."
+        storageKey="banking-transactions"
+        enableColumnResize
+        stickyHeader
+        selectable
+        maxSelectable={200}
+        onSelectionCapExceeded={() =>
+          pushToast(
+            "You can select up to 200 items at a time. Clear some selections and try again.",
+            "error"
+          )
+        }
+        selectedKeys={paritySelectedKeys}
+        onSelectionChange={(keys) => bulkSelection.setSelectedIds(new Set(keys))}
+        sortKey={sortBy.key}
+        sortDirection={sortBy.dir}
+        onSortChange={(key, direction) => {
+          // Preserve the register's date-default (first click on a non-date column starts ASC;
+          // first click on date starts DESC) — ParityTable's default toggle is always ASC-first,
+          // so when the key changes we re-apply the register convention via toggleSort.
+          if (key === sortBy.key) {
+            setSortBy({ key: key as BankTxnSort["key"], dir: direction });
+          } else {
+            onToggleSortCol(key);
+          }
+        }}
+        sortMode="external"
+        page={safeCurrentPage}
+        onPageChange={setCurrentPage}
+        pageSize={pagedRows.length || viewSettings.pageSize}
+        hidePager
+        expandedKeys={expandedTxId ? [expandedTxId] : []}
+        onExpandedChange={(keys) => setExpandedTxId(keys[0] ?? null)}
+        expandMode="single"
+        renderExpanded={renderExpandedRegisterRow}
+        onRowClick={(tx) => setExpandedTxId((cur) => (cur === tx.id ? null : tx.id))}
+        groupBy={
+          showGroupHeaders
+            ? {
+                getKey: (tx) => rowGroupKeyById.get(tx.id) ?? "all",
+                renderHeader: (key, rows) => (
+                  <span className="text-xs font-semibold text-gray-700">
+                    {groupTitleByKey.get(key) ?? key} ({rows.length})
+                  </span>
+                ),
+                collapsible: true,
+                collapsedKeys: parityCollapsedKeys,
+                onCollapsedChange: (keys) => {
+                  const next: Record<string, boolean> = {};
+                  for (const key of keys) next[key] = true;
+                  setCollapsedMonths(next);
+                  setCollapsedAllGroupings(
+                    groupedRows.length > 0 && keys.length >= groupedRows.length
+                  );
+                },
+              }
+            : undefined
+        }
+      />
 
-                          <div ref={matchPaneRef} className="border-t border-gray-200 pt-2 lg:border-t-0 lg:border-l lg:pl-3 lg:pt-0">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Match candidates</p>
-                            <p className="mt-0.5 text-[11px] text-gray-500">
-                              Recommended matches (±7 days) from live ledger data. If none fit, Search all like QuickBooks.
-                            </p>
-                            <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                              <input
-                                type="search"
-                                value={matchDraftQ}
-                                onChange={(e) => setMatchDraftQ(e.target.value)}
-                                placeholder="Search payee, memo, ref…"
-                                className="h-7 min-w-[140px] flex-1 rounded-sm border border-gray-300 px-2 text-xs"
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
-                                    setMatchSearchQ(matchDraftQ.trim());
-                                    setMatchSearchAll(true);
-                                  }
-                                }}
-                              />
-                              <button
-                                type="button"
-                                data-testid="inline-match-search-all"
-                                className={`rounded-sm border px-2 py-1 text-[11px] ${matchSearchAll ? "border-slate-800 bg-slate-900 text-white" : "border-gray-300 text-gray-700"}`}
-                                onClick={() => {
-                                  setMatchSearchQ(matchDraftQ.trim());
-                                  setMatchSearchAll(true);
-                                }}
-                              >
-                                Search all
-                              </button>
-                              <button
-                                type="button"
-                                className="rounded-sm border border-gray-300 px-2 py-1 text-[11px] text-gray-700"
-                                onClick={() => setMatchDrawerTxId(tx.id)}
-                              >
-                                Open match drawer
-                              </button>
-                            </div>
-                            {matchCandidatesQuery.isLoading ? <p className="mt-2 text-sm text-gray-500">Loading match candidates...</p> : null}
-                            {matchCandidatesQuery.isError ? (
-                              <p className="mt-2 text-sm text-red-700">Could not load match candidates.</p>
-                            ) : null}
-                            {!matchCandidatesQuery.isLoading &&
-                            !matchCandidatesQuery.isError &&
-                            (matchCandidatesQuery.data?.candidates ?? []).length === 0 ? (
-                              <p className="mt-2 text-sm text-gray-500">No match candidates found for this transaction.</p>
-                            ) : null}
-                            <div className="mt-2 space-y-1.5">
-                              {[...(matchCandidatesQuery.data?.candidates ?? [])]
-                                .sort((a, b) => b.match_score - a.match_score)
-                                .map((candidate: BankMatchCandidate) => (
-                                  <div
-                                    key={`${tx.id}-mc-${candidate.ledger_entry_kind}-${candidate.ledger_entry_id}`}
-                                    className="rounded-sm border border-gray-100 px-2 py-1.5 text-xs"
-                                  >
-                                    <div className="flex items-center justify-between gap-2">
-                                      <div className="flex items-center gap-1.5">
-                                        {MATCH_CANDIDATE_ENTITY_KIND[candidate.ledger_entry_kind] ? (
-                                          <EntityLink
-                                            kind={MATCH_CANDIDATE_ENTITY_KIND[candidate.ledger_entry_kind]!}
-                                            id={candidate.ledger_entry_id}
-                                            label={MATCH_CANDIDATE_KIND_LABELS[candidate.ledger_entry_kind]}
-                                            className="inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700 hover:underline"
-                                          />
-                                        ) : (
-                                          <span className="inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700">
-                                            {MATCH_CANDIDATE_KIND_LABELS[candidate.ledger_entry_kind]}
-                                          </span>
-                                        )}
-                                        {candidate.auto_match ? (
-                                          <span className="inline-flex items-center rounded-sm bg-slate-800 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
-                                            Best match
-                                          </span>
-                                        ) : null}
-                                      </div>
-                                      <span className="shrink-0 font-semibold text-gray-900">
-                                        {formatUsdCents(Math.abs(Number(candidate.amount_cents ?? 0)))}
-                                      </span>
-                                    </div>
-                                    <div className="mt-1 truncate text-gray-700" title={candidate.memo}>
-                                      {candidate.memo?.trim() ? candidate.memo : "—"}
-                                    </div>
-                                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-gray-500">
-                                      <span>Date: {String(candidate.event_date ?? "").slice(0, 10) || "—"}</span>
-                                      <span>Amount gap: {formatUsdCents(Math.abs(Number(candidate.amount_gap_cents ?? 0)))}</span>
-                                      <span>Date gap: {candidate.date_gap_days}d</span>
-                                      <span>Score: {candidate.match_score.toFixed(3)}</span>
-                                    </div>
-                                  </div>
-                                ))}
-                            </div>
-
-                            <div className="mt-3 border-t border-gray-100 pt-2">
-                              <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-                                Similar past categorizations
-                              </p>
-                              {!viewSettings.enableSuggestedCategorization ? (
-                                <p className="mt-1 text-xs text-gray-500">Suggested categorization disabled in view settings.</p>
-                              ) : null}
-                              {viewSettings.enableSuggestedCategorization && suggestionsQuery.isLoading ? (
-                                <p className="mt-1 text-xs text-gray-500">Loading suggestions...</p>
-                              ) : null}
-                              {viewSettings.enableSuggestedCategorization &&
-                              !suggestionsQuery.isLoading &&
-                              (suggestionsQuery.data?.suggestions ?? []).length === 0 ? (
-                                <p className="mt-1 text-xs text-gray-500">No similar past categorizations found.</p>
-                              ) : null}
-                              <div className="mt-1 space-y-1">
-                                {(suggestionsQuery.data?.suggestions ?? []).slice(0, 6).map((suggestion, index) => (
-                                  <button
-                                    key={`${tx.id}-s-${index}`}
-                                    type="button"
-                                    className="block w-full rounded-sm border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
-                                    onClick={() => {
-                                      // Contract fix (C1): apply the suggested category through the
-                                      // real /categorize contract (category_kind + gl_account_id) —
-                                      // the old {action_type:"match"} body 400'd. The suggestion
-                                      // carries its prior category + account; reuse them.
-                                      const suggestedKind = String(suggestion.category ?? suggestion.kind ?? "").trim();
-                                      const suggestedAccountId = String(
-                                        suggestion.gl_account_id ?? suggestion.coa_account_id ?? suggestion.account_id ?? ""
-                                      );
-                                      if (!suggestedKind && !suggestedAccountId) {
-                                        pushToast("This suggestion has no category to apply.", "error");
-                                        return;
-                                      }
-                                      void categorizeBankTransaction(tx.id, companyId, {
-                                        category_kind: suggestedKind || "Matched",
-                                        gl_account_id: suggestedAccountId || undefined,
-                                      })
-                                        .then(() => {
-                                          pushToast("Transaction matched", "success");
-                                          onDataChanged();
-                                        })
-                                        .catch((error) => pushToast(String((error as Error).message || "Match failed"), "error"));
-                                    }}
-                                  >
-                                    {String(suggestion.category ?? suggestion.kind ?? "candidate")} · {String(suggestion.id ?? "")}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : null}
-                          </Fragment>
-                        );
-                      })}
-                </Fragment>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
       <BankTransactionSplitModal
         open={Boolean(splitTx)}
         companyId={companyId}

@@ -19,7 +19,11 @@ try {
 
   const bankingTransactions = read("apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx");
   assertNotIncludes(bankingTransactions, "min-w-[1900px]", "Banking Transactions table still forces horizontal overflow");
-  assertIncludes(bankingTransactions, "table-fixed", "Banking Transactions table must use fixed responsive layout");
+  // Phase B: register shell is shared ParityTable (which renders table-fixed). Assert the migration
+  // + that ParityTable still carries the fixed-layout contract — never weaken to "any table".
+  assertIncludes(bankingTransactions, "ParityTable", "Banking Transactions register must use shared ParityTable");
+  const parityTable = read("apps/frontend/src/components/parity/ParityTable.tsx");
+  assertIncludes(parityTable, "table-fixed", "ParityTable must keep table-fixed (Banking Transactions fixed responsive layout)");
 
   // dispatch/components/LoadTable.tsx was deleted (orphan-triage batch 05) as a verified-dead
   // duplicate of DispatchBoard, which is the live dispatch loads table — check its responsive

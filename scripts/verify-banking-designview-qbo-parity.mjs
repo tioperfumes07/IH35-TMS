@@ -38,8 +38,9 @@ function stripComments(src) {
 
 /** The five assertions, each a predicate over the comment-stripped source. */
 export function checksFor(src) {
-  // DEFECT-9 — isolate the single-column "Amount" header cell to assert it is NOT sortable={false}.
-  const amountHeader = (src.match(/columnKey="amount"[\s\S]*?\/>/) ?? [""])[0];
+  // DEFECT-9 — Amount ParityColumn (Phase B remapped from TableHeaderCell columnKey="amount").
+  // Require label: after key so we don't match unrelated `{ key: "amount" }` state.
+  const amountWindow = (src.match(/key:\s*"amount"\s*,\s*label:\s*"[^"]+"[\s\S]{0,120}/) ?? [""])[0];
 
   return {
     // DEFECT-1: categorize footer is justify-between AND carries a bottom-left Split button.
@@ -50,8 +51,11 @@ export function checksFor(src) {
     matchExpandsRow:
       /mode:\s*"match"\s*\}\);[\s\S]{0,120}setExpandedTxId\(tx\.id\)/.test(src) &&
       /matchPaneRef/.test(src),
-    // DEFECT-9a: the Amount header cell exists and is sortable (no sortable={false}).
-    amountSortable: amountHeader.length > 0 && !/sortable=\{false\}/.test(amountHeader),
+    // DEFECT-9a: the Amount ParityColumn exists and is sortable: true (no sortable:false escape).
+    amountSortable:
+      amountWindow.length > 0 &&
+      /sortable:\s*true/.test(amountWindow) &&
+      !/sortable:\s*false/.test(amountWindow),
     // DEFECT-9b: a visible month/all-dates toggle that drives turnOffGrouping both ways.
     // (Audit gap #5 added Money in/out; By month may also set groupMode — still must flip turnOffGrouping.)
     groupingToggle:
@@ -66,7 +70,7 @@ export function checksFor(src) {
 const CHECK_LABELS = {
   splitFooterPlacement: "DEFECT-1 — categorize footer justify-between with a bottom-left Split button",
   matchExpandsRow: "DEFECT-7 — Match button sets expandedTxId + scrolls the candidates pane (matchPaneRef)",
-  amountSortable: "DEFECT-9a — single-column Amount header is sortable (no sortable={false})",
+  amountSortable: "DEFECT-9a — single-column Amount ParityColumn is sortable: true (no sortable:false)",
   groupingToggle: "DEFECT-9b — visible month/all-dates grouping toggle drives turnOffGrouping",
   customerReferenceSelect: 'DEFECT-10 — Customer field uses ReferenceSelect createKind="customer"',
 };
@@ -103,7 +107,7 @@ function selftest() {
     </div>
     <button onClick={() => { setDraft(tx, { mode: "match" }); setExpandedTxId(tx.id); matchPaneRef.current?.scrollIntoView(); }}>Match</button>
     <div ref={matchPaneRef} />
-    <TableHeaderCell columnKey="amount" label="Amount" sortKey={sortBy.key} onResize={setTxColWidth} />
+    key: "amount", label: "Amount", sortable: true,
     <button onClick={() => setViewSettings((prev) => ({ ...prev, turnOffGrouping: false, groupMode: "month" }))}>By month</button>
     <button onClick={() => setViewSettings((prev) => ({ ...prev, turnOffGrouping: true }))}>All dates</button>
     <ReferenceSelect createKind="customer" />
@@ -114,7 +118,7 @@ function selftest() {
       <Button onClick={() => void postTransaction(tx)}>Post</Button>
     </div>
     <button onClick={() => setDraft(tx, { mode: "match" })}>Match</button>
-    <TableHeaderCell columnKey="amount" label="Amount" sortable={false} sortKey={sortBy.key} />
+    key: "amount", label: "Amount", sortable: false,
     <SelectCombobox value={draft.customerId}><option>Select customer</option></SelectCombobox>
   `;
   const g = checksFor(stripComments(good));
