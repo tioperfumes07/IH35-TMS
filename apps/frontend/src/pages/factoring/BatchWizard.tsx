@@ -5,10 +5,14 @@ import {
   listFactoringBatchCandidateInvoices,
   submitFactoringBatch,
   type FactoringBatch,
+  type FactoringBatchInvoice,
 } from "../../api/factoring";
+import { ApiError } from "../../api/client";
 import { BatchDetail } from "./BatchDetail";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
@@ -61,6 +65,54 @@ export function BatchWizard() {
     );
   };
 
+  // Display-only ParityTable columns — the Pick checkbox keeps the exact toggleInvoice handler and
+  // checked state from the former hand-rolled table; amount formatting/sign/order preserved 1:1.
+  const candidateColumns = useMemo<Array<ParityColumn<FactoringBatchInvoice>>>(
+    () => [
+      {
+        key: "pick",
+        label: "Pick",
+        alwaysVisible: true,
+        render: (invoice) => (
+          <input
+            type="checkbox"
+            aria-label="Pick invoice"
+            checked={selectedInvoiceIds.includes(invoice.id)}
+            onChange={() => toggleInvoice(invoice.id)}
+          />
+        ),
+      },
+      {
+        key: "display_id",
+        label: "Invoice",
+        cellClass: "font-medium text-gray-900",
+        render: (invoice) => <EntityLink kind="invoice" id={invoice.id} label={invoice.display_id ?? invoice.id} />,
+      },
+      {
+        key: "customer_name",
+        label: "Customer",
+        render: (invoice) => invoice.customer_name ?? "—",
+      },
+      {
+        key: "issue_date",
+        label: "Issue Date",
+        render: (invoice) => formatDateUS(invoice.issue_date) || "—",
+      },
+      {
+        key: "due_date",
+        label: "Due Date",
+        render: (invoice) => formatDateUS(invoice.due_date) || "—",
+      },
+      {
+        key: "total_cents",
+        label: "Face Amount",
+        className: "text-right",
+        render: (invoice) => asMoney(invoice.total_cents),
+      },
+    ],
+    [selectedInvoiceIds]
+  );
+
   const createDraftAndProceed = async () => {
     if (!companyId) return;
     if (selectedInvoiceIds.length === 0) {
@@ -110,45 +162,24 @@ export function BatchWizard() {
           <div className="rounded-sm border border-gray-200 p-3 text-xs text-gray-700">
             Selected: <strong>{selectedCount}</strong> invoices · Face total: <strong>{asMoney(selectedTotalCents)}</strong>
           </div>
-          <div className="max-h-72 overflow-auto rounded-sm border border-gray-200">
-            <table className="min-w-full divide-y divide-gray-200 text-xs">
-              <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
-                <tr>
-                  <th className="px-2 py-2">Pick</th>
-                  <th className="px-2 py-2">Invoice</th>
-                  <th className="px-2 py-2">Customer</th>
-                  <th className="px-2 py-2">Issue Date</th>
-                  <th className="px-2 py-2">Due Date</th>
-                  <th className="px-2 py-2 text-right">Face Amount</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {(candidatesQuery.data ?? []).map((invoice) => (
-                  <tr key={invoice.id}>
-                    <td className="px-2 py-2">
-                      <input
-                        type="checkbox"
-                        checked={selectedInvoiceIds.includes(invoice.id)}
-                        onChange={() => toggleInvoice(invoice.id)}
-                      />
-                    </td>
-                    <td className="px-2 py-2 font-medium text-gray-900"><EntityLink kind="invoice" id={invoice.id} label={invoice.display_id ?? invoice.id} /></td>
-                    <td className="px-2 py-2">{invoice.customer_name ?? "—"}</td>
-                    <td className="px-2 py-2">{formatDateUS(invoice.issue_date) || "—"}</td>
-                    <td className="px-2 py-2">{formatDateUS(invoice.due_date) || "—"}</td>
-                    <td className="px-2 py-2 text-right">{asMoney(invoice.total_cents)}</td>
-                  </tr>
-                ))}
-                {(candidatesQuery.data ?? []).length === 0 ? (
-                  <tr>
-                    <td className="px-2 py-4 text-gray-500" colSpan={6}>
-                      {candidatesQuery.isLoading ? "Loading candidate invoices..." : "No paid-ready invoices available for a new batch."}
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
+          {candidatesQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load candidate invoices"
+              status={candidatesQuery.error instanceof ApiError ? candidatesQuery.error.status : 0}
+              message={(candidatesQuery.error as Error)?.message}
+              onRetry={() => void candidatesQuery.refetch()}
+            />
+          ) : (
+            <ParityTable<FactoringBatchInvoice>
+              columns={candidateColumns}
+              rows={candidatesQuery.data ?? []}
+              rowKey={(invoice) => invoice.id}
+              loading={candidatesQuery.isLoading}
+              emptyText="No paid-ready invoices available for a new batch."
+              storageKey="factoring-batch-wizard-candidates"
+              tableTestId="factoring-batch-wizard-candidates-parity"
+            />
+          )}
           <div className="flex justify-end">
             <Button size="sm" onClick={() => void createDraftAndProceed()} loading={draftMutation.isPending} disabled={!companyId}>
               Continue to Review
