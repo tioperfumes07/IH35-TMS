@@ -492,7 +492,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/accounting/RevenueRecognitionPage.tsx` | migrated (verify-step 1146) |
 | `apps/frontend/src/pages/accounting/SalesTaxPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/SubmitFactoringModal.tsx` | financial-hold |
-| `apps/frontend/src/pages/accounting/TransactionRegisterPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/accounting/TransactionRegisterPage.tsx` | migrated (verify-step 1148) — display-only; owner-greenlit UI-only migration |
 | `apps/frontend/src/pages/accounting/bills/RecurringBillList.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/journal-entries/JournalEntryDetailPage.tsx` | financial-hold |
 
