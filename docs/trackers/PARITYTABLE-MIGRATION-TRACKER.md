@@ -450,7 +450,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/pages/accounting/AbandonmentQueuePage.tsx` | financial-hold |
-| `apps/frontend/src/pages/accounting/AccountRegisterPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/accounting/AccountRegisterPage.tsx` | migrated (verify-step 1158) — display-only; owner-greenlit UI-only migration |
 | `apps/frontend/src/pages/accounting/AccountTypeCatalogPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/AccountsPayableAgingPage.tsx` | financial-hold |
