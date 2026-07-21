@@ -110,3 +110,70 @@ export async function restoreGlobalAccountRoleBindings(
     orphanKeys as unknown as string[],
   ]);
 }
+
+/**
+ * PRIMARY (accounting.chart_of_accounts_roles) companion to the legacy save/restore above.
+ *
+ * The settlement suites that run against the SHARED TRANSP company (settlement-gl-posting.db.test.ts)
+ * now designate settlement roles (driver_pay_expense / driver_payroll_clearing / damage_recovery /
+ * reimbursement_expense) in the PRIMARY per-company table to prove the resolver's primary path. That table
+ * is per (operating_company_id, role) with a partial unique index WHERE is_active. Because those settlement
+ * suites already share GLOBAL_ACCOUNT_ROLE_BINDINGS_TEST_LOCK_KEY for their full lifespan, snapshotting and
+ * restoring the primary designations under the SAME lock keeps TRANSP's real designations intact for sibling
+ * suites. Restore is FAIL-LOUD (never swallow) — same discipline as the legacy restore.
+ *
+ * Test hygiene only — no product GL behavior change.
+ */
+export type SavedCoaRoleDesignation = {
+  role: string;
+  account_id: string;
+};
+
+/** Snapshot active PRIMARY designations for (companyId, roles). Call under bypass_rls, holding the lock. */
+export async function saveGlobalCoaRoleDesignations(
+  client: pg.Client,
+  operatingCompanyId: string,
+  roles: readonly string[]
+): Promise<SavedCoaRoleDesignation[]> {
+  const prior = await client.query<{ role: string; account_id: string }>(
+    `SELECT role, account_id::text AS account_id
+       FROM accounting.chart_of_accounts_roles
+      WHERE operating_company_id = $1::uuid
+        AND role = ANY($2::text[])
+        AND is_active = true`,
+    [operatingCompanyId, roles as unknown as string[]]
+  );
+  return prior.rows;
+}
+
+/**
+ * Restore PRIMARY designations to the saved snapshot for this company. FAIL-LOUD — do not swallow.
+ * - Roles with a prior active row: re-point account_id back to the saved value.
+ * - Roles this suite designated with NO prior active row: DELETE the suite-created active row so TRANSP is
+ *   returned to its exact prior state (test-only teardown of a fixture-created designation).
+ */
+export async function restoreGlobalCoaRoleDesignations(
+  client: pg.Client,
+  operatingCompanyId: string,
+  roles: readonly string[],
+  prior: readonly SavedCoaRoleDesignation[]
+): Promise<void> {
+  const priorByRole = new Map(prior.map((r) => [r.role, r.account_id]));
+  for (const role of roles) {
+    const savedAccountId = priorByRole.get(role);
+    if (savedAccountId) {
+      await client.query(
+        `UPDATE accounting.chart_of_accounts_roles
+            SET account_id = $3::uuid, is_active = true, updated_at = now()
+          WHERE operating_company_id = $1::uuid AND role = $2 AND is_active = true`,
+        [operatingCompanyId, role, savedAccountId]
+      );
+    } else {
+      await client.query(
+        `DELETE FROM accounting.chart_of_accounts_roles
+          WHERE operating_company_id = $1::uuid AND role = $2 AND is_active = true`,
+        [operatingCompanyId, role]
+      );
+    }
+  }
+}

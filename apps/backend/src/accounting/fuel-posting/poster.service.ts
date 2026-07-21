@@ -1,5 +1,6 @@
 import { withLuciaBypass } from "../../auth/db.js";
 import { resolveAccountForCategory } from "../expense-category-map/resolver.service.js";
+import { resolveRoleAccountOptional } from "../coa-roles/resolver.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -65,33 +66,6 @@ async function ensureOpenPeriod(client: DbClient, operatingCompanyId: string, po
   }
 }
 
-// USMCA cross-entity-leak fix: this poster runs on withLuciaBypass (is_lucia_bypass()=true), so the
-// entity-scoped catalogs.accounts RLS (operating_company_id = app.operating_company_id GUC) is DEFEATED
-// and every catalogs.accounts read below would otherwise resolve an ARBITRARY entity's GL account
-// (ORDER BY ... LIMIT 1 across the whole per-entity COA). That would post a TRANSP fuel expense against
-// a TRK/USMCA account. catalogs.accounts is per-entity (AF-1, operating_company_id NOT NULL), so we pin
-// every resolver to the posting entity via an explicit operating_company_id predicate. Behavior is
-// identical for the correct entity (today only TRANSP has a populated COA).
-async function resolveRoleBoundAccount(client: DbClient, operatingCompanyId: string, roleKey: string): Promise<string | null> {
-  const row = await client.query<{ account_id: string }>(
-    `
-      SELECT arb.account_id::text AS account_id
-      FROM catalogs.account_role_bindings arb
-      JOIN catalogs.accounts a ON a.id = arb.account_id
-      WHERE arb.role_key = $1
-        AND arb.deactivated_at IS NULL
-        AND a.deactivated_at IS NULL
-        AND a.is_postable = true
-        AND (arb.operating_company_id = $2::uuid OR arb.operating_company_id IS NULL)
-        AND a.operating_company_id = $2::uuid
-      ORDER BY (arb.operating_company_id IS NOT NULL) DESC
-      LIMIT 1
-    `,
-    [roleKey, operatingCompanyId]
-  );
-  return row.rows[0]?.account_id ?? null;
-}
-
 async function resolveFuelAdvanceLiabilityAccount(client: DbClient, operatingCompanyId: string): Promise<string> {
   const byName = await client.query<{ id: string }>(
     `
@@ -138,8 +112,11 @@ async function resolveCompanyDirectCreditAccount(
   preference: CompanyDirectCredit
 ): Promise<{ account_id: string; source: string }> {
   if (preference === "ap") {
-    const apBound = await resolveRoleBoundAccount(client, operatingCompanyId, "ap_clearing");
-    if (apBound) return { account_id: apBound, source: "role_binding:ap_clearing" };
+    // Resolve A/P via the canonical CoA-roles resolver (CoaRole 'ap_control'; legacy 'ap_clearing' binding
+    // is kept as a fallback tier inside the resolver). ap_control is a CONTROL role: the resolver FAILS
+    // CLOSED on ambiguity (>1 designated/subtype-matching account) rather than silently picking one.
+    const apBound = await resolveRoleAccountOptional(client, operatingCompanyId, "ap_control");
+    if (apBound) return { account_id: apBound, source: "role_designation:ap_control" };
     const apSubtype = await client.query<{ id: string }>(
       `
         SELECT id::text
@@ -157,8 +134,8 @@ async function resolveCompanyDirectCreditAccount(
     throw new Error("AP credit account mapping is missing for company-direct fuel posting");
   }
 
-  const undeposited = await resolveRoleBoundAccount(client, operatingCompanyId, "undeposited_funds");
-  if (undeposited) return { account_id: undeposited, source: "role_binding:undeposited_funds" };
+  const undeposited = await resolveRoleAccountOptional(client, operatingCompanyId, "undeposited_funds");
+  if (undeposited) return { account_id: undeposited, source: "role_designation:undeposited_funds" };
 
   const cashLike = await client.query<{ id: string }>(
     `

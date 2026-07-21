@@ -15,8 +15,11 @@ export {
   releaseGlobalAccountRoleBindingsLock,
   saveGlobalAccountRoleBindings,
   restoreGlobalAccountRoleBindings,
+  saveGlobalCoaRoleDesignations,
+  restoreGlobalCoaRoleDesignations,
   GLOBAL_ACCOUNT_ROLE_BINDINGS_TEST_LOCK_KEY,
   type SavedAccountRoleBinding,
+  type SavedCoaRoleDesignation,
 } from "./global-account-role-bindings-lock.js";
 
 let cachedOperatingCompanyId: string | null = null;

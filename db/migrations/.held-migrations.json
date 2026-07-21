@@ -2,6 +2,10 @@
   "note": "HELD MIGRATIONS — each carries a 'DO NOT RUN ON PROD' marker and must run ONLY on a Neon branch by Jorge's hand, then be ledger-backfilled so prod db:migrate skips it. verify:hold-migrations-registered enforces bidirectional parity: every migration whose header says DO-NOT-RUN must be listed here, and every entry here must still carry the marker — so a held migration can never silently lose its marker (which would let db:migrate fire it on prod).",
   "held": [
     {
+      "file": "202607670000_settlement_coa_roles_widen_check.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Widen accounting.chart_of_accounts_roles.role CHECK (+ settlement/driver roles). No account_id seed. Owner Neon-applies + designates roles via CoaRolesPage."
+    },
+    {
       "file": "202607600000_factoring_balance_invoice_linkage.sql",
       "requires_held": ["202607340000_je_reversal_linkage.sql"],
       "held_apply_order": [
