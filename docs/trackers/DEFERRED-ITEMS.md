@@ -132,3 +132,47 @@ are pointed to Section C.
   `SELECT linked_work_order_uuid, count(*) ... GROUP BY 1 HAVING count(*)>1` check, then (b) collapse to the
   poster as the single canonical path + add the UNIQUE partial index via held migration + Neon ceremony.
   **source:** MASTER 6 · 04-PHASE4 · P4-08_WO-DOUBLE-BILL_VERIFY.
+
+## G. GUARD/MERGER FINDINGS (2026-07-21 merge wave)
+
+- **WC-REIMB weekly-close omits contract terms / reimbursements / fine passthrough** [OWNER-GATED] ·
+  **what:** `driver-finance/weekly-close.routes.ts` (post-#3107, live on prod) now applies **deductions**
+  correctly — it gates `applyPendingDeductionsToSettlementWithNetFloor` behind the per-entity
+  `SETTLEMENT_DEDUCTION_APPLY_ENABLED` flag and lets `aggregateSettlementTotals` recompute totals from the
+  lines. But it never runs the **contract-terms** leg. The canonical load-bookended close does:
+  `settlements-load-bookended.service.ts:7,325-328` imports `computeSettlementContractTerms` and calls it
+  under `SETTLEMENT_CONTRACT_TERMS_FLAG`, and that function internally computes **fine passthrough +
+  reimbursements** (`settlement-contract-terms.service.ts:761-770`). Verified 2026-07-21: weekly-close has
+  **zero** references to `settlement-contract-terms` or reimbursements.
+  **why it matters:** the two legs fail in OPPOSITE directions. #3107 closed the *overpay* landmine
+  (deductions ignored → driver paid gross). This remaining leg is an *underpay* risk — a driver owed
+  reimbursements is drafted without them. Underpayment of a contractor is the harder defect to detect,
+  because nobody reconciles a check that is too small as eagerly as one that is too large.
+  **why deferred:** the fix is driver-pay logic (financial cluster, §1.4 — never authored solo by an agent).
+  PR #3108 attempted it but was written against pre-#3107 `main`; rebasing produced **12 conflict hunks
+  across two competing implementations** of the same settlement function, so it was closed unmerged rather
+  than hand-composed. **NOTE:** closing #3108 removed the only in-flight fix for this gap — it is recorded
+  here so it is not silently dropped.
+  **what unblocks it:** a small ADDITIVE change on top of current `main` that calls the existing
+  `computeSettlementContractTerms` under `SETTLEMENT_CONTRACT_TERMS_FLAG` before
+  `aggregateSettlementTotals`, mirroring the canonical load-bookended close exactly (reuse only — no new
+  math), plus a guard pinning it; then Jorge's `JORGE-APPROVED`.
+  **source:** GUARD/merger review during the 2026-07-21 merge wave (#3107 merged + live-verified at
+  `18bd5e40c`; #3108 closed unmerged 22:44Z).
+
+- **NPF-DUP net-pay floor has multiple independent sources** [OWNER-GATED] ·
+  **what:** locked decision §9.2 requires "**one** floor resolver, **one** config source, default 5%,
+  overridable". Verified 2026-07-21 that `DEFAULT_NET_PAY_FLOOR_PCT = 0.05` is declared **independently** in
+  BOTH `accounting/settlement-posting/settlement-posting.math.ts:14` and
+  `accounting/settlement-posting/settlement-bill-payment.math.ts:20` — neither imports the other — alongside
+  DB column defaults on `mdata.drivers` / `org.companies.min_net_settlement_pct`. No CI guard pins them
+  equal (`grep DEFAULT_NET_PAY_FLOOR_PCT scripts/` returns nothing).
+  **why it matters:** the net-pay floor is the control that stops a driver's check being over-deducted.
+  Changing it in one module silently leaves the other at the old value, so the settlement path and the
+  bill-payment posting path can enforce **two different floors for the same driver** — a split-brain
+  financial control (§9.2 "one config source", LINKAGE-LAW C2 "no duplicate/split-brain"). LATENT today:
+  both read `0.05`, so no driver is currently mispaid.
+  **what unblocks it:** collapse to one exported constant + the existing clamping resolver in
+  `settlement-posting.math.ts`, have `settlement-bill-payment.math.ts` import it, add a guard asserting a
+  single declaration repo-wide; financial-cluster → Jorge's `JORGE-APPROVED`.
+  **source:** GUARD/merger post-merge verification of #3107 against locked decisions §9.2/§9.3.
