@@ -21,6 +21,7 @@ import { filterPlaidBankAccountsForCompany } from "../../../lib/banking-company-
 import { Link } from "react-router-dom";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useListState } from "../../../components/list-state";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { formatUsdCents } from "../../../lib/money";
 
 type ItemGroup = { itemId: string; accounts: PlaidBankAccount[] };
@@ -264,19 +265,66 @@ export function BankingCompanyTransactionsPanel({ companyId }: { companyId: stri
   // Empty message renders only once the transactions query settles, never mid-fetch.
   const txListState = useListState(txQuery, rows.length === 0);
 
+  // Display-only ParityTable migration: column order, cell text, and the signed
+  // formatMoney(amount_cents, is_credit) rendering are preserved 1:1 from the former
+  // hand-rolled table markup. No posting/mutation logic — this list is read-only.
+  const txColumns = useMemo<ParityColumn<PlaidBankTransaction>[]>(
+    () => [
+      {
+        key: "transaction_date",
+        label: "Date",
+        sortable: true,
+        cellClass: "whitespace-nowrap text-gray-800",
+        render: (t) => t.transaction_date,
+      },
+      {
+        key: "description",
+        label: "Description",
+        cellClass: "text-gray-800",
+        render: (t) => t.description || t.merchant_name || "—",
+      },
+      {
+        key: "amount_cents",
+        label: "Amount",
+        sortable: true,
+        // Server orders amount sorts by raw bt.amount_cents — mirror that, not the signed display value.
+        sortValue: (t) => t.amount_cents,
+        cellClass: "font-medium text-gray-900",
+        render: (t) => formatMoney(t.amount_cents, t.is_credit),
+      },
+      {
+        key: "account",
+        label: "Account",
+        cellClass: "text-gray-700",
+        render: (t) => (t.institution_name || "") + (t.account_mask ? ` ••••${t.account_mask}` : ""),
+      },
+      {
+        key: "category",
+        label: "Category",
+        cellClass: "text-gray-700",
+        render: (t) => categoryLabel(t),
+      },
+      {
+        key: "matched",
+        label: "Matched to",
+        cellClass: "text-gray-700",
+        render: (t) => matchedLabel(t),
+      },
+    ],
+    []
+  );
+
+  // Controlled sort — header clicks keep driving the SAME server-side sort param
+  // (CompanyTransactionsSort in the existing query key); ParityTable only reflects it.
+  const paritySortKey = sort === "amount_desc" || sort === "amount_asc" ? "amount_cents" : "transaction_date";
+  const paritySortDirection: "asc" | "desc" = sort === "date_asc" || sort === "amount_asc" ? "asc" : "desc";
+
   if (!companyId) return null;
 
-  const thBtn = (key: CompanyTransactionsSort, label: string) => (
-    <button
-      type="button"
-      className="font-semibold text-gray-700 underline-offset-2 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
-      onClick={() => setSort(key)}
-      aria-pressed={sort === key}
-    >
-      {label}
-      {sort === key ? " *" : ""}
-    </button>
-  );
+  const handleSortChange = (key: string, direction: "asc" | "desc") => {
+    if (key === "transaction_date") setSort(direction === "asc" ? "date_asc" : "date_desc");
+    else if (key === "amount_cents") setSort(direction === "asc" ? "amount_asc" : "amount_desc");
+  };
 
   return (
     <div className="rounded-sm border border-gray-200 bg-white p-3">
@@ -306,49 +354,18 @@ export function BankingCompanyTransactionsPanel({ companyId }: { companyId: stri
         </SelectCombobox>
       </div>
       {txQuery.isError ? <p className="text-sm text-red-600">Unable to load transactions.</p> : null}
-      {txQuery.isLoading ? <p className="text-sm text-gray-600">Loading…</p> : null}
-      <div className="overflow-x-auto">
-        <table className="min-w-full border-collapse text-left text-sm">
-          <caption className="sr-only">Company bank transactions</caption>
-          <thead>
-            <tr className="border-b border-gray-200 text-xs uppercase text-gray-500">
-              <th scope="col" className="py-2 pr-3">
-                {thBtn("date_desc", "Date")}
-              </th>
-              <th scope="col" className="py-2 pr-3">
-                Description
-              </th>
-              <th scope="col" className="py-2 pr-3">
-                {thBtn("amount_desc", "Amount")}
-              </th>
-              <th scope="col" className="py-2 pr-3">
-                Account
-              </th>
-              <th scope="col" className="py-2 pr-3">
-                Category
-              </th>
-              <th scope="col" className="py-2 pr-3">
-                Matched to
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((t: PlaidBankTransaction) => (
-              <tr key={t.id} className="border-b border-gray-100">
-                <td className="py-2 pr-3 whitespace-nowrap text-gray-800">{t.transaction_date}</td>
-                <td className="py-2 pr-3 text-gray-800">{t.description || t.merchant_name || "—"}</td>
-                <td className="py-2 pr-3 font-medium text-gray-900">{formatMoney(t.amount_cents, t.is_credit)}</td>
-                <td className="py-2 pr-3 text-gray-700">
-                  {(t.institution_name || "") + (t.account_mask ? ` ••••${t.account_mask}` : "")}
-                </td>
-                <td className="py-2 pr-3 text-gray-700">{categoryLabel(t)}</td>
-                <td className="py-2 pr-3 text-gray-700">{matchedLabel(t)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {txListState.isEmpty ? <p className="mt-2 text-sm text-gray-600">No transactions found.</p> : null}
+      <ParityTable<PlaidBankTransaction>
+        columns={txColumns}
+        rows={rows}
+        rowKey={(t) => t.id}
+        loading={txListState.isLoading}
+        emptyText={txListState.isEmpty ? "No transactions found." : undefined}
+        storageKey="banking-company-transactions"
+        tableTestId="banking-company-transactions-table"
+        sortKey={paritySortKey}
+        sortDirection={paritySortDirection}
+        onSortChange={handleSortChange}
+      />
     </div>
   );
 }
