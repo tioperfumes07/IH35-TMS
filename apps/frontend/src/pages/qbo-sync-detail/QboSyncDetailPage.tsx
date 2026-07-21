@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import {
   listQboSyncEventLog,
@@ -8,6 +8,7 @@ import {
 } from "../../api/qbo-integration";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner";
 import { useListState } from "../../components/list-state";
@@ -49,7 +50,6 @@ export function QboSyncDetailPage() {
   const companyId = selectedCompanyId ?? "";
   const [kind, setKind] = useState<"all" | QboSyncEventKind>("all");
   const [severity, setSeverity] = useState<"all" | QboSyncEventSeverity>("all");
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(() => new Set());
 
   const eventLogQuery = useInfiniteQuery({
     queryKey: ["qbo-sync-event-log", companyId, kind, severity],
@@ -73,6 +73,43 @@ export function QboSyncDetailPage() {
   );
   const totalEstimated = eventLogQuery.data?.pages[0]?.total_estimated ?? 0;
   const listState = useListState(eventLogQuery, events.length === 0);
+
+  const columns = useMemo<Array<ParityColumn<QboSyncEventLogRecord>>>(
+    () => [
+      {
+        key: "occurred_at",
+        label: "Timestamp",
+        sortable: true,
+        className: "whitespace-nowrap",
+        render: (row) => <span className="text-slate-700">{formatTimestamp(row.occurred_at)}</span>,
+      },
+      {
+        key: "kind",
+        label: "Kind",
+        sortable: true,
+        render: (row) => (
+          <span className={`rounded-sm border px-2 py-0.5 text-[10px] font-semibold uppercase ${kindPillClass(row.kind)}`}>{row.kind}</span>
+        ),
+      },
+      {
+        key: "severity",
+        label: "Severity",
+        sortable: true,
+        render: (row) => (
+          <span className={`rounded-sm border px-2 py-0.5 text-[10px] font-semibold uppercase ${severityPillClass(row.severity)}`}>
+            {row.severity}
+          </span>
+        ),
+      },
+      {
+        key: "summary",
+        label: "Summary",
+        sortable: true,
+        render: (row) => <span className="text-slate-800">{row.summary}</span>,
+      },
+    ],
+    [],
+  );
 
   return (
     <div className="space-y-4 p-4">
@@ -116,69 +153,33 @@ export function QboSyncDetailPage() {
         </div>
       </div>
 
-      <div className="rounded-sm border border-slate-200 bg-white">
-        <div className="border-b border-slate-200 px-3 py-2 text-xs text-slate-600">
+      <div className="space-y-2">
+        <div className="rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
           Showing {events.length} of about {totalEstimated} events
         </div>
 
-        {eventLogQuery.isLoading ? <div className="p-3 text-sm text-slate-500">Loading QBO sync events…</div> : null}
-        {listState.isEmpty ? (
-          <div className="p-3 text-sm text-slate-500">No QBO sync events match the selected filters.</div>
-        ) : null}
-
-        {events.length > 0 ? (
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-slate-50 text-[11px] font-semibold uppercase text-slate-600">
-              <tr>
-                <th className="px-3 py-2">Timestamp</th>
-                <th className="px-3 py-2">Kind</th>
-                <th className="px-3 py-2">Severity</th>
-                <th className="px-3 py-2">Summary</th>
-              </tr>
-            </thead>
-            <tbody>
-              {events.map((row: QboSyncEventLogRecord) => (
-                <Fragment key={row.id}>
-                  <tr
-                    className="cursor-pointer border-b border-slate-100 hover:bg-slate-50"
-                    onClick={() =>
-                      setExpandedRows((prev) => {
-                        const next = new Set(prev);
-                        if (next.has(row.id)) next.delete(row.id);
-                        else next.add(row.id);
-                        return next;
-                      })
-                    }
-                  >
-                    <td className="whitespace-nowrap px-3 py-2 text-slate-700">{formatTimestamp(row.occurred_at)}</td>
-                    <td className="px-3 py-2">
-                      <span className={`rounded-sm border px-2 py-0.5 text-[10px] font-semibold uppercase ${kindPillClass(row.kind)}`}>{row.kind}</span>
-                    </td>
-                    <td className="px-3 py-2">
-                      <span className={`rounded-sm border px-2 py-0.5 text-[10px] font-semibold uppercase ${severityPillClass(row.severity)}`}>
-                        {row.severity}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 text-slate-800">{row.summary}</td>
-                  </tr>
-                  {expandedRows.has(row.id) ? (
-                    <tr className="border-b border-slate-100 bg-slate-50">
-                      <td colSpan={4} className="px-3 py-2">
-                        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">Detail</div>
-                        <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-all rounded-sm border border-slate-200 bg-white p-2 text-[11px] text-slate-700">
-                          {JSON.stringify(row.detail ?? {}, null, 2)}
-                        </pre>
-                      </td>
-                    </tr>
-                  ) : null}
-                </Fragment>
-              ))}
-            </tbody>
-          </table>
-        ) : null}
+        <ParityTable
+          columns={columns}
+          rows={events}
+          rowKey={(row) => row.id}
+          loading={listState.isLoading}
+          storageKey="qbo-sync-event-log"
+          tableTestId="qbo-sync-event-log-table"
+          // Settled-only empty text (LIST-EMPTY-1): only supplied once listState resolves to "empty",
+          // never during loading/error, so ParityTable's own gate never flashes a false empty.
+          emptyText={listState.isEmpty ? "No QBO sync events match the selected filters." : undefined}
+          renderExpanded={(row) => (
+            <div>
+              <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">Detail</div>
+              <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-all rounded-sm border border-slate-200 bg-white p-2 text-[11px] text-slate-700">
+                {JSON.stringify(row.detail ?? {}, null, 2)}
+              </pre>
+            </div>
+          )}
+        />
 
         {eventLogQuery.hasNextPage ? (
-          <div className="border-t border-slate-200 px-3 py-2">
+          <div className="px-3 py-2">
             <Button onClick={() => void eventLogQuery.fetchNextPage()} loading={eventLogQuery.isFetchingNextPage}>
               Load more
             </Button>
