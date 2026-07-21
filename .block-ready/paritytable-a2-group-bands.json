@@ -1,0 +1,27 @@
+{
+  "block_id": "paritytable-a2-group-bands",
+  "branch": "feat/paritytable-group-bands",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend shared-component API extension)",
+  "phase": "FOUNDATION-FIRST P6 / ParityTable Phase A2",
+  "task": "Add OPTIONAL groupBy prop (getKey/renderHeader/collapsible/collapsedKeys/onCollapsedChange) to ParityTable for QBO-style group bands, modeled on the controlled-sort and A1 controlled-expansion precedents. Zero behavior change for existing consumers. Guard + verify-step 1176 (Rule 17).",
+  "source": "FOUNDATION-FIRST work order Priority 6 — ParityTable Phase A, extension A2 (ONE prop-family per PR; builds on A1, PR #3069 / 109930bb4)",
+  "source_file": "paritytable-a2-group-bands",
+  "allowed_files": [
+    ".block-ready/paritytable-a2-group-bands.json",
+    "apps/frontend/src/components/parity/ParityTable.tsx",
+    "apps/frontend/src/components/parity/ParityTable.test.tsx",
+    "scripts/verify-paritytable-group-bands.mjs",
+    "scripts/verify-steps/1176-verify-paritytable-group-bands.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "ParityTable exposes OPTIONAL groupBy?: { getKey: (row: T) => string; renderHeader: (key: string, rows: T[]) => ReactNode; collapsible?: boolean; collapsedKeys?: string[]; onCollapsedChange?: (keys: string[]) => void }; omitting = byte-identical current behavior for ~130 call sites; stable grouping over the CURRENT page's rows (no re-sort, pagination math unchanged); one full-width colSpan band <tr> per group; collapsible chevron hides rows; controlled collapse = onCollapsedChange != null (mirror isExpandControlled); composes with selection + expansion (incl. A1) + sticky header + density; unit tests cover omitted/bands/collapse/controlled; verify-paritytable-group-bands.mjs PASS (+ --selftest); verify-steps/1176 wired (Rule 17); npx tsc -b green; verify-mobile-responsive-audit new_vs_baseline=0."
+    }
+  ],
+  "note": "GATED: no (pure FE, additive API). Migration-free. No package.json / locked-guards / ci.yml edits (Rule 17). Phase B (BankingTx swap) remains HOLD behind owner approval."
+}

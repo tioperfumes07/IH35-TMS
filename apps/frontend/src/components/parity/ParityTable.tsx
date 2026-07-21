@@ -130,6 +130,28 @@ export type ParityTableProps<T> = {
    * other row when one expands. Applies in both controlled and uncontrolled modes.
    */
   expandMode?: "multi" | "single";
+
+  /**
+   * OPTIONAL QBO-style group bands (ParityTable Phase A2). Omitting keeps byte-identical current
+   * behavior for the ~130 existing call sites. When provided, the CURRENT page's rows are grouped
+   * in their CURRENT order by getKey (stable — never re-sorted), and each group is preceded by one
+   * full-width band <tr> (colSpan across all rendered columns) produced by renderHeader. Bands are
+   * computed over the current page only — pagination math is unchanged. Collapse follows the
+   * controlled-sort / A1 controlled-expansion precedents: presence of onCollapsedChange = controlled
+   * mode (caller owns collapsedKeys); otherwise an internal Set drives uncontrolled collapse.
+   */
+  groupBy?: {
+    /** Stable group key per row; rows keep their current order (no re-sort). */
+    getKey: (row: T) => string;
+    /** Full-width band row rendered above each group (spans all rendered columns). */
+    renderHeader: (key: string, rows: T[]) => ReactNode;
+    /** Band gets a ▸/▾ chevron toggle; collapsed groups hide their rows. Default false. */
+    collapsible?: boolean;
+    /** Controlled collapse — only meaningful with onCollapsedChange (mirrors expandedKeys). */
+    collapsedKeys?: string[];
+    /** Presence = controlled mode (mirrors onExpandedChange / onSortChange). */
+    onCollapsedChange?: (keys: string[]) => void;
+  };
 };
 
 function compareSortValues(
@@ -210,6 +232,7 @@ export function ParityTable<T>({
   expandedKeys: controlledExpandedKeys,
   onExpandedChange,
   expandMode = "multi",
+  groupBy,
 }: ParityTableProps<T>) {
   const persisted = useMemo(() => loadPersisted(storageKey), [storageKey]);
 
@@ -240,6 +263,15 @@ export function ParityTable<T>({
   const expanded = useMemo(
     () => (isExpandControlled ? new Set(controlledExpandedKeys ?? []) : internalExpanded),
     [isExpandControlled, controlledExpandedKeys, internalExpanded],
+  );
+  // Group-band collapse (Phase A2) mirrors the same controlled/uncontrolled split: presence of
+  // onCollapsedChange switches the source of truth from internal state to caller-owned collapsedKeys.
+  const isCollapseControlled = groupBy?.onCollapsedChange != null;
+  const [internalCollapsed, setInternalCollapsed] = useState<Set<string>>(new Set());
+  const controlledCollapsedKeys = groupBy?.collapsedKeys;
+  const collapsedGroups = useMemo(
+    () => (isCollapseControlled ? new Set(controlledCollapsedKeys ?? []) : internalCollapsed),
+    [isCollapseControlled, controlledCollapsedKeys, internalCollapsed],
   );
   const [colWidths, setColWidths] = useState<Record<string, number>>(persisted.colWidths ?? {});
   const gearRef = useRef<HTMLDivElement>(null);
@@ -286,6 +318,25 @@ export function ParityTable<T>({
   const offset = (safePage - 1) * pageSize;
   const pageRows = sortedRows.slice(offset, offset + pageSize);
   const d = DENSITY[density];
+
+  // Phase A2: group the CURRENT page's rows in their CURRENT order (stable — first appearance of
+  // each key sets group order; rows are never re-sorted). Pagination math above is untouched.
+  const groupGetKey = groupBy?.getKey;
+  const groupedPageRows = useMemo(() => {
+    if (!groupGetKey) return null;
+    const order: string[] = [];
+    const byKey = new Map<string, T[]>();
+    for (const row of pageRows) {
+      const key = groupGetKey(row);
+      const bucket = byKey.get(key);
+      if (bucket) bucket.push(row);
+      else {
+        byKey.set(key, [row]);
+        order.push(key);
+      }
+    }
+    return order.map((key) => ({ key, rows: byKey.get(key)! }));
+  }, [groupGetKey, pageRows]);
 
   const selectedRows = useMemo(
     () => rows.filter((r) => selected.has(rowKey(r))),
@@ -449,6 +500,20 @@ export function ParityTable<T>({
     setInternalExpanded(computeNext);
   }
 
+  function toggleGroupCollapsed(key: string) {
+    const computeNext = (prev: Set<string>): Set<string> => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    };
+    if (isCollapseControlled) {
+      groupBy?.onCollapsedChange?.([...computeNext(new Set(controlledCollapsedKeys ?? []))]);
+      return;
+    }
+    setInternalCollapsed(computeNext);
+  }
+
   function togglePageAll() {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -478,6 +543,75 @@ export function ParityTable<T>({
 
   const colSpan =
     visibleColumns.length + (selectable ? 1 : 0) + (rowActions ? 1 : 0) + (renderExpanded ? 1 : 0);
+
+  // Shared per-row renderer so the grouped (A2) and ungrouped paths emit IDENTICAL row markup —
+  // selection, expansion (incl. A1 controlled expansion), density, and row actions all compose.
+  const renderDataRow = (row: T) => {
+    const id = rowKey(row);
+    const isExpanded = expanded.has(id);
+    return (
+      <Fragment key={id}>
+      <tr
+        data-testid={rowTestId ? rowTestId(row) : undefined}
+        className={`border-t border-gray-100 ${
+          onRowClick ? "cursor-pointer hover:bg-gray-50" : ""
+        } ${rowClassName ? rowClassName(row) : ""}`}
+        style={{ height: d.rowH, ...(selected.has(id) ? { backgroundColor: colors.accentTint } : {}) }}
+        onClick={onRowClick ? () => onRowClick(row) : undefined}
+        onContextMenu={onRowContextMenu ? (event) => onRowContextMenu(row, event) : undefined}
+      >
+        {renderExpanded ? (
+          <td className="px-2 align-top" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
+            <button
+              type="button"
+              aria-label={isExpanded ? "Collapse row" : "Expand row"}
+              aria-expanded={isExpanded}
+              className="text-gray-500 hover:text-gray-800"
+              onClick={() => toggleExpanded(id)}
+            >
+              {isExpanded ? "▾" : "▸"}
+            </button>
+          </td>
+        ) : null}
+        {selectable ? (
+          <td className="px-2" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
+            <input
+              type="checkbox"
+              aria-label="Select row"
+              checked={selected.has(id)}
+              onChange={() => toggleRow(id)}
+            />
+          </td>
+        ) : null}
+        {visibleColumns.map((column) => (
+          <td
+            key={String(column.key)}
+            className={`overflow-hidden wrap-break-word px-2 align-top text-gray-800 ${
+              column.cellClass ?? column.className ?? ""
+            }`}
+            style={{ paddingTop: d.padY, paddingBottom: d.padY }}
+          >
+            {column.render
+              ? column.render(row)
+              : String((row as Record<string, unknown>)[String(column.key)] ?? "")}
+          </td>
+        ))}
+        {rowActions ? (
+          <td className="px-2 text-right" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
+            {rowActions(row)}
+          </td>
+        ) : null}
+      </tr>
+      {renderExpanded && isExpanded ? (
+        <tr className="bg-gray-50/60">
+          <td colSpan={colSpan} className="px-3 py-2">
+            {renderExpanded(row)}
+          </td>
+        </tr>
+      ) : null}
+      </Fragment>
+    );
+  };
 
   return (
     <div className="overflow-visible rounded-md border border-gray-200 bg-white" data-testid={tableTestId}>
@@ -651,73 +785,44 @@ export function ParityTable<T>({
                 {emptyText}
               </td>
             </tr>
-          ) : (
-            pageRows.map((row) => {
-              const id = rowKey(row);
-              const isExpanded = expanded.has(id);
+          ) : groupBy && groupedPageRows ? (
+            // Phase A2 group bands: one full-width band <tr> above each group, rows in their
+            // current order. Collapsed groups hide their rows (band stays visible).
+            groupedPageRows.map((group) => {
+              const isCollapsed = collapsedGroups.has(group.key);
               return (
-                <Fragment key={id}>
-                <tr
-                  data-testid={rowTestId ? rowTestId(row) : undefined}
-                  className={`border-t border-gray-100 ${
-                    onRowClick ? "cursor-pointer hover:bg-gray-50" : ""
-                  } ${rowClassName ? rowClassName(row) : ""}`}
-                  style={{ height: d.rowH, ...(selected.has(id) ? { backgroundColor: colors.accentTint } : {}) }}
-                  onClick={onRowClick ? () => onRowClick(row) : undefined}
-                  onContextMenu={onRowContextMenu ? (event) => onRowContextMenu(row, event) : undefined}
-                >
-                  {renderExpanded ? (
-                    <td className="px-2 align-top" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-                      <button
-                        type="button"
-                        aria-label={isExpanded ? "Collapse row" : "Expand row"}
-                        aria-expanded={isExpanded}
-                        className="text-gray-500 hover:text-gray-800"
-                        onClick={() => toggleExpanded(id)}
-                      >
-                        {isExpanded ? "▾" : "▸"}
-                      </button>
-                    </td>
-                  ) : null}
-                  {selectable ? (
-                    <td className="px-2" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        aria-label="Select row"
-                        checked={selected.has(id)}
-                        onChange={() => toggleRow(id)}
-                      />
-                    </td>
-                  ) : null}
-                  {visibleColumns.map((column) => (
+                <Fragment key={`parity-group:${group.key}`}>
+                  <tr
+                    className="border-t border-gray-200 bg-gray-50"
+                    data-parity-group={group.key}
+                  >
                     <td
-                      key={String(column.key)}
-                      className={`overflow-hidden wrap-break-word px-2 align-top text-gray-800 ${
-                        column.cellClass ?? column.className ?? ""
-                      }`}
+                      colSpan={colSpan}
+                      className="px-2 font-semibold text-gray-800"
                       style={{ paddingTop: d.padY, paddingBottom: d.padY }}
                     >
-                      {column.render
-                        ? column.render(row)
-                        : String((row as Record<string, unknown>)[String(column.key)] ?? "")}
-                    </td>
-                  ))}
-                  {rowActions ? (
-                    <td className="px-2 text-right" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-                      {rowActions(row)}
-                    </td>
-                  ) : null}
-                </tr>
-                {renderExpanded && isExpanded ? (
-                  <tr className="bg-gray-50/60">
-                    <td colSpan={colSpan} className="px-3 py-2">
-                      {renderExpanded(row)}
+                      <div className="flex items-center gap-1.5">
+                        {groupBy.collapsible ? (
+                          <button
+                            type="button"
+                            aria-label={isCollapsed ? `Expand group ${group.key}` : `Collapse group ${group.key}`}
+                            aria-expanded={!isCollapsed}
+                            className="text-gray-500 hover:text-gray-800"
+                            onClick={() => toggleGroupCollapsed(group.key)}
+                          >
+                            {isCollapsed ? "▸" : "▾"}
+                          </button>
+                        ) : null}
+                        <div className="min-w-0 flex-1">{groupBy.renderHeader(group.key, group.rows)}</div>
+                      </div>
                     </td>
                   </tr>
-                ) : null}
+                  {isCollapsed ? null : group.rows.map((row) => renderDataRow(row))}
                 </Fragment>
               );
             })
+          ) : (
+            pageRows.map((row) => renderDataRow(row))
           )}
         </tbody>
       </table>
