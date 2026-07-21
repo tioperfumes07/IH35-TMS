@@ -11,6 +11,7 @@ import {
 } from "../../api/banking";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ActionButton } from "../../components/shared/ActionButton";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -39,7 +40,7 @@ function syncStatusClasses(status: string) {
 }
 
 // KEYSTONE (Doc-18 defects 2,3,4,5,6,8) — clicking a bank account on Banking Home lands the operator on
-// the SAME categorize-capable register as the Transactions tab, not the old read-only <table>. We mount
+// the SAME categorize-capable register as the Transactions tab, not the old read-only table. We mount
 // the single live transaction surface (BankingTransactionsDesignView) pre-filtered to this account, so the
 // operator gets the full power (categorize / post / match / split, tab strip, From/To column, resizable,
 // responsive) instead of an inert grid whose rows had no onClick. The route (/banking/accounts/:id) and the
@@ -177,7 +178,8 @@ export function BankAccountDetailPage() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────────
-// @archived — the original read-only bank-account transactions table (Doc-18 BAD surface): a plain <table>
+// @archived — the original read-only bank-account transactions table (Doc-18 BAD surface): a plain hand-rolled
+// table (since re-rendered via the shared ParityTable, display-only, verify-step 1163)
 // whose rows had no onClick and no categorize/post/match/split, a box-in-box calendar, no tab strip, no
 // From/To column, not resizable. SUPERSEDED by BankingTransactionsDesignView, now mounted by
 // BankAccountDetailPage above. Kept importable for audit history; NEVER re-wire this into a route. Enforced
@@ -185,6 +187,56 @@ export function BankAccountDetailPage() {
 // only ONE live categorize table exists). The date pickers below were made borderless so no box-in-box
 // residue survives even in the archived source (Doc-18 defect #3).
 // ─────────────────────────────────────────────────────────────────────────────────────────────────────
+// Display-only ParityTable migration (verify-step 1163): column order (Date / Description / Amount /
+// Category / Matched), the is_credit-aware signed amount rendering (formatBankTransactionSignedAmount),
+// the EntityLink Matched cells, the settled-only empty literal, and the server-side offset pager are all
+// preserved 1:1 from the former hand-rolled markup. No handlers changed; this archived surface posts nothing.
+const ARCHIVED_TX_COLUMNS: ParityColumn<PlaidBankTransaction>[] = [
+  {
+    key: "transaction_date",
+    label: "Date",
+    render: (row) => <span className="text-gray-700">{row.transaction_date}</span>,
+  },
+  {
+    key: "description",
+    label: "Description",
+    render: (row) => (
+      <>
+        <div className="font-medium text-gray-900">{row.description || "Bank transaction"}</div>
+        {row.merchant_name ? <div className="text-xs text-gray-500">{row.merchant_name}</div> : null}
+      </>
+    ),
+  },
+  {
+    key: "amount_cents",
+    label: "Amount",
+    render: (row) => <span className="text-gray-700">{formatBankTransactionSignedAmount(row)}</span>,
+  },
+  {
+    key: "plaid_category",
+    label: "Category",
+    render: (row) => (
+      <span className="text-gray-700">
+        {Array.isArray(row.plaid_category) && row.plaid_category.length > 0 ? row.plaid_category.join(" / ") : "Uncategorized"}
+      </span>
+    ),
+  },
+  {
+    key: "matched",
+    label: "Matched",
+    render: (row) =>
+      row.matched_load_id ? (
+        <EntityLink kind="load" id={row.matched_load_id} label="Load" />
+      ) : row.matched_bill_id ? (
+        <EntityLink kind="bill" id={row.matched_bill_id} label="Bill" />
+      ) : row.matched_settlement_id ? (
+        <EntityLink kind="settlement" id={row.matched_settlement_id} label="Settlement" />
+      ) : (
+        "No"
+      ),
+  },
+];
+
 export function ArchivedBankAccountDetailTable() {
   const { id = "" } = useParams<{ id: string }>();
   const { pushToast: _pushToast } = useToast();
@@ -246,52 +298,18 @@ export function ArchivedBankAccountDetailTable() {
         </ActionButton>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full border-separate border-spacing-0 text-sm">
-          <thead>
-            <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
-              <th className="border-b border-gray-200 px-2 py-2">Date</th>
-              <th className="border-b border-gray-200 px-2 py-2">Description</th>
-              <th className="border-b border-gray-200 px-2 py-2">Amount</th>
-              <th className="border-b border-gray-200 px-2 py-2">Category</th>
-              <th className="border-b border-gray-200 px-2 py-2">Matched</th>
-            </tr>
-          </thead>
-          <tbody>
-            {transactions.map((row) => (
-              <tr key={row.id} className="align-top">
-                <td className="border-b border-gray-100 px-2 py-2 text-gray-700">{row.transaction_date}</td>
-                <td className="border-b border-gray-100 px-2 py-2 text-gray-700">
-                  <div className="font-medium text-gray-900">{row.description || "Bank transaction"}</div>
-                  {row.merchant_name ? <div className="text-xs text-gray-500">{row.merchant_name}</div> : null}
-                </td>
-                <td className="border-b border-gray-100 px-2 py-2 text-gray-700">{formatBankTransactionSignedAmount(row)}</td>
-                <td className="border-b border-gray-100 px-2 py-2 text-gray-700">
-                  {Array.isArray(row.plaid_category) && row.plaid_category.length > 0 ? row.plaid_category.join(" / ") : "Uncategorized"}
-                </td>
-                <td className="border-b border-gray-100 px-2 py-2 text-gray-700">
-                  {row.matched_load_id ? (
-                    <EntityLink kind="load" id={row.matched_load_id} label="Load" />
-                  ) : row.matched_bill_id ? (
-                    <EntityLink kind="bill" id={row.matched_bill_id} label="Bill" />
-                  ) : row.matched_settlement_id ? (
-                    <EntityLink kind="settlement" id={row.matched_settlement_id} label="Settlement" />
-                  ) : (
-                    "No"
-                  )}
-                </td>
-              </tr>
-            ))}
-            {listState.isEmpty ? (
-              <tr>
-                <td colSpan={5} className="px-2 py-4 text-center text-sm text-gray-500">
-                  No transactions found for this filter.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable
+        columns={ARCHIVED_TX_COLUMNS}
+        rows={transactions}
+        rowKey={(row) => row.id}
+        loading={listState.isLoading}
+        storageKey="banking-bank-account-detail-archived"
+        tableTestId="bank-account-detail-archived-table"
+        initialPageSize={PAGE_SIZE}
+        // Settled-only empty text (LIST-EMPTY-1): supplied only once listState.isEmpty resolves on a
+        // settled zero-row query, never mid-fetch.
+        emptyText={listState.isEmpty ? "No transactions found for this filter." : undefined}
+      />
 
       <div className="mt-3 flex items-center justify-end gap-2">
         <ActionButton

@@ -470,7 +470,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/accounting/FactorReserveCard.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/FactoringDetailPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/FactoringListPage.tsx` | financial-hold |
-| `apps/frontend/src/pages/accounting/FixedAssetsPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/accounting/FixedAssetsPage.tsx` | migrated (verify-step 1162) — display-only; owner-greenlit UI-only migration; read-only depreciation-schedule table inside DetailPanel modal retained (precedent cited by verify-step 1146 ObligationBlock) |
 | `apps/frontend/src/pages/accounting/IntegrationTransactionsPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/InvoiceCreateModal.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx` | financial-hold |
@@ -523,13 +523,13 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/banking/BankAccountDetail.tsx` | financial-hold |
+| `apps/frontend/src/pages/banking/BankAccountDetail.tsx` | migrated (verify-step 1163) — owner-greenlit display-only; archived read-only table |
 | `apps/frontend/src/pages/banking/BankTxCategorizationPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/banking/CashGlSetupPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/banking/TransfersListPage.tsx` | migrated (verify-step 1155) — owner-greenlit display-only |
 | `apps/frontend/src/pages/banking/CashGlSetupPage.tsx` | migrated (verify-step 1156) |
 | `apps/frontend/src/pages/banking/TransfersListPage.tsx` | financial-hold |
-| `apps/frontend/src/pages/banking/components/BankingPlaidConnectionsPanel.tsx` | financial-hold |
+| `apps/frontend/src/pages/banking/components/BankingPlaidConnectionsPanel.tsx` | migrated (verify-step 1164) — owner-greenlit display-only |
 | `apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx` | financial-hold |
 | `apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx` | financial-hold |
 | `apps/frontend/src/pages/banking/components/RegisterTable.tsx` | financial-hold |
