@@ -1,0 +1,27 @@
+{
+  "block_id": "paritytable-a5-controlled-selection",
+  "branch": "feat/paritytable-controlled-selection",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend shared-component API extension)",
+  "phase": "FOUNDATION-FIRST P6 / ParityTable Phase A5",
+  "task": "Add OPTIONAL controlled row-selection props (selectedKeys/onSelectionChange) to ParityTable, modeled on the controlled-sort and A1 controlled-expansion precedents. Zero behavior change for existing selectable consumers. Guard + verify-step 1192 (Rule 17). Unblocks BankingTransactionsDesignView Phase B (external BulkActionBar via useBulkSelection) after this capability lands — BankingTransactionsDesignView is NOT migrated in this PR.",
+  "source": "FOUNDATION-FIRST work order Priority 6 — ParityTable Phase A, extension A5 (ONE prop-family per PR; selection is independent of A4 sortMode)",
+  "source_file": "paritytable-a5-controlled-selection",
+  "allowed_files": [
+    ".block-ready/paritytable-a5-controlled-selection.json",
+    "apps/frontend/src/components/parity/ParityTable.tsx",
+    "apps/frontend/src/components/parity/ParityTable.test.tsx",
+    "scripts/verify-paritytable-controlled-selection.mjs",
+    "scripts/verify-steps/1192-verify-paritytable-controlled-selection.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "ParityTable exposes OPTIONAL selectedKeys?: string[] / onSelectionChange?: (keys: string[]) => void; omitting = byte-identical internal Set selection for existing selectable call sites; controlled mode = onSelectionChange != null (mirror isSortControlled) — checkbox/select-all notify, never mutate internal state, render from selectedKeys; maxSelectable + onSelectionCapExceeded respected in both modes; batchActions still receives selected row objects (keys ∩ current rows); selectedKeys={[]} clears; unit tests cover uncontrolled regression, controlled toggle (no internal mutation), select-all cap; verify-paritytable-controlled-selection.mjs PASS (+ --selftest); verify-steps/1192 wired (Rule 17); npx tsc -b green."
+    }
+  ],
+  "note": "GATED: no (pure FE, additive API). Migration-free. No package.json / locked-guards / ci.yml edits (Rule 17). BankingTransactionsDesignView is NOT migrated in this PR — capability only."
+}

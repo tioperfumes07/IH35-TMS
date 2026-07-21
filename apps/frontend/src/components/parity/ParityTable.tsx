@@ -77,6 +77,16 @@ export type ParityTableProps<T> = {
   maxSelectable?: number;
   /** Fired when a selection toggle/select-all-on-page would exceed maxSelectable; the toggle is a no-op in that case. */
   onSelectionCapExceeded?: (attempted: number) => void;
+  /**
+   * OPTIONAL controlled row selection (ParityTable Phase A5).
+   * Omitting keeps today's internal Set selection for existing selectable call sites.
+   * Presence of `onSelectionChange` = controlled mode: page owns `selectedKeys`;
+   * checkbox / select-all toggles call `onSelectionChange(nextKeys)` and never mutate
+   * internal selection state. `selectedKeys` is the source of truth when controlled.
+   * Keys are row ids from `rowKey` / existing key extractor (match current selection keying).
+   */
+  selectedKeys?: string[];
+  onSelectionChange?: (keys: string[]) => void;
 
   /** Filter toolbar slot (search + dropdowns), rendered above the table per the universal-list standard. */
   filterBar?: ReactNode;
@@ -248,6 +258,8 @@ export function ParityTable<T>({
   rowActions,
   maxSelectable,
   onSelectionCapExceeded,
+  selectedKeys: controlledSelectedKeys,
+  onSelectionChange,
   filterBar,
   exportFilename,
   stickyHeader = true,
@@ -297,7 +309,14 @@ export function ParityTable<T>({
       ),
   );
   const [gearOpen, setGearOpen] = useState(false);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  // Controlled selection (Phase A5) mirrors A1 expansion: presence of onSelectionChange
+  // switches the source of truth from internal state to the caller-owned selectedKeys prop.
+  const isSelectionControlled = onSelectionChange != null;
+  const [internalSelected, setInternalSelected] = useState<Set<string>>(new Set());
+  const selected = useMemo(
+    () => (isSelectionControlled ? new Set(controlledSelectedKeys ?? []) : internalSelected),
+    [isSelectionControlled, controlledSelectedKeys, internalSelected],
+  );
   // Controlled expansion mirrors the controlled-sort pattern above: presence of the change
   // notifier switches the source of truth from internal state to the caller-owned prop.
   const isExpandControlled = onExpandedChange != null;
@@ -523,7 +542,7 @@ export function ParityTable<T>({
   }
 
   function toggleRow(id: string) {
-    setSelected((prev) => {
+    const applyToggle = (prev: Set<string>): Set<string> => {
       const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
@@ -535,7 +554,16 @@ export function ParityTable<T>({
         return prev;
       }
       return next;
-    });
+    };
+    if (isSelectionControlled) {
+      const prev = new Set(controlledSelectedKeys ?? []);
+      const next = applyToggle(prev);
+      // Cap no-op returns the same Set reference — do not notify (mirrors uncontrolled setState bail).
+      if (next === prev) return;
+      onSelectionChange?.([...next]);
+      return;
+    }
+    setInternalSelected((prev) => applyToggle(prev));
   }
 
   function toggleExpanded(id: string) {
@@ -573,7 +601,7 @@ export function ParityTable<T>({
   }
 
   function togglePageAll() {
-    setSelected((prev) => {
+    const applyPageAll = (prev: Set<string>): Set<string> => {
       const next = new Set(prev);
       if (pageAllSelected) {
         pageRows.forEach((r) => next.delete(rowKey(r)));
@@ -585,7 +613,24 @@ export function ParityTable<T>({
         return prev;
       }
       return next;
-    });
+    };
+    if (isSelectionControlled) {
+      const prev = new Set(controlledSelectedKeys ?? []);
+      const next = applyPageAll(prev);
+      // Cap no-op returns the same Set reference — do not notify.
+      if (next === prev) return;
+      onSelectionChange?.([...next]);
+      return;
+    }
+    setInternalSelected((prev) => applyPageAll(prev));
+  }
+
+  function clearSelection() {
+    if (isSelectionControlled) {
+      onSelectionChange?.([]);
+      return;
+    }
+    setInternalSelected(new Set());
   }
 
   // Windowed numbered pages (max 7 buttons).
@@ -683,7 +728,7 @@ export function ParityTable<T>({
               <button
                 type="button"
                 className="rounded-sm border border-gray-300 px-1.5 py-0.5"
-                onClick={() => setSelected(new Set())}
+                onClick={clearSelection}
               >
                 Clear
               </button>
