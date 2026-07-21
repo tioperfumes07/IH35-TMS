@@ -710,7 +710,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/lists/accounting/QBOBulkLinkPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/components/QboSyncHealthCard.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/dispatch/DispatchCatalogListPage.tsx` | financial-hold |
-| `apps/frontend/src/pages/lists/driver/DriverCatalogListPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/lists/driver/DriverCatalogListPage.tsx` | done — owner-greenlit UI-only migration; columns Code/Display Name/Description/Order/Status preserved; `verify-driver-catalog-list-uses-paritytable.mjs` via verify-step 1107 |
 | `apps/frontend/src/pages/lists/drivers/DriversReferenceCatalogPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/maintenance/OemPartsCatalog.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/names/NamesMasterHub.tsx` | financial-hold |
