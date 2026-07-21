@@ -152,6 +152,35 @@ export type ParityTableProps<T> = {
     /** Presence = controlled mode (mirrors onExpandedChange / onSortChange). */
     onCollapsedChange?: (keys: string[]) => void;
   };
+
+  /**
+   * OPTIONAL controlled / external pagination (ParityTable Phase A3) — mirrors the controlled-sort
+   * and A1 controlled-expansion precedents. Omitting ALL of these keeps today's internal pagination
+   * byte-identical for the ~130 existing call sites.
+   *
+   * PAGE — presence of `onPageChange` = controlled page mode (mirrors onSortChange /
+   * onExpandedChange): pager clicks never mutate internal page state; ParityTable calls
+   * `onPageChange(nextPage)` and renders from the `page` prop (default 1 when undefined).
+   *
+   * PAGE SIZE — presence of the `pageSize` VALUE = controlled page-size mode (value-presence
+   * rule, deliberately NOT notifier-presence): the prop is the source of truth for slicing, the
+   * built-in per-page selector fires `onPageSizeChange(size)` without mutating internal state.
+   * Value-presence (not `onPageSizeChange != null`) is required so the recommended pre-paged
+   * combination below works with no callback at all.
+   *
+   * `hidePager: true` suppresses the built-in pager / per-page chrome entirely (works in
+   * controlled AND uncontrolled modes) so an external toolbar pager can own the UI. Internal page
+   * slicing still applies unless the caller also feeds pre-paged rows. Recommended combinations:
+   *  - "external chrome + ParityTable slices": pass full row set + page/onPageChange
+   *    (+ pageSize/onPageSizeChange) + hidePager — the table slices, the page owns the chrome.
+   *  - "external chrome + caller pre-pages" (e.g. server-paged): pass the CURRENT page's rows as
+   *    `rows`, pageSize = rows.length (or the server page size), hidePager — no double slicing.
+   */
+  page?: number;
+  onPageChange?: (page: number) => void;
+  pageSize?: number;
+  onPageSizeChange?: (size: number) => void;
+  hidePager?: boolean;
 };
 
 function compareSortValues(
@@ -233,6 +262,11 @@ export function ParityTable<T>({
   onExpandedChange,
   expandMode = "multi",
   groupBy,
+  page: controlledPage,
+  onPageChange,
+  pageSize: controlledPageSize,
+  onPageSizeChange,
+  hidePager = false,
 }: ParityTableProps<T>) {
   const persisted = useMemo(() => loadPersisted(storageKey), [storageKey]);
 
@@ -241,12 +275,20 @@ export function ParityTable<T>({
   const [internalSortDirection, setInternalSortDirection] = useState<"asc" | "desc">("asc");
   const sortKey = isSortControlled ? controlledSortKey ?? "" : internalSortKey;
   const sortDirection = isSortControlled ? controlledSortDirection ?? "asc" : internalSortDirection;
-  const [page, setPage] = useState(1);
+  // Controlled pagination (Phase A3) mirrors the controlled-sort split: presence of onPageChange
+  // switches the page source of truth from internal state to the caller-owned `page` prop.
+  const isPageControlled = onPageChange != null;
+  const [internalPage, setInternalPage] = useState(1);
+  const page = isPageControlled ? controlledPage ?? 1 : internalPage;
   const [pageInput, setPageInput] = useState("");
   const [density, setDensity] = useState<ParityDensity>(persisted.density ?? densityProp);
-  const [pageSize, setPageSize] = useState<number>(
+  // Page size uses VALUE-presence (pageSize != null = controlled) — see the A3 prop docs — so a
+  // pre-paged caller can pin the size with no callback. Internal state is unchanged otherwise.
+  const isPageSizeControlled = controlledPageSize != null;
+  const [internalPageSize, setInternalPageSize] = useState<number>(
     persisted.pageSize ?? initialPageSize ?? pageSizeOptions[0] ?? 15,
   );
+  const pageSize = isPageSizeControlled ? controlledPageSize : internalPageSize;
   const [hidden, setHidden] = useState<Set<string>>(
     () =>
       new Set(
@@ -462,6 +504,22 @@ export function ParityTable<T>({
     }
     setInternalSortKey(key);
     setInternalSortDirection(nextDirection);
+  }
+
+  function changePage(next: number) {
+    // Controlled (A3): notify the owner, never mutate internal page state — the `page` prop drives render.
+    if (isPageControlled) {
+      onPageChange?.(next);
+      return;
+    }
+    setInternalPage(next);
+  }
+
+  function changePageSize(next: number) {
+    onPageSizeChange?.(next);
+    if (!isPageSizeControlled) setInternalPageSize(next);
+    // Reset to page 1 (pre-A3 behavior); in controlled page mode this notifies onPageChange(1).
+    changePage(1);
   }
 
   function toggleRow(id: string) {
@@ -828,7 +886,8 @@ export function ParityTable<T>({
       </table>
       </div>
 
-      {/* Advanced pager */}
+      {/* Advanced pager — hidePager (A3) suppresses the built-in chrome so an external pager can own the UI. */}
+      {hidePager ? null : (
       <div
         className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-200 px-2 py-1.5 text-[11px]"
         style={{ color: colors.mutedText }}
@@ -840,11 +899,7 @@ export function ParityTable<T>({
             <select
               className="h-6 rounded-sm border border-gray-300 px-1"
               value={pageSize}
-              onChange={(e) => {
-                const next = Number(e.target.value);
-                setPageSize(next);
-                setPage(1);
-              }}
+              onChange={(e) => changePageSize(Number(e.target.value))}
             >
               {pageSizeOptions.map((opt) => (
                 <option key={opt} value={opt}>
@@ -858,7 +913,7 @@ export function ParityTable<T>({
           <button
             type="button"
             className="h-6 rounded-sm border border-gray-300 px-1.5 disabled:opacity-40"
-            onClick={() => setPage(1)}
+            onClick={() => changePage(1)}
             disabled={safePage <= 1}
           >
             «
@@ -866,7 +921,7 @@ export function ParityTable<T>({
           <button
             type="button"
             className="h-6 rounded-sm border border-gray-300 px-1.5 disabled:opacity-40"
-            onClick={() => setPage((c) => Math.max(1, c - 1))}
+            onClick={() => changePage(Math.max(1, safePage - 1))}
             disabled={safePage <= 1}
           >
             ‹
@@ -879,7 +934,7 @@ export function ParityTable<T>({
                 p === safePage ? "text-white" : "border-gray-300 text-gray-700 hover:bg-gray-50"
               }`}
               style={p === safePage ? { backgroundColor: colors.navy, borderColor: colors.navy } : undefined}
-              onClick={() => setPage(p)}
+              onClick={() => changePage(p)}
             >
               {p}
             </button>
@@ -887,7 +942,7 @@ export function ParityTable<T>({
           <button
             type="button"
             className="h-6 rounded-sm border border-gray-300 px-1.5 disabled:opacity-40"
-            onClick={() => setPage((c) => Math.min(pageCount, c + 1))}
+            onClick={() => changePage(Math.min(pageCount, safePage + 1))}
             disabled={safePage >= pageCount}
           >
             ›
@@ -895,7 +950,7 @@ export function ParityTable<T>({
           <button
             type="button"
             className="h-6 rounded-sm border border-gray-300 px-1.5 disabled:opacity-40"
-            onClick={() => setPage(pageCount)}
+            onClick={() => changePage(pageCount)}
             disabled={safePage >= pageCount}
           >
             »
@@ -910,7 +965,7 @@ export function ParityTable<T>({
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   const n = Number(pageInput);
-                  if (n >= 1 && n <= pageCount) setPage(n);
+                  if (n >= 1 && n <= pageCount) changePage(n);
                   setPageInput("");
                 }
               }}
@@ -919,6 +974,7 @@ export function ParityTable<T>({
           </span>
         </div>
       </div>
+      )}
     </div>
   );
 }
