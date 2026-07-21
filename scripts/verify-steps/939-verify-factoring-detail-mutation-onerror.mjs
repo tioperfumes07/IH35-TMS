@@ -9,7 +9,7 @@ const commands = [
 
 export async function runFactoringDetailMutationOnerrorStep(ctx) {
   for (const [command, args] of commands) {
-    const status = ctx.run(command, args);
+    const status = ctx.runAllowFailure(command, args);
     if (status !== 0) {
       throw new Error(`939-factoring-detail-mutation-onerror step failed: ${command} ${args.join(" ")}`);
     }
@@ -25,7 +25,7 @@ async function selftest() {
   const calls = [];
   const ctx = {
     ROOT: process.cwd(),
-    run(command, args) {
+    runAllowFailure(command, args) {
       calls.push([command, args]);
       return 0;
     },
@@ -44,7 +44,7 @@ async function selftest() {
       run: () =>
         step.run({
           ROOT: process.cwd(),
-          run: (_command, args) => (args.includes("--selftest") ? 0 : 1),
+          runAllowFailure: (_command, args) => (args.includes("--selftest") ? 0 : 1),
         }),
     });
   } catch {

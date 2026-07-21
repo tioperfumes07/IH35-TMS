@@ -5,7 +5,7 @@ import step from "../verify-steps/145-verify-schema-parity-determinism.mjs";
 test("verify step rejects immediately when the normal guard returns status 1", () => {
   const calls = [];
   const ctx = {
-    run(command, args) {
+    runAllowFailure(command, args) {
       calls.push([command, args]);
       return 1;
     },
@@ -24,7 +24,7 @@ test("verify step stops before the wrapper test when selftest fails", () => {
   const calls = [];
   const statuses = [0, 1];
   const ctx = {
-    run(command, args) {
+    runAllowFailure(command, args) {
       calls.push([command, args]);
       return statuses.shift();
     },
@@ -44,7 +44,7 @@ test("verify step rejects when the actual wrapper test returns status 1", () => 
   const calls = [];
   const statuses = [0, 0, 1];
   const ctx = {
-    run(command, args) {
+    runAllowFailure(command, args) {
       calls.push([command, args]);
       return statuses.shift();
     },
@@ -65,7 +65,7 @@ test("verify step runs normal, selftest, then the actual wrapper test", () => {
   const calls = [];
   const statuses = [0, 0, 0];
   const ctx = {
-    run(command, args) {
+    runAllowFailure(command, args) {
       calls.push([command, args]);
       return statuses.shift();
     },
