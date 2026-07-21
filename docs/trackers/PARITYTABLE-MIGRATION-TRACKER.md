@@ -665,7 +665,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx` | financial-hold |
-| `apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx` | financial-hold |
+| `apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx` | migrated (verify-step 1139) — display-only; owner-greenlit UI-only migration |
 
 ### pages/fuel (3)
 

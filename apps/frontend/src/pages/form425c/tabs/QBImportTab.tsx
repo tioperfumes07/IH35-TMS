@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { MONTHS, YEARS } from "../lib/constants";
 import { parseQBText } from "../lib/parseQBText";
 import type { CompanyKey, CompanyProfiles, QBParsedLine } from "../types";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type Props = {
@@ -11,6 +12,9 @@ type Props = {
   onApplyTotal: (totalReceipts: number) => void;
 };
 
+/** Parsed line + its position in the parsed array so the include-toggle targets the right row after sort/page. */
+type ParsedRow = QBParsedLine & { idx: number };
+
 export function QBImportTab({ activeCompany, setActiveCompany, profiles, onApplyTotal }: Props) {
   const [month, setMonth] = useState(new Date().getMonth());
   const [year, setYear] = useState(new Date().getFullYear());
@@ -19,6 +23,43 @@ export function QBImportTab({ activeCompany, setActiveCompany, profiles, onApply
   const profile = profiles[activeCompany];
 
   const includedTotal = useMemo(() => parsed.filter((x) => x.include).reduce((sum, x) => sum + x.amt, 0), [parsed]);
+
+  const parsedRows = useMemo<ParsedRow[]>(() => parsed.map((row, idx) => ({ ...row, idx })), [parsed]);
+
+  // Excluded rows keep the original muted + line-through look; the span-level class is needed
+  // because ParityTable's <td> sets its own text color that would otherwise win over the row class.
+  const mutedClass = (row: ParsedRow) => (row.include ? "" : "text-slate-400 line-through");
+
+  const columns = useMemo<Array<ParityColumn<ParsedRow>>>(
+    () => [
+      {
+        key: "include",
+        label: "Use",
+        render: (row) => (
+          <input
+            type="checkbox"
+            checked={row.include}
+            onChange={() =>
+              setParsed((prev) => prev.map((p, i) => (i === row.idx ? { ...p, include: !p.include } : p)))
+            }
+          />
+        ),
+      },
+      { key: "date", label: "Date", sortable: true, render: (row) => <span className={mutedClass(row)}>{row.date}</span> },
+      { key: "type", label: "Type", sortable: true, render: (row) => <span className={mutedClass(row)}>{row.type}</span> },
+      { key: "desc", label: "Description", sortable: true, render: (row) => <span className={mutedClass(row)}>{row.desc}</span> },
+      { key: "acct", label: "Account", sortable: true, render: (row) => <span className={mutedClass(row)}>{row.acct}</span> },
+      {
+        key: "amt",
+        label: "Amount",
+        sortable: true,
+        className: "text-right",
+        sortValue: (row) => row.amt,
+        render: (row) => <span className={mutedClass(row)}>${row.amt.toFixed(2)}</span>,
+      },
+    ],
+    [],
+  );
 
   return (
     <div className="space-y-4 p-4">
@@ -70,40 +111,14 @@ export function QBImportTab({ activeCompany, setActiveCompany, profiles, onApply
       </div>
 
       {parsed.length ? (
-        <div className="overflow-x-auto rounded-sm border bg-white">
-          <table className="min-w-full text-xs">
-            <thead className="bg-slate-800 text-white">
-              <tr>
-                <th className="px-2 py-2 text-left">Use</th>
-                <th className="px-2 py-2 text-left">Date</th>
-                <th className="px-2 py-2 text-left">Type</th>
-                <th className="px-2 py-2 text-left">Description</th>
-                <th className="px-2 py-2 text-left">Account</th>
-                <th className="px-2 py-2 text-right">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {parsed.map((row, idx) => (
-                <tr key={`${row.date}-${idx}`} className={row.include ? "border-b" : "border-b bg-slate-100 text-slate-400 line-through"}>
-                  <td className="px-2 py-1">
-                    <input
-                      type="checkbox"
-                      checked={row.include}
-                      onChange={() =>
-                        setParsed((prev) => prev.map((p, i) => (i === idx ? { ...p, include: !p.include } : p)))
-                      }
-                    />
-                  </td>
-                  <td className="px-2 py-1">{row.date}</td>
-                  <td className="px-2 py-1">{row.type}</td>
-                  <td className="px-2 py-1">{row.desc}</td>
-                  <td className="px-2 py-1">{row.acct}</td>
-                  <td className="px-2 py-1 text-right">${row.amt.toFixed(2)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable
+          columns={columns}
+          rows={parsedRows}
+          rowKey={(row) => `${row.date}-${row.idx}`}
+          storageKey="form425c-qb-import-preview"
+          tableTestId="qb-import-preview-table"
+          rowClassName={(row) => (row.include ? "" : "bg-slate-100")}
+        />
       ) : null}
       <div className="text-xs text-slate-500">
         Session-scoped preview only. Authoritative Form lines 19-23 remain backend Banking import values (DIP real accounts only; virtual factoring/escrow excluded).
@@ -111,4 +126,3 @@ export function QBImportTab({ activeCompany, setActiveCompany, profiles, onApply
     </div>
   );
 }
-
