@@ -19,7 +19,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-driver-default-expense-account-held";
-const MIGRATION = "db/migrations/202607670000_drivers_default_expense_account.sql";
+const MIGRATION = "db/migrations/202607680000_drivers_default_expense_account.sql";
 const REGISTRY = "db/migrations/.held-migrations.json";
 
 /** Pure checks — takes text so --selftest can inject fixtures. */
@@ -82,7 +82,7 @@ if (process.argv.includes("--selftest")) {
 ALTER TABLE mdata.drivers
   ADD COLUMN IF NOT EXISTS default_expense_account_id uuid REFERENCES catalogs.accounts(id) ON DELETE SET NULL;`;
   const goodRegistry = JSON.stringify({
-    held: [{ file: "202607670000_drivers_default_expense_account.sql", reason: "[HOLD-FOR-JORGE — TIER 1] banking-b4" }],
+    held: [{ file: "202607680000_drivers_default_expense_account.sql", reason: "[HOLD-FOR-JORGE — TIER 1] banking-b4" }],
   });
 
   const checks = [
