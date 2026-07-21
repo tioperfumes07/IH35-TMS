@@ -1,15 +1,20 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { formatDateUS } from "../../lib/formatDate";
 import { Link } from "react-router-dom";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
+import { ApiError } from "../../api/client";
 import {
   getAccountingPeriods,
   buildStatementExportUrl,
   ACCOUNTANT_REPORT_LINKS,
   ACCOUNTANT_EXPORT_STATEMENTS,
   type AccountingPeriod,
+  type ExportStatement,
 } from "../../api/my-accountant";
 
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
@@ -20,6 +25,50 @@ const STATUS_COLOR: Record<string, string> = {
   closed: "bg-slate-100 text-slate-700",
   locked: "bg-slate-100 text-slate-700",
 };
+
+// Column order preserved 1:1 from the pre-migration hand-rolled table.
+const PERIOD_COLUMNS: Array<ParityColumn<AccountingPeriod>> = [
+  {
+    key: "period_label",
+    label: "Period",
+    sortable: true,
+    render: (p) => <span className="whitespace-nowrap font-medium text-gray-800">{p.period_label ?? "—"}</span>,
+  },
+  {
+    key: "fiscal_year",
+    label: "Fiscal Year",
+    sortable: true,
+    render: (p) => <span className="whitespace-nowrap text-gray-600">{p.fiscal_year}</span>,
+  },
+  {
+    key: "period_start",
+    label: "Start",
+    sortable: true,
+    render: (p) => <span className="whitespace-nowrap text-gray-600">{fmtDate(p.period_start)}</span>,
+  },
+  {
+    key: "period_end",
+    label: "End",
+    sortable: true,
+    render: (p) => <span className="whitespace-nowrap text-gray-600">{fmtDate(p.period_end)}</span>,
+  },
+  {
+    key: "status",
+    label: "Status",
+    sortable: true,
+    render: (p) => (
+      <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[p.status] ?? "bg-gray-100 text-gray-600"}`}>
+        {titleize(p.status)}
+      </span>
+    ),
+  },
+  {
+    key: "closed_at",
+    label: "Closed",
+    sortable: true,
+    render: (p) => <span className="whitespace-nowrap text-gray-500">{fmtDate(p.closed_at)}</span>,
+  },
+];
 
 function PeriodStatusPanel({ periods }: { periods: AccountingPeriod[] }) {
   if (periods.length === 0) {
@@ -39,33 +88,13 @@ function PeriodStatusPanel({ periods }: { periods: AccountingPeriod[] }) {
           {lastClosed.closed_at ? ` (closed ${fmtDate(lastClosed.closed_at)})` : ""}
         </p>
       )}
-      <div className="overflow-x-auto rounded-sm border border-gray-200">
-        <table className="min-w-full divide-y divide-gray-200 text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              {["Period", "Fiscal Year", "Start", "End", "Status", "Closed"].map((h) => (
-                <th key={h} className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 bg-white">
-            {periods.map((p) => (
-              <tr key={p.id} className="hover:bg-gray-50">
-                <td className="px-3 py-2 whitespace-nowrap font-medium text-gray-800">{p.period_label ?? "—"}</td>
-                <td className="px-3 py-2 whitespace-nowrap text-gray-600">{p.fiscal_year}</td>
-                <td className="px-3 py-2 whitespace-nowrap text-gray-600">{fmtDate(p.period_start)}</td>
-                <td className="px-3 py-2 whitespace-nowrap text-gray-600">{fmtDate(p.period_end)}</td>
-                <td className="px-3 py-2 whitespace-nowrap">
-                  <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[p.status] ?? "bg-gray-100 text-gray-600"}`}>
-                    {titleize(p.status)}
-                  </span>
-                </td>
-                <td className="px-3 py-2 whitespace-nowrap text-gray-500">{fmtDate(p.closed_at)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable
+        columns={PERIOD_COLUMNS}
+        rows={periods}
+        rowKey={(p) => p.id}
+        storageKey="my-accountant-periods"
+        tableTestId="my-accountant-periods-table"
+      />
     </>
   );
 }
@@ -85,13 +114,53 @@ export function MyAccountantPage() {
   const operatingCompanyId = selectedCompanyId ?? "";
   const { enabled, loading: flagLoading } = useFeatureFlag("MY_ACCOUNTANT_ENABLED", operatingCompanyId || undefined);
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["accounting-periods", operatingCompanyId],
     queryFn: () => getAccountingPeriods(operatingCompanyId),
     enabled: Boolean(selectedCompanyId) && enabled,
   });
 
   const periods = data?.periods ?? [];
+
+  // Export rows/columns preserved 1:1 from the pre-migration hand-rolled table:
+  // statement label + right-aligned PDF / XLSX read-only download anchors (unchanged hrefs).
+  const exportColumns = useMemo<Array<ParityColumn<ExportStatement>>>(
+    () => [
+      {
+        key: "label",
+        label: "Statement",
+        sortable: true,
+        render: (s) => <span className="font-medium text-gray-800">{s.label}</span>,
+      },
+      {
+        key: "download",
+        label: "Download",
+        cellClass: "text-right",
+        className: "text-right",
+        render: (s) => (
+          <>
+            <a
+              href={buildStatementExportUrl(s.key, "pdf", operatingCompanyId)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mr-3 text-slate-700 hover:underline"
+            >
+              PDF
+            </a>
+            <a
+              href={buildStatementExportUrl(s.key, "xlsx", operatingCompanyId)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-slate-700 hover:underline"
+            >
+              XLSX
+            </a>
+          </>
+        ),
+      },
+    ],
+    [operatingCompanyId],
+  );
 
   if (!flagLoading && !enabled) {
     return (
@@ -110,7 +179,12 @@ export function MyAccountantPage() {
         {isLoading || flagLoading ? (
           <p className="py-8 text-center text-sm text-gray-500">Loading…</p>
         ) : isError ? (
-          <p className="py-8 text-center text-sm text-red-600">Failed to load period status.</p>
+          <ListErrorState
+            title="Failed to load period status"
+            status={error instanceof ApiError ? error.status : 0}
+            message={error instanceof Error ? error.message : undefined}
+            onRetry={() => void refetch()}
+          />
         ) : (
           <PeriodStatusPanel periods={periods} />
         )}
@@ -135,35 +209,13 @@ export function MyAccountantPage() {
         {!operatingCompanyId ? (
           <p className="py-2 text-sm text-gray-500">Select an entity to enable exports.</p>
         ) : (
-          <div className="overflow-x-auto rounded-sm border border-gray-200">
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <tbody className="divide-y divide-gray-100 bg-white">
-                {ACCOUNTANT_EXPORT_STATEMENTS.map((s) => (
-                  <tr key={s.key} className="hover:bg-gray-50">
-                    <td className="px-3 py-2 font-medium text-gray-800">{s.label}</td>
-                    <td className="px-3 py-2 text-right">
-                      <a
-                        href={buildStatementExportUrl(s.key, "pdf", operatingCompanyId)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mr-3 text-slate-700 hover:underline"
-                      >
-                        PDF
-                      </a>
-                      <a
-                        href={buildStatementExportUrl(s.key, "xlsx", operatingCompanyId)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-slate-700 hover:underline"
-                      >
-                        XLSX
-                      </a>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ParityTable
+            columns={exportColumns}
+            rows={[...ACCOUNTANT_EXPORT_STATEMENTS]}
+            rowKey={(s) => s.key}
+            storageKey="my-accountant-export"
+            tableTestId="my-accountant-export-table"
+          />
         )}
       </SectionCard>
 
