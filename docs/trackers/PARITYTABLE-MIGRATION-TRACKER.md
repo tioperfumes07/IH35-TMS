@@ -457,7 +457,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/BillsPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/CashForecastPage.tsx` | financial-hold |
-| `apps/frontend/src/pages/accounting/CoaRolesPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/accounting/CoaRolesPage.tsx` | migrated (verify-step 1144) — display-only; owner-greenlit UI-only migration |
 | `apps/frontend/src/pages/accounting/CreateMultipleBillsPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/DailyReconPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/EscrowPage.tsx` | financial-hold |
