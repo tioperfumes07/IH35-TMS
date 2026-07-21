@@ -4,10 +4,11 @@
  */
 import { useState } from "react";
 import { BackArrowHeader } from "../../components/layout/BackArrowHeader";
-import { useCompanyContext } from "../../contexts/CompanyContext";
-import { useMaintenancePartsCatalog } from "../../hooks/useMaintenancePartsCatalog";
-import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useMaintenancePartsCatalog, type MaintPartRow } from "../../hooks/useMaintenancePartsCatalog";
 
 const MANUFACTURERS = ["", "Detroit Diesel", "Cummins", "Freightliner", "Peterbilt", "Kenworth"];
 const CATEGORIES = [
@@ -19,6 +20,53 @@ const CATEGORIES = [
 function cents(n: number) {
   return n > 0 ? `$${(n / 100).toFixed(2)}` : "—";
 }
+
+const COLUMNS: Array<ParityColumn<MaintPartRow>> = [
+  {
+    key: "sku",
+    label: "SKU",
+    sortable: true,
+    render: (row) => <span className="font-mono text-xs">{row.sku}</span>,
+  },
+  {
+    key: "part_name",
+    label: "Part Name",
+    sortable: true,
+    render: (row) => <span className="font-medium">{row.part_name}</span>,
+  },
+  {
+    key: "manufacturer",
+    label: "Manufacturer",
+    sortable: true,
+  },
+  {
+    key: "category",
+    label: "Category",
+    sortable: true,
+    render: (row) => (
+      <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs capitalize">{row.category.replace(/_/g, " ")}</span>
+    ),
+  },
+  {
+    key: "model_compatibility",
+    label: "Compatible Models",
+    sortable: true,
+    sortValue: (row) => row.model_compatibility.join(", "),
+    render: (row) => (
+      <span className="text-xs text-gray-500">
+        {row.model_compatibility.slice(0, 3).join(", ")}
+        {row.model_compatibility.length > 3 ? ` +${row.model_compatibility.length - 3}` : ""}
+      </span>
+    ),
+  },
+  {
+    key: "typical_unit_cost_cents",
+    label: "Typical Cost",
+    sortable: true,
+    className: "text-right",
+    render: (row) => <span className="tabular-nums">{cents(row.typical_unit_cost_cents)}</span>,
+  },
+];
 
 export function MaintenancePartsCatalog() {
   const { selectedCompanyId } = useCompanyContext();
@@ -49,8 +97,6 @@ export function MaintenancePartsCatalog() {
         countBadge={total}
       />
 
-      {query.isError && <ListErrorBanner onRetry={() => void query.refetch()} />}
-
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-4">
         <input
           value={search}
@@ -66,38 +112,25 @@ export function MaintenancePartsCatalog() {
         </SelectCombobox>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
-            <tr>
-              <th className="px-3 py-2 text-left">SKU</th>
-              <th className="px-3 py-2 text-left">Part Name</th>
-              <th className="px-3 py-2 text-left">Manufacturer</th>
-              <th className="px-3 py-2 text-left">Category</th>
-              <th className="px-3 py-2 text-left">Compatible Models</th>
-              <th className="px-3 py-2 text-right">Typical Cost</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id} className="border-t border-gray-100 hover:bg-gray-50">
-                <td className="px-3 py-2 font-mono text-xs">{row.sku}</td>
-                <td className="px-3 py-2 font-medium">{row.part_name}</td>
-                <td className="px-3 py-2">{row.manufacturer}</td>
-                <td className="px-3 py-2">
-                  <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs capitalize">{row.category.replace(/_/g, " ")}</span>
-                </td>
-                <td className="px-3 py-2 text-xs text-gray-500">{row.model_compatibility.slice(0, 3).join(", ")}
-                  {row.model_compatibility.length > 3 ? ` +${row.model_compatibility.length - 3}` : ""}
-                </td>
-                <td className="px-3 py-2 text-right tabular-nums">{cents(row.typical_unit_cost_cents)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {rows.length === 0 && !query.isLoading && <div className="px-3 py-6 text-center text-sm text-gray-400">No parts found.</div>}
-        {query.isLoading && <div className="px-3 py-6 text-center text-sm text-gray-400">Loading parts…</div>}
-      </div>
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load parts catalog"
+          status={(query.error as { status?: number })?.status ?? 0}
+          message={(query.error as Error)?.message}
+          onRetry={() => void query.refetch()}
+        />
+      ) : (
+        <ParityTable
+          columns={COLUMNS}
+          rows={rows}
+          rowKey={(row) => row.id}
+          loading={query.isLoading}
+          storageKey="maintenance-parts-catalog"
+          tableTestId="maintenance-parts-catalog-table"
+          emptyText="No parts found."
+          initialPageSize={50}
+        />
+      )}
 
       {total > 50 && (
         <div className="flex items-center gap-2 text-sm">
