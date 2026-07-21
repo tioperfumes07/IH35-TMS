@@ -1,6 +1,8 @@
-import { Fragment, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { useQuery } from "@tanstack/react-query";
@@ -17,6 +19,8 @@ import {
   type AgingBuckets,
   type ArAgingCustomerRow,
   type ApAgingVendorRow,
+  type ArAgingInvoiceRow,
+  type ApAgingBillRow,
 } from "../../api/arApAging";
 
 const fmtCents = (c: number) => formatUsdCents(c);
@@ -34,8 +38,7 @@ const BUCKET_COLS: { key: keyof AgingBuckets; label: string }[] = [
   { key: "total_open_cents", label: "Total open" },
 ];
 
-const TH = "px-3 py-2 text-right font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap";
-const TD_NUM = "px-3 py-1.5 text-right tabular-nums whitespace-nowrap";
+const NUM_CELL = "text-right tabular-nums whitespace-nowrap";
 
 function csvCell(v: string | number): string {
   const s = String(v ?? "");
@@ -53,111 +56,201 @@ function downloadCsv(filename: string, rows: (string | number)[][]) {
   URL.revokeObjectURL(url);
 }
 
+// Aging bucket columns shared by both main tables — same order, labels, and cents formatting as the
+// pre-migration hand-rolled table (Total open stays bold).
+function bucketColumns<T extends AgingBuckets>(): ParityColumn<T>[] {
+  return BUCKET_COLS.map((c) => ({
+    key: c.key,
+    label: c.label,
+    sortable: true,
+    className: "text-right",
+    cellClass: `${NUM_CELL}${c.key === "total_open_cents" ? " font-semibold" : ""}`,
+    sortValue: (row: T) => row[c.key],
+    render: (row: T) => fmtCents(row[c.key]),
+  }));
+}
+
+const AR_COLUMNS: ParityColumn<ArAgingCustomerRow>[] = [
+  {
+    key: "customer_name",
+    label: "Customer",
+    sortable: true,
+    cellClass: "whitespace-nowrap text-gray-900",
+    render: (r) => r.customer_name || "—",
+  },
+  {
+    key: "open_invoice_count",
+    label: "Open",
+    sortable: true,
+    className: "text-right",
+    cellClass: NUM_CELL,
+    sortValue: (r) => r.open_invoice_count,
+  },
+  ...bucketColumns<ArAgingCustomerRow>(),
+];
+
+const AP_COLUMNS: ParityColumn<ApAgingVendorRow>[] = [
+  {
+    key: "vendor_name",
+    label: "Vendor",
+    sortable: true,
+    cellClass: "whitespace-nowrap text-gray-900",
+    render: (r) => r.vendor_name || "—",
+  },
+  {
+    key: "open_bill_count",
+    label: "Open",
+    sortable: true,
+    className: "text-right",
+    cellClass: NUM_CELL,
+    sortValue: (r) => r.open_bill_count,
+  },
+  ...bucketColumns<ApAgingVendorRow>(),
+];
+
+const AR_DRILL_COLUMNS: ParityColumn<ArAgingInvoiceRow>[] = [
+  {
+    key: "display_id",
+    label: "Invoice",
+    sortable: true,
+    cellClass: "whitespace-nowrap",
+    render: (inv) => <EntityLink kind="invoice" id={inv.invoice_id} label={inv.display_id} />,
+  },
+  { key: "status", label: "Status", sortable: true, cellClass: "capitalize" },
+  { key: "issue_date", label: "Issued", sortable: true, cellClass: "whitespace-nowrap", render: (inv) => fmtDate(inv.issue_date) },
+  { key: "due_date", label: "Due", sortable: true, cellClass: "whitespace-nowrap", render: (inv) => fmtDate(inv.due_date) },
+  {
+    key: "days_overdue",
+    label: "Days past due",
+    sortable: true,
+    className: "text-right",
+    cellClass: NUM_CELL,
+    sortValue: (inv) => inv.days_overdue,
+    render: (inv) => (inv.days_overdue > 0 ? inv.days_overdue : "—"),
+  },
+  {
+    key: "total_cents",
+    label: "Total",
+    sortable: true,
+    className: "text-right",
+    cellClass: NUM_CELL,
+    sortValue: (inv) => inv.total_cents,
+    render: (inv) => fmtCents(inv.total_cents),
+  },
+  {
+    key: "amount_open_cents",
+    label: "Open",
+    sortable: true,
+    className: "text-right",
+    cellClass: `${NUM_CELL} font-medium`,
+    sortValue: (inv) => inv.amount_open_cents,
+    render: (inv) => fmtCents(inv.amount_open_cents),
+  },
+];
+
+const AP_DRILL_COLUMNS: ParityColumn<ApAgingBillRow>[] = [
+  {
+    key: "bill_number",
+    label: "Bill #",
+    sortable: true,
+    cellClass: "whitespace-nowrap",
+    render: (b) => b.bill_number ?? "—",
+  },
+  { key: "status", label: "Status", sortable: true, cellClass: "capitalize" },
+  { key: "bill_date", label: "Bill date", sortable: true, cellClass: "whitespace-nowrap", render: (b) => fmtDate(b.bill_date) },
+  { key: "due_date", label: "Due", sortable: true, cellClass: "whitespace-nowrap", render: (b) => fmtDate(b.due_date) },
+  {
+    key: "days_overdue",
+    label: "Days past due",
+    sortable: true,
+    className: "text-right",
+    cellClass: NUM_CELL,
+    sortValue: (b) => b.days_overdue,
+    render: (b) => (b.days_overdue > 0 ? b.days_overdue : "—"),
+  },
+  {
+    key: "amount_cents",
+    label: "Amount",
+    sortable: true,
+    className: "text-right",
+    cellClass: NUM_CELL,
+    sortValue: (b) => b.amount_cents,
+    render: (b) => fmtCents(b.amount_cents),
+  },
+  {
+    key: "open_cents",
+    label: "Open",
+    sortable: true,
+    className: "text-right",
+    cellClass: `${NUM_CELL} font-medium`,
+    sortValue: (b) => b.open_cents,
+    render: (b) => fmtCents(b.open_cents),
+  },
+];
+
 // ---- Drill panels (read-only) ---------------------------------------------------------------
 
 function ArInvoicesDrill({ operatingCompanyId, customer, asOfDate }: { operatingCompanyId: string; customer: ArAgingCustomerRow; asOfDate: string }) {
-  const { data, isLoading, isError } = useQuery({
+  const query = useQuery({
     queryKey: ["fin20-ar-invoices", operatingCompanyId, customer.customer_id, asOfDate],
     queryFn: () => getArAgingInvoices(operatingCompanyId, customer.customer_id, asOfDate),
   });
-  const invoices = data?.invoices ?? [];
+  const invoices = query.data?.invoices ?? [];
   return (
-    <tr className="bg-gray-50">
-      <td colSpan={BUCKET_COLS.length + 2} className="px-3 py-2">
-        <div className="rounded-sm border border-gray-200 bg-white">
-          <div className="border-b border-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-600">
-            Open invoices — {customer.customer_name}
-          </div>
-          {isLoading ? (
-            <div className="px-3 py-3 text-xs text-gray-400">Loading…</div>
-          ) : isError ? (
-            <div className="px-3 py-3 text-xs text-red-600">Failed to load invoices.</div>
-          ) : invoices.length === 0 ? (
-            <div className="px-3 py-3 text-xs text-gray-400">No open invoices.</div>
-          ) : (
-            <table className="min-w-full text-xs">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-3 py-1.5 text-left font-semibold text-gray-600 uppercase tracking-wide">Invoice</th>
-                  <th className="px-3 py-1.5 text-left font-semibold text-gray-600 uppercase tracking-wide">Status</th>
-                  <th className="px-3 py-1.5 text-left font-semibold text-gray-600 uppercase tracking-wide">Issued</th>
-                  <th className="px-3 py-1.5 text-left font-semibold text-gray-600 uppercase tracking-wide">Due</th>
-                  <th className="px-3 py-1.5 text-right font-semibold text-gray-600 uppercase tracking-wide">Days past due</th>
-                  <th className="px-3 py-1.5 text-right font-semibold text-gray-600 uppercase tracking-wide">Total</th>
-                  <th className="px-3 py-1.5 text-right font-semibold text-gray-600 uppercase tracking-wide">Open</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {invoices.map((inv) => (
-                  <tr key={inv.invoice_id}>
-                    <td className="px-3 py-1.5 whitespace-nowrap"><EntityLink kind="invoice" id={inv.invoice_id} label={inv.display_id} /></td>
-                    <td className="px-3 py-1.5 capitalize">{inv.status}</td>
-                    <td className="px-3 py-1.5 whitespace-nowrap">{fmtDate(inv.issue_date)}</td>
-                    <td className="px-3 py-1.5 whitespace-nowrap">{fmtDate(inv.due_date)}</td>
-                    <td className="px-3 py-1.5 text-right tabular-nums">{inv.days_overdue > 0 ? inv.days_overdue : "—"}</td>
-                    <td className="px-3 py-1.5 text-right tabular-nums">{fmtCents(inv.total_cents)}</td>
-                    <td className="px-3 py-1.5 text-right tabular-nums font-medium">{fmtCents(inv.amount_open_cents)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </td>
-    </tr>
+    <div className="rounded-sm border border-gray-200 bg-white">
+      <div className="border-b border-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-600">
+        Open invoices — {customer.customer_name}
+      </div>
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load invoices"
+          status={0}
+          message={(query.error as Error)?.message ?? "Failed to load invoices."}
+          onRetry={() => void query.refetch()}
+        />
+      ) : (
+        <ParityTable
+          columns={AR_DRILL_COLUMNS}
+          rows={invoices}
+          rowKey={(inv) => inv.invoice_id}
+          loading={query.isLoading}
+          emptyText="No open invoices."
+          storageKey="ar-aging-invoices-drill"
+        />
+      )}
+    </div>
   );
 }
 
 function ApBillsDrill({ operatingCompanyId, vendor, asOfDate }: { operatingCompanyId: string; vendor: ApAgingVendorRow; asOfDate: string }) {
-  const { data, isLoading, isError } = useQuery({
+  const query = useQuery({
     queryKey: ["fin20-ap-bills", operatingCompanyId, vendor.vendor_id, asOfDate],
     queryFn: () => getApAgingBills(operatingCompanyId, vendor.vendor_id, asOfDate),
   });
-  const bills = data?.bills ?? [];
+  const bills = query.data?.bills ?? [];
   return (
-    <tr className="bg-gray-50">
-      <td colSpan={BUCKET_COLS.length + 2} className="px-3 py-2">
-        <div className="rounded-sm border border-gray-200 bg-white">
-          <div className="border-b border-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-600">
-            Open bills — {vendor.vendor_name}
-          </div>
-          {isLoading ? (
-            <div className="px-3 py-3 text-xs text-gray-400">Loading…</div>
-          ) : isError ? (
-            <div className="px-3 py-3 text-xs text-red-600">Failed to load bills.</div>
-          ) : bills.length === 0 ? (
-            <div className="px-3 py-3 text-xs text-gray-400">No open bills.</div>
-          ) : (
-            <table className="min-w-full text-xs">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-3 py-1.5 text-left font-semibold text-gray-600 uppercase tracking-wide">Bill #</th>
-                  <th className="px-3 py-1.5 text-left font-semibold text-gray-600 uppercase tracking-wide">Status</th>
-                  <th className="px-3 py-1.5 text-left font-semibold text-gray-600 uppercase tracking-wide">Bill date</th>
-                  <th className="px-3 py-1.5 text-left font-semibold text-gray-600 uppercase tracking-wide">Due</th>
-                  <th className="px-3 py-1.5 text-right font-semibold text-gray-600 uppercase tracking-wide">Days past due</th>
-                  <th className="px-3 py-1.5 text-right font-semibold text-gray-600 uppercase tracking-wide">Amount</th>
-                  <th className="px-3 py-1.5 text-right font-semibold text-gray-600 uppercase tracking-wide">Open</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {bills.map((b) => (
-                  <tr key={b.bill_id}>
-                    <td className="px-3 py-1.5 whitespace-nowrap">{b.bill_number ?? "—"}</td>
-                    <td className="px-3 py-1.5 capitalize">{b.status}</td>
-                    <td className="px-3 py-1.5 whitespace-nowrap">{fmtDate(b.bill_date)}</td>
-                    <td className="px-3 py-1.5 whitespace-nowrap">{fmtDate(b.due_date)}</td>
-                    <td className="px-3 py-1.5 text-right tabular-nums">{b.days_overdue > 0 ? b.days_overdue : "—"}</td>
-                    <td className="px-3 py-1.5 text-right tabular-nums">{fmtCents(b.amount_cents)}</td>
-                    <td className="px-3 py-1.5 text-right tabular-nums font-medium">{fmtCents(b.open_cents)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </td>
-    </tr>
+    <div className="rounded-sm border border-gray-200 bg-white">
+      <div className="border-b border-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-600">
+        Open bills — {vendor.vendor_name}
+      </div>
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load bills"
+          status={0}
+          message={(query.error as Error)?.message ?? "Failed to load bills."}
+          onRetry={() => void query.refetch()}
+        />
+      ) : (
+        <ParityTable
+          columns={AP_DRILL_COLUMNS}
+          rows={bills}
+          rowKey={(b) => b.bill_id}
+          loading={query.isLoading}
+          emptyText="No open bills."
+          storageKey="ap-aging-bills-drill"
+        />
+      )}
+    </div>
   );
 }
 
@@ -174,7 +267,6 @@ export function ArApAgingPage() {
   // (migration 202606290040). Future dates are clamped to today.
   const today = todayIso();
   const [asOfDate, setAsOfDate] = useState<string>(today);
-  const [expanded, setExpanded] = useState<string | null>(null);
   const isHistorical = asOfDate < today;
 
   const queryReady = Boolean(operatingCompanyId) && enabled;
@@ -256,7 +348,6 @@ export function ArApAgingPage() {
                 onChange={(next) => {
                   // Clamp to today; ignore empties so the report always has a valid as-of.
                   setAsOfDate(next && next <= today ? next : today);
-                  setExpanded(null);
                 }}
                 className="h-9 px-2 text-[13px] rounded-sm border border-gray-300 bg-white text-gray-700 tabular-nums"
               />
@@ -284,7 +375,7 @@ export function ArApAgingPage() {
       <div className="flex items-center gap-2 print:hidden">
         <button
           type="button"
-          onClick={() => { setMode("ar"); setExpanded(null); }}
+          onClick={() => setMode("ar")}
           className={[
             "h-9 px-4 text-[13px] rounded-sm border font-medium",
             mode === "ar" ? "border-slate-700 bg-slate-700 text-white" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50",
@@ -294,7 +385,7 @@ export function ArApAgingPage() {
         </button>
         <button
           type="button"
-          onClick={() => { setMode("ap"); setExpanded(null); }}
+          onClick={() => setMode("ap")}
           className={[
             "h-9 px-4 text-[13px] rounded-sm border font-medium",
             mode === "ap" ? "border-slate-700 bg-slate-700 text-white" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50",
@@ -308,88 +399,62 @@ export function ArApAgingPage() {
         {isHistorical
           ? `Historical aging as of ${fmtDate(asOfDate)} — each ${mode === "ar" ? "invoice" : "bill"}'s open balance reconstructed from payments dated on or before that date.`
           : `Aging as of today (${fmtDate(asOfDate)}), computed live from the canonical ledger views.`}{" "}
-        Click a row to drill into open {mode === "ar" ? "invoices" : "bills"}.
+        Expand a row (▸) to drill into open {mode === "ar" ? "invoices" : "bills"}.
       </p>
 
       {!operatingCompanyId ? (
         <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-sm text-gray-500">
           Select an operating company to view aging.
         </div>
+      ) : isError ? (
+        <ListErrorState
+          title="Couldn't load aging"
+          status={0}
+          message={((mode === "ar" ? arQuery.error : apQuery.error) as Error)?.message ?? "Failed to load aging."}
+          onRetry={() => void (mode === "ar" ? arQuery.refetch() : apQuery.refetch())}
+        />
       ) : (
-        <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-          <table className="min-w-full text-sm divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-3 py-2 text-left font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">
-                  {mode === "ar" ? "Customer" : "Vendor"}
-                </th>
-                <th className={TH}>Open</th>
-                {BUCKET_COLS.map((c) => (
-                  <th key={c.key} className={TH}>{c.label}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {isLoading ? (
-                <tr><td colSpan={BUCKET_COLS.length + 2} className="px-3 py-8 text-center text-gray-400">Loading…</td></tr>
-              ) : isError ? (
-                <tr><td colSpan={BUCKET_COLS.length + 2} className="px-3 py-8 text-center text-red-600">Failed to load aging.</td></tr>
-              ) : rowCount === 0 ? (
-                <tr><td colSpan={BUCKET_COLS.length + 2} className="px-3 py-8 text-center text-gray-400">No open balances.</td></tr>
-              ) : mode === "ar" ? (
-                arRows.map((r) => (
-                  <Fragment key={r.customer_id}>
-                    <tr
-                      onClick={() => setExpanded(expanded === r.customer_id ? null : r.customer_id)}
-                      className="cursor-pointer hover:bg-gray-50"
-                    >
-                      <td className="px-3 py-1.5 whitespace-nowrap text-gray-900">{r.customer_name || "—"}</td>
-                      <td className={TD_NUM}>{r.open_invoice_count}</td>
-                      {BUCKET_COLS.map((c) => (
-                        <td key={c.key} className={`${TD_NUM} ${c.key === "total_open_cents" ? "font-semibold" : ""}`}>
-                          {fmtCents(r[c.key])}
-                        </td>
-                      ))}
-                    </tr>
-                    {expanded === r.customer_id && (
-                      <ArInvoicesDrill operatingCompanyId={operatingCompanyId} customer={r} asOfDate={asOfDate} />
-                    )}
-                  </Fragment>
-                ))
-              ) : (
-                apRows.map((r) => (
-                  <Fragment key={r.vendor_id}>
-                    <tr
-                      onClick={() => setExpanded(expanded === r.vendor_id ? null : r.vendor_id)}
-                      className="cursor-pointer hover:bg-gray-50"
-                    >
-                      <td className="px-3 py-1.5 whitespace-nowrap text-gray-900">{r.vendor_name || "—"}</td>
-                      <td className={TD_NUM}>{r.open_bill_count}</td>
-                      {BUCKET_COLS.map((c) => (
-                        <td key={c.key} className={`${TD_NUM} ${c.key === "total_open_cents" ? "font-semibold" : ""}`}>
-                          {fmtCents(r[c.key])}
-                        </td>
-                      ))}
-                    </tr>
-                    {expanded === r.vendor_id && (
-                      <ApBillsDrill operatingCompanyId={operatingCompanyId} vendor={r} asOfDate={asOfDate} />
-                    )}
-                  </Fragment>
-                ))
+        <div className="space-y-2">
+          {mode === "ar" ? (
+            <ParityTable
+              key={asOfDate}
+              columns={AR_COLUMNS}
+              rows={arRows}
+              rowKey={(r) => r.customer_id}
+              loading={isLoading}
+              emptyText="No open balances."
+              storageKey="ar-aging-by-customer"
+              tableTestId="ar-aging-table"
+              renderExpanded={(r) => (
+                <ArInvoicesDrill operatingCompanyId={operatingCompanyId} customer={r} asOfDate={asOfDate} />
               )}
-            </tbody>
-            {totals && rowCount > 0 && (
-              <tfoot className="border-t-2 border-gray-300 bg-gray-50">
-                <tr>
-                  <td className="px-3 py-2 text-left font-semibold text-gray-900">Grand total</td>
-                  <td className={TD_NUM} />
-                  {BUCKET_COLS.map((c) => (
-                    <td key={c.key} className={`${TD_NUM} font-semibold text-gray-900`}>{fmtCents(totals[c.key])}</td>
-                  ))}
-                </tr>
-              </tfoot>
-            )}
-          </table>
+            />
+          ) : (
+            <ParityTable
+              key={asOfDate}
+              columns={AP_COLUMNS}
+              rows={apRows}
+              rowKey={(r) => r.vendor_id}
+              loading={isLoading}
+              emptyText="No open balances."
+              storageKey="ap-aging-by-vendor"
+              tableTestId="ap-aging-table"
+              renderExpanded={(r) => (
+                <ApBillsDrill operatingCompanyId={operatingCompanyId} vendor={r} asOfDate={asOfDate} />
+              )}
+            />
+          )}
+          {totals && rowCount > 0 && (
+            <div className="flex flex-wrap items-center justify-end gap-x-5 gap-y-1 rounded-sm border-t-2 border-gray-300 bg-gray-50 px-3 py-2 text-sm">
+              <span className="mr-auto font-semibold text-gray-900">Grand total</span>
+              {BUCKET_COLS.map((c) => (
+                <span key={c.key} className="whitespace-nowrap">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{c.label}</span>{" "}
+                  <span className="tabular-nums font-semibold text-gray-900">{fmtCents(totals[c.key])}</span>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
