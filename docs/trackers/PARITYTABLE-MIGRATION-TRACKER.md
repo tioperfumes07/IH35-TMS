@@ -629,7 +629,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/factoring/BatchDetail.tsx` | financial-hold |
 | `apps/frontend/src/pages/factoring/BatchWizard.tsx` | financial-hold |
 | `apps/frontend/src/pages/factoring/ChargebacksTable.tsx` | financial-hold |
-| `apps/frontend/src/pages/factoring/FactorAdmin.tsx` | financial-hold |
+| `apps/frontend/src/pages/factoring/FactorAdmin.tsx` | migrated (verify-step 1128) — owner-greenlit display-only migration of all 3 tables (factors, assignment history, batch history); actions/mutations untouched |
 | `apps/frontend/src/pages/factoring/FactoringHome.tsx` | financial-hold |
 | `apps/frontend/src/pages/factoring/FaroImportPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/factoring/RecoursePipelineTable.tsx` | financial-hold |
