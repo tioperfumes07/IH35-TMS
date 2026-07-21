@@ -485,7 +485,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/accounting/QboReconcileCapturesPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/QboReconciliationPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/ReceiptsPage.tsx` | financial-hold |
-| `apps/frontend/src/pages/accounting/RevenueRecognitionPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/accounting/RevenueRecognitionPage.tsx` | migrated (verify-step 1146) |
 | `apps/frontend/src/pages/accounting/SalesTaxPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/SubmitFactoringModal.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/TransactionRegisterPage.tsx` | financial-hold |

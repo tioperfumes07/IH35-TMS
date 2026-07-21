@@ -1,15 +1,17 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { useQuery } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
+import { ApiError } from "../../api/client";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import {
   getRevenueContracts, getRevenueContractDetail,
   type RevenueContractListItem, type RevenueContractDetail, type RevenueObligation,
 } from "../../api/revenue-recognition";
-import { useListState } from "../../components/list-state";
 
 const fmtCents = (c: number) => formatUsdCents(c);
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
@@ -127,7 +129,99 @@ export function RevenueRecognitionPage() {
 
   const total = data?.total ?? 0;
   const items = data?.items ?? [];
-  const listState = useListState(listQuery, items.length === 0);
+
+  const columns = useMemo<ParityColumn<RevenueContractListItem>[]>(
+    () => [
+      {
+        key: "contract_number",
+        label: "#",
+        sortable: true,
+        cellClass: "whitespace-nowrap text-gray-500 text-xs",
+        render: (row) => row.contract_number ?? "—",
+      },
+      {
+        key: "description",
+        label: "Description",
+        sortable: true,
+        cellClass: "max-w-[220px] truncate font-medium",
+        render: (row) => (
+          <button onClick={() => setDetailId(row.id)} className="text-slate-700 hover:underline text-left">{row.description}</button>
+        ),
+      },
+      {
+        key: "source_type",
+        label: "Source",
+        sortable: true,
+        cellClass: "whitespace-nowrap text-gray-600 capitalize",
+        render: (row) => titleize(row.source_type),
+      },
+      {
+        key: "contract_date",
+        label: "Date",
+        sortable: true,
+        cellClass: "whitespace-nowrap text-gray-600",
+        render: (row) => fmtDate(row.contract_date),
+      },
+      {
+        key: "transaction_price_cents",
+        label: "Price",
+        sortable: true,
+        className: "text-right",
+        cellClass: "whitespace-nowrap text-right tabular-nums",
+        render: (row) => fmtCents(row.transaction_price_cents),
+      },
+      {
+        key: "recognized_to_date_cents",
+        label: "Recognized",
+        sortable: true,
+        className: "text-right",
+        cellClass: "whitespace-nowrap text-right tabular-nums text-slate-700",
+        render: (row) => fmtCents(row.recognized_to_date_cents),
+      },
+      {
+        key: "deferred_balance_cents",
+        label: "Deferred",
+        sortable: true,
+        className: "text-right",
+        cellClass: "whitespace-nowrap text-right tabular-nums font-semibold",
+        render: (row) => fmtCents(row.deferred_balance_cents),
+      },
+      {
+        key: "obligation_count",
+        label: "Obligations",
+        sortable: true,
+        className: "text-center",
+        cellClass: "whitespace-nowrap text-center text-gray-600",
+        render: (row) => row.obligation_count,
+      },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        cellClass: "whitespace-nowrap",
+        render: (row) => (
+          <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[row.status] ?? "bg-gray-100 text-gray-600"}`}>
+            {titleize(row.status)}
+          </span>
+        ),
+      },
+    ],
+    [],
+  );
+
+  const filterBar = (
+    <div className="flex flex-wrap gap-2 items-center">
+      <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setOffset(0); }}
+        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500">
+        <option value="">All statuses</option>
+        <option value="draft">Draft</option>
+        <option value="active">Active</option>
+        <option value="fully_recognized">Fully Recognized</option>
+        <option value="voided">Voided</option>
+      </select>
+      <span className="text-xs text-gray-500">{total.toLocaleString()} contract{total !== 1 ? "s" : ""}</span>
+    </div>
+  );
 
   if (!flagLoading && !enabled) {
     return (
@@ -146,60 +240,25 @@ export function RevenueRecognitionPage() {
         <DetailPanel detail={detail} onClose={() => setDetailId(null)} />
       )}
 
-      <div className="flex flex-wrap gap-2 mb-4 items-center">
-        <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setOffset(0); }}
-          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500">
-          <option value="">All statuses</option>
-          <option value="draft">Draft</option>
-          <option value="active">Active</option>
-          <option value="fully_recognized">Fully Recognized</option>
-          <option value="voided">Voided</option>
-        </select>
-        <span className="text-xs text-gray-500">{total.toLocaleString()} contract{total !== 1 ? "s" : ""}</span>
-      </div>
-
-      {isLoading || flagLoading ? (
-        <p className="text-sm text-gray-500 py-8 text-center">Loading…</p>
-      ) : isError ? (
-        <p className="text-sm text-red-600 py-8 text-center">Failed to load revenue contracts.</p>
-      ) : listState.isEmpty ? (
-        <div className="py-12 text-center">
-          <p className="text-sm text-gray-500">No revenue contracts found.</p>
-          <p className="text-xs text-gray-400 mt-1">Contracts will appear here once revenue recognition is in use.</p>
-        </div>
+      {isError ? (
+        <ListErrorState
+          title="Failed to load revenue contracts."
+          status={listQuery.error instanceof ApiError ? listQuery.error.status : 0}
+          message={(listQuery.error as Error)?.message}
+          onRetry={() => void listQuery.refetch()}
+        />
       ) : (
-        <div className="overflow-x-auto rounded-sm border border-gray-200">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                {["#", "Description", "Source", "Date", "Price", "Recognized", "Deferred", "Obligations", "Status"].map((h) => (
-                  <th key={h} className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
-              {items.map((row: RevenueContractListItem) => (
-                <tr key={row.id} className="hover:bg-gray-50">
-                  <td className="px-3 py-2 whitespace-nowrap text-gray-500 text-xs">{row.contract_number ?? "—"}</td>
-                  <td className="px-3 py-2 max-w-[220px] truncate font-medium">
-                    <button onClick={() => setDetailId(row.id)} className="text-slate-700 hover:underline text-left">{row.description}</button>
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap text-gray-600 capitalize">{titleize(row.source_type)}</td>
-                  <td className="px-3 py-2 whitespace-nowrap text-gray-600">{fmtDate(row.contract_date)}</td>
-                  <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums">{fmtCents(row.transaction_price_cents)}</td>
-                  <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-slate-700">{fmtCents(row.recognized_to_date_cents)}</td>
-                  <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums font-semibold">{fmtCents(row.deferred_balance_cents)}</td>
-                  <td className="px-3 py-2 whitespace-nowrap text-center text-gray-600">{row.obligation_count}</td>
-                  <td className="px-3 py-2 whitespace-nowrap">
-                    <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[row.status] ?? "bg-gray-100 text-gray-600"}`}>
-                      {titleize(row.status)}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable
+          columns={columns}
+          rows={items}
+          rowKey={(row) => row.id}
+          loading={flagLoading || isLoading}
+          filterBar={filterBar}
+          storageKey="revenue-recognition-contracts"
+          tableTestId="revenue-recognition-contracts-table"
+          initialPageSize={limit}
+          emptyText="No revenue contracts found."
+        />
       )}
 
       {total > limit && (
