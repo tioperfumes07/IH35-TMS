@@ -2,11 +2,12 @@ import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { getPlaidBankAccounts, getTransfer, listTransfers, revokeTransfer, type TransferType } from "../../api/banking";
+import { getPlaidBankAccounts, getTransfer, listTransfers, revokeTransfer, type Transfer, type TransferType } from "../../api/banking";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
@@ -72,6 +73,109 @@ export function TransfersListPage() {
     }
     return map;
   }, [bankAccountsQuery.data?.accounts]);
+
+  // Display-only ParityTable migration: column order, cell formatting (amount sign/currency via
+  // formatMoney), and the View/Revoke inline action handlers are preserved 1:1 from the former
+  // hand-rolled table markup.
+  const columns = useMemo<ParityColumn<Transfer>[]>(
+    () => [
+      { key: "transfer_date", label: "Date", sortable: true, render: (row) => row.transfer_date },
+      {
+        key: "transfer_type",
+        label: "Type",
+        sortable: true,
+        cellClass: "capitalize",
+        render: (row) => typeLabel(row.transfer_type),
+      },
+      {
+        key: "from_account_id",
+        label: "From",
+        render: (row) => (
+          <EntityLink kind="bank_account" id={row.from_account_id} label={row.from_bank_name || row.from_coa_name || accountNameMap.get(row.from_account_id) || undefined} />
+        ),
+      },
+      {
+        key: "to_account_id",
+        label: "To",
+        render: (row) => (
+          <EntityLink kind="bank_account" id={row.to_account_id} label={row.to_bank_name || row.to_coa_name || accountNameMap.get(row.to_account_id) || undefined} />
+        ),
+      },
+      {
+        key: "amount_cents",
+        label: "Amount",
+        sortable: true,
+        sortValue: (row) => Number(row.amount_cents),
+        render: (row) => formatMoney(Number(row.amount_cents)),
+      },
+      { key: "memo", label: "Memo", render: (row) => row.memo || "-" },
+      { key: "reference_number", label: "Reference", render: (row) => row.reference_number || "-" },
+      {
+        key: "qbo_status",
+        label: "QBO Status",
+        render: (row) =>
+          row.revoked_at ? (
+            <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs text-gray-700">revoked</span>
+          ) : row.qbo_journal_entry_id ? (
+            <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-700">synced</span>
+          ) : (
+            <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-700">pending</span>
+          ),
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        alwaysVisible: true,
+        render: (row) => (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="text-xs text-slate-700 hover:underline"
+              onClick={() => {
+                if (!companyId) return;
+                void getTransfer(row.id, companyId)
+                  .then((detail) => {
+                    window.alert(
+                      `Transfer ${detail.transfer.id}\nType: ${detail.transfer.transfer_type}\nAmount: ${formatMoney(
+                        Number(detail.transfer.amount_cents)
+                      )}\nMemo: ${detail.transfer.memo || "-"}\nQBO JE: ${detail.transfer.qbo_journal_entry_id || "pending"}`
+                    );
+                  })
+                  .catch((error) => pushToast(String((error as Error).message || "Failed to load transfer detail"), "error"));
+              }}
+            >
+              View
+            </button>
+            {canRevoke && !row.revoked_at ? (
+              <button
+                type="button"
+                className="text-xs text-red-700 hover:underline disabled:opacity-60"
+                disabled={revokingId === row.id}
+                onClick={() => {
+                  const reason = window.prompt("Revocation reason");
+                  if (!reason || !companyId) return;
+                  setRevokingId(row.id);
+                  void revokeTransfer(row.id, companyId, reason)
+                    .then(() => {
+                      pushToast("Transfer revoked", "success");
+                      return Promise.all([
+                        queryClient.invalidateQueries({ queryKey: ["banking", "transfers"] }),
+                        queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts"] }),
+                      ]);
+                    })
+                    .catch((error) => pushToast(String((error as Error).message || "Failed to revoke transfer"), "error"))
+                    .finally(() => setRevokingId(""));
+                }}
+              >
+                Revoke
+              </button>
+            ) : null}
+          </div>
+        ),
+      },
+    ],
+    [accountNameMap, canRevoke, revokingId, companyId, pushToast, queryClient],
+  );
 
   return (
     <div className="space-y-3">
@@ -140,98 +244,18 @@ export function TransfersListPage() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white p-3">
-        <table className="min-w-full border-separate border-spacing-0 text-sm">
-          <thead>
-            <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
-              <th className="border-b border-gray-200 px-2 py-2">Date</th>
-              <th className="border-b border-gray-200 px-2 py-2">Type</th>
-              <th className="border-b border-gray-200 px-2 py-2">From</th>
-              <th className="border-b border-gray-200 px-2 py-2">To</th>
-              <th className="border-b border-gray-200 px-2 py-2">Amount</th>
-              <th className="border-b border-gray-200 px-2 py-2">Memo</th>
-              <th className="border-b border-gray-200 px-2 py-2">Reference</th>
-              <th className="border-b border-gray-200 px-2 py-2">QBO Status</th>
-              <th className="border-b border-gray-200 px-2 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id}>
-                <td className="border-b border-gray-100 px-2 py-2">{row.transfer_date}</td>
-                <td className="border-b border-gray-100 px-2 py-2 capitalize">{typeLabel(row.transfer_type)}</td>
-                <td className="border-b border-gray-100 px-2 py-2"><EntityLink kind="bank_account" id={row.from_account_id} label={row.from_bank_name || row.from_coa_name || accountNameMap.get(row.from_account_id) || undefined} /></td>
-                <td className="border-b border-gray-100 px-2 py-2"><EntityLink kind="bank_account" id={row.to_account_id} label={row.to_bank_name || row.to_coa_name || accountNameMap.get(row.to_account_id) || undefined} /></td>
-                <td className="border-b border-gray-100 px-2 py-2">{formatMoney(Number(row.amount_cents))}</td>
-                <td className="border-b border-gray-100 px-2 py-2">{row.memo || "-"}</td>
-                <td className="border-b border-gray-100 px-2 py-2">{row.reference_number || "-"}</td>
-                <td className="border-b border-gray-100 px-2 py-2">
-                  {row.revoked_at ? (
-                    <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs text-gray-700">revoked</span>
-                  ) : row.qbo_journal_entry_id ? (
-                    <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-700">synced</span>
-                  ) : (
-                    <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-700">pending</span>
-                  )}
-                </td>
-                <td className="border-b border-gray-100 px-2 py-2">
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      className="text-xs text-slate-700 hover:underline"
-                      onClick={() => {
-                        if (!companyId) return;
-                        void getTransfer(row.id, companyId)
-                          .then((detail) => {
-                            window.alert(
-                              `Transfer ${detail.transfer.id}\nType: ${detail.transfer.transfer_type}\nAmount: ${formatMoney(
-                                Number(detail.transfer.amount_cents)
-                              )}\nMemo: ${detail.transfer.memo || "-"}\nQBO JE: ${detail.transfer.qbo_journal_entry_id || "pending"}`
-                            );
-                          })
-                          .catch((error) => pushToast(String((error as Error).message || "Failed to load transfer detail"), "error"));
-                      }}
-                    >
-                      View
-                    </button>
-                    {canRevoke && !row.revoked_at ? (
-                      <button
-                        type="button"
-                        className="text-xs text-red-700 hover:underline disabled:opacity-60"
-                        disabled={revokingId === row.id}
-                        onClick={() => {
-                          const reason = window.prompt("Revocation reason");
-                          if (!reason || !companyId) return;
-                          setRevokingId(row.id);
-                          void revokeTransfer(row.id, companyId, reason)
-                            .then(() => {
-                              pushToast("Transfer revoked", "success");
-                              return Promise.all([
-                                queryClient.invalidateQueries({ queryKey: ["banking", "transfers"] }),
-                                queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts"] }),
-                              ]);
-                            })
-                            .catch((error) => pushToast(String((error as Error).message || "Failed to revoke transfer"), "error"))
-                            .finally(() => setRevokingId(""));
-                        }}
-                      >
-                        Revoke
-                      </button>
-                    ) : null}
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {listState.isEmpty ? (
-              <tr>
-                <td colSpan={9} className="px-2 py-4 text-center text-sm text-gray-500">
-                  No transfers found for this filter.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => row.id}
+        loading={listState.isLoading}
+        storageKey="banking-transfers-list"
+        tableTestId="banking-transfers-list-table"
+        initialPageSize={PAGE_SIZE}
+        // Settled-only empty text (LIST-EMPTY-1): only supplied once listState resolves to "empty",
+        // never mid-fetch, so ParityTable's own gate never flashes a false empty.
+        emptyText={listState.isEmpty ? "No transfers found for this filter." : undefined}
+      />
 
       <div className="flex justify-end gap-2">
         <ActionButton
