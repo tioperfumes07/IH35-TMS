@@ -878,6 +878,8 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/pages/work-orders/WorkOrdersConsoleListPage.tsx` | pending |
+| `apps/frontend/src/pages/work-orders/WOTimeTrackingPanel.tsx` | pending |
+| `apps/frontend/src/pages/work-orders/WorkOrdersConsoleListPage.tsx` | shipped (#TBD) |
 
 ### portal/PortalDashboardPage.tsx (1)
 
@@ -1424,3 +1426,14 @@ cards, per-status totals, and no-ELD-data copy are preserved. Guard:
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/compliance/HosViewerSection.tsx` | pages/compliance |
+## qbo-parity-a1 — WorkOrdersConsoleListPage (this PR)
+Maintenance work-orders console list was a hand-rolled `<table>` with inline error/loading
+rows. Migrated to shared `ParityTable` (resize + gear + CSV export) and replaced the ad-hoc
+error row with `ListErrorState` + Retry. Columns WO # / Billing / Class / Status / Est-Act /
+Labor ¢ / Opened / Actions preserved 1:1; SecondaryNavTabs segment counts, billing/service
+class/sort/search filters, server offset pagination, and `?sort=` URL persistence preserved.
+Guard: `scripts/verify-wo-console-list-uses-paritytable.mjs` via verify-step **1093**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/work-orders/WorkOrdersConsoleListPage.tsx` | pages/work-orders |

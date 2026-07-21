@@ -1,19 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
-import { listWorkOrdersConsole } from "../../api/workOrdersConsole";
+import { listWorkOrdersConsole, type WoConsoleRow } from "../../api/workOrdersConsole";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
-import { useListState } from "../../components/list-state";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type SegmentId = "all" | "open" | "in_progress" | "completed" | "cancelled";
 type WoSort = "created_desc" | "cost_desc" | "wo_number_asc" | "labor_cost_desc";
 
 const WO_SORT_VALUES = new Set<WoSort>(["created_desc", "cost_desc", "wo_number_asc", "labor_cost_desc"]);
+const PAGE_SIZE = 100;
 
 function parseWoSort(raw: string | null): WoSort {
   return raw && WO_SORT_VALUES.has(raw as WoSort) ? (raw as WoSort) : "created_desc";
@@ -45,7 +46,6 @@ export function WorkOrdersConsoleListPage() {
     );
   };
   const [page, setPage] = useState(0);
-  const PAGE_SIZE = 100;
 
   // Any filter/segment/search/sort change returns to the first page.
   useEffect(() => {
@@ -68,8 +68,7 @@ export function WorkOrdersConsoleListPage() {
     enabled: Boolean(companyId),
   });
 
-  // Empty row renders only once the work-order query settles (no first-fetch flash).
-  const listState = useListState(listQuery, (listQuery.data?.work_orders ?? []).length === 0);
+  const rows = useMemo(() => listQuery.data?.work_orders ?? [], [listQuery.data?.work_orders]);
 
   const tabCounts = listQuery.data?.tab_counts;
   // tab_counts keys mirror the segment ids, so the active segment's count is a real total.
@@ -86,138 +85,160 @@ export function WorkOrdersConsoleListPage() {
       { id: "completed", label: `Completed (${tabCounts?.completed ?? 0})` },
       { id: "cancelled", label: `Cancelled (${tabCounts?.cancelled ?? 0})` },
     ],
-    [tabCounts]
+    [tabCounts],
+  );
+
+  const columns = useMemo<Array<ParityColumn<WoConsoleRow>>>(
+    () => [
+      {
+        key: "display_id",
+        label: "WO #",
+        render: (row) => (
+          <span className="font-mono text-xs">{String(row.display_id ?? row.id ?? "")}</span>
+        ),
+      },
+      {
+        key: "wo_billing_type",
+        label: "Billing",
+        render: (row) => (
+          <span className="capitalize">{String(row.wo_billing_type ?? row.bucket ?? "")}</span>
+        ),
+      },
+      {
+        key: "wo_service_class",
+        label: "Class",
+        render: (row) => String(row.wo_service_class ?? row.wo_type ?? ""),
+      },
+      {
+        key: "status",
+        label: "Status",
+        render: (row) => String(row.status ?? ""),
+      },
+      {
+        key: "total_estimated_cost",
+        label: "Est / Act",
+        render: (row) => {
+          const est = row.total_estimated_cost ?? "—";
+          const act = row.total_actual_cost ?? "—";
+          return (
+            <>
+              {String(est)} / {String(act)}
+            </>
+          );
+        },
+      },
+      {
+        key: "labor_cost_cents",
+        label: "Labor ¢",
+        className: "text-right",
+        cellClass: "text-right font-mono text-[11px] text-slate-700",
+        render: (row) => (row.labor_cost_cents != null ? String(row.labor_cost_cents) : "0"),
+      },
+      {
+        key: "opened_at",
+        label: "Opened",
+        render: (row) => (
+          <span className="text-xs text-slate-600">
+            {String(row.opened_at ?? row.created_at ?? "").slice(0, 10)}
+          </span>
+        ),
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        alwaysVisible: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (row) => {
+          const id = String(row.id ?? "");
+          return (
+            <Link className="text-[#1f2a44] hover:underline" to={`/work-orders/${id}`}>
+              View
+            </Link>
+          );
+        },
+      },
+    ],
+    [],
   );
 
   return (
     <div className="flex flex-col gap-3 px-3 py-3">
       <PageHeader title="Work orders" subtitle="Operational console for vendor-ready work order PDFs" />
 
-      {!companyId ? <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Select a company.</div> : null}
+      {!companyId ? (
+        <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          Select a company.
+        </div>
+      ) : null}
 
       <SecondaryNavTabs activeId={segment} onChange={(id) => setSegment(id as SegmentId)} tabs={tabs} />
 
-      <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white p-2">
-        <SelectCombobox
-          value={billing}
-          onChange={(event) => setBilling(event.target.value as typeof billing)}
-          className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
-        >
-          <option value="all">Billing: All</option>
-          <option value="internal">Internal</option>
-          <option value="external">External</option>
-        </SelectCombobox>
-        <SelectCombobox
-          value={svc}
-          onChange={(event) => setSvc(event.target.value as typeof svc)}
-          className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
-        >
-          <option value="all">Service class: All</option>
-          <option value="pm">PM</option>
-          <option value="corrective">Corrective</option>
-          <option value="accident">Accident</option>
-          <option value="inspection_dot">DOT inspection</option>
-          <option value="inspection_state">State inspection</option>
-          <option value="warranty">Warranty</option>
-          <option value="other">Other</option>
-        </SelectCombobox>
-        <SelectCombobox
-          value={sort}
-          onChange={(event) => setSort(event.target.value as typeof sort)}
-          className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
-        >
-          <option value="created_desc">Sort: Newest</option>
-          <option value="cost_desc">Sort: Cost</option>
-          <option value="labor_cost_desc">Sort: Labor cost</option>
-          <option value="wo_number_asc">Sort: WO #</option>
-        </SelectCombobox>
-        <input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search WO #, unit, vendor, driver…"
-          className="h-8 min-w-[240px] flex-1 rounded-sm border border-gray-300 px-2 text-[13px]"
+      {listQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load work orders"
+          {...formatQueryErrorDetail(listQuery.error)}
+          onRetry={() => void listQuery.refetch()}
         />
-      </div>
-
-      <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full border-collapse text-left text-[13px]">
-          <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-600">
-            <tr>
-              <th className="border-b border-gray-200 px-2 py-2">WO #</th>
-              <th className="border-b border-gray-200 px-2 py-2">Billing</th>
-              <th className="border-b border-gray-200 px-2 py-2">Class</th>
-              <th className="border-b border-gray-200 px-2 py-2">Status</th>
-              <th className="border-b border-gray-200 px-2 py-2">Est / Act</th>
-              <th className="border-b border-gray-200 px-2 py-2 text-right">Labor ¢</th>
-              <th className="border-b border-gray-200 px-2 py-2">Opened</th>
-              <th className="border-b border-gray-200 px-2 py-2 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {listQuery.isError ? (
-              <tr>
-                <td colSpan={8} className="p-0">
-                  <ListErrorState
-                    title="Couldn't load work orders"
-                    {...formatQueryErrorDetail(listQuery.error)}
-                    onRetry={() => void listQuery.refetch()}
-                  />
-                </td>
-              </tr>
-            ) : null}
-            {!listQuery.isError && listQuery.isLoading && !listQuery.data ? (
-              <tr>
-                <td colSpan={8} className="px-2 py-3 text-xs text-slate-400">
-                  Loading…
-                </td>
-              </tr>
-            ) : null}
-            {listState.isEmpty ? (
-              <tr>
-                <td className="px-2 py-4 text-sm text-slate-500" colSpan={8}>
-                  No work orders match the current filters.
-                </td>
-              </tr>
-            ) : null}
-            {!listQuery.isError
-              ? (listQuery.data?.work_orders ?? []).map((row) => {
-                  const id = String(row.id ?? "");
-                  const display = String(row.display_id ?? row.id ?? "");
-                  const billingType = String(row.wo_billing_type ?? row.bucket ?? "");
-                  const serviceClass = String(row.wo_service_class ?? row.wo_type ?? "");
-                  const status = String(row.status ?? "");
-                  const opened = String(row.opened_at ?? row.created_at ?? "").slice(0, 10);
-                  const est = row.total_estimated_cost ?? "—";
-                  const act = row.total_actual_cost ?? "—";
-                  const labor = row.labor_cost_cents != null ? String(row.labor_cost_cents) : "0";
-                  return (
-                    <tr key={id} className="border-b border-gray-100 hover:bg-slate-50/60">
-                      <td className="code-cell px-2 py-2 font-mono text-xs">{display}</td>
-                      <td className="px-2 py-2 capitalize">{billingType}</td>
-                      <td className="px-2 py-2">{serviceClass}</td>
-                      <td className="px-2 py-2">{status}</td>
-                      <td className="px-2 py-2">
-                        {String(est)} / {String(act)}
-                      </td>
-                      <td className="px-2 py-2 text-right font-mono text-[11px] text-slate-700">{labor}</td>
-                      <td className="px-2 py-2 text-xs text-slate-600">{opened}</td>
-                      <td className="px-2 py-2 text-right">
-                        <Link className="text-[#1f2a44] hover:underline" to={`/work-orders/${id}`}>
-                          View
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })
-              : null}
-          </tbody>
-        </table>
-      </div>
+      ) : (
+        <ParityTable<WoConsoleRow>
+          rows={rows}
+          columns={columns}
+          rowKey={(row) => String(row.id ?? "")}
+          loading={listQuery.isLoading}
+          storageKey="work-orders-console-list"
+          exportFilename="work-orders"
+          emptyText="No work orders match the current filters."
+          initialPageSize={PAGE_SIZE}
+          pageSizeOptions={[PAGE_SIZE]}
+          filterBar={
+            <div className="flex flex-wrap items-center gap-2">
+              <SelectCombobox
+                value={billing}
+                onChange={(event) => setBilling(event.target.value as typeof billing)}
+                className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
+              >
+                <option value="all">Billing: All</option>
+                <option value="internal">Internal</option>
+                <option value="external">External</option>
+              </SelectCombobox>
+              <SelectCombobox
+                value={svc}
+                onChange={(event) => setSvc(event.target.value as typeof svc)}
+                className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
+              >
+                <option value="all">Service class: All</option>
+                <option value="pm">PM</option>
+                <option value="corrective">Corrective</option>
+                <option value="accident">Accident</option>
+                <option value="inspection_dot">DOT inspection</option>
+                <option value="inspection_state">State inspection</option>
+                <option value="warranty">Warranty</option>
+                <option value="other">Other</option>
+              </SelectCombobox>
+              <SelectCombobox
+                value={sort}
+                onChange={(event) => setSort(event.target.value as typeof sort)}
+                className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
+              >
+                <option value="created_desc">Sort: Newest</option>
+                <option value="cost_desc">Sort: Cost</option>
+                <option value="labor_cost_desc">Sort: Labor cost</option>
+                <option value="wo_number_asc">Sort: WO #</option>
+              </SelectCombobox>
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search WO #, unit, vendor, driver…"
+                className="h-8 min-w-[240px] flex-1 rounded-sm border border-gray-300 px-2 text-[13px]"
+              />
+            </div>
+          }
+        />
+      )}
 
       <div className="flex items-center justify-between gap-2 text-xs text-slate-600">
-        <span>
-          {total === 0 ? "No work orders" : `Showing ${pageStart}–${pageEnd} of ${total}`}
-        </span>
+        <span>{total === 0 ? "No work orders" : `Showing ${pageStart}–${pageEnd} of ${total}`}</span>
         <div className="flex items-center gap-2">
           <button
             type="button"
