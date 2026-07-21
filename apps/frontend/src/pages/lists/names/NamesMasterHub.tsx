@@ -1,8 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getNamesMasterCounts, searchNamesMaster, type NamesEntityType } from "../../../api/namesMaster";
+import { ApiError } from "../../../api/client";
+import {
+  getNamesMasterCounts,
+  searchNamesMaster,
+  type NamesEntityType,
+  type NamesMasterRow,
+} from "../../../api/namesMaster";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { PageHeader } from "../../../components/layout/PageHeader";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ListsSubNav } from "../ListsSubNav";
 
@@ -49,6 +57,56 @@ export function NamesMasterHub() {
   const counts = countsQuery.data;
 
   const pageCount = useMemo(() => Math.max(1, Math.ceil(total / pageSize)), [total]);
+
+  const columns = useMemo<Array<ParityColumn<NamesMasterRow>>>(
+    () => [
+      {
+        key: "entity_type",
+        label: "Type",
+        sortable: true,
+        render: (row) => <span className="capitalize">{row.entity_type}</span>,
+      },
+      {
+        key: "display_name",
+        label: "Name",
+        sortable: true,
+        render: (row) => <span className="font-medium">{row.display_name}</span>,
+      },
+      {
+        key: "primary_email",
+        label: "Email",
+        sortable: true,
+        render: (row) => <span>{row.primary_email ?? "—"}</span>,
+      },
+      {
+        key: "primary_phone",
+        label: "Phone",
+        sortable: true,
+        render: (row) => <span>{row.primary_phone ?? "—"}</span>,
+      },
+      {
+        key: "qbo_id",
+        label: "QBO ID",
+        sortable: true,
+        render: (row) => <span>{row.qbo_id ?? "—"}</span>,
+      },
+      {
+        key: "open",
+        label: "",
+        alwaysVisible: true,
+        render: (row) => (
+          <button
+            type="button"
+            className="rounded-sm border border-slate-300 px-2 py-1 text-xs font-semibold hover:bg-slate-50"
+            onClick={() => navigate(row.link_to_module_page)}
+          >
+            Open
+          </button>
+        ),
+      },
+    ],
+    [navigate],
+  );
 
   function submitSearch(event: React.FormEvent) {
     event.preventDefault();
@@ -107,46 +165,25 @@ export function NamesMasterHub() {
         </div>
       ) : null}
 
-      <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-            <tr>
-              <th className="px-3 py-2">Type</th>
-              <th className="px-3 py-2">Name</th>
-              <th className="px-3 py-2">Email</th>
-              <th className="px-3 py-2">Phone</th>
-              <th className="px-3 py-2">QBO ID</th>
-              <th className="px-3 py-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {searchQuery.isLoading ? (
-              <tr><td className="px-3 py-3 text-slate-500" colSpan={6}>Searching…</td></tr>
-            ) : null}
-            {!searchQuery.isLoading && rows.length === 0 ? (
-              <tr><td className="px-3 py-3 text-slate-500" colSpan={6}>No results. Try a search term.</td></tr>
-            ) : null}
-            {rows.map((row) => (
-              <tr key={`${row.entity_type}-${row.entity_id}`} className="border-t border-slate-100">
-                <td className="px-3 py-2 capitalize">{row.entity_type}</td>
-                <td className="px-3 py-2 font-medium">{row.display_name}</td>
-                <td className="px-3 py-2">{row.primary_email ?? "—"}</td>
-                <td className="px-3 py-2">{row.primary_phone ?? "—"}</td>
-                <td className="px-3 py-2">{row.qbo_id ?? "—"}</td>
-                <td className="px-3 py-2">
-                  <button
-                    type="button"
-                    className="rounded-sm border border-slate-300 px-2 py-1 text-xs font-semibold hover:bg-slate-50"
-                    onClick={() => navigate(row.link_to_module_page)}
-                  >
-                    Open
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {searchQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load names"
+          status={searchQuery.error instanceof ApiError ? searchQuery.error.status : 0}
+          message={(searchQuery.error as Error)?.message}
+          onRetry={() => void searchQuery.refetch()}
+        />
+      ) : (
+        <ParityTable<NamesMasterRow>
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => `${row.entity_type}-${row.entity_id}`}
+          loading={searchQuery.isLoading}
+          emptyText="No results. Try a search term."
+          initialPageSize={50}
+          storageKey="names-master-hub"
+          tableTestId="names-master-hub-table"
+        />
+      )}
 
       <div className="flex items-center justify-between text-sm text-slate-600">
         <span>

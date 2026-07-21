@@ -713,7 +713,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/lists/driver/DriverCatalogListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/drivers/DriversReferenceCatalogPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/maintenance/OemPartsCatalog.tsx` | financial-hold |
-| `apps/frontend/src/pages/lists/names/NamesMasterHub.tsx` | financial-hold |
+| `apps/frontend/src/pages/lists/names/NamesMasterHub.tsx` | migrated — read-only navigator results grid to ParityTable + ListErrorState (display-only; Open button preserved); `verify-names-master-hub-uses-paritytable.mjs` via verify-step 1109 |
 
 ### pages/maintenance (18)
 
