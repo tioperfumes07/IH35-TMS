@@ -1,9 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, Download, AlertTriangle } from "lucide-react";
+import { Download, AlertTriangle } from "lucide-react";
 import { listAuditEvents, type AuditEventListItem } from "../../api/audit";
 import { Button } from "../Button";
 import { DatePicker } from "../forms/DatePicker";
+import { ListErrorState } from "../ListErrorState";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 
 interface UserActivityTabProps {
   operatingCompanyId: string;
@@ -48,54 +50,17 @@ function ChangesDiff({ changes }: { changes?: Record<string, { old: unknown; new
   );
 }
 
-function EventRow({ event }: { event: EventWithPayload }) {
-  const [expanded, setExpanded] = useState(false);
-
+function payloadDetail(event: EventWithPayload) {
   return (
-    <>
-      <tr className="border-b hover:bg-gray-50">
-        <td className="px-3 py-2 text-xs whitespace-nowrap">{formatWhen(event.created_at)}</td>
-        <td className="px-3 py-2 text-xs">
-          <span
-            className={`inline-block px-2 py-0.5 rounded text-[10px] font-medium ${
-              event.severity === "error"
-                ? "bg-red-100 text-red-700"
-                : event.severity === "warn"
-                  ? "bg-slate-100 text-slate-700"
-                  : "bg-gray-100 text-gray-700"
-            }`}
-          >
-            {event.event_type}
-          </span>
-        </td>
-        <td className="px-3 py-2 text-xs text-gray-600">{event.summary || "—"}</td>
-        <td className="px-3 py-2 text-xs text-gray-500">{event.source || "—"}</td>
-        <td className="px-3 py-2">
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="p-1 hover:bg-gray-200 rounded-sm"
-            aria-label={expanded ? "Collapse" : "Expand"}
-          >
-            {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </button>
-        </td>
-      </tr>
-      {expanded ? (
-        <tr className="bg-gray-50">
-          <td colSpan={5} className="px-3 py-3">
-            <div className="text-xs">
-              <div className="font-medium text-gray-700 mb-2">Before → After</div>
-              <ChangesDiff changes={event.payload?.changes} />
-              {event.payload?.reason ? (
-                <div className="mt-2 text-gray-600">
-                  <span className="font-medium">Reason:</span> {event.payload.reason}
-                </div>
-              ) : null}
-            </div>
-          </td>
-        </tr>
+    <div className="text-xs">
+      <div className="font-medium text-gray-700 mb-2">Before → After</div>
+      <ChangesDiff changes={event.payload?.changes} />
+      {event.payload?.reason ? (
+        <div className="mt-2 text-gray-600">
+          <span className="font-medium">Reason:</span> {event.payload.reason}
+        </div>
       ) : null}
-    </>
+    </div>
   );
 }
 
@@ -164,6 +129,49 @@ export function UserActivityTab({ operatingCompanyId, userId }: UserActivityTabP
     return Array.from(unique).sort();
   }, [events]);
 
+  const columns: Array<ParityColumn<AuditEventListItem>> = useMemo(
+    () => [
+      {
+        key: "created_at",
+        label: "When",
+        sortable: true,
+        sortValue: (row) => new Date(row.created_at).getTime(),
+        render: (row) => <span className="whitespace-nowrap">{formatWhen(row.created_at)}</span>,
+      },
+      {
+        key: "event_type",
+        label: "Action",
+        sortable: true,
+        render: (row) => (
+          <span
+            className={`inline-block px-2 py-0.5 rounded text-[10px] font-medium ${
+              row.severity === "error"
+                ? "bg-red-100 text-red-700"
+                : row.severity === "warn"
+                  ? "bg-slate-100 text-slate-700"
+                  : "bg-gray-100 text-gray-700"
+            }`}
+          >
+            {row.event_type}
+          </span>
+        ),
+      },
+      {
+        key: "summary",
+        label: "Summary",
+        sortable: true,
+        render: (row) => <span className="text-gray-600">{row.summary || "—"}</span>,
+      },
+      {
+        key: "source",
+        label: "Source",
+        sortable: true,
+        render: (row) => <span className="text-gray-500">{row.source || "—"}</span>,
+      },
+    ],
+    [],
+  );
+
   return (
     <div className="space-y-4" data-testid="user-activity-tab">
       <div className="flex flex-wrap items-center gap-2 p-3 bg-gray-50 rounded-sm border">
@@ -231,31 +239,25 @@ export function UserActivityTab({ operatingCompanyId, userId }: UserActivityTabP
         </Button>
       </div>
 
-      {auditQuery.isLoading ? (
-        <div className="text-sm text-gray-500 p-4">Loading activity...</div>
-      ) : auditQuery.isError ? (
-        <div className="text-sm text-red-600 p-4">Failed to load user activity</div>
-      ) : !events.length ? (
-        <div className="text-sm text-gray-500 p-4">No audit activity found for this user.</div>
+      {auditQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load user activity"
+          status={0}
+          message={(auditQuery.error as Error)?.message ?? "Unable to load user activity."}
+          onRetry={() => void auditQuery.refetch()}
+        />
       ) : (
-        <div className="overflow-x-auto border rounded-sm">
-          <table className="w-full text-left">
-            <thead className="bg-gray-100 border-b">
-              <tr>
-                <th className="px-3 py-2 text-xs font-medium text-gray-700">When</th>
-                <th className="px-3 py-2 text-xs font-medium text-gray-700">Action</th>
-                <th className="px-3 py-2 text-xs font-medium text-gray-700">Summary</th>
-                <th className="px-3 py-2 text-xs font-medium text-gray-700">Source</th>
-                <th className="px-3 py-2 text-xs font-medium text-gray-700 w-8" />
-              </tr>
-            </thead>
-            <tbody>
-              {events.map((event) => (
-                <EventRow key={event.id} event={event as EventWithPayload} />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable
+          rows={events}
+          columns={columns}
+          rowKey={(row) => row.id}
+          loading={auditQuery.isLoading}
+          storageKey="user-activity-tab"
+          emptyText="No audit activity found for this user."
+          tableTestId="user-activity-table"
+          rowTestId={(row) => `user-activity-row-${row.id}`}
+          renderExpanded={(row) => payloadDetail(row as EventWithPayload)}
+        />
       )}
 
       {auditQuery.data && auditQuery.data.total_count > 200 ? (
