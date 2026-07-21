@@ -467,7 +467,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/accounting/EscrowPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/ExpenseCategoryMapPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/FactorReconciliationPage.tsx` | migrated (verify-step 1151) |
-| `apps/frontend/src/pages/accounting/FactorReserveCard.tsx` | financial-hold |
+| `apps/frontend/src/pages/accounting/FactorReserveCard.tsx` | migrated (verify-step 1169) |
 | `apps/frontend/src/pages/accounting/FactoringDetailPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/FactoringListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/FixedAssetsPage.tsx` | migrated (verify-step 1162) — display-only; owner-greenlit UI-only migration; read-only depreciation-schedule table inside DetailPanel modal retained (precedent cited by verify-step 1146 ObligationBlock) |
@@ -484,6 +484,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/accounting/PaymentDetailPage.tsx` | migrated (verify-step 1154) — display-only; owner-greenlit UI-only migration |
 | `apps/frontend/src/pages/accounting/PaymentsListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/PayrollAggregatedPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/accounting/PayrollAggregatedPage.tsx` | migrated (verify-step 1167) — display-only; owner-greenlit UI-only migration; `verify-payroll-aggregated-page-uses-paritytable.mjs` |
 | `apps/frontend/src/pages/accounting/PeriodComparisonPage.tsx` | migrated (verify-step 1141) |
 | `apps/frontend/src/pages/accounting/PrepaidExpensesPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/QBOSyncDriftDashboard.tsx` | migrated (verify-step 1157) |
@@ -531,7 +532,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/banking/TransfersListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/banking/components/BankingPlaidConnectionsPanel.tsx` | migrated (verify-step 1164) — owner-greenlit display-only |
 | `apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx` | financial-hold |
-| `apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx` | financial-hold |
+| `apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx` | migrated (verify-step 1165) — owner-greenlit display-only |
 | `apps/frontend/src/pages/banking/components/RegisterTable.tsx` | financial-hold |
 | `apps/frontend/src/pages/banking/components/forms/BillPaymentForm.tsx` | financial-hold |
 

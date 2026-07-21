@@ -1,12 +1,39 @@
 import { useQuery } from "@tanstack/react-query";
-import { listFactoringReserveBalances } from "../../api/accounting";
+import { listFactoringReserveBalances, type FactorReserveBalance } from "../../api/accounting";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { titleize } from "../../lib/titleize";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
 }
+
+// Display-only ParityTable migration: column order (Customer / Current reserve / Accrued /
+// Released), the money() cents formatter, and the read-only cells are preserved 1:1 from the
+// former hand-rolled table markup. No mutation lives in this table.
+const columns: Array<ParityColumn<FactorReserveBalance>> = [
+  { key: "customer_name", label: "Customer", sortable: true },
+  {
+    key: "reserve_balance_cents",
+    label: "Current reserve",
+    sortable: true,
+    render: (row) => money(row.reserve_balance_cents),
+  },
+  {
+    key: "reserve_accrued_cents",
+    label: "Accrued",
+    sortable: true,
+    render: (row) => money(row.reserve_accrued_cents),
+  },
+  {
+    key: "reserve_released_cents",
+    label: "Released",
+    sortable: true,
+    render: (row) => money(row.reserve_released_cents),
+  },
+];
 
 export function FactorReserveCard({ operatingCompanyId }: { operatingCompanyId: string }) {
   const query = useQuery({
@@ -21,42 +48,24 @@ export function FactorReserveCard({ operatingCompanyId }: { operatingCompanyId: 
   return (
     <div className="grid gap-3 md:grid-cols-2">
       <DataPanel title="Reserve balances by customer">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-gray-200 text-gray-600">
-                <th className="px-2 py-1.5 font-semibold">Customer</th>
-                <th className="px-2 py-1.5 font-semibold">Current reserve</th>
-                <th className="px-2 py-1.5 font-semibold">Accrued</th>
-                <th className="px-2 py-1.5 font-semibold">Released</th>
-              </tr>
-            </thead>
-            <tbody>
-              {query.isLoading ? (
-                <tr>
-                  <td className="px-2 py-2 text-gray-500" colSpan={4}>
-                    Loading reserve balances...
-                  </td>
-                </tr>
-              ) : null}
-              {!query.isLoading && rows.length === 0 ? (
-                <tr>
-                  <td className="px-2 py-2 text-gray-500" colSpan={4}>
-                    No reserve balances yet.
-                  </td>
-                </tr>
-              ) : null}
-              {rows.map((row) => (
-                <tr key={row.customer_id} className="border-b border-gray-100">
-                  <td className="px-2 py-1.5 text-gray-900">{row.customer_name}</td>
-                  <td className="px-2 py-1.5 text-gray-900">{money(row.reserve_balance_cents)}</td>
-                  <td className="px-2 py-1.5 text-gray-700">{money(row.reserve_accrued_cents)}</td>
-                  <td className="px-2 py-1.5 text-gray-700">{money(row.reserve_released_cents)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {query.isError ? (
+          <ListErrorState
+            title="Couldn't load reserve balances"
+            status={0}
+            message={(query.error as Error | undefined)?.message}
+            onRetry={() => void query.refetch()}
+          />
+        ) : (
+          <ParityTable<FactorReserveBalance>
+            columns={columns}
+            rows={rows}
+            rowKey={(row) => row.customer_id}
+            loading={query.isLoading}
+            emptyText="No reserve balances yet."
+            storageKey="accounting-factor-reserve-balances"
+            tableTestId="factor-reserve-balances-table"
+          />
+        )}
       </DataPanel>
 
       <DataPanel title="Latest reserve events">
