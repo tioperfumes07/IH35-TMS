@@ -1829,3 +1829,18 @@ TMS recognizes at delivery, QBO at invoice — the timing gap is a **KNOWN recon
 - `scripts/verify-revenue-recognition-two-event-latch-decisions.mjs`
 - `scripts/verify-steps/936-verify-revenue-recognition-two-event-latch-decisions.mjs` (renumbered off the #2732 step-933 collision with accounting sortable-headers)
 - Fails if locked anchors go missing (two-event latch, HARD Unbilled seed prerequisite before flag flip, reconciliation known-item, unbilled report/linkage, boundary conditions, materiality, maker/checker, TRK exclusion, point-in-time-as-simplification honesty) or if either surface reintroduces a single combined POD+delivered recognition gate.
+
+---
+
+## 2026-07-21 — Load PRE-INVOICE (on book) → OFFICIAL INVOICE (on deliver); TONU fee MANUAL (owner rulings, DESIGN/HOLD)
+
+Owner rulings recorded 2026-07-21 evening. Full design: `docs/specs/DESIGN-load-preinvoice-to-official-invoice-HOLD.md` (DESIGN-only, build-and-HOLD, do-not-merge).
+
+- **Two-event invoice lifecycle:** load **booked → PRE-INVOICE (automatic)** = a **non-posting cash-flow projection** (QuickBooks *Estimate* analogue), **not sent to customer, no GL**; load **delivered → OFFICIAL invoice (automatic)** = the **real A/R invoice, sent to customer**, which carries the ledger posting (reusing the locked two-event revenue latch above — earn @ delivery, bill @ POD). Booking is **not** a revenue-recognition trigger.
+- **Reuse existing poster** (`from-load.ts` `buildInvoiceFromLoad` + `postSourceTransaction`); **no new GL math.**
+- **Broker cancel / TONU fee is NOT automatic** — operator/owner decides per customer. When billed = **accessorial operating revenue** (already ruled); may reuse TONU→AR design (#3103), but the **billing trigger is manual**, never a side effect of `cancelLoad`.
+- **Unmapped invoice line:** designate the revenue **role first (fail-closed)**; default account = **Line Haul / Freight Service** (verify the real account on Neon/TRANSP — do **not** invent). Resolution source of truth = **`accounting.chart_of_accounts_roles` (PRIMARY)**, not legacy `catalogs.account_role_bindings`.
+- **Flags default OFF** (`LOAD_OFFICIAL_INVOICE_ON_DELIVER_ENABLED`, `LOAD_PREINVOICE_PROJECTION_ENABLED`), per-entity override only, TRK excluded; Unbilled Revenue seed (TRANSP/USMCA) is a HARD gate before the official-invoice flag flips.
+- **Reserve accounts: owner-manual only** (owner ruling 2026-07-21, "rule 19") — no reserve-account seeds in this design or its future PR.
+- Recorded for the record (implemented by their own blocks, not this one): **Faro = factor card + `mdata.vendors` row**; **Damage Claim Escrow = long-term liability for books** while noting the **~90-day short-term reality** on separation (tension documented); **SoD** — Owner/Admin/Accountant **may approve AND post** (no hard DB same-user block for those roles); **scope IN** lending/risk, process dashboard, calibration, doc-control, commodity catalog (commodity on invoice), Faro debtor credit-check UI; **scope OUT** OSHA, HTS/tariff, navy→green CTA color changes.
+- **Guard (Rule 17):** future PR adds `scripts/verify-steps/1209..1212-*` (no `package.json`/locked-guards/ci.yml edits) — pre-invoice non-posting, delivered auto-official-invoice, invoice-line role fail-closed, cancel-not-auto-TONU.
