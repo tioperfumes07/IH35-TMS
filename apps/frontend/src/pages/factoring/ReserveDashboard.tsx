@@ -5,9 +5,13 @@ import {
   getReserveBalances,
   getReserveReleaseForecast,
   listFactors,
+  type FactoringReserveBalanceHistoryEntry,
+  type FactoringReserveReleaseForecastPoint,
 } from "../../api/factoring";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useListState } from "../../components/list-state";
 
 const LOOKAHEAD_WINDOWS = [7, 14, 30, 60] as const;
@@ -30,6 +34,49 @@ function asDate(value: string | null | undefined) {
   if (Number.isNaN(date.getTime())) return "-";
   return date.toLocaleDateString();
 }
+
+// Display-only ParityTable columns — 1:1 with the former hand-rolled tables
+// (same column order, same formatting, same sign coloring). No amounts math changed.
+const HISTORY_COLUMNS: Array<ParityColumn<FactoringReserveBalanceHistoryEntry>> = [
+  { key: "created_at", label: "Date", sortable: true, render: (row) => asDateTime(row.created_at) },
+  {
+    key: "signed_amount_cents",
+    label: "Signed Movement",
+    sortable: true,
+    className: "text-right",
+    render: (row) => (
+      <span className={row.signed_amount_cents >= 0 ? "text-slate-700" : "text-red-700"}>
+        {asMoney(row.signed_amount_cents)}
+      </span>
+    ),
+  },
+  {
+    key: "running_balance_cents",
+    label: "Running Balance",
+    sortable: true,
+    className: "text-right",
+    cellClass: "text-right font-medium",
+    render: (row) => asMoney(row.running_balance_cents),
+  },
+];
+
+const FORECAST_COLUMNS: Array<ParityColumn<FactoringReserveReleaseForecastPoint>> = [
+  { key: "release_date", label: "Release Date", sortable: true, render: (row) => asDate(row.release_date) },
+  {
+    key: "projected_release_cents",
+    label: "Projected",
+    sortable: true,
+    className: "text-right",
+    render: (row) => asMoney(row.projected_release_cents),
+  },
+  {
+    key: "source_movement_count",
+    label: "Movements",
+    sortable: true,
+    className: "text-right",
+    render: (row) => row.source_movement_count,
+  },
+];
 
 export function ReserveDashboard() {
   const { selectedCompanyId } = useCompanyContext();
@@ -113,6 +160,30 @@ export function ReserveDashboard() {
   const historyListState = useListState(historyQuery, (historyQuery.data?.movements ?? []).length === 0);
   const forecastListState = useListState(forecast60Query, (forecast60Query.data?.schedule ?? []).length === 0);
 
+  // Recent-movements columns resolve the factor display name, so they depend on the loaded factor map.
+  const movementColumns = useMemo<Array<ParityColumn<FactoringReserveBalanceHistoryEntry>>>(
+    () => [
+      {
+        key: "factor_id",
+        label: "Factor",
+        sortable: true,
+        render: (row) => factorNameById.get(row.factor_id ?? "") ?? "-",
+        sortValue: (row) => factorNameById.get(row.factor_id ?? "") ?? "-",
+      },
+      { key: "created_at", label: "Date", sortable: true, render: (row) => asDateTime(row.created_at) },
+      { key: "reason", label: "Reason", sortable: true, render: (row) => row.reason },
+      { key: "direction", label: "Direction", sortable: true, className: "text-right", render: (row) => row.direction },
+      {
+        key: "amount_cents",
+        label: "Amount",
+        sortable: true,
+        className: "text-right",
+        render: (row) => asMoney(row.amount_cents),
+      },
+    ],
+    [factorNameById],
+  );
+
   return (
     <div className="space-y-3">
       <PageHeader
@@ -157,35 +228,27 @@ export function ReserveDashboard() {
       <div className="grid gap-3 md:grid-cols-2">
         <div className="rounded-sm border border-gray-200 p-3">
           <div className="mb-2 text-sm font-medium text-gray-900">Reserve Balance Over Time</div>
-          <div className="max-h-72 overflow-auto rounded-sm border border-gray-200">
-            <table className="min-w-full divide-y divide-gray-200 text-xs">
-              <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
-                <tr>
-                  <th className="px-2 py-2">Date</th>
-                  <th className="px-2 py-2 text-right">Signed Movement</th>
-                  <th className="px-2 py-2 text-right">Running Balance</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {(historyQuery.data?.movements ?? []).map((row) => (
-                  <tr key={row.id}>
-                    <td className="px-2 py-2">{asDateTime(row.created_at)}</td>
-                    <td className={`px-2 py-2 text-right ${row.signed_amount_cents >= 0 ? "text-slate-700" : "text-red-700"}`}>
-                      {asMoney(row.signed_amount_cents)}
-                    </td>
-                    <td className="px-2 py-2 text-right font-medium">{asMoney(row.running_balance_cents)}</td>
-                  </tr>
-                ))}
-                {historyListState.isLoading || historyListState.isEmpty ? (
-                  <tr>
-                    <td className="px-2 py-3 text-gray-500" colSpan={3}>
-                      {historyQuery.isLoading ? "Loading balance history..." : "No reserve movements found for the selected factor."}
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
+          {historyQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load reserve balance history"
+              status={0}
+              message={(historyQuery.error as Error | undefined)?.message}
+              onRetry={() => void historyQuery.refetch()}
+            />
+          ) : (
+            <ParityTable
+              rows={historyQuery.data?.movements ?? []}
+              columns={HISTORY_COLUMNS}
+              rowKey={(row) => row.id}
+              loading={historyListState.isLoading}
+              storageKey="factoring-reserve-balance-history"
+              tableTestId="factoring-reserve-balance-history-table"
+              pageSizeOptions={[20, 50, 100, 300]}
+              initialPageSize={20}
+              // Settled-only empty text (LIST-EMPTY-1): supplied only once the query settles empty.
+              emptyText={historyListState.isEmpty ? "No reserve movements found for the selected factor." : undefined}
+            />
+          )}
           <div className="mt-2 flex items-center justify-between text-xs text-gray-600">
             <span>
               Page {Math.min(page + 1, totalPages)} of {totalPages}
@@ -222,69 +285,53 @@ export function ReserveDashboard() {
             ))}
           </div>
 
-          <div className="mt-3 max-h-48 overflow-auto rounded-sm border border-gray-200">
-            <table className="min-w-full divide-y divide-gray-200 text-xs">
-              <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
-                <tr>
-                  <th className="px-2 py-2">Release Date</th>
-                  <th className="px-2 py-2 text-right">Projected</th>
-                  <th className="px-2 py-2 text-right">Movements</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {(forecast60Query.data?.schedule ?? []).map((row) => (
-                  <tr key={`${row.release_date}-${row.source_movement_count}`}>
-                    <td className="px-2 py-2">{asDate(row.release_date)}</td>
-                    <td className="px-2 py-2 text-right">{asMoney(row.projected_release_cents)}</td>
-                    <td className="px-2 py-2 text-right">{row.source_movement_count}</td>
-                  </tr>
-                ))}
-                {forecastListState.isLoading || forecastListState.isEmpty ? (
-                  <tr>
-                    <td className="px-2 py-3 text-gray-500" colSpan={3}>
-                      {forecast60Query.isLoading ? "Calculating reserve release forecast..." : "No projected reserve releases in the selected window."}
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
+          <div className="mt-3">
+            {forecast60Query.isError ? (
+              <ListErrorState
+                title="Couldn't load reserve release forecast"
+                status={0}
+                message={(forecast60Query.error as Error | undefined)?.message}
+                onRetry={() => void forecast60Query.refetch()}
+              />
+            ) : (
+              <ParityTable
+                rows={forecast60Query.data?.schedule ?? []}
+                columns={FORECAST_COLUMNS}
+                rowKey={(row) => `${row.release_date}-${row.source_movement_count}`}
+                loading={forecastListState.isLoading}
+                storageKey="factoring-reserve-release-forecast"
+                tableTestId="factoring-reserve-release-forecast-table"
+                pageSizeOptions={[100, 300]}
+                initialPageSize={100}
+                emptyText={forecastListState.isEmpty ? "No projected reserve releases in the selected window." : undefined}
+              />
+            )}
           </div>
         </div>
       </div>
 
       <div className="rounded-sm border border-gray-200 p-3">
         <div className="mb-2 text-sm font-medium text-gray-900">Recent Movements</div>
-        <div className="max-h-64 overflow-auto rounded-sm border border-gray-200">
-          <table className="min-w-full divide-y divide-gray-200 text-xs">
-            <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
-              <tr>
-                <th className="px-2 py-2">Factor</th>
-                <th className="px-2 py-2">Date</th>
-                <th className="px-2 py-2">Reason</th>
-                <th className="px-2 py-2 text-right">Direction</th>
-                <th className="px-2 py-2 text-right">Amount</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {(historyQuery.data?.movements ?? []).map((movement) => (
-                <tr key={movement.id}>
-                  <td className="px-2 py-2">{factorNameById.get(movement.factor_id ?? "") ?? "-"}</td>
-                  <td className="px-2 py-2">{asDateTime(movement.created_at)}</td>
-                  <td className="px-2 py-2">{movement.reason}</td>
-                  <td className="px-2 py-2 text-right">{movement.direction}</td>
-                  <td className="px-2 py-2 text-right">{asMoney(movement.amount_cents)}</td>
-                </tr>
-              ))}
-              {historyListState.isEmpty ? (
-                <tr>
-                  <td className="px-2 py-3 text-gray-500" colSpan={5}>
-                    No recent movements for this factor.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
+        {historyQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load recent reserve movements"
+            status={0}
+            message={(historyQuery.error as Error | undefined)?.message}
+            onRetry={() => void historyQuery.refetch()}
+          />
+        ) : (
+          <ParityTable
+            rows={historyQuery.data?.movements ?? []}
+            columns={movementColumns}
+            rowKey={(movement) => movement.id}
+            loading={historyListState.isLoading}
+            storageKey="factoring-reserve-recent-movements"
+            tableTestId="factoring-reserve-recent-movements-table"
+            pageSizeOptions={[20, 50, 100, 300]}
+            initialPageSize={20}
+            emptyText={historyListState.isEmpty ? "No recent movements for this factor." : undefined}
+          />
+        )}
       </div>
       </div>
     </div>

@@ -1,7 +1,11 @@
 import { useMemo, useState } from "react";
 import { Button } from "../Button";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 
 type PreviewRow = Record<string, string>;
+
+/** Preview rows carry no natural id — index within the parsed preview is the row key. */
+type IndexedPreviewRow = { previewIndex: number; cells: PreviewRow };
 
 type Props = {
   csvText: string;
@@ -51,6 +55,22 @@ export function FaroCSVUploadWidget({
   const preview = useMemo(() => parseCsvPreview(csvText), [csvText]);
   const valid = csvText.trim().length > 0 && preview.errors.length === 0 && preview.rows.length > 0;
 
+  // Display-only ParityTable wiring: columns mirror the CSV headers 1:1 (same order, raw cell
+  // text, no formatting change); rows are keyed by preview index since CSV rows have no id.
+  const previewColumns = useMemo<Array<ParityColumn<IndexedPreviewRow>>>(
+    () =>
+      preview.headers.map((header) => ({
+        key: header,
+        label: header,
+        render: (row: IndexedPreviewRow) => row.cells[header] ?? "",
+      })),
+    [preview.headers],
+  );
+  const previewRows = useMemo<IndexedPreviewRow[]>(
+    () => preview.rows.map((cells, idx) => ({ previewIndex: idx, cells })),
+    [preview.rows],
+  );
+
   return (
     <div className="space-y-3" data-faro-csv-upload="true">
       <div
@@ -84,30 +104,13 @@ export function FaroCSVUploadWidget({
       </div>
 
       {preview.headers.length > 0 ? (
-        <div className="overflow-x-auto rounded-sm border border-gray-200">
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-gray-50">
-              <tr>
-                {preview.headers.map((header) => (
-                  <th key={header} className="px-2 py-1">
-                    {header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {preview.rows.map((row, idx) => (
-                <tr key={idx} className="border-t border-gray-100">
-                  {preview.headers.map((header) => (
-                    <td key={header} className="px-2 py-1">
-                      {row[header] ?? ""}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable<IndexedPreviewRow>
+          columns={previewColumns}
+          rows={previewRows}
+          rowKey={(row) => String(row.previewIndex)}
+          tableTestId="faro-csv-upload-preview-table"
+          emptyText="No preview rows parsed."
+        />
       ) : null}
 
       {preview.errors.length > 0 ? (

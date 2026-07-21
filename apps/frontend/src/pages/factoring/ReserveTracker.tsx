@@ -23,7 +23,12 @@ import {
   getReserveReleaseForecast,
   listFactors,
   listFactoringBatches,
+  type FactoringChargebackFeeRow,
+  type FactoringReserveBalanceHistoryEntry,
+  type FactoringReserveReleaseForecastPoint,
 } from "../../api/factoring";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
@@ -86,6 +91,79 @@ function KpiCard({
   }
   return <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">{content}</div>;
 }
+
+// ─── ParityTable columns (display-only; order/format preserved 1:1) ──────────
+
+const FORECAST_COLUMNS: Array<ParityColumn<FactoringReserveReleaseForecastPoint>> = [
+  { key: "release_date", label: "Release Date", sortable: true, render: (row) => fmtD(row.release_date) },
+  {
+    key: "projected_release_cents",
+    label: "Projected Amount",
+    sortable: true,
+    className: "text-right",
+    cellClass: "text-right font-medium text-slate-700",
+    render: (row) => fmtM(row.projected_release_cents),
+  },
+  {
+    key: "source_movement_count",
+    label: "Source Movements",
+    sortable: true,
+    className: "text-right",
+  },
+];
+
+const HISTORY_COLUMNS: Array<ParityColumn<FactoringReserveBalanceHistoryEntry>> = [
+  { key: "created_at", label: "Date", sortable: true, render: (row) => fmtDt(row.created_at) },
+  { key: "reason", label: "Reason", sortable: true },
+  {
+    key: "signed_amount_cents",
+    label: "Movement",
+    sortable: true,
+    className: "text-right",
+    render: (row) => (
+      <span className={`font-medium ${row.signed_amount_cents >= 0 ? "text-slate-700" : "text-red-700"}`}>
+        {fmtM(row.signed_amount_cents)}
+      </span>
+    ),
+  },
+  {
+    key: "running_balance_cents",
+    label: "Running Balance",
+    sortable: true,
+    className: "text-right",
+    render: (row) => fmtM(row.running_balance_cents),
+  },
+];
+
+const CHARGEBACK_COLUMNS: Array<ParityColumn<FactoringChargebackFeeRow>> = [
+  { key: "created_at", label: "Date", sortable: true, render: (row) => fmtD(row.created_at) },
+  {
+    key: "factoring_advance_id",
+    label: "Advance",
+    render: (row) => (
+      <EntityLink
+        kind="factoring_advance"
+        id={row.factoring_advance_id}
+        label={row.statement_reference || row.factoring_advance_id.slice(0, 8)}
+      />
+    ),
+  },
+  {
+    key: "chargeback_amount",
+    label: "Chargeback",
+    sortable: true,
+    className: "text-right",
+    cellClass: "text-right text-red-700",
+    render: (row) => (row.chargeback_amount > 0 ? fmtM(row.chargeback_amount) : "—"),
+  },
+  {
+    key: "factor_fee_amount",
+    label: "Fee",
+    sortable: true,
+    className: "text-right",
+    render: (row) => (row.factor_fee_amount > 0 ? fmtM(row.factor_fee_amount) : "—"),
+  },
+];
 
 // ─── component ────────────────────────────────────────────────────────────────
 
@@ -312,35 +390,23 @@ export function ReserveTracker() {
         </div>
 
         {/* Forecast schedule table */}
-        <div className="max-h-56 overflow-x-auto rounded-sm border border-gray-200">
-          <table className="min-w-full divide-y divide-gray-200 text-xs">
-            <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
-              <tr>
-                <th className="px-2 py-2">Release Date</th>
-                <th className="px-2 py-2 text-right">Projected Amount</th>
-                <th className="px-2 py-2 text-right">Source Movements</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {(fc60.data?.schedule ?? []).map((row) => (
-                <tr key={`${row.release_date}-${row.source_movement_count}`}>
-                  <td className="px-2 py-2">{fmtD(row.release_date)}</td>
-                  <td className="px-2 py-2 text-right font-medium text-slate-700">
-                    {fmtM(row.projected_release_cents)}
-                  </td>
-                  <td className="px-2 py-2 text-right">{row.source_movement_count}</td>
-                </tr>
-              ))}
-              {(fc60.data?.schedule ?? []).length === 0 ? (
-                <tr>
-                  <td className="px-2 py-4 text-center text-gray-500" colSpan={3}>
-                    {fc60.isLoading ? "Calculating…" : "No projected releases in the next 60 days."}
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
+        {fc60.isError ? (
+          <ListErrorState
+            title="Couldn't load release forecast"
+            status={0}
+            message={(fc60.error as Error)?.message}
+            onRetry={() => void fc60.refetch()}
+          />
+        ) : (
+          <ParityTable<FactoringReserveReleaseForecastPoint>
+            columns={FORECAST_COLUMNS}
+            rows={fc60.data?.schedule ?? []}
+            rowKey={(row) => `${row.release_date}-${row.source_movement_count}`}
+            storageKey="factoring-reserve-forecast-schedule"
+            tableTestId="reserve-forecast-schedule-table"
+            emptyText={fc60.isLoading ? "Calculating…" : "No projected releases in the next 60 days."}
+          />
+        )}
       </div>
 
       {/* Per-factor reserve balances */}
@@ -377,103 +443,77 @@ export function ReserveTracker() {
           <div className="mb-2 text-sm font-semibold text-gray-800">
             Reserve Movement History — {factorNameById.get(selectedFactorId) ?? selectedFactorId.slice(0, 8)}
           </div>
-          <div className="max-h-64 overflow-x-auto rounded-sm border border-gray-200">
-            <table className="min-w-full divide-y divide-gray-200 text-xs">
-              <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
-                <tr>
-                  <th className="px-2 py-2">Date</th>
-                  <th className="px-2 py-2">Reason</th>
-                  <th className="px-2 py-2 text-right">Movement</th>
-                  <th className="px-2 py-2 text-right">Running Balance</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {(historyQ.data?.movements ?? []).map((row) => (
-                  <tr key={row.id}>
-                    <td className="px-2 py-2">{fmtDt(row.created_at)}</td>
-                    <td className="px-2 py-2">{row.reason}</td>
-                    <td
-                      className={`px-2 py-2 text-right font-medium ${
-                        row.signed_amount_cents >= 0 ? "text-slate-700" : "text-red-700"
-                      }`}
-                    >
-                      {fmtM(row.signed_amount_cents)}
-                    </td>
-                    <td className="px-2 py-2 text-right">{fmtM(row.running_balance_cents)}</td>
-                  </tr>
-                ))}
-                {(historyQ.data?.movements ?? []).length === 0 ? (
-                  <tr>
-                    <td className="px-2 py-4 text-center text-gray-500" colSpan={4}>
-                      {historyQ.isLoading ? "Loading…" : "No movements recorded for this factor."}
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
-          <div className="mt-2 flex items-center justify-between text-xs text-gray-600">
-            <span>
-              Page {Math.min(histPage + 1, totalHistPages)} of {totalHistPages}
-            </span>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-40"
-                onClick={() => setHistPage((p) => Math.max(0, p - 1))}
-                disabled={histPage <= 0}
-              >
-                Prev
-              </button>
-              <button
-                type="button"
-                className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-40"
-                onClick={() => setHistPage((p) => Math.min(totalHistPages - 1, p + 1))}
-                disabled={histPage >= totalHistPages - 1}
-              >
-                Next
-              </button>
-            </div>
-          </div>
+          {historyQ.isError ? (
+            <ListErrorState
+              title="Couldn't load reserve movement history"
+              status={0}
+              message={(historyQ.error as Error)?.message}
+              onRetry={() => void historyQ.refetch()}
+            />
+          ) : (
+            <>
+              <ParityTable<FactoringReserveBalanceHistoryEntry>
+                columns={HISTORY_COLUMNS}
+                rows={historyQ.data?.movements ?? []}
+                rowKey={(row) => row.id}
+                loading={historyQ.isLoading}
+                storageKey="factoring-reserve-movement-history"
+                tableTestId="reserve-movement-history-table"
+                emptyText="No movements recorded for this factor."
+                initialPageSize={PAGE_SIZE}
+                pageSizeOptions={[PAGE_SIZE]}
+              />
+              {/* Server-side pager (histPage drives the API offset) — handlers unchanged. */}
+              <div className="mt-2 flex items-center justify-between text-xs text-gray-600">
+                <span>
+                  Page {Math.min(histPage + 1, totalHistPages)} of {totalHistPages}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-40"
+                    onClick={() => setHistPage((p) => Math.max(0, p - 1))}
+                    disabled={histPage <= 0}
+                  >
+                    Prev
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-40"
+                    onClick={() => setHistPage((p) => Math.min(totalHistPages - 1, p + 1))}
+                    disabled={histPage >= totalHistPages - 1}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       ) : null}
 
       {/* Chargebacks pending detail */}
-      {(chargebacksQ.data?.history ?? []).length > 0 ? (
+      {chargebacksQ.isError ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="mb-2 text-sm font-semibold text-gray-800">Chargeback + Fee History</div>
-          <div className="max-h-48 overflow-x-auto rounded-sm border border-gray-200">
-            <table className="min-w-full divide-y divide-gray-200 text-xs">
-              <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
-                <tr>
-                  <th className="px-2 py-2">Date</th>
-                  <th className="px-2 py-2">Advance</th>
-                  <th className="px-2 py-2 text-right">Chargeback</th>
-                  <th className="px-2 py-2 text-right">Fee</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {(chargebacksQ.data?.history ?? []).slice(0, 50).map((row) => (
-                  <tr key={row.factoring_advance_id + row.created_at}>
-                    <td className="px-2 py-2">{fmtD(row.created_at)}</td>
-                    <td className="px-2 py-2">
-                      <EntityLink
-                        kind="factoring_advance"
-                        id={row.factoring_advance_id}
-                        label={row.statement_reference || row.factoring_advance_id.slice(0, 8)}
-                      />
-                    </td>
-                    <td className="px-2 py-2 text-right text-red-700">
-                      {row.chargeback_amount > 0 ? fmtM(row.chargeback_amount) : "—"}
-                    </td>
-                    <td className="px-2 py-2 text-right">
-                      {row.factor_fee_amount > 0 ? fmtM(row.factor_fee_amount) : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ListErrorState
+            title="Couldn't load chargeback + fee history"
+            status={0}
+            message={(chargebacksQ.error as Error)?.message}
+            onRetry={() => void chargebacksQ.refetch()}
+          />
+        </div>
+      ) : (chargebacksQ.data?.history ?? []).length > 0 ? (
+        <div className="rounded-sm border border-gray-200 bg-white p-3">
+          <div className="mb-2 text-sm font-semibold text-gray-800">Chargeback + Fee History</div>
+          <ParityTable<FactoringChargebackFeeRow>
+            columns={CHARGEBACK_COLUMNS}
+            rows={(chargebacksQ.data?.history ?? []).slice(0, 50)}
+            rowKey={(row) => row.factoring_advance_id + row.created_at}
+            storageKey="factoring-chargeback-fee-history"
+            tableTestId="chargeback-fee-history-table"
+            emptyText="No chargebacks or fees recorded."
+          />
         </div>
       ) : null}
     </div>

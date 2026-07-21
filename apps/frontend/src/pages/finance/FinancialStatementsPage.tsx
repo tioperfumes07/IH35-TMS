@@ -3,6 +3,8 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { BasisSelector, type AccountingBasis } from "../../components/accounting/BasisSelector";
@@ -76,6 +78,89 @@ function AccountCell({ code, name }: { code: string; name: string }) {
     </Link>
   );
 }
+
+// Both AccountingProfitLossLine and AccountingBalanceSheetLine share this shape.
+type StatementLine = {
+  account_id?: string;
+  account_code: string;
+  account_name: string;
+  account_type: string;
+  amount: number;
+};
+
+function statementColumns(showType: boolean): Array<ParityColumn<StatementLine>> {
+  const columns: Array<ParityColumn<StatementLine>> = [
+    {
+      key: "account_code",
+      label: "Account #",
+      sortable: true,
+      render: (line) => <span className="font-medium text-slate-900">{line.account_code || "—"}</span>,
+    },
+    {
+      key: "account_name",
+      label: "Account",
+      sortable: true,
+      render: (line) => <AccountCell code={line.account_code} name={line.account_name} />,
+    },
+  ];
+  if (showType) {
+    columns.push({
+      key: "account_type",
+      label: "Type",
+      sortable: true,
+      render: (line) => line.account_type || "—",
+    });
+  }
+  columns.push({
+    key: "amount",
+    label: "Amount",
+    sortable: true,
+    className: "text-right",
+    cellClass: "text-right",
+    render: (line) => money(line.amount),
+  });
+  return columns;
+}
+
+const TRIAL_BALANCE_COLUMNS: Array<ParityColumn<AccountingTrialBalanceRow>> = [
+  {
+    key: "account_code",
+    label: "Account #",
+    sortable: true,
+    render: (row) => <span className="font-medium text-slate-900">{row.account_code || "—"}</span>,
+  },
+  {
+    key: "account_name",
+    label: "Account",
+    sortable: true,
+    render: (row) => <AccountCell code={row.account_code} name={row.account_name} />,
+  },
+  { key: "account_type", label: "Type", sortable: true, render: (row) => row.account_type || "—" },
+  {
+    key: "total_debits",
+    label: "Debits",
+    sortable: true,
+    className: "text-right",
+    cellClass: "text-right",
+    render: (row) => money(row.total_debits),
+  },
+  {
+    key: "total_credits",
+    label: "Credits",
+    sortable: true,
+    className: "text-right",
+    cellClass: "text-right",
+    render: (row) => money(row.total_credits),
+  },
+  {
+    key: "net_balance",
+    label: "Net",
+    sortable: true,
+    className: "text-right",
+    cellClass: "text-right",
+    render: (row) => <span className={row.net_balance < 0 ? "text-rose-700" : "text-slate-900"}>{money(row.net_balance)}</span>,
+  },
+];
 
 export function FinancialStatementsPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -287,7 +372,14 @@ export function FinancialStatementsPage() {
       {/* PROFIT & LOSS */}
       {tab === "pl" ? (
         <div className="space-y-3">
-          {plQuery.isError ? <p className="text-sm text-red-600">Could not load profit &amp; loss.</p> : null}
+          {plQuery.isError ? (
+            <ListErrorState
+              title="Could not load profit & loss."
+              status={0}
+              message={(plQuery.error as Error)?.message}
+              onRetry={() => void plQuery.refetch()}
+            />
+          ) : null}
           {plQuery.isLoading ? <p className="text-sm text-slate-500">Loading…</p> : null}
           {plQuery.data ? (
             <>
@@ -301,25 +393,18 @@ export function FinancialStatementsPage() {
                 />
               </div>
               {[
-                { key: "revenue", title: "Revenue", lines: plRevenue, total: plQuery.data.revenue.total },
-                { key: "cogs", title: "Cost of goods sold", lines: plCogs, total: plQuery.data.cogs.total },
-                { key: "expenses", title: "Operating expenses", lines: plExpenses, total: plQuery.data.operating_expenses.total },
+                { key: "revenue", title: "Revenue", lines: plRevenue, total: plQuery.data.revenue.total, storageKey: "fin19-pl-revenue" },
+                { key: "cogs", title: "Cost of goods sold", lines: plCogs, total: plQuery.data.cogs.total, storageKey: "fin19-pl-cogs" },
+                { key: "expenses", title: "Operating expenses", lines: plExpenses, total: plQuery.data.operating_expenses.total, storageKey: "fin19-pl-expenses" },
               ].map((section) => (
-                <StatementTable
+                <StatementSection
                   key={section.key}
                   title={section.title}
-                  head={["Account #", "Account", "Type", "Amount"]}
-                  totalLabel="Section total"
-                  totalValue={money(section.total)}
-                  emptyColSpan={4}
-                  rows={section.lines.map((line) => (
-                    <tr key={`${section.key}-${line.account_code}-${line.account_name}`} className="border-b border-slate-100">
-                      <td className="px-3 py-2 font-medium text-slate-900">{line.account_code || "—"}</td>
-                      <td className="px-3 py-2"><AccountCell code={line.account_code} name={line.account_name} /></td>
-                      <td className="px-3 py-2">{line.account_type || "—"}</td>
-                      <td className="px-3 py-2 text-right">{money(line.amount)}</td>
-                    </tr>
-                  ))}
+                  storageKey={section.storageKey}
+                  tableTestId={`fin19-pl-${section.key}-table`}
+                  showType
+                  lines={section.lines}
+                  footerRows={[{ label: "Section total", value: money(section.total) }]}
                 />
               ))}
               <div className="rounded-sm border border-slate-200 bg-white px-3 py-2">
@@ -336,7 +421,14 @@ export function FinancialStatementsPage() {
       {/* BALANCE SHEET */}
       {tab === "bs" ? (
         <div className="space-y-3">
-          {bsQuery.isError ? <p className="text-sm text-red-600">Could not load balance sheet.</p> : null}
+          {bsQuery.isError ? (
+            <ListErrorState
+              title="Could not load balance sheet."
+              status={0}
+              message={(bsQuery.error as Error)?.message}
+              onRetry={() => void bsQuery.refetch()}
+            />
+          ) : null}
           {bsQuery.isLoading ? <p className="text-sm text-slate-500">Loading…</p> : null}
           {bsQuery.data ? (
             <>
@@ -349,69 +441,33 @@ export function FinancialStatementsPage() {
                   tone={bsQuery.data.balanced ? "positive" : "negative"}
                 />
               </div>
-              <StatementTable
+              <StatementSection
                 title="Assets"
-                head={["Account #", "Account", "Amount"]}
-                totalLabel="Total assets"
-                totalValue={money(bsQuery.data.assets.total)}
-                emptyColSpan={3}
-                rows={bsAssets.map((line) => (
-                  <tr key={`asset-${line.account_code}-${line.account_name}`} className="border-b border-slate-100">
-                    <td className="px-3 py-2 font-medium text-slate-900">{line.account_code || "—"}</td>
-                    <td className="px-3 py-2"><AccountCell code={line.account_code} name={line.account_name} /></td>
-                    <td className="px-3 py-2 text-right">{money(line.amount)}</td>
-                  </tr>
-                ))}
+                storageKey="fin19-bs-assets"
+                tableTestId="fin19-bs-assets-table"
+                showType={false}
+                lines={bsAssets}
+                footerRows={[{ label: "Total assets", value: money(bsQuery.data.assets.total) }]}
               />
-              <StatementTable
+              <StatementSection
                 title="Liabilities"
-                head={["Account #", "Account", "Amount"]}
-                totalLabel="Total liabilities"
-                totalValue={money(bsQuery.data.liabilities.total)}
-                emptyColSpan={3}
-                rows={bsLiabilities.map((line) => (
-                  <tr key={`liability-${line.account_code}-${line.account_name}`} className="border-b border-slate-100">
-                    <td className="px-3 py-2 font-medium text-slate-900">{line.account_code || "—"}</td>
-                    <td className="px-3 py-2"><AccountCell code={line.account_code} name={line.account_name} /></td>
-                    <td className="px-3 py-2 text-right">{money(line.amount)}</td>
-                  </tr>
-                ))}
+                storageKey="fin19-bs-liabilities"
+                tableTestId="fin19-bs-liabilities-table"
+                showType={false}
+                lines={bsLiabilities}
+                footerRows={[{ label: "Total liabilities", value: money(bsQuery.data.liabilities.total) }]}
               />
-              <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
-                <div className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold">Equity</div>
-                <table className="min-w-full text-left text-xs">
-                  <thead className="border-b border-slate-200 bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
-                    <tr>
-                      <th className="px-3 py-2">Account #</th>
-                      <th className="px-3 py-2">Account</th>
-                      <th className="px-3 py-2 text-right">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {bsEquity.length === 0 ? (
-                      <tr>
-                        <td colSpan={3} className="px-3 py-4 text-slate-500">No rows</td>
-                      </tr>
-                    ) : (
-                      bsEquity.map((line) => (
-                        <tr key={`equity-${line.account_code}-${line.account_name}`} className="border-b border-slate-100">
-                          <td className="px-3 py-2 font-medium text-slate-900">{line.account_code || "—"}</td>
-                          <td className="px-3 py-2"><AccountCell code={line.account_code} name={line.account_name} /></td>
-                          <td className="px-3 py-2 text-right">{money(line.amount)}</td>
-                        </tr>
-                      ))
-                    )}
-                    <tr className="bg-slate-50 font-semibold">
-                      <td colSpan={2} className="px-3 py-2 text-right">Current year earnings</td>
-                      <td className="px-3 py-2 text-right">{money(bsQuery.data.equity.current_year_earnings)}</td>
-                    </tr>
-                    <tr className="bg-slate-50 font-semibold">
-                      <td colSpan={2} className="px-3 py-2 text-right">Total equity</td>
-                      <td className="px-3 py-2 text-right">{money(bsQuery.data.equity.total)}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <StatementSection
+                title="Equity"
+                storageKey="fin19-bs-equity"
+                tableTestId="fin19-bs-equity-table"
+                showType={false}
+                lines={bsEquity}
+                footerRows={[
+                  { label: "Current year earnings", value: money(bsQuery.data.equity.current_year_earnings) },
+                  { label: "Total equity", value: money(bsQuery.data.equity.total) },
+                ]}
+              />
             </>
           ) : null}
         </div>
@@ -420,7 +476,14 @@ export function FinancialStatementsPage() {
       {/* TRIAL BALANCE */}
       {tab === "tb" ? (
         <div className="space-y-3">
-          {tbQuery.isError ? <p className="text-sm text-red-600">Could not load trial balance.</p> : null}
+          {tbQuery.isError ? (
+            <ListErrorState
+              title="Could not load trial balance."
+              status={0}
+              message={(tbQuery.error as Error)?.message}
+              onRetry={() => void tbQuery.refetch()}
+            />
+          ) : null}
           {tbQuery.data?.summary ? (
             <div className="grid gap-2 md:grid-cols-3">
               <SummaryCard label="Grand total debits" value={money(tbQuery.data.summary.grand_total_debits)} />
@@ -432,49 +495,24 @@ export function FinancialStatementsPage() {
               />
             </div>
           ) : null}
-          <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
-            <table className="min-w-full text-left text-xs">
-              <thead className="border-b border-slate-200 bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
-                <tr>
-                  <th className="px-3 py-2">Account #</th>
-                  <th className="px-3 py-2">Account</th>
-                  <th className="px-3 py-2">Type</th>
-                  <th className="px-3 py-2 text-right">Debits</th>
-                  <th className="px-3 py-2 text-right">Credits</th>
-                  <th className="px-3 py-2 text-right">Net</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tbQuery.isLoading ? (
-                  <tr>
-                    <td colSpan={6} className="px-3 py-4 text-slate-500">Loading…</td>
-                  </tr>
-                ) : null}
-                {!tbQuery.isLoading && tbRows.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-3 py-4 text-slate-500">No rows</td>
-                  </tr>
-                ) : null}
-                {tbRows.map((row) => (
-                  <tr key={row.account_id} className="border-b border-slate-100">
-                    <td className="px-3 py-2 font-medium text-slate-900">{row.account_code || "—"}</td>
-                    <td className="px-3 py-2"><AccountCell code={row.account_code} name={row.account_name} /></td>
-                    <td className="px-3 py-2">{row.account_type || "—"}</td>
-                    <td className="px-3 py-2 text-right">{money(row.total_debits)}</td>
-                    <td className="px-3 py-2 text-right">{money(row.total_credits)}</td>
-                    <td className={`px-3 py-2 text-right ${row.net_balance < 0 ? "text-rose-700" : "text-slate-900"}`}>{money(row.net_balance)}</td>
-                  </tr>
-                ))}
-                {tbQuery.data?.summary ? (
-                  <tr className="bg-slate-50 font-semibold">
-                    <td colSpan={3} className="px-3 py-2 text-right">Grand total</td>
-                    <td className="px-3 py-2 text-right">{money(tbQuery.data.summary.grand_total_debits)}</td>
-                    <td className="px-3 py-2 text-right">{money(tbQuery.data.summary.grand_total_credits)}</td>
-                    <td className="px-3 py-2" />
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
+          <div>
+            <ParityTable
+              columns={TRIAL_BALANCE_COLUMNS}
+              rows={tbRows}
+              rowKey={(row) => row.account_id}
+              loading={tbQuery.isLoading}
+              emptyText="No rows"
+              storageKey="fin19-trial-balance"
+              tableTestId="fin19-trial-balance-table"
+              initialPageSize={300}
+            />
+            {tbQuery.data?.summary ? (
+              <div className="mt-1 flex items-center justify-end gap-6 rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
+                <span>Grand total</span>
+                <span>Debits {money(tbQuery.data.summary.grand_total_debits)}</span>
+                <span>Credits {money(tbQuery.data.summary.grand_total_credits)}</span>
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -493,48 +531,45 @@ function SummaryCard({ label, value, tone }: { label: string; value: string; ton
   );
 }
 
-function StatementTable({
+// Display-only ParityTable wrapper for one statement section: title strip + ParityTable +
+// the pre-migration total/footer rows preserved 1:1 (same labels, same money() values).
+function StatementSection({
   title,
-  head,
-  rows,
-  totalLabel,
-  totalValue,
-  emptyColSpan,
+  storageKey,
+  tableTestId,
+  showType,
+  lines,
+  footerRows,
 }: {
   title: string;
-  head: string[];
-  rows: React.ReactNode[];
-  totalLabel: string;
-  totalValue: string;
-  emptyColSpan: number;
+  storageKey: string;
+  tableTestId: string;
+  showType: boolean;
+  lines: StatementLine[];
+  footerRows: Array<{ label: string; value: string }>;
 }) {
+  const columns = useMemo(() => statementColumns(showType), [showType]);
   return (
-    <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
-      <div className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold">{title}</div>
-      <table className="min-w-full text-left text-xs">
-        <thead className="border-b border-slate-200 bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
-          <tr>
-            {head.map((h, i) => (
-              <th key={h} className={`px-3 py-2 ${i === head.length - 1 ? "text-right" : ""}`}>
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.length === 0 ? (
-            <tr>
-              <td colSpan={emptyColSpan} className="px-3 py-4 text-slate-500">No rows</td>
-            </tr>
-          ) : (
-            rows
-          )}
-          <tr className="bg-slate-50 font-semibold">
-            <td colSpan={emptyColSpan - 1} className="px-3 py-2 text-right">{totalLabel}</td>
-            <td className="px-3 py-2 text-right">{totalValue}</td>
-          </tr>
-        </tbody>
-      </table>
+    <div>
+      <div className="rounded-t-sm border border-b-0 border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold">{title}</div>
+      <ParityTable
+        columns={columns}
+        rows={lines}
+        rowKey={(line) => `${line.account_code}-${line.account_name}`}
+        emptyText="No rows"
+        storageKey={storageKey}
+        tableTestId={tableTestId}
+        initialPageSize={300}
+      />
+      {footerRows.map((row) => (
+        <div
+          key={row.label}
+          className="mt-1 flex items-center justify-end gap-6 rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700"
+        >
+          <span>{row.label}</span>
+          <span>{row.value}</span>
+        </div>
+      ))}
     </div>
   );
 }
