@@ -1,9 +1,11 @@
 import { formatDateUS } from "../../../lib/formatDate";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { ConfirmModal } from "../../../components/shared/ConfirmModal";
+import { ListErrorState } from "../../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ArrowLeft, RefreshCw, ToggleLeft, Zap } from "lucide-react";
 import {
   listRecurringBillTemplates,
@@ -67,6 +69,104 @@ export function RecurringBillList() {
 
   const templates: RecurringBillTemplate[] = templatesQuery.data?.rows ?? [];
 
+  // Display-only ParityTable migration: column order, amount formatting (money → USD currency),
+  // date formatting, badges, and the Generate-now / Deactivate inline action handlers are
+  // preserved 1:1 from the former hand-rolled table markup.
+  const columns = useMemo<ParityColumn<RecurringBillTemplate>[]>(
+    () => [
+      {
+        key: "template_name",
+        label: "Template Name",
+        sortable: true,
+        cellClass: "font-medium text-gray-900",
+        render: (tmpl) => tmpl.template_name,
+      },
+      {
+        key: "vendor_uuid",
+        label: "Vendor",
+        cellClass: "font-mono text-xs",
+        sortValue: (tmpl) => tmpl.vendor_name ?? tmpl.vendor_uuid,
+        render: (tmpl) => (
+          <EntityLink kind="vendor" id={tmpl.vendor_uuid} label={tmpl.vendor_name ?? (tmpl.vendor_uuid.slice(0, 8) + "…")} />
+        ),
+      },
+      {
+        key: "frequency",
+        label: "Frequency",
+        sortable: true,
+        cellClass: "text-gray-700",
+        render: (tmpl) => frequencyLabel(tmpl.frequency),
+      },
+      {
+        key: "next_generation_date",
+        label: "Next Date",
+        sortable: true,
+        cellClass: "text-gray-700",
+        render: (tmpl) => formatDateUS(tmpl.next_generation_date),
+      },
+      {
+        key: "amount",
+        label: "Amount",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right font-medium text-gray-900",
+        sortValue: (tmpl) => Number(tmpl.amount),
+        render: (tmpl) => money(tmpl.amount),
+      },
+      {
+        key: "auto_post",
+        label: "Auto-Post",
+        className: "text-center",
+        cellClass: "text-center",
+        render: (tmpl) =>
+          tmpl.auto_post ? (
+            <span className="text-xs font-medium text-slate-700">Yes</span>
+          ) : (
+            <span className="text-xs text-gray-400">No</span>
+          ),
+      },
+      {
+        key: "is_active",
+        label: "Status",
+        className: "text-center",
+        cellClass: "text-center",
+        render: (tmpl) => statusBadge(tmpl.is_active),
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        alwaysVisible: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (tmpl) => (
+          <div className="flex items-center justify-end gap-2">
+            {tmpl.is_active && (
+              <>
+                <button
+                  title="Generate bill now"
+                  disabled={generateNowMutation.isPending}
+                  onClick={() => generateNowMutation.mutate(tmpl.uuid)}
+                  className="rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-slate-700 disabled:opacity-50"
+                >
+                  <Zap className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  title="Deactivate template"
+                  disabled={deactivateMutation.isPending}
+                  onClick={() => setDeactivateTarget({ uuid: tmpl.uuid, name: tmpl.template_name })}
+                  className="rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-red-600 disabled:opacity-50"
+                >
+                  <ToggleLeft className="h-3.5 w-3.5" />
+                </button>
+              </>
+            )}
+          </div>
+        ),
+      },
+    ],
+    [generateNowMutation, deactivateMutation],
+  );
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 text-xs text-gray-500">
@@ -113,12 +213,15 @@ export function RecurringBillList() {
       )}
 
       {templatesQuery.isError && (
-        <div className="rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          Failed to load recurring templates.
-        </div>
+        <ListErrorState
+          title="Couldn't load recurring templates"
+          status={0}
+          message={(templatesQuery.error as Error | undefined)?.message}
+          onRetry={() => void templatesQuery.refetch()}
+        />
       )}
 
-      {!templatesQuery.isLoading && templates.length === 0 && (
+      {!templatesQuery.isLoading && !templatesQuery.isError && templates.length === 0 && (
         <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 px-6 py-10 text-center">
           <p className="text-sm text-gray-500">No recurring bill templates yet.</p>
           <button
@@ -131,65 +234,13 @@ export function RecurringBillList() {
       )}
 
       {templates.length > 0 && (
-        <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-          <table className="min-w-full divide-y divide-gray-100 text-sm">
-            <thead>
-              <tr className="bg-gray-50 text-xs font-medium uppercase tracking-wide text-gray-500">
-                <th className="px-4 py-2 text-left">Template Name</th>
-                <th className="px-4 py-2 text-left">Vendor</th>
-                <th className="px-4 py-2 text-left">Frequency</th>
-                <th className="px-4 py-2 text-left">Next Date</th>
-                <th className="px-4 py-2 text-right">Amount</th>
-                <th className="px-4 py-2 text-center">Auto-Post</th>
-                <th className="px-4 py-2 text-center">Status</th>
-                <th className="px-4 py-2 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {templates.map((tmpl) => (
-                <tr key={tmpl.uuid} className="hover:bg-gray-50">
-                  <td className="px-4 py-2 font-medium text-gray-900">{tmpl.template_name}</td>
-                  <td className="px-4 py-2 font-mono text-xs"><EntityLink kind="vendor" id={tmpl.vendor_uuid} label={tmpl.vendor_name ?? (tmpl.vendor_uuid.slice(0, 8) + "…")} /></td>
-                  <td className="px-4 py-2 text-gray-700">{frequencyLabel(tmpl.frequency)}</td>
-                  <td className="px-4 py-2 text-gray-700">{formatDateUS(tmpl.next_generation_date)}</td>
-                  <td className="px-4 py-2 text-right font-medium text-gray-900">{money(tmpl.amount)}</td>
-                  <td className="px-4 py-2 text-center">
-                    {tmpl.auto_post ? (
-                      <span className="text-xs font-medium text-slate-700">Yes</span>
-                    ) : (
-                      <span className="text-xs text-gray-400">No</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-2 text-center">{statusBadge(tmpl.is_active)}</td>
-                  <td className="px-4 py-2">
-                    <div className="flex items-center justify-end gap-2">
-                      {tmpl.is_active && (
-                        <>
-                          <button
-                            title="Generate bill now"
-                            disabled={generateNowMutation.isPending}
-                            onClick={() => generateNowMutation.mutate(tmpl.uuid)}
-                            className="rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-slate-700 disabled:opacity-50"
-                          >
-                            <Zap className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            title="Deactivate template"
-                            disabled={deactivateMutation.isPending}
-                            onClick={() => setDeactivateTarget({ uuid: tmpl.uuid, name: tmpl.template_name })}
-                            className="rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-red-600 disabled:opacity-50"
-                          >
-                            <ToggleLeft className="h-3.5 w-3.5" />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable
+          columns={columns}
+          rows={templates}
+          rowKey={(tmpl) => tmpl.uuid}
+          storageKey="acct-recurring-bill-templates"
+          tableTestId="recurring-bill-templates-table"
+        />
       )}
       <ConfirmModal
         open={Boolean(deactivateTarget)}
