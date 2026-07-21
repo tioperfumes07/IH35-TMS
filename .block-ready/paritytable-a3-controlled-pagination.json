@@ -1,0 +1,27 @@
+{
+  "block_id": "paritytable-a3-controlled-pagination",
+  "branch": "feat/paritytable-controlled-pagination",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend shared-component API extension)",
+  "phase": "FOUNDATION-FIRST P6 / ParityTable Phase A3",
+  "task": "Add OPTIONAL controlled/external pagination props (page/onPageChange/pageSize/onPageSizeChange/hidePager) to ParityTable, modeled on the controlled-sort, A1 controlled-expansion, and A2 groupBy precedents. Zero behavior change for existing consumers. Guard + verify-step 1184 (Rule 17). Unblocks BankingTransactionsDesignView Phase B (external toolbar pager) after A4/A5.",
+  "source": "FOUNDATION-FIRST work order Priority 6 — ParityTable Phase A, extension A3 (ONE prop-family per PR; builds on A1 PR #3069 and A2 PR #3074)",
+  "source_file": "paritytable-a3-controlled-pagination",
+  "allowed_files": [
+    ".block-ready/paritytable-a3-controlled-pagination.json",
+    "apps/frontend/src/components/parity/ParityTable.tsx",
+    "apps/frontend/src/components/parity/ParityTable.test.tsx",
+    "scripts/verify-paritytable-controlled-pagination.mjs",
+    "scripts/verify-steps/1184-verify-paritytable-controlled-pagination.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "ParityTable exposes OPTIONAL page?: number / onPageChange?: (page: number) => void / pageSize?: number / onPageSizeChange?: (size: number) => void / hidePager?: boolean; omitting all = byte-identical current internal pagination for ~130 call sites; controlled page mode = onPageChange != null (mirror isSortControlled) — clicks notify, never mutate internal state, render from page prop (default 1); controlled page-size mode = VALUE-presence (pageSize != null) so pre-paged callers need no callback; hidePager suppresses the built-in pager chrome in both modes; selection/sort/expansion/groupBy untouched; unit tests cover uncontrolled default, controlled page, page-prop default, hidePager, controlled pageSize, pre-paged combination; verify-paritytable-controlled-pagination.mjs PASS (+ --selftest); verify-steps/1184 wired (Rule 17); npx tsc -b green; verify-mobile-responsive-audit new_vs_baseline=0."
+    }
+  ],
+  "note": "GATED: no (pure FE, additive API). Migration-free. No package.json / locked-guards / ci.yml edits (Rule 17). BankingTransactionsDesignView is NOT migrated in this PR — Phase B remains blocked on A4 (external-sort passthrough) + A5 (controlled selection)."
+}

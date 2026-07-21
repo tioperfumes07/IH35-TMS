@@ -388,4 +388,162 @@ describe("ParityTable (A1 grammar)", () => {
       expect(screen.getByText("detail for Alpha")).toBeInTheDocument();
     });
   });
+
+  // Controlled pagination (Phase A3) — mirrors the controlled-sort / A1 / A2 precedents.
+  describe("controlled pagination (A3)", () => {
+    const manyRows: Row[] = [
+      { id: "1", name: "Alpha", amount: "$10" },
+      { id: "2", name: "Bravo", amount: "$20" },
+      { id: "3", name: "Charlie", amount: "$30" },
+    ];
+
+    it("uncontrolled default is unchanged: built-in pager renders and Next advances internally", () => {
+      render(
+        <ParityTable<Row>
+          columns={columns}
+          rows={manyRows}
+          rowKey={(r) => r.id}
+          pageSizeOptions={[2]}
+        />,
+      );
+      // Pager chrome present with pre-A3 markup.
+      expect(screen.getByText("1–2 of 3")).toBeInTheDocument();
+      expect(screen.getByText("Per page")).toBeInTheDocument();
+      expect(screen.getByText("Alpha")).toBeInTheDocument();
+      expect(screen.queryByText("Charlie")).toBeNull();
+      // Next (›) advances via internal state — no props needed.
+      fireEvent.click(screen.getByText("›"));
+      expect(screen.getByText("Charlie")).toBeInTheDocument();
+      expect(screen.queryByText("Alpha")).toBeNull();
+      expect(screen.getByText("3–3 of 3")).toBeInTheDocument();
+    });
+
+    it("controlled mode: Next fires onPageChange(2) and does not advance until the page prop updates", () => {
+      const onPageChange = vi.fn();
+      const { rerender } = render(
+        <ParityTable<Row>
+          columns={columns}
+          rows={manyRows}
+          rowKey={(r) => r.id}
+          pageSizeOptions={[2]}
+          page={1}
+          onPageChange={onPageChange}
+        />,
+      );
+      fireEvent.click(screen.getByText("›"));
+      expect(onPageChange).toHaveBeenCalledWith(2);
+      // No internal mutation: still page 1 until the owner applies the prop.
+      expect(screen.getByText("Alpha")).toBeInTheDocument();
+      expect(screen.queryByText("Charlie")).toBeNull();
+
+      // Owner applies the new page → the table follows the prop.
+      rerender(
+        <ParityTable<Row>
+          columns={columns}
+          rows={manyRows}
+          rowKey={(r) => r.id}
+          pageSizeOptions={[2]}
+          page={2}
+          onPageChange={onPageChange}
+        />,
+      );
+      expect(screen.getByText("Charlie")).toBeInTheDocument();
+      expect(screen.queryByText("Alpha")).toBeNull();
+      // Numbered page button also notifies instead of mutating.
+      fireEvent.click(screen.getByText("1"));
+      expect(onPageChange).toHaveBeenCalledWith(1);
+      expect(screen.getByText("Charlie")).toBeInTheDocument();
+    });
+
+    it("controlled mode defaults to page 1 when the page prop is undefined", () => {
+      render(
+        <ParityTable<Row>
+          columns={columns}
+          rows={manyRows}
+          rowKey={(r) => r.id}
+          pageSizeOptions={[2]}
+          onPageChange={vi.fn()}
+        />,
+      );
+      expect(screen.getByText("Alpha")).toBeInTheDocument();
+      expect(screen.queryByText("Charlie")).toBeNull();
+    });
+
+    it("hidePager: no pager chrome in the DOM (rows still slice internally)", () => {
+      render(
+        <ParityTable<Row>
+          columns={columns}
+          rows={manyRows}
+          rowKey={(r) => r.id}
+          pageSizeOptions={[2]}
+          hidePager
+        />,
+      );
+      // No range label, per-page selector, or nav buttons.
+      expect(screen.queryByText("1–2 of 3")).toBeNull();
+      expect(screen.queryByText("Per page")).toBeNull();
+      expect(screen.queryByText("›")).toBeNull();
+      expect(screen.queryByText("«")).toBeNull();
+      // Internal slicing still applies (page 1 of size 2).
+      expect(screen.getByText("Alpha")).toBeInTheDocument();
+      expect(screen.getByText("Bravo")).toBeInTheDocument();
+      expect(screen.queryByText("Charlie")).toBeNull();
+    });
+
+    it("controlled pageSize: the prop drives slicing; the selector fires onPageSizeChange without internal mutation", () => {
+      const onPageSizeChange = vi.fn();
+      const { rerender } = render(
+        <ParityTable<Row>
+          columns={columns}
+          rows={manyRows}
+          rowKey={(r) => r.id}
+          pageSizeOptions={[2, 3]}
+          pageSize={2}
+          onPageSizeChange={onPageSizeChange}
+        />,
+      );
+      expect(screen.getByText("1–2 of 3")).toBeInTheDocument();
+      expect(screen.queryByText("Charlie")).toBeNull();
+
+      // Selector notifies the owner but does NOT change the slice until the prop updates.
+      fireEvent.change(screen.getByDisplayValue("2"), { target: { value: "3" } });
+      expect(onPageSizeChange).toHaveBeenCalledWith(3);
+      expect(screen.queryByText("Charlie")).toBeNull();
+      expect(screen.getByText("1–2 of 3")).toBeInTheDocument();
+
+      // Owner applies the new size → the table follows the prop.
+      rerender(
+        <ParityTable<Row>
+          columns={columns}
+          rows={manyRows}
+          rowKey={(r) => r.id}
+          pageSizeOptions={[2, 3]}
+          pageSize={3}
+          onPageSizeChange={onPageSizeChange}
+        />,
+      );
+      expect(screen.getByText("Charlie")).toBeInTheDocument();
+      expect(screen.getByText("1–3 of 3")).toBeInTheDocument();
+    });
+
+    it("pre-paged combination: pageSize = rows.length + hidePager renders every provided row with no pager", () => {
+      // Caller owns paging (e.g. server-paged): pass the CURRENT page's rows only.
+      const serverPage: Row[] = [
+        { id: "4", name: "Delta", amount: "$40" },
+        { id: "5", name: "Echo", amount: "$50" },
+      ];
+      render(
+        <ParityTable<Row>
+          columns={columns}
+          rows={serverPage}
+          rowKey={(r) => r.id}
+          pageSize={serverPage.length}
+          hidePager
+        />,
+      );
+      expect(screen.getByText("Delta")).toBeInTheDocument();
+      expect(screen.getByText("Echo")).toBeInTheDocument();
+      expect(screen.queryByText("Per page")).toBeNull();
+    });
+  });
 });
