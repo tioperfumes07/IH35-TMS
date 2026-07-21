@@ -1,5 +1,9 @@
-import { useRef } from "react";
-import { BulkSelectableTable } from "../../components/shared/BulkSelectableTable";
+/**
+ * Factoring chargebacks/fees list — display-only (props in; parent owns query).
+ * Migrated to shared ParityTable grammar; amount formatting, sign, column order,
+ * EntityLink, and bulk Export Selected / Dispute stub preserved 1:1.
+ */
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useToast } from "../../components/Toast";
 
@@ -35,88 +39,92 @@ function downloadCsv(filename: string, header: string[], rows: string[][]) {
 
 export function ChargebacksTable({ rows, fmtCurrency, fmtDate }: Props) {
   const { pushToast } = useToast();
-  // Ref tracks the currently-selected rows so the bulk "Export Selected" action (whose onClick is
-  // declared outside the render-prop) can build the CSV from the real selection.
-  const selectedRef = useRef<ChargebackFeeRow[]>([]);
 
-  const exportSelected = () => {
-    const selected = selectedRef.current;
-    if (selected.length === 0) {
-      pushToast("Select at least one row to export.", "info");
-      return;
-    }
-    downloadCsv(
-      `factoring-chargebacks-${new Date().toISOString().slice(0, 10)}.csv`,
-      ["Advance Id", "Date", "Statement Ref", "Chargeback", "Fee"],
-      selected.map((row) => [
-        row.factoring_advance_id,
-        fmtDate(row.created_at),
-        row.statement_reference || "",
-        fmtCurrency(row.chargeback_amount),
-        fmtCurrency(row.factor_fee_amount),
-      ])
-    );
-    pushToast(`Exported ${selected.length} chargeback row(s).`, "success");
-  };
+  const columns: Array<ParityColumn<ChargebackFeeRow>> = [
+    {
+      key: "factoring_advance_id",
+      label: "Advance",
+      render: (row) => (
+        <EntityLink
+          kind="factoring_advance"
+          id={row.factoring_advance_id}
+          label={row.statement_reference || row.factoring_advance_id.slice(0, 8)}
+        />
+      ),
+    },
+    {
+      key: "created_at",
+      label: "Date",
+      sortable: true,
+      render: (row) => fmtDate(row.created_at),
+    },
+    {
+      key: "statement_reference",
+      label: "Statement Ref",
+      render: (row) => row.statement_reference || "—",
+    },
+    {
+      key: "chargeback_amount",
+      label: "Chargeback",
+      sortable: true,
+      render: (row) => fmtCurrency(row.chargeback_amount),
+    },
+    {
+      key: "factor_fee_amount",
+      label: "Fee",
+      sortable: true,
+      render: (row) => fmtCurrency(row.factor_fee_amount),
+    },
+  ];
 
   return (
-    <BulkSelectableTable
-      entityType="factoring-chargebacks"
+    <ParityTable
+      columns={columns}
       rows={rows}
-      getRowId={(row) => row.factoring_advance_id}
-      bulkActions={[
-        { id: "export", label: "Export Selected", onClick: exportSelected },
-        {
-          id: "dispute",
-          label: "Dispute (coming soon)",
-          disabled: true,
-          onClick: () => pushToast("Bulk dispute is not available yet.", "info"),
-        },
-      ]}
-    >
-      {(ctx) => {
-        // Updated during render (ref, not state — no re-render) so exportSelected sees live selection.
-        selectedRef.current = rows.filter((row) => ctx.isSelected(row.factoring_advance_id));
-        return (
-          <table className="min-w-full divide-y divide-gray-200 text-xs">
-            <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
-              <tr>
-                <th className="w-8 px-2 py-2">{ctx.renderHeaderCheckbox()}</th>
-                <th className="px-2 py-2">Advance</th>
-                <th className="px-2 py-2">Date</th>
-                <th className="px-2 py-2">Statement Ref</th>
-                <th className="px-2 py-2">Chargeback</th>
-                <th className="px-2 py-2">Fee</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {rows.map((row) => (
-                <tr key={row.factoring_advance_id}>
-                  <td className="px-2 py-2">{ctx.renderRowCheckbox(row.factoring_advance_id)}</td>
-                  <td className="px-2 py-2">
-                    <EntityLink
-                      kind="factoring_advance"
-                      id={row.factoring_advance_id}
-                      label={row.statement_reference || row.factoring_advance_id.slice(0, 8)}
-                    />
-                  </td>
-                  <td className="px-2 py-2">{fmtDate(row.created_at)}</td>
-                  <td className="px-2 py-2">{row.statement_reference || "—"}</td>
-                  <td className="px-2 py-2">{fmtCurrency(row.chargeback_amount)}</td>
-                  <td className="px-2 py-2">{fmtCurrency(row.factor_fee_amount)}</td>
-                </tr>
-              ))}
-              {rows.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-2 py-4 text-gray-500">
-                    No chargeback/fee rows available.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        );
-      }}
-    </BulkSelectableTable>
+      rowKey={(row) => row.factoring_advance_id}
+      storageKey="factoring-chargebacks"
+      tableTestId="factoring-chargebacks-table"
+      emptyText="No chargeback/fee rows available."
+      selectable
+      maxSelectable={200}
+      onSelectionCapExceeded={() => pushToast("Selection cap of 200 rows reached.", "error")}
+      batchActions={(selected) => (
+        <>
+          <button
+            type="button"
+            className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+            onClick={() => {
+              if (selected.length === 0) {
+                pushToast("Select at least one row to export.", "info");
+                return;
+              }
+              downloadCsv(
+                `factoring-chargebacks-${new Date().toISOString().slice(0, 10)}.csv`,
+                ["Advance Id", "Date", "Statement Ref", "Chargeback", "Fee"],
+                selected.map((row) => [
+                  row.factoring_advance_id,
+                  fmtDate(row.created_at),
+                  row.statement_reference || "",
+                  fmtCurrency(row.chargeback_amount),
+                  fmtCurrency(row.factor_fee_amount),
+                ]),
+              );
+              pushToast(`Exported ${selected.length} chargeback row(s).`, "success");
+            }}
+          >
+            Export Selected
+          </button>
+          <button
+            type="button"
+            disabled
+            title="Bulk dispute is not available yet."
+            className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50"
+            onClick={() => pushToast("Bulk dispute is not available yet.", "info")}
+          >
+            Dispute (coming soon)
+          </button>
+        </>
+      )}
+    />
   );
 }
