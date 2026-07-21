@@ -43,7 +43,7 @@ import { createBill, payBill, voidBillInClientTx, voidBillPaymentInClientTx } fr
 import { createJournalEntry, reverseJournalEntryNoFlip } from "../journal-entries.service.js";
 import { postSourceTransaction } from "../posting-engine.service.js";
 import { restoreSettlementDeductionsInClientTx } from "./settlement-posting.service.js";
-import { resolveRoleAccountOptional } from "../coa-roles/resolver.service.js";
+import { resolveRoleAccountOptional, isCoaRole } from "../coa-roles/resolver.service.js";
 import {
   driverEscrowSubAccountName,
   planDriverEscrowSubAccount,
@@ -114,27 +114,6 @@ function scoped<T>(actor: Actor, operatingCompanyId: string, fn: (client: DbClie
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     return fn(client as DbClient);
   });
-}
-
-/** Resolve an account bound to role_key in catalogs.account_role_bindings, pinned to this entity. */
-async function resolveRoleBindingAccount(client: DbClient, operatingCompanyId: string, roleKey: string): Promise<string | null> {
-  const res = await client.query<{ account_id: string }>(
-    `
-      SELECT arb.account_id::text AS account_id
-      FROM catalogs.account_role_bindings arb
-      JOIN catalogs.accounts a ON a.id = arb.account_id
-      WHERE arb.role_key = $1
-        AND arb.deactivated_at IS NULL
-        AND a.deactivated_at IS NULL
-        AND a.is_postable = true
-        AND (arb.operating_company_id = $2::uuid OR arb.operating_company_id IS NULL)
-        AND a.operating_company_id = $2::uuid
-      ORDER BY (arb.operating_company_id IS NOT NULL) DESC
-      LIMIT 1
-    `,
-    [roleKey, operatingCompanyId]
-  );
-  return res.rows[0]?.account_id ?? null;
 }
 
 /**
@@ -358,9 +337,9 @@ export async function postSettlementBillPayment(
     const deductions = await loadDeductions(client, opco, settlementId);
 
     // Role accounts — missing => STOP, never guess.
-    const driverPayAccount = await resolveRoleBindingAccount(client, opco, "driver_pay_expense");
+    const driverPayAccount = await resolveRoleAccountOptional(client, opco, "driver_pay_expense");
     if (!driverPayAccount) {
-      throw new SettlementBillPaymentError("DRIVER_PAY_ACCOUNT_MISSING", "No active 'driver_pay_expense' role binding (Cost of Labor–Mexico Drivers)");
+      throw new SettlementBillPaymentError("DRIVER_PAY_ACCOUNT_MISSING", "No active 'driver_pay_expense' role designation (Cost of Labor–Mexico Drivers)");
     }
     const apAccount = await resolveRoleAccountOptional(client, opco, "ap_control");
     if (!apAccount) throw new SettlementBillPaymentError("AP_ACCOUNT_MISSING", "No A/P control account (ap_control) designated");
@@ -406,11 +385,13 @@ export async function postSettlementBillPayment(
         }
       } else {
         const roleKey = bucketRecoveryRoleKey(d.deduction_type);
-        accountId = await resolveRoleBindingAccount(client, opco, roleKey);
+        // Dynamic role key ({type}_recovery): resolve via the primary designation table (legacy binding
+        // as fallback tier) when it is a known CoaRole, else fail CLOSED (never silently posts).
+        accountId = isCoaRole(roleKey) ? await resolveRoleAccountOptional(client, opco, roleKey) : null;
         if (!accountId) {
           throw new SettlementBillPaymentError(
             "DEDUCTION_RECOVERY_ACCOUNT_MISSING",
-            `No active '${roleKey}' role binding for deduction bucket '${d.deduction_type}'`,
+            `No active '${roleKey}' role designation for deduction bucket '${d.deduction_type}'`,
             { deduction_id: d.id, role_key: roleKey }
           );
         }

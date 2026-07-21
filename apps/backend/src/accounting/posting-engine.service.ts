@@ -1267,28 +1267,13 @@ async function buildDriverReimbursementLines(
     );
   }
 
-  // reimbursement_expense lives in catalogs.account_role_bindings (the same binding the settlement poster
-  // resolves for its aggregate reimbursement leg) — resolve entity-pinned, identical shape, so an
-  // immediate pay-out and a settlement-close pay-out hit the SAME expense account.
-  const debitRes = await client.query<{ account_id: string }>(
-    `
-      SELECT arb.account_id::text AS account_id
-      FROM catalogs.account_role_bindings arb
-      JOIN catalogs.accounts a ON a.id = arb.account_id
-      WHERE arb.role_key = 'reimbursement_expense'
-        AND arb.deactivated_at IS NULL
-        AND a.deactivated_at IS NULL
-        AND a.is_postable = true
-        AND (arb.operating_company_id = $1::uuid OR arb.operating_company_id IS NULL)
-        AND a.operating_company_id = $1::uuid
-      ORDER BY (arb.operating_company_id IS NOT NULL) DESC
-      LIMIT 1
-    `,
-    [operatingCompanyId]
-  );
-  const debitAccountId = debitRes.rows[0]?.account_id ?? null;
+  // reimbursement_expense is resolved via the CoA-roles resolver: PRIMARY accounting.chart_of_accounts_roles
+  // first, then the legacy catalogs.account_role_bindings binding as a fallback tier (the same account the
+  // settlement poster resolves for its aggregate reimbursement leg) — entity-pinned, so an immediate
+  // pay-out and a settlement-close pay-out hit the SAME expense account.
+  const debitAccountId = await resolveRoleAccountOptional(client, operatingCompanyId, "reimbursement_expense");
   if (!debitAccountId) {
-    throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "No 'reimbursement_expense' role binding for driver reimbursement");
+    throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "No 'reimbursement_expense' role designation for driver reimbursement");
   }
   const creditAccount = creditAccountId ?? (await resolveCashLikeAccountForCompany(client, operatingCompanyId));
   if (!creditAccount) {

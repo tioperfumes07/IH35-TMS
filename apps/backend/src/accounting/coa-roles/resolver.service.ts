@@ -31,18 +31,58 @@ export const COA_ROLE_VALUES = [
   // ACCRUAL Dr property_tax_expense / Cr property_tax_payable; PAYMENT Dr property_tax_payable / Cr cash.
   "property_tax_expense",
   "property_tax_payable",
+  // Settlement / driver / fuel / period-close poster roles (migration 202607670000). These are the
+  // role keys the settlement, bill-payment, reimbursement, and period-close posters resolve. They were
+  // previously resolvable ONLY from the (empty in prod) catalogs.account_role_bindings legacy table;
+  // they are now first-class PRIMARY roles in accounting.chart_of_accounts_roles so the owner can
+  // designate them via the CoaRoles page and posters resolve them primary-first.
+  "driver_pay_expense",
+  "driver_payroll_clearing",
+  "reimbursement_expense",
+  "advance_recovery",
+  "damage_recovery",
+  "lease_recovery",
+  "insurance_recovery",
+  "fuel_advance_recovery",
+  "other_recovery",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];
+
+const COA_ROLE_SET: ReadonlySet<string> = new Set<string>(COA_ROLE_VALUES);
+
+/**
+ * Type guard: is an arbitrary string a known CoaRole? Used by posters that compute a role key
+ * dynamically (e.g. bucketRecoveryRoleKey -> `${type}_recovery`) so an unrecognized key fails CLOSED
+ * (never posts) instead of being force-cast into the resolver.
+ */
+export function isCoaRole(role: string): role is CoaRole {
+  return COA_ROLE_SET.has(role);
+}
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
 
+// CoaRole -> legacy catalogs.account_role_bindings.role_key, so the resolver's LEGACY FALLBACK tier
+// (resolveLegacyRoleBinding) keeps working for these roles when the PRIMARY chart_of_accounts_roles
+// mapping is absent (Rule 07 never-delete — the legacy table + path stay as a fallback, never the fix).
+// For most settlement roles the CoaRole name IS the legacy role_key; ap_control/undeposited_funds keep
+// their historical role_key aliases.
 const LEGACY_ROLE_BINDINGS: Partial<Record<CoaRole, string>> = {
   ar_control: "ar_clearing",
   ap_control: "ap_clearing",
   undeposited_funds: "undeposited_funds",
+  retained_earnings: "retained_earnings",
+  driver_pay_expense: "driver_pay_expense",
+  driver_payroll_clearing: "driver_payroll_clearing",
+  reimbursement_expense: "reimbursement_expense",
+  advance_recovery: "advance_recovery",
+  damage_recovery: "damage_recovery",
+  lease_recovery: "lease_recovery",
+  insurance_recovery: "insurance_recovery",
+  fuel_advance_recovery: "fuel_advance_recovery",
+  other_recovery: "other_recovery",
 };
 
 const ROLE_FALLBACKS: Partial<Record<CoaRole, { subtype?: string[]; type?: string[]; nameHints?: string[] }>> = {
