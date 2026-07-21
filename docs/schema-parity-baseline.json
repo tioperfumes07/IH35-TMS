@@ -3879,6 +3879,7 @@
       "payment_cleared_at",
       "payment_method",
       "payment_queued_at",
+      "payment_release_idempotency_key",
       "payment_sent_at",
       "payment_state",
       "pdf_generated_at",
@@ -4048,8 +4049,10 @@
       "created_at",
       "event_type",
       "id",
+      "idempotency_key",
       "operating_company_id",
       "payload",
+      "payment_release_idempotency_key",
       "settlement_id",
       "user_id"
     ],
