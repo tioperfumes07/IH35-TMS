@@ -714,6 +714,8 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/lists/accounting/QBOBulkLinkPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/components/QboSyncHealthCard.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/dispatch/DispatchCatalogListPage.tsx` | migrated — display-only ParityTable migration (owner greenlit); `verify-dispatch-catalog-list-uses-paritytable.mjs` via verify-step 1106 |
+| `apps/frontend/src/pages/lists/components/QboSyncHealthCard.tsx` | migrated (verify-step 1110) |
+| `apps/frontend/src/pages/lists/dispatch/DispatchCatalogListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/driver/DriverCatalogListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/dispatch/DispatchCatalogListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/driver/DriverCatalogListPage.tsx` | done — owner-greenlit UI-only migration; columns Code/Display Name/Description/Order/Status preserved; `verify-driver-catalog-list-uses-paritytable.mjs` via verify-step 1107 |
