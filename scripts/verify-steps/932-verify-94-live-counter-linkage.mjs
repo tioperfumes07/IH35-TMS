@@ -11,7 +11,7 @@ const commands = [
 
 export async function runLiveCounterLinkageStep(ctx) {
   for (const [command, args, cwd] of commands) {
-    const status = ctx.run(command, args, cwd ? { cwd: path.join(ctx.ROOT, cwd) } : undefined);
+    const status = ctx.runAllowFailure(command, args, cwd ? { cwd: path.join(ctx.ROOT, cwd) } : undefined);
     if (status !== 0) throw new Error(`94-live-counter-linkage step failed: ${command} ${args.join(" ")}`);
   }
 }
@@ -25,7 +25,7 @@ async function selftest() {
   const calls = [];
   const ctx = {
     ROOT: process.cwd(),
-    run(command, args, options) {
+    runAllowFailure(command, args, options) {
       calls.push([command, args, options]);
       return 0;
     },
@@ -46,7 +46,7 @@ async function selftest() {
       name: step.name,
       run: () => step.run({
         ROOT: process.cwd(),
-        run: (_command, args) =>
+        runAllowFailure: (_command, args) =>
           args.includes("src/reports/library.routes.live-counter.test.ts") ? 29 : 0,
       }),
     });
