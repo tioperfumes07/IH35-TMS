@@ -1,6 +1,13 @@
 #!/usr/bin/env node
 /**
  * CLOSURE-6 P5-T14 — team split config applies on shared load settlement.
+ *
+ * P2b/P2f update (owner ruling DECISION 2 Option A, 2026-07-21): config/override truth is
+ * canonical mdata.driver_teams (+ additive mdata.loads override columns). This guard now pins
+ * the CONVERGED state: plural endpoints stay (never-delete facade), apply.ts + routes resolve
+ * against mdata.driver_teams, and the facade is MOUNTED in index.ts (the old unmounted routes
+ * were a live 404 on the Drivers Team Splits panel). Companion zero-RETIRE-refs guard:
+ * scripts/verify-no-settlements-team-split-refs.mjs.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -8,10 +15,10 @@ import path from "node:path";
 const ROOT = process.cwd();
 
 const paths = {
-  migration: path.join(ROOT, "apps/backend/src/migrations/0394-team-splits.sql"),
   routes: path.join(ROOT, "apps/backend/src/settlements/team-splits/team-splits.routes.ts"),
   apply: path.join(ROOT, "apps/backend/src/settlements/team-splits/apply.ts"),
   tests: path.join(ROOT, "apps/backend/src/settlements/team-splits/team-splits.test.ts"),
+  index: path.join(ROOT, "apps/backend/src/index.ts"),
   hook: path.join(ROOT, "apps/frontend/src/hooks/useTeamSplits.ts"),
   panel: path.join(ROOT, "apps/frontend/src/pages/drivers/TeamSplitConfig.tsx"),
   driversPage: path.join(ROOT, "apps/frontend/src/pages/drivers/DriversPage.tsx"),
@@ -28,27 +35,38 @@ function fail(message) {
 }
 
 function main() {
-  const migration = read(paths.migration);
   const routes = read(paths.routes);
   const apply = read(paths.apply);
   const tests = read(paths.tests);
+  const index = read(paths.index);
   const hook = read(paths.hook);
   const panel = read(paths.panel);
   const driversPage = read(paths.driversPage);
 
-  if (!migration) fail("missing migration 0394-team-splits.sql");
   if (!routes) fail("missing team-splits.routes.ts");
   if (!apply) fail("missing apply.ts settlement hook");
   if (!tests) fail("missing team-splits.test.ts");
+  if (!index) fail("missing apps/backend/src/index.ts");
   if (!hook) fail("missing useTeamSplits.ts");
   if (!panel) fail("missing TeamSplitConfig.tsx");
   if (!driversPage) fail("missing DriversPage.tsx team splits sub-tab");
 
-  if (!migration.includes("CREATE TABLE IF NOT EXISTS settlements.team_split_configs")) {
-    fail("migration must create settlements.team_split_configs");
+  // Converged truth: facade + resolver read/write canonical mdata.driver_teams, never the
+  // RETIRE settlements-namespace config tables.
+  if (!routes.includes("mdata.driver_teams") && !routes.includes("driver-team.service")) {
+    fail("routes must facade over mdata.driver_teams (owner ruling DECISION 2, 2026-07-21)");
   }
-  if (!migration.includes("team_split_load_overrides")) {
-    fail("migration must create team_split_load_overrides");
+  if (!apply.includes("mdata.driver_teams")) {
+    fail("apply.ts must resolve splits from mdata.driver_teams (owner ruling DECISION 2, 2026-07-21)");
+  }
+  if (/settlements\.team_split_(configs|load_overrides)\b/.test(routes)) {
+    fail("routes must not reference RETIRE settlements team-split tables");
+  }
+  if (/settlements\.team_split_(configs|load_overrides)\b/.test(apply)) {
+    fail("apply.ts must not reference RETIRE settlements team-split tables");
+  }
+  if (!index.includes("registerTeamSplitRoutes")) {
+    fail("index.ts must mount registerTeamSplitRoutes (unmounted facade = live 404 on Team Splits panel)");
   }
 
   if (!routes.includes('app.post("/api/v1/team-splits/configs"')) {

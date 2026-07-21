@@ -1,3 +1,18 @@
+/**
+ * P2b/P2f team-split convergence (owner ruling DECISION 2, Option A — 2026-07-21).
+ *
+ * Splits resolve from canonical System A only:
+ *   1. per-load override — additive `team_split_override_*` columns on mdata.loads
+ *      (written by the plural facade POST /api/v1/loads/:id/team-split);
+ *   2. the active mdata.driver_teams row for the assigned driver (preferring the
+ *      load's own team_id link), with percentages via the SAME normalizeShares/
+ *      effectiveTeamPercentsFromRow math the live settlement close path uses.
+ *
+ * The RETIRE settlements-namespace team-split config/override tables have ZERO references
+ * here (guard: scripts/verify-no-settlements-team-split-refs.mjs).
+ */
+import { effectiveTeamPercentsFromRow } from "../../driver-finance/settlement-engine.js";
+
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
 };
@@ -35,76 +50,114 @@ function splitAmountCents(totalCents: number, primaryRatio: number, secondaryRat
   return { primaryCents, secondaryCents };
 }
 
+type TeamRowForResolution = {
+  id: string;
+  primary_driver_id: string;
+  secondary_driver_id: string;
+  split_method: string;
+  primary_share_pct: string | number | null;
+  co_share_pct: string | number | null;
+};
+
+const ACTIVE_TEAM_PREDICATE = `
+  is_active = true
+  AND effective_from <= CURRENT_DATE
+  AND (effective_to IS NULL OR effective_to >= CURRENT_DATE)
+`;
+
 export async function resolveTeamSplitForLoad(
   client: DbClient,
   input: { operatingCompanyId: string; loadId: string; assignedDriverId: string }
 ): Promise<TeamSplitResolution | null> {
-  const overrideRes = await client.query<{
-    primary_driver_id: string;
-    secondary_driver_id: string;
-    primary_ratio: string | number;
-    secondary_ratio: string | number;
+  const loadRes = await client.query<{
+    team_id: string | null;
+    override_primary_driver_id: string | null;
+    override_secondary_driver_id: string | null;
+    override_primary_ratio: string | number | null;
+    override_secondary_ratio: string | number | null;
   }>(
     `
-      SELECT primary_driver_id::text, secondary_driver_id::text, primary_ratio, secondary_ratio
-      FROM settlements.team_split_load_overrides
-      WHERE operating_company_id = $1::uuid
-        AND load_id = $2::uuid
+      SELECT
+        team_id::text,
+        team_split_override_primary_driver_id::text AS override_primary_driver_id,
+        team_split_override_secondary_driver_id::text AS override_secondary_driver_id,
+        team_split_override_primary_ratio AS override_primary_ratio,
+        team_split_override_secondary_ratio AS override_secondary_ratio
+      FROM mdata.loads
+      WHERE id = $2::uuid
+        AND operating_company_id = $1::uuid
+        AND soft_deleted_at IS NULL
       LIMIT 1
     `,
     [input.operatingCompanyId, input.loadId]
   );
-  const override = overrideRes.rows[0];
-  if (override) {
-    const primaryId = String(override.primary_driver_id);
-    const secondaryId = String(override.secondary_driver_id);
+  const load = loadRes.rows[0];
+  if (!load) return null;
+
+  if (load.override_primary_driver_id && load.override_secondary_driver_id && load.override_primary_ratio != null) {
+    const primaryId = String(load.override_primary_driver_id);
+    const secondaryId = String(load.override_secondary_driver_id);
     if (input.assignedDriverId !== primaryId && input.assignedDriverId !== secondaryId) return null;
+    const primaryRatio = Number(load.override_primary_ratio);
+    const secondaryRatio =
+      load.override_secondary_ratio != null ? Number(load.override_secondary_ratio) : Math.max(0, 1 - primaryRatio);
     return {
       primary_driver_id: primaryId,
       secondary_driver_id: secondaryId,
-      primary_ratio: Number(override.primary_ratio),
-      secondary_ratio: Number(override.secondary_ratio),
+      primary_ratio: primaryRatio,
+      secondary_ratio: secondaryRatio,
       source: "load_override",
     };
   }
 
-  const configRes = await client.query<{
-    id: string;
-    primary_driver_id: string;
-    secondary_driver_id: string;
-    primary_ratio: string | number;
-    secondary_ratio: string | number;
-  }>(
-    `
-      SELECT id::text, primary_driver_id::text, secondary_driver_id::text, primary_ratio, secondary_ratio
-      FROM settlements.team_split_configs
-      WHERE operating_company_id = $1::uuid
-        AND status = 'active'
-        AND effective_from_date <= CURRENT_DATE
-        AND (effective_to_date IS NULL OR effective_to_date >= CURRENT_DATE)
-        AND (
-          (primary_driver_id = $2::uuid AND secondary_driver_id IS NOT NULL)
-          OR secondary_driver_id = $2::uuid
-        )
-      ORDER BY created_at DESC
-      LIMIT 1
-    `,
-    [input.operatingCompanyId, input.assignedDriverId]
-  );
-  const config = configRes.rows[0];
-  if (!config) return null;
+  // Prefer the load's own team link (matches the live close path), then fall back to the
+  // assigned driver's active team (the plural contract's driver-keyed "config" lookup).
+  let team: TeamRowForResolution | undefined;
+  if (load.team_id) {
+    const byLoadTeam = await client.query<TeamRowForResolution>(
+      `
+        SELECT id::text, primary_driver_id::text, secondary_driver_id::text,
+               split_method::text, primary_share_pct, co_share_pct
+        FROM mdata.driver_teams
+        WHERE id = $2::uuid
+          AND operating_company_id = $1::uuid
+          AND ${ACTIVE_TEAM_PREDICATE}
+        LIMIT 1
+      `,
+      [input.operatingCompanyId, load.team_id]
+    );
+    team = byLoadTeam.rows[0];
+  }
+  if (!team) {
+    const byDriver = await client.query<TeamRowForResolution>(
+      `
+        SELECT id::text, primary_driver_id::text, secondary_driver_id::text,
+               split_method::text, primary_share_pct, co_share_pct
+        FROM mdata.driver_teams
+        WHERE operating_company_id = $1::uuid
+          AND ${ACTIVE_TEAM_PREDICATE}
+          AND (primary_driver_id = $2::uuid OR secondary_driver_id = $2::uuid)
+        ORDER BY created_at DESC
+        LIMIT 1
+      `,
+      [input.operatingCompanyId, input.assignedDriverId]
+    );
+    team = byDriver.rows[0];
+  }
+  if (!team) return null;
 
-  const primaryId = String(config.primary_driver_id);
-  const secondaryId = String(config.secondary_driver_id);
+  const primaryId = String(team.primary_driver_id);
+  const secondaryId = String(team.secondary_driver_id);
   if (input.assignedDriverId !== primaryId && input.assignedDriverId !== secondaryId) return null;
 
+  const { primaryPct, secondaryPct } = effectiveTeamPercentsFromRow(team);
   return {
     primary_driver_id: primaryId,
     secondary_driver_id: secondaryId,
-    primary_ratio: Number(config.primary_ratio),
-    secondary_ratio: Number(config.secondary_ratio),
+    primary_ratio: primaryPct / 100,
+    secondary_ratio: secondaryPct / 100,
     source: "config",
-    config_id: String(config.id),
+    config_id: String(team.id),
   };
 }
 

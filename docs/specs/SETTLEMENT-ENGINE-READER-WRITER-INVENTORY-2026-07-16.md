@@ -117,19 +117,15 @@ No live `INSERT`/`UPDATE`/`FROM` against `settlement.settlement` / `settlement_l
 
 Mounted alongside canonical: `registerSettlementsDisputesRoutes` + `registerSettlementDisputeRoutes` in `index.ts`.
 
-### 5.2 Team-split config → **P2f** (apply residual **P2b**)
+### 5.2 Team-split config → **P2f** (apply residual **P2b**) — **CONVERGED 2026-07-21 (Option A)**
 
 | File | Line | RW | Table | Purpose | Target |
 |---|---:|---|---|---|---|
-| `apps/backend/src/settlements/team-splits/team-splits.routes.ts` | 80 | READ | `settlements.team_split_configs` | List configs | **P2f** |
-| `apps/backend/src/settlements/team-splits/team-splits.routes.ts` | 105 | WRITE | `settlements.team_split_configs` | Create config | **P2f** |
-| `apps/backend/src/settlements/team-splits/team-splits.routes.ts` | 163 | WRITE | `settlements.team_split_configs` | Update config | **P2f** |
-| `apps/backend/src/settlements/team-splits/team-splits.routes.ts` | 202 | WRITE | `settlements.team_split_load_overrides` | Load override INSERT | **P2f** |
-| `apps/backend/src/settlements/team-splits/apply.ts` | 50 | READ | `settlements.team_split_load_overrides` | Resolve override | **P2b** / **P2f** |
-| `apps/backend/src/settlements/team-splits/apply.ts` | 80 | READ | `settlements.team_split_configs` | Resolve config | **P2b** / **P2f** |
-| `apps/backend/src/settlements/team-splits/apply.ts` | 153 | WRITE | `driver_finance.settlement_lines` | Apply split lines (already canonical) | **P2b** (done for write; keep) |
+| `apps/backend/src/settlements/team-splits/team-splits.routes.ts` | — | FACADE | `mdata.driver_teams` (+ `mdata.loads.team_split_override_*`) | Plural `/api/v1/team-splits/*` stays; writes canonical System A | **P2f done** |
+| `apps/backend/src/settlements/team-splits/apply.ts` | — | READ | `mdata.driver_teams` / load override cols | Resolve split (no RETIRE SQL) | **P2b done** |
+| `apps/backend/src/settlements/team-splits/apply.ts` | — | WRITE | `driver_finance.settlement_lines` | Apply split lines (already canonical) | keep |
 
-Canonical config table already written from `mdata/driver-team.service.ts` → `driver_finance.team_settlement_splits` (see §6).
+Canonical config table also written from `mdata/driver-team.service.ts` → `driver_finance.team_settlement_splits` (see §6). Guard: `scripts/verify-no-settlements-team-split-refs.mjs`.
 
 ---
 
@@ -242,11 +238,11 @@ No frontend file contains `payroll.driver_settlements` or `driver_finance.driver
 | Block | Intent | Inventory verdict @ `4e6b0c237` |
 |---|---|---|
 | **P2a** | Auto-deductions → DF deduction sub-ledger | Payroll writers **gone**; apply writes **`settlement_lines`** not `driver_settlement_deductions` — confirm/fix semantics |
-| **P2b** | Team-splits apply both branches → DF | Line **writes** already DF; still **reads** `settlements.team_split_*` |
+| **P2b** | Team-splits apply both branches → DF | **Done 2026-07-21** — resolver reads `mdata.driver_teams` + load override cols; lines write DF |
 | **P2c** | Retire payroll create/post | Routes 308'd; **3 WRITE** remain in `.deprecated.ts`; readers remain (PDF, aggregate, shadow, mdata) |
 | **P2d** | Approval → canonical | Service already on DF; confirm columns + tests; comment cleanup |
 | **P2e** | Converge disputes → `driver_settlement_disputes` | Plural `settlements.*` + DF dup `settlement_disputes` still live |
-| **P2f** | Team-split config → `team_settlement_splits` | Routes still write `settlements.team_split_*`; DF table also written from `driver-team.service` |
+| **P2f** | Team-split config → `mdata.driver_teams` (Option A) | **Done 2026-07-21** — plural facade mounted; zero RETIRE `team_split_*` SQL |
 | **P1** | Additive approval columns | HOLD migration (owner apply) — not this PR |
 | **P3** | Unmount + archive | After P2* |
 | **P4** | G4 harden + route-mount | Inventory §10–12 + G4 `settlements.*` + wire `verify-no-payroll-settlement-writes` |
@@ -267,17 +263,19 @@ apps/backend/src/payroll/driver-settlement.service.deprecated.ts
 
 Any **new** file (not listed) that `INSERT INTO` / `UPDATE` `settlements.settlement_disputes`, `settlements.team_split_configs`, or `settlements.team_split_load_overrides` fails CI. Legacy writers stay allowlisted until P2e/P2f/P3 repoint+unmount.
 
+**P2b/P2f (2026-07-21, Option A):** `apps/backend/src/settlements/team-splits/team-splits.routes.ts` removed from this allowlist — facade now writes `mdata.driver_teams` + additive `mdata.loads.team_split_override_*` only (zero RETIRE SQL; see `verify-no-settlements-team-split-refs.mjs`).
+
 ```settlement-engine-settlements-write-allowlist
 apps/backend/src/settlements/disputes/disputes.routes.ts
-apps/backend/src/settlements/team-splits/team-splits.routes.ts
 ```
 
 ---
 
 ## 12. Machine allowlist — RETIRE create/post route mounts (`index.ts`)
 
-Watched registrars: `registerPayrollDriverSettlementRoutes`, `registerSettlementsDisputesRoutes`, `registerTeamSplitRoutes`.
-Names listed below may remain mounted (legacy until P3). A **new** mount of a watched registrar not listed here fails CI (e.g. remounting unmounted `registerTeamSplitRoutes`).
+Watched registrars: `registerPayrollDriverSettlementRoutes`, `registerSettlementsDisputesRoutes` (plus selftest-only `registerPhantomRetireSettlementRoutes`).
+**P2b/P2f (2026-07-21):** `registerTeamSplitRoutes` removed from the watched RETIRE list — it is mounted as the plural facade over `mdata.driver_teams` (never-delete; no longer a RETIRE writer).
+Names listed below may remain mounted (legacy until P3). A **new** mount of a watched registrar not listed here fails CI.
 
 ```settlement-engine-retire-route-mount-allowlist
 registerPayrollDriverSettlementRoutes

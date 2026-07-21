@@ -326,6 +326,7 @@ import { registerReclassifyRoutes } from "./mdata/reclassify.routes.js";
 import { registerQboAutocompleteRoutes } from "./mdata/qbo-autocomplete.routes.js";
 import { registerQboMasterWriteRoutes } from "./mdata/qbo-master-write.routes.js";
 import { registerDriverTeamsAliasRoutes } from "./mdata/driver-teams-alias.routes.js";
+import { registerTeamSplitRoutes } from "./settlements/team-splits/team-splits.routes.js";
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
 import { registerUnitPermitsRoutes } from "./master-data/units/permits/routes.js";
 import { registerUnitTollTagsRoutes } from "./master-data/units/toll-tags/routes.js";
@@ -773,6 +774,8 @@ async function main() {
   await registerDriverRetentionRoutes(app);
   await registerMdataWorkflowRoutes(app);
   await registerDriverTeamsAliasRoutes(app);
+  // P2b/P2f: plural team-splits facade over mdata.driver_teams (fixes TeamSplitConfigPanel 404).
+  await registerTeamSplitRoutes(app);
   await registerCatalogsRoutes(app);
   await registerDriverCatalogRoutes(app);
   await registerDriverCatalogDeprecatedRoutes(app);
