@@ -1,10 +1,15 @@
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
-import { getMultiEntityAccountingSummary } from "../../api/accounting";
+import {
+  getMultiEntityAccountingSummary,
+  type MultiEntityAccountBalance,
+  type MultiEntityCompanySummary,
+} from "../../api/accounting";
 import { listMyCompanies } from "../../api/org";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 
@@ -45,6 +50,68 @@ export function MultiEntityAccountingPage() {
   const sortedCompanies = useMemo(
     () => [...(companiesQuery.data ?? [])].sort((a, b) => a.legal_name.localeCompare(b.legal_name)),
     [companiesQuery.data]
+  );
+
+  // Display-only columns — amount rendering preserved 1:1 via the same money() helper.
+  const byCompanyColumns = useMemo<Array<ParityColumn<MultiEntityCompanySummary>>>(
+    () => [
+      { key: "company_name", label: "Company", sortable: true },
+      {
+        key: "revenue_cents",
+        label: "Revenue",
+        sortable: true,
+        sortValue: (row) => row.revenue_cents,
+        render: (row) => money(row.revenue_cents),
+      },
+      {
+        key: "expense_cents",
+        label: "Expense",
+        sortable: true,
+        sortValue: (row) => row.expense_cents,
+        render: (row) => money(row.expense_cents),
+      },
+      {
+        key: "net_income_cents",
+        label: "Net income",
+        sortable: true,
+        sortValue: (row) => row.net_income_cents,
+        render: (row) => money(row.net_income_cents),
+      },
+    ],
+    []
+  );
+
+  const accountColumns = useMemo<Array<ParityColumn<MultiEntityAccountBalance>>>(
+    () => [
+      {
+        key: "account_name",
+        label: "Account",
+        sortable: true,
+        sortValue: (row) => `${row.account_number ? `${row.account_number} - ` : ""}${row.account_name}`,
+        render: (row) => (
+          <>
+            {row.account_number ? `${row.account_number} - ` : ""}
+            {row.account_name}
+          </>
+        ),
+      },
+      { key: "account_type", label: "Type", sortable: true },
+      {
+        key: "debit_cents",
+        label: "Debit",
+        sortable: true,
+        sortValue: (row) => row.debit_cents,
+        render: (row) => money(row.debit_cents),
+      },
+      {
+        key: "credit_cents",
+        label: "Credit",
+        sortable: true,
+        sortValue: (row) => row.credit_cents,
+        render: (row) => money(row.credit_cents),
+      },
+    ],
+    []
   );
 
   return (
@@ -118,51 +185,23 @@ export function MultiEntityAccountingPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-            <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-              <table className="min-w-full text-left text-xs">
-                <thead className="bg-gray-50 text-gray-600">
-                  <tr>
-                    <th className="px-3 py-2 font-semibold">Company</th>
-                    <th className="px-3 py-2 font-semibold">Revenue</th>
-                    <th className="px-3 py-2 font-semibold">Expense</th>
-                    <th className="px-3 py-2 font-semibold">Net income</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {summaryQuery.data.by_company.map((row) => (
-                    <tr key={row.operating_company_id} className="border-t border-gray-100">
-                      <td className="px-3 py-2">{row.company_name}</td>
-                      <td className="px-3 py-2">{money(row.revenue_cents)}</td>
-                      <td className="px-3 py-2">{money(row.expense_cents)}</td>
-                      <td className="px-3 py-2">{money(row.net_income_cents)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ParityTable
+              columns={byCompanyColumns}
+              rows={summaryQuery.data.by_company}
+              rowKey={(row) => row.operating_company_id}
+              storageKey="multi-entity-accounting-by-company"
+              emptyText="No per-company rows for the selected scope."
+              tableTestId="multi-entity-by-company-table"
+            />
 
-            <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-              <table className="min-w-full text-left text-xs">
-                <thead className="bg-gray-50 text-gray-600">
-                  <tr>
-                    <th className="px-3 py-2 font-semibold">Account</th>
-                    <th className="px-3 py-2 font-semibold">Type</th>
-                    <th className="px-3 py-2 font-semibold">Debit</th>
-                    <th className="px-3 py-2 font-semibold">Credit</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {summaryQuery.data.accounts.map((row) => (
-                    <tr key={row.account_id} className="border-t border-gray-100">
-                      <td className="px-3 py-2">{row.account_number ? `${row.account_number} - ` : ""}{row.account_name}</td>
-                      <td className="px-3 py-2">{row.account_type}</td>
-                      <td className="px-3 py-2">{money(row.debit_cents)}</td>
-                      <td className="px-3 py-2">{money(row.credit_cents)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ParityTable
+              columns={accountColumns}
+              rows={summaryQuery.data.accounts}
+              rowKey={(row) => row.account_id}
+              storageKey="multi-entity-accounting-accounts"
+              emptyText="No account balances for the selected scope."
+              tableTestId="multi-entity-accounts-table"
+            />
           </div>
         </>
       ) : null}
