@@ -6,14 +6,50 @@ export function createVerifyPrecommitContext(rootDir) {
   const VITEST_REPORT_PATH = path.join(rootDir, ".tmp-vitest-backend.json");
   const VERIFY_DB_URL = "postgres://verify:verify@localhost:54329/ih35_verify";
 
-  const run = (cmd, args, options = {}) => {
-    const result = spawnSync(cmd, args, {
+  const spawn = (cmd, args, options = {}) =>
+    spawnSync(cmd, args, {
       stdio: "inherit",
       cwd: rootDir,
       env: process.env,
       ...options,
     });
+
+  const describeCommand = (cmd, args) => `${cmd} ${(args ?? []).join(" ")}`.trim();
+
+  // Non-throwing runner for INTENTIONAL probes only: callers that inspect the
+  // exit status themselves (custom diagnostics, tolerate-and-handle failure).
+  // Returns the child exit status (1 when the status is unavailable). Because it
+  // NEVER throws, every caller MUST act on a non-zero return — silently ignoring
+  // it re-introduces the fake-green defect this module exists to prevent.
+  const runAllowFailure = (cmd, args, options = {}) => {
+    const result = spawn(cmd, args, options);
     return result.status ?? 1;
+  };
+
+  // Default runner: FAIL CLOSED (Rule 18 — pipeline truth). Any non-zero child
+  // exit, spawn failure, or terminating signal THROWS, so verify:pre-commit can
+  // never print PASS after a command failed — even when a step calls run() and
+  // discards the return value. Steps that must tolerate/inspect failure call
+  // runAllowFailure() instead.
+  const run = (cmd, args, options = {}) => {
+    const result = spawn(cmd, args, options);
+    if (result.error) {
+      throw new Error(
+        `verify:pre-commit command could not spawn: ${describeCommand(cmd, args)} — ${result.error.message}`
+      );
+    }
+    if (result.signal) {
+      throw new Error(
+        `verify:pre-commit command terminated by signal ${result.signal}: ${describeCommand(cmd, args)}`
+      );
+    }
+    const status = result.status ?? 1;
+    if (status !== 0) {
+      throw new Error(
+        `verify:pre-commit command failed (exit ${status}): ${describeCommand(cmd, args)}`
+      );
+    }
+    return status;
   };
 
   const fail = (message, exitCode = 1) => {
@@ -41,7 +77,9 @@ export function createVerifyPrecommitContext(rootDir) {
       );
     }
 
-    const startStatus = run("npm", ["run", "verify:db:start"]);
+    // Intentional probe: emit a targeted operator message instead of the generic
+    // fail-closed throw when docker compose cannot bring up the verify database.
+    const startStatus = runAllowFailure("npm", ["run", "verify:db:start"]);
     if (startStatus !== 0) {
       fail("verify:pre-commit could not start verify database via docker compose.", 2);
     }
@@ -88,6 +126,7 @@ export function createVerifyPrecommitContext(rootDir) {
     ROOT: rootDir,
     VITEST_REPORT_PATH,
     run,
+    runAllowFailure,
     fail,
     ensureDatabaseUrl,
     parseBackendVitestReport,

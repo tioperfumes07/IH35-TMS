@@ -9,7 +9,7 @@ const commands = [
 
 export async function runCoaSyncPanelMutationOnerrorStep(ctx) {
   for (const [command, args] of commands) {
-    const status = ctx.run(command, args);
+    const status = ctx.runAllowFailure(command, args);
     if (status !== 0) throw new Error(`coa-sync-panel-mutation-onerror step failed: ${command} ${args.join(" ")}`);
   }
 }
@@ -25,7 +25,7 @@ async function selftest() {
     index: 1,
     total: 1,
     name: step.name,
-    run: () => step.run({ run: (command, args) => { calls.push([command, args]); return 0; } }),
+    run: () => step.run({ runAllowFailure: (command, args) => { calls.push([command, args]); return 0; } }),
   });
   if (calls.length !== commands.length || !calls[0][1].includes("--selftest")) {
     throw new Error("step selftest did not execute onerror selftest and production guard");
@@ -36,7 +36,7 @@ async function selftest() {
       index: 1,
       total: 1,
       name: step.name,
-      run: () => step.run({ run: (_command, args) => args.includes("--selftest") ? 17 : 0 }),
+      run: () => step.run({ runAllowFailure: (_command, args) => args.includes("--selftest") ? 17 : 0 }),
     });
   } catch {
     rejected = true;
