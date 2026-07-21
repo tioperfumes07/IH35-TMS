@@ -38,6 +38,7 @@ function ObligationBlock({ ob }: { ob: RevenueObligation }) {
       </div>
       {ob.schedule_note && <p className="px-3 py-2 text-xs text-gray-500">{ob.schedule_note}</p>}
       {ob.schedule.length > 0 && (
+        <div className="overflow-x-auto">
         <table className="min-w-full text-xs divide-y divide-gray-200">
           <thead className="bg-white">
             <tr>
@@ -57,6 +58,7 @@ function ObligationBlock({ ob }: { ob: RevenueObligation }) {
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );
