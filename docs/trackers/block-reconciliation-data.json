@@ -1,6 +1,6 @@
 {
  "date": "2026-07-21",
- "generated_at_iso": "2026-07-21T00:09:57.755Z",
+ "generated_at_iso": "2026-07-21T03:51:12.294Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
@@ -13096,10 +13096,76 @@
  ],
  "merged_prs": [
   {
+   "number": 3001,
+   "title": "batch: 3 QBO-list ParityTable migrations (integration)",
+   "mergedAt": "2026-07-21T02:07:05Z",
+   "branch": "integration/qbo-lists-batch"
+  },
+  {
+   "number": 2997,
+   "title": "batch: 6 lists ParityTable migrations, round 2 (integration)",
+   "mergedAt": "2026-07-21T01:52:37Z",
+   "branch": "integration/lists-batch-2"
+  },
+  {
+   "number": 2990,
+   "title": "batch: 6 lists+profitability ParityTable migrations (integration)",
+   "mergedAt": "2026-07-21T01:37:56Z",
+   "branch": "integration/lists-profitability-batch"
+  },
+  {
+   "number": 2986,
+   "title": "batch: 3 profitability-view ParityTable migrations (integration)",
+   "mergedAt": "2026-07-21T01:23:43Z",
+   "branch": "integration/profitability-batch"
+  },
+  {
+   "number": 2979,
+   "title": "feat(guard): G2 rejects the placeholder acceptance template (boilerplate fake-green class)",
+   "mergedAt": "2026-07-21T00:52:48Z",
+   "branch": "feat/harden-g2-reject-boilerplate-acceptance"
+  },
+  {
+   "number": 2978,
+   "title": "fix(maintenance): migrate WorkOrderDetailPage tables to ParityTable",
+   "mergedAt": "2026-07-21T01:08:33Z",
+   "branch": "fix/wo-detail-paritytable"
+  },
+  {
+   "number": 2977,
+   "title": "fix(drivers): migrate DriverDetail table to ParityTable",
+   "mergedAt": "2026-07-21T00:53:26Z",
+   "branch": "fix/driver-detail-paritytable"
+  },
+  {
+   "number": 2976,
+   "title": "fix(maintenance): canonical amount_cents on WO→bill conversion + G6-4 guard (clean base)",
+   "mergedAt": "2026-07-21T00:51:20Z",
+   "branch": "feat/bills-amount-cents-canonical-clean"
+  },
+  {
+   "number": 2975,
+   "title": "fix(wo-console): migrate WorkOrdersConsoleListPage to ParityTable (clean base)",
+   "mergedAt": "2026-07-21T00:26:10Z",
+   "branch": "fix/wo-console-list-paritytable-clean"
+  },
+  {
+   "number": 2974,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-21T00:40:01Z",
+   "branch": "chore/tracker-artifacts-sync-29789437746"
+  },
+  {
    "number": 2972,
    "title": "batch: 27 ParityTable migrations (mega-integration)",
    "mergedAt": "2026-07-21T00:08:50Z",
    "branch": "integration/paritytable-batch-mega"
+  },
+  {
+   "number": 2945,
+   "title": "docs(design): bill_unit_allocation DELETE-then-INSERT → void-not-delete",
+   "mergedAt": "2026-07-21T00:11:07Z",
+   "branch": "design/bill-unit-allocation-void-not-delete"
   },
   {
    "number": 2942,
@@ -16628,75 +16694,9 @@
    "title": "feat(telematics): HOS-MAP driver→Samsara ID preview UI (read-only)",
    "mergedAt": "2026-07-10T14:29:14Z",
    "branch": "feat/hos-map-driver-samsara-preview"
-  },
-  {
-   "number": 2291,
-   "title": "chore(reconciler): VISUAL-REMAINDER done-marker files",
-   "mergedAt": "2026-07-10T14:29:04Z",
-   "branch": "chore/visual-remainder-done-markers"
-  },
-  {
-   "number": 2290,
-   "title": "fix(ui): visual remainder — bg-slate-1000 token, fuel title, severity chips, maintenance pagination",
-   "mergedAt": "2026-07-08T01:07:31Z",
-   "branch": "fix/visual-remainder-final"
-  },
-  {
-   "number": 2289,
-   "title": "fix(banking): idempotency guards — driver-advance, driver-expense, transfer dedup [HELD-FOR-JORGE]",
-   "mergedAt": "2026-07-08T00:58:49Z",
-   "branch": "feat/banking-posting-idempotency-guards"
-  },
-  {
-   "number": 2288,
-   "title": "feat(banking): split modal to approved QBO categorize design (descrip…",
-   "mergedAt": "2026-07-08T00:26:27Z",
-   "branch": "feat/bank-split-modal-qbo-design"
-  },
-  {
-   "number": 2287,
-   "title": "[HOLD-FOR-JORGE — TIER 2] FACT-PAR-1: Outbound Factor Submission Workflow",
-   "mergedAt": "2026-07-08T00:13:22Z",
-   "branch": "feat/factoring-submission-workflow"
-  },
-  {
-   "number": 2286,
-   "title": "[HOLD-FOR-JORGE — TIER 2] CUSTVEND-PAR-1: credit-limit enforcement + vendor-credit ledger + AR statement checklist",
-   "mergedAt": "2026-07-08T00:14:44Z",
-   "branch": "feat/custvend-parity-1"
-  },
-  {
-   "number": 2285,
-   "title": "feat(admin): Admin menu link + entity dropdown for feature-flag overrides",
-   "mergedAt": "2026-07-07T23:22:40Z",
-   "branch": "feat/admin-feature-flag-toggle"
-  },
-  {
-   "number": 2284,
-   "title": "feat(users): Owner-only Deactivate Probe Accounts admin panel",
-   "mergedAt": "2026-07-07T23:00:24Z",
-   "branch": "feat/users-admin-job-panel"
-  },
-  {
-   "number": 2283,
-   "title": "fix(qbo-picker): item picker reads canonical catalogs.items (fixes cr…",
-   "mergedAt": "2026-07-07T18:38:12Z",
-   "branch": "fix/qbo-picker-items-canonical"
-  },
-  {
-   "number": 2282,
-   "title": "[HOLD-FOR-JORGE — TIER 2] FACT-PAR-2: NOA Stamp + Remit-To Enforcement + Letter-of-Release Lifecycle",
-   "mergedAt": "2026-07-07T18:45:26Z",
-   "branch": "feat/factoring-noa-remit-enforcement"
-  },
-  {
-   "number": 2281,
-   "title": "fix(identity): USERS-1 PR B — deactivate_probe_accounts admin-job + CI guard",
-   "mergedAt": "2026-07-07T18:03:11Z",
-   "branch": "fix/users-1-probe-deactivate-ci-guard"
   }
  ],
- "merged_pr_total": 2763,
+ "merged_pr_total": 2774,
  "hold_for_jorge": [
   {
    "number": 2718,
