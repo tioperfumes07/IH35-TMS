@@ -1,26 +1,26 @@
 {
  "date": "2026-07-21",
- "generated_at_iso": "2026-07-21T09:05:04.670Z",
+ "generated_at_iso": "2026-07-21T12:45:25.614Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
   "NEEDS-VERIFY": 63,
-  "DONE": 666,
+  "DONE": 667,
   "AUDIT-NOTE": 425
  },
  "universe": {
-  "total_blocks_after_dedup": 1188,
+  "total_blocks_after_dedup": 1189,
   "by_source_after_dedup": {
-   ".block-ready": 1016,
+   ".block-ready": 1017,
    "program": 61,
    "enterprise-29": 29,
    "accounting": 25,
    "gap-spec": 57
   },
   "raw_file_counts": {
-   ".block-ready (*.json files)": 1369,
+   ".block-ready (*.json files)": 1370,
    ".block-ready retired (dup/stale/superseded, excluded)": 348,
-   ".block-ready active (counted)": 1021
+   ".block-ready active (counted)": 1022
   },
   "note": "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by UNIQUE block_id, EXCLUDING files with EXPLICIT retirement markers (_DUP/_STALE/_SUPERSEDED underscore suffixes, status superseded/duplicate/dup/stale, or superseded_by/duplicate_of). Hyphen descriptive …-stale/…-duplicate live defect IDs are NOT retired by filename alone. So the block count is neither the raw .block-ready file count nor inflated by duplicate/retired registrations."
  },
@@ -6726,6 +6726,17 @@
    "pr": 3074
   },
   {
+   "id": "paritytable-a3-controlled-pagination",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #3082 merged 2026-07-21",
+   "name": "Add OPTIONAL controlled/external pagination props (page/onPageChange/pageSize/onPageSizeChange/hidePager) to ParityTable",
+   "registered_on": null,
+   "pr": 3082
+  },
+  {
    "id": "PERF-BUDGET-RAISE",
    "source": ".block-ready",
    "fin": true,
@@ -13129,16 +13140,52 @@
  ],
  "merged_prs": [
   {
+   "number": 3082,
+   "title": "feat(parity): ParityTable A3 — optional controlled pagination props",
+   "mergedAt": "2026-07-21T12:44:33Z",
+   "branch": "feat/paritytable-controlled-pagination"
+  },
+  {
+   "number": 3081,
+   "title": "docs(tracker): P3-DISPUTES-UNIFY deferral entry (owner ruling Decision 3 = C) — doc-only",
+   "mergedAt": "2026-07-21T12:34:37Z",
+   "branch": "docs/p3-disputes-unify-tracker"
+  },
+  {
+   "number": 3080,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-21T09:18:50Z",
+   "branch": "chore/tracker-artifacts-sync-29816762860"
+  },
+  {
+   "number": 3079,
+   "title": "[HOLD] fix(driver-finance): settlement double-pay TOCTOU — CAS + row lock + idempotency latch on all 5 payment transitions (Phase 2)",
+   "mergedAt": "2026-07-21T12:13:16Z",
+   "branch": "fix/settlement-payment-double-pay-cas"
+  },
+  {
    "number": 3078,
    "title": "docs(settlement): owner-decision requests P2a / P2b-P2f / P2e-residual (doc-only)",
    "mergedAt": "2026-07-21T09:00:09Z",
    "branch": "docs/settlement-owner-decisions"
   },
   {
+   "number": 3077,
+   "title": "[HOLD] fix(settlements): P2e — converge plural dispute routes onto canonical driver_finance.driver_settlement_disputes",
+   "mergedAt": "2026-07-21T12:13:40Z",
+   "branch": "fix/settlement-disputes-converge"
+  },
+  {
    "number": 3076,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-07-21T08:43:26Z",
    "branch": "chore/tracker-artifacts-sync-29814339431"
+  },
+  {
+   "number": 3075,
+   "title": "fix(settlements): P2c — repoint last 4 payroll-ledger readers onto driver_finance [HOLD]",
+   "mergedAt": "2026-07-21T12:13:04Z",
+   "branch": "fix/settlement-payroll-readers-repoint"
   },
   {
    "number": 3074,
@@ -16691,46 +16738,28 @@
    "title": "feat(guard): G3 verify-guard-wired — no guard can exist unwired (silent fake-green)",
    "mergedAt": "2026-07-11T01:55:49Z",
    "branch": "feat/guard-guard-wired"
-  },
-  {
-   "number": 2317,
-   "title": "feat(guard): G2 verify-block-acceptance (LINKAGE-LAW Clause 6/8)",
-   "mergedAt": "2026-07-11T01:55:42Z",
-   "branch": "feat/guard-block-acceptance"
-  },
-  {
-   "number": 2316,
-   "title": "feat(guard): G1 verify-block-registry-complete (LINKAGE-LAW Clause 7)",
-   "mergedAt": "2026-07-11T01:03:17Z",
-   "branch": "feat/guard-block-registry-complete"
-  },
-  {
-   "number": 2315,
-   "title": "[HOLD-FOR-JORGE — TIER 1] fix(recon): enumerate active QBO connections past company-RLS (RECON-RLS-VISIBILITY)",
-   "mergedAt": "2026-07-11T00:58:36Z",
-   "branch": "fix/recon-qbo-connection-enumeration-rls"
-  },
-  {
-   "number": 2313,
-   "title": "design(qbo): single canonical QBO mirror — recommend mdata.qbo_* (Batch1 #03)",
-   "mergedAt": "2026-07-11T00:24:59Z",
-   "branch": "design/qbo-mirror-canonical"
-  },
-  {
-   "number": 2312,
-   "title": "[HOLD-FOR-JORGE — TIER 1] fix(settlement): gate postSettlement behind SETTLEMENT_GL_POSTING_ENABLED",
-   "mergedAt": "2026-07-11T00:24:51Z",
-   "branch": "fix/settlement-gl-posting-killswitch"
-  },
-  {
-   "number": 2311,
-   "title": "fix(reconciliation): QBO recon fails loud on 0 connections (RECON-NOCONN)",
-   "mergedAt": "2026-07-10T19:11:31Z",
-   "branch": "fix/recon-fail-loud-no-qbo-connection"
   }
  ],
- "merged_pr_total": 2793,
+ "merged_pr_total": 2799,
  "hold_for_jorge": [
+  {
+   "number": 3079,
+   "title": "[HOLD] fix(driver-finance): settlement double-pay TOCTOU — CAS + row lock + idempotency latch on all 5 payment transitions (Phase 2)",
+   "mergedAt": "2026-07-21T12:13:16Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3077,
+   "title": "[HOLD] fix(settlements): P2e — converge plural dispute routes onto canonical driver_finance.driver_settlement_disputes",
+   "mergedAt": "2026-07-21T12:13:40Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3075,
+   "title": "fix(settlements): P2c — repoint last 4 payroll-ledger readers onto driver_finance [HOLD]",
+   "mergedAt": "2026-07-21T12:13:04Z",
+   "category": "HOLD"
+  },
   {
    "number": 3070,
    "title": "feat(driver-finance): settlement payment idempotency keys (Phase 1, additive) [HOLD]",
