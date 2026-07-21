@@ -243,8 +243,8 @@ export async function listSettlementDisputes(userId: string, query: z.infer<type
           dr.first_name || ' ' || dr.last_name AS driver_name,
           s.display_id AS settlement_display_id
         FROM driver_finance.driver_settlement_disputes d
-        JOIN mdata.drivers dr ON dr.id = d.driver_id
-        JOIN driver_finance.driver_settlements s ON s.id = d.settlement_id
+        JOIN mdata.drivers dr ON dr.id = d.driver_id AND dr.operating_company_id = $1::uuid
+        JOIN driver_finance.driver_settlements s ON s.id = d.settlement_id AND s.operating_company_id = $1::uuid
         WHERE ${filters.join(" AND ")}
         ORDER BY d.created_at DESC
         LIMIT $${limitIdx} OFFSET $${offsetIdx}
