@@ -636,7 +636,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/factoring/FactoringHome.tsx` | migrated (verify-step 1127) |
 | `apps/frontend/src/pages/factoring/FactorAdmin.tsx` | migrated (verify-step 1128) — owner-greenlit display-only migration of all 3 tables (factors, assignment history, batch history); actions/mutations untouched |
 | `apps/frontend/src/pages/factoring/FactoringHome.tsx` | financial-hold |
-| `apps/frontend/src/pages/factoring/FaroImportPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/factoring/FaroImportPage.tsx` | migrated (verify-step 1131) — display-only preview table; owner-greenlit UI-only migration; import mutation untouched |
 | `apps/frontend/src/pages/factoring/RecoursePipelineTable.tsx` | financial-hold |
 | `apps/frontend/src/pages/factoring/ReserveDashboard.tsx` | migrated (fix/reserve-dashboard-paritytable, verify-step 1129 — display-only, owner greenlit UI-only migration) |
 | `apps/frontend/src/pages/factoring/ReserveTracker.tsx` | financial-hold |

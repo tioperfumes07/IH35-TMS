@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -37,6 +38,37 @@ type CommitResponse = {
 };
 
 const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+
+// Display-only preview columns — 1:1 with the former hand-rolled table (order, labels,
+// currency formatting, sign all unchanged). No action controls live in these cells.
+const PREVIEW_COLUMNS: Array<ParityColumn<PreviewLine>> = [
+  { key: "invoice_number", label: "Invoice", sortable: true },
+  { key: "customer_name", label: "Customer", sortable: true, render: (row) => row.customer_name ?? "—" },
+  {
+    key: "gross_amount_cents",
+    label: "Gross",
+    sortable: true,
+    render: (row) => currency.format(row.gross_amount_cents / 100),
+  },
+  {
+    key: "advance_amount_cents",
+    label: "Advance",
+    sortable: true,
+    render: (row) => currency.format(row.advance_amount_cents / 100),
+  },
+  {
+    key: "reserve_amount_cents",
+    label: "Reserve",
+    sortable: true,
+    render: (row) => currency.format(row.reserve_amount_cents / 100),
+  },
+  {
+    key: "net_amount_cents",
+    label: "Net",
+    sortable: true,
+    render: (row) => currency.format(row.net_amount_cents / 100),
+  },
+];
 
 export function FaroImportPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -133,32 +165,14 @@ export function FaroImportPage() {
           <h3 className="mb-2 text-sm font-semibold text-white">
             Preview — {preview.line_count} line{preview.line_count === 1 ? "" : "s"}
           </h3>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-xs text-slate-200">
-              <thead>
-                <tr className="border-b border-[#2A3150] text-slate-400">
-                  <th className="px-2 py-1">Invoice</th>
-                  <th className="px-2 py-1">Customer</th>
-                  <th className="px-2 py-1">Gross</th>
-                  <th className="px-2 py-1">Advance</th>
-                  <th className="px-2 py-1">Reserve</th>
-                  <th className="px-2 py-1">Net</th>
-                </tr>
-              </thead>
-              <tbody>
-                {previewRows.map((row) => (
-                  <tr key={row.invoice_number} className="border-b border-[#1E2440]">
-                    <td className="px-2 py-1">{row.invoice_number}</td>
-                    <td className="px-2 py-1">{row.customer_name ?? "—"}</td>
-                    <td className="px-2 py-1">{currency.format(row.gross_amount_cents / 100)}</td>
-                    <td className="px-2 py-1">{currency.format(row.advance_amount_cents / 100)}</td>
-                    <td className="px-2 py-1">{currency.format(row.reserve_amount_cents / 100)}</td>
-                    <td className="px-2 py-1">{currency.format(row.net_amount_cents / 100)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ParityTable
+            columns={PREVIEW_COLUMNS}
+            rows={previewRows}
+            rowKey={(row) => row.invoice_number}
+            storageKey="factoring-faro-import-preview"
+            tableTestId="faro-import-preview-table"
+            emptyText="No preview lines."
+          />
         </div>
       ) : null}
     </div>
