@@ -45,6 +45,29 @@ function grepRepo(needle, dirs) {
   return false;
 }
 
+/**
+ * The placeholder TEMPLATE acceptance string — the instruction to the block's author, NOT a real
+ * per-block criterion. 727 legacy blocks carry it (2026-07-20). G2 skipped it because it only gated
+ * done-state blocks, so a NEEDS-VERIFY/PENDING block could sail through carrying nothing checkable,
+ * and the reconciler could still promote it to DONE off file presence — the boilerplate fake-green class.
+ *
+ * We match on two stable, distinctive tells so a trivial reword can't slip past while a genuinely
+ * different criterion (which never contains this exact litany) is never false-flagged:
+ *   - "Builder STOPS at branch-proof" — unique to the template, appears in nothing real.
+ *   - the "table/column/fk/rls/route/mounted proven" litany — the template's opening.
+ */
+const BOILERPLATE_TELLS = [
+  /builder\s+stops\s+at\s+branch-?proof/i,
+  /table\/column\/fk\/rls\/route\/mounted\s+proven/i,
+];
+
+/** Is this acceptance item the placeholder template rather than a real criterion? */
+export function isBoilerplateAcceptanceItem(item) {
+  if (item == null) return false;
+  const text = typeof item === "string" ? item : JSON.stringify(item);
+  return BOILERPLATE_TELLS.some((re) => re.test(text));
+}
+
 /** Resolve ONE acceptance item. Returns {ok, deferred, msg}. */
 export function resolveItem(item) {
   if (typeof item !== "object" || item === null || !item.kind) {
@@ -109,8 +132,23 @@ export function resolveItem(item) {
 /** Evaluate a block's acceptance[]. Returns array of failure strings. */
 export function evaluateBlock(obj, id) {
   const errs = [];
-  if (!DONE.has(obj.status)) return errs; // only done/complete blocks are gated
   const acc = Array.isArray(obj.acceptance) ? obj.acceptance : [];
+
+  // BOILERPLATE gate — runs REGARDLESS of status (a NEEDS-VERIFY/PENDING block must not carry the
+  // placeholder template either). Only reaches added/changed blocks: run() feeds this function the
+  // forward-only diff vs origin/main, so the 727 grandfathered blocks are untouched until edited —
+  // and editing one then requires replacing its boilerplate with real criteria (touch it, fix it).
+  const boiler = acc.filter(isBoilerplateAcceptanceItem);
+  if (boiler.length) {
+    errs.push(
+      `${id}: acceptance[] carries the PLACEHOLDER TEMPLATE, not real criteria ` +
+        `("${String(typeof boiler[0] === "string" ? boiler[0] : boiler[0].check ?? JSON.stringify(boiler[0])).slice(0, 70)}…"). ` +
+        `Write machine-checkable per-block acceptance (kinds: table/column/fk/rls/route/mounted/guard/data/live/design/effective) — ` +
+        `data criteria must set zero_count_means:PENDING so an empty table can never read green.`
+    );
+  }
+
+  if (!DONE.has(obj.status)) return errs; // resolution below only gates done/complete blocks
   if (obj.flag && !acc.some((a) => a && a.kind === "effective")) {
     errs.push(`${id}: declares flag '${obj.flag}' but has no {kind:"effective"} acceptance item (Clause 6 mandatory)`);
   }
@@ -158,8 +196,27 @@ if (process.argv.includes("--selftest")) {
   checks.push(["malformed data item fails", resolveItem({ kind: "data" }).ok === false]);
   // db-kind well-formed -> ok+deferred
   checks.push(["well-formed data item deferred-ok", (() => { const r = resolveItem({ kind: "data", assert: "SELECT count(*) ...", expect: 0 }); return r.ok && r.deferred; })()]);
-  // non-done block ignored
+  // non-done block ignored (real guard item, not boilerplate) — resolution still gated to done only
   checks.push(["non-done block ignored", evaluateBlock({ status: "BUILD", acceptance: [{ kind: "guard", script: "nope.mjs", wired_into: "x" }] }, "b").length === 0]);
+
+  // --- boilerplate gate (2026-07-20) --------------------------------------------------------------
+  // The EXACT production template string, verbatim from a real .block-ready file — proves the gate
+  // catches the actual boilerplate, not just a paraphrase. Do not "simplify" this fixture.
+  const REAL_BOILERPLATE = {
+    check: "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD.",
+  };
+  checks.push(["detector flags the real template item", isBoilerplateAcceptanceItem(REAL_BOILERPLATE) === true]);
+  checks.push(["detector clears a real typed item", isBoilerplateAcceptanceItem({ kind: "guard", script: "x.mjs", wired_into: "y" }) === false]);
+  checks.push(["detector clears a real data assert", isBoilerplateAcceptanceItem({ kind: "data", assert: "PROD count of escrow ledger rows", zero_count_means: "PENDING" }) === false]);
+  // boilerplate fails REGARDLESS of status (this is the whole point — NEEDS-VERIFY must not carry it)
+  checks.push(["boilerplate on NEEDS-VERIFY block fails", evaluateBlock({ status: "NEEDS-VERIFY", acceptance: [REAL_BOILERPLATE] }, "nv").length > 0]);
+  checks.push(["boilerplate on PENDING block fails", evaluateBlock({ status: "PENDING", acceptance: [REAL_BOILERPLATE] }, "p").length > 0]);
+  checks.push(["boilerplate on done block fails", evaluateBlock({ status: "done", acceptance: [REAL_BOILERPLATE] }, "d").length > 0]);
+  // reworded-but-same-tell still caught (the litany tell alone)
+  checks.push(["litany tell alone is caught", isBoilerplateAcceptanceItem({ check: "table/column/fk/rls/route/mounted proven and nothing else" }) === true]);
+  // a real block with real per-block criteria passes at NEEDS-VERIFY (my 6 task-4 blocks' shape)
+  checks.push(["real NEEDS-VERIFY criteria pass", evaluateBlock({ status: "NEEDS-VERIFY", acceptance: [{ kind: "data", assert: "PROD count of driver_settlement_deductions with applied_to_settlement_id", zero_count_means: "PENDING" }] }, "ok").length === 0]);
+
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
     console.error("verify:block-acceptance --selftest FAIL:");
