@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ApiError } from "../../api/client";
 import {
   assignCustomerFactor,
   createFactor,
@@ -9,12 +10,16 @@ import {
   listFactors,
   listLetterOfReleases,
   updateFactor,
+  type CustomerFactorAssignment,
   type Factor,
+  type FactorBatchHistoryRow,
 } from "../../api/factoring";
 import { listCustomers } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useListState } from "../../components/list-state";
@@ -27,6 +32,52 @@ function formatPct(value: number) {
 function todayDate() {
   return companyToday();
 }
+
+// Display-only ParityTable columns — same order, labels, and cell formatting as the
+// former hand-rolled tables (financial surface: rates/amount formatting preserved 1:1).
+const FACTOR_COLUMNS: Array<ParityColumn<Factor>> = [
+  {
+    key: "name",
+    label: "Name",
+    sortable: true,
+    render: (factor) => <span className="font-medium text-gray-900">{factor.name}</span>,
+  },
+  { key: "advance_rate", label: "Advance Rate", sortable: true, render: (factor) => formatPct(factor.advance_rate) },
+  { key: "fee_rate", label: "Fee Rate", sortable: true, render: (factor) => formatPct(factor.fee_rate) },
+  { key: "reserve_rate", label: "Reserve Rate", sortable: true, render: (factor) => formatPct(factor.reserve_rate) },
+  { key: "recourse_days", label: "Recourse Days", sortable: true },
+  { key: "active", label: "Active", sortable: true, render: (factor) => (factor.active ? "Yes" : "No"), sortValue: (factor) => (factor.active ? 1 : 0) },
+  {
+    key: "updated_at",
+    label: "Updated",
+    sortable: true,
+    render: (factor) => new Date(factor.updated_at).toLocaleDateString(),
+    sortValue: (factor) => factor.updated_at,
+  },
+];
+
+const ASSIGNMENT_COLUMNS: Array<ParityColumn<CustomerFactorAssignment>> = [
+  { key: "factor_name", label: "Factor", sortable: true },
+  { key: "effective_from", label: "Effective From", sortable: true },
+  {
+    key: "effective_to",
+    label: "Effective To",
+    sortable: true,
+    render: (row) => row.effective_to ?? "Active",
+  },
+];
+
+const BATCH_COLUMNS: Array<ParityColumn<FactorBatchHistoryRow>> = [
+  { key: "batch_number", label: "Batch", sortable: true },
+  { key: "status", label: "Status", sortable: true, render: (row) => <span className="capitalize">{row.status}</span> },
+  {
+    key: "submitted_at",
+    label: "Submitted",
+    sortable: true,
+    render: (row) => (row.submitted_at ? new Date(row.submitted_at).toLocaleDateString() : "-"),
+    sortValue: (row) => row.submitted_at ?? null,
+  },
+];
 
 type AddFactorForm = {
   name: string;
@@ -197,16 +248,17 @@ export function FactorAdmin() {
     [customersQuery.data, detailCustomerId]
   );
 
+  const factorRows = factorsQuery.data ?? [];
+  const assignmentRows = useMemo(
+    () => (customerFactorDetailQuery.data?.assignments ?? []).filter((row) => row.factor_id === selectedFactor?.id),
+    [customerFactorDetailQuery.data?.assignments, selectedFactor?.id]
+  );
+  const batchRows = customerFactorDetailQuery.data?.batches ?? [];
+
   // Empty states render only once their backing query settles (never mid-fetch).
-  const factorsListState = useListState(factorsQuery, (factorsQuery.data ?? []).length === 0);
-  const assignmentsListState = useListState(
-    customerFactorDetailQuery,
-    (customerFactorDetailQuery.data?.assignments ?? []).filter((row) => row.factor_id === selectedFactor?.id).length === 0
-  );
-  const batchesListState = useListState(
-    customerFactorDetailQuery,
-    (customerFactorDetailQuery.data?.batches ?? []).length === 0
-  );
+  const factorsListState = useListState(factorsQuery, factorRows.length === 0);
+  const assignmentsListState = useListState(customerFactorDetailQuery, assignmentRows.length === 0);
+  const batchesListState = useListState(customerFactorDetailQuery, batchRows.length === 0);
 
   return (
     <div className="space-y-3">
@@ -231,45 +283,27 @@ export function FactorAdmin() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full divide-y divide-gray-200 text-xs">
-          <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
-            <tr>
-              <th className="px-2 py-2">Name</th>
-              <th className="px-2 py-2">Advance Rate</th>
-              <th className="px-2 py-2">Fee Rate</th>
-              <th className="px-2 py-2">Reserve Rate</th>
-              <th className="px-2 py-2">Recourse Days</th>
-              <th className="px-2 py-2">Active</th>
-              <th className="px-2 py-2">Updated</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {(factorsQuery.data ?? []).map((factor) => (
-              <tr
-                key={factor.id}
-                onClick={() => setSelectedFactor(factor)}
-                className={`cursor-pointer ${selectedFactor?.id === factor.id ? "bg-slate-100" : "hover:bg-gray-50"}`}
-              >
-                <td className="px-2 py-2 font-medium text-gray-900">{factor.name}</td>
-                <td className="px-2 py-2">{formatPct(factor.advance_rate)}</td>
-                <td className="px-2 py-2">{formatPct(factor.fee_rate)}</td>
-                <td className="px-2 py-2">{formatPct(factor.reserve_rate)}</td>
-                <td className="px-2 py-2">{factor.recourse_days}</td>
-                <td className="px-2 py-2">{factor.active ? "Yes" : "No"}</td>
-                <td className="px-2 py-2">{new Date(factor.updated_at).toLocaleDateString()}</td>
-              </tr>
-            ))}
-            {factorsListState.isEmpty ? (
-              <tr>
-                <td className="px-2 py-4 text-gray-500" colSpan={7}>
-                  No factors configured yet.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      {factorsListState.isError ? (
+        <ListErrorState
+          title="Couldn't load factors"
+          status={factorsQuery.error instanceof ApiError ? factorsQuery.error.status : 0}
+          message={(factorsQuery.error as Error | undefined)?.message}
+          onRetry={() => void factorsQuery.refetch()}
+        />
+      ) : (
+        <ParityTable<Factor>
+          columns={FACTOR_COLUMNS}
+          rows={factorRows}
+          rowKey={(factor) => factor.id}
+          loading={factorsListState.isLoading}
+          onRowClick={(factor) => setSelectedFactor(factor)}
+          rowClassName={(factor) => (selectedFactor?.id === factor.id ? "bg-slate-100" : "")}
+          // Settled-only empty text (LIST-EMPTY-1): supplied once the query resolves to "empty".
+          emptyText={factorsListState.isEmpty ? "No factors configured yet." : undefined}
+          storageKey="factor-admin-factors"
+          tableTestId="factor-admin-factors-table"
+        />
+      )}
 
       {selectedFactor ? (
         <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
@@ -367,66 +401,46 @@ export function FactorAdmin() {
                 <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
                   Assignment History {selectedCustomer ? `- ${selectedCustomer.name}` : ""}
                 </div>
-                <div className="max-h-72 overflow-auto">
-                  <table className="min-w-full divide-y divide-gray-200 text-xs">
-                    <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
-                      <tr>
-                        <th className="px-2 py-2">Factor</th>
-                        <th className="px-2 py-2">Effective From</th>
-                        <th className="px-2 py-2">Effective To</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {(customerFactorDetailQuery.data?.assignments ?? [])
-                        .filter((row) => row.factor_id === selectedFactor.id)
-                        .map((row) => (
-                          <tr key={row.id}>
-                            <td className="px-2 py-2">{row.factor_name}</td>
-                            <td className="px-2 py-2">{row.effective_from}</td>
-                            <td className="px-2 py-2">{row.effective_to ?? "Active"}</td>
-                          </tr>
-                        ))}
-                      {assignmentsListState.isEmpty ? (
-                        <tr>
-                          <td className="px-2 py-3 text-gray-500" colSpan={3}>
-                            No assignments found for this factor/customer.
-                          </td>
-                        </tr>
-                      ) : null}
-                    </tbody>
-                  </table>
-                </div>
+                {assignmentsListState.isError ? (
+                  <ListErrorState
+                    title="Couldn't load assignment history"
+                    status={customerFactorDetailQuery.error instanceof ApiError ? customerFactorDetailQuery.error.status : 0}
+                    message={(customerFactorDetailQuery.error as Error | undefined)?.message}
+                    onRetry={() => void customerFactorDetailQuery.refetch()}
+                  />
+                ) : (
+                  <ParityTable<CustomerFactorAssignment>
+                    columns={ASSIGNMENT_COLUMNS}
+                    rows={assignmentRows}
+                    rowKey={(row) => row.id}
+                    loading={assignmentsListState.isLoading}
+                    emptyText={assignmentsListState.isEmpty ? "No assignments found for this factor/customer." : undefined}
+                    storageKey="factor-admin-assignments"
+                    tableTestId="factor-admin-assignments-table"
+                  />
+                )}
               </div>
 
               <div className="rounded-sm border border-gray-200 p-3">
                 <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">Batch History</div>
-                <div className="max-h-72 overflow-auto">
-                  <table className="min-w-full divide-y divide-gray-200 text-xs">
-                    <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
-                      <tr>
-                        <th className="px-2 py-2">Batch</th>
-                        <th className="px-2 py-2">Status</th>
-                        <th className="px-2 py-2">Submitted</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {(customerFactorDetailQuery.data?.batches ?? []).map((row) => (
-                        <tr key={row.id}>
-                          <td className="px-2 py-2">{row.batch_number}</td>
-                          <td className="px-2 py-2 capitalize">{row.status}</td>
-                          <td className="px-2 py-2">{row.submitted_at ? new Date(row.submitted_at).toLocaleDateString() : "-"}</td>
-                        </tr>
-                      ))}
-                      {batchesListState.isEmpty ? (
-                        <tr>
-                          <td className="px-2 py-3 text-gray-500" colSpan={3}>
-                            No batch history for this customer.
-                          </td>
-                        </tr>
-                      ) : null}
-                    </tbody>
-                  </table>
-                </div>
+                {batchesListState.isError ? (
+                  <ListErrorState
+                    title="Couldn't load batch history"
+                    status={customerFactorDetailQuery.error instanceof ApiError ? customerFactorDetailQuery.error.status : 0}
+                    message={(customerFactorDetailQuery.error as Error | undefined)?.message}
+                    onRetry={() => void customerFactorDetailQuery.refetch()}
+                  />
+                ) : (
+                  <ParityTable<FactorBatchHistoryRow>
+                    columns={BATCH_COLUMNS}
+                    rows={batchRows}
+                    rowKey={(row) => row.id}
+                    loading={batchesListState.isLoading}
+                    emptyText={batchesListState.isEmpty ? "No batch history for this customer." : undefined}
+                    storageKey="factor-admin-batches"
+                    tableTestId="factor-admin-batches-table"
+                  />
+                )}
               </div>
             </div>
           ) : (
