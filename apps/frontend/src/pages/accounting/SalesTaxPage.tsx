@@ -8,9 +8,11 @@ import {
   listSalesTaxReturns,
   markSalesTaxReturnPaid,
   prepareSalesTaxReturn,
+  type SalesTaxReturn,
 } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
@@ -74,6 +76,89 @@ export function SalesTaxPage() {
     },
     onError: (error) => pushToast(String((error as Error).message ?? "Failed to prepare return"), "error"),
   });
+
+  const returnColumns = useMemo<Array<ParityColumn<SalesTaxReturn>>>(
+    () => [
+      {
+        key: "agency_name",
+        label: "Agency",
+        sortable: true,
+        render: (row) => row.agency_name ?? row.agency_id,
+        sortValue: (row) => row.agency_name ?? row.agency_id,
+      },
+      {
+        key: "period_start",
+        label: "Period",
+        sortable: true,
+        render: (row) => (
+          <>
+            {row.period_start} to {row.period_end}
+          </>
+        ),
+      },
+      {
+        key: "taxable_sales_cents",
+        label: "Taxable",
+        sortable: true,
+        render: (row) => money(row.taxable_sales_cents),
+        sortValue: (row) => Number(row.taxable_sales_cents ?? 0),
+      },
+      {
+        key: "tax_collected_cents",
+        label: "Collected",
+        sortable: true,
+        render: (row) => money(row.tax_collected_cents),
+        sortValue: (row) => Number(row.tax_collected_cents ?? 0),
+      },
+      {
+        key: "tax_owed_cents",
+        label: "Owed",
+        sortable: true,
+        render: (row) => money(row.tax_owed_cents),
+        sortValue: (row) => Number(row.tax_owed_cents ?? 0),
+      },
+      { key: "status", label: "Status", sortable: true },
+      {
+        key: "actions",
+        label: "Actions",
+        alwaysVisible: true,
+        render: (row) => (
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={row.status !== "open"}
+              onClick={() => {
+                void fileSalesTaxReturn(row.id, companyId)
+                  .then(async () => {
+                    await queryClient.invalidateQueries({ queryKey: ["sales-tax", "returns", companyId] });
+                    pushToast("Return marked filed", "success");
+                  })
+                  .catch((error) => pushToast(String((error as Error).message ?? "Failed to mark filed"), "error"));
+              }}
+            >
+              Mark filed
+            </Button>
+            <Button
+              size="sm"
+              disabled={row.status === "paid"}
+              onClick={() => {
+                void markSalesTaxReturnPaid(row.id, { operating_company_id: companyId })
+                  .then(async () => {
+                    await queryClient.invalidateQueries({ queryKey: ["sales-tax", "returns", companyId] });
+                    pushToast("Return marked paid", "success");
+                  })
+                  .catch((error) => pushToast(String((error as Error).message ?? "Failed to mark paid"), "error"));
+              }}
+            >
+              Mark paid
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [companyId, queryClient, pushToast]
+  );
 
   const totals = useMemo(() => {
     const rows = returnsQuery.data?.returns ?? [];
@@ -166,84 +251,24 @@ export function SalesTaxPage() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-left text-xs">
-          <thead className="bg-gray-50 text-gray-600">
-            <tr>
-              <th className="px-3 py-2 font-semibold">Agency</th>
-              <th className="px-3 py-2 font-semibold">Period</th>
-              <th className="px-3 py-2 font-semibold">Taxable</th>
-              <th className="px-3 py-2 font-semibold">Collected</th>
-              <th className="px-3 py-2 font-semibold">Owed</th>
-              <th className="px-3 py-2 font-semibold">Status</th>
-              <th className="px-3 py-2 font-semibold">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(returnsQuery.data?.returns ?? []).map((row) => (
-              <tr key={row.id} className="border-t border-gray-100">
-                <td className="px-3 py-2">{row.agency_name ?? row.agency_id}</td>
-                <td className="px-3 py-2">{row.period_start} to {row.period_end}</td>
-                <td className="px-3 py-2">{money(row.taxable_sales_cents)}</td>
-                <td className="px-3 py-2">{money(row.tax_collected_cents)}</td>
-                <td className="px-3 py-2">{money(row.tax_owed_cents)}</td>
-                <td className="px-3 py-2">{row.status}</td>
-                <td className="px-3 py-2">
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      disabled={row.status !== "open"}
-                      onClick={() => {
-                        void fileSalesTaxReturn(row.id, companyId)
-                          .then(async () => {
-                            await queryClient.invalidateQueries({ queryKey: ["sales-tax", "returns", companyId] });
-                            pushToast("Return marked filed", "success");
-                          })
-                          .catch((error) => pushToast(String((error as Error).message ?? "Failed to mark filed"), "error"));
-                      }}
-                    >
-                      Mark filed
-                    </Button>
-                    <Button
-                      size="sm"
-                      disabled={row.status === "paid"}
-                      onClick={() => {
-                        void markSalesTaxReturnPaid(row.id, { operating_company_id: companyId })
-                          .then(async () => {
-                            await queryClient.invalidateQueries({ queryKey: ["sales-tax", "returns", companyId] });
-                            pushToast("Return marked paid", "success");
-                          })
-                          .catch((error) => pushToast(String((error as Error).message ?? "Failed to mark paid"), "error"));
-                      }}
-                    >
-                      Mark paid
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {returnsQuery.isError ? (
-              <tr>
-                <td colSpan={7}>
-                  <ListErrorState
-                    title="Couldn't load sales tax returns"
-                    status={0}
-                    message={(returnsQuery.error as Error)?.message}
-                    onRetry={() => void returnsQuery.refetch()}
-                  />
-                </td>
-              </tr>
-            ) : (returnsQuery.data?.returns ?? []).length === 0 ? (
-              <tr>
-                <td className="px-3 py-4 text-gray-500" colSpan={7}>
-                  No sales tax returns prepared yet.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      {returnsQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load sales tax returns"
+          status={0}
+          message={(returnsQuery.error as Error)?.message}
+          onRetry={() => void returnsQuery.refetch()}
+        />
+      ) : (
+        <ParityTable
+          rows={returnsQuery.data?.returns ?? []}
+          columns={returnColumns}
+          rowKey={(row) => row.id}
+          loading={returnsQuery.isLoading}
+          emptyText="No sales tax returns prepared yet."
+          storageKey="accounting-sales-tax-returns"
+          tableTestId="sales-tax-returns-table"
+        />
+      )}
     </AccountingSubNavWrapper>
   );
 }
