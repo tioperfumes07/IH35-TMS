@@ -607,6 +607,8 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/driver-finance/EscrowDeductionsPendingTab.tsx` | financial-hold |
 | `apps/frontend/src/pages/driver-finance/components/EarningsSection.tsx` | migrated (verify-step 1120) — display-only; owner-greenlit UI-only migration |
 | `apps/frontend/src/pages/driver-finance/components/LiabilityBreakdownModal.tsx` | financial-hold |
+| `apps/frontend/src/pages/driver-finance/components/EarningsSection.tsx` | financial-hold |
+| `apps/frontend/src/pages/driver-finance/components/LiabilityBreakdownModal.tsx` | migrated (verify-step 1122) — owner-greenlit UI-only, display-only props-fed grid; `verify-liability-breakdown-modal-uses-paritytable.mjs` |
 | `apps/frontend/src/pages/driver-finance/components/ReimbursementsSection.tsx` | financial-hold |
 | `apps/frontend/src/pages/driver-finance/components/ReimbursementsSection.tsx` | migrated (verify-step 1121) — owner-greenlit display-only; read-only props-fed lines; columns Date/Description/Receipt #/Amount + subtotal preserved 1:1; `verify-reimbursements-section-uses-paritytable.mjs` |
 | `apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx` | financial-hold |
