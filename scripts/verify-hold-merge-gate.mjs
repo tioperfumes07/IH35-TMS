@@ -165,6 +165,14 @@ const CONTENT_SCAN_EXCLUDE = [
   /^scripts\/verify-hold-merge-gate\.mjs$/, // this gate's own fixtures look like flips/GL writes
   /^scripts\/verify-.*\.mjs$/, // verify selftests embed SQL / flag literals by design
   /\.md$/,
+  // Documentation DATA under docs/ — same rationale as the `.md` exclusion directly above, for the
+  // machine-readable twin of the same prose. Audit/tracker artifacts quote findings verbatim
+  // ("OPEN: ... never INSERT into mdata.equipment_log ..."), so a *description of a missing write*
+  // was being classified as a financial write. A docs/*.json is inert data with no execution path;
+  // real financial writes live in db/migrations/*.sql and backend code, which stay covered by the
+  // always-protected path globs, analyzeMigrationSql, and GL_CONTENT_PATH_RE. Deliberately scoped
+  // to docs/ — a .json anywhere else (config, seeds, .block-ready) is still fully scanned.
+  /^docs\/.*\.json$/,
   /(\.test\.|\.spec\.)/,
   /(^|\/)__tests__\//,
   /(^|\/)test-helpers\//, // db fixtures seed catalogs/accounting under bypass — not product GL
@@ -357,6 +365,41 @@ function selfTest() {
     { name: "flag flip ON -> fail", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/accounting/expenses.routes.ts"], diffByFile: { "apps/backend/src/accounting/expenses.routes.ts": "-  EXPENSE_GL_POSTING_ENABLED = false\n+  EXPENSE_GL_POSTING_ENABLED = true" } }, want: "fail" },
     { name: "flag flip ON, but JORGE-APPROVED -> pass", in: { title: "x", labels: ["JORGE-APPROVED"], changedFiles: ["a.ts"], diffByFile: { "a.ts": "+ FEATURE_VOID_ENABLED = 'on'" } }, want: "pass-approved" },
     { name: "plain frontend PR -> neutral", in: { title: "feat(ux): table", labels: [], changedFiles: ["apps/frontend/src/pages/Vendors.tsx"], diffByFile: { "apps/frontend/src/pages/Vendors.tsx": "+ <div/>" } }, want: "pass-neutral" },
+    // --- docs/*.json is documentation DATA, not a financial write (twin of the `.md` exclusion) ---
+    // Audit trackers quote findings verbatim; three of the four real-world matches that triggered
+    // this were describing a write that does NOT exist. Inert data, no execution path.
+    { name: "docs tracker JSON quoting DML in evidence prose -> neutral", in: {
+      title: "docs: corrected live block audit piles",
+      labels: [],
+      changedFiles: ["docs/trackers/block-audit-piles-2026-07-21.json"],
+      diffByFile: {
+        "docs/trackers/block-audit-piles-2026-07-21.json":
+          '+      "evidence": "OPEN: dual-confirm.service.ts never INSERT into mdata.equipment_log on transfer confirm",\n' +
+          '+      "evidence": "#3084 code-proven: apply.ts:106 INSERT INTO driver_finance.driver_settlement_deductions",\n',
+      },
+    }, want: "pass-neutral" },
+    // The exclusion must stay NARROW — these three prove it did not open a hole.
+    { name: "NON-docs .json with a financial write -> STILL fail", in: {
+      title: "chore: seed",
+      labels: [],
+      changedFiles: [".block-ready/seed-accounts.json"],
+      diffByFile: { ".block-ready/seed-accounts.json": '+  "sql": "INSERT INTO accounting.journal_entries (id) VALUES (1)"' },
+    }, want: "fail" },
+    { name: "backend .ts financial write is unaffected by the docs/json exclusion -> STILL fail", in: {
+      title: "docs: tracker refresh",
+      labels: [],
+      changedFiles: ["docs/trackers/block-audit-piles-2026-07-21.json", "apps/backend/src/driver-finance/x.service.ts"],
+      diffByFile: {
+        "docs/trackers/block-audit-piles-2026-07-21.json": '+  "evidence": "OPEN: never INSERT into mdata.equipment_log"',
+        "apps/backend/src/driver-finance/x.service.ts": "+ await client.query('INSERT INTO driver_finance.driver_settlements (id) VALUES ($1)')",
+      },
+    }, want: "fail" },
+    { name: "migration riding along with an excluded docs/json -> STILL fail", in: {
+      title: "docs: audit refresh",
+      labels: [],
+      changedFiles: ["docs/trackers/block-audit-piles-2026-07-21.json", "db/migrations/0501_x.sql"],
+      diffByFile: { "db/migrations/0501_x.sql": "+ UPDATE accounting.bills SET amount_cents = 0;" },
+    }, want: "fail" },
     // --- B-A5 / D1b squash-inspection planted failures ---
     // Title / "non-financial" claim MUST NOT neutralize a protected rider in the same squash.
     { name: "squash-inspection: non-financial title + frontend + financial migration -> fail", in: {
