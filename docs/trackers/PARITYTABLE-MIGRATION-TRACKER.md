@@ -635,6 +635,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/factoring/RecoursePipelineTable.tsx` | financial-hold |
 | `apps/frontend/src/pages/factoring/ReserveDashboard.tsx` | financial-hold |
 | `apps/frontend/src/pages/factoring/ReserveTracker.tsx` | financial-hold |
+| `apps/frontend/src/pages/factoring/ReserveTracker.tsx` | migrated (verify-step 1130) — display-only; owner-greenlit UI-only migration |
 
 ### pages/finance (5) — financial-hold
 
