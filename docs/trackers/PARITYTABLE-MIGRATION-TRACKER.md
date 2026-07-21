@@ -604,7 +604,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/pages/driver-finance/CashAdvanceRequestsPage.tsx` | financial-hold |
-| `apps/frontend/src/pages/driver-finance/EscrowDeductionsPendingTab.tsx` | financial-hold |
+| `apps/frontend/src/pages/driver-finance/EscrowDeductionsPendingTab.tsx` | migrated (verify-step 1116) |
 | `apps/frontend/src/pages/driver-finance/components/EarningsSection.tsx` | financial-hold |
 | `apps/frontend/src/pages/driver-finance/components/LiabilityBreakdownModal.tsx` | financial-hold |
 | `apps/frontend/src/pages/driver-finance/components/ReimbursementsSection.tsx` | financial-hold |

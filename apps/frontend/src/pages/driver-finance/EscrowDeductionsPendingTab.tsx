@@ -10,9 +10,11 @@ import {
 } from "../../api/driverFinance";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
 import { Modal } from "../../components/Modal";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatUsdCents } from "../../lib/money";
 
@@ -105,6 +107,88 @@ export function EscrowDeductionsPendingTab() {
     return selected.proposed_amount_cents / 100;
   }, [selected]);
 
+  // Display-only ParityTable migration: renders are 1:1 with the former hand-rolled <td>s —
+  // same formatters, same classes, same Review handler. No amount math changed.
+  const columns = useMemo<Array<ParityColumn<EscrowPendingDeduction>>>(
+    () => [
+      {
+        key: "driver_name",
+        label: "Driver Name",
+        render: (row) => row.driver_name ?? "—",
+      },
+      {
+        key: "load_number",
+        label: "Load #",
+        render: (row) => {
+          const loadId = row.load_id ?? "";
+          return row.load_id ? (
+            <button
+              type="button"
+              className="text-slate-700 underline hover:text-slate-700"
+              onClick={() => navigate(`/dispatch?load_id=${encodeURIComponent(loadId)}`)}
+            >
+              {row.load_number ?? row.load_id.slice(0, 8)}
+            </button>
+          ) : (
+            "—"
+          );
+        },
+      },
+      {
+        key: "proposed_amount_cents",
+        label: "Proposed Amount",
+        cellClass: "font-medium",
+        render: (row) => formatMoney(row.proposed_amount_cents),
+      },
+      {
+        key: "proposed_reason",
+        label: "Reason",
+        render: (row) => (
+          <span className="block max-w-[320px] truncate" title={row.proposed_reason}>
+            {row.proposed_reason}
+          </span>
+        ),
+      },
+      {
+        key: "proposed_at",
+        label: "Proposed At",
+        render: (row) => formatDateTime(row.proposed_at),
+      },
+      {
+        key: "expires_at",
+        label: "Expires At",
+        render: (row) => {
+          const nearExpiry = daysUntil(row.expires_at) <= 3;
+          return (
+            <span className={nearExpiry ? "font-semibold text-red-600" : ""}>
+              {formatDateTime(row.expires_at)}
+            </span>
+          );
+        },
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        alwaysVisible: true,
+        render: (row) => (
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              setSelected(row);
+              setOverrideAmount(row.proposed_amount_cents / 100);
+              setReviewNotes("");
+              setErrorMessage("");
+            }}
+          >
+            Review
+          </Button>
+        ),
+      },
+    ],
+    [navigate],
+  );
+
   return (
     <div className="space-y-3">
       <PageHeader title="Escrow Deductions Pending Review" subtitle="Auto-proposed abandonment deductions requiring Owner decision." />
@@ -115,74 +199,24 @@ export function EscrowDeductionsPendingTab() {
         </div>
       ) : null}
 
-      <div className="rounded-sm border border-gray-200 bg-white">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-gray-50 text-xs uppercase text-gray-600">
-              <tr>
-                <th className="px-3 py-2">Driver Name</th>
-                <th className="px-3 py-2">Load #</th>
-                <th className="px-3 py-2">Proposed Amount</th>
-                <th className="px-3 py-2">Reason</th>
-                <th className="px-3 py-2">Proposed At</th>
-                <th className="px-3 py-2">Expires At</th>
-                <th className="px-3 py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => {
-                const nearExpiry = daysUntil(row.expires_at) <= 3;
-                const loadId = row.load_id ?? "";
-                return (
-                  <tr key={row.id} className="border-t border-gray-100">
-                    <td className="px-3 py-2">{row.driver_name ?? "—"}</td>
-                    <td className="px-3 py-2">
-                      {row.load_id ? (
-                        <button
-                          type="button"
-                          className="text-slate-700 underline hover:text-slate-700"
-                          onClick={() => navigate(`/dispatch?load_id=${encodeURIComponent(loadId)}`)}
-                        >
-                          {row.load_number ?? row.load_id.slice(0, 8)}
-                        </button>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td className="px-3 py-2 font-medium">{formatMoney(row.proposed_amount_cents)}</td>
-                    <td className="max-w-[320px] truncate px-3 py-2" title={row.proposed_reason}>
-                      {row.proposed_reason}
-                    </td>
-                    <td className="px-3 py-2">{formatDateTime(row.proposed_at)}</td>
-                    <td className={`px-3 py-2 ${nearExpiry ? "font-semibold text-red-600" : ""}`}>{formatDateTime(row.expires_at)}</td>
-                    <td className="px-3 py-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => {
-                          setSelected(row);
-                          setOverrideAmount(row.proposed_amount_cents / 100);
-                          setReviewNotes("");
-                          setErrorMessage("");
-                        }}
-                      >
-                        Review
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
-              {rows.length === 0 ? (
-                <tr>
-                  <td className="px-3 py-8 text-center text-sm text-gray-500" colSpan={7}>
-                    No pending escrow deductions
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {pendingQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load pending escrow deductions"
+          status={pendingQuery.error instanceof ApiError ? pendingQuery.error.status : 0}
+          message={(pendingQuery.error as Error)?.message}
+          onRetry={() => void pendingQuery.refetch()}
+        />
+      ) : (
+        <ParityTable
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.id}
+          loading={pendingQuery.isLoading}
+          storageKey="escrow-deductions-pending"
+          tableTestId="escrow-deductions-pending-table"
+          emptyText="No pending escrow deductions"
+        />
+      )}
 
       <Modal
         open={Boolean(selected)}
