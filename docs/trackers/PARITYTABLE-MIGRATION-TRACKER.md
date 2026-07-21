@@ -632,7 +632,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/factoring/FactorAdmin.tsx` | financial-hold |
 | `apps/frontend/src/pages/factoring/FactoringHome.tsx` | financial-hold |
 | `apps/frontend/src/pages/factoring/FaroImportPage.tsx` | financial-hold |
-| `apps/frontend/src/pages/factoring/RecoursePipelineTable.tsx` | financial-hold |
+| `apps/frontend/src/pages/factoring/RecoursePipelineTable.tsx` | migrated (verify-step 1125) |
 | `apps/frontend/src/pages/factoring/ReserveDashboard.tsx` | financial-hold |
 | `apps/frontend/src/pages/factoring/ReserveTracker.tsx` | financial-hold |
 
