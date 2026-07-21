@@ -1587,3 +1587,16 @@ Guard: `scripts/verify-unit-parts-history-uses-paritytable.mjs` via verify-step 
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/components/vehicle-profile/UnitPartsHistorySection.tsx` | components/vehicle-profile |
+
+## qbo-parity-a1 — UserActivityTab (this PR)
+Admin User detail "Activity" tab (per-user audit trail) was a hand-rolled `<table>` with a
+bare red outage line ("Failed to load user activity"). Migrated to shared `ParityTable`
+(sort + resize + gear + `renderExpanded` Before→After payload diff) and replaced the ad-hoc
+error text with `ListErrorState` + Retry. Columns When / Action / Summary / Source preserved
+1:1; date-range filters, event-type + source dropdowns, the Voids & Reversals toggle,
+Refresh, and CSV export are unchanged. Read-only audit surface — no schema/posting change.
+Guard: `scripts/verify-user-activity-tab-uses-paritytable.mjs` via verify-step **1200**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/users/UserActivityTab.tsx` | components/users |
