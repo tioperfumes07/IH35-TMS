@@ -1,7 +1,13 @@
 /**
- * Phase 4 pre-work (0091-g7-1): pins the CURRENT legal payment-state transition
- * matrix in settlement-payment.service.ts before the Phase 2 CAS fix lands.
- * The test IS the guard — no standalone verify-*.mjs (Rule 17).
+ * Phase 4 pre-work (0091-g7-1): pins the legal payment-state transition matrix
+ * in settlement-payment.service.ts. The test IS the guard — no standalone
+ * verify-*.mjs (Rule 17).
+ *
+ * Phase 2 double-pay fix delta (DESIGN-settlement-double-pay-row-lock-state-guard §2.3):
+ * SAME-STATE (diagonal) calls are now IDEMPOTENT SUCCESS — the mutator returns the
+ * existing row and writes NOTHING (no UPDATE, no event, no audit) — instead of
+ * throwing invalid_payment_state_transition. Every off-diagonal illegal edge still
+ * throws, and the ALLOWED matrix itself is unchanged.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -88,14 +94,16 @@ function mockDbForTransition(fromState: PaymentState | null, toState: PaymentSta
     if (sql.includes("set_config('app.operating_company_id'")) {
       return { rows: [] };
     }
+    // Classify UPDATE-with-SET before SELECT: the settlement lookup now ends in
+    // "FOR UPDATE" (Phase 2 row lock), so a bare includes("UPDATE") misfiles it.
     if (
       sql.includes("SELECT") &&
       sql.includes("FROM driver_finance.driver_settlements") &&
-      !sql.includes("UPDATE")
+      !/UPDATE\s+driver_finance\.driver_settlements/.test(sql)
     ) {
       return { rows: [baseSettlement(fromState)] };
     }
-    if (sql.includes("UPDATE driver_finance.driver_settlements") && sql.includes("RETURNING")) {
+    if (/UPDATE\s+driver_finance\.driver_settlements/.test(sql) && sql.includes("RETURNING")) {
       return {
         rows: [
           {
@@ -118,7 +126,13 @@ function mockDbForTransition(fromState: PaymentState | null, toState: PaymentSta
 
 function updateWasCalled(): boolean {
   return mocked.queryMock.mock.calls.some(
-    ([sql]: [string]) => typeof sql === "string" && sql.includes("UPDATE driver_finance.driver_settlements")
+    ([sql]: [string]) => typeof sql === "string" && /UPDATE\s+driver_finance\.driver_settlements/.test(sql) && sql.includes("SET")
+  );
+}
+
+function eventInsertWasCalled(): boolean {
+  return mocked.queryMock.mock.calls.some(
+    ([sql]: [string]) => typeof sql === "string" && sql.includes("INSERT INTO driver_finance.settlement_payment_events")
   );
 }
 
@@ -161,7 +175,14 @@ describe("settlement payment transition matrix (0091-g7-1)", () => {
       mockDbForTransition(from, to);
       const allowed = isAllowed(from, to);
 
-      if (allowed) {
+      if (from === to) {
+        // Phase 2 idempotency latch: same-state is idempotent success and writes NOTHING.
+        const result = (await invokeTransition(to)) as { payment_state: string };
+        expect(result.payment_state).toBe(to);
+        expect(updateWasCalled()).toBe(false);
+        expect(eventInsertWasCalled()).toBe(false);
+        expect(mocked.appendCrudAuditMock).not.toHaveBeenCalled();
+      } else if (allowed) {
         const result = (await invokeTransition(to)) as { payment_state: string };
         expect(result.payment_state).toBe(to);
         expect(updateWasCalled()).toBe(true);

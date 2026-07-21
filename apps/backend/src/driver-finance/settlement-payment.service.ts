@@ -16,7 +16,11 @@ type SettlementRow = {
   payment_state: PaymentState | null;
   payment_method: string | null;
   payment_bank_reference: string | null;
+  payment_release_idempotency_key: string | null;
 };
+
+const SETTLEMENT_ROW_COLUMNS =
+  "id, operating_company_id, driver_id, status, payment_state, payment_method, payment_bank_reference, payment_release_idempotency_key";
 
 function settlementPaymentState(settlement: SettlementRow): PaymentState {
   return (settlement.payment_state ?? "unpaid") as PaymentState;
@@ -35,22 +39,74 @@ function hashPayload(input: unknown) {
 // regardless of validity. Fix: callers now receive operating_company_id explicitly (from the
 // route, same as every other driver_finance route) and set the GUC BEFORE this lookup, and this
 // lookup scopes by BOTH id and operating_company_id (defense in depth beyond RLS alone).
+//
+// DOUBLE-PAY FIX (canonicalization-drop D2, restored from the deprecated payroll service L289/446/587):
+// FOR UPDATE serializes concurrent mutators at the read, so a loser blocks until the winner commits
+// and then observes the true post-commit state instead of racing a stale one into a doomed UPDATE.
+// The load-bearing guard is the CAS predicate on every UPDATE below; this lock is defense in depth
+// and protects the read-decide-append window covering appendPaymentEvent/appendCrudAudit
+// (precedent: settlement-posting.service.ts).
 async function loadSettlement(
   client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> },
   settlementId: string,
-  operatingCompanyId: string
+  operatingCompanyId: string,
+  options: { forUpdate?: boolean } = {}
 ) {
   const res = await client.query<SettlementRow>(
     `
-      SELECT id, operating_company_id, driver_id, status, payment_state, payment_method, payment_bank_reference
+      SELECT ${SETTLEMENT_ROW_COLUMNS}
       FROM driver_finance.driver_settlements
       WHERE id = $1
         AND operating_company_id = $2
       LIMIT 1
+      ${options.forUpdate ? "FOR UPDATE" : ""}
     `,
     [settlementId, operatingCompanyId]
   );
   return res.rows[0] ?? null;
+}
+
+// DOUBLE-PAY FIX (canonicalization-drop D3/D4): every payment-state UPDATE carries a compare-and-swap
+// predicate (payment_state IS NOT DISTINCT FROM the state observed under the row lock). IS NOT DISTINCT
+// FROM, not "=": the column type is nullable in code (settlementPaymentState() coerces NULL -> 'unpaid');
+// a plain "=" would never match a NULL row and would break the first transition of any legacy row.
+// Under READ COMMITTED, a concurrency loser's UPDATE re-evaluates this WHERE after the winner commits,
+// no longer matches, and affects 0 rows -- exactly one transition can win. A 0-row outcome is then a
+// NORMAL concurrency rejection, not an error: resolveGuardedUpdateMiss() re-reads and splits
+// already-in-target (idempotent success -- NO second event, NO second audit row, mirroring the
+// deprecated latch's { idempotent: true }) from genuinely-illegal (invalid_payment_state_transition)
+// and gone (settlement_not_found).
+type GuardedUpdateResolution =
+  | { outcome: "idempotent"; settlement: SettlementRow }
+  | { outcome: "conflict" };
+
+async function resolveGuardedUpdateMiss(
+  client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> },
+  settlementId: string,
+  operatingCompanyId: string,
+  targetState: PaymentState
+): Promise<GuardedUpdateResolution> {
+  const current = await loadSettlement(client, settlementId, operatingCompanyId);
+  if (!current) throw new Error("settlement_not_found");
+  if (settlementPaymentState(current) === targetState) {
+    return { outcome: "idempotent", settlement: current };
+  }
+  return { outcome: "conflict" };
+}
+
+// One deterministic key per LOGICAL transition attempt: settlement + event type + the state the CAS
+// was predicated on + the transition timestamp the winning UPDATE stamped (RETURNING). A replay of
+// the same committed transition derives the same key and hits ON CONFLICT DO NOTHING (unique index
+// uq_settlement_payment_events_idem_key, migration 202607630000), so a re-run writes NO second event
+// row. A legal later cycle (bounced -> queued again) stamps a new timestamp and gets a new key.
+function paymentEventIdempotencyKey(
+  settlementId: string,
+  eventType: PaymentEventType,
+  previousState: PaymentState,
+  transitionStamp: string | Date | null | undefined
+) {
+  const stamp = transitionStamp instanceof Date ? transitionStamp.toISOString() : String(transitionStamp ?? "");
+  return hashPayload({ settlement_id: settlementId, event_type: eventType, previous_state: previousState, transition_stamp: stamp });
 }
 
 async function appendPaymentEvent(
@@ -58,7 +114,8 @@ async function appendPaymentEvent(
   settlement: SettlementRow,
   eventType: PaymentEventType,
   userId: string,
-  payload: Record<string, unknown> | null = null
+  payload: Record<string, unknown> | null = null,
+  idempotencyKey: string | null = null
 ) {
   await client.query(
     `
@@ -68,11 +125,14 @@ async function appendPaymentEvent(
         event_type,
         payload,
         user_id,
+        idempotency_key,
         created_at
       )
-      VALUES ($1,$2,$3,$4::jsonb,$5,now())
+      VALUES ($1,$2,$3,$4::jsonb,$5,$6,now())
+      ON CONFLICT (settlement_id, event_type, idempotency_key) WHERE idempotency_key IS NOT NULL
+      DO NOTHING
     `,
-    [settlement.id, settlement.operating_company_id, eventType, JSON.stringify(payload ?? {}), userId]
+    [settlement.id, settlement.operating_company_id, eventType, JSON.stringify(payload ?? {}), userId, idempotencyKey]
   );
 }
 
@@ -126,13 +186,14 @@ export async function queuePayment(settlementId: string, operatingCompanyId: str
   return withCurrentUser(userId, async (client) => {
     // GUC must be set BEFORE the lookup -- driver_settlements is FORCE RLS (see loadSettlement).
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
-    const settlement = await loadSettlement(client, settlementId, operatingCompanyId);
+    const settlement = await loadSettlement(client, settlementId, operatingCompanyId, { forUpdate: true });
     if (!settlement) throw new Error("settlement_not_found");
 
+    const currentState = settlementPaymentState(settlement);
+    if (currentState === "queued") return settlement; // idempotent: double-click/retry, no second event/audit
     if (!(settlement.status === "locked" || settlement.status === "final")) {
       throw new Error("settlement_must_be_final");
     }
-    const currentState = settlementPaymentState(settlement);
     if (!validateTransition(currentState, "queued")) {
       throw new Error("invalid_payment_state_transition");
     }
@@ -142,22 +203,39 @@ export async function queuePayment(settlementId: string, operatingCompanyId: str
       throw new Error("driver_bank_configuration_required");
     }
 
-    const updateRes = await client.query<SettlementRow>(
+    // Each queue is one payment-release attempt: mint a fresh rail-boundary idempotency key here
+    // (re-queue after bounce = a NEW release, so the old key must not be reused for it), which
+    // markSentToBank then carries to the bank unchanged on every retry of THIS release.
+    const releaseKey = crypto.randomUUID();
+    const updateRes = await client.query<SettlementRow & { payment_queued_at: Date | string | null }>(
       `
         UPDATE driver_finance.driver_settlements
         SET payment_state = 'queued',
             payment_queued_at = now(),
+            payment_release_idempotency_key = $4,
             updated_at = now()
         WHERE id = $1
           AND operating_company_id = $2
-        RETURNING id, operating_company_id, driver_id, status, payment_state, payment_method, payment_bank_reference
+          AND payment_state IS NOT DISTINCT FROM $3
+        RETURNING ${SETTLEMENT_ROW_COLUMNS}, payment_queued_at
       `,
-      [settlement.id, settlement.operating_company_id]
+      [settlement.id, settlement.operating_company_id, settlement.payment_state, releaseKey]
     );
     const updated = updateRes.rows[0];
-    if (!updated) throw new Error("settlement_payment_queue_failed");
+    if (!updated) {
+      const miss = await resolveGuardedUpdateMiss(client, settlement.id, operatingCompanyId, "queued");
+      if (miss.outcome === "idempotent") return miss.settlement;
+      throw new Error("invalid_payment_state_transition");
+    }
 
-    await appendPaymentEvent(client, updated, "queued", userId, { previous_state: currentState });
+    await appendPaymentEvent(
+      client,
+      updated,
+      "queued",
+      userId,
+      { previous_state: currentState, release_idempotency_key: releaseKey },
+      paymentEventIdempotencyKey(updated.id, "queued", currentState, updated.payment_queued_at)
+    );
     await appendCrudAudit(
       client,
       userId,
@@ -177,29 +255,47 @@ export async function queuePayment(settlementId: string, operatingCompanyId: str
 export async function markSentToBank(settlementId: string, operatingCompanyId: string, bankReference: string, userId: string) {
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
-    const settlement = await loadSettlement(client, settlementId, operatingCompanyId);
+    const settlement = await loadSettlement(client, settlementId, operatingCompanyId, { forUpdate: true });
     if (!settlement) throw new Error("settlement_not_found");
     const currentState = settlementPaymentState(settlement);
+    if (currentState === "sent_to_bank") return settlement; // idempotent: instruction already recorded
     if (!validateTransition(currentState, "sent_to_bank")) {
       throw new Error("invalid_payment_state_transition");
     }
 
-    const updateRes = await client.query<SettlementRow>(
+    // Rail boundary: reuse the release key minted at queue time so a retry-after-partial-failure
+    // presents the SAME idempotency key to the bank (one instruction per release). COALESCE covers
+    // rows queued before the key existed: mint one now, exactly once.
+    const fallbackReleaseKey = crypto.randomUUID();
+    const updateRes = await client.query<SettlementRow & { payment_sent_at: Date | string | null }>(
       `
         UPDATE driver_finance.driver_settlements
         SET payment_state = 'sent_to_bank',
             payment_sent_at = now(),
             payment_bank_reference = $3,
+            payment_release_idempotency_key = COALESCE(payment_release_idempotency_key, $5),
             updated_at = now()
         WHERE id = $1
           AND operating_company_id = $2
-        RETURNING id, operating_company_id, driver_id, status, payment_state, payment_method, payment_bank_reference
+          AND payment_state IS NOT DISTINCT FROM $4
+        RETURNING ${SETTLEMENT_ROW_COLUMNS}, payment_sent_at
       `,
-      [settlement.id, settlement.operating_company_id, bankReference]
+      [settlement.id, settlement.operating_company_id, bankReference, settlement.payment_state, fallbackReleaseKey]
     );
     const updated = updateRes.rows[0];
-    if (!updated) throw new Error("settlement_payment_sent_failed");
-    await appendPaymentEvent(client, updated, "sent", userId, { bank_reference: bankReference });
+    if (!updated) {
+      const miss = await resolveGuardedUpdateMiss(client, settlement.id, operatingCompanyId, "sent_to_bank");
+      if (miss.outcome === "idempotent") return miss.settlement;
+      throw new Error("invalid_payment_state_transition");
+    }
+    await appendPaymentEvent(
+      client,
+      updated,
+      "sent",
+      userId,
+      { bank_reference: bankReference, release_idempotency_key: updated.payment_release_idempotency_key },
+      paymentEventIdempotencyKey(updated.id, "sent", currentState, updated.payment_sent_at)
+    );
     await appendCrudAudit(
       client,
       userId,
@@ -220,14 +316,15 @@ export async function markSentToBank(settlementId: string, operatingCompanyId: s
 export async function markCleared(settlementId: string, operatingCompanyId: string, userId: string) {
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
-    const settlement = await loadSettlement(client, settlementId, operatingCompanyId);
+    const settlement = await loadSettlement(client, settlementId, operatingCompanyId, { forUpdate: true });
     if (!settlement) throw new Error("settlement_not_found");
     const currentState = settlementPaymentState(settlement);
+    if (currentState === "cleared") return settlement; // idempotent: terminal state already reached
     if (!validateTransition(currentState, "cleared")) {
       throw new Error("invalid_payment_state_transition");
     }
 
-    const updateRes = await client.query<SettlementRow>(
+    const updateRes = await client.query<SettlementRow & { payment_cleared_at: Date | string | null }>(
       `
         UPDATE driver_finance.driver_settlements
         SET payment_state = 'cleared',
@@ -235,13 +332,25 @@ export async function markCleared(settlementId: string, operatingCompanyId: stri
             updated_at = now()
         WHERE id = $1
           AND operating_company_id = $2
-        RETURNING id, operating_company_id, driver_id, status, payment_state, payment_method, payment_bank_reference
+          AND payment_state IS NOT DISTINCT FROM $3
+        RETURNING ${SETTLEMENT_ROW_COLUMNS}, payment_cleared_at
       `,
-      [settlement.id, settlement.operating_company_id]
+      [settlement.id, settlement.operating_company_id, settlement.payment_state]
     );
     const updated = updateRes.rows[0];
-    if (!updated) throw new Error("settlement_payment_cleared_failed");
-    await appendPaymentEvent(client, updated, "cleared", userId, {});
+    if (!updated) {
+      const miss = await resolveGuardedUpdateMiss(client, settlement.id, operatingCompanyId, "cleared");
+      if (miss.outcome === "idempotent") return miss.settlement;
+      throw new Error("invalid_payment_state_transition");
+    }
+    await appendPaymentEvent(
+      client,
+      updated,
+      "cleared",
+      userId,
+      {},
+      paymentEventIdempotencyKey(updated.id, "cleared", currentState, updated.payment_cleared_at)
+    );
 
     const payloadHash = hashPayload({
       settlement_id: updated.id,
@@ -269,14 +378,15 @@ export async function markCleared(settlementId: string, operatingCompanyId: stri
 export async function markBounced(settlementId: string, operatingCompanyId: string, reason: string, userId: string) {
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
-    const settlement = await loadSettlement(client, settlementId, operatingCompanyId);
+    const settlement = await loadSettlement(client, settlementId, operatingCompanyId, { forUpdate: true });
     if (!settlement) throw new Error("settlement_not_found");
     const currentState = settlementPaymentState(settlement);
+    if (currentState === "bounced") return settlement; // idempotent: bounce already recorded
     if (!validateTransition(currentState, "bounced")) {
       throw new Error("invalid_payment_state_transition");
     }
 
-    const updateRes = await client.query<SettlementRow>(
+    const updateRes = await client.query<SettlementRow & { updated_at: Date | string | null }>(
       `
         UPDATE driver_finance.driver_settlements
         SET payment_state = 'bounced',
@@ -284,13 +394,25 @@ export async function markBounced(settlementId: string, operatingCompanyId: stri
             updated_at = now()
         WHERE id = $1
           AND operating_company_id = $2
-        RETURNING id, operating_company_id, driver_id, status, payment_state, payment_method, payment_bank_reference
+          AND payment_state IS NOT DISTINCT FROM $4
+        RETURNING ${SETTLEMENT_ROW_COLUMNS}, updated_at
       `,
-      [settlement.id, settlement.operating_company_id, reason]
+      [settlement.id, settlement.operating_company_id, reason, settlement.payment_state]
     );
     const updated = updateRes.rows[0];
-    if (!updated) throw new Error("settlement_payment_bounced_failed");
-    await appendPaymentEvent(client, updated, "bounced", userId, { reason });
+    if (!updated) {
+      const miss = await resolveGuardedUpdateMiss(client, settlement.id, operatingCompanyId, "bounced");
+      if (miss.outcome === "idempotent") return miss.settlement;
+      throw new Error("invalid_payment_state_transition");
+    }
+    await appendPaymentEvent(
+      client,
+      updated,
+      "bounced",
+      userId,
+      { reason },
+      paymentEventIdempotencyKey(updated.id, "bounced", currentState, updated.updated_at)
+    );
 
     await appendCrudAudit(
       client,
@@ -332,14 +454,15 @@ export async function markPaidManually(
 ) {
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
-    const settlement = await loadSettlement(client, settlementId, operatingCompanyId);
+    const settlement = await loadSettlement(client, settlementId, operatingCompanyId, { forUpdate: true });
     if (!settlement) throw new Error("settlement_not_found");
     const currentState = settlementPaymentState(settlement);
+    if (currentState === "manual_paid") return settlement; // idempotent: disbursement already recorded ONCE
     if (!validateTransition(currentState, "manual_paid")) {
       throw new Error("invalid_payment_state_transition");
     }
 
-    const updateRes = await client.query<SettlementRow>(
+    const updateRes = await client.query<SettlementRow & { updated_at: Date | string | null }>(
       `
         UPDATE driver_finance.driver_settlements
         SET payment_state = 'manual_paid',
@@ -348,13 +471,25 @@ export async function markPaidManually(
             updated_at = now()
         WHERE id = $1
           AND operating_company_id = $2
-        RETURNING id, operating_company_id, driver_id, status, payment_state, payment_method, payment_bank_reference
+          AND payment_state IS NOT DISTINCT FROM $5
+        RETURNING ${SETTLEMENT_ROW_COLUMNS}, updated_at
       `,
-      [settlement.id, settlement.operating_company_id, paymentMethod, reference]
+      [settlement.id, settlement.operating_company_id, paymentMethod, reference, settlement.payment_state]
     );
     const updated = updateRes.rows[0];
-    if (!updated) throw new Error("settlement_mark_manual_paid_failed");
-    await appendPaymentEvent(client, updated, "marked_paid_manually", userId, { payment_method: paymentMethod, reference });
+    if (!updated) {
+      const miss = await resolveGuardedUpdateMiss(client, settlement.id, operatingCompanyId, "manual_paid");
+      if (miss.outcome === "idempotent") return miss.settlement;
+      throw new Error("invalid_payment_state_transition");
+    }
+    await appendPaymentEvent(
+      client,
+      updated,
+      "marked_paid_manually",
+      userId,
+      { payment_method: paymentMethod, reference },
+      paymentEventIdempotencyKey(updated.id, "marked_paid_manually", currentState, updated.updated_at)
+    );
 
     await appendCrudAudit(
       client,
