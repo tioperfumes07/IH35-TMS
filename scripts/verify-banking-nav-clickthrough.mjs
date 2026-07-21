@@ -66,8 +66,14 @@ export function assertGuard({ bankingHomeSrc, escrowTabSrc }) {
   }
 
   // (3) Driver Escrow register rows must be clickable (Doc-18 defect #12 — the dead-click regression).
-  if (!/<tr[^>]*onClick=/.test(escrowTabSrc)) {
-    failures.push(`${ESCROW_TAB_REL} — register <tr> rows have no onClick (dead click, Doc-18 defect #12)`);
+  // Two accepted (equally strict) shapes: the original hand-rolled <tr onClick=…>, or — after the
+  // owner-greenlit display-only ParityTable migration — the shared ParityTable's onRowClick prop
+  // (ParityTable renders it as the row <tr> onClick at runtime). Either way a row click must go
+  // somewhere; the drill-through target is asserted separately below.
+  const hasRowClick =
+    /<tr[^>]*onClick=/.test(escrowTabSrc) || /<ParityTable[\s\S]*?onRowClick=/.test(escrowTabSrc);
+  if (!hasRowClick) {
+    failures.push(`${ESCROW_TAB_REL} — register rows have no onClick/onRowClick (dead click, Doc-18 defect #12)`);
   }
   if (!/navigate\(`\/drivers\/\$\{rowDriverId\}`\)/.test(escrowTabSrc)) {
     failures.push(`${ESCROW_TAB_REL} — expected the row click to drill through to the driver (/drivers/:id)`);
@@ -112,10 +118,26 @@ function runSelftest() {
       onClick={openable ? () => navigate(\`/drivers/\${rowDriverId}\`) : undefined}
     >
   `;
+  const goodEscrowTabParity = `
+    <ParityTable
+      columns={columns}
+      rows={tableRows}
+      onRowClick={(row) => {
+        const rowDriverId = String(row.driver_id ?? "");
+        if (!rowDriverId) return;
+        navigate(\`/drivers/\${rowDriverId}\`);
+      }}
+    />
+  `;
   const cases = [
     {
       name: "healthy: persistent nav actions + clickable escrow rows",
       input: { bankingHomeSrc: goodBankingHome, escrowTabSrc: goodEscrowTab },
+      expectPass: true,
+    },
+    {
+      name: "healthy: escrow rows click-through via ParityTable onRowClick (display-only migration)",
+      input: { bankingHomeSrc: goodBankingHome, escrowTabSrc: goodEscrowTabParity },
       expectPass: true,
     },
     {

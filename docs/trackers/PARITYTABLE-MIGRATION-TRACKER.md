@@ -531,7 +531,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/banking/TransfersListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/banking/components/BankingPlaidConnectionsPanel.tsx` | financial-hold |
 | `apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx` | financial-hold |
-| `apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx` | financial-hold |
+| `apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx` | migrated (verify-step 1165) — owner-greenlit display-only |
 | `apps/frontend/src/pages/banking/components/RegisterTable.tsx` | financial-hold |
 | `apps/frontend/src/pages/banking/components/forms/BillPaymentForm.tsx` | financial-hold |
 
