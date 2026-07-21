@@ -1,0 +1,17 @@
+{
+  "block_id": "0091-g7-1",
+  "status": "BUILD",
+  "classification": "NON_FINANCIAL",
+  "phase": "FOUNDATION-FIRST-P4",
+  "task": "Phase 4 pre-work (0091-g7-1): transition-matrix pinning test for settlement-payment allowedTransitions. Test-only; pins CURRENT legal matrix before Phase 2 CAS fix. The vitest suite IS the guard (Rule 17 — no new verify-*.mjs).",
+  "branch": "test/settlement-payment-transition-matrix",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/0091-g7-1.json",
+    "apps/backend/src/driver-finance/__tests__/settlement-payment-transition-matrix.test.ts"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
