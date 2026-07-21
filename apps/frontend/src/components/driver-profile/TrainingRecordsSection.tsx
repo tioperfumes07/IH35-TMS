@@ -1,4 +1,4 @@
-import { DataTable } from "../DataTable";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { formatDateUS } from "../../lib/formatDate";
 
 function statusClass(status: string | undefined) {
@@ -8,6 +8,8 @@ function statusClass(status: string | undefined) {
   return "text-gray-600";
 }
 
+type TrainingRecordRow = Record<string, unknown> & { __rowKey: string };
+
 export function TrainingRecordsSection({
   records,
   onAddTraining,
@@ -15,6 +17,26 @@ export function TrainingRecordsSection({
   records: Array<Record<string, unknown>>;
   onAddTraining?: () => void;
 }) {
+  const rows: TrainingRecordRow[] = records.map((row, index) => ({
+    ...row,
+    __rowKey: `${String(row.type ?? "training")}-${index}`,
+  }));
+
+  const columns: Array<ParityColumn<TrainingRecordRow>> = [
+    { key: "type", label: "Type", render: (row) => String(row.type ?? "—") },
+    {
+      key: "completion_date",
+      label: "Completed",
+      render: (row) => formatDateUS(row.completion_date as string) || "—",
+    },
+    {
+      key: "expiration_date",
+      label: "Expiration",
+      render: (row) => <span className={statusClass(String(row.status))}>{String(row.expiration_date ?? "—")}</span>,
+    },
+    { key: "certificate_url", label: "Certificate", render: (row) => (row.certificate_url ? "On file" : "—") },
+  ];
+
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex items-center justify-between">
@@ -30,20 +52,12 @@ export function TrainingRecordsSection({
         </button>
       </div>
       <div className="mt-3">
-        <DataTable<Record<string, unknown>>
-          rows={records.map((row, index) => ({ ...row, __rowKey: `${String(row.type ?? "training")}-${index}` }))}
-          rowKey={(row) => String(row.__rowKey)}
+        <ParityTable<TrainingRecordRow>
+          rows={rows}
+          rowKey={(row) => row.__rowKey}
           emptyText="No training records."
-          columns={[
-            { key: "type", label: "Type", render: (row) => String(row.type ?? "—") },
-            { key: "completion_date", label: "Completed", render: (row) => formatDateUS(row.completion_date as string) || "—" },
-            {
-              key: "expiration_date",
-              label: "Expiration",
-              render: (row) => <span className={statusClass(String(row.status))}>{String(row.expiration_date ?? "—")}</span>,
-            },
-            { key: "certificate_url", label: "Certificate", render: (row) => (row.certificate_url ? "On file" : "—") },
-          ]}
+          columns={columns}
+          storageKey="dp-training-records"
         />
       </div>
     </section>

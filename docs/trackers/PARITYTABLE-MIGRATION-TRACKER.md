@@ -330,7 +330,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | --- | --- |
 | `apps/frontend/src/components/driver-profile/DocumentsSection.tsx` | pending |
 | `apps/frontend/src/components/driver-profile/SettlementsSection.tsx` | migrated (qbo-parity-a1) |
-| `apps/frontend/src/components/driver-profile/TrainingRecordsSection.tsx` | pending |
+| `apps/frontend/src/components/driver-profile/TrainingRecordsSection.tsx` | migrated (qbo-parity-a1) |
 
 ### components/drivers (3 remaining)
 
@@ -1557,3 +1557,17 @@ Guard: `scripts/verify-form2290-filings-uses-paritytable.mjs` via verify-step **
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/compliance/Form2290Filings.tsx` | pages/compliance |
+
+## qbo-parity-a1 — TrainingRecordsSection (this PR)
+Driver-profile Training records grid was on the legacy `DataTable` (itself a hand-rolled
+`<table>`, not shared ParityTable). Migrated to shared `ParityTable` (sort + resize + gear).
+Columns Type / Completed / Expiration / Certificate preserved 1:1, including the
+expiration-status color coding and the "+ Add training" action. `records` is a derived prop
+from the already-loaded driver-profile aggregate query (no independent fetch in this
+component) — no `ListErrorState` applies here, matching the CreateWOSectionReconcile
+precedent. No tab added/removed/renamed.
+Guard: `scripts/verify-training-records-uses-paritytable.mjs` via verify-step **1198**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/driver-profile/TrainingRecordsSection.tsx` | components/driver-profile |
