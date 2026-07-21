@@ -1,26 +1,26 @@
 {
  "date": "2026-07-21",
- "generated_at_iso": "2026-07-21T13:23:24.445Z",
+ "generated_at_iso": "2026-07-21T14:28:09.515Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
   "NEEDS-VERIFY": 63,
-  "DONE": 668,
+  "DONE": 669,
   "AUDIT-NOTE": 425
  },
  "universe": {
-  "total_blocks_after_dedup": 1190,
+  "total_blocks_after_dedup": 1191,
   "by_source_after_dedup": {
-   ".block-ready": 1018,
+   ".block-ready": 1019,
    "program": 61,
    "enterprise-29": 29,
    "accounting": 25,
    "gap-spec": 57
   },
   "raw_file_counts": {
-   ".block-ready (*.json files)": 1371,
+   ".block-ready (*.json files)": 1372,
    ".block-ready retired (dup/stale/superseded, excluded)": 348,
-   ".block-ready active (counted)": 1023
+   ".block-ready active (counted)": 1024
   },
   "note": "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by UNIQUE block_id, EXCLUDING files with EXPLICIT retirement markers (_DUP/_STALE/_SUPERSEDED underscore suffixes, status superseded/duplicate/dup/stale, or superseded_by/duplicate_of). Hyphen descriptive …-stale/…-duplicate live defect IDs are NOT retired by filename alone. So the block count is neither the raw .block-ready file count nor inflated by duplicate/retired registrations."
  },
@@ -6748,6 +6748,17 @@
    "pr": 3086
   },
   {
+   "id": "paritytable-a5-controlled-selection",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #3087 merged 2026-07-21",
+   "name": "Add OPTIONAL controlled row-selection props (selectedKeys/onSelectionChange) to ParityTable, modeled on the controlled-s",
+   "registered_on": null,
+   "pr": 3087
+  },
+  {
    "id": "PERF-BUDGET-RAISE",
    "source": ".block-ready",
    "fin": true,
@@ -13151,6 +13162,24 @@
  ],
  "merged_prs": [
   {
+   "number": 3090,
+   "title": "fix(guards): absolute no-RETIRE-table reference guard (G4) — settlement RETIRE set enforced, legacy names report-only",
+   "mergedAt": "2026-07-21T14:12:07Z",
+   "branch": "fix/absolute-no-retire-write-guard"
+  },
+  {
+   "number": 3088,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-21T13:37:16Z",
+   "branch": "chore/tracker-artifacts-sync-29834129299"
+  },
+  {
+   "number": 3087,
+   "title": "feat(parity): ParityTable A5 — optional controlled selection props",
+   "mergedAt": "2026-07-21T13:30:28Z",
+   "branch": "feat/paritytable-controlled-selection"
+  },
+  {
    "number": 3086,
    "title": "feat(parity): ParityTable A4 — optional external-sort passthrough",
    "mergedAt": "2026-07-21T13:22:21Z",
@@ -16731,27 +16760,9 @@
    "title": "fix(ui): D-CAL-1 — QuickBooks-format DatePicker on the two live Manual JE date fields",
    "mergedAt": "2026-07-11T03:11:15Z",
    "branch": "fix/coa-datepicker-parity"
-  },
-  {
-   "number": 2324,
-   "title": "fix(posting): P1-BILLPAY-GL — payBill posts an atomic DR ap_control / CR bank JE [HOLD-FOR-JORGE — TIER 1]",
-   "mergedAt": "2026-07-11T04:09:27Z",
-   "branch": "fix/bill-payment-auto-gl-post"
-  },
-  {
-   "number": 2323,
-   "title": "fix(posting): P1-BILL-GL — createBill auto-posts the internal GL (DR expense / CR ap_control) [HOLD-FOR-JORGE — TIER 1]",
-   "mergedAt": "2026-07-11T03:46:48Z",
-   "branch": "fix/create-bill-auto-gl-post"
-  },
-  {
-   "number": 2322,
-   "title": "docs(skill): §10 LINKAGE LAW + canonical wiring into the auto-loaded standards skill (permanence)",
-   "mergedAt": "2026-07-11T01:59:30Z",
-   "branch": "docs/skill-add-linkage-law"
   }
  ],
- "merged_pr_total": 2803,
+ "merged_pr_total": 2806,
  "hold_for_jorge": [
   {
    "number": 3085,
