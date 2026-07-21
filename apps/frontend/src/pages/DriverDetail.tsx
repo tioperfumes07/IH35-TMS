@@ -33,10 +33,13 @@ import {
   voidSafetyEvent,
   upsertDriverCompanyAuthorization,
   updateDriver,
+  type DriverQualificationRateHistoryItem,
 } from "../api/mdata";
 import { listClassesForJe } from "../api/accounting";
 import { legalMattersApi } from "../api/legal-matters";
 import { Button } from "../components/Button";
+import { ListErrorState } from "../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { ErrorBoundary } from "../components/ErrorBoundary";
@@ -595,7 +598,60 @@ export function DriverDetailPage() {
   const safetyEventsListState = useListState(safetyEventsQuery, (safetyEventsQuery.data ?? []).length === 0);
   const qboLinkageListState = useListState(qboLinkageHistoryQuery, (qboLinkageHistoryQuery.data?.rows ?? []).length === 0);
   const legalMattersListState = useListState(legalMattersForDriverQuery, (legalMattersForDriverQuery.data?.matters ?? []).length === 0);
-  const rateHistoryListState = useListState(historyQuery, selectedLineHistory.length === 0);
+
+  const rateHistoryColumns = useMemo<Array<ParityColumn<DriverQualificationRateHistoryItem>>>(
+    () => [
+      {
+        key: "effective_from",
+        label: "Date range",
+        sortable: true,
+        render: (item) => formatDateRange(item.effective_from, item.effective_to),
+      },
+      {
+        key: "amount",
+        label: "Amount",
+        sortable: true,
+        sortValue: (item) => Number(item.amount),
+        render: (item) => <span className={item.was_corrected ? "line-through" : ""}>${Number(item.amount).toFixed(2)}</span>,
+      },
+      {
+        key: "change_reason",
+        label: "Reason",
+        sortable: true,
+        render: (item) => (
+          <div className="flex items-center gap-2">
+            <span className="capitalize">{formatReasonLabel(item.change_reason)}</span>
+            {item.was_corrected ? (
+              <span
+                className="rounded-sm bg-gray-300 px-2 py-0.5 text-[10px] font-semibold uppercase text-gray-700"
+                title="This rate was corrected on the same day before settlement could occur"
+              >
+                Corrected
+              </span>
+            ) : null}
+          </div>
+        ),
+      },
+      {
+        key: "change_notes",
+        label: "Notes",
+        render: (item) => item.change_notes || "—",
+      },
+      {
+        key: "created_by_user_email",
+        label: "Changed by",
+        render: (item) => item.created_by_user_email || item.created_by_user_id || "—",
+      },
+      {
+        key: "created_at",
+        label: "Changed at",
+        sortable: true,
+        sortValue: (item) => new Date(item.created_at).getTime(),
+        render: (item) => new Date(item.created_at).toLocaleString(),
+      },
+    ],
+    []
+  );
 
   if (driverQuery.isLoading) {
     return <div className="text-sm text-gray-500">Loading driver...</div>;
@@ -1789,52 +1845,25 @@ export function DriverDetailPage() {
 
       <Modal open={historyModalOpen} onClose={() => setHistoryModalOpen(false)} title={`Rate history: ${selectedEquipmentName} - ${selectedLineItemName}`}>
         <div className="max-h-[60vh] overflow-auto">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="py-1">Date range</th>
-                <th className="py-1">Amount</th>
-                <th className="py-1">Reason</th>
-                <th className="py-1">Notes</th>
-                <th className="py-1">Changed by</th>
-                <th className="py-1">Changed at</th>
-              </tr>
-            </thead>
-            <tbody>
-              {selectedLineHistory.map((item) => (
-                <tr
-                  key={`${item.effective_from}-${item.created_at}-${item.amount}-${String(item.was_corrected)}`}
-                  className={`border-b border-gray-100 ${item.was_corrected ? "bg-gray-100 text-gray-500" : ""}`}
-                >
-                  <td className="py-1">{formatDateRange(item.effective_from, item.effective_to)}</td>
-                  <td className={`py-1 ${item.was_corrected ? "line-through" : ""}`}>${Number(item.amount).toFixed(2)}</td>
-                  <td className="py-1">
-                    <div className="flex items-center gap-2">
-                      <span className="capitalize">{formatReasonLabel(item.change_reason)}</span>
-                      {item.was_corrected ? (
-                        <span
-                          className="rounded-sm bg-gray-300 px-2 py-0.5 text-[10px] font-semibold uppercase text-gray-700"
-                          title="This rate was corrected on the same day before settlement could occur"
-                        >
-                          Corrected
-                        </span>
-                      ) : null}
-                    </div>
-                  </td>
-                  <td className="py-1">{item.change_notes || "—"}</td>
-                  <td className="py-1">{item.created_by_user_email || item.created_by_user_id || "—"}</td>
-                  <td className="py-1">{new Date(item.created_at).toLocaleString()}</td>
-                </tr>
-              ))}
-              {rateHistoryListState.isEmpty ? (
-                <tr>
-                  <td className="py-2 text-gray-500" colSpan={6}>
-                    No rate history found.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
+          {historyQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load rate history"
+              status={historyQuery.error instanceof ApiError ? historyQuery.error.status : 0}
+              message={(historyQuery.error as Error)?.message}
+              onRetry={() => void historyQuery.refetch()}
+            />
+          ) : (
+            <ParityTable<DriverQualificationRateHistoryItem>
+              columns={rateHistoryColumns}
+              rows={selectedLineHistory}
+              rowKey={(item) => `${item.effective_from}-${item.created_at}-${item.amount}-${String(item.was_corrected)}`}
+              loading={historyQuery.isLoading}
+              rowClassName={(item) => (item.was_corrected ? "bg-gray-100 text-gray-500" : "")}
+              storageKey="driver-rate-history"
+              tableTestId="driver-rate-history-table"
+              emptyText="No rate history found."
+            />
+          )}
         </div>
       </Modal>
 

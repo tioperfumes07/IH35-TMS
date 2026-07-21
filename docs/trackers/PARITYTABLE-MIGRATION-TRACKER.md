@@ -431,7 +431,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/DriverDetail.tsx` | pending |
+| `apps/frontend/src/pages/DriverDetail.tsx` | migrated (verify-step 1095) |
 
 ### pages/VendorDetail.tsx (1)
 
