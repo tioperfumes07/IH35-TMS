@@ -1,0 +1,27 @@
+{
+  "block_id": "paritytable-a1-controlled-expansion",
+  "branch": "feat/paritytable-controlled-expansion",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend shared-component API extension)",
+  "phase": "FOUNDATION-FIRST P6 / ParityTable Phase A1",
+  "task": "Add OPTIONAL controlled row-expansion props (expandedKeys/onExpandedChange/expandMode) to ParityTable, modeled on the controlled-sort precedent. Zero behavior change for existing consumers. Guard + verify-step 1172 (Rule 17).",
+  "source": "FOUNDATION-FIRST work order Priority 6 — ParityTable Phase A, extension A1 (ONE prop-family per PR; groupBy is A2, separate)",
+  "source_file": "paritytable-a1-controlled-expansion",
+  "allowed_files": [
+    ".block-ready/paritytable-a1-controlled-expansion.json",
+    "apps/frontend/src/components/parity/ParityTable.tsx",
+    "apps/frontend/src/components/parity/ParityTable.test.tsx",
+    "scripts/verify-paritytable-controlled-expansion.mjs",
+    "scripts/verify-steps/1172-verify-paritytable-controlled-expansion.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "ParityTable exposes OPTIONAL expandedKeys?: string[] / onExpandedChange?: (keys: string[]) => void / expandMode?: 'multi' | 'single' (default 'multi'); controlled mode = onExpandedChange != null (mirror isSortControlled); omitting all three keeps the internal expanded Set (byte-identical for ~130 call sites); 'single' collapses others in both modes; unit tests cover uncontrolled default, controlled mode, single mode; verify-paritytable-controlled-expansion.mjs PASS (+ --selftest); verify-steps/1172 wired (Rule 17); npx tsc -b green; verify-mobile-responsive-audit new_vs_baseline=0."
+    }
+  ],
+  "note": "GATED: no (pure FE, additive API). Migration-free. No package.json / locked-guards / ci.yml edits (Rule 17). Do NOT build groupBy here (Phase A2). Phase B (BankingTx swap) remains HOLD."
+}

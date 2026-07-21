@@ -114,6 +114,22 @@ export type ParityTableProps<T> = {
   sortKey?: string;
   sortDirection?: "asc" | "desc";
   onSortChange?: (key: string, direction: "asc" | "desc") => void;
+
+  /**
+   * OPTIONAL controlled row-expansion (ParityTable Phase A1) — mirrors the controlled-sort
+   * precedent above. Omitting these props keeps the existing uncontrolled multi-expand via the
+   * internal `expanded` Set (unchanged default for the ~130 existing call sites). Presence of
+   * `onExpandedChange` = controlled mode (mirrors `isSortControlled = onSortChange != null`):
+   * the page owns `expandedKeys` and is notified via `onExpandedChange` on every ▸/▾ toggle.
+   * Only meaningful when `renderExpanded` is provided (as today).
+   */
+  expandedKeys?: string[];
+  onExpandedChange?: (keys: string[]) => void;
+  /**
+   * "multi" (default, current behavior) keeps every expanded row open; "single" collapses any
+   * other row when one expands. Applies in both controlled and uncontrolled modes.
+   */
+  expandMode?: "multi" | "single";
 };
 
 function compareSortValues(
@@ -191,6 +207,9 @@ export function ParityTable<T>({
   sortKey: controlledSortKey,
   sortDirection: controlledSortDirection,
   onSortChange,
+  expandedKeys: controlledExpandedKeys,
+  onExpandedChange,
+  expandMode = "multi",
 }: ParityTableProps<T>) {
   const persisted = useMemo(() => loadPersisted(storageKey), [storageKey]);
 
@@ -214,7 +233,14 @@ export function ParityTable<T>({
   );
   const [gearOpen, setGearOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  // Controlled expansion mirrors the controlled-sort pattern above: presence of the change
+  // notifier switches the source of truth from internal state to the caller-owned prop.
+  const isExpandControlled = onExpandedChange != null;
+  const [internalExpanded, setInternalExpanded] = useState<Set<string>>(new Set());
+  const expanded = useMemo(
+    () => (isExpandControlled ? new Set(controlledExpandedKeys ?? []) : internalExpanded),
+    [isExpandControlled, controlledExpandedKeys, internalExpanded],
+  );
   const [colWidths, setColWidths] = useState<Record<string, number>>(persisted.colWidths ?? {});
   const gearRef = useRef<HTMLDivElement>(null);
   const resizing = useRef<{ key: string; startX: number; startW: number } | null>(null);
@@ -404,12 +430,23 @@ export function ParityTable<T>({
   }
 
   function toggleExpanded(id: string) {
-    setExpanded((prev) => {
+    // Shared toggle math for both modes: collapse if open; expand (alone in "single" mode) if closed.
+    const computeNext = (prev: Set<string>): Set<string> => {
+      if (prev.has(id)) {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      }
+      if (expandMode === "single") return new Set([id]);
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      next.add(id);
       return next;
-    });
+    };
+    if (isExpandControlled) {
+      onExpandedChange?.([...computeNext(new Set(controlledExpandedKeys ?? []))]);
+      return;
+    }
+    setInternalExpanded(computeNext);
   }
 
   function togglePageAll() {

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { ParityTable, type ParityColumn } from "./ParityTable";
 
 type Row = { id: string; name: string; amount: string };
@@ -141,5 +141,105 @@ describe("ParityTable (A1 grammar)", () => {
     // Collapse hides it again.
     fireEvent.click(screen.getByLabelText("Collapse row"));
     expect(screen.queryByText("detail for Alpha")).toBeNull();
+  });
+
+  // Controlled row-expansion (Phase A1) — mirrors the controlled-sort precedent.
+  describe("controlled row-expansion (A1)", () => {
+    const renderExpanded = (r: Row) => <div>detail for {r.name}</div>;
+
+    it("uncontrolled default is unchanged: multi-expand keeps every expanded row open", () => {
+      render(
+        <ParityTable<Row>
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r.id}
+          renderExpanded={renderExpanded}
+        />,
+      );
+      const toggles = screen.getAllByLabelText("Expand row");
+      fireEvent.click(toggles[0]);
+      fireEvent.click(screen.getAllByLabelText("Expand row")[0]); // Bravo (Alpha's toggle now reads Collapse)
+      // Multi mode: both details stay open at once (pre-A1 behavior).
+      expect(screen.getByText("detail for Alpha")).toBeInTheDocument();
+      expect(screen.getByText("detail for Bravo")).toBeInTheDocument();
+    });
+
+    it("controlled mode: expandedKeys drives the open rows; toggles fire onExpandedChange without mutating internally", () => {
+      const onExpandedChange = vi.fn();
+      const { rerender } = render(
+        <ParityTable<Row>
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r.id}
+          renderExpanded={renderExpanded}
+          expandedKeys={["1"]}
+          onExpandedChange={onExpandedChange}
+        />,
+      );
+      // Prop-driven: row 1 open, row 2 closed.
+      expect(screen.getByText("detail for Alpha")).toBeInTheDocument();
+      expect(screen.queryByText("detail for Bravo")).toBeNull();
+
+      // Expanding row 2 notifies the owner but does NOT open it until the prop changes.
+      fireEvent.click(screen.getByLabelText("Expand row"));
+      expect(onExpandedChange).toHaveBeenCalledWith(["1", "2"]);
+      expect(screen.queryByText("detail for Bravo")).toBeNull();
+
+      // Collapsing row 1 notifies with it removed from the CURRENT prop (still ["1"]) → [].
+      fireEvent.click(screen.getByLabelText("Collapse row"));
+      expect(onExpandedChange).toHaveBeenCalledWith([]);
+      expect(screen.getByText("detail for Alpha")).toBeInTheDocument();
+
+      // Owner applies the new keys → the table follows the prop.
+      rerender(
+        <ParityTable<Row>
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r.id}
+          renderExpanded={renderExpanded}
+          expandedKeys={["2"]}
+          onExpandedChange={onExpandedChange}
+        />,
+      );
+      expect(screen.queryByText("detail for Alpha")).toBeNull();
+      expect(screen.getByText("detail for Bravo")).toBeInTheDocument();
+    });
+
+    it('expandMode="single" (uncontrolled): expanding one row collapses the other', () => {
+      render(
+        <ParityTable<Row>
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r.id}
+          renderExpanded={renderExpanded}
+          expandMode="single"
+        />,
+      );
+      fireEvent.click(screen.getAllByLabelText("Expand row")[0]); // open Alpha
+      expect(screen.getByText("detail for Alpha")).toBeInTheDocument();
+      fireEvent.click(screen.getByLabelText("Expand row")); // open Bravo → Alpha collapses
+      expect(screen.queryByText("detail for Alpha")).toBeNull();
+      expect(screen.getByText("detail for Bravo")).toBeInTheDocument();
+      // Toggling the open row closed still works in single mode.
+      fireEvent.click(screen.getByLabelText("Collapse row"));
+      expect(screen.queryByText("detail for Bravo")).toBeNull();
+    });
+
+    it('expandMode="single" (controlled): onExpandedChange reports only the newly expanded key', () => {
+      const onExpandedChange = vi.fn();
+      render(
+        <ParityTable<Row>
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r.id}
+          renderExpanded={renderExpanded}
+          expandMode="single"
+          expandedKeys={["1"]}
+          onExpandedChange={onExpandedChange}
+        />,
+      );
+      fireEvent.click(screen.getByLabelText("Expand row")); // expand Bravo
+      expect(onExpandedChange).toHaveBeenCalledWith(["2"]);
+    });
   });
 });
