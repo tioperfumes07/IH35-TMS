@@ -8,6 +8,7 @@ import {
   getWorkOrderPostingPreview,
   listMaintenanceVehicles,
   listSevereRepairEstimates,
+  type WorkOrderPostingPreviewLine,
 } from "../../api/maintenance";
 import { cancelWorkOrderConsole, voidWorkOrderConsole } from "../../api/workOrdersConsole";
 import { CreateWorkOrderModal, type EditWorkOrderLine, type EditWorkOrderTarget } from "./components/CreateWorkOrderModal";
@@ -22,7 +23,8 @@ import { TasksTab } from "../../components/tasks/TasksTab";
 import { EntityAuditHistoryTab } from "../../components/audit/EntityAuditHistoryTab";
 import { CreateBillModal } from "./components/CreateBillModal";
 import { CreateExpenseModal } from "./components/CreateExpenseModal";
-import { listWorkOrderLinkedFinancials } from "../../api/accounting";
+import { listWorkOrderLinkedFinancials, type WorkOrderLinkedFinancials } from "../../api/accounting";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
 import { useToast } from "../../components/Toast";
@@ -31,6 +33,87 @@ import { EntityLink } from "../../components/shared/EntityLink";
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 /** Matches apps/backend/src/maintenance/wo-oos-estimator.ts DEFAULT_DAILY_LOSS_CENTS */
 const OOS_DAILY_LOSS_CENTS = 50_000;
+
+// Read-only display grids (qbo-parity-a1). The posting preview is a PREVIEW ONLY — no journal
+// entries are created or edited from this surface; bills/expenses are reverse drill-through links.
+type PostingPreviewTableRow = WorkOrderPostingPreviewLine & { row_key: string };
+
+const POSTING_PREVIEW_COLUMNS: Array<ParityColumn<PostingPreviewTableRow>> = [
+  {
+    key: "description",
+    label: "Line",
+    sortable: true,
+    sortValue: (row) => row.description || row.line_type,
+    render: (row) => row.description || row.line_type,
+  },
+  {
+    key: "ps_category_name",
+    label: "P&S Category",
+    sortable: true,
+    sortValue: (row) => row.ps_category_name || row.ps_category_id || "",
+    render: (row) => row.ps_category_name || row.ps_category_id || "—",
+  },
+  {
+    key: "ps_item_name",
+    label: "P&S Item",
+    sortable: true,
+    sortValue: (row) => row.ps_item_name || row.ps_item_id || "",
+    render: (row) => row.ps_item_name || row.ps_item_id || "—",
+  },
+  {
+    key: "asset_unit_code",
+    label: "Asset",
+    sortable: true,
+    sortValue: (row) => row.asset_unit_code || row.asset_id || "",
+    render: (row) => row.asset_unit_code || row.asset_id || "—",
+  },
+  {
+    key: "amount_cents",
+    label: "Amount",
+    sortable: true,
+    render: (row) => money.format((row.amount_cents ?? 0) / 100),
+  },
+];
+
+type LinkedBillRow = WorkOrderLinkedFinancials["bills"][number];
+type LinkedExpenseRow = WorkOrderLinkedFinancials["expenses"][number];
+
+const LINKED_BILL_COLUMNS: Array<ParityColumn<LinkedBillRow>> = [
+  {
+    key: "bill_number",
+    label: "Bill",
+    sortable: true,
+    sortValue: (row) => row.bill_number || row.id,
+    render: (row) => <EntityLink kind="bill" id={row.id} label={row.bill_number || row.id.slice(0, 8)} />,
+  },
+  { key: "bill_date", label: "Date", sortable: true, render: (row) => row.bill_date || "—" },
+  { key: "status", label: "Status", sortable: true, render: (row) => row.status || "—" },
+  {
+    key: "amount_cents",
+    label: "Amount",
+    sortable: true,
+    className: "text-right",
+    render: (row) => money.format((row.amount_cents ?? 0) / 100),
+  },
+];
+
+const LINKED_EXPENSE_COLUMNS: Array<ParityColumn<LinkedExpenseRow>> = [
+  {
+    key: "id",
+    label: "Expense",
+    sortable: true,
+    render: (row) => <EntityLink kind="expense" id={row.id} label={row.id.slice(0, 8)} />,
+  },
+  { key: "transaction_date", label: "Date", sortable: true, render: (row) => row.transaction_date || "—" },
+  { key: "status", label: "Status", sortable: true, render: (row) => row.status || "—" },
+  {
+    key: "total_amount_cents",
+    label: "Amount",
+    sortable: true,
+    className: "text-right",
+    render: (row) => money.format((row.total_amount_cents ?? 0) / 100),
+  },
+];
 
 function pickInvoiceTotalCents(wo: Record<string, unknown>): number | null {
   for (const key of ["vendor_invoice_total_cents", "external_vendor_invoice_cents", "invoice_total_cents"]) {
@@ -262,6 +345,11 @@ export function WorkOrderDetailPage() {
   });
 
   const wo = woQ.data;
+
+  const postingPreviewRows = useMemo<PostingPreviewTableRow[]>(
+    () => (previewQ.data?.lines ?? []).map((line, index) => ({ ...line, row_key: `${line.description}-${index}` })),
+    [previewQ.data?.lines]
+  );
 
   const invoiceCents = useMemo(() => (wo ? pickInvoiceTotalCents(wo) : null), [wo]);
   const linesCents = useMemo(() => (wo ? sumLineItemsCents(wo.line_items) : 0), [wo]);
@@ -594,30 +682,16 @@ export function WorkOrderDetailPage() {
                     { label: "Lines", value: String(previewQ.data.lines?.length ?? 0) },
                   ]}
                 />
-                <div className="max-h-60 overflow-auto rounded-sm border border-gray-100">
-                  <table className="min-w-full text-left text-[11px]">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-2 py-1">Line</th>
-                        <th className="px-2 py-1">P&S Category</th>
-                        <th className="px-2 py-1">P&S Item</th>
-                        <th className="px-2 py-1">Asset</th>
-                        <th className="px-2 py-1">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {previewQ.data.lines.map((line, index) => (
-                        <tr key={`${line.description}-${index}`} className="border-t border-gray-100">
-                          <td className="px-2 py-1">{line.description || line.line_type}</td>
-                          <td className="px-2 py-1">{line.ps_category_name || line.ps_category_id || "—"}</td>
-                          <td className="px-2 py-1">{line.ps_item_name || line.ps_item_id || "—"}</td>
-                          <td className="px-2 py-1">{line.asset_unit_code || line.asset_id || "—"}</td>
-                          <td className="px-2 py-1">{money.format((line.amount_cents ?? 0) / 100)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <ParityTable
+                  storageKey="wo-detail-posting-preview"
+                  tableTestId="wo-detail-posting-preview-parity"
+                  columns={POSTING_PREVIEW_COLUMNS}
+                  rows={postingPreviewRows}
+                  rowKey={(row) => row.row_key}
+                  emptyText="No posting preview lines."
+                  initialPageSize={25}
+                  pageSizeOptions={[10, 25, 50]}
+                />
               </div>
             ) : null}
           </div>
@@ -669,56 +743,28 @@ export function WorkOrderDetailPage() {
           ) : (
             <div className="space-y-3">
               {linkedFinancialsQ.data.bills.length > 0 ? (
-                <div className="overflow-x-auto rounded-sm border border-gray-100">
-                  <table className="min-w-full text-left text-[11px]">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-2 py-1">Bill</th>
-                        <th className="px-2 py-1">Date</th>
-                        <th className="px-2 py-1">Status</th>
-                        <th className="px-2 py-1 text-right">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {linkedFinancialsQ.data.bills.map((bill) => (
-                        <tr key={bill.id} className="border-t border-gray-100">
-                          <td className="px-2 py-1">
-                            <EntityLink kind="bill" id={bill.id} label={bill.bill_number || bill.id.slice(0, 8)} />
-                          </td>
-                          <td className="px-2 py-1">{bill.bill_date || "—"}</td>
-                          <td className="px-2 py-1">{bill.status || "—"}</td>
-                          <td className="px-2 py-1 text-right">{money.format((bill.amount_cents ?? 0) / 100)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <ParityTable
+                  storageKey="wo-detail-linked-bills"
+                  tableTestId="wo-detail-linked-bills-parity"
+                  columns={LINKED_BILL_COLUMNS}
+                  rows={linkedFinancialsQ.data.bills}
+                  rowKey={(row) => row.id}
+                  emptyText="No bills are linked to this work order yet."
+                  initialPageSize={25}
+                  pageSizeOptions={[10, 25, 50]}
+                />
               ) : null}
               {linkedFinancialsQ.data.expenses.length > 0 ? (
-                <div className="overflow-x-auto rounded-sm border border-gray-100">
-                  <table className="min-w-full text-left text-[11px]">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-2 py-1">Expense</th>
-                        <th className="px-2 py-1">Date</th>
-                        <th className="px-2 py-1">Status</th>
-                        <th className="px-2 py-1 text-right">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {linkedFinancialsQ.data.expenses.map((expense) => (
-                        <tr key={expense.id} className="border-t border-gray-100">
-                          <td className="px-2 py-1">
-                            <EntityLink kind="expense" id={expense.id} label={expense.id.slice(0, 8)} />
-                          </td>
-                          <td className="px-2 py-1">{expense.transaction_date || "—"}</td>
-                          <td className="px-2 py-1">{expense.status || "—"}</td>
-                          <td className="px-2 py-1 text-right">{money.format((expense.total_amount_cents ?? 0) / 100)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <ParityTable
+                  storageKey="wo-detail-linked-expenses"
+                  tableTestId="wo-detail-linked-expenses-parity"
+                  columns={LINKED_EXPENSE_COLUMNS}
+                  rows={linkedFinancialsQ.data.expenses}
+                  rowKey={(row) => row.id}
+                  emptyText="No expenses are linked to this work order yet."
+                  initialPageSize={25}
+                  pageSizeOptions={[10, 25, 50]}
+                />
               ) : null}
             </div>
           )

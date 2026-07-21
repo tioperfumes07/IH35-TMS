@@ -728,7 +728,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/maintenance/TireProgramPage.tsx` | pending |
 | `apps/frontend/src/pages/maintenance/VendorDetailPage.tsx` | pending |
 | `apps/frontend/src/pages/maintenance/WarrantyClaimsPage.tsx` | pending |
-| `apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx` | pending |
+| `apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx` | migrated (verify-step 1096) |
 | `apps/frontend/src/pages/maintenance/brakes/BrakeWearDashboard.tsx` | pending |
 | `apps/frontend/src/pages/maintenance/compliance/Compliance425CPage.tsx` | pending |
 | `apps/frontend/src/pages/maintenance/components/CreateWOSectionReconcile.tsx` | pending |
@@ -1437,3 +1437,17 @@ Guard: `scripts/verify-wo-console-list-uses-paritytable.mjs` via verify-step **1
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/work-orders/WorkOrdersConsoleListPage.tsx` | pages/work-orders |
+
+## qbo-parity-a1 — WorkOrderDetailPage (this PR)
+WO detail had three hand-rolled `<table>` grids: posting-preview lines, linked bills,
+and linked expenses. All three are read-only displays (the posting preview is a
+PREVIEW ONLY — no journal entry is created or edited from this surface) — migrated to
+shared `ParityTable` (sort + resize + gear). Columns Line / P&S Category / P&S Item /
+Asset / Amount and Bill·Expense / Date / Status / Amount preserved 1:1; `EntityLink`
+drill-through on bills/expenses, existing graceful backend-build outage banners, and
+the `wo-linked-financials` section wrapper preserved. Guard:
+`scripts/verify-wo-detail-uses-paritytable.mjs` via verify-step **1096**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx` | pages/maintenance |
