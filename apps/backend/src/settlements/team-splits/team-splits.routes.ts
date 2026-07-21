@@ -218,10 +218,13 @@ export async function registerTeamSplitRoutes(app: FastifyInstance) {
         `,
         [[body.data.primary_driver_id, body.data.secondary_driver_id], query.data.operating_company_id]
       );
-      const byId = new Map((res.rows as Array<{ id: string; driver_name: string }>).map((r) => [r.id, r.driver_name]));
+      const rows = res.rows as Array<{ id: string; driver_name: string }>;
+      // Prefer a plain object over Map so static route scanners do not treat
+      // property access as a Fastify route registration.
+      const byId: Record<string, string> = Object.fromEntries(rows.map((r) => [r.id, r.driver_name]));
       return {
-        primary: byId.get(body.data.primary_driver_id) ?? null,
-        secondary: byId.get(body.data.secondary_driver_id) ?? null,
+        primary: byId[body.data.primary_driver_id] ?? null,
+        secondary: byId[body.data.secondary_driver_id] ?? null,
       };
     });
     if (!names.primary || !names.secondary) return reply.code(400).send({ error: "E_DRIVER_NOT_IN_COMPANY" });

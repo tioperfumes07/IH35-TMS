@@ -36,11 +36,14 @@ const PAYROLL_WRITE_RE =
 const SETTLEMENTS_WRITE_RE =
   /\b(INSERT\s+INTO|UPDATE)\s+settlements\.(settlement_disputes|team_split_configs|team_split_load_overrides)\b/gi;
 
-/** RETIRE create/post (or write-path) registrars — mounting outside allowlist fails CI. */
+/** RETIRE create/post (or write-path) registrars — mounting outside allowlist fails CI.
+ *  registerTeamSplitRoutes was removed from this list in P2b/P2f (2026-07-21): the plural
+ *  endpoints remain mounted as a facade over mdata.driver_teams (never-delete law) and no longer
+ *  write settlements.team_split_* (see verify-no-settlements-team-split-refs.mjs). */
 const RETIRE_ROUTE_REGISTRARS = [
   "registerPayrollDriverSettlementRoutes", // create/post (308 stubs today; still mounted)
   "registerSettlementsDisputesRoutes", // plural RETIRE disputes create/update
-  "registerTeamSplitRoutes", // plural RETIRE team-split config create (unmounted today)
+  "registerPhantomRetireSettlementRoutes", // selftest plant only — never ship this registrar
 ];
 
 const SCAN_ROOTS = ["apps/backend", "apps/frontend"];
@@ -269,7 +272,7 @@ if (process.argv.includes("--selftest")) {
         "await registerDriverFinanceSettlementRoutes(app);",
         "await registerPayrollDriverSettlementRoutes(app);",
         "await registerSettlementsDisputesRoutes(app);",
-        "await registerTeamSplitRoutes(app); // NEW retire mount",
+        "await registerPhantomRetireSettlementRoutes(app); // NEW retire mount (planted)",
         "",
       ].join("\n")
     );
@@ -293,8 +296,8 @@ if (process.argv.includes("--selftest")) {
       ["NEW settlements.* writer fails", failuresGood.some((f) => f.includes("sneaky-settlements-writer"))],
       ["allowlisted settlements writer does not fail", !failuresGood.some((f) => f.includes("disputes.routes"))],
       ["good index has no route-mount failure", !failuresGood.some((f) => f.includes("newly mounted"))],
-      ["detects registerTeamSplitRoutes mount", mountedBad.includes("registerTeamSplitRoutes")],
-      ["NEW retire route mount fails", failuresBad.some((f) => f.includes("registerTeamSplitRoutes"))],
+      ["detects phantom retire route mount", mountedBad.includes("registerPhantomRetireSettlementRoutes")],
+      ["NEW retire route mount fails", failuresBad.some((f) => f.includes("registerPhantomRetireSettlementRoutes"))],
     ];
     const failed = checks.filter(([, ok]) => !ok);
     if (failed.length) {
