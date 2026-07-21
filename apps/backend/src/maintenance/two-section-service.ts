@@ -547,7 +547,7 @@ export async function autoCreateBillFromWO(
   const billRes = await client.query<{ id: string }>(
     `
       INSERT INTO accounting.bills (
-        operating_company_id, vendor_uuid, linked_work_order_uuid, status, bill_date, due_date, total_amount, qbo_sync_pending
+        operating_company_id, vendor_uuid, linked_work_order_uuid, status, bill_date, due_date, amount_cents, total_amount, qbo_sync_pending
       )
       SELECT
         w.operating_company_id,
@@ -556,6 +556,10 @@ export async function autoCreateBillFromWO(
         'draft',
         CURRENT_DATE,
         CURRENT_DATE + INTERVAL '30 days',
+        -- CANONICAL integer-cents (G6-4). Derived from the SAME dollars expression as total_amount so
+        -- the two never diverge (every read uses COALESCE(amount_cents, ROUND(total_amount*100))).
+        -- Previously omitted -> violated bills_amount_cents_present / created a NULL-canonical row.
+        ROUND(COALESCE(w.total_actual_cost, (COALESCE(w.estimated_cost_cents, 0)::numeric / 100.0), 0) * 100)::bigint,
         COALESCE(w.total_actual_cost, (COALESCE(w.estimated_cost_cents, 0)::numeric / 100.0), 0),
         true
       FROM maintenance.work_orders w
