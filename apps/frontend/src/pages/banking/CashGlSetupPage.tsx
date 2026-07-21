@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCashGlMapping, setBankAccountCashGl, type CashGlBankAccount } from "../../api/banking";
 import { BackArrowHeader } from "../../components/layout/BackArrowHeader";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -43,6 +44,36 @@ export function CashGlSetupPage() {
     mutation.mutate({ bankAccountId: bank.id, ledgerAccountId: value || null });
   };
 
+  // Display-only ParityTable migration: column order, cell content, and the inline
+  // SelectCombobox editor (handler unchanged) are preserved 1:1 from the hand-rolled table.
+  const columns: Array<ParityColumn<CashGlBankAccount>> = [
+    {
+      key: "account_name",
+      label: "Bank Account",
+      sortable: true,
+      render: (bank) => <span className="font-medium text-slate-800">{bank.account_name}</span>,
+    },
+    {
+      key: "ledger_account_id",
+      label: "Cash GL Account",
+      render: (bank) => (
+        <SelectCombobox
+          value={bank.ledger_account_id ?? ""}
+          disabled={!canEdit || savingId === bank.id}
+          onChange={(event) => onPick(bank, event.target.value)}
+          className="h-9 w-full max-w-md rounded-sm border border-gray-300 px-2 text-sm"
+        >
+          <option value="">— Not mapped —</option>
+          {coaOptions.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </SelectCombobox>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-3">
       <BackArrowHeader
@@ -57,43 +88,15 @@ export function CashGlSetupPage() {
       ) : null}
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
-            <tr>
-              <th className="px-3 py-2 text-left">Bank Account</th>
-              <th className="px-3 py-2 text-left">Cash GL Account</th>
-            </tr>
-          </thead>
-          <tbody>
-            {banks.map((bank) => (
-              <tr key={bank.id} className="border-t border-gray-100">
-                <td className="px-3 py-2 font-medium text-slate-800">{bank.account_name}</td>
-                <td className="px-3 py-2">
-                  <SelectCombobox
-                    value={bank.ledger_account_id ?? ""}
-                    disabled={!canEdit || savingId === bank.id}
-                    onChange={(event) => onPick(bank, event.target.value)}
-                    className="h-9 w-full max-w-md rounded-sm border border-gray-300 px-2 text-sm"
-                  >
-                    <option value="">— Not mapped —</option>
-                    {coaOptions.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </SelectCombobox>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {query.isLoading ? (
-          <div className="px-3 py-6 text-sm text-gray-500">Loading bank accounts…</div>
-        ) : banks.length === 0 ? (
-          <div className="px-3 py-6 text-sm text-gray-500">No bank accounts for this company.</div>
-        ) : null}
-      </div>
+      <ParityTable
+        columns={columns}
+        rows={banks}
+        rowKey={(bank) => bank.id}
+        loading={query.isLoading}
+        storageKey="banking-cash-gl-setup"
+        tableTestId="cash-gl-setup-table"
+        emptyText="No bank accounts for this company."
+      />
       <p className="text-xs text-gray-500">
         Setup only — this maps each bank account to its cash GL account (used by future bank-feed posting). No
         journal entries are posted here.
