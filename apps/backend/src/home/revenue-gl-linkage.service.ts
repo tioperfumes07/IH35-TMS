@@ -834,6 +834,25 @@ export function weeklyRevenueWindow(days: number, now: Date = new Date()): { fro
   return { fromDate, toDate: today };
 }
 
+/** h-05: Home KPI range presets. All windows are inclusive, company business calendar. */
+export const HOME_KPI_RANGES = ["today", "7d", "30d", "mtd", "ytd"] as const;
+export type HomeKpiRange = (typeof HOME_KPI_RANGES)[number];
+
+/**
+ * h-05: resolve a Home KPI range preset to an inclusive [fromDate, toDate] window in the
+ * company timezone. 7d/30d are rolling windows INCLUDING today (7d = today plus the prior
+ * 6 days — matches QBO dashboard "Last 7 days" semantics); mtd/ytd are calendar-anchored.
+ */
+export function revenueRangeWindow(range: HomeKpiRange, now: Date = new Date()): { fromDate: string; toDate: string } {
+  const today = companyBusinessDate(now);
+  if (range === "today") return { fromDate: today, toDate: today };
+  if (range === "7d") return { fromDate: addDaysIso(today, -6), toDate: today };
+  if (range === "30d") return { fromDate: addDaysIso(today, -29), toDate: today };
+  if (range === "mtd") return { fromDate: `${today.slice(0, 7)}-01`, toDate: today };
+  // ytd
+  return { fromDate: `${today.slice(0, 4)}-01-01`, toDate: today };
+}
+
 export const __test__ = {
   addDaysIso,
   emptyResult,

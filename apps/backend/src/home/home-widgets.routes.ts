@@ -11,6 +11,8 @@ import {
   computeRevenueGlLinkage,
   todayRevenueWindow,
   weeklyRevenueWindow,
+  revenueRangeWindow,
+  HOME_KPI_RANGES,
   type RevenueGlLinkageResult,
 } from "./revenue-gl-linkage.service.js";
 import {
@@ -69,6 +71,11 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 
 const daysQuerySchema = companyQuerySchema.extend({
   days: z.coerce.number().int().min(1).max(120).default(7),
+});
+
+// h-05: optional range preset for the Home revenue KPI (default preserves today-only behavior).
+const revenueRangeQuerySchema = companyQuerySchema.extend({
+  range: z.enum(HOME_KPI_RANGES).default("today"),
 });
 
 export async function registerHomeWidgetRoutes(app: FastifyInstance) {
@@ -209,11 +216,13 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
     const user = authed(req, reply);
     if (!user) return;
     if (!officeRole(user.role)) return reply.code(403).send({ error: "forbidden" });
-    const parsed = companyQuerySchema.safeParse(req.query ?? {});
+    const parsed = revenueRangeQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
 
     // 0280-02: dual-basis invoice + GL linkage (company TZ; no silent swallow → fabricated $0).
-    const { fromDate, toDate } = todayRevenueWindow();
+    // h-05: ?range=today|7d|30d|mtd|ytd — default "today" keeps todayRevenueWindow() semantics.
+    const { fromDate, toDate } =
+      parsed.data.range === "today" ? todayRevenueWindow() : revenueRangeWindow(parsed.data.range);
     try {
       const result = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) =>
         computeRevenueGlLinkage(client, {

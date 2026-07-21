@@ -8,6 +8,8 @@ import {
   computeRevenueGlLinkage,
   todayRevenueWindow,
   weeklyRevenueWindow,
+  revenueRangeWindow,
+  HOME_KPI_RANGES,
   __test__,
   type DbClient,
 } from "./revenue-gl-linkage.service.js";
@@ -91,6 +93,23 @@ describe("revenue-gl-linkage.service helpers", () => {
     expect(__test__.INVOICE_BASIS_ELIGIBLE_STATUSES).toEqual(["sent", "partial", "paid", "factored"]);
     expect(__test__.POSTED_BATCH_STATUSES).toEqual(["posted", "reversed"]);
     expect(COMPANY_TIME_ZONE).toBe("America/Chicago");
+  });
+
+  it("h-05: revenueRangeWindow resolves each preset in company timezone", () => {
+    // 2026-07-19 02:00 UTC = 2026-07-18 21:00 Central — company business date is 07-18.
+    const lateUtc = new Date("2026-07-19T02:00:00.000Z");
+
+    expect(HOME_KPI_RANGES).toEqual(["today", "7d", "30d", "mtd", "ytd"]);
+
+    expect(revenueRangeWindow("today", lateUtc)).toEqual({ fromDate: "2026-07-18", toDate: "2026-07-18" });
+    // Rolling windows INCLUDE today: 7d = today + prior 6 days.
+    expect(revenueRangeWindow("7d", lateUtc)).toEqual({ fromDate: "2026-07-12", toDate: "2026-07-18" });
+    expect(revenueRangeWindow("30d", lateUtc)).toEqual({ fromDate: "2026-06-19", toDate: "2026-07-18" });
+    expect(revenueRangeWindow("mtd", lateUtc)).toEqual({ fromDate: "2026-07-01", toDate: "2026-07-18" });
+    expect(revenueRangeWindow("ytd", lateUtc)).toEqual({ fromDate: "2026-01-01", toDate: "2026-07-18" });
+
+    // today preset must equal the legacy todayRevenueWindow (backward compatibility).
+    expect(revenueRangeWindow("today", lateUtc)).toEqual(todayRevenueWindow(lateUtc));
   });
 
   it("unverifiable result never fabricates a numeric revenue_cents=0 success", () => {
