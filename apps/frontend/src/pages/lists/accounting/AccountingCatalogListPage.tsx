@@ -4,7 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import type { AccountingCatalogRow } from "../../../api/catalogs-accounting";
 import { Button } from "../../../components/Button";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
-import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { ListErrorState } from "../../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { formatQueryErrorDetail } from "../../../lib/tableError";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AccountingCatalogModal, type AccountingCatalogClient, type AccountingMetadataField } from "./AccountingCatalogModal";
 import { AccountingCatalogProfileDrawer } from "./AccountingCatalogProfileDrawer";
@@ -59,16 +61,11 @@ export function AccountingCatalogListPage({
   const [selectedRow, setSelectedRow] = useState<AccountingCatalogRow | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // Remount key: bumping it resets ParityTable's internal selection after a bulk action
+  // (density/columns/per-page survive the remount via storageKey persistence).
+  const [tableKey, setTableKey] = useState(0);
   const bulkEnabled = enableBulkSelect && Boolean(bulkBar);
-  const toggleId = (id: string) =>
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  const clearSelection = () => setSelectedIds(new Set());
+  const clearSelection = () => setTableKey((k) => k + 1);
 
   const query = useQuery({
     queryKey: ["catalogs", "accounting", displayName, companyId, search, status],
@@ -80,11 +77,36 @@ export function AccountingCatalogListPage({
   const total = query.data?.total ?? 0;
   // Default sort order for a new row = max(existing)+1 (QBO/NetSuite convention: append to the end).
   const nextSortOrder = rows.length ? Math.max(...rows.map((r) => r.sort_order ?? 0)) + 1 : 1;
-  const emptyText = useMemo(() => {
-    if (query.isLoading) return `Loading ${displayName.toLowerCase()}...`;
-    if (rows.length > 0) return "";
-    return `No ${displayName.toLowerCase()} found.`;
-  }, [displayName, query.isLoading, rows.length]);
+
+  const columns = useMemo<Array<ParityColumn<AccountingCatalogRow>>>(
+    () => [
+      {
+        key: "code",
+        label: codeLabel,
+        sortable: true,
+        render: (row) => (
+          <span className="text-xs font-medium tracking-normal [font-variant-ligatures:none]">{row.code || "—"}</span>
+        ),
+      },
+      { key: "display_name", label: "Display Name", sortable: true },
+      {
+        key: "details",
+        label: "Details",
+        render: (row) => (
+          <span className="text-xs text-slate-600">{metadataSummary ? metadataSummary(row) : row.description || "—"}</span>
+        ),
+        sortValue: (row) => (metadataSummary ? metadataSummary(row) : row.description ?? ""),
+      },
+      {
+        key: "is_active",
+        label: "Status",
+        sortable: true,
+        render: (row) => <span className={statusPillClass(row.is_active)}>{row.is_active ? "Active" : "Inactive"}</span>,
+        sortValue: (row) => (row.is_active ? "Active" : "Inactive"),
+      },
+    ],
+    [codeLabel, metadataSummary],
+  );
 
   return (
     <div className="space-y-3">
@@ -107,8 +129,6 @@ export function AccountingCatalogListPage({
           ) : undefined
         }
       />
-      {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
-
       {helperLink ? (
         <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
           {helperLink.note ? <span className="mr-1">{helperLink.note}</span> : null}
@@ -118,77 +138,55 @@ export function AccountingCatalogListPage({
         </div>
       ) : null}
 
-      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
-        <input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search by code or display name"
-          className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2"
+      {query.isError ? (
+        <ListErrorState
+          title={`Couldn't load ${displayName.toLowerCase()}`}
+          {...formatQueryErrorDetail(query.error)}
+          onRetry={() => void query.refetch()}
         />
-        <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "true" | "false" | "all")} className="h-9 rounded-sm border border-gray-300 px-2 text-sm">
-          <option value="true">Active</option>
-          <option value="false">Inactive</option>
-          <option value="all">All</option>
-        </SelectCombobox>
-      </div>
-
-      {bulkEnabled && selectedIds.size > 0 ? (
-        <div className="flex flex-wrap items-center gap-2 rounded-sm border border-slate-300 bg-slate-100 p-2 text-sm">
-          <span className="font-semibold text-slate-700">{selectedIds.size} selected</span>
-          {bulkBar!({ selectedIds: [...selectedIds], rows, clearSelection, refetch: () => void query.refetch() })}
-          <button type="button" className="ml-auto text-xs font-semibold text-slate-700 underline" onClick={clearSelection}>
-            Clear
-          </button>
-        </div>
-      ) : null}
-
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
-            <tr>
-              {bulkEnabled ? (
-                <th className="w-8 px-3 py-2 text-left">
-                  <input
-                    type="checkbox"
-                    aria-label="Select all"
-                    checked={rows.length > 0 && rows.every((r) => selectedIds.has(r.id))}
-                    onChange={(e) => setSelectedIds(e.target.checked ? new Set(rows.map((r) => r.id)) : new Set())}
-                  />
-                </th>
-              ) : null}
-              <th className="px-3 py-2 text-left">{codeLabel}</th>
-              <th className="px-3 py-2 text-left">Display Name</th>
-              <th className="px-3 py-2 text-left">Details</th>
-              <th className="px-3 py-2 text-left">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr
-                key={row.id}
-                className="cursor-pointer border-t border-gray-100 hover:bg-gray-50"
-                onClick={() => {
-                  setSelectedRow(row);
-                  setProfileOpen(true);
-                }}
-              >
-                {bulkEnabled ? (
-                  <td className="px-3 py-2" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-                    <input type="checkbox" aria-label={`Select ${row.display_name}`} checked={selectedIds.has(row.id)} onChange={() => toggleId(row.id)} />
-                  </td>
-                ) : null}
-                <td className="px-3 py-2 text-xs font-medium tracking-normal [font-variant-ligatures:none]">{row.code || "—"}</td>
-                <td className="px-3 py-2">{row.display_name}</td>
-                <td className="px-3 py-2 text-xs text-slate-600">{metadataSummary ? metadataSummary(row) : row.description || "—"}</td>
-                <td className="px-3 py-2">
-                  <span className={statusPillClass(row.is_active)}>{row.is_active ? "Active" : "Inactive"}</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {emptyText ? <div className="px-3 py-6 text-sm text-gray-500">{emptyText}</div> : null}
-      </div>
+      ) : (
+        <ParityTable<AccountingCatalogRow>
+          key={tableKey}
+          rows={rows}
+          columns={columns}
+          rowKey={(row) => row.id}
+          loading={query.isLoading}
+          emptyText={`No ${displayName.toLowerCase()} found.`}
+          storageKey={`accounting-catalog-${displayName.toLowerCase().replace(/\s+/g, "-")}`}
+          tableTestId="accounting-catalog-list-table"
+          onRowClick={(row) => {
+            setSelectedRow(row);
+            setProfileOpen(true);
+          }}
+          selectable={bulkEnabled}
+          batchActions={
+            bulkEnabled
+              ? (selected) =>
+                  bulkBar!({
+                    selectedIds: selected.map((r) => r.id),
+                    rows,
+                    clearSelection,
+                    refetch: () => void query.refetch(),
+                  })
+              : undefined
+          }
+          filterBar={
+            <div className="grid gap-2 md:grid-cols-3">
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search by code or display name"
+                className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2"
+              />
+              <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "true" | "false" | "all")} className="h-9 rounded-sm border border-gray-300 px-2 text-sm">
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+                <option value="all">All</option>
+              </SelectCombobox>
+            </div>
+          }
+        />
+      )}
 
       <AccountingCatalogProfileDrawer
         open={profileOpen}
