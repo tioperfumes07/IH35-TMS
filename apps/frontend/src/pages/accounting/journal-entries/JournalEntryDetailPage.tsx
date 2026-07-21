@@ -1,11 +1,13 @@
 import { formatDateUS } from "../../../lib/formatDate";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
-import { getJournalEntry } from "../../../api/accounting";
+import { getJournalEntry, type JournalEntryPosting } from "../../../api/accounting";
 import { Button } from "../../../components/Button";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { DataPanel } from "../../../components/layout/DataPanel";
 import { DataPanelRow } from "../../../components/layout/DataPanelRow";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
 
@@ -18,6 +20,62 @@ function humanMemo(memo: string | null | undefined): string {
   if (!memo) return "—";
   return memo.replace(UUID_RE, (uuid) => uuid.slice(0, 8));
 }
+
+// Display-only ParityTable migration: columns/order/formatting mirror the former hand-rolled
+// table 1:1 (Line / Account / Class / Entity / Side / Amount / Description). Read-only GL
+// surface — this page posts nothing and must stay that way (no mutations).
+const postingColumns: Array<ParityColumn<JournalEntryPosting>> = [
+  {
+    key: "line_sequence",
+    label: "Line",
+    sortable: true,
+    render: (posting) => posting.line_sequence,
+  },
+  {
+    key: "account_name",
+    label: "Account",
+    sortable: true,
+    sortValue: (posting) =>
+      `${posting.account_number ? `${posting.account_number} - ` : ""}${posting.account_name || posting.account_id}`,
+    render: (posting) => (
+      <>
+        {posting.account_number ? `${posting.account_number} - ` : ""}
+        {posting.account_name || posting.account_id}
+      </>
+    ),
+  },
+  {
+    key: "class_name",
+    label: "Class",
+    sortable: true,
+    sortValue: (posting) => posting.class_name || posting.class_id || "",
+    render: (posting) => posting.class_name || posting.class_id || "—",
+  },
+  {
+    key: "entity_uuid",
+    label: "Entity",
+    sortable: true,
+    render: (posting) => posting.entity_uuid || "—",
+  },
+  {
+    key: "debit_or_credit",
+    label: "Side",
+    sortable: true,
+    render: (posting) => posting.debit_or_credit,
+  },
+  {
+    key: "amount_cents",
+    label: "Amount",
+    sortable: true,
+    render: (posting) => money(posting.amount_cents),
+  },
+  {
+    key: "description",
+    label: "Description",
+    sortable: true,
+    render: (posting) => posting.description || "—",
+  },
+];
 
 export function JournalEntryDetailPage() {
   const { id = "" } = useParams();
@@ -33,7 +91,17 @@ export function JournalEntryDetailPage() {
   if (detailQuery.isLoading) {
     return <div className="text-sm text-gray-500">Loading journal entry...</div>;
   }
-  if (detailQuery.isError || !detailQuery.data) {
+  if (detailQuery.isError) {
+    return (
+      <ListErrorState
+        title="Couldn't load journal entry"
+        status={0}
+        message={(detailQuery.error as Error | undefined)?.message}
+        onRetry={() => void detailQuery.refetch()}
+      />
+    );
+  }
+  if (!detailQuery.data) {
     return <div className="text-sm text-red-600">Journal entry not found.</div>;
   }
 
@@ -81,44 +149,14 @@ export function JournalEntryDetailPage() {
       </DataPanel>
 
       <DataPanel title="Postings">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-gray-200 text-gray-600">
-                <th className="px-2 py-1.5 font-semibold">Line</th>
-                <th className="px-2 py-1.5 font-semibold">Account</th>
-                <th className="px-2 py-1.5 font-semibold">Class</th>
-                <th className="px-2 py-1.5 font-semibold">Entity</th>
-                <th className="px-2 py-1.5 font-semibold">Side</th>
-                <th className="px-2 py-1.5 font-semibold">Amount</th>
-                <th className="px-2 py-1.5 font-semibold">Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              {postings.map((posting) => (
-                <tr key={posting.id} className="border-b border-gray-100">
-                  <td className="px-2 py-1.5">{posting.line_sequence}</td>
-                  <td className="px-2 py-1.5">
-                    {posting.account_number ? `${posting.account_number} - ` : ""}
-                    {posting.account_name || posting.account_id}
-                  </td>
-                  <td className="px-2 py-1.5">{posting.class_name || posting.class_id || "—"}</td>
-                  <td className="px-2 py-1.5">{posting.entity_uuid || "—"}</td>
-                  <td className="px-2 py-1.5">{posting.debit_or_credit}</td>
-                  <td className="px-2 py-1.5">{money(posting.amount_cents)}</td>
-                  <td className="px-2 py-1.5">{posting.description || "—"}</td>
-                </tr>
-              ))}
-              {postings.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-2 py-2 text-gray-500">
-                    No posting lines.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable<JournalEntryPosting>
+          storageKey="journal-entry-detail-postings"
+          tableTestId="journal-entry-detail-postings-table"
+          columns={postingColumns}
+          rows={postings}
+          rowKey={(posting) => posting.id}
+          emptyText="No posting lines."
+        />
       </DataPanel>
     </AccountingSubNavWrapper>
   );
