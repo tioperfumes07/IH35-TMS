@@ -31,17 +31,17 @@ BEGIN;
 ALTER TABLE banking.bank_transactions
   ADD COLUMN IF NOT EXISTS check_number text NULL;
 
+-- Single-column FK inline (valid whether or not held AF-3 has run — catalogs.classes.id is the PK in
+-- both states); the same-entity COMPOSITE FK upgrade is layered on below when AF-3 is present.
 ALTER TABLE banking.bank_transactions
-  ADD COLUMN IF NOT EXISTS categorization_class_id uuid NULL;
+  ADD COLUMN IF NOT EXISTS categorization_class_id uuid NULL REFERENCES catalogs.classes(id);
 
--- FK to catalogs.classes — dual-path because held AF-3 (202606300090_af3_catalogs_classes_per_entity,
--- not yet marked applied_on_prod) may or may not have added operating_company_id + uq_classes_company_id:
---   * AF-3 applied (fresh CI DB always — it sorts first): same-entity COMPOSITE FK
---     (operating_company_id, categorization_class_id) → catalogs.classes (operating_company_id, id),
---     the linkage-law C4 shape AF-3 itself used for catalogs.items.default_class_id.
---   * AF-3 not applied (possible prod state): single-column FK on id only; FORCED RLS on catalogs.classes
---     still gates reads. If Jorge applies AF-3 later, upgrade by re-running the composite branch by hand
---     (documented in .held-migrations.json).
+-- Same-entity COMPOSITE FK (linkage-law C4) — only when held AF-3
+-- (202606300090_af3_catalogs_classes_per_entity, not yet marked applied_on_prod) has added
+-- operating_company_id + uq_classes_company_id to catalogs.classes (fresh CI DB always — it sorts
+-- first). This is the shape AF-3 itself used for catalogs.items.default_class_id; it coexists with
+-- the single-column FK above. If Jorge applies AF-3 after this migration, re-run this DO block by
+-- hand to add the composite constraint (documented in .held-migrations.json).
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_constraint
@@ -51,12 +51,6 @@ BEGIN
       ALTER TABLE banking.bank_transactions ADD CONSTRAINT bank_tx_class_same_entity_fkey
         FOREIGN KEY (operating_company_id, categorization_class_id)
         REFERENCES catalogs.classes (operating_company_id, id);
-    END IF;
-  ELSE
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint
-        WHERE conname = 'bank_tx_categorization_class_id_fkey' AND conrelid = 'banking.bank_transactions'::regclass) THEN
-      ALTER TABLE banking.bank_transactions ADD CONSTRAINT bank_tx_categorization_class_id_fkey
-        FOREIGN KEY (categorization_class_id) REFERENCES catalogs.classes (id);
     END IF;
   END IF;
 END $$;
