@@ -7,8 +7,9 @@ import { useQuery } from "@tanstack/react-query";
 
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { listCoaAccountsForJe, listAccountingAuditTrail } from "../../api/accounting";
+import { listCoaAccountsForJe, listAccountingAuditTrail, type AccountingAuditTrailEvent } from "../../api/accounting";
 import { getAllAccounts } from "../../api/banking";
 import { getAccountRegister, type AccountRegisterReport, type AccountRegisterRow } from "../../api/account-register";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -326,6 +327,31 @@ export function AccountRegisterPage() {
     { key: "cr", label: "C/R", sortable: true, sortValue: () => "", render: () => "—" },
   ];
 
+  // Audit-history view — display-only ledger audit stream (same shape as the former hand-rolled
+  // table markup: When / Action / Journal entry / Dr/Cr / Amount, renderers preserved 1:1).
+  const auditColumns: Array<ParityColumn<AccountingAuditTrailEvent>> = [
+    {
+      key: "occurred_at",
+      label: "When",
+      cellClass: "whitespace-nowrap",
+      render: (e) => new Date(e.occurred_at).toLocaleString(),
+    },
+    { key: "event_class", label: "Action", render: (e) => e.event_class.replace("accounting.", "") },
+    {
+      key: "journal_entry_id",
+      label: "Journal entry",
+      render: (e) => <EntityLink kind="journal_entry" id={e.journal_entry_id} label={e.journal_entry_id.slice(0, 8)} />,
+    },
+    { key: "debit_or_credit", label: "Dr/Cr", render: (e) => e.debit_or_credit },
+    {
+      key: "amount_cents",
+      label: "Amount",
+      className: "text-right",
+      cellClass: "text-right tabular-nums",
+      render: (e) => fmtCents(e.amount_cents),
+    },
+  ];
+
   const printList = () => window.print();
 
   const kpiStrip = report ? (
@@ -514,38 +540,22 @@ export function AccountRegisterPage() {
           }
         />
         </>
+      ) : auditQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load audit history"
+          status={0}
+          message={(auditQuery.error as Error)?.message}
+          onRetry={() => void auditQuery.refetch()}
+        />
       ) : (
-        <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-          <table className="min-w-full text-left text-xs">
-            <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
-              <tr>
-                <th className="px-3 py-2">When</th>
-                <th className="px-3 py-2">Action</th>
-                <th className="px-3 py-2">Journal entry</th>
-                <th className="px-3 py-2">Dr/Cr</th>
-                <th className="px-3 py-2 text-right">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(auditQuery.data?.events ?? []).map((e) => (
-                <tr key={e.id} className="border-b border-gray-100">
-                  <td className="px-3 py-2 whitespace-nowrap">{new Date(e.occurred_at).toLocaleString()}</td>
-                  <td className="px-3 py-2">{e.event_class.replace("accounting.", "")}</td>
-                  <td className="px-3 py-2"><EntityLink kind="journal_entry" id={e.journal_entry_id} label={e.journal_entry_id.slice(0, 8)} /></td>
-                  <td className="px-3 py-2">{e.debit_or_credit}</td>
-                  <td className="px-3 py-2 text-right">{fmtCents(e.amount_cents)}</td>
-                </tr>
-              ))}
-              {auditQuery.data && auditQuery.data.events.length === 0 ? (
-                <tr>
-                  <td className="px-3 py-6 text-center text-gray-500" colSpan={5}>
-                    {auditQuery.isLoading ? "Loading…" : "No audit events for this account."}
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable
+          columns={auditColumns}
+          rows={auditQuery.data?.events ?? []}
+          rowKey={(e) => e.id}
+          loading={auditQuery.isLoading}
+          emptyText="No audit events for this account."
+          storageKey="account-register-audit"
+        />
       )}
     </AccountingSubNavWrapper>
   );

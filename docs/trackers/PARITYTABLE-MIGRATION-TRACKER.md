@@ -453,6 +453,8 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/accounting/AbandonmentQueuePage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/AccountRegisterPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/AccountTypeCatalogPage.tsx` | migrated (verify-step 1143) |
+| `apps/frontend/src/pages/accounting/AccountRegisterPage.tsx` | migrated (verify-step 1158) — display-only; owner-greenlit UI-only migration |
+| `apps/frontend/src/pages/accounting/AccountTypeCatalogPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/AccountsPayableAgingPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/AccountsPayableAgingPage.tsx` | migrated (verify-step 1147) — display-only; owner-greenlit UI-only migration; By Vendor Type grouped rollup stays hand-rolled (no ParityTable grouped-subtotal grammar) |
