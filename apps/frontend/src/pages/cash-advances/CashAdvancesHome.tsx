@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCashAdvanceDetail, getCashAdvancesKpis, listCashAdvances } from "../../api/cashAdvances";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AdvanceDetailDrawer } from "./components/AdvanceDetailDrawer";
@@ -92,17 +93,26 @@ export function CashAdvancesHomePage() {
 
       <CashAdvancesKpiRow kpis={kpisQuery.data} />
 
-      <CashAdvancesTable
-        rows={rows}
-        onOpenDetail={(row) => {
-          setSelectedId(String(row.id));
-          setDetailOpen(true);
-        }}
-        onMarkDisbursed={(row) => {
-          setSelectedId(String(row.id));
-          setMarkDisbursedOpen(true);
-        }}
-      />
+      {listQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load cash advances"
+          status={0}
+          message={(listQuery.error as Error)?.message}
+          onRetry={() => void listQuery.refetch()}
+        />
+      ) : (
+        <CashAdvancesTable
+          rows={rows}
+          onOpenDetail={(row) => {
+            setSelectedId(String(row.id));
+            setDetailOpen(true);
+          }}
+          onMarkDisbursed={(row) => {
+            setSelectedId(String(row.id));
+            setMarkDisbursedOpen(true);
+          }}
+        />
+      )}
 
       <CreateAdvanceModal
         open={createOpen}

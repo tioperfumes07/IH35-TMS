@@ -528,7 +528,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/cash-advances/components/CashAdvancesTable.tsx` | financial-hold |
+| `apps/frontend/src/pages/cash-advances/components/CashAdvancesTable.tsx` | migrated (verify-step 1115) — display-only; owner-greenlit UI-only migration |
 
 ### pages/cash-flow (1) — financial-hold
 
