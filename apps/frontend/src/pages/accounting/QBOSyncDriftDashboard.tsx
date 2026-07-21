@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "../../api/client";
+import { apiRequest, ApiError } from "../../api/client";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
@@ -91,6 +93,60 @@ export function QBOSyncDriftDashboard() {
 
   const data = dashboardQuery.data;
 
+  // Display-only ParityTable migration: same 5 columns in the same order, same cell renderers,
+  // same resolve-action buttons (handlers unchanged) as the former hand-rolled table markup.
+  const driftColumns: Array<ParityColumn<DriftLogRow>> = [
+    {
+      key: "entity_type",
+      label: "Entity",
+      sortable: true,
+      render: (row) => row.entity_type.replace(/_/g, " "),
+    },
+    {
+      key: "drift_type",
+      label: "Type",
+      sortable: true,
+      render: (row) => driftTypeLabel(row.drift_type),
+      sortValue: (row) => driftTypeLabel(row.drift_type),
+    },
+    {
+      key: "detected_at",
+      label: "Detected",
+      sortable: true,
+      render: (row) => formatRelative(row.detected_at),
+      sortValue: (row) => row.detected_at,
+    },
+    {
+      key: "status",
+      label: "Status",
+      sortable: true,
+      render: (row) => (row.resolved_at ? `Resolved (${row.resolution_action ?? "—"})` : "Open"),
+      sortValue: (row) => (row.resolved_at ? `Resolved (${row.resolution_action ?? "—"})` : "Open"),
+    },
+    {
+      key: "actions",
+      label: "Actions",
+      render: (row) =>
+        !row.resolved_at ? (
+          <div className="flex flex-wrap gap-1">
+            {(["accept_local", "accept_qbo", "manual_merge_recorded"] as const).map((action) => (
+              <button
+                key={action}
+                type="button"
+                className="rounded-sm border border-border px-2 py-0.5 text-xs disabled:opacity-50"
+                disabled={resolveMutation.isPending}
+                onClick={() => resolveMutation.mutate({ id: row.id, action })}
+              >
+                {action.replace(/_/g, " ")}
+              </button>
+            ))}
+          </div>
+        ) : (
+          "—"
+        ),
+    },
+  ];
+
   return (
     <AccountingSubNavWrapper title="QBO Sync Drift" subtitle="Daily reconciliation health across master data entities (clone-and-reconcile, not two-way sync)">
 
@@ -99,7 +155,12 @@ export function QBOSyncDriftDashboard() {
       ) : dashboardQuery.isLoading ? (
         <p className="text-muted-foreground">Loading drift dashboard…</p>
       ) : dashboardQuery.isError ? (
-        <p className="text-destructive">Unable to load drift dashboard.</p>
+        <ListErrorState
+          title="Unable to load drift dashboard."
+          status={(dashboardQuery.error as ApiError | undefined)?.status ?? 0}
+          message={(dashboardQuery.error as Error | undefined)?.message}
+          onRetry={() => void dashboardQuery.refetch()}
+        />
       ) : data ? (
         <>
           {data.last_alert ? (
@@ -125,58 +186,14 @@ export function QBOSyncDriftDashboard() {
             ))}
           </div>
 
-          <div className="overflow-x-auto rounded-lg border border-border">
-            <table className="min-w-full text-sm">
-              <thead className="bg-muted/50 text-left">
-                <tr>
-                  <th className="px-3 py-2">Entity</th>
-                  <th className="px-3 py-2">Type</th>
-                  <th className="px-3 py-2">Detected</th>
-                  <th className="px-3 py-2">Status</th>
-                  <th className="px-3 py-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.drift_log.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-3 py-6 text-center text-muted-foreground">
-                      No drift entries logged yet.
-                    </td>
-                  </tr>
-                ) : (
-                  data.drift_log.map((row) => (
-                    <tr key={row.id} className="border-t border-border">
-                      <td className="px-3 py-2">{row.entity_type.replace(/_/g, " ")}</td>
-                      <td className="px-3 py-2">{driftTypeLabel(row.drift_type)}</td>
-                      <td className="px-3 py-2">{formatRelative(row.detected_at)}</td>
-                      <td className="px-3 py-2">
-                        {row.resolved_at ? `Resolved (${row.resolution_action ?? "—"})` : "Open"}
-                      </td>
-                      <td className="px-3 py-2">
-                        {!row.resolved_at ? (
-                          <div className="flex flex-wrap gap-1">
-                            {(["accept_local", "accept_qbo", "manual_merge_recorded"] as const).map((action) => (
-                              <button
-                                key={action}
-                                type="button"
-                                className="rounded-sm border border-border px-2 py-0.5 text-xs disabled:opacity-50"
-                                disabled={resolveMutation.isPending}
-                                onClick={() => resolveMutation.mutate({ id: row.id, action })}
-                              >
-                                {action.replace(/_/g, " ")}
-                              </button>
-                            ))}
-                          </div>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <ParityTable
+            columns={driftColumns}
+            rows={data.drift_log}
+            rowKey={(row) => row.id}
+            emptyText="No drift entries logged yet."
+            storageKey="qbo-sync-drift-log"
+            tableTestId="qbo-sync-drift-log-table"
+          />
         </>
       ) : null}
     </AccountingSubNavWrapper>

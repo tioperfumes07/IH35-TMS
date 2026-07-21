@@ -453,8 +453,11 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/accounting/AbandonmentQueuePage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/AccountRegisterPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/AccountTypeCatalogPage.tsx` | migrated (verify-step 1143) |
+| `apps/frontend/src/pages/accounting/AccountRegisterPage.tsx` | migrated (verify-step 1158) — display-only; owner-greenlit UI-only migration |
+| `apps/frontend/src/pages/accounting/AccountTypeCatalogPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/AccountsPayableAgingPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/accounting/AccountsPayableAgingPage.tsx` | migrated (verify-step 1147) — display-only; owner-greenlit UI-only migration; By Vendor Type grouped rollup stays hand-rolled (no ParityTable grouped-subtotal grammar) |
 | `apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/BillsPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/CashForecastPage.tsx` | financial-hold |
@@ -463,7 +466,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/accounting/DailyReconPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/EscrowPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/ExpenseCategoryMapPage.tsx` | financial-hold |
-| `apps/frontend/src/pages/accounting/FactorReconciliationPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/accounting/FactorReconciliationPage.tsx` | migrated (verify-step 1151) |
 | `apps/frontend/src/pages/accounting/FactorReserveCard.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/FactoringDetailPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/FactoringListPage.tsx` | financial-hold |
@@ -474,16 +477,19 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/accounting/InvoicesListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/ManualJEListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/MonthClosePage.tsx` | financial-hold |
-| `apps/frontend/src/pages/accounting/MultiEntityAccountingPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/accounting/MultiEntityAccountingPage.tsx` | migrated (verify-step 1150) |
 | `apps/frontend/src/pages/accounting/MyAccountantPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/accounting/MyAccountantPage.tsx` | migrated (verify-step 1149) — display-only; owner-greenlit UI-only migration |
 | `apps/frontend/src/pages/accounting/PayBillModal.tsx` | financial-hold |
-| `apps/frontend/src/pages/accounting/PaymentDetailPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/accounting/PaymentDetailPage.tsx` | migrated (verify-step 1154) — display-only; owner-greenlit UI-only migration |
 | `apps/frontend/src/pages/accounting/PaymentsListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/PayrollAggregatedPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/PeriodComparisonPage.tsx` | migrated (verify-step 1141) |
 | `apps/frontend/src/pages/accounting/PrepaidExpensesPage.tsx` | financial-hold |
-| `apps/frontend/src/pages/accounting/QBOSyncDriftDashboard.tsx` | financial-hold |
+| `apps/frontend/src/pages/accounting/QBOSyncDriftDashboard.tsx` | migrated (verify-step 1157) |
 | `apps/frontend/src/pages/accounting/QboReconcileCapturesPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/accounting/QboReconciliationPage.tsx` | migrated (verify-step 1152) |
+| `apps/frontend/src/pages/accounting/QboReconcileCapturesPage.tsx` | migrated (verify-step 1153) — display-only; owner-greenlit UI-only migration; `verify-qbo-reconcile-captures-page-uses-paritytable.mjs` |
 | `apps/frontend/src/pages/accounting/QboReconciliationPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/ReceiptsPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/RevenueRecognitionPage.tsx` | financial-hold |
@@ -491,7 +497,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/accounting/RevenueRecognitionPage.tsx` | migrated (verify-step 1146) |
 | `apps/frontend/src/pages/accounting/SalesTaxPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/SubmitFactoringModal.tsx` | financial-hold |
-| `apps/frontend/src/pages/accounting/TransactionRegisterPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/accounting/TransactionRegisterPage.tsx` | migrated (verify-step 1148) — display-only; owner-greenlit UI-only migration |
 | `apps/frontend/src/pages/accounting/bills/RecurringBillList.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/journal-entries/JournalEntryDetailPage.tsx` | financial-hold |
 
@@ -520,6 +526,8 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/banking/BankAccountDetail.tsx` | financial-hold |
 | `apps/frontend/src/pages/banking/BankTxCategorizationPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/banking/CashGlSetupPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/banking/TransfersListPage.tsx` | migrated (verify-step 1155) — owner-greenlit display-only |
+| `apps/frontend/src/pages/banking/CashGlSetupPage.tsx` | migrated (verify-step 1156) |
 | `apps/frontend/src/pages/banking/TransfersListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/banking/components/BankingPlaidConnectionsPanel.tsx` | financial-hold |
 | `apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx` | financial-hold |
@@ -1497,3 +1505,26 @@ Print actions and historical as-of note are unchanged; query errors now render
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/finance/ArApAgingPage.tsx` | pages/finance |
+## qbo-parity-a1 — AccountsPayableAgingPage (this PR)
+Accounting-module A/P aging report (/accounting/accounts-payable, read-only — TMS
+bills are the canonical A/P subledger). Owner-greenlit **display-only** migration —
+no posting/mutation logic, no API/query change, cents math untouched. The By Vendor
+grid moved from the hand-rolled `<table>` + useTableController/TableHeaderCell/
+TableControls stack to shared `ParityTable` (sort + resize + gear + density + pager);
+the same 8 columns in the same order (Vendor / Vendor type / Current / 1-30 / 31-60 /
+61-90 / 91+ / Total) with the vendor + "Open bills" deep-links, type chip, and the
+61-90 / 91+ red flags preserved 1:1. URL-persisted sort (?sort=/?dir=,
+BANK-SORT-ROLLOUT-ACCT-AP2) now flows through ParityTable's controlled-sort props
+(verify-ap-aging-url-sort.mjs updated to lock the ParityTable wiring — same contract,
+new mechanism). The TOTAL `tfoot` values are preserved 1:1 as a totals strip under
+the grid (same pattern as ArApAgingPage, verify-step 1135). Query errors render
+`ListErrorState` + Retry instead of a bare red banner; the honest mirror-provenance
+empty states, QBO-mirror strip, Export/Print, Basis label, and ?view= URL sync are
+unchanged. The **By Vendor Type grouped rollup stays hand-rolled** (GroupBlock
+expand/collapse + per-group subtotal rows — ParityTable has no grouped-subtotal
+grammar; migrating it would change the display). Guard:
+`scripts/verify-accounts-payable-aging-page-uses-paritytable.mjs` via verify-step **1147**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/accounting/AccountsPayableAgingPage.tsx` | pages/accounting |

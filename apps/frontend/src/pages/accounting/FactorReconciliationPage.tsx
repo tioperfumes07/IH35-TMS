@@ -6,10 +6,12 @@ import {
   listFactorReconciliationItems,
   listFactorReconciliationRuns,
   listFactorReconciliationImportCandidates,
+  type FactorReconciliationItem,
   type FactorReconciliationRun,
 } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
@@ -63,6 +65,47 @@ export function FactorReconciliationPage() {
   );
 
   const mismatchCount = (itemsQuery.data ?? []).filter((row) => row.ledger_match_state !== "matched").length;
+
+  // Display-only ParityTable migration: column order, money formatting, and cell text colors
+  // are preserved 1:1 from the former hand-rolled table markup.
+  const itemColumns = useMemo<Array<ParityColumn<FactorReconciliationItem>>>(
+    () => [
+      {
+        key: "statement_invoice_number",
+        label: "Statement invoice",
+        sortable: true,
+        render: (item) => <span className="text-gray-900">{item.statement_invoice_number ?? "-"}</span>,
+      },
+      {
+        key: "ledger_match_state",
+        label: "State",
+        sortable: true,
+        render: (item) => <span className="text-gray-700">{item.ledger_match_state}</span>,
+      },
+      {
+        key: "factor_amount_cents",
+        label: "Factor",
+        sortable: true,
+        sortValue: (item) => Number(item.factor_amount_cents) || 0,
+        render: (item) => <span className="text-gray-700">{money(item.factor_amount_cents)}</span>,
+      },
+      {
+        key: "ledger_amount_cents",
+        label: "Ledger",
+        sortable: true,
+        sortValue: (item) => Number(item.ledger_amount_cents) || 0,
+        render: (item) => <span className="text-gray-700">{money(item.ledger_amount_cents)}</span>,
+      },
+      {
+        key: "variance_cents",
+        label: "Variance",
+        sortable: true,
+        sortValue: (item) => Number(item.variance_cents) || 0,
+        render: (item) => <span className="text-gray-700">{money(item.variance_cents)}</span>,
+      },
+    ],
+    []
+  );
 
   return (
     <AccountingSubNavWrapper title="Factor reconciliation" subtitle="Statement-to-ledger reconciliation with Q11 tolerance and match-state drilldown.">
@@ -155,30 +198,15 @@ export function FactorReconciliationPage() {
                     <span className="font-semibold">Run:</span> {selectedRun.statement_date} | <span className="font-semibold">Status:</span> {selectedRun.status} |{" "}
                     <span className="font-semibold">Mismatches:</span> {mismatchCount}
                   </div>
-                  <div className="max-h-[320px] overflow-auto rounded-sm border border-gray-200">
-                    <table className="min-w-full text-left text-xs">
-                      <thead className="bg-gray-50">
-                        <tr className="text-gray-600">
-                          <th className="px-2 py-1.5 font-semibold">Statement invoice</th>
-                          <th className="px-2 py-1.5 font-semibold">State</th>
-                          <th className="px-2 py-1.5 font-semibold">Factor</th>
-                          <th className="px-2 py-1.5 font-semibold">Ledger</th>
-                          <th className="px-2 py-1.5 font-semibold">Variance</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(itemsQuery.data ?? []).map((item) => (
-                          <tr key={item.id} className="border-t border-gray-100">
-                            <td className="px-2 py-1.5 text-gray-900">{item.statement_invoice_number ?? "-"}</td>
-                            <td className="px-2 py-1.5 text-gray-700">{item.ledger_match_state}</td>
-                            <td className="px-2 py-1.5 text-gray-700">{money(item.factor_amount_cents)}</td>
-                            <td className="px-2 py-1.5 text-gray-700">{money(item.ledger_amount_cents)}</td>
-                            <td className="px-2 py-1.5 text-gray-700">{money(item.variance_cents)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                  <ParityTable
+                    columns={itemColumns}
+                    rows={itemsQuery.data ?? []}
+                    rowKey={(item) => item.id}
+                    loading={itemsQuery.isLoading}
+                    storageKey="accounting-factor-reconciliation-items"
+                    tableTestId="factor-reconciliation-items-table"
+                    emptyText="No reconciliation items."
+                  />
                 </>
               ) : null}
             </div>

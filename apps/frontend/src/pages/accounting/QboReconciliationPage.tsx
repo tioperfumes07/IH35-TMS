@@ -5,6 +5,9 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { getQboReconciliation, type ReconFinding, type ReconObject } from "../../api/qbo-recon";
 import { formatUsdCents } from "../../lib/money";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ApiError } from "../../api/client";
 
 const FLAG = "TMS_QBO_RECON_UI_ENABLED";
 
@@ -37,7 +40,7 @@ export function QboReconciliationPage() {
   const { enabled, loading: flagLoading } = useFeatureFlag(FLAG, operatingCompanyId || undefined);
   const [selectedObject, setSelectedObject] = useState<string | null>(null);
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["qbo-recon", operatingCompanyId],
     queryFn: () => getQboReconciliation(operatingCompanyId),
     enabled: Boolean(selectedCompanyId) && enabled,
@@ -53,6 +56,164 @@ export function QboReconciliationPage() {
   }, [findings, selectedObject]);
 
   const allInSync = objects.length > 0 && objects.every((o) => o.count_in_sync) && balances.every((b) => b.balance!.in_sync);
+
+  // Column order, labels, formatting, and the Findings toggle button preserved 1:1 from the
+  // former hand-rolled table markup (display-only migration — no data/posting logic changed).
+  const objectColumns = useMemo<Array<ParityColumn<ReconObject>>>(
+    () => [
+      {
+        key: "label",
+        label: "Object",
+        render: (o) => <span className="font-medium text-gray-800">{o.label}</span>,
+      },
+      {
+        key: "tms_count",
+        label: "TMS",
+        cellClass: "text-right tabular-nums",
+        render: (o) => fmtNum(o.tms_count),
+      },
+      {
+        key: "qbo_mirror_count",
+        label: "QBO (mirror)",
+        cellClass: "text-right tabular-nums text-gray-600",
+        render: (o) => fmtNum(o.qbo_mirror_count),
+      },
+      {
+        key: "qbo_remote_count",
+        label: "QBO (remote API)",
+        cellClass: "text-right tabular-nums text-gray-600",
+        render: (o) =>
+          o.qbo_remote_count != null ? fmtNum(o.qbo_remote_count) : <span className="text-gray-300">—</span>,
+      },
+      {
+        key: "count_delta",
+        label: "Δ vs ",
+        cellClass: "text-right tabular-nums",
+        render: (o) => (
+          <>
+            <span className={o.count_delta !== 0 ? "font-semibold text-red-600" : "text-gray-400"}>
+              {o.count_delta > 0 ? `+${o.count_delta}` : o.count_delta}
+            </span>
+            <span className="ml-1 text-xs text-gray-400">{o.reference}</span>
+          </>
+        ),
+      },
+      {
+        key: "count_in_sync",
+        label: "Status",
+        render: (o) => <SyncPill inSync={o.count_in_sync} />,
+      },
+      {
+        key: "findings_toggle",
+        label: "",
+        cellClass: "text-right",
+        render: (o) => (
+          <button
+            onClick={() => setSelectedObject(selectedObject === o.object ? null : o.object)}
+            className="text-xs text-slate-600 hover:underline"
+          >
+            {selectedObject === o.object ? "Clear" : "Findings"}
+          </button>
+        ),
+      },
+    ],
+    [selectedObject],
+  );
+
+  const balanceColumns = useMemo<Array<ParityColumn<ReconObject>>>(
+    () => [
+      {
+        key: "balance_label",
+        label: "Balance",
+        render: (o) => <span className="font-medium text-gray-800">{o.balance!.label}</span>,
+      },
+      {
+        key: "balance_tms_cents",
+        label: "TMS",
+        cellClass: "text-right tabular-nums",
+        render: (o) => fmtCents(o.balance!.tms_cents),
+      },
+      {
+        key: "balance_qbo_cents",
+        label: "QBO (mirror)",
+        cellClass: "text-right tabular-nums text-gray-600",
+        render: (o) => fmtCents(o.balance!.qbo_cents),
+      },
+      {
+        key: "balance_delta_cents",
+        label: "Δ",
+        cellClass: "text-right tabular-nums",
+        render: (o) => (
+          <span className={o.balance!.delta_cents !== 0 ? "font-semibold text-red-600" : "text-gray-400"}>
+            {fmtCents(o.balance!.delta_cents)}
+          </span>
+        ),
+      },
+      {
+        key: "balance_in_sync",
+        label: "Status",
+        render: (o) => <SyncPill inSync={o.balance!.in_sync} />,
+      },
+    ],
+    [],
+  );
+
+  const findingColumns = useMemo<Array<ParityColumn<ReconFinding>>>(
+    () => [
+      {
+        key: "finding_type",
+        label: "Type",
+        cellClass: "whitespace-nowrap capitalize",
+        render: (f) => titleize(f.finding_type),
+      },
+      {
+        key: "mirror_category",
+        label: "Category",
+        cellClass: "whitespace-nowrap text-gray-600",
+        render: (f) => titleize(f.mirror_category),
+      },
+      {
+        key: "severity",
+        label: "Severity",
+        cellClass: "whitespace-nowrap",
+        render: (f) => (
+          <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${SEVERITY_CLASS[f.severity] ?? "bg-gray-100 text-gray-600"}`}>
+            {titleize(f.severity)}
+          </span>
+        ),
+      },
+      {
+        key: "status",
+        label: "Status",
+        cellClass: "whitespace-nowrap capitalize text-gray-600",
+        render: (f) => titleize(f.status),
+      },
+      {
+        key: "drift_metric_abs",
+        label: "Drift",
+        cellClass: "whitespace-nowrap text-right tabular-nums text-gray-600",
+        render: (f) => (
+          <>
+            {f.drift_metric_abs != null ? fmtNum(f.drift_metric_abs) : "—"}
+            {f.drift_metric_pct != null ? ` (${f.drift_metric_pct}%)` : ""}
+          </>
+        ),
+      },
+      {
+        key: "detected_at",
+        label: "Detected",
+        cellClass: "whitespace-nowrap text-gray-500",
+        render: (f) => fmtTs(f.detected_at),
+      },
+      {
+        key: "last_seen_at",
+        label: "Last seen",
+        cellClass: "whitespace-nowrap text-gray-500",
+        render: (f) => fmtTs(f.last_seen_at),
+      },
+    ],
+    [],
+  );
 
   if (!flagLoading && !enabled) {
     return (
@@ -73,7 +234,12 @@ export function QboReconciliationPage() {
       {isLoading || flagLoading ? (
         <p className="py-8 text-center text-sm text-gray-500">Loading…</p>
       ) : isError ? (
-        <p className="py-8 text-center text-sm text-red-600">Failed to load reconciliation.</p>
+        <ListErrorState
+          title="Failed to load reconciliation."
+          status={error instanceof ApiError ? error.status : 0}
+          message={(error as Error | null)?.message}
+          onRetry={() => void refetch()}
+        />
       ) : (
         <div className="space-y-5">
           {/* Sync state / last run */}
@@ -113,61 +279,15 @@ export function QboReconciliationPage() {
           {/* Per-object count reconciliation */}
           <div>
             <h2 className="mb-2 text-sm font-semibold text-gray-800">Object counts</h2>
-            <div className="overflow-x-auto rounded-sm border border-gray-200">
-              <table className="min-w-full divide-y divide-gray-200 text-sm">
-                <thead className="bg-gray-50">
-                  <tr>
-                    {["Object", "TMS", "QBO (mirror)", "QBO (remote API)", "Δ vs " , "Status", ""].map((h, i) => (
-                      <th
-                        key={i}
-                        className="whitespace-nowrap px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-600"
-                      >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 bg-white">
-                  {objects.map((o: ReconObject) => (
-                    <tr
-                      key={o.object}
-                      className={`hover:bg-gray-50 ${selectedObject === o.object ? "bg-slate-50" : ""}`}
-                    >
-                      <td className="px-3 py-2 font-medium text-gray-800">{o.label}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">{fmtNum(o.tms_count)}</td>
-                      <td className="px-3 py-2 text-right tabular-nums text-gray-600">{fmtNum(o.qbo_mirror_count)}</td>
-                      <td className="px-3 py-2 text-right tabular-nums text-gray-600">
-                        {o.qbo_remote_count != null ? fmtNum(o.qbo_remote_count) : <span className="text-gray-300">—</span>}
-                      </td>
-                      <td className="px-3 py-2 text-right tabular-nums">
-                        <span className={o.count_delta !== 0 ? "font-semibold text-red-600" : "text-gray-400"}>
-                          {o.count_delta > 0 ? `+${o.count_delta}` : o.count_delta}
-                        </span>
-                        <span className="ml-1 text-xs text-gray-400">{o.reference}</span>
-                      </td>
-                      <td className="px-3 py-2">
-                        <SyncPill inSync={o.count_in_sync} />
-                      </td>
-                      <td className="px-3 py-2 text-right">
-                        <button
-                          onClick={() => setSelectedObject(selectedObject === o.object ? null : o.object)}
-                          className="text-xs text-slate-600 hover:underline"
-                        >
-                          {selectedObject === o.object ? "Clear" : "Findings"}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {objects.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="px-3 py-8 text-center text-sm text-gray-400">
-                        No reconciliation data available.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <ParityTable<ReconObject>
+              columns={objectColumns}
+              rows={objects}
+              rowKey={(o) => o.object}
+              emptyText="No reconciliation data available."
+              storageKey="qbo-recon-object-counts"
+              tableTestId="qbo-recon-object-counts-table"
+              rowClassName={(o) => `hover:bg-gray-50 ${selectedObject === o.object ? "bg-slate-50" : ""}`}
+            />
             <p className="mt-1 text-xs text-gray-400">
               Δ compares TMS against the authoritative QBO remote-API count when collected, otherwise the local QBO mirror.
             </p>
@@ -177,42 +297,14 @@ export function QboReconciliationPage() {
           {balances.length > 0 && (
             <div>
               <h2 className="mb-2 text-sm font-semibold text-gray-800">Balance reconciliation</h2>
-              <div className="overflow-x-auto rounded-sm border border-gray-200">
-                <table className="min-w-full divide-y divide-gray-200 text-sm">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      {["Balance", "TMS", "QBO (mirror)", "Δ", "Status"].map((h) => (
-                        <th
-                          key={h}
-                          className="whitespace-nowrap px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-600"
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 bg-white">
-                    {balances.map((o) => {
-                      const b = o.balance!;
-                      return (
-                        <tr key={o.object} className="hover:bg-gray-50">
-                          <td className="px-3 py-2 font-medium text-gray-800">{b.label}</td>
-                          <td className="px-3 py-2 text-right tabular-nums">{fmtCents(b.tms_cents)}</td>
-                          <td className="px-3 py-2 text-right tabular-nums text-gray-600">{fmtCents(b.qbo_cents)}</td>
-                          <td className="px-3 py-2 text-right tabular-nums">
-                            <span className={b.delta_cents !== 0 ? "font-semibold text-red-600" : "text-gray-400"}>
-                              {fmtCents(b.delta_cents)}
-                            </span>
-                          </td>
-                          <td className="px-3 py-2">
-                            <SyncPill inSync={b.in_sync} />
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              <ParityTable<ReconObject>
+                columns={balanceColumns}
+                rows={balances}
+                rowKey={(o) => o.object}
+                storageKey="qbo-recon-balances"
+                tableTestId="qbo-recon-balances-table"
+                rowClassName={() => "hover:bg-gray-50"}
+              />
             </div>
           )}
 
@@ -235,42 +327,14 @@ export function QboReconciliationPage() {
                   : "No findings for the selected object."}
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-sm border border-gray-200">
-                <table className="min-w-full divide-y divide-gray-200 text-sm">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      {["Type", "Category", "Severity", "Status", "Drift", "Detected", "Last seen"].map((h) => (
-                        <th
-                          key={h}
-                          className="whitespace-nowrap px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-600"
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 bg-white">
-                    {visibleFindings.map((f: ReconFinding) => (
-                      <tr key={f.id} className="hover:bg-gray-50">
-                        <td className="px-3 py-2 whitespace-nowrap capitalize">{titleize(f.finding_type)}</td>
-                        <td className="px-3 py-2 whitespace-nowrap text-gray-600">{titleize(f.mirror_category)}</td>
-                        <td className="px-3 py-2 whitespace-nowrap">
-                          <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${SEVERITY_CLASS[f.severity] ?? "bg-gray-100 text-gray-600"}`}>
-                            {titleize(f.severity)}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2 whitespace-nowrap capitalize text-gray-600">{titleize(f.status)}</td>
-                        <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-gray-600">
-                          {f.drift_metric_abs != null ? fmtNum(f.drift_metric_abs) : "—"}
-                          {f.drift_metric_pct != null ? ` (${f.drift_metric_pct}%)` : ""}
-                        </td>
-                        <td className="px-3 py-2 whitespace-nowrap text-gray-500">{fmtTs(f.detected_at)}</td>
-                        <td className="px-3 py-2 whitespace-nowrap text-gray-500">{fmtTs(f.last_seen_at)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <ParityTable<ReconFinding>
+                columns={findingColumns}
+                rows={visibleFindings}
+                rowKey={(f) => f.id}
+                storageKey="qbo-recon-findings"
+                tableTestId="qbo-recon-findings-table"
+                rowClassName={() => "hover:bg-gray-50"}
+              />
             )}
             <p className="mt-1 text-xs text-gray-400">
               Read-only. Triggering a reconciliation run or resolving a finding is out of scope for this screen.

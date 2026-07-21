@@ -3,7 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
-import { TableControls, TableSearch, TableHeaderCell, useTableController, type TableColumn } from "../../components/table";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { TableSearch } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getApAgingByVendor, type ApAgingVendor, type ApAgingDisplayGroup } from "../../api/accounting";
 import { formatDateUS } from "../../lib/formatDate";
@@ -27,18 +29,15 @@ function today() {
   return companyToday();
 }
 
-// Aging columns; 61-90 and 91+ are flagged red per the QBO-grade spec.
-const COLUMNS: TableColumn[] = [
-  { key: "vendor", label: "Vendor", alwaysVisible: true },
-  { key: "type", label: "Vendor type" },
-  { key: "current", label: "Current" },
-  { key: "d1_30", label: "1-30" },
-  { key: "d31_60", label: "31-60" },
-  { key: "d61_90", label: "61-90" },
-  { key: "d90_plus", label: "91+" },
-  { key: "total", label: "Total" },
-];
 const MONEY_KEYS = ["current", "d1_30", "d31_60", "d61_90", "d90_plus", "total"] as const;
+const MONEY_LABELS: Record<(typeof MONEY_KEYS)[number], string> = {
+  current: "Current",
+  d1_30: "1-30",
+  d31_60: "31-60",
+  d61_90: "61-90",
+  d90_plus: "91+",
+  total: "Total",
+};
 const RED_KEYS = new Set(["d61_90", "d90_plus"]);
 const GROUP_ORDER: ApAgingDisplayGroup[] = ["Driver", "Repair", "Diesel", "Insurance", "Intercompany", "Other"];
 const GROUP_CHIP: Record<ApAgingDisplayGroup, string> = {
@@ -75,6 +74,91 @@ function amount(b: Buckets | ApAgingVendor, key: string): number {
   }
 }
 const moneyCellClass = (key: string) => `px-2 py-1.5 text-right tabular-nums ${RED_KEYS.has(key) ? "text-red-600" : ""}`;
+
+// By Vendor grid — shared ParityTable grammar (display-only migration). Same 8 columns, same
+// order, same cell renderers (vendor + Open bills deep-links, type chip, money buckets with the
+// 61-90 / 91+ red flags) the former hand-rolled table markup carried; 61-90 and 91+ stay red per the
+// QBO-grade spec. ParityTable's padding comes from its density style, so the cell classes here
+// carry only alignment/color (moneyCellClass keeps padding for the hand-rolled By Vendor Type
+// rollup below).
+const parityMoneyCellClass = (key: string) => `text-right tabular-nums ${RED_KEYS.has(key) ? "text-red-600" : ""}`;
+const VENDOR_COLUMNS: Array<ParityColumn<ApAgingVendor>> = [
+  {
+    key: "vendor",
+    label: "Vendor",
+    alwaysVisible: true,
+    sortable: true,
+    sortValue: (v) => v.vendor_name,
+    render: (v) =>
+      v.vendor_id ? (
+        <span className="inline-flex flex-col gap-0.5">
+          <Link to={`/vendors/${v.vendor_id}`} className="font-medium text-slate-700 hover:underline">{v.vendor_name}</Link>
+          <Link to={`/accounting/bills?vendor_id=${v.vendor_id}&status=unpaid`} className="text-[10px] font-medium text-slate-500 hover:underline">
+            Open bills
+          </Link>
+        </span>
+      ) : (
+        <span className="font-medium">{v.vendor_name}</span>
+      ),
+  },
+  {
+    key: "type",
+    label: "Vendor type",
+    sortable: true,
+    sortValue: (v) => v.display_group,
+    render: (v) => (
+      <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${GROUP_CHIP[v.display_group]}`}>{v.display_group}</span>
+    ),
+  },
+  {
+    key: "current",
+    label: "Current",
+    sortable: true,
+    cellClass: parityMoneyCellClass("current"),
+    sortValue: (v) => amount(v, "current"),
+    render: (v) => money(amount(v, "current")),
+  },
+  {
+    key: "d1_30",
+    label: "1-30",
+    sortable: true,
+    cellClass: parityMoneyCellClass("d1_30"),
+    sortValue: (v) => amount(v, "d1_30"),
+    render: (v) => money(amount(v, "d1_30")),
+  },
+  {
+    key: "d31_60",
+    label: "31-60",
+    sortable: true,
+    cellClass: parityMoneyCellClass("d31_60"),
+    sortValue: (v) => amount(v, "d31_60"),
+    render: (v) => money(amount(v, "d31_60")),
+  },
+  {
+    key: "d61_90",
+    label: "61-90",
+    sortable: true,
+    cellClass: parityMoneyCellClass("d61_90"),
+    sortValue: (v) => amount(v, "d61_90"),
+    render: (v) => money(amount(v, "d61_90")),
+  },
+  {
+    key: "d90_plus",
+    label: "91+",
+    sortable: true,
+    cellClass: parityMoneyCellClass("d90_plus"),
+    sortValue: (v) => amount(v, "d90_plus"),
+    render: (v) => money(amount(v, "d90_plus")),
+  },
+  {
+    key: "total",
+    label: "Total",
+    sortable: true,
+    cellClass: parityMoneyCellClass("total"),
+    sortValue: (v) => amount(v, "total"),
+    render: (v) => money(amount(v, "total")),
+  },
+];
 
 export function AccountsPayableAgingPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -146,22 +230,10 @@ export function AccountsPayableAgingPage() {
   const totals = useMemo(() => filtered.reduce(addBuckets, emptyBuckets()), [filtered]);
 
   // BANK-SORT-ROLLOUT-ACCT-AP2 — ?sort=/?dir= URL persistence via the shared useUrlSort hook
-  // (same contract as FleetTable / dispatch board). Hand-rolled <table> + TableHeaderCell stack;
-  // seeds useTableController from the URL and mirrors every header click back into it.
-  const urlSort = useUrlSort();
-
-  // By Vendor — shared QBO-grade table (sort / resize / gear). Search is the page-level `search` state.
-  const table = useTableController<ApAgingVendor>({
-    rows: filtered,
-    columns: COLUMNS,
-    tableKey: "ap-aging-by-vendor",
-    searchText: (v) => v.vendor_name, // controller search stays inert; page-level `search` drives filtering
-    sortValue: (v, key) => (key === "vendor" ? v.vendor_name : key === "type" ? v.display_group : amount(v, key)),
-    initialSortKey: urlSort.sortKey || null,
-    initialSortDir: urlSort.sortDirection,
-    onSortChange: (key, dir) => urlSort.onSortChange(key ?? "", dir),
-    defaultPageSize: 100,
-  });
+  // (same contract as FleetTable / dispatch board), now feeding ParityTable's controlled-sort
+  // props (sortKey / sortDirection / onSortChange) so every header click mirrors into the URL
+  // and ParityTable performs the row sort via each column's sortValue.
+  const { sortKey, sortDirection, onSortChange } = useUrlSort();
 
   // By Vendor Type — grouped rollups with subtotals.
   const groups = useMemo(() => {
@@ -266,75 +338,49 @@ export function AccountsPayableAgingPage() {
       {query.isLoading ? (
         <div className="px-3 py-6 text-sm text-slate-500">Loading A/P aging…</div>
       ) : query.isError ? (
-        <div className="px-3 py-6 text-sm text-red-600">Failed to load A/P aging.</div>
+        <ListErrorState
+          title="Couldn't load A/P aging"
+          status={0}
+          message={(query.error as Error)?.message ?? "Failed to load A/P aging."}
+          onRetry={() => void query.refetch()}
+        />
       ) : view === "by_vendor" ? (
         <div className="space-y-2">
-          <TableControls
-            search={search}
-            onSearchChange={setSearch}
-            searchPlaceholder="Search vendor…"
-            filteredCount={filtered.length}
-            totalCount={typeFiltered.length}
-            columns={COLUMNS}
-            hidden={table.hidden}
-            onToggleColumn={table.toggleColumn}
-            pageSize={table.pageSize}
-            onPageSizeChange={table.setPageSize}
+          <ParityTable<ApAgingVendor>
+            columns={VENDOR_COLUMNS}
+            rows={filtered}
+            rowKey={(v) => v.vendor_id ?? v.vendor_name}
+            storageKey="acct-ap-aging-by-vendor"
+            tableTestId="ap-aging-by-vendor-table"
+            initialPageSize={100}
+            emptyText={emptyMessage}
+            sortKey={sortKey}
+            sortDirection={sortDirection}
+            onSortChange={onSortChange}
+            filterBar={
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="w-56"><TableSearch value={search} onChange={setSearch} placeholder="Search vendor…" /></div>
+                <span className="text-[11px] text-slate-500">
+                  {filtered.length === typeFiltered.length ? `${typeFiltered.length}` : `${filtered.length} of ${typeFiltered.length}`} rows
+                </span>
+              </div>
+            }
           />
-          <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
-            <table className="w-full text-left text-xs">
-              <thead className="sticky top-0 z-10 bg-slate-50 text-[10px] uppercase tracking-wide text-slate-500">
-                <tr>
-                  {table.visibleColumns.map((col) => (
-                    <TableHeaderCell key={col.key} columnKey={col.key} label={col.label} sortKey={table.sortKey} sortDir={table.sortDir} onToggleSort={table.toggleSort} width={table.widths[col.key]} onResize={table.setColumnWidth} />
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {table.paged.map((v) => (
-                  <tr key={v.vendor_id ?? v.vendor_name} className="border-t border-slate-100 hover:bg-slate-50">
-                    {table.visibleColumns.map((col) => (
-                      <td key={col.key} className={MONEY_KEYS.includes(col.key as (typeof MONEY_KEYS)[number]) ? moneyCellClass(col.key) : "px-2 py-1.5"}>
-                        {col.key === "vendor" ? (
-                          v.vendor_id ? (
-                            <span className="inline-flex flex-col gap-0.5">
-                              <Link to={`/vendors/${v.vendor_id}`} className="font-medium text-slate-700 hover:underline">{v.vendor_name}</Link>
-                              <Link to={`/accounting/bills?vendor_id=${v.vendor_id}&status=unpaid`} className="text-[10px] font-medium text-slate-500 hover:underline">
-                                Open bills
-                              </Link>
-                            </span>
-                          ) : (
-                            <span className="font-medium">{v.vendor_name}</span>
-                          )
-                        ) : col.key === "type" ? (
-                          <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${GROUP_CHIP[v.display_group]}`}>{v.display_group}</span>
-                        ) : (
-                          money(amount(v, col.key))
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-                {table.paged.length === 0 ? <tr><td colSpan={table.visibleColumns.length} className="px-3 py-6 text-center text-slate-500">{emptyMessage}</td></tr> : null}
-              </tbody>
-              <tfoot>
-                <tr className="border-t-2 border-slate-300 bg-slate-50 font-semibold">
-                  {table.visibleColumns.map((col) => (
-                    <td key={col.key} className={MONEY_KEYS.includes(col.key as (typeof MONEY_KEYS)[number]) ? moneyCellClass(col.key) : "px-2 py-2"}>
-                      {col.key === "vendor" ? "TOTAL" : col.key === "type" ? "" : money(amount(totals, col.key))}
-                    </td>
-                  ))}
-                </tr>
-              </tfoot>
-            </table>
+          {/* TOTAL row — same values the former <tfoot> carried (sum of the filtered vendor rows),
+              with the 61-90 / 91+ buckets kept red. ParityTable has no footer-row grammar, so the
+              totals render as a strip directly under the grid (same pattern as ArApAgingPage). */}
+          <div
+            data-testid="ap-aging-by-vendor-total"
+            className="flex flex-wrap items-center justify-end gap-x-5 gap-y-1 rounded-sm border border-slate-200 border-t-2 border-t-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold"
+          >
+            <span className="mr-auto">TOTAL</span>
+            {MONEY_KEYS.map((k) => (
+              <span key={k} className="whitespace-nowrap">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{MONEY_LABELS[k]}</span>{" "}
+                <span className={`tabular-nums ${RED_KEYS.has(k) ? "text-red-600" : ""}`}>{money(amount(totals, k))}</span>
+              </span>
+            ))}
           </div>
-          {table.pageCount > 1 ? (
-            <div className="flex items-center justify-end gap-2 text-xs text-slate-600">
-              <button type="button" className="rounded-sm border px-2 py-1 disabled:opacity-40" disabled={table.page <= 1} onClick={() => table.setPage(table.page - 1)}>Prev</button>
-              <span>Page {table.page} / {table.pageCount}</span>
-              <button type="button" className="rounded-sm border px-2 py-1 disabled:opacity-40" disabled={table.page >= table.pageCount} onClick={() => table.setPage(table.page + 1)}>Next</button>
-            </div>
-          ) : null}
         </div>
       ) : (
         <div className="space-y-2">
