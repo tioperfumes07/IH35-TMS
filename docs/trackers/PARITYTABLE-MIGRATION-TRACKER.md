@@ -757,7 +757,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/profitability/ByCustomerView.tsx` | financial-hold |
 | `apps/frontend/src/pages/profitability/ByLaneView.tsx` | financial-hold |
 | `apps/frontend/src/pages/profitability/ByLoadView.tsx` | financial-hold |
-| `apps/frontend/src/pages/profitability/ByTypeView.tsx` | financial-hold |
+| `apps/frontend/src/pages/profitability/ByTypeView.tsx` | migrated (verify-step 1100) |
 
 ### pages/qbo (1) — financial-hold
 
