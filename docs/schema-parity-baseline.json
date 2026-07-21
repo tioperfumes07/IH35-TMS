@@ -3780,6 +3780,7 @@
       "recover_deduction_type",
       "recover_from_driver",
       "remaining_balance_cents",
+      "source_auto_deduction_policy_id",
       "source_bank_transaction_id",
       "source_expense_id",
       "source_pending_id",
@@ -3793,7 +3794,9 @@
       "dispute_description",
       "disputed_amount_cents",
       "driver_id",
+      "evidence_doc_ids",
       "id",
+      "legacy_dispute_type",
       "opened_at",
       "opened_by_driver",
       "opened_by_user_id",
@@ -3808,9 +3811,7 @@
       "status",
       "updated_at",
       "violation_type_id",
-      "violation_type_uuid",
-      "evidence_doc_ids",
-      "legacy_dispute_type"
+      "violation_type_uuid"
     ],
     "driver_finance.driver_settlement_gl_bills": [
       "accounting_bill_id",
