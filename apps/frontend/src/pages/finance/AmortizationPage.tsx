@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
@@ -13,6 +14,17 @@ import {
 
 const dollars = (cents: number) => (cents / 100).toLocaleString(undefined, { style: "currency", currency: "USD" });
 const toCents = (s: string) => Math.round((Number(s) || 0) * 100);
+
+// Display-only column set — same order, labels, right-alignment, and dollars() cents
+// formatting as the former hand-rolled table markup. No amount math changes.
+const SCHEDULE_COLUMNS: Array<ParityColumn<AmortRow>> = [
+  { key: "payment_number", label: "#", sortable: true },
+  { key: "due_date", label: "Due", sortable: true },
+  { key: "payment_cents", label: "Payment", sortable: true, className: "text-right", render: (r) => dollars(r.payment_cents) },
+  { key: "principal_cents", label: "Principal", sortable: true, className: "text-right", render: (r) => dollars(r.principal_cents) },
+  { key: "interest_cents", label: "Interest", sortable: true, className: "text-right", render: (r) => dollars(r.interest_cents) },
+  { key: "remaining_balance_cents", label: "Balance", sortable: true, className: "text-right", render: (r) => dollars(r.remaining_balance_cents) },
+];
 
 export function AmortizationPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -114,23 +126,17 @@ export function AmortizationPage() {
         <div className="rounded-sm border border-slate-200 bg-white p-4 lg:col-span-1">
           <h2 className="mb-3 text-sm font-semibold text-slate-700">Schedule</h2>
           {schedule.length === 0 ? <p className="text-sm text-slate-500">Select a loan to view its schedule.</p> : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead><tr className="text-left text-slate-500">
-                  <th className="py-1">#</th><th>Due</th><th className="text-right">Payment</th><th className="text-right">Principal</th><th className="text-right">Interest</th><th className="text-right">Balance</th>
-                </tr></thead>
-                <tbody>
-                  {schedule.slice(0, 12).map((r) => (
-                    <tr key={r.payment_number} className="border-b border-slate-100">
-                      <td className="py-1">{r.payment_number}</td><td>{r.due_date}</td>
-                      <td className="text-right">{dollars(r.payment_cents)}</td><td className="text-right">{dollars(r.principal_cents)}</td>
-                      <td className="text-right">{dollars(r.interest_cents)}</td><td className="text-right">{dollars(r.remaining_balance_cents)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {schedule.length > 12 && <p className="mt-1 text-xs text-slate-400">…{schedule.length - 12} more payments</p>}
-            </div>
+            <ParityTable<AmortRow>
+              columns={SCHEDULE_COLUMNS}
+              rows={schedule}
+              rowKey={(r) => String(r.payment_number)}
+              storageKey="finance-amortization-schedule"
+              tableTestId="amortization-schedule-table"
+              density="compact"
+              initialPageSize={12}
+              pageSizeOptions={[12, 60, 120, 360]}
+              emptyText="Select a loan to view its schedule."
+            />
           )}
         </div>
       </div>

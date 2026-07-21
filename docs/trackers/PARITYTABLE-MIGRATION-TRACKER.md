@@ -650,6 +650,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/pages/finance/AmortizationPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/finance/AmortizationPage.tsx` | migrated (verify-step 1134) — display-only schedule grid; owner-greenlit UI-only migration; calculator inputs untouched |
 | `apps/frontend/src/pages/finance/ArApAgingPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/finance/CalculatorPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/finance/FinancialStatementsPage.tsx` | financial-hold |
