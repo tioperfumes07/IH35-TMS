@@ -10,6 +10,17 @@
     ".block-ready/0091-g7-1.json",
     "apps/backend/src/driver-finance/__tests__/settlement-payment-transition-matrix.test.ts"
   ],
+  "acceptance": [
+    {
+      "check": "Vitest file apps/backend/src/driver-finance/__tests__/settlement-payment-transition-matrix.test.ts pins the full 6×6 allowedTransitions matrix via queuePayment / markSentToBank / markCleared / markBounced / markPaidManually (mocked db): every legal (from,to) reaches UPDATE; every illegal throws invalid_payment_state_transition."
+    },
+    {
+      "check": "payment_state NULL coerces to unpaid (?? unpaid) — queuePayment and markPaidManually allowed; markSentToBank rejected."
+    },
+    {
+      "check": "Test-only PR: no production code / migration / SQL change; Rule 17 — no new verify-*.mjs (vitest IS the guard)."
+    }
+  ],
   "runtime_path": "src",
   "db_required": false,
   "guard_required": false,
