@@ -42,12 +42,50 @@ const ROUTE_PATH = "/api/v1/accounting/coa-roles";
 const PLUGIN_BASENAME = "coa-roles.routes.ts";
 const PLUGIN_RELPATH = "accounting/coa-roles/coa-roles.routes.ts";
 
-/** Extract the `ignorePattern: /.../flags` regex literal from accounting/index.ts source. */
+/**
+ * Extract the `ignorePattern: /.../flags` regex literal from accounting/index.ts source.
+ *
+ * Parsed with a LINEAR single-pass scanner rather than a regex. The previous
+ * `/((?:\\.|\[[^\]]*\]|[^/\\\n])*)/` form was ambiguous — `\[[^\]]*\]` and `[^/\\\n]` can both
+ * match the same `[...]` text — so it backtracked exponentially (CodeQL js/redos; measured
+ * ~1s on 24 repetitions of `[]`, and it doubles per repetition). A scanner cannot backtrack,
+ * so the cost is strictly O(n) on any input.
+ */
 function extractIgnorePattern(accIndexSrc) {
-  const m = accIndexSrc.match(/ignorePattern:\s*\/((?:\\.|\[[^\]]*\]|[^/\\\n])*)\/([a-z]*)/);
-  if (!m) return null;
+  const key = accIndexSrc.search(/ignorePattern:\s*\//);
+  if (key === -1) return null;
+  const open = accIndexSrc.indexOf("/", key + "ignorePattern:".length - 1);
+  if (open === -1) return null;
+
+  let body = "";
+  let inClass = false;
+  let i = open + 1;
+  for (; i < accIndexSrc.length; i++) {
+    const c = accIndexSrc[i];
+    if (c === "\n") return null; // regex literals do not span lines
+    if (c === "\\") {
+      const next = accIndexSrc[i + 1];
+      if (next === undefined || next === "\n") return null;
+      body += c + next;
+      i++;
+      continue;
+    }
+    if (c === "[") inClass = true;
+    else if (c === "]") inClass = false;
+    else if (c === "/" && !inClass) break; // unescaped, outside a class → closing delimiter
+    body += c;
+  }
+  if (i >= accIndexSrc.length || accIndexSrc[i] !== "/") return null;
+
+  let flags = "";
+  for (let j = i + 1; j < accIndexSrc.length; j++) {
+    const f = accIndexSrc[j];
+    if (f < "a" || f > "z") break;
+    flags += f;
+  }
+
   try {
-    return new RegExp(m[1], m[2]);
+    return new RegExp(body, flags);
   } catch {
     return null;
   }
