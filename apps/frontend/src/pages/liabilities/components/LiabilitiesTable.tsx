@@ -1,7 +1,19 @@
+/**
+ * LiabilitiesTable — display-only ParityTable migration (owner greenlit UI-only).
+ *
+ * Rows arrive as props (parent page owns the queries and error state); this component
+ * performs no posting/mutation. Columns Display ID / Driver / Type / Source / Original $ /
+ * Paid $ / Balance $ / Schedule / Status / Action, amount formatting ($ + toFixed(2)),
+ * pills, and the View Detail / Send Ack Request handlers preserved 1:1.
+ */
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+
+type LiabilityRow = Record<string, unknown>;
+
 type Props = {
-  rows: Array<Record<string, unknown>>;
-  onOpenDetail: (row: Record<string, unknown>) => void;
-  onSendAck: (row: Record<string, unknown>) => void;
+  rows: LiabilityRow[];
+  onOpenDetail: (row: LiabilityRow) => void;
+  onSendAck: (row: LiabilityRow) => void;
 };
 
 function typePill(type: string) {
@@ -20,53 +32,87 @@ function statusPill(status: string) {
 }
 
 export function LiabilitiesTable({ rows, onOpenDetail, onSendAck }: Props) {
+  const columns: Array<ParityColumn<LiabilityRow>> = [
+    {
+      key: "id",
+      label: "Display ID",
+      render: (row) => <>{String(row.id).slice(0, 8)}</>,
+    },
+    {
+      key: "driver_full_name",
+      label: "Driver",
+      render: (row) => <>{String(row.driver_full_name ?? "—")}</>,
+    },
+    {
+      key: "type",
+      label: "Type",
+      render: (row) => (
+        <span className={`rounded-full px-2 py-0.5 ${typePill(String(row.type ?? ""))}`}>
+          {String(row.type ?? "type")}
+        </span>
+      ),
+    },
+    {
+      key: "source_description",
+      label: "Source",
+      render: (row) => <>{String(row.source_description ?? "—")}</>,
+    },
+    {
+      key: "original_amount",
+      label: "Original $",
+      render: (row) => <>${Number(row.original_amount ?? 0).toFixed(2)}</>,
+    },
+    {
+      key: "paid_to_date",
+      label: "Paid $",
+      render: (row) => <>${Number(row.paid_to_date ?? 0).toFixed(2)}</>,
+    },
+    {
+      key: "current_balance",
+      label: "Balance $",
+      cellClass: "font-semibold",
+      render: (row) => <>${Number(row.current_balance ?? 0).toFixed(2)}</>,
+    },
+    {
+      key: "scheduled_deduction",
+      label: "Schedule",
+      render: (row) => <>${Number(row.scheduled_deduction ?? 0).toFixed(2)}</>,
+    },
+    {
+      key: "display_status",
+      label: "Status",
+      render: (row) => {
+        const status = String(row.display_status ?? "active");
+        return (
+          <span className={`rounded-full px-2 py-0.5 ${statusPill(status)}`}>{status}</span>
+        );
+      },
+    },
+    {
+      key: "action",
+      label: "Action",
+      render: (row) => {
+        const status = String(row.display_status ?? "active");
+        return (
+          <div className="flex gap-2">
+            <button type="button" className="text-slate-700 underline" onClick={() => onOpenDetail(row)}>View Detail</button>
+            {status === "pending_ack" ? (
+              <button type="button" className="text-slate-700 underline" onClick={() => onSendAck(row)}>Send Ack Request</button>
+            ) : null}
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
-    <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-      <table className="min-w-[1200px] w-full text-left text-xs">
-        <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
-          <tr>
-            <th className="px-2 py-1">Display ID</th>
-            <th className="px-2 py-1">Driver</th>
-            <th className="px-2 py-1">Type</th>
-            <th className="px-2 py-1">Source</th>
-            <th className="px-2 py-1">Original $</th>
-            <th className="px-2 py-1">Paid $</th>
-            <th className="px-2 py-1">Balance $</th>
-            <th className="px-2 py-1">Schedule</th>
-            <th className="px-2 py-1">Status</th>
-            <th className="px-2 py-1">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => {
-            const status = String(row.display_status ?? "active");
-            return (
-              <tr key={String(row.id)} className="border-t border-gray-100">
-                <td className="px-2 py-1">{String(row.id).slice(0, 8)}</td>
-                <td className="px-2 py-1">{String(row.driver_full_name ?? "—")}</td>
-                <td className="px-2 py-1"><span className={`rounded-full px-2 py-0.5 ${typePill(String(row.type ?? ""))}`}>{String(row.type ?? "type")}</span></td>
-                <td className="px-2 py-1">{String(row.source_description ?? "—")}</td>
-                <td className="px-2 py-1">${Number(row.original_amount ?? 0).toFixed(2)}</td>
-                <td className="px-2 py-1">${Number(row.paid_to_date ?? 0).toFixed(2)}</td>
-                <td className="px-2 py-1 font-semibold">${Number(row.current_balance ?? 0).toFixed(2)}</td>
-                <td className="px-2 py-1">${Number(row.scheduled_deduction ?? 0).toFixed(2)}</td>
-                <td className="px-2 py-1"><span className={`rounded-full px-2 py-0.5 ${statusPill(status)}`}>{status}</span></td>
-                <td className="px-2 py-1">
-                  <div className="flex gap-2">
-                    <button type="button" className="text-slate-700 underline" onClick={() => onOpenDetail(row)}>View Detail</button>
-                    {status === "pending_ack" ? (
-                      <button type="button" className="text-slate-700 underline" onClick={() => onSendAck(row)}>Send Ack Request</button>
-                    ) : null}
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
-          {rows.length === 0 ? (
-            <tr><td colSpan={10} className="px-2 py-3 text-center text-gray-500">No active liabilities.</td></tr>
-          ) : null}
-        </tbody>
-      </table>
-    </div>
+    <ParityTable
+      columns={columns}
+      rows={rows}
+      rowKey={(row) => String(row.id)}
+      storageKey="liabilities-table"
+      tableTestId="liabilities-table"
+      emptyText="No active liabilities."
+    />
   );
 }

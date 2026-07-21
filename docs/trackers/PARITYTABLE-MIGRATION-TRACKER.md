@@ -697,7 +697,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/liabilities/components/LiabilitiesTable.tsx` | financial-hold |
+| `apps/frontend/src/pages/liabilities/components/LiabilitiesTable.tsx` | migrated (verify-step 1123) — owner-greenlit UI-only, display-only; `verify-liabilities-table-uses-paritytable.mjs` |
 
 ### pages/lists (11) — financial-hold
 
