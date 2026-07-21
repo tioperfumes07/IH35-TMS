@@ -135,26 +135,41 @@ function main() {
   const piles = readJson(PILES);
   const recon = readJson(RECON);
 
-  // 2. universe of record
-  const universe = recon.universe?.total_blocks_after_dedup ?? recon.blocks.length;
-  if (piles.items.length !== universe) {
-    errors.push(`classified ${piles.items.length} blocks but reconciler universe is ${universe}`);
+  // 2. AS-OF population completeness, against the FROZEN snapshot.
+  //
+  // Deliberately NOT compared against the live reconciler. This is a dated workpaper: pinning it
+  // to a living file would (a) mutate a historical record every time a block is registered and
+  // (b) turn CI red on every unrelated PR until someone regenerated it — a merge treadmill. The
+  // population is frozen at capture; publishing a new as-of is a deliberate `--recapture`.
+  const snap = piles.universe_snapshot;
+  if (!snap || typeof snap.total !== "number") {
+    errors.push(`${PILES}: universe_snapshot.total is required (frozen as-of population)`);
+  } else {
+    if (piles.items.length !== snap.total) {
+      errors.push(
+        `classified ${piles.items.length} blocks but the frozen as-of population is ${snap.total} ` +
+          `— the dated population was edited by hand`
+      );
+    }
+    const sum = Object.values(piles.totals).reduce((a, b) => a + b, 0);
+    if (sum !== snap.total) errors.push(`totals sum to ${sum}, frozen population is ${snap.total}`);
   }
-  const reconIds = new Set(recon.blocks.map((b) => b.id));
-  const pileIds = new Set(piles.items.map((i) => i.block_id));
-  const dropped = [...reconIds].filter((x) => !pileIds.has(x));
-  if (dropped.length) errors.push(`blocks silently dropped from the audit: ${dropped.join(", ")}`);
-  const sum = Object.values(piles.totals).reduce((a, b) => a + b, 0);
-  if (sum !== universe) errors.push(`totals sum to ${sum}, universe is ${universe}`);
+  const ids = piles.items.map((i) => i.block_id);
+  const dupes = ids.filter((x, n) => ids.indexOf(x) !== n);
+  if (dupes.length) errors.push(`duplicate block_ids in the audit: ${[...new Set(dupes)].join(", ")}`);
 
-  // 3. DONE→BUILT stays total
-  const reconStatus = new Map(recon.blocks.map((b) => [b.id, b.status]));
-  const violations = piles.items.filter(
-    (i) => reconStatus.get(i.block_id) === "DONE" && i.pile !== "BUILT"
-  );
+  // 3. DONE→BUILT stays total, judged on the audit's own frozen status field.
+  const violations = piles.items.filter((i) => i.status_reconcile === "DONE" && i.pile !== "BUILT");
   if (violations.length) {
     errors.push(`DONE blocks not piled BUILT: ${violations.map((v) => v.block_id).join(", ")}`);
   }
+
+  // Informational only: how far the dated audit now sits from the living reconciler.
+  const live = recon.universe?.total_blocks_after_dedup ?? recon.blocks?.length;
+  const staleness =
+    typeof live === "number" && snap && live !== snap.total
+      ? ` (as-of population ${snap.total}; reconciler now ${live} — expected drift, publish a new as-of with --recapture when wanted)`
+      : "";
 
   // 4. transcribed values must never masquerade as re-queried live proof
   const prov = piles.neon_prod_proof_provenance;
@@ -172,7 +187,8 @@ function main() {
 
   if (errors.length) fail(errors);
   console.log(
-    `OK ${LABEL}: audit regenerates byte-for-byte; ${piles.items.length}/${universe} blocks classified; DONE→BUILT total; Neon values carry provenance.`
+    `OK ${LABEL}: audit regenerates byte-for-byte; ${piles.items.length} blocks classified against ` +
+      `the frozen as-of population; DONE→BUILT total; Neon values carry provenance.${staleness}`
   );
 }
 

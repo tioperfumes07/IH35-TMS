@@ -10894,5 +10894,12 @@
       "paritytable-a5-controlled-selection"
     ],
     "rule": "set(items.block_id) must equal set(reconciliation.blocks.id); DONE→BUILT is total"
+  },
+  "universe_snapshot": {
+    "captured_from": "docs/trackers/block-reconciliation-data.json",
+    "captured_at_base_sha": "cde575b6463a3a3ac158a152d32d6bf219e1b72c",
+    "total": 1191,
+    "frozen": true,
+    "note": "AS-OF population for this dated audit. Frozen at capture so the artifact is immutable and reproducible forever. Publishing a new as-of is a deliberate act: re-run this generator with --recapture against the then-current reconciler."
   }
 }

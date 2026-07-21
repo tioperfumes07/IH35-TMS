@@ -65,9 +65,19 @@ function moduleFor(id, name) {
  * Build the corrected, normalized piles object from committed inputs.
  * Throws (with the offending ids) rather than emitting a number it cannot justify.
  */
-export function buildPiles(piles, recon) {
+export function buildPiles(piles, recon, { recapture = false } = {}) {
   const errors = [];
-  const reconBlocks = recon.blocks ?? [];
+  // AS-OF SEMANTICS. This is an audit workpaper dated 2026-07-21 at a fixed base SHA. Its
+  // population is FROZEN once captured: `items` IS the population, and `universe_snapshot`
+  // records what it was captured from. Regeneration therefore reproduces the same artifact
+  // forever, even as main moves on.
+  //
+  // Pinning the artifact to the LIVE reconciler instead would be wrong twice over: it would
+  // mutate a dated historical record every time a block is registered, and it would turn CI red
+  // on every unrelated PR until someone regenerated it (a merge treadmill). Publishing a NEW
+  // as-of is a deliberate act: `--recapture`.
+  const frozen = piles.universe_snapshot && !recapture;
+  const reconBlocks = frozen ? [] : recon.blocks ?? [];
   const reconById = new Map(reconBlocks.map((b) => [b.id, b]));
   const itemById = new Map(piles.items.map((i) => [i.block_id, i]));
 
@@ -102,10 +112,12 @@ export function buildPiles(piles, recon) {
     autoAdded.push(item);
   }
 
-  // Extra ids the reconciler does not know about are equally a defect.
-  for (const i of items) {
-    if (!reconById.has(i.block_id)) {
-      errors.push(`item "${i.block_id}" is not in the reconciler universe (${RECON_PATH})`);
+  // Extra ids the reconciler does not know about are equally a defect — checked at capture time.
+  if (!frozen) {
+    for (const i of items) {
+      if (!reconById.has(i.block_id)) {
+        errors.push(`item "${i.block_id}" is not in the reconciler universe (${RECON_PATH})`);
+      }
     }
   }
 
@@ -135,9 +147,15 @@ export function buildPiles(piles, recon) {
     const n = items.filter((i) => i.pile === p).length;
     if (n) totals[p] = n;
   }
-  const universe = recon.universe?.total_blocks_after_dedup ?? reconBlocks.length;
+  const universe = frozen
+    ? piles.universe_snapshot.total
+    : recon.universe?.total_blocks_after_dedup ?? reconBlocks.length;
   if (items.length !== universe) {
-    throw new Error(`item count ${items.length} != reconciler universe ${universe}`);
+    throw new Error(
+      frozen
+        ? `item count ${items.length} != frozen universe_snapshot.total ${universe} — the as-of population was edited by hand`
+        : `item count ${items.length} != reconciler universe ${universe}`
+    );
   }
 
   const byModule = {};
@@ -147,6 +165,16 @@ export function buildPiles(piles, recon) {
     ...piles,
     generated_at: piles.generated_at, // frozen input, never a clock — output must be stable
     denominators: { ...piles.denominators, active_reconcile: universe },
+    universe_snapshot: piles.universe_snapshot ?? {
+      captured_from: RECON_PATH,
+      captured_at_base_sha: piles.base_sha,
+      total: universe,
+      frozen: true,
+      note:
+        "AS-OF population for this dated audit. Frozen at capture so the artifact is immutable " +
+        "and reproducible forever. Publishing a new as-of is a deliberate act: re-run this " +
+        "generator with --recapture against the then-current reconciler.",
+    },
     totals,
     by_module: Object.fromEntries(Object.entries(byModule).sort(([a], [b]) => a.localeCompare(b))),
     universe_crosscheck: {
@@ -263,8 +291,8 @@ function renderGaps(p) {
   return L.join("\n") + "\n";
 }
 
-export function generate() {
-  const piles = buildPiles(readJson(PILES_PATH), readJson(RECON_PATH));
+export function generate(opts = {}) {
+  const piles = buildPiles(readJson(PILES_PATH), readJson(RECON_PATH), opts);
   return {
     [PILES_PATH]: JSON.stringify(piles, null, 2) + "\n",
     [REPORT_PATH]: renderReport(piles),
@@ -273,11 +301,35 @@ export function generate() {
   };
 }
 
+/**
+ * Informational only — NEVER fails. A dated audit going stale is expected and normal; it is not a
+ * CI defect and must not turn unrelated PRs red. It tells the operator when a new as-of is worth
+ * publishing.
+ */
+function reportStaleness(piles) {
+  let recon;
+  try {
+    recon = readJson(RECON_PATH);
+  } catch {
+    return;
+  }
+  const live = recon.universe?.total_blocks_after_dedup ?? recon.blocks?.length;
+  const frozenTotal = piles.universe_snapshot?.total;
+  if (typeof live === "number" && live !== frozenTotal) {
+    console.log(
+      `NOTE: as-of population is ${frozenTotal}; the reconciler now has ${live}. ` +
+        `That is expected drift, not a failure. To publish a NEW as-of: ` +
+        `node ${path.relative(ROOT, fileURLToPath(import.meta.url))} --recapture`
+    );
+  }
+}
+
 function main() {
   const check = process.argv.includes("--check");
+  const recapture = process.argv.includes("--recapture");
   let out;
   try {
-    out = generate();
+    out = generate({ recapture });
   } catch (e) {
     console.error(`FAIL publish-live-audit-2026-07-21: ${e.message}`);
     process.exit(1);
@@ -285,7 +337,14 @@ function main() {
   const drift = [];
   for (const rel of [PILES_PATH, REPORT_PATH, GAPS_PATH]) {
     const abs = path.join(ROOT, rel);
-    const current = fs.existsSync(abs) ? fs.readFileSync(abs, "utf8") : null;
+    // Read directly and treat ENOENT as "absent". An existsSync()-then-readFileSync() pair is a
+    // check-then-use race (CodeQL js/file-system-race): the file can change between the two calls.
+    let current = null;
+    try {
+      current = fs.readFileSync(abs, "utf8");
+    } catch (e) {
+      if (e.code !== "ENOENT") throw e;
+    }
     if (current === out[rel]) continue;
     if (check) drift.push(rel);
     else fs.writeFileSync(abs, out[rel]);
@@ -300,6 +359,7 @@ function main() {
       process.exit(1);
     }
     console.log("OK publish-live-audit-2026-07-21 --check: artifacts reproduce byte-for-byte.");
+    reportStaleness(out.piles);
     return;
   }
   console.log(`wrote ${PILES_PATH}\nwrote ${REPORT_PATH}\nwrote ${GAPS_PATH}`);
