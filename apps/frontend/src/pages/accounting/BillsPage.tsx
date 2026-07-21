@@ -4,7 +4,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { listBills, listPaymentsForBill, type BillStatus, type VendorBill } from "../../api/accounting";
+import { listBills, listPaymentsForBill, type BillPayment, type BillStatus, type VendorBill } from "../../api/accounting";
 import { listVendors } from "../../api/mdata";
 import { BillAllocationPanel } from "../../components/allocation";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -123,6 +123,24 @@ function billKpiCard(label: string, value: string, sublabel: string, tone: "neut
   );
 }
 
+// Display-only ParityTable migration of the former hand-rolled payments sub-table: same four
+// columns in the same order, same cell renders (formatDateUS / money / EntityLink / memo
+// fallback), same loading/error/empty-returns-null behavior. Read-only — no actions, no posting.
+const BILL_PAYMENT_COLUMNS: ParityColumn<BillPayment>[] = [
+  { key: "payment_date", label: "Payment date", sortable: true, render: (p) => formatDateUS(p.payment_date) },
+  { key: "amount_cents", label: "Amount", sortable: true, className: "text-right", cellClass: "text-right", render: (p) => money(p.amount_cents) },
+  {
+    key: "from_bank_account_id",
+    label: "Bank account",
+    sortable: true,
+    cellClass: "font-mono text-[10px]",
+    render: (p) => (
+      <EntityLink kind="bank_account" id={p.from_bank_account_id ?? undefined} label={p.from_bank_account_id ? p.from_bank_account_id.slice(0, 8) : undefined} />
+    ),
+  },
+  { key: "memo", label: "Memo", sortable: true, cellClass: "text-gray-700", render: (p) => p.memo || p.reference_number || "—" },
+];
+
 function BillPaymentsSubTable({ billId, companyId }: { billId: string; companyId: string }) {
   const paymentsQuery = useQuery({
     queryKey: ["accounting", "bill-payments", companyId, billId],
@@ -141,26 +159,14 @@ function BillPaymentsSubTable({ billId, companyId }: { billId: string; companyId
   }
   if (payments.length === 0) return null;
   return (
-    <table className="w-full text-[11px]">
-      <thead>
-        <tr className="text-left text-gray-600">
-          <th className="py-1 pr-2">Payment date</th>
-          <th className="py-1 pr-2 text-right">Amount</th>
-          <th className="py-1 pr-2">Bank account</th>
-          <th className="py-1 pr-2">Memo</th>
-        </tr>
-      </thead>
-      <tbody>
-        {payments.map((p) => (
-          <tr key={p.id}>
-            <td className="py-1 pr-2">{formatDateUS(p.payment_date)}</td>
-            <td className="py-1 pr-2 text-right">{money(p.amount_cents)}</td>
-            <td className="py-1 pr-2 font-mono text-[10px]"><EntityLink kind="bank_account" id={p.from_bank_account_id ?? undefined} label={p.from_bank_account_id ? p.from_bank_account_id.slice(0, 8) : undefined} /></td>
-            <td className="py-1 pr-2 text-gray-700">{p.memo || p.reference_number || "—"}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <ParityTable
+      columns={BILL_PAYMENT_COLUMNS}
+      rows={payments}
+      rowKey={(p) => p.id}
+      storageKey="bill-payments-subtable"
+      tableTestId="bill-payments-subtable"
+      emptyText="No payments recorded."
+    />
   );
 }
 
