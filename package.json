@@ -415,6 +415,8 @@
     "verify:sidebar-contract": "node scripts/verify-sidebar-contract.mjs",
     "verify:canonical-home-route": "node scripts/verify-canonical-home-route.mjs",
     "verify:block-acceptance": "node scripts/verify-block-acceptance.mjs",
+    "verify:bills-amount-cents-canonical": "node scripts/verify-bills-amount-cents-canonical.mjs",
+    "verify:bills-amount-cents-canonical:selftest": "node scripts/verify-bills-amount-cents-canonical.mjs --selftest",
     "verify:cashflow-module": "node scripts/verify-cashflow-module.mjs",
     "verify:insurance-financial-writes": "node scripts/verify-insurance-financial-writes.mjs",
     "verify:sidebar-route-resolution": "node scripts/verify-sidebar-route-resolution.mjs",
