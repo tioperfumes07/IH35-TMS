@@ -3808,7 +3808,9 @@
       "status",
       "updated_at",
       "violation_type_id",
-      "violation_type_uuid"
+      "violation_type_uuid",
+      "evidence_doc_ids",
+      "legacy_dispute_type"
     ],
     "driver_finance.driver_settlement_gl_bills": [
       "accounting_bill_id",
