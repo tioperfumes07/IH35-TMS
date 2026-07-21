@@ -477,6 +477,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/accounting/MonthClosePage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/MultiEntityAccountingPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/MyAccountantPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/accounting/MyAccountantPage.tsx` | migrated (verify-step 1149) — display-only; owner-greenlit UI-only migration |
 | `apps/frontend/src/pages/accounting/PayBillModal.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/PaymentDetailPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/PaymentsListPage.tsx` | financial-hold |
