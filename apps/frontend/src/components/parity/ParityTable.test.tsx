@@ -242,4 +242,150 @@ describe("ParityTable (A1 grammar)", () => {
       expect(onExpandedChange).toHaveBeenCalledWith(["2"]);
     });
   });
+
+  // Group bands (Phase A2) — mirrors the controlled-sort / A1 controlled-expansion precedents.
+  describe("group bands (A2)", () => {
+    type GRow = { id: string; name: string; grp: string };
+    const gColumns: Array<ParityColumn<GRow>> = [
+      { key: "name", label: "Name" },
+      { key: "grp", label: "Group" },
+    ];
+    // Deliberately interleaved keys: stable grouping must keep row order WITHIN each group
+    // and order groups by first appearance (A before B) — never re-sort.
+    const gRows: GRow[] = [
+      { id: "1", name: "Alpha", grp: "A" },
+      { id: "2", name: "Bravo", grp: "B" },
+      { id: "3", name: "Charlie", grp: "A" },
+    ];
+    const groupByBase = {
+      getKey: (r: GRow) => r.grp,
+      renderHeader: (key: string, rowsInGroup: GRow[]) => (
+        <span>{`Band ${key} (${rowsInGroup.length})`}</span>
+      ),
+    };
+
+    it("omitted groupBy = unchanged: no band rows, plain row list", () => {
+      render(<ParityTable<GRow> columns={gColumns} rows={gRows} rowKey={(r) => r.id} />);
+      // header + 3 data rows, no bands.
+      expect(screen.getAllByRole("row")).toHaveLength(4);
+      expect(screen.queryByText(/^Band /)).toBeNull();
+      expect(document.querySelector("[data-parity-group]")).toBeNull();
+    });
+
+    it("renders one full-width band per group with the group's rows beneath it, order preserved", () => {
+      render(
+        <ParityTable<GRow>
+          columns={gColumns}
+          rows={gRows}
+          rowKey={(r) => r.id}
+          groupBy={groupByBase}
+        />,
+      );
+      // Bands rendered with the correct group rows.
+      expect(screen.getByText("Band A (2)")).toBeInTheDocument();
+      expect(screen.getByText("Band B (1)")).toBeInTheDocument();
+      // Band <td> spans every rendered column.
+      const bandCell = screen.getByText("Band A (2)").closest("td");
+      expect(bandCell).toHaveAttribute("colspan", "2");
+      // Sequence: band A → Alpha, Charlie (stable within group) → band B → Bravo.
+      const sequence = screen
+        .getAllByRole("row")
+        .slice(1) // drop header row
+        .map((tr) => tr.textContent ?? "");
+      expect(sequence[0]).toContain("Band A (2)");
+      expect(sequence[1]).toContain("Alpha");
+      expect(sequence[2]).toContain("Charlie");
+      expect(sequence[3]).toContain("Band B (1)");
+      expect(sequence[4]).toContain("Bravo");
+      // Not collapsible by default: no chevron toggles.
+      expect(screen.queryByLabelText("Collapse group A")).toBeNull();
+    });
+
+    it("collapsible: chevron toggle hides the group's rows (uncontrolled), band stays visible", () => {
+      render(
+        <ParityTable<GRow>
+          columns={gColumns}
+          rows={gRows}
+          rowKey={(r) => r.id}
+          groupBy={{ ...groupByBase, collapsible: true }}
+        />,
+      );
+      expect(screen.getByText("Alpha")).toBeInTheDocument();
+      fireEvent.click(screen.getByLabelText("Collapse group A"));
+      // Group A rows hidden; band and other groups untouched.
+      expect(screen.queryByText("Alpha")).toBeNull();
+      expect(screen.queryByText("Charlie")).toBeNull();
+      expect(screen.getByText("Band A (2)")).toBeInTheDocument();
+      expect(screen.getByText("Bravo")).toBeInTheDocument();
+      // Re-expand restores the rows.
+      fireEvent.click(screen.getByLabelText("Expand group A"));
+      expect(screen.getByText("Alpha")).toBeInTheDocument();
+    });
+
+    it("controlled collapse: collapsedKeys drives hidden groups; toggles fire onCollapsedChange without mutating internally", () => {
+      const onCollapsedChange = vi.fn();
+      const { rerender } = render(
+        <ParityTable<GRow>
+          columns={gColumns}
+          rows={gRows}
+          rowKey={(r) => r.id}
+          groupBy={{
+            ...groupByBase,
+            collapsible: true,
+            collapsedKeys: ["A"],
+            onCollapsedChange,
+          }}
+        />,
+      );
+      // Prop-driven: group A collapsed, group B open.
+      expect(screen.queryByText("Alpha")).toBeNull();
+      expect(screen.getByText("Bravo")).toBeInTheDocument();
+
+      // Collapsing B notifies the owner but does NOT hide it until the prop changes.
+      fireEvent.click(screen.getByLabelText("Collapse group B"));
+      expect(onCollapsedChange).toHaveBeenCalledWith(["A", "B"]);
+      expect(screen.getByText("Bravo")).toBeInTheDocument();
+
+      // Expanding A notifies with it removed from the CURRENT prop (still ["A"]) → [].
+      fireEvent.click(screen.getByLabelText("Expand group A"));
+      expect(onCollapsedChange).toHaveBeenCalledWith([]);
+      expect(screen.queryByText("Alpha")).toBeNull();
+
+      // Owner applies the new keys → the table follows the prop.
+      rerender(
+        <ParityTable<GRow>
+          columns={gColumns}
+          rows={gRows}
+          rowKey={(r) => r.id}
+          groupBy={{
+            ...groupByBase,
+            collapsible: true,
+            collapsedKeys: ["B"],
+            onCollapsedChange,
+          }}
+        />,
+      );
+      expect(screen.getByText("Alpha")).toBeInTheDocument();
+      expect(screen.queryByText("Bravo")).toBeNull();
+    });
+
+    it("grouping composes with selection and row expansion (A1) on grouped rows", () => {
+      render(
+        <ParityTable<GRow>
+          columns={gColumns}
+          rows={gRows}
+          rowKey={(r) => r.id}
+          selectable
+          renderExpanded={(r) => <div>detail for {r.name}</div>}
+          groupBy={groupByBase}
+        />,
+      );
+      // Selection still works on rows under a band.
+      fireEvent.click(screen.getAllByLabelText("Select row")[0]);
+      expect(screen.getByText("1 selected")).toBeInTheDocument();
+      // Row expansion still works on rows under a band.
+      fireEvent.click(screen.getAllByLabelText("Expand row")[0]);
+      expect(screen.getByText("detail for Alpha")).toBeInTheDocument();
+    });
+  });
 });
