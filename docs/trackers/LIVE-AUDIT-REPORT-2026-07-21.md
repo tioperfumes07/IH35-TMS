@@ -3,22 +3,30 @@
 > **CORRECTION:** v1 (GAP=36 / NOISE=383) undercounted by treating AUDIT-NOTE as NOISE.
 > Classify agent mapped backlog-verify OPEN→GAP. Spot-check: `0441-mod10-payment-status-panel-404`
 > was wrongly NOISE — `registerSettlementPaymentRoutes` still unmounted on main.
+>
+> **UNIVERSE CORRECTION (this revision):** the first cut published a `1,185` denominator and
+> hardcoded it in an `assert`. At this audit's own base SHA the reconciler universe was
+> **1,191** — 6 blocks that were already DONE on main were silently dropped
+> (`0091-g7-1`, `paritytable-a1-controlled-expansion`, `paritytable-a2-group-bands`, `paritytable-a3-controlled-pagination`, `paritytable-a4-external-sort`, `paritytable-a5-controlled-selection`).
+> The denominator is now DERIVED from `docs/trackers/block-reconciliation-data.json` and
+> cross-checked on every run, so it cannot drift again.
 
 **Base SHA:** `cde575b6463a3a3ac158a152d32d6bf219e1b72c`  
 **Deploy SHA:** `de92db2` (lag)  
-**Generated:** 2026-07-21T14:47:40.344735+00:00
+**Generated:** 2026-07-21T14:47:40.344735+00:00  
+**Re-perform:** `node scripts/ops/publish-live-audit-2026-07-21.mjs --check`
 
-## Headline (active universe = 1,185)
+## Headline (active universe = 1,191)
 
 | Pile | v2 (authoritative) | v1 (superseded) |
 |---|---:|---:|
-| BUILT | 709 | 667 |
+| BUILT | 715 | 667 |
 | GAP | 287 | 36 |
 | NEEDS-PROD | 34 | 71 |
 | NEEDS-OWNER | 106 | 28 |
 | NOISE | 39 | 383 |
 | UNVERIFIED | 10 | — |
-| **SUM** | **1185** | 1185 |
+| **SUM** | **1191** | 1185 |
 
 ## Critical GAPs (re-verified)
 
@@ -57,25 +65,30 @@
 - Proof: owner/Martin gate
 - Rec: NEEDS-OWNER
 
-## Neon proofs
+## Neon values — transcribed, NOT re-queried by this generator
 
-- `payment_idempotency_cols` = `True`
-- `auto_deduction_link_col` = `True`
-- `team_split_override_cols` = `True`
-- `driver_finance_tables` = `True`
-- `payroll_table_still_exists_as_empty_retire` = `True`
-- `bills_amount_cents_nullable` = `True`
-- `load_cancellations_charge_id` = `False`
-- `load_cancellations_has_charge_cents` = `True`
+- Source: read-only Neon session on br-fancy-credit-akjnd07a with app.bypass_rls=lucia
+- Obtained: 2026-07-21
+- Re-queried by this generator: **no**
+- These values were transcribed from that session. This generator performs NO database or network access, so it cannot and does not re-verify them. Re-query before relying on any of them for a financial decision.
+
+- `payment_idempotency_cols` = `true`
+- `auto_deduction_link_col` = `true`
+- `team_split_override_cols` = `true`
+- `driver_finance_tables` = `true`
+- `payroll_table_still_exists_as_empty_retire` = `true`
+- `bills_amount_cents_nullable` = `true`
+- `load_cancellations_charge_id` = `false`
+- `load_cancellations_has_charge_cents` = `true`
 - `bank_transactions_rows` = `10427`
 - `bills_total_rows` = `16196`
 - `bills_null_amount_rows` = `0`
 - `recon_runs_rows` = `173`
 - `drivers_rows_rls_bypass` = `178`
-- `dual_dispute_tables` = `True`
+- `dual_dispute_tables` = `true`
 - `driver_finance_settlements_rows` = `0`
-- `settlement_payment_routes_mounted` = `False`
-- `zero_row_settlement_window_still_open` = `True`
+- `settlement_payment_routes_mounted` = `false`
+- `zero_row_settlement_window_still_open` = `true`
 
 ## Full GAP list
 
