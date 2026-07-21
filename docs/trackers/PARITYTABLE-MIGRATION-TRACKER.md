@@ -654,6 +654,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/finance/ArApAgingPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/finance/ArApAgingPage.tsx` | migrated (verify-step 1135) — display-only; owner-greenlit UI-only migration |
 | `apps/frontend/src/pages/finance/CalculatorPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/finance/CalculatorPage.tsx` | migrated (verify-step 1138) — display-only; pure calculator, no posting |
 | `apps/frontend/src/pages/finance/FinancialStatementsPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/finance/LoanWizardPage.tsx` | migrated (verify-step 1137) |
 | `apps/frontend/src/pages/finance/FinancialStatementsPage.tsx` | migrated (verify-step 1136) — display-only; owner-greenlit UI-only migration |

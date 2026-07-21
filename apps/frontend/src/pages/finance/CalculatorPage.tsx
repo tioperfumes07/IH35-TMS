@@ -3,10 +3,26 @@ import { Link } from "react-router-dom";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
-import { FINANCE_HUB_CALCULATOR_FLAG, computeCalculator, type CalcScenario } from "../../api/financeCalculator";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import {
+  FINANCE_HUB_CALCULATOR_FLAG,
+  computeCalculator,
+  type CalcPreviewRow,
+  type CalcScenario,
+} from "../../api/financeCalculator";
 
 const dollars = (c: number) => (c / 100).toLocaleString(undefined, { style: "currency", currency: "USD" });
 const toCents = (s: string) => Math.round((Number(s) || 0) * 100);
+
+// Display-only ParityTable migration: same columns, order, and dollars() formatting as the
+// former hand-rolled amortization preview table. No posting/mutation — pure calculation output.
+const AMORT_COLUMNS: Array<ParityColumn<CalcPreviewRow>> = [
+  { key: "period", label: "#", sortable: true },
+  { key: "date", label: "Due", sortable: true },
+  { key: "principal_cents", label: "Principal", className: "text-right", sortable: true, render: (r) => dollars(r.principal_cents) },
+  { key: "interest_cents", label: "Interest", className: "text-right", sortable: true, render: (r) => dollars(r.interest_cents) },
+  { key: "balance_cents", label: "Balance", className: "text-right", sortable: true, render: (r) => dollars(r.balance_cents) },
+];
 
 export function CalculatorPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -86,18 +102,15 @@ export function CalculatorPage() {
                 <dt>Total paid</dt><dd className="text-right">{dollars(s.total_payments_cents)}</dd>
                 <dt>Payoff date</dt><dd className="text-right">{s.payoff_date}</dd>
               </dl>
-              <div className="mt-3 overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead><tr className="text-left text-slate-500"><th className="py-1">#</th><th>Due</th><th className="text-right">Principal</th><th className="text-right">Interest</th><th className="text-right">Balance</th></tr></thead>
-                  <tbody>
-                    {s.amortization_preview.map((r) => (
-                      <tr key={r.period} className="border-b border-slate-100">
-                        <td className="py-1">{r.period}</td><td>{r.date}</td>
-                        <td className="text-right">{dollars(r.principal_cents)}</td><td className="text-right">{dollars(r.interest_cents)}</td><td className="text-right">{dollars(r.balance_cents)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="mt-3">
+                <ParityTable<CalcPreviewRow>
+                  columns={AMORT_COLUMNS}
+                  rows={s.amortization_preview}
+                  rowKey={(r) => String(r.period)}
+                  storageKey="finance-calculator-amortization"
+                  tableTestId="finance-calculator-amortization-table"
+                  emptyText="No amortization rows."
+                />
               </div>
             </div>
           ))}
