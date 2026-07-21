@@ -22,7 +22,7 @@ describe("payroll aggregated (P5-T25)", () => {
   it("returns driver settlements and qbo w2 runs", async () => {
     queryMock.mockImplementation(async (sql: string) => {
       if (sql.includes("to_regclass")) return { rows: [{ ok: true }] };
-      if (sql.includes("payroll.driver_settlements")) {
+      if (sql.includes("driver_finance.driver_settlements")) {
         return {
           rows: [{ id: "s1", driver_id: "d1", net_cents: 10000, status: "draft" }],
         };

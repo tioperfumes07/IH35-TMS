@@ -11,23 +11,19 @@ export async function fetchAggregatedPayroll(
   operatingCompanyId: string
 ) {
   const driverSettlements: Array<Record<string, unknown>> = [];
-  if (await relationExists(client, "payroll.driver_settlements")) {
-    const res = await client.query(
-      `
-        SELECT id, driver_id, pay_period_start, pay_period_end, gross_cents, deductions_cents, net_cents, status, bank_settle_date
-        FROM payroll.driver_settlements
-        WHERE operating_company_id = $1
-        ORDER BY pay_period_end DESC
-        LIMIT 50
-      `,
-      [operatingCompanyId]
-    );
-    driverSettlements.push(...res.rows);
-  } else if (await relationExists(client, "driver_finance.driver_settlements")) {
+  // P2c reader repoint (settlement engine collapse): the RETIRE payroll.driver_settlements read is
+  // removed — canonical driver_finance is the ONLY source. NOTE the old canonical fallback selected
+  // gross_cents/deductions_cents/net_cents, columns that do NOT exist on the canonical header
+  // (it stores dollars: gross_pay/deductions_total/net_pay) — it was dead code that would have
+  // errored at runtime. The response contract stays CENTS via ROUND(x * 100).
+  if (await relationExists(client, "driver_finance.driver_settlements")) {
     const res = await client.query(
       `
         SELECT id, driver_id, period_start AS pay_period_start, period_end AS pay_period_end,
-               gross_cents, deductions_cents, net_cents, status, NULL::date AS bank_settle_date
+               ROUND(gross_pay * 100)::bigint AS gross_cents,
+               ROUND(deductions_total * 100)::bigint AS deductions_cents,
+               ROUND(net_pay * 100)::bigint AS net_cents,
+               status, bank_settle_date
         FROM driver_finance.driver_settlements
         WHERE operating_company_id = $1
         ORDER BY period_end DESC
