@@ -9,6 +9,8 @@ import {
   type InsuranceTypeCatalogEntry,
 } from "../../api/insurance";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
@@ -104,10 +106,6 @@ export function TypeCatalogAdmin() {
 
   const orderedRows = useMemo(() => query.data ?? [], [query.data]);
 
-  if (!companyId) {
-    return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to manage insurance type catalog.</div>;
-  }
-
   const beginEdit = (row: InsuranceTypeCatalogEntry) => {
     setEditingId(row.id);
     setEditingName(row.name);
@@ -115,6 +113,156 @@ export function TypeCatalogAdmin() {
     setEditingSortOrder(String(row.sort_order));
     setEditingActive(row.active);
   };
+
+  const columns: Array<ParityColumn<InsuranceTypeCatalogEntry>> = useMemo(
+    () => [
+      {
+        key: "code",
+        label: "Code",
+        sortable: true,
+      },
+      {
+        key: "name",
+        label: "Name",
+        sortable: true,
+        render: (row) =>
+          row.id === editingId ? (
+            <input
+              className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              value={editingName}
+              onChange={(event) => setEditingName(event.target.value)}
+            />
+          ) : (
+            row.name
+          ),
+      },
+      {
+        key: "description",
+        label: "Description",
+        sortable: true,
+        sortValue: (row) => row.description ?? "",
+        render: (row) =>
+          row.id === editingId ? (
+            <input
+              className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              value={editingDescription}
+              onChange={(event) => setEditingDescription(event.target.value)}
+            />
+          ) : (
+            row.description || "-"
+          ),
+      },
+      {
+        key: "sort_order",
+        label: "Sort",
+        sortable: true,
+        render: (row) =>
+          row.id === editingId ? (
+            <input
+              type="number"
+              className="w-20 rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              value={editingSortOrder}
+              onChange={(event) => setEditingSortOrder(event.target.value)}
+            />
+          ) : (
+            row.sort_order
+          ),
+      },
+      {
+        key: "active",
+        label: "Status",
+        sortable: true,
+        sortValue: (row) => (row.active ? 1 : 0),
+        render: (row) =>
+          row.id === editingId ? (
+            <label className="flex items-center gap-1 text-xs">
+              <input type="checkbox" checked={editingActive} onChange={(event) => setEditingActive(event.target.checked)} />
+              Active
+            </label>
+          ) : row.active ? (
+            <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">active</span>
+          ) : (
+            <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">inactive</span>
+          ),
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        alwaysVisible: true,
+        render: (row) =>
+          row.id === editingId ? (
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                loading={updateMutation.isPending}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  updateMutation.mutate({
+                    id: row.id,
+                    name: editingName.trim(),
+                    description: editingDescription.trim(),
+                    sort_order: Number(editingSortOrder || 0),
+                    active: editingActive,
+                  });
+                }}
+                disabled={!editingName.trim()}
+              >
+                Save
+              </Button>
+              <Button
+                size="sm"
+                variant="tertiary"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setEditingId(null);
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  beginEdit(row);
+                }}
+              >
+                Edit
+              </Button>
+              {row.active ? (
+                <Button
+                  size="sm"
+                  variant="danger"
+                  loading={deactivateMutation.isPending && deactivateMutation.variables === row.id}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    deactivateMutation.mutate(row.id);
+                  }}
+                >
+                  Deactivate
+                </Button>
+              ) : null}
+            </div>
+          ),
+      },
+    ],
+    [
+      deactivateMutation,
+      editingActive,
+      editingDescription,
+      editingId,
+      editingName,
+      editingSortOrder,
+      updateMutation,
+    ],
+  );
+
+  if (!companyId) {
+    return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to manage insurance type catalog.</div>;
+  }
 
   return (
     <div className="space-y-4">
@@ -175,122 +323,24 @@ export function TypeCatalogAdmin() {
         </label>
       </section>
 
-      {query.isLoading ? <div className="text-sm text-slate-500">Loading type catalog...</div> : null}
-      {query.isError ? <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-700">Failed to load type catalog.</div> : null}
-
-      <section className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-left text-xs">
-          <thead className="bg-gray-50 text-slate-600">
-            <tr>
-              <th className="px-3 py-2 font-semibold">Code</th>
-              <th className="px-3 py-2 font-semibold">Name</th>
-              <th className="px-3 py-2 font-semibold">Description</th>
-              <th className="px-3 py-2 font-semibold">Sort</th>
-              <th className="px-3 py-2 font-semibold">Status</th>
-              <th className="px-3 py-2 font-semibold">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orderedRows.map((row) => {
-              const isEditing = row.id === editingId;
-              return (
-                <tr key={row.id} className="border-t border-gray-100 align-top">
-                  <td className="px-3 py-2 text-slate-700">{row.code}</td>
-                  <td className="px-3 py-2 text-slate-700">
-                    {isEditing ? (
-                      <input
-                        className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                        value={editingName}
-                        onChange={(event) => setEditingName(event.target.value)}
-                      />
-                    ) : (
-                      row.name
-                    )}
-                  </td>
-                  <td className="px-3 py-2 text-slate-700">
-                    {isEditing ? (
-                      <input
-                        className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                        value={editingDescription}
-                        onChange={(event) => setEditingDescription(event.target.value)}
-                      />
-                    ) : (
-                      row.description || "-"
-                    )}
-                  </td>
-                  <td className="px-3 py-2 text-slate-700">
-                    {isEditing ? (
-                      <input
-                        type="number"
-                        className="w-20 rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                        value={editingSortOrder}
-                        onChange={(event) => setEditingSortOrder(event.target.value)}
-                      />
-                    ) : (
-                      row.sort_order
-                    )}
-                  </td>
-                  <td className="px-3 py-2 text-slate-700">
-                    {isEditing ? (
-                      <label className="flex items-center gap-1 text-xs">
-                        <input type="checkbox" checked={editingActive} onChange={(event) => setEditingActive(event.target.checked)} />
-                        Active
-                      </label>
-                    ) : row.active ? (
-                      <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">active</span>
-                    ) : (
-                      <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">inactive</span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2">
-                    {isEditing ? (
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          loading={updateMutation.isPending}
-                          onClick={() =>
-                            updateMutation.mutate({
-                              id: row.id,
-                              name: editingName.trim(),
-                              description: editingDescription.trim(),
-                              sort_order: Number(editingSortOrder || 0),
-                              active: editingActive,
-                            })
-                          }
-                          disabled={!editingName.trim()}
-                        >
-                          Save
-                        </Button>
-                        <Button size="sm" variant="tertiary" onClick={() => setEditingId(null)}>
-                          Cancel
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="secondary" onClick={() => beginEdit(row)}>
-                          Edit
-                        </Button>
-                        {row.active ? (
-                          <Button size="sm" variant="danger" loading={deactivateMutation.isPending && deactivateMutation.variables === row.id} onClick={() => deactivateMutation.mutate(row.id)}>
-                            Deactivate
-                          </Button>
-                        ) : null}
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-            {!query.isLoading && orderedRows.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-3 py-5 text-center text-slate-500">
-                  No type catalog entries.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </section>
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load type catalog"
+          status={0}
+          message={(query.error as Error)?.message}
+          onRetry={() => void query.refetch()}
+        />
+      ) : (
+        <ParityTable<InsuranceTypeCatalogEntry>
+          columns={columns}
+          rows={orderedRows}
+          rowKey={(row) => row.id}
+          loading={query.isLoading}
+          emptyText="No type catalog entries."
+          storageKey="insurance-type-catalog-admin"
+          tableTestId="insurance-type-catalog-admin-table"
+        />
+      )}
     </div>
   );
 }

@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { resolveApiUrl } from "../../api/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 interface LayoverRow {
   uuid: string;
@@ -25,7 +27,7 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
   const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
   const qc = useQueryClient();
 
-  const { data, isLoading } = useQuery<{ data: LayoverRow[] }>({
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery<{ data: LayoverRow[] }>({
     queryKey: ["driver-layovers", driverUuid, from, to],
     queryFn: async () => {
       const res = await fetch(
@@ -52,6 +54,55 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
   });
 
   const rows = data?.data ?? [];
+  const columns = useMemo<ParityColumn<LayoverRow>[]>(
+    () => [
+      {
+        key: "layover_started_at",
+        label: "Started",
+        sortable: true,
+        render: (row) => new Date(row.layover_started_at).toLocaleString(),
+      },
+      {
+        key: "layover_ended_at",
+        label: "Ended",
+        sortable: true,
+        render: (row) => (row.layover_ended_at ? new Date(row.layover_ended_at).toLocaleString() : "ongoing"),
+      },
+      {
+        key: "duration_hours",
+        label: "Hours",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (row) => (row.duration_hours != null ? row.duration_hours.toFixed(1) : "—"),
+      },
+      {
+        key: "billable_to_customer",
+        label: "Billable",
+        sortable: true,
+        render: (row) => (
+          <button
+            type="button"
+            onClick={() => billableMutation.mutate({ uuid: row.uuid, billable: !row.billable_to_customer })}
+            className={`text-xs px-2 py-0.5 rounded-sm ${row.billable_to_customer ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-600"}`}
+          >
+            {row.billable_to_customer ? "Billable" : "Not billable"}
+          </button>
+        ),
+      },
+      {
+        key: "per_diem_eligible",
+        label: "Per Diem",
+        sortable: true,
+        render: (row) => (
+          <span className={`text-xs ${row.per_diem_eligible ? "text-slate-700" : "text-gray-400"}`}>
+            {row.per_diem_eligible ? "Eligible" : "Excluded"}
+          </span>
+        ),
+      },
+    ],
+    [billableMutation],
+  );
 
   return (
     <div>
@@ -62,46 +113,23 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
         <DatePicker value={to} onChange={(next) => setTo(next)}
           className="border rounded-sm px-2 py-1 text-sm" />
       </div>
-      {isLoading && <p className="text-gray-400 text-sm">Loading...</p>}
-      {!isLoading && rows.length === 0 && (
-        <p className="text-gray-400 text-sm">No layovers detected in this period.</p>
+      {isError && (
+        <ListErrorState
+          title="Couldn't load driver layovers"
+          status={0}
+          message={(error as Error)?.message}
+          onRetry={() => void refetch()}
+        />
       )}
-      {rows.length > 0 && (
-        <div className="overflow-x-auto">
-        <table className="w-full text-sm border-collapse">
-          <thead>
-            <tr className="bg-gray-50">
-              <th className="text-left px-3 py-2 border-b">Started</th>
-              <th className="text-left px-3 py-2 border-b">Ended</th>
-              <th className="text-left px-3 py-2 border-b">Hours</th>
-              <th className="text-left px-3 py-2 border-b">Billable</th>
-              <th className="text-left px-3 py-2 border-b">Per Diem</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.uuid} className="border-b hover:bg-gray-50">
-                <td className="px-3 py-2">{new Date(r.layover_started_at).toLocaleString()}</td>
-                <td className="px-3 py-2">{r.layover_ended_at ? new Date(r.layover_ended_at).toLocaleString() : "ongoing"}</td>
-                <td className="px-3 py-2">{r.duration_hours != null ? r.duration_hours.toFixed(1) : "—"}</td>
-                <td className="px-3 py-2">
-                  <button
-                    onClick={() => billableMutation.mutate({ uuid: r.uuid, billable: !r.billable_to_customer })}
-                    className={`text-xs px-2 py-0.5 rounded-sm ${r.billable_to_customer ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-600"}`}
-                  >
-                    {r.billable_to_customer ? "Billable" : "Not billable"}
-                  </button>
-                </td>
-                <td className="px-3 py-2">
-                  <span className={`text-xs ${r.per_diem_eligible ? "text-slate-700" : "text-gray-400"}`}>
-                    {r.per_diem_eligible ? "Eligible" : "Excluded"}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        </div>
+      {!isError && (
+        <ParityTable
+          rows={rows}
+          columns={columns}
+          rowKey={(row) => row.uuid}
+          loading={isLoading || (isFetching && rows.length === 0)}
+          storageKey="driver-layover-history"
+          emptyText="No layovers detected in this period."
+        />
       )}
     </div>
   );

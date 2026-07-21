@@ -1,9 +1,17 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { createGeofence, listGeofences, updateGeofence, type GeofenceLocationKind } from "../../api/geofencing";
+import {
+  createGeofence,
+  listGeofences,
+  updateGeofence,
+  type Geofence,
+  type GeofenceLocationKind,
+} from "../../api/geofencing";
 import { listCustomers, listLocations, listVendors } from "../../api/mdata";
 
 const LOCATION_KIND_OPTIONS: Array<{ id: GeofenceLocationKind; label: string }> = [
@@ -27,6 +35,10 @@ function polygonTextToGeoJson(input: string) {
   const last = rows[rows.length - 1];
   if (first[0] !== last[0] || first[1] !== last[1]) closed.push(first);
   return { type: "Polygon" as const, coordinates: [closed] };
+}
+
+function vertexCount(item: Geofence) {
+  return Math.max(0, (item.polygon_geojson.coordinates?.[0]?.length ?? 0) - 1);
 }
 
 export function GeofencesPage() {
@@ -81,6 +93,8 @@ export function GeofencesPage() {
     return [];
   }, [customersQuery.data?.customers, locationKind, vendorsQuery.data?.vendors, yardsQuery.data?.locations]);
 
+  const geofences = geofencesQuery.data?.geofences ?? [];
+
   async function handleCreate() {
     if (!operatingCompanyId || !label.trim()) return;
     const polygon = polygonTextToGeoJson(polygonText);
@@ -102,10 +116,53 @@ export function GeofencesPage() {
     }
   }
 
-  async function toggleActive(id: string, isActive: boolean) {
-    await updateGeofence(id, { is_active: !isActive });
-    await queryClient.invalidateQueries({ queryKey: ["telematics", "geofences", operatingCompanyId] });
-  }
+  const toggleActive = useCallback(
+    async (id: string, isActive: boolean) => {
+      await updateGeofence(id, { is_active: !isActive });
+      await queryClient.invalidateQueries({ queryKey: ["telematics", "geofences", operatingCompanyId] });
+    },
+    [operatingCompanyId, queryClient],
+  );
+
+  const geofenceColumns = useMemo<Array<ParityColumn<Geofence>>>(
+    () => [
+      { key: "label", label: "Label", sortable: true, render: (item) => item.label },
+      { key: "location_kind", label: "Kind", sortable: true, render: (item) => item.location_kind },
+      {
+        key: "location_ref_id",
+        label: "Linked ref",
+        sortable: true,
+        render: (item) => item.location_ref_id ?? "—",
+      },
+      {
+        key: "vertices",
+        label: "Vertices",
+        sortable: true,
+        sortValue: (item) => vertexCount(item),
+        render: (item) => vertexCount(item),
+      },
+      {
+        key: "is_active",
+        label: "Status",
+        sortable: true,
+        render: (item) => (item.is_active ? "Active" : "Inactive"),
+      },
+      {
+        key: "action",
+        label: "Action",
+        render: (item) => (
+          <button
+            type="button"
+            className="rounded-sm border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+            onClick={() => void toggleActive(item.id, item.is_active)}
+          >
+            {item.is_active ? "Deactivate" : "Activate"}
+          </button>
+        ),
+      },
+    ],
+    [toggleActive],
+  );
 
   const polygonPreview = polygonTextToGeoJson(polygonText);
 
@@ -174,41 +231,26 @@ export function GeofencesPage() {
 
       <section className="rounded-sm border border-slate-200 bg-white p-3">
         <h3 className="text-sm font-semibold text-slate-900">Active geofences</h3>
-        {geofencesQuery.isLoading ? <p className="mt-2 text-sm text-slate-500">Loading...</p> : null}
-        <div className="mt-2 overflow-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-slate-50 text-[11px] uppercase text-slate-600">
-              <tr>
-                <th className="px-2 py-2">Label</th>
-                <th className="px-2 py-2">Kind</th>
-                <th className="px-2 py-2">Linked ref</th>
-                <th className="px-2 py-2">Vertices</th>
-                <th className="px-2 py-2">Status</th>
-                <th className="px-2 py-2">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(geofencesQuery.data?.geofences ?? []).map((item) => (
-                <tr key={item.id} className="border-b border-slate-100">
-                  <td className="px-2 py-2 font-medium text-slate-900">{item.label}</td>
-                  <td className="px-2 py-2">{item.location_kind}</td>
-                  <td className="px-2 py-2">{item.location_ref_id ?? "—"}</td>
-                  <td className="px-2 py-2">{Math.max(0, (item.polygon_geojson.coordinates?.[0]?.length ?? 0) - 1)}</td>
-                  <td className="px-2 py-2">{item.is_active ? "Active" : "Inactive"}</td>
-                  <td className="px-2 py-2">
-                    <button
-                      type="button"
-                      className="rounded-sm border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
-                      onClick={() => void toggleActive(item.id, item.is_active)}
-                    >
-                      {item.is_active ? "Deactivate" : "Activate"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {geofencesQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load geofences"
+            status={0}
+            message={(geofencesQuery.error as Error)?.message}
+            onRetry={() => void geofencesQuery.refetch()}
+          />
+        ) : (
+          <div className="mt-2">
+            <ParityTable<Geofence>
+              columns={geofenceColumns}
+              rows={geofences}
+              rowKey={(item) => item.id}
+              loading={geofencesQuery.isLoading}
+              emptyText="No geofences configured yet. Use the form above to create one."
+              storageKey="operations-geofences"
+              exportFilename="geofences"
+            />
+          </div>
+        )}
       </section>
     </div>
   );

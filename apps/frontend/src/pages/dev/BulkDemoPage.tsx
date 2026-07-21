@@ -1,12 +1,6 @@
-import { useMemo, useState } from "react";
-import {
-  BulkActionBar,
-  BulkActionModal,
-  BulkProgressDialog,
-  TableSelection,
-  TableSelectionHeader,
-  useBulkSelection,
-} from "../../components/bulk";
+import { useState } from "react";
+import { BulkActionModal, BulkProgressDialog } from "../../components/bulk";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { bulkUpdate } from "../../api/bulk";
 
 type DemoRow = {
@@ -15,8 +9,8 @@ type DemoRow = {
   status: string;
 };
 
-const PAGE_SIZE = 10;
 const TOTAL_ROWS = 50;
+const PAGE_SIZE = 10;
 
 function buildRows(): DemoRow[] {
   return Array.from({ length: TOTAL_ROWS }, (_, index) => ({
@@ -28,12 +22,18 @@ function buildRows(): DemoRow[] {
 
 const ALL_ROWS = buildRows();
 
+const COLUMNS: Array<ParityColumn<DemoRow>> = [
+  { key: "name", label: "Name", sortable: true },
+  { key: "status", label: "Status", sortable: true },
+];
+
 export function BulkDemoPage() {
-  const [page, setPage] = useState(0);
   const [capMessage, setCapMessage] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [progressOpen, setProgressOpen] = useState(false);
   const [progressLoading, setProgressLoading] = useState(false);
+  const [tableResetKey, setTableResetKey] = useState(0);
+  const [pendingIds, setPendingIds] = useState<string[]>([]);
   const [progress, setProgress] = useState({
     requested: 0,
     succeeded: 0,
@@ -41,20 +41,8 @@ export function BulkDemoPage() {
     bulk_call_id: "",
   });
 
-  const selection = useBulkSelection({
-    cap: 200,
-    onCapExceeded: (error) => setCapMessage(error.message),
-  });
-
-  const pageRows = useMemo(() => {
-    const start = page * PAGE_SIZE;
-    return ALL_ROWS.slice(start, start + PAGE_SIZE);
-  }, [page]);
-
-  const pageRowIds = useMemo(() => pageRows.map((row) => row.id), [pageRows]);
-
   const runMockBulk = async (reason?: string) => {
-    const ids = Array.from(selection.selectedIds);
+    const ids = pendingIds;
     setModalOpen(false);
     setProgressOpen(true);
     setProgressLoading(true);
@@ -75,7 +63,8 @@ export function BulkDemoPage() {
         failed: [],
         bulk_call_id: "demo-mock-bulk-call",
       });
-      selection.clear();
+      setTableResetKey((k) => k + 1);
+      setPendingIds([]);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Bulk update failed";
       setProgress({
@@ -108,90 +97,38 @@ export function BulkDemoPage() {
         </div>
       ) : null}
 
-      <BulkActionBar
-        selectedCount={selection.count}
-        actions={[
-          {
-            id: "set-inactive",
-            label: "Set inactive",
-            onClick: () => setModalOpen(true),
-          },
-        ]}
-        onClear={selection.clear}
-      />
-
-      <TableSelection
-        rows={pageRows}
-        getId={(row) => row.id}
-        selectedIds={selection.selectedIds}
-        onSelectionChange={selection.setSelectedIds}
-        pageRowIds={pageRowIds}
-        onCapExceeded={setCapMessage}
-      >
-        {(selectCtx) => (
-          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-gray-50 text-xs uppercase text-gray-600">
-                <tr>
-                  <th className="w-10 px-2 py-2">
-                    <TableSelectionHeader
-                      selectedIds={selection.selectedIds}
-                      pageRowIds={pageRowIds}
-                      onSelectionChange={selection.setSelectedIds}
-                      onCapExceeded={setCapMessage}
-                    />
-                  </th>
-                  <th className="px-2 py-2">Name</th>
-                  <th className="px-2 py-2">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pageRows.map((row) => (
-                  <tr key={row.id} className="border-t border-gray-100">
-                    <td className="px-2 py-2">
-                      <input
-                        type="checkbox"
-                        aria-label={`Select ${row.name}`}
-                        checked={selectCtx.isSelected(row.id)}
-                        onChange={() => selectCtx.toggle(row.id)}
-                      />
-                    </td>
-                    <td className="px-2 py-2">{row.name}</td>
-                    <td className="px-2 py-2">{row.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+      <ParityTable<DemoRow>
+        key={tableResetKey}
+        columns={COLUMNS}
+        rows={ALL_ROWS}
+        rowKey={(row) => row.id}
+        storageKey="dev-bulk-demo"
+        initialPageSize={PAGE_SIZE}
+        pageSizeOptions={[10, 25, 50]}
+        selectable
+        maxSelectable={200}
+        onSelectionCapExceeded={() =>
+          setCapMessage("You can select up to 200 items at a time. Clear some selections and try again.")
+        }
+        emptyText="No demo rows."
+        batchActions={(selected) => (
+          <button
+            type="button"
+            className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+            onClick={() => {
+              setPendingIds(selected.map((row) => row.id));
+              setModalOpen(true);
+            }}
+          >
+            Set inactive
+          </button>
         )}
-      </TableSelection>
-
-      <div className="flex items-center gap-2 text-sm">
-        <button
-          type="button"
-          className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-40"
-          disabled={page === 0}
-          onClick={() => setPage((p) => Math.max(0, p - 1))}
-        >
-          Previous
-        </button>
-        <span>
-          Page {page + 1} of {Math.ceil(TOTAL_ROWS / PAGE_SIZE)}
-        </span>
-        <button
-          type="button"
-          className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-40"
-          disabled={(page + 1) * PAGE_SIZE >= TOTAL_ROWS}
-          onClick={() => setPage((p) => p + 1)}
-        >
-          Next
-        </button>
-      </div>
+      />
 
       <BulkActionModal
         open={modalOpen}
         actionLabel="Set inactive"
-        affectedCount={selection.count}
+        affectedCount={pendingIds.length}
         requiresReason
         description="Demo bulk action — calls bulk API helper (mock failure expected without backend route)."
         onCancel={() => setModalOpen(false)}

@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-notification-preferences-paritytable",
+  "branch": "fix/notification-preferences-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable migration)",
+  "phase": "OPS-FE",
+  "task": "Migrate NotificationPreferencesPage from hand-rolled <table> to ParityTable + ListErrorState. Guard + verify-step 1085 (Rule 17).",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md + qbo-parity-a1-paritytable-universal-adoption",
+  "source_file": "qbo-parity-a1-paritytable-universal-adoption",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-notification-preferences-paritytable.json",
+    "apps/frontend/src/pages/settings/NotificationPreferencesPage.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-notification-preferences-uses-paritytable.mjs",
+    "scripts/verify-steps/1085-verify-notification-preferences-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "NotificationPreferencesPage.tsx uses ParityTable; no hand-rolled <table>/<thead>; columns Event/Email/SMS/WhatsApp/In-app preserved; per-event checkbox matrix + channel master toggles + quiet hours + Save/Reset preserved; ListErrorState on load failure; verify-notification-preferences-uses-paritytable.mjs PASS (+ --selftest); verify-steps/1085 wired (Rule 17); tracker marks NotificationPreferencesPage migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 — NotificationPreferencesPage surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17)."
+}

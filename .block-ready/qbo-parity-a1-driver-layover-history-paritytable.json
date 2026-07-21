@@ -1,0 +1,27 @@
+{
+  "block_id": "qbo-parity-a1-driver-layover-history-paritytable",
+  "branch": "fix/driver-layover-paritytable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (pure frontend ParityTable migration)",
+  "phase": "OPS-FE",
+  "task": "Migrate DriverLayoverHistory from a hand-rolled table to ParityTable, preserving the date range, billable toggle, and per-diem status. Guard + verify-step 1067.",
+  "source": "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+  "source_file": "qbo-parity-a1-driver-layover-history-paritytable",
+  "allowed_files": [
+    ".block-ready/qbo-parity-a1-driver-layover-history-paritytable.json",
+    "apps/frontend/src/pages/drivers/DriverLayoverHistory.tsx",
+    "docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md",
+    "scripts/verify-driver-layover-history-uses-paritytable.mjs",
+    "scripts/verify-steps/1067-verify-driver-layover-history-uses-paritytable.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "DriverLayoverHistory uses ParityTable and ListErrorState; no hand-rolled <table>/<thead>; Started/Ended/Hours/Billable/Per Diem columns, date range, mark-billable action, per-diem status, and empty period message are preserved; verify-driver-layover-history-uses-paritytable.mjs PASS (+ --selftest); verify-step 1067 is auto-discovered (Rule 17); tracker marks the driver layover history surface migrated."
+    }
+  ],
+  "note": "GATED: no (pure FE). Incremental qbo-parity-a1 driver layover history surface only. No migrations. No package.json / locked-guards / ci.yml edits (Rule 17)."
+}

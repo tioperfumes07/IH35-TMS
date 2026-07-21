@@ -1,9 +1,11 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { getDocsFoundationKpis, listDocsFoundation, type DocsFoundationRow, type FileEntityType } from "../../api/docs";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { UploadModal } from "../../components/documents/UploadModal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -19,6 +21,60 @@ const ENTITY_TABS: Array<{ id: DocsEntityTabId; label: string }> = [
   { id: "equipment", label: "Equipment" },
 ];
 const DOCS_ENTITY_TAB_IDS = new Set<string>(ENTITY_TABS.map((tab) => tab.id));
+
+const DOCS_COLUMNS: Array<ParityColumn<DocsFoundationRow>> = [
+  {
+    key: "original_filename",
+    label: "File",
+    sortable: true,
+    render: (row) => <span className="truncate">{row.original_filename}</span>,
+  },
+  {
+    key: "type_label",
+    label: "Type",
+    sortable: true,
+    sortValue: (row) => row.type_label ?? row.type ?? "Uncategorized",
+    render: (row) => <span className="truncate">{row.type_label ?? row.type ?? "Uncategorized"}</span>,
+  },
+  {
+    key: "entity",
+    label: "Entity",
+    sortable: true,
+    sortValue: (row) => {
+      const firstLink = row.links?.[0];
+      return firstLink ? `${firstLink.entity_type}:${firstLink.entity_id}` : "";
+    },
+    render: (row) => {
+      const firstLink = row.links?.[0];
+      return (
+        <span className="truncate">
+          {firstLink ? `${firstLink.entity_type}:${firstLink.entity_id.slice(0, 8)}` : "—"}
+        </span>
+      );
+    },
+  },
+  {
+    key: "size_bytes",
+    label: "Size",
+    sortable: true,
+    sortValue: (row) => Number(row.size_bytes),
+    render: (row) => <span className="truncate">{fmtFileSize(row.size_bytes)}</span>,
+  },
+  {
+    key: "expiration_date",
+    label: "Expires",
+    sortable: true,
+    sortValue: (row) => (row.expiration_date ? new Date(row.expiration_date).getTime() : null),
+    render: (row) => <span className="truncate">{fmtDate(row.expiration_date)}</span>,
+  },
+  {
+    key: "created_at",
+    label: "Uploaded",
+    sortable: true,
+    sortValue: (row) => new Date(row.created_at).getTime(),
+    render: (row) => <span className="truncate">{fmtDate(row.created_at)}</span>,
+  },
+];
 
 export function parseDocsEntityTab(raw: string | null): DocsEntityTabId {
   if (raw && DOCS_ENTITY_TAB_IDS.has(raw)) return raw as DocsEntityTabId;
@@ -94,7 +150,50 @@ export function DocsHomePage() {
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const canPrev = page > 1;
   const canNext = page < totalPages;
-  const emptyState = useMemo(() => !listQuery.isLoading && rows.length === 0, [listQuery.isLoading, rows.length]);
+
+  const filterBar = (
+    <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+      <label className="space-y-1 text-xs font-semibold text-gray-600">
+        Type filter
+        <input
+          value={typeFilter}
+          onChange={(event) => {
+            setTypeFilter(event.target.value);
+            setPage(1);
+          }}
+          className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm font-normal"
+          placeholder="Category code, label, mime type"
+        />
+      </label>
+      <label className="space-y-1 text-xs font-semibold text-gray-600">
+        Expiration before
+        <DatePicker
+          value={expiresBefore}
+          onChange={(next) => {
+            setExpiresBefore(next);
+            setPage(1);
+          }}
+          className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm font-normal"
+        />
+      </label>
+      <div className="flex items-end gap-2">
+        {kpiFilter !== "none" ? (
+          <span className="pb-2 text-xs font-semibold text-gray-600">
+            {kpiFilter === "missing_required"
+              ? "Missing required (no category or incomplete upload)"
+              : "Recent uploads (last 7 days)"}
+          </span>
+        ) : null}
+        <button
+          type="button"
+          className="h-9 rounded-sm border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+          onClick={clearListFilters}
+        >
+          Reset filters
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-3">
@@ -129,11 +228,7 @@ export function DocsHomePage() {
 
       {/* All four KPIs drill into the list via real filters (server predicates lockstep with /docs/kpis). */}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-        <KpiCard
-          label="Total Docs"
-          value={String(kpisQuery.data?.total_docs ?? 0)}
-          onClick={clearListFilters}
-        />
+        <KpiCard label="Total Docs" value={String(kpisQuery.data?.total_docs ?? 0)} onClick={clearListFilters} />
         <KpiCard
           label="Expiring 30 Days"
           value={String(kpisQuery.data?.expiring_30_days ?? 0)}
@@ -174,104 +269,55 @@ export function DocsHomePage() {
       />
 
       <section className="rounded-sm border border-gray-200 bg-white p-3">
-        <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-3">
-          <label className="space-y-1 text-xs font-semibold text-gray-600">
-            Type filter
-            <input
-              value={typeFilter}
-              onChange={(event) => {
-                setTypeFilter(event.target.value);
-                setPage(1);
-              }}
-              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm font-normal"
-              placeholder="Category code, label, mime type"
-            />
-          </label>
-          <label className="space-y-1 text-xs font-semibold text-gray-600">
-            Expiration before
-            <DatePicker
-              value={expiresBefore}
-              onChange={(next) => {
-                setExpiresBefore(next);
-                setPage(1);
-              }}
-              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm font-normal"
-            />
-          </label>
-          <div className="flex items-end gap-2">
-            {kpiFilter !== "none" ? (
-              <span className="pb-2 text-xs font-semibold text-gray-600">
-                {kpiFilter === "missing_required" ? "Missing required (no category or incomplete upload)" : "Recent uploads (last 7 days)"}
-              </span>
-            ) : null}
-            <button
-              type="button"
-              className="h-9 rounded-sm border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-              onClick={clearListFilters}
-            >
-              Reset filters
-            </button>
-          </div>
-        </div>
+        {listQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load documents"
+            status={0}
+            message={(listQuery.error as Error)?.message}
+            onRetry={() => void listQuery.refetch()}
+          />
+        ) : (
+          <ParityTable
+            rows={rows}
+            columns={DOCS_COLUMNS}
+            rowKey={(row) => row.id}
+            loading={listQuery.isLoading}
+            filterBar={filterBar}
+            storageKey="docs-home-page"
+            emptyText="No documents found. Click + Upload Document to add one."
+            tableTestId="docs-home-table"
+            rowTestId={(row) => `docs-home-row-${row.id}`}
+            initialPageSize={limit}
+            pageSizeOptions={[limit]}
+            exportFilename="documents"
+          />
+        )}
 
-        {listQuery.isLoading ? <div className="h-20 animate-pulse rounded-sm bg-slate-100" /> : null}
-        {emptyState ? (
-          <div className="rounded-sm border border-dashed border-gray-300 p-6 text-center">
-            <p className="text-base font-semibold text-gray-900">No documents found</p>
-            <p className="mt-1 text-sm text-gray-600">No documents yet. Click + Upload Document to add one.</p>
-            <button
-              type="button"
-              onClick={() => setUploadOpen(true)}
-              className="mt-3 rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#0f1729]"
-            >
-              + Upload Document
-            </button>
+        {!listQuery.isError ? (
+          <div className="mt-3 flex items-center justify-between text-xs text-gray-600">
+            <span>
+              Page {page} of {totalPages} · {total} total
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-50"
+                disabled={!canPrev || listQuery.isLoading}
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-50"
+                disabled={!canNext || listQuery.isLoading}
+                onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+              >
+                Next
+              </button>
+            </div>
           </div>
         ) : null}
-
-        {!listQuery.isLoading && rows.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full table-fixed text-left text-sm">
-              <thead className="bg-gray-50 text-xs uppercase text-gray-600">
-                <tr>
-                  <th className="px-2 py-1">File</th>
-                  <th className="px-2 py-1">Type</th>
-                  <th className="px-2 py-1">Entity</th>
-                  <th className="px-2 py-1">Size</th>
-                  <th className="px-2 py-1">Expires</th>
-                  <th className="px-2 py-1">Uploaded</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <DocsRow key={row.id} row={row} />
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : null}
-
-        <div className="mt-3 flex items-center justify-between text-xs text-gray-600">
-          <span>Page {page} of {totalPages} · {total} total</span>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-50"
-              disabled={!canPrev}
-              onClick={() => setPage((current) => Math.max(1, current - 1))}
-            >
-              Previous
-            </button>
-            <button
-              type="button"
-              className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-50"
-              disabled={!canNext}
-              onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-            >
-              Next
-            </button>
-          </div>
-        </div>
       </section>
     </div>
   );
@@ -296,18 +342,4 @@ function KpiCard({ label, value, onClick }: { label: string; value: string; onCl
     );
   }
   return <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">{content}</div>;
-}
-
-function DocsRow({ row }: { row: DocsFoundationRow }) {
-  const firstLink = row.links?.[0];
-  return (
-    <tr className="border-t border-gray-100">
-      <td className="truncate px-2 py-1">{row.original_filename}</td>
-      <td className="truncate px-2 py-1">{row.type_label ?? row.type ?? "Uncategorized"}</td>
-      <td className="truncate px-2 py-1">{firstLink ? `${firstLink.entity_type}:${firstLink.entity_id.slice(0, 8)}` : "—"}</td>
-      <td className="truncate px-2 py-1">{fmtFileSize(row.size_bytes)}</td>
-      <td className="truncate px-2 py-1">{fmtDate(row.expiration_date)}</td>
-      <td className="truncate px-2 py-1">{fmtDate(row.created_at)}</td>
-    </tr>
-  );
 }

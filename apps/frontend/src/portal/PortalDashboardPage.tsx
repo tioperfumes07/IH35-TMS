@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { apiRequest } from "../api/client";
+import { ListErrorState } from "../components/ListErrorState";
 import { StatusBadge } from "../components/layout/StatusBadge";
+import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
 
 type PortalLoadRow = {
   id: string;
@@ -13,6 +15,44 @@ type PortalLoadRow = {
   delivery_state: string | null;
   progress_status: string | null;
 };
+
+function formatRoute(load: PortalLoadRow): string {
+  const pickup = [load.pickup_city, load.pickup_state].filter(Boolean).join(", ");
+  const delivery = [load.delivery_city, load.delivery_state].filter(Boolean).join(", ");
+  return `${pickup} → ${delivery}`;
+}
+
+const COLUMNS: Array<ParityColumn<PortalLoadRow>> = [
+  {
+    key: "load_number",
+    label: "Load #",
+    sortable: true,
+    render: (load) => (
+      <Link to={`/portal/loads/${load.id}`} className="font-medium text-slate-700 hover:underline">
+        {load.load_number}
+      </Link>
+    ),
+  },
+  {
+    key: "route",
+    label: "Route",
+    sortable: true,
+    sortValue: (load) => formatRoute(load),
+    render: (load) => <span className="text-slate-700">{formatRoute(load)}</span>,
+  },
+  {
+    key: "status",
+    label: "Status",
+    sortable: true,
+    render: (load) => <span className="capitalize">{load.status.replace(/_/g, " ")}</span>,
+  },
+  {
+    key: "progress_status",
+    label: "Progress",
+    sortable: true,
+    render: (load) => <StatusBadge variant="neutral">{load.progress_status ?? "unknown"}</StatusBadge>,
+  },
+];
 
 export function PortalDashboardPage() {
   const loadsQuery = useQuery({
@@ -28,42 +68,25 @@ export function PortalDashboardPage() {
         <p className="text-sm text-slate-600">Active and recent shipments for your account.</p>
       </div>
 
-      {loadsQuery.isLoading ? <p className="text-sm text-slate-600">Loading loads…</p> : null}
-      {loadsQuery.error ? <p className="text-sm text-red-600">Could not load shipments.</p> : null}
-
-      <div className="overflow-hidden rounded-sm border border-slate-200 bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-600">
-            <tr>
-              <th className="px-4 py-2 font-medium">Load #</th>
-              <th className="px-4 py-2 font-medium">Route</th>
-              <th className="px-4 py-2 font-medium">Status</th>
-              <th className="px-4 py-2 font-medium">Progress</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(loadsQuery.data ?? []).map((load) => (
-              <tr key={load.id} className="border-t border-slate-100">
-                <td className="px-4 py-3">
-                  <Link to={`/portal/loads/${load.id}`} className="font-medium text-slate-700 hover:underline">
-                    {load.load_number}
-                  </Link>
-                </td>
-                <td className="px-4 py-3 text-slate-700">
-                  {[load.pickup_city, load.pickup_state].filter(Boolean).join(", ")} → {[load.delivery_city, load.delivery_state].filter(Boolean).join(", ")}
-                </td>
-                <td className="px-4 py-3 capitalize">{load.status.replace(/_/g, " ")}</td>
-                <td className="px-4 py-3">
-                  <StatusBadge variant="neutral">{load.progress_status ?? "unknown"}</StatusBadge>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {(loadsQuery.data ?? []).length === 0 && !loadsQuery.isLoading ? (
-          <p className="px-4 py-6 text-sm text-slate-600">No loads to display yet.</p>
-        ) : null}
-      </div>
+      {loadsQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load shipments"
+          status={0}
+          message={(loadsQuery.error as Error)?.message}
+          onRetry={() => void loadsQuery.refetch()}
+        />
+      ) : (
+        <ParityTable<PortalLoadRow>
+          rows={loadsQuery.data ?? []}
+          columns={COLUMNS}
+          rowKey={(load) => load.id}
+          loading={loadsQuery.isLoading}
+          storageKey="portal-dashboard-loads"
+          exportFilename="portal-loads"
+          emptyText="No loads to display yet."
+          tableTestId="portal-dashboard-loads-table"
+        />
+      )}
     </div>
   );
 }
