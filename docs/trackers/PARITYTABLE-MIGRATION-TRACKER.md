@@ -776,7 +776,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/qbo/QBOSyncStatusDashboardPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/qbo/QBOSyncStatusDashboardPage.tsx` | migrated (verify-step 1113) |
 
 ### pages/qbo-sync-detail (2) — financial-hold
 
