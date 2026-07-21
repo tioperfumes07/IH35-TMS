@@ -1571,3 +1571,19 @@ Guard: `scripts/verify-training-records-uses-paritytable.mjs` via verify-step **
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/components/driver-profile/TrainingRecordsSection.tsx` | components/driver-profile |
+## fix/parity-wave-next-migration — UnitPartsHistorySection (this PR)
+Vehicle profile "Parts Used" panel — a reverse drill-through of WO parts consumption
+(`maintenance.parts_invoice_links` via `work_orders.unit_id`) linking each row to its Work
+Order + Vendor + posted invoice amount. Was a hand-rolled `<table>` with no error surfacing
+(a fetch failure silently fell through to the "no rows" branch). Migrated to shared
+`ParityTable` (sort + resize + gear) and wired `ListErrorState` on query failure so an
+outage no longer reads as a false-empty "no parts" result. Columns When / Work Order / Part /
+Qty / Vendor / Invoice / Amount preserved 1:1; `vp-section-parts-used` container testid,
+`unit-parts-history-table` table testid, per-row `unit-parts-row-{id}` testid, and the
+"View all assignments" drill-through link all preserved. No schema/migration/posting
+changed — read-only display surface. No tab added/removed/renamed.
+Guard: `scripts/verify-unit-parts-history-uses-paritytable.mjs` via verify-step **1199**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/components/vehicle-profile/UnitPartsHistorySection.tsx` | components/vehicle-profile |

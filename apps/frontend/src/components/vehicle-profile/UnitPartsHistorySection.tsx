@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { listUnitPartsHistory, type PartsAssignmentRow } from "../../api/maintenance";
 import { EntityLink } from "../shared/EntityLink";
 import { formatDateUS } from "../../lib/formatDate";
+import { ListErrorState } from "../ListErrorState";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 
 type Props = {
   unitId: string;
@@ -12,6 +14,69 @@ type Props = {
 function formatMoney(value: number | null | undefined) {
   return `$${Number(value ?? 0).toFixed(2)}`;
 }
+
+const PARTS_HISTORY_COLUMNS: Array<ParityColumn<PartsAssignmentRow>> = [
+  {
+    key: "created_at",
+    label: "When",
+    sortable: true,
+    sortValue: (row) => new Date(row.created_at).getTime(),
+    render: (row) => formatDateUS(row.created_at) || "—",
+  },
+  {
+    key: "work_order_id",
+    label: "Work Order",
+    sortable: true,
+    sortValue: (row) => row.work_order_display_id ?? row.work_order_id,
+    render: (row) => (
+      <EntityLink
+        kind="work_order"
+        id={row.work_order_id}
+        label={row.work_order_display_id ?? row.work_order_id.slice(0, 8)}
+      />
+    ),
+  },
+  {
+    key: "part_description",
+    label: "Part",
+    sortable: true,
+    render: (row) => (
+      <>
+        {row.part_description}
+        {row.part_number ? <span className="ml-1 text-gray-500">({row.part_number})</span> : null}
+      </>
+    ),
+  },
+  {
+    key: "qty_used",
+    label: "Qty",
+    sortable: true,
+  },
+  {
+    key: "vendor_name",
+    label: "Vendor",
+    sortable: true,
+    sortValue: (row) => row.vendor_name ?? row.vendor_id,
+    render: (row) =>
+      row.vendor_id ? (
+        <EntityLink kind="vendor" id={row.vendor_id} label={row.vendor_name ?? row.vendor_id.slice(0, 8)} />
+      ) : (
+        "—"
+      ),
+  },
+  {
+    key: "vendor_invoice_number",
+    label: "Invoice",
+    sortable: true,
+    render: (row) => row.vendor_invoice_number || "—",
+  },
+  {
+    key: "vendor_invoice_amount",
+    label: "Amount",
+    sortable: true,
+    render: (row) => formatMoney(row.vendor_invoice_amount),
+  },
+];
 
 /**
  * Reverse drill-through: parts consumed on this unit via WO.unit_id → parts_invoice_links.
@@ -39,68 +104,36 @@ export function UnitPartsHistorySection({ unitId, companyId }: Props) {
         </Link>
       </div>
 
-      {partsQuery.isLoading ? <p className="mt-3 text-xs text-gray-500">Loading parts history…</p> : null}
       {partsQuery.isError ? (
-        <p className="mt-3 text-xs text-red-600" role="alert">
-          Unable to load parts used on this unit.
-        </p>
-      ) : null}
-
-      {!partsQuery.isLoading && !partsQuery.isError && rows.length === 0 ? (
-        <p className="mt-3 text-xs text-gray-500">No parts linked to work orders for this unit.</p>
-      ) : null}
-
-      {!partsQuery.isLoading && !partsQuery.isError && rows.length > 0 ? (
-        <div className="mt-3 overflow-x-auto">
-          <table className="w-full min-w-[36rem] text-left text-xs" data-testid="unit-parts-history-table">
-            <thead className="border-b border-gray-200 text-gray-600">
-              <tr>
-                <th className="px-2 py-1 font-medium">When</th>
-                <th className="px-2 py-1 font-medium">Work Order</th>
-                <th className="px-2 py-1 font-medium">Part</th>
-                <th className="px-2 py-1 font-medium">Qty</th>
-                <th className="px-2 py-1 font-medium">Vendor</th>
-                <th className="px-2 py-1 font-medium">Invoice</th>
-                <th className="px-2 py-1 font-medium">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.id} className="border-b border-gray-100 last:border-b-0" data-testid={`unit-parts-row-${row.id}`}>
-                  <td className="px-2 py-1.5 text-gray-700">{formatDateUS(row.created_at) || "—"}</td>
-                  <td className="px-2 py-1.5">
-                    <EntityLink
-                      kind="work_order"
-                      id={row.work_order_id}
-                      label={row.work_order_display_id ?? row.work_order_id.slice(0, 8)}
-                    />
-                  </td>
-                  <td className="px-2 py-1.5 text-gray-800">
-                    {row.part_description}
-                    {row.part_number ? (
-                      <span className="ml-1 text-gray-500">({row.part_number})</span>
-                    ) : null}
-                  </td>
-                  <td className="px-2 py-1.5 text-gray-700">{row.qty_used}</td>
-                  <td className="px-2 py-1.5">
-                    {row.vendor_id ? (
-                      <EntityLink
-                        kind="vendor"
-                        id={row.vendor_id}
-                        label={row.vendor_name ?? row.vendor_id.slice(0, 8)}
-                      />
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                  <td className="px-2 py-1.5 text-gray-700">{row.vendor_invoice_number || "—"}</td>
-                  <td className="px-2 py-1.5 text-gray-700">{formatMoney(row.vendor_invoice_amount)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="mt-3">
+          {(() => {
+            const err = partsQuery.error as { status?: number; message?: string } | null;
+            return (
+              <ListErrorState
+                title="Couldn't load parts used on this unit"
+                status={typeof err?.status === "number" ? err.status : 0}
+                message={err?.message}
+                onRetry={() => void partsQuery.refetch()}
+              />
+            );
+          })()}
         </div>
-      ) : null}
+      ) : (
+        <div className="mt-3">
+          <ParityTable
+            storageKey="unit-parts-history"
+            tableTestId="unit-parts-history-table"
+            rowTestId={(row) => `unit-parts-row-${row.id}`}
+            columns={PARTS_HISTORY_COLUMNS}
+            rows={rows}
+            rowKey={(row) => row.id}
+            loading={partsQuery.isLoading}
+            emptyText="No parts linked to work orders for this unit."
+            initialPageSize={20}
+            pageSizeOptions={[10, 20, 50]}
+          />
+        </div>
+      )}
     </section>
   );
 }
