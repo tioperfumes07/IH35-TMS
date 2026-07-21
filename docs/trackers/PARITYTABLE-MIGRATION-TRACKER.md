@@ -427,6 +427,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | File | Status |
 | --- | --- |
 | `apps/frontend/src/pages/Customers.tsx` | pending |
+| `apps/frontend/src/pages/Customers.tsx` | migrated (fix/customers-paritytable) |
 
 ### pages/DriverDetail.tsx (1)
 
@@ -1531,6 +1532,19 @@ grammar; migrating it would change the display). Guard:
 | --- | --- |
 | `apps/frontend/src/pages/accounting/AccountsPayableAgingPage.tsx` | pages/accounting |
 
+## fix/customers-paritytable — Customers.tsx (this PR)
+Customers master-detail transaction list. The hand-rolled `<table>` was moved onto shared
+`ParityTable` (sort + resize + gear + CSV export) in an earlier sweep, but the inventory
+row was never flipped and no guard pinned the page — this PR records the migration honestly
+and locks it. Columns Date / Type / Doc # / Status / Amount / Balance / Load # (+ defaultHidden
+Settlement # / Truck # / Pick-up date / Delivery date / Loaded miles) preserved 1:1;
+"No transactions for current filters." empty state, CSV export, and "+ Create Customer"
+preserved. Tab count unchanged — internals-only pin (no schema / posting / module changes).
+Guard: `scripts/verify-customers-uses-paritytable.mjs` via verify-step **1197**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/Customers.tsx` | pages |
 ## fix/form2290-paritytable — Form2290Filings (this PR)
 Compliance Form 2290 HVUT filings list. The hand-rolled `<table>` was moved onto shared
 `ParityTable` (sort + resize + gear + CSV export) in the qbo-parity-a1 batch-1 sweep (#2275),
