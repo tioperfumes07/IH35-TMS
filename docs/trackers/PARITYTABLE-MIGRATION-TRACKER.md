@@ -535,7 +535,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/cash-flow/tabs/ActualVsProjectedTab.tsx` | financial-hold |
+| `apps/frontend/src/pages/cash-flow/tabs/ActualVsProjectedTab.tsx` | migrated (verify-step 1140) — display-only; owner-greenlit UI-only migration |
 
 ### pages/compliance (4)
 
