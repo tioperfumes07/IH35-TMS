@@ -703,7 +703,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/lists/MaintenancePartsCatalog.tsx` | financial-hold |
+| `apps/frontend/src/pages/lists/MaintenancePartsCatalog.tsx` | migrated (verify-step 1101) |
 | `apps/frontend/src/pages/lists/MaintenanceServicesCatalog.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/accounting/AccountingCatalogListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/accounting/DetailTypesListPage.tsx` | financial-hold |
