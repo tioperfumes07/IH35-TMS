@@ -1538,7 +1538,7 @@ but the inventory row was never flipped and no guard pinned the page — this PR
 migration honestly and locks it. Columns Tax period / Status / Total tax preserved 1:1
 (tax-period render upgraded to `formatDateUS` in the sweep); "No filings yet." empty state,
 Generate draft PDF action, and deadline banner preserved. No tab added/removed/renamed.
-Guard: `scripts/verify-form2290-filings-uses-paritytable.mjs` via verify-step **1194**.
+Guard: `scripts/verify-form2290-filings-uses-paritytable.mjs` via verify-step **1196**.
 
 | File | Module |
 | --- | --- |
