@@ -342,8 +342,8 @@ function main() {
     let current = null;
     try {
       current = fs.readFileSync(abs, "utf8");
-    } catch (e) {
-      if (e.code !== "ENOENT") throw e;
+    } catch (err) {
+      if (err && err.code !== "ENOENT") throw err;
     }
     if (current === out[rel]) continue;
     if (check) drift.push(rel);
