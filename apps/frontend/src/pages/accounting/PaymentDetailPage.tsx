@@ -2,8 +2,9 @@ import { formatDateUS } from "../../lib/formatDate";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
-import { applyPayment, getPayment, listInvoices, unapplyPayment, voidPayment } from "../../api/accounting";
+import { applyPayment, getPayment, listInvoices, unapplyPayment, voidPayment, type PaymentApplication } from "../../api/accounting";
 import { Button } from "../../components/Button";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { ListErrorState } from "../../components/ListErrorState";
 import { DataPanel } from "../../components/layout/DataPanel";
@@ -89,6 +90,55 @@ export function PaymentDetailPage() {
   });
 
   const [voidOpen, setVoidOpen] = useState(false);
+
+  // Display-only ParityTable migration: columns/order/formatting mirror the former
+  // hand-rolled table 1:1 (Invoice # / Applied amount / Open after / Applied at / Actions).
+  const applicationColumns: Array<ParityColumn<PaymentApplication>> = [
+    {
+      key: "invoice_display_id",
+      label: "Invoice #",
+      sortable: true,
+      render: (app) => (
+        <span className="text-gray-900">
+          <EntityLink kind="invoice" id={app.invoice_id ?? undefined} label={app.invoice_display_id ?? app.invoice_id?.slice(0, 8)} />
+        </span>
+      ),
+    },
+    {
+      key: "amount_cents",
+      label: "Applied amount",
+      sortable: true,
+      render: (app) => <span className="text-gray-700">{money(app.amount_cents)}</span>,
+    },
+    {
+      key: "invoice_amount_open_cents",
+      label: "Open after",
+      sortable: true,
+      sortValue: (app) => Math.max(0, Number(app.invoice_amount_open_cents ?? 0)),
+      render: (app) => <span className="text-gray-700">{money(Math.max(0, Number(app.invoice_amount_open_cents ?? 0)))}</span>,
+    },
+    {
+      key: "applied_at",
+      label: "Applied at",
+      sortable: true,
+      render: (app) => <span className="text-gray-700">{new Date(app.applied_at).toLocaleString()}</span>,
+    },
+    {
+      key: "actions",
+      label: "Actions",
+      render: (app) => (
+        <span className="text-gray-700">
+          {!isVoided ? (
+            <Button size="sm" variant="secondary" onClick={() => unapplyMutation.mutate(app.id)} loading={unapplyMutation.isPending}>
+              Unapply
+            </Button>
+          ) : (
+            "-"
+          )}
+        </span>
+      ),
+    },
+  ];
 
   if (detailQuery.isLoading) return <div className="text-sm text-gray-500">Loading payment...</div>;
   if (detailQuery.isError)
@@ -180,48 +230,14 @@ export function PaymentDetailPage() {
             </Button>
           ) : null}
         </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-gray-200 text-gray-600">
-                <th className="px-2 py-1.5 font-semibold">Invoice #</th>
-                <th className="px-2 py-1.5 font-semibold">Applied amount</th>
-                <th className="px-2 py-1.5 font-semibold">Open after</th>
-                <th className="px-2 py-1.5 font-semibold">Applied at</th>
-                <th className="px-2 py-1.5 font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(payment.applications ?? []).map((app) => {
-                const openAfter = Math.max(0, Number(app.invoice_amount_open_cents ?? 0));
-                return (
-                  <tr key={app.id} className="border-b border-gray-100">
-                    <td className="px-2 py-1.5 text-gray-900"><EntityLink kind="invoice" id={app.invoice_id ?? undefined} label={app.invoice_display_id ?? app.invoice_id?.slice(0, 8)} /></td>
-                    <td className="px-2 py-1.5 text-gray-700">{money(app.amount_cents)}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{money(openAfter)}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{new Date(app.applied_at).toLocaleString()}</td>
-                    <td className="px-2 py-1.5 text-gray-700">
-                      {!isVoided ? (
-                        <Button size="sm" variant="secondary" onClick={() => unapplyMutation.mutate(app.id)} loading={unapplyMutation.isPending}>
-                          Unapply
-                        </Button>
-                      ) : (
-                        "-"
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-              {(payment.applications ?? []).length === 0 ? (
-                <tr>
-                  <td className="px-2 py-2 text-gray-500" colSpan={5}>
-                    No applications yet.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable<PaymentApplication>
+          storageKey="payment-detail-applications"
+          tableTestId="payment-detail-applications-table"
+          columns={applicationColumns}
+          rows={payment.applications ?? []}
+          rowKey={(app) => app.id}
+          emptyText="No applications yet."
+        />
       </DataPanel>
 
       {payment.notes ? (
