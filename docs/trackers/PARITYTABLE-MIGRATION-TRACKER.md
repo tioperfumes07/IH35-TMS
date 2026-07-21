@@ -484,6 +484,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/accounting/PaymentDetailPage.tsx` | migrated (verify-step 1154) — display-only; owner-greenlit UI-only migration |
 | `apps/frontend/src/pages/accounting/PaymentsListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/PayrollAggregatedPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/accounting/PayrollAggregatedPage.tsx` | migrated (verify-step 1167) — display-only; owner-greenlit UI-only migration; `verify-payroll-aggregated-page-uses-paritytable.mjs` |
 | `apps/frontend/src/pages/accounting/PeriodComparisonPage.tsx` | migrated (verify-step 1141) |
 | `apps/frontend/src/pages/accounting/PrepaidExpensesPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/QBOSyncDriftDashboard.tsx` | migrated (verify-step 1157) |
