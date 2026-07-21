@@ -11,8 +11,10 @@ import {
   type SettlementDisputeStatus,
 } from "../../../api/driverFinance";
 import { Button } from "../../../components/Button";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { useToast } from "../../../components/Toast";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useListState } from "../../../components/list-state";
 
@@ -95,6 +97,82 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
     resolutionNotes.trim().length >= 20 &&
     (resolution === "rejected" || resolutionAmountPreviewCents > 0);
 
+  // Display-only ParityTable migration: cell rendering (money(), status badge, days-ago,
+  // Open action handler) preserved byte-for-byte from the former hand-rolled table markup.
+  const columns = useMemo<Array<ParityColumn<SettlementDisputeRow>>>(
+    () => [
+      {
+        key: "driver_name",
+        label: "Driver Name",
+        sortable: true,
+        sortValue: (row) => String(row.driver_name ?? row.driver_id ?? ""),
+        cellClass: "min-w-0 max-w-[240px]",
+        render: (row) => {
+          const dn = row.driver_name ?? row.driver_id ?? "—";
+          return (
+            <span title={dn !== "—" ? String(dn) : undefined} className="single-line-name">
+              {String(dn)}
+            </span>
+          );
+        },
+      },
+      {
+        key: "period_start",
+        label: "Settlement Period",
+        sortable: true,
+        sortValue: (row) => row.period_start ?? "",
+        render: (row) => (
+          <>
+            {row.period_start ?? "-"} to {row.period_end ?? "-"}
+          </>
+        ),
+      },
+      { key: "dispute_category", label: "Category", sortable: true },
+      {
+        key: "dispute_description",
+        label: "Description",
+        cellClass: "max-w-[240px] truncate",
+        render: (row) => <span title={row.dispute_description}>{row.dispute_description}</span>,
+      },
+      {
+        key: "disputed_amount_cents",
+        label: "Disputed Amount",
+        sortable: true,
+        sortValue: (row) => Number(row.disputed_amount_cents ?? 0),
+        render: (row) => money(row.disputed_amount_cents),
+      },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        render: (row) => (
+          <span className={`rounded-sm px-2 py-0.5 text-[10px] font-semibold ${statusBadgeClass(row.status)}`}>
+            {row.status}
+          </span>
+        ),
+      },
+      {
+        key: "opened_at",
+        label: "Opened",
+        sortable: true,
+        sortValue: (row) => row.opened_at,
+        render: (row) =>
+          `${Math.max(0, Math.floor((Date.now() - new Date(row.opened_at).getTime()) / 86400000))}d ago`,
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        alwaysVisible: true,
+        render: (row) => (
+          <Button size="sm" variant="secondary" onClick={() => setSelected(row)}>
+            Open
+          </Button>
+        ),
+      },
+    ],
+    [],
+  );
+
   return (
     <div className="space-y-3">
       <div className="rounded-sm border border-gray-200 bg-white p-3">
@@ -127,60 +205,25 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-left text-xs">
-          <thead className="bg-gray-50 text-gray-600">
-            <tr>
-              <th className="px-3 py-2">Driver Name</th>
-              <th className="px-3 py-2">Settlement Period</th>
-              <th className="px-3 py-2">Category</th>
-              <th className="px-3 py-2">Description</th>
-              <th className="px-3 py-2">Disputed Amount</th>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">Opened</th>
-              <th className="px-3 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id} className="border-t border-gray-100">
-                <td className="min-w-0 max-w-[240px] px-3 py-2">
-                  {(() => {
-                    const dn = row.driver_name ?? row.driver_id ?? "—";
-                    return (
-                      <span title={dn !== "—" ? String(dn) : undefined} className="single-line-name">
-                        {String(dn)}
-                      </span>
-                    );
-                  })()}
-                </td>
-                <td className="px-3 py-2">{row.period_start ?? "-"} to {row.period_end ?? "-"}</td>
-                <td className="px-3 py-2">{row.dispute_category}</td>
-                <td className="max-w-[240px] truncate px-3 py-2" title={row.dispute_description}>
-                  {row.dispute_description}
-                </td>
-                <td className="px-3 py-2">{money(row.disputed_amount_cents)}</td>
-                <td className="px-3 py-2">
-                  <span className={`rounded-sm px-2 py-0.5 text-[10px] font-semibold ${statusBadgeClass(row.status)}`}>{row.status}</span>
-                </td>
-                <td className="px-3 py-2">{Math.max(0, Math.floor((Date.now() - new Date(row.opened_at).getTime()) / 86400000))}d ago</td>
-                <td className="px-3 py-2">
-                  <Button size="sm" variant="secondary" onClick={() => setSelected(row)}>
-                    Open
-                  </Button>
-                </td>
-              </tr>
-            ))}
-            {listState.isLoading || listState.isEmpty ? (
-              <tr>
-                <td colSpan={8} className="px-3 py-6 text-center text-gray-500">
-                  {disputesQuery.isLoading ? "Loading disputes..." : "No disputes found for current filter."}
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      {listState.isError ? (
+        <ListErrorState
+          title="Couldn't load disputes"
+          status={(disputesQuery.error as { status?: number })?.status ?? 0}
+          message={(disputesQuery.error as Error)?.message}
+          onRetry={() => void disputesQuery.refetch()}
+        />
+      ) : (
+        <ParityTable
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.id}
+          loading={listState.isLoading}
+          storageKey="settlement-disputes"
+          tableTestId="settlement-disputes-table"
+          rowTestId={(row) => `settlement-dispute-row-${row.id}`}
+          emptyText="No disputes found for current filter."
+        />
+      )}
 
       {detail ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3">

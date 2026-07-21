@@ -608,7 +608,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/driver-finance/components/EarningsSection.tsx` | financial-hold |
 | `apps/frontend/src/pages/driver-finance/components/LiabilityBreakdownModal.tsx` | financial-hold |
 | `apps/frontend/src/pages/driver-finance/components/ReimbursementsSection.tsx` | financial-hold |
-| `apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx` | financial-hold |
+| `apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx` | migrated (verify-step 1119) |
 | `apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx` | financial-hold |
 
 ### pages/drivers (4)
