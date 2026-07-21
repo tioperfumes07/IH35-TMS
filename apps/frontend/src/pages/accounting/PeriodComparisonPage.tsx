@@ -1,8 +1,15 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getComparisonReport, type ComparisonReportBasis, type ComparisonReportType } from "../../api/accounting";
+import {
+  getComparisonReport,
+  type ComparisonReportBasis,
+  type ComparisonReportRow,
+  type ComparisonReportType,
+} from "../../api/accounting";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 function money(cents: number) {
@@ -28,6 +35,65 @@ export function PeriodComparisonPage() {
     queryFn: () => getComparisonReport(companyId, { type, basis, periods }),
     enabled: Boolean(companyId),
   });
+
+  const period1Label = reportQuery.data?.periods[0] ?? "Period 1";
+  const period2Label = reportQuery.data?.periods[1] ?? "Period 2";
+
+  const columns = useMemo<ParityColumn<ComparisonReportRow>[]>(
+    () => [
+      {
+        key: "account",
+        label: "Account",
+        sortable: true,
+        render: (row) => <span className="text-gray-900">{row.account}</span>,
+      },
+      {
+        key: "period_1_amount",
+        label: period1Label,
+        sortable: true,
+        render: (row) => money(row.period_1_amount),
+      },
+      {
+        key: "period_2_amount",
+        label: period2Label,
+        sortable: true,
+        render: (row) => money(row.period_2_amount),
+      },
+      {
+        key: "variance_cents",
+        label: "Variance",
+        sortable: true,
+        render: (row) => (
+          <span className={`font-semibold ${row.variance_cents < 0 ? "text-red-700" : "text-slate-700"}`}>
+            {money(row.variance_cents)}
+          </span>
+        ),
+      },
+      {
+        key: "variance_pct",
+        label: "Variance %",
+        sortable: true,
+        render: (row) => (
+          <span className={`font-semibold ${row.variance_pct != null && row.variance_pct < 0 ? "text-red-700" : "text-slate-700"}`}>
+            {row.variance_pct == null ? "n/a" : `${row.variance_pct.toFixed(2)}%`}
+          </span>
+        ),
+      },
+      {
+        key: "lineage",
+        label: "Lineage",
+        render: (row) => (
+          <Link
+            to={`/accounting/posting-lineage?source_transaction_type=account&source_transaction_id=${encodeURIComponent(row.account_id ?? row.row_key)}`}
+            className="text-sm font-medium text-slate-700 hover:underline"
+          >
+            Open lineage
+          </Link>
+        ),
+      },
+    ],
+    [period1Label, period2Label],
+  );
 
   return (
     <AccountingSubNavWrapper title="Period comparison" subtitle="Side-by-side period variance for P&L or balance sheet with accrual/cash basis selection.">
@@ -62,55 +128,23 @@ export function PeriodComparisonPage() {
         </label>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-left text-sm">
-          <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
-            <tr>
-              <th className="px-3 py-2">Account</th>
-              <th className="px-3 py-2">{reportQuery.data?.periods[0] ?? "Period 1"}</th>
-              <th className="px-3 py-2">{reportQuery.data?.periods[1] ?? "Period 2"}</th>
-              <th className="px-3 py-2">Variance</th>
-              <th className="px-3 py-2">Variance %</th>
-              <th className="px-3 py-2">Lineage</th>
-            </tr>
-          </thead>
-          <tbody>
-            {reportQuery.isLoading ? (
-              <tr>
-                <td colSpan={6} className="px-3 py-4 text-gray-500">
-                  Loading comparison...
-                </td>
-              </tr>
-            ) : null}
-            {reportQuery.isError ? (
-              <tr>
-                <td colSpan={6} className="px-3 py-4 text-red-600">
-                  Failed to load report. Use `YYYY-QN` or `YYYY-MM` in the periods input.
-                </td>
-              </tr>
-            ) : null}
-            {reportQuery.data?.rows.map((row) => (
-              <tr key={row.row_key} className="border-t border-gray-100">
-                <td className="px-3 py-2 text-gray-900">{row.account}</td>
-                <td className="px-3 py-2">{money(row.period_1_amount)}</td>
-                <td className="px-3 py-2">{money(row.period_2_amount)}</td>
-                <td className={`px-3 py-2 font-semibold ${row.variance_cents < 0 ? "text-red-700" : "text-slate-700"}`}>{money(row.variance_cents)}</td>
-                <td className={`px-3 py-2 font-semibold ${row.variance_pct != null && row.variance_pct < 0 ? "text-red-700" : "text-slate-700"}`}>
-                  {row.variance_pct == null ? "n/a" : `${row.variance_pct.toFixed(2)}%`}
-                </td>
-                <td className="px-3 py-2">
-                  <Link
-                    to={`/accounting/posting-lineage?source_transaction_type=account&source_transaction_id=${encodeURIComponent(row.account_id ?? row.row_key)}`}
-                    className="text-sm font-medium text-slate-700 hover:underline"
-                  >
-                    Open lineage
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {reportQuery.isError ? (
+        <ListErrorState
+          title="Failed to load report"
+          status={0}
+          message="Use YYYY-QN or YYYY-MM in the periods input."
+          onRetry={() => void reportQuery.refetch()}
+        />
+      ) : (
+        <ParityTable
+          columns={columns}
+          rows={reportQuery.data?.rows ?? []}
+          rowKey={(row) => row.row_key}
+          loading={reportQuery.isLoading}
+          storageKey="period-comparison"
+          emptyText="No comparison rows."
+        />
+      )}
     </AccountingSubNavWrapper>
   );
 }
