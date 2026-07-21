@@ -629,7 +629,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/factoring/BatchDetail.tsx` | financial-hold |
+| `apps/frontend/src/pages/factoring/BatchDetail.tsx` | migrated (verify-step 1126) — display-only, owner review required |
 | `apps/frontend/src/pages/factoring/BatchWizard.tsx` | financial-hold |
 | `apps/frontend/src/pages/factoring/ChargebacksTable.tsx` | financial-hold |
 | `apps/frontend/src/pages/factoring/FactorAdmin.tsx` | financial-hold |

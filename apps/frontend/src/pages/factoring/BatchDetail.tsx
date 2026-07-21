@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getFactoringBatchDetail, getReserveMovements, type FactoringReserveMovement } from "../../api/factoring";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { titleize } from "../../lib/titleize";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
@@ -9,7 +11,12 @@ function asMoney(cents: number) {
   return money.format((Number(cents) || 0) / 100);
 }
 
-function withRunningBalance(movements: FactoringReserveMovement[]) {
+type ReserveMovementRow = FactoringReserveMovement & {
+  signed_amount_cents: number;
+  running_balance_cents: number;
+};
+
+function withRunningBalance(movements: FactoringReserveMovement[]): ReserveMovementRow[] {
   let running = 0;
   return movements.map((movement) => {
     const signed = movement.direction === "credit" ? movement.amount_cents : -movement.amount_cents;
@@ -21,6 +28,47 @@ function withRunningBalance(movements: FactoringReserveMovement[]) {
     };
   });
 }
+
+const RESERVE_COLUMNS: Array<ParityColumn<ReserveMovementRow>> = [
+  {
+    key: "created_at",
+    label: "Created At",
+    sortable: true,
+    render: (row) => new Date(row.created_at).toLocaleString(),
+  },
+  {
+    key: "reason",
+    label: "Reason",
+    sortable: true,
+  },
+  {
+    key: "direction",
+    label: "Direction",
+    sortable: true,
+    render: (row) => <span className="capitalize">{row.direction}</span>,
+  },
+  {
+    key: "signed_amount_cents",
+    label: "Amount",
+    sortable: true,
+    className: "text-right",
+    sortValue: (row) => row.signed_amount_cents,
+    render: (row) => (
+      <span className={row.signed_amount_cents >= 0 ? "text-slate-700" : "text-red-700"}>
+        {row.signed_amount_cents >= 0 ? "+" : "-"}
+        {asMoney(Math.abs(row.signed_amount_cents))}
+      </span>
+    ),
+  },
+  {
+    key: "running_balance_cents",
+    label: "Running Reserve Balance",
+    sortable: true,
+    className: "text-right",
+    sortValue: (row) => row.running_balance_cents,
+    render: (row) => <span className="font-medium">{asMoney(row.running_balance_cents)}</span>,
+  },
+];
 
 export function BatchDetail({ batchId, companyId }: { batchId: string; companyId: string }) {
   const detailQuery = useQuery({
@@ -41,6 +89,16 @@ export function BatchDetail({ batchId, companyId }: { batchId: string; companyId
   if (detailQuery.isLoading) {
     return <div className="text-sm text-gray-500">Loading submitted batch detail...</div>;
   }
+  if (detailQuery.isError) {
+    return (
+      <ListErrorState
+        title="Couldn't load batch detail"
+        status={0}
+        message={(detailQuery.error as Error)?.message}
+        onRetry={() => void detailQuery.refetch()}
+      />
+    );
+  }
   if (!detail) {
     return <div className="text-sm text-gray-500">Batch detail unavailable.</div>;
   }
@@ -58,47 +116,24 @@ export function BatchDetail({ batchId, companyId }: { batchId: string; companyId
 
       <div className="rounded-sm border border-gray-200 p-3">
         <div className="mb-2 text-sm font-medium text-gray-900">Reserve Movements</div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 text-xs">
-            <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
-              <tr>
-                <th className="px-2 py-2">Created At</th>
-                <th className="px-2 py-2">Reason</th>
-                <th className="px-2 py-2">Direction</th>
-                <th className="px-2 py-2 text-right">Amount</th>
-                <th className="px-2 py-2 text-right">Running Reserve Balance</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {reserveRows.map((movement) => (
-                <tr key={movement.id}>
-                  <td className="px-2 py-2">{new Date(movement.created_at).toLocaleString()}</td>
-                  <td className="px-2 py-2">{movement.reason}</td>
-                  <td className="px-2 py-2 capitalize">{movement.direction}</td>
-                  <td className={`px-2 py-2 text-right ${movement.signed_amount_cents >= 0 ? "text-slate-700" : "text-red-700"}`}>
-                    {movement.signed_amount_cents >= 0 ? "+" : "-"}
-                    {asMoney(Math.abs(movement.signed_amount_cents))}
-                  </td>
-                  <td className="px-2 py-2 text-right font-medium">{asMoney(movement.running_balance_cents)}</td>
-                </tr>
-              ))}
-              {reserveMovementsQuery.isLoading ? (
-                <tr>
-                  <td className="px-2 py-3 text-gray-500" colSpan={5}>
-                    Loading reserve movements...
-                  </td>
-                </tr>
-              ) : null}
-              {!reserveMovementsQuery.isLoading && reserveRows.length === 0 ? (
-                <tr>
-                  <td className="px-2 py-3 text-gray-500" colSpan={5}>
-                    No reserve movements for this batch.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
+        {reserveMovementsQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load reserve movements"
+            status={0}
+            message={(reserveMovementsQuery.error as Error)?.message}
+            onRetry={() => void reserveMovementsQuery.refetch()}
+          />
+        ) : (
+          <ParityTable
+            columns={RESERVE_COLUMNS}
+            rows={reserveRows}
+            rowKey={(row) => row.id}
+            loading={reserveMovementsQuery.isLoading}
+            emptyText="No reserve movements for this batch."
+            storageKey="factoring-batch-reserve-movements"
+            tableTestId="factoring-batch-reserve-movements-table"
+          />
+        )}
       </div>
     </div>
   );
