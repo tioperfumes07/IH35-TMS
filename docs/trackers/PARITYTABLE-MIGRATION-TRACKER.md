@@ -557,6 +557,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/compliance/HosViewerSection.tsx` | pending |
 | `apps/frontend/src/pages/compliance/HosTrackerSection.tsx` | pending |
 | `apps/frontend/src/pages/compliance/HosViewerSection.tsx` | migrated (fix/hos-viewer-paritytable) |
+| `apps/frontend/src/pages/compliance/Form2290Filings.tsx` | migrated (fix/form2290-paritytable) |
 
 ### pages/customers (4)
 
@@ -1529,3 +1530,16 @@ grammar; migrating it would change the display). Guard:
 | File | Module |
 | --- | --- |
 | `apps/frontend/src/pages/accounting/AccountsPayableAgingPage.tsx` | pages/accounting |
+
+## fix/form2290-paritytable — Form2290Filings (this PR)
+Compliance Form 2290 HVUT filings list. The hand-rolled `<table>` was moved onto shared
+`ParityTable` (sort + resize + gear + CSV export) in the qbo-parity-a1 batch-1 sweep (#2275),
+but the inventory row was never flipped and no guard pinned the page — this PR records the
+migration honestly and locks it. Columns Tax period / Status / Total tax preserved 1:1
+(tax-period render upgraded to `formatDateUS` in the sweep); "No filings yet." empty state,
+Generate draft PDF action, and deadline banner preserved. No tab added/removed/renamed.
+Guard: `scripts/verify-form2290-filings-uses-paritytable.mjs` via verify-step **1196**.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/compliance/Form2290Filings.tsx` | pages/compliance |
