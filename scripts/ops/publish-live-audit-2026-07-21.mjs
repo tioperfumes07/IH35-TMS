@@ -285,7 +285,13 @@ function main() {
   const drift = [];
   for (const rel of [PILES_PATH, REPORT_PATH, GAPS_PATH]) {
     const abs = path.join(ROOT, rel);
-    const current = fs.existsSync(abs) ? fs.readFileSync(abs, "utf8") : null;
+    // Read without existsSync (CodeQL js/file-system-race / TOCTOU).
+    let current = null;
+    try {
+      current = fs.readFileSync(abs, "utf8");
+    } catch (err) {
+      if (err && err.code !== "ENOENT") throw err;
+    }
     if (current === out[rel]) continue;
     if (check) drift.push(rel);
     else fs.writeFileSync(abs, out[rel]);
