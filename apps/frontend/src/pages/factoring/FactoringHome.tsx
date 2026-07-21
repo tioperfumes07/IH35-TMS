@@ -2,7 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { deactivateFactoring, getFactoringChargebacksFees, getFactoringRecoursePipeline, getFactoringStatementsSettings, getFactoringSummary } from "../../api/factoring";
+import {
+  deactivateFactoring,
+  getFactoringChargebacksFees,
+  getFactoringRecoursePipeline,
+  getFactoringStatementsSettings,
+  getFactoringSummary,
+  type FactoringMonthlyFeeSummary,
+  type FactoringSettingsRow,
+} from "../../api/factoring";
 import { listUnits, listVendors, updateVendor } from "../../api/mdata";
 import { listLoads } from "../../api/loads";
 import { Combobox } from "../../components/shared/Combobox";
@@ -16,8 +24,13 @@ import {
   listEquipmentLoans,
   listFaroDailyImports,
   upsertFaroDailyImport,
+  type DriverVendorMergeRow,
+  type FaroDailyImportRow,
 } from "../../api/data-infra";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 import { Modal } from "../../components/Modal";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -66,6 +79,72 @@ function fmtDate(value: unknown) {
   if (Number.isNaN(date.getTime())) return "—";
   return date.toLocaleDateString();
 }
+
+// ParityTable migration (display-only): column order, labels, and cell formatting
+// preserved 1:1 from the former hand-rolled table markup for each tab.
+const MONTHLY_FEE_COLUMNS: Array<ParityColumn<FactoringMonthlyFeeSummary>> = [
+  { key: "statement_month", label: "Month", sortable: true, render: (row) => fmtDate(row.statement_month) },
+  { key: "chargeback_total", label: "Chargebacks", sortable: true, render: (row) => fmtCurrency(row.chargeback_total) },
+  { key: "factor_fee_total", label: "Fees", sortable: true, render: (row) => fmtCurrency(row.factor_fee_total) },
+];
+
+const STATEMENT_HISTORY_COLUMNS: Array<ParityColumn<FactoringSettingsRow>> = [
+  { key: "statement_month", label: "Month", sortable: true, render: (row) => fmtDate(row.statement_month ?? null) },
+  {
+    key: "month_chargebacks_total",
+    label: "Chargebacks",
+    sortable: true,
+    render: (row) => fmtCurrency(row.month_chargebacks_total ?? 0),
+  },
+  {
+    key: "month_factor_fees_total",
+    label: "Fees",
+    sortable: true,
+    render: (row) => fmtCurrency(row.month_factor_fees_total ?? 0),
+  },
+];
+
+const FARO_IMPORT_COLUMNS: Array<ParityColumn<FaroDailyImportRow>> = [
+  { key: "statement_date", label: "Statement Date", sortable: true, render: (row) => fmtDate(row.statement_date) },
+  { key: "statement_reference", label: "Reference", sortable: true },
+  {
+    key: "gross_total_cents",
+    label: "Gross",
+    sortable: true,
+    render: (row) => fmtCurrency(Number(row.gross_total_cents ?? 0) / 100),
+  },
+  {
+    key: "advance_total_cents",
+    label: "Advance",
+    sortable: true,
+    render: (row) => fmtCurrency(Number(row.advance_total_cents ?? 0) / 100),
+  },
+  {
+    key: "reserve_total_cents",
+    label: "Reserve",
+    sortable: true,
+    render: (row) => fmtCurrency(Number(row.reserve_total_cents ?? 0) / 100),
+  },
+  {
+    key: "fee_total_cents",
+    label: "Fee",
+    sortable: true,
+    render: (row) => fmtCurrency(Number(row.fee_total_cents ?? 0) / 100),
+  },
+];
+
+const VENDOR_MERGE_COLUMNS: Array<ParityColumn<DriverVendorMergeRow>> = [
+  {
+    key: "driver_id",
+    label: "Driver",
+    sortable: true,
+    render: (row) => <EntityLink kind="driver" id={row.driver_id} label={row.driver_id?.slice(0, 8)} />,
+  },
+  { key: "from_qbo_vendor_id", label: "From", sortable: true },
+  { key: "to_qbo_vendor_id", label: "To", sortable: true },
+  { key: "merge_reason", label: "Reason", sortable: true },
+  { key: "merged_at", label: "Merged At", sortable: true, render: (row) => fmtDate(row.merged_at) },
+];
 
 export function FactoringHomePage({ initialTab = "recourse_pipeline" }: FactoringHomeProps = {}) {
   const location = useLocation();
@@ -461,33 +540,22 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-medium text-gray-900">Monthly fee summaries</div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 text-xs">
-                <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
-                  <tr>
-                    <th className="px-2 py-2">Month</th>
-                    <th className="px-2 py-2">Chargebacks</th>
-                    <th className="px-2 py-2">Fees</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {(feesQuery.data?.monthly_summary ?? []).map((row) => (
-                    <tr key={String(row.statement_month)}>
-                      <td className="px-2 py-2">{fmtDate(row.statement_month)}</td>
-                      <td className="px-2 py-2">{fmtCurrency(row.chargeback_total)}</td>
-                      <td className="px-2 py-2">{fmtCurrency(row.factor_fee_total)}</td>
-                    </tr>
-                  ))}
-                  {(feesQuery.data?.monthly_summary ?? []).length === 0 ? (
-                    <tr>
-                      <td className="px-2 py-4 text-gray-500" colSpan={3}>
-                        No monthly fee summaries available.
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
+            {feesQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load monthly fee summaries"
+                {...formatQueryErrorDetail(feesQuery.error)}
+                onRetry={() => void feesQuery.refetch()}
+              />
+            ) : (
+              <ParityTable
+                columns={MONTHLY_FEE_COLUMNS}
+                rows={feesQuery.data?.monthly_summary ?? []}
+                rowKey={(row) => String(row.statement_month)}
+                loading={feesQuery.isLoading}
+                emptyText="No monthly fee summaries available."
+                storageKey="factoring-home-monthly-fee-summaries"
+              />
+            )}
           </div>
         </div>
       ) : null}
@@ -507,33 +575,22 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
 
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-medium text-gray-900">Statement history</div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 text-xs">
-                <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
-                  <tr>
-                    <th className="px-2 py-2">Month</th>
-                    <th className="px-2 py-2">Chargebacks</th>
-                    <th className="px-2 py-2">Fees</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {(settingsQuery.data?.statements ?? []).map((row) => (
-                    <tr key={String(row.statement_month)}>
-                      <td className="px-2 py-2">{fmtDate(row.statement_month ?? null)}</td>
-                      <td className="px-2 py-2">{fmtCurrency(row.month_chargebacks_total ?? 0)}</td>
-                      <td className="px-2 py-2">{fmtCurrency(row.month_factor_fees_total ?? 0)}</td>
-                    </tr>
-                  ))}
-                  {(settingsQuery.data?.statements ?? []).length === 0 ? (
-                    <tr>
-                      <td className="px-2 py-4 text-gray-500" colSpan={3}>
-                        No statement history rows available.
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
+            {settingsQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load statement history"
+                {...formatQueryErrorDetail(settingsQuery.error)}
+                onRetry={() => void settingsQuery.refetch()}
+              />
+            ) : (
+              <ParityTable
+                columns={STATEMENT_HISTORY_COLUMNS}
+                rows={settingsQuery.data?.statements ?? []}
+                rowKey={(row) => String(row.statement_month)}
+                loading={settingsQuery.isLoading}
+                emptyText="No statement history rows available."
+                storageKey="factoring-home-statement-history"
+              />
+            )}
           </div>
 
           <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
@@ -654,39 +711,22 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-medium text-gray-900">Recent Faro imports</div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 text-xs">
-                <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
-                  <tr>
-                    <th className="px-2 py-2">Statement Date</th>
-                    <th className="px-2 py-2">Reference</th>
-                    <th className="px-2 py-2">Gross</th>
-                    <th className="px-2 py-2">Advance</th>
-                    <th className="px-2 py-2">Reserve</th>
-                    <th className="px-2 py-2">Fee</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {(faroImportsQuery.data?.rows ?? []).map((row) => (
-                    <tr key={row.id}>
-                      <td className="px-2 py-2">{fmtDate(row.statement_date)}</td>
-                      <td className="px-2 py-2">{row.statement_reference}</td>
-                      <td className="px-2 py-2">{fmtCurrency(Number(row.gross_total_cents ?? 0) / 100)}</td>
-                      <td className="px-2 py-2">{fmtCurrency(Number(row.advance_total_cents ?? 0) / 100)}</td>
-                      <td className="px-2 py-2">{fmtCurrency(Number(row.reserve_total_cents ?? 0) / 100)}</td>
-                      <td className="px-2 py-2">{fmtCurrency(Number(row.fee_total_cents ?? 0) / 100)}</td>
-                    </tr>
-                  ))}
-                  {(faroImportsQuery.data?.rows ?? []).length === 0 ? (
-                    <tr>
-                      <td className="px-2 py-4 text-gray-500" colSpan={6}>
-                        No Faro imports recorded yet.
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
+            {faroImportsQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load Faro imports"
+                {...formatQueryErrorDetail(faroImportsQuery.error)}
+                onRetry={() => void faroImportsQuery.refetch()}
+              />
+            ) : (
+              <ParityTable
+                columns={FARO_IMPORT_COLUMNS}
+                rows={faroImportsQuery.data?.rows ?? []}
+                rowKey={(row) => row.id}
+                loading={faroImportsQuery.isLoading}
+                emptyText="No Faro imports recorded yet."
+                storageKey="factoring-home-faro-imports"
+              />
+            )}
           </div>
         </div>
       ) : null}
@@ -885,37 +925,22 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-medium text-gray-900">Recent merge history</div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 text-xs">
-                <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
-                  <tr>
-                    <th className="px-2 py-2">Driver</th>
-                    <th className="px-2 py-2">From</th>
-                    <th className="px-2 py-2">To</th>
-                    <th className="px-2 py-2">Reason</th>
-                    <th className="px-2 py-2">Merged At</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {(vendorMergesQuery.data?.rows ?? []).map((row) => (
-                    <tr key={row.id}>
-                      <td className="px-2 py-2"><EntityLink kind="driver" id={row.driver_id} label={row.driver_id?.slice(0, 8)} /></td>
-                      <td className="px-2 py-2">{row.from_qbo_vendor_id}</td>
-                      <td className="px-2 py-2">{row.to_qbo_vendor_id}</td>
-                      <td className="px-2 py-2">{row.merge_reason}</td>
-                      <td className="px-2 py-2">{fmtDate(row.merged_at)}</td>
-                    </tr>
-                  ))}
-                  {(vendorMergesQuery.data?.rows ?? []).length === 0 ? (
-                    <tr>
-                      <td className="px-2 py-4 text-gray-500" colSpan={5}>
-                        No merge history yet.
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
+            {vendorMergesQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load merge history"
+                {...formatQueryErrorDetail(vendorMergesQuery.error)}
+                onRetry={() => void vendorMergesQuery.refetch()}
+              />
+            ) : (
+              <ParityTable
+                columns={VENDOR_MERGE_COLUMNS}
+                rows={vendorMergesQuery.data?.rows ?? []}
+                rowKey={(row) => row.id}
+                loading={vendorMergesQuery.isLoading}
+                emptyText="No merge history yet."
+                storageKey="factoring-home-vendor-merges"
+              />
+            )}
           </div>
         </div>
       ) : null}
