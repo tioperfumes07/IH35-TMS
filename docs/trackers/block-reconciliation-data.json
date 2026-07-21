@@ -1,12 +1,12 @@
 {
  "date": "2026-07-21",
- "generated_at_iso": "2026-07-21T14:28:09.515Z",
+ "generated_at_iso": "2026-07-21T19:56:09.147Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
-  "NEEDS-VERIFY": 63,
+  "NEEDS-VERIFY": 64,
   "DONE": 669,
-  "AUDIT-NOTE": 425
+  "AUDIT-NOTE": 424
  },
  "universe": {
   "total_blocks_after_dedup": 1191,
@@ -619,6 +619,17 @@
    "name": "The code-default CORS origin list diverged: index.ts getAllowedOrigins() OMITTED the real prod frontend origin https://a",
    "registered_on": null,
    "pr": null
+  },
+  {
+   "id": "0441-mod10-payment-status-panel-404",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #3097 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 3097
   },
   {
    "id": "0441-mod8-backdated-check-dead",
@@ -10102,17 +10113,6 @@
    "pr": null
   },
   {
-   "id": "0441-mod10-payment-status-panel-404",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "0441-mod10-three-settlement-dispute-backends",
    "source": ".block-ready",
    "fin": true,
@@ -13161,6 +13161,66 @@
   }
  ],
  "merged_prs": [
+  {
+   "number": 3107,
+   "title": "fix(driver-finance): wire weekly-close settlement totals through canonical deduction applier [HOLD]",
+   "mergedAt": "2026-07-21T16:09:45Z",
+   "branch": "fix/weekly-close-apply-deductions-hold"
+  },
+  {
+   "number": 3105,
+   "title": "fix(verify): ctx.run() fails closed on non-zero — HOLD (Rule 18 pipeline truth)",
+   "mergedAt": "2026-07-21T15:54:38Z",
+   "branch": "fix/verify-step-ctx-run-throws"
+  },
+  {
+   "number": 3098,
+   "title": "fix(vehicle-profile): migrate UnitPartsHistorySection to shared ParityTable",
+   "mergedAt": "2026-07-21T15:21:50Z",
+   "branch": "fix/parity-wave-next-migration"
+  },
+  {
+   "number": 3097,
+   "title": "DESIGN HOLD: mount registerSettlementPaymentRoutes in index.ts (0441-mod10-payment-status-panel-404)",
+   "mergedAt": "2026-07-21T15:32:50Z",
+   "branch": "design/settlement-payment-routes-mount-hold"
+  },
+  {
+   "number": 3096,
+   "title": "docs: corrected live block audit piles v2 (GAP=287)",
+   "mergedAt": "2026-07-21T15:41:07Z",
+   "branch": "docs/live-audit-2026-07-21-v2"
+  },
+  {
+   "number": 3095,
+   "title": "fix(driver-profile): TrainingRecordsSection migrated to shared ParityTable",
+   "mergedAt": "2026-07-21T15:02:01Z",
+   "branch": "fix/training-records-paritytable"
+  },
+  {
+   "number": 3094,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-21T14:41:38Z",
+   "branch": "chore/tracker-artifacts-sync-29839174291"
+  },
+  {
+   "number": 3093,
+   "title": "feat(parity): pin Customers list on ParityTable (already migrated)",
+   "mergedAt": "2026-07-21T14:42:59Z",
+   "branch": "fix/customers-paritytable"
+  },
+  {
+   "number": 3092,
+   "title": "fix(banking): BankingTx register migrated to shared ParityTable (A1–A5) — guard-mapped, behavior-preserving",
+   "mergedAt": "2026-07-21T14:39:41Z",
+   "branch": "fix/banking-tx-paritytable-shell"
+  },
+  {
+   "number": 3091,
+   "title": "feat(parity): migrate Form2290Filings onto ParityTable",
+   "mergedAt": "2026-07-21T14:32:09Z",
+   "branch": "fix/form2290-paritytable"
+  },
   {
    "number": 3090,
    "title": "fix(guards): absolute no-RETIRE-table reference guard (G4) — settlement RETIRE set enforced, legacy names report-only",
@@ -16700,70 +16760,28 @@
    "title": "feat(schema): P4-05 — safety.incidents.auto_created_claim_id FK -> insurance.claim [HOLD-FOR-JORGE — TIER 1]",
    "mergedAt": "2026-07-11T11:53:35Z",
    "branch": "feat/damage-claim-fk-p4"
-  },
-  {
-   "number": 2334,
-   "title": "feat(schema): P4-06 — work_orders unit_id/driver_id FKs -> mdata.units/drivers [HOLD-FOR-JORGE — TIER 1]",
-   "mergedAt": "2026-07-11T12:29:20Z",
-   "branch": "feat/work-order-entity-fks-p4"
-  },
-  {
-   "number": 2333,
-   "title": "feat(schema): item 18 — bills.mdata_vendor_id FK -> mdata.vendors [HOLD-FOR-JORGE — TIER 1]",
-   "mergedAt": "2026-07-11T11:53:16Z",
-   "branch": "feat/bills-mdata-vendor-fk-p3"
-  },
-  {
-   "number": 2332,
-   "title": "feat(schema): P3-INVOICE-FK — detention_requests -> invoice/line FKs [HOLD-FOR-JORGE — TIER 1]",
-   "mergedAt": "2026-07-11T04:49:24Z",
-   "branch": "feat/detention-invoice-fk-p3"
-  },
-  {
-   "number": 2331,
-   "title": "fix(cron): P2-BANK-AUTOMATCH — surface the auto-match metric instead of discarding it",
-   "mergedAt": "2026-07-11T11:38:59Z",
-   "branch": "fix/bank-automatch-observable-p2"
-  },
-  {
-   "number": 2330,
-   "title": "feat(schema): P2-BILLLINE-LOADID — bill_lines.load_id FK -> mdata.loads [HOLD-FOR-JORGE — TIER 1]",
-   "mergedAt": "2026-07-11T11:24:57Z",
-   "branch": "feat/bill-lines-load-id-p2"
-  },
-  {
-   "number": 2329,
-   "title": "fix(ui): 0243-g8-5 — retryable error banner on Manual-JE + Pre-settlements lists",
-   "mergedAt": "2026-07-11T04:50:09Z",
-   "branch": "fix/list-error-states-0243-g8-5"
-  },
-  {
-   "number": 2328,
-   "title": "feat(a11y): 0243-g8-4 — input-accessible-name ratchet guard (eslint-10-compatible)",
-   "mergedAt": "2026-07-11T05:01:26Z",
-   "branch": "feat/a11y-input-label-guard"
-  },
-  {
-   "number": 2327,
-   "title": "fix(ui): §7 decorative-emoji cleanup — legal, filter-bar, final-additions (0441-mod12)",
-   "mergedAt": "2026-07-11T04:06:05Z",
-   "branch": "fix/section7-emoji-cleanup"
-  },
-  {
-   "number": 2326,
-   "title": "fix(ui): D-CREATE-INLINE — inline \"+ Create\" on recurring-bill vendor + multi-bill A/P account pickers",
-   "mergedAt": "2026-07-11T03:17:40Z",
-   "branch": "fix/create-inline-referenceselect"
-  },
-  {
-   "number": 2325,
-   "title": "fix(ui): D-CAL-1 — QuickBooks-format DatePicker on the two live Manual JE date fields",
-   "mergedAt": "2026-07-11T03:11:15Z",
-   "branch": "fix/coa-datepicker-parity"
   }
  ],
- "merged_pr_total": 2806,
+ "merged_pr_total": 2816,
  "hold_for_jorge": [
+  {
+   "number": 3107,
+   "title": "fix(driver-finance): wire weekly-close settlement totals through canonical deduction applier [HOLD]",
+   "mergedAt": "2026-07-21T16:09:45Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3105,
+   "title": "fix(verify): ctx.run() fails closed on non-zero — HOLD (Rule 18 pipeline truth)",
+   "mergedAt": "2026-07-21T15:54:38Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3097,
+   "title": "DESIGN HOLD: mount registerSettlementPaymentRoutes in index.ts (0441-mod10-payment-status-panel-404)",
+   "mergedAt": "2026-07-21T15:32:50Z",
+   "category": "HOLD"
+  },
   {
    "number": 3085,
    "title": "[HOLD] fix(settlements): P2b/P2f converge team-splits facade onto mdata.driver_teams",
