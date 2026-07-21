@@ -8,6 +8,7 @@ import {
   listExpenseCategoryMappings,
   type ExpenseCategoryMapKind,
   type ExpenseCategoryMapPostingSide,
+  type ExpenseCategoryMapRow,
 } from "../../api/accounting";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
@@ -17,6 +18,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useListState } from "../../components/list-state";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 const KIND_OPTIONS: ExpenseCategoryMapKind[] = [
   "fuel",
@@ -110,6 +112,61 @@ export function ExpenseCategoryMapPage() {
 
   const canSubmit = Boolean(form.category_code.trim() && form.account_id && companyId);
 
+  // Display-only ParityTable migration: column order, cell content, and the inline
+  // Deactivate action (handler unchanged) are preserved 1:1 from the hand-rolled table.
+  const columns: Array<ParityColumn<ExpenseCategoryMapRow>> = [
+    { key: "category_kind", label: "Kind", sortable: true },
+    { key: "category_code", label: "Code", sortable: true },
+    {
+      key: "account_number",
+      label: "Account",
+      sortable: true,
+      sortValue: (row) => `${row.account_number ?? "?"} - ${row.account_name ?? row.account_id}`,
+      render: (row) => (
+        <>
+          {row.account_number ?? "?"} - {row.account_name ?? row.account_id}
+        </>
+      ),
+    },
+    { key: "posting_side", label: "Side", sortable: true },
+    {
+      key: "is_active",
+      label: "Status",
+      sortable: true,
+      sortValue: (row) => (row.is_active ? "active" : "inactive"),
+      render: (row) => (row.is_active ? "active" : "inactive"),
+    },
+    {
+      key: "audit",
+      label: "Audit",
+      render: (row) => (
+        <Link
+          to={`/admin/activity?event_class=expense_category_map_change&resource_id=${encodeURIComponent(row.id)}`}
+          className="text-slate-700 hover:underline"
+        >
+          View audit
+        </Link>
+      ),
+    },
+    {
+      key: "actions",
+      label: "Actions",
+      render: (row) =>
+        row.is_active ? (
+          <Button
+            size="sm"
+            variant="danger"
+            loading={deactivateMutation.isPending}
+            onClick={() => setDeactivateTarget(row.id)}
+          >
+            Deactivate
+          </Button>
+        ) : (
+          "-"
+        ),
+    },
+  ];
+
   return (
     <AccountingSubNavWrapper
       title="Expense Category Map"
@@ -128,82 +185,23 @@ export function ExpenseCategoryMapPage() {
         </label>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-left text-xs">
-          <thead className="bg-gray-50 text-gray-600">
-            <tr>
-              <th className="px-3 py-2 font-semibold">Kind</th>
-              <th className="px-3 py-2 font-semibold">Code</th>
-              <th className="px-3 py-2 font-semibold">Account</th>
-              <th className="px-3 py-2 font-semibold">Side</th>
-              <th className="px-3 py-2 font-semibold">Status</th>
-              <th className="px-3 py-2 font-semibold">Audit</th>
-              <th className="px-3 py-2 font-semibold">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {mapQuery.isLoading ? (
-              <tr>
-                <td className="px-3 py-3 text-gray-500" colSpan={7}>
-                  Loading mappings...
-                </td>
-              </tr>
-            ) : null}
-            {listState.isError ? (
-              <tr>
-                <td className="px-3 py-2" colSpan={7}>
-                  <ListErrorState
-                    title="Couldn't load category mappings"
-                    status={0}
-                    message={(mapQuery.error as Error | undefined)?.message}
-                    onRetry={() => void mapQuery.refetch()}
-                  />
-                </td>
-              </tr>
-            ) : null}
-            {listState.isEmpty ? (
-              <tr>
-                <td className="px-3 py-3 text-gray-500" colSpan={7}>
-                  No mappings found.
-                </td>
-              </tr>
-            ) : null}
-            {(mapQuery.data?.rows ?? []).map((row) => (
-              <tr key={row.id} className="border-t border-gray-100">
-                <td className="px-3 py-2">{row.category_kind}</td>
-                <td className="px-3 py-2">{row.category_code}</td>
-                <td className="px-3 py-2">
-                  {row.account_number ?? "?"} - {row.account_name ?? row.account_id}
-                </td>
-                <td className="px-3 py-2">{row.posting_side}</td>
-                <td className="px-3 py-2">{row.is_active ? "active" : "inactive"}</td>
-                <td className="px-3 py-2">
-                  <Link
-                    to={`/admin/activity?event_class=expense_category_map_change&resource_id=${encodeURIComponent(row.id)}`}
-                    className="text-slate-700 hover:underline"
-                  >
-                    View audit
-                  </Link>
-                </td>
-                <td className="px-3 py-2">
-                  {row.is_active ? (
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      loading={deactivateMutation.isPending}
-                      onClick={() => setDeactivateTarget(row.id)}
-                    >
-                      Deactivate
-                    </Button>
-                  ) : (
-                    "-"
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {listState.isError ? (
+        <ListErrorState
+          title="Couldn't load category mappings"
+          status={0}
+          message={(mapQuery.error as Error | undefined)?.message}
+          onRetry={() => void mapQuery.refetch()}
+        />
+      ) : (
+        <ParityTable<ExpenseCategoryMapRow>
+          columns={columns}
+          rows={mapQuery.data?.rows ?? []}
+          rowKey={(row) => row.id}
+          loading={mapQuery.isLoading}
+          emptyText="No mappings found."
+          storageKey="accounting-expense-category-map"
+        />
+      )}
 
       {showAddModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
