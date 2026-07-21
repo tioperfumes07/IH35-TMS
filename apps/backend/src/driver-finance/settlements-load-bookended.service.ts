@@ -3,6 +3,7 @@ import { isEnabled } from "../lib/feature-flags/service.js";
 import { recordPostingFlagSkip } from "../accounting/posting-flag-skip-audit.js";
 import { applyApprovedAbandonmentChargebacksToSettlement } from "./abandonment.service.js";
 import { applyPendingDeductionsToSettlementWithNetFloor } from "./settlement-deduction-cap.service.js";
+import { applyAutoDeductionsToSettlement } from "../settlements/auto-deductions/apply.js";
 import { computeSettlementContractTerms, SETTLEMENT_CONTRACT_TERMS_FLAG } from "./settlement-contract-terms.service.js";
 import { appendSettlementLineFromDriverBillIfMissing, fetchTeamDriversForLoad } from "./settlement-engine.js";
 
@@ -353,6 +354,18 @@ async function closeLoadBookendedSettlementForDriver(
     operating_company_id: opts.operatingCompanyId,
   });
   if (deductionApplyEnabled) {
+    // P2a (owner DECISION 1, 2026-07-21): FIRST materialize active auto-deduction-policy tranches
+    // into the canonical driver_finance.driver_settlement_deductions sub-ledger (cents), so the
+    // net-floor cap applier below SEES them — closing the hole where an auto policy could push a
+    // driver below the net floor invisibly. Same flag, no settlement_lines writes, no totals math
+    // (idempotent via the one-open-tranche-per-policy partial unique index).
+    const autoMaterialized = await applyAutoDeductionsToSettlement(client, {
+      settlementId,
+      driverId: opts.driverId,
+      operatingCompanyId: opts.operatingCompanyId,
+      actorUserId: opts.actorUserId,
+    });
+
     const applied = await applyPendingDeductionsToSettlementWithNetFloor(client, {
       settlementId,
       driverId: opts.driverId,
@@ -377,6 +390,10 @@ async function closeLoadBookendedSettlementForDriver(
         gross_cents: applied.grossCents,
         floor_cents: applied.floorCents,
         available_cents: applied.availableCents,
+        // P2a additive fields: auto-deduction tranches materialized into the sub-ledger this close.
+        auto_materialized_count: autoMaterialized.materialized.length,
+        auto_materialized_cents: autoMaterialized.total_materialized_cents,
+        auto_materializer_schema_ready: autoMaterialized.schema_ready,
       },
       "info",
       "REPAIR-A-DEDUCTION-APPLY"

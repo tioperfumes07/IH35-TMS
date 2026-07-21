@@ -31,20 +31,31 @@ const IDS = {
 };
 
 type Line = { line_type: string; amount: number };
-type Deduction = { id: string; amount_cents: number; reason: string; deduction_type: string; applied: boolean; load_id: string | null };
+type Deduction = { id: string; amount_cents: number; reason: string; deduction_type: string; applied: boolean; load_id: string | null; policy_id?: string };
+type AutoPolicy = {
+  id: string;
+  deduction_type: string;
+  total_owed_cents: number;
+  deducted_so_far_cents: number;
+  max_per_settlement_cents: number;
+  memo: string | null;
+  status: string;
+};
 
 type State = {
   lines: Line[];
   deductions: Deduction[];
+  autoPolicies: AutoPolicy[];
   flagOn: boolean;
   aggregate: { gross: number; deductions: number; reimbursements: number; net: number } | null;
   callLog: string[];
 };
 
-function makeState(opts: { earnings: number; flagOn: boolean; deductions?: Deduction[] }): State {
+function makeState(opts: { earnings: number; flagOn: boolean; deductions?: Deduction[]; autoPolicies?: AutoPolicy[] }): State {
   return {
     lines: [],
     deductions: opts.deductions ?? [],
+    autoPolicies: opts.autoPolicies ?? [],
     flagOn: opts.flagOn,
     aggregate: null,
     callLog: [],
@@ -59,6 +70,48 @@ function makeMockClient(state: State & { _pendingEarnings?: number }) {
       const rows = <R>(r: R[]) => ({ rows: r as unknown as T[] });
 
       if (sql.includes("to_regclass('driver_finance.settlement_lines')")) return rows([{ ok: true }]);
+
+      // P2a materializer schema probe (checked BEFORE the generic information_schema branch —
+      // the probe SQL also contains "FROM information_schema.columns").
+      if (sql.includes("to_regclass('driver_finance.driver_settlement_deductions')")) {
+        return rows([{ table_ok: true, column_ok: true }]);
+      }
+      // P2a materializer: active-policy read (FOR UPDATE)
+      if (sql.includes("FROM driver_finance.auto_deduction_policies")) {
+        state.callLog.push("auto_policies_read");
+        return rows(
+          state.autoPolicies
+            .filter((p) => p.status === "active" && p.deducted_so_far_cents < p.total_owed_cents)
+            .map((p) => ({ ...p }))
+        );
+      }
+      // P2a materializer: sub-ledger tranche insert (ON CONFLICT one-open-tranche arbiter simulated)
+      if (sql.includes("INSERT INTO driver_finance.driver_settlement_deductions")) {
+        const policyId = String(values?.[5] ?? "");
+        if (state.deductions.some((d) => d.policy_id === policyId && !d.applied)) return rows([]);
+        const id = `auto-${state.deductions.length + 1}`;
+        state.deductions.push({
+          id,
+          amount_cents: Number(values?.[3] ?? 0),
+          reason: String(values?.[4] ?? ""),
+          deduction_type: String(values?.[2] ?? ""),
+          applied: false,
+          load_id: null,
+          policy_id: policyId,
+        });
+        state.callLog.push("auto_tranche_insert");
+        return rows([{ id }]);
+      }
+      // P2a materializer: policy progress update
+      if (sql.includes("UPDATE driver_finance.auto_deduction_policies")) {
+        const policy = state.autoPolicies.find((p) => p.id === String(values?.[0] ?? ""));
+        if (policy) {
+          policy.deducted_so_far_cents = Number(values?.[1] ?? 0);
+          if (values?.[2] === true) policy.status = "completed";
+        }
+        state.callLog.push("auto_policy_update");
+        return rows([]);
+      }
 
       if (sql.includes("FROM information_schema.columns")) {
         // driver has no override columns; company cols exist so resolveSettlementMinNet reads company.
@@ -195,5 +248,67 @@ describe("closeLoadBookendedSettlement — deduction applier wiring (SETTLEMENT_
     // Tie-out: net = gross - deductions + reimb = 1000 - 200 + 0 = 800; floor ($50) respected (800 >= 50).
     expect(state.aggregate).toEqual({ gross: 1000, deductions: 200, reimbursements: 0, net: 800 });
     expect(state.aggregate!.net).toBeGreaterThanOrEqual(Math.round(state.aggregate!.gross * 0.05));
+  });
+
+  it("P2a flag ON — auto-policy tranche is MATERIALIZED into the sub-ledger BEFORE the cap applier, which applies it (ordering + tie-out)", async () => {
+    // Gross $1000, 5% floor => $950 available. Auto policy: $500 owed, $200/settlement max.
+    const state = makeState({
+      earnings: 1000,
+      flagOn: true,
+      autoPolicies: [
+        { id: "pol-1", deduction_type: "repair", total_owed_cents: 50000, deducted_so_far_cents: 0, max_per_settlement_cents: 20000, memo: "WO-22", status: "active" },
+      ],
+    }) as State & { _pendingEarnings: number };
+    vi.mocked(appendSettlementLineFromDriverBillIfMissing).mockImplementation(async () => {
+      state.lines.push({ line_type: "earnings", amount: state._pendingEarnings });
+    });
+    const client = makeMockClient(state);
+
+    await closeSettlementForFinalLoad(client, { loadId: IDS.load, operatingCompanyId: IDS.company, actorUserId: IDS.actor });
+
+    // Ordering: materializer inserted the tranche BEFORE the cap applier read pending deductions,
+    // and both ran BEFORE aggregate recomputed net_pay.
+    expect(state.callLog.indexOf("auto_tranche_insert")).toBeGreaterThanOrEqual(0);
+    expect(state.callLog.indexOf("auto_tranche_insert")).toBeLessThan(state.callLog.indexOf("pending_deductions_read"));
+    expect(state.callLog.indexOf("pending_deductions_read")).toBeLessThan(state.callLog.indexOf("aggregate_write"));
+
+    // The cap applier SAW and applied the auto tranche (cents sub-ledger row → positive deduction line).
+    expect(state.deductions).toHaveLength(1);
+    expect(state.deductions[0]).toMatchObject({ policy_id: "pol-1", amount_cents: 20000, applied: true });
+    expect(state.deductions[0]!.reason).toBe("Auto-deduction (repair): WO-22");
+
+    // Policy counter advanced at materialization.
+    expect(state.autoPolicies[0]!.deducted_so_far_cents).toBe(20000);
+
+    // Tie-out: net = 1000 - 200 = 800, floor respected.
+    expect(state.aggregate).toEqual({ gross: 1000, deductions: 200, reimbursements: 0, net: 800 });
+  });
+
+  it("P2a flag ON — the net-floor cap now GOVERNS autos: an over-cap auto tranche is deferred, net pay NOT pushed below the floor", async () => {
+    // Gross $100, 5% floor => $95 available. Auto tranche $200 > $95 → the cap applier defers it.
+    // (Pre-P2a this was the financial hole: negative auto lines bypassed the cap entirely.)
+    const state = makeState({
+      earnings: 100,
+      flagOn: true,
+      autoPolicies: [
+        { id: "pol-1", deduction_type: "cash_advance", total_owed_cents: 50000, deducted_so_far_cents: 0, max_per_settlement_cents: 20000, memo: null, status: "active" },
+      ],
+    }) as State & { _pendingEarnings: number };
+    vi.mocked(appendSettlementLineFromDriverBillIfMissing).mockImplementation(async () => {
+      state.lines.push({ line_type: "earnings", amount: state._pendingEarnings });
+    });
+    const client = makeMockClient(state);
+
+    await closeSettlementForFinalLoad(client, { loadId: IDS.load, operatingCompanyId: IDS.company, actorUserId: IDS.actor });
+
+    // Tranche materialized but DEFERRED over cap: stays open in the sub-ledger (rolls to next settlement).
+    expect(state.callLog).toContain("auto_tranche_insert");
+    expect(state.callLog).toContain("pending_deductions_read");
+    expect(state.callLog).not.toContain("deduction_line_insert");
+    expect(state.deductions).toHaveLength(1);
+    expect(state.deductions[0]!.applied).toBe(false);
+
+    // Net pay untouched — the driver is NOT pushed below the floor by the auto policy.
+    expect(state.aggregate).toEqual({ gross: 100, deductions: 0, reimbursements: 0, net: 100 });
   });
 });
