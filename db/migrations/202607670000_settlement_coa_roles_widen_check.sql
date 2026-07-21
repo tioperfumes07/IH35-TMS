@@ -22,11 +22,14 @@
 -- SUPERSET / IDEMPOTENCY: §1 rebuilds accounting.chart_of_accounts_roles.role as a TRUE SUPERSET of
 -- main's current values (0223 base 12 + FIN-22's 4 + CODER-34's 6 + Property-Tax's 2 = 24) PLUS the 9
 -- settlement roles = 33. §2 does the same for the legacy catalogs.account_role_bindings.role_key CHECK,
--- keeping ALL existing legacy values (the settlement role_keys already existed there since CODER-34 —
--- driver_pay_expense/driver_payroll_clearing/reimbursement_expense/*_recovery — so §2 is effectively a
--- no-op re-assertion that preserves the superset; included for a single self-contained, order-independent
--- law). DROP CONSTRAINT IF EXISTS + ADD CONSTRAINT is idempotent (re-runnable) and composes in any apply
--- order with the held property-tax/factoring wideners because every list here is a superset of theirs.
+-- keeping ALL existing legacy values — the settlement role_keys already existed there since CODER-34
+-- (driver_pay_expense/driver_payroll_clearing/reimbursement_expense/*_recovery), and
+-- 'abandonment_chargeback_recovery' since 202607380000 (still resolved directly from this legacy table by
+-- settlement-payrun-close.service.ts — out of this PR's resolver-repoint scope, so it MUST stay in this
+-- CHECK). §2's list is copied verbatim from 202607380000 (the latest widener on main) so it is a TRUE
+-- superset, not a re-typed subset. DROP CONSTRAINT IF EXISTS + ADD CONSTRAINT is idempotent (re-runnable)
+-- and composes in any apply order with the held property-tax/factoring wideners because every list here is
+-- a superset of theirs.
 --
 -- FRESH-DB SAFE: pure DDL on tables that already exist by this point in the chain (chart_of_accounts_roles
 -- from 0223; account_role_bindings from 0010/0011). No RAISE, no data dependency. On a fresh CI DB the two
@@ -79,7 +82,11 @@ ALTER TABLE catalogs.account_role_bindings ADD CONSTRAINT account_role_bindings_
     'rental_income', 'lease_receivable', 'interest_income', 'gain_loss_on_disposal',
     'factoring_advance_liability', 'ar_assigned_to_factor', 'factoring_recoursed_ar',
     'default_interest_expense', 'factor_reserve_held', 'factor_fee_expense',
-    'property_tax_expense', 'property_tax_payable'
+    'property_tax_expense', 'property_tax_payable',
+    -- 202607380000 (SETTLE-PAYRUN): the abandonment-chargeback recovery credit role for the pay-run
+    -- close (settlement-payrun-close.service.ts). Was DROPPED by an earlier draft of this migration's
+    -- §2 re-assertion — restored here so this CHECK stays a TRUE superset of 202607380000's list.
+    'abandonment_chargeback_recovery'
   ])
 );
 
