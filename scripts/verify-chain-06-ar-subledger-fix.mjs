@@ -1,6 +1,11 @@
 #!/usr/bin/env node
 // CONN-2 regression guard — keeps the CHAIN-06 §5/§7-A AR-subledger fix from silently regressing.
 //
+// STATUS 2026-07-21 — CODE FIXED + GUARDS WIRED (verify-steps 920–922); live money path still
+// requires owner flag/ops proof. This guard proves the poster wiring remains intact (static analysis).
+// Wired via scripts/verify-steps/921-verify-chain-06-ar-subledger-fix.mjs (Rule 17). See
+// docs/specs/qbo-parity/CHAIN-06-STATUS-2026-07-21.md and PR #3121.
+//
 // Background (docs/specs/qbo-parity/CHAIN-06-FACTORING-AR-TIEOUT-PROOF.md §5, surfaced by PR #2188, not
 // fixed there by design): postFactoringCustomerPaymentEvent / postFactoringChargebackEvent relieved the
 // GL's `ar_control` but never touched `accounting.invoices.amount_paid_cents`/`status` — AR Aging would

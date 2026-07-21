@@ -5,6 +5,11 @@
 **Status:** `[HOLD-FOR-JORGE — TIER 1]` — **do not merge. no flag flip. no live post.**
 **Date:** 2026-06-18
 
+> **STATUS 2026-07-21 — CODE FIXED + GUARDS WIRED (verify-steps 920–922); live money path still requires owner flag/ops proof.**
+> This HOLD design sketch is historical. Invoice→A/R→factoring secured-borrowing + AR-subledger
+> relief are in code (`poster.service.ts`); see `docs/specs/qbo-parity/CHAIN-06-STATUS-2026-07-21.md`
+> and PR #3121. Still not LIVE-VERIFIED with money (owner flag/ops).
+
 > **Design doc, not posting code** (§1.4 / §1.7). Reuse existing GL; no new math, no migration, no flag.
 
 ## Reuse surface (existing)
