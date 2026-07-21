@@ -1,5 +1,5 @@
-import { useRef } from "react";
-import { BulkSelectableTable } from "../../components/shared/BulkSelectableTable";
+import { useMemo } from "react";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useToast } from "../../components/Toast";
 
@@ -37,12 +37,8 @@ function downloadCsv(filename: string, header: string[], rows: string[][]) {
 
 export function RecoursePipelineTable({ rows, fmtCurrency, fmtDate }: Props) {
   const { pushToast } = useToast();
-  // Ref tracks the currently-selected rows so the bulk "Export Selected" action (whose onClick is
-  // declared outside the render-prop) can build the CSV from the real selection.
-  const selectedRef = useRef<RecoursePipelineRow[]>([]);
 
-  const exportSelected = () => {
-    const selected = selectedRef.current;
+  const exportSelected = (selected: RecoursePipelineRow[]) => {
     if (selected.length === 0) {
       pushToast("Select at least one row to export.", "info");
       return;
@@ -62,66 +58,83 @@ export function RecoursePipelineTable({ rows, fmtCurrency, fmtDate }: Props) {
     pushToast(`Exported ${selected.length} recourse row(s).`, "success");
   };
 
+  const columns: Array<ParityColumn<RecoursePipelineRow>> = useMemo(
+    () => [
+      {
+        key: "invoice_reference",
+        label: "Invoice",
+        sortable: true,
+        cellClass: "font-medium text-gray-900",
+        render: (row) => (
+          <EntityLink
+            kind="factoring_advance"
+            id={row.factoring_advance_id}
+            label={row.invoice_reference || row.factoring_advance_id.slice(0, 8)}
+          />
+        ),
+      },
+      { key: "customer_name", label: "Customer", sortable: true },
+      {
+        key: "advance_amount",
+        label: "Advance",
+        sortable: true,
+        render: (row) => fmtCurrency(row.advance_amount),
+      },
+      {
+        key: "reserve_amount",
+        label: "Reserve",
+        sortable: true,
+        render: (row) => fmtCurrency(row.reserve_amount),
+      },
+      {
+        key: "recourse_expiry_date",
+        label: "Recourse Expiry",
+        sortable: true,
+        render: (row) => fmtDate(row.recourse_expiry_date),
+      },
+      {
+        key: "days_until_recourse_expiry",
+        label: "Days Left",
+        sortable: true,
+        render: (row) => Number(row.days_until_recourse_expiry ?? 0),
+        sortValue: (row) => Number(row.days_until_recourse_expiry ?? 0),
+      },
+    ],
+    [fmtCurrency, fmtDate],
+  );
+
   return (
-    <BulkSelectableTable
-      entityType="factoring-recourse"
+    <ParityTable<RecoursePipelineRow>
+      columns={columns}
       rows={rows}
-      getRowId={(row) => row.factoring_advance_id}
-      bulkActions={[
-        { id: "export", label: "Export Selected", onClick: exportSelected },
-        {
-          id: "extend",
-          label: "Extend Recourse (coming soon)",
-          disabled: true,
-          onClick: () => pushToast("Bulk recourse extension is not available yet.", "info"),
-        },
-      ]}
-    >
-      {(ctx) => {
-        // Updated during render (ref, not state — no re-render) so exportSelected sees live selection.
-        selectedRef.current = rows.filter((row) => ctx.isSelected(row.factoring_advance_id));
-        return (
-          <table className="min-w-full divide-y divide-gray-200 text-xs">
-            <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
-              <tr>
-                <th className="w-8 px-2 py-2">{ctx.renderHeaderCheckbox()}</th>
-                <th className="px-2 py-2">Invoice</th>
-                <th className="px-2 py-2">Customer</th>
-                <th className="px-2 py-2">Advance</th>
-                <th className="px-2 py-2">Reserve</th>
-                <th className="px-2 py-2">Recourse Expiry</th>
-                <th className="px-2 py-2">Days Left</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {rows.map((row) => (
-                <tr key={row.factoring_advance_id}>
-                  <td className="px-2 py-2">{ctx.renderRowCheckbox(row.factoring_advance_id)}</td>
-                  <td className="px-2 py-2 font-medium text-gray-900">
-                    <EntityLink
-                      kind="factoring_advance"
-                      id={row.factoring_advance_id}
-                      label={row.invoice_reference || row.factoring_advance_id.slice(0, 8)}
-                    />
-                  </td>
-                  <td className="px-2 py-2">{row.customer_name}</td>
-                  <td className="px-2 py-2">{fmtCurrency(row.advance_amount)}</td>
-                  <td className="px-2 py-2">{fmtCurrency(row.reserve_amount)}</td>
-                  <td className="px-2 py-2">{fmtDate(row.recourse_expiry_date)}</td>
-                  <td className="px-2 py-2">{Number(row.days_until_recourse_expiry ?? 0)}</td>
-                </tr>
-              ))}
-              {rows.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-2 py-4 text-gray-500">
-                    No recourse pipeline rows available in this environment.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        );
-      }}
-    </BulkSelectableTable>
+      rowKey={(row) => row.factoring_advance_id}
+      emptyText="No recourse pipeline rows available in this environment."
+      storageKey="factoring-recourse-pipeline"
+      tableTestId="factoring-recourse-pipeline-table"
+      selectable
+      maxSelectable={200}
+      onSelectionCapExceeded={() =>
+        pushToast("You can select up to 200 items at a time. Clear some selections and try again.", "error")
+      }
+      batchActions={(selected) => (
+        <>
+          <button
+            type="button"
+            className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+            onClick={() => exportSelected(selected)}
+          >
+            Export Selected
+          </button>
+          <button
+            type="button"
+            disabled
+            className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50"
+            onClick={() => pushToast("Bulk recourse extension is not available yet.", "info")}
+          >
+            Extend Recourse
+          </button>
+        </>
+      )}
+    />
   );
 }
