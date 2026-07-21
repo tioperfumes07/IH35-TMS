@@ -1,26 +1,26 @@
 {
  "date": "2026-07-21",
- "generated_at_iso": "2026-07-21T07:52:10.929Z",
+ "generated_at_iso": "2026-07-21T08:28:06.020Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
   "NEEDS-VERIFY": 63,
-  "DONE": 665,
+  "DONE": 666,
   "AUDIT-NOTE": 425
  },
  "universe": {
-  "total_blocks_after_dedup": 1187,
+  "total_blocks_after_dedup": 1188,
   "by_source_after_dedup": {
-   ".block-ready": 1015,
+   ".block-ready": 1016,
    "program": 61,
    "enterprise-29": 29,
    "accounting": 25,
    "gap-spec": 57
   },
   "raw_file_counts": {
-   ".block-ready (*.json files)": 1368,
+   ".block-ready (*.json files)": 1369,
    ".block-ready retired (dup/stale/superseded, excluded)": 348,
-   ".block-ready active (counted)": 1020
+   ".block-ready active (counted)": 1021
   },
   "note": "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by UNIQUE block_id, EXCLUDING files with EXPLICIT retirement markers (_DUP/_STALE/_SUPERSEDED underscore suffixes, status superseded/duplicate/dup/stale, or superseded_by/duplicate_of). Hyphen descriptive …-stale/…-duplicate live defect IDs are NOT retired by filename alone. So the block count is neither the raw .block-ready file count nor inflated by duplicate/retired registrations."
  },
@@ -6715,6 +6715,17 @@
    "pr": 3069
   },
   {
+   "id": "paritytable-a2-group-bands",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #3074 merged 2026-07-21",
+   "name": "Add OPTIONAL groupBy prop (getKey/renderHeader/collapsible/collapsedKeys/onCollapsedChange) to ParityTable for QBO-style",
+   "registered_on": null,
+   "pr": 3074
+  },
+  {
    "id": "PERF-BUDGET-RAISE",
    "source": ".block-ready",
    "fin": true,
@@ -13118,6 +13129,18 @@
  ],
  "merged_prs": [
   {
+   "number": 3074,
+   "title": "feat(parity): ParityTable A2 — optional groupBy QBO-style group bands (additive, zero behavior change)",
+   "mergedAt": "2026-07-21T08:27:09Z",
+   "branch": "feat/paritytable-group-bands"
+  },
+  {
+   "number": 3072,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-21T08:06:11Z",
+   "branch": "chore/tracker-artifacts-sync-29812006590"
+  },
+  {
    "number": 3069,
    "title": "feat(parity): ParityTable A1 — optional controlled row-expansion props",
    "mergedAt": "2026-07-21T07:51:20Z",
@@ -16704,21 +16727,9 @@
    "title": "chore(standards): §0 verify-everything law + correct stale schema maps (vs prod)",
    "mergedAt": "2026-07-10T18:13:59Z",
    "branch": "chore/verify-law-and-schema-map-corrections"
-  },
-  {
-   "number": 2307,
-   "title": "feat(program): live Audit-Truth tracker on the Program board (verified vs prod)",
-   "mergedAt": "2026-07-10T18:13:49Z",
-   "branch": "feat/program-board-audit-truth"
-  },
-  {
-   "number": 2306,
-   "title": "fix(visual-sweep): Safety S-01/04/08/09/10/11/13 — filters, export, home, alert tile",
-   "mergedAt": "2026-07-10T18:13:02Z",
-   "branch": "fix/visual-sweep-vs-d"
   }
  ],
- "merged_pr_total": 2788,
+ "merged_pr_total": 2790,
  "hold_for_jorge": [
   {
    "number": 2718,
