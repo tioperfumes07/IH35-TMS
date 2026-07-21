@@ -703,16 +703,20 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/lists/MaintenancePartsCatalog.tsx` | financial-hold |
+| `apps/frontend/src/pages/lists/MaintenancePartsCatalog.tsx` | migrated (verify-step 1101) |
 | `apps/frontend/src/pages/lists/MaintenanceServicesCatalog.tsx` | financial-hold |
+| `apps/frontend/src/pages/lists/MaintenancePartsCatalog.tsx` | financial-hold |
+| `apps/frontend/src/pages/lists/MaintenanceServicesCatalog.tsx` | migrated (verify-step 1102) |
 | `apps/frontend/src/pages/lists/accounting/AccountingCatalogListPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/lists/accounting/AccountingCatalogListPage.tsx` | migrated (verify-step 1103) |
 | `apps/frontend/src/pages/lists/accounting/DetailTypesListPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/lists/accounting/DetailTypesListPage.tsx` | migrated (verify-step 1104) — display-only; owner-greenlit UI-only migration |
 | `apps/frontend/src/pages/lists/accounting/QBOBulkLinkPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/components/QboSyncHealthCard.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/dispatch/DispatchCatalogListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/driver/DriverCatalogListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/drivers/DriversReferenceCatalogPage.tsx` | financial-hold |
-| `apps/frontend/src/pages/lists/maintenance/OemPartsCatalog.tsx` | financial-hold |
+| `apps/frontend/src/pages/lists/maintenance/OemPartsCatalog.tsx` | migrated (verify-step 1105) — owner-greenlit UI-only; `verify-oem-parts-catalog-uses-paritytable.mjs` |
 | `apps/frontend/src/pages/lists/names/NamesMasterHub.tsx` | financial-hold |
 
 ### pages/maintenance (18)
@@ -759,7 +763,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/profitability/ByLoadView.tsx` | migrated (verify-step 1099) |
 | `apps/frontend/src/pages/profitability/ByLaneView.tsx` | migrated (verify-step 1098) |
 | `apps/frontend/src/pages/profitability/ByLoadView.tsx` | financial-hold |
-| `apps/frontend/src/pages/profitability/ByTypeView.tsx` | financial-hold |
+| `apps/frontend/src/pages/profitability/ByTypeView.tsx` | migrated (verify-step 1100) |
 
 ### pages/qbo (1) — financial-hold
 

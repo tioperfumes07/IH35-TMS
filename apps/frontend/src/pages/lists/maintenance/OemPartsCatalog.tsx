@@ -9,6 +9,7 @@ import {
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { ListsSubNav } from "../ListsSubNav";
@@ -19,6 +20,36 @@ function formatCost(value: string | null) {
   if (Number.isNaN(num)) return value;
   return `$${num.toFixed(2)}`;
 }
+
+const COLUMNS: Array<ParityColumn<OemPartRow>> = [
+  { key: "brand", label: "Brand", sortable: true },
+  {
+    key: "oem_part_number",
+    label: "OEM Part #",
+    sortable: true,
+    cellClass: "text-xs font-medium tracking-normal [font-variant-ligatures:none]",
+    render: (row) => row.oem_part_number || "—",
+  },
+  { key: "part_name", label: "Name", sortable: true },
+  { key: "category", label: "Category", sortable: true },
+  {
+    key: "default_supplier",
+    label: "Default Supplier",
+    sortable: true,
+    render: (row) => row.default_supplier || "—",
+  },
+  {
+    key: "unit_cost_usd_typical",
+    label: "Typical Cost",
+    sortable: true,
+    sortValue: (row) => {
+      if (!row.unit_cost_usd_typical) return null;
+      const num = Number(row.unit_cost_usd_typical);
+      return Number.isNaN(num) ? row.unit_cost_usd_typical : num;
+    },
+    render: (row) => formatCost(row.unit_cost_usd_typical),
+  },
+];
 
 function OemPartsCreateModal({
   open,
@@ -154,12 +185,6 @@ export function OemPartsCatalog() {
     return [...new Set(fromApi)].sort();
   }, [brandsQuery.data?.rows]);
 
-  const emptyText = useMemo(() => {
-    if (query.isLoading) return "Loading OEM part templates...";
-    if (rows.length > 0) return "";
-    return "No OEM part templates found.";
-  }, [query.isLoading, rows.length]);
-
   return (
     <div className="space-y-3">
       <ListsSubNav />
@@ -219,35 +244,15 @@ export function OemPartsCatalog() {
         Fleet brands only (from trucks, trailers, and reefers in your fleet)
       </label>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
-            <tr>
-              <th className="px-3 py-2 text-left">Brand</th>
-              <th className="px-3 py-2 text-left">OEM Part #</th>
-              <th className="px-3 py-2 text-left">Name</th>
-              <th className="px-3 py-2 text-left">Category</th>
-              <th className="px-3 py-2 text-left">Default Supplier</th>
-              <th className="px-3 py-2 text-left">Typical Cost</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row: OemPartRow) => (
-              <tr key={row.id} className="border-t border-gray-100 hover:bg-gray-50">
-                <td className="px-3 py-2">{row.brand}</td>
-                <td className="px-3 py-2 text-xs font-medium tracking-normal [font-variant-ligatures:none]">
-                  {row.oem_part_number || "—"}
-                </td>
-                <td className="px-3 py-2">{row.part_name}</td>
-                <td className="px-3 py-2">{row.category}</td>
-                <td className="px-3 py-2">{row.default_supplier || "—"}</td>
-                <td className="px-3 py-2">{formatCost(row.unit_cost_usd_typical)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {emptyText ? <div className="px-3 py-6 text-sm text-gray-500">{emptyText}</div> : null}
-      </div>
+      <ParityTable<OemPartRow>
+        columns={COLUMNS}
+        rows={rows}
+        rowKey={(row) => row.id}
+        loading={query.isLoading}
+        emptyText="No OEM part templates found."
+        storageKey="lists-oem-parts-catalog"
+        tableTestId="oem-parts-catalog-table"
+      />
 
       <OemPartsCreateModal
         open={modalOpen}
