@@ -1,3 +1,5 @@
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+
 interface ByCustomerViewProps {
   filters: {
     dateFrom: string;
@@ -6,6 +8,31 @@ interface ByCustomerViewProps {
   };
 }
 
+type CustomerProfitabilityRow = {
+  customer: string;
+  loads: string;
+  miles: string;
+  rev_per_mile: string;
+  cost_per_mile: string;
+  margin_per_mile: string;
+  total_margin: string;
+};
+
+const COLUMNS: Array<ParityColumn<CustomerProfitabilityRow>> = [
+  { key: "customer", label: "Customer" },
+  { key: "loads", label: "Loads", className: "text-right" },
+  { key: "miles", label: "Miles", className: "text-right" },
+  { key: "rev_per_mile", label: "Rev/Mi", className: "text-right" },
+  { key: "cost_per_mile", label: "Cost/Mi", className: "text-right" },
+  { key: "margin_per_mile", label: "Margin/Mi", className: "text-right" },
+  { key: "total_margin", label: "Total Margin", className: "text-right" },
+];
+
+// Stub view — no data source is wired yet (module unrouted; see stub-inventory recon).
+// The former hand-rolled table rendered a single hardcoded "No data loaded" placeholder
+// row, which is expressed here as the ParityTable empty state. No amounts are computed.
+const ROWS: CustomerProfitabilityRow[] = [];
+
 export function ByCustomerView({ filters }: ByCustomerViewProps) {
   return (
     <div className="rounded-sm border border-gray-200 bg-white p-6">
@@ -13,31 +40,15 @@ export function ByCustomerView({ filters }: ByCustomerViewProps) {
       <p className="text-sm text-gray-500">
         Customer profitability view for {filters.dateFrom} to {filters.dateTo}.
       </p>
-      <div className="overflow-x-auto">
-      <table className="mt-4 w-full text-sm">
-        <thead>
-          <tr className="border-b">
-            <th className="text-left py-2">Customer</th>
-            <th className="text-right py-2">Loads</th>
-            <th className="text-right py-2">Miles</th>
-            <th className="text-right py-2">Rev/Mi</th>
-            <th className="text-right py-2">Cost/Mi</th>
-            <th className="text-right py-2">Margin/Mi</th>
-            <th className="text-right py-2">Total Margin</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr className="border-b">
-            <td className="py-2 text-gray-500 italic">No data loaded</td>
-            <td className="py-2 text-right">-</td>
-            <td className="py-2 text-right">-</td>
-            <td className="py-2 text-right">-</td>
-            <td className="py-2 text-right">-</td>
-            <td className="py-2 text-right">-</td>
-            <td className="py-2 text-right">-</td>
-          </tr>
-        </tbody>
-      </table>
+      <div className="mt-4">
+        <ParityTable
+          columns={COLUMNS}
+          rows={ROWS}
+          rowKey={(row) => row.customer}
+          storageKey="profitability-by-customer"
+          tableTestId="profitability-by-customer-table"
+          emptyText="No data loaded"
+        />
       </div>
     </div>
   );

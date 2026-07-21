@@ -754,8 +754,10 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/profitability/ByCustomerView.tsx` | financial-hold |
+| `apps/frontend/src/pages/profitability/ByCustomerView.tsx` | migrated (verify-step 1097) |
 | `apps/frontend/src/pages/profitability/ByLaneView.tsx` | financial-hold |
+| `apps/frontend/src/pages/profitability/ByLoadView.tsx` | migrated (verify-step 1099) |
+| `apps/frontend/src/pages/profitability/ByLaneView.tsx` | migrated (verify-step 1098) |
 | `apps/frontend/src/pages/profitability/ByLoadView.tsx` | financial-hold |
 | `apps/frontend/src/pages/profitability/ByTypeView.tsx` | financial-hold |
 

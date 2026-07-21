@@ -1,3 +1,5 @@
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+
 interface ByLaneViewProps {
   filters: {
     dateFrom: string;
@@ -7,39 +9,45 @@ interface ByLaneViewProps {
   };
 }
 
+type LaneRow = {
+  lane: string;
+  loads: string;
+  miles: string;
+  revPerMile: string;
+  costPerMile: string;
+  marginPerMile: string;
+  totalMargin: string;
+};
+
+const COLUMNS: Array<ParityColumn<LaneRow>> = [
+  { key: "lane", label: "Lane", sortable: true },
+  { key: "loads", label: "Loads", sortable: true, className: "text-right" },
+  { key: "miles", label: "Miles", sortable: true, className: "text-right" },
+  { key: "revPerMile", label: "Rev/Mi", sortable: true, className: "text-right" },
+  { key: "costPerMile", label: "Cost/Mi", sortable: true, className: "text-right" },
+  { key: "marginPerMile", label: "Margin/Mi", sortable: true, className: "text-right" },
+  { key: "totalMargin", label: "Total Margin", sortable: true, className: "text-right" },
+];
+
 export function ByLaneView({ filters }: ByLaneViewProps) {
+  // Display-only stub (no data fetch wired yet) — rows stay empty until the
+  // profitability engine feed is connected; ParityTable renders the empty state.
+  const rows: LaneRow[] = [];
+
   return (
     <div className="rounded-sm border border-gray-200 bg-white p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">By Lane</h3>
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-gray-500 mb-4">
         Lane profitability view for {filters.dateFrom} to {filters.dateTo}.
       </p>
-      <div className="overflow-x-auto">
-      <table className="mt-4 w-full text-sm">
-        <thead>
-          <tr className="border-b">
-            <th className="text-left py-2">Lane</th>
-            <th className="text-right py-2">Loads</th>
-            <th className="text-right py-2">Miles</th>
-            <th className="text-right py-2">Rev/Mi</th>
-            <th className="text-right py-2">Cost/Mi</th>
-            <th className="text-right py-2">Margin/Mi</th>
-            <th className="text-right py-2">Total Margin</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr className="border-b">
-            <td className="py-2 text-gray-500 italic">No data loaded</td>
-            <td className="py-2 text-right">-</td>
-            <td className="py-2 text-right">-</td>
-            <td className="py-2 text-right">-</td>
-            <td className="py-2 text-right">-</td>
-            <td className="py-2 text-right">-</td>
-            <td className="py-2 text-right">-</td>
-          </tr>
-        </tbody>
-      </table>
-      </div>
+      <ParityTable<LaneRow>
+        columns={COLUMNS}
+        rows={rows}
+        rowKey={(row) => row.lane}
+        storageKey="profitability-by-lane"
+        tableTestId="profitability-by-lane-table"
+        emptyText="No data loaded"
+      />
     </div>
   );
 }
