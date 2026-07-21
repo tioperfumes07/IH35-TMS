@@ -114,6 +114,17 @@ export type ParityTableProps<T> = {
   sortKey?: string;
   sortDirection?: "asc" | "desc";
   onSortChange?: (key: string, direction: "asc" | "desc") => void;
+  /**
+   * OPTIONAL external-sort passthrough (ParityTable Phase A4).
+   * Default "internal" (current behavior): when sortKey is set, ParityTable sorts rows itself.
+   * "external": ParityTable NEVER reorders rows — it only paints the sort indicator from
+   * sortKey/sortDirection and fires onSortChange on header clicks. Caller owns the order
+   * (server-side sort, or a pre-sorted pipeline like bankTxnSortGroup's sort→group→page).
+   * Only meaningful with controlled sort (onSortChange present) — external mode requires
+   * controlled sort; if onSortChange is absent, "external" falls back to "internal" so an
+   * uncontrolled table can never paint a sort state nobody applied.
+   */
+  sortMode?: "internal" | "external";
 
   /**
    * OPTIONAL controlled row-expansion (ParityTable Phase A1) — mirrors the controlled-sort
@@ -258,6 +269,7 @@ export function ParityTable<T>({
   sortKey: controlledSortKey,
   sortDirection: controlledSortDirection,
   onSortChange,
+  sortMode = "internal",
   expandedKeys: controlledExpandedKeys,
   onExpandedChange,
   expandMode = "multi",
@@ -271,6 +283,9 @@ export function ParityTable<T>({
   const persisted = useMemo(() => loadPersisted(storageKey), [storageKey]);
 
   const isSortControlled = onSortChange != null;
+  // Phase A4: external sort passthrough REQUIRES controlled sort — without onSortChange the
+  // caller could never apply an order, so "external" falls back to today's internal sort.
+  const isSortExternal = sortMode === "external" && isSortControlled;
   const [internalSortKey, setInternalSortKey] = useState<string>("");
   const [internalSortDirection, setInternalSortDirection] = useState<"asc" | "desc">("asc");
   const sortKey = isSortControlled ? controlledSortKey ?? "" : internalSortKey;
@@ -332,6 +347,9 @@ export function ParityTable<T>({
   const visibleColumns = columns.filter((c) => c.alwaysVisible || !hidden.has(String(c.key)));
 
   const sortedRows = useMemo(() => {
+    // Phase A4 external passthrough: identity — the caller owns row order (server-side sort or a
+    // pre-sorted pipeline like bankTxnSortGroup). No copy, no sort; indicator + onSortChange only.
+    if (isSortExternal) return rows;
     if (!sortKey) return rows;
     const column = columns.find((c) => String(c.key) === sortKey);
     const extract = (row: T): string | number | null | undefined =>
@@ -352,7 +370,7 @@ export function ParityTable<T>({
       return sortDirection === "asc" ? cmp : -cmp;
     });
     return copy;
-  }, [rows, columns, sortKey, sortDirection]);
+  }, [rows, columns, sortKey, sortDirection, isSortExternal]);
 
   const total = sortedRows.length;
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
