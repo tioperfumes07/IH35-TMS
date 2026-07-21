@@ -709,7 +709,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/lists/accounting/DetailTypesListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/accounting/QBOBulkLinkPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/components/QboSyncHealthCard.tsx` | financial-hold |
-| `apps/frontend/src/pages/lists/dispatch/DispatchCatalogListPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/lists/dispatch/DispatchCatalogListPage.tsx` | migrated — display-only ParityTable migration (owner greenlit); `verify-dispatch-catalog-list-uses-paritytable.mjs` via verify-step 1106 |
 | `apps/frontend/src/pages/lists/driver/DriverCatalogListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/drivers/DriversReferenceCatalogPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/maintenance/OemPartsCatalog.tsx` | financial-hold |
