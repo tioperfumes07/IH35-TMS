@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { DriverCatalogRow } from "../../../api/catalogs-driver";
 import { Button } from "../../../components/Button";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { DriverCatalogModal, type DriverCatalogClient } from "./DriverCatalogModal";
@@ -26,6 +27,30 @@ function statusPillClass(isActive: boolean) {
   return isActive ? "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700" : "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
 }
 
+const CATALOG_COLUMNS: Array<ParityColumn<DriverCatalogRow>> = [
+  {
+    key: "code",
+    label: "Code",
+    sortable: true,
+    render: (row) => <span className="text-xs font-medium tracking-normal [font-variant-ligatures:none]">{row.code}</span>,
+  },
+  { key: "display_name", label: "Display Name", sortable: true },
+  {
+    key: "description",
+    label: "Description",
+    sortable: true,
+    render: (row) => <>{row.description || "—"}</>,
+  },
+  { key: "sort_order", label: "Order", sortable: true },
+  {
+    key: "is_active",
+    label: "Status",
+    sortable: true,
+    sortValue: (row) => (row.is_active ? "Active" : "Inactive"),
+    render: (row) => <span className={statusPillClass(row.is_active)}>{row.is_active ? "Active" : "Inactive"}</span>,
+  },
+];
+
 export function DriverCatalogListPage({ client, displayName, breadcrumbPath }: Props) {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -43,12 +68,6 @@ export function DriverCatalogListPage({ client, displayName, breadcrumbPath }: P
 
   const rows = query.data?.rows ?? [];
   const total = query.data?.total ?? 0;
-
-  const emptyText = useMemo(() => {
-    if (query.isLoading) return `Loading ${displayName.toLowerCase()}...`;
-    if (rows.length > 0) return "";
-    return `No ${displayName.toLowerCase()} found.`;
-  }, [displayName, query.isLoading, rows.length]);
 
   return (
     <div className="space-y-3">
@@ -80,33 +99,20 @@ export function DriverCatalogListPage({ client, displayName, breadcrumbPath }: P
         </SelectCombobox>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
-            <tr>
-              <th className="px-3 py-2 text-left">Code</th>
-              <th className="px-3 py-2 text-left">Display Name</th>
-              <th className="px-3 py-2 text-left">Description</th>
-              <th className="px-3 py-2 text-left">Order</th>
-              <th className="px-3 py-2 text-left">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id} className="cursor-pointer border-t border-gray-100 hover:bg-gray-50" onClick={() => { setModalMode("edit"); setSelectedRow(row); setModalOpen(true); }}>
-                <td className="px-3 py-2 text-xs font-medium tracking-normal [font-variant-ligatures:none]">{row.code}</td>
-                <td className="px-3 py-2">{row.display_name}</td>
-                <td className="px-3 py-2">{row.description || "—"}</td>
-                <td className="px-3 py-2">{row.sort_order}</td>
-                <td className="px-3 py-2">
-                  <span className={statusPillClass(row.is_active)}>{row.is_active ? "Active" : "Inactive"}</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {emptyText ? <div className="px-3 py-6 text-sm text-gray-500">{emptyText}</div> : null}
-      </div>
+      <ParityTable
+        columns={CATALOG_COLUMNS}
+        rows={rows}
+        rowKey={(row) => row.id}
+        loading={query.isLoading}
+        emptyText={`No ${displayName.toLowerCase()} found.`}
+        storageKey="driver-catalog-list"
+        tableTestId="driver-catalog-list-table"
+        onRowClick={(row) => {
+          setModalMode("edit");
+          setSelectedRow(row);
+          setModalOpen(true);
+        }}
+      />
 
       <DriverCatalogModal
         open={modalOpen}

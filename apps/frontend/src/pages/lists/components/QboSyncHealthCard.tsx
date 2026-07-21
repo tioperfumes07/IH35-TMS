@@ -1,3 +1,4 @@
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import type { ListsQboSyncHealthRow } from "../../../api/listsHub";
 
 type Props = {
@@ -14,6 +15,25 @@ function driftClass(value: string) {
   return "text-slate-600";
 }
 
+const COLUMNS: Array<ParityColumn<ListsQboSyncHealthRow>> = [
+  { key: "entity", label: "Entity", sortable: true },
+  { key: "local_count", label: "Local", sortable: true, className: "text-right" },
+  {
+    key: "qbo_count",
+    label: "QBO",
+    sortable: true,
+    className: "text-right",
+    render: (row) => row.qbo_count ?? "—",
+  },
+  {
+    key: "drift",
+    label: "Drift",
+    sortable: true,
+    className: "text-right",
+    render: (row) => <span className={`font-semibold ${driftClass(row.drift)}`}>{row.drift}</span>,
+  },
+];
+
 export function QboSyncHealthCard({ rows, onForceSync, syncing }: Props) {
   return (
     <div className="rounded-sm border border-slate-200 bg-white p-3">
@@ -23,27 +43,14 @@ export function QboSyncHealthCard({ rows, onForceSync, syncing }: Props) {
           {syncing ? "Starting..." : "Force QBO Sync"}
         </button>
       </div>
-      <table className="min-w-full text-xs">
-        <thead className="bg-slate-100 text-slate-600">
-          <tr>
-            <th className="px-2 py-1 text-left">Entity</th>
-            <th className="px-2 py-1 text-right">Local</th>
-            <th className="px-2 py-1 text-right">QBO</th>
-            <th className="px-2 py-1 text-right">Drift</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.entity} className="border-t border-slate-100">
-              <td className="px-2 py-1">{row.entity}</td>
-              <td className="px-2 py-1 text-right">{row.local_count}</td>
-              <td className="px-2 py-1 text-right">{row.qbo_count ?? "—"}</td>
-              <td className={`px-2 py-1 text-right font-semibold ${driftClass(row.drift)}`}>{row.drift}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <ParityTable<ListsQboSyncHealthRow>
+        columns={COLUMNS}
+        rows={rows}
+        rowKey={(row) => row.entity}
+        storageKey="lists-qbo-sync-health"
+        tableTestId="lists-qbo-sync-health-table"
+        emptyText="No QBO sync health rows."
+      />
     </div>
   );
 }
-

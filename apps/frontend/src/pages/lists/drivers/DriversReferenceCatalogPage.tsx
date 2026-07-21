@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { ApiError } from "../../../api/client";
 import type { DriversReferenceCatalogRow } from "../../../api/lists-drivers-catalogs";
 import { Button } from "../../../components/Button";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
-import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { ListErrorState } from "../../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { ListsSubNav } from "../ListsSubNav";
 import { DriversReferenceCatalogModal, type DriversReferenceCatalogClient } from "./DriversReferenceCatalogModal";
@@ -47,12 +49,6 @@ export function DriversReferenceCatalogPage({ client, displayName, catalogKey }:
 
   const total = query.data?.total_count ?? 0;
 
-  const emptyText = useMemo(() => {
-    if (query.isLoading) return `Loading ${displayName.toLowerCase()}...`;
-    if (rows.length > 0) return "";
-    return `No ${displayName.toLowerCase()} found.`;
-  }, [displayName, query.isLoading, rows.length]);
-
   async function toggleArchive(row: DriversReferenceCatalogRow) {
     if (row.archived_at) {
       await client.restore(row.id);
@@ -61,6 +57,37 @@ export function DriversReferenceCatalogPage({ client, displayName, catalogKey }:
     }
     void query.refetch();
   }
+
+  const columns: Array<ParityColumn<DriversReferenceCatalogRow>> = [
+    {
+      key: "code",
+      label: "Code",
+      sortable: true,
+      render: (row) => (
+        <span className="text-xs font-medium tracking-normal [font-variant-ligatures:none]">{row.code}</span>
+      ),
+    },
+    { key: "label", label: "Label", sortable: true },
+    { key: "sort_order", label: "Sort Order", sortable: true },
+    {
+      key: "archived_at",
+      label: "Archived",
+      sortable: true,
+      sortValue: (row) => (row.archived_at ? "Archived" : "Active"),
+      render: (row) => (
+        <span className={archivedPillClass(Boolean(row.archived_at))}>{row.archived_at ? "Archived" : "Active"}</span>
+      ),
+    },
+    {
+      key: "actions",
+      label: "Actions",
+      render: (row) => (
+        <Button variant="secondary" onClick={() => void toggleArchive(row)}>
+          {row.archived_at ? "Unarchive" : "Archive"}
+        </Button>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-3">
@@ -74,7 +101,6 @@ export function DriversReferenceCatalogPage({ client, displayName, catalogKey }:
           <Button onClick={() => setModalOpen(true)}>+ Create</Button>
         }
       />
-      {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
         <input
@@ -94,37 +120,24 @@ export function DriversReferenceCatalogPage({ client, displayName, catalogKey }:
         </SelectCombobox>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
-            <tr>
-              <th className="px-3 py-2 text-left">Code</th>
-              <th className="px-3 py-2 text-left">Label</th>
-              <th className="px-3 py-2 text-left">Sort Order</th>
-              <th className="px-3 py-2 text-left">Archived</th>
-              <th className="px-3 py-2 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id} className="border-t border-gray-100 hover:bg-gray-50">
-                <td className="px-3 py-2 text-xs font-medium tracking-normal [font-variant-ligatures:none]">{row.code}</td>
-                <td className="px-3 py-2">{row.label}</td>
-                <td className="px-3 py-2">{row.sort_order}</td>
-                <td className="px-3 py-2">
-                  <span className={archivedPillClass(Boolean(row.archived_at))}>{row.archived_at ? "Archived" : "Active"}</span>
-                </td>
-                <td className="px-3 py-2">
-                  <Button variant="secondary" onClick={() => void toggleArchive(row)}>
-                    {row.archived_at ? "Unarchive" : "Archive"}
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {emptyText ? <div className="px-3 py-6 text-sm text-gray-500">{emptyText}</div> : null}
-      </div>
+      {query.isError ? (
+        <ListErrorState
+          title={`Couldn't load ${displayName.toLowerCase()}`}
+          status={query.error instanceof ApiError ? query.error.status : 0}
+          message={(query.error as Error)?.message}
+          onRetry={() => void query.refetch()}
+        />
+      ) : (
+        <ParityTable<DriversReferenceCatalogRow>
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.id}
+          loading={query.isLoading}
+          emptyText={`No ${displayName.toLowerCase()} found.`}
+          storageKey={`drivers-ref-catalog-${catalogKey}`}
+          tableTestId="drivers-reference-catalog-table"
+        />
+      )}
 
       <DriversReferenceCatalogModal
         open={modalOpen}

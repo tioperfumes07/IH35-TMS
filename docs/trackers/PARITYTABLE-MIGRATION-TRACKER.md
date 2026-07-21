@@ -713,11 +713,17 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/lists/accounting/DetailTypesListPage.tsx` | migrated (verify-step 1104) — display-only; owner-greenlit UI-only migration |
 | `apps/frontend/src/pages/lists/accounting/QBOBulkLinkPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/components/QboSyncHealthCard.tsx` | financial-hold |
+| `apps/frontend/src/pages/lists/dispatch/DispatchCatalogListPage.tsx` | migrated — display-only ParityTable migration (owner greenlit); `verify-dispatch-catalog-list-uses-paritytable.mjs` via verify-step 1106 |
+| `apps/frontend/src/pages/lists/components/QboSyncHealthCard.tsx` | migrated (verify-step 1110) |
 | `apps/frontend/src/pages/lists/dispatch/DispatchCatalogListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/driver/DriverCatalogListPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/lists/dispatch/DispatchCatalogListPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/lists/driver/DriverCatalogListPage.tsx` | done — owner-greenlit UI-only migration; columns Code/Display Name/Description/Order/Status preserved; `verify-driver-catalog-list-uses-paritytable.mjs` via verify-step 1107 |
 | `apps/frontend/src/pages/lists/drivers/DriversReferenceCatalogPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/lists/maintenance/OemPartsCatalog.tsx` | migrated (verify-step 1105) — owner-greenlit UI-only; `verify-oem-parts-catalog-uses-paritytable.mjs` |
-| `apps/frontend/src/pages/lists/names/NamesMasterHub.tsx` | financial-hold |
+| `apps/frontend/src/pages/lists/drivers/DriversReferenceCatalogPage.tsx` | migrated (verify-step 1108) |
+| `apps/frontend/src/pages/lists/maintenance/OemPartsCatalog.tsx` | financial-hold |
+| `apps/frontend/src/pages/lists/names/NamesMasterHub.tsx` | migrated — read-only navigator results grid to ParityTable + ListErrorState (display-only; Open button preserved); `verify-names-master-hub-uses-paritytable.mjs` via verify-step 1109 |
 
 ### pages/maintenance (18)
 
@@ -752,7 +758,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 
 | File | Status |
 | --- | --- |
-| `apps/frontend/src/pages/payroll-integration/PayrollAggregateTable.tsx` | financial-hold |
+| `apps/frontend/src/pages/payroll-integration/PayrollAggregateTable.tsx` | migrated (verify-step 1111) |
 
 ### pages/profitability (4) — financial-hold
 

@@ -9,10 +9,11 @@ import type {
 } from "../../../api/catalogs-dispatch";
 import { Button } from "../../../components/Button";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
+import { ListErrorState } from "../../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { CatalogEntryModal } from "./CatalogEntryModal";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
-import { useListState } from "../../../components/list-state";
 
 type StatusFilter = "active" | "inactive" | "all";
 
@@ -44,6 +45,42 @@ function statusPill(isActive: boolean) {
     ? "inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700"
     : "inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600";
 }
+
+// Column order preserved 1:1 from the former hand-rolled table: Code · Display Name · Desc · Order · Status.
+const COLUMNS: Array<ParityColumn<DispatchCatalogRow>> = [
+  {
+    key: "code",
+    label: "Code",
+    sortable: true,
+    render: (row) => <span className="font-semibold text-slate-800">{row.code}</span>,
+  },
+  {
+    key: "display_name",
+    label: "Display Name",
+    sortable: true,
+    render: (row) => <span className="text-slate-800">{row.display_name}</span>,
+  },
+  {
+    key: "description",
+    label: "Desc",
+    sortable: true,
+    cellClass: "max-w-[320px] truncate text-slate-600",
+    render: (row) => row.description ?? "—",
+  },
+  {
+    key: "sort_order",
+    label: "Order",
+    sortable: true,
+    render: (row) => <span className="text-slate-700">{row.sort_order}</span>,
+  },
+  {
+    key: "is_active",
+    label: "Status",
+    sortable: true,
+    sortValue: (row) => (row.is_active ? 1 : 0),
+    render: (row) => <span className={statusPill(row.is_active)}>{row.is_active ? "Active" : "Inactive"}</span>,
+  },
+];
 
 export function DispatchCatalogListPage({ catalogKey, title, description, client }: Props) {
   const navigate = useNavigate();
@@ -100,7 +137,6 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
 
   const rows = listQuery.data?.rows ?? [];
   const total = listQuery.data?.total ?? 0;
-  const listState = useListState(listQuery, rows.length === 0);
   const isSaving = createMutation.isPending || updateMutation.isPending || deactivateMutation.isPending;
 
   const breadcrumb = useMemo(
@@ -145,55 +181,30 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
         </label>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
-        <table className="min-w-full text-left text-xs">
-          <thead className="bg-slate-50">
-            <tr className="text-slate-600">
-              <th className="px-3 py-2 font-semibold">Code</th>
-              <th className="px-3 py-2 font-semibold">Display Name</th>
-              <th className="px-3 py-2 font-semibold">Desc</th>
-              <th className="px-3 py-2 font-semibold">Order</th>
-              <th className="px-3 py-2 font-semibold">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {listQuery.isLoading ? (
-              <tr>
-                <td className="px-3 py-3 text-slate-500" colSpan={5}>
-                  Loading entries...
-                </td>
-              </tr>
-            ) : null}
-            {listState.isEmpty ? (
-              <tr>
-                <td className="px-3 py-3 text-slate-500" colSpan={5}>
-                  No entries match these filters
-                </td>
-              </tr>
-            ) : null}
-            {rows.map((row) => (
-              <tr
-                key={row.id}
-                className="cursor-pointer border-t border-slate-100 hover:bg-slate-50"
-                onClick={() => {
-                  navigate(`/lists/dispatch/${catalogKey}`);
-                  setCodeError(null);
-                  setActiveRow(row);
-                  setModalMode("edit");
-                }}
-              >
-                <td className="px-3 py-2 font-semibold text-slate-800">{row.code}</td>
-                <td className="px-3 py-2 text-slate-800">{row.display_name}</td>
-                <td className="max-w-[320px] truncate px-3 py-2 text-slate-600">{row.description ?? "—"}</td>
-                <td className="px-3 py-2 text-slate-700">{row.sort_order}</td>
-                <td className="px-3 py-2">
-                  <span className={statusPill(row.is_active)}>{row.is_active ? "Active" : "Inactive"}</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {listQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load catalog entries"
+          status={listQuery.error instanceof ApiError ? listQuery.error.status : 0}
+          message={(listQuery.error as Error | null)?.message}
+          onRetry={() => void listQuery.refetch()}
+        />
+      ) : (
+        <ParityTable
+          rows={rows}
+          columns={COLUMNS}
+          rowKey={(row) => row.id}
+          loading={listQuery.isLoading}
+          emptyText="No entries match these filters"
+          storageKey={`dispatch-catalog-${catalogKey}`}
+          tableTestId="dispatch-catalog-list-table"
+          onRowClick={(row) => {
+            navigate(`/lists/dispatch/${catalogKey}`);
+            setCodeError(null);
+            setActiveRow(row);
+            setModalMode("edit");
+          }}
+        />
+      )}
 
       <div className="text-xs text-slate-500">Total rows: {total}</div>
 
