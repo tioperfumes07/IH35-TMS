@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -13,6 +13,7 @@ import {
   type QboSyncRunStatus,
 } from "../../api/qbo-integration";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
@@ -54,7 +55,6 @@ export function QBOSyncStatusDashboardPage() {
   const [kind, setKind] = useState("");
   const [timeRange, setTimeRange] = useState<"1h" | "24h" | "7d" | "30d">("24h");
   const [search, setSearch] = useState("");
-  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") === "conflicts" ? "conflicts" : "runs";
   const setActiveTab = (next: "runs" | "conflicts") => {
@@ -130,6 +130,91 @@ export function QBOSyncStatusDashboardPage() {
     },
     onError: () => pushToast("Ack failed", "error"),
   });
+
+  const runColumns = useMemo<Array<ParityColumn<QboSyncRunRow>>>(
+    () => [
+      {
+        key: "started_at",
+        label: "Started",
+        sortable: true,
+        render: (r) => r.started_at?.slice(0, 19) ?? "—",
+      },
+      {
+        key: "kind",
+        label: "Kind",
+        sortable: true,
+        cellClass: "font-medium",
+      },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        render: (r) => (
+          <span className={`rounded-sm border px-2 py-0.5 text-[10px] font-semibold ${statusPill(r.status)}`}>{r.status}</span>
+        ),
+      },
+      {
+        key: "retry_count",
+        label: "Retry#",
+        sortable: true,
+        className: "text-right",
+      },
+      {
+        key: "last_error",
+        label: "Last error",
+        cellClass: "max-w-xs truncate text-gray-700",
+        render: (r) => r.last_error ?? "—",
+      },
+      {
+        key: "duration_ms",
+        label: "Duration",
+        sortable: true,
+        className: "text-right",
+        render: (r) => (r.duration_ms != null ? `${r.duration_ms}ms` : "—"),
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        alwaysVisible: true,
+        cellClass: "space-x-1",
+        render: (r) => (
+          <>
+            {r.status === "dead_letter" && (
+              <Button
+                size="sm"
+                loading={retryMut.isPending}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  retryMut.mutate(r.id);
+                }}
+              >
+                Retry now
+              </Button>
+            )}
+            {r.status === "dead_letter" && (
+              <Button
+                size="sm"
+                variant="secondary"
+                loading={dismissMut.isPending}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  dismissMut.mutate(r.id);
+                }}
+              >
+                Dismiss
+              </Button>
+            )}
+            {entityHref(r.entity_kind, r.entity_id) ? (
+              <Link to={entityHref(r.entity_kind, r.entity_id)!} className="text-slate-700 underline" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
+                View entity
+              </Link>
+            ) : null}
+          </>
+        ),
+      },
+    ],
+    [retryMut, dismissMut],
+  );
 
   return (
     <div className="space-y-4 p-4">
@@ -238,90 +323,23 @@ export function QBOSyncStatusDashboardPage() {
       </div>
 
       <div className="grid gap-3 xl:grid-cols-[1fr_320px]">
-        <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
-          {runsQuery.isLoading ? <p className="p-3 text-sm text-gray-500">Loading sync runs…</p> : null}
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-gray-50 text-[11px] font-semibold uppercase text-gray-600">
-              <tr>
-                <th className="px-2 py-2">Started</th>
-                <th className="px-2 py-2">Kind</th>
-                <th className="px-2 py-2">Status</th>
-                <th className="px-2 py-2 text-right">Retry#</th>
-                <th className="px-2 py-2">Last error</th>
-                <th className="px-2 py-2 text-right">Duration</th>
-                <th className="px-2 py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {runs.map((r: QboSyncRunRow) => (
-                <Fragment key={r.id}>
-                  <tr
-                    className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
-                    onClick={() =>
-                      setExpanded((prev) => {
-                        const n = new Set(prev);
-                        if (n.has(r.id)) n.delete(r.id);
-                        else n.add(r.id);
-                        return n;
-                      })
-                    }
-                  >
-                    <td className="px-2 py-2">{r.started_at?.slice(0, 19) ?? "—"}</td>
-                    <td className="px-2 py-2 font-medium">{r.kind}</td>
-                    <td className="px-2 py-2">
-                      <span className={`rounded-sm border px-2 py-0.5 text-[10px] font-semibold ${statusPill(r.status)}`}>{r.status}</span>
-                    </td>
-                    <td className="px-2 py-2 text-right">{r.retry_count}</td>
-                    <td className="max-w-xs truncate px-2 py-2 text-gray-700">{r.last_error ?? "—"}</td>
-                    <td className="px-2 py-2 text-right">{r.duration_ms != null ? `${r.duration_ms}ms` : "—"}</td>
-                    <td className="space-x-1 px-2 py-2">
-                      {r.status === "dead_letter" && (
-                        <Button
-                          size="sm"
-                          loading={retryMut.isPending}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            retryMut.mutate(r.id);
-                          }}
-                        >
-                          Retry now
-                        </Button>
-                      )}
-                      {r.status === "dead_letter" && (
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          loading={dismissMut.isPending}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            dismissMut.mutate(r.id);
-                          }}
-                        >
-                          Dismiss
-                        </Button>
-                      )}
-                      {entityHref(r.entity_kind, r.entity_id) ? (
-                        <Link to={entityHref(r.entity_kind, r.entity_id)!} className="text-slate-700 underline" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-                          View entity
-                        </Link>
-                      ) : null}
-                    </td>
-                  </tr>
-                  {expanded.has(r.id) ? (
-                    <tr className="bg-slate-50">
-                      <td colSpan={7} className="px-3 py-2 font-mono text-[11px] text-gray-800">
-                        <div className="mb-1 font-semibold">Payload / diagnostics</div>
-                        <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all">
-                          {JSON.stringify({ payload: r.payload, stack: r.error_stack }, null, 2)}
-                        </pre>
-                      </td>
-                    </tr>
-                  ) : null}
-                </Fragment>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable
+          rows={runs}
+          columns={runColumns}
+          rowKey={(r) => r.id}
+          loading={runsQuery.isLoading}
+          emptyText="No sync runs found."
+          storageKey="qbo-sync-status-runs"
+          tableTestId="qbo-sync-runs-table"
+          renderExpanded={(r) => (
+            <div className="font-mono text-[11px] text-gray-800">
+              <div className="mb-1 font-semibold">Payload / diagnostics</div>
+              <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all">
+                {JSON.stringify({ payload: r.payload, stack: r.error_stack }, null, 2)}
+              </pre>
+            </div>
+          )}
+        />
 
         <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
           <div className="text-sm font-semibold">Recent alerts (24h)</div>
