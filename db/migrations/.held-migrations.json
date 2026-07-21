@@ -7,7 +7,9 @@
     },
     {
       "file": "202607600000_factoring_balance_invoice_linkage.sql",
-      "requires_held": ["202607340000_je_reversal_linkage.sql"],
+      "requires_held": [
+        "202607340000_je_reversal_linkage.sql"
+      ],
       "held_apply_order": [
         "202607340000_je_reversal_linkage.sql",
         "202607600000_factoring_balance_invoice_linkage.sql"
@@ -301,6 +303,10 @@
     {
       "file": "202607510000_events_audit_log_entity_isolation.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] events.event_log: force RLS + canonical app.operating_company_id policy. public.audit_log: add operating_company_id, best-effort backfill from referenced record tables, enable+force RLS with WORM (SELECT/INSERT only); removed invalid per-partition column-add loop. Owner applies on Neon branch + ledger-backfills."
+    },
+    {
+      "file": "202607680000_bank_tx_capture_fields.sql",
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL] 0441-mod8-tx-fields-captured-not-sent — additive capture-field persistence on banking.bank_transactions (check_number text, categorization_class_id uuid FK catalogs.classes, categorization_location text, is_billable boolean default false, tags text) so the categorize panel's Check no./Class/Location/Billable/Tags survive Post instead of evaporating as a draft-only overlay. ADDITIVE + IDEMPOTENT; nullable/default — no backfill. No GL rows, no flags, no RLS change (columns inherit the table's FORCED RLS + grants). NOT YET applied on prod — GUARD validates on throwaway Postgres apply-twice, owner applies on Neon then ledger-backfills; CI fresh-from-0001 builds the columns."
     }
   ]
 }
