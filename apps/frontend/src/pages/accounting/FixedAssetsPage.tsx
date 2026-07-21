@@ -6,6 +6,8 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { useUrlSort } from "../../hooks/useUrlSort";
+import { ApiError } from "../../api/client";
+import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import {
   getFixedAssets, getFixedAssetDetail,
@@ -211,7 +213,14 @@ export function FixedAssetsPage() {
         <DetailPanel detail={detail} onClose={() => setDetailId(null)} />
       )}
 
-      {isError ? <p className="text-sm text-red-600 py-2 text-center">Failed to load fixed assets.</p> : null}
+      {isError ? (
+        <ListErrorState
+          title="Failed to load fixed assets."
+          status={assetsQuery.error instanceof ApiError ? assetsQuery.error.status : 0}
+          message={(assetsQuery.error as Error | null)?.message}
+          onRetry={() => void assetsQuery.refetch()}
+        />
+      ) : null}
 
       <ParityTable
         columns={columns}
@@ -220,6 +229,7 @@ export function FixedAssetsPage() {
         loading={flagLoading || isPending || (isFetching && items.length === 0)}
         filterBar={filterBar}
         storageKey="fixed-assets-list"
+        tableTestId="fixed-assets-table"
         initialPageSize={limit}
         emptyText="No fixed assets found."
         sortKey={sortKey}
