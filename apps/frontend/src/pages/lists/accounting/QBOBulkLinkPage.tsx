@@ -2,9 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { Button } from "../../../components/Button";
+import { ListErrorState } from "../../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { QboCombobox } from "../../../components/forms/QboCombobox";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { ApiError } from "../../../api/client";
 import { getQboUnlinkedEntities, postQboBulkLink, type UnlinkedEntityRow } from "../../../api/qbo-integration";
 
 type Step = 1 | 2 | 3;
@@ -15,6 +18,10 @@ type RowEdit = UnlinkedEntityRow & {
   qbo_vendor_id: string | null;
   qbo_class_id: string | null;
 };
+
+function unlinkedErrorStatus(error: unknown) {
+  return error instanceof ApiError ? error.status : 0;
+}
 
 export function QBOBulkLinkPage() {
   const { pushToast } = useToast();
@@ -73,6 +80,88 @@ export function QBOBulkLinkPage() {
 
   const acceptedCount = rows.filter((r) => r.accept && (r.qbo_vendor_id || r.qbo_class_id)).length;
 
+  // Display-only ParityTable columns — cell renderers preserve the accept checkbox and the
+  // QboCombobox link controls 1:1 from the former hand-rolled table markup.
+  const columns = useMemo<Array<ParityColumn<RowEdit>>>(
+    () => [
+      {
+        key: "accept",
+        label: "",
+        alwaysVisible: true,
+        render: (r) => (
+          <input
+            type="checkbox"
+            aria-label="Select"
+            checked={r.accept}
+            onChange={(e) =>
+              setRows((prev) =>
+                prev.map((x) => (x.id === r.id && x.entity_kind === r.entity_kind ? { ...x, accept: e.target.checked } : x))
+              )
+            }
+          />
+        ),
+      },
+      {
+        key: "name",
+        label: "Entity",
+        sortable: true,
+        cellClass: "font-medium",
+      },
+      {
+        key: "entity_kind",
+        label: "Kind",
+        sortable: true,
+      },
+      {
+        key: "qbo_vendor_id",
+        label: "QBO vendor",
+        render: (r) =>
+          r.entity_kind === "equipment" ? (
+            <span className="text-gray-400">—</span>
+          ) : (
+            <QboCombobox
+              entityType="vendor"
+              operatingCompanyId={companyId}
+              value={r.qbo_vendor_id}
+              displayValue=""
+              allowFreeText={false}
+              onChange={(id) =>
+                setRows((prev) =>
+                  prev.map((x) => (x.id === r.id && x.entity_kind === r.entity_kind ? { ...x, qbo_vendor_id: id } : x))
+                )
+              }
+            />
+          ),
+      },
+      {
+        key: "qbo_class_id",
+        label: "QBO class",
+        render: (r) => (
+          <QboCombobox
+            entityType="account"
+            operatingCompanyId={companyId}
+            value={r.qbo_class_id}
+            displayValue=""
+            allowFreeText={false}
+            onChange={(id) =>
+              setRows((prev) =>
+                prev.map((x) => (x.id === r.id && x.entity_kind === r.entity_kind ? { ...x, qbo_class_id: id } : x))
+              )
+            }
+          />
+        ),
+      },
+      {
+        key: "match_confidence",
+        label: "Confidence",
+        sortable: true,
+        sortValue: (r) => r.match_confidence,
+        render: (r) => `${(r.match_confidence * 100).toFixed(0)}%`,
+      },
+    ],
+    [companyId]
+  );
+
   return (
     <div className="space-y-4">
       <BackArrowHeader backTo="/lists" breadcrumb={["Lists", "Accounting", "QBO bulk-link"]} title="QBO vendor / class bulk-link" />
@@ -109,7 +198,14 @@ export function QBOBulkLinkPage() {
       {step === 2 ? (
         <div className="space-y-3">
           {unlinkedQuery.isLoading ? <p className="text-sm text-gray-500">Loading suggestions…</p> : null}
-          {unlinkedQuery.isError ? <p className="text-sm text-red-600">Could not load unlinked entities.</p> : null}
+          {unlinkedQuery.isError ? (
+            <ListErrorState
+              title="Could not load unlinked entities."
+              status={unlinkedErrorStatus(unlinkedQuery.error)}
+              message={(unlinkedQuery.error as Error)?.message}
+              onRetry={() => void unlinkedQuery.refetch()}
+            />
+          ) : null}
           {unlinkedQuery.isSuccess && rows.length > 0 ? (
             <>
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -136,72 +232,14 @@ export function QBOBulkLinkPage() {
                 </Button>
               </div>
               <p className="text-xs text-gray-600">Matches use Levenshtein-style confidence on entity names vs QBO archive labels.</p>
-              <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
-                <table className="min-w-full text-left text-xs">
-                  <thead className="bg-gray-50 text-[11px] font-semibold uppercase text-gray-600">
-                    <tr>
-                      <th className="px-2 py-2"><span className="sr-only">Select</span></th>
-                      <th className="px-2 py-2">Entity</th>
-                      <th className="px-2 py-2">Kind</th>
-                      <th className="px-2 py-2">QBO vendor</th>
-                      <th className="px-2 py-2">QBO class</th>
-                      <th className="px-2 py-2">Confidence</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((r) => (
-                      <tr key={`${r.entity_kind}-${r.id}`} className="border-t border-gray-100">
-                        <td className="px-2 py-2 align-top">
-                          <input
-                            type="checkbox"
-                            checked={r.accept}
-                            onChange={(e) =>
-                              setRows((prev) =>
-                                prev.map((x) => (x.id === r.id && x.entity_kind === r.entity_kind ? { ...x, accept: e.target.checked } : x))
-                              )
-                            }
-                          />
-                        </td>
-                        <td className="px-2 py-2 align-top font-medium">{r.name}</td>
-                        <td className="px-2 py-2 align-top">{r.entity_kind}</td>
-                        <td className="px-2 py-2 align-top">
-                          {r.entity_kind === "equipment" ? (
-                            <span className="text-gray-400">—</span>
-                          ) : (
-                            <QboCombobox
-                              entityType="vendor"
-                              operatingCompanyId={companyId}
-                              value={r.qbo_vendor_id}
-                              displayValue=""
-                              allowFreeText={false}
-                              onChange={(id) =>
-                                setRows((prev) =>
-                                  prev.map((x) => (x.id === r.id && x.entity_kind === r.entity_kind ? { ...x, qbo_vendor_id: id } : x))
-                                )
-                              }
-                            />
-                          )}
-                        </td>
-                        <td className="px-2 py-2 align-top">
-                          <QboCombobox
-                            entityType="account"
-                            operatingCompanyId={companyId}
-                            value={r.qbo_class_id}
-                            displayValue=""
-                            allowFreeText={false}
-                            onChange={(id) =>
-                              setRows((prev) =>
-                                prev.map((x) => (x.id === r.id && x.entity_kind === r.entity_kind ? { ...x, qbo_class_id: id } : x))
-                              )
-                            }
-                          />
-                        </td>
-                        <td className="px-2 py-2 align-top">{(r.match_confidence * 100).toFixed(0)}%</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <ParityTable<RowEdit>
+                columns={columns}
+                rows={rows}
+                rowKey={(r) => `${r.entity_kind}-${r.id}`}
+                emptyText="No unlinked entities."
+                storageKey="qbo-bulk-link-unlinked"
+                tableTestId="qbo-bulk-link-table"
+              />
               {withMatches.length > 0 ? (
                 <p className="text-xs text-gray-500">
                   {withMatches.length} row{withMatches.length === 1 ? "" : "s"} with auto suggestions ({noMatches.length} without).
