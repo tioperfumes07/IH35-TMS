@@ -69,7 +69,7 @@ const categorizeBodySchema = z.object({
   // 0441-mod8-tx-fields-captured-not-sent — the categorize panel's remaining QBO-parity capture fields
   // (Check no. / Class / Location / Billable / Tags). Previously captured in the frontend draft and
   // silently dropped on Post; persisted on banking.bank_transactions by held migration
-  // 202607680000_bank_tx_capture_fields.sql. class_id is the real catalogs.classes FK (linkage law —
+  // 202607690000_bank_tx_capture_fields.sql. class_id is the real catalogs.classes FK (linkage law —
   // the label is derived by JOIN, never stored); location + tags are free text (no locations catalog
   // exists today); is_billable pairs with customer_id for billable-to-customer rows.
   check_number: z.string().trim().max(40).optional(),

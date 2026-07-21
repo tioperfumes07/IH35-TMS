@@ -77,7 +77,7 @@ export type PlaidBankTransaction = {
   check_number?: string | null;
   location?: string | null;
   /** 0441-mod8-tx-fields-captured-not-sent — persisted categorize-panel capture fields (held migration
-   *  202607680000_bank_tx_capture_fields): Class (catalogs.classes FK + JOIN-derived label), Location,
+   *  202607690000_bank_tx_capture_fields): Class (catalogs.classes FK + JOIN-derived label), Location,
    *  Billable, Tags now survive Post and hydrate the panel on reload. */
   categorization_class_id?: string | null;
   categorization_class_name?: string | null;
@@ -428,7 +428,7 @@ export function categorizeBankTransaction(
     recover_deduction_type?: string;
     memo?: string;
     // 0441-mod8-tx-fields-captured-not-sent — the panel's remaining capture fields, persisted on
-    // banking.bank_transactions (held migration 202607680000). class_id is the real catalogs.classes FK.
+    // banking.bank_transactions (held migration 202607690000). class_id is the real catalogs.classes FK.
     check_number?: string;
     class_id?: string;
     location?: string;

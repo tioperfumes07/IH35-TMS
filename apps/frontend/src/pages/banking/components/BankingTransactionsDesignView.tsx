@@ -681,7 +681,7 @@ export function BankingTransactionsDesignView({
       toAccountId: "",
       accountId: "",
       // 0441-mod8-tx-fields-captured-not-sent — hydrate the persisted capture fields (held migration
-      // 202607680000) so a categorized row re-opens with what the operator saved, not blanks.
+      // 202607690000) so a categorized row re-opens with what the operator saved, not blanks.
       className: tx.categorization_class_name ?? "",
       classId: tx.categorization_class_id ?? "",
       location: tx.categorization_location ?? "",
@@ -785,7 +785,7 @@ export function BankingTransactionsDesignView({
         memo: draft.memo || undefined,
         // 0441-mod8-tx-fields-captured-not-sent — the panel captured Check no./Class/Location/Billable/
         // Tags but never sent them, so they evaporated on Post. Persisted now (held migration
-        // 202607680000). class_id is the catalogs.classes FK the inline "+ Add new class" links.
+        // 202607690000). class_id is the catalogs.classes FK the inline "+ Add new class" links.
         check_number: draft.checkNo || undefined,
         class_id: draft.classId || undefined,
         location: draft.location || undefined,

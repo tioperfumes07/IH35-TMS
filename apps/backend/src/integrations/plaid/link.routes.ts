@@ -553,7 +553,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           bt.categorization_load_id::text AS categorization_load_id,
           l.load_number AS categorization_load_number,
           -- 0441-mod8-tx-fields-captured-not-sent — persisted capture fields (held migration
-          -- 202607680000): the categorize panel hydrates from these instead of losing them on reload.
+          -- 202607690000): the categorize panel hydrates from these instead of losing them on reload.
           -- Class label derived by JOIN on catalogs.classes (linkage law — FK stored, label never).
           bt.check_number,
           bt.categorization_class_id::text AS categorization_class_id,

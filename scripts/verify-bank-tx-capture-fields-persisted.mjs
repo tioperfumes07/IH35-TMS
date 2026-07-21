@@ -8,7 +8,7 @@
  * evaporated on Post (draft-only overlay, lost on reload).
  *
  * Asserts (static, comment-stripped where noted):
- *   1. Held migration 202607680000_bank_tx_capture_fields.sql exists, adds all 5 columns, carries the
+ *   1. Held migration 202607690000_bank_tx_capture_fields.sql exists, adds all 5 columns, carries the
  *      DO-NOT-RUN-ON-PROD marker, and is registered in db/migrations/.held-migrations.json.
  *   2. categorization.routes.ts: categorizeBodySchema accepts check_number/class_id/location/
  *      is_billable/tags AND the categorize UPDATE writes all 5 persisted columns.
@@ -23,7 +23,7 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 
-const MIGRATION_REL = "db/migrations/202607680000_bank_tx_capture_fields.sql";
+const MIGRATION_REL = "db/migrations/202607690000_bank_tx_capture_fields.sql";
 const HELD_REGISTRY_REL = "db/migrations/.held-migrations.json";
 const ROUTES_REL = "apps/backend/src/banking/categorization.routes.ts";
 const LIST_REL = "apps/backend/src/integrations/plaid/link.routes.ts";
@@ -66,8 +66,8 @@ export function evaluate({ migrationSql, heldRegistryJson, routesSrc, listSrc, v
   } catch {
     failures.push(`${HELD_REGISTRY_REL} — invalid JSON`);
   }
-  if (held && !(held.held ?? []).some((h) => h.file === "202607680000_bank_tx_capture_fields.sql")) {
-    failures.push(`${HELD_REGISTRY_REL} — 202607680000_bank_tx_capture_fields.sql not registered as held`);
+  if (held && !(held.held ?? []).some((h) => h.file === "202607690000_bank_tx_capture_fields.sql")) {
+    failures.push(`${HELD_REGISTRY_REL} — 202607690000_bank_tx_capture_fields.sql not registered as held`);
   }
 
   // 2. Backend categorize route: schema + UPDATE
@@ -180,7 +180,7 @@ function runSelftest() {
       name: "regression: held registration removed",
       mutate: (i) => ({
         ...i,
-        heldRegistryJson: i.heldRegistryJson.replace("202607680000_bank_tx_capture_fields.sql", "0000_gone.sql"),
+        heldRegistryJson: i.heldRegistryJson.replace("202607690000_bank_tx_capture_fields.sql", "0000_gone.sql"),
       }),
       expectPass: false,
     },
