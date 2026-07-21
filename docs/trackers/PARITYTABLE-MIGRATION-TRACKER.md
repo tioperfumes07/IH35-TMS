@@ -516,7 +516,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | --- | --- |
 | `apps/frontend/src/pages/banking/BankAccountDetail.tsx` | financial-hold |
 | `apps/frontend/src/pages/banking/BankTxCategorizationPage.tsx` | financial-hold |
-| `apps/frontend/src/pages/banking/CashGlSetupPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/banking/CashGlSetupPage.tsx` | migrated (verify-step 1156) |
 | `apps/frontend/src/pages/banking/TransfersListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/banking/components/BankingPlaidConnectionsPanel.tsx` | financial-hold |
 | `apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx` | financial-hold |
