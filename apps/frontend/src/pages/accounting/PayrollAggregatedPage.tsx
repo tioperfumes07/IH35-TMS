@@ -1,7 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getAggregatedPayroll, refreshAggregatedPayroll } from "../../api/payrollAggregated";
+import {
+  getAggregatedPayroll,
+  refreshAggregatedPayroll,
+  type AggregatedDriverSettlement,
+  type AggregatedQboW2Run,
+} from "../../api/payrollAggregated";
 import { Button } from "../../components/Button";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
@@ -9,6 +15,47 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
 }
+
+// Display-only ParityTable migration: column order, cell content, amount formatting, and
+// right-alignment preserved 1:1 from the former hand-rolled tables.
+const SETTLEMENT_COLUMNS: Array<ParityColumn<AggregatedDriverSettlement>> = [
+  {
+    key: "pay_period_start",
+    label: "Period",
+    render: (row) => (
+      <>
+        {row.pay_period_start ?? "—"} → {row.pay_period_end ?? "—"}
+      </>
+    ),
+  },
+  { key: "status", label: "Status", render: (row) => row.status ?? "—" },
+  {
+    key: "net_cents",
+    label: "Net",
+    className: "text-right",
+    render: (row) => money(Number(row.net_cents ?? 0)),
+  },
+];
+
+const W2_RUN_COLUMNS: Array<ParityColumn<AggregatedQboW2Run>> = [
+  {
+    key: "qbo_payroll_run_name",
+    label: "Run",
+    render: (row) => row.qbo_payroll_run_name ?? row.qbo_payroll_run_id,
+  },
+  {
+    key: "employee_count",
+    label: "Employees",
+    className: "text-right",
+    render: (row) => row.employee_count ?? 0,
+  },
+  {
+    key: "net_cents",
+    label: "Net",
+    className: "text-right",
+    render: (row) => money(Number(row.net_cents ?? 0)),
+  },
+];
 
 export function PayrollAggregatedPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -53,59 +100,28 @@ export function PayrollAggregatedPage() {
       <div className="grid gap-3 lg:grid-cols-2">
         <section className="rounded-sm border border-gray-200 bg-white p-3">
           <h2 className="mb-2 text-sm font-semibold text-gray-900">Driver settlements (TMS)</h2>
-          {aggregatedQuery.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-xs">
-              <thead className="bg-gray-50 text-gray-600">
-                <tr>
-                  <th className="px-2 py-1.5">Period</th>
-                  <th className="px-2 py-1.5">Status</th>
-                  <th className="px-2 py-1.5 text-right">Net</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(data?.driver_settlements ?? []).map((row) => (
-                  <tr key={row.id} className="border-t border-gray-100">
-                    <td className="px-2 py-1.5">
-                      {row.pay_period_start ?? "—"} → {row.pay_period_end ?? "—"}
-                    </td>
-                    <td className="px-2 py-1.5">{row.status ?? "—"}</td>
-                    <td className="px-2 py-1.5 text-right">{money(Number(row.net_cents ?? 0))}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {!aggregatedQuery.isLoading && (data?.driver_settlements?.length ?? 0) === 0 ? (
-              <p className="mt-2 text-sm text-gray-500">No driver settlements.</p>
-            ) : null}
-          </div>
+          <ParityTable<AggregatedDriverSettlement>
+            columns={SETTLEMENT_COLUMNS}
+            rows={data?.driver_settlements ?? []}
+            rowKey={(row) => row.id}
+            loading={aggregatedQuery.isLoading}
+            emptyText="No driver settlements."
+            storageKey="payroll-aggregated-driver-settlements"
+            tableTestId="payroll-aggregated-driver-settlements-table"
+          />
         </section>
 
         <section className="rounded-sm border border-gray-200 bg-white p-3">
           <h2 className="mb-2 text-sm font-semibold text-gray-900">QBO Payroll W-2 runs</h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-xs">
-              <thead className="bg-gray-50 text-gray-600">
-                <tr>
-                  <th className="px-2 py-1.5">Run</th>
-                  <th className="px-2 py-1.5 text-right">Employees</th>
-                  <th className="px-2 py-1.5 text-right">Net</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(data?.qbo_w2_runs ?? []).map((row) => (
-                  <tr key={row.qbo_payroll_run_id} className="border-t border-gray-100">
-                    <td className="px-2 py-1.5">{row.qbo_payroll_run_name ?? row.qbo_payroll_run_id}</td>
-                    <td className="px-2 py-1.5 text-right">{row.employee_count ?? 0}</td>
-                    <td className="px-2 py-1.5 text-right">{money(Number(row.net_cents ?? 0))}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {!aggregatedQuery.isLoading && (data?.qbo_w2_runs?.length ?? 0) === 0 ? (
-              <p className="mt-2 text-sm text-gray-500">No QBO payroll runs linked yet.</p>
-            ) : null}
-          </div>
+          <ParityTable<AggregatedQboW2Run>
+            columns={W2_RUN_COLUMNS}
+            rows={data?.qbo_w2_runs ?? []}
+            rowKey={(row) => row.qbo_payroll_run_id}
+            loading={aggregatedQuery.isLoading}
+            emptyText="No QBO payroll runs linked yet."
+            storageKey="payroll-aggregated-qbo-w2-runs"
+            tableTestId="payroll-aggregated-qbo-w2-runs-table"
+          />
         </section>
       </div>
     </AccountingSubNavWrapper>
