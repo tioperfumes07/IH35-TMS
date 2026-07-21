@@ -459,7 +459,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/accounting/AccountsPayableAgingPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/AccountsPayableAgingPage.tsx` | migrated (verify-step 1147) — display-only; owner-greenlit UI-only migration; By Vendor Type grouped rollup stays hand-rolled (no ParityTable grouped-subtotal grammar) |
 | `apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx` | financial-hold |
-| `apps/frontend/src/pages/accounting/BillsPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/accounting/BillsPage.tsx` | migrated (verify-step 1170) — display-only; owner-greenlit UI-only migration; read-only list, inline Allocate action preserved; payments sub-table → ParityTable |
 | `apps/frontend/src/pages/accounting/CashForecastPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/CoaRolesPage.tsx` | migrated (verify-step 1144) — display-only; owner-greenlit UI-only migration |
 | `apps/frontend/src/pages/accounting/CreateMultipleBillsPage.tsx` | financial-hold |
