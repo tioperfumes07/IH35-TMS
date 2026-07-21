@@ -21,6 +21,15 @@ const ROLE_LABELS: Record<CoaRole, string> = {
   sales_tax_payable: "Sales tax payable",
   cash_basis_adjustment_equity: "Cash basis adjustment equity",
   retained_earnings: "Retained earnings",
+  driver_pay_expense: "Driver pay expense",
+  driver_payroll_clearing: "Driver payroll clearing",
+  reimbursement_expense: "Reimbursement expense",
+  advance_recovery: "Advance recovery",
+  damage_recovery: "Damage recovery",
+  lease_recovery: "Lease recovery",
+  insurance_recovery: "Insurance recovery",
+  fuel_advance_recovery: "Fuel advance recovery",
+  other_recovery: "Other recovery",
 };
 
 export function CoaRolesPage() {

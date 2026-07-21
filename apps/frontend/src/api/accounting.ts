@@ -1111,6 +1111,17 @@ export const COA_ROLE_VALUES = [
   "sales_tax_payable",
   "cash_basis_adjustment_equity",
   "retained_earnings",
+  // Settlement / driver / fuel poster roles — designatable on the CoA Roles page so the owner can map
+  // each to a GL account (no migration seed). Backend enum: accounting/coa-roles/resolver.service.ts.
+  "driver_pay_expense",
+  "driver_payroll_clearing",
+  "reimbursement_expense",
+  "advance_recovery",
+  "damage_recovery",
+  "lease_recovery",
+  "insurance_recovery",
+  "fuel_advance_recovery",
+  "other_recovery",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];

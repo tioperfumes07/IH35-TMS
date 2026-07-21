@@ -15,8 +15,11 @@ import {
   ensureIntegrationPrerequisites,
   releaseGlobalAccountRoleBindingsLock,
   restoreGlobalAccountRoleBindings,
+  restoreGlobalCoaRoleDesignations,
   saveGlobalAccountRoleBindings,
+  saveGlobalCoaRoleDesignations,
   type SavedAccountRoleBinding,
+  type SavedCoaRoleDesignation,
 } from "../../../../test-helpers/db-fixture.js";
 import { postSettlementToGl, type SettlementPostingResult } from "../settlement-posting.service.js";
 import { SettlementPostingError } from "../settlement-posting.math.js";
@@ -42,6 +45,10 @@ describeIntegration("FIN-18 settlement GL posting (real Postgres)", () => {
   // settlement-payrun-close for save → bind → tests → fail-loud restore.
   const roleKeys = ["driver_pay_expense", "driver_payroll_clearing", "damage_recovery", "reimbursement_expense"] as const;
   let priorGlobalBindings: SavedAccountRoleBinding[] = [];
+  // PRIMARY (accounting.chart_of_accounts_roles) snapshot for the SHARED TRANSP company — saved before this
+  // suite designates the settlement roles, restored fail-loud in afterAll so sibling suites see TRANSP's
+  // real designations. Serialized by the same GLOBAL_ACCOUNT_ROLE_BINDINGS_TEST_LOCK_KEY as the legacy save.
+  let priorCoaDesignations: SavedCoaRoleDesignation[] = [];
   let heldGlobalBindingsLock = false;
   let templateId: string;
   const drivers: string[] = [];
@@ -181,10 +188,24 @@ describeIntegration("FIN-18 settlement GL posting (real Postgres)", () => {
       await mk(acct.damageRecovery, "DMGR", "Expense");
       await mk(acct.reimb, "RMB", "Expense");
       priorGlobalBindings = await saveGlobalAccountRoleBindings(db, roleKeys);
-      const bind = async (roleKey: string, accountId: string) =>
-        db.query(
-          // Must set operating_company_id — resolveRoleAccountByKey requires entity match (or NULL).
-          // Leaving a sibling suite's ISO-company id on the row makes TRANSP resolution fail closed.
+      priorCoaDesignations = await saveGlobalCoaRoleDesignations(db, companyId, roleKeys);
+      const bind = async (roleKey: string, accountId: string) => {
+        // PRIMARY designation (accounting.chart_of_accounts_roles) — the tier the resolver reads FIRST.
+        // Proves the settlement poster now resolves driver_pay_expense / driver_payroll_clearing /
+        // damage_recovery / reimbursement_expense from the PRIMARY CoA-roles table (not the legacy binding).
+        await db.query(
+          `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
+           VALUES ($1::uuid,$2,$3::uuid,true)
+           ON CONFLICT (operating_company_id, role) WHERE is_active
+             DO UPDATE SET account_id = EXCLUDED.account_id, is_active = true`,
+          [companyId, roleKey, accountId]
+        );
+        // LEGACY binding kept so the shared catalogs.account_role_bindings lock contract with sibling suites
+        // (settlement-bill-payment / settlement-payrun-close) is unchanged (Rule 07 never-delete). It also
+        // exercises the resolver's legacy FALLBACK tier if the primary designation is ever absent.
+        // Must set operating_company_id — the resolver requires entity match (or NULL).
+        // Leaving a sibling suite's ISO-company id on the row makes TRANSP resolution fail closed.
+        await db.query(
           `INSERT INTO catalogs.account_role_bindings (role_key, account_id, operating_company_id)
            VALUES ($1,$2::uuid,$3::uuid)
            ON CONFLICT (role_key) DO UPDATE
@@ -193,6 +214,7 @@ describeIntegration("FIN-18 settlement GL posting (real Postgres)", () => {
                  deactivated_at = NULL`,
           [roleKey, accountId, companyId]
         );
+      };
       await bind("driver_pay_expense", acct.driverPay);
       await bind("driver_payroll_clearing", acct.netClearing);
       await bind("damage_recovery", acct.damageRecovery);
@@ -252,6 +274,8 @@ describeIntegration("FIN-18 settlement GL posting (real Postgres)", () => {
       // Restore GLOBAL bindings (do NOT DELETE) — fail-loud, own transaction.
       await bypass(async () => {
         await restoreGlobalAccountRoleBindings(db, roleKeys, priorGlobalBindings, companyId);
+        // Restore PRIMARY designations on the shared TRANSP company to their exact prior state — fail-loud.
+        await restoreGlobalCoaRoleDesignations(db, companyId, roleKeys, priorCoaDesignations);
       });
     } catch (err) {
       restoreError = err;

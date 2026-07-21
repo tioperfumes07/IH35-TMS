@@ -1,6 +1,7 @@
 import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { writeTransactionSourceLink } from "./accounting-spine-emit.js";
+import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 
 function isDec31(isoDate: string) {
   return isoDate.slice(0, 10).endsWith("-12-31");
@@ -82,25 +83,12 @@ export async function insertRetainedEarningsClosingJournalIfNeeded(
 
   if (lines.length === 0) return null;
 
-  let reAccountId: string | null = null;
-  // USMCA cross-entity-leak fix: pin the retained_earnings binding to this entity (prefer the entity-scoped
-  // binding, fall back to a legacy global NULL-entity binding) AND require the resolved account to belong to
-  // this entity — never resolve another entity's equity account. Identical for TRANSP.
-  const reRes = await client.query<{ account_id: string }>(
-    `
-      SELECT arb.account_id::text AS account_id
-      FROM catalogs.account_role_bindings arb
-      JOIN catalogs.accounts a ON a.id = arb.account_id
-      WHERE arb.role_key = 'retained_earnings'
-        AND arb.deactivated_at IS NULL
-        AND (arb.operating_company_id = $1::uuid OR arb.operating_company_id IS NULL)
-        AND a.operating_company_id = $1::uuid
-      ORDER BY (arb.operating_company_id IS NOT NULL) DESC
-      LIMIT 1
-    `,
-    [params.operating_company_id]
-  );
-  reAccountId = reRes.rows[0]?.account_id ?? null;
+  // Resolve retained earnings via the CoA-roles resolver: PRIMARY accounting.chart_of_accounts_roles
+  // first, then the legacy catalogs.account_role_bindings 'retained_earnings' binding as a fallback tier,
+  // then the resolver's Equity account-shape fallback. The resolver pins BOTH the mapping row and the
+  // resolved account to this entity (never another entity's equity account). The additional
+  // entity-equity fallbacks below remain as last-resort tiers.
+  let reAccountId: string | null = await resolveRoleAccountOptional(client, params.operating_company_id, "retained_earnings");
   if (!reAccountId) {
     const fb = await client.query<{ id: string }>(
       `

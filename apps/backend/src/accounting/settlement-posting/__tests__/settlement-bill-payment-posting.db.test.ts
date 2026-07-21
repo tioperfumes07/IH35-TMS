@@ -368,6 +368,17 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
         );
       await bind("driver_pay_expense", acct.driverPay);
       await bind("cash_dip", acct.dipCash);
+      // PRIMARY designation for driver_pay_expense (accounting.chart_of_accounts_roles) — the tier the
+      // resolver reads FIRST. Proves the bill-payment poster resolves driver_pay_expense from the PRIMARY
+      // CoA-roles table (not the legacy binding). cash_dip stays legacy-only: it is the DIP bank bridge
+      // (resolved via banking.bank_accounts JOIN), not a chart_of_accounts_roles CoaRole.
+      await db.query(
+        `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
+         VALUES ($1::uuid,'driver_pay_expense',$2::uuid,true)
+         ON CONFLICT (operating_company_id, role) WHERE is_active
+           DO UPDATE SET account_id = EXCLUDED.account_id, is_active = true`,
+        [companyId, acct.driverPay]
+      );
 
       await db.query(
         `INSERT INTO banking.bank_accounts (id, operating_company_id, account_name, account_type, ledger_account_id, current_balance_cents)
