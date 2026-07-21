@@ -11,6 +11,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { formatCurrencyFromCents } from "../lists/accounting/coa-list-utils";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 const PAGE_SIZE = 100;
 
@@ -109,6 +110,92 @@ export function TransactionRegisterPage() {
     setPage(0);
     setSources((current) => (current.includes(value) ? current.filter((s) => s !== value) : [...current, value]));
   }
+
+  // Display-only ParityTable migration: same columns, same order, same cell renders
+  // (badge, formatCurrencyFromCents amounts, em-dash blanks, Open link) as the former
+  // hand-rolled table markup. Server-side paging stays outside the table, unchanged.
+  const columns = useMemo<ParityColumn<RegisterTransaction>[]>(
+    () => [
+      {
+        key: "source",
+        label: "Source",
+        sortable: true,
+        render: (r) => (
+          <span className={`rounded-sm border px-2 py-0.5 text-[11px] ${sourceBadgeClass(r.source)}`}>
+            {r.source}
+          </span>
+        ),
+      },
+      {
+        key: "date",
+        label: "Date",
+        sortable: true,
+        sortValue: (r) => r.date ?? "",
+        cellClass: "whitespace-nowrap text-slate-700",
+        render: (r) => (r.date ? formatDateUS(r.date) : "—"),
+      },
+      {
+        key: "description",
+        label: "Description",
+        sortable: true,
+        sortValue: (r) => r.description ?? "",
+        cellClass: "text-slate-800",
+        render: (r) => r.description ?? "—",
+      },
+      { key: "type", label: "Type", sortable: true, cellClass: "text-slate-600" },
+      {
+        key: "counterparty",
+        label: "Customer / Vendor",
+        sortable: true,
+        sortValue: (r) => r.counterparty ?? "",
+        cellClass: "text-slate-700",
+        render: (r) => r.counterparty ?? "—",
+      },
+      {
+        key: "amount_in_cents",
+        label: "In",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right tabular-nums text-slate-800",
+        render: (r) => (r.amount_in_cents > 0 ? formatCurrencyFromCents(r.amount_in_cents) : "—"),
+      },
+      {
+        key: "amount_out_cents",
+        label: "Out",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right tabular-nums text-slate-800",
+        render: (r) => (r.amount_out_cents > 0 ? formatCurrencyFromCents(r.amount_out_cents) : "—"),
+      },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        sortValue: (r) => r.status ?? "",
+        cellClass: "text-slate-600",
+        render: (r) => r.status ?? "—",
+      },
+      {
+        key: "link",
+        label: "Link",
+        alwaysVisible: true,
+        render: (r) =>
+          r.detail_path ? (
+            <button
+              type="button"
+              onClick={() => navigate(r.detail_path!)}
+              className="inline-flex items-center gap-1 text-[12px] text-slate-600 hover:text-[#1f2a44]"
+              aria-label="Open source record"
+            >
+              Open <ArrowRightCircle className="h-3.5 w-3.5" />
+            </button>
+          ) : (
+            "—"
+          ),
+      },
+    ],
+    [navigate],
+  );
 
   function exportCsv() {
     const blob = new Blob([toCsv(rows)], { type: "text/csv;charset=utf-8;" });
@@ -215,73 +302,17 @@ export function TransactionRegisterPage() {
       {query.isError ? (
         <ListErrorState {...formatQueryErrorDetail(query.error)} onRetry={() => void query.refetch()} />
       ) : (
-        <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-slate-50">
-              <tr className="text-slate-600">
-                <th className="px-3 py-2 font-semibold">Source</th>
-                <th className="px-3 py-2 font-semibold">Date</th>
-                <th className="px-3 py-2 font-semibold">Description</th>
-                <th className="px-3 py-2 font-semibold">Type</th>
-                <th className="px-3 py-2 font-semibold">Customer / Vendor</th>
-                <th className="px-3 py-2 text-right font-semibold">In</th>
-                <th className="px-3 py-2 text-right font-semibold">Out</th>
-                <th className="px-3 py-2 font-semibold">Status</th>
-                <th className="px-3 py-2 font-semibold">Link</th>
-              </tr>
-            </thead>
-            <tbody>
-              {query.isLoading ? (
-                <tr>
-                  <td colSpan={9} className="px-3 py-6 text-center text-slate-500">
-                    Loading…
-                  </td>
-                </tr>
-              ) : rows.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="px-3 py-6 text-center text-slate-500">
-                    No transactions for the selected filters.
-                  </td>
-                </tr>
-              ) : (
-                rows.map((r) => (
-                  <tr key={`${r.source}:${r.id}`} className="border-t border-slate-100 hover:bg-slate-50">
-                    <td className="px-3 py-2">
-                      <span className={`rounded-sm border px-2 py-0.5 text-[11px] ${sourceBadgeClass(r.source)}`}>
-                        {r.source}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-slate-700">{r.date ? formatDateUS(r.date) : "—"}</td>
-                    <td className="px-3 py-2 text-slate-800">{r.description ?? "—"}</td>
-                    <td className="px-3 py-2 text-slate-600">{r.type}</td>
-                    <td className="px-3 py-2 text-slate-700">{r.counterparty ?? "—"}</td>
-                    <td className="px-3 py-2 text-right tabular-nums text-slate-800">
-                      {r.amount_in_cents > 0 ? formatCurrencyFromCents(r.amount_in_cents) : "—"}
-                    </td>
-                    <td className="px-3 py-2 text-right tabular-nums text-slate-800">
-                      {r.amount_out_cents > 0 ? formatCurrencyFromCents(r.amount_out_cents) : "—"}
-                    </td>
-                    <td className="px-3 py-2 text-slate-600">{r.status ?? "—"}</td>
-                    <td className="px-3 py-2">
-                      {r.detail_path ? (
-                        <button
-                          type="button"
-                          onClick={() => navigate(r.detail_path!)}
-                          className="inline-flex items-center gap-1 text-[12px] text-slate-600 hover:text-[#1f2a44]"
-                          aria-label="Open source record"
-                        >
-                          Open <ArrowRightCircle className="h-3.5 w-3.5" />
-                        </button>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => `${r.source}:${r.id}`}
+          loading={query.isLoading}
+          emptyText="No transactions for the selected filters."
+          storageKey="transaction-register"
+          tableTestId="transaction-register-table"
+          initialPageSize={PAGE_SIZE}
+          pageSizeOptions={[PAGE_SIZE]}
+        />
       )}
 
       <div className="flex items-center justify-between text-xs text-slate-600">
