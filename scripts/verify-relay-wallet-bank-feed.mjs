@@ -98,7 +98,11 @@ const designView = read(
   "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
 );
 if (designView) {
-  if (!/isRelayWalletAccount/.test(designView) || !/label=\"Driver\"/.test(designView) || !/label=\"Truck\"/.test(designView)) {
+  // Phase B: Driver/Truck/Load are ParityColumn defs (`label: "Driver"`) — accept both that shape
+  // and the prior TableHeaderCell `label="Driver"` so the Relay-wallet column property cannot regress.
+  const hasDriverCol = /label\s*[:=]\s*"Driver"/.test(designView);
+  const hasTruckCol = /label\s*[:=]\s*"Truck"/.test(designView);
+  if (!/isRelayWalletAccount/.test(designView) || !hasDriverCol || !hasTruckCol) {
     failures.push("BankingTransactionsDesignView must show Driver/Truck/Load columns on Relay wallet");
   }
   if (!/buildRelayFuelBreakdown|Fuel breakdown \(Relay\)/.test(designView)) {

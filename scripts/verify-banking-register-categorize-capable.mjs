@@ -27,10 +27,12 @@ const DESIGN_VIEW_REL = "apps/frontend/src/pages/banking/components/BankingTrans
 const BANKING_DIR_REL = "apps/frontend/src/pages/banking";
 
 // A file hosts a LIVE categorize grid when its (non-archived) source both posts a categorization
-// (categorizeBankTransaction) AND renders the QBO-parity From/To column (columnKey="fromTo").
+// (categorizeBankTransaction) AND renders the QBO-parity From/To column.
+// Phase B remapped columnKey="fromTo" → ParityColumn key: "fromTo" (same safety property).
 function hostsLiveCategorizeGrid(src) {
   if (/@archived/.test(src)) return false;
-  return src.includes("categorizeBankTransaction(") && src.includes('columnKey="fromTo"');
+  const hasFromTo = src.includes('columnKey="fromTo"') || /key:\s*"fromTo"/.test(src);
+  return src.includes("categorizeBankTransaction(") && hasFromTo;
 }
 
 /**
@@ -59,16 +61,23 @@ export function evaluate({ detailSrc, designViewSrc, bankingFiles }) {
   }
 
   // (3) The mounted register is genuinely categorize-capable.
-  const capabilityChecks = [
-    ['columnKey="fromTo"', "From/To column"],
-    ["onResize=", "resizable header (TableHeaderCell onResize)"],
-    ["categorizeBankTransaction(", "inline categorize/post"],
-    ["expandedTxId", "row → detail (match/categorize) drawer"],
-  ];
-  for (const [needle, label] of capabilityChecks) {
-    if (!designViewSrc.includes(needle)) {
-      failures.push(`${DESIGN_VIEW_REL} — register lost its ${label} (missing '${needle}')`);
-    }
+  // Phase B: From/To is a ParityColumn key; resize is ParityTable enableColumnResize;
+  // expansion is A1 controlled expandedKeys/onExpandedChange (expandedTxId still owns it).
+  if (!/key:\s*"fromTo"/.test(designViewSrc) && !designViewSrc.includes('columnKey="fromTo"')) {
+    failures.push(`${DESIGN_VIEW_REL} — register lost its From/To column (missing key: "fromTo")`);
+  }
+  if (!/enableColumnResize/.test(designViewSrc) && !designViewSrc.includes("onResize=")) {
+    failures.push(
+      `${DESIGN_VIEW_REL} — register lost its resizable header (missing enableColumnResize / onResize)`
+    );
+  }
+  if (!designViewSrc.includes("categorizeBankTransaction(")) {
+    failures.push(`${DESIGN_VIEW_REL} — register lost its inline categorize/post (missing 'categorizeBankTransaction(')`);
+  }
+  if (!designViewSrc.includes("expandedTxId")) {
+    failures.push(
+      `${DESIGN_VIEW_REL} — register lost its row → detail (match/categorize) drawer (missing 'expandedTxId')`
+    );
   }
 
   // (4) Exactly ONE live categorize grid across the banking pages.
@@ -118,7 +127,7 @@ function runReal() {
 
 function runSelftest() {
   const goodDesignView =
-    'columnKey="fromTo" onResize={setTxColWidth} categorizeBankTransaction( expandedTxId';
+    'key: "fromTo" enableColumnResize categorizeBankTransaction( expandedTxId';
   const goodDetail =
     '<BankingTransactionsDesignView selectedAccountId={id} /> // @archived ArchivedBankAccountDetailTable';
   const cases = [
@@ -150,7 +159,7 @@ function runSelftest() {
         designViewSrc: goodDesignView,
         bankingFiles: [
           { rel: "components/BankingTransactionsDesignView.tsx", src: goodDesignView },
-          { rel: "BankAccountDetail.tsx", src: 'categorizeBankTransaction( columnKey="fromTo"' },
+          { rel: "BankAccountDetail.tsx", src: 'categorizeBankTransaction( key: "fromTo"' },
         ],
       },
       expectPass: false,
