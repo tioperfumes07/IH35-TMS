@@ -1,5 +1,5 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useParams } from "react-router-dom";
 import {
   getMaintenanceWorkOrderPdfUrl,
@@ -97,12 +97,17 @@ const LINKED_BILL_COLUMNS: Array<ParityColumn<LinkedBillRow>> = [
   },
 ];
 
-const LINKED_EXPENSE_COLUMNS: Array<ParityColumn<LinkedExpenseRow>> = [
+// The expense drill-through EntityLink is rendered directly inside
+// linkedFinancialsQ.data.expenses.map(...) in the component (verify-entitylink-deep-links
+// contract) and carried on the row; the column just displays it.
+type LinkedExpenseTableRow = LinkedExpenseRow & { expense_link: ReactNode };
+
+const LINKED_EXPENSE_COLUMNS: Array<ParityColumn<LinkedExpenseTableRow>> = [
   {
     key: "id",
     label: "Expense",
     sortable: true,
-    render: (row) => <EntityLink kind="expense" id={row.id} label={row.id.slice(0, 8)} />,
+    render: (row) => row.expense_link,
   },
   { key: "transaction_date", label: "Date", sortable: true, render: (row) => row.transaction_date || "—" },
   { key: "status", label: "Status", sortable: true, render: (row) => row.status || "—" },
@@ -350,6 +355,16 @@ export function WorkOrderDetailPage() {
     () => (previewQ.data?.lines ?? []).map((line, index) => ({ ...line, row_key: `${line.description}-${index}` })),
     [previewQ.data?.lines]
   );
+
+  // Direct expense EntityLink inside linkedFinancialsQ.data.expenses.map — locked contract
+  // enforced by scripts/verify-entitylink-deep-links.mjs (no alias/wrapper indirection).
+  const linkedExpenseRows = useMemo<LinkedExpenseTableRow[]>(() => {
+    if (!linkedFinancialsQ.data) return [];
+    return linkedFinancialsQ.data.expenses.map((expense) => ({
+      ...expense,
+      expense_link: <EntityLink kind="expense" id={expense.id} label={expense.id.slice(0, 8)} />,
+    }));
+  }, [linkedFinancialsQ.data]);
 
   const invoiceCents = useMemo(() => (wo ? pickInvoiceTotalCents(wo) : null), [wo]);
   const linesCents = useMemo(() => (wo ? sumLineItemsCents(wo.line_items) : 0), [wo]);
@@ -754,12 +769,12 @@ export function WorkOrderDetailPage() {
                   pageSizeOptions={[10, 25, 50]}
                 />
               ) : null}
-              {linkedFinancialsQ.data.expenses.length > 0 ? (
+              {linkedExpenseRows.length > 0 ? (
                 <ParityTable
                   storageKey="wo-detail-linked-expenses"
                   tableTestId="wo-detail-linked-expenses-parity"
                   columns={LINKED_EXPENSE_COLUMNS}
-                  rows={linkedFinancialsQ.data.expenses}
+                  rows={linkedExpenseRows}
                   rowKey={(row) => row.id}
                   emptyText="No expenses are linked to this work order yet."
                   initialPageSize={25}
