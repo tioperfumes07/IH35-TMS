@@ -487,6 +487,8 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/accounting/QBOSyncDriftDashboard.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/QboReconcileCapturesPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/QboReconciliationPage.tsx` | migrated (verify-step 1152) |
+| `apps/frontend/src/pages/accounting/QboReconcileCapturesPage.tsx` | migrated (verify-step 1153) — display-only; owner-greenlit UI-only migration; `verify-qbo-reconcile-captures-page-uses-paritytable.mjs` |
+| `apps/frontend/src/pages/accounting/QboReconciliationPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/ReceiptsPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/RevenueRecognitionPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/SalesTaxPage.tsx` | migrated (verify-step 1142) |

@@ -1,6 +1,8 @@
 // FIN-23 — QBO Reconcile / Modify Captures (READ-ONLY surfacing).
 // Surfaces sync health, modify captures (changes made directly in QBO), and conflicts/alerts.
 // No resolve/apply: this page only reads and displays. Gated behind QBO_RECONCILE_UI_ENABLED.
+// Display-only ParityTable migration: all hand-rolled table markup replaced by the shared
+// ParityTable grammar. No API call, query key, or mutation change — this surface stays read-only.
 import { useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -8,12 +10,16 @@ import { EntityLink, type EntityKind } from "../../components/shared/EntityLink"
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ListErrorState } from "../../components/ListErrorState";
 import {
   getQboReconcileOverview,
   getQboModifyCaptures,
   getQboConflicts,
   type QboModifyCapture,
+  type QboReconAlert,
   type QboSyncConflict,
+  type QboSyncHealthRow,
 } from "../../api/qbo-reconcile";
 import { fetchReconRuns, fetchReconExceptions, type ReconRun, type ReconExceptionRow } from "../../api/recon";
 import { ApiError } from "../../api/client";
@@ -23,6 +29,8 @@ const SELECT_CLASS = "h-9 rounded-sm border border-gray-300 px-2 text-[13px] foc
 
 const fmtDt = (s: string | null) => (s ? new Date(s).toLocaleString("en-US") : "—");
 const titleize = (s: string | null) => (s ? s.replace(/_/g, " ") : "—");
+const errorStatus = (e: unknown) => (e instanceof ApiError ? e.status : 0);
+const errorMessage = (e: unknown) => (e instanceof Error ? e.message : undefined);
 
 const STATUS_PILL: Record<string, string> = {
   applied: "bg-slate-100 text-slate-700",
@@ -94,15 +102,65 @@ export function parseQboReconcileTab(raw: string | null): Tab {
   return "overview";
 }
 
+const HEALTH_COLUMNS: Array<ParityColumn<QboSyncHealthRow>> = [
+  {
+    key: "entity",
+    label: "Entity",
+    sortable: true,
+    cellClass: "font-medium capitalize",
+    render: (row) => titleize(row.entity),
+  },
+  {
+    key: "local_count",
+    label: "Local",
+    sortable: true,
+    cellClass: "text-right tabular-nums",
+    render: (row) => row.local_count ?? "—",
+  },
+  {
+    key: "qbo_count",
+    label: "QBO",
+    sortable: true,
+    cellClass: "text-right tabular-nums",
+    render: (row) => row.qbo_count ?? "—",
+  },
+  {
+    key: "pending_count",
+    label: "Pending",
+    sortable: true,
+    cellClass: "text-right tabular-nums",
+    render: (row) => row.pending_count ?? 0,
+  },
+  {
+    key: "drift",
+    label: "Status",
+    sortable: true,
+    render: (row) => (
+      <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${
+        row.drift === "drift" ? "bg-red-100 text-red-700" : row.drift === "in_sync" ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-500"
+      }`}>{titleize(row.drift)}</span>
+    ),
+  },
+];
+
 function OverviewTab({ companyId }: { companyId: string }) {
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["qbo-reconcile-overview", companyId],
     queryFn: () => getQboReconcileOverview(companyId),
     enabled: Boolean(companyId),
   });
 
   if (isLoading) return <p className="py-8 text-center text-sm text-gray-500">Loading…</p>;
-  if (isError || !data) return <p className="py-8 text-center text-sm text-red-600">Failed to load sync health.</p>;
+  if (isError || !data) {
+    return (
+      <ListErrorState
+        title="Failed to load sync health."
+        status={errorStatus(error)}
+        message={errorMessage(error)}
+        onRetry={() => void refetch()}
+      />
+    );
+  }
 
   const c = data.connection;
   return (
@@ -132,42 +190,98 @@ function OverviewTab({ companyId }: { companyId: string }) {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200">
-        <table className="min-w-full divide-y divide-gray-200 text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              {["Entity", "Local", "QBO", "Pending", "Status"].map((h) => (
-                <th key={h} className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 whitespace-nowrap">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 bg-white">
-            {data.health.map((row) => (
-              <tr key={row.entity} className="hover:bg-gray-50">
-                <td className="px-3 py-2 font-medium capitalize">{titleize(row.entity)}</td>
-                <td className="px-3 py-2 text-right tabular-nums">{row.local_count ?? "—"}</td>
-                <td className="px-3 py-2 text-right tabular-nums">{row.qbo_count ?? "—"}</td>
-                <td className="px-3 py-2 text-right tabular-nums">{row.pending_count ?? 0}</td>
-                <td className="px-3 py-2">
-                  <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${
-                    row.drift === "drift" ? "bg-red-100 text-red-700" : row.drift === "in_sync" ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-500"
-                  }`}>{titleize(row.drift)}</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable
+        rows={data.health}
+        columns={HEALTH_COLUMNS}
+        rowKey={(row) => row.entity}
+        emptyText="No sync health rows."
+        storageKey="qbo-reconcile-sync-health"
+        tableTestId="qbo-reconcile-sync-health-table"
+      />
     </div>
   );
 }
+
+const CAPTURE_COLUMNS: Array<ParityColumn<QboModifyCapture>> = [
+  {
+    key: "received_at",
+    label: "Received",
+    sortable: true,
+    cellClass: "whitespace-nowrap text-gray-600",
+    render: (row) => fmtDt(row.received_at),
+  },
+  {
+    key: "qbo_entity_type",
+    label: "Entity",
+    sortable: true,
+    cellClass: "whitespace-nowrap capitalize",
+    render: (row) => titleize(row.qbo_entity_type),
+  },
+  {
+    key: "qbo_entity_id",
+    label: "QBO ID",
+    cellClass: "whitespace-nowrap font-mono text-xs text-gray-500",
+    render: (row) => row.qbo_entity_id ?? "—",
+  },
+  {
+    key: "qbo_event_type",
+    label: "Event",
+    sortable: true,
+    cellClass: "whitespace-nowrap capitalize text-gray-600",
+    render: (row) => titleize(row.qbo_event_type),
+  },
+  {
+    key: "qbo_last_updated_at",
+    label: "QBO Updated",
+    sortable: true,
+    cellClass: "whitespace-nowrap text-gray-600",
+    render: (row) => fmtDt(row.qbo_last_updated_at),
+  },
+  {
+    key: "applied_at",
+    label: "Reflected in TMS",
+    sortable: true,
+    cellClass: "whitespace-nowrap text-gray-600",
+    render: (row) =>
+      row.applied_at ? (
+        <span>
+          {fmtDt(row.applied_at)}
+          {row.applied_to_tms_entity_id ? (
+            <span className="ml-1 text-xs text-gray-600">
+              <TmsEntityLink
+                entityType={row.applied_to_tms_entity_table ?? row.qbo_entity_type}
+                entityId={row.applied_to_tms_entity_id}
+                label={row.applied_to_tms_entity_id.slice(0, 8)}
+              />
+            </span>
+          ) : row.applied_to_tms_entity_table ? (
+            <span className="ml-1 text-xs text-gray-400">{titleize(row.applied_to_tms_entity_table)}</span>
+          ) : null}
+        </span>
+      ) : (
+        <span className="text-xs text-gray-400">Not reflected</span>
+      ),
+  },
+  {
+    key: "status",
+    label: "Status",
+    sortable: true,
+    cellClass: "whitespace-nowrap",
+    render: (row) => (
+      <>
+        <Pill map={STATUS_PILL} value={row.status} />
+        {row.error_message && <div className="mt-0.5 max-w-[220px] truncate text-xs text-red-600" title={row.error_message}>{row.error_message}</div>}
+      </>
+    ),
+  },
+];
 
 function CapturesTab({ companyId }: { companyId: string }) {
   const [status, setStatus] = useState("");
   const [offset, setOffset] = useState(0);
   const limit = 50;
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["qbo-modify-captures", companyId, status, offset],
     queryFn: () => getQboModifyCaptures({ operating_company_id: companyId, status: status || undefined, limit, offset }),
     enabled: Boolean(companyId),
@@ -191,59 +305,25 @@ function CapturesTab({ companyId }: { companyId: string }) {
         <span className="text-xs text-gray-500">{total.toLocaleString()} capture{total !== 1 ? "s" : ""}</span>
       </div>
 
-      {isLoading ? (
-        <p className="py-8 text-center text-sm text-gray-500">Loading…</p>
-      ) : isError ? (
-        <p className="py-8 text-center text-sm text-red-600">Failed to load modify captures.</p>
-      ) : items.length === 0 ? (
-        <p className="py-12 text-center text-sm text-gray-400">No QBO modify captures recorded.</p>
+      {isError ? (
+        <ListErrorState
+          title="Failed to load modify captures."
+          status={errorStatus(error)}
+          message={errorMessage(error)}
+          onRetry={() => void refetch()}
+        />
       ) : (
-        <div className="overflow-x-auto rounded-sm border border-gray-200">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                {["Received", "Entity", "QBO ID", "Event", "QBO Updated", "Reflected in TMS", "Status"].map((h) => (
-                  <th key={h} className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 whitespace-nowrap">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
-              {items.map((row) => (
-                <tr key={row.id} className="hover:bg-gray-50 align-top">
-                  <td className="px-3 py-2 whitespace-nowrap text-gray-600">{fmtDt(row.received_at)}</td>
-                  <td className="px-3 py-2 whitespace-nowrap capitalize">{titleize(row.qbo_entity_type)}</td>
-                  <td className="px-3 py-2 whitespace-nowrap font-mono text-xs text-gray-500">{row.qbo_entity_id ?? "—"}</td>
-                  <td className="px-3 py-2 whitespace-nowrap capitalize text-gray-600">{titleize(row.qbo_event_type)}</td>
-                  <td className="px-3 py-2 whitespace-nowrap text-gray-600">{fmtDt(row.qbo_last_updated_at)}</td>
-                  <td className="px-3 py-2 whitespace-nowrap text-gray-600">
-                    {row.applied_at ? (
-                      <span>
-                        {fmtDt(row.applied_at)}
-                        {row.applied_to_tms_entity_id ? (
-                          <span className="ml-1 text-xs text-gray-600">
-                            <TmsEntityLink
-                              entityType={row.applied_to_tms_entity_table ?? row.qbo_entity_type}
-                              entityId={row.applied_to_tms_entity_id}
-                              label={row.applied_to_tms_entity_id.slice(0, 8)}
-                            />
-                          </span>
-                        ) : row.applied_to_tms_entity_table ? (
-                          <span className="ml-1 text-xs text-gray-400">{titleize(row.applied_to_tms_entity_table)}</span>
-                        ) : null}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-gray-400">Not reflected</span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap">
-                    <Pill map={STATUS_PILL} value={row.status} />
-                    {row.error_message && <div className="mt-0.5 max-w-[220px] truncate text-xs text-red-600" title={row.error_message}>{row.error_message}</div>}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable
+          rows={items}
+          columns={CAPTURE_COLUMNS}
+          rowKey={(row) => row.id}
+          loading={isLoading}
+          emptyText="No QBO modify captures recorded."
+          initialPageSize={limit}
+          pageSizeOptions={[limit, 100, 300]}
+          storageKey="qbo-reconcile-captures"
+          tableTestId="qbo-reconcile-captures-table"
+        />
       )}
 
       {total > limit && (
@@ -257,7 +337,9 @@ function CapturesTab({ companyId }: { companyId: string }) {
   );
 }
 
-function snapshotPairs(conflict: QboSyncConflict): Array<{ field: string; tms: unknown; qbo: unknown }> {
+type ConflictFieldPair = { field: string; tms: unknown; qbo: unknown };
+
+function snapshotPairs(conflict: QboSyncConflict): ConflictFieldPair[] {
   const tms = (conflict.tms_snapshot ?? {}) as Record<string, unknown>;
   const qbo = (conflict.qbo_snapshot ?? {}) as Record<string, unknown>;
   const fields = conflict.conflict_fields?.length
@@ -272,17 +354,91 @@ function fmtVal(v: unknown): string {
   return String(v);
 }
 
+const CONFLICT_FIELD_COLUMNS: Array<ParityColumn<ConflictFieldPair>> = [
+  {
+    key: "field",
+    label: "Field",
+    sortable: true,
+    cellClass: "font-medium text-gray-700",
+    render: (pair) => titleize(pair.field),
+  },
+  {
+    key: "tms",
+    label: "TMS (local)",
+    cellClass: "text-gray-600",
+    render: (pair) => fmtVal(pair.tms),
+    sortValue: (pair) => fmtVal(pair.tms),
+  },
+  {
+    key: "qbo",
+    label: "QBO (remote)",
+    cellClass: "text-gray-600",
+    render: (pair) => fmtVal(pair.qbo),
+    sortValue: (pair) => fmtVal(pair.qbo),
+  },
+];
+
+const ALERT_COLUMNS: Array<ParityColumn<QboReconAlert>> = [
+  {
+    key: "run_at",
+    label: "Run at",
+    sortable: true,
+    cellClass: "whitespace-nowrap text-gray-600",
+    render: (a) => fmtDt(a.run_at),
+  },
+  {
+    key: "entity_type",
+    label: "Entity",
+    sortable: true,
+    cellClass: "whitespace-nowrap capitalize",
+    render: (a) => titleize(a.entity_type),
+  },
+  {
+    key: "local_count",
+    label: "Local",
+    sortable: true,
+    cellClass: "text-right tabular-nums",
+  },
+  {
+    key: "qbo_count",
+    label: "QBO",
+    sortable: true,
+    cellClass: "text-right tabular-nums",
+  },
+  {
+    key: "delta_pct",
+    label: "Delta %",
+    sortable: true,
+    cellClass: "text-right tabular-nums",
+  },
+  {
+    key: "severity",
+    label: "Severity",
+    sortable: true,
+    render: (a) => <Pill map={SEVERITY_PILL} value={a.severity} />,
+  },
+];
+
 function ConflictsTab({ companyId }: { companyId: string }) {
   const [openOnly, setOpenOnly] = useState(true);
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["qbo-conflicts", companyId, openOnly],
     queryFn: () => getQboConflicts({ operating_company_id: companyId, open_only: openOnly ? "true" : "false", limit: 100, alert_limit: 50 }),
     enabled: Boolean(companyId),
   });
 
   if (isLoading) return <p className="py-8 text-center text-sm text-gray-500">Loading…</p>;
-  if (isError || !data) return <p className="py-8 text-center text-sm text-red-600">Failed to load conflicts.</p>;
+  if (isError || !data) {
+    return (
+      <ListErrorState
+        title="Failed to load conflicts."
+        status={errorStatus(error)}
+        message={errorMessage(error)}
+        onRetry={() => void refetch()}
+      />
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -320,24 +476,13 @@ function ConflictsTab({ companyId }: { companyId: string }) {
                     <span className="text-xs text-gray-500">{conflict.resolved_at ? `Resolved ${fmtDt(conflict.resolved_at)}` : `Detected ${fmtDt(conflict.detected_at)}`}</span>
                   </div>
                 </div>
-                <table className="min-w-full divide-y divide-gray-200 text-sm">
-                  <thead className="bg-white">
-                    <tr>
-                      {["Field", "TMS (local)", "QBO (remote)"].map((h) => (
-                        <th key={h} className="px-3 py-1.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {snapshotPairs(conflict).map((p) => (
-                      <tr key={p.field}>
-                        <td className="px-3 py-1.5 font-medium text-gray-700">{titleize(p.field)}</td>
-                        <td className="px-3 py-1.5 text-gray-600">{fmtVal(p.tms)}</td>
-                        <td className="px-3 py-1.5 text-gray-600">{fmtVal(p.qbo)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <ParityTable
+                  rows={snapshotPairs(conflict)}
+                  columns={CONFLICT_FIELD_COLUMNS}
+                  rowKey={(pair) => pair.field}
+                  emptyText="No conflicting fields."
+                  storageKey="qbo-reconcile-conflict-fields"
+                />
               </div>
             ))}
           </div>
@@ -349,29 +494,14 @@ function ConflictsTab({ companyId }: { companyId: string }) {
         {data.alerts.length === 0 ? (
           <p className="rounded-sm border border-gray-200 bg-white py-8 text-center text-sm text-gray-400">No reconciliation alerts.</p>
         ) : (
-          <div className="overflow-x-auto rounded-sm border border-gray-200">
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  {["Run at", "Entity", "Local", "QBO", "Delta %", "Severity"].map((h) => (
-                    <th key={h} className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 whitespace-nowrap">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 bg-white">
-                {data.alerts.map((a) => (
-                  <tr key={a.uuid} className="hover:bg-gray-50">
-                    <td className="px-3 py-2 whitespace-nowrap text-gray-600">{fmtDt(a.run_at)}</td>
-                    <td className="px-3 py-2 whitespace-nowrap capitalize">{titleize(a.entity_type)}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">{a.local_count}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">{a.qbo_count}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">{a.delta_pct}</td>
-                    <td className="px-3 py-2"><Pill map={SEVERITY_PILL} value={a.severity} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ParityTable
+            rows={data.alerts}
+            columns={ALERT_COLUMNS}
+            rowKey={(a) => a.uuid}
+            emptyText="No reconciliation alerts."
+            storageKey="qbo-reconcile-alerts"
+            tableTestId="qbo-reconcile-alerts-table"
+          />
         )}
       </section>
     </div>
@@ -394,8 +524,49 @@ function exceptionCount(run: ReconRun): string {
   return typeof t?.exceptions === "number" ? String(t.exceptions) : "—";
 }
 
+const RUN_COLUMNS: Array<ParityColumn<ReconRun>> = [
+  {
+    key: "started_at",
+    label: "Started",
+    sortable: true,
+    cellClass: "whitespace-nowrap text-gray-600",
+    render: (r) => fmtDt(r.started_at),
+  },
+  {
+    key: "run_type",
+    label: "Type",
+    sortable: true,
+    cellClass: "whitespace-nowrap capitalize",
+    render: (r) => titleize(r.run_type),
+  },
+  {
+    key: "window_start",
+    label: "Window",
+    cellClass: "whitespace-nowrap text-gray-500 text-xs",
+    render: (r) => (
+      <>
+        {fmtDt(r.window_start)} → {fmtDt(r.window_end)}
+      </>
+    ),
+  },
+  {
+    key: "status",
+    label: "Status",
+    sortable: true,
+    render: (r) => <Pill map={STATUS_PILL} value={r.status} />,
+  },
+  {
+    key: "exceptions",
+    label: "Exceptions",
+    cellClass: "text-right tabular-nums",
+    sortable: true,
+    sortValue: (r) => exceptionCount(r),
+    render: (r) => exceptionCount(r),
+  },
+];
+
 function ReconRunsTab({ companyId }: { companyId: string }) {
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["recon-runs", companyId],
     queryFn: () => fetchReconRuns(companyId, { limit: 50 }),
     enabled: Boolean(companyId),
@@ -403,36 +574,73 @@ function ReconRunsTab({ companyId }: { companyId: string }) {
   });
   if (isLoading) return <p className="py-8 text-center text-sm text-gray-500">Loading…</p>;
   if (error instanceof ApiError && error.status === 404) return <ReconDisabledHint />;
-  if (error) return <p className="py-8 text-center text-sm text-gray-500">Couldn’t load reconciliation runs.</p>;
+  if (error) {
+    return (
+      <ListErrorState
+        title="Couldn’t load reconciliation runs."
+        status={errorStatus(error)}
+        message={errorMessage(error)}
+        onRetry={() => void refetch()}
+      />
+    );
+  }
   const runs: ReconRun[] = data?.runs ?? [];
-  if (runs.length === 0) return <p className="rounded-sm border border-gray-200 bg-white py-10 text-center text-sm text-gray-400">No reconciliation runs yet.</p>;
   return (
-    <div className="overflow-x-auto rounded-sm border border-gray-200">
-      <table className="min-w-full divide-y divide-gray-200 text-sm">
-        <thead className="bg-gray-50">
-          <tr>{["Started", "Type", "Window", "Status", "Exceptions"].map((h) => (
-            <th key={h} className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 whitespace-nowrap">{h}</th>
-          ))}</tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100 bg-white">
-          {runs.map((r) => (
-            <tr key={r.id} className="hover:bg-gray-50">
-              <td className="px-3 py-2 whitespace-nowrap text-gray-600">{fmtDt(r.started_at)}</td>
-              <td className="px-3 py-2 whitespace-nowrap capitalize">{titleize(r.run_type)}</td>
-              <td className="px-3 py-2 whitespace-nowrap text-gray-500 text-xs">{fmtDt(r.window_start)} → {fmtDt(r.window_end)}</td>
-              <td className="px-3 py-2"><Pill map={STATUS_PILL} value={r.status} /></td>
-              <td className="px-3 py-2 text-right tabular-nums">{exceptionCount(r)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <ParityTable
+      rows={runs}
+      columns={RUN_COLUMNS}
+      rowKey={(r) => r.id}
+      emptyText="No reconciliation runs yet."
+      storageKey="qbo-reconcile-recon-runs"
+      tableTestId="qbo-reconcile-recon-runs-table"
+    />
   );
 }
 
+const EXCEPTION_COLUMNS: Array<ParityColumn<ReconExceptionRow>> = [
+  {
+    key: "exception_class",
+    label: "Class",
+    sortable: true,
+    cellClass: "whitespace-nowrap font-medium capitalize",
+    render: (x) => titleize(x.exception_class),
+  },
+  {
+    key: "field",
+    label: "Field",
+    sortable: true,
+    cellClass: "whitespace-nowrap text-gray-600",
+    render: (x) => titleize(x.field),
+  },
+  {
+    key: "tms_value",
+    label: "TMS",
+    cellClass: "text-gray-600",
+    render: (x) => x.tms_value ?? "—",
+  },
+  {
+    key: "qbo_value",
+    label: "QBO",
+    cellClass: "text-gray-600",
+    render: (x) => x.qbo_value ?? "—",
+  },
+  {
+    key: "severity",
+    label: "Severity",
+    sortable: true,
+    render: (x) => <Pill map={SEVERITY_PILL} value={x.severity} />,
+  },
+  {
+    key: "status",
+    label: "Status",
+    sortable: true,
+    render: (x) => <Pill map={STATUS_PILL} value={x.status} />,
+  },
+];
+
 function ReconExceptionsTab({ companyId }: { companyId: string }) {
   const [status, setStatus] = useState("");
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["recon-exceptions", companyId, status],
     queryFn: () => fetchReconExceptions(companyId, { status: status || undefined, limit: 100 }),
     enabled: Boolean(companyId),
@@ -450,34 +658,23 @@ function ReconExceptionsTab({ companyId }: { companyId: string }) {
           <option value="resolved">Resolved</option>
         </select>
       </div>
-      {isLoading ? (
-        <p className="py-8 text-center text-sm text-gray-500">Loading…</p>
-      ) : error ? (
-        <p className="py-8 text-center text-sm text-gray-500">Couldn’t load exceptions.</p>
-      ) : rows.length === 0 ? (
-        <p className="rounded-sm border border-gray-200 bg-white py-10 text-center text-sm text-gray-400">No reconciliation exceptions.</p>
+      {error ? (
+        <ListErrorState
+          title="Couldn’t load exceptions."
+          status={errorStatus(error)}
+          message={errorMessage(error)}
+          onRetry={() => void refetch()}
+        />
       ) : (
-        <div className="overflow-x-auto rounded-sm border border-gray-200">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50">
-              <tr>{["Class", "Field", "TMS", "QBO", "Severity", "Status"].map((h) => (
-                <th key={h} className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 whitespace-nowrap">{h}</th>
-              ))}</tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
-              {rows.map((x) => (
-                <tr key={x.id} className="hover:bg-gray-50">
-                  <td className="px-3 py-2 whitespace-nowrap font-medium capitalize">{titleize(x.exception_class)}</td>
-                  <td className="px-3 py-2 whitespace-nowrap text-gray-600">{titleize(x.field)}</td>
-                  <td className="px-3 py-2 text-gray-600">{x.tms_value ?? "—"}</td>
-                  <td className="px-3 py-2 text-gray-600">{x.qbo_value ?? "—"}</td>
-                  <td className="px-3 py-2"><Pill map={SEVERITY_PILL} value={x.severity} /></td>
-                  <td className="px-3 py-2"><Pill map={STATUS_PILL} value={x.status} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable
+          rows={rows}
+          columns={EXCEPTION_COLUMNS}
+          rowKey={(x) => x.id}
+          loading={isLoading}
+          emptyText="No reconciliation exceptions."
+          storageKey="qbo-reconcile-recon-exceptions"
+          tableTestId="qbo-reconcile-recon-exceptions-table"
+        />
       )}
     </div>
   );
