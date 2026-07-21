@@ -470,7 +470,7 @@ hand-rolled `<table>` grids with a bare red outage banner. Migrated all three to
 | `apps/frontend/src/pages/accounting/FactorReserveCard.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/FactoringDetailPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/FactoringListPage.tsx` | financial-hold |
-| `apps/frontend/src/pages/accounting/FixedAssetsPage.tsx` | financial-hold |
+| `apps/frontend/src/pages/accounting/FixedAssetsPage.tsx` | migrated (verify-step 1162) — display-only; owner-greenlit UI-only migration; read-only depreciation-schedule table inside DetailPanel modal retained (precedent cited by verify-step 1146 ObligationBlock) |
 | `apps/frontend/src/pages/accounting/IntegrationTransactionsPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/InvoiceCreateModal.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx` | financial-hold |
