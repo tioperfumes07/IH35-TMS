@@ -131,7 +131,7 @@ export function RecoursePipelineTable({ rows, fmtCurrency, fmtDate }: Props) {
             className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50"
             onClick={() => pushToast("Bulk recourse extension is not available yet.", "info")}
           >
-            Extend Recourse (coming soon)
+            Extend Recourse
           </button>
         </>
       )}

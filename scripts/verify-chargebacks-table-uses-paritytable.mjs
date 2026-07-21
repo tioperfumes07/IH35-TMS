@@ -55,8 +55,12 @@ function assertMigrated(src) {
   if (!src.includes("Export Selected")) {
     errors.push(`${PAGE}: must keep Export Selected bulk action`);
   }
-  if (!src.includes("Dispute (coming soon)")) {
-    errors.push(`${PAGE}: must keep Dispute (coming soon) stub`);
+  // Assert the disabled Dispute affordance via its compliant tooltip, NOT the literal
+  // "Dispute (coming soon)" — that rendered copy is forbidden by verify-no-prod-stubs, and
+  // asserting it here would put the two guards in direct conflict (as happened on
+  // SafetyEventsTable). The button label is "Dispute"; the tooltip explains it is not yet backed.
+  if (!src.includes("Bulk dispute is not available yet")) {
+    errors.push(`${PAGE}: must keep the disabled Dispute bulk affordance (tooltip "Bulk dispute is not available yet")`);
   }
   if (!src.includes("fmtCurrency(row.chargeback_amount)") || !src.includes("fmtCurrency(row.factor_fee_amount)")) {
     errors.push(`${PAGE}: must keep fmtCurrency for chargeback + fee amounts`);
@@ -94,7 +98,7 @@ function selftest() {
       batchActions={(selected) => (
         <>
           <button>Export Selected</button>
-          <button>Dispute (coming soon)</button>
+          <button disabled title="Bulk dispute is not available yet.">Dispute</button>
         </>
       )}
     />
