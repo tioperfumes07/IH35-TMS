@@ -12,6 +12,7 @@ import {
   assertRevenueLinesHaveIncomeAccount,
   InvoiceLoadSourceRequiredError,
   InvoiceLineIncomeAccountRequiredError,
+  type InvoiceLineGuardRow,
 } from "./invoice-linkage-guards.js";
 import { createExpandedInvoice } from "./invoices.service.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope, recomputeInvoiceTotals } from "./shared.js";
@@ -712,13 +713,8 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       if (String(current.status) !== "draft") return { code: 409 as const, error: "invoice_not_draft" };
 
       // P-INVOICE P0 (#3177): fail closed before send — income account + load source_load_id.
-      const sendLinesRes = await client.query<{
-        id: string;
-        line_type: string | null;
-        line_total_cents: number | null;
-        account_id: string | null;
-        qbo_item_id: string | null;
-      }>(
+      // withCompanyScope client is `any` — do not pass query type args (TS2347).
+      const sendLinesRes = await client.query(
         `
           SELECT
             id::text,
@@ -732,12 +728,13 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         `,
         [params.data.id]
       );
+      const sendLines = sendLinesRes.rows as InvoiceLineGuardRow[];
       try {
         assertLoadRevenueHasSourceLoad(
           current.source_load_id ? String(current.source_load_id) : null,
-          sendLinesRes.rows
+          sendLines
         );
-        assertRevenueLinesHaveIncomeAccount(query.data.operating_company_id, sendLinesRes.rows);
+        assertRevenueLinesHaveIncomeAccount(query.data.operating_company_id, sendLines);
       } catch (guardErr) {
         if (guardErr instanceof InvoiceLoadSourceRequiredError) {
           return { code: 409 as const, error: "invoice_load_source_required", message: guardErr.message };
