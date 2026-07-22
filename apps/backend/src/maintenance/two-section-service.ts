@@ -544,15 +544,17 @@ export async function autoCreateBillFromWO(
   opts?: { billNumber?: string | null; memo?: string | null }
 ) {
   if (!(await relationExists(client, "accounting.bills"))) return null;
+  // Law §9: stamp unit_id from the WO header (migration 202607050810 hard FK). Vendor preserved via COALESCE.
   const billRes = await client.query<{ id: string }>(
     `
       INSERT INTO accounting.bills (
-        operating_company_id, vendor_uuid, linked_work_order_uuid, status, bill_date, due_date, amount_cents, total_amount, qbo_sync_pending
+        operating_company_id, vendor_uuid, linked_work_order_uuid, unit_id, status, bill_date, due_date, amount_cents, total_amount, qbo_sync_pending
       )
       SELECT
         w.operating_company_id,
         COALESCE(w.external_vendor_id, w.vendor_id),
         w.id,
+        w.unit_id,
         'draft',
         CURRENT_DATE,
         CURRENT_DATE + INTERVAL '30 days',
@@ -603,6 +605,7 @@ export async function autoCreateExpenseFromWO(
   const woContext = await client.query<{
     operating_company_id: string;
     vendor_uuid: string | null;
+    unit_id: string | null;
     load_id: string | null;
     total_amount: number | null;
   }>(
@@ -610,6 +613,7 @@ export async function autoCreateExpenseFromWO(
       SELECT
         w.operating_company_id,
         COALESCE(w.external_vendor_id, w.vendor_id) AS vendor_uuid,
+        w.unit_id::text AS unit_id,
         w.load_id,
         COALESCE(w.total_actual_cost, (COALESCE(w.estimated_cost_cents, 0)::numeric / 100.0), 0) AS total_amount
       FROM maintenance.work_orders w
@@ -661,39 +665,83 @@ export async function autoCreateExpenseFromWO(
   }
 
   const hasLoadIdColumn = await columnExists(client, "accounting.expenses", "load_id");
-  const expenseRes = await client.query<{ id: string }>(
-    hasLoadIdColumn
-      ? `
-          INSERT INTO accounting.expenses (
-            operating_company_id,
-            vendor_uuid,
-            linked_work_order_uuid,
-            load_id,
-            status,
-            transaction_date,
-            total_amount,
-            payment_account_uuid
-          )
-          VALUES ($1, $2, $3, $4, 'posted', CURRENT_DATE, $5, $6)
-          RETURNING id
-        `
-      : `
-          INSERT INTO accounting.expenses (
-            operating_company_id,
-            vendor_uuid,
-            linked_work_order_uuid,
-            status,
-            transaction_date,
-            total_amount,
-            payment_account_uuid
-          )
-          VALUES ($1, $2, $3, 'posted', CURRENT_DATE, $4, $5)
-          RETURNING id
-        `,
-    hasLoadIdColumn
-      ? [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.load_id, wo.total_amount, paymentAccountUuid ?? null]
-      : [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.total_amount, paymentAccountUuid ?? null]
-  );
+  // Law §9: stamp unit_id from WO (migration 202607050810). Vendor preserved via wo.vendor_uuid.
+  const hasUnitIdColumn = await columnExists(client, "accounting.expenses", "unit_id");
+
+  let expenseRes: { rows: { id: string }[] };
+  if (hasUnitIdColumn && hasLoadIdColumn) {
+    expenseRes = await client.query<{ id: string }>(
+      `
+        INSERT INTO accounting.expenses (
+          operating_company_id,
+          vendor_uuid,
+          linked_work_order_uuid,
+          unit_id,
+          load_id,
+          status,
+          transaction_date,
+          total_amount,
+          payment_account_uuid
+        )
+        VALUES ($1, $2, $3, $4, $5, 'posted', CURRENT_DATE, $6, $7)
+        RETURNING id
+      `,
+      [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.unit_id ?? null, wo.load_id, wo.total_amount, paymentAccountUuid ?? null]
+    );
+  } else if (hasUnitIdColumn) {
+    expenseRes = await client.query<{ id: string }>(
+      `
+        INSERT INTO accounting.expenses (
+          operating_company_id,
+          vendor_uuid,
+          linked_work_order_uuid,
+          unit_id,
+          status,
+          transaction_date,
+          total_amount,
+          payment_account_uuid
+        )
+        VALUES ($1, $2, $3, $4, 'posted', CURRENT_DATE, $5, $6)
+        RETURNING id
+      `,
+      [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.unit_id ?? null, wo.total_amount, paymentAccountUuid ?? null]
+    );
+  } else if (hasLoadIdColumn) {
+    expenseRes = await client.query<{ id: string }>(
+      `
+        INSERT INTO accounting.expenses (
+          operating_company_id,
+          vendor_uuid,
+          linked_work_order_uuid,
+          load_id,
+          status,
+          transaction_date,
+          total_amount,
+          payment_account_uuid
+        )
+        VALUES ($1, $2, $3, $4, 'posted', CURRENT_DATE, $5, $6)
+        RETURNING id
+      `,
+      [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.load_id, wo.total_amount, paymentAccountUuid ?? null]
+    );
+  } else {
+    expenseRes = await client.query<{ id: string }>(
+      `
+        INSERT INTO accounting.expenses (
+          operating_company_id,
+          vendor_uuid,
+          linked_work_order_uuid,
+          status,
+          transaction_date,
+          total_amount,
+          payment_account_uuid
+        )
+        VALUES ($1, $2, $3, 'posted', CURRENT_DATE, $4, $5)
+        RETURNING id
+      `,
+      [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.total_amount, paymentAccountUuid ?? null]
+    );
+  }
   const expenseId = String(expenseRes.rows[0]?.id ?? "");
   if (!expenseId) return null;
   if (await relationExists(client, "accounting.expense_lines")) {

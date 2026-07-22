@@ -72,6 +72,13 @@ describe("autoCreateBillFromWO — bill_lines write (Phase 1.5 bill-branch regre
     const res = await autoCreateBillFromWO(client, "user-1", "wo-1");
     expect(res, "bill should be created (relationExists mocked true)").not.toBeNull();
 
+    // Law §9: auto WO→bill must stamp unit_id from work_orders (and keep vendor_uuid).
+    const billInsert = calls.find((c) => c.sql.includes("INSERT INTO accounting.bills"));
+    expect(billInsert, "bills INSERT must run").toBeTruthy();
+    expect(billInsert!.sql).toMatch(/\bunit_id\b/);
+    expect(billInsert!.sql).toMatch(/w\.unit_id/);
+    expect(billInsert!.sql).toMatch(/COALESCE\(w\.external_vendor_id,\s*w\.vendor_id\)/);
+
     const billLineInsert = calls.find((c) => c.sql.includes("INSERT INTO accounting.bill_lines"));
     expect(billLineInsert, "bill_lines INSERT must run").toBeTruthy();
 

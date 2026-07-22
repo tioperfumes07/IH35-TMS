@@ -74,6 +74,7 @@ describe("maintenance posting work-order to bill", () => {
               status: "complete",
               vendor_id: "vendor-1",
               external_vendor_id: null,
+              unit_id: "44444444-4444-4444-8444-444444444444",
               total_actual_cost: "1200.00",
               display_id: "WO-100",
             },
@@ -132,6 +133,19 @@ describe("maintenance posting work-order to bill", () => {
     expect(result.bill_id).toBe("bill-1");
     expect(result.bill_action).toBe("created");
     expect(result.ledger_posting).toBe("posted");
+
+    // Law §9: close poster must stamp unit_id + preserve vendor on the created bill header.
+    const billInsertCall = mockQuery.mock.calls.find((c) => String(c[0]).includes("INSERT INTO accounting.bills"));
+    expect(billInsertCall, "bills INSERT must run").toBeTruthy();
+    expect(String(billInsertCall![0])).toMatch(/\bunit_id\b/);
+    expect(billInsertCall![1]).toEqual(
+      expect.arrayContaining([
+        "vendor-1",
+        "22222222-2222-4222-8222-222222222222",
+        "44444444-4444-4444-8444-444444444444",
+      ])
+    );
+
     expect(mockResolveAccountForCategory).toHaveBeenCalledWith(
       "11111111-1111-4111-8111-111111111111",
       "maintenance",
