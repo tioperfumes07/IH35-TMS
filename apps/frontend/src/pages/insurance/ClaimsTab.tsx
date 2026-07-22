@@ -46,6 +46,20 @@ function formatMoney(cents: number): string {
   return formatUsdCents(cents);
 }
 
+const CLAIM_FAULT_LABELS: Record<string, string> = {
+  undetermined: "Undetermined",
+  company: "Company",
+  third_party: "Third party",
+  shared: "Shared",
+};
+
+const CLAIM_RECOVERY_RAIL_LABELS: Record<string, string> = {
+  escrow: "Escrow",
+  settlement: "Next settlement",
+  split: "Split",
+  ask: "Not decided",
+};
+
 export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
@@ -171,6 +185,35 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
         label: "Paid",
         sortable: true,
         render: (claim) => formatMoney(claim.amount_paid_cents),
+      },
+      // Slice-2 economics on the grid. Without these the wizard collected fault / responsibility /
+      // deductible / recovery rail and no list ever showed them back — the write-only half of the
+      // Law §10a reverse requirement. "Ask" is rendered, not hidden: an undecided owner-locked rail
+      // is precisely what an operator needs to spot from the list.
+      {
+        key: "fault",
+        label: "Fault",
+        sortable: true,
+        render: (claim) => CLAIM_FAULT_LABELS[claim.fault ?? "undetermined"] ?? claim.fault ?? "—",
+      },
+      {
+        key: "driver_responsible",
+        label: "Driver resp.",
+        sortable: true,
+        render: (claim) =>
+          claim.driver_responsible === true ? "Yes" : claim.driver_responsible === false ? "No" : "Not assessed",
+      },
+      {
+        key: "deductible_cents",
+        label: "Deductible",
+        sortable: true,
+        render: (claim) => (claim.deductible_cents ? formatMoney(claim.deductible_cents) : "—"),
+      },
+      {
+        key: "recovery_rail",
+        label: "Recovery",
+        sortable: true,
+        render: (claim) => CLAIM_RECOVERY_RAIL_LABELS[claim.recovery_rail ?? "ask"] ?? claim.recovery_rail ?? "—",
       },
     ],
     [],

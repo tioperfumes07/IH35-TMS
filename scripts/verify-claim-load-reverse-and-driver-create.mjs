@@ -60,8 +60,11 @@ export function computeFailures(sources) {
     errors.push("api/insurance.ts listInsuranceClaims params must accept load_id?: string");
   }
 
-  // 3) Reverse-section Filter union
-  if (!/\{\s*load_id:\s*string;[\s\S]{0,40}?\}/.test(reverseSection)) {
+  // 3) Reverse-section Filter union. Window is generous (not just load_id's own union member) because
+  // WIZARD-CLAIM-ECONOMICS-DEPTH slice 2 legitimately adds a 4th trailer_id member to the same union
+  // type, lengthening every member's "never" companion list — this checks the union TYPE still accepts
+  // load_id, not the exact byte distance to the type's closing brace.
+  if (!/type Filter =[\s\S]{0,600}?\{\s*load_id:\s*string;[\s\S]{0,120}?\}/.test(reverseSection)) {
     errors.push("InsuranceClaimsReverseSection Filter union must accept { load_id: string }");
   }
 

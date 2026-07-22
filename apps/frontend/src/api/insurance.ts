@@ -23,6 +23,21 @@ export type PaymentScheduleStatus = "scheduled" | "reminded" | "paid" | "overdue
 export type InsuranceClaimStatus = "open" | "investigating" | "approved" | "denied" | "paid" | "closed";
 export type InsuranceLawsuitStatus = "filed" | "active" | "settled" | "dismissed" | "judgment";
 
+/**
+ * WIZARD-CLAIM-ECONOMICS-DEPTH slice 2 (202607730000, HOLD-FOR-JORGE — not yet applied on prod).
+ * Mirrors apps/backend/src/insurance/claim.shared.ts INSURANCE_CLAIM_FAULT_VALUES.
+ */
+export type InsuranceClaimFault = "undetermined" | "company" | "third_party" | "shared";
+
+/**
+ * Owner lock #1 (2026-07-22, master plan §0.1 Example A2): ALWAYS ASK — 'ask' is the permanent neutral
+ * "not decided yet" state. The UI must default to 'ask' and never silently auto-advance it.
+ */
+export type InsuranceClaimRecoveryRail = "escrow" | "settlement" | "split" | "ask";
+
+/** Owner lock #2 (2026-07-22, Choice Z): ALWAYS ASK — no dollar threshold, ever. */
+export type InsuranceClaimRepairBooksTreatment = "expense" | "capitalize" | "ask";
+
 export type InsurancePolicy = {
   id: string;
   insurer_name: string;
@@ -203,6 +218,15 @@ export type InsuranceClaim = {
   accident_report_id?: string | null;
   load_id?: string | null;
   driver_id?: string | null;
+  /** WIZARD-CLAIM-ECONOMICS-DEPTH slice 2 (202607730000, HOLD — not yet on prod). */
+  fault?: InsuranceClaimFault;
+  driver_responsible?: boolean | null;
+  trailer_id?: string | null;
+  /** Resolved from mdata.equipment.equipment_number (claim.routes.ts CLAIM_FROM join). */
+  trailer_display_id?: string | null;
+  deductible_cents?: number;
+  recovery_rail?: InsuranceClaimRecoveryRail;
+  repair_books_treatment?: InsuranceClaimRepairBooksTreatment;
 };
 
 export type InsuranceClaimGraph = {
@@ -237,6 +261,15 @@ export type CreateInsuranceClaimPayload = {
   accident_report_id?: string | null;
   load_id?: string | null;
   driver_id?: string | null;
+  /** WIZARD-CLAIM-ECONOMICS-DEPTH slice 2 (202607730000, HOLD — not yet on prod). Pure capture, no GL. */
+  fault?: InsuranceClaimFault;
+  driver_responsible?: boolean | null;
+  trailer_id?: string | null;
+  deductible_cents?: number;
+  /** Owner lock #1: caller must send an explicit value; 'ask' is the safe default, never auto-advanced. */
+  recovery_rail?: InsuranceClaimRecoveryRail;
+  /** Owner lock #2 (Choice Z): caller must send an explicit value; no $ threshold anywhere. */
+  repair_books_treatment?: InsuranceClaimRepairBooksTreatment;
 };
 
 export type UpdateInsuranceClaimPayload = {
@@ -254,6 +287,12 @@ export type UpdateInsuranceClaimPayload = {
   accident_report_id?: string | null;
   load_id?: string | null;
   driver_id?: string | null;
+  fault?: InsuranceClaimFault;
+  driver_responsible?: boolean | null;
+  trailer_id?: string | null;
+  deductible_cents?: number;
+  recovery_rail?: InsuranceClaimRecoveryRail;
+  repair_books_treatment?: InsuranceClaimRepairBooksTreatment;
 };
 
 export type InsuranceLawsuit = {
@@ -441,6 +480,8 @@ export const insuranceClaimsApi = {
     unit_id?: string;
     /** Filter insurance.claim.load_id (load reverse drill-through). */
     load_id?: string;
+    /** Filter insurance.claim.trailer_id -> mdata.equipment (trailer reverse drill-through, slice 2). */
+    trailer_id?: string;
   }) {
     return apiRequest<{ claims: InsuranceClaim[] }>(`/api/v1/insurance/claims?${toInsuranceQuery(params)}`);
   },
@@ -610,6 +651,7 @@ export function listInsuranceClaims(params: {
   driver_id?: string;
   unit_id?: string;
   load_id?: string;
+  trailer_id?: string;
 }) {
   return insuranceClaimsApi.list(params);
 }
