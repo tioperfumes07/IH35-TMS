@@ -69,12 +69,18 @@ function extractGroupRoutes(tabsConfigSrc) {
   return [...new Set(routes)];
 }
 
+/** Escape all RegExp metacharacters (incl. `\`) — CodeQL js/incomplete-sanitization. */
+function escapeRegExp(s) {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function assertNavigateAlias(manifest, fromPath, toPath) {
   // Accept either absolute or relative child path forms in Route path=
-  const escapedFrom = fromPath.replace(/\//g, "\\/");
-  const absOrRel = fromPath.replace(/^\/safety\//, "");
+  const escapedFrom = escapeRegExp(fromPath);
+  const absOrRel = escapeRegExp(fromPath.replace(/^\/safety\//, ""));
+  const escapedTo = escapeRegExp(toPath);
   const pathPat = new RegExp(
-    `path=["'](?:${escapedFrom}|${absOrRel})["'][\\s\\S]{0,200}?Navigate[^>]*to=["']${toPath.replace(/\//g, "\\/")}["']`,
+    `path=["'](?:${escapedFrom}|${absOrRel})["'][\\s\\S]{0,200}?Navigate[^>]*to=["']${escapedTo}["']`,
     "m"
   );
   if (!pathPat.test(manifest)) {
