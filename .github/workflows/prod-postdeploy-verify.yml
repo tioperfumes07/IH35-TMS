@@ -20,7 +20,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      # fetch-depth: 0 — the superseded check below needs real history to ask
+      # "is THIS commit an ancestor of what is live?". With a shallow clone
+      # `git merge-base --is-ancestor` cannot answer and the check is worthless.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Wait for Render production deploy of this commit to be live
         env:
@@ -39,17 +44,33 @@ jobs:
               echo "Production deploy ${LIVE} for ${SHA} is live."
               exit 0
             fi
-            # if a NEWER commit already deployed past this one, this commit's deploy
-            # was superseded — that's fine, prod is ahead; stop waiting.
-            NEWER=$(printf '%s' "$DEPLOYS" | jq -r '[.[] | select(.deploy.status == "live")] | .[0].deploy.commit.id // empty')
-            if [ -n "$NEWER" ] && [ "$NEWER" != "$SHA" ]; then
-              echo "A newer commit (${NEWER}) is already live in prod; ${SHA} was superseded. Proceeding to verify current prod."
-              exit 0
+            # A commit is genuinely SUPERSEDED only if what is live is a DESCENDANT of it.
+            #
+            # BUG THIS REPLACES (observed 2026-07-22): this block took "the most recent live
+            # deploy's commit", named it NEWER, and treated `!= $SHA` as proof of supersession —
+            # with no ancestry comparison at all. Before a fresh deploy finishes, the live commit
+            # is ALWAYS different from the just-merged SHA, so this fired on the FIRST loop
+            # iteration of every run and exited 0. The wait loop and the timeout branch below were
+            # unreachable. The gate reported "Production Post-Deploy Verify: success" for merges
+            # that never deployed — main sat 3 commits ahead of prod for 4+ hours (prod 3cac24f
+            # vs main 8d5a50c6e) while this check was green, and it logged the older commit as
+            # "a newer commit … was superseded".
+            LIVE_COMMIT=$(printf '%s' "$DEPLOYS" | jq -r '[.[] | select(.deploy.status == "live")] | .[0].deploy.commit.id // empty')
+            if [ -n "$LIVE_COMMIT" ] && [ "$LIVE_COMMIT" != "$SHA" ]; then
+              if git merge-base --is-ancestor "$SHA" "$LIVE_COMMIT" 2>/dev/null; then
+                echo "Live prod commit ${LIVE_COMMIT} is a descendant of ${SHA}; this commit was genuinely superseded. Verifying current prod."
+                exit 0
+              fi
+              echo "Live prod commit ${LIVE_COMMIT} is NOT a descendant of ${SHA} — prod is BEHIND this merge. Still waiting."
             fi
             echo "prod deploy of ${SHA} not live yet; waiting 20s…"
             sleep 20
           done
-          echo "::warning::Did not observe a live prod deploy for ${SHA} within the window; verifying current prod state anyway."
+          # Timeout is a FAILURE, not a warning. "Merged" is not "live", and a gate whose entire
+          # job is proving the deploy landed must not pass when it did not.
+          echo "::error::No live prod deploy for ${SHA} within the window, and nothing newer is live either — the merge did NOT reach production."
+          echo "Check the Render service for a failed/stuck deploy (preDeployCommand runs db:migrate first, so a failing pre-deploy blocks every later deploy silently)."
+          exit 1
 
       - name: Smoke PRODUCTION
         id: smoke
