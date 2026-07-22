@@ -1,4 +1,7 @@
 import type { Dispatch, SetStateAction } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { listInsuranceClaims, listInsuranceLawsuits } from "../../../api/insurance";
+import { listDrivers, listUnits } from "../../../api/mdata";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
@@ -23,6 +26,11 @@ export type LegalMatterFormState = {
   attorney_firm: string;
   attorney_phone: string;
   attorney_email: string;
+  /** Linkage FKs (API-ready; schema on legal.matters). */
+  insurance_claim_id: string;
+  insurance_lawsuit_id: string;
+  related_driver_id: string;
+  unit_id: string;
 };
 
 export const EMPTY_LEGAL_MATTER_FORM: LegalMatterFormState = {
@@ -45,6 +53,10 @@ export const EMPTY_LEGAL_MATTER_FORM: LegalMatterFormState = {
   attorney_firm: "",
   attorney_phone: "",
   attorney_email: "",
+  insurance_claim_id: "",
+  insurance_lawsuit_id: "",
+  related_driver_id: "",
+  unit_id: "",
 };
 
 export function matterRowToFormState(matter: Record<string, unknown>): LegalMatterFormState {
@@ -76,6 +88,10 @@ export function matterRowToFormState(matter: Record<string, unknown>): LegalMatt
     attorney_firm: String(matter.attorney_firm ?? ""),
     attorney_phone: String(matter.attorney_phone ?? ""),
     attorney_email: String(matter.attorney_email ?? ""),
+    insurance_claim_id: matter.insurance_claim_id ? String(matter.insurance_claim_id) : "",
+    insurance_lawsuit_id: matter.insurance_lawsuit_id ? String(matter.insurance_lawsuit_id) : "",
+    related_driver_id: matter.related_driver_id ? String(matter.related_driver_id) : "",
+    unit_id: matter.unit_id ? String(matter.unit_id) : "",
   };
 }
 
@@ -88,6 +104,11 @@ export const LEGAL_MATTER_EDIT_STATUSES = [
   "dismissed",
   "judgment",
 ] as const;
+
+function optionalUuidOrNull(raw: string): string | null {
+  const trimmed = raw.trim();
+  return trimmed ? trimmed : null;
+}
 
 export function formStateToUpdatePayload(form: LegalMatterFormState): Record<string, unknown> {
   // Never PATCH status=closed — that bypasses closeMatter (closed_at / outcome / matter_closed).
@@ -119,6 +140,10 @@ export function formStateToUpdatePayload(form: LegalMatterFormState): Record<str
     attorney_firm: form.attorney_firm.trim(),
     attorney_phone: form.attorney_phone.trim(),
     attorney_email: form.attorney_email.trim() || null,
+    insurance_claim_id: optionalUuidOrNull(form.insurance_claim_id),
+    insurance_lawsuit_id: optionalUuidOrNull(form.insurance_lawsuit_id),
+    related_driver_id: optionalUuidOrNull(form.related_driver_id),
+    unit_id: optionalUuidOrNull(form.unit_id),
   };
 }
 
@@ -137,11 +162,40 @@ type Props = {
   form: LegalMatterFormState;
   setForm: Dispatch<SetStateAction<LegalMatterFormState>>;
   mode: "create" | "edit";
+  /** Required for linkage pickers (claims / lawsuits / drivers / units). */
+  operatingCompanyId: string;
 };
 
-export function LegalMatterFormFields({ form, setForm, mode }: Props) {
+export function LegalMatterFormFields({ form, setForm, mode, operatingCompanyId }: Props) {
+  const claimsQuery = useQuery({
+    queryKey: ["legal-matter-form", "claims", operatingCompanyId],
+    enabled: Boolean(operatingCompanyId),
+    queryFn: () => listInsuranceClaims({ operating_company_id: operatingCompanyId }).then((r) => r.claims),
+  });
+  const lawsuitsQuery = useQuery({
+    queryKey: ["legal-matter-form", "lawsuits", operatingCompanyId],
+    enabled: Boolean(operatingCompanyId),
+    queryFn: () => listInsuranceLawsuits({ operating_company_id: operatingCompanyId }).then((r) => r.lawsuits),
+  });
+  const driversQuery = useQuery({
+    queryKey: ["legal-matter-form", "drivers", operatingCompanyId],
+    enabled: Boolean(operatingCompanyId),
+    queryFn: () =>
+      listDrivers({ operating_company_id: operatingCompanyId, status: "All", limit: 500 }).then((r) => r.drivers),
+  });
+  const unitsQuery = useQuery({
+    queryKey: ["legal-matter-form", "units", operatingCompanyId],
+    enabled: Boolean(operatingCompanyId),
+    queryFn: async () => {
+      const result = await listUnits({ operating_company_id: operatingCompanyId, limit: 500 });
+      return (result.units as Array<{ id: string; unit_code?: string | null; unit_number?: string | null }>).filter(
+        (u) => Boolean(u.id),
+      );
+    },
+  });
+
   return (
-    <div className="grid gap-2 md:grid-cols-2">
+    <div className="grid gap-2 md:grid-cols-2" data-testid="legal-matter-form-fields">
       {mode === "create" ? (
         <label className="text-xs text-gray-600">
           Matter number
@@ -243,6 +297,68 @@ export function LegalMatterFormFields({ form, setForm, mode }: Props) {
           onChange={(e) => setForm((f) => ({ ...f, court: e.target.value }))}
         />
       </label>
+
+      <label className="text-xs text-gray-600" data-testid="legal-matter-insurance-claim-picker">
+        Insurance claim
+        <SelectCombobox
+          className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
+          value={form.insurance_claim_id}
+          onChange={(e) => setForm((f) => ({ ...f, insurance_claim_id: e.target.value }))}
+        >
+          <option value="">None</option>
+          {(claimsQuery.data ?? []).map((claim) => (
+            <option key={claim.id} value={claim.id}>
+              {claim.claim_number} — {claim.status}
+            </option>
+          ))}
+        </SelectCombobox>
+      </label>
+      <label className="text-xs text-gray-600" data-testid="legal-matter-insurance-lawsuit-picker">
+        Insurance lawsuit
+        <SelectCombobox
+          className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
+          value={form.insurance_lawsuit_id}
+          onChange={(e) => setForm((f) => ({ ...f, insurance_lawsuit_id: e.target.value }))}
+        >
+          <option value="">None</option>
+          {(lawsuitsQuery.data ?? []).map((lawsuit) => (
+            <option key={lawsuit.id} value={lawsuit.id}>
+              {lawsuit.case_number} — {lawsuit.status}
+            </option>
+          ))}
+        </SelectCombobox>
+      </label>
+      <label className="text-xs text-gray-600" data-testid="legal-matter-related-driver-picker">
+        Related driver
+        <SelectCombobox
+          className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
+          value={form.related_driver_id}
+          onChange={(e) => setForm((f) => ({ ...f, related_driver_id: e.target.value }))}
+        >
+          <option value="">None</option>
+          {(driversQuery.data ?? []).map((driver) => (
+            <option key={driver.id} value={driver.id}>
+              {[driver.first_name, driver.last_name].filter(Boolean).join(" ") || driver.id.slice(0, 8)}
+            </option>
+          ))}
+        </SelectCombobox>
+      </label>
+      <label className="text-xs text-gray-600" data-testid="legal-matter-unit-picker">
+        Unit
+        <SelectCombobox
+          className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
+          value={form.unit_id}
+          onChange={(e) => setForm((f) => ({ ...f, unit_id: e.target.value }))}
+        >
+          <option value="">None</option>
+          {(unitsQuery.data ?? []).map((unit) => (
+            <option key={unit.id} value={unit.id}>
+              {unit.unit_code || unit.unit_number || unit.id.slice(0, 8)}
+            </option>
+          ))}
+        </SelectCombobox>
+      </label>
+
       <label className="text-xs text-gray-600">
         Amount claimed (against us)
         <MoneyInput

@@ -7,7 +7,9 @@ import {
   listInsurancePolicies,
   type InsuranceClaimStatus,
 } from "../../api/insurance";
-import { listUnits } from "../../api/mdata";
+import { listLoads } from "../../api/loads";
+import { listDrivers, listUnits } from "../../api/mdata";
+import { getSafetyAccidents } from "../../api/safety";
 import { Modal } from "../Modal";
 import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
@@ -23,6 +25,9 @@ type FormState = {
   claim_number: string;
   policy_id: string;
   asset_id: string;
+  driver_id: string;
+  load_id: string;
+  accident_report_id: string;
   accident_date: string;
   reported_date: string;
   status: InsuranceClaimStatus;
@@ -44,6 +49,9 @@ const INITIAL_FORM: FormState = {
   claim_number: "",
   policy_id: "",
   asset_id: "",
+  driver_id: "",
+  load_id: "",
+  accident_report_id: "",
   accident_date: "",
   reported_date: "",
   status: "open",
@@ -113,7 +121,30 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
     },
   });
 
+  const driversQuery = useQuery({
+    queryKey: ["insurance", "claim-create", "drivers", operatingCompanyId],
+    enabled: open && Boolean(operatingCompanyId),
+    queryFn: () =>
+      listDrivers({ operating_company_id: operatingCompanyId, status: "All", limit: 500 }).then((r) => r.drivers),
+  });
+
+  const loadsQuery = useQuery({
+    queryKey: ["insurance", "claim-create", "loads", operatingCompanyId],
+    enabled: open && Boolean(operatingCompanyId),
+    queryFn: () =>
+      listLoads({ operating_company_id: [operatingCompanyId], limit: 200 }).then((r) => r.loads ?? []),
+  });
+
+  const accidentsQuery = useQuery({
+    queryKey: ["insurance", "claim-create", "accidents", operatingCompanyId],
+    enabled: open && Boolean(operatingCompanyId),
+    queryFn: () => getSafetyAccidents(operatingCompanyId).then((r) => r.accidents ?? []),
+  });
+
   const units = useMemo(() => unitsQuery.data ?? [], [unitsQuery.data]);
+  const drivers = useMemo(() => driversQuery.data ?? [], [driversQuery.data]);
+  const loads = useMemo(() => loadsQuery.data ?? [], [loadsQuery.data]);
+  const accidents = useMemo(() => accidentsQuery.data ?? [], [accidentsQuery.data]);
 
   useEffect(() => {
     if (!open) return;
@@ -130,6 +161,9 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
         claim_number: form.claim_number.trim(),
         policy_id: form.policy_id,
         asset_id: form.asset_id || null,
+        driver_id: form.driver_id || null,
+        load_id: form.load_id || null,
+        accident_report_id: form.accident_report_id || null,
         accident_date: form.accident_date,
         reported_date: form.reported_date,
         status: form.status,
@@ -200,6 +234,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
     <Modal open={open} onClose={onClose} title="Create Claim">
       <form
         className="space-y-4 text-sm"
+        data-testid="claim-create-form"
         onSubmit={(event) => {
           event.preventDefault();
           onSubmit();
@@ -257,6 +292,58 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
                   {unitLabel(unit)}
                 </option>
               ))}
+            </select>
+          </label>
+
+          <label className="space-y-1" data-testid="claim-create-driver-field">
+            <span className="text-xs font-semibold text-slate-700">Driver</span>
+            <select
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
+              value={form.driver_id}
+              onChange={(event) => updateField("driver_id", event.target.value)}
+            >
+              <option value="">Unassigned</option>
+              {drivers.map((driver) => (
+                <option key={driver.id} value={driver.id}>
+                  {[driver.first_name, driver.last_name].filter(Boolean).join(" ") || driver.id.slice(0, 8)}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="space-y-1" data-testid="claim-create-load-field">
+            <span className="text-xs font-semibold text-slate-700">Load</span>
+            <select
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
+              value={form.load_id}
+              onChange={(event) => updateField("load_id", event.target.value)}
+            >
+              <option value="">Unassigned</option>
+              {loads.map((load) => (
+                <option key={load.id} value={load.id}>
+                  {load.load_number || load.id.slice(0, 8)}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="space-y-1" data-testid="claim-create-accident-field">
+            <span className="text-xs font-semibold text-slate-700">Accident report</span>
+            <select
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
+              value={form.accident_report_id}
+              onChange={(event) => updateField("accident_report_id", event.target.value)}
+            >
+              <option value="">Unassigned</option>
+              {accidents.map((accident) => {
+                const id = String(accident.id ?? "");
+                const when = accident.accident_at ? String(accident.accident_at).slice(0, 10) : "no date";
+                return (
+                  <option key={id} value={id}>
+                    {id.slice(0, 8)} — {when}
+                  </option>
+                );
+              })}
             </select>
           </label>
 

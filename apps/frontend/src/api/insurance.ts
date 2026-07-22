@@ -435,6 +435,10 @@ export const insuranceClaimsApi = {
     policy_id?: string;
     status?: InsuranceClaimStatus;
     asset_id?: string;
+    /** Filter insurance.claim.driver_id (driver reverse drill-through). */
+    driver_id?: string;
+    /** Filter via mdata.assets.unit_id (unit reverse drill-through). */
+    unit_id?: string;
   }) {
     return apiRequest<{ claims: InsuranceClaim[] }>(`/api/v1/insurance/claims?${toInsuranceQuery(params)}`);
   },
@@ -601,6 +605,8 @@ export function listInsuranceClaims(params: {
   policy_id?: string;
   status?: InsuranceClaimStatus;
   asset_id?: string;
+  driver_id?: string;
+  unit_id?: string;
 }) {
   return insuranceClaimsApi.list(params);
 }
