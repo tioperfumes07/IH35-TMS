@@ -111,6 +111,18 @@ export function SettlementDetailPage() {
       ? String((lines[0] as Record<string, unknown>).load_id)
       : null);
 
+  // LAW OF THE LAND §9 (2026-07-22): "Loads in cycle" reverse-link — distinct load ids carried
+  // directly on settlement_lines.load_id (Jorge LOCKED 2026-06-27 direct-trace column), not just the
+  // header's single settlementLoadId (a settlement may cover multiple loads for a driver's period).
+  const settlementLoadIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const line of lines) {
+      const loadId = (line as Record<string, unknown>).load_id;
+      if (typeof loadId === "string" && loadId) ids.add(loadId);
+    }
+    return Array.from(ids);
+  }, [lines]);
+
   const teamSplitQuery = useQuery({
     queryKey: ["driver-finance", "team-settlement-split", settlementLoadId, companyId],
     queryFn: () => previewTeamSettlementSplit(settlementLoadId!, companyId),
@@ -193,12 +205,14 @@ export function SettlementDetailPage() {
         </div>
       ) : null}
       <SettlementHeader
+        driverId={driverId}
         driverName={String(settlement.driver_full_name ?? "-")}
         driverDisplayId={String(settlement.driver_display_id ?? "-")}
         periodStart={String(settlement.period_start ?? "-")}
         periodEnd={String(settlement.period_end ?? "-")}
         status={String(settlement.status ?? "-")}
         computedAt={debt.computedAt}
+        loadIds={settlementLoadIds}
         onRefresh={() => void debt.refresh()}
       />
       {canOpenDispute ? (

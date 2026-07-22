@@ -5,12 +5,27 @@ import { cashAdvanceRequestsOfficeApi } from "../../api/cashAdvanceRequests";
 import { getDebtSummary, listSettlements, type SettlementListRow } from "../../api/driverFinance";
 import { getLiabilitiesByDriver } from "../../api/liabilities";
 import { Button } from "../Button";
+import { EntityLink } from "../shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { useLiveDebt } from "../../pages/driver-finance/hooks/useLiveDebt";
+import { listAutoDeductionPolicies } from "../../hooks/useAutoDeductionPolicies";
 
 type Props = {
   driverId: string;
   operatingCompanyId: string;
+  /**
+   * LAW OF THE LAND §9 (2026-07-22): reverse+forward drill from this tab into the driver's
+   * Operations sub-views (e.g. escrow-history) without a URL round-trip — DriverDetail.tsx owns the
+   * activeTab/operationsSubView state, so this callback lets EarningsTab drive it directly.
+   */
+  onOpenOperationsView?: (slug: string) => void;
+  /**
+   * LAW OF THE LAND §9 (2026-07-22): "Pay rate template link if data exists" — verified there is no
+   * FK from a driver to a catalogs pay-rate-template row (rate lines are per-qualification
+   * line_item_template_id amounts on Equipment Assignments, not a template reference — Rule 16, no
+   * guessed mapping). The honest link is to the tab that actually holds the driver's live rates.
+   */
+  onOpenEquipmentAssignments?: () => void;
 };
 
 type LiabilityRow = Record<string, unknown>;
@@ -40,7 +55,9 @@ const SETTLEMENT_COLUMNS: Array<ParityColumn<SettlementListRow>> = [
     label: "Period",
     sortable: true,
     sortValue: (row) => row.period_end,
-    render: (row) => `${row.period_start} → ${row.period_end}`,
+    render: (row) => (
+      <EntityLink kind="settlement" id={row.id} label={`${row.period_start} → ${row.period_end}`} />
+    ),
   },
   {
     key: "gross_pay",
@@ -73,7 +90,9 @@ const LIABILITY_COLUMNS: Array<ParityColumn<LiabilityRow>> = [
     key: "type",
     label: "Type",
     sortable: true,
-    render: (row) => String(row.type ?? "—"),
+    render: (row) => (
+      <EntityLink kind="liability" id={row.id ? String(row.id) : null} label={String(row.type ?? "—")} />
+    ),
   },
   {
     key: "source_description",
@@ -111,7 +130,7 @@ const LIABILITY_COLUMNS: Array<ParityColumn<LiabilityRow>> = [
   },
 ];
 
-export function EarningsTab({ driverId, operatingCompanyId }: Props) {
+export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView, onOpenEquipmentAssignments }: Props) {
   const queryClient = useQueryClient();
   const enabled = Boolean(driverId) && Boolean(operatingCompanyId);
   const { debt, computedAt, loading: debtLoading, refresh } = useLiveDebt(
@@ -134,6 +153,15 @@ export function EarningsTab({ driverId, operatingCompanyId }: Props) {
   const cashAdvancesQuery = useQuery({
     queryKey: ["driver-cash-advances", operatingCompanyId, driverId],
     queryFn: () => cashAdvanceRequestsOfficeApi.list(operatingCompanyId, "approved"),
+    enabled,
+  });
+
+  // LAW OF THE LAND §9 (2026-07-22): driver profile reverse link for "active deductions /
+  // auto-deduction policies" — backend already supports driver_id filtering
+  // (settlements/auto-deductions/policy.routes.ts), just wasn't wired to this tab.
+  const autoDeductionPoliciesQuery = useQuery({
+    queryKey: ["driver-auto-deduction-policies", operatingCompanyId, driverId],
+    queryFn: () => listAutoDeductionPolicies(operatingCompanyId, { driver_id: driverId }),
     enabled,
   });
 
@@ -217,6 +245,13 @@ export function EarningsTab({ driverId, operatingCompanyId }: Props) {
             {money(cashAdvancesUnpaid)}
           </div>
           <div className="text-[10px] text-slate-700">{approvedAdvancesForDriver.length} approved advance(s)</div>
+          <Link
+            to={`/cash-advances?driver_id=${encodeURIComponent(driverId)}`}
+            className="text-[10px] text-slate-700 underline"
+            data-testid="driver-earnings-cash-advances-link"
+          >
+            View all cash advances →
+          </Link>
         </div>
         <div className="rounded-sm border border-slate-200 bg-slate-100 p-3">
           <div className="text-[11px] uppercase text-slate-700">Pending ack liabilities</div>
@@ -224,6 +259,38 @@ export function EarningsTab({ driverId, operatingCompanyId }: Props) {
             {money(Number(debt?.pending_ack_total ?? 0))}
           </div>
           <div className="text-[10px] text-slate-700">{Number(debt?.pending_ack_count ?? 0)} pending</div>
+        </div>
+      </div>
+
+      {/* LAW OF THE LAND §9 (2026-07-22): escrow balance tile — honest empty ($0.00) rather than
+          hidden when the driver has no escrow clause, per driver-profile reverse-link scope. */}
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold text-gray-900">Escrow</h3>
+          {onOpenOperationsView ? (
+            <button
+              type="button"
+              className="text-xs text-slate-700 underline"
+              data-testid="driver-earnings-escrow-link"
+              onClick={() => onOpenOperationsView("escrow-history")}
+            >
+              View escrow history →
+            </button>
+          ) : null}
+        </div>
+        <div className="grid gap-2 md:grid-cols-2">
+          <div>
+            <div className="text-[11px] uppercase text-gray-500">Pre-clause balance</div>
+            <div className="text-lg font-semibold text-gray-900" data-testid="driver-earnings-escrow-pre">
+              {money(Number(debt?.escrow_pre_clause ?? 0))}
+            </div>
+          </div>
+          <div>
+            <div className="text-[11px] uppercase text-gray-500">Post-clause balance</div>
+            <div className="text-lg font-semibold text-gray-900" data-testid="driver-earnings-escrow-post">
+              {money(Number(debt?.escrow_post_clause ?? 0))}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -271,7 +338,16 @@ export function EarningsTab({ driverId, operatingCompanyId }: Props) {
       </div>
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <h3 className="mb-2 text-sm font-semibold text-gray-900">Active liabilities</h3>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold text-gray-900">Active liabilities</h3>
+          <Link
+            to={`/liabilities?driver_id=${encodeURIComponent(driverId)}`}
+            className="text-xs text-slate-700 underline"
+            data-testid="driver-earnings-liabilities-link"
+          >
+            View all liabilities →
+          </Link>
+        </div>
         <ParityTable
           columns={LIABILITY_COLUMNS}
           rows={liabilities}
@@ -284,6 +360,66 @@ export function EarningsTab({ driverId, operatingCompanyId }: Props) {
           rowTestId={(row) => `driver-earnings-liability-${String(row.id)}`}
         />
       </div>
+
+      {/* LAW OF THE LAND §9 (2026-07-22): active deductions / auto-deduction policies reverse-link. */}
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold text-gray-900">Active deductions</h3>
+          <Link
+            to={`/drivers/deductions?driver_id=${encodeURIComponent(driverId)}`}
+            className="text-xs text-slate-700 underline"
+            data-testid="driver-earnings-auto-deductions-link"
+          >
+            Manage auto-deduction policies →
+          </Link>
+        </div>
+        {autoDeductionPoliciesQuery.isPending ? (
+          <p className="text-xs text-gray-500">Loading…</p>
+        ) : (autoDeductionPoliciesQuery.data?.rows ?? []).length === 0 ? (
+          <p className="text-xs text-gray-500">No auto-deduction policies for this driver.</p>
+        ) : (
+          <div className="space-y-1">
+            {(autoDeductionPoliciesQuery.data?.rows ?? []).map((policy) => (
+              <div
+                key={policy.id}
+                className="flex items-center justify-between rounded-sm border border-gray-100 px-2 py-1 text-xs"
+                data-testid={`driver-earnings-auto-deduction-${policy.id}`}
+              >
+                <span>
+                  {policy.deduction_type} · {policy.status}
+                </span>
+                <span className="font-semibold">
+                  {money((policy.deducted_so_far_cents ?? 0) / 100)} / {money((policy.total_owed_cents ?? 0) / 100)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* LAW OF THE LAND §9 (2026-07-22): pay rate — honest note, not a fabricated catalog FK.
+          Verified: driver current_rates are per-qualification line_item_template_id amounts, not a
+          reference to catalogs pay-rate-template rows (Rule 16 — no guessed mapping). */}
+      {onOpenEquipmentAssignments ? (
+        <div className="rounded-sm border border-gray-200 bg-white p-3">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900">Pay rates</h3>
+              <p className="text-[11px] text-gray-500">
+                Per-load and per-mile rates live on the driver's equipment qualifications, not a shared template.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="whitespace-nowrap text-xs text-slate-700 underline"
+              data-testid="driver-earnings-pay-rates-link"
+              onClick={onOpenEquipmentAssignments}
+            >
+              View rates on Equipment Assignments →
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {/* ARCHIVE (A24-5): prior placeholder copy lived inline in DriverDetail.tsx — Sunset 2026-09-01 */}
     </div>

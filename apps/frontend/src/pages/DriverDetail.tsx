@@ -176,6 +176,13 @@ export function DriverDetailPage() {
     if (t === "settlements" || t === "earnings") {
       setActiveTab("Earnings & Debt");
     }
+    // LAW OF THE LAND §9 (2026-07-22): ?tab=operations&op=<slug> deep-links straight into an
+    // Operations sub-view (e.g. escrow-history) — same pattern as the settlements/earnings alias above.
+    if (t === "operations") {
+      setActiveTab("Operations");
+      const op = searchParams.get("op");
+      if (op && op in OPERATIONS_VIEW_BY_SLUG) setOperationsSubView(op);
+    }
   }, [searchParams]);
   useEffect(() => {
     if (searchParams.get("assign_truck") === "1" && id) {
@@ -1332,7 +1339,15 @@ export function DriverDetailPage() {
       ) : null}
 
       {activeTab === "Earnings & Debt" ? (
-        <EarningsTab driverId={id} operatingCompanyId={String(driver?.operating_company_id ?? "")} />
+        <EarningsTab
+          driverId={id}
+          operatingCompanyId={String(driver?.operating_company_id ?? "")}
+          onOpenOperationsView={(slug) => {
+            setActiveTab("Operations");
+            setOperationsSubView(slug);
+          }}
+          onOpenEquipmentAssignments={() => setActiveTab("Equipment Assignments")}
+        />
       ) : null}
 
       {activeTab === "Safety File" ? (

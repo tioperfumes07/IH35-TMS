@@ -1,6 +1,7 @@
 import { holdLiability, markLiabilityPaidOff, resumeLiability } from "../../../api/liabilities";
 import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 type Props = {
   open: boolean;
@@ -25,6 +26,14 @@ export function LiabilityDetailDrawer({ open, operatingCompanyId, liability, onC
           <button type="button" className="text-gray-500 underline" onClick={onClose}>Close</button>
         </div>
         <div className="space-y-1 rounded-sm border border-gray-200 bg-gray-50 p-2">
+          <div>
+            Driver:{" "}
+            <EntityLink
+              kind="driver"
+              id={liability.driver_id ? String(liability.driver_id) : null}
+              label={String(liability.driver_full_name ?? "—")}
+            />
+          </div>
           <div>Type: {String(liability.type ?? "—")}</div>
           <div>Source: {String(liability.source_description ?? "—")}</div>
           <div>Original: ${Number(liability.original_amount ?? 0).toFixed(2)}</div>
@@ -40,10 +49,18 @@ export function LiabilityDetailDrawer({ open, operatingCompanyId, liability, onC
         </div>
         <div className="mt-2 rounded-sm border border-gray-200 p-2">
           <div className="mb-1 font-semibold">Settlement History (reverse-link)</div>
+          {liability.settlement_history_is_driver_level ? (
+            <div className="mb-1 text-[10px] text-gray-500">
+              Driver-level settlement deductions (exact per-liability attribution is a HOLD — see REMAINING in the
+              PR).
+            </div>
+          ) : null}
           <div className="space-y-1">
             {settlementHistory.map((row) => (
               <div key={String(row.settlement_id ?? row.id)} className="rounded-sm border border-gray-100 px-2 py-1">
-                Settlement {String(row.settlement_id ?? "—")} · ${Number(row.amount ?? 0).toFixed(2)}
+                Settlement{" "}
+                <EntityLink kind="settlement" id={row.settlement_id ? String(row.settlement_id) : null} label={String(row.settlement_id ?? "—")} /> ·
+                ${Number(row.amount ?? 0).toFixed(2)}
               </div>
             ))}
             {settlementHistory.length === 0 ? <div className="text-gray-500">No settlement deductions yet.</div> : null}

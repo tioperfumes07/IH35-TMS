@@ -1,0 +1,149 @@
+#!/usr/bin/env node
+/**
+ * verify-driver-settlements-domain-linkage — LAW OF THE LAND §9 (2026-07-22).
+ *
+ * Structural (regex) presence checks that the driver-settlements-domain reverse/forward drills
+ * wired in this block stay wired: EntityLink cash_advance kind, driver-profile reverse links
+ * (cash advances / escrow / auto-deductions), driver_id query-param plumbing on cash advances +
+ * auto-deduction policies (FE + BE), and driver/settlement EntityLink usage on the cash-advance +
+ * liability surfaces. Not a full TS-AST contract (see verify-entitylink-deep-links.mjs for that
+ * style) — a lighter regex sweep, same style as verify-driver-picker-audit-present.mjs.
+ *
+ * Rule 17: lives entirely under scripts/ + scripts/verify-steps/ — no package.json /
+ * locked-guards.yml / ci.yml edits.
+ */
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+const ROOT = resolve(import.meta.dirname, "..");
+const failures = [];
+
+function read(relPath) {
+  try {
+    return readFileSync(resolve(ROOT, relPath), "utf8");
+  } catch {
+    failures.push(`MISSING FILE: ${relPath}`);
+    return "";
+  }
+}
+
+function requireMatch(relPath, pattern, description) {
+  const content = read(relPath);
+  if (!content) return;
+  if (!pattern.test(content)) {
+    failures.push(`${relPath}: ${description}`);
+  }
+}
+
+// 1. EntityLink: cash_advance kind resolves to a real route (no dead link).
+requireMatch(
+  "apps/frontend/src/components/shared/EntityLink.tsx",
+  /\|\s*"cash_advance"/,
+  "EntityKind must include \"cash_advance\""
+);
+requireMatch(
+  "apps/frontend/src/components/shared/EntityLink.tsx",
+  /case "cash_advance":\s*\n\s*return `\/cash-advances\?advance_id=\$\{id\}`;/,
+  "resolveEntityRoute must resolve cash_advance -> /cash-advances?advance_id="
+);
+
+// 2. Cash Advances Home: honors advance_id + driver_id deep-link/filter params (settlement/liability parity).
+requireMatch(
+  "apps/frontend/src/pages/cash-advances/CashAdvancesHome.tsx",
+  /searchParams\.get\("advance_id"\)/,
+  "CashAdvancesHomePage must read advance_id from searchParams (EntityLink deep-link target)"
+);
+requireMatch(
+  "apps/frontend/src/pages/cash-advances/CashAdvancesHome.tsx",
+  /searchParams\.get\("driver_id"\)/,
+  "CashAdvancesHomePage must read driver_id from searchParams (driver-profile reverse link)"
+);
+
+// 3. Backend: cash-advances list endpoint accepts driver_id filter (read-path only, no new GL math).
+requireMatch(
+  "apps/backend/src/cash-advances/cash-advances.routes.ts",
+  /driver_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/,
+  "listQuerySchema must accept an optional driver_id filter"
+);
+
+// 4. Driver-facing EntityLink drill-throughs on the financial surfaces.
+requireMatch(
+  "apps/frontend/src/pages/cash-advances/components/CashAdvancesTable.tsx",
+  /<EntityLink[\s\S]{0,60}kind="driver"/,
+  "driver column must render <EntityLink kind=\"driver\" .../>"
+);
+requireMatch(
+  "apps/frontend/src/pages/cash-advances/components/AdvanceDetailDrawer.tsx",
+  /<EntityLink[\s\S]{0,60}kind="driver"/,
+  "drawer must render the driver as <EntityLink kind=\"driver\" .../>"
+);
+requireMatch(
+  "apps/frontend/src/pages/liabilities/components/LiabilitiesTable.tsx",
+  /kind="driver"/,
+  "driver column must render <EntityLink kind=\"driver\" .../>"
+);
+requireMatch(
+  "apps/frontend/src/pages/liabilities/components/LiabilityDetailDrawer.tsx",
+  /kind="driver"/,
+  "drawer must render the driver as <EntityLink kind=\"driver\" .../>"
+);
+
+// 5. Settlement header: driver + loads-in-cycle are real drill-throughs, not "-" placeholders.
+requireMatch(
+  "apps/frontend/src/pages/driver-finance/components/SettlementHeader.tsx",
+  /kind="driver"/,
+  "SettlementHeader must render the driver name as <EntityLink kind=\"driver\" .../>"
+);
+requireMatch(
+  "apps/frontend/src/pages/driver-finance/components/SettlementHeader.tsx",
+  /loadIds/,
+  "SettlementHeader must accept + render a loadIds prop instead of a hardcoded \"-\""
+);
+requireMatch(
+  "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
+  /settlementLoadIds/,
+  "SettlementDetailPage must compute distinct settlementLoadIds from settlement lines"
+);
+
+// 6. Driver profile (EarningsTab) reverse links: cash advances, escrow tile, auto-deduction policies.
+requireMatch(
+  "apps/frontend/src/components/drivers/EarningsTab.tsx",
+  /driver-earnings-cash-advances-link/,
+  "EarningsTab must link to /cash-advances?driver_id= (View all cash advances)"
+);
+requireMatch(
+  "apps/frontend/src/components/drivers/EarningsTab.tsx",
+  /driver-earnings-escrow-pre/,
+  "EarningsTab must render an escrow tile (pre-clause balance, honest-empty)"
+);
+requireMatch(
+  "apps/frontend/src/components/drivers/EarningsTab.tsx",
+  /driver-earnings-auto-deductions-link/,
+  "EarningsTab must link to /drivers/deductions?driver_id= (Manage auto-deduction policies)"
+);
+
+// 7. Auto-deduction policies: driver_id scoping wired FE hook -> component -> panel (BE already supported it).
+requireMatch(
+  "apps/frontend/src/hooks/useAutoDeductionPolicies.ts",
+  /export function useAutoDeductionPolicies\(operatingCompanyId: string, driverId\?: string\)/,
+  "useAutoDeductionPolicies must accept an optional driverId filter"
+);
+requireMatch(
+  "apps/frontend/src/pages/drivers/AutoDeductionPolicies.tsx",
+  /searchParams\.get\("driver_id"\)/,
+  "AutoDeductionPoliciesPanel must read driver_id from searchParams (driver-profile reverse link)"
+);
+
+// 8. DriverDetail: operations sub-view deep link + EarningsTab callback wiring (forward+reverse).
+requireMatch(
+  "apps/frontend/src/pages/DriverDetail.tsx",
+  /onOpenOperationsView/,
+  "DriverDetailPage must pass onOpenOperationsView to EarningsTab (Escrow tile -> Operations tab drill)"
+);
+
+if (failures.length > 0) {
+  console.error("FAIL verify-driver-settlements-domain-linkage:");
+  for (const failure of failures) console.error(` - ${failure}`);
+  process.exit(1);
+}
+console.log("PASS verify-driver-settlements-domain-linkage");

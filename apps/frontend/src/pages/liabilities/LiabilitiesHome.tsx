@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
-import { getActiveLiabilities, getLiabilitiesKpis, getLiabilityDetail } from "../../api/liabilities";
+import { getActiveLiabilities, getLiabilitiesByDriver, getLiabilitiesKpis, getLiabilityDetail } from "../../api/liabilities";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { LiabilitiesKpiRow } from "./components/LiabilitiesKpiRow";
@@ -15,8 +15,11 @@ export function LiabilitiesHomePage() {
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const deepLinkLiabilityId = searchParams.get("liability_id");
+  // LAW OF THE LAND §9 (2026-07-22): driver-profile reverse-link — "View all liabilities" from
+  // EarningsTab.tsx scopes this list to one driver (cash-advances ?driver_id= parity).
+  const driverIdFilter = searchParams.get("driver_id");
   const [tab, setTab] = useState<(typeof SUBNAV)[number]>("All Active");
   const [selectedLiabilityId, setSelectedLiabilityId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -35,8 +38,9 @@ export function LiabilitiesHomePage() {
     enabled: Boolean(companyId),
   });
   const activeQuery = useQuery({
-    queryKey: ["liabilities", "active", companyId],
-    queryFn: () => getActiveLiabilities(companyId),
+    queryKey: ["liabilities", "active", companyId, driverIdFilter ?? ""],
+    queryFn: () =>
+      driverIdFilter ? getLiabilitiesByDriver(driverIdFilter, companyId) : getActiveLiabilities(companyId),
     enabled: Boolean(companyId),
   });
   const detailQuery = useQuery({
@@ -55,6 +59,23 @@ export function LiabilitiesHomePage() {
   return (
     <div className="space-y-3">
       <PageHeader title="Liabilities" subtitle="Driver debt with acknowledgment + forfeiture status" />
+
+      {driverIdFilter ? (
+        <div className="flex items-center justify-between rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+          <span>Filtered to one driver.</span>
+          <button
+            type="button"
+            className="text-slate-700 underline"
+            onClick={() => {
+              const params = new URLSearchParams(searchParams);
+              params.delete("driver_id");
+              setSearchParams(params, { replace: true });
+            }}
+          >
+            Clear filter
+          </button>
+        </div>
+      ) : null}
 
       <div className="overflow-x-auto rounded-sm bg-[#1A1F36] px-2 py-1 text-[11px] text-white">
         <div className="flex min-w-max gap-4">
