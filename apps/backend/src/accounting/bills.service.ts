@@ -674,8 +674,15 @@ export async function getBillPaymentDetail(userId: string, operatingCompanyId: s
             LIMIT 1
           ) AS journal_entry_id
         FROM accounting.bill_payments bp
+        -- v.id is uuid; accounting.bill_payments.vendor_id is text (verified on the Neon prod
+        -- branch br-fancy-credit-akjnd07a, 2026-07-22). Comparing them directly raises
+        -- "operator does not exist: uuid = text" and 500s every bill-payment detail request,
+        -- including the 404 path, because the error fires before the not-found check. Same class as
+        -- the bills.vendor_id join in getBillDetail. Cast the uuid side to text, never
+        -- bp.vendor_id::uuid — vendor_id is free-form text and a non-uuid value would RAISE instead
+        -- of simply not matching.
         LEFT JOIN mdata.vendors v
-          ON v.id = bp.vendor_id
+          ON v.id::text = bp.vendor_id
          AND v.operating_company_id = bp.operating_company_id
         LEFT JOIN accounting.bills b
           ON b.id = bp.bill_id

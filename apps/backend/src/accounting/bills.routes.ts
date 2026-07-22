@@ -430,7 +430,10 @@ export async function registerBillsRoutes(app: FastifyInstance) {
   });
 
   // Law §9 reverse drill-through — must be registered after the list route.
-  app.get("/api/v1/accounting/bill-payments/:id", async (req, reply) => {
+  // rateLimit matches the sibling read route below (/api/v1/vendors/:vendorId/bills): this handler
+  // performs its own authorization, and CodeQL js/missing-rate-limiting flags an authorizing route
+  // with no limit because it is a cheap credential/enumeration oracle otherwise.
+  app.get("/api/v1/accounting/bill-payments/:id", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
