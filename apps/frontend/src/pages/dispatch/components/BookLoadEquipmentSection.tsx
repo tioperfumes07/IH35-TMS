@@ -1,7 +1,8 @@
 import type { JSX } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
-import { listDrivers, listDriverTeams, listUnits } from "../../../api/mdata";
+import { listDriverTeams, listUnits } from "../../../api/mdata";
+import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { OptimalDriversPanel } from "../../../components/dispatch/OptimalDriversPanel";
 import { DriverHosClocksBlock } from "../../../components/dispatch/hos/DriverHosClocks";
@@ -44,18 +45,6 @@ function toUnitOption(row: unknown, index: number): Option {
   return { id, label: title || `Unit ${index + 1}` };
 }
 
-function toDriverOption(row: unknown, index: number): Option {
-  if (!row || typeof row !== "object") return { id: `driver-${index}`, label: `Driver ${index + 1}` };
-  const rec = row as Record<string, unknown>;
-  const id = typeof rec.id === "string" ? rec.id : `driver-${index}`;
-  // mdata.drivers exposes first_name/last_name (no full_name) — compose from those so the
-  // dropdown shows real names instead of "Driver N".
-  const composed = [getTextValue(rec, ["first_name"]), getTextValue(rec, ["last_name"])].filter(Boolean).join(" ");
-  const fullName = getTextValue(rec, ["full_name", "display_name", "name"]) || composed;
-  const shortName = getTextValue(rec, ["short_name", "driver_code"]);
-  return { id, label: [fullName, shortName].filter(Boolean).join(" · ") || `Driver ${index + 1}` };
-}
-
 export function BookLoadEquipmentSection({ register, watch, setValue, operatingCompanyId, optimizerLoadId, deadheadAfterAt, deadheadDropCity, deadheadDropState }: Props) {
   const assignmentMode = watch ? watch("assignment_mode") : "solo";
   const primaryDriverId = watch ? String(watch("assigned_primary_driver_id") ?? "") : "";
@@ -83,15 +72,6 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
     queryFn: () => listUnits({ operating_company_id: operatingCompanyId, include: "trailers", limit: 500 }),
     enabled: Boolean(operatingCompanyId),
   });
-  const driversQuery = useQuery({
-    // THE Book Load driver picker. status:Active + limit:200 = the COMPLETE active set (all 91 today).
-    // Was unbounded → endpoint default limit=50 (ORDER BY created_at DESC); after filterHumanDrivers only
-    // ~26 showed, so an active driver created before the newest-50 window (e.g. Mecor) was unselectable.
-    // Endpoint max=200; 91<<200. This picker filters client-side, so it must load the full active roster.
-    queryKey: ["book-load-drivers", operatingCompanyId],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, status: "Active", limit: 200 }),
-    enabled: Boolean(operatingCompanyId),
-  });
   const teamsQuery = useQuery({
     queryKey: ["book-load-driver-teams", operatingCompanyId],
     queryFn: () => listDriverTeams(String(operatingCompanyId)),
@@ -105,7 +85,6 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
   const trailers = fleet
     .filter((row) => (row as { kind?: string }).kind === "trailer")
     .map((row, index) => toUnitOption(row, index));
-  const drivers = (driversQuery.data?.drivers ?? []).map((row, index) => toDriverOption(row, index));
   const toggles = [
     { field: "requires_reefer_fuel", label: "Reefer fuel" },
     { field: "requires_pulp_probe", label: "Pulp probe" },
@@ -164,27 +143,28 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
         <Field
           label="Driver"
           input={
-            <SelectCombobox {...register("assigned_primary_driver_id")} className="h-7 w-full text-xs">
-              <option value="">{driversQuery.isLoading ? "Loading drivers..." : "Select driver"}</option>
-              {drivers.map((driver) => (
-                <option key={driver.id} value={driver.id}>
-                  {driver.label}
-                </option>
-              ))}
-            </SelectCombobox>
+            <DriverPickerWithCreate
+              operatingCompanyId={operatingCompanyId ?? ""}
+              value={primaryDriverId || null}
+              onChange={(next) => setValue?.("assigned_primary_driver_id", next ?? "", { shouldDirty: true })}
+              className="h-7 w-full text-xs"
+              placeholder="Select driver"
+              dataField="assigned_primary_driver_id"
+              // BookLoadModalV4 is a centered portal modal (not ParityDrawer) → default shell="modal".
+            />
           }
         />
         <Field
           label="Team driver"
           input={
-            <SelectCombobox {...register("assigned_secondary_driver_id")} className="h-7 w-full text-xs">
-              <option value="">{driversQuery.isLoading ? "Loading drivers..." : "Solo load (optional)"}</option>
-              {drivers.map((driver) => (
-                <option key={`team-${driver.id}`} value={driver.id}>
-                  {driver.label}
-                </option>
-              ))}
-            </SelectCombobox>
+            <DriverPickerWithCreate
+              operatingCompanyId={operatingCompanyId ?? ""}
+              value={secondaryDriverId || null}
+              onChange={(next) => setValue?.("assigned_secondary_driver_id", next ?? "", { shouldDirty: true })}
+              className="h-7 w-full text-xs"
+              placeholder="Solo load (optional)"
+              dataField="assigned_secondary_driver_id"
+            />
           }
         />
       </div>

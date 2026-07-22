@@ -8,8 +8,11 @@ import {
   type InsuranceClaimStatus,
 } from "../../api/insurance";
 import { listLoads } from "../../api/loads";
-import { listDrivers, listUnits } from "../../api/mdata";
+import { listUnits } from "../../api/mdata";
 import { getSafetyAccidents } from "../../api/safety";
+import { Combobox } from "../Combobox";
+import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
+import { CreateUnitModal } from "../fleet/CreateUnitModal";
 import { ParityDrawer } from "../parity/ParityDrawer";
 import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
@@ -105,6 +108,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [formError, setFormError] = useState("");
   const [serverError, setServerError] = useState("");
+  const [unitCreateOpen, setUnitCreateOpen] = useState(false);
 
   const policiesQuery = useQuery({
     queryKey: ["insurance", "claim-create", "policies", operatingCompanyId],
@@ -121,13 +125,6 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
     },
   });
 
-  const driversQuery = useQuery({
-    queryKey: ["insurance", "claim-create", "drivers", operatingCompanyId],
-    enabled: open && Boolean(operatingCompanyId),
-    queryFn: () =>
-      listDrivers({ operating_company_id: operatingCompanyId, status: "All", limit: 500 }).then((r) => r.drivers),
-  });
-
   const loadsQuery = useQuery({
     queryKey: ["insurance", "claim-create", "loads", operatingCompanyId],
     enabled: open && Boolean(operatingCompanyId),
@@ -142,8 +139,19 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
   });
 
   const units = useMemo(() => unitsQuery.data ?? [], [unitsQuery.data]);
-  const drivers = useMemo(() => driversQuery.data ?? [], [driversQuery.data]);
+  const unitOptions = useMemo(
+    () => units.map((unit) => ({ value: unit.id, label: unitLabel(unit) })),
+    [units]
+  );
   const loads = useMemo(() => loadsQuery.data ?? [], [loadsQuery.data]);
+  const loadOptions = useMemo(
+    () =>
+      loads.map((load) => ({
+        value: load.id,
+        label: load.load_number || load.id.slice(0, 8),
+      })),
+    [loads]
+  );
   const accidents = useMemo(() => accidentsQuery.data ?? [], [accidentsQuery.data]);
 
   useEffect(() => {
@@ -152,6 +160,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
     setFieldErrors({});
     setFormError("");
     setServerError("");
+    setUnitCreateOpen(false);
   }, [open]);
 
   const createMutation = useMutation({
@@ -231,6 +240,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
   };
 
   return (
+    <>
     <ParityDrawer open={open} onClose={onClose} title="Create Claim" size="wide">
       <form
         className="space-y-4 text-sm"
@@ -285,50 +295,42 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
 
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Unit / Asset</span>
-            <select
-              className="w-full rounded-sm border border-gray-300 px-2 py-1"
-              value={form.asset_id}
-              onChange={(event) => updateField("asset_id", event.target.value)}
-            >
-              <option value="">Unassigned</option>
-              {units.map((unit) => (
-                <option key={unit.id} value={unit.id}>
-                  {unitLabel(unit)}
-                </option>
-              ))}
-            </select>
+            <Combobox
+              options={unitOptions}
+              value={form.asset_id || null}
+              onChange={(next) => updateField("asset_id", next ?? "")}
+              placeholder="Unassigned"
+              loading={unitsQuery.isLoading}
+              allowClear
+              allowAddNew={{
+                label: "+ Create unit",
+                onAdd: () => setUnitCreateOpen(true),
+              }}
+            />
           </label>
 
           <label className="space-y-1" data-testid="claim-create-driver-field">
             <span className="text-xs font-semibold text-slate-700">Driver</span>
-            <select
-              className="w-full rounded-sm border border-gray-300 px-2 py-1"
-              value={form.driver_id}
-              onChange={(event) => updateField("driver_id", event.target.value)}
-            >
-              <option value="">Unassigned</option>
-              {drivers.map((driver) => (
-                <option key={driver.id} value={driver.id}>
-                  {[driver.first_name, driver.last_name].filter(Boolean).join(" ") || driver.id.slice(0, 8)}
-                </option>
-              ))}
-            </select>
+            <DriverPickerWithCreate
+              operatingCompanyId={operatingCompanyId}
+              value={form.driver_id || null}
+              onChange={(next) => updateField("driver_id", next ?? "")}
+              open={open}
+              shell="drawer"
+              placeholder="Unassigned"
+            />
           </label>
 
           <label className="space-y-1" data-testid="claim-create-load-field">
             <span className="text-xs font-semibold text-slate-700">Load</span>
-            <select
-              className="w-full rounded-sm border border-gray-300 px-2 py-1"
-              value={form.load_id}
-              onChange={(event) => updateField("load_id", event.target.value)}
-            >
-              <option value="">Unassigned</option>
-              {loads.map((load) => (
-                <option key={load.id} value={load.id}>
-                  {load.load_number || load.id.slice(0, 8)}
-                </option>
-              ))}
-            </select>
+            <Combobox
+              options={loadOptions}
+              value={form.load_id || null}
+              onChange={(next) => updateField("load_id", next ?? "")}
+              placeholder="Unassigned"
+              loading={loadsQuery.isLoading}
+              allowClear
+            />
           </label>
 
           <label className="space-y-1" data-testid="claim-create-accident-field">
@@ -453,5 +455,16 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
         </div>
       </form>
     </ParityDrawer>
+    <CreateUnitModal
+      open={unitCreateOpen}
+      operatingCompanyId={operatingCompanyId}
+      onClose={() => setUnitCreateOpen(false)}
+      onCreated={(createdId) => {
+        updateField("asset_id", createdId);
+        setUnitCreateOpen(false);
+        void unitsQuery.refetch();
+      }}
+    />
+    </>
   );
 }

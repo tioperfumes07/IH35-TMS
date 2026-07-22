@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listDrivers } from "../../api/mdata";
 import { patchAssignDriver } from "../../api/dispatch";
-import { Combobox } from "../shared/Combobox";
+import { Combobox } from "../Combobox";
+import { CreateDriverModal } from "../drivers/CreateDriverModal";
 import { optimisticPatch } from "../../lib/optimisticPatch";
 
 type Props = {
@@ -17,6 +18,7 @@ type Props = {
 export function InlineDriverPicker({ loadId, operatingCompanyId, driverId, displayLabel, onAssigned, onRollback }: Props) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [driverCreateOpen, setDriverCreateOpen] = useState(false);
 
   const driversQuery = useQuery({
     queryKey: ["dispatch", "inline-drivers", operatingCompanyId],
@@ -34,6 +36,28 @@ export function InlineDriverPicker({ loadId, operatingCompanyId, driverId, displ
       label: `${row.first_name ?? ""} ${row.last_name ?? ""}`.trim() || row.id.slice(0, 8),
     }));
   }, [driversQuery.data?.drivers]);
+
+  const assignDriver = async (next: string, labelHint?: string) => {
+    const label = labelHint ?? options.find((opt) => opt.value === next)?.label ?? next.slice(0, 8);
+    const prior = { driverId, label: displayLabel };
+    const result = await optimisticPatch({
+      applyOptimistic: () => onAssigned({ driverId: next, label }),
+      rollback: () => {
+        onRollback();
+        onAssigned({ driverId: prior.driverId ?? "", label: prior.label });
+      },
+      request: () =>
+        patchAssignDriver(loadId, {
+          operating_company_id: operatingCompanyId,
+          driver_uuid: next,
+        }),
+      onError: (message) => setError(message.slice(0, 40)),
+    });
+    if (result.ok) {
+      setError(null);
+      setOpen(false);
+    }
+  };
 
   if (!open) {
     return (
@@ -59,28 +83,27 @@ export function InlineDriverPicker({ loadId, operatingCompanyId, driverId, displ
         options={options}
         value={driverId}
         placeholder="Type driver…"
+        loading={driversQuery.isLoading}
+        allowAddNew={{
+          label: "+ Create driver",
+          onAdd: () => setDriverCreateOpen(true),
+        }}
         onChange={async (next) => {
           if (!next) return;
-          const label = options.find((opt) => opt.value === next)?.label ?? next.slice(0, 8);
-          const prior = { driverId, label: displayLabel };
-          const result = await optimisticPatch({
-            applyOptimistic: () => onAssigned({ driverId: next, label }),
-            rollback: () => {
-              onRollback();
-              onAssigned({ driverId: prior.driverId ?? "", label: prior.label });
-            },
-            request: () =>
-              patchAssignDriver(loadId, {
-                operating_company_id: operatingCompanyId,
-                driver_uuid: next,
-              }),
-            onError: (message) => setError(message.slice(0, 40)),
-          });
-          if (result.ok) {
-            setError(null);
-            setOpen(false);
-          }
+          await assignDriver(next);
         }}
+      />
+      <CreateDriverModal
+        open={driverCreateOpen}
+        companyId={operatingCompanyId}
+        onClose={() => setDriverCreateOpen(false)}
+        onCreated={(createdId) => {
+          setDriverCreateOpen(false);
+          void driversQuery.refetch().then(() => {
+            void assignDriver(createdId);
+          });
+        }}
+        // Board cell — not nested in a ParityDrawer → default shell="modal".
       />
     </div>
   );

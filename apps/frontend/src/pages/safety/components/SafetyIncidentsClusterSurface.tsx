@@ -11,6 +11,7 @@ import {
 import { listDrivers, listUnits } from "../../../api/mdata";
 import { listLoads } from "../../../api/loads";
 import { Button } from "../../../components/Button";
+import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { companyToday } from "../../../lib/businessDate";
@@ -479,19 +480,14 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
               <label className="block">
                 <span className="text-slate-600">Driver</span>
                 {createMode ? (
-                  <select
-                    className={inputCls}
-                    value={str(selected?.driver_id)}
-                    data-testid={`${config.pageTestId}-field-driver_id`}
-                    onChange={(e) => setField("driver_id", e.target.value)}
-                  >
-                    <option value="">—</option>
-                    {drivers.map((d) => (
-                      <option key={String(d.id)} value={String(d.id)}>
-                        {`${d.first_name ?? ""} ${d.last_name ?? ""}`.trim() || "Driver"}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="mt-1" data-testid={`${config.pageTestId}-field-driver_id`}>
+                    <DriverPickerWithCreate
+                      operatingCompanyId={operatingCompanyId}
+                      value={str(selected?.driver_id) || null}
+                      onChange={(next) => setField("driver_id", next ?? "")}
+                      placeholder="Select driver"
+                    />
+                  </div>
                 ) : (
                   <div className="mt-1 text-slate-800">
                     {(detail?.driver_id ? driverNameById.get(String(detail.driver_id)) : "") || "—"}

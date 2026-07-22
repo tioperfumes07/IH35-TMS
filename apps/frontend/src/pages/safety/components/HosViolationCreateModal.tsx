@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { createHosViolation } from "../../../api/safetyV64";
 import { Button } from "../../../components/Button";
+import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { Modal } from "../../../components/Modal";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
@@ -87,15 +88,15 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
         <div className="grid gap-3 md:grid-cols-2">
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600" htmlFor="hos-vio-driver-id">
-              Driver ID <span className="text-red-600">*</span>
+              Driver <span className="text-red-600">*</span>
             </label>
-            <input
-              id="hos-vio-driver-id"
-              className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
-              placeholder="driver UUID"
-              value={form.driver_id}
-              onChange={(e) => setForm((v) => ({ ...v, driver_id: e.target.value }))}
-              required
+            <DriverPickerWithCreate
+              operatingCompanyId={operatingCompanyId}
+              value={form.driver_id || null}
+              onChange={(next) => setForm((v) => ({ ...v, driver_id: next ?? "" }))}
+              open={open}
+              placeholder="Select driver…"
+              dataField="hos-vio-driver-id"
             />
           </div>
           <div className="flex flex-col gap-1">

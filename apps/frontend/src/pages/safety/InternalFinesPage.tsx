@@ -7,8 +7,8 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createInternalFine, getInternalFines } from "../../api/safety";
 import { listInternalFineReasons } from "../../api/catalogs-safety";
-import { listDrivers } from "../../api/mdata";
 import { listDispatchLoads, type DispatchStatus } from "../../api/dispatch";
+import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { companyToday } from "../../lib/businessDate";
 import { useAuth } from "../../auth/useAuth";
@@ -53,14 +53,6 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
     enabled: Boolean(operatingCompanyId),
   });
 
-  // FIX 1 — driver picker: company-scoped listDrivers (DRIVERPROFILE-1 requires operating_company_id;
-  // limit 200 so active drivers past the newest 50 are never silently dropped).
-  const driversQuery = useQuery({
-    queryKey: ["mdata", "drivers", "internal-fine-picker", operatingCompanyId],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, limit: 200 }),
-    enabled: Boolean(operatingCompanyId),
-  });
-
   // FIX 1 — reason picker: owner-managed internal-fine-reasons catalog (active only).
   const reasonsQuery = useQuery({
     queryKey: ["catalogs", "safety", "internal-fine-reasons", "picker", operatingCompanyId],
@@ -82,7 +74,6 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
     enabled: Boolean(operatingCompanyId),
   });
 
-  const drivers = driversQuery.data?.drivers ?? [];
   const reasons = reasonsQuery.data?.rows ?? [];
   const loads = loadsQuery.data?.loads ?? [];
 
@@ -142,20 +133,13 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
     <div className="space-y-3">
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="grid gap-2 md:grid-cols-6">
-          <SelectCombobox
-            value={form.driver_uuid}
-            onChange={(e) => setForm((v) => ({ ...v, driver_uuid: e.target.value }))}
+          <DriverPickerWithCreate
+            operatingCompanyId={operatingCompanyId}
+            value={form.driver_uuid || null}
+            onChange={(next) => setForm((v) => ({ ...v, driver_uuid: next ?? "" }))}
+            placeholder="Search by driver"
             className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-          >
-            <option value="" disabled>
-              Search by driver
-            </option>
-            {drivers.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.first_name} {d.last_name}
-              </option>
-            ))}
-          </SelectCombobox>
+          />
           <SelectCombobox
             value={form.reason_uuid}
             onChange={(e) => setForm((v) => ({ ...v, reason_uuid: e.target.value }))}
