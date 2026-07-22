@@ -27,7 +27,7 @@ import { listVendors } from "../../../api/mdata";
 import type { AccountingCatalogClient } from "./AccountingCatalogModal";
 import { Button } from "../../../components/Button";
 import { Combobox, type ComboboxOption } from "../../../components/Combobox";
-import { QuickCreateEntityModal } from "../../../components/forms/shared/QuickCreateEntityModal";
+import { InlineCreateDrawer } from "../../../components/parity/InlineCreateDrawer";
 import { Modal } from "../../../components/Modal";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 
@@ -101,7 +101,11 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
   const [submitError, setSubmitError] = useState("");
   const [saving, setSaving] = useState(false);
   const [creatingCategory, setCreatingCategory] = useState(false);
-  // PS-A: which account picker opened the nested "+ Add new account" create chrome (QBO parity).
+  // PS-A: which account picker opened "+ Add new account". Must open BK7 NewAccountDrawerForm
+  // (InlineCreateDrawer kind="account") — NOT QuickCreateEntityModal kind="category" (wrong entity /
+  // wrong chrome; would bind a category-create id into default_*_account_id → catalogs.accounts).
+  // Account commit stays FINANCIAL-GATED in NewAccountDrawerForm (ACCOUNT_CREATE_GATED); this only
+  // wires the correct create chrome (ManualJE / CoA pattern). No invented GL accounts here.
   const [accountCreateSide, setAccountCreateSide] = useState<"income" | "expense" | null>(null);
 
   const accountsQuery = useQuery({
@@ -507,10 +511,11 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
       </div>
     </Modal>
 
-      {/* PS-A: account create stacks as sibling overlay (not inside Modal — verify:no-nested-modal-frames). */}
-      <QuickCreateEntityModal
+      {/* PS-A: CoA account create as sibling overlay (InlineCreateDrawer is not a Modal frame —
+          verify:no-nested-modal-frames). Same chrome as ManualJEModal "+ Add new account". */}
+      <InlineCreateDrawer
         open={accountCreateSide !== null}
-        kind="category"
+        kind="account"
         operatingCompanyId={operatingCompanyId}
         onClose={() => setAccountCreateSide(null)}
         onCreated={handleAccountCreated}

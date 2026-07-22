@@ -32,11 +32,13 @@ describe("ItemEditorModal — real account/category pickers (PS-A)", () => {
     expect(SRC).toMatch(/\+ Add new category/);
   });
 
-  it("offers nested + Add new account on income and expense pickers (PS-A)", () => {
+  it("offers nested + Add new account via InlineCreateDrawer kind=account (PS-A / supersedes HOLD #3133)", () => {
     expect(SRC).toMatch(/incomeAccountId[\s\S]{0,900}allowAddNew=\{\{\s*label:\s*"\+ Add new account"/);
     expect(SRC).toMatch(/expenseAccountId[\s\S]{0,900}allowAddNew=\{\{\s*label:\s*"\+ Add new account"/);
-    expect(SRC).toContain('kind="category"');
-    expect(SRC).toContain("QuickCreateEntityModal");
+    expect(SRC).toContain("InlineCreateDrawer");
+    expect(SRC).toContain('kind="account"');
+    // Wrong create kind must not return as JSX (docs #3133 theater). Comments may name the defect.
+    expect(SRC).not.toMatch(/<QuickCreateEntityModal[\s\S]{0,300}kind=["']category["']/);
   });
 
   it("persists the QBO two-sided purchasing side incl. a real preferred-vendor reference (AF-2c.2)", () => {
