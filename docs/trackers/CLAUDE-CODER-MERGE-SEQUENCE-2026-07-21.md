@@ -3,6 +3,7 @@
 **As-of:** 2026-07-21 late evening · refreshed after CI babysit + §1.2/§1.4 correction  
 **Owner law:** Cursor builds; **Claude coder merges + Neon apply**. Docs-only STALE ≠ progress.  
 **Supersedes:** WAVE verify theater PRs; optional skip of #3164 when this file lands.  
+**Living scoreboard:** #3182 `TRUE-CONNECTIVITY-MASTER` (12/12 economic FAIL + ops matrix + dual-path class) — prefer over WAVE STALE audits.  
 **Correction (owner/Cursor):** “No migrations” does **NOT** mean self-mergeable. Touching `accounting.*` / financial-cluster **data or writers** still requires Jorge (`JORGE-APPROVED` / chat OK) per skill §1.2–§1.4. Do **not** weaken `hold-merge-gate`.
 
 ---
@@ -48,9 +49,10 @@ Squash → delete branch → `git fetch origin main` → rebase next.
 | 1 | **This PR (#3181)** | Permanent handoff | **Skip #3164** if this lands first |
 | 2 | **#3169** | `verify-no-dead-schema` + linkage edges — schema reachability only; **not** §9 money proof | Wait pending `build-typecheck` / CodeQL |
 | 3 | **#3165** | ItemEditor `+ Add new account` → account create chrome | ✅ was green |
-| 4 | **#3179** | Claim/legal **UI** linkage (no money mig) — only if re-read confirms no `accounting.*` INSERT/UPDATE | CI babysit pushed; wait full green |
-| 5 | **#3148** / **#3151** | Optional PARTIAL UX (CoA name picker / dispatcher invoice status) — merge as UX only, **not** “accounting fixed” | Optional |
-| 6 | Tracker chores **#3160** / **#3150** / **#3130** | Optional noise | Skip if noisy |
+| 4 | **#3183** | Safety dual-path: ComingSoon group bookmarks → V6.4 Live redirects; orphans `@archived`; `verify-safety-active-path` | FE mount only; browser UNVERIFIED post-deploy |
+| 5 | **#3179** | Claim/legal **UI** linkage (no money mig) — only if re-read confirms no `accounting.*` INSERT/UPDATE | CI babysit pushed; wait full green |
+| 6 | **#3148** / **#3151** | Optional PARTIAL UX (CoA name picker / dispatcher invoice status) — merge as UX only, **not** “accounting fixed” | Optional |
+| 7 | Tracker chores **#3160** / **#3150** / **#3130** | Optional noise | Skip if noisy |
 
 ---
 
