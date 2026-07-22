@@ -158,7 +158,22 @@ export function RecordCCPaymentModal({
   };
 
   return (
-    <ParityDrawer open={open} onClose={onClose} title="Pay credit card" size="wide">
+    <ParityDrawer
+      open={open}
+      onClose={onClose}
+      title="Pay credit card"
+      size="wide"
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={onClose} disabled={saving}>
+            Cancel
+          </Button>
+          <Button type="button" onClick={() => void handleSave()} disabled={!valid || saving}>
+            {saving ? "Saving…" : "Record payment"}
+          </Button>
+        </div>
+      }
+    >
       <div className="space-y-3 text-sm" data-testid="record-cc-payment-drawer">
         <label className="block text-xs font-semibold text-gray-700">
           Credit card vendor
@@ -223,14 +238,6 @@ export function RecordCCPaymentModal({
           Memo (optional)
           <input className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={memo} onChange={(e) => setMemo(e.target.value)} />
         </label>
-        <div className="flex justify-end gap-2 border-t border-gray-100 pt-3">
-          <Button type="button" variant="secondary" onClick={onClose} disabled={saving}>
-            Cancel
-          </Button>
-          <Button type="button" onClick={() => void handleSave()} disabled={!valid || saving}>
-            {saving ? "Saving…" : "Record payment"}
-          </Button>
-        </div>
       </div>
     </ParityDrawer>
   );

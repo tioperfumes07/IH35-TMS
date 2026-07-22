@@ -134,8 +134,41 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
   }, [open, vendorId]);
 
   return (
-    <ParityDrawer open={open} onClose={onClose} title="Bill payment — multiple bills" size="wide">
+    <ParityDrawer
+      open={open}
+      onClose={onClose}
+      title="Bill payment — multiple bills"
+      size="wide"
+      footer={
+        completedPaymentId ? (
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-600">Payment recorded. Close an open task it fulfils:</span>
+            <div className="flex items-center gap-2">
+              <TaskLinkPicker
+                operatingCompanyId={operatingCompanyId}
+                targetType="bill_payment"
+                targetId={completedPaymentId}
+                onLinked={() => { setCompletedPaymentId(null); onClose(); }}
+              />
+              <Button type="button" variant="secondary" onClick={() => { setCompletedPaymentId(null); onClose(); }}>
+                Done
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" form="bill-payment-modal-form" disabled={saving || manualInvalid}>
+              {saving ? "Saving…" : "Record payment"}
+            </Button>
+          </div>
+        )
+      }
+    >
       <form
+        id="bill-payment-modal-form"
         className="space-y-3"
         onSubmit={async (event) => {
           event.preventDefault();
@@ -299,31 +332,6 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
           <textarea rows={2} value={memo} onChange={(e) => setMemo(e.target.value)} className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]" />
         </label>
 
-        {completedPaymentId ? (
-          <div className="flex items-center justify-between border-t border-gray-200 pt-3">
-            <span className="text-xs text-gray-600">Payment recorded. Close an open task it fulfils:</span>
-            <div className="flex items-center gap-2">
-              <TaskLinkPicker
-                operatingCompanyId={operatingCompanyId}
-                targetType="bill_payment"
-                targetId={completedPaymentId}
-                onLinked={() => { setCompletedPaymentId(null); onClose(); }}
-              />
-              <Button type="button" variant="secondary" onClick={() => { setCompletedPaymentId(null); onClose(); }}>
-                Done
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={saving || manualInvalid}>
-              {saving ? "Saving…" : "Record payment"}
-            </Button>
-          </div>
-        )}
       </form>
     </ParityDrawer>
   );
