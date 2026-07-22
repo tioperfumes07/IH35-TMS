@@ -1,0 +1,43 @@
+{
+  "_doc": "BASELINE of pre-existing LINKAGE BREAKS (required edge missing per the owner's law: one economic fact wired through every module/account it touches). DEBT REGISTER, not approval. NEW breaks fail the build. Wire an edge and DELETE its entry.",
+  "_law": "CLAUDE.md 10a/10d Total Connectivity",
+  "_captured": "2026-07-21",
+  "count": 7,
+  "entries": [
+    {
+      "table": "insurance.claim",
+      "edge": "money",
+      "reason": "WO-CLAIM-MONEY \u2014 a claim generates no expense/bill/JE. Deductible, legal fees and repairs never hit the books from the claim."
+    },
+    {
+      "table": "insurance.lawsuit",
+      "edge": "money",
+      "reason": "WO-CLAIM-MONEY \u2014 lawsuit has no cost leg; cannot answer what a suit cost."
+    },
+    {
+      "table": "legal.matters",
+      "edge": "money",
+      "reason": "WO-CLAIM-MONEY \u2014 matter reaches claim/driver/unit but no expense/bill/JE."
+    },
+    {
+      "table": "driver_finance.settlement_lines",
+      "edge": "gl_account",
+      "reason": "WO-SETTLE-GL \u2014 settlement lines carry no GL account; which account a line hits is not recorded."
+    },
+    {
+      "table": "fuel.fuel_transactions",
+      "edge": "vendor",
+      "reason": "WO-FUEL-AP \u2014 fuel purchase has no payee."
+    },
+    {
+      "table": "fuel.fuel_transactions",
+      "edge": "money",
+      "reason": "WO-FUEL-AP \u2014 fuel spend never reaches AP/GL; operationally linked, financially orphaned."
+    },
+    {
+      "table": "dispatch.load_cancellations",
+      "edge": "ar",
+      "reason": "WO-2 TONU \u2014 billable cancellation never becomes a receivable. 1 billable row on prod, never billed."
+    }
+  ]
+}

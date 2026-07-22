@@ -15,6 +15,7 @@
     "prepare": "husky && node scripts/setup-git-merge-drivers.mjs",
     "setup:git-drivers": "node scripts/setup-git-merge-drivers.mjs",
     "export:tracker": "node scripts/export-tracker-xlsx.mjs",
+    "verify:linkage-required-edges": "node scripts/verify-linkage-required-edges.mjs",
     "verify:no-dead-schema": "node scripts/verify-no-dead-schema.mjs",
     "reconcile:blocks": "node scripts/reconcile-block-status.mjs",
     "board:sync": "node scripts/sync-program-board.mjs",
