@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { withCurrentUser } from "../../auth/db.js";
+import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 import { currentAuthUser } from "./shared.js";
 
 interface DetailTypeEntry {
@@ -37,6 +38,7 @@ export function registerAccountTypeCatalogRoutes(app: FastifyInstance) {
 
       const rows = await withCurrentUser(authUser.uuid, async (client) => {
         if (operatingCompanyId) {
+          await assertCompanyMembership(authUser.uuid, operatingCompanyId);
           await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
             operatingCompanyId,
           ]);
