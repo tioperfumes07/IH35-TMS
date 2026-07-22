@@ -13,6 +13,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ManualJEModal } from "./ManualJEModal";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -124,27 +125,36 @@ export function ManualJEListPage() {
     [user?.role, voidMutation],
   );
 
+  const jeActiveFilterCount =
+    (source !== "all" ? 1 : 0) + (status !== "all" ? 1 : 0) + (fromDate || toDate ? 1 : 0) + (accountId ? 1 : 0);
+
   const filterBar = (
-    <div className="grid grid-cols-5 gap-2 w-full text-xs">
-      <SelectCombobox className="h-8 rounded-sm border border-gray-300 px-2" value={source} onChange={(e) => setSource(e.target.value as JournalEntrySource | "all")}>
-        <option value="all">All sources</option>
-        <option value="manual">Manual</option>
-        <option value="auto">Auto</option>
-      </SelectCombobox>
-      <SelectCombobox className="h-8 rounded-sm border border-gray-300 px-2" value={status} onChange={(e) => setStatus(e.target.value as JournalEntryStatus | "all")}>
-        <option value="all">All statuses</option>
-        <option value="posted">Posted</option>
-        <option value="voided">Voided</option>
-      </SelectCombobox>
-      <DatePicker className="h-8 rounded-sm border border-gray-300 px-2" value={fromDate} onChange={(next) => setFromDate(next)} />
-      <DatePicker className="h-8 rounded-sm border border-gray-300 px-2" value={toDate} onChange={(next) => setToDate(next)} />
-      <input
-        className="h-8 rounded-sm border border-gray-300 px-2"
-        placeholder="Account ID (optional)"
-        value={accountId}
-        onChange={(e) => setAccountId(e.target.value)}
-      />
-    </div>
+    <CollapsedListFilters
+      activeFilterCount={jeActiveFilterCount}
+      testIdPrefix="manual-je"
+      dataAttributes={{ "data-manual-je-filter-toolbar": "collapsed" }}
+    >
+      <div className="grid grid-cols-2 gap-2 w-full text-xs md:grid-cols-5">
+        <SelectCombobox className="h-8 rounded-sm border border-gray-300 px-2" value={source} onChange={(e) => setSource(e.target.value as JournalEntrySource | "all")}>
+          <option value="all">All sources</option>
+          <option value="manual">Manual</option>
+          <option value="auto">Auto</option>
+        </SelectCombobox>
+        <SelectCombobox className="h-8 rounded-sm border border-gray-300 px-2" value={status} onChange={(e) => setStatus(e.target.value as JournalEntryStatus | "all")}>
+          <option value="all">All statuses</option>
+          <option value="posted">Posted</option>
+          <option value="voided">Voided</option>
+        </SelectCombobox>
+        <DatePicker className="h-8 rounded-sm border border-gray-300 px-2" value={fromDate} onChange={(next) => setFromDate(next)} />
+        <DatePicker className="h-8 rounded-sm border border-gray-300 px-2" value={toDate} onChange={(next) => setToDate(next)} />
+        <input
+          className="h-8 rounded-sm border border-gray-300 px-2"
+          placeholder="Account ID (optional)"
+          value={accountId}
+          onChange={(e) => setAccountId(e.target.value)}
+        />
+      </div>
+    </CollapsedListFilters>
   );
 
   return (

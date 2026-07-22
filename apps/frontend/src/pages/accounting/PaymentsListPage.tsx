@@ -12,6 +12,7 @@ import { RecordPaymentModal } from "./RecordPaymentModal";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
 function money(cents: number) {
@@ -135,45 +136,58 @@ export function PaymentsListPage() {
     [],
   );
 
+  const paymentsActiveFilterCount =
+    (status !== "all" ? 1 : 0) + (method ? 1 : 0) + (dateFrom || dateTo ? 1 : 0);
+
   const filterBar = (
-    <div className="grid gap-2 md:grid-cols-5 w-full">
-      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-        Status
-        <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "all" | "active" | "voided")} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
-          <option value="all">All</option>
-          <option value="active">Active</option>
-          <option value="voided">Voided</option>
-        </SelectCombobox>
-      </label>
+    <div className="space-y-2 w-full">
+      <CollapsedListFilters
+        activeFilterCount={paymentsActiveFilterCount}
+        testIdPrefix="payments"
+        dataAttributes={{ "data-payments-filter-toolbar": "collapsed" }}
+        searchSlot={
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Payment # or customer"
+            className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-[13px]"
+            aria-label="Search payments"
+          />
+        }
+      >
+        <div className="grid gap-2 md:grid-cols-4">
+          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+            Status
+            <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "all" | "active" | "voided")} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
+              <option value="all">All</option>
+              <option value="active">Active</option>
+              <option value="voided">Voided</option>
+            </SelectCombobox>
+          </label>
 
-      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-        Method
-        <SelectCombobox value={method} onChange={(event) => setMethod(event.target.value as "" | PaymentMethod | "factoring")} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
-          {METHOD_OPTIONS.map((option) => (
-            <option key={option.label} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </SelectCombobox>
-      </label>
+          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+            Method
+            <SelectCombobox value={method} onChange={(event) => setMethod(event.target.value as "" | PaymentMethod | "factoring")} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
+              {METHOD_OPTIONS.map((option) => (
+                <option key={option.label} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </SelectCombobox>
+          </label>
 
-      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
-        Search by payment # or customer
-        <input value={search} onChange={(event) => setSearch(event.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
-      </label>
+          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+            From
+            <DatePicker value={dateFrom} onChange={(next) => setDateFrom(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+          </label>
+          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+            To
+            <DatePicker value={dateTo} onChange={(next) => setDateTo(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+          </label>
+        </div>
+      </CollapsedListFilters>
 
-      <div className="grid grid-cols-2 gap-2">
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-          From
-          <DatePicker value={dateFrom} onChange={(next) => setDateFrom(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
-        </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-          To
-          <DatePicker value={dateTo} onChange={(next) => setDateTo(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
-        </label>
-      </div>
-
-      <div className="flex items-center gap-3 text-xs text-gray-600 md:col-span-5">
+      <div className="flex items-center gap-3 text-xs text-gray-600">
         <span>Amount: {money(totals.amount)}</span>
         <span>Applied: {money(totals.applied)}</span>
         <span>Unapplied: {money(totals.unapplied)}</span>

@@ -9,7 +9,7 @@ import { useBulkPermission } from "../../hooks/useBulkPermission";
 import { useToast } from "../../components/Toast";
 import { useListState, type ListQueryStatus } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
-import { TableSearch } from "../../components/table";
+import { CollapsedListFilters, TableSearch } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
 function fmtMoney(cents: number) {
@@ -163,32 +163,40 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
           pushToast("You can select up to 200 items at a time. Clear some selections and try again.", "error")
         }
         filterBar={
-          <div className="flex flex-wrap items-center gap-2">
-            <TableSearch value={search} onChange={setSearch} placeholder="Search name, code, email…" className="w-56" />
-            {/* QBO-PARITY-VENDORS — additive filter chips (Active / 1099-eligible / With open). */}
-            <div className="inline-flex flex-wrap items-center gap-1" data-vendor-filter-chips="true">
-              {(
-                [
-                  { key: "active", label: "Active", on: activeOnly, toggle: () => setActiveOnly((v) => !v) },
-                  { key: "1099", label: "1099-eligible", on: only1099, toggle: () => setOnly1099((v) => !v) },
-                  { key: "with-open", label: "With open", on: withOpen, toggle: () => setWithOpen((v) => !v) },
-                ] as const
-              ).map((chip) => (
-                <button
-                  key={chip.key}
-                  type="button"
-                  aria-pressed={chip.on}
-                  data-vendor-filter-chip={chip.key}
-                  onClick={chip.toggle}
-                  className={`rounded-sm border px-2 py-1 text-xs font-medium ${
-                    chip.on ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  {chip.label}
-                </button>
-              ))}
+          <CollapsedListFilters
+            activeFilterCount={(activeOnly ? 1 : 0) + (only1099 ? 1 : 0) + (withOpen ? 1 : 0)}
+            testIdPrefix="vendors"
+            dataAttributes={{ "data-vendors-filter-toolbar": "collapsed" }}
+            searchSlot={
+              <TableSearch value={search} onChange={setSearch} placeholder="Search name, code, email…" className="w-56" />
+            }
+          >
+            <div className="space-y-1.5">
+              <div className="text-xs font-semibold text-gray-600">Vendor filters</div>
+              <div className="inline-flex flex-wrap items-center gap-1" data-vendor-filter-chips="true">
+                {(
+                  [
+                    { key: "active", label: "Active", on: activeOnly, toggle: () => setActiveOnly((v) => !v) },
+                    { key: "1099", label: "1099-eligible", on: only1099, toggle: () => setOnly1099((v) => !v) },
+                    { key: "with-open", label: "With open", on: withOpen, toggle: () => setWithOpen((v) => !v) },
+                  ] as const
+                ).map((chip) => (
+                  <button
+                    key={chip.key}
+                    type="button"
+                    aria-pressed={chip.on}
+                    data-vendor-filter-chip={chip.key}
+                    onClick={chip.toggle}
+                    className={`rounded-sm border px-2 py-1 text-xs font-medium ${
+                      chip.on ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          </CollapsedListFilters>
         }
         batchActions={(selected) => {
           const ids = selected.map((v) => v.id);

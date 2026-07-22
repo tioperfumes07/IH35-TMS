@@ -26,8 +26,8 @@ import { getCoaAccounts } from "../../../api/banking";
 import { listVendors } from "../../../api/mdata";
 import type { AccountingCatalogClient } from "./AccountingCatalogModal";
 import { Button } from "../../../components/Button";
-import { Combobox, type ComboboxOption } from "../../../components/Combobox";
-import { InlineCreateDrawer } from "../../../components/parity/InlineCreateDrawer";
+import { Combobox } from "../../../components/Combobox";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { Modal } from "../../../components/Modal";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 
@@ -101,12 +101,6 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
   const [submitError, setSubmitError] = useState("");
   const [saving, setSaving] = useState(false);
   const [creatingCategory, setCreatingCategory] = useState(false);
-  // PS-A: which account picker opened "+ Add new account". Must open BK7 NewAccountDrawerForm
-  // (InlineCreateDrawer kind="account") — NOT QuickCreateEntityModal kind="category" (wrong entity /
-  // wrong chrome; would bind a category-create id into default_*_account_id → catalogs.accounts).
-  // Account commit stays FINANCIAL-GATED in NewAccountDrawerForm (ACCOUNT_CREATE_GATED); this only
-  // wires the correct create chrome (ManualJE / CoA pattern). No invented GL accounts here.
-  const [accountCreateSide, setAccountCreateSide] = useState<"income" | "expense" | null>(null);
 
   const accountsQuery = useQuery({
     queryKey: ["catalogs", "accounts", "for-items", operatingCompanyId],
@@ -131,29 +125,29 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
   });
 
   const accounts = accountsQuery.data?.accounts ?? [];
-  const incomeOptions: ComboboxOption[] = useMemo(
+  const incomeOptions = useMemo(
     () =>
       accounts
         .filter((a) => a.account_type && INCOME_TYPES.includes(a.account_type))
-        .map((a) => ({ value: a.id, label: a.account_name, sublabel: a.account_number })),
+        .map((a) => ({ value: a.id, label: a.account_name, type: a.account_number ?? undefined })),
     [accounts]
   );
-  const expenseOptions: ComboboxOption[] = useMemo(
+  const expenseOptions = useMemo(
     () =>
       accounts
         .filter((a) => a.account_type && EXPENSE_TYPES.includes(a.account_type))
-        .map((a) => ({ value: a.id, label: a.account_name, sublabel: a.account_number })),
+        .map((a) => ({ value: a.id, label: a.account_name, type: a.account_number ?? undefined })),
     [accounts]
   );
-  const categoryOptions: ComboboxOption[] = useMemo(
+  const categoryOptions = useMemo(
     () => (categoriesQuery.data?.rows ?? []).map((c) => ({ value: c.id, label: c.display_name })),
     [categoriesQuery.data]
   );
-  const classOptions: ComboboxOption[] = useMemo(
+  const classOptions = useMemo(
     () => (classesQuery.data?.rows ?? []).map((c) => ({ value: c.id, label: c.display_name })),
     [classesQuery.data]
   );
-  const vendorOptions: ComboboxOption[] = useMemo(
+  const vendorOptions = useMemo(
     () => (vendorsQuery.data?.vendors ?? []).filter((v) => !v.deactivated_at).map((v) => ({ value: v.id, label: v.name })),
     [vendorsQuery.data]
   );
@@ -177,20 +171,14 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  function handleAccountCreated(rec: { id: string; label: string }) {
-    void queryClient.invalidateQueries({ queryKey: ["catalogs", "accounts", "for-items", operatingCompanyId] });
-    if (accountCreateSide === "income") set("incomeAccountId", rec.id);
-    else if (accountCreateSide === "expense") set("expenseAccountId", rec.id);
-    setAccountCreateSide(null);
-  }
-
   async function handleAddCategory(name: string) {
     const trimmed = name.trim();
     if (!trimmed || creatingCategory) return;
     setCreatingCategory(true);
     setSubmitError("");
     try {
-      // Repeatable inline create against the per-entity qbo_categories catalog (QBO "keep creating").
+      // Product & Service Categories catalog — NOT QuickCreate createKind="category"
+      // (that path writes COA accounts for expense/banking "Category" pickers).
       const created = await qboCategoriesCatalogClient.create(operatingCompanyId, {
         code: trimmed.toUpperCase().replace(/[^A-Z0-9]+/g, "-").slice(0, 60) || "CAT",
         display_name: trimmed,
@@ -319,7 +307,8 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
               ))}
             </select>
           </label>
-          {/* Category — QBO places this right under Name. Repeatable inline "+ New category". */}
+          {/* Category — Product & Service Categories (qbo_categories), NOT CoA.
+              Repeatable inline "+ Add new category" via qboCategoriesCatalogClient.create. */}
           <label className="block">
             <span className="text-xs font-semibold text-gray-600">Category</span>
             <div className="mt-1">
@@ -373,14 +362,17 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
                   <span className="font-normal text-gray-400">(carrier default: Service income)</span>
                 </span>
                 <div className="mt-1">
-                  <Combobox
-                    options={incomeOptions}
+                  <ReferenceSelect
                     value={form.incomeAccountId}
                     onChange={(v) => set("incomeAccountId", v)}
+                    options={incomeOptions}
+                    createKind="account"
+                    operatingCompanyId={operatingCompanyId}
                     placeholder="Select income account"
-                    loading={accountsQuery.isLoading}
-                    allowClear
-                    allowAddNew={{ label: "+ Add new account", onAdd: () => setAccountCreateSide("income") }}
+                    disabled={accountsQuery.isLoading}
+                    onOptionCreated={() =>
+                      void queryClient.invalidateQueries({ queryKey: ["catalogs", "accounts", "for-items", operatingCompanyId] })
+                    }
                   />
                 </div>
                 {errors.incomeAccountId ? <p className="mt-1 text-[11px] text-red-700">{errors.incomeAccountId}</p> : null}
@@ -424,27 +416,34 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
               <label className="block">
                 <span className="text-xs font-semibold text-gray-600">Preferred vendor</span>
                 <div className="mt-1">
-                  <Combobox
-                    options={vendorOptions}
+                  <ReferenceSelect
                     value={form.preferredVendorId}
                     onChange={(v) => set("preferredVendorId", v)}
+                    options={vendorOptions}
+                    createKind="vendor"
+                    operatingCompanyId={operatingCompanyId}
                     placeholder="No preferred vendor"
-                    loading={vendorsQuery.isLoading}
-                    allowClear
+                    disabled={vendorsQuery.isLoading || !operatingCompanyId}
+                    onOptionCreated={() =>
+                      void queryClient.invalidateQueries({ queryKey: ["mdata", "vendors", "for-items", operatingCompanyId] })
+                    }
                   />
                 </div>
               </label>
               <label className="block md:col-span-2">
                 <span className="text-xs font-semibold text-gray-600">Expense account *</span>
                 <div className="mt-1">
-                  <Combobox
-                    options={expenseOptions}
+                  <ReferenceSelect
                     value={form.expenseAccountId}
                     onChange={(v) => set("expenseAccountId", v)}
+                    options={expenseOptions}
+                    createKind="account"
+                    operatingCompanyId={operatingCompanyId}
                     placeholder="Select expense account"
-                    loading={accountsQuery.isLoading}
-                    allowClear
-                    allowAddNew={{ label: "+ Add new account", onAdd: () => setAccountCreateSide("expense") }}
+                    disabled={accountsQuery.isLoading}
+                    onOptionCreated={() =>
+                      void queryClient.invalidateQueries({ queryKey: ["catalogs", "accounts", "for-items", operatingCompanyId] })
+                    }
                   />
                 </div>
                 {errors.expenseAccountId ? <p className="mt-1 text-[11px] text-red-700">{errors.expenseAccountId}</p> : null}
@@ -457,13 +456,17 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
           <label className="block">
             <span className="text-xs font-semibold text-gray-600">Class</span>
             <div className="mt-1">
-              <Combobox
-                options={classOptions}
+              <ReferenceSelect
                 value={form.classId}
                 onChange={(v) => set("classId", v)}
+                options={classOptions}
+                createKind="class"
+                operatingCompanyId={operatingCompanyId}
                 placeholder="No class"
-                loading={classesQuery.isLoading}
-                allowClear
+                disabled={classesQuery.isLoading || !operatingCompanyId}
+                onOptionCreated={() =>
+                  void queryClient.invalidateQueries({ queryKey: ["catalogs", "accounting", "classes", operatingCompanyId] })
+                }
               />
             </div>
           </label>
@@ -510,16 +513,6 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
         </div>
       </div>
     </Modal>
-
-      {/* PS-A: CoA account create as sibling overlay (InlineCreateDrawer is not a Modal frame —
-          verify:no-nested-modal-frames). Same chrome as ManualJEModal "+ Add new account". */}
-      <InlineCreateDrawer
-        open={accountCreateSide !== null}
-        kind="account"
-        operatingCompanyId={operatingCompanyId}
-        onClose={() => setAccountCreateSide(null)}
-        onCreated={handleAccountCreated}
-      />
     </>
   );
 }

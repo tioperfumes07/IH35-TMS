@@ -7,7 +7,7 @@ import {
   listInsuranceClaims,
   type InsuranceLawsuitStatus,
 } from "../../api/insurance";
-import { Modal } from "../Modal";
+import { ParityDrawer } from "../parity/ParityDrawer";
 import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
 
@@ -175,7 +175,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Create Lawsuit">
+    <ParityDrawer open={open} onClose={onClose} title="Create Lawsuit" size="wide">
       <form
         className="space-y-4 text-sm"
         onSubmit={(event) => {
@@ -341,6 +341,6 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
           </button>
         </div>
       </form>
-    </Modal>
+    </ParityDrawer>
   );
 }

@@ -7,13 +7,12 @@
  * navigation away, no losing entered data (QB-STD-3/4). Created records write to the SAME
  * canonical table the list reads from, so they survive reload (QB-STD-5).
  *
- * Every reference dropdown across the TMS should use this instead of wiring Combobox +
- * create-modal ad-hoc. Account/category selects keep their existing lock-account control
- * alongside via the `lockControl` slot.
+ * CHROME-11: nested create uses ParityDrawer / InlineCreateDrawer — never a centered Modal
+ * stacked on top of an already-open money drawer.
  *
  * Two inline-create backends, by kind:
- *   - vendor / customer / item / category / part → QuickCreateEntityModal (canonical tables)
- *   - service → InlineCreateDrawer's richer BK7 two-sided (sell+buy) form (NewServiceDrawerForm)
+ *   - vendor / customer / account / service → InlineCreateDrawer (rich BK7 forms; account gated)
+ *   - item / category / part / class → QuickCreateEntityModal (ParityDrawer shell)
  */
 import { useState, type ReactNode } from "react";
 import { Combobox, type ComboboxOption } from "../Combobox";
@@ -21,7 +20,7 @@ import {
   QuickCreateEntityModal,
   type QuickCreateKind,
 } from "../forms/shared/QuickCreateEntityModal";
-import { InlineCreateDrawer } from "./InlineCreateDrawer";
+import { InlineCreateDrawer, type InlineCreateKind } from "./InlineCreateDrawer";
 
 export type ReferenceOption = {
   value: string;
@@ -30,7 +29,7 @@ export type ReferenceOption = {
   type?: string;
 };
 
-export type ReferenceCreateKind = QuickCreateKind | "service";
+export type ReferenceCreateKind = QuickCreateKind | "service" | "account";
 
 export type ReferenceSelectProps = {
   value: string | null;
@@ -48,6 +47,8 @@ export type ReferenceSelectProps = {
   /** Slot to keep an existing control (e.g. account lock toggle) beside the select. */
   lockControl?: ReactNode;
 };
+
+const INLINE_KINDS = new Set<ReferenceCreateKind>(["vendor", "customer", "account", "service"]);
 
 export function ReferenceSelect({
   value,
@@ -80,6 +81,8 @@ export function ReferenceSelect({
     setCreateOpen(false);
   }
 
+  const useInline = INLINE_KINDS.has(createKind);
+
   return (
     <div className="flex items-center gap-2">
       <div className="min-w-0 flex-1">
@@ -95,10 +98,10 @@ export function ReferenceSelect({
         />
       </div>
       {lockControl}
-      {createKind === "service" ? (
+      {useInline ? (
         <InlineCreateDrawer
           open={createOpen}
-          kind="service"
+          kind={createKind as InlineCreateKind}
           operatingCompanyId={operatingCompanyId}
           onClose={() => setCreateOpen(false)}
           onCreated={handleCreated}
@@ -107,7 +110,7 @@ export function ReferenceSelect({
         <QuickCreateEntityModal
           open={createOpen}
           operatingCompanyId={operatingCompanyId}
-          kind={createKind}
+          kind={createKind as QuickCreateKind}
           onClose={() => setCreateOpen(false)}
           onCreated={handleCreated}
         />

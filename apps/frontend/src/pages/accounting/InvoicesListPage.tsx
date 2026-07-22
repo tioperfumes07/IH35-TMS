@@ -8,7 +8,6 @@ import { ArrowRightCircle } from "lucide-react";
 import { listInvoices, type Invoice, type InvoiceStatus } from "../../api/accounting";
 import { listCustomers } from "../../api/mdata";
 import { Button } from "../../components/Button";
-import { DataPanel } from "../../components/layout/DataPanel";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { CustomerAdjustmentModal } from "./modals/CustomerAdjustmentModal";
@@ -25,6 +24,7 @@ import { BulkActionModal, BulkProgressDialog } from "../../components/bulk";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { useToast } from "../../components/Toast";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
 // INVOICE-LISTFILTER-01: real InvoiceStatus values go to the backend `status` param.
@@ -289,56 +289,68 @@ export function InvoicesListPage() {
     [],
   );
 
+  const invoicesActiveFilterCount =
+    (status ? 1 : 0) + (customerId ? 1 : 0) + (fromDate || toDate ? 1 : 0);
+
   const filterBar = (
-    <DataPanel title="Filters">
+    <div className="space-y-2">
       {customersQuery.isError ? (
-        <div className="mb-2">
-          <ListErrorBanner
-            message={`Failed to load customer filters: ${(customersQuery.error as Error)?.message ?? "Request failed"}`}
-            onRetry={() => void customersQuery.refetch()}
-          />
-        </div>
+        <ListErrorBanner
+          message={`Failed to load customer filters: ${(customersQuery.error as Error)?.message ?? "Request failed"}`}
+          onRetry={() => void customersQuery.refetch()}
+        />
       ) : null}
-      <div className="grid gap-2 md:grid-cols-6">
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-          Status
-          <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as InvoiceListFilter)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
-            {STATUS_OPTIONS.map((option) => (
-              <option key={option.label} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </SelectCombobox>
-        </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-          Customer
-          {/* A3/FIX-06: shared ReferenceSelect gives the customer FILTER the inline "+ Add new
-              customer" row too (writes to canonical mdata.customers — same table customerOptions
-              reads from). */}
-          <ReferenceSelect
-            value={customerId || null}
-            onChange={(next) => setCustomerId(next ?? "")}
-            options={customerFilterOptions}
-            createKind="customer"
-            operatingCompanyId={selectedCompanyId ?? ""}
-            placeholder="All customers"
-            disabled={!selectedCompanyId}
+      <CollapsedListFilters
+        activeFilterCount={invoicesActiveFilterCount}
+        testIdPrefix="invoices"
+        dataAttributes={{ "data-invoices-filter-toolbar": "collapsed" }}
+        searchSlot={
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="INV-2026-00001 or customer"
+            className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-[13px]"
+            aria-label="Search invoices"
           />
-        </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
-          Search
-          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="INV-2026-00001 or customer" className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
-        </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-          From issue date
-          <DatePicker value={fromDate} onChange={(next) => setFromDate(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
-        </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-          To issue date
-          <DatePicker value={toDate} onChange={(next) => setToDate(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
-        </label>
-      </div>
-      <div className="mt-2 flex items-center gap-3 text-xs text-gray-600">
+        }
+      >
+        <div className="grid gap-2 md:grid-cols-4">
+          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+            Status
+            <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as InvoiceListFilter)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
+              {STATUS_OPTIONS.map((option) => (
+                <option key={option.label} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </SelectCombobox>
+          </label>
+          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
+            Customer
+            {/* A3/FIX-06: shared ReferenceSelect gives the customer FILTER the inline "+ Add new
+                customer" row too (writes to canonical mdata.customers — same table customerOptions
+                reads from). */}
+            <ReferenceSelect
+              value={customerId || null}
+              onChange={(next) => setCustomerId(next ?? "")}
+              options={customerFilterOptions}
+              createKind="customer"
+              operatingCompanyId={selectedCompanyId ?? ""}
+              placeholder="All customers"
+              disabled={!selectedCompanyId}
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+            From issue date
+            <DatePicker value={fromDate} onChange={(next) => setFromDate(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+          </label>
+          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+            To issue date
+            <DatePicker value={toDate} onChange={(next) => setToDate(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+          </label>
+        </div>
+      </CollapsedListFilters>
+      <div className="flex items-center gap-3 text-xs text-gray-600">
         <span>Total billed: {money(totals.total)}</span>
         <span>Open: {money(totals.open)}</span>
         <span>
@@ -347,7 +359,7 @@ export function InvoicesListPage() {
           {listMeta.hasMore ? " (more available)" : ""}
         </span>
       </div>
-    </DataPanel>
+    </div>
   );
 
   return (

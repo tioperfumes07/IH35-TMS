@@ -9,6 +9,7 @@ import { useUrlSort } from "../../hooks/useUrlSort";
 import { ApiError } from "../../api/client";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters } from "../../components/table";
 import {
   getFixedAssets, getFixedAssetDetail,
   type FixedAssetListItem, type FixedAssetDetail,
@@ -183,16 +184,26 @@ export function FixedAssetsPage() {
   );
 
   const filterBar = (
-    <div className="flex flex-wrap gap-2 items-center">
-      <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setOffset(0); }}
-        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500">
-        <option value="">All statuses</option>
-        <option value="active">Active</option>
-        <option value="fully_depreciated">Fully Depreciated</option>
-        <option value="disposed">Disposed</option>
-        <option value="voided">Voided</option>
-      </select>
-      <span className="text-xs text-gray-500">{total.toLocaleString()} asset{total !== 1 ? "s" : ""}</span>
+    <div className="flex flex-wrap gap-2 items-center" data-fixed-assets-filter-toolbar="collapsed">
+      <CollapsedListFilters activeFilterCount={statusFilter ? 1 : 0} testIdPrefix="fixed-assets">
+        <select
+          value={statusFilter}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setOffset(0);
+          }}
+          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500"
+        >
+          <option value="">All statuses</option>
+          <option value="active">Active</option>
+          <option value="fully_depreciated">Fully Depreciated</option>
+          <option value="disposed">Disposed</option>
+          <option value="voided">Voided</option>
+        </select>
+      </CollapsedListFilters>
+      <span className="text-xs text-gray-500">
+        {total.toLocaleString()} asset{total !== 1 ? "s" : ""}
+      </span>
     </div>
   );
 

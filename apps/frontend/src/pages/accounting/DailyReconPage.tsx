@@ -8,6 +8,7 @@ import { useListState } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { CollapsedListFilters } from "../../components/table";
 import { companyToday, addDaysIso } from "../../lib/businessDate";
 
 const ENTITY_TYPE_OPTIONS = [
@@ -163,48 +164,54 @@ export function DailyReconPage() {
       ) : (
         <>
           {/* Filters */}
-          <div className="flex flex-wrap gap-2 items-end">
-            <div className="flex flex-col gap-0.5">
-              <label className="text-[10px] font-semibold uppercase text-gray-500">From</label>
-              <DatePicker
-                value={fromDate}
-                onChange={setFromDate}
-                className="h-10 rounded-sm border border-gray-300 px-2 text-sm"
-              />
+          <CollapsedListFilters
+            activeFilterCount={(fromDate || toDate ? 1 : 0) + (entityType ? 1 : 0) + (matchStatus !== "all" ? 1 : 0)}
+            testIdPrefix="daily-recon"
+            dataAttributes={{ "data-daily-recon-filter-toolbar": "collapsed" }}
+          >
+            <div className="flex flex-wrap gap-2 items-end">
+              <div className="flex flex-col gap-0.5">
+                <label className="text-[10px] font-semibold uppercase text-gray-500">From</label>
+                <DatePicker
+                  value={fromDate}
+                  onChange={setFromDate}
+                  className="h-10 rounded-sm border border-gray-300 px-2 text-sm"
+                />
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <label className="text-[10px] font-semibold uppercase text-gray-500">To</label>
+                <DatePicker
+                  value={toDate}
+                  onChange={setToDate}
+                  className="h-10 rounded-sm border border-gray-300 px-2 text-sm"
+                />
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <label className="text-[10px] font-semibold uppercase text-gray-500">Type</label>
+                <select
+                  value={entityType}
+                  onChange={(e) => setEntityType(e.target.value)}
+                  className="h-10 rounded-sm border border-gray-300 px-2 text-sm"
+                >
+                  {ENTITY_TYPE_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <label className="text-[10px] font-semibold uppercase text-gray-500">Status</label>
+                <select
+                  value={matchStatus}
+                  onChange={(e) => setMatchStatus(e.target.value as DailyReconMatchStatus | "all")}
+                  className="h-10 rounded-sm border border-gray-300 px-2 text-sm"
+                >
+                  {MATCH_STATUS_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div className="flex flex-col gap-0.5">
-              <label className="text-[10px] font-semibold uppercase text-gray-500">To</label>
-              <DatePicker
-                value={toDate}
-                onChange={setToDate}
-                className="h-10 rounded-sm border border-gray-300 px-2 text-sm"
-              />
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <label className="text-[10px] font-semibold uppercase text-gray-500">Type</label>
-              <select
-                value={entityType}
-                onChange={(e) => setEntityType(e.target.value)}
-                className="h-10 rounded-sm border border-gray-300 px-2 text-sm"
-              >
-                {ENTITY_TYPE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <label className="text-[10px] font-semibold uppercase text-gray-500">Status</label>
-              <select
-                value={matchStatus}
-                onChange={(e) => setMatchStatus(e.target.value as DailyReconMatchStatus | "all")}
-                className="h-10 rounded-sm border border-gray-300 px-2 text-sm"
-              >
-                {MATCH_STATUS_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            </div>
-          </div>
+          </CollapsedListFilters>
 
           {/* Days */}
           {listState.isEmpty ? (

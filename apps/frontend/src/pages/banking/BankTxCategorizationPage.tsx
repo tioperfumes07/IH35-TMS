@@ -23,7 +23,8 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { ManualJEModal } from "./components/ManualJEModal";
 import { TransferModal } from "./TransferModal";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+import { coaAccountReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { formatUsdCents } from "../../lib/money";
 
 function txDate(tx: Record<string, unknown>) {
@@ -159,6 +160,11 @@ export function BankTxCategorizationPage() {
     queryFn: () => getCoaAccounts(companyId),
     enabled: Boolean(companyId),
   });
+
+  const coaOptions = useMemo(
+    () => (coaQuery.data?.accounts ?? []).map(coaAccountReferenceOption),
+    [coaQuery.data?.accounts]
+  );
 
   const backendPending =
     uncQuery.isError &&
@@ -373,18 +379,17 @@ export function BankTxCategorizationPage() {
               <Button size="sm" variant="secondary" onClick={() => void applyBulkSuggestions()}>
                 Apply suggestion to all selected
               </Button>
-              <SelectCombobox
-                className="h-8 rounded-sm border border-gray-300 px-2"
-                value={batchCoaId}
-                onChange={(e) => setBatchCoaId(e.target.value)}
-              >
-                <option value="">Batch COA…</option>
-                {(coaQuery.data?.accounts ?? []).map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.account_number} — {a.account_name}
-                  </option>
-                ))}
-              </SelectCombobox>
+              <div className="w-48">
+                <ReferenceSelect
+                  value={batchCoaId || null}
+                  onChange={(next) => setBatchCoaId(next ?? "")}
+                  options={coaOptions}
+                  createKind="account"
+                  operatingCompanyId={companyId}
+                  placeholder="Batch COA…"
+                  onOptionCreated={() => void coaQuery.refetch()}
+                />
+              </div>
               <Button
                 size="sm"
                 disabled={!batchCoaId}
@@ -460,18 +465,17 @@ export function BankTxCategorizationPage() {
                       <td className="px-2 py-1.5 align-top" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                         <div className="flex flex-col gap-1">
                           <div className="flex flex-wrap gap-1">
-                            <SelectCombobox
-                              className="h-8 max-w-[140px] rounded-sm border border-gray-300 px-1 text-[11px]"
-                              value={coaPickByTx[id] ?? ""}
-                              onChange={(e) => setCoaPickByTx((p) => ({ ...p, [id]: e.target.value }))}
-                            >
-                              <option value="">Categorize as…</option>
-                              {(coaQuery.data?.accounts ?? []).map((a) => (
-                                <option key={a.id} value={a.id}>
-                                  {a.account_number}
-                                </option>
-                              ))}
-                            </SelectCombobox>
+                            <div className="max-w-[160px] flex-1">
+                              <ReferenceSelect
+                                value={coaPickByTx[id] ?? null}
+                                onChange={(next) => setCoaPickByTx((p) => ({ ...p, [id]: next ?? "" }))}
+                                options={coaOptions}
+                                createKind="account"
+                                operatingCompanyId={companyId}
+                                placeholder="Categorize as…"
+                                onOptionCreated={() => void coaQuery.refetch()}
+                              />
+                            </div>
                             <Button
                               size="sm"
                               disabled={!coaPickByTx[id]}

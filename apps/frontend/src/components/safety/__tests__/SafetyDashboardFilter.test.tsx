@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { SafetyDashboardFilter } from "../SafetyDashboardFilter";
 
 describe("SafetyDashboardFilter", () => {
-  it("shows the counter summary with the window label when counts are reported", () => {
+  it("keeps Activity window / Status collapsed until Filters is opened (CHROME-01)", () => {
     render(
       <SafetyDashboardFilter
         value="active"
@@ -15,6 +15,9 @@ describe("SafetyDashboardFilter", () => {
         countsReported
       />
     );
+    expect(screen.getByTestId("safety-filters-toggle")).toBeInTheDocument();
+    expect(screen.queryByTestId("safety-window-7d")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("safety-status-active")).not.toBeInTheDocument();
     expect(screen.getByText(/window 7d/i)).toBeInTheDocument();
   });
 
@@ -32,7 +35,7 @@ describe("SafetyDashboardFilter", () => {
     expect(screen.queryByTestId("safety-counter-line")).not.toBeInTheDocument();
   });
 
-  it("calls onActivityWindowChange when a window pill is clicked", () => {
+  it("calls onActivityWindowChange when a window pill is clicked inside the Filters panel", () => {
     const onWindow = vi.fn();
     render(
       <SafetyDashboardFilter
@@ -44,6 +47,7 @@ describe("SafetyDashboardFilter", () => {
         total={5}
       />
     );
+    fireEvent.click(screen.getByTestId("safety-filters-toggle"));
     fireEvent.click(screen.getByTestId("safety-window-30d"));
     expect(onWindow).toHaveBeenCalledWith("30d");
   });

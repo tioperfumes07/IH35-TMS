@@ -12,6 +12,8 @@ import {
   type ItemLine,
 } from "../../../../components/forms/shared/CostBreakdownBox";
 import { DatePicker } from "../../../../components/forms/DatePicker";
+import { ReferenceSelect } from "../../../../components/parity/ReferenceSelect";
+import { vendorReferenceOption } from "../../../../components/parity/referenceOptionLabels";
 import { SelectCombobox } from "../../../../components/shared/SelectCombobox";
 
 type Props = {
@@ -51,6 +53,10 @@ export function CreateExpenseForm({ value, onChange, operatingCompanyId }: Props
 
   const sectionALines = useMemo(() => parseCategoryLines(value), [value]);
   const sectionBLines = useMemo(() => parseItemLines(value), [value]);
+  const vendorOptions = useMemo(
+    () => (vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption),
+    [vendorsQuery.data?.vendors]
+  );
   const expenseCategoryOptions = useMemo<CostContextOption[]>(
     () =>
       (costContextQuery.data?.expense_categories ?? []).map((entry) => ({
@@ -106,18 +112,15 @@ export function CreateExpenseForm({ value, onChange, operatingCompanyId }: Props
           />
         </Field>
         <Field label="Vendor">
-          <SelectCombobox
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
-            value={String(value.vendor_id ?? "")}
-            onChange={(event) => onChange({ ...value, vendor_id: event.target.value })}
-          >
-            <option value="">Select vendor...</option>
-            {(vendorsQuery.data?.vendors ?? []).map((vendor) => (
-              <option key={vendor.id} value={vendor.id}>
-                {vendor.name}
-              </option>
-            ))}
-          </SelectCombobox>
+          <ReferenceSelect
+            value={value.vendor_id ? String(value.vendor_id) : null}
+            onChange={(next) => onChange({ ...value, vendor_id: next ?? "" })}
+            options={vendorOptions}
+            createKind="vendor"
+            operatingCompanyId={operatingCompanyId}
+            placeholder="Select vendor..."
+            disabled={!operatingCompanyId}
+          />
         </Field>
         <Field label="Pay From Account">
           <SelectCombobox

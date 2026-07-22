@@ -16,7 +16,7 @@ import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 
 function canAccess(role?: string) {
   return role === "Owner" || role === "Administrator" || role === "Accountant";
@@ -233,18 +233,19 @@ export function CategorizationRulesPage() {
               min={1}
               className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
             />
-            <SelectCombobox
-              value={coaAccountId}
-              onChange={(event) => setCoaAccountId(event.target.value)}
-              className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
-            >
-              <option value="">Select target COA account</option>
-              {(accountsQuery.data?.accounts ?? []).map((account) => (
-                <option key={account.id} value={account.id}>
-                  {account.account_number} - {account.account_name}
-                </option>
-              ))}
-            </SelectCombobox>
+            <ReferenceSelect
+              value={coaAccountId || null}
+              onChange={(next) => setCoaAccountId(next ?? "")}
+              options={(accountsQuery.data?.accounts ?? []).map((account) => ({
+                value: account.id,
+                label: `${account.account_number} - ${account.account_name}`,
+              }))}
+              createKind="category"
+              addNewLabel="+ Add new account"
+              operatingCompanyId={companyId}
+              placeholder="Select target COA account"
+              disabled={!companyId}
+            />
             <div className="flex flex-wrap gap-2 pt-1">
               <ActionButton disabled={saving} onClick={() => void onSaveRule()}>
                 {saving ? "Saving..." : "Save Rule"}

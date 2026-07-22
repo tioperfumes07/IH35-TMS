@@ -9,6 +9,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { CollapsedListFilters } from "../../../components/table";
 import { formatDateUS } from "../../../lib/formatDate";
 
 const MATTER_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -116,40 +117,46 @@ export function LegalMattersListPage() {
           storageKey="legal-matters"
           emptyText="No matters match filters."
           filterBar={
-            <div className="flex flex-wrap gap-2">
-              <SelectCombobox
-                className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-              >
-                <option value="">All statuses</option>
-                {["open", "investigating", "litigation", "settled", "dismissed", "judgment", "closed"].map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </SelectCombobox>
-              <SelectCombobox
-                className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
-                value={severity}
-                onChange={(e) => setSeverity(e.target.value)}
-              >
-                <option value="">All severity</option>
-                {["critical", "high", "medium", "low"].map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </SelectCombobox>
-              <SelectCombobox className="rounded-sm border border-gray-200 px-2 py-1 text-sm" value={type} onChange={(e) => setType(e.target.value)}>
-                <option value="">All types</option>
-                {["lawsuit", "claim", "demand_letter", "settlement", "regulatory", "other"].map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </SelectCombobox>
-            </div>
+            <CollapsedListFilters
+              activeFilterCount={(status ? 1 : 0) + (severity ? 1 : 0) + (type ? 1 : 0)}
+              testIdPrefix="legal-matters"
+              dataAttributes={{ "data-legal-matters-filter-toolbar": "collapsed" }}
+            >
+              <div className="flex flex-wrap gap-2">
+                <SelectCombobox
+                  className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                >
+                  <option value="">All statuses</option>
+                  {["open", "investigating", "litigation", "settled", "dismissed", "judgment", "closed"].map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </SelectCombobox>
+                <SelectCombobox
+                  className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
+                  value={severity}
+                  onChange={(e) => setSeverity(e.target.value)}
+                >
+                  <option value="">All severity</option>
+                  {["critical", "high", "medium", "low"].map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </SelectCombobox>
+                <SelectCombobox className="rounded-sm border border-gray-200 px-2 py-1 text-sm" value={type} onChange={(e) => setType(e.target.value)}>
+                  <option value="">All types</option>
+                  {["lawsuit", "claim", "demand_letter", "settlement", "regulatory", "other"].map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </SelectCombobox>
+              </div>
+            </CollapsedListFilters>
           }
         />
       )}

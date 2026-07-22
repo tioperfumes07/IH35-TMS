@@ -3,13 +3,16 @@ import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listDrivers, listUnits, listVendors } from "../../api/mdata";
+import { listCatalogAccounts } from "../../api/catalog-accounts";
+import { classesCatalogClient } from "../../api/catalogs-accounting";
 import { DatePicker } from "../forms/DatePicker";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../forms/TwoSectionLineEditor";
 import { TotalsStack } from "../forms/shared/TotalsStack";
 import { BILL_TYPE_TABS, TypeTabBar } from "../forms/shared/TypeTabBar";
-import { QboCombobox } from "../forms/QboCombobox";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { vendorReferenceOption } from "../parity/referenceOptionLabels";
+import { Combobox } from "../Combobox";
+import { CreateDriverModal } from "../drivers/CreateDriverModal";
 import { SelectCombobox } from "../shared/SelectCombobox";
 import { UploadZone } from "../UploadZone";
 import { companyToday } from "../../lib/businessDate";
@@ -126,8 +129,10 @@ export function VendorBillForm({
   const [loadNumber, setLoadNumber] = useState("");
   const [driverId, setDriverId] = useState("");
   const [unitId, setUnitId] = useState(linkedUnitId ?? "");
+  const [driverCreateOpen, setDriverCreateOpen] = useState(false);
+  const [classId, setClassId] = useState<string | null>(null);
   const [className, setClassName] = useState("");
-  const [accountQboId, setAccountQboId] = useState<string | null>(null);
+  const [accountId, setAccountId] = useState<string | null>(null);
   const [accountDisplay, setAccountDisplay] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -157,10 +162,62 @@ export function VendorBillForm({
     queryFn: () => listUnits({ status: "Active", operating_company_id: operatingCompanyId, limit: 500 }),
     enabled: Boolean(operatingCompanyId),
   });
+  const accountsQuery = useQuery({
+    queryKey: ["vendor-bill-form", "ap-accounts", operatingCompanyId],
+    queryFn: () => listCatalogAccounts({ status: "active" }),
+    enabled: Boolean(operatingCompanyId),
+    staleTime: 60_000,
+  });
+  const classesQuery = useQuery({
+    queryKey: ["vendor-bill-form", "classes", operatingCompanyId],
+    queryFn: () =>
+      classesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: 200 }),
+    enabled: Boolean(operatingCompanyId),
+    staleTime: 60_000,
+  });
 
   const vendorOptions = useMemo(
     () => (vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption),
     [vendorsQuery.data?.vendors]
+  );
+
+  const driverOptions = useMemo(
+    () =>
+      (driversQuery.data?.drivers ?? []).map((driver) => ({
+        value: driver.id,
+        label: [driver.first_name, driver.last_name].filter(Boolean).join(" ").trim() || driver.id,
+      })),
+    [driversQuery.data?.drivers]
+  );
+
+  // A/P account picker — Liability / AccountsPayable postable accounts (canonical catalogs.accounts).
+  const apAccountOptions = useMemo(
+    () =>
+      (accountsQuery.data?.accounts ?? [])
+        .filter(
+          (acct) =>
+            acct.is_postable &&
+            !acct.deactivated_at &&
+            (acct.account_type === "Liability" ||
+              String(acct.account_subtype ?? "").toLowerCase().includes("payable") ||
+              String(acct.account_name ?? "").toLowerCase().includes("accounts payable"))
+        )
+        .map((acct) => ({
+          value: acct.id,
+          label: acct.account_number ? `${acct.account_number} · ${acct.account_name}` : acct.account_name,
+          type: acct.account_type ?? undefined,
+        })),
+    [accountsQuery.data?.accounts]
+  );
+
+  const classOptions = useMemo(
+    () =>
+      (classesQuery.data?.rows ?? []).map((row) => ({
+        value: row.id,
+        label: row.display_name || row.code,
+        type: row.code,
+      })),
+    [classesQuery.data?.rows]
   );
 
   const subtotal = lineSubtotal(lines);
@@ -212,7 +269,7 @@ export function VendorBillForm({
         className,
         terms,
       }),
-      coa_account_id: accountQboId && accountQboId.includes("-") ? accountQboId : undefined,
+      coa_account_id: accountId ?? undefined,
       attachment_draft_id: draftAttachmentEntityId,
       lines: linePayloads,
       // HARD cross-module FKs — only when linkage / picker supplies them.
@@ -222,6 +279,7 @@ export function VendorBillForm({
   }
 
   return (
+    <>
     <form className="space-y-3" onSubmit={handleSubmit}>
       {linkedWoDisplayId ? (
         <div className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700">
@@ -230,11 +288,12 @@ export function VendorBillForm({
       ) : null}
       <TypeTabBar tabs={BILL_TYPE_TABS} activeId={billType} onChange={setBillType} />
 
-      <div className="rounded-sm border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
-        Bill Details
+      {/* CHROME-10: flat sections — no nested bordered panel inside the drawer */}
+      <div className="space-y-1">
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-700">Bill Details</div>
       </div>
 
-      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-2 md:grid-cols-6">
+      <div className="grid gap-2 md:grid-cols-6">
         <Field label="Bill Type *">
           <input
             className="h-8 w-full rounded-sm border border-gray-300 bg-gray-100 px-2 text-xs"
@@ -268,14 +327,22 @@ export function VendorBillForm({
           />
         </Field>
         <Field label="A/P Account *">
-          <QboCombobox
-            entityType="account"
+          <ReferenceSelect
+            value={accountId}
+            onChange={(next) => {
+              setAccountId(next);
+              const match = apAccountOptions.find((o) => o.value === next);
+              setAccountDisplay(match?.label ?? "");
+            }}
+            options={apAccountOptions}
+            createKind="category"
+            addNewLabel="+ Add new account"
             operatingCompanyId={operatingCompanyId}
-            value={accountQboId}
-            displayValue={accountDisplay}
-            onChange={(qboId, displayName) => {
-              setAccountQboId(qboId);
-              setAccountDisplay(displayName);
+            placeholder="Select A/P account…"
+            disabled={!operatingCompanyId}
+            onOptionCreated={(opt) => {
+              setAccountId(opt.value);
+              setAccountDisplay(opt.label);
             }}
           />
         </Field>
@@ -320,18 +387,18 @@ export function VendorBillForm({
 
         <div className="md:col-span-6 h-2" />
         <Field label="Driver">
-          <SelectCombobox
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
-            value={driverId}
-            onChange={(event) => setDriverId(event.target.value)}
-          >
-            <option value="">Select driver...</option>
-            {(driversQuery.data?.drivers ?? []).map((driver) => (
-              <option key={driver.id} value={driver.id}>
-                {[driver.first_name, driver.last_name].filter(Boolean).join(" ").trim() || driver.id}
-              </option>
-            ))}
-          </SelectCombobox>
+          <Combobox
+            options={driverOptions}
+            value={driverId || null}
+            onChange={(next) => setDriverId(next ?? "")}
+            placeholder="Select driver..."
+            loading={driversQuery.isLoading}
+            allowClear
+            allowAddNew={{
+              label: "+ Create driver",
+              onAdd: () => setDriverCreateOpen(true),
+            }}
+          />
         </Field>
         <Field label="Unit">
           <SelectCombobox
@@ -349,11 +416,22 @@ export function VendorBillForm({
         </Field>
         <div className="md:col-span-3" />
         <Field label="Class">
-          <input
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
-            value={className}
-            onChange={(event) => setClassName(event.target.value)}
-            placeholder="Class"
+          <ReferenceSelect
+            value={classId}
+            onChange={(next) => {
+              setClassId(next);
+              const match = classOptions.find((o) => o.value === next);
+              setClassName(match?.label ?? "");
+            }}
+            options={classOptions}
+            createKind="class"
+            operatingCompanyId={operatingCompanyId}
+            placeholder="Select class…"
+            disabled={!operatingCompanyId}
+            onOptionCreated={(opt) => {
+              setClassId(opt.value);
+              setClassName(opt.label);
+            }}
           />
         </Field>
       </div>
@@ -397,6 +475,17 @@ export function VendorBillForm({
         </button>
       </div>
     </form>
+    <CreateDriverModal
+      open={driverCreateOpen}
+      companyId={operatingCompanyId}
+      onClose={() => setDriverCreateOpen(false)}
+      onCreated={(createdId) => {
+        setDriverId(createdId);
+        setDriverCreateOpen(false);
+        void driversQuery.refetch();
+      }}
+    />
+    </>
   );
 }
 

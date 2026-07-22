@@ -16,6 +16,7 @@ import { getTripProfitability, type TripProfitabilityRow } from "../../lib/loadP
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters } from "../../components/table";
 import { ReportsSubNav } from "../reports/ReportsSubNav";
 import { EntityLink } from "../../components/shared/EntityLink";
 
@@ -141,31 +142,37 @@ export function TripProfitability() {
   ];
 
   const filterBar = (
-    <div className="flex flex-wrap items-end gap-3">
-      <label className="text-sm">
-        From
-        <DatePicker
-          className="ml-2 rounded-sm border px-2 py-1"
-          value={period.start}
-          onChange={(next) => setPeriod((p) => ({ ...p, start: next }))}
-        />
-      </label>
-      <label className="text-sm">
-        To
-        <DatePicker
-          className="ml-2 rounded-sm border px-2 py-1"
-          value={period.end}
-          onChange={(next) => setPeriod((p) => ({ ...p, end: next }))}
-        />
-      </label>
-      <button
-        type="button"
-        className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#1F2A44]"
-        onClick={() => setApplied(period)}
-      >
-        Apply
-      </button>
-    </div>
+    <CollapsedListFilters
+      activeFilterCount={period.start || period.end ? 1 : 0}
+      testIdPrefix="trip-profit"
+      dataAttributes={{ "data-trip-profit-filter-toolbar": "collapsed" }}
+    >
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="text-sm">
+          From
+          <DatePicker
+            className="ml-2 rounded-sm border px-2 py-1"
+            value={period.start}
+            onChange={(next) => setPeriod((p) => ({ ...p, start: next }))}
+          />
+        </label>
+        <label className="text-sm">
+          To
+          <DatePicker
+            className="ml-2 rounded-sm border px-2 py-1"
+            value={period.end}
+            onChange={(next) => setPeriod((p) => ({ ...p, end: next }))}
+          />
+        </label>
+        <button
+          type="button"
+          className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#1F2A44]"
+          onClick={() => setApplied(period)}
+        >
+          Apply
+        </button>
+      </div>
+    </CollapsedListFilters>
   );
 
   return (

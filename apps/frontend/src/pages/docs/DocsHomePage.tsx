@@ -6,6 +6,7 @@ import { getDocsFoundationKpis, listDocsFoundation, type DocsFoundationRow, type
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters } from "../../components/table";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { UploadModal } from "../../components/documents/UploadModal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -152,47 +153,53 @@ export function DocsHomePage() {
   const canNext = page < totalPages;
 
   const filterBar = (
-    <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-      <label className="space-y-1 text-xs font-semibold text-gray-600">
-        Type filter
-        <input
-          value={typeFilter}
-          onChange={(event) => {
-            setTypeFilter(event.target.value);
-            setPage(1);
-          }}
-          className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm font-normal"
-          placeholder="Category code, label, mime type"
-        />
-      </label>
-      <label className="space-y-1 text-xs font-semibold text-gray-600">
-        Expiration before
-        <DatePicker
-          value={expiresBefore}
-          onChange={(next) => {
-            setExpiresBefore(next);
-            setPage(1);
-          }}
-          className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm font-normal"
-        />
-      </label>
-      <div className="flex items-end gap-2">
-        {kpiFilter !== "none" ? (
-          <span className="pb-2 text-xs font-semibold text-gray-600">
-            {kpiFilter === "missing_required"
-              ? "Missing required (no category or incomplete upload)"
-              : "Recent uploads (last 7 days)"}
-          </span>
-        ) : null}
-        <button
-          type="button"
-          className="h-9 rounded-sm border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-          onClick={clearListFilters}
-        >
-          Reset filters
-        </button>
+    <CollapsedListFilters
+      activeFilterCount={(typeFilter ? 1 : 0) + (expiresBefore ? 1 : 0) + (kpiFilter !== "none" ? 1 : 0)}
+      testIdPrefix="docs"
+      dataAttributes={{ "data-docs-filter-toolbar": "collapsed" }}
+    >
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+        <label className="space-y-1 text-xs font-semibold text-gray-600">
+          Type filter
+          <input
+            value={typeFilter}
+            onChange={(event) => {
+              setTypeFilter(event.target.value);
+              setPage(1);
+            }}
+            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm font-normal"
+            placeholder="Category code, label, mime type"
+          />
+        </label>
+        <label className="space-y-1 text-xs font-semibold text-gray-600">
+          Expiration before
+          <DatePicker
+            value={expiresBefore}
+            onChange={(next) => {
+              setExpiresBefore(next);
+              setPage(1);
+            }}
+            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm font-normal"
+          />
+        </label>
+        <div className="flex items-end gap-2">
+          {kpiFilter !== "none" ? (
+            <span className="pb-2 text-xs font-semibold text-gray-600">
+              {kpiFilter === "missing_required"
+                ? "Missing required (no category or incomplete upload)"
+                : "Recent uploads (last 7 days)"}
+            </span>
+          ) : null}
+          <button
+            type="button"
+            className="h-9 rounded-sm border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            onClick={clearListFilters}
+          >
+            Reset filters
+          </button>
+        </div>
       </div>
-    </div>
+    </CollapsedListFilters>
   );
 
   return (

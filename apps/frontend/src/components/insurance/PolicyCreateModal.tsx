@@ -4,7 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { ApiError, apiRequest } from "../../api/client";
 import { insurancePoliciesApi, listInsuranceTypeCatalog, type InsurancePolicyStatus } from "../../api/insurance";
 import { listUnits } from "../../api/mdata";
-import { Modal } from "../Modal";
+import { ParityDrawer } from "../parity/ParityDrawer";
 import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
 
@@ -278,7 +278,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Create Policy">
+    <ParityDrawer open={open} onClose={onClose} title="Create Policy" size="wide">
       <form
         className="space-y-4 text-sm"
         onSubmit={(event) => {
@@ -502,6 +502,6 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           </button>
         </div>
       </form>
-    </Modal>
+    </ParityDrawer>
   );
 }

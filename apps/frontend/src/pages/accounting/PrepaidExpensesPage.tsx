@@ -13,6 +13,7 @@ import {
 } from "../../api/prepaid-expenses";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
 const fmtCents = (c: number) => formatUsdCents(c);
@@ -282,15 +283,25 @@ export function PrepaidExpensesPage() {
   );
 
   const filterBar = (
-    <div className="flex flex-wrap gap-2 items-center">
-      <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setOffset(0); }}
-        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500">
-        <option value="">All statuses</option>
-        <option value="active">Active</option>
-        <option value="fully_amortized">Fully Amortized</option>
-        <option value="voided">Voided</option>
-      </select>
-      <span className="text-xs text-gray-500">{total.toLocaleString()} asset{total !== 1 ? "s" : ""}</span>
+    <div className="flex flex-wrap gap-2 items-center" data-prepaid-filter-toolbar="collapsed">
+      <CollapsedListFilters activeFilterCount={statusFilter ? 1 : 0} testIdPrefix="prepaid">
+        <select
+          value={statusFilter}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setOffset(0);
+          }}
+          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500"
+        >
+          <option value="">All statuses</option>
+          <option value="active">Active</option>
+          <option value="fully_amortized">Fully Amortized</option>
+          <option value="voided">Voided</option>
+        </select>
+      </CollapsedListFilters>
+      <span className="text-xs text-gray-500">
+        {total.toLocaleString()} asset{total !== 1 ? "s" : ""}
+      </span>
     </div>
   );
 

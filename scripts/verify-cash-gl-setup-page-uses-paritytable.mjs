@@ -4,7 +4,7 @@
  *
  * The bank-account → cash-GL-account mapping page must use the shared ParityTable
  * grammar, not a hand-rolled <table>. Display-only migration: column order
- * (Bank Account, Cash GL Account), the inline SelectCombobox mapping editor
+ * (Bank Account, Cash GL Account), the inline ReferenceSelect (+ Create) mapping editor
  * (Owner/Administrator gated, handler unchanged), the ListErrorBanner error
  * surface, and the empty text must all be preserved. This page is setup-only
  * config (banking.bank_accounts.ledger_account_id) — it posts NO journal
@@ -49,8 +49,8 @@ function assertMigrated(src) {
   if (!src.includes('tableTestId="cash-gl-setup-table"')) {
     errors.push(`${PAGE}: must set tableTestId="cash-gl-setup-table"`);
   }
-  if (!src.includes("SelectCombobox")) {
-    errors.push(`${PAGE}: must keep the inline SelectCombobox cash-GL mapping editor`);
+  if (!src.includes("ReferenceSelect") || !/createKind=["']account["']/.test(src)) {
+    errors.push(`${PAGE}: must keep the inline ReferenceSelect cash-GL mapping editor (createKind=account)`);
   }
   if (!src.includes("ListErrorBanner")) {
     errors.push(`${PAGE}: must keep the ListErrorBanner error surface on query error`);
@@ -68,10 +68,10 @@ function selftest() {
   const good = `
     import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
     import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
-    import { SelectCombobox } from "../../components/shared/SelectCombobox";
+    import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
     const columns = [
       { key: "account_name", label: "Bank Account" },
-      { key: "ledger_account_id", label: "Cash GL Account", render: (bank) => <SelectCombobox /> },
+      { key: "ledger_account_id", label: "Cash GL Account", render: (bank) => <ReferenceSelect createKind="account" /> },
     ];
     <ListErrorBanner onRetry={() => {}} />
     <ParityTable

@@ -1,4 +1,5 @@
 import { DatePicker } from "../../components/forms/DatePicker";
+import { CollapsedListFilters } from "../../components/table";
 
 interface FilterBarProps {
   filters: {
@@ -20,40 +21,49 @@ const EQUIPMENT_TYPES = [
 ];
 
 export function FilterBar({ filters, onChange }: FilterBarProps) {
+  const activeFilterCount =
+    (filters.dateFrom || filters.dateTo ? 1 : 0) + (filters.equipmentType ? 1 : 0);
+
   return (
-    <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
-      <div className="flex flex-col gap-1">
-        <label className="text-xs text-gray-600">From</label>
-        <DatePicker
-          value={filters.dateFrom}
-          onChange={next => onChange({ ...filters, dateFrom: next })}
-          className="w-[130px] min-h-11 text-sm border rounded-sm px-2"
-        />
-      </div>
+    <div className="flex flex-wrap items-end gap-3" data-profitability-filter-toolbar="collapsed">
+      <CollapsedListFilters activeFilterCount={activeFilterCount} testIdPrefix="profitability">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-gray-600">From</label>
+            <DatePicker
+              value={filters.dateFrom}
+              onChange={(next) => onChange({ ...filters, dateFrom: next })}
+              className="w-[130px] min-h-11 text-sm border rounded-sm px-2"
+            />
+          </div>
 
-      <div className="flex flex-col gap-1">
-        <label className="text-xs text-gray-600">To</label>
-        <DatePicker
-          value={filters.dateTo}
-          onChange={next => onChange({ ...filters, dateTo: next })}
-          className="w-[130px] min-h-11 text-sm border rounded-sm px-2"
-        />
-      </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-gray-600">To</label>
+            <DatePicker
+              value={filters.dateTo}
+              onChange={(next) => onChange({ ...filters, dateTo: next })}
+              className="w-[130px] min-h-11 text-sm border rounded-sm px-2"
+            />
+          </div>
 
-      <div className="flex flex-col gap-1">
-        <label className="text-xs text-gray-600">Equipment</label>
-        <select
-          value={filters.equipmentType || ""}
-          onChange={e => onChange({ ...filters, equipmentType: e.target.value || undefined })}
-          className="w-[120px] min-h-11 text-sm border rounded-sm px-2"
-        >
-          {EQUIPMENT_TYPES.map(t => (
-            <option key={t.value} value={t.value}>{t.label}</option>
-          ))}
-        </select>
-      </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-gray-600">Equipment</label>
+            <select
+              value={filters.equipmentType || ""}
+              onChange={(e) => onChange({ ...filters, equipmentType: e.target.value || undefined })}
+              className="w-[120px] min-h-11 text-sm border rounded-sm px-2"
+            >
+              {EQUIPMENT_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </CollapsedListFilters>
 
-      <button className="min-h-11 px-3 text-sm border rounded-sm hover:bg-gray-50 ml-auto">
+      <button type="button" className="min-h-11 px-3 text-sm border rounded-sm hover:bg-gray-50 ml-auto">
         Export
       </button>
     </div>

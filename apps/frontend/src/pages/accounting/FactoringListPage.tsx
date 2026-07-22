@@ -6,13 +6,13 @@ import { useNavigate } from "react-router-dom";
 import { listFactoringAdvances, type FactoringAdvance } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
-import { DataPanel } from "../../components/layout/DataPanel";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SubmitFactoringModal } from "./SubmitFactoringModal";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
 const STATUS_OPTIONS: Array<{ value: "all" | FactoringAdvance["status"]; label: string }> = [
@@ -102,37 +102,50 @@ export function FactoringListPage() {
     );
   }
 
+  const factoringActiveFilterCount = (status !== "all" ? 1 : 0) + (fromDate || toDate ? 1 : 0);
+
   const filterBar = (
-    <div className="grid gap-2 md:grid-cols-4 w-full">
-      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-        Status
-        <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "all" | FactoringAdvance["status"])} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
-          {STATUS_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </SelectCombobox>
-      </label>
-      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-        Search
-        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="FAC-2026-00012" className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
-      </label>
-      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-        Date from
-        <DatePicker value={fromDate} onChange={(next) => setFromDate(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
-      </label>
-      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-        Date to
-        <DatePicker value={toDate} onChange={(next) => setToDate(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
-      </label>
-    </div>
+    <CollapsedListFilters
+      activeFilterCount={factoringActiveFilterCount}
+      testIdPrefix="factoring"
+      dataAttributes={{ "data-factoring-filter-toolbar": "collapsed" }}
+      searchSlot={
+        <input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="FAC-2026-00012"
+          className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-[13px]"
+          aria-label="Search factoring advances"
+        />
+      }
+    >
+      <div className="grid gap-2 md:grid-cols-3 w-full">
+        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          Status
+          <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "all" | FactoringAdvance["status"])} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
+            {STATUS_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </SelectCombobox>
+        </label>
+        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          Date from
+          <DatePicker value={fromDate} onChange={(next) => setFromDate(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+        </label>
+        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          Date to
+          <DatePicker value={toDate} onChange={(next) => setToDate(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+        </label>
+      </div>
+    </CollapsedListFilters>
   );
 
   return (
     <AccountingSubNavWrapper title="Factoring" subtitle="Track factoring submissions, reserves, and releases" actions={<Button onClick={() => setSubmitOpen(true)}>+ Submit New Batch</Button>}>
 
-      <DataPanel title="Filters">{filterBar}</DataPanel>
+      {filterBar}
 
       <ParityTable
         columns={columns}

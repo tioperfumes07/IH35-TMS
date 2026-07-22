@@ -3,9 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { createPayment, listInvoices, type Invoice, type PaymentMethod } from "../../api/accounting";
 import { listCustomers } from "../../api/mdata";
 import { Button } from "../../components/Button";
-import { Combobox } from "../../components/Combobox";
-import { Modal } from "../../components/Modal";
+import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { UploadZone } from "../../components/UploadZone";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
@@ -141,13 +141,30 @@ export function RecordPaymentModal({
   const customerOptions = (customersQuery.data ?? []).map((row) => ({
     value: row.id,
     label: row.name,
-    sublabel: row.customer_code ?? undefined,
+    type: row.customer_code ?? undefined,
   }));
 
   return (
-    <Modal open={open} onClose={onClose} title="Record Payment">
+    <ParityDrawer
+      open={open}
+      onClose={onClose}
+      title="Receive Payment"
+      size="wide"
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" form="record-payment-form">
+            Record Payment
+          </Button>
+        </div>
+      }
+    >
       <form
+        id="record-payment-form"
         className="space-y-3"
+        data-testid="record-payment-drawer"
         onSubmit={async (event) => {
           event.preventDefault();
           setErrorMessage(null);
@@ -199,12 +216,14 @@ export function RecordPaymentModal({
                 onRetry={() => void customersQuery.refetch()}
               />
             ) : null}
-            <Combobox
-              options={customerOptions}
+            <ReferenceSelect
               value={customerId}
               onChange={setCustomerId}
+              options={customerOptions}
+              createKind="customer"
+              operatingCompanyId={operatingCompanyId}
               placeholder="Select customer"
-              loading={customersQuery.isLoading}
+              disabled={!operatingCompanyId || customersQuery.isLoading}
             />
           </div>
 
@@ -317,14 +336,7 @@ export function RecordPaymentModal({
           defaultCategory={paymentMethod === "check" ? "check_image" : paymentMethod === "wire" ? "wire_confirmation" : "ach_confirmation"}
           title="Payment Proof / Backup"
         />
-
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit">Record Payment</Button>
-        </div>
       </form>
-    </Modal>
+    </ParityDrawer>
   );
 }

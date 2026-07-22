@@ -5,7 +5,7 @@ import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { TableSearch } from "../../components/table";
+import { CollapsedListFilters, TableSearch } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getApAgingByVendor, type ApAgingVendor, type ApAgingDisplayGroup } from "../../api/accounting";
 import { formatDateUS } from "../../lib/formatDate";
@@ -276,24 +276,30 @@ export function AccountsPayableAgingPage() {
 
   return (
     <AccountingSubNavWrapper title="Accounts Payable" subtitle={apSubtitle}>
-      <div className="mb-3 flex flex-wrap items-end gap-3 print:hidden">
-        <label className="text-xs font-semibold text-slate-600">
-          As of
-          <div className="mt-1"><DatePicker value={asOf} onChange={(d) => setAsOf(d || today())} /></div>
-        </label>
-
+      <div className="mb-3 flex flex-wrap items-end gap-3 print:hidden" data-ap-aging-filter-toolbar="collapsed">
         <div className="inline-flex overflow-hidden rounded-sm border border-slate-300">
           <button type="button" className={`px-3 py-1.5 text-sm ${view === "by_vendor" ? "bg-slate-800 text-white" : "bg-white text-slate-700"}`} onClick={() => setView("by_vendor")}>By Vendor</button>
           <button type="button" className={`px-3 py-1.5 text-sm ${view === "by_type" ? "bg-slate-800 text-white" : "bg-white text-slate-700"}`} onClick={() => setView("by_type")}>By Vendor Type</button>
         </div>
 
-        <label className="text-xs font-semibold text-slate-600">
-          Vendor type
-          <select className="mt-1 block h-9 rounded-sm border border-slate-300 px-2 text-sm" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as ApAgingDisplayGroup | "all")}>
-            <option value="all">All types</option>
-            {GROUP_ORDER.map((g) => <option key={g} value={g}>{g}</option>)}
-          </select>
-        </label>
+        <CollapsedListFilters
+          activeFilterCount={(asOf !== today() ? 1 : 0) + (typeFilter !== "all" ? 1 : 0)}
+          testIdPrefix="ap-aging"
+        >
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="text-xs font-semibold text-slate-600">
+              As of
+              <div className="mt-1"><DatePicker value={asOf} onChange={(d) => setAsOf(d || today())} /></div>
+            </label>
+            <label className="text-xs font-semibold text-slate-600">
+              Vendor type
+              <select className="mt-1 block h-9 rounded-sm border border-slate-300 px-2 text-sm" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as ApAgingDisplayGroup | "all")}>
+                <option value="all">All types</option>
+                {GROUP_ORDER.map((g) => <option key={g} value={g}>{g}</option>)}
+              </select>
+            </label>
+          </div>
+        </CollapsedListFilters>
 
         <span className="text-xs text-slate-500">Basis: {query.data?.basis === "cash" ? "Cash" : "Accrual"}</span>
 

@@ -2,12 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createJournalEntry, listClassesForJe, listCoaAccountsForJe } from "../../api/accounting";
 import { Button } from "../Button";
-import { Modal } from "../Modal";
+import { ParityDrawer } from "../parity/ParityDrawer";
 import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
 import { DatePicker } from "../forms/DatePicker";
-import { SelectCombobox } from "../shared/SelectCombobox";
-import { InlineCreateDrawer } from "../parity/InlineCreateDrawer";
+import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { companyToday } from "../../lib/businessDate";
 
 type Props = {
@@ -42,11 +41,6 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
   const [referenceNumber, setReferenceNumber] = useState("");
   const [lines, setLines] = useState<LineRow[]>([emptyLine(), emptyLine()]);
   const [loading, setLoading] = useState(false);
-  // orphan-triage F1: which line's Account dropdown opened the inline "+ Add new account" drawer
-  // (BK7 NewAccountDrawerForm, via InlineCreateDrawer). Account create itself is FINANCIAL-GATED
-  // (ACCOUNT_CREATE_GATED in NewAccountDrawerForm) — this only wires the reference-dropdown
-  // affordance per CLAUDE.md §7; it does not add any new posting/GL logic.
-  const [accountCreateLineIdx, setAccountCreateLineIdx] = useState<number | null>(null);
 
   const accountsQuery = useQuery({
     queryKey: ["manual-je", "accounts"],
@@ -58,6 +52,23 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
     queryFn: listClassesForJe,
     enabled: open && step === 2,
   });
+
+  const accountOptions = useMemo(
+    () =>
+      (accountsQuery.data?.accounts ?? []).map((account) => ({
+        value: account.id,
+        label: `${account.account_number} - ${account.account_name}`,
+      })),
+    [accountsQuery.data]
+  );
+  const classOptions = useMemo(
+    () =>
+      (classesQuery.data?.classes ?? []).map((klass) => ({
+        value: klass.id,
+        label: klass.class_code ? `${klass.class_code} - ${klass.class_name}` : klass.class_name,
+      })),
+    [classesQuery.data]
+  );
 
   const totalDebitCents = useMemo(
     () => lines.reduce((sum, line) => sum + Math.round(Number(line.debit || 0) * 100), 0),
@@ -142,15 +153,16 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
   };
 
   return (
-    <Modal
+    <ParityDrawer
       open={open}
       onClose={() => {
         reset();
         onClose();
       }}
       title={step === 1 ? "Manual Journal Entry — Step 1: Header" : "Manual Journal Entry — Step 2: Lines"}
+      size="wide"
     >
-      <div className="space-y-2 text-xs">
+      <div className="space-y-2 text-xs" data-testid="manual-je-drawer">
         {step === 1 ? (
           <>
             <p className="text-[11px] text-gray-600">Enter the journal header. Line items are added on the next step.</p>
@@ -221,40 +233,28 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
               </div>
               {lines.map((line, idx) => (
                 <div key={idx} className="grid grid-cols-5 gap-1 rounded-sm border border-gray-200 p-1.5">
-                  <div className="flex flex-col gap-0.5">
-                    <SelectCombobox
-                      className="h-8 rounded-sm border border-gray-300 px-1"
-                      value={line.account_id}
-                      onChange={(e) => setLines((prev) => prev.map((row, i) => (i === idx ? { ...row, account_id: e.target.value } : row)))}
-                    >
-                      <option value="">Account</option>
-                      {(accountsQuery.data?.accounts ?? []).map((account) => (
-                        <option key={account.id} value={account.id}>
-                          {account.account_number} - {account.account_name}
-                        </option>
-                      ))}
-                    </SelectCombobox>
-                    <button
-                      type="button"
-                      className="text-left text-[10px] text-slate-700 underline"
-                      onClick={() => setAccountCreateLineIdx(idx)}
-                    >
-                      + Add new account
-                    </button>
-                  </div>
-                  <SelectCombobox
-                    className="h-8 rounded-sm border border-gray-300 px-1"
-                    value={line.class_id}
-                    onChange={(e) => setLines((prev) => prev.map((row, i) => (i === idx ? { ...row, class_id: e.target.value } : row)))}
-                  >
-                    <option value="">Class</option>
-                    {(classesQuery.data?.classes ?? []).map((klass) => (
-                      <option key={klass.id} value={klass.id}>
-                        {klass.class_code ? `${klass.class_code} - ` : ""}
-                        {klass.class_name}
-                      </option>
-                    ))}
-                  </SelectCombobox>
+                  <ReferenceSelect
+                    value={line.account_id || null}
+                    onChange={(next) =>
+                      setLines((prev) => prev.map((row, i) => (i === idx ? { ...row, account_id: next ?? "" } : row)))
+                    }
+                    options={accountOptions}
+                    createKind="account"
+                    operatingCompanyId={operatingCompanyId}
+                    placeholder="Account"
+                    onOptionCreated={() => void accountsQuery.refetch()}
+                  />
+                  <ReferenceSelect
+                    value={line.class_id || null}
+                    onChange={(next) =>
+                      setLines((prev) => prev.map((row, i) => (i === idx ? { ...row, class_id: next ?? "" } : row)))
+                    }
+                    options={classOptions}
+                    createKind="class"
+                    operatingCompanyId={operatingCompanyId}
+                    placeholder="Class"
+                    onOptionCreated={() => void classesQuery.refetch()}
+                  />
                   {/* M-1: dollars-mode QBO money entry; debit/credit DOLLARS → Math.round(*100)=amount_cents byte-for-byte. */}
                   <MoneyInput
                     valueDollars={line.debit || null}
@@ -326,20 +326,6 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
           </>
         )}
       </div>
-
-      <InlineCreateDrawer
-        open={accountCreateLineIdx !== null}
-        kind="account"
-        operatingCompanyId={operatingCompanyId}
-        onClose={() => setAccountCreateLineIdx(null)}
-        onCreated={(result) => {
-          const idx = accountCreateLineIdx;
-          setAccountCreateLineIdx(null);
-          if (idx === null) return;
-          setLines((prev) => prev.map((row, i) => (i === idx ? { ...row, account_id: result.id } : row)));
-          void accountsQuery.refetch();
-        }}
-      />
-    </Modal>
+    </ParityDrawer>
   );
 }

@@ -14,6 +14,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { CollapsedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
@@ -311,22 +312,28 @@ export function DisputeQueuePage() {
 
   return (
     <AccountingSubNavWrapper title="Settlement dispute queue" subtitle="Office workflows for P6 settlement disputes">
-      <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-          Status
-          <SelectCombobox
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
-            aria-label="Dispute status filter"
-          >
-            {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </SelectCombobox>
-        </label>
+      <div className="flex flex-wrap items-end gap-3">
+        <CollapsedListFilters
+          activeFilterCount={status !== "submitted" ? 1 : 0}
+          testIdPrefix="dispute-queue"
+          dataAttributes={{ "data-dispute-queue-filter-toolbar": "collapsed" }}
+        >
+          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+            Status
+            <SelectCombobox
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+              aria-label="Dispute status filter"
+            >
+              {STATUS_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </SelectCombobox>
+          </label>
+        </CollapsedListFilters>
         <Button size="sm" variant="secondary" disabled={query.isFetching} onClick={() => void query.refetch()}>
           Refresh
         </Button>

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { AlertTriangle } from "lucide-react";
-import { Modal } from "../../../components/Modal";
+import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { Button } from "../../../components/Button";
 import { UploadZone } from "../../../components/UploadZone";
 import { useToast } from "../../../components/Toast";
@@ -9,7 +10,8 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { FieldError, fieldErrorClassname } from "../../../components/forms/FieldError";
 import { FormErrorBanner } from "../../../components/forms/FormErrorBanner";
 import { useFormValidation } from "../../../components/forms/useFormValidation";
-import { QboCombobox } from "../../../components/forms/QboCombobox";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+import { listCustomers } from "../../../api/mdata";
 import { ApiError } from "../../../api/client";
 import { useAuth } from "../../../auth/useAuth";
 import { companyToday } from "../../../lib/businessDate";
@@ -51,9 +53,9 @@ type Props = {
 export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEntityType, onClose, onCreated, createInvoice }: Props) {
   const { pushToast } = useToast();
   const auth = useAuth();
+  const queryClient = useQueryClient();
   const [customerId, setCustomerId] = useState<string | null>(null);
-  const [customerQboId, setCustomerQboId] = useState<string | null>(null);
-  const [customerName, setCustomerName] = useState("");
+  const [referenceCustomerId, setReferenceCustomerId] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [issueDate, setIssueDate] = useState(companyToday());
   const [dueDate, setDueDate] = useState("");
@@ -61,6 +63,24 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
   const [creditLimitBlock, setCreditLimitBlock] = useState<CreditLimitBlock | null>(null);
   const [overrideCreditLimit, setOverrideCreditLimit] = useState(false);
   const canOverrideCreditLimit = ["Owner", "Administrator", "Manager"].includes(auth.user?.role ?? "");
+
+  const customersQuery = useQuery({
+    queryKey: ["invoice-type-modal", "customers", operatingCompanyId],
+    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId, limit: 200 }),
+    enabled: Boolean(operatingCompanyId) && open,
+    staleTime: 60_000,
+  });
+  const customerOptions = useMemo(
+    () =>
+      (customersQuery.data?.customers ?? [])
+        .map((c) => ({ value: c.id, label: c.name }))
+        .sort((a, b) => a.label.localeCompare(b.label)),
+    [customersQuery.data?.customers]
+  );
+  const customersById = useMemo(
+    () => new Map((customersQuery.data?.customers ?? []).map((c) => [c.id, c])),
+    [customersQuery.data?.customers]
+  );
 
   const formSnapshot = useMemo(
     () => ({
@@ -118,8 +138,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
   useEffect(() => {
     if (!open) return;
     setCustomerId(null);
-    setCustomerQboId(null);
-    setCustomerName("");
+    setReferenceCustomerId(null);
     setNotes("");
     setIssueDate(companyToday());
     setDueDate("");
@@ -130,7 +149,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
   }, [open, resetInvoiceErrors]);
 
   return (
-    <Modal open={open} onClose={onClose} title={title}>
+    <ParityDrawer open={open} onClose={onClose} title={title} size="wide">
       <form
         className="space-y-3"
         onSubmit={(event) => {
@@ -142,50 +161,52 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
         <div className="grid gap-2 md:grid-cols-2">
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-600">Customer *</label>
-            <QboCombobox
-              entityType="customer"
-              operatingCompanyId={operatingCompanyId}
-              value={customerQboId}
-              displayValue={customerName}
-              allowFreeText={false}
-              placeholder="Select QBO customer (type to search)…"
-              onChange={(qboId, name) => {
+            <ReferenceSelect
+              value={customerId}
+              onChange={(next) => {
                 clearInvoiceFieldError("customer_id");
-                if (qboId) {
-                  setCustomerQboId(qboId);
-                  setCustomerName(name);
-                  return;
+                setCustomerId(next);
+                const record = next ? customersById.get(next) : undefined;
+                if (next && record) {
+                  setNotes((prev) => {
+                    if (prev.trim()) return prev;
+                    const parts: string[] = [`Bill-to: ${record.name}`];
+                    if (record.email) parts.push(`Email: ${record.email}`);
+                    if (record.phone) parts.push(`Phone: ${record.phone}`);
+                    return parts.join("\n");
+                  });
                 }
-                setCustomerName(name);
               }}
-              onPick={(row) => {
+              options={customerOptions}
+              createKind="customer"
+              operatingCompanyId={operatingCompanyId}
+              placeholder="Search customers…"
+              onOptionCreated={(opt) => {
+                void queryClient.invalidateQueries({ queryKey: ["invoice-type-modal", "customers"] });
                 clearInvoiceFieldError("customer_id");
-                setCustomerId(row.id);
-                setCustomerQboId(row.qbo_id);
-                setCustomerName(row.display_name);
-                setNotes((prev) => {
-                  if (prev.trim()) return prev;
-                  const parts: string[] = [`Bill-to: ${row.display_name}`];
-                  if (row.company_name) parts.push(String(row.company_name));
-                  if (row.primary_email) parts.push(`Email: ${row.primary_email}`);
-                  if (row.primary_phone) parts.push(`Phone: ${row.primary_phone}`);
-                  return parts.join("\n");
-                });
+                setCustomerId(opt.value);
               }}
             />
             <FieldError id="customer_id" message={invoiceFieldErrors.customer_id} />
           </div>
           <div className="space-y-1 md:col-span-2">
-            <label className="text-xs font-semibold text-slate-600">QBO customer reference (appends to Notes)</label>
-            <QboCombobox
-              entityType="customer"
+            <label className="text-xs font-semibold text-slate-600">Customer reference (appends to Notes)</label>
+            <ReferenceSelect
+              value={referenceCustomerId}
+              onChange={(next) => {
+                if (!next) return;
+                const record = customersById.get(next);
+                const line = `Customer reference: ${record?.name ?? "Unknown"}`;
+                setNotes((prev) => (prev ? `${prev}\n${line}` : line));
+                setReferenceCustomerId(null);
+              }}
+              options={customerOptions}
+              createKind="customer"
               operatingCompanyId={operatingCompanyId}
-              value={null}
-              displayValue=""
-              allowFreeText={false}
-              onChange={(qboId, displayName) => {
-                if (!qboId) return;
-                const line = `QBO customer: ${displayName} (${qboId})`;
+              placeholder="Search customers to add a reference…"
+              onOptionCreated={(opt) => {
+                void queryClient.invalidateQueries({ queryKey: ["invoice-type-modal", "customers"] });
+                const line = `Customer reference: ${opt.label}`;
                 setNotes((prev) => (prev ? `${prev}\n${line}` : line));
               }}
             />
@@ -272,6 +293,6 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
           <Button type="submit" disabled={creditLimitBlock != null && (!canOverrideCreditLimit || !overrideCreditLimit)}>Create</Button>
         </div>
       </form>
-    </Modal>
+    </ParityDrawer>
   );
 }

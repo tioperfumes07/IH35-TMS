@@ -31,6 +31,7 @@ vi.mock("../../api/maintenance", () => ({
 
 vi.mock("../../api/mdata", () => ({
   listUnits: vi.fn().mockResolvedValue({ units: [{ id: "unit-1", unit_number: "T-101" }] }),
+  listVendors: vi.fn().mockResolvedValue({ vendors: [] }),
 }));
 
 vi.mock("../UploadZone", () => ({
@@ -54,13 +55,21 @@ vi.mock("../parity/ReferenceSelect", () => ({
     value,
     onChange,
     options,
+    placeholder,
+    createKind,
   }: {
     value: string | null;
     onChange: (v: string | null) => void;
     options: Array<{ value: string; label: string }>;
+    placeholder?: string;
+    createKind?: string;
   }) => (
-    <select aria-label="Category" value={value ?? ""} onChange={(event) => onChange(event.target.value || null)}>
-      <option value="">Select category…</option>
+    <select
+      aria-label={placeholder ?? createKind ?? "Reference"}
+      value={value ?? ""}
+      onChange={(event) => onChange(event.target.value || null)}
+    >
+      <option value="">{placeholder ?? "Select…"}</option>
       {options.map((option) => (
         <option key={option.value} value={option.value}>
           {option.label}
@@ -103,15 +112,11 @@ describe("RecordExpenseModal", () => {
     await waitFor(() => expect(mdataApi.listUnits).toHaveBeenCalled());
 
     const form = screen.getByTestId("record-expense-form");
-    // Vendor + Category both use ReferenceSelect; pick the Category label's select (has Fuel option).
-    const categorySelect = within(form)
-      .getAllByLabelText(/^category/i)
-      .find((el) => Array.from(el.querySelectorAll("option")).some((opt) => opt.value === "cat-1"));
-    expect(categorySelect).toBeTruthy();
-    await user.selectOptions(categorySelect!, "cat-1");
+    // Vendor + Category + Payment account use ReferenceSelect (mocked as <select aria-label=placeholder>).
+    await user.selectOptions(within(form).getByLabelText(/select category/i), "cat-1");
     await user.type(within(form).getByLabelText(/amount/i), "42.50");
     await user.selectOptions(within(form).getByLabelText(/payment method/i), "cash");
-    await user.selectOptions(within(form).getByLabelText(/payment account/i), "acct-1");
+    await user.selectOptions(within(form).getByLabelText(/bank\/cash account/i), "acct-1");
     await user.click(within(form).getByRole("button", { name: /record expense/i }));
 
     await waitFor(() => expect(accountingApi.createExpense).toHaveBeenCalledTimes(1));

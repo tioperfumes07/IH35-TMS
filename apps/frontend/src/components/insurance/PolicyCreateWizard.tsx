@@ -9,7 +9,7 @@ import {
 } from "../../api/insurance";
 import { listUnits } from "../../api/mdata";
 import { ListErrorState } from "../ListErrorState";
-import { Modal } from "../Modal";
+import { ParityDrawer } from "../parity/ParityDrawer";
 import { MoneyInput } from "../forms/MoneyInput";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { useToast } from "../Toast";
@@ -306,7 +306,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
   ][step - 1]!;
 
   return (
-    <Modal open={open} onClose={onClose} title={title}>
+    <ParityDrawer open={open} onClose={onClose} title={title} size="wide">
       <div className="space-y-4 text-sm">
         <StepIndicator current={step} total={4} />
 
@@ -610,7 +610,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
           </div>
         </div>
       </div>
-    </Modal>
+    </ParityDrawer>
   );
 }
 

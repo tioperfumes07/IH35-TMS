@@ -13,6 +13,7 @@ import { DataTable } from "../../components/DataTable";
 import { PolicyCreateModal } from "../../components/insurance/PolicyCreateModal";
 import { PolicyCreateWizard } from "../../components/insurance/PolicyCreateWizard";
 import { TaskLinkPicker } from "../../components/tasks/TaskLinkPicker";
+import { CollapsedListFilters } from "../../components/table";
 import { formatDateUS } from "../../lib/formatDate";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatUsdCents } from "../../lib/money";
@@ -122,7 +123,12 @@ export function PoliciesList() {
         </div>
       ) : null}
 
-      <section className="rounded-sm border border-gray-200 bg-white p-3">
+      <CollapsedListFilters
+        activeFilterCount={(typeFilter ? 1 : 0) + (statusFilter ? 1 : 0) + (expiringSoonOnly ? 1 : 0)}
+        testIdPrefix="insurance-policies"
+        dataAttributes={{ "data-insurance-policies-filter-toolbar": "collapsed" }}
+        className="rounded-sm border border-gray-200 bg-white p-2"
+      >
         <div className="grid gap-3 md:grid-cols-4">
           <label className="text-xs font-semibold text-slate-600">
             Type
@@ -165,7 +171,7 @@ export function PoliciesList() {
             Expiring soon (next 30 days)
           </label>
         </div>
-      </section>
+      </CollapsedListFilters>
 
       {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Filters (Type/Status/
           Expiring-soon) above feed `rows`; row-click → policy details preserved exactly. */}

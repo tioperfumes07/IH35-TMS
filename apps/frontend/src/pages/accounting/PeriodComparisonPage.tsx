@@ -1,11 +1,16 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getComparisonReport, type ComparisonReportBasis, type ComparisonReportRow, type ComparisonReportType } from "../../api/accounting";
+import {
+  getComparisonReport,
+  type ComparisonReportBasis,
+  type ComparisonReportRow,
+  type ComparisonReportType,
+} from "../../api/accounting";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -31,13 +36,10 @@ export function PeriodComparisonPage() {
     enabled: Boolean(companyId),
   });
 
-  const rows = reportQuery.data?.rows ?? [];
   const period1Label = reportQuery.data?.periods[0] ?? "Period 1";
   const period2Label = reportQuery.data?.periods[1] ?? "Period 2";
 
-  // Columns are memoized on the period labels so the two amount headers track the loaded report
-  // while ParityTable still owns sort (by the underlying numeric field) / resize / column-toggle.
-  const columns = useMemo<Array<ParityColumn<ComparisonReportRow>>>(
+  const columns = useMemo<ParityColumn<ComparisonReportRow>[]>(
     () => [
       {
         key: "account",
@@ -49,35 +51,28 @@ export function PeriodComparisonPage() {
         key: "period_1_amount",
         label: period1Label,
         sortable: true,
-        className: "text-right",
-        cellClass: "text-right tabular-nums",
         render: (row) => money(row.period_1_amount),
       },
       {
         key: "period_2_amount",
         label: period2Label,
         sortable: true,
-        className: "text-right",
-        cellClass: "text-right tabular-nums",
         render: (row) => money(row.period_2_amount),
       },
       {
         key: "variance_cents",
         label: "Variance",
         sortable: true,
-        className: "text-right",
-        cellClass: "text-right tabular-nums",
         render: (row) => (
-          <span className={`font-semibold ${row.variance_cents < 0 ? "text-red-700" : "text-slate-700"}`}>{money(row.variance_cents)}</span>
+          <span className={`font-semibold ${row.variance_cents < 0 ? "text-red-700" : "text-slate-700"}`}>
+            {money(row.variance_cents)}
+          </span>
         ),
       },
       {
         key: "variance_pct",
         label: "Variance %",
         sortable: true,
-        className: "text-right",
-        cellClass: "text-right tabular-nums",
-        sortValue: (row) => row.variance_pct,
         render: (row) => (
           <span className={`font-semibold ${row.variance_pct != null && row.variance_pct < 0 ? "text-red-700" : "text-slate-700"}`}>
             {row.variance_pct == null ? "n/a" : `${row.variance_pct.toFixed(2)}%`}
@@ -87,7 +82,6 @@ export function PeriodComparisonPage() {
       {
         key: "lineage",
         label: "Lineage",
-        alwaysVisible: true,
         render: (row) => (
           <Link
             to={`/accounting/posting-lineage?source_transaction_type=account&source_transaction_id=${encodeURIComponent(row.account_id ?? row.row_key)}`}
@@ -144,12 +138,11 @@ export function PeriodComparisonPage() {
       ) : (
         <ParityTable
           columns={columns}
-          rows={rows}
+          rows={reportQuery.data?.rows ?? []}
           rowKey={(row) => row.row_key}
           loading={reportQuery.isLoading}
-          emptyText="No comparison rows for the selected periods."
           storageKey="period-comparison"
-          exportFilename="period-comparison"
+          emptyText="No comparison rows."
         />
       )}
     </AccountingSubNavWrapper>

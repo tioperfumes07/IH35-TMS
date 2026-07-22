@@ -8,6 +8,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters } from "../../components/table";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
@@ -193,46 +194,54 @@ export function TransfersListPage() {
       />
       {transfersQuery.isError ? <ListErrorBanner onRetry={() => void transfersQuery.refetch()} /> : null}
 
-      <div className="grid grid-cols-1 gap-3 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-6">
-        <label className="text-xs text-gray-600">
-          From
-          <DatePicker value={fromDate} onChange={(next) => setFromDate(next)} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
-        </label>
-        <label className="text-xs text-gray-600">
-          To
-          <DatePicker value={toDate} onChange={(next) => setToDate(next)} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
-        </label>
-        <label className="text-xs text-gray-600">
-          Type
-          <SelectCombobox value={type} onChange={(e) => setType(e.target.value as TransferType | "")} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm">
-            <option value="">All</option>
-            <option value="bank_to_bank">Bank-to-Bank</option>
-            <option value="cc_payment">CC Payment</option>
-            <option value="cash_deposit">Cash Deposit</option>
-            <option value="owner_contribution">Owner Contribution</option>
-            <option value="owner_distribution">Owner Distribution</option>
-          </SelectCombobox>
-        </label>
-        <label className="text-xs text-gray-600">
-          Account
-          <SelectCombobox value={accountId} onChange={(e) => setAccountId(e.target.value)} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm">
-            <option value="">All</option>
-            {(bankAccountsQuery.data?.accounts ?? []).map((account) => (
-              <option key={account.id} value={account.id}>
-                {account.institution_name || "Bank"} - {account.account_name || "Account"}
-              </option>
-            ))}
-          </SelectCombobox>
-        </label>
-        <label className="text-xs text-gray-600">
-          Status
-          <SelectCombobox value={status} onChange={(e) => setStatus(e.target.value as "active" | "revoked" | "")} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm">
-            <option value="">All</option>
-            <option value="active">Active</option>
-            <option value="revoked">Revoked</option>
-          </SelectCombobox>
-        </label>
-        <div className="flex items-end gap-2">
+      <CollapsedListFilters
+        activeFilterCount={
+          (fromDate || toDate ? 1 : 0) + (type ? 1 : 0) + (accountId ? 1 : 0) + (status ? 1 : 0)
+        }
+        testIdPrefix="transfers"
+        dataAttributes={{ "data-transfers-filter-toolbar": "collapsed" }}
+      >
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
+          <label className="text-xs text-gray-600">
+            From
+            <DatePicker value={fromDate} onChange={(next) => setFromDate(next)} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+          </label>
+          <label className="text-xs text-gray-600">
+            To
+            <DatePicker value={toDate} onChange={(next) => setToDate(next)} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+          </label>
+          <label className="text-xs text-gray-600">
+            Type
+            <SelectCombobox value={type} onChange={(e) => setType(e.target.value as TransferType | "")} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm">
+              <option value="">All</option>
+              <option value="bank_to_bank">Bank-to-Bank</option>
+              <option value="cc_payment">CC Payment</option>
+              <option value="cash_deposit">Cash Deposit</option>
+              <option value="owner_contribution">Owner Contribution</option>
+              <option value="owner_distribution">Owner Distribution</option>
+            </SelectCombobox>
+          </label>
+          <label className="text-xs text-gray-600">
+            Account
+            <SelectCombobox value={accountId} onChange={(e) => setAccountId(e.target.value)} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm">
+              <option value="">All</option>
+              {(bankAccountsQuery.data?.accounts ?? []).map((account) => (
+                <option key={account.id} value={account.id}>
+                  {account.institution_name || "Bank"} - {account.account_name || "Account"}
+                </option>
+              ))}
+            </SelectCombobox>
+          </label>
+          <label className="text-xs text-gray-600">
+            Status
+            <SelectCombobox value={status} onChange={(e) => setStatus(e.target.value as "active" | "revoked" | "")} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm">
+              <option value="">All</option>
+              <option value="active">Active</option>
+              <option value="revoked">Revoked</option>
+            </SelectCombobox>
+          </label>
+        </div>
+        <div className="mt-2">
           <ActionButton
             onClick={() => {
               setOffset(0);
@@ -242,7 +251,7 @@ export function TransfersListPage() {
             Apply
           </ActionButton>
         </div>
-      </div>
+      </CollapsedListFilters>
 
       <ParityTable
         columns={columns}

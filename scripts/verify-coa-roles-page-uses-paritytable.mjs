@@ -4,11 +4,10 @@
  *
  * The CoA roles binding page (money-adjacent catalog/config) must render its role list through
  * the shared ParityTable grammar, not a hand-rolled <table>. DISPLAY-ONLY migration: the
- * per-row account <select> (value=uuid, label=account name — never render a raw uuid) and the
- * Save button (upsertCoaRole mutation) keep their handlers; the rowsQuery ListErrorState and
- * the validateQuery ListErrorBanner error surfaces are preserved
- * (verify-accounting-query-error-states / verify-list-error-state-coverage companions).
- * No posting/GL logic lives on this page and none may be added.
+ * per-row ReferenceSelect account picker (+ Create) and the Save button (upsertCoaRole mutation) keep their
+ * exact handlers; the rowsQuery ListErrorState and the validateQuery ListErrorBanner error
+ * surfaces are preserved (verify-accounting-query-error-states / verify-list-error-state-coverage
+ * companions). No posting/GL logic lives on this page and none may be added.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -54,13 +53,8 @@ function assertMigrated(src) {
   if (!src.includes("upsertMutation.mutate({ role: row.role, account_id: value })")) {
     errors.push(`${PAGE}: must keep the per-row Save handler (upsertCoaRole mutation) unchanged`);
   }
-  // Datalist showed option VALUE (uuid) as the control text — forbidden. Select keeps uuid as
-  // value= but renders account_name as the visible label.
-  if (!src.includes("<select") || !src.includes("value={account.id}") || !src.includes("{account.account_name}")) {
-    errors.push(`${PAGE}: must use a <select> account picker (value=uuid, label=account_name)`);
-  }
-  if (src.includes("datalist") || src.includes("coa-role-account-options-")) {
-    errors.push(`${PAGE}: must not use datalist account picker (renders uuid as the control value)`);
+  if (!src.includes("ReferenceSelect") || !src.includes('createKind="category"')) {
+    errors.push(`${PAGE}: must keep the per-row ReferenceSelect account picker (createKind=category)`);
   }
   return errors;
 }
@@ -72,12 +66,7 @@ function selftest() {
     const columns = [
       { key: "role", label: "Role" },
       { key: "account_id", label: "Account", render: (row) => (
-        <select value={value}>
-          <option value="">Select account</option>
-          {accounts.map((account) => (
-            <option key={account.id} value={account.id}>{account.account_name}</option>
-          ))}
-        </select> ) },
+        <ReferenceSelect createKind="category" value={value} onChange={() => {}} /> ) },
       { key: "is_active", label: "Status" },
       { key: "updated_at", label: "Updated" },
       { key: "action", label: "Action", render: (row) => (

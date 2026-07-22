@@ -10,7 +10,7 @@ import {
   type TransferType,
 } from "../../api/banking";
 import { Button } from "../../components/Button";
-import { Modal } from "../../components/Modal";
+import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
@@ -252,7 +252,21 @@ export function RecordTransferModal({
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Record Transfer">
+    <ParityDrawer
+      open={open}
+      onClose={onClose}
+      title="Record Transfer"
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button size="sm" variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button size="sm" loading={saving} disabled={!valid} onClick={() => void handleSave()}>
+            Save Transfer
+          </Button>
+        </div>
+      }
+    >
       <div className="space-y-3 text-sm">
         <fieldset className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {transferTypeOptions.map((option) => (
@@ -312,16 +326,8 @@ export function RecordTransferModal({
           <input className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={referenceNumber} onChange={(e) => setReferenceNumber(e.target.value)} />
         </label>
         {!valid ? <p className="text-xs text-slate-700">Select both accounts, use different accounts, and enter an amount greater than zero.</p> : null}
-        <div className="flex justify-end gap-2">
-          <Button size="sm" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button size="sm" loading={saving} disabled={!valid} onClick={() => void handleSave()}>
-            Save Transfer
-          </Button>
-        </div>
       </div>
-    </Modal>
+    </ParityDrawer>
   );
 }
 

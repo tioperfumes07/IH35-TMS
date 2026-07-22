@@ -1,11 +1,11 @@
 /**
  * UniversalFilterBar — W2-P PLANNER-REDESIGN
  * Shared FilterBar for ALL planner pages.
- * Period presets (QBO-style), date range, filters.
- * All controls 28px height, content-width (proportionate).
+ * CHROME-02: Period presets + date range collapse behind Filters popover (QBO-style).
  */
 
-import { useState, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { SlidersHorizontal } from "lucide-react";
 import { DatePicker } from "../../components/forms/DatePicker";
 
 export type PeriodPreset =
@@ -172,86 +172,111 @@ const PRESET_LABELS: Record<PeriodPreset, string> = {
 };
 
 export function UniversalFilterBar({ value, onChange, summaryText }: UniversalFilterBarProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
-  const handlePreset = useCallback((preset: PeriodPreset) => {
-    if (preset === "custom") {
-      onChange({ ...value, period: preset });
-    } else {
-      const { from, to } = getPresetDates(preset);
-      onChange({ ...value, period: preset, from, to });
-    }
-    setIsOpen(false);
-  }, [value, onChange]);
+  const activeCount =
+    (value.period !== "this_month" ? 1 : 0) +
+    (value.period === "custom" && value.from ? 1 : 0) +
+    (value.period === "custom" && value.to ? 1 : 0);
+
+  const handlePreset = useCallback(
+    (preset: PeriodPreset) => {
+      if (preset === "custom") {
+        onChange({ ...value, period: preset });
+      } else {
+        const { from, to } = getPresetDates(preset);
+        onChange({ ...value, period: preset, from, to });
+      }
+    },
+    [value, onChange]
+  );
 
   const handleFrom = (from: string) => onChange({ ...value, period: "custom", from });
   const handleTo = (to: string) => onChange({ ...value, period: "custom", to });
 
-  // 28px height, content-width (proportionate), compact layout
-  const btnBase = "h-[28px] px-2 text-xs border rounded-sm flex items-center gap-1 bg-white";
+  useEffect(() => {
+    if (!filtersOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setFiltersOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [filtersOpen]);
 
   return (
-    <div className="flex items-center gap-2 px-3 py-2 border-b bg-gray-50">
-      {/* Period selector — compact dropdown */}
-      <div className="relative">
-        <button
-          type="button"
-          className={btnBase}
-          onClick={() => setIsOpen((s) => !s)}
-          aria-haspopup="listbox"
-          aria-expanded={isOpen}
+    <div
+      ref={ref}
+      className="relative flex items-center gap-2 border-b bg-gray-50 px-3 py-2"
+      data-planner-filter-toolbar="collapsed"
+    >
+      <span className="text-xs font-medium text-gray-700">{PRESET_LABELS[value.period]}</span>
+      <span className="text-xs text-gray-500">
+        {value.from} – {value.to}
+      </span>
+
+      <button
+        type="button"
+        aria-expanded={filtersOpen}
+        data-testid="planner-filters-toggle"
+        onClick={() => setFiltersOpen((o) => !o)}
+        className="flex h-8 items-center gap-1 rounded-sm border border-gray-300 bg-white px-2 text-[12px] font-semibold text-gray-700 hover:bg-gray-50"
+      >
+        <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
+        Filters
+        {activeCount > 0 ? (
+          <span className="ml-1 inline-flex min-w-[16px] items-center justify-center rounded-full bg-[#1F2A44] px-1 text-[10px] font-bold text-white">
+            {activeCount}
+          </span>
+        ) : null}
+      </button>
+
+      {summaryText ? <div className="ml-auto text-xs text-gray-600">{summaryText}</div> : null}
+
+      {filtersOpen ? (
+        <div
+          className="absolute left-3 top-full z-50 mt-1 w-[min(560px,90vw)] space-y-3 rounded-sm border border-gray-200 bg-white p-3 shadow-lg"
+          data-testid="planner-filters-panel"
         >
-          <span>{PRESET_LABELS[value.period]}</span>
-          <span>▼</span>
-        </button>
-        {isOpen && (
-          <div className="absolute top-full left-0 mt-1 z-50 bg-white border rounded-sm shadow-md min-w-40 max-w-48">
-            {(Object.keys(PRESET_LABELS) as PeriodPreset[]).map((k) => (
-              <button
-                key={k}
-                type="button"
-                className="w-full text-left px-3 py-1.5 text-xs hover:bg-gray-100"
-                onClick={() => handlePreset(k)}
-              >
-                {PRESET_LABELS[k]}
-              </button>
-            ))}
+          <div className="space-y-1.5">
+            <div className="text-xs font-semibold text-gray-600">Period</div>
+            <div className="grid max-h-48 grid-cols-2 gap-1 overflow-y-auto sm:grid-cols-3">
+              {(Object.keys(PRESET_LABELS) as PeriodPreset[]).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  className={`rounded-sm border px-2 py-1 text-left text-xs ${
+                    value.period === k ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-200 hover:bg-gray-50"
+                  }`}
+                  onClick={() => handlePreset(k)}
+                >
+                  {PRESET_LABELS[k]}
+                </button>
+              ))}
+            </div>
           </div>
-        )}
-      </div>
 
-      {/* From / To — content-width, not stretchy */}
-      <div className="flex items-center gap-1">
-        <span className="text-xs text-gray-500">From</span>
-        <DatePicker
-          className="h-[28px] px-2 text-xs border rounded-sm bg-white"
-          value={value.from}
-          onChange={(next) => handleFrom(next)}
-        />
-      </div>
-      <div className="flex items-center gap-1">
-        <span className="text-xs text-gray-500">To</span>
-        <DatePicker
-          className="h-[28px] px-2 text-xs border rounded-sm bg-white"
-          value={value.to}
-          onChange={(next) => handleTo(next)}
-        />
-      </div>
-
-      {/* Filters placeholder — add specific filters per planner */}
-      <div className="flex items-center gap-2 flex-1">
-        <button type="button" className={btnBase}>
-          Filters ▼
-        </button>
-        <button type="button" className={btnBase}>
-          Columns ⚙️
-        </button>
-      </div>
-
-      {/* Right-aligned summary */}
-      {summaryText && (
-        <div className="text-xs text-gray-600 ml-auto">{summaryText}</div>
-      )}
+          <div className="space-y-1.5">
+            <div className="text-xs font-semibold text-gray-600">Date range</div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-gray-500">From</span>
+              <DatePicker
+                className="h-[28px] w-32 px-2 text-xs"
+                value={value.from}
+                onChange={(next) => handleFrom(next)}
+                max={value.to || undefined}
+              />
+              <span className="text-xs text-gray-500">To</span>
+              <DatePicker
+                className="h-[28px] w-32 px-2 text-xs"
+                value={value.to}
+                onChange={(next) => handleTo(next)}
+                min={value.from || undefined}
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

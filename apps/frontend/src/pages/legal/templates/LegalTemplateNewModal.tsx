@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ApiError } from "../../../api/client";
 import type { LegalTemplateDraft } from "../../../api/legal-templates";
 import { Button } from "../../../components/Button";
-import { Modal } from "../../../components/Modal";
+import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 
 type Props = {
   open: boolean;
@@ -67,7 +67,7 @@ export function LegalTemplateNewModal({ open, onClose, onCreate }: Props) {
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Create Legal Template">
+    <ParityDrawer open={open} onClose={onClose} title="Create Legal Template" size="wide">
       <div className="space-y-3">
         <label className="block text-xs font-semibold text-gray-600">
           Template code
@@ -156,6 +156,6 @@ export function LegalTemplateNewModal({ open, onClose, onCreate }: Props) {
           </Button>
         </div>
       </div>
-    </Modal>
+    </ParityDrawer>
   );
 }

@@ -1,6 +1,8 @@
-import type { JSX } from "react";
+import { useMemo, type JSX } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
-import { QboCombobox } from "../../../components/forms/QboCombobox";
+import { listCustomers } from "../../../api/mdata";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 
 export type BookLoadFormValues = {
   customer_id: string;
@@ -39,6 +41,7 @@ export function BookLoadCustomerSection({
   customerIdError,
   showOptionalFields = true,
 }: Props) {
+  const queryClient = useQueryClient();
   const dollarsToCents = (value: unknown) => {
     if (value === null || value === undefined || value === "") return 0;
     const numeric = Number(value);
@@ -46,8 +49,19 @@ export function BookLoadCustomerSection({
     return Math.round(numeric * 100);
   };
 
-  const customerQboId = watch("customer_qbo_id");
-  const customerName = watch("customer_name");
+  const customersQuery = useQuery({
+    queryKey: ["book-load-customer-section", "customers", operatingCompanyId],
+    queryFn: () => listCustomers({ operating_company_id: String(operatingCompanyId), limit: 200 }),
+    enabled: Boolean(operatingCompanyId),
+    staleTime: 60_000,
+  });
+  const customerOptions = useMemo(
+    () =>
+      (customersQuery.data?.customers ?? [])
+        .map((c) => ({ value: c.id, label: c.name }))
+        .sort((a, b) => a.label.localeCompare(b.label)),
+    [customersQuery.data?.customers]
+  );
 
   return (
     <section className="rounded-sm border border-slate-200 bg-slate-100 p-3">
@@ -57,31 +71,21 @@ export function BookLoadCustomerSection({
           <input type="hidden" {...register("customer_id", { required: "Select a customer from QuickBooks search results" })} />
           <label className="text-[11px] font-semibold text-gray-600">Customer *</label>
           {operatingCompanyId && setValue ? (
-            <QboCombobox
-              entityType="customer"
-              operatingCompanyId={operatingCompanyId}
-              value={customerQboId?.trim() ? customerQboId : null}
-              displayValue={customerName ?? ""}
-              allowFreeText={false}
-              placeholder="Select QBO customer (type to search)…"
-              onChange={(qboId, name) => {
-                if (qboId) {
-                  setValue("customer_qbo_id", qboId, { shouldDirty: true, shouldValidate: false });
-                  setValue("customer_name", name, { shouldDirty: true, shouldValidate: false });
-                  return;
-                }
-                // Free-text edit: the user typed over the field, diverging from the picked row.
-                // Clear the picked TMS FK (and its QBO mirror id) so a stale customer_id can't
-                // silently ride along with a different name. This forces a fresh pick; the
-                // `required` rule on customer_id (validated here) blocks submit until then.
-                setValue("customer_id", "", { shouldDirty: true, shouldValidate: true });
-                setValue("customer_qbo_id", "", { shouldDirty: true, shouldValidate: false });
-                setValue("customer_name", name, { shouldDirty: true, shouldValidate: false });
+            <ReferenceSelect
+              value={watch("customer_id") || null}
+              onChange={(next) => {
+                const match = customerOptions.find((o) => o.value === next);
+                setValue("customer_id", next ?? "", { shouldDirty: true, shouldValidate: true });
+                setValue("customer_name", match?.label ?? "", { shouldDirty: true, shouldValidate: false });
               }}
-              onPick={(row) => {
-                setValue("customer_id", row.id, { shouldDirty: true, shouldValidate: true });
-                setValue("customer_qbo_id", row.qbo_id, { shouldDirty: true, shouldValidate: false });
-                setValue("customer_name", row.display_name, { shouldDirty: true, shouldValidate: false });
+              options={customerOptions}
+              createKind="customer"
+              operatingCompanyId={operatingCompanyId}
+              placeholder="Search customers…"
+              onOptionCreated={(opt) => {
+                void queryClient.invalidateQueries({ queryKey: ["book-load-customer-section", "customers"] });
+                setValue("customer_id", opt.value, { shouldDirty: true, shouldValidate: true });
+                setValue("customer_name", opt.label, { shouldDirty: true, shouldValidate: false });
               }}
             />
           ) : (
@@ -93,18 +97,25 @@ export function BookLoadCustomerSection({
         <Field label="Customer PO#" input={<input {...register("customer_po_number")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />} />
         {operatingCompanyId && setValue && getValues ? (
           <div className="md:col-span-2">
-            <label className="text-[11px] font-semibold text-gray-600">QBO customer lookup (appends to Special notes)</label>
+            <label className="text-[11px] font-semibold text-gray-600">Customer reference lookup (appends to Special notes)</label>
             <div className="mt-1">
-              <QboCombobox
-                entityType="customer"
-                operatingCompanyId={operatingCompanyId}
+              <ReferenceSelect
                 value={null}
-                displayValue=""
-                allowFreeText={false}
-                onChange={(qboId, displayName) => {
-                  if (!qboId) return;
+                onChange={(next) => {
+                  if (!next) return;
+                  const match = customerOptions.find((o) => o.value === next);
                   const prev = String(getValues("notes") ?? "");
-                  const line = `QBO customer: ${displayName} (${qboId})`;
+                  const line = `Customer reference: ${match?.label ?? "Unknown"}`;
+                  setValue("notes", prev ? `${prev}\n${line}` : line, { shouldDirty: true });
+                }}
+                options={customerOptions}
+                createKind="customer"
+                operatingCompanyId={operatingCompanyId}
+                placeholder="Search customers to add a reference…"
+                onOptionCreated={(opt) => {
+                  void queryClient.invalidateQueries({ queryKey: ["book-load-customer-section", "customers"] });
+                  const prev = String(getValues("notes") ?? "");
+                  const line = `Customer reference: ${opt.label}`;
                   setValue("notes", prev ? `${prev}\n${line}` : line, { shouldDirty: true });
                 }}
               />

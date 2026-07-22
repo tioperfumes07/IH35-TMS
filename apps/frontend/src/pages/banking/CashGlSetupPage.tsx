@@ -3,8 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCashGlMapping, setBankAccountCashGl, type CashGlBankAccount } from "../../api/banking";
 import { BackArrowHeader } from "../../components/layout/BackArrowHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
 
@@ -44,8 +44,6 @@ export function CashGlSetupPage() {
     mutation.mutate({ bankAccountId: bank.id, ledgerAccountId: value || null });
   };
 
-  // Display-only ParityTable migration: column order, cell content, and the inline
-  // SelectCombobox editor (handler unchanged) are preserved 1:1 from the hand-rolled table.
   const columns: Array<ParityColumn<CashGlBankAccount>> = [
     {
       key: "account_name",
@@ -57,19 +55,16 @@ export function CashGlSetupPage() {
       key: "ledger_account_id",
       label: "Cash GL Account",
       render: (bank) => (
-        <SelectCombobox
-          value={bank.ledger_account_id ?? ""}
-          disabled={!canEdit || savingId === bank.id}
-          onChange={(event) => onPick(bank, event.target.value)}
-          className="h-9 w-full max-w-md rounded-sm border border-gray-300 px-2 text-sm"
-        >
-          <option value="">— Not mapped —</option>
-          {coaOptions.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </SelectCombobox>
+        <ReferenceSelect
+          value={bank.ledger_account_id || null}
+          onChange={(next) => onPick(bank, next ?? "")}
+          options={coaOptions}
+          createKind="account"
+          operatingCompanyId={companyId}
+          placeholder="— Not mapped —"
+          disabled={!canEdit || !companyId || savingId === bank.id}
+          onOptionCreated={() => void query.refetch()}
+        />
       ),
     },
   ];

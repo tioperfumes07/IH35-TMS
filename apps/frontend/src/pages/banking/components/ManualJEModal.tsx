@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createJournalEntry, listClassesForJe, listCoaAccountsForJe } from "../../../api/accounting";
 import { Button } from "../../../components/Button";
-import { Modal } from "../../../components/Modal";
+import { ParityDrawer } from "../../../components/parity/ParityDrawer";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useToast } from "../../../components/Toast";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type Props = {
   open: boolean;
@@ -40,6 +40,23 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
     queryFn: listClassesForJe,
     enabled: open,
   });
+
+  const accountOptions = useMemo(
+    () =>
+      (accountsQuery.data?.accounts ?? []).map((account) => ({
+        value: account.id,
+        label: `${account.account_number} - ${account.account_name}`,
+      })),
+    [accountsQuery.data]
+  );
+  const classOptions = useMemo(
+    () =>
+      (classesQuery.data?.classes ?? []).map((klass) => ({
+        value: klass.id,
+        label: klass.class_code ? `${klass.class_code} - ${klass.class_name}` : klass.class_name,
+      })),
+    [classesQuery.data]
+  );
 
   const totalDebitCents = useMemo(
     () => lines.reduce((sum, line) => sum + Math.round(Number(line.debit || 0) * 100), 0),
@@ -127,13 +144,14 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
   };
 
   return (
-    <Modal
+    <ParityDrawer
       open={open}
       onClose={() => {
         reset();
         onClose();
       }}
       title={step === 1 ? "Manual Journal Entry - Step 1" : "Manual Journal Entry - Step 2 Confirm"}
+      size="wide"
     >
       <div className="space-y-2 text-xs">
         {step === 1 ? (
@@ -142,30 +160,24 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
             <div className="space-y-1">
               {lines.map((line, idx) => (
                 <div key={idx} className="grid grid-cols-6 gap-1 rounded-sm border border-gray-200 p-1.5">
-                  <SelectCombobox
-                    className="h-8 rounded-sm border border-gray-300 px-1"
-                    value={line.account_id}
-                    onChange={(e) => setLines((prev) => prev.map((row, i) => (i === idx ? { ...row, account_id: e.target.value } : row)))}
-                  >
-                    <option value="">Account</option>
-                    {(accountsQuery.data?.accounts ?? []).map((account) => (
-                      <option key={account.id} value={account.id}>
-                        {account.account_number} - {account.account_name}
-                      </option>
-                    ))}
-                  </SelectCombobox>
-                  <SelectCombobox
-                    className="h-8 rounded-sm border border-gray-300 px-1"
-                    value={line.class_id}
-                    onChange={(e) => setLines((prev) => prev.map((row, i) => (i === idx ? { ...row, class_id: e.target.value } : row)))}
-                  >
-                    <option value="">Class</option>
-                    {(classesQuery.data?.classes ?? []).map((klass) => (
-                      <option key={klass.id} value={klass.id}>
-                        {klass.class_code ? `${klass.class_code} - ` : ""}{klass.class_name}
-                      </option>
-                    ))}
-                  </SelectCombobox>
+                  <ReferenceSelect
+                    value={line.account_id || null}
+                    onChange={(next) => setLines((prev) => prev.map((row, i) => (i === idx ? { ...row, account_id: next ?? "" } : row)))}
+                    options={accountOptions}
+                    createKind="account"
+                    operatingCompanyId={operatingCompanyId}
+                    placeholder="Account"
+                    onOptionCreated={() => void accountsQuery.refetch()}
+                  />
+                  <ReferenceSelect
+                    value={line.class_id || null}
+                    onChange={(next) => setLines((prev) => prev.map((row, i) => (i === idx ? { ...row, class_id: next ?? "" } : row)))}
+                    options={classOptions}
+                    createKind="class"
+                    operatingCompanyId={operatingCompanyId}
+                    placeholder="Class"
+                    onOptionCreated={() => void classesQuery.refetch()}
+                  />
                   <input
                     className="h-8 rounded-sm border border-gray-300 px-2"
                     placeholder="Entity UUID (optional)"
@@ -261,6 +273,6 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
           </>
         )}
       </div>
-    </Modal>
+    </ParityDrawer>
   );
 }

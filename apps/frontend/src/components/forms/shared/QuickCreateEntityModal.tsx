@@ -8,7 +8,7 @@ import { chartOfAccountsCatalogClient, classesCatalogClient, itemsCatalogClient 
 import { fetchAccountTypeCatalog, detailTypesForAccountType, ACCOUNT_TYPE_GROUPS } from "../../../api/coa-list";
 import { getCoaAccounts } from "../../../api/banking";
 import { Combobox, type ComboboxOption } from "../../../components/Combobox";
-import { Modal } from "../../../components/Modal";
+import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
 
 // FIX-03: an item's income/expense account is a REFERENCED catalogs.accounts record (QBO parity), not
@@ -258,9 +258,10 @@ export function QuickCreateEntityModal({
     }
   });
 
+  // CHROME-11: nest create in a right ParityDrawer — never a centered Modal stacked on money drawers.
   return (
-    <Modal open={open} onClose={onClose} title={titleFor(kind)} modalKind="quick-create-entity" sizePreset="md" resizable>
-      <form className="space-y-3 text-sm" onSubmit={submit}>
+    <ParityDrawer open={open} onClose={onClose} title={titleFor(kind)}>
+      <form className="space-y-3 text-sm" onSubmit={submit} data-testid="quick-create-entity-drawer">
         <label className="block">
           <span className="text-xs font-medium text-gray-600">{kind === "vendor" || kind === "customer" ? "Display name *" : "Name *"}</span>
           <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("name")} aria-label="Quick create name" />
@@ -449,6 +450,6 @@ export function QuickCreateEntityModal({
           </button>
         </div>
       </form>
-    </Modal>
+    </ParityDrawer>
   );
 }

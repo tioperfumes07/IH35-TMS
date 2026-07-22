@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Button } from "../../components/Button";
-import { Modal } from "../../components/Modal";
+import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import type { Invoice } from "../../api/accounting";
@@ -32,7 +32,7 @@ export function PaymentApplyModal({ open, loading = false, unappliedCents, invoi
   const selectedInvoice = filteredInvoices.find((row) => row.id === selectedInvoiceId) ?? null;
 
   return (
-    <Modal open={open} onClose={onClose} title="Apply Payment">
+    <ParityDrawer open={open} onClose={onClose} title="Apply Payment">
       <form
         className="space-y-3"
         onSubmit={(event) => {
@@ -91,6 +91,6 @@ export function PaymentApplyModal({ open, loading = false, unappliedCents, invoi
           </Button>
         </div>
       </form>
-    </Modal>
+    </ParityDrawer>
   );
 }

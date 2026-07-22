@@ -8,6 +8,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getIntegrationTransactions, type IntegrationTxnItem } from "../../api/integration-transactions";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
 const fmtCents = (c: number | null) => (c == null ? "—" : formatUsdCents(c));
@@ -167,25 +168,53 @@ export function IntegrationTransactionsPage() {
   ];
 
   const filterBar = (
-    <div className="flex flex-wrap gap-2">
-      <input
-        type="search" aria-label="Search transactions by description or QBO ID" placeholder="Search description, QBO ID…" value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm w-56 focus:outline-hidden focus:ring-1 focus:ring-slate-500"
-      />
-      <select aria-label="Filter by sync status" value={syncStatus} onChange={(e) => setSyncStatus(e.target.value)}
-        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500">
-        <option value="">All statuses</option>
-        {(["pending","in_flight","synced","failed","blocked"] as const).map((s) => (
-          <option key={s} value={s}>{s}</option>
-        ))}
-      </select>
-      <select aria-label="Filter by entity type" value={entityType} onChange={(e) => setEntityType(e.target.value)}
-        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500">
-        <option value="">All types</option>
-        {Object.entries(ENTITY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-      </select>
-      <span className="ml-auto self-center text-xs text-gray-500">{total.toLocaleString()} record{total !== 1 ? "s" : ""}</span>
+    <div className="flex flex-wrap gap-2 items-center" data-integration-tx-filter-toolbar="collapsed">
+      <CollapsedListFilters
+        activeFilterCount={(syncStatus ? 1 : 0) + (entityType ? 1 : 0)}
+        testIdPrefix="integration-tx"
+        searchSlot={
+          <input
+            type="search"
+            aria-label="Search transactions by description or QBO ID"
+            placeholder="Search description, QBO ID…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-3 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500"
+          />
+        }
+      >
+        <div className="flex flex-wrap gap-2">
+          <select
+            aria-label="Filter by sync status"
+            value={syncStatus}
+            onChange={(e) => setSyncStatus(e.target.value)}
+            className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500"
+          >
+            <option value="">All statuses</option>
+            {(["pending", "in_flight", "synced", "failed", "blocked"] as const).map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+          <select
+            aria-label="Filter by entity type"
+            value={entityType}
+            onChange={(e) => setEntityType(e.target.value)}
+            className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500"
+          >
+            <option value="">All types</option>
+            {Object.entries(ENTITY_LABELS).map(([k, v]) => (
+              <option key={k} value={k}>
+                {v}
+              </option>
+            ))}
+          </select>
+        </div>
+      </CollapsedListFilters>
+      <span className="ml-auto self-center text-xs text-gray-500">
+        {total.toLocaleString()} record{total !== 1 ? "s" : ""}
+      </span>
     </div>
   );
 

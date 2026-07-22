@@ -8,6 +8,7 @@ import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { ApiError } from "../../api/client";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters } from "../../components/table";
 import {
   getRevenueContracts, getRevenueContractDetail,
   type RevenueContractListItem, type RevenueContractDetail, type RevenueObligation,
@@ -212,16 +213,26 @@ export function RevenueRecognitionPage() {
   );
 
   const filterBar = (
-    <div className="flex flex-wrap gap-2 items-center">
-      <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setOffset(0); }}
-        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500">
-        <option value="">All statuses</option>
-        <option value="draft">Draft</option>
-        <option value="active">Active</option>
-        <option value="fully_recognized">Fully Recognized</option>
-        <option value="voided">Voided</option>
-      </select>
-      <span className="text-xs text-gray-500">{total.toLocaleString()} contract{total !== 1 ? "s" : ""}</span>
+    <div className="flex flex-wrap gap-2 items-center" data-revrec-filter-toolbar="collapsed">
+      <CollapsedListFilters activeFilterCount={statusFilter ? 1 : 0} testIdPrefix="revrec">
+        <select
+          value={statusFilter}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setOffset(0);
+          }}
+          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500"
+        >
+          <option value="">All statuses</option>
+          <option value="draft">Draft</option>
+          <option value="active">Active</option>
+          <option value="fully_recognized">Fully Recognized</option>
+          <option value="voided">Voided</option>
+        </select>
+      </CollapsedListFilters>
+      <span className="text-xs text-gray-500">
+        {total.toLocaleString()} contract{total !== 1 ? "s" : ""}
+      </span>
     </div>
   );
 

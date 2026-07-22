@@ -6,10 +6,10 @@ import { describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "../../../components/Toast";
 import { InvoiceTypeModalBase } from "../../accounting/modals/InvoiceTypeModalBase";
 
-const searchMock = vi.fn();
+const listCustomersMock = vi.fn();
 
-vi.mock("../../../api/qbo-mdata", () => ({
-  searchQboMasterData: (...args: unknown[]) => searchMock(...args),
+vi.mock("../../../api/mdata", () => ({
+  listCustomers: (...args: unknown[]) => listCustomersMock(...args),
 }));
 
 function wrap(ui: ReactElement) {
@@ -24,7 +24,7 @@ function wrap(ui: ReactElement) {
 describe("InvoiceTypeModalBase validation", () => {
   it("requires customer before submit", async () => {
     const user = userEvent.setup();
-    searchMock.mockResolvedValue({ results: [] });
+    listCustomersMock.mockResolvedValue({ customers: [], total: 0 });
     const createInvoice = vi.fn();
     wrap(
       <InvoiceTypeModalBase
@@ -44,17 +44,18 @@ describe("InvoiceTypeModalBase validation", () => {
     expect(createInvoice).not.toHaveBeenCalled();
   });
 
-  it("after QBO pick, Create sends customer_id UUID", async () => {
+  it("after picking a TMS customer, Create sends customer_id UUID", async () => {
     const user = userEvent.setup();
-    searchMock.mockResolvedValue({
-      results: [
+    listCustomersMock.mockResolvedValue({
+      customers: [
         {
           id: "71111111-1111-4111-8111-111111111111",
-          qbo_id: "qb-99",
-          display_name: "Invoice Customer LLC",
-          active: true,
+          name: "Invoice Customer LLC",
+          email: "ar@example.com",
+          phone: "555-0100",
         },
       ],
+      total: 1,
     });
 
     const createInvoice = vi.fn().mockResolvedValue({ id: "inv-1" });
@@ -70,12 +71,11 @@ describe("InvoiceTypeModalBase validation", () => {
       />
     );
 
-    const custInput = screen.getByPlaceholderText(/Select QBO customer/i);
+    const custInput = screen.getByPlaceholderText(/Search customers…/i);
     await user.click(custInput);
-    await user.type(custInput, "Inv");
-    await waitFor(() => expect(searchMock).toHaveBeenCalled(), { timeout: 4000 });
+    await waitFor(() => expect(listCustomersMock).toHaveBeenCalled(), { timeout: 4000 });
 
-    const option = await screen.findByRole("button", { name: /Invoice Customer LLC/i });
+    const option = await screen.findByRole("option", { name: /Invoice Customer LLC/i });
     await user.click(option);
 
     await user.click(screen.getByRole("button", { name: /^Create$/i }));
