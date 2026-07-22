@@ -8,6 +8,8 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { recordPostingFlagSkip } from "../accounting/posting-flag-skip-audit.js";
 import { applyPendingDeductionsToSettlementWithNetFloor } from "./settlement-deduction-cap.service.js";
+import { applyAutoDeductionsToSettlement } from "../settlements/auto-deductions/apply.js";
+import { computeSettlementContractTerms, SETTLEMENT_CONTRACT_TERMS_FLAG } from "./settlement-contract-terms.service.js";
 import { SETTLEMENT_DEDUCTION_APPLY_FLAG } from "./settlements-load-bookended.service.js";
 
 const bodySchema = z.object({
@@ -51,13 +53,14 @@ type DbClient = {
  * REPAIR-A root cause: this draft-builder previously hardcoded deductions_total: 0,
  * reimbursements_total: 0, net_pay: grossPay with NO flag check and NO call to the canonical
  * deduction applier — a "pays gross" landmine the day a FE caller wires this route. Fixed by
- * reusing the SAME canonical applier + aggregator the load-bookended close already uses
- * (settlements-load-bookended.service.ts): after the earnings lines exist, gate the applier
- * behind the shared per-entity SETTLEMENT_DEDUCTION_APPLY_FLAG (canonical isEnabled resolver,
- * NOT a raw flag read), then let aggregateSettlementTotals recompute gross/deductions/
- * reimbursements/net FROM THE LINES — never a hardcoded literal. Flag OFF is not silent: it
- * is recorded via recordPostingFlagSkip (verify-no-silent-noop-posting), matching the
- * load-bookended OFF-branch exactly. NO new GL math — reuse only.
+ * reusing the SAME canonical helpers the load-bookended close already uses
+ * (settlements-load-bookended.service.ts), in the SAME order:
+ *   1) computeSettlementContractTerms (hire-contract MPG/referral/fines/reimbursements)
+ *   2) applyAutoDeductionsToSettlement (materialize policy tranches into the sub-ledger)
+ *   3) applyPendingDeductionsToSettlementWithNetFloor (net-floor, pay-first)
+ *   4) aggregateSettlementTotals (derive gross/deductions/reimbursements/net FROM LINES)
+ * Each step is flag-gated via canonical isEnabled; OFF records recordPostingFlagSkip
+ * (verify-no-silent-noop-posting). NO new GL math — reuse only.
  */
 export async function buildWeeklyCloseDraftForDriver(
   client: DbClient,
@@ -111,11 +114,40 @@ export async function buildWeeklyCloseDraftForDriver(
     );
   }
 
+  // ── Hire-contract terms (OFF-flag-gated) — parity with load-bookended close ─────────────────────
+  // Without this, weekly-close never materializes reimbursements / MPG / referral / fine lines even
+  // when SETTLEMENT_CONTRACT_TERMS_ENABLED is ON — software ignores the signed-hire money path.
+  const contractTermsEnabled = await isEnabled(client, SETTLEMENT_CONTRACT_TERMS_FLAG, {
+    operating_company_id: opts.operatingCompanyId,
+  });
+  if (contractTermsEnabled) {
+    await computeSettlementContractTerms(client, {
+      settlementId,
+      driverId: opts.driverId,
+      operatingCompanyId: opts.operatingCompanyId,
+      actorUserId: opts.actorUserId,
+    });
+  } else {
+    await recordPostingFlagSkip(client, opts.actorUserId, {
+      flagKey: SETTLEMENT_CONTRACT_TERMS_FLAG,
+      postingDomain: "driver_finance.settlement_contract_terms",
+      operatingCompanyId: opts.operatingCompanyId,
+      context: { settlement_id: settlementId, driver_id: opts.driverId, week_start: opts.weekStart, week_end: opts.weekEnd },
+    });
+  }
+
   // ── Deduction applier (OFF-flag-gated, canonical reuse — see settlements-load-bookended.service.ts) ──
   const deductionApplyEnabled = await isEnabled(client, SETTLEMENT_DEDUCTION_APPLY_FLAG, {
     operating_company_id: opts.operatingCompanyId,
   });
   if (deductionApplyEnabled) {
+    const autoMaterialized = await applyAutoDeductionsToSettlement(client, {
+      settlementId,
+      driverId: opts.driverId,
+      operatingCompanyId: opts.operatingCompanyId,
+      actorUserId: opts.actorUserId,
+    });
+
     const applied = await applyPendingDeductionsToSettlementWithNetFloor(client, {
       settlementId,
       driverId: opts.driverId,
@@ -140,6 +172,9 @@ export async function buildWeeklyCloseDraftForDriver(
         gross_cents: applied.grossCents,
         floor_cents: applied.floorCents,
         available_cents: applied.availableCents,
+        auto_materialized_count: autoMaterialized.materialized.length,
+        auto_materialized_cents: autoMaterialized.total_materialized_cents,
+        auto_materializer_schema_ready: autoMaterialized.schema_ready,
       },
       "info",
       "REPAIR-A-DEDUCTION-APPLY"
@@ -164,6 +199,7 @@ export async function buildWeeklyCloseDraftForDriver(
     settlement_id: settlementId,
     week_start: opts.weekStart,
     week_end: opts.weekEnd,
+    contract_terms_applied: contractTermsEnabled,
     deductions_applied: deductionApplyEnabled,
   });
 
