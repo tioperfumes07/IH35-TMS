@@ -127,6 +127,14 @@
       "reason": "Bank account detail deep-link \u2014 subnav deferred Block 43"
     },
     {
+      "path": "/banking/uncategorized",
+      "reason": "Workflow-B legacy alias \u2014 redirects to /banking/transactions?type=uncategorized (verify-banking-active-categorize-path)"
+    },
+    {
+      "path": "/banking/categorize",
+      "reason": "Workflow-B legacy alias \u2014 redirects to /banking/transactions (verify-banking-active-categorize-path)"
+    },
+    {
       "path": "/factoring",
       "reason": "Standalone factoring module; sidebar FACT points to /accounting/factoring"
     },
