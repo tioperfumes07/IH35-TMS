@@ -1537,14 +1537,15 @@ export const ROUTES = React.Children.toArray(
           <Route path="vehicle-inspections" element={<Navigate to="/safety/idvr" replace />} />
           {/* SYS-04 (Wave 2) — restore 5 Safety sub-routes that previously fell through to the
               catch-all and silently redirected to Home. Registered as children of /safety so the
-              SAFETY sidebar item stays active and the Safety subnav renders. Two map to existing
-              real tabs; three have no page yet and render an in-context placeholder (NOT a Home
-              redirect). Additive only — no existing route touched. */}
+              SAFETY sidebar item stays active and the Safety subnav renders.
+              Active-path law (2026-07-21): group bookmark URLs must Navigate to the first Live
+              V6.4 tab in that group — never ComingSoon while real tabs exist (ARCHIVE-not-DELETE
+              on legacy shells; stubs are not an allowed active mount). */}
           <Route path="/safety/hours-of-service" element={<Navigate to="/safety/hos" replace />} />
           <Route path="/safety/inspections" element={<Navigate to="/safety/dot-inspections" replace />} />
-          <Route path="/safety/fines-and-discipline" element={<ComingSoonPage feature="Fines & Discipline" />} />
-          <Route path="/safety/driver-financial-safety" element={<ComingSoonPage feature="Driver Financial Safety" />} />
-          <Route path="/safety/workforce-planning" element={<ComingSoonPage feature="Workforce Planning" />} />
+          <Route path="/safety/fines-and-discipline" element={<Navigate to="/safety/internal-fines" replace />} />
+          <Route path="/safety/driver-financial-safety" element={<Navigate to="/safety/escrow-record" replace />} />
+          <Route path="/safety/workforce-planning" element={<Navigate to="/safety/driver-scheduler" replace />} />
         </Route>
         <Route
           path="/liabilities"
