@@ -39,7 +39,7 @@
 | P-EXPENSE | Expense → GL/JE → list/register/vendor/payment | #3166 | **FAIL** | reverse drill | #3170 |
 | P-BILL | Vendor bill → bill_lines → AP → payment → JE | #3167 | **FAIL** | 0 bill_lines on Neon | #3172 |
 | P-SETTLE | Settlement → pay-run → CoA → JE → escrow | #3168 | **FAIL** | no FE; CoA undesignated; main resolver | #3149 #3171 |
-| P-CLAIM-LEGAL | Claim → legal → expense → driver/unit → GL → pay | *(this wave)* | **FAIL** | no expenses.claim_id; no deductible; no recovery FK | *(HOLD mig after audit PR)* |
+| P-CLAIM-LEGAL | Claim → legal → expense → driver/unit → GL → pay | #3175 | **FAIL** | no expense/bill FK; no deductible; claim/legal UI pickers | *(UI fix in flight; HOLD mig later)* | *(this wave)* | **FAIL** | no expenses.claim_id; no deductible; no recovery FK | *(HOLD mig after audit PR)* |
 | P-INVOICE | Load → invoice → AR → payment → JE | *(batch2 in flight)* | **FAIL*** | 1 invoice only; AR/payment chain thin | TBD |
 | P-FACTOR | Factoring advance → liability/reserve → JE | *(batch2)* | **FAIL*** | 0 advances / 0 batches live | TBD |
 | P-FUEL | Fuel txn → expense/GL → unit/driver → JE | *(batch2)* | **FAIL*** | 1499 txns; 0 driver/load/qbo_expense | TBD |
@@ -68,3 +68,4 @@ GitHub reports **≥500** merged PRs since 2026-07-10 alone (API page cap). Re-a
 |---|---|
 | 2026-07-21 | Ledger opened; P-EXPENSE/BILL/SETTLE FAIL documented |
 | 2026-07-21 | Neon snapshot + P-CLAIM-LEGAL FAIL; bank/fuel/factor/invoice preliminary FAIL from counts |
+| 2026-07-21 | P-CLAIM-LEGAL → #3175 FAIL; closed duplicate #3174; #3172 CI repair in flight |
