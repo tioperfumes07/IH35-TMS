@@ -1,323 +1,3002 @@
 {
-  "_doc": "BASELINE of pre-existing dead schema (objects created by a migration that no non-test source file reads). Captured 2026-07-21 by the first run of verify-no-dead-schema.mjs. This is a DEBT REGISTER, not an approval: every entry is a column/table implying a feature that does not exist. NEW dead schema is NOT allowed - the guard fails on anything not listed here. Wire an object and DELETE its entry.",
-  "_law": "CLAUDE.md 10a Total Connectivity - a record or field missing its link is NOT done.",
+  "_doc": "BASELINE of pre-existing DEAD/WEAK schema. DEBT REGISTER, not approval. NEW dead schema fails the build. Wire an object and DELETE its entry (the guard prints entries that became wired so the register drains).",
+  "_law": "CLAUDE.md 10a Total Connectivity",
   "_captured": "2026-07-21",
-  "count": 63,
+  "_scope": "SCHEMA REACHABILITY IN CODE only. This guard cannot prove rows are populated, that a poster runs, or that reverse drill-through exists in the UI. Those are live-data audits (LAW 0: prod wins). Never cite this guard as proof the books are wired.",
+  "_verdicts": {
+    "none": "identifier appears NOWHERE in non-test source \u2014 storage with no reader at all",
+    "weak": "identifier appears in the codebase but in NO file that touches this table \u2014 the substring illusion (e.g. mdata.drivers.employment_status, superseded by driver_employment_status_id in 0343)"
+  },
+  "_recapture": "2026-07-21 \u2014 coverage went from 1,074 ADD COLUMN-only objects to 5,740 live columns (inline CREATE TABLE columns were 81% of the schema and were invisible), and whole-corpus substring matching was replaced by whole-token, table-context matching. The count grew because the guard now sees what it always claimed to check. DO-block DDL (real CREATE TABLE inside $$ bodies) and comma-separated inline columns are now parsed too \u2014 the prior revision discarded dollar-quoted bodies entirely.",
+  "count": 498,
   "entries": [
+    {
+      "object": "_system.background_jobs.last_error_message",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0160_p6_t11194_background_jobs_tracking.sql"
+    },
+    {
+      "object": "_system.background_jobs.last_failed_run_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0160_p6_t11194_background_jobs_tracking.sql"
+    },
+    {
+      "object": "_system.background_jobs.run_count_today",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0160_p6_t11194_background_jobs_tracking.sql"
+    },
+    {
+      "object": "_system.reconciliation_findings.resolution_notes",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0200_ds_remediate_reconciliation_findings.sql"
+    },
+    {
+      "object": "_system.reconciliation_findings.resolved_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0200_ds_remediate_reconciliation_findings.sql"
+    },
+    {
+      "object": "accounting.ap_import_batches.requested_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607110310_af4_ap_import_scaffold.sql"
+    },
+    {
+      "object": "accounting.ap_import_batches.review_notes",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607110310_af4_ap_import_scaffold.sql"
+    },
+    {
+      "object": "accounting.ap_import_batches.reviewed_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607110310_af4_ap_import_scaffold.sql"
+    },
+    {
+      "object": "accounting.ap_import_batches.reviewed_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607110310_af4_ap_import_scaffold.sql"
+    },
+    {
+      "object": "accounting.credit_memos.qbo_idempotency_key",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0178_p7_w2_accounting_entity_sync_columns.sql"
+    },
+    {
+      "object": "accounting.credit_memos.related_invoice_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0060_p3_t11_20_1_accounting_invoices_schema.sql"
+    },
+    {
+      "object": "accounting.customer_classifications.archive_reason",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0325_clear_default_classifications.sql"
+    },
+    {
+      "object": "accounting.customer_classifications.source",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0325_clear_default_classifications.sql"
+    },
     {
       "object": "accounting.depreciation_autopost_runs",
       "kind": "TABLE",
+      "verdict": "none",
       "migration": "202607100100_block01_depreciation_loan_link_and_autopost_log.sql"
+    },
+    {
+      "object": "accounting.depreciation_autopost_runs.asset_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607100100_block01_depreciation_loan_link_and_autopost_log.sql"
+    },
+    {
+      "object": "accounting.depreciation_autopost_runs.error_code",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607100100_block01_depreciation_loan_link_and_autopost_log.sql"
+    },
+    {
+      "object": "accounting.depreciation_autopost_runs.error_message",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607100100_block01_depreciation_loan_link_and_autopost_log.sql"
+    },
+    {
+      "object": "accounting.depreciation_autopost_runs.outcome",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607100100_block01_depreciation_loan_link_and_autopost_log.sql"
+    },
+    {
+      "object": "accounting.depreciation_autopost_runs.period_count",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607100100_block01_depreciation_loan_link_and_autopost_log.sql"
+    },
+    {
+      "object": "accounting.depreciation_autopost_runs.run_date",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607100100_block01_depreciation_loan_link_and_autopost_log.sql"
+    },
+    {
+      "object": "accounting.depreciation_autopost_runs.total_posted_cents",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607100100_block01_depreciation_loan_link_and_autopost_log.sql"
+    },
+    {
+      "object": "accounting.depreciation_schedule_rows.deleted_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281060_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "accounting.depreciation_schedule_rows.units_this_period",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606281060_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "accounting.expense_lines.ps_category_qbo_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0266_acct11_pse_enforce.sql"
+    },
+    {
+      "object": "accounting.expense_lines.ps_item_qbo_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0266_acct11_pse_enforce.sql"
+    },
+    {
+      "object": "accounting.expenses.payment_term_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606151300_expenses_header_phase1_foundation.sql"
+    },
+    {
+      "object": "accounting.factoring_advances.qbo_idempotency_key",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0178_p7_w2_accounting_entity_sync_columns.sql"
+    },
+    {
+      "object": "accounting.fixed_asset_classes.default_accum_depr_account_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606281060_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "accounting.fixed_asset_classes.default_asset_account_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606281060_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "accounting.fixed_asset_classes.default_depr_expense_account_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606281060_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "accounting.fixed_asset_classes.deleted_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281060_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "accounting.fixed_asset_disposals.deleted_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281060_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "accounting.fixed_assets.acquisition_je_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606281060_fixed_assets_data_model.sql"
     },
     {
       "object": "accounting.fixed_assets.financing_loan_id",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "202607100100_block01_depreciation_loan_link_and_autopost_log.sql"
     },
     {
       "object": "accounting.form_1042_s",
       "kind": "TABLE",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1042_s.chapter3_exemption_code",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1042_s.corrects_form_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1042_s.federal_tax_withheld_cents",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1042_s.gross_income_cents",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1042_s.income_code",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1042_s.is_corrected",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1042_s.issued_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1042_s.payee_tax_profile_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1042_s.recipient_country_code",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1042_s.recipient_foreign_tin",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1042_s.recipient_name",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1042_s.recipient_us_tin",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1042_s.status",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1042_s.tax_document_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1042_s.tax_rate_bps",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1042_s.tax_year",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1042_s.treaty_article",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1042_s.treaty_country_code",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1042_s.voided_reason",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1042_s.withholding_agent_ein",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1042_s.withholding_agent_legal_name",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1099_nec.box5_state_tax_withheld_cents",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1099_nec.box6_state_payer_number",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1099_nec.box7_state_income_cents",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1099_nec.corrects_form_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1099_nec.issued_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.form_1099_nec.voided_reason",
+      "kind": "COLUMN",
+      "verdict": "weak",
       "migration": "202607130100_block17_24_tax_document_engine.sql"
     },
     {
       "object": "accounting.invoices.deducted_at",
       "kind": "COLUMN",
-      "migration": "0106_p6_foundation_universal_attachments.sql"
-    },
-    {
-      "object": "accounting.invoices.deducted_at",
-      "kind": "COLUMN",
-      "migration": "0123_p6_pre_ledger_drift_reconciliation.sql"
-    },
-    {
-      "object": "accounting.invoices.deducted_via_settlement_id",
-      "kind": "COLUMN",
+      "verdict": "none",
       "migration": "0106_p6_foundation_universal_attachments.sql"
     },
     {
       "object": "accounting.invoices.deducted_via_settlement_id",
       "kind": "COLUMN",
-      "migration": "0123_p6_pre_ledger_drift_reconciliation.sql"
+      "verdict": "none",
+      "migration": "0106_p6_foundation_universal_attachments.sql"
+    },
+    {
+      "object": "accounting.invoices.qbo_idempotency_key",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0178_p7_w2_accounting_entity_sync_columns.sql"
+    },
+    {
+      "object": "accounting.journal_entries.qbo_idempotency_key",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0178_p7_w2_accounting_entity_sync_columns.sql"
+    },
+    {
+      "object": "accounting.lease_classification.classification_basis",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606290062_fin22_lease_asc842_subledger.sql"
+    },
+    {
+      "object": "accounting.lease_classification.lease_term_major_part_of_life",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606290062_fin22_lease_asc842_subledger.sql"
+    },
+    {
+      "object": "accounting.lease_classification.purchase_option_reasonably_certain",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606290062_fin22_lease_asc842_subledger.sql"
+    },
+    {
+      "object": "accounting.lease_classification.pv_substantially_all_fair_value",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606290062_fin22_lease_asc842_subledger.sql"
+    },
+    {
+      "object": "accounting.lease_classification.specialized_asset",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606290062_fin22_lease_asc842_subledger.sql"
+    },
+    {
+      "object": "accounting.lease_classification.transfers_ownership",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606290062_fin22_lease_asc842_subledger.sql"
     },
     {
       "object": "accounting.line_category_load_required",
       "kind": "TABLE",
+      "verdict": "none",
       "migration": "0093_p5_d5_load_fk_invariant_wo_time.sql"
     },
     {
-      "object": "accounting.line_category_load_required",
-      "kind": "TABLE",
-      "migration": "0123_p6_pre_ledger_drift_reconciliation.sql"
+      "object": "accounting.line_category_load_required.description",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0093_p5_d5_load_fk_invariant_wo_time.sql"
+    },
+    {
+      "object": "accounting.line_category_load_required.effective_from",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0093_p5_d5_load_fk_invariant_wo_time.sql"
+    },
+    {
+      "object": "accounting.line_category_load_required.line_category",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0093_p5_d5_load_fk_invariant_wo_time.sql"
+    },
+    {
+      "object": "accounting.period_cash_basis_snapshot.computed_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0217_accounting_period_cash_basis_snapshot.sql"
+    },
+    {
+      "object": "accounting.prepaid_amortization_rows.deleted_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606271610_prepaid_expenses_data_model.sql"
+    },
+    {
+      "object": "accounting.prepaid_assets.deleted_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606271610_prepaid_expenses_data_model.sql"
+    },
+    {
+      "object": "accounting.revenue_contracts.ar_account_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281070_revenue_recognition_data_model.sql"
+    },
+    {
+      "object": "accounting.revenue_contracts.deleted_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281070_revenue_recognition_data_model.sql"
+    },
+    {
+      "object": "accounting.revenue_obligations.deleted_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281070_revenue_recognition_data_model.sql"
     },
     {
       "object": "accounting.revenue_recognition_rows",
       "kind": "TABLE",
+      "verdict": "none",
       "migration": "202606281070_revenue_recognition_data_model.sql"
+    },
+    {
+      "object": "accounting.revenue_recognition_rows.contract_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281070_revenue_recognition_data_model.sql"
+    },
+    {
+      "object": "accounting.revenue_recognition_rows.deleted_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281070_revenue_recognition_data_model.sql"
+    },
+    {
+      "object": "accounting.revenue_recognition_rows.method_snapshot",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281070_revenue_recognition_data_model.sql"
+    },
+    {
+      "object": "accounting.revenue_recognition_rows.obligation_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281070_revenue_recognition_data_model.sql"
+    },
+    {
+      "object": "accounting.revenue_recognition_rows.period_date",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281070_revenue_recognition_data_model.sql"
+    },
+    {
+      "object": "accounting.revenue_recognition_rows.period_number",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281070_revenue_recognition_data_model.sql"
+    },
+    {
+      "object": "accounting.revenue_recognition_rows.posted",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281070_revenue_recognition_data_model.sql"
+    },
+    {
+      "object": "accounting.revenue_recognition_rows.posted_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281070_revenue_recognition_data_model.sql"
+    },
+    {
+      "object": "accounting.revenue_recognition_rows.posted_journal_entry_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281070_revenue_recognition_data_model.sql"
+    },
+    {
+      "object": "accounting.revenue_recognition_rows.recognized_amount_cents",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281070_revenue_recognition_data_model.sql"
+    },
+    {
+      "object": "accounting.revenue_recognition_rows.remaining_deferred_cents",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281070_revenue_recognition_data_model.sql"
+    },
+    {
+      "object": "accounting.tax_document_batch.issued_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.tax_document_batch.issued_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.tax_document_batch.reviewed_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.tax_document_batch.reviewed_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.tax_document.email_message_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.tax_document.emailed_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.tax_document.emailed_to_address",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.tax_document.issued_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.tax_document.issued_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.tax_document.mailed_at",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.tax_document.mailed_to_address_snapshot",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.tax_document.voided_reason",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.vendor_classifications.archive_reason",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0325_clear_default_classifications.sql"
+    },
+    {
+      "object": "accounting.vendor_classifications.source",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0325_clear_default_classifications.sql"
+    },
+    {
+      "object": "accounting.vendor_credits.source_payment_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0222_block_34_payment_application_engine.sql"
+    },
+    {
+      "object": "alerts.broker_queue.proposed_message",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606111057_w2b_alert_rules.sql"
     },
     {
       "object": "analytics.customer_rollup",
       "kind": "TABLE",
+      "verdict": "none",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.customer_rollup.avg_cost_per_mile",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.customer_rollup.avg_margin_per_mile",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.customer_rollup.avg_revenue_per_mile",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.customer_rollup.customer_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.customer_rollup.has_allocated_costs",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.customer_rollup.load_count",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.customer_rollup.period_end",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.customer_rollup.period_start",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.customer_rollup.rollup_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.customer_rollup.total_cost",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.customer_rollup.total_margin",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.customer_rollup.total_miles",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.customer_rollup.total_revenue",
+      "kind": "COLUMN",
+      "verdict": "weak",
       "migration": "202606111056_w2a_profitability_engine.sql"
     },
     {
       "object": "analytics.lane_rollup",
       "kind": "TABLE",
+      "verdict": "none",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.lane_rollup.avg_cost_per_mile",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.lane_rollup.avg_margin_per_mile",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.lane_rollup.avg_revenue_per_mile",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.lane_rollup.has_allocated_costs",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.lane_rollup.lane_key",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.lane_rollup.load_count",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.lane_rollup.period_end",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.lane_rollup.period_start",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.lane_rollup.rollup_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.lane_rollup.total_cost",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.lane_rollup.total_margin",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.lane_rollup.total_miles",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.lane_rollup.total_revenue",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.load_fact.accessorial_revenue",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.load_fact.cost_source",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.load_fact.delivery_date",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.load_fact.dest_state",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.load_fact.detention_revenue",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.load_fact.driver_pay",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.load_fact.empty_miles",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.load_fact.fact_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.load_fact.fuel_cost",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.load_fact.fuel_surcharge",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.load_fact.insurance_alloc",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.load_fact.layover_cost",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.load_fact.linehaul_revenue",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.load_fact.loaded_miles",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.load_fact.lumper_wash_scale",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.load_fact.maintenance_alloc",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.load_fact.origin_state",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.load_fact.other_alloc",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.load_fact.revenue_source",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.load_fact.tolls",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.load_fact.transit_days",
+      "kind": "COLUMN",
+      "verdict": "none",
       "migration": "202606111056_w2a_profitability_engine.sql"
     },
     {
       "object": "analytics.type_rollup",
       "kind": "TABLE",
+      "verdict": "none",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.type_rollup.avg_cost_per_mile",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.type_rollup.avg_margin_per_mile",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.type_rollup.avg_revenue_per_mile",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.type_rollup.equipment_type",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.type_rollup.has_allocated_costs",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.type_rollup.load_count",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.type_rollup.period_end",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.type_rollup.period_start",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.type_rollup.rollup_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.type_rollup.total_cost",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.type_rollup.total_margin",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.type_rollup.total_miles",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.type_rollup.total_revenue",
+      "kind": "COLUMN",
+      "verdict": "weak",
       "migration": "202606111056_w2a_profitability_engine.sql"
     },
     {
       "object": "banking.bank_transactions.excluded_reason",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "0182_p7_w2_bank_transactions_review.sql"
     },
     {
       "object": "banking.bank_transactions.matched_invoice_id",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "0182_p7_w2_bank_transactions_review.sql"
     },
     {
       "object": "banking.bank_transactions.pse_ps_item_qbo_id",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "0266_acct11_pse_enforce.sql"
     },
     {
       "object": "banking.bank_transactions.pse_qbo_account_id",
       "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0266_acct11_pse_enforce.sql"
+    },
+    {
+      "object": "banking.bank_transactions.pse_vendor_subtype_suggestion",
+      "kind": "COLUMN",
+      "verdict": "none",
       "migration": "0266_acct11_pse_enforce.sql"
     },
     {
       "object": "banking.bank_transactions.reconciliation_cleared",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "0182_p7_w2_bank_transactions_review.sql"
     },
     {
       "object": "banking.reconciliation_sessions.auto_match_run_at",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "0184_p7_w2_reconciliation_sessions_extend.sql"
     },
     {
       "object": "banking.reconciliation_sessions.auto_match_suggestions_count",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "0184_p7_w2_reconciliation_sessions_extend.sql"
     },
     {
       "object": "banking.reconciliation_sessions.reopen_reason",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "0184_p7_w2_reconciliation_sessions_extend.sql"
     },
     {
       "object": "banking.reconciliation_sessions.reopened_at",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "0184_p7_w2_reconciliation_sessions_extend.sql"
     },
     {
       "object": "banking.reconciliation_sessions.reopened_by_user_id",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "0184_p7_w2_reconciliation_sessions_extend.sql"
+    },
+    {
+      "object": "brokerupdate.send.send_error",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606111230_w4b_broker_auto_update.sql"
     },
     {
       "object": "catalogs.company_violation_types.default_fine_amount_cents",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "0115_p6_stabilization_reconciliation.sql"
     },
     {
       "object": "catalogs.equipment_types_dedup_ledger_0318",
       "kind": "TABLE",
+      "verdict": "none",
       "migration": "0318_equipment_types_canonical_dedup.sql"
+    },
+    {
+      "object": "catalogs.equipment_types_dedup_ledger_0318.canonical_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0318_equipment_types_canonical_dedup.sql"
+    },
+    {
+      "object": "catalogs.equipment_types_dedup_ledger_0318.duplicate_code",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0318_equipment_types_canonical_dedup.sql"
+    },
+    {
+      "object": "catalogs.equipment_types_dedup_ledger_0318.duplicate_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0318_equipment_types_canonical_dedup.sql"
+    },
+    {
+      "object": "catalogs.payee_tax_profile.backup_withholding_required",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "catalogs.payee_tax_profile.income_source_determination",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "catalogs.payee_tax_profile.treaty_benefit_claimed",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "catalogs.payee_tax_profile.voided_reason",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "catalogs.payee_tax_profile.w8ben_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "catalogs.payee_tax_profile.w9_captured_at",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "catalogs.payee_tax_profile.w9_file_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "catalogs.payee_tax_profile.w9_on_file",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "catalogs.payee_tax_profile.w9_tin_type",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "catalogs.payee_tax_profile.w9_us_tin",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "catalogs.tax_form_thresholds.backup_withholding_rate_bps",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "catalogs.tax_form_thresholds.nra_withholding_rate_bps",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "catalogs.vendor_types.is_system",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607420000_vendor_types_catalog.sql"
+    },
+    {
+      "object": "catalogs.vendor_types.qbo_vendor_type_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607420000_vendor_types_catalog.sql"
+    },
+    {
+      "object": "catalogs.vendor_types.vendor_type_code",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607420000_vendor_types_catalog.sql"
+    },
+    {
+      "object": "catalogs.vendor_types.vendor_type_name",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607420000_vendor_types_catalog.sql"
+    },
+    {
+      "object": "chat.messages.tombstoned_by",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607012000_chat_dispatch_schema.sql"
+    },
+    {
+      "object": "chat.participants.joined_at",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607012000_chat_dispatch_schema.sql"
+    },
+    {
+      "object": "compliance.appraisal_districts.cad_code",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607080300_property_tax_rendition_filing.sql"
+    },
+    {
+      "object": "compliance.appraisal_districts.is_seed",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607080300_property_tax_rendition_filing.sql"
+    },
+    {
+      "object": "compliance.drug_alcohol_test_results.clearinghouse_reference",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606271520_capture_prod_column_drift.sql"
+    },
+    {
+      "object": "compliance.drug_alcohol_test_results.created_by",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606271520_capture_prod_column_drift.sql"
+    },
+    {
+      "object": "compliance.drug_alcohol_test_results.selection_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606271520_capture_prod_column_drift.sql"
+    },
+    {
+      "object": "compliance.form_2290_filings.pdf_file_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0378_form_2290_filings.sql"
+    },
+    {
+      "object": "dispatch.auto_status_suggestions.user_response",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0230_cap4_auto_status_suggestions.sql"
+    },
+    {
+      "object": "dispatch.bol_documents.docs_attachment_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0356_dispatch_pod_bol.sql"
+    },
+    {
+      "object": "dispatch.load_abandonments.abandonment_notes",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0094_p5_e1_auto_deduct_escrow_load_abandonment.sql"
+    },
+    {
+      "object": "dispatch.load_abandonments.abandonment_type",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0094_p5_e1_auto_deduct_escrow_load_abandonment.sql"
+    },
+    {
+      "object": "dispatch.load_abandonments.estimated_cost_cents",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0094_p5_e1_auto_deduct_escrow_load_abandonment.sql"
+    },
+    {
+      "object": "dispatch.load_abandonments.recovery_driver_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0094_p5_e1_auto_deduct_escrow_load_abandonment.sql"
+    },
+    {
+      "object": "dispatch.load_abandonments.reported_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0094_p5_e1_auto_deduct_escrow_load_abandonment.sql"
+    },
+    {
+      "object": "dispatch.load_abandonments.unit_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0094_p5_e1_auto_deduct_escrow_load_abandonment.sql"
+    },
+    {
+      "object": "dispatch.load_cancellations.reason_code_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606300130_load_cancellations_per_entity_fk.sql"
+    },
+    {
+      "object": "dispatch.load_eta_predictions.confidence_class",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0040_p3_t11_5_dispatch_rebuild.sql"
+    },
+    {
+      "object": "dispatch.load_eta_predictions.inputs_json",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0040_p3_t11_5_dispatch_rebuild.sql"
+    },
+    {
+      "object": "dispatch.load_eta_predictions.predicted_arrival_stop_uuid",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0040_p3_t11_5_dispatch_rebuild.sql"
+    },
+    {
+      "object": "dispatch.load_eta_predictions.variance_minutes",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0040_p3_t11_5_dispatch_rebuild.sql"
+    },
+    {
+      "object": "dispatch.loads.canceled_at",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0281_dispatch_cancel_reason.sql"
+    },
+    {
+      "object": "dispatch.loads.canceled_by",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0281_dispatch_cancel_reason.sql"
+    },
+    {
+      "object": "dispatch.pod_documents.docs_attachment_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0356_dispatch_pod_bol.sql"
+    },
+    {
+      "object": "dispatch.ratecon_extractions.error_detail",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607022000_ratecon_extractions.sql"
+    },
+    {
+      "object": "docs.files.dispatch_external_message_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0113_p6_d3_driver_instructions_pdf_storage.sql"
+    },
+    {
+      "object": "driver_finance.auto_deduction_policies.cancelled_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281000_auto_deduction_policies.sql"
+    },
+    {
+      "object": "driver_finance.driver_deduction_buckets.total_obligation_cents",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606290011_driver_deduction_buckets.sql"
+    },
+    {
+      "object": "driver_finance.driver_payment_methods.payment_method_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607370000_driver_payment_methods.sql"
+    },
+    {
+      "object": "driver_finance.driver_settlements.pay_method",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0143_settlement_model_load_bookended_and_expense_attribution.sql"
+    },
+    {
+      "object": "driver_finance.escrow_balances.release_claims_window_days",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606120600_d1_settlement_approval.sql"
+    },
+    {
+      "object": "driver_finance.escrow_balances.release_scheduled_at",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606120600_d1_settlement_approval.sql"
+    },
+    {
+      "object": "driver_finance.escrow_deductions_pending.proposed_by_system",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0094_p5_e1_auto_deduct_escrow_load_abandonment.sql"
+    },
+    {
+      "object": "driver_finance.escrow_deductions_pending.source_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0094_p5_e1_auto_deduct_escrow_load_abandonment.sql"
+    },
+    {
+      "object": "driver_finance.settlement_lines.auto_deduction_policy_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606281000_auto_deduction_policies.sql"
     },
     {
       "object": "driver_finance.settlement_lines.dispute_resolved_at",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "202607430000_settlement_lines_approval_columns.sql"
     },
     {
       "object": "driver_finance.settlement_lines.dispute_resolved_by",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "202607430000_settlement_lines_approval_columns.sql"
     },
     {
       "object": "driver_finance.settlement_lines.disputed_at",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "202607430000_settlement_lines_approval_columns.sql"
     },
     {
       "object": "driver_finance.settlement_lines.disputed_by",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "202607430000_settlement_lines_approval_columns.sql"
+    },
+    {
+      "object": "driver_finance.settlement_lines.posting_account_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607520000_driver_finance_settlement_posting_linkage_columns.sql"
+    },
+    {
+      "object": "driver_finance.settlement_preview_costs.cost_kind",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0167_block_i_settlement_preview_costs.sql"
+    },
+    {
+      "object": "driver_finance.settlement_preview_costs.memo",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0167_block_i_settlement_preview_costs.sql"
+    },
+    {
+      "object": "driver_finance.signed_acknowledgments.ip_address",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0056_p3_t11_15_4_driver_pwa_backend.sql"
+    },
+    {
+      "object": "driver_finance.trip_link_queue.settlement_line_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606120600_d1_settlement_approval.sql"
+    },
+    {
+      "object": "factor.reconciliation_runs.closed_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0224_block_26_factor_reconciliation.sql"
+    },
+    {
+      "object": "factor.reconciliation_runs.closed_by_user_uuid",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0224_block_26_factor_reconciliation.sql"
+    },
+    {
+      "object": "finance.loan_amortization_rows.deleted_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606160100_fh3_amortization_data_model.sql"
+    },
+    {
+      "object": "finance.loan_amortization_rows.posted_journal_entry_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606160100_fh3_amortization_data_model.sql"
+    },
+    {
+      "object": "finance.loans.deleted_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606160100_fh3_amortization_data_model.sql"
+    },
+    {
+      "object": "fixed_assets.asset_classes",
+      "kind": "TABLE",
+      "verdict": "none",
+      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "fixed_assets.asset_classes.code",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "fixed_assets.asset_classes.default_accum_depr_account_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "fixed_assets.asset_classes.default_asset_account_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "fixed_assets.asset_classes.default_depr_expense_account_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "fixed_assets.asset_classes.default_method",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "fixed_assets.asset_classes.default_useful_life_months",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "fixed_assets.asset_classes.deleted_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "fixed_assets.asset_classes.depreciates",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "fixed_assets.asset_classes.name",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "fixed_assets.assets.asset_class_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "fixed_assets.assets.prior_accumulated_depreciation_cents",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
     },
     {
       "object": "fixed_assets.depreciation_schedules",
       "kind": "TABLE",
+      "verdict": "none",
       "migration": "202606151600_fh1_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "fixed_assets.depreciation_schedules.accumulated_to_date_cents",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "fixed_assets.depreciation_schedules.asset_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "fixed_assets.depreciation_schedules.book_value_end_cents",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "fixed_assets.depreciation_schedules.deleted_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "fixed_assets.depreciation_schedules.depreciation_amount_cents",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "fixed_assets.depreciation_schedules.method_snapshot",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "fixed_assets.depreciation_schedules.period_date",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "fixed_assets.depreciation_schedules.period_number",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "fixed_assets.depreciation_schedules.posted_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "fixed_assets.depreciation_schedules.posted_journal_entry_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "fixed_assets.disposals.deleted_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "forecast.predicted_delivery_changes.confirmed_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606170300_predicted_delivery_changes_audit.sql"
+    },
+    {
+      "object": "fuel.fuel_transactions.fuel_card_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0300_create_fuel_transactions.sql"
+    },
+    {
+      "object": "fuel.fuel_transactions.pump_number",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0300_create_fuel_transactions.sql"
+    },
+    {
+      "object": "fuel.fuel_transactions.qbo_class_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0300_create_fuel_transactions.sql"
     },
     {
       "object": "identity.applicant_documents",
       "kind": "TABLE",
+      "verdict": "none",
+      "migration": "0363_identity_driver_applicants.sql"
+    },
+    {
+      "object": "identity.applicant_documents.applicant_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0363_identity_driver_applicants.sql"
+    },
+    {
+      "object": "identity.applicant_documents.document_type",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0363_identity_driver_applicants.sql"
+    },
+    {
+      "object": "identity.applicant_documents.file_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0363_identity_driver_applicants.sql"
+    },
+    {
+      "object": "identity.applicant_documents.file_name",
+      "kind": "COLUMN",
+      "verdict": "weak",
       "migration": "0363_identity_driver_applicants.sql"
     },
     {
       "object": "ifta.personal_conveyance_miles_by_quarter",
       "kind": "TABLE",
+      "verdict": "none",
       "migration": "202607130200_block03_ifta_trip_methodology_extend.sql"
+    },
+    {
+      "object": "ifta.personal_conveyance_miles_by_quarter.computed_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130200_block03_ifta_trip_methodology_extend.sql"
+    },
+    {
+      "object": "ifta.personal_conveyance_miles_by_quarter.miles",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130200_block03_ifta_trip_methodology_extend.sql"
+    },
+    {
+      "object": "ifta.personal_conveyance_miles_by_quarter.preparation_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130200_block03_ifta_trip_methodology_extend.sql"
+    },
+    {
+      "object": "ifta.personal_conveyance_miles_by_quarter.source",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130200_block03_ifta_trip_methodology_extend.sql"
+    },
+    {
+      "object": "ifta.personal_conveyance_miles_by_quarter.unit_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130200_block03_ifta_trip_methodology_extend.sql"
+    },
+    {
+      "object": "ifta.quarterly_preparations.miles_methodology",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130200_block03_ifta_trip_methodology_extend.sql"
+    },
+    {
+      "object": "ifta.quarterly_preparations.pdf_file_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130200_block03_ifta_trip_methodology_extend.sql"
+    },
+    {
+      "object": "ifta.quarterly_preparations.pdf_generated_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130200_block03_ifta_trip_methodology_extend.sql"
+    },
+    {
+      "object": "ifta.quarterly_preparations.pdf_render_template_version",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130200_block03_ifta_trip_methodology_extend.sql"
+    },
+    {
+      "object": "ifta.state_miles_by_quarter.is_ifta_jurisdiction",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130200_block03_ifta_trip_methodology_extend.sql"
+    },
+    {
+      "object": "ifta.state_miles_by_quarter.net_taxable_miles",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130200_block03_ifta_trip_methodology_extend.sql"
+    },
+    {
+      "object": "ifta.state_miles_by_quarter.personal_conveyance_deduction_miles",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130200_block03_ifta_trip_methodology_extend.sql"
+    },
+    {
+      "object": "ifta.state_tax_by_quarter.is_ifta_jurisdiction",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130200_block03_ifta_trip_methodology_extend.sql"
+    },
+    {
+      "object": "ifta.state_tax_by_quarter.personal_conveyance_deduction_miles",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130200_block03_ifta_trip_methodology_extend.sql"
+    },
+    {
+      "object": "ih35_migrations.applied_migrations.applied_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0173_ih35_migrations_applied_tracker.sql"
+    },
+    {
+      "object": "integrations.engine_fault_events.received_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606080216_engine_fault_events.sql"
+    },
+    {
+      "object": "integrations.samsara_webhook_events.processed_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0137_p8c_m_samsara_stub_foundation.sql"
+    },
+    {
+      "object": "integrations.samsara_webhook_events.processing_error",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0137_p8c_m_samsara_stub_foundation.sql"
     },
     {
       "object": "maint.part_position_assignment",
       "kind": "TABLE",
+      "verdict": "none",
       "migration": "202606122215_m1_positioned_parts_picker.sql"
+    },
+    {
+      "object": "maint.part_position_assignment.part_uuid",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606122215_m1_positioned_parts_picker.sql"
+    },
+    {
+      "object": "maint.part_position_assignment.position_overrides",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606122215_m1_positioned_parts_picker.sql"
+    },
+    {
+      "object": "maint.part_position_assignment.position_set_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606122215_m1_positioned_parts_picker.sql"
+    },
+    {
+      "object": "maint.part.requires_position",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606122215_m1_positioned_parts_picker.sql"
+    },
+    {
+      "object": "maint.position_set.description",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606122215_m1_positioned_parts_picker.sql"
+    },
+    {
+      "object": "maint.position_set.map_svg_config",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606122215_m1_positioned_parts_picker.sql"
+    },
+    {
+      "object": "maint.position_set.map_view",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606122215_m1_positioned_parts_picker.sql"
+    },
+    {
+      "object": "maint.position_set.part_type_hint",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606122215_m1_positioned_parts_picker.sql"
+    },
+    {
+      "object": "maint.position_set.positions",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606122215_m1_positioned_parts_picker.sql"
+    },
+    {
+      "object": "maint.position_set.sort_order",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606122215_m1_positioned_parts_picker.sql"
+    },
+    {
+      "object": "maint.position_set.vehicle_make",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606122215_m1_positioned_parts_picker.sql"
+    },
+    {
+      "object": "maint.position_set.vehicle_model",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606122215_m1_positioned_parts_picker.sql"
+    },
+    {
+      "object": "maintenance.defects.resolved_by_wo_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0056_p3_t11_15_4_driver_pwa_backend.sql"
+    },
+    {
+      "object": "maintenance.dvir_submissions.geo_lat",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0056_p3_t11_15_4_driver_pwa_backend.sql"
+    },
+    {
+      "object": "maintenance.dvir_submissions.geo_lng",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0056_p3_t11_15_4_driver_pwa_backend.sql"
+    },
+    {
+      "object": "maintenance.internal_labor_log.journal_entry_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606080935_block15_mechanic_shop.sql"
+    },
+    {
+      "object": "maintenance.wo_serialized_parts.part_catalog_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606221100_block8_wo_vmrs_serialized_parts.sql"
     },
     {
       "object": "maintenance.work_orders.cancel_notes",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "202606221200_wo_enhancements_cancel.sql"
+    },
+    {
+      "object": "maintenance.work_orders.cancel_reason_code",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606221200_wo_enhancements_cancel.sql"
+    },
+    {
+      "object": "maintenance.work_orders.labor_only_no_parts",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0049_p3_t11_6_1_wo_format_vendor_inventory_integrity.sql"
+    },
+    {
+      "object": "mdata.customers.billing_address_line2",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0008_mdata_init.sql"
+    },
+    {
+      "object": "mdata.customers.billing_country",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0008_mdata_init.sql"
     },
     {
       "object": "mdata.customers.lumper_billing_mode",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "202606251500_lumper_billing_config.sql"
     },
     {
       "object": "mdata.drivers.b1_visa_expires_date",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "202606080930_block14_mexico_ops.sql"
     },
     {
       "object": "mdata.drivers.b1_visa_number",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "202606080930_block14_mexico_ops.sql"
     },
     {
       "object": "mdata.drivers.has_b1_visa",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "202606080930_block14_mexico_ops.sql"
     },
     {
       "object": "mdata.drivers.last_samsara_login_at",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "202606192100_drivers_last_samsara_login.sql"
+    },
+    {
+      "object": "mdata.drivers.referral_source",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607080000_settlement_contract_terms.sql"
+    },
+    {
+      "object": "mdata.entity_reclassification_log.spine_event_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606120500_c4_cust_vend_reclassify.sql"
+    },
+    {
+      "object": "mdata.equipment.operation_country",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0303_trailer_profile_part1.sql"
+    },
+    {
+      "object": "mdata.load_stops.is_extra_stop",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0111_p6_d2_book_load_v3_stops_columns.sql"
+    },
+    {
+      "object": "mdata.loads.canceled_at",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0281_dispatch_cancel_reason.sql"
+    },
+    {
+      "object": "mdata.loads.canceled_by",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0281_dispatch_cancel_reason.sql"
+    },
+    {
+      "object": "mdata.locations.is_ih35_yard",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0051_arriving_soon_views.sql"
+    },
+    {
+      "object": "mdata.maintenance_parts.typical_vendor_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606281030_maintenance_parts_catalog.sql"
+    },
+    {
+      "object": "mdata.qbo_classes.fully_qualified_name",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0194_qbo_master_data_projection_transp.sql"
+    },
+    {
+      "object": "mdata.qbo_classes.mirrored_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0194_qbo_master_data_projection_transp.sql"
+    },
+    {
+      "object": "mdata.unit_border_crossings.manifest_number",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0295_vehicle_profile_part1.sql"
     },
     {
       "object": "mdata.vendors.vendor_type_id",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "202607420000_vendor_types_catalog.sql"
     },
     {
       "object": "migration.block6_demo_purge_ledger",
       "kind": "TABLE",
+      "verdict": "none",
+      "migration": "202606161700_block6_archive_demo_test_data.sql"
+    },
+    {
+      "object": "migration.block6_demo_purge_ledger.migration_ts",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606161700_block6_archive_demo_test_data.sql"
+    },
+    {
+      "object": "migration.block6_demo_purge_ledger.row_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606161700_block6_archive_demo_test_data.sql"
+    },
+    {
+      "object": "migration.block6_demo_purge_ledger.soft_delete_column",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606161700_block6_archive_demo_test_data.sql"
+    },
+    {
+      "object": "migration.block6_demo_purge_ledger.table_name",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606161700_block6_archive_demo_test_data.sql"
+    },
+    {
+      "object": "migration.block6_demo_purge_ledger.table_schema",
+      "kind": "COLUMN",
+      "verdict": "weak",
       "migration": "202606161700_block6_archive_demo_test_data.sql"
     },
     {
       "object": "migration.test_seed_archive_ledger_0320",
       "kind": "TABLE",
+      "verdict": "none",
+      "migration": "0320_archive_test_seed_data.sql"
+    },
+    {
+      "object": "migration.test_seed_archive_ledger_0320.migration_ts",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0320_archive_test_seed_data.sql"
+    },
+    {
+      "object": "migration.test_seed_archive_ledger_0320.row_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0320_archive_test_seed_data.sql"
+    },
+    {
+      "object": "migration.test_seed_archive_ledger_0320.table_name",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0320_archive_test_seed_data.sql"
+    },
+    {
+      "object": "migration.test_seed_archive_ledger_0320.table_schema",
+      "kind": "COLUMN",
+      "verdict": "weak",
       "migration": "0320_archive_test_seed_data.sql"
     },
     {
       "object": "migration.test_seed_archive_ledger_0367",
       "kind": "TABLE",
+      "verdict": "none",
+      "migration": "0367_archive_mdata_customers_test_seed.sql"
+    },
+    {
+      "object": "migration.test_seed_archive_ledger_0367.migration_ts",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0367_archive_mdata_customers_test_seed.sql"
+    },
+    {
+      "object": "migration.test_seed_archive_ledger_0367.row_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0367_archive_mdata_customers_test_seed.sql"
+    },
+    {
+      "object": "migration.test_seed_archive_ledger_0367.table_name",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0367_archive_mdata_customers_test_seed.sql"
+    },
+    {
+      "object": "migration.test_seed_archive_ledger_0367.table_schema",
+      "kind": "COLUMN",
+      "verdict": "weak",
       "migration": "0367_archive_mdata_customers_test_seed.sql"
     },
     {
       "object": "migration.test_seed_archive_ledger_0369",
       "kind": "TABLE",
+      "verdict": "none",
+      "migration": "0369_archive_identity_debug_test_users.sql"
+    },
+    {
+      "object": "migration.test_seed_archive_ledger_0369.migration_ts",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0369_archive_identity_debug_test_users.sql"
+    },
+    {
+      "object": "migration.test_seed_archive_ledger_0369.row_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0369_archive_identity_debug_test_users.sql"
+    },
+    {
+      "object": "migration.test_seed_archive_ledger_0369.table_name",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0369_archive_identity_debug_test_users.sql"
+    },
+    {
+      "object": "migration.test_seed_archive_ledger_0369.table_schema",
+      "kind": "COLUMN",
+      "verdict": "weak",
       "migration": "0369_archive_identity_debug_test_users.sql"
     },
     {
       "object": "migration.test_seed_archive_ledger_0396",
       "kind": "TABLE",
+      "verdict": "none",
       "migration": "0396_archive_test_users.sql"
+    },
+    {
+      "object": "migration.test_seed_archive_ledger_0396.archived_reason",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0396_archive_test_users.sql"
+    },
+    {
+      "object": "migration.test_seed_archive_ledger_0396.migration_ts",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0396_archive_test_users.sql"
+    },
+    {
+      "object": "migration.test_seed_archive_ledger_0396.row_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0396_archive_test_users.sql"
+    },
+    {
+      "object": "migration.test_seed_archive_ledger_0396.table_name",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0396_archive_test_users.sql"
+    },
+    {
+      "object": "migration.test_seed_archive_ledger_0396.table_schema",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0396_archive_test_users.sql"
+    },
+    {
+      "object": "ops.daily_task_alerts.delivered_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0192_ops_daily_tasks_module.sql"
+    },
+    {
+      "object": "ops.daily_task_alerts.enqueued_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0192_ops_daily_tasks_module.sql"
     },
     {
       "object": "ops.load_test_runs",
       "kind": "TABLE",
+      "verdict": "none",
+      "migration": "202606080205_load_test_runs.sql"
+    },
+    {
+      "object": "ops.load_test_runs.duration_ms",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606080205_load_test_runs.sql"
+    },
+    {
+      "object": "ops.load_test_runs.finished_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606080205_load_test_runs.sql"
+    },
+    {
+      "object": "ops.load_test_runs.get_p95_ms",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606080205_load_test_runs.sql"
+    },
+    {
+      "object": "ops.load_test_runs.post_p95_ms",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606080205_load_test_runs.sql"
+    },
+    {
+      "object": "ops.load_test_runs.qbo_sync_p95_ms",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606080205_load_test_runs.sql"
+    },
+    {
+      "object": "ops.load_test_runs.requests_failed",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606080205_load_test_runs.sql"
+    },
+    {
+      "object": "ops.load_test_runs.requests_total",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606080205_load_test_runs.sql"
+    },
+    {
+      "object": "ops.load_test_runs.results",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606080205_load_test_runs.sql"
+    },
+    {
+      "object": "ops.load_test_runs.run_mode",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606080205_load_test_runs.sql"
+    },
+    {
+      "object": "ops.load_test_runs.run_notes",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606080205_load_test_runs.sql"
+    },
+    {
+      "object": "ops.load_test_runs.run_started_by",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606080205_load_test_runs.sql"
+    },
+    {
+      "object": "ops.load_test_runs.scenario_name",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606080205_load_test_runs.sql"
+    },
+    {
+      "object": "ops.load_test_runs.started_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606080205_load_test_runs.sql"
+    },
+    {
+      "object": "ops.load_test_runs.status",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606080205_load_test_runs.sql"
+    },
+    {
+      "object": "ops.load_test_runs.thresholds_passed",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606080205_load_test_runs.sql"
+    },
+    {
+      "object": "ops.load_test_runs.uuid",
+      "kind": "COLUMN",
+      "verdict": "weak",
       "migration": "202606080205_load_test_runs.sql"
     },
     {
       "object": "org.companies.eld_provider",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "0304_compliance_dashboard.sql"
     },
     {
       "object": "org.companies.ifta_license_number",
       "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0304_compliance_dashboard.sql"
+    },
+    {
+      "object": "org.companies.irp_account_number",
+      "kind": "COLUMN",
+      "verdict": "weak",
       "migration": "0304_compliance_dashboard.sql"
     },
     {
       "object": "org.companies.scac_code",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "0304_compliance_dashboard.sql"
     },
     {
       "object": "org.companies.ucr_filing_year",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "0304_compliance_dashboard.sql"
+    },
+    {
+      "object": "outbox.outbox_queue.available_at",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0003_outbox_init.sql"
+    },
+    {
+      "object": "outbox.outbox_queue.locked_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0003_outbox_init.sql"
+    },
+    {
+      "object": "outbox.outbox_queue.processed_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0003_outbox_init.sql"
+    },
+    {
+      "object": "outbox.queue.audit_session_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0201_ds_remediate_qbo_remote_counts_canonical.sql"
+    },
+    {
+      "object": "outbox.queue.external_version",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0201_ds_remediate_qbo_remote_counts_canonical.sql"
+    },
+    {
+      "object": "outbox.queue.last_attempted_at",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0201_ds_remediate_qbo_remote_counts_canonical.sql"
+    },
+    {
+      "object": "outbox.queue.last_error_code",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0201_ds_remediate_qbo_remote_counts_canonical.sql"
+    },
+    {
+      "object": "outbox.queue.last_error_msg",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0201_ds_remediate_qbo_remote_counts_canonical.sql"
+    },
+    {
+      "object": "outbox.queue.succeeded_at",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0201_ds_remediate_qbo_remote_counts_canonical.sql"
+    },
+    {
+      "object": "payroll_integration.aggregate_cache",
+      "kind": "TABLE",
+      "verdict": "none",
+      "migration": "202606281040_payroll_integration_cache.sql"
+    },
+    {
+      "object": "payroll_integration.aggregate_cache.allocation_json",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606281040_payroll_integration_cache.sql"
+    },
+    {
+      "object": "payroll_integration.aggregate_cache.benefits_total_cents",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606281040_payroll_integration_cache.sql"
+    },
+    {
+      "object": "payroll_integration.aggregate_cache.by_person_json",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606281040_payroll_integration_cache.sql"
+    },
+    {
+      "object": "payroll_integration.aggregate_cache.driver_settlements_total_cents",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606281040_payroll_integration_cache.sql"
+    },
+    {
+      "object": "payroll_integration.aggregate_cache.grand_total_labor_cents",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606281040_payroll_integration_cache.sql"
+    },
+    {
+      "object": "payroll_integration.aggregate_cache.last_refreshed_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281040_payroll_integration_cache.sql"
+    },
+    {
+      "object": "payroll_integration.aggregate_cache.period_end",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281040_payroll_integration_cache.sql"
+    },
+    {
+      "object": "payroll_integration.aggregate_cache.period_start",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281040_payroll_integration_cache.sql"
+    },
+    {
+      "object": "payroll_integration.aggregate_cache.taxes_employer_total_cents",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606281040_payroll_integration_cache.sql"
+    },
+    {
+      "object": "payroll_integration.aggregate_cache.w2_payroll_total_cents",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606281040_payroll_integration_cache.sql"
+    },
+    {
+      "object": "payroll.driver_settlement_line_items.auto_deduction_policy_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606281000_auto_deduction_policies.sql"
     },
     {
       "object": "payroll.driver_settlements.recover_override_by",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "202606131600_settlement_capped_recovery_flag_and_override.sql"
     },
     {
       "object": "payroll.driver_settlements.recover_override_cents",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "202606131600_settlement_capped_recovery_flag_and_override.sql"
     },
     {
       "object": "payroll.driver_settlements.recover_override_reason",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "202606131600_settlement_capped_recovery_flag_and_override.sql"
-    },
-    {
-      "object": "payroll_integration.aggregate_cache",
-      "kind": "TABLE",
-      "migration": "202606281040_payroll_integration_cache.sql"
     },
     {
       "object": "public.audit_log_partitioned",
       "kind": "TABLE",
+      "verdict": "none",
+      "migration": "202606080940_block26_partition_hot_tables.sql"
+    },
+    {
+      "object": "public.audit_log_partitioned.action",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606080940_block26_partition_hot_tables.sql"
+    },
+    {
+      "object": "public.audit_log_partitioned.change_data",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606080940_block26_partition_hot_tables.sql"
+    },
+    {
+      "object": "public.audit_log_partitioned.changed_by",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606080940_block26_partition_hot_tables.sql"
+    },
+    {
+      "object": "public.audit_log_partitioned.record_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606080940_block26_partition_hot_tables.sql"
+    },
+    {
+      "object": "public.audit_log_partitioned.table_name",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606080940_block26_partition_hot_tables.sql"
+    },
+    {
+      "object": "public.audit_log.change_data",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606080940_block26_partition_hot_tables.sql"
+    },
+    {
+      "object": "public.audit_log.changed_by",
+      "kind": "COLUMN",
+      "verdict": "weak",
       "migration": "202606080940_block26_partition_hot_tables.sql"
     },
     {
       "object": "public.partition_maintenance_log",
       "kind": "TABLE",
+      "verdict": "none",
       "migration": "202606080940_block26_partition_hot_tables.sql"
+    },
+    {
+      "object": "public.partition_maintenance_log.action",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606080940_block26_partition_hot_tables.sql"
+    },
+    {
+      "object": "public.partition_maintenance_log.from_date",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606080940_block26_partition_hot_tables.sql"
+    },
+    {
+      "object": "public.partition_maintenance_log.partition_name",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606080940_block26_partition_hot_tables.sql"
+    },
+    {
+      "object": "public.partition_maintenance_log.performed_at",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606080940_block26_partition_hot_tables.sql"
+    },
+    {
+      "object": "public.partition_maintenance_log.table_name",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606080940_block26_partition_hot_tables.sql"
+    },
+    {
+      "object": "public.partition_maintenance_log.to_date",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606080940_block26_partition_hot_tables.sql"
+    },
+    {
+      "object": "qbo_archive.import_batches.jorge_signed_off_at",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0079_p5_t6_qbo_forensic_snapshot.sql"
+    },
+    {
+      "object": "qbo_archive.import_batches.jorge_signed_off_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0079_p5_t6_qbo_forensic_snapshot.sql"
+    },
+    {
+      "object": "qbo.bill_payment_mappings.mapped_at",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0162_p6_t11196_qbo_sync_runs_and_bill_payment_mappings.sql"
+    },
+    {
+      "object": "qbo.sync_alerts.resolved_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0144_qbo_sync_observability_and_alerts.sql"
+    },
+    {
+      "object": "qbo.sync_dead_letter_email_throttle.sent_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0163_p6_t11199_qbo_sync_worker_retry_outbox.sql"
+    },
+    {
+      "object": "reference.ifta_tax_rates.jurisdiction_name",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130200_block03_ifta_trip_methodology_extend.sql"
+    },
+    {
+      "object": "reference.ifta_tax_rates.surcharge_per_gallon",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130200_block03_ifta_trip_methodology_extend.sql"
+    },
+    {
+      "object": "reference.non_ifta_jurisdictions.country_code",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130200_block03_ifta_trip_methodology_extend.sql"
+    },
+    {
+      "object": "reference.non_ifta_jurisdictions.jurisdiction_name",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130200_block03_ifta_trip_methodology_extend.sql"
+    },
+    {
+      "object": "safety.anomaly_alert_rules.description",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606080211_anomaly_alert_rules.sql"
+    },
+    {
+      "object": "safety.background_checks.voided_reason",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0249_safety_background_checks.sql"
+    },
+    {
+      "object": "safety.civil_fines.voided_reason",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607110200_civil_fines_voidable.sql"
+    },
+    {
+      "object": "safety.company_violations.evidence_doc_ids",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0050_two_section_v5_and_safety_restructure.sql"
+    },
+    {
+      "object": "safety.complaints.resolved_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0050_two_section_v5_and_safety_restructure.sql"
+    },
+    {
+      "object": "safety.csa_scores.source_url",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0051_p3_t11_17_2_safety_v6_4_schema.sql"
+    },
+    {
+      "object": "safety.driver_documents.voided_reason",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0250_safety_training_records.sql"
+    },
+    {
+      "object": "safety.driver_safety_profiles.background_due_count",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0246_safety_driver_profile.sql"
+    },
+    {
+      "object": "safety.driver_safety_profiles.hire_date",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0246_safety_driver_profile.sql"
+    },
+    {
+      "object": "safety.driver_safety_profiles.profile_status",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0246_safety_driver_profile.sql"
+    },
+    {
+      "object": "safety.driver_safety_profiles.voided_reason",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0246_safety_driver_profile.sql"
+    },
+    {
+      "object": "safety.drug_pool_selections.voided_reason",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0257_safety_drug_pool.sql"
+    },
+    {
+      "object": "safety.dvir_submissions.corrects_dvir_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0344_safety_dvir.sql"
+    },
+    {
+      "object": "safety.dvir_submissions.geo_lat",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0344_safety_dvir.sql"
+    },
+    {
+      "object": "safety.dvir_submissions.geo_lng",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0344_safety_dvir.sql"
+    },
+    {
+      "object": "safety.hos_exceptions.voided_reason",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0258_safety_hos_exceptions.sql"
+    },
+    {
+      "object": "safety.integrity_observations.observation_data",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0051_p3_t11_17_2_safety_v6_4_schema.sql"
+    },
+    {
+      "object": "safety.integrity_observations.observation_type",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0051_p3_t11_17_2_safety_v6_4_schema.sql"
+    },
+    {
+      "object": "safety.integrity_observations.severity",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0051_p3_t11_17_2_safety_v6_4_schema.sql"
+    },
+    {
+      "object": "safety.integrity_observations.source_view",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0051_p3_t11_17_2_safety_v6_4_schema.sql"
+    },
+    {
+      "object": "safety.integrity_observations.subject_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0051_p3_t11_17_2_safety_v6_4_schema.sql"
+    },
+    {
+      "object": "safety.integrity_observations.subject_type",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0051_p3_t11_17_2_safety_v6_4_schema.sql"
+    },
+    {
+      "object": "safety.internal_fines.voided_reason",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0050_two_section_v5_and_safety_restructure.sql"
+    },
+    {
+      "object": "safety.random_pool.completed_test_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0270_safety_drug_program.sql"
+    },
+    {
+      "object": "safety.training_programs.voided_reason",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0256_safety_training_programs.sql"
+    },
+    {
+      "object": "samsara.vehicle_state_miles.samsara_vehicle_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0372_ifta_quarterly_preparation.sql"
+    },
+    {
+      "object": "samsara.vehicle_state_miles.unit_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0372_ifta_quarterly_preparation.sql"
     },
     {
       "object": "settlement.settlement_line.dispute_resolved_at",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "202606120600_d1_settlement_approval.sql"
     },
     {
       "object": "settlement.settlement_line.dispute_resolved_by",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "202606120600_d1_settlement_approval.sql"
     },
     {
       "object": "settlement.settlement_line.disputed_at",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "202606120600_d1_settlement_approval.sql"
     },
     {
       "object": "settlement.settlement_line.disputed_by",
       "kind": "COLUMN",
+      "verdict": "none",
       "migration": "202606120600_d1_settlement_approval.sql"
     },
     {
       "object": "settlements.team_split_configs",
       "kind": "TABLE",
+      "verdict": "none",
       "migration": "202606281010_team_split_configs.sql"
     },
     {
       "object": "settlements.team_split_load_overrides",
       "kind": "TABLE",
+      "verdict": "none",
       "migration": "202606281010_team_split_configs.sql"
+    },
+    {
+      "object": "settlements.team_split_load_overrides.load_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281010_team_split_configs.sql"
+    },
+    {
+      "object": "settlements.team_split_load_overrides.primary_driver_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281010_team_split_configs.sql"
+    },
+    {
+      "object": "settlements.team_split_load_overrides.primary_ratio",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281010_team_split_configs.sql"
+    },
+    {
+      "object": "settlements.team_split_load_overrides.reason",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281010_team_split_configs.sql"
+    },
+    {
+      "object": "settlements.team_split_load_overrides.secondary_driver_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281010_team_split_configs.sql"
+    },
+    {
+      "object": "settlements.team_split_load_overrides.secondary_ratio",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281010_team_split_configs.sql"
+    },
+    {
+      "object": "tasks.note.is_internal",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111055_w1b_tasks_module.sql"
+    },
+    {
+      "object": "tasks.note.note_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606111055_w1b_tasks_module.sql"
+    },
+    {
+      "object": "tasks.status_history.history_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606111055_w1b_tasks_module.sql"
     },
     {
       "object": "tasks.task_type_seed",
       "kind": "TABLE",
+      "verdict": "none",
       "migration": "202606120001_tasks_planner_v3.sql"
+    },
+    {
+      "object": "tasks.task_type_seed.name",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606120001_tasks_planner_v3.sql"
+    },
+    {
+      "object": "tasks.task.assigned_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606111055_w1b_tasks_module.sql"
+    },
+    {
+      "object": "tasks.task.completion_notes",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606111055_w1b_tasks_module.sql"
+    },
+    {
+      "object": "telematics.vehicle_driver_pairing_overlap_flags.detected_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606080217_vehicle_driver_pairing_audit.sql"
+    },
+    {
+      "object": "telematics.vehicle_driver_pairing_overlap_flags.resolved_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606080217_vehicle_driver_pairing_audit.sql"
+    },
+    {
+      "object": "usmca_ops.activation_audit.checklist_snapshot",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606080244_usmca_ops_schema_grant.sql"
+    },
+    {
+      "object": "usmca_ops.activation_state.pilot_driver_ids",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606080244_usmca_ops_schema_grant.sql"
+    },
+    {
+      "object": "usmca_ops.activation_state.qbo_subaccount_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606080244_usmca_ops_schema_grant.sql"
+    },
+    {
+      "object": "usmca_ops.activation_state.rollback_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606080244_usmca_ops_schema_grant.sql"
     }
   ]
 }

@@ -1,9 +1,10 @@
 {
-  "_doc": "BASELINE of pre-existing LINKAGE BREAKS. DEBT REGISTER, not approval. NEW breaks fail the build. Wire an edge and DELETE its entry. SCOPE: this guard proves SCHEMA REACHABILITY only -- it cannot prove rows are populated or that reverse UI exists. Population + reverse drill-through are separate audits.",
+  "_doc": "BASELINE of pre-existing LINKAGE BREAKS and UNENFORCED MONEY POINTERS. DEBT REGISTER, not approval. NEW breaks fail the build. Wire an edge and DELETE its entry.",
   "_law": "CLAUDE.md 10a/10d Total Connectivity",
   "_captured": "2026-07-21",
-  "_corrected": "manifest overreach removed 2026-07-21 after review: driverless expenses, non-load bills/invoices, and non-claim legal matters are LAWFUL and are no longer required edges.",
-  "count": 7,
+  "_scope": "SCHEMA REACHABILITY ONLY. It cannot prove rows are populated, that a poster runs, or that reverse drill-through exists in the UI. LAW 0: prod wins over migrations, and prod has diverged \u2014 a pass here is not a statement about prod's FK graph. Never cite this guard as proof the books are wired.",
+  "_corrected": "2026-07-21 review: (1) the unenforced-pointer detector was defined but NEVER CALLED while three real findings (settlement_lines.posting_account_id, fuel_transactions.vendor_id, accident_reports.driver_id) were removed in deference to it \u2014 it now runs and is baselined; (2) `if (have.size===0) continue` exempted zero-FK tables, the worst break, by construction \u2014 removed, which surfaced insurance.lawsuit driver+unit; (3) polymorphic gl/source satisfaction was a hardcoded table list \u2014 now derived from the linked_object_type / source_transaction_type literals that actually appear in backend source; (4) junction satisfaction accepted ANY table referencing both sides \u2014 now requires a genuine narrow link table; (5) dollar-quoted DO bodies were discarded, hiding maintenance.work_orders and safety.accident_reports entirely.",
+  "count": 9,
   "entries": [
     {
       "table": "accounting.expenses",
@@ -14,6 +15,16 @@
       "table": "insurance.claim",
       "edge": "money",
       "reason": "WO-CLAIM-MONEY \u2014 claim generates no expense/bill/JE. Deductible, legal fees, repairs never reach the books from the claim."
+    },
+    {
+      "table": "insurance.lawsuit",
+      "edge": "driver",
+      "reason": "WO-CLAIM-MONEY \u2014 lawsuit carries claim_id and court text only; the driver involved is not reachable from the suit. Surfaced after the zero-FK exemption was removed."
+    },
+    {
+      "table": "insurance.lawsuit",
+      "edge": "unit",
+      "reason": "WO-CLAIM-MONEY \u2014 the unit involved is not reachable from the suit. Surfaced after the zero-FK exemption was removed."
     },
     {
       "table": "insurance.lawsuit",
@@ -39,6 +50,202 @@
       "table": "safety.accident_reports",
       "edge": "money",
       "reason": "WO-CLAIM-MONEY \u2014 accident generates no cost record (driver_id exists but UNENFORCED, see pointer register)."
+    }
+  ],
+  "unenforced_pointers_count": 48,
+  "_pointer_doc": "A money-critical uuid declared with NO FOREIGN KEY. It accepts any value and dangles when its target is removed: wired in a column list, not in the database. Fixing these is additive-migration work (ADD CONSTRAINT ... NOT VALID, then VALIDATE after an orphan sweep) and is FINANCIAL CLUSTER \u2014 owner-approved, never self-merged.",
+  "unenforced_pointers": [
+    {
+      "table": "accounting.bill_lines",
+      "column": "bill_id"
+    },
+    {
+      "table": "accounting.bill_payments",
+      "column": "from_bank_account_id"
+    },
+    {
+      "table": "accounting.bill_payments",
+      "column": "payment_batch_id"
+    },
+    {
+      "table": "accounting.bills",
+      "column": "coa_account_id"
+    },
+    {
+      "table": "accounting.expenses",
+      "column": "payment_account_uuid"
+    },
+    {
+      "table": "accounting.expenses",
+      "column": "payment_term_id"
+    },
+    {
+      "table": "accounting.expenses",
+      "column": "vendor_uuid"
+    },
+    {
+      "table": "accounting.invoices",
+      "column": "bill_to_entity_id"
+    },
+    {
+      "table": "accounting.invoices",
+      "column": "deducted_via_settlement_id"
+    },
+    {
+      "table": "accounting.prepaid_assets",
+      "column": "vendor_uuid"
+    },
+    {
+      "table": "accounting.recurring_bill_generation_log",
+      "column": "generated_bill_uuid"
+    },
+    {
+      "table": "accounting.recurring_bill_templates",
+      "column": "vendor_uuid"
+    },
+    {
+      "table": "accounting.revenue_contracts",
+      "column": "customer_uuid"
+    },
+    {
+      "table": "banking.bank_transactions",
+      "column": "categorization_customer_id"
+    },
+    {
+      "table": "banking.bank_transactions",
+      "column": "categorization_gl_account_id"
+    },
+    {
+      "table": "banking.bank_transactions",
+      "column": "categorization_vendor_id"
+    },
+    {
+      "table": "banking.bank_transactions",
+      "column": "suggested_match_bill_id"
+    },
+    {
+      "table": "banking.bank_transactions",
+      "column": "suggested_match_invoice_id"
+    },
+    {
+      "table": "banking.transfers",
+      "column": "from_account_id"
+    },
+    {
+      "table": "banking.transfers",
+      "column": "to_account_id"
+    },
+    {
+      "table": "driver_finance.abandonment_chargebacks",
+      "column": "settlement_line_id"
+    },
+    {
+      "table": "driver_finance.driver_advances",
+      "column": "linked_bill_payment_id"
+    },
+    {
+      "table": "driver_finance.driver_bills",
+      "column": "settled_in_settlement_id"
+    },
+    {
+      "table": "driver_finance.driver_bills",
+      "column": "source_legacy_bill_id"
+    },
+    {
+      "table": "driver_finance.driver_settlements",
+      "column": "accounting_bill_id"
+    },
+    {
+      "table": "driver_finance.driver_settlements",
+      "column": "accounting_bill_payment_id"
+    },
+    {
+      "table": "driver_finance.settlement_disputes",
+      "column": "settlement_line_id"
+    },
+    {
+      "table": "driver_finance.settlement_lines",
+      "column": "posting_account_id"
+    },
+    {
+      "table": "driver_finance.settlement_payment_events",
+      "column": "settlement_id"
+    },
+    {
+      "table": "fuel.fuel_transactions",
+      "column": "vendor_id"
+    },
+    {
+      "table": "maintenance.internal_labor_log",
+      "column": "unit_id"
+    },
+    {
+      "table": "maintenance.wo_serialized_parts",
+      "column": "unit_id"
+    },
+    {
+      "table": "maintenance.wo_time_entries",
+      "column": "actor_vendor_id"
+    },
+    {
+      "table": "safety.accident_reports",
+      "column": "driver_id"
+    },
+    {
+      "table": "safety.background_checks",
+      "column": "driver_id"
+    },
+    {
+      "table": "safety.compliance_reminders",
+      "column": "driver_id"
+    },
+    {
+      "table": "safety.damage_continuity_chains",
+      "column": "insurance_claim_id"
+    },
+    {
+      "table": "safety.document_alert_events",
+      "column": "driver_id"
+    },
+    {
+      "table": "safety.driver_documents",
+      "column": "driver_id"
+    },
+    {
+      "table": "safety.driver_qualification_files",
+      "column": "driver_id"
+    },
+    {
+      "table": "safety.driver_safety_profiles",
+      "column": "driver_id"
+    },
+    {
+      "table": "safety.driver_w8ben",
+      "column": "driver_id"
+    },
+    {
+      "table": "safety.hos_exceptions",
+      "column": "driver_id"
+    },
+    {
+      "table": "safety.internal_fines",
+      "column": "driver_liability_id"
+    },
+    {
+      "table": "safety.medical_cards",
+      "column": "driver_id"
+    },
+    {
+      "table": "safety.photo_comparison_sessions",
+      "column": "driver_uuid"
+    },
+    {
+      "table": "safety.photo_comparison_sessions",
+      "column": "unit_uuid"
+    },
+    {
+      "table": "safety.training_records",
+      "column": "driver_id"
     }
   ]
 }
