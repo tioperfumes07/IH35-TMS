@@ -3,6 +3,7 @@ import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
 import rateLimit from "@fastify/rate-limit";
+import { CLOUDFLARE_IP_RANGES, resolveClientIp, type IpResolvable } from "./config/client-ip.js";
 import cron from "node-cron";
 import { registerPhoneAuthRoutes } from "./auth/phone-routes.js";
 import { registerEmailAuthRoutes } from "./auth/email-routes.js";
@@ -506,7 +507,11 @@ type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegE
 
 const repoRoot = resolveMonorepoRoot(import.meta.url);
 
-const app = Fastify({ logger: true });
+// trustProxy is scoped to Cloudflare's published ranges, never `true`. Without it `req.ip` is the
+// Cloudflare edge, so every per-route rate limit bucketed the whole internet into a handful of
+// egress IPs (see config/client-ip.ts). `true` would be worse than nothing — it trusts any caller's
+// X-Forwarded-For, letting a client pick its own rate-limit bucket.
+const app = Fastify({ logger: true, trustProxy: [...CLOUDFLARE_IP_RANGES] });
 attachHttpErrorMonitor(app);
 let shuttingDown = false;
 
@@ -643,7 +648,13 @@ async function main() {
   });
   // Per-route rate limiting (opt-in only: global:false → zero effect on routes that don't set
   // config.rateLimit). Applied to the task-chat write/read routes to prevent comment-spam/DoS.
-  await app.register(rateLimit, { global: false });
+  // keyGenerator: bucket by the REAL caller. Default keying is `req.ip`, which behind Cloudflare is
+  // the edge — so the ~141 opt-in limits shared buckets across all users (one busy tenant could
+  // exhaust the limit for everyone; an attacker got the same allowance as the entire user base).
+  await app.register(rateLimit, {
+    global: false,
+    keyGenerator: (req) => resolveClientIp(req as unknown as IpResolvable),
+  });
   await registerSessionMiddleware(app);
   // G3-1 CSRF guard — must be registered BEFORE route plugins so the onRequest hook
   // propagates into every child context. Only engages on cookie-authenticated,
