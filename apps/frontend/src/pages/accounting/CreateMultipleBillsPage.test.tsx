@@ -86,6 +86,12 @@ describe("CreateMultipleBillsPage", () => {
         vendor_id: "ven-1",
         bill_date: "2026-05-27",
         amount_cents: 12500,
+        lines: [
+          expect.objectContaining({
+            amount_cents: 12500,
+            section: "A",
+          }),
+        ],
       })
     );
   });
