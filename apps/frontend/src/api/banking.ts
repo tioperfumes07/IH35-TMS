@@ -50,6 +50,8 @@ export type PlaidBankTransaction = {
   matched_load_id: string | null;
   matched_bill_id: string | null;
   matched_settlement_id: string | null;
+  /** Stamped when categorize→GL posts via bank_categorization (Law §9 reverse → JE). */
+  matched_journal_entry_id?: string | null;
   institution_name?: string | null;
   account_name?: string | null;
   account_mask?: string | null;
