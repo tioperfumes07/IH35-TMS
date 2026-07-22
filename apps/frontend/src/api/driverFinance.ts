@@ -472,3 +472,77 @@ export function settleAndPay(settlementId: string, operatingCompanyId: string) {
     { method: "POST", body: { operating_company_id: operatingCompanyId } }
   );
 }
+
+// ── Settlement pay-run close / preview (LAW-E2E #3168 hop 3) ─────────────────
+
+export type PayRunNetBreakdown = {
+  gross_cents: number;
+  deductions_cents: number;
+  chargebacks_cents: number;
+  advance_recoveries_cents: number;
+  escrow_contribution_cents: number;
+  escrow_balance_before_cents: number;
+  net_cents: number;
+};
+
+export type PayRunJeLegPreview = {
+  account_id: string;
+  debit_or_credit: "debit" | "credit";
+  amount_cents: number;
+  description: string;
+};
+
+export type SettlementPayRunResult = {
+  result: "previewed" | "posted";
+  posting_enabled: boolean;
+  settlement_id: string;
+  journal_entry_id: string | null;
+  payrun_gl_run_id: string | null;
+  breakdown: PayRunNetBreakdown;
+  recovered_advance_ids: string[];
+  je_preview: PayRunJeLegPreview[];
+  disbursement: {
+    recorded: boolean;
+    payment_method_id: string | null;
+    payment_method_name: string | null;
+  };
+};
+
+/** CoA designation / role-binding failures — fail-loud; operator must open CoA Roles (never invent). */
+export const PAYRUN_COA_ERROR_CODES = new Set([
+  "DRIVER_PAY_ACCOUNT_MISSING",
+  "DEDUCTION_RECOVERY_ACCOUNT_MISSING",
+  "ADVANCE_CLEARING_ACCOUNT_MISSING",
+  "CHARGEBACK_RECOVERY_ACCOUNT_MISSING",
+]);
+
+export function previewSettlementPayRun(
+  settlementId: string,
+  companyId: string,
+  options: { payment_method_id?: string | null; standard_escrow_contribution_cents?: number } = {}
+) {
+  const params = new URLSearchParams({ operating_company_id: companyId });
+  if (options.payment_method_id) params.set("payment_method_id", options.payment_method_id);
+  if (options.standard_escrow_contribution_cents != null) {
+    params.set("standard_escrow_contribution_cents", String(options.standard_escrow_contribution_cents));
+  }
+  return apiRequest<SettlementPayRunResult>(
+    `/api/v1/driver-finance/settlements/${encodeURIComponent(settlementId)}/payrun-preview?${params.toString()}`
+  );
+}
+
+export function closeSettlementPayRun(
+  settlementId: string,
+  payload: {
+    operating_company_id: string;
+    payment_method_id?: string | null;
+    standard_escrow_contribution_cents?: number;
+    payment_reference?: string | null;
+    bank_txn_id?: string | null;
+  }
+) {
+  return apiRequest<SettlementPayRunResult>(
+    `/api/v1/driver-finance/settlements/${encodeURIComponent(settlementId)}/payrun-close`,
+    { method: "POST", body: payload }
+  );
+}

@@ -105,6 +105,8 @@ export type SettlementPayRunResult = {
   posting_enabled: boolean;
   settlement_id: string;
   journal_entry_id: string | null;
+  /** Present when a payrun_gl_runs row was claimed or already existed (flag ON path only). */
+  payrun_gl_run_id: string | null;
   breakdown: PayRunNetBreakdown;
   recovered_advance_ids: string[];
   je_preview: PayRunJeLegPreview[];
@@ -443,6 +445,7 @@ export async function closeSettlementPayRun(
         posting_enabled: false,
         settlement_id: settlementId,
         journal_entry_id: null,
+        payrun_gl_run_id: null,
         breakdown,
         recovered_advance_ids: recoverable.map((a) => a.id),
         je_preview: legs,
@@ -476,6 +479,7 @@ export async function closeSettlementPayRun(
         posting_enabled: true,
         settlement_id: settlementId,
         journal_entry_id: existing.rows[0]?.journal_entry_id ?? null,
+        payrun_gl_run_id: existing.rows[0]?.id ?? null,
         breakdown,
         recovered_advance_ids: [],
         je_preview: legs,
@@ -565,6 +569,7 @@ export async function closeSettlementPayRun(
       posting_enabled: true,
       settlement_id: settlementId,
       journal_entry_id: je.id,
+      payrun_gl_run_id: payrunRunId,
       breakdown,
       recovered_advance_ids: recoveredIds,
       je_preview: legs,
