@@ -11,6 +11,8 @@ import { TotalsStack } from "../forms/shared/TotalsStack";
 import { BILL_TYPE_TABS, TypeTabBar } from "../forms/shared/TypeTabBar";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { vendorReferenceOption } from "../parity/referenceOptionLabels";
+import { Combobox } from "../Combobox";
+import { CreateDriverModal } from "../drivers/CreateDriverModal";
 import { SelectCombobox } from "../shared/SelectCombobox";
 import { UploadZone } from "../UploadZone";
 import { companyToday } from "../../lib/businessDate";
@@ -127,6 +129,7 @@ export function VendorBillForm({
   const [loadNumber, setLoadNumber] = useState("");
   const [driverId, setDriverId] = useState("");
   const [unitId, setUnitId] = useState(linkedUnitId ?? "");
+  const [driverCreateOpen, setDriverCreateOpen] = useState(false);
   const [classId, setClassId] = useState<string | null>(null);
   const [className, setClassName] = useState("");
   const [accountId, setAccountId] = useState<string | null>(null);
@@ -176,6 +179,15 @@ export function VendorBillForm({
   const vendorOptions = useMemo(
     () => (vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption),
     [vendorsQuery.data?.vendors]
+  );
+
+  const driverOptions = useMemo(
+    () =>
+      (driversQuery.data?.drivers ?? []).map((driver) => ({
+        value: driver.id,
+        label: [driver.first_name, driver.last_name].filter(Boolean).join(" ").trim() || driver.id,
+      })),
+    [driversQuery.data?.drivers]
   );
 
   // A/P account picker — Liability / AccountsPayable postable accounts (canonical catalogs.accounts).
@@ -267,6 +279,7 @@ export function VendorBillForm({
   }
 
   return (
+    <>
     <form className="space-y-3" onSubmit={handleSubmit}>
       {linkedWoDisplayId ? (
         <div className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700">
@@ -374,18 +387,18 @@ export function VendorBillForm({
 
         <div className="md:col-span-6 h-2" />
         <Field label="Driver">
-          <SelectCombobox
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
-            value={driverId}
-            onChange={(event) => setDriverId(event.target.value)}
-          >
-            <option value="">Select driver...</option>
-            {(driversQuery.data?.drivers ?? []).map((driver) => (
-              <option key={driver.id} value={driver.id}>
-                {[driver.first_name, driver.last_name].filter(Boolean).join(" ").trim() || driver.id}
-              </option>
-            ))}
-          </SelectCombobox>
+          <Combobox
+            options={driverOptions}
+            value={driverId || null}
+            onChange={(next) => setDriverId(next ?? "")}
+            placeholder="Select driver..."
+            loading={driversQuery.isLoading}
+            allowClear
+            allowAddNew={{
+              label: "+ Create driver",
+              onAdd: () => setDriverCreateOpen(true),
+            }}
+          />
         </Field>
         <Field label="Unit">
           <SelectCombobox
@@ -462,6 +475,17 @@ export function VendorBillForm({
         </button>
       </div>
     </form>
+    <CreateDriverModal
+      open={driverCreateOpen}
+      companyId={operatingCompanyId}
+      onClose={() => setDriverCreateOpen(false)}
+      onCreated={(createdId) => {
+        setDriverId(createdId);
+        setDriverCreateOpen(false);
+        void driversQuery.refetch();
+      }}
+    />
+    </>
   );
 }
 

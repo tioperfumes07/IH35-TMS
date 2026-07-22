@@ -28,6 +28,9 @@ Linearized onto `origin/main` overnight:
 
 - ItemEditor Product & Service Categories create restored to `qboCategoriesCatalogClient.create` (NOT QuickCreate createKind=category / CoA)
 - CHROME-03: Bills / Expenses / Invoices / Payments / Manual JE / Bill Payments / Factoring → CollapsedListFilters
+- CHROME-06: Transfers, Arriving Soon, AssetFilters, settlement disputes, dispute queue
+- CHROME-10: CostBreakdownBox nested amount borders flattened
+- VendorBillForm driver → Combobox +CreateDriverModal
 - Banking Workflow-B archived forms vendor → ReferenceSelect
 
 ## Remaining (morning)
