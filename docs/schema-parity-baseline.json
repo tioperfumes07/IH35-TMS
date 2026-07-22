@@ -4980,14 +4980,20 @@
       "asset_id",
       "claim_number",
       "created_at",
+      "deductible_cents",
       "driver_id",
+      "driver_responsible",
+      "fault",
       "id",
       "load_id",
       "notes",
       "policy_id",
+      "recovery_rail",
+      "repair_books_treatment",
       "reported_date",
       "status",
-      "tenant_id"
+      "tenant_id",
+      "trailer_id"
     ],
     "insurance.coi_request": [
       "created_at",
