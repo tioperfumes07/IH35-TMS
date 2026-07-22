@@ -354,11 +354,13 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             acct.account_number                          AS expense_account_number,
             acct.account_name                            AS expense_account_name
           FROM accounting.expense_lines el
-          ${hasExpenseAccount ? "LEFT JOIN catalogs.accounts acct ON acct.id = el.expense_account_uuid" : "LEFT JOIN catalogs.accounts acct ON false"}
+          ${hasExpenseAccount
+            ? "LEFT JOIN catalogs.accounts acct ON acct.id = el.expense_account_uuid AND acct.operating_company_id = $2::uuid"
+            : "LEFT JOIN catalogs.accounts acct ON acct.operating_company_id = $2::uuid AND false"}
           WHERE el.expense_id = $1::uuid
           ORDER BY el.line_sequence ASC
         `,
-        [params.data.id]
+        [params.data.id, q.operating_company_id]
       );
 
       return { expense, lines: linesRes.rows };
