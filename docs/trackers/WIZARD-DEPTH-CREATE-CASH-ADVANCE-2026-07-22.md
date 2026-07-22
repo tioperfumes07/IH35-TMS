@@ -40,10 +40,13 @@ Canonical master plan: `docs/trackers/FULL-SYSTEM-AUDIT-AND-WIRING-MASTER-PLAN-2
 | Field | Create Advance POST today | Needed |
 |-------|---------------------------|--------|
 | `load_id` | absent | add (nullable UUID) → stamp `driver_advances.load_id` |
+| `unit_id` / `trailer_id` | absent | add for trip/ops (fuel/lumper) |
 | `from_bank_account_id` / disbursement account | absent | add for transfer method |
 | `recovery_mode` `full` \| `amortize` | absent (schedule always required) | add; when `full`, schedule optional / single period |
+| `economic_routing` `driver_settlement` \| `load_expense` | absent | purpose→books; lumper = load_expense (expense JE HOLD) |
+| purpose `lumper` | absent | add; requires load |
 
-Financial cluster: schema/API changes → **build-and-HOLD** if migration; prefer additive columns already on `driver_advances` if present.
+Financial cluster: schema/API changes → **build-and-HOLD** if migration; prefer additive columns already on `driver_advances` if present. Prod verified 2026-07-22: `load_id` exists; unit/trailer/bank/recovery/economic_routing **missing** → additive migration `202607720000_driver_advance_wizard_depth.sql` (owner Neon-apply required). Lumper expense GL posting remains HOLD.
 
 ## Fix block
 
