@@ -3,6 +3,10 @@ import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 import { resolveAccountForCategory } from "./expense-category-map/resolver.service.js";
 import { resolveBillLineDebitAccount, BillLineAccountError } from "./bill-account-resolver.js";
+import {
+  assertLoadRevenueHasSourceLoad,
+  InvoiceLoadSourceRequiredError as SharedInvoiceLoadSourceError,
+} from "./invoice-linkage-guards.js";
 import { resolveReversalDate, todayIso } from "./void.service.js";
 
 // CHAIN-05 (BLOCK-03) adds "bank_categorization" (a categorized bank-feed line → direction-aware balanced
@@ -75,6 +79,7 @@ export type PostingErrorCode =
   | "ADVANCE_NOT_POSTING_ELIGIBLE"
   | "BILL_LINE_ACCOUNT_UNRESOLVED"
   | "INVOICE_LINE_REVENUE_UNRESOLVED"
+  | "INVOICE_LOAD_SOURCE_REQUIRED"
   | "EXPENSE_NOT_POSTING_ELIGIBLE"
   | "BANK_CATEGORIZATION_NOT_POSTING_ELIGIBLE"
   | "TRANSFER_NOT_POSTING_ELIGIBLE";
@@ -113,11 +118,23 @@ export class InvoiceRevenueAccountError extends PostingEngineError {
           `(display_order=${displayOrder ?? "?"}, qbo_item_id=${qboItemId ?? "none"}) has no mapped, ` +
           `active income account for operating_company_id=${operatingCompanyId}. Map the line's ` +
           `Product/Service item to an income account (catalogs.items.default_income_account_id) or set ` +
-          `the line's account_id — refusing to post revenue to a default account.`
+          `the line's account_id — refusing to post revenue to a default account (HOLD designate if ` +
+          `role/map missing; do not invent CoA accounts).`
     );
     this.invoice_line_id = invoiceLineId;
     this.display_order = displayOrder;
     this.qbo_item_id = qboItemId;
+  }
+}
+
+export class InvoiceLoadSourceRequiredError extends PostingEngineError {
+  constructor(detail?: string) {
+    super(
+      "INVOICE_LOAD_SOURCE_REQUIRED",
+      detail ??
+        "invoice_load_source_required: load-revenue invoice lines require accounting.invoices.source_load_id " +
+          "(create via from-load) — refusing orphan load revenue post."
+    );
   }
 }
 
@@ -514,6 +531,16 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
     [sourceId, operatingCompanyId]
   );
 
+  // P-INVOICE P0 (#3177): load-revenue lines fail closed without source_load_id (Law §9 load hop).
+  try {
+    assertLoadRevenueHasSourceLoad(invoice.source_load_id, lineRows.rows);
+  } catch (err) {
+    if (err instanceof SharedInvoiceLoadSourceError) {
+      throw new InvoiceLoadSourceRequiredError(err.message);
+    }
+    throw err;
+  }
+
   const descriptionBase = invoice.display_id ? `Invoice ${invoice.display_id}` : `Invoice ${sourceId}`;
   const accountResolutionTrace: Array<Record<string, unknown>> = [];
   const revenueCredits: PostingLineDraft[] = [];
@@ -526,7 +553,7 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
     const lineCents = row.line_total_cents != null ? Number(row.line_total_cents) : 0;
     if (lineCents <= 0) continue; // non-revenue-bearing line (zero/credit) — nothing to post.
     if (!row.income_account_id) {
-      // HARD FAIL — no default. Refuse to post revenue to a generic account.
+      // HARD FAIL — no default. Refuse to post revenue to a generic / invented account.
       throw new InvoiceRevenueAccountError(operatingCompanyId, row.id, row.display_order, row.qbo_item_id);
     }
     revenueCredits.push({
