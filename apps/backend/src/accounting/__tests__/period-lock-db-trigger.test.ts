@@ -18,6 +18,8 @@ const COMPANY_ID = "91e0bf0a-133f-4ce8-a734-2586cfa66d96";
 const INVOICE_ID = "aaaa0000-0000-4000-8000-000000000001";
 const ACTOR_ID = "cccc0000-0000-4000-8000-000000000001";
 
+const LOAD_ID = "bbbb0000-0000-4000-8000-000000000099";
+
 function makeInvoiceRow(overrides?: Record<string, unknown>) {
   return {
     id: INVOICE_ID,
@@ -25,7 +27,8 @@ function makeInvoiceRow(overrides?: Record<string, unknown>) {
     issue_date: "2026-04-15",
     total_cents: 50000,
     display_id: "INV-2026-00099",
-    source_load_id: null,
+    // P-INVOICE P0: linehaul revenue requires source_load_id (fail-closed before period lock).
+    source_load_id: LOAD_ID,
     ...overrides,
   };
 }
