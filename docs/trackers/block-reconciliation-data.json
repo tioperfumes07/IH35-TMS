@@ -1,12 +1,12 @@
 {
- "date": "2026-07-21",
- "generated_at_iso": "2026-07-21T23:10:09.416Z",
+ "date": "2026-07-22",
+ "generated_at_iso": "2026-07-22T00:17:54.581Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
-  "NEEDS-VERIFY": 64,
-  "DONE": 669,
-  "AUDIT-NOTE": 424
+  "NEEDS-VERIFY": 69,
+  "DONE": 670,
+  "AUDIT-NOTE": 418
  },
  "universe": {
   "total_blocks_after_dedup": 1191,
@@ -28,14 +28,14 @@
   {
    "id": "BANK-18-DESIGNVIEW-QBO-PARITY",
    "status": "DONE",
-   "pr": null,
+   "pr": 3131,
    "registered_on": "2026-07-11",
    "title": ""
   },
   {
    "id": "BANK-18-KEYSTONE-CATEGORIZE-REGISTER",
-   "status": "NEEDS-VERIFY",
-   "pr": null,
+   "status": "DONE",
+   "pr": 3131,
    "registered_on": "2026-07-11",
    "title": ""
   },
@@ -599,6 +599,17 @@
    "pr": 2651
   },
   {
+   "id": "0091-m-lists-2",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #3127 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 3127
+  },
+  {
    "id": "0243-g7-4-empty-e2e-specs-false-green",
    "source": ".block-ready",
    "fin": true,
@@ -643,15 +654,37 @@
    "pr": 2671
   },
   {
-   "id": "BANK-18-KEYSTONE-CATEGORIZE-REGISTER",
+   "id": "0441-mod8-tx-fields-captured-not-sent",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "2/4 signature file(s) on main — partial, unverified",
+   "evidence": "PR #3124 title-match only, unverified",
    "name": "",
-   "registered_on": "2026-07-11",
-   "pr": null
+   "registered_on": null,
+   "pr": 3124
+  },
+  {
+   "id": "audit2-internal-controls-approval-workflow",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #3128 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 3128
+  },
+  {
+   "id": "audit9-expense-validation-duplicate-detection",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #3143 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 3143
   },
   {
    "id": "BLOCK-02-DRIVER-ESCROW-DESIGN",
@@ -712,9 +745,9 @@
    "fin": true,
    "tier": "1",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #2521 title-match only, unverified",
+   "evidence": "PR #3142 title-match only, unverified",
    "name": "CONNECTIONS / TASK 3 — Relay internal-bank + diesel codes",
-   "pr": 2521
+   "pr": 3142
   },
   {
    "id": "consolidate-distributed-modules-fuel-tasks-fin",
@@ -781,6 +814,28 @@
    "name": "",
    "registered_on": null,
    "pr": 2673
+  },
+  {
+   "id": "flow6-auto-invoice-sending",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #3140 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 3140
+  },
+  {
+   "id": "flow6-auto-payment-application",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #3140 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 3140
   },
   {
    "id": "fuel-1-planner-diagram-empty-state",
@@ -1986,7 +2041,18 @@
    "evidence": "all 2 file(s) on main",
    "name": "",
    "registered_on": "2026-07-11",
-   "pr": null
+   "pr": 3131
+  },
+  {
+   "id": "BANK-18-KEYSTONE-CATEGORIZE-REGISTER",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 4 file(s) on main",
+   "name": "",
+   "registered_on": "2026-07-11",
+   "pr": 3131
   },
   {
    "id": "BANK-SORT-ROLLOUT-ACCT",
@@ -8903,17 +8969,6 @@
    "pr": null
   },
   {
-   "id": "0091-m-lists-2",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "0091-m-woid-1",
    "source": ".block-ready",
    "fin": true,
@@ -10773,17 +10828,6 @@
    "pr": null
   },
   {
-   "id": "0441-mod8-tx-fields-captured-not-sent",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "0441-mod9-create-trailer-no-manual-path",
    "source": ".block-ready",
    "fin": true,
@@ -11367,17 +11411,6 @@
    "pr": null
   },
   {
-   "id": "audit2-internal-controls-approval-workflow",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "audit4-tax-return-automation",
    "source": ".block-ready",
    "fin": true,
@@ -11412,17 +11445,6 @@
   },
   {
    "id": "audit8-revenue-leakage-detection",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "audit9-expense-validation-duplicate-detection",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -12248,28 +12270,6 @@
   },
   {
    "id": "flow5-dual-deduction-systems-consolidate",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "flow6-auto-invoice-sending",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "flow6-auto-payment-application",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -13161,6 +13161,144 @@
   }
  ],
  "merged_prs": [
+  {
+   "number": 3147,
+   "title": "docs(accounting): drain verify-then-build verdicts 2026-07-21 [DO NOT MERGE — builder]",
+   "mergedAt": "2026-07-22T00:15:54Z",
+   "branch": "docs/accounting-drain-verdicts-2026-07-21"
+  },
+  {
+   "number": 3144,
+   "title": "[HOLD-FOR-JORGE] docs(design): parts inventory → accounting (GL valuation / COGS) linkage (0441-mod13-inventory-accounting-none)",
+   "mergedAt": "2026-07-22T00:15:50Z",
+   "branch": "design/mod13-parts-inventory-accounting-hold"
+  },
+  {
+   "number": 3143,
+   "title": "[HOLD-FOR-JORGE] docs(design): expense duplicate-detection + expense-policy enforcement (audit9-expense-validation-duplicate-detection)",
+   "mergedAt": "2026-07-22T00:15:45Z",
+   "branch": "design/audit9-expense-duplicate-detection-hold"
+  },
+  {
+   "number": 3142,
+   "title": "docs(banking) [HOLD-FOR-JORGE]: DESIGN HOLD — CONN-3 Relay internal bank, owner questions only",
+   "mergedAt": "2026-07-22T00:15:40Z",
+   "branch": "design/conn-3-relay-internal-bank-hold"
+  },
+  {
+   "number": 3141,
+   "title": "[HOLD-FOR-JORGE] fix(grants): revoke PUBLIC UPDATE/DELETE on audit trail + GL-run anchors",
+   "mergedAt": "2026-07-22T00:16:49Z",
+   "branch": "fix/revoke-public-write-append-only"
+  },
+  {
+   "number": 3140,
+   "title": "[HOLD-FOR-JORGE] docs(design): auto-apply customer payments (FIFO) + unapplied-payment alerts (flow6-auto-payment-application)",
+   "mergedAt": "2026-07-22T00:15:34Z",
+   "branch": "design/flow6-auto-payment-application-hold"
+  },
+  {
+   "number": 3139,
+   "title": "docs(banking): remaining disposition report — STALE/SKIP/HOLD map (9/24 pending pile items)",
+   "mergedAt": "2026-07-22T00:15:28Z",
+   "branch": "docs/banking-remaining-disposition-2026-07-21"
+  },
+  {
+   "number": 3138,
+   "title": "docs(accounting): WAVE 2 verify 10 priority financial GAPs vs origin/main (3 STALE · 1 COVERED · 3 DESIGN · 3 open) — do not merge",
+   "mergedAt": "2026-07-22T00:15:24Z",
+   "branch": "docs/accounting-drain-verify-wave2-2026-07-21"
+  },
+  {
+   "number": 3137,
+   "title": "docs(banking): STALE evidence — banking-grid-sort shipped+guarded (misfiled) + CONN-1 defer #3135",
+   "mergedAt": "2026-07-22T00:15:16Z",
+   "branch": "docs/banking-drain-gridsort-conn1-evidence-2026-07-21"
+  },
+  {
+   "number": 3136,
+   "title": "docs(banking): STALE evidence — 0441-mod8 plaid-sign + auto-match shipped+guarded",
+   "mergedAt": "2026-07-22T00:15:08Z",
+   "branch": "docs/banking-drain-sign-automatch-stale-2026-07-21"
+  },
+  {
+   "number": 3134,
+   "title": "docs(banking): DESIGN HOLD — bank-feed 'transfer' categorization has no JE (0285-banking-transfer-gl-gap)",
+   "mergedAt": "2026-07-22T00:15:01Z",
+   "branch": "design/0285-banking-transfer-gl-hold"
+  },
+  {
+   "number": 3132,
+   "title": "docs(accounting): verify 8 audited GAP blocks vs origin/main (7 STALE, 1 open)",
+   "mergedAt": "2026-07-22T00:03:39Z",
+   "branch": "docs/accounting-drain-verify-2026-07-21"
+  },
+  {
+   "number": 3131,
+   "title": "fix(banking): BANK-18 registry truth-up + Rule-17 verify-step for categorize-capable register",
+   "mergedAt": "2026-07-22T00:04:17Z",
+   "branch": "fix/bank18-registry-truth-categorize-guard"
+  },
+  {
+   "number": 3128,
+   "title": "[HOLD-FOR-JORGE] design(audit2-internal-controls): safe mount of settlements/approval.routes.ts — DESIGN HOLD (docs-only; 6/9 handlers unscoped)",
+   "mergedAt": "2026-07-22T00:16:09Z",
+   "branch": "design/settlement-approval-safe-mount-hold"
+  },
+  {
+   "number": 3127,
+   "title": "[HOLD-FOR-JORGE] design(0091-m-lists-2): CoA true-merge accounts — DESIGN HOLD (docs-only; current 'Merge accounts' is deactivate-only)",
+   "mergedAt": "2026-07-22T00:16:04Z",
+   "branch": "design/coa-true-merge-accounts-hold"
+  },
+  {
+   "number": 3125,
+   "title": "[HOLD-FOR-JORGE] fix(db): 202607380000 settlement_lines line_type CHECK must be true live-superset (blocks Neon apply)",
+   "mergedAt": "2026-07-21T23:31:31Z",
+   "branch": "fix/hold-202607380000-line-type-superset"
+  },
+  {
+   "number": 3124,
+   "title": "[HOLD-FOR-JORGE] feat(banking): persist categorize-panel capture fields — check no./class/location/billable/tags (0441-mod8-tx-fields-captured-not-sent)",
+   "mergedAt": "2026-07-22T00:17:06Z",
+   "branch": "fix/bank-tx-capture-fields-persisted"
+  },
+  {
+   "number": 3122,
+   "title": "[GOVERNANCE][HOLD-FOR-JORGE] docs: CHAIN-06 AR-subledger marked code-fixed (guards 920–922); stale OPEN claims corrected",
+   "mergedAt": "2026-07-21T23:29:03Z",
+   "branch": "docs/chain06-ar-subledger-code-fixed-2026-07-21"
+  },
+  {
+   "number": 3121,
+   "title": "docs(tracker): Top-10 builder evidence — verified BUILT vs HOLD map (2026-07-21) — do not merge",
+   "mergedAt": "2026-07-22T00:03:34Z",
+   "branch": "docs/top10-builder-evidence-2026-07-21"
+  },
+  {
+   "number": 3119,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-22T00:03:31Z",
+   "branch": "chore/tracker-artifacts-sync-29876196859"
+  },
+  {
+   "number": 3118,
+   "title": "fix(boot): startup drift guard must exempt HELD migrations (latent prod-outage)",
+   "mergedAt": "2026-07-22T00:04:05Z",
+   "branch": "fix/startup-drift-guard-held-exemption"
+  },
+  {
+   "number": 3117,
+   "title": "docs(tracker): NEEDS-PROD Neon verdicts 2026-07-21 (10/10 resolved)",
+   "mergedAt": "2026-07-22T00:03:28Z",
+   "branch": "docs/needs-prod-neon-verdicts-2026-07-21"
+  },
+  {
+   "number": 3115,
+   "title": "docs(tracker): NEEDS-OWNER adjudication 2026-07-21 (35 answered / 44 unanswered / 18 action-only / 9 stale)",
+   "mergedAt": "2026-07-22T00:14:53Z",
+   "branch": "docs/needs-owner-adjudication-2026-07-21"
+  },
   {
    "number": 3112,
    "title": "docs(tracker): register 2 financial findings from the 2026-07-21 merge wave (WC-REIMB, NPF-DUP)",
@@ -16622,148 +16760,88 @@
    "title": "docs(ceremony): TASK-B ledger-backfill SQL for the 8 held+applied ceremony migrations (ITEM-13)",
    "mergedAt": "2026-07-11T20:56:23Z",
    "branch": "docs/ceremony-task-b-ledger-backfill"
-  },
-  {
-   "number": 2367,
-   "title": "feat(cron): wire recon + audit-chain-verify into the in-process scheduler (Doc 16 — recon runs on its own)",
-   "mergedAt": "2026-07-11T21:05:49Z",
-   "branch": "feat/recon-inprocess-scheduler"
-  },
-  {
-   "number": 2366,
-   "title": "fix(qbo): token-refresh cron selects on access_token_expires_at (P0 — connection stays live)",
-   "mergedAt": "2026-07-11T20:54:00Z",
-   "branch": "fix/qbo-token-refresh-access-token"
-  },
-  {
-   "number": 2365,
-   "title": "[REVIEW-FOR-JORGE] feat(mdata): ITEM 3=B — Customers/Vendors lists pinned to active company",
-   "mergedAt": "2026-07-11T20:39:10Z",
-   "branch": "feat/item3-list-active-company-scope-v2"
-  },
-  {
-   "number": 2364,
-   "title": "[HOLD-FOR-JORGE] feat(migration): VALIDATE the 8 ceremony NOT-VALID FKs (ITEM-13)",
-   "mergedAt": "2026-07-11T20:36:06Z",
-   "branch": "feat/ceremony-validate-fks"
-  },
-  {
-   "number": 2363,
-   "title": "chore(guard): lock transaction-company isolation (ITEM-14)",
-   "mergedAt": "2026-07-11T20:26:28Z",
-   "branch": "chore/guard-transaction-company-isolation"
-  },
-  {
-   "number": 2362,
-   "title": "chore(guard): lock catalogs.excel_upload_jobs FORCED-RLS contract (ITEM-2)",
-   "mergedAt": "2026-07-11T20:00:30Z",
-   "branch": "chore/guard-excel-upload-jobs-rls"
-  },
-  {
-   "number": 2361,
-   "title": "fix(ui): TIER-3 batch 4 — honest error render on 7 direct-empty list pages",
-   "mergedAt": "2026-07-11T18:50:25Z",
-   "branch": "fix/list-error-state-batch4"
-  },
-  {
-   "number": 2360,
-   "title": "fix(ui): TIER-3 batch 3 — honest error states on 8 more list pages",
-   "mergedAt": "2026-07-11T18:38:19Z",
-   "branch": "fix/list-error-state-batch3"
-  },
-  {
-   "number": 2359,
-   "title": "fix(ui): TIER-3 batch 2 — filter/search aria-labels on 8 list pages + regression guard",
-   "mergedAt": "2026-07-11T18:29:07Z",
-   "branch": "fix/tier3-batch2-filter-aria"
-  },
-  {
-   "number": 2358,
-   "title": "fix(ui): TIER-3 batch — legal breadcrumbs (8 pages) + WorkOrders/Safety filter aria-labels",
-   "mergedAt": "2026-07-11T18:16:56Z",
-   "branch": "fix/tier3-legal-breadcrumbs-a11y"
-  },
-  {
-   "number": 2357,
-   "title": "chore(tracker): mark the 7 merged owner-verified fixes DONE (honest tracker status)",
-   "mergedAt": "2026-07-11T18:05:42Z",
-   "branch": "chore/tracker-reflect-merged-fixes"
-  },
-  {
-   "number": 2356,
-   "title": "fix(accounting): FIX-06 — inline + Create sweep (ReferenceSelect) + coverage ratchet guard",
-   "mergedAt": "2026-07-11T17:53:03Z",
-   "branch": "fix/fix-06-referenceselect-sweep"
-  },
-  {
-   "number": 2355,
-   "title": "fix(ui): P4 — bills date-range filter + vendors/customers pager server-total + parallel-books doc",
-   "mergedAt": "2026-07-11T17:39:55Z",
-   "branch": "fix/p4-bills-datefilter-pager-total-doc"
-  },
-  {
-   "number": 2354,
-   "title": "fix(ui): P4 — 425c §7 header + owner-approvals owner-facing copy + home KPI AA contrast",
-   "mergedAt": "2026-07-11T17:17:34Z",
-   "branch": "fix/p4-425c-header-home-copy-contrast"
-  },
-  {
-   "number": 2353,
-   "title": "[HOLD-FOR-JORGE] fix(accounting): FIX-03 — product/service + Create populates + persists income/expense account link",
-   "mergedAt": "2026-07-11T17:30:51Z",
-   "branch": "fix/fix-03-product-service-account-link-hold"
-  },
-  {
-   "number": 2352,
-   "title": "feat(program): FIX-11 — By-Module drill-down adds Wired/Needs-design/Missing/Completeness columns",
-   "mergedAt": "2026-07-11T17:00:36Z",
-   "branch": "feat/tracker-bymodule-columns"
-  },
-  {
-   "number": 2351,
-   "title": "[HOLD-FOR-JORGE] fix(accounting): FIX-02 — category + Create opens full COA creator (Account Type + Detail Type)",
-   "mergedAt": "2026-07-11T17:14:16Z",
-   "branch": "fix/fix-02-category-coa-creator-hold"
-  },
-  {
-   "number": 2350,
-   "title": "fix(program): FIX-10 — /program defaults to the clean Program Tracker (archive old board)",
-   "mergedAt": "2026-07-11T16:49:39Z",
-   "branch": "fix/program-tracker-default-route"
-  },
-  {
-   "number": 2349,
-   "title": "fix(banking): FIX-04 — From/To column shows real from/to accounts (was echoing raw description)",
-   "mergedAt": "2026-07-11T16:46:53Z",
-   "branch": "fix/banking-from-to-accounts"
-  },
-  {
-   "number": 2348,
-   "title": "chore(registry): register 6 owner-verified fixes (P1) — appear in Program Tracker at true status",
-   "mergedAt": "2026-07-11T16:39:53Z",
-   "branch": "chore/register-coder-verified-fixes"
-  },
-  {
-   "number": 2347,
-   "title": "fix(ui): Customers/Vendors master-detail list → shared resizable QBO table",
-   "mergedAt": "2026-07-11T16:30:49Z",
-   "branch": "fix/customers-vendors-resizable-list"
-  },
-  {
-   "number": 2346,
-   "title": "feat(program): live Program Tracker page — Pending / In Progress / Completed & live / Sequence tabs",
-   "mergedAt": "2026-07-11T16:09:50Z",
-   "branch": "feat/program-tracker-page"
-  },
-  {
-   "number": 2345,
-   "title": "chore(registry): register 928 authored MASTER-6 blocks into .block-ready (honest extraction, no stubs)",
-   "mergedAt": "2026-07-11T15:36:04Z",
-   "branch": "chore/register-authored-batch1"
   }
  ],
- "merged_pr_total": 2826,
+ "merged_pr_total": 2849,
  "hold_for_jorge": [
+  {
+   "number": 3144,
+   "title": "[HOLD-FOR-JORGE] docs(design): parts inventory → accounting (GL valuation / COGS) linkage (0441-mod13-inventory-accounting-none)",
+   "mergedAt": "2026-07-22T00:15:50Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3143,
+   "title": "[HOLD-FOR-JORGE] docs(design): expense duplicate-detection + expense-policy enforcement (audit9-expense-validation-duplicate-detection)",
+   "mergedAt": "2026-07-22T00:15:45Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3142,
+   "title": "docs(banking) [HOLD-FOR-JORGE]: DESIGN HOLD — CONN-3 Relay internal bank, owner questions only",
+   "mergedAt": "2026-07-22T00:15:40Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3141,
+   "title": "[HOLD-FOR-JORGE] fix(grants): revoke PUBLIC UPDATE/DELETE on audit trail + GL-run anchors",
+   "mergedAt": "2026-07-22T00:16:49Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3140,
+   "title": "[HOLD-FOR-JORGE] docs(design): auto-apply customer payments (FIFO) + unapplied-payment alerts (flow6-auto-payment-application)",
+   "mergedAt": "2026-07-22T00:15:34Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3139,
+   "title": "docs(banking): remaining disposition report — STALE/SKIP/HOLD map (9/24 pending pile items)",
+   "mergedAt": "2026-07-22T00:15:28Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3134,
+   "title": "docs(banking): DESIGN HOLD — bank-feed 'transfer' categorization has no JE (0285-banking-transfer-gl-gap)",
+   "mergedAt": "2026-07-22T00:15:01Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3128,
+   "title": "[HOLD-FOR-JORGE] design(audit2-internal-controls): safe mount of settlements/approval.routes.ts — DESIGN HOLD (docs-only; 6/9 handlers unscoped)",
+   "mergedAt": "2026-07-22T00:16:09Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3127,
+   "title": "[HOLD-FOR-JORGE] design(0091-m-lists-2): CoA true-merge accounts — DESIGN HOLD (docs-only; current 'Merge accounts' is deactivate-only)",
+   "mergedAt": "2026-07-22T00:16:04Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3125,
+   "title": "[HOLD-FOR-JORGE] fix(db): 202607380000 settlement_lines line_type CHECK must be true live-superset (blocks Neon apply)",
+   "mergedAt": "2026-07-21T23:31:31Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3124,
+   "title": "[HOLD-FOR-JORGE] feat(banking): persist categorize-panel capture fields — check no./class/location/billable/tags (0441-mod8-tx-fields-captured-not-sent)",
+   "mergedAt": "2026-07-22T00:17:06Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3122,
+   "title": "[GOVERNANCE][HOLD-FOR-JORGE] docs: CHAIN-06 AR-subledger marked code-fixed (guards 920–922); stale OPEN claims corrected",
+   "mergedAt": "2026-07-21T23:29:03Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3121,
+   "title": "docs(tracker): Top-10 builder evidence — verified BUILT vs HOLD map (2026-07-21) — do not merge",
+   "mergedAt": "2026-07-22T00:03:34Z",
+   "category": "HOLD"
+  },
   {
    "number": 3111,
    "title": "[HOLD][docs-only] Rev-rec delivery two-event latch — Step 4 verification: PARTIAL (poster missing, owner-gated)",
