@@ -270,6 +270,7 @@ const RecurringBillList = React.lazy(() => import("../pages/accounting/bills/Rec
 const RecurringBillCreate = React.lazy(() => import("../pages/accounting/bills/RecurringBillCreate").then((m) => ({ default: m.RecurringBillCreate })));
 const ExpenseCreatePage = React.lazy(() => import("../pages/accounting/ExpenseCreatePage").then((m) => ({ default: m.ExpenseCreatePage })));
 const ExpensesListPage = React.lazy(() => import("../pages/accounting/ExpensesListPage").then((m) => ({ default: m.ExpensesListPage })));
+const ExpenseDetailPage = React.lazy(() => import("../pages/accounting/ExpenseDetailPage").then((m) => ({ default: m.ExpenseDetailPage })));
 const BillsPage = React.lazy(() => import("../pages/accounting/BillsPage").then((m) => ({ default: m.BillsPage })));
 const VendorBalancesPage = React.lazy(() => import("../pages/accounting/VendorBalancesPage").then((m) => ({ default: m.VendorBalancesPage })));
 const ManualJEListPage = React.lazy(() => import("../pages/accounting/ManualJEListPage").then((m) => ({ default: m.ManualJEListPage })));
@@ -3777,6 +3778,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <ExpensesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/expenses/:id"
+          element={
+            <ProtectedRoute>
+              <ExpenseDetailPage />
             </ProtectedRoute>
           }
         />

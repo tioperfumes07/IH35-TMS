@@ -380,7 +380,7 @@ function directResolverCase(sf) {
       node.expression.text === "expense" &&
       node.statements.length === 1 &&
       ts.isReturnStatement(node.statements[0]) &&
-      node.statements[0].expression?.getText(sf) === "`/accounting/expenses/list?expense_id=${id}`",
+      node.statements[0].expression?.getText(sf) === "`/accounting/expenses/${id}`",
   );
   return found.length === 1;
 }
@@ -649,7 +649,7 @@ export function assertContracts(sources) {
     failures.push("WorkOrderDetailPage: exported component must directly render the expense EntityLink inside linkedFinancialsQ.data.expenses.map");
   }
   if (!parsed.entityLink || !directResolverCase(parsed.entityLink)) {
-    failures.push("EntityLink: expense resolver must directly return `/accounting/expenses/list?expense_id=${id}`");
+    failures.push("EntityLink: expense resolver must directly return `/accounting/expenses/${id}`");
   }
 
   if (parsed.manifest) {
@@ -658,6 +658,7 @@ export function assertContracts(sources) {
       ["/accounting/payments/:id", "PaymentDetailPage", "../pages/accounting/PaymentDetailPage"],
       ["/accounting/audit-trail", "AccountingAuditTrailPage", "../pages/accounting/AccountingAuditTrailPage"],
       ["/accounting/expenses/list", "ExpensesListPage", "../pages/accounting/ExpensesListPage"],
+      ["/accounting/expenses/:id", "ExpenseDetailPage", "../pages/accounting/ExpenseDetailPage"],
     ]) {
       if (!directRoute(parsed.manifest, routePath, component)) {
         failures.push(`manifest: ROUTES must directly mount <Route path="${routePath}" element={<ProtectedRoute><${component} /></ProtectedRoute>} />`);
@@ -680,10 +681,10 @@ function canonicalSources() {
     payment: `export function PaymentDetailPage(){return <button onClick={()=>navigate(\`/accounting/audit-trail?source_type=customer_payment&source_id=\${encodeURIComponent(payment.id)}\`)}/>}`,
     audit: `export function AccountingAuditTrailPage(){const [searchParams]=useSearchParams();const sourceTypeParam=searchParams.get("source_type");const sourceIdParam=searchParams.get("source_id");const [sourceType,setSourceType]=useState(()=>sourceTypeParam ?? "");const [sourceId,setSourceId]=useState(()=>sourceIdParam ?? "");const eventQuery=useInfiniteQuery({queryFn:({pageParam})=>listAccountingAuditTrail(companyId,{source_transaction_type:sourceType.trim() || undefined,source_transaction_id:sourceId.trim() || undefined})});return <span>{sourceType}{sourceId}{eventQuery.data}</span>}`,
     faults: `export function FaultDraftsPage(){const [searchParams]=useSearchParams();const deepLinkUnitId=searchParams.get("unit_id");return <span>{deepLinkUnitId}</span>}`,
-    entityLink: `export function resolveEntityRoute(kind,id){switch(kind){case "expense":return \`/accounting/expenses/list?expense_id=\${id}\`;}}`,
+    entityLink: `export function resolveEntityRoute(kind,id){switch(kind){case "expense":return \`/accounting/expenses/\${id}\`;}}`,
     expensesList: `export function ExpensesListPage(){const [searchParams]=useSearchParams();const deepLinkExpenseId=searchParams.get("expense_id");const columns=[{key:"expense_number",render:(r)=><EntityLink kind="expense" id={r.id}/>}];return <span>{deepLinkExpenseId}{columns.length}</span>}`,
     woDetail: `export function WorkOrderDetailPage(){return <>{linkedFinancialsQ.data.expenses.map((expense)=><EntityLink kind="expense" id={expense.id}/>)}</>}`,
-    manifest: `const InvoiceDetailPage=React.lazy(()=>import("../pages/accounting/InvoiceDetailPage").then((m)=>({default:m.InvoiceDetailPage})));const PaymentDetailPage=React.lazy(()=>import("../pages/accounting/PaymentDetailPage").then((m)=>({default:m.PaymentDetailPage})));const AccountingAuditTrailPage=React.lazy(()=>import("../pages/accounting/AccountingAuditTrailPage").then((m)=>({default:m.AccountingAuditTrailPage})));const ExpensesListPage=React.lazy(()=>import("../pages/accounting/ExpensesListPage").then((m)=>({default:m.ExpensesListPage})));export const ROUTES=React.Children.toArray(<><Route path="/accounting/invoices/:id" element={<ProtectedRoute><InvoiceDetailPage /></ProtectedRoute>}/><Route path="/accounting/payments/:id" element={<ProtectedRoute><PaymentDetailPage /></ProtectedRoute>}/><Route path="/accounting/audit-trail" element={<ProtectedRoute><AccountingAuditTrailPage /></ProtectedRoute>}/><Route path="/accounting/expenses/list" element={<ProtectedRoute><ExpensesListPage /></ProtectedRoute>}/></>)`,
+    manifest: `const InvoiceDetailPage=React.lazy(()=>import("../pages/accounting/InvoiceDetailPage").then((m)=>({default:m.InvoiceDetailPage})));const PaymentDetailPage=React.lazy(()=>import("../pages/accounting/PaymentDetailPage").then((m)=>({default:m.PaymentDetailPage})));const AccountingAuditTrailPage=React.lazy(()=>import("../pages/accounting/AccountingAuditTrailPage").then((m)=>({default:m.AccountingAuditTrailPage})));const ExpensesListPage=React.lazy(()=>import("../pages/accounting/ExpensesListPage").then((m)=>({default:m.ExpensesListPage})));const ExpenseDetailPage=React.lazy(()=>import("../pages/accounting/ExpenseDetailPage").then((m)=>({default:m.ExpenseDetailPage})));export const ROUTES=React.Children.toArray(<><Route path="/accounting/invoices/:id" element={<ProtectedRoute><InvoiceDetailPage /></ProtectedRoute>}/><Route path="/accounting/payments/:id" element={<ProtectedRoute><PaymentDetailPage /></ProtectedRoute>}/><Route path="/accounting/audit-trail" element={<ProtectedRoute><AccountingAuditTrailPage /></ProtectedRoute>}/><Route path="/accounting/expenses/list" element={<ProtectedRoute><ExpensesListPage /></ProtectedRoute>}/><Route path="/accounting/expenses/:id" element={<ProtectedRoute><ExpenseDetailPage /></ProtectedRoute>}/></>)`,
   };
 }
 

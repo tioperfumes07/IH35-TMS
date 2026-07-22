@@ -109,7 +109,12 @@ export function ExpensesListPage() {
       sortable: true,
       // Derived display (vendor_name / driver name) — must supply sortValue or header is a no-op.
       sortValue: (r) => payeeOf(r),
-      render: (r) => <span className="font-medium text-gray-900">{payeeOf(r)}</span>,
+      render: (r) =>
+        r.vendor_uuid ? (
+          <EntityLink kind="vendor" id={r.vendor_uuid} label={r.vendor_name ?? r.vendor_uuid.slice(0, 8)} />
+        ) : (
+          <span className="font-medium text-gray-900">{payeeOf(r)}</span>
+        ),
     },
     {
       key: "line_description",
@@ -225,10 +230,7 @@ export function ExpensesListPage() {
           rowKey={(r) => r.id}
           loading={query.isLoading}
           onRowClick={(r) => {
-            setHighlightedExpenseId(r.id);
-            const next = new URLSearchParams(searchParams);
-            next.set("expense_id", r.id);
-            void navigate(`/accounting/expenses/list?${next.toString()}`, { replace: true });
+            void navigate(`/accounting/expenses/${r.id}`);
           }}
           rowClassName={(r) => (highlightedExpenseId === r.id ? "bg-slate-100" : "")}
           filterBar={filterBar}

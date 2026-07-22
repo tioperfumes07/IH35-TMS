@@ -178,9 +178,9 @@ export async function getAccountRegister(
             p.source_transaction_type, p.source_transaction_id,
             cls.class_name,
             -- Payee derived from the source transaction's real party (verified FKs, no phantom columns):
-            --   bill→vendor, invoice→customer, customer_payment→customer, settlement→driver.
-            --   bill_payment/expense have no clean direct party link → honest NULL (not fabricated).
-            COALESCE(bv.vendor_name, ic.customer_name, pc.customer_name,
+            --   bill→vendor, expense→vendor, invoice→customer, customer_payment→customer, settlement→driver.
+            --   bill_payment has no clean direct party link → honest NULL (not fabricated).
+            COALESCE(bv.vendor_name, ev.vendor_name, ic.customer_name, pc.customer_name,
                      NULLIF(TRIM(CONCAT_WS(' ', dr.first_name, dr.last_name)), '')) AS payee,
             sp.split_account
        FROM accounting.journal_entry_postings p
@@ -190,6 +190,9 @@ export async function getAccountRegister(
        LEFT JOIN accounting.bills b
          ON p.source_transaction_type = 'bill' AND b.id::text = p.source_transaction_id
        LEFT JOIN mdata.vendors bv ON bv.id::text = b.vendor_uuid
+       LEFT JOIN accounting.expenses ex
+         ON p.source_transaction_type = 'expense' AND ex.id::text = p.source_transaction_id
+       LEFT JOIN mdata.vendors ev ON ev.id = ex.vendor_uuid
        LEFT JOIN accounting.invoices inv
          ON p.source_transaction_type = 'invoice' AND inv.id::text = p.source_transaction_id
        LEFT JOIN mdata.customers ic ON ic.id = inv.customer_id

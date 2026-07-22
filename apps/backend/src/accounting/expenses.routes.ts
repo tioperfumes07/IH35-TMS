@@ -114,15 +114,19 @@ const listExpensesQuerySchema = companyQuerySchema.extend({
   date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   load_id: z.string().uuid().optional(),
+  vendor_uuid: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
+
+const expenseIdParamSchema = z.object({ id: z.string().uuid() });
 
 export type ExpenseListFilters = {
   status?: "draft" | "posted" | "void";
   dateFrom?: string;
   dateTo?: string;
   loadId?: string;
+  vendorUuid?: string;
   limit: number;
   offset: number;
 };
@@ -177,6 +181,10 @@ export async function queryExpensesList(
   if (filters.loadId) {
     values.push(filters.loadId);
     where.push(`e.load_id = $${values.length}::uuid`);
+  }
+  if (filters.vendorUuid) {
+    values.push(filters.vendorUuid);
+    where.push(`e.vendor_uuid = $${values.length}::uuid`);
   }
   values.push(filters.limit);
   const limitIdx = values.length;
@@ -258,6 +266,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         dateFrom: q.date_from,
         dateTo: q.date_to,
         loadId: q.load_id,
+        vendorUuid: q.vendor_uuid,
         limit: q.limit,
         offset: q.offset,
       });
@@ -265,6 +274,100 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
     });
 
     if ("unavailable" in result) return reply.code(200).send({ rows: [] });
+    return reply.code(200).send(result);
+  });
+
+  // Law §9 reverse drill-through: expense detail (header + lines + vendor/JE/load/unit/GL ids).
+  // Entity-scoped via withCompanyScope + explicit operating_company_id filter. SELECT only.
+  app.get("/api/v1/expenses/:id", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+
+    const params = expenseIdParamSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const parsed = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsed.success) return validationError(reply, parsed.error);
+    const q = parsed.data;
+
+    const result = await withCompanyScope(String(user.uuid), q.operating_company_id, async (client) => {
+      if (!(await relationExists(client, "accounting.expenses"))) return { unavailable: true as const };
+
+      const hasUnitId = await columnExists(client, "accounting", "expenses", "unit_id");
+      const hasWorkOrderId = await columnExists(client, "accounting", "expenses", "linked_work_order_uuid");
+      const hasPaymentAccount = await columnExists(client, "accounting", "expenses", "payment_account_uuid");
+      const hasExpenseAccount = await columnExists(client, "accounting", "expense_lines", "expense_account_uuid");
+      const hasAmountCents = await columnExists(client, "accounting", "expense_lines", "amount_cents");
+
+      const headerRes = await client.query(
+        `
+          SELECT
+            e.id::text                                   AS id,
+            e.expense_number                             AS expense_number,
+            e.transaction_date                           AS transaction_date,
+            e.total_amount_cents::text                   AS total_amount_cents,
+            e.status                                     AS status,
+            e.posting_status                             AS posting_status,
+            e.memo                                       AS memo,
+            e.load_id::text                              AS load_id,
+            e.vendor_uuid::text                          AS vendor_uuid,
+            e.driver_uuid::text                          AS driver_uuid,
+            e.journal_entry_id::text                     AS journal_entry_id,
+            e.reversed_by_je_id::text                    AS reversed_by_je_id,
+            e.posted_at::text                            AS posted_at,
+            e.created_at::text                           AS created_at,
+            ${hasPaymentAccount ? "e.payment_account_uuid::text" : "NULL::text"} AS payment_account_uuid,
+            ${hasUnitId ? "e.unit_id::text" : "NULL::text"} AS unit_id,
+            ${hasWorkOrderId ? "e.linked_work_order_uuid::text" : "NULL::text"} AS linked_work_order_uuid,
+            v.vendor_name                                AS vendor_name,
+            dr.first_name                                AS driver_first_name,
+            dr.last_name                                 AS driver_last_name,
+            l.load_number                                AS load_number,
+            ${hasUnitId ? "u.unit_number" : "NULL::text"}  AS unit_display_id,
+            ${hasWorkOrderId ? "wo.display_id" : "NULL::text"} AS work_order_display_id,
+            pay_acct.account_number                      AS payment_account_number,
+            pay_acct.account_name                        AS payment_account_name
+          FROM accounting.expenses e
+          LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid
+          LEFT JOIN mdata.drivers dr ON dr.id = e.driver_uuid
+          LEFT JOIN mdata.loads l ON l.id = e.load_id
+          ${hasUnitId ? "LEFT JOIN mdata.units u ON u.id = e.unit_id" : ""}
+          ${hasWorkOrderId ? "LEFT JOIN maintenance.work_orders wo ON wo.id = e.linked_work_order_uuid" : ""}
+          ${hasPaymentAccount ? "LEFT JOIN catalogs.accounts pay_acct ON pay_acct.id = e.payment_account_uuid" : "LEFT JOIN catalogs.accounts pay_acct ON false"}
+          WHERE e.id = $1::uuid
+            AND e.operating_company_id = $2::uuid
+          LIMIT 1
+        `,
+        [params.data.id, q.operating_company_id]
+      );
+      const expense = headerRes.rows[0] as Record<string, unknown> | undefined;
+      if (!expense) return { notFound: true as const };
+
+      const linesRes = await client.query(
+        `
+          SELECT
+            el.id::text                                  AS id,
+            el.line_sequence                             AS line_sequence,
+            ${hasAmountCents ? "el.amount_cents::text" : "NULL::text"} AS amount_cents,
+            el.description                               AS description,
+            ${hasExpenseAccount ? "el.expense_account_uuid::text" : "NULL::text"} AS expense_account_uuid,
+            acct.account_number                          AS expense_account_number,
+            acct.account_name                            AS expense_account_name
+          FROM accounting.expense_lines el
+          ${hasExpenseAccount
+            ? "LEFT JOIN catalogs.accounts acct ON acct.id = el.expense_account_uuid AND acct.operating_company_id = $2::uuid"
+            : "LEFT JOIN catalogs.accounts acct ON acct.operating_company_id = $2::uuid AND false"}
+          WHERE el.expense_id = $1::uuid
+          ORDER BY el.line_sequence ASC
+        `,
+        [params.data.id, q.operating_company_id]
+      );
+
+      return { expense, lines: linesRes.rows };
+    });
+
+    if ("unavailable" in result) return reply.code(404).send({ error: "expenses_unavailable" });
+    if ("notFound" in result) return reply.code(404).send({ error: "expense_not_found" });
     return reply.code(200).send(result);
   });
 

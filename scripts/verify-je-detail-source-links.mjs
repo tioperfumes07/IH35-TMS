@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Rule-17 guard: JE detail must call source-links API and render EntityLinks including invoice (Law §9 P-INVOICE).
+ * Rule-17 guard: JE detail must call source-links API and render EntityLinks
+ * (Law §9 — invoice, customer_payment, expense reverse drill-through).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -42,6 +43,9 @@ function assertJeDetailSourceLinks() {
   }
   if (!/case ["']customer_payment["']/.test(page) && !/customer_payment/.test(page)) {
     errors.push("JournalEntryDetailPage: must map customer_payment source type");
+  }
+  if (!/kind:\s*"expense"|case ["']expense["']/.test(page)) {
+    errors.push("JournalEntryDetailPage: must map expense source type to EntityLink");
   }
   return errors;
 }
