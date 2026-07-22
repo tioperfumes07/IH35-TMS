@@ -141,9 +141,9 @@ REMAINING: code fixes P0–P2; owner Neon-apply only after code lands; no merge 
 
 ---
 
-## CODE FIX follow-up (this worktree — DO NOT MERGE without JORGE-APPROVED)
+## CODE FIX follow-up — LANDED as #3172 (merged 2026-07-22)
 
-Branch `fix/law-bill-lines-persist-*` implements ranked FAIL #1 (persist `bill_lines` on vendor create):
+PR #3172 (merged) implements ranked FAIL #1 (persist `bill_lines` on vendor create):
 
 - `createBill` + `createBillBodySchema` accept `lines` and INSERT `accounting.bill_lines` in the **same** `withCurrentUser` txn as the header; fail closed on empty/mismatched lines.
 - `VendorBillForm` / `createVendorBill` send real line payloads (no `lines_preview` memo stub).
