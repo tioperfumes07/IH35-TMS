@@ -5,6 +5,9 @@ import { ApiError } from "../../api/client";
 import {
   insuranceClaimsApi,
   listInsurancePolicies,
+  type InsuranceClaimFault,
+  type InsuranceClaimRecoveryRail,
+  type InsuranceClaimRepairBooksTreatment,
   type InsuranceClaimStatus,
 } from "../../api/insurance";
 import { listLoads } from "../../api/loads";
@@ -13,9 +16,13 @@ import { getSafetyAccidents } from "../../api/safety";
 import { Combobox } from "../Combobox";
 import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
 import { CreateUnitModal } from "../fleet/CreateUnitModal";
+import { CreateTrailerModal } from "../fleet/CreateTrailerModal";
 import { ParityDrawer } from "../parity/ParityDrawer";
 import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
+
+/** Tri-state driver_responsible: "" = not yet determined (NULL), "true" / "false" = decided. */
+type DriverResponsibleOption = "" | "true" | "false";
 
 type Props = {
   open: boolean;
@@ -39,6 +46,16 @@ type FormState = {
   adjuster_name: string;
   adjuster_email: string;
   notes: string;
+  // WIZARD-CLAIM-ECONOMICS-DEPTH slice 2 (202607730000, HOLD — schema not yet on prod). Pure capture;
+  // no GL posting reads/writes any of these fields in this slice.
+  fault: InsuranceClaimFault;
+  driver_responsible: DriverResponsibleOption;
+  trailer_id: string;
+  deductible: string;
+  /** Owner lock #1 — ALWAYS ASK; the picker must always default here and never auto-advance. */
+  recovery_rail: InsuranceClaimRecoveryRail;
+  /** Owner lock #2 (Choice Z) — ALWAYS ASK; no $ threshold anywhere. */
+  repair_books_treatment: InsuranceClaimRepairBooksTreatment;
 };
 
 type UnitOption = {
@@ -46,6 +63,12 @@ type UnitOption = {
   unit_code?: string | null;
   unit_number?: string | null;
   status?: string | null;
+};
+
+type TrailerOption = {
+  id: string;
+  kind?: "truck" | "trailer";
+  unit_number?: string | null;
 };
 
 const INITIAL_FORM: FormState = {
@@ -63,6 +86,12 @@ const INITIAL_FORM: FormState = {
   adjuster_name: "",
   adjuster_email: "",
   notes: "",
+  fault: "undetermined",
+  driver_responsible: "",
+  trailer_id: "",
+  deductible: "",
+  recovery_rail: "ask",
+  repair_books_treatment: "ask",
 };
 
 function unitLabel(unit: UnitOption) {
@@ -109,6 +138,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
   const [formError, setFormError] = useState("");
   const [serverError, setServerError] = useState("");
   const [unitCreateOpen, setUnitCreateOpen] = useState(false);
+  const [trailerCreateOpen, setTrailerCreateOpen] = useState(false);
 
   const policiesQuery = useQuery({
     queryKey: ["insurance", "claim-create", "policies", operatingCompanyId],
@@ -138,6 +168,17 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
     queryFn: () => getSafetyAccidents(operatingCompanyId).then((r) => r.accidents ?? []),
   });
 
+  // Trailer hub: unified fleet list (mdata.units trucks + mdata.equipment trailers), filtered to
+  // kind === "trailer" (Rule 03: trailers live in mdata.equipment, never mdata.units).
+  const trailersQuery = useQuery({
+    queryKey: ["insurance", "claim-create", "trailers", operatingCompanyId],
+    enabled: open && Boolean(operatingCompanyId),
+    queryFn: async () => {
+      const result = await listUnits({ operating_company_id: operatingCompanyId, limit: 500, include: "trailers" });
+      return (result.units as TrailerOption[]).filter((row) => row.kind === "trailer" && Boolean(row.id));
+    },
+  });
+
   const units = useMemo(() => unitsQuery.data ?? [], [unitsQuery.data]);
   const unitOptions = useMemo(
     () => units.map((unit) => ({ value: unit.id, label: unitLabel(unit) })),
@@ -153,6 +194,11 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
     [loads]
   );
   const accidents = useMemo(() => accidentsQuery.data ?? [], [accidentsQuery.data]);
+  const trailers = useMemo(() => trailersQuery.data ?? [], [trailersQuery.data]);
+  const trailerOptions = useMemo(
+    () => trailers.map((trailer) => ({ value: trailer.id, label: trailer.unit_number ?? trailer.id.slice(0, 8) })),
+    [trailers]
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -161,10 +207,11 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
     setFormError("");
     setServerError("");
     setUnitCreateOpen(false);
+    setTrailerCreateOpen(false);
   }, [open]);
 
   const createMutation = useMutation({
-    mutationFn: (payload: { amountClaimedCents?: number; amountPaidCents?: number }) =>
+    mutationFn: (payload: { amountClaimedCents?: number; amountPaidCents?: number; deductibleCents?: number }) =>
       insuranceClaimsApi.create({
         operating_company_id: operatingCompanyId,
         claim_number: form.claim_number.trim(),
@@ -181,6 +228,12 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
         adjuster_name: form.adjuster_name.trim() || null,
         adjuster_email: form.adjuster_email.trim() || null,
         notes: form.notes.trim() || null,
+        fault: form.fault,
+        driver_responsible: form.driver_responsible === "" ? null : form.driver_responsible === "true",
+        trailer_id: form.trailer_id || null,
+        deductible_cents: payload.deductibleCents,
+        recovery_rail: form.recovery_rail,
+        repair_books_treatment: form.repair_books_treatment,
       }),
     onSuccess: () => {
       pushToast("Claim created successfully.", "success");
@@ -222,6 +275,8 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
     if (amountClaimedCents === null) nextFieldErrors.amount_claimed = "Amount claimed must be a valid non-negative amount.";
     const amountPaidCents = parseCurrencyToCents(form.amount_paid);
     if (amountPaidCents === null) nextFieldErrors.amount_paid = "Amount paid must be a valid non-negative amount.";
+    const deductibleCents = parseCurrencyToCents(form.deductible);
+    if (deductibleCents === null) nextFieldErrors.deductible = "Deductible must be a valid non-negative amount.";
 
     if (form.adjuster_email.trim()) {
       const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.adjuster_email.trim());
@@ -236,6 +291,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
     createMutation.mutate({
       amountClaimedCents: typeof amountClaimedCents === "number" ? amountClaimedCents : undefined,
       amountPaidCents: typeof amountPaidCents === "number" ? amountPaidCents : undefined,
+      deductibleCents: typeof deductibleCents === "number" ? deductibleCents : undefined,
     });
   };
 
@@ -333,6 +389,22 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
             />
           </label>
 
+          <label className="space-y-1" data-testid="claim-create-trailer-field">
+            <span className="text-xs font-semibold text-slate-700">Trailer</span>
+            <Combobox
+              options={trailerOptions}
+              value={form.trailer_id || null}
+              onChange={(next) => updateField("trailer_id", next ?? "")}
+              placeholder="Unassigned"
+              loading={trailersQuery.isLoading}
+              allowClear
+              allowAddNew={{
+                label: "+ Create trailer",
+                onAdd: () => setTrailerCreateOpen(true),
+              }}
+            />
+          </label>
+
           <label className="space-y-1" data-testid="claim-create-accident-field">
             <span className="text-xs font-semibold text-slate-700">Accident report</span>
             <select
@@ -366,6 +438,33 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
               <option value="denied">Denied</option>
               <option value="paid">Paid</option>
               <option value="closed">Closed</option>
+            </select>
+          </label>
+
+          <label className="space-y-1" data-testid="claim-create-fault-field">
+            <span className="text-xs font-semibold text-slate-700">Fault</span>
+            <select
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
+              value={form.fault}
+              onChange={(event) => updateField("fault", event.target.value as InsuranceClaimFault)}
+            >
+              <option value="undetermined">Undetermined</option>
+              <option value="company">Company</option>
+              <option value="third_party">Third party</option>
+              <option value="shared">Shared</option>
+            </select>
+          </label>
+
+          <label className="space-y-1" data-testid="claim-create-driver-responsible-field">
+            <span className="text-xs font-semibold text-slate-700">Driver Responsible</span>
+            <select
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
+              value={form.driver_responsible}
+              onChange={(event) => updateField("driver_responsible", event.target.value as DriverResponsibleOption)}
+            >
+              <option value="">Not yet determined</option>
+              <option value="true">Yes — driver responsible</option>
+              <option value="false">No — driver not responsible</option>
             </select>
           </label>
 
@@ -431,6 +530,60 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
           </label>
         </div>
 
+        {/* WIZARD-CLAIM-ECONOMICS-DEPTH slice 2 — pure capture, no GL posting reads/writes these
+            fields. Owner locks #1/#2 (2026-07-22): recovery_rail and repair_books_treatment ALWAYS
+            default to "ask" and are never auto-advanced by this form — the user must actively pick a
+            value to move past "ask". No $ threshold anywhere: if the driver is at fault/responsible,
+            they owe the FULL company-funded repair amount, not just the deductible. */}
+        <div className="space-y-3 border-t border-gray-100 pt-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Deductible &amp; Recovery</h3>
+          <div className="grid gap-3 md:grid-cols-3">
+            <label className="space-y-1">
+              <span className="text-xs font-semibold text-slate-700">Deductible (USD)</span>
+              <MoneyInput
+                valueDollars={form.deductible ? Number(form.deductible) : null}
+                onChangeDollars={(d) => updateField("deductible", d == null ? "" : String(d))}
+                ariaLabel="Deductible (USD)"
+              />
+              {fieldErrors.deductible ? <span className="text-xs text-red-700">{fieldErrors.deductible}</span> : null}
+            </label>
+
+            <label className="space-y-1" data-testid="claim-create-recovery-rail-field">
+              <span className="text-xs font-semibold text-slate-700">Driver Deductible Recovery</span>
+              <select
+                className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                value={form.recovery_rail}
+                onChange={(event) => updateField("recovery_rail", event.target.value as InsuranceClaimRecoveryRail)}
+              >
+                <option value="ask">Ask later (not decided)</option>
+                <option value="escrow">Recover from driver escrow</option>
+                <option value="settlement">Recover from next settlement</option>
+                <option value="split">Split escrow / settlement</option>
+              </select>
+            </label>
+
+            <label className="space-y-1" data-testid="claim-create-repair-books-field">
+              <span className="text-xs font-semibold text-slate-700">Uninsured Repair Books Treatment</span>
+              <select
+                className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                value={form.repair_books_treatment}
+                onChange={(event) =>
+                  updateField("repair_books_treatment", event.target.value as InsuranceClaimRepairBooksTreatment)
+                }
+              >
+                <option value="ask">Ask later (not decided)</option>
+                <option value="expense">Expense</option>
+                <option value="capitalize">Capitalize</option>
+              </select>
+            </label>
+          </div>
+          <p className="text-xs text-gray-500">
+            No dollar threshold applies to either choice above — every claim asks, every time. If the driver is
+            at fault or responsible, they owe the full company-funded repair amount (not deductible-only),
+            recovered via the same rail selected here.
+          </p>
+        </div>
+
         <label className="space-y-1">
           <span className="text-xs font-semibold text-slate-700">Notes</span>
           <textarea
@@ -463,6 +616,16 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
         updateField("asset_id", createdId);
         setUnitCreateOpen(false);
         void unitsQuery.refetch();
+      }}
+    />
+    <CreateTrailerModal
+      open={trailerCreateOpen}
+      operatingCompanyId={operatingCompanyId}
+      onClose={() => setTrailerCreateOpen(false)}
+      onCreated={(createdId) => {
+        updateField("trailer_id", createdId);
+        setTrailerCreateOpen(false);
+        void trailersQuery.refetch();
       }}
     />
     </>

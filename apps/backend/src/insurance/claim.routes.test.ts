@@ -83,6 +83,12 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
     return { rows: [{ id: String(values?.[1]) }] };
   }
 
+  if (sql.includes("FROM mdata.equipment")) {
+    // WIZARD-CLAIM-ECONOMICS-DEPTH slice 2 trailer hub check (assertOptionalHubExists "trailer" branch).
+    if (String(values?.[0]) === "dddddddd-dddd-4ddd-8ddd-dddddddddddd") return { rows: [] };
+    return { rows: [{ id: String(values?.[0]) }] };
+  }
+
   if (sql.includes("INSERT INTO insurance.claim")) {
     return {
       rows: [
@@ -267,5 +273,133 @@ describe("insurance claim routes", () => {
 
     expect(response.statusCode).toBe(404);
     expect(response.json()).toMatchObject({ error: "claim_not_found" });
+  });
+
+  // WIZARD-CLAIM-ECONOMICS-DEPTH slice 2 (202607730000, HOLD — schema not yet on prod).
+  describe("claim economics fields (slice 2)", () => {
+    it("POST creates a claim with the full economics slice (fault/driver_responsible/trailer/deductible/recovery_rail/repair_books_treatment)", async () => {
+      const app = await buildApp();
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/v1/insurance/claims",
+        payload: {
+          operating_company_id: "11111111-1111-4111-8111-111111111111",
+          claim_number: "CLM-100",
+          policy_id: "22222222-2222-4222-8222-222222222222",
+          accident_date: "2026-05-01",
+          reported_date: "2026-05-02",
+          amount_claimed_cents: 100000,
+          trailer_id: "33333333-3333-4333-8333-333333333333",
+          fault: "company",
+          driver_responsible: false,
+          deductible_cents: 250000,
+          recovery_rail: "escrow",
+          repair_books_treatment: "expense",
+        },
+      });
+
+      expect(response.statusCode).toBe(201);
+      const insertCall = queryMock.mock.calls.find(([sql]) => sql.includes("INSERT INTO insurance.claim"));
+      expect(insertCall).toBeDefined();
+      const insertValues = insertCall?.[1] as unknown[];
+      // fault, driver_responsible, trailer_id, deductible_cents, recovery_rail, repair_books_treatment
+      // are the last 6 bound params (see the INSERT column list in claim.routes.ts).
+      expect(insertValues.slice(-6)).toEqual(["company", false, "33333333-3333-4333-8333-333333333333", 250000, "escrow", "expense"]);
+    });
+
+    it("POST defaults fault/recovery_rail/repair_books_treatment server-side (COALESCE) when the caller omits them — owner locks never silently skipped", async () => {
+      const app = await buildApp();
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/v1/insurance/claims",
+        payload: {
+          operating_company_id: "11111111-1111-4111-8111-111111111111",
+          claim_number: "CLM-101",
+          policy_id: "22222222-2222-4222-8222-222222222222",
+          accident_date: "2026-05-01",
+          reported_date: "2026-05-02",
+          amount_claimed_cents: 100000,
+        },
+      });
+
+      expect(response.statusCode).toBe(201);
+      const insertCall = queryMock.mock.calls.find(([sql]) => sql.includes("INSERT INTO insurance.claim"));
+      const sql = String(insertCall?.[0] ?? "");
+      // COALESCE(..., 'undetermined') / COALESCE(..., 'ask') / COALESCE(..., 'ask') / COALESCE(..., 0)
+      // is what makes an omitted owner-locked field land on the safe neutral default in the DB, not on
+      // an application-level guess baked into the JS.
+      expect(sql).toMatch(/COALESCE\(\$16, 'undetermined'\)/);
+      expect(sql).toMatch(/COALESCE\(\$19, 0\)/);
+      expect(sql).toMatch(/COALESCE\(\$20, 'ask'\)/);
+      expect(sql).toMatch(/COALESCE\(\$21, 'ask'\)/);
+    });
+
+    it("POST returns trailer_not_found for a trailer outside the caller's entity scope", async () => {
+      const app = await buildApp();
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/v1/insurance/claims",
+        payload: {
+          operating_company_id: "11111111-1111-4111-8111-111111111111",
+          claim_number: "CLM-102",
+          policy_id: "22222222-2222-4222-8222-222222222222",
+          accident_date: "2026-05-01",
+          reported_date: "2026-05-02",
+          trailer_id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+        },
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(response.json()).toMatchObject({ error: "trailer_not_found" });
+    });
+
+    it("GET applies the trailer_id reverse-drill filter", async () => {
+      const app = await buildApp();
+      const response = await app.inject({
+        method: "GET",
+        url: "/api/v1/insurance/claims?operating_company_id=11111111-1111-4111-8111-111111111111&trailer_id=33333333-3333-4333-8333-333333333333",
+      });
+
+      expect(response.statusCode).toBe(200);
+      const listCall = queryMock.mock.calls.find(
+        ([sql]) => sql.includes("FROM insurance.claim") && sql.includes("ORDER BY c.accident_date DESC")
+      );
+      expect(String(listCall?.[0])).toContain("c.trailer_id = $");
+    });
+
+    it("PATCH updates driver_responsible, recovery_rail, and repair_books_treatment", async () => {
+      const app = await buildApp();
+      const response = await app.inject({
+        method: "PATCH",
+        url: "/api/v1/insurance/claims/11111111-1111-4111-8111-111111111111?operating_company_id=11111111-1111-4111-8111-111111111111",
+        payload: {
+          driver_responsible: true,
+          recovery_rail: "settlement",
+          repair_books_treatment: "capitalize",
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const updateCall = queryMock.mock.calls.find(([sql]) => sql.includes("UPDATE insurance.claim"));
+      expect(updateCall).toBeDefined();
+      const updateSql = String(updateCall?.[0] ?? "");
+      expect(updateSql).toContain("driver_responsible = $");
+      expect(updateSql).toContain("recovery_rail = $");
+      expect(updateSql).toContain("repair_books_treatment = $");
+    });
+
+    it("PATCH returns trailer_not_found when reassigning to a trailer outside entity scope", async () => {
+      const app = await buildApp();
+      const response = await app.inject({
+        method: "PATCH",
+        url: "/api/v1/insurance/claims/11111111-1111-4111-8111-111111111111?operating_company_id=11111111-1111-4111-8111-111111111111",
+        payload: {
+          trailer_id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+        },
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(response.json()).toMatchObject({ error: "trailer_not_found" });
+    });
   });
 });

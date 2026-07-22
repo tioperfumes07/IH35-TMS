@@ -3,6 +3,27 @@ import { z } from "zod";
 export const INSURANCE_CLAIM_STATUSES = ["open", "investigating", "approved", "denied", "paid", "closed"] as const;
 export const INSURANCE_LAWSUIT_STATUSES = ["filed", "active", "settled", "dismissed", "judgment"] as const;
 
+/**
+ * WIZARD-CLAIM-ECONOMICS-DEPTH slice 2 (202607730000, HOLD-FOR-JORGE — financial cluster, not yet
+ * applied on prod). "undetermined" is the only safe default — a fresh claim is never defaulted to a
+ * specific fault finding (mirrors safety.accident_reports.at_fault precedent).
+ */
+export const INSURANCE_CLAIM_FAULT_VALUES = ["undetermined", "company", "third_party", "shared"] as const;
+
+/**
+ * Owner lock #1 (2026-07-22, master plan §0.1 Example A2): driver-deductible recovery rail is ALWAYS
+ * ASK — 'ask' is the permanent neutral "not decided yet" state and must never be silently advanced by
+ * any migration/backfill/UI default. UI must force an explicit choice before allowing 'ask' to persist
+ * past claim creation for a claim with driver_responsible = true.
+ */
+export const INSURANCE_CLAIM_RECOVERY_RAIL_VALUES = ["escrow", "settlement", "split", "ask"] as const;
+
+/**
+ * Owner lock #2 (2026-07-22, Choice Z): uninsured/company-funded repair books treatment is ALWAYS ASK
+ * (expense vs capitalize) — NO dollar threshold anywhere. 'ask' is the permanent neutral default.
+ */
+export const INSURANCE_CLAIM_REPAIR_BOOKS_TREATMENT_VALUES = ["expense", "capitalize", "ask"] as const;
+
 export const operatingCompanySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
@@ -25,6 +46,8 @@ export const listClaimsQuerySchema = operatingCompanySchema.extend({
   unit_id: z.string().uuid().optional(),
   /** Reverse drill: insurance.claim.load_id → mdata.loads (WIZARD-CLAIM-ECONOMICS-DEPTH slice 1). */
   load_id: z.string().uuid().optional(),
+  /** Reverse drill: mdata.equipment (trailer) -> insurance.claim.trailer_id (slice 2, 202607730000). */
+  trailer_id: z.string().uuid().optional(),
 });
 
 /** Forward graph FKs (prod-live via 202607410000) — link existing hubs only; never invent amounts. */
@@ -32,6 +55,19 @@ const claimGraphFkFields = {
   accident_report_id: z.string().uuid().nullable().optional(),
   load_id: z.string().uuid().nullable().optional(),
   driver_id: z.string().uuid().nullable().optional(),
+} as const;
+
+/**
+ * WIZARD-CLAIM-ECONOMICS-DEPTH slice 2 economics fields (202607730000, HOLD-FOR-JORGE — schema not yet
+ * applied on prod). Pure capture — no GL posting reads/writes these in this slice.
+ */
+const claimEconomicsFields = {
+  fault: z.enum(INSURANCE_CLAIM_FAULT_VALUES).optional(),
+  driver_responsible: z.boolean().nullable().optional(),
+  trailer_id: z.string().uuid().nullable().optional(),
+  deductible_cents: z.number().int().nonnegative().optional(),
+  recovery_rail: z.enum(INSURANCE_CLAIM_RECOVERY_RAIL_VALUES).optional(),
+  repair_books_treatment: z.enum(INSURANCE_CLAIM_REPAIR_BOOKS_TREATMENT_VALUES).optional(),
 } as const;
 
 export const createClaimBodySchema = z.object({
@@ -48,6 +84,7 @@ export const createClaimBodySchema = z.object({
   adjuster_email: z.string().trim().email().max(320).nullable().optional(),
   notes: z.string().trim().max(4000).nullable().optional(),
   ...claimGraphFkFields,
+  ...claimEconomicsFields,
 });
 
 export const updateClaimBodySchema = z
@@ -64,6 +101,7 @@ export const updateClaimBodySchema = z
     adjuster_email: z.string().trim().email().max(320).nullable().optional(),
     notes: z.string().trim().max(4000).nullable().optional(),
     ...claimGraphFkFields,
+    ...claimEconomicsFields,
   })
   .refine((value) => Object.keys(value).length > 0, { message: "at least one field is required" });
 
@@ -107,3 +145,6 @@ export const updateLawsuitBodySchema = z
 
 export type InsuranceClaimStatus = (typeof INSURANCE_CLAIM_STATUSES)[number];
 export type InsuranceLawsuitStatus = (typeof INSURANCE_LAWSUIT_STATUSES)[number];
+export type InsuranceClaimFault = (typeof INSURANCE_CLAIM_FAULT_VALUES)[number];
+export type InsuranceClaimRecoveryRail = (typeof INSURANCE_CLAIM_RECOVERY_RAIL_VALUES)[number];
+export type InsuranceClaimRepairBooksTreatment = (typeof INSURANCE_CLAIM_REPAIR_BOOKS_TREATMENT_VALUES)[number];

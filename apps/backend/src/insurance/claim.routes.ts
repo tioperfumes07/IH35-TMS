@@ -63,19 +63,27 @@ function claimSelectColumns(alias = "c") {
     ${a}created_at::text,
     ${a}accident_report_id::text,
     ${a}load_id::text,
-    ${a}driver_id::text
+    ${a}driver_id::text,
+    ${a}fault,
+    ${a}driver_responsible,
+    ${a}trailer_id::text,
+    trailers.equipment_number AS trailer_display_id,
+    ${a}deductible_cents::bigint,
+    ${a}recovery_rail,
+    ${a}repair_books_treatment
   `;
 }
 
 const CLAIM_FROM = `
   FROM insurance.claim c
   LEFT JOIN mdata.assets assets ON assets.id = c.asset_id
+  LEFT JOIN mdata.equipment trailers ON trailers.id = c.trailer_id
 `;
 
 async function assertOptionalHubExists(
   client: Queryable,
   operatingCompanyId: string,
-  kind: "accident_report" | "load" | "driver",
+  kind: "accident_report" | "load" | "driver" | "trailer",
   id: string | null | undefined
 ): Promise<"ok" | "not_found"> {
   if (id === undefined || id === null) return "ok";
@@ -99,6 +107,21 @@ async function assertOptionalHubExists(
         FROM mdata.loads
         WHERE id = $1::uuid
           AND operating_company_id = $2::uuid
+        LIMIT 1
+      `,
+      [id, operatingCompanyId]
+    );
+    return res.rows[0] ? "ok" : "not_found";
+  }
+  if (kind === "trailer") {
+    // mdata.equipment (trailers) scoping mirrors mdata.units: owned OR currently leased to this entity
+    // (see apps/backend/src/fleet/trailer.routes.ts).
+    const res = await client.query(
+      `
+        SELECT id::text
+        FROM mdata.equipment
+        WHERE id = $1::uuid
+          AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
         LIMIT 1
       `,
       [id, operatingCompanyId]
@@ -161,6 +184,10 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         values.push(parsed.data.load_id);
         filters.push(`load_id = $${values.length}::uuid`);
       }
+      if (parsed.data.trailer_id) {
+        values.push(parsed.data.trailer_id);
+        filters.push(`trailer_id = $${values.length}::uuid`);
+      }
       const scopedFilters = filters.map((f) =>
         f
           .replace(/^tenant_id/, "c.tenant_id")
@@ -169,7 +196,8 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
           .replace(/^asset_id/, "c.asset_id")
           .replace(/^driver_id/, "c.driver_id")
           .replace(/^unit_id/, "assets.unit_id")
-          .replace(/^load_id/, "c.load_id"),
+          .replace(/^load_id/, "c.load_id")
+          .replace(/^trailer_id/, "c.trailer_id"),
       );
       const result = await client.query(
         `
@@ -322,6 +350,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         ["accident_report", body.accident_report_id],
         ["load", body.load_id],
         ["driver", body.driver_id],
+        ["trailer", body.trailer_id],
       ] as const) {
         if ((await assertOptionalHubExists(client, body.operating_company_id, kind, id)) === "not_found") {
           return { kind: `${kind}_not_found` as const };
@@ -345,11 +374,19 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
             notes,
             accident_report_id,
             load_id,
-            driver_id
+            driver_id,
+            fault,
+            driver_responsible,
+            trailer_id,
+            deductible_cents,
+            recovery_rail,
+            repair_books_treatment
           )
           VALUES (
             $1::uuid, $2, $3::uuid, $4::uuid, $5::date, $6::date, $7, $8, $9, $10, $11, $12,
-            $13::uuid, $14::uuid, $15::uuid
+            $13::uuid, $14::uuid, $15::uuid,
+            COALESCE($16, 'undetermined'), $17, $18::uuid, COALESCE($19, 0),
+            COALESCE($20, 'ask'), COALESCE($21, 'ask')
           )
           RETURNING id::text
         `,
@@ -369,6 +406,12 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
           body.accident_report_id ?? null,
           body.load_id ?? null,
           body.driver_id ?? null,
+          body.fault ?? null,
+          body.driver_responsible ?? null,
+          body.trailer_id ?? null,
+          body.deductible_cents ?? null,
+          body.recovery_rail ?? null,
+          body.repair_books_treatment ?? null,
         ]
       );
       const createdId = insert.rows[0]?.id;
@@ -390,6 +433,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
     if (created.kind === "accident_report_not_found") return reply.code(404).send({ error: "accident_report_not_found" });
     if (created.kind === "load_not_found") return reply.code(404).send({ error: "load_not_found" });
     if (created.kind === "driver_not_found") return reply.code(404).send({ error: "driver_not_found" });
+    if (created.kind === "trailer_not_found") return reply.code(404).send({ error: "trailer_not_found" });
     if (created.kind === "claim_not_found") return reply.code(500).send({ error: "claim_create_failed" });
     return reply.code(201).send(created.row);
   });
@@ -437,6 +481,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         ["accident_report", body.accident_report_id],
         ["load", body.load_id],
         ["driver", body.driver_id],
+        ["trailer", body.trailer_id],
       ] as const) {
         if ((await assertOptionalHubExists(client, query.data.operating_company_id, kind, id)) === "not_found") {
           return { kind: `${kind}_not_found` as const };
@@ -482,6 +527,16 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
       if (body.accident_report_id !== undefined) setField("accident_report_id", body.accident_report_id, "::uuid");
       if (body.load_id !== undefined) setField("load_id", body.load_id, "::uuid");
       if (body.driver_id !== undefined) setField("driver_id", body.driver_id, "::uuid");
+      // WIZARD-CLAIM-ECONOMICS-DEPTH slice 2 (202607730000) — fault/responsibility/trailer/deductible/
+      // recovery-rail/books-treatment are all editable post-create (investigation findings evolve).
+      // Owner locks #1/#2: recovery_rail and repair_books_treatment are never auto-advanced by THIS
+      // route — only ever set to a value the caller (a human, via the UI) explicitly sent.
+      if (body.fault !== undefined) setField("fault", body.fault);
+      if (body.driver_responsible !== undefined) setField("driver_responsible", body.driver_responsible);
+      if (body.trailer_id !== undefined) setField("trailer_id", body.trailer_id, "::uuid");
+      if (body.deductible_cents !== undefined) setField("deductible_cents", body.deductible_cents);
+      if (body.recovery_rail !== undefined) setField("recovery_rail", body.recovery_rail);
+      if (body.repair_books_treatment !== undefined) setField("repair_books_treatment", body.repair_books_treatment);
 
       if (assignments.length === 0) return { kind: "claim_not_found" as const };
 
@@ -512,6 +567,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
     if (updated.kind === "accident_report_not_found") return reply.code(404).send({ error: "accident_report_not_found" });
     if (updated.kind === "load_not_found") return reply.code(404).send({ error: "load_not_found" });
     if (updated.kind === "driver_not_found") return reply.code(404).send({ error: "driver_not_found" });
+    if (updated.kind === "trailer_not_found") return reply.code(404).send({ error: "trailer_not_found" });
     if (updated.kind === "claim_not_found") return reply.code(404).send({ error: "claim_not_found" });
     if (updated.kind === "invalid_status_transition") {
       return reply.code(400).send({

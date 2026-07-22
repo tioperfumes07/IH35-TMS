@@ -17,6 +17,7 @@ import { StatusChangeModal } from "../../components/trailer-profile/StatusChange
 import { TrailerReeferSection } from "../../components/trailer-profile/TrailerReeferSection";
 import { ServiceTimeline } from "../../components/maintenance/ServiceTimeline";
 import { TypeSpecsSection } from "../../components/trailer-profile/TypeSpecsSection";
+import { InsuranceClaimsReverseSection } from "../../components/insurance/InsuranceClaimsReverseSection";
 
 export type TrailerProfileAggregate = {
   equipment: Record<string, unknown>;
@@ -126,6 +127,14 @@ export function TrailerProfilePage() {
       </div>
       <div data-testid="tp-section-6-compliance">
         <ComplianceSection compliance={aggregate.compliance} plates={aggregate.plates} />
+      </div>
+      <div data-testid="tp-section-6b-insurance-claims">
+        <InsuranceClaimsReverseSection
+          operatingCompanyId={companyId}
+          filter={{ trailer_id: id }}
+          contextLabel="this trailer"
+          data-testid="trailer-profile-insurance-claims"
+        />
       </div>
       <div data-testid="tp-section-7-documents">
         <DocumentsSection
