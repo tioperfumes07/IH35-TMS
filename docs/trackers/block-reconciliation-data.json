@@ -1,6 +1,6 @@
 {
  "date": "2026-07-22",
- "generated_at_iso": "2026-07-22T03:52:03.872Z",
+ "generated_at_iso": "2026-07-22T04:39:44.851Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
@@ -13162,6 +13162,60 @@
  ],
  "merged_prs": [
   {
+   "number": 3194,
+   "title": "docs: agent GitHub identity + merge attribution (2026-07-22)",
+   "mergedAt": "2026-07-22T04:13:36Z",
+   "branch": "docs/agent-merge-attribution-20260722"
+  },
+  {
+   "number": 3193,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-22T04:25:39Z",
+   "branch": "chore/tracker-artifacts-sync-29889509282"
+  },
+  {
+   "number": 3190,
+   "title": "fix(drivers): active-path law — one Live mount, archive parallel trees",
+   "mergedAt": "2026-07-22T04:20:07Z",
+   "branch": "fix/drivers-active-path-law-20260721"
+  },
+  {
+   "number": 3188,
+   "title": "fix(accounting): invoice reverse drill-through (Law §9 P-INVOICE)",
+   "mergedAt": "2026-07-22T04:35:39Z",
+   "branch": "fix/invoice-reverse-drill-through"
+  },
+  {
+   "number": 3187,
+   "title": "fix(banking): lock active categorize path + legacy redirects",
+   "mergedAt": "2026-07-22T03:57:56Z",
+   "branch": "fix/banking-categorize-active-path-20260721"
+  },
+  {
+   "number": 3184,
+   "title": "fix(settlements): weekly-close bookended parity (contract terms + auto-deduct)",
+   "mergedAt": "2026-07-22T04:03:00Z",
+   "branch": "fix/weekly-close-contract-terms-parity"
+  },
+  {
+   "number": 3183,
+   "title": "fix(safety): V6.4 active-path law — no ComingSoon while Live tabs exist",
+   "mergedAt": "2026-07-22T03:55:12Z",
+   "branch": "fix/safety-active-path-law-20260721"
+  },
+  {
+   "number": 3182,
+   "title": "docs(law): TRUE connectivity master — economic + ops + dual-path (not STALE)",
+   "mergedAt": "2026-07-22T04:11:24Z",
+   "branch": "docs/true-connectivity-master-20260721"
+  },
+  {
+   "number": 3181,
+   "title": "docs(ops): Claude coder merge sequence 2026-07-21 (Law §9 permanent)",
+   "mergedAt": "2026-07-22T04:20:56Z",
+   "branch": "docs/claude-coder-merge-sequence-20260721"
+  },
+  {
    "number": 3180,
    "title": "fix(maintenance): WO auto bill/expense stamp unit_id (Law §9 / #3176 P0)",
    "mergedAt": "2026-07-22T03:35:49Z",
@@ -13174,10 +13228,34 @@
    "branch": "fix/law-claim-legal-ui-linkage-20260721"
   },
   {
+   "number": 3178,
+   "title": "docs(hold)[HOLD-FOR-JORGE]: fuel GL flush — designate diesel|def|reefer|oil|misc maps",
+   "mergedAt": "2026-07-22T04:38:53Z",
+   "branch": "hold/fuel-gl-map-codes-designate-20260721"
+  },
+  {
+   "number": 3175,
+   "title": "docs(audit): Law §9 E2E claim→legal→expense linkage FAIL (2026-07-21)",
+   "mergedAt": "2026-07-22T04:18:08Z",
+   "branch": "docs/law-e2e-claim-legal-expense-2026-07-21"
+  },
+  {
+   "number": 3173,
+   "title": "docs(audit): Law §9 FULL linkage master ledger — every money path vs deploy",
+   "mergedAt": "2026-07-22T04:17:51Z",
+   "branch": "docs/law-full-linkage-audit-master"
+  },
+  {
    "number": 3172,
    "title": "fix(accounting): persist bill_lines on vendor Bill create (LAW §9 / #3167)",
    "mergedAt": "2026-07-22T03:35:03Z",
    "branch": "fix/law-bill-lines-persist-20260721204112"
+  },
+  {
+   "number": 3171,
+   "title": "fix(settlements): wire pay-run preview/close FE (#3168)",
+   "mergedAt": "2026-07-22T04:02:52Z",
+   "branch": "law-fix/payrun-fe-wire-20260721"
   },
   {
    "number": 3169,
@@ -16682,88 +16760,16 @@
    "title": "fix(relay): wire the orphaned fuel-ingest cron into the scheduler (doc 21 Part A gap 1)",
    "mergedAt": "2026-07-12T05:11:40Z",
    "branch": "fix/relay-fuel-ingest-cron-wired"
-  },
-  {
-   "number": 2390,
-   "title": "fix: QBO minorversion 65→75 consistency guard + orphan-FK inventory ratchet (flagged non-financial sub-items)",
-   "mergedAt": "2026-07-12T05:00:36Z",
-   "branch": "fix/qbo-minorversion-and-orphan-fk-ratchet"
-  },
-  {
-   "number": 2389,
-   "title": "fix(g2-2): alerts routes assert company membership (cross-entity leak) + 4 DONE flips",
-   "mergedAt": "2026-07-12T11:53:03Z",
-   "branch": "fix/g2-2-alerts-membership-leak"
-  },
-  {
-   "number": 2388,
-   "title": "chore(tracker): 11 named FIX-* blocks verified-DONE (recon was stale)",
-   "mergedAt": "2026-07-12T04:34:07Z",
-   "branch": "chore/named-blocks-verified-done"
-  },
-  {
-   "number": 2387,
-   "title": "fix(p1): break 2 real import cycles + circular-dependency regression guard",
-   "mergedAt": "2026-07-12T04:43:18Z",
-   "branch": "fix/p1-circular-dependencies"
-  },
-  {
-   "number": 2385,
-   "title": "docs(specs): 0252 HR + phase13 vertical + phase3 quality-mgmt cluster dispositions (46 blocks, all design-gated/N-A)",
-   "mergedAt": "2026-07-12T04:37:59Z",
-   "branch": "docs/0252-hr-design"
-  },
-  {
-   "number": 2384,
-   "title": "fix(0243): CORS prod-defaults single-source + fail-loud (h1-2) + e2e assert-or-skip guard (g7-4)",
-   "mergedAt": "2026-07-12T04:30:10Z",
-   "branch": "fix/0243-cors-and-e2e-guard"
-  },
-  {
-   "number": 2383,
-   "title": "fix(0243-d4-1): Samsara webhook unit resolution (units-primary lookup) + cluster design doc",
-   "mergedAt": "2026-07-12T04:10:08Z",
-   "branch": "fix/0243-samsara-webhook-and-designs"
-  },
-  {
-   "number": 2382,
-   "title": "fix(0091): Samsara position cross-entity leak + CoA-list pagination total (+ cluster design doc)",
-   "mergedAt": "2026-07-12T03:56:49Z",
-   "branch": "fix/0091-entity-leak-and-coa-pagination"
-  },
-  {
-   "number": 2381,
-   "title": "feat(safety): events-log surfaces the related load (safety-event→load reverse linkage) + REPAIR-F design",
-   "mergedAt": "2026-07-12T03:37:41Z",
-   "branch": "feat/biz-flow-safety-load-linkage"
-  },
-  {
-   "number": 2380,
-   "title": "fix(0519): banking-uncategorized-KPI regression guard + DB-integrity/maint design docs",
-   "mergedAt": "2026-07-12T03:35:30Z",
-   "branch": "fix/0519-banking-kpi-guard-and-designs"
-  },
-  {
-   "number": 2379,
-   "title": "chore(tracker): 16 blocks verified-DONE (evidence-backed) — visible progress",
-   "mergedAt": "2026-07-12T03:30:35Z",
-   "branch": "chore/verified-done-overrides"
-  },
-  {
-   "number": 2378,
-   "title": "docs(specs): 0251 factoring/commodity/charge-code/stop-location design docs (enables owner-approved build)",
-   "mergedAt": "2026-07-12T03:28:15Z",
-   "branch": "docs/0251-financial-cluster-designs"
-  },
-  {
-   "number": 2377,
-   "title": "feat(dispatch): loads listing surfaces invoice status (load→invoice reverse linkage, gap-21)",
-   "mergedAt": "2026-07-12T03:13:21Z",
-   "branch": "feat/dispatch-load-invoice-linkage"
   }
  ],
- "merged_pr_total": 2858,
+ "merged_pr_total": 2871,
  "hold_for_jorge": [
+  {
+   "number": 3178,
+   "title": "docs(hold)[HOLD-FOR-JORGE]: fuel GL flush — designate diesel|def|reefer|oil|misc maps",
+   "mergedAt": "2026-07-22T04:38:53Z",
+   "category": "HOLD"
+  },
   {
    "number": 3153,
    "title": "[HOLD-FOR-JORGE] docs(design): audit2 settlement approval mount — do not wire until G1-3",
