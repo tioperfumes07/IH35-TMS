@@ -1,3 +1,15 @@
+# UPDATE 2026-07-22 morning (owner GO)
+
+- CC_BILL_PAYMENT_GATED → **false** (all companies)
+- ACCOUNT_CREATE_GATED → **false** (all companies)
+- QBOBulkLinkPage QboCombobox → **ALLOWLIST confirmed**
+- Driver/Vehicle qbo_vendor_id → examples only; awaiting A/B/C
+- createKind driver → exhaustive audit shipped; build waves next
+
+See `OWNER-GO-FINANCIAL-GATES-2026-07-22.md`.
+
+---
+
 # OVERNIGHT HOLD — Jorge ~08:00 CT 2026-07-22
 
 Chrome / catalog / creator burn-down continued without pause. Decisions below are **not blocking** UI chrome.
