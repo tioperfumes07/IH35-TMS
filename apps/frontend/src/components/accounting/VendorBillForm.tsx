@@ -484,6 +484,10 @@ export function VendorBillForm({
         setDriverCreateOpen(false);
         void driversQuery.refetch();
       }}
+      // CHROME-11: VendorBillForm renders inside the Bill ParityDrawer (VendorBillCreatePage /
+      // CreateBillModal) — the nested driver creator must stack as a ParityDrawer, never a
+      // centered Modal on top of the already-open Bill drawer.
+      shell="drawer"
     />
     </>
   );

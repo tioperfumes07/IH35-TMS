@@ -13,6 +13,7 @@ import { listMyCompanies } from "../../api/org";
 import { Button } from "../Button";
 import { Combobox } from "../Combobox";
 import { Modal } from "../Modal";
+import { ParityDrawer } from "../parity/ParityDrawer";
 import { SelectCombobox } from "../shared/SelectCombobox";
 import { StatusBadge } from "../StatusBadge";
 import { useToast } from "../Toast";
@@ -144,9 +145,18 @@ type CreateDriverModalProps = {
    * /drivers/:id instead.
    */
   onCreated?: (driverId: string) => void;
+  /**
+   * CHROME-11: this is the SAME single canonical driver creator (Blueprint 4.2.2.1) for every call
+   * site — only the outer chrome changes. Top-level entry points (Drivers module, Safety Driver
+   * Files, Cash-advance inline create) keep the default centered `Modal`. Nested call sites that
+   * open this ON TOP OF an already-open money `ParityDrawer` (e.g. VendorBillForm's "+ Create
+   * driver") MUST pass `shell="drawer"` so the create panel stacks as a right ParityDrawer instead
+   * of a centered Modal-on-drawer.
+   */
+  shell?: "modal" | "drawer";
 };
 
-export function CreateDriverModal({ open, companyId, onClose, onCreated }: CreateDriverModalProps) {
+export function CreateDriverModal({ open, companyId, onClose, onCreated, shell = "modal" }: CreateDriverModalProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -437,24 +447,13 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated }: Creat
     resetDriverCreateErrors();
   }, [open, resetDriverCreateErrors]);
 
-  return (
-    <>
-      <Modal
-        open={open}
-        onClose={onClose}
-        title="Create Driver"
-        confirmDiscardOnClose
-        isDirty={isDriverCreateDirty}
-        onRegisterAttemptClose={(fn) => {
-          driverCreateAttemptCloseRef.current = fn;
-        }}
-      >
-        <form
-          className="grid grid-cols-1 gap-3 md:grid-cols-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-          }}
-        >
+  const driverCreateForm = (
+    <form
+      className="grid grid-cols-1 gap-3 md:grid-cols-2"
+      onSubmit={(event) => {
+        event.preventDefault();
+      }}
+    >
           <div className="col-span-full">
             <FormErrorBanner message={driverApiError} />
           </div>
@@ -819,7 +818,11 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated }: Creat
           ) : null}
 
           <div className="col-span-full flex justify-end gap-2">
-            <Button variant="secondary" type="button" onClick={() => driverCreateAttemptCloseRef.current?.()}>
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={() => (shell === "drawer" ? onClose() : driverCreateAttemptCloseRef.current?.())}
+            >
               Cancel
             </Button>
             <SaveDropdown
@@ -839,52 +842,86 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated }: Creat
               onSaveAndAddAnother={() => void runDriverCreateSave("add_another")}
             />
           </div>
-        </form>
+    </form>
+  );
+
+  const driverCreateSummary = (
+    <div className="space-y-3">
+      <p className="text-sm text-gray-700">
+        WhatsApp invite sent to {createSummary?.phone}. Invite expires in 72 hours.
+      </p>
+      {createSummary?.linked_user_event_type === "existing_user" ? (
+        <p className="text-sm text-slate-700">
+          Phone {createSummary.phone} was already registered. Linked existing account.
+        </p>
+      ) : null}
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-2 text-xs break-all">{createSummary?.invite_url}</div>
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="secondary"
+          type="button"
+          onClick={async () => {
+            if (!createSummary?.invite_url) return;
+            try {
+              await navigator.clipboard.writeText(createSummary.invite_url);
+              pushToast("Invite URL copied", "success");
+            } catch {
+              pushToast("Could not copy invite URL", "error");
+            }
+          }}
+        >
+          Copy
+        </Button>
+        <Button variant="secondary" type="button" onClick={() => setCreateSummary(null)}>
+          Done
+        </Button>
+        <Button
+          type="button"
+          onClick={() => {
+            if (!createSummary?.driver_id) return;
+            const nextDriverId = createSummary.driver_id;
+            setCreateSummary(null);
+            if (onCreated) onCreated(nextDriverId);
+            else navigate(`/drivers/${nextDriverId}`);
+          }}
+        >
+          View Driver
+        </Button>
+      </div>
+    </div>
+  );
+
+  // CHROME-11: nested call sites (shell="drawer") stack THIS SAME creator as a right ParityDrawer —
+  // never a centered Modal on top of an already-open money drawer (e.g. Bill create).
+  if (shell === "drawer") {
+    return (
+      <>
+        <ParityDrawer open={open} onClose={onClose} title="Create Driver" size="wide">
+          {driverCreateForm}
+        </ParityDrawer>
+        <ParityDrawer open={Boolean(createSummary)} onClose={() => setCreateSummary(null)} title="Driver created successfully">
+          {driverCreateSummary}
+        </ParityDrawer>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Modal
+        open={open}
+        onClose={onClose}
+        title="Create Driver"
+        confirmDiscardOnClose
+        isDirty={isDriverCreateDirty}
+        onRegisterAttemptClose={(fn) => {
+          driverCreateAttemptCloseRef.current = fn;
+        }}
+      >
+        {driverCreateForm}
       </Modal>
       <Modal open={Boolean(createSummary)} onClose={() => setCreateSummary(null)} title="Driver created successfully">
-        <div className="space-y-3">
-          <p className="text-sm text-gray-700">
-            WhatsApp invite sent to {createSummary?.phone}. Invite expires in 72 hours.
-          </p>
-          {createSummary?.linked_user_event_type === "existing_user" ? (
-            <p className="text-sm text-slate-700">
-              Phone {createSummary.phone} was already registered. Linked existing account.
-            </p>
-          ) : null}
-          <div className="rounded-sm border border-gray-200 bg-gray-50 p-2 text-xs break-all">{createSummary?.invite_url}</div>
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="secondary"
-              type="button"
-              onClick={async () => {
-                if (!createSummary?.invite_url) return;
-                try {
-                  await navigator.clipboard.writeText(createSummary.invite_url);
-                  pushToast("Invite URL copied", "success");
-                } catch {
-                  pushToast("Could not copy invite URL", "error");
-                }
-              }}
-            >
-              Copy
-            </Button>
-            <Button variant="secondary" type="button" onClick={() => setCreateSummary(null)}>
-              Done
-            </Button>
-            <Button
-              type="button"
-              onClick={() => {
-                if (!createSummary?.driver_id) return;
-                const nextDriverId = createSummary.driver_id;
-                setCreateSummary(null);
-                if (onCreated) onCreated(nextDriverId);
-                else navigate(`/drivers/${nextDriverId}`);
-              }}
-            >
-              View Driver
-            </Button>
-          </div>
-        </div>
+        {driverCreateSummary}
       </Modal>
     </>
   );
