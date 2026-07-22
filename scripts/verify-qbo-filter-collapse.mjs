@@ -82,6 +82,9 @@ for (const [rel, marker] of [
   ["apps/frontend/src/pages/profitability/FilterBar.tsx", "data-profitability-filter-toolbar"],
   ["apps/frontend/src/pages/accounting/TransactionRegisterPage.tsx", "data-transaction-register-filter-toolbar"],
   ["apps/frontend/src/pages/reports/runners/RunnerFilters.tsx", "data-runner-filter-toolbar"],
+  ["apps/frontend/src/pages/accounting/FixedAssetsPage.tsx", "data-fixed-assets-filter-toolbar"],
+  ["apps/frontend/src/pages/accounting/PrepaidExpensesPage.tsx", "data-prepaid-filter-toolbar"],
+  ["apps/frontend/src/pages/accounting/DailyReconPage.tsx", "data-daily-recon-filter-toolbar"],
 ]) {
   const src = read(rel);
   if (!src.includes("CollapsedListFilters")) {
