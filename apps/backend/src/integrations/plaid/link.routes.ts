@@ -304,6 +304,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           bt.matched_load_id,
           bt.matched_bill_id,
           bt.matched_settlement_id,
+          bt.matched_journal_entry_id::text AS matched_journal_entry_id,
           bt.notes,
           bt.created_at
         FROM banking.bank_transactions bt
@@ -539,6 +540,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           bt.matched_load_id,
           bt.matched_bill_id,
           bt.matched_settlement_id,
+          bt.matched_journal_entry_id::text AS matched_journal_entry_id,
           bt.notes,
           bt.created_at,
           bt.source,
@@ -565,6 +567,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           ba.account_name,
           ba.account_mask,
           CASE
+            WHEN bt.matched_journal_entry_id IS NOT NULL THEN 'je'
             WHEN bt.matched_load_id IS NOT NULL THEN 'load'
             WHEN bt.matched_settlement_id IS NOT NULL THEN 'settlement'
             WHEN bt.matched_bill_id IS NOT NULL THEN 'bill'

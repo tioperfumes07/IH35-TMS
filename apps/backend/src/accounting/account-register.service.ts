@@ -20,6 +20,7 @@ const SOURCE_TYPE_LABELS: Record<string, string> = {
   settlement: "Settlement",
   transfer: "Transfer",
   expense: "Expense",
+  bank_categorization: "Bank Categorization",
 };
 
 export type RawPosting = {

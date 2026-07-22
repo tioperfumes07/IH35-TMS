@@ -445,7 +445,7 @@ export function BankingTransactionsDesignView({
         String(tx.matched_kind ?? "").toLowerCase() === "excluded" ||
         String(tx.notes ?? "").toLowerCase().includes("excluded from banking transactions view");
       const looksCategorized =
-        Boolean(tx.matched_load_id || tx.matched_bill_id || tx.matched_settlement_id) ||
+        Boolean(tx.matched_load_id || tx.matched_bill_id || tx.matched_settlement_id || tx.matched_journal_entry_id) ||
         (tx.matched_kind != null && String(tx.matched_kind).toLowerCase() !== "excluded");
       if (looksExcluded) {
         out.excluded.push(tx);
@@ -500,7 +500,7 @@ export function BankingTransactionsDesignView({
         case "missing_from_to":
           return !String(tx.merchant_name ?? tx.description ?? "").trim();
         case "uncategorized":
-          return !tx.matched_kind && !tx.matched_bill_id && !tx.matched_load_id && !tx.matched_settlement_id;
+          return !tx.matched_kind && !tx.matched_bill_id && !tx.matched_load_id && !tx.matched_settlement_id && !tx.matched_journal_entry_id;
         case "requests_waiting_reply":
           return String(tx.notes ?? "").toLowerCase().includes("waiting for reply");
         case "requests_reply_received":
@@ -1043,6 +1043,19 @@ export function BankingTransactionsDesignView({
                     ) : null}
                   </div>
                 )}
+              {tx.matched_journal_entry_id ? (
+                <div
+                  className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px]"
+                  onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
+                >
+                  <EntityLink
+                    kind="journal_entry"
+                    id={tx.matched_journal_entry_id}
+                    label="Journal Entry"
+                    data-testid="bank-txn-je-link"
+                  />
+                </div>
+              ) : null}
             </div>
             <div className="inline-flex items-center gap-1 text-gray-400">
               <button

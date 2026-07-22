@@ -62,6 +62,8 @@ function sourceRoute(type: string | null, reference: string | null): string {
   if (t === "bill_payment") return "/accounting/bill-payments";
   if (t === "expense") return "/accounting/expenses/list";
   if (t === "settlement") return "/driver-finance/settlements";
+  // Law §9 bank reverse: bank_categorization source_transaction_id is the bank txn uuid.
+  if (t === "bank_categorization" && reference) return `/banking/transactions?txn_id=${reference}`;
   return "/accounting/journal-entries";
 }
 

@@ -975,7 +975,10 @@ export function getJournalEntry(id: string, operatingCompanyId: string) {
   return apiRequest<JournalEntry>(withCompany(`/api/v1/accounting/journal-entries/${id}`, operatingCompanyId));
 }
 
-/** Reverse drill-through: which source document(s) posted this JE (Law §9). */
+/**
+ * Law §9 reverse drill — which source document(s) posted this JE, per posting line
+ * (expense, bill, invoice, bank_categorization, …).
+ */
 export type JournalEntrySourceLink = {
   journal_entry_posting_id: string;
   line_sequence: number;

@@ -37,12 +37,19 @@ describe("AccountRegisterPage CA-05 guard", () => {
       "/accounting/expenses/list",
       "/driver-finance/settlements",
       "/accounting/journal-entries",
+      "/banking/transactions",
     ];
     const missing = targets.filter((t) => {
       const base = t.endsWith("/") ? t.slice(0, -1) : t; // strip the :id trailing slash
       return !(manifest.includes(`path="${base}"`) || manifest.includes(`path="${base}/:id"`));
     });
     expect(missing, `drill-through routes not in manifest: ${missing.join(", ")}`).toEqual([]);
+  });
+
+  it("maps bank_categorization register rows to the bank txn deep-link", () => {
+    expect(page).toMatch(
+      /t === ["']bank_categorization["'] && reference\)\s*return [`'"]\/banking\/transactions\?txn_id=\$\{reference\}[`'"]/
+    );
   });
 
   it("formats money in cents (/100) — no 10x bug", () => {
