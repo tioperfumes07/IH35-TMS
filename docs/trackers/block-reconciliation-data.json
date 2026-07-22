@@ -1,12 +1,12 @@
 {
  "date": "2026-07-22",
- "generated_at_iso": "2026-07-22T04:39:44.851Z",
+ "generated_at_iso": "2026-07-22T08:48:23.084Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
-  "NEEDS-VERIFY": 69,
+  "NEEDS-VERIFY": 71,
   "DONE": 670,
-  "AUDIT-NOTE": 418
+  "AUDIT-NOTE": 416
  },
  "universe": {
   "total_blocks_after_dedup": 1191,
@@ -814,6 +814,28 @@
    "name": "",
    "registered_on": null,
    "pr": 2673
+  },
+  {
+   "id": "flow2-auto-deduction-trigger-from-customer-exp",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #3159 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 3159
+  },
+  {
+   "id": "flow2-customer-chargeback-driver-expense",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #3159 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 3159
   },
   {
    "id": "flow6-auto-invoice-sending",
@@ -12214,28 +12236,6 @@
    "pr": null
   },
   {
-   "id": "flow2-auto-deduction-trigger-from-customer-exp",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "flow2-customer-chargeback-driver-expense",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "flow3-cancellation-auto-customer-charge",
    "source": ".block-ready",
    "fin": true,
@@ -13162,6 +13162,12 @@
  ],
  "merged_prs": [
   {
+   "number": 3196,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-22T04:56:21Z",
+   "branch": "chore/tracker-artifacts-sync-29891616295"
+  },
+  {
    "number": 3194,
    "title": "docs: agent GitHub identity + merge attribution (2026-07-22)",
    "mergedAt": "2026-07-22T04:13:36Z",
@@ -13190,6 +13196,12 @@
    "title": "fix(banking): lock active categorize path + legacy redirects",
    "mergedAt": "2026-07-22T03:57:56Z",
    "branch": "fix/banking-categorize-active-path-20260721"
+  },
+  {
+   "number": 3186,
+   "title": "fix(banking): bank categorization ↔ JE reverse drill (Law §9 / #3177 P0)",
+   "mergedAt": "2026-07-22T05:03:07Z",
+   "branch": "fix/bank-categorization-je-reverse"
   },
   {
    "number": 3184,
@@ -13234,6 +13246,12 @@
    "branch": "hold/fuel-gl-map-codes-designate-20260721"
   },
   {
+   "number": 3176,
+   "title": "docs(audit): Law §9 E2E batch3 — WO / fine / advance / escrow (DO NOT MERGE)",
+   "mergedAt": "2026-07-22T05:03:31Z",
+   "branch": "audit/law-e2e-batch3-money-ops-2026-07-21"
+  },
+  {
    "number": 3175,
    "title": "docs(audit): Law §9 E2E claim→legal→expense linkage FAIL (2026-07-21)",
    "mergedAt": "2026-07-22T04:18:08Z",
@@ -13268,6 +13286,12 @@
    "title": "fix(accounting): ItemEditor + Add new account opens account create chrome (not category)",
    "mergedAt": "2026-07-22T03:33:19Z",
    "branch": "fix/item-editor-account-create-kind"
+  },
+  {
+   "number": 3159,
+   "title": "[HOLD-FOR-JORGE] docs(design): WAVE 5 HOLDs — gap3 vendor FK · DIP AP split · flow2 chargeback",
+   "mergedAt": "2026-07-22T05:03:54Z",
+   "branch": "design/acct-drain-w5-holds-2026-07-21"
   },
   {
    "number": 3153,
@@ -16736,38 +16760,20 @@
    "title": "feat(relay): owner-only CSV import endpoint (ingest historical fuel transactions) — doc 21/23",
    "mergedAt": "2026-07-12T13:02:14Z",
    "branch": "feat/relay-csv-import-endpoint"
-  },
-  {
-   "number": 2394,
-   "title": "feat(relay): owner-only fuel backfill endpoint (seed full history) — doc 21/23 Part A",
-   "mergedAt": "2026-07-12T05:36:10Z",
-   "branch": "feat/relay-fuel-backfill-endpoint"
-  },
-  {
-   "number": 2393,
-   "title": "fix(relay): enroll RELAY_FUEL_INGEST_ENABLED in PER_ENTITY_ONLY_FLAG_KEYS (doc 21 gap 2)",
-   "mergedAt": "2026-07-12T05:22:25Z",
-   "branch": "fix/relay-flag-per-entity-only"
-  },
-  {
-   "number": 2392,
-   "title": "fix(tracker): By-Module path-based + Sequence block_ready_key bridge (Doc 20)",
-   "mergedAt": "2026-07-12T05:56:30Z",
-   "branch": "fix/doc20-tracker-bymodule-sequence"
-  },
-  {
-   "number": 2391,
-   "title": "fix(relay): wire the orphaned fuel-ingest cron into the scheduler (doc 21 Part A gap 1)",
-   "mergedAt": "2026-07-12T05:11:40Z",
-   "branch": "fix/relay-fuel-ingest-cron-wired"
   }
  ],
- "merged_pr_total": 2871,
+ "merged_pr_total": 2875,
  "hold_for_jorge": [
   {
    "number": 3178,
    "title": "docs(hold)[HOLD-FOR-JORGE]: fuel GL flush — designate diesel|def|reefer|oil|misc maps",
    "mergedAt": "2026-07-22T04:38:53Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3159,
+   "title": "[HOLD-FOR-JORGE] docs(design): WAVE 5 HOLDs — gap3 vendor FK · DIP AP split · flow2 chargeback",
+   "mergedAt": "2026-07-22T05:03:54Z",
    "category": "HOLD"
   },
   {
