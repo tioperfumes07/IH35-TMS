@@ -10,6 +10,7 @@ import { listComplaintTypes } from "../../../api/catalogs-safety";
 import { listDrivers } from "../../../api/mdata";
 import { useAuth } from "../../../auth/useAuth";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useListState } from "../../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
@@ -52,8 +53,7 @@ export function ComplaintsTab() {
     retry: false,
   });
 
-  // Company-scoped driver roster for the respondent picker. operating_company_id is REQUIRED and we
-  // pass limit:200 so the roster is not silently truncated to the newest 50 (driver-picker 50-cap).
+  // Company-scoped driver roster for list labels (create form uses DriverPickerWithCreate).
   const driversQuery = useQuery({
     queryKey: ["safety-v64", "complaints-driver-roster", companyId],
     queryFn: () => listDrivers({ operating_company_id: companyId, limit: 200 }),
@@ -76,12 +76,6 @@ export function ComplaintsTab() {
       map.set(String(d.id), driverLabel(d.first_name, d.last_name) || String(d.id));
     }
     return map;
-  }, [driversQuery.data]);
-
-  const driverOptions = useMemo(() => {
-    return (driversQuery.data?.drivers ?? [])
-      .map((d) => ({ id: String(d.id), label: driverLabel(d.first_name, d.last_name) || String(d.id) }))
-      .sort((a, b) => a.label.localeCompare(b.label));
   }, [driversQuery.data]);
 
   const complaintTypeByCode = useMemo(() => {
@@ -207,16 +201,13 @@ export function ComplaintsTab() {
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="grid gap-2 md:grid-cols-6">
             <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" placeholder="Complainant" value={form.complainant_external_name} onChange={(e) => setForm((v) => ({ ...v, complainant_external_name: e.target.value }))} />
-            <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1 text-xs" value={form.respondent_driver_id} onChange={(e) => setForm((v) => ({ ...v, respondent_driver_id: e.target.value }))}>
-              <option value="" disabled>
-                {driversQuery.isLoading ? "Loading drivers…" : "Respondent driver"}
-              </option>
-              {driverOptions.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.label}
-                </option>
-              ))}
-            </SelectCombobox>
+            <DriverPickerWithCreate
+              operatingCompanyId={companyId}
+              value={form.respondent_driver_id || null}
+              onChange={(next) => setForm((v) => ({ ...v, respondent_driver_id: next ?? "" }))}
+              placeholder="Respondent driver"
+              className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+            />
             <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1 text-xs" value={form.complaint_type} onChange={(e) => setForm((v) => ({ ...v, complaint_type: e.target.value }))}>
               <option value="" disabled>
                 {complaintTypesQuery.isLoading ? "Loading types…" : "Type"}

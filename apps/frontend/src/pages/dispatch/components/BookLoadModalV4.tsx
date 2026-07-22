@@ -1251,7 +1251,9 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                     <span className="blw-sec-meta">Class <b>T120-SMITH</b></span>
                   </div>
                   <div className="space-y-2 p-3">
-                    {/* Trip Type lifted to the full-width banner above the body (A3). §B starts at Equipment. */}
+                    {/* Trip Type lifted to the full-width banner above the body (A3). §B starts at Equipment.
+                        SKIP inventing a driver picker here — create-worthy Driver / Team driver fields live in
+                        BookLoadEquipmentSection (DriverPickerWithCreate + CreateDriverModal). */}
                     <BookLoadEquipmentSection
                       register={form.register}
                       watch={form.watch}

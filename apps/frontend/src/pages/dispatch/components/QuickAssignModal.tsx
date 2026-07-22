@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { listDrivers, listUnits } from "../../../api/mdata";
+import { listUnits } from "../../../api/mdata";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type Props = {
@@ -35,13 +36,6 @@ export function QuickAssignModal({ open, operatingCompanyId, loadNumber, hardWar
   const [ackAll, setAckAll] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // THE Quick Assign driver picker. status:Active + limit:200 = the COMPLETE active set (see
-  // BookLoadEquipmentSection — endpoint default limit=50 silently truncates the roster).
-  const driversQuery = useQuery({
-    queryKey: ["quick-assign-drivers", operatingCompanyId],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, status: "Active", limit: 200 }),
-    enabled: open && Boolean(operatingCompanyId),
-  });
   // Unified fleet: trucks (mdata.units) + trailers (mdata.equipment), kind-tagged + active-filtered.
   const unitsQuery = useQuery({
     queryKey: ["quick-assign-units", operatingCompanyId],
@@ -49,14 +43,6 @@ export function QuickAssignModal({ open, operatingCompanyId, loadNumber, hardWar
     enabled: open && Boolean(operatingCompanyId),
   });
 
-  const driverOptions = useMemo(
-    () =>
-      (driversQuery.data?.drivers ?? []).map((d) => ({
-        value: d.id,
-        label: [d.first_name, d.last_name].filter(Boolean).join(" ").trim() || d.id.slice(0, 8),
-      })),
-    [driversQuery.data?.drivers]
-  );
   const fleet = (unitsQuery.data?.units ?? []) as Array<Record<string, unknown>>;
   const truckOptions = useMemo(
     () =>
@@ -96,19 +82,18 @@ export function QuickAssignModal({ open, operatingCompanyId, loadNumber, hardWar
       >
         <label className="block text-xs font-semibold text-gray-600">
           Driver <span className="text-red-500">*</span>
-          <SelectCombobox
-            value={driverId}
-            onChange={(event) => setDriverId(event.target.value)}
-            className="mt-0.5 h-9 w-full text-sm"
-            required
-          >
-            <option value="">{driversQuery.isLoading ? "Loading drivers…" : "Select driver…"}</option>
-            {driverOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </SelectCombobox>
+          <div className="mt-0.5">
+            <DriverPickerWithCreate
+              operatingCompanyId={operatingCompanyId}
+              value={driverId || null}
+              onChange={(next) => setDriverId(next ?? "")}
+              open={open}
+              placeholder="Select driver…"
+              className="h-9 w-full text-sm"
+              allowClear={false}
+              // Standalone Modal chrome → default shell="modal".
+            />
+          </div>
         </label>
         <label className="block text-xs font-semibold text-gray-600">
           Unit

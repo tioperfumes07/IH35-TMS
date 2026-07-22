@@ -17,6 +17,7 @@ import { listCustomers, listDrivers } from "../api/mdata";
 import { formatDateTimeUS, formatDateUS } from "../lib/formatDate";
 import { Button } from "../components/Button";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
+import { DriverPickerWithCreate } from "../components/drivers/DriverPickerWithCreate";
 import { MoneyInput } from "../components/forms/MoneyInput";
 import { DatePicker } from "../components/forms/DatePicker";
 import { companyToday } from "../lib/businessDate";
@@ -581,7 +582,18 @@ export function UserDetailPage() {
             {enableRelated ? (
               <div className="mt-2 space-y-2">
                 <Combobox options={customerOptions} value={relatedCustomerId} onChange={setRelatedCustomerId} placeholder="Related customer" loading={customersQuery.isLoading} />
-                <Combobox options={driverOptions} value={relatedDriverId} onChange={setRelatedDriverId} placeholder="Related driver" loading={driversQuery.isLoading} />
+                {selectedCompanyId ? (
+                  <DriverPickerWithCreate
+                    operatingCompanyId={selectedCompanyId}
+                    value={relatedDriverId}
+                    onChange={setRelatedDriverId}
+                    open={addEventOpen && enableRelated}
+                    placeholder="Related driver"
+                    dataField="dispatcher-safety-related-driver"
+                  />
+                ) : (
+                  <Combobox options={driverOptions} value={relatedDriverId} onChange={setRelatedDriverId} placeholder="Related driver" loading={driversQuery.isLoading} disabled />
+                )}
                 <div className="text-xs text-gray-500">Related load: optional until dispatch load linking is enabled.</div>
               </div>
             ) : null}

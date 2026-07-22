@@ -7,7 +7,8 @@ import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useToast } from "../../../components/Toast";
 import { legalContractsApi, type LegalContractLanguage, type LegalSignerType } from "../../../api/legal-contracts";
 import { legalTemplatesApi, type LegalTemplateSummary } from "../../../api/legal-templates";
-import { listDrivers, listCustomers } from "../../../api/mdata";
+import { listCustomers, listDrivers } from "../../../api/mdata";
+import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { useListState } from "../../../components/list-state";
 
 // Unified bilingual contract creator (Lease / NDA / Policy / any active category).
@@ -105,17 +106,15 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
   });
   const fields = detailQuery.data?.variable_schema?.fields ?? {};
 
-  // Party source per signer type.
-  const driversQuery = useQuery({
-    queryKey: ["legal", "party", "drivers", operatingCompanyId],
-    enabled: open && signerType === "driver" && Boolean(operatingCompanyId),
-    // limit:200 — the driver list defaults to 50 (newest-first) and silently drops the rest.
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, limit: 200 }),
-  });
   const customersQuery = useQuery({
     queryKey: ["legal", "party", "customers", operatingCompanyId],
     enabled: open && signerType === "customer" && Boolean(operatingCompanyId),
     queryFn: () => listCustomers({ operating_company_id: operatingCompanyId }),
+  });
+  const driversQuery = useQuery({
+    queryKey: ["legal", "party", "drivers", operatingCompanyId],
+    enabled: open && signerType === "driver" && Boolean(operatingCompanyId),
+    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, limit: 200 }),
   });
   const unitsQuery = useQuery({
     queryKey: ["legal", "party", "units", operatingCompanyId],
@@ -123,25 +122,15 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
     queryFn: () => legalContractsApi.leaseToOwnFleet({ operating_company_id: operatingCompanyId }),
   });
 
-  const partyOptions: Party[] = useMemo(() => {
-    if (signerType === "driver") {
-      return (driversQuery.data?.drivers ?? []).map((d) => ({
-        id: String(d.id),
-        label: `${d.first_name ?? ""} ${d.last_name ?? ""}`.trim() || String(d.id),
-        email: (d as { email?: string | null }).email ?? null,
-        phone: (d as { phone?: string | null }).phone ?? null,
-      }));
-    }
-    if (signerType === "customer") {
-      return (customersQuery.data?.customers ?? []).map((c) => ({
-        id: String(c.id),
-        label: (c as { customer_name?: string }).customer_name ?? String(c.id),
-        email: (c as { email?: string | null }).email ?? null,
-        phone: (c as { phone?: string | null }).phone ?? null,
-      }));
-    }
-    return [];
-  }, [signerType, driversQuery.data, customersQuery.data]);
+  const customerPartyOptions: Party[] = useMemo(() => {
+    if (signerType !== "customer") return [];
+    return (customersQuery.data?.customers ?? []).map((c) => ({
+      id: String(c.id),
+      label: (c as { customer_name?: string }).customer_name ?? String(c.id),
+      email: (c as { email?: string | null }).email ?? null,
+      phone: (c as { phone?: string | null }).phone ?? null,
+    }));
+  }, [signerType, customersQuery.data]);
 
   const isLease = selectedTemplate?.category === "lease";
   const leaseUnits = unitsQuery.data?.units ?? [];
@@ -470,27 +459,60 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                   Select {signerType}
                   <span className="text-crit"> *</span>
                 </span>
-                <SelectCombobox
-                  value={signerEntityId}
-                  onChange={(e) => {
-                    const id = e.target.value;
-                    setSignerEntityId(id);
-                    const p = partyOptions.find((x) => x.id === id);
-                    if (p) {
-                      setSignerName(p.label);
-                      setSignerEmail(p.email ?? "");
-                      setSignerPhone(p.phone ?? "");
-                    }
-                  }}
-                  className="w-full"
-                >
-                  <option value="">Select…</option>
-                  {partyOptions.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.label}
-                    </option>
-                  ))}
-                </SelectCombobox>
+                {signerType === "driver" ? (
+                  <DriverPickerWithCreate
+                    operatingCompanyId={operatingCompanyId}
+                    value={signerEntityId || null}
+                    open={open}
+                    shell="drawer"
+                    placeholder="Select driver…"
+                    onChange={(id) => {
+                      setSignerEntityId(id ?? "");
+                      if (!id) {
+                        setSignerName("");
+                        setSignerEmail("");
+                        setSignerPhone("");
+                        return;
+                      }
+                      const applyDriver = (d: { first_name?: string | null; last_name?: string | null; email?: string | null; phone?: string | null }) => {
+                        setSignerName(`${d.first_name ?? ""} ${d.last_name ?? ""}`.trim() || id);
+                        setSignerEmail(d.email ?? "");
+                        setSignerPhone(d.phone ?? "");
+                      };
+                      const cached = driversQuery.data?.drivers?.find((row) => String(row.id) === id);
+                      if (cached) {
+                        applyDriver(cached as { first_name?: string | null; last_name?: string | null; email?: string | null; phone?: string | null });
+                        return;
+                      }
+                      void driversQuery.refetch().then((result) => {
+                        const d = result.data?.drivers?.find((row) => String(row.id) === id);
+                        if (d) applyDriver(d as { first_name?: string | null; last_name?: string | null; email?: string | null; phone?: string | null });
+                      });
+                    }}
+                  />
+                ) : (
+                  <SelectCombobox
+                    value={signerEntityId}
+                    onChange={(e) => {
+                      const id = e.target.value;
+                      setSignerEntityId(id);
+                      const p = customerPartyOptions.find((x) => x.id === id);
+                      if (p) {
+                        setSignerName(p.label);
+                        setSignerEmail(p.email ?? "");
+                        setSignerPhone(p.phone ?? "");
+                      }
+                    }}
+                    className="w-full"
+                  >
+                    <option value="">Select…</option>
+                    {customerPartyOptions.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.label}
+                      </option>
+                    ))}
+                  </SelectCombobox>
+                )}
               </label>
             )}
 

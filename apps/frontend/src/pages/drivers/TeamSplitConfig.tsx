@@ -1,10 +1,8 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { listDrivers } from "../../api/mdata";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
+import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
 import { Modal } from "../../components/Modal";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useTeamSplits } from "../../hooks/useTeamSplits";
 
@@ -28,19 +26,6 @@ export function TeamSplitConfigPanel() {
 
 export function TeamSplitConfig({ operatingCompanyId }: Props) {
   const { data, isLoading, create, endConfig } = useTeamSplits(operatingCompanyId);
-  const driversQuery = useQuery({
-    queryKey: ["drivers", "team-splits", operatingCompanyId],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, limit: 200 }).then((res) => res.drivers), // full active set (endpoint default 50 truncates >50)
-    enabled: Boolean(operatingCompanyId),
-  });
-  const driverOptions = useMemo(
-    () =>
-      (driversQuery.data ?? []).map((driver) => ({
-        value: driver.id,
-        label: `${driver.first_name} ${driver.last_name}`,
-      })),
-    [driversQuery.data]
-  );
 
   const [createOpen, setCreateOpen] = useState(false);
   const [primaryDriverId, setPrimaryDriverId] = useState("");
@@ -113,33 +98,29 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
         <div className="space-y-3">
           <label className="block text-xs font-medium text-gray-700">
             Primary driver
-            <SelectCombobox
-              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-[13px]"
-              value={primaryDriverId}
-              onChange={(e) => setPrimaryDriverId(e.target.value)}
-            >
-              <option value="">Select driver…</option>
-              {driverOptions.map((driver) => (
-                <option key={driver.value} value={driver.value}>
-                  {driver.label}
-                </option>
-              ))}
-            </SelectCombobox>
+            <div className="mt-1">
+              <DriverPickerWithCreate
+                operatingCompanyId={operatingCompanyId}
+                value={primaryDriverId || null}
+                onChange={(next) => setPrimaryDriverId(next ?? "")}
+                open={createOpen}
+                placeholder="Select driver…"
+                dataField="team-split-primary-driver"
+              />
+            </div>
           </label>
           <label className="block text-xs font-medium text-gray-700">
             Secondary driver
-            <SelectCombobox
-              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-[13px]"
-              value={secondaryDriverId}
-              onChange={(e) => setSecondaryDriverId(e.target.value)}
-            >
-              <option value="">Select driver…</option>
-              {driverOptions.map((driver) => (
-                <option key={driver.value} value={driver.value}>
-                  {driver.label}
-                </option>
-              ))}
-            </SelectCombobox>
+            <div className="mt-1">
+              <DriverPickerWithCreate
+                operatingCompanyId={operatingCompanyId}
+                value={secondaryDriverId || null}
+                onChange={(next) => setSecondaryDriverId(next ?? "")}
+                open={createOpen}
+                placeholder="Select driver…"
+                dataField="team-split-secondary-driver"
+              />
+            </div>
           </label>
           <div className="flex flex-wrap gap-2">
             {RATIO_PRESETS.map((preset) => (

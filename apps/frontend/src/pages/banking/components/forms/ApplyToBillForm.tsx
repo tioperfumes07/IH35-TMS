@@ -3,7 +3,7 @@ import type { JSX } from "react";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listCatalogAccounts } from "../../../../api/catalog-accounts";
-import { listVendors, listDrivers, listUnits } from "../../../../api/mdata";
+import { listVendors, listUnits } from "../../../../api/mdata";
 import { getWoCostContext } from "../../../../api/maintenance";
 import {
   CostBreakdownBox,
@@ -12,6 +12,7 @@ import {
   type ItemLine,
 } from "../../../../components/forms/shared/CostBreakdownBox";
 import { DatePicker } from "../../../../components/forms/DatePicker";
+import { DriverPickerWithCreate } from "../../../../components/drivers/DriverPickerWithCreate";
 import { ReferenceSelect } from "../../../../components/parity/ReferenceSelect";
 import { vendorReferenceOption } from "../../../../components/parity/referenceOptionLabels";
 import { SelectCombobox } from "../../../../components/shared/SelectCombobox";
@@ -38,11 +39,6 @@ export function ApplyToBillForm({ value, onChange, operatingCompanyId }: Props) 
   const vendorsQuery = useQuery({
     queryKey: ["categorize-bill", "vendors", operatingCompanyId],
     queryFn: () => listVendors({ operating_company_id: operatingCompanyId }),
-    enabled: Boolean(operatingCompanyId),
-  });
-  const driversQuery = useQuery({
-    queryKey: ["categorize-bill", "drivers", operatingCompanyId],
-    queryFn: () => listDrivers({ status: "Active", operating_company_id: operatingCompanyId, limit: 200 }), // full active set (endpoint default 50 truncates >50)
     enabled: Boolean(operatingCompanyId),
   });
   const unitsQuery = useQuery({
@@ -188,14 +184,16 @@ export function ApplyToBillForm({ value, onChange, operatingCompanyId }: Props) 
           />
         </Field>
         <Field label="Driver">
-          <SelectCombobox className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={String(value.driver_id ?? "")} onChange={(event) => onChange({ ...value, driver_id: event.target.value })}>
-            <option value="">Select driver...</option>
-            {(driversQuery.data?.drivers ?? []).map((driver) => (
-              <option key={driver.id} value={driver.id}>
-                {[driver.first_name, driver.last_name].filter(Boolean).join(" ").trim() || driver.id}
-              </option>
-            ))}
-          </SelectCombobox>
+          {/* CategorizeDrawer parent → nested create uses drawer shell (CHROME-11). */}
+          <DriverPickerWithCreate
+            operatingCompanyId={operatingCompanyId}
+            value={value.driver_id ? String(value.driver_id) : null}
+            onChange={(next) => onChange({ ...value, driver_id: next ?? "" })}
+            shell="drawer"
+            placeholder="Select driver..."
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
+            disabled={!operatingCompanyId}
+          />
         </Field>
         <Field label="Unit">
           <SelectCombobox className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={String(value.unit_id ?? "")} onChange={(event) => onChange({ ...value, unit_id: event.target.value })}>

@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState, useId } from "react";
+import { useMemo, useState } from "react";
 import { getDispatchAvailableDrivers, type AvailableDriverRow } from "../../api/dispatch";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { Combobox } from "../../components/Combobox";
+import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
 
 export type AssignDriverDropdownProps = {
   loadId: string;
@@ -12,6 +13,11 @@ export type AssignDriverDropdownProps = {
   disabled?: boolean;
   /** When set (e.g. in tests), skips network fetch. */
   driversOverride?: AvailableDriverRow[];
+  /**
+   * Parent already a ParityDrawer → pass "drawer". Standalone Modal/page → default "modal".
+   * LoadReassignModal uses Modal, so consumers inherit shell="modal" unless overridden.
+   */
+  shell?: "modal" | "drawer";
 };
 
 export const REASSIGN_REASON_CODES = [
@@ -30,6 +36,7 @@ export function AssignDriverDropdown({
   forPickupAt,
   disabled,
   driversOverride,
+  shell = "modal",
 }: AssignDriverDropdownProps) {
   const q = useQuery({
     queryKey: ["dispatch", "available-drivers", loadId, operatingCompanyId, forPickupAt ?? ""],
@@ -53,10 +60,39 @@ export function AssignDriverDropdown({
   }, [drivers]);
 
   const [pendingUnsafe, setPendingUnsafe] = useState<AvailableDriverRow | null>(null);
-  const selectId = useId();
+  const [driverCreateOpen, setDriverCreateOpen] = useState(false);
+  /** Newly created driver may not yet appear in available-drivers (HOS/distance); keep a local option. */
+  const [createdOption, setCreatedOption] = useState<{ driver_id: string; display_name: string } | null>(null);
+
+  const optionsRows = useMemo(() => {
+    if (!createdOption) return sorted;
+    if (sorted.some((d) => d.driver_id === createdOption.driver_id)) return sorted;
+    return [
+      {
+        driver_id: createdOption.driver_id,
+        display_name: createdOption.display_name,
+        display_id: null,
+        hours_remaining_today: 0,
+        hours_remaining_week: 0,
+        distance_to_pickup_miles: 0,
+        hos_safe: true,
+        is_in_violation: false,
+      } satisfies AvailableDriverRow,
+      ...sorted,
+    ];
+  }, [sorted, createdOption]);
+
+  const comboboxOptions = useMemo(
+    () =>
+      optionsRows.map((d) => ({
+        value: d.driver_id,
+        label: d.hos_safe ? d.display_name : `${d.display_name} — out of HOS`,
+      })),
+    [optionsRows]
+  );
 
   const onSelectId = (id: string) => {
-    const row = sorted.find((d) => d.driver_id === id);
+    const row = optionsRows.find((d) => d.driver_id === id);
     if (!row) {
       onChange(id);
       return;
@@ -70,30 +106,27 @@ export function AssignDriverDropdown({
 
   return (
     <div className="space-y-1">
-      <label htmlFor={selectId} className="text-xs font-semibold text-gray-600">
-        Driver
-      </label>
-      <SelectCombobox
-        id={selectId}
-        className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
-        value={value}
+      <label className="text-xs font-semibold text-gray-600">Driver</label>
+      <Combobox
+        className="h-9 w-full text-sm"
+        options={comboboxOptions}
+        value={value || null}
         disabled={disabled || (!driversOverride && q.isLoading)}
-        onChange={(e) => onSelectId(e.target.value)}
-      >
-        <option value="">{q.isLoading ? "Loading…" : "Select driver"}</option>
-        {sorted.map((d) => (
-          <option
-            key={d.driver_id}
-            value={d.driver_id}
-            disabled={false}
-            className={d.hos_safe ? undefined : "text-gray-400"}
-            title={d.hos_safe ? undefined : "Out of hours today"}
-          >
-            {d.display_name}
-            {!d.hos_safe ? " — out of HOS" : ""}
-          </option>
-        ))}
-      </SelectCombobox>
+        loading={!driversOverride && q.isLoading}
+        placeholder={q.isLoading ? "Loading…" : "Select driver"}
+        allowClear
+        allowAddNew={{
+          label: "+ Create driver",
+          onAdd: () => setDriverCreateOpen(true),
+        }}
+        onChange={(next) => {
+          if (!next) {
+            onChange("");
+            return;
+          }
+          onSelectId(next);
+        }}
+      />
       {pendingUnsafe ? (
         <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-xs text-slate-700">
           <p className="font-semibold">Driver is out of hours today</p>
@@ -115,6 +148,18 @@ export function AssignDriverDropdown({
           </div>
         </div>
       ) : null}
+      <CreateDriverModal
+        open={driverCreateOpen}
+        companyId={operatingCompanyId}
+        shell={shell}
+        onClose={() => setDriverCreateOpen(false)}
+        onCreated={(createdId) => {
+          setCreatedOption({ driver_id: createdId, display_name: `Driver ${createdId.slice(0, 8)}` });
+          onChange(createdId);
+          setDriverCreateOpen(false);
+          void q.refetch();
+        }}
+      />
     </div>
   );
 }

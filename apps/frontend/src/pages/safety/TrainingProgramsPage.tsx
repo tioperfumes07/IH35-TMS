@@ -9,6 +9,7 @@ import {
 } from "../../api/safety";
 import { listDrivers } from "../../api/mdata";
 import { Button } from "../../components/Button";
+import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
 import { Modal } from "../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
@@ -51,6 +52,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
   const [recertifyMonths, setRecertifyMonths] = useState("12");
   const [passingGrade, setPassingGrade] = useState("");
   const [assignDriverIds, setAssignDriverIds] = useState<string[]>([]);
+  const [driverCreateOpen, setDriverCreateOpen] = useState(false);
   const [sessionPrograms, setSessionPrograms] = useState<ProgramRow[]>([]);
 
   const completionsQuery = useQuery({
@@ -273,6 +275,17 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
           <div className="text-xs text-slate-600">
             Program: <span className="font-semibold text-slate-800">{selectedProgram?.name ?? "—"}</span>
           </div>
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-xs font-semibold text-slate-600">Drivers</div>
+            <button
+              type="button"
+              className="text-xs font-semibold text-slate-700 underline"
+              data-testid="training-program-create-driver"
+              onClick={() => setDriverCreateOpen(true)}
+            >
+              + Create driver
+            </button>
+          </div>
           <div className="max-h-48 space-y-1 overflow-y-auto rounded-sm border border-gray-200 p-2">
             {(driversQuery.data?.drivers ?? []).map((driver) => (
               <label key={driver.id} className="flex items-center gap-2 text-xs text-slate-700">
@@ -306,6 +319,16 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
           </div>
         </form>
       </Modal>
+      <CreateDriverModal
+        open={driverCreateOpen}
+        companyId={operatingCompanyId}
+        onClose={() => setDriverCreateOpen(false)}
+        onCreated={(createdId) => {
+          setAssignDriverIds((current) => (current.includes(createdId) ? current : [...current, createdId]));
+          setDriverCreateOpen(false);
+          void driversQuery.refetch();
+        }}
+      />
     </div>
   );
 }

@@ -18,6 +18,10 @@ type Props = {
   driversOverride?: AssignDriverDropdownProps["driversOverride"];
 };
 
+/**
+ * SKIP inventing a second driver picker here — create-worthy select lives in AssignDriverDropdown
+ * (wired with CreateDriverModal + "+ Create driver"); this modal inherits via composition.
+ */
 export function LoadReassignModal({ open, onClose, loadId, operatingCompanyId, loadNumber, driversOverride }: Props) {
   const { pushToast } = useToast();
   const qc = useQueryClient();

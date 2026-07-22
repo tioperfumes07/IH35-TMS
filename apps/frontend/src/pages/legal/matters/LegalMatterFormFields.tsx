@@ -1,9 +1,10 @@
 import type { Dispatch, SetStateAction } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listInsuranceClaims, listInsuranceLawsuits } from "../../../api/insurance";
-import { listDrivers, listUnits } from "../../../api/mdata";
+import { listUnits } from "../../../api/mdata";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 export type LegalMatterFormState = {
@@ -177,12 +178,6 @@ export function LegalMatterFormFields({ form, setForm, mode, operatingCompanyId 
     enabled: Boolean(operatingCompanyId),
     queryFn: () => listInsuranceLawsuits({ operating_company_id: operatingCompanyId }).then((r) => r.lawsuits),
   });
-  const driversQuery = useQuery({
-    queryKey: ["legal-matter-form", "drivers", operatingCompanyId],
-    enabled: Boolean(operatingCompanyId),
-    queryFn: () =>
-      listDrivers({ operating_company_id: operatingCompanyId, status: "All", limit: 500 }).then((r) => r.drivers),
-  });
   const unitsQuery = useQuery({
     queryKey: ["legal-matter-form", "units", operatingCompanyId],
     enabled: Boolean(operatingCompanyId),
@@ -330,18 +325,15 @@ export function LegalMatterFormFields({ form, setForm, mode, operatingCompanyId 
       </label>
       <label className="text-xs text-gray-600" data-testid="legal-matter-related-driver-picker">
         Related driver
-        <SelectCombobox
-          className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
-          value={form.related_driver_id}
-          onChange={(e) => setForm((f) => ({ ...f, related_driver_id: e.target.value }))}
-        >
-          <option value="">None</option>
-          {(driversQuery.data ?? []).map((driver) => (
-            <option key={driver.id} value={driver.id}>
-              {[driver.first_name, driver.last_name].filter(Boolean).join(" ") || driver.id.slice(0, 8)}
-            </option>
-          ))}
-        </SelectCombobox>
+        <div className="mt-1">
+          <DriverPickerWithCreate
+            operatingCompanyId={operatingCompanyId}
+            value={form.related_driver_id || null}
+            onChange={(next) => setForm((f) => ({ ...f, related_driver_id: next ?? "" }))}
+            placeholder="None"
+            allowClear
+          />
+        </div>
       </label>
       <label className="text-xs text-gray-600" data-testid="legal-matter-unit-picker">
         Unit

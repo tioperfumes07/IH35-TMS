@@ -26,7 +26,25 @@ if (!fs.existsSync(abs)) fail(`accident wizard component missing: ${DRAWER}`);
 const src = fs.readFileSync(abs, "utf8");
 
 // 1) The wizard must source its catalogs from the real, company-scoped list functions.
-for (const fn of ["listDrivers", "listUnits", "listVendors"]) {
+//    The DRIVER catalog may be reached directly via listDrivers OR through the shared
+//    <DriverPickerWithCreate> (PLUS-DRIVER-SYSTEM), which calls listDrivers internally. When it
+//    delegates, the shared component is inspected too — otherwise "renders a component" would be an
+//    unchecked escape hatch and the dead-catalog defect this guard exists to catch could return
+//    through the shared picker.
+const SHARED_DRIVER_PICKER = "apps/frontend/src/components/drivers/DriverPickerWithCreate.tsx";
+const delegatesDriverPicker = src.includes("DriverPickerWithCreate");
+if (!src.includes("listDrivers") && !delegatesDriverPicker) {
+  fail(`${DRAWER} no longer imports/uses listDrivers — the listDrivers catalog is dead again`);
+}
+if (delegatesDriverPicker) {
+  let shared = "";
+  try { shared = fs.readFileSync(path.join(process.cwd(), SHARED_DRIVER_PICKER), "utf8"); } catch { shared = ""; }
+  if (!shared) fail(`${SHARED_DRIVER_PICKER} is missing but ${DRAWER} delegates its driver catalog to it`);
+  else if (!shared.includes("listDrivers")) {
+    fail(`${SHARED_DRIVER_PICKER} no longer calls listDrivers — the driver catalog is dead through the shared picker`);
+  }
+}
+for (const fn of ["listUnits", "listVendors"]) {
   if (!src.includes(fn)) fail(`${DRAWER} no longer imports/uses ${fn} — the ${fn} catalog is dead again`);
 }
 // Load picker uses the dispatch loads list.

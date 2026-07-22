@@ -1,9 +1,10 @@
 import type { JSX } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
-import { listMaintenanceDrivers, listMaintenanceVehicles } from "../../../api/maintenance";
+import { listMaintenanceVehicles } from "../../../api/maintenance";
 import { listCustomers, listVendors } from "../../../api/mdata";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
+import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { Combobox } from "../../../components/shared/Combobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
@@ -69,12 +70,6 @@ export function CreateWOSectionIdentification({
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });
-  const driversQuery = useQuery({
-    queryKey: ["maintenance", "master-data", "drivers", operatingCompanyId, "create-wo"],
-    queryFn: () => listMaintenanceDrivers(String(operatingCompanyId), {}),
-    enabled: Boolean(operatingCompanyId),
-    staleTime: 60_000,
-  });
   const vendorsQuery = useQuery({
     queryKey: ["maintenance", "vendors", operatingCompanyId, "create-wo-id"],
     queryFn: () => listVendors({ operating_company_id: String(operatingCompanyId), status: "active", limit: 200 }),
@@ -89,9 +84,6 @@ export function CreateWOSectionIdentification({
   });
   const vehicleOptions = (vehiclesQuery.data?.rows ?? [])
     .map((row) => ({ value: row.id, label: row.unit_display_id || row.id }))
-    .sort((a, b) => a.label.localeCompare(b.label));
-  const driverOptions = (driversQuery.data?.rows ?? [])
-    .map((row) => ({ value: row.id, label: `${row.first_name} ${row.last_name}`.trim() || row.id }))
     .sort((a, b) => a.label.localeCompare(b.label));
   const vendorOptions = (vendorsQuery.data?.vendors ?? [])
     .filter((v) => !v.deactivated_at)
@@ -136,11 +128,11 @@ export function CreateWOSectionIdentification({
           {operatingCompanyId && setValue ? (
             <>
               <input type="hidden" {...register("driver_id", { required: requireDriverAndLoad })} />
-              <Combobox
-                options={driverOptions}
+              <DriverPickerWithCreate
+                operatingCompanyId={operatingCompanyId}
                 value={watch("driver_id") || null}
-                placeholder={driversQuery.isLoading ? "Loading drivers..." : "Select driver"}
                 onChange={(value) => setValue("driver_id", value ?? "", { shouldDirty: true })}
+                placeholder="Select driver"
               />
             </>
           ) : (
