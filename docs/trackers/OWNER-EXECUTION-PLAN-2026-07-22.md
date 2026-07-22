@@ -63,28 +63,36 @@ Do **not** jump to random pending blocks first. Many pending blocks *are* this w
 
 ### PHASE 1 — Module-by-module deep audit inventory (no skipping)
 
-Order (money + ops risk first — launch delay classes first):
+**Owner-locked order (2026-07-22) — follow exactly:**
 
-1. **Settlements** (driver pay, deductions, escrow, advances on statement)  
-2. **Accounting** (expense, bill, bill payment, JE, CoA)  
-3. **Bank** (match, categorize, transfers)  
-4. **Drivers** + **Driver Hub** (profile reverse everything)  
-5. **Dispatch** (loads ↔ money)  
-6. **Fleet** (truck + trailer)  
-7. **Insurance** + **Legal** (claim economics already started — finish)  
-8. **Maintenance** (WO ↔ bill/expense)  
-9. **Safety** + **Compliance**  
-10. **Factoring** + **Fuel** + **Cash Flow** + **Finance**  
-11. **Customers** + **Vendors**  
-12. **Inventory** + **Lists** + **Reports** + **Docs**  
-13. **Form 425** + **Tasks** + **Users** + **Help** + **Program** + **System** + **Home** + **ELD**
+| Seq | Module (sidebar) | Notes |
+|-----|------------------|-------|
+| 1 | **accounting** | Expense, bill, bill payment, JE, CoA — money trust first |
+| 2 | **bank** | Match, categorize, transfers ↔ payments/GL |
+| 3 | **safety** | Accidents, fines, dual-path active design |
+| 4 | **lists** | Catalogs that every wizard depends on |
+| 5 | **maintenance** | WO ↔ bill/expense/unit |
+| 6 | **insurance** | Claim economics (already IN_PROGRESS — finish depth) |
+| 7 | **legal** | Matters ↔ claims/lawsuits |
+| 8 | **dispatch** | Loads ↔ driver/unit/trailer/money |
+| 9 | **settlements** | Pay, deductions, escrow, advances on statement |
+| 10 | **factoring** | Advances ↔ loads/AR |
+| 11 | **vendors** | A/P counterparty |
+| 12 | **customers** | A/R counterparty |
+| 13 | **drivers** | Driver profile reverse (all money + ops) |
+| 14 | **driver-hub** | Hub surfaces ↔ profile |
+| 15 | **fleet** | Truck + trailer |
+| 16 | **cash-flow** | Cash views ↔ bank/accounting |
+| 17 | **finance** | Finance hub |
+| 18+ | **Last wave** | home → fuel → form_425 → reports → then tasks, inventory, docs, users, help, program, system, eld |
 
-For **each** module:
+For **each** module in that order:
 
 1. Write `~/Desktop/IH35-CURSOR-AUDIT/modules/<module>.md` (HAVE/MISSING/DRIFT/WILL FAIL).  
-2. Add rows to `MODULE-DEEP-AUDIT-SCOREBOARD-2026-07-22.md`.  
+2. Add/update rows in `MODULE-DEEP-AUDIT-SCOREBOARD-2026-07-22.md`.  
 3. Tag each finding: `DUAL-PATH` · `WIZARD` · `REVERSE` · `FORWARD-LINK` · `ECONOMICS` · `COA-GL` · `HOLD-NEON`.  
 4. **Do not** mark AUDITED until A+B+C above are done or explicitly UNVERIFIED with reason.
+5. Open fix PRs for that module (Phase 2) before starting the next module’s deep audit — unless Jorge authorizes parallel lanes on **non-overlapping** modules.
 
 **Exit:** All 30 modules have a Desktop file + scoreboard row. Counts known.
 
@@ -151,10 +159,10 @@ The old pending blocks **already were** mostly linkage + economics. Phase 1–2 
 
 ## 5. Immediate next actions (start now)
 
-1. Jorge: **approve this sequence** (or edit order of modules in Phase 1).  
-2. Cursor: keep scoreboard + law updates pushed; start **Settlements** deep module audit file to Jorge’s click-through depth (not grep-only).  
-3. Claude: merge green non-HOLD PRs; hold financial (#3228 claim economics Neon, #3223 advance posting).  
-4. Build **verify-reverse-drill-required** early (control plane) while Settlements audit runs.  
+1. Jorge: **module order locked** (accounting → bank → safety → lists → … → last home/fuel/425/reports).  
+2. Cursor: begin **Accounting** deep module audit file to Jorge’s click-through depth, then its fix PRs.  
+3. Claude: merge green non-HOLD PRs; hold financial (#3228 claim economics Neon, advance posting).  
+4. Build **verify-reverse-drill-required** early (control plane) in parallel with Accounting audit.
 
 ---
 
@@ -163,3 +171,4 @@ The old pending blocks **already were** mostly linkage + economics. Phase 1–2 
 | Date | Note |
 |------|------|
 | 2026-07-22 | Plan created from Jorge session — full click-through + economics definition; sequence locked; incomplete prior audit admitted |
+| 2026-07-22 | **Module order locked by Jorge:** accounting → bank → safety → lists → maintenance → insurance → legal → dispatch → settlements → factoring → vendors → customers → drivers → driver-hub → fleet → cash-flow → finance → then home/fuel/form_425/reports/… |
