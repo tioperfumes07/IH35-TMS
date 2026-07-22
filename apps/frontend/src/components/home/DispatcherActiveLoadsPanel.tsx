@@ -15,6 +15,9 @@ export type DispatcherActiveLoadRow = {
   driver_name: string | null;
   unit_id: string | null;
   unit_number: string | null;
+  // dispatch-sweep-gap-21 residual — read-only invoice reverse linkage on Home.
+  invoice_display_id?: string | null;
+  invoice_status?: string | null;
 };
 
 type DispatcherActiveLoadsPanelProps = {
@@ -89,6 +92,16 @@ export function DispatcherActiveLoadsPanel({ rows, isLoading, isError, onRetry }
                 ) : (
                   <span className="text-slate-400">—</span>
                 )}
+              </span>
+              <span
+                className="shrink-0 font-mono text-[11px] text-slate-600"
+                data-testid="dispatcher-active-load-invoice"
+                title={row.invoice_status ? `Invoice ${row.invoice_status}` : "No invoice"}
+              >
+                {row.invoice_display_id ?? "—"}
+                {row.invoice_status ? (
+                  <span className="ml-1 text-slate-400">({row.invoice_status})</span>
+                ) : null}
               </span>
               <span className={`rounded-sm px-2 py-0.5 text-[11px] font-semibold ${badgeClass(row.is_late, row.detention_expected)}`}>
                 {badgeLabel(row.is_late, row.detention_expected)}

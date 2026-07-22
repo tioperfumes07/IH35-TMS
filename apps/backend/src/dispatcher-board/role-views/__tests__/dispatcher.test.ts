@@ -15,6 +15,15 @@ describe("dispatcher home role view (GAP-66)", () => {
     expect(src).toContain("mdata.detention_requests");
   });
 
+  it("surfaces read-only load→invoice reverse linkage on active loads (gap-21 residual)", () => {
+    const src = readFileSync(servicePath, "utf8");
+    expect(src).toMatch(/accounting\.invoices\s+i/);
+    expect(src).toContain("i.source_load_id = l.id");
+    expect(src).toContain("i.operating_company_id = l.operating_company_id");
+    expect(src).toContain("AS invoice_status");
+    expect(src).toContain("invoice_display_id");
+  });
+
   it("enforces role access + auth for dispatcher home route", () => {
     const src = readFileSync(routesPath, "utf8");
     expect(src).toContain('app.get("/api/v1/dispatcher-board/home"');
