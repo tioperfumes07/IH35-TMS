@@ -74,7 +74,7 @@ export function CoaRolesPage() {
   }, [rowsQuery.data?.rows]);
 
   // Column order/labels preserved 1:1 from the former hand-rolled table markup; the per-row
-  // account input + datalist and the Save button keep their exact handlers (display-only migration).
+  // account <select> (name label, uuid value) and Save button keep their handlers (display-only).
   const columns: Array<ParityColumn<CoaRoleRow>> = [
     {
       key: "role",
