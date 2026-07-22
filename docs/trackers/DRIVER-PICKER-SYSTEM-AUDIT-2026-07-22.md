@@ -4,6 +4,17 @@
 **Block:** **PLUS-DRIVER-SYSTEM** (not money-only) — shared `DriverPickerWithCreate` + specialized hosts inherit.  
 **Guard:** `scripts/verify-plus-driver-system-create.mjs` (+ verify-step `1239`).
 
+## Scope honesty (2026-07-21 promise / Rule 21)
+
+This audit + PR are **ONE spine** of the owner-held bar: **nested canonical creators** on create-worthy fields (driver system-wide + ClaimCreate unit).
+
+They are **not** the whole Law §9 economic FAIL board. Paths Expense / Bill / Settle / Claim / Invoice / Factor / Fuel / Maint / Safety-fine / Bank / Escrow / Advance remain **FAIL** on `TRUE-CONNECTIVITY-MASTER` until separate **CODE** PRs. Chrome ≠ linkage.
+
+| ClaimCreateModal | Nested create |
+|------------------|---------------|
+| Driver → `DriverPickerWithCreate` | **YES** |
+| Unit → `CreateUnitModal` | **YES** |
+
 ## Shared component
 
 `apps/frontend/src/components/drivers/DriverPickerWithCreate.tsx` — Combobox + `allowAddNew: "+ Create driver"` + `CreateDriverModal` (limit 200, Active). Use wherever practical. Specialized UIs (`InlineDriverPicker`, `DriverAutocomplete`, `AssignDriverDropdown`) wire CreateDriverModal into the host so consumers inherit.
