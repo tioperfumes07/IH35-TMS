@@ -14,6 +14,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { ConfirmModal } from "../../components/shared/ConfirmModal";
 import { useToast } from "../../components/Toast";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useListState } from "../../components/list-state";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -243,28 +244,41 @@ export function ExpenseCategoryMapPage() {
                 />
               </label>
 
-              <label className="text-xs font-semibold text-gray-600">
-                Account (autocomplete)
-                <input
-                  list="expense-category-account-options"
-                  className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
-                  value={form.account_id}
-                  onChange={(event) => setForm((prev) => ({ ...prev, account_id: event.target.value }))}
-                  placeholder="Select account id"
-                />
-                <datalist id="expense-category-account-options">
-                  {accounts.map((account) => (
-                    <option key={account.id} value={account.id}>
-                      {account.account_number} - {account.account_name}
-                    </option>
-                  ))}
-                </datalist>
-                <p className="mt-1 text-[11px] text-gray-500">
+              <div className="text-xs font-semibold text-gray-600" data-testid="expense-category-map-account-select">
+                Account
+                {/*
+                  §7.3 + FIX-06 coverage ratchet: a COA-account picker on a create form must be the
+                  shared ReferenceSelect, not a plain <select>. A raw select fixes the uuid-label
+                  defect but drops the mandatory inline "+ Add new" row, so the operator has to
+                  abandon this form to create a missing account. createKind="category" is the COA
+                  path — QuickCreateEntityModal's category branch writes to catalogs.accounts
+                  (canonical, the same table getCoaAccounts reads), never a *_qbo_* mirror.
+                  The option LABEL stays the account name so no raw uuid is ever rendered.
+                */}
+                <div className="mt-1">
+                  <ReferenceSelect
+                    value={form.account_id || null}
+                    onChange={(value) => setForm((prev) => ({ ...prev, account_id: value ?? "" }))}
+                    options={accounts.map((account) => ({
+                      value: account.id,
+                      label: account.account_name,
+                      type: account.account_number ?? undefined,
+                    }))}
+                    createKind="category"
+                    operatingCompanyId={companyId}
+                    placeholder="Select account"
+                    addNewLabel="+ Add new account"
+                    onOptionCreated={() => {
+                      void queryClient.invalidateQueries({ queryKey: ["expense-category-map", "accounts"] });
+                    }}
+                  />
+                </div>
+                <p className="mt-1 text-[11px] font-normal text-gray-500">
                   {selectedAccount
                     ? `Selected: ${selectedAccount.account_number} - ${selectedAccount.account_name}`
                     : "Pick from chart of accounts."}
                 </p>
-              </label>
+              </div>
 
               <fieldset className="text-xs font-semibold text-gray-600">
                 <legend>Posting side</legend>

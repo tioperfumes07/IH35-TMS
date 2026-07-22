@@ -8,8 +8,10 @@
  * "No mappings found." (LIST-EMPTY-1), the ListErrorState error surface on the map query, the
  * ListErrorBanner + accountsQuery retry in the add modal (wave-c), the inline Deactivate action
  * (soft delete via ConfirmModal — void, never delete), and the admin-activity audit link must all
- * be preserved. No posting/GL logic lives in this file's table; the create/deactivate mutations
- * are pre-existing modal/confirm flows and must remain untouched.
+ * be preserved. Add-modal account picker must be a <select> (value=uuid, label=account_name) —
+ * never a datalist that renders the raw uuid (same defect class as CoA Roles #3148). No posting/GL
+ * logic lives in this file's table; the create/deactivate mutations are pre-existing modal/confirm
+ * flows and must remain untouched.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -67,6 +69,31 @@ function assertMigrated(src) {
   if (!src.includes("event_class=expense_category_map_change")) {
     errors.push(`${PAGE}: must keep the admin-activity audit drill-through link`);
   }
+  // The ORIGINAL defect: a datalist rendered the option VALUE (a raw uuid) as the control text.
+  // The first fix swapped in a plain <select> — which cures the uuid display but drops the
+  // mandatory inline "+ Add new" row, so it trips verify-referenceselect-coverage-ratchet
+  // (§7.3: every accounting-entity dropdown on a create form is a ReferenceSelect). Two guards
+  // cannot both be right, and the product lock wins: assert the ReferenceSelect mechanism, and
+  // keep asserting the real intent — the visible label is the ACCOUNT NAME, never the uuid.
+  if (
+    !src.includes("<ReferenceSelect") ||
+    !/createKind="category"/.test(src) ||
+    !/label:\s*account\.account_name/.test(src) ||
+    !src.includes('data-testid="expense-category-map-account-select"')
+  ) {
+    errors.push(
+      `${PAGE}: account picker must be <ReferenceSelect createKind="category"> with label: account.account_name ` +
+        `(inline "+ Add new account" is mandatory per §7.3; the visible label must never be the uuid), ` +
+        `wrapped by data-testid=expense-category-map-account-select`,
+    );
+  }
+  // A plain <select>/<datalist> bound to the account is the regression this guard now blocks.
+  if (/<select[^>]*account_id/.test(src)) {
+    errors.push(`${PAGE}: raw <select> bound to account_id — must be ReferenceSelect (no inline "+ Add new" otherwise)`);
+  }
+  if (src.includes("datalist") || src.includes("expense-category-account-options") || src.includes("Select account id")) {
+    errors.push(`${PAGE}: must not use datalist account picker (renders uuid as the control value)`);
+  }
   return errors;
 }
 
@@ -87,6 +114,14 @@ function selftest() {
     ];
     {accountsQuery.isError ? <ListErrorBanner onRetry={() => void accountsQuery.refetch()} /> : null}
     <ListErrorState title="Couldn't load category mappings" />
+    <div data-testid="expense-category-map-account-select">
+      <ReferenceSelect
+        value={form.account_id || null}
+        options={accounts.map((account) => ({ value: account.id, label: account.account_name }))}
+        createKind="category"
+        addNewLabel="+ Add new account"
+      />
+    </div>
     <ParityTable
       loading={mapQuery.isLoading}
       storageKey="accounting-expense-category-map"
@@ -100,6 +135,8 @@ function selftest() {
       return (
         <table className="min-w-full">
           <thead><tr><th>Kind</th></tr></thead>
+          <input list="expense-category-account-options" placeholder="Select account id" />
+          <datalist id="expense-category-account-options" />
         </table>
       );
     }
