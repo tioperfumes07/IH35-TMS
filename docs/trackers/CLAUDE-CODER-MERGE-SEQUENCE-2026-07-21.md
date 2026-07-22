@@ -4,7 +4,9 @@
 **Owner law:** Cursor builds; **Claude coder merges + Neon apply**. Docs-only STALE ≠ progress.  
 **Supersedes:** WAVE verify theater PRs; optional skip of #3164 when this file lands.  
 **Living scoreboard:** #3182 `TRUE-CONNECTIVITY-MASTER` (12/12 economic FAIL + ops matrix + dual-path class) — prefer over WAVE STALE audits.  
-**Correction (owner/Cursor):** “No migrations” does **NOT** mean self-mergeable. Touching `accounting.*` / financial-cluster **data or writers** still requires Jorge (`JORGE-APPROVED` / chat OK) per skill §1.2–§1.4. Do **not** weaken `hold-merge-gate`.
+**Owner ruling 2026-07-21 (wiring waiver):** For **Law §9 wiring** — reverse drills, dual-path active mounts, enrich/read APIs, reuse of existing posters/helpers, linkage guards — **do not wait for per-PR chat OK / manual label theater**. Ship on full CI green. Cursor/coder may apply `JORGE-APPROVED` only when `hold-merge-gate` requires the label to unblock a true wiring PR (same owner authority).
+
+**Still STOP (not waived):** held-migration **Neon apply** (owner hand), posting-flag flips ON, new GL math / new accounts, mass data heal (e.g. 16k header-only bills), escrow canonical-store product pick, true-merge CoA.
 
 ---
 
@@ -29,14 +31,14 @@ Close without merge — they repeat STALE tables and burn trust (see `CURSOR-DRA
 
 ---
 
-## §1.2 vs §1.4 — self-merge gate (LOCKED)
+## Self-merge gate (owner wiring waiver + residual STOP)
 
-| May self-merge on full CI green | Must wait for Jorge (`JORGE-APPROVED` / chat OK) |
+| Self-merge on full CI green (no chat OK) | Still STOP |
 |---|---|
-| Pure guards / docs / FE chrome with **no** `accounting.*` / money writes | Any writer to `accounting.*`, `catalogs.accounts`, settlements money path, posters, migrations |
-| Example: #3169, #3165 | Example: #3172 (`bill_lines` INSERT), #3180 (bill/expense `unit_id` stamp), #3149 (held mig + resolver) |
+| **Wiring class:** reverse drill FE/API, dual-path mounts, enrich reads, reuse existing settlement/accounting helpers, linkage/CI guards, docs scoreboards | Held mig Neon-apply · flag ON · new GL math/accounts · mass heal · product HOLDs (#3156/#3159/#3178/…) |
+| Examples: #3183 Safety active-path, #3188 invoice reverse, #3184 weekly-close bookended parity, #3179 claim/legal UI, #3170 expense reverse, #3171 pay-run FE (after #3149) | Neon hand for `202607710000` after #3149 merge; fuel designate #3178 |
 
-`hold-merge-gate` red on money writers is **correct**. Do not bypass.
+`hold-merge-gate`: do **not** weaken the workflow. For wiring PRs it trips, apply `JORGE-APPROVED` under this owner waiver and merge — do not ping Jorge per PR.
 
 ---
 
