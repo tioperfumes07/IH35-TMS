@@ -12,6 +12,7 @@ import {
   assertRevenueLinesHaveIncomeAccount,
   InvoiceLoadSourceRequiredError,
   InvoiceLineIncomeAccountRequiredError,
+  type InvoiceLineGuardRow,
 } from "./invoice-linkage-guards.js";
 import { createExpandedInvoice } from "./invoices.service.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope, recomputeInvoiceTotals } from "./shared.js";
@@ -666,13 +667,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       if (String(current.status) !== "draft") return { code: 409 as const, error: "invoice_not_draft" };
 
       // P-INVOICE P0 (#3177): fail closed before send — income account + load source_load_id.
-      const sendLinesRes = await client.query<{
-        id: string;
-        line_type: string | null;
-        line_total_cents: number | null;
-        account_id: string | null;
-        qbo_item_id: string | null;
-      }>(
+      const sendLinesRes = await client.query(
         `
           SELECT
             id::text,
@@ -686,12 +681,24 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         `,
         [params.data.id]
       );
+      // The withCompanyScope client is intentionally untyped (rows: Record<string, unknown>[]), so a
+      // type ARGUMENT on .query is a compile error (TS2347). Normalize explicitly instead — which is
+      // also the safer read: line_total_cents comes back from ::bigint as a STRING, and the
+      // revenue-bearing predicate compares it numerically, so an unconverted value would make every
+      // line read as 0 cents and silently disable the fail-closed guard this PR exists to add.
+      const sendLines: InvoiceLineGuardRow[] = sendLinesRes.rows.map((row: Record<string, unknown>) => ({
+        id: row.id == null ? null : String(row.id),
+        line_type: row.line_type == null ? null : String(row.line_type),
+        line_total_cents: row.line_total_cents == null ? null : Number(row.line_total_cents),
+        account_id: row.account_id == null ? null : String(row.account_id),
+        qbo_item_id: row.qbo_item_id == null ? null : String(row.qbo_item_id),
+      }));
       try {
         assertLoadRevenueHasSourceLoad(
           current.source_load_id ? String(current.source_load_id) : null,
-          sendLinesRes.rows
+          sendLines
         );
-        assertRevenueLinesHaveIncomeAccount(query.data.operating_company_id, sendLinesRes.rows);
+        assertRevenueLinesHaveIncomeAccount(query.data.operating_company_id, sendLines);
       } catch (guardErr) {
         if (guardErr instanceof InvoiceLoadSourceRequiredError) {
           return { code: 409 as const, error: "invoice_load_source_required", message: guardErr.message };
