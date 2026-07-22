@@ -218,7 +218,6 @@
   "verify-multi-entity-access-scope.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
   "verify-multi-entity-accounting-filter.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
   "verify-nav-pattern.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
-  "verify-no-accounting-qbo-writes.mjs": "baselined 2026-07-16 B-D2 — package.json script exists but no CI workflow/verify-steps execution; wire into locked-guards.yml or ci.yml, or justify individually",
   "verify-no-deprecated-schema-creates.mjs": "baselined 2026-07-16 B-D2 — package.json script exists but no CI workflow/verify-steps execution; wire into locked-guards.yml or ci.yml, or justify individually",
   "verify-no-emoji-in-dispatch-chrome.mjs": "baselined 2026-07-16 B-D2 — package.json script exists but no CI workflow/verify-steps execution; wire into locked-guards.yml or ci.yml, or justify individually",
   "verify-no-empty-string-uuid-bind.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
