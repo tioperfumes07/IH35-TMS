@@ -16,6 +16,7 @@ import { BillDetailPanel } from "./BillDetailPanel";
 import { PayBillModal } from "./PayBillModal";
 import { CCPaymentModal } from "./bill-payments/CCPaymentModal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
 // BANKREC-LISTSTATUS-01: read-only badge derived from bank.reconciliation_matches (server-side).
@@ -154,66 +155,78 @@ export function BillPaymentsListPage() {
     [canVoid, voidMutation],
   );
 
+  const billPayActiveFilterCount = (vendorId ? 1 : 0) + (dateFrom || dateTo ? 1 : 0);
+
   const filterBar = (
-    <div className="grid gap-2 w-full md:grid-cols-5">
+    <div className="space-y-2 w-full">
       {unpaidBillsQuery.isError ? (
-        <div className="md:col-span-5">
-          <ListErrorBanner
-            message={`Failed to load unpaid bills: ${(unpaidBillsQuery.error as Error)?.message ?? "Request failed"}`}
-            onRetry={() => void unpaidBillsQuery.refetch()}
-          />
-        </div>
+        <ListErrorBanner
+          message={`Failed to load unpaid bills: ${(unpaidBillsQuery.error as Error)?.message ?? "Request failed"}`}
+          onRetry={() => void unpaidBillsQuery.refetch()}
+        />
       ) : null}
-      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
-        Unpaid bill selector
-        <SelectCombobox
-          className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
-          value={selectedBillId}
-          onChange={(event) => setSelectedBillId(event.target.value)}
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 min-w-[240px] flex-1">
+          Unpaid bill selector
+          <SelectCombobox
+            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+            value={selectedBillId}
+            onChange={(event) => setSelectedBillId(event.target.value)}
+          >
+            <option value="">Select bill to pay...</option>
+            {(unpaidBillsQuery.data?.rows ?? []).map((bill) => (
+              <option key={bill.id} value={bill.id}>
+                {displayBillLabel(bill)}
+              </option>
+            ))}
+          </SelectCombobox>
+        </label>
+        <CollapsedListFilters
+          activeFilterCount={billPayActiveFilterCount}
+          testIdPrefix="bill-payments"
+          dataAttributes={{ "data-bill-payments-filter-toolbar": "collapsed" }}
+          searchSlot={
+            <input
+              className="h-8 w-56 rounded-sm border border-gray-300 px-2 text-[13px]"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search payment rows"
+              aria-label="Search bill payments"
+            />
+          }
         >
-          <option value="">Select bill to pay...</option>
-          {(unpaidBillsQuery.data?.rows ?? []).map((bill) => (
-            <option key={bill.id} value={bill.id}>
-              {displayBillLabel(bill)}
-            </option>
-          ))}
-        </SelectCombobox>
-      </label>
-      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-        Vendor ID
-        <input
-          className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
-          value={vendorId}
-          onChange={(event) => setVendorId(event.target.value)}
-          placeholder="Optional vendor UUID"
-        />
-      </label>
-      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-        From
-        <DatePicker
-          className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
-          value={dateFrom}
-          onChange={(next) => setDateFrom(next)}
-        />
-      </label>
-      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-        To
-        <DatePicker
-          className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
-          value={dateTo}
-          onChange={(next) => setDateTo(next)}
-        />
-      </label>
-      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
-        Search payment rows
-        <input
-          className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="payment id, bill id, vendor id, method, reference, memo"
-        />
-      </label>
-      <div className="flex items-end text-xs text-gray-600">Total rows amount: <span className="ml-1 font-semibold text-gray-900">{money(totals)}</span></div>
+          <div className="grid gap-2 md:grid-cols-3">
+            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+              Vendor ID
+              <input
+                className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+                value={vendorId}
+                onChange={(event) => setVendorId(event.target.value)}
+                placeholder="Optional vendor UUID"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+              From
+              <DatePicker
+                className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+                value={dateFrom}
+                onChange={(next) => setDateFrom(next)}
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+              To
+              <DatePicker
+                className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+                value={dateTo}
+                onChange={(next) => setDateTo(next)}
+              />
+            </label>
+          </div>
+        </CollapsedListFilters>
+        <div className="flex items-end text-xs text-gray-600 pb-1">
+          Total rows amount: <span className="ml-1 font-semibold text-gray-900">{money(totals)}</span>
+        </div>
+      </div>
     </div>
   );
 

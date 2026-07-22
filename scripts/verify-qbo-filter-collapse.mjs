@@ -65,6 +65,25 @@ if (!vendors.includes("data-vendors-filter-toolbar")) {
   failures.push("VendorsListView: missing data-vendors-filter-toolbar collapsed marker");
 }
 
+// CHROME-03 — Accounting money lists collapse filters behind Filters popover
+for (const [rel, marker] of [
+  ["apps/frontend/src/pages/accounting/BillsPage.tsx", "data-bills-filter-toolbar"],
+  ["apps/frontend/src/pages/accounting/ExpensesListPage.tsx", "data-expenses-filter-toolbar"],
+  ["apps/frontend/src/pages/accounting/InvoicesListPage.tsx", "data-invoices-filter-toolbar"],
+  ["apps/frontend/src/pages/accounting/PaymentsListPage.tsx", "data-payments-filter-toolbar"],
+  ["apps/frontend/src/pages/accounting/ManualJEListPage.tsx", "data-manual-je-filter-toolbar"],
+  ["apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx", "data-bill-payments-filter-toolbar"],
+  ["apps/frontend/src/pages/accounting/FactoringListPage.tsx", "data-factoring-filter-toolbar"],
+]) {
+  const src = read(rel);
+  if (!src.includes("CollapsedListFilters")) {
+    failures.push(`${rel}: must use CollapsedListFilters`);
+  }
+  if (!src.includes(marker)) {
+    failures.push(`${rel}: missing ${marker} collapsed marker`);
+  }
+}
+
 // CHROME-12 — Receive Payment uses ParityDrawer (not centered Modal)
 const payment = read("apps/frontend/src/pages/accounting/RecordPaymentModal.tsx");
 if (/<Modal[\s/>]/.test(payment)) {

@@ -11,6 +11,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { formatDateUS } from "../../lib/formatDate";
+import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
 const STATUS_OPTIONS: Array<{ value: "" | ExpenseListStatus; label: string }> = [
@@ -141,30 +142,40 @@ export function ExpensesListPage() {
     { key: "is_reconciled", label: "Bank Match", sortable: true, render: (r) => <MatchPill matched={r.is_reconciled} /> },
   ];
 
+  const expensesActiveFilterCount = (status ? 1 : 0) + (fromDate || toDate ? 1 : 0);
+
   const filterBar = (
     <div className="flex flex-wrap items-end gap-3">
-      <label className="flex flex-col gap-1 text-[11px] font-semibold text-gray-600">
-        Status
-        <SelectCombobox
-          value={status}
-          onChange={(e) => setStatus(e.target.value as "" | ExpenseListStatus)}
-          className="h-8 rounded-sm border border-gray-300 px-2 text-[13px]"
-        >
-          {STATUS_OPTIONS.map((o) => (
-            <option key={o.label} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </SelectCombobox>
-      </label>
-      <label className="flex flex-col gap-1 text-[11px] font-semibold text-gray-600">
-        From date
-        <DatePicker value={fromDate} onChange={(next) => setFromDate(next)} className="h-8 rounded-sm border border-gray-300 px-2 text-[13px]" />
-      </label>
-      <label className="flex flex-col gap-1 text-[11px] font-semibold text-gray-600">
-        To date
-        <DatePicker value={toDate} onChange={(next) => setToDate(next)} className="h-8 rounded-sm border border-gray-300 px-2 text-[13px]" />
-      </label>
+      <CollapsedListFilters
+        activeFilterCount={expensesActiveFilterCount}
+        testIdPrefix="expenses"
+        dataAttributes={{ "data-expenses-filter-toolbar": "collapsed" }}
+      >
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="flex flex-col gap-1 text-[11px] font-semibold text-gray-600">
+            Status
+            <SelectCombobox
+              value={status}
+              onChange={(e) => setStatus(e.target.value as "" | ExpenseListStatus)}
+              className="h-8 rounded-sm border border-gray-300 px-2 text-[13px]"
+            >
+              {STATUS_OPTIONS.map((o) => (
+                <option key={o.label} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </SelectCombobox>
+          </label>
+          <label className="flex flex-col gap-1 text-[11px] font-semibold text-gray-600">
+            From date
+            <DatePicker value={fromDate} onChange={(next) => setFromDate(next)} className="h-8 rounded-sm border border-gray-300 px-2 text-[13px]" />
+          </label>
+          <label className="flex flex-col gap-1 text-[11px] font-semibold text-gray-600">
+            To date
+            <DatePicker value={toDate} onChange={(next) => setToDate(next)} className="h-8 rounded-sm border border-gray-300 px-2 text-[13px]" />
+          </label>
+        </div>
+      </CollapsedListFilters>
       <div className="ml-auto flex items-center gap-3 text-[11px] text-gray-600">
         <span>Total: {money(totals.total)}</span>
         <span>Matched: {totals.matched}</span>

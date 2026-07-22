@@ -18,6 +18,7 @@ import { useToast } from "../../components/Toast";
 import { TasksTab } from "../../components/tasks/TasksTab";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { CreateBillModal } from "../maintenance/components/CreateBillModal";
 import { companyToday, addDaysIso, monthBoundsIso } from "../../lib/businessDate";
@@ -424,6 +425,9 @@ export function BillsPage() {
     [allocationBillId],
   );
 
+  const billsActiveFilterCount =
+    (category ? 1 : 0) + (status ? 1 : 0) + (vendorId ? 1 : 0) + (dateFrom || dateTo ? 1 : 0);
+
   const filterBar = (
     <div className="flex flex-col gap-2 w-full">
       {vendorsQuery.isError ? (
@@ -432,72 +436,78 @@ export function BillsPage() {
           onRetry={() => void vendorsQuery.refetch()}
         />
       ) : null}
-      <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="text-gray-600">Category:</span>
-        <button
-          type="button"
-          className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${!category ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"}`}
-          onClick={() => setCategory("")}
-        >
-          All
-        </button>
-        {BILL_LIST_CATEGORIES.map((cat) => (
+      <CollapsedListFilters
+        activeFilterCount={billsActiveFilterCount}
+        testIdPrefix="bills"
+        dataAttributes={{ "data-bills-filter-toolbar": "collapsed" }}
+      >
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="text-gray-600">Category:</span>
           <button
-            key={cat}
             type="button"
-            className={`rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${
-              category === cat ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-            }`}
-            onClick={() => setCategory(cat)}
+            className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${!category ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"}`}
+            onClick={() => setCategory("")}
           >
-            {cat}
+            All
           </button>
-        ))}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="text-gray-600">Status:</span>
-        <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1" value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
-          <option value="">All open items</option>
-          <option value="unpaid">Unpaid</option>
-          <option value="partial">Partial</option>
-          <option value="paid">Paid</option>
-          <option value="voided">Voided</option>
-        </SelectCombobox>
-        <span className="text-gray-600">Vendor:</span>
-        {/* A3/FIX-06: shared ReferenceSelect gives the vendor FILTER the inline "+ Add new vendor" row
-            too (writes to canonical mdata.vendors — same table vendorOptions reads from). */}
-        <div className="w-56">
-          <ReferenceSelect
-            value={vendorId || null}
-            onChange={(next) => setVendorId(next ?? "")}
-            options={vendorFilterOptions}
-            createKind="vendor"
-            operatingCompanyId={companyId}
-            placeholder="All vendors"
-            disabled={!companyId}
-          />
+          {BILL_LIST_CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              className={`rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${
+                category === cat ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+              }`}
+              onClick={() => setCategory(cat)}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
-      </div>
 
-      <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="text-gray-600">From:</span>
-        <DatePicker value={dateFrom} onChange={setDateFrom} max={dateTo || undefined} className="w-36" />
-        <span className="text-gray-600">To:</span>
-        <DatePicker value={dateTo} onChange={setDateTo} min={dateFrom || undefined} className="w-36" />
-        {dateFrom || dateTo ? (
-          <button
-            type="button"
-            className="rounded-full border border-gray-300 bg-white px-2.5 py-0.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-            onClick={() => {
-              setDateFrom("");
-              setDateTo("");
-            }}
-          >
-            Clear dates
-          </button>
-        ) : null}
-      </div>
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="text-gray-600">Status:</span>
+          <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1" value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
+            <option value="">All open items</option>
+            <option value="unpaid">Unpaid</option>
+            <option value="partial">Partial</option>
+            <option value="paid">Paid</option>
+            <option value="voided">Voided</option>
+          </SelectCombobox>
+          <span className="text-gray-600">Vendor:</span>
+          {/* A3/FIX-06: shared ReferenceSelect gives the vendor FILTER the inline "+ Add new vendor" row
+              too (writes to canonical mdata.vendors — same table vendorOptions reads from). */}
+          <div className="w-56">
+            <ReferenceSelect
+              value={vendorId || null}
+              onChange={(next) => setVendorId(next ?? "")}
+              options={vendorFilterOptions}
+              createKind="vendor"
+              operatingCompanyId={companyId}
+              placeholder="All vendors"
+              disabled={!companyId}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="text-gray-600">From:</span>
+          <DatePicker value={dateFrom} onChange={setDateFrom} max={dateTo || undefined} className="w-36" />
+          <span className="text-gray-600">To:</span>
+          <DatePicker value={dateTo} onChange={setDateTo} min={dateFrom || undefined} className="w-36" />
+          {dateFrom || dateTo ? (
+            <button
+              type="button"
+              className="rounded-full border border-gray-300 bg-white px-2.5 py-0.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+              onClick={() => {
+                setDateFrom("");
+                setDateTo("");
+              }}
+            >
+              Clear dates
+            </button>
+          ) : null}
+        </div>
+      </CollapsedListFilters>
     </div>
   );
 

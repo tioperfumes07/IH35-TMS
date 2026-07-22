@@ -12,7 +12,7 @@ Chrome / catalog / creator burn-down continued without pause. Decisions below ar
 6. **Safety integrity defects** (accident persist, fine drill-through backend) — chrome fixed pickers; root-cause money/schema = separate evidence pass.
 7. **GitHub attribution / machine account** — Houston morning pack.
 
-## Shipped on PR #3197 (`fix/chrome-01-plus-01-creators`)
+## Shipped on PR #3200 (`fix/chrome-01-plus-01-creators`)
 
 Linearized onto `origin/main` overnight:
 
@@ -24,6 +24,12 @@ Linearized onto `origin/main` overnight:
 - Banking: CoA ReferenceSelect + Transfer/CC ParityDrawer
 - Guards (Rule 17): `verify-safety-filter-chrome`, `verify-money-reference-select-plus`, `verify-qbo-filter-collapse`, `verify-insurance-legal-reference-select` + verify-steps 1230–1234
 
+## Shipped overnight (continued)
+
+- ItemEditor Product & Service Categories create restored to `qboCategoriesCatalogClient.create` (NOT QuickCreate createKind=category / CoA)
+- CHROME-03: Bills / Expenses / Invoices / Payments / Manual JE / Bill Payments / Factoring → CollapsedListFilters
+- Banking Workflow-B archived forms vendor → ReferenceSelect
+
 ## Remaining (morning)
 
 - Merge #3197 when CI green
@@ -31,4 +37,4 @@ Linearized onto `origin/main` overnight:
 - Broader filter collapse on remaining DIRTY modules (Accounting lists, etc.)
 - LIVE PROOF: deploy SHA + browser — **UNVERIFIED until merge/deploy**
 
-PR: https://github.com/tioperfumes07/IH35-TMS/pull/3197
+PR: https://github.com/tioperfumes07/IH35-TMS/pull/3200
