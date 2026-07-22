@@ -241,8 +241,8 @@ export function ChartOfAccountsListPage() {
   });
 
   const typeCatalogQuery = useQuery({
-    queryKey: ["coa-list", "account-type-catalog"],
-    queryFn: fetchAccountTypeCatalog,
+    queryKey: ["coa-list", "account-type-catalog", companyId],
+    queryFn: () => fetchAccountTypeCatalog(companyId),
     enabled: Boolean(companyId),
   });
 

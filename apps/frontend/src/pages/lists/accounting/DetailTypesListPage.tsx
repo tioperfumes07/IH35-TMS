@@ -31,7 +31,7 @@ export function DetailTypesListPage() {
   const [activeRow, setActiveRow] = useState<DetailTypeRow | null>(null);
   const [submitError, setSubmitError] = useState("");
 
-  const accountTypesQuery = useQuery({ queryKey: ["account-type-catalog"], queryFn: getAccountTypeCatalog });
+  const accountTypesQuery = useQuery({ queryKey: ["account-type-catalog", companyId], queryFn: () => getAccountTypeCatalog(companyId || undefined) });
   const typeLabel = useMemo(() => {
     const map = new Map<string, string>();
     for (const t of accountTypesQuery.data ?? []) map.set(t.id, t.accountType);

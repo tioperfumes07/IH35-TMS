@@ -33,8 +33,13 @@ export type AccountBalancesReport = {
   generated_at: string;
 };
 
-export function fetchAccountTypeCatalog() {
-  return apiRequest<AccountTypeCatalogEntry[]>("/api/v1/accounting/account-type-catalog");
+export function fetchAccountTypeCatalog(operatingCompanyId?: string | null) {
+  const params = new URLSearchParams();
+  if (operatingCompanyId) params.set("operating_company_id", operatingCompanyId);
+  const qs = params.toString();
+  return apiRequest<AccountTypeCatalogEntry[]>(
+    `/api/v1/accounting/account-type-catalog${qs ? `?${qs}` : ""}`,
+  );
 }
 
 // ── Shared COA account-type taxonomy ────────────────────────────────────────────────────────────

@@ -24,6 +24,11 @@ export type AccountTypeCatalogEntry = {
  * catalogs.detail_types). The TYPE taxonomy is universal accounting (global, correct);
  * account INSTANCES are per-entity (catalogs.accounts, shown on the Chart of Accounts).
  */
-export function getAccountTypeCatalog() {
-  return apiRequest<AccountTypeCatalogEntry[]>("/api/v1/accounting/account-type-catalog");
+export function getAccountTypeCatalog(operatingCompanyId?: string | null) {
+  const params = new URLSearchParams();
+  if (operatingCompanyId) params.set("operating_company_id", operatingCompanyId);
+  const qs = params.toString();
+  return apiRequest<AccountTypeCatalogEntry[]>(
+    `/api/v1/accounting/account-type-catalog${qs ? `?${qs}` : ""}`,
+  );
 }

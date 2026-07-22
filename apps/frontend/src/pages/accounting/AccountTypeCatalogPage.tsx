@@ -72,7 +72,7 @@ export function AccountTypeCatalogPage() {
 
   const query = useQuery({
     queryKey: ["account-type-catalog"],
-    queryFn: getAccountTypeCatalog,
+    queryFn: () => getAccountTypeCatalog(),
   });
   const { data, isLoading, isError } = query;
   const listState = useListState(query, (data ?? []).length === 0);
@@ -105,6 +105,13 @@ export function AccountTypeCatalogPage() {
       >
         ← Lists &amp; Catalogs / Accounting
       </Link>
+      <div className="mb-3 rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+        Account types are a fixed read-only taxonomy. To add or edit custom detail types, open{" "}
+        <Link to="/lists/accounting/detail-types" className="font-semibold text-slate-800 underline">
+          Lists → Detail Type
+        </Link>
+        .
+      </div>
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <input
           value={search}
