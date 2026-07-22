@@ -1808,7 +1808,12 @@
       "suggested_vendor_id",
       "transaction_date",
       "transfer_kind",
-      "updated_at"
+      "updated_at",
+      "categorization_class_id",
+      "categorization_location",
+      "check_number",
+      "is_billable",
+      "tags"
     ],
     "banking.equipment_loan_attributions": [
       "amount_cents",

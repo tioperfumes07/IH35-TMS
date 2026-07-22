@@ -680,18 +680,20 @@ export function BankingTransactionsDesignView({
       fromAccountId: "",
       toAccountId: "",
       accountId: "",
-      className: "",
-      classId: "",
-      location: "",
+      // 0441-mod8-tx-fields-captured-not-sent — hydrate the persisted capture fields (held migration
+      // 202607690000) so a categorized row re-opens with what the operator saved, not blanks.
+      className: tx.categorization_class_name ?? "",
+      classId: tx.categorization_class_id ?? "",
+      location: tx.categorization_location ?? "",
       productService: "",
       itemId: "",
       customerProject: "",
       customerId: "",
       payee: tx.merchant_name || "",
       vendorId: "",
-      checkNo: "",
-      billable: false,
-      tags: "",
+      checkNo: tx.check_number ?? "",
+      billable: Boolean(tx.is_billable),
+      tags: tx.tags ?? "",
       memo: viewSettings.copyBankDetailToMemo ? description : tx.notes || "",
       driverId: tx.categorization_driver_id ?? "",
       driverName: tx.categorization_driver_name ?? "",
@@ -781,6 +783,16 @@ export function BankingTransactionsDesignView({
         recover_deduction_type:
           draft.driverId && draft.recoverFromDriver ? draft.recoverDeductionType || undefined : undefined,
         memo: draft.memo || undefined,
+        // 0441-mod8-tx-fields-captured-not-sent — the panel captured Check no./Class/Location/Billable/
+        // Tags but never sent them, so they evaporated on Post. Persisted now (held migration
+        // 202607690000). class_id is the catalogs.classes FK the inline "+ Add new class" links.
+        check_number: draft.checkNo || undefined,
+        class_id: draft.classId || undefined,
+        location: draft.location || undefined,
+        // Always send the boolean — `|| undefined` would make un-checking Billable unpersistable
+        // (backend COALESCE keeps the prior true).
+        is_billable: draft.billable,
+        tags: draft.tags || undefined,
       });
       pushToast("Transaction posted", "success");
       onDataChanged();
