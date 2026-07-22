@@ -136,7 +136,7 @@ export function PayRunClosePanel({ settlementId, companyId, userRole, settlement
       <div className="mb-2 flex items-center justify-between gap-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Pay-run GL close</p>
         {!postable ? (
-          <span className="text-[10px] text-amber-700">Finalize/lock settlement before close</span>
+          <span className="text-[10px] text-slate-600">Finalize/lock settlement before close</span>
         ) : null}
       </div>
       <p className="mb-2 text-xs text-gray-600">
@@ -205,7 +205,7 @@ export function PayRunClosePanel({ settlementId, companyId, userRole, settlement
 
       {errorBanner ? (
         <div
-          className="mb-3 rounded-sm border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-900"
+          className="mb-3 border-l-4 border-red-600 bg-red-50 px-3 py-2 text-xs text-red-900"
           data-testid="payrun-error-banner"
           role="alert"
         >
@@ -231,8 +231,8 @@ export function PayRunClosePanel({ settlementId, companyId, userRole, settlement
             <span
               className={`rounded-sm px-2 py-0.5 font-semibold ${
                 result.result === "posted"
-                  ? "bg-emerald-100 text-emerald-900"
-                  : "bg-amber-100 text-amber-900"
+                  ? "bg-slate-100 text-slate-700"
+                  : "bg-slate-100 text-slate-600"
               }`}
               data-testid="payrun-result-badge"
             >
