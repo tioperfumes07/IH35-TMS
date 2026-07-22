@@ -113,6 +113,7 @@ async function getOrCreateBillForWorkOrder(
     status: string | null;
     vendor_id: string | null;
     external_vendor_id: string | null;
+    unit_id: string | null;
     total_actual_cost: string | number | null;
     display_id: string | null;
   }>(
@@ -122,6 +123,7 @@ async function getOrCreateBillForWorkOrder(
         status::text,
         vendor_id::text,
         external_vendor_id::text,
+        unit_id::text,
         total_actual_cost::text,
         display_id::text
       FROM maintenance.work_orders
@@ -155,6 +157,7 @@ async function getOrCreateBillForWorkOrder(
   }
 
   const totalAmount = asAmount(wo.total_actual_cost);
+  // Law §9: stamp unit_id from WO (migration 202607050810). Vendor preserved via vendorKey.
   const billInsert = await client.query<{ id: string }>(
     `
       INSERT INTO accounting.bills (
@@ -162,6 +165,7 @@ async function getOrCreateBillForWorkOrder(
         vendor_id,
         vendor_uuid,
         linked_work_order_uuid,
+        unit_id,
         status,
         bill_date,
         due_date,
@@ -176,7 +180,7 @@ async function getOrCreateBillForWorkOrder(
         updated_at
       )
       VALUES (
-        $1::uuid, $2, $2, $3::uuid, 'unpaid', CURRENT_DATE, CURRENT_DATE + INTERVAL '30 days',
+        $1::uuid, $2, $2, $3::uuid, $8::uuid, 'unpaid', CURRENT_DATE, CURRENT_DATE + INTERVAL '30 days',
         $4, $5, 0, 0, $6, true, $7::uuid, now(), now()
       )
       RETURNING id::text
@@ -189,6 +193,7 @@ async function getOrCreateBillForWorkOrder(
       Math.round(totalAmount * 100),
       `Auto-created from work order ${String(wo.display_id ?? input.work_order_id)}`,
       input.actor_user_id,
+      wo.unit_id ?? null,
     ]
   );
   return { bill_id: billInsert.rows[0]?.id ?? null, action: "created" };
