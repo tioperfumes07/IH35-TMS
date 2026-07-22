@@ -1,5 +1,6 @@
 import { formatDateUS } from "../../lib/formatDate";
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -48,6 +49,7 @@ function displayBillLabel(bill: VendorBill) {
 }
 
 export function BillPaymentsListPage() {
+  const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const { user } = useAuth();
   const { pushToast } = useToast();
@@ -143,7 +145,10 @@ export function BillPaymentsListPage() {
             <Button
               size="sm"
               variant="secondary"
-              onClick={() => setVoidTarget(row.id)}
+              onClick={(event) => {
+                event.stopPropagation();
+                setVoidTarget(row.id);
+              }}
             >
               Void
             </Button>
@@ -276,6 +281,7 @@ export function BillPaymentsListPage() {
         sortKey={sortKey}
         sortDirection={sortDirection}
         onSortChange={onSortChange}
+        onRowClick={(row) => navigate(`/accounting/bill-payments/${row.id}`)}
         emptyText="No bill payments found."
       />
 

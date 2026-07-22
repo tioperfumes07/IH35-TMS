@@ -32,6 +32,7 @@ export type EntityKind =
   | "bank_account"
   | "factoring_advance"
   | "payment"
+  | "bill_payment"
   | "work_order"
   | "bank_transaction"
   | "claim"
@@ -97,6 +98,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/accounting/factoring/${id}`;
     case "payment":
       return `/accounting/payments/${id}`;
+    case "bill_payment":
+      return `/accounting/bill-payments/${id}`;
     case "work_order":
       return `/maintenance/work-orders/${id}`;
     case "settlement":
