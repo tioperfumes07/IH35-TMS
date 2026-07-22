@@ -23,8 +23,11 @@ import {
   ensureIntegrationPrerequisites,
   releaseGlobalAccountRoleBindingsLock,
   restoreGlobalAccountRoleBindings,
+  restoreGlobalCoaRoleDesignations,
   saveGlobalAccountRoleBindings,
+  saveGlobalCoaRoleDesignations,
   type SavedAccountRoleBinding,
+  type SavedCoaRoleDesignation,
 } from "../../../test-helpers/db-fixture.js";
 import { TEST_OWNER_USER_ID, TEST_ENCRYPTION_KEY } from "../../../test-helpers/constants.js";
 import { upsertDriverEscrowAccountLink } from "../../accounting/driver-subaccount-provision.service.js";
@@ -70,6 +73,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     "abandonment_chargeback_recovery",
   ] as const;
   let priorGlobalBindings: SavedAccountRoleBinding[] = [];
+  let priorCoaDesignations: SavedCoaRoleDesignation[] = [];
   let heldGlobalBindingsLock = false;
   const paymentMethodId = randomUUID();
   // per-driver escrow liability sub-accounts (grandparent -> parent -> per-driver leaf)
@@ -241,6 +245,9 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
       await mkAcct(escrowGrandparent, `Damage Claim Escrow ${suffix}`, "Liability", null, escrowQbo("GP"));
       await mkAcct(escrowParent, `Driver Escrow ${suffix}`, "Liability", escrowGrandparent, escrowQbo("P"));
       priorGlobalBindings = await saveGlobalAccountRoleBindings(db, GLOBAL_BIND_KEYS);
+      // Snapshot SHARED-company PRIMARY designations BEFORE we overwrite them (sibling suites
+      // need ap_control / uncategorized_expense intact — never wipe the whole company).
+      priorCoaDesignations = await saveGlobalCoaRoleDesignations(db, companyId, GLOBAL_BIND_KEYS);
       // Legacy bindings kept as resolver FALLBACK tier (Rule 07) — prove primary path by also designating.
       await bind("driver_pay_expense", acct.driverPay);
       await bind("insurance_recovery", acct.insuranceRecovery);
@@ -302,7 +309,6 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
         await db.query(`DELETE FROM driver_finance.driver_settlements WHERE id = ANY($1::uuid[])`, [sids]);
         await db.query(`DELETE FROM accounting.escrow_accounts WHERE holder_id = ANY($1::uuid[])`, [allDrivers]);
         await db.query(`DELETE FROM catalogs.payment_methods WHERE id=$1::uuid`, [paymentMethodId]);
-        await db.query(`DELETE FROM accounting.chart_of_accounts_roles WHERE operating_company_id=$1::uuid`, [companyId]);
         await db.query(`DELETE FROM mdata.drivers WHERE id = ANY($1::uuid[])`, [allDrivers]);
         await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key='SETTLEMENT_GL_POSTING_ENABLED' AND (operating_company_id=$1::uuid OR user_uuid=$2::uuid)`, [companyId, flagActor]);
         await db.query(`DELETE FROM integrations.qbo_connections WHERE operating_company_id=$1::uuid AND realm_id=$2`, [companyId, realm]);
@@ -312,9 +318,12 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     }
 
     try {
-      // Restore GLOBAL bindings BEFORE deleting fixture accounts (FK). FAIL-LOUD — own txn.
+      // Restore GLOBAL legacy bindings + PRIMARY CoA designations BEFORE deleting fixture accounts (FK).
+      // FAIL-LOUD — own txn. Never wipe all chart_of_accounts_roles for the shared company
+      // (that deleted ap_control and flaked bulk-post-as-bill / CI build-typecheck).
       await bypass(async () => {
         await restoreGlobalAccountRoleBindings(db, GLOBAL_BIND_KEYS, priorGlobalBindings, companyId);
+        await restoreGlobalCoaRoleDesignations(db, companyId, GLOBAL_BIND_KEYS, priorCoaDesignations);
       });
     } catch (err) {
       restoreError = err;

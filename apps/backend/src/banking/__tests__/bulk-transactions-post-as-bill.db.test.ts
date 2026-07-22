@@ -31,10 +31,48 @@ describeIntegration("BANKING-GL-COMPLETION post-as-bill paid-in-full end-to-end 
   const vendorId = randomUUID();
   const bankGlAccountId = randomUUID();
   const apControlAccountId = randomUUID();
+  const uncategorizedExpenseAccountId = randomUUID();
   const bankAccountId = randomUUID();
   const createdBillIds: string[] = [];
   const createdPaymentIds: string[] = [];
   const createdTxnIds: string[] = [];
+
+  /** Seed bill/payment CoA roles on the SHARED company. Call before posting — sibling suites
+   *  DELETE chart_of_accounts_roles in teardown; beforeAll-only seed still flakes under forks. */
+  async function ensureBillPostingRoles() {
+    await bypass(async () => {
+      await db.query(
+        `INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable)
+         VALUES ($1::uuid,$3::uuid,$2,'Bulk Post AP Control Test','Liability',true)
+         ON CONFLICT (id) DO NOTHING`,
+        [apControlAccountId, `BPBAP${suffix}`, companyId]
+      );
+      await db.query(
+        `INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable)
+         VALUES ($1::uuid,$3::uuid,$2,'Bulk Post Uncategorized Exp Test','Expense',true)
+         ON CONFLICT (id) DO NOTHING`,
+        [uncategorizedExpenseAccountId, `BPBUE${suffix}`, companyId]
+      );
+      await db.query(
+        `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
+         SELECT $1::uuid, 'ap_control', $2::uuid, true
+         WHERE NOT EXISTS (
+           SELECT 1 FROM accounting.chart_of_accounts_roles
+           WHERE operating_company_id = $1::uuid AND role = 'ap_control' AND is_active = true
+         )`,
+        [companyId, apControlAccountId]
+      );
+      await db.query(
+        `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
+         SELECT $1::uuid, 'uncategorized_expense', $2::uuid, true
+         WHERE NOT EXISTS (
+           SELECT 1 FROM accounting.chart_of_accounts_roles
+           WHERE operating_company_id = $1::uuid AND role = 'uncategorized_expense' AND is_active = true
+         )`,
+        [companyId, uncategorizedExpenseAccountId]
+      );
+    });
+  }
 
   async function bypass(fn: () => Promise<void>) {
     await db.query("BEGIN");
@@ -128,26 +166,12 @@ describeIntegration("BANKING-GL-COMPLETION post-as-bill paid-in-full end-to-end 
          ON CONFLICT (id) DO NOTHING`,
         [vendorId, companyId]
       );
-      // Bill/bill-payment posters resolve ap_control from accounting.chart_of_accounts_roles
-      // (bank-transaction-splits.service). This suite uses the SHARED company from
-      // ensureIntegrationPrerequisites(); sibling suites DELETE that company's role rows in
-      // teardown — order-dependent flake ("bill_posted expected true"). Seed additively only.
-      await db.query(
-        `INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable)
-         VALUES ($1::uuid,$3::uuid,$2,'Bulk Post AP Control Test','Liability',true)
-         ON CONFLICT (id) DO NOTHING`,
-        [apControlAccountId, `BPBAP${suffix}`, companyId]
-      );
-      await db.query(
-        `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
-         SELECT $1::uuid, 'ap_control', $2::uuid, true
-         WHERE NOT EXISTS (
-           SELECT 1 FROM accounting.chart_of_accounts_roles
-           WHERE operating_company_id = $1::uuid AND role = 'ap_control' AND is_active = true
-         )`,
-        [companyId, apControlAccountId]
-      );
+      // Bill/bill-payment posters resolve ap_control (+ uncategorized_expense fallback) from
+      // accounting.chart_of_accounts_roles. Shared-company sibling suites DELETE those rows in
+      // teardown — order-dependent flake ("bill_posted expected true"). Seed additively in
+      // beforeAll; re-ensure immediately before the flags-ON post as well.
     });
+    await ensureBillPostingRoles();
   });
 
   afterAll(async () => {
@@ -234,6 +258,8 @@ describeIntegration("BANKING-GL-COMPLETION post-as-bill paid-in-full end-to-end 
   it("flags ON — bill posts DR uncategorized_expense / CR ap_control, then bill_payment posts DR ap_control / CR the real bank; tie-out; idempotent", async () => {
     await setFlagOverride("BILL_GL_POSTING_ENABLED", true);
     await setFlagOverride("BILL_PAYMENT_GL_POSTING_ENABLED", true);
+    // Re-seed immediately before post — sibling fork teardown can wipe shared CoA roles after beforeAll.
+    await ensureBillPostingRoles();
     const amountCents = 44_400;
     const txnId = await seedTxn(amountCents);
 
