@@ -91,3 +91,13 @@ Reply with one of:
 - **C** — dual UI as above  
 
 …and whether VehicleProfile follows the **same** letter.
+
+
+---
+
+## OWNER DECISION (2026-07-22)
+
+**A** — keep `QboCombobox` (QBO-id allowlist) for DriverDetail + VehicleProfile.
+**VehicleProfile:** same letter (**A**).
+
+Rationale (architecture): field stores QBO vendor id for driver-as-vendor / parallel-books linkage; hire may leave null until MD-2 reconcile; B would confuse TMS shop pickers with QBO identity.

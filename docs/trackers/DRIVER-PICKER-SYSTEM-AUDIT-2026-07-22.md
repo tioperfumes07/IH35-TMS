@@ -156,3 +156,18 @@ Guard (future PR): fail if covered money/dispatch surfaces use bare `SelectCombo
 - Hit if file references `CreateDriverModal`, `InlineDriverPicker`, `listDrivers(`, or driver-ish field names near Combobox/SelectCombobox.
 - False positives possible on FILTER_ONLY / shared hooks — wave PRs must open each file before migrating.
 - Regenerated: `node scripts/inventory-driver-pickers.mjs`
+
+
+## Overlap with pending piles / gaps (2026-07-22)
+
+**Short answer:** some *related* defects are already in GAP/BUG trackers; the **nested +Create / CreateDriverModal** wave itself is mostly **new chrome work** (not already filed as `PLUS-DRIVER-*` in `block-audit-piles-2026-07-21.json`).
+
+| Existing tracker | Relationship to this audit |
+|------------------|----------------------------|
+| **B2-2** (BUG-AUDIT) — driver-picker 50-cap in ~14 non-dispatch pickers | Same *surfaces* often (e.g. CreateAdvanceModal) but **different defect**: missing drivers past limit 50 vs missing nested +Create. Fix together when touching a file. |
+| **FIX-DISPATCH-DRIVER-PICKER-50-CAP** | **DONE** (#1530) for Book Load / InlineDriverPicker | 
+| program-board **second creator** on `/maintenance/drivers` | Related integrity: never a thin second CreateDriver form — same law as this audit |
+| **A2 ReferenceSelect** keystone | Vendor/customer nested create — **driver is NOT a QuickCreateKind**; money surfaces use `CreateDriverModal` directly (CHROME-11 pattern) |
+| CHROME-/PLUS-DRIVER-* ids in piles JSON | **0 hits** — these block ids live in `UI-CHROME-DISPATCH-BLOCKS-2026-07-22.md` / catalog audits, not the 2026-07-21 reconcile piles |
+
+**Do not skip** PLUS-DRIVER waves because piles look empty for that id — de-dupe *per file* against B2-2 / CHROME-11 / already-canonical CreateDriverModal sites.
