@@ -179,7 +179,7 @@ export function IntegrationTransactionsPage() {
             placeholder="Search description, QBO ID…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-8 w-56 rounded-sm border border-gray-300 px-3 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500"
+            className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-3 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500"
           />
         }
       >

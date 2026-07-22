@@ -26,7 +26,7 @@ export function AssetFiltersBar({ lifecycle, search, onLifecycleChange, onSearch
             value={search}
             onChange={(event) => onSearchChange(event.target.value)}
             placeholder="Unit number, VIN, driver, or location"
-            className="h-8 w-64 rounded-sm border border-gray-300 px-2 text-sm font-normal text-gray-900"
+            className="min-h-12 h-12 w-64 rounded-sm border border-gray-300 px-2 text-sm font-normal text-gray-900"
             aria-label="Search assets"
           />
         }

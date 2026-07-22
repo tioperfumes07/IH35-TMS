@@ -176,7 +176,7 @@ export function ReceiptsPage() {
               setSearch(e.target.value);
               setOffset(0);
             }}
-            className="h-8 w-56 rounded-sm border border-gray-300 px-3 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500"
+            className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-3 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500"
           />
         }
       >

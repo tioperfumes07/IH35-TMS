@@ -309,7 +309,7 @@ export function InvoicesListPage() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="INV-2026-00001 or customer"
-            className="h-8 w-56 rounded-sm border border-gray-300 px-2 text-[13px]"
+            className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-[13px]"
             aria-label="Search invoices"
           />
         }

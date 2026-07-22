@@ -139,7 +139,7 @@ export function ItemsListPage() {
       dataAttributes={{ "data-items-filter-toolbar": "collapsed" }}
       searchSlot={
         <input
-          className="h-8 w-56 rounded-sm border border-gray-300 px-2 text-sm"
+          className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-sm"
           placeholder="Search items…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}

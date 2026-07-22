@@ -240,7 +240,7 @@ export function TransactionRegisterPage() {
                 setSearch(event.target.value);
               }}
               placeholder="Description or customer / vendor / driver"
-              className="h-8 w-72 rounded-sm border border-slate-300 px-2 text-[13px]"
+              className="min-h-12 h-12 w-72 rounded-sm border border-slate-300 px-2 text-[13px]"
               aria-label="Search transactions"
             />
           }
