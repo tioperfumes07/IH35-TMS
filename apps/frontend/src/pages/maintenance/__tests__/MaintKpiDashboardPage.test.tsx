@@ -92,6 +92,8 @@ describe("MaintKpiDashboardPage (B35)", () => {
   it("applies date filters and PM hub links", async () => {
     const user = userEvent.setup();
     renderPage();
+    await screen.findByTestId("maint-kpi-dashboard");
+    await user.click(screen.getByTestId("maint-kpi-filters-toggle"));
     await screen.findByTestId("maint-kpi-filter-start");
     await user.clear(screen.getByTestId("maint-kpi-filter-start"));
     await user.type(screen.getByTestId("maint-kpi-filter-start"), "2026-05-01");

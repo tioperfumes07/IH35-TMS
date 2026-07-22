@@ -4,6 +4,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { Button } from "../../../components/Button";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { CollapsedListFilters } from "../../../components/table";
 import { useToast } from "../../../components/Toast";
 
 type Props = {
@@ -153,41 +154,50 @@ export function WorkOrdersTable({
           </>
         )}
         filterBar={
-          <div className="flex flex-wrap items-center gap-2">
-            {/* M-09: visual filter indicator — the source/vendor/search boxes below had no label or icon
-                marking them as filters (looked like plain data-entry fields). */}
-            <span className="text-xs font-semibold text-gray-600">Filter:</span>
-            <label className="flex items-center gap-1 text-xs text-gray-600">
-              <span>Source type</span>
-              <SelectCombobox
-                className="min-h-12 rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
-                value={sourceTypeFilter}
-                onChange={(e) => onSourceTypeChange(e.target.value)}
-              >
-                <option value="">All</option>
-                <option value="IS">IS</option>
-                <option value="ES">ES</option>
-                <option value="AC">AC</option>
-                <option value="ET">ET</option>
-                <option value="RT">RT</option>
-                <option value="IT">IT</option>
-                <option value="RS">RS</option>
-              </SelectCombobox>
-            </label>
-            <input
-              aria-label="Filter by external vendor id"
-              className="min-h-12 rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
-              value={externalVendorFilter}
-              onChange={(e) => onExternalVendorChange(e.target.value)}
-              placeholder="External vendor id…"
-            />
-            <input
-              aria-label="Search work orders by WO, unit, driver, or status"
-              className="min-h-12 w-full max-w-xs rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search WO / unit / driver / status…"
-            />
+          <div data-wo-filter-toolbar="collapsed">
+            <CollapsedListFilters
+              activeFilterCount={(sourceTypeFilter ? 1 : 0) + (externalVendorFilter ? 1 : 0)}
+              testIdPrefix="work-orders"
+              searchSlot={
+                <input
+                  aria-label="Search work orders by WO, unit, driver, or status"
+                  className="min-h-12 w-full max-w-xs rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search WO / unit / driver / status…"
+                />
+              }
+            >
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                <label className="space-y-1 text-xs text-gray-600">
+                  <span>Source type</span>
+                  <SelectCombobox
+                    className="min-h-12 w-full rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
+                    value={sourceTypeFilter}
+                    onChange={(e) => onSourceTypeChange(e.target.value)}
+                  >
+                    <option value="">All</option>
+                    <option value="IS">IS</option>
+                    <option value="ES">ES</option>
+                    <option value="AC">AC</option>
+                    <option value="ET">ET</option>
+                    <option value="RT">RT</option>
+                    <option value="IT">IT</option>
+                    <option value="RS">RS</option>
+                  </SelectCombobox>
+                </label>
+                <label className="space-y-1 text-xs text-gray-600">
+                  <span>External vendor id</span>
+                  <input
+                    aria-label="Filter by external vendor id"
+                    className="min-h-12 w-full rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
+                    value={externalVendorFilter}
+                    onChange={(e) => onExternalVendorChange(e.target.value)}
+                    placeholder="External vendor id…"
+                  />
+                </label>
+              </div>
+            </CollapsedListFilters>
           </div>
         }
       />

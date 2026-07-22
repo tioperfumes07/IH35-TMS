@@ -51,6 +51,10 @@ describe("FleetTablePage type filter", () => {
   it("renders type filter dropdown with All plus nine fleet types", async () => {
     renderPage();
     await waitFor(() => {
+      expect(screen.getByTestId("fleet-page-filters-toggle")).toBeTruthy();
+    });
+    fireEvent.click(screen.getByTestId("fleet-page-filters-toggle"));
+    await waitFor(() => {
       expect(screen.getByLabelText("Filter fleet by type")).toBeTruthy();
     });
     const select = screen.getByLabelText("Filter fleet by type") as HTMLSelectElement;
@@ -62,6 +66,10 @@ describe("FleetTablePage type filter", () => {
 
   it("syncs ?type=Reefer in the URL when selecting Reefer", async () => {
     renderPage(["/maintenance/fleet-table"]);
+    await waitFor(() => {
+      expect(screen.getByTestId("fleet-page-filters-toggle")).toBeTruthy();
+    });
+    fireEvent.click(screen.getByTestId("fleet-page-filters-toggle"));
     await waitFor(() => {
       expect(screen.getByLabelText("Filter fleet by type")).toBeTruthy();
     });
@@ -80,6 +88,10 @@ describe("FleetTablePage type filter", () => {
     fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
     await waitFor(() => {
       expect(screen.getByText("Showing 3 of 3 vehicles")).toBeTruthy();
+    });
+    fireEvent.click(screen.getByTestId("fleet-page-filters-toggle"));
+    await waitFor(() => {
+      expect(screen.getByLabelText("Filter fleet by type")).toBeTruthy();
     });
     expect((screen.getByLabelText("Filter fleet by type") as HTMLSelectElement).value).toBe("");
   });

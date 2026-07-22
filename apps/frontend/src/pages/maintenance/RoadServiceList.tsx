@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { StatusBadge } from "../../components/StatusBadge";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters } from "../../components/table";
 import { useRoadServiceTickets, type RoadServiceStatus, type RoadServiceTicket } from "../../hooks/useRoadServiceTickets";
 import { RoadServiceTicketModal } from "./RoadServiceTicketModal";
 
@@ -125,24 +126,29 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-3 px-2" data-testid="road-service-list">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap gap-2" data-testid="road-service-status-filter">
-          {STATUS_FILTERS.map((filter) => (
-            <button
-              key={filter.id}
-              type="button"
-              data-testid={`road-service-status-filter-${filter.id}`}
-              onClick={() => setStatusFilter(filter.id)}
-              className={`rounded border px-2 py-1 text-xs font-medium ${
-                statusFilter === filter.id
-                  ? "border-slate-600 bg-slate-50 text-slate-800"
-                  : "border-gray-300 bg-white text-gray-700"
-              }`}
-            >
-              {filter.label}
-            </button>
-          ))}
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-2" data-road-service-filter-toolbar="collapsed">
+        <CollapsedListFilters
+          activeFilterCount={statusFilter !== "all" ? 1 : 0}
+          testIdPrefix="road-service"
+        >
+          <div className="flex flex-wrap gap-2" data-testid="road-service-status-filter">
+            {STATUS_FILTERS.map((filter) => (
+              <button
+                key={filter.id}
+                type="button"
+                data-testid={`road-service-status-filter-${filter.id}`}
+                onClick={() => setStatusFilter(filter.id)}
+                className={`rounded border px-2 py-1 text-xs font-medium ${
+                  statusFilter === filter.id
+                    ? "border-slate-600 bg-slate-50 text-slate-800"
+                    : "border-gray-300 bg-white text-gray-700"
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+        </CollapsedListFilters>
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-600">Rollup: {money(totalCost)}</span>
           <Button type="button" onClick={() => setCreateOpen(true)}>
