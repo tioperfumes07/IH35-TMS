@@ -37,6 +37,7 @@ import {
 } from "../api/mdata";
 import { listClassesForJe } from "../api/accounting";
 import { legalMattersApi } from "../api/legal-matters";
+import { InsuranceClaimsReverseSection } from "../components/insurance/InsuranceClaimsReverseSection";
 import { Button } from "../components/Button";
 import { ListErrorState } from "../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
@@ -1433,24 +1434,34 @@ export function DriverDetailPage() {
       ) : null}
 
       {activeTab === "Legal Matters" ? (
-        <div className="space-y-2">
-          <p className="text-sm text-gray-600">Legal matters linked to this driver (Owner/Admin).</p>
-          {legalMattersForDriverQuery.isLoading ? (
-            <p className="text-sm text-gray-500">Loading…</p>
-          ) : (
-            <ul className="space-y-2">
-              {(legalMattersForDriverQuery.data?.matters ?? []).map((m: Record<string, unknown>) => (
-                <li key={String(m.id ?? "")} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
-                  <Link className="font-semibold text-slate-700" to={`/legal/matters/${String(m.id ?? "")}`}>
-                    {String(m.matter_number ?? "")}
-                  </Link>
-                  <span className="ml-2 text-gray-600">{String(m.status ?? "")}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-          {legalMattersListState.isEmpty ? (
-            <p className="text-sm text-gray-500">No linked matters.</p>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <p className="text-sm text-gray-600">Legal matters linked to this driver (Owner/Admin).</p>
+            {legalMattersForDriverQuery.isLoading ? (
+              <p className="text-sm text-gray-500">Loading…</p>
+            ) : (
+              <ul className="space-y-2">
+                {(legalMattersForDriverQuery.data?.matters ?? []).map((m: Record<string, unknown>) => (
+                  <li key={String(m.id ?? "")} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+                    <Link className="font-semibold text-slate-700" to={`/legal/matters/${String(m.id ?? "")}`}>
+                      {String(m.matter_number ?? "")}
+                    </Link>
+                    <span className="ml-2 text-gray-600">{String(m.status ?? "")}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {legalMattersListState.isEmpty ? (
+              <p className="text-sm text-gray-500">No linked matters.</p>
+            ) : null}
+          </div>
+          {driver?.operating_company_id ? (
+            <InsuranceClaimsReverseSection
+              operatingCompanyId={String(driver.operating_company_id)}
+              filter={{ driver_id: id }}
+              contextLabel="this driver"
+              data-testid="driver-detail-insurance-claims"
+            />
           ) : null}
         </div>
       ) : null}

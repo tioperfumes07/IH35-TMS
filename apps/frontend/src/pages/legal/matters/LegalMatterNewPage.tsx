@@ -32,7 +32,7 @@ export function LegalMatterNewPage() {
         <p className="text-sm text-gray-600">Select an operating company.</p>
       ) : (
         <div className="mx-auto max-w-3xl space-y-3 rounded-sm border border-gray-200 bg-white p-4">
-          <LegalMatterFormFields form={form} setForm={setForm} mode="create" />
+          <LegalMatterFormFields form={form} setForm={setForm} mode="create" operatingCompanyId={companyId} />
           <div className="flex gap-2">
             <Link to="/legal/matters">
               <Button variant="secondary">Cancel</Button>

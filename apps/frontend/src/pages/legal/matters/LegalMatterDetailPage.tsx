@@ -221,6 +221,7 @@ export function LegalMatterDetailPage() {
                   )
                 }
                 mode="edit"
+                operatingCompanyId={companyId}
               />
               <div className="flex flex-wrap gap-2">
                 <Button
@@ -277,6 +278,20 @@ export function LegalMatterDetailPage() {
                       id={String(matter.insurance_claim_id)}
                       label={String(matter.insurance_claim_id).slice(0, 8)}
                     />
+                  ) : (
+                    "—"
+                  )}
+                </div>
+                <div>
+                  <strong>Insurance lawsuit:</strong>{" "}
+                  {matter?.insurance_lawsuit_id ? (
+                    <Link
+                      className="text-slate-700 underline"
+                      to="/safety/insurance/lawsuits"
+                      data-testid="matter-insurance-lawsuit-link"
+                    >
+                      {String(matter.insurance_lawsuit_id).slice(0, 8)}
+                    </Link>
                   ) : (
                     "—"
                   )}

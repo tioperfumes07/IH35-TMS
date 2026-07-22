@@ -19,6 +19,10 @@ export const listClaimsQuerySchema = operatingCompanySchema.extend({
   policy_id: z.string().uuid().optional(),
   status: z.enum(INSURANCE_CLAIM_STATUSES).optional(),
   asset_id: z.string().uuid().optional(),
+  /** Reverse drill: insurance.claim.driver_id → mdata.drivers */
+  driver_id: z.string().uuid().optional(),
+  /** Reverse drill via mdata.assets.unit_id (claim stores asset_id). */
+  unit_id: z.string().uuid().optional(),
 });
 
 /** Forward graph FKs (prod-live via 202607410000) — link existing hubs only; never invent amounts. */

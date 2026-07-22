@@ -37,6 +37,7 @@ import { BackhaulSuggestionsWidget } from "../../components/reports/BackhaulSugg
 import { EditVehicleModal } from "../../components/fleet/EditVehicleModal";
 import { EntityAuditHistoryTab } from "../../components/audit/EntityAuditHistoryTab";
 import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
+import { InsuranceClaimsReverseSection } from "../../components/insurance/InsuranceClaimsReverseSection";
 
 export type UnitProfileAggregate = {
   unit: Record<string, unknown>;
@@ -306,6 +307,14 @@ export function VehicleProfilePage() {
               filter={{ unit_id: id }}
               contextLabel="this unit"
               data-testid="vehicle-profile-legal-matters"
+            />
+          </div>
+          <div data-testid="vp-section-10c-insurance-claims">
+            <InsuranceClaimsReverseSection
+              operatingCompanyId={companyId}
+              filter={{ unit_id: id }}
+              contextLabel="this unit"
+              data-testid="vehicle-profile-insurance-claims"
             />
           </div>
           <div data-testid="vp-section-11-action-bar">

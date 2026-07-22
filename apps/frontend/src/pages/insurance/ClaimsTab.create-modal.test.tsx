@@ -38,6 +38,11 @@ vi.mock("../../api/mdata", () => ({
   listUnits: vi.fn().mockResolvedValue({
     units: [{ id: "unit-1", unit_code: "TRK-100", status: "Active" }],
   }),
+  listDrivers: vi.fn().mockResolvedValue({ drivers: [] }),
+}));
+
+vi.mock("../../api/loads", () => ({
+  listLoads: vi.fn().mockResolvedValue({ loads: [], total_count: 0, has_more: false }),
 }));
 
 vi.mock("../../api/client", async () => {
@@ -50,6 +55,7 @@ vi.mock("../../api/client", async () => {
 
 vi.mock("../../api/safety", () => ({
   getUserPreferences: vi.fn().mockResolvedValue({ preferences: {} }),
+  getSafetyAccidents: vi.fn().mockResolvedValue({ accidents: [] }),
 }));
 
 function wrap(ui: ReactElement) {
@@ -77,7 +83,10 @@ describe("ClaimsTab create claim modal", () => {
 
     const claimNumberInput = screen.getByLabelText(/Claim Number/i);
     await user.type(claimNumberInput, "CLM-1001");
-    await user.click(screen.getByRole("button", { name: /^Cancel$/i }));
+    const dialog = screen.getByRole("heading", { name: /Create Claim/i }).closest("form")?.parentElement ?? document.body;
+    const cancelInModal = Array.from(dialog.querySelectorAll("button")).find((b) => /^Cancel$/i.test(b.textContent ?? ""));
+    expect(cancelInModal).toBeTruthy();
+    await user.click(cancelInModal!);
 
     await waitFor(() => {
       expect(screen.queryByRole("heading", { name: /Create Claim/i })).toBeNull();
@@ -87,5 +96,8 @@ describe("ClaimsTab create claim modal", () => {
     await screen.findByRole("heading", { name: /Create Claim/i });
     expect(screen.getByLabelText(/Claim Number/i)).toHaveValue("");
     expect(insuranceApiMocks.createClaim).not.toHaveBeenCalled();
+    expect(screen.getByTestId("claim-create-driver-field")).toBeTruthy();
+    expect(screen.getByTestId("claim-create-load-field")).toBeTruthy();
+    expect(screen.getByTestId("claim-create-accident-field")).toBeTruthy();
   });
 });

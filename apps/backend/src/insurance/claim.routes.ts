@@ -142,10 +142,30 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         filters.push(`status = $${values.length}`);
       }
       if (parsed.data.asset_id) {
-        values.push(parsed.data.asset_id);
+        // Accept unit-or-asset id (same bridge as create): resolve to mdata.assets.id when possible.
+        const resolvedAssetId =
+          (await resolveMdataAssetId(client, parsed.data.operating_company_id, parsed.data.asset_id)) ??
+          parsed.data.asset_id;
+        values.push(resolvedAssetId);
         filters.push(`asset_id = $${values.length}::uuid`);
       }
-      const scopedFilters = filters.map((f) => f.replace(/^tenant_id/, "c.tenant_id").replace(/^policy_id/, "c.policy_id").replace(/^status/, "c.status").replace(/^asset_id/, "c.asset_id"));
+      if (parsed.data.driver_id) {
+        values.push(parsed.data.driver_id);
+        filters.push(`driver_id = $${values.length}::uuid`);
+      }
+      if (parsed.data.unit_id) {
+        values.push(parsed.data.unit_id);
+        filters.push(`unit_id = $${values.length}::uuid`);
+      }
+      const scopedFilters = filters.map((f) =>
+        f
+          .replace(/^tenant_id/, "c.tenant_id")
+          .replace(/^policy_id/, "c.policy_id")
+          .replace(/^status/, "c.status")
+          .replace(/^asset_id/, "c.asset_id")
+          .replace(/^driver_id/, "c.driver_id")
+          .replace(/^unit_id/, "assets.unit_id"),
+      );
       const result = await client.query(
         `
           SELECT ${claimSelectColumns("c")}
