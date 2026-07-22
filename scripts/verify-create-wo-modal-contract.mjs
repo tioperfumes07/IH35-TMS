@@ -32,8 +32,23 @@ function main() {
     }
   }
 
-  if (!identification.includes("listMaintenanceVehicles") || !identification.includes("listMaintenanceDrivers")) {
-    failures.push("missing_catalog_picker_queries");
+  // Vehicle picker still sources from the maintenance catalog.
+  if (!identification.includes("listMaintenanceVehicles")) {
+    failures.push("missing_catalog_picker_queries:vehicles");
+  }
+  // Driver picker: accept EITHER the original maintenance-scoped query OR the shared
+  // <DriverPickerWithCreate> (PLUS-DRIVER-SYSTEM). The shared picker is not a downgrade — it reads
+  // canonical mdata.drivers, its operating_company_id is a REQUIRED param (compile-time enforced,
+  // so the entity scope cannot be silently dropped), and it passes limit:200 which clears the
+  // known 50-row driver-picker truncation landmine. What must never happen is the driver picker
+  // losing its entity scope or its data source entirely — that is what is asserted here.
+  const hasMaintenanceDriverQuery = identification.includes("listMaintenanceDrivers");
+  const hasSharedDriverPicker = identification.includes("DriverPickerWithCreate");
+  if (!hasMaintenanceDriverQuery && !hasSharedDriverPicker) {
+    failures.push("missing_catalog_picker_queries:drivers");
+  }
+  if (hasMaintenanceDriverQuery && !identification.includes("operatingCompanyId")) {
+    failures.push("driver_query_lost_entity_scope");
   }
 
   if (identification.includes("QBO vendor lookup (appends to Description)")) {
