@@ -232,6 +232,22 @@ export type VendorBill = {
   // BANKREC-LISTSTATUS-01: true iff any of this bill's payments has an active (not-rejected)
   // bank.reconciliation_matches row. Read-only, derived server-side.
   is_reconciled?: boolean;
+  /** Law §9 — resolved from journal_entry_postings (bills have no journal_entry_id column). */
+  journal_entry_id?: string | null;
+  unit_id?: string | null;
+  linked_work_order_uuid?: string | null;
+};
+
+export type BillDetailLine = {
+  id: string;
+  line_sequence: number;
+  amount_cents: number;
+  description: string | null;
+  account_id: string | null;
+  account_number: string | null;
+  account_name: string | null;
+  load_id: string | null;
+  load_number: string | null;
 };
 
 export type BillPayment = {
@@ -632,9 +648,12 @@ export function listPaymentsForBill(billId: string, operatingCompanyId: string) 
 }
 
 export function getVendorBill(id: string, operatingCompanyId: string) {
-  return apiRequest<{ bill: VendorBill; payments: BillPayment[]; audit_events: Array<Record<string, unknown>> }>(
-    withCompany(`/api/v1/accounting/bills/${id}`, operatingCompanyId)
-  );
+  return apiRequest<{
+    bill: VendorBill;
+    lines: BillDetailLine[];
+    payments: BillPayment[];
+    audit_events: Array<Record<string, unknown>>;
+  }>(withCompany(`/api/v1/accounting/bills/${id}`, operatingCompanyId));
 }
 
 export function payVendorBill(

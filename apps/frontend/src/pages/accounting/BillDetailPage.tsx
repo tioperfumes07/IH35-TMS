@@ -1,7 +1,7 @@
 import { formatDateUS } from "../../lib/formatDate";
+import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "react-router-dom";
-import { getVendorBill, type BillPayment } from "../../api/accounting";
+import { getVendorBill, type BillDetailLine, type BillPayment } from "../../api/accounting";
 import { ListErrorState } from "../../components/ListErrorState";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
@@ -22,6 +22,13 @@ function statusVariant(status: string): "positive" | "neutral" | "crit" | "warn"
   if (status === "voided") return "neutral";
   if (status === "partial") return "warn";
   return "crit";
+}
+
+function accountLabel(number: string | null | undefined, name: string | null | undefined, id: string) {
+  if (number && name) return `${number} — ${name}`;
+  if (name) return name;
+  if (number) return number;
+  return id.slice(0, 8);
 }
 
 export function BillDetailPage() {
@@ -48,12 +55,61 @@ export function BillDetailPage() {
     );
 
   const bill = detailQuery.data?.bill;
+  const lines = detailQuery.data?.lines ?? [];
   const payments = detailQuery.data?.payments ?? [];
 
   if (!bill) return <div className="p-4 text-sm text-red-600">Bill not found.</div>;
 
   const displayId = bill.bill_number ?? bill.id.slice(0, 8);
   const balance = Number(bill.amount_cents ?? 0) - Number(bill.paid_cents ?? 0);
+
+  const lineColumns: Array<ParityColumn<BillDetailLine>> = [
+    { key: "line_sequence", label: "Line", sortable: true, render: (line) => line.line_sequence },
+    {
+      key: "account_id",
+      label: "GL account",
+      sortable: true,
+      sortValue: (line) => line.account_name ?? line.account_id ?? "",
+      render: (line) =>
+        line.account_id ? (
+          <Link
+            to={`/accounting/chart-of-accounts/register/${line.account_id}`}
+            className="text-slate-700 hover:underline"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {accountLabel(line.account_number, line.account_name, line.account_id)}
+          </Link>
+        ) : (
+          "—"
+        ),
+    },
+    {
+      key: "description",
+      label: "Description",
+      sortable: true,
+      render: (line) => line.description || "—",
+    },
+    {
+      key: "load_id",
+      label: "Load",
+      sortable: true,
+      sortValue: (line) => line.load_number ?? line.load_id ?? "",
+      render: (line) =>
+        line.load_id ? (
+          <EntityLink kind="load" id={line.load_id} label={line.load_number ?? line.load_id.slice(0, 8)} />
+        ) : (
+          "—"
+        ),
+    },
+    {
+      key: "amount_cents",
+      label: "Amount",
+      sortable: true,
+      className: "text-right",
+      cellClass: "text-right tabular-nums",
+      render: (line) => money(line.amount_cents),
+    },
+  ];
 
   // QBO-parity grid — columns, order, and content preserved verbatim from the former hand-rolled table.
   const paymentColumns: Array<ParityColumn<BillPayment>> = [
@@ -128,6 +184,24 @@ export function BillDetailPage() {
           <span className="text-xs font-semibold text-gray-600">Open balance</span>
           <span className="text-sm font-semibold text-gray-900">{money(balance)}</span>
         </DataPanelRow>
+        {bill.journal_entry_id ? (
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Journal entry</span>
+            <EntityLink kind="journal_entry" id={bill.journal_entry_id} label={bill.journal_entry_id.slice(0, 8)} />
+          </DataPanelRow>
+        ) : null}
+        {bill.unit_id ? (
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Unit</span>
+            <EntityLink kind="unit" id={bill.unit_id} label={bill.unit_id.slice(0, 8)} />
+          </DataPanelRow>
+        ) : null}
+        {bill.linked_work_order_uuid ? (
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Work order</span>
+            <EntityLink kind="work_order" id={bill.linked_work_order_uuid} label={bill.linked_work_order_uuid.slice(0, 8)} />
+          </DataPanelRow>
+        ) : null}
         {bill.memo ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Memo</span>
@@ -138,6 +212,20 @@ export function BillDetailPage() {
           <span className="text-xs font-semibold text-gray-600">Created</span>
           <span className="text-sm text-gray-900">{formatDateUS(bill.created_at)}</span>
         </DataPanelRow>
+      </DataPanel>
+
+      <DataPanel title="Lines">
+        <div data-testid="bill-detail-lines">
+        <ParityTable<BillDetailLine>
+          columns={lineColumns}
+          rows={lines}
+          rowKey={(line) => line.id}
+          loading={detailQuery.isFetching && !detailQuery.data}
+          emptyText="No bill lines."
+          density="compact"
+          storageKey="bill-detail-lines"
+        />
+        </div>
       </DataPanel>
 
       <DataPanel title="Payments">
