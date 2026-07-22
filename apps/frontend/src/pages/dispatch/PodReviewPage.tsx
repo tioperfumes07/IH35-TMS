@@ -12,6 +12,7 @@ import {
 } from "../../api/dispatch";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 
@@ -205,38 +206,44 @@ export function PodReviewPage() {
   );
 
   const filterBar = (
-    <div className="flex flex-wrap items-center gap-3">
-      <label className="text-sm">
-        Filter by load
-        <select
-          value={loadId}
-          onChange={(event) => setLoadId(event.target.value)}
-          className="mt-1 h-10 w-full rounded-sm border px-2"
-          data-testid="pod-load-filter"
-        >
-          <option value="">All loads</option>
-          {loadOptions.map((load) => (
-            <option key={load.id} value={load.id}>
-              {load.load_number ?? load.id}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="text-sm">
-        POD status
-        <select
-          value={statusFilter}
-          onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
-          className="mt-1 h-10 w-full rounded-sm border px-2"
-          data-testid="pod-status-filter"
-        >
-          <option value="pending_review">Pending review</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-          <option value="">All</option>
-        </select>
-      </label>
-    </div>
+    <CollapsedListFilters
+      activeFilterCount={(loadId ? 1 : 0) + (statusFilter !== "pending_review" ? 1 : 0)}
+      testIdPrefix="pod"
+      dataAttributes={{ "data-pod-filter-toolbar": "collapsed" }}
+    >
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="text-sm">
+          Filter by load
+          <select
+            value={loadId}
+            onChange={(event) => setLoadId(event.target.value)}
+            className="mt-1 h-10 w-full rounded-sm border px-2"
+            data-testid="pod-load-filter"
+          >
+            <option value="">All loads</option>
+            {loadOptions.map((load) => (
+              <option key={load.id} value={load.id}>
+                {load.load_number ?? load.id}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-sm">
+          POD status
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
+            className="mt-1 h-10 w-full rounded-sm border px-2"
+            data-testid="pod-status-filter"
+          >
+            <option value="pending_review">Pending review</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="">All</option>
+          </select>
+        </label>
+      </div>
+    </CollapsedListFilters>
   );
 
   return (

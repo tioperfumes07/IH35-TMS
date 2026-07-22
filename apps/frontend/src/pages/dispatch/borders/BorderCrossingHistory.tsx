@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { CollapsedListFilters } from "../../../components/table";
 import { formatDateTimeUS } from "../../../lib/formatDate";
 // NOTE (EntityLink adoption sweep): `vehicle_id` here is the raw Samsara external vehicle id
 // (dispatch.border_crossing_events.vehicle_id, sourced from integrations.samsara_positions —
@@ -84,24 +85,30 @@ export function BorderCrossingHistory() {
   );
 
   const filterBar = (
-    <div className="relative flex flex-wrap items-center gap-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">From</label>
-        <DatePicker
-          value={from}
-          onChange={(next) => setFrom(next)}
-          className="border rounded-sm px-3 py-1.5 text-sm"
-        />
+    <CollapsedListFilters
+      activeFilterCount={from || to ? 1 : 0}
+      testIdPrefix="border-crossing"
+      dataAttributes={{ "data-border-crossing-filter-toolbar": "collapsed" }}
+    >
+      <div className="relative flex flex-wrap items-center gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">From</label>
+          <DatePicker
+            value={from}
+            onChange={(next) => setFrom(next)}
+            className="border rounded-sm px-3 py-1.5 text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
+          <DatePicker
+            value={to}
+            onChange={(next) => setTo(next)}
+            className="border rounded-sm px-3 py-1.5 text-sm"
+          />
+        </div>
       </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
-        <DatePicker
-          value={to}
-          onChange={(next) => setTo(next)}
-          className="border rounded-sm px-3 py-1.5 text-sm"
-        />
-      </div>
-    </div>
+    </CollapsedListFilters>
   );
 
   return (

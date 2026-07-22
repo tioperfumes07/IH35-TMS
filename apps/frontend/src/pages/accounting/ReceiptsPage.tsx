@@ -9,6 +9,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getReceipts, getReceiptDetail, type ReceiptItem } from "../../api/receipts";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
 const fmtCents = (c: number | null) => (c == null ? "—" : formatUsdCents(c));
@@ -161,17 +162,41 @@ export function ReceiptsPage() {
   );
 
   const filterBar = (
-    <div className="flex flex-wrap gap-2 items-center">
-      <input type="search" aria-label="Search receipts by filename or notes" placeholder="Search filename, notes…" value={search}
-        onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
-        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm w-56 focus:outline-hidden focus:ring-1 focus:ring-slate-500" />
-      <select aria-label="Filter receipts by source" value={entityType} onChange={(e) => { setEntityType(e.target.value as "" | "expense" | "bill"); setOffset(0); }}
-        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500">
-        <option value="">All sources</option>
-        <option value="expense">Expenses</option>
-        <option value="bill">Bills</option>
-      </select>
-      <span className="ml-auto self-center text-xs text-gray-500">{total.toLocaleString()} receipt{total !== 1 ? "s" : ""}</span>
+    <div className="flex flex-wrap gap-2 items-center" data-receipts-filter-toolbar="collapsed">
+      <CollapsedListFilters
+        activeFilterCount={entityType ? 1 : 0}
+        testIdPrefix="receipts"
+        searchSlot={
+          <input
+            type="search"
+            aria-label="Search receipts by filename or notes"
+            placeholder="Search filename, notes…"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setOffset(0);
+            }}
+            className="h-8 w-56 rounded-sm border border-gray-300 px-3 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500"
+          />
+        }
+      >
+        <select
+          aria-label="Filter receipts by source"
+          value={entityType}
+          onChange={(e) => {
+            setEntityType(e.target.value as "" | "expense" | "bill");
+            setOffset(0);
+          }}
+          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500"
+        >
+          <option value="">All sources</option>
+          <option value="expense">Expenses</option>
+          <option value="bill">Bills</option>
+        </select>
+      </CollapsedListFilters>
+      <span className="ml-auto self-center text-xs text-gray-500">
+        {total.toLocaleString()} receipt{total !== 1 ? "s" : ""}
+      </span>
     </div>
   );
 

@@ -86,6 +86,9 @@ for (const [rel, marker] of [
   ["apps/frontend/src/pages/accounting/PrepaidExpensesPage.tsx", "data-prepaid-filter-toolbar"],
   ["apps/frontend/src/pages/accounting/DailyReconPage.tsx", "data-daily-recon-filter-toolbar"],
   ["apps/frontend/src/pages/accounting/AccountsPayableAgingPage.tsx", "data-ap-aging-filter-toolbar"],
+  ["apps/frontend/src/pages/dispatch/PodReviewPage.tsx", "data-pod-filter-toolbar"],
+  ["apps/frontend/src/pages/dispatch/borders/BorderCrossingHistory.tsx", "data-border-crossing-filter-toolbar"],
+  ["apps/frontend/src/pages/accounting/ReceiptsPage.tsx", "data-receipts-filter-toolbar"],
 ]) {
   const src = read(rel);
   if (!src.includes("CollapsedListFilters")) {
