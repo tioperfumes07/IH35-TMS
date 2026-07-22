@@ -24,13 +24,14 @@ const checks = [
   { alias: "/catalogs/payment-terms",            realTarget: "/lists/accounting/payment-terms" },
   { alias: "/catalogs/posting-templates",        realTarget: "/lists/accounting/posting-templates" },
   { alias: "/catalogs/account-role-bindings",    realTarget: "/lists/accounting/account-role-bindings" },
+  // DUALPATH-08 (2026-07-22): redirects to the Live RecurringBillList surface — no longer a stub.
+  { alias: "/accounting/recurring-transactions", realTarget: "/accounting/bills/recurring" },
 ];
 
 // Honest stubs — these SHOULD still point to ComingSoonPage (not real pages yet)
 const honestStubs = [
   "/catalogs/accounts",
   "/catalogs/items",
-  "/accounting/recurring-transactions",
 ];
 
 for (const { alias, realTarget } of checks) {
