@@ -601,12 +601,33 @@ export async function listBillPayments(
 export async function getBillDetail(userId: string, operatingCompanyId: string, billId: string) {
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
-    const billRes = await client.query<BillRow>(
+    const billRes = await client.query<BillRow & { vendor_name?: string | null; unit_id?: string | null; linked_work_order_uuid?: string | null }>(
       `
-        SELECT *
-        FROM accounting.bills
-        WHERE id = $1
-          AND operating_company_id = $2
+        SELECT
+          b.*,
+          v.vendor_name,
+          (
+            SELECT jep.journal_entry_uuid::text
+            FROM accounting.journal_entry_postings jep
+            WHERE jep.operating_company_id = b.operating_company_id
+              AND jep.source_transaction_type = 'bill'
+              AND jep.source_transaction_id = b.id::text
+            ORDER BY jep.created_at ASC
+            LIMIT 1
+          ) AS journal_entry_id
+        FROM accounting.bills b
+        -- v.id is uuid; b.vendor_id / b.vendor_uuid are BOTH text (verified on the Neon prod branch
+        -- br-fancy-credit-akjnd07a, 2026-07-22). Comparing them directly raises
+        -- "operator does not exist: uuid = text" and 500s EVERY bill-detail request, including the
+        -- unknown-bill 404 path, since the error fires before the not-found check. Reproduced
+        -- against prod, not inferred. Cast the uuid side to text rather than the text side to uuid:
+        -- vendor_id is free-form text and a non-uuid value there would make ::uuid raise instead of
+        -- simply not matching.
+        LEFT JOIN mdata.vendors v
+          ON v.id::text = COALESCE(b.vendor_id, b.vendor_uuid)
+         AND v.operating_company_id = b.operating_company_id
+        WHERE b.id = $1
+          AND b.operating_company_id = $2
         LIMIT 1
       `,
       [billId, operatingCompanyId]
@@ -620,6 +641,40 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
         WHERE bill_id = $1
           AND operating_company_id = $2
         ORDER BY payment_date DESC, created_at DESC
+      `,
+      [billId, operatingCompanyId]
+    );
+    const linesRes = await client.query<{
+      id: string;
+      line_sequence: number;
+      amount_cents: string | null;
+      description: string | null;
+      account_id: string | null;
+      account_number: string | null;
+      account_name: string | null;
+      load_id: string | null;
+      load_number: string | null;
+    }>(
+      `
+        SELECT
+          bl.id::text AS id,
+          bl.line_sequence,
+          ROUND(COALESCE(bl.amount, 0) * 100)::bigint::text AS amount_cents,
+          bl.description,
+          bl.account_id::text AS account_id,
+          acct.account_number,
+          acct.account_name,
+          bl.load_id::text AS load_id,
+          l.load_number
+        FROM accounting.bill_lines bl
+        LEFT JOIN catalogs.accounts acct
+          ON acct.id = bl.account_id
+         AND acct.operating_company_id = $2::uuid
+        LEFT JOIN mdata.loads l
+          ON l.id = bl.load_id
+         AND l.operating_company_id = $2::uuid
+        WHERE bl.bill_id = $1::uuid
+        ORDER BY bl.line_sequence ASC
       `,
       [billId, operatingCompanyId]
     );
@@ -637,8 +692,26 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
       );
       return res.rows;
     });
+    const normalized = normalizeBill(bill);
     return {
-      bill: normalizeBill(bill),
+      bill: {
+        ...normalized,
+        vendor_name: bill.vendor_name ?? null,
+        journal_entry_id: (bill as { journal_entry_id?: string | null }).journal_entry_id ?? null,
+        unit_id: bill.unit_id ?? null,
+        linked_work_order_uuid: bill.linked_work_order_uuid ?? null,
+      },
+      lines: linesRes.rows.map((row) => ({
+        id: row.id,
+        line_sequence: Number(row.line_sequence ?? 0),
+        amount_cents: Number(row.amount_cents ?? 0),
+        description: row.description,
+        account_id: row.account_id,
+        account_number: row.account_number,
+        account_name: row.account_name,
+        load_id: row.load_id,
+        load_number: row.load_number,
+      })),
       payments: paymentsRes.rows.map((row) => ({
         ...row,
         amount_cents: Number(row.amount_cents ?? Math.round(Number(row.amount ?? 0) * 100)),
