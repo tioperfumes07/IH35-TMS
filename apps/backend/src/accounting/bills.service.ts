@@ -721,6 +721,65 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
   });
 }
 
+/** Law §9 reverse: bill payment detail + JE from postings (no journal_entry_id column on bill_payments). */
+export async function getBillPaymentDetail(userId: string, operatingCompanyId: string, paymentId: string) {
+  return withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    const paymentRes = await client.query<
+      BillPaymentRow & {
+        journal_entry_id: string | null;
+        vendor_name: string | null;
+        bill_number: string | null;
+      }
+    >(
+      `
+        SELECT
+          bp.*,
+          v.vendor_name,
+          b.bill_number,
+          (
+            SELECT jep.journal_entry_uuid::text
+            FROM accounting.journal_entry_postings jep
+            WHERE jep.operating_company_id = bp.operating_company_id
+              AND jep.source_transaction_type = 'bill_payment'
+              AND jep.source_transaction_id = bp.id::text
+            ORDER BY jep.created_at ASC
+            LIMIT 1
+          ) AS journal_entry_id
+        FROM accounting.bill_payments bp
+        -- v.id is uuid; accounting.bill_payments.vendor_id is text (verified on the Neon prod
+        -- branch br-fancy-credit-akjnd07a, 2026-07-22). Comparing them directly raises
+        -- "operator does not exist: uuid = text" and 500s every bill-payment detail request,
+        -- including the 404 path, because the error fires before the not-found check. Same class as
+        -- the bills.vendor_id join in getBillDetail. Cast the uuid side to text, never
+        -- bp.vendor_id::uuid — vendor_id is free-form text and a non-uuid value would RAISE instead
+        -- of simply not matching.
+        LEFT JOIN mdata.vendors v
+          ON v.id::text = bp.vendor_id
+         AND v.operating_company_id = bp.operating_company_id
+        LEFT JOIN accounting.bills b
+          ON b.id = bp.bill_id
+         AND b.operating_company_id = bp.operating_company_id
+        WHERE bp.id = $1::uuid
+          AND bp.operating_company_id = $2::uuid
+        LIMIT 1
+      `,
+      [paymentId, operatingCompanyId]
+    );
+    const row = paymentRes.rows[0];
+    if (!row) return null;
+    return {
+      payment: {
+        ...row,
+        amount_cents: Number(row.amount_cents ?? Math.round(Number(row.amount ?? 0) * 100)),
+        journal_entry_id: row.journal_entry_id ?? null,
+        vendor_name: row.vendor_name ?? null,
+        bill_number: row.bill_number ?? null,
+      },
+    };
+  });
+}
+
 export async function createBill(input: CreateBillInput, userId: string) {
   if (input.amountCents <= 0) throw new Error("bill_amount_must_be_positive");
 

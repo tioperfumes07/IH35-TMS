@@ -6,6 +6,7 @@ import { resolveAllocation } from "./allocation.js";
 import {
   createBill,
   getBillDetail,
+  getBillPaymentDetail,
   listBillPayments,
   listBillPaymentsForBill,
   listBills,
@@ -426,6 +427,24 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       offset: query.data.offset,
     });
     return { rows };
+  });
+
+  // Law §9 reverse drill-through — must be registered after the list route.
+  // rateLimit matches the sibling read route below (/api/v1/vendors/:vendorId/bills): this handler
+  // performs its own authorization, and CodeQL js/missing-rate-limiting flags an authorizing route
+  // with no limit because it is a cheap credential/enumeration oracle otherwise.
+  app.get("/api/v1/accounting/bill-payments/:id", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+
+    const detail = await getBillPaymentDetail(String(user.uuid), query.data.operating_company_id, params.data.id);
+    if (!detail) return reply.code(404).send({ error: "bill_payment_not_found" });
+    return detail;
   });
 
   app.post("/api/v1/accounting/bills/:id/allocate", async (req, reply) => {

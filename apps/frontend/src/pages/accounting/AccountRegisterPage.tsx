@@ -59,6 +59,7 @@ function sourceRoute(type: string | null, reference: string | null): string {
   if (t === "invoice" && reference) return `/accounting/invoices/${reference}`;
   if (t === "customer_payment" && reference) return `/accounting/payments/${reference}`;
   if (t === "bill" && reference) return `/accounting/bills/${reference}`;
+  if (t === "bill_payment" && reference) return `/accounting/bill-payments/${reference}`;
   if (t === "bill_payment") return "/accounting/bill-payments";
   if (t === "expense" && reference) return `/accounting/expenses/${reference}`;
   if (t === "expense") return "/accounting/expenses/list";
