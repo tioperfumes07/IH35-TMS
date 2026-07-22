@@ -1,7 +1,8 @@
-import { useMemo } from "react";
-import { useQueries } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { ManualJEModal } from "./ManualJEModal";
 import {
   listBills,
   listBillPayments,
@@ -12,6 +13,8 @@ import {
 import { getQboSyncQueue, getQboSyncQueueStats } from "../../api/banking";
 import { listSettlements } from "../../api/driverFinance";
 import { getProfitLossReport, getTrialBalanceReport } from "../../api/reports";
+import { useAuth } from "../../auth/useAuth";
+import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 
@@ -171,6 +174,9 @@ function homePanel(title: string, rows: AmountRow[], empty: string, actionHref?:
 export function AccountingHubPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [manualJeOpen, setManualJeOpen] = useState(false);
   const mtdStart = monthStartIso();
   const monthRange = useMemo(() => monthBoundsIso(companyToday()), []);
   const quarterRange = useMemo(() => currentQuarterRange(), []);
@@ -398,6 +404,14 @@ export function AccountingHubPage() {
       title="Accounting"
       subtitle="Bills, expenses, invoices, settlements & transaction review"
       kpiStrip={kpiStrip}
+      actions={
+        // Access follows the existing accounting role gate (canAccessAccounting: Owner /
+        // Administrator / Accountant) — the same bar as every other create surface in this module.
+        // No amount threshold: owner ruling 2026-07-22, "remove threshold".
+        <Button size="sm" onClick={() => setManualJeOpen(true)} disabled={!companyId}>
+          + Create Manual JE
+        </Button>
+      }
     >
       {!companyId ? <p className="text-sm text-slate-700">Select an operating company.</p> : null}
       <div className="grid gap-2 lg:grid-cols-3">
@@ -435,6 +449,19 @@ export function AccountingHubPage() {
           "Open profit & loss"
         )}
       </div>
+      {companyId && user?.role === "Owner" ? (
+        <ManualJEModal
+          open={manualJeOpen}
+          operatingCompanyId={companyId}
+          onClose={() => setManualJeOpen(false)}
+          onSaved={() => {
+            setManualJeOpen(false);
+            void queryClient.invalidateQueries({ queryKey: ["journal-entries", companyId] });
+            void queryClient.invalidateQueries({ queryKey: ["accounting-hub", "trial-balance", companyId] });
+            void queryClient.invalidateQueries({ queryKey: ["accounting-hub", "profit-loss", companyId] });
+          }}
+        />
+      ) : null}
     </AccountingSubNavWrapper>
   );
 }
