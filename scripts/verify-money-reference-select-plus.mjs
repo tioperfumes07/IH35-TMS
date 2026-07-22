@@ -215,6 +215,23 @@ if (!bankManualJe.includes("ParityDrawer") || !bankManualJe.includes('createKind
   failures.push("banking/components/ManualJEModal must use ParityDrawer + ReferenceSelect createKind=account/class");
 }
 
+// ── chrome-01-plus-01-creators: archived banking Workflow-B forms vendor → ReferenceSelect ──
+const createExpenseForm = read("apps/frontend/src/pages/banking/components/forms/CreateExpenseForm.tsx");
+if (!createExpenseForm.includes("ReferenceSelect") || !createExpenseForm.includes('createKind="vendor"')) {
+  failures.push("CreateExpenseForm Vendor must use ReferenceSelect createKind=vendor");
+}
+if (/Field label="Vendor"[\s\S]{0,400}SelectCombobox/.test(createExpenseForm)) {
+  failures.push("CreateExpenseForm Vendor must not use SelectCombobox");
+}
+
+const applyToBillForm = read("apps/frontend/src/pages/banking/components/forms/ApplyToBillForm.tsx");
+if (!applyToBillForm.includes("ReferenceSelect") || !applyToBillForm.includes('createKind="vendor"')) {
+  failures.push("ApplyToBillForm Vendor must use ReferenceSelect createKind=vendor");
+}
+if (/Field label="Vendor"[\s\S]{0,400}SelectCombobox/.test(applyToBillForm)) {
+  failures.push("ApplyToBillForm Vendor must not use SelectCombobox");
+}
+
 if (failures.length) {
   console.error("FAIL verify-money-reference-select-plus:");
   for (const f of failures) console.error(" -", f);

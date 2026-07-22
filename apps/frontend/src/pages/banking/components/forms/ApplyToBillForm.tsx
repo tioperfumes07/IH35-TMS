@@ -2,7 +2,7 @@
 import type { JSX } from "react";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getAllAccounts } from "../../../../api/banking";
+import { listCatalogAccounts } from "../../../../api/catalog-accounts";
 import { listVendors, listDrivers, listUnits } from "../../../../api/mdata";
 import { getWoCostContext } from "../../../../api/maintenance";
 import {
@@ -12,6 +12,8 @@ import {
   type ItemLine,
 } from "../../../../components/forms/shared/CostBreakdownBox";
 import { DatePicker } from "../../../../components/forms/DatePicker";
+import { ReferenceSelect } from "../../../../components/parity/ReferenceSelect";
+import { vendorReferenceOption } from "../../../../components/parity/referenceOptionLabels";
 import { SelectCombobox } from "../../../../components/shared/SelectCombobox";
 
 type Props = {
@@ -49,9 +51,10 @@ export function ApplyToBillForm({ value, onChange, operatingCompanyId }: Props) 
     enabled: Boolean(operatingCompanyId),
   });
   const accountsQuery = useQuery({
-    queryKey: ["categorize-bill", "accounts", operatingCompanyId],
-    queryFn: () => getAllAccounts(operatingCompanyId),
+    queryKey: ["categorize-bill", "ap-accounts", operatingCompanyId],
+    queryFn: () => listCatalogAccounts({ status: "active" }),
     enabled: Boolean(operatingCompanyId),
+    staleTime: 60_000,
   });
   const costContextQuery = useQuery({
     queryKey: ["categorize-bill", "cost-context", operatingCompanyId],
@@ -61,6 +64,30 @@ export function ApplyToBillForm({ value, onChange, operatingCompanyId }: Props) 
 
   const sectionALines = useMemo(() => parseCategoryLines(value), [value]);
   const sectionBLines = useMemo(() => parseItemLines(value), [value]);
+  const vendorOptions = useMemo(
+    () => (vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption),
+    [vendorsQuery.data?.vendors]
+  );
+  // A/P account picker — Liability / AccountsPayable postable accounts (canonical catalogs.accounts),
+  // matching VendorBillForm's A/P Account pattern (chrome-plus-01-creators).
+  const apAccountOptions = useMemo(
+    () =>
+      (accountsQuery.data?.accounts ?? [])
+        .filter(
+          (acct) =>
+            acct.is_postable &&
+            !acct.deactivated_at &&
+            (acct.account_type === "Liability" ||
+              String(acct.account_subtype ?? "").toLowerCase().includes("payable") ||
+              String(acct.account_name ?? "").toLowerCase().includes("accounts payable"))
+        )
+        .map((acct) => ({
+          value: acct.id,
+          label: acct.account_number ? `${acct.account_number} · ${acct.account_name}` : acct.account_name,
+          type: acct.account_type ?? undefined,
+        })),
+    [accountsQuery.data?.accounts]
+  );
   const expenseCategoryOptions = useMemo<CostContextOption[]>(
     () =>
       (costContextQuery.data?.expense_categories ?? []).map((entry) => ({
@@ -131,24 +158,27 @@ export function ApplyToBillForm({ value, onChange, operatingCompanyId }: Props) 
           />
         </Field>
         <Field label="Vendor">
-          <SelectCombobox className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={String(value.vendor_id ?? "")} onChange={(event) => onChange({ ...value, vendor_id: event.target.value })}>
-            <option value="">Select vendor...</option>
-            {(vendorsQuery.data?.vendors ?? []).map((vendor) => (
-              <option key={vendor.id} value={vendor.id}>
-                {vendor.name}
-              </option>
-            ))}
-          </SelectCombobox>
+          <ReferenceSelect
+            value={value.vendor_id ? String(value.vendor_id) : null}
+            onChange={(next) => onChange({ ...value, vendor_id: next ?? "" })}
+            options={vendorOptions}
+            createKind="vendor"
+            operatingCompanyId={operatingCompanyId}
+            placeholder="Select vendor..."
+            disabled={!operatingCompanyId}
+          />
         </Field>
         <Field label="A/P Account">
-          <SelectCombobox className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={String(value.ap_account_id ?? "")} onChange={(event) => onChange({ ...value, ap_account_id: event.target.value })}>
-            <option value="">Select account...</option>
-            {(accountsQuery.data?.accounts ?? []).map((account: Record<string, unknown>) => (
-              <option key={String(account.id ?? "")} value={String(account.id ?? "")}>
-                {String(account.display_name ?? "Account")}
-              </option>
-            ))}
-          </SelectCombobox>
+          <ReferenceSelect
+            value={value.ap_account_id ? String(value.ap_account_id) : null}
+            onChange={(next) => onChange({ ...value, ap_account_id: next ?? "" })}
+            options={apAccountOptions}
+            createKind="category"
+            addNewLabel="+ Add new account"
+            operatingCompanyId={operatingCompanyId}
+            placeholder="Select A/P account…"
+            disabled={!operatingCompanyId}
+          />
         </Field>
         <Field label="Load Number">
           <input
