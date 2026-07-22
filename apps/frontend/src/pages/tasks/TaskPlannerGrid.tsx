@@ -188,7 +188,12 @@ export function TaskPlannerGrid() {
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      <UniversalFilterBar value={filter} onChange={setFilter} summaryText={query.data ? `${query.data.count} task${query.data.count !== 1 ? "s" : ""}` : undefined} />
+      <UniversalFilterBar
+        value={filter}
+        onChange={setFilter}
+        summaryText={query.data ? `${query.data.count} task${query.data.count !== 1 ? "s" : ""}` : undefined}
+        defaultPeriod="this_week"
+      />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Main grid */}

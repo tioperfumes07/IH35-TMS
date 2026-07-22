@@ -1,12 +1,13 @@
 /**
  * UniversalFilterBar — W2-P PLANNER-REDESIGN
  * Shared FilterBar for ALL planner pages.
- * CHROME-02: Period presets + date range collapse behind Filters popover (QBO-style).
+ * CHROME-05: Period presets + date range live ONLY inside the Filters popover — the
+ * shared CollapsedListFilters gold pattern (Dispatch FilterBar), not always-on chrome.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { SlidersHorizontal } from "lucide-react";
+import { useCallback } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { CollapsedListFilters } from "../table/CollapsedListFilters";
 
 export type PeriodPreset =
   | "this_week"
@@ -40,6 +41,8 @@ interface UniversalFilterBarProps {
   value: FilterState;
   onChange: (next: FilterState) => void;
   summaryText?: string;
+  /** Preset the page treats as "no filter applied" for the Filters badge count. Defaults to this_month. */
+  defaultPeriod?: PeriodPreset;
 }
 
 function getPresetDates(preset: PeriodPreset): { from: string; to: string } {
@@ -171,12 +174,9 @@ const PRESET_LABELS: Record<PeriodPreset, string> = {
   custom: "Custom",
 };
 
-export function UniversalFilterBar({ value, onChange, summaryText }: UniversalFilterBarProps) {
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
+export function UniversalFilterBar({ value, onChange, summaryText, defaultPeriod = "this_month" }: UniversalFilterBarProps) {
   const activeCount =
-    (value.period !== "this_month" ? 1 : 0) +
+    (value.period !== defaultPeriod ? 1 : 0) +
     (value.period === "custom" && value.from ? 1 : 0) +
     (value.period === "custom" && value.to ? 1 : 0);
 
@@ -195,88 +195,54 @@ export function UniversalFilterBar({ value, onChange, summaryText }: UniversalFi
   const handleFrom = (from: string) => onChange({ ...value, period: "custom", from });
   const handleTo = (to: string) => onChange({ ...value, period: "custom", to });
 
-  useEffect(() => {
-    if (!filtersOpen) return;
-    const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setFiltersOpen(false);
-    };
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
-  }, [filtersOpen]);
-
   return (
     <div
-      ref={ref}
-      className="relative flex items-center gap-2 border-b bg-gray-50 px-3 py-2"
+      className="flex items-center gap-2 border-b bg-gray-50 px-3 py-2"
       data-planner-filter-toolbar="collapsed"
     >
-      <span className="text-xs font-medium text-gray-700">{PRESET_LABELS[value.period]}</span>
-      <span className="text-xs text-gray-500">
-        {value.from} – {value.to}
-      </span>
-
-      <button
-        type="button"
-        aria-expanded={filtersOpen}
-        data-testid="planner-filters-toggle"
-        onClick={() => setFiltersOpen((o) => !o)}
-        className="flex h-8 items-center gap-1 rounded-sm border border-gray-300 bg-white px-2 text-[12px] font-semibold text-gray-700 hover:bg-gray-50"
-      >
-        <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
-        Filters
-        {activeCount > 0 ? (
-          <span className="ml-1 inline-flex min-w-[16px] items-center justify-center rounded-full bg-[#1F2A44] px-1 text-[10px] font-bold text-white">
-            {activeCount}
-          </span>
-        ) : null}
-      </button>
-
-      {summaryText ? <div className="ml-auto text-xs text-gray-600">{summaryText}</div> : null}
-
-      {filtersOpen ? (
-        <div
-          className="absolute left-3 top-full z-50 mt-1 w-[min(560px,90vw)] space-y-3 rounded-sm border border-gray-200 bg-white p-3 shadow-lg"
-          data-testid="planner-filters-panel"
-        >
-          <div className="space-y-1.5">
-            <div className="text-xs font-semibold text-gray-600">Period</div>
-            <div className="grid max-h-48 grid-cols-2 gap-1 overflow-y-auto sm:grid-cols-3">
-              {(Object.keys(PRESET_LABELS) as PeriodPreset[]).map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  className={`rounded-sm border px-2 py-1 text-left text-xs ${
-                    value.period === k ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-200 hover:bg-gray-50"
-                  }`}
-                  onClick={() => handlePreset(k)}
-                >
-                  {PRESET_LABELS[k]}
-                </button>
-              ))}
-            </div>
+      <CollapsedListFilters activeFilterCount={activeCount} testIdPrefix="planner">
+        <div className="space-y-1.5">
+          <div className="text-xs font-semibold text-gray-600">
+            Period <span className="font-normal text-gray-400">— currently {PRESET_LABELS[value.period]}</span>
           </div>
-
-          <div className="space-y-1.5">
-            <div className="text-xs font-semibold text-gray-600">Date range</div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs text-gray-500">From</span>
-              <DatePicker
-                className="h-[28px] w-32 px-2 text-xs"
-                value={value.from}
-                onChange={(next) => handleFrom(next)}
-                max={value.to || undefined}
-              />
-              <span className="text-xs text-gray-500">To</span>
-              <DatePicker
-                className="h-[28px] w-32 px-2 text-xs"
-                value={value.to}
-                onChange={(next) => handleTo(next)}
-                min={value.from || undefined}
-              />
-            </div>
+          <div className="grid max-h-48 grid-cols-2 gap-1 overflow-y-auto sm:grid-cols-3">
+            {(Object.keys(PRESET_LABELS) as PeriodPreset[]).map((k) => (
+              <button
+                key={k}
+                type="button"
+                className={`rounded-sm border px-2 py-1 text-left text-xs ${
+                  value.period === k ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-200 hover:bg-gray-50"
+                }`}
+                onClick={() => handlePreset(k)}
+              >
+                {PRESET_LABELS[k]}
+              </button>
+            ))}
           </div>
         </div>
-      ) : null}
+
+        <div className="space-y-1.5">
+          <div className="text-xs font-semibold text-gray-600">Date range</div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-gray-500">From</span>
+            <DatePicker
+              className="h-[28px] w-32 px-2 text-xs"
+              value={value.from}
+              onChange={(next) => handleFrom(next)}
+              max={value.to || undefined}
+            />
+            <span className="text-xs text-gray-500">To</span>
+            <DatePicker
+              className="h-[28px] w-32 px-2 text-xs"
+              value={value.to}
+              onChange={(next) => handleTo(next)}
+              min={value.from || undefined}
+            />
+          </div>
+        </div>
+      </CollapsedListFilters>
+
+      {summaryText ? <div className="ml-auto text-xs text-gray-600">{summaryText}</div> : null}
     </div>
   );
 }
