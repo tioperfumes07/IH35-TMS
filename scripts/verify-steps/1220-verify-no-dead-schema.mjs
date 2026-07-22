@@ -1,5 +1,5 @@
 /**
- * Step 1217 — verify-no-dead-schema.
+ * Step 1220 — verify-no-dead-schema.
  * Enforces CLAUDE.md §10a (Total Connectivity): a column or table created by a migration that NO
  * non-test source file reads is dead schema — it implies a feature that does not exist.
  * This is the guard the linkage law was missing; without it agents substitute "CI green" and

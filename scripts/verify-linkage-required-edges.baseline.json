@@ -1,13 +1,19 @@
 {
-  "_doc": "BASELINE of pre-existing LINKAGE BREAKS (required edge missing per the owner's law: one economic fact wired through every module/account it touches). DEBT REGISTER, not approval. NEW breaks fail the build. Wire an edge and DELETE its entry.",
+  "_doc": "BASELINE of pre-existing LINKAGE BREAKS. DEBT REGISTER, not approval. NEW breaks fail the build. Wire an edge and DELETE its entry. SCOPE: this guard proves SCHEMA REACHABILITY only -- it cannot prove rows are populated or that reverse UI exists. Population + reverse drill-through are separate audits.",
   "_law": "CLAUDE.md 10a/10d Total Connectivity",
   "_captured": "2026-07-21",
+  "_corrected": "manifest overreach removed 2026-07-21 after review: driverless expenses, non-load bills/invoices, and non-claim legal matters are LAWFUL and are no longer required edges.",
   "count": 7,
   "entries": [
     {
+      "table": "accounting.expenses",
+      "edge": "claim_or_matter",
+      "reason": "WO-CLAIM-MONEY \u2014 no claim_id/matter_id on an expense, so a deductible or legal fee cannot be traced to the claim that caused it."
+    },
+    {
       "table": "insurance.claim",
       "edge": "money",
-      "reason": "WO-CLAIM-MONEY \u2014 a claim generates no expense/bill/JE. Deductible, legal fees and repairs never hit the books from the claim."
+      "reason": "WO-CLAIM-MONEY \u2014 claim generates no expense/bill/JE. Deductible, legal fees, repairs never reach the books from the claim."
     },
     {
       "table": "insurance.lawsuit",
@@ -17,27 +23,22 @@
     {
       "table": "legal.matters",
       "edge": "money",
-      "reason": "WO-CLAIM-MONEY \u2014 matter reaches claim/driver/unit but no expense/bill/JE."
-    },
-    {
-      "table": "driver_finance.settlement_lines",
-      "edge": "gl_account",
-      "reason": "WO-SETTLE-GL \u2014 settlement lines carry no GL account; which account a line hits is not recorded."
-    },
-    {
-      "table": "fuel.fuel_transactions",
-      "edge": "vendor",
-      "reason": "WO-FUEL-AP \u2014 fuel purchase has no payee."
+      "reason": "WO-CLAIM-MONEY \u2014 matter reaches claim/driver/unit but never the money."
     },
     {
       "table": "fuel.fuel_transactions",
       "edge": "money",
-      "reason": "WO-FUEL-AP \u2014 fuel spend never reaches AP/GL; operationally linked, financially orphaned."
+      "reason": "WO-FUEL-AP \u2014 fuel spend never reaches AP/GL (vendor_id exists but UNENFORCED, see pointer register)."
     },
     {
       "table": "dispatch.load_cancellations",
       "edge": "ar",
-      "reason": "WO-2 TONU \u2014 billable cancellation never becomes a receivable. 1 billable row on prod, never billed."
+      "reason": "WO-TONU-AR \u2014 a billable cancellation cannot become a receivable. NOTE: owner-locked design is MANUAL billing (#3129 HOLD) \u2014 this edge enables billing, it must NOT auto-invoice on cancel."
+    },
+    {
+      "table": "safety.accident_reports",
+      "edge": "money",
+      "reason": "WO-CLAIM-MONEY \u2014 accident generates no cost record (driver_id exists but UNENFORCED, see pointer register)."
     }
   ]
 }

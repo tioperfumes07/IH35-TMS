@@ -39,18 +39,23 @@ const BASELINE_FILE = join(ROOT, "scripts/verify-linkage-required-edges.baseline
  */
 export const REQUIRED_EDGES = {
   // ── the expense: "every expense linked to driver, truck, expense account, GL, payment" ──
+  // CORRECTED 2026-07-21 against prod (Cursor caught the error in the first draft):
+  // expense_account lives on accounting.expense_lines (FK -> catalogs.accounts) and IS wired;
+  // driver_uuid/unit_id/load_id already carry FKs. The real defect is NOT a missing column but an
+  // UNENFORCED one -- vendor_uuid and payment_account_uuid are bare uuids with no FK. That class is
+  // caught by UNENFORCED_POINTERS below, not by a missing-edge rule that would fight real columns.
   "accounting.expenses": {
-    driver: ["mdata.drivers"],
-    unit: ["mdata.units", "mdata.assets", "mdata.equipment"],
-    expense_account: ["catalogs.accounts"],
+    // NOT required: driver / unit. A driverless, unit-less vendor expense (shop, office, insurance)
+    // is LAWFUL -- createExpense makes driver optional. Requiring them would fail valid AP.
+    // Driver-attribution is enforced by product rules (recover_from_driver), not by this guard.
     gl: ["accounting.journal_entries"],
-    vendor_or_payee: ["mdata.vendors"],
-    payment: ["banking.bank_accounts", "banking.bank_transactions", "catalogs.payment_methods", "accounting.bill_payments"],
+    claim_or_matter: ["insurance.claim", "legal.matters"],
   },
   // ── AP ──
   "accounting.bills": {
+    // NOT required: load. Shop / insurance / office vendor bills are legitimately not load-linked.
+    // §9.7 "everything links to the load" governs LOAD-attributable spend, not all AP.
     vendor: ["mdata.vendors"],
-    load: ["mdata.loads"],
     gl: ["accounting.journal_entries"],
   },
   "accounting.bill_payments": {
@@ -61,7 +66,6 @@ export const REQUIRED_EDGES = {
   // ── AR ──
   "accounting.invoices": {
     customer: ["mdata.customers"],
-    load: ["mdata.loads"],
     gl: ["accounting.journal_entries"],
   },
   // ── the GL itself must be traceable back to what caused it ──
@@ -84,9 +88,9 @@ export const REQUIRED_EDGES = {
     money: ["accounting.expenses", "accounting.bills", "accounting.journal_entries"],
   },
   "legal.matters": {
-    claim: ["insurance.claim"],
-    driver: ["mdata.drivers"],
-    unit: ["mdata.units"],
+    // NOT required: claim. Not every matter originates in an insurance claim (contract disputes,
+    // employment, regulatory). Claim linkage is required only for insurance-origin matters, which
+    // is a product rule this static guard cannot see.
     money: ["accounting.expenses", "accounting.bills", "accounting.journal_entries"],
   },
   // ── driver pay ──
@@ -98,14 +102,14 @@ export const REQUIRED_EDGES = {
   "driver_finance.settlement_lines": {
     settlement: ["driver_finance.driver_settlements"],
     driver: ["mdata.drivers"],
-    gl_account: ["catalogs.accounts", "accounting.journal_entries"],
+    // posting_account_id EXISTS on prod but carries NO FK -> see UNENFORCED_POINTERS.
   },
   // ── fuel: operationally linked today, financially orphaned ──
   "fuel.fuel_transactions": {
     driver: ["mdata.drivers"],
     unit: ["mdata.units"],
     load: ["mdata.loads"],
-    vendor: ["mdata.vendors"],
+    // vendor_id EXISTS on prod but carries NO FK -> see UNENFORCED_POINTERS, not a missing edge.
     money: ["accounting.bills", "accounting.expenses", "accounting.journal_entries", "banking.bank_transactions"],
   },
   // ── revenue events ──
@@ -119,11 +123,72 @@ export const REQUIRED_EDGES = {
     money: ["accounting.bills", "accounting.expenses", "accounting.journal_entries"],
   },
   "safety.accident_reports": {
-    driver: ["mdata.drivers"],
+    // driver_id EXISTS on prod but carries NO FK -> see UNENFORCED_POINTERS.
     unit: ["mdata.units"],
     claim: ["insurance.claim"],
+    money: ["accounting.expenses", "accounting.bills", "accounting.journal_entries"],
   },
 };
+
+/**
+ * MONEY-CRITICAL POINTER COLUMNS must be FK-ENFORCED.
+ *
+ * The defect this catches (found on prod 2026-07-21, 165 instances): the link WAS written -- as a
+ * bare `uuid` column with NO foreign key. driver_settlements.accounting_bill_id,
+ * settlement_lines.posting_account_id, bill_payments.from_bank_account_id,
+ * banking.transfers.from_account_id, fuel_transactions.vendor_id, expenses.vendor_uuid ... all
+ * exist, none enforced. A pointer with no FK accepts any value and dangles when its target is
+ * removed. It LOOKS wired in a column list and guarantees nothing -- which is precisely why
+ * "it's built" kept surviving inspection.
+ */
+const MONEY_POINTER_RE = /(vendor|customer|account|driver|unit|claim|matter|payment|bill|invoice|settlement|policy)/i;
+const POINTER_SCHEMAS = new Set(["accounting","banking","driver_finance","insurance","legal","safety","fuel","maintenance","dispatch"]);
+
+/** uuid columns declared per table, and which columns carry an FK. */
+export function buildPointerMaps(sqlFiles) {
+  const uuidCols = new Map();   // schema.table -> Set(col)
+  const fkCols = new Map();     // schema.table -> Set(col)
+  const QUALIFIED = /^[a-z_][a-z0-9_]*\.[a-z_][a-z0-9_]*$/i;
+  const put = (map, t, c) => { if (!map.has(t)) map.set(t, new Set()); map.get(t).add(c); };
+
+  for (const raw of sqlFiles) {
+    const sql = raw.replace(/--[^\n]*/g, "");
+    for (const m of sql.matchAll(/CREATE TABLE(?:\s+IF NOT EXISTS)?\s+([A-Za-z_][\w.]*)\s*\(([\s\S]*?)\n\s*\)/gi)) {
+      const t = m[1]; if (!QUALIFIED.test(t)) continue;
+      for (const line of m[2].split("\n")) {
+        const cm = line.match(/^\s*([a-z_][a-z0-9_]*)\s+uuid\b/i);
+        if (cm) { put(uuidCols, t, cm[1]); if (/REFERENCES/i.test(line)) put(fkCols, t, cm[1]); }
+      }
+    }
+    for (const m of sql.matchAll(/ALTER TABLE(?:\s+ONLY)?\s+([A-Za-z_][\w.]*)([\s\S]*?);/gi)) {
+      const t = m[1]; if (!QUALIFIED.test(t)) continue;
+      for (const c of m[2].matchAll(/ADD COLUMN(?:\s+IF NOT EXISTS)?\s+([a-z_][a-z0-9_]*)\s+uuid\b([^,;]*)/gi)) {
+        put(uuidCols, t, c[1]); if (/REFERENCES/i.test(c[2])) put(fkCols, t, c[1]);
+      }
+      for (const c of m[2].matchAll(/FOREIGN KEY\s*\(\s*([a-z_][a-z0-9_,\s]*)\)/gi)) {
+        c[1].split(",").map((x) => x.trim()).forEach((col) => put(fkCols, t, col));
+      }
+    }
+  }
+  return { uuidCols, fkCols };
+}
+
+export function findUnenforcedPointers({ uuidCols, fkCols }) {
+  const out = [];
+  for (const [tbl, cols] of uuidCols) {
+    const schema = tbl.split(".")[0];
+    if (!POINTER_SCHEMAS.has(schema)) continue;
+    const enforced = fkCols.get(tbl) ?? new Set();
+    for (const col of cols) {
+      if (!/_(id|uuid)$/i.test(col)) continue;
+      if (["id", "operating_company_id", "tenant_id"].includes(col)) continue;
+      if (!MONEY_POINTER_RE.test(col)) continue;
+      if (enforced.has(col)) continue;
+      out.push({ table: tbl, column: col });
+    }
+  }
+  return out;
+}
 
 /** Parse every FK target declared for each table across all migrations. */
 export function buildEdgeGraph(sqlFiles) {
@@ -264,8 +329,15 @@ function selftest() {
   if (!have.has("accounting.journal_entries")) failures.push("missed second inline REFERENCES");
 
   const miss = findMissingEdges(g, { "accounting.expenses": REQUIRED_EDGES["accounting.expenses"] });
-  if (!miss.some((m) => m.edge === "expense_account")) failures.push("did not flag the missing expense_account edge");
-  if (miss.some((m) => m.edge === "driver")) failures.push("false-flagged a satisfied edge (driver)");
+  // gl IS satisfied in the fixture (REFERENCES accounting.journal_entries) -> must not be flagged.
+  if (miss.some((m) => m.edge === "gl")) failures.push("false-flagged a satisfied edge (gl)");
+  // claim_or_matter is absent in the fixture -> must be flagged.
+  if (!miss.some((m) => m.edge === "claim_or_matter")) failures.push("did not flag the missing claim_or_matter edge");
+  // OVERREACH REGRESSION LOCK (review 2026-07-21): a driverless / load-less / non-claim record is
+  // LAWFUL. If any of these ever become required edges again, this selftest fails loudly.
+  if ("driver" in REQUIRED_EDGES["accounting.expenses"]) failures.push("overreach: expenses must not require driver (driverless vendor expense is lawful)");
+  if ("load" in (REQUIRED_EDGES["accounting.bills"] ?? {})) failures.push("overreach: bills must not require load (shop/insurance/office bills are lawful)");
+  if ("claim" in (REQUIRED_EDGES["legal.matters"] ?? {})) failures.push("overreach: legal.matters must not require claim (non-insurance matters are lawful)");
 
   const alt = findMissingEdges(new Map([["insurance.claim", new Set(["insurance.policy", "mdata.drivers", "mdata.assets", "safety.incidents", "accounting.bills"])]]),
     { "insurance.claim": REQUIRED_EDGES["insurance.claim"] });
