@@ -39,7 +39,7 @@ export function DispatchPlannersLayout({ children }: { children?: ReactNode }) {
             </NavLink>
           ))}
         </nav>
-        <UniversalFilterBar value={filters} onChange={setFilters} />
+        <UniversalFilterBar value={filters} onChange={setFilters} defaultPeriod="this_week" />
         <PlannerRangeToolbar />
         {children}
       </div>

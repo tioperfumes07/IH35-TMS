@@ -27,21 +27,29 @@ if (!safety.includes("filtersOpen")) {
   failures.push("SafetyDashboardFilter: missing filtersOpen gate");
 }
 
-// UniversalFilterBar — Filters must open a real panel; From/To not always-on
+// UniversalFilterBar (CHROME-05) — must delegate to the shared CollapsedListFilters
+// gold pattern (Dispatch FilterBar), not a bespoke popover with always-on From/To chrome.
 const universal = read("apps/frontend/src/components/planner/UniversalFilterBar.tsx");
-if (!universal.includes("filtersOpen")) {
-  failures.push("UniversalFilterBar: missing filtersOpen — Filters button must toggle a panel");
+if (!universal.includes("CollapsedListFilters")) {
+  failures.push("UniversalFilterBar: must use the shared CollapsedListFilters gold pattern");
 }
-if (!universal.includes("data-testid=\"planner-filters-panel\"")) {
-  failures.push("UniversalFilterBar: missing planner-filters-panel test id");
+if (!universal.includes("data-testid=\"planner-filters-panel\"") && !/testIdPrefix="planner"/.test(universal)) {
+  failures.push("UniversalFilterBar: missing planner Filters popover test id wiring");
 }
 if (/>\s*Filters ▼\s*</.test(universal)) {
   failures.push("UniversalFilterBar: stub 'Filters ▼' button still present");
 }
-// From/To must not be always-on in the slim toolbar (live inside popover).
-const universalToolbar = universal.split("return (")[1]?.split("{filtersOpen ?")[0] ?? universal;
-if (/>\s*From\s*</.test(universalToolbar) && /<DatePicker/.test(universalToolbar)) {
-  failures.push("UniversalFilterBar: From/To DatePickers still always-on in toolbar");
+// Everything before <CollapsedListFilters ...> is the always-visible slim toolbar —
+// From/To DatePickers and the period/date summary text must NOT render there.
+const universalToolbar = universal.split("<CollapsedListFilters")[0] ?? universal;
+if (/<DatePicker/.test(universalToolbar)) {
+  failures.push("UniversalFilterBar: From/To DatePickers still always-on before the Filters popover");
+}
+if (/\{value\.from\}|\{value\.to\}/.test(universalToolbar)) {
+  failures.push("UniversalFilterBar: from/to date text still always-on before the Filters popover");
+}
+if (/PRESET_LABELS\[value\.period\]/.test(universalToolbar)) {
+  failures.push("UniversalFilterBar: period label still always-on before the Filters popover");
 }
 
 // Customers — chips collapsed; search stays visible
