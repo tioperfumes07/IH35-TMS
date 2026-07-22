@@ -74,10 +74,24 @@ function claimSelectColumns(alias = "c") {
   `;
 }
 
+// Entity-scoped joins. Joining these hubs by id alone lets a claim in one operating company
+// surface an asset or trailer belonging to another — the cross-entity leak class that is masked
+// today (RLS is role-scoped, TRANSP dominates the data) and breaks the moment USMCA goes live.
+// Scoping columns verified against PROD (br-fancy-credit-akjnd07a), NOT assumed — CLAUDE.md §4:
+//   mdata.assets    -> tenant_id                (no operating_company_id)
+//   mdata.equipment -> owner_company_id + currently_leased_to_company_id  (the owner/leased pair;
+//                      a trailer TRK owns and leases to TRANSP must still resolve for TRANSP)
 const CLAIM_FROM = `
   FROM insurance.claim c
-  LEFT JOIN mdata.assets assets ON assets.id = c.asset_id
-  LEFT JOIN mdata.equipment trailers ON trailers.id = c.trailer_id
+  LEFT JOIN mdata.assets assets
+    ON assets.id = c.asset_id
+   AND assets.tenant_id = c.operating_company_id
+  LEFT JOIN mdata.equipment trailers
+    ON trailers.id = c.trailer_id
+   AND (
+        trailers.owner_company_id = c.operating_company_id
+     OR trailers.currently_leased_to_company_id = c.operating_company_id
+   )
 `;
 
 async function assertOptionalHubExists(

@@ -158,8 +158,19 @@ export function computeFailures(sources) {
   if (!/\$\{a\}fault,/.test(claimRoutes) || !/\$\{a\}recovery_rail,/.test(claimRoutes) || !/\$\{a\}repair_books_treatment/.test(claimRoutes)) {
     errors.push("claim.routes.ts: claimSelectColumns() must project fault/recovery_rail/repair_books_treatment");
   }
-  if (!/LEFT JOIN mdata\.equipment trailers ON trailers\.id = c\.trailer_id/.test(claimRoutes)) {
+  // The join must exist AND be entity-scoped. The original regex pinned the exact one-line form,
+  // which failed the moment the join was correctly scoped across multiple lines — and, worse, would
+  // have PASSED the unscoped one-liner forever. mdata.equipment carries owner_company_id +
+  // currently_leased_to_company_id (NOT operating_company_id — CLAUDE.md §4, verified on prod), so a
+  // trailer TRK owns and leases to TRANSP must still resolve for TRANSP.
+  if (!/LEFT JOIN mdata\.equipment trailers[\s\S]{0,80}?trailers\.id = c\.trailer_id/.test(claimRoutes)) {
     errors.push("claim.routes.ts: CLAIM_FROM must LEFT JOIN mdata.equipment trailers for the trailer display id");
+  }
+  if (!/trailers\.id = c\.trailer_id[\s\S]{0,240}?(owner_company_id|currently_leased_to_company_id)/.test(claimRoutes)) {
+    errors.push("claim.routes.ts: the mdata.equipment trailer join must be ENTITY-SCOPED (owner_company_id / currently_leased_to_company_id) — an id-only join leaks trailers across operating companies");
+  }
+  if (!/LEFT JOIN mdata\.assets assets[\s\S]{0,160}?assets\.tenant_id\s*=\s*c\.operating_company_id/.test(claimRoutes)) {
+    errors.push("claim.routes.ts: the mdata.assets join must be ENTITY-SCOPED (assets.tenant_id = c.operating_company_id) — mdata.assets has no operating_company_id");
   }
   if (!/COALESCE\(\$16, 'undetermined'\)/.test(claimRoutes)) {
     errors.push("claim.routes.ts: INSERT must COALESCE fault to 'undetermined' server-side when the caller omits it");
@@ -287,7 +298,15 @@ function claimSelectColumns(alias = "c") {
   \`;
 }
 const CLAIM_FROM = \`
-  LEFT JOIN mdata.equipment trailers ON trailers.id = c.trailer_id
+  LEFT JOIN mdata.assets assets
+    ON assets.id = c.asset_id
+   AND assets.tenant_id = c.operating_company_id
+  LEFT JOIN mdata.equipment trailers
+    ON trailers.id = c.trailer_id
+   AND (
+        trailers.owner_company_id = c.operating_company_id
+     OR trailers.currently_leased_to_company_id = c.operating_company_id
+   )
 \`;
       for (const [kind, id] of [
         ["trailer", body.trailer_id],
