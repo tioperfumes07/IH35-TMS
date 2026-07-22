@@ -448,7 +448,6 @@ import { registerOwnerTodaysAttentionRoutes } from "./owner/todays-attention/rou
 import { registerAccountingRoleHomeRoutes } from "./accounting/role-home/routes.js";
 import { registerBillGlDraftRoutes } from "./accounting/bill-gl-draft.routes.js";
 import { registerBillPaymentGlRoutes } from "./accounting/bill-payment-gl.routes.js";
-import { registerAllocationsRoutes } from "./accounting/allocations.routes.js";
 import { registerCashForecastManualRoutes } from "./forecast/cash-forecast-manual.routes.js";
 import { registerGeocodingRoutes } from "./integrations/trimble/geocoding.routes.js";
 import { registerSafetyOfficerRoleHomeRoutes } from "./safety-officer/role-views/routes.js";
@@ -897,7 +896,6 @@ async function main() {
   await registerAccountingRoleHomeRoutes(app);
   await registerBillGlDraftRoutes(app);
   await registerBillPaymentGlRoutes(app);
-  await registerAllocationsRoutes(app);
   await registerSafetyOfficerRoleHomeRoutes(app);
   await registerDriverManagerRoleHomeRoutes(app);
   await registerReportsRoutes(app);

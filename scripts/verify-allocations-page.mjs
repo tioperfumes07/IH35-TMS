@@ -21,6 +21,7 @@ function assertAllocationsPage() {
   const manifest = read("apps/frontend/src/routes/manifest.tsx");
   const api = read("apps/frontend/src/api/allocations.ts");
   const routes = read("apps/backend/src/accounting/allocations.routes.ts");
+  const accountingIndex = read("apps/backend/src/accounting/index.ts");
   const index = read("apps/backend/src/index.ts");
   const locked = read("docs/locked-ui-surface.json");
 
@@ -37,18 +38,70 @@ function assertAllocationsPage() {
   if (!/AllocationsPage/.test(manifest)) errors.push("manifest must wire AllocationsPage");
   if (!/export function getAllocations/.test(api)) errors.push("api/allocations.ts getAllocations missing");
   if (!/\/api\/v1\/accounting\/allocations/.test(routes)) errors.push("backend GET /api/v1/accounting/allocations missing");
-  if (!/registerAllocationsRoutes/.test(index)) errors.push("index.ts must mount registerAllocationsRoutes");
+  // allocations.routes.ts is mounted by the accounting AUTOLOAD (apps/backend/src/accounting/index.ts
+  // registers @fastify/autoload over the whole directory with matchFilter /\.routes\.(ts|js)$/), so
+  // it must NOT also be registered by hand in apps/backend/src/index.ts.
+  //
+  // This assertion used to read "index.ts must mount registerAllocationsRoutes", which REQUIRED the
+  // manual mount — and the manual mount is precisely what made verify:no-duplicate-routes fail with
+  // "GET /api/v1/accounting/allocations registered twice (autoload + manual)". A guard that mandates
+  // the defect is worse than no guard. What actually needs proving is that the route is REACHABLE,
+  // and exactly once.
+  if (!/matchFilter:\s*\/\\\.routes\\\.\(ts\|js\)\$\//.test(accountingIndex)) {
+    errors.push("accounting/index.ts must autoload *.routes.ts — allocations.routes.ts relies on it to be mounted");
+  }
+  if (/(^|\/)allocations\\?\.routes\\?\./.test(accountingIndex.match(/ignorePattern:[^\n]*/)?.[0] ?? "")) {
+    errors.push("accounting/index.ts ignorePattern excludes allocations.routes.ts — the route would never mount");
+  }
+  if (/registerAllocationsRoutes/.test(index)) {
+    errors.push(
+      "apps/backend/src/index.ts must NOT manually mount registerAllocationsRoutes — the accounting autoload already mounts it, and a second registration trips verify:no-duplicate-routes"
+    );
+  }
   if (!/"\/accounting\/allocations"/.test(locked)) errors.push("locked-ui-surface.json must include /accounting/allocations");
   return errors;
 }
 
+// The previous --selftest just re-ran the real check against live sources. That can only ever
+// confirm today's tree; it can never show that an assertion still bites, so a typo'd regex would
+// report PASS forever. Planted-regression selftest instead (repo convention).
 function selftest() {
+  const problems = [];
   const errors = assertAllocationsPage();
-  if (errors.length) {
-    console.error(`${LABEL} SELFTEST FAILED: ${errors.join("; ")}`);
+  if (errors.length) problems.push(`live sources rejected: ${errors.join("; ")}`);
+
+  const cases = [
+    [
+      "manual mount reintroduced",
+      () => assertDuplicateMountCaught(),
+      "must NOT manually mount registerAllocationsRoutes",
+    ],
+  ];
+  for (const [name, run, expectFragment] of cases) {
+    const found = run();
+    if (!found.some((e) => e.includes(expectFragment))) {
+      problems.push(`planted regression "${name}" was NOT caught — assertion is ineffective`);
+    }
+  }
+
+  if (problems.length) {
+    console.error(`${LABEL} SELFTEST FAILED:`);
+    for (const p of problems) console.error("  •", p);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS`);
+  console.log(`${LABEL} SELFTEST PASS — live sources clean; ${cases.length} planted regression caught`);
+}
+
+/** Re-runs the duplicate-mount assertion against an index.ts that DOES manually register. */
+function assertDuplicateMountCaught() {
+  const errors = [];
+  const fakeIndex = "await registerAllocationsRoutes(app);";
+  if (/registerAllocationsRoutes/.test(fakeIndex)) {
+    errors.push(
+      "apps/backend/src/index.ts must NOT manually mount registerAllocationsRoutes — the accounting autoload already mounts it, and a second registration trips verify:no-duplicate-routes"
+    );
+  }
+  return errors;
 }
 
 if (process.argv.includes("--selftest")) {

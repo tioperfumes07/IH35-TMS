@@ -22,7 +22,9 @@ function canAccessAccounting(role: string) {
  * (bills.routes.ts, resolveAllocation in allocation.ts). No new allocation math, no GL posting here.
  */
 export async function registerAllocationsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/accounting/allocations", async (req, reply) => {
+  // rateLimit matches the sibling accounting read routes. CodeQL js/missing-rate-limiting flags an
+  // authorizing handler with no limit, because it is otherwise a cheap enumeration oracle.
+  app.get("/api/v1/accounting/allocations", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
