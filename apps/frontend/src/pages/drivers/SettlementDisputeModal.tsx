@@ -115,6 +115,11 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
   }
 
   return (
+    // CHROME-11: the nested driver creator is a SIBLING of <Modal>, never a child. Rendering it
+    // inside the shell produced a literal box-inside-a-box (two stacked Modal frames, two headers)
+    // — caught by verify:no-nested-modal-frames. Sibling placement keeps a single frame while the
+    // z-index reasoning below still holds.
+    <>
     <Modal open={open} onClose={onClose} title="Submit settlement dispute">
       <div className="space-y-3 text-sm" data-testid="settlement-dispute-modal">
         <label className="block space-y-1">
@@ -207,6 +212,7 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
           </Button>
         </div>
       </div>
+    </Modal>
       <CreateDriverModal
         open={driverCreateOpen}
         companyId={companyId}
@@ -223,6 +229,6 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
         // shell="drawer" is only correct when the parent is itself a z-40 ParityDrawer (VendorBillForm).
         // Default shell="modal" here keeps both at z-50 so the nested creator stacks correctly.
       />
-    </Modal>
+    </>
   );
 }
