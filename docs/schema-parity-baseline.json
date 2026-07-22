@@ -3599,6 +3599,8 @@
       "disbursement_status",
       "display_id",
       "driver_id",
+      "economic_routing",
+      "from_bank_account_id",
       "id",
       "liability_id",
       "linked_bank_txn_id",
@@ -3615,9 +3617,12 @@
       "recipient_name",
       "recipient_type",
       "recovered_in_settlement_id",
+      "recovery_mode",
       "requires_owner_approval",
       "status",
       "submitted_by_user_id",
+      "trailer_id",
+      "unit_id",
       "updated_at"
     ],
     "driver_finance.driver_bills": [
