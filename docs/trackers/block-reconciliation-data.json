@@ -1,11 +1,11 @@
 {
  "date": "2026-07-21",
- "generated_at_iso": "2026-07-21T23:10:09.416Z",
+ "generated_at_iso": "2026-07-22T00:14:03.185Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
-  "NEEDS-VERIFY": 64,
-  "DONE": 669,
+  "NEEDS-VERIFY": 63,
+  "DONE": 670,
   "AUDIT-NOTE": 424
  },
  "universe": {
@@ -28,14 +28,14 @@
   {
    "id": "BANK-18-DESIGNVIEW-QBO-PARITY",
    "status": "DONE",
-   "pr": null,
+   "pr": 3131,
    "registered_on": "2026-07-11",
    "title": ""
   },
   {
    "id": "BANK-18-KEYSTONE-CATEGORIZE-REGISTER",
-   "status": "NEEDS-VERIFY",
-   "pr": null,
+   "status": "DONE",
+   "pr": 3131,
    "registered_on": "2026-07-11",
    "title": ""
   },
@@ -641,17 +641,6 @@
    "name": "",
    "registered_on": null,
    "pr": 2671
-  },
-  {
-   "id": "BANK-18-KEYSTONE-CATEGORIZE-REGISTER",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "2/4 signature file(s) on main — partial, unverified",
-   "name": "",
-   "registered_on": "2026-07-11",
-   "pr": null
   },
   {
    "id": "BLOCK-02-DRIVER-ESCROW-DESIGN",
@@ -1986,7 +1975,18 @@
    "evidence": "all 2 file(s) on main",
    "name": "",
    "registered_on": "2026-07-11",
-   "pr": null
+   "pr": 3131
+  },
+  {
+   "id": "BANK-18-KEYSTONE-CATEGORIZE-REGISTER",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 4 file(s) on main",
+   "name": "",
+   "registered_on": "2026-07-11",
+   "pr": 3131
   },
   {
    "id": "BANK-SORT-ROLLOUT-ACCT",
@@ -13162,6 +13162,54 @@
  ],
  "merged_prs": [
   {
+   "number": 3132,
+   "title": "docs(accounting): verify 8 audited GAP blocks vs origin/main (7 STALE, 1 open)",
+   "mergedAt": "2026-07-22T00:03:39Z",
+   "branch": "docs/accounting-drain-verify-2026-07-21"
+  },
+  {
+   "number": 3131,
+   "title": "fix(banking): BANK-18 registry truth-up + Rule-17 verify-step for categorize-capable register",
+   "mergedAt": "2026-07-22T00:04:17Z",
+   "branch": "fix/bank18-registry-truth-categorize-guard"
+  },
+  {
+   "number": 3125,
+   "title": "[HOLD-FOR-JORGE] fix(db): 202607380000 settlement_lines line_type CHECK must be true live-superset (blocks Neon apply)",
+   "mergedAt": "2026-07-21T23:31:31Z",
+   "branch": "fix/hold-202607380000-line-type-superset"
+  },
+  {
+   "number": 3122,
+   "title": "[GOVERNANCE][HOLD-FOR-JORGE] docs: CHAIN-06 AR-subledger marked code-fixed (guards 920–922); stale OPEN claims corrected",
+   "mergedAt": "2026-07-21T23:29:03Z",
+   "branch": "docs/chain06-ar-subledger-code-fixed-2026-07-21"
+  },
+  {
+   "number": 3121,
+   "title": "docs(tracker): Top-10 builder evidence — verified BUILT vs HOLD map (2026-07-21) — do not merge",
+   "mergedAt": "2026-07-22T00:03:34Z",
+   "branch": "docs/top10-builder-evidence-2026-07-21"
+  },
+  {
+   "number": 3119,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-22T00:03:31Z",
+   "branch": "chore/tracker-artifacts-sync-29876196859"
+  },
+  {
+   "number": 3118,
+   "title": "fix(boot): startup drift guard must exempt HELD migrations (latent prod-outage)",
+   "mergedAt": "2026-07-22T00:04:05Z",
+   "branch": "fix/startup-drift-guard-held-exemption"
+  },
+  {
+   "number": 3117,
+   "title": "docs(tracker): NEEDS-PROD Neon verdicts 2026-07-21 (10/10 resolved)",
+   "mergedAt": "2026-07-22T00:03:28Z",
+   "branch": "docs/needs-prod-neon-verdicts-2026-07-21"
+  },
+  {
    "number": 3112,
    "title": "docs(tracker): register 2 financial findings from the 2026-07-21 merge wave (WC-REIMB, NPF-DUP)",
    "mergedAt": "2026-07-21T23:02:20Z",
@@ -16712,58 +16760,28 @@
    "title": "[HOLD-FOR-JORGE] fix(accounting): FIX-03 — product/service + Create populates + persists income/expense account link",
    "mergedAt": "2026-07-11T17:30:51Z",
    "branch": "fix/fix-03-product-service-account-link-hold"
-  },
-  {
-   "number": 2352,
-   "title": "feat(program): FIX-11 — By-Module drill-down adds Wired/Needs-design/Missing/Completeness columns",
-   "mergedAt": "2026-07-11T17:00:36Z",
-   "branch": "feat/tracker-bymodule-columns"
-  },
-  {
-   "number": 2351,
-   "title": "[HOLD-FOR-JORGE] fix(accounting): FIX-02 — category + Create opens full COA creator (Account Type + Detail Type)",
-   "mergedAt": "2026-07-11T17:14:16Z",
-   "branch": "fix/fix-02-category-coa-creator-hold"
-  },
-  {
-   "number": 2350,
-   "title": "fix(program): FIX-10 — /program defaults to the clean Program Tracker (archive old board)",
-   "mergedAt": "2026-07-11T16:49:39Z",
-   "branch": "fix/program-tracker-default-route"
-  },
-  {
-   "number": 2349,
-   "title": "fix(banking): FIX-04 — From/To column shows real from/to accounts (was echoing raw description)",
-   "mergedAt": "2026-07-11T16:46:53Z",
-   "branch": "fix/banking-from-to-accounts"
-  },
-  {
-   "number": 2348,
-   "title": "chore(registry): register 6 owner-verified fixes (P1) — appear in Program Tracker at true status",
-   "mergedAt": "2026-07-11T16:39:53Z",
-   "branch": "chore/register-coder-verified-fixes"
-  },
-  {
-   "number": 2347,
-   "title": "fix(ui): Customers/Vendors master-detail list → shared resizable QBO table",
-   "mergedAt": "2026-07-11T16:30:49Z",
-   "branch": "fix/customers-vendors-resizable-list"
-  },
-  {
-   "number": 2346,
-   "title": "feat(program): live Program Tracker page — Pending / In Progress / Completed & live / Sequence tabs",
-   "mergedAt": "2026-07-11T16:09:50Z",
-   "branch": "feat/program-tracker-page"
-  },
-  {
-   "number": 2345,
-   "title": "chore(registry): register 928 authored MASTER-6 blocks into .block-ready (honest extraction, no stubs)",
-   "mergedAt": "2026-07-11T15:36:04Z",
-   "branch": "chore/register-authored-batch1"
   }
  ],
- "merged_pr_total": 2826,
+ "merged_pr_total": 2834,
  "hold_for_jorge": [
+  {
+   "number": 3125,
+   "title": "[HOLD-FOR-JORGE] fix(db): 202607380000 settlement_lines line_type CHECK must be true live-superset (blocks Neon apply)",
+   "mergedAt": "2026-07-21T23:31:31Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3122,
+   "title": "[GOVERNANCE][HOLD-FOR-JORGE] docs: CHAIN-06 AR-subledger marked code-fixed (guards 920–922); stale OPEN claims corrected",
+   "mergedAt": "2026-07-21T23:29:03Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3121,
+   "title": "docs(tracker): Top-10 builder evidence — verified BUILT vs HOLD map (2026-07-21) — do not merge",
+   "mergedAt": "2026-07-22T00:03:34Z",
+   "category": "HOLD"
+  },
   {
    "number": 3111,
    "title": "[HOLD][docs-only] Rev-rec delivery two-event latch — Step 4 verification: PARTIAL (poster missing, owner-gated)",
