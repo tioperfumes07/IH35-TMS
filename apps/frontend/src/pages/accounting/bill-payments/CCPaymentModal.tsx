@@ -11,13 +11,11 @@ import { useCCPayment } from "../../../hooks/useCCPayment";
 import { companyToday } from "../../../lib/businessDate";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 
-// FINANCIAL GATE (orphan-triage F1): /api/v1/bill-payments/cc posts directly to
-// accounting.bill_payments + accounting.bills (money-moving) and had zero prior UI consumer
-// anywhere in the app (verified: useCCPayment/submitCcBillPayment were unused before this PR).
-// Per constitution §1.4 there is no EXISTING gated/wired poster for this exact action to reuse,
-// so the form renders fully but submit stays disabled until Jorge gives an explicit per-block OK
-// (same pattern as NewAccountDrawerForm's ACCOUNT_CREATE_GATED). Flip to false only on that OK.
-const CC_BILL_PAYMENT_GATED = true;
+// FINANCIAL GATE (orphan-triage F1): /api/v1/bill-payments/cc posts to
+// accounting.bill_payments + accounting.bills (money-moving).
+// Owner GO 2026-07-22: flip for ALL operating companies — "everything should be working,
+// it has already been stated, so flip flags on all companies."
+const CC_BILL_PAYMENT_GATED = false;
 
 type Props = { open: boolean; operatingCompanyId: string; bill: VendorBill | null; onClose: () => void; onSaved: () => void };
 
