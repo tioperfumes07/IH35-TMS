@@ -9,6 +9,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters } from "../../components/table";
 
 export function AbandonmentQueuePage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -99,10 +100,16 @@ export function AbandonmentQueuePage() {
         rowKey={(row) => String(row.id ?? "")}
         loading={listQuery.isPending || (listQuery.isFetching && rows.length === 0)}
         filterBar={
-          <SelectCombobox className="h-9 rounded-sm border border-gray-300 px-2 text-xs" value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
-            <option value="pending">Pending</option>
-            <option value="all">All</option>
-          </SelectCombobox>
+          <CollapsedListFilters
+            activeFilterCount={status !== "pending" ? 1 : 0}
+            testIdPrefix="abandonment"
+            dataAttributes={{ "data-abandonment-filter-toolbar": "collapsed" }}
+          >
+            <SelectCombobox className="h-9 rounded-sm border border-gray-300 px-2 text-xs" value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
+              <option value="pending">Pending</option>
+              <option value="all">All</option>
+            </SelectCombobox>
+          </CollapsedListFilters>
         }
         storageKey="abandonment-queue"
         emptyText="No rows."

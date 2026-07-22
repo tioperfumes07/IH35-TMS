@@ -89,6 +89,8 @@ for (const [rel, marker] of [
   ["apps/frontend/src/pages/dispatch/PodReviewPage.tsx", "data-pod-filter-toolbar"],
   ["apps/frontend/src/pages/dispatch/borders/BorderCrossingHistory.tsx", "data-border-crossing-filter-toolbar"],
   ["apps/frontend/src/pages/accounting/ReceiptsPage.tsx", "data-receipts-filter-toolbar"],
+  ["apps/frontend/src/pages/accounting/IntegrationTransactionsPage.tsx", "data-integration-tx-filter-toolbar"],
+  ["apps/frontend/src/pages/accounting/AbandonmentQueuePage.tsx", "data-abandonment-filter-toolbar"],
 ]) {
   const src = read(rel);
   if (!src.includes("CollapsedListFilters")) {
