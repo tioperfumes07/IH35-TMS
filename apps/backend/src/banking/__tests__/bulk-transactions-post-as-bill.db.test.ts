@@ -30,6 +30,7 @@ describeIntegration("BANKING-GL-COMPLETION post-as-bill paid-in-full end-to-end 
   const userId = "00000000-0000-4000-8000-0000000000f6";
   const vendorId = randomUUID();
   const bankGlAccountId = randomUUID();
+  const apControlAccountId = randomUUID();
   const bankAccountId = randomUUID();
   const createdBillIds: string[] = [];
   const createdPaymentIds: string[] = [];
@@ -126,6 +127,25 @@ describeIntegration("BANKING-GL-COMPLETION post-as-bill paid-in-full end-to-end 
          VALUES ($1::uuid, $2::uuid, 'Bulk Post Test Vendor', 'Other')
          ON CONFLICT (id) DO NOTHING`,
         [vendorId, companyId]
+      );
+      // Bill/bill-payment posters resolve ap_control from accounting.chart_of_accounts_roles
+      // (bank-transaction-splits.service). This suite uses the SHARED company from
+      // ensureIntegrationPrerequisites(); sibling suites DELETE that company's role rows in
+      // teardown — order-dependent flake ("bill_posted expected true"). Seed additively only.
+      await db.query(
+        `INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable)
+         VALUES ($1::uuid,$3::uuid,$2,'Bulk Post AP Control Test','Liability',true)
+         ON CONFLICT (id) DO NOTHING`,
+        [apControlAccountId, `BPBAP${suffix}`, companyId]
+      );
+      await db.query(
+        `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
+         SELECT $1::uuid, 'ap_control', $2::uuid, true
+         WHERE NOT EXISTS (
+           SELECT 1 FROM accounting.chart_of_accounts_roles
+           WHERE operating_company_id = $1::uuid AND role = 'ap_control' AND is_active = true
+         )`,
+        [companyId, apControlAccountId]
       );
     });
   });
