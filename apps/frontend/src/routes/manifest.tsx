@@ -34,7 +34,7 @@ const OnboardingWizardPage = React.lazy(() => import("../pages/drivers/Onboardin
 const ApplicantsPipelinePage = React.lazy(() => import("../pages/drivers/ApplicantsPipelinePage").then((m) => ({ default: m.ApplicantsPipelinePage })));
 const ApplicationPage = React.lazy(() => import("../pages/public/ApplicationPage").then((m) => ({ default: m.ApplicationPage })));
 const DriverLoadStatusesPage = React.lazy(() => import("../pages/DriverLoadStatusesPage").then((m) => ({ default: m.DriverLoadStatusesPage })));
-const DriversPage = React.lazy(() => import("../pages/drivers/DriversPage").then((m) => ({ default: m.DriversPage })));
+const DriversPage = React.lazy(() => import("../pages/Drivers").then((m) => ({ default: m.DriversPage })));
 const RetentionDashboard = React.lazy(() => import("../pages/drivers/RetentionDashboard").then((m) => ({ default: m.RetentionDashboard })));
 import type { DriversSubnavId } from "../components/drivers/DRIVERS_TABS_CONFIG";
 const DispatchPage = React.lazy(() => import("../pages/Dispatch").then((m) => ({ default: m.DispatchPage })));
@@ -352,13 +352,6 @@ const DriverPayTypesListPage = React.lazy(() => import("../pages/lists/driver/Dr
 const DriverTeamsPage = React.lazy(() => import("../pages/lists/driver/DriverTeamsPage").then((m) => ({ default: m.DriverTeamsPage })));
 const EscrowTypesListPage = React.lazy(() => import("../pages/lists/driver/EscrowTypesListPage").then((m) => ({ default: m.EscrowTypesListPage })));
 const PayRateTemplatesListPage = React.lazy(() => import("../pages/lists/driver/PayRateTemplatesListPage").then((m) => ({ default: m.PayRateTemplatesListPage })));
-import {
-  CdlEndorsementsListPage,
-  CdlRestrictionsListPage,
-  EmploymentStatusesListPage,
-  LicenseClassesListPage,
-  MedicalCardStatusesListPage,
-} from "../pages/lists/driver/deprecated-subcatalog-pages";
 import { Catalog as DriversLicenseClassesCatalog } from "../pages/lists/drivers/license-classes/Catalog";
 import { Catalog as DriversEndorsementsCatalog } from "../pages/lists/drivers/endorsements/Catalog";
 import { Catalog as DriversRestrictionsCatalog } from "../pages/lists/drivers/restrictions/Catalog";
@@ -574,7 +567,7 @@ function MaintenanceTabRoute({ tabId }: { tabId: MaintenanceTabId }) {
 function DriversSubtabRoute({
   subnav,
 }: {
-  subnav: DriversSubnavId | "disputes" | "auto_deductions" | "team_splits";
+  subnav: DriversSubnavId | "disputes" | "team_splits";
 }) {
   return <DriversPage initialSubnav={subnav} />;
 }
@@ -869,11 +862,7 @@ export const ROUTES = React.Children.toArray(
         />
         <Route
           path="/drivers/auto-deductions"
-          element={
-            <ProtectedRoute>
-              <DriversSubtabRoute subnav="auto_deductions" />
-            </ProtectedRoute>
-          }
+          element={<Navigate to="/drivers/deductions" replace />}
         />
         <Route
           path="/drivers/team-splits"
@@ -2216,43 +2205,23 @@ export const ROUTES = React.Children.toArray(
         />
         <Route
           path="/lists/driver/license-classes"
-          element={
-            <ProtectedRoute>
-              <LicenseClassesListPage />
-            </ProtectedRoute>
-          }
+          element={<Navigate to="/lists/drivers/license-classes" replace />}
         />
         <Route
           path="/lists/driver/endorsements"
-          element={
-            <ProtectedRoute>
-              <CdlEndorsementsListPage />
-            </ProtectedRoute>
-          }
+          element={<Navigate to="/lists/drivers/endorsements" replace />}
         />
         <Route
           path="/lists/driver/restrictions"
-          element={
-            <ProtectedRoute>
-              <CdlRestrictionsListPage />
-            </ProtectedRoute>
-          }
+          element={<Navigate to="/lists/drivers/restrictions" replace />}
         />
         <Route
           path="/lists/driver/medical-card-status"
-          element={
-            <ProtectedRoute>
-              <MedicalCardStatusesListPage />
-            </ProtectedRoute>
-          }
+          element={<Navigate to="/lists/drivers/medical-card-status" replace />}
         />
         <Route
           path="/lists/driver/employment-status"
-          element={
-            <ProtectedRoute>
-              <EmploymentStatusesListPage />
-            </ProtectedRoute>
-          }
+          element={<Navigate to="/lists/drivers/employment-status" replace />}
         />
         <Route
           path="/lists/drivers/license-classes"

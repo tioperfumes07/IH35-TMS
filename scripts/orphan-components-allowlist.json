@@ -82,6 +82,12 @@
     "_comment_dispatchlist: @archived — superseded by DispatchBoard; enforced by verify-dispatch-list-orphaned.mjs (0243-c1-4)",
     "apps/frontend/src/components/dispatch/DispatchList.tsx",
     "_comment_driverhospill: imported only by @archived DispatchList; live DispatchBoard uses DriverHosClockValue instead",
-    "apps/frontend/src/pages/dispatch/DriverHosPill.tsx"
+    "apps/frontend/src/pages/dispatch/DriverHosPill.tsx",
+    "_comment_driverspage: @archived drivers active-path (2026-07-21) — dual-chrome wrapper retired; canonical LIVE mount is pages/Drivers.tsx. RETAINED, not deleted, because CI guards string-scan this path for the subtab path constants + tab contract anchors (verify-drivers-subnav-routes-registered). Deleting it would red those guards.",
+    "apps/frontend/src/pages/drivers/DriversPage.tsx",
+    "_comment_deprecatedsubcatalog: @archived drivers active-path (2026-07-21) — singular /lists/driver/{license-classes,endorsements,restrictions,medical-card-status,employment-status} now Navigate-redirect to canonical plural /lists/drivers/*. Page components retained for ledger/unit tests only; deliberately not mounted in routes/manifest.tsx (Rule 07 archive-not-delete).",
+    "apps/frontend/src/pages/lists/driver/deprecated-subcatalog-pages.tsx",
+    "_comment_drivercatalogbanner: deprecation banner imported ONLY by the @archived deprecated-subcatalog-pages above; orphaned as a consequence of that archive, not independently dead.",
+    "apps/frontend/src/pages/lists/driver/DriverCatalogDeprecatedBanner.tsx"
   ]
 }

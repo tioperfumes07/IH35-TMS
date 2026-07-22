@@ -15,6 +15,7 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
   { path: "/drivers/permits", label: "Permits", module: "drivers" },
   { path: "/drivers/pay-rate-templates", label: "Pay Rate Templates", module: "drivers" },
   { path: "/drivers/deductions", label: "Deductions", module: "drivers" },
+  { path: "/drivers/team-splits", label: "Team Splits", module: "drivers" },
   { path: "/drivers/disputes", label: "Disputes", module: "drivers" },
   { path: "/drivers/leave", label: "Leave", module: "drivers" },
   { path: "/banking", label: "Banking Home", module: "banking" },
@@ -94,6 +95,7 @@ export const DRIVERS_SUBTAB_PATH: Record<string, string> = {
   permits: "/drivers/permits",
   pay_rate_templates: "/drivers/pay-rate-templates",
   deductions: "/drivers/deductions",
+  team_splits: "/drivers/team-splits",
   disputes: "/drivers/disputes",
   leave: "/drivers/leave",
 };

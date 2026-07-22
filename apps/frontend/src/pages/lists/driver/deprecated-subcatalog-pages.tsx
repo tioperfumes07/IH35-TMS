@@ -1,3 +1,12 @@
+/**
+ * @archived — Drivers active-path (2026-07-21)
+ *
+ * Singular `/lists/driver/{license-classes|endorsements|restrictions|medical-card-status|employment-status}`
+ * routes Navigate-redirect to canonical `/lists/drivers/*` (plural). These page components remain
+ * for ledger / unit tests only — not mounted in `routes/manifest.tsx`.
+ *
+ * Rule 07: archive, do not delete.
+ */
 import { createDriverCatalogClient } from "../../../api/catalogs-driver";
 import { DriverCatalogDeprecatedBanner } from "./DriverCatalogDeprecatedBanner";
 import { DriverCatalogListPage } from "./DriverCatalogListPage";
