@@ -23,8 +23,17 @@ const safety = read("apps/frontend/src/components/safety/SafetyDashboardFilter.t
 if (!safety.includes('data-safety-filter-toolbar="collapsed"')) {
   failures.push("SafetyDashboardFilter: missing data-safety-filter-toolbar=\"collapsed\"");
 }
-if (!safety.includes("filtersOpen")) {
-  failures.push("SafetyDashboardFilter: missing filtersOpen gate");
+// CHROME-02: SafetyDashboardFilter delegates to the shared CollapsedListFilters gold pattern —
+// the filtersOpen gate now lives there, not re-forked per module.
+if (!safety.includes("CollapsedListFilters")) {
+  failures.push("SafetyDashboardFilter: must use the shared CollapsedListFilters gold pattern");
+}
+
+// Dispatch FilterBar (CHROME-02 origin of the gold pattern) — must also delegate to the shared
+// CollapsedListFilters component, proving there is exactly one popover/collapse implementation.
+const dispatchFilterBar = read("apps/frontend/src/components/dispatch/FilterBar.tsx");
+if (!dispatchFilterBar.includes("CollapsedListFilters")) {
+  failures.push("Dispatch FilterBar: must delegate to the shared CollapsedListFilters gold pattern");
 }
 
 // UniversalFilterBar — Filters must open a real panel; From/To not always-on
