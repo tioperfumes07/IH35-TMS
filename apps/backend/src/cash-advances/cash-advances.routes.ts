@@ -29,22 +29,60 @@ const repaymentScheduleSchema = z.object({
   cadence: z.enum(["weekly", "biweekly"]).default("weekly"),
 });
 
-const createAdvanceBodySchema = z.object({
-  driver_id: z.string().uuid(),
-  amount: z.number().positive(),
-  purpose: z.enum(["fuel_deposit", "border_fee", "family_emergency", "vendor_payment", "other"]),
-  disbursement_method: z.enum(["direct_bank_transfer", "wire", "comdata", "in_person_check"]),
-  recipient_info: z
-    .object({
-      recipient_type: z.enum(["driver", "vendor", "third_party"]).default("driver"),
-      recipient_name: z.string().trim().min(1).max(200).optional(),
-      bank_reference: z.string().trim().max(200).optional(),
-      notes: z.string().trim().max(1000).optional(),
-    })
-    .default({ recipient_type: "driver" }),
-  linked_bill_id: z.string().uuid().optional(),
-  repayment_schedule: repaymentScheduleSchema,
-});
+const createAdvanceBodySchema = z
+  .object({
+    driver_id: z.string().uuid(),
+    amount: z.number().positive(),
+    purpose: z.enum(["fuel_deposit", "border_fee", "family_emergency", "vendor_payment", "lumper", "other"]),
+    disbursement_method: z.enum(["direct_bank_transfer", "wire", "comdata", "in_person_check"]),
+    recipient_info: z
+      .object({
+        recipient_type: z.enum(["driver", "vendor", "third_party"]).default("driver"),
+        recipient_name: z.string().trim().min(1).max(200).optional(),
+        bank_reference: z.string().trim().max(200).optional(),
+        notes: z.string().trim().max(1000).optional(),
+      })
+      .default({ recipient_type: "driver" }),
+    linked_bill_id: z.string().uuid().optional(),
+    // Optional when recovery_mode=full (server builds single-period schedule) or purpose=lumper (load expense).
+    repayment_schedule: repaymentScheduleSchema.optional(),
+    // Wizard-depth 2026-07-22 — parity with Book Load cash_advance_recovery_mode + request load_id.
+    load_id: z.string().uuid().nullable().optional(),
+    unit_id: z.string().uuid().nullable().optional(),
+    trailer_id: z.string().uuid().nullable().optional(),
+    from_bank_account_id: z.string().uuid().nullable().optional(),
+    recovery_mode: z.enum(["full", "amortize"]).default("full"),
+    economic_routing: z.enum(["driver_settlement", "load_expense"]).optional(),
+  })
+  .superRefine((val, ctx) => {
+    if (val.purpose === "lumper" && !val.load_id) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["load_id"], message: "load_id required for lumper" });
+    }
+    if (val.purpose === "fuel_deposit" && (!val.load_id || !val.unit_id)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["load_id"],
+        message: "fuel_deposit requires load_id and unit_id",
+      });
+    }
+    if (val.disbursement_method === "direct_bank_transfer" && !val.from_bank_account_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["from_bank_account_id"],
+        message: "from_bank_account_id required for direct_bank_transfer",
+      });
+    }
+    if (val.purpose !== "lumper" && val.recovery_mode === "amortize" && !val.repayment_schedule) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["repayment_schedule"],
+        message: "repayment_schedule required when recovery_mode=amortize",
+      });
+    }
+  });
+
+/** Exported for unit tests (wizard-depth schema contract). */
+export const createCashAdvanceBodySchemaForTests = createAdvanceBodySchema;
 
 const markDisbursedBodySchema = z.object({
   disbursement_method: z.enum(["direct_bank_transfer", "wire", "comdata", "in_person_check"]).optional(),
