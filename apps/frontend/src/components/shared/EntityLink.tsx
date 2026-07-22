@@ -35,6 +35,7 @@ export type EntityKind =
   | "work_order"
   | "bank_transaction"
   | "claim"
+  | "lawsuit"
   | "matter";
 
 export interface EntityLinkProps {
@@ -62,9 +63,11 @@ const DEFAULT_LINK_CLASSNAME =
  *
  * Verified against apps/frontend/src/routes/manifest.tsx. Every declared EntityKind resolves —
  * never fabricate a dead link. Query-param drill-through kinds (settlement / liability /
- * claim / bank_transaction) require the target page to honor the param (CI: verify-entitylink-deep-links).
+ * claim / lawsuit / bank_transaction) require the target page to honor the param (CI:
+ * verify-entitylink-deep-links, verify-legal-matter-lawsuit-linkage).
  * "payment" → /accounting/payments/:id · "work_order" → /maintenance/work-orders/:id
  * "bill" → /accounting/bills/:id · "expense" → /accounting/expenses/:id · "matter" → /legal/matters/:id
+ * "lawsuit" → /safety/insurance/lawsuits?lawsuit_id= (LawsuitsTab selects+highlights the row)
  * "bank_transaction" → /banking/transactions?txn_id= (BankingHome expands row)
  */
 export function resolveEntityRoute(kind: EntityKind, id: string): string | null {
@@ -105,6 +108,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/banking/transactions?txn_id=${id}`;
     case "claim":
       return `/safety/insurance/claims?claim_id=${id}`;
+    case "lawsuit":
+      return `/safety/insurance/lawsuits?lawsuit_id=${id}`;
     case "matter":
       return `/legal/matters/${id}`;
     default:

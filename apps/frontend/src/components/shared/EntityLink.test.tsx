@@ -19,11 +19,12 @@ describe("resolveEntityRoute", () => {
     expect(resolveEntityRoute("matter", "id1")).toBe("/legal/matters/id1");
   });
 
-  it("resolves settlement and claim to query-param drill-through", () => {
+  it("resolves settlement, claim, and lawsuit to query-param drill-through", () => {
     expect(resolveEntityRoute("settlement", "id1")).toBe(
       "/driver-finance/settlements?settlement_id=id1",
     );
     expect(resolveEntityRoute("claim", "id1")).toBe("/safety/insurance/claims?claim_id=id1");
+    expect(resolveEntityRoute("lawsuit", "id1")).toBe("/safety/insurance/lawsuits?lawsuit_id=id1");
   });
 
   it("resolves liability to list query-param and expense to per-id detail", () => {
@@ -46,16 +47,21 @@ describe("EntityLink", () => {
     expect(link.className).toContain("text-slate-700");
   });
 
-  it("renders claim and matter deep-links", () => {
+  it("renders claim, lawsuit, and matter deep-links", () => {
     render(
       <MemoryRouter>
         <EntityLink kind="claim" id="clm-1" label="CLM-1" />
+        <EntityLink kind="lawsuit" id="law-1" label="LAW-1" />
         <EntityLink kind="matter" id="mat-1" label="MAT-1" />
       </MemoryRouter>,
     );
     expect(screen.getByRole("link", { name: "CLM-1" })).toHaveAttribute(
       "href",
       "/safety/insurance/claims?claim_id=clm-1",
+    );
+    expect(screen.getByRole("link", { name: "LAW-1" })).toHaveAttribute(
+      "href",
+      "/safety/insurance/lawsuits?lawsuit_id=law-1",
     );
     expect(screen.getByRole("link", { name: "MAT-1" })).toHaveAttribute("href", "/legal/matters/mat-1");
   });

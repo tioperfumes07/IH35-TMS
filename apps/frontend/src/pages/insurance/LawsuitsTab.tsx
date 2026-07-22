@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { listInsuranceLawsuits, type InsuranceLawsuit, type InsuranceLawsuitStatus } from "../../api/insurance";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { Button } from "../../components/Button";
@@ -43,7 +44,16 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
   const queryClient = useQueryClient();
   const companyId = operatingCompanyId ?? selectedCompanyId ?? "";
   const [createOpen, setCreateOpen] = useState(false);
-  const [selectedLawsuitId, setSelectedLawsuitId] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const deepLinkLawsuitId = searchParams.get("lawsuit_id");
+  const [selectedLawsuitId, setSelectedLawsuitId] = useState<string | null>(deepLinkLawsuitId);
+
+  // Law §9 reverse drill-through: EntityLink kind="lawsuit" navigates here with ?lawsuit_id=
+  // (e.g. from LegalMatterDetailPage's insurance_lawsuit_id). Select + highlight the row and
+  // resolve its claim so the legal-matters reverse section below reflects the deep-linked lawsuit.
+  useEffect(() => {
+    if (deepLinkLawsuitId) setSelectedLawsuitId(deepLinkLawsuitId);
+  }, [deepLinkLawsuitId]);
 
   const query = useQuery({
     queryKey: ["insurance-lawsuits", companyId || "none", claimId ?? "all"],
