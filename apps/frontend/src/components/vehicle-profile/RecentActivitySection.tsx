@@ -1,4 +1,11 @@
-/** @deprecated Sunset 2026-09-01 — operational loads/status feed; service events use ServiceTimeline (B31). */
+/**
+ * @archived — Fleet Vehicle Profile active-path (DUALPATH-06, 2026-07-22)
+ * Raw-JSON-preview loads/status/work_orders dump. Superseded by
+ * `components/maintenance/ServiceTimeline.tsx` (B31), the sole canonical activity surface on
+ * `VehicleProfilePage` (`vp-section-5-maintenance`). No longer imported/rendered by
+ * `VehicleProfilePage.tsx` — ARCHIVE-not-DELETE per Rule 07. Enforced by
+ * `verify-fleet-profile-no-dual-activity.mjs`. Sunset 2026-09-01.
+ */
 import { useMemo, useState } from "react";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 

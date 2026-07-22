@@ -55,8 +55,19 @@ function main() {
   if (activity.includes("No truck attached.")) {
     failures.push("TrailerRecentActivitySection must not gate WO list on attached truck");
   }
-  if (!profilePage.includes("<TrailerRecentActivitySection equipmentId={id} companyId={companyId} />")) {
-    failures.push("TrailerProfilePage must wire TrailerRecentActivitySection without attachedUnitId");
+  // DUALPATH-07 fix (2026-07-22): TrailerRecentActivitySection is archived (Rule 07), not
+  // deleted — it must no longer be rendered on the live page. The equipment_id-filtered WO
+  // history requirement this guard was written for (B26) is now satisfied by ServiceTimeline,
+  // which is equipment_id-filtered on TrailerProfilePage (see check below). The component file
+  // itself + its own unit test still prove the underlying equipment_id query logic (checked via
+  // `activity`/`frontendTest` above), so B26's substance is preserved, not weakened.
+  if (/<TrailerRecentActivitySection[\s/>]/.test(profilePage)) {
+    failures.push(
+      "TrailerProfilePage must not render legacy TrailerRecentActivitySection (DUALPATH-07 — archived, ServiceTimeline is canonical)"
+    );
+  }
+  if (!profilePage.includes("equipmentId={id}") || !profilePage.includes("ServiceTimeline")) {
+    failures.push("TrailerProfilePage must wire ServiceTimeline filtered by equipmentId (B26 equipment_id law)");
   }
   if (!backendTest.includes("equipment_id filter")) {
     failures.push("backend vitest must cover equipment_id filter");

@@ -16,7 +16,6 @@ import { ReeferTelemetrySection } from "../../components/trailer-profile/ReeferT
 import { StatusChangeModal } from "../../components/trailer-profile/StatusChangeModal";
 import { TrailerReeferSection } from "../../components/trailer-profile/TrailerReeferSection";
 import { ServiceTimeline } from "../../components/maintenance/ServiceTimeline";
-import { TrailerRecentActivitySection } from "../../components/trailer-profile/TrailerRecentActivitySection";
 import { TypeSpecsSection } from "../../components/trailer-profile/TypeSpecsSection";
 
 export type TrailerProfileAggregate = {
@@ -137,7 +136,10 @@ export function TrailerProfilePage() {
           onUploaded={invalidateProfile}
         />
       </div>
-      <TrailerRecentActivitySection equipmentId={id} companyId={companyId} />
+      {/* DUALPATH-07 fix (2026-07-22): the old tp-section-9-activity TrailerRecentActivitySection
+          widget was removed from the live render path — ServiceTimeline (tp-section-5-maintenance,
+          above, already equipment_id-filtered per B26) is the sole canonical activity surface.
+          TrailerRecentActivitySection.tsx is archived (ARCHIVE-not-DELETE), not deleted, per Rule 07. */}
       <div data-testid="tp-section-8-action-bar">
         <ActionBar
           equipmentId={id}

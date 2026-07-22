@@ -29,7 +29,6 @@ import { ReeferSection } from "../../components/vehicle-profile/ReeferSection";
 import { FinancialUnitPLSection } from "../../components/vehicle-profile/FinancialUnitPLSection";
 import { ServiceTimeline } from "../../components/maintenance/ServiceTimeline";
 import { UnitPartsHistorySection } from "../../components/vehicle-profile/UnitPartsHistorySection";
-import { RecentActivitySection } from "../../components/vehicle-profile/RecentActivitySection";
 import { DocumentsSection } from "../../components/vehicle-profile/DocumentsSection";
 import { PhotoGallery } from "../../components/vehicle-profile/PhotoGallery";
 import { ActionBar } from "../../components/vehicle-profile/ActionBar";
@@ -286,11 +285,10 @@ export function VehicleProfilePage() {
               comparable={(profile.comparable_metrics ?? {}) as Record<string, unknown>}
             />
           </div>
-          <div data-testid="vp-section-9-activity">
-            {profile.recent_activity ? (
-              <RecentActivitySection activity={profile.recent_activity as Parameters<typeof RecentActivitySection>[0]["activity"]} />
-            ) : null}
-          </div>
+          {/* DUALPATH-06 fix (2026-07-22): the old vp-section-9-activity raw-JSON RecentActivitySection
+              widget was removed from the live render path — ServiceTimeline (vp-section-5-maintenance,
+              above) is the sole canonical activity surface. RecentActivitySection.tsx is archived
+              (ARCHIVE-not-DELETE), not deleted, per Rule 07. */}
           <div data-testid="vp-section-10-documents">
           <DocumentsSection
             unitId={id}

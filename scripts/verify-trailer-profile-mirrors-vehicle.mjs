@@ -48,8 +48,17 @@ if (!trailer.includes("tp-section-4-reefer")) {
 if (!trailer.includes("TrailerReeferSection")) {
   fail("trailer page must wire TrailerReeferSection for reefer hours");
 }
-if (!trailer.includes("TrailerRecentActivitySection")) {
-  fail("trailer page must include recent activity (mirrors vp-section-9-activity)");
+// DUALPATH-06/07 fix (2026-07-22): vp-section-9-activity / TrailerRecentActivitySection were the
+// deprecated raw-JSON dual-path activity widgets — both archived, not deleted (Rule 07).
+// ServiceTimeline is now the sole canonical activity surface mirrored on both profiles.
+if (vehicle.includes('data-testid="vp-section-9-activity"')) {
+  fail("vehicle page must not re-add vp-section-9-activity (DUALPATH-06 — archived)");
+}
+if (/<TrailerRecentActivitySection[\s/>]/.test(trailer)) {
+  fail("trailer page must not render legacy TrailerRecentActivitySection (DUALPATH-07 — archived)");
+}
+if (!vehicle.includes("ServiceTimeline") || !trailer.includes("ServiceTimeline")) {
+  fail("both profiles must render ServiceTimeline as the canonical activity surface");
 }
 if (!trailer.includes("/api/v1/mdata/equipment/")) {
   fail("trailer profile must fetch aggregate via /api/v1/mdata/equipment/:id");

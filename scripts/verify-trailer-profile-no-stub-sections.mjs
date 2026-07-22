@@ -41,8 +41,18 @@ if (!page.includes("EditTrailerModal")) {
   console.error("verify:trailer-profile-no-stub-sections FAIL: edit modal not wired on page");
   process.exit(1);
 }
-if (!page.includes("TrailerRecentActivitySection")) {
-  console.error("verify:trailer-profile-no-stub-sections FAIL: activity section missing");
+if (!page.includes("ServiceTimeline")) {
+  console.error("verify:trailer-profile-no-stub-sections FAIL: activity section (ServiceTimeline) missing");
+  process.exit(1);
+}
+// DUALPATH-07 fix (2026-07-22): TrailerRecentActivitySection is archived, not deleted (Rule 07) —
+// it must no longer render on the live page alongside ServiceTimeline. See
+// verify-fleet-profile-no-dual-activity.mjs.
+if (/<TrailerRecentActivitySection[\s/>]/.test(page)) {
+  console.error(
+    "verify:trailer-profile-no-stub-sections FAIL: legacy TrailerRecentActivitySection must not " +
+      "render live (DUALPATH-07 — archived, ServiceTimeline is canonical)"
+  );
   process.exit(1);
 }
 

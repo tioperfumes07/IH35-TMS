@@ -1078,6 +1078,8 @@ Route: `/fleet/units/:id` renders `VehicleProfilePage` with six sections (identi
 
 Sections 7–11 on `VehicleProfilePage`: reefer (conditional), financial P&amp;L, recent activity, documents, action bar. Recommendations: PDF export, trip cost calculator, photo gallery, ownership cost meter, comparable units widget.
 
+**Recent activity (DUALPATH-06, 2026-07-22 update):** Section 9's original `RecentActivitySection` (raw-JSON loads/status/work_orders preview) is superseded by `ServiceTimeline` (B31, rendered in Section 5) and no longer mounted — matches the B31 design intent ("Legacy recent-activity stubs ARCHIVE-not-DELETE," line 589). `RecentActivitySection.tsx` is retained `@archived`, not deleted. **CI:** `verify:fleet-profile-no-dual-activity`.
+
 **Reefer:** Trailer-level only — `mdata.equipment` reefer columns (migration `0296`); Section 7 when `equipment_type = 'Reefer'` and `current_unit_id` = unit. Not on `mdata.units`.
 
 **Documents:** Reuse `docs.files` + `docs.file_links` (`entity_type='unit'`). No `mdata.unit_documents`. Upload via existing docs module; profile lists via `GET /api/v1/mdata/units/:id/documents`.
@@ -1142,8 +1144,8 @@ No migration. UX and API hardening on Part 1 data layer.
 
 - **Status change:** `PUT /api/v1/fleet/trailers/:id/status` with reason, optional note/effective date, lifecycle fields (sold/transfer/damage/OOS). Validated by `apps/backend/src/fleet/trailer-status-state-machine.ts` (terminal `Sold`/`Transferred`/`Lost`; `Sold→InService` only with Owner `admin_override`). Audits `fleet.trailer.status_changed`.
 - **Edit:** `PATCH /api/v1/fleet/trailers/:id` via `EditTrailerModal` (identity, specs, insurance, notes). Audits `fleet.trailer.updated` with before/after diff.
-- **UI:** `StatusChangeModal`, status badge dropdown on `IdentityStatusHeader`, `TrailerReeferSection` live reefer-hours UI (conditional `equipment_type=Reefer`; A19), `TrailerRecentActivitySection` (equipment log, docs files, WO list filtered by `equipment_id`).
-- **CI:** `verify:trailer-status-state-machine-coverage`, `verify:trailer-profile-no-stub-sections`, `verify:trailer-wo-equipment-id` (B26).
+- **UI:** `StatusChangeModal`, status badge dropdown on `IdentityStatusHeader`, `TrailerReeferSection` live reefer-hours UI (conditional `equipment_type=Reefer`; A19), `ServiceTimeline` (B31, equipment_id-filtered activity — canonical since DUALPATH-07, 2026-07-22; superseded `TrailerRecentActivitySection` is `@archived`, not deleted).
+- **CI:** `verify:trailer-status-state-machine-coverage`, `verify:trailer-profile-no-stub-sections`, `verify:trailer-wo-equipment-id` (B26), `verify:fleet-profile-no-dual-activity`.
 
 ## Compliance Dashboard (Safety module) — Block 16 (locked 2026-06-02)
 

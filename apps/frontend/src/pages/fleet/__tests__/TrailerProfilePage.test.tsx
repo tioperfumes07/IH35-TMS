@@ -57,19 +57,21 @@ describe("TrailerProfilePage", () => {
     vi.spyOn(clientApi, "apiRequest").mockResolvedValue(aggregateFixture as never);
   });
 
-  it("renders trailer profile sections", async () => {
+  it("renders trailer profile sections with ServiceTimeline as the sole activity surface (DUALPATH-07)", async () => {
     renderPage();
     expect(await screen.findByTestId("tp-section-1-identity")).toBeTruthy();
     expect(screen.getByTestId("tp-section-2-specs")).toBeTruthy();
     expect(screen.getByTestId("tp-section-3-assignment")).toBeTruthy();
     expect(screen.getByTestId("tp-section-4-reefer")).toBeTruthy();
     expect(screen.getByTestId("tp-section-5-maintenance")).toBeTruthy();
+    expect(screen.getByTestId("service-timeline")).toBeTruthy();
     expect(screen.getByTestId("tp-section-6-compliance")).toBeTruthy();
     expect(screen.getByTestId("tp-section-7-documents")).toBeTruthy();
     expect(screen.getByTestId("tp-section-8-action-bar")).toBeTruthy();
-    expect(screen.getByTestId("tp-section-9-activity")).toBeTruthy();
     expect(screen.getByTestId("tp-reefer-a19-slot")).toBeTruthy();
     expect(await screen.findByText("Reefer hours tracking")).toBeTruthy();
+    // DUALPATH-07 fix: the old TrailerRecentActivitySection widget must not render live.
+    expect(screen.queryByTestId("tp-section-9-activity")).toBeNull();
   });
 
   it("does not render reefer A19 slot for dry van", async () => {

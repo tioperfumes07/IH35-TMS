@@ -88,6 +88,10 @@
     "_comment_deprecatedsubcatalog: @archived drivers active-path (2026-07-21) — singular /lists/driver/{license-classes,endorsements,restrictions,medical-card-status,employment-status} now Navigate-redirect to canonical plural /lists/drivers/*. Page components retained for ledger/unit tests only; deliberately not mounted in routes/manifest.tsx (Rule 07 archive-not-delete).",
     "apps/frontend/src/pages/lists/driver/deprecated-subcatalog-pages.tsx",
     "_comment_drivercatalogbanner: deprecation banner imported ONLY by the @archived deprecated-subcatalog-pages above; orphaned as a consequence of that archive, not independently dead.",
-    "apps/frontend/src/pages/lists/driver/DriverCatalogDeprecatedBanner.tsx"
+    "apps/frontend/src/pages/lists/driver/DriverCatalogDeprecatedBanner.tsx",
+    "_comment_vehiclerecentactivity: @archived Fleet Vehicle Profile active-path (DUALPATH-06, 2026-07-22) — superseded by ServiceTimeline; no longer imported/rendered by VehicleProfilePage.tsx. Enforced by verify-fleet-profile-no-dual-activity.mjs.",
+    "apps/frontend/src/components/vehicle-profile/RecentActivitySection.tsx",
+    "_comment_trailerrecentactivity: @archived Fleet Trailer Profile active-path (DUALPATH-07, 2026-07-22) — superseded by ServiceTimeline (equipment_id-filtered per B26); no longer imported/rendered by TrailerProfilePage.tsx. Enforced by verify-fleet-profile-no-dual-activity.mjs.",
+    "apps/frontend/src/components/trailer-profile/TrailerRecentActivitySection.tsx"
   ]
 }
