@@ -204,8 +204,6 @@ export function UniversalFilterBar({ value, onChange, summaryText }: UniversalFi
     return () => document.removeEventListener("mousedown", onDoc);
   }, [filtersOpen]);
 
-  const btnBase = "h-[28px] px-2 text-xs border rounded-sm flex items-center gap-1 bg-white";
-
   return (
     <div
       ref={ref}
@@ -231,15 +229,6 @@ export function UniversalFilterBar({ value, onChange, summaryText }: UniversalFi
             {activeCount}
           </span>
         ) : null}
-      </button>
-
-      <button
-        type="button"
-        className={`${btnBase} text-gray-400`}
-        disabled
-        title="Column chooser coming soon"
-      >
-        Columns ⚙️
       </button>
 
       {summaryText ? <div className="ml-auto text-xs text-gray-600">{summaryText}</div> : null}
