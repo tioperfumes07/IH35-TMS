@@ -31,6 +31,10 @@ export type DispatcherHomeActiveLoad = {
   driver_name: string | null;
   unit_id: string | null;
   unit_number: string | null;
+  // dispatch-sweep-gap-21 residual — same read-only load→invoice reverse linkage as
+  // GET /api/v1/dispatch/loads (already guarded). Display enrichment only; no GL write.
+  invoice_display_id: string | null;
+  invoice_status: string | null;
 };
 
 export type DispatcherHomePendingActions = {
@@ -182,7 +186,9 @@ async function loadActiveLoads(
         l.assigned_primary_driver_id::text AS driver_id,
         NULLIF(TRIM(CONCAT_WS(' ', dr.first_name, dr.last_name)), '')::text AS driver_name,
         l.assigned_unit_id::text AS unit_id,
-        u.unit_number::text AS unit_number
+        u.unit_number::text AS unit_number,
+        inv.invoice_display_id,
+        inv.invoice_status
       FROM mdata.loads l
       JOIN mdata.customers c ON c.id = l.customer_id
       LEFT JOIN mdata.drivers dr ON dr.id = l.assigned_primary_driver_id
@@ -204,6 +210,17 @@ async function loadActiveLoads(
         ORDER BY ls.sequence_number DESC
         LIMIT 1
       ) delivery ON true
+      LEFT JOIN LATERAL (
+        SELECT
+          i.display_id::text AS invoice_display_id,
+          i.status::text AS invoice_status
+        FROM accounting.invoices i
+        WHERE i.source_load_id = l.id
+          AND i.operating_company_id = l.operating_company_id
+          AND i.status <> 'void'
+        ORDER BY i.issue_date DESC, i.created_at DESC
+        LIMIT 1
+      ) inv ON true
       WHERE l.soft_deleted_at IS NULL
         AND l.dispatcher_user_id = $1::uuid
         AND l.status::text = ANY($${company.values.length > 0 ? "3" : "2"}::text[])
@@ -226,6 +243,8 @@ async function loadActiveLoads(
     driver_name: row.driver_name ? String(row.driver_name) : null,
     unit_id: row.unit_id ? String(row.unit_id) : null,
     unit_number: row.unit_number ? String(row.unit_number) : null,
+    invoice_display_id: row.invoice_display_id ? String(row.invoice_display_id) : null,
+    invoice_status: row.invoice_status ? String(row.invoice_status) : null,
   }));
 }
 
