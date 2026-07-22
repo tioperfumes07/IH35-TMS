@@ -305,6 +305,10 @@
       "reason": "[HOLD-FOR-JORGE — TIER 1] events.event_log: force RLS + canonical app.operating_company_id policy. public.audit_log: add operating_company_id, best-effort backfill from referenced record tables, enable+force RLS with WORM (SELECT/INSERT only); removed invalid per-partition column-add loop. Owner applies on Neon branch + ledger-backfills."
     },
     {
+      "file": "202607680000_drivers_default_expense_account.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] banking-b4 — mdata.drivers.default_expense_account_id (uuid FK catalogs.accounts ON DELETE SET NULL + partial index), mirroring mdata.vendors.default_expense_account_id (held 202607110230). Option-B RECOMMENDATION ONLY: pre-fills the account picker when a bank txn / bill / expense is categorized to a driver — user always overrides; never a silent auto-post, no new GL math, no flag. Additive/idempotent; inherits mdata.drivers RLS + grants (0008). NOT YET applied on prod — throwaway PG apply-twice; owner Neon-apply + ledger-backfill."
+    },
+    {
       "file": "202607690000_bank_tx_capture_fields.sql",
       "reason": "[HOLD-FOR-JORGE — FINANCIAL] 0441-mod8-tx-fields-captured-not-sent — additive capture-field persistence on banking.bank_transactions (check_number text, categorization_class_id uuid FK catalogs.classes, categorization_location text, is_billable boolean default false, tags text) so the categorize panel's Check no./Class/Location/Billable/Tags survive Post instead of evaporating as a draft-only overlay. ADDITIVE + IDEMPOTENT; nullable/default — no backfill. No GL rows, no flags, no RLS change (columns inherit the table's FORCED RLS + grants). NOT YET applied on prod — GUARD validates on throwaway Postgres apply-twice, owner applies on Neon then ledger-backfills; CI fresh-from-0001 builds the columns."
     },
