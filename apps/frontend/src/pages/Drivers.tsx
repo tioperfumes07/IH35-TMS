@@ -39,6 +39,9 @@ import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { CreateDriverModal } from "../components/drivers/CreateDriverModal";
 import { DriversListPage } from "./drivers/DriversListPage";
 import { AutoDeductionPoliciesPanel } from "./drivers/AutoDeductionPolicies";
+import { SettlementDisputeList } from "./drivers/SettlementDisputeList";
+import { TeamSplitConfigPanel } from "./drivers/TeamSplitConfig";
+import { useSettlementDisputes } from "../hooks/useSettlementDisputes";
 import {
   DRIVERS_LIST_STATUS_TABS,
   DRIVERS_MODULE_NAV_PATHS,
@@ -49,6 +52,13 @@ import {
   type DriversListStatusId,
   type DriversSubnavId,
 } from "../components/drivers/DRIVERS_TABS_CONFIG";
+import {
+  DRIVERS_DISPUTES_SUBTAB_ID,
+  DRIVERS_DISPUTES_SUBTAB_PATH,
+  DRIVERS_TEAM_SPLITS_SUBTAB_ID,
+  DRIVERS_TEAM_SPLITS_SUBTAB_PATH,
+  type DriversExtendedSubtabId,
+} from "./drivers/driversExtendedSubtabs";
 import { DRIVERS_SUBTAB_PATH, driversSubtabFromPath } from "../router/route-manifest";
 
 export { DRIVERS_MODULE_NAV_PATHS };
@@ -116,7 +126,7 @@ function daysUntil(dateIso: string | null | undefined) {
 }
 
 type DriversPageProps = {
-  initialSubnav?: DriversSubnavId;
+  initialSubnav?: DriversSubnavId | DriversExtendedSubtabId;
 };
 
 export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
@@ -126,11 +136,12 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
+  const { openCount } = useSettlementDisputes();
   const [search, setSearch] = useState("");
   const driverListStatus = useMemo(() => parseDriverListStatus(searchParams), [searchParams]);
   const activeTab = useMemo(() => parseDriversHomeView(searchParams), [searchParams]);
   const subnavTab = useMemo(
-    () => (initialSubnav ?? driversSubtabFromPath(location.pathname)) as DriversSubnavId,
+    () => (initialSubnav ?? driversSubtabFromPath(location.pathname)) as DriversSubnavId | DriversExtendedSubtabId,
     [initialSubnav, location.pathname]
   );
 
@@ -455,9 +466,46 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
       </KpiStrip>
 
       <div className="flex flex-wrap items-center gap-3">
-        <div className="overflow-x-auto border-b border-gray-200 bg-white px-2 py-1">
+        <div className="overflow-x-auto border-b border-gray-200 bg-white px-2 py-1" data-testid="drivers-unified-subnav">
           <div className="flex min-w-max gap-4">
-            {DRIVERS_SUBNAV.map((tab) => {
+            {DRIVERS_SUBNAV.slice(0, 8).map((tab) => {
+              const target = DRIVERS_SUBTAB_PATH[tab.id];
+              const active = subnavTab === tab.id;
+              return (
+                <NavLink
+                  key={tab.id}
+                  to={target}
+                  className={`pb-0.5 text-xs font-semibold ${
+                    active ? "border-b-2 border-[#1f2a44] text-[#1f2a44]" : "border-b-2 border-transparent text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  {tab.label}
+                </NavLink>
+              );
+            })}
+            <NavLink
+              to={DRIVERS_TEAM_SPLITS_SUBTAB_PATH}
+              data-testid="drivers-team-splits-tab"
+              className={`pb-0.5 text-xs font-semibold ${
+                subnavTab === DRIVERS_TEAM_SPLITS_SUBTAB_ID
+                  ? "border-b-2 border-[#1f2a44] text-[#1f2a44]"
+                  : "border-b-2 border-transparent text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              Team Splits
+            </NavLink>
+            <NavLink
+              to={DRIVERS_DISPUTES_SUBTAB_PATH}
+              data-testid="drivers-disputes-tab"
+              className={`pb-0.5 text-xs font-semibold ${
+                subnavTab === DRIVERS_DISPUTES_SUBTAB_ID
+                  ? "border-b-2 border-[#1f2a44] text-[#1f2a44]"
+                  : "border-b-2 border-transparent text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              Disputes{openCount > 0 ? ` (${openCount})` : ""}
+            </NavLink>
+            {DRIVERS_SUBNAV.slice(8).map((tab) => {
               const target = DRIVERS_SUBTAB_PATH[tab.id];
               const active = subnavTab === tab.id;
               return (
@@ -659,6 +707,16 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                 Settlement auto-deduction policies (amount, type, hold/resume, remaining balance). Cash-advance debt alerts live under Cash advances.
               </p>
               <AutoDeductionPoliciesPanel />
+            </div>
+          ) : null}
+          {subnavTab === DRIVERS_TEAM_SPLITS_SUBTAB_ID ? (
+            <div className="space-y-2" data-testid="drivers-page-team-splits">
+              <TeamSplitConfigPanel />
+            </div>
+          ) : null}
+          {subnavTab === DRIVERS_DISPUTES_SUBTAB_ID ? (
+            <div className="space-y-2" data-testid="drivers-page-disputes">
+              <SettlementDisputeList />
             </div>
           ) : null}
           {subnavTab === "permits" ? (
