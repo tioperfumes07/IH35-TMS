@@ -5,6 +5,7 @@ import type { RunnerFilter } from "./runner-config";
 import { listDrivers, listUnits } from "../../../api/mdata";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { CollapsedListFilters } from "../../../components/table";
 
 type Props = {
   filters: RunnerFilter[];
@@ -52,79 +53,87 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
     });
   }, [filters, values]);
 
+  const activeFilterCount = filters.reduce((count, filter) => {
+    if (filter.type === "date_range") return count + (values.from || values.to ? 1 : 0);
+    const v = values[filter.key];
+    return count + (v != null && String(v) !== "" ? 1 : 0);
+  }, 0);
+
   return (
-    <section className="rounded-sm border border-slate-200 bg-white p-3">
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {filters.map((filter) => {
-          if (filter.type === "date_range") {
-            return (
-              <div key={filter.key} className="md:col-span-2 xl:col-span-2">
-                <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
-                <div className="flex items-center gap-2">
-                  <DatePicker className="rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(values.from ?? "")} onChange={(next) => onChange("from", next)} />
-                  <span className="text-slate-500">to</span>
-                  <DatePicker className="rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(values.to ?? "")} onChange={(next) => onChange("to", next)} />
+    <section className="space-y-2" data-runner-filter-toolbar="collapsed">
+      <CollapsedListFilters activeFilterCount={activeFilterCount} testIdPrefix="runner">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {filters.map((filter) => {
+            if (filter.type === "date_range") {
+              return (
+                <div key={filter.key} className="md:col-span-2 xl:col-span-2">
+                  <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
+                  <div className="flex items-center gap-2">
+                    <DatePicker className="rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(values.from ?? "")} onChange={(next) => onChange("from", next)} />
+                    <span className="text-slate-500">to</span>
+                    <DatePicker className="rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(values.to ?? "")} onChange={(next) => onChange("to", next)} />
+                  </div>
                 </div>
-              </div>
-            );
-          }
-          if (filter.type === "month_picker") {
+              );
+            }
+            if (filter.type === "month_picker") {
+              return (
+                <label key={filter.key} className="block">
+                  <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
+                  <input type="month" className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? "")} onChange={(e) => onChange(filter.key, e.target.value)} />
+                </label>
+              );
+            }
+            if (filter.type === "unit_select") {
+              const units = (unitsQuery.data?.units ?? []) as Array<{ id: string; unit_number: string }>;
+              return (
+                <label key={filter.key} className="block">
+                  <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
+                  <SelectCombobox className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? "")} onChange={(e) => onChange(filter.key, e.target.value)}>
+                    <option value="">Select unit</option>
+                    {units.map((unit) => (
+                      <option key={unit.id} value={unit.id}>
+                        {unit.unit_number}
+                      </option>
+                    ))}
+                  </SelectCombobox>
+                </label>
+              );
+            }
+            if (filter.type === "driver_select") {
+              const drivers = driversQuery.data?.drivers ?? [];
+              return (
+                <label key={filter.key} className="block">
+                  <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
+                  <SelectCombobox className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? "")} onChange={(e) => onChange(filter.key, e.target.value)}>
+                    <option value="">Select driver</option>
+                    {drivers.map((driver) => (
+                      <option key={driver.id} value={driver.id}>
+                        {`${driver.first_name} ${driver.last_name}`}
+                      </option>
+                    ))}
+                  </SelectCombobox>
+                </label>
+              );
+            }
+            const showCompany = companies.length > 1;
+            if (!showCompany) return null;
             return (
               <label key={filter.key} className="block">
                 <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
-                <input type="month" className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? "")} onChange={(e) => onChange(filter.key, e.target.value)} />
-              </label>
-            );
-          }
-          if (filter.type === "unit_select") {
-            const units = (unitsQuery.data?.units ?? []) as Array<{ id: string; unit_number: string }>;
-            return (
-              <label key={filter.key} className="block">
-                <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
-                <SelectCombobox className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? "")} onChange={(e) => onChange(filter.key, e.target.value)}>
-                  <option value="">All units</option>
-                  {units.map((unit) => (
-                    <option key={unit.id} value={unit.id}>
-                      {unit.unit_number}
+                <SelectCombobox className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? selectedCompanyId ?? "")} onChange={(e) => onChange(filter.key, e.target.value)}>
+                  {companies.map((company) => (
+                    <option key={company.id} value={company.id}>
+                      {company.legal_name}
                     </option>
                   ))}
                 </SelectCombobox>
               </label>
             );
-          }
-          if (filter.type === "driver_select") {
-            const drivers = driversQuery.data?.drivers ?? [];
-            return (
-              <label key={filter.key} className="block">
-                <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
-                <SelectCombobox className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? "")} onChange={(e) => onChange(filter.key, e.target.value)}>
-                  <option value="">Select driver</option>
-                  {drivers.map((driver) => (
-                    <option key={driver.id} value={driver.id}>
-                      {`${driver.first_name} ${driver.last_name}`}
-                    </option>
-                  ))}
-                </SelectCombobox>
-              </label>
-            );
-          }
-          const showCompany = companies.length > 1;
-          if (!showCompany) return null;
-          return (
-            <label key={filter.key} className="block">
-              <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
-              <SelectCombobox className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? selectedCompanyId ?? "")} onChange={(e) => onChange(filter.key, e.target.value)}>
-                {companies.map((company) => (
-                  <option key={company.id} value={company.id}>
-                    {company.legal_name}
-                  </option>
-                ))}
-              </SelectCombobox>
-            </label>
-          );
-        })}
-      </div>
-      <div className="mt-3 flex justify-end">
+          })}
+        </div>
+      </CollapsedListFilters>
+      <div className="flex justify-end">
         <button
           type="button"
           onClick={onRun}

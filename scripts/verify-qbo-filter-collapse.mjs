@@ -80,6 +80,8 @@ for (const [rel, marker] of [
   ["apps/frontend/src/pages/accounting/DisputeQueuePage.tsx", "data-dispute-queue-filter-toolbar"],
   ["apps/frontend/src/components/assets/AssetFiltersBar.tsx", "data-asset-filter-toolbar"],
   ["apps/frontend/src/pages/profitability/FilterBar.tsx", "data-profitability-filter-toolbar"],
+  ["apps/frontend/src/pages/accounting/TransactionRegisterPage.tsx", "data-transaction-register-filter-toolbar"],
+  ["apps/frontend/src/pages/reports/runners/RunnerFilters.tsx", "data-runner-filter-toolbar"],
 ]) {
   const src = read(rel);
   if (!src.includes("CollapsedListFilters")) {

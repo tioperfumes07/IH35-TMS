@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { ArrowRightCircle, Download } from "lucide-react";
 import { listTransactionRegister, type RegisterTransaction, type TransactionSource } from "../../api/accounting";
-import { DataPanel } from "../../components/layout/DataPanel";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { formatDateUS } from "../../lib/formatDate";
@@ -12,6 +11,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { formatCurrencyFromCents } from "../lists/accounting/coa-list-utils";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters } from "../../components/table";
 
 const PAGE_SIZE = 100;
 
@@ -223,28 +223,16 @@ export function TransactionRegisterPage() {
       }
     >
 
-      <DataPanel title="Filters">
-        <div className="flex flex-wrap items-center gap-1.5">
-          {SOURCE_OPTIONS.map((opt) => {
-            const active = sources.includes(opt.value);
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => toggleSource(opt.value)}
-                className={`rounded-full border px-3 py-0.5 text-[12px] ${
-                  active ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-slate-300 bg-white text-slate-600"
-                }`}
-              >
-                {opt.label}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="mt-2 grid gap-2 md:grid-cols-5">
-          <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600 md:col-span-2">
-            Search
+      <div className="space-y-2" data-transaction-register-filter-toolbar="collapsed">
+        <CollapsedListFilters
+          activeFilterCount={
+            (sources.length > 0 ? 1 : 0) +
+            (direction !== "all" ? 1 : 0) +
+            (status ? 1 : 0) +
+            (fromDate || toDate ? 1 : 0)
+          }
+          testIdPrefix="transaction-register"
+          searchSlot={
             <input
               value={search}
               onChange={(event) => {
@@ -252,52 +240,74 @@ export function TransactionRegisterPage() {
                 setSearch(event.target.value);
               }}
               placeholder="Description or customer / vendor / driver"
-              className="h-9 rounded-sm border border-slate-300 px-2 text-[13px]"
+              className="h-8 w-72 rounded-sm border border-slate-300 px-2 text-[13px]"
+              aria-label="Search transactions"
             />
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
-            Direction
-            <select
-              value={direction}
-              onChange={(event) => {
-                setPage(0);
-                setDirection(event.target.value as "all" | "in" | "out");
-              }}
-              className="h-9 rounded-sm border border-slate-300 px-2 text-[13px]"
-            >
-              <option value="all">All</option>
-              <option value="in">Money in</option>
-              <option value="out">Money out</option>
-            </select>
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
-            Status
-            <input
-              value={status}
-              onChange={(event) => {
-                setPage(0);
-                setStatus(event.target.value);
-              }}
-              placeholder="e.g. paid, uncategorized"
-              className="h-9 rounded-sm border border-slate-300 px-2 text-[13px]"
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
-            From
-            <DatePicker value={fromDate} onChange={(next) => { setPage(0); setFromDate(next); }} className="h-9 rounded-sm border border-slate-300 px-2 text-[13px]" />
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
-            To
-            <DatePicker value={toDate} onChange={(next) => { setPage(0); setToDate(next); }} className="h-9 rounded-sm border border-slate-300 px-2 text-[13px]" />
-          </label>
-        </div>
+          }
+        >
+          <div className="flex flex-wrap items-center gap-1.5">
+            {SOURCE_OPTIONS.map((opt) => {
+              const active = sources.includes(opt.value);
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => toggleSource(opt.value)}
+                  className={`rounded-full border px-3 py-0.5 text-[12px] ${
+                    active ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-slate-300 bg-white text-slate-600"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
 
-        <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-600">
+          <div className="mt-2 grid gap-2 md:grid-cols-4">
+            <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
+              Direction
+              <select
+                value={direction}
+                onChange={(event) => {
+                  setPage(0);
+                  setDirection(event.target.value as "all" | "in" | "out");
+                }}
+                className="h-9 rounded-sm border border-slate-300 px-2 text-[13px]"
+              >
+                <option value="all">All</option>
+                <option value="in">Money in</option>
+                <option value="out">Money out</option>
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
+              Status
+              <input
+                value={status}
+                onChange={(event) => {
+                  setPage(0);
+                  setStatus(event.target.value);
+                }}
+                placeholder="e.g. paid, uncategorized"
+                className="h-9 rounded-sm border border-slate-300 px-2 text-[13px]"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
+              From
+              <DatePicker value={fromDate} onChange={(next) => { setPage(0); setFromDate(next); }} className="h-9 rounded-sm border border-slate-300 px-2 text-[13px]" />
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
+              To
+              <DatePicker value={toDate} onChange={(next) => { setPage(0); setToDate(next); }} className="h-9 rounded-sm border border-slate-300 px-2 text-[13px]" />
+            </label>
+          </div>
+        </CollapsedListFilters>
+
+        <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
           <span>{total.toLocaleString()} transactions</span>
           <span>In (page): {formatCurrencyFromCents(totals.inSum)}</span>
           <span>Out (page): {formatCurrencyFromCents(totals.outSum)}</span>
         </div>
-      </DataPanel>
+      </div>
 
       {query.isError ? (
         <ListErrorState {...formatQueryErrorDetail(query.error)} onRetry={() => void query.refetch()} />
