@@ -19,6 +19,7 @@ import { ActionButton } from "../components/shared/ActionButton";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { PageHeader } from "../components/layout/PageHeader";
+import { CollapsedListFilters } from "../components/table";
 import { Modal } from "../components/Modal";
 import { useToast } from "../components/Toast";
 import { useCompanyContext } from "../contexts/CompanyContext";
@@ -421,41 +422,59 @@ export function CustomersPage() {
                 Master-detail
               </button>
             </div>
-            <div className="inline-flex rounded-sm border border-gray-300 bg-white p-0.5 text-xs" data-list-status-filter="customers">
-              {(["active", "inactive", "all"] as const).map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  className={`rounded-sm px-2 py-1 font-medium capitalize ${listStatus === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
-                  onClick={() => setListStatus(value)}
+            {/* CHROME-04 — roster-level Status/Type/Credit-status chips collapsed behind a
+                QBO-style Filters popover (Dispatch FilterBar / CollapsedListFilters gold pattern).
+                Filters the left customer list in BOTH list and master-detail view modes. */}
+            <CollapsedListFilters
+              activeFilterCount={(listStatus !== "active" ? 1 : 0) + (rosterType ? 1 : 0) + (rosterCreditStatus ? 1 : 0)}
+              testIdPrefix="customers-roster"
+              dataAttributes={{ "data-customers-roster-filter-toolbar": "collapsed" }}
+            >
+              <div className="space-y-1.5">
+                <div className="text-xs font-semibold text-gray-600">Status</div>
+                <div className="inline-flex rounded-sm border border-gray-300 bg-white p-0.5 text-xs" data-list-status-filter="customers">
+                  {(["active", "inactive", "all"] as const).map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      className={`rounded-sm px-2 py-1 font-medium capitalize ${listStatus === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                      onClick={() => setListStatus(value)}
+                    >
+                      {value}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/* V8 — roster Type + Credit-status filters (filter the left customer list, not transactions). */}
+              <div className="space-y-1.5">
+                <div className="text-xs font-semibold text-gray-600">Type</div>
+                <SelectCombobox
+                  value={rosterType}
+                  onChange={(event) => setRosterType(event.target.value as typeof rosterType)}
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                  aria-label="Filter customers by type"
                 >
-                  {value}
-                </button>
-              ))}
-            </div>
-            {/* V8 — roster Type + Credit-status filters (filter the left customer list, not transactions). */}
-            <SelectCombobox
-              value={rosterType}
-              onChange={(event) => setRosterType(event.target.value as typeof rosterType)}
-              className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-              aria-label="Filter customers by type"
-            >
-              <option value="">All types</option>
-              <option value="broker">Broker</option>
-              <option value="direct_shipper">Direct shipper</option>
-            </SelectCombobox>
-            <SelectCombobox
-              value={rosterCreditStatus}
-              onChange={(event) => setRosterCreditStatus(event.target.value as typeof rosterCreditStatus)}
-              className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-              aria-label="Filter customers by credit status"
-            >
-              <option value="">All statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="credit_hold">Credit hold</option>
-              <option value="blacklist">Blacklist</option>
-            </SelectCombobox>
+                  <option value="">All types</option>
+                  <option value="broker">Broker</option>
+                  <option value="direct_shipper">Direct shipper</option>
+                </SelectCombobox>
+              </div>
+              <div className="space-y-1.5">
+                <div className="text-xs font-semibold text-gray-600">Credit status</div>
+                <SelectCombobox
+                  value={rosterCreditStatus}
+                  onChange={(event) => setRosterCreditStatus(event.target.value as typeof rosterCreditStatus)}
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                  aria-label="Filter customers by credit status"
+                >
+                  <option value="">All statuses</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="credit_hold">Credit hold</option>
+                  <option value="blacklist">Blacklist</option>
+                </SelectCombobox>
+              </div>
+            </CollapsedListFilters>
             <ActionButton onClick={() => setCreateOpen(true)}>
               + Create Customer
             </ActionButton>

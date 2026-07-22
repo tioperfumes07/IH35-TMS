@@ -3,6 +3,9 @@
  * CHROME-02 — QBO-style filter collapse guard.
  * Ensures Safety, UniversalFilterBar, Customers, and Vendors keep filters behind a Filters popover —
  * not always-on chip strips or stub Filters buttons.
+ * CHROME-04 extends coverage to the Customers/Vendors PAGE-HEADER roster filters (Status/Type/
+ * Credit-status/Category), which sit above CustomersListView/VendorsListView and were the
+ * still-DIRTY always-on chip strips the filter matrix (S3) flagged after CHROME-02 shipped.
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -63,6 +66,37 @@ if (/data-vendor-filter-chips="true"/.test(vendors.split("CollapsedListFilters")
 }
 if (!vendors.includes("data-vendors-filter-toolbar")) {
   failures.push("VendorsListView: missing data-vendors-filter-toolbar collapsed marker");
+}
+
+// CHROME-04 — Customers/Vendors PAGE-HEADER roster filters (Status/Type/Credit-status/Category)
+// must also collapse behind CollapsedListFilters — these sit ABOVE CustomersListView/VendorsListView
+// and were previously always-on chip strips + selects in the PageHeader actions row.
+const customersPage = read("apps/frontend/src/pages/Customers.tsx");
+if (!customersPage.includes("CollapsedListFilters")) {
+  failures.push("Customers.tsx: roster Status/Type/Credit-status filters must use CollapsedListFilters");
+}
+if (!customersPage.includes("data-customers-roster-filter-toolbar")) {
+  failures.push("Customers.tsx: missing data-customers-roster-filter-toolbar collapsed marker");
+}
+{
+  const beforePopover = customersPage.split("CollapsedListFilters")[0] ?? customersPage;
+  if (/data-list-status-filter="customers"/.test(beforePopover)) {
+    failures.push("Customers.tsx: roster Status chips still always-on outside the Filters popover");
+  }
+}
+
+const vendorsPage = read("apps/frontend/src/pages/Vendors.tsx");
+if (!vendorsPage.includes("CollapsedListFilters")) {
+  failures.push("Vendors.tsx: roster Status/Category filters must use CollapsedListFilters");
+}
+if (!vendorsPage.includes("data-vendors-roster-filter-toolbar")) {
+  failures.push("Vendors.tsx: missing data-vendors-roster-filter-toolbar collapsed marker");
+}
+{
+  const beforePopover = vendorsPage.split("CollapsedListFilters")[0] ?? vendorsPage;
+  if (/data-list-status-filter="vendors"/.test(beforePopover)) {
+    failures.push("Vendors.tsx: roster Status chips still always-on outside the Filters popover");
+  }
 }
 
 // CHROME-03 — Accounting money lists collapse filters behind Filters popover
