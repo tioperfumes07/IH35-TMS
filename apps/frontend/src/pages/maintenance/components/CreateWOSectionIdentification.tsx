@@ -1,14 +1,12 @@
 import type { JSX } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
 import type { UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { listMaintenanceDrivers, listMaintenanceVehicles } from "../../../api/maintenance";
-import { useToast } from "../../../components/Toast";
+import { listCustomers, listVendors } from "../../../api/mdata";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
-import { QboCombobox } from "../../../components/forms/QboCombobox";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { Combobox } from "../../../components/shared/Combobox";
-import { QuickCreateEntityModal, type QuickCreateKind } from "../../../components/forms/shared/QuickCreateEntityModal";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 
 type Props = {
   register: UseFormRegister<CreateWOFormValues>;
@@ -56,8 +54,6 @@ export function CreateWOSectionIdentification({
   getValues,
 }: Props) {
   const queryClient = useQueryClient();
-  const { pushToast } = useToast();
-  const [quickCreateKind, setQuickCreateKind] = useState<QuickCreateKind | null>(null);
   const type = watch("wo_type");
   const sourceType = watch("source_type");
   const bucket = watch("bucket");
@@ -79,11 +75,30 @@ export function CreateWOSectionIdentification({
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });
+  const vendorsQuery = useQuery({
+    queryKey: ["maintenance", "vendors", operatingCompanyId, "create-wo-id"],
+    queryFn: () => listVendors({ operating_company_id: String(operatingCompanyId), status: "active", limit: 200 }),
+    enabled: Boolean(operatingCompanyId),
+    staleTime: 60_000,
+  });
+  const customersQuery = useQuery({
+    queryKey: ["maintenance", "customers", operatingCompanyId, "create-wo-id"],
+    queryFn: () => listCustomers({ operating_company_id: String(operatingCompanyId), limit: 200 }),
+    enabled: Boolean(operatingCompanyId),
+    staleTime: 60_000,
+  });
   const vehicleOptions = (vehiclesQuery.data?.rows ?? [])
     .map((row) => ({ value: row.id, label: row.unit_display_id || row.id }))
     .sort((a, b) => a.label.localeCompare(b.label));
   const driverOptions = (driversQuery.data?.rows ?? [])
     .map((row) => ({ value: row.id, label: `${row.first_name} ${row.last_name}`.trim() || row.id }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+  const vendorOptions = (vendorsQuery.data?.vendors ?? [])
+    .filter((v) => !v.deactivated_at)
+    .map((v) => ({ value: v.id, label: v.name }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+  const customerOptions = (customersQuery.data?.customers ?? [])
+    .map((c) => ({ value: c.id, label: c.name }))
     .sort((a, b) => a.label.localeCompare(b.label));
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3">
@@ -179,48 +194,33 @@ export function CreateWOSectionIdentification({
               <input type="hidden" {...register("vendor_id")} />
               <input type="hidden" {...register("vendor_qbo_id")} />
               <input type="hidden" {...register("vendor_display_name")} />
-              <div className="flex items-center gap-2">
-                <div className="flex-1">
-                  <QboCombobox
-                    entityType="vendor"
-                    operatingCompanyId={operatingCompanyId}
-                    value={watch("vendor_qbo_id") ? watch("vendor_qbo_id") : null}
-                    displayValue={watch("vendor_display_name") ?? ""}
-                    allowFreeText={false}
-                    placeholder="Search QuickBooks vendors…"
-                    onChange={(qboId, displayName) => {
-                      setValue("vendor_qbo_id", qboId ?? "", { shouldDirty: true });
-                      setValue("vendor_display_name", displayName, { shouldDirty: true });
-                      if (!qboId) {
-                        setValue("vendor_id", "", { shouldDirty: true });
-                        setValue("external_vendor_id", "", { shouldDirty: true });
-                      }
-                    }}
-                    onPick={(row) => {
-                      setValue("vendor_id", row.id, { shouldDirty: true });
-                      setValue("external_vendor_id", row.id, { shouldDirty: true });
-                      setValue("vendor_qbo_id", row.qbo_id, { shouldDirty: true });
-                      setValue("vendor_display_name", row.display_name || row.company_name || "", { shouldDirty: true });
-                      const shopNameNow = String(getValues("shop_name") ?? "").trim();
-                      if (!shopNameNow) {
-                        setValue("shop_name", row.display_name || row.company_name || "", { shouldDirty: true });
-                      }
-                      const shopPhoneNow = String(getValues("shop_phone") ?? "").trim();
-                      if (!shopPhoneNow && row.primary_phone) {
-                        setValue("shop_phone", row.primary_phone, { shouldDirty: true });
-                      }
-                    }}
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
-                  onClick={() => setQuickCreateKind("vendor")}
-                  aria-label="Quick create vendor"
-                >
-                  + Create
-                </button>
-              </div>
+              <ReferenceSelect
+                value={watch("vendor_id") || null}
+                onChange={(next) => {
+                  const match = vendorOptions.find((o) => o.value === next);
+                  setValue("vendor_id", next ?? "", { shouldDirty: true });
+                  setValue("external_vendor_id", next ?? "", { shouldDirty: true });
+                  setValue("vendor_qbo_id", "", { shouldDirty: true });
+                  setValue("vendor_display_name", match?.label ?? "", { shouldDirty: true });
+                  if (next && match) {
+                    const shopNameNow = String(getValues("shop_name") ?? "").trim();
+                    if (!shopNameNow) {
+                      setValue("shop_name", match.label, { shouldDirty: true });
+                    }
+                  }
+                }}
+                options={vendorOptions}
+                createKind="vendor"
+                operatingCompanyId={operatingCompanyId}
+                placeholder="Search vendors…"
+                onOptionCreated={(opt) => {
+                  void queryClient.invalidateQueries({ queryKey: ["maintenance", "vendors"] });
+                  setValue("vendor_display_name", opt.label, { shouldDirty: true });
+                  setValue("external_vendor_id", opt.value, { shouldDirty: true });
+                  const shopNameNow = String(getValues("shop_name") ?? "").trim();
+                  if (!shopNameNow) setValue("shop_name", opt.label, { shouldDirty: true });
+                }}
+              />
             </>
           ) : (
             <input {...register("vendor_id")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
@@ -242,36 +242,23 @@ export function CreateWOSectionIdentification({
               <input type="hidden" {...register("customer_id")} />
               <input type="hidden" {...register("customer_qbo_id")} />
               <input type="hidden" {...register("customer_display_name")} />
-              <div className="flex items-center gap-2">
-                <div className="flex-1">
-                  <QboCombobox
-                    entityType="customer"
-                    operatingCompanyId={operatingCompanyId}
-                    value={watch("customer_qbo_id") ? watch("customer_qbo_id") : null}
-                    displayValue={watch("customer_display_name") ?? ""}
-                    allowFreeText={false}
-                    placeholder="Search QuickBooks customers…"
-                    onChange={(qboId, displayName) => {
-                      setValue("customer_qbo_id", qboId ?? "", { shouldDirty: true });
-                      setValue("customer_display_name", displayName, { shouldDirty: true });
-                      if (!qboId) setValue("customer_id", "", { shouldDirty: true });
-                    }}
-                    onPick={(row) => {
-                      setValue("customer_id", row.id, { shouldDirty: true });
-                      setValue("customer_qbo_id", row.qbo_id, { shouldDirty: true });
-                      setValue("customer_display_name", row.display_name || row.company_name || "", { shouldDirty: true });
-                    }}
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
-                  onClick={() => setQuickCreateKind("customer")}
-                  aria-label="Quick create customer"
-                >
-                  + Create
-                </button>
-              </div>
+              <ReferenceSelect
+                value={watch("customer_id") || null}
+                onChange={(next) => {
+                  const match = customerOptions.find((o) => o.value === next);
+                  setValue("customer_id", next ?? "", { shouldDirty: true });
+                  setValue("customer_qbo_id", "", { shouldDirty: true });
+                  setValue("customer_display_name", match?.label ?? "", { shouldDirty: true });
+                }}
+                options={customerOptions}
+                createKind="customer"
+                operatingCompanyId={operatingCompanyId}
+                placeholder="Search customers…"
+                onOptionCreated={(opt) => {
+                  void queryClient.invalidateQueries({ queryKey: ["maintenance", "customers"] });
+                  setValue("customer_display_name", opt.label, { shouldDirty: true });
+                }}
+              />
             </>
           ) : (
             <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" disabled />
@@ -348,32 +335,6 @@ export function CreateWOSectionIdentification({
         </div>
       ) : null}
       {backendLoadError ? <div className="mt-2 text-xs font-semibold text-red-600">{backendLoadError}</div> : null}
-      {quickCreateKind && operatingCompanyId && setValue ? (
-        <QuickCreateEntityModal
-          open
-          kind={quickCreateKind}
-          operatingCompanyId={operatingCompanyId}
-          onClose={() => setQuickCreateKind(null)}
-          onCreated={(created) => {
-            if (quickCreateKind === "vendor") {
-              setValue("vendor_id", created.id, { shouldDirty: true });
-              setValue("external_vendor_id", created.id, { shouldDirty: true });
-              setValue("vendor_qbo_id", "", { shouldDirty: true });
-              setValue("vendor_display_name", created.label, { shouldDirty: true });
-              const shopNameNow = getValues ? String(getValues("shop_name") ?? "").trim() : "";
-              if (!shopNameNow) setValue("shop_name", created.label, { shouldDirty: true });
-            } else if (quickCreateKind === "customer") {
-              setValue("customer_id", created.id, { shouldDirty: true });
-              setValue("customer_qbo_id", "", { shouldDirty: true });
-              setValue("customer_display_name", created.label, { shouldDirty: true });
-            } else {
-              pushToast("Unsupported quick create target.", "error");
-            }
-            setQuickCreateKind(null);
-            void queryClient.invalidateQueries({ queryKey: ["qbo-mdata-autocomplete"] });
-          }}
-        />
-      ) : null}
     </section>
   );
 }

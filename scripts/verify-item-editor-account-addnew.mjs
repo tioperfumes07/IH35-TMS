@@ -33,12 +33,17 @@ function stripComments(src) {
     .replace(/(^|[^:])\/\/[^\n]*/g, "$1");
 }
 
-/** Isolate the Combobox JSX bound to a given form field (picker binding, not type defs). */
-function comboboxNearField(src, fieldName) {
+/** Isolate the picker JSX bound to a given form field (picker binding, not type defs). */
+function pickerNearField(src, fieldName) {
   const needle = `value={form.${fieldName}}`;
   const idx = src.indexOf(needle);
   if (idx < 0) return "";
   return src.slice(Math.max(0, idx - 120), idx + 900);
+}
+
+/** @deprecated alias — kept for selftest fixtures that still name Combobox */
+function comboboxNearField(src, fieldName) {
+  return pickerNearField(src, fieldName);
 }
 
 /**
@@ -57,10 +62,20 @@ function accountCreateChrome(src) {
 }
 
 /** The assertions, each a predicate over the comment-stripped source. */
+function pickerHasAccountAddNew(picker) {
+  // Preferred: ReferenceSelect createKind="account" (routes to InlineCreateDrawer / NewAccountDrawerForm).
+  if (/<ReferenceSelect\b/.test(picker) && /createKind=["']account["']/.test(picker)) return true;
+  // Legacy: Combobox allowAddNew + separate InlineCreateDrawer.
+  return picker.includes("<Combobox") && /allowAddNew=\{\{\s*label:\s*"\+ Add new account"/.test(picker);
+}
+
 export function checksFor(src) {
-  const incomePicker = comboboxNearField(src, "incomeAccountId");
-  const expensePicker = comboboxNearField(src, "expenseAccountId");
+  const incomePicker = pickerNearField(src, "incomeAccountId");
+  const expensePicker = pickerNearField(src, "expenseAccountId");
   const chrome = accountCreateChrome(src);
+
+  const usesReferenceSelectAccount =
+    /createKind=["']account["']/.test(incomePicker) && /createKind=["']account["']/.test(expensePicker);
 
   const usesInlineAccountDrawer =
     /<InlineCreateDrawer\b/.test(src) &&
@@ -74,21 +89,22 @@ export function checksFor(src) {
     (/handleAccountCreated/.test(src) || /accountCreateSide/.test(src));
 
   return {
-    incomeAllowAddNew:
-      incomePicker.includes("<Combobox") && /allowAddNew=\{\{\s*label:\s*"\+ Add new account"/.test(incomePicker),
-    expenseAllowAddNew:
-      expensePicker.includes("<Combobox") && /allowAddNew=\{\{\s*label:\s*"\+ Add new account"/.test(expensePicker),
-    nestedAccountCreate: usesInlineAccountDrawer && !wrongCategoryKindForAccount,
+    incomeAllowAddNew: pickerHasAccountAddNew(incomePicker),
+    expenseAllowAddNew: pickerHasAccountAddNew(expensePicker),
+    // Nested create: ReferenceSelect(account) owns InlineCreateDrawer internally, OR explicit drawer.
+    nestedAccountCreate: (usesReferenceSelectAccount || usesInlineAccountDrawer) && !wrongCategoryKindForAccount,
     noWrongCategoryKind: !wrongCategoryKindForAccount,
     refetchAfterCreate: /invalidateQueries[\s\S]{0,200}\["catalogs",\s*"accounts",\s*"for-items"/.test(src),
   };
 }
 
 const CHECK_LABELS = {
-  incomeAllowAddNew: "PS-A — Income account Combobox exposes allowAddNew (+ Add new account)",
-  expenseAllowAddNew: "PS-A — Expense account Combobox exposes allowAddNew (+ Add new account)",
+  incomeAllowAddNew:
+    "PS-A — Income account picker exposes + Add new account (ReferenceSelect createKind=account or Combobox allowAddNew)",
+  expenseAllowAddNew:
+    "PS-A — Expense account picker exposes + Add new account (ReferenceSelect createKind=account or Combobox allowAddNew)",
   nestedAccountCreate:
-    "PS-A — Nested create uses InlineCreateDrawer kind=\"account\" (NewAccountDrawerForm / CoA chrome)",
+    "PS-A — Nested create uses account chrome (ReferenceSelect createKind=account → InlineCreateDrawer / NewAccountDrawerForm)",
   noWrongCategoryKind:
     "PS-A — MUST NOT wire QuickCreateEntityModal kind=\"category\" for income/expense account create",
   refetchAfterCreate: "PS-A — Account list refetches after inline create (catalogs.accounts for-items query)",
@@ -121,7 +137,7 @@ export function check() {
 }
 
 function selftest() {
-  const good = `
+  const goodLegacy = `
     <Combobox
     value={form.incomeAccountId}
     onChange={(v) => set("incomeAccountId", v)}
@@ -134,6 +150,17 @@ function selftest() {
       void queryClient.invalidateQueries({ queryKey: ["catalogs", "accounts", "for-items", operatingCompanyId] });
     }
     <InlineCreateDrawer open={accountCreateSide !== null} kind="account" onCreated={handleAccountCreated} />
+  `;
+  const goodReferenceSelect = `
+    <ReferenceSelect
+    value={form.incomeAccountId}
+    onChange={(v) => set("incomeAccountId", v)}
+    createKind="account"
+    <ReferenceSelect
+    value={form.expenseAccountId}
+    onChange={(v) => set("expenseAccountId", v)}
+    createKind="account"
+    void queryClient.invalidateQueries({ queryKey: ["catalogs", "accounts", "for-items", operatingCompanyId] });
   `;
   // Exact HOLD #3133 / main defect: label says account, chrome is category.
   const badWrongKind = `
@@ -160,12 +187,14 @@ function selftest() {
     onChange={(v) => set("expenseAccountId", v)}
     allowClear
   `;
-  const g = checksFor(stripComments(good));
+  const g = checksFor(stripComments(goodLegacy));
+  const g2 = checksFor(stripComments(goodReferenceSelect));
   const w = checksFor(stripComments(badWrongKind));
   const b = checksFor(stripComments(badMissing));
   const failures = [];
   for (const key of Object.keys(CHECK_LABELS)) {
-    if (!g[key]) failures.push(`good fixture should PASS ${key}`);
+    if (!g[key]) failures.push(`good legacy fixture should PASS ${key}`);
+    if (!g2[key]) failures.push(`good ReferenceSelect fixture should PASS ${key}`);
   }
   for (const key of ["nestedAccountCreate", "noWrongCategoryKind"]) {
     if (w[key]) failures.push(`wrong-kind fixture should FAIL ${key}`);

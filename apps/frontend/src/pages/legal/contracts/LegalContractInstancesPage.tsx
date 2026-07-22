@@ -15,6 +15,7 @@ import { TruckLeaseCreatorModal } from "./TruckLeaseCreatorModal";
 import { UnifiedContractCreatorModal } from "./UnifiedContractCreatorModal";
 import { useFeatureFlag } from "../../../hooks/useFeatureFlag";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { CollapsedListFilters, TableSearch } from "../../../components/table";
 
 const STATUS_OPTIONS: Array<{ value: "all" | LegalContractStatus; label: string }> = [
   { value: "all", label: "All statuses" },
@@ -253,54 +254,68 @@ export function LegalContractInstancesPage() {
         storageKey="legal-contracts"
         emptyText="No contract instances found for current filters."
         filterBar={
-          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-6">
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              aria-label="Search contracts by signer or template code"
-              className="h-9 rounded-sm border border-gray-300 px-2 text-sm xl:col-span-2"
-              placeholder="Search signer or template code"
-            />
-            <SelectCombobox
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as "all" | LegalContractStatus)}
-              className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
-            >
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </SelectCombobox>
-            <SelectCombobox
-              value={templateFilter}
-              onChange={(event) => setTemplateFilter(event.target.value)}
-              className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
-            >
-              <option value="">All templates</option>
-              {templateOptions.map((code) => (
-                <option key={code} value={code}>
-                  {code}
-                </option>
-              ))}
-            </SelectCombobox>
-            <SelectCombobox
-              value={signerTypeFilter}
-              onChange={(event) => setSignerTypeFilter(event.target.value)}
-              className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
-            >
-              <option value="all">All signer types</option>
-              <option value="driver">Driver</option>
-              <option value="employee">Employee</option>
-              <option value="customer">Customer</option>
-              <option value="vendor">Vendor</option>
-              <option value="other">Other</option>
-            </SelectCombobox>
-            <div className="grid grid-cols-2 gap-2 xl:col-span-2">
-              <DatePicker value={dateFrom} onChange={(next) => setDateFrom(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-sm" />
-              <DatePicker value={dateTo} onChange={(next) => setDateTo(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-sm" />
+          <CollapsedListFilters
+            activeFilterCount={
+              (statusFilter !== "all" ? 1 : 0) +
+              (templateFilter ? 1 : 0) +
+              (signerTypeFilter !== "all" ? 1 : 0) +
+              (dateFrom ? 1 : 0) +
+              (dateTo ? 1 : 0)
+            }
+            testIdPrefix="legal-contracts"
+            dataAttributes={{ "data-legal-contracts-filter-toolbar": "collapsed" }}
+            searchSlot={
+              <TableSearch
+                value={search}
+                onChange={setSearch}
+                placeholder="Search signer or template code"
+                aria-label="Search signer or template code"
+                className="w-64"
+              />
+            }
+          >
+            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+              <SelectCombobox
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value as "all" | LegalContractStatus)}
+                className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
+              >
+                {STATUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </SelectCombobox>
+              <SelectCombobox
+                value={templateFilter}
+                onChange={(event) => setTemplateFilter(event.target.value)}
+                className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
+              >
+                <option value="">All templates</option>
+                {templateOptions.map((code) => (
+                  <option key={code} value={code}>
+                    {code}
+                  </option>
+                ))}
+              </SelectCombobox>
+              <SelectCombobox
+                value={signerTypeFilter}
+                onChange={(event) => setSignerTypeFilter(event.target.value)}
+                className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
+              >
+                <option value="all">All signer types</option>
+                <option value="driver">Driver</option>
+                <option value="employee">Employee</option>
+                <option value="customer">Customer</option>
+                <option value="vendor">Vendor</option>
+                <option value="other">Other</option>
+              </SelectCombobox>
+              <div className="grid grid-cols-2 gap-2">
+                <DatePicker value={dateFrom} onChange={(next) => setDateFrom(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-sm" />
+                <DatePicker value={dateTo} onChange={(next) => setDateTo(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-sm" />
+              </div>
             </div>
-          </div>
+          </CollapsedListFilters>
         }
       />
 

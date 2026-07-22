@@ -6,7 +6,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { legalContractsApi, type LeaseToOwnFleetUnit } from "../../../api/legal-contracts";
 import { legalTemplatesApi } from "../../../api/legal-templates";
 import { Button } from "../../../components/Button";
-import { Modal } from "../../../components/Modal";
+import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
@@ -240,7 +240,7 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
   const canSave = Boolean(lessee.name.trim()) && selectedList.length > 0 && Boolean(seller);
 
   return (
-    <Modal open={open} onClose={onClose} title="New Lease-to-Own Contract">
+    <ParityDrawer open={open} onClose={onClose} title="New Lease-to-Own Contract" size="wide">
       <div className="space-y-3">
         <div className="flex flex-wrap gap-2 text-xs">
           {STEPS.map((s, i) => (
@@ -358,6 +358,6 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
           )}
         </div>
       </div>
-    </Modal>
+    </ParityDrawer>
   );
 }

@@ -10,6 +10,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { LegalTemplateNewModal } from "./LegalTemplateNewModal";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { CollapsedListFilters, TableSearch } from "../../../components/table";
 
 const STATUS_OPTIONS = ["draft", "pending_review", "approved", "active", "retired"] as const;
 
@@ -95,33 +96,41 @@ export function LegalTemplatesListPage() {
         storageKey="legal-templates"
         emptyText="No legal templates found for current filters."
         filterBar={
-          <div className="grid gap-2 md:grid-cols-4">
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              aria-label="Search templates by code or display name"
-              placeholder="Search code or display name"
-              className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2"
-            />
-            <input
-              value={category}
-              onChange={(event) => setCategory(event.target.value)}
-              placeholder="Category"
-              className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
-            />
-            <SelectCombobox
-              value={status}
-              onChange={(event) => setStatus(event.target.value as (typeof STATUS_OPTIONS)[number] | "all")}
-              className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
-            >
-              <option value="all">All statuses</option>
-              {STATUS_OPTIONS.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </SelectCombobox>
-          </div>
+          <CollapsedListFilters
+            activeFilterCount={(status !== "all" ? 1 : 0) + (category ? 1 : 0)}
+            testIdPrefix="legal-templates"
+            dataAttributes={{ "data-legal-templates-filter-toolbar": "collapsed" }}
+            searchSlot={
+              <TableSearch
+                value={search}
+                onChange={setSearch}
+                placeholder="Search code or display name"
+                aria-label="Search code or display name"
+                className="w-64"
+              />
+            }
+          >
+            <div className="grid gap-2 md:grid-cols-2">
+              <input
+                value={category}
+                onChange={(event) => setCategory(event.target.value)}
+                placeholder="Category"
+                className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
+              />
+              <SelectCombobox
+                value={status}
+                onChange={(event) => setStatus(event.target.value as (typeof STATUS_OPTIONS)[number] | "all")}
+                className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
+              >
+                <option value="all">All statuses</option>
+                {STATUS_OPTIONS.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </SelectCombobox>
+            </div>
+          </CollapsedListFilters>
         }
       />
 

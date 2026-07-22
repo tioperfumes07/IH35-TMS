@@ -2,6 +2,7 @@
 // Used by Fleet first, then Customers, Vendors, Drivers, and every list table.
 export { TableControls } from "./TableControls";
 export { TableSearch } from "./TableSearch";
+export { CollapsedListFilters } from "./CollapsedListFilters";
 export { Paginator } from "./Paginator";
 export { ColumnChooser, type TableColumn } from "./ColumnChooser";
 export { TableHeaderCell } from "./TableHeaderCell";

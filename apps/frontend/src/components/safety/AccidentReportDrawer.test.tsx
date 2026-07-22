@@ -55,6 +55,32 @@ vi.mock("../shared/Combobox", () => ({
   ),
 }));
 
+// Repair Vendor migrated to the shared ReferenceSelect (+ Create vendor). Render as a native
+// <select> too, matching the shared/Combobox mock above, so the existing selectOptions-driven
+// assertions stay deterministic without asserting on the +Create inline-create chrome here.
+vi.mock("../parity/ReferenceSelect", () => ({
+  ReferenceSelect: ({
+    options,
+    value,
+    onChange,
+    placeholder,
+  }: {
+    options: Array<{ value: string; label: string }>;
+    value: string | null;
+    onChange: (v: string | null) => void;
+    placeholder?: string;
+  }) => (
+    <select aria-label={placeholder ?? "combobox"} value={value ?? ""} onChange={(e) => onChange(e.target.value || null)}>
+      <option value="">--</option>
+      {options.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
+    </select>
+  ),
+}));
+
 vi.mock("../forms/TwoSectionLineEditor", () => ({ TwoSectionLineEditor: () => <div data-testid="two-section-editor" /> }));
 vi.mock("../forms/shared/TotalsStack", () => ({ TotalsStack: () => <div data-testid="totals-stack" /> }));
 

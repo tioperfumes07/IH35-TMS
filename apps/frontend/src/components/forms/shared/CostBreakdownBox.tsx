@@ -119,7 +119,7 @@ export function CostBreakdownBox({
             Section A - Category lines
           </div>
           <div className="p-2">
-            <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
+            <div className="overflow-x-auto bg-white">
               <table className="min-w-full text-xs">
                 <thead className="bg-gray-50">
                   <tr>
@@ -255,7 +255,7 @@ export function CostBreakdownBox({
           </div>
           <div className="space-y-2 p-2">
             {sectionB.lines.map((line) => (
-              <div key={line.id} className="rounded-sm border border-gray-200 bg-white p-2">
+              <div key={line.id} className="border-b border-gray-100 bg-white p-2 last:border-b-0">
                 <div className="grid gap-2 md:grid-cols-[1fr_1.2fr_1fr_110px_90px_95px_40px]">
                   <div className="flex items-center gap-1">
                     <SelectCombobox
@@ -350,11 +350,11 @@ export function CostBreakdownBox({
                 </div>
 
                 {partsLaborMode !== "none" ? (
-                  <div className="mt-2 rounded-sm border border-gray-100 bg-gray-50 p-2">
+                  <div className="mt-2 bg-gray-50 p-2">
                     <div className="mb-1 text-[11px] font-semibold text-gray-600">Parts & Labor</div>
-                    {(line.sub_rows ?? []).map((row) => (
-                      <div key={row.id} className="mb-1 grid gap-1 md:grid-cols-[80px_1fr_160px_80px_100px_100px_30px]">
-                        <div className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-[11px] uppercase">{row.line_type}</div>
+                      {(line.sub_rows ?? []).map((row) => (
+                        <div key={row.id} className="mb-1 grid gap-1 border-t border-gray-100 pt-2 md:grid-cols-[80px_1fr_160px_80px_100px_100px_30px]">
+                          <div className="px-2 py-1 text-[11px] uppercase text-slate-600">{row.line_type}</div>
                         {row.line_type === "parts" ? (
                           <div className="space-y-1">
                             <div className="flex items-center gap-1">

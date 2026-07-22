@@ -244,41 +244,29 @@ export function ExpenseCategoryMapPage() {
                 />
               </label>
 
-              <div className="text-xs font-semibold text-gray-600" data-testid="expense-category-map-account-select">
+              <label className="text-xs font-semibold text-gray-600">
                 Account
-                {/*
-                  §7.3 + FIX-06 coverage ratchet: a COA-account picker on a create form must be the
-                  shared ReferenceSelect, not a plain <select>. A raw select fixes the uuid-label
-                  defect but drops the mandatory inline "+ Add new" row, so the operator has to
-                  abandon this form to create a missing account. createKind="category" is the COA
-                  path — QuickCreateEntityModal's category branch writes to catalogs.accounts
-                  (canonical, the same table getCoaAccounts reads), never a *_qbo_* mirror.
-                  The option LABEL stays the account name so no raw uuid is ever rendered.
-                */}
                 <div className="mt-1">
                   <ReferenceSelect
                     value={form.account_id || null}
-                    onChange={(value) => setForm((prev) => ({ ...prev, account_id: value ?? "" }))}
+                    onChange={(next) => setForm((prev) => ({ ...prev, account_id: next ?? "" }))}
                     options={accounts.map((account) => ({
                       value: account.id,
-                      label: account.account_name,
-                      type: account.account_number ?? undefined,
+                      label: `${account.account_number} - ${account.account_name}`,
                     }))}
                     createKind="category"
+                    addNewLabel="+ Add new account"
                     operatingCompanyId={companyId}
                     placeholder="Select account"
-                    addNewLabel="+ Add new account"
-                    onOptionCreated={() => {
-                      void queryClient.invalidateQueries({ queryKey: ["expense-category-map", "accounts"] });
-                    }}
+                    disabled={!companyId}
                   />
                 </div>
-                <p className="mt-1 text-[11px] font-normal text-gray-500">
+                <p className="mt-1 text-[11px] text-gray-500">
                   {selectedAccount
                     ? `Selected: ${selectedAccount.account_number} - ${selectedAccount.account_name}`
                     : "Pick from chart of accounts."}
                 </p>
-              </div>
+              </label>
 
               <fieldset className="text-xs font-semibold text-gray-600">
                 <legend>Posting side</legend>

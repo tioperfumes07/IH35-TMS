@@ -40,7 +40,11 @@ function main() {
     failures.push("duplicate_vendor_lookup_field_present");
   }
 
-  if (!identification.includes("setValue(\"external_vendor_id\", row.id")) {
+  // Accept legacy Combobox row.id mirror OR ReferenceSelect next/opt.value mirror.
+  const mirrorsExternalVendor =
+    identification.includes('setValue("external_vendor_id", row.id') ||
+    /setValue\(\s*["']external_vendor_id["']\s*,\s*(next|opt\.value)/.test(identification);
+  if (!mirrorsExternalVendor) {
     failures.push("vendor_not_mirrored_to_external_vendor_id");
   }
 

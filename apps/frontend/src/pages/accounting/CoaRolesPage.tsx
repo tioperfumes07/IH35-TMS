@@ -8,6 +8,8 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+import { coaAccountReferenceOption } from "../../components/parity/referenceOptionLabels";
 
 const ROLE_LABELS: Record<CoaRole, string> = {
   ar_control: "AR control",
@@ -73,8 +75,9 @@ export function CoaRolesPage() {
     return COA_ROLE_VALUES.map((role) => byRole.get(role) ?? { role, id: null, account_id: null, account_name: null, account_number: null, is_active: false, updated_at: null });
   }, [rowsQuery.data?.rows]);
 
-  // Column order/labels preserved 1:1 from the former hand-rolled table markup; the per-row
-  // account <select> (name label, uuid value) and Save button keep their handlers (display-only).
+  // Column order/labels preserved 1:1 from the former hand-rolled table markup. The per-row
+  // account picker is a ReferenceSelect (was a raw UUID text input + datalist — required typing
+  // a raw account id by hand); the Save button keeps its exact handler unchanged.
   const columns: Array<ParityColumn<CoaRoleRow>> = [
     {
       key: "role",
@@ -91,33 +94,23 @@ export function CoaRolesPage() {
       label: "Account",
       render: (row) => {
         const value = draftByRole[row.role] ?? row.account_id ?? "";
+        const accountOptions = (accountsQuery.data?.accounts ?? []).map(coaAccountReferenceOption);
         return (
-          <select
-            className="h-9 w-full min-w-[280px] rounded-sm border border-gray-300 px-2 text-sm"
-            value={value}
-            onChange={(event) => setDraftByRole((prev) => ({ ...prev, [row.role]: event.target.value }))}
-          >
-            <option value="">Select account</option>
-            {(accountsQuery.data?.accounts ?? []).map((account) => (
-              // value stays the uuid (what the API needs); the LABEL is the account name so the
-              // control never renders a raw uuid.
-              <option key={account.id} value={account.id}>
-                {account.account_name}
-              </option>
-            ))}
-          </select>
+          <div className="min-w-[280px]">
+            <ReferenceSelect
+              value={value || null}
+              onChange={(next) => setDraftByRole((prev) => ({ ...prev, [row.role]: next ?? "" }))}
+              options={accountOptions}
+              createKind="category"
+              addNewLabel="+ Add new account"
+              operatingCompanyId={companyId}
+              placeholder="Select account…"
+              disabled={!companyId}
+              onOptionCreated={() => void accountsQuery.refetch()}
+            />
+          </div>
         );
       },
-    },
-    {
-      // QBO pattern: the number lives in the gear column-toggle, hidden by default, and the owner's
-      // choice persists via ParityTable's storageKey. Default-hidden is also data-correct — 1,313 of
-      // 1,371 catalogs.accounts rows carry synthetic clone placeholders ("QBO-1014"), not real CoA
-      // numbers, so surfacing them by default is noise rather than information.
-      key: "account_number",
-      label: "Account number",
-      defaultHidden: true,
-      render: (row) => row.account_number ?? "-",
     },
     {
       key: "is_active",

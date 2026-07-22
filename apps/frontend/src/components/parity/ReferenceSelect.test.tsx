@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-// Mock the inline create modal so the test focuses on ReferenceSelect's wiring
-// (open on +Add, return-selected on create) without API/Toast/Modal deps.
-vi.mock("../forms/shared/QuickCreateEntityModal", () => ({
-  QuickCreateEntityModal: ({
+// Vendor/customer/account/service use InlineCreateDrawer (CHROME-11). Mock it so the test
+// focuses on ReferenceSelect wiring without drawer/API deps.
+vi.mock("./InlineCreateDrawer", () => ({
+  InlineCreateDrawer: ({
     open,
     kind,
     onCreated,
@@ -14,12 +14,16 @@ vi.mock("../forms/shared/QuickCreateEntityModal", () => ({
     onCreated: (r: { id: string; label: string }) => void;
   }) =>
     open ? (
-      <div data-testid="quick-create" data-kind={kind}>
+      <div data-testid="inline-create" data-kind={kind}>
         <button type="button" onClick={() => onCreated({ id: "new-1", label: "New Vendor" })}>
           mock-create
         </button>
       </div>
     ) : null,
+}));
+
+vi.mock("../forms/shared/QuickCreateEntityModal", () => ({
+  QuickCreateEntityModal: () => null,
 }));
 
 import { ReferenceSelect } from "./ReferenceSelect";
@@ -40,20 +44,27 @@ describe("ReferenceSelect (A2)", () => {
     return { onChange };
   }
 
-  it("always shows the '+ Add new' button and opens the inline create on click", () => {
+  function openDropdown() {
+    fireEvent.focus(screen.getByRole("combobox"));
+    fireEvent.click(screen.getByRole("combobox"));
+  }
+
+  it("shows the '+ Add new' option when the combobox is open and opens inline create", () => {
     setup();
-    const addNew = screen.getByRole("button", { name: /\+ Add new vendor/i });
+    openDropdown();
+    const addNew = screen.getByRole("option", { name: /\+ Add new vendor/i });
     expect(addNew).toBeInTheDocument();
-    expect(screen.queryByTestId("quick-create")).toBeNull();
+    expect(screen.queryByTestId("inline-create")).toBeNull();
     fireEvent.click(addNew);
-    expect(screen.getByTestId("quick-create")).toHaveAttribute("data-kind", "vendor");
+    expect(screen.getByTestId("inline-create")).toHaveAttribute("data-kind", "vendor");
   });
 
   it("returns to the parent with the newly-created value selected, then closes", () => {
     const { onChange } = setup();
-    fireEvent.click(screen.getByRole("button", { name: /\+ Add new vendor/i }));
+    openDropdown();
+    fireEvent.click(screen.getByRole("option", { name: /\+ Add new vendor/i }));
     fireEvent.click(screen.getByText("mock-create"));
     expect(onChange).toHaveBeenCalledWith("new-1");
-    expect(screen.queryByTestId("quick-create")).toBeNull();
+    expect(screen.queryByTestId("inline-create")).toBeNull();
   });
 });

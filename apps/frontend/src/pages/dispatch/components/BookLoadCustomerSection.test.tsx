@@ -6,10 +6,10 @@ import { useForm } from "react-hook-form";
 import { describe, expect, it, vi } from "vitest";
 import { BookLoadCustomerSection, type BookLoadFormValues } from "./BookLoadCustomerSection";
 
-const searchMock = vi.fn();
+const listCustomersMock = vi.fn();
 
-vi.mock("../../../api/qbo-mdata", () => ({
-  searchQboMasterData: (...args: unknown[]) => searchMock(...args),
+vi.mock("../../../api/mdata", () => ({
+  listCustomers: (...args: unknown[]) => listCustomersMock(...args),
 }));
 
 let getValues: (() => BookLoadFormValues) | null = null;
@@ -51,81 +51,68 @@ function wrap(ui: ReactElement) {
 }
 
 describe("BookLoadCustomerSection", () => {
-  it("onPick saves customer_id, customer_qbo_id, and customer_name to form state", async () => {
+  it("picking a customer saves customer_id and customer_name to form state", async () => {
     const user = userEvent.setup();
-    searchMock.mockResolvedValue({
-      results: [
+    listCustomersMock.mockResolvedValue({
+      customers: [
         {
           id: "61111111-1111-4111-8111-111111111111",
-          qbo_id: "qb-cust-77",
-          display_name: "LIVE TEST CUSTOMER LLC",
-          active: true,
-          company_name: "LIVE TEST CUSTOMER LLC",
-          primary_email: "ar@example.com",
-          primary_phone: "555-0100",
+          name: "LIVE TEST CUSTOMER LLC",
+          email: "ar@example.com",
+          phone: "555-0100",
         },
       ],
+      total: 1,
     });
 
     wrap(<TestHarness />);
     expect(getValues).not.toBeNull();
 
-    const inputs = screen.getAllByPlaceholderText(/Select QBO customer/i);
+    const inputs = screen.getAllByPlaceholderText(/Search customers…/i);
     const primary = inputs[0];
     await user.click(primary);
-    await user.type(primary, "LIVE");
 
-    await waitFor(() => expect(searchMock).toHaveBeenCalled(), { timeout: 4000 });
+    await waitFor(() => expect(listCustomersMock).toHaveBeenCalled(), { timeout: 4000 });
 
-    const option = await screen.findByRole("button", { name: /LIVE TEST CUSTOMER LLC/i });
+    const option = await screen.findByRole("option", { name: /LIVE TEST CUSTOMER LLC/i });
     await user.click(option);
 
     await waitFor(() => {
       const v = getValues!();
       expect(v.customer_id).toBe("61111111-1111-4111-8111-111111111111");
-      expect(v.customer_qbo_id).toBe("qb-cust-77");
       expect(v.customer_name).toBe("LIVE TEST CUSTOMER LLC");
     });
   });
 
-  it("clears the stale customer_id when the picked customer text is edited over (D3-3)", async () => {
+  it("the customer reference lookup appends to Special notes without changing customer_id", async () => {
     const user = userEvent.setup();
-    searchMock.mockResolvedValue({
-      results: [
+    listCustomersMock.mockResolvedValue({
+      customers: [
         {
           id: "61111111-1111-4111-8111-111111111111",
-          qbo_id: "qb-cust-77",
-          display_name: "LIVE TEST CUSTOMER LLC",
-          active: true,
-          company_name: "LIVE TEST CUSTOMER LLC",
-          primary_email: "ar@example.com",
-          primary_phone: "555-0100",
+          name: "LIVE TEST CUSTOMER LLC",
+          email: "ar@example.com",
+          phone: "555-0100",
         },
       ],
+      total: 1,
     });
 
     wrap(<TestHarness />);
     expect(getValues).not.toBeNull();
 
-    const primary = screen.getAllByPlaceholderText(/Select QBO customer/i)[0];
-    await user.click(primary);
-    await user.type(primary, "LIVE");
+    const referenceInput = screen.getByPlaceholderText(/Search customers to add a reference/i);
+    await user.click(referenceInput);
 
-    await waitFor(() => expect(searchMock).toHaveBeenCalled(), { timeout: 4000 });
+    await waitFor(() => expect(listCustomersMock).toHaveBeenCalled(), { timeout: 4000 });
 
-    const option = await screen.findByRole("button", { name: /LIVE TEST CUSTOMER LLC/i });
+    const option = await screen.findByRole("option", { name: /LIVE TEST CUSTOMER LLC/i });
     await user.click(option);
-
-    // Precondition: a real customer was picked.
-    await waitFor(() => expect(getValues!().customer_id).toBe("61111111-1111-4111-8111-111111111111"));
-
-    // Now type over the picked customer — diverging free text must not carry the old FK.
-    await user.type(primary, "X");
 
     await waitFor(() => {
       const v = getValues!();
       expect(v.customer_id).toBe("");
-      expect(v.customer_qbo_id).toBe("");
+      expect(v.notes).toContain("LIVE TEST CUSTOMER LLC");
     });
   });
 });

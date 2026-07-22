@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { legalContractsApi } from "../../../api/legal-contracts";
 import { legalTemplatesApi, type LegalTemplateSummary } from "../../../api/legal-templates";
 import { Button } from "../../../components/Button";
-import { Modal } from "../../../components/Modal";
+import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
@@ -125,7 +125,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
   const templateLabel = (row: LegalTemplateSummary) => `${row.display_name_en} (v${row.version})`;
 
   return (
-    <Modal open={open} onClose={onClose} title="Send Contract">
+    <ParityDrawer open={open} onClose={onClose} title="Send Contract" size="wide">
       <div className="space-y-3">
         <div className="flex flex-wrap gap-2 text-xs">
           {STEPS.map((label, idx) => (
@@ -320,6 +320,6 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
           )}
         </div>
       </div>
-    </Modal>
+    </ParityDrawer>
   );
 }

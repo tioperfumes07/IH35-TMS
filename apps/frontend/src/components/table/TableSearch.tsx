@@ -6,9 +6,17 @@ type Props = {
   onChange: (v: string) => void;
   placeholder?: string;
   className?: string;
+  /** Optional override; defaults to placeholder. Call sites may pass the same string for static a11y guards. */
+  "aria-label"?: string;
 };
 
-export function TableSearch({ value, onChange, placeholder = "Search…", className = "" }: Props) {
+export function TableSearch({
+  value,
+  onChange,
+  placeholder = "Search…",
+  className = "",
+  "aria-label": ariaLabel,
+}: Props) {
   return (
     <div className={`relative ${className}`}>
       <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" aria-hidden />
@@ -17,7 +25,7 @@ export function TableSearch({ value, onChange, placeholder = "Search…", classN
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        aria-label={placeholder}
+        aria-label={ariaLabel ?? placeholder}
         className="h-8 w-full rounded-sm border border-gray-300 pl-7 pr-2 text-[13px]"
       />
     </div>

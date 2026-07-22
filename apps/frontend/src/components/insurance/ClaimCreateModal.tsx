@@ -10,7 +10,7 @@ import {
 import { listLoads } from "../../api/loads";
 import { listDrivers, listUnits } from "../../api/mdata";
 import { getSafetyAccidents } from "../../api/safety";
-import { Modal } from "../Modal";
+import { ParityDrawer } from "../parity/ParityDrawer";
 import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
 
@@ -231,7 +231,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Create Claim">
+    <ParityDrawer open={open} onClose={onClose} title="Create Claim" size="wide">
       <form
         className="space-y-4 text-sm"
         data-testid="claim-create-form"
@@ -452,6 +452,6 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
           </button>
         </div>
       </form>
-    </Modal>
+    </ParityDrawer>
   );
 }

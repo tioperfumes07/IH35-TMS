@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Modal } from "../../components/Modal";
+import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { useInvoiceCreateFromLoad, type LoadStatusFilter } from "../../hooks/useInvoiceCreateFromLoad";
@@ -52,8 +52,8 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
         : "Blank invoice";
 
   return (
-    <Modal open={open} onClose={resetAndClose} title={title}>
-      <div className="space-y-4" data-invoice-create-modal="true">
+    <ParityDrawer open={open} onClose={resetAndClose} title={title} size="wide">
+      <div className="space-y-4" data-invoice-create-modal="true" data-testid="invoice-create-drawer">
         {step === "choose" ? (
           <div className="grid gap-2">
             <button
@@ -202,6 +202,6 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
           </div>
         ) : null}
       </div>
-    </Modal>
+    </ParityDrawer>
   );
 }

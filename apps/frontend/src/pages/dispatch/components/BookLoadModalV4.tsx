@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useForm, type UseFormSetValue } from "react-hook-form";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createDispatchLoad } from "../../../api/dispatch";
 import { ApiError } from "../../../api/client";
 import { getLoad, updateDispatchLoadFull, type LoadDetail } from "../../../api/loads";
 import { buildEditPrefill, buildEditPatchBody } from "./book-load-v4/editLoadMapping";
-import { listVendors } from "../../../api/mdata";
+import { listCustomers, listVendors } from "../../../api/mdata";
 import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
 import { ConfirmDiscardDialog } from "../../../components/dialogs/ConfirmDiscardDialog";
@@ -46,7 +46,7 @@ import {
   sumAccessorialCents,
   type AccessorialRow,
 } from "../../../components/dispatch/accessorial-editor-lib";
-import { QboCombobox } from "../../../components/forms/QboCombobox";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 
@@ -198,6 +198,7 @@ const BOOK_LOAD_CORRECT_DESIGN_CSS = `
 
 export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, templatePrefillJson, editLoadId, prefillUnitId }: Props) {
   const auth = useAuth();
+  const queryClient = useQueryClient();
   const isEditMode = Boolean(editLoadId);
   const { pushToast } = useToast();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -404,8 +405,6 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
   const fuel = form.watch("fuel_surcharge_cents");
   const accessorialRows = form.watch("accessorial_rows");
   const stops = form.watch("stops");
-  const customerQboId = form.watch("customer_qbo_id");
-  const customerName = form.watch("customer_name");
   const loadType = form.watch("load_type");
   const driverPayRatePerMile = form.watch("driver_pay_rate_per_mile");
   const milesShortest = form.watch("miles_shortest");
@@ -425,6 +424,20 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
         .filter((vendor) => (vendor.vendor_type ?? "").toLowerCase().includes("factor") || (vendor.name ?? "").toLowerCase().includes("factor"))
         .map((vendor) => ({ value: vendor.name, label: vendor.name })),
     [factoringVendorsQuery.data?.vendors]
+  );
+
+  const customersQuery = useQuery({
+    queryKey: ["book-load-v4-customers", operatingCompanyId],
+    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId, limit: 200 }),
+    enabled: Boolean(operatingCompanyId),
+    staleTime: 60_000,
+  });
+  const customerOptions = useMemo(
+    () =>
+      (customersQuery.data?.customers ?? [])
+        .map((c) => ({ value: c.id, label: c.name }))
+        .sort((a, b) => a.label.localeCompare(b.label)),
+    [customersQuery.data?.customers]
   );
 
   const sectionTotal = useMemo(
@@ -1013,34 +1026,23 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Customer
-                      <input type="hidden" {...form.register("customer_id", { required: "Select a customer from QuickBooks search results" })} />
+                      <input type="hidden" {...form.register("customer_id", { required: "Select a customer from the list" })} />
                       <div className="mt-0.5">
-                        <QboCombobox
-                          entityType="customer"
-                          operatingCompanyId={operatingCompanyId}
-                          value={customerQboId?.trim() ? customerQboId : null}
-                          displayValue={customerName ?? ""}
-                          allowFreeText={false}
-                          placeholder="Select customer..."
-                          onChange={(qboId, name) => {
-                            if (qboId) {
-                              form.setValue("customer_qbo_id", qboId, { shouldDirty: true, shouldValidate: false });
-                              form.setValue("customer_name", name, { shouldDirty: true, shouldValidate: false });
-                              return;
-                            }
-                            // D3-3: user typed over the field, diverging from the picked row.
-                            // Clear the picked TMS FK (and its QBO mirror id) so a stale customer_id
-                            // can't silently ride along under a different name — otherwise the load
-                            // books under the WRONG customer. This forces a fresh pick; the `required`
-                            // rule on customer_id blocks submit until the user re-selects a real row.
-                            form.setValue("customer_id", "", { shouldDirty: true, shouldValidate: true });
-                            form.setValue("customer_qbo_id", "", { shouldDirty: true, shouldValidate: false });
-                            form.setValue("customer_name", name, { shouldDirty: true, shouldValidate: false });
+                        <ReferenceSelect
+                          value={form.watch("customer_id") || null}
+                          onChange={(next) => {
+                            const match = customerOptions.find((o) => o.value === next);
+                            form.setValue("customer_id", next ?? "", { shouldDirty: true, shouldValidate: true });
+                            form.setValue("customer_name", match?.label ?? "", { shouldDirty: true, shouldValidate: false });
                           }}
-                          onPick={(row) => {
-                            form.setValue("customer_id", row.id, { shouldDirty: true, shouldValidate: true });
-                            form.setValue("customer_qbo_id", row.qbo_id, { shouldDirty: true, shouldValidate: false });
-                            form.setValue("customer_name", row.display_name, { shouldDirty: true, shouldValidate: false });
+                          options={customerOptions}
+                          createKind="customer"
+                          operatingCompanyId={operatingCompanyId}
+                          placeholder="Select customer..."
+                          onOptionCreated={(opt) => {
+                            void queryClient.invalidateQueries({ queryKey: ["book-load-v4-customers"] });
+                            form.setValue("customer_id", opt.value, { shouldDirty: true, shouldValidate: true });
+                            form.setValue("customer_name", opt.label, { shouldDirty: true, shouldValidate: false });
                           }}
                         />
                       </div>

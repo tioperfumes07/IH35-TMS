@@ -15,6 +15,7 @@ import { Button } from "../Button";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../forms/TwoSectionLineEditor";
 import { TotalsStack } from "../forms/shared/TotalsStack";
 import { Combobox } from "../shared/Combobox";
+import { ReferenceSelect, type ReferenceOption } from "../parity/ReferenceSelect";
 import { useToast } from "../Toast";
 import { companyToday } from "../../lib/businessDate";
 import { DatePicker } from "../forms/DatePicker";
@@ -140,7 +141,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
       }),
     [unitsQuery.data?.units]
   );
-  const vendorOptions = useMemo(
+  const vendorOptions: ReferenceOption[] = useMemo(
     () => (vendorsQuery.data?.vendors ?? []).map((row) => ({ value: String(row.id), label: row.name || String(row.id).slice(0, 8) })),
     [vendorsQuery.data?.vendors]
   );
@@ -269,11 +270,13 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
 
             <Field label="Repair Vendor">
               <div data-testid="accident-vendor-picker">
-                <Combobox
+                <ReferenceSelect
                   options={vendorOptions}
                   value={vendorId || null}
                   placeholder="Search vendor…"
                   onChange={(next) => setVendorId(next ?? "")}
+                  createKind="vendor"
+                  operatingCompanyId={operatingCompanyId}
                 />
               </div>
             </Field>

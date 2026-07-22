@@ -9,7 +9,7 @@ import { useBulkPermission } from "../../hooks/useBulkPermission";
 import { useToast } from "../../components/Toast";
 import { useListState, type ListQueryStatus } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
-import { TableSearch } from "../../components/table";
+import { CollapsedListFilters, TableSearch } from "../../components/table";
 import { CustomerDrillModal } from "../../components/customers/CustomerDrillModal";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
@@ -215,21 +215,32 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
           pushToast("You can select up to 200 items at a time. Clear some selections and try again.", "error")
         }
         filterBar={
-          <div className="flex flex-wrap items-center gap-2">
-            <TableSearch value={search} onChange={setSearch} placeholder="Search name, code, contact…" className="w-56" />
-            {filterChips.map((chip) => (
-              <button
-                key={chip.id}
-                type="button"
-                className={`rounded-full px-3 py-1 text-xs font-medium ${
-                  filter === chip.id ? "bg-[#1F2A44] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-                onClick={() => setFilter(chip.id)}
-              >
-                {chip.label}
-              </button>
-            ))}
-          </div>
+          <CollapsedListFilters
+            activeFilterCount={filter !== "all" ? 1 : 0}
+            testIdPrefix="customers"
+            dataAttributes={{ "data-customers-filter-toolbar": "collapsed" }}
+            searchSlot={
+              <TableSearch value={search} onChange={setSearch} placeholder="Search name, code, contact…" className="w-56" />
+            }
+          >
+            <div className="space-y-1.5">
+              <div className="text-xs font-semibold text-gray-600">Quality / status</div>
+              <div className="flex flex-wrap items-center gap-2">
+                {filterChips.map((chip) => (
+                  <button
+                    key={chip.id}
+                    type="button"
+                    className={`rounded-full px-3 py-1 text-xs font-medium ${
+                      filter === chip.id ? "bg-[#1F2A44] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                    onClick={() => setFilter(chip.id)}
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </CollapsedListFilters>
         }
         batchActions={(selected) => {
           const ids = selected.map((c) => c.id);

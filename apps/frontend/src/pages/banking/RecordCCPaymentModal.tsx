@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { categorizeBankTransaction, getPlaidBankAccounts, recordCcPayment } from "../../api/banking";
+import { listCatalogAccounts } from "../../api/catalog-accounts";
+import { listVendors } from "../../api/mdata";
 import { Button } from "../../components/Button";
-import { Modal } from "../../components/Modal";
-import { QboCombobox } from "../../components/forms/QboCombobox";
+import { ParityDrawer } from "../../components/parity/ParityDrawer";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+import { vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
@@ -15,10 +18,6 @@ type Props = {
   operatingCompanyId: string;
   onClose: () => void;
   onSaved: () => void;
-  // banking Categorize inline wiring (HELD): opening this modal FROM a bank-feed row (Transaction type
-  // = "CC Payment") pre-seeds amount/date/from-bank-account from that row, and — once the payment
-  // posts — best-effort marks the originating row categorized. Optional; the existing BankingHome
-  // mount (no prefill props) keeps its blank-form behavior byte-for-byte.
   prefillAmountCents?: number;
   prefillDate?: string;
   prefillMemo?: string;
@@ -30,7 +29,6 @@ function todayIsoDate() {
   return companyToday();
 }
 
-// M-1: amount stays a DOLLAR number → amount_cents = round(amount*100) unchanged (byte-for-byte).
 function centsFromAmount(value: number | null) {
   if (value == null || !Number.isFinite(value)) return 0;
   return Math.round(value * 100);
@@ -51,9 +49,7 @@ export function RecordCCPaymentModal({
 }: Props) {
   const { pushToast } = useToast();
   const [ccVendorId, setCcVendorId] = useState<string | null>(null);
-  const [ccVendorLabel, setCcVendorLabel] = useState("");
   const [liabilityAccountId, setLiabilityAccountId] = useState<string | null>(null);
-  const [liabilityLabel, setLiabilityLabel] = useState("");
   const [fromBankId, setFromBankId] = useState("");
   const [paymentDate, setPaymentDate] = useState(todayIsoDate());
   const [amount, setAmount] = useState<number | null>(null);
@@ -64,9 +60,7 @@ export function RecordCCPaymentModal({
   useEffect(() => {
     if (!open) return;
     setCcVendorId(null);
-    setCcVendorLabel("");
     setLiabilityAccountId(null);
-    setLiabilityLabel("");
     setFromBankId(prefillFromBankId || "");
     setPaymentDate(prefillDate || todayIsoDate());
     setAmount(prefillAmountCents != null && prefillAmountCents > 0 ? prefillAmountCents / 100 : null);
@@ -79,6 +73,17 @@ export function RecordCCPaymentModal({
     queryFn: () => getPlaidBankAccounts(operatingCompanyId),
     enabled: open && Boolean(operatingCompanyId),
   });
+  const vendorsQuery = useQuery({
+    queryKey: ["cc-payment", "vendors", operatingCompanyId],
+    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, limit: 200 }),
+    enabled: open && Boolean(operatingCompanyId),
+  });
+  const accountsQuery = useQuery({
+    queryKey: ["cc-payment", "liability-accounts", operatingCompanyId],
+    queryFn: () => listCatalogAccounts({ status: "active" }),
+    enabled: open && Boolean(operatingCompanyId),
+    staleTime: 60_000,
+  });
 
   const bankAccounts = useMemo(
     () =>
@@ -89,17 +94,40 @@ export function RecordCCPaymentModal({
     [bankAccountsQuery.data?.accounts]
   );
 
-  const vendorKey = (ccVendorId ?? ccVendorLabel).trim();
+  const vendorOptions = useMemo(
+    () => (vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption),
+    [vendorsQuery.data?.vendors]
+  );
+
+  const liabilityOptions = useMemo(
+    () =>
+      (accountsQuery.data?.accounts ?? [])
+        .filter(
+          (acct) =>
+            acct.is_postable &&
+            !acct.deactivated_at &&
+            (acct.account_type === "Liability" ||
+              String(acct.account_subtype ?? "").toLowerCase().includes("credit") ||
+              String(acct.account_name ?? "").toLowerCase().includes("credit card"))
+        )
+        .map((acct) => ({
+          value: acct.id,
+          label: acct.account_number ? `${acct.account_number} · ${acct.account_name}` : acct.account_name,
+          type: acct.account_type ?? undefined,
+        })),
+    [accountsQuery.data?.accounts]
+  );
+
   const amountCents = centsFromAmount(amount);
   const valid =
-    Boolean(vendorKey && liabilityAccountId && fromBankId && paymentDate) && amountCents > 0;
+    Boolean(ccVendorId && liabilityAccountId && fromBankId && paymentDate) && amountCents > 0;
 
   const handleSave = async () => {
-    if (!valid || !liabilityAccountId) return;
+    if (!valid || !liabilityAccountId || !ccVendorId) return;
     setSaving(true);
     try {
       await recordCcPayment(operatingCompanyId, {
-        cc_vendor_id: vendorKey,
+        cc_vendor_id: ccVendorId,
         cc_liability_coa_account_id: liabilityAccountId,
         from_bank_account_id: fromBankId,
         payment_date: paymentDate,
@@ -108,16 +136,12 @@ export function RecordCCPaymentModal({
         statement_period: statementPeriod.trim() || undefined,
       });
       pushToast("Credit card payment recorded", "success");
-      // Best-effort: mark the originating bank-feed row categorized so it clears "for review". Reuses
-      // the EXISTING /categorize poster (no new GL math — the JE already posted via recordCcPayment
-      // above). vendor_id only sent when QboCombobox resolved a real vendors.id (uuid); a free-typed
-      // label still lands in the memo via categorization_memo, never silently dropped.
       if (linkBankTransactionId) {
         try {
           await categorizeBankTransaction(linkBankTransactionId, operatingCompanyId, {
             category_kind: "CC Payment",
             gl_account_id: liabilityAccountId ?? undefined,
-            vendor_id: vendorKey && UUID_RE.test(vendorKey) ? vendorKey : undefined,
+            vendor_id: UUID_RE.test(ccVendorId) ? ccVendorId : undefined,
             memo: memo.trim() || undefined,
           });
         } catch {
@@ -134,35 +158,34 @@ export function RecordCCPaymentModal({
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Pay credit card">
-      <div className="space-y-3 text-sm">
+    <ParityDrawer open={open} onClose={onClose} title="Pay credit card" size="wide">
+      <div className="space-y-3 text-sm" data-testid="record-cc-payment-drawer">
         <label className="block text-xs font-semibold text-gray-700">
-          Credit card vendor (QuickBooks)
+          Credit card vendor
           <div className="mt-1 font-normal">
-            <QboCombobox
-              entityType="vendor"
-              operatingCompanyId={operatingCompanyId}
+            <ReferenceSelect
               value={ccVendorId}
-              displayValue={ccVendorLabel}
-              onChange={(qboId, displayName) => {
-                setCcVendorId(qboId);
-                setCcVendorLabel(displayName);
-              }}
+              onChange={setCcVendorId}
+              options={vendorOptions}
+              createKind="vendor"
+              operatingCompanyId={operatingCompanyId}
+              placeholder="Select vendor…"
+              disabled={!operatingCompanyId}
             />
           </div>
         </label>
         <label className="block text-xs font-semibold text-gray-700">
           Card liability account (COA)
           <div className="mt-1 font-normal">
-            <QboCombobox
-              entityType="account"
-              operatingCompanyId={operatingCompanyId}
+            <ReferenceSelect
               value={liabilityAccountId}
-              displayValue={liabilityLabel}
-              onChange={(qboId, displayName) => {
-                setLiabilityAccountId(qboId);
-                setLiabilityLabel(displayName);
-              }}
+              onChange={setLiabilityAccountId}
+              options={liabilityOptions}
+              createKind="category"
+              addNewLabel="+ Add new account"
+              operatingCompanyId={operatingCompanyId}
+              placeholder="Select liability account…"
+              disabled={!operatingCompanyId}
             />
           </div>
         </label>
@@ -189,7 +212,6 @@ export function RecordCCPaymentModal({
           </label>
           <label className="block">
             Amount (USD)
-            {/* M-1: dollars-mode QBO money entry; amount stays a DOLLAR number → amount_cents byte-for-byte. */}
             <MoneyInput valueDollars={amount} onChangeDollars={setAmount} className="mt-1 w-full" ariaLabel="Amount (USD)" />
           </label>
         </div>
@@ -199,18 +221,17 @@ export function RecordCCPaymentModal({
         </label>
         <label className="block">
           Memo (optional)
-          <textarea className="mt-1 min-h-16 w-full rounded-sm border border-gray-300 px-2 py-1" value={memo} onChange={(e) => setMemo(e.target.value)} />
+          <input className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={memo} onChange={(e) => setMemo(e.target.value)} />
         </label>
-        {!valid ? <p className="text-xs text-slate-700">Select vendor, liability COA, bank account, and enter an amount greater than zero.</p> : null}
-        <div className="flex justify-end gap-2">
-          <Button size="sm" variant="secondary" onClick={onClose}>
+        <div className="flex justify-end gap-2 border-t border-gray-100 pt-3">
+          <Button type="button" variant="secondary" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
-          <Button size="sm" loading={saving} disabled={!valid} onClick={() => void handleSave()}>
-            Record payment
+          <Button type="button" onClick={() => void handleSave()} disabled={!valid || saving}>
+            {saving ? "Saving…" : "Record payment"}
           </Button>
         </div>
       </div>
-    </Modal>
+    </ParityDrawer>
   );
 }

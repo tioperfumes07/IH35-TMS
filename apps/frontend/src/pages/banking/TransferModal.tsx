@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createTransfer, getAllAccounts, markBankTransactionTransfer, type TransferAccountKind } from "../../api/banking";
 import { Button } from "../../components/Button";
-import { Modal } from "../../components/Modal";
+import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
@@ -133,7 +133,21 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved, pref
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Record transfer (bank to bank)">
+    <ParityDrawer
+      open={open}
+      onClose={onClose}
+      title="Record transfer (bank to bank)"
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button size="sm" variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button size="sm" loading={saving} disabled={!valid} onClick={() => void handleSave()}>
+            Save transfer
+          </Button>
+        </div>
+      }
+    >
       <div className="space-y-3 text-sm">
         <label className="block">
           From bank account
@@ -193,15 +207,7 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved, pref
         </label>
         {!dateOk ? <p className="text-xs text-slate-700">Transfer date must be within the last 90 days (not today-future).</p> : null}
         {!valid && dateOk ? <p className="text-xs text-slate-700">Select two different accounts and enter an amount greater than zero.</p> : null}
-        <div className="flex justify-end gap-2">
-          <Button size="sm" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button size="sm" loading={saving} disabled={!valid} onClick={() => void handleSave()}>
-            Save transfer
-          </Button>
-        </div>
       </div>
-    </Modal>
+    </ParityDrawer>
   );
 }

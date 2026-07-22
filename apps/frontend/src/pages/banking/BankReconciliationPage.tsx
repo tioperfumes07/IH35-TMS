@@ -18,6 +18,8 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ActionButton } from "../../components/shared/ActionButton";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+import { coaAccountReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { StatementUpload } from "../../components/banking/StatementUpload";
 import { useToast } from "../../components/Toast";
@@ -85,6 +87,11 @@ export function BankReconciliationPage() {
     queryFn: () => getCoaAccounts(selectedCompanyId ?? undefined).then((res) => res.accounts),
     enabled: Boolean(selectedCompanyId),
   });
+
+  const coaOptions = useMemo(
+    () => (coaQuery.data ?? []).map(coaAccountReferenceOption),
+    [coaQuery.data]
+  );
 
   const worklistQuery = useQuery({
     queryKey: ["bank-recon", "worklist", selectedCompanyId, accountId, periodStart, periodEnd],
@@ -277,14 +284,15 @@ export function BankReconciliationPage() {
                 <div className="text-xs text-gray-700">
                   {selectedRow.transaction_date} · {selectedRow.merchant_name ?? selectedRow.description ?? "-"} · {money(selectedRow.amount_cents)}
                 </div>
-                <SelectCombobox value={varianceAccountId} onChange={(event) => setVarianceAccountId(event.target.value)} className="text-sm">
-                  <option value="">Variance account (required if variance exists)</option>
-                  {(coaQuery.data ?? []).map((account) => (
-                    <option key={String(account.id)} value={String(account.id)}>
-                      {String(account.account_number ?? "")} - {String(account.account_name ?? "")}
-                    </option>
-                  ))}
-                </SelectCombobox>
+                <ReferenceSelect
+                  value={varianceAccountId || null}
+                  onChange={(next) => setVarianceAccountId(next ?? "")}
+                  options={coaOptions}
+                  createKind="account"
+                  operatingCompanyId={selectedCompanyId ?? ""}
+                  placeholder="Variance account (required if variance exists)"
+                  onOptionCreated={() => void coaQuery.refetch()}
+                />
                 <div className="flex flex-wrap items-center gap-2">
                   <ActionButton
                     disabled={acceptMutation.isPending || !isAutoMatchCandidate(selectedRow)}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Modal } from "../../../components/Modal";
+import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { Button } from "../../../components/Button";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
@@ -222,7 +222,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
   const canSubmit = canGoStep3 && signerName.trim().length >= 2 && (signerType === "other" || signerEntityId || signerType === "vendor");
 
   return (
-    <Modal open={open} onClose={onClose} title="Create contract">
+    <ParityDrawer open={open} onClose={onClose} title="Create contract" size="wide">
       <div className="space-y-3">
         <div className="flex flex-wrap gap-1 text-xs">
           {["Template", "Fill", "Party & sign"].map((label, i) => (
@@ -545,6 +545,6 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
           </div>
         )}
       </div>
-    </Modal>
+    </ParityDrawer>
   );
 }

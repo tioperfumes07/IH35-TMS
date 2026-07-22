@@ -10,8 +10,11 @@ import { listCargoClaimReasons } from "../../../api/catalogs-safety";
 import { listCustomers, listDrivers, listUnits } from "../../../api/mdata";
 import { listLoads } from "../../../api/loads";
 import { Button } from "../../../components/Button";
+import { Combobox } from "../../../components/Combobox";
+import { CreateDriverModal } from "../../../components/drivers/CreateDriverModal";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { DatePicker } from "../../../components/forms/DatePicker";
+import { ReferenceSelect, type ReferenceOption } from "../../../components/parity/ReferenceSelect";
 import { formatDateUS } from "../../../lib/formatDate";
 import { companyNow } from "../../../lib/businessDate";
 import { useListState } from "../../../components/list-state";
@@ -65,6 +68,7 @@ export function CargoClaimIntakeSurface({
 }: Props) {
   const queryClient = useQueryClient();
   const [creating, setCreating] = useState(false);
+  const [driverCreateOpen, setDriverCreateOpen] = useState(false);
   const [form, setForm] = useState({ ...emptyForm });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -120,8 +124,17 @@ export function CargoClaimIntakeSurface({
   const listState = useListState(listQuery, rows.length === 0);
   const reasons = reasonsQuery.data?.rows ?? [];
   const customers = customersQuery.data?.customers ?? [];
+  const customerOptions: ReferenceOption[] = customers.map((c) => ({
+    value: c.id,
+    label: c.name,
+    type: c.customer_code ?? undefined,
+  }));
   const loads = loadsQuery.data?.loads ?? [];
   const drivers = driversQuery.data?.drivers ?? [];
+  const driverOptions = drivers.map((d) => ({
+    value: d.id,
+    label: `${d.first_name ?? ""} ${d.last_name ?? ""}`.trim() || d.id,
+  }));
   const allUnits = (unitsQuery.data?.units ?? []) as UnifiedUnit[];
   const trucks = useMemo(() => allUnits.filter((u) => u.kind !== "trailer"), [allUnits]);
   const trailers = useMemo(() => allUnits.filter((u) => u.kind === "trailer"), [allUnits]);
@@ -267,19 +280,17 @@ export function CargoClaimIntakeSurface({
             </label>
             <label className="block">
               <span className={labelSpan}>Claimant (customer)</span>
-              <select
-                className={inputClass}
-                data-testid={`${pageTestId}-claimant`}
-                value={form.claimantCustomerId}
-                onChange={(e) => set({ claimantCustomerId: e.target.value })}
-              >
-                <option value="">— Select customer —</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+              <div className="mt-1" data-testid={`${pageTestId}-claimant`}>
+                <ReferenceSelect
+                  value={form.claimantCustomerId || null}
+                  onChange={(v) => set({ claimantCustomerId: v ?? "" })}
+                  options={customerOptions}
+                  createKind="customer"
+                  operatingCompanyId={operatingCompanyId}
+                  placeholder="Select customer"
+                  disabled={!operatingCompanyId || customersQuery.isLoading}
+                />
+              </div>
             </label>
             <label className="block">
               <span className={labelSpan}>Claim reason</span>
@@ -328,14 +339,19 @@ export function CargoClaimIntakeSurface({
             </label>
             <label className="block">
               <span className={labelSpan}>Driver</span>
-              <select className={inputClass} value={form.driverId} onChange={(e) => set({ driverId: e.target.value })}>
-                <option value="">— Select driver —</option>
-                {drivers.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.first_name} {d.last_name}
-                  </option>
-                ))}
-              </select>
+              <div className="mt-1">
+                <Combobox
+                  options={driverOptions}
+                  value={form.driverId || null}
+                  onChange={(v) => set({ driverId: v ?? "" })}
+                  placeholder="Select driver"
+                  loading={driversQuery.isLoading}
+                  allowAddNew={{
+                    label: "+ Create driver",
+                    onAdd: () => setDriverCreateOpen(true),
+                  }}
+                />
+              </div>
             </label>
             <label className="block">
               <span className={labelSpan}>Unit (truck)</span>
@@ -453,6 +469,17 @@ export function CargoClaimIntakeSurface({
           </div>
         </div>
       ) : null}
+
+      <CreateDriverModal
+        open={driverCreateOpen}
+        companyId={operatingCompanyId}
+        onClose={() => setDriverCreateOpen(false)}
+        onCreated={(driverId) => {
+          set({ driverId });
+          setDriverCreateOpen(false);
+          void driversQuery.refetch();
+        }}
+      />
     </div>
   );
 }

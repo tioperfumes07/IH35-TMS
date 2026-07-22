@@ -14,6 +14,7 @@ import {
 import { listUnits, listVendors, updateVendor } from "../../api/mdata";
 import { listLoads } from "../../api/loads";
 import { Combobox } from "../../components/shared/Combobox";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import {
   createDriverVendorMerge,
   createEquipmentLoan,
@@ -742,11 +743,15 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                 onChange={(v) => setLoanEquipmentId(v ?? "")}
                 placeholder="Select equipment"
               />
-              <Combobox
-                options={(vendorsQuery.data ?? []).map((v) => ({ value: v.id, label: v.name }))}
+              <ReferenceSelect
                 value={loanLenderVendorId || null}
                 onChange={(v) => setLoanLenderVendorId(v ?? "")}
+                options={(vendorsQuery.data ?? []).map((v) => ({ value: v.id, label: v.name }))}
+                createKind="vendor"
+                operatingCompanyId={companyId}
                 placeholder="Select lender vendor"
+                disabled={!companyId}
+                onOptionCreated={() => void queryClient.invalidateQueries({ queryKey: ["factoring", "vendors", companyId] })}
               />
               {/* M-1 (GUARD FAIL #3): was a raw "principal cents" text input (350 = $3.50). cents-mode MoneyInput:
                   operator types dollars; principal_cents = Number(loanPrincipalCents) stored unchanged. */}

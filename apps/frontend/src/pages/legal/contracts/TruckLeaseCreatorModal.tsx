@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { legalContractsApi } from "../../../api/legal-contracts";
 import { truckLeaseApi } from "../../../api/truck-lease";
 import { Button } from "../../../components/Button";
+import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
 
 type Props = {
@@ -121,22 +122,19 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4">
-      <div className="w-full max-w-3xl rounded-lg border border-gray-200 bg-white shadow-xl my-8">
-        <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
-          <div>
-            <h2 className="text-base font-semibold text-gray-900">New Truck Lease Agreement</h2>
-            <p className="text-xs text-gray-500">Commercial operating lease — no purchase option. Saves as draft, then send to signer.</p>
-          </div>
-          <button type="button" onClick={onClose} aria-label="Close truck lease creator" className="rounded-sm p-1 text-gray-500 hover:bg-gray-100">✕</button>
-        </div>
-
+    <ParityDrawer
+      open={open}
+      onClose={onClose}
+      title="New Truck Lease Agreement"
+      subtitle="Commercial operating lease — no purchase option. Saves as draft, then send to signer."
+      size="wide"
+    >
         {ensureQuery.isLoading ? (
-          <div className="px-5 py-8 text-center text-sm text-gray-500">Preparing template…</div>
+          <div className="px-1 py-8 text-center text-sm text-gray-500">Preparing template…</div>
         ) : ensureQuery.isError ? (
-          <div className="px-5 py-8 text-center text-sm text-red-600">Template unavailable. LEGAL_CONTRACTS_ENABLED may be off.</div>
+          <div className="px-1 py-8 text-center text-sm text-red-600">Template unavailable. LEGAL_CONTRACTS_ENABLED may be off.</div>
         ) : (
-          <div className="space-y-5 px-5 py-4">
+          <div className="space-y-5">
 
             {/* Lessor */}
             <section>
@@ -244,7 +242,6 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
             </div>
           </div>
         )}
-      </div>
-    </div>
+    </ParityDrawer>
   );
 }

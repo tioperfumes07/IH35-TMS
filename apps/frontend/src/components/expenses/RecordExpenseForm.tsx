@@ -336,23 +336,23 @@ export function RecordExpenseForm({
       <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("payment-account")}>
         Payment account *
         <div className="mt-1">
-          <SelectCombobox
-            id={fieldId("payment-account")}
-            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
-            value={values.paymentAccountId}
-            onChange={(event) => {
-              const nextId = event.target.value;
-              const match = paymentAccountOptions.find((row) => row.id === nextId);
-              setValues((prev) => ({ ...prev, paymentAccountId: nextId, paymentAccountLabel: match?.label ?? "" }));
+          <ReferenceSelect
+            value={values.paymentAccountId || null}
+            onChange={(next) => {
+              const match = paymentAccountOptions.find((row) => row.id === (next ?? ""));
+              setValues((prev) => ({
+                ...prev,
+                paymentAccountId: next ?? "",
+                paymentAccountLabel: match?.label ?? "",
+              }));
             }}
-          >
-            <option value="">Select bank/cash account…</option>
-            {paymentAccountOptions.map((row) => (
-              <option key={row.id} value={row.id}>
-                {row.label}
-              </option>
-            ))}
-          </SelectCombobox>
+            options={paymentAccountOptions.map((row) => ({ value: row.id, label: row.label }))}
+            createKind="category"
+            addNewLabel="+ Add new account"
+            operatingCompanyId={operatingCompanyId}
+            placeholder="Select bank/cash account…"
+            disabled={!operatingCompanyId}
+          />
         </div>
       </label>
 

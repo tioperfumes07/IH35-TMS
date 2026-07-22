@@ -13,11 +13,12 @@ import {
   type WorkOrderType,
 } from "../../../api/maintenance";
 import { ApiError } from "../../../api/client";
+import { listVendors } from "../../../api/mdata";
 import { companyToday } from "../../../lib/businessDate";
 import { BILL_TERMS_OPTIONS } from "../../../lib/billTermsLabel";
 import { Button } from "../../../components/Button";
 import { Combobox } from "../../../components/shared/Combobox";
-import { QboCombobox } from "../../../components/forms/QboCombobox";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
 import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
@@ -505,6 +506,14 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       }),
     enabled: Boolean(operatingCompanyId && serviceDate && (driverId || unitId)),
   });
+  const vendorsQuery = useQuery({
+    queryKey: ["maintenance", "vendors", operatingCompanyId],
+    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, status: "active", limit: 200 }),
+    enabled: open && Boolean(operatingCompanyId),
+  });
+  const vendorOptions = (vendorsQuery.data?.vendors ?? [])
+    .filter((v) => !v.deactivated_at)
+    .map((v) => ({ value: v.id, label: v.name }));
 
   useEffect(() => {
     if (!open) return;
@@ -970,16 +979,23 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
               <input type="hidden" {...form.register("vendor_id")} />
               <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
                 <FieldV5 label="Vendor (QuickBooks list)">
-                  <QboCombobox
-                    entityType="vendor"
-                    operatingCompanyId={operatingCompanyId}
+                  <ReferenceSelect
                     value={form.watch("vendor_id") || null}
-                    displayValue={form.watch("vendor_display_name") || ""}
-                    onChange={(qboId, displayName) => {
-                      form.setValue("vendor_id", qboId || "", { shouldDirty: true });
-                      form.setValue("vendor_display_name", displayName, { shouldDirty: true });
+                    onChange={(next) => {
+                      form.setValue("vendor_id", next ?? "", { shouldDirty: true });
+                      form.setValue("external_vendor_id", next ?? "", { shouldDirty: true });
+                      const match = vendorOptions.find((o) => o.value === next);
+                      form.setValue("vendor_display_name", match?.label ?? "", { shouldDirty: true });
                     }}
+                    options={vendorOptions}
+                    createKind="vendor"
+                    operatingCompanyId={operatingCompanyId}
                     placeholder="Search vendor…"
+                    onOptionCreated={(opt) => {
+                      void vendorsQuery.refetch();
+                      form.setValue("vendor_display_name", opt.label, { shouldDirty: true });
+                      form.setValue("external_vendor_id", opt.value, { shouldDirty: true });
+                    }}
                   />
                 </FieldV5>
                 <FieldV5 label="Vendor invoice #"><input {...form.register("vendor_invoice_number")} className={FLD} /></FieldV5>
