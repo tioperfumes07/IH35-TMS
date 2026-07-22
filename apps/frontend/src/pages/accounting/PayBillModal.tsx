@@ -69,11 +69,29 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
   const needsBankAccount = paymentMethod === "check" || paymentMethod === "ach" || paymentMethod === "wire" || paymentMethod === "credit_card";
 
   return (
-    <ParityDrawer open={open} onClose={onClose} title="Pay Bill" size="wide">
+    <ParityDrawer
+      open={open}
+      onClose={onClose}
+      title="Pay Bill"
+      size="wide"
+      footer={
+        bill ? (
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" form="pay-bill-form" disabled={saving}>
+              {saving ? "Paying..." : "Record Payment"}
+            </Button>
+          </div>
+        ) : undefined
+      }
+    >
       {!bill ? (
         <div className="text-sm text-gray-600">No bill selected.</div>
       ) : (
         <form
+          id="pay-bill-form"
           className="space-y-3"
           onSubmit={async (event) => {
             event.preventDefault();
@@ -213,14 +231,6 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
             </div>
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? "Paying..." : "Record Payment"}
-            </Button>
-          </div>
         </form>
       )}
     </ParityDrawer>
