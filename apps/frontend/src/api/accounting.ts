@@ -581,26 +581,6 @@ export function getExpense(id: string, operatingCompanyId: string) {
   );
 }
 
-export type JournalEntrySourceLink = {
-  journal_entry_posting_id: string;
-  line_sequence: number;
-  source_transaction_type: string | null;
-  source_transaction_id: string | null;
-  source_transaction_line_id: string | null;
-  posting_batch_id: string | null;
-  source_link_id: string | null;
-  linked_object_type: string | null;
-  linked_object_id: string | null;
-  relationship_role: string | null;
-  source_link_created_at: string | null;
-};
-
-export function getJournalEntrySourceLinks(id: string, operatingCompanyId: string) {
-  return apiRequest<{ journal_entry_id: string; source_links: JournalEntrySourceLink[] }>(
-    withCompany(`/api/v1/accounting/journal-entries/${id}/source-links`, operatingCompanyId)
-  );
-}
-
 export function listBills(
   operatingCompanyId: string,
   params: {
