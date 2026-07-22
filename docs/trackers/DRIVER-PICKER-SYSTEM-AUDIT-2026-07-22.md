@@ -15,6 +15,12 @@ They are **not** the whole Law §9 economic FAIL board. Paths Expense / Bill / S
 | Driver → `DriverPickerWithCreate` | **YES** |
 | Unit → `CreateUnitModal` | **YES** |
 
+| Metric | Count |
+|---|---|
+| **TOTAL hits** | **69** |
+
+_Count produced by `node scripts/inventory-driver-pickers.mjs` (code scan), not hand-typed. Re-run it to refresh; the classification tables below are hand-curated and are NOT regenerated._
+
 ## Shared component
 
 `apps/frontend/src/components/drivers/DriverPickerWithCreate.tsx` — Combobox + `allowAddNew: "+ Create driver"` + `CreateDriverModal` (limit 200, Active). Use wherever practical. Specialized UIs (`InlineDriverPicker`, `DriverAutocomplete`, `AssignDriverDropdown`) wire CreateDriverModal into the host so consumers inherit.
