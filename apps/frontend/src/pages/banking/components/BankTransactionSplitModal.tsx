@@ -14,9 +14,13 @@
 // trucking-link fields (Driver/Unit/Trailer/Trip) tucked behind a per-line "Add detail/links" disclosure.
 // NON-FINANCIAL: this only changes what renders. commitSplit/save/toPayload logic and payload field names
 // are untouched — every field still writes through the existing `patchLine`.
+//
+// CHROME-12: outer shell swapped from centered Modal to ParityDrawer (QBO side-panel chrome) — the
+// CHROME-11 leftover note named this file explicitly. Presentational only; BANK_TX_SPLIT_ENABLED gating
+// and every payload/handler above is untouched.
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Modal } from "../../../components/Modal";
+import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { Button } from "../../../components/Button";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
@@ -240,7 +244,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Split transaction" wide>
+    <ParityDrawer open={open} onClose={onClose} title="Split transaction" size="wide">
       {!transaction ? null : (
         <div className="space-y-3 text-xs text-gray-800">
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-gray-50 p-2">
@@ -496,6 +500,6 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
           </div>
         </div>
       )}
-    </Modal>
+    </ParityDrawer>
   );
 }
