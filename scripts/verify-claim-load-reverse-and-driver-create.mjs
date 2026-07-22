@@ -157,8 +157,8 @@ function selftest() {
     ["reverseSection", (f) => { f.reverseSection = f.reverseSection.replace("load_id: string", "loadId: string"); }, "Filter union must accept { load_id: string }"],
     ["loadDetailDrawer", (f) => { f.loadDetailDrawer = f.loadDetailDrawer.replaceAll("InsuranceClaimsReverseSection", "SomethingElse"); }, "must mount InsuranceClaimsReverseSection"],
     ["loadDetailDrawer", (f) => { f.loadDetailDrawer = f.loadDetailDrawer.replace("load_id: load.id", "unit_id: load.id"); }, "must filter by load_id: load.id"],
-    ["claimCreate", (f) => { f.claimCreate = f.claimCreate.replace('shell="drawer"', ""); }, 'shell="drawer"'],
-    ["claimCreate", (f) => { f.claimCreate = f.claimCreate.replace("+ Create driver", "+ Add driver"); }, '"+ Create driver" allowAddNew row'],
+    ["claimCreate", (f) => { f.claimCreate = f.claimCreate.replace('shell="drawer"', ""); }, "DriverPickerWithCreate shell=\"drawer\""],
+    ["claimCreate", (f) => { f.claimCreate = f.claimCreate.replace("DriverPickerWithCreate", "BareDriverSelect"); }, "DriverPickerWithCreate shell=\"drawer\""],
     ["claimCreate", (f) => { f.claimCreate += `\n<select value={form.driver_id} />`; }, "regressed to a bare <select>"],
   ];
 
