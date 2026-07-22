@@ -91,11 +91,16 @@ export async function enrichInvoice(client: { query: (sql: string, values?: unkn
         c.customer_name,
         fa.display_id AS factoring_display_id,
         COALESCE(l.customer_chargeback_requested, false) AS source_load_chargeback_requested,
-        l.customer_chargeback_reason AS source_load_chargeback_reason
+        l.customer_chargeback_reason AS source_load_chargeback_reason,
+        l.load_number AS source_load_number
       FROM accounting.invoices i
-      JOIN mdata.customers c ON c.id = i.customer_id
+      JOIN mdata.customers c
+        ON c.id = i.customer_id
+       AND c.operating_company_id = i.operating_company_id
       LEFT JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
-      LEFT JOIN mdata.loads l ON l.id = i.source_load_id
+      LEFT JOIN mdata.loads l
+        ON l.id = i.source_load_id
+       AND l.operating_company_id = i.operating_company_id
       WHERE i.id = $1
       LIMIT 1
     `,
@@ -105,12 +110,21 @@ export async function enrichInvoice(client: { query: (sql: string, values?: unkn
   if (!invoice) return null;
   const linesRes = await client.query(
     `
-      SELECT *
-      FROM accounting.invoice_lines
-      WHERE invoice_id = $1
-      ORDER BY display_order ASC, created_at ASC
+      SELECT
+        il.*,
+        a.account_number AS income_account_number,
+        a.account_name AS income_account_name
+      FROM accounting.invoice_lines il
+      JOIN accounting.invoices i
+        ON i.id = il.invoice_id
+      LEFT JOIN catalogs.accounts a
+        ON a.id = il.account_id
+       AND a.operating_company_id = i.operating_company_id
+      WHERE il.invoice_id = $1
+        AND i.operating_company_id = $2
+      ORDER BY il.display_order ASC, il.created_at ASC
     `,
-    [invoiceId]
+    [invoiceId, invoice.operating_company_id]
   );
   const applicationsRes = await client.query(
     `
@@ -123,10 +137,42 @@ export async function enrichInvoice(client: { query: (sql: string, values?: unkn
     `,
     [invoiceId]
   );
+  // Law §9 forward: invoice → GL JE (+ payment JEs applied to this invoice). Read-only; no new GL math.
+  const journalEntriesRes = await client.query(
+    `
+      SELECT DISTINCT ON (je.id)
+        je.id::text AS journal_entry_id,
+        je.entry_date::text AS entry_date,
+        je.status,
+        je.source,
+        jep.source_transaction_type,
+        jep.source_transaction_id,
+        jep.posting_batch_id::text AS posting_batch_id
+      FROM accounting.journal_entry_postings jep
+      JOIN accounting.journal_entries je
+        ON je.id = jep.journal_entry_uuid
+       AND je.operating_company_id = jep.operating_company_id
+      WHERE jep.operating_company_id = $2
+        AND (
+          (jep.source_transaction_type = 'invoice' AND jep.source_transaction_id = $1::text)
+          OR (
+            jep.source_transaction_type = 'customer_payment'
+            AND jep.source_transaction_id IN (
+              SELECT pa.payment_id::text
+              FROM accounting.payment_applications pa
+              WHERE pa.invoice_id = $1::uuid
+            )
+          )
+        )
+      ORDER BY je.id, je.entry_date DESC, jep.line_sequence ASC
+    `,
+    [invoiceId, invoice.operating_company_id]
+  );
   return {
     ...invoice,
     lines: linesRes.rows,
     payment_applications: applicationsRes.rows,
+    journal_entries: journalEntriesRes.rows,
   };
 }
 
@@ -731,11 +777,15 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
                 NULLIF(TRIM(i.ar_email_snapshot), '')
               ) AS customer_email
             FROM accounting.invoices i
-            JOIN mdata.customers c ON c.id = i.customer_id
+            JOIN mdata.customers c
+              ON c.id = i.customer_id
+             AND c.operating_company_id = i.operating_company_id
+             AND c.operating_company_id = $2
             WHERE i.id = $1
+              AND i.operating_company_id = $2
             LIMIT 1
           `,
-          [params.data.id]
+          [params.data.id, query.data.operating_company_id]
         );
         const customerEmail = notifyRes.rows[0]?.customer_email ? String(notifyRes.rows[0].customer_email).trim() : "";
         if (customerEmail) {

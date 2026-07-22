@@ -17,8 +17,21 @@ export type InvoiceLine = {
   line_total_cents: number;
   qbo_class_snapshot: string | null;
   qbo_item_id: string | null;
+  account_id?: string | null;
+  income_account_number?: string | null;
+  income_account_name?: string | null;
   display_order: number;
   created_at: string;
+};
+
+export type InvoiceJournalEntryLink = {
+  journal_entry_id: string;
+  entry_date: string | null;
+  status: string | null;
+  source: string | null;
+  source_transaction_type: string | null;
+  source_transaction_id: string | null;
+  posting_batch_id: string | null;
 };
 
 export type Invoice = {
@@ -29,6 +42,7 @@ export type Invoice = {
   display_id: string;
   status: InvoiceStatus;
   source_load_id: string | null;
+  source_load_number?: string | null;
   source_load_chargeback_requested?: boolean;
   source_load_chargeback_reason?: string | null;
   issue_date: string;
@@ -62,6 +76,8 @@ export type Invoice = {
     payment_display_id?: string | null;
     payment_date?: string | null;
   }>;
+  /** GL journal entries posted from this invoice and/or customer payments applied to it (Law §9). */
+  journal_entries?: InvoiceJournalEntryLink[];
 };
 
 export type FactoringAdvance = {
@@ -957,6 +973,27 @@ export function listJournalEntries(
 
 export function getJournalEntry(id: string, operatingCompanyId: string) {
   return apiRequest<JournalEntry>(withCompany(`/api/v1/accounting/journal-entries/${id}`, operatingCompanyId));
+}
+
+/** Reverse drill-through: which source document(s) posted this JE (Law §9). */
+export type JournalEntrySourceLink = {
+  journal_entry_posting_id: string;
+  line_sequence: number;
+  source_transaction_type: string | null;
+  source_transaction_id: string | null;
+  source_transaction_line_id: string | null;
+  posting_batch_id: string | null;
+  source_link_id: string | null;
+  linked_object_type: string | null;
+  linked_object_id: string | null;
+  relationship_role: string | null;
+  source_link_created_at: string | null;
+};
+
+export function getJournalEntrySourceLinks(id: string, operatingCompanyId: string) {
+  return apiRequest<{ journal_entry_id: string; source_links: JournalEntrySourceLink[] }>(
+    withCompany(`/api/v1/accounting/journal-entries/${id}/source-links`, operatingCompanyId)
+  );
 }
 
 export function createJournalEntry(

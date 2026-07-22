@@ -2,7 +2,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { addInvoiceLine, deleteInvoiceLine, getInvoice, patchInvoiceLine, sendInvoice, voidInvoice, type InvoiceLine } from "../../api/accounting";
 import { resolveApiUrl } from "../../api/client";
 import { Button } from "../../components/Button";
@@ -139,6 +139,28 @@ export function InvoiceDetailPage() {
   const lineColumns: Array<ParityColumn<InvoiceLine>> = [
     { key: "line_type", label: "Type", sortable: true },
     { key: "description", label: "Description", sortable: true },
+    {
+      key: "account_id",
+      label: "Income account",
+      sortable: true,
+      sortValue: (line) => line.income_account_name ?? line.account_id ?? "",
+      render: (line) => {
+        if (!line.account_id) return <span className="text-gray-400">—</span>;
+        const label =
+          line.income_account_number && line.income_account_name
+            ? `${line.income_account_number} - ${line.income_account_name}`
+            : line.income_account_name ?? line.account_id.slice(0, 8);
+        return (
+          <Link
+            to={`/accounting/chart-of-accounts/register/${line.account_id}`}
+            className="text-slate-700 hover:underline"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {label}
+          </Link>
+        );
+      },
+    },
     { key: "quantity", label: "Qty", sortable: true },
     { key: "unit_amount_cents", label: "Unit", sortable: true, render: (line) => money(line.unit_amount_cents) },
     { key: "line_total_cents", label: "Total", sortable: true, render: (line) => money(line.line_total_cents) },
@@ -281,7 +303,15 @@ export function InvoiceDetailPage() {
           <DataPanelRow>
             <span className="text-xs text-gray-600">Source Load</span>
             <span className="text-sm text-gray-900">
-              <EntityLink kind="load" id={invoice.source_load_id ?? undefined} label={invoice.source_load_id ? invoice.source_load_id.slice(0, 8) : "-"} />
+              <EntityLink
+                kind="load"
+                id={invoice.source_load_id ?? undefined}
+                label={
+                  invoice.source_load_id
+                    ? invoice.source_load_number ?? invoice.source_load_id.slice(0, 8)
+                    : "-"
+                }
+              />
             </span>
           </DataPanelRow>
         </DataPanel>
@@ -329,6 +359,31 @@ export function InvoiceDetailPage() {
           </div>
         </DataPanel>
       </div>
+
+      <DataPanel title="GL / Journal entries">
+        {(invoice.journal_entries ?? []).length === 0 ? (
+          <div className="text-sm text-gray-600" data-testid="invoice-journal-entries-empty">
+            No journal entries linked yet (unposted or posting reversed).
+          </div>
+        ) : (
+          <div className="space-y-2" data-testid="invoice-journal-entries">
+            {(invoice.journal_entries ?? []).map((je) => (
+              <DataPanelRow key={`${je.journal_entry_id}-${je.source_transaction_type}`}>
+                <span className="text-xs text-gray-600">
+                  <span className="mr-2 font-semibold uppercase tracking-wide text-gray-500">
+                    {je.source_transaction_type ?? "source"}
+                  </span>
+                  <EntityLink kind="journal_entry" id={je.journal_entry_id} label={je.journal_entry_id.slice(0, 8)} />
+                </span>
+                <span className="text-sm text-gray-900">
+                  {je.entry_date ? formatDateUS(je.entry_date) : "—"}
+                  {je.status ? ` · ${je.status}` : ""}
+                </span>
+              </DataPanelRow>
+            ))}
+          </div>
+        )}
+      </DataPanel>
 
       {invoice.factoring_advance_id ? (
         <DataPanel title="Factoring">

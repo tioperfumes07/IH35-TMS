@@ -1,13 +1,20 @@
 import { formatDateUS } from "../../../lib/formatDate";
+import type { ReactNode } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useParams } from "react-router-dom";
-import { getJournalEntry, type JournalEntryPosting } from "../../../api/accounting";
+import {
+  getJournalEntry,
+  getJournalEntrySourceLinks,
+  type JournalEntryPosting,
+  type JournalEntrySourceLink,
+} from "../../../api/accounting";
 import { Button } from "../../../components/Button";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { DataPanel } from "../../../components/layout/DataPanel";
 import { DataPanelRow } from "../../../components/layout/DataPanelRow";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
 
@@ -19,6 +26,89 @@ const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi
 function humanMemo(memo: string | null | undefined): string {
   if (!memo) return "—";
   return memo.replace(UUID_RE, (uuid) => uuid.slice(0, 8));
+}
+
+function postingEntityKind(type: string | null | undefined): EntityKind | null {
+  switch ((type ?? "").toLowerCase()) {
+    case "invoice":
+      return "invoice";
+    case "customer_payment":
+    case "payment":
+    case "bill_payment":
+      return "payment";
+    case "bill":
+      return "bill";
+    case "expense":
+      return "expense";
+    case "settlement":
+    case "driver_settlement":
+    case "driver_settlement_deduction":
+      return "settlement";
+    case "journal_entry":
+      return "journal_entry";
+    case "load":
+      return "load";
+    case "vendor":
+      return "vendor";
+    case "customer":
+      return "customer";
+    case "unit":
+      return "unit";
+    case "driver":
+      return "driver";
+    case "work_order":
+      return "work_order";
+    case "factoring_advance":
+      return "factoring_advance";
+    case "bank_transaction":
+    case "bank_categorization":
+      return "bank_transaction";
+    case "claim":
+      return "claim";
+    case "matter":
+      return "matter";
+    case "liability":
+      return "liability";
+    default:
+      return null;
+  }
+}
+
+function SourceEntityLink({
+  type,
+  id,
+  label,
+}: {
+  type: string | null | undefined;
+  id: string | null | undefined;
+  label?: ReactNode;
+}) {
+  const kind = postingEntityKind(type);
+  if (!kind || !id) return <>{label ?? id ?? "—"}</>;
+  return <EntityLink kind={kind} id={id} label={label ?? id.slice(0, 8)} />;
+}
+
+function uniqueSourceRows(rows: JournalEntrySourceLink[]): Array<{
+  key: string;
+  type: string;
+  id: string;
+}> {
+  const seen = new Set<string>();
+  const out: Array<{ key: string; type: string; id: string }> = [];
+  for (const row of rows) {
+    const candidates: Array<{ type: string | null; id: string | null }> = [
+      { type: row.source_transaction_type, id: row.source_transaction_id },
+      { type: row.linked_object_type, id: row.linked_object_id },
+    ];
+    for (const candidate of candidates) {
+      if (!candidate.type || !candidate.id) continue;
+      const key = `${candidate.type}:${candidate.id}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ key, type: candidate.type, id: candidate.id });
+    }
+  }
+  return out;
 }
 
 // Display-only ParityTable migration: columns/order/formatting mirror the former hand-rolled
@@ -38,10 +128,14 @@ const postingColumns: Array<ParityColumn<JournalEntryPosting>> = [
     sortValue: (posting) =>
       `${posting.account_number ? `${posting.account_number} - ` : ""}${posting.account_name || posting.account_id}`,
     render: (posting) => (
-      <>
+      <Link
+        to={`/accounting/chart-of-accounts/register/${posting.account_id}`}
+        className="text-slate-700 hover:underline"
+        onClick={(event) => event.stopPropagation()}
+      >
         {posting.account_number ? `${posting.account_number} - ` : ""}
         {posting.account_name || posting.account_id}
-      </>
+      </Link>
     ),
   },
   {
@@ -88,6 +182,12 @@ export function JournalEntryDetailPage() {
     enabled: Boolean(selectedCompanyId && id),
   });
 
+  const sourceLinksQuery = useQuery({
+    queryKey: ["accounting", "journal-entry-source-links", selectedCompanyId, id],
+    queryFn: () => getJournalEntrySourceLinks(id, selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId && id),
+  });
+
   if (detailQuery.isLoading) {
     return <div className="text-sm text-gray-500">Loading journal entry...</div>;
   }
@@ -107,6 +207,7 @@ export function JournalEntryDetailPage() {
 
   const entry = detailQuery.data;
   const postings = entry.postings ?? [];
+  const sourceRows = uniqueSourceRows(sourceLinksQuery.data?.source_links ?? []);
 
   return (
     <AccountingSubNavWrapper>
@@ -146,6 +247,23 @@ export function JournalEntryDetailPage() {
           <span className="text-xs font-semibold text-gray-600">QBO Link</span>
           <span className="text-sm text-gray-900">{entry.qbo_journal_entry_id || "Not linked"}</span>
         </DataPanelRow>
+      </DataPanel>
+
+      <DataPanel title="Source links">
+        {sourceLinksQuery.isError ? (
+          <p className="text-sm text-red-600">Could not load source links.</p>
+        ) : sourceRows.length === 0 ? (
+          <p className="text-sm text-gray-500">No source transactions linked to this journal entry.</p>
+        ) : (
+          <ul className="space-y-1 text-sm text-gray-900" data-testid="journal-entry-source-links">
+            {sourceRows.map((row) => (
+              <li key={row.key} className="flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">{row.type}</span>
+                <SourceEntityLink type={row.type} id={row.id} label={row.id.slice(0, 8)} />
+              </li>
+            ))}
+          </ul>
+        )}
       </DataPanel>
 
       <DataPanel title="Postings">
