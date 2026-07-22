@@ -5,6 +5,8 @@ import { getWoCostContext } from "../../api/maintenance";
 import { listUnits, listVendors } from "../../api/mdata";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
 import { Button } from "../Button";
+import { Combobox } from "../Combobox";
+import { CreateUnitModal } from "../fleet/CreateUnitModal";
 import { DatePicker } from "../forms/DatePicker";
 import { MoneyInput } from "../forms/MoneyInput";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
@@ -56,6 +58,7 @@ export function RecordExpenseForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
+  const [unitCreateOpen, setUnitCreateOpen] = useState(false);
 
   // Prefill unit from WO context without clobbering a user picker change.
   useEffect(() => {
@@ -94,6 +97,19 @@ export function RecordExpenseForm({
   const vendorOptions = useMemo(
     () => (vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption),
     [vendorsQuery.data?.vendors]
+  );
+
+  // Unit picker — same "Combobox + canonical CreateUnitModal" pattern as VendorBillForm's Driver/Unit
+  // (no createKind="unit" on ReferenceSelect yet; CreateUnitModal is the single canonical fleet-roster
+  // unit creator — writes mdata.units, same table unitsQuery reads, so a created unit selects +
+  // survives reload).
+  const unitOptions = useMemo(
+    () =>
+      ((unitsQuery.data?.units ?? []) as Array<Record<string, unknown>>).map((unit) => ({
+        value: String(unit.id ?? ""),
+        label: String(unit.unit_number ?? unit.id ?? ""),
+      })),
+    [unitsQuery.data?.units]
   );
 
   // Payment account = the cash/bank account the expense was paid FROM → postable Asset accounts.
@@ -168,6 +184,7 @@ export function RecordExpenseForm({
   const fieldId = (name: string) => `${idPrefix}-${name}`;
 
   return (
+    <>
     <form className="space-y-3" onSubmit={onSubmit} data-testid="record-expense-form">
       {linkedWoDisplayId ? (
         <div className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700">
@@ -274,28 +291,25 @@ export function RecordExpenseForm({
       <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("unit")}>
         Truck/Unit (optional)
         <div className="mt-1">
-          <SelectCombobox
-            id={fieldId("unit")}
-            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
-            value={values.unitId}
-            onChange={(event) => {
-              const nextId = event.target.value;
-              const units = (unitsQuery.data?.units ?? []) as Array<Record<string, unknown>>;
-              const match = units.find((row) => String(row.id ?? "") === nextId);
+          <Combobox
+            options={unitOptions}
+            value={values.unitId || null}
+            onChange={(next) => {
+              const match = unitOptions.find((row) => row.value === (next ?? ""));
               setValues((prev) => ({
                 ...prev,
-                unitId: nextId,
-                unitLabel: match ? String(match.unit_number ?? match.id ?? "") : "",
+                unitId: next ?? "",
+                unitLabel: match?.label ?? "",
               }));
             }}
-          >
-            <option value="">Select unit…</option>
-            {((unitsQuery.data?.units ?? []) as Array<Record<string, unknown>>).map((unit) => (
-              <option key={String(unit.id ?? "")} value={String(unit.id ?? "")}>
-                {String(unit.unit_number ?? unit.id ?? "")}
-              </option>
-            ))}
-          </SelectCombobox>
+            placeholder="Select unit…"
+            loading={unitsQuery.isLoading}
+            allowClear
+            allowAddNew={{
+              label: "+ Create unit",
+              onAdd: () => setUnitCreateOpen(true),
+            }}
+          />
         </div>
       </label>
 
@@ -381,5 +395,18 @@ export function RecordExpenseForm({
         </div>
       ) : null}
     </form>
+    <CreateUnitModal
+      open={unitCreateOpen}
+      operatingCompanyId={operatingCompanyId}
+      onClose={() => setUnitCreateOpen(false)}
+      onCreated={(createdId) => {
+        // unitLabel resolves via the existing "resolve unit label for memo" effect above once
+        // unitsQuery refetches and the new row is present (same pattern as WO-context prefill).
+        setValues((prev) => ({ ...prev, unitId: createdId, unitLabel: "" }));
+        setUnitCreateOpen(false);
+        void unitsQuery.refetch();
+      }}
+    />
+    </>
   );
 }

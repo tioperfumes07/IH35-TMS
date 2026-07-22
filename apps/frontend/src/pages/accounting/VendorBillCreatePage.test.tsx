@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement } from "react";
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { VendorBillForm } from "../../components/accounting/VendorBillForm";
 import { ToastProvider } from "../../components/Toast";
@@ -13,6 +14,11 @@ vi.mock("../../api/mdata", () => ({
   listVendors: vi.fn().mockResolvedValue({ vendors: [{ id: "v-1", name: "Acme Parts" }] }),
   listDrivers: vi.fn().mockResolvedValue({ drivers: [] }),
   listUnits: vi.fn().mockResolvedValue({ units: [] }),
+  // CreateDriverModal / CreateUnitModal (nested "+ Create" for Driver + Unit) reference these as
+  // useMutation's mutationFn at render time — must be defined even though this test never submits.
+  createDriver: vi.fn(),
+  checkReturningDriver: vi.fn(),
+  createUnit: vi.fn(),
 }));
 
 vi.mock("../../api/maintenance", () => ({
@@ -26,7 +32,10 @@ vi.mock("../../api/maintenance", () => ({
 function wrap(ui: ReactElement) {
   return (
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      <ToastProvider>{ui}</ToastProvider>
+      <ToastProvider>
+        {/* CreateDriverModal (Driver nested create, PR #3200) calls useNavigate — needs a Router. */}
+        <MemoryRouter>{ui}</MemoryRouter>
+      </ToastProvider>
     </QueryClientProvider>
   );
 }

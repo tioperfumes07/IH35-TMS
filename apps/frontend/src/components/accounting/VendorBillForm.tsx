@@ -13,6 +13,7 @@ import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { vendorReferenceOption } from "../parity/referenceOptionLabels";
 import { Combobox } from "../Combobox";
 import { CreateDriverModal } from "../drivers/CreateDriverModal";
+import { CreateUnitModal } from "../fleet/CreateUnitModal";
 import { SelectCombobox } from "../shared/SelectCombobox";
 import { UploadZone } from "../UploadZone";
 import { companyToday } from "../../lib/businessDate";
@@ -130,6 +131,7 @@ export function VendorBillForm({
   const [driverId, setDriverId] = useState("");
   const [unitId, setUnitId] = useState(linkedUnitId ?? "");
   const [driverCreateOpen, setDriverCreateOpen] = useState(false);
+  const [unitCreateOpen, setUnitCreateOpen] = useState(false);
   const [classId, setClassId] = useState<string | null>(null);
   const [className, setClassName] = useState("");
   const [accountId, setAccountId] = useState<string | null>(null);
@@ -188,6 +190,19 @@ export function VendorBillForm({
         label: [driver.first_name, driver.last_name].filter(Boolean).join(" ").trim() || driver.id,
       })),
     [driversQuery.data?.drivers]
+  );
+
+  // Unit picker — same "Combobox + canonical CreateUnitModal" pattern as Driver above (no
+  // createKind="unit" on ReferenceSelect yet; CreateUnitModal is the single canonical fleet-roster
+  // unit creator — writes mdata.units, same table unitsQuery reads, so a created unit selects +
+  // survives reload).
+  const unitOptions = useMemo(
+    () =>
+      ((unitsQuery.data?.units ?? []) as Array<Record<string, unknown>>).map((unit) => ({
+        value: String(unit.id ?? ""),
+        label: String(unit.unit_number ?? unit.id ?? ""),
+      })),
+    [unitsQuery.data?.units]
   );
 
   // A/P account picker — Liability / AccountsPayable postable accounts (canonical catalogs.accounts).
@@ -401,18 +416,18 @@ export function VendorBillForm({
           />
         </Field>
         <Field label="Unit">
-          <SelectCombobox
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
-            value={unitId}
-            onChange={(event) => setUnitId(event.target.value)}
-          >
-            <option value="">Select unit...</option>
-            {((unitsQuery.data?.units ?? []) as Array<Record<string, unknown>>).map((unit) => (
-              <option key={String(unit.id ?? "")} value={String(unit.id ?? "")}>
-                {String(unit.unit_number ?? unit.id ?? "")}
-              </option>
-            ))}
-          </SelectCombobox>
+          <Combobox
+            options={unitOptions}
+            value={unitId || null}
+            onChange={(next) => setUnitId(next ?? "")}
+            placeholder="Select unit..."
+            loading={unitsQuery.isLoading}
+            allowClear
+            allowAddNew={{
+              label: "+ Create unit",
+              onAdd: () => setUnitCreateOpen(true),
+            }}
+          />
         </Field>
         <div className="md:col-span-3" />
         <Field label="Class">
@@ -483,6 +498,16 @@ export function VendorBillForm({
         setDriverId(createdId);
         setDriverCreateOpen(false);
         void driversQuery.refetch();
+      }}
+    />
+    <CreateUnitModal
+      open={unitCreateOpen}
+      operatingCompanyId={operatingCompanyId}
+      onClose={() => setUnitCreateOpen(false)}
+      onCreated={(createdId) => {
+        setUnitId(createdId);
+        setUnitCreateOpen(false);
+        void unitsQuery.refetch();
       }}
     />
     </>
