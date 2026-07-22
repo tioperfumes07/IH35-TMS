@@ -378,11 +378,11 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
         ) : (autoDeductionPoliciesQuery.data?.rows ?? []).length === 0 ? (
           <p className="text-xs text-gray-500">No auto-deduction policies for this driver.</p>
         ) : (
-          <div className="space-y-1">
+          <div className="divide-y divide-gray-100">
             {(autoDeductionPoliciesQuery.data?.rows ?? []).map((policy) => (
               <div
                 key={policy.id}
-                className="flex items-center justify-between rounded-sm border border-gray-100 px-2 py-1 text-xs"
+                className="flex items-center justify-between px-1 py-1.5 text-xs"
                 data-testid={`driver-earnings-auto-deduction-${policy.id}`}
               >
                 <span>
