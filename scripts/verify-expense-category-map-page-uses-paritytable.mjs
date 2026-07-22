@@ -8,8 +8,10 @@
  * "No mappings found." (LIST-EMPTY-1), the ListErrorState error surface on the map query, the
  * ListErrorBanner + accountsQuery retry in the add modal (wave-c), the inline Deactivate action
  * (soft delete via ConfirmModal — void, never delete), and the admin-activity audit link must all
- * be preserved. No posting/GL logic lives in this file's table; the create/deactivate mutations
- * are pre-existing modal/confirm flows and must remain untouched.
+ * be preserved. Add-modal account picker must be a <select> (value=uuid, label=account_name) —
+ * never a datalist that renders the raw uuid (same defect class as CoA Roles #3148). No posting/GL
+ * logic lives in this file's table; the create/deactivate mutations are pre-existing modal/confirm
+ * flows and must remain untouched.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -67,6 +69,21 @@ function assertMigrated(src) {
   if (!src.includes("event_class=expense_category_map_change")) {
     errors.push(`${PAGE}: must keep the admin-activity audit drill-through link`);
   }
+  // Datalist showed option VALUE (uuid) as the control text — forbidden. Select keeps uuid as
+  // value= but renders account_name as the visible label (Wave 7 / #3148 sibling).
+  if (
+    !src.includes("<select") ||
+    !src.includes("value={account.id}") ||
+    !src.includes("{account.account_name}") ||
+    !src.includes('data-testid="expense-category-map-account-select"')
+  ) {
+    errors.push(
+      `${PAGE}: must use a <select> account picker (value=uuid, label=account_name, data-testid=expense-category-map-account-select)`,
+    );
+  }
+  if (src.includes("datalist") || src.includes("expense-category-account-options") || src.includes("Select account id")) {
+    errors.push(`${PAGE}: must not use datalist account picker (renders uuid as the control value)`);
+  }
   return errors;
 }
 
@@ -87,6 +104,12 @@ function selftest() {
     ];
     {accountsQuery.isError ? <ListErrorBanner onRetry={() => void accountsQuery.refetch()} /> : null}
     <ListErrorState title="Couldn't load category mappings" />
+    <select data-testid="expense-category-map-account-select" value={form.account_id}>
+      <option value="">Select account</option>
+      {accounts.map((account) => (
+        <option key={account.id} value={account.id}>{account.account_name}</option>
+      ))}
+    </select>
     <ParityTable
       loading={mapQuery.isLoading}
       storageKey="accounting-expense-category-map"
@@ -100,6 +123,8 @@ function selftest() {
       return (
         <table className="min-w-full">
           <thead><tr><th>Kind</th></tr></thead>
+          <input list="expense-category-account-options" placeholder="Select account id" />
+          <datalist id="expense-category-account-options" />
         </table>
       );
     }

@@ -244,21 +244,22 @@ export function ExpenseCategoryMapPage() {
               </label>
 
               <label className="text-xs font-semibold text-gray-600">
-                Account (autocomplete)
-                <input
-                  list="expense-category-account-options"
+                Account
+                <select
                   className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
                   value={form.account_id}
                   onChange={(event) => setForm((prev) => ({ ...prev, account_id: event.target.value }))}
-                  placeholder="Select account id"
-                />
-                <datalist id="expense-category-account-options">
+                  data-testid="expense-category-map-account-select"
+                >
+                  <option value="">Select account</option>
                   {accounts.map((account) => (
+                    // value stays the uuid (API needs it); LABEL is account name so the control
+                    // never renders a raw uuid (same defect class as CoA Roles #3148).
                     <option key={account.id} value={account.id}>
-                      {account.account_number} - {account.account_name}
+                      {account.account_name}
                     </option>
                   ))}
-                </datalist>
+                </select>
                 <p className="mt-1 text-[11px] text-gray-500">
                   {selectedAccount
                     ? `Selected: ${selectedAccount.account_number} - ${selectedAccount.account_name}`
