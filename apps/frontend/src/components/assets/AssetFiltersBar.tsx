@@ -1,4 +1,5 @@
 import type { AssetLifecycle } from "./types";
+import { CollapsedListFilters } from "../table";
 
 type Props = {
   lifecycle: AssetLifecycle | "all";
@@ -16,8 +17,20 @@ const LIFECYCLE_OPTIONS: Array<{ value: AssetLifecycle | "all"; label: string }>
 
 export function AssetFiltersBar({ lifecycle, search, onLifecycleChange, onSearchChange }: Props) {
   return (
-    <section className="rounded-sm border border-gray-200 bg-white p-3">
-      <div className="grid gap-2 md:grid-cols-[220px_1fr]">
+    <section data-asset-filter-toolbar="collapsed">
+      <CollapsedListFilters
+        activeFilterCount={lifecycle !== "all" ? 1 : 0}
+        testIdPrefix="assets"
+        searchSlot={
+          <input
+            value={search}
+            onChange={(event) => onSearchChange(event.target.value)}
+            placeholder="Unit number, VIN, driver, or location"
+            className="h-8 w-64 rounded-sm border border-gray-300 px-2 text-sm font-normal text-gray-900"
+            aria-label="Search assets"
+          />
+        }
+      >
         <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
           Lifecycle
           <select
@@ -32,16 +45,7 @@ export function AssetFiltersBar({ lifecycle, search, onLifecycleChange, onSearch
             ))}
           </select>
         </label>
-        <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
-          Search
-          <input
-            value={search}
-            onChange={(event) => onSearchChange(event.target.value)}
-            placeholder="Unit number, VIN, driver, or location"
-            className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm font-normal text-gray-900"
-          />
-        </label>
-      </div>
+      </CollapsedListFilters>
     </section>
   );
 }

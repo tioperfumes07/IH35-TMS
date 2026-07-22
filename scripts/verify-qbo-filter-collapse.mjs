@@ -78,6 +78,7 @@ for (const [rel, marker] of [
   ["apps/frontend/src/pages/maintenance/components/ArrivingSoonFilterBar.tsx", "data-arriving-soon-filter-toolbar"],
   ["apps/frontend/src/pages/drivers/SettlementDisputeList.tsx", "data-settlement-dispute-filter-toolbar"],
   ["apps/frontend/src/pages/accounting/DisputeQueuePage.tsx", "data-dispute-queue-filter-toolbar"],
+  ["apps/frontend/src/components/assets/AssetFiltersBar.tsx", "data-asset-filter-toolbar"],
 ]) {
   const src = read(rel);
   if (!src.includes("CollapsedListFilters")) {

@@ -338,7 +338,7 @@ export function CostBreakdownBox({
                     className="text-xs"
                     ariaLabel={`${col.cost} (item)`}
                   />
-                  <div className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-semibold">${Number(line.amount || 0).toFixed(2)}</div>
+                  <div className="px-2 py-1 text-xs font-semibold tabular-nums text-gray-900">${Number(line.amount || 0).toFixed(2)}</div>
                   <button
                     disabled={readOnly}
                     type="button"
@@ -456,7 +456,7 @@ export function CostBreakdownBox({
                             {row.part_location_codes?.join(", ") || "Select location(s)"}
                           </button>
                         ) : (
-                          <div className="rounded-sm border border-gray-200 bg-gray-100 px-2 py-1 text-xs text-gray-500">No location</div>
+                          <div className="px-2 py-1 text-xs text-gray-500">No location</div>
                         )}
                         <input
                           disabled={readOnly}
@@ -504,7 +504,7 @@ export function CostBreakdownBox({
                           className="text-xs"
                           ariaLabel="Sub-row cost"
                         />
-                        <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-xs">${Number(row.amount || 0).toFixed(2)}</div>
+                          <div className="px-2 py-1 text-xs tabular-nums text-gray-900">${Number(row.amount || 0).toFixed(2)}</div>
                         <button
                           disabled={readOnly}
                           type="button"
@@ -584,7 +584,7 @@ export function CostBreakdownBox({
               </div>
             ))}
 
-            {sectionB.lines.length === 0 ? <div className="rounded-sm border border-dashed border-gray-300 bg-white px-2 py-3 text-center text-xs text-gray-500">No Section B lines</div> : null}
+            {sectionB.lines.length === 0 ? <div className="px-2 py-3 text-center text-xs text-gray-500">No Section B lines</div> : null}
 
             <div className="flex items-center justify-between">
               <button
