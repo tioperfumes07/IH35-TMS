@@ -94,9 +94,13 @@ export async function enrichInvoice(client: { query: (sql: string, values?: unkn
         l.customer_chargeback_reason AS source_load_chargeback_reason,
         l.load_number AS source_load_number
       FROM accounting.invoices i
-      JOIN mdata.customers c ON c.id = i.customer_id
+      JOIN mdata.customers c
+        ON c.id = i.customer_id
+       AND c.operating_company_id = i.operating_company_id
       LEFT JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
-      LEFT JOIN mdata.loads l ON l.id = i.source_load_id
+      LEFT JOIN mdata.loads l
+        ON l.id = i.source_load_id
+       AND l.operating_company_id = i.operating_company_id
       WHERE i.id = $1
       LIMIT 1
     `,
@@ -111,11 +115,16 @@ export async function enrichInvoice(client: { query: (sql: string, values?: unkn
         a.account_number AS income_account_number,
         a.account_name AS income_account_name
       FROM accounting.invoice_lines il
-      LEFT JOIN catalogs.accounts a ON a.id = il.account_id
+      JOIN accounting.invoices i
+        ON i.id = il.invoice_id
+      LEFT JOIN catalogs.accounts a
+        ON a.id = il.account_id
+       AND a.operating_company_id = i.operating_company_id
       WHERE il.invoice_id = $1
+        AND i.operating_company_id = $2
       ORDER BY il.display_order ASC, il.created_at ASC
     `,
-    [invoiceId]
+    [invoiceId, invoice.operating_company_id]
   );
   const applicationsRes = await client.query(
     `
@@ -768,11 +777,15 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
                 NULLIF(TRIM(i.ar_email_snapshot), '')
               ) AS customer_email
             FROM accounting.invoices i
-            JOIN mdata.customers c ON c.id = i.customer_id
+            JOIN mdata.customers c
+              ON c.id = i.customer_id
+             AND c.operating_company_id = i.operating_company_id
+             AND c.operating_company_id = $2
             WHERE i.id = $1
+              AND i.operating_company_id = $2
             LIMIT 1
           `,
-          [params.data.id]
+          [params.data.id, query.data.operating_company_id]
         );
         const customerEmail = notifyRes.rows[0]?.customer_email ? String(notifyRes.rows[0].customer_email).trim() : "";
         if (customerEmail) {
