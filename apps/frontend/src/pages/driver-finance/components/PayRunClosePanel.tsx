@@ -257,26 +257,27 @@ export function PayRunClosePanel({ settlementId, companyId, userRole, settlement
             <div className="font-semibold">Net {formatCents(result.breakdown.net_cents)}</div>
           </div>
 
-          {(result.journal_entry_id || result.payrun_gl_run_id) && (
+          {/*
+            Reverse drill-through (Law §9). The journal entry is the reachable accounting
+            destination and renders as a real EntityLink. `payrun_gl_run_id` is deliberately NOT
+            printed: no /payrun-gl-runs detail route exists, so displaying the bare uuid would put
+            an unclickable dead-end id on screen — the exact defect the linkage law forbids, and it
+            would have to be silenced in the EntityLink-adoption baseline. Give it a detail route
+            first, then link it here through EntityLink like the JE.
+          */}
+          {result.journal_entry_id ? (
             <div className="flex flex-wrap gap-3 text-xs" data-testid="payrun-reverse-links">
-              {result.journal_entry_id ? (
-                <span>
-                  Journal:{" "}
-                  <EntityLink
-                    kind="journal_entry"
-                    id={result.journal_entry_id}
-                    label={`JE ${result.journal_entry_id.slice(0, 8)}`}
-                    data-testid="payrun-je-link"
-                  />
-                </span>
-              ) : null}
-              {result.payrun_gl_run_id ? (
-                <span className="font-mono text-gray-700" data-testid="payrun-gl-run-id">
-                  payrun_gl_runs={result.payrun_gl_run_id}
-                </span>
-              ) : null}
+              <span>
+                Journal:{" "}
+                <EntityLink
+                  kind="journal_entry"
+                  id={result.journal_entry_id}
+                  label={`JE ${result.journal_entry_id.slice(0, 8)}`}
+                  data-testid="payrun-je-link"
+                />
+              </span>
             </div>
-          )}
+          ) : null}
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs" data-testid="payrun-je-legs">
