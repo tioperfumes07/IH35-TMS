@@ -323,7 +323,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             dr.first_name                                AS driver_first_name,
             dr.last_name                                 AS driver_last_name,
             l.load_number                                AS load_number,
-            ${hasUnitId ? "u.display_id" : "NULL::text"}  AS unit_display_id,
+            ${hasUnitId ? "u.unit_number" : "NULL::text"}  AS unit_display_id,
             ${hasWorkOrderId ? "wo.display_id" : "NULL::text"} AS work_order_display_id,
             pay_acct.account_number                      AS payment_account_number,
             pay_acct.account_name                        AS payment_account_name
