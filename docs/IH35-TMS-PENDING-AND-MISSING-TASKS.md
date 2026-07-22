@@ -99,7 +99,7 @@ verification on real data**, not new building.
 | Fixed assets | `/accounting/fixed-assets` | shell (Finance Hub overlaps) |
 | Prepaid expenses | `/accounting/prepaid-expenses` | shell |
 | My accountant | `/accounting/my-accountant` | shell |
-| Recurring transactions | `/accounting/recurring-transactions` | ComingSoon |
+| (legacy redirect, DUALPATH-08 2026-07-22) | `/accounting/recurring-transactions` | → `/accounting/bills/recurring` (Live `RecurringBillList`) |
 | (legacy redirect) | `/safety/accidents-incidents` | → `/safety/accidents` |
 
 Code debt markers (origin/main, excl tests): **58 TODO · 3 HACK · 10 @deprecated · 0 FIXME/NotImplemented.**

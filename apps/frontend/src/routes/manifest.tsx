@@ -3870,9 +3870,14 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route path="/safety/accidents-incidents" element={<Navigate replace to="/safety/accidents" />} />
+        {/* DUALPATH-08 (2026-07-22): "/accounting/recurring-transactions" was a dead-end ComingSoon
+            mount while the Live surface already existed at /accounting/bills/recurring
+            (RecurringBillList). Active-path law (same pattern as Safety #3183): redirect the alias
+            to the canonical Live tab instead of rendering a stub. ARCHIVE-not-DELETE — the Live
+            route below is untouched; only this alias's element changes. */}
         <Route
           path="/accounting/recurring-transactions"
-          element={<ProtectedRoute><ComingSoonPage /></ProtectedRoute>}
+          element={<Navigate to="/accounting/bills/recurring" replace />}
         />
         {/* UI-1: 6/6 modules built (prepaid, integration-transactions, receipts, revenue-recognition, fixed-assets, my-accountant). */}
         <Route path="/accounting/integration-transactions" element={<ProtectedRoute><IntegrationTransactionsPage /></ProtectedRoute>} />
