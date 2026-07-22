@@ -993,6 +993,7 @@ export type JournalEntrySourceLink = {
   source_link_created_at: string | null;
 };
 
+/** Reverse drill: what source document posted this JE (invoice/bill/expense/…). */
 export function getJournalEntrySourceLinks(id: string, operatingCompanyId: string) {
   return apiRequest<{ journal_entry_id: string; source_links: JournalEntrySourceLink[] }>(
     withCompany(`/api/v1/accounting/journal-entries/${id}/source-links`, operatingCompanyId)
