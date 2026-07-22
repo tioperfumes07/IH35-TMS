@@ -742,7 +742,10 @@ export function listWorkOrderLinkedFinancials(workOrderId: string, operatingComp
 export function createExpense(
   operatingCompanyId: string,
   body: {
-    category_qbo_id: string;
+    /** QBO-bridged category id when present; omit when posting a TMS-native CoA row. */
+    category_qbo_id?: string;
+    /** catalogs.accounts UUID — used when the category has no QBO bridge yet (parallel books). */
+    category_account_id?: string;
     expense_date: string;
     amount_cents: number;
     payment_account_uuid: string;

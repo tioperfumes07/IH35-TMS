@@ -2,8 +2,8 @@ import type { JSX } from "react";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { listDrivers, listUnits, listVendors } from "../../api/mdata";
-import { listCatalogAccounts } from "../../api/catalog-accounts";
+import { ensureDriverVendors, listDrivers, listUnits, listVendors } from "../../api/mdata";
+import { getCoaAccounts } from "../../api/banking";
 import { classesCatalogClient } from "../../api/catalogs-accounting";
 import { DatePicker } from "../forms/DatePicker";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../forms/TwoSectionLineEditor";
@@ -14,13 +14,13 @@ import { vendorReferenceOption } from "../parity/referenceOptionLabels";
 import { Combobox } from "../Combobox";
 import { CreateDriverModal } from "../drivers/CreateDriverModal";
 import { CreateUnitModal } from "../fleet/CreateUnitModal";
-import { SelectCombobox } from "../shared/SelectCombobox";
 import { UploadZone } from "../UploadZone";
 import { companyToday } from "../../lib/businessDate";
 import {
   buildVendorBillLinePayloads,
   type VendorBillFormLinePayload,
 } from "./vendorBillLines";
+import { dueDateFromBillTerms } from "./vendorBillDueDate";
 
 export type { VendorBillFormLinePayload };
 export { buildVendorBillLinePayloads };
@@ -123,7 +123,8 @@ export function VendorBillForm({
   const [billType, setBillType] = useState(resolvedInitialBillType);
   const [draftAttachmentEntityId] = useState(() => crypto.randomUUID());
   const [billDate, setBillDate] = useState(() => companyToday());
-  const [dueDate, setDueDate] = useState("");
+  const [dueDate, setDueDate] = useState(() => dueDateFromBillTerms(companyToday(), "net_30"));
+  const [dueDateTouched, setDueDateTouched] = useState(false);
   const [billNumber, setBillNumber] = useState("");
   const [terms, setTerms] = useState("net_30");
   const [vendorId, setVendorId] = useState("");
@@ -149,9 +150,24 @@ export function VendorBillForm({
     setBillType(initialBillType);
   }, [initialBillType]);
 
+  // QBO parity: Bill Date + Terms auto-fill Due Date until the operator overrides Due Date.
+  useEffect(() => {
+    if (dueDateTouched) return;
+    const next = dueDateFromBillTerms(billDate, terms);
+    if (next) setDueDate(next);
+  }, [billDate, terms, dueDateTouched]);
+
   const vendorsQuery = useQuery({
     queryKey: ["vendor-bill-form", "vendors", operatingCompanyId],
-    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, limit: 200 }),
+    queryFn: async () => {
+      // Ensure Active drivers exist as mdata.vendors (driver-as-vendor) before listing.
+      try {
+        await ensureDriverVendors(operatingCompanyId);
+      } catch {
+        // Read path still works if ensure is forbidden for the role — picker shows existing vendors.
+      }
+      return listVendors({ operating_company_id: operatingCompanyId, limit: 5000, status: "active" });
+    },
     enabled: Boolean(operatingCompanyId),
   });
   const driversQuery = useQuery({
@@ -161,12 +177,14 @@ export function VendorBillForm({
   });
   const unitsQuery = useQuery({
     queryKey: ["vendor-bill-form", "units", operatingCompanyId],
-    queryFn: () => listUnits({ status: "Active", operating_company_id: operatingCompanyId, limit: 500 }),
+    // Fleet enum is InService (not "Active") — status=Active was silently dropped server-side; pin InService.
+    queryFn: () => listUnits({ status: "InService", operating_company_id: operatingCompanyId, limit: 500 }),
     enabled: Boolean(operatingCompanyId),
   });
   const accountsQuery = useQuery({
     queryKey: ["vendor-bill-form", "ap-accounts", operatingCompanyId],
-    queryFn: () => listCatalogAccounts({ status: "active" }),
+    // Entity-scoped CoA (same as banking categorize) — never the user's default company chart.
+    queryFn: () => getCoaAccounts(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });
@@ -209,14 +227,18 @@ export function VendorBillForm({
   const apAccountOptions = useMemo(
     () =>
       (accountsQuery.data?.accounts ?? [])
-        .filter(
-          (acct) =>
-            acct.is_postable &&
-            !acct.deactivated_at &&
-            (acct.account_type === "Liability" ||
-              String(acct.account_subtype ?? "").toLowerCase().includes("payable") ||
-              String(acct.account_name ?? "").toLowerCase().includes("accounts payable"))
-        )
+        .filter((acct) => {
+          const type = String(acct.account_type ?? "");
+          const subtype = String((acct as { account_subtype?: string | null }).account_subtype ?? "").toLowerCase();
+          const name = String(acct.account_name ?? "").toLowerCase();
+          const deactivated = (acct as { deactivated_at?: string | null }).deactivated_at;
+          if (deactivated) return false;
+          return (
+            type === "Liability" ||
+            subtype.includes("payable") ||
+            name.includes("accounts payable")
+          );
+        })
         .map((acct) => ({
           value: acct.id,
           label: acct.account_number ? `${acct.account_number} · ${acct.account_name}` : acct.account_name,
@@ -320,18 +342,28 @@ export function VendorBillForm({
           <DatePicker className="w-full" value={billDate} onChange={setBillDate} />
         </Field>
         <Field label="Terms">
-          <SelectCombobox
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
+          {/* Flat native select — SelectCombobox wraps Combobox with its own border (box-in-box). */}
+          <select
+            className="h-8 w-full rounded-sm border border-gray-300 bg-white px-2 text-xs"
             value={terms}
             onChange={(event) => setTerms(event.target.value)}
+            aria-label="Terms"
           >
             <option value="net_30">Net 30</option>
             <option value="net_15">Net 15</option>
             <option value="net_7">Net 7</option>
-          </SelectCombobox>
+            <option value="due_on_receipt">Due on receipt</option>
+          </select>
         </Field>
         <Field label="Due Date *">
-          <DatePicker className="w-full" value={dueDate} onChange={setDueDate} />
+          <DatePicker
+            className="w-full"
+            value={dueDate}
+            onChange={(next) => {
+              setDueDateTouched(true);
+              setDueDate(next);
+            }}
+          />
         </Field>
         <Field label="Bill Number *">
           <input

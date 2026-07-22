@@ -1322,6 +1322,19 @@ export function createVendor(body: CreateVendorInput) {
   return apiRequest<VendorOption>("/api/v1/mdata/vendors", { method: "POST", body });
 }
 
+/**
+ * Driver-as-vendor (blueprint §3.13.1): ensure every Active driver for the company has a matching
+ * mdata.vendors row (name match). Idempotent — creates only the missing ones. Used by Bill/Expense
+ * vendor pickers so USMCA (and any entity) shows drivers as payees the same way TRANSP does after
+ * QBO import populated vendor names.
+ */
+export function ensureDriverVendors(operatingCompanyId: string) {
+  return apiRequest<{ created: number; already_present: number; total_active_drivers: number }>(
+    "/api/v1/mdata/vendors/ensure-drivers",
+    { method: "POST", body: { operating_company_id: operatingCompanyId } }
+  );
+}
+
 export type UpdateVendorInput = Partial<{
   name: string;
   vendor_code: string | null;
