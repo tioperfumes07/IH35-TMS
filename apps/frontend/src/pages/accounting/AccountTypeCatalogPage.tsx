@@ -72,7 +72,7 @@ export function AccountTypeCatalogPage() {
 
   const query = useQuery({
     queryKey: ["account-type-catalog"],
-    queryFn: getAccountTypeCatalog,
+    queryFn: () => getAccountTypeCatalog(),
   });
   const { data, isLoading, isError } = query;
   const listState = useListState(query, (data ?? []).length === 0);
