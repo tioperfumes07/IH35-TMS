@@ -1,42 +1,34 @@
-# OVERNIGHT HOLD — for Jorge at ~08:00 CT 2026-07-22
+# OVERNIGHT HOLD — Jorge ~08:00 CT 2026-07-22
 
-Owner sleeping. Chrome / catalog / creator burn-down continued without pause.
-Anything needing owner decision is listed here — **not blocking** UI chrome work.
+Chrome / catalog / creator burn-down continued without pause. Decisions below are **not blocking** UI chrome.
 
-## 2026-07-22 overnight — FineCreate UUID → driver Combobox + CreateDriverModal
+## HOLD (need Jorge)
 
-DEFECT FIXED (frontend): FineCreateModal required raw driver UUID. Now uses
-`listDrivers` Combobox + nested `CreateDriverModal` (+ Create) and ParityDrawer shell.
+1. **CC bill payment gate** — `CC_BILL_PAYMENT_GATED = true` in `CCPaymentModal` (ParityDrawer done; submit still gated).
+2. **Account create financial gate** — InlineCreateDrawer account create remains ACCOUNT_CREATE_GATED.
+3. **QBOBulkLinkPage** — keep QboCombobox (intentional QBO-id link UI). Confirm allowlist.
+4. **DriverDetail / VehicleProfile “QBO vendor”** — still QboCombobox because fields store `qbo_vendor_id` (QBO id), not mdata vendor UUID. Migrating needs mapping via `vendor.qbo_id`.
+5. **createKind="driver"** on ReferenceSelect — Cash advance + FineCreate use Combobox + CreateDriverModal instead (canonical creator). Optional future kind.
+6. **Safety integrity defects** (accident persist, fine drill-through backend) — chrome fixed pickers; root-cause money/schema = separate evidence pass.
+7. **GitHub attribution / machine account** — Houston morning pack.
 
-HOLD unchanged: createKind="driver" on ReferenceSelect (use Combobox + CreateDriverModal until kind exists).
+## Shipped on PR #3197 (`fix/chrome-01-plus-01-creators`)
 
+Linearized onto `origin/main` overnight:
 
-1. **CC bill payment gate** — `CC_BILL_PAYMENT_GATED = true` in `CCPaymentModal`. UI now ParityDrawer; submit still disabled until financial-cluster OK.
-2. **Account create financial gate** — InlineCreateDrawer account create remains ACCOUNT_CREATE_GATED (by design).
-3. **QBOBulkLinkPage** — may keep QboCombobox intentionally (QBO-id link UI). Confirm allowlist.
-4. **createKind="driver"** — Cash advance driver picker: no ReferenceSelect driver kind yet. HOLD until wizard extension.
-5. **Safety integrity defects** (accident persist, fine drill-through) — chrome agents note; root-cause money/schema fixes need evidence + possibly Neon. Do not silent-patch.
-6. **GitHub attribution / machine account** — deferred to Houston morning (owner pack).
+- Filters: Safety + Customers + Vendors + UniversalFilterBar (`CollapsedListFilters`)
+- Money +Create: Bill / Expense / JE / ItemEditor / CC pay / Cash GL / Rules / Transfers / Receive Payment / Invoice types
+- Ops: WO vendor (id + outside), BookLoad customer, Factoring lender, Cash-advance +Create driver
+- Safety: FineCreate driver Combobox+CreateDriverModal, CargoClaim customer+driver, AccidentReport vendor
+- Insurance + Legal: Claim/Lawsuit/Policy creators + list filter collapse + guards
+- Banking: CoA ReferenceSelect + Transfer/CC ParityDrawer
+- Guards (Rule 17): `verify-safety-filter-chrome`, `verify-money-reference-select-plus`, `verify-qbo-filter-collapse`, `verify-insurance-legal-reference-select` + verify-steps 1230–1234
 
-## Shipped overnight (PR #3197 branch `fix/chrome-01-plus-01-creators`)
+## Remaining (morning)
 
-- CHROME-01 Safety Filters collapse + guard
-- CHROME-02 Customers/Vendors CollapsedListFilters + UniversalFilterBar + Receive Payment ParityDrawer + guard 1232
-- PLUS-01 money ReferenceSelect (Bill A/P/class, Expense payment, ExpenseCategoryMap, Record Payment customer)
-- PLUS-02/03/04 batch: ManualJE account+class, ItemEditor all FKs, WO vendor, factoring lender, Cash GL, CategorizationRules, Transfer/CC ParityDrawer
-- CHROME-12 continues: InvoiceCreate, CC bill pay, ManualJE → ParityDrawer
-- Nested create via ReferenceSelect / InlineCreateDrawer / QuickCreate in ParityDrawer (not Modal-on-drawer)
+- Merge #3197 when CI green
+- DriverDetail / VehicleProfile QBO vendor mapping (HOLD #4)
+- Broader filter collapse on remaining DIRTY modules (Accounting lists, etc.)
+- LIVE PROOF: deploy SHA + browser — **UNVERIFIED until merge/deploy**
 
-## Still burning (agents + parent)
-
-- Remaining QboCombobox: InvoiceTypeModalBase, BookLoad*, DriverDetail, VehicleProfile (+ QboCombobox.tsx + maybe QBOBulkLink)
-- Safety / Insurance / Legal entity pickers + filter collapse
-- Accounting SelectCombobox entity leftovers
-- Banking reconcile / obligation pickers where CoA
-- Desktop audit pack refresh under `~/Desktop/.../2026-07-22-CHROME/`
-
-## PR
-
-https://github.com/tioperfumes07/IH35-TMS/pull/3197
-
-LIVE PROOF: UNVERIFIED until CI green + merge + deploy SHA.
+PR: https://github.com/tioperfumes07/IH35-TMS/pull/3197
