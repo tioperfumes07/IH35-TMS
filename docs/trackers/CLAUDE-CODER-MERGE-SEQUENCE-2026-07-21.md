@@ -1,8 +1,9 @@
 # Claude coder merge sequence (permanent until owner revises)
 
-**As-of:** 2026-07-21 evening · `origin/main` @ `e64fc4c6b` · 39 open PRs in #3100–#3200 band  
+**As-of:** 2026-07-21 late evening · refreshed after CI babysit + §1.2/§1.4 correction  
 **Owner law:** Cursor builds; **Claude coder merges + Neon apply**. Docs-only STALE ≠ progress.  
-**Supersedes:** WAVE verify theater PRs; optional skip of #3164 when this file lands.
+**Supersedes:** WAVE verify theater PRs; optional skip of #3164 when this file lands.  
+**Correction (owner/Cursor):** “No migrations” does **NOT** mean self-mergeable. Touching `accounting.*` / financial-cluster **data or writers** still requires Jorge (`JORGE-APPROVED` / chat OK) per skill §1.2–§1.4. Do **not** weaken `hold-merge-gate`.
 
 ---
 
@@ -19,102 +20,95 @@ Close without merge — they repeat STALE tables and burn trust (see `CURSOR-DRA
 | **#3163** | WAVE 7 verify priority GAP batch | OPEN · docs-only · STALE table only |
 | **#3113** | Neon-apply handoff CORRECTED — DO NOT MERGE | OPEN · ops doc · superseded by this sequence + coder Neon lane |
 
-**Also close (docs-only STALE / builder theater — not in merge queue):**
+**Also leave closed / do not merge as progress:**
 
 - Any future WAVE-N verify PR (Cursor forbidden from opening more).
-- **#3116**, **#3145**, **#3155**, **#3162**, **#3120** — builder-tagged “DO NOT MERGE”; real fixes belong in ON-MISSION PRs with §9 evidence, not orphan builder branches.
-
-**Do not merge #3176 as “fixed”** — merge only as **FAIL evidence** (batch3 audit doc); title says DO NOT MERGE for good reason.
-
----
-
-## Merge NOW if CI green (repo-truth / non-money / real UI wiring)
-
-**Rule:** ONE AT A TIME · squash merge · rebase next PR onto fresh `origin/main` after each.
-
-| Order | PR | Why safe now | CI (2026-07-21 eve) | Caveat |
-|---|---|---|---|---|
-| 1 | **This PR** (`CLAUDE-CODER-MERGE-SEQUENCE` + updated drain §E) | Permanent handoff | — | **Skip #3164** if this lands first (same intent, richer) |
-| 2 | **#3169** | `verify-no-dead-schema` guard — §10a linkage enforcement | ✅ green | Repo truth; no Neon |
-| 3 | **#3165** | ItemEditor `+ Add new account` → account create chrome (fixes #3133 gap) | ✅ green | UX wiring only; not GL/posting proof |
-| 4 | **#3160** / **#3150** / **#3130** | Tracker auto-refresh chores | ✅ green each | **Optional** — pick one or skip if noisy |
-| 5 | **#3148** | CoA Roles picker shows account **name** not uuid | ✅ green | **PARTIAL** — UX only; not “accounting fixed” |
-| 6 | **#3151** | Dispatcher Home invoice status column | ✅ green | **PARTIAL** — reverse surface; title says DO NOT MERGE (builder) but owner queue says merge as UX |
-| 7 | **#3173** | Law §9 FULL linkage master ledger | ✅ green | Evidence doc only |
-| 8 | **#3175** | claim→legal→expense E2E FAIL audit | ✅ green | Evidence doc only |
-| 9 | **#3176** | batch3 WO/fine/advance/escrow FAIL audit | ✅ green | Evidence doc only — **not** a fix claim |
-
-After each merge: `git fetch origin main` before rebasing the next branch.
+- **#3116**, **#3145**, **#3155**, **#3162**, **#3120** — builder-tagged “DO NOT MERGE” until ON-MISSION §9 proof.
+- **Audit FAIL evidence PRs** (#3166, #3167, #3168, #3176, #3177, #3178) — scoreboard only; **do not** squash-merge unless Jorge explicitly wants docs on main. Prefer this sequence file + TRUE-connectivity master as the living scoreboard.
 
 ---
 
-## Merge AFTER Neon apply (coder owns Neon) — financial / migration
+## §1.2 vs §1.4 — self-merge gate (LOCKED)
 
-**Rule:** Migration on Neon prod first (or confirm already applied) → then merge for repo truth → LIVE PROOF or UNVERIFIED in PR body.
+| May self-merge on full CI green | Must wait for Jorge (`JORGE-APPROVED` / chat OK) |
+|---|---|
+| Pure guards / docs / FE chrome with **no** `accounting.*` / money writes | Any writer to `accounting.*`, `catalogs.accounts`, settlements money path, posters, migrations |
+| Example: #3169, #3165 | Example: #3172 (`bill_lines` INSERT), #3180 (bill/expense `unit_id` stamp), #3149 (held mig + resolver) |
 
-| Order | PR | Neon / gate | CI (2026-07-21 eve) | Blocker |
-|---|---|---|---|---|
-| — | **#3141** append-only grants | **Already MERGED** to main | was merged | Prod apply done — no action |
-| — | **#3124** bank tx capture fields | **Already MERGED** to main | was merged | Confirm Neon `202607690000` applied |
-| 1 | **#3123** driver `default_expense_account_id` | Held mig · owner JORGE-APPROVED design | ✅ green | Coder Neon apply → live column proof |
-| 2 | **#3149** pay-run → CoA roles resolver | Mig `202607710000` + owner role designations | ❌ `build-typecheck` | Fix typecheck → Neon → live designate proof |
-| 3 | **#3172** bill_lines persist on Bill create | Verify Neon `bill_lines` populate | ❌ `hold-merge-gate` | CI green + Neon row proof required |
-| 4 | **#3170** expense reverse drill-through | Law §9 E2E top-3 | ❌ `hold-merge-gate` | CI green + reverse drill LIVE PROOF |
-| 5 | **#3171** pay-run preview/close FE | After **#3149** lands | ❌ `locked-guards`, `build-typecheck` | Depends on #3149 + #3168 audit context |
-| 6 | **#3180** WO `unit_id` stamp on auto bill/expense | After hold-merge-gate understood | ❌ `hold-merge-gate` | CI green; no money mig |
-| 7 | **#3179** claim/legal UI linkage | No money migrations | ❌ `build-typecheck` | CI green + UI drill-through proof |
+`hold-merge-gate` red on money writers is **correct**. Do not bypass.
 
 ---
 
-## HOLD forever until Jorge answers (do not merge as “fixed”)
+## Lane A — self-merge when fully green (ONE AT A TIME)
 
-These are honest design/owner gates. Merging ≠ wiring. Already-merged design holds on main stay **HOLD** — do not reopen as fix PRs.
+Squash → delete branch → `git fetch origin main` → rebase next.
 
-| PR | Topic | State (2026-07-21 eve) |
-|---|---|---|
-| **#3114** | Governance owner rulings §20 | OPEN — merge only when Jorge says law text is final |
-| **#3127** | CoA true-merge accounts | **MERGED** design hold — deactivate-only today |
-| **#3128** / **#3153** | Settlement approval mount (G1–3 IDOR) | **MERGED** design holds — routes stay unwired |
-| **#3129** | Pre-invoice on book → official on deliver | OPEN |
-| **#3135** | CONN-1 Plaid reconcile-commit | **MERGED** PENDING(GATED) honesty |
-| **#3140** | Auto-apply customer payments FIFO | **MERGED** design hold |
-| **#3142** | CONN-3 Relay internal bank | **MERGED** design hold |
-| **#3143** | Expense duplicate detection | **MERGED** design hold |
-| **#3144** | Parts inventory → GL | **MERGED** design hold |
-| **#3156** | Escrow split-brain — pick canonical store | OPEN |
-| **#3159** | Vendor FK · DIP AP split · flow2 chargeback | OPEN |
-| **#3178** | Fuel GL flush — diesel\|def\|reefer\|oil\|misc maps | OPEN |
+| Order | PR | Why | Status notes (late eve) |
+|---|---|---|---|
+| 1 | **This PR (#3181)** | Permanent handoff | **Skip #3164** if this lands first |
+| 2 | **#3169** | `verify-no-dead-schema` + linkage edges — schema reachability only; **not** §9 money proof | Wait pending `build-typecheck` / CodeQL |
+| 3 | **#3165** | ItemEditor `+ Add new account` → account create chrome | ✅ was green |
+| 4 | **#3179** | Claim/legal **UI** linkage (no money mig) — only if re-read confirms no `accounting.*` INSERT/UPDATE | CI babysit pushed; wait full green |
+| 5 | **#3148** / **#3151** | Optional PARTIAL UX (CoA name picker / dispatcher invoice status) — merge as UX only, **not** “accounting fixed” | Optional |
+| 6 | Tracker chores **#3160** / **#3150** / **#3130** | Optional noise | Skip if noisy |
 
-**#3133** docs HOLD is superseded by code fix **#3165** (merge in “Merge NOW” queue).
+---
+
+## Lane B — owner-gated money / Neon (coder)
+
+| Order | PR | Gate | Notes |
+|---|---|---|---|
+| 1 | **#3123** | Neon apply held mig (already JORGE-APPROVED design) | Confirm column live |
+| 2 | **#3149** | CI green + Neon `202607710000` + owner CoA role designations | **Before #3171**. CI babysit fixed shared-coa-role test isolation |
+| 3 | **#3171** | After **#3149** on main + CI green | Pay-run FE must not ship ahead of resolver |
+| 4 | **#3170** | Jorge OK + CI green | Reverse drill; `hold-merge-gate` may be false-positive on SELECT — still need label; LIVE reverse proof or UNVERIFIED |
+| 5 | **#3172** | **JORGE-APPROVED** + CI (hold red is legitimate — writes `bill_lines`) | LIVE: new bills get `bill_lines`>0; 16k header-only heal = separate plan |
+| 6 | **#3180** | **JORGE-APPROVED** + CI (hold red is legitimate — stamps bill/expense `unit_id`) | LIVE: WO→bill/expense `unit_id IS NOT NULL` |
+
+Already on main (no merge action): **#3141**, **#3124** (confirm Neon apply for #3124).
+
+---
+
+## HOLD until Jorge answers (do not merge as “fixed”)
+
+| PR | Topic |
+|---|---|
+| **#3114** | Governance owner rulings |
+| **#3129** | Pre-invoice on book → official on deliver |
+| **#3156** | Escrow split-brain — pick canonical store |
+| **#3159** | Vendor FK · DIP AP · flow2 chargeback |
+| **#3178** | Fuel GL flush — designate diesel\|def\|reefer\|oil\|misc maps |
+
+Merged design holds on main stay HOLD (do not reopen as fake fixes): #3127 CoA true-merge, #3128/#3153 settlement approval mount, #3135 CONN-1, #3140 auto-apply, #3142 CONN-3, #3143 expense dup, #3144 parts→GL.
+
+**#3133** docs HOLD superseded by code **#3165**.
 
 ---
 
 ## Permanent law for every future merge
 
-Every **money** PR MUST include in the PR body:
+Every **money** PR MUST include:
 
-1. **ACCEPTANCE** block (`docs/templates/ACCEPTANCE-EVIDENCE-BLOCK.md`)
-2. **Law §9 LINKAGE** checklist (forward + reverse)
-3. **LIVE PROOF** (deploy SHA, Neon row, endpoint, browser drill) **OR** explicit **UNVERIFIED** with named blocker
+1. **ACCEPTANCE** (`docs/templates/ACCEPTANCE-EVIDENCE-BLOCK.md`)
+2. **Law §9 LINKAGE** (forward + reverse)
+3. **LIVE PROOF** (deploy SHA, Neon RLS-bypass, endpoint, browser) **OR** explicit **UNVERIFIED**
 
-**Forbidden:**
+**Forbidden:** STALE verify as progress · UI chrome as accounting done · Cursor self-merge money · citing schema guards (#3169 class) as books-wired proof · shipping #3171 before #3149.
 
-- Docs-only STALE verify PRs as “drain progress”
-- Merging UI chrome and claiming accounting/linkage fixed
-- Cursor self-merge on money or migration lanes
+**Roles:** Cursor builds + dual-path/orphan fixes · Claude coder merges + Neon + post-merge forensic.
 
-**Roles:** Cursor builds + opens PR · Claude coder merges + Neon apply + post-merge forensic proof.
+**Bar:** QuickBooks / NetSuite / McLeod / Alvys grade — not minimum shippable.
 
 ---
 
-## Quick reference — open PR CI snapshot (eve 2026-07-21)
+## Quick reference — CI babysit (late eve 2026-07-21)
 
-| Bucket | PRs | Notes |
-|---|---|---|
-| THEATER (close) | 3152, 3154, 3158, 3161, 3163, 3113 | |
-| Merge NOW (green) | 3169, 3165, 3148, 3151, 3173, 3175, 3176 | optional 3160/3150/3130 |
-| Neon / money (blocked CI) | 3123✅, 3149❌, 3172❌, 3170❌, 3171❌, 3179❌, 3180❌ | |
-| Already merged (repo truth done) | 3141, 3124 | verify Neon apply |
-| HOLD Jorge | 3114, 3129, 3156, 3159, 3178 | + merged design holds 3127/3128/3153/3135/3140/3142/3143/3144 |
+| PR | Action |
+|---|---|
+| #3179 | typecheck/entity-link baseline fix pushed — merge Lane A when green |
+| #3171 | nested-box + §7 palette fix pushed — merge Lane B **after #3149** |
+| #3149 | shared CoA role test isolation pushed — Neon then merge |
+| #3170 | typecheck fix pushed; hold stays until Jorge labels |
+| #3172 / #3180 | legitimate financial HOLD — Jorge label required |
 
-*Refresh this table when `origin/main` advances or PR CI changes.*
+*Refresh when `origin/main` advances or PR CI changes.*
