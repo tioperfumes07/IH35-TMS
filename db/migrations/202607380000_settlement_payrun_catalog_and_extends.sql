@@ -4,6 +4,8 @@
 -- DO NOT RUN ON PROD — runs ONLY on a Neon branch by Jorge's hand, then ledger-backfilled (held-migration
 -- firewall + .held-migrations.json enforce this at execution time). Ordered AFTER 202607370000.
 --
+-- FIXED 2026-07-21 — line_type CHECK rewritten as true live-superset + multi-constraint drop; do not apply pre-fix versions.
+--
 -- CANONICAL-CHECK: payment_method_catalog. catalogs.payment_methods is the OWNER-EDITABLE payment-method
 --   CATALOG (QBO pattern) — the list of methods a company can pay by (ACH/Wire/Check/Cash/…), each pinned to
 --   the cash/bank GL account it draws from. This is DISTINCT from driver_finance.driver_payment_methods (the
@@ -20,9 +22,10 @@
 --   4. EXTEND driver_finance.cash_advance_requests (the REQUEST/APPROVAL workflow): submitted_by_user_id
 --           (the office "maker") + maker<>checker CHECK vs reviewed_by_user_id (I4). Owner/Admin auto-approve
 --           leaves reviewed_by NULL (role IS the authority); other roles need a DISTINCT approver.
---   5. EXTEND driver_finance.settlement_lines line_type CHECK: + 'advance_recovery' + 'escrow_contribution'.
---  5b. WIDEN catalogs.account_role_bindings.role_key CHECK: + 'abandonment_chargeback_recovery' (the pay-run
---           chargeback recovery credit role — was missing, so chargeback settlements failed to post).
+--   5. EXTEND driver_finance.settlement_lines line_type CHECK as a TRUE LIVE SUPERSET: keep all 11 live
+--           values + ADD only 'escrow_contribution' (never narrow; drop ALL prior line_type CHECKs first).
+--  5b. NO-OP — role_key CHECK widening for settlement/abandonment is owned by 202607670000 (primary +
+--           legacy supersets). Do not seed catalogs.account_role_bindings; do not re-narrow role_key here.
 --   6. NEW  driver_finance.payrun_gl_runs — a one-row-per-settlement GL-run IDEMPOTENCY ANCHOR (NOT a ledger;
 --           UNIQUE (operating_company_id, settlement_id) so a repeated pay-run close cannot double-post the JE;
 --           FORCE RLS + 0065 grants, no-DELETE). See its CANONICAL-CHECK block below.
@@ -135,55 +138,53 @@ BEGIN
   END IF;
 END $$;
 
--- ── 5. EXTEND settlement_lines line_type set: advance recovery + escrow contribution ───────────────
+-- ── 5. EXTEND settlement_lines line_type as TRUE LIVE SUPERSET (+ escrow_contribution only) ───────
+-- Live prod (br-fancy-credit-akjnd07a, verified 2026-07-21) has TWO line_type CHECKs and an 11-value
+-- set. Pre-fix drafts DROPPED only one constraint and ADDED a NARROWED set (omitted escrow,
+-- auto_deduction, dispute_adjustment). Forbidden. Drop ALL line_type CHECKs, then ADD one superset.
 DO $$
 DECLARE
-  chk text;
+  r record;
 BEGIN
-  SELECT conname INTO chk
-  FROM pg_constraint
-  WHERE conrelid = 'driver_finance.settlement_lines'::regclass
-    AND contype = 'c'
-    AND pg_get_constraintdef(oid) ILIKE '%line_type%';
-  IF chk IS NOT NULL THEN
-    EXECUTE format('ALTER TABLE driver_finance.settlement_lines DROP CONSTRAINT %I', chk);
+  IF to_regclass('driver_finance.settlement_lines') IS NULL THEN
+    RETURN;
   END IF;
+  FOR r IN
+    SELECT c.conname
+    FROM pg_constraint c
+    WHERE c.conrelid = 'driver_finance.settlement_lines'::regclass
+      AND c.contype = 'c'
+      AND pg_get_constraintdef(c.oid) ILIKE '%line_type%'
+  LOOP
+    EXECUTE format('ALTER TABLE driver_finance.settlement_lines DROP CONSTRAINT %I', r.conname);
+  END LOOP;
   ALTER TABLE driver_finance.settlement_lines
     ADD CONSTRAINT settlement_lines_line_type_chk_payrun CHECK (
       line_type IN (
-        'earnings', 'extra_pay', 'reimbursement', 'deduction', 'abandonment_chargeback',
-        'team_split_primary', 'team_split_secondary',
-        'advance_recovery', 'escrow_contribution'
+        'earnings',
+        'extra_pay',
+        'reimbursement',
+        'deduction',
+        'advance_recovery',
+        'escrow',
+        'abandonment_chargeback',
+        'team_split_primary',
+        'team_split_secondary',
+        'auto_deduction',
+        'dispute_adjustment',
+        'escrow_contribution'
       )
     );
 EXCEPTION WHEN duplicate_object THEN
-  NULL; -- constraint already swapped on a re-run
+  NULL; -- constraint already present on a re-run
 END $$;
 
--- ── 5b. WIDEN catalogs.account_role_bindings.role_key CHECK: + 'abandonment_chargeback_recovery' ────
--- The pay-run credits abandonment chargebacks to the 'abandonment_chargeback_recovery' role account
--- (settlement-payrun-close.service.ts:resolveRoleBindingAccount). That role_key was MISSING from the
--- account_role_bindings_role_key_check enum (last widened in 202607080310), so the owner could never bind
--- an account to it — every settlement carrying an abandonment chargeback threw CHARGEBACK_RECOVERY_ACCOUNT_
--- MISSING (a dead money leg). Re-add the constraint with the full 202607080310 superset PLUS the new key
--- (idempotent DROP+ADD; the list must remain the complete superset so no existing role is dropped).
-ALTER TABLE catalogs.account_role_bindings DROP CONSTRAINT IF EXISTS account_role_bindings_role_key_check;
-ALTER TABLE catalogs.account_role_bindings ADD CONSTRAINT account_role_bindings_role_key_check CHECK (
-  role_key = ANY (ARRAY[
-    'ar_clearing', 'ap_clearing', 'cash_dip', 'cash_payroll', 'cash_petty',
-    'fuel_expense', 'maintenance_expense', 'driver_payroll_clearing',
-    'factor_advances_receivable', 'factor_chargebacks_payable', 'undeposited_funds',
-    'driver_pay_expense', 'reimbursement_expense',
-    'advance_recovery', 'damage_recovery', 'lease_recovery', 'insurance_recovery',
-    'fuel_advance_recovery', 'other_recovery',
-    'rental_income', 'lease_receivable', 'interest_income', 'gain_loss_on_disposal',
-    'factoring_advance_liability', 'ar_assigned_to_factor', 'factoring_recoursed_ar',
-    'default_interest_expense', 'factor_reserve_held', 'factor_fee_expense',
-    'property_tax_expense', 'property_tax_payable',
-    -- SETTLE-PAYRUN (2026-07-13): the abandonment-chargeback recovery credit role for the pay-run close.
-    'abandonment_chargeback_recovery'
-  ])
-);
+-- ── 5b. NO-OP — catalogs.account_role_bindings.role_key CHECK widening ────────────────────────────
+-- role_key CHECK widening for settlement/abandonment (including abandonment_chargeback_recovery) is
+-- owned by 202607670000_settlement_coa_roles_widen_check.sql (primary chart_of_accounts_roles + legacy
+-- account_role_bindings supersets). Apply order: 370000 → 380000 → 400000 → 670000. Do NOT seed
+-- catalogs.account_role_bindings rows here; do NOT drop or re-assert a subset of role_key values.
+-- (Previous §5b body removed 2026-07-21 — competing CHECK wideners risked narrowing live keys.)
 
 -- ── 6. NEW pay-run GL-RUN idempotency anchor (driver_finance.payrun_gl_runs) ───────────────────────
 -- CANONICAL-CHECK: payrun_gl_run_idempotency_anchor. driver_finance.payrun_gl_runs is NOT a money ledger and

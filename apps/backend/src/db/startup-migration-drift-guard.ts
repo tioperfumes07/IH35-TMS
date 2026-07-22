@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { QueryResult } from "pg";
+import { loadHeldMigrationSet } from "./held-migrations.js";
 
 const MIGRATION_FILE_PATTERN = /^\d{4}[a-z]?_.+\.sql$/i;
 const SKIP_ENV = "SKIP_MIGRATION_DRIFT_GUARD";
@@ -62,7 +63,34 @@ export async function runStartupMigrationDriftGuard(opts: {
       FROM ih35_migrations.applied_migrations
     `);
     const { sysLedger, appLedger } = parseLedgerRows(query.rows);
-    const missing = repoMigrations.filter((name) => !sysLedger.has(name) || !appLedger.has(name));
+    const unledgered = repoMigrations.filter((name) => !sysLedger.has(name) || !appLedger.has(name));
+
+    // HELD migrations are deliberately left UNLEDGERED on prod: scripts/db-migrate.mjs
+    // (shouldSkipHeldOnProd) HELD-SKIPs them so a "DO NOT RUN ON PROD" migration cannot fire on a
+    // deploy; the owner hand-applies on a Neon branch and ledger-backfills. That honest pending
+    // state is NOT drift, and treating it as drift refuses the backend's boot and fails the deploy
+    // (2026-07-13 incident: 202607370000_driver_payment_methods held-skipped -> this guard saw it
+    // unledgered -> process.exit(1)).
+    //
+    // Until now this guard survived only by ACCIDENT: MIGRATION_FILE_PATTERN requires exactly four
+    // leading digits, and every held migration happens to be timestamp-style (202607...), so the
+    // pattern matched 0 of 72. Registering a held migration under a 4-digit name (0XXX_*.sql) would
+    // have exited the process on prod. The sibling guard assertMigrationDriftBootGuard
+    // (lib/migration-status.ts) already excludes held explicitly; this makes the two agree by
+    // construction instead of by naming convention.
+    const heldSet = loadHeldMigrationSet(opts.repoRoot);
+    const heldPending = unledgered.filter((name) => heldSet.has(name));
+    const missing = unledgered.filter((name) => !heldSet.has(name));
+
+    if (heldPending.length > 0) {
+      console.warn(
+        JSON.stringify({
+          event: "migration_drift_held_pending_ignored",
+          held_pending_count: heldPending.length,
+          sample: heldPending.slice(0, 5),
+        })
+      );
+    }
 
     if (missing.length > 0) {
       console.error(
