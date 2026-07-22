@@ -318,9 +318,13 @@ Proposed guards (each with an embedded `--selftest` of planted pass/fail fixture
    UndepositedFunds). Which is canonical per factor (Faro / RTS / Love's / Ecapital), which are archived, and
    the standardized subtype (canonical is Asset per CPA `factor_reserve_held`) — **owner ruling needed before
    any balance-sheet reclassification.** Not implemented here.
-2. **TONU revenue presentation:** book TONU as ordinary **Accessorial Revenue** (Income, in gross freight
-   revenue) vs **Other Income** (below the line). Industry norm (McLeod/Alvys) treats TONU as operating
-   accessorial revenue; confirm this vs the owner's P&L presentation preference.
+2. **TONU revenue presentation — RESOLVED (owner ruling, 2026-07-21):** TONU is presented as
+   **OPERATING REVENUE** — a **child account under the Accessorial Income parent** (alongside
+   detention / layover / lumper), **NOT** Other Income. This matches the industry norm (McLeod / Alvys):
+   TONU is operating accessorial revenue, booked in gross freight revenue, not below the line. Owner
+   (Jorge P. Munoz) selected this in writing 2026-07-21 (see `IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` §19.2).
+   The §2.1 target hierarchy already places **TONU Income** as an Accessorial Revenue child — that
+   placement is now the **locked** presentation. No open question remains on this item.
 3. **Legacy §1.3 accounts — archive vs keep-in-place:** relocate the messy layover/lumper/billable-income
    accounts as **archived children** under Accessorial Revenue, or keep them where they are with a documented
    crosswalk? (Never delete either way.)
