@@ -23,8 +23,11 @@ import {
   ensureIntegrationPrerequisites,
   releaseGlobalAccountRoleBindingsLock,
   restoreGlobalAccountRoleBindings,
+  restoreGlobalCoaRoleDesignations,
   saveGlobalAccountRoleBindings,
+  saveGlobalCoaRoleDesignations,
   type SavedAccountRoleBinding,
+  type SavedCoaRoleDesignation,
 } from "../../../test-helpers/db-fixture.js";
 import { TEST_OWNER_USER_ID, TEST_ENCRYPTION_KEY } from "../../../test-helpers/constants.js";
 import { upsertDriverEscrowAccountLink } from "../../accounting/driver-subaccount-provision.service.js";
@@ -70,6 +73,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     "abandonment_chargeback_recovery",
   ] as const;
   let priorGlobalBindings: SavedAccountRoleBinding[] = [];
+  let priorCoaDesignations: SavedCoaRoleDesignation[] = [];
   let heldGlobalBindingsLock = false;
   const paymentMethodId = randomUUID();
   // per-driver escrow liability sub-accounts (grandparent -> parent -> per-driver leaf)
@@ -144,6 +148,17 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
        VALUES ($1,$2::uuid,$3::uuid)
        ON CONFLICT (role_key) DO UPDATE SET account_id = EXCLUDED.account_id, deactivated_at = NULL, operating_company_id = EXCLUDED.operating_company_id`,
       [roleKey, accountId, companyId]
+    );
+  }
+
+  /** PRIMARY CoA-roles designation (resolver reads this first). */
+  async function designate(role: string, accountId: string) {
+    await db.query(
+      `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
+       VALUES ($1::uuid,$2,$3::uuid,true)
+       ON CONFLICT (operating_company_id, role) WHERE is_active
+         DO UPDATE SET account_id = EXCLUDED.account_id, is_active = true`,
+      [companyId, role, accountId]
     );
   }
 
@@ -230,10 +245,19 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
       await mkAcct(escrowGrandparent, `Damage Claim Escrow ${suffix}`, "Liability", null, escrowQbo("GP"));
       await mkAcct(escrowParent, `Driver Escrow ${suffix}`, "Liability", escrowGrandparent, escrowQbo("P"));
       priorGlobalBindings = await saveGlobalAccountRoleBindings(db, GLOBAL_BIND_KEYS);
+      // Snapshot SHARED-company PRIMARY designations BEFORE we overwrite them (sibling suites
+      // need ap_control / uncategorized_expense intact — never wipe the whole company).
+      priorCoaDesignations = await saveGlobalCoaRoleDesignations(db, companyId, GLOBAL_BIND_KEYS);
+      // Legacy bindings kept as resolver FALLBACK tier (Rule 07) — prove primary path by also designating.
       await bind("driver_pay_expense", acct.driverPay);
       await bind("insurance_recovery", acct.insuranceRecovery);
       await bind("advance_recovery", acct.advanceClearing);
       await bind("abandonment_chargeback_recovery", acct.chargebackRecovery);
+      // PRIMARY designations — the tier closeSettlementPayRun resolves first after the CoA-resolver repoint.
+      await designate("driver_pay_expense", acct.driverPay);
+      await designate("insurance_recovery", acct.insuranceRecovery);
+      await designate("advance_recovery", acct.advanceClearing);
+      await designate("abandonment_chargeback_recovery", acct.chargebackRecovery);
       // owner-editable payment method pinned to the cash account
       await db.query(
         // canonical 0152 table is code-keyed (code + display_name), not `name`.
@@ -294,9 +318,12 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     }
 
     try {
-      // Restore GLOBAL bindings BEFORE deleting fixture accounts (FK). FAIL-LOUD — own txn.
+      // Restore GLOBAL legacy bindings + PRIMARY CoA designations BEFORE deleting fixture accounts (FK).
+      // FAIL-LOUD — own txn. Never wipe all chart_of_accounts_roles for the shared company
+      // (that deleted ap_control and flaked bulk-post-as-bill / CI build-typecheck).
       await bypass(async () => {
         await restoreGlobalAccountRoleBindings(db, GLOBAL_BIND_KEYS, priorGlobalBindings, companyId);
+        await restoreGlobalCoaRoleDesignations(db, companyId, GLOBAL_BIND_KEYS, priorCoaDesignations);
       });
     } catch (err) {
       restoreError = err;

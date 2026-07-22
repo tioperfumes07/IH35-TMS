@@ -30,6 +30,7 @@ const ROLE_LABELS: Record<CoaRole, string> = {
   insurance_recovery: "Insurance recovery",
   fuel_advance_recovery: "Fuel advance recovery",
   other_recovery: "Other recovery",
+  abandonment_chargeback_recovery: "Abandonment chargeback recovery",
 };
 
 export function CoaRolesPage() {

@@ -15,9 +15,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 
 const RESOLVER = "apps/backend/src/accounting/coa-roles/resolver.service.ts";
-const MIGRATION = "db/migrations/202607670000_settlement_coa_roles_widen_check.sql";
+// Latest widen that must permit the full settlement + pay-run role set (true supersets of earlier wideners).
+const MIGRATION = "db/migrations/202607710000_payrun_abandonment_chargeback_coa_role.sql";
 
-// Required by the task (hard set) + the full recovery set the settlement posters resolve dynamically.
+// Required by the task (hard set) + the full recovery set the settlement posters resolve dynamically
+// + pay-run close abandonment chargeback residual.
 const REQUIRED_ROLES = [
   "driver_pay_expense",
   "driver_payroll_clearing",
@@ -28,6 +30,7 @@ const REQUIRED_ROLES = [
   "insurance_recovery",
   "fuel_advance_recovery",
   "other_recovery",
+  "abandonment_chargeback_recovery",
 ];
 
 function extractCoaRoleValues(source) {
