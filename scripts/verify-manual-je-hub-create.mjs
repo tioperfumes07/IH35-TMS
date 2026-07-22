@@ -3,12 +3,19 @@
  * ACCT-PR-4/6 — Manual JE create on the Accounting Hub.
  *
  * Guards the audit requirement:
- *   - AccountingHubPage has an Owner-gated "+ Create Manual JE" primary button (never "+ New"/"+ Add").
+ *   - AccountingHubPage has a "+ Create Manual JE" primary button (never "+ New"/"+ Add").
  *   - It wires the SAME accounting ManualJEModal used by ManualJEListPage (no duplicate Banking modal
  *     import on the hub page).
- *   - The manual-JE create endpoint enforces an amount threshold (Owner-only at/above
- *     MANUAL_JE_OWNER_THRESHOLD_CENTS), documented in ONE place in journal-entries.service.ts —
- *     matching void's Owner-tier seriousness bar (canVoid: Owner + Accountant only).
+ *   - Access follows the EXISTING accounting role gate (canAccessAccounting: Owner / Administrator /
+ *     Accountant) — the same bar as every other create surface in this module.
+ *
+ * NO AMOUNT THRESHOLD. This guard previously required an invented $1,000 Owner-only ceiling
+ * (MANUAL_JE_OWNER_THRESHOLD_CENTS / canCreateManualJeAtAmount), plus an Owner-only render condition
+ * on the hub button. That was a business rule no owner authorised, and it failed closed with a bare
+ * 403 `forbidden_manual_je_owner_threshold` that no UI surfaced — an Accountant entering a $1,500 JE
+ * got a silent rejection. Owner ruling 2026-07-22: "remove threshold." Both the ceiling and the
+ * Owner-only button gate are gone, and this guard now asserts their ABSENCE so neither creeps back
+ * in without an owner decision.
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -41,9 +48,13 @@ if (/["'>]\s*\+\s*New\b/.test(hub) || /["'>]\s*\+\s*Add\b/.test(hub)) {
   failures.push(`${HUB_PATH}: primary button must be "+ Create" / "+ Create Manual JE" — never "+ New"/"+ Add"`);
 }
 
-// 2. Owner-gated: the button render must be conditioned on Owner role.
-if (!/user\?\.role === ["']Owner["']/.test(hub)) {
-  failures.push(`${HUB_PATH}: "+ Create Manual JE" must be Owner-gated (user?.role === "Owner")`);
+// 2. NOT role-narrowed at the button: access is the module's existing canAccessAccounting gate.
+//    An Owner-only render here would hide the action from the Administrators and Accountants who
+//    are exactly the people expected to post manual journal entries.
+if (/user\?\.role === ["']Owner["'][\s\S]{0,200}?Create Manual JE/.test(hub)) {
+  failures.push(
+    `${HUB_PATH}: "+ Create Manual JE" must NOT be narrowed to Owner — access follows canAccessAccounting (owner ruling 2026-07-22 "remove threshold")`
+  );
 }
 
 // 3. Must import the accounting ManualJEModal (re-exports components/accounting/ManualJEModal),
@@ -55,21 +66,14 @@ if (/from\s*["'][^"']*banking\/components\/ManualJEModal["']/.test(hub)) {
   failures.push(`${HUB_PATH}: must NOT import the Banking ManualJEModal`);
 }
 
-// 4. Backend: single-source-of-truth Owner-configurable threshold constant + gate helper.
-if (!/export const MANUAL_JE_OWNER_THRESHOLD_CENTS\s*=\s*\d/.test(service)) {
-  failures.push(`${SERVICE_PATH}: missing exported MANUAL_JE_OWNER_THRESHOLD_CENTS constant`);
-}
-if (!/export function canCreateManualJeAtAmount\(/.test(service)) {
-  failures.push(`${SERVICE_PATH}: missing exported canCreateManualJeAtAmount(role, totalDebitCents) gate`);
-}
-
-// 5. Backend: the create route must actually call the threshold gate (amount-threshold check on
-//    CREATE, not just void) before persisting.
-if (!/canCreateManualJeAtAmount/.test(routes)) {
-  failures.push(`${ROUTES_PATH}: POST /journal-entries must call canCreateManualJeAtAmount before create`);
-}
-if (!/forbidden_manual_je_owner_threshold/.test(routes)) {
-  failures.push(`${ROUTES_PATH}: missing 403 forbidden_manual_je_owner_threshold response on threshold breach`);
+// 4/5. Backend: NO amount threshold anywhere on the manual-JE create path (owner ruling
+//       2026-07-22). Assert absence, so the ceiling cannot be reintroduced without an owner call.
+for (const [label, source] of [[SERVICE_PATH, service], [ROUTES_PATH, routes]]) {
+  if (/MANUAL_JE_OWNER_THRESHOLD_CENTS|canCreateManualJeAtAmount|forbidden_manual_je_owner_threshold/.test(source)) {
+    failures.push(
+      `${label}: manual-JE amount threshold reintroduced — the owner removed it on 2026-07-22. A dollar ceiling on posting is a business decision, not an engineering default.`
+    );
+  }
 }
 
 if (failures.length) {
@@ -77,4 +81,4 @@ if (failures.length) {
   for (const f of failures) console.error(" -", f);
   process.exit(1);
 }
-console.log("PASS verify-manual-je-hub-create — Owner-gated hub create + amount-threshold gate wired");
+console.log("PASS verify-manual-je-hub-create — hub create wired via canAccessAccounting; no amount threshold");

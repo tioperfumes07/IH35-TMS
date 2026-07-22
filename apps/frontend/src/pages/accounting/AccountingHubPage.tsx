@@ -405,14 +405,12 @@ export function AccountingHubPage() {
       subtitle="Bills, expenses, invoices, settlements & transaction review"
       kpiStrip={kpiStrip}
       actions={
-        // Owner-gated: manual JE is a high-risk direct GL write; hub entry point is restricted to
-        // Owner (mirrors void's Owner-tier bar). Non-Owner still creates manual JEs from the Journal
-        // Entries list page below MANUAL_JE_OWNER_THRESHOLD_CENTS — see journal-entries.service.ts.
-        user?.role === "Owner" ? (
-          <Button size="sm" onClick={() => setManualJeOpen(true)} disabled={!companyId}>
-            + Create Manual JE
-          </Button>
-        ) : null
+        // Access follows the existing accounting role gate (canAccessAccounting: Owner /
+        // Administrator / Accountant) — the same bar as every other create surface in this module.
+        // No amount threshold: owner ruling 2026-07-22, "remove threshold".
+        <Button size="sm" onClick={() => setManualJeOpen(true)} disabled={!companyId}>
+          + Create Manual JE
+        </Button>
       }
     >
       {!companyId ? <p className="text-sm text-slate-700">Select an operating company.</p> : null}

@@ -4,7 +4,6 @@ import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import {
-  canCreateManualJeAtAmount,
   createJournalEntry,
   getJournalEntryDetail,
   getJournalEntrySourceLinks,
@@ -61,14 +60,6 @@ export async function registerJournalEntryRoutes(app: FastifyInstance) {
     if (!canAccessAccounting(user.role)) return reply.code(403).send({ error: "forbidden" });
     const body = createJournalEntryBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
-    // MANUAL-JE-HUB-CREATE: amount-threshold check on CREATE (mirrors void's Owner-tier bar for
-    // high-risk GL writes — see canCreateManualJeAtAmount / MANUAL_JE_OWNER_THRESHOLD_CENTS).
-    const totalDebitCents = body.data.postings
-      .filter((line) => line.debit_or_credit === "debit")
-      .reduce((sum, line) => sum + Number(line.amount_cents || 0), 0);
-    if (!canCreateManualJeAtAmount(user.role, totalDebitCents)) {
-      return reply.code(403).send({ error: "forbidden_manual_je_owner_threshold" });
-    }
     try {
       const memoParts: string[] = [];
       if (body.data.reference_number) memoParts.push(`Ref: ${body.data.reference_number}`);

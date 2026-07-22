@@ -10,24 +10,6 @@ import { auditVoid, canVoid, postVoidReversal } from "./void.service.js";
 type JournalEntrySource = "manual" | "auto";
 type JournalEntryStatus = "posted" | "voided";
 
-// MANUAL-JE-HUB-CREATE — amount-threshold gate on CREATE (not just void). Prior to this, void was
-// role-gated at ANY amount (canVoid: Owner + Accountant only — see void.service.ts) while create had
-// NO amount check at all (canAccessAccounting in journal-entries.routes.ts admits Owner/Administrator/
-// Accountant regardless of size). A large arbitrary GL posting is at least as high-risk as a void, so
-// manual JEs at/above this threshold require Owner, mirroring void's seriousness. Below the threshold
-// the existing role gate (Owner/Administrator/Accountant) is unchanged.
-//
-// SINGLE SOURCE OF TRUTH — Owner-configurable in this ONE place. No schema/migration dependency (pure
-// authorization check on the total debit amount, not new GL math); adjust this constant to change the
-// dollar line company-wide.
-export const MANUAL_JE_OWNER_THRESHOLD_CENTS = 100_000; // $1,000.00
-
-/** Manual JE create at/above MANUAL_JE_OWNER_THRESHOLD_CENTS requires Owner (matches void's Owner+Accountant bar for high-risk GL writes; below threshold the existing role gate applies unchanged). */
-export function canCreateManualJeAtAmount(role: string | null | undefined, totalDebitCents: number): boolean {
-  if (totalDebitCents < MANUAL_JE_OWNER_THRESHOLD_CENTS) return true;
-  return role === "Owner";
-}
-
 type QueryableClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
