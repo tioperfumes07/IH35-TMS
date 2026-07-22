@@ -5,8 +5,9 @@ import { useAuth } from "../../auth/useAuth";
 import { EntityLink } from "../shared/EntityLink";
 
 type Filter =
-  | { driver_id: string; unit_id?: never }
-  | { unit_id: string; driver_id?: never };
+  | { driver_id: string; unit_id?: never; load_id?: never }
+  | { unit_id: string; driver_id?: never; load_id?: never }
+  | { load_id: string; driver_id?: never; unit_id?: never };
 
 type Props = {
   operatingCompanyId: string;

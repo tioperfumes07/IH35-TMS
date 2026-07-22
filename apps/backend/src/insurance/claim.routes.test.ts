@@ -169,6 +169,23 @@ describe("insurance claim routes", () => {
     expect(body.claims[0]?.id).toBe("11111111-1111-4111-8111-111111111111");
   });
 
+  it("GET applies driver_id and load_id reverse-drill filters", async () => {
+    const app = await buildApp();
+    const response = await app.inject({
+      method: "GET",
+      url: "/api/v1/insurance/claims?operating_company_id=11111111-1111-4111-8111-111111111111&driver_id=66666666-6666-4666-8666-666666666666&load_id=77777777-7777-4777-8777-777777777777",
+    });
+
+    expect(response.statusCode).toBe(200);
+    const calls = queryMock.mock.calls.filter(([sql]) => sql.includes("ORDER BY c.accident_date DESC"));
+    expect(calls).toHaveLength(1);
+    const [sql, values] = calls[0]!;
+    expect(sql).toContain("c.driver_id = $");
+    expect(sql).toContain("c.load_id = $");
+    expect(values).toContain("66666666-6666-4666-8666-666666666666");
+    expect(values).toContain("77777777-7777-4777-8777-777777777777");
+  });
+
   it("POST creates claim", async () => {
     const app = await buildApp();
     const response = await app.inject({

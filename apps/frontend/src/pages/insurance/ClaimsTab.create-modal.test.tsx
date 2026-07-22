@@ -58,6 +58,13 @@ vi.mock("../../api/safety", () => ({
   getSafetyAccidents: vi.fn().mockResolvedValue({ accidents: [] }),
 }));
 
+// ClaimCreateModal's driver field nests the canonical CreateDriverModal (Blueprint 4.2.2.1,
+// CHROME-11 shell="drawer") behind "+ Create driver". It is not under test here — stub it out
+// the same way LoadDetailDrawer.test.tsx stubs heavy nested creators.
+vi.mock("../../components/drivers/CreateDriverModal", () => ({
+  CreateDriverModal: () => null,
+}));
+
 function wrap(ui: ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
