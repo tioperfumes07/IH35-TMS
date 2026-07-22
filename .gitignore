@@ -43,8 +43,8 @@ docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.*
 !.cursor/rules/17-no-guard-hotfile-thrash.mdc
 !.cursor/rules/18-pipeline-truth-and-throughput.mdc
 !.cursor/rules/19-owner-manual-reserve-accounts.mdc
-!.cursor/rules/20-block-progress-status.mdc
 !.cursor/rules/21-full-system-no-partial-amnesia.mdc
+!.cursor/rules/22-session-boot-announce.mdc
 !.cursor/rules/dual-lane-never-idle.mdc
 
 # Office/Excel lock files (created while a workbook is open; never commit)

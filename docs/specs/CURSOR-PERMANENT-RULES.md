@@ -9,7 +9,31 @@ Before any work, read docs/specs/QUALITY-STANDARD-LOCKED.md. It is the first law
 
 > **Claude (planning): include the directive "Read docs/specs/CURSOR-PERMANENT-RULES.md FIRST before writing any code." at the top of every paste box.**
 
-Last updated: 2026-07-16 by Jorge
+Last updated: 2026-07-22 by Jorge
+
+---
+
+## RULE 22 — SYSTEM-WIDE DEEP LINKAGE (owner 2026-07-22 — LOCKED)
+
+Deep linkage is the **entire OS**, not Insurance Claims / Legal only.
+
+- **Applies to:** Safety, Compliance/FMCSA, Fleet/Vehicles, Trailers, Dispatch/Loads, Settlements, Escrow, Banking, Accounting/CoA, Maintenance/WO, Insurance, Legal, Drivers — every module, tab, nested tab, wizard/creator/drawer.
+- **Bar:** forward + reverse drill wherever A relates to B; purpose → economics on money paths; market minimum = QBO / NetSuite / McLeod / Alvys.
+- **Claims A2 / Advance C** in `docs/trackers/FULL-SYSTEM-AUDIT-AND-WIRING-MASTER-PLAN-2026-07-22.md` are **depth samples**, not scope limits.
+- **Forbidden:** treating linkage as “claims work” and leaving Safety/Compliance/Vehicles/Settlements thinly wired.
+- Cursor always-apply: `.cursor/rules/14-linkage-law-enforcement.mdc` + `.cursor/rules/21-full-system-no-partial-amnesia.mdc`.
+
+---
+
+## RULE 23 — NEW SESSION ANNOUNCE + TIERED MODEL (owner 2026-07-22 — LOCKED)
+
+On the **first reply of every new conversation**, Cursor MUST open with:
+
+`NEW SESSION · rules autoloaded · tiered model in force (Rule 12)`
+
+So Jorge knows permanent rules just loaded. Do not skip. Same-thread continuations use Rule 20 progress headers instead.
+
+**Tiered model** (quality first): highest capability for money/schema/migrations/review; mid for routine feature code; fast for mechanical/docs. Escalate when in doubt. Always-apply: `.cursor/rules/12-model-tiering.mdc` + `.cursor/rules/22-session-boot-announce.mdc`.
 
 ---
 

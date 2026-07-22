@@ -17,6 +17,7 @@ You are building a **real operating system of record** — QuickBooks (accountin
 2. **Every money event is economically complete** — vendor/customer + GL (CoA) + JE/expense/bill/payment as required + audit + load/driver/unit where they belong. CoA roles actually designate and posters actually resolve them — **not** empty bindings and silent skips.
 3. **The active product is the new design** — not half-written replacements. Defect class: `DUAL_PATH_OLD_ACTIVE` / `ORPHAN_NEW` (new code written, old route/format still what users hit; ComingSoon stub mounted while real tab exists elsewhere).
 4. **No stone left unturned** = every module, every tab, every money and ops hop — **linked, mounted, communicating, proven**.
+5. **Deep linkage is SYSTEM-WIDE** (owner 2026-07-22) — **not** Insurance Claims / Legal only. Safety, Compliance, Vehicles/Fleet, Trailers, Dispatch, Settlements, Escrow, Banking, Accounting, Maintenance, Drivers — same both-way bar. Claims economics (A2) is a **sample**, not the scope boundary.
 
 ## Non-stop workstreams (do not drop)
 
@@ -37,3 +38,26 @@ You are building a **real operating system of record** — QuickBooks (accountin
 ## Definition of done
 
 `acceptance[]` with live proof (or UNVERIFIED named). CI-green ≠ done. Chrome ≠ linkage.
+
+## Reminder document (owner 2026-07-22)
+
+Canonical checklist Cursor must not forget:
+
+**`docs/trackers/FULL-SYSTEM-AUDIT-AND-WIRING-MASTER-PLAN-2026-07-22.md`**
+
+When Jorge says “execute the master plan,” run dual-path + Law §9 + wizard-depth + purpose→economics for every module/tab/wizard. Create Cash Advance exemplar: load + truck + trailer + bank; personal→settlement deduct; lumper→expense on load.
+
+Full linkage is **not** only EntityLinks. For **every** wizard/creator/modal/drawer (Create Advance, Book Load, Bill, Expense, Fine, Claim, Settlement close, …) audit and fix **field-by-field**:
+
+1. **Chrome** — no boxes-in-boxes; QBO side-panel / ParityDrawer gold; flatten nested borders
+2. **Disbursement / payment method** — real design (not hardcoded bank names in a label); pick **actual bank accounts** / cards / methods from TMS Banking
+3. **Ops linkage** — load / unit / driver / bill / claim as the workflow requires (e.g. cash advance → `load_id`)
+4. **Settlement money modes** — where repayment/recovery exists: support **deduct from next settlement** (single/full) **and** amortize (periods/cadence) — not periods-only
+5. **Canonical nested +Create** on every create-worthy picker
+6. Document HAVE / MISSING / WRONG vs approved screen + McLeod/Alvys/QBO before calling a creator “done”
+
+Exemplar owner findings (Create Cash Advance — must fix, not paper over):
+- Nested bordered boxes inside wizard
+- Disbursement method incorrectly designed; no bank-account select
+- No load linkage on create surface (backend already knows `load_id` on requests/advances)
+- Repayment has periods/cadence only — missing **next settlement / single deduction** option
