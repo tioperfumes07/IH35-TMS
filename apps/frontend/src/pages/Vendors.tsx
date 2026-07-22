@@ -13,6 +13,7 @@ import { ActionButton } from "../components/shared/ActionButton";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { PageHeader } from "../components/layout/PageHeader";
+import { CollapsedListFilters } from "../components/table";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { parseVendorNotes } from "../lib/vendorProfileMeta";
 import { VendorsListView } from "./vendors/VendorsListView";
@@ -263,34 +264,49 @@ export function VendorsPage() {
                 Master-detail
               </button>
             </div>
-            <div className="inline-flex rounded-sm border border-gray-300 bg-white p-0.5 text-xs" data-list-status-filter="vendors">
-              {(["active", "inactive", "all"] as const).map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  className={`rounded-sm px-2 py-1 font-medium capitalize ${listStatus === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
-                  onClick={() => setListStatus(value)}
-                >
-                  {value}
-                </button>
-              ))}
-            </div>
-            {/* V8 — roster Category filter (filters the left vendor list, not transactions). */}
-            {categoryOptions.length > 0 ? (
-              <SelectCombobox
-                value={rosterCategory}
-                onChange={(event) => setRosterCategory(event.target.value)}
-                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                aria-label="Filter vendors by category"
-              >
-                <option value="">All categories</option>
-                {categoryOptions.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </SelectCombobox>
-            ) : null}
+            {/* CHROME-04 — roster-level Status/Category chips collapsed behind a QBO-style
+                Filters popover (Dispatch FilterBar / CollapsedListFilters gold pattern).
+                Filters the left vendor list in BOTH list and master-detail view modes. */}
+            <CollapsedListFilters
+              activeFilterCount={(listStatus !== "active" ? 1 : 0) + (rosterCategory ? 1 : 0)}
+              testIdPrefix="vendors-roster"
+              dataAttributes={{ "data-vendors-roster-filter-toolbar": "collapsed" }}
+            >
+              <div className="space-y-1.5">
+                <div className="text-xs font-semibold text-gray-600">Status</div>
+                <div className="inline-flex rounded-sm border border-gray-300 bg-white p-0.5 text-xs" data-list-status-filter="vendors">
+                  {(["active", "inactive", "all"] as const).map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      className={`rounded-sm px-2 py-1 font-medium capitalize ${listStatus === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                      onClick={() => setListStatus(value)}
+                    >
+                      {value}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/* V8 — roster Category filter (filters the left vendor list, not transactions). */}
+              {categoryOptions.length > 0 ? (
+                <div className="space-y-1.5">
+                  <div className="text-xs font-semibold text-gray-600">Category</div>
+                  <SelectCombobox
+                    value={rosterCategory}
+                    onChange={(event) => setRosterCategory(event.target.value)}
+                    className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                    aria-label="Filter vendors by category"
+                  >
+                    <option value="">All categories</option>
+                    {categoryOptions.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </SelectCombobox>
+                </div>
+              ) : null}
+            </CollapsedListFilters>
             <ActionButton onClick={() => setCreateOpen(true)}>
               + Create Vendor
             </ActionButton>
