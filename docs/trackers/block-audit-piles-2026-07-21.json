@@ -6,9 +6,9 @@
     "active_reconcile": 1191
   },
   "totals": {
-    "BUILT": 715,
-    "GAP": 287,
-    "NEEDS-PROD": 34,
+    "BUILT": 721,
+    "GAP": 291,
+    "NEEDS-PROD": 24,
     "NEEDS-OWNER": 106,
     "NOISE": 39,
     "UNVERIFIED": 10
@@ -36,7 +36,7 @@
     "settlements": 80,
     "users-docs-help": 3
   },
-  "method": "reconcile status + backlog-verify OPEN→GAP overlay + settlement PR flips + Neon overlays (CORRECTED v2)",
+  "method": "reconcile status + backlog-verify OPEN→GAP overlay + settlement PR flips + Neon overlays (CORRECTED v2) + NEEDS-PROD Neon verdicts overlay 2026-07-21 (10/10 resolved)",
   "items": [
     {
       "id": "0007-no-silent-noop-posting",
@@ -67,10 +67,10 @@
     },
     {
       "id": "0007-pattern-5-split-brain-engines",
-      "pile": "NEEDS-PROD",
+      "pile": "GAP",
       "module": "accounting",
       "status_reconcile": "AUDIT-NOTE",
-      "evidence": "backlog-verify UNVERIFIED + needs_live — only a Neon prod read can decide",
+      "evidence": "GAP-CONFIRMED (structural) — parallel escrow schemas exist on prod (accounting.escrow_* + driver_finance.escrow_*) but BOTH engines have 0 data rows (true zeros with RLS bypass). No live divergence today; designate canonical store BEFORE first live escrow posting. [Neon MCP RLS-bypass read 2026-07-21 ~22:55 UTC on br-fancy-credit-akjnd07a; docs/trackers/NEEDS-PROD-NEON-VERDICTS-2026-07-21.md §8]",
       "fin": true,
       "block_id": "0007-pattern-5-split-brain-engines"
     },
@@ -148,10 +148,10 @@
     },
     {
       "id": "0010-f15-plaid-amex-wf-error-status",
-      "pile": "NEEDS-PROD",
+      "pile": "BUILT",
       "module": "banking",
-      "status_reconcile": "AUDIT-NOTE",
-      "evidence": "backlog-verify UNVERIFIED + needs_live — only a Neon prod read can decide",
+      "status_reconcile": "DONE",
+      "evidence": "STALE/BUILT — claimed AmEx/WF Plaid error state absent on prod. All active Plaid-linked AmEx/WF accounts sync_status='active', last_synced_at 2026-07-21 07:00–07:01 UTC. disconnected rows are is_active=false superseded artifacts. [Neon MCP RLS-bypass read 2026-07-21 ~22:55 UTC on br-fancy-credit-akjnd07a; docs/trackers/NEEDS-PROD-NEON-VERDICTS-2026-07-21.md §1]",
       "fin": true,
       "block_id": "0010-f15-plaid-amex-wf-error-status"
     },
@@ -617,10 +617,10 @@
     },
     {
       "id": "0243-flag-live-all-9-gl-flags-on_DONE",
-      "pile": "NEEDS-PROD",
+      "pile": "BUILT",
       "module": "accounting",
-      "status_reconcile": "AUDIT-NOTE",
-      "evidence": "backlog-verify UNVERIFIED + needs_live — only a Neon prod read can decide",
+      "status_reconcile": "DONE",
+      "evidence": "BUILT-LIVE — all 9 named GL posting flags enabled=true per-entity overrides for TRANSP/TRK/USMCA (flipped 2026-07-04→2026-07-16, no expiries). QBO push flags remain OFF. [Neon MCP RLS-bypass read 2026-07-21 ~22:55 UTC on br-fancy-credit-akjnd07a; docs/trackers/NEEDS-PROD-NEON-VERDICTS-2026-07-21.md §9]",
       "fin": true,
       "block_id": "0243-flag-live-all-9-gl-flags-on_DONE"
     },
@@ -2453,10 +2453,10 @@
     },
     {
       "id": "0473-2-7-bank-transactions-uncategorized-plaid",
-      "pile": "NEEDS-PROD",
+      "pile": "GAP",
       "module": "banking",
       "status_reconcile": "AUDIT-NOTE",
-      "evidence": "backlog-verify UNVERIFIED + needs_live — only a Neon prod read can decide",
+      "evidence": "GAP-CONFIRMED — 8,817 uncategorized Plaid-sourced bank_transactions (status=pending_categorization) on prod (TRANSP 3,991 + TRK 4,695 + USMCA 131). Review-state cross-check: 10,424 rows review_state=for_review + pending_categorization. Operational/data backlog, not a wiring defect. [Neon MCP RLS-bypass read 2026-07-21 ~22:55 UTC on br-fancy-credit-akjnd07a; docs/trackers/NEEDS-PROD-NEON-VERDICTS-2026-07-21.md §2]",
       "fin": true,
       "block_id": "0473-2-7-bank-transactions-uncategorized-plaid"
     },
@@ -2507,10 +2507,10 @@
     },
     {
       "id": "0518-r09-plaid-amex-wf-error",
-      "pile": "NEEDS-PROD",
+      "pile": "BUILT",
       "module": "banking",
-      "status_reconcile": "AUDIT-NOTE",
-      "evidence": "backlog-verify UNVERIFIED + needs_live — only a Neon prod read can decide",
+      "status_reconcile": "DONE",
+      "evidence": "STALE/BUILT — dedupe of 0010-f15. AmEx 5007 + all WF accounts sync_status='active' synced 2026-07-21 07:00 UTC; no ERROR state. [Neon MCP RLS-bypass read 2026-07-21 ~22:55 UTC on br-fancy-credit-akjnd07a; docs/trackers/NEEDS-PROD-NEON-VERDICTS-2026-07-21.md §3]",
       "fin": true,
       "block_id": "0518-r09-plaid-amex-wf-error"
     },
@@ -2579,10 +2579,10 @@
     },
     {
       "id": "0519-bk1-plaid-amex-wf-error",
-      "pile": "NEEDS-PROD",
+      "pile": "BUILT",
       "module": "banking",
-      "status_reconcile": "AUDIT-NOTE",
-      "evidence": "backlog-verify UNVERIFIED + needs_live — only a Neon prod read can decide",
+      "status_reconcile": "DONE",
+      "evidence": "STALE/BUILT — dedupe of 0010-f15. Connections healthy; banking.plaid_items to_regclass=NULL (state lives on bank_accounts.sync_status). [Neon MCP RLS-bypass read 2026-07-21 ~22:55 UTC on br-fancy-credit-akjnd07a; docs/trackers/NEEDS-PROD-NEON-VERDICTS-2026-07-21.md §4]",
       "fin": true,
       "block_id": "0519-bk1-plaid-amex-wf-error"
     },
@@ -2651,10 +2651,10 @@
     },
     {
       "id": "0519-fl1-2649-bank-tx-uncategorized_DISPATCH",
-      "pile": "NEEDS-PROD",
+      "pile": "GAP",
       "module": "banking",
       "status_reconcile": "AUDIT-NOTE",
-      "evidence": "backlog-verify UNVERIFIED + needs_live — only a Neon prod read can decide",
+      "evidence": "GAP-CONFIRMED (count STALE) — live uncategorized bank_transactions = 10,424 (not the claimed 2,649): TRANSP 5,598 + TRK 4,695 + USMCA 131 of 10,427 total. Only 3 rows ever categorized. Re-scope any dispatch block from 2,649 → 10,424. [Neon MCP RLS-bypass read 2026-07-21 ~22:55 UTC on br-fancy-credit-akjnd07a; docs/trackers/NEEDS-PROD-NEON-VERDICTS-2026-07-21.md §5]",
       "fin": true,
       "block_id": "0519-fl1-2649-bank-tx-uncategorized_DISPATCH"
     },
@@ -3191,10 +3191,10 @@
     },
     {
       "id": "banking-2-plaid-connections-error-state",
-      "pile": "NEEDS-PROD",
+      "pile": "BUILT",
       "module": "banking",
-      "status_reconcile": "AUDIT-NOTE",
-      "evidence": "backlog-verify UNVERIFIED + needs_live — only a Neon prod read can decide",
+      "status_reconcile": "DONE",
+      "evidence": "STALE/BUILT — no Plaid connection in error/needs_reauth on prod. Distinct sync_status values: only active|disconnected. Active connections synced 2026-07-21 07:00–07:01 UTC. [Neon MCP RLS-bypass read 2026-07-21 ~22:55 UTC on br-fancy-credit-akjnd07a; docs/trackers/NEEDS-PROD-NEON-VERDICTS-2026-07-21.md §7]",
       "fin": true,
       "block_id": "banking-2-plaid-connections-error-state"
     },
@@ -4541,10 +4541,10 @@
     },
     {
       "id": "CONN-1-plaid-reconcile-commit",
-      "pile": "NEEDS-PROD",
+      "pile": "GAP",
       "module": "banking",
-      "status_reconcile": "NEEDS-VERIFY",
-      "evidence": "backlog-verify UNVERIFIED + needs_live — only a Neon prod read can decide",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "GAP-CONFIRMED — banking.reconciliation_sessions = 0 rows all entities (true zero with RLS bypass). Reconcile-commit routes wired but never exercised in prod. Usage/adoption gap, not a code gap. [Neon MCP RLS-bypass read 2026-07-21 ~22:55 UTC on br-fancy-credit-akjnd07a; docs/trackers/NEEDS-PROD-NEON-VERDICTS-2026-07-21.md §6]",
       "fin": true,
       "block_id": "CONN-1-plaid-reconcile-commit"
     },
@@ -10270,10 +10270,10 @@
     },
     {
       "id": "usmca-banking-ingestion-dedup",
-      "pile": "NEEDS-PROD",
+      "pile": "BUILT",
       "module": "accounting",
-      "status_reconcile": "AUDIT-NOTE",
-      "evidence": "backlog-verify UNVERIFIED + needs_live — only a Neon prod read can decide",
+      "status_reconcile": "DONE",
+      "evidence": "BUILT-LIVE — USMCA has 1 active BofA Plaid account syncing daily; 133 tx all source=plaid with 100% dedup_hash; 0 dedup_hash / plaid_transaction_id collisions; 0 csv_import rows for USMCA. [Neon MCP RLS-bypass read 2026-07-21 ~22:55 UTC on br-fancy-credit-akjnd07a; docs/trackers/NEEDS-PROD-NEON-VERDICTS-2026-07-21.md §10]",
       "fin": true,
       "block_id": "usmca-banking-ingestion-dedup"
     },
@@ -10765,6 +10765,14 @@
     }
   ],
   "neon_prod_proof": {
+    "needs_prod_neon_verdicts_2026_07_21": {
+      "resolved": 10,
+      "ref": "docs/trackers/NEEDS-PROD-NEON-VERDICTS-2026-07-21.md",
+      "uncategorized_bank_tx": 10424,
+      "plaid_amex_wf_error_state": "STALE",
+      "reconciliation_sessions": 0,
+      "gl_posting_flags_all9_on": true
+    },
     "payment_idempotency_cols": true,
     "auto_deduction_link_col": true,
     "team_split_override_cols": true,

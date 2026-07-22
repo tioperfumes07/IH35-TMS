@@ -1,6 +1,6 @@
 {
  "date": "2026-07-21",
- "generated_at_iso": "2026-07-21T23:29:49.714Z",
+ "generated_at_iso": "2026-07-21T23:10:09.416Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
@@ -13162,12 +13162,6 @@
  ],
  "merged_prs": [
   {
-   "number": 3122,
-   "title": "[GOVERNANCE][HOLD-FOR-JORGE] docs: CHAIN-06 AR-subledger marked code-fixed (guards 920–922); stale OPEN claims corrected",
-   "mergedAt": "2026-07-21T23:29:03Z",
-   "branch": "docs/chain06-ar-subledger-code-fixed-2026-07-21"
-  },
-  {
    "number": 3112,
    "title": "docs(tracker): register 2 financial findings from the 2026-07-21 merge wave (WC-REIMB, NPF-DUP)",
    "mergedAt": "2026-07-21T23:02:20Z",
@@ -16760,16 +16754,16 @@
    "title": "feat(program): live Program Tracker page — Pending / In Progress / Completed & live / Sequence tabs",
    "mergedAt": "2026-07-11T16:09:50Z",
    "branch": "feat/program-tracker-page"
+  },
+  {
+   "number": 2345,
+   "title": "chore(registry): register 928 authored MASTER-6 blocks into .block-ready (honest extraction, no stubs)",
+   "mergedAt": "2026-07-11T15:36:04Z",
+   "branch": "chore/register-authored-batch1"
   }
  ],
- "merged_pr_total": 2827,
+ "merged_pr_total": 2826,
  "hold_for_jorge": [
-  {
-   "number": 3122,
-   "title": "[GOVERNANCE][HOLD-FOR-JORGE] docs: CHAIN-06 AR-subledger marked code-fixed (guards 920–922); stale OPEN claims corrected",
-   "mergedAt": "2026-07-21T23:29:03Z",
-   "category": "HOLD"
-  },
   {
    "number": 3111,
    "title": "[HOLD][docs-only] Rev-rec delivery two-event latch — Step 4 verification: PARTIAL (poster missing, owner-gated)",

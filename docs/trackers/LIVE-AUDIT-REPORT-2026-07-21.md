@@ -20,9 +20,9 @@
 
 | Pile | v2 (authoritative) | v1 (superseded) |
 |---|---:|---:|
-| BUILT | 715 | 667 |
-| GAP | 287 | 36 |
-| NEEDS-PROD | 34 | 71 |
+| BUILT | 721 | 667 |
+| GAP | 291 | 36 |
+| NEEDS-PROD | 24 | 71 |
 | NEEDS-OWNER | 106 | 28 |
 | NOISE | 39 | 383 |
 | UNVERIFIED | 10 | — |
@@ -72,6 +72,7 @@
 - Re-queried by this generator: **no**
 - These values were transcribed from that session. This generator performs NO database or network access, so it cannot and does not re-verify them. Re-query before relying on any of them for a financial decision.
 
+- `needs_prod_neon_verdicts_2026_07_21` = `[object Object]`
 - `payment_idempotency_cols` = `true`
 - `auto_deduction_link_col` = `true`
 - `team_split_override_cols` = `true`
@@ -92,7 +93,7 @@
 
 ## Full GAP list
 
-See `docs/trackers/LIVE-AUDIT-GAPS-2026-07-21.md` (287 items).
+See `docs/trackers/LIVE-AUDIT-GAPS-2026-07-21.md` (291 items).
 
 ## Caveat
 
