@@ -11,6 +11,11 @@ import { EscrowResolverError } from "./escrow-resolver.service.js";
 
 const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
 const idParamsSchema = z.object({ id: z.string().uuid() });
+/** Preview GET may pass the same disbursement inputs as close so net>0 settlements can balance the cash leg. */
+const previewQuerySchema = companyQuerySchema.extend({
+  payment_method_id: z.string().uuid().nullable().optional(),
+  standard_escrow_contribution_cents: z.coerce.number().int().min(0).max(1_000_000).optional(),
+});
 const closeBodySchema = companyQuerySchema.extend({
   payment_method_id: z.string().uuid().nullable().optional(),
   standard_escrow_contribution_cents: z.coerce.number().int().min(0).max(1_000_000).optional(),
@@ -48,12 +53,18 @@ export function registerSettlementPayRunCloseRoutes(app: FastifyInstance) {
     if (!AUTHORITY_ROLES.has(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const p = idParamsSchema.safeParse(req.params ?? {});
     if (!p.success) return validationError(reply, p.error);
-    const q = companyQuerySchema.safeParse(req.query ?? {});
+    const q = previewQuerySchema.safeParse(req.query ?? {});
     if (!q.success) return validationError(reply, q.error);
     await assertCompanyMembership(user.uuid, q.data.operating_company_id);
     try {
       return await closeSettlementPayRun(
-        { operatingCompanyId: q.data.operating_company_id, settlementId: p.data.id, previewOnly: true },
+        {
+          operatingCompanyId: q.data.operating_company_id,
+          settlementId: p.data.id,
+          paymentMethodId: q.data.payment_method_id ?? null,
+          standardEscrowContributionCents: q.data.standard_escrow_contribution_cents ?? null,
+          previewOnly: true,
+        },
         { userId: user.uuid }
       );
     } catch (e) {

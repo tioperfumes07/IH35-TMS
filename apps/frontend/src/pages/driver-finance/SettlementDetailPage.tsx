@@ -38,6 +38,7 @@ import { PendingAckNotice } from "./components/PendingAckNotice";
 import { ReimbursementsSection } from "./components/ReimbursementsSection";
 import { SettlementHeader } from "./components/SettlementHeader";
 import { useLiveDebt } from "./hooks/useLiveDebt";
+import { PayRunClosePanel } from "./components/PayRunClosePanel";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 function toDeductionRows(lines: Array<Record<string, unknown>>): DeductionRow[] {
@@ -336,6 +337,15 @@ export function SettlementDetailPage() {
                 .catch((error) => pushToast(`Finalize blocked: ${String((error as Error).message || error)}`, "error"));
             }}
           />
+          {companyId ? (
+            <PayRunClosePanel
+              settlementId={settlementId}
+              companyId={companyId}
+              userRole={auth.user?.role}
+              settlementStatus={String(settlement.status ?? "")}
+              onPosted={() => void refreshSettlementViews()}
+            />
+          ) : null}
           {isFinalSettlement ? (
             <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
               <div className="mb-2 flex items-center justify-between">
