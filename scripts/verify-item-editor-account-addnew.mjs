@@ -3,14 +3,20 @@
  * verify-item-editor-account-addnew.mjs  (PS-A — ItemEditor income/expense account pickers)
  *
  * Locks QBO-parity nested "+ Add new account" on ItemEditorModal's Income and Expense account
- * Combobox pickers. Without allowAddNew, operators must leave the item editor to create a GL
- * account — unlike Bills, Expense, and Banking categorize rows (ReferenceSelect / QuickCreate).
+ * Combobox pickers, AND locks the CORRECT create chrome:
+ *
+ *   MUST: InlineCreateDrawer kind="account" → NewAccountDrawerForm (catalogs.accounts / CoA)
+ *   MUST NOT: QuickCreateEntityModal kind="category" (wrong kind — docs HOLD #3133 theater)
+ *
+ * Product/service Category (+ Add new category) is a SEPARATE path (qbo_categories catalog) and
+ * must not be confused with GL account create.
  *
  * Usage:
  *   node scripts/verify-item-editor-account-addnew.mjs            # scan the real file
  *   node scripts/verify-item-editor-account-addnew.mjs --selftest # pure-logic selftest
  *
- * LINKAGE: N/A (frontend regression guard). Additive only.
+ * LINKAGE: forward ItemEditor default_*_account_id → catalogs.accounts; reverse CoA picker
+ * list via getCoaAccounts. Additive only. Rule 17 — no package.json / CI workflow edits.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -35,20 +41,45 @@ function comboboxNearField(src, fieldName) {
   return src.slice(Math.max(0, idx - 120), idx + 900);
 }
 
-/** The four assertions, each a predicate over the comment-stripped source. */
+/**
+ * Slice around InlineCreateDrawer / QuickCreateEntityModal JSX used for account create.
+ * Prefer the drawer/modal tag so kind= is in-window (handleAccountCreated also appears earlier).
+ */
+function accountCreateChrome(src) {
+  for (const tag of ["InlineCreateDrawer", "QuickCreateEntityModal"]) {
+    const idx = src.indexOf(`<${tag}`);
+    if (idx >= 0) return src.slice(idx, idx + 500);
+  }
+  // Fallback: any mention of accountCreateSide near a create chrome open.
+  const idx = src.indexOf("accountCreateSide !== null");
+  if (idx >= 0) return src.slice(Math.max(0, idx - 120), idx + 400);
+  return "";
+}
+
+/** The assertions, each a predicate over the comment-stripped source. */
 export function checksFor(src) {
   const incomePicker = comboboxNearField(src, "incomeAccountId");
   const expensePicker = comboboxNearField(src, "expenseAccountId");
+  const chrome = accountCreateChrome(src);
+
+  const usesInlineAccountDrawer =
+    /<InlineCreateDrawer\b/.test(src) &&
+    /kind=["']account["']/.test(chrome) &&
+    /onCreated=\{handleAccountCreated\}/.test(src);
+
+  // Forbidden: account FK create chrome wired as category (HOLD #3133 root defect).
+  const wrongCategoryKindForAccount =
+    /<QuickCreateEntityModal\b/.test(src) &&
+    /kind=["']category["']/.test(chrome) &&
+    (/handleAccountCreated/.test(src) || /accountCreateSide/.test(src));
 
   return {
     incomeAllowAddNew:
       incomePicker.includes("<Combobox") && /allowAddNew=\{\{\s*label:\s*"\+ Add new account"/.test(incomePicker),
     expenseAllowAddNew:
       expensePicker.includes("<Combobox") && /allowAddNew=\{\{\s*label:\s*"\+ Add new account"/.test(expensePicker),
-    nestedAccountCreate:
-      /QuickCreateEntityModal/.test(src) &&
-      /kind="category"/.test(src) &&
-      /handleAccountCreated|onCreated=\{handleAccountCreated\}/.test(src),
+    nestedAccountCreate: usesInlineAccountDrawer && !wrongCategoryKindForAccount,
+    noWrongCategoryKind: !wrongCategoryKindForAccount,
     refetchAfterCreate: /invalidateQueries[\s\S]{0,200}\["catalogs",\s*"accounts",\s*"for-items"/.test(src),
   };
 }
@@ -57,7 +88,9 @@ const CHECK_LABELS = {
   incomeAllowAddNew: "PS-A — Income account Combobox exposes allowAddNew (+ Add new account)",
   expenseAllowAddNew: "PS-A — Expense account Combobox exposes allowAddNew (+ Add new account)",
   nestedAccountCreate:
-    "PS-A — Nested create uses QuickCreateEntityModal kind=\"category\" (same chrome as other accounting surfaces)",
+    "PS-A — Nested create uses InlineCreateDrawer kind=\"account\" (NewAccountDrawerForm / CoA chrome)",
+  noWrongCategoryKind:
+    "PS-A — MUST NOT wire QuickCreateEntityModal kind=\"category\" for income/expense account create",
   refetchAfterCreate: "PS-A — Account list refetches after inline create (catalogs.accounts for-items query)",
 };
 
@@ -77,7 +110,9 @@ export function run() {
     for (const f of offenders) console.error(`  - ${f}`);
     return { ok: false, offenders };
   }
-  console.log("[verify-item-editor-account-addnew] PASS — income/expense account pickers have nested + Add new");
+  console.log(
+    "[verify-item-editor-account-addnew] PASS — income/expense + Add new account opens InlineCreateDrawer kind=account",
+  );
   return { ok: true, offenders: [] };
 }
 
@@ -98,9 +133,24 @@ function selftest() {
     function handleAccountCreated(rec) {
       void queryClient.invalidateQueries({ queryKey: ["catalogs", "accounts", "for-items", operatingCompanyId] });
     }
+    <InlineCreateDrawer open={accountCreateSide !== null} kind="account" onCreated={handleAccountCreated} />
+  `;
+  // Exact HOLD #3133 / main defect: label says account, chrome is category.
+  const badWrongKind = `
+    <Combobox
+    value={form.incomeAccountId}
+    onChange={(v) => set("incomeAccountId", v)}
+    allowAddNew={{ label: "+ Add new account", onAdd: () => setAccountCreateSide("income") }}
+    <Combobox
+    value={form.expenseAccountId}
+    onChange={(v) => set("expenseAccountId", v)}
+    allowAddNew={{ label: "+ Add new account", onAdd: () => setAccountCreateSide("expense") }}
+    function handleAccountCreated(rec) {
+      void queryClient.invalidateQueries({ queryKey: ["catalogs", "accounts", "for-items", operatingCompanyId] });
+    }
     <QuickCreateEntityModal open={accountCreateSide !== null} kind="category" onCreated={handleAccountCreated} />
   `;
-  const bad = `
+  const badMissing = `
     <Combobox
     value={form.incomeAccountId}
     onChange={(v) => set("incomeAccountId", v)}
@@ -111,18 +161,29 @@ function selftest() {
     allowClear
   `;
   const g = checksFor(stripComments(good));
-  const b = checksFor(stripComments(bad));
+  const w = checksFor(stripComments(badWrongKind));
+  const b = checksFor(stripComments(badMissing));
   const failures = [];
   for (const key of Object.keys(CHECK_LABELS)) {
     if (!g[key]) failures.push(`good fixture should PASS ${key}`);
-    if (b[key]) failures.push(`bad fixture should FAIL ${key}`);
+  }
+  for (const key of ["nestedAccountCreate", "noWrongCategoryKind"]) {
+    if (w[key]) failures.push(`wrong-kind fixture should FAIL ${key}`);
+  }
+  if (!w.incomeAllowAddNew || !w.expenseAllowAddNew) {
+    failures.push("wrong-kind fixture should still have allowAddNew labels (isolates kind defect)");
+  }
+  for (const key of ["incomeAllowAddNew", "expenseAllowAddNew", "nestedAccountCreate", "refetchAfterCreate"]) {
+    if (b[key]) failures.push(`missing-addnew fixture should FAIL ${key}`);
   }
   if (failures.length) {
     console.error("[verify-item-editor-account-addnew] SELFTEST FAIL:");
     for (const f of failures) console.error(`  ✗ ${f}`);
     process.exit(1);
   }
-  console.log(`[verify-item-editor-account-addnew] SELFTEST PASS — ${Object.keys(CHECK_LABELS).length} checks flag regressions`);
+  console.log(
+    `[verify-item-editor-account-addnew] SELFTEST PASS — ${Object.keys(CHECK_LABELS).length} checks; wrong-kind fixture rejected`,
+  );
 }
 
 const isMain = path.resolve(process.argv[1] ?? "") === path.resolve(new URL(import.meta.url).pathname);
