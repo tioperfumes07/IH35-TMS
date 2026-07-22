@@ -39,10 +39,6 @@ export function CoaRolesPage() {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const [draftByRole, setDraftByRole] = useState<Record<string, string>>({});
-  // Account numbers are OFF by default: 1,313 of 1,371 rows in catalogs.accounts carry synthetic
-  // clone placeholders ("QBO-1014", "QBO-100"), not real CoA numbers, so showing them by default is
-  // noise. Owner toggles them on when they need to disambiguate two same-named accounts.
-  const [showAccountNumbers, setShowAccountNumbers] = useState(false);
 
   const rowsQuery = useQuery({
     queryKey: ["coa-roles", companyId],
@@ -104,14 +100,24 @@ export function CoaRolesPage() {
             <option value="">Select account</option>
             {(accountsQuery.data?.accounts ?? []).map((account) => (
               // value stays the uuid (what the API needs); the LABEL is the account name so the
-              // control never renders a raw uuid. Number is opt-in via the toggle above the table.
+              // control never renders a raw uuid.
               <option key={account.id} value={account.id}>
-                {showAccountNumbers ? `${account.account_number} - ${account.account_name}` : account.account_name}
+                {account.account_name}
               </option>
             ))}
           </select>
         );
       },
+    },
+    {
+      // QBO pattern: the number lives in the gear column-toggle, hidden by default, and the owner's
+      // choice persists via ParityTable's storageKey. Default-hidden is also data-correct — 1,313 of
+      // 1,371 catalogs.accounts rows carry synthetic clone placeholders ("QBO-1014"), not real CoA
+      // numbers, so surfacing them by default is noise rather than information.
+      key: "account_number",
+      label: "Account number",
+      defaultHidden: true,
+      render: (row) => row.account_number ?? "-",
     },
     {
       key: "is_active",
@@ -175,19 +181,6 @@ export function CoaRolesPage() {
             : `Missing role mappings: ${(validateQuery.data?.missing_roles ?? []).join(", ") || "unknown"}`}
         </div>
       ) : null}
-
-      <div className="flex items-center justify-end">
-        <label className="flex items-center gap-2 text-xs text-slate-700">
-          <input
-            type="checkbox"
-            className="h-4 w-4 rounded-sm border-gray-300"
-            checked={showAccountNumbers}
-            onChange={(event) => setShowAccountNumbers(event.target.checked)}
-            data-testid="coa-roles-show-account-numbers"
-          />
-          Show account numbers
-        </label>
-      </div>
 
       {rowsQuery.isError ? (
         <ListErrorState
