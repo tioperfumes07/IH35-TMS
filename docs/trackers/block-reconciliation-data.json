@@ -1,12 +1,12 @@
 {
  "date": "2026-07-22",
- "generated_at_iso": "2026-07-22T08:55:47.261Z",
+ "generated_at_iso": "2026-07-22T14:29:12.759Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
-  "NEEDS-VERIFY": 71,
+  "NEEDS-VERIFY": 72,
   "DONE": 670,
-  "AUDIT-NOTE": 416
+  "AUDIT-NOTE": 415
  },
  "universe": {
   "total_blocks_after_dedup": 1191,
@@ -880,6 +880,17 @@
    "name": "",
    "registered_on": null,
    "pr": 2677
+  },
+  {
+   "id": "h-05-home-kpi-no-date-range-toggle",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #3116 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 3116
   },
   {
    "id": "home-2-open-loads-inflight-late-consistency-un",
@@ -12390,17 +12401,6 @@
    "pr": null
   },
   {
-   "id": "h-05-home-kpi-no-date-range-toggle",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "help-module-minimal-vs-meets",
    "source": ".block-ready",
    "fin": true,
@@ -13162,10 +13162,82 @@
  ],
  "merged_prs": [
   {
+   "number": 3209,
+   "title": "fix(ui): CHROME-02 — migrate Dispatch FilterBar + SafetyDashboardFilter onto shared CollapsedListFilters",
+   "mergedAt": "2026-07-22T14:18:22Z",
+   "branch": "fix/chrome-02-qbo-filter-toolbar"
+  },
+  {
+   "number": 3208,
+   "title": "fix(ui): CHROME-11 — stop nested driver create Modal-on-drawer in Bill create",
+   "mergedAt": "2026-07-22T14:10:57Z",
+   "branch": "fix/chrome-11-nested-create-drawer"
+  },
+  {
+   "number": 3207,
+   "title": "fix(ui): CHROME-05 collapse planner UniversalFilterBar behind Filters popover",
+   "mergedAt": "2026-07-22T14:10:50Z",
+   "branch": "fix/chrome-05-universal-filterbar"
+  },
+  {
+   "number": 3206,
+   "title": "chore(deps): bump brace-expansion from 5.0.5 to 5.0.7 in /apps/driver-pwa in the npm_and_yarn group across 1 directory",
+   "mergedAt": "2026-07-22T14:10:33Z",
+   "branch": "dependabot/npm_and_yarn/apps/driver-pwa/npm_and_yarn-7429694490"
+  },
+  {
+   "number": 3205,
+   "title": "fix(catalog): PLUS-01/02 wave2 — Unit picker nested +Create (VendorBillForm, RecordExpenseForm)",
+   "mergedAt": "2026-07-22T14:10:21Z",
+   "branch": "fix/plus-money-reference-select-wave2"
+  },
+  {
+   "number": 3204,
+   "title": "fix(ui): CHROME-04 — Customers/Vendors roster header filters collapse behind Filters popover",
+   "mergedAt": "2026-07-22T13:44:30Z",
+   "branch": "fix/chrome-04-customers-vendors-filters"
+  },
+  {
+   "number": 3203,
+   "title": "fix(ci): post-deploy verify passed green for merges that never deployed",
+   "mergedAt": "2026-07-22T13:45:02Z",
+   "branch": "fix/postdeploy-verify-fake-superseded"
+  },
+  {
+   "number": 3202,
+   "title": "docs(trackers): reconcile the merge-sequence contradiction I created",
+   "mergedAt": "2026-07-22T13:31:25Z",
+   "branch": "docs/merge-sequence-reconciliation-2026-07-22"
+  },
+  {
+   "number": 3201,
+   "title": "fix(ci): push gate no longer false-fails every push that follows a rebase",
+   "mergedAt": "2026-07-22T13:31:29Z",
+   "branch": "fix/push-gate-rebase-head-false-positive"
+  },
+  {
+   "number": 3200,
+   "title": "fix(ui): CHROME + PLUS catalog +Create burn-down (Safety filters, money/ops pickers)",
+   "mergedAt": "2026-07-22T13:18:25Z",
+   "branch": "fix/chrome-01-plus-01-creators"
+  },
+  {
+   "number": 3199,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-22T09:09:06Z",
+   "branch": "chore/tracker-artifacts-sync-29905843700"
+  },
+  {
    "number": 3196,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-07-22T04:56:21Z",
    "branch": "chore/tracker-artifacts-sync-29891616295"
+  },
+  {
+   "number": 3195,
+   "title": "fix(accounting): live Detail Types everywhere + catalog + Create audit",
+   "mergedAt": "2026-07-22T13:31:40Z",
+   "branch": "fix/detail-type-live-catalog-plus-create"
   },
   {
    "number": 3194,
@@ -13178,6 +13250,12 @@
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-07-22T04:25:39Z",
    "branch": "chore/tracker-artifacts-sync-29889509282"
+  },
+  {
+   "number": 3191,
+   "title": "fix(accounting): P-INVOICE P0 Law §9 — income + source_load_id + JE EntityLink",
+   "mergedAt": "2026-07-22T13:18:17Z",
+   "branch": "fix/p-invoice-p0-linkage"
   },
   {
    "number": 3190,
@@ -13246,6 +13324,12 @@
    "branch": "hold/fuel-gl-map-codes-designate-20260721"
   },
   {
+   "number": 3177,
+   "title": "docs(audit): Law §9 E2E batch2 — Invoice/Factor/Fuel/Bank FAIL (deploy e64fc4c)",
+   "mergedAt": "2026-07-22T13:31:33Z",
+   "branch": "audit/law-e2e-batch2-2026-07-21"
+  },
+  {
    "number": 3176,
    "title": "docs(audit): Law §9 E2E batch3 — WO / fine / advance / escrow (DO NOT MERGE)",
    "mergedAt": "2026-07-22T05:03:31Z",
@@ -13276,10 +13360,28 @@
    "branch": "law-fix/payrun-fe-wire-20260721"
   },
   {
+   "number": 3170,
+   "title": "fix(accounting): expense reverse drill-through (Law §9 E2E top-3)",
+   "mergedAt": "2026-07-22T13:33:07Z",
+   "branch": "fix/expense-e2e-linkage-reverse"
+  },
+  {
    "number": 3169,
    "title": "feat(guards): verify-no-dead-schema — CI enforcement for the §10a linkage law",
    "mergedAt": "2026-07-22T03:31:37Z",
    "branch": "fix/guard-no-dead-schema"
+  },
+  {
+   "number": 3167,
+   "title": "docs(audit): LAW-E2E Bill→BillPayment→JE linkage 2026-07-21",
+   "mergedAt": "2026-07-22T13:18:21Z",
+   "branch": "audit/law-e2e-bill-billpayment-2026-07-21"
+  },
+  {
+   "number": 3166,
+   "title": "audit: Law §9 Expense E2E linkage FAIL-honest (2026-07-21)",
+   "mergedAt": "2026-07-22T09:11:44Z",
+   "branch": "audit/law-e2e-expense-2026-07-21"
   },
   {
    "number": 3165,
@@ -13288,10 +13390,34 @@
    "branch": "fix/item-editor-account-create-kind"
   },
   {
+   "number": 3163,
+   "title": "docs(accounting): WAVE 7 verify priority GAP batch vs origin/main — do not merge",
+   "mergedAt": "2026-07-22T09:10:46Z",
+   "branch": "docs/accounting-drain-wave7-2026-07-21"
+  },
+  {
+   "number": 3162,
+   "title": "fix(accounting): Expense Category Map account picker shows name, not uuid [DO NOT MERGE — builder]",
+   "mergedAt": "2026-07-22T09:09:58Z",
+   "branch": "fix/w7-expense-category-map-account-picker"
+  },
+  {
+   "number": 3161,
+   "title": "docs(accounting): WAVE 6 verify priority batch vs origin/main — do not merge",
+   "mergedAt": "2026-07-22T09:10:58Z",
+   "branch": "docs/accounting-drain-wave6-2026-07-21"
+  },
+  {
    "number": 3159,
    "title": "[HOLD-FOR-JORGE] docs(design): WAVE 5 HOLDs — gap3 vendor FK · DIP AP split · flow2 chargeback",
    "mergedAt": "2026-07-22T05:03:54Z",
    "branch": "design/acct-drain-w5-holds-2026-07-21"
+  },
+  {
+   "number": 3158,
+   "title": "docs(accounting): WAVE 5 verify final 8 NEEDS-OWNER residuals — do not merge",
+   "mergedAt": "2026-07-22T09:11:09Z",
+   "branch": "docs/accounting-drain-wave5-2026-07-21"
   },
   {
    "number": 3156,
@@ -13300,16 +13426,40 @@
    "branch": "design/0007-escrow-split-brain-hold"
   },
   {
+   "number": 3155,
+   "title": "fix(accounting): Rule-17 wire CHAIN-04 bill-payment guards (verify-steps 1212/1213) [DO NOT MERGE — builder]",
+   "mergedAt": "2026-07-22T09:01:01Z",
+   "branch": "fix/chain-04-tieout-guards-verify-steps"
+  },
+  {
+   "number": 3154,
+   "title": "docs(accounting): WAVE 4 verify 12 residual NEEDS-OWNER/PROD items — do not merge",
+   "mergedAt": "2026-07-22T09:11:21Z",
+   "branch": "docs/accounting-drain-wave4-2026-07-21"
+  },
+  {
    "number": 3153,
    "title": "[HOLD-FOR-JORGE] docs(design): audit2 settlement approval mount — do not wire until G1-3",
    "mergedAt": "2026-07-22T00:21:15Z",
    "branch": "design/audit2-settlement-approval-mount-hold"
   },
   {
+   "number": 3151,
+   "title": "fix(dispatch): Dispatcher Home active loads show invoice status (gap-21 residual) [DO NOT MERGE — builder]",
+   "mergedAt": "2026-07-22T09:10:34Z",
+   "branch": "fix/dispatch-home-active-load-invoice-status"
+  },
+  {
    "number": 3149,
    "title": "[HOLD-FOR-JORGE] fix(settlements): pay-run close → CoA roles resolver (#3109 residual)",
    "mergedAt": "2026-07-22T03:37:28Z",
    "branch": "fix/payrun-close-coa-resolver"
+  },
+  {
+   "number": 3148,
+   "title": "fix(accounting): CoA Roles picker shows account name, not raw uuid (+ opt-in number toggle)",
+   "mergedAt": "2026-07-22T09:10:10Z",
+   "branch": "fix/coa-roles-show-account-name"
   },
   {
    "number": 3147,
@@ -13322,6 +13472,12 @@
    "title": "fix(accounting): CI guard for child-line scope inheritance via enforced parent FK (0519-es1-58) [DO NOT MERGE — builder]",
    "mergedAt": "2026-07-22T00:31:28Z",
    "branch": "fix/accounting-line-scope-inheritance-guard"
+  },
+  {
+   "number": 3145,
+   "title": "fix(accounting): Period Comparison list → ParityTable (sort/resize/gear) [DO NOT MERGE — builder]",
+   "mergedAt": "2026-07-22T09:10:21Z",
+   "branch": "fix/period-comparison-paritytable-sort-resize"
   },
   {
    "number": 3144,
@@ -13390,6 +13546,12 @@
    "branch": "design/0285-banking-transfer-gl-hold"
   },
   {
+   "number": 3133,
+   "title": "docs(accounting)[HOLD-FOR-JORGE]: ItemEditor \"+ Add new account\" opens wrong create kind",
+   "mergedAt": "2026-07-22T13:32:27Z",
+   "branch": "design/item-editor-add-new-account-hold"
+  },
+  {
    "number": 3132,
    "title": "docs(accounting): verify 8 audited GAP blocks vs origin/main (7 STALE, 1 open)",
    "mergedAt": "2026-07-22T00:03:39Z",
@@ -13450,6 +13612,12 @@
    "branch": "docs/top10-builder-evidence-2026-07-21"
   },
   {
+   "number": 3120,
+   "title": "chore(guards): CI-wire verify-no-accounting-qbo-writes (0008-g3) — builder, do not merge",
+   "mergedAt": "2026-07-22T09:11:33Z",
+   "branch": "chore/wire-accounting-qbo-writes-guard"
+  },
+  {
    "number": 3119,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-07-22T00:03:31Z",
@@ -13468,10 +13636,22 @@
    "branch": "docs/needs-prod-neon-verdicts-2026-07-21"
   },
   {
+   "number": 3116,
+   "title": "fix(home): h-05 — Today/7d/30d/MTD/YTD range toggle on Home KPI row (both variants) — DO NOT MERGE",
+   "mergedAt": "2026-07-22T13:31:53Z",
+   "branch": "fix/h-05-home-kpi-range-toggle"
+  },
+  {
    "number": 3115,
    "title": "docs(tracker): NEEDS-OWNER adjudication 2026-07-21 (35 answered / 44 unanswered / 18 action-only / 9 stale)",
    "mergedAt": "2026-07-22T00:14:53Z",
    "branch": "docs/needs-owner-adjudication-2026-07-21"
+  },
+  {
+   "number": 3114,
+   "title": "[GOVERNANCE][HOLD-FOR-JORGE] Owner rulings 2026-07-21 (+ evening §20) — DO NOT MERGE",
+   "mergedAt": "2026-07-22T14:10:10Z",
+   "branch": "governance/owner-rulings-2026-07-21"
   },
   {
    "number": 3112,
@@ -16580,189 +16760,9 @@
    "title": "fix(ui): add EntityLink drill-through to 6 orphan entity cells (Total Connectivity)",
    "mergedAt": "2026-07-13T21:46:23Z",
    "branch": "fix/entitylink-drillthroughs"
-  },
-  {
-   "number": 2433,
-   "title": "[HOLD-FOR-JORGE] fix(settlement-dispute): gate corrective JE on SETTLEMENT_GL_POSTING_ENABLED (Item 4)",
-   "mergedAt": "2026-07-13T21:45:57Z",
-   "branch": "fix/settlement-dispute-je-gate"
-  },
-  {
-   "number": 2432,
-   "title": "feat(ci): verify:local-ci — reproduce build-typecheck locally before pushing",
-   "mergedAt": "2026-07-13T21:23:18Z",
-   "branch": "chore/local-ci-repro"
-  },
-  {
-   "number": 2431,
-   "title": "[HOLD-FOR-JORGE] feat(settlement-payrun): per-driver settlement close + escrow cap + advance recovery + payment-method catalog (reuse-and-extend, flags OFF)",
-   "mergedAt": "2026-07-13T21:45:47Z",
-   "branch": "feat/settlement-payrun-reuse-extend"
-  },
-  {
-   "number": 2430,
-   "title": "chore(deps): bump the production-dependencies group across 1 directory with 22 updates",
-   "mergedAt": "2026-07-15T01:43:33Z",
-   "branch": "dependabot/npm_and_yarn/production-dependencies-734b4d0bcd"
-  },
-  {
-   "number": 2429,
-   "title": "chore(ci): guard makes a duplicate financial ledger structurally unmergeable",
-   "mergedAt": "2026-07-13T18:12:49Z",
-   "branch": "chore/guard-no-duplicate-financial-ledger"
-  },
-  {
-   "number": 2428,
-   "title": "fix(ci): tracker-sync bot push bypasses husky pre-push (was failing every scheduled run)",
-   "mergedAt": "2026-07-13T17:10:07Z",
-   "branch": "fix/tracker-sync-husky-no-verify"
-  },
-  {
-   "number": 2427,
-   "title": "chore(ci): wire 5 critical non-financial guards into locked-guards (were unwired)",
-   "mergedAt": "2026-07-13T15:16:55Z",
-   "branch": "chore/ci-wire-critical-guards"
-  },
-  {
-   "number": 2426,
-   "title": "fix(expenses): Create=modal + canonical inline \"+ Add new vendor\" (flat frame)",
-   "mergedAt": "2026-07-13T16:47:38Z",
-   "branch": "fix/expense-create-modal-catalog"
-  },
-  {
-   "number": 2423,
-   "title": "chore(deps): bump the development-dependencies group with 6 updates",
-   "mergedAt": "2026-07-13T12:28:02Z",
-   "branch": "dependabot/npm_and_yarn/development-dependencies-2c63745c42"
-  },
-  {
-   "number": 2422,
-   "title": "feat(ci): verify:static — local static-guard parity runner (no-DB, sentinel-isolated)",
-   "mergedAt": "2026-07-13T12:27:50Z",
-   "branch": "chore/ci-local-parity"
-  },
-  {
-   "number": 2421,
-   "title": "[HOLD-FOR-JORGE] fix(gov-void): governance JE void reverses-not-flips (converge w/ #2415; close guard blind spot)",
-   "mergedAt": "2026-07-13T12:27:19Z",
-   "branch": "fix/gov-je-void-reverse-not-flip"
-  },
-  {
-   "number": 2420,
-   "title": "fix(boot): make migration drift boot-guard held-aware (unblocks Render deploy)",
-   "mergedAt": "2026-07-13T00:41:07Z",
-   "branch": "fix/boot-drift-guard-held-aware"
-  },
-  {
-   "number": 2419,
-   "title": "docs(qbo-parity): Settlement Pay-Run / Batch Disbursement design doc (DESIGN-ONLY — HOLD FOR JORGE)",
-   "mergedAt": "2026-07-13T00:01:01Z",
-   "branch": "docs/settlement-payrun-design"
-  },
-  {
-   "number": 2418,
-   "title": "[HOLD-FOR-JORGE] feat(driver-finance): canonical driver payment-method master data (+ fixes phantom ACH probe)",
-   "mergedAt": "2026-07-12T23:59:00Z",
-   "branch": "feat/driver-payment-methods-canonical"
-  },
-  {
-   "number": 2417,
-   "title": "[HOLD-FOR-JORGE] fix(gl-void): JE reversal-linkage reads are deploy-order-safe (expand/contract)",
-   "mergedAt": "2026-07-12T21:52:59Z",
-   "branch": "fix/je-list-reversal-columns-compat"
-  },
-  {
-   "number": 2415,
-   "title": "[HOLD-FOR-JORGE] feat(gl-void): JE void posts a linked reversing entry (Option 1), never flips the original",
-   "mergedAt": "2026-07-12T21:28:54Z",
-   "branch": "fix/finance-void-inapp-modal"
-  },
-  {
-   "number": 2413,
-   "title": "fix(flags): reject + purge UUID-shaped feature-flag keys (junk row cleanup + CHECK constraint)",
-   "mergedAt": "2026-07-12T23:06:17Z",
-   "branch": "fix/feature-flag-key-not-uuid"
-  },
-  {
-   "number": 2412,
-   "title": "fix(ci): hold-merge-gate blocks a held-migration PR unless the firewall is present (label-independent)",
-   "mergedAt": "2026-07-12T19:48:24Z",
-   "branch": "fix/held-migration-firewall-merge-gate"
-  },
-  {
-   "number": 2411,
-   "title": "[HOLD-FOR-JORGE] feat(gl-void): AF-7 money-control action gates — JE void + period close/reopen",
-   "mergedAt": "2026-07-12T19:48:13Z",
-   "branch": "feat/gl-void-money-control-gate"
-  },
-  {
-   "number": 2409,
-   "title": "fix(banking): surface statement import + empty-state on Bank Reconciliation (CONN-1)",
-   "mergedAt": "2026-07-12T18:53:55Z",
-   "branch": "fix/conn1-bank-recon-statement-import"
-  },
-  {
-   "number": 2408,
-   "title": "[HOLD-FOR-JORGE] fix(migrate): HELD migrations genuinely cannot run on prod (runtime enforcement)",
-   "mergedAt": "2026-07-12T18:53:44Z",
-   "branch": "claude/status-sync-standing-loop-v2-8e0le8"
-  },
-  {
-   "number": 2407,
-   "title": "fix(accounting): Bill + Expense Category selectors surface the full Chart-of-Accounts",
-   "mergedAt": "2026-07-12T16:40:50Z",
-   "branch": "fix/bill-expense-category-full-coa"
-  },
-  {
-   "number": 2406,
-   "title": "docs(tracker): CHAIN-05 live-verified DONE + CHAIN-04/CONN-1 honest NEEDS-VERIFY",
-   "mergedAt": "2026-07-12T15:24:33Z",
-   "branch": "docs/chain05-live-verified"
-  },
-  {
-   "number": 2405,
-   "title": "[HOLD-FOR-JORGE] feat(relay): CONN-3 Relay internal bank — wallet account + fuel product-services (Part B)",
-   "mergedAt": "2026-07-12T18:24:52Z",
-   "branch": "feat/conn3-relay-internal-bank"
-  },
-  {
-   "number": 2404,
-   "title": "feat(guards): 5 Wave-3 posting/void flag-gate guards (enables verify-then-flip)",
-   "mergedAt": "2026-07-12T15:50:43Z",
-   "branch": "feat/wave3-flag-guards"
-  },
-  {
-   "number": 2403,
-   "title": "fix(chain-07): redirect accounting settlements 500 → canonical /driver-finance/settlements",
-   "mergedAt": "2026-07-12T15:26:01Z",
-   "branch": "fix/chain07-settlements-redirect"
-  },
-  {
-   "number": 2402,
-   "title": "docs(finance): flag verify-then-flip state table + safe flip order",
-   "mergedAt": "2026-07-12T14:50:29Z",
-   "branch": "docs/flag-verify-state-and-order"
-  },
-  {
-   "number": 2401,
-   "title": "docs(tracker): financial buildable-vs-design split (895 blocks)",
-   "mergedAt": "2026-07-12T14:27:19Z",
-   "branch": "docs/financial-block-buildability"
-  },
-  {
-   "number": 2400,
-   "title": "feat(dispatch): GAP-24 freshness indicator complete + 13 verified-DONE overrides",
-   "mergedAt": "2026-07-12T15:12:06Z",
-   "branch": "feat/build-gap24-and-live-eta"
-  },
-  {
-   "number": 2399,
-   "title": "feat(tracker): Since Jul 1 view (git-derived block creation dates)",
-   "mergedAt": "2026-07-12T14:13:16Z",
-   "branch": "feat/tracker-since-jul1"
   }
  ],
- "merged_pr_total": 2878,
+ "merged_pr_total": 2908,
  "hold_for_jorge": [
   {
    "number": 3178,
@@ -16843,6 +16843,12 @@
    "category": "HOLD"
   },
   {
+   "number": 3133,
+   "title": "docs(accounting)[HOLD-FOR-JORGE]: ItemEditor \"+ Add new account\" opens wrong create kind",
+   "mergedAt": "2026-07-22T13:32:27Z",
+   "category": "HOLD"
+  },
+  {
    "number": 3129,
    "title": "[HOLD-FOR-JORGE] docs(design): load pre-invoice on book → official invoice on deliver (auto); TONU fee manual",
    "mergedAt": "2026-07-22T08:54:15Z",
@@ -16888,6 +16894,12 @@
    "number": 3121,
    "title": "docs(tracker): Top-10 builder evidence — verified BUILT vs HOLD map (2026-07-21) — do not merge",
    "mergedAt": "2026-07-22T00:03:34Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3114,
+   "title": "[GOVERNANCE][HOLD-FOR-JORGE] Owner rulings 2026-07-21 (+ evening §20) — DO NOT MERGE",
+   "mergedAt": "2026-07-22T14:10:10Z",
    "category": "HOLD"
   },
   {
