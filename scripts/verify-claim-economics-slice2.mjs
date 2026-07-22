@@ -48,6 +48,9 @@ const REGISTRY_PATH = "db/migrations/.held-migrations.json";
  *   registry: string | null,
  *   claimShared: string,
  *   claimRoutes: string,
+ *   autoClaim: string,
+ *   reverseSection: string,
+ *   claimsTab: string,
  *   claimCreate: string,
  *   insuranceApi: string,
  * }} sources
@@ -55,7 +58,7 @@ const REGISTRY_PATH = "db/migrations/.held-migrations.json";
  */
 export function computeFailures(sources) {
   const errors = [];
-  const { migration, registry, claimShared, claimRoutes, claimCreate, insuranceApi } = sources;
+  const { migration, registry, claimShared, claimRoutes, autoClaim, claimCreate, reverseSection, claimsTab, insuranceApi } = sources;
 
   // 1) Migration — held, additive, idempotent, correct FK target, correct CHECKs, no GL.
   if (!migration) {
@@ -169,14 +172,73 @@ export function computeFailures(sources) {
   if (!/trailers\.id = c\.trailer_id[\s\S]{0,240}?(owner_company_id|currently_leased_to_company_id)/.test(claimRoutes)) {
     errors.push("claim.routes.ts: the mdata.equipment trailer join must be ENTITY-SCOPED (owner_company_id / currently_leased_to_company_id) — an id-only join leaks trailers across operating companies");
   }
-  if (!/LEFT JOIN mdata\.assets assets[\s\S]{0,160}?assets\.tenant_id\s*=\s*c\.operating_company_id/.test(claimRoutes)) {
-    errors.push("claim.routes.ts: the mdata.assets join must be ENTITY-SCOPED (assets.tenant_id = c.operating_company_id) — mdata.assets has no operating_company_id");
+  if (!/LEFT JOIN mdata\.assets assets[\s\S]{0,200}?assets\.tenant_id\s*=\s*\$\{scope\}/.test(claimRoutes)) {
+    errors.push("claim.routes.ts: the mdata.assets join must be ENTITY-SCOPED (assets.tenant_id = the claim's company scope) — mdata.assets has no operating_company_id");
   }
-  if (!/COALESCE\(\$16, 'undetermined'\)/.test(claimRoutes)) {
+  // The claim side of every scope predicate must tolerate rows written before operating_company_id
+  // was populated. Keying on c.operating_company_id ALONE resolves to NULL on those rows and
+  // silently drops the unit/trailer off the claim — a wrong answer that looks like "no trailer".
+  if (!/const scope\s*=[\s\S]{0,200}?COALESCE\(c\.operating_company_id, c\.tenant_id\)/.test(claimRoutes)) {
+    errors.push("claim.routes.ts: the claim-side scope expression must be COALESCE(c.operating_company_id, c.tenant_id) — a bare c.operating_company_id drops every row that predates the backfill");
+  }
+  // Placeholder numbers are NOT asserted here. The INSERT column list is built lockstep and is
+  // capability-dependent, so pinning $16/$20/$21 asserted parameter ORDER (and broke when a column
+  // was legitimately added ahead of them) rather than the owner lock itself. Assert the DEFAULT.
+  if (!/COALESCE\(\$\{p\}, 'undetermined'\)/.test(claimRoutes)) {
     errors.push("claim.routes.ts: INSERT must COALESCE fault to 'undetermined' server-side when the caller omits it");
   }
-  if (!/COALESCE\(\$20, 'ask'\)/.test(claimRoutes) || !/COALESCE\(\$21, 'ask'\)/.test(claimRoutes)) {
+  if ((claimRoutes.match(/COALESCE\(\$\{p\}, 'ask'\)/g) ?? []).length < 2) {
     errors.push("claim.routes.ts: INSERT must COALESCE recovery_rail AND repair_books_treatment to 'ask' server-side (owner locks #1/#2 — never silently skipped)");
+  }
+  // ── RLS-KEY CLASS LOCK ───────────────────────────────────────────────────────────────────────
+  // insurance.claim carries FORCED RLS keyed on operating_company_id for EVERY command, so that
+  // column is the WITH CHECK for INSERT too (verified on prod br-fancy-credit-akjnd07a 2026-07-22:
+  // policy `identity.is_lucia_bypass() OR operating_company_id::text = current_setting(...)`,
+  // polcmd '*', column nullable with no default). A writer that sets only tenant_id leaves it NULL,
+  // the check is not satisfied, and Postgres REJECTS the row — prod n_tup_ins was 0, meaning claim
+  // creation had never once succeeded. Every writer must set BOTH columns.
+  if (!/put\("operating_company_id", body\.operating_company_id/.test(claimRoutes)) {
+    errors.push("claim.routes.ts: the claim INSERT must write operating_company_id — prod RLS keys the INSERT WITH CHECK on it and rejects rows where it is NULL");
+  }
+  if (!/put\("tenant_id", body\.operating_company_id/.test(claimRoutes)) {
+    errors.push("claim.routes.ts: the claim INSERT must write tenant_id — every existing claim read still filters on it");
+  }
+  if (!/INSERT INTO insurance\.claim \([\s\S]{0,200}?\btenant_id,\s*\n\s*operating_company_id,/.test(autoClaim)) {
+    errors.push(
+      "insurance-link.service.ts: the WF-027 auto-claim INSERT must write operating_company_id alongside tenant_id — prod RLS rejects the row otherwise"
+    );
+  }
+  // ── HELD-COLUMN READ GUARD ───────────────────────────────────────────────────────────────────
+  // The six economics columns come from HELD 202607730000, which is skipped by db:migrate. Reading
+  // them unconditionally 500s the whole claims module on any database that is a migration behind.
+  if (!/getClaimColumnCapabilities/.test(claimRoutes)) {
+    errors.push(
+      "claim.routes.ts: must probe column capabilities via getClaimColumnCapabilities() — the held-migration columns cannot be read unconditionally"
+    );
+  }
+  if (!/caps\.economics\s*$|caps\.economics/m.test(claimRoutes)) {
+    errors.push("claim.routes.ts: SQL builders must branch on caps.economics so a pre-migration database degrades instead of 500-ing");
+  }
+  // ── REVERSE RENDER (LAW §10a Layer C) ────────────────────────────────────────────────────────
+  // Forward persistence without a reverse surface is NOT done. The economics recorded at create
+  // must be readable back from the claim's reverse panel (driver / unit / trailer / load profiles)
+  // and from the claims grid — otherwise an operator records "driver responsible, $2,500, escrow"
+  // and can never see it again.
+  for (const field of ["fault", "driver_responsible", "deductible_cents", "recovery_rail"]) {
+    if (!new RegExp(`claim\\.${field}`).test(reverseSection)) {
+      errors.push(
+        `InsuranceClaimsReverseSection.tsx: must render claim.${field} — slice-2 economics are write-only without the reverse surface (Law §10a Layer C)`
+      );
+    }
+    if (!new RegExp(`key: "${field}"`).test(claimsTab)) {
+      errors.push(`ClaimsTab.tsx: claims grid must carry a "${field}" column — the recorded decision has to be visible in the list`);
+    }
+  }
+
+  if (!/economics_unavailable/.test(claimRoutes)) {
+    errors.push(
+      'claim.routes.ts: must refuse economics writes with "economics_unavailable" when the columns are absent — accepting a field and dropping it is the "accepted by the API is not done" failure'
+    );
   }
   if (!/\["trailer", body\.trailer_id\]/.test(claimRoutes)) {
     errors.push("claim.routes.ts: POST must run assertOptionalHubExists for trailer_id (entity-scoped mdata.equipment check)");
@@ -297,24 +359,35 @@ function claimSelectColumns(alias = "c") {
     \${a}repair_books_treatment
   \`;
 }
-const CLAIM_FROM = \`
-  LEFT JOIN mdata.assets assets
-    ON assets.id = c.asset_id
-   AND assets.tenant_id = c.operating_company_id
+const caps = await getClaimColumnCapabilities(client);
+function claimFrom(caps) {
+  const scope = caps.operatingCompanyId ? \`COALESCE(c.operating_company_id, c.tenant_id)\` : \`c.tenant_id\`;
+  const trailerJoin = caps.economics ? \`
   LEFT JOIN mdata.equipment trailers
     ON trailers.id = c.trailer_id
    AND (
-        trailers.owner_company_id = c.operating_company_id
-     OR trailers.currently_leased_to_company_id = c.operating_company_id
-   )
+        trailers.owner_company_id = \${scope}
+     OR trailers.currently_leased_to_company_id = \${scope}
+   )\` : "";
+  return \`
+  LEFT JOIN mdata.assets assets
+    ON assets.id = c.asset_id
+   AND assets.tenant_id = \${scope}\${trailerJoin}
 \`;
+}
       for (const [kind, id] of [
         ["trailer", body.trailer_id],
       ] as const) {}
-          VALUES (
-            COALESCE($16, 'undetermined'), $17, $18::uuid, COALESCE($19, 0),
-            COALESCE($20, 'ask'), COALESCE($21, 'ask')
-          )
+      put("tenant_id", body.operating_company_id, (p) => \`\${p}::uuid\`);
+      if (caps.operatingCompanyId) put("operating_company_id", body.operating_company_id, (p) => \`\${p}::uuid\`);
+      if (caps.economics) {
+        put("fault", body.fault ?? null, (p) => \`COALESCE(\${p}, 'undetermined')\`);
+        put("deductible_cents", body.deductible_cents ?? null, (p) => \`COALESCE(\${p}, 0)\`);
+        put("recovery_rail", body.recovery_rail ?? null, (p) => \`COALESCE(\${p}, 'ask')\`);
+        put("repair_books_treatment", body.repair_books_treatment ?? null, (p) => \`COALESCE(\${p}, 'ask')\`);
+      } else {
+        return { kind: "economics_unavailable" as const };
+      }
     if (created.kind === "trailer_not_found") return reply.code(404).send({ error: "trailer_not_found" });
 
   app.patch("/api/v1/insurance/claims/:id", async (req, reply) => {
@@ -346,6 +419,21 @@ const INITIAL_FORM = {
 <label data-testid="claim-create-repair-books-field"><select /></label>
 <MoneyInput ariaLabel="Deductible (USD)" />
 `,
+    autoClaim: `
+      INSERT INTO insurance.claim (
+        tenant_id,
+        operating_company_id,
+        claim_number,
+        policy_id
+      )
+      VALUES ($1::uuid, $1::uuid, $2, $3::uuid)
+`,
+    reverseSection: `
+      {claim.fault} {claim.driver_responsible} {claim.deductible_cents} {claim.recovery_rail}
+`,
+    claimsTab: `
+      { key: "fault" }, { key: "driver_responsible" }, { key: "deductible_cents" }, { key: "recovery_rail" },
+`,
     insuranceApi: `
 export type CreateInsuranceClaimPayload = {
   deductible_cents?: number;
@@ -375,7 +463,17 @@ function selftest() {
     ["claimShared", (f) => { f.claimShared = f.claimShared.replace("deductible_cents: z.number().int().nonnegative().optional(),", ""); }, "deductible_cents must be a nonnegative integer"],
     ["claimShared", (f) => { f.claimShared = f.claimShared.replace('["escrow", "settlement", "split", "ask"]', '["escrow", "settlement", "split", "ask", "auto"]'); }, "owner lock #1"],
     ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace("LEFT JOIN mdata.equipment trailers", "LEFT JOIN mdata.units trailers"); }, "LEFT JOIN mdata.equipment trailers"],
-    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace("COALESCE($20, 'ask'), COALESCE($21, 'ask')", "$20, $21"); }, "owner locks #1/#2"],
+    // RLS-key class: prod FORCE RLS keys the claim INSERT WITH CHECK on operating_company_id.
+    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace('if (caps.operatingCompanyId) put("operating_company_id", body.operating_company_id, (p) => `${p}::uuid`);', ""); }, "must write operating_company_id"],
+    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace("COALESCE(c.operating_company_id, c.tenant_id)", "c.operating_company_id"); }, "drops every row that predates the backfill"],
+    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replaceAll("getClaimColumnCapabilities", "somethingElse"); }, "getClaimColumnCapabilities"],
+    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace('return { kind: "economics_unavailable" as const };', "return null;"); }, "economics_unavailable"],
+    ["autoClaim", (f) => { f.autoClaim = f.autoClaim.replace("        operating_company_id,\n", ""); }, "auto-claim INSERT must write operating_company_id"],
+    ["reverseSection", (f) => { f.reverseSection = f.reverseSection.replace("{claim.recovery_rail}", ""); }, "must render claim.recovery_rail"],
+    ["reverseSection", (f) => { f.reverseSection = f.reverseSection.replace("{claim.driver_responsible}", ""); }, "must render claim.driver_responsible"],
+    ["claimsTab", (f) => { f.claimsTab = f.claimsTab.replace('{ key: "deductible_cents" },', ""); }, 'must carry a "deductible_cents" column'],
+    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replaceAll("COALESCE(${p}, 'ask')", "${p}"); }, "owner locks #1/#2"],
+    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace("COALESCE(${p}, 'undetermined')", "${p}"); }, "COALESCE fault to 'undetermined'"],
     ["claimRoutes", (f) => {
       const patchIdx = f.claimRoutes.indexOf('app.patch("/api/v1/insurance/claims/:id"');
       const before = f.claimRoutes.slice(0, patchIdx);
@@ -420,6 +518,9 @@ function main() {
     registry: read(REGISTRY_PATH),
     claimShared: read("apps/backend/src/insurance/claim.shared.ts") ?? "",
     claimRoutes: read("apps/backend/src/insurance/claim.routes.ts") ?? "",
+    autoClaim: read("apps/backend/src/safety/damage-continuity/insurance-link.service.ts") ?? "",
+    reverseSection: read("apps/frontend/src/components/insurance/InsuranceClaimsReverseSection.tsx") ?? "",
+    claimsTab: read("apps/frontend/src/pages/insurance/ClaimsTab.tsx") ?? "",
     claimCreate: read("apps/frontend/src/components/insurance/ClaimCreateModal.tsx") ?? "",
     insuranceApi: read("apps/frontend/src/api/insurance.ts") ?? "",
   };

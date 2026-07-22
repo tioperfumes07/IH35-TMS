@@ -12,6 +12,7 @@ import {
 } from "./claim.shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { resolveMdataAssetId } from "./resolve-asset-id.shared.js";
+import { type ClaimColumnCapabilities, getClaimColumnCapabilities } from "./claim-columns.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -35,16 +36,47 @@ function canMutate(role: string) {
   return ["Owner", "Administrator", "Manager", "Accountant", "Dispatcher"].includes(role);
 }
 
-async function withCompanyScope<T>(userId: string, operatingCompanyId: string, fn: (client: Queryable) => Promise<T>) {
+async function withCompanyScope<T>(
+  userId: string,
+  operatingCompanyId: string,
+  fn: (client: Queryable, caps: ClaimColumnCapabilities) => Promise<T>
+) {
   await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
     await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
-    return fn(client as Queryable);
+    // Probed once per process and cached; every claim SQL builder below is shaped by the answer so
+    // that a database missing either held migration degrades instead of 500-ing.
+    const caps = await getClaimColumnCapabilities(client as Queryable);
+    return fn(client as Queryable, caps);
   });
 }
 
-function claimSelectColumns(alias = "c") {
+// The six economics columns and the entity-scope column both come from HELD migrations, so a
+// database that is a migration behind does not have them. Every SQL builder below takes the
+// probed capabilities and degrades to the pre-migration shape rather than referencing a column
+// that isn't there — see claim-columns.ts for the prod evidence behind each flag.
+function claimSelectColumns(caps: ClaimColumnCapabilities, alias = "c") {
   const a = alias ? `${alias}.` : "";
+  // Neutral literals matching 202607730000's declared defaults, so the API response shape is
+  // identical before and after the migration lands and the UI never has to branch.
+  const economics = caps.economics
+    ? `
+    ${a}fault,
+    ${a}driver_responsible,
+    ${a}trailer_id::text,
+    trailers.equipment_number AS trailer_display_id,
+    ${a}deductible_cents::bigint,
+    ${a}recovery_rail,
+    ${a}repair_books_treatment`
+    : `
+    'undetermined'::text AS fault,
+    NULL::boolean AS driver_responsible,
+    NULL::text AS trailer_id,
+    NULL::text AS trailer_display_id,
+    0::bigint AS deductible_cents,
+    'ask'::text AS recovery_rail,
+    'ask'::text AS repair_books_treatment`;
+
   return `
     ${a}id::text,
     ${a}tenant_id::text,
@@ -63,36 +95,46 @@ function claimSelectColumns(alias = "c") {
     ${a}created_at::text,
     ${a}accident_report_id::text,
     ${a}load_id::text,
-    ${a}driver_id::text,
-    ${a}fault,
-    ${a}driver_responsible,
-    ${a}trailer_id::text,
-    trailers.equipment_number AS trailer_display_id,
-    ${a}deductible_cents::bigint,
-    ${a}recovery_rail,
-    ${a}repair_books_treatment
+    ${a}driver_id::text,${economics}
   `;
 }
 
 // Entity-scoped joins. Joining these hubs by id alone lets a claim in one operating company
 // surface an asset or trailer belonging to another — the cross-entity leak class that is masked
 // today (RLS is role-scoped, TRANSP dominates the data) and breaks the moment USMCA goes live.
-// Scoping columns verified against PROD (br-fancy-credit-akjnd07a), NOT assumed — CLAUDE.md §4:
+//
+// Scoping columns VERIFIED against the Neon prod branch br-fancy-credit-akjnd07a on 2026-07-22
+// (RLS-immune information_schema/pg_catalog reads), not assumed:
+//   insurance.claim -> operating_company_id EXISTS and is the live forced-RLS key; the policy is
+//                      (identity.is_lucia_bypass() OR operating_company_id::text = current_setting(...))
+//                      on polcmd '*'. tenant_id also exists and is what every writer fills in today.
 //   mdata.assets    -> tenant_id                (no operating_company_id)
 //   mdata.equipment -> owner_company_id + currently_leased_to_company_id  (the owner/leased pair;
 //                      a trailer TRK owns and leases to TRANSP must still resolve for TRANSP)
-const CLAIM_FROM = `
-  FROM insurance.claim c
-  LEFT JOIN mdata.assets assets
-    ON assets.id = c.asset_id
-   AND assets.tenant_id = c.operating_company_id
+//
+// The claim side of each predicate uses COALESCE(c.operating_company_id, c.tenant_id): prod's RLS
+// key is operating_company_id, but rows written before the writers started populating it carry the
+// value in tenant_id only, and a database without held 202607490000 has no such column at all.
+// Keying on operating_company_id alone would silently resolve to NULL and drop the unit/trailer
+// off the claim on every one of those rows.
+function claimFrom(caps: ClaimColumnCapabilities) {
+  const scope = caps.operatingCompanyId ? `COALESCE(c.operating_company_id, c.tenant_id)` : `c.tenant_id`;
+  const trailerJoin = caps.economics
+    ? `
   LEFT JOIN mdata.equipment trailers
     ON trailers.id = c.trailer_id
    AND (
-        trailers.owner_company_id = c.operating_company_id
-     OR trailers.currently_leased_to_company_id = c.operating_company_id
-   )
+        trailers.owner_company_id = ${scope}
+     OR trailers.currently_leased_to_company_id = ${scope}
+   )`
+    : "";
+  return `
+  FROM insurance.claim c
+  LEFT JOIN mdata.assets assets
+    ON assets.id = c.asset_id
+   AND assets.tenant_id = ${scope}${trailerJoin}
 `;
+}
 
 async function assertOptionalHubExists(
   client: Queryable,
@@ -167,7 +209,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
     const parsed = listClaimsQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
 
-    const rows = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
+    const rows = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client, caps) => {
       const values: unknown[] = [parsed.data.operating_company_id];
       const filters = ["tenant_id = $1::uuid"];
       if (parsed.data.policy_id) {
@@ -199,6 +241,11 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         filters.push(`load_id = $${values.length}::uuid`);
       }
       if (parsed.data.trailer_id) {
+        // trailer_id only exists once held 202607730000 is applied. Filtering by a column that is
+        // not there would 500; silently dropping the filter would be worse — it would answer a
+        // "claims for THIS trailer" question with every claim in the company. Return the honest
+        // "not available yet" instead.
+        if (!caps.economics) return { kind: "trailer_filter_unavailable" as const };
         values.push(parsed.data.trailer_id);
         filters.push(`trailer_id = $${values.length}::uuid`);
       }
@@ -215,8 +262,8 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
       );
       const result = await client.query(
         `
-          SELECT ${claimSelectColumns("c")}
-          ${CLAIM_FROM}
+          SELECT ${claimSelectColumns(caps, "c")}
+          ${claimFrom(caps)}
           WHERE ${scopedFilters.join(" AND ")}
           ORDER BY c.accident_date DESC, c.created_at DESC
         `,
@@ -224,6 +271,14 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
       );
       return result.rows;
     });
+
+    if (!Array.isArray(rows) && rows?.kind === "trailer_filter_unavailable") {
+      return reply.code(503).send({
+        error: "trailer_filter_unavailable",
+        message:
+          "Filtering claims by trailer requires migration 202607730000 (insurance.claim.trailer_id), which has not been applied to this database yet.",
+      });
+    }
 
     return { claims: rows };
   });
@@ -240,11 +295,11 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
       const query = operatingCompanySchema.safeParse(req.query ?? {});
       if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
 
-      const graph = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const graph = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client, caps) => {
       const claimRes = await client.query(
         `
-          SELECT ${claimSelectColumns("c")}
-          ${CLAIM_FROM}
+          SELECT ${claimSelectColumns(caps, "c")}
+          ${claimFrom(caps)}
           WHERE c.tenant_id = $1::uuid AND c.id = $2::uuid
           LIMIT 1
         `,
@@ -342,7 +397,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const body = parsed.data;
 
-    const created = await withCompanyScope(user.uuid, body.operating_company_id, async (client) => {
+    const created = await withCompanyScope(user.uuid, body.operating_company_id, async (client, caps) => {
       const policy = await client.query(
         `
           SELECT id::text
@@ -371,69 +426,82 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         }
       }
 
+      // operating_company_id is NOT optional on prod. insurance.claim carries FORCED RLS whose
+      // policy — verified on br-fancy-credit-akjnd07a 2026-07-22, polcmd '*' so it is the WITH
+      // CHECK for INSERT too — is
+      //   identity.is_lucia_bypass() OR operating_company_id::text = current_setting('app.operating_company_id', true)
+      // The column is nullable with no default and this route sets app.operating_company_id, never
+      // app.bypass_rls='lucia'. Writing only tenant_id therefore leaves operating_company_id NULL,
+      // the WITH CHECK evaluates NULL (not true), and Postgres REJECTS the row. Prod
+      // insurance.claim.n_tup_ins is 0 — claim creation has never once succeeded in production.
+      // Both columns get the same value: tenant_id is what every existing read filters on, and
+      // operating_company_id is what RLS enforces.
+      //
+      // Lockstep INSERT (skill §2): columns / expressions / values grow together, so a column that
+      // this database does not have yet is simply never emitted and no placeholder can drift.
+      const cols: string[] = [];
+      const exprs: string[] = [];
+      const insertValues: unknown[] = [];
+      const put = (col: string, value: unknown, expr?: (p: string) => string) => {
+        insertValues.push(value);
+        const placeholder = `$${insertValues.length}`;
+        cols.push(col);
+        exprs.push(expr ? expr(placeholder) : placeholder);
+      };
+
+      put("tenant_id", body.operating_company_id, (p) => `${p}::uuid`);
+      if (caps.operatingCompanyId) put("operating_company_id", body.operating_company_id, (p) => `${p}::uuid`);
+      put("claim_number", body.claim_number);
+      put("policy_id", body.policy_id, (p) => `${p}::uuid`);
+      put("asset_id", body.asset_id ? resolvedAssetId : null, (p) => `${p}::uuid`);
+      put("accident_date", body.accident_date, (p) => `${p}::date`);
+      put("reported_date", body.reported_date, (p) => `${p}::date`);
+      put("status", body.status ?? "open");
+      put("amount_claimed_cents", body.amount_claimed_cents);
+      put("amount_paid_cents", body.amount_paid_cents);
+      put("adjuster_name", body.adjuster_name ?? null);
+      put("adjuster_email", body.adjuster_email ?? null);
+      put("notes", body.notes ?? null);
+      put("accident_report_id", body.accident_report_id ?? null, (p) => `${p}::uuid`);
+      put("load_id", body.load_id ?? null, (p) => `${p}::uuid`);
+      put("driver_id", body.driver_id ?? null, (p) => `${p}::uuid`);
+      if (caps.economics) {
+        // COALESCE keeps 202607730000's declared defaults authoritative when the caller omits a
+        // field — in particular recovery_rail / repair_books_treatment land on 'ask', never on a
+        // silently-chosen rail (owner locks #1 and #2).
+        put("fault", body.fault ?? null, (p) => `COALESCE(${p}, 'undetermined')`);
+        put("driver_responsible", body.driver_responsible ?? null);
+        put("trailer_id", body.trailer_id ?? null, (p) => `${p}::uuid`);
+        put("deductible_cents", body.deductible_cents ?? null, (p) => `COALESCE(${p}, 0)`);
+        put("recovery_rail", body.recovery_rail ?? null, (p) => `COALESCE(${p}, 'ask')`);
+        put("repair_books_treatment", body.repair_books_treatment ?? null, (p) => `COALESCE(${p}, 'ask')`);
+      } else if (
+        body.fault !== undefined ||
+        body.driver_responsible !== undefined ||
+        body.trailer_id !== undefined ||
+        body.deductible_cents !== undefined ||
+        body.recovery_rail !== undefined ||
+        body.repair_books_treatment !== undefined
+      ) {
+        // Accepting an economics field and dropping it on the floor would be the exact
+        // "accepted by the API is not done" failure the standard names. Refuse instead.
+        return { kind: "economics_unavailable" as const };
+      }
+
       const insert = await client.query<{ id: string }>(
         `
-          INSERT INTO insurance.claim (
-            tenant_id,
-            claim_number,
-            policy_id,
-            asset_id,
-            accident_date,
-            reported_date,
-            status,
-            amount_claimed_cents,
-            amount_paid_cents,
-            adjuster_name,
-            adjuster_email,
-            notes,
-            accident_report_id,
-            load_id,
-            driver_id,
-            fault,
-            driver_responsible,
-            trailer_id,
-            deductible_cents,
-            recovery_rail,
-            repair_books_treatment
-          )
-          VALUES (
-            $1::uuid, $2, $3::uuid, $4::uuid, $5::date, $6::date, $7, $8, $9, $10, $11, $12,
-            $13::uuid, $14::uuid, $15::uuid,
-            COALESCE($16, 'undetermined'), $17, $18::uuid, COALESCE($19, 0),
-            COALESCE($20, 'ask'), COALESCE($21, 'ask')
-          )
+          INSERT INTO insurance.claim (${cols.join(", ")})
+          VALUES (${exprs.join(", ")})
           RETURNING id::text
         `,
-        [
-          body.operating_company_id,
-          body.claim_number,
-          body.policy_id,
-          body.asset_id ? resolvedAssetId : null,
-          body.accident_date,
-          body.reported_date,
-          body.status ?? "open",
-          body.amount_claimed_cents,
-          body.amount_paid_cents,
-          body.adjuster_name ?? null,
-          body.adjuster_email ?? null,
-          body.notes ?? null,
-          body.accident_report_id ?? null,
-          body.load_id ?? null,
-          body.driver_id ?? null,
-          body.fault ?? null,
-          body.driver_responsible ?? null,
-          body.trailer_id ?? null,
-          body.deductible_cents ?? null,
-          body.recovery_rail ?? null,
-          body.repair_books_treatment ?? null,
-        ]
+        insertValues
       );
       const createdId = insert.rows[0]?.id;
       if (!createdId) return { kind: "claim_not_found" as const };
       const result = await client.query(
         `
-          SELECT ${claimSelectColumns("c")}
-          ${CLAIM_FROM}
+          SELECT ${claimSelectColumns(caps, "c")}
+          ${claimFrom(caps)}
           WHERE c.tenant_id = $1::uuid AND c.id = $2::uuid
           LIMIT 1
         `,
@@ -448,6 +516,13 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
     if (created.kind === "load_not_found") return reply.code(404).send({ error: "load_not_found" });
     if (created.kind === "driver_not_found") return reply.code(404).send({ error: "driver_not_found" });
     if (created.kind === "trailer_not_found") return reply.code(404).send({ error: "trailer_not_found" });
+    if (created.kind === "economics_unavailable") {
+      return reply.code(503).send({
+        error: "economics_unavailable",
+        message:
+          "Claim economics fields (fault, driver_responsible, trailer_id, deductible_cents, recovery_rail, repair_books_treatment) require migration 202607730000, which has not been applied to this database yet.",
+      });
+    }
     if (created.kind === "claim_not_found") return reply.code(500).send({ error: "claim_create_failed" });
     return reply.code(201).send(created.row);
   });
@@ -465,7 +540,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
     if (!bodyParsed.success) return reply.code(400).send({ error: "validation_error", details: bodyParsed.error.flatten() });
     const body = bodyParsed.data;
 
-    const updated = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+    const updated = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client, caps) => {
       if (body.policy_id !== undefined) {
         const policy = await client.query(
           `
@@ -545,6 +620,19 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
       // recovery-rail/books-treatment are all editable post-create (investigation findings evolve).
       // Owner locks #1/#2: recovery_rail and repair_books_treatment are never auto-advanced by THIS
       // route — only ever set to a value the caller (a human, via the UI) explicitly sent.
+      // On a database without 202607730000 these columns do not exist; refuse the edit rather than
+      // accept it and drop it (or 500 on an UPDATE against a missing column).
+      if (
+        !caps.economics &&
+        (body.fault !== undefined ||
+          body.driver_responsible !== undefined ||
+          body.trailer_id !== undefined ||
+          body.deductible_cents !== undefined ||
+          body.recovery_rail !== undefined ||
+          body.repair_books_treatment !== undefined)
+      ) {
+        return { kind: "economics_unavailable" as const };
+      }
       if (body.fault !== undefined) setField("fault", body.fault);
       if (body.driver_responsible !== undefined) setField("driver_responsible", body.driver_responsible);
       if (body.trailer_id !== undefined) setField("trailer_id", body.trailer_id, "::uuid");
@@ -566,8 +654,8 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
       if (!upd.rows[0]) return { kind: "claim_not_found" as const };
       const result = await client.query(
         `
-          SELECT ${claimSelectColumns("c")}
-          ${CLAIM_FROM}
+          SELECT ${claimSelectColumns(caps, "c")}
+          ${claimFrom(caps)}
           WHERE c.tenant_id = $1::uuid AND c.id = $2::uuid
           LIMIT 1
         `,
@@ -582,6 +670,13 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
     if (updated.kind === "load_not_found") return reply.code(404).send({ error: "load_not_found" });
     if (updated.kind === "driver_not_found") return reply.code(404).send({ error: "driver_not_found" });
     if (updated.kind === "trailer_not_found") return reply.code(404).send({ error: "trailer_not_found" });
+    if (updated.kind === "economics_unavailable") {
+      return reply.code(503).send({
+        error: "economics_unavailable",
+        message:
+          "Claim economics fields (fault, driver_responsible, trailer_id, deductible_cents, recovery_rail, repair_books_treatment) require migration 202607730000, which has not been applied to this database yet.",
+      });
+    }
     if (updated.kind === "claim_not_found") return reply.code(404).send({ error: "claim_not_found" });
     if (updated.kind === "invalid_status_transition") {
       return reply.code(400).send({

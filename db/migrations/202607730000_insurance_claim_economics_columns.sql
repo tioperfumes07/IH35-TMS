@@ -83,21 +83,26 @@ BEGIN
         CHECK (recovery_rail IN ('escrow', 'settlement', 'split', 'ask')),
       ADD COLUMN IF NOT EXISTS repair_books_treatment text NOT NULL DEFAULT 'ask'
         CHECK (repair_books_treatment IN ('expense', 'capitalize', 'ask'));
+
+    -- Both indexes live INSIDE the to_regclass guard on purpose. Left at top level they reference
+    -- trailer_id / recovery_rail unconditionally, so on a database where insurance.claim does not
+    -- exist the DO block above would correctly no-op and then the bare CREATE INDEX would hard-fail
+    -- with "relation does not exist" — defeating the guard the file opens with.
+
+    -- Reverse drill-through (LAW OF THE LAND §10a): a trailer profile must be able to find claims
+    -- that involved it, without a full table scan. Partial index — most claims have no trailer.
+    CREATE INDEX IF NOT EXISTS idx_insurance_claim_trailer
+      ON insurance.claim (trailer_id)
+      WHERE trailer_id IS NOT NULL;
+
+    -- Recovery-rail queue index — the future slice-3 poster/worklist needs to find every claim still
+    -- sitting at the neutral 'ask' state (owner lock: never silently advance past 'ask').
+    CREATE INDEX IF NOT EXISTS idx_insurance_claim_recovery_rail_ask
+      ON insurance.claim (recovery_rail)
+      WHERE recovery_rail = 'ask';
   END IF;
 END
 $$;
-
--- Reverse drill-through (LAW OF THE LAND §10a): a trailer profile must be able to find claims that
--- involved it, without a full table scan. Partial index — most claims have no trailer.
-CREATE INDEX IF NOT EXISTS idx_insurance_claim_trailer
-  ON insurance.claim (trailer_id)
-  WHERE trailer_id IS NOT NULL;
-
--- Recovery-rail / books-treatment queue index — the future slice-3 poster/worklist needs to find every
--- claim still sitting at the neutral 'ask' state (owner lock: never silently advance past 'ask').
-CREATE INDEX IF NOT EXISTS idx_insurance_claim_recovery_rail_ask
-  ON insurance.claim (recovery_rail)
-  WHERE recovery_rail = 'ask';
 
 COMMIT;
 

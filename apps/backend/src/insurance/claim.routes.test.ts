@@ -328,10 +328,31 @@ describe("insurance claim routes", () => {
       // COALESCE(..., 'undetermined') / COALESCE(..., 'ask') / COALESCE(..., 'ask') / COALESCE(..., 0)
       // is what makes an omitted owner-locked field land on the safe neutral default in the DB, not on
       // an application-level guess baked into the JS.
-      expect(sql).toMatch(/COALESCE\(\$16, 'undetermined'\)/);
-      expect(sql).toMatch(/COALESCE\(\$19, 0\)/);
-      expect(sql).toMatch(/COALESCE\(\$20, 'ask'\)/);
-      expect(sql).toMatch(/COALESCE\(\$21, 'ask'\)/);
+      //
+      // Matched on the DEFAULT, not on a hardcoded $N. The column list is now built lockstep and is
+      // capability-dependent (operating_company_id is only emitted where the column exists), so
+      // pinning $16/$19/$20/$21 asserted the parameter ORDER rather than the owner lock, and broke
+      // the moment a column was legitimately added ahead of them.
+      expect(sql).toMatch(/COALESCE\(\$\d+, 'undetermined'\)/);
+      expect(sql).toMatch(/COALESCE\(\$\d+, 0\)/);
+      expect(sql).toMatch(/COALESCE\(\$\d+, 'ask'\)[\s\S]*COALESCE\(\$\d+, 'ask'\)/);
+      // The owner-locked columns must be the ones carrying those COALESCEs — pair each column with
+      // its expression by position in the lockstep lists.
+      const columns = sql.match(/INSERT INTO insurance\.claim \(([^)]*)\)/)?.[1].split(",").map((c) => c.trim()) ?? [];
+      const expressions = sql.match(/VALUES \(([\s\S]*?)\)\s*\n/)?.[1].split(/,\s*(?![^(]*\))/).map((e) => e.trim()) ?? [];
+      expect(columns.length).toBe(expressions.length);
+      const exprFor = (col: string) => expressions[columns.indexOf(col)];
+      expect(exprFor("fault")).toMatch(/COALESCE\(\$\d+, 'undetermined'\)/);
+      expect(exprFor("deductible_cents")).toMatch(/COALESCE\(\$\d+, 0\)/);
+      expect(exprFor("recovery_rail")).toMatch(/COALESCE\(\$\d+, 'ask'\)/);
+      expect(exprFor("repair_books_treatment")).toMatch(/COALESCE\(\$\d+, 'ask'\)/);
+      // Prod RLS keys INSERT on operating_company_id; omitting it silently rejects every claim.
+      // Both columns must carry the SAME operating company id (compared on the bound values, since
+      // the lockstep builder gives each column its own placeholder).
+      expect(columns).toContain("operating_company_id");
+      const boundValues = insertCall?.[1] as unknown[];
+      expect(boundValues[columns.indexOf("operating_company_id")]).toBe(boundValues[columns.indexOf("tenant_id")]);
+      expect(boundValues[columns.indexOf("operating_company_id")]).toBe("11111111-1111-4111-8111-111111111111");
     });
 
     it("POST returns trailer_not_found for a trailer outside the caller's entity scope", async () => {
