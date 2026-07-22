@@ -95,6 +95,8 @@ for (const [rel, marker] of [
   ["apps/frontend/src/pages/dispatch/TripProfitability.tsx", "data-trip-profit-filter-toolbar"],
   ["apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx", "data-audit-trail-filter-toolbar"],
   ["apps/frontend/src/pages/safety/tabs/AnomaliesTab.tsx", "data-anomalies-filter-toolbar"],
+  ["apps/frontend/src/pages/lists/accounting/ItemsListPage.tsx", "data-items-filter-toolbar"],
+  ["apps/frontend/src/pages/docs/DocsHomePage.tsx", "data-docs-filter-toolbar"],
 ]) {
   const src = read(rel);
   if (!src.includes("CollapsedListFilters")) {

@@ -13,6 +13,7 @@ import { getCoaAccounts } from "../../../api/banking";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { Button } from "../../../components/Button";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { CollapsedListFilters } from "../../../components/table";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useUrlSort } from "../../../hooks/useUrlSort";
 import { ItemEditorModal } from "./ItemEditorModal";
@@ -132,14 +133,20 @@ export function ItemsListPage() {
   );
 
   const filterBar = (
-    <div className="flex flex-wrap items-center gap-3">
-      <input
-        className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
-        placeholder="Search items…"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        aria-label="Search items"
-      />
+    <CollapsedListFilters
+      activeFilterCount={groupByCategory ? 0 : 1}
+      testIdPrefix="items"
+      dataAttributes={{ "data-items-filter-toolbar": "collapsed" }}
+      searchSlot={
+        <input
+          className="h-8 w-56 rounded-sm border border-gray-300 px-2 text-sm"
+          placeholder="Search items…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          aria-label="Search items"
+        />
+      }
+    >
       <label className="flex items-center gap-2 text-xs text-gray-700">
         <input
           type="checkbox"
@@ -149,7 +156,7 @@ export function ItemsListPage() {
         />
         Group by category
       </label>
-    </div>
+    </CollapsedListFilters>
   );
 
   return (

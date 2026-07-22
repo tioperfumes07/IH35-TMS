@@ -24,6 +24,7 @@ https://github.com/tioperfumes07/IH35-TMS/pull/3200
 - VendorBillForm driver → Combobox +CreateDriverModal
 - Banking Workflow-B archived forms vendor → ReferenceSelect
 - Guards: verify-qbo-filter-collapse extended; entity-link baseline refreshed as needed
+- CHROME filters continued: RevRec, Trip Profit, Audit Trail, Anomalies, Items, Docs, Integration TX, Abandonment, Receipts, POD, Border, AP Aging, …
 
 ## Remaining (morning)
 
