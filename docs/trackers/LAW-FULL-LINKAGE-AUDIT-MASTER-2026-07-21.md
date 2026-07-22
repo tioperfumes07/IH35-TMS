@@ -10,7 +10,6 @@
 | Ref | SHA | Note |
 |---|---|---|
 | Live API | `e64fc4c` | healthz shallow |
-| `origin/main` | `e64fc4c` | matched at ledger refresh |
 
 ## Neon truth snapshot (RLS bypass `lucia`, prod `br-fancy-credit-akjnd07a`, 2026-07-21)
 
@@ -31,26 +30,24 @@
 | `accounting.factoring_advances` / `factoring.batch` | **0** / **0** |
 | `catalogs.account_role_bindings` | **0** |
 | `safety.civil_fines` / `internal_fines` / `incidents` | **0** / **0** / **0** |
-
 ## Path register (master)
 
 | Path ID | Economic event | Audit PR / file | Overall | Top FAILs | Fix PRs |
 |---|---|---|---|---|---|
-| P-EXPENSE | Expense → GL/JE → list/register/vendor/payment | #3166 | **FAIL** | reverse drill | #3170 |
-| P-BILL | Vendor bill → bill_lines → AP → payment → JE | #3167 | **FAIL** | 0 bill_lines on Neon | #3172 |
-| P-SETTLE | Settlement → pay-run → CoA → JE → escrow | #3168 | **FAIL** | no FE; CoA undesignated; main resolver | #3149 #3171 |
-| P-CLAIM-LEGAL | Claim → legal → expense → driver/unit → GL → pay | #3175 | **FAIL** | no expense/bill FK; no deductible; claim/legal UI pickers | *(UI fix in flight; HOLD mig later)* | *(this wave)* | **FAIL** | no expenses.claim_id; no deductible; no recovery FK | *(HOLD mig after audit PR)* |
-| P-INVOICE | Load → invoice → AR → payment → JE | *(batch2 in flight)* | **FAIL*** | 1 invoice only; AR/payment chain thin | TBD |
-| P-FACTOR | Factoring advance → liability/reserve → JE | *(batch2)* | **FAIL*** | 0 advances / 0 batches live | TBD |
-| P-FUEL | Fuel txn → expense/GL → unit/driver → JE | *(batch2)* | **FAIL*** | 1499 txns; 0 driver/load/qbo_expense | TBD |
+| P-EXPENSE | Expense → GL/JE → list/register/vendor/payment | #3166 · `LAW-E2E-EXPENSE-LINKAGE-2026-07-21.md` | **FAIL** | reverse drill | #3170 |
+| P-BILL | Vendor bill → bill_lines → AP → payment → JE | #3167 · `LAW-E2E-BILL-BILLPAYMENT-LINKAGE-2026-07-21.md` | **FAIL** | 0 bill_lines on Neon | #3172 |
+| P-SETTLE | Settlement → pay-run → CoA → JE → escrow | #3168 · `LAW-E2E-SETTLEMENT-…` | **FAIL** | no FE; CoA undesignated; main resolver | #3149 #3171 |
+| P-CLAIM-LEGAL | Claim → legal → expense → driver/unit → GL → pay | #3175 | **FAIL** | no expense/bill FK; no deductible; claim/legal UI pickers | *(UI fix in flight; HOLD mig later)* |
+| P-INVOICE | Load → invoice → AR → payment → JE | **this PR** · `LAW-E2E-INVOICE-AR-LINKAGE-2026-07-21.md` | **FAIL** | 1 fixture invoice; load null; JE reversed; payments=0; no JE EntityLink | TBD |
+| P-FACTOR | Factoring advance → liability/reserve → JE | **this PR** · `LAW-E2E-FACTORING-LINKAGE-2026-07-21.md` | **FAIL** | 0 batches/advances/lifecycle JE despite flag ON | TBD |
+| P-FUEL | Fuel txn → expense/GL → unit/driver → JE | **this PR** · `LAW-E2E-FUEL-LINKAGE-2026-07-21.md` | **FAIL** | 1499 txns; posted_to_gl=0; driver/vendor/load=0; 0 fuel_event JE | TBD |
 | P-MAINT | WO → bill/expense → unit → JE | *(batch3)* | **FAIL*** | 2 WOs; 0 vendor; bill_lines=0 | TBD |
 | P-SAFETY | Incident/fine → liability/expense → driver → JE | *(batch3)* | **UNVERIFIED*** | 0 fines/incidents live; schema TBD in audit PR | TBD |
-| P-BANK | Bank txn → match/categorize → GL → source entity | *(batch2)* | **FAIL*** | 10424/10427 pending_categorization | TBD |
+| P-BANK | Bank txn → match/categorize → GL → source entity | **this PR** · `LAW-E2E-BANK-MATCH-LINKAGE-2026-07-21.md` | **FAIL** | 10424/10427 for_review; 0 invoice/bill match; register/JE reverse gaps | TBD |
 | P-ESCROW | Escrow contribution/release → liability → driver | *(batch3)* | **FAIL*** | escrow_ledger=0 | TBD |
 | P-ADVANCE | Cash advance → recovery → settlement → JE | *(batch3)* | **FAIL*** | advances=0; settlements=0 | TBD |
 
 \* Preliminary Neon verdict pending full hop-table audit PR from batch agents; will not be marked PASS without hop evidence.
-
 ## Non-path merged volume (context)
 
 GitHub reports **≥500** merged PRs since 2026-07-10 alone (API page cap). Re-auditing by PR title is how STALE theater failed. **We audit paths + live Neon/UI**, then map merged PRs into paths as evidence — not the reverse.
@@ -66,6 +63,7 @@ GitHub reports **≥500** merged PRs since 2026-07-10 alone (API page cap). Re-a
 
 | Date | Change |
 |---|---|
-| 2026-07-21 | Ledger opened; P-EXPENSE/BILL/SETTLE FAIL documented |
+| 2026-07-21 | Ledger opened; P-EXPENSE/BILL/SETTLE FAIL documented; claim-legal audit dispatched |
 | 2026-07-21 | Neon snapshot + P-CLAIM-LEGAL FAIL; bank/fuel/factor/invoice preliminary FAIL from counts |
 | 2026-07-21 | P-CLAIM-LEGAL → #3175 FAIL; closed duplicate #3174; #3172 CI repair in flight |
+| 2026-07-21 | Batch2: P-INVOICE / P-FACTOR / P-FUEL / P-BANK FAIL-honest audits + ranked P0s (deploy `e64fc4c`) |
