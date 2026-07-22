@@ -157,6 +157,10 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         values.push(parsed.data.unit_id);
         filters.push(`unit_id = $${values.length}::uuid`);
       }
+      if (parsed.data.load_id) {
+        values.push(parsed.data.load_id);
+        filters.push(`load_id = $${values.length}::uuid`);
+      }
       const scopedFilters = filters.map((f) =>
         f
           .replace(/^tenant_id/, "c.tenant_id")
@@ -164,7 +168,8 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
           .replace(/^status/, "c.status")
           .replace(/^asset_id/, "c.asset_id")
           .replace(/^driver_id/, "c.driver_id")
-          .replace(/^unit_id/, "assets.unit_id"),
+          .replace(/^unit_id/, "assets.unit_id")
+          .replace(/^load_id/, "c.load_id"),
       );
       const result = await client.query(
         `

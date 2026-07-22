@@ -26,6 +26,7 @@ import { CustomsTab } from "./drawer-tabs/CustomsTab";
 import { FactoringTab } from "./tabs/FactoringTab";
 import { FinesDeductionsCard } from "./tabs/FinesDeductionsCard";
 import { SettlementProfitabilityCard } from "./tabs/SettlementProfitabilityCard";
+import { InsuranceClaimsReverseSection } from "../insurance/InsuranceClaimsReverseSection";
 import { BookLoadModalV4 } from "../../pages/dispatch/components/BookLoadModalV4";
 import { CargoSensorTimeline } from "../../pages/dispatch/cargo-sensors/CargoSensorTimeline";
 
@@ -440,6 +441,15 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                     </div>
                   </div>
                 )}
+
+                {load.operating_company_id ? (
+                  <InsuranceClaimsReverseSection
+                    operatingCompanyId={load.operating_company_id}
+                    filter={{ load_id: load.id }}
+                    contextLabel="this load"
+                    data-testid="load-detail-insurance-claims"
+                  />
+                ) : null}
               </div>
             ) : loadQuery.isError ? (
               // BUG 1: never hang silently — surface the error + a retry instead of an endless "Loading…".
