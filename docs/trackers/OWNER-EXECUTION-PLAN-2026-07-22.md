@@ -84,7 +84,7 @@ Do **not** jump to random pending blocks first. Many pending blocks *are* this w
 | 15 | **fleet** | Truck + trailer |
 | 16 | **cash-flow** | Cash views ↔ bank/accounting |
 | 17 | **finance** | Finance hub |
-| 18+ | **Last wave** | home → fuel → form_425 → reports → then tasks, inventory, docs, users, help, program, system, eld |
+| 18+ | **Last wave** | home → fuel → form_425 → reports → tasks → inventory → docs → users → help → program → system → eld → **compliance** (owner: end) |
 
 For **each** module in that order:
 
