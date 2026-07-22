@@ -285,13 +285,12 @@ export function LegalMatterDetailPage() {
                 <div>
                   <strong>Insurance lawsuit:</strong>{" "}
                   {matter?.insurance_lawsuit_id ? (
-                    <Link
-                      className="text-slate-700 underline"
-                      to="/safety/insurance/lawsuits"
+                    <EntityLink
+                      kind="lawsuit"
+                      id={String(matter.insurance_lawsuit_id)}
+                      label={String(matter.insurance_lawsuit_id).slice(0, 8)}
                       data-testid="matter-insurance-lawsuit-link"
-                    >
-                      {String(matter.insurance_lawsuit_id).slice(0, 8)}
-                    </Link>
+                    />
                   ) : (
                     "—"
                   )}
