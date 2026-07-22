@@ -30,6 +30,11 @@ const OLD_PAGE_REL = "apps/frontend/src/pages/banking/BankTxCategorizationPage.t
 
 const ARCHIVE_MARKER = "@archived — Workflow-B";
 
+/** Escape all RegExp metacharacters (incl. `\`) — CodeQL js/incomplete-sanitization. */
+function escapeRegExp(s) {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 /** Legacy URLs that must redirect to the live categorize register (bookmark/deep-link safety). */
 const LEGACY_REDIRECTS = [
   {
@@ -84,10 +89,10 @@ export function evaluateActiveCategorizePath(input) {
       continue;
     }
     const blockRe = new RegExp(
-      `path="${legacyPath.replace(/\//g, "\\/")}"[\\s\\S]{0,400}?${target.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`,
+      `path="${escapeRegExp(legacyPath)}"[\\s\\S]{0,400}?${escapeRegExp(target)}`,
     );
     if (!blockRe.test(manifestSrc)) {
-      failures.push(`${MANIFEST_REL} — path="${legacyPath}" must ${target.replace("Navigate ", "Navigate ")}`);
+      failures.push(`${MANIFEST_REL} — path="${legacyPath}" must ${target}`);
     }
   }
 
