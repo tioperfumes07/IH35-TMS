@@ -1,0 +1,44 @@
+---
+description: Reserve / holdback accounts are OWNER-created manually in-app only — no agent/migration/seed may create/import/reclassify them.
+alwaysApply: true
+---
+
+# RULE 19 — RESERVE ACCOUNTS ARE OWNER-MANUAL ONLY
+
+Owner permanent law (2026-07-21). Always apply. Extends `07-never-delete-only-add` — for reserve
+accounts specifically, agents don't even **ADD**.
+
+## Owner directive (verbatim, 2026-07-21)
+
+> "do not bring in reserves accounts i will create manually, make this a permanent rule. i will
+> craete in our own softwarem manually."
+
+## The law (non-negotiable)
+
+Factoring **reserve / holdback / retainage** accounts in `catalogs.accounts` are **owner-created
+manually, in the TMS app, only.** No agent, migration, seed, script, or import may:
+
+- **create** a new reserve / holdback account,
+- **import** a reserve account (e.g. from QBO clone),
+- **reclassify** or **re-subtype** an existing reserve account (no changing `account_type` /
+  `account_subtype` / parent),
+- **merge** two reserve accounts, or
+- **archive / deactivate / delete** a reserve account.
+
+The owner will create the correct reserve accounts himself, manually, in-app. Until he acts
+manually in-app, the existing reserve accounts **stay untouched exactly as they are on prod** — including
+the 11 QBO-clone reserve accounts with mixed subtypes (CashOnHand / Savings / UndepositedFunds /
+Retainage / OtherCurrentAssets) across TRANSP / TRK / USMCA. Their inconsistent subtypes are **not** an
+agent cleanup target.
+
+## Scope
+
+Any `catalogs.accounts` row whose purpose is a factoring reserve / holdback (names such as
+`%reserve%`, `%holdback%`, `%retainage%` in the factoring context). This is a **balance-sheet-moving,
+owner-only** decision — the more conservative reading wins on any doubt.
+
+## Why this rule exists
+
+Reserve subtype standardization and canonical-vs-archive selection is an owner balance-sheet decision
+(CPA `factor_reserve_held` = Asset). A guessed reclassification silently moves the balance sheet. The
+owner has ruled these are hand-built by him in-software; agents leave them alone.

@@ -1832,15 +1832,98 @@ TMS recognizes at delivery, QBO at invoice — the timing gap is a **KNOWN recon
 
 ---
 
-## 2026-07-21 — Load PRE-INVOICE (on book) → OFFICIAL INVOICE (on deliver); TONU fee MANUAL (owner rulings, DESIGN/HOLD)
+## 19. Owner rulings — 2026-07-21 (reserve accounts owner-manual-only · TONU = accessorial operating revenue)
 
-Owner rulings recorded 2026-07-21 evening. Full design: `docs/specs/DESIGN-load-preinvoice-to-official-invoice-HOLD.md` (DESIGN-only, build-and-HOLD, do-not-merge).
+Source: Jorge P. Munoz (owner), in writing 2026-07-21. Sole owner call per the 2026-07-11 owner-authority ruling.
+Status: LOCKED. Both rulings are permanent accounting/governance decisions.
 
-- **Two-event invoice lifecycle:** load **booked → PRE-INVOICE (automatic)** = a **non-posting cash-flow projection** (QuickBooks *Estimate* analogue), **not sent to customer, no GL**; load **delivered → OFFICIAL invoice (automatic)** = the **real A/R invoice, sent to customer**, which carries the ledger posting (reusing the locked two-event revenue latch above — earn @ delivery, bill @ POD). Booking is **not** a revenue-recognition trigger.
-- **Reuse existing poster** (`from-load.ts` `buildInvoiceFromLoad` + `postSourceTransaction`); **no new GL math.**
-- **Broker cancel / TONU fee is NOT automatic** — operator/owner decides per customer. When billed = **accessorial operating revenue** (already ruled); may reuse TONU→AR design (#3103), but the **billing trigger is manual**, never a side effect of `cancelLoad`.
-- **Unmapped invoice line:** designate the revenue **role first (fail-closed)**; default account = **Line Haul / Freight Service** (verify the real account on Neon/TRANSP — do **not** invent). Resolution source of truth = **`accounting.chart_of_accounts_roles` (PRIMARY)**, not legacy `catalogs.account_role_bindings`.
-- **Flags default OFF** (`LOAD_OFFICIAL_INVOICE_ON_DELIVER_ENABLED`, `LOAD_PREINVOICE_PROJECTION_ENABLED`), per-entity override only, TRK excluded; Unbilled Revenue seed (TRANSP/USMCA) is a HARD gate before the official-invoice flag flips.
-- **Reserve accounts: owner-manual only** (owner ruling 2026-07-21, "rule 19") — no reserve-account seeds in this design or its future PR.
-- Recorded for the record (implemented by their own blocks, not this one): **Faro = factor card + `mdata.vendors` row**; **Damage Claim Escrow = long-term liability for books** while noting the **~90-day short-term reality** on separation (tension documented); **SoD** — Owner/Admin/Accountant **may approve AND post** (no hard DB same-user block for those roles); **scope IN** lending/risk, process dashboard, calibration, doc-control, commodity catalog (commodity on invoice), Faro debtor credit-check UI; **scope OUT** OSHA, HTS/tariff, navy→green CTA color changes.
-- **Guard (Rule 17):** future PR adds `scripts/verify-steps/1209..1212-*` (no `package.json`/locked-guards/ci.yml edits) — pre-invoice non-posting, delivered auto-official-invoice, invoice-line role fail-closed, cancel-not-auto-TONU.
+### 19.1 Reserve accounts are OWNER-MANUAL ONLY (permanent rule)
+
+Owner's exact words (2026-07-21):
+
+> "do not bring in reserves accounts i will create manually, make this a permanent rule. i will craete in our own softwarem manually."
+
+**Ruling:** Factoring **reserve / holdback / retainage** accounts in `catalogs.accounts` are **owner-created
+manually, in the TMS app, only.** No agent, migration, seed, script, or import may **create, import,
+reclassify, re-subtype, merge, or archive/deactivate/delete** a reserve account. The owner will create the
+correct reserve accounts himself, manually, in-app. Until he acts manually in-app, the existing reserve
+accounts — including the 11 QBO-clone reserve accounts with mixed subtypes (CashOnHand / Savings /
+UndepositedFunds / Retainage / OtherCurrentAssets) across TRANSP / TRK / USMCA (see
+`DESIGN-tonu-cancellation-ar-and-accessorial-coa-HOLD.md` §1.6) — **stay untouched exactly as they are on
+prod.** This **extends** the never-delete-only-add law (`.cursor/rules/07`): for reserve accounts
+specifically, agents don't even **ADD** — owner-manual only.
+
+Canonical rule surface: `.cursor/rules/19-owner-manual-reserve-accounts.mdc` (always-apply).
+
+### 19.2 TONU presentation = ACCESSORIAL OPERATING REVENUE (permanent accounting decision)
+
+**Ruling:** TONU (Truck Ordered Not Used) cancellation-fee revenue is presented as **OPERATING REVENUE** — a
+**child account under the Accessorial Income parent** (alongside detention / layover / lumper), **NOT** Other
+Income. This matches McLeod / Alvys practice (TONU is operating accessorial revenue, booked in gross freight
+revenue, not below the line). Owner selected this in writing 2026-07-21.
+
+This **resolves** open owner-decision #2 in
+`DESIGN-tonu-cancellation-ar-and-accessorial-coa-HOLD.md` §7. The design's §2.1 target hierarchy already
+places **TONU Income** as a child under the **Accessorial Revenue** parent — that placement is now the locked
+presentation.
+
+---
+
+## 20. Owner rulings — 2026-07-21 evening (load revenue · unmapped invoice · Faro · escrow · SoD · scope)
+
+Source: Jorge P. Munoz (owner), in writing 2026-07-21 evening. Sole owner call per the 2026-07-11
+owner-authority ruling. Status: LOCKED.
+
+Companion tracker note: `docs/trackers/OWNER-RULINGS-2026-07-21-EVENING.md`.
+
+### 20.1 Load revenue — pre-invoice on book · official invoice on deliver · TONU fee NOT automatic
+
+**Ruling:**
+
+1. **On book** → create a **pre-invoice** so cash-flow projections can see booked revenue before delivery.
+2. **On deliver** → create the **official invoice** and **auto-send** it to the customer.
+3. **Broker cancel / TONU fee is NOT automatic.** The operator decides case-by-case (depends on the
+   customer). When a TONU fee **is** billed, presentation remains **accessorial operating revenue**
+   (§19.2). Automatic TONU fee creation on cancel is forbidden.
+
+### 20.2 Unmapped invoice line → default revenue account (fail-closed until designated)
+
+**Ruling:** When an invoice line has no mapped revenue account, the default is the designated
+**Line Haul / Freight Service** account — whichever CoA role is designated as `revenue_default` /
+freight-service revenue on the Chart of Accounts. The **revenue role must be designated first**;
+until it is designated, the path is **fail-closed** (do not guess an account).
+
+### 20.3 Faro — BOTH factoring.factor card AND mdata.vendors vendor card
+
+**Ruling:** Faro appears in **both** places: the `factoring.factor` card **and** an `mdata.vendors`
+vendor card. Neither surface replaces the other (never-delete / only-add).
+
+### 20.4 Damage Claim Escrow — keep long-term liability presentation
+
+**Ruling:** Damage Claim Escrow keeps **long-term liability** presentation (owner expects multi-year
+driver tenure). Operational note (not a presentation change): on separation, payout is typically due
+within ~90 days and is therefore short-term **cash** reality — but **books presentation stays LT**
+per this owner ruling.
+
+### 20.5 SoD — Owner / Admin / Accountant may approve AND post (same person allowed)
+
+**Ruling:** Owner, Admin, and Accountant **may** both approve and post (same person allowed for those
+roles). This is **not** a hard DB ban on same-user approve+post for those roles. (Stricter
+maker/checker for other roles remains a separate design question and is not opened here.)
+
+### 20.6 Scope IN / OUT (product backlog gate)
+
+**IN scope:**
+
+- Lending / risk module
+- Process dashboard
+- Calibration
+- Doc-control
+- Commodity catalog (needed on invoice)
+- Faro debtor credit-check UI
+
+**OUT of scope (do not build / do not change):**
+
+- OSHA
+- HTS / tariff
+- Navy → green CTA color changes (keep current palette)
