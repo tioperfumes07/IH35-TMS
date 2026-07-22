@@ -6,6 +6,63 @@
 
 ---
 
+## 0.0 Partnership — do it correctly (owner 2026-07-22)
+
+Jorge’s instruction: Cursor must **help design and wire the OS correctly**, not invent thin TMS forms. **Market systems are the MINIMUM**, not aspirational.
+
+### Universal deep linkage (NOT claims-only)
+
+Claims / legal are **examples**, not the only place this applies. **No stone left unturned** across the entire product:
+
+| Domain | Must link both ways (when involved) |
+|--------|-------------------------------------|
+| Safety | Accident, incident, fine, violation ↔ driver, unit, trailer, load, claim, legal, settlement deduction |
+| Compliance / FMCSA | DQ file, medical, MVR, Clearinghouse, HOS ↔ driver; unit inspection / 2290 / IFTA ↔ unit |
+| Vehicles / Fleet | Unit ↔ WO, parts, vendor bill, expense, claim, accident, fuel, load assignment, escrow/lease if OO |
+| Trailers | Same class as units where applicable |
+| Dispatch / Loads | Load ↔ customer, driver, unit, trailer, stops, advances, lumper expense, claim, detention |
+| Settlements | Statement lines ↔ loads, advances, fines, claim deductibles, escrow in/out — itemized (Alvys / 49 CFR 376) |
+| Escrow | Balance + every deposit/withdrawal ↔ driver (and truck when OO), purpose, claim/advance/WO provenance |
+| Banking | Bank txn ↔ expense/bill/payment/transfer + entity + audit (WF-012 single-link) |
+| Accounting | Every money object ↔ CoA + counterparty + ops provenance + audit |
+| Maintenance | WO ↔ unit/trailer, vendor, parts invoice, bill/expense, claim if damage, load if roadside on trip |
+| Insurance / Legal | Claim ↔ policy, accident, driver, unit, trailer, load, WO, lawsuit, matter, money recovery |
+| Drivers | Profile reverse: settlements, advances, escrow, claims, accidents, fines, liabilities, pay rates |
+
+**Wrong:** deep wiring only on Insurance Claim create.  
+**Right:** every module/tab/wizard audited to Law §9 + purpose→economics at the same seriousness as §0.1 A2 / C.
+
+Claims A2 is the **depth sample**. Safety, compliance, vehicles, settlements, etc. get the **same bar**.
+
+### Reference systems (always research fresh before recommending)
+
+| Domain | Minimum bar |
+|--------|-------------|
+| Accounting trust / claim proceeds / deductible residual | **QuickBooks Online** — repair/loss expense full; insurer deposit credits same expense (not sales); residual = deductible; optional Insurance Claims Receivable when approved |
+| Controls / fixed asset + insurance on asset | **NetSuite** — asset Insurance subtab; claim on asset; write-off/disposal path; receivable only when fixed & determinable; repair vs capitalize per policy |
+| Trucking ops seriousness | **McLeod-class** — accident ↔ unit/driver/load; claim file; settlement itemization |
+| Modern TMS settlements / escrow | **Alvys** — deductions from driver **or** truck; escrow deposit/withdrawal; **split** payroll vs escrow as **separate** transactions; claim-related costs itemized on statement |
+| Carrier law / lease truth | **49 CFR Part 376** — itemized settlement; authorized deductions; event-driven accident damage + deductible reserve (escrow) disclosed |
+| Books law | **US GAAP** — insurance receivable when probable/approved; no premature gain; capitalize vs expense per CPA |
+
+### How Cursor works with Jorge on every deep block
+
+1. **Research first** — cite QBO / NetSuite / McLeod / Alvys / GAAP (or FMCSA) for the decision.  
+2. **RESPOND BEFORE CODE** — decision tree + linkage matrix + what money objects are created.  
+3. **Owner locks** any ambiguous money routing (asset vs expense, escrow vs settlement default).  
+4. **Build UI + FKs + reverse drills** first; **posting/migrations = financial HOLD** (`JORGE-APPROVED` + Neon).  
+5. **Evidence** — live proof or **UNVERIFIED**. Never “done” on CI alone.  
+6. **Never dilute** §0 / §0.1 examples. Claims = Example A2 depth; advances = Example C depth; settlements = full statement economics.
+
+### Honest repo gap (claims — verified in code 2026-07-22)
+
+`createClaimBodySchema` today: policy, asset, accident_date, amounts, notes, + graph FKs `accident_report_id` / `load_id` / `driver_id`.  
+**Missing vs A2 / market bar:** fault, driver_responsible, trailer_id, deductible_cents, recovery_rail (escrow|settlement|split), insurance_receivable / driver_liability objects, WO/vendor FK, reverse surfaces on Driver/Unit/Trailer/Load/Escrow/Settlement with claim provenance.
+
+That gap is exactly why block **`WIZARD-CLAIM-ECONOMICS-DEPTH`** exists — Cursor designs with Jorge to market standard, then codes without inventing shortcuts.
+
+---
+
 ## 0. What “done” means (never redefine)
 
 For **every module · every tab · every nested tab · every wizard/creator/drawer**:
@@ -36,7 +93,195 @@ These are **canonical depth samples**. Every other module/tab/wizard must be aud
 | Lawsuit ↔ Legal matter | Forward + reverse | Matter page dead-ends; lawsuit has no matter hop | [#3221](https://github.com/tioperfumes07/IH35-TMS/pull/3221) class work |
 | Schema traps | FK/pointers enforced | Guard hid `insurance.lawsuit` driver/unit breaks (#3169 class) | Pointers enforced; 0-count re-check with RLS bypass |
 
-**Done only when:** create → row → GL/expense if money → driver profile reverse → unit reverse → load reverse → legal matter reverse (as applicable) — proven live or UNVERIFIED named.
+**Done only when:** create → row → GL/expense if money → driver profile reverse → unit reverse → load reverse → legal matter reverse (as applicable) — proven live or honest **UNVERIFIED**.
+
+### Example A2 — Insurance claim economics (owner 2026-07-22 — FULL depth)
+
+**Not enough:** “claim has a driver field.”  
+**Required:** every relevant ops link **and** a **purpose/fault → money** decision tree (same seriousness as Create Advance personal vs lumper).
+
+#### Ops links on claim / accident (every possible link that applies)
+
+| Link | Required |
+|------|----------|
+| Driver | Always when a driver was involved |
+| Vehicle / truck (unit) | Always when a unit was involved |
+| Trailer | When a trailer was involved |
+| Trip / load | When on a trip / load |
+| Accident report | When claim arises from accident |
+| WO / repair | When repair is tracked as maintenance WO |
+| Legal matter / lawsuit | When litigated |
+| Insurance policy | When insured |
+| Vendor (shop / tow) | When third party repairs |
+
+Reverse: each of those profiles/pages must show the claim (forward + reverse).
+
+#### Fault / responsibility → what money object is created
+
+| Situation | What should happen in TMS books |
+|-----------|----------------------------------|
+| Accident, **not our fault** (other party / their insurance pays) | Claim tracks recovery from other carrier/insurer; may still link driver/unit/load/trailer for ops; **no** driver deductible deduction unless policy says otherwise |
+| Accident, **our fault** / company liability | Claim + possible expense/reserve; links stay |
+| **Driver responsible** and **driver pays deductible** | Deductible → **expense** (or receivable) **with claim provenance** → recover via **settlement deduction** and/or **escrow** draw per policy (owner chooses / records which) |
+| **No insurance** (or not covered) and **we pay for the fix** | Repair cost → post to **asset** (capitalize to unit) **or** expense per CPA policy — **not** silent; must link **unit + claim + WO/vendor invoice**; if driver share owed → settlement/escrow deduction for their portion |
+| Company pays deductible then recovers from driver | Company expense/outlay first → driver liability → settlement and/or escrow recovery with claim id on the deduction |
+| Escrow only vs settlement only vs split | **Always ask** (owner lock 2026-07-22) — escrow / next settlement / both — never implied, never auto-default |
+
+#### SHOULD-BE operator story (claim)
+
+1. Accident on load L-12047, unit T169, trailer TR-88, driver Juan — all four linked and saved.  
+2. Mark **fault** (ours / not ours / shared) and **driver responsible?** (yes/no).  
+3. If driver pays deductible $2,500 → create deductible money object linked to claim → choose recovery **escrow** and/or **next settlement**.  
+4. If uninsured repair $18,000 we fund → asset or expense on **T169** + vendor/WO + claim; Juan’s share (if any) via escrow/settlement.  
+5. Open Juan’s profile → see claim + open deductible balance. Open T169 → see claim + repair. Open L-12047 → see claim. Open escrow/settlement → see deduction lines with claim id.
+
+#### Honest status in this plan (2026-07-22)
+
+| Piece | In report before this update? | Now |
+|-------|------------------------------|-----|
+| Driver / unit / load on claim | Yes (high level) | Yes |
+| Trailer / trip / WO / policy / vendor | **Weak / not spelled** | **Added here — required** |
+| Fault / driver responsible | **No** | **Added — required** |
+| Deductible → expense + settlement/escrow | One vague line | **Full tree above** |
+| Uninsured repair → asset account | **No** | **Added — required** |
+| CODE | Claim-Legal money FK still FAIL; #3221 is FE reverse only | Block: **WIZARD-CLAIM-ECONOMICS-DEPTH** (financial HOLD for posting) |
+
+**CODE block name:** `WIZARD-CLAIM-ECONOMICS-DEPTH` — wizard fields for fault, responsibility, deductible, recovery rail (escrow/settlement/split), asset-vs-expense for uninsured repair; full ops FKs; reverse drills. Posting flags OFF until CPA/Neon.
+
+#### Market-correct money objects (design lock — posting HOLD)
+
+| Event | QBO / GAAP-shaped books | McLeod / Alvys-shaped ops |
+|-------|-------------------------|---------------------------|
+| Repair bill paid (insured) | Dr Expense (or Asset if capitalize); Cr Bank/AP | Linked to claim + unit + WO/vendor |
+| Insurer pays | Dr Bank; Cr **same** expense (or Insurance receivable → Bank) — **not** sales income | Claim status → paid; deposit linked to claim |
+| Residual after insurer | = company deductible / unreimbursed loss | Still on claim |
+| Driver owes deductible | Dr Driver receivable / liability; Cr expense recovery or AP clear | Deduction on **settlement** and/or **escrow withdrawal**; Alvys-style **split = two lines**; line shows claim id |
+| Uninsured / we fund repair | Expense **or** capitalize to unit (CPA lock) | Unit + claim + WO; optional driver share via escrow/settlement |
+| Not our fault / 3rd party pays | Track recovery receivable from other carrier/insurer | Ops links remain; no driver deduct unless lease says so |
+
+**Owner decisions (2026-07-22 locks + open):**
+
+| # | Question | Owner lock |
+|---|----------|------------|
+| 1 | Driver deductible recovery rail | **LOCKED: always ask** (escrow / next settlement / split) — never auto-default |
+| 2 | Uninsured repair: capitalize vs expense | **LOCKED: Choice Z — always ask** (expense vs capitalize). **No $ threshold.** If **driver fault / responsible**, driver owes the **full company-funded repair** (e.g. $8,000 in Example E) — recover via always-ask rail; capitalize vs expense is still asked for the **company books** treatment of whatever remains after / alongside driver recovery. |
+| 3 | Deductible books shape | **LOCKED: Option C** — expense residual + Driver A/R (Example D). |
+
+#### Example E — Uninsured repair: expense vs capitalize (same story, two books)
+
+**Facts (no insurance pays — we fund the fix):**
+
+- Driver **Juan**, unit **T169**, trailer **TR-88**, load **L-12047**, claim/incident **CLM-0051** (or safety incident if no policy).
+- Shop repairs T169 for **$8,000** (vendor + WO-T169-…).
+- **No insurer recovery** (uninsured / denied / below coverage).
+- **If Juan’s fault / responsible (owner lock):** he owes **$8,000** (full repair) — recover via **always-ask** escrow/settlement/split. Not “deductible only.”
+- If **not** his fault: company may absorb; still link ops; no driver A/R unless policy says otherwise.
+- **No dollar threshold** in the product — never “if > $X capitalize else expense.”
+- **Z LOCKED:** operator always chooses expense vs capitalize for company books.
+
+##### Choice X — Expense the whole repair (P&L)
+
+| When | Entry | What you see |
+|------|-------|--------------|
+| Pay shop $8,000 | Dr **Repairs & maintenance** $8,000 · Cr Bank/AP $8,000 | Hits current-period P&L |
+| Links | — | Claim/incident + T169 + WO + vendor + load/driver |
+| If Juan owes $2,000 | Open Driver A/R (if Option C) + recover via ask-rail | Same reverse drills |
+
+- **When it’s right:** ordinary repair that does not extend useful life / restore beyond prior condition (GAAP repair vs betterment).
+- **What operators feel:** simple; unit cost basis unchanged.
+
+##### Choice Y — Capitalize to the unit (Balance sheet / asset)
+
+| When | Entry | What you see |
+|------|-------|--------------|
+| Pay shop $8,000 | Dr **Fixed asset – T169** (or Accumulated improvement) $8,000 · Cr Bank/AP $8,000 | Increases carrying value of T169 (NetSuite-style asset work) |
+| Links | — | Same ops graph + asset register / unit profile shows capitalized repair + claim |
+| Depreciation | Later periods | Depreciate improvement per CPA life |
+| If Juan owes $2,000 | Still Driver A/R + ask-rail; company net capitalized = $6,000 if he pays | Clear split company vs driver |
+
+- **When it’s right:** major restoration / betterment that CPA treats as capital (not routine R&M).
+- **What operators feel:** unit financial history shows the repair as part of the truck, not just an expense blip.
+
+##### Choice Z — Always ask (**LOCKED** owner 2026-07-22)
+
+On every uninsured (or company-funded) repair wizard step:
+
+> “Post this repair as: **Expense (P&L)** · **Capitalize to unit asset**”
+
+No auto $ cutoff. Never silent threshold.
+
+**Driver fault / responsible (owner lock):** If it was **his fault**, he owes the **full repair** (Example E: **$8,000**), not only a policy deductible. Recovery rail = **always ask** (escrow / settlement / split). Company still chooses Z (expense vs capitalize) for how the outlay / residual sits on the books (typically: open Driver A/R $8,000 under Option C discipline; clear as he pays; expense or asset treatment per Z for the company side).
+
+| Why Z | Matches owner: no threshold + explicit books choice every time. |
+
+---
+
+#### Example D — Deductible books: one concrete story (**Option C LOCKED**)
+
+**Facts (same story for all options):**
+
+- Driver **Juan**, unit **T169**, load **L-12047**, claim **CLM-0042** (our fault; driver responsible).
+- Shop repair bill: **$12,000** (vendor Love’s / WO-T169-…).
+- Policy deductible: **$2,500** (driver owes this).
+- Insurer will pay: **$9,500**.
+- Company pays the shop **$12,000** from operating bank today.
+- Later: insurer deposits **$9,500**; Juan recovers **$2,500** via settlement and/or escrow (**always ask** which).
+
+##### Step 0 — always (ops + QBO-shaped repair)
+
+| What | Books (shape) | Ops links |
+|------|---------------|-----------|
+| Pay shop $12,000 | Dr **Repairs expense** $12,000 · Cr Bank $12,000 | Claim CLM-0042 + unit T169 + WO + vendor |
+| Insurer pays $9,500 | Dr Bank $9,500 · Cr **Repairs expense** $9,500 (not sales) | Same claim id on deposit |
+
+After Step 0, **Repairs expense residual = $2,500** = economic deductible. That is the QBO residual pattern.
+
+Now: how do we treat Juan owing that $2,500?
+
+---
+
+**Option A — Expense residual only (no driver A/R on books)**
+
+| When | Entry | What you see |
+|------|-------|--------------|
+| After insurer | Leave $2,500 in Repairs expense | P&L shows company ate deductible |
+| Recover from Juan (settlement $1,500 + escrow $1,000) | Dr Settlement payable / escrow · Cr **Repairs expense** (or Other income–recovery) $2,500 | Expense nets toward $0; **no** open A/R |
+
+- **Pros:** Simple; matches “deductible left in expense until recovered.”  
+- **Cons:** Until Juan pays, books do **not** show “Juan owes us $2,500” as an asset — only ops notes / deduction schedule.
+
+---
+
+**Option B — Driver A/R (receivable) for the full deductible**
+
+| When | Entry | What you see |
+|------|-------|--------------|
+| When driver responsibility confirmed | Dr **Driver receivable – Juan** $2,500 · Cr Repairs expense (or Due from driver clearing) $2,500 | Balance sheet: Juan owes $2,500; expense net of recovery expectation |
+| Settlement takes $1,500 | Dr Settlement / Cr Driver receivable $1,500 | Receivable → $1,000 |
+| Escrow takes $1,000 | Dr Escrow liability (or escrow cash) / Cr Driver receivable $1,000 | Receivable → $0 |
+
+- **Pros:** Clear “who owes what”; matches NetSuite-ish receivable discipline; Driver Detail shows open balance.  
+- **Cons:** Extra account; must clear receivable when recovered (Alvys-style two lines still OK).
+
+---
+
+**Option C — Both (recommended for OS-of-record / court-grade) — expense tells loss story; A/R tells who owes**
+
+| When | Entry | What you see |
+|------|-------|--------------|
+| Pay shop + insurer (Step 0) | Same as above → $2,500 residual in expense | True cost of claim on P&L until recovered |
+| Confirm Juan owes deductible | Dr **Driver receivable – Juan** $2,500 · Cr **Driver deductible clearing** (or recoveries) $2,500 | A/R open; expense still shows economic loss until clearing policy chosen |
+| Recover via settlement/escrow | Cr Driver receivable as money comes in; clearing/expense nets | Driver Detail + claim + settlement + escrow all show CLM-0042 |
+
+- **Pros:** P&L honesty **and** “Juan owes $2,500” on BS; full drill-through. Matches “serious ERP + TMS.”  
+- **Cons:** Needs CoA accounts + posting flags OFF until CPA/Neon.
+
+---
+
+**Owner lock (2026-07-22):** **Option C.**  
+UI captures fault / responsibility / amounts / always-ask recovery; posting HOLD until CPA/Neon. When driver fault on uninsured full repair, Driver A/R = **full** amount (Example E $8,000), same C discipline.
+
+---
 
 ### Example B — Safety / accident (dual-path + active design)
 
@@ -95,17 +340,21 @@ Use these as the **acceptance picture**. If the live wizard/screen cannot do the
 
 ### SHOULD-BE 1 — Insurance claim (accident on a load)
 
-**Operator story:** Driver Juan wrecks unit T169 on load L-12047. Safety opens Accident → creates/links Insurance Claim.
+**Operator story:** Driver Juan wrecks unit T169 + trailer TR-88 on load L-12047. Safety opens Accident → Insurance Claim.
 
 | Step | What the UI must do | What the books / records must do |
 |------|---------------------|----------------------------------|
-| 1 | Accident drawer: pick **driver** (+ Create), **unit**, **load**, save **persists** (not fake fields) | Accident row FKs driver/unit/load; audit event |
-| 2 | Claim create: same driver/unit/load/accident prefilled; +Create where missing | Claim row linked; appears on **Driver Detail → claims**, **Unit profile**, **Load**, **Insurance** |
-| 3 | If deductible / recovery | Expense or liability + optional settlement deduction with claim provenance |
-| 4 | If lawsuit | Legal matter ↔ lawsuit **both directions** (EntityLink) |
-| 5 | Reverse | From Juan’s profile open claim; from claim open Juan / T169 / L-12047 / matter |
+| 1 | Accident drawer: **driver**, **unit**, **trailer**, **load** — all persist | Accident FKs + audit |
+| 2 | Claim: same links + policy; +Create where missing | Claim on driver / unit / trailer / load profiles |
+| 3 | Capture **fault** + **driver responsible?** | Drives money routing (see §0.1 Example A2) |
+| 4 | If driver deductible | Expense/receivable + recovery via **settlement** and/or **escrow** with claim id |
+| 5 | If no insurance / we pay repair | **Asset** (or expense per CPA) on unit + WO/vendor + claim; driver share if any via escrow/settlement |
+| 6 | If lawsuit | Legal matter ↔ lawsuit both ways |
+| 7 | Reverse | From Juan / T169 / TR-88 / L-12047 / claim / escrow / settlement — all open each other |
 
-**Wrong:** bare selects; claim orphaned; DriverDetail has no claims reverse; ComingSoon Safety tab while Live fines exist.
+**Wrong:** bare selects; claim orphaned; no fault/responsibility; deductible with no settlement/escrow rail; uninsured repair with no asset/unit link; DriverDetail missing claims reverse.
+
+See **§0.1 Example A2** for the full decision tree.
 
 ### SHOULD-BE 2 — Safety fines / dual-path
 
@@ -170,7 +419,13 @@ Use these as the **acceptance picture**. If the live wizard/screen cannot do the
 
 ## 0.3 What Cursor WILL DO (execution — not aspiration)
 
-Ordered work. Update status in §4 when PRs open. **Do not stop after chrome.**
+**Sequence authority (owner 2026-07-22):** `docs/trackers/OWNER-EXECUTION-PLAN-2026-07-22.md`  
+**Scoreboard:** `docs/trackers/MODULE-DEEP-AUDIT-SCOREBOARD-2026-07-22.md` (30 modules)
+
+Order: **Phase 0 law lock → Phase 1 module deep audit (Jorge click-through + economics) → Phase 2 build that module’s PRs → Phase 3 leftover pile items → Phase 4 launch gates.**  
+Do **not** redefine done as chrome. Do **not** skip module audits to “burn the old pile” first — the pile *is* mostly this work.
+
+Ordered tactical table (still valid inside Phase 1–2):
 
 | # | Action | Example standard | Output |
 |---|--------|------------------|--------|
@@ -179,15 +434,18 @@ Ordered work. Update status in §4 when PRs open. **Do not stop after chrome.**
 | 3 | Purpose routing in API/FE | Personal→settlement deduct; Lumper→expense on load | Additive schema/API; posting flags OFF until CPA/Neon where required |
 | 4 | Driver Detail reverse pack | SHOULD-BE 4 | Settlements, Advances, Liabilities, Escrow, Deductions, Pay rate links |
 | 5 | Settlement close CoA | SHOULD-BE 4 + scoreboard Settle FAIL | `resolveRoleAccount` (HOLD if Neon roles missing — ask Jorge) |
-| 6 | Claim/Accident persist + reverse | SHOULD-BE 1 | Accident fields save; claim on profiles; lawsuit↔matter (#3221+) |
+| 6 | Claim/Accident **economics** + reverse | SHOULD-BE 1 + **§0.1 A2** | Fault, driver responsible, deductible→settlement/escrow, uninsured→asset, full ops FKs (driver/unit/trailer/load/WO/policy); block `WIZARD-CLAIM-ECONOMICS-DEPTH` (financial HOLD for posting) |
 | 7 | Wizard-depth audits for every remaining creator | §1.3 template | One tracker file per wizard → CODE |
 | 8 | Law §9 scoreboard FAIL→PASS one path at a time | TRUE-CONNECTIVITY-MASTER | Expense→Bill→Settle→… with live proof |
 | 9 | Tab-within-tab sweep | Arch design tabs | Every Drivers/Accounting/… nested tab gets A–E |
 | 10 | Never claim done without | §0 Layer E | Live proof or UNVERIFIED |
+| 11 | **Module deep audits (30)** per OWNER-EXECUTION-PLAN | Jorge click-through + economics | Desktop `modules/<name>.md` + scoreboard |
 
-**Remind phrase (paste to Cursor):**
+**Remind phrases (paste to Cursor):**
 
-> Execute `docs/trackers/FULL-SYSTEM-AUDIT-AND-WIRING-MASTER-PLAN-2026-07-22.md` §§0–0.3 — Insurance/Safety/Accident examples + Create Advance SHOULD-BE stories (personal→settlement, lumper→expense, load/truck/trailer/bank). Do the table in §0.3. Do not redefine done as chrome.
+> Execute `docs/trackers/OWNER-EXECUTION-PLAN-2026-07-22.md` — do not invent a new sequence.
+
+> Execute `docs/trackers/FULL-SYSTEM-AUDIT-AND-WIRING-MASTER-PLAN-2026-07-22.md` §§0–0.3 — Insurance/Safety/Accident examples + Create Advance SHOULD-BE stories. Do not redefine done as chrome.
 
 ---
 
@@ -215,7 +473,7 @@ Scoreboard: `TRUE-CONNECTIVITY-MASTER-2026-07-21.md` (12 paths — all FAIL as o
 | Expense | FAIL | FE source-links / reverse register |
 | Bill | FAIL | bill_lines persist proof |
 | Settle | FAIL | CoA resolver + FE close |
-| Claim-Legal | FAIL→wiring | [#3221](https://github.com/tioperfumes07/IH35-TMS/pull/3221) EntityLink |
+| Claim-Legal | PARTIAL (FE reverse drill CI-green) | [#3221](https://github.com/tioperfumes07/IH35-TMS/pull/3221) lawsuit↔matter EntityLink; money FK/deductible still FAIL |
 | Invoice | FAIL | income + load required |
 | Factor | FAIL | live advance→JE proof |
 | Fuel | FAIL | CoA maps HOLD |
@@ -334,10 +592,10 @@ Order (do not skip depth):
 | PR | Role | Merge by |
 |----|------|----------|
 | #3218 | Creators spine (nested +Create) | Claude |
-| #3220 | Dual-path OLD vs NEW audit | Claude |
+| #3220 | Dual-path OLD vs NEW audit + **this master plan** | Claude |
 | #3221 | Claim-Legal EntityLink | Claude |
 | #3222 | Fleet dual-path activity fix | Claude |
-| (next) | Create Advance wizard depth + purpose routing | Claude |
+| **#3223** | **Create Advance wizard depth + purpose routing** (HOLD Neon migration + lumper JE) | Claude / owner Neon |
 | (next) | Settlements domain reverse FE | Claude |
 
 Cursor builds/pushes/PRs only unless owner says otherwise.
@@ -357,3 +615,8 @@ Cursor builds/pushes/PRs only unless owner says otherwise.
 | 2026-07-22 | Plan created from owner word + Create Advance deep findings (boxes, bank, load/unit/trailer, personal→deduct, lumper→expense). |
 | 2026-07-22 | §0.1 added — binding examples: Insurance/claim/lawsuit, Safety/accident dual-path, Create Cash Advance walkthrough, 2026-07-21 OS-of-record word. |
 | 2026-07-22 | §0.2 SHOULD-BE worked examples (claim, safety, advance stories A/B/C, settlements, market bar). §0.3 What Cursor WILL DO execution table. |
+| 2026-07-22 | §0.1 **Example A2** — claim economics: fault, driver responsible, deductible→settlement/escrow, uninsured→asset, full ops links (trailer/trip/WO/policy). Honest: was only partial before. |
+| 2026-07-22 | §0.0 Partnership — market systems are MINIMUM; research→design→owner locks→build; claim schema gap named; QBO/NetSuite/Alvys/GAAP money-object table + 3 owner CPA questions. |
+| 2026-07-22 | Universal deep linkage table (safety/compliance/fleet/settlements/… — not claims-only). Lock #1 always-ask recovery; #2 no $ threshold. Example D A/B/C for deductible books. |
+| 2026-07-22 | RULE 22 permanent + Rule 14/21: system-wide linkage. Example E for Q2 (expense vs capitalize). Cursor recs: Q2=always ask; Q3=Option C. |
+| 2026-07-22 | **Owner locks:** Q2=Z no threshold + if driver fault owes full repair ($8k Example E); Q3=**C**. |

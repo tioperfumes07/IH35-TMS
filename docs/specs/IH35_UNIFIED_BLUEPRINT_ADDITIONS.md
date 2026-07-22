@@ -1927,3 +1927,16 @@ maker/checker for other roles remains a separate design question and is not open
 - OSHA
 - HTS / tariff
 - Navy → green CTA color changes (keep current palette)
+
+---
+
+## 2026-07-22 — SYSTEM-WIDE DEEP LINKAGE (owner LOCKED)
+
+Deep linkage is the **entire product**, not Insurance Claims / Legal only. Applies to Safety, Compliance, Fleet/Vehicles, Trailers, Dispatch, Settlements, Escrow, Banking, Accounting, Maintenance, Insurance, Legal, Drivers — every tab/wizard. Claims A2 / Advance C are depth samples only.
+
+Canonical: `docs/specs/CURSOR-PERMANENT-RULES.md` RULE 22; `.cursor/rules/14` + `21`; master plan §0.0.
+
+Claim economics owner locks (2026-07-22 — FINAL):
+1. Driver deductible recovery rail = **always ask** (escrow / settlement / split)
+2. Uninsured repair = **Choice Z always ask** expense vs capitalize; **no $ threshold**. If **driver fault**, driver owes **full** company-funded repair (e.g. $8,000), recovered via always-ask rail.
+3. Deductible books = **Option C** (expense residual + Driver A/R) — LOCKED
