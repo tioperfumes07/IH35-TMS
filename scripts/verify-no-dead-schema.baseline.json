@@ -1,0 +1,323 @@
+{
+  "_doc": "BASELINE of pre-existing dead schema (objects created by a migration that no non-test source file reads). Captured 2026-07-21 by the first run of verify-no-dead-schema.mjs. This is a DEBT REGISTER, not an approval: every entry is a column/table implying a feature that does not exist. NEW dead schema is NOT allowed - the guard fails on anything not listed here. Wire an object and DELETE its entry.",
+  "_law": "CLAUDE.md 10a Total Connectivity - a record or field missing its link is NOT done.",
+  "_captured": "2026-07-21",
+  "count": 63,
+  "entries": [
+    {
+      "object": "accounting.depreciation_autopost_runs",
+      "kind": "TABLE",
+      "migration": "202607100100_block01_depreciation_loan_link_and_autopost_log.sql"
+    },
+    {
+      "object": "accounting.fixed_assets.financing_loan_id",
+      "kind": "COLUMN",
+      "migration": "202607100100_block01_depreciation_loan_link_and_autopost_log.sql"
+    },
+    {
+      "object": "accounting.form_1042_s",
+      "kind": "TABLE",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.invoices.deducted_at",
+      "kind": "COLUMN",
+      "migration": "0106_p6_foundation_universal_attachments.sql"
+    },
+    {
+      "object": "accounting.invoices.deducted_at",
+      "kind": "COLUMN",
+      "migration": "0123_p6_pre_ledger_drift_reconciliation.sql"
+    },
+    {
+      "object": "accounting.invoices.deducted_via_settlement_id",
+      "kind": "COLUMN",
+      "migration": "0106_p6_foundation_universal_attachments.sql"
+    },
+    {
+      "object": "accounting.invoices.deducted_via_settlement_id",
+      "kind": "COLUMN",
+      "migration": "0123_p6_pre_ledger_drift_reconciliation.sql"
+    },
+    {
+      "object": "accounting.line_category_load_required",
+      "kind": "TABLE",
+      "migration": "0093_p5_d5_load_fk_invariant_wo_time.sql"
+    },
+    {
+      "object": "accounting.line_category_load_required",
+      "kind": "TABLE",
+      "migration": "0123_p6_pre_ledger_drift_reconciliation.sql"
+    },
+    {
+      "object": "accounting.revenue_recognition_rows",
+      "kind": "TABLE",
+      "migration": "202606281070_revenue_recognition_data_model.sql"
+    },
+    {
+      "object": "analytics.customer_rollup",
+      "kind": "TABLE",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.lane_rollup",
+      "kind": "TABLE",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "analytics.type_rollup",
+      "kind": "TABLE",
+      "migration": "202606111056_w2a_profitability_engine.sql"
+    },
+    {
+      "object": "banking.bank_transactions.excluded_reason",
+      "kind": "COLUMN",
+      "migration": "0182_p7_w2_bank_transactions_review.sql"
+    },
+    {
+      "object": "banking.bank_transactions.matched_invoice_id",
+      "kind": "COLUMN",
+      "migration": "0182_p7_w2_bank_transactions_review.sql"
+    },
+    {
+      "object": "banking.bank_transactions.pse_ps_item_qbo_id",
+      "kind": "COLUMN",
+      "migration": "0266_acct11_pse_enforce.sql"
+    },
+    {
+      "object": "banking.bank_transactions.pse_qbo_account_id",
+      "kind": "COLUMN",
+      "migration": "0266_acct11_pse_enforce.sql"
+    },
+    {
+      "object": "banking.bank_transactions.reconciliation_cleared",
+      "kind": "COLUMN",
+      "migration": "0182_p7_w2_bank_transactions_review.sql"
+    },
+    {
+      "object": "banking.reconciliation_sessions.auto_match_run_at",
+      "kind": "COLUMN",
+      "migration": "0184_p7_w2_reconciliation_sessions_extend.sql"
+    },
+    {
+      "object": "banking.reconciliation_sessions.auto_match_suggestions_count",
+      "kind": "COLUMN",
+      "migration": "0184_p7_w2_reconciliation_sessions_extend.sql"
+    },
+    {
+      "object": "banking.reconciliation_sessions.reopen_reason",
+      "kind": "COLUMN",
+      "migration": "0184_p7_w2_reconciliation_sessions_extend.sql"
+    },
+    {
+      "object": "banking.reconciliation_sessions.reopened_at",
+      "kind": "COLUMN",
+      "migration": "0184_p7_w2_reconciliation_sessions_extend.sql"
+    },
+    {
+      "object": "banking.reconciliation_sessions.reopened_by_user_id",
+      "kind": "COLUMN",
+      "migration": "0184_p7_w2_reconciliation_sessions_extend.sql"
+    },
+    {
+      "object": "catalogs.company_violation_types.default_fine_amount_cents",
+      "kind": "COLUMN",
+      "migration": "0115_p6_stabilization_reconciliation.sql"
+    },
+    {
+      "object": "catalogs.equipment_types_dedup_ledger_0318",
+      "kind": "TABLE",
+      "migration": "0318_equipment_types_canonical_dedup.sql"
+    },
+    {
+      "object": "driver_finance.settlement_lines.dispute_resolved_at",
+      "kind": "COLUMN",
+      "migration": "202607430000_settlement_lines_approval_columns.sql"
+    },
+    {
+      "object": "driver_finance.settlement_lines.dispute_resolved_by",
+      "kind": "COLUMN",
+      "migration": "202607430000_settlement_lines_approval_columns.sql"
+    },
+    {
+      "object": "driver_finance.settlement_lines.disputed_at",
+      "kind": "COLUMN",
+      "migration": "202607430000_settlement_lines_approval_columns.sql"
+    },
+    {
+      "object": "driver_finance.settlement_lines.disputed_by",
+      "kind": "COLUMN",
+      "migration": "202607430000_settlement_lines_approval_columns.sql"
+    },
+    {
+      "object": "fixed_assets.depreciation_schedules",
+      "kind": "TABLE",
+      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
+    },
+    {
+      "object": "identity.applicant_documents",
+      "kind": "TABLE",
+      "migration": "0363_identity_driver_applicants.sql"
+    },
+    {
+      "object": "ifta.personal_conveyance_miles_by_quarter",
+      "kind": "TABLE",
+      "migration": "202607130200_block03_ifta_trip_methodology_extend.sql"
+    },
+    {
+      "object": "maint.part_position_assignment",
+      "kind": "TABLE",
+      "migration": "202606122215_m1_positioned_parts_picker.sql"
+    },
+    {
+      "object": "maintenance.work_orders.cancel_notes",
+      "kind": "COLUMN",
+      "migration": "202606221200_wo_enhancements_cancel.sql"
+    },
+    {
+      "object": "mdata.customers.lumper_billing_mode",
+      "kind": "COLUMN",
+      "migration": "202606251500_lumper_billing_config.sql"
+    },
+    {
+      "object": "mdata.drivers.b1_visa_expires_date",
+      "kind": "COLUMN",
+      "migration": "202606080930_block14_mexico_ops.sql"
+    },
+    {
+      "object": "mdata.drivers.b1_visa_number",
+      "kind": "COLUMN",
+      "migration": "202606080930_block14_mexico_ops.sql"
+    },
+    {
+      "object": "mdata.drivers.has_b1_visa",
+      "kind": "COLUMN",
+      "migration": "202606080930_block14_mexico_ops.sql"
+    },
+    {
+      "object": "mdata.drivers.last_samsara_login_at",
+      "kind": "COLUMN",
+      "migration": "202606192100_drivers_last_samsara_login.sql"
+    },
+    {
+      "object": "mdata.vendors.vendor_type_id",
+      "kind": "COLUMN",
+      "migration": "202607420000_vendor_types_catalog.sql"
+    },
+    {
+      "object": "migration.block6_demo_purge_ledger",
+      "kind": "TABLE",
+      "migration": "202606161700_block6_archive_demo_test_data.sql"
+    },
+    {
+      "object": "migration.test_seed_archive_ledger_0320",
+      "kind": "TABLE",
+      "migration": "0320_archive_test_seed_data.sql"
+    },
+    {
+      "object": "migration.test_seed_archive_ledger_0367",
+      "kind": "TABLE",
+      "migration": "0367_archive_mdata_customers_test_seed.sql"
+    },
+    {
+      "object": "migration.test_seed_archive_ledger_0369",
+      "kind": "TABLE",
+      "migration": "0369_archive_identity_debug_test_users.sql"
+    },
+    {
+      "object": "migration.test_seed_archive_ledger_0396",
+      "kind": "TABLE",
+      "migration": "0396_archive_test_users.sql"
+    },
+    {
+      "object": "ops.load_test_runs",
+      "kind": "TABLE",
+      "migration": "202606080205_load_test_runs.sql"
+    },
+    {
+      "object": "org.companies.eld_provider",
+      "kind": "COLUMN",
+      "migration": "0304_compliance_dashboard.sql"
+    },
+    {
+      "object": "org.companies.ifta_license_number",
+      "kind": "COLUMN",
+      "migration": "0304_compliance_dashboard.sql"
+    },
+    {
+      "object": "org.companies.scac_code",
+      "kind": "COLUMN",
+      "migration": "0304_compliance_dashboard.sql"
+    },
+    {
+      "object": "org.companies.ucr_filing_year",
+      "kind": "COLUMN",
+      "migration": "0304_compliance_dashboard.sql"
+    },
+    {
+      "object": "payroll.driver_settlements.recover_override_by",
+      "kind": "COLUMN",
+      "migration": "202606131600_settlement_capped_recovery_flag_and_override.sql"
+    },
+    {
+      "object": "payroll.driver_settlements.recover_override_cents",
+      "kind": "COLUMN",
+      "migration": "202606131600_settlement_capped_recovery_flag_and_override.sql"
+    },
+    {
+      "object": "payroll.driver_settlements.recover_override_reason",
+      "kind": "COLUMN",
+      "migration": "202606131600_settlement_capped_recovery_flag_and_override.sql"
+    },
+    {
+      "object": "payroll_integration.aggregate_cache",
+      "kind": "TABLE",
+      "migration": "202606281040_payroll_integration_cache.sql"
+    },
+    {
+      "object": "public.audit_log_partitioned",
+      "kind": "TABLE",
+      "migration": "202606080940_block26_partition_hot_tables.sql"
+    },
+    {
+      "object": "public.partition_maintenance_log",
+      "kind": "TABLE",
+      "migration": "202606080940_block26_partition_hot_tables.sql"
+    },
+    {
+      "object": "settlement.settlement_line.dispute_resolved_at",
+      "kind": "COLUMN",
+      "migration": "202606120600_d1_settlement_approval.sql"
+    },
+    {
+      "object": "settlement.settlement_line.dispute_resolved_by",
+      "kind": "COLUMN",
+      "migration": "202606120600_d1_settlement_approval.sql"
+    },
+    {
+      "object": "settlement.settlement_line.disputed_at",
+      "kind": "COLUMN",
+      "migration": "202606120600_d1_settlement_approval.sql"
+    },
+    {
+      "object": "settlement.settlement_line.disputed_by",
+      "kind": "COLUMN",
+      "migration": "202606120600_d1_settlement_approval.sql"
+    },
+    {
+      "object": "settlements.team_split_configs",
+      "kind": "TABLE",
+      "migration": "202606281010_team_split_configs.sql"
+    },
+    {
+      "object": "settlements.team_split_load_overrides",
+      "kind": "TABLE",
+      "migration": "202606281010_team_split_configs.sql"
+    },
+    {
+      "object": "tasks.task_type_seed",
+      "kind": "TABLE",
+      "migration": "202606120001_tasks_planner_v3.sql"
+    }
+  ]
+}
