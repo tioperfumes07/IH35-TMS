@@ -90,10 +90,10 @@ export function QuickCreateEntityModal({
   // (catalogs.account_types via fetchAccountTypeCatalog), filtered by the chosen account type.
   const selectedAccountType = form.watch("accountType") ?? "";
   const accountTypeCatalogQuery = useQuery({
-    queryKey: ["account-type-catalog"],
-    queryFn: fetchAccountTypeCatalog,
+    queryKey: ["account-type-catalog", operatingCompanyId],
+    queryFn: () => fetchAccountTypeCatalog(operatingCompanyId),
     staleTime: 5 * 60 * 1000,
-    enabled: open && kind === "category",
+    enabled: open && kind === "category" && Boolean(operatingCompanyId),
   });
   const detailTypeOptions = useMemo(
     () => detailTypesForAccountType(accountTypeCatalogQuery.data, selectedAccountType),

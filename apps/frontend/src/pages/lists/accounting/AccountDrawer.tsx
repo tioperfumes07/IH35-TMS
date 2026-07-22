@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -125,9 +126,10 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
   const [confirmArchive, setConfirmArchive] = useState(false);
 
   const typeCatalogQuery = useQuery({
-    queryKey: ["account-type-catalog"],
-    queryFn: fetchAccountTypeCatalog,
+    queryKey: ["account-type-catalog", operatingCompanyId],
+    queryFn: () => fetchAccountTypeCatalog(operatingCompanyId),
     staleTime: 5 * 60 * 1000,
+    enabled: Boolean(operatingCompanyId),
   });
 
   const detailTypesForType = useMemo<AccountTypeCatalogEntry["detailTypes"]>(
@@ -388,8 +390,17 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
               <FieldError msg={errors.account_type} />
             </FieldLabel>
 
-            {/* Detail Type (cascaded) */}
+            {/* Detail Type (cascaded) — live catalogs.detail_types; manage customs via Lists */}
             <FieldLabel label="Detail Type">
+              <div className="mt-1 flex items-center justify-end">
+                <Link
+                  to="/lists/accounting/detail-types"
+                  className="text-[11px] font-semibold text-slate-700 hover:underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  + Create detail type
+                </Link>
+              </div>
               <select
                 value={form.account_subtype}
                 disabled={readOnly || detailTypesForType.length === 0}

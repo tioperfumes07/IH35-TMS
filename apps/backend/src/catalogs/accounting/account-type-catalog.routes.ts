@@ -27,7 +27,20 @@ export function registerAccountTypeCatalogRoutes(app: FastifyInstance) {
       const authUser = currentAuthUser(req, reply);
       if (!authUser) return;
 
+      // Optional entity scope: when provided, include system detail types (opco NULL) PLUS this
+      // entity's custom rows. Without it, only system/global rows are reliable under FORCED RLS.
+      const q = (req.query ?? {}) as { operating_company_id?: string };
+      const operatingCompanyId =
+        typeof q.operating_company_id === "string" && q.operating_company_id.trim()
+          ? q.operating_company_id.trim()
+          : null;
+
       const rows = await withCurrentUser(authUser.uuid, async (client) => {
+        if (operatingCompanyId) {
+          await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+            operatingCompanyId,
+          ]);
+        }
         const res = await client.query<{
           at_id: string;
           code: string;
@@ -40,7 +53,8 @@ export function registerAccountTypeCatalogRoutes(app: FastifyInstance) {
           dt_id: string | null;
           dt_name: string | null;
           dt_sort: number | null;
-        }>(`
+        }>(
+          `
           SELECT
             at.id           AS at_id,
             at.code,
@@ -55,10 +69,17 @@ export function registerAccountTypeCatalogRoutes(app: FastifyInstance) {
             dt.sort_order   AS dt_sort
           FROM catalogs.account_types at
           LEFT JOIN catalogs.detail_types dt
-            ON dt.account_type_id = at.id AND dt.is_active = true
+            ON dt.account_type_id = at.id
+           AND dt.is_active = true
+           AND (
+             dt.operating_company_id IS NULL
+             OR ($1::uuid IS NOT NULL AND dt.operating_company_id = $1::uuid)
+           )
           WHERE at.is_active = true
           ORDER BY at.sort_order ASC, dt.sort_order ASC
-        `);
+        `,
+          [operatingCompanyId],
+        );
         return res.rows;
       });
 

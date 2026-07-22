@@ -36,6 +36,26 @@ const manifest = read("apps/frontend/src/routes/manifest.tsx");
 if (!/path="\/lists\/accounting\/account-types"/.test(manifest)) failures.push("manifest must route /lists/accounting/account-types");
 if (!/path="\/lists\/accounting\/detail-types"/.test(manifest) || !/<DetailTypesListPage \/>/.test(manifest)) failures.push("manifest must route /lists/accounting/detail-types → DetailTypesListPage");
 
+// Dual-path lock: JE/inline New Account drawer must NOT keep a hardcoded DETAIL_TYPES array —
+// create pickers must use the live account-type catalog (same as CoA AccountDrawer).
+const newAccount = read("apps/frontend/src/components/parity/drawers/NewAccountDrawerForm.tsx");
+if (/const DETAIL_TYPES\s*[:=]/.test(newAccount)) {
+  failures.push("NewAccountDrawerForm must not hardcode DETAIL_TYPES — use fetchAccountTypeCatalog / detailTypesForAccountType");
+}
+if (!/fetchAccountTypeCatalog|detailTypesForAccountType/.test(newAccount)) {
+  failures.push("NewAccountDrawerForm must call fetchAccountTypeCatalog / detailTypesForAccountType");
+}
+
+const subnav = read("apps/frontend/src/pages/accounting/subnav-manifest.ts");
+if (!/path: "\/lists\/accounting\/detail-types"/.test(subnav)) {
+  failures.push("Accounting subnav must link Detail Type → /lists/accounting/detail-types");
+}
+
+const catalogRoute = read("apps/backend/src/catalogs/accounting/account-type-catalog.routes.ts");
+if (!/operating_company_id/.test(catalogRoute) || !/set_config\('app\.operating_company_id'/.test(catalogRoute)) {
+  failures.push("account-type-catalog route must accept operating_company_id and set app.operating_company_id GUC");
+}
+
 if (failures.length) {
   console.error("verify:detail-type-catalog — FAILED");
   for (const m of failures) console.error(`- ${m}`);

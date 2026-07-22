@@ -1,110 +1,39 @@
 /**
  * BK7 — New Account drawer form (two-column + cascade + lock flag).
  *
- * LEFT: Account name, Account number, Account type (grouped), Detail type
- *   (cascades from type), sub-account toggle → parent selector, description,
- *   "Use for billable expenses", Lock account flag.
- * RIGHT: Live BS/P&L tree preview showing where new account lands.
+ * LEFT: Account name, Account number, Account type (8-value COA enum, statement-grouped),
+ *   Detail type (LIVE from catalogs.detail_types via account-type-catalog — no hardcoded arrays),
+ *   sub-account toggle → parent selector, description, billable + lock flags.
+ * RIGHT: Live BS/P&L preview from the fetched account-type catalog.
  *
  * GATE: Account create commit is FINANCIAL/GATED.
  *   The form is fully rendered and validated but the submit button shows
  *   "Awaiting approval — contact Jorge" when `accountCreateGated=true`.
  *   Change to `false` only after Jorge's explicit per-block OK.
  */
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Lock } from "lucide-react";
 import { chartOfAccountsCatalogClient } from "../../../api/catalogs-accounting";
+import {
+  ACCOUNT_TYPE_GROUPS,
+  ACCOUNT_TYPES,
+  COA_ENUM_TO_CATALOG_CODES,
+  detailTypesForAccountType,
+  fetchAccountTypeCatalog,
+  type AccountTypeCatalogEntry,
+  type CoaAccountType,
+} from "../../../api/coa-list";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
 
 const ACCOUNT_CREATE_GATED = true; // FINANCIAL GATE — flip to false only on Jorge's explicit OK
 
-type AccountTypeGroup = {
-  group: string;
-  types: { value: string; label: string }[];
-};
-
-const ACCOUNT_TYPE_GROUPS: AccountTypeGroup[] = [
-  {
-    group: "ASSET",
-    types: [
-      { value: "Bank", label: "Bank" },
-      { value: "Accounts Receivable", label: "Accounts Receivable (A/R)" },
-      { value: "Other Current Assets", label: "Other Current Assets" },
-      { value: "Fixed Assets", label: "Fixed Assets" },
-      { value: "Other Assets", label: "Other Assets" },
-    ],
-  },
-  {
-    group: "LIABILITY",
-    types: [
-      { value: "Credit Card", label: "Credit Card" },
-      { value: "Accounts Payable", label: "Accounts Payable (A/P)" },
-      { value: "Other Current Liabilities", label: "Other Current Liabilities" },
-      { value: "Long Term Liabilities", label: "Long Term Liabilities" },
-    ],
-  },
-  {
-    group: "EQUITY",
-    types: [{ value: "Equity", label: "Equity" }],
-  },
-  {
-    group: "INCOME",
-    types: [
-      { value: "Income", label: "Income" },
-      { value: "Other Income", label: "Other Income" },
-    ],
-  },
-  {
-    group: "EXPENSE",
-    types: [
-      { value: "Cost of Goods Sold", label: "Cost of Goods Sold" },
-      { value: "Expenses", label: "Expenses" },
-      { value: "Other Expense", label: "Other Expense" },
-    ],
-  },
-];
-
-const DETAIL_TYPES: Record<string, string[]> = {
-  Bank: ["Checking", "Savings", "Money Market", "Other Bank Account"],
-  "Accounts Receivable": ["Accounts Receivable"],
-  "Other Current Assets": ["Allowance for Bad Debts", "Deferred Tax Assets", "Inventory", "Loans to Officers", "Other Current Assets", "Prepaid Expenses", "Retainage", "Undeposited Funds"],
-  "Fixed Assets": ["Accumulated Depletion", "Accumulated Depreciation", "Buildings", "Furniture & Fixtures", "Intangible Assets", "Land", "Leasehold Improvements", "Machinery & Equipment", "Other Fixed Assets", "Vehicles"],
-  "Other Assets": ["Goodwill", "Licenses", "Long-term Investments", "Long-term Notes Receivable", "Other Long-term Assets", "Security Deposits"],
-  "Credit Card": ["Credit Card"],
-  "Accounts Payable": ["Accounts Payable"],
-  "Other Current Liabilities": ["Direct Deposit Payable", "Federal Income Tax Payable", "Health Insurance Payable", "Insurance Payable", "Line of Credit", "Loan Payable", "Other Taxes Payable", "Sales Tax Payable", "Unearned Revenue"],
-  "Long Term Liabilities": ["Notes Payable", "Other Long Term Liabilities", "Shareholder Notes Payable"],
-  Equity: ["Common Stock", "Dividends Paid", "Estimated Taxes", "Members Equity", "Opening Balance Equity", "Owner's Equity", "Paid-in Capital", "Partner Contributions", "Partner Distributions", "Preferred Stock", "Retained Earnings", "Treasury Stock"],
-  Income: ["Discounts/Refunds Given", "Non-Profit Income", "Other Primary Income", "Sales of Product Income", "Service/Fee Income", "Unapplied Cash Payment Income"],
-  "Other Income": ["Dividend Income", "Interest Earned", "Other Investment Income", "Other Miscellaneous Income", "Tax-Exempt Interest"],
-  "Cost of Goods Sold": ["Equipment Rental in COGS", "Other Costs of Service-COS", "Shipping, Freight & Delivery-COS", "Supplies & Materials-COGS"],
-  Expenses: ["Advertising/Promotional", "Auto", "Bad Debts", "Bank Charges", "Charitable Contributions", "Commissions & Fees", "Dues & Subscriptions", "Entertainment", "Equipment Rental", "Finance Costs", "Income Tax Expense", "Insurance", "Interest Paid", "Legal & Professional Fees", "Meals & Entertainment", "Office/General Administrative Expenses", "Other Business Expenses", "Other Miscellaneous Service Cost", "Payroll Expenses", "Printing", "Promotional Meals", "Rent or Lease", "Repair & Maintenance", "Shipping, Freight & Delivery", "Stationery & Printing", "Supplies", "Taxes Paid", "Travel", "Unapplied Cash Bill Payment Expense", "Utilities", "Vehicle"],
-  "Other Expense": ["Depreciation", "Exchange Gain or Loss", "Other Miscellaneous Expense", "Penalties & Settlements"],
-};
-
-const BS_PL_SECTIONS: Record<string, string> = {
-  Bank: "Balance Sheet → Assets → Current Assets",
-  "Accounts Receivable": "Balance Sheet → Assets → Current Assets",
-  "Other Current Assets": "Balance Sheet → Assets → Current Assets",
-  "Fixed Assets": "Balance Sheet → Assets → Fixed Assets",
-  "Other Assets": "Balance Sheet → Assets → Other Assets",
-  "Credit Card": "Balance Sheet → Liabilities → Current Liabilities",
-  "Accounts Payable": "Balance Sheet → Liabilities → Current Liabilities",
-  "Other Current Liabilities": "Balance Sheet → Liabilities → Current Liabilities",
-  "Long Term Liabilities": "Balance Sheet → Liabilities → Long-Term Liabilities",
-  Equity: "Balance Sheet → Equity",
-  Income: "Profit & Loss → Income",
-  "Other Income": "Profit & Loss → Other Income",
-  "Cost of Goods Sold": "Profit & Loss → Cost of Goods Sold",
-  Expenses: "Profit & Loss → Expenses",
-  "Other Expense": "Profit & Loss → Other Expenses",
-};
-
 type FormState = {
   name: string;
   accountNumber: string;
-  accountType: string;
+  accountType: CoaAccountType | "";
   detailType: string;
   isSubaccount: boolean;
   parentAccount: string;
@@ -134,8 +63,32 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
     lockAccount: false,
   });
 
-  const detailOptions = form.accountType ? DETAIL_TYPES[form.accountType] ?? [] : [];
-  const bsPlSection = form.accountType ? BS_PL_SECTIONS[form.accountType] : null;
+  const typeCatalogQuery = useQuery({
+    queryKey: ["account-type-catalog", operatingCompanyId],
+    queryFn: () => fetchAccountTypeCatalog(operatingCompanyId),
+    staleTime: 5 * 60 * 1000,
+    enabled: Boolean(operatingCompanyId),
+  });
+
+  const detailOptions = useMemo(
+    () => detailTypesForAccountType(typeCatalogQuery.data, form.accountType),
+    [typeCatalogQuery.data, form.accountType],
+  );
+
+  const previewEntry = useMemo<AccountTypeCatalogEntry | null>(() => {
+    const data = typeCatalogQuery.data;
+    if (!data || !form.accountType) return null;
+    const codes = new Set(COA_ENUM_TO_CATALOG_CODES[form.accountType] ?? []);
+    const matches = data.filter(
+      (e) => codes.has(e.code) || e.accountType === form.accountType || e.code === form.accountType,
+    );
+    if (matches.length === 0) return null;
+    if (form.detailType) {
+      const withDetail = matches.find((e) => e.detailTypes.some((dt) => dt.name === form.detailType));
+      if (withDetail) return withDetail;
+    }
+    return matches[0];
+  }, [typeCatalogQuery.data, form.accountType, form.detailType]);
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({
@@ -159,10 +112,13 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
       pushToast("Account type is required.", "error");
       return;
     }
+    if (!ACCOUNT_TYPES.includes(form.accountType)) {
+      pushToast("Account type is invalid.", "error");
+      return;
+    }
     setSaving(true);
     try {
-      // QB-STD-5: canonical catalogs.accounts (same table getCoaAccounts reads). Previously used
-      // createQboAccount → mdata.qbo_accounts (mirror), invisible after refresh.
+      // QB-STD-5: canonical catalogs.accounts (same table getCoaAccounts reads).
       const rawSlug = form.name.trim().replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 12) || "ACCT";
       const safeSlug = /^[A-Z]/.test(rawSlug) ? rawSlug : `E${rawSlug}`;
       const accountCode = form.accountNumber.trim() || `${safeSlug}${String(Date.now()).slice(-6)}`;
@@ -184,7 +140,6 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
   return (
     <form onSubmit={handleSubmit} className="h-full">
       <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
-        {/* LEFT COLUMN — fields */}
         <div className="flex flex-col gap-3">
           <label className="block">
             <span className="text-xs font-medium text-gray-700">Account name *</span>
@@ -212,34 +167,49 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
             <select
               className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
               value={form.accountType}
-              onChange={(e) => set("accountType", e.target.value)}
+              onChange={(e) => set("accountType", e.target.value as CoaAccountType | "")}
             >
               <option value="">Select a type…</option>
               {ACCOUNT_TYPE_GROUPS.map((group) => (
-                <optgroup key={group.group} label={group.group}>
+                <optgroup key={group.label} label={group.label}>
                   {group.types.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
+                    <option key={t} value={t}>{t}</option>
                   ))}
                 </optgroup>
               ))}
             </select>
           </label>
 
-          {detailOptions.length > 0 && (
-            <label className="block">
-              <span className="text-xs font-medium text-gray-700">Detail type *</span>
-              <select
-                className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
-                value={form.detailType}
-                onChange={(e) => set("detailType", e.target.value)}
+          <div className="block">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-medium text-gray-700">Detail type</span>
+              <Link
+                to="/lists/accounting/detail-types"
+                className="text-[11px] font-semibold text-slate-700 hover:underline"
+                onClick={(e) => e.stopPropagation()}
               >
-                <option value="">Select a detail type…</option>
-                {detailOptions.map((d) => (
-                  <option key={d} value={d}>{d}</option>
-                ))}
-              </select>
-            </label>
-          )}
+                + Create detail type
+              </Link>
+            </div>
+            <select
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
+              value={form.detailType}
+              disabled={!form.accountType || detailOptions.length === 0}
+              onChange={(e) => set("detailType", e.target.value)}
+              aria-label="Detail type"
+            >
+              <option value="">
+                {!form.accountType
+                  ? "Select account type first…"
+                  : detailOptions.length === 0
+                    ? "No detail types available"
+                    : "Select a detail type…"}
+              </option>
+              {detailOptions.map((d) => (
+                <option key={d.id} value={d.name}>{d.name}</option>
+              ))}
+            </select>
+          </div>
 
           <label className="flex items-center gap-2 text-sm text-gray-700">
             <input
@@ -248,17 +218,17 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
               onChange={(e) => set("isSubaccount", e.target.checked)}
               className="h-4 w-4 rounded-sm border-gray-300"
             />
-            Make this a sub-account
+            Is sub-account
           </label>
 
           {form.isSubaccount && (
             <label className="block">
-              <span className="text-xs font-medium text-gray-700">Parent account *</span>
+              <span className="text-xs font-medium text-gray-700">Parent account</span>
               <input
                 className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
                 value={form.parentAccount}
                 onChange={(e) => set("parentAccount", e.target.value)}
-                placeholder="Parent account name"
+                placeholder="Parent account name or number"
               />
             </label>
           )}
@@ -267,7 +237,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
             <span className="text-xs font-medium text-gray-700">Description</span>
             <textarea
               className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
-              rows={2}
+              rows={3}
               value={form.description}
               onChange={(e) => set("description", e.target.value)}
             />
@@ -284,66 +254,53 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
           </label>
 
           <label className="flex items-center gap-2 text-sm text-gray-700">
-            <Lock className="h-3.5 w-3.5 text-gray-400" />
             <input
               type="checkbox"
               checked={form.lockAccount}
               onChange={(e) => set("lockAccount", e.target.checked)}
               className="h-4 w-4 rounded-sm border-gray-300"
             />
-            Lock account (restrict posting)
+            <Lock className="h-3.5 w-3.5 text-gray-500" aria-hidden />
+            Lock account
           </label>
         </div>
 
-        {/* RIGHT COLUMN — live BS/P&L preview */}
-        <div className="flex flex-col gap-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Where this account lands</p>
-          <div className="min-h-[120px] rounded-sm border border-dashed border-gray-200 bg-gray-50 p-3">
-            {form.accountType ? (
-              <div className="text-xs text-gray-700">
-                <p className="font-medium text-gray-900">{form.accountType}</p>
-                {form.detailType && (
-                  <p className="mt-0.5 text-gray-500">Sub-type: {form.detailType}</p>
-                )}
-                {bsPlSection && (
-                  <p className="mt-2 rounded-sm bg-slate-100 px-2 py-1.5 text-slate-700">
-                    {bsPlSection}
-                  </p>
-                )}
-                {form.name.trim() && (
-                  <p className="mt-2 font-medium text-gray-900">
-                    → {form.name.trim()}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p className="text-xs text-gray-400">Select an account type to preview placement</p>
-            )}
-          </div>
-          {ACCOUNT_CREATE_GATED && (
-            <div className="mt-2 rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              <span className="font-semibold">Account creation gated.</span> The form is ready but the submit is disabled pending financial-cluster approval. Contact Jorge to enable.
+        <div className="rounded-sm border border-gray-200 bg-slate-50 p-3 text-sm text-gray-700">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Where this lands</p>
+          {previewEntry ? (
+            <div className="mt-2 space-y-1">
+              <p className="font-medium text-gray-900">{form.accountType}</p>
+              {form.detailType && (
+                <p className="mt-0.5 text-gray-500">Detail type: {form.detailType}</p>
+              )}
+              <p className="text-gray-600">{previewEntry.statement}</p>
+              <p className="text-xs text-gray-500">
+                Normal balance: {previewEntry.normalBalance} · Default: {previewEntry.defaultAction}
+              </p>
             </div>
+          ) : (
+            <p className="mt-2 text-gray-500">Select an account type to preview statement placement.</p>
+          )}
+          {typeCatalogQuery.isError && (
+            <p className="mt-2 text-xs text-red-700">Could not load detail-type catalog. Retry or open Lists → Detail Type.</p>
           )}
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="mt-6 flex justify-end gap-2 border-t border-gray-100 pt-4">
+      <div className="mt-6 flex justify-end gap-2 border-t border-gray-200 pt-4">
         <button
           type="button"
           onClick={onClose}
-          className="rounded-sm border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={saving || ACCOUNT_CREATE_GATED}
-          className="rounded-sm bg-[#1f2a44] px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 hover:bg-[#0f1729]"
-          title={ACCOUNT_CREATE_GATED ? "Account create awaiting financial approval" : undefined}
+          className="rounded-sm bg-slate-800 px-3 py-1.5 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-60"
         >
-          {saving ? "Saving…" : ACCOUNT_CREATE_GATED ? "Awaiting approval" : "Save"}
+          {ACCOUNT_CREATE_GATED ? "Awaiting approval — contact Jorge" : saving ? "Saving…" : "+ Create"}
         </button>
       </div>
     </form>

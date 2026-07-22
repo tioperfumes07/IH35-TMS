@@ -146,6 +146,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   // More ▾ — catalogs / settings
   { label: "Chart of Accounts", path: "/lists/accounting/chart-of-accounts", section: "more" },
   { label: "Account Type Catalog", path: "/accounting/account-type-catalog", section: "more" },
+  { label: "Detail Type", path: "/lists/accounting/detail-types", section: "more" },
   { label: "Payment methods catalog", path: "/accounting/payment-methods-catalog", section: "more" },
   { label: "Expense category map", path: "/accounting/settings/expense-category-map", section: "more" },
   { label: "CoA roles", path: "/accounting/settings/coa-roles", section: "more" },
@@ -200,6 +201,7 @@ export const ACCOUNTING_MORE_TABS = [
   { label: "Posting Lineage",   to: "/accounting/posting-lineage" },
   { label: "QBO Sync Drift",    to: "/accounting/qbo-sync" },
   { label: "Account Type Catalog", to: "/accounting/account-type-catalog" },
+  { label: "Detail Type", to: "/lists/accounting/detail-types" },
   { label: "Payment Methods Catalog", to: "/accounting/payment-methods-catalog" },
   { label: "Settings",          to: "/accounting/settings/expense-category-map" },
 ] as const;
