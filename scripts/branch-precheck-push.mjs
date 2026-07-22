@@ -268,7 +268,21 @@ export function runPrecheckPush(options = {}) {
   const unmerged = runGitOrThrow(["diff", "--name-only", "--diff-filter=U"], { cwd: root });
   const gitDir = runGitOrThrow(["rev-parse", "--git-dir"], { cwd: root });
   const stateDir = path.resolve(root, gitDir);
-  const hasOperationState = ["MERGE_HEAD", "REBASE_HEAD", "CHERRY_PICK_HEAD", "rebase-merge", "rebase-apply"]
+  // REBASE_HEAD is deliberately NOT in this list. git writes it during a rebase and LEAVES IT
+  // BEHIND after the rebase completes successfully — it is a convenience ref to the commit being
+  // replayed, not an in-progress marker. Treating it as one made this gate fail every push that
+  // followed any rebase, with `category=conflict: merge/rebase/cherry-pick operation is still in
+  // progress`, on a completely clean tree (observed 2026-07-22: rebase reported "Successfully
+  // rebased", `git status --porcelain` empty, `diff --diff-filter=U` empty, no rebase-merge/
+  // rebase-apply directory — and the gate still refused the push until .git/REBASE_HEAD was
+  // deleted by hand). That is a false positive that pushes authors toward --no-verify, which is
+  // exactly how a real gate stops being trusted.
+  //
+  // The authoritative in-progress markers are kept: MERGE_HEAD and CHERRY_PICK_HEAD are removed by
+  // git on completion/abort, and rebase-merge/rebase-apply are the directories git uses for an
+  // interrupted rebase. Unmerged paths are still checked separately below, so a genuinely
+  // conflicted tree is still refused.
+  const hasOperationState = ["MERGE_HEAD", "CHERRY_PICK_HEAD", "rebase-merge", "rebase-apply"]
     .some((marker) => fs.existsSync(path.join(stateDir, marker)));
   if (unmerged || hasOperationState) {
     return {
