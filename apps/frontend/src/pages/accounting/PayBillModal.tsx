@@ -3,8 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { payVendorBill, type BillPaymentMethod, type VendorBill } from "../../api/accounting";
 import { getAllAccounts } from "../../api/banking";
 import { Button } from "../../components/Button";
+import { Combobox } from "../../components/Combobox";
+import { PlaidLink } from "../../components/banking/PlaidLink";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { companyToday } from "../../lib/businessDate";
@@ -41,12 +42,22 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
   const [memo, setMemo] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [bankCreateOpen, setBankCreateOpen] = useState(false);
 
   const accountsQuery = useQuery({
     queryKey: ["pay-bill", "accounts", operatingCompanyId],
     queryFn: () => getAllAccounts(operatingCompanyId),
-    enabled: open,
+    enabled: open && Boolean(operatingCompanyId),
   });
+
+  const bankOptions = useMemo(
+    () =>
+      (accountsQuery.data?.accounts ?? []).map((account: Record<string, unknown>) => ({
+        value: String(account.id ?? ""),
+        label: String(account.display_name ?? account.account_name ?? "Account"),
+      })),
+    [accountsQuery.data?.accounts]
+  );
 
   const remainingCents = useMemo(() => {
     if (!bill) return 0;
@@ -63,148 +74,189 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
     setReferenceNumber("");
     setMemo("");
     setError(null);
+    setBankCreateOpen(false);
   }, [open, bill, remainingCents, accountsQuery.data?.accounts]);
 
   const payAmountCents = amountCents ?? 0;
-  const needsBankAccount = paymentMethod === "check" || paymentMethod === "ach" || paymentMethod === "wire" || paymentMethod === "credit_card";
+  const needsBankAccount =
+    paymentMethod === "check" ||
+    paymentMethod === "ach" ||
+    paymentMethod === "wire" ||
+    paymentMethod === "credit_card";
 
   return (
-    <ParityDrawer
-      open={open}
-      onClose={onClose}
-      title="Pay Bill"
-      size="wide"
-      footer={
-        bill ? (
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" form="pay-bill-form" disabled={saving}>
-              {saving ? "Paying..." : "Record Payment"}
-            </Button>
-          </div>
-        ) : undefined
-      }
-    >
-      {!bill ? (
-        <div className="text-sm text-gray-600">No bill selected.</div>
-      ) : (
-        <form
-          id="pay-bill-form"
-          className="space-y-3"
-          onSubmit={async (event) => {
-            event.preventDefault();
-            setError(null);
-            if (payAmountCents <= 0) {
-              setError("Payment amount must be greater than zero.");
-              return;
-            }
-            if (payAmountCents > remainingCents) {
-              setError("Payment amount cannot exceed remaining bill balance.");
-              return;
-            }
-            if (paymentMethod === "check" && !checkNumber.trim()) {
-              setError("Check number is required when payment method is check.");
-              return;
-            }
-            if (needsBankAccount && !fromBankAccountId) {
-              setError("From bank account is required for this payment method.");
-              return;
-            }
-            setSaving(true);
-            try {
-              await payVendorBill(bill.id, operatingCompanyId, {
-                payment_date: paymentDate,
-                amount_cents: payAmountCents,
-                payment_method: paymentMethod,
-                from_bank_account_id: needsBankAccount ? fromBankAccountId : undefined,
-                check_number: paymentMethod === "check" ? checkNumber : undefined,
-                reference_number: referenceNumber || undefined,
-                memo: memo || undefined,
-              });
-              onSaved();
-            } catch (submitError) {
-              setError(submitError instanceof Error ? submitError.message : "Failed to submit payment.");
-            } finally {
-              setSaving(false);
-            }
-          }}
-        >
-          {error ? <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div> : null}
-          {accountsQuery.isError ? (
-            <ListErrorBanner
-              message={`Failed to load payment accounts: ${(accountsQuery.error as Error)?.message ?? "Request failed"}`}
-              onRetry={() => void accountsQuery.refetch()}
-            />
-          ) : null}
+    <>
+      <ParityDrawer
+        open={open}
+        onClose={onClose}
+        title="Pay Bill"
+        size="wide"
+        footer={
+          bill ? (
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="secondary" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="submit" form="pay-bill-form" disabled={saving}>
+                {saving ? "Paying..." : "Record Payment"}
+              </Button>
+            </div>
+          ) : undefined
+        }
+      >
+        {!bill ? (
+          <div className="text-sm text-gray-600">No bill selected.</div>
+        ) : (
+          <form
+            id="pay-bill-form"
+            className="space-y-3"
+            data-testid="pay-bill-form"
+            onSubmit={async (event) => {
+              event.preventDefault();
+              setError(null);
+              if (payAmountCents <= 0) {
+                setError("Payment amount must be greater than zero.");
+                return;
+              }
+              if (payAmountCents > remainingCents) {
+                setError("Payment amount cannot exceed remaining bill balance.");
+                return;
+              }
+              if (paymentMethod === "check" && !checkNumber.trim()) {
+                setError("Check number is required when payment method is check.");
+                return;
+              }
+              if (needsBankAccount && !fromBankAccountId) {
+                setError("From bank account is required for this payment method.");
+                return;
+              }
+              setSaving(true);
+              try {
+                await payVendorBill(bill.id, operatingCompanyId, {
+                  payment_date: paymentDate,
+                  amount_cents: payAmountCents,
+                  payment_method: paymentMethod,
+                  from_bank_account_id: needsBankAccount ? fromBankAccountId : undefined,
+                  check_number: paymentMethod === "check" ? checkNumber : undefined,
+                  reference_number: referenceNumber || undefined,
+                  memo: memo || undefined,
+                });
+                onSaved();
+              } catch (submitError) {
+                setError(submitError instanceof Error ? submitError.message : "Failed to submit payment.");
+              } finally {
+                setSaving(false);
+              }
+            }}
+          >
+            {error ? (
+              <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div>
+            ) : null}
+            {accountsQuery.isError ? (
+              <ListErrorBanner
+                message={`Failed to load payment accounts: ${(accountsQuery.error as Error)?.message ?? "Request failed"}`}
+                onRetry={() => void accountsQuery.refetch()}
+              />
+            ) : null}
 
-          <div className="rounded-sm border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
-            Bill Payment Details
-          </div>
+            {/* CHROME: flat sections — no nested bordered panel inside the drawer (box-in-box) */}
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-700">Bill Payment Details</div>
 
-          <div className="grid grid-cols-1 gap-2 rounded-sm border border-gray-200 bg-white p-2 md:grid-cols-6">
-            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-              Vendor
-              <input value={vendorName} readOnly className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px]" />
-            </label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-              Bill #
-              <input value={bill.bill_number || bill.id.slice(0, 8)} readOnly className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px]" />
-            </label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-              Payment date
-              <DatePicker value={paymentDate} onChange={setPaymentDate} className="text-[13px]" />
-            </label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-              Payment method
-              <SelectCombobox value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as BillPaymentMethod)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
-                {METHOD_OPTIONS.map((method) => (
-                  <option key={method.value} value={method.value}>
-                    {method.label}
-                  </option>
-                ))}
-              </SelectCombobox>
-            </label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-              Payment amount (USD)
-              <MoneyInput valueCents={amountCents} onChangeCents={setAmountCents} ariaLabel="Payment amount" />
-            </label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-              Remaining
-              <input value={money(remainingCents)} readOnly className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px]" />
-            </label>
-            {needsBankAccount ? (
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-6">
               <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-                From bank account
-                <SelectCombobox value={fromBankAccountId} onChange={(event) => setFromBankAccountId(event.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
-                  <option value="">Select account</option>
-                  {(accountsQuery.data?.accounts ?? []).map((account: Record<string, unknown>) => (
-                    <option key={String(account.id ?? "")} value={String(account.id ?? "")}>
-                      {String(account.display_name ?? "Account")}
+                Vendor
+                <input
+                  value={vendorName}
+                  readOnly
+                  className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px]"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+                Bill #
+                <input
+                  value={bill.bill_number || bill.id.slice(0, 8)}
+                  readOnly
+                  className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px]"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+                Payment date
+                <DatePicker value={paymentDate} onChange={setPaymentDate} className="text-[13px]" />
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+                Payment method
+                <select
+                  aria-label="Payment method"
+                  value={paymentMethod}
+                  onChange={(event) => setPaymentMethod(event.target.value as BillPaymentMethod)}
+                  className="h-9 rounded-sm border border-gray-300 bg-white px-2 text-[13px]"
+                >
+                  {METHOD_OPTIONS.map((method) => (
+                    <option key={method.value} value={method.value}>
+                      {method.label}
                     </option>
                   ))}
-                </SelectCombobox>
+                </select>
               </label>
-            ) : null}
-            {paymentMethod === "check" ? (
               <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-                Check number
-                <input value={checkNumber} onChange={(event) => setCheckNumber(event.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+                Payment amount (USD)
+                <MoneyInput valueCents={amountCents} onChangeCents={setAmountCents} ariaLabel="Payment amount" />
               </label>
-            ) : null}
-            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-              Reference number
-              <input value={referenceNumber} onChange={(event) => setReferenceNumber(event.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
-            </label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-6">
-              Memo
-              <textarea rows={3} value={memo} onChange={(event) => setMemo(event.target.value)} className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]" />
-            </label>
-          </div>
+              <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+                Remaining
+                <input
+                  value={money(remainingCents)}
+                  readOnly
+                  className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px]"
+                />
+              </label>
+              {needsBankAccount ? (
+                <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
+                  From bank account
+                  {/* Picker law: catalog + inline + Add new inside Combobox (first row), not outside. */}
+                  <Combobox
+                    dataField="from-bank-account"
+                    placeholder="Select bank account…"
+                    options={bankOptions}
+                    value={fromBankAccountId || null}
+                    onChange={(next) => setFromBankAccountId(next ?? "")}
+                    allowAddNew={{
+                      label: "+ Add new bank account",
+                      onAdd: () => setBankCreateOpen(true),
+                    }}
+                  />
+                </label>
+              ) : null}
+              {paymentMethod === "check" ? (
+                <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+                  Check number
+                  <input
+                    value={checkNumber}
+                    onChange={(event) => setCheckNumber(event.target.value)}
+                    className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+                  />
+                </label>
+              ) : null}
+              <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+                Reference number
+                <input
+                  value={referenceNumber}
+                  onChange={(event) => setReferenceNumber(event.target.value)}
+                  className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-6">
+                Memo
+                <textarea
+                  rows={3}
+                  value={memo}
+                  onChange={(event) => setMemo(event.target.value)}
+                  className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+                />
+              </label>
+            </div>
 
-          <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">Apply to bill</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-gray-600">Apply to bill</div>
             <div className="overflow-x-auto">
               <table className="min-w-full text-left text-xs">
                 <thead className="bg-gray-50 text-gray-600">
@@ -223,16 +275,45 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
                     <td className="px-2 py-1.5">{money(bill.paid_cents)}</td>
                     <td className="px-2 py-1.5 font-semibold text-red-700">{money(remainingCents)}</td>
                     <td className="px-2 py-1.5">
-                      <MoneyInput valueCents={amountCents} onChangeCents={setAmountCents} ariaLabel="Payment amount" className="w-24" />
+                      <MoneyInput
+                        valueCents={amountCents}
+                        onChangeCents={setAmountCents}
+                        ariaLabel="Payment amount"
+                        className="w-24"
+                      />
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
-          </div>
+          </form>
+        )}
+      </ParityDrawer>
 
-        </form>
-      )}
-    </ParityDrawer>
+      {/* Nested drawer: bank accounts are provisioned via Plaid (canonical Banking path) — same QBO connect chrome. */}
+      <ParityDrawer
+        open={bankCreateOpen}
+        onClose={() => setBankCreateOpen(false)}
+        title="Add bank account"
+        size="md"
+      >
+        <div className="space-y-3 text-sm text-gray-700" data-testid="pay-bill-add-bank-drawer">
+          <p>
+            Connect a bank account for this company. After Plaid succeeds, the new account appears in{" "}
+            <strong>From bank account</strong> and can be selected for this payment.
+          </p>
+          <PlaidLink
+            operatingCompanyId={operatingCompanyId}
+            label="Connect via Plaid"
+            onSuccess={async () => {
+              const refreshed = await accountsQuery.refetch();
+              const nextId = String(refreshed.data?.accounts?.[0]?.id ?? "");
+              if (nextId) setFromBankAccountId(nextId);
+              setBankCreateOpen(false);
+            }}
+          />
+        </div>
+      </ParityDrawer>
+    </>
   );
 }
