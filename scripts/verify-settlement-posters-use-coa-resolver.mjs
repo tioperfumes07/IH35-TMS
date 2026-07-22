@@ -27,6 +27,8 @@ const TARGET_FILES = [
   "apps/backend/src/accounting/posting-engine.service.ts",
   "apps/backend/src/accounting/fuel-posting/poster.service.ts",
   "apps/backend/src/accounting/period-close-retained-earnings.service.ts",
+  // Residual after #3109 — pay-run close was still reading the empty legacy bindings table directly.
+  "apps/backend/src/driver-finance/settlement-payrun-close.service.ts",
 ];
 
 // `FROM catalogs.account_role_bindings` = a direct role→account resolution read (forbidden in posters).

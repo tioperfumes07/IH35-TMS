@@ -38,6 +38,7 @@ import {
   classifyDeductionTarget,
   dollarsToCents,
 } from "../accounting/settlement-posting/settlement-bill-payment.math.js";
+import { isCoaRole, resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -117,25 +118,14 @@ function scoped<T>(actor: Actor, operatingCompanyId: string, fn: (client: DbClie
   });
 }
 
-/** Resolve an account bound to role_key (entity-pinned; legacy NULL-entity bindings allowed, entity preferred). */
-async function resolveRoleBindingAccount(client: DbClient, operatingCompanyId: string, roleKey: string): Promise<string | null> {
-  const res = await client.query<{ account_id: string }>(
-    `
-      SELECT arb.account_id::text AS account_id
-      FROM catalogs.account_role_bindings arb
-      JOIN catalogs.accounts a ON a.id = arb.account_id
-      WHERE arb.role_key = $1
-        AND arb.deactivated_at IS NULL
-        AND a.deactivated_at IS NULL
-        AND a.is_postable = true
-        AND (arb.operating_company_id = $2::uuid OR arb.operating_company_id IS NULL)
-        AND a.operating_company_id = $2::uuid
-      ORDER BY (arb.operating_company_id IS NOT NULL) DESC
-      LIMIT 1
-    `,
-    [roleKey, operatingCompanyId]
-  );
-  return res.rows[0]?.account_id ?? null;
+/**
+ * Resolve a settlement pay-run role→GL account via the shared CoA-roles resolver
+ * (PRIMARY accounting.chart_of_accounts_roles, legacy catalogs.account_role_bindings as fallback).
+ * Unknown / undesignated roles fail CLOSED (null) — never guess a GL account.
+ */
+async function resolvePayRunRoleAccount(client: DbClient, operatingCompanyId: string, roleKey: string): Promise<string | null> {
+  if (!isCoaRole(roleKey)) return null;
+  return resolveRoleAccountOptional(client, operatingCompanyId, roleKey);
 }
 
 async function loadSettlement(client: DbClient, operatingCompanyId: string, settlementId: string): Promise<SettlementRow> {
@@ -353,9 +343,15 @@ export async function closeSettlementPayRun(
     const label = `Settlement ${settlement.display_id ?? settlement.id}`;
 
     // ── Resolve the credit target accounts (missing => STOP, never guess). ────────────────────────────
-    const driverPayAccount = await resolveRoleBindingAccount(client, opco, "driver_pay_expense");
+    // #3109 repointed sibling posters to the CoA-roles resolver; pay-run close was the residual gap
+    // (still read catalogs.account_role_bindings directly → DRIVER_PAY_ACCOUNT_MISSING after owner
+    // designated roles on chart_of_accounts_roles only).
+    const driverPayAccount = await resolvePayRunRoleAccount(client, opco, "driver_pay_expense");
     if (!driverPayAccount) {
-      throw new SettlementPayRunError("DRIVER_PAY_ACCOUNT_MISSING", "No active 'driver_pay_expense' role binding");
+      throw new SettlementPayRunError(
+        "DRIVER_PAY_ACCOUNT_MISSING",
+        "No active 'driver_pay_expense' CoA role designation (chart_of_accounts_roles)"
+      );
     }
 
     const legs: PayRunJeLegPreview[] = [
@@ -363,11 +359,11 @@ export async function closeSettlementPayRun(
     ];
 
     for (const [roleKey, cents] of deductionsByRole) {
-      const acct = await resolveRoleBindingAccount(client, opco, roleKey);
+      const acct = await resolvePayRunRoleAccount(client, opco, roleKey);
       if (!acct) {
         throw new SettlementPayRunError(
           "DEDUCTION_RECOVERY_ACCOUNT_MISSING",
-          `No active '${roleKey}' role binding for a settlement deduction bucket`,
+          `No active '${roleKey}' CoA role designation for a settlement deduction bucket`,
           { role_key: roleKey }
         );
       }
@@ -375,11 +371,11 @@ export async function closeSettlementPayRun(
     }
 
     if (chargebacksCents > 0) {
-      const cbAcct = await resolveRoleBindingAccount(client, opco, "abandonment_chargeback_recovery");
+      const cbAcct = await resolvePayRunRoleAccount(client, opco, "abandonment_chargeback_recovery");
       if (!cbAcct) {
         throw new SettlementPayRunError(
           "CHARGEBACK_RECOVERY_ACCOUNT_MISSING",
-          "No active 'abandonment_chargeback_recovery' role binding for settlement chargebacks"
+          "No active 'abandonment_chargeback_recovery' CoA role designation for settlement chargebacks"
         );
       }
       legs.push({ account_id: cbAcct, debit_or_credit: "credit", amount_cents: chargebacksCents, description: `${label} — abandonment chargeback recovery` });
@@ -387,11 +383,11 @@ export async function closeSettlementPayRun(
 
     if (advanceRecoveriesCents > 0) {
       // Cr cash-advance CLEARING (the advance_recovery role account) — reduces the driver-advance receivable.
-      const advAcct = await resolveRoleBindingAccount(client, opco, "advance_recovery");
+      const advAcct = await resolvePayRunRoleAccount(client, opco, "advance_recovery");
       if (!advAcct) {
         throw new SettlementPayRunError(
           "ADVANCE_CLEARING_ACCOUNT_MISSING",
-          "No active 'advance_recovery' (cash-advance clearing) role binding for advance recoveries"
+          "No active 'advance_recovery' (cash-advance clearing) CoA role designation for advance recoveries"
         );
       }
       legs.push({ account_id: advAcct, debit_or_credit: "credit", amount_cents: advanceRecoveriesCents, description: `${label} — cash-advance recovery` });

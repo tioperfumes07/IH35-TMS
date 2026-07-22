@@ -147,6 +147,17 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     );
   }
 
+  /** PRIMARY CoA-roles designation (resolver reads this first). */
+  async function designate(role: string, accountId: string) {
+    await db.query(
+      `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
+       VALUES ($1::uuid,$2,$3::uuid,true)
+       ON CONFLICT (operating_company_id, role) WHERE is_active
+         DO UPDATE SET account_id = EXCLUDED.account_id, is_active = true`,
+      [companyId, role, accountId]
+    );
+  }
+
   /** Seed a driver + its escrow leaf + bridge + a locked settlement (gross 3000). */
   async function seedDriverAndSettlement(s: Scenario, escrowBalanceCents: number) {
     await db.query(
@@ -230,10 +241,16 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
       await mkAcct(escrowGrandparent, `Damage Claim Escrow ${suffix}`, "Liability", null, escrowQbo("GP"));
       await mkAcct(escrowParent, `Driver Escrow ${suffix}`, "Liability", escrowGrandparent, escrowQbo("P"));
       priorGlobalBindings = await saveGlobalAccountRoleBindings(db, GLOBAL_BIND_KEYS);
+      // Legacy bindings kept as resolver FALLBACK tier (Rule 07) — prove primary path by also designating.
       await bind("driver_pay_expense", acct.driverPay);
       await bind("insurance_recovery", acct.insuranceRecovery);
       await bind("advance_recovery", acct.advanceClearing);
       await bind("abandonment_chargeback_recovery", acct.chargebackRecovery);
+      // PRIMARY designations — the tier closeSettlementPayRun resolves first after the CoA-resolver repoint.
+      await designate("driver_pay_expense", acct.driverPay);
+      await designate("insurance_recovery", acct.insuranceRecovery);
+      await designate("advance_recovery", acct.advanceClearing);
+      await designate("abandonment_chargeback_recovery", acct.chargebackRecovery);
       // owner-editable payment method pinned to the cash account
       await db.query(
         // canonical 0152 table is code-keyed (code + display_name), not `name`.
@@ -285,6 +302,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
         await db.query(`DELETE FROM driver_finance.driver_settlements WHERE id = ANY($1::uuid[])`, [sids]);
         await db.query(`DELETE FROM accounting.escrow_accounts WHERE holder_id = ANY($1::uuid[])`, [allDrivers]);
         await db.query(`DELETE FROM catalogs.payment_methods WHERE id=$1::uuid`, [paymentMethodId]);
+        await db.query(`DELETE FROM accounting.chart_of_accounts_roles WHERE operating_company_id=$1::uuid`, [companyId]);
         await db.query(`DELETE FROM mdata.drivers WHERE id = ANY($1::uuid[])`, [allDrivers]);
         await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key='SETTLEMENT_GL_POSTING_ENABLED' AND (operating_company_id=$1::uuid OR user_uuid=$2::uuid)`, [companyId, flagActor]);
         await db.query(`DELETE FROM integrations.qbo_connections WHERE operating_company_id=$1::uuid AND realm_id=$2`, [companyId, realm]);

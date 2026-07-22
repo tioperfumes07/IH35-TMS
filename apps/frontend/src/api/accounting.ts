@@ -1122,6 +1122,7 @@ export const COA_ROLE_VALUES = [
   "insurance_recovery",
   "fuel_advance_recovery",
   "other_recovery",
+  "abandonment_chargeback_recovery",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];
