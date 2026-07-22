@@ -11,6 +11,7 @@ import {
   type SettlementDisputeStatus,
 } from "../../../api/driverFinance";
 import { Button } from "../../../components/Button";
+import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
@@ -111,12 +112,14 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
             </SelectCombobox>
           </label>
           <label className="text-xs">
-            <div className="mb-1 text-gray-500">Driver ID</div>
-            <input
-              value={driverId}
-              onChange={(event) => setDriverId(event.target.value)}
+            <div className="mb-1 text-gray-500">Driver</div>
+            <DriverPickerWithCreate
+              operatingCompanyId={companyId}
+              value={driverId || null}
+              onChange={(next) => setDriverId(next ?? "")}
+              placeholder="Optional driver filter"
               className="w-full rounded-sm border border-gray-300 px-2 py-1"
-              placeholder="Optional driver UUID filter"
+              disabled={!companyId}
             />
           </label>
           <div className="flex items-end">

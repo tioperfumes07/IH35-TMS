@@ -6,18 +6,23 @@ import { CreateWOSectionIdentification } from "./CreateWOSectionIdentification";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
 
 const listMaintenanceVehicles = vi.fn();
-const listMaintenanceDrivers = vi.fn();
+const listDrivers = vi.fn();
 const listVendors = vi.fn();
 const listCustomers = vi.fn();
 
 vi.mock("../../../api/maintenance", () => ({
   listMaintenanceVehicles: (...args: unknown[]) => listMaintenanceVehicles(...args),
-  listMaintenanceDrivers: (...args: unknown[]) => listMaintenanceDrivers(...args),
 }));
 
 vi.mock("../../../api/mdata", () => ({
   listVendors: (...args: unknown[]) => listVendors(...args),
   listCustomers: (...args: unknown[]) => listCustomers(...args),
+  listDrivers: (...args: unknown[]) => listDrivers(...args),
+}));
+
+vi.mock("../../../components/drivers/CreateDriverModal", () => ({
+  CreateDriverModal: ({ open }: { open: boolean }) =>
+    open ? <div data-testid="create-driver-modal-stub">CreateDriverModal</div> : null,
 }));
 
 vi.mock("../../../components/parity/ReferenceSelect", () => ({
@@ -109,8 +114,8 @@ describe("CreateWOSectionIdentification", () => {
     listMaintenanceVehicles.mockResolvedValue({
       rows: [{ id: "unit-1", unit_display_id: "T169" }],
     });
-    listMaintenanceDrivers.mockResolvedValue({
-      rows: [{ id: "driver-1", first_name: "Alex", last_name: "Driver" }],
+    listDrivers.mockResolvedValue({
+      drivers: [{ id: "driver-1", first_name: "Alex", last_name: "Driver" }],
     });
     listVendors.mockResolvedValue({
       vendors: [{ id: "vendor-1", name: "Vendor One", deactivated_at: null }],

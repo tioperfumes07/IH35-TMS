@@ -6,6 +6,11 @@ import { describe, expect, it, vi } from "vitest";
 import "../../design/design-tokens.css";
 import { AssignDriverDropdown } from "./AssignDriverDropdown";
 
+vi.mock("../../components/drivers/CreateDriverModal", () => ({
+  CreateDriverModal: ({ open }: { open: boolean }) =>
+    open ? <div data-testid="create-driver-modal-stub">CreateDriverModal</div> : null,
+}));
+
 function wrap(ui: ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
@@ -46,12 +51,29 @@ describe("AssignDriverDropdown (P5-T19)", () => {
       />
     );
 
-    const select = screen.getByRole("combobox", { name: /driver/i });
-    await user.selectOptions(select, "00000000-0000-4000-8000-000000000011");
+    const input = screen.getByRole("combobox");
+    await user.click(input);
+    await user.click(await screen.findByRole("option", { name: /Tired Driver/i }));
     expect(onChange).not.toHaveBeenCalled();
     expect(screen.getByText(/out of hours today/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /assign anyway/i }));
     expect(onChange).toHaveBeenCalledWith("00000000-0000-4000-8000-000000000011");
+  });
+
+  it("exposes + Create driver allowAddNew row", async () => {
+    const user = userEvent.setup();
+    wrap(
+      <AssignDriverDropdown
+        loadId="00000000-0000-4000-8000-000000000001"
+        operatingCompanyId="00000000-0000-4000-8000-000000000002"
+        value=""
+        onChange={vi.fn()}
+        driversOverride={[]}
+      />
+    );
+
+    await user.click(screen.getByRole("combobox"));
+    expect(await screen.findByRole("option", { name: /\+ Create driver/i })).toBeInTheDocument();
   });
 });

@@ -12,6 +12,7 @@ import { getCoaAccounts } from "../../api/banking";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
 import { Combobox } from "../../components/Combobox";
+import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { PaymentMethodPicker } from "../../components/driver-finance/PaymentMethodPicker";
@@ -51,6 +52,7 @@ export function SettlementCloseArrivalPage() {
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
   const [paymentMethodId, setPaymentMethodId] = useState<string | null>(null);
   const [paymentMethodGlAccountId, setPaymentMethodGlAccountId] = useState<string | null>(null);
+  const [driverCreateOpen, setDriverCreateOpen] = useState(false);
 
   const openQuery = useQuery({
     queryKey: ["driver-finance", "pre-settlements", "open-by-driver", companyId],
@@ -170,8 +172,17 @@ export function SettlementCloseArrivalPage() {
                 placeholder="Select driver"
                 loading={openQuery.isLoading}
                 allowClear
+                allowAddNew={{
+                  label: "+ Create driver",
+                  onAdd: () => setDriverCreateOpen(true),
+                }}
               />
             </div>
+            <p className="mt-1 text-[11px] text-slate-600">
+              This picker lists drivers with an open pre-settlement. A newly created driver has no
+              pre-settlement yet — create them here, then they appear once dispatch/settlement
+              generates their first pre-settlement.
+            </p>
           </label>
 
           {selectedDriverId && detailQuery.isLoading ? <p className="text-sm text-gray-600">Loading settlement…</p> : null}
@@ -374,6 +385,18 @@ export function SettlementCloseArrivalPage() {
           ) : null}
         </>
       )}
+      <CreateDriverModal
+        open={driverCreateOpen}
+        companyId={companyId}
+        onClose={() => setDriverCreateOpen(false)}
+        onCreated={(createdId) => {
+          setSelectedDriverId(createdId);
+          setDriverCreateOpen(false);
+          void driversQuery.refetch();
+        }}
+        // Full-page surface (not nested inside another drawer/modal) — default centered
+        // shell="modal" is the correct chrome here.
+      />
     </div>
   );
 }

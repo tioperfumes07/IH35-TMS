@@ -9,9 +9,10 @@ import {
   spawnSafetyWo,
   type AccidentFault,
 } from "../../api/safety";
-import { listDrivers, listUnits, listVendors } from "../../api/mdata";
+import { listUnits, listVendors } from "../../api/mdata";
 import { listDispatchLoads } from "../../api/dispatch";
 import { Button } from "../Button";
+import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../forms/TwoSectionLineEditor";
 import { TotalsStack } from "../forms/shared/TotalsStack";
 import { Combobox } from "../shared/Combobox";
@@ -96,14 +97,6 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
 
   const scopeReady = open && Boolean(operatingCompanyId);
 
-  // Full active roster (limit 200) — client-side filter in the Combobox. The endpoint defaults to 50
-  // (ORDER BY created_at DESC); an active driver past the newest 50 would silently vanish otherwise
-  // (Driver Picker 50-Cap landmine). Fires listDrivers with operating_company_id on drawer open.
-  const driversQuery = useQuery({
-    queryKey: ["accident", "drivers", operatingCompanyId],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, status: "Active", limit: 200 }),
-    enabled: scopeReady,
-  });
   const unitsQuery = useQuery({
     queryKey: ["accident", "units", operatingCompanyId],
     queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: 200 }),
@@ -120,17 +113,6 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
     enabled: scopeReady,
   });
 
-  const driverOptions = useMemo(
-    () =>
-      (driversQuery.data?.drivers ?? []).map((row) => {
-        const last = textField(row as unknown as Record<string, unknown>, ["last_name"]);
-        const first = textField(row as unknown as Record<string, unknown>, ["first_name"]);
-        // DOT accident register (49 CFR 390.15) keys to a real driver — display "LAST, First".
-        const label = [last, first].filter(Boolean).join(", ") || String(row.id).slice(0, 8);
-        return { value: String(row.id), label };
-      }),
-    [driversQuery.data?.drivers]
-  );
   const unitOptions = useMemo(
     () =>
       (unitsQuery.data?.units ?? []).map((row, index) => {
@@ -249,11 +231,13 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
 
             <Field label="Driver">
               <div data-testid="accident-driver-picker">
-                <Combobox
-                  options={driverOptions}
+                <DriverPickerWithCreate
+                  operatingCompanyId={operatingCompanyId}
                   value={driverId || null}
-                  placeholder="Search driver…"
                   onChange={(next) => setDriverId(next ?? "")}
+                  open={open}
+                  shell="drawer"
+                  placeholder="Search driver…"
                 />
               </div>
             </Field>

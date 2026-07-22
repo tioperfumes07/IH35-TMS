@@ -10,9 +10,16 @@ type Props = {
   // Optional page size. Callers that must not miss active drivers past the newest 50 (the listDrivers
   // default cap) pass e.g. 200. Omitted → unchanged behavior for existing callers.
   limit?: number;
+  /**
+   * PLUS-DRIVER-MONEY: opt-in "+ Create driver" row for money-tagging call sites (bank tx
+   * categorization / split-line driver linkage) where the driver may genuinely not exist yet.
+   * Omitted → unchanged behavior (no create row) for lookup-only callers (e.g. FactoringHome's
+   * vendor-merge picker, which only makes sense for an already-existing driver).
+   */
+  onRequestCreate?: () => void;
 };
 
-export function DriverAutocomplete({ companyId, value, onChange, placeholder = "Search driver by name", limit }: Props) {
+export function DriverAutocomplete({ companyId, value, onChange, placeholder = "Search driver by name", limit, onRequestCreate }: Props) {
   const [search, setSearch] = useState("");
   // Show-on-focus (not gated behind a typed query): the initial unfiltered roster is visible as soon as
   // the field is focused, so an empty result reads as "genuinely no drivers under this entity", not
@@ -45,6 +52,21 @@ export function DriverAutocomplete({ companyId, value, onChange, placeholder = "
       />
       {focused ? (
         <div className="max-h-40 overflow-y-auto rounded-sm border border-gray-200 bg-white">
+          {/* QB-STD-1: add row is FIRST — always visible before any typing (Combobox convention). */}
+          {onRequestCreate ? (
+            <button
+              type="button"
+              className="block w-full border-b border-gray-100 px-2 py-1 text-left text-xs font-medium text-slate-600 hover:bg-gray-50"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => {
+                onRequestCreate();
+                setSearch("");
+                setFocused(false);
+              }}
+            >
+              + Create driver
+            </button>
+          ) : null}
           {driversQuery.isLoading ? <p className="px-2 py-1 text-xs text-gray-500">Loading drivers...</p> : null}
           {!driversQuery.isLoading && rows.length === 0 ? (
             <p className="px-2 py-1 text-xs text-gray-500">No drivers found for this company.</p>

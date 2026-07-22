@@ -17,6 +17,7 @@ import {
   listRandomPoolEntries,
   type RtdCase,
 } from "../../../api/safety";
+import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { DrugAlcoholTable } from "../components/DrugAlcoholTable";
 import { DrugAlcoholDashboard } from "../DrugAlcoholDashboard";
 import { RandomTestingPool } from "../RandomTestingPool";
@@ -223,20 +224,16 @@ export function DrugAlcoholTab() {
 
       <div className="rounded-sm border border-gray-200 bg-white p-4">
         <div className="flex flex-wrap items-end gap-3">
-          <label className="block text-xs text-slate-600">
+          <label className="block min-w-[240px] text-xs text-slate-600">
             Driver
-            <select
-              className="mt-1 block min-w-[240px] rounded-sm border border-gray-300 px-2 py-1 text-sm"
-              value={driverId}
-              onChange={(event) => setDriverId(event.target.value)}
-            >
-              <option value="">Select driver…</option>
-              {(driversQ.data ?? []).map((driver) => (
-                <option key={driver.id} value={driver.id}>
-                  {[driver.first_name, driver.last_name].filter(Boolean).join(" ") || driver.id}
-                </option>
-              ))}
-            </select>
+            <div className="mt-1">
+              <DriverPickerWithCreate
+                operatingCompanyId={companyId}
+                value={driverId || null}
+                onChange={(next) => setDriverId(next ?? "")}
+                placeholder="Select driver…"
+              />
+            </div>
           </label>
           {selectedDriver ? (
             <div className="text-xs text-slate-600">

@@ -10,6 +10,7 @@ import {
 } from "../../api/safety";
 import { listDrivers } from "../../api/mdata";
 import { Button } from "../../components/Button";
+import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
 import { Modal } from "../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { companyToday } from "../../lib/businessDate";
@@ -21,6 +22,7 @@ type Props = {
 export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
+  const [driverCreateOpen, setDriverCreateOpen] = useState(false);
   const [topic, setTopic] = useState("");
   const [meetingDate, setMeetingDate] = useState(companyToday());
   const [requiredAttendees, setRequiredAttendees] = useState<string[]>([]);
@@ -202,7 +204,17 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
             />
           </label>
           <div>
-            <div className="text-xs font-semibold text-slate-600">Required attendees</div>
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-xs font-semibold text-slate-600">Required attendees</div>
+              <button
+                type="button"
+                className="text-xs font-semibold text-slate-700 underline"
+                data-testid="safety-meeting-create-driver"
+                onClick={() => setDriverCreateOpen(true)}
+              >
+                + Create driver
+              </button>
+            </div>
             <div className="mt-1 max-h-40 space-y-1 overflow-y-auto rounded-sm border border-gray-200 p-2">
               {drivers.map((driver) => (
                 <label key={driver.id} className="flex items-center gap-2 text-xs text-slate-700">
@@ -227,6 +239,16 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
           </div>
         </form>
       </Modal>
+      <CreateDriverModal
+        open={driverCreateOpen}
+        companyId={operatingCompanyId}
+        onClose={() => setDriverCreateOpen(false)}
+        onCreated={(createdId) => {
+          setRequiredAttendees((current) => (current.includes(createdId) ? current : [...current, createdId]));
+          setDriverCreateOpen(false);
+          void driversQuery.refetch();
+        }}
+      />
     </div>
   );
 }

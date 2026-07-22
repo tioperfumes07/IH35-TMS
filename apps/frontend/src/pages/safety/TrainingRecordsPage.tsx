@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createSafetyTrainingRecord, getTrainingCompletions } from "../../api/safety";
 import { listDrivers } from "../../api/mdata";
 import { Button } from "../../components/Button";
+import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
 import { Modal } from "../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { companyToday } from "../../lib/businessDate";
@@ -135,20 +136,16 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
         >
           <label className="block text-xs text-slate-600">
             Driver
-            <select
-              value={driverId}
-              onChange={(event) => setDriverId(event.target.value)}
-              className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
-              data-testid="training-record-driver"
-              required
-            >
-              <option value="">Select driver</option>
-              {(driversQuery.data?.drivers ?? []).map((driver) => (
-                <option key={driver.id} value={driver.id}>
-                  {`${driver.first_name ?? ""} ${driver.last_name ?? ""}`.trim() || driver.id}
-                </option>
-              ))}
-            </select>
+            <div className="mt-1">
+              <DriverPickerWithCreate
+                operatingCompanyId={operatingCompanyId}
+                value={driverId || null}
+                onChange={(next) => setDriverId(next ?? "")}
+                open={createOpen}
+                placeholder="Select driver"
+                dataField="training-record-driver"
+              />
+            </div>
           </label>
           <label className="block text-xs text-slate-600">
             Training name

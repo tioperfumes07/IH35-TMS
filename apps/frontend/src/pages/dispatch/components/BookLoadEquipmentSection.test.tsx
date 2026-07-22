@@ -1,8 +1,14 @@
 import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { BookLoadEquipmentSection } from "./BookLoadEquipmentSection";
+
+vi.mock("../../../components/drivers/DriverPickerWithCreate", () => ({
+  DriverPickerWithCreate: ({ placeholder }: { placeholder?: string }) => (
+    <div data-testid="driver-picker-stub">{placeholder ?? "driver"}</div>
+  ),
+}));
 
 // GUARD render-guard (render-v6 §B): the reefer/flatbed detail panels are CONDITIONAL on trailer type.
 // Token-in-source is insufficient (the panels can exist but never reveal). These tests mount the section

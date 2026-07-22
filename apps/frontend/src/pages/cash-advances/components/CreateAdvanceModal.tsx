@@ -3,6 +3,8 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { createCashAdvance, listUnpaidBills, type CashAdvanceMethod, type CashAdvancePurpose } from "../../../api/cashAdvances";
 import { listDrivers } from "../../../api/mdata";
 import { Button } from "../../../components/Button";
+import { Combobox } from "../../../components/Combobox";
+import { CreateDriverModal } from "../../../components/drivers/CreateDriverModal";
 import { ModalCloseButton } from "../../../components/ModalCloseButton";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
@@ -46,12 +48,22 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
   const [weeklyAmount, setWeeklyAmount] = useState("75");
   const [cadence, setCadence] = useState<"weekly" | "biweekly">("weekly");
   const [abovePolicyWarn, setAbovePolicyWarn] = useState<string | null>(null);
+  const [driverCreateOpen, setDriverCreateOpen] = useState(false);
 
   const driversQuery = useQuery({
     queryKey: ["cash-advances", "drivers", operatingCompanyId],
     queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, status: "Active", search: "", limit: 200 }), // full active set (endpoint default 50 truncates >50)
     enabled: open && Boolean(operatingCompanyId),
   });
+
+  const driverOptions = useMemo(
+    () =>
+      (driversQuery.data?.drivers ?? []).map((driver) => ({
+        value: driver.id,
+        label: [driver.first_name, driver.last_name].filter(Boolean).join(" ").trim() || driver.id,
+      })),
+    [driversQuery.data?.drivers]
+  );
   const billsQuery = useQuery({
     queryKey: ["cash-advances", "unpaid-bills", operatingCompanyId],
     queryFn: () => listUnpaidBills(operatingCompanyId),
@@ -112,14 +124,18 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
         <div className="grid gap-3 md:grid-cols-2">
           <label className="space-y-1">
             <span>Driver</span>
-            <SelectCombobox className="w-full rounded-sm border border-gray-300 px-2 py-1" value={driverId} onChange={(e) => setDriverId(e.target.value)}>
-              <option value="">Select driver</option>
-              {(driversQuery.data?.drivers ?? []).map((driver) => (
-                <option key={driver.id} value={driver.id}>
-                  {driver.first_name} {driver.last_name}
-                </option>
-              ))}
-            </SelectCombobox>
+            <Combobox
+              options={driverOptions}
+              value={driverId || null}
+              onChange={(next) => setDriverId(next ?? "")}
+              placeholder="Select driver"
+              loading={driversQuery.isLoading}
+              allowClear
+              allowAddNew={{
+                label: "+ Create driver",
+                onAdd: () => setDriverCreateOpen(true),
+              }}
+            />
           </label>
           <label className="space-y-1">
             <span>Amount</span>
@@ -274,6 +290,18 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
           </Button>
         </div>
       </div>
+      <CreateDriverModal
+        open={driverCreateOpen}
+        companyId={operatingCompanyId}
+        onClose={() => setDriverCreateOpen(false)}
+        onCreated={(createdId) => {
+          setDriverId(createdId);
+          setDriverCreateOpen(false);
+          void driversQuery.refetch();
+        }}
+        // CreateAdvanceModal is a standalone modal-style panel (not nested inside another
+        // drawer/modal money surface) — default centered shell="modal" is the correct chrome here.
+      />
     </>
   );
 }

@@ -3,6 +3,8 @@ import { resolveApiUrl } from "../../api/client";
 import { useQuery } from "@tanstack/react-query";
 import { listDrivers } from "../../api/mdata";
 import { listSettlements } from "../../api/driverFinance";
+import { Combobox } from "../../components/Combobox";
+import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
 import { Modal } from "../../components/Modal";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { Button } from "../../components/Button";
@@ -35,6 +37,7 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
   const [claimedDollars, setClaimedDollars] = useState("");
   const [description, setDescription] = useState("");
   const [evidenceFiles, setEvidenceFiles] = useState<File[]>([]);
+  const [driverCreateOpen, setDriverCreateOpen] = useState(false);
 
   const driversQuery = useQuery({
     queryKey: ["drivers", "dispute-modal", companyId],
@@ -116,21 +119,21 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
       <div className="space-y-3 text-sm" data-testid="settlement-dispute-modal">
         <label className="block space-y-1">
           <span className="font-medium">Driver</span>
-          <select
-            className="w-full rounded-sm border border-gray-300 px-2 py-1"
-            value={driverId}
-            onChange={(e) => {
-              setDriverId(e.target.value);
+          <Combobox
+            options={driverOptions}
+            value={driverId || null}
+            onChange={(next) => {
+              setDriverId(next ?? "");
               setSettlementId("");
             }}
-          >
-            <option value="">Select driver</option>
-            {driverOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            placeholder="Select driver"
+            loading={driversQuery.isLoading}
+            allowClear
+            allowAddNew={{
+              label: "+ Create driver",
+              onAdd: () => setDriverCreateOpen(true),
+            }}
+          />
         </label>
 
         <label className="block space-y-1">
@@ -204,6 +207,22 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
           </Button>
         </div>
       </div>
+      <CreateDriverModal
+        open={driverCreateOpen}
+        companyId={companyId}
+        onClose={() => setDriverCreateOpen(false)}
+        onCreated={(createdId) => {
+          setDriverId(createdId);
+          setSettlementId("");
+          setDriverCreateOpen(false);
+          void driversQuery.refetch();
+        }}
+        // Deliberate deviation from the naive CHROME-11 "parent is a modal/drawer -> shell=drawer"
+        // rule: ParityDrawer is z-40, this outer <Modal> is z-50 — a shell="drawer" nested creator
+        // would paint BEHIND the still-open Modal's backdrop (invisible/unusable), not on top of it.
+        // shell="drawer" is only correct when the parent is itself a z-40 ParityDrawer (VendorBillForm).
+        // Default shell="modal" here keeps both at z-50 so the nested creator stacks correctly.
+      />
     </Modal>
   );
 }

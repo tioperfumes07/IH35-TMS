@@ -26,6 +26,7 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { useToast } from "../../../components/Toast";
 import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomplete";
+import { CreateDriverModal } from "../../../components/drivers/CreateDriverModal";
 import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
 import { TrailerAutocomplete } from "../../../components/banking/TrailerAutocomplete";
 import { LoadAutocomplete } from "../../../components/banking/LoadAutocomplete";
@@ -77,6 +78,8 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
   // default so the primary Category/Description/Amount row reads clean (owner feedback: "boxes are
   // out of proportion" / table crammed 7 columns).
   const [expandedLinks, setExpandedLinks] = useState<Record<string, boolean>>({});
+  // PLUS-DRIVER-MONEY: nested "+ Create driver" from a split line's Driver picker.
+  const [driverCreateForLineKey, setDriverCreateForLineKey] = useState<string | null>(null);
 
   const txnId = transaction?.id ?? "";
   const totalCents = Math.abs(transaction?.amount_cents ?? 0);
@@ -244,6 +247,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
   }
 
   return (
+    <>
     <ParityDrawer open={open} onClose={onClose} title="Split transaction" size="wide">
       {!transaction ? null : (
         <div className="space-y-3 text-xs text-gray-800">
@@ -435,6 +439,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                           companyId={companyId}
                           value={line.driver_id ?? ""}
                           onChange={(driverId, driverName) => patchLine(line._key, { driver_id: driverId || undefined, _driverName: driverName ?? "" })}
+                          onRequestCreate={() => setDriverCreateForLineKey(line._key)}
                         />
                         {line.driver_id ? (
                           <label className="mt-1 flex items-center gap-1 text-[10px] text-gray-600">
@@ -501,5 +506,18 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
         </div>
       )}
     </ParityDrawer>
+    <CreateDriverModal
+      open={Boolean(driverCreateForLineKey)}
+      companyId={companyId}
+      shell="drawer"
+      onClose={() => setDriverCreateForLineKey(null)}
+      onCreated={(createdId) => {
+        if (driverCreateForLineKey) {
+          patchLine(driverCreateForLineKey, { driver_id: createdId });
+        }
+        setDriverCreateForLineKey(null);
+      }}
+    />
+    </>
   );
 }

@@ -31,6 +31,7 @@ Owner confirms GO before build. Cursor builds; no mass rewrite without ordered b
 | **PLUS-02-BANKING-MODALS** | CC, transfers, cash-GL, rules, reconcile |
 | **PLUS-03-LISTS-JE-CLASS** | ItemEditor preferred vendor + class; ManualJE class |
 | **PLUS-04-OPS-PICKERS** | WO vendor; factoring lender; dispatch wizards last |
+| **PLUS-DRIVER-SYSTEM** | ✅ **this PR** — `DriverPickerWithCreate` + CreateDriverModal nested `+ Create driver` on all create-worthy pickers (money, banking, settlements, dispatch, safety, insurance/`ClaimCreateModal`, legal, maint, fleet, users). Guard `verify-plus-driver-system-create`. Owner A QBO untouched. **Not money-only.** |
 
 ## Integrity (from prior audits — not chrome-only)
 
