@@ -24,6 +24,20 @@ type BillStatus = "open" | "partial" | "paid" | "voided";
 // bill payments (e.g. the settlement deduction closure — from_bank_account_id NULL, no cash moves).
 type PaymentMethod = "check" | "ach" | "wire" | "cash" | "credit_card" | "other";
 
+/** One expense/item line to persist on accounting.bill_lines with the bill header. */
+export type CreateBillLineInput = {
+  /** catalogs.accounts.id — explicit DR account (preferred). Entity-scoped; validated when set. */
+  accountId?: string | null;
+  amountCents: number;
+  description?: string | null;
+  section?: "A" | "B";
+  expenseCategoryUuid?: string | null;
+  serviceItemUuid?: string | null;
+  categoryKind?: string | null;
+  categoryCode?: string | null;
+  loadId?: string | null;
+};
+
 type CreateBillInput = {
   operatingCompanyId: string;
   vendorId: string;
@@ -42,6 +56,13 @@ type CreateBillInput = {
   // Draft id used by UploadZone for create-time bill attachments; reconciled onto the real bill id in
   // the same txn (Option B inc 2 — docs/specs/ATTACHMENT-DRAFT-LINKAGE-FIX.md).
   attachmentDraftId?: string | null;
+  /**
+   * Vendor Bill create (LAW §9): when provided, must be non-empty and is INSERTed into
+   * accounting.bill_lines in the SAME transaction as the bill header. Omitted = legacy
+   * programmatic callers (settlement/insurance) that still add lines on their own path.
+   * Never invent GL accounts — accountId must be caller-supplied or left null for poster tiers.
+   */
+  lines?: CreateBillLineInput[];
 };
 
 type PayBillInput = {
@@ -629,6 +650,21 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
 
 export async function createBill(input: CreateBillInput, userId: string) {
   if (input.amountCents <= 0) throw new Error("bill_amount_must_be_positive");
+
+  // LAW-E2E #3167: when the UI (or any caller) sends lines, fail closed — never create a header-only
+  // bill that the poster cannot resolve (live Neon had 16k bills / 0 bill_lines).
+  const linesProvided = input.lines !== undefined;
+  if (linesProvided) {
+    if (!input.lines || input.lines.length === 0) throw new Error("bill_lines_required");
+    for (const line of input.lines) {
+      if (!Number.isInteger(line.amountCents) || line.amountCents <= 0) {
+        throw new Error("bill_line_amount_must_be_positive");
+      }
+    }
+    const linesSum = input.lines.reduce((sum, line) => sum + line.amountCents, 0);
+    if (linesSum !== input.amountCents) throw new Error("bill_lines_amount_mismatch");
+  }
+
   const bill = await withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
     const res = await client.query<BillRow>(
@@ -673,6 +709,65 @@ export async function createBill(input: CreateBillInput, userId: string) {
     );
     if ((res.rowCount ?? 0) === 0 || !res.rows[0]) throw new Error("bill_insert_failed");
     const created = normalizeBill(res.rows[0]);
+
+    if (linesProvided && input.lines) {
+      let seq = 0;
+      for (const line of input.lines) {
+        seq += 1;
+        const accountId = line.accountId?.trim() || null;
+        if (accountId) {
+          // Entity-scope the GL account — never accept a cross-company catalogs.accounts id.
+          const acct = await client.query<{ id: string }>(
+            `
+              SELECT id::text
+              FROM catalogs.accounts
+              WHERE id = $1::uuid
+                AND operating_company_id = $2::uuid
+              LIMIT 1
+            `,
+            [accountId, input.operatingCompanyId]
+          );
+          if (!acct.rows[0]) throw new Error("bill_line_account_not_in_company");
+        }
+        const amountDollars = line.amountCents / 100;
+        const section = line.section === "A" || line.section === "B" ? line.section : "A";
+        await client.query(
+          `
+            INSERT INTO accounting.bill_lines (
+              bill_id,
+              line_sequence,
+              amount,
+              description,
+              section,
+              expense_category_uuid,
+              service_item_uuid,
+              category_kind,
+              category_code,
+              account_id,
+              load_id
+            )
+            VALUES (
+              $1::uuid, $2, $3, $4, $5,
+              $6::uuid, $7::uuid, $8, $9, $10::uuid, $11::uuid
+            )
+          `,
+          [
+            created.id,
+            seq,
+            amountDollars,
+            line.description ?? null,
+            section,
+            line.expenseCategoryUuid ?? accountId,
+            line.serviceItemUuid ?? null,
+            line.categoryKind ?? null,
+            line.categoryCode ?? null,
+            accountId,
+            line.loadId ?? null,
+          ]
+        );
+      }
+    }
+
     // Option B inc 2: link create-time draft attachments (vendor invoice scans) to the real bill id,
     // atomically inside this same transaction so they can't be orphaned.
     await reassignDraftAttachments(client, {
@@ -691,6 +786,7 @@ export async function createBill(input: CreateBillInput, userId: string) {
         operating_company_id: input.operatingCompanyId,
         vendor_id: input.vendorId,
         amount_cents: input.amountCents,
+        bill_line_count: linesProvided ? input.lines!.length : 0,
       },
       "info",
       "P5-D2-BILL-PAYMENT"

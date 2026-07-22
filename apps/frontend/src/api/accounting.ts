@@ -613,6 +613,18 @@ export function createVendorBill(
     work_order_id?: string;
     unit_id?: string;
     attachment_draft_id?: string;
+    /** LAW-E2E #3167 — real bill_lines payloads (not memo-only). */
+    lines: Array<{
+      account_id?: string;
+      amount_cents: number;
+      description?: string;
+      section?: "A" | "B";
+      expense_category_uuid?: string;
+      service_item_uuid?: string;
+      category_kind?: string;
+      category_code?: string;
+      load_id?: string;
+    }>;
   }
 ) {
   return apiRequest<{ bill: VendorBill }>(withCompany(`/api/v1/accounting/bills`, operatingCompanyId), {

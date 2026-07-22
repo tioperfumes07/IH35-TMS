@@ -110,6 +110,8 @@ export function CreateMultipleBillsPage() {
           continue;
         }
         try {
+          // LAW-E2E #3167: createVendorBill requires lines — never send header-only.
+          // Bulk grid is one amount (+ optional COA) per row → one Section A line.
           await createVendorBill(companyId, {
             vendor_id: row.vendor_id,
             bill_number: row.bill_number.trim() || undefined,
@@ -118,6 +120,14 @@ export function CreateMultipleBillsPage() {
             amount_cents: amountCents,
             memo: row.memo.trim() || undefined,
             coa_account_id: row.coa_account_id || undefined,
+            lines: [
+              {
+                amount_cents: amountCents,
+                account_id: row.coa_account_id || undefined,
+                description: row.memo.trim() || undefined,
+                section: "A",
+              },
+            ],
           });
           ok += 1;
         } catch (error) {

@@ -47,6 +47,18 @@ const listBillPaymentsQuerySchema = companyQuerySchema.extend({
   offset: z.coerce.number().int().min(0).default(0),
 });
 
+const createBillLineSchema = z.object({
+  account_id: z.string().uuid().optional().nullable(),
+  amount_cents: z.coerce.number().int().positive(),
+  description: z.string().trim().max(2000).optional().nullable(),
+  section: z.enum(["A", "B"]).optional(),
+  expense_category_uuid: z.string().uuid().optional().nullable(),
+  service_item_uuid: z.string().uuid().optional().nullable(),
+  category_kind: z.string().trim().max(120).optional().nullable(),
+  category_code: z.string().trim().max(120).optional().nullable(),
+  load_id: z.string().uuid().optional().nullable(),
+});
+
 const createBillBodySchema = z.object({
   vendor_id: z.string().trim().min(1),
   bill_number: z.string().trim().max(200).optional(),
@@ -59,6 +71,9 @@ const createBillBodySchema = z.object({
   work_order_id: z.string().uuid().optional().nullable(),
   unit_id: z.string().uuid().optional().nullable(),
   attachment_draft_id: z.string().uuid().optional().nullable(),
+  // LAW-E2E #3167 — vendor Bill create must send real lines (not memo-only). When present, createBill
+  // persists accounting.bill_lines in the same txn; empty array fails closed.
+  lines: z.array(createBillLineSchema).max(200).optional(),
 });
 
 const payBillBodySchema = z.object({
@@ -195,6 +210,17 @@ export async function registerBillsRoutes(app: FastifyInstance) {
           workOrderId: body.data.work_order_id,
           unitId: body.data.unit_id,
           attachmentDraftId: body.data.attachment_draft_id,
+          lines: body.data.lines?.map((line) => ({
+            accountId: line.account_id,
+            amountCents: line.amount_cents,
+            description: line.description,
+            section: line.section,
+            expenseCategoryUuid: line.expense_category_uuid,
+            serviceItemUuid: line.service_item_uuid,
+            categoryKind: line.category_kind,
+            categoryCode: line.category_code,
+            loadId: line.load_id,
+          })),
         },
         String(user.uuid)
       );
@@ -216,7 +242,15 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       return reply.code(201).send({ bill });
     } catch (error) {
       const message = String((error as Error)?.message ?? "bill_create_failed");
-      if (message === "bill_amount_must_be_positive") return reply.code(400).send({ error: message });
+      if (
+        message === "bill_amount_must_be_positive" ||
+        message === "bill_lines_required" ||
+        message === "bill_line_amount_must_be_positive" ||
+        message === "bill_lines_amount_mismatch" ||
+        message === "bill_line_account_not_in_company"
+      ) {
+        return reply.code(400).send({ error: message });
+      }
       throw error;
     }
   });

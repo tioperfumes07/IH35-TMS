@@ -13,6 +13,13 @@ import { vendorReferenceOption } from "../parity/referenceOptionLabels";
 import { SelectCombobox } from "../shared/SelectCombobox";
 import { UploadZone } from "../UploadZone";
 import { companyToday } from "../../lib/businessDate";
+import {
+  buildVendorBillLinePayloads,
+  type VendorBillFormLinePayload,
+} from "./vendorBillLines";
+
+export type { VendorBillFormLinePayload };
+export { buildVendorBillLinePayloads };
 
 export type VendorBillFormSubmitPayload = {
   vendor_id: string;
@@ -28,6 +35,8 @@ export type VendorBillFormSubmitPayload = {
   // HARD cross-module link (maintenance): real FKs — only present when linkage props / unit picker set.
   work_order_id?: string;
   unit_id?: string;
+  /** Real bill lines — required for vendor create; createBill persists these in the same txn. */
+  lines: VendorBillFormLinePayload[];
 };
 
 type Props = {
@@ -61,21 +70,32 @@ function lineSubtotal(lines: TwoSectionLine[]) {
   }, 0);
 }
 
-function buildContractStubMemo(lines: TwoSectionLine[], taxRate: number, billType: string, accountLabel?: string) {
+function buildMemoContext(opts: {
+  billType: string;
+  taxRate: number;
+  taxAmount: number;
+  accountLabel?: string;
+  linkedWoDisplayId?: string;
+  loadNumber: string;
+  driverId: string;
+  unitId: string;
+  className: string;
+  terms: string;
+}) {
   const parts = [
-    "bill_form_stub:v1",
-    `bill_type:${billType}`,
-    `line_count:${lines.length}`,
-    `tax_rate:${taxRate}`,
+    `bill_type:${opts.billType}`,
+    `tax_rate:${opts.taxRate}`,
   ];
-  if (accountLabel) parts.push(`ap_account_hint:${accountLabel}`);
-  if (lines.length) {
-    const preview = lines
-      .slice(0, 4)
-      .map((line) => `${line.section}:${line.description || "line"}=${Number(line.amount || 0).toFixed(2)}`)
-      .join("; ");
-    parts.push(`lines_preview:${preview}`);
+  if (opts.taxAmount > 0) {
+    parts.push(`tax_amount_display_only:${opts.taxAmount.toFixed(2)}`);
   }
+  if (opts.accountLabel) parts.push(`ap_account_hint:${opts.accountLabel}`);
+  if (opts.linkedWoDisplayId) parts.push(`WO: ${opts.linkedWoDisplayId}`);
+  if (opts.loadNumber.trim()) parts.push(`load:${opts.loadNumber.trim()}`);
+  if (opts.driverId) parts.push(`driver:${opts.driverId}`);
+  if (opts.unitId) parts.push(`unit:${opts.unitId}`);
+  if (opts.className.trim()) parts.push(`class:${opts.className.trim()}`);
+  if (opts.terms) parts.push(`terms:${opts.terms}`);
   return parts.join(" · ");
 }
 
@@ -109,6 +129,7 @@ export function VendorBillForm({
   const [className, setClassName] = useState("");
   const [accountQboId, setAccountQboId] = useState<string | null>(null);
   const [accountDisplay, setAccountDisplay] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Prefill unit from WO context without clobbering a user picker change.
   useEffect(() => {
@@ -144,22 +165,32 @@ export function VendorBillForm({
 
   const subtotal = lineSubtotal(lines);
   const taxAmount = (subtotal * taxRate) / 100;
-  const totalCents = Math.round((subtotal + taxAmount) * 100);
+  const linePayloads = useMemo(() => buildVendorBillLinePayloads(lines), [lines]);
+  const lineSumCents = linePayloads.reduce((sum, line) => sum + line.amount_cents, 0);
+  // Bill amount = SUM(line amounts). Tax is display-only until a tax expense line with a real
+  // account_id is supported — never invent a tax GL account (owner law).
+  const amountCents = lineSumCents;
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    setFormError(null);
     const vendorKey = vendorId.trim();
     if (!vendorKey) return;
-    if (totalCents <= 0) return;
-
-    const memoParts = [buildContractStubMemo(lines, taxRate, billType, accountDisplay || undefined)];
-    if (linkedWoDisplayId) memoParts.push(`WO: ${linkedWoDisplayId}`);
-    if (loadNumber.trim()) memoParts.push(`load:${loadNumber.trim()}`);
-    if (driverId) memoParts.push(`driver:${driverId}`);
-    if (unitId) memoParts.push(`unit:${unitId}`);
-    if (className.trim()) memoParts.push(`class:${className.trim()}`);
-    // Terms belong in the payload memo (audit: fork had Terms UI but never submitted them).
-    if (terms) memoParts.push(`terms:${terms}`);
+    if (amountCents <= 0) {
+      setFormError("Add at least one line with an amount greater than zero.");
+      return;
+    }
+    if (linePayloads.length === 0) {
+      setFormError("Bill lines are required — amounts cannot be memo-only.");
+      return;
+    }
+    const sectionAMissingAccount = linePayloads.some(
+      (line) => line.section === "A" && !line.account_id
+    );
+    if (sectionAMissingAccount) {
+      setFormError("Each Category (Section A) line needs a Chart of Accounts category.");
+      return;
+    }
 
     const resolvedUnitId = unitId || linkedUnitId || undefined;
 
@@ -168,10 +199,22 @@ export function VendorBillForm({
       bill_number: billNumber.trim() || undefined,
       bill_date: billDate,
       due_date: dueDate.trim() || undefined,
-      amount_cents: totalCents,
-      memo: memoParts.join(" · "),
+      amount_cents: amountCents,
+      memo: buildMemoContext({
+        billType,
+        taxRate,
+        taxAmount,
+        accountLabel: accountDisplay || undefined,
+        linkedWoDisplayId,
+        loadNumber,
+        driverId,
+        unitId,
+        className,
+        terms,
+      }),
       coa_account_id: accountQboId && accountQboId.includes("-") ? accountQboId : undefined,
       attachment_draft_id: draftAttachmentEntityId,
+      lines: linePayloads,
       // HARD cross-module FKs — only when linkage / picker supplies them.
       ...(linkedWoId ? { work_order_id: linkedWoId } : {}),
       ...(resolvedUnitId ? { unit_id: resolvedUnitId } : {}),
@@ -319,8 +362,11 @@ export function VendorBillForm({
       <TotalsStack subtotal={subtotal} taxRate={taxRate} onTaxRateChange={setTaxRate} grandLabel="Bill Total = A + B" />
 
       <div className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-[11px] text-slate-700">
-        Line-level bill persistence posts a single vendor bill total until multi-line bill API ships.
+        Line amounts post to <code className="text-[10px]">accounting.bill_lines</code> with the bill header
+        (same transaction). Tax shown above is display-only until a tax expense line with a real CoA
+        account is entered — the bill amount equals the sum of lines (no invented tax GL).
       </div>
+      {formError ? <p className="text-sm text-red-600">{formError}</p> : null}
 
       <UploadZone
         operatingCompanyId={operatingCompanyId}
@@ -344,7 +390,7 @@ export function VendorBillForm({
         <button
           type="submit"
           data-testid={submitTestId}
-          disabled={submitting || !operatingCompanyId || totalCents <= 0 || !vendorId.trim()}
+          disabled={submitting || !operatingCompanyId || amountCents <= 0 || !vendorId.trim()}
           className="rounded-sm bg-slate-800 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
           {submitting ? "Saving…" : submitLabel}
