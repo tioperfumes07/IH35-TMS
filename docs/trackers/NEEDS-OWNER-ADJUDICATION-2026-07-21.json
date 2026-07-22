@@ -1,0 +1,850 @@
+[
+  {
+    "id": "AF-1-entity-coa-fix",
+    "module": "accounting",
+    "verdict": "ACTION-ONLY",
+    "question": "No question pending \u2014 per-entity CoA split awaits owner Neon-apply of the held migration.",
+    "ruling_citation": "docs/LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md 'TRANSP + TRK: IMPORT opening balances FROM QuickBooks' + entity-facts (accounting.* entity-partitioned by operating_company_id).",
+    "buildable_action": "Jorge runs db/migrations/202606272100_af1_catalogs_accounts_per_entity.sql on a Neon branch, ledger-backfill, then prod."
+  },
+  {
+    "id": "AF-2-qbo-drift",
+    "module": "qbo-recon",
+    "verdict": "STALE",
+    "question": "None \u2014 decision made and already built.",
+    "ruling_citation": "LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md 'AF-2 qbo-drift: detect only, write stays OFF' \u2014 implemented in master-data-anchor-drift.ts (detect-only, writes recon_exceptions).",
+    "buildable_action": "None \u2014 detect-only shipped (backlog-verify RESOLVED). Optional: confirm guard CI-wiring."
+  },
+  {
+    "id": "AF-4-ap-bills-migration",
+    "module": "accounting",
+    "verdict": "ANSWERED",
+    "question": "Import the ~$1.18M A/P from QuickBooks? \u2014 YES.",
+    "ruling_citation": "LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md 'YES \u2014 import ~$1.18M A/P from QuickBooks (BS/AP as of cutover), AFTER opening balances land.'",
+    "buildable_action": "Build the accounting.bills write/import path on the held ap_import scaffold; owner runs after STMT-2 opening balances land (financial ceremony)."
+  },
+  {
+    "id": "AF-5-stub-catalogs",
+    "module": "platform",
+    "verdict": "STALE",
+    "question": "None \u2014 premise stale; the catalogs are already real.",
+    "ruling_citation": "docs/accounting/AF-1-AF-5-DESIGN.md \u2014 '~34 stub catalogs' premise stale; re-verification found 61 real catalog tiles; both named examples already real.",
+    "buildable_action": "None product-side. Residual code hygiene: CI-wire scripts/verify-journal-entry-types-real.mjs (orphaned guard)."
+  },
+  {
+    "id": "AF-7-money-controls",
+    "module": "platform",
+    "verdict": "ACTION-ONLY",
+    "question": "No new question \u2014 money-control flag enablement awaits owner per-flag OK after CPA tie-out.",
+    "ruling_citation": "LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md 'AF-7 money-controls: OFF until CPA tie-out' (VOID/money-control flags are not in the \u00a79.9 all-ON posting set).",
+    "buildable_action": "Owner per-flag OK to flip MONEY_CONTROL_* after CPA tie-out; independently confirm period-close UX + financial-RLS-per-role scope built."
+  },
+  {
+    "id": "BLOCK-01-of-29-TIER1.5-DEPRECIATION",
+    "module": "platform",
+    "verdict": "ANSWERED",
+    "question": "Depreciation method/scope? \u2014 5-yr straight-line, revenue equipment, GAAP books.",
+    "ruling_citation": "LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md 'Depreciation: 5-yr straight-line, revenue equipment, GAAP books' + LOCKED_DECISIONS \u00a79.9 AMORTIZATION flag ON.",
+    "buildable_action": "Owner Neon-applies held 202607100100 (financing_loan_id link + autopost audit); enable the monthly autopost cron (engine already live)."
+  },
+  {
+    "id": "BLOCK-02-of-29-TIER1.5-DRIVER-ESCROW",
+    "module": "settlements",
+    "verdict": "ANSWERED",
+    "question": "Driver escrow model/return timing? \u2014 liability, returned \u226590d after separation, net of deductions.",
+    "ruling_citation": "LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md 'Driver escrow: liability returned \u226590 days AFTER resign/fire/termination date, net of deductions' + cpa-skill \u00a74.",
+    "buildable_action": "Verify/complete the termination-payout path on canonical accounting.escrow_accounts/escrow_postings (live); apply held escrow-separation migration (see BLOCK-02-DRIVER-ESCROW-DESIGN)."
+  },
+  {
+    "id": "BLOCK-03-of-29-TIER1.5-IFTA",
+    "module": "fuel",
+    "verdict": "STALE",
+    "question": "None \u2014 IFTA ruled and already built.",
+    "ruling_citation": "LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md 'IFTA: in-house \u2026 base on TRIP practical miles \u2026 quarterly; Jorge files' \u2014 backlog-verify RESOLVED (routes + wizard live).",
+    "buildable_action": "None \u2014 extend additively only."
+  },
+  {
+    "id": "BLOCK-17-of-29-TIER2.5-W2-1099",
+    "module": "platform",
+    "verdict": "ACTION-ONLY",
+    "question": "No question on the build \u2014 drivers=1099-NEC, in-house, Jorge transmits; awaits owner migration run.",
+    "ruling_citation": "LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md '1099 + ALL tax docs: drivers = 1099-NEC; build in-house \u2026 Jorge/company transmits \u2026 every tax doc = PDF.'",
+    "buildable_action": "Owner runs held db/migrations/202607130100_block17_24_tax_document_engine.sql (tax-doc engine schema). (NRA-withholding open Q tracked under BLOCK-24.)"
+  },
+  {
+    "id": "BLOCK-19-of-29-TIER3-AUDIT-HASH",
+    "module": "platform",
+    "verdict": "STALE",
+    "question": "None \u2014 audit hash chain already built.",
+    "ruling_citation": "backlog-verify: events.event_log prev_hash/hash sha256 chain + trigger (202606111051) + ops.audit_chain_verifications \u2014 RESOLVED.",
+    "buildable_action": "None."
+  },
+  {
+    "id": "BLOCK-24-of-29-TIER3.5-1099-ANNUAL",
+    "module": "platform",
+    "verdict": "UNANSWERED",
+    "question": "Mexican-B1 W-8BEN drivers doing US service: apply 1042-S + 30% NRA withholding, or 1099-NEC only \u2014 and is 30% withholding currently being done?",
+    "ruling_citation": "LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md foreign-status caveat: '\u2026generally needs 1042-S + 30% NRA withholding, not 1099-NEC \u2014 OPEN COMPLIANCE QUESTION for Jorge/CPA.'",
+    "buildable_action": "On ruling: encode 1099-NEC and/or 1042-S generation off driver_finance.settlement_lines; owner runs held 202607130100. Engine already covers both forms."
+  },
+  {
+    "id": "BLOCK-25-of-29-TIER3.5-CONSOLIDATION",
+    "module": "platform",
+    "verdict": "ANSWERED",
+    "question": "When to build consolidation? \u2014 defer to the very end (needs all 3 entities live).",
+    "ruling_citation": "LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md 'Consolidation (BLOCK-25): defer to the very end (BLOCK-25 needs all 3 entities live).'",
+    "buildable_action": "When USMCA is live: register the already-built consolidated-statements.routes.ts fp() plugin in index.ts (intercompany-elimination statements currently unreachable)."
+  },
+  {
+    "id": "CHAIN-06-invoice-ar-chain-proof",
+    "module": "accounting",
+    "verdict": "ANSWERED",
+    "question": "When does A/R close on a factored invoice? \u2014 only when the customer pays Faro, never at funding.",
+    "ruling_citation": "LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md 'CHAIN-06 confirmed \u2026 A/R closes only when the customer pays Faro, never at funding' + LOCKED_DECISIONS \u00a79.9 FACTORING flag ON.",
+    "buildable_action": "Fix the latent AR-subledger divergence (postFactoringCustomerPayment/Chargeback must update accounting.invoices.amount_paid_cents/status) BEFORE relying on the ON flag; CI-wire the two orphaned verify:chain-06 guards."
+  },
+  {
+    "id": "CHAIN-07-settlements-500-fix",
+    "module": "settlements",
+    "verdict": "STALE",
+    "question": "None \u2014 the 500 fix shipped.",
+    "ruling_citation": "backlog-verify: settlement-payment.routes.ts mapServiceError surfaces pg_code/pg_constraint (PR #1655) \u2014 RESOLVED.",
+    "buildable_action": "None."
+  },
+  {
+    "id": "CONN-4-edi-foundation",
+    "module": "platform",
+    "verdict": "STALE",
+    "question": "Build EDI? \u2014 defer to the very end, only if a customer requires it (and foundation already on main).",
+    "ruling_citation": "LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md 'EDI (CONN-4): defer to the very end (only if a customer requires it)' \u2014 backlog-verify: edi.routes.ts registered, RESOLVED.",
+    "buildable_action": "None now \u2014 extend only when a customer requires EDI."
+  },
+  {
+    "id": "DISP-WIZARD-edit-load-patch",
+    "module": "dispatch",
+    "verdict": "ANSWERED",
+    "question": "Does load-edit touch billing (Tier-1)? \u2014 YES, a quantity change adds an expense/deduction.",
+    "ruling_citation": "LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md 'DISP-WIZARD (edit-load): quantity change ADDS an expense/deduction \u2192 touches billing (Tier-1).'",
+    "buildable_action": "Build the edit-load patch as a Tier-1 financial change (full ceremony, reuse existing posters, no new GL math)."
+  },
+  {
+    "id": "DISP-WO-work-order-modal",
+    "module": "maintenance",
+    "verdict": "ANSWERED",
+    "question": "Is the WO modal financial? \u2014 yes when it creates a bill; the WO bill uses the same expense format.",
+    "ruling_citation": "LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md 'DISP-WO (work-order modal): financial when it creates a bill; WO bill uses the same expense format' + \u00a79.9 BILL flag ON.",
+    "buildable_action": "Verify create_bill_for_wo posts live under BILL_GL_POSTING_ENABLED (now ON); reuse maintenance poster (modal already built+mounted)."
+  },
+  {
+    "id": "ENT-AUDIT",
+    "module": "platform",
+    "verdict": "ANSWERED",
+    "question": "What to do with ENT-AUDIT placeholder? \u2014 verify current state and fold into the DB-audit.",
+    "ruling_citation": "LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md 'FH-VERIFY / ENT-AUDIT: verify + fold into DB-audit.'",
+    "buildable_action": "Run the entity/DB verification and fold findings into the DB-audit sweep; do not invent new scope (respond-before-code on any concrete sub-block)."
+  },
+  {
+    "id": "FH-VERIFY-finance-hub-modules",
+    "module": "platform",
+    "verdict": "ANSWERED",
+    "question": "What to do with Finance-Hub modules? \u2014 verify and fold into the DB-audit.",
+    "ruling_citation": "LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md 'FH-VERIFY / ENT-AUDIT: verify + fold into DB-audit' + \u00a79.9 AMORTIZATION ON (FH-3).",
+    "buildable_action": "Verify FH-1..8 state (FH-1..4 flags now ON per \u00a79.9), fold into DB-audit; FH-5..8 remain design-done pending build."
+  },
+  {
+    "id": "FIX-05-BANKING-SPLIT-ENABLE-AND-WIRE",
+    "module": "banking",
+    "verdict": "ANSWERED",
+    "question": "Enable the bank-tx split + GL posting? \u2014 yes, flags are ON.",
+    "ruling_citation": "LOCKED_DECISIONS \u00a79.9 'ALL GL posting flags are ON for all three operating companies \u2026 BANK_TX_SPLIT \u2026 Verified live on Neon 2026-07-20.'",
+    "buildable_action": "Verify Split posts live (feature already built+wired); complete the dedupe wiring and CI-wire the split guard."
+  },
+  {
+    "id": "HOS-FANOUT-03-08",
+    "module": "safety",
+    "verdict": "ANSWERED",
+    "question": "Where should HOS surface? \u2014 fan out to dispatch/maintenance/wherever, using certified ELD as source of truth.",
+    "ruling_citation": "LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md 'HOS: fan out to dispatch/maintenance/wherever; show certified-ELD remaining-drive-time wherever connected; certified ELD = single source of truth.'",
+    "buildable_action": "Build the HOS remaining-drive-time surfaces across dispatch/maintenance reading certified-ELD data (Tier-2, no money)."
+  },
+  {
+    "id": "HOS-MAP-driver-samsara-id",
+    "module": "safety",
+    "verdict": "ACTION-ONLY",
+    "question": "No open question \u2014 a driver\u2192Samsara-id backfill migration needs owner sign-off to run.",
+    "ruling_citation": "docs/trackers/BLOCK-RECONCILIATION 'HOS-MAP \u2026 Tier 2 (telematics) + MIGRATE if a backfill writes ids. STOPS for Jorge.'",
+    "buildable_action": "Owner authorizes/runs the driver\u2192Samsara-id mapping backfill migration; then wire telematics id resolution."
+  },
+  {
+    "id": "HOS-PRC-DATA-verbatim-clocks",
+    "module": "safety",
+    "verdict": "ANSWERED",
+    "question": "Show verbatim ELD clocks? \u2014 yes; certified ELD is the single source of truth.",
+    "ruling_citation": "LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md 'show certified-ELD remaining-drive-time wherever connected; certified ELD = single source of truth.'",
+    "buildable_action": "Display verbatim certified-ELD clock data wherever HOS appears (Tier-2, telematics, no money)."
+  },
+  {
+    "id": "HOS-PRC2-reader-swap",
+    "module": "safety",
+    "verdict": "ACTION-ONLY",
+    "question": "No open question \u2014 gated on a GUARD per-driver reconciliation that has not been run.",
+    "ruling_citation": "docs/trackers/BLOCK-RECONCILIATION 'HOS-PRC2 \u2026 GATED on GUARD per-driver verify (board == roster == Samsara certified ELD).'",
+    "buildable_action": "GUARD runs the per-driver board==roster==Samsara-certified-ELD reconciliation; on pass, swap the reader."
+  },
+  {
+    "id": "ITEM-02-EXCEL-UPLOAD-RLS-REASSERT",
+    "module": "dispatch",
+    "verdict": "ACTION-ONLY",
+    "question": "No open question \u2014 owner runs the RLS-reassert migration as neondb_owner.",
+    "ruling_citation": "backlog-verify: PR #2369 MERGED; 202607270000_reassert_excel_upload_jobs_rls.sql present, idempotent, not held \u2014 awaits owner run as neondb_owner.",
+    "buildable_action": "Owner applies the reassert migration as neondb_owner; fix the guard so verify-excel-upload-jobs-rls-forced.mjs actually validates FORCE RLS on this table."
+  },
+  {
+    "id": "STMT-3-1099-425c-consolidation",
+    "module": "platform",
+    "verdict": "ANSWERED",
+    "question": "How to sequence 1099 + 425C + consolidation? \u2014 3b (425C) done; 3a 1099 owner-runs; 3c consolidation defers to end.",
+    "ruling_citation": "LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md consolidation 'defer to the very end' + 1099 build directive; \u00a78.9 425C DIP live.",
+    "buildable_action": "3a: owner runs held 202607130100 (1099). 3c: mount consolidated-statements route when all entities live. 3b already done."
+  },
+  {
+    "id": "USMCA-LAUNCH-carrier",
+    "module": "platform",
+    "verdict": "ACTION-ONLY",
+    "question": "No open question \u2014 USMCA launch is an owner trigger gated on entity-independence completion.",
+    "ruling_citation": "LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md 'USMCA LAUNCH: gated on entity-independence completion (142-table wall + guards). Then turn EVERY function ON. Not a fixed calendar date' + entity-facts.",
+    "buildable_action": "Owner triggers launch after the 142-table entity-isolation wall closes and USMCA opening balances (STMT-2) are entered; then flip visibility and enable all functions."
+  },
+  {
+    "id": "VOID-VERIFY-void-everywhere",
+    "module": "platform",
+    "verdict": "ANSWERED",
+    "question": "Build a shared void/cancel/reverse layer? \u2014 yes, everywhere (Owner/Admin, reason-required, audited).",
+    "ruling_citation": "LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md 'VOID-VERIFY: shared void/cancel/reverse layer everywhere (PR #2186 \u2014 Owner/Admin, reason-required, audited; load keeps its own maker/checker).'",
+    "buildable_action": "Layer built (PR-1/PR-2 merged). Build PR-3/PR-4 (Expenses/Settlements void, folded into AF-7); owner flips VOID_ENFORCEMENT_ENABLED/WO_VOID_ENABLED (NOT in \u00a79.9 all-ON set)."
+  },
+  {
+    "id": "BLOCK-02-DRIVER-ESCROW-DESIGN",
+    "module": "settlements",
+    "verdict": "ACTION-ONLY",
+    "question": "No open design question \u2014 escrow model locked; the separation table awaits owner Neon-apply.",
+    "ruling_citation": "LOCKED_DECISIONS \u00a79.4 escrow liability + LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md '\u226590 days after termination, net of deductions.'",
+    "buildable_action": "Owner applies held db/migrations/202607111000_block02_driver_escrow_separation_return.sql; also add a table-existence/isEnabled guard so the live escrow-separations GET routes don't 500 on prod pre-apply."
+  },
+  {
+    "id": "CHAIN-04-bill-payment-tieout",
+    "module": "accounting",
+    "verdict": "ANSWERED",
+    "question": "Build the accept-bill write path (auto-create the missing bill_payment)? \u2014 yes.",
+    "ruling_citation": "LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md 'CHAIN-04 (bill-payment tie-out): build (PR #2188 supplies the proof + Part-2b accept-bill design).'",
+    "buildable_action": "Build Part-2b: on accepting a 'bill' bank-match candidate, auto-create the bill_payment row via the existing poster (read-only tie-out already live)."
+  },
+  {
+    "id": "CONN-3-relay-internal-bank",
+    "module": "banking",
+    "verdict": "ACTION-ONLY",
+    "question": "No open question \u2014 Relay is real and ingest is built; the wallet-registration migration is held.",
+    "ruling_citation": "LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md 'Relay fuel (CONN-3): real \u2026 ingest built (PR #2181) with 24-month backfill.'",
+    "buildable_action": "Owner runs held 202607470000_relay_wallet_banking_registration.sql on a Neon branch/prod so the Relay Fuel Wallet appears in /banking."
+  },
+  {
+    "id": "phase13-audit216-banking-industry",
+    "module": "banking",
+    "verdict": "UNANSWERED",
+    "question": "Is a lending-operations / banking-risk-analytics module in scope for IH35-TMS, or explicitly out-of-scope?",
+    "ruling_citation": "No ruling found \u2014 grep for lending-operations/banking-risk = 0 hits; acceptance kind=design, spec=NONE.",
+    "buildable_action": "If in scope: author a design spec first. Separately, route or archive the dead BankingKpiRow.tsx component."
+  },
+  {
+    "id": "phase3-audit57-process-audit-docs-workflow",
+    "module": "platform",
+    "verdict": "UNANSWERED",
+    "question": "Build a process-bottleneck / audit-docs workflow dashboard, or is it out-of-scope?",
+    "ruling_citation": "No ruling found \u2014 docs/specs/phase3-cluster-disposition-2026-07-12.md records the same empty-grep NEEDS-DESIGN finding.",
+    "buildable_action": "If in scope: author a design spec before any build."
+  },
+  {
+    "id": "phase3-audit72-calibration",
+    "module": "fleet",
+    "verdict": "UNANSWERED",
+    "question": "Track equipment calibration (ELD / scale) inside TMS, or treat it as out-of-scope?",
+    "ruling_citation": "docs/specs/phase3-cluster-disposition-2026-07-12.md:37 records NEEDS-DESIGN; no calibration table/spec exists.",
+    "buildable_action": "If in scope: define the calibration-tracked equipment model + cadence, then build."
+  },
+  {
+    "id": "phase3-audit75-document-control",
+    "module": "platform",
+    "verdict": "UNANSWERED",
+    "question": "Build an approval-workflow / lifecycle (document control) over docs.files, or is git + docs.files sufficient?",
+    "ruling_citation": "docs/specs/phase3-cluster-disposition-2026-07-12.md:45 'approval-workflow/lifecycle over docs.files is plausible but needs a [decision].'",
+    "buildable_action": "If yes: author the doc-control lifecycle design over docs.files, then build."
+  },
+  {
+    "id": "product-service-categories-rename-and-creator",
+    "module": "qbo-recon",
+    "verdict": "ACTION-ONLY",
+    "question": "No open question \u2014 rename+creator shipped; parent-category nesting needs an owner-gated catalogs.* migration.",
+    "ruling_citation": "LOCKED_DECISIONS \u00a77.3 inline '+ Add new'; rename+creator confirmed mounted (QboCategoriesListPage). catalogs.* change is \u00a71.4 financial-cluster, owner-gated.",
+    "buildable_action": "Author + owner-run a catalogs.* migration adding qbo_categories.parent_category_id (self-FK) + description/active/sort_order; then wire nesting."
+  },
+  {
+    "id": "STMT-2-opening-balances",
+    "module": "platform",
+    "verdict": "ACTION-ONLY",
+    "question": "Basis is settled (03/31/2026 QBO BS per entity); it awaits owner-entered figures + wiring.",
+    "ruling_citation": "LOCKED_DECISIONS \u00a78.9 'opening balances = QBO Balance Sheet as of 03/31/2026, per entity' + OPENING-BALANCE-IMPORT-AND-CUTOVER-2026-07-16.md.",
+    "buildable_action": "Owner supplies/locks per-entity opening figures; then wire opening-balance-import.routes.ts + qbo-ob-2026-03-31-live-pull.routes.ts (currently file-only) and the frontend, and post the balanced opening JE (owner hand)."
+  },
+  {
+    "id": "0008-g3-qbo-mirror-canonical_DISPATCH",
+    "module": "dispatch",
+    "verdict": "ANSWERED",
+    "question": "Which QBO-mirror is canonical \u2014 accounting.qbo_* or mdata.qbo_*? \u2014 mdata.qbo_*.",
+    "ruling_citation": "LOCKED_DECISIONS \u00a79.6 'mdata.qbo_* canonical for the QBO mirror (repoint the accounting.qbo_* writers).'",
+    "buildable_action": "Repoint the 18 accounting.qbo_* writer sites onto mdata.qbo_* and retire accounting.qbo_* (STEP-1 mdata.qbo_* sync columns migration is itself held for owner)."
+  },
+  {
+    "id": "0008-h-create-bill-line-items-load-id_DISPATCH",
+    "module": "dispatch",
+    "verdict": "ANSWERED",
+    "question": "Should Create Bill carry line items + load_id? \u2014 yes; everything links to the load.",
+    "ruling_citation": "LOCKED_DECISIONS \u00a79.7 'Create Bill gains line items + load_id; universal rule \u2014 diesel, expenses, repairs \u2026 all connect to the load/driver.'",
+    "buildable_action": "Owner runs held 202607200000_bill_lines_load_id.sql (accounting.bill_lines.load_id FK \u2192 mdata.loads); then surface load linkage in the bill UI."
+  },
+  {
+    "id": "0091-d1-2",
+    "module": "accounting",
+    "verdict": "ANSWERED",
+    "question": "Canonical vendor table \u2014 mdata.vendors or mdata.qbo_vendors? \u2014 mdata.vendors (+ resolver).",
+    "ruling_citation": "LOCKED_DECISIONS \u00a79.6 'mdata.vendors canonical for vendors (+ a resolver so WO/expense pickers read it).'",
+    "buildable_action": "Build the vendor resolver and repoint WO/expense/CC pickers off mdata.qbo_vendors onto mdata.vendors; archive (never delete) the duplicate."
+  },
+  {
+    "id": "0091-m-factor-1",
+    "module": "qbo-recon",
+    "verdict": "UNANSWERED",
+    "question": "Which of the four competing reserve ledgers is canonical for the factoring reserve balance?",
+    "ruling_citation": "No ruling found \u2014 acceptance record: 'needs an owner decision on canonical reserve ledger' (dead current_reserve_balance read, no write path).",
+    "buildable_action": "On ruling: point factoring-virtual + cash-flow/home widgets at the one canonical reserve ledger and retire the dead reads."
+  },
+  {
+    "id": "0242-no-auto-customer-charge-on-cancellation",
+    "module": "accounting",
+    "verdict": "UNANSWERED",
+    "question": "Approve auto-AR for billable (TONU) cancellations per the design doc, and which GL revenue account + does it require owner approval?",
+    "ruling_citation": "Policy locked (rev-rec at delivery, two-event latch, cpa-skill \u00a75) but the build is gated: DESIGN-load-revenue-capture-auto-invoice-tonu.md 'Nothing is built until #1 is approved.'",
+    "buildable_action": "On GO: create the AR charge from cancelLoad() for billable reasons via the existing poster; wire reason.requires_owner_approval; add charge_id FK."
+  },
+  {
+    "id": "0243-g11-10-month-close-checklist-unsatisfiabl",
+    "module": "platform",
+    "verdict": "UNANSWERED",
+    "question": "Should month-close lock a period on a reviewed/acknowledged sign-off, instead of requiring zero overdue AR/AP (currently unsatisfiable)?",
+    "ruling_citation": "No ruling found \u2014 month-close.service.ts canLock still requires arOverdueCount==0 && apOverdueCount==0; policy change is \u00a71.4 owner/CPA.",
+    "buildable_action": "On ruling: replace the zero-overdue gate with a maker/checker sign-off mechanism + audit trail on the period-lock."
+  },
+  {
+    "id": "0243-g6-2-vendor-create-no-dedup-guard",
+    "module": "compliance",
+    "verdict": "STALE",
+    "question": "None \u2014 vendor-create dedup is already built and wired.",
+    "ruling_citation": "backlog-verify: mdata/vendors.routes.ts:156 vendorNameConflictExists (entity-scoped lower(btrim(name)) check) \u2014 'not-built' claim is stale.",
+    "buildable_action": "None (optionally add a DB partial-unique index to back the app-layer check)."
+  },
+  {
+    "id": "0251-gap12-commodity-equipment-mapping",
+    "module": "dispatch",
+    "verdict": "UNANSWERED",
+    "question": "Adopt commodity-based dispatch \u2014 build a commodity\u2192equipment mapping (e.g. reefer required)? (requires a product/commodity catalog first)",
+    "ruling_citation": "No ruling found \u2014 no commodity catalog/mapping exists; prerequisite 0251-gap10 unbuilt.",
+    "buildable_action": "On yes: build the product/commodity catalog (gap10), then the equipment-mapping table."
+  },
+  {
+    "id": "0251-gap13-commodity-rate-matrix",
+    "module": "dispatch",
+    "verdict": "UNANSWERED",
+    "question": "Build a commodity rate matrix (commodity-based pricing)? Depends on the commodity-catalog decision above.",
+    "ruling_citation": "No ruling found \u2014 no rate_matrix/commodity-rate table or pricing logic exists.",
+    "buildable_action": "On yes: build the commodity rate matrix keyed off the commodity catalog."
+  },
+  {
+    "id": "0251-gap2-vendor-gl-linkage",
+    "module": "accounting",
+    "verdict": "ANSWERED",
+    "question": "Should vendors carry a default GL/expense account FK to catalogs.accounts? \u2014 yes (recommendation-only), on canonical mdata.vendors.",
+    "ruling_citation": "LOCKED_DECISIONS \u00a79.6 mdata.vendors canonical + LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md banking categorization recommend+confirm model.",
+    "buildable_action": "Owner runs held 202607110230_vendor_qbo_parity.sql (mdata.vendors.default_expense_account_id FK). (Factor-as-vendor sub-question tracked at 0251-gap3.)"
+  },
+  {
+    "id": "0251-gap3-vendor-invoice-linkage",
+    "module": "accounting",
+    "verdict": "UNANSWERED",
+    "question": "Must a factor (Faro) also exist as an mdata.vendors row for invoice linkage, or is the factoring.factor (customer\u2192factor NOA) model canonical?",
+    "ruling_citation": "Tension unresolved: \u00a78.8 names a canonical Faro vendor 3585f27e, but invoices link the factor via factoring.factor, not mdata.vendors; no single ruling.",
+    "buildable_action": "On ruling: either add the factoring_vendor link or formalize factoring.factor as the canonical invoice-factor linkage."
+  },
+  {
+    "id": "0252-audit146-workplace-safety-osha",
+    "module": "safety",
+    "verdict": "UNANSWERED",
+    "question": "Build OSHA workplace-safety incident tracking (hr.osha_incidents design exists but is unprioritized)?",
+    "ruling_citation": "No ruling \u2014 docs/specs/0252-\u2026 is 'plan only, no SQL authored', candidate #2, unprioritized.",
+    "buildable_action": "On approval: author the hr.osha_incidents migration + module per the existing plan."
+  },
+  {
+    "id": "0257-audit-88",
+    "module": "compliance",
+    "verdict": "UNANSWERED",
+    "question": "Is customs HTS/tariff classification in scope for IH35-TMS? (the border-crossing module is already built; only HTS classification is missing)",
+    "ruling_citation": "No ruling \u2014 border-crossing wizard/history live+wired; HTS is normally a licensed customs-broker function.",
+    "buildable_action": "If in scope: design an HTS-classification surface; otherwise mark out-of-scope. Core border-crossing already done."
+  },
+  {
+    "id": "0277-csrf-tokens-recommendation",
+    "module": "insurance",
+    "verdict": "STALE",
+    "question": "None material \u2014 CSRF protection is built and wired; only a token-vs-origin security-arch preference remains an owner call.",
+    "ruling_citation": "backlog-verify: middleware/csrf-origin-guard.ts imported+registered (index.ts:430/638) with a 237-line test \u2014 Origin/Referer allow-list CSRF guard live.",
+    "buildable_action": "None required. Optional owner decision: add token-based CSRF on top of the origin guard."
+  },
+  {
+    "id": "0278-safety-gap1-auto-driver-status",
+    "module": "safety",
+    "verdict": "UNANSWERED",
+    "question": "Should safety events auto-change driver status (probation/suspension) by severity/frequency thresholds? (explicit-termination path already wired)",
+    "ruling_citation": "No ruling \u2014 grep probation/suspension in safety/*.ts = 0; only explicit termination wired (driver-safety-events.routes.ts:437).",
+    "buildable_action": "On ruling: define the severity/frequency thresholds and auto-status state changes."
+  },
+  {
+    "id": "0285-df-gap1-no-escrow-for-cash-advances",
+    "module": "settlements",
+    "verdict": "UNANSWERED",
+    "question": "May driver escrow offset an unrecovered cash advance (asset) on separation, and under what trigger \u2014 interacting with the 5% floor + pay-first ordering?",
+    "ruling_citation": "\u00a79.3 rules pay-first-then-escrow for walkoff/abandonment/damage recoveries \u2014 but does NOT cover cash advances; no escrow-fallback branch exists.",
+    "buildable_action": "On ruling: add (or explicitly forbid) an escrow-fallback branch for advance shortfall at separation."
+  },
+  {
+    "id": "0285-df-gap2-dual-deduction-systems",
+    "module": "settlements",
+    "verdict": "ANSWERED",
+    "question": "Which deduction store is canonical among the three in driver_finance.*? \u2014 driver_finance.driver_settlement_deductions.",
+    "ruling_citation": "LOCKED_DECISIONS \u00a79.1 'Canonical deduction store = driver_finance.driver_settlement_deductions \u2026 Retire the payroll.* copy + the settlement_lines auto_deduction path.'",
+    "buildable_action": "Migrate/retire the payroll.* + settlement_lines auto_deduction writers onto the canonical store; decide whether deduction_schedule is an amortization PLAN that materializes rows into it."
+  },
+  {
+    "id": "0441-mod13-form425c-exhibit-c-opening-balance-",
+    "module": "platform",
+    "verdict": "UNANSWERED",
+    "question": "Supply the Form 425C Exhibit C opening-balance block scope \u2014 question text not fully recoverable (named source .txt absent from repo).",
+    "ruling_citation": "No spec \u2014 .block-ready file is boilerplate; source .txt missing. Basis ties to STMT-2 (03/31/2026 QBO BS).",
+    "buildable_action": "Owner supplies the Exhibit C opening-balance spec; then wire it to STMT-2 figures."
+  },
+  {
+    "id": "0441-mod13-notifications-module-not-fully-audi",
+    "module": "platform",
+    "verdict": "UNANSWERED",
+    "question": "Scope: what does 'notifications module not fully audited' require? Acceptance criteria are absent from the repo.",
+    "ruling_citation": "No spec \u2014 .block-ready boilerplate; financial-block-buildability.csv NEEDS-JORGE-DECISION.",
+    "buildable_action": "Owner scopes the notifications audit; then build/verify."
+  },
+  {
+    "id": "0441-mod5-retention-excludes-critical-truncate",
+    "module": "platform",
+    "verdict": "UNANSWERED",
+    "question": "Scope: which data-retention policy/table must stop excluding critical (truncate) records? Criteria are absent from the repo.",
+    "ruling_citation": "No spec \u2014 .block-ready boilerplate; financial-block-buildability.csv NEEDS-JORGE-DECISION.",
+    "buildable_action": "Owner names the affected retention policy/table; then fix."
+  },
+  {
+    "id": "0441-mod6-idvr-row-not-clickable-session-fake-",
+    "module": "platform",
+    "verdict": "UNANSWERED",
+    "question": "Scope: identify the IDVR screen/row/session issue precisely \u2014 acceptance criteria absent from the repo.",
+    "ruling_citation": "No spec \u2014 .block-ready boilerplate; financial-block-buildability.csv NEEDS-JORGE-DECISION.",
+    "buildable_action": "Owner names the IDVR screen/row + expected behavior; then fix."
+  },
+  {
+    "id": "0473-1-1-default-revenue-account-unmapped-line",
+    "module": "accounting",
+    "verdict": "UNANSWERED",
+    "question": "For an unmapped invoice line: hard-fail vs post to a catch-all revenue account? (the standard line-haul account is 'Line Haul' under Sales of Service.)",
+    "ruling_citation": "cpa-skill \u00a76 lists 'Line Haul' revenue account, but the hard-fail-vs-catch-all handling has no captured CPA sign-off.",
+    "buildable_action": "On ruling: encode invoice_lines \u2192 catalogs.items income account \u2192 catalogs.accounts, with the chosen unmapped-line behavior."
+  },
+  {
+    "id": "0473-1-10-year-end-close-retained-earnings-asc",
+    "module": "platform",
+    "verdict": "UNANSWERED",
+    "question": "Confirm the year-end-close / retained-earnings roll process and ASC treatment (OBE\u2192RE reclass is locked, but the full close is undefined).",
+    "ruling_citation": "No spec \u2014 financial-block-buildability.csv NEEDS-JORGE-DECISION; \u00a78.5 locks only OBE\u2192Retained-Earnings \u22480.",
+    "buildable_action": "On ruling: design the year-end close (RE roll) per the confirmed ASC treatment."
+  },
+  {
+    "id": "0473-1-6-wo-void-reversal-grain",
+    "module": "accounting",
+    "verdict": "UNANSWERED",
+    "question": "Confirm WO void reversal grain: whole-bill net-zero mirror (as built) vs line-level partial reversal \u2014 is whole-bill correct?",
+    "ruling_citation": "No CPA sign-off captured \u2014 void.service.postVoidReversal reverses at whole-bill grain (both entries retained), guard-pinned but unconfirmed.",
+    "buildable_action": "On confirmation: keep whole-bill grain; also enroll WO_VOID_ENABLED in POSTING_FLAG_KEYS (see 0091-h3-3)."
+  },
+  {
+    "id": "0473-1-8-tk-transp-lease-asc842",
+    "module": "accounting",
+    "verdict": "ANSWERED",
+    "question": "ASC 842 classification for TRK-owns / TRANSP-leases? \u2014 operating lease; books in TRK.",
+    "ruling_citation": "LOCKED_DECISIONS \u00a76.5 (FIN-22 lease) + entity-facts 'Equipment leases \u2192 TRK signs \u2026 books in TRK' + finance-engine-decisions-locked 'lease=operating' + \u00a79.9 LEASE flag ON.",
+    "buildable_action": "None to decide. Residual doc deliverable: capture the CPA/counsel ASC 842 common-control practical-expedient + useful-life memo confirming the locked operating-lease treatment."
+  },
+  {
+    "id": "0473-1-9-driver-settlement-net-pay-mod_DISPATCH",
+    "module": "settlements",
+    "verdict": "ANSWERED",
+    "question": "Driver net-pay floor + tax classification? \u2014 5% editable floor; drivers = 1099-NEC (W-8BEN).",
+    "ruling_citation": "LOCKED_DECISIONS \u00a79.2 '5% DEFAULT, EDITABLE' + cpa-skill \u00a74 'W-8BEN \u2026 5% net-pay floor \u2026 Driver Cash Advance = asset; Driver Escrow = LIABILITY.'",
+    "buildable_action": "None (5% floor built at DEFAULT_NET_PAY_FLOOR_PCT=0.05). Residual: CPA/counsel written confirmation of the 1099 classification (documentation, not code)."
+  },
+  {
+    "id": "0473-2-5-trial-balance-002-cosmetic_CLEANUP",
+    "module": "platform",
+    "verdict": "UNANSWERED",
+    "question": "Question text not fully recoverable \u2014 the $0.02 Dr/Cr trial-balance residual can't be traced to a named endpoint; needs re-derivation or a live TB read.",
+    "ruling_citation": "No traceable source \u2014 named source .txt absent; accounting.* (trial balance) is \u00a71.4 financial-cluster.",
+    "buildable_action": "Owner/GUARD does a live TB read to confirm/clear the $0.02 residual before any cosmetic cleanup."
+  },
+  {
+    "id": "0490-section-c-2-reporting-vs-reports-drift",
+    "module": "dispatch",
+    "verdict": "ANSWERED",
+    "question": "Canonical schema for scheduled reports \u2014 reporting.* or reports.*? \u2014 reporting.*.",
+    "ruling_citation": "LOCKED_DECISIONS \u00a79.6 'reporting.* canonical for scheduled reports (migrate reports.* rows in, archive the old).'",
+    "buildable_action": "Migrate reports.* rows into reporting.*, archive the old; update scripts/verify-no-deprecated-schema-creates.mjs (remove 'reporting' from DEPRECATED, add 'reports')."
+  },
+  {
+    "id": "0518-r18-schema-fragmentation-8-dup-pairs",
+    "module": "factoring",
+    "verdict": "UNANSWERED",
+    "question": "Canonical picks for the remaining dup schema pairs: docs vs documents, mdata vs master_data, maint vs maintenance? (reports/reporting already ruled \u00a79.6)",
+    "ruling_citation": "Partial ruling only \u2014 SCHEMA-CANONICALIZATION-VERDICTS-2026-06-28.md resolves 3 pairs; \u00a79.6 resolves reports/reporting; 3-4 pairs remain undecided (and rule-14 vs \u00a79.6 disagree on mdata.vendors).",
+    "buildable_action": "On rulings: fold each loser into the canonical schema (archive, never delete) and align the linkage-law RETIRE list."
+  },
+  {
+    "id": "0519-at2-no-db-enforced-sod",
+    "module": "accounting",
+    "verdict": "UNANSWERED",
+    "question": "Require DB-enforced segregation-of-duties (approved_by \u2260 posted_by trigger) on journal entries, or is app-layer maker/checker sufficient?",
+    "ruling_citation": "No ruling \u2014 grep approved_by/posted_by on journal_entries/posting_batches = 0; only app-layer maker/checker exists.",
+    "buildable_action": "On ruling: add a DB trigger/constraint enforcing approver\u2260poster if required."
+  },
+  {
+    "id": "audit10-payroll-automation-tax-withhol_DISPATCH",
+    "module": "settlements",
+    "verdict": "ANSWERED",
+    "question": "Should TMS automate W-2 office-payroll tax withholding? \u2014 no; W-2 payroll runs in QuickBooks Payroll; drivers are 1099.",
+    "ruling_citation": "cpa-skill \u00a74/\u00a79 (drivers 1099, W-8BEN) + LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md 'AF-8 payroll-bridge: stays DEFERRED (1099, no QBO write-back).'",
+    "buildable_action": "None to build \u2014 produce a reconciliation sign-off that TMS driver-settlement totals and QBO W-2 payroll don't double-count."
+  },
+  {
+    "id": "bf10b-qbo-recon-six-types",
+    "module": "qbo-recon",
+    "verdict": "ANSWERED",
+    "question": "Does QBO recon cover all six register types? \u2014 yes (B1-1 landed); the only open bit is which flag gates Daily Recon.",
+    "ruling_citation": "backlog-verify: recon-cron.service.ts declares all six QboRegisterSources; code note: 'flag key kept as GL_POSTING_ENABLED \u2026 owner config decision' + \u00a79.9 GL_POSTING_ENABLED ON.",
+    "buildable_action": "Verify daily recon runs (gated by GL_POSTING_ENABLED, now ON); optionally rename the gating flag if owner prefers."
+  },
+  {
+    "id": "bf4-load-invoice-ar-factoring-payment",
+    "module": "qbo-recon",
+    "verdict": "ANSWERED",
+    "question": "Does a customer payment post GL so A/R clears? \u2014 yes (customer_payment is a first-class poster); flag now ON.",
+    "ruling_citation": "backlog-verify: posting-engine.service.ts registers 'customer_payment' + \u00a79.9 CUSTOMER_PAYMENT flag ON \u2014 the 'A/R never clears' claim is disproven.",
+    "buildable_action": "Verify/automate the unposted-source sweep (sourceOrder invoice\u2192bill\u2192customer_payment\u2192bill_payment) so customer_payment GL materializes without a manual batch."
+  },
+  {
+    "id": "bf7-cash-advance-recovery-engine",
+    "module": "settlements",
+    "verdict": "ANSWERED",
+    "question": "Enable cash-advance recovery posting to the books? \u2014 yes; SETTLEMENT flag is ON.",
+    "ruling_citation": "LOCKED_DECISIONS \u00a79.9 SETTLEMENT flag ON (supersedes 'SETTLEMENT OFF until CPA'); backlog-verify: FK + recovery engine already built.",
+    "buildable_action": "Verify advances recover on real books under SETTLEMENT_GL_POSTING_ENABLED (now ON); no code gap remains."
+  },
+  {
+    "id": "db5-resize-removal-directive-vs-current-lock",
+    "module": "dispatch",
+    "verdict": "UNANSWERED",
+    "question": "The old 'remove resizable tables app-wide' directive conflicts with the shipped/extended resize feature \u2014 re-confirm resize stays, or retire it?",
+    "ruling_citation": "Standing conflict, no reconciling ruling \u2014 ResizableTh/Table live and actively extended (PR #2296) vs the old removal directive.",
+    "buildable_action": "On owner call: keep + extend resize (retire the old directive) OR remove app-wide; do not build either direction without the decision."
+  },
+  {
+    "id": "dip-mor-pre-post-petition-ap-split",
+    "module": "accounting",
+    "verdict": "UNANSWERED",
+    "question": "For the Ch.11 DIP Monthly Operating Report, add a pre-petition vs post-petition A/P split (tagging/columns + petition date)? Currently absent.",
+    "ruling_citation": "No ruling \u2014 grep pre_petition/post_petition in db/migrations + apps/backend = 0; Ch.11 is confirmed but the AP-split treatment is undecided.",
+    "buildable_action": "On ruling: add pre/post-petition tagging to A/P keyed to the petition date for MOR reporting."
+  },
+  {
+    "id": "events-event-log-force-rls-still-blocked",
+    "module": "platform",
+    "verdict": "ACTION-ONLY",
+    "question": "No open question \u2014 the FORCE-RLS migration is written and its GUC prerequisite landed; it awaits owner Neon-apply.",
+    "ruling_citation": "backlog-verify: 202607510000_events_audit_log_entity_isolation.sql (ENABLE + FORCE RLS) authored, idempotent, held.",
+    "buildable_action": "Owner applies 202607510000 on a Neon branch + ledger-backfill so events.event_log becomes FORCE-RLS on prod."
+  },
+  {
+    "id": "expand-escrow-non-bond-deductions",
+    "module": "settlements",
+    "verdict": "UNANSWERED",
+    "question": "Which additional deduction_type values may draw driver escrow (chargebacks, safety-event fines) beyond 'escrow_load_abandonment'?",
+    "ruling_citation": "No ruling \u2014 escrow-deduction-pending.service.ts hardcodes the single type; expansion is flagged needs-design, financial-cluster.",
+    "buildable_action": "On ruling: add the approved deduction_type values (migration + service filter) drawing escrow."
+  },
+  {
+    "id": "factoring-asc860-cpa-control-test-open",
+    "module": "accounting",
+    "verdict": "ACTION-ONLY",
+    "question": "No open modeling question \u2014 model is secured-borrowing; a CPA must write the per-agreement ASC 860 control-test ruling.",
+    "ruling_citation": "LOCKED_DECISIONS \u00a78.6 + cpa-skill \u00a73 'Factoring = secured borrowing / recourse (NOT a sale). ASC 860 control-test nuance applies.'",
+    "buildable_action": "CPA writes the ASC 860 three-part control-surrender test against the executed FARO agreement + the per-factor sale-vs-secured config (owner/CPA hand)."
+  },
+  {
+    "id": "factoring-asc860-determination-memo",
+    "module": "factoring",
+    "verdict": "ACTION-ONLY",
+    "question": "No open modeling question \u2014 treatment locked; the determination memo document just needs to be authored.",
+    "ruling_citation": "cpa-skill \u00a73 'secured borrowing \u2026 A/R remains on IH35 books as pledged collateral \u2026 never as a sale of receivables.'",
+    "buildable_action": "CPA/owner authors docs/accounting/FACTORING-ASC860-DETERMINATION.md (the ASC 860-10-40-5 three-condition analysis)."
+  },
+  {
+    "id": "factoring-g3-debtor-credit-check-decision-note",
+    "module": "factoring",
+    "verdict": "UNANSWERED",
+    "question": "Surface Faro daily-report debtor credit-check data as a feature, or leave it out?",
+    "ruling_citation": "No ruling \u2014 source doc frames it as an enhancement candidate pending an owner decision.",
+    "buildable_action": "On yes: build a debtor-credit surface off Faro daily-report data."
+  },
+  {
+    "id": "fk-escrow-termination-0289",
+    "module": "drivers",
+    "verdict": "STALE",
+    "question": "None \u2014 'termination_id' is a phantom column that never existed; the intent is covered by the escrow-separations model.",
+    "ruling_citation": "backlog-verify: 'termination_id' returns zero hits everywhere; covered by driver_finance.driver_escrow_separations (separation_date + 90-day eligible_release_date) + \u00a79.4.",
+    "buildable_action": "None \u2014 no such column to add; escrow-return-on-termination is handled by the separations table (see BLOCK-02-DRIVER-ESCROW-DESIGN)."
+  },
+  {
+    "id": "flow2-customer-chargeback-driver-expense",
+    "module": "accounting",
+    "verdict": "UNANSWERED",
+    "question": "Define the customer-chargeback\u2192driver-billback policy: which driver-caused expenses are billable back, who approves, and the GL treatment (expense reduction vs other income vs AR)?",
+    "ruling_citation": "No ruling/spec \u2014 only factoring chargebacks (a different concept) exist; no design doc under docs/specs.",
+    "buildable_action": "On ruling: author the design (trigger, approval, GL treatment, customer-invoice rule) then build."
+  },
+  {
+    "id": "flow5-dual-deduction-systems-consolidate",
+    "module": "settlements",
+    "verdict": "ANSWERED",
+    "question": "Consolidate the dual/triple deduction systems onto which store? \u2014 driver_finance.driver_settlement_deductions.",
+    "ruling_citation": "LOCKED_DECISIONS \u00a79.1 'Canonical deduction store = driver_finance.driver_settlement_deductions \u2026 Retire the payroll.* copy + the settlement_lines auto_deduction path.'",
+    "buildable_action": "Consolidate the capped-recovery + legacy deductions paths onto the canonical store behind an OFF flag; owner+CPA verify before flipping (same work as 0285-df-gap2)."
+  },
+  {
+    "id": "gated-blocks-conn-plaid-relay-edi",
+    "module": "qbo-recon",
+    "verdict": "ACTION-ONLY",
+    "question": "No open question \u2014 CONN-1/2/3 are built; four CONN-3 migrations are held awaiting the owner Neon ceremony.",
+    "ruling_citation": "LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md CONNECTORS section (Plaid/Relay built; EDI defer) + backlog-verify (routes registered, migrations held).",
+    "buildable_action": "Owner applies the four held CONN-3 migrations (absent from .ledger.json) on a Neon branch; EDI stays deferred."
+  },
+  {
+    "id": "h-03-open-queue-navy-cta",
+    "module": "reports",
+    "verdict": "UNANSWERED",
+    "question": "Grant a \u00a77 palette-lock exception to recolor the 'Open queue' CTA green? (navy #1F2A44 is currently the compliant locked token)",
+    "ruling_citation": "No exception granted \u2014 CLAUDE.md \u00a77 palette lock; navy CTA is compliant, green needs explicit owner exception.",
+    "buildable_action": "On exception: recolor the CTA. Otherwise no change (not a defect)."
+  },
+  {
+    "id": "hiring-bypass-and-safety-contract-alerts",
+    "module": "safety",
+    "verdict": "UNANSWERED",
+    "question": "Approve a hire-status state-machine spec (contract pending upload/sign) before build?",
+    "ruling_citation": "No ruling/spec \u2014 no governing spec under docs/specs; flagged design-first in the source doc.",
+    "buildable_action": "On approval: author the hire-status state-machine spec, then build the alerts."
+  },
+  {
+    "id": "ifta-sales-tax-booking-location-confirm",
+    "module": "accounting",
+    "verdict": "ANSWERED",
+    "question": "Is freight line-haul sales-taxable? \u2014 no; interstate/cross-border freight transportation is not TX-sales-taxable.",
+    "ruling_citation": "cpa-skill \u00a75/\u00a79 'No sales tax on line-haul \u2014 interstate/cross-border freight transportation is not TX-sales-taxable.'",
+    "buildable_action": "None for freight. If any taxable ancillary arises, post via the existing accounting.sales_tax_returns.paid_bill_id path; confirm IFTA fuel-tax booking location matches CPA intent."
+  },
+  {
+    "id": "module25-required-docs-ruleset-per-entity",
+    "module": "factoring",
+    "verdict": "UNANSWERED",
+    "question": "Define the per-entity-type required-document ruleset/matrix (the queued owner decision).",
+    "ruling_citation": "Partial only \u2014 \u00a78.8(6) locks 'required-doc regulatory defaults, warn-first'; the per-entity-type matrix remains the queued owner decision.",
+    "buildable_action": "On ruling: build the per-entity-type required-document config/matrix on top of the warn-first defaults."
+  },
+  {
+    "id": "p1-data-encryption-at-rest",
+    "module": "platform",
+    "verdict": "UNANSWERED",
+    "question": "Approve a key-management/rotation policy (KMS or key-versioning)? Current single static ENCRYPTION_KEY works but isn't rotation-capable.",
+    "ruling_citation": "No ruling \u2014 encryption.ts enforces AES-256-GCM (fails safe if key unset), but there is no key-rotation policy; it's a security-architecture owner decision.",
+    "buildable_action": "On decision: implement KMS or a key-versioning scheme for rotation."
+  },
+  {
+    "id": "P4-01_SAFETY-INSURANCE-LINK_DISPATCH",
+    "module": "dispatch",
+    "verdict": "ANSWERED",
+    "question": "Should safety link to insurance? \u2014 yes; total-connectivity is the Law of the Land (only file targets need naming).",
+    "ruling_citation": "AGENTS.md / ARCHITECTURE-BLUEPRINT-2026-07-05.md \u00a79 linkage checklist + rule 14 (every record links both-way to operational + hub tables).",
+    "buildable_action": "Author the additive safety\u2194insurance FK (entity-scoped, 0-NULL backfill, forward+reverse drill), validated on ci-migration-test."
+  },
+  {
+    "id": "P4-02_LEGAL-LINK_DISPATCH",
+    "module": "dispatch",
+    "verdict": "ANSWERED",
+    "question": "Should legal link cross-module? \u2014 yes; total-connectivity is the Law of the Land (only file targets need naming).",
+    "ruling_citation": "ARCHITECTURE-BLUEPRINT-2026-07-05.md \u00a79 linkage checklist + rule 14 total connectivity.",
+    "buildable_action": "Author the additive legal\u2194entity/load FK per the linkage checklist (entity-scoped, backfill 0-NULL, both-way drill)."
+  },
+  {
+    "id": "P4-03_UNIT-IDENTITY_DISPATCH",
+    "module": "dispatch",
+    "verdict": "ANSWERED",
+    "question": "Unit identity/ownership model? \u2014 owner_company_id (TRK owns) + currently_leased_to_company_id (TRANSP/USMCA), not operating_company_id.",
+    "ruling_citation": "entity-facts 'Unit ownership lives on the unit row via owner_company_id (TRK owns) + currently_leased_to_company_id \u2026 NOT operating_company_id.'",
+    "buildable_action": "Author the additive unit-identity bridge FK consistent with owner/lease columns; validate on ci-migration-test."
+  },
+  {
+    "id": "P4-04_SAFETY-COST-GL_DISPATCH",
+    "module": "dispatch",
+    "verdict": "UNANSWERED",
+    "question": "Define the GL treatment for safety costs \u2014 which expense account(s) do safety events/fines post to?",
+    "ruling_citation": "No ruling \u2014 block is prose/no-files NEEDS-JORGE-DECISION; GL posting design (\u00a71.4) requires owner/CPA.",
+    "buildable_action": "On ruling: build the safety-cost \u2192 GL posting via the existing poster (no new GL math), FK'd to the safety event + unit."
+  },
+  {
+    "id": "P4-05_DAMAGE-CLAIM-FK_DISPATCH",
+    "module": "dispatch",
+    "verdict": "ANSWERED",
+    "question": "Should damage claims link to their financial primitives? \u2014 yes (damage deduction \u2192 claim \u2192 escrow liability).",
+    "ruling_citation": "AGENTS.md \u00a79 linkage checklist 'a damage deduction \u2192 the claim \u2192 escrow liability' + rule 14.",
+    "buildable_action": "Author the additive damage-claim FK (0 orphans pre-migration, FK validated on ci-migration-test)."
+  },
+  {
+    "id": "P4-06_WO-FK_DISPATCH",
+    "module": "dispatch",
+    "verdict": "ANSWERED",
+    "question": "Should work orders link to load/unit/vendor? \u2014 yes; everything links to the load.",
+    "ruling_citation": "LOCKED_DECISIONS \u00a79.7 'Everything links to the load' + ARCHITECTURE-BLUEPRINT \u00a79 (repair bill \u2192 unit + vendor + load + WO + expense acct + JE).",
+    "buildable_action": "Author the additive WO\u2194load/unit/vendor FKs (0 orphans, validated on ci-migration-test)."
+  },
+  {
+    "id": "P4-07_PARTS-GL_DISPATCH",
+    "module": "dispatch",
+    "verdict": "UNANSWERED",
+    "question": "Define the GL treatment for parts \u2014 part receipt \u2192 inventory-asset JE, and WO-consumption posting?",
+    "ruling_citation": "No ruling \u2014 block is design/no-files NEEDS-JORGE-DECISION; parts\u2192inventory-asset accounting is undecided.",
+    "buildable_action": "On ruling: build parts receipt\u2192inventory-asset + WO-consumption posting via the existing poster."
+  },
+  {
+    "id": "P4-08_WO-DOUBLE-BILL_VERIFY",
+    "module": "maintenance",
+    "verdict": "ACTION-ONLY",
+    "question": "No open design question \u2014 the root-cause fix needs a live prod duplicate-count read + owner Neon-apply of a UNIQUE index.",
+    "ruling_citation": "backlog-verify: two-section-service.ts autoCreateBillFromWO does an unconditional INSERT; DEFERRED-ITEMS.md \u00a7F \u2014 fix is \u00a71.4 migration requiring a prod read first.",
+    "buildable_action": "GUARD reads prod WO-bill duplicate counts; owner applies a UNIQUE(linked_work_order_uuid) partial index + collapses to one canonical writer."
+  },
+  {
+    "id": "PHASE2_ACCESSORIAL-REVENUE_divergent-engine_DISPATCH",
+    "module": "dispatch",
+    "verdict": "UNANSWERED",
+    "question": "Resolve the accessorial-revenue engine divergence \u2014 name the target files/approach (which engine is canonical)?",
+    "ruling_citation": "No ruling \u2014 block is functional/no-files NEEDS-JORGE-DECISION; CoA \u00a76 defines the accessorial revenue children but not the engine.",
+    "buildable_action": "On decision: consolidate accessorial-revenue onto one engine wired into the invoice/poster path."
+  },
+  {
+    "id": "PHASE2_CANCEL-TONU_billable-cancellation-no-charge_DISPATCH",
+    "module": "dispatch",
+    "verdict": "UNANSWERED",
+    "question": "Approve building TONU billable-cancellation \u2192 AR per the design doc (GO/no-go)?",
+    "ruling_citation": "Policy locked but build gated: DESIGN-load-revenue-capture-auto-invoice-tonu.md decision #1 'Nothing is built until #1 is approved.' (same GO as 0242)",
+    "buildable_action": "On GO: create the TONU AR charge via the existing poster + add load_cancellations.charge_id FK (owner Neon-apply)."
+  },
+  {
+    "id": "PHASE2_LOAD-INVOICE_no-auto-ar_DISPATCH",
+    "module": "dispatch",
+    "verdict": "UNANSWERED",
+    "question": "Approve building auto-invoice-on-delivery + seed the Unbilled Revenue account (TRANSP+USMCA) per the design doc (GO/no-go)?",
+    "ruling_citation": "Rev-rec is locked (two-event latch, cpa-skill \u00a75) but the build is gated: DESIGN-load-revenue-capture-auto-invoice-tonu.md decisions #1 + #3.",
+    "buildable_action": "On GO: seed Unbilled Revenue (owner Neon + JORGE-APPROVED) then wire delivery\u2192invoice via the existing poster; per-entity flag (default OFF)."
+  },
+  {
+    "id": "PHASE2_RECON-COLLECTOR_frozen-feed_DISPATCH",
+    "module": "dispatch",
+    "verdict": "UNANSWERED",
+    "question": "Scope/approach for the reconciliation-collector frozen-feed issue \u2014 question text minimal (prose/no-files).",
+    "ruling_citation": "No ruling \u2014 block is prose/no-files NEEDS-JORGE-DECISION.",
+    "buildable_action": "Owner names the frozen-feed symptom + target; then fix."
+  },
+  {
+    "id": "public-audit-log-partitions-no-rls",
+    "module": "platform",
+    "verdict": "ACTION-ONLY",
+    "question": "No open question \u2014 the RLS-enable+FORCE+WORM migration is written and idempotent; it awaits owner Neon-apply.",
+    "ruling_citation": "backlog-verify: fix authored + held; public.audit_log(+partitioned)+48 partitions created without RLS at 202606080940; remediation idempotent.",
+    "buildable_action": "Owner applies the RLS-enable/force/WORM migration on a Neon branch + ledger-backfill."
+  },
+  {
+    "id": "ruling-3-driver-escrow-current-vs-long_DISPATCH",
+    "module": "settlements",
+    "verdict": "UNANSWERED",
+    "question": "Reclass Damage Claim Escrow (QBO-1150040187) from OtherLongTermLiabilities to a current-liability subtype (60-90d turnover)? Which subtype?",
+    "ruling_citation": "Partial \u2014 \u00a79.4/cpa-skill \u00a74 say escrow is a liability returned 60-90d/\u226590d post-separation, but the exact current-liability subtype is not ruled.",
+    "buildable_action": "On ruling: owner-approved migration/data change reclassifying the escrow accounts to the chosen current-liability subtype."
+  },
+  {
+    "id": "ruling-4-embezzlement-reclass-off-ar-q_DISPATCH",
+    "module": "dispatch",
+    "verdict": "ANSWERED",
+    "question": "Reclass the embezzlement/unauthorized-expense balances off A/R? \u2014 no; keep them as receivables pursued in bankruptcy court.",
+    "ruling_citation": "cpa-skill \u00a77 'the \"Unauthorized Expenses\" receivables (Ignacio, Anarely) are receivables pursued in bankruptcy court \u2014 NOT written off, NOT reclassed to expense.'",
+    "buildable_action": "None \u2014 keep as receivables (cloned balances remain provisional until Martin's court cleanup; do not reclass off A/R)."
+  },
+  {
+    "id": "s-12-log-event-button-navy-cta",
+    "module": "reports",
+    "verdict": "UNANSWERED",
+    "question": "Grant a \u00a77 palette-lock exception to recolor the '+ Log Event' CTA green? (navy #1F2A44 is currently compliant)",
+    "ruling_citation": "No exception granted \u2014 CLAUDE.md \u00a77 palette lock; navy is the locked token (same as h-03).",
+    "buildable_action": "On exception: recolor. Otherwise no change (not a defect)."
+  },
+  {
+    "id": "sweepfix1727-8",
+    "module": "banking",
+    "verdict": "UNANSWERED",
+    "question": "Should /finance land on FinanceOverviewPage (current) or the real /finance/hub, and should the 4-tab vs 5-tab (Calculator) subnav be unified?",
+    "ruling_citation": "No ruling \u2014 routes/manifest.tsx:4100 still lands /finance on the stub; the subnav split is unresolved.",
+    "buildable_action": "On decision: repoint /finance and unify the subnavs accordingly."
+  },
+  {
+    "id": "usmca-unhide-entity-switcher",
+    "module": "accounting",
+    "verdict": "ACTION-ONLY",
+    "question": "No open question \u2014 USMCA stays hidden until launch; unhiding is an owner go/no-go after preconditions.",
+    "ruling_citation": "entity-facts 'USMCA \u2026 hidden until then; starts with 0 balances, TMS-only, isolated' + code gate is_active=false pre-launch.",
+    "buildable_action": "Owner go/no-go to flip org.companies.is_active for USMCA after COA-seed + banking-ingestion preconditions (tied to USMCA-LAUNCH + STMT-2 USMCA OB)."
+  },
+  {
+    "id": "wo-cancellation-reasons-fold-into-void-cancel-",
+    "module": "maintenance",
+    "verdict": "UNANSWERED",
+    "question": "Fold catalogs.wo_cancellation_reasons into catalogs.void_cancel_reasons (which is canonical), and re-point the WO Cancel/Void modal to a reason-catalog dropdown?",
+    "ruling_citation": "No ruling \u2014 both catalogs live+registered; \u00a79.8 says archive-not-delete but the canonical pick + modal re-point are undecided.",
+    "buildable_action": "On ruling: fold the loser's rows into the canonical catalog (archive, never delete) and wire the WO modal to the dropdown."
+  }
+]
