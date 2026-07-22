@@ -76,6 +76,14 @@ export type PlaidBankTransaction = {
   category?: string | null;
   check_number?: string | null;
   location?: string | null;
+  /** 0441-mod8-tx-fields-captured-not-sent — persisted categorize-panel capture fields (held migration
+   *  202607690000_bank_tx_capture_fields): Class (catalogs.classes FK + JOIN-derived label), Location,
+   *  Billable, Tags now survive Post and hydrate the panel on reload. */
+  categorization_class_id?: string | null;
+  categorization_class_name?: string | null;
+  categorization_location?: string | null;
+  is_billable?: boolean | null;
+  tags?: string | null;
   /**
    * Relay Fuel Wallet: product lines from integrations.relay_fuel_transaction_lines
    * (diesel truck / reefer / DEF / fee) when source_ref is relay_fuel:*.
@@ -419,6 +427,13 @@ export function categorizeBankTransaction(
     recover_from_driver?: boolean;
     recover_deduction_type?: string;
     memo?: string;
+    // 0441-mod8-tx-fields-captured-not-sent — the panel's remaining capture fields, persisted on
+    // banking.bank_transactions (held migration 202607690000). class_id is the real catalogs.classes FK.
+    check_number?: string;
+    class_id?: string;
+    location?: string;
+    is_billable?: boolean;
+    tags?: string;
   }
 ) {
   return apiRequest<{ ok: boolean }>(`/api/v1/banking/transactions/${transactionId}/categorize?${q(companyId)}`, {
