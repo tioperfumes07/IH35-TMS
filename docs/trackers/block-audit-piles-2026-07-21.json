@@ -5972,10 +5972,10 @@
     },
     {
       "id": "FIX-05-BANKING-SPLIT-ENABLE-AND-WIRE",
-      "pile": "NEEDS-OWNER",
+      "pile": "BUILT",
       "module": "banking",
       "status_reconcile": "PENDING (GATED)",
-      "evidence": "PENDING (GATED) — gated on owner decision/HELD gate — [verified 2026-07-11] owner-verified: split modal built but button disabled Wave-2 + flag OFF; wire+dedupe pending, flag",
+      "evidence": "Verified live 2026-07-21: migration 202607110100 applied on prod (banking.bank_transaction_splits exists), BANK_TX_SPLIT_ENABLED ON for TRANSP/TRK/USMCA via lib.feature_flag_overrides, Split buttons wired in BankingTransactionsDesignView.tsx with no disabled gate.",
       "fin": true,
       "block_id": "FIX-05-BANKING-SPLIT-ENABLE-AND-WIRE"
     },
