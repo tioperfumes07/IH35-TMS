@@ -26,6 +26,7 @@ import { getCoaAccounts } from "../../../api/banking";
 import { listVendors } from "../../../api/mdata";
 import type { AccountingCatalogClient } from "./AccountingCatalogModal";
 import { Button } from "../../../components/Button";
+import { Combobox } from "../../../components/Combobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { Modal } from "../../../components/Modal";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
@@ -99,6 +100,7 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [creatingCategory, setCreatingCategory] = useState(false);
 
   const accountsQuery = useQuery({
     queryKey: ["catalogs", "accounts", "for-items", operatingCompanyId],
@@ -167,6 +169,27 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  async function handleAddCategory(name: string) {
+    const trimmed = name.trim();
+    if (!trimmed || creatingCategory) return;
+    setCreatingCategory(true);
+    setSubmitError("");
+    try {
+      // Product & Service Categories catalog — NOT QuickCreate createKind="category"
+      // (that path writes COA accounts for expense/banking "Category" pickers).
+      const created = await qboCategoriesCatalogClient.create(operatingCompanyId, {
+        code: trimmed.toUpperCase().replace(/[^A-Z0-9]+/g, "-").slice(0, 60) || "CAT",
+        display_name: trimmed,
+      });
+      await queryClient.invalidateQueries({ queryKey: ["catalogs", "accounting", "qbo-categories", operatingCompanyId] });
+      set("categoryId", created.id);
+    } catch (err) {
+      setSubmitError(err instanceof ApiError ? String((err.data as Record<string, unknown>)?.error ?? err.message) : "Failed to create category.");
+    } finally {
+      setCreatingCategory(false);
+    }
   }
 
   function validate(): boolean {
@@ -284,21 +307,19 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
               ))}
             </select>
           </label>
-          {/* Category — QBO places this right under Name. */}
+          {/* Category — Product & Service Categories (qbo_categories), NOT CoA.
+              Repeatable inline "+ Add new category" via qboCategoriesCatalogClient.create. */}
           <label className="block">
             <span className="text-xs font-semibold text-gray-600">Category</span>
             <div className="mt-1">
-              <ReferenceSelect
+              <Combobox
+                options={categoryOptions}
                 value={form.categoryId}
                 onChange={(v) => set("categoryId", v)}
-                options={categoryOptions}
-                createKind="category"
-                operatingCompanyId={operatingCompanyId}
-                placeholder="Uncategorized"
-                disabled={categoriesQuery.isLoading}
-                onOptionCreated={() =>
-                  void queryClient.invalidateQueries({ queryKey: ["catalogs", "accounting", "qbo-categories", operatingCompanyId] })
-                }
+                placeholder={creatingCategory ? "Creating…" : "Uncategorized"}
+                loading={categoriesQuery.isLoading || creatingCategory}
+                allowClear
+                allowAddNew={{ label: "+ Add new category", onAdd: (query) => void handleAddCategory(query) }}
               />
             </div>
           </label>
