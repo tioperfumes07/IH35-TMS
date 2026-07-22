@@ -148,6 +148,14 @@ for (const [rel, marker] of [
   ["apps/frontend/src/pages/safety/tabs/AnomaliesTab.tsx", "data-anomalies-filter-toolbar"],
   ["apps/frontend/src/pages/lists/accounting/ItemsListPage.tsx", "data-items-filter-toolbar"],
   ["apps/frontend/src/pages/docs/DocsHomePage.tsx", "data-docs-filter-toolbar"],
+  // CHROME-06 — Maint/Fleet/Ops leftovers (WO tables, Fleet TableControls children, RoadService,
+  // Driver Reports, Maintenance KPI dashboard, DVIR defects inbox).
+  ["apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx", "data-wo-filter-toolbar"],
+  ["apps/frontend/src/pages/maintenance/RoadServiceList.tsx", "data-road-service-filter-toolbar"],
+  ["apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx", "data-driver-reports-filter-toolbar"],
+  ["apps/frontend/src/pages/maintenance/MaintKpiDashboardPage.tsx", "data-maint-kpi-filter-toolbar"],
+  ["apps/frontend/src/pages/maintenance/DefectsInboxPage.tsx", "data-defects-inbox-filter-toolbar"],
+  ["apps/frontend/src/pages/maintenance/FleetTablePage.tsx", "data-fleet-page-filter-toolbar"],
 ]) {
   const src = read(rel);
   if (!src.includes("CollapsedListFilters")) {
@@ -155,6 +163,17 @@ for (const [rel, marker] of [
   }
   if (!src.includes(marker)) {
     failures.push(`${rel}: missing ${marker} collapsed marker`);
+  }
+}
+
+// CHROME-06 — FleetTable (shared component) TableControls children collapse behind CollapsedListFilters
+{
+  const fleetTable = read("apps/frontend/src/components/FleetTable.tsx");
+  if (!fleetTable.includes("CollapsedListFilters")) {
+    failures.push("FleetTable.tsx: TableControls children must use CollapsedListFilters");
+  }
+  if (!fleetTable.includes("data-fleet-filter-toolbar")) {
+    failures.push("FleetTable.tsx: missing data-fleet-filter-toolbar collapsed marker");
   }
 }
 

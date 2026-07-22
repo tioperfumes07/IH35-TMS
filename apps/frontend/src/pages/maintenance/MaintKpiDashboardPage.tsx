@@ -12,6 +12,7 @@ import {
 import { apiRequest } from "../../api/client";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters } from "../../components/table";
 
 type KpiTileId = MaintKpiDrilldownKind | "pm_compliance";
 type DrillRow = Record<string, unknown>;
@@ -193,41 +194,50 @@ export function MaintKpiDashboardPage() {
             </Link>
           </p>
         </div>
-        <div className="flex flex-wrap items-end gap-2 text-xs">
-          <label className="flex flex-col gap-0.5">
-            <span className="text-[10px] uppercase text-slate-500">From</span>
-            <DatePicker
-              className="rounded-sm border border-gray-300 px-2 py-1"
-              value={periodStart}
-              onChange={(next) => setPeriodStart(next)}
-              data-testid="maint-kpi-filter-start"
-            />
-          </label>
-          <label className="flex flex-col gap-0.5">
-            <span className="text-[10px] uppercase text-slate-500">To</span>
-            <DatePicker
-              className="rounded-sm border border-gray-300 px-2 py-1"
-              value={periodEnd}
-              onChange={(next) => setPeriodEnd(next)}
-              data-testid="maint-kpi-filter-end"
-            />
-          </label>
-          <label className="flex flex-col gap-0.5">
-            <span className="text-[10px] uppercase text-slate-500">Unit</span>
-            <select
-              className="min-w-32 rounded-sm border border-gray-300 px-2 py-1"
-              value={unitId}
-              onChange={(e) => setUnitId(e.target.value)}
-              data-testid="maint-kpi-filter-unit"
-            >
-              <option value="">All fleet</option>
-              {(unitsQ.data?.rows ?? []).map((row) => (
-                <option key={row.id} value={row.id}>
-                  {row.unit_number}
-                </option>
-              ))}
-            </select>
-          </label>
+        <div data-maint-kpi-filter-toolbar="collapsed">
+          <CollapsedListFilters
+            activeFilterCount={
+              (periodStart !== defaults.start ? 1 : 0) + (periodEnd !== defaults.end ? 1 : 0) + (unitId ? 1 : 0)
+            }
+            testIdPrefix="maint-kpi"
+          >
+            <div className="flex flex-wrap items-end gap-2 text-xs">
+              <label className="flex flex-col gap-0.5">
+                <span className="text-[10px] uppercase text-slate-500">From</span>
+                <DatePicker
+                  className="rounded-sm border border-gray-300 px-2 py-1"
+                  value={periodStart}
+                  onChange={(next) => setPeriodStart(next)}
+                  data-testid="maint-kpi-filter-start"
+                />
+              </label>
+              <label className="flex flex-col gap-0.5">
+                <span className="text-[10px] uppercase text-slate-500">To</span>
+                <DatePicker
+                  className="rounded-sm border border-gray-300 px-2 py-1"
+                  value={periodEnd}
+                  onChange={(next) => setPeriodEnd(next)}
+                  data-testid="maint-kpi-filter-end"
+                />
+              </label>
+              <label className="flex flex-col gap-0.5">
+                <span className="text-[10px] uppercase text-slate-500">Unit</span>
+                <select
+                  className="min-w-32 rounded-sm border border-gray-300 px-2 py-1"
+                  value={unitId}
+                  onChange={(e) => setUnitId(e.target.value)}
+                  data-testid="maint-kpi-filter-unit"
+                >
+                  <option value="">All fleet</option>
+                  {(unitsQ.data?.rows ?? []).map((row) => (
+                    <option key={row.id} value={row.id}>
+                      {row.unit_number}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </CollapsedListFilters>
         </div>
       </div>
 

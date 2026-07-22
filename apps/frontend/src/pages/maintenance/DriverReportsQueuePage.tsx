@@ -7,6 +7,7 @@ import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters } from "../../components/table";
 import { EntityLink } from "../../components/shared/EntityLink";
 
 const LINK = "text-slate-700 hover:underline";
@@ -143,24 +144,34 @@ export function DriverReportsQueuePage() {
         exportFilename="driver-reports"
         rowActions={rowActions}
         filterBar={
-          <div className="flex flex-wrap items-center gap-2">
-            <SelectCombobox
-              className="min-h-12 rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as "" | DriverReportRow["status"])}
+          <div data-driver-reports-filter-toolbar="collapsed">
+            <CollapsedListFilters
+              activeFilterCount={statusFilter ? 1 : 0}
+              testIdPrefix="driver-reports"
+              searchSlot={
+                <input
+                  className="min-h-12 w-full max-w-xs rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
+                  placeholder="Search type / driver / load / description…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              }
             >
-              <option value="">All statuses</option>
-              <option value="submitted">submitted</option>
-              <option value="under_review">under_review</option>
-              <option value="resolved">resolved</option>
-              <option value="dismissed">dismissed</option>
-            </SelectCombobox>
-            <input
-              className="min-h-12 w-full max-w-xs rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
-              placeholder="Search type / driver / load / description…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+              <label className="space-y-1 text-xs text-gray-600">
+                <span>Status</span>
+                <SelectCombobox
+                  className="min-h-12 w-full rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
+                  value={statusFilter}
+                  onChange={(event) => setStatusFilter(event.target.value as "" | DriverReportRow["status"])}
+                >
+                  <option value="">All statuses</option>
+                  <option value="submitted">submitted</option>
+                  <option value="under_review">under_review</option>
+                  <option value="resolved">resolved</option>
+                  <option value="dismissed">dismissed</option>
+                </SelectCombobox>
+              </label>
+            </CollapsedListFilters>
           </div>
         }
       />

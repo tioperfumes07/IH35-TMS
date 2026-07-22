@@ -14,6 +14,7 @@ import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters } from "../../components/table";
 
 export function DefectsInboxPage() {
   const { selectedCompanyId, companies } = useCompanyContext();
@@ -102,20 +103,28 @@ export function DefectsInboxPage() {
   return (
     <div className="space-y-4" data-testid="maint-dvir-defects-inbox">
       <PageHeader title="DVIR Defects" subtitle="Review driver-submitted defects and triage into work orders." />
-      <div className="flex items-center justify-end">
-        <SelectCombobox
-          className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
-          value={statusFilter}
-          onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
-          aria-label="Triage status filter"
+      <div className="flex items-center justify-end" data-defects-inbox-filter-toolbar="collapsed">
+        <CollapsedListFilters
+          activeFilterCount={statusFilter !== "pending" ? 1 : 0}
+          testIdPrefix="defects-inbox"
         >
-          <option value="pending">Pending</option>
-          <option value="assigned">Assigned</option>
-          <option value="escalated">Escalated</option>
-          <option value="converted">Converted</option>
-          <option value="closed">Closed (no action)</option>
-          <option value="all">All</option>
-        </SelectCombobox>
+          <label className="space-y-1 text-xs text-gray-600">
+            <span>Triage status</span>
+            <SelectCombobox
+              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
+              aria-label="Triage status filter"
+            >
+              <option value="pending">Pending</option>
+              <option value="assigned">Assigned</option>
+              <option value="escalated">Escalated</option>
+              <option value="converted">Converted</option>
+              <option value="closed">Closed (no action)</option>
+              <option value="all">All</option>
+            </SelectCombobox>
+          </label>
+        </CollapsedListFilters>
       </div>
 
       <ParityTable

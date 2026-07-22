@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { FleetTable, type FleetRow, type SoftDeleteFilter } from "../../components/FleetTable";
 import { FLEET_TYPE_FILTER_OPTIONS, parseFleetTypeFilter } from "../../components/fleet/fleetTypeFilter";
+import { CollapsedListFilters } from "../../components/table";
 import { downloadFleetLocationHosXlsx, getFleetLocationHos } from "../../api/reports";
 import { useListState } from "../../components/list-state";
 import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
@@ -274,27 +275,37 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
         />
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white px-2 py-1.5 text-xs">
-        <label className="flex items-center gap-1 font-semibold text-gray-700">
-          <input type="checkbox" checked={activeOnly} onChange={(e) => setStatus(e.target.checked ? "InService" : "all")} />
-          Active only
-        </label>
-        <label htmlFor="fleet-type-filter" className="font-semibold text-gray-700">
-          Type
-        </label>
-        <select
-          id="fleet-type-filter"
-          aria-label="Filter fleet by type"
-          className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs"
-          value={typeFilter}
-          onChange={(event) => setTypeFilter(event.target.value)}
+      <div
+        className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white px-2 py-1.5 text-xs"
+        data-fleet-page-filter-toolbar="collapsed"
+      >
+        <CollapsedListFilters
+          activeFilterCount={(typeFilter ? 1 : 0) + (rawStatus != null && rawStatus !== "all" ? 1 : 0)}
+          testIdPrefix="fleet-page"
         >
-          {FLEET_TYPE_FILTER_OPTIONS.map((option) => (
-            <option key={option.label} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+          <div className="space-y-2">
+            <label className="flex items-center gap-1 font-semibold text-gray-700">
+              <input type="checkbox" checked={activeOnly} onChange={(e) => setStatus(e.target.checked ? "InService" : "all")} />
+              Active only
+            </label>
+            <label htmlFor="fleet-type-filter" className="block font-semibold text-gray-700">
+              Type
+              <select
+                id="fleet-type-filter"
+                aria-label="Filter fleet by type"
+                className="mt-1 w-full rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs"
+                value={typeFilter}
+                onChange={(event) => setTypeFilter(event.target.value)}
+              >
+                {FLEET_TYPE_FILTER_OPTIONS.map((option) => (
+                  <option key={option.label} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </CollapsedListFilters>
         <span className="text-gray-600">
           Showing {filteredCount} of {totalVehicleCount} vehicles
         </span>

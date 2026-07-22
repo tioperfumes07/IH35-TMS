@@ -6,7 +6,7 @@ import { BulkActionBar, TableSelection, TableSelectionHeader, useBulkSelection }
 import { useToast } from "./Toast";
 import { FleetBulkControls, type BulkApplyPayload } from "./fleet/BulkActionBar";
 import { EditVehicleModal } from "./fleet/EditVehicleModal";
-import { TableControls, Paginator, TableHeaderCell, useTableController, type TableColumn } from "./table";
+import { TableControls, Paginator, TableHeaderCell, useTableController, CollapsedListFilters, type TableColumn } from "./table";
 import { patchUnit } from "../api/mdata";
 import { patchTrailer } from "../api/fleet-trailers";
 import { useUrlSort } from "../hooks/useUrlSort";
@@ -402,40 +402,48 @@ export function FleetTable({
         pageSize={table.pageSize}
         onPageSizeChange={table.setPageSize}
       >
-        <div className="inline-flex rounded-sm border border-gray-300 bg-white p-0.5 text-[11px]" data-list-status-filter="fleet">
-          {(["active", "inactive", "all"] as const).map((value) => (
-            <button
-              key={value}
-              type="button"
-              className={`rounded-sm px-2 py-1 font-medium capitalize ${softDeleteFilter === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
-              onClick={() => onSoftDeleteFilterChange(value)}
+        <CollapsedListFilters
+          activeFilterCount={(softDeleteFilter !== "active" ? 1 : 0) + (statusFilter ? 1 : 0) + (typeListFilter ? 1 : 0)}
+          testIdPrefix="fleet"
+          dataAttributes={{ "data-fleet-filter-toolbar": "collapsed" }}
+        >
+          <div className="space-y-2">
+            <div className="inline-flex rounded-sm border border-gray-300 bg-white p-0.5 text-[11px]" data-list-status-filter="fleet">
+              {(["active", "inactive", "all"] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={`rounded-sm px-2 py-1 font-medium capitalize ${softDeleteFilter === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                  onClick={() => onSoftDeleteFilterChange(value)}
+                >
+                  {value}
+                </button>
+              ))}
+            </div>
+            <select
+              aria-label="Filter by status"
+              className="h-8 w-full rounded-sm border border-gray-300 px-2 text-[12px]"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
             >
-              {value}
-            </button>
-          ))}
-        </div>
-        <select
-          aria-label="Filter by status"
-          className="h-8 rounded-sm border border-gray-300 px-2 text-[12px]"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          <option value="">All statuses</option>
-          {statusOptions.map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-        <select
-          aria-label="Filter by type"
-          className="h-8 rounded-sm border border-gray-300 px-2 text-[12px]"
-          value={typeListFilter}
-          onChange={(e) => setTypeListFilter(e.target.value)}
-        >
-          <option value="">All types</option>
-          {typeOptions.map((t) => (
-            <option key={t} value={t}>{t}</option>
-          ))}
-        </select>
+              <option value="">All statuses</option>
+              {statusOptions.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+            <select
+              aria-label="Filter by type"
+              className="h-8 w-full rounded-sm border border-gray-300 px-2 text-[12px]"
+              value={typeListFilter}
+              onChange={(e) => setTypeListFilter(e.target.value)}
+            >
+              <option value="">All types</option>
+              {typeOptions.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+        </CollapsedListFilters>
         {showMaintenanceColumns ? (
           <button
             type="button"
