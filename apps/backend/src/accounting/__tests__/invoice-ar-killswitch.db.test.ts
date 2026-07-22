@@ -37,6 +37,7 @@ describeIntegration("CHAIN-06 invoice→A/R kill switch (real Postgres, route le
   const incomeAccountId = randomUUID();
   const arAccountId = randomUUID();
   const customerId = randomUUID();
+  const loadId = randomUUID();
   const invoiceId = randomUUID();
   const invoiceDisplayId = `INV-2026-${String(Math.floor(10000 + Math.random() * 89999))}`; // INV-YYYY-NNNNN
   const revenueCents = 340000; // $3,400.00 linehaul, no tax
@@ -146,10 +147,16 @@ describeIntegration("CHAIN-06 invoice→A/R kill switch (real Postgres, route le
         `INSERT INTO mdata.customers (id, operating_company_id, customer_name) VALUES ($1::uuid,$2::uuid,$3)`,
         [customerId, companyId, `CHAIN06 Cust ${suffix}`]
       );
+      // P-INVOICE P0: linehaul requires source_load_id (fail-closed).
       await db.query(
-        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, subtotal_cents, tax_cents, total_cents, status)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,$5,0,$5,'sent')`,
-        [invoiceId, companyId, customerId, invoiceDisplayId, revenueCents]
+        `INSERT INTO mdata.loads (id, operating_company_id, load_number, customer_id, status, rate_total_cents, dispatcher_user_id)
+         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,'delivered',$5,$6::uuid)`,
+        [loadId, companyId, `L-${suffix}`, customerId, revenueCents, userId]
+      );
+      await db.query(
+        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, subtotal_cents, tax_cents, total_cents, status, source_load_id)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,$5,0,$5,'sent',$6::uuid)`,
+        [invoiceId, companyId, customerId, invoiceDisplayId, revenueCents, loadId]
       );
       await db.query(
         `INSERT INTO accounting.invoice_lines (operating_company_id, invoice_id, line_type, account_id, description, quantity, unit_amount_cents, line_total_cents, display_order)
@@ -180,6 +187,7 @@ describeIntegration("CHAIN-06 invoice→A/R kill switch (real Postgres, route le
         await db.query(`DELETE FROM accounting.posting_batches WHERE source_transaction_id=$1 AND source_transaction_type='invoice'`, [invoiceId]);
         await db.query(`DELETE FROM accounting.invoice_lines WHERE invoice_id=$1::uuid`, [invoiceId]);
         await db.query(`DELETE FROM accounting.invoices WHERE id=$1::uuid`, [invoiceId]);
+        await db.query(`DELETE FROM mdata.loads WHERE id=$1::uuid`, [loadId]);
         await db.query(`DELETE FROM mdata.customers WHERE id=$1::uuid`, [customerId]);
         await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key=$1 AND operating_company_id=$2::uuid`, [FLAG_KEY, companyId]);
         await db.query(`DELETE FROM accounting.chart_of_accounts_roles WHERE operating_company_id=$1::uuid AND account_id=$2::uuid`, [companyId, arAccountId]);

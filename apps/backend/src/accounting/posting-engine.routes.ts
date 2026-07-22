@@ -67,6 +67,12 @@ function mapPostingError(error: PostingEngineError) {
   if (error.code === "ACCOUNT_MAPPING_MISSING") {
     return { statusCode: 422, body: { error: "account_mapping_missing", message: error.message } };
   }
+  if (error.code === "INVOICE_LINE_REVENUE_UNRESOLVED") {
+    return { statusCode: 422, body: { error: "invoice_line_revenue_unresolved", message: error.message } };
+  }
+  if (error.code === "INVOICE_LOAD_SOURCE_REQUIRED") {
+    return { statusCode: 409, body: { error: "invoice_load_source_required", message: error.message } };
+  }
   return { statusCode: 400, body: { error: "posting_engine_error", message: error.message } };
 }
 

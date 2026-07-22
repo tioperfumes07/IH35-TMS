@@ -184,11 +184,37 @@ describe("reverse drill-through production behavior", () => {
 
   it("renders the exact invoice customer link and navigates to the exact invoice audit URL", async () => {
     const user = userEvent.setup();
+    apiMocks.getAccountingSourceLineage.mockResolvedValue({
+      rows: [
+        {
+          posting_id: "p-1",
+          journal_entry_id: "je-inv-900",
+          posting_batch_id: null,
+          source_transaction_type: "invoice",
+          source_transaction_id: "inv-100",
+          source_transaction_line_id: null,
+          linked_object_type: null,
+          linked_object_id: null,
+          relationship_role: null,
+          account_id: "acct-1",
+          account_number: null,
+          account_name: null,
+          debit_or_credit: "debit",
+          amount_cents: 100,
+          description: null,
+          occurred_at: "2026-07-01T00:00:00Z",
+        },
+      ],
+    });
     renderAt(<InvoiceDetailPage />, "/accounting/invoices/inv-100", "/accounting/invoices/:id");
 
     expect(await screen.findByRole("link", { name: "Acme Freight" })).toHaveAttribute(
       "href",
       "/customers/customer-44",
+    );
+    expect(await screen.findByRole("link", { name: "je-inv-9" })).toHaveAttribute(
+      "href",
+      "/accounting/journal-entries/je-inv-900",
     );
     const auditButton = screen.getByRole("button", { name: "View audit log" });
     expect(auditButton).toBeVisible();

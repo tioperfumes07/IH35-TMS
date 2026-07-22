@@ -7,6 +7,13 @@ import { enqueueEmail } from "../email/queue.service.js";
 import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.service.js";
 import { nextInvoiceDisplayId } from "./display-id.js";
 import { buildInvoiceFromLoad } from "./from-load.js";
+import {
+  assertLoadRevenueHasSourceLoad,
+  assertRevenueLinesHaveIncomeAccount,
+  InvoiceLoadSourceRequiredError,
+  InvoiceLineIncomeAccountRequiredError,
+  type InvoiceLineGuardRow,
+} from "./invoice-linkage-guards.js";
 import { createExpandedInvoice } from "./invoices.service.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope, recomputeInvoiceTotals } from "./shared.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
@@ -705,6 +712,39 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       if (!current) return { code: 404 as const, error: "invoice_not_found" };
       if (String(current.status) !== "draft") return { code: 409 as const, error: "invoice_not_draft" };
 
+      // P-INVOICE P0 (#3177): fail closed before send — income account + load source_load_id.
+      // withCompanyScope client is `any` — do not pass query type args (TS2347).
+      const sendLinesRes = await client.query(
+        `
+          SELECT
+            id::text,
+            line_type::text,
+            line_total_cents::bigint AS line_total_cents,
+            account_id::text,
+            qbo_item_id
+          FROM accounting.invoice_lines
+          WHERE invoice_id = $1::uuid
+          ORDER BY display_order ASC, id ASC
+        `,
+        [params.data.id]
+      );
+      const sendLines = sendLinesRes.rows as InvoiceLineGuardRow[];
+      try {
+        assertLoadRevenueHasSourceLoad(
+          current.source_load_id ? String(current.source_load_id) : null,
+          sendLines
+        );
+        assertRevenueLinesHaveIncomeAccount(query.data.operating_company_id, sendLines);
+      } catch (guardErr) {
+        if (guardErr instanceof InvoiceLoadSourceRequiredError) {
+          return { code: 409 as const, error: "invoice_load_source_required", message: guardErr.message };
+        }
+        if (guardErr instanceof InvoiceLineIncomeAccountRequiredError) {
+          return { code: 422 as const, error: "invoice_line_income_account_required", message: guardErr.message };
+        }
+        throw guardErr;
+      }
+
       // FACT-PAR-2: 422 guard — customer with active factor assignment requires NOA config on the factor
       const invoiceDate = String(current.issue_date);
       const noaCheck = await client.query(
@@ -816,6 +856,9 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
           message: `Factor "${result.factor_name}" has an active assignment for this customer but is missing NOA stamp text or remit-to address. Configure NOA fields on the factor profile before sending this invoice.`,
           factor_id: result.factor_id,
         });
+      }
+      if ("message" in result && typeof result.message === "string") {
+        return reply.code(result.code).send({ error: result.error, message: result.message });
       }
       return reply.code(result.code).send({ error: result.error });
     }

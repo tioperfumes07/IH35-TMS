@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { addInvoiceLine, deleteInvoiceLine, getInvoice, patchInvoiceLine, sendInvoice, voidInvoice, type InvoiceLine } from "../../api/accounting";
+import { addInvoiceLine, deleteInvoiceLine, getAccountingSourceLineage, getInvoice, patchInvoiceLine, sendInvoice, voidInvoice, type InvoiceLine } from "../../api/accounting";
 import { resolveApiUrl } from "../../api/client";
 import { Button } from "../../components/Button";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
@@ -50,6 +50,18 @@ export function InvoiceDetailPage() {
   const detailQuery = useQuery({
     queryKey: ["accounting", "invoice", selectedCompanyId, id],
     queryFn: () => getInvoice(id, selectedCompanyId!),
+    enabled: Boolean(id && selectedCompanyId),
+  });
+
+  // Law §9 / P-INVOICE P0: Invoice → JE forward EntityLink via source lineage.
+  const lineageQuery = useQuery({
+    queryKey: ["accounting", "invoice-source-lineage", selectedCompanyId, id],
+    queryFn: () =>
+      getAccountingSourceLineage(selectedCompanyId!, {
+        source_transaction_type: "invoice",
+        source_transaction_id: id,
+        limit: 50,
+      }),
     enabled: Boolean(id && selectedCompanyId),
   });
 
@@ -111,6 +123,19 @@ export function InvoiceDetailPage() {
   const isDraft = invoice?.status === "draft";
   const canRecordPayment = invoice?.status === "sent" || invoice?.status === "partial";
   const lineCount = invoice?.lines?.length ?? 0;
+
+  const journalEntryIds = useMemo(() => {
+    const rows = lineageQuery.data?.rows ?? [];
+    const seen = new Set<string>();
+    const ids: string[] = [];
+    for (const row of rows) {
+      const jeId = String(row.journal_entry_id ?? "").trim();
+      if (!jeId || seen.has(jeId)) continue;
+      seen.add(jeId);
+      ids.push(jeId);
+    }
+    return ids;
+  }, [lineageQuery.data?.rows]);
 
   const totals = useMemo(
     () => ({
@@ -312,6 +337,22 @@ export function InvoiceDetailPage() {
                     : "-"
                 }
               />
+            </span>
+          </DataPanelRow>
+          <DataPanelRow>
+            <span className="text-xs text-gray-600">Journal Entry</span>
+            <span className="text-sm text-gray-900" data-testid="invoice-journal-entry-links">
+              {lineageQuery.isError ? (
+                <span className="text-red-600">Could not load JE links</span>
+              ) : journalEntryIds.length === 0 ? (
+                <span className="text-gray-500">—</span>
+              ) : (
+                <span className="inline-flex flex-wrap gap-2">
+                  {journalEntryIds.map((jeId) => (
+                    <EntityLink key={jeId} kind="journal_entry" id={jeId} label={jeId.slice(0, 8)} />
+                  ))}
+                </span>
+              )}
             </span>
           </DataPanelRow>
         </DataPanel>

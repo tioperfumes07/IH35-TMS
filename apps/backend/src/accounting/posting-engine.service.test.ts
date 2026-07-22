@@ -123,7 +123,7 @@ describe("posting engine service", () => {
               total_cents: 10000,
               tax_cents: 1200,
               display_id: "INV-2026-00001",
-              source_load_id: null,
+              source_load_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
             },
           ],
         };
@@ -200,7 +200,7 @@ describe("posting engine service", () => {
               total_cents: 30000,
               tax_cents: 0,
               display_id: "INV-2026-00002",
-              source_load_id: null,
+              source_load_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
             },
           ],
         };
@@ -268,7 +268,8 @@ describe("posting engine service", () => {
               total_cents: 10000,
               tax_cents: 0,
               display_id: "INV-2026-00003",
-              source_load_id: null,
+              // Load hop present so this test isolates income-account fail-closed (not source_load).
+              source_load_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
             },
           ],
         };
@@ -303,6 +304,64 @@ describe("posting engine service", () => {
     await expect(promise).rejects.toBeInstanceOf(mod.InvoiceRevenueAccountError);
     await expect(promise).rejects.toMatchObject({ code: "INVOICE_LINE_REVENUE_UNRESOLVED", qbo_item_id: "unmapped-item" });
     // No revenue/AR posting lines were written — refused to post.
+    expect(calls.some((c) => c.sql.includes("INSERT INTO accounting.journal_entry_postings"))).toBe(false);
+  });
+
+  it("HARD-FAILS when load-revenue invoice has null source_load_id (P-INVOICE P0)", async () => {
+    const { client, calls } = createMockClient((sql) => {
+      if (sql.includes("FROM accounting.posting_batches")) return { rows: [] };
+      if (sql.includes("FROM accounting.invoices")) {
+        return {
+          rows: [
+            {
+              id: "9f943015-e3d2-4f1f-8732-c0ef4bbd25fc",
+              status: "sent",
+              issue_date: "2026-05-01",
+              total_cents: 10000,
+              tax_cents: 0,
+              display_id: "INV-2026-00004",
+              source_load_id: null,
+            },
+          ],
+        };
+      }
+      if (sql.includes("FROM accounting.invoice_lines il")) {
+        return {
+          rows: [
+            {
+              id: "22220000-0000-4000-8000-000000000002",
+              line_type: "linehaul",
+              line_total_cents: 10000,
+              display_order: 0,
+              description: "Linehaul",
+              qbo_item_id: "item-1",
+              income_account_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            },
+          ],
+        };
+      }
+      if (sql.includes("FROM accounting.chart_of_accounts_roles car")) {
+        return { rows: [{ account_id: "11111111-1111-4111-8111-111111111111" }] };
+      }
+      if (sql.includes("FROM catalogs.account_role_bindings")) return { rows: [] };
+      if (sql.includes("FROM catalogs.accounts")) return { rows: [] };
+      return { rows: [] };
+    });
+
+    withCurrentUserMock.mockImplementation(async (_userId: string, fn: (c: typeof client) => Promise<unknown>) => fn(client));
+
+    const mod = await import("./posting-engine.service.js");
+    const promise = mod.postSourceTransaction(
+      {
+        operating_company_id: "2cf17ad1-c728-4f54-a930-d6beed95eb37",
+        source_transaction_type: "invoice",
+        source_transaction_id: "9f943015-e3d2-4f1f-8732-c0ef4bbd25fc",
+        posting_purpose: "initial_post",
+      },
+      { userId: "cd9d01fe-a90d-4cd2-a96d-f6a443f7debc" }
+    );
+    await expect(promise).rejects.toBeInstanceOf(mod.InvoiceLoadSourceRequiredError);
+    await expect(promise).rejects.toMatchObject({ code: "INVOICE_LOAD_SOURCE_REQUIRED" });
     expect(calls.some((c) => c.sql.includes("INSERT INTO accounting.journal_entry_postings"))).toBe(false);
   });
 
