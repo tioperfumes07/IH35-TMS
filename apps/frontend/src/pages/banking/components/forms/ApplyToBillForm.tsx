@@ -169,7 +169,7 @@ export function ApplyToBillForm({ value, onChange, operatingCompanyId }: Props) 
             value={value.ap_account_id ? String(value.ap_account_id) : null}
             onChange={(next) => onChange({ ...value, ap_account_id: next ?? "" })}
             options={apAccountOptions}
-            createKind="category"
+            createKind="account"
             addNewLabel="+ Add new account"
             operatingCompanyId={operatingCompanyId}
             placeholder="Select A/P account…"
