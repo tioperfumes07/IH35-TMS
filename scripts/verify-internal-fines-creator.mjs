@@ -28,7 +28,21 @@ if (!creator) failures.push(`missing:${creatorPath}`);
 if (!backend) failures.push(`missing:${backendPath}`);
 
 // FIX 1 — pickers wired.
-if (creator && !creator.includes("listDrivers")) failures.push("frontend_missing_listDrivers_import");
+// The driver picker may call listDrivers DIRECTLY, or delegate to the shared
+// <DriverPickerWithCreate> (PLUS-DRIVER-SYSTEM) which calls it internally. Accept either, but when
+// it delegates, PROVE the shared component still queries listDrivers — otherwise "delegates to a
+// component" would be an unchecked escape hatch and the dead-text-input defect this guard exists to
+// catch could return through the shared picker.
+const sharedDriverPickerPath = "apps/frontend/src/components/drivers/DriverPickerWithCreate.tsx";
+const sharedDriverPicker = read(sharedDriverPickerPath);
+const delegatesToSharedPicker = Boolean(creator && creator.includes("DriverPickerWithCreate"));
+if (creator && !creator.includes("listDrivers") && !delegatesToSharedPicker) {
+  failures.push("frontend_missing_listDrivers_import");
+}
+if (delegatesToSharedPicker) {
+  if (!sharedDriverPicker) failures.push(`missing:${sharedDriverPickerPath}`);
+  else if (!sharedDriverPicker.includes("listDrivers")) failures.push("shared_driver_picker_missing_listDrivers");
+}
 if (creator && !creator.includes("listInternalFineReasons")) failures.push("frontend_missing_internal_fine_reasons_catalog_fetch");
 // The pickers must store the resolved uuids (not raw text) so the create button can ever enable.
 if (creator && !creator.includes("driver_uuid")) failures.push("frontend_missing_driver_uuid_binding");
