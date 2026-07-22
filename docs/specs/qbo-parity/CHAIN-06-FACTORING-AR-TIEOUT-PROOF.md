@@ -3,6 +3,13 @@
 **Status:** `[HOLD-FOR-JORGE — TIER 1 FINANCIAL]` — design doc + **read-only** proof only. No posting
 code, no migration, no flag flip, no live post. (CLAUDE.md §1.4/§1.7.)
 
+> **STATUS 2026-07-21 — CODE FIXED + GUARDS WIRED (verify-steps 920–922); live money path still requires owner flag/ops proof.**
+> The §5 / §7-A AR-subledger gap described below was **closed in code** (CONN-2 /
+> `applyCustomerPaymentSubledgerRelief` / `applyChargebackSubledgerRelief` on
+> `poster.service.ts`). Do **not** treat this doc’s historical “not patched here” language as current
+> defect state. **Not LIVE-VERIFIED with money** — flag/ops proof still owner-gated.
+> Cross-link: PR #3121 evidence map (`docs/trackers/TOP10-BUILDER-EVIDENCE-2026-07-21.md`).
+
 **Directive this proves (Jorge, 2026-07-05):** *"AR closes when the CUSTOMER pays the FACTORING
 company, NOT IH35."* i.e. the funding/advance event must **never** relieve A/R; only the customer's
 actual remittance to Faro relieves it.
@@ -150,28 +157,28 @@ poster uses — restores structural (not string-parsed) reverse drill. Flagged a
 
 ## 5. Tie-out mismatch discovered in the current model (reported per instructions, not silently fixed)
 
-**The GL relieves `ar_control`; the A/R subledger (`accounting.invoices`) never reflects it.**
-`postFactoringCustomerPaymentEvent` and `postFactoringChargebackEvent` write only to
+> **STATUS 2026-07-21 — CODE FIXED + GUARDS WIRED (verify-steps 920–922); live money path still requires owner flag/ops proof.**
+> Section below is **historical discovery text** (as of PR #2188 / CODER-34). The code gap is closed;
+> keep the narrative for audit trail. Do not re-open as an unfixed build item.
+
+**[HISTORICAL — pre-CONN-2]** The GL relieved `ar_control`; the A/R subledger (`accounting.invoices`)
+did not reflect it. `postFactoringCustomerPaymentEvent` and `postFactoringChargebackEvent` wrote only to
 `accounting.journal_entries` / `journal_entry_postings`. Neither the poster nor its caller
-(`factoring-advances.routes.ts` `/reserve-held` route, verified lines ~460-521) ever updates
-`accounting.invoices.amount_paid_cents` or `status`. Verified: `grep -n "amount_paid_cents\|status = 'paid'"
-apps/backend/src/accounting/factoring-advances.routes.ts` returns **no matches**. The route updates only
-`factoring_status` (`'advanced'` → `'reserve_held'`).
+(`factoring-advances.routes.ts` `/reserve-held` route, verified lines ~460-521) updated
+`accounting.invoices.amount_paid_cents` or `status`. Verified at discovery time:
+`grep -n "amount_paid_cents\|status = 'paid'" apps/backend/src/accounting/factoring-advances.routes.ts`
+returned **no matches**. The route updated only `factoring_status` (`'advanced'` → `'reserve_held'`).
 
-**Effect:** the moment `FACTORING_GL_POSTING_ENABLED` is flipped ON and a factored invoice's customer pays
-Faro, the **control account** (`SUM(journal_entry_postings) on ar_control`) drops by the invoice's face
-value, but the **subledger** (`SUM(accounting.invoices.amount_open_cents)`, the AR-aging source) does
-**not** — because `amount_paid_cents` was never incremented and `status` never moved off `'sent'`/`'factored'`.
-AR Aging (and any report reading `invoices.amount_open_cents`) will keep showing a factored-and-collected
-invoice as fully open even though the GL says it is closed. **This breaks the exact tie-out this doc exists
-to prove**, the moment the flag goes on — it does not break anything today (flag is OFF, no JE exists yet).
+**[HISTORICAL effect]** Flipping `FACTORING_GL_POSTING_ENABLED` ON without a subledger update would have
+left AR Aging (`invoices.amount_open_cents`) showing factored-and-collected invoices as open while the
+GL `ar_control` was closed — breaking this doc’s tie-out the moment the flag went on.
 
-**This is a real gap, surfaced per CLAUDE.md §9 — not patched here** (that would be new financial-write
-code in a design-doc PR). The fix belongs in the same future block that wires
-`FACTORING_GL_POSTING_ENABLED` ON: the `/reserve-held` (and `/chargeback`) route handlers must also set
-`accounting.invoices.amount_paid_cents = total_cents` (or the proportional share, if one advance ever
-covers multiple invoices — see `allocateByProportion`) and `status` accordingly, in the **same transaction**
-as the JE post, so subledger and control account move together. Flagged as open decision §7-A.
+**[CURRENT — code]** CONN-2 closed the gap inside the poster (not the route):
+`applyCustomerPaymentSubledgerRelief` SETs `amount_paid_cents` + `status` after customer-payment JEs;
+`applyChargebackSubledgerRelief` moves status to `'factored'` (leaves `amount_paid_cents` untouched by
+design — receivable reclassed, not collected). Guarded by verify-steps **920–922**.
+**Still not LIVE-VERIFIED with money** — owner flag/ops proof required before claiming live AR-aging
+tie-out.
 
 ## 6. Guard script
 
@@ -182,10 +189,12 @@ and the §5 subledger gap as informational findings (never fails the guard on da
 
 ## 7. Open decisions for Jorge
 
-- **A. (the real gap, §5).** Confirm the fix belongs to the eventual `FACTORING_GL_POSTING_ENABLED`
+- **A. (the real gap, §5).** ~~Confirm the fix belongs to the eventual `FACTORING_GL_POSTING_ENABLED`
   go-live block: update `accounting.invoices.amount_paid_cents`/`status` in the same transaction as
-  `postFactoringCustomerPaymentEvent`/`postFactoringChargebackEvent`. Recommended — do not flip the flag
-  ON in any entity until this is closed, or AR Aging will silently diverge from the GL.
+  `postFactoringCustomerPaymentEvent`/`postFactoringChargebackEvent`.~~
+  **STATUS 2026-07-21 — CODE FIXED + GUARDS WIRED (verify-steps 920–922); live money path still
+  requires owner flag/ops proof.** Subledger relief is in the poster; remaining owner gate is flag-on
+  + live ops proof (not a code rebuild). See PR #3121 evidence map.
 - **B.** Confirm reserve/fee/liability round-trip (Leg C) is the right acceptance bar before flag-on —
   recommend running this proof against a Neon branch with a handful of real Faro submissions replayed
   through the poster (flag ON, branch only) before Jorge approves prod flag-on.
@@ -202,3 +211,7 @@ Design doc + **read-only** proof only · no new GL math (the secured-borrowing e
 already merged, flag OFF) · no migration in this PR (roles/accounts already seeded by `202607013000`) ·
 surfaces the §5 subledger gap rather than patching it solo · `[HOLD-FOR-JORGE — TIER 1]`, never
 self-merged (§1.4).
+
+> **Addendum 2026-07-21:** §5 code gap later closed in CONN-2 + guarded by verify-steps 920–922.
+> This design doc remains the historical discovery record; see status banners above. Not LIVE-VERIFIED
+> with money until owner flag/ops proof.

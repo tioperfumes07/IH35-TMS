@@ -33,6 +33,18 @@
 ## ⚠️ LATENT BUG TO FIX BEFORE FLIPPING FACTORING FLAG (CHAIN-06, PR #2188)
 `postFactoringCustomerPaymentEvent`/`postFactoringChargebackEvent` relieve GL `ar_control` but do **NOT** update `accounting.invoices.amount_paid_cents`/`status`. When `FACTORING_GL_POSTING_ENABLED` flips ON, **AR-Aging (invoice subledger) will diverge from the GL.** Fix belongs in the flag-on block, before enabling.
 
+> **STATUS 2026-07-21 — CODE FIXED + GUARDS WIRED (verify-steps 920–922); live money path still requires owner flag/ops proof.**
+> Historical claim above described the pre-CONN-2 latent gap (PR #2188). Code now updates the invoice
+> subledger via `applyCustomerPaymentSubledgerRelief` / `applyChargebackSubledgerRelief` in
+> `apps/backend/src/accounting/factoring-posting/poster.service.ts`. Regression guards:
+> `scripts/verify-chain-06-invoice-ar-chain-proof.mjs` (step 920),
+> `scripts/verify-chain-06-ar-subledger-fix.mjs` (step 921),
+> `scripts/verify-chain-06-factoring-ar-tieout.mjs` (step 922).
+> **Not LIVE-VERIFIED with money** — `FACTORING_GL_POSTING_ENABLED` remains owner-gated; no claim of
+> live customer-payment → AR-aging tie-out without owner flag/ops proof.
+> Evidence map: PR #3121 (`docs/trackers/TOP10-BUILDER-EVIDENCE-2026-07-21.md`); design history:
+> `docs/specs/qbo-parity/CHAIN-06-FACTORING-AR-TIEOUT-PROOF.md` §5.
+
 ## CONNECTORS / DEFER
 - **Relay fuel (CONN-3):** real; API key SECRET → env `RELAY_API_KEY`, never committed; ingest built (PR #2181) with **24-month backfill** (`RELAY_FUEL_INGEST_BACKFILL_MONTHS`, monthly-chunked, idempotent). Fuel→expense posting is the held follow-up.
 - **EDI (CONN-4):** defer to the very end (only if a customer requires it).

@@ -1,6 +1,6 @@
 {
  "date": "2026-07-21",
- "generated_at_iso": "2026-07-21T19:56:09.147Z",
+ "generated_at_iso": "2026-07-21T23:10:09.416Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
@@ -13162,16 +13162,76 @@
  ],
  "merged_prs": [
   {
+   "number": 3112,
+   "title": "docs(tracker): register 2 financial findings from the 2026-07-21 merge wave (WC-REIMB, NPF-DUP)",
+   "mergedAt": "2026-07-21T23:02:20Z",
+   "branch": "docs/defer-weekly-close-reimbursements-gap"
+  },
+  {
+   "number": 3111,
+   "title": "[HOLD][docs-only] Rev-rec delivery two-event latch — Step 4 verification: PARTIAL (poster missing, owner-gated)",
+   "mergedAt": "2026-07-21T22:59:25Z",
+   "branch": "docs/hold-rev-rec-delivery-latch-verify-2026-07-21"
+  },
+  {
+   "number": 3110,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-21T22:36:28Z",
+   "branch": "chore/tracker-artifacts-sync-29863551219"
+  },
+  {
+   "number": 3109,
+   "title": "[HOLD-FOR-JORGE] fix(accounting): settle CoA roles into chart_of_accounts_roles + resolver (no legacy seed)",
+   "mergedAt": "2026-07-21T23:09:17Z",
+   "branch": "fix/settlement-coa-roles-resolver-hold"
+  },
+  {
    "number": 3107,
    "title": "fix(driver-finance): wire weekly-close settlement totals through canonical deduction applier [HOLD]",
    "mergedAt": "2026-07-21T16:09:45Z",
    "branch": "fix/weekly-close-apply-deductions-hold"
   },
   {
+   "number": 3106,
+   "title": "fix(gate): hold-merge-gate false-positives on docs/*.json evidence prose [GOVERNANCE]",
+   "mergedAt": "2026-07-21T22:37:17Z",
+   "branch": "fix/hold-gate-docs-json-false-positive"
+  },
+  {
    "number": 3105,
    "title": "fix(verify): ctx.run() fails closed on non-zero — HOLD (Rule 18 pipeline truth)",
    "mergedAt": "2026-07-21T15:54:38Z",
    "branch": "fix/verify-step-ctx-run-throws"
+  },
+  {
+   "number": 3104,
+   "title": "guard(accounting): CoA-roles route reachability = ALREADY_MOUNTED (verdict + guard, DO NOT MERGE)",
+   "mergedAt": "2026-07-21T22:37:00Z",
+   "branch": "fix/coa-roles-routes-reachable"
+  },
+  {
+   "number": 3103,
+   "title": "[HOLD-FOR-JORGE] docs(design): TONU cancellation→A/R linkage + accessorial CoA (HOLD, do not merge)",
+   "mergedAt": "2026-07-21T22:36:53Z",
+   "branch": "design/tonu-ar-accessorial-coa-hold"
+  },
+  {
+   "number": 3101,
+   "title": "DESIGN HOLD — CPA Step 3 CORRECTED: CoA role designation + accessorial/TONU (docs-only, DO NOT MERGE)",
+   "mergedAt": "2026-07-21T22:36:34Z",
+   "branch": "design/cpa-step3-coa-role-map-hold"
+  },
+  {
+   "number": 3100,
+   "title": "fix(ci): wire dead samsara + factoring verify guards (Rule 17)",
+   "mergedAt": "2026-07-21T22:16:33Z",
+   "branch": "fix/wire-dead-verify-guards"
+  },
+  {
+   "number": 3099,
+   "title": "fix(admin): migrate UserActivityTab to shared ParityTable",
+   "mergedAt": "2026-07-21T22:28:41Z",
+   "branch": "fix/paritytable-wave-2"
   },
   {
    "number": 3098,
@@ -16700,70 +16760,22 @@
    "title": "chore(registry): register 928 authored MASTER-6 blocks into .block-ready (honest extraction, no stubs)",
    "mergedAt": "2026-07-11T15:36:04Z",
    "branch": "chore/register-authored-batch1"
-  },
-  {
-   "number": 2344,
-   "title": "docs(skill): OWNER RULING — flag-flips are the owner's SOLE decision (no CPA/external gate)",
-   "mergedAt": "2026-07-11T15:16:46Z",
-   "branch": "docs/owner-ruling-flag-flips-sole-decision"
-  },
-  {
-   "number": 2343,
-   "title": "fix(ui): TIER-3 honest error states on list pages (0243-g8-5 / pattern-3) + regression guard",
-   "mergedAt": "2026-07-11T14:24:21Z",
-   "branch": "fix/list-error-states-rollout"
-  },
-  {
-   "number": 2342,
-   "title": "fix(ui): UI-03 PART A — inline \"+ Create\" vocab fix + coverage regression guard",
-   "mergedAt": "2026-07-11T14:00:59Z",
-   "branch": "fix/ui-03-parta-inline-create-guard"
-  },
-  {
-   "number": 2341,
-   "title": "docs(banking): UI-03 PART B multi-vendor split — design + verify-first (ALREADY BUILT, flag-gated OFF)",
-   "mergedAt": "2026-07-11T13:50:20Z",
-   "branch": "docs/ui-03-partb-multivendor-split-design"
-  },
-  {
-   "number": 2340,
-   "title": "fix(ui): D-CREATE-VERIFY — guard proves dead/@archived create forms stay UNMOUNTED",
-   "mergedAt": "2026-07-11T13:46:04Z",
-   "branch": "fix/dead-forms-unmounted-guard"
-  },
-  {
-   "number": 2339,
-   "title": "fix(ui): UI-02 PART 1 — create-forms-wired regression ratchet (verify-first: already wired)",
-   "mergedAt": "2026-07-11T12:57:27Z",
-   "branch": "fix/ui-create-forms-wired-guard"
-  },
-  {
-   "number": 2338,
-   "title": "docs(deferred): record P4-08 WO->bill double-bill finding (owner-gated UNIQUE index)",
-   "mergedAt": "2026-07-11T12:29:17Z",
-   "branch": "docs/p4-08-double-bill-finding"
-  },
-  {
-   "number": 2337,
-   "title": "fix(ui): UI-01 — QuickBooks-format calendars everywhere + no-nested-box ratchet (2 guards)",
-   "mergedAt": "2026-07-11T12:42:50Z",
-   "branch": "fix/ui-quickbooks-calendars-and-flat-boxes"
-  },
-  {
-   "number": 2336,
-   "title": "feat(schema): Phase-4 cross-module FK batch (P4-01/02/03) — safety↔insurance↔legal + asset↔unit [HOLD-FOR-JORGE — TIER 1]",
-   "mergedAt": "2026-07-11T12:15:32Z",
-   "branch": "feat/phase4-crossmodule-fks-batch"
-  },
-  {
-   "number": 2335,
-   "title": "feat(schema): P4-05 — safety.incidents.auto_created_claim_id FK -> insurance.claim [HOLD-FOR-JORGE — TIER 1]",
-   "mergedAt": "2026-07-11T11:53:35Z",
-   "branch": "feat/damage-claim-fk-p4"
   }
  ],
- "merged_pr_total": 2816,
+ "merged_pr_total": 2826,
  "hold_for_jorge": [
+  {
+   "number": 3111,
+   "title": "[HOLD][docs-only] Rev-rec delivery two-event latch — Step 4 verification: PARTIAL (poster missing, owner-gated)",
+   "mergedAt": "2026-07-21T22:59:25Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3109,
+   "title": "[HOLD-FOR-JORGE] fix(accounting): settle CoA roles into chart_of_accounts_roles + resolver (no legacy seed)",
+   "mergedAt": "2026-07-21T23:09:17Z",
+   "category": "HOLD"
+  },
   {
    "number": 3107,
    "title": "fix(driver-finance): wire weekly-close settlement totals through canonical deduction applier [HOLD]",
@@ -16771,9 +16783,27 @@
    "category": "HOLD"
   },
   {
+   "number": 3106,
+   "title": "fix(gate): hold-merge-gate false-positives on docs/*.json evidence prose [GOVERNANCE]",
+   "mergedAt": "2026-07-21T22:37:17Z",
+   "category": "HOLD"
+  },
+  {
    "number": 3105,
    "title": "fix(verify): ctx.run() fails closed on non-zero — HOLD (Rule 18 pipeline truth)",
    "mergedAt": "2026-07-21T15:54:38Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3103,
+   "title": "[HOLD-FOR-JORGE] docs(design): TONU cancellation→A/R linkage + accessorial CoA (HOLD, do not merge)",
+   "mergedAt": "2026-07-21T22:36:53Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3101,
+   "title": "DESIGN HOLD — CPA Step 3 CORRECTED: CoA role designation + accessorial/TONU (docs-only, DO NOT MERGE)",
+   "mergedAt": "2026-07-21T22:36:34Z",
    "category": "HOLD"
   },
   {

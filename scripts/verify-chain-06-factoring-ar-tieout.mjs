@@ -4,9 +4,14 @@
  *
  * CHAIN-06 — read-only tie-out proof: invoice -> A/R -> factoring (secured-borrowing, CODER-34) must
  * reconcile to the penny, and AR must relieve ONLY when the customer pays the factor — never at funding.
- * See docs/specs/qbo-parity/CHAIN-06-FACTORING-AR-TIEOUT-PROOF.md for the full design + the real
- * subledger gap this proof surfaces (accounting.invoices.amount_paid_cents is never updated by the
- * factoring poster — §5 of that doc). This script does NOT fix that gap; it detects it.
+ * See docs/specs/qbo-parity/CHAIN-06-FACTORING-AR-TIEOUT-PROOF.md for the full design.
+ *
+ * STATUS 2026-07-21 — CODE FIXED + GUARDS WIRED (verify-steps 920–922); live money path still
+ * requires owner flag/ops proof. The historical §5 claim that "amount_paid_cents is never updated by
+ * the factoring poster" is STALE: CONN-2 closed that code gap via applyCustomerPaymentSubledgerRelief /
+ * applyChargebackSubledgerRelief (static regression: verify-chain-06-ar-subledger-fix.mjs / step 921).
+ * This script remains the Leg B/C (and informational) live-DB tie-out; it does NOT claim LIVE-VERIFIED
+ * money until FACTORING_GL_POSTING_ENABLED is owner-gated ON with ops proof. Evidence: PR #3121.
  *
  * GROUNDED (live code, verified against apps/backend/src/accounting/factoring-posting/poster.service.ts,
  * PR #1770 / CODER-34, merged 2026-07-05, flag FACTORING_GL_POSTING_ENABLED default OFF):
@@ -26,12 +31,14 @@
  * Informational-only (never fails the guard, reported so it's not silently missed):
  *   subledgerGap — factored invoices whose GL says A/R was relieved (a customer-payment or chargeback-return
  *     JE exists referencing the invoice's factoring_advance_id) but accounting.invoices.amount_paid_cents
- *     was never incremented. Expected to be non-empty until the open decision in CHAIN-06-FACTORING-AR-
- *     TIEOUT-PROOF.md §5/§7-A is closed. Reported, not failed, so this guard can ship before that fix does.
+ *     still lags. After the CONN-2 code fix this should be empty for NEW posts; any remaining rows are
+ *     live/legacy data (or flag-OFF environments with no posts) — investigate, do not treat as "code
+ *     still open." Companion static guard (step 921) proves the poster wiring cannot regress silently.
  *
  * MODE: ADVISORY by default. CHAIN_06_TIEOUT_ENFORCE=true -> blocking (exit 1) on B/C only.
  * DEGRADE-SAFE: no DATABASE_URL -> skip with a warning and exit 0 — never crash CI.
  * Read-only. Never repairs a row.
+ * Wired via scripts/verify-steps/922-verify-chain-06-factoring-ar-tieout.mjs (Rule 17).
  */
 
 import process from "node:process";
@@ -118,9 +125,9 @@ async function main() {
     }
 
     if (Object.keys(info).length) {
-      console.log("\n[chain-06-tieout] INFORMATIONAL (not a failure — see CHAIN-06-FACTORING-AR-TIEOUT-PROOF.md §5/§7-A):");
+      console.log("\n[chain-06-tieout] INFORMATIONAL (not a failure — see CHAIN-06-STATUS-2026-07-21.md; code gap closed, investigate live/legacy rows):");
       for (const [name, rows] of Object.entries(info)) {
-        console.log(`  [${name}] ${rows.length} row(s) — invoices.amount_paid_cents not yet updated by the factoring poster.`);
+        console.log(`  [${name}] ${rows.length} row(s) — amount_paid_cents lags GL relief (legacy/live data or flag-OFF; poster wiring is guarded by step 921).`);
       }
     }
 
