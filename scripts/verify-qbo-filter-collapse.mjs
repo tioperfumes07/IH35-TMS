@@ -85,6 +85,7 @@ for (const [rel, marker] of [
   ["apps/frontend/src/pages/accounting/FixedAssetsPage.tsx", "data-fixed-assets-filter-toolbar"],
   ["apps/frontend/src/pages/accounting/PrepaidExpensesPage.tsx", "data-prepaid-filter-toolbar"],
   ["apps/frontend/src/pages/accounting/DailyReconPage.tsx", "data-daily-recon-filter-toolbar"],
+  ["apps/frontend/src/pages/accounting/AccountsPayableAgingPage.tsx", "data-ap-aging-filter-toolbar"],
 ]) {
   const src = read(rel);
   if (!src.includes("CollapsedListFilters")) {
