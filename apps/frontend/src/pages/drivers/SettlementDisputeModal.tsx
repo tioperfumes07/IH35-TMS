@@ -115,6 +115,7 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
   }
 
   return (
+    <>
     <Modal open={open} onClose={onClose} title="Submit settlement dispute">
       <div className="space-y-3 text-sm" data-testid="settlement-dispute-modal">
         <label className="block space-y-1">
@@ -207,22 +208,20 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
           </Button>
         </div>
       </div>
-      <CreateDriverModal
-        open={driverCreateOpen}
-        companyId={companyId}
-        onClose={() => setDriverCreateOpen(false)}
-        onCreated={(createdId) => {
-          setDriverId(createdId);
-          setSettlementId("");
-          setDriverCreateOpen(false);
-          void driversQuery.refetch();
-        }}
-        // Deliberate deviation from the naive CHROME-11 "parent is a modal/drawer -> shell=drawer"
-        // rule: ParityDrawer is z-40, this outer <Modal> is z-50 — a shell="drawer" nested creator
-        // would paint BEHIND the still-open Modal's backdrop (invisible/unusable), not on top of it.
-        // shell="drawer" is only correct when the parent is itself a z-40 ParityDrawer (VendorBillForm).
-        // Default shell="modal" here keeps both at z-50 so the nested creator stacks correctly.
-      />
     </Modal>
+    {/* Sibling (not child of <Modal>) — verify-no-nested-modal-frames forbids CreateDriverModal
+        inside the shared Modal JSX tree (double-frame). Same z-50 modal shell stacks on top. */}
+    <CreateDriverModal
+      open={driverCreateOpen}
+      companyId={companyId}
+      onClose={() => setDriverCreateOpen(false)}
+      onCreated={(createdId) => {
+        setDriverId(createdId);
+        setSettlementId("");
+        setDriverCreateOpen(false);
+        void driversQuery.refetch();
+      }}
+    />
+    </>
   );
 }
