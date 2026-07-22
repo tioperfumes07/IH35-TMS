@@ -74,6 +74,10 @@ for (const [rel, marker] of [
   ["apps/frontend/src/pages/accounting/ManualJEListPage.tsx", "data-manual-je-filter-toolbar"],
   ["apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx", "data-bill-payments-filter-toolbar"],
   ["apps/frontend/src/pages/accounting/FactoringListPage.tsx", "data-factoring-filter-toolbar"],
+  ["apps/frontend/src/pages/banking/TransfersListPage.tsx", "data-transfers-filter-toolbar"],
+  ["apps/frontend/src/pages/maintenance/components/ArrivingSoonFilterBar.tsx", "data-arriving-soon-filter-toolbar"],
+  ["apps/frontend/src/pages/drivers/SettlementDisputeList.tsx", "data-settlement-dispute-filter-toolbar"],
+  ["apps/frontend/src/pages/accounting/DisputeQueuePage.tsx", "data-dispute-queue-filter-toolbar"],
 ]) {
   const src = read(rel);
   if (!src.includes("CollapsedListFilters")) {
