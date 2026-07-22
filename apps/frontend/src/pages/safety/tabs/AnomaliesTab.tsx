@@ -4,6 +4,7 @@ import { listAnomalies, type SafetyAnomaly, type SafetyAnomalySeverity, type Saf
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AnomalyDetailDrawer } from "./AnomalyDetailDrawer";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { CollapsedListFilters } from "../../../components/table";
 
 const SEVERITY_FILTERS: Array<SafetyAnomalySeverity | "all"> = ["all", "low", "medium", "high", "critical"];
 const STATUS_FILTERS: Array<SafetyAnomalyStatus | "all"> = ["all", "new", "acknowledged", "resolved", "dismissed"];
@@ -79,30 +80,36 @@ export function AnomaliesTab() {
   );
 
   const filterBar = (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="text-xs font-semibold text-slate-700">Severity</span>
-      {SEVERITY_FILTERS.map((item) => (
-        <button
-          key={item}
-          type="button"
-          className={`rounded-sm px-2 py-1 text-xs ${severity === item ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
-          onClick={() => setSeverity(item)}
-        >
-          {item}
-        </button>
-      ))}
-      <span className="ml-3 text-xs font-semibold text-slate-700">Status</span>
-      {STATUS_FILTERS.map((item) => (
-        <button
-          key={item}
-          type="button"
-          className={`rounded-sm px-2 py-1 text-xs ${status === item ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
-          onClick={() => setStatus(item)}
-        >
-          {item}
-        </button>
-      ))}
-    </div>
+    <CollapsedListFilters
+      activeFilterCount={(severity !== "all" ? 1 : 0) + (status !== "all" ? 1 : 0)}
+      testIdPrefix="anomalies"
+      dataAttributes={{ "data-anomalies-filter-toolbar": "collapsed" }}
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-semibold text-slate-700">Severity</span>
+        {SEVERITY_FILTERS.map((item) => (
+          <button
+            key={item}
+            type="button"
+            className={`rounded-sm px-2 py-1 text-xs ${severity === item ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
+            onClick={() => setSeverity(item)}
+          >
+            {item}
+          </button>
+        ))}
+        <span className="ml-3 text-xs font-semibold text-slate-700">Status</span>
+        {STATUS_FILTERS.map((item) => (
+          <button
+            key={item}
+            type="button"
+            className={`rounded-sm px-2 py-1 text-xs ${status === item ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
+            onClick={() => setStatus(item)}
+          >
+            {item}
+          </button>
+        ))}
+      </div>
+    </CollapsedListFilters>
   );
 
   return (

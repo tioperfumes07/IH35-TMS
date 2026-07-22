@@ -15,6 +15,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { formatUsdCents } from "../../lib/money";
 
@@ -266,54 +267,60 @@ export function AccountingAuditTrailPage() {
   );
 
   const filterBar = (
-    <div className="grid gap-3 w-full md:grid-cols-4">
-      <label className="text-xs text-slate-600">
-        Source type
-        <input
-          className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
-          value={sourceType}
-          onChange={(e) => setSourceType(e.target.value)}
-          placeholder="invoice | bill | payment"
-        />
-      </label>
-      <label className="text-xs text-slate-600">
-        Source id
-        <input
-          className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
-          value={sourceId}
-          onChange={(e) => setSourceId(e.target.value)}
-          placeholder="uuid or display id"
-        />
-      </label>
-      <label className="text-xs text-slate-600">
-        Account
-        <select
-          className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
-          value={accountId}
-          onChange={(e) => setAccountId(e.target.value)}
-        >
-          <option value="">All accounts</option>
-          {accountOptions.map((account) => (
-            <option key={account.id} value={account.id}>
-              {account.account_number} - {account.account_name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <div className="flex items-end">
-        <Button
-          variant="secondary"
-          onClick={() => {
-            setSourceType("");
-            setSourceId("");
-            setAccountId("");
-            void eventQuery.refetch();
-          }}
-        >
-          Reset filters
-        </Button>
+    <CollapsedListFilters
+      activeFilterCount={(sourceType ? 1 : 0) + (sourceId ? 1 : 0) + (accountId ? 1 : 0)}
+      testIdPrefix="audit-trail"
+      dataAttributes={{ "data-audit-trail-filter-toolbar": "collapsed" }}
+    >
+      <div className="grid gap-3 w-full md:grid-cols-4">
+        <label className="text-xs text-slate-600">
+          Source type
+          <input
+            className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
+            value={sourceType}
+            onChange={(e) => setSourceType(e.target.value)}
+            placeholder="invoice | bill | payment"
+          />
+        </label>
+        <label className="text-xs text-slate-600">
+          Source id
+          <input
+            className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
+            value={sourceId}
+            onChange={(e) => setSourceId(e.target.value)}
+            placeholder="uuid or display id"
+          />
+        </label>
+        <label className="text-xs text-slate-600">
+          Account
+          <select
+            className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
+            value={accountId}
+            onChange={(e) => setAccountId(e.target.value)}
+          >
+            <option value="">All accounts</option>
+            {accountOptions.map((account) => (
+              <option key={account.id} value={account.id}>
+                {account.account_number} - {account.account_name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="flex items-end">
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setSourceType("");
+              setSourceId("");
+              setAccountId("");
+              void eventQuery.refetch();
+            }}
+          >
+            Reset filters
+          </Button>
+        </div>
       </div>
-    </div>
+    </CollapsedListFilters>
   );
 
   return (
