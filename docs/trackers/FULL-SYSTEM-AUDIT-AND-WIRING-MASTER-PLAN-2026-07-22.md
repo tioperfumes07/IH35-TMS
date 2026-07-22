@@ -419,7 +419,13 @@ See **§0.1 Example A2** for the full decision tree.
 
 ## 0.3 What Cursor WILL DO (execution — not aspiration)
 
-Ordered work. Update status in §4 when PRs open. **Do not stop after chrome.**
+**Sequence authority (owner 2026-07-22):** `docs/trackers/OWNER-EXECUTION-PLAN-2026-07-22.md`  
+**Scoreboard:** `docs/trackers/MODULE-DEEP-AUDIT-SCOREBOARD-2026-07-22.md` (30 modules)
+
+Order: **Phase 0 law lock → Phase 1 module deep audit (Jorge click-through + economics) → Phase 2 build that module’s PRs → Phase 3 leftover pile items → Phase 4 launch gates.**  
+Do **not** redefine done as chrome. Do **not** skip module audits to “burn the old pile” first — the pile *is* mostly this work.
+
+Ordered tactical table (still valid inside Phase 1–2):
 
 | # | Action | Example standard | Output |
 |---|--------|------------------|--------|
@@ -433,10 +439,13 @@ Ordered work. Update status in §4 when PRs open. **Do not stop after chrome.**
 | 8 | Law §9 scoreboard FAIL→PASS one path at a time | TRUE-CONNECTIVITY-MASTER | Expense→Bill→Settle→… with live proof |
 | 9 | Tab-within-tab sweep | Arch design tabs | Every Drivers/Accounting/… nested tab gets A–E |
 | 10 | Never claim done without | §0 Layer E | Live proof or UNVERIFIED |
+| 11 | **Module deep audits (30)** per OWNER-EXECUTION-PLAN | Jorge click-through + economics | Desktop `modules/<name>.md` + scoreboard |
 
-**Remind phrase (paste to Cursor):**
+**Remind phrases (paste to Cursor):**
 
-> Execute `docs/trackers/FULL-SYSTEM-AUDIT-AND-WIRING-MASTER-PLAN-2026-07-22.md` §§0–0.3 — Insurance/Safety/Accident examples + Create Advance SHOULD-BE stories (personal→settlement, lumper→expense, load/truck/trailer/bank). Do the table in §0.3. Do not redefine done as chrome.
+> Execute `docs/trackers/OWNER-EXECUTION-PLAN-2026-07-22.md` — do not invent a new sequence.
+
+> Execute `docs/trackers/FULL-SYSTEM-AUDIT-AND-WIRING-MASTER-PLAN-2026-07-22.md` §§0–0.3 — Insurance/Safety/Accident examples + Create Advance SHOULD-BE stories. Do not redefine done as chrome.
 
 ---
 

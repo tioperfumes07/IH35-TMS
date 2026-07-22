@@ -18,6 +18,8 @@ You are building a **real operating system of record** — QuickBooks (accountin
 3. **The active product is the new design** — not half-written replacements. Defect class: `DUAL_PATH_OLD_ACTIVE` / `ORPHAN_NEW` (new code written, old route/format still what users hit; ComingSoon stub mounted while real tab exists elsewhere).
 4. **No stone left unturned** = every module, every tab, every money and ops hop — **linked, mounted, communicating, proven**.
 5. **Deep linkage is SYSTEM-WIDE** (owner 2026-07-22) — **not** Insurance Claims / Legal only. Safety, Compliance, Vehicles/Fleet, Trailers, Dispatch, Settlements, Escrow, Banking, Accounting, Maintenance, Drivers — same both-way bar. Claims economics (A2) is a **sample**, not the scope boundary.
+6. **Module deep-audit sequence (owner 2026-07-22)** — Follow `docs/trackers/OWNER-EXECUTION-PLAN-2026-07-22.md`. Jorge’s audit = **click-through** (every tab, every link both ways, QBO chrome, no boxes-in-boxes, correct catalogs, full wizards) **plus** economics/CoA/banking/GL wiring. Scoreboard: `MODULE-DEEP-AUDIT-SCOREBOARD-2026-07-22.md` (30 modules). **Do not** drain random pile blocks before the module is audited and its fix PRs are opened. Remind: *Execute OWNER-EXECUTION-PLAN-2026-07-22.md*.
+
 
 ## Non-stop workstreams (do not drop)
 

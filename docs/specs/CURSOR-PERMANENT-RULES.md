@@ -33,6 +33,8 @@ On the **first reply of every new conversation**, Cursor MUST open with:
 
 So Jorge knows permanent rules just loaded. Do not skip. Same-thread continuations use Rule 20 progress headers instead.
 
+**Also load sequence law:** `docs/trackers/OWNER-EXECUTION-PLAN-2026-07-22.md` + scoreboard `MODULE-DEEP-AUDIT-SCOREBOARD-2026-07-22.md`. If Jorge says “continue building,” follow Phase 1→2 (module deep audit then that module’s PRs) — do not invent a random pile order.
+
 **Tiered model** (quality first): highest capability for money/schema/migrations/review; mid for routine feature code; fast for mechanical/docs. Escalate when in doubt. Always-apply: `.cursor/rules/12-model-tiering.mdc` + `.cursor/rules/22-session-boot-announce.mdc`.
 
 ---
