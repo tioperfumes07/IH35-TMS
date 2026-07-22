@@ -371,7 +371,7 @@ describe("reverse drill-through production behavior", () => {
 
     expect(await screen.findByRole("link", { name: "EXP-300" })).toHaveAttribute(
       "href",
-      "/accounting/expenses/list?expense_id=expense-300",
+      "/accounting/expenses/expense-300",
     );
     expect(screen.getByText(/Deep-link expense/)).toHaveTextContent("highlighted in the list below");
   });
@@ -392,7 +392,7 @@ describe("reverse drill-through production behavior", () => {
 
     expect(await screen.findByRole("link", { name: "EXP-301" })).toHaveAttribute(
       "href",
-      "/accounting/expenses/list?expense_id=expense-route-301",
+      "/accounting/expenses/expense-route-301",
     );
     expect(screen.getByText(/Deep-link expense/)).toHaveTextContent("highlighted in the list below");
   });

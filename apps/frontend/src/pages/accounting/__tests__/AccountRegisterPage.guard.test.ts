@@ -35,6 +35,7 @@ describe("AccountRegisterPage CA-05 guard", () => {
       "/accounting/bills",
       "/accounting/bill-payments",
       "/accounting/expenses/list",
+      "/accounting/expenses/",
       "/driver-finance/settlements",
       "/accounting/journal-entries",
       "/banking/transactions",
@@ -50,6 +51,10 @@ describe("AccountRegisterPage CA-05 guard", () => {
     expect(page).toMatch(
       /t === ["']bank_categorization["'] && reference\)\s*return [`'"]\/banking\/transactions\?txn_id=\$\{reference\}[`'"]/
     );
+  });
+
+  it("embeds expense id in sourceRoute when reference is present", () => {
+    expect(page).toMatch(/t === ["']expense["'] && reference\)\s*return [`'"]\/accounting\/expenses\/\$\{reference\}[`'"]/);
   });
 
   it("formats money in cents (/100) — no 10x bug", () => {

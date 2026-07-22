@@ -26,9 +26,9 @@ describe("resolveEntityRoute", () => {
     expect(resolveEntityRoute("claim", "id1")).toBe("/safety/insurance/claims?claim_id=id1");
   });
 
-  it("resolves liability and expense to list query-param drill-through (real consumers)", () => {
+  it("resolves liability to list query-param and expense to per-id detail", () => {
     expect(resolveEntityRoute("liability", "id1")).toBe("/liabilities?liability_id=id1");
-    expect(resolveEntityRoute("expense", "id1")).toBe("/accounting/expenses/list?expense_id=id1");
+    expect(resolveEntityRoute("expense", "id1")).toBe("/accounting/expenses/id1");
     expect(resolveEntityRoute("bank_transaction", "txn1")).toBe("/banking/transactions?txn_id=txn1");
     expect(resolveEntityRoute("bill", "id1")).toBe("/accounting/bills/id1");
   });
@@ -70,7 +70,7 @@ describe("EntityLink", () => {
     expect(screen.getByRole("link", { name: "BILL-0001" })).toHaveAttribute("href", "/accounting/bills/bill-1");
     expect(screen.getByRole("link", { name: "EXP-0001" })).toHaveAttribute(
       "href",
-      "/accounting/expenses/list?expense_id=exp-1",
+      "/accounting/expenses/exp-1",
     );
   });
 

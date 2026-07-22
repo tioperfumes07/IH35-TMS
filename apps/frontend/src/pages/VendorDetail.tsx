@@ -4,7 +4,7 @@ import { MoneyInput } from "../components/forms/MoneyInput";
 import { ParityTable } from "../components/parity/ParityTable";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { listVendorBills, type VendorBill } from "../api/accounting";
+import { listExpenses, listVendorBills, type ExpenseListRow, type VendorBill } from "../api/accounting";
 import { ApiError, apiRequest } from "../api/client";
 import { listVendorBillPayments, recordVendorBillPayment, type VendorBillPaymentListRow } from "../api/vendors";
 import { getVendor, updateVendor, listPaymentTermOptions } from "../api/mdata";
@@ -87,6 +87,11 @@ export function VendorDetailPage() {
     sortDirection: billSortDirection,
     onSortChange: onBillSortChange,
   } = useUrlSort({ key: "bill_sort", dir: "bill_dir" });
+  const {
+    sortKey: expenseSortKey,
+    sortDirection: expenseSortDirection,
+    onSortChange: onExpenseSortChange,
+  } = useUrlSort({ key: "expense_sort", dir: "expense_dir" });
   const [activeTab, setActiveTab] = useState<VendorTab>("Profile");
   const [billPayOpen, setBillPayOpen] = useState(false);
   const [billPayDate, setBillPayDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -128,6 +133,11 @@ export function VendorDetailPage() {
   const billsQuery = useQuery({
     queryKey: ["vendor-ap-bills", companyId, id],
     queryFn: () => listVendorBills(companyId, { vendor_id: id, include_balance: true, has_balance: true, limit: 200 }),
+    enabled: Boolean(companyId) && Boolean(id) && activeTab === "A/P",
+  });
+  const vendorExpensesQuery = useQuery({
+    queryKey: ["vendor-expenses", companyId, id],
+    queryFn: () => listExpenses(companyId, { vendor_uuid: id, limit: 200 }).then((res) => res.rows),
     enabled: Boolean(companyId) && Boolean(id) && activeTab === "A/P",
   });
   const vendorIntegrityQuery = useQuery({
@@ -1091,6 +1101,49 @@ export function VendorDetailPage() {
               ]}
             />
           ) : null}
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <div className="mb-2 text-sm font-semibold text-gray-900">Expenses</div>
+            {vendorExpensesQuery.isError ? <p className="text-sm text-red-600">Could not load expenses.</p> : null}
+            {!vendorExpensesQuery.isError ? (
+              <ParityTable<ExpenseListRow>
+                rows={vendorExpensesQuery.data ?? []}
+                rowKey={(e) => e.id}
+                loading={vendorExpensesQuery.isLoading}
+                storageKey="vendor-detail-expenses"
+                emptyText="No expenses for this vendor."
+                exportFilename="vendor-expenses"
+                sortKey={expenseSortKey}
+                sortDirection={expenseSortDirection}
+                onSortChange={onExpenseSortChange}
+                columns={[
+                  {
+                    key: "expense_number",
+                    label: "Expense #",
+                    sortable: true,
+                    sortValue: (e) => e.expense_number ?? e.id,
+                    render: (e) => (
+                      <EntityLink kind="expense" id={e.id} label={e.expense_number ?? e.id.slice(0, 8)} />
+                    ),
+                  },
+                  { key: "transaction_date", label: "Date", sortable: true, render: (e) => e.transaction_date },
+                  {
+                    key: "total_amount_cents",
+                    label: "Amount",
+                    sortable: true,
+                    cellClass: "text-right tabular-nums",
+                    render: (e) => money.format((Number(e.total_amount_cents) || 0) / 100),
+                  },
+                  { key: "status", label: "Status", sortable: true, render: (e) => e.status },
+                  {
+                    key: "posting_status",
+                    label: "GL",
+                    sortable: true,
+                    render: (e) => <span className="capitalize">{e.posting_status}</span>,
+                  },
+                ]}
+              />
+            ) : null}
+          </div>
         </div>
       ) : null}
 

@@ -519,6 +519,8 @@ export function listExpenses(
     status?: ExpenseListStatus;
     date_from?: string;
     date_to?: string;
+    vendor_uuid?: string;
+    load_id?: string;
     limit?: number;
     offset?: number;
   } = {}
@@ -527,10 +529,76 @@ export function listExpenses(
   if (params.status) query.set("status", params.status);
   if (params.date_from) query.set("date_from", params.date_from);
   if (params.date_to) query.set("date_to", params.date_to);
+  if (params.vendor_uuid) query.set("vendor_uuid", params.vendor_uuid);
+  if (params.load_id) query.set("load_id", params.load_id);
   if (params.limit !== undefined) query.set("limit", String(params.limit));
   if (params.offset !== undefined) query.set("offset", String(params.offset));
   const qs = query.toString();
   return apiRequest<{ rows: ExpenseListRow[] }>(withCompany(`/api/v1/expenses${qs ? `?${qs}` : ""}`, operatingCompanyId));
+}
+
+export type ExpenseDetailLine = {
+  id: string;
+  line_sequence: number;
+  amount_cents: number | string | null;
+  description: string | null;
+  expense_account_uuid: string | null;
+  expense_account_number: string | null;
+  expense_account_name: string | null;
+};
+
+export type ExpenseDetail = {
+  id: string;
+  expense_number: string | null;
+  transaction_date: string;
+  total_amount_cents: number | string;
+  status: ExpenseListStatus;
+  posting_status: ExpensePostingStatus;
+  memo: string | null;
+  load_id: string | null;
+  load_number: string | null;
+  vendor_uuid: string | null;
+  vendor_name: string | null;
+  driver_uuid: string | null;
+  driver_first_name: string | null;
+  driver_last_name: string | null;
+  journal_entry_id: string | null;
+  reversed_by_je_id: string | null;
+  posted_at: string | null;
+  created_at: string;
+  payment_account_uuid: string | null;
+  payment_account_number: string | null;
+  payment_account_name: string | null;
+  unit_id: string | null;
+  unit_display_id: string | null;
+  linked_work_order_uuid: string | null;
+  work_order_display_id: string | null;
+};
+
+export function getExpense(id: string, operatingCompanyId: string) {
+  return apiRequest<{ expense: ExpenseDetail; lines: ExpenseDetailLine[] }>(
+    withCompany(`/api/v1/expenses/${id}`, operatingCompanyId)
+  );
+}
+
+export type JournalEntrySourceLink = {
+  journal_entry_posting_id: string;
+  line_sequence: number;
+  source_transaction_type: string | null;
+  source_transaction_id: string | null;
+  source_transaction_line_id: string | null;
+  posting_batch_id: string | null;
+  source_link_id: string | null;
+  linked_object_type: string | null;
+  linked_object_id: string | null;
+  relationship_role: string | null;
+  source_link_created_at: string | null;
+};
+
+export function getJournalEntrySourceLinks(id: string, operatingCompanyId: string) {
+  return apiRequest<{ journal_entry_id: string; source_links: JournalEntrySourceLink[] }>(
+    withCompany(`/api/v1/accounting/journal-entries/${id}/source-links`, operatingCompanyId)
+  );
 }
 
 export function listBills(

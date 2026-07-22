@@ -290,6 +290,7 @@ export function assertExpensesListRoute({
     ["AccountingHub Expenses tab", accountingHub, /id:\s*["']expenses["'][^}]*to:\s*["']\/accounting\/expenses\/list["']/],
     ["QboStyleHomePage View link", home, /<Link\s+to=["']\/accounting\/expenses\/list["'][^>]*>View →<\/Link>/],
     ["AccountRegister expense fallback", accountRegister, /t === ["']expense["']\)\s*return ["']\/accounting\/expenses\/list["']/],
+    ["AccountRegister expense with id", accountRegister, /t === ["']expense["'] && reference\)\s*return [`'"]\/accounting\/expenses\/\$\{reference\}[`'"]/],
     ["RecordExpenseModal View all link", recordExpenseModal, /<Link[^>]*to=["']\/accounting\/expenses\/list["'][^>]*>[\s\S]*?View all expenses[\s\S]*?<\/Link>/],
   ];
   for (const [name, src, okRe] of browseTargets) {
@@ -305,8 +306,8 @@ export function assertExpensesListRoute({
 
   if (!entityLink) {
     errors.push("EntityLink: file missing");
-  } else if (!/`\/accounting\/expenses\/list\?expense_id=\$\{id\}`/.test(entityLink)) {
-    errors.push("EntityLink: per-ID expense drill-through must remain /list?expense_id=");
+  } else if (!/`\/accounting\/expenses\/\$\{id\}`/.test(entityLink)) {
+    errors.push("EntityLink: per-ID expense drill-through must be /accounting/expenses/${id}");
   }
 
   errors.push(...wrongDestinationErrors({
@@ -351,10 +352,10 @@ function selftest() {
     subnavWrapper: `{ label: "Expense", to: "/accounting/expenses" }`,
     subnavManifest: `${childrenBlock}${flatBlock}${groupEntry}`,
     accountingHub: `{ id: "expenses", label: "Expenses", to: "/accounting/expenses/list" }`,
-    accountRegister: `if (t === "expense") return "/accounting/expenses/list";`,
+    accountRegister: `if (t === "expense" && reference) return \`/accounting/expenses/\${reference}\`; if (t === "expense") return "/accounting/expenses/list";`,
     expenseCreate: `navigate("/accounting/expenses/list"); navigate("/accounting/expenses/list");`,
     expensesList: `navigate("/accounting/expenses/list?expense_id=1");`,
-    entityLink: "return `/accounting/expenses/list?expense_id=${id}`;",
+    entityLink: "return `/accounting/expenses/${id}`;",
     recordExpenseModal: `<Link to="/accounting/expenses/list">View all expenses</Link>`,
   };
   const goodErrors = assertExpensesListRoute(good);
