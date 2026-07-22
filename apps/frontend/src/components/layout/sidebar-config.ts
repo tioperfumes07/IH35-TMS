@@ -181,10 +181,18 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "Account Visibility", to: "/banking/account-visibility" },
       ];
     case "safety":
+      // Active-path law: flyout must land on V6.4 canonical tab routes (SAFETY_GROUPS), not
+      // ComingSoon stubs. Extra live surfaces (CSA Mitigation, Anomaly Alerts) stay ADDITIVE
+      // (Rule 07 — never delete); they are outside the 28-tab groups but remain reachable.
       return [
+        { label: "Safety Home", to: "/safety/home" },
         { label: "Driver Files", to: "/safety/driver-files" },
+        { label: "Hours of Service", to: "/safety/hos" },
         { label: "DOT Compliance", to: "/safety/dot-compliance" },
         { label: "DOT Inspections", to: "/safety/dot-inspections" },
+        { label: "CSA Score", to: "/safety/csa-score" },
+        { label: "Accidents & Incidents", to: "/safety/accidents" },
+        { label: "Internal Fines", to: "/safety/internal-fines" },
         { label: "CSA Mitigation", to: "/safety/csa-mitigation" },
         { label: "Anomaly Alerts", to: "/safety/anomaly-alerts" },
       ];

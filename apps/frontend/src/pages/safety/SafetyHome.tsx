@@ -1,6 +1,9 @@
 /**
  * @deprecated Sunset 2026-09-01 — legacy v5 Safety shell superseded by `/safety/*` tab routes.
- * Accident workflow canonical home: `AccidentsPage` at `/safety/accidents` (Block A23-3).
+ * @archived — Safety active-path (V6.4): flat SAFETY_SUBNAV shell is NOT the live mount.
+ * Live shell: `SafetyLayout` + `SafetyGroupNav` + `SAFETY_TABS_CONFIG` (28 tabs / 9 groups).
+ * Live home: `tabs/SafetyHomeTab` at `/safety/home`.
+ * Accident workflow canonical: `AccidentsPage` via `AccidentsIncidentsTab` at `/safety/accidents`.
  * ARCHIVE-not-DELETE: retained for reference; no active manifest imports.
  */
 import { useEffect, useMemo, useState } from "react";

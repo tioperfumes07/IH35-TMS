@@ -1,3 +1,9 @@
+/**
+ * @archived — Safety active-path (V6.4)
+ * Duplicate of `SAFETY_TABS` / TABS in `components/safety/SAFETY_TABS_CONFIG.ts`.
+ * Canonical inventory lives in SAFETY_TABS_CONFIG (SAFETY_CANONICAL_TAB_COUNT = 28).
+ * ARCHIVE-not-DELETE: keep for historical architecture-verification references only.
+ */
 // Architecture verification helper: keeps an explicit tab list in pages/safety.
 export const TABS = [
   { id: "driver-files" },

@@ -1,3 +1,9 @@
+/**
+ * @archived — Safety active-path (V6.4)
+ * Superseded by `tabs/ComplaintsTab.tsx` (safetyV64 create/patch/void) at `/safety/complaints`.
+ * ARCHIVE-not-DELETE: retained for reference / deprecated SafetyHome.tsx cluster only.
+ * Do not re-mount in routes/manifest.tsx. Sunset: 2026-09-01.
+ */
 import { useMemo, useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";

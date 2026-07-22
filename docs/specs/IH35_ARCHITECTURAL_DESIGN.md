@@ -355,8 +355,15 @@ MPG Fleet Avg · MTD Gallons · MTD Fuel Cost · IFTA Tax (Q-to-date) · Savings
 - Integrity Reports: four sub-tabs (WO Cost, Fuel MPG, Driver Dwell, HOS Pattern) with per-row Review action.
 
 ### Route compatibility
-- `/safety` redirects to `/safety/driver-files`.
+- `/safety` redirects to `/safety/home` (S-11 aggregate home; then users reach any of the 28 tabs via hover-dropdown).
 - Legacy bookmark route `/safety/vehicle-inspections` redirects to `/safety/idvr`.
+- Group bookmark aliases redirect to the first Live tab in that group (never ComingSoon while tabs exist):
+  - `/safety/hours-of-service` → `/safety/hos`
+  - `/safety/inspections` → `/safety/dot-inspections`
+  - `/safety/fines-and-discipline` → `/safety/internal-fines`
+  - `/safety/driver-financial-safety` → `/safety/escrow-record`
+  - `/safety/workforce-planning` → `/safety/driver-scheduler`
+- **Active path (LOCKED 2026-07-21):** live mount is `SafetyLayout` + `SAFETY_TABS_CONFIG` / `SafetyGroupNav` + `pages/safety/tabs/*`. Legacy flat-shell `SafetyHome.tsx` and pre-V64 pages `DotInspectionsPage` / `ComplaintsPage` are `@archived` (Rule 07) and must not be re-registered in `manifest.tsx`. CI: `scripts/verify-safety-active-path.mjs`.
 
 ### A23-1 — Safety route registration gap (2026-06-03)
 
