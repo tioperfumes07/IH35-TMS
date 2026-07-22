@@ -4,8 +4,16 @@ function q(companyId: string) {
   return `operating_company_id=${encodeURIComponent(companyId)}`;
 }
 
-export type CashAdvancePurpose = "fuel_deposit" | "border_fee" | "family_emergency" | "vendor_payment" | "other";
+export type CashAdvancePurpose =
+  | "fuel_deposit"
+  | "border_fee"
+  | "family_emergency"
+  | "vendor_payment"
+  | "lumper"
+  | "other";
 export type CashAdvanceMethod = "direct_bank_transfer" | "wire" | "comdata" | "in_person_check";
+export type CashAdvanceRecoveryMode = "full" | "amortize";
+export type CashAdvanceEconomicRouting = "driver_settlement" | "load_expense";
 
 export type CashAdvanceCreatePayload = {
   driver_id: string;
@@ -15,14 +23,21 @@ export type CashAdvanceCreatePayload = {
   recipient_info: {
     recipient_type: "driver" | "vendor" | "third_party";
     recipient_name?: string;
+    bank_reference?: string;
     notes?: string;
   };
   linked_bill_id?: string;
-  repayment_schedule: {
+  repayment_schedule?: {
     weekly_installment_amount: number;
     total_periods: number;
     cadence: "weekly" | "biweekly";
   };
+  load_id?: string | null;
+  unit_id?: string | null;
+  trailer_id?: string | null;
+  from_bank_account_id?: string | null;
+  recovery_mode?: CashAdvanceRecoveryMode;
+  economic_routing?: CashAdvanceEconomicRouting;
 };
 
 export function getCashAdvancesKpis(companyId: string) {
@@ -55,7 +70,13 @@ export function listUnpaidBills(companyId: string) {
 export function markCashAdvanceDisbursed(
   id: string,
   companyId: string,
-  payload: { disbursement_method?: CashAdvanceMethod; bank_txn_id?: string; comdata_txn_id?: string; check_number?: string; wire_confirmation_ref?: string }
+  payload: {
+    disbursement_method?: CashAdvanceMethod;
+    bank_txn_id?: string;
+    comdata_txn_id?: string;
+    check_number?: string;
+    wire_confirmation_ref?: string;
+  }
 ) {
   return apiRequest<Record<string, unknown>>(`/api/v1/cash-advances/${id}/mark-disbursed?${q(companyId)}`, {
     method: "PATCH",
