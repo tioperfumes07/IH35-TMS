@@ -100,19 +100,22 @@ describe("VehicleProfilePage", () => {
     vi.mocked(accountingApi.listClassesForJe).mockResolvedValue({ classes: [] });
   });
 
-  it("renders all eleven profile sections", async () => {
+  it("renders profile sections with ServiceTimeline as the sole activity surface (DUALPATH-06)", async () => {
     render(wrap(<VehicleProfilePage />));
     expect(await screen.findByTestId("vp-section-1-identity")).toBeInTheDocument();
     expect(screen.getByTestId("vp-section-2-telemetry")).toBeInTheDocument();
     expect(screen.getByTestId("vp-section-3-driver")).toBeInTheDocument();
     expect(screen.getByTestId("vp-section-4-load")).toBeInTheDocument();
     expect(screen.getByTestId("vp-section-5-maintenance")).toBeInTheDocument();
+    expect(screen.getByTestId("service-timeline")).toBeInTheDocument();
     expect(screen.getByTestId("vp-section-6-compliance")).toBeInTheDocument();
     expect(screen.getByTestId("vp-section-7-reefer")).toBeInTheDocument();
     expect(screen.getByTestId("vp-section-8-financial")).toBeInTheDocument();
-    expect(screen.getByTestId("vp-section-9-activity")).toBeInTheDocument();
     expect(screen.getByTestId("vp-section-10-documents")).toBeInTheDocument();
     expect(screen.getByTestId("vp-section-11-action-bar")).toBeInTheDocument();
+    // DUALPATH-06 fix: the old raw-JSON RecentActivitySection widget must not render live.
+    expect(screen.queryByTestId("vp-section-9-activity")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("vehicle-recent-activity")).not.toBeInTheDocument();
   });
 
   it("shows comparable banner when deviation above 15%", async () => {

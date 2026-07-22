@@ -1,4 +1,11 @@
-/** @deprecated Sunset 2026-09-01 — trailer WO history canonical via ServiceTimeline (B31); equipment log + docs remain here. */
+/**
+ * @archived — Fleet Trailer Profile active-path (DUALPATH-07, 2026-07-22)
+ * Equipment log / docs / WO-history dump. Superseded by
+ * `components/maintenance/ServiceTimeline.tsx` (B31, equipment_id-filtered per B26), the sole
+ * canonical activity surface on `TrailerProfilePage` (`tp-section-5-maintenance`). No longer
+ * imported/rendered by `TrailerProfilePage.tsx` — ARCHIVE-not-DELETE per Rule 07. Enforced by
+ * `verify-fleet-profile-no-dual-activity.mjs`. Sunset 2026-09-01.
+ */
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { listFiles, type DocsFile } from "../../api/docs";
