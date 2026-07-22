@@ -13,7 +13,7 @@ import {
 } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
-import { Modal } from "../../components/Modal";
+import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
@@ -41,6 +41,10 @@ function statusPill(status: FactoringAdvanceDetail["status"]) {
 }
 
 type ActionKind = "advance" | "reserve_held" | "release" | "recourse" | "void";
+
+// CHROME-14: the advance/reserve/release/recourse/void action shell below was swapped from centered
+// Modal to ParityDrawer (QBO side-panel chrome), with Cancel/Confirm moved into the drawer's sticky
+// footer. Presentational only — every mutationFn branch and payload field above is untouched.
 
 export function FactoringDetailPage() {
   const { id = "" } = useParams();
@@ -252,7 +256,7 @@ export function FactoringDetailPage() {
       </DataPanel>
       {selectedCompanyId ? <FactorReserveCard operatingCompanyId={selectedCompanyId} /> : null}
 
-      <Modal
+      <ParityDrawer
         open={Boolean(action)}
         title={
           action === "advance"
@@ -266,6 +270,16 @@ export function FactoringDetailPage() {
                   : "Void Factoring Batch"
         }
         onClose={() => setAction(null)}
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setAction(null)}>
+              Cancel
+            </Button>
+            <Button loading={mutation.isPending} onClick={() => mutation.mutate()}>
+              Confirm
+            </Button>
+          </div>
+        }
       >
         <div className="space-y-2 text-sm">
           {action === "advance" ? (
@@ -317,17 +331,8 @@ export function FactoringDetailPage() {
               <textarea className="min-h-[80px] rounded-sm border border-gray-300 p-2 text-[13px]" value={notes} onChange={(event) => setNotes(event.target.value)} />
             </label>
           ) : null}
-
-          <div className="flex justify-end gap-2 border-t border-gray-200 pt-2">
-            <Button variant="secondary" onClick={() => setAction(null)}>
-              Cancel
-            </Button>
-            <Button loading={mutation.isPending} onClick={() => mutation.mutate()}>
-              Confirm
-            </Button>
-          </div>
         </div>
-      </Modal>
+      </ParityDrawer>
     </AccountingSubNavWrapper>
   );
 }

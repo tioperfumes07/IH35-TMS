@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "../Button";
-import { Modal } from "../Modal";
+import { ParityDrawer } from "../parity/ParityDrawer";
 import { ApiError } from "../../api/client";
 
 /** Human-readable message out of a void API failure (validation details / field message / text). */
@@ -37,10 +37,15 @@ type Props = {
 };
 
 /**
- * In-app modal for a financial VOID/reversal — replaces native window.prompt()/confirm() on money actions.
- * QuickBooks/NetSuite parity: states what is being voided (ref + amount + period), REQUIRES a reason (an
- * audit-trail requirement), and states that a reversing entry will be posted. Submit is disabled until the
- * reason meets the minimum length; API errors are surfaced instead of hanging.
+ * In-app VOID/reversal shell for a financial action — replaces native window.prompt()/confirm() on money
+ * actions. QuickBooks/NetSuite parity: states what is being voided (ref + amount + period), REQUIRES a
+ * reason (an audit-trail requirement), and states that a reversing entry will be posted. Submit is
+ * disabled until the reason meets the minimum length; API errors are surfaced instead of hanging.
+ *
+ * CHROME-14: outer shell swapped from centered Modal to ParityDrawer (QBO side-panel chrome), with the
+ * Cancel/Void buttons in the drawer's sticky footer (form id "void-reason-form" wires the submit button
+ * across the footer/body boundary — CHROME-13 pattern). Presentational only; every caller (JE void,
+ * payment-method void, bill-payment void, invoice void, etc.) keeps its existing onSubmit contract.
  */
 export function VoidReasonModal({
   open,
@@ -65,8 +70,23 @@ export function VoidReasonModal({
   };
 
   return (
-    <Modal open={open} onClose={close} title={title}>
+    <ParityDrawer
+      open={open}
+      onClose={close}
+      title={title}
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={close}>
+            Cancel
+          </Button>
+          <Button type="submit" form="void-reason-form" variant="danger" loading={submitting} disabled={!valid}>
+            Void
+          </Button>
+        </div>
+      }
+    >
       <form
+        id="void-reason-form"
         className="space-y-3"
         onSubmit={async (event) => {
           event.preventDefault();
@@ -116,15 +136,7 @@ export function VoidReasonModal({
             {submitError}
           </div>
         ) : null}
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={close}>
-            Cancel
-          </Button>
-          <Button type="submit" variant="danger" loading={submitting} disabled={!valid}>
-            Void
-          </Button>
-        </div>
       </form>
-    </Modal>
+    </ParityDrawer>
   );
 }

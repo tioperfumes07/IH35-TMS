@@ -4,7 +4,7 @@ import { listVendors } from "../../api/mdata";
 import { listFactoringCandidateInvoices, submitFactoringBatch } from "../../api/accounting";
 import { getFactoringSummary } from "../../api/factoring";
 import { Button } from "../../components/Button";
-import { Modal } from "../../components/Modal";
+import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { parseVendorNotes } from "../../lib/vendorProfileMeta";
@@ -14,6 +14,10 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
 }
+
+// CHROME-14: outer shell swapped from centered Modal to ParityDrawer size="wide" (QBO side-panel chrome),
+// Cancel/Submit + selected-total moved into the drawer's sticky footer. Presentational only —
+// submitFactoringBatch payload, validation, and the vendor/invoice pickers above are untouched.
 
 type Props = {
   open: boolean;
@@ -103,13 +107,27 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
   }
 
   return (
-    <Modal
+    <ParityDrawer
       open={open}
       title="Submit Factoring Batch"
+      size="wide"
       onClose={() => {
         if (isSubmitting) return;
         onClose();
       }}
+      footer={
+        <div className="flex items-center justify-between">
+          <div className="text-xs text-gray-600">Selected total: {money(selectedTotal)}</div>
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
+              Cancel
+            </Button>
+            <Button onClick={() => void onSubmit()} loading={isSubmitting}>
+              Submit
+            </Button>
+          </div>
+        </div>
+      }
     >
       <div className="space-y-3 text-sm">
         {factoringSummaryQuery.isError ? (
@@ -213,19 +231,7 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
         </div>
 
         {error ? <div className="rounded-sm border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">{error}</div> : null}
-
-        <div className="flex items-center justify-between border-t border-gray-200 pt-2">
-          <div className="text-xs text-gray-600">Selected total: {money(selectedTotal)}</div>
-          <div className="flex gap-2">
-            <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
-              Cancel
-            </Button>
-            <Button onClick={() => void onSubmit()} loading={isSubmitting}>
-              Submit
-            </Button>
-          </div>
-        </div>
       </div>
-    </Modal>
+    </ParityDrawer>
   );
 }
