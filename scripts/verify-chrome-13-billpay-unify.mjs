@@ -6,9 +6,17 @@
  * established by RecordTransferModal / RecordPaymentModal / CCPaymentModal) — never a bare
  * centered Modal, and never buttons left scrolling inline inside the body.
  *
- * Does NOT touch CC_BILL_PAYMENT_GATED or ACCOUNT_CREATE_GATED — this guard also locks the
- * CC bill-payment HOLD gate so a future chrome PR can't silently flip it while "just" touching
- * the drawer shell.
+ * GATE OWNERSHIP (corrected 2026-07-22): this guard no longer asserts the value of
+ * CC_BILL_PAYMENT_GATED. It originally locked the gate to `true` so a chrome PR could not silently
+ * flip it — a good instinct, but the owner then gave an explicit GO (#3213) and flipped it to
+ * `false`, leaving two guards on main asserting opposite values of the same constant. That is not
+ * a stricter repo; it is a repo whose main is permanently red, which blocks every unrelated PR and
+ * teaches people to bypass guards.
+ *
+ * The gate's value now has ONE owner: scripts/verify-owner-financial-gates-ungated.mjs. This guard
+ * keeps doing its actual job — drawer shell + sticky-footer chrome — and stays silent on the flag.
+ * A future chrome PR still cannot flip the gate unnoticed, because flipping it back would red the
+ * dedicated gate guard instead.
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -40,11 +48,8 @@ for (const { path, label } of SURFACES) {
   }
 }
 
-// CC-bill-payment stays HOLD-for-Jorge: this block unifies chrome only, never flips the gate.
-const ccBillPayment = read("apps/frontend/src/pages/accounting/bill-payments/CCPaymentModal.tsx");
-if (!/const CC_BILL_PAYMENT_GATED\s*=\s*true/.test(ccBillPayment)) {
-  failures.push("CCPaymentModal.tsx CC_BILL_PAYMENT_GATED must stay true — flip requires explicit Jorge financial-cluster approval, not a chrome PR");
-}
+// The CC_BILL_PAYMENT_GATED value is asserted by verify-owner-financial-gates-ungated.mjs, not
+// here — see GATE OWNERSHIP above. Duplicating it produced two guards demanding opposite values.
 
 if (failures.length) {
   console.error("FAIL verify-chrome-13-billpay-unify:");
@@ -52,4 +57,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("PASS verify-chrome-13-billpay-unify — bill-payment/CC-payment drawers share ParityDrawer + sticky footer chrome; CC gate untouched");
+console.log("PASS verify-chrome-13-billpay-unify — bill-payment/CC-payment drawers share ParityDrawer + sticky footer chrome");
