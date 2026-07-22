@@ -17,7 +17,7 @@ import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
-import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
+import { ensureIntegrationPrerequisites, createIsolatedOperatingCompany, deactivateIsolatedOperatingCompany, type IsolatedOperatingCompany } from "../../../test-helpers/db-fixture.js";
 import { bulkPostTransactionsAsBills, postCreatedBillsGl } from "../bulk-transactions.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
@@ -25,9 +25,10 @@ const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true
 describeIntegration("BANKING-GL-COMPLETION post-as-bill paid-in-full end-to-end (real Postgres)", () => {
   let db: pg.Client;
   let pool: pg.Pool;
+  let isolated: IsolatedOperatingCompany;
   let companyId: string;
   const suffix = randomUUID().slice(0, 6);
-  const userId = "00000000-0000-4000-8000-0000000000f6";
+  const userId = randomUUID();
   const vendorId = randomUUID();
   const bankGlAccountId = randomUUID();
   const apControlAccountId = randomUUID();
@@ -37,8 +38,7 @@ describeIntegration("BANKING-GL-COMPLETION post-as-bill paid-in-full end-to-end 
   const createdPaymentIds: string[] = [];
   const createdTxnIds: string[] = [];
 
-  /** Seed bill/payment CoA roles on the SHARED company. Call before posting — sibling suites
-   *  DELETE chart_of_accounts_roles in teardown; beforeAll-only seed still flakes under forks. */
+  /** Seed bill/payment CoA roles on THIS suite's isolated company (no shared-TRANSP race). */
   async function ensureBillPostingRoles() {
     await bypass(async () => {
       await db.query(
@@ -55,20 +55,14 @@ describeIntegration("BANKING-GL-COMPLETION post-as-bill paid-in-full end-to-end 
       );
       await db.query(
         `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
-         SELECT $1::uuid, 'ap_control', $2::uuid, true
-         WHERE NOT EXISTS (
-           SELECT 1 FROM accounting.chart_of_accounts_roles
-           WHERE operating_company_id = $1::uuid AND role = 'ap_control' AND is_active = true
-         )`,
+         VALUES ($1::uuid, 'ap_control', $2::uuid, true)
+         ON CONFLICT (operating_company_id, role) WHERE is_active DO UPDATE SET account_id = EXCLUDED.account_id`,
         [companyId, apControlAccountId]
       );
       await db.query(
         `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
-         SELECT $1::uuid, 'uncategorized_expense', $2::uuid, true
-         WHERE NOT EXISTS (
-           SELECT 1 FROM accounting.chart_of_accounts_roles
-           WHERE operating_company_id = $1::uuid AND role = 'uncategorized_expense' AND is_active = true
-         )`,
+         VALUES ($1::uuid, 'uncategorized_expense', $2::uuid, true)
+         ON CONFLICT (operating_company_id, role) WHERE is_active DO UPDATE SET account_id = EXCLUDED.account_id`,
         [companyId, uncategorizedExpenseAccountId]
       );
     });
@@ -132,7 +126,7 @@ describeIntegration("BANKING-GL-COMPLETION post-as-bill paid-in-full end-to-end 
   }
 
   beforeAll(async () => {
-    companyId = await ensureIntegrationPrerequisites();
+    await ensureIntegrationPrerequisites();
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
     if (!cs) throw new Error("DATABASE_URL required");
     db = new pg.Client(buildPgClientConfig(cs));
@@ -140,14 +134,28 @@ describeIntegration("BANKING-GL-COMPLETION post-as-bill paid-in-full end-to-end 
     await db.query("SET ROLE ih35_app");
     pool = new pg.Pool(buildPgClientConfig(cs));
 
+    // Actor must exist BEFORE createIsolatedOperatingCompany({ actorUserId }).
+    await db.query("BEGIN");
+    await db.query("SET LOCAL app.bypass_rls = 'lucia'");
+    await db.query(
+      `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
+      [userId, `bulk-post-bill-${suffix}@test.local`]
+    );
+    await db.query("COMMIT");
+
+    isolated = await createIsolatedOperatingCompany({
+      codePrefix: "BPB",
+      legalNamePrefix: "Bulk Post As Bill Fixture",
+      label: "bulk-transactions-post-as-bill",
+      actorUserId: userId,
+      client: db,
+    });
+    companyId = isolated.companyId;
+
     await bypass(async () => {
       await db.query(
-        `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
-        [userId, `bulk-post-bill-${suffix}@test.local`]
-      );
-      await db.query(
-        `INSERT INTO org.user_company_access (user_id, company_id) VALUES ($1::uuid,$2::uuid) ON CONFLICT (user_id, company_id) DO NOTHING`,
-        [userId, companyId]
+        `UPDATE identity.users SET default_company_id = $1::uuid WHERE id = $2::uuid`,
+        [companyId, userId]
       );
       await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key IN ('BILL_GL_POSTING_ENABLED','BILL_PAYMENT_GL_POSTING_ENABLED') AND (operating_company_id=$1::uuid OR user_uuid=$2::uuid)`, [companyId, userId]);
       await db.query(
@@ -166,10 +174,6 @@ describeIntegration("BANKING-GL-COMPLETION post-as-bill paid-in-full end-to-end 
          ON CONFLICT (id) DO NOTHING`,
         [vendorId, companyId]
       );
-      // Bill/bill-payment posters resolve ap_control (+ uncategorized_expense fallback) from
-      // accounting.chart_of_accounts_roles. Shared-company sibling suites DELETE those rows in
-      // teardown — order-dependent flake ("bill_posted expected true"). Seed additively in
-      // beforeAll; re-ensure immediately before the flags-ON post as well.
     });
     await ensureBillPostingRoles();
   });
@@ -196,10 +200,13 @@ describeIntegration("BANKING-GL-COMPLETION post-as-bill paid-in-full end-to-end 
         await db.query(`DELETE FROM mdata.vendors WHERE id = $1::uuid`, [vendorId]);
         await db.query(`DELETE FROM banking.bank_transactions WHERE id = ANY($1::uuid[])`, [createdTxnIds]);
         await db.query(`DELETE FROM banking.bank_accounts WHERE id = $1::uuid`, [bankAccountId]);
-        await db.query(`DELETE FROM catalogs.accounts WHERE id = $1::uuid`, [bankGlAccountId]);
+        await db.query(`DELETE FROM catalogs.accounts WHERE id = ANY($1::uuid[])`, [[bankGlAccountId, apControlAccountId, uncategorizedExpenseAccountId]]);
+        await db.query(`DELETE FROM accounting.chart_of_accounts_roles WHERE operating_company_id = $1::uuid`, [companyId]);
         await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key IN ('BILL_GL_POSTING_ENABLED','BILL_PAYMENT_GL_POSTING_ENABLED') AND (operating_company_id=$1::uuid OR user_uuid=$2::uuid)`, [companyId, userId]);
-        await db.query(`DELETE FROM org.user_company_access WHERE user_id=$1::uuid AND company_id=$2::uuid`, [userId, companyId]);
       });
+      if (isolated) {
+        await deactivateIsolatedOperatingCompany(db, isolated);
+      }
     } catch {
       /* best-effort cleanup */
     }
