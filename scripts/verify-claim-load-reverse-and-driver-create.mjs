@@ -73,19 +73,23 @@ export function computeFailures(sources) {
     errors.push("LoadDetailDrawer claims reverse must filter by load_id: load.id");
   }
 
-  // 5) ClaimCreateModal driver picker is the canonical nested-create pattern, not a bare <select>
-  if (!/import\s*\{\s*CreateDriverModal\s*\}\s*from\s*["']\.\.\/drivers\/CreateDriverModal["']/.test(claimCreate)) {
-    errors.push("ClaimCreateModal must import the canonical CreateDriverModal (Blueprint 4.2.2.1)");
+  // 5) ClaimCreateModal driver picker — nested create via gold pattern (Rule 21 / PLUS-DRIVER-SYSTEM).
+  // Prefer DriverPickerWithCreate (composes Combobox + CreateDriverModal). Direct CreateDriverModal
+  // + Combobox allowAddNew also OK. Bare <select> is forbidden.
+  const hasPickerWithCreate =
+    /DriverPickerWithCreate[\s\S]{0,400}?shell="drawer"/.test(claimCreate) &&
+    /import\s*\{\s*DriverPickerWithCreate\s*\}\s*from\s*["']\.\.\/drivers\/DriverPickerWithCreate["']/.test(claimCreate);
+  const hasInlineCreateDriver =
+    /import\s*\{\s*CreateDriverModal\s*\}\s*from\s*["']\.\.\/drivers\/CreateDriverModal["']/.test(claimCreate) &&
+    /<CreateDriverModal[\s\S]{0,300}?shell="drawer"/.test(claimCreate) &&
+    /allowAddNew=\{\{\s*label:\s*["']\+ Create driver["']/.test(claimCreate);
+  if (!hasPickerWithCreate && !hasInlineCreateDriver) {
+    errors.push(
+      'ClaimCreateModal driver field must use DriverPickerWithCreate shell="drawer" (preferred) or Combobox + CreateDriverModal shell="drawer" — never a bare <select>',
+    );
   }
-  if (!/<CreateDriverModal[\s\S]{0,300}?shell="drawer"/.test(claimCreate)) {
-    errors.push('ClaimCreateModal must render <CreateDriverModal> with shell="drawer" — it nests inside the Claim create ParityDrawer (CHROME-11)');
-  }
-  if (!/allowAddNew=\{\{\s*label:\s*["']\+ Create driver["']/.test(claimCreate)) {
-    errors.push('ClaimCreateModal driver field must expose a "+ Create driver" allowAddNew row (Combobox nested-create pattern)');
-  }
-  // Regression guard: the driver field must no longer be a bare <select> bound to form.driver_id.
   if (/<select[\s\S]{0,200}?value=\{form\.driver_id\}/.test(claimCreate)) {
-    errors.push("ClaimCreateModal driver field regressed to a bare <select> — must use the Combobox + CreateDriverModal nested-create pattern");
+    errors.push("ClaimCreateModal driver field regressed to a bare <select> — must use nested-create gold pattern");
   }
 
   return errors;
@@ -131,9 +135,8 @@ function goodFixture() {
       <INSURANCE_CLAIMS_REVERSE_SECTION_MARKER filter={{ load_id: load.id }} />
     `.replaceAll("INSURANCE_CLAIMS_REVERSE_SECTION_MARKER", "InsuranceClaimsReverseSection"),
     claimCreate: `
-      import { CreateDriverModal } from "../drivers/CreateDriverModal";
-      <Combobox allowAddNew={{ label: "+ Create driver", onAdd: () => setDriverCreateOpen(true) }} />
-      <CreateDriverModal open={driverCreateOpen} shell="drawer" />
+      import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
+      <DriverPickerWithCreate operatingCompanyId={id} value={form.driver_id || null} shell="drawer" />
     `,
   };
 }
