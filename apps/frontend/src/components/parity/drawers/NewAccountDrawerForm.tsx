@@ -6,10 +6,9 @@
  *   sub-account toggle → parent selector, description, billable + lock flags.
  * RIGHT: Live BS/P&L preview from the fetched account-type catalog.
  *
- * GATE: Account create commit is FINANCIAL/GATED.
- *   The form is fully rendered and validated but the submit button shows
- *   "Awaiting approval — contact Jorge" when `accountCreateGated=true`.
- *   Change to `false` only after Jorge's explicit per-block OK.
+ * GATE: Account create commit was FINANCIAL/GATED until owner GO 2026-07-22
+ *   ("flip flags on all companies"). Save now commits to catalogs.accounts
+ *   (TMS parallel books — no QBO write-back).
  */
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
@@ -28,7 +27,7 @@ import {
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
 
-const ACCOUNT_CREATE_GATED = true; // FINANCIAL GATE — flip to false only on Jorge's explicit OK
+const ACCOUNT_CREATE_GATED = false; // Owner GO 2026-07-22 — all companies
 
 type FormState = {
   name: string;
