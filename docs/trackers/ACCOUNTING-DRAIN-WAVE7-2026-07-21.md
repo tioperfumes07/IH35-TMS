@@ -1,3 +1,10 @@
+> **STALE — NOT EVIDENCE OF PROGRESS (banner added 2026-07-22).**
+> `CLAUDE-CODER-MERGE-SEQUENCE-2026-07-21.md` listed this PR under **NEVER merge (close as
+> theater)** — it restates STALE tables and contains no wiring. It was merged anyway by the
+> Claude Code verifier lane in a green-CI sweep that did not read that file first. See the
+> **RECONCILIATION — 2026-07-22** section there for the full accounting.
+> Living scoreboard is `TRUE-CONNECTIVITY-MASTER` + the FAIL-honest E2E audits, not this file.
+
 # ACCOUNTING DRAIN — WAVE 7 verify (2026-07-21)
 
 **Base:** `origin/main` @ `ade4d3f56`  
