@@ -74,7 +74,7 @@ export function CoaRolesPage() {
   }, [rowsQuery.data?.rows]);
 
   // Column order/labels preserved 1:1 from the former hand-rolled table markup; the per-row
-  // account input + datalist and the Save button keep their exact handlers (display-only migration).
+  // account <select> (name label, uuid value) and Save button keep their handlers (display-only).
   const columns: Array<ParityColumn<CoaRoleRow>> = [
     {
       key: "role",
@@ -92,24 +92,32 @@ export function CoaRolesPage() {
       render: (row) => {
         const value = draftByRole[row.role] ?? row.account_id ?? "";
         return (
-          <>
-            <input
-              list={`coa-role-account-options-${row.role}`}
-              className="h-9 w-full min-w-[280px] rounded-sm border border-gray-300 px-2 text-sm"
-              value={value}
-              onChange={(event) => setDraftByRole((prev) => ({ ...prev, [row.role]: event.target.value }))}
-              placeholder="Select account id"
-            />
-            <datalist id={`coa-role-account-options-${row.role}`}>
-              {(accountsQuery.data?.accounts ?? []).map((account) => (
-                <option key={account.id} value={account.id}>
-                  {account.account_number} - {account.account_name}
-                </option>
-              ))}
-            </datalist>
-          </>
+          <select
+            className="h-9 w-full min-w-[280px] rounded-sm border border-gray-300 px-2 text-sm"
+            value={value}
+            onChange={(event) => setDraftByRole((prev) => ({ ...prev, [row.role]: event.target.value }))}
+          >
+            <option value="">Select account</option>
+            {(accountsQuery.data?.accounts ?? []).map((account) => (
+              // value stays the uuid (what the API needs); the LABEL is the account name so the
+              // control never renders a raw uuid.
+              <option key={account.id} value={account.id}>
+                {account.account_name}
+              </option>
+            ))}
+          </select>
         );
       },
+    },
+    {
+      // QBO pattern: the number lives in the gear column-toggle, hidden by default, and the owner's
+      // choice persists via ParityTable's storageKey. Default-hidden is also data-correct — 1,313 of
+      // 1,371 catalogs.accounts rows carry synthetic clone placeholders ("QBO-1014"), not real CoA
+      // numbers, so surfacing them by default is noise rather than information.
+      key: "account_number",
+      label: "Account number",
+      defaultHidden: true,
+      render: (row) => row.account_number ?? "-",
     },
     {
       key: "is_active",
