@@ -6,10 +6,10 @@
     "active_reconcile": 1191
   },
   "totals": {
-    "BUILT": 721,
+    "BUILT": 722,
     "GAP": 291,
     "NEEDS-PROD": 24,
-    "NEEDS-OWNER": 106,
+    "NEEDS-OWNER": 105,
     "NOISE": 39,
     "UNVERIFIED": 10
   },

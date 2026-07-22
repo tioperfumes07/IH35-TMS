@@ -20,10 +20,10 @@
 
 | Pile | v2 (authoritative) | v1 (superseded) |
 |---|---:|---:|
-| BUILT | 721 | 667 |
+| BUILT | 722 | 667 |
 | GAP | 291 | 36 |
 | NEEDS-PROD | 24 | 71 |
-| NEEDS-OWNER | 106 | 28 |
+| NEEDS-OWNER | 105 | 28 |
 | NOISE | 39 | 383 |
 | UNVERIFIED | 10 | — |
 | **SUM** | **1191** | 1185 |
