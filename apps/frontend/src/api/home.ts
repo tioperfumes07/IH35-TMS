@@ -514,13 +514,22 @@ function coerceTodayRevenuePayload(raw: Record<string, unknown>): HomeTodayReven
   };
 }
 
+/** h-05: Home KPI range presets (server resolves the window in company timezone). */
+export const HOME_KPI_RANGES = ["today", "7d", "30d", "mtd", "ytd"] as const;
+export type HomeKpiRange = (typeof HOME_KPI_RANGES)[number];
+
 /**
  * Today revenue — prefers typed 200 `{ status: "unverifiable" }`.
  * Also maps legacy/alternate 422 with `error=revenue_gl_linkage_unverifiable` to the same shape.
  * Transport/auth/5xx stay as thrown ApiError (never labeled schema-unverifiable).
+ * h-05: optional `range` preset (today|7d|30d|mtd|ytd) — omitted/`today` keeps legacy behavior.
  */
-export async function fetchHomeTodayRevenue(companyId: string): Promise<HomeTodayRevenue> {
-  const path = withCompany("/api/v1/home/today-revenue", companyId);
+export async function fetchHomeTodayRevenue(companyId: string, range: HomeKpiRange = "today"): Promise<HomeTodayRevenue> {
+  const basePath =
+    range === "today"
+      ? "/api/v1/home/today-revenue"
+      : `/api/v1/home/today-revenue?range=${encodeURIComponent(range)}`;
+  const path = withCompany(basePath, companyId);
   try {
     const raw = await apiRequest<Record<string, unknown>>(path);
     return coerceTodayRevenuePayload(raw);

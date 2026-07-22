@@ -9,6 +9,7 @@
  */
 
 import type { AuthMeResponse } from "../../types/api";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { cashAdvanceRequestsOfficeApi } from "../../api/cashAdvanceRequests";
@@ -25,6 +26,7 @@ import {
   fetchHomeVendorMappingIntegrity,
   fetchHomeTodayRevenue,
   fetchHomeWosOpenCount,
+  type HomeKpiRange,
 } from "../../api/home";
 import { getKpiSummary } from "../../api/reports";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -44,6 +46,7 @@ import { FleetUtilizationGauge } from "./charts/FleetUtilizationGauge";
 import { WeeklyRevenueChart } from "./charts/WeeklyRevenueChart";
 import { WOStatusPieChart } from "./charts/WOStatusPieChart";
 import { formatShortDate, formatUsdFromCents, HomeKpiCard } from "./HomeKpiCard";
+import { HomeKpiRangeToggle, revenueKpiLabel } from "./HomeKpiRangeToggle";
 import { QuickActionsBar } from "./QuickActionsBar";
 import { HOME_QUICK_JUMPS } from "./homeQuickJumps";
 import "./home-print.css";
@@ -57,6 +60,8 @@ export function OwnerHome({ auth }: Props) {
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const cid = selectedCompanyId ?? "";
+  // h-05: KPI range preset — server resolves the window in company TZ (default: today).
+  const [kpiRange, setKpiRange] = useState<HomeKpiRange>("today");
 
   const kpiSummaryQuery = useQuery({
     queryKey: ["reports", "kpi-summary", selectedCompanyId],
@@ -65,8 +70,8 @@ export function OwnerHome({ auth }: Props) {
   });
 
   const todayRevenueQuery = useQuery({
-    queryKey: ["home", "today-revenue", cid],
-    queryFn: () => fetchHomeTodayRevenue(cid),
+    queryKey: ["home", "today-revenue", cid, kpiRange],
+    queryFn: () => fetchHomeTodayRevenue(cid, kpiRange),
     enabled: Boolean(cid),
   });
 
@@ -266,10 +271,15 @@ export function OwnerHome({ auth }: Props) {
         <DriverDaySummaryCard operatingCompanyId={selectedCompanyId} />
       </div>
 
+      {/* h-05: KPI date-range toggle — drives the revenue KPI window (7d/30d/MTD/YTD). */}
+      <div className="order-3 lg:order-1">
+        <HomeKpiRangeToggle value={kpiRange} onChange={setKpiRange} />
+      </div>
+
       <section className="kpi-grid order-3 grid grid-cols-1 gap-2 md:grid-cols-2 lg:order-1 lg:grid-cols-3">
         <div>
           <HomeKpiCard
-            label="Today's Revenue"
+            label={revenueKpiLabel(kpiRange)}
             to="/reports"
             number={
               tr == null
@@ -303,7 +313,7 @@ export function OwnerHome({ auth }: Props) {
               )
             }
             delta={
-              tr != null && tr.delta_pct_vs_yesterday != null && Number.isFinite(tr.delta_pct_vs_yesterday) ? (
+              kpiRange === "today" && tr != null && tr.delta_pct_vs_yesterday != null && Number.isFinite(tr.delta_pct_vs_yesterday) ? (
                 <span
                   className={`inline-flex rounded px-1.5 py-0.5 font-semibold ${
                     tr.delta_pct_vs_yesterday >= 0 ? "bg-slate-100 text-slate-700" : "bg-red-100 text-red-800"
