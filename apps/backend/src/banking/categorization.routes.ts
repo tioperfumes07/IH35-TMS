@@ -66,6 +66,17 @@ const categorizeBodySchema = z.object({
   // Customer → customer_id (both already accepted above) round out the four catalog links.
   item_id: z.string().uuid().optional(),
   memo: z.string().trim().max(4000).optional(),
+  // 0441-mod8-tx-fields-captured-not-sent — the categorize panel's remaining QBO-parity capture fields
+  // (Check no. / Class / Location / Billable / Tags). Previously captured in the frontend draft and
+  // silently dropped on Post; persisted on banking.bank_transactions by held migration
+  // 202607690000_bank_tx_capture_fields.sql. class_id is the real catalogs.classes FK (linkage law —
+  // the label is derived by JOIN, never stored); location + tags are free text (no locations catalog
+  // exists today); is_billable pairs with customer_id for billable-to-customer rows.
+  check_number: z.string().trim().max(40).optional(),
+  class_id: z.string().uuid().optional(),
+  location: z.string().trim().max(200).optional(),
+  is_billable: z.boolean().optional(),
+  tags: z.string().trim().max(1000).optional(),
   suggested_match_invoice_id: z.string().uuid().optional(),
   suggested_match_bill_id: z.string().uuid().optional(),
 });
@@ -325,6 +336,11 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
             categorization_recover_deduction_type = COALESCE($17, categorization_recover_deduction_type),
             categorization_item_id = COALESCE($18, categorization_item_id),
             categorization_trailer_id = COALESCE($19, categorization_trailer_id),
+            check_number = COALESCE($20, check_number),
+            categorization_class_id = COALESCE($21, categorization_class_id),
+            categorization_location = COALESCE($22, categorization_location),
+            is_billable = COALESCE($23, is_billable),
+            tags = COALESCE($24, tags),
             skip_reason = NULL,
             investigate_note = NULL,
             categorized_at = now(),
@@ -352,6 +368,11 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
           body.data.recover_deduction_type ?? null,
           body.data.item_id ?? null,
           body.data.trailer_id ?? null,
+          body.data.check_number ?? null,
+          body.data.class_id ?? null,
+          body.data.location ?? null,
+          body.data.is_billable ?? null,
+          body.data.tags ?? null,
         ]
       );
 
