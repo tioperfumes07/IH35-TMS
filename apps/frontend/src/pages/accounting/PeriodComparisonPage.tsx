@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getComparisonReport, type ComparisonReportBasis, type ComparisonReportRow, type ComparisonReportType } from "../../api/accounting";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function money(cents: number) {
@@ -134,20 +135,23 @@ export function PeriodComparisonPage() {
       </div>
 
       {reportQuery.isError ? (
-        <p className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          Failed to load report. Use `YYYY-QN` or `YYYY-MM` in the periods input.
-        </p>
-      ) : null}
-
-      <ParityTable
-        columns={columns}
-        rows={rows}
-        rowKey={(row) => row.row_key}
-        loading={reportQuery.isLoading}
-        emptyText="No comparison rows for the selected periods."
-        storageKey="accounting-period-comparison"
-        exportFilename="period-comparison"
-      />
+        <ListErrorState
+          title="Failed to load report"
+          status={0}
+          message="Use YYYY-QN or YYYY-MM in the periods input."
+          onRetry={() => void reportQuery.refetch()}
+        />
+      ) : (
+        <ParityTable
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.row_key}
+          loading={reportQuery.isLoading}
+          emptyText="No comparison rows for the selected periods."
+          storageKey="period-comparison"
+          exportFilename="period-comparison"
+        />
+      )}
     </AccountingSubNavWrapper>
   );
 }
