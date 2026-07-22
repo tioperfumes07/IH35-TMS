@@ -1413,6 +1413,24 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
+        {/* Workflow-B legacy aliases — @archived BankTxCategorizationPage was never a manifest route;
+            these redirects preserve bookmarks/deep links on the single live categorize surface. */}
+        <Route
+          path="/banking/uncategorized"
+          element={
+            <ProtectedRoute>
+              <Navigate to="/banking/transactions?type=uncategorized" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/banking/categorize"
+          element={
+            <ProtectedRoute>
+              <Navigate to="/banking/transactions" replace />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/banking/accounts/:id"
           element={

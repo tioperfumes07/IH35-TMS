@@ -77,6 +77,13 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     setActiveTab(bankingTabFromPath(location.pathname) as BankingTabId);
   }, [location.pathname]);
 
+  // Legacy /banking/uncategorized alias lands here via manifest redirect (?type=uncategorized).
+  useEffect(() => {
+    if (searchParams.get("type") === "uncategorized") {
+      setTransactionsInitialFilter("uncategorized");
+    }
+  }, [searchParams]);
+
   const kpiQuery = useQuery({
     queryKey: ["banking", "kpis", companyId],
     queryFn: () => getBankingKpis(companyId),
