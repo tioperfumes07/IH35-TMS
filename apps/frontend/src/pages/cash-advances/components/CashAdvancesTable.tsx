@@ -1,3 +1,5 @@
+import { EntityLink } from "../../../components/shared/EntityLink";
+
 type Props = {
   rows: Array<Record<string, unknown>>;
   onOpenDetail: (row: Record<string, unknown>) => void;
@@ -36,7 +38,14 @@ export function CashAdvancesTable({ rows, onOpenDetail, onMarkDisbursed }: Props
             return (
               <tr key={String(row.id)} className="border-t border-gray-100">
                 <td className="px-2 py-1 font-medium">{String(row.display_id ?? String(row.id).slice(0, 8))}</td>
-                <td className="px-2 py-1">{String(row.driver_full_name ?? "—")}</td>
+                <td className="px-2 py-1">
+                  <EntityLink
+                    kind="driver"
+                    id={row.driver_id ? String(row.driver_id) : null}
+                    label={String(row.driver_full_name ?? "—")}
+                    onClick={(event) => event.stopPropagation()}
+                  />
+                </td>
                 <td className="px-2 py-1">${Number(row.amount ?? 0).toFixed(2)}</td>
                 <td className="px-2 py-1">{String(row.purpose ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.disbursement_method ?? "—")}</td>

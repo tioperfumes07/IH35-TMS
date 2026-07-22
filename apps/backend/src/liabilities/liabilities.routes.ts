@@ -155,18 +155,30 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
         .catch(() => ({ rows: [] as Record<string, unknown>[] }));
       const liability = rowRes.rows[0];
       if (!liability) return null;
+      // FIX (Law §9 2026-07-22, GAP not patch — same root cause as cash-advances.routes.ts GET /:id):
+      // driver_finance.settlement_lines has never had a liability_id column (0191 create + 202607430000
+      // additive columns only added load_id/source_table/source_reference_id/source_id, none
+      // backfilled) — the old query's SQL error was silently swallowed by .catch to []. The canonical
+      // deduction ledger (driver_finance.driver_settlement_deductions) has driver_id but no column
+      // linking back to a specific liability id (deductions.service.ts "TODO B4-B" gap), so this can
+      // only show driver-level settlement-deduction history, not "deductions that repaid THIS
+      // liability" exactly. REMAINING/HOLD: exact per-liability attribution needs the deduction-cap
+      // migration block — separate financial PR (owner + CPA review), not invented here.
       const settlementsRes = await client
         .query(
           `
-            SELECT settlement_id, amount, created_at
-            FROM driver_finance.settlement_lines
-            WHERE liability_id = $1
+            SELECT applied_to_settlement_id AS settlement_id,
+                   (amount_cents::numeric / 100) AS amount,
+                   created_at
+            FROM driver_finance.driver_settlement_deductions
+            WHERE driver_id = $1
+              AND applied_to_settlement_id IS NOT NULL
             ORDER BY created_at DESC
           `,
-          [params.data.id]
+          [liability.driver_id]
         )
         .catch(() => ({ rows: [] as Record<string, unknown>[] }));
-      return { ...liability, settlement_history: settlementsRes.rows };
+      return { ...liability, settlement_history: settlementsRes.rows, settlement_history_is_driver_level: true };
     });
     if (!detail) return reply.code(404).send({ error: "liability_not_found" });
     return detail;

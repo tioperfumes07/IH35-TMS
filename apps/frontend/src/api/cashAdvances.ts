@@ -31,11 +31,12 @@ export function getCashAdvancesKpis(companyId: string) {
 
 export function listCashAdvances(
   companyId: string,
-  filters: { view?: "all" | "pending_approval" | "outstanding" | "paid_off"; search?: string } = {}
+  filters: { view?: "all" | "pending_approval" | "outstanding" | "paid_off"; search?: string; driver_id?: string } = {}
 ) {
   const query = new URLSearchParams({ operating_company_id: companyId });
   if (filters.view) query.set("view", filters.view);
   if (filters.search) query.set("search", filters.search);
+  if (filters.driver_id) query.set("driver_id", filters.driver_id);
   return apiRequest<{ advances: Array<Record<string, unknown>> }>(`/api/v1/cash-advances?${query.toString()}`);
 }
 

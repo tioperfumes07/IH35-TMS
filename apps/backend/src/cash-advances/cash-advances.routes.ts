@@ -18,6 +18,9 @@ const listQuerySchema = COMPANY_QUERY.extend({
   view: z.enum(["all", "pending_approval", "outstanding", "paid_off"]).optional(),
   status: z.string().trim().optional(),
   search: z.string().trim().optional(),
+  // LAW OF THE LAND §9 (2026-07-22): driver profile reverse-link — "View all cash advances" from
+  // DriverDetail.tsx / EarningsTab.tsx scopes this list to one driver.
+  driver_id: z.string().uuid().optional(),
 });
 
 const repaymentScheduleSchema = z.object({
@@ -123,6 +126,10 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
         values.push(query.data.status);
         where.push(`disbursement_status = $${values.length}`);
       }
+      if (query.data.driver_id) {
+        values.push(query.data.driver_id);
+        where.push(`driver_id = $${values.length}`);
+      }
       if (query.data.search) {
         values.push(`%${query.data.search}%`);
         where.push(`(display_id ILIKE $${values.length} OR driver_full_name ILIKE $${values.length} OR purpose ILIKE $${values.length})`);
@@ -204,18 +211,41 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
           [row.liability_id]
         )
         .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+      // FIX (Law §9 2026-07-22, GAP not patch): the old query filtered
+      // driver_finance.settlement_lines WHERE liability_id = $1 — that column has never existed on
+      // settlement_lines (verified: migrations 0191 create + 202607430000 additive columns; only
+      // load_id/source_table/source_reference_id/source_id were added, none backfilled). The .catch
+      // swallowed the resulting SQL error into an empty array — a silent failure (Rule 16 forbids
+      // catch-and-swallow-to-empty). The canonical ledger for a cash-advance repayment deduction is
+      // driver_finance.driver_settlement_deductions (deductions.service.ts sourceType
+      // "cash_advance_repayment"), which carries driver_id but — confirmed by the deductions.service.ts
+      // "TODO B4-B: generic source_reference_id" comment — has NO column linking a row back to the
+      // specific driver_advances/driver_liabilities id it repays. So this can only show "settlement
+      // deductions recorded for this driver" (driver-level), not "deductions that repaid THIS advance"
+      // (advance-level). REMAINING/HOLD: exact per-advance attribution needs the deduction-cap
+      // migration block (owner-approved schema + settlement-engine writer change) — separate financial
+      // PR, do not invent it here.
       const settlementRes = await client
         .query(
           `
-            SELECT settlement_id, amount, created_at
-            FROM driver_finance.settlement_lines
-            WHERE liability_id = $1
+            SELECT applied_to_settlement_id AS settlement_id,
+                   (amount_cents::numeric / 100) AS amount,
+                   created_at
+            FROM driver_finance.driver_settlement_deductions
+            WHERE driver_id = $1
+              AND deduction_type = 'cash_advance_repayment'
+              AND applied_to_settlement_id IS NOT NULL
             ORDER BY created_at DESC
           `,
-          [row.liability_id]
+          [row.driver_id]
         )
         .catch(() => ({ rows: [] as Record<string, unknown>[] }));
-      return { ...row, deduction_schedule: scheduleRes.rows, settlement_history: settlementRes.rows };
+      return {
+        ...row,
+        deduction_schedule: scheduleRes.rows,
+        settlement_history: settlementRes.rows,
+        settlement_history_is_driver_level: true,
+      };
     });
     if (!detail) return reply.code(404).send({ error: "cash_advance_not_found" });
     return detail;
@@ -413,6 +443,14 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
       const advance = advanceRes.rows[0];
       if (!advance) return { code: 404 as const, error: "cash_advance_not_found" };
 
+      // HOLD (Law §9 2026-07-22 — NOT fixed in this PR): this WHERE liability_id = $1 filters
+      // driver_finance.settlement_lines, which has never had a liability_id column (same root cause
+      // documented on the GET /:id settlement_history query above) — the .catch always swallows a SQL
+      // error to rows=[], so cnt is always 0 and this write-path guard never actually blocks a reverse.
+      // Left untouched here on purpose: this gates a mutation (cash-advance reversal), and changing a
+      // live financial gate's query semantics without owner/CPA review is out of scope for a
+      // frontend-linkage PR (Rule 13 financial law). Tracked as REMAINING — needs an explicit backend
+      // fix (or the Phase-2 settlement_lines repoint) reviewed as a financial change, not bundled here.
       const settlementUseRes = await client
         .query(
           `

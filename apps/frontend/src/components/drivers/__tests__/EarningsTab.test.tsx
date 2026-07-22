@@ -102,6 +102,46 @@ describe("EarningsTab", () => {
     expect(link.getAttribute("href")).toBe(`/driver-finance/settlements?driver_id=${driverId}`);
   });
 
+  it("links to liabilities + cash advances filtered by driver (Law §9 2026-07-22)", async () => {
+    render(wrap(<EarningsTab driverId={driverId} operatingCompanyId={companyId} />));
+    const liabilitiesLink = await screen.findByTestId("driver-earnings-liabilities-link");
+    expect(liabilitiesLink.getAttribute("href")).toBe(`/liabilities?driver_id=${driverId}`);
+    const advancesLink = await screen.findByTestId("driver-earnings-cash-advances-link");
+    expect(advancesLink.getAttribute("href")).toBe(`/cash-advances?driver_id=${driverId}`);
+  });
+
+  it("renders honest-empty escrow tile with a drill into Operations escrow history", async () => {
+    const onOpenOperationsView = vi.fn();
+    render(
+      wrap(
+        <EarningsTab
+          driverId={driverId}
+          operatingCompanyId={companyId}
+          onOpenOperationsView={onOpenOperationsView}
+        />,
+      ),
+    );
+    expect(await screen.findByTestId("driver-earnings-escrow-pre")).toHaveTextContent("$0.00");
+    expect(await screen.findByTestId("driver-earnings-escrow-post")).toHaveTextContent("$0.00");
+    fireEvent.click(await screen.findByTestId("driver-earnings-escrow-link"));
+    expect(onOpenOperationsView).toHaveBeenCalledWith("escrow-history");
+  });
+
+  it("links pay rates to Equipment Assignments instead of a fabricated catalog FK", async () => {
+    const onOpenEquipmentAssignments = vi.fn();
+    render(
+      wrap(
+        <EarningsTab
+          driverId={driverId}
+          operatingCompanyId={companyId}
+          onOpenEquipmentAssignments={onOpenEquipmentAssignments}
+        />,
+      ),
+    );
+    fireEvent.click(await screen.findByTestId("driver-earnings-pay-rates-link"));
+    expect(onOpenEquipmentAssignments).toHaveBeenCalled();
+  });
+
   it("refresh triggers live debt recompute", async () => {
     render(wrap(<EarningsTab driverId={driverId} operatingCompanyId={companyId} />));
     await screen.findByTestId("driver-earnings-debt-tab");

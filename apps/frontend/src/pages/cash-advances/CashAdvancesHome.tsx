@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCashAdvanceDetail, getCashAdvancesKpis, listCashAdvances } from "../../api/cashAdvances";
@@ -31,6 +31,10 @@ export function CashAdvancesHomePage() {
   const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
+  // LAW OF THE LAND §9 (2026-07-22): EntityLink kind="cash_advance" → /cash-advances?advance_id=
+  // and the driver-profile reverse link → /cash-advances?driver_id= (settlement/liability parity).
+  const deepLinkAdvanceId = searchParams.get("advance_id");
+  const driverIdFilter = searchParams.get("driver_id");
   const tab = parseCashAdvancesTab(searchParams.get("tab"));
   const setTab = (next: CashAdvancesTab) => {
     const params = new URLSearchParams(searchParams);
@@ -43,6 +47,12 @@ export function CashAdvancesHomePage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [markDisbursedOpen, setMarkDisbursedOpen] = useState(false);
 
+  useEffect(() => {
+    if (!deepLinkAdvanceId) return;
+    setSelectedId(deepLinkAdvanceId);
+    setDetailOpen(true);
+  }, [deepLinkAdvanceId]);
+
   const kpisQuery = useQuery({
     queryKey: ["cash-advances", "kpis", companyId],
     queryFn: () => getCashAdvancesKpis(companyId),
@@ -50,8 +60,8 @@ export function CashAdvancesHomePage() {
   });
 
   const listQuery = useQuery({
-    queryKey: ["cash-advances", "list", companyId, tab],
-    queryFn: () => listCashAdvances(companyId, { view: tab }),
+    queryKey: ["cash-advances", "list", companyId, tab, driverIdFilter],
+    queryFn: () => listCashAdvances(companyId, { view: tab, driver_id: driverIdFilter ?? undefined }),
     enabled: Boolean(companyId),
   });
 
@@ -74,6 +84,23 @@ export function CashAdvancesHomePage() {
           </Button>
         }
       />
+
+      {driverIdFilter ? (
+        <div className="flex items-center justify-between rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+          <span>Filtered to one driver.</span>
+          <button
+            type="button"
+            className="text-slate-700 underline"
+            onClick={() => {
+              const params = new URLSearchParams(searchParams);
+              params.delete("driver_id");
+              setSearchParams(params, { replace: true });
+            }}
+          >
+            Clear filter
+          </button>
+        </div>
+      ) : null}
 
       <div className="overflow-x-auto rounded-sm bg-[#1A1F36] px-2 py-1 text-[11px] text-white">
         <div className="flex min-w-max gap-4">

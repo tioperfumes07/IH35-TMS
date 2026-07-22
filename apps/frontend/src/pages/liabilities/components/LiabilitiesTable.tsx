@@ -7,6 +7,7 @@
  * pills, and the View Detail / Send Ack Request handlers preserved 1:1.
  */
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 type LiabilityRow = Record<string, unknown>;
 
@@ -41,7 +42,14 @@ export function LiabilitiesTable({ rows, onOpenDetail, onSendAck }: Props) {
     {
       key: "driver_full_name",
       label: "Driver",
-      render: (row) => <>{String(row.driver_full_name ?? "—")}</>,
+      render: (row) => (
+        <EntityLink
+          kind="driver"
+          id={row.driver_id ? String(row.driver_id) : null}
+          label={String(row.driver_full_name ?? "—")}
+          onClick={(event) => event.stopPropagation()}
+        />
+      ),
     },
     {
       key: "type",

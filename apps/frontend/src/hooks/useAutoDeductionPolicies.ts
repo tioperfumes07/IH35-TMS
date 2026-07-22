@@ -54,11 +54,11 @@ export async function listAutoDeductionPolicies(operatingCompanyId: string, filt
   return apiRequest<{ rows: AutoDeductionPolicy[] }>(`/api/v1/auto-deductions/policies?${params.toString()}`);
 }
 
-export function useAutoDeductionPolicies(operatingCompanyId: string) {
+export function useAutoDeductionPolicies(operatingCompanyId: string, driverId?: string) {
   return useQuery({
-    queryKey: ["auto-deduction-policies", operatingCompanyId],
+    queryKey: ["auto-deduction-policies", operatingCompanyId, driverId ?? null],
     enabled: Boolean(operatingCompanyId),
-    queryFn: () => listAutoDeductionPolicies(operatingCompanyId),
+    queryFn: () => listAutoDeductionPolicies(operatingCompanyId, driverId ? { driver_id: driverId } : undefined),
   });
 }
 

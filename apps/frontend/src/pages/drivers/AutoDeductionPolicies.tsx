@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { listDrivers } from "../../api/mdata";
 import { useQuery } from "@tanstack/react-query";
@@ -6,12 +7,18 @@ import { Button } from "../../components/Button";
 import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { Modal } from "../../components/Modal";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useAutoDeductionPolicies, useAutoDeductionPolicyMutations } from "../../hooks/useAutoDeductionPolicies";
 
 type Props = {
   operatingCompanyId: string;
+  /**
+   * LAW OF THE LAND §9 (2026-07-22): reverse link from DriverDetail.tsx / EarningsTab.tsx
+   * (?driver_id= on /drivers/deductions). Scopes the list and locks the create form's driver field.
+   */
+  driverId?: string;
 };
 
 const DEDUCTION_TYPES = [
@@ -29,14 +36,16 @@ function money(cents: number) {
 
 export function AutoDeductionPoliciesPanel() {
   const { selectedCompanyId } = useCompanyContext();
+  const [searchParams] = useSearchParams();
+  const driverIdFilter = searchParams.get("driver_id") ?? undefined;
   if (!selectedCompanyId) {
     return <p className="px-2 py-2 text-xs text-gray-500">Select an operating company to manage auto-deduction policies.</p>;
   }
-  return <AutoDeductionPolicies operatingCompanyId={selectedCompanyId} />;
+  return <AutoDeductionPolicies operatingCompanyId={selectedCompanyId} driverId={driverIdFilter} />;
 }
 
-export function AutoDeductionPolicies({ operatingCompanyId }: Props) {
-  const policiesQuery = useAutoDeductionPolicies(operatingCompanyId);
+export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriverId }: Props) {
+  const policiesQuery = useAutoDeductionPolicies(operatingCompanyId, lockedDriverId);
   const { createMutation, patchMutation, cancelMutation } = useAutoDeductionPolicyMutations(operatingCompanyId);
   const driversQuery = useQuery({
     queryKey: ["drivers", "auto-deductions", operatingCompanyId],
@@ -45,12 +54,16 @@ export function AutoDeductionPolicies({ operatingCompanyId }: Props) {
   });
 
   const [createOpen, setCreateOpen] = useState(false);
-  const [driverId, setDriverId] = useState("");
+  const [driverId, setDriverId] = useState(lockedDriverId ?? "");
   const [deductionType, setDeductionType] = useState<(typeof DEDUCTION_TYPES)[number]["value"]>("repair");
   const [totalOwed, setTotalOwed] = useState("500.00");
   const [maxPerSettlement, setMaxPerSettlement] = useState("100.00");
   const [memo, setMemo] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (lockedDriverId) setDriverId(lockedDriverId);
+  }, [lockedDriverId]);
 
   const grouped = useMemo(() => {
     const rows = policiesQuery.data?.rows ?? [];
@@ -77,7 +90,9 @@ export function AutoDeductionPolicies({ operatingCompanyId }: Props) {
       <div key={row.id} className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <div className="text-sm font-semibold text-gray-900">{driverNameById.get(row.driver_id) || row.driver_id}</div>
+            <div className="text-sm font-semibold text-gray-900">
+              <EntityLink kind="driver" id={row.driver_id} label={driverNameById.get(row.driver_id) || row.driver_id} />
+            </div>
             <div className="text-xs text-gray-600">{row.deduction_type} · {money(deducted)} / {money(owed)}</div>
           </div>
           <StatusBadge status={row.status} />
@@ -170,10 +185,14 @@ export function AutoDeductionPolicies({ operatingCompanyId }: Props) {
                 value={driverId || null}
                 onChange={(next) => setDriverId(next ?? "")}
                 open={createOpen}
+                disabled={Boolean(lockedDriverId)}
                 placeholder="Select driver…"
                 dataField="auto-deduction-driver"
               />
             </div>
+            {lockedDriverId ? (
+              <span className="text-[10px] font-normal text-gray-500">Locked from driver profile.</span>
+            ) : null}
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Type

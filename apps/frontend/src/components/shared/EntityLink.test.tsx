@@ -33,6 +33,10 @@ describe("resolveEntityRoute", () => {
     expect(resolveEntityRoute("bank_transaction", "txn1")).toBe("/banking/transactions?txn_id=txn1");
     expect(resolveEntityRoute("bill", "id1")).toBe("/accounting/bills/id1");
   });
+
+  it("resolves cash_advance to query-param drill-through (Law §9 2026-07-22)", () => {
+    expect(resolveEntityRoute("cash_advance", "adv-1")).toBe("/cash-advances?advance_id=adv-1");
+  });
 });
 
 describe("EntityLink", () => {
@@ -111,6 +115,18 @@ describe("EntityLink", () => {
     expect(screen.getByRole("link", { name: "Settlement 9" })).toHaveAttribute(
       "href",
       "/driver-finance/settlements?settlement_id=stl-9",
+    );
+  });
+
+  it("resolves the cash_advance query-param route as a real link (Law §9 2026-07-22)", () => {
+    render(
+      <MemoryRouter>
+        <EntityLink kind="cash_advance" id="adv-1" label="CA-2026-0001" />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("link", { name: "CA-2026-0001" })).toHaveAttribute(
+      "href",
+      "/cash-advances?advance_id=adv-1",
     );
   });
 });
