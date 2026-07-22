@@ -6844,6 +6844,7 @@
       "customer_chargeback_driver_fault",
       "date_of_birth",
       "deactivated_at",
+      "default_expense_account_id",
       "dot_medical_expires_at",
       "driver_employment_status_id",
       "driver_settlement_deduction_id",
