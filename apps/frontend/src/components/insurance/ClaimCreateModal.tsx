@@ -276,7 +276,11 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
                 </option>
               ))}
             </select>
-            {fieldErrors.policy_id ? <span className="text-xs text-red-700">{fieldErrors.policy_id}</span> : null}
+            {fieldErrors.policy_id ? (
+              <span className="text-xs text-red-700" role="alert">
+                Policy is required or invalid.
+              </span>
+            ) : null}
           </label>
 
           <label className="space-y-1">
