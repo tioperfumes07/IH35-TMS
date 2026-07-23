@@ -317,6 +317,10 @@
       "reason": "[HOLD-FOR-JORGE — TIER 1] Widen accounting.chart_of_accounts_roles.role CHECK (+ abandonment_chargeback_recovery for pay-run close). No account_id seed. Companion to 202607670000; owner Neon-applies + designates via CoaRolesPage."
     },
     {
+      "file": "202607760000_cash_dip_coa_role.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Widen accounting.chart_of_accounts_roles.role CHECK (+ cash_dip for settlement BillPayment DIP cash). TRUE SUPERSET of 202607710000's 34 values. No account_id seed. Owner Neon-applies then designates cash_dip → QBO-1150040141 (WF General Operating 6103) for TRANSP via CoaRolesPage."
+    },
+    {
       "file": "202607730000_insurance_claim_economics_columns.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] WIZARD-CLAIM-ECONOMICS-DEPTH slice 2 — additive insurance.claim columns: fault (undetermined|company|third_party|shared, default undetermined), driver_responsible (nullable tri-state bool), trailer_id (uuid FK -> mdata.equipment ON DELETE SET NULL), deductible_cents (bigint >=0 default 0), recovery_rail (escrow|settlement|split|ask, default ask — owner lock: ALWAYS ASK, never auto-default), repair_books_treatment (expense|capitalize|ask, default ask — owner lock Choice Z: ALWAYS ASK, no $ threshold). Pure schema capture; posts nothing, no GL/JE/flag. UNVERIFIED vs Neon prod (no DB credentials this session) — authored from repo truth (0285/202607410000/202607490000) + claim.shared.ts; re-verify column-not-exists on the Neon branch before apply. Renumbered from 202607720000 -> 202607730000 (collision: PR #3223 already claimed 202607720000_driver_advance_wizard_depth.sql). Run only on a Neon branch by Jorge, then ledger-backfill."
     },

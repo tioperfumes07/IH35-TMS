@@ -47,6 +47,8 @@ export const COA_ROLE_VALUES = [
   "other_recovery",
   // Pay-run close residual (#3109 left this on the legacy table): abandonment chargeback recovery credit.
   "abandonment_chargeback_recovery",
+  // Settlement BillPayment DIP cash bridge (lane defect A / 202607760000): was legacy-bindings-only.
+  "cash_dip",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];
@@ -86,6 +88,7 @@ const LEGACY_ROLE_BINDINGS: Partial<Record<CoaRole, string>> = {
   fuel_advance_recovery: "fuel_advance_recovery",
   other_recovery: "other_recovery",
   abandonment_chargeback_recovery: "abandonment_chargeback_recovery",
+  cash_dip: "cash_dip",
 };
 
 const ROLE_FALLBACKS: Partial<Record<CoaRole, { subtype?: string[]; type?: string[]; nameHints?: string[] }>> = {
