@@ -12,6 +12,7 @@ import { MoneyInput } from "../forms/MoneyInput";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { coaAccountReferenceOption, vendorReferenceOption } from "../parity/referenceOptionLabels";
 import { SelectCombobox } from "../shared/SelectCombobox";
+import { EntityLink } from "../shared/EntityLink";
 import { UploadZone } from "../UploadZone";
 import {
   initialRecordExpenseFormValues,
@@ -74,19 +75,23 @@ export function RecordExpenseForm({
   });
   const unitsQuery = useQuery({
     queryKey: ["record-expense", "units", operatingCompanyId],
-    queryFn: () => listUnits({ status: "Active", operating_company_id: operatingCompanyId, limit: 500 }),
+    // No status filter — a tow / roadside expense is written against an OutOfService or
+    // InMaintenance unit, which a hard "InService" filter would hide. See VendorBillForm.
+    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: 500 }),
     enabled: Boolean(operatingCompanyId),
   });
   const vendorsQuery = useQuery({
     queryKey: ["record-expense", "vendors", operatingCompanyId],
-    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, limit: 500 }),
+    queryFn: () =>
+      listVendors({ operating_company_id: operatingCompanyId, limit: 5000, status: "active" }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });
   const paymentAccountsQuery = useQuery({
     queryKey: ["record-expense", "payment-accounts", operatingCompanyId],
-    // No explicit limit → listCatalogAccounts pages through the FULL chart (backend caps limit at 200; the
-    // chart has 371 accounts), so the oldest payment accounts stay selectable (G9-H6).
+    // Entity-scoped full chart (USMCA/TRANSP) — never default-company CoA. No explicit limit so
+    // listCatalogAccounts pages the FULL chart (backend caps limit at 200; the chart has 371),
+    // keeping the oldest payment accounts selectable (G9-H6).
     queryFn: () => listCatalogAccounts({ status: "active", operating_company_id: operatingCompanyId }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
@@ -124,13 +129,13 @@ export function RecordExpenseForm({
     [paymentAccountsQuery.data?.accounts]
   );
 
-  // LIVE-DEFECT fix (GUARD 2026-07-12): surface the FULL Chart-of-Accounts as Category options (same COA the
-  // banking categorize screen uses) instead of the limited/empty expense_categories list. paymentAccountsQuery
-  // already fetches the full chart; filter to postable accounts that carry a QBO id (category_qbo_id is REQUIRED
-  // to post). Fallback to expense_categories only if the COA query hasn't resolved.
+  // LIVE-DEFECT fix (2026-07-22): Category must list the entity CoA including freshly created accounts
+  // that have no QBO bridge yet (parallel books). Previously filtered to qbo_account_id only → diesel
+  // created via + Add new never appeared. Prefer Expense/COGS/OtherExpense; keep Income out of category.
+  const EXPENSE_TYPES = new Set(["Expense", "CostOfGoodsSold", "OtherExpense"]);
   const categoryOptions = useMemo(() => {
     const fromCoa = (paymentAccountsQuery.data?.accounts ?? [])
-      .filter((acct) => acct.is_postable && acct.qbo_account_id)
+      .filter((acct) => acct.is_postable && !acct.deactivated_at && EXPENSE_TYPES.has(String(acct.account_type)))
       .map((acct) => ({
         id: String(acct.id),
         label: acct.account_number ? `${acct.account_number} · ${acct.account_name}` : acct.account_name,
@@ -186,9 +191,9 @@ export function RecordExpenseForm({
   return (
     <>
     <form className="space-y-3" onSubmit={onSubmit} data-testid="record-expense-form">
-      {linkedWoDisplayId ? (
+      {workOrderId && linkedWoDisplayId ? (
         <div className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700">
-          Linked — {linkedWoDisplayId}
+          Linked — <EntityLink kind="work_order" id={workOrderId} label={linkedWoDisplayId} />
         </div>
       ) : null}
       <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("vendor")}>
@@ -257,7 +262,13 @@ export function RecordExpenseForm({
             operatingCompanyId={operatingCompanyId}
             placeholder="Select category…"
             onOptionCreated={(opt) => {
-              setValues((prev) => ({ ...prev, categoryId: opt.value, categoryLabel: opt.label, categoryQboId: null }));
+              setValues((prev) => ({
+                ...prev,
+                categoryId: opt.value,
+                categoryLabel: opt.label,
+                categoryQboId: null,
+              }));
+              void paymentAccountsQuery.refetch();
               void costContextQuery.refetch();
             }}
           />
