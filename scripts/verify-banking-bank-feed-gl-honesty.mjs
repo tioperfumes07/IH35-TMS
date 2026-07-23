@@ -27,6 +27,20 @@ export function run(root = process.cwd()) {
   if (!view.includes("BANK_FEED_GL_POSTING_ENABLED")) {
     failures.push("honesty banner must name BANK_FEED_GL_POSTING_ENABLED");
   }
+  // False-claim lock: matched_journal_entry_id is ALSO stamped by recon Match (kind=je).
+  if (/appear only when/i.test(view) || /back-pointer appear only/i.test(view)) {
+    failures.push(
+      "honesty banner must NOT claim matched_journal_entry_id appears only from the bank-feed poster (recon Match stamps it too)"
+    );
+  }
+  if (!view.includes("match.service") && !view.includes("ledger_entry_kind")) {
+    failures.push(
+      "honesty banner must disclose recon Match / ledger_entry_kind=je as a matched_journal_entry_id source (not poster-only)"
+    );
+  }
+  if (!view.includes("not") || !/matched_journal_entry_id[\s\S]{0,200}not/i.test(view)) {
+    failures.push("honesty banner must state matched_journal_entry_id is not proof bank-feed posting is live");
+  }
   if (!view.includes("transactionsQuery.isSuccess")) {
     failures.push("GL honesty banner must gate on transactionsQuery.isSuccess (not !isLoading)");
   }
@@ -61,7 +75,7 @@ if (process.argv.includes("--selftest")) {
   mk("apps/frontend/src/api/banking.ts", "matched_journal_entry_id: string | null;\n");
   mk(
     "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
-    `transactionsQuery.isSuccess\nborder-l-4 border-slate-400 bg-slate-100\nbanking-bank-feed-gl-posting-honesty-banner\nBANK_FEED_GL_POSTING_ENABLED\nkind="journal_entry"\nbank-tx-categorization-je-link\nmatched_journal_entry_id\n`
+    `transactionsQuery.isSuccess\nborder-l-4 border-slate-400 bg-slate-100\nbanking-bank-feed-gl-posting-honesty-banner\nBANK_FEED_GL_POSTING_ENABLED\nkind="journal_entry"\nbank-tx-categorization-je-link\nmatched_journal_entry_id is not proof\nmatch.service.ts\nledger_entry_kind\n`
   );
   mk(
     "apps/frontend/src/pages/accounting/journal-entries/JournalEntryDetailPage.tsx",
