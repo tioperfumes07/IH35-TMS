@@ -499,7 +499,12 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
                   <span>Chargebacks open</span><span className="text-red-700">{money.format(factoringChargebacks)}</span>
                 </Link>
-                <div className="flex justify-between"><span>+30 aging fees</span><span className="text-slate-700">{money.format(0)}</span></div>
+                <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
+                  <span>+30 aging fees</span>
+                  <span className="text-slate-700" title="No aging_fees_30d field on factoring-virtual — open Chargebacks & Fees">
+                    — (see Chargebacks & Fees)
+                  </span>
+                </Link>
                 <div className="pt-1 text-xs text-gray-500">
                   Last advance: {factoringVirtualSummary.lastAdvanceAt ? String(factoringVirtualSummary.lastAdvanceAt).slice(0, 10) : "—"}
                 </div>
@@ -696,10 +701,12 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 <span>Chargebacks open</span>
                 <span className="text-red-700">{money.format(factoringChargebacks)}</span>
               </Link>
-              <div className="flex justify-between">
+              <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
                 <span>+30 aging fees</span>
-                <span className="text-slate-700">{money.format(0)}</span>
-              </div>
+                <span className="text-slate-700" title="No aging_fees_30d field on factoring-virtual — open Chargebacks & Fees">
+                  — (see Chargebacks & Fees)
+                </span>
+              </Link>
               <div className="pt-1 text-xs text-gray-500">
                 Last advance:{" "}
                 {factoringVirtualSummary.lastAdvanceAt
