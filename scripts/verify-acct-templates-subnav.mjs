@@ -57,10 +57,10 @@ if (!/displayName="Posting Templates"/.test(page)) {
 }
 
 if (failures.length) {
-  console.error("FAIL verify-acct-posting-templates-subnav:");
+  console.error("FAIL verify-acct-templates-subnav:");
   for (const f of failures) console.error(" -", f);
   process.exit(1);
 }
 console.log(
-  "PASS verify-acct-posting-templates-subnav — Accounting More ▾ links Posting Templates; Lists entry retained"
+  "PASS verify-acct-templates-subnav — Accounting More ▾ links Posting Templates; Lists entry retained"
 );
