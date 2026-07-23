@@ -7,6 +7,7 @@ import { enqueueAccountingOutbox } from "./outbox-events.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 import { assertBankAccountUsable } from "../banking/bank-account-visibility.js";
+import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 
 const paymentMethodSchema = z.enum([
   "ach",
@@ -143,9 +144,18 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
       );
       if (!customerRes.rows[0]) return { code: 404 as const, error: "customer_not_found" as const };
 
+      // deposited_to_account_id stores catalogs.accounts.id (GL debit). bank_account_id is the
+      // Banking row — bridge via ledger_account_id. Never store a free-text bank slug.
+      let depositedToAccountId: string | null = null;
       if (body.data.bank_account_id) {
-        const acctRes = await client.query(
-          `SELECT id FROM banking.bank_accounts WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        const acctRes = await client.query<{ id: string; ledger_account_id: string | null }>(
+          `
+            SELECT id::text AS id, ledger_account_id::text AS ledger_account_id
+            FROM banking.bank_accounts
+            WHERE id = $1::uuid
+              AND operating_company_id = $2::uuid
+            LIMIT 1
+          `,
           [body.data.bank_account_id, query.data.operating_company_id]
         );
         if (!acctRes.rows[0]) return { code: 400 as const, error: "bank_account_not_found" };
@@ -154,6 +164,13 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
         if (!(await assertBankAccountUsable(client, body.data.bank_account_id, query.data.operating_company_id))) {
           return { code: 400 as const, error: "bank_account_not_found" };
         }
+        depositedToAccountId = acctRes.rows[0].ledger_account_id;
+        if (!depositedToAccountId) return { code: 400 as const, error: "bank_account_missing_ledger_gl" };
+      } else {
+        depositedToAccountId =
+          (await resolveRoleAccountOptional(client, query.data.operating_company_id, "undeposited_funds")) ??
+          (await resolveRoleAccountOptional(client, query.data.operating_company_id, "cash_clearing"));
+        if (!depositedToAccountId) return { code: 400 as const, error: "deposited_to_account_required" };
       }
 
       const displayId = await nextPaymentDisplayId(client, query.data.operating_company_id, new Date(`${body.data.received_at}T00:00:00.000Z`));
@@ -184,7 +201,7 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
           body.data.received_at,
           body.data.reference_number ?? null,
           body.data.amount_cents,
-          body.data.bank_account_id ?? "ops_checking",
+          depositedToAccountId,
           null,
           user.uuid,
           "manual",
