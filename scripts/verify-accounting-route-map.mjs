@@ -31,7 +31,6 @@ try {
     { from: "/accounting/vendors", to: "/vendors", targetPage: "VendorsPage" },
     { from: "/accounting/customers", to: "/customers", targetPage: "CustomersPage" },
     { from: "/accounting/reports", to: "/reports", targetPage: "ReportsHomePage" },
-    { from: "/accounting/maintenance-shop", to: "/maintenance", targetPage: "MaintenanceHomePage" },
   ];
 
   for (const { from, to, targetPage } of parityMap) {

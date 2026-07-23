@@ -26,6 +26,8 @@ const checks = [
   { alias: "/catalogs/account-role-bindings",    realTarget: "/lists/accounting/account-role-bindings" },
   // DUALPATH-08 (2026-07-22): redirects to the Live RecurringBillList surface — no longer a stub.
   { alias: "/accounting/recurring-transactions", realTarget: "/accounting/bills/recurring" },
+  // DUALPATH-09 (2026-07-22): arch-design "Period Close" alias → Live MonthClosePage wizard.
+  { alias: "/accounting/period-close", realTarget: "/accounting/month-close" },
 ];
 
 // Honest stubs — these SHOULD still point to ComingSoonPage (not real pages yet)

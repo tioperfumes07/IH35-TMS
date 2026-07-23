@@ -88,7 +88,10 @@ const createExpenseBodySchema = z.object({
   driver_id: z.string().uuid().optional(),
   // Form category is a QBO account id (mdata.qbo_accounts.qbo_id); resolved server-side, entity-scoped,
   // to a catalogs.accounts (GL) id that becomes the expense line's debit account. Rejected if unbridged.
+  // Prefer category_account_id (TMS catalogs.accounts UUID) when the operator creates/selects a local
+  // CoA row that has no QBO bridge yet — parallel-books: TMS chart is authoritative for posting.
   category_qbo_id: z.string().trim().min(1).optional(),
+  category_account_id: z.string().uuid().optional(),
   expense_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   amount_cents: z.coerce.number().int().positive(),
   vendor_uuid: z.string().uuid().optional(),
@@ -149,6 +152,7 @@ export type ExpenseListRow = {
   load_number: string | null;
   line_description: string | null;
   is_reconciled: boolean;
+  journal_entry_id: string | null;
 };
 
 /**
@@ -204,6 +208,7 @@ export async function queryExpensesList(
         e.load_id::text                              AS load_id,
         e.vendor_uuid::text                          AS vendor_uuid,
         e.driver_uuid::text                          AS driver_uuid,
+        e.journal_entry_id::text                     AS journal_entry_id,
         e.created_at                                 AS created_at,
         v.vendor_name                                AS vendor_name,
         dr.first_name                                AS driver_first_name,
@@ -384,7 +389,9 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
     // BOTH a GL category and the cash/bank account it was paid from — no uncategorized cash-out, no
     // orphan payable. Driver-centric callers (driver_id present) keep the existing optional behavior.
     if (!body.driver_id) {
-      if (!body.category_qbo_id) return reply.code(400).send({ error: "category_required_for_driverless_expense" });
+      if (!body.category_qbo_id && !body.category_account_id) {
+        return reply.code(400).send({ error: "category_required_for_driverless_expense" });
+      }
       if (!body.payment_account_uuid) return reply.code(400).send({ error: "payment_account_required_for_driverless_expense" });
     }
 
@@ -416,7 +423,19 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         // bridged into this entity's ledger chart — surfaced as an honest CoA-gap, never silently
         // miscategorized (the CoA-completeness fill is a separate owner-gated step).
         let categoryAccountId: string | null = null;
-        if (body.category_qbo_id) {
+        if (body.category_account_id) {
+          const byId = await client.query(
+            `SELECT id::text AS id
+               FROM catalogs.accounts
+              WHERE id = $1::uuid
+                AND operating_company_id = $2::uuid
+                AND deactivated_at IS NULL
+              LIMIT 1`,
+            [body.category_account_id, body.operating_company_id]
+          );
+          categoryAccountId = (byId.rows[0] as { id?: string } | undefined)?.id ?? null;
+          if (!categoryAccountId) return { categoryUnbridged: true as const };
+        } else if (body.category_qbo_id) {
           const catRes = await client.query(
             `SELECT id::text AS id
                FROM catalogs.accounts

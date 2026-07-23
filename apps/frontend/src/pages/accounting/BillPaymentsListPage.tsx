@@ -77,10 +77,10 @@ export function BillPaymentsListPage() {
   });
 
   const unpaidBillsQuery = useQuery({
-    queryKey: ["accounting", "bills-unpaid", companyId],
+    queryKey: ["accounting", "bills-has-balance", companyId],
     queryFn: () =>
       listBills(companyId, {
-        status: "unpaid",
+        has_balance: true,
         include_balance: true,
         limit: 300,
       }),
@@ -115,7 +115,7 @@ export function BillPaymentsListPage() {
       pushToast("Bill payment voided", "success");
       void queryClient.invalidateQueries({ queryKey: ["accounting", "bill-payments-list", companyId] });
       void queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-balances", companyId] });
-      void queryClient.invalidateQueries({ queryKey: ["accounting", "bills-unpaid", companyId] });
+      void queryClient.invalidateQueries({ queryKey: ["accounting", "bills-has-balance", companyId] });
     },
     onError: (error) => pushToast(String((error as Error)?.message ?? "Void failed"), "error"),
   });
@@ -297,7 +297,7 @@ export function BillPaymentsListPage() {
             pushToast("Bill payment recorded", "success");
             void queryClient.invalidateQueries({ queryKey: ["accounting", "bill-payments-list", companyId] });
             void queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-balances", companyId] });
-            void queryClient.invalidateQueries({ queryKey: ["accounting", "bills-unpaid", companyId] });
+            void queryClient.invalidateQueries({ queryKey: ["accounting", "bills-has-balance", companyId] });
           }}
         />
       ) : null}
@@ -313,7 +313,7 @@ export function BillPaymentsListPage() {
             pushToast("CC bill payment recorded", "success");
             void queryClient.invalidateQueries({ queryKey: ["accounting", "bill-payments-list", companyId] });
             void queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-balances", companyId] });
-            void queryClient.invalidateQueries({ queryKey: ["accounting", "bills-unpaid", companyId] });
+            void queryClient.invalidateQueries({ queryKey: ["accounting", "bills-has-balance", companyId] });
           }}
         />
       ) : null}
