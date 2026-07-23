@@ -101,7 +101,7 @@ export function CoaRolesPage() {
               value={value || null}
               onChange={(next) => setDraftByRole((prev) => ({ ...prev, [row.role]: next ?? "" }))}
               options={accountOptions}
-              createKind="category"
+              createKind="account"
               addNewLabel="+ Add new account"
               operatingCompanyId={companyId}
               placeholder="Select account…"

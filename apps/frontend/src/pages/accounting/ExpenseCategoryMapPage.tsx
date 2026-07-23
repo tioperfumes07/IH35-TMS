@@ -254,7 +254,7 @@ export function ExpenseCategoryMapPage() {
                       value: account.id,
                       label: `${account.account_number} - ${account.account_name}`,
                     }))}
-                    createKind="category"
+                    createKind="account"
                     addNewLabel="+ Add new account"
                     operatingCompanyId={companyId}
                     placeholder="Select account"
