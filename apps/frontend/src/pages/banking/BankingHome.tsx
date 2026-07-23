@@ -594,6 +594,100 @@ export function BankingHomePage({ initialTab }: Props = {}) {
         </div>
       ) : null}
 
+      {activeTab === "factoring" ? (
+        <div className="space-y-3">
+          <div className="rounded-sm border border-slate-300 bg-slate-100">
+            <div className="flex items-center justify-between border-b border-slate-300 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
+              <span>Factoring (Faro) · Banking entry</span>
+              <Link to="/factoring" className="text-[10px] font-semibold normal-case text-slate-800 hover:underline">
+                Open Factoring module →
+              </Link>
+            </div>
+            <div className="space-y-1 px-3 py-2 text-sm">
+              <Link to="/factoring/reserve-tracker" className="flex justify-between hover:underline">
+                <span>Reserves held</span>
+                <span>{money.format(factoringReserve)}</span>
+              </Link>
+              <div className="flex justify-between">
+                <span>Advances funded MTD</span>
+                <span>{money.format(Math.max(cashPosting - factoringReserve, 0))}</span>
+              </div>
+              <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
+                <span>Chargebacks open</span>
+                <span className="text-red-700">{money.format(factoringChargebacks)}</span>
+              </Link>
+              <div className="flex justify-between">
+                <span>+30 aging fees</span>
+                <span className="text-slate-700">{money.format(0)}</span>
+              </div>
+              <div className="pt-1 text-xs text-gray-500">
+                Last advance:{" "}
+                {factoringVirtualSummary.lastAdvanceAt
+                  ? String(factoringVirtualSummary.lastAdvanceAt).slice(0, 10)
+                  : "—"}
+              </div>
+              {factoringTile ? <div className="text-xs text-slate-700">{factoringTile.display_name}</div> : null}
+              <div className="flex flex-wrap gap-2 pt-2">
+                <ActionButton onClick={() => navigate("/factoring/recourse-pipeline")}>Recourse Pipeline</ActionButton>
+                <ActionButton onClick={() => navigate("/factoring/chargebacks-fees")}>Chargebacks & Fees</ActionButton>
+                <ActionButton onClick={() => navigate("/factoring/statements-settings")}>Statements & Settings</ActionButton>
+              </div>
+            </div>
+          </div>
+          <p className="text-xs text-gray-600">
+            Design law: Banking Factoring tab is a thin entry summary that deep-links into the standalone{" "}
+            <Link to="/factoring" className="underline">
+              /factoring
+            </Link>{" "}
+            module. Accounts home still shows the Factoring virtual-bank card (additive — never removed).
+          </p>
+        </div>
+      ) : null}
+
+      {activeTab === "relay_card" ? (
+        <div className="space-y-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Relay Card · Banking</p>
+              <ActionButton
+                onClick={() => {
+                  const relay = tiles.find((t) => Boolean(t.is_relay));
+                  if (relay?.id) setSelectedAccountId(String(relay.id));
+                  navigate(BANKING_TAB_PATH.transactions);
+                }}
+              >
+                Open in Transactions
+              </ActionButton>
+            </div>
+            <div className="max-h-[320px] overflow-y-auto">
+              {tiles
+                .filter((t) => Boolean(t.is_relay))
+                .map((tile) => (
+                  <button
+                    key={String(tile.id)}
+                    type="button"
+                    className="grid w-full grid-cols-[1fr_auto] border-b border-gray-100 px-2 py-1.5 text-left text-sm hover:bg-gray-50"
+                    onClick={() => {
+                      setSelectedAccountId(String(tile.id));
+                      navigate(BANKING_TAB_PATH.transactions);
+                    }}
+                  >
+                    <span className="truncate">{tile.display_name}</span>
+                    <span className="font-medium">{money.format(Number(tile.current_balance ?? 0))}</span>
+                  </button>
+                ))}
+              {tiles.filter((t) => Boolean(t.is_relay)).length === 0 ? (
+                <EntityEmptyState entityName={selectedCompany?.legal_name} noun="Relay card accounts" />
+              ) : null}
+            </div>
+            <p className="mt-2 text-xs text-gray-600">
+              Relay fuel-line breakdown stays on the Transactions register when a Relay wallet row is expanded.
+              This tab is the design-law entry surface (not a delete of the register breakdown).
+            </p>
+          </div>
+        </div>
+      ) : null}
+
       {activeTab === "driver_escrow" ? (
         <DriverEscrowTabContent
           operatingCompanyId={companyId}

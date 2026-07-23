@@ -244,22 +244,23 @@ Sub-nav routes show: "Available after accounting cutover (Phase 5)" — wired in
 ### Top action button
 **+ Manual JE** (for adjustments not routed through normal flows)
 
-### Sub-nav tabs (12 — locked design)
+### Sub-nav tabs (13 — locked design)
 
 | Tab | What it shows | Phase |
 |-----|---------------|-------|
-| **Home** | Account tiles (real banks + virtual factoring/escrow) | Phase 3 ✅ shipped |
-| **All Transactions** | Unified ledger across all accounts | Phase 3 ✅ |
-| **BOA Checking** | Bank of America operating account | Phase 3 ✅ |
-| **IBC Checking** | IBC operating account | Phase 3 ✅ |
-| **Factoring (Faro)** | Entry tab inside Banking that shows thin summary + **navigates to standalone `/factoring`** deep-dive page. `/factoring` sub-tabs: **Recourse Pipeline**, **Chargebacks & Fees**, **Statements & Settings** | T11.12 pending |
-| **Escrow (virtual)** | Per-driver escrow balances | Phase 3 ✅ |
-| **Categorize Drawer** | Uncategorized transactions queue (8 actions) | Phase 3 ✅ |
-| **Reconciliation Workspace** | Match bank txns to GL entries · sign-off | Phase 6 (P6) |
-| **Bank Statement Import** | PDF parser for non-feed banks | Phase 6 |
-| **Plaid Connections** | Live bank feed config | Phase 6 |
-| **Relay Card** | Fuel card transactions auto-categorized | Phase 4 (live API) |
-| **Settings** | Account map · Posting rules · Sweep config | Owner only |
+| **Home / Accounts** | Account tiles (real banks + virtual factoring/escrow) · live path `/banking` | Phase 3 ✅ shipped |
+| **All Transactions** | Unified ledger across all accounts · `/banking/transactions` | Phase 3 ✅ |
+| **BOA Checking** | Bank of America operating account (reachable via Accounts tile → account detail) | Phase 3 ✅ |
+| **IBC Checking** | IBC operating account (reachable via Accounts tile → account detail) | Phase 3 ✅ |
+| **Factoring (Faro)** | Entry tab inside Banking (`/banking/factoring`) — thin summary + navigates to standalone `/factoring` deep-dive. `/factoring` sub-tabs: **Recourse Pipeline**, **Chargebacks & Fees**, **Statements & Settings** | T11.12 + Banking entry ✅ |
+| **Escrow (virtual)** | Per-driver escrow balances · `/banking/driver-escrow` | Phase 3 ✅ |
+| **Categorize Drawer** | Uncategorized transactions queue (8 actions) — live inside Transactions Match/Categorize register | Phase 3 ✅ |
+| **Reconciliation Workspace** | Match bank txns to GL entries · sign-off · `/banking/reconciliation` (+ workspace) | Phase 6 (P6) |
+| **Bank Statement Import** | CSV/PDF import for non-feed banks (CSV live inside Reconciliation; PDF Phase 6) | Phase 6 |
+| **Plaid Connections** | Live bank feed config (panel on Accounts + connect actions) | Phase 6 |
+| **Relay Card** | Fuel card transactions · Banking entry `/banking/relay` → Transactions register breakdown | Phase 4 (live API) ✅ |
+| **Reports** | Banking reports surface · `/banking/reports` | Phase 3 ✅ (design add 2026-07-23 — was live code; Rule 05 sync) |
+| **Settings** | Account map · Cash GL setup · Posting rules · Sweep config · Account Visibility | Owner only |
 
 ### KPI row — 6 cards
 BOA Balance · IBC Balance · Factoring Available · Escrow Total · MTD Inflow · MTD Outflow

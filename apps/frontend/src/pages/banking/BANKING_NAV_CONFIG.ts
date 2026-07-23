@@ -3,7 +3,9 @@ export const BANKING_MODULE_TABS = [
   { id: "accounts", label: "Accounts" },
   { id: "transactions", label: "Transactions" },
   { id: "reconciliation", label: "Reconciliation" },
+  { id: "factoring", label: "Factoring (Faro)" },
   { id: "driver_escrow", label: "Driver Escrow" },
+  { id: "relay_card", label: "Relay Card" },
   { id: "reports", label: "Reports" },
 ] as const;
 

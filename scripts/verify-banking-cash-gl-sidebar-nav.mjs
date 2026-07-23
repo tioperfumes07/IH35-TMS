@@ -45,7 +45,7 @@ export function run(root = process.cwd()) {
     failures.push("bank flyout still substitutes Fuel Planner for Banking tabs");
   }
 
-  for (const id of ["accounts", "transactions", "reconciliation", "driver_escrow", "reports"]) {
+  for (const id of ["accounts", "transactions", "reconciliation", "factoring", "driver_escrow", "relay_card", "reports"]) {
     if (!nav.includes(`id: "${id}"`)) failures.push(`BANKING_MODULE_TABS missing ${id}`);
   }
 
@@ -67,7 +67,7 @@ function selftest() {
     );
     fs.writeFileSync(
       `${tmp}/${NAV}`,
-      `id: "accounts"\nid: "transactions"\nid: "reconciliation"\nid: "driver_escrow"\nid: "reports"\n`
+      `id: "accounts"\nid: "transactions"\nid: "reconciliation"\nid: "factoring"\nid: "driver_escrow"\nid: "relay_card"\nid: "reports"\n`
     );
     if (run(tmp).length) throw new Error("expected PASS");
     fs.writeFileSync(`${tmp}/${HOME}`, `// orphan again\n`);
