@@ -41,6 +41,7 @@ export type EntityKind =
   | "cash_advance"
   | "account"
   | "prepaid_asset"
+  | "sales_tax_return"
   | "fixed_asset";
 
 export interface EntityLinkProps {
@@ -128,6 +129,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/accounting/chart-of-accounts/register/${id}`;
     case "prepaid_asset":
       return `/accounting/prepaid-expenses?asset_id=${id}`;
+    case "sales_tax_return":
+      return `/accounting/sales-tax?return_id=${id}`;
     case "fixed_asset":
       return `/accounting/fixed-assets?asset_id=${id}`;
     default:

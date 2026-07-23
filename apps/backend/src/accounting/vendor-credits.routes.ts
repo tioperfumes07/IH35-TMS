@@ -23,6 +23,10 @@ const applyBodySchema = z.object({
     z.object({
       bill_id: z.string().uuid(),
       applied_cents: z.coerce.number().int().positive(),
+      // Retry-safety. Unique per entity among non-voided rows
+      // (uq_vendor_credit_app_idempotency, migration 202607750000), so a double-submit or a retry
+      // after a timeout inserts once instead of decrementing the credit twice.
+      idempotency_key: z.string().trim().min(1).max(200).optional(),
     })
   ).min(1).max(50),
 });
@@ -229,10 +233,17 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
 
         const appRes = await client.query(
           `INSERT INTO accounting.vendor_credit_applications
-             (operating_company_id, credit_id, bill_id, applied_cents, applied_by_user_id)
-           VALUES ($1, $2, $3, $4, $5)
+             (operating_company_id, credit_id, bill_id, applied_cents, applied_by_user_id, idempotency_key)
+           VALUES ($1, $2, $3, $4, $5, $6)
            RETURNING id`,
-          [query.data.operating_company_id, params.data.id, app.bill_id, app.applied_cents, user.uuid]
+          [
+            query.data.operating_company_id,
+            params.data.id,
+            app.bill_id,
+            app.applied_cents,
+            user.uuid,
+            app.idempotency_key ?? null,
+          ]
         );
         applicationIds.push(String(appRes.rows[0]?.id ?? ""));
       }
