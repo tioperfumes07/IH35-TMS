@@ -260,7 +260,7 @@ Sub-nav routes show: "Available after accounting cutover (Phase 5)" — wired in
 | **Plaid Connections** | Live bank feed config (panel on Accounts + connect actions) | Phase 6 |
 | **Relay Card** | Fuel card transactions · Banking entry `/banking/relay` → Transactions register breakdown | Phase 4 (live API) ✅ |
 | **Reports** | Banking reports surface · `/banking/reports` | Phase 3 ✅ (design add 2026-07-23 — was live code; Rule 05 sync) |
-| **Settings** | Account map · Cash GL setup · Posting rules · Sweep config · Account Visibility | Owner only |
+| **Settings** | Account map · Cash GL setup · Categorization rules · Account Visibility · queues · Plaid panel · `/banking/settings` | Owner only ✅ |
 
 ### KPI row — 6 cards
 BOA Balance · IBC Balance · Factoring Available · Escrow Total · MTD Inflow · MTD Outflow
