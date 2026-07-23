@@ -15,6 +15,7 @@ import { Combobox } from "../Combobox";
 import { CreateDriverModal } from "../drivers/CreateDriverModal";
 import { CreateUnitModal } from "../fleet/CreateUnitModal";
 import { UploadZone } from "../UploadZone";
+import { EntityLink } from "../shared/EntityLink";
 import { companyToday } from "../../lib/businessDate";
 import {
   buildVendorBillLinePayloads,
@@ -318,9 +319,9 @@ export function VendorBillForm({
   return (
     <>
     <form className="space-y-3" onSubmit={handleSubmit}>
-      {linkedWoDisplayId ? (
+      {linkedWoId && linkedWoDisplayId ? (
         <div className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700">
-          Linked — {linkedWoDisplayId}
+          Linked — <EntityLink kind="work_order" id={linkedWoId} label={linkedWoDisplayId} />
         </div>
       ) : null}
       <TypeTabBar tabs={BILL_TYPE_TABS} activeId={billType} onChange={setBillType} />

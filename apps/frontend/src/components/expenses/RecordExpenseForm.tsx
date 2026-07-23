@@ -12,6 +12,7 @@ import { MoneyInput } from "../forms/MoneyInput";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { coaAccountReferenceOption, vendorReferenceOption } from "../parity/referenceOptionLabels";
 import { SelectCombobox } from "../shared/SelectCombobox";
+import { EntityLink } from "../shared/EntityLink";
 import { UploadZone } from "../UploadZone";
 import {
   initialRecordExpenseFormValues,
@@ -192,9 +193,9 @@ export function RecordExpenseForm({
   return (
     <>
     <form className="space-y-3" onSubmit={onSubmit} data-testid="record-expense-form">
-      {linkedWoDisplayId ? (
+      {workOrderId && linkedWoDisplayId ? (
         <div className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700">
-          Linked — {linkedWoDisplayId}
+          Linked — <EntityLink kind="work_order" id={workOrderId} label={linkedWoDisplayId} />
         </div>
       ) : null}
       <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("vendor")}>
