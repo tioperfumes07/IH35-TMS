@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { Button } from "../../components/Button";
-import { Combobox } from "../../components/Combobox";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { Modal } from "../../components/Modal";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { useToast } from "../../components/Toast";
@@ -55,7 +55,7 @@ export function PaymentMethodsCatalogPage() {
     enabled: (createOpen || Boolean(editId)) && Boolean(companyId),
   });
   const accountOptions = useMemo(
-    () => (accountsQuery.data?.accounts ?? []).map((a) => ({ value: a.id, label: a.account_name, sublabel: a.account_number })),
+    () => (accountsQuery.data?.accounts ?? []).map((a) => ({ value: a.id, label: a.account_name, type: a.account_number ?? undefined })),
     [accountsQuery.data]
   );
   const accountNameById = useMemo(() => {
@@ -226,13 +226,15 @@ export function PaymentMethodsCatalogPage() {
           <label className="block">
             <span className="text-xs font-medium text-gray-600">GL account (cash/bank)</span>
             <div className="mt-1">
-              <Combobox
-                options={accountOptions}
+              <ReferenceSelect
                 value={createForm.gl_account_id}
                 onChange={(v) => setCreateForm((f) => ({ ...f, gl_account_id: v }))}
+                options={accountOptions}
+                createKind="account"
+                operatingCompanyId={companyId}
                 placeholder="Select GL account (optional)"
-                loading={accountsQuery.isLoading}
-                allowClear
+                disabled={accountsQuery.isLoading}
+                onOptionCreated={() => void accountsQuery.refetch()}
               />
             </div>
           </label>
@@ -282,13 +284,15 @@ export function PaymentMethodsCatalogPage() {
           <label className="block">
             <span className="text-xs font-medium text-gray-600">GL account (cash/bank)</span>
             <div className="mt-1">
-              <Combobox
-                options={accountOptions}
+              <ReferenceSelect
                 value={editForm.gl_account_id}
                 onChange={(v) => setEditForm((f) => ({ ...f, gl_account_id: v }))}
+                options={accountOptions}
+                createKind="account"
+                operatingCompanyId={companyId}
                 placeholder="Select GL account"
-                loading={accountsQuery.isLoading}
-                allowClear
+                disabled={accountsQuery.isLoading}
+                onOptionCreated={() => void accountsQuery.refetch()}
               />
             </div>
           </label>
