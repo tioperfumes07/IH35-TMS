@@ -43,6 +43,7 @@
     "/accounting/payments",
     "/accounting/payments/:id",
     "/accounting/payroll",
+    "/accounting/period-close",
     "/accounting/period-comparison",
     "/accounting/posting-lineage",
     "/accounting/pre-settlements",

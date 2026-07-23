@@ -127,6 +127,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   // More ▾ — period / analysis
   { label: "Sales tax", path: "/accounting/sales-tax", section: "more" },
   { label: "Month close", path: "/accounting/month-close", section: "more" },
+  { label: "Period close", path: "/accounting/period-close", section: "more" },
   { label: "Period comparison", path: "/accounting/period-comparison", section: "more" },
   { label: "Cash forecast", path: "/accounting/cash-forecast", section: "more" },
   { label: "Multi-entity", path: "/accounting/multi-entity", section: "more" },
