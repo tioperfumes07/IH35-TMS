@@ -1,6 +1,6 @@
 {
  "date": "2026-07-23",
- "generated_at_iso": "2026-07-23T14:37:25.736Z",
+ "generated_at_iso": "2026-07-23T18:11:59.750Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
@@ -13162,6 +13162,96 @@
  ],
  "merged_prs": [
   {
+   "number": 3346,
+   "title": "[HOLD-FOR-JORGE] fix(banking): cash-GL is_postable DB trigger (WO #6)",
+   "mergedAt": "2026-07-23T18:10:23Z",
+   "branch": "fix/banking-cash-gl-postable-trigger"
+  },
+  {
+   "number": 3344,
+   "title": "guard(accounting): pin settlement_lines line_type true supersets (WO #3)",
+   "mergedAt": "2026-07-23T18:10:02Z",
+   "branch": "fix/settlement-lines-line-type-superset-guard"
+  },
+  {
+   "number": 3343,
+   "title": "[HOLD-FOR-JORGE] fix(accounting): cash_dip primary CoA role + DIP resolver",
+   "mergedAt": "2026-07-23T18:10:08Z",
+   "branch": "fix/accounting-cash-dip-coa-role"
+  },
+  {
+   "number": 3342,
+   "title": "fix(accounting): CoA Roles empty account picker (entity + postable)",
+   "mergedAt": "2026-07-23T18:09:48Z",
+   "branch": "fix/coa-roles-accounts-picker"
+  },
+  {
+   "number": 3341,
+   "title": "fix(safety): block reducing a fine already converted to a driver liability (Option B)",
+   "mergedAt": "2026-07-23T17:19:04Z",
+   "branch": "fix/fine-reduce-blocks-converted-liability"
+  },
+  {
+   "number": 3340,
+   "title": "fix(safety): DOT inspection + HOS violation creators asked for raw uuids (SAF-F14)",
+   "mergedAt": "2026-07-23T17:34:12Z",
+   "branch": "fix/safety-creator-pickers"
+  },
+  {
+   "number": 3339,
+   "title": "fix(safety): DOT inspection + complaint void recorded a placeholder reason (SAF-F11)",
+   "mergedAt": "2026-07-23T17:10:34Z",
+   "branch": "fix/safety-void-requires-reason"
+  },
+  {
+   "number": 3338,
+   "title": "fix(banking): cash-GL bind only postable accounts (lane defect E)",
+   "mergedAt": "2026-07-23T16:34:22Z",
+   "branch": "fix/banking-cash-gl-is-postable"
+  },
+  {
+   "number": 3337,
+   "title": "docs(law): canonical DEFINITION-OF-DONE + enforcing guard + Cursor/Claude lane split",
+   "mergedAt": "2026-07-23T16:34:10Z",
+   "branch": "docs/definition-of-done-canonical"
+  },
+  {
+   "number": 3336,
+   "title": "fix(frontend): base-less API fetches silently received index.html (SAF-F06)",
+   "mergedAt": "2026-07-23T16:12:22Z",
+   "branch": "fix/base-less-api-fetch-spa-fallback"
+  },
+  {
+   "number": 3335,
+   "title": "fix(dispatch): cancellation reports read the wrong reason catalog",
+   "mergedAt": "2026-07-23T15:39:48Z",
+   "branch": "fix/cancellation-reason-label-source"
+  },
+  {
+   "number": 3334,
+   "title": "fix(safety): dashboard KPI tiles were permanently 0 — wire them to real sources",
+   "mergedAt": "2026-07-23T15:39:43Z",
+   "branch": "fix/safety-dashboard-kpis-wired"
+  },
+  {
+   "number": 3333,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-23T15:39:37Z",
+   "branch": "chore/tracker-artifacts-sync-30016618118"
+  },
+  {
+   "number": 3332,
+   "title": "fix(banking): drain stack 22–31 onto main (replaces CONFLICTING #3324–#3331)",
+   "mergedAt": "2026-07-23T15:41:07Z",
+   "branch": "fix/banking-stack-drain-main"
+  },
+  {
+   "number": 3320,
+   "title": "fix(guards): my meta-guard was 87% false positives — name-agnostic classifier",
+   "mergedAt": "2026-07-23T15:39:27Z",
+   "branch": "fix/meta-guard-classifier-name-agnostic"
+  },
+  {
    "number": 3319,
    "title": "fix(guards): selftest-debt burndown batch 1 — 10 guards, 69→59",
    "mergedAt": "2026-07-23T13:20:18Z",
@@ -16670,100 +16760,22 @@
    "title": "fix(inventory): honest Assignments trail from parts_invoice_links",
    "mergedAt": "2026-07-16T15:21:05Z",
    "branch": "feat/inventory-assignments-honesty"
-  },
-  {
-   "number": 2552,
-   "title": "fix(law): EntityLink dead-end follow-up (bill/expense/bank_txn)",
-   "mergedAt": "2026-07-16T15:11:22Z",
-   "branch": "feat/entitylink-deadends"
-  },
-  {
-   "number": 2551,
-   "title": "[HOLD-FOR-JORGE] fix(law): wire EntityLinks, fine→deduction seed, Relay ingest, Bank Register",
-   "mergedAt": "2026-07-16T14:54:57Z",
-   "branch": "feat/law-wiring-connectivity"
-  },
-  {
-   "number": 2550,
-   "title": "fix(banking): include all bank accounts in Transfer From/To (QBO parity)",
-   "mergedAt": "2026-07-16T14:22:12Z",
-   "branch": "feat/banking-transfer-all-bank-accounts"
-  },
-  {
-   "number": 2549,
-   "title": "[HOLD-FOR-JORGE] feat(qbo): assemble balanced OB preview JE from mapped BS (no post)",
-   "mergedAt": "2026-07-16T14:22:04Z",
-   "branch": "hold/ob-je-preview-assemble"
-  },
-  {
-   "number": 2548,
-   "title": "fix(settlements): STEP 3 kill RETIRE payroll writers; G4 → 0",
-   "mergedAt": "2026-07-16T14:21:29Z",
-   "branch": "feat/settlement-step3-kill-retire-payroll-writers"
-  },
-  {
-   "number": 2547,
-   "title": "[HOLD-FOR-JORGE] feat(qbo): map OB live preview via mdata.qbo_accounts (no JE)",
-   "mergedAt": "2026-07-16T12:53:21Z",
-   "branch": "feat/ob-qbo-live-map-mdata-0331"
-  },
-  {
-   "number": 2546,
-   "title": "docs(audit): progress after #2545 live OB preview",
-   "mergedAt": "2026-07-16T12:06:42Z",
-   "branch": "docs/audit-progress-2545-live"
-  },
-  {
-   "number": 2545,
-   "title": "[HOLD-FOR-JORGE] feat(qbo): live OB BS/TB preview as_of 2026-03-31 (no post)",
-   "mergedAt": "2026-07-16T11:48:40Z",
-   "branch": "feat/ob-qbo-live-preview-2026-03-31"
-  },
-  {
-   "number": 2543,
-   "title": "feat(qbo): parseBalanceSheet for OB 2026-03-31 live pull (no post)",
-   "mergedAt": "2026-07-16T05:10:23Z",
-   "branch": "feat/ob-parse-balance-sheet-0331"
-  },
-  {
-   "number": 2542,
-   "title": "docs(audit): progress after #2535–#2540 merge wave",
-   "mergedAt": "2026-07-16T05:04:54Z",
-   "branch": "docs/audit-progress-relay-ceremony"
-  },
-  {
-   "number": 2541,
-   "title": "docs(qbo): OB 2026-03-31 live pull plan (draft)",
-   "mergedAt": "2026-07-16T05:25:28Z",
-   "branch": "feat/qbo-ob-0331-live-preview"
-  },
-  {
-   "number": 2540,
-   "title": "docs(audit): CURSOR-AUDIT-2026-07-15 pack",
-   "mergedAt": "2026-07-16T04:19:13Z",
-   "branch": "docs/cursor-audit-2026-07-15"
-  },
-  {
-   "number": 2539,
-   "title": "[HOLD-FOR-JORGE] fix(qbo): Step-2 repoint mirrors to mdata.qbo_*",
-   "mergedAt": "2026-07-16T04:52:35Z",
-   "branch": "feat/qbo-step2-mdata-repoint"
-  },
-  {
-   "number": 2538,
-   "title": "[HOLD-FOR-JORGE] feat(relay): bridge ingest to canonical fuel (no GL)",
-   "mergedAt": "2026-07-16T04:32:16Z",
-   "branch": "feat/relay-canonical-fuel-bridge"
-  },
-  {
-   "number": 2537,
-   "title": "fix(ui): restore dispatch and invoice deep-link connectivity",
-   "mergedAt": "2026-07-16T04:19:05Z",
-   "branch": "feat/dispatch-invoice-deeplinks"
   }
  ],
  "merged_pr_total": 3000,
  "hold_for_jorge": [
+  {
+   "number": 3346,
+   "title": "[HOLD-FOR-JORGE] fix(banking): cash-GL is_postable DB trigger (WO #6)",
+   "mergedAt": "2026-07-23T18:10:23Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3343,
+   "title": "[HOLD-FOR-JORGE] fix(accounting): cash_dip primary CoA role + DIP resolver",
+   "mergedAt": "2026-07-23T18:10:08Z",
+   "category": "HOLD"
+  },
   {
    "number": 3282,
    "title": "chore(db): record the HOLD-batch migration already applied to prod [FINANCIAL / NEEDS JORGE-APPROVED]",
