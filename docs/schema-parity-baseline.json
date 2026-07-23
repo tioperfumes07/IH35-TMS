@@ -8556,19 +8556,26 @@
     "safety.accident_reports": [
       "accident_at",
       "at_fault",
+      "bill_or_expense_ref",
       "description",
       "driver_id",
       "id",
       "incident_id",
       "insurance_claim_id",
+      "insurance_claim_number",
       "insurance_lawsuit_id",
       "load_id",
+      "location",
       "operating_company_id",
+      "police_report_number",
       "preventable",
       "status",
+      "third_party_name",
+      "third_party_plate",
       "unit_id",
       "updated_at",
-      "vendor_id"
+      "vendor_id",
+      "vendor_invoice_number"
     ],
     "safety.anomaly_alert_rules": [
       "cadence_minutes",
