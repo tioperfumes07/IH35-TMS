@@ -22,6 +22,7 @@ import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useAuth } from "../../auth/useAuth";
 import { ManageAccountsModal } from "./components/ManageAccountsModal";
 import { AccountTilesRow } from "./components/AccountTilesRow";
 import { SyncStatusStrip } from "./components/SyncStatusStrip";
@@ -52,6 +53,8 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   const [searchParams] = useSearchParams();
   const deepLinkTxnId = searchParams.get("txn_id");
   const { selectedCompanyId, selectedCompany } = useCompanyContext();
+  const { user } = useAuth();
+  const canSeeEmailQueue = user?.role === "Owner" || user?.role === "Administrator";
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const companyId = selectedCompanyId ?? "";
@@ -240,6 +243,9 @@ export function BankingHomePage({ initialTab }: Props = {}) {
           <ActionButton onClick={() => navigate(BANKING_TAB_PATH.transactions)}>+ Import Statement</ActionButton>
         </span>
         <ActionButton onClick={() => navigate("/banking/cash-gl-setup")}>Cash GL setup</ActionButton>
+        {canSeeEmailQueue ? (
+          <ActionButton onClick={() => navigate("/banking/email-queue")}>Email Queue</ActionButton>
+        ) : null}
         <ActionButton onClick={() => setManageOpen(true)}>+ Create Account / Manage Accounts</ActionButton>
         <PlaidLinkButton
           operatingCompanyId={companyId}
