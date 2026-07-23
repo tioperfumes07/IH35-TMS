@@ -56,7 +56,12 @@ export async function registerCancellationsReportRoutes(app: FastifyInstance) {
         `
           SELECT
             lc.reason_code,
-            COALESCE(r.reason_label, lc.reason_code) AS reason_label,
+            -- Resolve the label from the catalog dispatch actually writes from
+            -- (catalogs.load_cancellation_reasons, entity-scoped, 21 distinct codes) and keep the
+            -- legacy global catalog as a fallback tier. Joining only the legacy 9-row table left
+            -- 12 of those 21 codes unmatched, so the report rendered raw codes like FORCE_WEATHER
+            -- and CUST_NO_SHOW_AT_PICKUP. Both tiers are kept so no label can regress.
+            COALESCE(lcr.display_name, r.reason_label, lc.reason_code) AS reason_label,
             lc.cancellation_charge_cents,
             lc.billable_to_customer,
             to_char(lc.cancelled_at AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD') AS cancelled_on,
@@ -68,6 +73,9 @@ export async function registerCancellationsReportRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.loads l ON l.id = lc.load_id
           LEFT JOIN mdata.customers c ON c.id = l.customer_id
           LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+          LEFT JOIN catalogs.load_cancellation_reasons lcr
+            ON lcr.reason_code = lc.reason_code
+           AND lcr.operating_company_id = lc.operating_company_id
           LEFT JOIN catalogs.cancellation_reasons r ON r.reason_code = lc.reason_code
           WHERE lc.operating_company_id = $1::uuid
             AND ($2::date IS NULL OR lc.cancelled_at >= $2::date)
