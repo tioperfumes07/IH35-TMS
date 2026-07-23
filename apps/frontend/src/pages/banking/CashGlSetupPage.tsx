@@ -38,6 +38,11 @@ export function CashGlSetupPage() {
     [query.data]
   );
   const banks = query.data?.bank_accounts ?? [];
+  const unboundCount = useMemo(
+    () => banks.filter((b) => !b.ledger_account_id).length,
+    [banks]
+  );
+  const mappedCount = banks.length - unboundCount;
 
   const onPick = (bank: CashGlBankAccount, value: string) => {
     setSavingId(bank.id);
@@ -82,6 +87,29 @@ export function CashGlSetupPage() {
         </div>
       ) : null}
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
+
+      {/* Absence / coverage honesty only after a successful response — never invent "complete". Flat accent (UI-01). */}
+      {query.isSuccess && banks.length > 0 && unboundCount > 0 ? (
+        <div
+          className="border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+          data-testid="banking-cash-gl-unbound-honesty-banner"
+        >
+          <p className="font-semibold">
+            Cash GL mapping incomplete: {mappedCount} of {banks.length} bank account(s) mapped · {unboundCount}{" "}
+            unbound
+          </p>
+          <p className="mt-1">
+            Unmapped banks cannot open Bank Register / bank-feed GL posting until each row has a Cash GL account.
+            Neon live (TRANSP) was 8/16 mapped — do not treat Banking as cash-posting ready while unbound remain.
+            Map each &quot;— Not mapped —&quot; row below.
+          </p>
+        </div>
+      ) : null}
+      {query.isSuccess && banks.length > 0 && unboundCount === 0 ? (
+        <p className="text-xs text-slate-600" data-testid="banking-cash-gl-mapping-complete-note">
+          All {banks.length} active bank account(s) have a Cash GL mapping for this company.
+        </p>
+      ) : null}
 
       <ParityTable
         columns={columns}

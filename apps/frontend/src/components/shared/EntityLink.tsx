@@ -33,6 +33,7 @@ export type EntityKind =
   | "factoring_advance"
   | "payment"
   | "bill_payment"
+  | "transfer"
   | "work_order"
   | "bank_transaction"
   | "claim"
@@ -71,7 +72,9 @@ const DEFAULT_LINK_CLASSNAME =
  * never fabricate a dead link. Query-param drill-through kinds (settlement / liability /
  * claim / lawsuit / bank_transaction / cash_advance) require the target page to honor the param
  * (CI: verify-entitylink-deep-links, verify-legal-matter-lawsuit-linkage).
- * "payment" → /accounting/payments/:id · "work_order" → /maintenance/work-orders/:id
+ * "payment" → /accounting/payments/:id · "bill_payment" → /accounting/bill-payments/:id
+ * "transfer" → /banking/transfers?transfer_id= (TransfersListPage highlights row)
+ * "work_order" → /maintenance/work-orders/:id
  * "bill" → /accounting/bills/:id · "expense" → /accounting/expenses/:id · "matter" → /legal/matters/:id
  * "lawsuit" → /safety/insurance/lawsuits?lawsuit_id= (LawsuitsTab selects+highlights the row)
  * "bank_transaction" → /banking/transactions?txn_id= (BankingHome expands row)
@@ -104,6 +107,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/accounting/payments/${id}`;
     case "bill_payment":
       return `/accounting/bill-payments/${id}`;
+    case "transfer":
+      return `/banking/transfers?transfer_id=${id}`;
     case "work_order":
       return `/maintenance/work-orders/${id}`;
     case "settlement":

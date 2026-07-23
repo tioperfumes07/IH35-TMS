@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import {
   acknowledgeSettlement,
   finalizeSettlement,
@@ -59,6 +59,7 @@ export function SettlementDetailPage() {
   const { selectedCompanyId } = useCompanyContext();
   const auth = useAuth();
   const { pushToast } = useToast();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
@@ -287,7 +288,10 @@ export function SettlementDetailPage() {
         proposedDeductions={summary.deductionTotal}
         isRefreshing={debt.isStale}
         onOpenBreakdown={() => setLiabilityOpen(true)}
-        onOpenEscrow={() => pushToast("Open the escrow card on the right for timeline details.", "info")}
+        onOpenEscrow={() => {
+          // Law §9 reverse: settlement → Banking Driver Escrow virtual bank (not a toast dead-end).
+          navigate("/banking/driver-escrow");
+        }}
       />
       <PendingAckNotice pendingAckCount={debt.debt?.pending_ack_count ?? 0} />
       {teamSplitQuery.data && Array.isArray((teamSplitQuery.data as Record<string, unknown>).splits) ? (

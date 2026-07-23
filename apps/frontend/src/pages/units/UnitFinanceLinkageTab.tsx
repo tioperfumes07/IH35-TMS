@@ -4,6 +4,7 @@ import { getUnitFinanceLinkage } from "../../api/unit-finance-linkage";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
 
 type UnitFinanceLinkageTabProps = {
   unitId: string;
@@ -39,6 +40,8 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
       <p className="text-xs text-gray-600">
         Read-only drill-through to existing finance surfaces — no new GL posting from this tab.
       </p>
+
+      <LinkedBankTransactionsPanel companyId={companyId} linkage={{ kind: "unit_id", id: unitId }} />
 
       <section className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
