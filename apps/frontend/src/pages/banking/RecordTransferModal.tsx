@@ -123,7 +123,7 @@ export function RecordTransferModal({
     () =>
       (coaAccountsQuery.data?.accounts ?? []).map((account) => ({
         id: account.id,
-        name: `${account.account_number || "COA"} - ${account.account_name}`,
+        name: account.account_name,
         kind: "coa" as const,
         account_type: account.account_type ?? "",
         account_number: account.account_number ?? null,

@@ -146,7 +146,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
         .filter((a) => a.is_postable && !a.deactivated_at && a.account_type && INCOME_TYPES.includes(a.account_type))
         .map((a) => ({
           value: a.id,
-          label: a.account_number ? `${a.account_number} · ${a.account_name}` : a.account_name,
+          label: a.account_name,
           type: a.account_type ?? undefined,
         })),
     [accountsQuery.data?.accounts]

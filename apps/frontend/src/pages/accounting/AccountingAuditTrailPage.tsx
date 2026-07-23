@@ -185,7 +185,7 @@ export function AccountingAuditTrailPage() {
         sortable: true,
         render: (row) => (
           <>
-            {row.account_number ?? "—"} {row.account_name ? `- ${row.account_name}` : ""}
+            {row.account_name ?? "—"}
           </>
         ),
       },
@@ -236,7 +236,7 @@ export function AccountingAuditTrailPage() {
         sortable: true,
         render: (row) => (
           <>
-            {row.account_number ?? "—"} {row.account_name ? `- ${row.account_name}` : ""}
+            {row.account_name ?? "—"}
           </>
         ),
       },

@@ -88,14 +88,14 @@ export function MultiEntityAccountingPage() {
         key: "account_name",
         label: "Account",
         sortable: true,
-        sortValue: (row) => `${row.account_number ? `${row.account_number} - ` : ""}${row.account_name}`,
+        sortValue: (row) => `$${row.account_name}`,
         render: (row) => (
           <EntityLink
             kind="account"
             id={row.account_id}
             label={
               <>
-                {row.account_number ? `${row.account_number} - ` : ""}
+                
                 {row.account_name}
               </>
             }

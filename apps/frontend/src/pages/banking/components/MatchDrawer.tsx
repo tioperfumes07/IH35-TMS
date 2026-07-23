@@ -345,7 +345,7 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
                 options={(coaQuery.data?.accounts ?? []).map((account) => ({
                   value: account.id,
                   label: account.account_name,
-                  type: account.account_number ? String(account.account_number) : undefined,
+                  type: account.account_type ? String(account.account_type) : undefined,
                 }))}
                 createKind="category"
                 operatingCompanyId={operatingCompanyId}

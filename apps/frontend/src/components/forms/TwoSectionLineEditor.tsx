@@ -109,7 +109,7 @@ export function TwoSectionLineEditor({
     // PRIMARY: the full Chart-of-Accounts (same as banking categorize) — searchable existing accounts.
     const fromCoa = (coaAccountsQuery.data?.accounts ?? []).map((account) => ({
       id: String(account.id ?? ""),
-      label: `${account.account_number ?? ""} · ${account.account_name ?? ""}`.replace(/^ · /, "").trim(),
+      label: `${account.account_name ?? ""}`.trim(),
     }));
     const merged = new Map<string, CostContextOption>();
     for (const row of fromCoa) {
@@ -122,7 +122,7 @@ export function TwoSectionLineEditor({
     // FALLBACKS (only if the COA query hasn't resolved): accounting-categories, then cost-context.
     const fromAccounting = (accountingCategoriesQuery.data ?? []).map((entry) => ({
       id: String(entry.id ?? ""),
-      label: `${entry.account_number ?? entry.qbo_id ?? ""} · ${entry.name ?? ""}`.trim(),
+      label: `${entry.name ?? ""}`.trim() || String(entry.account_number ?? entry.qbo_id ?? ""),
     }));
     if (fromAccounting.length > 0) return fromAccounting;
     return (costContextQuery.data?.expense_categories ?? []).map((entry) => ({

@@ -273,7 +273,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
                 </option>
                 {parentOptions.map((a) => (
                   <option key={a.id} value={a.id}>
-                    {a.account_number ? `${a.account_number} · ` : ""}
+                    
                     {a.account_name}
                   </option>
                 ))}

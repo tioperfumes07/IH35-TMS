@@ -458,7 +458,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
     const accounts = incomeAccountsQuery.data?.accounts ?? [];
     return accounts
       .filter((a) => a.account_type === "Income")
-      .map((a) => ({ value: a.id, label: a.account_number ? `${a.account_number} — ${a.account_name}` : a.account_name }));
+      .map((a) => ({ value: a.id, label: a.account_name }));
   }, [incomeAccountsQuery.data]);
 
   async function saveNewTerm() {

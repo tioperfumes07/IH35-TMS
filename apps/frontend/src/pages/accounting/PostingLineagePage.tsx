@@ -148,10 +148,10 @@ export function PostingLineagePage() {
         key: "account_number",
         label: "Account",
         sortable: true,
-        sortValue: (row) => `${row.account_number ?? ""} ${row.account_name ?? ""}`.trim(),
+        sortValue: (row) => `${row.account_name ?? ""}`.trim(),
         render: (row) => (
           <>
-            {row.account_number ?? "—"} {row.account_name ? `- ${row.account_name}` : ""}
+            {row.account_name ?? "—"}
           </>
         ),
       },

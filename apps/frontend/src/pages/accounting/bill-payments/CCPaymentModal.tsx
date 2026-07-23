@@ -58,7 +58,7 @@ export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSave
         )
         .map((acct) => ({
           value: acct.id,
-          label: acct.account_number ? `${acct.account_number} · ${acct.account_name}` : acct.account_name,
+          label: acct.account_name,
           type: acct.account_type ?? undefined,
         })),
     [accountsQuery.data?.accounts]
