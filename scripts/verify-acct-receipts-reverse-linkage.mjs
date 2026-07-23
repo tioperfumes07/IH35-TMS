@@ -22,8 +22,14 @@ export function check() {
   const page = read(PAGE);
 
   if (!/EntityLink/.test(page)) failures.push(`${PAGE}: must use EntityLink for bill/expense drill-through`);
-  if (!/kind=\{row\.source\.type === "expense" \? "expense" : "bill"\}/.test(page)) {
-    failures.push(`${PAGE}: list Ref # column must EntityLink by source type + entity_id`);
+  // Kind must be resolved from the source type for ALL THREE types. The old assertion hardcoded the
+  // two-branch form `type === "expense" ? "expense" : "bill"`, which sends a PAYMENT receipt to
+  // /accounting/bills/<payment_id> — a wrong-record drill — and blocked the correct resolver.
+  if (!/kind=\{receiptEntityKind\(row\)\}/.test(page)) {
+    failures.push(`${PAGE}: list Ref # column must resolve EntityLink kind via receiptEntityKind(row)`);
+  }
+  if (!/case[\s\S]{0,0}|receiptEntityKind/.test(page) || !/"payment"/.test(page)) {
+    failures.push(`${PAGE}: receiptEntityKind must map payment receipts to the payment kind, not bill`);
   }
   if (!/id=\{row\.entity_id\}/.test(page)) failures.push(`${PAGE}: list must pass entity_id to EntityLink`);
   if (!/id=\{data\.entity_id\}/.test(page)) failures.push(`${PAGE}: detail panel must EntityLink data.entity_id`);
