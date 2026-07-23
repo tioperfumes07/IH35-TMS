@@ -1265,8 +1265,22 @@ export const COA_ROLE_VALUES = [
   "sales_tax_payable",
   "cash_basis_adjustment_equity",
   "retained_earnings",
-  // Settlement / driver / fuel poster roles — designatable on the CoA Roles page so the owner can map
-  // each to a GL account (no migration seed). Backend enum: accounting/coa-roles/resolver.service.ts.
+  "uncategorized_expense",
+  // FIN-22 lessor lease (TRK)
+  "rental_income",
+  "lease_receivable",
+  "interest_income",
+  "gain_loss_on_disposal",
+  // CODER-34 factoring secured-borrowing (TRANSP)
+  "factoring_advance_liability",
+  "ar_assigned_to_factor",
+  "factoring_recoursed_ar",
+  "default_interest_expense",
+  "factor_reserve_held",
+  "factor_fee_expense",
+  "property_tax_expense",
+  "property_tax_payable",
+  // Settlement / driver / fuel poster roles — designatable on the CoA Roles page
   "driver_pay_expense",
   "driver_payroll_clearing",
   "reimbursement_expense",
@@ -1277,7 +1291,7 @@ export const COA_ROLE_VALUES = [
   "fuel_advance_recovery",
   "other_recovery",
   "abandonment_chargeback_recovery",
-  // DIP operating cash — designate WF General Operating 6103 (QBO-1150040141) after held 202607760000.
+  // DIP operating cash
   "cash_dip",
 ] as const;
 
