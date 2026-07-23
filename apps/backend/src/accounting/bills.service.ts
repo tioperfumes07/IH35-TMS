@@ -172,6 +172,35 @@ const BILL_PAYMENT_IS_RECONCILED_SQL = `
   )
 `;
 
+/**
+ * OPEN BALANCE — must match the A/P aging definition.
+ *
+ * The aging (ap-aging.service.ts AP_AGING_OPEN_BILLS_SQL) computes
+ *   amount_cents - SUM(bill_payments) - SUM(vendor_credit_applications)
+ * while the bills list and the Pay-Bill picker used only
+ *   amount_cents - paid_cents
+ * and `vendor-credits.routes.ts` never updates bills.paid_cents. A bill fully settled by a vendor
+ * credit therefore dropped to $0 in the aging but stayed listed as open AND stayed selectable in
+ * the pay picker — an operator could pay a bill that was already settled by a credit.
+ *
+ * Fixed on the READ side on purpose: bills.paid_cents has four independent writers (this file x3
+ * and bills-bulk.routes.ts), including a void path that recomputes MAX(0, paid - amount). Folding
+ * credits into that column would fight those writers and corrupt on the next void.
+ *
+ * Scoped by operating_company_id as well as bill_id — same as the aging, and it uses the
+ * idx_vendor_credit_app_bill_active partial index.
+ */
+const APPLIED_VENDOR_CREDITS_SQL = `COALESCE((
+        SELECT SUM(vca.applied_cents)
+        FROM accounting.vendor_credit_applications vca
+        WHERE vca.bill_id = b.id
+          AND vca.operating_company_id = b.operating_company_id
+          AND vca.voided_at IS NULL
+      ), 0)`;
+
+/** Open balance net of payments AND non-voided vendor credits. */
+const BILL_OPEN_BALANCE_SQL = `(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0) - ${APPLIED_VENDOR_CREDITS_SQL})`;
+
 const BILL_IS_RECONCILED_SQL = `
   EXISTS (
     SELECT 1
@@ -357,7 +386,7 @@ export async function listBillsByVendor(
       where.push("b.revoked_at IS NULL");
     }
     if (options.hasBalance) {
-      where.push("(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0)) > 0");
+      where.push(`${BILL_OPEN_BALANCE_SQL} > 0`);
     }
     values.push(options.limit, options.offset);
     const res = await client.query<BillRow>(
@@ -403,7 +432,7 @@ export async function listAllBillsForCompany(
       where.push("b.revoked_at IS NULL");
     }
     if (options.hasBalance) {
-      where.push("(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0)) > 0");
+      where.push(`${BILL_OPEN_BALANCE_SQL} > 0`);
     }
     values.push(options.limit, options.offset);
     const res = await client.query<BillRow>(

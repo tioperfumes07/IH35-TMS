@@ -153,6 +153,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
           // stale parent behind. parent_account_id is a real FK (catalogs.accounts(id), 0010).
           parent_account_id: form.isSubaccount && form.parentAccount ? form.parentAccount : null,
           is_locked: form.lockAccount,
+          is_billable_expense: form.billableExpenses,
         },
       });
       onCreated({ id: String(res.id), label: form.name.trim() });
@@ -291,22 +292,19 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
           </label>
 
           {/*
-            "Use for billable expenses" has NO storage: catalogs.accounts has no billable column
-            (verified against db/migrations — the only billable_* columns live on the cancellation-
-            reason tables). It was silently discarded on every save. Persisting it needs an additive
-            migration, which is owner-gated (financial cluster), so the control is disabled and
-            labelled rather than left lying. ARCHIVE-not-DELETE: kept in place for the migration.
+            Now persisted: migration 202607750000 added catalogs.accounts.is_billable_expense, and
+            the catalogs accounting factory maps it in selectMetadataSql + create/update. Previously
+            this control had NO storage and was silently discarded on every save, so it was disabled
+            and labelled rather than left lying.
           */}
-          <label className="flex items-center gap-2 text-sm text-gray-400">
+          <label className="flex items-center gap-2 text-sm text-gray-700">
             <input
               type="checkbox"
               checked={form.billableExpenses}
               onChange={(e) => set("billableExpenses", e.target.checked)}
-              disabled
               className="h-4 w-4 rounded-sm border-gray-300"
             />
             Use for billable expenses
-            <span className="text-xs">— not stored yet (needs schema)</span>
           </label>
 
           <label className="flex items-center gap-2 text-sm text-gray-700">

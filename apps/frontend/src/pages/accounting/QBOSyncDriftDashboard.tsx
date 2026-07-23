@@ -5,6 +5,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 
 type EntitySummary = {
   entity_type: string;
@@ -71,6 +72,19 @@ function driftTypeLabel(type: string) {
   return type;
 }
 
+function driftEntityKind(entityType: string): EntityKind | null {
+  switch (entityType) {
+    case "chart_of_accounts":
+      return "account";
+    case "customers":
+      return "customer";
+    case "vendors":
+      return "vendor";
+    default:
+      return null;
+  }
+}
+
 export function QBOSyncDriftDashboard() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -101,6 +115,19 @@ export function QBOSyncDriftDashboard() {
       label: "Entity",
       sortable: true,
       render: (row) => row.entity_type.replace(/_/g, " "),
+    },
+    {
+      key: "entity_id",
+      label: "Local record",
+      sortable: true,
+      sortValue: (row) => row.entity_id ?? "",
+      render: (row) => {
+        const kind = driftEntityKind(row.entity_type);
+        if (!kind || !row.entity_id) {
+          return <span className="font-mono text-xs text-muted-foreground">{row.entity_id ? `${row.entity_id.slice(0, 8)}…` : "—"}</span>;
+        }
+        return <EntityLink kind={kind} id={row.entity_id} label={`${row.entity_id.slice(0, 8)}…`} />;
+      },
     },
     {
       key: "drift_type",
