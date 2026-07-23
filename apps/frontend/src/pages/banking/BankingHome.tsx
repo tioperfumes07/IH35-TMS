@@ -342,6 +342,29 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             uncategorizedCount={uncategorizedCount}
             pendingSyncCount={pendingSyncCount}
           />
+          {allAccountsQuery.isSuccess &&
+          (() => {
+            const accts = allAccountsQuery.data?.accounts ?? [];
+            const unbound = accts.filter((a) => !a.ledger_account_id).length;
+            if (accts.length === 0 || unbound === 0) return null;
+            return (
+              <div
+                className="border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+                data-testid="banking-accounts-cash-gl-unbound-banner"
+              >
+                <p className="font-semibold">
+                  Cash GL unbound: {unbound} of {accts.length} bank account(s) have no Cash GL mapping
+                </p>
+                <p className="mt-1">
+                  Bank Register and bank-feed posting need a Cash GL per account. Map unbound banks on Cash GL setup —
+                  do not treat Accounts home as posting-ready.
+                </p>
+                <div className="mt-2">
+                  <ActionButton onClick={() => navigate("/banking/cash-gl-setup")}>Open Cash GL setup</ActionButton>
+                </div>
+              </div>
+            );
+          })()}
           <AccountTilesRow
             tiles={sortedBankTiles}
             selectedId={selectedId}
