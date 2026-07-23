@@ -144,7 +144,17 @@ export function CollectionsPage() {
                 onClick={() => setSelectedTaskId(task.id)}
                 className={`w-full border-b border-gray-100 px-3 py-2 text-left ${selectedTask === task.id ? "bg-slate-100" : "hover:bg-gray-50"}`}
               >
-                <div className="text-sm font-medium text-gray-900">{task.customer_name ?? "Unknown customer"}</div>
+                <div
+                  className="text-sm font-medium text-gray-900"
+                  onClick={(event) => event.stopPropagation()}
+                  onKeyDown={(event) => event.stopPropagation()}
+                >
+                  <EntityLink
+                    kind="customer"
+                    id={task.customer_id}
+                    label={task.customer_name ?? task.customer_id.slice(0, 8)}
+                  />
+                </div>
                 <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-600">
                   <span>{task.aging_bucket.replace("_", "-")}</span>
                   <span>{task.days_overdue}d overdue</span>
@@ -172,7 +182,21 @@ export function CollectionsPage() {
             <p className="px-3 py-4 text-sm text-gray-500">Select a task from the queue.</p>
           ) : (
             <div className="space-y-4 p-3">
-              <div className="grid gap-2 text-sm md:grid-cols-2">
+              <div className="grid gap-2 text-sm md:grid-cols-3">
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-gray-500">Customer</div>
+                  <div className="font-medium">
+                    <EntityLink
+                      kind="customer"
+                      id={detailQuery.data?.task.customer_id ?? undefined}
+                      label={
+                        detailQuery.data?.task.customer_name ??
+                        detailQuery.data?.task.customer_id?.slice(0, 8) ??
+                        "-"
+                      }
+                    />
+                  </div>
+                </div>
                 <div>
                   <div className="text-xs uppercase tracking-wide text-gray-500">Invoice</div>
                   <div className="font-medium"><EntityLink kind="invoice" id={detailQuery.data?.task.invoice_id ?? undefined} label={detailQuery.data?.task.invoice_id?.slice(0, 8) ?? "-"} /></div>
