@@ -82,13 +82,13 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
   // SAF-F05: these fields rendered as uncontrolled <input>s and were discarded on save. Controlled +
   // seeded from the existing record (patch mode) so they persist. accident.* reads are cast to string.
   const str = (v: unknown) => (typeof v === "string" ? v : "");
-  const [policeReportNumber, setPoliceReportNumber] = useState(() => str(accident.police_report_number));
-  const [insuranceClaimNumber, setInsuranceClaimNumber] = useState(() => str(accident.insurance_claim_number));
-  const [location, setLocation] = useState(() => str(accident.location));
-  const [thirdPartyName, setThirdPartyName] = useState(() => str(accident.third_party_name));
-  const [thirdPartyPlate, setThirdPartyPlate] = useState(() => str(accident.third_party_plate));
-  const [vendorInvoiceNumber, setVendorInvoiceNumber] = useState(() => str(accident.vendor_invoice_number));
-  const [billOrExpenseRef, setBillOrExpenseRef] = useState(() => str(accident.bill_or_expense_ref));
+  const [policeReportNumber, setPoliceReportNumber] = useState(() => str(accident?.police_report_number));
+  const [insuranceClaimNumber, setInsuranceClaimNumber] = useState(() => str(accident?.insurance_claim_number));
+  const [location, setLocation] = useState(() => str(accident?.location));
+  const [thirdPartyName, setThirdPartyName] = useState(() => str(accident?.third_party_name));
+  const [thirdPartyPlate, setThirdPartyPlate] = useState(() => str(accident?.third_party_plate));
+  const [vendorInvoiceNumber, setVendorInvoiceNumber] = useState(() => str(accident?.vendor_invoice_number));
+  const [billOrExpenseRef, setBillOrExpenseRef] = useState(() => str(accident?.bill_or_expense_ref));
   // B9: Report Date is display-only (not part of the accidents create/update payload — the API has
   // no report_date column; see CreateAccidentInput/PatchAccidentInput in ../../api/safety.ts) but must
   // still use the shared calendar DatePicker like every other date field, not a raw text input.
