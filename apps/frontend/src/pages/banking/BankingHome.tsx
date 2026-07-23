@@ -889,6 +889,22 @@ export function BankingHomePage({ initialTab }: Props = {}) {
 
       {activeTab === "settings" ? (
         <div className="space-y-3">
+          <div
+            className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950"
+            data-testid="banking-settings-not-ops-complete-banner"
+          >
+            <p className="font-semibold">Settings links configure Banking — they do not complete Match/Categorize or reconcile.</p>
+            <p className="mt-1">
+              Cash GL, rules, queues, and Plaid config are prerequisites. Live feed clearance still happens on Transactions
+              → For review and Reconciliation sessions.
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <ActionButton onClick={() => navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`)}>
+                Open for-review queue
+              </ActionButton>
+              <ActionButton onClick={() => navigate(BANKING_TAB_PATH.plaid_connections)}>Plaid Connections</ActionButton>
+            </div>
+          </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Banking Settings</p>
             <p className="mb-3 text-sm text-gray-700">
