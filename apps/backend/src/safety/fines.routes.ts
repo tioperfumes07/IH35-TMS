@@ -451,6 +451,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
               updated_by_user_id = $4
           WHERE id = $1
             AND operating_company_id = $2
+            AND voided_at IS NULL
           RETURNING *
         `,
         [params.data.id, query.data.operating_company_id, body.data.notes ?? null, user.uuid]
@@ -481,6 +482,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
               updated_by_user_id = $4
           WHERE id = $1
             AND operating_company_id = $2
+            AND voided_at IS NULL
           RETURNING *
         `,
         [params.data.id, query.data.operating_company_id, body.data.notes ?? null, user.uuid]
@@ -502,7 +504,38 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
     const body = reduceFineBody.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
 
-    const updated = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+    const outcome = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      // OWNER RULING 2026-07-23 (Option B): a fine that has already been converted to a driver
+      // liability may NOT be reduced in place. convertFineToLiability COPIES fine.amount_cents into
+      // driver_finance.driver_liabilities — the two rows are not linked afterwards. Reducing the
+      // fine alone therefore leaves the driver's liability at the ORIGINAL amount, and the driver is
+      // deducted the full amount while the fine reads "reduced". That is a silent overcharge of a
+      // real person's settlement.
+      //
+      // Industry standard is a hard block, not a silent cascade: QuickBooks refuses to edit
+      // payment-bearing transactions in place, and the accepted workflow is to UNAPPLY the dependent
+      // record first, then amend the source. NetSuite likewise dims fields on transactions that carry
+      // dependents. We do the same and name the remedy in the error.
+      const current = await client.query<{
+        id: string;
+        voided_at: string | null;
+        converted_to_liability_id: string | null;
+      }>(
+        `
+          SELECT id::text, voided_at, converted_to_liability_id::text
+          FROM safety.civil_fines
+          WHERE id = $1 AND operating_company_id = $2
+          LIMIT 1
+        `,
+        [params.data.id, query.data.operating_company_id]
+      );
+      const fine = current.rows[0];
+      if (!fine) return { kind: "not_found" as const };
+      if (fine.voided_at) return { kind: "voided" as const };
+      if (fine.converted_to_liability_id) {
+        return { kind: "converted" as const, liabilityId: fine.converted_to_liability_id };
+      }
+
       const res = await client.query(
         `
           UPDATE safety.civil_fines
@@ -512,14 +545,43 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
               updated_by_user_id = $5
           WHERE id = $1
             AND operating_company_id = $2
+            AND voided_at IS NULL
+            AND converted_to_liability_id IS NULL
           RETURNING *
         `,
         [params.data.id, query.data.operating_company_id, body.data.amount_cents, body.data.reason, user.uuid]
       );
-      return res.rows[0] ?? null;
+      const row = res.rows[0];
+      // The predicate is repeated in the UPDATE so a concurrent convert/void between the SELECT and
+      // the UPDATE cannot slip through — the read above is for the error message, not the gate.
+      if (!row) return { kind: "conflict_race" as const };
+      return { kind: "ok" as const, row };
     });
-    if (!updated) return reply.code(404).send({ error: "fine_not_found" });
-    return updated;
+
+    if (outcome.kind === "not_found") return reply.code(404).send({ error: "fine_not_found" });
+    if (outcome.kind === "voided") {
+      return reply.code(409).send({
+        error: "fine_voided",
+        message: "This fine is voided. A voided record is immutable and cannot be reduced.",
+      });
+    }
+    if (outcome.kind === "converted") {
+      return reply.code(409).send({
+        error: "fine_already_converted_to_liability",
+        message:
+          "This fine has already been converted to a driver liability, which holds its own copy of the " +
+          "amount. Reducing the fine here would leave the driver owing the original amount. Reverse the " +
+          "driver liability first, then reduce the fine and convert again.",
+        driver_liability_id: outcome.liabilityId,
+      });
+    }
+    if (outcome.kind === "conflict_race") {
+      return reply.code(409).send({
+        error: "fine_state_changed",
+        message: "This fine was voided or converted to a liability while you were editing it. Reload and retry.",
+      });
+    }
+    return outcome.row;
   });
 
   app.post("/api/v1/safety/fines/:id/link-payment", async (req, reply) => {
