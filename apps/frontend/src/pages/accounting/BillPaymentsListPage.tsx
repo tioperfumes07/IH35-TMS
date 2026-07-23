@@ -77,10 +77,10 @@ export function BillPaymentsListPage() {
   });
 
   const unpaidBillsQuery = useQuery({
-    queryKey: ["accounting", "bills-unpaid", companyId],
+    queryKey: ["accounting", "bills-has-balance", companyId],
     queryFn: () =>
       listBills(companyId, {
-        status: "unpaid",
+        has_balance: true,
         include_balance: true,
         limit: 300,
       }),
