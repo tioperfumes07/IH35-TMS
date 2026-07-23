@@ -181,6 +181,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "Transfers", to: "/banking/transfers" },
         { label: "Reconcile Queue", to: "/banking/reconcile" },
         { label: "Cash GL setup", to: "/banking/cash-gl-setup" },
+        { label: "Email Queue", to: "/banking/email-queue" },
         // BANK-ACCOUNT-HIDE (Tier-1 HOLD): per-entity hide/exclude manager. Route + nav entry are
         // additive; the page itself is gated behind BANK_ACCOUNT_HIDE_ENABLED (default OFF) and shows
         // a plain-language notice until Jorge flips the per-entity flag.
