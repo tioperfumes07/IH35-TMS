@@ -468,7 +468,11 @@ function selftest() {
   ]));
   if (!ptrs.some((p) => p.column === "vendor_id")) failures.push("unenforced pointer (vendor_id, no FK) not detected");
   if (ptrs.some((p) => p.column === "bill_id")) failures.push("false positive: an FK-enforced pointer was flagged");
-  const wired = collectSelftestWiring();
+  // Read THIS FILE off disk (real repo source, not a fixture) and confirm findUnenforcedPointers is
+  // actually wired into collect()'s run path, not just defined/exported and left uncalled.
+  const selfSrc = readFileSync(fileURLToPath(import.meta.url), "utf8");
+  const collectBody = selfSrc.slice(selfSrc.indexOf("function collect()"), selfSrc.indexOf("function main()"));
+  const wired = collectBody.includes("findUnenforcedPointers");
   if (!wired) failures.push("findUnenforcedPointers is not called by main() — the detector would ship dead");
 
   // JUNCTION TIGHTENING: a wide table referencing both sides is not a junction.
@@ -490,13 +494,6 @@ function selftest() {
     process.exit(1);
   }
   console.log("verify-linkage-required-edges --selftest OK");
-}
-
-/** Reads this file and asserts the pointer detector is wired into the run path, not just exported. */
-function collectSelftestWiring() {
-  const self = readFileSync(fileURLToPath(import.meta.url), "utf8");
-  const collectBody = self.slice(self.indexOf("function collect()"), self.indexOf("function main()"));
-  return collectBody.includes("findUnenforcedPointers");
 }
 
 // Import-safe: importing a helper must not run the guard (or inherit its process.exit).
