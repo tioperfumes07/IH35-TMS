@@ -5,6 +5,7 @@ import {
   getAllAccounts,
   getBankingKpis,
   getFactoringVirtual,
+  getFactoringVirtualTimeline,
   getBankingTiles,
   getBankingUncategorized,
   getPlaidBankAccounts,
@@ -12,6 +13,7 @@ import {
   getReconciliationSessions,
   startReconciliationSession,
 } from "../../api/banking";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { EntityEmptyState } from "../../components/shared/EntityEmptyState";
@@ -133,6 +135,11 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     queryKey: ["banking", "factoring-virtual", companyId],
     queryFn: () => getFactoringVirtual(companyId),
     enabled: Boolean(companyId),
+  });
+  const factoringTimelineQuery = useQuery({
+    queryKey: ["banking", "factoring-virtual-timeline", companyId],
+    queryFn: () => getFactoringVirtualTimeline(companyId),
+    enabled: Boolean(companyId) && activeTab === "factoring",
   });
 
   const money = useMemo(
@@ -490,11 +497,21 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 <Link to="/factoring/reserve-tracker" className="flex justify-between hover:underline">
                   <span>Reserves held</span><span>{money.format(factoringReserve)}</span>
                 </Link>
-                <div className="flex justify-between"><span>Advances funded MTD</span><span>{money.format(Math.max(cashPosting - factoringReserve, 0))}</span></div>
+                <div className="flex justify-between">
+                  <span>Advances funded MTD</span>
+                  <span title="No advances_funded_mtd on factoring-virtual API — open Factoring module">
+                    — (see Factoring module)
+                  </span>
+                </div>
                 <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
                   <span>Chargebacks open</span><span className="text-red-700">{money.format(factoringChargebacks)}</span>
                 </Link>
-                <div className="flex justify-between"><span>+30 aging fees</span><span className="text-slate-700">{money.format(0)}</span></div>
+                <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
+                  <span>+30 aging fees</span>
+                  <span className="text-slate-700" title="No aging_fees_30d field on factoring-virtual — open Chargebacks & Fees">
+                    — (see Chargebacks & Fees)
+                  </span>
+                </Link>
                 <div className="pt-1 text-xs text-gray-500">
                   Last advance: {factoringVirtualSummary.lastAdvanceAt ? String(factoringVirtualSummary.lastAdvanceAt).slice(0, 10) : "—"}
                 </div>
@@ -587,7 +604,8 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 </Link>
               </div>
             </div>
-            {(reconciliationSessionsQuery.data?.open_sessions ?? []).length === 0 &&
+            {reconciliationSessionsQuery.isSuccess &&
+            (reconciliationSessionsQuery.data?.open_sessions ?? []).length === 0 &&
             (reconciliationSessionsQuery.data?.completed_sessions ?? []).length === 0 ? (
               <div
                 className="mb-3 border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
@@ -652,6 +670,26 @@ export function BankingHomePage({ initialTab }: Props = {}) {
 
       {activeTab === "factoring" ? (
         <div className="space-y-3">
+          {factoringVirtualQuery.isSuccess &&
+          !factoringVirtualSummary.lastAdvanceAt &&
+          factoringReserve === 0 &&
+          factoringChargebacks === 0 ? (
+            <div
+              className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+              data-testid="banking-factoring-entry-unproven-banner"
+            >
+              <p className="font-semibold">Factoring Banking entry has no proven Faro advance / reserve / chargeback activity yet.</p>
+              <p className="mt-1">
+                This tab is a thin entry into `/factoring` — zeros here are not “factoring healthy.” Use Recourse Pipeline /
+                Reserve Tracker / Chargebacks for live Faro truth. Do not invent Advances funded MTD from cash posting
+                KPIs.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <ActionButton onClick={() => navigate("/factoring/recourse-pipeline")}>Recourse Pipeline</ActionButton>
+                <ActionButton onClick={() => navigate("/factoring/reserve-tracker")}>Reserve Tracker</ActionButton>
+              </div>
+            </div>
+          ) : null}
           <div className="rounded-sm border border-slate-300 bg-slate-100">
             <div className="flex items-center justify-between border-b border-slate-300 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
               <span>Factoring (Faro) · Banking entry</span>
@@ -666,16 +704,20 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               </Link>
               <div className="flex justify-between">
                 <span>Advances funded MTD</span>
-                <span>{money.format(Math.max(cashPosting - factoringReserve, 0))}</span>
+                <span title="No advances_funded_mtd on factoring-virtual API — open Factoring module; never invent from cash posting">
+                  — (see Factoring module)
+                </span>
               </div>
               <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
                 <span>Chargebacks open</span>
                 <span className="text-red-700">{money.format(factoringChargebacks)}</span>
               </Link>
-              <div className="flex justify-between">
+              <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
                 <span>+30 aging fees</span>
-                <span className="text-slate-700">{money.format(0)}</span>
-              </div>
+                <span className="text-slate-700" title="No aging_fees_30d field on factoring-virtual — open Chargebacks & Fees">
+                  — (see Chargebacks & Fees)
+                </span>
+              </Link>
               <div className="pt-1 text-xs text-gray-500">
                 Last advance:{" "}
                 {factoringVirtualSummary.lastAdvanceAt
@@ -690,12 +732,61 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               </div>
             </div>
           </div>
+          <div
+            className="rounded-sm border border-slate-300 bg-white"
+            data-testid="banking-factoring-faro-advances-panel"
+          >
+            <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
+              <span>Recent Faro advances</span>
+              <Link to="/accounting/factoring" className="text-[10px] font-semibold normal-case text-slate-800 hover:underline">
+                All advances →
+              </Link>
+            </div>
+            {factoringTimelineQuery.isSuccess ? (
+              <div className="max-h-[220px] overflow-y-auto">
+                {(factoringTimelineQuery.data?.timeline ?? []).length === 0 ? (
+                  <p className="px-3 py-2 text-xs text-gray-500">
+                    No non-voided advances in <code className="text-[11px]">accounting.factoring_advances</code> for this
+                    company yet.
+                  </p>
+                ) : (
+                  (factoringTimelineQuery.data?.timeline ?? []).map((row) => {
+                    const cents = Number(row.advance_amount_cents ?? 0);
+                    return (
+                      <div
+                        key={row.id}
+                        className="grid grid-cols-[1fr_auto] items-center gap-2 border-b border-gray-100 px-3 py-1.5 text-sm"
+                      >
+                        <span className="min-w-0 truncate">
+                          <EntityLink
+                            kind="factoring_advance"
+                            id={row.id}
+                            label={row.display_id || row.id.slice(0, 8)}
+                            data-testid={`banking-factoring-advance-link-${row.id}`}
+                          />
+                          <span className="ml-2 text-[11px] uppercase text-gray-500">{row.status}</span>
+                        </span>
+                        <span className="tabular-nums text-xs text-gray-800">
+                          {Number.isFinite(cents) ? money.format(cents / 100) : "—"}
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            ) : factoringTimelineQuery.isError ? (
+              <p className="px-3 py-2 text-xs text-red-700">Could not load Faro advances timeline.</p>
+            ) : (
+              <p className="px-3 py-2 text-xs text-gray-500">Loading advances…</p>
+            )}
+          </div>
           <p className="text-xs text-gray-600">
             Design law: Banking Factoring tab is a thin entry summary that deep-links into the standalone{" "}
             <Link to="/factoring" className="underline">
               /factoring
             </Link>{" "}
-            module. Accounts home still shows the Factoring virtual-bank card (additive — never removed).
+            module. Accounts home still shows the Factoring virtual-bank card (additive — never removed). Recent advances
+            use EntityLink → <code className="text-[11px]">/accounting/factoring/:id</code>.
           </p>
         </div>
       ) : null}
@@ -715,15 +806,12 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               <p className="font-semibold">Relay Card accounts cannot be identified yet</p>
               <p className="mt-1">
                 Account-tiles cannot express Relay identity today: <code className="text-[11px]">is_relay</code> is a
-                phantom field (not populated by any migration or backend writer). The real identifier is{" "}
-                <code className="text-[11px]">catalogs.accounts.system_purpose = &apos;relay_fuel_wallet&apos;</code>{" "}
-                via ledger mapping (held). An empty Relay tab is not “no Relay activity” — the system cannot identify
-                Relay accounts in this feed yet.
+                phantom field (not populated by any migration or backend writer). An empty Relay tab is not “no Relay
+                activity” — the system cannot identify Relay accounts in this feed yet.
               </p>
             </div>
             <p className="mt-2 text-xs text-gray-600">
               Relay fuel-line breakdown stays on the Transactions register when a Relay wallet row is expanded.
-              This tab is the design-law entry surface (not a delete of the register breakdown).
             </p>
           </div>
         </div>
@@ -742,6 +830,22 @@ export function BankingHomePage({ initialTab }: Props = {}) {
 
       {activeTab === "statement_import" ? (
         <div className="space-y-3">
+          <div
+            className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+            data-testid="banking-statement-import-not-recon-proof-banner"
+          >
+            <p className="font-semibold">Statement Import is an input path — not reconciliation proof.</p>
+            <p className="mt-1">
+              Uploading CSV does not close a period or clear for-review. After import, Match/Categorize on Transactions
+              and run Reconciliation sessions. PDF parser remains Phase 6 (honest deferral).
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <ActionButton onClick={() => navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`)}>
+                Open for-review queue
+              </ActionButton>
+              <ActionButton onClick={() => navigate(BANKING_TAB_PATH.reconciliation)}>Open Reconciliation</ActionButton>
+            </div>
+          </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Bank Statement Import</p>
             <p className="mb-3 text-sm text-gray-700">
@@ -807,6 +911,22 @@ export function BankingHomePage({ initialTab }: Props = {}) {
 
       {activeTab === "settings" ? (
         <div className="space-y-3">
+          <div
+            className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+            data-testid="banking-settings-not-ops-complete-banner"
+          >
+            <p className="font-semibold">Settings links configure Banking — they do not complete Match/Categorize or reconcile.</p>
+            <p className="mt-1">
+              Cash GL, rules, queues, and Plaid config are prerequisites. Live feed clearance still happens on Transactions
+              → For review and Reconciliation sessions.
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <ActionButton onClick={() => navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`)}>
+                Open for-review queue
+              </ActionButton>
+              <ActionButton onClick={() => navigate(BANKING_TAB_PATH.plaid_connections)}>Plaid Connections</ActionButton>
+            </div>
+          </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Banking Settings</p>
             <p className="mb-3 text-sm text-gray-700">

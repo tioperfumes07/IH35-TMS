@@ -1,4 +1,7 @@
 const MapView = React.lazy(() => import("../pages/dispatch/MapView").then((m) => ({ default: m.MapView })));
+const LoadBankingLinkagePage = React.lazy(() =>
+  import("../pages/dispatch/LoadBankingLinkagePage").then((m) => ({ default: m.LoadBankingLinkagePage }))
+);
 import React from "react";
 import { Navigate, Route, useLocation, useParams } from "react-router-dom";
 import type { ReactNode } from "react";
@@ -632,6 +635,8 @@ function DriverSafetyProfileTab() {
 function DispatchLoadDetailRedirect() {
   const { id } = useParams<{ id: string }>();
   if (!id) return <Navigate to="/dispatch?view=loads" replace />;
+  // EntityLink kind="load" (48+ callers) must open the load on the Dispatch board — never a bank-feed stub.
+  // Reverse Law §9 bank linkage lives at /dispatch/loads/:id/banking (LoadBankingLinkagePage).
   return <Navigate to={`/dispatch?load_id=${encodeURIComponent(id)}`} replace />;
 }
 
@@ -1199,6 +1204,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <GeofencesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/loads/:id/banking"
+          element={
+            <ProtectedRoute>
+              <LoadBankingLinkagePage />
             </ProtectedRoute>
           }
         />

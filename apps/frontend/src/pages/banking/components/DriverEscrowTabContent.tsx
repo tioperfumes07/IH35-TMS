@@ -121,6 +121,31 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
 
   return (
     <div className="space-y-3">
+      {driverBalancesQuery.isSuccess &&
+      accountLedgerQuery.isSuccess &&
+      listState.isEmpty &&
+      Number(driverEscrowBalance ?? 0) === 0 &&
+      driverRows.length === 0 ? (
+        <div
+          className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+          data-testid="banking-escrow-empty-honesty-banner"
+        >
+          <p className="font-semibold">Driver Escrow shows $0 with no ledger rows and no per-driver balances.</p>
+          <p className="mt-1">
+            Escrow is a liability virtual bank — empty is not “healthy zero” until settlements / deductions / holdbacks
+            post into escrow and appear here. Cross-check Settlements and for-review bank rows that may be escrow-related
+            but still unmatched.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-3">
+            <Link to="/drivers/settlements" className="font-medium text-slate-800 underline">
+              Settlements
+            </Link>
+            <Link to="/banking/transactions?type=uncategorized" className="font-medium text-slate-800 underline">
+              For-review Match/Categorize
+            </Link>
+          </div>
+        </div>
+      ) : null}
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <div className="rounded-sm border border-gray-200 bg-slate-50 px-3 py-2">

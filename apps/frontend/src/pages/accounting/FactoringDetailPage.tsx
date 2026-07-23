@@ -1,7 +1,7 @@
 import { formatDateUS } from "../../lib/formatDate";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   getFactoringAdvance,
   markAdvanced,
@@ -167,6 +167,13 @@ export function FactoringDetailPage() {
         actions={
           <div className="flex items-center gap-2">
             <span className={statusPill(detail.status)}>{detail.status.replaceAll("_", " ")}</span>
+            <Link
+              to="/banking/factoring"
+              className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-800 hover:bg-slate-50"
+              data-testid="factoring-advance-banking-reverse-link"
+            >
+              Banking · Factoring entry
+            </Link>
             <Button variant="secondary" onClick={() => navigate(`/vendors/${detail.factoring_company_vendor_id}`)}>
               Edit factoring company profile
             </Button>

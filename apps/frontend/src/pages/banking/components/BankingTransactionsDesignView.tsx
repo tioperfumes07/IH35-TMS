@@ -9,6 +9,7 @@ import {
   getBankingSuggestions,
   getCoaAccounts,
   getMatchCandidates,
+  getBankTransactionCategorizationLinks,
   getPlaidCompanyTransactions,
   isManualBankTransaction,
   skipBankTransactionInvestigation,
@@ -251,13 +252,6 @@ export function BankingTransactionsDesignView({
   const [descriptionFilter, setDescriptionFilter] = useState("");
   const [amountFilter, setAmountFilter] = useState<AmountFilter>("all");
   const [selectedTransactionType, setSelectedTransactionType] = useState(initialTransactionType ?? "all");
-  // Deep-link / KPI filter must apply after mount — BankingHome sets initialTransactionType via
-  // ?type=uncategorized after the child is already mounted with "all".
-  useEffect(() => {
-    if (initialTransactionType) {
-      setSelectedTransactionType(initialTransactionType);
-    }
-  }, [initialTransactionType]);
   const [categorizeBy, setCategorizeBy] = useState<CategorizeBy>("category");
   const [showDateFilterMenu, setShowDateFilterMenu] = useState(false);
   const [dateFrom, setDateFrom] = useState("");
@@ -388,6 +382,13 @@ export function BankingTransactionsDesignView({
     setMatchSearchQ("");
     setMatchDraftQ("");
   }, [expandedTxId]);
+
+  // BLOCK-6b — FORWARD drill-through panel. API + client existed; this wire is the Law §9 surface.
+  const categorizationLinksQuery = useQuery({
+    queryKey: ["banking", "tx-categorization-links", companyId, expandedTxId ?? ""],
+    queryFn: () => getBankTransactionCategorizationLinks(String(expandedTxId), companyId),
+    enabled: Boolean(companyId && expandedTxId),
+  });
 
   // Secondary panel — "similar past categorizations" (kept, additive-only; not the primary match source).
   const suggestionsQuery = useQuery({
@@ -1418,10 +1419,81 @@ export function BankingTransactionsDesignView({
   function renderExpandedRegisterRow(tx: PlaidBankTransaction) {
     const { spent, received } = spentReceived(tx);
     const draft = getDraft(tx);
+    const links = categorizationLinksQuery.data;
+    const hasPersistedLinks = Boolean(
+      links &&
+        (links.driver_id ||
+          links.unit_id ||
+          links.trailer_id ||
+          links.load_id ||
+          links.vendor_id ||
+          links.customer_id ||
+          links.item_id ||
+          links.deduction_id)
+    );
     return (
       <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
         <div className="p-1">
           <p className="mb-2 text-xs font-semibold text-gray-900">{transactionLabel(tx)}</p>
+          <div
+            className="mb-2 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5"
+            data-testid="banking-tx-categorization-links-panel"
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">Linked to (persisted)</p>
+            {categorizationLinksQuery.isLoading && expandedTxId === tx.id ? (
+              <p className="mt-1 text-xs text-gray-500">Loading linkage…</p>
+            ) : null}
+            {categorizationLinksQuery.isError && expandedTxId === tx.id ? (
+              <p className="mt-1 text-xs text-red-700">Could not load categorization links.</p>
+            ) : null}
+            {categorizationLinksQuery.isSuccess &&
+            expandedTxId === tx.id &&
+            !hasPersistedLinks ? (
+              <p className="mt-1 text-xs text-slate-700">
+                No persisted Driver / Unit / Load / Vendor / Customer / deduction tags on this row yet. Draft fields
+                below are not Law §9 links until Post / Categorize commits them.
+              </p>
+            ) : null}
+            {hasPersistedLinks && expandedTxId === tx.id ? (
+              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs" onClick={(e) => e.stopPropagation()}>
+                {links?.driver_id ? (
+                  <EntityLink kind="driver" id={links.driver_id} label={links.driver_name || "Driver"} />
+                ) : null}
+                {links?.unit_id ? (
+                  <EntityLink kind="unit" id={links.unit_id} label={links.unit_number || "Unit"} />
+                ) : null}
+                {links?.trailer_id ? (
+                  <EntityLink kind="trailer" id={links.trailer_id} label={links.trailer_number || "Trailer"} />
+                ) : null}
+                {links?.load_id ? (
+                  <EntityLink kind="load" id={links.load_id} label={links.load_number || "Trip"} />
+                ) : null}
+                {links?.vendor_id ? (
+                  <EntityLink kind="vendor" id={links.vendor_id} label={links.vendor_name || "Vendor"} />
+                ) : null}
+                {links?.customer_id ? (
+                  <EntityLink kind="customer" id={links.customer_id} label={links.customer_name || "Customer"} />
+                ) : null}
+                {links?.item_id ? (
+                  <span className="text-gray-700">Item: {links.item_name || links.item_id.slice(0, 8)}</span>
+                ) : null}
+                {links?.deduction_id ? (
+                  <span className="text-gray-700" title={links.deduction_status ?? undefined}>
+                    Deduction: {links.deduction_type || "settlement"}{" "}
+                    {links.deduction_amount_cents != null
+                      ? formatUsdCents(Math.abs(Number(links.deduction_amount_cents)))
+                      : ""}
+                    {links.deduction_load_id ? (
+                      <>
+                        {" "}
+                        · <EntityLink kind="load" id={links.deduction_load_id} label="Deduction load" />
+                      </>
+                    ) : null}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
           {viewSettings.showBankDetails ? (
             <div className="mb-2 grid grid-cols-1 gap-1 text-xs text-gray-600 md:grid-cols-2">
               <div>Date: {formatBankTransactionDate(tx.transaction_date)}</div>
