@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { resolveApiUrl } from "../../api/client";
 
 interface Props {
   operatingCompanyId: string;
@@ -10,8 +11,7 @@ export function CustomsTimePill({ operatingCompanyId, crossingPoint, direction }
   const { data } = useQuery({
     queryKey: ["customs-time-avg", operatingCompanyId, crossingPoint, direction],
     queryFn: async () => {
-      const res = await fetch(
-        `/api/v1/dispatch/border-crossings/customs-time-avg?operating_company_id=${encodeURIComponent(operatingCompanyId)}&crossing=${encodeURIComponent(crossingPoint)}&direction=${direction}`,
+      const res = await fetch(resolveApiUrl(`/api/v1/dispatch/border-crossings/customs-time-avg?operating_company_id=${encodeURIComponent(operatingCompanyId)}&crossing=${encodeURIComponent(crossingPoint)}&direction=${direction}`),
         { credentials: "include" }
       );
       if (!res.ok) return null;

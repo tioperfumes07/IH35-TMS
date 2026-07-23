@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { resolveApiUrl } from "../../api/client";
 
+// SAF-F06 class: bare fetch(path) resolves against the SPA origin, which returns
+// index.html with HTTP 200 — res.ok stays true and res.json() throws on HTML, so the
+// call fails silently and renders as empty. resolveApiUrl() applies VITE_API_BASE_URL.
 async function postItemsAction(path: string, operatingCompanyId: string) {
-  const res = await fetch(path, {
+  const res = await fetch(resolveApiUrl(path), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ operating_company_id: operatingCompanyId }),

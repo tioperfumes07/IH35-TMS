@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { CollapsedListFilters } from "../../../components/table";
 import { formatDateTimeUS } from "../../../lib/formatDate";
+import { resolveApiUrl } from "../../../api/client";
 // NOTE (EntityLink adoption sweep): `vehicle_id` here is the raw Samsara external vehicle id
 // (dispatch.border_crossing_events.vehicle_id, sourced from integrations.samsara_positions —
 // verified against apps/backend/src/integrations/samsara/border-crossings), NOT mdata.units.id.
@@ -39,8 +40,7 @@ export function BorderCrossingHistory() {
   const { data, isLoading } = useQuery<{ data: CrossingEvent[] }>({
     queryKey: ["border-crossings-history", operatingCompanyId, from, to],
     queryFn: async () => {
-      const res = await fetch(
-        `/api/v1/dispatch/border-crossings/history?operating_company_id=${encodeURIComponent(operatingCompanyId)}&from=${from}&to=${to}`,
+      const res = await fetch(resolveApiUrl(`/api/v1/dispatch/border-crossings/history?operating_company_id=${encodeURIComponent(operatingCompanyId)}&from=${from}&to=${to}`),
         { credentials: "include" }
       );
       if (!res.ok) throw new Error("Failed to fetch border crossings");

@@ -1,4 +1,5 @@
 import { apiRequest } from "./client";
+import { resolveApiUrl } from "./client";
 
 function q(companyId: string) {
   return `operating_company_id=${encodeURIComponent(companyId)}`;
@@ -902,11 +903,10 @@ export function listHarshEventDashcamClips(companyId: string, harshEventId: stri
 }
 
 export async function addAccidentPhoto(id: string, companyId: string, file: File) {
-  const base = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
-  const url = `${base ? base.replace(/\/$/, "") : ""}/api/v1/safety/accidents/${id}/photos?${q(companyId)}`;
+  const url = `/api/v1/safety/accidents/${id}/photos?${q(companyId)}`;
   const form = new FormData();
   form.append("file", file);
-  const response = await fetch(url, {
+  const response = await fetch(resolveApiUrl(url), {
     method: "POST",
     credentials: "include",
     body: form,
@@ -972,11 +972,10 @@ export function createSafetyIncident(body: {
 }
 
 export async function uploadSafetyIncidentPhoto(id: string, companyId: string, file: File) {
-  const base = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
-  const url = `${base ? base.replace(/\/$/, "") : ""}/api/v1/safety/incidents/${id}/photos?${q(companyId)}`;
+  const url = `/api/v1/safety/incidents/${id}/photos?${q(companyId)}`;
   const form = new FormData();
   form.append("file", file);
-  const response = await fetch(url, {
+  const response = await fetch(resolveApiUrl(url), {
     method: "POST",
     credentials: "include",
     body: form,

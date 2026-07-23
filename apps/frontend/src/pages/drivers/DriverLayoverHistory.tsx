@@ -30,8 +30,7 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery<{ data: LayoverRow[] }>({
     queryKey: ["driver-layovers", driverUuid, from, to],
     queryFn: async () => {
-      const res = await fetch(
-        `/api/v1/dispatch/layovers?operating_company_id=${encodeURIComponent(operatingCompanyId)}&driver=${encodeURIComponent(driverUuid)}&from=${from}&to=${to}`,
+      const res = await fetch(resolveApiUrl(`/api/v1/dispatch/layovers?operating_company_id=${encodeURIComponent(operatingCompanyId)}&driver=${encodeURIComponent(driverUuid)}&from=${from}&to=${to}`),
         { credentials: "include" }
       );
       if (!res.ok) throw new Error("Failed to load layovers");

@@ -26,8 +26,7 @@ type Props = {
 // ─── API ──────────────────────────────────────────────────────────────────────
 
 async function fetchDrawHistory(companyId: string): Promise<PoolDraw[]> {
-  const res = await fetch(
-    `/api/safety/drug-alcohol/random-pool/draws?operating_company_id=${companyId}`,
+  const res = await fetch(resolveApiUrl(`/api/safety/drug-alcohol/random-pool/draws?operating_company_id=${companyId}`),
     { credentials: "include" }
   );
   if (!res.ok) throw new Error(`draws_fetch_${res.status}`);

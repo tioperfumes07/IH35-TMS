@@ -1,4 +1,5 @@
 import { ApiError, apiRequest } from "./client";
+import { resolveApiUrl } from "./client";
 
 function companyQuery(companyId: string) {
   return `operating_company_id=${encodeURIComponent(companyId)}`;
@@ -41,9 +42,8 @@ export function createDotInspection(companyId: string, body: Record<string, unkn
 export async function uploadDotInspectionPdf(companyId: string, id: string, file: File) {
   const form = new FormData();
   form.append("file", file);
-  const base = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
-  const url = `${base ? base.replace(/\/$/, "") : ""}/api/v1/safety/dot-inspections/${id}/upload-pdf?${companyQuery(companyId)}`;
-  const response = await fetch(url, { method: "POST", credentials: "include", body: form });
+  const url = `/api/v1/safety/dot-inspections/${id}/upload-pdf?${companyQuery(companyId)}`;
+  const response = await fetch(resolveApiUrl(url), { method: "POST", credentials: "include", body: form });
   const isJson = response.headers.get("content-type")?.includes("application/json");
   const payload = isJson ? await response.json() : await response.text();
   if (!response.ok) throw new ApiError(response.status, payload);
