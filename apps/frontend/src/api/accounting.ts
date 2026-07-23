@@ -531,6 +531,7 @@ export type ExpenseListRow = {
   driver_last_name: string | null;
   line_description: string | null;
   is_reconciled: boolean;
+  journal_entry_id: string | null;
 };
 
 export function listExpenses(
