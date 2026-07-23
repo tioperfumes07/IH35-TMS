@@ -39,7 +39,8 @@ export type EntityKind =
   | "lawsuit"
   | "matter"
   | "cash_advance"
-  | "account";
+  | "account"
+  | "fixed_asset";
 
 export interface EntityLinkProps {
   kind: EntityKind;
@@ -124,6 +125,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       // routes/manifest.tsx: <Route path="/accounting/chart-of-accounts/register/:accountId">.
       // Law §9 requires every money row to drill forward to the GL account it posts to.
       return `/accounting/chart-of-accounts/register/${id}`;
+    case "fixed_asset":
+      return `/accounting/fixed-assets?asset_id=${id}`;
     default:
       return null;
   }
