@@ -22,6 +22,19 @@ export function run(root = process.cwd()) {
   if (!lookup.includes("linked_object_type = 'transfer'")) {
     failures.push("transfer-tms-je-lookup must also try transaction_source_links linked_object_type=transfer");
   }
+  if (!lookup.includes("reversal_of_line_id IS NULL")) {
+    failures.push(
+      "transfer-tms-je-lookup must exclude reversal lines (reversal_of_line_id IS NULL) so revoke does not land JE drill on the reversing entry"
+    );
+  }
+  if (!lookup.includes("ORDER BY jep.created_at ASC") && !lookup.includes("ORDER BY jep.created_at ASC, jep.line_sequence ASC")) {
+    failures.push(
+      "transfer-tms-je-lookup must ORDER BY created_at (not line_sequence alone) for deterministic original-JE selection"
+    );
+  }
+  if (/ORDER BY jep\.line_sequence ASC\s*\n\s*LIMIT 1/.test(lookup) && !lookup.includes("reversal_of_line_id IS NULL")) {
+    failures.push("forbidden: ORDER BY line_sequence LIMIT 1 without excluding reversal lines");
+  }
   if (!routes.includes("attachTransferJournalEntryIds") || !routes.includes("transfer-tms-je-lookup")) {
     failures.push("transfers.routes must enrich list/detail via attachTransferJournalEntryIds");
   }
@@ -51,7 +64,7 @@ if (process.argv.includes("--selftest")) {
   };
   mk(
     "apps/backend/src/lib/transfer-tms-je-lookup.ts",
-    `journal_entry_postings\nsource_transaction_type = 'transfer'\nlinked_object_type = 'transfer'\n`
+    `journal_entry_postings\nsource_transaction_type = 'transfer'\nlinked_object_type = 'transfer'\nreversal_of_line_id IS NULL\nORDER BY jep.created_at ASC, jep.line_sequence ASC\n`
   );
   mk(
     "apps/backend/src/banking/transfers.routes.ts",

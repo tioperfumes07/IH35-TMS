@@ -1510,8 +1510,9 @@ export function BankingTransactionsDesignView({
             hasPersistedLinks &&
             !matchedJournalEntryId ? (
               <p className="mt-1 text-xs text-slate-600">
-                No TMS journal entry linked yet — bank-feed GL posting is flag-gated (BANK_FEED_GL_POSTING_ENABLED,
-                default OFF).
+                No <code className="text-[11px]">matched_journal_entry_id</code> on this row yet. That column is set by
+                recon Match to an existing JE, or by the flag-gated bank-feed poster (BANK_FEED_GL_POSTING_ENABLED,
+                default OFF) — absence is not by itself proof the flag blocked a post.
               </p>
             ) : null}
           </div>
@@ -2103,13 +2104,15 @@ export function BankingTransactionsDesignView({
             className="border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
             data-testid="banking-bank-feed-gl-posting-honesty-banner"
           >
-            <p className="font-semibold">TMS journal entry on categorized rows requires BANK_FEED_GL_POSTING_ENABLED</p>
+            <p className="font-semibold">Categorize tags are not ledger posts — BANK_FEED_GL_POSTING_ENABLED stays OFF by default</p>
             <p className="mt-1">
-              Categorize tags persist driver/unit/load/vendor fields immediately. A balanced TMS JE and{" "}
-              <code className="text-[11px]">matched_journal_entry_id</code> back-pointer appear only when the existing
-              bank-feed poster ran with the flag ON for this entity (default OFF). Zero linked JEs with the flag OFF is
-              expected — not proof that categorize posts to the ledger. Reverse drill: JE detail Source links map{" "}
-              <code className="text-[11px]">bank_categorization</code> → Banking Transactions.
+              Categorize persists driver/unit/load/vendor fields immediately; that alone does not post a balanced TMS
+              JE. <code className="text-[11px]">matched_journal_entry_id</code> is <strong>not</strong> proof that
+              bank-feed GL posting is live — recon Match can also stamp it when{" "}
+              <code className="text-[11px]">ledger_entry_kind = &apos;je&apos;</code> (see{" "}
+              <code className="text-[11px]">match.service.ts</code>), and the flag-gated bank-feed poster is a separate
+              path (default OFF). A JE link with the flag OFF is a match/link, not “posting is on.” Reverse drill: JE
+              detail Source maps <code className="text-[11px]">bank_categorization</code> → Banking Transactions.
             </p>
           </div>
           <div
