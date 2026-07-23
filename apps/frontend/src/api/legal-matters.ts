@@ -1,4 +1,5 @@
 import { apiRequest } from "./client";
+import { resolveApiUrl } from "./client";
 
 export type LegalMatterRow = Record<string, unknown>;
 
@@ -135,9 +136,8 @@ export async function uploadMatterDocument(
   form.append("is_privileged", isPrivileged ? "true" : "false");
   form.append("file", file);
   const path = withCompany(`/api/v1/legal/matters/${encodeURIComponent(matterId)}/documents`, operatingCompanyId);
-  const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
-  const url = API_BASE_URL ? `${API_BASE_URL.replace(/\/$/, "")}${path}` : new URL(path, window.location.origin).toString();
-  const response = await fetch(url, { method: "POST", body: form, credentials: "include" });
+  const url = path;
+  const response = await fetch(resolveApiUrl(url), { method: "POST", body: form, credentials: "include" });
   const payload = response.headers.get("content-type")?.includes("application/json") ? await response.json() : await response.text();
   if (!response.ok) throw new Error(typeof payload === "object" && payload && "error" in payload ? String((payload as { error: string }).error) : "upload_failed");
   return payload as { document: Record<string, unknown> };

@@ -69,8 +69,7 @@ export async function fetchWaitTimes(cbpPortCode: string): Promise<WaitTimeRow[]
 }
 
 export async function fetchCustomsBrokers(operatingCompanyId: string): Promise<CustomsBroker[]> {
-  const res = await fetch(
-    `/api/v1/border-crossing/customs-brokers?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+  const res = await fetch(resolveApiUrl(`/api/v1/border-crossing/customs-brokers?operating_company_id=${encodeURIComponent(operatingCompanyId)}`),
     { credentials: "include" }
   );
   if (!res.ok) return [];

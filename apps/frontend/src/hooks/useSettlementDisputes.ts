@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../contexts/CompanyContext";
+import { resolveApiUrl } from "../api/client";
 
 export type SettlementDisputeType =
   | "missing_line"
@@ -36,8 +37,11 @@ type ListResponse = {
   offset: number;
 };
 
+// SAF-F06 class: bare fetch(path) resolves against the SPA origin, which returns
+// index.html with HTTP 200 — res.ok stays true and res.json() throws on HTML, so the
+// call fails silently and renders as empty. resolveApiUrl() applies VITE_API_BASE_URL.
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, {
+  const res = await fetch(resolveApiUrl(path), {
     credentials: "include",
     headers: { "content-type": "application/json", ...(init?.headers ?? {}) },
     ...init,

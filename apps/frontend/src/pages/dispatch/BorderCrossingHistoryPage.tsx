@@ -4,6 +4,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { CustomsTimePill } from "../../components/dispatch/CustomsTimePill";
+import { resolveApiUrl } from "../../api/client";
 
 type CrossingRow = {
   id: string;
@@ -30,8 +31,7 @@ export function BorderCrossingHistoryPage() {
   useEffect(() => {
     if (!selectedCompanyId) return;
     setLoading(true);
-    void fetch(
-      `/api/v1/border-crossing/history?operating_company_id=${encodeURIComponent(selectedCompanyId)}`,
+    void fetch(resolveApiUrl(`/api/v1/border-crossing/history?operating_company_id=${encodeURIComponent(selectedCompanyId)}`),
       { credentials: "include" }
     )
       .then((res) => res.json())

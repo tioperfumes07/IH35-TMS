@@ -12,6 +12,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { ListErrorState } from "../../../components/ListErrorState";
 import { TestSchedulingPanel } from "./TestSchedulingPanel";
 import { RandomPoolDashboard } from "./RandomPoolDashboard";
+import { resolveApiUrl } from "../../../api/client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -37,8 +38,7 @@ type TestRecord = {
 // ─── API ──────────────────────────────────────────────────────────────────────
 
 async function fetchEnrollments(companyId: string): Promise<Enrollment[]> {
-  const res = await fetch(
-    `/api/safety/drug-alcohol/enrollments?operating_company_id=${companyId}&active_only=true`,
+  const res = await fetch(resolveApiUrl(`/api/safety/drug-alcohol/enrollments?operating_company_id=${companyId}&active_only=true`),
     { credentials: "include" }
   );
   if (!res.ok) throw new Error(`enrollments_fetch_${res.status}`);
@@ -47,8 +47,7 @@ async function fetchEnrollments(companyId: string): Promise<Enrollment[]> {
 }
 
 async function fetchPositives(companyId: string): Promise<TestRecord[]> {
-  const res = await fetch(
-    `/api/safety/drug-alcohol/tests?operating_company_id=${companyId}&result=positive`,
+  const res = await fetch(resolveApiUrl(`/api/safety/drug-alcohol/tests?operating_company_id=${companyId}&result=positive`),
     { credentials: "include" }
   );
   if (!res.ok) throw new Error(`positives_fetch_${res.status}`);

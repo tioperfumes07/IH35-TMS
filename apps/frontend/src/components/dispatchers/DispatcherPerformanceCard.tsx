@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { resolveApiUrl } from "../../api/client";
 
 interface DispatcherGapStats {
   dispatcher_id: string | null;
@@ -22,8 +23,7 @@ export function DispatcherPerformanceCard({ dispatcherId, operatingCompanyId }: 
   const { data } = useQuery<DispatcherGapStats | null>({
     queryKey: ["booking-gap-dispatcher", dispatcherId, from, to],
     queryFn: async () => {
-      const res = await fetch(
-        `/api/v1/dispatch/analytics/booking-gap/dispatcher/${encodeURIComponent(dispatcherId)}?operating_company_id=${encodeURIComponent(operatingCompanyId)}&from=${from}&to=${to}`,
+      const res = await fetch(resolveApiUrl(`/api/v1/dispatch/analytics/booking-gap/dispatcher/${encodeURIComponent(dispatcherId)}?operating_company_id=${encodeURIComponent(operatingCompanyId)}&from=${from}&to=${to}`),
         { credentials: "include" }
       );
       if (!res.ok) return null;

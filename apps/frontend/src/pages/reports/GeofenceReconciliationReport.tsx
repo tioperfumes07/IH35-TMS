@@ -7,6 +7,7 @@ import { formatDateTimeUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { resolveApiUrl } from "../../api/client";
 
 interface Finding {
   uuid: string;
@@ -43,8 +44,7 @@ export function GeofenceReconciliationReport() {
   const { data, isLoading, isError, error, refetch } = useQuery<{ data: Finding[] }>({
     queryKey: ["geofence-recon", operatingCompanyId, date],
     queryFn: async () => {
-      const res = await fetch(
-        `/api/v1/integrations/samsara/geofences/reconciliation?operating_company_id=${encodeURIComponent(operatingCompanyId)}&date=${date}`,
+      const res = await fetch(resolveApiUrl(`/api/v1/integrations/samsara/geofences/reconciliation?operating_company_id=${encodeURIComponent(operatingCompanyId)}&date=${date}`),
         { credentials: "include" }
       );
       if (!res.ok) throw new Error("Failed to load reconciliation");
@@ -55,8 +55,7 @@ export function GeofenceReconciliationReport() {
 
   const resolveMutation = useMutation({
     mutationFn: async ({ uuid, note }: { uuid: string; note: string }) => {
-      const res = await fetch(
-        `/api/v1/integrations/samsara/geofences/reconciliation/anomaly/${uuid}/resolve`,
+      const res = await fetch(resolveApiUrl(`/api/v1/integrations/samsara/geofences/reconciliation/anomaly/${uuid}/resolve`),
         { method: "PATCH", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ note }) }
       );
       if (!res.ok) throw new Error("Failed to resolve");

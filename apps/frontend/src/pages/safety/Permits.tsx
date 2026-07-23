@@ -1,14 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { PermitsPage } from "./PermitsPage";
 import { Form2290Filings } from "../compliance/Form2290Filings";
+import { resolveApiUrl } from "../../api/client";
 
 type Props = {
   operatingCompanyId: string;
 };
 
 async function fetchForm2290Deadline(companyId: string) {
-  const res = await fetch(
-    `/api/v1/compliance/form-2290/upcoming-deadline?operating_company_id=${encodeURIComponent(companyId)}`,
+  const res = await fetch(resolveApiUrl(`/api/v1/compliance/form-2290/upcoming-deadline?operating_company_id=${encodeURIComponent(companyId)}`),
     { credentials: "include" }
   );
   if (!res.ok) return null;
