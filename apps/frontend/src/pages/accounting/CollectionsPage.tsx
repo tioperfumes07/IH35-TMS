@@ -138,20 +138,44 @@ export function CollectionsPage() {
           <header className="border-b border-gray-100 px-3 py-2 text-sm font-semibold">Queue</header>
           <div className="max-h-136 overflow-auto">
             {(tasksQuery.data?.tasks ?? []).map((task) => (
-              <button
+              /*
+                Row is a div-with-role, not a <button>. Two reasons:
+                (a) <a> (EntityLink) inside <button> is invalid HTML — React warns
+                    "validateDOMNesting: <a> cannot appear as a descendant of <button>" and the
+                    a11y tree presents an ambiguous nested control.
+                (b) the previous fix wrapped the customer line in a full-width div with
+                    stopPropagation, which killed task selection across that entire line —
+                    clicking the whitespace beside the name did nothing at all. That wrapper was
+                    also redundant: EntityLink already calls event.stopPropagation() in its own
+                    onClick, so the name navigates without selecting, and everything else selects.
+              */
+              <div
                 key={task.id}
-                type="button"
+                role="button"
+                tabIndex={0}
                 onClick={() => setSelectedTaskId(task.id)}
-                className={`w-full border-b border-gray-100 px-3 py-2 text-left ${selectedTask === task.id ? "bg-slate-100" : "hover:bg-gray-50"}`}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setSelectedTaskId(task.id);
+                  }
+                }}
+                className={`w-full cursor-pointer border-b border-gray-100 px-3 py-2 text-left ${selectedTask === task.id ? "bg-slate-100" : "hover:bg-gray-50"}`}
               >
-                <div className="text-sm font-medium text-gray-900">{task.customer_name ?? "Unknown customer"}</div>
+                <div className="text-sm font-medium text-gray-900">
+                  <EntityLink
+                    kind="customer"
+                    id={task.customer_id}
+                    label={task.customer_name ?? task.customer_id.slice(0, 8)}
+                  />
+                </div>
                 <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-600">
                   <span>{task.aging_bucket.replace("_", "-")}</span>
                   <span>{task.days_overdue}d overdue</span>
                   <span>{money(task.owed_cents)}</span>
                   <span className="font-semibold">{task.status}</span>
                 </div>
-              </button>
+              </div>
             ))}
             {tasksQuery.isLoading ? <p className="px-3 py-3 text-sm text-gray-500">Loading tasks...</p> : null}
             {!tasksQuery.isLoading && tasksQuery.isError ? (
@@ -172,7 +196,21 @@ export function CollectionsPage() {
             <p className="px-3 py-4 text-sm text-gray-500">Select a task from the queue.</p>
           ) : (
             <div className="space-y-4 p-3">
-              <div className="grid gap-2 text-sm md:grid-cols-2">
+              <div className="grid gap-2 text-sm md:grid-cols-3">
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-gray-500">Customer</div>
+                  <div className="font-medium">
+                    <EntityLink
+                      kind="customer"
+                      id={detailQuery.data?.task.customer_id ?? undefined}
+                      label={
+                        detailQuery.data?.task.customer_name ??
+                        detailQuery.data?.task.customer_id?.slice(0, 8) ??
+                        "-"
+                      }
+                    />
+                  </div>
+                </div>
                 <div>
                   <div className="text-xs uppercase tracking-wide text-gray-500">Invoice</div>
                   <div className="font-medium"><EntityLink kind="invoice" id={detailQuery.data?.task.invoice_id ?? undefined} label={detailQuery.data?.task.invoice_id?.slice(0, 8) ?? "-"} /></div>
