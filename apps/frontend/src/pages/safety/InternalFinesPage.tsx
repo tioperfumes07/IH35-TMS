@@ -238,7 +238,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
           <label className="block">
             <span className="text-slate-600">Reason code</span>
             <input
-              className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2"
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2"
               value={newReason.reason_code}
               onChange={(e) => setNewReason((v) => ({ ...v, reason_code: e.target.value }))}
               placeholder="e.g. LATE_BOL"
@@ -247,7 +247,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
           <label className="block">
             <span className="text-slate-600">Reason name</span>
             <input
-              className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2"
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2"
               value={newReason.reason_name}
               onChange={(e) => setNewReason((v) => ({ ...v, reason_name: e.target.value }))}
               placeholder="e.g. Late BOL submission"
