@@ -4,9 +4,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
+# CI-COVERAGE FIX (2026-07-23): NO `branches:` filter on the PR trigger. The
+# new-CVE step already diffs against `github.event.pull_request.base.sha` (the PR's
+# OWN base, never a hardcoded main), so on a stacked PR it correctly measures that
+# PR's incremental CVE delta.
 on:
   pull_request:
-    branches: [main]
+    types: [opened, synchronize, reopened]
   push:
     branches: [main]
   schedule:

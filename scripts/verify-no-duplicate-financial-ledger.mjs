@@ -106,7 +106,7 @@ function isDistinctLedger(canonical, fqName) {
  * }} args
  * @returns {{errors:string[], evaluated:string[]}}
  */
-export function evaluate({ registry, baseline, tables, declText }) {
+export function assertNoDuplicateLedger({ registry, baseline, tables, declText }) {
   const financial = new Set(registry.financial_schemas || []);
   const tableSet = new Set(tables.map((t) => t.fq));
   const schemaSet = new Set(tables.map((t) => t.schema));
@@ -273,7 +273,7 @@ function realRun() {
   }
   const baseline = readJson(BASELINE_REL, { frozen_tables: [] }).frozen_tables || [];
   const { tables, declText } = scanMigrations();
-  const { errors, evaluated } = evaluate({ registry, baseline, tables, declText });
+  const { errors, evaluated } = assertNoDuplicateLedger({ registry, baseline, tables, declText });
 
   for (const w of serviceWarnings(registry)) console.warn(`[verify-no-duplicate-financial-ledger] WARN (service soft-check): ${w}`);
 
@@ -349,7 +349,7 @@ function selftest() {
     const tables = [...canon];
     const declText = {};
     if (c.newT) { tables.push(c.newT); declText[c.newT.fq] = c.text; }
-    const { errors, evaluated } = evaluate({ registry, baseline, tables, declText });
+    const { errors, evaluated } = assertNoDuplicateLedger({ registry, baseline, tables, declText });
     const failed = errors.length > 0;
     const ok = failed === c.expectFail;
     // extra assertion for (v): the baselined tables must never appear in `evaluated`
