@@ -19,6 +19,7 @@ const REQUIRED_LIVE_TAB_IDS = [
   "relay_card",
   "reports",
   "statement_import",
+  "plaid_connections",
   "settings",
 ];
 
@@ -27,10 +28,12 @@ const REQUIRED_DESIGN_NEEDLES = [
   "/banking/factoring",
   "/banking/relay",
   "/banking/statement-import",
+  "/banking/plaid-connections",
   "/banking/settings",
   "**Reports**",
   "**Relay Card**",
   "**Factoring (Faro)**",
+  "**Plaid Connections**",
 ];
 
 export function run(root = process.cwd()) {
@@ -54,6 +57,7 @@ export function run(root = process.cwd()) {
     "/banking/factoring",
     "/banking/relay",
     "/banking/statement-import",
+    "/banking/plaid-connections",
     "/banking/settings",
   ]) {
     if (!paths.includes(`"${path}"`)) failures.push(`BANKING_TAB_PATH missing ${path}`);
@@ -70,7 +74,7 @@ if (process.argv.includes("--selftest")) {
   };
   mk(
     DESIGN,
-    "## MODULE 4 — BANKING\n/banking/factoring\n/banking/relay\n/banking/statement-import\n/banking/settings\n**Reports**\n**Relay Card**\n**Factoring (Faro)**\n## MODULE 5\n"
+    "## MODULE 4 — BANKING\n/banking/factoring\n/banking/relay\n/banking/statement-import\n/banking/plaid-connections\n/banking/settings\n**Reports**\n**Relay Card**\n**Factoring (Faro)**\n**Plaid Connections**\n## MODULE 5\n"
   );
   mk(
     NAV,
@@ -78,7 +82,7 @@ if (process.argv.includes("--selftest")) {
   );
   mk(
     PATHS,
-    `"/banking/factoring"\n"/banking/relay"\n"/banking/statement-import"\n"/banking/settings"\n`
+    `"/banking/factoring"\n"/banking/relay"\n"/banking/statement-import"\n"/banking/plaid-connections"\n"/banking/settings"\n`
   );
   if (run(tmp).length) throw new Error("expected PASS: " + run(tmp).join("; "));
   mk(NAV, 'id: "accounts"\n');

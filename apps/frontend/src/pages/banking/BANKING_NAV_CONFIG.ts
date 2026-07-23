@@ -8,6 +8,7 @@ export const BANKING_MODULE_TABS = [
   { id: "relay_card", label: "Relay Card" },
   { id: "reports", label: "Reports" },
   { id: "statement_import", label: "Statement Import" },
+  { id: "plaid_connections", label: "Plaid Connections" },
   { id: "settings", label: "Settings" },
 ] as const;
 

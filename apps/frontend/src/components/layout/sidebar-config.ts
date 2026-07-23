@@ -181,6 +181,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "Relay Card", to: "/banking/relay" },
         { label: "Reports", to: "/banking/reports" },
         { label: "Statement Import", to: "/banking/statement-import" },
+        { label: "Plaid Connections", to: "/banking/plaid-connections" },
         { label: "Settings", to: "/banking/settings" },
         { label: "Transfers", to: "/banking/transfers" },
         { label: "Reconcile Queue", to: "/banking/reconcile" },

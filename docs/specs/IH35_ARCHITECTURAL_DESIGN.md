@@ -257,7 +257,7 @@ Sub-nav routes show: "Available after accounting cutover (Phase 5)" — wired in
 | **Categorize Drawer** | Uncategorized transactions queue (8 actions) — live inside Transactions Match/Categorize register | Phase 3 ✅ |
 | **Reconciliation Workspace** | Match bank txns to GL entries · sign-off · `/banking/reconciliation` (+ workspace) | Phase 6 (P6) |
 | **Bank Statement Import** | CSV import for non-feed banks · `/banking/statement-import` (PDF parser Phase 6; also available inside Reconciliation) | Phase 6 CSV ✅ · PDF later |
-| **Plaid Connections** | Live bank feed config (panel on Accounts + connect actions) | Phase 6 |
+| **Plaid Connections** | Live bank feed config · `/banking/plaid-connections` (panel also on Accounts + Settings — additive) | Phase 6 ✅ |
 | **Relay Card** | Fuel card transactions · Banking entry `/banking/relay` → Transactions register breakdown | Phase 4 (live API) ✅ |
 | **Reports** | Banking reports surface · `/banking/reports` | Phase 3 ✅ (design add 2026-07-23 — was live code; Rule 05 sync) |
 | **Settings** | Account map · Cash GL setup · Categorization rules · Account Visibility · queues · Plaid panel · `/banking/settings` | Owner only ✅ |

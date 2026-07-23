@@ -26,6 +26,7 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
   { path: "/banking/relay", label: "Relay Card", module: "banking" },
   { path: "/banking/reports", label: "Banking Reports", module: "banking" },
   { path: "/banking/statement-import", label: "Bank Statement Import", module: "banking" },
+  { path: "/banking/plaid-connections", label: "Plaid Connections", module: "banking" },
   { path: "/banking/settings", label: "Banking Settings", module: "banking" },
   { path: "/maintenance", label: "Maintenance Home", module: "maintenance" },
   { path: "/maintenance/active-wos", label: "Active WOs", module: "maintenance" },
@@ -83,6 +84,7 @@ export const BANKING_TAB_PATH: Record<string, string> = {
   relay_card: "/banking/relay",
   reports: "/banking/reports",
   statement_import: "/banking/statement-import",
+  plaid_connections: "/banking/plaid-connections",
   settings: "/banking/settings",
 };
 
@@ -94,6 +96,7 @@ export function bankingTabFromPath(pathname: string): string {
   if (pathname === "/banking/relay") return "relay_card";
   if (pathname === "/banking/reports") return "reports";
   if (pathname === "/banking/statement-import") return "statement_import";
+  if (pathname === "/banking/plaid-connections") return "plaid_connections";
   if (pathname === "/banking/settings") return "settings";
   return "accounts";
 }
