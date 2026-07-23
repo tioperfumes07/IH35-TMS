@@ -542,7 +542,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
         <div className="space-y-3">
           {uncategorizedCount > 0 ? (
             <div
-              className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950"
+              className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
               data-testid="banking-forreview-backlog-banner"
             >
               <p className="font-semibold">
@@ -600,7 +600,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             {(reconciliationSessionsQuery.data?.open_sessions ?? []).length === 0 &&
             (reconciliationSessionsQuery.data?.completed_sessions ?? []).length === 0 ? (
               <div
-                className="mb-3 rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950"
+                className="mb-3 border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
                 data-testid="banking-recon-never-completed-banner"
               >
                 <p className="font-semibold">No reconciliation sessions exist for this company yet.</p>
@@ -664,7 +664,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
         <div className="space-y-3">
           {!factoringVirtualSummary.lastAdvanceAt && factoringReserve === 0 && factoringChargebacks === 0 ? (
             <div
-              className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950"
+              className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
               data-testid="banking-factoring-entry-unproven-banner"
             >
               <p className="font-semibold">Factoring Banking entry has no proven Faro advance / reserve / chargeback activity yet.</p>
@@ -735,7 +735,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
         <div className="space-y-3">
           {tiles.filter((t) => Boolean(t.is_relay)).length === 0 ? (
             <div
-              className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950"
+              className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
               data-testid="banking-relay-entry-unproven-banner"
             >
               <p className="font-semibold">No Relay card / fuel-wallet bank tiles are mapped for this company yet.</p>
@@ -756,36 +756,21 @@ export function BankingHomePage({ initialTab }: Props = {}) {
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Relay Card · Banking</p>
-              <ActionButton
-                onClick={() => {
-                  const relay = tiles.find((t) => Boolean(t.is_relay));
-                  if (relay?.id) setSelectedAccountId(String(relay.id));
-                  navigate(BANKING_TAB_PATH.transactions);
-                }}
-              >
-                Open in Transactions
-              </ActionButton>
+              <ActionButton onClick={() => navigate(BANKING_TAB_PATH.transactions)}>Open in Transactions</ActionButton>
             </div>
-            <div className="max-h-[320px] overflow-y-auto">
-              {tiles
-                .filter((t) => Boolean(t.is_relay))
-                .map((tile) => (
-                  <button
-                    key={String(tile.id)}
-                    type="button"
-                    className="grid w-full grid-cols-[1fr_auto] border-b border-gray-100 px-2 py-1.5 text-left text-sm hover:bg-gray-50"
-                    onClick={() => {
-                      setSelectedAccountId(String(tile.id));
-                      navigate(BANKING_TAB_PATH.transactions);
-                    }}
-                  >
-                    <span className="truncate">{tile.display_name}</span>
-                    <span className="font-medium">{money.format(Number(tile.current_balance ?? 0))}</span>
-                  </button>
-                ))}
-              {tiles.filter((t) => Boolean(t.is_relay)).length === 0 ? (
-                <EntityEmptyState entityName={selectedCompany?.legal_name} noun="Relay card accounts" />
-              ) : null}
+            {/* is_relay is PHANTOM (never populated) — do not .find/.filter tiles by it (verify-banking-relay-tab-honesty). */}
+            <div
+              className="border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+              data-testid="banking-relay-phantom-field-unproven-notice"
+            >
+              <p className="font-semibold">Relay Card accounts cannot be identified yet</p>
+              <p className="mt-1">
+                Account-tiles cannot express Relay identity today: <code className="text-[11px]">is_relay</code> is a
+                phantom field (not populated by any migration or backend writer). The real identifier is{" "}
+                <code className="text-[11px]">catalogs.accounts.system_purpose = &apos;relay_fuel_wallet&apos;</code>{" "}
+                via ledger mapping (held). An empty Relay tab is not “no Relay activity” — the system cannot identify
+                Relay accounts in this feed yet.
+              </p>
             </div>
             <p className="mt-2 text-xs text-gray-600">
               Relay fuel-line breakdown stays on the Transactions register when a Relay wallet row is expanded.
