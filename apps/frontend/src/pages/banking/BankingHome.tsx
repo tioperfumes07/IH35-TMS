@@ -808,6 +808,22 @@ export function BankingHomePage({ initialTab }: Props = {}) {
 
       {activeTab === "statement_import" ? (
         <div className="space-y-3">
+          <div
+            className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950"
+            data-testid="banking-statement-import-not-recon-proof-banner"
+          >
+            <p className="font-semibold">Statement Import is an input path — not reconciliation proof.</p>
+            <p className="mt-1">
+              Uploading CSV does not close a period or clear for-review. After import, Match/Categorize on Transactions
+              and run Reconciliation sessions. PDF parser remains Phase 6 (honest deferral).
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <ActionButton onClick={() => navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`)}>
+                Open for-review queue
+              </ActionButton>
+              <ActionButton onClick={() => navigate(BANKING_TAB_PATH.reconciliation)}>Open Reconciliation</ActionButton>
+            </div>
+          </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Bank Statement Import</p>
             <p className="mb-3 text-sm text-gray-700">
