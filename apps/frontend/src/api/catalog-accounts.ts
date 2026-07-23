@@ -76,6 +76,7 @@ export function getCatalogAccount(id: string) {
 export async function listCatalogAccounts(params?: {
   status?: string;
   limit?: number;
+  /** Required for USMCA/TRANSP entity charts — omitting falls back to the user's default company. */
   operating_company_id?: string;
 }) {
   const status = params?.status ?? "active";

@@ -36,6 +36,12 @@ export type FaroCsvLine = {
   due_on?: string;
 };
 
+export type FaroCsvPreviewLine = FaroCsvLine & {
+  invoice_id?: string | null;
+  customer_id?: string | null;
+  customer_display_name?: string | null;
+};
+
 export type FaroCsvParseResult = {
   headers: string[];
   lines: FaroCsvLine[];
@@ -190,6 +196,49 @@ export function parseFaroCsv(csvText: string): FaroCsvParseResult {
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
 };
+
+/** Preview-only: resolve TMS invoice + customer ids for Faro CSV invoice numbers (Law §9 reverse drill). */
+export async function enrichFaroPreviewLines(
+  client: Queryable,
+  companyId: string,
+  lines: FaroCsvLine[]
+): Promise<FaroCsvPreviewLine[]> {
+  if (lines.length === 0) return [];
+  const numbers = Array.from(new Set(lines.map((l) => l.invoice_number).filter(Boolean)));
+  if (numbers.length === 0) return lines.map((line) => ({ ...line, invoice_id: null, customer_id: null }));
+
+  const res = await client.query<{
+    id: string;
+    display_id: string;
+    customer_id: string | null;
+    customer_name: string | null;
+  }>(
+    `
+      SELECT
+        i.id::text,
+        i.display_id::text,
+        i.customer_id::text,
+        c.customer_name::text AS customer_name
+      FROM accounting.invoices i
+      LEFT JOIN mdata.customers c
+             ON c.id = i.customer_id
+            AND c.operating_company_id = i.operating_company_id
+      WHERE i.operating_company_id = $1::uuid
+        AND i.display_id = ANY($2::text[])
+    `,
+    [companyId, numbers]
+  );
+  const byDisplay = new Map(res.rows.map((row) => [row.display_id, row]));
+  return lines.map((line) => {
+    const match = byDisplay.get(line.invoice_number);
+    return {
+      ...line,
+      invoice_id: match?.id ?? null,
+      customer_id: match?.customer_id ?? null,
+      customer_display_name: match?.customer_name ?? line.customer_name ?? null,
+    };
+  });
+}
 
 /** Resolve CSV statement/economic date — fail closed; never salvage to today. */
 export function resolveFaroCsvStatementDate(
