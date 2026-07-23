@@ -30,6 +30,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-definition-of-done-evidence";
 const DOD = "docs/specs/DEFINITION-OF-DONE.md";
+const HOOK = ".husky/commit-msg";
 const SELFTEST = process.argv.includes("--selftest");
 
 const sh = (cmd) => {
@@ -67,6 +68,23 @@ export function assertDoDEvidence(commits, opts = {}) {
   if (!dodPresent) {
     problems.push(
       `${DOD} is missing — the canonical Definition of Done must exist for this guard to mean anything`
+    );
+  }
+
+  // The commit-msg hook is the fast local half of this rule. It is bypassable with --no-verify (by
+  // design, and this repo uses that), so CI is the real gate — but nothing should be able to DELETE
+  // the local hook silently. Assert it is present and still calls the shared checker.
+  const hookPresent = opts.hookPresent ?? fs.existsSync(path.join(ROOT, HOOK));
+  const hookWired =
+    opts.hookWired ??
+    (hookPresent && /check-commit-evidence\.mjs/.test(fs.readFileSync(path.join(ROOT, HOOK), "utf8")));
+  if (!hookPresent) {
+    problems.push(
+      `${HOOK} is missing — the commit-time evidence check was removed. Restore it (see ${DOD} §3).`
+    );
+  } else if (!hookWired) {
+    problems.push(
+      `${HOOK} exists but no longer invokes scripts/check-commit-evidence.mjs — the hook is inert.`
     );
   }
 
@@ -167,6 +185,12 @@ if (SELFTEST) {
   // Case 4: the canonical DoD file going missing must fail.
   expect("dod-missing", [good], "canonical Definition of Done must exist", { dodPresent: false });
 
+  // Case 5: deleting the commit-msg hook must fail (nobody removes the local check quietly).
+  expect("hook-deleted", [good], "commit-time evidence check was removed", { hookPresent: false });
+
+  // Case 6: a hook that exists but no longer calls the shared checker is inert and must fail.
+  expect("hook-inert", [good], "the hook is inert", { hookPresent: true, hookWired: false });
+
   // Negative: a compliant commit must NOT be flagged, and a docs-only commit is exempt.
   const clean = assertDoDEvidence([good]);
   if (clean.length) failures.push(`false-positive on a compliant commit: ${clean.join(" | ")}`);
@@ -180,7 +204,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 4 planted defects caught, compliant + docs-only commits not flagged`);
+  console.log(`${LABEL} SELFTEST PASS — 6 planted defects caught, compliant + docs-only commits not flagged`);
   process.exit(0);
 }
 
