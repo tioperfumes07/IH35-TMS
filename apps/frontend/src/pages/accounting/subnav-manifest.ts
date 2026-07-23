@@ -83,6 +83,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   // Bill payment ▾
   { label: "Bill payment", path: "/accounting/bill-payments", section: "billpay" },
   { label: "Vendor balances", path: "/accounting/vendor-balances", section: "billpay" },
+  { label: "Vendor credits", path: "/accounting/vendor-credits", section: "billpay" },
   { label: "Accounts payable", path: "/accounting/accounts-payable", section: "billpay" },
   { label: "AP Aging", path: "/reports/ap-aging", section: "billpay" },
 

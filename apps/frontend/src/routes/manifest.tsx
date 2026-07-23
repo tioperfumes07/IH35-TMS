@@ -278,6 +278,7 @@ const ExpensesListPage = React.lazy(() => import("../pages/accounting/ExpensesLi
 const ExpenseDetailPage = React.lazy(() => import("../pages/accounting/ExpenseDetailPage").then((m) => ({ default: m.ExpenseDetailPage })));
 const BillsPage = React.lazy(() => import("../pages/accounting/BillsPage").then((m) => ({ default: m.BillsPage })));
 const VendorBalancesPage = React.lazy(() => import("../pages/accounting/VendorBalancesPage").then((m) => ({ default: m.VendorBalancesPage })));
+const VendorCreditsPage = React.lazy(() => import("../pages/accounting/VendorCreditsPage").then((m) => ({ default: m.VendorCreditsPage })));
 const ManualJEListPage = React.lazy(() => import("../pages/accounting/ManualJEListPage").then((m) => ({ default: m.ManualJEListPage })));
 const BillPaymentsListPage = React.lazy(() => import("../pages/accounting/BillPaymentsListPage").then((m) => ({ default: m.BillPaymentsListPage })));
 const BillPaymentDetailPage = React.lazy(() => import("../pages/accounting/BillPaymentDetailPage").then((m) => ({ default: m.BillPaymentDetailPage })));
@@ -3815,6 +3816,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <VendorBalancesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/vendor-credits"
+          element={
+            <ProtectedRoute>
+              <VendorCreditsPage />
             </ProtectedRoute>
           }
         />
