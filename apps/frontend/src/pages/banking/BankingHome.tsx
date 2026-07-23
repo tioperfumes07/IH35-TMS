@@ -726,6 +726,26 @@ export function BankingHomePage({ initialTab }: Props = {}) {
 
       {activeTab === "relay_card" ? (
         <div className="space-y-3">
+          {tiles.filter((t) => Boolean(t.is_relay)).length === 0 ? (
+            <div
+              className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950"
+              data-testid="banking-relay-entry-unproven-banner"
+            >
+              <p className="font-semibold">No Relay card / fuel-wallet bank tiles are mapped for this company yet.</p>
+              <p className="mt-1">
+                Empty Relay tab is not "no fuel spend." Fuel card activity may still sit in for-review bank transactions
+                awaiting Match/Categorize, or Relay may need account tags / Plaid mapping under Plaid Connections.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <ActionButton
+                  onClick={() => navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`)}
+                >
+                  Open for-review queue
+                </ActionButton>
+                <ActionButton onClick={() => navigate(BANKING_TAB_PATH.plaid_connections)}>Plaid Connections</ActionButton>
+              </div>
+            </div>
+          ) : null}
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Relay Card · Banking</p>
