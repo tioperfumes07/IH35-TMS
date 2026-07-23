@@ -1,16 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { createPayment, listInvoices, type Invoice, type PaymentMethod } from "../../api/accounting";
+import { createPayment, listCoaRoles, listInvoices, type Invoice, type PaymentMethod } from "../../api/accounting";
+import { getAllAccounts, getCoaAccounts } from "../../api/banking";
 import { listCustomers } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { UploadZone } from "../../components/UploadZone";
-import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+import { ReferenceSelect, type ReferenceOption } from "../../components/parity/ReferenceSelect";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { companyToday } from "../../lib/businessDate";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { formatBankAccountPickerLabel } from "../banking/transferAccountPicker";
 
 type Props = {
   open: boolean;
@@ -33,6 +35,8 @@ const PAYMENT_METHODS: Array<{ value: PaymentMethod; label: string }> = [
   { value: "other", label: "Other" },
 ];
 
+const DEPOSIT_COA_TYPES = new Set(["Asset", "Bank", "Other Current Asset", "Other Current Assets", "Other Asset"]);
+
 // M-1: amount stays a DOLLAR number → *_cents = round(amount*100) unchanged (byte-for-byte).
 function dollarsToCents(value: number | null) {
   if (value == null || !Number.isFinite(value) || value <= 0) return 0;
@@ -46,6 +50,56 @@ function centsToDollars(value: number): number | null {
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+}
+
+/** Build deposit options as catalogs.accounts UUIDs (posting engine debit). Never a free-text bank slug. */
+export function buildReceivePaymentDepositOptions(input: {
+  bankAccounts: Array<Record<string, unknown>>;
+  coaAccounts: Array<{ id: string; account_number?: string | null; account_name: string; account_type?: string }>;
+  undepositedFundsAccountId: string | null;
+}): ReferenceOption[] {
+  const options: ReferenceOption[] = [];
+  const seen = new Set<string>();
+
+  const push = (value: string, label: string, type?: string) => {
+    if (!value || seen.has(value)) return;
+    seen.add(value);
+    options.push({ value, label, type });
+  };
+
+  if (input.undepositedFundsAccountId) {
+    const uf = input.coaAccounts.find((a) => a.id === input.undepositedFundsAccountId);
+    push(
+      input.undepositedFundsAccountId,
+      uf ? `${uf.account_number || "COA"} — ${uf.account_name}` : "Undeposited Funds",
+      "Undeposited Funds"
+    );
+  }
+
+  for (const row of input.bankAccounts) {
+    const ledger = row.ledger_account_id != null ? String(row.ledger_account_id) : "";
+    if (!ledger) continue;
+    push(
+      ledger,
+      formatBankAccountPickerLabel({
+        id: String(row.id ?? ""),
+        display_name: (row.display_name as string | null | undefined) ?? null,
+        account_name: (row.account_name as string | null | undefined) ?? null,
+        institution_name: (row.institution_name as string | null | undefined) ?? null,
+        account_mask: (row.account_mask as string | null | undefined) ?? null,
+        ledger_account_id: ledger,
+      }),
+      "Bank"
+    );
+  }
+
+  for (const account of input.coaAccounts) {
+    const type = String(account.account_type ?? "");
+    if (!DEPOSIT_COA_TYPES.has(type)) continue;
+    push(account.id, `${account.account_number || "COA"} — ${account.account_name}`, type || "Asset");
+  }
+
+  return options;
 }
 
 export function RecordPaymentModal({
@@ -62,16 +116,38 @@ export function RecordPaymentModal({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("ach");
   const [reference, setReference] = useState("");
   const [amountDollars, setAmountDollars] = useState<number | null>(centsToDollars(prefillAmountCents ?? 0));
-  const [depositedTo, setDepositedTo] = useState("ops_checking");
+  const [depositedToAccountId, setDepositedToAccountId] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [applyByInvoice, setApplyByInvoice] = useState<Record<string, number>>({});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
+  const [extraDepositOptions, setExtraDepositOptions] = useState<ReferenceOption[]>([]);
 
   const customersQuery = useQuery({
     queryKey: ["record-payment", "customers", operatingCompanyId],
     queryFn: () => listCustomers({ operating_company_id: operatingCompanyId, limit: 200 }).then((res) => res.customers),
-    enabled: open,
+    enabled: open && Boolean(operatingCompanyId),
+  });
+
+  const depositCatalogQuery = useQuery({
+    queryKey: ["record-payment", "deposit-catalog", operatingCompanyId],
+    queryFn: async () => {
+      const [banks, coa, roles] = await Promise.all([
+        getAllAccounts(operatingCompanyId),
+        getCoaAccounts(operatingCompanyId),
+        listCoaRoles(operatingCompanyId),
+      ]);
+      const uf =
+        roles.rows.find((r) => r.role === "undeposited_funds" && r.is_active && r.account_id)?.account_id ??
+        roles.rows.find((r) => r.role === "cash_clearing" && r.is_active && r.account_id)?.account_id ??
+        null;
+      return {
+        bankAccounts: banks.accounts ?? [],
+        coaAccounts: coa.accounts ?? [],
+        undepositedFundsAccountId: uf,
+      };
+    },
+    enabled: open && Boolean(operatingCompanyId),
   });
 
   const openInvoicesQuery = useQuery({
@@ -95,6 +171,13 @@ export function RecordPaymentModal({
   const amountCents = dollarsToCents(amountDollars);
   const openInvoices = openInvoicesQuery.data ?? [];
 
+  const depositOptions = useMemo(() => {
+    const catalog = depositCatalogQuery.data;
+    const base = catalog ? buildReceivePaymentDepositOptions(catalog) : [];
+    const baseIds = new Set(base.map((o) => o.value));
+    return [...base, ...extraDepositOptions.filter((opt) => !baseIds.has(opt.value))];
+  }, [depositCatalogQuery.data, extraDepositOptions]);
+
   useEffect(() => {
     if (!open) return;
     setCustomerId(prefillCustomerId ?? null);
@@ -102,12 +185,19 @@ export function RecordPaymentModal({
     setPaymentMethod("ach");
     setReference("");
     setAmountDollars(centsToDollars(prefillAmountCents ?? 0));
-    setDepositedTo("ops_checking");
+    setDepositedToAccountId(null);
     setNotes("");
     setErrorMessage(null);
     setApplyByInvoice({});
     setDraftAttachmentEntityId(crypto.randomUUID());
+    setExtraDepositOptions([]);
   }, [open, prefillAmountCents, prefillCustomerId]);
+
+  useEffect(() => {
+    if (!open || depositedToAccountId) return;
+    const preferred = depositCatalogQuery.data?.undepositedFundsAccountId ?? depositOptions[0]?.value ?? null;
+    if (preferred) setDepositedToAccountId(preferred);
+  }, [open, depositedToAccountId, depositCatalogQuery.data, depositOptions]);
 
   useEffect(() => {
     if (!open || !prefillInvoiceId || !prefillAmountCents) return;
@@ -176,6 +266,10 @@ export function RecordPaymentModal({
             setErrorMessage("Amount must be greater than zero.");
             return;
           }
+          if (!depositedToAccountId) {
+            setErrorMessage("Deposited to account is required.");
+            return;
+          }
           if (totalApplied > amountCents) {
             setErrorMessage("Sum of apply amounts cannot exceed payment amount.");
             return;
@@ -192,7 +286,7 @@ export function RecordPaymentModal({
               payment_date: paymentDate,
               reference: reference || undefined,
               amount_cents: amountCents,
-              deposited_to_account_id: depositedTo || "ops_checking",
+              deposited_to_account_id: depositedToAccountId,
               notes: notes || undefined,
               apply_to,
               // Option B: send the UploadZone draft id so the payment route re-keys the uploaded
@@ -254,10 +348,29 @@ export function RecordPaymentModal({
             <MoneyInput valueDollars={amountDollars} onChangeDollars={setAmountDollars} ariaLabel="Amount (USD)" />
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-            Deposited to
-            <input value={depositedTo} onChange={(event) => setDepositedTo(event.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
-          </label>
+          <div className="space-y-1" data-testid="receive-payment-deposit-to">
+            <label className="text-xs font-semibold text-gray-600">Deposited to</label>
+            {depositCatalogQuery.isError ? (
+              <ListErrorBanner
+                message={`Failed to load deposit accounts: ${(depositCatalogQuery.error as Error)?.message ?? "Request failed"}`}
+                onRetry={() => void depositCatalogQuery.refetch()}
+              />
+            ) : null}
+            <ReferenceSelect
+              value={depositedToAccountId}
+              onChange={setDepositedToAccountId}
+              options={depositOptions}
+              createKind="account"
+              addNewLabel="+ Add new account"
+              operatingCompanyId={operatingCompanyId}
+              placeholder="Select deposit account"
+              disabled={!operatingCompanyId || depositCatalogQuery.isLoading}
+              onOptionCreated={(opt) => {
+                setExtraDepositOptions((prev) => [...prev, opt]);
+                void depositCatalogQuery.refetch();
+              }}
+            />
+          </div>
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
             Notes

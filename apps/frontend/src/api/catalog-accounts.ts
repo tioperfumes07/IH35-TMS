@@ -73,16 +73,26 @@ export function getCatalogAccount(id: string) {
 // chart has 371 accounts — so a single call silently drops the OLDEST accounts (ORDER BY created_at DESC).
 // When the caller does not force a specific `limit`, page by offset until a short page so the FULL chart is
 // returned; a caller passing an explicit `limit` still gets exactly that page (backend clamps it to <=200).
-export async function listCatalogAccounts(params?: { status?: string; limit?: number }) {
+export async function listCatalogAccounts(params?: {
+  status?: string;
+  limit?: number;
+  /** Required for USMCA/TRANSP entity charts — omitting falls back to the user's default company. */
+  operating_company_id?: string;
+}) {
   const status = params?.status ?? "active";
+  const appendOpco = (qs: URLSearchParams) => {
+    if (params?.operating_company_id) qs.set("operating_company_id", params.operating_company_id);
+  };
   if (params?.limit !== undefined) {
     const qs = new URLSearchParams({ status, limit: String(params.limit) });
+    appendOpco(qs);
     return apiRequest<{ accounts: CatalogAccount[] }>(`/api/v1/catalogs/accounts?${qs.toString()}`);
   }
   const PAGE = 200;
   const accounts: CatalogAccount[] = [];
   for (let offset = 0; ; offset += PAGE) {
     const qs = new URLSearchParams({ status, limit: String(PAGE), offset: String(offset) });
+    appendOpco(qs);
     const res = await apiRequest<{ accounts: CatalogAccount[] }>(`/api/v1/catalogs/accounts?${qs.toString()}`);
     accounts.push(...res.accounts);
     if (res.accounts.length < PAGE) break;

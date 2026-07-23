@@ -245,13 +245,14 @@ export function CreateMultipleBillsPage() {
                   />
                 </td>
                 <td className="px-2 py-1.5">
-                  {/* D-CREATE-INLINE: the A/P account picker gets the inline "+ Add new category" row
-                      (creates in catalogs.accounts, immediately selectable), matching the split modal. */}
+                  {/* D-CREATE-INLINE: A/P account uses createKind="account" (CoA Liability wizard),
+                      not createKind="category" (expense Category wizard). */}
                   <ReferenceSelect
                     value={row.coa_account_id || null}
                     onChange={(next) => updateRow(row.id, { coa_account_id: next ?? "" })}
                     options={(coaQuery.data?.accounts ?? []).map(coaAccountReferenceOption)}
-                    createKind="category"
+                    createKind="account"
+                    addNewLabel="+ Add new account"
                     operatingCompanyId={companyId}
                     placeholder="Optional"
                     onOptionCreated={() => void coaQuery.refetch()}

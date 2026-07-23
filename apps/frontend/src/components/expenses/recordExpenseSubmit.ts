@@ -55,7 +55,8 @@ export async function submitRecordExpense(
 ) {
   // Category (GL account) + payment account + payment method are REQUIRED — a categorized cash-out,
   // never an uncategorized one. Records to accounting.expenses (cash-out), NOT a vendor bill.
-  if (!values.categoryQboId) throw new Error("Category is required");
+  // Prefer QBO-bridged category when present; otherwise post by TMS catalogs.accounts id.
+  if (!values.categoryQboId && !values.categoryId) throw new Error("Category is required");
   if (!values.paymentAccountId) throw new Error("Payment account is required");
   if (!values.paymentMethod) throw new Error("Payment method is required");
   const cents = dollarsToCents(values.amount);
@@ -65,7 +66,10 @@ export async function submitRecordExpense(
   const resolvedUnitId = values.unitId || linkage?.unitId || undefined;
 
   return createExpense(operatingCompanyId, {
-    category_qbo_id: values.categoryQboId,
+    ...(values.categoryQboId ? { category_qbo_id: values.categoryQboId } : {}),
+    ...(!values.categoryQboId && values.categoryId && UUID_RE.test(values.categoryId)
+      ? { category_account_id: values.categoryId }
+      : {}),
     expense_date: values.billDate,
     amount_cents: cents,
     payment_account_uuid: values.paymentAccountId,
