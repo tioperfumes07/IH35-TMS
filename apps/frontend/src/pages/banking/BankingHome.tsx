@@ -890,7 +890,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
       {activeTab === "settings" ? (
         <div className="space-y-3">
           <div
-            className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950"
+            className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
             data-testid="banking-settings-not-ops-complete-banner"
           >
             <p className="font-semibold">Settings links configure Banking — they do not complete Match/Categorize or reconcile.</p>
