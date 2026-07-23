@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { listEscrowAccounts, listEscrowPostings, type EscrowAccount, type EscrowPosting } from "../../api/accounting";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -19,6 +19,37 @@ function money(cents: number) {
 function dt(value: string) {
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? value : d.toLocaleString();
+}
+
+function escrowSourceEntityKind(sourceType: EscrowPosting["source_type"]): EntityKind | null {
+  switch (sourceType) {
+    case "driver_settlement":
+      return "settlement";
+    case "factoring_advance":
+      return "factoring_advance";
+    case "vendor_bill":
+      return "bill";
+    default:
+      return null;
+  }
+}
+
+function EscrowPostingSourceLink({ row }: { row: EscrowPosting }) {
+  const kind = escrowSourceEntityKind(row.source_type);
+  if (!kind || !row.source_id) {
+    return (
+      <>
+        {row.source_type}
+        {row.source_id ? ` / ${row.source_id.slice(0, 8)}` : ""}
+      </>
+    );
+  }
+  return (
+    <>
+      {row.source_type}{" "}
+      <EntityLink kind={kind} id={row.source_id} label={row.source_id.slice(0, 8)} />
+    </>
+  );
 }
 
 export function EscrowPage() {
@@ -91,12 +122,7 @@ export function EscrowPage() {
         key: "source_type",
         label: "Source",
         sortable: true,
-        render: (row) => (
-          <>
-            {row.source_type}
-            {row.source_id ? ` / ${row.source_id}` : ""}
-          </>
-        ),
+        render: (row) => <EscrowPostingSourceLink row={row} />,
       },
       {
         key: "linked_journal_entry_id",
