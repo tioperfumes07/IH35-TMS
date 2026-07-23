@@ -44,16 +44,12 @@ export function PaymentDetailPage() {
     queryKey: ["accounting", "payment-open-invoices", selectedCompanyId, payment?.customer_id],
     queryFn: async () => {
       if (!payment?.customer_id) return [];
-      const [sent, partial] = await Promise.all([
-        listInvoices(selectedCompanyId!, { customer_id: payment.customer_id, status: "sent" }).then((res) => res.invoices ?? []),
-        listInvoices(selectedCompanyId!, { customer_id: payment.customer_id, status: "partial" }).then((res) => res.invoices ?? []),
-      ]);
-      const seen = new Set<string>();
-      return [...sent, ...partial].filter((row) => {
-        if (seen.has(row.id)) return false;
-        seen.add(row.id);
-        return Number(row.amount_open_cents ?? 0) > 0;
+      const res = await listInvoices(selectedCompanyId!, {
+        customer_id: payment.customer_id,
+        has_balance: true,
+        limit: 300,
       });
+      return res.invoices ?? [];
     },
     enabled: Boolean(canApply && selectedCompanyId && payment?.customer_id),
   });
