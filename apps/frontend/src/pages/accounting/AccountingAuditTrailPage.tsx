@@ -111,11 +111,11 @@ export function AccountingAuditTrailPage() {
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
 
   const accountsQuery = useInfiniteQuery({
-    queryKey: ["accounting-audit-trail-accounts"],
-    queryFn: async () => listCoaAccountsForJe(),
+    queryKey: ["accounting-audit-trail-accounts", companyId],
+    queryFn: async () => listCoaAccountsForJe(companyId, { postableOnly: true }),
     getNextPageParam: () => undefined,
     initialPageParam: undefined,
-    enabled: true,
+    enabled: Boolean(companyId),
     retry: false,
   });
 

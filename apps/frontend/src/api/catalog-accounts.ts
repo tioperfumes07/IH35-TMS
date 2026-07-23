@@ -78,21 +78,24 @@ export async function listCatalogAccounts(params?: {
   limit?: number;
   /** Required for USMCA/TRANSP entity charts — omitting falls back to the user's default company. */
   operating_company_id?: string;
+  /** When true, only rows with is_postable=true (posting-target pickers). */
+  postable_only?: boolean;
 }) {
   const status = params?.status ?? "active";
-  const appendOpco = (qs: URLSearchParams) => {
+  const appendCommon = (qs: URLSearchParams) => {
     if (params?.operating_company_id) qs.set("operating_company_id", params.operating_company_id);
+    if (params?.postable_only) qs.set("postable_only", "true");
   };
   if (params?.limit !== undefined) {
     const qs = new URLSearchParams({ status, limit: String(params.limit) });
-    appendOpco(qs);
+    appendCommon(qs);
     return apiRequest<{ accounts: CatalogAccount[] }>(`/api/v1/catalogs/accounts?${qs.toString()}`);
   }
   const PAGE = 200;
   const accounts: CatalogAccount[] = [];
   for (let offset = 0; ; offset += PAGE) {
     const qs = new URLSearchParams({ status, limit: String(PAGE), offset: String(offset) });
-    appendOpco(qs);
+    appendCommon(qs);
     const res = await apiRequest<{ accounts: CatalogAccount[] }>(`/api/v1/catalogs/accounts?${qs.toString()}`);
     accounts.push(...res.accounts);
     if (res.accounts.length < PAGE) break;

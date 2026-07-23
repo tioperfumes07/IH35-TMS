@@ -67,8 +67,9 @@ export function ExpenseCategoryMapPage() {
   });
 
   const accountsQuery = useQuery({
-    queryKey: ["expense-category-map", "accounts"],
-    queryFn: () => listCoaAccountsForJe(),
+    queryKey: ["expense-category-map", "accounts", companyId],
+    queryFn: () => listCoaAccountsForJe(companyId, { postableOnly: true }),
+    enabled: Boolean(companyId),
     staleTime: 60_000,
   });
 

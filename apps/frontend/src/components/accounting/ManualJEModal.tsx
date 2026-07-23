@@ -43,9 +43,9 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
   const [loading, setLoading] = useState(false);
 
   const accountsQuery = useQuery({
-    queryKey: ["manual-je", "accounts"],
-    queryFn: listCoaAccountsForJe,
-    enabled: open && step === 2,
+    queryKey: ["manual-je", "accounts", operatingCompanyId],
+    queryFn: () => listCoaAccountsForJe(operatingCompanyId, { postableOnly: true }),
+    enabled: open && step === 2 && Boolean(operatingCompanyId),
   });
   const classesQuery = useQuery({
     queryKey: ["manual-je", "classes"],

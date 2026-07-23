@@ -163,7 +163,7 @@ export function AccountRegisterPage() {
 
   const accountsQuery = useQuery({
     queryKey: ["coa-accounts", companyId],
-    queryFn: () => listCoaAccountsForJe(),
+    queryFn: () => listCoaAccountsForJe(companyId, { postableOnly: true }),
     enabled: Boolean(companyId),
   });
 
