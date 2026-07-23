@@ -28,12 +28,12 @@ const MONEY_COMPONENT = "MoneyInput.tsx";
 
 // ALLOWLIST — money inputs intentionally NOT yet converted, each with a tracked reason. Keep this EMPTY
 // except for genuinely-blocked fields; every entry is debt to remove.
-//   EscrowForfeitModal: BLOCKED — its POST target /api/v1/driver-finance/escrow/:driverId/forfeit has NO
-//   backend handler (grep "forfeit" across apps/backend/src = only escrow-history.service.ts, a reader;
-//   escrow_ledger is written ONLY by settlements/approval.service.ts, the settlement-approval path — not by
-//   this modal). So the modal currently 404s and its emit-unit is UNDECIDABLE (no Zod contract to match).
-//   Converting the widget on inference = the PartsMasterData trap. Resolution is a backend/product decision
-//   (wire the forfeit route → convert matching its Zod as a TIER-1 [HOLD]; OR archive the dead modal).
+//   EscrowForfeitModal: the backend route is now BUILT (SAF-F01: escrow-forfeit.routes.ts, mounted). Its
+//   Zod contract is decided — amount is DOLLARS (service converts ×100). The remaining debt is purely the
+//   FRONTEND widget: converting the modal's raw amount input to MoneyInput (+ ParityDrawer + a real
+//   liability picker) is SAF-F10, a separate tracked frontend finding. Kept here ONLY until SAF-F10 lands;
+//   at that point remove this entry. Not converting the widget inside the backend HOLD PR keeps scope honest
+//   (a half-converted modal on an inferred binding is the PartsMasterData trap).
 const ALLOWLIST = new Set([
   "apps/frontend/src/pages/safety/components/EscrowForfeitModal.tsx",
 ]);

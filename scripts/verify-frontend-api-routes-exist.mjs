@@ -39,7 +39,8 @@ const ALLOWLIST = [
   // --- FINANCIAL routes: GATED builds, owner-only. Do NOT build autonomously. ---
   "/api/v1/customers/:x/payments/:x/unapply", // customer payment un-apply (reverses cash application)
   "/api/v1/banking/reconcile/factoring/apply", // factoring bank-match apply (posts factoring settlement)
-  "/api/v1/driver-finance/escrow/:x/forfeit", // driver escrow forfeit (moves held escrow)
+  // /api/v1/driver-finance/escrow/:x/forfeit — BUILT (SAF-F01): escrow-forfeit.routes.ts, mounted in
+  // index.ts. Removed from this allowlist; the guard now resolves the real handler.
   // mark-transfer categorizes a bank txn as an inter-account transfer AND enqueues a QBO accounting
   // outbox event (mirrors the shipped POST /transfer). The FE sends { from_account_id, to_account_id }
   // but the transfer DIRECTION (in/out) must be derived correctly before posting — financial-aware,
