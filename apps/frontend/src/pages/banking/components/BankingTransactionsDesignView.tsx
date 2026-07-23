@@ -1422,6 +1422,7 @@ export function BankingTransactionsDesignView({
     const { spent, received } = spentReceived(tx);
     const draft = getDraft(tx);
     const links = categorizationLinksQuery.data;
+    const matchedJournalEntryId = links?.matched_journal_entry_id ?? tx.matched_journal_entry_id ?? null;
     const hasPersistedLinks = Boolean(
       links &&
         (links.driver_id ||
@@ -1431,7 +1432,8 @@ export function BankingTransactionsDesignView({
           links.vendor_id ||
           links.customer_id ||
           links.item_id ||
-          links.deduction_id)
+          links.deduction_id ||
+          matchedJournalEntryId)
     );
     return (
       <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
@@ -1493,7 +1495,24 @@ export function BankingTransactionsDesignView({
                     ) : null}
                   </span>
                 ) : null}
+                {matchedJournalEntryId ? (
+                  <EntityLink
+                    kind="journal_entry"
+                    id={matchedJournalEntryId}
+                    label="TMS Journal Entry"
+                    data-testid="bank-tx-categorization-je-link"
+                  />
+                ) : null}
               </div>
+            ) : null}
+            {categorizationLinksQuery.isSuccess &&
+            expandedTxId === tx.id &&
+            hasPersistedLinks &&
+            !matchedJournalEntryId ? (
+              <p className="mt-1 text-xs text-slate-600">
+                No TMS journal entry linked yet — bank-feed GL posting is flag-gated (BANK_FEED_GL_POSTING_ENABLED,
+                default OFF).
+              </p>
             ) : null}
           </div>
           {viewSettings.showBankDetails ? (
@@ -2078,6 +2097,21 @@ export function BankingTransactionsDesignView({
 
   return (
     <div className="space-y-3">
+      {transactionsQuery.isSuccess ? (
+        <div
+          className="border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+          data-testid="banking-bank-feed-gl-posting-honesty-banner"
+        >
+          <p className="font-semibold">TMS journal entry on categorized rows requires BANK_FEED_GL_POSTING_ENABLED</p>
+          <p className="mt-1">
+            Categorize tags persist driver/unit/load/vendor fields immediately. A balanced TMS JE and{" "}
+            <code className="text-[11px]">matched_journal_entry_id</code> back-pointer appear only when the existing
+            bank-feed poster ran with the flag ON for this entity (default OFF). Zero linked JEs with the flag OFF is
+            expected — not proof that categorize posts to the ledger. Reverse drill: JE detail Source links map{" "}
+            <code className="text-[11px]">bank_categorization</code> → Banking Transactions.
+          </p>
+        </div>
+      ) : null}
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="flex flex-wrap items-start gap-2">
           {accounts.map((account) => (
