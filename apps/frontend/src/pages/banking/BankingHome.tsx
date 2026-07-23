@@ -699,6 +699,28 @@ export function BankingHomePage({ initialTab }: Props = {}) {
         <BankingReportsTabContent />
       ) : null}
 
+      {activeTab === "settings" ? (
+        <div className="space-y-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Banking Settings</p>
+            <p className="mb-3 text-sm text-gray-700">
+              Account map, Cash GL, categorization rules, queues, and visibility — Owner/Administrator surfaces stay
+              role-gated on their pages.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <ActionButton onClick={() => navigate("/banking/cash-gl-setup")}>Cash GL setup</ActionButton>
+              <ActionButton onClick={() => navigate("/banking/categorization-rules")}>Categorization rules</ActionButton>
+              <ActionButton onClick={() => navigate("/banking/account-visibility")}>Account Visibility</ActionButton>
+              {canSeeEmailQueue ? (
+                <ActionButton onClick={() => navigate("/banking/email-queue")}>Email Queue</ActionButton>
+              ) : null}
+              <ActionButton onClick={() => navigate("/banking/qbo-sync-queue")}>QBO Sync Queue</ActionButton>
+            </div>
+          </div>
+          <BankingPlaidConnectionsPanel companyId={companyId} />
+        </div>
+      ) : null}
+
       <ManageAccountsModal
         open={manageOpen}
         operatingCompanyId={companyId}

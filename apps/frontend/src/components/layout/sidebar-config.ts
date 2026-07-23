@@ -180,6 +180,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "Driver Escrow", to: "/banking/driver-escrow" },
         { label: "Relay Card", to: "/banking/relay" },
         { label: "Reports", to: "/banking/reports" },
+        { label: "Settings", to: "/banking/settings" },
         { label: "Transfers", to: "/banking/transfers" },
         { label: "Reconcile Queue", to: "/banking/reconcile" },
         { label: "Cash GL setup", to: "/banking/cash-gl-setup" },
