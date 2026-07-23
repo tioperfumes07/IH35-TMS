@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { convertFineToLiability, getSafetyFines } from "../../api/safety";
@@ -56,6 +57,20 @@ export function FinesPage({ operatingCompanyId }: Props) {
   });
 
   const rows = finesQuery.data?.fines ?? [];
+
+  // SAF-F33 reverse drill-through: /safety/external-fines?fine_id=<id> opens that fine's drawer.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const fineIdParam = searchParams.get("fine_id");
+  useEffect(() => {
+    if (!fineIdParam || rows.length === 0) return;
+    const match = rows.find((r) => String(r.id) === fineIdParam);
+    if (match) {
+      setSelectedFine(match);
+      const next = new URLSearchParams(searchParams);
+      next.delete("fine_id");
+      setSearchParams(next, { replace: true });
+    }
+  }, [fineIdParam, rows, searchParams, setSearchParams]);
 
   // Migrated to the shared QBO-parity grid — columns, order, and the per-row "Open" action are
   // preserved verbatim (§7 additive-only).
