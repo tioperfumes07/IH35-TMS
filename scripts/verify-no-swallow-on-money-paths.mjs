@@ -31,7 +31,7 @@ export const MONEY =
 const SWALLOW = /catch\s*\([^)]*\)\s*\{\s*(\/\/[^\n]*\s*|\/\*[\s\S]*?\*\/\s*)*\}/g;
 
 /** Scan one file's source for empty/comment-only catch swallows on a money-path relative path. */
-export function findEmptyCatchSwallows(rel, src) {
+export function checkEmptyCatchSwallows(rel, src) {
   const offenders = [];
   if (!MONEY.test(rel)) return offenders;
   SWALLOW.lastIndex = 0;
@@ -73,7 +73,7 @@ export const SWL2_PATHS =
   /(banking\/recon\.service|accounting\/finance-hub\.service|integrations\/qbo\/mirror-integrity\.service|integrations\/relay-payments\/|qbo-sync\/ap-bills)/;
 const FAKE_EMPTY_CATCH = /\.catch\(\s*(?:async\s*)?\(\s*\)\s*=>\s*(?:\[\s*\]|0|null|\(\s*\{\s*\}\s*\)|\{\s*\})\s*\)/g;
 
-export function findFakeEmptySwallows(rel, src) {
+export function checkFakeEmptySwallows(rel, src) {
   const offenders = [];
   if (!SWL2_PATHS.test(rel)) return offenders;
   FAKE_EMPTY_CATCH.lastIndex = 0;
@@ -100,9 +100,9 @@ export function run() {
   const offenders = [];
   if (!fs.existsSync(SRC)) return offenders;
   walk(SRC, (rel, src) => {
-    offenders.push(...findEmptyCatchSwallows(rel, src));
+    offenders.push(...checkEmptyCatchSwallows(rel, src));
     offenders.push(...findSpineEmitSwallows(rel, src));
-    offenders.push(...findFakeEmptySwallows(rel, src));
+    offenders.push(...checkFakeEmptySwallows(rel, src));
   });
   return offenders;
 }
@@ -150,17 +150,17 @@ export async function pullApBillsFromQbo() {
     ["MONEY matches relay-payments path", MONEY.test(relayRel)],
     ["MONEY matches plaid path", MONEY.test(plaidRel)],
     ["MONEY matches integrations/qbo path", MONEY.test(qboIntRel)],
-    ["planted empty catch in A/P puller is flagged", findEmptyCatchSwallows(apPullerRel, plantedAp).length === 1],
-    ["planted comment-only catch in relay is flagged", findEmptyCatchSwallows(relayRel, plantedRelay).length === 1],
-    ["honest rethrow catch is not flagged", findEmptyCatchSwallows(apPullerRel, honest).length === 0],
-    ["intentional-swallow annotation is allowed", findEmptyCatchSwallows(apPullerRel, intentional).length === 0],
+    ["planted empty catch in A/P puller is flagged", checkEmptyCatchSwallows(apPullerRel, plantedAp).length === 1],
+    ["planted comment-only catch in relay is flagged", checkEmptyCatchSwallows(relayRel, plantedRelay).length === 1],
+    ["honest rethrow catch is not flagged", checkEmptyCatchSwallows(apPullerRel, honest).length === 0],
+    ["intentional-swallow annotation is allowed", checkEmptyCatchSwallows(apPullerRel, intentional).length === 0],
     [
       "SWL-2 fake-empty on ap-bills path is flagged",
-      findFakeEmptySwallows("apps/backend/src/qbo-sync/ap-bills-puller.ts", plantedFakeEmpty).length === 1,
+      checkFakeEmptySwallows("apps/backend/src/qbo-sync/ap-bills-puller.ts", plantedFakeEmpty).length === 1,
     ],
     [
       "SWL-2 fake-empty on relay path is flagged",
-      findFakeEmptySwallows(relayRel, plantedFakeEmpty).length === 1,
+      checkFakeEmptySwallows(relayRel, plantedFakeEmpty).length === 1,
     ],
   ];
   const failed = checks.filter(([, ok]) => !ok);

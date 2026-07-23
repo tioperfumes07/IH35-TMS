@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getAllAccounts } from "../../../api/banking";
+import { listCatalogAccounts } from "../../../api/catalog-accounts";
 import type { VendorBill } from "../../../api/accounting";
 import { Button } from "../../../components/Button";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useCCPayment } from "../../../hooks/useCCPayment";
 import { companyToday } from "../../../lib/businessDate";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
@@ -17,21 +17,69 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 // it has already been stated, so flip flags on all companies."
 const CC_BILL_PAYMENT_GATED = false;
 
-type Props = { open: boolean; operatingCompanyId: string; bill: VendorBill | null; onClose: () => void; onSaved: () => void };
+type Props = {
+  open: boolean;
+  operatingCompanyId: string;
+  bill: VendorBill | null;
+  onClose: () => void;
+  onSaved: () => void;
+};
+
+function money(cents: number) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+}
 
 export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSaved }: Props) {
-  const [ccAccountId, setCcAccountId] = useState("");
+  const [ccAccountId, setCcAccountId] = useState<string | null>(null);
   const [paymentDate, setPaymentDate] = useState(() => companyToday());
-  const [amountDollars, setAmountDollars] = useState("0");
+  const [amountCents, setAmountCents] = useState<number | null>(0);
+  const [memo, setMemo] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const ccPayment = useCCPayment(operatingCompanyId);
-  const accountsQuery = useQuery({ queryKey: ["cc-accounts", operatingCompanyId], queryFn: () => getAllAccounts(operatingCompanyId), enabled: open });
-  const ccAccounts = useMemo(() => (accountsQuery.data?.accounts ?? []).filter((a) => String(a.account_type ?? "").includes("credit")), [accountsQuery.data]);
+
+  const accountsQuery = useQuery({
+    queryKey: ["cc-bill-payment", "liability-accounts", operatingCompanyId],
+    queryFn: () => listCatalogAccounts({ status: "active" }),
+    enabled: open && Boolean(operatingCompanyId),
+    staleTime: 60_000,
+  });
+
+  const ccAccountOptions = useMemo(
+    () =>
+      (accountsQuery.data?.accounts ?? [])
+        .filter(
+          (acct) =>
+            acct.is_postable &&
+            !acct.deactivated_at &&
+            (acct.account_type === "Liability" ||
+              String(acct.account_subtype ?? "").toLowerCase().includes("credit") ||
+              String(acct.account_name ?? "").toLowerCase().includes("credit card") ||
+              String(acct.account_type ?? "").toLowerCase().includes("credit"))
+        )
+        .map((acct) => ({
+          value: acct.id,
+          label: acct.account_number ? `${acct.account_number} · ${acct.account_name}` : acct.account_name,
+          type: acct.account_type ?? undefined,
+        })),
+    [accountsQuery.data?.accounts]
+  );
+
+  const remainingCents = useMemo(() => {
+    if (!bill) return 0;
+    return Math.max(0, Number(bill.amount_cents ?? 0) - Number(bill.paid_cents ?? 0));
+  }, [bill]);
+
   useEffect(() => {
     if (!open || !bill) return;
-    setCcAccountId(String(ccAccounts[0]?.id ?? ""));
-    setAmountDollars(String(Math.max(0, Number(bill.amount_cents ?? 0) - Number(bill.paid_cents ?? 0)) / 100));
-  }, [open, bill, ccAccounts]);
-  if (!bill) return null;
+    setCcAccountId(ccAccountOptions[0]?.value ?? null);
+    setPaymentDate(companyToday());
+    setAmountCents(remainingCents);
+    setMemo("");
+    setError(null);
+  }, [open, bill, remainingCents, ccAccountOptions]);
+
+  const payAmountCents = amountCents ?? 0;
+
   return (
     <ParityDrawer
       open={open}
@@ -39,72 +87,139 @@ export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSave
       title="Pay with CC"
       size="wide"
       footer={
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            form="cc-bill-payment-form"
-            disabled={CC_BILL_PAYMENT_GATED}
-            title={CC_BILL_PAYMENT_GATED ? "Pay with CC awaiting financial approval" : undefined}
-          >
-            {CC_BILL_PAYMENT_GATED ? "Awaiting approval" : "Pay with CC"}
-          </Button>
-        </div>
+        bill ? (
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="cc-bill-payment-form"
+              disabled={CC_BILL_PAYMENT_GATED || ccPayment.isPending}
+              title={CC_BILL_PAYMENT_GATED ? "Pay with CC awaiting financial approval" : undefined}
+            >
+              {CC_BILL_PAYMENT_GATED ? "Awaiting approval" : ccPayment.isPending ? "Paying…" : "Pay with CC"}
+            </Button>
+          </div>
+        ) : undefined
       }
     >
-      <form
-        id="cc-bill-payment-form"
-        className="space-y-2"
-        data-testid="cc-bill-payment-drawer"
-        onSubmit={async (e) => {
-          e.preventDefault();
-          if (CC_BILL_PAYMENT_GATED) return;
-          await ccPayment.mutateAsync({
-            bill_id: bill.id,
-            cc_account_id: ccAccountId,
-            payment_amount_cents: Math.round(Number(amountDollars) * 100),
-            payment_date: paymentDate,
-          });
-          onSaved();
-          onClose();
-        }}
-      >
-        {accountsQuery.isError ? (
-          <ListErrorBanner
-            message={`Failed to load credit-card accounts: ${(accountsQuery.error as Error)?.message ?? "Request failed"}`}
-            onRetry={() => void accountsQuery.refetch()}
-          />
-        ) : null}
-        {/* Banking.bank_accounts (credit) — not CoA; SelectCombobox intentional */}
-        <SelectCombobox
-          value={ccAccountId}
-          onChange={(e) => setCcAccountId(e.target.value)}
-          className="h-9 w-full rounded-sm border px-2 text-[13px]"
+      {!bill ? (
+        <div className="text-sm text-gray-600">No bill selected.</div>
+      ) : (
+        <form
+          id="cc-bill-payment-form"
+          className="space-y-3"
+          data-testid="cc-bill-payment-drawer"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            if (CC_BILL_PAYMENT_GATED) return;
+            setError(null);
+            if (payAmountCents <= 0) {
+              setError("Payment amount must be greater than zero.");
+              return;
+            }
+            if (payAmountCents > remainingCents) {
+              setError("Payment amount cannot exceed remaining bill balance.");
+              return;
+            }
+            if (!ccAccountId) {
+              setError("Credit card liability account is required.");
+              return;
+            }
+            try {
+              await ccPayment.mutateAsync({
+                bill_id: bill.id,
+                cc_account_id: ccAccountId,
+                payment_amount_cents: payAmountCents,
+                payment_date: paymentDate,
+                memo: memo.trim() || undefined,
+              });
+              onSaved();
+              onClose();
+            } catch (submitError) {
+              setError(submitError instanceof Error ? submitError.message : "Failed to submit CC payment.");
+            }
+          }}
         >
-          <option value="">CC account</option>
-          {ccAccounts.map((a) => (
-            <option key={String(a.id)} value={String(a.id)}>
-              {String(a.display_name ?? a.id)}
-            </option>
-          ))}
-        </SelectCombobox>
-        {/* M-1: dollars-mode; Math.round(amountDollars*100)=payment_amount_cents byte-for-byte. */}
-        <MoneyInput
-          valueDollars={amountDollars ? Number(amountDollars) : null}
-          onChangeDollars={(d) => setAmountDollars(d == null ? "" : String(d))}
-          ariaLabel="Payment amount (USD)"
-          className="w-full"
-        />
-        <DatePicker className="h-9 w-full rounded-sm border px-2 text-[13px]" value={paymentDate} onChange={setPaymentDate} />
-        {CC_BILL_PAYMENT_GATED ? (
-          <div className="rounded-sm border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-800">
-            <span className="font-semibold">CC bill payment gated.</span> Submit is disabled pending financial-cluster
-            approval. Contact Jorge to enable.
+          {error ? (
+            <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div>
+          ) : null}
+          {accountsQuery.isError ? (
+            <ListErrorBanner
+              message={`Failed to load credit-card accounts: ${(accountsQuery.error as Error)?.message ?? "Request failed"}`}
+              onRetry={() => void accountsQuery.refetch()}
+            />
+          ) : null}
+
+          {/* CHROME: flat sections — no nested bordered panel inside the drawer (box-in-box) */}
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-700">CC Bill Payment Details</div>
+
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-6">
+            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+              Vendor
+              <input
+                value={bill.vendor_name ?? bill.vendor_id ?? "Vendor"}
+                readOnly
+                className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px]"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+              Bill #
+              <input
+                value={bill.bill_number || bill.id.slice(0, 8)}
+                readOnly
+                className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px]"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+              Payment date
+              <DatePicker value={paymentDate} onChange={setPaymentDate} className="text-[13px]" />
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+              Payment amount (USD)
+              <MoneyInput valueCents={amountCents} onChangeCents={setAmountCents} ariaLabel="Payment amount" />
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+              Remaining
+              <input
+                value={money(remainingCents)}
+                readOnly
+                className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px]"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
+              Credit card liability account
+              <ReferenceSelect
+                value={ccAccountId}
+                onChange={setCcAccountId}
+                options={ccAccountOptions}
+                createKind="account"
+                addNewLabel="+ Add new account"
+                operatingCompanyId={operatingCompanyId}
+                placeholder="Select credit card account…"
+                disabled={!operatingCompanyId}
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-6">
+              Memo
+              <textarea
+                rows={3}
+                value={memo}
+                onChange={(event) => setMemo(event.target.value)}
+                className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+              />
+            </label>
           </div>
-        ) : null}
-      </form>
+
+          {CC_BILL_PAYMENT_GATED ? (
+            <div className="rounded-sm border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-800">
+              <span className="font-semibold">CC bill payment gated.</span> Submit is disabled pending financial-cluster
+              approval. Contact Jorge to enable.
+            </div>
+          ) : null}
+        </form>
+      )}
     </ParityDrawer>
   );
 }
