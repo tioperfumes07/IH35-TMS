@@ -23,6 +23,16 @@ vi.mock("../../../api/banking", async (importOriginal) => {
     ...actual,
     getMatchCandidates: vi.fn(),
     acceptBankReconMatch: vi.fn(),
+    getCoaAccounts: vi.fn().mockResolvedValue({ accounts: [] }),
+    categorizeBankTransaction: vi.fn(),
+  };
+});
+
+vi.mock("../../../api/mdata", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../api/mdata")>();
+  return {
+    ...actual,
+    listVendors: vi.fn().mockResolvedValue({ vendors: [] }),
   };
 });
 
