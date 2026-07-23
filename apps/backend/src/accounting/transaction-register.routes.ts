@@ -64,7 +64,7 @@ export const TRANSACTION_REGISTER_UNION_SQL = `
          (CASE WHEN bt.is_credit THEN ABS(bt.amount_cents) ELSE 0 END)::bigint AS amount_in_cents,
          (CASE WHEN bt.is_credit THEN 0 ELSE ABS(bt.amount_cents) END)::bigint AS amount_out_cents,
          COALESCE(bt.status, 'uncategorized') AS status,
-         '/banking/transactions' AS detail_path
+         '/banking/transactions?txn_id=' || bt.id::text AS detail_path
     FROM banking.bank_transactions bt
    WHERE bt.operating_company_id = $1
 
@@ -78,7 +78,7 @@ export const TRANSACTION_REGISTER_UNION_SQL = `
          0::bigint AS amount_in_cents,
          ROUND(COALESCE(ft.total_cost, 0) * 100)::bigint AS amount_out_cents,
          (CASE WHEN ft.qbo_expense_id IS NOT NULL THEN 'synced' ELSE 'recorded' END) AS status,
-         '/fuel/history' AS detail_path
+         '/fuel/history?transaction_id=' || ft.id::text AS detail_path
     FROM fuel.fuel_transactions ft
     LEFT JOIN mdata.vendors v ON v.id = ft.vendor_id
    WHERE ft.operating_company_id = $1 AND ft.archived_at IS NULL
@@ -106,7 +106,7 @@ export const TRANSACTION_REGISTER_UNION_SQL = `
          0::bigint AS amount_in_cents,
          COALESCE(b.amount_cents, ROUND(COALESCE(b.total_amount, 0) * 100)::bigint, 0)::bigint AS amount_out_cents,
          b.status,
-         '/accounting/bills' AS detail_path
+         '/accounting/bills/' || b.id::text AS detail_path
     FROM accounting.bills b
     LEFT JOIN mdata.vendors v ON v.id::text = b.vendor_uuid
    WHERE b.operating_company_id = $1 AND b.revoked_at IS NULL
@@ -122,7 +122,7 @@ export const TRANSACTION_REGISTER_UNION_SQL = `
          0::bigint AS amount_in_cents,
          ROUND(COALESCE(s.net_pay, 0) * 100)::bigint AS amount_out_cents,
          s.status,
-         '/driver-finance/settlements' AS detail_path
+         '/driver-finance/settlements?settlement_id=' || s.id::text AS detail_path
     FROM driver_finance.driver_settlements s
     LEFT JOIN mdata.drivers d ON d.id = s.driver_id
    WHERE s.operating_company_id = $1
