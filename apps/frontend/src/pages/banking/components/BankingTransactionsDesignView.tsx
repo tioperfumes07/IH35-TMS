@@ -1074,8 +1074,9 @@ export function BankingTransactionsDesignView({
               <button
                 type="button"
                 disabled
-                aria-label="Attach file (not available for bank transactions)"
-                title="Attachments aren't supported on bank feed rows yet — attach the receipt to the Bill or Expense this transaction posts to."
+                data-testid="bank-txn-attach-disabled"
+                aria-label="Attach file (disabled — bank_transaction not in documents.attachments)"
+                title="Disabled: documents.attachments has no bank_transaction entity_type. Attach receipts to the Bill, Expense, or JE this row posts to."
                 className="cursor-not-allowed opacity-60"
               >
                 <Paperclip className="h-4 w-4" />
@@ -1083,8 +1084,9 @@ export function BankingTransactionsDesignView({
               <button
                 type="button"
                 disabled
-                aria-label="Add note (not available here)"
-                title="Notes aren't editable from this grid yet."
+                data-testid="bank-txn-note-disabled"
+                aria-label="Add note (disabled — no notes PATCH route)"
+                title="Disabled: banking.bank_transactions.notes is system-only today; no PATCH /api/v1/banking/transactions/:id notes body."
                 className="cursor-not-allowed opacity-60"
               >
                 <MessageSquare className="h-4 w-4" />
@@ -2098,19 +2100,40 @@ export function BankingTransactionsDesignView({
   return (
     <div className="space-y-3">
       {transactionsQuery.isSuccess ? (
-        <div
-          className="border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
-          data-testid="banking-bank-feed-gl-posting-honesty-banner"
-        >
-          <p className="font-semibold">TMS journal entry on categorized rows requires BANK_FEED_GL_POSTING_ENABLED</p>
-          <p className="mt-1">
-            Categorize tags persist driver/unit/load/vendor fields immediately. A balanced TMS JE and{" "}
-            <code className="text-[11px]">matched_journal_entry_id</code> back-pointer appear only when the existing
-            bank-feed poster ran with the flag ON for this entity (default OFF). Zero linked JEs with the flag OFF is
-            expected — not proof that categorize posts to the ledger. Reverse drill: JE detail Source links map{" "}
-            <code className="text-[11px]">bank_categorization</code> → Banking Transactions.
-          </p>
-        </div>
+        <>
+          <div
+            className="border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+            data-testid="banking-bank-feed-gl-posting-honesty-banner"
+          >
+            <p className="font-semibold">TMS journal entry on categorized rows requires BANK_FEED_GL_POSTING_ENABLED</p>
+            <p className="mt-1">
+              Categorize tags persist driver/unit/load/vendor fields immediately. A balanced TMS JE and{" "}
+              <code className="text-[11px]">matched_journal_entry_id</code> back-pointer appear only when the existing
+              bank-feed poster ran with the flag ON for this entity (default OFF). Zero linked JEs with the flag OFF is
+              expected — not proof that categorize posts to the ledger. Reverse drill: JE detail Source links map{" "}
+              <code className="text-[11px]">bank_categorization</code> → Banking Transactions.
+            </p>
+          </div>
+          <div
+            className="border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+            data-testid="banking-bank-row-attachments-notes-honesty-banner"
+          >
+            <p className="font-semibold">Bank row attachments and notes are not wired yet</p>
+            <p className="mt-1">
+              QBO-style paperclip and note icons stay visible but disabled.{" "}
+              <strong>Attachments:</strong>{" "}
+              <code className="text-[11px]">documents.attachments</code> CHECK has no{" "}
+              <code className="text-[11px]">bank_transaction</code> entity_type and{" "}
+              <code className="text-[11px]">/api/v1/documents/attachments</code> upload rejects bank feed rows — attach
+              receipts to the Bill, Expense, or JE this transaction posts to instead.{" "}
+              <strong>Notes:</strong>{" "}
+              <code className="text-[11px]">banking.bank_transactions.notes</code> exists for system/skip/investigate
+              text only; there is no operator notes{" "}
+              <code className="text-[11px]">PATCH /api/v1/banking/transactions/:id</code> body (today&apos;s PATCH edits
+              manual row dates only).
+            </p>
+          </div>
+        </>
       ) : null}
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="flex flex-wrap items-start gap-2">
