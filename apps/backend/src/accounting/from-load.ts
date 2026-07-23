@@ -39,6 +39,34 @@ function stopExtraDescription(input: {
   return `${stopLabel}${stopType}${rateLabel}${detail}`;
 }
 
+/** Non-void invoice already linked to this load (from-load idempotency + PATCH uniqueness). */
+export async function findConflictingInvoiceForLoad(
+  client: Queryable,
+  operatingCompanyId: string,
+  loadId: string,
+  excludeInvoiceId?: string
+): Promise<Record<string, unknown> | null> {
+  const values: unknown[] = [operatingCompanyId, loadId];
+  let excludeSql = "";
+  if (excludeInvoiceId) {
+    values.push(excludeInvoiceId);
+    excludeSql = `AND i.id <> $${values.length}`;
+  }
+  const res = await client.query(
+    `
+      SELECT i.id
+      FROM accounting.invoices i
+      WHERE i.operating_company_id = $1
+        AND i.source_load_id = $2
+        AND i.voided_at IS NULL
+        ${excludeSql}
+      LIMIT 1
+    `,
+    values
+  );
+  return res.rows[0] ?? null;
+}
+
 export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoiceInput): Promise<BuildInvoiceResult> {
   const existingRes = await client.query(
     `
@@ -46,6 +74,7 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
       FROM accounting.invoices i
       WHERE i.operating_company_id = $1
         AND i.source_load_id = $2
+        AND i.voided_at IS NULL
       ORDER BY i.created_at DESC
       LIMIT 1
     `,

@@ -107,4 +107,33 @@ describe("month close service", () => {
     ).rejects.toThrow("checklist_incomplete");
     expect(mocked.insertRetainedEarningsClosingJournalIfNeeded).not.toHaveBeenCalled();
   });
+
+  it("allows can_lock when overdue A/R is acknowledged", async () => {
+    mocked.query.mockImplementation(async (sql: string) => {
+      if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+      if (sql.includes("FROM accounting.periods")) {
+        return { rows: [{ id: "period-1", status: "open", period_start: "2026-05-01", period_end: "2026-05-31" }] };
+      }
+      if (sql.includes("WITH coverage AS")) return { rows: [] };
+      if (sql.includes("FROM accounting.invoices")) return { rows: [{ overdue_count: 3 }] };
+      if (sql.includes("FROM accounting.bills b")) return { rows: [{ overdue_count: 0 }] };
+      if (sql.includes("FROM accounting.sales_tax_returns")) return { rows: [{ ifta_filed: true }] };
+      if (sql.includes("FROM accounting.journal_entries je")) return { rows: [{ count: 1 }] };
+      if (sql.includes("accounting.month_close_checklist_ack")) {
+        return { rows: [{ checklist_item: "ar_aging_review" }] };
+      }
+      return { rows: [] };
+    });
+
+    const status = await getMonthCloseStatus({
+      userId: "11111111-1111-4111-8111-111111111111",
+      operatingCompanyId: "22222222-2222-4222-8222-222222222222",
+      period: "2026-05",
+    });
+
+    expect(status.ar_aging_review.overdue_count).toBe(3);
+    expect(status.ar_aging_review.reviewed).toBe(true);
+    expect(status.ar_aging_review.complete).toBe(true);
+    expect(status.can_lock).toBe(true);
+  });
 });

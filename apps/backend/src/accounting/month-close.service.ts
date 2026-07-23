@@ -24,10 +24,12 @@ export type MonthCloseStatus = {
   ar_aging_review: {
     complete: boolean;
     overdue_count: number;
+    reviewed: boolean;
   };
   ap_aging_review: {
     complete: boolean;
     overdue_count: number;
+    reviewed: boolean;
   };
   fuel_tax: {
     complete: boolean;
@@ -58,7 +60,30 @@ function parsePeriod(period: string) {
   };
 }
 
-async function loadChecklist(client: Client, input: { operatingCompanyId: string; periodStart: string; periodEnd: string }) {
+type ChecklistItem = "ar_aging_review" | "ap_aging_review";
+
+async function loadChecklistAcknowledgments(
+  client: Client,
+  input: { operatingCompanyId: string; period: string }
+): Promise<Record<ChecklistItem, boolean>> {
+  const ackRes = await client.query<{ checklist_item: string }>(
+    `
+      SELECT DISTINCT payload->>'checklist_item' AS checklist_item
+      FROM audit.audit_events
+      WHERE event_class = 'accounting.month_close_checklist_ack'
+        AND payload->>'operating_company_id' = $1
+        AND payload->>'period' = $2
+    `,
+    [input.operatingCompanyId, input.period]
+  );
+  const acked = new Set(ackRes.rows.map((row) => row.checklist_item));
+  return {
+    ar_aging_review: acked.has("ar_aging_review"),
+    ap_aging_review: acked.has("ap_aging_review"),
+  };
+}
+
+async function loadChecklist(client: Client, input: { operatingCompanyId: string; periodStart: string; periodEnd: string; period: string }) {
   const periodRes = await client.query<{
     id: string;
     status: string;
@@ -187,10 +212,14 @@ async function loadChecklist(client: Client, input: { operatingCompanyId: string
   const apOverdueCount = Number(apOverdueRes.rows[0]?.overdue_count ?? 0);
   const iftaFiled = Boolean(fuelTaxRes.rows[0]?.ifta_filed ?? false);
   const adjustingCount = Number(adjustingEntriesRes.rows[0]?.count ?? 0);
+  const acknowledgments = await loadChecklistAcknowledgments(client, {
+    operatingCompanyId: input.operatingCompanyId,
+    period: input.period,
+  });
 
   const bankReconComplete = accountsPending.length === 0;
-  const arComplete = arOverdueCount === 0;
-  const apComplete = apOverdueCount === 0;
+  const arComplete = arOverdueCount === 0 || acknowledgments.ar_aging_review;
+  const apComplete = apOverdueCount === 0 || acknowledgments.ap_aging_review;
   const fuelTaxComplete = iftaFiled;
   const periodOpen = period?.status === "open";
   const canLock = periodOpen && bankReconComplete && arComplete && apComplete && fuelTaxComplete;
@@ -203,6 +232,7 @@ async function loadChecklist(client: Client, input: { operatingCompanyId: string
     iftaFiled,
     adjustingCount,
     canLock,
+    acknowledgments,
   };
 }
 
@@ -214,6 +244,7 @@ export async function getMonthCloseStatus(input: { userId: string; operatingComp
       operatingCompanyId: input.operatingCompanyId,
       periodStart: periodBounds.period_start,
       periodEnd: periodBounds.period_end,
+      period: input.period,
     });
 
     return {
@@ -227,12 +258,14 @@ export async function getMonthCloseStatus(input: { userId: string; operatingComp
         accounts_pending: checklist.accountsPending,
       },
       ar_aging_review: {
-        complete: checklist.arOverdueCount === 0,
+        complete: checklist.arOverdueCount === 0 || checklist.acknowledgments.ar_aging_review,
         overdue_count: checklist.arOverdueCount,
+        reviewed: checklist.acknowledgments.ar_aging_review,
       },
       ap_aging_review: {
-        complete: checklist.apOverdueCount === 0,
+        complete: checklist.apOverdueCount === 0 || checklist.acknowledgments.ap_aging_review,
         overdue_count: checklist.apOverdueCount,
+        reviewed: checklist.acknowledgments.ap_aging_review,
       },
       fuel_tax: {
         complete: checklist.iftaFiled,
@@ -261,6 +294,7 @@ export async function lockMonthClose(input: {
         operatingCompanyId: input.operatingCompanyId,
         periodStart: periodBounds.period_start,
         periodEnd: periodBounds.period_end,
+        period: input.period,
       });
       if (!checklist.canLock) {
         throw new Error("checklist_incomplete");
@@ -318,6 +352,8 @@ export async function lockMonthClose(input: {
             bank_recon_pending_accounts: checklist.accountsPending.length,
             ar_overdue_count: checklist.arOverdueCount,
             ap_overdue_count: checklist.apOverdueCount,
+            ar_review_acknowledged: checklist.acknowledgments.ar_aging_review,
+            ap_review_acknowledged: checklist.acknowledgments.ap_aging_review,
             ifta_filed: checklist.iftaFiled,
             adjusting_entries: checklist.adjustingCount,
           },
@@ -336,5 +372,30 @@ export async function lockMonthClose(input: {
       await client.query("ROLLBACK").catch(() => undefined);
       throw error;
     }
+  });
+}
+
+export async function acknowledgeMonthCloseChecklist(input: {
+  userId: string;
+  operatingCompanyId: string;
+  period: string;
+  checklistItem: ChecklistItem;
+}) {
+  parsePeriod(input.period);
+
+  return withCompanyScope(input.userId, input.operatingCompanyId, async (client) => {
+    await appendCrudAudit(
+      client,
+      input.userId,
+      "accounting.month_close_checklist_ack",
+      {
+        operating_company_id: input.operatingCompanyId,
+        period: input.period,
+        checklist_item: input.checklistItem,
+      },
+      "info",
+      "Block-CMC"
+    );
+    return { ok: true as const, checklist_item: input.checklistItem };
   });
 }
