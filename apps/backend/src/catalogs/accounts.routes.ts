@@ -27,6 +27,11 @@ const listQuerySchema = z.object({
   account_type: accountTypeSchema.optional(),
   parent_account_id: z.string().uuid().optional(),
   operating_company_id: z.string().uuid().optional(),
+  // Posting-target pickers (CoA Roles, JE lines, expense map) must not offer header/non-postable rows.
+  postable_only: z
+    .union([z.literal("true"), z.literal("false"), z.boolean()])
+    .optional()
+    .transform((v) => v === true || v === "true"),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -115,10 +120,12 @@ export async function registerAccountRoutes(app: FastifyInstance) {
     if (!authUser) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
-    const { limit, offset, status, search, account_type, parent_account_id } = parsed.data;
+    const { limit, offset, status, search, account_type, parent_account_id, postable_only } = parsed.data;
 
     // Resolve the active entity (explicit param, else the user's default/accessible company) and read its
     // per-entity COA. Without this the af1 RLS returns 0 rows — the empty "Select account" picker.
+    // Callers that know the switcher entity (CoA Roles, JE, expense map) MUST pass operating_company_id
+    // so the picker matches the entity being designated — default resolution alone is not enough.
     const operatingCompanyId =
       parsed.data.operating_company_id ??
       (await withCurrentUser(authUser.uuid, (client) => resolveOperatingCompanyId(client, authUser.uuid)));
@@ -129,6 +136,7 @@ export async function registerAccountRoutes(app: FastifyInstance) {
       const filters: string[] = [];
       if (status === "active") filters.push("deactivated_at IS NULL");
       if (status === "inactive") filters.push("deactivated_at IS NOT NULL");
+      if (postable_only) filters.push("is_postable = true");
       if (search) {
         values.push(`%${search}%`);
         const idx = values.length;

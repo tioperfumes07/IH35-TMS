@@ -78,10 +78,14 @@ export async function listCatalogAccounts(params?: {
   limit?: number;
   /** Required for USMCA/TRANSP entity charts — omitting falls back to the user's default company. */
   operating_company_id?: string;
+  /** When true, only rows with is_postable=true (posting-target pickers). */
+  postable_only?: boolean;
 }) {
   const status = params?.status ?? "active";
+  // Name locked for verify-acct-catalog-accounts-opco-scope (appendOpco). Also sends postable_only.
   const appendOpco = (qs: URLSearchParams) => {
     if (params?.operating_company_id) qs.set("operating_company_id", params.operating_company_id);
+    if (params?.postable_only) qs.set("postable_only", "true");
   };
   if (params?.limit !== undefined) {
     const qs = new URLSearchParams({ status, limit: String(params.limit) });

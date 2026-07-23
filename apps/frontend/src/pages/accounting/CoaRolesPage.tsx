@@ -49,8 +49,9 @@ export function CoaRolesPage() {
   });
 
   const accountsQuery = useQuery({
-    queryKey: ["coa-roles", "accounts"],
-    queryFn: () => listCoaAccountsForJe(),
+    queryKey: ["coa-roles", "accounts", companyId],
+    queryFn: () => listCoaAccountsForJe(companyId, { postableOnly: true }),
+    enabled: Boolean(companyId),
     staleTime: 60_000,
   });
 
@@ -164,6 +165,20 @@ export function CoaRolesPage() {
         <ListErrorBanner
           message={`Failed to validate CoA role mappings: ${(validateQuery.error as Error)?.message ?? "Request failed"}`}
           onRetry={() => void validateQuery.refetch()}
+        />
+      ) : null}
+
+      {accountsQuery.isError ? (
+        <ListErrorBanner
+          message={`Failed to load chart of accounts for this entity: ${(accountsQuery.error as Error)?.message ?? "Request failed"}`}
+          onRetry={() => void accountsQuery.refetch()}
+        />
+      ) : null}
+
+      {!accountsQuery.isLoading && !accountsQuery.isError && companyId && (accountsQuery.data?.accounts.length ?? 0) === 0 ? (
+        <ListErrorBanner
+          message="No postable accounts returned for this entity. Check CoA seed / entity scope — designations cannot proceed with an empty picker."
+          onRetry={() => void accountsQuery.refetch()}
         />
       ) : null}
 

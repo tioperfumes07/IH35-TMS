@@ -30,6 +30,12 @@ describe("catalogs.accounts read routes are entity-scoped (A1 / af1 RLS)", () =>
     expect(handler).not.toContain("await withCurrentUser(authUser.uuid, async (client) => {");
   });
 
+  it("GET list accepts postable_only and filters is_postable (CoA Roles picker)", () => {
+    expect(SRC).toContain("postable_only");
+    const handler = sliceBetween(SRC, 'app.get("/api/v1/catalogs/accounts"', 'app.post("/api/v1/catalogs/accounts"');
+    expect(handler).toContain('filters.push("is_postable = true")');
+  });
+
   it("GET /api/v1/catalogs/accounts/:id reads under withScopedCompany", () => {
     const handler = sliceBetween(SRC, 'app.get("/api/v1/catalogs/accounts/:id"', 'app.patch("/api/v1/catalogs/accounts/:id"');
     expect(handler).toContain("withScopedCompany");

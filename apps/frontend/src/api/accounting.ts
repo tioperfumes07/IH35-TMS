@@ -1114,18 +1114,38 @@ export function voidJournalEntry(id: string, operatingCompanyId: string, reason:
   });
 }
 
-export async function listCoaAccountsForJe() {
-  // G9-H6: /catalogs/accounts hard-caps `limit` at 200 (accounts.routes.ts) and returns no total, while the
-  // chart has 371 accounts. A single limit=300 request both exceeds the cap (→400) and, at 200, drops the
-  // OLDEST ~171 accounts (ORDER BY created_at DESC) from the JE line picker. Page by offset until a short
-  // page so the FULL chart is selectable.
-  type JeAccountRow = { id: string; account_number: string; account_name: string };
+export type JeAccountRow = {
+  id: string;
+  account_number: string | null;
+  account_name: string;
+  account_type?: string | null;
+  is_postable?: boolean;
+};
+
+/**
+ * Entity-scoped chart for JE / CoA Roles / expense-map pickers.
+ * MUST pass operatingCompanyId — omitting it lets the API fall back to the user's default company
+ * (or return [] when none resolves), which empties the CoA Roles "Select account…" dropdown while
+ * the switcher entity still has a full postable chart under af1 RLS.
+ */
+export async function listCoaAccountsForJe(
+  operatingCompanyId: string,
+  opts?: { postableOnly?: boolean }
+) {
+  // G9-H6: /catalogs/accounts hard-caps `limit` at 200 (accounts.routes.ts). Page by offset until a
+  // short page so the FULL entity chart is selectable.
   const PAGE = 200;
   const accounts: JeAccountRow[] = [];
+  const postableOnly = opts?.postableOnly !== false;
   for (let offset = 0; ; offset += PAGE) {
-    const res = await apiRequest<{ accounts: JeAccountRow[] }>(
-      `/api/v1/catalogs/accounts?status=active&limit=${PAGE}&offset=${offset}`
-    );
+    const qs = new URLSearchParams({
+      status: "active",
+      limit: String(PAGE),
+      offset: String(offset),
+      operating_company_id: operatingCompanyId,
+    });
+    if (postableOnly) qs.set("postable_only", "true");
+    const res = await apiRequest<{ accounts: JeAccountRow[] }>(`/api/v1/catalogs/accounts?${qs.toString()}`);
     accounts.push(...res.accounts);
     if (res.accounts.length < PAGE) break;
   }
