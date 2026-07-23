@@ -4,7 +4,8 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createInternalFine, getInternalFines } from "../../api/safety";
+import { createInternalFine, disputeInternalFine, getInternalFines, voidInternalFine } from "../../api/safety";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { listInternalFineReasons, createInternalFineReason } from "../../api/catalogs-safety";
 import { Modal } from "../../components/Modal";
 import { listDispatchLoads, type DispatchStatus } from "../../api/dispatch";
@@ -37,6 +38,8 @@ const ALL_DISPATCH_STATUSES: DispatchStatus[] = [
 export function InternalFinesPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  // SAF-F12: which fine a lifecycle action is open for, and which action.
+  const [lifecycleTarget, setLifecycleTarget] = useState<{ row: InternalFineRow; action: "dispute" | "void" } | null>(null);
   const [form, setForm] = useState({
     driver_uuid: "",
     reason_uuid: "",
@@ -131,6 +134,9 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
 
   const canCreate = missing.length === 0 && !createMutation.isPending;
   const approverName = user?.email ?? user?.uuid ?? null;
+  // SAF-F12 role gates mirror the server: dispute = Owner/Administrator/Safety, void = Owner/Administrator.
+  const canDispute = user?.role === "Owner" || user?.role === "Administrator" || user?.role === "Safety";
+  const canVoid = user?.role === "Owner" || user?.role === "Administrator";
 
   // Migrated to the shared QBO-parity grid — columns and order are preserved verbatim (§7 additive-only).
   const columns: Array<ParityColumn<InternalFineRow>> = [
@@ -148,6 +154,45 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
         ) : (
           "—"
         ),
+    },
+    {
+      // SAF-F12: the page had NO row action at all, so a fine imposed on a driver could never be
+      // disputed or voided even though the schema has always accepted both states. Void is
+      // Owner/Administrator-only (governance: void is reason-required and role-gated); dispute is
+      // open to the safety desk. A fine already converted to a liability is refused by the server
+      // and the error names the dependent liability — never a silent cascade.
+      key: "actions",
+      label: "Actions",
+      render: (row) => {
+        const isVoided = Boolean(row.voided_at) || String(row.status ?? "") === "voided";
+        const isConverted = Boolean(row.driver_liability_id) || String(row.status ?? "") === "converted_to_liability";
+        if (isVoided) return <span className="text-slate-400">Voided</span>;
+        return (
+          <div className="flex items-center gap-2">
+            {canDispute && !isConverted ? (
+              <button
+                type="button"
+                className="text-[#1f2a44] underline"
+                data-testid={`internal-fine-dispute-${String(row.id ?? "")}`}
+                onClick={() => setLifecycleTarget({ row, action: "dispute" })}
+              >
+                Dispute
+              </button>
+            ) : null}
+            {canVoid && !isConverted ? (
+              <button
+                type="button"
+                className="text-[#dc2626] underline"
+                data-testid={`internal-fine-void-${String(row.id ?? "")}`}
+                onClick={() => setLifecycleTarget({ row, action: "void" })}
+              >
+                Void
+              </button>
+            ) : null}
+            {isConverted ? <span className="text-slate-400">Converted — reverse the liability first</span> : null}
+          </div>
+        );
+      },
     },
   ];
 
@@ -289,6 +334,34 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
         emptyText="No internal fines found."
         storageKey="safety-internal-fines"
         exportFilename="internal-fines"
+      />
+
+      {/* SAF-F12: reason-required lifecycle shell, reused from the accounting void contract.
+          postsReversingEntry={false} — a safety fine void posts no GL entry; claiming it would be a lie. */}
+      <VoidReasonModal
+        open={Boolean(lifecycleTarget)}
+        title={lifecycleTarget?.action === "void" ? "Void Internal Fine" : "Dispute Internal Fine"}
+        entityRef={
+          lifecycleTarget
+            ? `${String(lifecycleTarget.row.reason_code ?? lifecycleTarget.row.reason_name ?? "Internal fine")} · $${Number(
+                lifecycleTarget.row.amount ?? 0
+              ).toFixed(2)} · ${formatDateUS(lifecycleTarget.row.imposed_date)}`
+            : undefined
+        }
+        minLength={3}
+        postsReversingEntry={false}
+        onClose={() => setLifecycleTarget(null)}
+        onSubmit={async (reason) => {
+          if (!lifecycleTarget) return;
+          const id = String(lifecycleTarget.row.id ?? "");
+          if (lifecycleTarget.action === "void") {
+            await voidInternalFine(id, operatingCompanyId, reason);
+          } else {
+            await disputeInternalFine(id, operatingCompanyId, reason);
+          }
+          await queryClient.invalidateQueries({ queryKey: ["safety", "internal-fines", operatingCompanyId] });
+          setLifecycleTarget(null);
+        }}
       />
     </div>
   );

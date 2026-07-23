@@ -16,6 +16,20 @@ const internalFinesQuerySchema = companyQuerySchema.extend({
   driver_id: z.string().uuid().optional(),
 });
 
+// SAF-F12 — internal fines had ONLY GET + POST, so a fine could be imposed on a driver and then
+// never disputed or voided, even though safety.internal_fines.status accepts 'disputed'/'voided'
+// and the table carries voided_at + voided_reason. A punitive record an operator cannot correct is
+// a governance defect, not a missing nicety.
+//
+// Reason is REQUIRED on both transitions (void-cancel governance; min 3 matches the accounting void
+// contract, the SAF-F11 complaint void, and VoidReasonModal's default).
+const internalFineReasonBodySchema = z.object({
+  reason: z.string().trim().min(3).max(500),
+});
+const internalFineIdParamsSchema = z.object({
+  id: z.string().uuid(),
+});
+
 const dotInspectionSchema = z.object({
   inspection_date: z.string(),
   driver_uuid: z.string().uuid().optional(),
@@ -337,6 +351,172 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
       return res.rows;
     });
     return { fines };
+  });
+
+  /**
+   * SAF-F12 — dispute an internal fine (pending/approved -> disputed), reason required.
+   *
+   * A dispute is a state the driver is entitled to and the schema already allowed; there was simply
+   * no way to reach it. It moves no money: an approved fine's driver_liability row is untouched, so
+   * disputing never silently reverses a recovery. Voiding is the transition that must refuse when a
+   * liability exists (below).
+   */
+  app.patch("/api/v1/safety/internal-fines/:id/dispute", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    if (!validateRole(user.role)) return reply.code(403).send({ error: "forbidden" });
+    const params = internalFineIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const body = internalFineReasonBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+
+    const outcome = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
+      const current = await client.query(
+        `SELECT id, status, voided_at FROM safety.internal_fines WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        [params.data.id, query.data.operating_company_id]
+      );
+      const row = current.rows[0];
+      if (!row) return { kind: "not_found" as const };
+      if (row.voided_at) return { kind: "voided" as const };
+      if (row.status === "converted_to_liability") return { kind: "converted" as const };
+
+      const res = await client.query(
+        `
+          UPDATE safety.internal_fines
+          SET status = 'disputed',
+              notes = COALESCE(notes || E'\\n', '') || 'DISPUTED: ' || $4
+          WHERE id = $1
+            AND operating_company_id = $2
+            AND voided_at IS NULL
+            AND status <> 'converted_to_liability'
+          RETURNING *
+        `,
+        [params.data.id, query.data.operating_company_id, user.uuid, body.data.reason]
+      );
+      const updated = res.rows[0];
+      if (!updated) return { kind: "conflict_race" as const };
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "safety.internal_fine.disputed",
+        { internal_fine_id: updated.id, reason: body.data.reason, previous_status: row.status },
+        "warning",
+        "SAF-F12-INTERNAL-FINE-LIFECYCLE"
+      );
+      return { kind: "ok" as const, row: updated };
+    });
+
+    if (outcome.kind === "not_found") return reply.code(404).send({ error: "internal_fine_not_found" });
+    if (outcome.kind === "voided") {
+      return reply.code(409).send({
+        error: "internal_fine_voided",
+        message: "This fine is voided. A voided record is immutable and cannot be disputed.",
+      });
+    }
+    if (outcome.kind === "converted") {
+      return reply.code(409).send({
+        error: "internal_fine_already_converted_to_liability",
+        message:
+          "This fine has already been converted to a driver liability. Dispute the liability itself — " +
+          "changing the fine here would not change what the driver owes.",
+      });
+    }
+    if (outcome.kind === "conflict_race") {
+      return reply.code(409).send({
+        error: "internal_fine_state_changed",
+        message: "This fine was voided or converted while you were editing it. Reload and retry.",
+      });
+    }
+    return { fine: outcome.row };
+  });
+
+  /**
+   * SAF-F12 — void an internal fine. Owner/Administrator only, reason required, void-not-delete
+   * (voided_at + voided_reason; the row is never removed).
+   *
+   * OWNER RULING 2026-07-23 (amend BLOCKS, never cascades): a fine already converted to a
+   * driver_finance.driver_liabilities row is REFUSED here, with the dependent liability id and the
+   * remedy named in the error. Voiding the fine while the liability stands would leave the driver
+   * owing money for a fine that no longer exists — the same silent-overcharge shape as the reduce
+   * path fixed in #3341.
+   */
+  app.post("/api/v1/safety/internal-fines/:id/void", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    if (!["Owner", "Administrator"].includes(user.role)) return reply.code(403).send({ error: "forbidden" });
+    const params = internalFineIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const body = internalFineReasonBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+
+    const outcome = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
+      const current = await client.query(
+        `SELECT id, status, voided_at, driver_liability_id
+           FROM safety.internal_fines
+          WHERE id = $1 AND operating_company_id = $2
+          LIMIT 1`,
+        [params.data.id, query.data.operating_company_id]
+      );
+      const row = current.rows[0];
+      if (!row) return { kind: "not_found" as const };
+      if (row.voided_at) return { kind: "already_voided" as const };
+      if (row.driver_liability_id || row.status === "converted_to_liability") {
+        return { kind: "converted" as const, liabilityId: row.driver_liability_id };
+      }
+
+      // The predicate is repeated in the UPDATE so a concurrent convert between the SELECT and the
+      // UPDATE cannot slip through — the read above is for the error message, not the gate.
+      const res = await client.query(
+        `
+          UPDATE safety.internal_fines
+          SET status = 'voided', voided_at = now(), voided_reason = $3
+          WHERE id = $1
+            AND operating_company_id = $2
+            AND voided_at IS NULL
+            AND driver_liability_id IS NULL
+            AND status <> 'converted_to_liability'
+          RETURNING *
+        `,
+        [params.data.id, query.data.operating_company_id, body.data.reason]
+      );
+      const updated = res.rows[0];
+      if (!updated) return { kind: "conflict_race" as const };
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "safety.internal_fine.voided",
+        { internal_fine_id: updated.id, void_reason: body.data.reason, previous_status: row.status },
+        "warning",
+        "SAF-F12-INTERNAL-FINE-LIFECYCLE"
+      );
+      return { kind: "ok" as const, row: updated };
+    });
+
+    if (outcome.kind === "not_found") return reply.code(404).send({ error: "internal_fine_not_found" });
+    if (outcome.kind === "already_voided") {
+      return reply.code(409).send({ error: "internal_fine_voided", message: "This fine is already voided." });
+    }
+    if (outcome.kind === "converted") {
+      return reply.code(409).send({
+        error: "internal_fine_already_converted_to_liability",
+        message:
+          "This fine has already been converted to a driver liability, which holds its own copy of the " +
+          "amount. Voiding the fine here would leave the driver owing money for a fine that no longer " +
+          "exists. Reverse the driver liability first, then void the fine.",
+        driver_liability_id: outcome.liabilityId,
+      });
+    }
+    if (outcome.kind === "conflict_race") {
+      return reply.code(409).send({
+        error: "internal_fine_state_changed",
+        message: "This fine was voided or converted while you were editing it. Reload and retry.",
+      });
+    }
+    return { fine: outcome.row };
   });
 
   app.post("/api/v1/safety/v5/complaints", async (req, reply) => {

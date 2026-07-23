@@ -765,6 +765,26 @@ export function getInternalFines(companyId: string, params: { driver_id?: string
   return apiRequest<{ fines: Array<Record<string, unknown>> }>(`/api/v1/safety/internal-fines?${qs.toString()}`);
 }
 
+/**
+ * SAF-F12 — internal-fine lifecycle. Both transitions are reason-REQUIRED (min 3, matching the
+ * backend contract and the accounting void contract). Void is Owner/Administrator-only server-side
+ * and REFUSES a fine already converted to a driver liability, returning driver_liability_id so the
+ * UI can name the dependent record instead of silently failing.
+ */
+export function disputeInternalFine(id: string, companyId: string, reason: string) {
+  return apiRequest<{ fine: Record<string, unknown> }>(
+    `/api/v1/safety/internal-fines/${encodeURIComponent(id)}/dispute?${q(companyId)}`,
+    { method: "PATCH", body: { reason } }
+  );
+}
+
+export function voidInternalFine(id: string, companyId: string, reason: string) {
+  return apiRequest<{ fine: Record<string, unknown> }>(
+    `/api/v1/safety/internal-fines/${encodeURIComponent(id)}/void?${q(companyId)}`,
+    { method: "POST", body: { reason } }
+  );
+}
+
 export function createInternalFine(companyId: string, body: Record<string, unknown>) {
   return apiRequest<Record<string, unknown>>(`/api/v1/safety/internal-fines?${q(companyId)}`, {
     method: "POST",
