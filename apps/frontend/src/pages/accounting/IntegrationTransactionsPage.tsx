@@ -2,8 +2,8 @@ import { useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getIntegrationTransactions, type IntegrationTxnItem } from "../../api/integration-transactions";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -26,6 +26,23 @@ const ENTITY_LABELS: Record<string, string> = {
   bank_transaction: "Bank Txn", bill: "Bill", expense: "Expense",
   invoice: "Invoice", journal_entry: "Journal Entry",
 };
+
+function integrationEntityKind(entityType: string): EntityKind | null {
+  switch (entityType) {
+    case "bank_transaction":
+      return "bank_transaction";
+    case "bill":
+      return "bill";
+    case "expense":
+      return "expense";
+    case "invoice":
+      return "invoice";
+    case "journal_entry":
+      return "journal_entry";
+    default:
+      return null;
+  }
+}
 
 // Backend caps `limit` at 500 (integration-transactions.routes.ts) — fetch the max in one page and
 // let ParityTable's own advanced pager handle client-side paging (same pattern as ExpensesListPage /
@@ -75,6 +92,25 @@ export function IntegrationTransactionsPage() {
           {ENTITY_LABELS[row.entity_type] ?? row.entity_type}
         </span>
       ),
+    },
+    {
+      key: "entity_id",
+      label: "Entity",
+      sortable: true,
+      sortValue: (row) => row.entity_id ?? "",
+      render: (row) => {
+        const kind = integrationEntityKind(row.entity_type);
+        if (!kind || !row.entity_id) {
+          return <span className="font-mono text-xs text-gray-500">{row.entity_id ? `${row.entity_id.slice(0, 8)}…` : "—"}</span>;
+        }
+        return (
+          <EntityLink
+            kind={kind}
+            id={row.entity_id}
+            label={`${row.entity_id.slice(0, 8)}…`}
+          />
+        );
+      },
     },
     {
       key: "description",
@@ -157,10 +193,14 @@ export function IntegrationTransactionsPage() {
       render: (row) => {
         const bt = row.bank_transaction;
         return (
-          <span className="whitespace-nowrap text-xs">
-            {bt?.matched_load_id && <Link to={`/dispatch/loads/${bt.matched_load_id}`} className="mr-2 text-slate-700 hover:underline">Load</Link>}
-            {bt?.matched_bill_id && <Link to={`/accounting/bills/${bt.matched_bill_id}`} className="text-slate-700 hover:underline">Bill</Link>}
-            {!bt?.matched_load_id && !bt?.matched_bill_id && <span className="text-gray-400">—</span>}
+          <span className="flex flex-wrap gap-2 whitespace-nowrap text-xs">
+            {bt?.matched_load_id ? (
+              <EntityLink kind="load" id={bt.matched_load_id} label="Load" />
+            ) : null}
+            {bt?.matched_bill_id ? (
+              <EntityLink kind="bill" id={bt.matched_bill_id} label="Bill" />
+            ) : null}
+            {!bt?.matched_load_id && !bt?.matched_bill_id ? <span className="text-gray-400">—</span> : null}
           </span>
         );
       },

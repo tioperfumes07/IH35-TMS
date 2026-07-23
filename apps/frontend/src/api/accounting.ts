@@ -531,6 +531,7 @@ export type ExpenseListRow = {
   driver_last_name: string | null;
   line_description: string | null;
   is_reconciled: boolean;
+  journal_entry_id: string | null;
 };
 
 export function listExpenses(
@@ -742,7 +743,10 @@ export function listWorkOrderLinkedFinancials(workOrderId: string, operatingComp
 export function createExpense(
   operatingCompanyId: string,
   body: {
-    category_qbo_id: string;
+    /** QBO-bridged category id when present; omit when posting a TMS-native CoA row. */
+    category_qbo_id?: string;
+    /** catalogs.accounts UUID — used when the category has no QBO bridge yet (parallel books). */
+    category_account_id?: string;
     expense_date: string;
     amount_cents: number;
     payment_account_uuid: string;
@@ -1829,7 +1833,8 @@ export type RecurringBillFrequency = "weekly" | "biweekly" | "monthly" | "quarte
 export type RecurringBillLineItem = {
   description: string;
   amount: number;
-  account_id?: string | null;
+  /** catalogs.accounts.id — expense/asset category for generated bill_lines */
+  coa_account_id?: string | null;
   memo?: string | null;
   class_id?: string | null;
 };
