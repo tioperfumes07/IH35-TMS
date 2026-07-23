@@ -80,21 +80,20 @@ export async function listCatalogAccounts(params?: {
   operating_company_id?: string;
 }) {
   const status = params?.status ?? "active";
-  function buildQs(limit: number, offset?: number) {
-    const qs = new URLSearchParams({ status, limit: String(limit) });
-    if (offset !== undefined) qs.set("offset", String(offset));
+  const appendOpco = (qs: URLSearchParams) => {
     if (params?.operating_company_id) qs.set("operating_company_id", params.operating_company_id);
-    return qs.toString();
-  }
+  };
   if (params?.limit !== undefined) {
-    return apiRequest<{ accounts: CatalogAccount[] }>(`/api/v1/catalogs/accounts?${buildQs(params.limit)}`);
+    const qs = new URLSearchParams({ status, limit: String(params.limit) });
+    appendOpco(qs);
+    return apiRequest<{ accounts: CatalogAccount[] }>(`/api/v1/catalogs/accounts?${qs.toString()}`);
   }
   const PAGE = 200;
   const accounts: CatalogAccount[] = [];
   for (let offset = 0; ; offset += PAGE) {
-    const res = await apiRequest<{ accounts: CatalogAccount[] }>(
-      `/api/v1/catalogs/accounts?${buildQs(PAGE, offset)}`
-    );
+    const qs = new URLSearchParams({ status, limit: String(PAGE), offset: String(offset) });
+    appendOpco(qs);
+    const res = await apiRequest<{ accounts: CatalogAccount[] }>(`/api/v1/catalogs/accounts?${qs.toString()}`);
     accounts.push(...res.accounts);
     if (res.accounts.length < PAGE) break;
   }

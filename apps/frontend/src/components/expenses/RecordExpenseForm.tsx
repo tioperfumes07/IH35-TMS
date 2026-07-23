@@ -75,7 +75,9 @@ export function RecordExpenseForm({
   });
   const unitsQuery = useQuery({
     queryKey: ["record-expense", "units", operatingCompanyId],
-    queryFn: () => listUnits({ status: "InService", operating_company_id: operatingCompanyId, limit: 500 }),
+    // No status filter — a tow / roadside expense is written against an OutOfService or
+    // InMaintenance unit, which a hard "InService" filter would hide. See VendorBillForm.
+    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: 500 }),
     enabled: Boolean(operatingCompanyId),
   });
   const vendorsQuery = useQuery({
@@ -87,7 +89,9 @@ export function RecordExpenseForm({
   });
   const paymentAccountsQuery = useQuery({
     queryKey: ["record-expense", "payment-accounts", operatingCompanyId],
-    // Entity-scoped full chart (USMCA/TRANSP) — never default-company CoA.
+    // Entity-scoped full chart (USMCA/TRANSP) — never default-company CoA. No explicit limit so
+    // listCatalogAccounts pages the FULL chart (backend caps limit at 200; the chart has 371),
+    // keeping the oldest payment accounts selectable (G9-H6).
     queryFn: () => listCatalogAccounts({ status: "active", operating_company_id: operatingCompanyId }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,

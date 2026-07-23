@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listDrivers, listUnits, listVendors } from "../../api/mdata";
-import { getCoaAccounts } from "../../api/banking";
+import { listCatalogAccounts } from "../../api/catalog-accounts";
 import { classesCatalogClient } from "../../api/catalogs-accounting";
 import { DatePicker } from "../forms/DatePicker";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../forms/TwoSectionLineEditor";
@@ -171,14 +171,20 @@ export function VendorBillForm({
   });
   const unitsQuery = useQuery({
     queryKey: ["vendor-bill-form", "units", operatingCompanyId],
-    // Fleet enum is InService (not "Active") — status=Active was silently dropped server-side; pin InService.
-    queryFn: () => listUnits({ status: "InService", operating_company_id: operatingCompanyId, limit: 500 }),
+    // NO status filter on purpose. "Active" was an invalid enum the backend silently swallowed
+    // (unitStatusSchema...catch(undefined)), so the picker really returned ALL non-deactivated units.
+    // Pinning "InService" turned that into a HARD filter and dropped InMaintenance / OutOfService /
+    // Damaged units — i.e. exactly the units a repair bill is written for. A truck in the shop would
+    // vanish from the Unit dropdown and the bill would save with no unit_id, breaking WO-bill-unit
+    // linkage on the maintenance case this form exists for.
+    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: 500 }),
     enabled: Boolean(operatingCompanyId),
   });
   const accountsQuery = useQuery({
     queryKey: ["vendor-bill-form", "ap-accounts", operatingCompanyId],
-    // Entity-scoped CoA (same as banking categorize) — never the user's default company chart.
-    queryFn: () => getCoaAccounts(operatingCompanyId),
+    // Entity-scoped CoA (never the user's default-company chart). listCatalogAccounts (not
+    // getCoaAccounts) because its row shape carries is_postable — the A/P filter below needs it.
+    queryFn: () => listCatalogAccounts({ status: "active", operating_company_id: operatingCompanyId }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });
@@ -222,11 +228,15 @@ export function VendorBillForm({
     () =>
       (accountsQuery.data?.accounts ?? [])
         .filter((acct) => {
+          // is_postable is REQUIRED here. Dropping it let non-postable Liability HEADER accounts into
+          // the A/P picker — e.g. the "Driver Escrow" parent that driver-subaccount-provision creates
+          // with is_postable=false. Selecting one persists a header id to accounting.bills.coa_account_id
+          // and feeds it to the QBO bill push as the AP account.
+          if (!acct.is_postable) return false;
+          if (acct.deactivated_at) return false;
           const type = String(acct.account_type ?? "");
-          const subtype = String((acct as { account_subtype?: string | null }).account_subtype ?? "").toLowerCase();
+          const subtype = String(acct.account_subtype ?? "").toLowerCase();
           const name = String(acct.account_name ?? "").toLowerCase();
-          const deactivated = (acct as { deactivated_at?: string | null }).deactivated_at;
-          if (deactivated) return false;
           return (
             type === "Liability" ||
             subtype.includes("payable") ||
@@ -376,7 +386,7 @@ export function VendorBillForm({
               setAccountDisplay(match?.label ?? "");
             }}
             options={apAccountOptions}
-            createKind="category"
+            createKind="account"
             addNewLabel="+ Add new account"
             operatingCompanyId={operatingCompanyId}
             placeholder="Select A/P account…"
@@ -478,7 +488,13 @@ export function VendorBillForm({
       </div>
 
       <TwoSectionLineEditor mode="bill" onChange={setLines} partsLaborMode="parts-and-labor" />
-      <TotalsStack subtotal={subtotal} taxRate={taxRate} onTaxRateChange={setTaxRate} grandLabel="Bill Total = A + B" />
+      <TotalsStack
+        subtotal={subtotal}
+        taxRate={taxRate}
+        onTaxRateChange={setTaxRate}
+        grandLabel="Bill Total = sum of lines"
+        taxDisplayOnly
+      />
 
       <div className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-[11px] text-slate-700">
         Line amounts post to <code className="text-[10px]">accounting.bill_lines</code> with the bill header

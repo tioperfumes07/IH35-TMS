@@ -36,15 +36,31 @@ if (bill.includes("SelectCombobox") && bill.includes("Terms")) {
   const termsBlock = bill.slice(bill.indexOf("Terms"), bill.indexOf("Due Date"));
   if (termsBlock.includes("SelectCombobox")) fail("Terms still uses SelectCombobox (box-in-box)");
 }
-if (!bill.includes('status: "InService"')) fail("VendorBillForm units must request InService");
-if (!bill.includes("getCoaAccounts")) fail("VendorBillForm A/P must use entity-scoped getCoaAccounts");
+// Unit picker must NOT hard-filter status. "Active" was an invalid enum the backend silently
+// swallowed, so the picker returned ALL non-deactivated units; pinning a real status turned it into
+// a hard filter that hides InMaintenance / OutOfService / Damaged units — exactly the units a repair
+// bill or a tow expense is written against. The earlier version of this guard ASSERTED the defect.
+if (/listUnits\(\{[^}]*status:/.test(bill)) {
+  fail("VendorBillForm unit picker must not hard-filter status — in-shop / OOS units must stay selectable for repair bills");
+}
+// A/P account list must come from listCatalogAccounts, whose row shape carries is_postable.
+// getCoaAccounts' row shape omits it, which is what silently dropped the is_postable predicate and
+// let non-postable Liability headers (e.g. Driver Escrow parents) into the "A/P Account" picker.
+if (!bill.includes("listCatalogAccounts({ status:")) {
+  fail("VendorBillForm A/P must use entity-scoped listCatalogAccounts (its rows carry is_postable)");
+}
+if (!bill.includes("acct.is_postable")) {
+  fail("VendorBillForm A/P filter must keep the is_postable predicate — non-postable header accounts must never be selectable");
+}
 ok("VendorBillForm QBO/catalog wiring");
 
 const expense = read("apps/frontend/src/components/expenses/RecordExpenseForm.tsx");
 if (!expense.includes("operating_company_id: operatingCompanyId")) {
   fail("RecordExpenseForm listCatalogAccounts must pass operating_company_id");
 }
-if (!expense.includes('status: "InService"')) fail("RecordExpenseForm units must request InService");
+if (/listUnits\(\{[^}]*status:/.test(expense)) {
+  fail("RecordExpenseForm unit picker must not hard-filter status — a tow/roadside expense targets an OOS or in-shop unit");
+}
 if (expense.includes("acct.qbo_account_id)") && expense.includes("filter((acct) => acct.is_postable && acct.qbo_account_id)")) {
   fail("RecordExpenseForm must NOT filter categories to qbo_account_id-only");
 }
