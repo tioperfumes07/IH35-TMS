@@ -123,7 +123,7 @@ async function registerReceiptsRoutes(app: FastifyInstance) {
       }
       if (q) {
         conds.push(
-          `(a.filename ILIKE $${pi} OR COALESCE(a.notes,'') ILIKE $${pi} OR COALESCE(e.memo,'') ILIKE $${pi} OR COALESCE(b.vendor_name,'') ILIKE $${pi} OR COALESCE(p.display_id,'') ILIKE $${pi} OR COALESCE(c.name,'') ILIKE $${pi})`
+          `(a.filename ILIKE $${pi} OR COALESCE(a.notes,'') ILIKE $${pi} OR COALESCE(e.memo,'') ILIKE $${pi} OR COALESCE(b.vendor_name,'') ILIKE $${pi} OR COALESCE(p.display_id,'') ILIKE $${pi} OR COALESCE(c.customer_name,'') ILIKE $${pi})`
         );
         params.push(`%${q}%`);
         pi++;
@@ -172,7 +172,7 @@ async function registerReceiptsRoutes(app: FastifyInstance) {
           p.amount_cents::text           AS payment_amount_cents,
           p.reference                    AS payment_reference,
           p.voided_at::text              AS payment_voided_at,
-          c.name                         AS customer_name
+          c.customer_name                         AS customer_name
         FROM documents.attachments a
         ${joins}
         WHERE ${where}
@@ -239,7 +239,7 @@ async function registerReceiptsRoutes(app: FastifyInstance) {
           p.amount_cents::text AS payment_amount_cents,
           p.reference AS payment_reference,
           p.voided_at::text AS payment_voided_at,
-          c.name AS customer_name
+          c.customer_name AS customer_name
          FROM documents.attachments a
          LEFT JOIN accounting.expenses e ON e.id = a.entity_id AND a.entity_type = 'expense'
          LEFT JOIN accounting.bills b ON b.id = a.entity_id AND a.entity_type = 'bill'
