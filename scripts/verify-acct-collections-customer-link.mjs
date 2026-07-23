@@ -38,6 +38,27 @@ export function check(src) {
   if (/Unknown customer/.test(src) && !/kind="customer"/.test(src)) {
     errors.push(`${PAGE}: plain Unknown customer without EntityLink`);
   }
+  // SELECTION CONTRACT — the defect this guard originally missed.
+  // The queue row must not wrap the customer line in a stopPropagation div: that div is full-width,
+  // so it swallowed clicks across the entire first line and task selection died there. It was also
+  // redundant — EntityLink already calls event.stopPropagation() inside its own onClick.
+  if (/onClick=\{\(event\) => event\.stopPropagation\(\)\}/.test(src.replace(/\/\*[\s\S]*?\*\//g, ""))) {
+    errors.push(`${PAGE}: queue row must not wrap the customer line in a stopPropagation div — it is full-width and kills task selection; EntityLink already stops propagation`);
+  }
+  // <a> (EntityLink) inside <button> is invalid HTML (validateDOMNesting) and an ambiguous a11y
+  // control. The queue row must therefore be a div with role="button", not a real <button>, so the
+  // customer link can live inside it legally AND the rest of the row stays selectable.
+  // Bounded to the single row element: a <button ...> with no closing tag before the EntityLink.
+  // Strip comments first: a comment that merely DESCRIBES the forbidden nesting (like the one in
+  // CollectionsPage explaining why the row is a div) would otherwise trip this structural check.
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+  if (/<button(?:(?!<\/button>)[\s\S])*?<EntityLink/.test(code)) {
+    errors.push(`${PAGE}: EntityLink (an <a>) must not be nested inside a <button> — use a div with role="button"`);
+  }
+  if (!/role="button"/.test(src)) {
+    errors.push(`${PAGE}: queue row must be a div with role="button" (keyboard-activatable) so the customer link can nest legally`);
+  }
+
   // Detail panel Customer label present
   if (!src.includes(">Customer<") && !src.includes("Customer</div>")) {
     errors.push(`${PAGE}: detail panel must label Customer`);

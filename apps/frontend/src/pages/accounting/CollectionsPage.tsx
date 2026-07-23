@@ -138,17 +138,31 @@ export function CollectionsPage() {
           <header className="border-b border-gray-100 px-3 py-2 text-sm font-semibold">Queue</header>
           <div className="max-h-136 overflow-auto">
             {(tasksQuery.data?.tasks ?? []).map((task) => (
-              <button
+              /*
+                Row is a div-with-role, not a <button>. Two reasons:
+                (a) <a> (EntityLink) inside <button> is invalid HTML — React warns
+                    "validateDOMNesting: <a> cannot appear as a descendant of <button>" and the
+                    a11y tree presents an ambiguous nested control.
+                (b) the previous fix wrapped the customer line in a full-width div with
+                    stopPropagation, which killed task selection across that entire line —
+                    clicking the whitespace beside the name did nothing at all. That wrapper was
+                    also redundant: EntityLink already calls event.stopPropagation() in its own
+                    onClick, so the name navigates without selecting, and everything else selects.
+              */
+              <div
                 key={task.id}
-                type="button"
+                role="button"
+                tabIndex={0}
                 onClick={() => setSelectedTaskId(task.id)}
-                className={`w-full border-b border-gray-100 px-3 py-2 text-left ${selectedTask === task.id ? "bg-slate-100" : "hover:bg-gray-50"}`}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setSelectedTaskId(task.id);
+                  }
+                }}
+                className={`w-full cursor-pointer border-b border-gray-100 px-3 py-2 text-left ${selectedTask === task.id ? "bg-slate-100" : "hover:bg-gray-50"}`}
               >
-                <div
-                  className="text-sm font-medium text-gray-900"
-                  onClick={(event) => event.stopPropagation()}
-                  onKeyDown={(event) => event.stopPropagation()}
-                >
+                <div className="text-sm font-medium text-gray-900">
                   <EntityLink
                     kind="customer"
                     id={task.customer_id}
@@ -161,7 +175,7 @@ export function CollectionsPage() {
                   <span>{money(task.owed_cents)}</span>
                   <span className="font-semibold">{task.status}</span>
                 </div>
-              </button>
+              </div>
             ))}
             {tasksQuery.isLoading ? <p className="px-3 py-3 text-sm text-gray-500">Loading tasks...</p> : null}
             {!tasksQuery.isLoading && tasksQuery.isError ? (
