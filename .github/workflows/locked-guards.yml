@@ -3,9 +3,15 @@ name: locked-guards
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+# CI-COVERAGE FIX (2026-07-23): NO `branches:` filter on purpose. `branches: [main]`
+# meant a stacked PR (base = another feature branch) skipped every static guard in
+# this file — the cheapest and highest-signal gate in the repo. Evidence: PR #3298
+# ran only hold-merge-gate + pass-7. Every step here is a whole-tree static check
+# with no dependency on github.base_ref, so it is correct on any base.
 on:
   pull_request:
-    branches: [main]
+    types: [opened, synchronize, reopened]
 
 jobs:
   locked-guards:

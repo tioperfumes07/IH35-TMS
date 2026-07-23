@@ -10,6 +10,28 @@ export type BankingTile = {
   current_balance: number;
   uncategorized_count: number;
   color_tag: string;
+  /**
+   * PHANTOM: never populated. Do NOT use this as a "is this a Relay / fuel-card account" discriminator.
+   *
+   * `banking.bank_accounts.is_relay` is not created by any migration (0072 creates the table; the real
+   * additive columns come from 0169/0177/202606280100/202607121000). Nothing in db/migrations/ or
+   * apps/backend/src ever writes it true — the only occurrences in the repo are reads inside the
+   * self-disabling view 0044_p3_t11_9_banking_rebuild.sql: `a.is_relay` plus four literal
+   * `false AS is_relay` in the virtual-tile UNION arms. So this field is `false` for every tile,
+   * always: `tiles.filter(t => t.is_relay)` is permanently `[]` and `tiles.find(t => t.is_relay)` is
+   * permanently `undefined` (navigating off that resolves to NO account).
+   *
+   * The real, migration-backed Relay identifier is
+   *   catalogs.accounts.system_purpose = 'relay_fuel_wallet'  ->  banking.bank_accounts.ledger_account_id
+   * (202607290000_relay_internal_bank_seed.sql, 202607470000_relay_wallet_banking_registration.sql,
+   * apps/backend/src/integrations/relay-payments/relay-wallet-bank-feed.service.ts). Both of those
+   * migrations are HELD-FOR-JORGE and absent from db/migrations/.ledger.json, and
+   * views.banking_account_tiles projects neither ledger_account_id nor system_purpose — so the
+   * /api/v1/banking/account-tiles payload cannot express "this tile is Relay" at all yet.
+   *
+   * Enforced by scripts/verify-banking-relay-tab-honesty.mjs (the guard auto-lifts if a migration
+   * ever genuinely adds and sets the column).
+   */
   is_relay: boolean;
   display_order: number;
   last_txn_date?: string | null;
