@@ -1,6 +1,6 @@
 {
  "date": "2026-07-23",
- "generated_at_iso": "2026-07-23T10:54:38.206Z",
+ "generated_at_iso": "2026-07-23T11:13:11.863Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
@@ -13162,6 +13162,18 @@
  ],
  "merged_prs": [
   {
+   "number": 3304,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-23T11:12:41Z",
+   "branch": "chore/tracker-artifacts-sync-29992338373"
+  },
+  {
+   "number": 3303,
+   "title": "feat(guards): meta-guard — a --selftest must be capable of failing",
+   "mergedAt": "2026-07-23T11:12:26Z",
+   "branch": "chore/meta-guard-selftests-can-fail"
+  },
+  {
    "number": 3294,
    "title": "fix(banking): Transfers empty-state honesty (12/econ)",
    "mergedAt": "2026-07-23T10:50:33Z",
@@ -13310,6 +13322,12 @@
    "title": "fix(accounting): fixed assets unit + JE reverse drill (36/37)",
    "mergedAt": "2026-07-23T05:07:37Z",
    "branch": "fix/acct-fixed-assets-entitylink-reverse"
+  },
+  {
+   "number": 3268,
+   "title": "fix(accounting): prepaid expenses JE EntityLink reverse (35/37)",
+   "mergedAt": "2026-07-23T11:12:10Z",
+   "branch": "fix/acct-prepaid-entitylink-reverse"
   },
   {
    "number": 3267,
@@ -16742,27 +16760,9 @@
    "title": "feat(migrations): [HOLD-FOR-JORGE] register Relay Fuel Wallet as a bank account (CONN-3 step 1)",
    "mergedAt": "2026-07-15T21:54:35Z",
    "branch": "feat/relay-wallet-banking-registration-HOLD"
-  },
-  {
-   "number": 2520,
-   "title": "feat(migrations): [HOLD-FOR-JORGE] Phase-1/1b settlement approval columns (applied on prod)",
-   "mergedAt": "2026-07-15T21:17:48Z",
-   "branch": "feat/settlement-phase1-approval-columns-HOLD"
-  },
-  {
-   "number": 2519,
-   "title": "fix(reconcile): AUDIT-NOTE bucket kills the phantom 845 gated (registry-truth)",
-   "mergedAt": "2026-07-15T20:28:41Z",
-   "branch": "fix/reconcile-blocks-truthful-counter"
-  },
-  {
-   "number": 2518,
-   "title": "docs(specs): opening-balance import + 07/01/2026 cutover design",
-   "mergedAt": "2026-07-15T20:28:37Z",
-   "branch": "docs/opening-balance-import-cutover-design"
   }
  ],
- "merged_pr_total": 2991,
+ "merged_pr_total": 2994,
  "hold_for_jorge": [
   {
    "number": 3282,
