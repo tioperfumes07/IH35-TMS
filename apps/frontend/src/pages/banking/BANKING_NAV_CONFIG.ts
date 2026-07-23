@@ -7,6 +7,7 @@ export const BANKING_MODULE_TABS = [
   { id: "driver_escrow", label: "Driver Escrow" },
   { id: "relay_card", label: "Relay Card" },
   { id: "reports", label: "Reports" },
+  { id: "statement_import", label: "Statement Import" },
   { id: "settings", label: "Settings" },
 ] as const;
 
