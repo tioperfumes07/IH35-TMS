@@ -23,6 +23,10 @@ const applyBodySchema = z.object({
     z.object({
       bill_id: z.string().uuid(),
       applied_cents: z.coerce.number().int().positive(),
+      // Retry-safety. Unique per entity among non-voided rows
+      // (uq_vendor_credit_app_idempotency, migration 202607750000), so a double-submit or a retry
+      // after a timeout inserts once instead of decrementing the credit twice.
+      idempotency_key: z.string().trim().min(1).max(200).optional(),
     })
   ).min(1).max(50),
 });
@@ -198,12 +202,48 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
         const bill = billRes.rows[0];
         if (!bill) return { code: 404 as const, error: `bill_not_found:${app.bill_id}` };
 
+        // CAP THE APPLICATION AT THE BILL'S REMAINING BALANCE.
+        // amount_cents and paid_cents were already SELECTed above and then never used, so the only
+        // ceiling was the credit's own unapplied amount: a $5,000 credit could be applied to a $100
+        // bill and drive it negative. Remaining balance must also net off credits ALREADY applied to
+        // this bill, or two half-size applications could still overshoot together.
+        const alreadyAppliedRes = await client.query(
+          `SELECT COALESCE(SUM(applied_cents), 0)::text AS applied_cents
+             FROM accounting.vendor_credit_applications
+            WHERE bill_id = $1
+              AND operating_company_id = $2
+              AND voided_at IS NULL`,
+          [app.bill_id, query.data.operating_company_id]
+        );
+        const billRemainingCents =
+          Number(bill.amount_cents ?? 0)
+          - Number(bill.paid_cents ?? 0)
+          - Number(alreadyAppliedRes.rows[0]?.applied_cents ?? 0);
+        if (app.applied_cents > billRemainingCents) {
+          return {
+            code: 422 as const,
+            error: "applied_cents_exceeds_bill_balance",
+            detail: {
+              bill_id: app.bill_id,
+              applied_cents: app.applied_cents,
+              bill_remaining_cents: Math.max(0, billRemainingCents),
+            },
+          };
+        }
+
         const appRes = await client.query(
           `INSERT INTO accounting.vendor_credit_applications
-             (operating_company_id, credit_id, bill_id, applied_cents, applied_by_user_id)
-           VALUES ($1, $2, $3, $4, $5)
+             (operating_company_id, credit_id, bill_id, applied_cents, applied_by_user_id, idempotency_key)
+           VALUES ($1, $2, $3, $4, $5, $6)
            RETURNING id`,
-          [query.data.operating_company_id, params.data.id, app.bill_id, app.applied_cents, user.uuid]
+          [
+            query.data.operating_company_id,
+            params.data.id,
+            app.bill_id,
+            app.applied_cents,
+            user.uuid,
+            app.idempotency_key ?? null,
+          ]
         );
         applicationIds.push(String(appRes.rows[0]?.id ?? ""));
       }

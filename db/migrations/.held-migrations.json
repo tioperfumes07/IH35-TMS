@@ -319,6 +319,10 @@
     {
       "file": "202607730000_insurance_claim_economics_columns.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] WIZARD-CLAIM-ECONOMICS-DEPTH slice 2 — additive insurance.claim columns: fault (undetermined|company|third_party|shared, default undetermined), driver_responsible (nullable tri-state bool), trailer_id (uuid FK -> mdata.equipment ON DELETE SET NULL), deductible_cents (bigint >=0 default 0), recovery_rail (escrow|settlement|split|ask, default ask — owner lock: ALWAYS ASK, never auto-default), repair_books_treatment (expense|capitalize|ask, default ask — owner lock Choice Z: ALWAYS ASK, no $ threshold). Pure schema capture; posts nothing, no GL/JE/flag. UNVERIFIED vs Neon prod (no DB credentials this session) — authored from repo truth (0285/202607410000/202607490000) + claim.shared.ts; re-verify column-not-exists on the Neon branch before apply. Renumbered from 202607720000 -> 202607730000 (collision: PR #3223 already claimed 202607720000_driver_advance_wizard_depth.sql). Run only on a Neon branch by Jorge, then ledger-backfill."
+    },
+    {
+      "file": "202607740000_claim_wo_bill_expense_fk_linkage.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] Accounting audit ranked-PR queue item 12/22 — Claim→WO→Bill/Expense FK linkage. Additive insurance_claim_id uuid FK -> insurance.claim(id) ON DELETE SET NULL on maintenance.work_orders, accounting.bills, accounting.expenses (+ partial indexes). Closes the exact gap claim.routes.ts's own graph endpoint documents (gaps.expense / gaps.work_order) and LAW-E2E-CLAIM-LEGAL-EXPENSE-LINKAGE-2026-07-21.md hop 3 confirms via Neon information_schema. Columns all-NULL on add so the inline FK holds trivially — no backfill, no NOT VALID. No GL/JE/posting, no flag flip, no RLS/grant change (inherits each table's existing FORCED RLS). UI/route wiring is an explicit follow-up CODE PR after Neon-apply — this PR is schema-design-only. Run only on a Neon branch by Jorge, then ledger-backfill."
     }
   ]
 }
