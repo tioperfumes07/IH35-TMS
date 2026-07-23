@@ -253,6 +253,8 @@ export type Transfer = {
   memo: string | null;
   reference_number: string | null;
   qbo_journal_entry_id: string | null;
+  /** TMS GL journal entry when TRANSFER_GL_POSTING_ENABLED posted (via posting spine). */
+  journal_entry_id?: string | null;
   revoked_at: string | null;
   revoked_reason: string | null;
   created_at: string;

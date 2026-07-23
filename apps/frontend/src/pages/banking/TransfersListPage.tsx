@@ -125,6 +125,16 @@ export function TransfersListPage() {
       { key: "memo", label: "Memo", render: (row) => row.memo || "-" },
       { key: "reference_number", label: "Reference", render: (row) => row.reference_number || "-" },
       {
+        key: "journal_entry_id",
+        label: "TMS JE",
+        render: (row) =>
+          row.journal_entry_id ? (
+            <EntityLink kind="journal_entry" id={row.journal_entry_id} label={row.journal_entry_id.slice(0, 8)} />
+          ) : (
+            <span className="text-xs text-slate-500">—</span>
+          ),
+      },
+      {
         key: "qbo_status",
         label: "QBO Status",
         render: (row) =>
@@ -152,7 +162,9 @@ export function TransfersListPage() {
                     window.alert(
                       `Transfer ${detail.transfer.id}\nType: ${detail.transfer.transfer_type}\nAmount: ${formatMoney(
                         Number(detail.transfer.amount_cents)
-                      )}\nMemo: ${detail.transfer.memo || "-"}\nQBO JE: ${detail.transfer.qbo_journal_entry_id || "pending"}`
+                      )}\nMemo: ${detail.transfer.memo || "-"}\nTMS JE: ${
+                        detail.transfer.journal_entry_id || "none (TRANSFER_GL_POSTING_ENABLED off or not posted)"
+                      }\nQBO JE: ${detail.transfer.qbo_journal_entry_id || "pending"}`
                     );
                   })
                   .catch((error) => pushToast(String((error as Error).message || "Failed to load transfer detail"), "error"));
@@ -206,6 +218,20 @@ export function TransfersListPage() {
         }
       />
       {transfersQuery.isError ? <ListErrorBanner onRetry={() => void transfersQuery.refetch()} /> : null}
+      {transfersQuery.isSuccess ? (
+        <div
+          className="border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+          data-testid="banking-transfer-gl-posting-honesty-banner"
+        >
+          <p className="font-semibold">TMS journal entry link requires TRANSFER_GL_POSTING_ENABLED</p>
+          <p className="mt-1">
+            Transfer rows store QBO journal ids separately from TMS GL. A TMS JE appears in the TMS JE column only
+            when the existing transfer poster ran with the flag ON for this entity (default OFF). Zero linked JEs
+            with the flag OFF is expected — not proof that transfers post to the ledger. Reverse drill: JE detail
+            Source links map <code className="text-[11px]">transfer</code> → Banking Transfers.
+          </p>
+        </div>
+      ) : null}
       {listState.isEmpty ? (
         <div
           className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
