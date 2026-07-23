@@ -2,7 +2,7 @@ import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getWoCostContext } from "../../api/maintenance";
-import { listUnits, listVendors } from "../../api/mdata";
+import { ensureDriverVendors, listUnits, listVendors } from "../../api/mdata";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
 import { Button } from "../Button";
 import { Combobox } from "../Combobox";

@@ -2,7 +2,7 @@ import type { JSX } from "react";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { listDrivers, listUnits, listVendors } from "../../api/mdata";
+import { ensureDriverVendors, listDrivers, listUnits, listVendors } from "../../api/mdata";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
 import { classesCatalogClient } from "../../api/catalogs-accounting";
 import { DatePicker } from "../forms/DatePicker";
@@ -151,7 +151,15 @@ export function VendorBillForm({
 
   const vendorsQuery = useQuery({
     queryKey: ["vendor-bill-form", "vendors", operatingCompanyId],
-    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, limit: 200 }),
+    queryFn: async () => {
+      // Ensure Active drivers exist as mdata.vendors (driver-as-vendor) before listing.
+      try {
+        await ensureDriverVendors(operatingCompanyId);
+      } catch {
+        // Read path still works if ensure is forbidden for the role — picker shows existing vendors.
+      }
+      return listVendors({ operating_company_id: operatingCompanyId, limit: 200 });
+    },
     enabled: Boolean(operatingCompanyId),
   });
   const driversQuery = useQuery({
