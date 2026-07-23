@@ -135,6 +135,7 @@ async function registerReceiptsRoutes(app: FastifyInstance) {
         LEFT JOIN accounting.bills b ON b.id = a.entity_id AND a.entity_type = 'bill'
         LEFT JOIN accounting.payments p ON p.id = a.entity_id AND a.entity_type = 'payment'
         LEFT JOIN mdata.customers c ON c.id = p.customer_id AND a.entity_type = 'payment'
+                                AND c.operating_company_id = $1::uuid
       `;
 
       const countRes = await client.query(
@@ -245,6 +246,7 @@ async function registerReceiptsRoutes(app: FastifyInstance) {
          LEFT JOIN accounting.bills b ON b.id = a.entity_id AND a.entity_type = 'bill'
          LEFT JOIN accounting.payments p ON p.id = a.entity_id AND a.entity_type = 'payment'
          LEFT JOIN mdata.customers c ON c.id = p.customer_id AND a.entity_type = 'payment'
+                                AND c.operating_company_id = $2::uuid
          WHERE a.id = $1 AND a.operating_company_id = $2
            AND a.is_deleted = false
            AND ${RECEIPT_SCOPE_SQL}`,
