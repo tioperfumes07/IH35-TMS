@@ -67,9 +67,15 @@ export function check(src) {
 }
 
 function selftest() {
+  // The good fixture must satisfy EVERY assertion, including the selection-contract ones added
+  // later (no stopPropagation wrapper, no <a> inside <button>, row carries role="button"). Without
+  // role="button" here the selftest failed on its OWN fixture — a red that blocked `verify:static`
+  // (local pre-push) for everyone while the plain run passed, so CI never surfaced it.
   const good = `
     import { EntityLink } from "../../components/shared/EntityLink";
-    <EntityLink kind="customer" id={task.customer_id} />
+    <div role="button" tabIndex={0} onClick={() => setSelectedTaskId(task.id)}>
+      <EntityLink kind="customer" id={task.customer_id} />
+    </div>
     <div className="text-xs">Customer</div>
     <EntityLink kind="customer" id={detailQuery.data?.task.customer_id} />
   `;

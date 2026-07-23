@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -16,6 +17,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 function money(cents: number) {
@@ -27,6 +29,16 @@ export function SalesTaxPage() {
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
+
+  /*
+    DEEP-LINK READER — EntityLink kind="sales_tax_return" resolves to
+    /accounting/sales-tax?return_id=<id>. Without this the param was silently discarded and the
+    operator landed on the unfiltered list with nothing selected, which is a cosmetic link, not a
+    drill-through. Highlighting the row is what makes that link real.
+  */
+  const [searchParams] = useSearchParams();
+  const highlightReturnId = searchParams.get("return_id");
+
 
   const [agencyName, setAgencyName] = useState("");
   const [jurisdiction, setJurisdiction] = useState("");
@@ -77,13 +89,33 @@ export function SalesTaxPage() {
     onError: (error) => pushToast(String((error as Error).message ?? "Failed to prepare return"), "error"),
   });
 
+  const agencyVendorById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const agency of agenciesQuery.data?.agencies ?? []) {
+      if (agency.agency_vendor_id) map.set(agency.id, agency.agency_vendor_id);
+    }
+    return map;
+  }, [agenciesQuery.data?.agencies]);
+
   const returnColumns = useMemo<Array<ParityColumn<SalesTaxReturn>>>(
     () => [
       {
         key: "agency_name",
         label: "Agency",
         sortable: true,
-        render: (row) => row.agency_name ?? row.agency_id,
+        render: (row) => {
+          const vendorId = agencyVendorById.get(row.agency_id);
+          if (vendorId) {
+            return (
+              <EntityLink
+                kind="vendor"
+                id={vendorId}
+                label={row.agency_name ?? row.agency_id}
+              />
+            );
+          }
+          return row.agency_name ?? row.agency_id;
+        },
         sortValue: (row) => row.agency_name ?? row.agency_id,
       },
       {
@@ -118,6 +150,17 @@ export function SalesTaxPage() {
         sortValue: (row) => Number(row.tax_owed_cents ?? 0),
       },
       { key: "status", label: "Status", sortable: true },
+      {
+        key: "paid_bill_id",
+        label: "Payment bill",
+        sortable: true,
+        render: (row) =>
+          row.paid_bill_id ? (
+            <EntityLink kind="bill" id={row.paid_bill_id} label={row.paid_bill_id.slice(0, 8)} />
+          ) : (
+            "—"
+          ),
+      },
       {
         key: "actions",
         label: "Actions",
@@ -157,7 +200,7 @@ export function SalesTaxPage() {
         ),
       },
     ],
-    [companyId, queryClient, pushToast]
+    [agencyVendorById, companyId, queryClient, pushToast]
   );
 
   const totals = useMemo(() => {
@@ -263,6 +306,7 @@ export function SalesTaxPage() {
           rows={returnsQuery.data?.returns ?? []}
           columns={returnColumns}
           rowKey={(row) => row.id}
+          rowClassName={(row) => (highlightReturnId && row.id === highlightReturnId ? "bg-slate-100" : "")}
           loading={returnsQuery.isLoading}
           emptyText="No sales tax returns prepared yet."
           storageKey="accounting-sales-tax-returns"
