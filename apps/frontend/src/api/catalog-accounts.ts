@@ -82,20 +82,21 @@ export async function listCatalogAccounts(params?: {
   postable_only?: boolean;
 }) {
   const status = params?.status ?? "active";
-  const appendCommon = (qs: URLSearchParams) => {
+  // Name locked for verify-acct-catalog-accounts-opco-scope (appendOpco). Also sends postable_only.
+  const appendOpco = (qs: URLSearchParams) => {
     if (params?.operating_company_id) qs.set("operating_company_id", params.operating_company_id);
     if (params?.postable_only) qs.set("postable_only", "true");
   };
   if (params?.limit !== undefined) {
     const qs = new URLSearchParams({ status, limit: String(params.limit) });
-    appendCommon(qs);
+    appendOpco(qs);
     return apiRequest<{ accounts: CatalogAccount[] }>(`/api/v1/catalogs/accounts?${qs.toString()}`);
   }
   const PAGE = 200;
   const accounts: CatalogAccount[] = [];
   for (let offset = 0; ; offset += PAGE) {
     const qs = new URLSearchParams({ status, limit: String(PAGE), offset: String(offset) });
-    appendCommon(qs);
+    appendOpco(qs);
     const res = await apiRequest<{ accounts: CatalogAccount[] }>(`/api/v1/catalogs/accounts?${qs.toString()}`);
     accounts.push(...res.accounts);
     if (res.accounts.length < PAGE) break;
