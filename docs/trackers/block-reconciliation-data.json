@@ -1,6 +1,6 @@
 {
  "date": "2026-07-22",
- "generated_at_iso": "2026-07-22T19:02:03.968Z",
+ "generated_at_iso": "2026-07-22T19:48:44.908Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
@@ -13162,6 +13162,24 @@
  ],
  "merged_prs": [
   {
+   "number": 3233,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-22T19:22:39Z",
+   "branch": "chore/tracker-artifacts-sync-29949191374"
+  },
+  {
+   "number": 3230,
+   "title": "fix(accounting): Bill Payment reverse — detail + register (2/6)",
+   "mergedAt": "2026-07-22T19:13:35Z",
+   "branch": "fix/acct-bill-payment-reverse"
+  },
+  {
+   "number": 3229,
+   "title": "fix(accounting): Bill detail reverse — lines + JE (1/6)",
+   "mergedAt": "2026-07-22T19:07:41Z",
+   "branch": "fix/acct-bill-detail-reverse"
+  },
+  {
    "number": 3228,
    "title": "fix(insurance): WIZARD-CLAIM-ECONOMICS-DEPTH slice 2 — fault/responsibility/trailer/deductible/recovery/books [HOLD / FINANCIAL]",
    "mergedAt": "2026-07-22T19:01:07Z",
@@ -16742,27 +16760,9 @@
    "title": "feat(vendors): QBO-parity list filters/columns (1099?/Status) + W-9/1099 profile tab",
    "mergedAt": "2026-07-14T06:45:27Z",
    "branch": "feat/qbo-parity-vendors"
-  },
-  {
-   "number": 2456,
-   "title": "feat(customers): QBO-parity Loads + Per-Customer P&L profile tabs + list Overdue/open",
-   "mergedAt": "2026-07-14T07:10:01Z",
-   "branch": "feat/qbo-parity-customers"
-  },
-  {
-   "number": 2455,
-   "title": "feat(system): Owner-only SYSTEM module — QBO recon/sync, program tracker, health, Claude Coder",
-   "mergedAt": "2026-07-14T02:13:15Z",
-   "branch": "feat/system-module"
-  },
-  {
-   "number": 2454,
-   "title": "fix(audit): work-order events carry entity_type='work_order' so they surface on the Audit tab",
-   "mergedAt": "2026-07-14T01:30:04Z",
-   "branch": "fix/wo-audit-entity-type-normalization"
   }
  ],
- "merged_pr_total": 2928,
+ "merged_pr_total": 2931,
  "hold_for_jorge": [
   {
    "number": 3228,
