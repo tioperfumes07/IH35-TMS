@@ -40,6 +40,7 @@ export type ReferenceSelectProps = {
   operatingCompanyId: string;
   placeholder?: string;
   disabled?: boolean;
+  loading?: boolean;
   /** Override the "+ Add new ___" label shown as the first dropdown row. */
   addNewLabel?: string;
   /** Notified when a record is created inline (so a parent can refetch). */
@@ -58,6 +59,7 @@ export function ReferenceSelect({
   operatingCompanyId,
   placeholder,
   disabled,
+  loading,
   addNewLabel,
   onOptionCreated,
   lockControl,
