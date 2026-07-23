@@ -51,6 +51,32 @@ export async function generateFromTemplate(
 
   const memo = template.memo ?? template.template_name;
 
+  // When the template stores line items with CoA, create real bill_lines (LAW §9). Header-only remains
+  // for legacy templates with an empty line_items array.
+  const rawLines = Array.isArray(template.line_items) ? template.line_items : [];
+  const billLines =
+    rawLines.length > 0
+      ? rawLines.map((line) => {
+          const lineCents = Math.round(Number(line.amount) * 100);
+          if (!Number.isFinite(lineCents) || lineCents <= 0) {
+            throw new Error("recurring_bill_line_amount_invalid");
+          }
+          if (!line.coa_account_id) {
+            throw new Error("recurring_bill_line_coa_required");
+          }
+          return {
+            accountId: line.coa_account_id,
+            amountCents: lineCents,
+            description: line.description || template.template_name,
+            section: "A" as const,
+          };
+        })
+      : undefined;
+  if (billLines) {
+    const linesSum = billLines.reduce((sum, line) => sum + line.amountCents, 0);
+    if (linesSum !== amountCents) throw new Error("recurring_bill_lines_amount_mismatch");
+  }
+
   const bill = await createBill(
     {
       operatingCompanyId: template.operating_company_id,
@@ -58,6 +84,7 @@ export async function generateFromTemplate(
       billDate: targetDate,
       amountCents,
       memo,
+      ...(billLines ? { lines: billLines } : {}),
     },
     actorUserId
   );
