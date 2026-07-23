@@ -13,6 +13,11 @@ const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+// SAF-F17 — unit-profile reverse view. Optional; absent = the existing company-wide list.
+const accidentsQuerySchema = companyQuerySchema.extend({
+  unit_id: z.string().uuid().optional(),
+});
+
 const eventsQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   filter: z.enum(["active", "resolved", "all"]).default("active"),
@@ -355,7 +360,11 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
   app.get("/api/v1/safety/accidents", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    const query = companyQuerySchema.safeParse(req.query ?? {});
+    // SAF-F17: optional unit scoping for the unit profile's reverse safety section. Filtered in SQL
+    // because this list is capped at LIMIT 500 — a client-side filter would silently omit a unit's
+    // accidents once the company crosses that cap. `safety.accident_reports` has a `unit_id` column
+    // and NO `trailer_id` column, so there is deliberately no trailer filter here.
+    const query = accidentsQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       // SAF-F26: join the driver NAME and unit NUMBER so the list drills through by name, not a raw
@@ -363,6 +372,12 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
       // has NO operating_company_id (owner_company_id / currently_leased_to_company_id). The former
       // `.catch(() => [])` swallow is removed — a failed accidents query must surface, not render as an
       // empty "no accidents" all-clear on a safety screen (the same fake-green class as SAF-F06).
+      const values: unknown[] = [query.data.operating_company_id];
+      let unitFilter = "";
+      if (query.data.unit_id) {
+        values.push(query.data.unit_id);
+        unitFilter = `AND ar.unit_id = $${values.length}`;
+      }
       const res = await client.query(
         `
           SELECT ar.*,
@@ -377,10 +392,11 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
            AND (u.owner_company_id = ar.operating_company_id
                 OR u.currently_leased_to_company_id = ar.operating_company_id)
           WHERE ar.operating_company_id = $1
+          ${unitFilter}
           ORDER BY ar.accident_at DESC
           LIMIT 500
         `,
-        [query.data.operating_company_id]
+        values
       );
       return res.rows;
     });

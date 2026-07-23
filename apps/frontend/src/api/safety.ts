@@ -185,6 +185,8 @@ export function getSafetyDvirSubmissions(
   filters: {
     driver_id?: string;
     unit_id?: string;
+    /** SAF-F17 — trailer profile reverse view. */
+    trailer_id?: string;
     from?: string;
     to?: string;
     limit?: number;
@@ -194,6 +196,7 @@ export function getSafetyDvirSubmissions(
   const qs = new URLSearchParams({ operating_company_id: companyId });
   if (filters.driver_id) qs.set("driver_id", filters.driver_id);
   if (filters.unit_id) qs.set("unit_id", filters.unit_id);
+  if (filters.trailer_id) qs.set("trailer_id", filters.trailer_id);
   if (filters.from) qs.set("from", filters.from);
   if (filters.to) qs.set("to", filters.to);
   if (filters.limit != null) qs.set("limit", String(filters.limit));
@@ -207,8 +210,11 @@ export function getSafetyDvirDetail(id: string, companyId: string) {
   );
 }
 
-export function getSafetyAccidents(companyId: string) {
-  return apiRequest<{ accidents: Array<Record<string, unknown>> }>(`/api/v1/safety/accidents?${q(companyId)}`);
+export function getSafetyAccidents(companyId: string, params: { unit_id?: string } = {}) {
+  const qs = new URLSearchParams({ operating_company_id: companyId });
+  // SAF-F17: server-side unit scoping (the route caps at LIMIT 500).
+  if (params.unit_id) qs.set("unit_id", params.unit_id);
+  return apiRequest<{ accidents: Array<Record<string, unknown>> }>(`/api/v1/safety/accidents?${qs.toString()}`);
 }
 
 export function getSafetyAccidentDetail(id: string, companyId: string) {
@@ -712,8 +718,12 @@ export function escalateCompanyViolation(id: string, companyId: string, reason: 
   });
 }
 
-export function getDotInspections(companyId: string) {
-  return apiRequest<{ inspections: Array<Record<string, unknown>> }>(`/api/v1/safety/dot-inspections?${q(companyId)}`);
+export function getDotInspections(companyId: string, params: { unit_id?: string; trailer_id?: string } = {}) {
+  const qs = new URLSearchParams({ operating_company_id: companyId });
+  // SAF-F17: safety.dot_inspections carries both unit_id and trailer_id; both scope server-side.
+  if (params.unit_id) qs.set("unit_id", params.unit_id);
+  if (params.trailer_id) qs.set("trailer_id", params.trailer_id);
+  return apiRequest<{ inspections: Array<Record<string, unknown>> }>(`/api/v1/safety/dot-inspections?${qs.toString()}`);
 }
 
 export function createDotInspection(
@@ -959,6 +969,8 @@ export type SafetyIncidentType = "damage_report" | "trailer_interchange" | "carg
 export type SafetyIncidentListFilters = {
   driver_id?: string;
   unit_id?: string;
+  /** SAF-F17 — trailer profile reverse view (safety.incidents.trailer_id FKs mdata.equipment). */
+  trailer_id?: string;
   date_from?: string;
   date_to?: string;
 };
@@ -972,6 +984,7 @@ export function listSafetyIncidents(
   // q() already embeds operating_company_id; append remaining list filters.
   if (filters.driver_id) qs.set("driver_id", filters.driver_id);
   if (filters.unit_id) qs.set("unit_id", filters.unit_id);
+  if (filters.trailer_id) qs.set("trailer_id", filters.trailer_id);
   if (filters.date_from) qs.set("date_from", filters.date_from);
   if (filters.date_to) qs.set("date_to", filters.date_to);
   const extra = qs.toString();

@@ -12,6 +12,9 @@ const companyQuerySchema = z.object({
 const listQuerySchema = companyQuerySchema.extend({
   driver_id: z.string().uuid().optional(),
   unit_id: z.string().uuid().optional(),
+  // SAF-F17: the trailer profile's reverse safety section. The column already existed on
+  // safety.dvir_submissions; only the filter was missing, so a trailer's DVIRs were unreachable.
+  trailer_id: z.string().uuid().optional(),
   from: z.string().datetime({ offset: true }).optional(),
   to: z.string().datetime({ offset: true }).optional(),
   limit: z.coerce.number().int().min(1).max(200).default(100),
@@ -63,6 +66,10 @@ export async function registerSafetyDvirRoutes(app: FastifyInstance) {
       if (query.data.unit_id) {
         filters.push(`ds.unit_id = $${idx++}`);
         values.push(query.data.unit_id);
+      }
+      if (query.data.trailer_id) {
+        filters.push(`ds.trailer_id = $${idx++}`);
+        values.push(query.data.trailer_id);
       }
       if (query.data.from) {
         filters.push(`ds.submitted_at >= $${idx++}`);

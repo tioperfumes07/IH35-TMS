@@ -37,6 +37,7 @@ import { EditVehicleModal } from "../../components/fleet/EditVehicleModal";
 import { EntityAuditHistoryTab } from "../../components/audit/EntityAuditHistoryTab";
 import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
 import { InsuranceClaimsReverseSection } from "../../components/insurance/InsuranceClaimsReverseSection";
+import { AssetSafetyReverseSection } from "../../components/safety/AssetSafetyReverseSection";
 
 export type UnitProfileAggregate = {
   unit: Record<string, unknown>;
@@ -313,6 +314,16 @@ export function VehicleProfilePage() {
               filter={{ unit_id: id }}
               contextLabel="this unit"
               data-testid="vehicle-profile-insurance-claims"
+            />
+          </div>
+          {/* SAF-F17 — reverse linkage. Accidents, DOT inspections, DVIRs and incidents all stored
+              this unit's id and none of it was readable from the unit. DEFINITION-OF-DONE §1.C. */}
+          <div data-testid="vp-section-10d-safety-records">
+            <AssetSafetyReverseSection
+              operatingCompanyId={companyId}
+              assetKind="unit"
+              assetId={id}
+              data-testid="vehicle-profile-safety-records"
             />
           </div>
           <div data-testid="vp-section-11-action-bar">
