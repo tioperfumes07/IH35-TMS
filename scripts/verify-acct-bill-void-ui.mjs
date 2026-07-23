@@ -99,6 +99,20 @@ for (const code of REQUIRED_ERROR_CODES) {
   }
 }
 
+// CONTRACT PARITY: the drawer's client-side minimum must match the server's zod contract
+// (bills.routes.ts `reason: z.string().trim().min(3)`). minLength={1} let Void enable on a 2-char
+// reason that then 400s server-side, so the void silently failed for anyone who typed "ok".
+if (!/minLength=\{3\}/.test(page)) {
+  failures.push(`${PAGE_PATH}: void reason minLength must be 3 to match the backend contract reason.min(3) — a lower client minimum lets the request 400`);
+}
+
+// The catch must re-throw the ORIGINAL error. Wrapping it in a plain Error discards
+// ApiError.data.details, which VoidReasonModal.extractVoidError reads to surface
+// details.fieldErrors.reason[0] — otherwise the user sees "API request failed with status 400".
+if (/throw new Error\(billVoidErrorMessage\(/.test(page)) {
+  failures.push(`${PAGE_PATH}: void catch must re-throw the original error — wrapping it hides ApiError.data.details`);
+}
+
 if (failures.length > 0) {
   console.error("verify-acct-bill-void-ui FAILED:");
   for (const failure of failures) console.error(`  - ${failure}`);

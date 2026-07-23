@@ -220,7 +220,10 @@ export function BillDetailPage() {
         open={voidOpen}
         title="Void Bill"
         entityRef={`${displayId} · ${money(bill.amount_cents)} · ${formatDateUS(bill.bill_date)}`}
-        minLength={1}
+        // Backend contract is reason: z.string().trim().min(3) (bills.routes.ts:91). minLength={1}
+        // let the drawer enable Void on a 2-char reason, which then 400s server-side — the void
+        // silently failed for anyone who typed "ok".
+        minLength={3}
         onClose={() => setVoidOpen(false)}
         onSubmit={async (reason) => {
           try {
@@ -228,7 +231,11 @@ export function BillDetailPage() {
           } catch (error) {
             // Re-throw with owner/role-gated copy so the drawer's inline error is human-readable
             // (raw voidBill() rejection codes are role/state codes, not user-facing text).
-            throw new Error(billVoidErrorMessage(error));
+            // Re-throw the ORIGINAL error. Wrapping it in a plain Error discarded
+            // ApiError.data.details, which VoidReasonModal.extractVoidError reads to surface
+            // details.fieldErrors.reason[0] — so a field-level rejection rendered as the useless
+            // "API request failed with status 400".
+            throw error;
           }
           setVoidOpen(false);
         }}
