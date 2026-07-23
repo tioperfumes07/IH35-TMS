@@ -60,4 +60,18 @@ if (errors.length) {
   for (const e of errors) console.error(`  ${e}`);
   process.exit(1);
 }
+
+// The link is only real if the TARGET PAGE consumes the param. Asserting only that EntityLink
+// contains the route string certified a dead ?return_id= as done — a guard that freezes a cosmetic
+// link is worse than no guard.
+const salesTaxPage = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/accounting/SalesTaxPage.tsx"), "utf8");
+if (!/useSearchParams/.test(salesTaxPage) || !/searchParams\.get\("return_id"\)/.test(salesTaxPage)) {
+  console.error("FAIL: SalesTaxPage must read searchParams return_id — EntityLink kind=sales_tax_return resolves to ?return_id= and a page that ignores it makes the drill-through cosmetic");
+  process.exit(1);
+}
+if (!/highlightReturnId/.test(salesTaxPage)) {
+  console.error("FAIL: SalesTaxPage must USE the return_id it reads (row highlight) — reading it without acting on it is still a dead link");
+  process.exit(1);
+}
+
 console.log(`${LABEL} PASS`);

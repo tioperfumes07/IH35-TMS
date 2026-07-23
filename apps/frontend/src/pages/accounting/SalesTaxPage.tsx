@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -28,6 +29,16 @@ export function SalesTaxPage() {
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
+
+  /*
+    DEEP-LINK READER — EntityLink kind="sales_tax_return" resolves to
+    /accounting/sales-tax?return_id=<id>. Without this the param was silently discarded and the
+    operator landed on the unfiltered list with nothing selected, which is a cosmetic link, not a
+    drill-through. Highlighting the row is what makes that link real.
+  */
+  const [searchParams] = useSearchParams();
+  const highlightReturnId = searchParams.get("return_id");
+
 
   const [agencyName, setAgencyName] = useState("");
   const [jurisdiction, setJurisdiction] = useState("");
@@ -295,6 +306,7 @@ export function SalesTaxPage() {
           rows={returnsQuery.data?.returns ?? []}
           columns={returnColumns}
           rowKey={(row) => row.id}
+          rowClassName={(row) => (highlightReturnId && row.id === highlightReturnId ? "bg-slate-100" : "")}
           loading={returnsQuery.isLoading}
           emptyText="No sales tax returns prepared yet."
           storageKey="accounting-sales-tax-returns"

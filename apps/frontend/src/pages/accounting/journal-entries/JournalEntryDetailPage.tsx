@@ -71,6 +71,9 @@ function postingEntityKind(type: string | null | undefined): EntityKind | null {
       return "liability";
     case "sales_tax_return":
       return "sales_tax_return";
+    case "fixed_asset":
+    case "fixed_asset_depreciation":
+      return "fixed_asset";
     default:
       return null;
   }
