@@ -87,7 +87,11 @@ export async function registerLoadCancellationsAnalyticsRoutes(app: FastifyInsta
         `
           SELECT
             lc.reason_code,
-            COALESCE(r.reason_label, lc.reason_code) AS reason_label,
+            -- Resolve from the catalog dispatch actually writes from
+            -- (catalogs.load_cancellation_reasons, entity-scoped), keeping the legacy global
+            -- catalog as a fallback tier. See cancellations-report.routes.ts for the full note:
+            -- the legacy-only join left 12 of 21 real codes unlabelled.
+            COALESCE(lcr.display_name, r.reason_label, lc.reason_code) AS reason_label,
             lc.cancellation_charge_cents,
             l.rate_total_cents,
             to_char(lc.cancelled_at AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD') AS cancelled_on,
@@ -99,6 +103,9 @@ export async function registerLoadCancellationsAnalyticsRoutes(app: FastifyInsta
           LEFT JOIN mdata.loads l ON l.id = lc.load_id
           LEFT JOIN mdata.customers c ON c.id = l.customer_id
           LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+          LEFT JOIN catalogs.load_cancellation_reasons lcr
+            ON lcr.reason_code = lc.reason_code
+           AND lcr.operating_company_id = lc.operating_company_id
           LEFT JOIN catalogs.cancellation_reasons r ON r.reason_code = lc.reason_code
           WHERE lc.operating_company_id = $1::uuid
             AND ($2::date IS NULL OR lc.cancelled_at >= $2::date)
