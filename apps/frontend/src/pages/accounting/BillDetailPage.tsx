@@ -57,10 +57,6 @@ function statusVariant(status: string): "positive" | "neutral" | "crit" | "warn"
 function accountLabel(_number: string | null | undefined, name: string | null | undefined, id: string) {
   if (name) return name;
   return id.slice(0, 8);
-} — ${name}`;
-  if (name) return name;
-  if (number) return number;
-  return id.slice(0, 8);
 }
 
 export function BillDetailPage() {
