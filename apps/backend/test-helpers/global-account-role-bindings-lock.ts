@@ -83,7 +83,7 @@ export async function restoreGlobalAccountRoleBindings(
     await client.query(
       `INSERT INTO catalogs.account_role_bindings (role_key, account_id, operating_company_id, deactivated_at)
        VALUES ($1, $2::uuid, $3::uuid, $4)
-       ON CONFLICT (role_key) DO UPDATE
+       ON CONFLICT (operating_company_id, role_key) DO UPDATE
          SET account_id = EXCLUDED.account_id,
              operating_company_id = EXCLUDED.operating_company_id,
              deactivated_at = EXCLUDED.deactivated_at`,

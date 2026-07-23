@@ -7,8 +7,9 @@
  *    ap_control row. Fix: any db.test that SEEDS `ap_control` MUST use createIsolatedOperatingCompany()
  *    (canonical: apps/backend/test-helpers/isolated-company.ts).
  *
- * 2) catalogs.account_role_bindings is UNIQUE(role_key) GLOBALLY. Settlement suites that
- *    INSERT…ON CONFLICT (role_key) MUST hold GLOBAL_ACCOUNT_ROLE_BINDINGS_TEST_LOCK_KEY
+ * 2) catalogs.account_role_bindings is UNIQUE(operating_company_id, role_key) per entity
+ *    (global UNIQUE(role_key) dropped by 202607770000). Settlement suites that
+ *    INSERT…ON CONFLICT (operating_company_id, role_key) MUST hold GLOBAL_ACCOUNT_ROLE_BINDINGS_TEST_LOCK_KEY
  *    (922337203685477002) via acquireGlobalAccountRoleBindingsLock for save→bind→tests→restore.
  *    Restore must call restoreGlobalAccountRoleBindings (fail-loud) — never best-effort swallow.
  *
@@ -89,7 +90,8 @@ export function classify(src) {
 export function classifyGlobalBindings(src, basename) {
   const mutates =
     /INSERT\s+INTO\s+catalogs\.account_role_bindings/i.test(src) &&
-    /ON\s+CONFLICT\s*\(\s*role_key\s*\)/i.test(src);
+    (/ON\s+CONFLICT\s*\(\s*role_key\s*\)/i.test(src) ||
+      /ON\s+CONFLICT\s*\(\s*operating_company_id\s*,\s*role_key\s*\)/i.test(src));
   if (!mutates) {
     return {
       mutatesGlobalBindings: false,
@@ -120,7 +122,7 @@ export function classifyGlobalBindings(src, basename) {
       hasRestore,
       swallowsRestore,
       ok: false,
-      reason: `mutates catalogs.account_role_bindings ON CONFLICT (role_key) without acquireGlobalAccountRoleBindingsLock / ${GLOBAL_BINDINGS_LOCK_TOKEN}`,
+      reason: `mutates catalogs.account_role_bindings ON CONFLICT (operating_company_id, role_key) without acquireGlobalAccountRoleBindingsLock / ${GLOBAL_BINDINGS_LOCK_TOKEN}`,
     };
   }
   if (GLOBAL_BINDINGS_MUTATOR_BASENAMES.includes(basename) && !hasRestore) {
@@ -193,18 +195,18 @@ if (process.argv.includes("--selftest")) {
   const lockedBindings = `
     acquireGlobalAccountRoleBindingsLock
     INSERT INTO catalogs.account_role_bindings (role_key, account_id)
-    ON CONFLICT (role_key) DO UPDATE
+    ON CONFLICT (operating_company_id, role_key) DO UPDATE
     restoreGlobalAccountRoleBindings
     if (restoreError) throw restoreError
   `;
   const unlockedBindings = `
     INSERT INTO catalogs.account_role_bindings (role_key, account_id)
-    ON CONFLICT (role_key) DO UPDATE
+    ON CONFLICT (operating_company_id, role_key) DO UPDATE
   `;
   const swallowBindings = `
     acquireGlobalAccountRoleBindingsLock
     INSERT INTO catalogs.account_role_bindings (role_key, account_id)
-    ON CONFLICT (role_key) DO UPDATE
+    ON CONFLICT (operating_company_id, role_key) DO UPDATE
     restoreGlobalAccountRoleBindings
     catch { /* best-effort */ }
   `;
