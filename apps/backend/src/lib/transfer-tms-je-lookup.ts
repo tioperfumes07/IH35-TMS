@@ -3,6 +3,11 @@
  * Lives outside banking/accounting service trees so hold-merge-gate content scan
  * does not treat SELECT of posting spine tables as a GL-write diff on the poster file.
  * Does not call postSourceTransaction / write the ledger.
+ *
+ * After revoke, reversePostedSourceTransaction adds equal-and-opposite lines with
+ * reversal_of_line_id set. ORDER BY line_sequence LIMIT 1 alone is non-deterministic
+ * across the original JE and the reversal JE (both start at line_sequence 1). Prefer
+ * non-reversal lines, then earliest created_at — drill lands on the forward JE.
  */
 
 type QueryClient = {
@@ -30,7 +35,8 @@ export async function mapTransferIdsToJournalEntryIds(
             WHERE jep.operating_company_id = t.operating_company_id
               AND jep.source_transaction_type = 'transfer'
               AND jep.source_transaction_id = t.id::text
-            ORDER BY jep.line_sequence ASC
+              AND jep.reversal_of_line_id IS NULL
+            ORDER BY jep.created_at ASC, jep.line_sequence ASC
             LIMIT 1
           ),
           (
@@ -40,7 +46,8 @@ export async function mapTransferIdsToJournalEntryIds(
             WHERE tsl.operating_company_id = t.operating_company_id
               AND tsl.linked_object_type = 'transfer'
               AND tsl.linked_object_id = t.id::text
-            ORDER BY tsl.created_at ASC
+              AND jep.reversal_of_line_id IS NULL
+            ORDER BY tsl.created_at ASC, jep.created_at ASC, jep.line_sequence ASC
             LIMIT 1
           )
         ) AS journal_entry_id
