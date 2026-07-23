@@ -24,8 +24,24 @@ const STATUS_COLOR: Record<string, string> = {
   pending_approval: "bg-slate-100 text-slate-700",
 };
 
+/**
+ * Receipt source -> EntityLink kind. Must cover PAYMENT: main's version resolved
+ * `type === "expense" ? "expense" : "bill"`, so once payment receipts exist a payment would link
+ * to /accounting/bills/<payment_id> — a wrong-record drill. EntityLink has a real "payment" kind
+ * (-> /accounting/payments/:id), so all three source types resolve to their own detail route.
+ */
+function receiptEntityKind(row: ReceiptItem): "expense" | "bill" | "payment" {
+  if (row.source.type === "expense") return "expense";
+  if (row.source.type === "payment") return "payment";
+  return "bill";
+}
+
 function receiptRefLabel(row: ReceiptItem) {
-  return row.source.type === "expense" ? (row.source.expense_number ?? "—") : (row.source.bill_number ?? "—");
+  // Payment receipts carry payment_display_id, not bill_number — the two-branch version read
+  // bill_number off a payment source (a type error, and "—" at runtime).
+  if (row.source.type === "expense") return row.source.expense_number ?? "—";
+  if (row.source.type === "payment") return row.source.payment_display_id ?? "—";
+  return row.source.bill_number ?? "—";
 }
 
 function ReceiptDetailPanel({ id, companyId, onClose }: { id: string; companyId: string; onClose: () => void }) {
@@ -58,7 +74,7 @@ function ReceiptDetailPanel({ id, companyId, onClose }: { id: string; companyId:
             <div className="flex gap-2">
               <span className="text-gray-500 w-28 shrink-0">Linked to</span>
               <EntityLink
-                kind={data.source.type === "expense" ? "expense" : "bill"}
+                kind={receiptEntityKind(data)}
                 id={data.entity_id}
                 label={`${data.source.type} ${receiptRefLabel(data)}`}
               />
@@ -79,7 +95,7 @@ function ReceiptDetailPanel({ id, companyId, onClose }: { id: string; companyId:
 export function ReceiptsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
-  const [entityType, setEntityType] = useState<"" | "expense" | "bill">("");
+  const [entityType, setEntityType] = useState<"" | "expense" | "bill" | "payment">("");
   const [search, setSearch] = useState("");
   const [offset, setOffset] = useState(0);
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -128,11 +144,14 @@ export function ReceiptsPage() {
         key: "ref",
         label: "Ref #",
         sortable: true,
-        sortValue: (row) =>
-          row.source.type === "expense" ? (row.source.expense_number ?? "") : (row.source.bill_number ?? ""),
+        sortValue: (row) => {
+          if (row.source.type === "expense") return row.source.expense_number ?? "";
+          if (row.source.type === "payment") return row.source.payment_display_id ?? "";
+          return row.source.bill_number ?? "";
+        },
         render: (row) => (
           <EntityLink
-            kind={row.source.type === "expense" ? "expense" : "bill"}
+            kind={receiptEntityKind(row)}
             id={row.entity_id}
             label={receiptRefLabel(row)}
           />
@@ -187,7 +206,7 @@ export function ReceiptsPage() {
           aria-label="Filter receipts by source"
           value={entityType}
           onChange={(e) => {
-            setEntityType(e.target.value as "" | "expense" | "bill");
+            setEntityType(e.target.value as "" | "expense" | "bill" | "payment");
             setOffset(0);
           }}
           className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500"
@@ -195,6 +214,7 @@ export function ReceiptsPage() {
           <option value="">All sources</option>
           <option value="expense">Expenses</option>
           <option value="bill">Bills</option>
+          <option value="payment">Customer payments</option>
         </select>
       </CollapsedListFilters>
       <span className="ml-auto self-center text-xs text-gray-500">
@@ -204,7 +224,7 @@ export function ReceiptsPage() {
   );
 
   return (
-    <AccountingSubNavWrapper title="Receipts" subtitle="Uploaded receipts linked to expenses and bills">
+    <AccountingSubNavWrapper title="Receipts" subtitle="Uploaded receipts for expenses, bills, and customer payment proof">
       {detailId && <ReceiptDetailPanel id={detailId} companyId={operatingCompanyId} onClose={() => setDetailId(null)} />}
 
       {isError ? (
