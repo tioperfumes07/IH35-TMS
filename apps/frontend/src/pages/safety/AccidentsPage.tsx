@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { formatDateUS } from "../../lib/formatDate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSafetyAccidents } from "../../api/safety";
@@ -61,6 +62,23 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
   });
 
   const allRows = accidentsQuery.data?.accidents ?? [];
+
+  // SAF-F33 reverse drill-through: another module linking here as
+  // /safety/accidents?accident_id=<id> opens that accident's drawer once the list has loaded.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const accidentIdParam = searchParams.get("accident_id");
+  useEffect(() => {
+    if (!accidentIdParam || allRows.length === 0) return;
+    const match = allRows.find((r) => String(r.id) === accidentIdParam);
+    if (match) {
+      setSelectedAccident(match);
+      setDrawerOpen(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete("accident_id");
+      setSearchParams(next, { replace: true });
+    }
+  }, [accidentIdParam, allRows, searchParams, setSearchParams]);
+
   const rows = useMemo(() => {
     return allRows.filter((row) => {
       if (driverFilter && !String(row.driver_id ?? "").toLowerCase().includes(driverFilter.trim().toLowerCase())) return false;
