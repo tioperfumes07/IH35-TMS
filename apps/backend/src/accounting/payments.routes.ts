@@ -7,6 +7,7 @@ import { nextPaymentDisplayId } from "./display-id.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 import { requireVoidCancelExecutor } from "../lib/authz/void-cancel-authz.js";
+import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 
 const paymentMethodSchema = z.enum([
   "ach",
@@ -40,7 +41,7 @@ const createBodySchema = z.object({
   payment_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   reference: z.string().trim().max(200).optional(),
   amount_cents: z.coerce.number().int().positive(),
-  deposited_to_account_id: z.string().trim().max(120).optional(),
+  deposited_to_account_id: z.string().uuid().optional(),
   notes: z.string().trim().max(5000).optional(),
   // Draft id for create-time payment attachments (check/ACH/wire confirmations); reconciled onto the
   // real payment id in the same txn (Option B inc 2 — docs/specs/ATTACHMENT-DRAFT-LINKAGE-FIX.md).
@@ -232,6 +233,29 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
       );
       if (!customerRes.rows[0]) return { code: 404 as const, error: "customer_not_found" };
 
+      // Deposit-to must be a catalogs.accounts UUID for this entity (GL cash/bank/UF). Never a
+      // free-text bank slug — posting treats the value as catalogs.accounts.id.
+      let depositedToAccountId = body.data.deposited_to_account_id ?? null;
+      if (depositedToAccountId) {
+        const acct = await client.query(
+          `
+            SELECT id::text AS id
+            FROM catalogs.accounts
+            WHERE id = $1::uuid
+              AND operating_company_id = $2::uuid
+              AND deactivated_at IS NULL
+            LIMIT 1
+          `,
+          [depositedToAccountId, query.data.operating_company_id]
+        );
+        if (!acct.rows[0]) return { code: 400 as const, error: "deposited_to_account_not_found" };
+      } else {
+        depositedToAccountId =
+          (await resolveRoleAccountOptional(client, query.data.operating_company_id, "undeposited_funds")) ??
+          (await resolveRoleAccountOptional(client, query.data.operating_company_id, "cash_clearing"));
+        if (!depositedToAccountId) return { code: 400 as const, error: "deposited_to_account_required" };
+      }
+
       const displayId = await nextPaymentDisplayId(client, query.data.operating_company_id, new Date(`${body.data.payment_date}T00:00:00.000Z`));
 
       const paymentRes = await client.query(
@@ -258,7 +282,7 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
           body.data.payment_date,
           body.data.reference ?? null,
           body.data.amount_cents,
-          body.data.deposited_to_account_id ?? "ops_checking",
+          depositedToAccountId,
           body.data.notes ?? null,
           user.uuid,
         ]

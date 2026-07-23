@@ -134,6 +134,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   // More ▾ — QBO-parity back office
   { label: "Revenue recognition", path: "/accounting/revenue-recognition", section: "more" },
   { label: "Fixed assets", path: "/accounting/fixed-assets", section: "more" },
+  { label: "Allocations", path: "/accounting/allocations", section: "more" },
   { label: "Prepaid expenses", path: "/accounting/prepaid-expenses", section: "more" },
   { label: "My accountant", path: "/accounting/my-accountant", section: "more" },
   { label: "Payroll", path: "/accounting/payroll", section: "more" },
@@ -141,6 +142,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   // More ▾ — audit / lineage / sync
   { label: "Audit trail", path: "/accounting/audit-trail", section: "more" },
   { label: "Posting lineage", path: "/accounting/posting-lineage", section: "more" },
+  { label: "Posting Templates", path: "/lists/accounting/posting-templates", section: "more" },
   { label: "QBO sync drift", path: "/accounting/qbo-sync", section: "more" },
 
   // More ▾ — catalogs / settings
