@@ -193,6 +193,27 @@ export function TransfersListPage() {
         }
       />
       {transfersQuery.isError ? <ListErrorBanner onRetry={() => void transfersQuery.refetch()} /> : null}
+      {listState.isEmpty ? (
+        <div
+          className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+          data-testid="banking-transfers-never-recorded-banner"
+        >
+          <p className="font-semibold">No bank transfers recorded for this company in the selected filters.</p>
+          <p className="mt-1">
+            Transfer workflow is not proven live until at least one transfer is recorded from Banking Home (+ Record
+            Transfer / + Pay Credit Card). An empty list is not “all clear” — it is unproven use. Inter-account moves
+            that only exist as unmatched for-review bank feed rows still need Match/Categorize on Transactions.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Link to="/banking" className="text-xs font-medium text-slate-800 underline">
+              Banking Home — Record Transfer
+            </Link>
+            <Link to="/banking/transactions?type=uncategorized" className="text-xs font-medium text-slate-800 underline">
+              Open for-review queue
+            </Link>
+          </div>
+        </div>
+      ) : null}
 
       <CollapsedListFilters
         activeFilterCount={

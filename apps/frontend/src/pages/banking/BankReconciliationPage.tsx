@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   acceptBankReconMatch,
   type BankReconWorklistPayload,
@@ -175,6 +175,36 @@ export function BankReconciliationPage() {
         title="Bank Reconciliation"
         subtitle="Review unmatched transactions, accept/reject auto matches, and close reconciled periods."
       />
+
+      {/*
+        isSuccess, not merely !isLoading: a FAILED sessions fetch also has isLoading === false and
+        data === undefined, so the previous condition asserted "no reconciliation sessions proven
+        live" to an owner whose request simply errored. Claiming absence from data we never received
+        is the exact dishonesty this banner exists to prevent.
+      */}
+      {sessionsQuery.isSuccess &&
+      (sessionsQuery.data?.open_sessions ?? []).length === 0 &&
+      (sessionsQuery.data?.completed_sessions ?? []).length === 0 ? (
+        <div
+          className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+          data-testid="banking-recon-matches-never-proven-banner"
+        >
+          <p className="font-semibold">No reconciliation sessions or matches proven live for this company.</p>
+          <p className="mt-1">
+            Neon truth: reconciliation_matches / sessions can be empty while the bank feed still has a large for-review
+            backlog. Progress % here is not a period close. Start a session from Banking → Reconciliation, then Match /
+            Categorize feed rows on Transactions. Do not treat this screen as books reconciled.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-3">
+            <Link to="/banking/reconciliation" className="font-medium text-slate-800 underline">
+              Banking Reconciliation tab
+            </Link>
+            <Link to="/banking/transactions?type=uncategorized" className="font-medium text-slate-800 underline">
+              For-review Match/Categorize
+            </Link>
+          </div>
+        </div>
+      ) : null}
 
       {balanceHeader ? (
         <div

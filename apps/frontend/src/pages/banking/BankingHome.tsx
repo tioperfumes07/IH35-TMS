@@ -22,6 +22,7 @@ import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useAuth } from "../../auth/useAuth";
 import { ManageAccountsModal } from "./components/ManageAccountsModal";
 import { AccountTilesRow } from "./components/AccountTilesRow";
 import { SyncStatusStrip } from "./components/SyncStatusStrip";
@@ -35,6 +36,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { DriverEscrowTabContent } from "./components/DriverEscrowTabContent";
 import { BankingReportsTabContent } from "./components/BankingReportsTabContent";
 import { BankingTransactionsDesignView } from "./components/BankingTransactionsDesignView";
+import { StatementUpload } from "../../components/banking/StatementUpload";
 import { BANKING_TAB_PATH, bankingTabFromPath } from "../../router/route-manifest";
 import { BANKING_MODULE_TABS, type BankingModuleTabId } from "./BANKING_NAV_CONFIG";
 
@@ -52,6 +54,8 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   const [searchParams] = useSearchParams();
   const deepLinkTxnId = searchParams.get("txn_id");
   const { selectedCompanyId, selectedCompany } = useCompanyContext();
+  const { user } = useAuth();
+  const canSeeEmailQueue = user?.role === "Owner" || user?.role === "Administrator";
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const companyId = selectedCompanyId ?? "";
@@ -236,10 +240,13 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   const tabActions =
     activeTab === "accounts" ? (
       <>
-        <span title="Import a statement CSV from the Transactions tab (per bank account).">
-          <ActionButton onClick={() => navigate(BANKING_TAB_PATH.transactions)}>+ Import Statement</ActionButton>
+        <span title="Import a statement CSV for a bank account.">
+          <ActionButton onClick={() => navigate(BANKING_TAB_PATH.statement_import)}>+ Import Statement</ActionButton>
         </span>
         <ActionButton onClick={() => navigate("/banking/cash-gl-setup")}>Cash GL setup</ActionButton>
+        {canSeeEmailQueue ? (
+          <ActionButton onClick={() => navigate("/banking/email-queue")}>Email Queue</ActionButton>
+        ) : null}
         <ActionButton onClick={() => setManageOpen(true)}>+ Create Account / Manage Accounts</ActionButton>
         <PlaidLinkButton
           operatingCompanyId={companyId}
@@ -412,7 +419,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               type="button"
               onClick={() => {
                 setTransactionsInitialFilter("uncategorized");
-                navigate(BANKING_TAB_PATH.transactions);
+                navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`);
               }}
               className="flex h-16 min-w-0 flex-col justify-center gap-0.5 rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-left text-[11px] transition hover:bg-slate-100"
             >
@@ -522,18 +529,48 @@ export function BankingHomePage({ initialTab }: Props = {}) {
       ) : null}
 
       {activeTab === "transactions" ? (
-        <BankingTransactionsDesignView
-          companyId={companyId}
-          accounts={plaidAccountsQuery.data?.accounts ?? []}
-          selectedAccountId={selectedAccountId}
-          onSelectAccount={setSelectedAccountId}
-          onManageConnections={() => setActiveTab("accounts")}
-          initialTransactionType={transactionsInitialFilter}
-          highlightTransactionId={deepLinkTxnId}
-          onDataChanged={() => {
-            void queryClient.invalidateQueries({ queryKey: ["banking"] });
-          }}
-        />
+        <div className="space-y-3">
+          {uncategorizedCount > 0 ? (
+            <div
+              className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+              data-testid="banking-forreview-backlog-banner"
+            >
+              <p className="font-semibold">
+                For-review backlog: {uncategorizedCount.toLocaleString()} transaction(s) still need Match/Categorize
+              </p>
+              <p className="mt-1">
+                Live bank feed is not “caught up” until these are matched or categorized. Use the For review tab below —
+                Match opens candidates; Categorize posts to a GL account. Do not treat a large for-review queue as
+                reconciled books.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <ActionButton
+                  onClick={() => {
+                    setTransactionsInitialFilter("uncategorized");
+                    navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`);
+                  }}
+                >
+                  Focus uncategorized filter
+                </ActionButton>
+                <Link to="/banking/categorize" className="text-xs font-medium text-slate-800 underline">
+                  /banking/categorize deep link
+                </Link>
+              </div>
+            </div>
+          ) : null}
+          <BankingTransactionsDesignView
+            companyId={companyId}
+            accounts={plaidAccountsQuery.data?.accounts ?? []}
+            selectedAccountId={selectedAccountId}
+            onSelectAccount={setSelectedAccountId}
+            onManageConnections={() => navigate(BANKING_TAB_PATH.plaid_connections)}
+            initialTransactionType={transactionsInitialFilter}
+            highlightTransactionId={deepLinkTxnId}
+            onDataChanged={() => {
+              void queryClient.invalidateQueries({ queryKey: ["banking"] });
+            }}
+          />
+        </div>
       ) : null}
 
       {activeTab === "reconciliation" ? (
@@ -550,6 +587,31 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 </Link>
               </div>
             </div>
+            {(reconciliationSessionsQuery.data?.open_sessions ?? []).length === 0 &&
+            (reconciliationSessionsQuery.data?.completed_sessions ?? []).length === 0 ? (
+              <div
+                className="mb-3 border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+                data-testid="banking-recon-never-completed-banner"
+              >
+                <p className="font-semibold">No reconciliation sessions exist for this company yet.</p>
+                <p className="mt-1">
+                  Statement reconcile is not proven live until a session is started and completed. Uncategorized /
+                  for-review bank transactions still need Match/Categorize on the Transactions tab (
+                  {uncategorizedCount.toLocaleString()} currently flagged). Do not treat this screen as “reconciled.”
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <ActionButton onClick={openStartReconciliation}>+ Start first reconciliation</ActionButton>
+                  <ActionButton
+                    onClick={() => {
+                      setTransactionsInitialFilter("uncategorized");
+                      navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`);
+                    }}
+                  >
+                    Open for-review queue
+                  </ActionButton>
+                </div>
+              </div>
+            ) : null}
             <p className="text-sm text-gray-700">Open sessions: {(reconciliationSessionsQuery.data?.open_sessions ?? []).length}</p>
             <div className="mt-2 space-y-1">
               {(reconciliationSessionsQuery.data?.open_sessions ?? []).map((session) => (
@@ -588,6 +650,85 @@ export function BankingHomePage({ initialTab }: Props = {}) {
         </div>
       ) : null}
 
+      {activeTab === "factoring" ? (
+        <div className="space-y-3">
+          <div className="rounded-sm border border-slate-300 bg-slate-100">
+            <div className="flex items-center justify-between border-b border-slate-300 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
+              <span>Factoring (Faro) · Banking entry</span>
+              <Link to="/factoring" className="text-[10px] font-semibold normal-case text-slate-800 hover:underline">
+                Open Factoring module →
+              </Link>
+            </div>
+            <div className="space-y-1 px-3 py-2 text-sm">
+              <Link to="/factoring/reserve-tracker" className="flex justify-between hover:underline">
+                <span>Reserves held</span>
+                <span>{money.format(factoringReserve)}</span>
+              </Link>
+              <div className="flex justify-between">
+                <span>Advances funded MTD</span>
+                <span>{money.format(Math.max(cashPosting - factoringReserve, 0))}</span>
+              </div>
+              <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
+                <span>Chargebacks open</span>
+                <span className="text-red-700">{money.format(factoringChargebacks)}</span>
+              </Link>
+              <div className="flex justify-between">
+                <span>+30 aging fees</span>
+                <span className="text-slate-700">{money.format(0)}</span>
+              </div>
+              <div className="pt-1 text-xs text-gray-500">
+                Last advance:{" "}
+                {factoringVirtualSummary.lastAdvanceAt
+                  ? String(factoringVirtualSummary.lastAdvanceAt).slice(0, 10)
+                  : "—"}
+              </div>
+              {factoringTile ? <div className="text-xs text-slate-700">{factoringTile.display_name}</div> : null}
+              <div className="flex flex-wrap gap-2 pt-2">
+                <ActionButton onClick={() => navigate("/factoring/recourse-pipeline")}>Recourse Pipeline</ActionButton>
+                <ActionButton onClick={() => navigate("/factoring/chargebacks-fees")}>Chargebacks & Fees</ActionButton>
+                <ActionButton onClick={() => navigate("/factoring/statements-settings")}>Statements & Settings</ActionButton>
+              </div>
+            </div>
+          </div>
+          <p className="text-xs text-gray-600">
+            Design law: Banking Factoring tab is a thin entry summary that deep-links into the standalone{" "}
+            <Link to="/factoring" className="underline">
+              /factoring
+            </Link>{" "}
+            module. Accounts home still shows the Factoring virtual-bank card (additive — never removed).
+          </p>
+        </div>
+      ) : null}
+
+      {activeTab === "relay_card" ? (
+        <div className="space-y-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Relay Card · Banking</p>
+              <ActionButton onClick={() => navigate(BANKING_TAB_PATH.transactions)}>Open in Transactions</ActionButton>
+            </div>
+            {/* is_relay is PHANTOM (never populated) — do not .find/.filter tiles by it (verify-banking-relay-tab-honesty). */}
+            <div
+              className="border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+              data-testid="banking-relay-phantom-field-unproven-notice"
+            >
+              <p className="font-semibold">Relay Card accounts cannot be identified yet</p>
+              <p className="mt-1">
+                Account-tiles cannot express Relay identity today: <code className="text-[11px]">is_relay</code> is a
+                phantom field (not populated by any migration or backend writer). The real identifier is{" "}
+                <code className="text-[11px]">catalogs.accounts.system_purpose = &apos;relay_fuel_wallet&apos;</code>{" "}
+                via ledger mapping (held). An empty Relay tab is not “no Relay activity” — the system cannot identify
+                Relay accounts in this feed yet.
+              </p>
+            </div>
+            <p className="mt-2 text-xs text-gray-600">
+              Relay fuel-line breakdown stays on the Transactions register when a Relay wallet row is expanded.
+              This tab is the design-law entry surface (not a delete of the register breakdown).
+            </p>
+          </div>
+        </div>
+      ) : null}
+
       {activeTab === "driver_escrow" ? (
         <DriverEscrowTabContent
           operatingCompanyId={companyId}
@@ -597,6 +738,93 @@ export function BankingHomePage({ initialTab }: Props = {}) {
 
       {activeTab === "reports" ? (
         <BankingReportsTabContent />
+      ) : null}
+
+      {activeTab === "statement_import" ? (
+        <div className="space-y-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Bank Statement Import</p>
+            <p className="mb-3 text-sm text-gray-700">
+              CSV import for non-feed banks (PDF parser remains Phase 6). Select a bank account, then upload. The same
+              uploader remains available inside Reconciliation (additive — not removed).
+            </p>
+            <label className="mb-2 block text-xs font-semibold text-gray-600">
+              Bank account
+              <select
+                className="mt-1 w-full max-w-md rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
+                value={selectedId ?? ""}
+                onChange={(e) => setSelectedAccountId(e.target.value || null)}
+              >
+                <option value="">Select account…</option>
+                {bankAccountsPanelRows.map((row) => (
+                  <option key={row.id} value={row.id}>
+                    {row.displayName}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {selectedId ? (
+              <StatementUpload
+                bankAccountId={selectedId}
+                onUploaded={() => {
+                  void queryClient.invalidateQueries({ queryKey: ["banking"] });
+                }}
+              />
+            ) : (
+              <p className="text-xs text-gray-500">Select a bank account to enable CSV upload.</p>
+            )}
+            <div className="mt-3">
+              <ActionButton onClick={() => navigate(BANKING_TAB_PATH.reconciliation)}>Open Reconciliation</ActionButton>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {activeTab === "plaid_connections" ? (
+        <div className="space-y-3" data-testid="banking-plaid-connections-tab">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Plaid Connections</p>
+            <p className="mb-3 text-sm text-gray-700">
+              Live bank feed config — connect, reconnect, and inspect items. Same panel remains on Accounts and Settings
+              (additive; never removed).
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <ActionButton onClick={() => navigate(BANKING_TAB_PATH.settings)}>Open Banking Settings</ActionButton>
+              <ActionButton onClick={() => navigate("/banking/cash-gl-setup")}>Cash GL setup</ActionButton>
+            </div>
+          </div>
+          <BankingPlaidConnectionsPanel companyId={companyId} />
+          <PlaidSyncStatusPanel operatingCompanyId={companyId} />
+          <PlaidLink
+            operatingCompanyId={companyId}
+            onSuccess={() => {
+              void queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts", companyId] });
+            }}
+            label="Connect via PlaidLink"
+          />
+        </div>
+      ) : null}
+
+      {activeTab === "settings" ? (
+        <div className="space-y-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Banking Settings</p>
+            <p className="mb-3 text-sm text-gray-700">
+              Account map, Cash GL, categorization rules, queues, and visibility — Owner/Administrator surfaces stay
+              role-gated on their pages.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <ActionButton onClick={() => navigate("/banking/cash-gl-setup")}>Cash GL setup</ActionButton>
+              <ActionButton onClick={() => navigate("/banking/categorization-rules")}>Categorization rules</ActionButton>
+              <ActionButton onClick={() => navigate("/banking/account-visibility")}>Account Visibility</ActionButton>
+              {canSeeEmailQueue ? (
+                <ActionButton onClick={() => navigate("/banking/email-queue")}>Email Queue</ActionButton>
+              ) : null}
+              <ActionButton onClick={() => navigate("/banking/qbo-sync-queue")}>QBO Sync Queue</ActionButton>
+            </div>
+          </div>
+          <BankingPlaidConnectionsPanel companyId={companyId} />
+        </div>
       ) : null}
 
       <ManageAccountsModal

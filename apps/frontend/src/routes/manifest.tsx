@@ -1331,6 +1331,14 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/banking/factoring"
+          element={
+            <ProtectedRoute>
+              <BankingHomePage initialTab="factoring" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/banking/driver-escrow"
           element={
             <ProtectedRoute>
@@ -1339,10 +1347,42 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/banking/relay"
+          element={
+            <ProtectedRoute>
+              <BankingHomePage initialTab="relay_card" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/banking/reports"
           element={
             <ProtectedRoute>
               <BankingHomePage initialTab="reports" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/banking/statement-import"
+          element={
+            <ProtectedRoute>
+              <BankingHomePage initialTab="statement_import" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/banking/plaid-connections"
+          element={
+            <ProtectedRoute>
+              <BankingHomePage initialTab="plaid_connections" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/banking/settings"
+          element={
+            <ProtectedRoute>
+              <BankingHomePage initialTab="settings" />
             </ProtectedRoute>
           }
         />
@@ -1424,7 +1464,7 @@ export const ROUTES = React.Children.toArray(
           path="/banking/categorize"
           element={
             <ProtectedRoute>
-              <Navigate to="/banking/transactions" replace />
+              <Navigate to="/banking/transactions?type=uncategorized" replace />
             </ProtectedRoute>
           }
         />
