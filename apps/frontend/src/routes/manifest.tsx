@@ -1,4 +1,7 @@
 const MapView = React.lazy(() => import("../pages/dispatch/MapView").then((m) => ({ default: m.MapView })));
+const LoadBankingLinkagePage = React.lazy(() =>
+  import("../pages/dispatch/LoadBankingLinkagePage").then((m) => ({ default: m.LoadBankingLinkagePage }))
+);
 import React from "react";
 import { Navigate, Route, useLocation, useParams } from "react-router-dom";
 import type { ReactNode } from "react";
@@ -632,7 +635,8 @@ function DriverSafetyProfileTab() {
 function DispatchLoadDetailRedirect() {
   const { id } = useParams<{ id: string }>();
   if (!id) return <Navigate to="/dispatch?view=loads" replace />;
-  return <Navigate to={`/dispatch?load_id=${encodeURIComponent(id)}`} replace />;
+  // Prefer the banking reverse-linkage surface (Law §9) over a silent board redirect.
+  return <Navigate to={`/dispatch/loads/${encodeURIComponent(id)}`} replace />;
 }
 
 /** Legacy `/fleet/:unitId` bookmarks → canonical `/fleet/units/:id` (never collide with known fleet leaves). */
@@ -1206,7 +1210,7 @@ export const ROUTES = React.Children.toArray(
           path="/dispatch/loads/:id"
           element={
             <ProtectedRoute>
-              <DispatchLoadDetailRedirect />
+              <LoadBankingLinkagePage />
             </ProtectedRoute>
           }
         />

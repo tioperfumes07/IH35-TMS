@@ -1453,8 +1453,7 @@ export function BankingTransactionsDesignView({
             {categorizationLinksQuery.isError && expandedTxId === tx.id ? (
               <p className="mt-1 text-xs text-red-700">Could not load categorization links.</p>
             ) : null}
-            {!categorizationLinksQuery.isLoading &&
-            !categorizationLinksQuery.isError &&
+            {categorizationLinksQuery.isSuccess &&
             expandedTxId === tx.id &&
             !hasPersistedLinks ? (
               <p className="mt-1 text-xs text-slate-700">
