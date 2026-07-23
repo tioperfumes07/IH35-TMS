@@ -350,7 +350,7 @@ export function VendorBillForm({
               setAccountDisplay(match?.label ?? "");
             }}
             options={apAccountOptions}
-            createKind="category"
+            createKind="account"
             addNewLabel="+ Add new account"
             operatingCompanyId={operatingCompanyId}
             placeholder="Select A/P account…"
