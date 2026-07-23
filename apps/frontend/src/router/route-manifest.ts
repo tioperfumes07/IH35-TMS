@@ -21,7 +21,9 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
   { path: "/banking", label: "Banking Home", module: "banking" },
   { path: "/banking/transactions", label: "Banking Transactions", module: "banking" },
   { path: "/banking/reconciliation", label: "Bank Reconciliation", module: "banking" },
+  { path: "/banking/factoring", label: "Banking Factoring Entry", module: "banking" },
   { path: "/banking/driver-escrow", label: "Driver Escrow", module: "banking" },
+  { path: "/banking/relay", label: "Relay Card", module: "banking" },
   { path: "/banking/reports", label: "Banking Reports", module: "banking" },
   { path: "/maintenance", label: "Maintenance Home", module: "maintenance" },
   { path: "/maintenance/active-wos", label: "Active WOs", module: "maintenance" },
@@ -74,14 +76,18 @@ export const BANKING_TAB_PATH: Record<string, string> = {
   accounts: "/banking",
   transactions: "/banking/transactions",
   reconciliation: "/banking/reconciliation",
+  factoring: "/banking/factoring",
   driver_escrow: "/banking/driver-escrow",
+  relay_card: "/banking/relay",
   reports: "/banking/reports",
 };
 
 export function bankingTabFromPath(pathname: string): string {
   if (pathname === "/banking/transactions") return "transactions";
   if (pathname === "/banking/reconciliation") return "reconciliation";
+  if (pathname === "/banking/factoring") return "factoring";
   if (pathname === "/banking/driver-escrow") return "driver_escrow";
+  if (pathname === "/banking/relay") return "relay_card";
   if (pathname === "/banking/reports") return "reports";
   return "accounts";
 }

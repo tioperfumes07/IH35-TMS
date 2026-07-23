@@ -1329,10 +1329,26 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/banking/factoring"
+          element={
+            <ProtectedRoute>
+              <BankingHomePage initialTab="factoring" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/banking/driver-escrow"
           element={
             <ProtectedRoute>
               <BankingHomePage initialTab="driver_escrow" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/banking/relay"
+          element={
+            <ProtectedRoute>
+              <BankingHomePage initialTab="relay_card" />
             </ProtectedRoute>
           }
         />
