@@ -16,7 +16,6 @@ const fail = (m) => {
 const modal = fs.readFileSync(path.join(root, "apps/frontend/src/pages/accounting/RecordPaymentModal.tsx"), "utf8");
 const payments = fs.readFileSync(path.join(root, "apps/backend/src/accounting/payments.routes.ts"), "utf8");
 const customerPayments = fs.readFileSync(path.join(root, "apps/backend/src/accounting/customer-payments.routes.ts"), "utf8");
-const posting = fs.readFileSync(path.join(root, "apps/backend/src/accounting/posting-engine.service.ts"), "utf8");
 
 if (modal.includes("ops_checking")) fail("RecordPaymentModal must not reference ops_checking");
 if (!modal.includes('createKind="account"')) fail("Deposited to must use ReferenceSelect createKind=account");
@@ -46,8 +45,7 @@ if (!customerPayments.includes("resolveRoleAccountOptional")) {
   fail("customer-payments must resolve UF/cash_clearing via coa-roles resolver");
 }
 
-if (!posting.includes("resolveCustomerPaymentDepositAccount")) {
-  fail("posting-engine must soft-resolve legacy deposit values");
-}
+// Soft-resolve of legacy deposit slugs in posting-engine is a separate HOLD PR
+// (touches *posting* → JORGE-APPROVED). This guard locks write-path + UI only.
 
 console.log("PASS: verify-acct-receive-payment-deposit");

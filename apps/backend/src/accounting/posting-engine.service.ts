@@ -254,48 +254,6 @@ async function resolveBankLedgerAccountId(
   return res.rows[0]?.ledger_account_id ?? null;
 }
 
-/**
- * Customer payment deposit GL resolver.
- * Values historically written into accounting.payments.deposited_to_account_id include:
- * - catalogs.accounts.id (correct — posting debit)
- * - banking.bank_accounts.id (legacy customer-payments path — bridge via ledger_account_id)
- * - free-text "ops_checking" (broken slug — never a GL id)
- * Fail soft to undeposited_funds / cash_clearing so historical rows can still post.
- */
-async function resolveCustomerPaymentDepositAccount(
-  client: DbClient,
-  operatingCompanyId: string,
-  depositedTo: string | null | undefined
-): Promise<string | null> {
-  const raw = depositedTo?.trim() || null;
-  if (!raw || raw === "ops_checking") {
-    return resolveCashLikeAccountForCompany(client, operatingCompanyId);
-  }
-
-  const uuidOk = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(raw);
-  if (!uuidOk) {
-    return resolveCashLikeAccountForCompany(client, operatingCompanyId);
-  }
-
-  const coa = await client.query<{ id: string }>(
-    `
-      SELECT id::text AS id
-      FROM catalogs.accounts
-      WHERE id = $1::uuid
-        AND operating_company_id = $2::uuid
-        AND deactivated_at IS NULL
-      LIMIT 1
-    `,
-    [raw, operatingCompanyId]
-  );
-  if (coa.rows[0]?.id) return coa.rows[0].id;
-
-  const bankLedger = await resolveBankLedgerAccountId(client, operatingCompanyId, raw);
-  if (bankLedger) return bankLedger;
-
-  return resolveCashLikeAccountForCompany(client, operatingCompanyId);
-}
-
 // Exported for reuse by sibling posters (e.g. FIN-22 lease ASC 842) so the closed-period gate is
 // enforced identically everywhere (no duplicated period-lock logic). Additive — no behavior change.
 export async function ensureOpenPeriod(client: DbClient, operatingCompanyId: string, postingDate: string) {
@@ -979,13 +937,10 @@ async function buildCustomerPaymentLines(client: DbClient, operatingCompanyId: s
   const arAccountId = await resolveArAccountForCompany(client, operatingCompanyId);
   if (!arAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AR account mapping is missing");
 
-  // Resolve deposit GL: catalogs.accounts UUID, OR banking.bank_accounts.id → ledger_account_id,
-  // OR legacy slug "ops_checking" / blank → undeposited_funds / cash_clearing. Never post a slug.
-  let debitCashAccount = await resolveCustomerPaymentDepositAccount(
-    client,
-    operatingCompanyId,
-    payment.deposited_to_account_id
-  );
+  let debitCashAccount = payment.deposited_to_account_id?.trim() || null;
+  if (!debitCashAccount) {
+    debitCashAccount = await resolveCashLikeAccountForCompany(client, operatingCompanyId);
+  }
   if (!debitCashAccount) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping is missing");
 
   const label = payment.display_id ? `Customer payment ${payment.display_id}` : `Customer payment ${sourceId}`;
