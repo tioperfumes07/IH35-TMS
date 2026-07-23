@@ -244,5 +244,13 @@
     "reason": "53 was applied on prod Neon 2026-07-15 + ledger-backfilled, but the original file was never committed (repo drift). This committed file is the functionally-identical DDL; the override reconciles the prod ledger's original checksum with the committed file so db:migrate does not flag drift.",
     "added_at": "2026-07-16",
     "added_in_pr": "FIX-53-REPO-DRIFT"
+  },
+  {
+    "filename": "202607770000_drop_account_role_bindings_global_unique.sql",
+    "ledger_checksum": "4575fe02113eee81b92b4e08752f740cd28f960b66bfbf2ab023d9cf27402cb8",
+    "disk_checksum": "a6c6ff2b589d4138d81c870cae5beea8dbcf14bc3443ec84a8c25e868973f4e3",
+    "reason": "2026-07-23: held migration was owner-applied on prod Neon during #3345 then ledger-backfilled with the pre-merge draft checksum; the merged file header text differs, so the disk checksum drifted from the ledger. DDL is a single idempotent DROP CONSTRAINT IF EXISTS account_role_bindings_role_key_key. Prod verified via Neon (project tiny-field-89581227): account_role_bindings_role_key_key ABSENT, per-entity uq_account_role_bindings_company_role_key present, table 0 rows — migration effect already applied. Override reconciles ledger 4575fe02 with disk a6c6ff2b to unblock Render preDeploy db:migrate (exit 1 checksum-freeze). Same class as 202607480000-510000; no reapply.",
+    "added_at": "2026-07-23",
+    "added_in_pr": "hotfix/predeploy-checksum-202607770000"
   }
 ]
