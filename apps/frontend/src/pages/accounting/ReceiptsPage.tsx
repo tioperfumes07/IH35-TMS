@@ -58,7 +58,9 @@ function ReceiptDetailPanel({ id, companyId, onClose }: { id: string; companyId:
             <div className="flex gap-2">
               <span className="text-gray-500 w-28 shrink-0">Linked to</span>
               <Link to={data.source.detail_path} className="text-slate-700 hover:underline capitalize">
-                {data.source.type} {data.source.type === "expense" ? data.source.expense_number : data.source.bill_number}
+                {data.source.type === "payment"
+                  ? `Payment ${data.source.payment_display_id ?? data.entity_id.slice(0, 8)}`
+                  : `${data.source.type} ${data.source.type === "expense" ? data.source.expense_number : data.source.bill_number}`}
               </Link>
             </div>
             <div className="flex gap-2"><span className="text-gray-500 w-28 shrink-0">Amount</span><span>{fmtCents(data.source.amount_cents)}</span></div>
@@ -78,7 +80,7 @@ function ReceiptDetailPanel({ id, companyId, onClose }: { id: string; companyId:
 export function ReceiptsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
-  const [entityType, setEntityType] = useState<"" | "expense" | "bill">("");
+  const [entityType, setEntityType] = useState<"" | "expense" | "bill" | "payment">("");
   const [search, setSearch] = useState("");
   const [offset, setOffset] = useState(0);
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -127,11 +129,18 @@ export function ReceiptsPage() {
         key: "ref",
         label: "Ref #",
         sortable: true,
-        sortValue: (row) =>
-          row.source.type === "expense" ? (row.source.expense_number ?? "") : (row.source.bill_number ?? ""),
+        sortValue: (row) => {
+          if (row.source.type === "expense") return row.source.expense_number ?? "";
+          if (row.source.type === "payment") return row.source.payment_display_id ?? "";
+          return row.source.bill_number ?? "";
+        },
         render: (row) => (
           <Link to={row.source.detail_path} className="text-slate-700 hover:underline text-xs">
-            {row.source.type === "expense" ? (row.source.expense_number ?? "—") : (row.source.bill_number ?? "—")}
+            {row.source.type === "expense"
+              ? (row.source.expense_number ?? "—")
+              : row.source.type === "payment"
+                ? (row.source.payment_display_id ?? "—")
+                : (row.source.bill_number ?? "—")}
           </Link>
         ),
       },
@@ -184,7 +193,7 @@ export function ReceiptsPage() {
           aria-label="Filter receipts by source"
           value={entityType}
           onChange={(e) => {
-            setEntityType(e.target.value as "" | "expense" | "bill");
+            setEntityType(e.target.value as "" | "expense" | "bill" | "payment");
             setOffset(0);
           }}
           className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500"
@@ -192,6 +201,7 @@ export function ReceiptsPage() {
           <option value="">All sources</option>
           <option value="expense">Expenses</option>
           <option value="bill">Bills</option>
+          <option value="payment">Customer payments</option>
         </select>
       </CollapsedListFilters>
       <span className="ml-auto self-center text-xs text-gray-500">
@@ -201,7 +211,7 @@ export function ReceiptsPage() {
   );
 
   return (
-    <AccountingSubNavWrapper title="Receipts" subtitle="Uploaded receipts linked to expenses and bills">
+    <AccountingSubNavWrapper title="Receipts" subtitle="Uploaded receipts for expenses, bills, and customer payment proof">
       {detailId && <ReceiptDetailPanel id={detailId} companyId={operatingCompanyId} onClose={() => setDetailId(null)} />}
 
       {isError ? (
