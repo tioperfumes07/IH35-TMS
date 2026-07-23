@@ -10,6 +10,7 @@ description: >-
 
 # IH35-TMS — Operating Standards
 
+> **★ DEFINITION OF DONE (BINDING, every session):** `docs/specs/DEFINITION-OF-DONE.md` — the canonical "done" bar: 5 DONE layers (active path · wizard depth · forward **and reverse** linkage · purpose→economics · evidence) + 5 VERIFY layers (QBO chrome · universal picker law · deep linkage chains · catalogs/entity scope · CPA-grade economics) + the required PR evidence block + guard rules. CI-green is the floor, not the verdict.
 > **Rule #0 (LOCKED, every session):** `docs/specs/QUALITY-STANDARD-LOCKED.md` — hardline quality law.
 > **Cursor charter (every session):** `docs/specs/CURSOR-OPERATING-CONSTITUTION.md` — permanent operating constitution; more conservative reading wins on conflict.
 > **Law of the Land:** `docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md` — total connectivity / linkage checklist.
