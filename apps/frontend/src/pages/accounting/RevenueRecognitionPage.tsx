@@ -8,6 +8,7 @@ import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { ApiError } from "../../api/client";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { CollapsedListFilters } from "../../components/table";
 import {
   getRevenueContracts, getRevenueContractDetail,
@@ -86,6 +87,24 @@ function DetailPanel({ detail, onClose }: { detail: RevenueContractDetail; onClo
           <div><div className="text-xs text-gray-500">Transaction price</div><div className="tabular-nums">{fmtCents(detail.transaction_price_cents)}</div></div>
           <div><div className="text-xs text-gray-500">Recognized to date</div><div className="tabular-nums text-slate-700">{fmtCents(detail.recognized_to_date_cents)}</div></div>
           <div><div className="text-xs text-gray-500">Deferred balance</div><div className="tabular-nums font-semibold">{fmtCents(detail.deferred_balance_cents)}</div></div>
+        </div>
+
+        <div className="mb-3 rounded-sm border border-gray-200 bg-gray-50 px-3 py-2 text-xs" data-testid="revenue-recognition-reverse-drill">
+          <div className="font-semibold text-gray-700 mb-1">Source links</div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-gray-600">
+            <span>
+              Customer:{" "}
+              <EntityLink kind="customer" id={detail.customer_uuid} label={detail.customer_uuid ? undefined : "—"} />
+            </span>
+            <span>
+              Invoice:{" "}
+              <EntityLink kind="invoice" id={detail.source_invoice_id} label={detail.source_invoice_id ? undefined : "—"} />
+            </span>
+            <span>
+              Load:{" "}
+              <EntityLink kind="load" id={detail.source_load_id} label={detail.source_load_id ? undefined : "—"} />
+            </span>
+          </div>
         </div>
 
         <div className="mb-4">
