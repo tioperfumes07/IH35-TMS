@@ -4,9 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { getAccountTypeCatalog, type AccountTypeCatalogEntry } from "../../api/account-type-catalog";
 import { ApiError } from "../../api/client";
+import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useListState } from "../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useCompanyContext } from "../../contexts/CompanyContext";
 
 const STATEMENT_COLOR: Record<string, string> = {
   "Balance Sheet": "bg-slate-100 text-slate-700",
@@ -68,11 +70,14 @@ const COLUMNS: Array<ParityColumn<AccountTypeCatalogEntry>> = [
 ];
 
 export function AccountTypeCatalogPage() {
+  const { selectedCompanyId } = useCompanyContext();
+  const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
 
   const query = useQuery({
-    queryKey: ["account-type-catalog"],
-    queryFn: () => getAccountTypeCatalog(),
+    queryKey: ["account-type-catalog", companyId],
+    queryFn: () => getAccountTypeCatalog(companyId || undefined),
+    enabled: Boolean(companyId),
   });
   const { data, isLoading, isError } = query;
   const listState = useListState(query, (data ?? []).length === 0);
@@ -97,6 +102,13 @@ export function AccountTypeCatalogPage() {
     <AccountingSubNavWrapper
       title="Account Type Catalog"
       subtitle="QBO-parity account type → detail-type taxonomy (read-only). Account types are universal; account instances are per-entity (see Chart of Accounts)."
+      actions={
+        <Link to="/lists/accounting/detail-types?create=1">
+          <Button size="sm" disabled={!companyId} data-testid="account-type-catalog-create-detail-type">
+            + Create
+          </Button>
+        </Link>
+      }
     >
       <Link
         to="/lists"
@@ -126,7 +138,9 @@ export function AccountTypeCatalogPage() {
         )}
       </div>
 
-      {isLoading ? (
+      {!companyId ? (
+        <p className="py-8 text-center text-sm text-gray-500">Select an operating company to view the account-type catalog.</p>
+      ) : isLoading ? (
         <p className="py-8 text-center text-sm text-gray-500">Loading…</p>
       ) : isError ? (
         <ListErrorState

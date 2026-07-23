@@ -215,7 +215,14 @@ export function DisputeQueuePage() {
         key: "driver_name",
         label: "Driver",
         sortable: true,
-        render: (row) => row.driver_name ?? row.driver_id.slice(0, 8),
+        render: (row) => (
+          <EntityLink
+            kind="driver"
+            id={row.driver_id}
+            label={row.driver_name ?? row.driver_id.slice(0, 8)}
+            data-testid="dispute-queue-driver-link"
+          />
+        ),
       },
       {
         key: "reason_code",
