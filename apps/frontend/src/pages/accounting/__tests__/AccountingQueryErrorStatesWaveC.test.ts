@@ -309,7 +309,11 @@ describe("Accounting Wave C query error behavior", () => {
 
     await clickScopedRefresh(/Failed to load open invoices for payment application/);
 
-    await waitFor(() => expect(accountingApi.listInvoices).toHaveBeenCalledTimes(invoiceCalls + 2));
+    // ONE listInvoices call per refetch: the open-invoice query is a single
+    // server-side has_balance=true fetch (it used to be a dual status=sent +
+    // status=partial Promise.all, which is what the old "+ 2" pinned).
+    await waitFor(() => expect(accountingApi.listInvoices).toHaveBeenCalledTimes(invoiceCalls + 1));
+    expect(vi.mocked(accountingApi.listInvoices).mock.calls.at(-1)?.[1]).toMatchObject({ has_balance: true });
     expect(accountingApi.getPayment).toHaveBeenCalledTimes(detailCalls);
   });
 
