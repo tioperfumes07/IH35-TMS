@@ -11,7 +11,12 @@ import { FieldError, fieldErrorClassname } from "../../../components/forms/Field
 import { FormErrorBanner } from "../../../components/forms/FormErrorBanner";
 import { useFormValidation } from "../../../components/forms/useFormValidation";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+import { Combobox } from "../../../components/Combobox";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { listCustomers } from "../../../api/mdata";
+import { listLoads } from "../../../api/loads";
+import { getCoaAccounts } from "../../../api/banking";
+import { addInvoiceLine, patchInvoice } from "../../../api/accounting";
 import { ApiError } from "../../../api/client";
 import { useAuth } from "../../../auth/useAuth";
 import { companyToday } from "../../../lib/businessDate";
@@ -23,12 +28,34 @@ type CreditLimitBlock = {
   can_override: boolean;
 };
 
-const invoiceModalSchema = z.object({
-  customer_id: z.string().min(1, "Customer is required").uuid("Customer is required"),
-  issue_date: z.string(),
-  due_date: z.string(),
-  notes: z.string(),
-});
+const INCOME_TYPES = ["Income", "OtherIncome"];
+const CARRIER_DEFAULT_INCOME_NAME = "Sales of Service Income";
+const LOAD_PICKER_LIMIT = 200;
+
+const invoiceModalSchema = z
+  .object({
+    customer_id: z.string().min(1, "Customer is required").uuid("Customer is required"),
+    issue_date: z.string(),
+    due_date: z.string(),
+    notes: z.string(),
+    income_account_id: z.string(),
+    line_description: z.string(),
+    line_amount_cents: z.number().int().min(0),
+    load_id: z.string(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.line_amount_cents > 0) {
+      if (!value.income_account_id.trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Income account is required when line amount is set", path: ["income_account_id"] });
+      }
+      if (!value.line_description.trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Line description is required when line amount is set", path: ["line_description"] });
+      }
+    }
+    if (value.load_id.trim() && value.line_amount_cents > 0 && !value.line_description.trim()) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Line description is required for load-linked revenue", path: ["line_description"] });
+    }
+  });
 
 type Props = {
   open: boolean;
@@ -56,6 +83,10 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
   const queryClient = useQueryClient();
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [referenceCustomerId, setReferenceCustomerId] = useState<string | null>(null);
+  const [loadId, setLoadId] = useState<string | null>(null);
+  const [incomeAccountId, setIncomeAccountId] = useState<string | null>(null);
+  const [lineDescription, setLineDescription] = useState("");
+  const [lineAmountCents, setLineAmountCents] = useState<number | null>(null);
   const [notes, setNotes] = useState("");
   const [issueDate, setIssueDate] = useState(companyToday());
   const [dueDate, setDueDate] = useState("");
@@ -70,6 +101,27 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
     enabled: Boolean(operatingCompanyId) && open,
     staleTime: 60_000,
   });
+
+  const loadsQuery = useQuery({
+    queryKey: ["invoice-type-modal", "loads", operatingCompanyId, customerId],
+    queryFn: () =>
+      listLoads({
+        operating_company_id: operatingCompanyId ? [operatingCompanyId] : undefined,
+        customer_id: customerId ?? undefined,
+        limit: LOAD_PICKER_LIMIT,
+        sort: "-pickup_date",
+      }),
+    enabled: Boolean(operatingCompanyId) && open,
+    staleTime: 60_000,
+  });
+
+  const accountsQuery = useQuery({
+    queryKey: ["invoice-type-modal", "income-accounts", operatingCompanyId],
+    queryFn: () => getCoaAccounts(operatingCompanyId),
+    enabled: Boolean(operatingCompanyId) && open,
+    staleTime: 60_000,
+  });
+
   const customerOptions = useMemo(
     () =>
       (customersQuery.data?.customers ?? [])
@@ -82,14 +134,44 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
     [customersQuery.data?.customers]
   );
 
+  const incomeAccountOptions = useMemo(
+    () =>
+      (accountsQuery.data?.accounts ?? [])
+        .filter((a) => a.account_type && INCOME_TYPES.includes(a.account_type))
+        .map((a) => ({
+          value: a.id,
+          label: a.account_number ? `${a.account_number} · ${a.account_name}` : a.account_name,
+          type: a.account_type ?? undefined,
+        })),
+    [accountsQuery.data?.accounts]
+  );
+
+  const loadOptions = useMemo(
+    () =>
+      (loadsQuery.data?.loads ?? []).map((load) => ({
+        value: load.id,
+        label: load.load_number ? `${load.load_number}${load.customer_name ? ` · ${load.customer_name}` : ""}` : load.id,
+      })),
+    [loadsQuery.data?.loads]
+  );
+
+  const loadsById = useMemo(
+    () => new Map((loadsQuery.data?.loads ?? []).map((load) => [load.id, load])),
+    [loadsQuery.data?.loads]
+  );
+
   const formSnapshot = useMemo(
     () => ({
       customer_id: customerId ?? "",
       issue_date: issueDate,
       due_date: dueDate,
       notes,
+      income_account_id: incomeAccountId ?? "",
+      line_description: lineDescription,
+      line_amount_cents: lineAmountCents ?? 0,
+      load_id: loadId ?? "",
     }),
-    [customerId, issueDate, dueDate, notes]
+    [customerId, issueDate, dueDate, notes, incomeAccountId, lineDescription, lineAmountCents, loadId]
   );
 
   const {
@@ -110,11 +192,26 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
           due_date: parsed.due_date || undefined,
           internal_notes: parsed.notes || undefined,
           customer_notes: parsed.notes || undefined,
-          // Option B: send the UploadZone draft id so the invoice route re-keys the rate-con/BOL onto the
-          // new invoice (otherwise it orphans).
           attachment_draft_id: draftAttachmentEntityId,
           override_credit_limit: overrideCreditLimit || undefined,
         });
+
+        const loadKey = parsed.load_id.trim() || null;
+        if (loadKey) {
+          await patchInvoice(created.id, operatingCompanyId, { source_load_id: loadKey });
+        }
+
+        if (parsed.line_amount_cents > 0) {
+          await addInvoiceLine(created.id, operatingCompanyId, {
+            line_type: loadKey ? "linehaul" : "other",
+            description: parsed.line_description.trim(),
+            quantity: 1,
+            unit_amount_cents: parsed.line_amount_cents,
+            source_load_id: loadKey ?? undefined,
+            account_id: parsed.income_account_id.trim() || undefined,
+          });
+        }
+
         onCreated(created.id);
         pushToast("Invoice created", "success");
       } catch (err) {
@@ -139,6 +236,10 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
     if (!open) return;
     setCustomerId(null);
     setReferenceCustomerId(null);
+    setLoadId(null);
+    setIncomeAccountId(null);
+    setLineDescription("");
+    setLineAmountCents(null);
     setNotes("");
     setIssueDate(companyToday());
     setDueDate("");
@@ -148,10 +249,31 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
     setDraftAttachmentEntityId(crypto.randomUUID());
   }, [open, resetInvoiceErrors]);
 
+  // Customer default income account (Option-B suggestion — editable, never silent).
+  useEffect(() => {
+    if (!open || !customerId || incomeAccountId) return;
+    const customer = customersById.get(customerId);
+    const defaultId = customer?.default_income_account_id;
+    if (defaultId && incomeAccountOptions.some((opt) => opt.value === defaultId)) {
+      setIncomeAccountId(defaultId);
+    }
+  }, [open, customerId, incomeAccountId, customersById, incomeAccountOptions]);
+
+  // Carrier default when no customer default is set.
+  useEffect(() => {
+    if (!open || incomeAccountId) return;
+    const accounts = accountsQuery.data?.accounts ?? [];
+    const dflt = accounts.find(
+      (a) => a.account_name === CARRIER_DEFAULT_INCOME_NAME && a.account_type && INCOME_TYPES.includes(a.account_type)
+    );
+    if (dflt) setIncomeAccountId((prev) => prev ?? dflt.id);
+  }, [open, incomeAccountId, accountsQuery.data?.accounts]);
+
   return (
     <ParityDrawer open={open} onClose={onClose} title={title} size="wide">
       <form
         className="space-y-3"
+        data-invoice-create-form="true"
         onSubmit={(event) => {
           event.preventDefault();
           void submitInvoiceCreate(formSnapshot);
@@ -166,6 +288,8 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
               onChange={(next) => {
                 clearInvoiceFieldError("customer_id");
                 setCustomerId(next);
+                setLoadId(null);
+                setIncomeAccountId(null);
                 const record = next ? customersById.get(next) : undefined;
                 if (next && record) {
                   setNotes((prev) => {
@@ -188,6 +312,35 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
               }}
             />
             <FieldError id="customer_id" message={invoiceFieldErrors.customer_id} />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-600">Load (optional)</label>
+            <Combobox
+              options={loadOptions}
+              value={loadId}
+              onChange={(next) => {
+                clearInvoiceFieldError("load_id");
+                setLoadId(next);
+                if (!next) return;
+                const load = loadsById.get(next);
+                if (load?.customer_id && load.customer_id !== customerId) {
+                  setCustomerId(load.customer_id);
+                  clearInvoiceFieldError("customer_id");
+                }
+                if (load?.load_number && !lineDescription.trim()) {
+                  setLineDescription(`Linehaul · Load ${load.load_number}`);
+                }
+                const rateCents = Number(load?.rate_total_cents ?? 0);
+                if (rateCents > 0 && (lineAmountCents == null || lineAmountCents === 0)) {
+                  setLineAmountCents(rateCents);
+                }
+              }}
+              placeholder={customerId ? "Link load (optional)…" : "Select customer first…"}
+              loading={loadsQuery.isLoading}
+              disabled={!operatingCompanyId}
+              allowClear
+            />
+            <FieldError id="load_id" message={invoiceFieldErrors.load_id} />
           </div>
           <div className="space-y-1 md:col-span-2">
             <label className="text-xs font-semibold text-slate-600">Customer reference (appends to Notes)</label>
@@ -212,8 +365,6 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
             />
           </div>
           <label className="text-xs font-semibold text-slate-600">
-            {/* QBO-parity: "Invoice date" per B8 §3 header set; shared DatePicker replaces the raw
-                native date input — same "YYYY-MM-DD" value, no payload change. */}
             Invoice date
             <DatePicker
               data-testid="issue_date"
@@ -238,6 +389,55 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
               }}
             />
             <FieldError id="due_date" message={invoiceFieldErrors.due_date} />
+          </label>
+          <div className="space-y-1 md:col-span-2">
+            <label className="text-xs font-semibold text-slate-600">
+              Income account *
+              <span className="ml-1 font-normal text-slate-400">(required when line amount is set)</span>
+            </label>
+            <ReferenceSelect
+              value={incomeAccountId}
+              onChange={(next) => {
+                clearInvoiceFieldError("income_account_id");
+                setIncomeAccountId(next);
+              }}
+              options={incomeAccountOptions}
+              createKind="account"
+              operatingCompanyId={operatingCompanyId}
+              placeholder="Select income account…"
+              disabled={!operatingCompanyId || accountsQuery.isLoading}
+              onOptionCreated={() => {
+                void queryClient.invalidateQueries({ queryKey: ["invoice-type-modal", "income-accounts", operatingCompanyId] });
+              }}
+            />
+            <FieldError id="income_account_id" message={invoiceFieldErrors.income_account_id} />
+          </div>
+          <label className="text-xs font-semibold text-slate-600 md:col-span-2">
+            Line description
+            <input
+              data-field="line_description"
+              className={fieldErrorClassname(Boolean(invoiceFieldErrors.line_description), "mt-1 h-9 w-full rounded-sm border px-2 text-sm")}
+              value={lineDescription}
+              placeholder="e.g. Linehaul · Load L-12047"
+              onChange={(event) => {
+                clearInvoiceFieldError("line_description");
+                setLineDescription(event.target.value);
+              }}
+            />
+            <FieldError id="line_description" message={invoiceFieldErrors.line_description} />
+          </label>
+          <label className="text-xs font-semibold text-slate-600">
+            Line amount (USD)
+            <MoneyInput
+              valueCents={lineAmountCents}
+              onChangeCents={(cents) => {
+                clearInvoiceFieldError("line_amount_cents");
+                setLineAmountCents(cents);
+              }}
+              ariaLabel="Line amount (USD)"
+              className="mt-1 w-full"
+            />
+            <FieldError id="line_amount_cents" message={invoiceFieldErrors.line_amount_cents} />
           </label>
           <label className="text-xs font-semibold text-slate-600 md:col-span-2">
             Notes
