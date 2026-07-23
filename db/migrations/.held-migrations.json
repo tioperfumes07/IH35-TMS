@@ -339,6 +339,10 @@
     {
       "file": "202607770000_drop_account_role_bindings_global_unique.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] Drop catalogs.account_role_bindings GLOBAL UNIQUE(role_key). Keep per-entity uq. Table 0 rows. Legacy retiring."
+    },
+    {
+      "file": "202607760000_escrow_forfeit_source_type_and_damage_recovery_designation.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] SAF-F01 escrow forfeit prereqs — (1) add 'forfeit' to accounting.escrow_postings.source_type CHECK (posting_type CHECK untouched; forfeit reuses 'adjustment'); (2) designate the existing 'damage_recovery' CoA role (already in the role CHECK) to QBO-1150040091 'Driver Accident Damages & Repairs' for TRANSP + USMCA (owner ruling 2026-07-23: forfeited escrow = recovery vs recorded loss, never income; reuse the existing account, mint none). Additive/idempotent: DROP-IF-EXISTS+ADD CHECK, INSERT ON CONFLICT DO NOTHING keyed to the partial unique uq_coa_roles_company_role_active. Posting stays dark until the owner applies this AND flips DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED (default OFF); the route fails loud otherwise. Verified vs Neon br-fancy-credit-akjnd07a (source_type CHECK, role CHECK already has damage_recovery, account exists, all escrow tables 0 rows). Run only on a Neon branch by Jorge, then ledger-backfill."
     }
   ]
 }
