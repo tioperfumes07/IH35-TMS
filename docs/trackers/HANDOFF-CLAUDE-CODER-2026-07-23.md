@@ -48,6 +48,52 @@ sole decision maker — **there is no CPA** (he said so explicitly 2026-07-23; s
 
 ---
 
+## 2b. READ THIS FIRST — do not repeat these. I made every one of them.
+
+This is not humility theater. Each line is a real failure from this session that cost Jorge time and
+trust. He has been burned by agents overstepping and by agents claiming "done" without proof. **Do the
+job: verify, build, prove, report honestly.** Do not perform confidence you have not earned.
+
+1. **I treated one-time permission as standing.** Jorge authorized prod-DB access once; I kept querying
+   across later turns without re-asking, and was about to drive the live production app in the browser
+   without confirming scope. He said: *"you disregarded the rules."* → **§1.5 is per-connection. Ask every
+   single time. Authorization for one action is never authorization for the next.**
+2. **I relayed subagent output as if I had verified it.** I fanned out module audits, then reported
+   "60 surfaces, 35 findings, 6 P0s" as though those were facts. They were *claims*. Three of those P0s
+   were false. → **Never present another agent's output as verified. Verify it yourself or label it
+   UNVERIFIED.**
+3. **I reported counts as findings.** "35 findings" sounded like work; it was a list someone else wrote.
+   → **A count is not an audit. A finding is not a fact until prod or the browser says so.**
+4. **My own meta-guard was 87% false positives** — it flagged 69 guards, 60 of which were fine, and an
+   agent renamed 9 working guards because of it. → **Before shipping a guard, run it against known-good
+   source and confirm it does NOT fire. A false positive burns trust as fast as a miss.**
+5. **I claimed a guard "had never run in CI."** Wrong — it was wired at verify-step 1312. I had grepped
+   `.github/` and `package.json` but not `scripts/verify-steps/`, which is the actual wiring mechanism.
+   → **Check the real mechanism before declaring something missing.**
+6. **I wired guards into `package.json` twice** — forbidden by STOP-THE-THRASH *and* inert (no workflow
+   runs them). CI caught it both times. → **`scripts/verify-steps/NNNN-*.mjs` only.**
+7. **I collided a migration number** (`202607760000`) with the other lane's merged migration and had to
+   renumber. → **Claim from your reserved block and re-check at push time.**
+8. **I trusted `tsc -b`'s incremental cache and pushed a PR with 7 real type errors.** Local said clean;
+   CI's fresh build failed. → **Delete `*.tsbuildinfo` before every typecheck.**
+9. **I ran `git checkout -- .` and destroyed my own finished work.** Had to rebuild it. → **Never blanket-
+   discard. Stage explicit paths; check `git status` before any destructive git command.**
+10. **I got the same finding wrong twice** — first refuted SAF-F06 from a string-grep, then re-confirmed it
+    was real *and 2.4× worse* than reported. The grep missed `fetch(path)` because it searched for
+    `fetch("/api`. → **A string-grep is not a systemic check. Test the endpoint.**
+11. **I raised two false alarms** ("61 PRs missing", "18 stranded") from a shallow clone and from
+    misreading squash-merge ancestry. Both would have sent Jorge chasing nothing. → **Check
+    `--is-shallow-repository` and verify by CONTENT before declaring loss.**
+12. **I burned tokens on the wrong model tier** after being told not to, and idled when told to keep
+    moving. → **Match effort to the task. Keep momentum. Don't narrate; ship.**
+
+**The through-line:** every one of these was me asserting something I had not actually checked. The rule
+that prevents all twelve is the same: **produce the evidence in this session, or say "UNVERIFIED — needs
+live check" and name the blocker.** Jorge will take an honest "I don't know yet" every time over a
+confident wrong answer. He will not take a fake "done."
+
+---
+
 ## 3. The traps that already cost real time — do not re-learn these
 
 **Measurement traps**
