@@ -64,18 +64,29 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
     return Math.max(0, Number(bill.amount_cents ?? 0) - Number(bill.paid_cents ?? 0));
   }, [bill]);
 
+  // Seed form only when the drawer opens on a bill — never when the accounts
+  // query refetches after Plaid (that wipe turned ACH/$500 into Check/full).
   useEffect(() => {
     if (!open || !bill) return;
     setPaymentDate(companyToday());
     setPaymentMethod("check");
     setAmountCents(remainingCents);
-    setFromBankAccountId(String(accountsQuery.data?.accounts?.[0]?.id ?? ""));
+    setFromBankAccountId("");
     setCheckNumber("");
     setReferenceNumber("");
     setMemo("");
     setError(null);
     setBankCreateOpen(false);
-  }, [open, bill, remainingCents, accountsQuery.data?.accounts]);
+  }, [open, bill, remainingCents]);
+
+  // Default "From bank" once accounts arrive, but never overwrite an explicit
+  // selection (including a freshly Plaid-created account).
+  useEffect(() => {
+    if (!open || !bill) return;
+    if (fromBankAccountId) return;
+    const firstId = accountsQuery.data?.accounts?.[0]?.id;
+    if (firstId) setFromBankAccountId(String(firstId));
+  }, [open, bill, fromBankAccountId, accountsQuery.data?.accounts]);
 
   const payAmountCents = amountCents ?? 0;
   const needsBankAccount =
@@ -305,10 +316,13 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
           <PlaidLink
             operatingCompanyId={operatingCompanyId}
             label="Connect via Plaid"
-            onSuccess={async () => {
-              const refreshed = await accountsQuery.refetch();
-              const nextId = String(refreshed.data?.accounts?.[0]?.id ?? "");
+            onSuccess={async (accounts) => {
+              // Use the Plaid-returned row — NOT accountsQuery[0]. /banking/accounts/all
+              // orders by display_order, display_name; a new Plaid row sets neither and
+              // sorts last, so [0] would keep paying Chase while the operator connected BOA.
+              const nextId = String(accounts[0]?.id ?? "");
               if (nextId) setFromBankAccountId(nextId);
+              await accountsQuery.refetch();
               setBankCreateOpen(false);
             }}
           />
