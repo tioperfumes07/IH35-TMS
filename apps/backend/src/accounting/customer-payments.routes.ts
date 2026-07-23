@@ -148,7 +148,7 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
       // Banking row — bridge via ledger_account_id. Never store a free-text bank slug.
       let depositedToAccountId: string | null = null;
       if (body.data.bank_account_id) {
-        const acctRes = await client.query<{ id: string; ledger_account_id: string | null }>(
+        const acctRes = await client.query(
           `
             SELECT id::text AS id, ledger_account_id::text AS ledger_account_id
             FROM banking.bank_accounts
@@ -158,13 +158,14 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
           `,
           [body.data.bank_account_id, query.data.operating_company_id]
         );
-        if (!acctRes.rows[0]) return { code: 400 as const, error: "bank_account_not_found" };
+        const bankRow = acctRes.rows[0] as { id: string; ledger_account_id: string | null } | undefined;
+        if (!bankRow) return { code: 400 as const, error: "bank_account_not_found" };
         // BANK-ACCOUNT-HIDE: an account hidden for THIS entity can never receive a NEW payment
         // deposit (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
         if (!(await assertBankAccountUsable(client, body.data.bank_account_id, query.data.operating_company_id))) {
           return { code: 400 as const, error: "bank_account_not_found" };
         }
-        depositedToAccountId = acctRes.rows[0].ledger_account_id;
+        depositedToAccountId = bankRow.ledger_account_id;
         if (!depositedToAccountId) return { code: 400 as const, error: "bank_account_missing_ledger_gl" };
       } else {
         depositedToAccountId =
