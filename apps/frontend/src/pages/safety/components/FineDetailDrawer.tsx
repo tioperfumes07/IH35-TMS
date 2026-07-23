@@ -80,6 +80,16 @@ export function FineDetailDrawer({ open, fine, converting, onClose, onConvertToL
         <div className="mt-3 space-y-2 text-sm">
           <div><strong>Status:</strong> {String(fine.status ?? "open")}</div>
           <div><strong>Subject:</strong> {String(fine.subject_type ?? "—")}</div>
+          {fine.subject_driver_id ? (
+            <div>
+              <strong>Driver:</strong>{" "}
+              <EntityLink
+                kind="driver"
+                id={String(fine.subject_driver_id)}
+                label={(fine.subject_driver_name as string | undefined) ?? undefined}
+              />
+            </div>
+          ) : null}
           <div><strong>Violation:</strong> {String(fine.violation_description ?? "—")}</div>
           <div><strong>Authority:</strong> {String(fine.issued_by_authority ?? "—")}</div>
           <div><strong>Issued date:</strong> {formatDateUS(fine.issued_date)}</div>
@@ -123,7 +133,7 @@ export function FineDetailDrawer({ open, fine, converting, onClose, onConvertToL
       <FineConvertConfirmModal
         open={confirmOpen}
         amountCents={Number(fine.amount_cents ?? 0)}
-        driverLabel={String(fine.subject_driver_id ?? "driver")}
+        driverLabel={String(fine.subject_driver_name ?? fine.subject_driver_id ?? "driver")}
         loading={converting}
         onClose={() => setConfirmOpen(false)}
         onConfirm={() => {

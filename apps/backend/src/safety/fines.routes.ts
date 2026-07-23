@@ -102,34 +102,43 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
     const q = query.data;
 
     const rows = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
-      const filters = ["operating_company_id = $1", "deactivated_at IS NULL"];
+      // SAF-F18: qualify every filter with cf. — the driver-name LEFT JOIN below adds mdata.drivers,
+      // which shares operating_company_id / deactivated_at, so unqualified columns would be ambiguous.
+      const filters = ["cf.operating_company_id = $1", "cf.deactivated_at IS NULL"];
       const values: unknown[] = [q.operating_company_id];
       if (q.status) {
         values.push(q.status);
-        filters.push(`status = $${values.length}`);
+        filters.push(`cf.status = $${values.length}`);
       }
       if (q.subject_type) {
         values.push(q.subject_type);
-        filters.push(`subject_type = $${values.length}`);
+        filters.push(`cf.subject_type = $${values.length}`);
       }
       if (q.subject_driver_id) {
         values.push(q.subject_driver_id);
-        filters.push(`subject_driver_id = $${values.length}`);
+        filters.push(`cf.subject_driver_id = $${values.length}`);
       }
       if (q.issued_date_from) {
         values.push(q.issued_date_from);
-        filters.push(`issued_date >= $${values.length}::date`);
+        filters.push(`cf.issued_date >= $${values.length}::date`);
       }
       if (q.issued_date_to) {
         values.push(q.issued_date_to);
-        filters.push(`issued_date <= $${values.length}::date`);
+        filters.push(`cf.issued_date <= $${values.length}::date`);
       }
+      // SAF-F18: join the driver name server-side so the list + detail render a NAME, not a raw uuid.
+      // mdata.drivers RLS is identity-based; withCompanyScope runs under the Lucia user, so the join
+      // only sees drivers this user may access. The join is scoped by the fine's own entity too.
       const res = await client.query(
         `
-          SELECT *
-          FROM safety.civil_fines
+          SELECT cf.*,
+                 NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS subject_driver_name
+          FROM safety.civil_fines cf
+          LEFT JOIN mdata.drivers d
+            ON d.id = cf.subject_driver_id
+           AND d.operating_company_id = cf.operating_company_id
           WHERE ${filters.join(" AND ")}
-          ORDER BY issued_date DESC, created_at DESC
+          ORDER BY cf.issued_date DESC, cf.created_at DESC
           LIMIT 500
         `,
         values
@@ -149,7 +158,14 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
 
     const row = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
-        `SELECT * FROM safety.civil_fines WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        // SAF-F18: same driver-name join so the detail drawer shows a name, not the raw uuid.
+        `SELECT cf.*,
+                NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS subject_driver_name
+         FROM safety.civil_fines cf
+         LEFT JOIN mdata.drivers d
+           ON d.id = cf.subject_driver_id
+          AND d.operating_company_id = cf.operating_company_id
+         WHERE cf.id = $1 AND cf.operating_company_id = $2 LIMIT 1`,
         [params.data.id, query.data.operating_company_id]
       );
       return res.rows[0] ?? null;
