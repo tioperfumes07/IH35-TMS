@@ -48,12 +48,29 @@ function selftestBody(source) {
   return source.slice(m.index, i);
 }
 
+/** Names of functions/consts defined at the top level of this guard file. */
+function declaredFunctionNames(source) {
+  const names = new Set();
+  for (const m of source.matchAll(/^\s*(?:export\s+)?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)/gm)) names.add(m[1]);
+  for (const m of source.matchAll(/^\s*(?:export\s+)?const\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?\(/gm)) names.add(m[1]);
+  names.delete("selftest");
+  return names;
+}
+
 export function classify(source) {
   if (!source.includes("--selftest")) return { hasSelftest: false };
   const body = selftestBody(source);
   if (!body) return { hasSelftest: true, inert: false, fakeGreen: false };
 
-  const callsAssertion = /\b(assert\w*|check\w*|run\w*)\s*\(/.test(body);
+  // NAME-AGNOSTIC (fixed 2026-07-23): the first version only recognised assert*/check*/run*, so
+  // guards whose entrypoint is scan(), evaluate(), computeFailures(), findUncastJoins() etc. were
+  // reported inert even though they genuinely exercised the assertion — a false positive that
+  // caused 9 needless renames in PR #3319. What actually matters is that the selftest calls the
+  // guard's OWN logic, whatever it is named, so derive the names from the file itself.
+  const declared = declaredFunctionNames(source);
+  const callsAssertion =
+    /\b(assert\w*|check\w*|run\w*)\s*\(/.test(body) ||
+    [...declared].some((n) => new RegExp(`\\b${n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\(`).test(body));
   const readsRepo = /\bread\s*\(|readFileSync\s*\(/.test(body);
   // "Can exit non-zero" includes delegating to a fail()/die()/bail() helper or throwing — not just a
   // literal process.exit(1). verify-live-audit-reproducible.mjs calls fail(errors), which exits 1;
