@@ -17,10 +17,35 @@ const createLineBodySchema = z.object({
   quantity: z.coerce.number().positive().default(1),
   unit_amount_cents: z.coerce.number().int().min(0),
   source_load_id: z.string().uuid().optional(),
+  /** Explicit income CoA — when set, must be a postable Income account for the operating company (never invented server-side). */
+  account_id: z.string().uuid().optional(),
   qbo_class_snapshot: z.string().trim().max(120).optional(),
   qbo_item_id: z.string().trim().max(120).optional(),
   display_order: z.coerce.number().int().min(0).optional(),
 });
+
+async function assertExplicitIncomeAccount(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> },
+  operatingCompanyId: string,
+  accountId: string
+) {
+  const res = await client.query(
+    `
+      SELECT id
+      FROM catalogs.accounts
+      WHERE id = $1
+        AND operating_company_id = $2
+        AND deactivated_at IS NULL
+        AND is_postable = true
+        AND account_type IN ('Income', 'OtherIncome')
+      LIMIT 1
+    `,
+    [accountId, operatingCompanyId]
+  );
+  if (!res.rows[0]) {
+    throw Object.assign(new Error("invoice_line_income_account_invalid"), { code: "invoice_line_income_account_invalid" });
+  }
+}
 
 const patchLineBodySchema = z
   .object({
@@ -67,9 +92,22 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
         const guard = await ensureDraftInvoice(client, params.data.id, query.data.operating_company_id);
         if (!guard.ok) return guard;
         const lineTotal = Math.round(body.data.quantity * body.data.unit_amount_cents);
-        const revenueResolution = await resolveInvoiceLineRevenueAccountId(query.data.operating_company_id, {
-          line_type: body.data.line_type,
-        });
+        let revenueCode: string;
+        let accountId: string;
+        if (body.data.account_id) {
+          await assertExplicitIncomeAccount(client, query.data.operating_company_id, body.data.account_id);
+          const derived = await resolveInvoiceLineRevenueAccountId(query.data.operating_company_id, {
+            line_type: body.data.line_type,
+          });
+          revenueCode = derived.revenue_code;
+          accountId = body.data.account_id;
+        } else {
+          const revenueResolution = await resolveInvoiceLineRevenueAccountId(query.data.operating_company_id, {
+            line_type: body.data.line_type,
+          });
+          revenueCode = revenueResolution.revenue_code;
+          accountId = revenueResolution.account_id;
+        }
         const rowRes = await client.query(
           `
             INSERT INTO accounting.invoice_lines (
@@ -101,8 +139,8 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
             params.data.id,
             body.data.source_load_id ?? null,
             body.data.line_type,
-            revenueResolution.revenue_code,
-            revenueResolution.account_id,
+            revenueCode,
+            accountId,
             body.data.description,
             body.data.quantity,
             body.data.unit_amount_cents,
@@ -141,6 +179,9 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
     } catch (error) {
       if (error instanceof ExpenseCategoryMapResolutionError) {
         return reply.code(409).send({ error: "invoice_line_revenue_account_mapping_missing" });
+      }
+      if ((error as { code?: string }).code === "invoice_line_income_account_invalid") {
+        return reply.code(422).send({ error: "invoice_line_income_account_invalid" });
       }
       throw error;
     }

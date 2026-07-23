@@ -384,6 +384,7 @@ export function patchInvoice(id: string, operatingCompanyId: string, payload: Pa
   ar_email_snapshot: string | null;
   ar_phone_snapshot: string | null;
   currency_code: "USD" | "MXN";
+  source_load_id: string | null;
 }>) {
   return apiRequest<Invoice>(withCompany(`/api/v1/accounting/invoices/${id}`, operatingCompanyId), { method: "PATCH", body: payload });
 }
@@ -408,6 +409,7 @@ export function addInvoiceLine(
     quantity: number;
     unit_amount_cents: number;
     source_load_id?: string;
+    account_id?: string;
     qbo_class_snapshot?: string;
     qbo_item_id?: string;
     display_order?: number;
