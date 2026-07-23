@@ -12,6 +12,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { companyToday } from "../../lib/businessDate";
+import { apAgingBillsListHref } from "../reports/agingDrillThrough";
 
 type ApAgingView = "by_vendor" | "by_type";
 
@@ -93,7 +94,7 @@ const VENDOR_COLUMNS: Array<ParityColumn<ApAgingVendor>> = [
       v.vendor_id ? (
         <span className="inline-flex flex-col gap-0.5">
           <Link to={`/vendors/${v.vendor_id}`} className="font-medium text-slate-700 hover:underline">{v.vendor_name}</Link>
-          <Link to={`/accounting/bills?vendor_id=${v.vendor_id}&status=unpaid`} className="text-[10px] font-medium text-slate-500 hover:underline">
+          <Link to={apAgingBillsListHref(v.vendor_id)} className="text-[10px] font-medium text-slate-500 hover:underline">
             Open bills
           </Link>
         </span>
@@ -438,7 +439,7 @@ function GroupBlock({ group, rows, subtotal, open, onToggle }: { group: ApAgingD
                 {v.vendor_id ? (
                   <span className="inline-flex flex-col gap-0.5">
                     <Link to={`/vendors/${v.vendor_id}`} className="text-slate-700 hover:underline">{v.vendor_name}</Link>
-                    <Link to={`/accounting/bills?vendor_id=${v.vendor_id}&status=unpaid`} className="text-[10px] font-medium text-slate-500 hover:underline">
+                    <Link to={apAgingBillsListHref(v.vendor_id)} className="text-[10px] font-medium text-slate-500 hover:underline">
                       Open bills
                     </Link>
                   </span>

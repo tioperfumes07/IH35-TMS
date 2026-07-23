@@ -57,6 +57,8 @@ export function TwoSectionLineEditor({
   const [quickCreateTarget, setQuickCreateTarget] = useState<{ kind: QuickCreateKind; lineId?: string; subId?: string } | null>(null);
   const [categoryFetchActive, setCategoryFetchActive] = useState(mode === "bill");
   const [itemFetchActive, setItemFetchActive] = useState(mode === "bill");
+  /** Optimistic CoA rows so a just-created category appears before refetch completes. */
+  const [createdCategoryOptions, setCreatedCategoryOptions] = useState<CostContextOption[]>([]);
 
   const accountingCategoriesQuery = useAccountingCategoriesQuery({
     operatingCompanyId,
@@ -109,7 +111,14 @@ export function TwoSectionLineEditor({
       id: String(account.id ?? ""),
       label: `${account.account_number ?? ""} · ${account.account_name ?? ""}`.replace(/^ · /, "").trim(),
     }));
-    if (fromCoa.length > 0) return fromCoa;
+    const merged = new Map<string, CostContextOption>();
+    for (const row of fromCoa) {
+      if (row.id) merged.set(row.id, row);
+    }
+    for (const row of createdCategoryOptions) {
+      if (row.id) merged.set(row.id, row);
+    }
+    if (merged.size > 0) return Array.from(merged.values());
     // FALLBACKS (only if the COA query hasn't resolved): accounting-categories, then cost-context.
     const fromAccounting = (accountingCategoriesQuery.data ?? []).map((entry) => ({
       id: String(entry.id ?? ""),
@@ -120,7 +129,12 @@ export function TwoSectionLineEditor({
       id: String(entry.id ?? ""),
       label: String(entry.name ?? ""),
     }));
-  }, [coaAccountsQuery.data, accountingCategoriesQuery.data, costContextQuery.data?.expense_categories]);
+  }, [
+    coaAccountsQuery.data,
+    accountingCategoriesQuery.data,
+    costContextQuery.data?.expense_categories,
+    createdCategoryOptions,
+  ]);
   const itemOptions = useMemo<CostContextOption[]>(() => {
     const fromAccounting = (accountingItemsQuery.data ?? []).map((entry) => ({
       id: String(entry.id ?? ""),
@@ -213,6 +227,14 @@ export function TwoSectionLineEditor({
         itemOptions={itemOptions}
         partOptions={partOptions}
         locationOptions={locationOptions}
+        operatingCompanyId={operatingCompanyId || undefined}
+        onCategoryOptionCreated={(_lineId, opt) => {
+          setCreatedCategoryOptions((prev) => {
+            if (prev.some((row) => row.id === opt.id)) return prev;
+            return [...prev, { id: opt.id, label: opt.label }];
+          });
+          void coaAccountsQuery.refetch();
+        }}
         onQuickCreateCategory={(lineId) => setQuickCreateTarget({ kind: "category", lineId })}
         onQuickCreateItem={(lineId) => setQuickCreateTarget({ kind: "item", lineId })}
         onQuickCreatePart={(lineId, subId) => setQuickCreateTarget({ kind: "part", lineId, subId })}
@@ -233,6 +255,11 @@ export function TwoSectionLineEditor({
           onCreated={(created) => {
             if (quickCreateTarget.kind === "category" && quickCreateTarget.lineId) {
               updateLines(lines.map((line) => (line.id === quickCreateTarget.lineId ? { ...line, expense_category_uuid: created.id } : line)));
+              setCreatedCategoryOptions((prev) => {
+                if (prev.some((row) => row.id === created.id)) return prev;
+                return [...prev, { id: created.id, label: created.label }];
+              });
+              void coaAccountsQuery.refetch();
             }
             if (quickCreateTarget.kind === "item" && quickCreateTarget.lineId) {
               updateLines(lines.map((line) => (line.id === quickCreateTarget.lineId ? { ...line, service_item_uuid: created.id } : line)));
