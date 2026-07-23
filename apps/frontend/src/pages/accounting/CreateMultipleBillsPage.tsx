@@ -2,8 +2,8 @@ import { useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createVendorBill } from "../../api/accounting";
-import { getCoaAccounts } from "../../api/banking";
-import { listVendors } from "../../api/mdata";
+import { listCatalogAccounts } from "../../api/catalog-accounts";
+import { listDrivers, listUnits, listVendors } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
@@ -11,8 +11,12 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { coaAccountReferenceOption, vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
+import { Combobox } from "../../components/Combobox";
+import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
+import { CreateUnitModal } from "../../components/fleet/CreateUnitModal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { dueDateFromBillTerms } from "../../components/accounting/vendorBillDueDate";
 
 type SeedDraft = {
   bank_transaction_id?: string;
@@ -27,10 +31,15 @@ type BillDraftRow = {
   vendor_id: string;
   bill_date: string;
   due_date: string;
+  due_date_touched: boolean;
+  terms: string;
   bill_number: string;
-  amount: number | null; // M-1: dollar number (was a dollars-string); amount_cents = round(amount*100) byte-for-byte
+  amount: number | null;
   memo: string;
   coa_account_id: string;
+  expense_account_id: string;
+  unit_id: string;
+  driver_id: string;
 };
 
 function centsToDollars(cents: number): number | null {
@@ -39,16 +48,23 @@ function centsToDollars(cents: number): number | null {
 }
 
 function rowFromSeed(seed: SeedDraft, index: number): BillDraftRow {
+  const billDate = seed.transaction_date ?? "";
+  const terms = "net_30";
   return {
     id: `seed-${index}-${seed.bank_transaction_id ?? "txn"}`,
     bank_transaction_id: seed.bank_transaction_id ?? "",
     vendor_id: "",
-    bill_date: seed.transaction_date ?? "",
-    due_date: "",
+    bill_date: billDate,
+    due_date: billDate ? dueDateFromBillTerms(billDate, terms) : "",
+    due_date_touched: false,
+    terms,
     bill_number: "",
     amount: centsToDollars(Math.abs(Number(seed.amount_cents) || 0)),
     memo: seed.description ?? "",
     coa_account_id: "",
+    expense_account_id: "",
+    unit_id: "",
+    driver_id: "",
   };
 }
 
@@ -59,10 +75,15 @@ function emptyRow(): BillDraftRow {
     vendor_id: "",
     bill_date: "",
     due_date: "",
+    due_date_touched: false,
+    terms: "net_30",
     bill_number: "",
     amount: null,
     memo: "",
     coa_account_id: "",
+    expense_account_id: "",
+    unit_id: "",
+    driver_id: "",
   };
 }
 
@@ -80,6 +101,8 @@ export function CreateMultipleBillsPage() {
   const seeds = ((location.state as { seeds?: SeedDraft[] } | null)?.seeds ?? []).filter(Boolean);
   const [rows, setRows] = useState<BillDraftRow[]>(() => (seeds.length > 0 ? seeds.map(rowFromSeed) : [emptyRow()]));
   const [lastResult, setLastResult] = useState<CreateResult | null>(null);
+  const [driverCreateRowId, setDriverCreateRowId] = useState<string | null>(null);
+  const [unitCreateRowId, setUnitCreateRowId] = useState<string | null>(null);
 
   const vendorsQuery = useQuery({
     queryKey: ["multi-bills", "vendors", companyId],
@@ -89,13 +112,86 @@ export function CreateMultipleBillsPage() {
 
   const coaQuery = useQuery({
     queryKey: ["multi-bills", "coa", companyId],
-    queryFn: () => getCoaAccounts(companyId),
+    // Entity-scoped CoA (never the user's default-company chart). listCatalogAccounts (not
+    // getCoaAccounts) because its row shape carries is_postable / account_subtype — both filters
+    // below need them, and getCoaAccounts's narrower row type does not expose is_postable.
+    queryFn: () => listCatalogAccounts({ status: "active", operating_company_id: companyId }),
+    enabled: Boolean(companyId),
+  });
+
+  const unitsQuery = useQuery({
+    queryKey: ["multi-bills", "units", companyId],
+    queryFn: () => listUnits({ status: "Active", operating_company_id: companyId, limit: 500 }),
+    enabled: Boolean(companyId),
+  });
+
+  const driversQuery = useQuery({
+    queryKey: ["multi-bills", "drivers", companyId],
+    queryFn: () => listDrivers({ status: "Active", operating_company_id: companyId, limit: 200 }),
     enabled: Boolean(companyId),
   });
 
   const vendorOptions = useMemo(
     () => (vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption),
     [vendorsQuery.data?.vendors]
+  );
+
+  const unitOptions = useMemo(
+    () =>
+      ((unitsQuery.data?.units ?? []) as Array<Record<string, unknown>>).map((unit) => ({
+        value: String(unit.id ?? ""),
+        label: String(unit.unit_number ?? unit.display_id ?? unit.id ?? ""),
+      })),
+    [unitsQuery.data?.units]
+  );
+
+  const driverOptions = useMemo(
+    () =>
+      (driversQuery.data?.drivers ?? []).map((driver) => ({
+        value: driver.id,
+        label: [driver.first_name, driver.last_name].filter(Boolean).join(" ").trim() || driver.id,
+      })),
+    [driversQuery.data?.drivers]
+  );
+
+  // Bill HEADER A/P account (accounting.bills.coa_account_id) — the credit side of the bill.
+  // is_postable is REQUIRED: without it a non-postable Liability HEADER (e.g. the "Driver Escrow"
+  // parent that driver-subaccount-provision creates with is_postable=false) is selectable and gets
+  // persisted as the bill's A/P account. Same filter shape as VendorBillForm's apAccountOptions.
+  const apAccountOptions = useMemo(
+    () =>
+      (coaQuery.data?.accounts ?? [])
+        .filter((acct) => {
+          if (!acct.is_postable) return false;
+          if (acct.deactivated_at) return false;
+          const type = String(acct.account_type ?? "");
+          const subtype = String(acct.account_subtype ?? "").toLowerCase();
+          const name = String(acct.account_name ?? "").toLowerCase();
+          return (
+            type === "Liability" ||
+            subtype.includes("payable") ||
+            name.includes("accounts payable") ||
+            name.includes("a/p")
+          );
+        })
+        .map(coaAccountReferenceOption),
+    [coaQuery.data?.accounts]
+  );
+
+  // Bill LINE account (bill_lines.account_id) — the DEBIT side. posting-engine buildBillLines DEBITs
+  // this and CREDITs the ap_control role account, so this MUST be an expense/COGS account, never the
+  // A/P header account (that produced a self-cancelling DR A/P / CR A/P entry with no P&L impact).
+  const expenseAccountOptions = useMemo(
+    () =>
+      (coaQuery.data?.accounts ?? [])
+        .filter((acct) => {
+          if (!acct.is_postable) return false;
+          if (acct.deactivated_at) return false;
+          const type = String(acct.account_type ?? "");
+          return type === "Expense" || type === "CostOfGoodsSold" || type === "OtherExpense";
+        })
+        .map(coaAccountReferenceOption),
+    [coaQuery.data?.accounts]
   );
 
   const createMutation = useMutation({
@@ -109,21 +205,38 @@ export function CreateMultipleBillsPage() {
           failed.push({ rowId: row.id, reason: "Missing vendor, bill date, or positive amount" });
           continue;
         }
+        if (!row.coa_account_id) {
+          failed.push({ rowId: row.id, reason: "Missing A/P account" });
+          continue;
+        }
+        if (!row.expense_account_id) {
+          failed.push({ rowId: row.id, reason: "Missing expense account" });
+          continue;
+        }
+        if (row.expense_account_id === row.coa_account_id) {
+          failed.push({ rowId: row.id, reason: "Expense account must differ from A/P account" });
+          continue;
+        }
+        const memoParts = [row.memo.trim()];
+        if (row.driver_id) {
+          const driverLabel = driverOptions.find((d) => d.value === row.driver_id)?.label;
+          memoParts.push(`driver:${driverLabel || row.driver_id}`);
+        }
+        if (row.terms) memoParts.push(`terms:${row.terms}`);
         try {
-          // LAW-E2E #3167: createVendorBill requires lines — never send header-only.
-          // Bulk grid is one amount (+ optional COA) per row → one Section A line.
           await createVendorBill(companyId, {
             vendor_id: row.vendor_id,
             bill_number: row.bill_number.trim() || undefined,
             bill_date: row.bill_date,
             due_date: row.due_date || undefined,
             amount_cents: amountCents,
-            memo: row.memo.trim() || undefined,
-            coa_account_id: row.coa_account_id || undefined,
+            memo: memoParts.filter(Boolean).join(" · ") || undefined,
+            coa_account_id: row.coa_account_id,
+            unit_id: row.unit_id || undefined,
             lines: [
               {
                 amount_cents: amountCents,
-                account_id: row.coa_account_id || undefined,
+                account_id: row.expense_account_id,
                 description: row.memo.trim() || undefined,
                 section: "A",
               },
@@ -144,8 +257,7 @@ export function CreateMultipleBillsPage() {
       if (result.ok > 0) pushToast(`Created ${result.ok} bill(s)`, "success");
       if (result.failed.length > 0) pushToast(`${result.failed.length} row(s) failed`, "error");
     },
-    onError: (error) =>
-      pushToast(String((error as Error)?.message ?? "Failed to create bills"), "error"),
+    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to create bills"), "error"),
   });
 
   const totalUsd = useMemo(
@@ -158,13 +270,24 @@ export function CreateMultipleBillsPage() {
   );
 
   const updateRow = (rowId: string, patch: Partial<BillDraftRow>) => {
-    setRows((current) => current.map((row) => (row.id === rowId ? { ...row, ...patch } : row)));
+    setRows((current) =>
+      current.map((row) => {
+        if (row.id !== rowId) return row;
+        const next = { ...row, ...patch };
+        if (!next.due_date_touched && next.bill_date && next.terms) {
+          next.due_date = dueDateFromBillTerms(next.bill_date, next.terms);
+        }
+        return next;
+      })
+    );
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-testid="create-multiple-bills-page">
       <PageHeader title="Create multiple bills" subtitle="Bulk vendor bill drafting from selected bank transactions." />
-      {!companyId ? <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800">Select an operating company.</p> : null}
+      {!companyId ? (
+        <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800">Select an operating company.</p>
+      ) : null}
       {vendorsQuery.isError ? (
         <ListErrorBanner
           message={`Failed to load vendors for bill rows: ${(vendorsQuery.error as Error)?.message ?? "Request failed"}`}
@@ -175,6 +298,18 @@ export function CreateMultipleBillsPage() {
         <ListErrorBanner
           message={`Failed to load A/P accounts for bill rows: ${(coaQuery.error as Error)?.message ?? "Request failed"}`}
           onRetry={() => void coaQuery.refetch()}
+        />
+      ) : null}
+      {driversQuery.isError ? (
+        <ListErrorBanner
+          message={`Failed to load drivers for bill rows: ${(driversQuery.error as Error)?.message ?? "Request failed"}`}
+          onRetry={() => void driversQuery.refetch()}
+        />
+      ) : null}
+      {unitsQuery.isError ? (
+        <ListErrorBanner
+          message={`Failed to load units for bill rows: ${(unitsQuery.error as Error)?.message ?? "Request failed"}`}
+          onRetry={() => void unitsQuery.refetch()}
         />
       ) : null}
 
@@ -198,10 +333,14 @@ export function CreateMultipleBillsPage() {
               <th className="px-2 py-2">Source tx</th>
               <th className="px-2 py-2">Vendor</th>
               <th className="px-2 py-2">Bill date</th>
+              <th className="px-2 py-2">Terms</th>
               <th className="px-2 py-2">Due date</th>
               <th className="px-2 py-2">Bill #</th>
               <th className="px-2 py-2 text-right">Amount (USD)</th>
               <th className="px-2 py-2">A/P account</th>
+              <th className="px-2 py-2">Expense account</th>
+              <th className="px-2 py-2">Unit</th>
+              <th className="px-2 py-2">Driver</th>
               <th className="px-2 py-2">Memo</th>
               <th className="px-2 py-2"> </th>
             </tr>
@@ -213,7 +352,6 @@ export function CreateMultipleBillsPage() {
                   {row.bank_transaction_id ? row.bank_transaction_id.slice(0, 8) : "manual"}
                 </td>
                 <td className="px-2 py-1.5">
-                  {/* A3: shared ReferenceSelect gives the vendor picker the inline "+ Add new vendor" row. */}
                   <div className="min-w-[180px]">
                     <ReferenceSelect
                       value={row.vendor_id || null}
@@ -230,13 +368,33 @@ export function CreateMultipleBillsPage() {
                   <DatePicker className="w-28" value={row.bill_date} onChange={(next) => updateRow(row.id, { bill_date: next })} />
                 </td>
                 <td className="px-2 py-1.5">
-                  <DatePicker className="w-28" value={row.due_date} onChange={(next) => updateRow(row.id, { due_date: next })} />
+                  <select
+                    className="h-8 w-24 rounded-sm border border-gray-300 bg-white px-1 text-xs"
+                    value={row.terms}
+                    onChange={(event) => updateRow(row.id, { terms: event.target.value })}
+                    aria-label="Terms"
+                  >
+                    <option value="net_30">Net 30</option>
+                    <option value="net_15">Net 15</option>
+                    <option value="net_7">Net 7</option>
+                    <option value="due_on_receipt">Due on receipt</option>
+                  </select>
                 </td>
                 <td className="px-2 py-1.5">
-                  <input className="h-8 rounded-sm border border-gray-300 px-2" value={row.bill_number} onChange={(event) => updateRow(row.id, { bill_number: event.target.value })} />
+                  <DatePicker
+                    className="w-28"
+                    value={row.due_date}
+                    onChange={(next) => updateRow(row.id, { due_date: next, due_date_touched: true })}
+                  />
                 </td>
                 <td className="px-2 py-1.5">
-                  {/* M-1: dollars-mode QBO money entry; amount stays a DOLLAR number → amount_cents byte-for-byte. */}
+                  <input
+                    className="h-8 rounded-sm border border-gray-300 px-2"
+                    value={row.bill_number}
+                    onChange={(event) => updateRow(row.id, { bill_number: event.target.value })}
+                  />
+                </td>
+                <td className="px-2 py-1.5">
                   <MoneyInput
                     valueDollars={row.amount}
                     onChangeDollars={(d) => updateRow(row.id, { amount: d })}
@@ -245,21 +403,71 @@ export function CreateMultipleBillsPage() {
                   />
                 </td>
                 <td className="px-2 py-1.5">
-                  {/* D-CREATE-INLINE: A/P account uses createKind="account" (CoA Liability wizard),
-                      not createKind="category" (expense Category wizard). */}
-                  <ReferenceSelect
-                    value={row.coa_account_id || null}
-                    onChange={(next) => updateRow(row.id, { coa_account_id: next ?? "" })}
-                    options={(coaQuery.data?.accounts ?? []).map(coaAccountReferenceOption)}
-                    createKind="account"
-                    addNewLabel="+ Add new account"
-                    operatingCompanyId={companyId}
-                    placeholder="Optional"
-                    onOptionCreated={() => void coaQuery.refetch()}
-                  />
+                  <div className="min-w-[160px]">
+                    <ReferenceSelect
+                      value={row.coa_account_id || null}
+                      onChange={(next) => updateRow(row.id, { coa_account_id: next ?? "" })}
+                      options={apAccountOptions}
+                      createKind="account"
+                      addNewLabel="+ Add new account"
+                      operatingCompanyId={companyId}
+                      placeholder="A/P account *"
+                      onOptionCreated={() => void coaQuery.refetch()}
+                    />
+                  </div>
                 </td>
                 <td className="px-2 py-1.5">
-                  <input className="h-8 min-w-[220px] rounded-sm border border-gray-300 px-2" value={row.memo} onChange={(event) => updateRow(row.id, { memo: event.target.value })} />
+                  <div className="min-w-[160px]">
+                    <ReferenceSelect
+                      value={row.expense_account_id || null}
+                      onChange={(next) => updateRow(row.id, { expense_account_id: next ?? "" })}
+                      options={expenseAccountOptions}
+                      createKind="account"
+                      addNewLabel="+ Add new account"
+                      operatingCompanyId={companyId}
+                      placeholder="Expense account *"
+                      onOptionCreated={() => void coaQuery.refetch()}
+                    />
+                  </div>
+                </td>
+                <td className="px-2 py-1.5">
+                  <div className="min-w-[120px]">
+                    <Combobox
+                      options={unitOptions}
+                      value={row.unit_id || null}
+                      onChange={(next) => updateRow(row.id, { unit_id: next ?? "" })}
+                      placeholder="Select unit…"
+                      loading={unitsQuery.isLoading}
+                      allowClear
+                      allowAddNew={{
+                        label: "+ Create unit",
+                        onAdd: () => setUnitCreateRowId(row.id),
+                      }}
+                    />
+                  </div>
+                </td>
+                <td className="px-2 py-1.5">
+                  <div className="min-w-[140px]">
+                    <Combobox
+                      options={driverOptions}
+                      value={row.driver_id || null}
+                      onChange={(next) => updateRow(row.id, { driver_id: next ?? "" })}
+                      placeholder="Select driver…"
+                      loading={driversQuery.isLoading}
+                      allowClear
+                      allowAddNew={{
+                        label: "+ Create driver",
+                        onAdd: () => setDriverCreateRowId(row.id),
+                      }}
+                    />
+                  </div>
+                </td>
+                <td className="px-2 py-1.5">
+                  <input
+                    className="h-8 min-w-[180px] rounded-sm border border-gray-300 px-2"
+                    value={row.memo}
+                    onChange={(event) => updateRow(row.id, { memo: event.target.value })}
+                  />
                 </td>
                 <td className="px-2 py-1.5 text-right">
                   <button
@@ -279,16 +487,41 @@ export function CreateMultipleBillsPage() {
 
       {lastResult ? (
         <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
-          <p className="font-semibold text-gray-900">Last run: {lastResult.ok} created, {lastResult.failed.length} failed.</p>
+          <p className="font-semibold text-gray-900">
+            Last run: {lastResult.ok} created, {lastResult.failed.length} failed.
+          </p>
           {lastResult.failed.length > 0 ? (
             <ul className="mt-1 space-y-1 text-red-700">
               {lastResult.failed.map((failure) => (
-                <li key={`${failure.rowId}-${failure.reason}`}>{failure.rowId}: {failure.reason}</li>
+                <li key={`${failure.rowId}-${failure.reason}`}>
+                  {failure.reason}
+                </li>
               ))}
             </ul>
           ) : null}
         </div>
       ) : null}
+
+      <CreateDriverModal
+        open={driverCreateRowId !== null}
+        companyId={companyId}
+        onClose={() => setDriverCreateRowId(null)}
+        onCreated={(createdId) => {
+          if (driverCreateRowId) updateRow(driverCreateRowId, { driver_id: createdId });
+          setDriverCreateRowId(null);
+          void driversQuery.refetch();
+        }}
+      />
+      <CreateUnitModal
+        open={unitCreateRowId !== null}
+        operatingCompanyId={companyId}
+        onClose={() => setUnitCreateRowId(null)}
+        onCreated={(createdId) => {
+          if (unitCreateRowId) updateRow(unitCreateRowId, { unit_id: createdId });
+          setUnitCreateRowId(null);
+          void unitsQuery.refetch();
+        }}
+      />
     </div>
   );
 }

@@ -29,7 +29,7 @@ function read(rel) {
 }
 
 /** All assertions, as a pure function of the five sources. */
-export function computeFailures({ service, detailPage, api, manifest, entityLink }) {
+export function assertBillDetail({ service, detailPage, api, manifest, entityLink }) {
   const errors = [];
 
   if (!/export async function getBillDetail\(/.test(service)) {
@@ -119,7 +119,7 @@ export type BillDetail = { lines: BillDetailLine[] };`,
 function selftest() {
   const problems = [];
 
-  const good = computeFailures(goodFixture());
+  const good = assertBillDetail(goodFixture());
   if (good.length !== 0) problems.push(`good fixture should pass, got: ${good.join(" | ")}`);
 
   const cases = [
@@ -139,8 +139,13 @@ function selftest() {
 
   for (const [name, mutate, expectFragment] of cases) {
     const f = goodFixture();
+    const before = f[name];
     mutate(f);
-    const failures = computeFailures(f);
+    if (f[name] === before) {
+      problems.push(`planted regression "${expectFragment}" did not mutate the source — selftest is inert`);
+      continue;
+    }
+    const failures = assertBillDetail(f);
     if (!failures.some((x) => x.includes(expectFragment))) {
       problems.push(`planted regression in ${name} ("${expectFragment}") was NOT caught — assertion is ineffective`);
     }
@@ -155,7 +160,7 @@ function selftest() {
 }
 
 function main() {
-  const errors = computeFailures({
+  const errors = assertBillDetail({
     service: read("apps/backend/src/accounting/bills.service.ts"),
     detailPage: read("apps/frontend/src/pages/accounting/BillDetailPage.tsx"),
     api: read("apps/frontend/src/api/accounting.ts"),

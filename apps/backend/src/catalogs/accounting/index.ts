@@ -32,6 +32,7 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
       "'opening_balance_cents', t.opening_balance_cents",
       "'opening_balance_as_of', t.opening_balance_as_of",
       "'is_locked', t.is_locked",
+      "'is_billable_expense', t.is_billable_expense",
       "'qbo_account_id', t.qbo_account_id",
       "'qbo_account_qrn', t.qbo_account_qrn",
     ],
@@ -47,6 +48,9 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
           : Number(metadata.opening_balance_cents),
       opening_balance_as_of: (metadata.opening_balance_as_of as string | null | undefined) ?? null,
       is_locked: metadata.is_locked === undefined ? false : Boolean(metadata.is_locked),
+      // QBO parity "Use for billable expenses" (migration 202607750000). Selection/display only —
+      // this flag never auto-posts anything.
+      is_billable_expense: metadata.is_billable_expense === undefined ? false : Boolean(metadata.is_billable_expense),
       qbo_account_id: (metadata.qbo_account_id as string | null | undefined) ?? null,
       qbo_account_qrn: (metadata.qbo_account_qrn as string | null | undefined) ?? null,
     }),
@@ -63,6 +67,7 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
         ? { opening_balance_as_of: metadata.opening_balance_as_of as string | null }
         : {}),
       ...(metadata.is_locked !== undefined ? { is_locked: Boolean(metadata.is_locked) } : {}),
+      ...(metadata.is_billable_expense !== undefined ? { is_billable_expense: Boolean(metadata.is_billable_expense) } : {}),
       ...(metadata.qbo_account_id !== undefined ? { qbo_account_id: metadata.qbo_account_id as string | null } : {}),
       ...(metadata.qbo_account_qrn !== undefined ? { qbo_account_qrn: metadata.qbo_account_qrn as string | null } : {}),
     }),
