@@ -8,6 +8,7 @@ import { FineDetailDrawer } from "./components/FineDetailDrawer";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 type FineRow = Record<string, unknown>;
 
@@ -61,6 +62,22 @@ export function FinesPage({ operatingCompanyId }: Props) {
   const columns: Array<ParityColumn<FineRow>> = [
     { key: "issued_date", label: "Issued", sortable: true, render: (row) => formatDateUS(row.issued_date) },
     { key: "subject_type", label: "Subject", sortable: true, render: (row) => String(row.subject_type ?? "—") },
+    {
+      // SAF-F18: show the driver NAME (from the server-side join) as a drill-through link — was a raw
+      // subject_driver_id uuid, or nothing. Company-subject fines have no driver → dash.
+      key: "subject_driver_name",
+      label: "Driver",
+      render: (row) =>
+        row.subject_driver_id ? (
+          <EntityLink
+            kind="driver"
+            id={String(row.subject_driver_id)}
+            label={(row.subject_driver_name as string | undefined) ?? undefined}
+          />
+        ) : (
+          <span className="text-slate-400">—</span>
+        ),
+    },
     { key: "issued_by_authority", label: "Authority", render: (row) => String(row.issued_by_authority ?? "—") },
     { key: "violation_description", label: "Violation", render: (row) => String(row.violation_description ?? "—") },
     { key: "amount_cents", label: "Amount", render: (row) => `$${(Number(row.amount_cents ?? 0) / 100).toFixed(2)}` },
