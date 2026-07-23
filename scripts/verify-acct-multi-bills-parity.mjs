@@ -2,7 +2,8 @@
 /**
  * Guard: Create Multiple Bills grid parity with VendorBillForm (Accounting full-audit 10/22).
  * Proves: due-date helper, Terms + auto due per row, A/P createKind=account + required,
- * separate expense line account (≠ A/P header), entity-scoped driver/unit pickers, unit_id on create.
+ * separate expense line account (≠ A/P header), is_postable/deactivated_at filtering on both CoA
+ * pickers, entity-scoped driver/unit pickers, unit_id on create.
  *
  * Self-test: node scripts/verify-acct-multi-bills-parity.mjs --selftest
  */
@@ -62,6 +63,20 @@ function checkMultiBillsParity(files) {
   if (!page.includes("CostOfGoodsSold")) {
     violations.push("CreateMultipleBillsPage expense picker must include CostOfGoodsSold accounts");
   }
+  // Non-postable Liability HEADER accounts (e.g. the "Driver Escrow" parent, is_postable=false) must
+  // never reach either CoA picker. Requires the typed listCatalogAccounts row shape — getCoaAccounts
+  // does not expose is_postable, so filtering on it there is a silent no-op.
+  if (!page.includes("listCatalogAccounts")) {
+    violations.push("CreateMultipleBillsPage must load the CoA via listCatalogAccounts (carries is_postable)");
+  }
+  const postableGuards = page.match(/if \(!acct\.is_postable\) return false;/g) ?? [];
+  if (postableGuards.length < 2) {
+    violations.push("CreateMultipleBillsPage A/P and expense pickers must both filter on is_postable");
+  }
+  const deactivatedGuards = page.match(/if \(acct\.deactivated_at\) return false;/g) ?? [];
+  if (deactivatedGuards.length < 2) {
+    violations.push("CreateMultipleBillsPage A/P and expense pickers must both filter out deactivated_at");
+  }
   if (!page.includes("listDrivers")) violations.push("CreateMultipleBillsPage must load entity-scoped drivers");
   if (!page.includes("listUnits")) violations.push("CreateMultipleBillsPage must load entity-scoped units");
   if (!page.includes("unit_id")) violations.push("CreateMultipleBillsPage must pass unit_id to createVendorBill");
@@ -101,6 +116,11 @@ const goodFixture = [
       `Expense account *`,
       `Missing expense account`,
       `CostOfGoodsSold`,
+      `listCatalogAccounts`,
+      `if (!acct.is_postable) return false;`,
+      `if (acct.deactivated_at) return false;`,
+      `if (!acct.is_postable) return false;`,
+      `if (acct.deactivated_at) return false;`,
       `coa_account_id: row.coa_account_id`,
       `account_id: row.expense_account_id`,
       `listDrivers`,

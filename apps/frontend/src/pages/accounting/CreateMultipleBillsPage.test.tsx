@@ -24,14 +24,19 @@ vi.mock("../../api/mdata", () => ({
   }),
 }));
 
-vi.mock("../../api/banking", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../api/banking")>();
+// The page loads the CoA via listCatalogAccounts (not getCoaAccounts) because only that row shape
+// carries is_postable — the A/P + expense pickers both filter on it. "acc-ap-header" is the
+// non-postable Liability PARENT (e.g. the Driver Escrow header) that must never be selectable.
+vi.mock("../../api/catalog-accounts", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../api/catalog-accounts")>();
   return {
     ...actual,
-    getCoaAccounts: vi.fn().mockResolvedValue({
+    listCatalogAccounts: vi.fn().mockResolvedValue({
       accounts: [
-        { id: "acc-ap", account_number: "2000", account_name: "Accounts Payable", account_type: "Liability", is_postable: true, deactivated_at: null },
-        { id: "acc-exp", account_number: "6100", account_name: "Repairs Expense", account_type: "Expense", is_postable: true, deactivated_at: null },
+        { id: "acc-ap", account_number: "2000", account_name: "Accounts Payable", account_type: "Liability", account_subtype: "AccountsPayable", is_postable: true, deactivated_at: null },
+        { id: "acc-ap-header", account_number: "2900", account_name: "Driver Escrow", account_type: "Liability", account_subtype: null, is_postable: false, deactivated_at: null },
+        { id: "acc-exp", account_number: "6100", account_name: "Repairs Expense", account_type: "Expense", account_subtype: null, is_postable: true, deactivated_at: null },
+        { id: "acc-exp-off", account_number: "6199", account_name: "Retired Expense", account_type: "Expense", account_subtype: null, is_postable: true, deactivated_at: "2026-01-01T00:00:00.000Z" },
       ],
     }),
   };
@@ -173,7 +178,7 @@ describe("CreateMultipleBillsPage", () => {
     );
   });
 
-  it("does not create bill when expense account equals A/P account", async () => {
+  it("keeps the A/P header account out of the expense picker and blocks create without one", async () => {
     const user = userEvent.setup();
     vi.mocked(accountingApi.createVendorBill).mockClear();
     render(
@@ -203,14 +208,27 @@ describe("CreateMultipleBillsPage", () => {
     );
 
     await waitFor(() => expect(screen.getByTestId("create-multiple-bills-page")).toBeInTheDocument());
+    // Wait for the vendor + CoA queries to settle before selecting (otherwise the options are absent).
+    await waitFor(() => expect(screen.getByRole("option", { name: "Acme Repair" })).toBeInTheDocument());
+
+    const optionValues = (label: string) =>
+      Array.from((screen.getByLabelText(label) as HTMLSelectElement).options).map((o) => o.value);
+
+    // The bill LINE debits this account, so the A/P header account (and any Liability) must not be
+    // offered — that is what produced the self-cancelling DR A/P / CR A/P entry.
+    expect(optionValues("Expense account *")).not.toContain("acc-ap");
+    expect(optionValues("Expense account *")).toContain("acc-exp");
+    // Deactivated accounts are excluded from the expense picker.
+    expect(optionValues("Expense account *")).not.toContain("acc-exp-off");
+    // Non-postable Liability HEADER (Driver Escrow parent) must not be a selectable A/P account.
+    expect(optionValues("A/P account *")).not.toContain("acc-ap-header");
+    expect(optionValues("A/P account *")).toContain("acc-ap");
+
     await user.selectOptions(screen.getByLabelText("Select vendor…"), "ven-1");
     await user.selectOptions(screen.getByLabelText("A/P account *"), "acc-ap");
-    await user.selectOptions(screen.getByLabelText("Expense account *"), "acc-ap");
     await user.click(screen.getByRole("button", { name: /create bills/i }));
 
-    await waitFor(() =>
-      expect(screen.getByText(/expense account must differ from a\/p account/i)).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText(/missing expense account/i)).toBeInTheDocument());
     expect(accountingApi.createVendorBill).not.toHaveBeenCalled();
   });
 });

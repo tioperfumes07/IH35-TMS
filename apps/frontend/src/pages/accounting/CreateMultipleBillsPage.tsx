@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createVendorBill } from "../../api/accounting";
-import { getCoaAccounts } from "../../api/banking";
+import { listCatalogAccounts } from "../../api/catalog-accounts";
 import { listDrivers, listUnits, listVendors } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -112,7 +112,10 @@ export function CreateMultipleBillsPage() {
 
   const coaQuery = useQuery({
     queryKey: ["multi-bills", "coa", companyId],
-    queryFn: () => getCoaAccounts(companyId),
+    // Entity-scoped CoA (never the user's default-company chart). listCatalogAccounts (not
+    // getCoaAccounts) because its row shape carries is_postable / account_subtype — both filters
+    // below need them, and getCoaAccounts's narrower row type does not expose is_postable.
+    queryFn: () => listCatalogAccounts({ status: "active", operating_company_id: companyId }),
     enabled: Boolean(companyId),
   });
 
@@ -151,32 +154,41 @@ export function CreateMultipleBillsPage() {
     [driversQuery.data?.drivers]
   );
 
+  // Bill HEADER A/P account (accounting.bills.coa_account_id) — the credit side of the bill.
+  // is_postable is REQUIRED: without it a non-postable Liability HEADER (e.g. the "Driver Escrow"
+  // parent that driver-subaccount-provision creates with is_postable=false) is selectable and gets
+  // persisted as the bill's A/P account. Same filter shape as VendorBillForm's apAccountOptions.
   const apAccountOptions = useMemo(
     () =>
       (coaQuery.data?.accounts ?? [])
         .filter((acct) => {
+          if (!acct.is_postable) return false;
+          if (acct.deactivated_at) return false;
           const type = String(acct.account_type ?? "");
+          const subtype = String(acct.account_subtype ?? "").toLowerCase();
           const name = String(acct.account_name ?? "").toLowerCase();
           return (
-            acct.is_postable &&
-            !acct.deactivated_at &&
-            (type === "Liability" || name.includes("accounts payable") || name.includes("a/p"))
+            type === "Liability" ||
+            subtype.includes("payable") ||
+            name.includes("accounts payable") ||
+            name.includes("a/p")
           );
         })
         .map(coaAccountReferenceOption),
     [coaQuery.data?.accounts]
   );
 
+  // Bill LINE account (bill_lines.account_id) — the DEBIT side. posting-engine buildBillLines DEBITs
+  // this and CREDITs the ap_control role account, so this MUST be an expense/COGS account, never the
+  // A/P header account (that produced a self-cancelling DR A/P / CR A/P entry with no P&L impact).
   const expenseAccountOptions = useMemo(
     () =>
       (coaQuery.data?.accounts ?? [])
         .filter((acct) => {
+          if (!acct.is_postable) return false;
+          if (acct.deactivated_at) return false;
           const type = String(acct.account_type ?? "");
-          return (
-            acct.is_postable &&
-            !acct.deactivated_at &&
-            (type === "Expense" || type === "CostOfGoodsSold")
-          );
+          return type === "Expense" || type === "CostOfGoodsSold" || type === "OtherExpense";
         })
         .map(coaAccountReferenceOption),
     [coaQuery.data?.accounts]
