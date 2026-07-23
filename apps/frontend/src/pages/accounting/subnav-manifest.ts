@@ -142,6 +142,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   // More ▾ — audit / lineage / sync
   { label: "Audit trail", path: "/accounting/audit-trail", section: "more" },
   { label: "Posting lineage", path: "/accounting/posting-lineage", section: "more" },
+  { label: "Posting Templates", path: "/lists/accounting/posting-templates", section: "more" },
   { label: "QBO sync drift", path: "/accounting/qbo-sync", section: "more" },
 
   // More ▾ — catalogs / settings
