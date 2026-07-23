@@ -111,6 +111,7 @@ export function CoaRolesPage() {
               operatingCompanyId={companyId}
               placeholder="Select account…"
               disabled={!companyId}
+              loading={accountsQuery.isLoading}
               onOptionCreated={() => void accountsQuery.refetch()}
             />
           </div>

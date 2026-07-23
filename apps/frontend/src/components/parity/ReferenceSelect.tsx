@@ -96,6 +96,7 @@ export function ReferenceSelect({
           onChange={onChange}
           placeholder={placeholder}
           disabled={disabled}
+          loading={loading}
           allowAddNew={{ label: addLabel, onAdd: () => setCreateOpen(true) }}
         />
       </div>
