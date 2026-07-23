@@ -146,7 +146,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     await db.query(
       `INSERT INTO catalogs.account_role_bindings (role_key, account_id, operating_company_id)
        VALUES ($1,$2::uuid,$3::uuid)
-       ON CONFLICT (role_key) DO UPDATE SET account_id = EXCLUDED.account_id, deactivated_at = NULL, operating_company_id = EXCLUDED.operating_company_id`,
+       ON CONFLICT (operating_company_id, role_key) WHERE (operating_company_id IS NOT NULL) DO UPDATE SET account_id = EXCLUDED.account_id, deactivated_at = NULL, operating_company_id = EXCLUDED.operating_company_id`,
       [roleKey, accountId, companyId]
     );
   }

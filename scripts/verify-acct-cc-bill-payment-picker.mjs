@@ -15,6 +15,9 @@ const fail = (m) => {
 if (!src.includes("ReferenceSelect")) fail("CC liability account must use ReferenceSelect");
 if (!src.includes('createKind="account"')) fail("CC liability account must use ReferenceSelect createKind=account");
 if (!src.includes("listCatalogAccounts")) fail("CC bill payment must load catalogs.accounts (listCatalogAccounts), not banking bank_accounts");
+if (!/listCatalogAccounts\s*\(\s*\{[^}]*operating_company_id\s*:/.test(src)) {
+  fail("CC bill payment listCatalogAccounts must pass operating_company_id (FORCE RLS empty-picker bug)");
+}
 if (src.includes("getAllAccounts")) fail("CC bill payment must not use banking getAllAccounts — backend validates catalogs.accounts");
 if (src.includes("SelectCombobox") && /Credit card|CC account/i.test(src)) {
   fail("CC liability account must not use SelectCombobox (no inline +Create)");
