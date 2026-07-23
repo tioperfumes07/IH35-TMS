@@ -6,6 +6,8 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { listSafetyEvents } from "./safety.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { INTERNAL_CSA_SOURCE_METADATA } from "../routes/safety/csa-scores.js";
+import { EXCLUDE_ARCHIVED_DRIVERS_SQL } from "../mdata/test-seed-archive.js";
+import { EXCLUDE_PSEUDO_DRIVERS_SQL } from "../mdata/driver-pseudo-user.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -96,29 +98,87 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     const companyId = query.data.operating_company_id;
 
     const payload = await withCompanyScope(user.uuid, companyId, async (client) => {
-      const kpiRes = await client
-        .query(
-          `
-            SELECT *
-            FROM views.safety_dashboard_kpis
-            WHERE operating_company_id = $1
-            LIMIT 1
-          `,
-          [companyId]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
-      const pendingAckRes = await client
-        .query<{ count: number }>(
-          `
-            SELECT COUNT(*)::int AS count
-            FROM driver_finance.driver_liabilities
-            WHERE operating_company_id = $1
-              AND requires_acknowledgment = true
-              AND acknowledgment_uuid IS NULL
-          `,
-          [companyId]
-        )
-        .catch(() => ({ rows: [{ count: 0 }] }));
+      // SAFETY-KPI-WIRED: every tile SafetyKpiRow renders is computed here from its real source.
+      //
+      // Why this is not read from views.safety_dashboard_kpis: migration 0045 creates that view
+      // conditionally — real aggregate IF safety.safety_events already exists, else a
+      // `SELECT ... WHERE false` stub. safety_events did not exist when 0045 ran, so the STUB was
+      // installed and nothing ever recreated it. On prod the view returns zero rows for every
+      // entity, which rendered the whole dashboard as 0 while the fleet had 83 active drivers.
+      // The 0045 "real" branch also selects event_at, a column safety.safety_events does not have
+      // (it is occurred_at), so re-running that branch would fail. The view is left in place
+      // (additive-only); this route simply stops depending on it.
+      //
+      // No .catch() fallbacks here on purpose: a swallowed error rendered identically to real
+      // zeros, which is what hid this defect. If a source is unavailable the endpoint must fail
+      // loudly rather than report a false all-clear on a safety screen.
+      const kpiRes = await client.query<{
+        open_events: number;
+        mtd_violations: number;
+        training_due_30d: number;
+        active_drivers: number;
+        drivers_with_open_fines: number;
+        open_company_violations: number;
+        critical_integrity_alerts: number;
+        open_liabilities: number;
+        pending_acknowledgments: number;
+      }>(
+        `
+          SELECT
+            (SELECT COUNT(*)::int FROM safety.safety_events
+              WHERE operating_company_id = $1 AND status = 'open') AS open_events,
+            (SELECT COUNT(*)::int FROM safety.safety_events
+              WHERE operating_company_id = $1
+                AND occurred_at >= date_trunc('month', now())) AS mtd_violations,
+            (SELECT COUNT(*)::int FROM safety.safety_events
+              WHERE operating_company_id = $1
+                AND event_type = 'training_due'
+                AND occurred_at <= now() + INTERVAL '30 days') AS training_due_30d,
+            -- Must agree with the canonical Drivers list (/api/v1/mdata/drivers?status=Active),
+            -- which is what an operator cross-checks this tile against. That list filters on the
+            -- driver STATUS plus the archived/pseudo exclusions — NOT on deactivated_at. Using a
+            -- different predicate here produced 83 vs the list's 82 and would reintroduce exactly
+            -- the kind of number-disagreement this fix exists to remove.
+            (SELECT COUNT(*)::int FROM mdata.drivers
+              WHERE operating_company_id = $1
+                AND status = 'Active'
+                AND ${EXCLUDE_ARCHIVED_DRIVERS_SQL}
+                AND ${EXCLUDE_PSEUDO_DRIVERS_SQL}) AS active_drivers,
+            (SELECT COUNT(DISTINCT driver_id)::int FROM (
+                SELECT subject_driver_id AS driver_id
+                FROM safety.civil_fines
+                WHERE operating_company_id = $1
+                  AND subject_driver_id IS NOT NULL
+                  AND status IN ('open', 'contested')
+                  AND voided_at IS NULL
+                  AND deactivated_at IS NULL
+                UNION
+                SELECT driver_id
+                FROM safety.internal_fines
+                WHERE operating_company_id = $1
+                  AND driver_id IS NOT NULL
+                  AND status IN ('pending', 'approved', 'disputed')
+                  AND voided_at IS NULL
+              ) AS open_fine_drivers) AS drivers_with_open_fines,
+            (SELECT COUNT(*)::int FROM safety.company_violations
+              WHERE operating_company_id = $1
+                AND status IN ('open', 'in_progress', 'escalated')
+                AND deactivated_at IS NULL) AS open_company_violations,
+            (SELECT COUNT(*)::int FROM safety.integrity_alerts
+              WHERE operating_company_id = $1
+                AND lower(severity) = 'critical'
+                AND resolution_status IN ('unresolved', 'investigating')
+                AND (snoozed_until IS NULL OR snoozed_until <= now())) AS critical_integrity_alerts,
+            (SELECT COUNT(*)::int FROM driver_finance.driver_liabilities
+              WHERE operating_company_id = $1
+                AND current_balance > 0) AS open_liabilities,
+            (SELECT COUNT(*)::int FROM views.liabilities_active_with_context
+              WHERE operating_company_id = $1
+                AND requires_acknowledgment = true
+                AND acknowledgment_uuid IS NULL) AS pending_acknowledgments
+        `,
+        [companyId]
+      );
       const testsRes = await client
         .query<{ count: number }>(
           `
@@ -160,14 +220,25 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           [companyId]
         )
         .catch(() => ({ rows: [{ score: null }] }));
+      const k = kpiRes.rows[0];
+      const pendingAcknowledgments = Number(k?.pending_acknowledgments ?? 0);
       return {
-        ...(kpiRes.rows[0] ?? {
-          operating_company_id: companyId,
-          open_events: 0,
-          mtd_violations: 0,
-          training_due_30d: 0,
-        }),
-        pending_acks: Number(pendingAckRes.rows[0]?.count ?? 0),
+        operating_company_id: companyId,
+        open_events: Number(k?.open_events ?? 0),
+        mtd_violations: Number(k?.mtd_violations ?? 0),
+        training_due_30d: Number(k?.training_due_30d ?? 0),
+        // The six tiles SafetyKpiRow renders. These keys must match that component exactly —
+        // it previously bound field names this endpoint never returned, so each resolved
+        // `undefined ?? 0` and every tile read 0 regardless of real data.
+        active_drivers: Number(k?.active_drivers ?? 0),
+        drivers_with_open_fines: Number(k?.drivers_with_open_fines ?? 0),
+        open_company_violations: Number(k?.open_company_violations ?? 0),
+        critical_integrity_alerts: Number(k?.critical_integrity_alerts ?? 0),
+        open_liabilities: Number(k?.open_liabilities ?? 0),
+        pending_acknowledgments: pendingAcknowledgments,
+        // pending_acks kept for back-compat: SafetyKpiRow falls back to it, and it was the only
+        // tile key this endpoint ever emitted.
+        pending_acks: pendingAcknowledgments,
         da_tests_ytd: Number(testsRes.rows[0]?.count ?? 0),
         csa_score_latest:
           csaRes.rows[0]?.score == null ? null : Number(csaRes.rows[0].score),
