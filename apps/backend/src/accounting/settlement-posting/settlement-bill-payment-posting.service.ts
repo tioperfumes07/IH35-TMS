@@ -120,8 +120,14 @@ function scoped<T>(actor: Actor, operatingCompanyId: string, fn: (client: DbClie
  * Resolve the DIP bank account (banking.bank_accounts row) whose GL bridge (ledger_account_id) is the
  * account bound to the cash_dip role — so payBill(from that bank) + the bill-payment poster credit the
  * Wells Fargo — DIP cash account (never a hardcoded id). NULL when unmapped (caller fails loud).
+ *
+ * PRIMARY path: accounting.chart_of_accounts_roles via resolveRoleAccountOptional("cash_dip")
+ * (legacy account_role_bindings is fallback inside the resolver only — never JOIN'd here).
  */
 async function resolveDipBankAccountId(client: DbClient, operatingCompanyId: string): Promise<string | null> {
+  const cashDipAccountId = await resolveRoleAccountOptional(client, operatingCompanyId, "cash_dip");
+  if (!cashDipAccountId) return null;
+
   // BANK-ACCOUNT-HIDE: an account hidden for THIS entity is never eligible as the resolved DIP bank
   // (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
   const hideOn = await isBankAccountHideEnabled(client, operatingCompanyId);
@@ -129,18 +135,12 @@ async function resolveDipBankAccountId(client: DbClient, operatingCompanyId: str
     `
       SELECT ba.id::text AS bank_account_id
       FROM banking.bank_accounts ba
-      JOIN catalogs.account_role_bindings arb
-        ON arb.account_id = ba.ledger_account_id
-       AND arb.role_key = 'cash_dip'
-       AND arb.deactivated_at IS NULL
-       AND (arb.operating_company_id = $1::uuid OR arb.operating_company_id IS NULL)
       WHERE ba.operating_company_id = $1::uuid
-        AND ba.ledger_account_id IS NOT NULL
+        AND ba.ledger_account_id = $2::uuid
         ${bankAccountHiddenFilterSql(hideOn, "ba")}
-      ORDER BY (arb.operating_company_id IS NOT NULL) DESC
       LIMIT 1
     `,
-    [operatingCompanyId]
+    [operatingCompanyId, cashDipAccountId]
   );
   return res.rows[0]?.bank_account_id ?? null;
 }

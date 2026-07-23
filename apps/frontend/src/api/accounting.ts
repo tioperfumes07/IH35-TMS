@@ -1277,6 +1277,8 @@ export const COA_ROLE_VALUES = [
   "fuel_advance_recovery",
   "other_recovery",
   "abandonment_chargeback_recovery",
+  // DIP operating cash — designate WF General Operating 6103 (QBO-1150040141) after held 202607760000.
+  "cash_dip",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];
