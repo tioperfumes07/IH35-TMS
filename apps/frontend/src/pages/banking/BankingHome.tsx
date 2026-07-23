@@ -600,7 +600,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             {(reconciliationSessionsQuery.data?.open_sessions ?? []).length === 0 &&
             (reconciliationSessionsQuery.data?.completed_sessions ?? []).length === 0 ? (
               <div
-                className="mb-3 rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+                className="mb-3 border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
                 data-testid="banking-recon-never-completed-banner"
               >
                 <p className="font-semibold">No reconciliation sessions exist for this company yet.</p>
