@@ -218,12 +218,13 @@ export function BankingHomePage({ initialTab }: Props = {}) {
       navigate(`/accounting/chart-of-accounts/register/${ledgerAccountId}`);
       return;
     }
-    pushToast(
-      selectedId
-        ? "This bank has no Cash GL mapping. Link it under Banking → Cash GL setup, then open Bank Register."
-        : "Select a bank account first, then open Bank Register.",
-      "error"
-    );
+    if (selectedId) {
+      // FAIL-3: Cash GL setup was routed but unreachable — send operator to the wired surface.
+      navigate("/banking/cash-gl-setup");
+      pushToast("This bank has no Cash GL mapping. Map it here, then open Bank Register.", "error");
+      return;
+    }
+    pushToast("Select a bank account first, then open Bank Register.", "error");
   };
   const navActions = (
     <>
@@ -238,6 +239,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
         <span title="Import a statement CSV from the Transactions tab (per bank account).">
           <ActionButton onClick={() => navigate(BANKING_TAB_PATH.transactions)}>+ Import Statement</ActionButton>
         </span>
+        <ActionButton onClick={() => navigate("/banking/cash-gl-setup")}>Cash GL setup</ActionButton>
         <ActionButton onClick={() => setManageOpen(true)}>+ Create Account / Manage Accounts</ActionButton>
         <PlaidLinkButton
           operatingCompanyId={companyId}
