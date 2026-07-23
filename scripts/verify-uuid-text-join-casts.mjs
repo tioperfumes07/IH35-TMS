@@ -73,7 +73,7 @@ export function aliasMap(source) {
  * when the right-hand alias resolves to a table this file actually joins AND that table's column is
  * on the verified text list. A cast on either side, or a bound parameter, is fine.
  */
-export function findUncastJoins(source) {
+export function checkUncastJoins(source) {
   const hits = [];
   const aliases = aliasMap(source);
   const lines = source.split("\n");
@@ -157,7 +157,7 @@ function selftest() {
     LEFT JOIN mdata.drivers dr ON dr.id = e.driver_uuid
     WHERE b.id = $1::uuid
   `;
-  const goodHits = findUncastJoins(good);
+  const goodHits = checkUncastJoins(good);
   if (goodHits.length !== 0) {
     problems.push(`good fixture should pass, got: ${goodHits.map((h) => h.text).join(" | ")}`);
   }
@@ -171,7 +171,7 @@ function selftest() {
   ];
 
   for (const [name, snippet, expectFragment] of cases) {
-    const hits = findUncastJoins(snippet);
+    const hits = checkUncastJoins(snippet);
     if (!hits.some((h) => h.reason.includes(expectFragment))) {
       problems.push(`planted regression "${name}" was NOT caught — assertion is ineffective`);
     }
@@ -189,7 +189,7 @@ function main() {
   const files = walk(path.join(ROOT, SCAN_DIR));
   const failures = [];
   for (const file of files) {
-    const hits = findUncastJoins(fs.readFileSync(file, "utf8"));
+    const hits = checkUncastJoins(fs.readFileSync(file, "utf8"));
     for (const hit of hits) {
       failures.push(`${path.relative(ROOT, file)}:${hit.line}  ${hit.reason}\n      ${hit.text}`);
     }

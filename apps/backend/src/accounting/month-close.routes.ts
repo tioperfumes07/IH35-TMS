@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
-import { getMonthCloseStatus, lockMonthClose } from "./month-close.service.js";
+import { getMonthCloseStatus, lockMonthClose, acknowledgeMonthCloseChecklist } from "./month-close.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const monthCloseRoles = new Set(["Owner", "Administrator", "Accountant"]);
@@ -17,6 +17,12 @@ const monthCloseBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   period: monthPeriodSchema,
   closing_notes: z.string().trim().max(1000).optional(),
+});
+
+const monthCloseAckBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  period: monthPeriodSchema,
+  checklist_item: z.enum(["ar_aging_review", "ap_aging_review"]),
 });
 
 function monthCloser(req: Parameters<typeof currentAuthUser>[0], reply: Parameters<typeof currentAuthUser>[1]) {
@@ -71,6 +77,27 @@ export async function registerMonthCloseRoutes(app: FastifyInstance) {
       if (message === "period_not_open") return reply.code(409).send({ error: "period_not_open" });
       if (message === "checklist_incomplete") return reply.code(409).send({ error: "checklist_incomplete" });
       if (message.includes("IH35_CLOSED_PERIOD")) return reply.code(423).send({ error: "period_locked", message });
+      throw error;
+    }
+  });
+
+  app.post("/api/v1/accounting/month-close-acknowledge", async (req, reply) => {
+    const user = monthCloser(req, reply);
+    if (!user) return;
+    const body = monthCloseAckBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
+
+    try {
+      return await acknowledgeMonthCloseChecklist({
+        userId: user.uuid,
+        operatingCompanyId: body.data.operating_company_id,
+        period: body.data.period,
+        checklistItem: body.data.checklist_item,
+      });
+    } catch (error) {
+      const message = String((error as Error).message ?? "");
+      if (message === "invalid_period") return reply.code(400).send({ error: "invalid_period" });
       throw error;
     }
   });
