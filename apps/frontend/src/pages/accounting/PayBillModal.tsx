@@ -295,7 +295,7 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
         open={bankCreateOpen}
         onClose={() => setBankCreateOpen(false)}
         title="Add bank account"
-        size="md"
+        size="regular"
       >
         <div className="space-y-3 text-sm text-gray-700" data-testid="pay-bill-add-bank-drawer">
           <p>
