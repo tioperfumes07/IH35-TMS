@@ -94,6 +94,9 @@ export function CoaRolesPage() {
     {
       key: "account_id",
       label: "Account",
+      // overflow-visible: belt-and-suspenders with Combobox body portal — ParityTable td defaults
+      // to overflow-hidden which used to clip the absolute listbox to the row height.
+      cellClass: "overflow-visible",
       render: (row) => {
         const value = draftByRole[row.role] ?? row.account_id ?? "";
         const accountOptions = (accountsQuery.data?.accounts ?? []).map(coaAccountReferenceOption);
@@ -108,6 +111,7 @@ export function CoaRolesPage() {
               operatingCompanyId={companyId}
               placeholder="Select account…"
               disabled={!companyId}
+              loading={accountsQuery.isLoading}
               onOptionCreated={() => void accountsQuery.refetch()}
             />
           </div>

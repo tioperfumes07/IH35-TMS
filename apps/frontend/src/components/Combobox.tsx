@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { createPortal } from "react-dom";
 
 export type ComboboxOption = {
   value: string;
@@ -24,6 +25,7 @@ type ComboboxProps = {
 };
 
 const MAX_VISIBLE_OPTIONS = 50;
+const LISTBOX_MAX_HEIGHT = 256;
 
 function scoreOption(label: string, query: string, filterMode: NonNullable<ComboboxProps["filterMode"]>) {
   const normalizedLabel = label.trim().toLowerCase();
@@ -51,6 +53,35 @@ function scoreOption(label: string, query: string, filterMode: NonNullable<Combo
   return null;
 }
 
+function measureListboxStyle(anchor: HTMLElement): CSSProperties {
+  const rect = anchor.getBoundingClientRect();
+  const gap = 4;
+  const spaceBelow = window.innerHeight - rect.bottom - gap;
+  const spaceAbove = rect.top - gap;
+  const openUp = spaceBelow < 180 && spaceAbove > spaceBelow;
+  const maxHeight = Math.min(LISTBOX_MAX_HEIGHT, Math.max(120, openUp ? spaceAbove : spaceBelow));
+  const width = Math.max(rect.width, 200);
+
+  if (openUp) {
+    return {
+      position: "fixed",
+      left: rect.left,
+      width,
+      bottom: window.innerHeight - rect.top + gap,
+      maxHeight,
+      zIndex: 80,
+    };
+  }
+  return {
+    position: "fixed",
+    left: rect.left,
+    width,
+    top: rect.bottom + gap,
+    maxHeight,
+    zIndex: 80,
+  };
+}
+
 export function Combobox({
   options,
   value,
@@ -68,7 +99,9 @@ export function Combobox({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [listboxStyle, setListboxStyle] = useState<CSSProperties>({});
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const listboxRef = useRef<HTMLDivElement | null>(null);
   const listboxId = useMemo(() => `combobox-list-${Math.random().toString(36).slice(2, 10)}`, []);
 
   const selectedOption = useMemo(() => options.find((option) => option.value === value) ?? null, [options, value]);
@@ -114,15 +147,35 @@ export function Combobox({
   // totalRows drives ArrowUp/ArrowDown wrap-around.
   const totalRowCount = filteredOptions.length + (showAddNew ? 1 : 0);
 
+  useLayoutEffect(() => {
+    if (!open || !containerRef.current) return;
+    setListboxStyle(measureListboxStyle(containerRef.current));
+  }, [open, filteredOptions.length, loading, showAddNew]);
+
+  useEffect(() => {
+    if (!open) return;
+    function reposition() {
+      if (!containerRef.current) return;
+      setListboxStyle(measureListboxStyle(containerRef.current));
+    }
+    window.addEventListener("resize", reposition);
+    // Capture: ParityTable and other overflow-x-auto ancestors scroll without bubbling.
+    document.addEventListener("scroll", reposition, true);
+    return () => {
+      window.removeEventListener("resize", reposition);
+      document.removeEventListener("scroll", reposition, true);
+    };
+  }, [open]);
+
   useEffect(() => {
     function onDocumentClick(event: MouseEvent) {
       const target = event.target as Node | null;
-      if (!target || !containerRef.current) return;
-      if (!containerRef.current.contains(target)) {
-        setOpen(false);
-        setQuery("");
-        setActiveIndex(-1);
-      }
+      if (!target) return;
+      if (containerRef.current?.contains(target)) return;
+      if (listboxRef.current?.contains(target)) return;
+      setOpen(false);
+      setQuery("");
+      setActiveIndex(-1);
     }
     document.addEventListener("mousedown", onDocumentClick);
     return () => document.removeEventListener("mousedown", onDocumentClick);
@@ -210,6 +263,77 @@ export function Combobox({
     }
   }
 
+  const listbox =
+    open && typeof document !== "undefined"
+      ? createPortal(
+          <div
+            ref={listboxRef}
+            id={listboxId}
+            role="listbox"
+            data-combobox-listbox="portal"
+            style={listboxStyle}
+            className="overflow-auto rounded-sm border border-gray-200 bg-white shadow-md"
+          >
+            {loading ? (
+              <div className="flex items-center gap-2 px-2 py-2 text-[13px] text-gray-600">
+                <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-500" />
+                Loading...
+              </div>
+            ) : null}
+            {/* QB-STD-1: add row is FIRST — always visible before any typing. */}
+            {!loading && showAddNew && allowAddNew ? (
+              <button
+                type="button"
+                role="option"
+                aria-selected={activeIndex === 0}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => {
+                  allowAddNew.onAdd(query.trim());
+                  setOpen(false);
+                  setQuery("");
+                }}
+                onMouseEnter={() => setActiveIndex(0)}
+                className={`w-full border-b border-gray-100 px-2 py-1.5 text-left text-[13px] font-medium ${
+                  activeIndex === 0 ? "bg-slate-100 text-slate-700" : "text-slate-600 hover:bg-gray-50"
+                }`}
+              >
+                {addRowLabel}
+              </button>
+            ) : null}
+            {!loading && filteredOptions.length === 0 && !showAddNew ? (
+              <div className="px-2 py-2 text-[13px] text-gray-500">No matches</div>
+            ) : null}
+            {!loading &&
+              filteredOptions.map((option, index) => {
+                // Options are at listbox indices 1..n when the add row occupies index 0.
+                const listIndex = showAddNew ? index + 1 : index;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="option"
+                    aria-selected={value === option.value}
+                    // Commit on CLICK (not mouseDown) so touch taps, automation, and assistive
+                    // interactions all select — mouseDown-only left the field empty on touch/click-only
+                    // input (the load-cancel reason couldn't be picked). mouseDown still preventDefaults to
+                    // keep the input focused so the dropdown doesn't blur-close before the click lands.
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => commitSelection(option.value)}
+                    onMouseEnter={() => setActiveIndex(listIndex)}
+                    className={`w-full px-2 py-1.5 text-left text-[13px] ${
+                      activeIndex === listIndex ? "bg-slate-100 text-slate-700" : "text-gray-800 hover:bg-gray-50"
+                    }`}
+                  >
+                    <div>{option.label}</div>
+                    {option.sublabel ? <div className="text-[11px] text-gray-500">{option.sublabel}</div> : null}
+                  </button>
+                );
+              })}
+          </div>,
+          document.body,
+        )
+      : null;
+
   return (
     <div ref={containerRef} className={`relative ${className ?? ""}`}>
       <div
@@ -258,65 +382,7 @@ export function Combobox({
         ) : null}
       </div>
       {error ? <p className="mt-1 text-[11px] text-red-600">{error}</p> : null}
-      {open ? (
-        <div id={listboxId} role="listbox" className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-sm border border-gray-200 bg-white shadow-md">
-          {loading ? (
-            <div className="flex items-center gap-2 px-2 py-2 text-[13px] text-gray-600">
-              <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-500" />
-              Loading...
-            </div>
-          ) : null}
-          {/* QB-STD-1: add row is FIRST — always visible before any typing. */}
-          {!loading && showAddNew && allowAddNew ? (
-            <button
-              type="button"
-              role="option"
-              aria-selected={activeIndex === 0}
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={() => {
-                allowAddNew.onAdd(query.trim());
-                setOpen(false);
-                setQuery("");
-              }}
-              onMouseEnter={() => setActiveIndex(0)}
-              className={`w-full border-b border-gray-100 px-2 py-1.5 text-left text-[13px] font-medium ${
-                activeIndex === 0 ? "bg-slate-100 text-slate-700" : "text-slate-600 hover:bg-gray-50"
-              }`}
-            >
-              {addRowLabel}
-            </button>
-          ) : null}
-          {!loading && filteredOptions.length === 0 && !showAddNew ? (
-            <div className="px-2 py-2 text-[13px] text-gray-500">No matches</div>
-          ) : null}
-          {!loading &&
-            filteredOptions.map((option, index) => {
-              // Options are at listbox indices 1..n when the add row occupies index 0.
-              const listIndex = showAddNew ? index + 1 : index;
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  role="option"
-                  aria-selected={value === option.value}
-                  // Commit on CLICK (not mouseDown) so touch taps, automation, and assistive
-                  // interactions all select — mouseDown-only left the field empty on touch/click-only
-                  // input (the load-cancel reason couldn't be picked). mouseDown still preventDefaults to
-                  // keep the input focused so the dropdown doesn't blur-close before the click lands.
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => commitSelection(option.value)}
-                  onMouseEnter={() => setActiveIndex(listIndex)}
-                  className={`w-full px-2 py-1.5 text-left text-[13px] ${
-                    activeIndex === listIndex ? "bg-slate-100 text-slate-700" : "text-gray-800 hover:bg-gray-50"
-                  }`}
-                >
-                  <div>{option.label}</div>
-                  {option.sublabel ? <div className="text-[11px] text-gray-500">{option.sublabel}</div> : null}
-                </button>
-              );
-            })}
-        </div>
-      ) : null}
+      {listbox}
     </div>
   );
 }
