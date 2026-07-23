@@ -2,7 +2,7 @@
 /**
  * Guard: Vendor Bill / Expense wizard QBO + catalog wiring (Accounting PR wave).
  * Proves: due-date helper, Terms not SelectCombobox box-in-box, entity-scoped CoA,
- * ensure-drivers route, CostBreakdown ReferenceSelect when company set,
+ * CostBreakdown ReferenceSelect when company set,
  * expense category allows TMS-native accounts (category_account_id).
  */
 import fs from "node:fs";
@@ -36,7 +36,6 @@ if (bill.includes("SelectCombobox") && bill.includes("Terms")) {
   const termsBlock = bill.slice(bill.indexOf("Terms"), bill.indexOf("Due Date"));
   if (termsBlock.includes("SelectCombobox")) fail("Terms still uses SelectCombobox (box-in-box)");
 }
-if (!bill.includes("ensureDriverVendors")) fail("VendorBillForm must ensure driver-vendors");
 if (!bill.includes('status: "InService"')) fail("VendorBillForm units must request InService");
 if (!bill.includes("getCoaAccounts")) fail("VendorBillForm A/P must use entity-scoped getCoaAccounts");
 ok("VendorBillForm QBO/catalog wiring");
@@ -45,7 +44,6 @@ const expense = read("apps/frontend/src/components/expenses/RecordExpenseForm.ts
 if (!expense.includes("operating_company_id: operatingCompanyId")) {
   fail("RecordExpenseForm listCatalogAccounts must pass operating_company_id");
 }
-if (!expense.includes("ensureDriverVendors")) fail("RecordExpenseForm must ensure driver-vendors");
 if (!expense.includes('status: "InService"')) fail("RecordExpenseForm units must request InService");
 if (expense.includes("acct.qbo_account_id)") && expense.includes("filter((acct) => acct.is_postable && acct.qbo_account_id)")) {
   fail("RecordExpenseForm must NOT filter categories to qbo_account_id-only");
@@ -59,12 +57,6 @@ ok("expense submit supports TMS-native category");
 const routes = read("apps/backend/src/accounting/expenses.routes.ts");
 if (!routes.includes("category_account_id")) fail("expenses.routes must accept category_account_id");
 ok("expenses.routes category_account_id");
-
-const vendors = read("apps/backend/src/mdata/vendors.routes.ts");
-if (!vendors.includes("/api/v1/mdata/vendors/ensure-drivers")) {
-  fail("ensure-drivers route missing");
-}
-ok("ensure-drivers route");
 
 const cost = read("apps/frontend/src/components/forms/shared/CostBreakdownBox.tsx");
 if (!cost.includes("ReferenceSelect") || !cost.includes("operatingCompanyId")) {

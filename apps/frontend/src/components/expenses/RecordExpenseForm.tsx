@@ -2,7 +2,7 @@ import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getWoCostContext } from "../../api/maintenance";
-import { ensureDriverVendors, listUnits, listVendors } from "../../api/mdata";
+import { listUnits, listVendors } from "../../api/mdata";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
 import { Button } from "../Button";
 import { Combobox } from "../Combobox";
@@ -80,14 +80,8 @@ export function RecordExpenseForm({
   });
   const vendorsQuery = useQuery({
     queryKey: ["record-expense", "vendors", operatingCompanyId],
-    queryFn: async () => {
-      try {
-        await ensureDriverVendors(operatingCompanyId);
-      } catch {
-        // Picker still lists existing vendors if ensure is role-forbidden.
-      }
-      return listVendors({ operating_company_id: operatingCompanyId, limit: 5000, status: "active" });
-    },
+    queryFn: () =>
+      listVendors({ operating_company_id: operatingCompanyId, limit: 5000, status: "active" }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });
