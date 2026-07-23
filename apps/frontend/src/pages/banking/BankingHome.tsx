@@ -36,6 +36,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { DriverEscrowTabContent } from "./components/DriverEscrowTabContent";
 import { BankingReportsTabContent } from "./components/BankingReportsTabContent";
 import { BankingTransactionsDesignView } from "./components/BankingTransactionsDesignView";
+import { StatementUpload } from "../../components/banking/StatementUpload";
 import { BANKING_TAB_PATH, bankingTabFromPath } from "../../router/route-manifest";
 import { BANKING_MODULE_TABS, type BankingModuleTabId } from "./BANKING_NAV_CONFIG";
 
@@ -239,8 +240,8 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   const tabActions =
     activeTab === "accounts" ? (
       <>
-        <span title="Import a statement CSV from the Transactions tab (per bank account).">
-          <ActionButton onClick={() => navigate(BANKING_TAB_PATH.transactions)}>+ Import Statement</ActionButton>
+        <span title="Import a statement CSV for a bank account.">
+          <ActionButton onClick={() => navigate(BANKING_TAB_PATH.statement_import)}>+ Import Statement</ActionButton>
         </span>
         <ActionButton onClick={() => navigate("/banking/cash-gl-setup")}>Cash GL setup</ActionButton>
         {canSeeEmailQueue ? (
@@ -697,6 +698,46 @@ export function BankingHomePage({ initialTab }: Props = {}) {
 
       {activeTab === "reports" ? (
         <BankingReportsTabContent />
+      ) : null}
+
+      {activeTab === "statement_import" ? (
+        <div className="space-y-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Bank Statement Import</p>
+            <p className="mb-3 text-sm text-gray-700">
+              CSV import for non-feed banks (PDF parser remains Phase 6). Select a bank account, then upload. The same
+              uploader remains available inside Reconciliation (additive — not removed).
+            </p>
+            <label className="mb-2 block text-xs font-semibold text-gray-600">
+              Bank account
+              <select
+                className="mt-1 w-full max-w-md rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
+                value={selectedId ?? ""}
+                onChange={(e) => setSelectedAccountId(e.target.value || null)}
+              >
+                <option value="">Select account…</option>
+                {bankAccountsPanelRows.map((row) => (
+                  <option key={row.id} value={row.id}>
+                    {row.displayName}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {selectedId ? (
+              <StatementUpload
+                bankAccountId={selectedId}
+                onUploaded={() => {
+                  void queryClient.invalidateQueries({ queryKey: ["banking"] });
+                }}
+              />
+            ) : (
+              <p className="text-xs text-gray-500">Select a bank account to enable CSV upload.</p>
+            )}
+            <div className="mt-3">
+              <ActionButton onClick={() => navigate(BANKING_TAB_PATH.reconciliation)}>Open Reconciliation</ActionButton>
+            </div>
+          </div>
+        </div>
       ) : null}
 
       {activeTab === "settings" ? (
