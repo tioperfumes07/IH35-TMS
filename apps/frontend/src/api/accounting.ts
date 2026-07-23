@@ -384,6 +384,7 @@ export function patchInvoice(id: string, operatingCompanyId: string, payload: Pa
   ar_email_snapshot: string | null;
   ar_phone_snapshot: string | null;
   currency_code: "USD" | "MXN";
+  source_load_id: string | null;
 }>) {
   return apiRequest<Invoice>(withCompany(`/api/v1/accounting/invoices/${id}`, operatingCompanyId), { method: "PATCH", body: payload });
 }
@@ -408,6 +409,7 @@ export function addInvoiceLine(
     quantity: number;
     unit_amount_cents: number;
     source_load_id?: string;
+    account_id?: string;
     qbo_class_snapshot?: string;
     qbo_item_id?: string;
     display_order?: number;
@@ -1559,10 +1561,12 @@ export type MonthCloseStatus = {
   ar_aging_review: {
     complete: boolean;
     overdue_count: number;
+    reviewed: boolean;
   };
   ap_aging_review: {
     complete: boolean;
     overdue_count: number;
+    reviewed: boolean;
   };
   fuel_tax: {
     complete: boolean;
@@ -1599,6 +1603,23 @@ export function closeMonth(
       operating_company_id: operatingCompanyId,
       period: body.period,
       closing_notes: body.closing_notes,
+    },
+  });
+}
+
+export function acknowledgeMonthCloseChecklist(
+  operatingCompanyId: string,
+  body: {
+    period: string;
+    checklist_item: "ar_aging_review" | "ap_aging_review";
+  }
+) {
+  return apiRequest<{ ok: boolean; checklist_item: string }>("/api/v1/accounting/month-close-acknowledge", {
+    method: "POST",
+    body: {
+      operating_company_id: operatingCompanyId,
+      period: body.period,
+      checklist_item: body.checklist_item,
     },
   });
 }

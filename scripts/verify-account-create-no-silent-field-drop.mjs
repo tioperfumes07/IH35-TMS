@@ -59,6 +59,10 @@ export function assertNoSilentFieldDrop(source) {
     ["description", "description:", "Description textarea"],
     ["parentAccount", "parent_account_id", "Parent account picker"],
     ["lockAccount", "is_locked", "Lock account checkbox (§7 KEEP-listed control)"],
+    // Storage landed in migration 202607750000 (catalogs.accounts.is_billable_expense) and the
+    // catalogs accounting factory now maps it, so this field must be SENT — it is no longer
+    // allowed to be a disabled placeholder.
+    ["billableExpenses", "is_billable_expense", "Use-for-billable-expenses checkbox"],
   ];
   for (const [stateField, payloadToken, label] of MUST_PERSIST) {
     if (!source.includes(stateField)) continue; // field removed entirely — nothing to drop
@@ -73,13 +77,15 @@ export function assertNoSilentFieldDrop(source) {
     errors.push("Parent account is a free-text input again — its value must be a catalogs.accounts uuid, so typed text can never persist");
   }
 
-  // A control with no storage must be visibly disabled, not silently ignored. Anchor on the JSX
-  // checkbox, not the first mention of the name (that is the FormState type, far above the input).
+  // INVERTED once the column shipped: while catalogs.accounts had no billable column this control
+  // had to stay `disabled` so it could not lie. Migration 202607750000 added the column, so it must
+  // now be ENABLED and actually persisted — a disabled control here would be a silent regression
+  // back to "collects a value nobody stores".
   const billableInput = source.indexOf("checked={form.billableExpenses}");
   if (billableInput !== -1) {
     const block = source.slice(billableInput, billableInput + 400);
-    if (!/disabled/.test(block)) {
-      errors.push('"Use for billable expenses" has no catalogs.accounts column — it must stay `disabled` + labelled until an owner-approved migration adds one, never silently dropped');
+    if (/disabled/.test(block)) {
+      errors.push('"Use for billable expenses" is disabled again — catalogs.accounts.is_billable_expense exists (migration 202607750000), so the control must be enabled and sent');
     }
   }
 
@@ -101,8 +107,9 @@ function selftest() {
     ["description dropped from payload", live.replace(/description:\s*form\.description[^\n]*\n/, ""), "never sends `description:`"],
     ["parent_account_id dropped from payload", live.replace(/parent_account_id:\s*form\.isSubaccount[^\n]*\n/, ""), "never sends `parent_account_id`"],
     ["is_locked dropped from payload", live.replace(/is_locked:\s*form\.lockAccount[^\n]*\n/, ""), "never sends `is_locked`"],
+    ["is_billable_expense dropped from payload", live.replace(/is_billable_expense:\s*form\.billableExpenses[^\n]*\n/, ""), "never sends `is_billable_expense`"],
     ["parent reverted to free text", live.replace(/<select/, '<input placeholder="Parent account name or number"'), "free-text input again"],
-    ["billable checkbox silently re-enabled", live.replace(/\s+disabled\n/, "\n"), "must stay `disabled`"],
+    ["billable checkbox disabled again", live.replace(/checked=\{form\.billableExpenses\}/, "checked={form.billableExpenses} disabled"), "is disabled again"],
   ];
 
   for (const [name, mutated, expectFragment] of cases) {
