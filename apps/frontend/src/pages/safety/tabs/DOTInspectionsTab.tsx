@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { formatDateUS } from "../../../lib/formatDate";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -10,6 +10,9 @@ import { companyToday } from "../../../lib/businessDate";
 import { useListState } from "../../../components/list-state";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { InspectionScoreBadge } from "../../../components/safety/InspectionScoreBadge";
+import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
+import { Combobox } from "../../../components/Combobox";
+import { listUnits } from "../../../api/mdata";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 export function DOTInspectionsTab() {
@@ -129,6 +132,27 @@ export function DOTInspectionsTab() {
     },
   });
 
+  // SAF-F14: the creator asked operators to type raw uuids into `placeholder="driver_id"` /
+  // `"unit_id"` text boxes. Picker law requires a real entity-scoped catalog behind every reference
+  // field, with inline create. Units are scoped by owner/lessee inside listUnits.
+  const unitsQuery = useQuery({
+    queryKey: ["dot-inspection-units", companyId],
+    queryFn: () => listUnits({ operating_company_id: companyId, limit: 200 }),
+    enabled: Boolean(companyId),
+  });
+  const unitOptions = useMemo(
+    () =>
+      (unitsQuery.data?.units ?? []).map((row, index) => {
+        const rec = (row ?? {}) as Record<string, unknown>;
+        const id = typeof rec.id === "string" ? rec.id : `unit-${index}`;
+        const label =
+          [rec.unit_number, rec.truck_number, rec.number].find((v) => typeof v === "string" && v) ??
+          id.slice(0, 8);
+        return { value: id, label: String(label) };
+      }),
+    [unitsQuery.data?.units]
+  );
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -137,8 +161,22 @@ export function DOTInspectionsTab() {
       </div>
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-9">
         <DatePicker className="rounded-sm border border-gray-300 px-2 py-1 text-xs" value={form.inspection_date} onChange={(next) => setForm((v) => ({ ...v, inspection_date: next }))} />
-        <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" placeholder="driver_id" value={form.driver_id} onChange={(e) => setForm((v) => ({ ...v, driver_id: e.target.value }))} />
-        <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" placeholder="unit_id" value={form.unit_id} onChange={(e) => setForm((v) => ({ ...v, unit_id: e.target.value }))} />
+        <div data-testid="dot-inspection-driver-picker">
+          <DriverPickerWithCreate
+            operatingCompanyId={companyId}
+            value={form.driver_id || null}
+            onChange={(next) => setForm((v) => ({ ...v, driver_id: next ?? "" }))}
+            placeholder="Search driver…"
+          />
+        </div>
+        <div data-testid="dot-inspection-unit-picker">
+          <Combobox
+            options={unitOptions}
+            value={form.unit_id || null}
+            placeholder="Search unit…"
+            onChange={(next) => setForm((v) => ({ ...v, unit_id: next ?? "" }))}
+          />
+        </div>
         <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" placeholder="Inspector" value={form.inspector_name} onChange={(e) => setForm((v) => ({ ...v, inspector_name: e.target.value }))} />
         <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" type="number" min={1} max={6} value={form.inspection_level} onChange={(e) => setForm((v) => ({ ...v, inspection_level: Number(e.target.value || 1) }))} />
         <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1 text-xs" value={form.outcome} onChange={(e) => setForm((v) => ({ ...v, outcome: e.target.value as typeof form.outcome }))}>

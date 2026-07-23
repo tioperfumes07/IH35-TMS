@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { createHosViolation, listHosViolations, voidHosViolation } from "../../../api/safetyV64";
 import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
+import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useListState } from "../../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
@@ -118,12 +119,15 @@ export function HOSViolationsTab() {
   return (
     <div className="space-y-3">
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-7">
-        <input
-          className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-          placeholder="driver_id"
-          value={form.driver_id}
-          onChange={(e) => setForm((v) => ({ ...v, driver_id: e.target.value }))}
-        />
+        {/* SAF-F14: raw uuid text box replaced with the canonical driver picker (inline create). */}
+        <div data-testid="hos-violation-driver-picker">
+          <DriverPickerWithCreate
+            operatingCompanyId={companyId}
+            value={form.driver_id || null}
+            onChange={(next) => setForm((v) => ({ ...v, driver_id: next ?? "" }))}
+            placeholder="Search driver…"
+          />
+        </div>
         <input
           className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
           placeholder="Violation type"
