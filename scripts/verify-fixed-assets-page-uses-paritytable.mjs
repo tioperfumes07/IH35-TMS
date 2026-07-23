@@ -4,7 +4,9 @@
  *
  * The fixed-asset register list must use the shared ParityTable grammar
  * (sort/resize/gear), not a hand-rolled <table>. Display-only migration: the
- * detail-open button stays inside a cell renderer, the server-side offset pager
+ * detail-open button stays inside a cell renderer (asserted structurally — the
+ * button must live in the ParityColumn array and its handler must reach
+ * setDetailId; the handler's NAME is deliberately not pinned), the server-side offset pager
  * (Prev/Next) is preserved, and load failures surface ListErrorState (never a
  * silent false-empty). The ONE small read-only depreciation-schedule table inside
  * the DetailPanel modal is explicitly retained (this page IS the precedent the
@@ -31,6 +33,56 @@ const COLUMN_LABELS = [
   "Owner",
   "Status",
 ];
+
+/** Slice the `const columns = ...[ ... ]` array literal (bracket-balanced). */
+function extractColumnsBlock(src) {
+  const decl = src.search(/const\s+columns\s*[:=]/);
+  if (decl === -1) return null;
+  // Skip generic type args such as useMemo<ParityColumn<T>[]>( — the array literal
+  // starts at the first "[" that directly follows "=" or "=>".
+  const opener = /(?:=>|=)\s*\[/.exec(src.slice(decl));
+  if (!opener) return null;
+  const start = decl + opener.index + opener[0].length - 1;
+  let depth = 0;
+  for (let i = start; i < src.length; i += 1) {
+    const ch = src[i];
+    if (ch === "[") depth += 1;
+    else if (ch === "]") {
+      depth -= 1;
+      if (depth === 0) return src.slice(start, i + 1);
+    }
+  }
+  return null;
+}
+
+/**
+ * Slice the body of `const <name> = (...) => { ... }` / `function <name>(...) { ... }`.
+ * Brace-balanced so a LATER function (e.g. closeDetail) can never satisfy an
+ * assertion about THIS one. Returns null when the handler is not declared.
+ */
+function extractHandlerBody(src, name) {
+  const decl = new RegExp(`(?:const|let|function)\\s+${name}\\b`).exec(src);
+  if (!decl) return null;
+  const from = decl.index;
+  const arrow = src.indexOf("=>", from);
+  const blockStart = src.indexOf("{", from);
+  // Arrow with a bare-expression body: `const f = (id) => setDetailId(id);`
+  if (arrow !== -1 && (blockStart === -1 || blockStart > arrow)) {
+    const rest = src.slice(arrow + 2);
+    if (!/^\s*\{/.test(rest)) return rest.slice(0, rest.indexOf(";") + 1 || 200);
+  }
+  if (blockStart === -1) return null;
+  let depth = 0;
+  for (let i = blockStart; i < src.length; i += 1) {
+    const ch = src[i];
+    if (ch === "{") depth += 1;
+    else if (ch === "}") {
+      depth -= 1;
+      if (depth === 0) return src.slice(blockStart, i + 1);
+    }
+  }
+  return null;
+}
 
 function assertMigrated(src) {
   const errors = [];
@@ -85,8 +137,27 @@ function assertMigrated(src) {
     errors.push(`${PAGE}: must keep ListErrorState title for fixed-assets load failure`);
   }
   // Detail-open action must remain inside a cell renderer; server offset pager preserved.
-  if (!src.includes("setDetailId(row.id)")) {
-    errors.push(`${PAGE}: must keep the detail-open button inside a cell renderer`);
+  // Structural (not name-pinned): the button must live inside the ParityColumn
+  // definitions and its onClick must call a handler with row.id, and that handler
+  // must actually open the detail panel (setDetailId) — a renamed no-op still fails.
+  const columnsBlock = extractColumnsBlock(src);
+  if (!columnsBlock) {
+    errors.push(`${PAGE}: expected a columns array of ParityColumn definitions`);
+  } else {
+    const openMatch = columnsBlock.match(/<button[^>]*onClick=\{\(\)\s*=>\s*(\w+)\(row\.id\)\}/);
+    if (!openMatch) {
+      errors.push(
+        `${PAGE}: must keep the detail-open button inside a cell renderer (<button onClick={() => <handler>(row.id)}>)`,
+      );
+    } else {
+      const handler = openMatch[1];
+      if (handler !== "setDetailId") {
+        const body = extractHandlerBody(src, handler);
+        if (!body || !body.includes("setDetailId(")) {
+          errors.push(`${PAGE}: detail-open handler ${handler}() must set the detail state (setDetailId)`);
+        }
+      }
+    }
   }
   if (!src.includes("setOffset(")) {
     errors.push(`${PAGE}: must preserve the server-side offset pager (Prev/Next)`);
@@ -135,10 +206,38 @@ function selftest() {
       );
     }
   `;
+  // Renamed opener that really opens the detail panel — must PASS (name not pinned).
+  const renamed = good
+    .replace("export function FixedAssetsPage() {", "export function FixedAssetsPage() {\n      const openDetail = (id) => { setDetailId(id); setSearchParams(id); };")
+    .replace("setDetailId(row.id)", "openDetail(row.id)");
+  // Renamed opener that does NOT touch detail state — must still FAIL.
+  const renamedNoop = good
+    .replace("export function FixedAssetsPage() {", "export function FixedAssetsPage() {\n      const openDetail = (id) => { console.log(id); };")
+    .replace("setDetailId(row.id)", "openDetail(row.id)");
+  // Detail-open button moved OUT of the cell renderers — must still FAIL.
+  const outsideRenderer = good.replace(
+    '{ key: "name", label: "Name", render: (row) => <button onClick={() => setDetailId(row.id)}>x</button> },',
+    '{ key: "name", label: "Name" },',
+  );
   const goodErrors = assertMigrated(good);
   const badErrors = assertMigrated(bad);
+  const renamedErrors = assertMigrated(renamed);
+  const renamedNoopErrors = assertMigrated(renamedNoop);
+  const outsideRendererErrors = assertMigrated(outsideRenderer);
   if (goodErrors.length) {
     console.error(`${LABEL} --selftest FAIL good fixture:`, goodErrors);
+    process.exit(1);
+  }
+  if (renamedErrors.length) {
+    console.error(`${LABEL} --selftest FAIL renamed-opener fixture (handler name must not be pinned):`, renamedErrors);
+    process.exit(1);
+  }
+  if (!renamedNoopErrors.some((e) => e.includes("must set the detail state"))) {
+    console.error(`${LABEL} --selftest FAIL: a renamed no-op opener must be rejected`, renamedNoopErrors);
+    process.exit(1);
+  }
+  if (!outsideRendererErrors.some((e) => e.includes("inside a cell renderer"))) {
+    console.error(`${LABEL} --selftest FAIL: detail-open button outside a cell renderer must be rejected`, outsideRendererErrors);
     process.exit(1);
   }
   if (badErrors.length < 3) {
