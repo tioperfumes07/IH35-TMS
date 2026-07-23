@@ -166,7 +166,7 @@ export function VendorBillForm({
   });
   const accountsQuery = useQuery({
     queryKey: ["vendor-bill-form", "ap-accounts", operatingCompanyId],
-    queryFn: () => listCatalogAccounts({ status: "active" }),
+    queryFn: () => listCatalogAccounts({ status: "active", operating_company_id: operatingCompanyId }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });
@@ -350,7 +350,7 @@ export function VendorBillForm({
               setAccountDisplay(match?.label ?? "");
             }}
             options={apAccountOptions}
-            createKind="category"
+            createKind="account"
             addNewLabel="+ Add new account"
             operatingCompanyId={operatingCompanyId}
             placeholder="Select A/P account…"
@@ -452,7 +452,13 @@ export function VendorBillForm({
       </div>
 
       <TwoSectionLineEditor mode="bill" onChange={setLines} partsLaborMode="parts-and-labor" />
-      <TotalsStack subtotal={subtotal} taxRate={taxRate} onTaxRateChange={setTaxRate} grandLabel="Bill Total = A + B" />
+      <TotalsStack
+        subtotal={subtotal}
+        taxRate={taxRate}
+        onTaxRateChange={setTaxRate}
+        grandLabel="Bill Total = sum of lines"
+        taxDisplayOnly
+      />
 
       <div className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-[11px] text-slate-700">
         Line amounts post to <code className="text-[10px]">accounting.bill_lines</code> with the bill header

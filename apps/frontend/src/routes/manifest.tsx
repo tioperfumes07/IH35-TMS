@@ -168,6 +168,7 @@ const ReceiptsPage = React.lazy(() => import("../pages/accounting/ReceiptsPage")
 const PrepaidExpensesPage = React.lazy(() => import("../pages/accounting/PrepaidExpensesPage").then((m) => ({ default: m.PrepaidExpensesPage })));
 const RevenueRecognitionPage = React.lazy(() => import("../pages/accounting/RevenueRecognitionPage").then((m) => ({ default: m.RevenueRecognitionPage })));
 const FixedAssetsPage = React.lazy(() => import("../pages/accounting/FixedAssetsPage").then((m) => ({ default: m.FixedAssetsPage })));
+const AllocationsPage = React.lazy(() => import("../pages/accounting/AllocationsPage").then((m) => ({ default: m.AllocationsPage })));
 const QboReconcileCapturesPage = React.lazy(() => import("../pages/accounting/QboReconcileCapturesPage").then((m) => ({ default: m.QboReconcileCapturesPage })));
 const AccountTypeCatalogPage = React.lazy(() => import("../pages/accounting/AccountTypeCatalogPage").then((m) => ({ default: m.AccountTypeCatalogPage })));
 const MyAccountantPage = React.lazy(() => import("../pages/accounting/MyAccountantPage").then((m) => ({ default: m.MyAccountantPage })));
@@ -3606,6 +3607,13 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
+        {/* DUALPATH-09 (2026-07-22): IH35_ARCHITECTURAL_DESIGN.md tab "Period Close" — operators and
+            deep links expect /accounting/period-close while the Live wizard is MonthClosePage at
+            /accounting/month-close. Redirect the alias; never delete the canonical mount (Rule 07). */}
+        <Route
+          path="/accounting/period-close"
+          element={<Navigate to="/accounting/month-close" replace />}
+        />
         <Route
           path="/accounting/audit-trail"
           element={
@@ -3893,6 +3901,8 @@ export const ROUTES = React.Children.toArray(
         <Route path="/accounting/receipts" element={<ProtectedRoute><ReceiptsPage /></ProtectedRoute>} />
         <Route path="/accounting/revenue-recognition" element={<ProtectedRoute><RevenueRecognitionPage /></ProtectedRoute>} />
         <Route path="/accounting/fixed-assets" element={<ProtectedRoute><FixedAssetsPage /></ProtectedRoute>} />
+        {/* Accounting PR 3/6 — FH-7 §3.14 Allocations tab: read-only rollup of bill_unit_allocation. */}
+        <Route path="/accounting/allocations" element={<ProtectedRoute><AllocationsPage /></ProtectedRoute>} />
         {/* FIN-23 — QBO reconcile / modify captures (read-only, behind QBO_RECONCILE_UI_ENABLED). */}
         <Route path="/accounting/qbo-reconcile" element={<ProtectedRoute><QboReconcileCapturesPage /></ProtectedRoute>} />
         <Route path="/accounting/prepaid-expenses" element={<ProtectedRoute><PrepaidExpensesPage /></ProtectedRoute>} />

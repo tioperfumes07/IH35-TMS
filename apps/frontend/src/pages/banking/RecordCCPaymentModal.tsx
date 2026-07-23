@@ -80,7 +80,7 @@ export function RecordCCPaymentModal({
   });
   const accountsQuery = useQuery({
     queryKey: ["cc-payment", "liability-accounts", operatingCompanyId],
-    queryFn: () => listCatalogAccounts({ status: "active" }),
+    queryFn: () => listCatalogAccounts({ status: "active", operating_company_id: operatingCompanyId }),
     enabled: open && Boolean(operatingCompanyId),
     staleTime: 60_000,
   });

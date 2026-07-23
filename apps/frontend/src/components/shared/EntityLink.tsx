@@ -38,7 +38,8 @@ export type EntityKind =
   | "claim"
   | "lawsuit"
   | "matter"
-  | "cash_advance";
+  | "cash_advance"
+  | "account";
 
 export interface EntityLinkProps {
   kind: EntityKind;
@@ -118,6 +119,11 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/safety/insurance/lawsuits?lawsuit_id=${id}`;
     case "matter":
       return `/legal/matters/${id}`;
+    case "account":
+      // GL account (catalogs.accounts) → its register. Route verified present in
+      // routes/manifest.tsx: <Route path="/accounting/chart-of-accounts/register/:accountId">.
+      // Law §9 requires every money row to drill forward to the GL account it posts to.
+      return `/accounting/chart-of-accounts/register/${id}`;
     default:
       return null;
   }

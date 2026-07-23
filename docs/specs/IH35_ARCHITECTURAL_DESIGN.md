@@ -212,7 +212,7 @@ For IS/IT (internal):
 | **Journal Entries** | All JE with manual JE attestation | Phase 5 |
 | **Account Register** | Per-account running-balance ledger + audit history (read-only; D5/CA-05) | Phase 5 |
 | **Posting Templates** | WF-053 cross-module posting service config | Phase 5 |
-| **Allocations** | Multi-unit cost allocation (Section 3.14) | Phase 5 |
+| **Allocations** | Multi-unit cost allocation (Section 3.14). Live MVP: `/accounting/allocations` (Accounting sub-nav → More ▾), read-only list of `accounting.bill_unit_allocation` joined to bill/vendor/unit/GL, re-allocate via existing `BillAllocationPanel` (Accounting PR 3/6, 2026-07-22). Full 3.14 engine (periods, amortized JE, rotating-allocator, `manual_amount` method per FH-7) remains Phase 5. | Phase 5 |
 | **Customer Credits / Chargebacks** | Memo + chargeback workflow (P5-T6) | Phase 5 |
 | **QBO Sync Status** | Live sync log + drift detection during parallel run | Phase 5 |
 | **Period Close** | Month-end close checklist + Owner sign-off | Phase 5 |
