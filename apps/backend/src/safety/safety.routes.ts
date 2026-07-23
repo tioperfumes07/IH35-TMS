@@ -339,18 +339,30 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const res = await client
-        .query(
-          `
-            SELECT *
-            FROM safety.accident_reports
-            WHERE operating_company_id = $1
-            ORDER BY accident_at DESC
-            LIMIT 500
-          `,
-          [query.data.operating_company_id]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+      // SAF-F26: join the driver NAME and unit NUMBER so the list drills through by name, not a raw
+      // uuid. driver join is entity-scoped; the unit join is scoped by owner/lessee because mdata.units
+      // has NO operating_company_id (owner_company_id / currently_leased_to_company_id). The former
+      // `.catch(() => [])` swallow is removed — a failed accidents query must surface, not render as an
+      // empty "no accidents" all-clear on a safety screen (the same fake-green class as SAF-F06).
+      const res = await client.query(
+        `
+          SELECT ar.*,
+                 NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
+                 u.unit_number AS unit_number
+          FROM safety.accident_reports ar
+          LEFT JOIN mdata.drivers d
+            ON d.id = ar.driver_id
+           AND d.operating_company_id = ar.operating_company_id
+          LEFT JOIN mdata.units u
+            ON u.id = ar.unit_id
+           AND (u.owner_company_id = ar.operating_company_id
+                OR u.currently_leased_to_company_id = ar.operating_company_id)
+          WHERE ar.operating_company_id = $1
+          ORDER BY ar.accident_at DESC
+          LIMIT 500
+        `,
+        [query.data.operating_company_id]
+      );
       return res.rows;
     });
     return { accidents: rows };
