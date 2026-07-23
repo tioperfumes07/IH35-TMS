@@ -154,7 +154,6 @@ type ViewSettings = {
   turnOffGrouping: boolean;
   /** month | money — only applied when turnOffGrouping is false. */
   groupMode: Exclude<BankTxnGroupMode, "none">;
-  addNewVendors: boolean;
   showAmountsInOneColumn: boolean;
   showTagsField: boolean;
   editableDateField: boolean;
@@ -300,7 +299,6 @@ export function BankingTransactionsDesignView({
     showLocation: false,
     turnOffGrouping: false,
     groupMode: "month",
-    addNewVendors: false,
     showAmountsInOneColumn: false,
     showTagsField: true,
     editableDateField: false,
@@ -1587,7 +1585,7 @@ export function BankingTransactionsDesignView({
             </label>
             <label className="text-xs text-gray-600">
               Payee (vendor)
-              <div className="mt-0.5">
+              <div className="mt-0.5" data-testid="banking-categorize-picker-vendor">
                 <ReferenceSelect
                   value={draft.vendorId || null}
                   onChange={(vid) => {
@@ -1693,7 +1691,7 @@ export function BankingTransactionsDesignView({
             </label>
             <label className="text-xs text-gray-600">
               Category (Chart of Accounts)
-              <div className="mt-0.5">
+              <div className="mt-0.5" data-testid="banking-categorize-picker-category">
                 <ReferenceSelect
                   value={draft.accountId || null}
                   onChange={(v) => setDraft(tx, { accountId: v ?? "" })}
@@ -1711,7 +1709,7 @@ export function BankingTransactionsDesignView({
             </label>
             <label className="text-xs text-gray-600">
               Class
-              <div className="mt-0.5">
+              <div className="mt-0.5" data-testid="banking-categorize-picker-class">
                 <ReferenceSelect
                   value={draft.classId || null}
                   onChange={(cid) => {
@@ -1743,7 +1741,7 @@ export function BankingTransactionsDesignView({
             </label>
             <label className="text-xs text-gray-600">
               Item (Products &amp; Services)
-              <div className="mt-0.5">
+              <div className="mt-0.5" data-testid="banking-categorize-picker-item">
                 <ReferenceSelect
                   value={draft.itemId || null}
                   onChange={(iid) => {
@@ -1776,7 +1774,7 @@ export function BankingTransactionsDesignView({
             </label>
             <label className="text-xs text-gray-600">
               Customer/project
-              <div className="mt-0.5">
+              <div className="mt-0.5" data-testid="banking-categorize-picker-customer">
                 <ReferenceSelect
                   value={draft.customerId || null}
                   onChange={(cid) => {
@@ -2487,7 +2485,14 @@ export function BankingTransactionsDesignView({
                     </div>
                   ) : null}
                   <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Automation review</p>
-                  <ToggleLine label="Add new vendors" checked={viewSettings.addNewVendors} onChange={(checked) => setViewSettings((prev) => ({ ...prev, addNewVendors: checked }))} />
+                  <label
+                    className="inline-flex items-center gap-2 text-xs text-gray-500"
+                    data-testid="banking-add-new-vendors-automation-not-wired"
+                    title="Bank-feed auto-vendor review automation is not wired yet. Inline + Add new vendor on each categorize row still works via ReferenceSelect."
+                  >
+                    <input type="checkbox" checked={false} disabled readOnly aria-disabled="true" />
+                    Add new vendors (automation — not wired)
+                  </label>
                   <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Transaction details</p>
                   <div className="grid grid-cols-1 gap-1 text-xs">
                     <ToggleLine label="Show amounts in 1 column" checked={viewSettings.showAmountsInOneColumn} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showAmountsInOneColumn: checked }))} />
