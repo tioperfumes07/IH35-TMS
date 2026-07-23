@@ -63,7 +63,10 @@ function sourceRoute(type: string | null, reference: string | null): string {
   if (t === "bill_payment") return "/accounting/bill-payments";
   if (t === "expense" && reference) return `/accounting/expenses/${reference}`;
   if (t === "expense") return "/accounting/expenses/list";
+  if (t === "settlement" && reference) return `/driver-finance/settlements?settlement_id=${reference}`;
   if (t === "settlement") return "/driver-finance/settlements";
+  // Law §9 transfer reverse: banking transfers list (QBO Transfer / fund move).
+  if (t === "transfer") return "/banking/transfers";
   // Law §9 bank reverse: bank_categorization source_transaction_id is the bank txn uuid.
   if (t === "bank_categorization" && reference) return `/banking/transactions?txn_id=${reference}`;
   return "/accounting/journal-entries";

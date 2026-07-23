@@ -4,15 +4,29 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
+# CI-COVERAGE FIX (2026-07-23): the `pull_request` trigger deliberately has NO
+# `branches:` filter. A stacked PR (base = another feature branch, not `main`)
+# previously matched nothing here, so `ci / build-typecheck` — including the §7
+# palette ratchets — never executed and the PR looked "green" having been checked
+# by nothing. Evidence: PR #3298 (base fix/banking-15-…) ran ONLY hold-merge-gate
+# + pass-7. Every job below is a whole-tree static/compile check and is
+# base-agnostic, EXCEPT verify-branch-fresh (see its `if:` below).
 on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    types: [opened, synchronize, reopened]
 
 jobs:
   verify-branch-fresh:
-    if: github.event_name == 'pull_request'
+    # Base-DEPENDENT gate: it asserts the PR base is 0 commits behind origin/main.
+    # That question is only meaningful for a PR that merges INTO main. On a stacked
+    # PR the base is a feature branch, so the count is "how far the stack's parent
+    # is behind main" — a guaranteed red that would train reviewers to ignore red.
+    # Unchanged for every PR targeting main: base_ref == 'main' → still runs, still
+    # a required context. Freshness for a stacked PR is enforced when GitHub
+    # retargets it to main on the parent's merge, which re-runs this job.
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:

@@ -110,9 +110,16 @@ export function BankingObligationReconcilePage() {
   return (
     <div className="space-y-3">
       <PageHeader backHref="/banking" title="Bank reconciliation" subtitle="Drag a transaction onto an obligation, or use bulk actions." />
-      {!txnsQuery.isLoading && !obligationsQuery.isLoading && transactions.length === 0 && obligations.length === 0 ? (
+      {/*
+        Only claim 'nothing to reconcile' when BOTH queries actually ran and succeeded. Without the
+        isError/isSuccess checks a failed or not-yet-enabled fetch (companyId still resolving) renders
+        the same banner, telling the operator the queue is clear from data we never received — the
+        exact dishonesty this banner exists to prevent, inverted.
+      */}
+      {txnsQuery.isSuccess && obligationsQuery.isSuccess && !txnsQuery.isError && !obligationsQuery.isError &&
+      transactions.length === 0 && obligations.length === 0 ? (
         <div
-          className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950"
+          className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
           data-testid="banking-reconcile-queue-empty-honesty-banner"
         >
           <p className="font-semibold">Reconcile queue has no unmatched rows and no open obligations in this view.</p>

@@ -115,7 +115,7 @@ function isExempt(rel) {
 }
 
 /** Returns { violations: string[], legacy: string[] }. */
-export function scan(opts = {}) {
+export function checkRetireRefs(opts = {}) {
   const roots = opts.roots ?? SCAN_ROOTS.map((r) => path.join(ROOT, r));
   const relFrom = opts.relFrom ?? ROOT;
   const files = [];
@@ -187,7 +187,7 @@ function selftest() {
     fs.writeFileSync(path.join(src, "old-engine.deprecated.ts"), "await q(`SELECT id FROM payroll.driver_settlements`);\n");
     fs.writeFileSync(path.join(src, "__tests__/mock.test.ts"), "if (sql.includes('FROM payroll.driver_settlements')) {}\n");
 
-    const { violations, legacy } = scan({ roots: [path.join(tmp, "apps/backend/src")], relFrom: tmp });
+    const { violations, legacy } = checkRetireRefs({ roots: [path.join(tmp, "apps/backend/src")], relFrom: tmp });
     const hasV = (f) => violations.some((v) => v.includes(f));
     const hasL = (f) => legacy.some((v) => v.includes(f));
     const checks = [
@@ -228,7 +228,7 @@ if (isMain) {
   if (process.argv.includes("--selftest")) {
     selftest();
   } else {
-    const { violations, legacy } = scan();
+    const { violations, legacy } = checkRetireRefs();
     if (legacy.length) {
       console.warn(`[${LABEL}] WARN — ${legacy.length} KNOWN_LEGACY RETIRE reference(s) (report-only; each needs its own repoint block):`);
       for (const f of legacy) console.warn("  ⚠ " + f);
