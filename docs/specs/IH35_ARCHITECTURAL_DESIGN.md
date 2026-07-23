@@ -201,7 +201,7 @@ For IS/IT (internal):
 ### Top action button
 **+ Create Manual JE** (Owner-only above threshold)
 
-### Sub-nav tabs (12 — Phase 5 expanded)
+### Sub-nav tabs (14 — Phase 5 expanded)
 
 | Tab | What it shows | Phase |
 |-----|---------------|-------|
@@ -217,6 +217,8 @@ For IS/IT (internal):
 | **QBO Sync Status** | Live sync log + drift detection during parallel run | Phase 5 |
 | **Period Close** | Month-end close checklist + Owner sign-off | Phase 5 |
 | **Audit Trail** | Append-only event log | Phase 5 |
+| **Receipts** | Expense/bill/payment attachment proof + reverse drill | Phase 5 |
+| **Undeposited Funds** | CoA role deep-link into Account Register | Phase 5 |
 | **Settings** | Posting rules · Class config · Default accounts | Owner only |
 
 ### KPI row — 6 cards
