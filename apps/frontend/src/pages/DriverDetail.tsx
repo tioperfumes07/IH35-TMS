@@ -38,6 +38,7 @@ import {
 import { listClassesForJe } from "../api/accounting";
 import { legalMattersApi } from "../api/legal-matters";
 import { InsuranceClaimsReverseSection } from "../components/insurance/InsuranceClaimsReverseSection";
+import { DriverSafetyReverseSection } from "../components/safety/DriverSafetyReverseSection";
 import { Button } from "../components/Button";
 import { ListErrorState } from "../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
@@ -1431,6 +1432,17 @@ export function DriverDetailPage() {
                   <div className="text-sm text-gray-500">No safety events recorded for this driver.</div>
                 ) : null}
               </div>
+              {/* SAF-F16 — reverse linkage. The block above is only the internal safety-EVENT log;
+                  the driver's actual safety record (external fines, internal fines, complaints,
+                  drug & alcohol) lived in safety.* with FKs to this driver and was unreadable from
+                  the driver's own page. DEFINITION-OF-DONE §1.C: forward without reverse is not done. */}
+              {driver?.operating_company_id ? (
+                <DriverSafetyReverseSection
+                  operatingCompanyId={String(driver.operating_company_id)}
+                  driverId={id}
+                  data-testid="driver-detail-safety-reverse"
+                />
+              ) : null}
             </>
           )}
         </div>
