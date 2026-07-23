@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { closeMonth, getMonthCloseStatus } from "../../api/accounting";
+import { acknowledgeMonthCloseChecklist, closeMonth, getMonthCloseStatus } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -21,6 +21,9 @@ type ChecklistRow = {
   complete: boolean;
   detail: string;
   href: string;
+  ackItem?: "ar_aging_review" | "ap_aging_review";
+  canAcknowledge?: boolean;
+  reviewed?: boolean;
 };
 
 export function MonthClosePage() {
@@ -57,9 +60,24 @@ export function MonthClosePage() {
     },
   });
 
+  const ackMutation = useMutation({
+    mutationFn: (checklistItem: "ar_aging_review" | "ap_aging_review") =>
+      acknowledgeMonthCloseChecklist(companyId, { period, checklist_item: checklistItem }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["accounting", "month-close", companyId, period] });
+      pushToast("Review acknowledged for this period", "success");
+    },
+    onError: (error) => {
+      pushToast(String((error as Error).message ?? "Failed to acknowledge review"), "error");
+    },
+  });
+
+  const periodEnd = statusQuery.data?.period_end ?? "";
+
   const checklistRows = useMemo<ChecklistRow[]>(() => {
     const status = statusQuery.data;
     if (!status) return [];
+    const agingAsOf = periodEnd ? `?as_of=${periodEnd}` : "";
     return [
       {
         id: "bank_recon",
@@ -74,22 +92,32 @@ export function MonthClosePage() {
         id: "ar_aging",
         label: "A/R aging review",
         complete: status.ar_aging_review.complete,
-        detail: status.ar_aging_review.complete ? "No overdue A/R items." : `${status.ar_aging_review.overdue_count} overdue invoice(s)`,
-        href: "/reports/ar-aging",
+        detail: status.ar_aging_review.overdue_count === 0
+          ? "No overdue A/R items."
+          : `${status.ar_aging_review.overdue_count} overdue invoice(s) — review required before close`,
+        href: `/reports/ar-aging${agingAsOf}`,
+        ackItem: "ar_aging_review",
+        canAcknowledge: status.ar_aging_review.overdue_count > 0 && !status.ar_aging_review.reviewed,
+        reviewed: status.ar_aging_review.reviewed,
       },
       {
         id: "ap_aging",
         label: "A/P aging review",
         complete: status.ap_aging_review.complete,
-        detail: status.ap_aging_review.complete ? "No overdue A/P items." : `${status.ap_aging_review.overdue_count} overdue bill(s)`,
-        href: "/reports/ap-aging",
+        detail: status.ap_aging_review.overdue_count === 0
+          ? "No overdue A/P items."
+          : `${status.ap_aging_review.overdue_count} overdue bill(s) — review required before close`,
+        href: `/reports/ap-aging${agingAsOf}`,
+        ackItem: "ap_aging_review",
+        canAcknowledge: status.ap_aging_review.overdue_count > 0 && !status.ap_aging_review.reviewed,
+        reviewed: status.ap_aging_review.reviewed,
       },
       {
         id: "fuel_tax",
         label: "Fuel tax filing",
         complete: status.fuel_tax.complete,
         detail: status.fuel_tax.ifta_filed ? "Filing marked complete." : "Filing not marked for selected period.",
-        href: "/accounting/sales-tax",
+        href: "/reports/ifta-preparer",
       },
       {
         id: "adjusting_entries",
@@ -99,7 +127,7 @@ export function MonthClosePage() {
         href: "/accounting/journal-entries",
       },
     ];
-  }, [statusQuery.data]);
+  }, [statusQuery.data, periodEnd]);
 
   const canLock = Boolean(statusQuery.data?.can_lock);
 
@@ -110,7 +138,7 @@ export function MonthClosePage() {
       label: "Status",
       render: (row) => (
         <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
-          {row.complete ? "Complete" : "Pending"}
+          {row.complete ? "Complete" : row.reviewed ? "Reviewed" : "Pending"}
         </span>
       ),
     },
@@ -119,9 +147,21 @@ export function MonthClosePage() {
       key: "href",
       label: "Action",
       render: (row) => (
-        <Link to={row.href} className="text-sm font-medium text-slate-700 hover:underline">
-          Open
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link to={row.href} className="text-sm font-medium text-slate-700 hover:underline">
+            Open
+          </Link>
+          {row.canAcknowledge && row.ackItem ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              loading={ackMutation.isPending}
+              onClick={() => ackMutation.mutate(row.ackItem!)}
+            >
+              Mark reviewed
+            </Button>
+          ) : null}
+        </div>
       ),
     },
   ];
@@ -132,6 +172,14 @@ export function MonthClosePage() {
       {!companyId ? (
         <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">Select an operating company before running month close.</p>
       ) : null}
+
+      <div className="mb-3 flex flex-wrap items-center gap-3 text-sm">
+        <Link to="/reports/audit/period-close-history" className="font-medium text-slate-700 hover:underline">
+          Period close history
+        </Link>
+        <span className="text-gray-400">·</span>
+        <span className="text-gray-600">Overdue A/R or A/P may remain open — accountant marks review before lock (G11-10).</span>
+      </div>
 
       <div className="grid gap-3 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
         <label className="text-xs text-gray-600">

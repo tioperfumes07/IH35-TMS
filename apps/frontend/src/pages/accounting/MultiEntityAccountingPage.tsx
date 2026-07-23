@@ -10,6 +10,7 @@ import { listMyCompanies } from "../../api/org";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 
@@ -89,10 +90,17 @@ export function MultiEntityAccountingPage() {
         sortable: true,
         sortValue: (row) => `${row.account_number ? `${row.account_number} - ` : ""}${row.account_name}`,
         render: (row) => (
-          <>
-            {row.account_number ? `${row.account_number} - ` : ""}
-            {row.account_name}
-          </>
+          <EntityLink
+            kind="account"
+            id={row.account_id}
+            label={
+              <>
+                {row.account_number ? `${row.account_number} - ` : ""}
+                {row.account_name}
+              </>
+            }
+            data-testid="multi-entity-account-link"
+          />
         ),
       },
       { key: "account_type", label: "Type", sortable: true },
