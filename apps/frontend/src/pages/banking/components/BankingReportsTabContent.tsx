@@ -37,7 +37,7 @@ export function BankingReportsTabContent() {
   return (
     <div className="space-y-3">
       <div
-        className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950"
+        className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
         data-testid="banking-reports-not-recon-proof-banner"
       >
         <p className="font-semibold">Reports are drill-through surfaces — not bank reconciliation proof.</p>
