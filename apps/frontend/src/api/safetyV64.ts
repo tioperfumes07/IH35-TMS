@@ -50,9 +50,12 @@ export async function uploadDotInspectionPdf(companyId: string, id: string, file
   return payload as Record<string, unknown>;
 }
 
-export function voidDotInspection(companyId: string, id: string) {
+// SAF-F11: void_reason is REQUIRED by the backend (min 3 chars). It is no longer defaulted to a
+// placeholder server-side, so the caller must capture a real reason from the operator.
+export function voidDotInspection(companyId: string, id: string, voidReason: string) {
   return apiRequest<{ dot_inspection: Record<string, unknown> }>(`/api/v1/safety/dot-inspections/${id}/void?${companyQuery(companyId)}`, {
     method: "POST",
+    body: { void_reason: voidReason },
   });
 }
 
@@ -89,8 +92,12 @@ export function patchComplaintV64(companyId: string, id: string, body: Record<st
   });
 }
 
-export function voidComplaintV64(companyId: string, id: string) {
-  return apiRequest<{ complaint: Record<string, unknown> }>(`/api/v1/safety/complaints/${id}/void?${companyQuery(companyId)}`, { method: "POST" });
+// SAF-F11: void_reason is REQUIRED by the backend (min 3 chars).
+export function voidComplaintV64(companyId: string, id: string, voidReason: string) {
+  return apiRequest<{ complaint: Record<string, unknown> }>(`/api/v1/safety/complaints/${id}/void?${companyQuery(companyId)}`, {
+    method: "POST",
+    body: { void_reason: voidReason },
+  });
 }
 
 export function getIntegrityWoCostOutliers(companyId: string) {

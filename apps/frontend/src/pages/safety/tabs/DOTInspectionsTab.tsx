@@ -13,6 +13,7 @@ import { InspectionScoreBadge } from "../../../components/safety/InspectionScore
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { Combobox } from "../../../components/Combobox";
 import { listUnits } from "../../../api/mdata";
+import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 export function DOTInspectionsTab() {
@@ -61,8 +62,11 @@ export function DOTInspectionsTab() {
     },
   });
 
+  // SAF-F11: void is reason-required. Capture the reason before calling, instead of letting the
+  // backend stamp a placeholder into the audit trail.
+  const [voidTargetId, setVoidTargetId] = useState<string | null>(null);
   const voidMutation = useMutation({
-    mutationFn: (id: string) => voidDotInspection(companyId, id),
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => voidDotInspection(companyId, id, reason),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["safety-v64", "dot-inspections", companyId] });
     },
@@ -108,7 +112,7 @@ export function DOTInspectionsTab() {
             type="button"
             className="text-red-700 underline disabled:opacity-50"
             disabled={Boolean(row.voided_at) || voidMutation.isPending}
-            onClick={() => voidMutation.mutate(String(row.id))}
+            onClick={() => setVoidTargetId(String(row.id))}
           >
             {row.voided_at ? "Voided" : "Void"}
           </button>
@@ -246,6 +250,18 @@ export function DOTInspectionsTab() {
           </div>
         )}
       </div>
+      <VoidReasonModal
+        open={voidTargetId !== null}
+        title="Void DOT Inspection"
+        entityRef={voidTargetId ? `Inspection ${voidTargetId}` : undefined}
+        postsReversingEntry={false}
+        onClose={() => setVoidTargetId(null)}
+        onSubmit={async (reason) => {
+          if (!voidTargetId) return;
+          await voidMutation.mutateAsync({ id: voidTargetId, reason });
+          setVoidTargetId(null);
+        }}
+      />
     </div>
   );
 }
