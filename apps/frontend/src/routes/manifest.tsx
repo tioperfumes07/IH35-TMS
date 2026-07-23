@@ -635,8 +635,9 @@ function DriverSafetyProfileTab() {
 function DispatchLoadDetailRedirect() {
   const { id } = useParams<{ id: string }>();
   if (!id) return <Navigate to="/dispatch?view=loads" replace />;
-  // Prefer the banking reverse-linkage surface (Law §9) over a silent board redirect.
-  return <Navigate to={`/dispatch/loads/${encodeURIComponent(id)}`} replace />;
+  // EntityLink kind="load" (48+ callers) must open the load on the Dispatch board — never a bank-feed stub.
+  // Reverse Law §9 bank linkage lives at /dispatch/loads/:id/banking (LoadBankingLinkagePage).
+  return <Navigate to={`/dispatch?load_id=${encodeURIComponent(id)}`} replace />;
 }
 
 /** Legacy `/fleet/:unitId` bookmarks → canonical `/fleet/units/:id` (never collide with known fleet leaves). */
@@ -1207,10 +1208,18 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
-          path="/dispatch/loads/:id"
+          path="/dispatch/loads/:id/banking"
           element={
             <ProtectedRoute>
               <LoadBankingLinkagePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/loads/:id"
+          element={
+            <ProtectedRoute>
+              <DispatchLoadDetailRedirect />
             </ProtectedRoute>
           }
         />
