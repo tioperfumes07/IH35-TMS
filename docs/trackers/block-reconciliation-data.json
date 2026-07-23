@@ -1,6 +1,6 @@
 {
  "date": "2026-07-23",
- "generated_at_iso": "2026-07-23T11:13:11.863Z",
+ "generated_at_iso": "2026-07-23T14:37:25.736Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
@@ -8003,7 +8003,7 @@
    "evidence": "[verified 2026-07-12] agent: 0 raw type=date + verify-no-raw-date-input guard passes",
    "name": "",
    "registered_on": null,
-   "pr": 1892
+   "pr": 3310
   },
   {
    "id": "UI-01_CALENDARS-AND-BOXES_DISPATCH",
@@ -13162,6 +13162,90 @@
  ],
  "merged_prs": [
   {
+   "number": 3319,
+   "title": "fix(guards): selftest-debt burndown batch 1 — 10 guards, 69→59",
+   "mergedAt": "2026-07-23T13:20:18Z",
+   "branch": "fix/selftest-debt-burndown-batch1"
+  },
+  {
+   "number": 3318,
+   "title": "fix(banking): Escrow ↔ settlement both-way linkage (31/linkage)",
+   "mergedAt": "2026-07-23T13:20:14Z",
+   "branch": "fix/banking-31-escrow-settlement"
+  },
+  {
+   "number": 3317,
+   "title": "fix(banking): Match drawer nested +Create vendor/CoA (29/picker)",
+   "mergedAt": "2026-07-23T13:20:09Z",
+   "branch": "fix/banking-29-match-drawer-create"
+  },
+  {
+   "number": 3316,
+   "title": "fix(banking): FAIL 28 categorize §4 pickers (28 of 37)",
+   "mergedAt": "2026-07-23T13:17:56Z",
+   "branch": "fix/banking-28-categorize-pickers"
+  },
+  {
+   "number": 3315,
+   "title": "fix(banking): FAIL 27 bank row attachments/notes honesty",
+   "mergedAt": "2026-07-23T13:17:14Z",
+   "branch": "fix/banking-27-attachments-notes-honesty"
+  },
+  {
+   "number": 3314,
+   "title": "fix(banking): bank-feed GL posting honesty + JE link (26 of 37)",
+   "mergedAt": "2026-07-23T13:17:09Z",
+   "branch": "fix/banking-26-bank-feed-gl-honesty"
+  },
+  {
+   "number": 3313,
+   "title": "fix(guards): collections selftest failed on its own fixture — unblocks local pre-push [P1]",
+   "mergedAt": "2026-07-23T12:13:03Z",
+   "branch": "fix/guards-collections-selftest-fixture"
+  },
+  {
+   "number": 3312,
+   "title": "fix(banking): Transfer ↔ TMS JE reverse + GL flag honesty (25/linkage)",
+   "mergedAt": "2026-07-23T13:17:04Z",
+   "branch": "fix/banking-25-transfer-je-reverse"
+  },
+  {
+   "number": 3311,
+   "title": "fix(banking): Match EntityLink bill/payment/transfer (24/linkage)",
+   "mergedAt": "2026-07-23T13:16:32Z",
+   "branch": "fix/banking-24-match-entitylink"
+  },
+  {
+   "number": 3310,
+   "title": "fix(banking): Relay Card tab gated on a phantom column — honesty guard + typed disclosure",
+   "mergedAt": "2026-07-23T12:15:54Z",
+   "branch": "fix/banking-relay-tab-phantom-field-honesty"
+  },
+  {
+   "number": 3309,
+   "title": "fix(banking): Cash GL unbound honesty + bind reachability (23/econ+wiring)",
+   "mergedAt": "2026-07-23T13:16:27Z",
+   "branch": "fix/banking-23-cash-gl-unbound"
+  },
+  {
+   "number": 3308,
+   "title": "fix(ci): stacked PRs skipped every real gate — run the 9 required contexts on any PR base",
+   "mergedAt": "2026-07-23T12:14:29Z",
+   "branch": "chore/ci-stacked-pr-gate-coverage"
+  },
+  {
+   "number": 3307,
+   "title": "fix(banking): wire by-linkage reverse panels (22/linkage)",
+   "mergedAt": "2026-07-23T13:16:21Z",
+   "branch": "fix/banking-22-by-linkage-reverse"
+  },
+  {
+   "number": 3306,
+   "title": "fix(guards): make two inert selftests real (caught by the new meta-guard)",
+   "mergedAt": "2026-07-23T11:59:03Z",
+   "branch": "fix/guards-real-selftests"
+  },
+  {
    "number": 3304,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-07-23T11:12:41Z",
@@ -13172,6 +13256,12 @@
    "title": "feat(guards): meta-guard — a --selftest must be capable of failing",
    "mergedAt": "2026-07-23T11:12:26Z",
    "branch": "chore/meta-guard-selftests-can-fail"
+  },
+  {
+   "number": 3295,
+   "title": "fix(banking): recon matches + reconcile-queue honesty (13/econ)",
+   "mergedAt": "2026-07-23T13:26:56Z",
+   "branch": "fix/banking-13-recon-matches-honesty"
   },
   {
    "number": 3294,
@@ -13190,6 +13280,12 @@
    "title": "fix(banking): for-review Match/Categorize honesty (10/econ)",
    "mergedAt": "2026-07-23T10:50:23Z",
    "branch": "fix/banking-10-forreview-match-honesty"
+  },
+  {
+   "number": 3291,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-23T12:11:40Z",
+   "branch": "chore/tracker-artifacts-sync-29981184043"
   },
   {
    "number": 3290,
@@ -16664,105 +16760,9 @@
    "title": "fix(ui): restore dispatch and invoice deep-link connectivity",
    "mergedAt": "2026-07-16T04:19:05Z",
    "branch": "feat/dispatch-invoice-deeplinks"
-  },
-  {
-   "number": 2536,
-   "title": "fix(425c): stop hardcoding petition_date; require case SoR",
-   "mergedAt": "2026-07-16T04:18:57Z",
-   "branch": "feat/425c-petition-date-sor"
-  },
-  {
-   "number": 2535,
-   "title": "fix(deploy): checksum overrides for mig 48–51 (unblock Render preDeploy)",
-   "mergedAt": "2026-07-16T03:55:41Z",
-   "branch": "hotfix/predeploy-checksum-48-51"
-  },
-  {
-   "number": 2534,
-   "title": "docs(handoff): coder→cursor — settlement/QBO collapse, cutover, relay + safe stop points",
-   "mergedAt": "2026-07-16T02:38:24Z",
-   "branch": "docs/handoff-coder-to-cursor-2026-07-15"
-  },
-  {
-   "number": 2533,
-   "title": "feat(migrations): [HOLD-FOR-JORGE] QBO collapse STEP 1 — mdata.qbo_* sync columns",
-   "mergedAt": "2026-07-16T02:16:19Z",
-   "branch": "feat/qbo-collapse-step1-mdata-qbo-sync-columns-HOLD"
-  },
-  {
-   "number": 2532,
-   "title": "docs(cutover): Ch.11 fresh-start — opening 03/31/2026, parallel posting 04/01/2026 (supersedes 07/01)",
-   "mergedAt": "2026-07-16T02:03:12Z",
-   "branch": "docs/cutover-ch11-03-31-2026-fresh-start"
-  },
-  {
-   "number": 2531,
-   "title": "feat(migration): [HOLD-FOR-JORGE] TRANSP override for CUSTOMER_PAYMEN…",
-   "mergedAt": "2026-07-16T02:38:56Z",
-   "branch": "feat/customer-payment-transp-override"
-  },
-  {
-   "number": 2530,
-   "title": "Feat/audit log retired comment",
-   "mergedAt": "2026-07-16T02:20:10Z",
-   "branch": "feat/audit-log-retired-comment"
-  },
-  {
-   "number": 2529,
-   "title": "feat(settlements): [HOLD] settlement collapse STEP 2 — retire the payroll settlement engine",
-   "mergedAt": "2026-07-16T02:18:34Z",
-   "branch": "feat/settlement-collapse-step2-retire-payroll-engine-HOLD"
-  },
-  {
-   "number": 2528,
-   "title": "feat(migrations): [HOLD-FOR-JORGE] entity isolation for insurance, fa…",
-   "mergedAt": "2026-07-16T03:16:07Z",
-   "branch": "feat/entity-isolation-opco-rls"
-  },
-  {
-   "number": 2527,
-   "title": "feat(money-posting): gate driver-advance GL post behind DRIVER_ADVANC…",
-   "mergedAt": "2026-07-16T02:38:34Z",
-   "branch": "feat/gate-driver-advance-gl"
-  },
-  {
-   "number": 2526,
-   "title": "feat(migrations): [HOLD-FOR-JORGE] settlement collapse STEP 1 — driver_finance posting-linkage columns",
-   "mergedAt": "2026-07-15T23:58:56Z",
-   "branch": "feat/settlement-collapse-step1-posting-linkage-cols-HOLD"
-  },
-  {
-   "number": 2525,
-   "title": "docs(usmca): U1 entity-isolation classification for GUARD (no DDL)",
-   "mergedAt": "2026-07-16T03:15:58Z",
-   "branch": "cursor/usmca-u1-entity-isolation-classification-9607"
-  },
-  {
-   "number": 2524,
-   "title": "fix(settlements): retire dead GET /settlements/:id to canonical 308 (P2.4b)",
-   "mergedAt": "2026-07-15T22:52:57Z",
-   "branch": "fix/p2.4b-retire-settlement-detail-redirect"
-  },
-  {
-   "number": 2523,
-   "title": "feat(settlements): [HOLD-FOR-JORGE] P2.4a repoint approval.service to canonical driver_finance.*",
-   "mergedAt": "2026-07-15T22:57:48Z",
-   "branch": "feat/p2.4a-approval-service-repoint-HOLD"
-  },
-  {
-   "number": 2522,
-   "title": "feat(migrations): [HOLD-FOR-JORGE] Phase-1c approval CHECK + escrow FK (applied on prod)",
-   "mergedAt": "2026-07-15T22:19:36Z",
-   "branch": "feat/settlement-phase1c-escrow-fk-HOLD"
-  },
-  {
-   "number": 2521,
-   "title": "feat(migrations): [HOLD-FOR-JORGE] register Relay Fuel Wallet as a bank account (CONN-3 step 1)",
-   "mergedAt": "2026-07-15T21:54:35Z",
-   "branch": "feat/relay-wallet-banking-registration-HOLD"
   }
  ],
- "merged_pr_total": 2994,
+ "merged_pr_total": 3000,
  "hold_for_jorge": [
   {
    "number": 3282,
