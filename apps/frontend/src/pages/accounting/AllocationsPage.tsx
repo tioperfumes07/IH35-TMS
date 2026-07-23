@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -75,9 +76,35 @@ export function AllocationsPage() {
   const limit = 50;
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
 
+  /*
+    REVERSE DRILL (Law §9): the backend route and getAllocations() both accept bill_id / asset_id,
+    so a bill or a unit can hand off to this tab scoped to itself. Reading them here is what makes
+    `/accounting/allocations?bill_id=…` actually filter — without it the deep link silently showed
+    EVERY allocation, which reads as "the link is broken" to an operator holding one bill.
+  */
+  const [searchParams, setSearchParams] = useSearchParams();
+  const billIdFilter = searchParams.get("bill_id") ?? undefined;
+  const assetIdFilter = searchParams.get("asset_id") ?? undefined;
+  const hasFilter = Boolean(billIdFilter || assetIdFilter);
+
+  const clearFilter = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("bill_id");
+    next.delete("asset_id");
+    setSearchParams(next, { replace: true });
+    setOffset(0);
+  };
+
   const listQuery = useQuery({
-    queryKey: ["accounting-allocations", operatingCompanyId, offset],
-    queryFn: () => getAllocations({ operating_company_id: operatingCompanyId, limit, offset }),
+    queryKey: ["accounting-allocations", operatingCompanyId, offset, billIdFilter, assetIdFilter],
+    queryFn: () =>
+      getAllocations({
+        operating_company_id: operatingCompanyId,
+        limit,
+        offset,
+        bill_id: billIdFilter,
+        asset_id: assetIdFilter,
+      }),
     enabled: Boolean(selectedCompanyId),
   });
   const { data, isPending, isFetching, isError } = listQuery;
@@ -110,12 +137,20 @@ export function AllocationsPage() {
         key: "gl_account_name",
         label: "GL Account",
         sortable: true,
+        // Law §9: the GL account a bill posts to must drill forward to its register, not sit as
+        // dead text. coa_account_id is already on the row — it just was not linked.
         render: (row) =>
           row.gl_account_name ? (
-            <span>
-              {row.gl_account_number ? <span className="text-gray-400">{row.gl_account_number} · </span> : null}
-              {row.gl_account_name}
-            </span>
+            <EntityLink
+              kind="account"
+              id={row.coa_account_id}
+              label={
+                <>
+                  {row.gl_account_number ? <span className="text-gray-400">{row.gl_account_number} · </span> : null}
+                  {row.gl_account_name}
+                </>
+              }
+            />
           ) : (
             "—"
           ),
@@ -170,9 +205,22 @@ export function AllocationsPage() {
 
   const filterBar = (
     <div className="flex flex-wrap items-center gap-2" data-allocations-filter-toolbar="collapsed">
-      <CollapsedListFilters activeFilterCount={0} testIdPrefix="allocations">
-        <p className="px-2 py-1 text-xs text-gray-500">No filters yet — filter by bill or unit from their detail pages.</p>
+      <CollapsedListFilters activeFilterCount={hasFilter ? 1 : 0} testIdPrefix="allocations">
+        <p className="px-2 py-1 text-xs text-gray-500">
+          {hasFilter
+            ? "Scoped by the bill or unit you drilled in from. Clear to see every allocation."
+            : "Open a bill or a unit and use its Allocations link to scope this list."}
+        </p>
       </CollapsedListFilters>
+      {hasFilter ? (
+        <button
+          onClick={clearFilter}
+          data-testid="allocations-clear-filter"
+          className="rounded-sm border border-gray-300 px-2 py-0.5 text-xs text-slate-700 hover:bg-gray-50"
+        >
+          Clear {billIdFilter ? "bill" : "unit"} filter
+        </button>
+      ) : null}
       <span className="text-xs text-gray-500">
         {total.toLocaleString()} allocation{total !== 1 ? "s" : ""}
       </span>

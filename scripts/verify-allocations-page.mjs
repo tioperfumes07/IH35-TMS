@@ -59,6 +59,53 @@ function assertAllocationsPage() {
     );
   }
   if (!/"\/accounting\/allocations"/.test(locked)) errors.push("locked-ui-surface.json must include /accounting/allocations");
+
+  errors.push(
+    ...assertLinkage({
+      page,
+      billDetail: read("apps/frontend/src/pages/accounting/BillDetailPage.tsx"),
+      entityLink: read("apps/frontend/src/components/shared/EntityLink.tsx"),
+      manifest,
+    })
+  );
+  return errors;
+}
+
+/**
+ * LAW §9 total-connectivity assertions for the Allocations surface. Split out (and taking its
+ * sources as arguments) so the planted-regression selftest can prove each one still bites.
+ *
+ * Every check here corresponds to a real gap found on this branch, not a hypothetical:
+ *  - the page shipped ignoring bill_id/asset_id even though the route + client accepted them, so
+ *    `/accounting/allocations?bill_id=X` silently listed EVERY allocation;
+ *  - the GL account was dead text while coa_account_id sat unused on the row;
+ *  - the bill had no hop into its own allocations (forward-only linkage is not linkage).
+ */
+export function assertLinkage({ page, billDetail, entityLink, manifest }) {
+  const errors = [];
+
+  if (!/searchParams\.get\("bill_id"\)/.test(page) || !/searchParams\.get\("asset_id"\)/.test(page)) {
+    errors.push("AllocationsPage must read bill_id + asset_id from the URL (reverse drill-in target)");
+  }
+  if (!/bill_id:\s*billIdFilter/.test(page) || !/asset_id:\s*assetIdFilter/.test(page)) {
+    errors.push("AllocationsPage must pass bill_id/asset_id through to getAllocations — reading them is not filtering");
+  }
+  if (!/queryKey:\s*\[[^\]]*billIdFilter[^\]]*assetIdFilter/.test(page.replace(/\s+/g, " "))) {
+    errors.push("AllocationsPage react-query key must include the filters or a deep link serves the cached unfiltered list");
+  }
+  if (!/kind="account"/.test(page)) {
+    errors.push("AllocationsPage must EntityLink the GL account (Law §9 forward drill to the posting account)");
+  }
+  if (!/case "account":/.test(entityLink) || !/chart-of-accounts\/register\//.test(entityLink)) {
+    errors.push('EntityLink must resolve kind="account" to the chart-of-accounts register route');
+  }
+  if (!/chart-of-accounts\/register\/:accountId/.test(manifest)) {
+    errors.push("manifest must still mount /accounting/chart-of-accounts/register/:accountId — EntityLink account would be a dead link");
+  }
+  if (!/\/accounting\/allocations\?bill_id=/.test(billDetail)) {
+    errors.push("BillDetailPage must link to its own allocations (reverse hop bill → allocations)");
+  }
+
   return errors;
 }
 
@@ -70,11 +117,46 @@ function selftest() {
   const errors = assertAllocationsPage();
   if (errors.length) problems.push(`live sources rejected: ${errors.join("; ")}`);
 
+  // Real sources, then one mutated copy per linkage assertion — each mutation is the exact
+  // regression the assertion exists to stop.
+  const live = {
+    page: read("apps/frontend/src/pages/accounting/AllocationsPage.tsx"),
+    billDetail: read("apps/frontend/src/pages/accounting/BillDetailPage.tsx"),
+    entityLink: read("apps/frontend/src/components/shared/EntityLink.tsx"),
+    manifest: read("apps/frontend/src/routes/manifest.tsx"),
+  };
+  const without = (key, pattern) => assertLinkage({ ...live, [key]: live[key].replace(pattern, "") });
+
   const cases = [
     [
       "manual mount reintroduced",
       () => assertDuplicateMountCaught(),
       "must NOT manually mount registerAllocationsRoutes",
+    ],
+    [
+      "page stops reading the bill_id deep link",
+      () => without("page", /searchParams\.get\("bill_id"\)/g),
+      "must read bill_id + asset_id from the URL",
+    ],
+    [
+      "page reads the filter but stops sending it",
+      () => without("page", /bill_id:\s*billIdFilter,?/g),
+      "must pass bill_id/asset_id through to getAllocations",
+    ],
+    [
+      "GL account demoted back to dead text",
+      () => without("page", /kind="account"/g),
+      "must EntityLink the GL account",
+    ],
+    [
+      "EntityLink account route removed",
+      () => without("entityLink", /case "account":/g),
+      'must resolve kind="account"',
+    ],
+    [
+      "bill loses its hop into allocations",
+      () => without("billDetail", /\/accounting\/allocations\?bill_id=/g),
+      "must link to its own allocations",
     ],
   ];
   for (const [name, run, expectFragment] of cases) {
