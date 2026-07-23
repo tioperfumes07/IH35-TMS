@@ -1561,10 +1561,12 @@ export type MonthCloseStatus = {
   ar_aging_review: {
     complete: boolean;
     overdue_count: number;
+    reviewed: boolean;
   };
   ap_aging_review: {
     complete: boolean;
     overdue_count: number;
+    reviewed: boolean;
   };
   fuel_tax: {
     complete: boolean;
@@ -1601,6 +1603,23 @@ export function closeMonth(
       operating_company_id: operatingCompanyId,
       period: body.period,
       closing_notes: body.closing_notes,
+    },
+  });
+}
+
+export function acknowledgeMonthCloseChecklist(
+  operatingCompanyId: string,
+  body: {
+    period: string;
+    checklist_item: "ar_aging_review" | "ap_aging_review";
+  }
+) {
+  return apiRequest<{ ok: boolean; checklist_item: string }>("/api/v1/accounting/month-close-acknowledge", {
+    method: "POST",
+    body: {
+      operating_company_id: operatingCompanyId,
+      period: body.period,
+      checklist_item: body.checklist_item,
     },
   });
 }

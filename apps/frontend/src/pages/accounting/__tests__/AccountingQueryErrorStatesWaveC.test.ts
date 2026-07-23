@@ -6,6 +6,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as accountingApi from "../../../api/accounting";
 import * as bankingApi from "../../../api/banking";
+import * as catalogAccountsApi from "../../../api/catalog-accounts";
 import * as mdataApi from "../../../api/mdata";
 import * as paymentMethodsApi from "../../../api/paymentMethods";
 import { BillsPage } from "../BillsPage";
@@ -67,6 +68,11 @@ vi.mock("../../../api/banking", async (importOriginal) => {
     getCoaAccounts: vi.fn(),
     getPlaidBankAccounts: vi.fn(),
   };
+});
+
+vi.mock("../../../api/catalog-accounts", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../api/catalog-accounts")>();
+  return { ...actual, listCatalogAccounts: vi.fn() };
 });
 
 vi.mock("../../../api/mdata", async (importOriginal) => {
@@ -268,7 +274,7 @@ describe("Accounting Wave C query error behavior", () => {
   });
 
   it("renders the CC account failure and Refresh refetches only accounts", async () => {
-    vi.mocked(bankingApi.getAllAccounts).mockRejectedValue(QUERY_ERROR);
+    vi.mocked(catalogAccountsApi.listCatalogAccounts).mockRejectedValue(QUERY_ERROR);
     renderSurface(
       createElement(CCPaymentModal, {
         open: true,
@@ -281,11 +287,11 @@ describe("Accounting Wave C query error behavior", () => {
 
     expect(await screen.findByText(/Failed to load credit-card accounts: planted query failure/)).toBeInTheDocument();
     expect(screen.queryByText(/Loading/i)).not.toBeInTheDocument();
-    const accountCalls = vi.mocked(bankingApi.getAllAccounts).mock.calls.length;
+    const accountCalls = vi.mocked(catalogAccountsApi.listCatalogAccounts).mock.calls.length;
 
     await clickScopedRefresh(/Failed to load credit-card accounts/);
 
-    await waitFor(() => expect(bankingApi.getAllAccounts).toHaveBeenCalledTimes(accountCalls + 1));
+    await waitFor(() => expect(catalogAccountsApi.listCatalogAccounts).toHaveBeenCalledTimes(accountCalls + 1));
   });
 
   it("renders the open-invoice failure and Refresh leaves payment detail untouched", async () => {
