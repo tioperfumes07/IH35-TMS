@@ -50,6 +50,10 @@ const TARGETS = [
   "apps/frontend/src/pages/accounting/bill-payments/CCPaymentModal.tsx",
   // Bank-transaction Split — CHROME-11 leftover note; this block's primary fix.
   "apps/frontend/src/pages/banking/components/BankTransactionSplitModal.tsx",
+  // Vendor credit create — writes an accounting.vendor_credits money row, and its ReferenceSelect
+  // createKind="vendor" opens a nested InlineCreateDrawer, so a centered Modal here would invert
+  // the drawer stack. Added when the creator was converted off <Modal> (PR #3265).
+  "apps/frontend/src/pages/accounting/VendorCreditsPage.tsx",
 ];
 
 function runSelftest() {

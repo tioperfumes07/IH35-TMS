@@ -55,6 +55,20 @@ export function AbandonmentQueuePage() {
           return <EntityLink kind="driver" id={row.driver_id as string | undefined} label={driverId ? `${driverId.slice(0, 8)}…` : undefined} />;
         },
       },
+      {
+        key: "applied_to_settlement_id",
+        label: "Settlement",
+        render: (row) => {
+          const settlementId = row.applied_to_settlement_id as string | undefined;
+          return (
+            <EntityLink
+              kind="settlement"
+              id={settlementId}
+              label={settlementId ? `${settlementId.slice(0, 8)}…` : undefined}
+            />
+          );
+        },
+      },
       { key: "total_chargeback_cents", label: "Total ¢", render: (row) => String(row.total_chargeback_cents ?? "") },
       { key: "status", label: "Status", render: (row) => <span className="capitalize">{String(row.status ?? "")}</span> },
       {

@@ -31,7 +31,7 @@ const LABEL = "verify-legal-matter-lawsuit-linkage";
  * @param {{ entityLink: string, matterDetail: string, lawsuitsTab: string }} sources
  * @returns {string[]}
  */
-export function computeFailures(sources) {
+export function assertLegalMatterLawsuitLinkage(sources) {
   const errors = [];
   const { entityLink, matterDetail, lawsuitsTab } = sources;
 
@@ -106,10 +106,14 @@ useEffect(() => {
 `,
   };
 
+  // [name, mutatedField, sources]. `mutatedField` is null for cases that supply a wholesale-distinct
+  // fixture value (guaranteed to differ from `good` by inspection) rather than a `.replace()` of it —
+  // only the `.replace()`-derived cases need the "did it actually mutate" check below.
   const badCases = [
-    ["missing-kind", { ...good, entityLink: good.entityLink.replace('  | "lawsuit"\n', "") }],
+    ["missing-kind", "entityLink", { ...good, entityLink: good.entityLink.replace('  | "lawsuit"\n', "") }],
     [
       "wrong-route",
+      "entityLink",
       {
         ...good,
         entityLink: good.entityLink.replace(
@@ -118,26 +122,35 @@ useEffect(() => {
         ),
       },
     ],
-    ["bare-link-regression", { ...good, matterDetail: '<Link to="/safety/insurance/lawsuits" data-testid="matter-insurance-lawsuit-link">x</Link>' }],
-    ["missing-testid", { ...good, matterDetail: '<EntityLink kind="lawsuit" id={String(matter.insurance_lawsuit_id)} />' }],
-    ["no-search-params-hook", { ...good, lawsuitsTab: good.lawsuitsTab.replace("useSearchParams", "useState") }],
-    ["no-param-read", { ...good, lawsuitsTab: good.lawsuitsTab.replace('searchParams.get("lawsuit_id")', '""') }],
-    ["dead-deep-link", { ...good, lawsuitsTab: good.lawsuitsTab.replace("setSelectedLawsuitId(deepLinkLawsuitId)", "doNothing()") }],
+    ["bare-link-regression", null, { ...good, matterDetail: '<Link to="/safety/insurance/lawsuits" data-testid="matter-insurance-lawsuit-link">x</Link>' }],
+    ["missing-testid", null, { ...good, matterDetail: '<EntityLink kind="lawsuit" id={String(matter.insurance_lawsuit_id)} />' }],
+    ["no-search-params-hook", "lawsuitsTab", { ...good, lawsuitsTab: good.lawsuitsTab.replace("useSearchParams", "useState") }],
+    ["no-param-read", "lawsuitsTab", { ...good, lawsuitsTab: good.lawsuitsTab.replace('searchParams.get("lawsuit_id")', '""') }],
+    ["dead-deep-link", "lawsuitsTab", { ...good, lawsuitsTab: good.lawsuitsTab.replace("setSelectedLawsuitId(deepLinkLawsuitId)", "doNothing()") }],
   ];
 
-  const goodFails = computeFailures(good);
-  if (goodFails.length !== 0) {
-    console.error(`${LABEL} selftest FAIL: good fixture failed`, goodFails);
-    process.exit(1);
-  }
-  for (const [name, sources] of badCases) {
-    const fails = computeFailures(sources);
+  const problems = [];
+
+  const goodFails = assertLegalMatterLawsuitLinkage(good);
+  if (goodFails.length !== 0) problems.push(`good fixture should pass, got: ${goodFails.join(" | ")}`);
+
+  for (const [name, mutatedField, sources] of badCases) {
+    if (mutatedField && sources[mutatedField] === good[mutatedField]) {
+      problems.push(`planted regression "${name}" did not mutate ${mutatedField} — selftest is inert`);
+      continue;
+    }
+    const fails = assertLegalMatterLawsuitLinkage(sources);
     if (fails.length === 0) {
-      console.error(`${LABEL} selftest FAIL: bad fixture "${name}" unexpectedly passed`);
-      process.exit(1);
+      problems.push(`planted regression "${name}" was NOT caught — bad fixture unexpectedly passed`);
     }
   }
-  console.log(`✓ ${LABEL} selftest PASS`);
+
+  if (problems.length) {
+    console.error(`${LABEL} SELFTEST FAILED:`);
+    for (const p of problems) console.error(`  • ${p}`);
+    process.exit(1);
+  }
+  console.log(`✓ ${LABEL} selftest PASS — good fixture passes; ${badCases.length} planted regressions all caught`);
 }
 
 function main() {
@@ -152,7 +165,7 @@ function main() {
     lawsuitsTab: read("apps/frontend/src/pages/insurance/LawsuitsTab.tsx"),
   };
 
-  const failures = computeFailures(sources);
+  const failures = assertLegalMatterLawsuitLinkage(sources);
   if (failures.length > 0) {
     console.error(`✗ ${LABEL}: FAIL`);
     for (const f of failures) console.error(`  - ${f}`);
