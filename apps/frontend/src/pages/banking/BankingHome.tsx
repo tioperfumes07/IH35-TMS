@@ -557,6 +557,31 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 </Link>
               </div>
             </div>
+            {(reconciliationSessionsQuery.data?.open_sessions ?? []).length === 0 &&
+            (reconciliationSessionsQuery.data?.completed_sessions ?? []).length === 0 ? (
+              <div
+                className="mb-3 rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950"
+                data-testid="banking-recon-never-completed-banner"
+              >
+                <p className="font-semibold">No reconciliation sessions exist for this company yet.</p>
+                <p className="mt-1">
+                  Statement reconcile is not proven live until a session is started and completed. Uncategorized /
+                  for-review bank transactions still need Match/Categorize on the Transactions tab (
+                  {uncategorizedCount.toLocaleString()} currently flagged). Do not treat this screen as “reconciled.”
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <ActionButton onClick={openStartReconciliation}>+ Start first reconciliation</ActionButton>
+                  <ActionButton
+                    onClick={() => {
+                      setTransactionsInitialFilter("uncategorized");
+                      navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`);
+                    }}
+                  >
+                    Open for-review queue
+                  </ActionButton>
+                </div>
+              </div>
+            ) : null}
             <p className="text-sm text-gray-700">Open sessions: {(reconciliationSessionsQuery.data?.open_sessions ?? []).length}</p>
             <div className="mt-2 space-y-1">
               {(reconciliationSessionsQuery.data?.open_sessions ?? []).map((session) => (
