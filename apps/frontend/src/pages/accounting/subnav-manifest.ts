@@ -83,6 +83,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   // Bill payment ▾
   { label: "Bill payment", path: "/accounting/bill-payments", section: "billpay" },
   { label: "Vendor balances", path: "/accounting/vendor-balances", section: "billpay" },
+  { label: "Vendor credits", path: "/accounting/vendor-credits", section: "billpay" },
   { label: "Accounts payable", path: "/accounting/accounts-payable", section: "billpay" },
   { label: "AP Aging", path: "/reports/ap-aging", section: "billpay" },
 
@@ -97,6 +98,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   // More ▾ — AR / receivables
   { label: "Invoices", path: "/accounting/invoices", section: "more" },
   { label: "Receive Payment", path: "/accounting/payments", section: "more" },
+  { label: "Undeposited Funds", path: "/accounting/undeposited-funds", section: "more" },
   { label: "AR Aging", path: "/reports/ar-aging", section: "more" },
   COLLECTIONS_SUBNAV_ITEM,
 

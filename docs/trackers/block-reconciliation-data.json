@@ -1,6 +1,6 @@
 {
  "date": "2026-07-23",
- "generated_at_iso": "2026-07-23T05:05:38.388Z",
+ "generated_at_iso": "2026-07-23T10:55:34.772Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
@@ -758,7 +758,7 @@
    "evidence": "[verified 2026-07-12] agent: PR #2135 docs-only, no code/migration touched",
    "name": "",
    "registered_on": null,
-   "pr": 2453
+   "pr": 3276
   },
   {
    "id": "d-02-cancel-load-shown-on-unsaved-load",
@@ -13162,16 +13162,112 @@
  ],
  "merged_prs": [
   {
+   "number": 3294,
+   "title": "fix(banking): Transfers empty-state honesty (12/econ)",
+   "mergedAt": "2026-07-23T10:50:33Z",
+   "branch": "fix/banking-12-transfers-empty-honesty"
+  },
+  {
+   "number": 3293,
+   "title": "fix(banking): Plaid Connections entry tab (11/econ)",
+   "mergedAt": "2026-07-23T10:50:28Z",
+   "branch": "fix/banking-11-plaid-connections-entry"
+  },
+  {
+   "number": 3292,
+   "title": "fix(banking): for-review Match/Categorize honesty (10/econ)",
+   "mergedAt": "2026-07-23T10:50:23Z",
+   "branch": "fix/banking-10-forreview-match-honesty"
+  },
+  {
+   "number": 3290,
+   "title": "fix(banking): Reconciliation empty-state honesty (9/9)",
+   "mergedAt": "2026-07-23T10:50:15Z",
+   "branch": "fix/banking-9of9-recon-empty-honesty"
+  },
+  {
+   "number": 3289,
+   "title": "fix(banking): arch-design ↔ Banking tabs guard (8/9)",
+   "mergedAt": "2026-07-23T10:50:11Z",
+   "branch": "fix/banking-8of9-arch-design-banking-tabs"
+  },
+  {
+   "number": 3288,
+   "title": "fix(banking): Statement Import entry tab (7/9)",
+   "mergedAt": "2026-07-23T10:50:06Z",
+   "branch": "fix/banking-7of9-statement-import-tab"
+  },
+  {
+   "number": 3287,
+   "title": "fix(banking): Settings entry tab (6/9)",
+   "mergedAt": "2026-07-23T10:49:42Z",
+   "branch": "fix/banking-6of9-settings-tab"
+  },
+  {
+   "number": 3286,
+   "title": "fix(banking): Factoring + Relay Card entry tabs (4–5/9)",
+   "mergedAt": "2026-07-23T10:49:37Z",
+   "branch": "fix/banking-4of9-factoring-relay-tabs"
+  },
+  {
+   "number": 3285,
+   "title": "fix(accounting): open balance must net vendor credits + cap credit applications [FINANCIAL / NEEDS JORGE-APPROVED]",
+   "mergedAt": "2026-07-23T05:13:54Z",
+   "branch": "fix/acct-open-balance-includes-vendor-credits"
+  },
+  {
+   "number": 3284,
+   "title": "fix(banking): Email Queue nav reachability (3/9)",
+   "mergedAt": "2026-07-23T10:49:32Z",
+   "branch": "fix/banking-2of9-email-queue-nav"
+  },
+  {
+   "number": 3283,
+   "title": "fix(banking): Cash GL setup reachability + sidebar flyout (1–2/9)",
+   "mergedAt": "2026-07-23T10:49:21Z",
+   "branch": "fix/banking-1of9-cash-gl-sidebar"
+  },
+  {
+   "number": 3282,
+   "title": "chore(db): record the HOLD-batch migration already applied to prod [FINANCIAL / NEEDS JORGE-APPROVED]",
+   "mergedAt": "2026-07-23T05:29:36Z",
+   "branch": "chore/record-applied-hold-migration"
+  },
+  {
+   "number": 3281,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-23T10:49:09Z",
+   "branch": "chore/tracker-artifacts-sync-29977929245"
+  },
+  {
    "number": 3280,
    "title": "fix(accounting): maintenance-shop hub under Accounting subnav (47/47)",
    "mergedAt": "2026-07-23T03:48:50Z",
    "branch": "acct-maintenance-shop-hub-20260722"
   },
   {
+   "number": 3279,
+   "title": "fix(accounting): abandonment queue settlement EntityLink reverse (46/46)",
+   "mergedAt": "2026-07-23T10:48:42Z",
+   "branch": "fix-acct-abandonment-settlement-link"
+  },
+  {
+   "number": 3278,
+   "title": "fix(accounting): QBO sync drift entity EntityLink reverse (45/46)",
+   "mergedAt": "2026-07-23T10:48:37Z",
+   "branch": "fix-acct-qbo-drift-entitylink"
+  },
+  {
    "number": 3277,
    "title": "fix(accounting): Integration transactions EntityLink reverse (44/46)",
    "mergedAt": "2026-07-23T03:42:59Z",
    "branch": "fix-acct-integration-txn-entitylink"
+  },
+  {
+   "number": 3276,
+   "title": "fix(accounting): Multi-entity consolidated account register drill (43/43)",
+   "mergedAt": "2026-07-23T10:48:30Z",
+   "branch": "fix/acct-multi-entity-leaf"
   },
   {
    "number": 3275,
@@ -13186,6 +13282,12 @@
    "branch": "fix/acct-account-type-create"
   },
   {
+   "number": 3273,
+   "title": "fix(accounting): revenue recognition source EntityLink reverse (40/40)",
+   "mergedAt": "2026-07-23T10:47:53Z",
+   "branch": "fix/acct-revenue-recognition-reverse"
+  },
+  {
    "number": 3272,
    "title": "fix(accounting): dispute queue driver EntityLink reverse (39/40)",
    "mergedAt": "2026-07-23T03:47:03Z",
@@ -13198,10 +13300,46 @@
    "branch": "fix/acct-pre-settlements-reverse"
   },
   {
+   "number": 3270,
+   "title": "fix(accounting): escrow posting source EntityLink reverse (37/37)",
+   "mergedAt": "2026-07-23T05:11:33Z",
+   "branch": "fix/acct-escrow-posting-entitylink-reverse"
+  },
+  {
+   "number": 3269,
+   "title": "fix(accounting): fixed assets unit + JE reverse drill (36/37)",
+   "mergedAt": "2026-07-23T05:07:37Z",
+   "branch": "fix/acct-fixed-assets-entitylink-reverse"
+  },
+  {
+   "number": 3267,
+   "title": "fix(accounting): payment methods catalog GL ReferenceSelect +Create (34/34)",
+   "mergedAt": "2026-07-23T10:47:38Z",
+   "branch": "fix/acct-payment-methods-catalog-create"
+  },
+  {
+   "number": 3266,
+   "title": "fix(accounting): sales tax EntityLink reverse + JE mapping (33/34)",
+   "mergedAt": "2026-07-23T10:47:31Z",
+   "branch": "fix/acct-sales-tax-entitylink-reverse"
+  },
+  {
+   "number": 3265,
+   "title": "fix(accounting): vendor credits UI + vendor reverse drill (32/34)",
+   "mergedAt": "2026-07-23T10:47:23Z",
+   "branch": "fix/acct-vendor-credits-ui"
+  },
+  {
    "number": 3264,
    "title": "fix(accounting): bill payments pay picker has_balance not unpaid (31/31)",
    "mergedAt": "2026-07-23T03:51:23Z",
    "branch": "fix/acct-bill-payments-has-balance"
+  },
+  {
+   "number": 3263,
+   "title": "fix(accounting): payment detail apply uses has_balance open AR (30/31)",
+   "mergedAt": "2026-07-23T05:10:04Z",
+   "branch": "fix/acct-payment-detail-has-balance"
   },
   {
    "number": 3261,
@@ -13222,6 +13360,12 @@
    "branch": "fix/acct-factor-recon-invoice-link"
   },
   {
+   "number": 3258,
+   "title": "fix(accounting): All Transactions + Register id-scoped reverse (25/28)",
+   "mergedAt": "2026-07-23T10:47:17Z",
+   "branch": "fix/acct-txn-register-detail-paths"
+  },
+  {
    "number": 3257,
    "title": "fix(accounting): New Account drawer silently discarded 4 collected fields [FINANCIAL / HOLD]",
    "mergedAt": "2026-07-23T03:06:52Z",
@@ -13240,16 +13384,58 @@
    "branch": "fix/acct-ap-aging-drill"
   },
   {
+   "number": 3254,
+   "title": "fix(accounting): month-close aging review acknowledge (24/24)",
+   "mergedAt": "2026-07-23T10:47:10Z",
+   "branch": "fix/acct-month-close-ack"
+  },
+  {
    "number": 3253,
    "title": "fix(accounting): period-close alias → month-close (20/24)",
    "mergedAt": "2026-07-23T03:14:09Z",
    "branch": "fix/acct-recurring-dualpath"
   },
   {
+   "number": 3252,
+   "title": "docs(accounting): live economics smoke evidence pack (23/24)",
+   "mergedAt": "2026-07-23T10:46:44Z",
+   "branch": "fix/acct-live-economics-evidence"
+  },
+  {
+   "number": 3251,
+   "title": "fix(accounting): Receipts payment proof + Undeposited Funds nav (19/24)",
+   "mergedAt": "2026-07-23T10:46:36Z",
+   "branch": "fix/acct-receipts-leaf"
+  },
+  {
    "number": 3250,
    "title": "HOLD(accounting): Claim→WO→Bill/Expense FK design (12/24) — Neon",
    "mergedAt": "2026-07-23T05:04:44Z",
    "branch": "fix/acct-claim-wo-bill-fk-hold"
+  },
+  {
+   "number": 3249,
+   "title": "HOLD(accounting): ensure Active drivers as vendors (5b/24)",
+   "mergedAt": "2026-07-23T05:43:45Z",
+   "branch": "fix/acct-ensure-driver-vendors-hold"
+  },
+  {
+   "number": 3248,
+   "title": "HOLD(accounting): soft-resolve legacy Receive Payment deposit (7b/24)",
+   "mergedAt": "2026-07-23T05:20:35Z",
+   "branch": "fix/acct-receive-payment-deposit-softresolve"
+  },
+  {
+   "number": 3247,
+   "title": "fix(accounting): invoice create income CoA picker + load link (15/24)",
+   "mergedAt": "2026-07-23T05:36:13Z",
+   "branch": "fix/acct-invoice-create-coa"
+  },
+  {
+   "number": 3246,
+   "title": "fix(accounting): CC Bill Payment account picker +Create / QBO chrome (17/24)",
+   "mergedAt": "2026-07-23T10:46:19Z",
+   "branch": "fix/acct-cc-bill-payment-picker"
   },
   {
    "number": 3245,
@@ -13262,6 +13448,12 @@
    "title": "fix(accounting): Expense list JE/vendor reverse columns (18/24)",
    "mergedAt": "2026-07-23T03:08:31Z",
    "branch": "fix/acct-expense-list-reverse"
+  },
+  {
+   "number": 3243,
+   "title": "fix(accounting): Multiple Bills row parity with VendorBillForm (10/24)",
+   "mergedAt": "2026-07-23T10:46:12Z",
+   "branch": "fix/acct-multi-bills-parity"
   },
   {
    "number": 3242,
@@ -16568,202 +16760,16 @@
    "title": "docs(specs): opening-balance import + 07/01/2026 cutover design",
    "mergedAt": "2026-07-15T20:28:37Z",
    "branch": "docs/opening-balance-import-cutover-design"
-  },
-  {
-   "number": 2517,
-   "title": "test(routes): LISTS-1 CoA redirect regression test (modsweep-lists-1)",
-   "mergedAt": "2026-07-15T19:56:30Z",
-   "branch": "test/lists-coa-redirect"
-  },
-  {
-   "number": 2516,
-   "title": "feat(ci): extend no-silent-swallow guard to banking/ + qbo-sync/ (D4)",
-   "mergedAt": "2026-07-15T19:56:22Z",
-   "branch": "feat/d4-no-swallow-qbo-banking"
-  },
-  {
-   "number": 2515,
-   "title": "feat(ci): guard against migrations outside db/migrations (governance §7b)",
-   "mergedAt": "2026-07-15T19:33:21Z",
-   "branch": "feat/migration-location-guard"
-  },
-  {
-   "number": 2514,
-   "title": "fix(maintenance): [HOLD-FOR-JORGE] stop lineless/unbalanced JE on internal WO close (#3)",
-   "mergedAt": "2026-07-15T19:33:10Z",
-   "branch": "fix/internal-labor-lineless-je-HOLD"
-  },
-  {
-   "number": 2513,
-   "title": "chore(ci): run verify-no-test-fixture-names in verify:pre-commit (modsweep)",
-   "mergedAt": "2026-07-15T19:33:02Z",
-   "branch": "chore/wire-unwired-guards"
-  },
-  {
-   "number": 2512,
-   "title": "feat(relay): 3-day ingest windows + timeout/retry + fail-loud + Owner trigger UI (B3a)",
-   "mergedAt": "2026-07-15T19:12:26Z",
-   "branch": "feat/relay-fuel-ingest-timeout-trigger-ui"
-  },
-  {
-   "number": 2511,
-   "title": "fix(ci): close hold-merge-gate GL-write coverage gap (D2)",
-   "mergedAt": "2026-07-15T18:34:18Z",
-   "branch": "feat/hold-merge-gate-gl-marker-coverage"
-  },
-  {
-   "number": 2510,
-   "title": "feat(qbo-sync): [HOLD-FOR-JORGE] A/P sync per-step+company isolation + owner trigger (B-A2)",
-   "mergedAt": "2026-07-15T18:29:07Z",
-   "branch": "feat/ap-sync-per-step-company-isolation-HOLD"
-  },
-  {
-   "number": 2509,
-   "title": "docs(settlement): Phase-0 inventory for canonical collapse (B-C.P0)",
-   "mergedAt": "2026-07-15T18:13:38Z",
-   "branch": "docs/settlement-collapse-phase0-inventory"
-  },
-  {
-   "number": 2508,
-   "title": "fix(banking): derived From/To read-only, drop stray free-text input (B-A4)",
-   "mergedAt": "2026-07-15T18:28:57Z",
-   "branch": "fix/banking-fromto-relabel-stray-input"
-  },
-  {
-   "number": 2507,
-   "title": "fix(banking): entity-aware empty-state (B-A1)",
-   "mergedAt": "2026-07-15T17:58:18Z",
-   "branch": "fix/banking-entity-empty-state"
-  },
-  {
-   "number": 2506,
-   "title": "docs(migrations): approved-applied note for 202607390000 (B-A6)",
-   "mergedAt": "2026-07-15T17:58:11Z",
-   "branch": "chore/held-migration-202607390000-approved-note"
-  },
-  {
-   "number": 2505,
-   "title": "feat(deploy): frontend build-sha stamp + 3-way deploy-parity monitor (B-B)",
-   "mergedAt": "2026-07-15T17:40:55Z",
-   "branch": "feat/frontend-version-stamp-deploy-parity"
-  },
-  {
-   "number": 2504,
-   "title": "fix(tests): serialize shared-singleton COA-role db.tests on advisory lock (chain-06 flake root cause) + close TS7 backlog",
-   "mergedAt": "2026-07-15T11:30:01Z",
-   "branch": "claude/status-sync-standing-loop-v2-8e0le8"
-  },
-  {
-   "number": 2503,
-   "title": "test(gl-posting): user-scope flag overrides in 5 more flaky GL-posting db.tests (part 2)",
-   "mergedAt": "2026-07-15T01:38:12Z",
-   "branch": "test/gl-flag-isolation-part2"
-  },
-  {
-   "number": 2502,
-   "title": "test(lists): fix stale routing-smoke expectations for relabeled Lists pages",
-   "mergedAt": "2026-07-15T01:36:18Z",
-   "branch": "fix/stale-test-triage"
-  },
-  {
-   "number": 2501,
-   "title": "fix(accounting): sub-nav → approved grouped click-open dropdowns (supersedes #2500) — DRAFT, eyeball vs PNG",
-   "mergedAt": "2026-07-15T01:39:39Z",
-   "branch": "fix/accounting-subnav-grouped-dropdowns"
-  },
-  {
-   "number": 2499,
-   "title": "test(gl-posting): user-scope flag overrides in the 3 flaky GL-posting db.tests",
-   "mergedAt": "2026-07-14T23:41:04Z",
-   "branch": "test/gl-posting-flag-isolation"
-  },
-  {
-   "number": 2498,
-   "title": "test(ui): regression guard against nested modal double-frame headers",
-   "mergedAt": "2026-07-14T23:00:44Z",
-   "branch": "fix/nested-modal-double-frame"
-  },
-  {
-   "number": 2497,
-   "title": "fix(cors): add driver.ih35dispatch.com to prod default origins + canonical guard",
-   "mergedAt": "2026-07-14T23:00:33Z",
-   "branch": "fix/cors-origins-canonical"
-  },
-  {
-   "number": 2496,
-   "title": "fix(ui): wire 26 dead KPI cards to real drill-downs (dead-click baseline 49→23)",
-   "mergedAt": "2026-07-14T22:29:18Z",
-   "branch": "fix/dead-click-rollout"
-  },
-  {
-   "number": 2495,
-   "title": "test(banking): guard categorize inline-create rollout (Location stays free-text)",
-   "mergedAt": "2026-07-14T22:29:34Z",
-   "branch": "feat/banking-inline-create-rollout"
-  },
-  {
-   "number": 2494,
-   "title": "test(customers/vendors): B20 regression guard (pagination + inline-create + \"+ Create\")",
-   "mergedAt": "2026-07-14T22:29:45Z",
-   "branch": "feat/customers-vendors-gaps"
-  },
-  {
-   "number": 2493,
-   "title": "fix(safety): wire AccidentReportDrawer Report Date to shared DatePick…",
-   "mergedAt": "2026-07-14T22:03:32Z",
-   "branch": "fix/accident-report-datepicker"
-  },
-  {
-   "number": 2492,
-   "title": "fix(relay-fuel): entity-scoped key never falls back to the global key…",
-   "mergedAt": "2026-07-14T21:08:04Z",
-   "branch": "fix/relay-key-no-cross-entity-fallback"
-  },
-  {
-   "number": 2491,
-   "title": "fix(banking): stop inline class-create from wiping its own label",
-   "mergedAt": "2026-07-14T20:09:52Z",
-   "branch": "fix/banking-inline-class-label"
-  },
-  {
-   "number": 2490,
-   "title": "Fix/banking sync strip transaction count",
-   "mergedAt": "2026-07-14T20:45:28Z",
-   "branch": "fix/banking-sync-strip-transaction-count"
-  },
-  {
-   "number": 2489,
-   "title": "Fix/docs upload viewed entity",
-   "mergedAt": "2026-07-14T20:09:35Z",
-   "branch": "fix/docs-upload-viewed-entity"
-  },
-  {
-   "number": 2488,
-   "title": "Feat/vendor types catalog hold",
-   "mergedAt": "2026-07-14T21:07:44Z",
-   "branch": "feat/vendor-types-catalog-hold"
-  },
-  {
-   "number": 2487,
-   "title": "feat(insurance): G11-1 claim->accident/load/driver forward FKs (HOLD-…",
-   "mergedAt": "2026-07-14T17:54:13Z",
-   "branch": "feat/claim-accident-load-driver-fk-hold"
-  },
-  {
-   "number": 2486,
-   "title": "feat(relay-fuel): per-entity Relay API key (RELAY_API_KEY_<CODE>) so …",
-   "mergedAt": "2026-07-14T17:24:30Z",
-   "branch": "feat/relay-per-entity-api-key"
-  },
-  {
-   "number": 2485,
-   "title": "fix(module-help): help module verified non-financial defect fixes",
-   "mergedAt": "2026-07-14T14:46:40Z",
-   "branch": "fix/module-help-defects"
   }
  ],
- "merged_pr_total": 2959,
+ "merged_pr_total": 2991,
  "hold_for_jorge": [
+  {
+   "number": 3282,
+   "title": "chore(db): record the HOLD-batch migration already applied to prod [FINANCIAL / NEEDS JORGE-APPROVED]",
+   "mergedAt": "2026-07-23T05:29:36Z",
+   "category": "HOLD"
+  },
   {
    "number": 3257,
    "title": "fix(accounting): New Account drawer silently discarded 4 collected fields [FINANCIAL / HOLD]",
@@ -16774,6 +16780,18 @@
    "number": 3250,
    "title": "HOLD(accounting): Claim→WO→Bill/Expense FK design (12/24) — Neon",
    "mergedAt": "2026-07-23T05:04:44Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3249,
+   "title": "HOLD(accounting): ensure Active drivers as vendors (5b/24)",
+   "mergedAt": "2026-07-23T05:43:45Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3248,
+   "title": "HOLD(accounting): soft-resolve legacy Receive Payment deposit (7b/24)",
+   "mergedAt": "2026-07-23T05:20:35Z",
    "category": "HOLD"
   },
   {
