@@ -15,7 +15,7 @@ import { Combobox } from "../../../components/Combobox";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { listCustomers } from "../../../api/mdata";
 import { listLoads } from "../../../api/loads";
-import { getCoaAccounts } from "../../../api/banking";
+import { listCatalogAccounts } from "../../../api/catalog-accounts";
 import { addInvoiceLine, patchInvoice } from "../../../api/accounting";
 import { ApiError } from "../../../api/client";
 import { useAuth } from "../../../auth/useAuth";
@@ -117,7 +117,9 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
 
   const accountsQuery = useQuery({
     queryKey: ["invoice-type-modal", "income-accounts", operatingCompanyId],
-    queryFn: () => getCoaAccounts(operatingCompanyId),
+    // listCatalogAccounts (not getCoaAccounts): its row shape carries is_postable, which the
+    // income filter below needs. getCoaAccounts' CoaAccountPickerRow omits it.
+    queryFn: () => listCatalogAccounts({ status: "active", operating_company_id: operatingCompanyId }),
     enabled: Boolean(operatingCompanyId) && open,
     staleTime: 60_000,
   });
@@ -137,7 +139,11 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
   const incomeAccountOptions = useMemo(
     () =>
       (accountsQuery.data?.accounts ?? [])
-        .filter((a) => a.account_type && INCOME_TYPES.includes(a.account_type))
+        // is_postable + deactivated_at are REQUIRED. The backend's assertExplicitIncomeAccount
+        // enforces is_postable = true, so offering a non-postable Income HEADER account here hands
+        // the user a choice guaranteed to 422 — and because the invoice row is created BEFORE the
+        // line is added, that failure orphans a draft invoice with no lines and no load link.
+        .filter((a) => a.is_postable && !a.deactivated_at && a.account_type && INCOME_TYPES.includes(a.account_type))
         .map((a) => ({
           value: a.id,
           label: a.account_number ? `${a.account_number} · ${a.account_name}` : a.account_name,
@@ -264,7 +270,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
     if (!open || incomeAccountId) return;
     const accounts = accountsQuery.data?.accounts ?? [];
     const dflt = accounts.find(
-      (a) => a.account_name === CARRIER_DEFAULT_INCOME_NAME && a.account_type && INCOME_TYPES.includes(a.account_type)
+      (a) => a.account_name === CARRIER_DEFAULT_INCOME_NAME && a.is_postable && !a.deactivated_at && a.account_type && INCOME_TYPES.includes(a.account_type)
     );
     if (dflt) setIncomeAccountId((prev) => prev ?? dflt.id);
   }, [open, incomeAccountId, accountsQuery.data?.accounts]);

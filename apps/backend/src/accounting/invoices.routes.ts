@@ -632,6 +632,9 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
             FROM mdata.loads
             WHERE id = $1
               AND operating_company_id = $2
+              -- soft_deleted_at: an archived load must never become the revenue source of an
+              -- invoice. The UI picker excludes them; the endpoint did not.
+              AND soft_deleted_at IS NULL
             LIMIT 1
           `,
           [body.data.source_load_id, query.data.operating_company_id]
