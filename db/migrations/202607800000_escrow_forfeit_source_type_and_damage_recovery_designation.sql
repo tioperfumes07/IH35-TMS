@@ -25,7 +25,9 @@
 -- existing rows, no DELETE, no backfill. Posting stays DARK until the owner applies this and the escrow
 -- GL posting flag is ON — the route fails loud otherwise.
 --
--- Numbering: main's current max is 202607750000; this is strictly above it.
+-- Numbering: renumbered 202607760000 -> 202607800000 after a collision — main merged
+-- 202607760000_cash_dip_coa_role.sql (accounting lane) and 202607780000; Cursor's pending #3347 holds
+-- 202607790000. 202607800000 is strictly above every claimed number in both lanes.
 
 BEGIN;
 
