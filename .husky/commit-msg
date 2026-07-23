@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+# Definition of Done — evidence block enforced at commit time.
+# Fast, dependency-free, and it IMPORTS the same assertion CI runs
+# (scripts/verify-definition-of-done-evidence.mjs) so local and CI cannot drift.
+#
+# NOTE: `git commit --no-verify` skips this hook. That is why CI verify-step 1324
+# enforces the identical rule on every branch commit, and additionally asserts this
+# hook file still exists — deleting it fails CI.
+node scripts/check-commit-evidence.mjs "$1" || exit 1
