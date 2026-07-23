@@ -43,7 +43,16 @@ export type EntityKind =
   | "account"
   | "prepaid_asset"
   | "sales_tax_return"
-  | "fixed_asset";
+  | "fixed_asset"
+  // SAF-F33: safety records were undrillable — no module could link INTO an accident, fine,
+  // complaint, DOT inspection, escrow record, or permit. These resolve to the record's list surface
+  // with a query param the page honors (same drill pattern as claim/lawsuit/settlement).
+  | "accident"
+  | "safety_fine"
+  | "complaint"
+  | "dot_inspection"
+  | "escrow_record"
+  | "permit";
 
 export interface EntityLinkProps {
   kind: EntityKind;
@@ -138,6 +147,19 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/accounting/sales-tax?return_id=${id}`;
     case "fixed_asset":
       return `/accounting/fixed-assets?asset_id=${id}`;
+    // SAF-F33 safety drill-through — each target list page reads the param and opens/highlights the row.
+    case "accident":
+      return `/safety/accidents?accident_id=${id}`;
+    case "safety_fine":
+      return `/safety/external-fines?fine_id=${id}`;
+    case "complaint":
+      return `/safety/complaints?complaint_id=${id}`;
+    case "dot_inspection":
+      return `/safety/dot-inspections?inspection_id=${id}`;
+    case "escrow_record":
+      return `/safety/escrow-record?driver_id=${id}`;
+    case "permit":
+      return `/safety/permits?permit_id=${id}`;
     default:
       return null;
   }

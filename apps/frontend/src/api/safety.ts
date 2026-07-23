@@ -230,6 +230,14 @@ export type CreateAccidentInput = {
   description?: string | null;
   at_fault?: AccidentFault | null;
   preventable?: boolean | null;
+  // SAF-F05: accident evidence fields the drawer previously discarded (now persisted).
+  police_report_number?: string | null;
+  insurance_claim_number?: string | null;
+  location?: string | null;
+  third_party_name?: string | null;
+  third_party_plate?: string | null;
+  vendor_invoice_number?: string | null;
+  bill_or_expense_ref?: string | null;
 };
 
 export function createSafetyAccident(body: CreateAccidentInput) {
@@ -245,6 +253,14 @@ export type PatchAccidentInput = {
   description?: string | null;
   at_fault?: AccidentFault | null;
   preventable?: boolean | null;
+  // SAF-F05: accident evidence fields the drawer previously discarded (now persisted).
+  police_report_number?: string | null;
+  insurance_claim_number?: string | null;
+  location?: string | null;
+  third_party_name?: string | null;
+  third_party_plate?: string | null;
+  vendor_invoice_number?: string | null;
+  bill_or_expense_ref?: string | null;
 };
 
 export function patchSafetyAccident(id: string, companyId: string, body: PatchAccidentInput) {
@@ -732,8 +748,11 @@ export function followUpDotInspectionEvent(
   });
 }
 
-export function getInternalFines(companyId: string) {
-  return apiRequest<{ fines: Array<Record<string, unknown>> }>(`/api/v1/safety/internal-fines?${q(companyId)}`);
+export function getInternalFines(companyId: string, params: { driver_id?: string } = {}) {
+  const qs = new URLSearchParams({ operating_company_id: companyId });
+  // SAF-F16: server-side driver scoping (the route caps at LIMIT 500).
+  if (params.driver_id) qs.set("driver_id", params.driver_id);
+  return apiRequest<{ fines: Array<Record<string, unknown>> }>(`/api/v1/safety/internal-fines?${qs.toString()}`);
 }
 
 export function createInternalFine(companyId: string, body: Record<string, unknown>) {
@@ -743,8 +762,27 @@ export function createInternalFine(companyId: string, body: Record<string, unkno
   });
 }
 
-export function getComplaints(companyId: string) {
-  return apiRequest<{ complaints: Array<Record<string, unknown>> }>(`/api/v1/safety/complaints?${q(companyId)}`);
+export function getComplaints(companyId: string, params: { driver_id?: string } = {}) {
+  const qs = new URLSearchParams({ operating_company_id: companyId });
+  // SAF-F16: matches EITHER complainant_driver_id OR respondent_driver_id, server-side.
+  if (params.driver_id) qs.set("driver_id", params.driver_id);
+  return apiRequest<{ complaints: Array<Record<string, unknown>> }>(`/api/v1/safety/complaints?${qs.toString()}`);
+}
+
+/**
+ * SAF-F16 — driver-scoped drug & alcohol test history.
+ *
+ * Base path is `/api/safety/...` (NOT `/api/v1/...`): `registerDrugAlcoholProgramRoutes` is
+ * registered with no prefix and the route hard-codes its own absolute path
+ * (apps/backend/src/safety/drug-alcohol/routes.ts). Reads `safety.da_test_records`, whose driver
+ * column is `driver_uuid`. The `/api/v1/safety/drug-alcohol/tests` route is a DIFFERENT endpoint
+ * over the older `safety.drug_test` table and has no driver filter — do not swap them.
+ */
+export function getDriverDrugAlcoholTests(companyId: string, driverUuid: string) {
+  const qs = new URLSearchParams({ operating_company_id: companyId, driver_uuid: driverUuid });
+  return apiRequest<{ tests: Array<Record<string, unknown>> }>(
+    `/api/safety/drug-alcohol/tests?${qs.toString()}`
+  );
 }
 
 export function createComplaint(companyId: string, body: Record<string, unknown>) {

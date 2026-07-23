@@ -335,6 +335,18 @@
     {
       "file": "202607790000_cost_of_labor_mexico_drivers_transp_usmca.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1 · NEEDS OWNER+CPA CONFIRM] Seed Cost of Labor–Mexico Drivers on TRANSP+USMCA. Account numbers NULL until CPA confirms. Type/subtype match TRK QBO-204 structure. Then designate driver_pay_expense."
+    },
+    {
+      "file": "202607770000_drop_account_role_bindings_global_unique.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Drop catalogs.account_role_bindings GLOBAL UNIQUE(role_key). Keep per-entity uq. Table 0 rows. Legacy retiring."
+    },
+    {
+      "file": "202607800000_escrow_forfeit_source_type_and_damage_recovery_designation.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] SAF-F01 escrow forfeit prereqs — (1) add 'forfeit' to accounting.escrow_postings.source_type CHECK (posting_type CHECK untouched; forfeit reuses 'adjustment'); (2) designate the existing 'damage_recovery' CoA role (already in the role CHECK) to QBO-1150040091 'Driver Accident Damages & Repairs' for TRANSP + USMCA (owner ruling 2026-07-23: forfeited escrow = recovery vs recorded loss, never income; reuse the existing account, mint none). Additive/idempotent: DROP-IF-EXISTS+ADD CHECK, INSERT ON CONFLICT DO NOTHING keyed to the partial unique uq_coa_roles_company_role_active. Posting stays dark until the owner applies this AND flips DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED (default OFF); the route fails loud otherwise. Verified vs Neon br-fancy-credit-akjnd07a (source_type CHECK, role CHECK already has damage_recovery, account exists, all escrow tables 0 rows). Run only on a Neon branch by Jorge, then ledger-backfill."
+    },
+    {
+      "file": "202607810000_accident_reports_capture_fields.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] SAF-F05 — add 7 additive text columns to safety.accident_reports (police_report_number, insurance_claim_number, location, third_party_name, third_party_plate, vendor_invoice_number, bill_or_expense_ref) the accident wizard rendered but silently discarded (no columns existed, verified on Neon br-fancy-credit-akjnd07a). All nullable text, no backfill, inherit table FORCED RLS + 0065 safety-schema grants. insurance_claim_number is the external insurer number, distinct from the insurance_claim_id FK. Posts nothing. Claude migration block 202607810000 (LANE-ASSIGNMENT §2a). Run only on a Neon branch by Jorge, then ledger-backfill."
     }
   ]
 }

@@ -11,6 +11,11 @@ const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+// SAF-F16 — driver-profile reverse view. Optional; absent = the existing company-wide list.
+const internalFinesQuerySchema = companyQuerySchema.extend({
+  driver_id: z.string().uuid().optional(),
+});
+
 const dotInspectionSchema = z.object({
   inspection_date: z.string(),
   driver_uuid: z.string().uuid().optional(),
@@ -305,19 +310,29 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
   app.get("/api/v1/safety/internal-fines", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
-    const query = companyQuerySchema.safeParse(req.query ?? {});
+    // SAF-F16: `driver_id` is filtered in SQL, not by the caller. The company list is capped at
+    // LIMIT 500, so a client-side filter on that page would silently omit a driver's fines the
+    // moment the company crosses 500 — a reverse view that quietly under-reports is worse than none.
+    const query = internalFinesQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     const fines = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
+      const values: unknown[] = [query.data.operating_company_id];
+      let driverFilter = "";
+      if (query.data.driver_id) {
+        values.push(query.data.driver_id);
+        driverFilter = `AND f.driver_id = $${values.length}`;
+      }
       const res = await client.query(
         `
           SELECT f.*, r.reason_code, r.reason_name
           FROM safety.internal_fines f
           LEFT JOIN catalogs.internal_fine_reasons r ON r.id = f.reason_id
           WHERE f.operating_company_id = $1
+          ${driverFilter}
           ORDER BY f.imposed_date DESC, f.created_at DESC
           LIMIT 500
         `,
-        [query.data.operating_company_id]
+        values
       );
       return res.rows;
     });
