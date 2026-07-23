@@ -4,7 +4,8 @@ import fs from "node:fs";
 
 export function run(root = process.cwd()) {
   const failures = [];
-  const service = fs.readFileSync(`${root}/apps/backend/src/banking/transfers.service.ts`, "utf8");
+  const lookup = fs.readFileSync(`${root}/apps/backend/src/lib/transfer-tms-je-lookup.ts`, "utf8");
+  const routes = fs.readFileSync(`${root}/apps/backend/src/banking/transfers.routes.ts`, "utf8");
   const api = fs.readFileSync(`${root}/apps/frontend/src/api/banking.ts`, "utf8");
   const transfers = fs.readFileSync(
     `${root}/apps/frontend/src/pages/banking/TransfersListPage.tsx`,
@@ -15,11 +16,14 @@ export function run(root = process.cwd()) {
     "utf8"
   );
 
-  if (!service.includes("journal_entry_id") || !service.includes("source_transaction_type = 'transfer'")) {
-    failures.push("listTransfers/getTransferDetail must join TMS JE via source_transaction_type=transfer");
+  if (!lookup.includes("journal_entry_postings") || !lookup.includes("source_transaction_type = 'transfer'")) {
+    failures.push("transfer-tms-je-lookup must SELECT TMS JE via source_transaction_type=transfer");
   }
-  if (!service.includes("linked_object_type = 'transfer'")) {
-    failures.push("transfer JE lookup must also try transaction_source_links linked_object_type=transfer");
+  if (!lookup.includes("linked_object_type = 'transfer'")) {
+    failures.push("transfer-tms-je-lookup must also try transaction_source_links linked_object_type=transfer");
+  }
+  if (!routes.includes("attachTransferJournalEntryIds") || !routes.includes("transfer-tms-je-lookup")) {
+    failures.push("transfers.routes must enrich list/detail via attachTransferJournalEntryIds");
   }
   if (!api.includes("journal_entry_id?:") && !api.includes("journal_entry_id?: string")) {
     failures.push("Transfer type must expose optional journal_entry_id");
@@ -46,8 +50,12 @@ if (process.argv.includes("--selftest")) {
     fs.writeFileSync(`${tmp}/${rel}`, body);
   };
   mk(
-    "apps/backend/src/banking/transfers.service.ts",
-    `journal_entry_id\nsource_transaction_type = 'transfer'\nlinked_object_type = 'transfer'\n`
+    "apps/backend/src/lib/transfer-tms-je-lookup.ts",
+    `journal_entry_postings\nsource_transaction_type = 'transfer'\nlinked_object_type = 'transfer'\n`
+  );
+  mk(
+    "apps/backend/src/banking/transfers.routes.ts",
+    `attachTransferJournalEntryIds\ntransfer-tms-je-lookup\n`
   );
   mk("apps/frontend/src/api/banking.ts", `journal_entry_id?: string | null;\n`);
   mk(
