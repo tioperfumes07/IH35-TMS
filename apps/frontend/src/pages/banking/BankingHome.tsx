@@ -5,6 +5,7 @@ import {
   getAllAccounts,
   getBankingKpis,
   getFactoringVirtual,
+  getFactoringVirtualTimeline,
   getBankingTiles,
   getBankingUncategorized,
   getPlaidBankAccounts,
@@ -12,6 +13,7 @@ import {
   getReconciliationSessions,
   startReconciliationSession,
 } from "../../api/banking";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { EntityEmptyState } from "../../components/shared/EntityEmptyState";
@@ -133,6 +135,11 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     queryKey: ["banking", "factoring-virtual", companyId],
     queryFn: () => getFactoringVirtual(companyId),
     enabled: Boolean(companyId),
+  });
+  const factoringTimelineQuery = useQuery({
+    queryKey: ["banking", "factoring-virtual-timeline", companyId],
+    queryFn: () => getFactoringVirtualTimeline(companyId),
+    enabled: Boolean(companyId) && activeTab === "factoring",
   });
 
   const money = useMemo(
@@ -748,12 +755,61 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               </div>
             </div>
           </div>
+          <div
+            className="rounded-sm border border-slate-300 bg-white"
+            data-testid="banking-factoring-faro-advances-panel"
+          >
+            <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
+              <span>Recent Faro advances</span>
+              <Link to="/accounting/factoring" className="text-[10px] font-semibold normal-case text-slate-800 hover:underline">
+                All advances →
+              </Link>
+            </div>
+            {factoringTimelineQuery.isSuccess ? (
+              <div className="max-h-[220px] overflow-y-auto">
+                {(factoringTimelineQuery.data?.timeline ?? []).length === 0 ? (
+                  <p className="px-3 py-2 text-xs text-gray-500">
+                    No non-voided advances in <code className="text-[11px]">accounting.factoring_advances</code> for this
+                    company yet.
+                  </p>
+                ) : (
+                  (factoringTimelineQuery.data?.timeline ?? []).map((row) => {
+                    const cents = Number(row.advance_amount_cents ?? 0);
+                    return (
+                      <div
+                        key={row.id}
+                        className="grid grid-cols-[1fr_auto] items-center gap-2 border-b border-gray-100 px-3 py-1.5 text-sm"
+                      >
+                        <span className="min-w-0 truncate">
+                          <EntityLink
+                            kind="factoring_advance"
+                            id={row.id}
+                            label={row.display_id || row.id.slice(0, 8)}
+                            data-testid={`banking-factoring-advance-link-${row.id}`}
+                          />
+                          <span className="ml-2 text-[11px] uppercase text-gray-500">{row.status}</span>
+                        </span>
+                        <span className="tabular-nums text-xs text-gray-800">
+                          {Number.isFinite(cents) ? money.format(cents / 100) : "—"}
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            ) : factoringTimelineQuery.isError ? (
+              <p className="px-3 py-2 text-xs text-red-700">Could not load Faro advances timeline.</p>
+            ) : (
+              <p className="px-3 py-2 text-xs text-gray-500">Loading advances…</p>
+            )}
+          </div>
           <p className="text-xs text-gray-600">
             Design law: Banking Factoring tab is a thin entry summary that deep-links into the standalone{" "}
             <Link to="/factoring" className="underline">
               /factoring
             </Link>{" "}
-            module. Accounts home still shows the Factoring virtual-bank card (additive — never removed).
+            module. Accounts home still shows the Factoring virtual-bank card (additive — never removed). Recent advances
+            use EntityLink → <code className="text-[11px]">/accounting/factoring/:id</code> (canonical Faro advance).
           </p>
         </div>
       ) : null}

@@ -302,6 +302,22 @@ export function getFactoringVirtual(companyId: string) {
   return apiRequest<{ companies: FactoringVirtualCompany[] }>(`/api/v1/banking/factoring-virtual?${q(companyId)}`);
 }
 
+export type FactoringVirtualAdvanceRow = {
+  id: string;
+  display_id: string;
+  status: string;
+  advance_amount_cents: number | string | null;
+  created_at: string | null;
+  advanced_at: string | null;
+};
+
+/** Recent Faro advances for Banking Factoring tab (Law §9 forward drill). */
+export function getFactoringVirtualTimeline(companyId: string) {
+  return apiRequest<{ timeline: FactoringVirtualAdvanceRow[] }>(
+    `/api/v1/banking/factoring-virtual/timeline?${q(companyId)}`
+  );
+}
+
 export type BankMatchCandidateKind = "payment" | "bill_payment" | "transfer" | "je" | "bill" | "expense";
 
 export type BankMatchCandidate = {
