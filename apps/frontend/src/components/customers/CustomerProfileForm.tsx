@@ -424,7 +424,7 @@ type Props = {
   customerId?: string;
 };
 
-export function CustomerProfileForm({ values, onPatch, mode, paymentTermOptions, onPaymentTermCreated, parentCustomerOptions, customerId }: Props) {
+export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode, paymentTermOptions, onPaymentTermCreated, parentCustomerOptions, customerId }: Props) {
   const [localTerms, setLocalTerms] = useState<PaymentTermOption[]>([]);
   const [addTermOpen, setAddTermOpen] = useState(false);
   const [newTermName, setNewTermName] = useState("");
@@ -449,8 +449,9 @@ export function CustomerProfileForm({ values, onPatch, mode, paymentTermOptions,
   // Option-B (vendor-customer-categorization-option-b): default income account is a RECOMMENDATION
   // that pre-fills invoice lines — the user can always override it. Scoped to Income-type accounts.
   const incomeAccountsQuery = useQuery({
-    queryKey: ["catalog-accounts", "income-for-customer-default"],
-    queryFn: () => listCatalogAccounts({ status: "active" }),
+    queryKey: ["catalog-accounts", "income-for-customer-default", operatingCompanyId],
+    queryFn: () => listCatalogAccounts({ status: "active", operating_company_id: operatingCompanyId }),
+    enabled: Boolean(operatingCompanyId),
     staleTime: 5 * 60 * 1000,
   });
   const incomeAccountOptions = useMemo(() => {

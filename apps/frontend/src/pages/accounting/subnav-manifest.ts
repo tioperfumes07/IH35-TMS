@@ -127,6 +127,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   // More ▾ — period / analysis
   { label: "Sales tax", path: "/accounting/sales-tax", section: "more" },
   { label: "Month close", path: "/accounting/month-close", section: "more" },
+  { label: "Period close", path: "/accounting/period-close", section: "more" },
   { label: "Period comparison", path: "/accounting/period-comparison", section: "more" },
   { label: "Cash forecast", path: "/accounting/cash-forecast", section: "more" },
   { label: "Multi-entity", path: "/accounting/multi-entity", section: "more" },
@@ -142,6 +143,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   // More ▾ — audit / lineage / sync
   { label: "Audit trail", path: "/accounting/audit-trail", section: "more" },
   { label: "Posting lineage", path: "/accounting/posting-lineage", section: "more" },
+  { label: "Posting Templates", path: "/lists/accounting/posting-templates", section: "more" },
   { label: "QBO sync drift", path: "/accounting/qbo-sync", section: "more" },
 
   // More ▾ — catalogs / settings

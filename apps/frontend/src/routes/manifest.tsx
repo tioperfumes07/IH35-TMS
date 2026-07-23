@@ -3607,6 +3607,13 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
+        {/* DUALPATH-09 (2026-07-22): IH35_ARCHITECTURAL_DESIGN.md tab "Period Close" — operators and
+            deep links expect /accounting/period-close while the Live wizard is MonthClosePage at
+            /accounting/month-close. Redirect the alias; never delete the canonical mount (Rule 07). */}
+        <Route
+          path="/accounting/period-close"
+          element={<Navigate to="/accounting/month-close" replace />}
+        />
         <Route
           path="/accounting/audit-trail"
           element={

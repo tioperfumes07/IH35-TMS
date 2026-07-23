@@ -130,6 +130,31 @@ export function ExpensesListPage() {
       render: (r) => <EntityLink kind="load" id={r.load_id} label={r.load_number ?? (r.load_id ? r.load_id.slice(0, 8) : undefined)} />,
     },
     {
+      key: "vendor_uuid",
+      label: "Vendor",
+      sortable: true,
+      sortValue: (r) => r.vendor_name ?? "",
+      render: (r) => (
+        <EntityLink
+          kind="vendor"
+          id={r.vendor_uuid ?? undefined}
+          label={r.vendor_name ?? (r.vendor_uuid ? r.vendor_uuid.slice(0, 8) : undefined)}
+        />
+      ),
+    },
+    {
+      key: "journal_entry_id",
+      label: "JE",
+      sortable: true,
+      render: (r) => (
+        <EntityLink
+          kind="journal_entry"
+          id={r.journal_entry_id ?? undefined}
+          label={r.journal_entry_id ? r.journal_entry_id.slice(0, 8) : undefined}
+        />
+      ),
+    },
+    {
       key: "total_amount_cents",
       label: "Amount",
       sortable: true,
