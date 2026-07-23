@@ -63,8 +63,12 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
   const allRows = accidentsQuery.data?.accidents ?? [];
   const rows = useMemo(() => {
     return allRows.filter((row) => {
-      if (driverFilter && !String(row.driver_id ?? "").toLowerCase().includes(driverFilter.trim().toLowerCase())) return false;
-      if (unitFilter && !String(row.unit_id ?? "").toLowerCase().includes(unitFilter.trim().toLowerCase())) return false;
+      // SAF-F26: filter on the joined NAME (what an operator types), falling back to the id. Before,
+      // these matched only the raw uuid, so the filters were unusable.
+      const driverText = String(row.driver_name ?? row.driver_id ?? "").toLowerCase();
+      const unitText = String(row.unit_number ?? row.unit_id ?? "").toLowerCase();
+      if (driverFilter && !driverText.includes(driverFilter.trim().toLowerCase())) return false;
+      if (unitFilter && !unitText.includes(unitFilter.trim().toLowerCase())) return false;
       const accidentDate = String(row.accident_at ?? "").slice(0, 10);
       if (fromDate && accidentDate && accidentDate < fromDate) return false;
       if (toDate && accidentDate && accidentDate > toDate) return false;
@@ -87,8 +91,8 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
   // action are preserved verbatim (§7 additive-only).
   const columns: Array<ParityColumn<AccidentRow>> = [
     { key: "accident_at", label: "Date", sortable: true, render: (row) => formatDateUS(row.accident_at) },
-    { key: "driver_id", label: "Driver", render: (row) => <EntityLink kind="driver" id={row.driver_id as string | undefined} /> },
-    { key: "unit_id", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id as string | undefined} /> },
+    { key: "driver_id", label: "Driver", render: (row) => <EntityLink kind="driver" id={row.driver_id as string | undefined} label={(row.driver_name as string | undefined) ?? undefined} /> },
+    { key: "unit_id", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id as string | undefined} label={(row.unit_number as string | undefined) ?? undefined} /> },
     { key: "location", label: "Location", render: (row) => String(row.location ?? row.description ?? "—") },
     { key: "at_fault", label: "At Fault", cellClass: "capitalize", render: (row) => formatAtFault(row.at_fault) },
     { key: "preventable", label: "Preventable", render: (row) => formatPreventable(row.preventable) },
