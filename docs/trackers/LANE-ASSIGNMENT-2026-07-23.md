@@ -30,8 +30,29 @@ reverted once in this repo.
 | **CLAUDE** | **1325 – 1399** |
 | **CURSOR** | **1400 – 1499** |
 
-Currently taken: `…1312, 1320, 1321, 1322, 1323, 1324`. Highest in use: **1324**.
+Currently taken: `…1312, 1320, 1321, 1322, 1323, 1324` (Claude), `1400, 1402, 1403, 1404, 1406` (Cursor).
 Claim the next free number **in your own range only**, and re-check at push time.
+
+## 2a. Reserved MIGRATION-number ranges (collision = broken merge)
+
+`db/migrations/NNNNNNNNNNNN_*.sql` numbers are a SINGLE shared sequence and MUST be strictly above
+main's max — but with both lanes building held migrations in parallel, "strictly above max at author
+time" is not enough: two open branches pick the same next number and collide when the second merges.
+This already happened — #3348 (escrow-forfeit) and the accounting lane both authored `202607760000`;
+#3348 had to renumber to `202607800000`.
+
+To make collisions structurally impossible, split the tail of the sequence by lane. As of 2026-07-23
+main's max is `202607780000`, so:
+
+| Lane | Reserved migration range |
+|---|---|
+| **CURSOR** | `202607790000` – `202607799999` (…790000, 791000, …) then `2026078` even-thousand blocks it opens |
+| **CLAUDE** | `202607800000` – `202607809999` (…800000, 801000, …) |
+
+Rule: **claim the next free number in your own reserved block, and re-check at push time** (the same
+discipline as verify-steps). When a lane exhausts its block, it opens the next `…N0000` block that no
+migration or open PR in either lane has claimed, and records it here in the same commit. A migration
+number is never reused even after a renumber — the abandoned number stays burned.
 
 ---
 
