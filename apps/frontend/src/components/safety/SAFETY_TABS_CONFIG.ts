@@ -144,6 +144,39 @@ export const SAFETY_ALIAS_TABS: { groupId: string; tab: SafetyTab }[] = [
     groupId: "compliance-monitoring",
     tab: { id: "cert-expiry", label: "Cert Expiry", route: "/safety/cert-expiry", badge: "new" },
   },
+  // SAF-F22 — six routes were MOUNTED in routes/manifest.tsx with ZERO inbound links anywhere in the
+  // app: reachable only by typing the URL. They are real, working surfaces (Training Programs/Records,
+  // ELD Audit Trail, 425C Audit Trail, Photo Comparison, Safety Reports), so under §7 additive-only the
+  // fix is to give them an entry point — never to delete them.
+  //
+  // They go in SAFETY_ALIAS_TABS, not SAFETY_GROUPS, deliberately: SAFETY_GROUPS is the owner-locked
+  // canonical 28 (SAFETY_CANONICAL_TAB_COUNT + the flat TABS array + verify-safety-count-nav-integrity).
+  // Aliases render as real NavLinks inside their group's dropdown (SafetyGroupNav merges them in), so
+  // these become clickable without touching the locked count — the same mechanism Cert Expiry uses.
+  {
+    groupId: "driver-files",
+    tab: { id: "training-programs", label: "Training Programs", route: "/safety/training/programs", badge: null },
+  },
+  {
+    groupId: "driver-files",
+    tab: { id: "training-records", label: "Training Records", route: "/safety/training/records", badge: null },
+  },
+  {
+    groupId: "hours-fatigue",
+    tab: { id: "eld-audit-trail", label: "ELD Audit Trail", route: "/safety/eld/audit-trail", badge: null },
+  },
+  {
+    groupId: "incidents-claims",
+    tab: { id: "photo-comparison", label: "Photo Comparison", route: "/safety/photo-comparison", badge: null },
+  },
+  {
+    groupId: "compliance-monitoring",
+    tab: { id: "audit-425c", label: "425C Audit Trail", route: "/safety/audit-425c", badge: null },
+  },
+  {
+    groupId: "compliance-monitoring",
+    tab: { id: "safety-reports", label: "Safety Reports", route: "/safety/reports", badge: null },
+  },
 ];
 
 export function findSafetyTab(tabId: string) {

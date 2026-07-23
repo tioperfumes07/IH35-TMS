@@ -6,6 +6,7 @@ import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { EscrowForfeitModal } from "../components/EscrowForfeitModal";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 export function EscrowRecordTab() {
   const auth = useAuth();
@@ -49,7 +50,24 @@ export function EscrowRecordTab() {
 
   const columns = useMemo<ParityColumn<EscrowRecordRow>[]>(
     () => [
-      { key: "driver_name", label: "Driver", sortable: true },
+      {
+        // SAF-F23: the driver was plain text on a money screen — no way to get from a driver's
+        // escrow balance back to the driver. `row.id` IS the mdata.drivers id (listEscrowRecords
+        // builds each record with `id: driverId`), so this is a canonical FK drill-through, not a
+        // label. The driver page carries the settlement/earnings + escrow history surfaces.
+        key: "driver_name",
+        label: "Driver",
+        sortable: true,
+        render: (row) => (
+          <EntityLink
+            kind="driver"
+            id={row.id || null}
+            label={row.driver_name}
+            className="font-semibold text-slate-700"
+            data-testid={`escrow-driver-link-${row.id}`}
+          />
+        ),
+      },
       { key: "current_balance", label: "Current Balance", sortable: true, render: (row) => `$${row.current_balance.toFixed(2)}` },
       { key: "pre_clause_total", label: "Pre-clause", sortable: true, render: (row) => `$${row.pre_clause_total.toFixed(2)}` },
       { key: "post_clause_total", label: "Post-clause", sortable: true, render: (row) => `$${row.post_clause_total.toFixed(2)}` },

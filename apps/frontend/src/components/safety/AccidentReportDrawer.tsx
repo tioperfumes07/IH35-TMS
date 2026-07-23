@@ -12,6 +12,7 @@ import {
 import { listUnits, listVendors } from "../../api/mdata";
 import { listDispatchLoads } from "../../api/dispatch";
 import { Button } from "../Button";
+import { EntityLink } from "../shared/EntityLink";
 import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../forms/TwoSectionLineEditor";
 import { TotalsStack } from "../forms/shared/TotalsStack";
@@ -42,6 +43,9 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
   const { pushToast } = useToast();
   const [uploading, setUploading] = useState(false);
   const [spawnedWoDisplayId, setSpawnedWoDisplayId] = useState<string | null>(null);
+  // SAF-F35: the spawn response already returns the WO's uuid; only the display id was kept, so the
+  // spawned work order was a dead-end string. Keeping the id makes it a real drill-through.
+  const [spawnedWoId, setSpawnedWoId] = useState<string | null>(null);
   const [costLines, setCostLines] = useState<TwoSectionLine[]>([]);
   const [taxRate, setTaxRate] = useState(8.25);
 
@@ -426,6 +430,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                 .then((payload) => {
                   const displayId = String(payload.spawned_wo_display_id ?? "");
                   setSpawnedWoDisplayId(displayId || null);
+                  setSpawnedWoId(String(payload.spawned_wo_id ?? "") || null);
                   pushToast(displayId ? `Spawn WO created (${displayId})` : "Spawn WO requested", "success");
                   onUpdated();
                 })
@@ -466,8 +471,18 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
           </div>
         ) : null}
         {spawnedWoDisplayId ? (
-          <div className="mt-2 rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-[11px] text-slate-700">
-            New WO (source type AC): {spawnedWoDisplayId}
+          <div
+            className="mt-2 rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-[11px] text-slate-700"
+            data-testid="accident-spawned-wo"
+          >
+            New WO (source type AC):{" "}
+            <EntityLink
+              kind="work_order"
+              id={spawnedWoId}
+              label={spawnedWoDisplayId}
+              className="font-semibold text-slate-700 underline"
+              data-testid="accident-spawned-wo-link"
+            />
           </div>
         ) : null}
         <div className="mt-3">

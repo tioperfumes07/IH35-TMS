@@ -131,7 +131,19 @@ export function DriverSafetyReverseSection({
 
   return (
     <div className="space-y-3" data-testid={testId}>
-      <h2 className="text-sm font-semibold text-gray-900">Safety records linked to this driver</h2>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold text-gray-900">Safety records linked to this driver</h2>
+        {/* SAF-F22: /safety/driver-profiles/:driverId was MOUNTED with zero inbound links — reachable
+            only by typing the URL. It is per-driver and parameterized, so it cannot be a nav entry
+            like the other five orphans; the driver's own page is its natural entry point. */}
+        <Link
+          className="text-xs font-semibold text-slate-700 underline"
+          to={`/safety/driver-profiles/${driverId}`}
+          data-testid="driver-safety-profile-link"
+        >
+          Open Safety Profile
+        </Link>
+      </div>
 
       <SectionShell
         title="External Fines"
