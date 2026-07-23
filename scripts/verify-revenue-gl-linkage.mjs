@@ -39,7 +39,7 @@ function readRel(rel) {
   return fs.readFileSync(abs, "utf8");
 }
 
-export function collectFailures(sources) {
+export function assertRevenueGlLinkage(sources) {
   const failures = [];
   const require = (key, text, code) => {
     if (!sources[key] || !sources[key].includes(text)) failures.push(code);
@@ -165,7 +165,7 @@ function runGuard(root = ROOT) {
       process.exit(1);
     }
   }
-  const failures = collectFailures(sources);
+  const failures = assertRevenueGlLinkage(sources);
   if (failures.length) {
     console.error(`${LABEL} FAILED:`);
     for (const f of failures) console.error(`  - ${f}`);
@@ -229,7 +229,7 @@ function selftest() {
     fs.mkdirSync(path.dirname(abs), { recursive: true });
     fs.writeFileSync(abs, good[key]);
   }
-  const goodFails = collectFailures(readSourcesFrom(tmp));
+  const goodFails = assertRevenueGlLinkage(readSourcesFrom(tmp));
   if (goodFails.length) {
     console.error(`${LABEL} --selftest FAILED: clean tree should pass`, goodFails);
     process.exit(1);
@@ -248,7 +248,7 @@ function selftest() {
       app.get("/api/v1/home/weekly-revenue"
     `
   );
-  const badFails = collectFailures(readSourcesFrom(tmp));
+  const badFails = assertRevenueGlLinkage(readSourcesFrom(tmp));
   if (!badFails.includes("today_revenue_silent_zero_catch")) {
     console.error(`${LABEL} --selftest FAILED: planted silent-zero catch not detected`, badFails);
     process.exit(1);
@@ -265,7 +265,7 @@ function selftest() {
       app.get("/api/v1/home/weekly-revenue"
     `
   );
-  const bad422 = collectFailures(readSourcesFrom(tmp));
+  const bad422 = assertRevenueGlLinkage(readSourcesFrom(tmp));
   if (!bad422.includes("unverifiable_must_not_be_422")) {
     console.error(`${LABEL} --selftest FAILED: planted 422 unverifiable not detected`, bad422);
     process.exit(1);
