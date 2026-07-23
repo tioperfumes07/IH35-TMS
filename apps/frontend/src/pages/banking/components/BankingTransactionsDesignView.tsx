@@ -9,6 +9,7 @@ import {
   getBankingSuggestions,
   getCoaAccounts,
   getMatchCandidates,
+  getBankTransactionCategorizationLinks,
   getPlaidCompanyTransactions,
   isManualBankTransaction,
   skipBankTransactionInvestigation,
@@ -130,9 +131,11 @@ const MATCH_CANDIDATE_KIND_LABELS: Record<BankMatchCandidateKind, string> = {
   expense: "Expense",
 };
 
-// Only kinds with a real EntityLink route map here — "payment"/"bill_payment"/"transfer" have no
-// EntityLink kind (and no per-id detail route) yet, so those candidates keep the plain badge.
-const MATCH_CANDIDATE_ENTITY_KIND: Partial<Record<BankMatchCandidateKind, EntityKind>> = {
+// Match candidates — EntityLink for every kind with a real detail route (Law §9).
+const MATCH_CANDIDATE_ENTITY_KIND: Record<BankMatchCandidateKind, EntityKind> = {
+  payment: "payment",
+  bill_payment: "bill_payment",
+  transfer: "transfer",
   je: "journal_entry",
   bill: "bill",
   expense: "expense",
@@ -151,7 +154,6 @@ type ViewSettings = {
   turnOffGrouping: boolean;
   /** month | money — only applied when turnOffGrouping is false. */
   groupMode: Exclude<BankTxnGroupMode, "none">;
-  addNewVendors: boolean;
   showAmountsInOneColumn: boolean;
   showTagsField: boolean;
   editableDateField: boolean;
@@ -252,7 +254,7 @@ export function BankingTransactionsDesignView({
   const [amountFilter, setAmountFilter] = useState<AmountFilter>("all");
   const [selectedTransactionType, setSelectedTransactionType] = useState(initialTransactionType ?? "all");
   // Deep-link / KPI filter must apply after mount — BankingHome sets initialTransactionType via
-  // ?type=uncategorized after the child is already mounted with "all".
+  // ?type=uncategorized (and similar). Without this sync, the first paint sticks on "all".
   useEffect(() => {
     if (initialTransactionType) {
       setSelectedTransactionType(initialTransactionType);
@@ -304,7 +306,6 @@ export function BankingTransactionsDesignView({
     showLocation: false,
     turnOffGrouping: false,
     groupMode: "month",
-    addNewVendors: false,
     showAmountsInOneColumn: false,
     showTagsField: true,
     editableDateField: false,
@@ -388,6 +389,13 @@ export function BankingTransactionsDesignView({
     setMatchSearchQ("");
     setMatchDraftQ("");
   }, [expandedTxId]);
+
+  // BLOCK-6b — FORWARD drill-through panel. API + client existed; this wire is the Law §9 surface.
+  const categorizationLinksQuery = useQuery({
+    queryKey: ["banking", "tx-categorization-links", companyId, expandedTxId ?? ""],
+    queryFn: () => getBankTransactionCategorizationLinks(String(expandedTxId), companyId),
+    enabled: Boolean(companyId && expandedTxId),
+  });
 
   // Secondary panel — "similar past categorizations" (kept, additive-only; not the primary match source).
   const suggestionsQuery = useQuery({
@@ -1071,8 +1079,9 @@ export function BankingTransactionsDesignView({
               <button
                 type="button"
                 disabled
-                aria-label="Attach file (not available for bank transactions)"
-                title="Attachments aren't supported on bank feed rows yet — attach the receipt to the Bill or Expense this transaction posts to."
+                data-testid="bank-txn-attach-disabled"
+                aria-label="Attach file (disabled — bank_transaction not in documents.attachments)"
+                title="Disabled: documents.attachments has no bank_transaction entity_type. Attach receipts to the Bill, Expense, or JE this row posts to."
                 className="cursor-not-allowed opacity-60"
               >
                 <Paperclip className="h-4 w-4" />
@@ -1080,8 +1089,9 @@ export function BankingTransactionsDesignView({
               <button
                 type="button"
                 disabled
-                aria-label="Add note (not available here)"
-                title="Notes aren't editable from this grid yet."
+                data-testid="bank-txn-note-disabled"
+                aria-label="Add note (disabled — no notes PATCH route)"
+                title="Disabled: banking.bank_transactions.notes is system-only today; no PATCH /api/v1/banking/transactions/:id notes body."
                 className="cursor-not-allowed opacity-60"
               >
                 <MessageSquare className="h-4 w-4" />
@@ -1418,10 +1428,101 @@ export function BankingTransactionsDesignView({
   function renderExpandedRegisterRow(tx: PlaidBankTransaction) {
     const { spent, received } = spentReceived(tx);
     const draft = getDraft(tx);
+    const links = categorizationLinksQuery.data;
+    const matchedJournalEntryId = links?.matched_journal_entry_id ?? tx.matched_journal_entry_id ?? null;
+    const hasPersistedLinks = Boolean(
+      links &&
+        (links.driver_id ||
+          links.unit_id ||
+          links.trailer_id ||
+          links.load_id ||
+          links.vendor_id ||
+          links.customer_id ||
+          links.item_id ||
+          links.deduction_id ||
+          matchedJournalEntryId)
+    );
     return (
       <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
         <div className="p-1">
           <p className="mb-2 text-xs font-semibold text-gray-900">{transactionLabel(tx)}</p>
+          <div
+            className="mb-2 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5"
+            data-testid="banking-tx-categorization-links-panel"
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">Linked to (persisted)</p>
+            {categorizationLinksQuery.isLoading && expandedTxId === tx.id ? (
+              <p className="mt-1 text-xs text-gray-500">Loading linkage…</p>
+            ) : null}
+            {categorizationLinksQuery.isError && expandedTxId === tx.id ? (
+              <p className="mt-1 text-xs text-red-700">Could not load categorization links.</p>
+            ) : null}
+            {categorizationLinksQuery.isSuccess &&
+            expandedTxId === tx.id &&
+            !hasPersistedLinks ? (
+              <p className="mt-1 text-xs text-slate-700">
+                No persisted Driver / Unit / Load / Vendor / Customer / deduction tags on this row yet. Draft fields
+                below are not Law §9 links until Post / Categorize commits them.
+              </p>
+            ) : null}
+            {hasPersistedLinks && expandedTxId === tx.id ? (
+              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs" onClick={(e) => e.stopPropagation()}>
+                {links?.driver_id ? (
+                  <EntityLink kind="driver" id={links.driver_id} label={links.driver_name || "Driver"} />
+                ) : null}
+                {links?.unit_id ? (
+                  <EntityLink kind="unit" id={links.unit_id} label={links.unit_number || "Unit"} />
+                ) : null}
+                {links?.trailer_id ? (
+                  <EntityLink kind="trailer" id={links.trailer_id} label={links.trailer_number || "Trailer"} />
+                ) : null}
+                {links?.load_id ? (
+                  <EntityLink kind="load" id={links.load_id} label={links.load_number || "Trip"} />
+                ) : null}
+                {links?.vendor_id ? (
+                  <EntityLink kind="vendor" id={links.vendor_id} label={links.vendor_name || "Vendor"} />
+                ) : null}
+                {links?.customer_id ? (
+                  <EntityLink kind="customer" id={links.customer_id} label={links.customer_name || "Customer"} />
+                ) : null}
+                {links?.item_id ? (
+                  <span className="text-gray-700">Item: {links.item_name || links.item_id.slice(0, 8)}</span>
+                ) : null}
+                {links?.deduction_id ? (
+                  <span className="text-gray-700" title={links.deduction_status ?? undefined}>
+                    Deduction: {links.deduction_type || "settlement"}{" "}
+                    {links.deduction_amount_cents != null
+                      ? formatUsdCents(Math.abs(Number(links.deduction_amount_cents)))
+                      : ""}
+                    {links.deduction_load_id ? (
+                      <>
+                        {" "}
+                        · <EntityLink kind="load" id={links.deduction_load_id} label="Deduction load" />
+                      </>
+                    ) : null}
+                  </span>
+                ) : null}
+                {matchedJournalEntryId ? (
+                  <EntityLink
+                    kind="journal_entry"
+                    id={matchedJournalEntryId}
+                    label="TMS Journal Entry"
+                    data-testid="bank-tx-categorization-je-link"
+                  />
+                ) : null}
+              </div>
+            ) : null}
+            {categorizationLinksQuery.isSuccess &&
+            expandedTxId === tx.id &&
+            hasPersistedLinks &&
+            !matchedJournalEntryId ? (
+              <p className="mt-1 text-xs text-slate-600">
+                No <code className="text-[11px]">matched_journal_entry_id</code> on this row yet. That column is set by
+                recon Match to an existing JE, or by the flag-gated bank-feed poster (BANK_FEED_GL_POSTING_ENABLED,
+                default OFF) — absence is not by itself proof the flag blocked a post.
+              </p>
+            ) : null}
+          </div>
           {viewSettings.showBankDetails ? (
             <div className="mb-2 grid grid-cols-1 gap-1 text-xs text-gray-600 md:grid-cols-2">
               <div>Date: {formatBankTransactionDate(tx.transaction_date)}</div>
@@ -1492,7 +1593,7 @@ export function BankingTransactionsDesignView({
             </label>
             <label className="text-xs text-gray-600">
               Payee (vendor)
-              <div className="mt-0.5">
+              <div className="mt-0.5" data-testid="banking-categorize-picker-vendor">
                 <ReferenceSelect
                   value={draft.vendorId || null}
                   onChange={(vid) => {
@@ -1598,7 +1699,7 @@ export function BankingTransactionsDesignView({
             </label>
             <label className="text-xs text-gray-600">
               Category (Chart of Accounts)
-              <div className="mt-0.5">
+              <div className="mt-0.5" data-testid="banking-categorize-picker-category">
                 <ReferenceSelect
                   value={draft.accountId || null}
                   onChange={(v) => setDraft(tx, { accountId: v ?? "" })}
@@ -1616,7 +1717,7 @@ export function BankingTransactionsDesignView({
             </label>
             <label className="text-xs text-gray-600">
               Class
-              <div className="mt-0.5">
+              <div className="mt-0.5" data-testid="banking-categorize-picker-class">
                 <ReferenceSelect
                   value={draft.classId || null}
                   onChange={(cid) => {
@@ -1648,7 +1749,7 @@ export function BankingTransactionsDesignView({
             </label>
             <label className="text-xs text-gray-600">
               Item (Products &amp; Services)
-              <div className="mt-0.5">
+              <div className="mt-0.5" data-testid="banking-categorize-picker-item">
                 <ReferenceSelect
                   value={draft.itemId || null}
                   onChange={(iid) => {
@@ -1681,7 +1782,7 @@ export function BankingTransactionsDesignView({
             </label>
             <label className="text-xs text-gray-600">
               Customer/project
-              <div className="mt-0.5">
+              <div className="mt-0.5" data-testid="banking-categorize-picker-customer">
                 <ReferenceSelect
                   value={draft.customerId || null}
                   onChange={(cid) => {
@@ -1922,18 +2023,12 @@ export function BankingTransactionsDesignView({
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5">
-                      {MATCH_CANDIDATE_ENTITY_KIND[candidate.ledger_entry_kind] ? (
-                        <EntityLink
-                          kind={MATCH_CANDIDATE_ENTITY_KIND[candidate.ledger_entry_kind]!}
-                          id={candidate.ledger_entry_id}
-                          label={MATCH_CANDIDATE_KIND_LABELS[candidate.ledger_entry_kind]}
-                          className="inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700 hover:underline"
-                        />
-                      ) : (
-                        <span className="inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700">
-                          {MATCH_CANDIDATE_KIND_LABELS[candidate.ledger_entry_kind]}
-                        </span>
-                      )}
+                      <EntityLink
+                        kind={MATCH_CANDIDATE_ENTITY_KIND[candidate.ledger_entry_kind]}
+                        id={candidate.ledger_entry_id}
+                        label={MATCH_CANDIDATE_KIND_LABELS[candidate.ledger_entry_kind]}
+                        className="inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700 hover:underline"
+                      />
                       {candidate.auto_match ? (
                         <span className="inline-flex items-center rounded-sm bg-slate-800 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
                           Best match
@@ -2010,6 +2105,44 @@ export function BankingTransactionsDesignView({
 
   return (
     <div className="space-y-3">
+      {transactionsQuery.isSuccess ? (
+        <>
+          <div
+            className="border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+            data-testid="banking-bank-feed-gl-posting-honesty-banner"
+          >
+            <p className="font-semibold">Categorize tags are not ledger posts — BANK_FEED_GL_POSTING_ENABLED stays OFF by default</p>
+            <p className="mt-1">
+              Categorize persists driver/unit/load/vendor fields immediately; that alone does not post a balanced TMS
+              JE. <code className="text-[11px]">matched_journal_entry_id</code> is <strong>not</strong> proof that
+              bank-feed GL posting is live — recon Match can also stamp it when{" "}
+              <code className="text-[11px]">ledger_entry_kind = &apos;je&apos;</code> (see{" "}
+              <code className="text-[11px]">match.service.ts</code>), and the flag-gated bank-feed poster is a separate
+              path (default OFF). A JE link with the flag OFF is a match/link, not “posting is on.” Reverse drill: JE
+              detail Source maps <code className="text-[11px]">bank_categorization</code> → Banking Transactions.
+            </p>
+          </div>
+          <div
+            className="border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+            data-testid="banking-bank-row-attachments-notes-honesty-banner"
+          >
+            <p className="font-semibold">Bank row attachments and notes are not wired yet</p>
+            <p className="mt-1">
+              QBO-style paperclip and note icons stay visible but disabled.{" "}
+              <strong>Attachments:</strong>{" "}
+              <code className="text-[11px]">documents.attachments</code> CHECK has no{" "}
+              <code className="text-[11px]">bank_transaction</code> entity_type and{" "}
+              <code className="text-[11px]">/api/v1/documents/attachments</code> upload rejects bank feed rows — attach
+              receipts to the Bill, Expense, or JE this transaction posts to instead.{" "}
+              <strong>Notes:</strong>{" "}
+              <code className="text-[11px]">banking.bank_transactions.notes</code> exists for system/skip/investigate
+              text only; there is no operator notes{" "}
+              <code className="text-[11px]">PATCH /api/v1/banking/transactions/:id</code> body (today&apos;s PATCH edits
+              manual row dates only).
+            </p>
+          </div>
+        </>
+      ) : null}
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="flex flex-wrap items-start gap-2">
           {accounts.map((account) => (
@@ -2362,7 +2495,14 @@ export function BankingTransactionsDesignView({
                     </div>
                   ) : null}
                   <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Automation review</p>
-                  <ToggleLine label="Add new vendors" checked={viewSettings.addNewVendors} onChange={(checked) => setViewSettings((prev) => ({ ...prev, addNewVendors: checked }))} />
+                  <label
+                    className="inline-flex items-center gap-2 text-xs text-gray-500"
+                    data-testid="banking-add-new-vendors-automation-not-wired"
+                    title="Bank-feed auto-vendor review automation is not wired yet. Inline + Add new vendor on each categorize row still works via ReferenceSelect."
+                  >
+                    <input type="checkbox" checked={false} disabled readOnly aria-disabled="true" />
+                    Add new vendors (automation — not wired)
+                  </label>
                   <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Transaction details</p>
                   <div className="grid grid-cols-1 gap-1 text-xs">
                     <ToggleLine label="Show amounts in 1 column" checked={viewSettings.showAmountsInOneColumn} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showAmountsInOneColumn: checked }))} />

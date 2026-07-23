@@ -2,11 +2,17 @@ import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   acceptBankReconMatch,
+  categorizeBankTransaction,
+  getCoaAccounts,
   getMatchCandidates,
   type BankMatchCandidate,
   type BankMatchCandidateKind,
 } from "../../../api/banking";
+import { listVendors } from "../../../api/mdata";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+import { vendorReferenceOption } from "../../../components/parity/referenceOptionLabels";
 import { useToast } from "../../../components/Toast";
 import { useListState } from "../../../components/list-state";
 import { formatUsdCents } from "../../../lib/money";
@@ -37,20 +43,23 @@ const KIND_LABELS: Record<BankMatchCandidateKind, string> = {
   expense: "Expense",
 };
 
+const KIND_ENTITY: Record<BankMatchCandidateKind, EntityKind> = {
+  payment: "payment",
+  bill_payment: "bill_payment",
+  transfer: "transfer",
+  je: "journal_entry",
+  bill: "bill",
+  expense: "expense",
+};
+
 function formatMoneyCents(cents: number | null | undefined) {
   if (cents == null || Number.isNaN(Number(cents))) return "—";
   return formatUsdCents(Math.abs(Number(cents)));
 }
 
-function kindBadge(kind: BankMatchCandidateKind) {
-  return (
-    <span
-      data-testid="match-candidate-kind"
-      className="inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700"
-    >
-      {KIND_LABELS[kind]}
-    </span>
-  );
+/** Label-only chrome — EntityLink must stay inline at the call site (entity-link-adoption). */
+function kindBadgeClassName() {
+  return "inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700 hover:underline";
 }
 
 export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClose, onAccepted }: Props) {
@@ -59,6 +68,8 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
   const [searchAll, setSearchAll] = useState(false);
   const [searchQ, setSearchQ] = useState("");
   const [draftQ, setDraftQ] = useState("");
+  const [categorizeVendorId, setCategorizeVendorId] = useState("");
+  const [categorizeGlAccountId, setCategorizeGlAccountId] = useState("");
   const { pushToast } = useToast();
 
   const candidatesQuery = useQuery({
@@ -69,6 +80,17 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
         q: searchQ || undefined,
       }),
     enabled: open && Boolean(operatingCompanyId && bankTransactionId),
+  });
+
+  const vendorsQuery = useQuery({
+    queryKey: ["banking", "match-drawer", "vendors", operatingCompanyId],
+    queryFn: () => listVendors({ operating_company_id: operatingCompanyId }),
+    enabled: open && Boolean(operatingCompanyId),
+  });
+  const coaQuery = useQuery({
+    queryKey: ["banking", "match-drawer", "coa", operatingCompanyId],
+    queryFn: () => getCoaAccounts(operatingCompanyId),
+    enabled: open && Boolean(operatingCompanyId),
   });
 
   const confirmMutation = useMutation({
@@ -91,6 +113,25 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
     onSettled: () => setConfirmingId(null),
   });
 
+  const categorizeMutation = useMutation({
+    mutationFn: () =>
+      categorizeBankTransaction(String(bankTransactionId), operatingCompanyId, {
+        category_kind: "expense",
+        gl_account_id: categorizeGlAccountId || undefined,
+        vendor_id: categorizeVendorId || undefined,
+      }),
+    onSuccess: () => {
+      pushToast("Transaction categorized.", "success");
+      setCategorizeVendorId("");
+      setCategorizeGlAccountId("");
+      onAccepted?.();
+      onClose();
+    },
+    onError: (error) => {
+      pushToast(String((error as Error).message ?? "Categorize failed"), "error");
+    },
+  });
+
   // Empty message renders only once the candidates query settles, never mid-fetch.
   const listState = useListState(candidatesQuery, (candidatesQuery.data?.candidates ?? []).length === 0);
 
@@ -98,6 +139,7 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
 
   const candidates: BankMatchCandidate[] = candidatesQuery.data?.candidates ?? [];
   const topAutoMatchId = candidates.find((c) => c.auto_match)?.ledger_entry_id ?? null;
+  const canCategorize = Boolean(categorizeGlAccountId) && !categorizeMutation.isPending;
 
   return (
     <>
@@ -197,7 +239,15 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
                       checked={isSelected}
                       onChange={() => setSelectedId(c.ledger_entry_id)}
                     />
-                    {kindBadge(c.ledger_entry_kind)}
+                    {c.ledger_entry_id ? (
+                      <EntityLink
+                        kind={KIND_ENTITY[c.ledger_entry_kind]}
+                        id={c.ledger_entry_id}
+                        label={KIND_LABELS[c.ledger_entry_kind]}
+                        data-testid="match-candidate-kind"
+                        className={kindBadgeClassName()}
+                      />
+                    ) : null}
                     {isTopAuto ? (
                       <span
                         data-testid="match-candidate-top"
@@ -260,6 +310,59 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
               No matchable records found in the ±7-day window for this transaction.
             </p>
           ) : null}
+        </div>
+
+        {/* §4 nested +Create — vendor + CoA category when no ledger match fits (QBO Find match → Categorize). */}
+        <div
+          className="mt-4 space-y-2 border-t border-slate-200 pt-3"
+          data-testid="match-drawer-categorize-create"
+        >
+          <p className="text-xs font-semibold text-slate-800">Or categorize instead</p>
+          <p className="text-[11px] text-slate-500">
+            Nested <strong>+ Add new</strong> creates stay in this drawer (entity-scoped catalogs). Category is
+            required; vendor is optional. Uses the same categorize API as the Transactions register.
+          </p>
+          <label className="block text-xs text-slate-600">
+            Payee (vendor)
+            <div className="mt-0.5" data-testid="match-drawer-picker-vendor">
+              <ReferenceSelect
+                value={categorizeVendorId || null}
+                onChange={(vid) => setCategorizeVendorId(vid ?? "")}
+                options={(vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption)}
+                createKind="vendor"
+                operatingCompanyId={operatingCompanyId}
+                placeholder="Select payee (vendor)"
+                onOptionCreated={() => void vendorsQuery.refetch()}
+              />
+            </div>
+          </label>
+          <label className="block text-xs text-slate-600">
+            Category (Chart of Accounts)
+            <div className="mt-0.5" data-testid="match-drawer-picker-category">
+              <ReferenceSelect
+                value={categorizeGlAccountId || null}
+                onChange={(aid) => setCategorizeGlAccountId(aid ?? "")}
+                options={(coaQuery.data?.accounts ?? []).map((account) => ({
+                  value: account.id,
+                  label: account.account_name,
+                  type: account.account_number ? String(account.account_number) : undefined,
+                }))}
+                createKind="category"
+                operatingCompanyId={operatingCompanyId}
+                placeholder="Select category account"
+                onOptionCreated={() => void coaQuery.refetch()}
+              />
+            </div>
+          </label>
+          <button
+            type="button"
+            data-testid="match-drawer-categorize-submit"
+            className="rounded-sm border border-slate-700 bg-slate-900 px-2 py-1.5 text-[11px] text-white hover:bg-slate-800 disabled:opacity-60"
+            disabled={!canCategorize}
+            onClick={() => categorizeMutation.mutate()}
+          >
+            {categorizeMutation.isPending ? "Categorizing…" : "Categorize"}
+          </button>
         </div>
       </aside>
     </>

@@ -73,11 +73,18 @@ export async function registerBankingFactoringVirtualRoutes(app: FastifyInstance
       const res = await client
         .query(
           `
-            SELECT *
-            FROM accounting.factoring_advances
-            WHERE operating_company_id = $1
-            ORDER BY created_at DESC
-            LIMIT 500
+            SELECT
+              fa.id::text AS id,
+              fa.display_id,
+              fa.status,
+              fa.advance_amount_cents,
+              fa.created_at::text AS created_at,
+              fa.advanced_at::text AS advanced_at
+            FROM accounting.factoring_advances fa
+            WHERE fa.operating_company_id = $1
+              AND fa.status IS DISTINCT FROM 'voided'
+            ORDER BY COALESCE(fa.advanced_at, fa.created_at) DESC NULLS LAST
+            LIMIT 25
           `,
           [companyId]
         )

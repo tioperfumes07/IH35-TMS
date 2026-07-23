@@ -63,6 +63,8 @@ function postingEntityKind(type: string | null | undefined): EntityKind | null {
     case "bank_transaction":
     case "bank_categorization":
       return "bank_transaction";
+    case "transfer":
+      return "transfer";
     case "claim":
       return "claim";
     case "matter":

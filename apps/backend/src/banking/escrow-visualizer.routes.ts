@@ -115,7 +115,9 @@ export async function registerBankingEscrowVisualizerRoutes(app: FastifyInstance
               NULL::text AS bucket,
               (amount_cents::numeric / 100) AS amount,
               description AS memo,
-              created_at
+              created_at,
+              settlement_id::text AS settlement_id,
+              settlement_line_id::text AS settlement_line_id
             FROM driver_finance.escrow_ledger
             WHERE ${filters.join(" AND ")}
             ORDER BY created_at DESC

@@ -275,6 +275,8 @@ export type Transfer = {
   memo: string | null;
   reference_number: string | null;
   qbo_journal_entry_id: string | null;
+  /** TMS GL journal entry when TRANSFER_GL_POSTING_ENABLED posted (via posting spine). */
+  journal_entry_id?: string | null;
   revoked_at: string | null;
   revoked_reason: string | null;
   created_at: string;
@@ -299,6 +301,9 @@ export type EscrowDriverTimelineRow = {
   amount: number;
   memo: string | null;
   created_at: string;
+  /** Canonical driver_finance.driver_settlements id when this ledger row was posted from a settlement. */
+  settlement_id?: string | null;
+  settlement_line_id?: string | null;
 };
 
 function q(companyId: string) {
@@ -320,6 +325,22 @@ export type FactoringVirtualCompany = {
 /** Canonical reserve/chargeback balances from accounting.factoring_companies (0441-mod8). */
 export function getFactoringVirtual(companyId: string) {
   return apiRequest<{ companies: FactoringVirtualCompany[] }>(`/api/v1/banking/factoring-virtual?${q(companyId)}`);
+}
+
+export type FactoringVirtualAdvanceRow = {
+  id: string;
+  display_id: string;
+  status: string;
+  advance_amount_cents: number | string | null;
+  created_at: string | null;
+  advanced_at: string | null;
+};
+
+/** Recent Faro advances for Banking Factoring tab (Law §9 forward drill). */
+export function getFactoringVirtualTimeline(companyId: string) {
+  return apiRequest<{ timeline: FactoringVirtualAdvanceRow[] }>(
+    `/api/v1/banking/factoring-virtual/timeline?${q(companyId)}`
+  );
 }
 
 export type BankMatchCandidateKind = "payment" | "bill_payment" | "transfer" | "je" | "bill" | "expense";
@@ -497,6 +518,8 @@ export type BankCategorizationLinks = {
   deduction_bucket_id: string | null;
   deduction_load_id: string | null;
   split_mode: string | null;
+  /** Set when BANK_FEED_GL_POSTING_ENABLED ran and the bank-feed poster stamped a TMS JE back-pointer. */
+  matched_journal_entry_id: string | null;
 };
 
 export function getBankTransactionCategorizationLinks(transactionId: string, companyId: string) {
