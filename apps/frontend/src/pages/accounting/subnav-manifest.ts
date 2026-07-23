@@ -97,6 +97,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   // More ▾ — AR / receivables
   { label: "Invoices", path: "/accounting/invoices", section: "more" },
   { label: "Receive Payment", path: "/accounting/payments", section: "more" },
+  { label: "Undeposited Funds", path: "/accounting/undeposited-funds", section: "more" },
   { label: "AR Aging", path: "/reports/ar-aging", section: "more" },
   COLLECTIONS_SUBNAV_ITEM,
 

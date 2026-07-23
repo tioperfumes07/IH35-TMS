@@ -165,6 +165,7 @@ const LoginResetConfirmPage = React.lazy(() => import("../pages/LoginResetConfir
 const ComingSoonPage = React.lazy(() => import("../pages/ComingSoonPage").then((m) => ({ default: m.ComingSoonPage })));
 const IntegrationTransactionsPage = React.lazy(() => import("../pages/accounting/IntegrationTransactionsPage").then((m) => ({ default: m.IntegrationTransactionsPage })));
 const ReceiptsPage = React.lazy(() => import("../pages/accounting/ReceiptsPage").then((m) => ({ default: m.ReceiptsPage })));
+const UndepositedFundsPage = React.lazy(() => import("../pages/accounting/UndepositedFundsPage").then((m) => ({ default: m.UndepositedFundsPage })));
 const PrepaidExpensesPage = React.lazy(() => import("../pages/accounting/PrepaidExpensesPage").then((m) => ({ default: m.PrepaidExpensesPage })));
 const RevenueRecognitionPage = React.lazy(() => import("../pages/accounting/RevenueRecognitionPage").then((m) => ({ default: m.RevenueRecognitionPage })));
 const FixedAssetsPage = React.lazy(() => import("../pages/accounting/FixedAssetsPage").then((m) => ({ default: m.FixedAssetsPage })));
@@ -3902,6 +3903,7 @@ export const ROUTES = React.Children.toArray(
         {/* UI-1: 6/6 modules built (prepaid, integration-transactions, receipts, revenue-recognition, fixed-assets, my-accountant). */}
         <Route path="/accounting/integration-transactions" element={<ProtectedRoute><IntegrationTransactionsPage /></ProtectedRoute>} />
         <Route path="/accounting/receipts" element={<ProtectedRoute><ReceiptsPage /></ProtectedRoute>} />
+        <Route path="/accounting/undeposited-funds" element={<ProtectedRoute><UndepositedFundsPage /></ProtectedRoute>} />
         <Route path="/accounting/revenue-recognition" element={<ProtectedRoute><RevenueRecognitionPage /></ProtectedRoute>} />
         <Route path="/accounting/fixed-assets" element={<ProtectedRoute><FixedAssetsPage /></ProtectedRoute>} />
         {/* Accounting PR 3/6 — FH-7 §3.14 Allocations tab: read-only rollup of bill_unit_allocation. */}
