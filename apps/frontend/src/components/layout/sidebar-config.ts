@@ -170,11 +170,17 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
     case "maintenance":
       return MAINTENANCE_MODULE_NAV_LINKS.map((item) => ({ label: item.label, to: item.path }));
     case "bank":
+      // FAIL-5: flyout must mirror BANKING_MODULE_TABS (+ additive queues/settings). Fuel Planner
+      // stays on its own sidebar item (Module 5) — not duplicated here.
       return [
-        { label: "Overview", to: "/banking" },
-        { label: "Reconcile", to: "/banking/reconcile" },
+        { label: "Accounts", to: "/banking" },
+        { label: "Transactions", to: "/banking/transactions" },
+        { label: "Reconciliation", to: "/banking/reconciliation" },
+        { label: "Driver Escrow", to: "/banking/driver-escrow" },
+        { label: "Reports", to: "/banking/reports" },
         { label: "Transfers", to: "/banking/transfers" },
-        { label: "Fuel Planner", to: "/fuel" },
+        { label: "Reconcile Queue", to: "/banking/reconcile" },
+        { label: "Cash GL setup", to: "/banking/cash-gl-setup" },
         // BANK-ACCOUNT-HIDE (Tier-1 HOLD): per-entity hide/exclude manager. Route + nav entry are
         // additive; the page itself is gated behind BANK_ACCOUNT_HIDE_ENABLED (default OFF) and shows
         // a plain-language notice until Jorge flips the per-entity flag.
