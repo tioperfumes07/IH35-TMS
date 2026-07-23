@@ -545,10 +545,14 @@ export async function registerBankingRoutes(app: FastifyInstance) {
           ORDER BY ba.account_name ASC`,
         [companyId]
       );
+      // Only postable asset leaves — binding a non-postable header/group account breaks bank→GL posting.
       const coa = await client.query<{ id: string; account_number: string; account_name: string }>(
         `SELECT id::text, account_number, account_name
            FROM catalogs.accounts
-          WHERE operating_company_id = $1 AND deactivated_at IS NULL AND account_type ILIKE 'asset'
+          WHERE operating_company_id = $1
+            AND deactivated_at IS NULL
+            AND account_type ILIKE 'asset'
+            AND is_postable = true
           ORDER BY account_number ASC`,
         [companyId]
       );
@@ -580,13 +584,17 @@ export async function registerBankingRoutes(app: FastifyInstance) {
         [params.data.id, companyId]
       );
       if (!bank.rows[0]) return { error: "bank_account_not_found" as const };
-      // Cross-entity guard: the chosen COA account must belong to THIS entity.
+      // Cross-entity + postable guard: COA account must belong to THIS entity and be is_postable.
       if (body.data.ledger_account_id) {
-        const acct = await client.query<{ id: string }>(
-          `SELECT id FROM catalogs.accounts WHERE id = $1 AND operating_company_id = $2 AND deactivated_at IS NULL LIMIT 1`,
+        const acct = await client.query<{ id: string; is_postable: boolean }>(
+          `SELECT id, is_postable
+             FROM catalogs.accounts
+            WHERE id = $1 AND operating_company_id = $2 AND deactivated_at IS NULL
+            LIMIT 1`,
           [body.data.ledger_account_id, companyId]
         );
         if (!acct.rows[0]) return { error: "account_not_in_entity" as const };
+        if (acct.rows[0].is_postable !== true) return { error: "account_not_postable" as const };
       }
       await client.query(
         `UPDATE banking.bank_accounts SET ledger_account_id = $1, updated_at = now() WHERE id = $2 AND operating_company_id = $3`,
