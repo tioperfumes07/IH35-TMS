@@ -419,7 +419,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               type="button"
               onClick={() => {
                 setTransactionsInitialFilter("uncategorized");
-                navigate(BANKING_TAB_PATH.transactions);
+                navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`);
               }}
               className="flex h-16 min-w-0 flex-col justify-center gap-0.5 rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-left text-[11px] transition hover:bg-slate-100"
             >
@@ -529,18 +529,48 @@ export function BankingHomePage({ initialTab }: Props = {}) {
       ) : null}
 
       {activeTab === "transactions" ? (
-        <BankingTransactionsDesignView
-          companyId={companyId}
-          accounts={plaidAccountsQuery.data?.accounts ?? []}
-          selectedAccountId={selectedAccountId}
-          onSelectAccount={setSelectedAccountId}
-          onManageConnections={() => setActiveTab("accounts")}
-          initialTransactionType={transactionsInitialFilter}
-          highlightTransactionId={deepLinkTxnId}
-          onDataChanged={() => {
-            void queryClient.invalidateQueries({ queryKey: ["banking"] });
-          }}
-        />
+        <div className="space-y-3">
+          {uncategorizedCount > 0 ? (
+            <div
+              className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950"
+              data-testid="banking-forreview-backlog-banner"
+            >
+              <p className="font-semibold">
+                For-review backlog: {uncategorizedCount.toLocaleString()} transaction(s) still need Match/Categorize
+              </p>
+              <p className="mt-1">
+                Live bank feed is not “caught up” until these are matched or categorized. Use the For review tab below —
+                Match opens candidates; Categorize posts to a GL account. Do not treat a large for-review queue as
+                reconciled books.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <ActionButton
+                  onClick={() => {
+                    setTransactionsInitialFilter("uncategorized");
+                    navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`);
+                  }}
+                >
+                  Focus uncategorized filter
+                </ActionButton>
+                <Link to="/banking/categorize" className="text-xs font-medium text-slate-800 underline">
+                  /banking/categorize deep link
+                </Link>
+              </div>
+            </div>
+          ) : null}
+          <BankingTransactionsDesignView
+            companyId={companyId}
+            accounts={plaidAccountsQuery.data?.accounts ?? []}
+            selectedAccountId={selectedAccountId}
+            onSelectAccount={setSelectedAccountId}
+            onManageConnections={() => setActiveTab("accounts")}
+            initialTransactionType={transactionsInitialFilter}
+            highlightTransactionId={deepLinkTxnId}
+            onDataChanged={() => {
+              void queryClient.invalidateQueries({ queryKey: ["banking"] });
+            }}
+          />
+        </div>
       ) : null}
 
       {activeTab === "reconciliation" ? (
