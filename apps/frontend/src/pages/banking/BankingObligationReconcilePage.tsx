@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   bulkReconcileAction,
   getPlaidBankAccounts,
@@ -110,6 +110,21 @@ export function BankingObligationReconcilePage() {
   return (
     <div className="space-y-3">
       <PageHeader backHref="/banking" title="Bank reconciliation" subtitle="Drag a transaction onto an obligation, or use bulk actions." />
+      {!txnsQuery.isLoading && !obligationsQuery.isLoading && transactions.length === 0 && obligations.length === 0 ? (
+        <div
+          className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950"
+          data-testid="banking-reconcile-queue-empty-honesty-banner"
+        >
+          <p className="font-semibold">Reconcile queue has no unmatched rows and no open obligations in this view.</p>
+          <p className="mt-1">
+            That is not proof the company is caught up. Most feed activity still lands on Transactions → For review
+            (Match/Categorize). Use that path when this queue is empty but uncategorized KPIs are non-zero.
+          </p>
+          <Link to="/banking/transactions?type=uncategorized" className="mt-2 inline-block font-medium text-slate-800 underline">
+            Open for-review Match/Categorize
+          </Link>
+        </div>
+      ) : null}
       {txnsQuery.isError || obligationsQuery.isError ? (
         <ListErrorBanner
           message={
