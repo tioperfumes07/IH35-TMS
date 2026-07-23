@@ -17,6 +17,7 @@ import { MedicalCardSection } from "../../components/driver-profile/MedicalCardS
 import { PerformanceScorecardSection } from "../../components/driver-profile/PerformanceScorecardSection";
 import { SettlementsSection } from "../../components/driver-profile/SettlementsSection";
 import { DriverPaymentMethodsCard } from "../../components/driver-profile/DriverPaymentMethodsCard";
+import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
 import { TrainingRecordsSection } from "../../components/driver-profile/TrainingRecordsSection";
 import { W8BenSection } from "../../components/driver-profile/W8BenSection";
 import { AddTrainingModal } from "../../components/drivers/AddTrainingModal";
@@ -327,6 +328,15 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           }}
         />
         <DriverPaymentMethodsCard driverId={id} companyId={companyId} />
+        {companyId ? (
+          <div className="mt-3" data-testid="dp-section-linked-bank-txns">
+            <LinkedBankTransactionsPanel
+              companyId={companyId}
+              linkage={{ kind: "driver_id", id }}
+              entityLabel={displayName}
+            />
+          </div>
+        ) : null}
       </div>
       <div data-testid="dp-section-layovers">
         <LayoverSummaryCard driverId={id} companyId={companyId} />
