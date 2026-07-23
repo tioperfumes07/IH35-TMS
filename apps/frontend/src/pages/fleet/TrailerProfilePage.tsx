@@ -18,6 +18,7 @@ import { TrailerReeferSection } from "../../components/trailer-profile/TrailerRe
 import { ServiceTimeline } from "../../components/maintenance/ServiceTimeline";
 import { TypeSpecsSection } from "../../components/trailer-profile/TypeSpecsSection";
 import { InsuranceClaimsReverseSection } from "../../components/insurance/InsuranceClaimsReverseSection";
+import { AssetSafetyReverseSection } from "../../components/safety/AssetSafetyReverseSection";
 
 export type TrailerProfileAggregate = {
   equipment: Record<string, unknown>;
@@ -134,6 +135,17 @@ export function TrailerProfilePage() {
           filter={{ trailer_id: id }}
           contextLabel="this trailer"
           data-testid="trailer-profile-insurance-claims"
+        />
+      </div>
+      {/* SAF-F17 — reverse linkage. DOT inspections, DVIRs and incidents (trailer interchanges
+          especially) all carry this trailer's id; none of it was readable from the trailer.
+          Accidents are unit-only: safety.accident_reports has no trailer column. */}
+      <div data-testid="tp-section-6c-safety-records">
+        <AssetSafetyReverseSection
+          operatingCompanyId={companyId}
+          assetKind="trailer"
+          assetId={id}
+          data-testid="trailer-profile-safety-records"
         />
       </div>
       <div data-testid="tp-section-7-documents">

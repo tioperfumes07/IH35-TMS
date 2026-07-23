@@ -98,7 +98,11 @@ if (SELFTEST) {
     {
       ...live,
       [ROUTE]: live[ROUTE].replace(
-        /const res = await client\.query\(\s*`\s*\n\s*SELECT ar\.\*,[\s\S]*?LIMIT 500\s*`,\s*\n\s*\[query\.data\.operating_company_id\]\s*\n\s*\);/,
+        // SAF-F17 widened the params from a literal `[query.data.operating_company_id]` array to a
+        // built `values` array (the route gained an optional unit_id filter). The ASSERTION is
+        // unchanged — only this mutation's match had to follow the source, or the selftest silently
+        // went inert and stopped proving anything.
+        /const res = await client\.query\(\s*`\s*\n\s*SELECT ar\.\*,[\s\S]*?LIMIT 500\s*`,\s*\n\s*(?:values|\[query\.data\.operating_company_id\])\s*\n\s*\);/,
         "const res = await client.query(`SELECT * FROM safety.accident_reports WHERE operating_company_id = $1 ORDER BY accident_at DESC LIMIT 500`, [query.data.operating_company_id]).catch(() => ({ rows: [] }));"
       ),
     },

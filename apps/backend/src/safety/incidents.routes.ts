@@ -15,6 +15,12 @@ const listQuerySchema = companyQuerySchema.extend({
   incident_type: incidentTypeSchema,
   driver_id: z.string().uuid().optional(),
   unit_id: z.string().uuid().optional(),
+  // SAF-F17: the trailer profile's reverse safety section. `safety.incidents.trailer_id` FKs to
+  // mdata.equipment (trailers live in mdata.equipment, NOT mdata.units — migration
+  // 202607031600_safety_incidents_trailer_fk_to_equipment.sql), and trailer interchanges are the
+  // incident type that is ABOUT a trailer, so having no trailer filter made them unreachable
+  // from the trailer they concern.
+  trailer_id: z.string().uuid().optional(),
   // YYYY-MM-DD inclusive bounds on incident_at (date portion).
   date_from: z
     .string()
@@ -99,6 +105,10 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
       if (query.data.unit_id) {
         params.push(query.data.unit_id);
         filters.push(`i.unit_id = $${params.length}`);
+      }
+      if (query.data.trailer_id) {
+        params.push(query.data.trailer_id);
+        filters.push(`i.trailer_id = $${params.length}`);
       }
       if (query.data.date_from) {
         params.push(query.data.date_from);

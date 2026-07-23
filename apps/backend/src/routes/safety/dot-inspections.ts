@@ -12,6 +12,12 @@ const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+// SAF-F17 — unit / trailer profile reverse view. Both optional; absent = company-wide list.
+const dotInspectionsListQuerySchema = companyQuerySchema.extend({
+  unit_id: z.string().uuid().optional(),
+  trailer_id: z.string().uuid().optional(),
+});
+
 const cleanRateQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   driver_id: z.string().uuid().optional(),
@@ -108,19 +114,34 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
   app.get("/api/v1/safety/dot-inspections", async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
-    const query = companyQuerySchema.safeParse(req.query ?? {});
+    // SAF-F17: optional asset scoping for the unit / trailer profile reverse safety section.
+    // `safety.dot_inspections` carries BOTH `unit_id` and `trailer_id`, so both are filterable.
+    // Filtered in SQL — this list is capped at LIMIT 500 and a client-side filter would silently
+    // omit an asset's inspections past that cap.
+    const query = dotInspectionsListQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
     const rows = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
+      const values: unknown[] = [query.data.operating_company_id];
+      const filters: string[] = [];
+      if (query.data.unit_id) {
+        values.push(query.data.unit_id);
+        filters.push(`AND unit_id = $${values.length}`);
+      }
+      if (query.data.trailer_id) {
+        values.push(query.data.trailer_id);
+        filters.push(`AND trailer_id = $${values.length}`);
+      }
       const res = await client.query(
         `
           SELECT *
           FROM safety.dot_inspections
           WHERE operating_company_id = $1
+          ${filters.join("\n          ")}
           ORDER BY inspection_date DESC, created_at DESC
           LIMIT 500
         `,
-        [query.data.operating_company_id]
+        values
       );
       return res.rows;
     });
