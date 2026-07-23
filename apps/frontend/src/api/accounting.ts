@@ -531,6 +531,7 @@ export type ExpenseListRow = {
   driver_last_name: string | null;
   line_description: string | null;
   is_reconciled: boolean;
+  journal_entry_id: string | null;
 };
 
 export function listExpenses(
@@ -1810,7 +1811,8 @@ export type RecurringBillFrequency = "weekly" | "biweekly" | "monthly" | "quarte
 export type RecurringBillLineItem = {
   description: string;
   amount: number;
-  account_id?: string | null;
+  /** catalogs.accounts.id — expense/asset category for generated bill_lines */
+  coa_account_id?: string | null;
   memo?: string | null;
   class_id?: string | null;
 };

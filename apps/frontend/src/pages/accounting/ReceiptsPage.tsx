@@ -3,11 +3,12 @@ import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { titleize } from "../../lib/titleize";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getReceipts, getReceiptDetail, type ReceiptItem } from "../../api/receipts";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
@@ -23,6 +24,26 @@ const STATUS_COLOR: Record<string, string> = {
   pending_approval: "bg-slate-100 text-slate-700",
 };
 
+/**
+ * Receipt source -> EntityLink kind. Must cover PAYMENT: main's version resolved
+ * `type === "expense" ? "expense" : "bill"`, so once payment receipts exist a payment would link
+ * to /accounting/bills/<payment_id> — a wrong-record drill. EntityLink has a real "payment" kind
+ * (-> /accounting/payments/:id), so all three source types resolve to their own detail route.
+ */
+function receiptEntityKind(row: ReceiptItem): "expense" | "bill" | "payment" {
+  if (row.source.type === "expense") return "expense";
+  if (row.source.type === "payment") return "payment";
+  return "bill";
+}
+
+function receiptRefLabel(row: ReceiptItem) {
+  // Payment receipts carry payment_display_id, not bill_number — the two-branch version read
+  // bill_number off a payment source (a type error, and "—" at runtime).
+  if (row.source.type === "expense") return row.source.expense_number ?? "—";
+  if (row.source.type === "payment") return row.source.payment_display_id ?? "—";
+  return row.source.bill_number ?? "—";
+}
+
 function ReceiptDetailPanel({ id, companyId, onClose }: { id: string; companyId: string; onClose: () => void }) {
   const detailQuery = useQuery({
     queryKey: ["receipt-detail", id, companyId],
@@ -32,12 +53,7 @@ function ReceiptDetailPanel({ id, companyId, onClose }: { id: string; companyId:
   const { data, isLoading, isError } = detailQuery;
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-        <div className="flex items-start justify-between mb-4">
-          <h2 className="text-base font-semibold text-gray-900">Receipt Detail</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
-        </div>
+    <ParityDrawer open title="Receipt detail" subtitle="Linked expense or bill" onClose={onClose} size="wide">
         {isLoading ? (
           <p className="text-sm text-gray-500">Loading…</p>
         ) : isError ? (
@@ -57,11 +73,11 @@ function ReceiptDetailPanel({ id, companyId, onClose }: { id: string; companyId:
             <hr />
             <div className="flex gap-2">
               <span className="text-gray-500 w-28 shrink-0">Linked to</span>
-              <Link to={data.source.detail_path} className="text-slate-700 hover:underline capitalize">
-                {data.source.type === "payment"
-                  ? `Payment ${data.source.payment_display_id ?? data.entity_id.slice(0, 8)}`
-                  : `${data.source.type} ${data.source.type === "expense" ? data.source.expense_number : data.source.bill_number}`}
-              </Link>
+              <EntityLink
+                kind={receiptEntityKind(data)}
+                id={data.entity_id}
+                label={`${data.source.type} ${receiptRefLabel(data)}`}
+              />
             </div>
             <div className="flex gap-2"><span className="text-gray-500 w-28 shrink-0">Amount</span><span>{fmtCents(data.source.amount_cents)}</span></div>
             <div className="flex gap-2"><span className="text-gray-500 w-28 shrink-0">Date</span><span>{fmtDate(data.source.date)}</span></div>
@@ -72,8 +88,7 @@ function ReceiptDetailPanel({ id, companyId, onClose }: { id: string; companyId:
             </a>
           </div>
         )}
-      </div>
-    </div>
+    </ParityDrawer>
   );
 }
 
@@ -135,13 +150,11 @@ export function ReceiptsPage() {
           return row.source.bill_number ?? "";
         },
         render: (row) => (
-          <Link to={row.source.detail_path} className="text-slate-700 hover:underline text-xs">
-            {row.source.type === "expense"
-              ? (row.source.expense_number ?? "—")
-              : row.source.type === "payment"
-                ? (row.source.payment_display_id ?? "—")
-                : (row.source.bill_number ?? "—")}
-          </Link>
+          <EntityLink
+            kind={receiptEntityKind(row)}
+            id={row.entity_id}
+            label={receiptRefLabel(row)}
+          />
         ),
       },
       { key: "source_date", label: "Date", sortable: true, sortValue: (row) => row.source.date ?? "", render: (row) => fmtDate(row.source.date) },
