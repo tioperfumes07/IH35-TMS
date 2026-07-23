@@ -165,8 +165,13 @@ const coaRoles = read("apps/frontend/src/pages/accounting/CoaRolesPage.tsx");
 if (coaRoles.includes("<datalist")) {
   failures.push("CoaRolesPage must not use raw UUID datalist — use ReferenceSelect");
 }
-if (!coaRoles.includes("ReferenceSelect") || !coaRoles.includes('createKind="category"')) {
-  failures.push("CoaRolesPage account picker must use ReferenceSelect createKind=category");
+// createKind must be "account", not "category". A CoA ROLE binds a role to a GL ACCOUNT, so the
+// inline "+ Add new" has to open the account wizard and write catalogs.accounts — the same table
+// this picker reads (picker law: write what you read). "category" opened the expense-category
+// wizard. This assertion previously pinned the wrong value and blocked the correction; the sibling
+// guard verify-coa-roles-page-uses-paritytable.mjs had the identical defect.
+if (!coaRoles.includes("ReferenceSelect") || !coaRoles.includes('createKind="account"')) {
+  failures.push("CoaRolesPage account picker must use ReferenceSelect createKind=account");
 }
 
 const invoiceTypeModal = read("apps/frontend/src/pages/accounting/modals/InvoiceTypeModalBase.tsx");
