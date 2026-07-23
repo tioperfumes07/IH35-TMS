@@ -3,8 +3,9 @@ import { DatePicker } from "../components/forms/DatePicker";
 import { MoneyInput } from "../components/forms/MoneyInput";
 import { ParityTable } from "../components/parity/ParityTable";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom";
 import { listExpenses, listVendorBills, type ExpenseListRow, type VendorBill } from "../api/accounting";
+import { listVendorCredits } from "../api/vendor-credits";
 import { ApiError, apiRequest } from "../api/client";
 import { listVendorBillPayments, recordVendorBillPayment, type VendorBillPaymentListRow } from "../api/vendors";
 import { getVendor, updateVendor, listPaymentTermOptions } from "../api/mdata";
@@ -138,6 +139,11 @@ export function VendorDetailPage() {
   const vendorExpensesQuery = useQuery({
     queryKey: ["vendor-expenses", companyId, id],
     queryFn: () => listExpenses(companyId, { vendor_uuid: id, limit: 200 }).then((res) => res.rows),
+    enabled: Boolean(companyId) && Boolean(id) && activeTab === "A/P",
+  });
+  const vendorCreditsQuery = useQuery({
+    queryKey: ["vendor-credits", companyId, id],
+    queryFn: () => listVendorCredits(companyId, { vendor_id: id }).then((res) => res.credits),
     enabled: Boolean(companyId) && Boolean(id) && activeTab === "A/P",
   });
   const vendorIntegrityQuery = useQuery({
@@ -1141,6 +1147,46 @@ export function VendorDetailPage() {
                     sortable: true,
                     render: (e) => <span className="capitalize">{e.posting_status}</span>,
                   },
+                ]}
+              />
+            ) : null}
+          </div>
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="text-sm font-semibold text-gray-900">Vendor credits</div>
+              <Link to={`/accounting/vendor-credits?vendor_id=${encodeURIComponent(id)}`} className="text-xs text-slate-700 hover:underline">
+                View all credits
+              </Link>
+            </div>
+            {vendorCreditsQuery.isError ? <p className="text-sm text-red-600">Could not load vendor credits.</p> : null}
+            {!vendorCreditsQuery.isError ? (
+              <ParityTable
+                rows={vendorCreditsQuery.data ?? []}
+                rowKey={(c) => c.id}
+                loading={vendorCreditsQuery.isLoading}
+                storageKey="vendor-detail-credits"
+                emptyText="No vendor credits for this vendor."
+                exportFilename="vendor-credits"
+                columns={[
+                  {
+                    key: "display_id",
+                    label: "Credit #",
+                    sortable: true,
+                    render: (c) => (
+                      <Link to={`/accounting/vendor-credits?vendor_id=${encodeURIComponent(id)}`} className="text-slate-700 hover:underline">
+                        {c.display_id}
+                      </Link>
+                    ),
+                  },
+                  { key: "issue_date", label: "Issue date", sortable: true, render: (c) => c.issue_date },
+                  {
+                    key: "amount_unapplied_cents",
+                    label: "Unapplied",
+                    sortable: true,
+                    cellClass: "text-right tabular-nums font-semibold",
+                    render: (c) => money.format(c.amount_unapplied_cents / 100),
+                  },
+                  { key: "status", label: "Status", sortable: true, render: (c) => c.status },
                 ]}
               />
             ) : null}

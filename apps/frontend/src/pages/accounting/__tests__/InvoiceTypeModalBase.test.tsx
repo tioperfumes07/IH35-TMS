@@ -7,10 +7,31 @@ import { ToastProvider } from "../../../components/Toast";
 import { InvoiceTypeModalBase } from "../../accounting/modals/InvoiceTypeModalBase";
 
 const listCustomersMock = vi.fn();
+const listLoadsMock = vi.fn();
+const getCoaAccountsMock = vi.fn();
+const addInvoiceLineMock = vi.fn();
+const patchInvoiceMock = vi.fn();
 
 vi.mock("../../../api/mdata", () => ({
   listCustomers: (...args: unknown[]) => listCustomersMock(...args),
 }));
+
+vi.mock("../../../api/loads", () => ({
+  listLoads: (...args: unknown[]) => listLoadsMock(...args),
+}));
+
+vi.mock("../../../api/banking", () => ({
+  getCoaAccounts: (...args: unknown[]) => getCoaAccountsMock(...args),
+}));
+
+vi.mock("../../../api/accounting", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../api/accounting")>();
+  return {
+    ...actual,
+    addInvoiceLine: (...args: unknown[]) => addInvoiceLineMock(...args),
+    patchInvoice: (...args: unknown[]) => patchInvoiceMock(...args),
+  };
+});
 
 function wrap(ui: ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -25,6 +46,8 @@ describe("InvoiceTypeModalBase validation", () => {
   it("requires customer before submit", async () => {
     const user = userEvent.setup();
     listCustomersMock.mockResolvedValue({ customers: [], total: 0 });
+    listLoadsMock.mockResolvedValue({ loads: [], total_count: 0 });
+    getCoaAccountsMock.mockResolvedValue({ accounts: [] });
     const createInvoice = vi.fn();
     wrap(
       <InvoiceTypeModalBase
@@ -57,6 +80,19 @@ describe("InvoiceTypeModalBase validation", () => {
       ],
       total: 1,
     });
+    listLoadsMock.mockResolvedValue({ loads: [], total_count: 0 });
+    getCoaAccountsMock.mockResolvedValue({
+      accounts: [
+        {
+          id: "82222222-2222-4222-8222-222222222222",
+          account_name: "Sales of Service Income",
+          account_type: "Income",
+          account_number: "4000",
+        },
+      ],
+    });
+    patchInvoiceMock.mockResolvedValue({});
+    addInvoiceLineMock.mockResolvedValue({ line: { id: "line-1" } });
 
     const createInvoice = vi.fn().mockResolvedValue({ id: "inv-1" });
     wrap(
@@ -87,5 +123,31 @@ describe("InvoiceTypeModalBase validation", () => {
         })
       );
     });
+  });
+
+  it("renders income account ReferenceSelect with createKind account", async () => {
+    listCustomersMock.mockResolvedValue({ customers: [], total: 0 });
+    listLoadsMock.mockResolvedValue({ loads: [], total_count: 0 });
+    getCoaAccountsMock.mockResolvedValue({
+      accounts: [
+        {
+          id: "82222222-2222-4222-8222-222222222222",
+          account_name: "Sales of Service Income",
+          account_type: "Income",
+        },
+      ],
+    });
+    wrap(
+      <InvoiceTypeModalBase
+        open
+        operatingCompanyId="91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071"
+        title="Test invoice"
+        billToEntityType="customer"
+        onClose={vi.fn()}
+        onCreated={vi.fn()}
+        createInvoice={vi.fn()}
+      />
+    );
+    expect(await screen.findByPlaceholderText(/Select income account/i)).toBeTruthy();
   });
 });
