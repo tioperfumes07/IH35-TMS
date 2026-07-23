@@ -10,9 +10,12 @@ concurrency:
 #
 # All three jobs are added to branch-protection-config.json required_status_checks.contexts.
 
+# CI-COVERAGE FIX (2026-07-23): NO `branches:` filter on the PR trigger. All three
+# gates are whole-tree scans (db/migrations/**, tsconfig, tsc --noEmit) with no
+# dependency on github.base_ref, so they are correct on a stacked PR too.
 on:
   pull_request:
-    branches: [main]
+    types: [opened, synchronize, reopened]
   push:
     branches: [main]
 

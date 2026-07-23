@@ -35,7 +35,7 @@ const TARGET_FILES = [
 // A `JOIN catalogs.account_role_bindings` (the DIP cash_dip bank bridge) is intentionally NOT matched.
 const FORBIDDEN = /\bFROM\s+catalogs\.account_role_bindings\b/i;
 
-function scanContent(content) {
+function checkContent(content) {
   // Return the 1-based line numbers that contain a forbidden direct legacy role→account read.
   const hits = [];
   const lines = content.split("\n");
@@ -50,9 +50,9 @@ function selftest() {
   const goodJoin = "  JOIN catalogs.account_role_bindings arb ON arb.account_id = ba.ledger_account_id";
   const goodResolver = "  const acct = await resolveRoleAccountOptional(client, opco, 'driver_pay_expense');";
   const failures = [];
-  if (scanContent(bad).length !== 1) failures.push("detector did NOT flag a direct FROM catalogs.account_role_bindings read");
-  if (scanContent(goodJoin).length !== 0) failures.push("detector WRONGLY flagged a JOIN catalogs.account_role_bindings bridge");
-  if (scanContent(goodResolver).length !== 0) failures.push("detector WRONGLY flagged a resolver call");
+  if (checkContent(bad).length !== 1) failures.push("detector did NOT flag a direct FROM catalogs.account_role_bindings read");
+  if (checkContent(goodJoin).length !== 0) failures.push("detector WRONGLY flagged a JOIN catalogs.account_role_bindings bridge");
+  if (checkContent(goodResolver).length !== 0) failures.push("detector WRONGLY flagged a resolver call");
   if (failures.length > 0) {
     console.error("verify-settlement-posters-use-coa-resolver SELFTEST FAILED:");
     for (const f of failures) console.error(` - ${f}`);
@@ -73,7 +73,7 @@ function main() {
       console.error(`verify-settlement-posters-use-coa-resolver: expected file missing: ${rel}`);
       process.exit(1);
     }
-    const hits = scanContent(fs.readFileSync(abs, "utf8"));
+    const hits = checkContent(fs.readFileSync(abs, "utf8"));
     if (hits.length > 0) offenders.push({ rel, hits });
   }
   if (offenders.length > 0) {

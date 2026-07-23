@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { useQuery } from "@tanstack/react-query";
@@ -9,6 +10,7 @@ import { useUrlSort } from "../../hooks/useUrlSort";
 import { ApiError } from "../../api/client";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { CollapsedListFilters } from "../../components/table";
 import {
   getFixedAssets, getFixedAssetDetail,
@@ -42,6 +44,11 @@ function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: (
             {!detail.is_owner_operated && detail.owner_company_name && (
               <p className="text-xs text-slate-600 mt-0.5">Owned by {detail.owner_company_name} (operated here)</p>
             )}
+            {detail.unit_uuid ? (
+              <p className="text-xs text-slate-600 mt-0.5">
+                Unit: <EntityLink kind="unit" id={detail.unit_uuid} label={detail.vin_serial ?? detail.unit_uuid.slice(0, 8)} />
+              </p>
+            ) : null}
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none ml-4">×</button>
         </div>
@@ -109,11 +116,32 @@ export function FixedAssetsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const { enabled, loading: flagLoading } = useFeatureFlag("FIXED_ASSETS_ENABLED", operatingCompanyId || undefined);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [statusFilter, setStatusFilter] = useState("");
   const [offset, setOffset] = useState(0);
-  const [detailId, setDetailId] = useState<string | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(searchParams.get("asset_id"));
   const limit = 50;
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
+
+  useEffect(() => {
+    const assetId = searchParams.get("asset_id");
+    if (assetId) setDetailId(assetId);
+  }, [searchParams]);
+
+  const openDetail = (id: string) => {
+    setDetailId(id);
+    const next = new URLSearchParams(searchParams);
+    next.set("asset_id", id);
+    setSearchParams(next, { replace: true });
+  };
+
+  const closeDetail = () => {
+    setDetailId(null);
+    if (!searchParams.get("asset_id")) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("asset_id");
+    setSearchParams(next, { replace: true });
+  };
 
   const assetsQuery = useQuery({
     queryKey: ["fixed-assets", operatingCompanyId, statusFilter, offset],
@@ -139,7 +167,7 @@ export function FixedAssetsPage() {
         label: "Name",
         sortable: true,
         render: (row) => (
-          <button onClick={() => setDetailId(row.id)} className="text-slate-700 hover:underline text-left font-medium">{row.name}</button>
+          <button onClick={() => openDetail(row.id)} className="text-slate-700 hover:underline text-left font-medium">{row.name}</button>
         ),
       },
       { key: "class_name", label: "Class", sortable: true, render: (row) => row.class_name ?? "—" },
@@ -180,7 +208,7 @@ export function FixedAssetsPage() {
         ),
       },
     ],
-    [],
+    [openDetail],
   );
 
   const filterBar = (
@@ -221,7 +249,7 @@ export function FixedAssetsPage() {
   return (
     <AccountingSubNavWrapper title="Fixed Assets" subtitle="Asset register, depreciation schedule, and disposals (read-only; GL posting gated)">
       {detailId && detail && !detailLoading && (
-        <DetailPanel detail={detail} onClose={() => setDetailId(null)} />
+        <DetailPanel detail={detail} onClose={closeDetail} />
       )}
 
       {isError ? (

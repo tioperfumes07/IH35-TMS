@@ -43,7 +43,7 @@ const LEGACY_REDIRECTS = [
   },
   {
     path: "/banking/categorize",
-    target: 'Navigate to="/banking/transactions"',
+    target: 'Navigate to="/banking/transactions?type=uncategorized"',
   },
 ];
 
@@ -72,6 +72,12 @@ export function evaluateActiveCategorizePath(input) {
   }
   if (!designViewSrc.includes("categorizeBankTransaction(")) {
     failures.push(`${DESIGN_VIEW_REL} — live register must call categorizeBankTransaction(`);
+  }
+  // Deep-link honesty: ?type=uncategorized must update the filter after mount (not mount-only useState).
+  if (!designViewSrc.includes("setSelectedTransactionType(initialTransactionType")) {
+    failures.push(
+      `${DESIGN_VIEW_REL} — must sync selectedTransactionType when initialTransactionType changes (deep-link ?type=)`,
+    );
   }
 
   // (3) manifest routes the transactions tab (canonical URL).
@@ -138,12 +144,12 @@ function runSelftest() {
     path="/banking/uncategorized"
     <Navigate to="/banking/transactions?type=uncategorized" replace />
     path="/banking/categorize"
-    <Navigate to="/banking/transactions" replace />
+    <Navigate to="/banking/transactions?type=uncategorized" replace />
   `;
   const goodHome =
     'searchParams.get("type") === "uncategorized" setTransactionsInitialFilter("uncategorized") <BankingTransactionsDesignView';
   const goodDetail = "<BankingTransactionsDesignView selectedAccountId={id} />";
-  const goodDesign = "categorizeBankTransaction(";
+  const goodDesign = "categorizeBankTransaction( setSelectedTransactionType(initialTransactionType";
   const goodOld = `${ARCHIVE_MARKER} superseded`;
 
   const cases = [
