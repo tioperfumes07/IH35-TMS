@@ -16,6 +16,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 function money(cents: number) {
@@ -77,13 +78,33 @@ export function SalesTaxPage() {
     onError: (error) => pushToast(String((error as Error).message ?? "Failed to prepare return"), "error"),
   });
 
+  const agencyVendorById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const agency of agenciesQuery.data?.agencies ?? []) {
+      if (agency.agency_vendor_id) map.set(agency.id, agency.agency_vendor_id);
+    }
+    return map;
+  }, [agenciesQuery.data?.agencies]);
+
   const returnColumns = useMemo<Array<ParityColumn<SalesTaxReturn>>>(
     () => [
       {
         key: "agency_name",
         label: "Agency",
         sortable: true,
-        render: (row) => row.agency_name ?? row.agency_id,
+        render: (row) => {
+          const vendorId = agencyVendorById.get(row.agency_id);
+          if (vendorId) {
+            return (
+              <EntityLink
+                kind="vendor"
+                id={vendorId}
+                label={row.agency_name ?? row.agency_id}
+              />
+            );
+          }
+          return row.agency_name ?? row.agency_id;
+        },
         sortValue: (row) => row.agency_name ?? row.agency_id,
       },
       {
@@ -118,6 +139,17 @@ export function SalesTaxPage() {
         sortValue: (row) => Number(row.tax_owed_cents ?? 0),
       },
       { key: "status", label: "Status", sortable: true },
+      {
+        key: "paid_bill_id",
+        label: "Payment bill",
+        sortable: true,
+        render: (row) =>
+          row.paid_bill_id ? (
+            <EntityLink kind="bill" id={row.paid_bill_id} label={row.paid_bill_id.slice(0, 8)} />
+          ) : (
+            "—"
+          ),
+      },
       {
         key: "actions",
         label: "Actions",
@@ -157,7 +189,7 @@ export function SalesTaxPage() {
         ),
       },
     ],
-    [companyId, queryClient, pushToast]
+    [agencyVendorById, companyId, queryClient, pushToast]
   );
 
   const totals = useMemo(() => {
