@@ -18,6 +18,16 @@ export type ReceiptSource =
       vendor_name: string | null;
       status: string | null;
       detail_path: string;
+    }
+  | {
+      type: "payment";
+      payment_display_id: string | null;
+      customer_name: string | null;
+      date: string | null;
+      amount_cents: number | null;
+      reference: string | null;
+      status: string | null;
+      detail_path: string;
     };
 
 export type ReceiptItem = {
@@ -42,7 +52,7 @@ export type ReceiptDetail = ReceiptItem & {
 
 export function getReceipts(input: {
   operating_company_id: string;
-  entity_type?: "expense" | "bill";
+  entity_type?: "expense" | "bill" | "payment";
   date_from?: string;
   date_to?: string;
   q?: string;
