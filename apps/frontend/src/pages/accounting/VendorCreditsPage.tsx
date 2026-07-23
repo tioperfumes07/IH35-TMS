@@ -11,7 +11,7 @@ import {
 import { Button } from "../../components/Button";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { ListErrorState } from "../../components/ListErrorState";
-import { Modal } from "../../components/Modal";
+import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -53,7 +53,7 @@ export function VendorCreditsPage() {
     () =>
       (vendorsQuery.data?.vendors ?? []).map((v) => ({
         value: v.id,
-        label: v.vendor_name ?? v.id,
+        label: v.name ?? v.id,
       })),
     [vendorsQuery.data?.vendors],
   );
@@ -186,7 +186,29 @@ export function VendorCreditsPage() {
         />
       )}
 
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create vendor credit">
+      {/* CHROME-12: money creator -> ParityDrawer side panel (never a centered Modal). A centered
+          modal here would also invert the nested Create-vendor InlineCreateDrawer opened by the
+          ReferenceSelect below. */}
+      <ParityDrawer
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        title="Create vendor credit"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={() => setCreateOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={!createVendorId || createAmountCents == null || createAmountCents <= 0 || createMut.isPending}
+              loading={createMut.isPending}
+              onClick={() => createMut.mutate()}
+            >
+              Save
+            </Button>
+          </div>
+        }
+      >
         <div className="space-y-3 text-sm">
           <label className="block">
             <span className="text-xs font-medium text-gray-600">Vendor *</span>
@@ -205,7 +227,11 @@ export function VendorCreditsPage() {
           <label className="block">
             <span className="text-xs font-medium text-gray-600">Amount *</span>
             <div className="mt-1">
-              <MoneyInput value={createAmountCents} onChange={setCreateAmountCents} aria-label="Vendor credit amount" />
+              <MoneyInput
+                valueCents={createAmountCents}
+                onChangeCents={setCreateAmountCents}
+                ariaLabel="Vendor credit amount"
+              />
             </div>
           </label>
           <label className="block">
@@ -217,21 +243,8 @@ export function VendorCreditsPage() {
               onChange={(e) => setCreateNotes(e.target.value)}
             />
           </label>
-          <div className="flex justify-end gap-2 border-t border-gray-100 pt-3">
-            <Button type="button" variant="secondary" onClick={() => setCreateOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              disabled={!createVendorId || createAmountCents == null || createAmountCents <= 0 || createMut.isPending}
-              loading={createMut.isPending}
-              onClick={() => createMut.mutate()}
-            >
-              Save
-            </Button>
-          </div>
         </div>
-      </Modal>
+      </ParityDrawer>
     </AccountingSubNavWrapper>
   );
 }
