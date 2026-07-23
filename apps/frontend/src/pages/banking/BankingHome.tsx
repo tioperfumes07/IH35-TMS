@@ -490,7 +490,12 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 <Link to="/factoring/reserve-tracker" className="flex justify-between hover:underline">
                   <span>Reserves held</span><span>{money.format(factoringReserve)}</span>
                 </Link>
-                <div className="flex justify-between"><span>Advances funded MTD</span><span>{money.format(Math.max(cashPosting - factoringReserve, 0))}</span></div>
+                <div className="flex justify-between">
+                  <span>Advances funded MTD</span>
+                  <span title="No advances_funded_mtd on factoring-virtual API — open Factoring module">
+                    — (see Factoring module)
+                  </span>
+                </div>
                 <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
                   <span>Chargebacks open</span><span className="text-red-700">{money.format(factoringChargebacks)}</span>
                 </Link>
