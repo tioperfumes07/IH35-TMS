@@ -26,6 +26,10 @@ const MONEY_ADJACENT_CALLERS = [
   "apps/frontend/src/components/accounting/VendorBillForm.tsx",
   "apps/frontend/src/pages/banking/components/forms/ApplyToBillForm.tsx",
   "apps/frontend/src/pages/banking/RecordCCPaymentModal.tsx",
+  // Same empty-picker class as CoA Roles pre-#3342: status-only list under FORCE RLS → [].
+  "apps/frontend/src/pages/accounting/bill-payments/CCPaymentModal.tsx",
+  "apps/frontend/src/pages/accounting/CreateMultipleBillsPage.tsx",
+  "apps/frontend/src/pages/accounting/modals/InvoiceTypeModalBase.tsx",
 ];
 
 /**
