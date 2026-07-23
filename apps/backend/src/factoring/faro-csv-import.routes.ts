@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { currentAuthUser, validationError } from "../accounting/shared.js";
-import { commitFaroCsvImport, FaroCsvImportError, parseFaroCsv } from "./faro-csv-import.js";
+import { currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
+import { commitFaroCsvImport, enrichFaroPreviewLines, FaroCsvImportError, parseFaroCsv } from "./faro-csv-import.js";
 
 const importBodySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -23,11 +23,14 @@ export async function registerFaroCsvImportRoutes(app: FastifyInstance) {
     try {
       if (body.data.preview_only) {
         const parsed = parseFaroCsv(body.data.csv_text);
+        const lines = await withCompanyScope(user.uuid, body.data.operating_company_id, (client) =>
+          enrichFaroPreviewLines(client, body.data.operating_company_id, parsed.lines.slice(0, 25))
+        );
         return {
           preview: true,
           line_count: parsed.lines.length,
           headers: parsed.headers,
-          lines: parsed.lines.slice(0, 25),
+          lines,
           statement_date: body.data.statement_date ?? parsed.statement_date,
         };
       }

@@ -3,6 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -12,6 +13,9 @@ import { companyToday } from "../../lib/businessDate";
 type PreviewLine = {
   invoice_number: string;
   customer_name?: string;
+  invoice_id?: string | null;
+  customer_id?: string | null;
+  customer_display_name?: string | null;
   gross_amount_cents: number;
   advance_amount_cents: number;
   reserve_amount_cents: number;
@@ -42,8 +46,32 @@ const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "
 // Display-only preview columns — 1:1 with the former hand-rolled table (order, labels,
 // currency formatting, sign all unchanged). No action controls live in these cells.
 const PREVIEW_COLUMNS: Array<ParityColumn<PreviewLine>> = [
-  { key: "invoice_number", label: "Invoice", sortable: true },
-  { key: "customer_name", label: "Customer", sortable: true, render: (row) => row.customer_name ?? "—" },
+  {
+    key: "invoice_number",
+    label: "Invoice",
+    sortable: true,
+    render: (row) => (
+      <EntityLink
+        kind="invoice"
+        id={row.invoice_id}
+        label={row.invoice_number}
+        data-testid="faro-import-invoice-link"
+      />
+    ),
+  },
+  {
+    key: "customer_name",
+    label: "Customer",
+    sortable: true,
+    render: (row) => (
+      <EntityLink
+        kind="customer"
+        id={row.customer_id}
+        label={row.customer_display_name ?? row.customer_name ?? "—"}
+        data-testid="faro-import-customer-link"
+      />
+    ),
+  },
   {
     key: "gross_amount_cents",
     label: "Gross",
