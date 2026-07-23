@@ -252,6 +252,13 @@ export function BankingTransactionsDesignView({
   const [descriptionFilter, setDescriptionFilter] = useState("");
   const [amountFilter, setAmountFilter] = useState<AmountFilter>("all");
   const [selectedTransactionType, setSelectedTransactionType] = useState(initialTransactionType ?? "all");
+  // Deep-link / KPI filter must apply after mount — BankingHome sets initialTransactionType via
+  // ?type=uncategorized after the child is already mounted with "all".
+  useEffect(() => {
+    if (initialTransactionType) {
+      setSelectedTransactionType(initialTransactionType);
+    }
+  }, [initialTransactionType]);
   const [categorizeBy, setCategorizeBy] = useState<CategorizeBy>("category");
   const [showDateFilterMenu, setShowDateFilterMenu] = useState(false);
   const [dateFrom, setDateFrom] = useState("");
