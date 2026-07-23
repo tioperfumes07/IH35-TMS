@@ -230,6 +230,14 @@ export type CreateAccidentInput = {
   description?: string | null;
   at_fault?: AccidentFault | null;
   preventable?: boolean | null;
+  // SAF-F05: accident evidence fields the drawer previously discarded (now persisted).
+  police_report_number?: string | null;
+  insurance_claim_number?: string | null;
+  location?: string | null;
+  third_party_name?: string | null;
+  third_party_plate?: string | null;
+  vendor_invoice_number?: string | null;
+  bill_or_expense_ref?: string | null;
 };
 
 export function createSafetyAccident(body: CreateAccidentInput) {
@@ -245,6 +253,14 @@ export type PatchAccidentInput = {
   description?: string | null;
   at_fault?: AccidentFault | null;
   preventable?: boolean | null;
+  // SAF-F05: accident evidence fields the drawer previously discarded (now persisted).
+  police_report_number?: string | null;
+  insurance_claim_number?: string | null;
+  location?: string | null;
+  third_party_name?: string | null;
+  third_party_plate?: string | null;
+  vendor_invoice_number?: string | null;
+  bill_or_expense_ref?: string | null;
 };
 
 export function patchSafetyAccident(id: string, companyId: string, body: PatchAccidentInput) {

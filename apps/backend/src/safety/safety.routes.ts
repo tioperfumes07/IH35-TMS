@@ -40,6 +40,11 @@ const nullableUuid = z.string().uuid().nullish();
 // false default.
 const atFaultEnum = z.enum(["yes", "no", "disputed"]).nullish();
 const preventableFlag = z.boolean().nullish();
+// SAF-F05: the drawer rendered these 7 fields but discarded them on save (no columns existed). They
+// are standard accident-report evidence (police report #, external insurer claim #, location, 3rd
+// party, vendor invoice, bill/expense ref) — persisted via migration 202607810000. All free-text and
+// nullish so an unfilled field stays NULL.
+const accidentTextField = z.string().max(200).nullish();
 const createAccidentBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   driver_id: nullableUuid,
@@ -50,6 +55,13 @@ const createAccidentBodySchema = z.object({
   description: z.string().nullish(),
   at_fault: atFaultEnum,
   preventable: preventableFlag,
+  police_report_number: accidentTextField,
+  insurance_claim_number: accidentTextField,
+  location: accidentTextField,
+  third_party_name: accidentTextField,
+  third_party_plate: accidentTextField,
+  vendor_invoice_number: accidentTextField,
+  bill_or_expense_ref: accidentTextField,
 });
 const patchAccidentBodySchema = z.object({
   driver_id: nullableUuid,
@@ -60,6 +72,13 @@ const patchAccidentBodySchema = z.object({
   description: z.string().nullish(),
   at_fault: atFaultEnum,
   preventable: preventableFlag,
+  police_report_number: accidentTextField,
+  insurance_claim_number: accidentTextField,
+  location: accidentTextField,
+  third_party_name: accidentTextField,
+  third_party_plate: accidentTextField,
+  vendor_invoice_number: accidentTextField,
+  bill_or_expense_ref: accidentTextField,
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
@@ -417,7 +436,14 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             accident_at,
             description,
             at_fault,
-            preventable
+            preventable,
+            police_report_number,
+            insurance_claim_number,
+            location,
+            third_party_name,
+            third_party_plate,
+            vendor_invoice_number,
+            bill_or_expense_ref
           )
           VALUES (
             $1,
@@ -428,7 +454,14 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             COALESCE($6::timestamptz, now()),
             $7,
             $8,
-            $9
+            $9,
+            $10,
+            $11,
+            $12,
+            $13,
+            $14,
+            $15,
+            $16
           )
           RETURNING *
         `,
@@ -442,6 +475,13 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           body.data.description ?? null,
           body.data.at_fault ?? null,
           body.data.preventable ?? null,
+          body.data.police_report_number ?? null,
+          body.data.insurance_claim_number ?? null,
+          body.data.location ?? null,
+          body.data.third_party_name ?? null,
+          body.data.third_party_plate ?? null,
+          body.data.vendor_invoice_number ?? null,
+          body.data.bill_or_expense_ref ?? null,
         ]
       );
       const inserted = res.rows[0];
@@ -494,6 +534,13 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
       { key: "description", column: "description" },
       { key: "at_fault", column: "at_fault" },
       { key: "preventable", column: "preventable" },
+      { key: "police_report_number", column: "police_report_number" },
+      { key: "insurance_claim_number", column: "insurance_claim_number" },
+      { key: "location", column: "location" },
+      { key: "third_party_name", column: "third_party_name" },
+      { key: "third_party_plate", column: "third_party_plate" },
+      { key: "vendor_invoice_number", column: "vendor_invoice_number" },
+      { key: "bill_or_expense_ref", column: "bill_or_expense_ref" },
     ];
     const setClauses: string[] = [];
     const values: unknown[] = [];
