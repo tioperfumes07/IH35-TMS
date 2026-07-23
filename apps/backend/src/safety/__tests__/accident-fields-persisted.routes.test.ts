@@ -1,0 +1,102 @@
+import Fastify, { type FastifyInstance } from "fastify";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { registerSafetyRoutes } from "../safety.routes.js";
+
+/**
+ * SAF-F05 — the accident wizard's 7 evidence fields (police report #, external insurer claim #,
+ * location, 3rd party name/plate, vendor invoice, bill/expense ref) must reach the DB on create AND
+ * patch. Before this they rendered but were discarded. These tests assert the route accepts and WRITES
+ * them (the INSERT/UPDATE carries the column + value), so a future regression that drops a field from
+ * the SQL is caught.
+ */
+const COMPANY = "11111111-1111-4111-8111-111111111111";
+const ACCIDENT_ID = "22222222-2222-4222-8222-222222222222";
+
+const { mockQuery } = vi.hoisted(() => ({ mockQuery: vi.fn() }));
+
+vi.mock("../../auth/db.js", () => ({
+  withCurrentUser: vi.fn(async (_u: string, fn: (c: { query: typeof mockQuery }) => Promise<unknown>) => fn({ query: mockQuery })),
+}));
+vi.mock("../../auth/session-middleware.js", () => ({ requireAuth: () => true }));
+vi.mock("../../_helpers/company-membership-guard.js", () => ({ assertCompanyMembership: vi.fn(async () => undefined) }));
+vi.mock("../../audit/crud-audit.js", () => ({
+  appendCrudAudit: vi.fn(async () => undefined),
+  buildPatchChanges: vi.fn(() => ({})),
+}));
+
+const FIELDS = {
+  police_report_number: "PR-2026-0099",
+  insurance_claim_number: "INS-CLM-771",
+  location: "IH-35 mile marker 18, Laredo",
+  third_party_name: "Acme Freight LLC",
+  third_party_plate: "TX-8891234",
+  vendor_invoice_number: "VINV-5567",
+  bill_or_expense_ref: "BILL-3321",
+};
+
+describe("accident create/patch persists the 7 evidence fields (SAF-F05)", () => {
+  let app: FastifyInstance;
+
+  beforeEach(async () => {
+    mockQuery.mockReset();
+    app = Fastify({ logger: false });
+    app.decorateRequest("user", null);
+    app.addHook("preHandler", async (req) => {
+      req.user = { uuid: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", role: "Safety", email: "s@ih35.local" };
+    });
+    await registerSafetyRoutes(app);
+    await app.ready();
+  });
+
+  afterEach(async () => {
+    await app.close();
+  });
+
+  it("create: sends every field as an INSERT column + value", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("INSERT INTO safety.accident_reports")) return { rows: [{ id: ACCIDENT_ID }], rowCount: 1 };
+      return { rows: [], rowCount: 0 };
+    });
+
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/safety/accidents",
+      payload: { operating_company_id: COMPANY, ...FIELDS },
+    });
+    expect(res.statusCode).toBe(201); // create → 201 Created
+
+    const insert = mockQuery.mock.calls.map(([sql]) => String(sql)).find((s) => s.includes("INSERT INTO safety.accident_reports"));
+    expect(insert).toBeDefined();
+    const insertCall = mockQuery.mock.calls.find(([sql]) => String(sql).includes("INSERT INTO safety.accident_reports"));
+    const params = insertCall?.[1] as unknown[];
+    for (const [col, value] of Object.entries(FIELDS)) {
+      expect(insert, `INSERT must name ${col}`).toContain(col);
+      expect(params, `INSERT params must carry the value for ${col}`).toContain(value);
+    }
+  });
+
+  it("patch: only-provided fields become SET clauses carrying the value", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("SELECT * FROM safety.accident_reports")) return { rows: [{ id: ACCIDENT_ID }], rowCount: 1 };
+      if (sql.includes("UPDATE safety.accident_reports")) return { rows: [{ id: ACCIDENT_ID, ...FIELDS }], rowCount: 1 };
+      return { rows: [], rowCount: 0 };
+    });
+
+    const res = await app.inject({
+      method: "PATCH",
+      url: `/api/v1/safety/accidents/${ACCIDENT_ID}?operating_company_id=${COMPANY}`,
+      payload: { location: FIELDS.location, third_party_name: FIELDS.third_party_name },
+    });
+    expect(res.statusCode).toBe(200);
+
+    const updateCall = mockQuery.mock.calls.find(([sql]) => String(sql).includes("UPDATE safety.accident_reports"));
+    const sql = String(updateCall?.[0]);
+    const params = updateCall?.[1] as unknown[];
+    expect(sql).toContain("location =");
+    expect(sql).toContain("third_party_name =");
+    expect(params).toContain(FIELDS.location);
+    expect(params).toContain(FIELDS.third_party_name);
+    // A field not sent must NOT appear in the SET.
+    expect(sql).not.toContain("police_report_number =");
+  });
+});

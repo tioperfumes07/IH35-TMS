@@ -9,6 +9,14 @@ const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+// SAF-F16 — driver-profile reverse view. A complaint touches a driver on EITHER side
+// (`complainant_driver_id` when they filed it, `respondent_driver_id` when it is against them);
+// the driver's own page must surface both, so one param matches either column.
+// Optional; absent = the existing company-wide list. The privacy gate is unchanged.
+const complaintsQuerySchema = companyQuerySchema.extend({
+  driver_id: z.string().uuid().optional(),
+});
+
 const idParamsSchema = z.object({
   id: z.string().uuid(),
 });
@@ -97,13 +105,24 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
     if (!user) return;
     const appRole = ensureComplaintReadRole(user, reply);
     if (!appRole) return;
-    const query = companyQuerySchema.safeParse(req.query ?? {});
+    const query = complaintsQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
     const rows = await withCompany(user.uuid, appRole, query.data.operating_company_id, async (client) => {
+      const values: unknown[] = [query.data.operating_company_id];
+      let driverFilter = "";
+      if (query.data.driver_id) {
+        values.push(query.data.driver_id);
+        // SAF-F16: filtered in SQL because this list is capped at LIMIT 500 — filtering
+        // client-side would silently drop a driver's complaints past that cap.
+        driverFilter = `AND (complainant_driver_id = $${values.length} OR respondent_driver_id = $${values.length})`;
+      }
       const res = await client.query(
-        `SELECT * FROM safety.complaints WHERE operating_company_id = $1 ORDER BY filed_at DESC LIMIT 500`,
-        [query.data.operating_company_id]
+        `SELECT * FROM safety.complaints
+         WHERE operating_company_id = $1
+         ${driverFilter}
+         ORDER BY filed_at DESC LIMIT 500`,
+        values
       );
       return res.rows;
     });
