@@ -57,16 +57,9 @@ function formatMoneyCents(cents: number | null | undefined) {
   return formatUsdCents(Math.abs(Number(cents)));
 }
 
-function kindBadge(kind: BankMatchCandidateKind, id: string) {
-  return (
-    <EntityLink
-      kind={KIND_ENTITY[kind]}
-      id={id}
-      label={KIND_LABELS[kind]}
-      data-testid="match-candidate-kind"
-      className="inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700 hover:underline"
-    />
-  );
+/** Label-only chrome — EntityLink must stay inline at the call site (entity-link-adoption). */
+function kindBadgeClassName() {
+  return "inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700 hover:underline";
 }
 
 export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClose, onAccepted }: Props) {
@@ -246,7 +239,15 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
                       checked={isSelected}
                       onChange={() => setSelectedId(c.ledger_entry_id)}
                     />
-                    {kindBadge(c.ledger_entry_kind, c.ledger_entry_id)}
+                    {c.ledger_entry_id ? (
+                      <EntityLink
+                        kind={KIND_ENTITY[c.ledger_entry_kind]}
+                        id={c.ledger_entry_id}
+                        label={KIND_LABELS[c.ledger_entry_kind]}
+                        data-testid="match-candidate-kind"
+                        className={kindBadgeClassName()}
+                      />
+                    ) : null}
                     {isTopAuto ? (
                       <span
                         data-testid="match-candidate-top"
