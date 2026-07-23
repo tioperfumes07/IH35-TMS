@@ -14,11 +14,11 @@ function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
-function assertRevenueRecognitionReverse() {
+function assertRevenueRecognitionReverse(sources) {
   const errors = [];
-  const page = read(PAGE);
-  const api = read("apps/frontend/src/api/revenue-recognition.ts");
-  const manifest = read("apps/frontend/src/routes/manifest.tsx");
+  const page = sources?.page ?? read(PAGE);
+  const api = sources?.api ?? read("apps/frontend/src/api/revenue-recognition.ts");
+  const manifest = sources?.manifest ?? read("apps/frontend/src/routes/manifest.tsx");
 
   if (!/from "\.\.\/\.\.\/components\/shared\/EntityLink"/.test(page)) {
     errors.push(`${PAGE}: must import EntityLink`);
@@ -44,19 +44,39 @@ function assertRevenueRecognitionReverse() {
   return errors;
 }
 
+/**
+ * Planted-regression selftest: runs the REAL assertion against MUTATED COPIES of the REAL files.
+ * The previous version compared two string literals declared inside this script and never read the
+ * repo, so it exited 0 even against a broken page — it proved nothing.
+ */
 function selftest() {
-  const good = `
-    data-testid="revenue-recognition-reverse-drill"
-    <EntityLink kind="invoice" id={detail.source_invoice_id} />
-    <EntityLink kind="load" id={detail.source_load_id} />
-    <EntityLink kind="customer" id={detail.customer_uuid} />
-  `;
-  const bad = `<p>{detail.description}</p>`;
-  if (!/kind="invoice"/.test(good) || /kind="invoice"/.test(bad)) {
+  const live = {
+    page: read(PAGE),
+    api: read("apps/frontend/src/api/revenue-recognition.ts"),
+    manifest: read("apps/frontend/src/routes/manifest.tsx"),
+  };
+  const problems = [];
+
+  const liveErrors = assertRevenueRecognitionReverse(live);
+  if (liveErrors.length) problems.push(`live sources rejected: ${liveErrors.join("; ")}`);
+
+  const cases = [
+    ["EntityLink import removed", { ...live, page: live.page.replace(/from "\.\.\/\.\.\/components\/shared\/EntityLink"/g, 'from "./nope"') }, "must import EntityLink"],
+    ["reverse-drill marker removed", { ...live, page: live.page.replace(/data-testid="revenue-recognition-reverse-drill"/g, "") }, "reverse drill marker missing"],
+  ];
+  for (const [name, mutated, expect] of cases) {
+    if (mutated.page === live.page) { problems.push(`planted regression "${name}" did not mutate the source — selftest is inert`); continue; }
+    if (!assertRevenueRecognitionReverse(mutated).some((e) => e.includes(expect))) {
+      problems.push(`planted regression "${name}" was NOT caught — assertion is ineffective`);
+    }
+  }
+
+  if (problems.length) {
     console.error(`${LABEL} --selftest FAIL`);
+    for (const pr of problems) console.error("  •", pr);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS`);
+  console.log(`${LABEL} --selftest PASS — live sources clean; ${cases.length} planted regressions caught`);
 }
 
 if (process.argv.includes("--selftest")) {
