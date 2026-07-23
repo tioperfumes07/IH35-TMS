@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createInternalFine, getInternalFines } from "../../api/safety";
-import { listInternalFineReasons } from "../../api/catalogs-safety";
+import { listInternalFineReasons, createInternalFineReason } from "../../api/catalogs-safety";
+import { Modal } from "../../components/Modal";
 import { listDispatchLoads, type DispatchStatus } from "../../api/dispatch";
 import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
@@ -75,6 +75,28 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
   });
 
   const reasons = reasonsQuery.data?.rows ?? [];
+
+  // SAF-F24: inline "+ Add new reason" — Law §4 requires the create affordance INSIDE the dropdown
+  // (was an external <Link> to /lists), opening a mini-create without leaving the page. On success the
+  // catalog refetches and the new reason is auto-selected.
+  const [reasonModalOpen, setReasonModalOpen] = useState(false);
+  const [newReason, setNewReason] = useState({ reason_code: "", reason_name: "", default_amount: 0 });
+  const createReasonMutation = useMutation({
+    mutationFn: () =>
+      createInternalFineReason(operatingCompanyId, {
+        reason_code: newReason.reason_code.trim(),
+        reason_name: newReason.reason_name.trim(),
+        default_amount: newReason.default_amount,
+        is_active: true,
+      }),
+    onSuccess: async (created) => {
+      await queryClient.invalidateQueries({ queryKey: ["catalogs", "safety", "internal-fine-reasons", "picker", operatingCompanyId] });
+      setForm((v) => ({ ...v, reason_uuid: String(created.id) }));
+      setReasonModalOpen(false);
+      setNewReason({ reason_code: "", reason_name: "", default_amount: 0 });
+    },
+  });
+  const ADD_REASON_SENTINEL = "__add_reason__";
   const loads = loadsQuery.data?.loads ?? [];
 
   const createMutation = useMutation({
@@ -142,12 +164,22 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
           />
           <SelectCombobox
             value={form.reason_uuid}
-            onChange={(e) => setForm((v) => ({ ...v, reason_uuid: e.target.value }))}
+            onChange={(e) => {
+              // SAF-F24: the sentinel opens the mini-create instead of selecting a reason.
+              if (e.target.value === ADD_REASON_SENTINEL) {
+                setReasonModalOpen(true);
+                return;
+              }
+              setForm((v) => ({ ...v, reason_uuid: e.target.value }));
+            }}
             className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+            data-testid="internal-fine-reason-picker"
           >
             <option value="" disabled>
-              Filter by reason
+              Select a reason
             </option>
+            {/* Law §4: inline "+ Add new" as the first row inside the dropdown. */}
+            <option value={ADD_REASON_SENTINEL}>+ Add new reason…</option>
             {reasons.map((r) => (
               <option key={r.id} value={r.id}>
                 {r.reason_name}
@@ -196,11 +228,59 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
           {form.status === "approved" && approverName ? (
             <span className="text-[11px] text-gray-600">Approving as {approverName} — creates a recoverable driver liability on save.</span>
           ) : null}
-          <Link to="/lists/safety/internal-fine-reasons" className="text-[11px] text-[#334155] underline">
-            Add reason in catalog
-          </Link>
+          {/* SAF-F24: the external "Add reason in catalog" Link is removed — reason creation is now the
+              inline "+ Add new reason…" row inside the picker (Law §4). */}
         </div>
       </div>
+
+      <Modal open={reasonModalOpen} onClose={() => setReasonModalOpen(false)} title="New internal-fine reason">
+        <div className="space-y-2 text-xs" data-testid="internal-fine-reason-create-modal">
+          <label className="block">
+            <span className="text-slate-600">Reason code</span>
+            <input
+              className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2"
+              value={newReason.reason_code}
+              onChange={(e) => setNewReason((v) => ({ ...v, reason_code: e.target.value }))}
+              placeholder="e.g. LATE_BOL"
+            />
+          </label>
+          <label className="block">
+            <span className="text-slate-600">Reason name</span>
+            <input
+              className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2"
+              value={newReason.reason_name}
+              onChange={(e) => setNewReason((v) => ({ ...v, reason_name: e.target.value }))}
+              placeholder="e.g. Late BOL submission"
+            />
+          </label>
+          <label className="block">
+            <span className="text-slate-600">Default amount (USD)</span>
+            <MoneyInput
+              valueDollars={newReason.default_amount || null}
+              onChangeDollars={(d) => setNewReason((v) => ({ ...v, default_amount: d ?? 0 }))}
+              ariaLabel="Default amount (USD)"
+              placeholder="0.00"
+            />
+          </label>
+          {createReasonMutation.isError ? (
+            <p className="text-[11px] text-red-600">{(createReasonMutation.error as Error)?.message ?? "Could not create the reason."}</p>
+          ) : null}
+          <div className="flex justify-end gap-2 pt-1">
+            <button type="button" className="rounded-sm border border-gray-300 px-3 py-1" onClick={() => setReasonModalOpen(false)}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="rounded-sm bg-[#1F2A44] px-3 py-1 font-semibold text-white disabled:opacity-50"
+              disabled={!newReason.reason_code.trim() || !newReason.reason_name.trim() || createReasonMutation.isPending}
+              onClick={() => createReasonMutation.mutate()}
+            >
+              {createReasonMutation.isPending ? "Adding…" : "Add reason"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       <ParityTable<InternalFineRow>
         columns={columns}
         rows={query.data?.fines ?? []}
