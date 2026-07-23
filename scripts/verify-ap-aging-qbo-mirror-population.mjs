@@ -133,7 +133,9 @@ export function assertGuard(src) {
   if (/subtitle="[^"]*(tie to QBO|mirrored from QuickBooks)[^"]*"/i.test(page)) {
     errs.push(`${PATHS.page}: hardcoded unconditional QBO-tie subtitle forbidden`);
   }
-  if (!page.includes("/accounting/bills?vendor_id=")) {
+  // Open bills may be built via apAgingBillsListHref (has_balance=true) — do not require a
+  // hardcoded query-string literal (that broke when unpaid→has_balance landed).
+  if (!page.includes("apAgingBillsListHref") && !page.includes("/accounting/bills?vendor_id=")) {
     errs.push(`${PATHS.page}: must forward-drill open bills`);
   }
 
