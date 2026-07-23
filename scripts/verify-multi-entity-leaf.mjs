@@ -14,9 +14,9 @@ function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
-function assertMultiEntityLeaf() {
+function assertMultiEntityLeaf(sources) {
   const errors = [];
-  const page = read("apps/frontend/src/pages/accounting/MultiEntityAccountingPage.tsx");
+  const page = sources?.page ?? read("apps/frontend/src/pages/accounting/MultiEntityAccountingPage.tsx");
 
   if (!/EntityLink/.test(page) || !/kind="account"/.test(page) || !/row\.account_id/.test(page)) {
     errors.push("MultiEntityAccountingPage: accounts table must EntityLink GL account_id");
@@ -27,17 +27,36 @@ function assertMultiEntityLeaf() {
   return errors;
 }
 
+/**
+ * Planted-regression selftest: runs the REAL assertion against MUTATED COPIES of the REAL file.
+ * The previous version compared two string literals declared inside this script and never read the
+ * repo, so it exited 0 even against a broken page — it proved nothing.
+ */
 function selftest() {
-  const good = `
-    kind="account" id={row.account_id}
-    data-testid="multi-entity-account-link"
-  `;
-  const bad = `<span>{row.account_name}</span>`;
-  if (!/kind="account"/.test(good) || /kind="account"/.test(bad)) {
+  const PAGE = "apps/frontend/src/pages/accounting/MultiEntityAccountingPage.tsx";
+  const live = { page: read(PAGE) };
+  const problems = [];
+
+  const liveErrors = assertMultiEntityLeaf(live);
+  if (liveErrors.length) problems.push(`live source rejected: ${liveErrors.join("; ")}`);
+
+  const cases = [
+    ["EntityLink removed", { page: live.page.replace(/kind="account"/g, "kind=\"nope\"") }, "must EntityLink GL account_id"],
+    ["reverse marker removed", { page: live.page.replace(/data-testid="multi-entity-account-link"/g, "") }, "reverse marker missing"],
+  ];
+  for (const [name, mutated, expect] of cases) {
+    if (mutated.page === live.page) { problems.push(`planted regression "${name}" did not mutate the source — selftest is inert`); continue; }
+    if (!assertMultiEntityLeaf(mutated).some((e) => e.includes(expect))) {
+      problems.push(`planted regression "${name}" was NOT caught — assertion is ineffective`);
+    }
+  }
+
+  if (problems.length) {
     console.error(`${LABEL} --selftest FAIL`);
+    for (const pr of problems) console.error("  •", pr);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS`);
+  console.log(`${LABEL} --selftest PASS — live source clean; ${cases.length} planted regressions caught`);
 }
 
 if (process.argv.includes("--selftest")) {
