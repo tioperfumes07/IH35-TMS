@@ -1,4 +1,5 @@
 import type { SettlementListRow } from "../../api/driverFinance";
+import { EntityLink } from "../shared/EntityLink";
 import { DataPanel } from "../layout/DataPanel";
 import { DataPanelRow } from "../layout/DataPanelRow";
 import { colors } from "../../design/tokens";
@@ -22,8 +23,28 @@ export function PreSettlementsPanel({ rows, loading = false, title = "Pre-settle
       {loading ? <p className="px-2 py-2 text-xs text-gray-500">Loading pre-settlements…</p> : null}
       {!loading &&
         rows.map((settlement) => (
-          <DataPanelRow key={settlement.id}>
-            <span>{settlement.driver_full_name} · {settlement.period_start} to {settlement.period_end}</span>
+          <DataPanelRow key={settlement.id} data-testid="pre-settlement-row-reverse">
+            <span className="flex flex-wrap items-center gap-1 text-sm">
+              <EntityLink
+                kind="driver"
+                id={settlement.driver_id}
+                label={settlement.driver_display_id || settlement.driver_full_name}
+              />
+              <span className="text-gray-400">·</span>
+              <EntityLink
+                kind="settlement"
+                id={settlement.id}
+                label={`${settlement.period_start} – ${settlement.period_end}`}
+              />
+              {settlement.load_count > 0 ? (
+                <>
+                  <span className="text-gray-400">·</span>
+                  <span className="text-xs text-gray-500">
+                    {settlement.load_count} load{settlement.load_count !== 1 ? "s" : ""}
+                  </span>
+                </>
+              ) : null}
+            </span>
             <span>{formatMoney(Number(settlement.net_pay ?? 0))}</span>
           </DataPanelRow>
         ))}

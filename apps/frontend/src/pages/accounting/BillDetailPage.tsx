@@ -1,13 +1,18 @@
 import { formatDateUS } from "../../lib/formatDate";
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { getVendorBill, type BillDetailLine, type BillPayment } from "../../api/accounting";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getVendorBill, voidVendorBill, type BillDetailLine, type BillPayment } from "../../api/accounting";
+import { ApiError } from "../../api/client";
+import { Button } from "../../components/Button";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { ListErrorState } from "../../components/ListErrorState";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useToast } from "../../components/Toast";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -15,6 +20,31 @@ import { useUrlSort } from "../../hooks/useUrlSort";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+}
+
+// USMCA-14/22: friendly copy for the known voidBill() rejection codes (apps/backend/src/accounting/bills.service.ts)
+// so a role-gated or payments-blocked void surfaces a clear reason instead of a raw error code.
+function billVoidErrorMessage(error: unknown): string {
+  const code =
+    error instanceof ApiError && error.data && typeof error.data === "object"
+      ? String((error.data as Record<string, unknown>).error ?? "")
+      : "";
+  switch (code) {
+    case "forbidden_owner_only":
+      return "Only the Owner role may void this bill.";
+    case "forbidden_void_owner_or_accountant_only":
+      return "Only Owner or Accountant roles may void this bill.";
+    case "bill_has_payments_cannot_void":
+      return "This bill has payment(s) recorded. Void the bill payment(s) first, then void the bill.";
+    case "bill_already_void":
+      return "This bill has already been voided.";
+    case "void_reason_required":
+      return "A void reason is required.";
+    case "bill_not_found":
+      return "Bill not found.";
+    default:
+      return error instanceof Error ? error.message : "Failed to void bill.";
+  }
 }
 
 function statusVariant(status: string): "positive" | "neutral" | "crit" | "warn" {
@@ -34,13 +64,30 @@ function accountLabel(number: string | null | undefined, name: string | null | u
 export function BillDetailPage() {
   const { id = "" } = useParams();
   const { selectedCompanyId } = useCompanyContext();
+  const queryClient = useQueryClient();
+  const { pushToast } = useToast();
   // BANK-SORT-ROLLOUT-ACCT: payments grid sort persists in URL (?sort=&dir=).
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
+  const [voidOpen, setVoidOpen] = useState(false);
 
   const detailQuery = useQuery({
     queryKey: ["accounting", "bill", selectedCompanyId, id],
     queryFn: () => getVendorBill(id, selectedCompanyId!),
     enabled: Boolean(id && selectedCompanyId),
+  });
+
+  // USMCA-14/22: wires the existing governed void API (voidVendorBill) — audit found it unmounted on
+  // the Bill detail UI. Reuses the same executor/reversal logic backend voidBill() already enforces;
+  // no new GL math here (Rule 13 — reuse the existing poster).
+  const voidMutation = useMutation({
+    mutationFn: (reason: string) => voidVendorBill(id, selectedCompanyId!, reason),
+    onSuccess: () => {
+      pushToast("Bill voided", "success");
+      void queryClient.invalidateQueries({ queryKey: ["accounting", "bill", selectedCompanyId, id] });
+      void queryClient.invalidateQueries({ queryKey: ["accounting", "bills"] });
+      void queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-balances"] });
+    },
+    onError: (error) => pushToast(billVoidErrorMessage(error), "error"),
   });
 
   if (detailQuery.isLoading) return <div className="p-4 text-sm text-slate-500">Loading bill…</div>;
@@ -62,6 +109,15 @@ export function BillDetailPage() {
 
   const displayId = bill.bill_number ?? bill.id.slice(0, 8);
   const balance = Number(bill.amount_cents ?? 0) - Number(bill.paid_cents ?? 0);
+  const isVoided = bill.status === "voided";
+  // Mirrors backend bill_has_payments_cannot_void: a bill with any active payment must have the
+  // payment(s) voided first (BillPaymentsListPage / BillPaymentDetailPage) before the bill itself can void.
+  const hasPayments = Number(bill.paid_cents ?? 0) > 0;
+  const voidDisabledReason = isVoided
+    ? "Bill already voided."
+    : hasPayments
+      ? "Void the bill payment(s) first."
+      : undefined;
 
   const lineColumns: Array<ParityColumn<BillDetailLine>> = [
     { key: "line_sequence", label: "Line", sortable: true, render: (line) => line.line_sequence },
@@ -147,8 +203,42 @@ export function BillDetailPage() {
                 Matched
               </span>
             ) : null}
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => setVoidOpen(true)}
+              disabled={Boolean(voidDisabledReason)}
+              title={voidDisabledReason}
+            >
+              Void
+            </Button>
           </div>
         }
+      />
+
+      <VoidReasonModal
+        open={voidOpen}
+        title="Void Bill"
+        entityRef={`${displayId} · ${money(bill.amount_cents)} · ${formatDateUS(bill.bill_date)}`}
+        // Backend contract is reason: z.string().trim().min(3) (bills.routes.ts:91). minLength={1}
+        // let the drawer enable Void on a 2-char reason, which then 400s server-side — the void
+        // silently failed for anyone who typed "ok".
+        minLength={3}
+        onClose={() => setVoidOpen(false)}
+        onSubmit={async (reason) => {
+          try {
+            await voidMutation.mutateAsync(reason);
+          } catch (error) {
+            // Re-throw with owner/role-gated copy so the drawer's inline error is human-readable
+            // (raw voidBill() rejection codes are role/state codes, not user-facing text).
+            // Re-throw the ORIGINAL error. Wrapping it in a plain Error discarded
+            // ApiError.data.details, which VoidReasonModal.extractVoidError reads to surface
+            // details.fieldErrors.reason[0] — so a field-level rejection rendered as the useless
+            // "API request failed with status 400".
+            throw error;
+          }
+          setVoidOpen(false);
+        }}
       />
 
       <DataPanel title="Bill">
@@ -202,6 +292,22 @@ export function BillDetailPage() {
             <EntityLink kind="work_order" id={bill.linked_work_order_uuid} label={bill.linked_work_order_uuid.slice(0, 8)} />
           </DataPanelRow>
         ) : null}
+        {/*
+          REVERSE DRILL (Law §9): a bill split across units writes accounting.bill_unit_allocation
+          rows, and the Allocations tab can filter by bill_id — but the bill itself had no hop into
+          it, so the allocation was reachable only by scrolling the global list. This closes the
+          reverse direction: bill → its own allocations.
+        */}
+        <DataPanelRow>
+          <span className="text-xs font-semibold text-gray-600">Allocations</span>
+          <Link
+            to={`/accounting/allocations?bill_id=${bill.id}`}
+            data-testid="bill-detail-allocations-link"
+            className="text-sm text-slate-700 hover:underline"
+          >
+            Unit allocations for this bill
+          </Link>
+        </DataPanelRow>
         {bill.memo ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Memo</span>

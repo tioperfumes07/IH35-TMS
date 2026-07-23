@@ -288,7 +288,12 @@ export async function registerVendorRoutes(app: FastifyInstance) {
   // Driver-as-vendor ensure (Jorge-depth Accounting 2026-07-22): Active drivers must appear in the
   // vendor picker for bills/expenses. TRANSP already has ~52 name-matched vendor rows from QBO;
   // USMCA had 83 drivers / 2 vendors — empty driver payees. Idempotent INSERT of missing vendors.
-  app.post("/api/v1/mdata/vendors/ensure-drivers", async (req, reply) => {
+  //
+  // rateLimit: this handler fans out one SELECT (+ possibly one INSERT) PER ACTIVE DRIVER — 83 for
+  // USMCA — so an unthrottled caller can drive an unbounded number of round trips per request.
+  // CodeQL js/missing-rate-limiting flagged exactly that. Same shape as allocations.routes.ts;
+  // max is low because this is an idempotent maintenance action, not a read path.
+  app.post("/api/v1/mdata/vendors/ensure-drivers", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -327,8 +332,61 @@ export async function registerVendorRoutes(app: FastifyInstance) {
 
       let created = 0;
       let alreadyPresent = 0;
+      let linked = 0;
       for (const driver of drivers.rows) {
-        const existing = await client.query<{ id: string }>(
+        // Identity is mdata.vendors.driver_id — a real FK to mdata.drivers, guarded by
+        // uq_vendors_driver_active_per_company (operating_company_id, driver_id) WHERE driver_id IS
+        // NOT NULL AND deactivated_at IS NULL. The old `lower(vendor_name)` match was NOT identity:
+        // two drivers with the same name collapse onto one vendor (paying the wrong person), and a
+        // renamed driver silently forks a second payee.
+        const linkedRow = await client.query<{ id: string }>(
+          `
+            SELECT id::text AS id
+            FROM mdata.vendors
+            WHERE operating_company_id = $1::uuid
+              AND deactivated_at IS NULL
+              AND driver_id = $2::uuid
+            LIMIT 1
+          `,
+          [scopedCompanyId, driver.id]
+        );
+        if (linkedRow.rows[0]?.id) {
+          alreadyPresent += 1;
+          continue;
+        }
+
+        const codeBase = driver.display_name
+          .replace(/[^A-Za-z0-9]+/g, "")
+          .toUpperCase()
+          .slice(0, 12) || "DRIVER";
+        const vendorCode = `DRV-${codeBase}-${driver.id.replace(/-/g, "").slice(0, 8).toUpperCase()}`;
+
+        // Adopt a row THIS route created on an earlier run (vendor_code = the deterministic
+        // DRV-<NAME>-<8hex> for this exact driver id) so re-running links it instead of forking a
+        // duplicate payee. Deliberately NOT a name match: an unrelated third-party vendor that
+        // happens to share the driver's name must never be silently claimed as the driver's payee.
+        const adopt = await client.query<{ id: string }>(
+          `
+            UPDATE mdata.vendors
+               SET driver_id = $2::uuid,
+                   updated_by_user_id = $3::uuid,
+                   updated_at = now()
+             WHERE operating_company_id = $1::uuid
+               AND deactivated_at IS NULL
+               AND driver_id IS NULL
+               AND vendor_code = $4
+            RETURNING id::text AS id
+          `,
+          [scopedCompanyId, driver.id, authUser.uuid, vendorCode]
+        );
+        if (adopt.rows[0]?.id) {
+          linked += 1;
+          continue;
+        }
+
+        // A pre-existing name-matched vendor (e.g. the ~52 TRANSP rows mirrored from QBO) is left
+        // alone — no duplicate is created and no link is invented.
+        const nameMatch = await client.query<{ id: string }>(
           `
             SELECT id::text AS id
             FROM mdata.vendors
@@ -339,36 +397,49 @@ export async function registerVendorRoutes(app: FastifyInstance) {
           `,
           [scopedCompanyId, driver.display_name]
         );
-        if (existing.rows[0]?.id) {
+        if (nameMatch.rows[0]?.id) {
           alreadyPresent += 1;
           continue;
         }
-        const codeBase = driver.display_name
-          .replace(/[^A-Za-z0-9]+/g, "")
-          .toUpperCase()
-          .slice(0, 12) || "DRIVER";
-        const vendorCode = `DRV-${codeBase}-${driver.id.replace(/-/g, "").slice(0, 8).toUpperCase()}`;
-        await client.query(
-          `
-            INSERT INTO mdata.vendors (
-              vendor_name, vendor_code, vendor_type, phone, email,
-              operating_company_id, created_by_user_id, updated_by_user_id
-            )
-            VALUES ($1, $2, 'Other', $3, $4, $5::uuid, $6::uuid, $6::uuid)
-          `,
-          [
-            driver.display_name,
-            vendorCode,
-            driver.phone,
-            driver.email,
-            scopedCompanyId,
-            authUser.uuid,
-          ]
-        );
-        created += 1;
+
+        // SAVEPOINT, not a bare try/catch: withCurrentUser runs the whole handler in ONE
+        // transaction, so an un-savepointed unique violation aborts it and every later driver in
+        // this loop fails with 25P02. Only 23505 is absorbed — anything else is re-thrown so the
+        // request fails loudly instead of silently under-creating.
+        await client.query("SAVEPOINT ensure_driver_vendor");
+        try {
+          await client.query(
+            `
+              INSERT INTO mdata.vendors (
+                vendor_name, vendor_code, vendor_type, phone, email, driver_id,
+                operating_company_id, created_by_user_id, updated_by_user_id
+              )
+              VALUES ($1, $2, 'Other', $3, $4, $7::uuid, $5::uuid, $6::uuid, $6::uuid)
+            `,
+            [
+              driver.display_name,
+              vendorCode,
+              driver.phone,
+              driver.email,
+              scopedCompanyId,
+              authUser.uuid,
+              driver.id,
+            ]
+          );
+          await client.query("RELEASE SAVEPOINT ensure_driver_vendor");
+          created += 1;
+        } catch (err) {
+          await client.query("ROLLBACK TO SAVEPOINT ensure_driver_vendor");
+          // 23505 = unique_violation: uq_vendors_driver_active_per_company (or the vendor_code
+          // unique) means a concurrent run already produced this driver's payee — "already
+          // present", not an error.
+          if ((err as { code?: string })?.code !== "23505") throw err;
+          alreadyPresent += 1;
+        }
       }
       return {
         created,
+        linked,
         already_present: alreadyPresent,
         total_active_drivers: drivers.rows.length,
       };

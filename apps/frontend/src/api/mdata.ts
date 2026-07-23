@@ -1323,7 +1323,13 @@ export function createVendor(body: CreateVendorInput) {
 }
 
 export function ensureDriverVendors(operatingCompanyId: string) {
-  return apiRequest<{ created: number; already_present: number; total_active_drivers: number }>(
+  return apiRequest<{
+    created: number;
+    /** Pre-existing rows this route had created earlier and has now back-linked via driver_id. */
+    linked: number;
+    already_present: number;
+    total_active_drivers: number;
+  }>(
     "/api/v1/mdata/vendors/ensure-drivers",
     { method: "POST", body: { operating_company_id: operatingCompanyId } }
   );
