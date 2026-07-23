@@ -33,9 +33,9 @@ function ReallocatePanel({
   onSaved: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40" onClick={onClose}>
+    <div className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-black/40 p-4" onClick={onClose}>
       <div
-        className="w-full max-w-2xl rounded-lg bg-white p-4 shadow-xl"
+        className="my-auto max-h-[min(90vh,720px)] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-4 shadow-xl"
         onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-start justify-between">
