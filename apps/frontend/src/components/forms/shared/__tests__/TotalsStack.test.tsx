@@ -56,6 +56,15 @@ describe("TotalsStack", () => {
     expect(screen.getByText("Bill Total = A + B")).toBeInTheDocument();
   });
 
+  it("taxDisplayOnly: grand equals subtotal (tax does not inflate posted amount)", () => {
+    render(
+      <TotalsStack subtotal={100} taxRate={8.25} grandLabel="Bill Total = sum of lines" taxDisplayOnly />
+    );
+    expect(screen.getByTestId("totals-stack-tax-amount")).toHaveTextContent("$8.25");
+    expect(screen.getByTestId("totals-stack-grand-amount")).toHaveTextContent("$100.00");
+    expect(screen.getByText("Tax % (display only)")).toBeInTheDocument();
+  });
+
   it("renders negative subtotal without crashing", () => {
     render(<TotalsStack subtotal={-50} taxRate={8.25} grandLabel="WO Total = A + B" />);
     expect(screen.getByText("$-50.00")).toBeInTheDocument();

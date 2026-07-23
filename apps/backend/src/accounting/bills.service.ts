@@ -222,7 +222,9 @@ function normalizeBill(row: BillRow) {
   };
 }
 
-async function resolveVendorDisplayMap(
+// Exported for allocations.service.ts (Allocations list reuses the same QBO-snapshot vendor
+// display-name lookup as listBills — never invent a second vendor-name resolver).
+export async function resolveVendorDisplayMap(
   operatingCompanyId: string,
   vendorIds: string[]
 ): Promise<Record<string, string>> {
