@@ -48,7 +48,7 @@ export function ApplyToBillForm({ value, onChange, operatingCompanyId }: Props) 
   });
   const accountsQuery = useQuery({
     queryKey: ["categorize-bill", "ap-accounts", operatingCompanyId],
-    queryFn: () => listCatalogAccounts({ status: "active" }),
+    queryFn: () => listCatalogAccounts({ status: "active", operating_company_id: operatingCompanyId }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });

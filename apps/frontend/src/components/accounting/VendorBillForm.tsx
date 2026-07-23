@@ -166,7 +166,7 @@ export function VendorBillForm({
   });
   const accountsQuery = useQuery({
     queryKey: ["vendor-bill-form", "ap-accounts", operatingCompanyId],
-    queryFn: () => listCatalogAccounts({ status: "active" }),
+    queryFn: () => listCatalogAccounts({ status: "active", operating_company_id: operatingCompanyId }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });
