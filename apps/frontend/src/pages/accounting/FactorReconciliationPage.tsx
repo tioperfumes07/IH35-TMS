@@ -16,6 +16,7 @@ import { DataPanel } from "../../components/layout/DataPanel";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 function money(cents: number) {
@@ -74,7 +75,22 @@ export function FactorReconciliationPage() {
         key: "statement_invoice_number",
         label: "Statement invoice",
         sortable: true,
-        render: (item) => <span className="text-gray-900">{item.statement_invoice_number ?? "-"}</span>,
+        render: (item) => (
+          <span className="text-gray-900">{item.statement_invoice_number ?? "-"}</span>
+        ),
+      },
+      {
+        key: "invoice_id",
+        label: "Ledger invoice",
+        sortable: true,
+        sortValue: (item) => item.invoice_id ?? "",
+        render: (item) => (
+          <EntityLink
+            kind="invoice"
+            id={item.invoice_id ?? undefined}
+            label={item.invoice_id ? item.invoice_id.slice(0, 8) : "-"}
+          />
+        ),
       },
       {
         key: "ledger_match_state",

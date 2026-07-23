@@ -149,6 +149,7 @@ export type ExpenseListRow = {
   load_number: string | null;
   line_description: string | null;
   is_reconciled: boolean;
+  journal_entry_id: string | null;
 };
 
 /**
@@ -204,6 +205,7 @@ export async function queryExpensesList(
         e.load_id::text                              AS load_id,
         e.vendor_uuid::text                          AS vendor_uuid,
         e.driver_uuid::text                          AS driver_uuid,
+        e.journal_entry_id::text                     AS journal_entry_id,
         e.created_at                                 AS created_at,
         v.vendor_name                                AS vendor_name,
         dr.first_name                                AS driver_first_name,
