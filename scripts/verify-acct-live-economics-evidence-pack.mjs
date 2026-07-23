@@ -53,15 +53,18 @@ export function check() {
     if (!doc.includes(section)) failures.push(`${REPO_DOC}: missing section/snippet "${section}"`);
   }
 
+  // CI runners have no Jorge Desktop — lock *references* in the repo doc always.
+  // Filesystem presence is optional locally (IH35_REQUIRE_DESKTOP_AUDIT=1 to fail-closed).
   const desktopRoot = path.join(os.homedir(), "Desktop", "IH35-CURSOR-AUDIT");
+  const requireDesktopFs = process.env.IH35_REQUIRE_DESKTOP_AUDIT === "1";
   for (const rel of DESKTOP_FILES) {
-    const abs = path.join(desktopRoot, rel);
-    if (!fs.existsSync(abs)) failures.push(`Desktop audit missing: ${abs}`);
-    else if (!doc.includes(rel.replace(/^modules\//, "").replace(".md", ""))) {
-      // doc table must reference the desktop artifact basename
-      if (!doc.includes(path.basename(rel))) {
-        failures.push(`${REPO_DOC}: must reference desktop file ${rel}`);
-      }
+    const basename = path.basename(rel);
+    if (!doc.includes(basename)) {
+      failures.push(`${REPO_DOC}: must reference desktop file ${rel}`);
+    }
+    if (requireDesktopFs) {
+      const abs = path.join(desktopRoot, rel);
+      if (!fs.existsSync(abs)) failures.push(`Desktop audit missing: ${abs}`);
     }
   }
 
