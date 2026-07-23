@@ -1450,7 +1450,7 @@ export function BankingTransactionsDesignView({
             !categorizationLinksQuery.isError &&
             expandedTxId === tx.id &&
             !hasPersistedLinks ? (
-              <p className="mt-1 text-xs text-amber-900">
+              <p className="mt-1 text-xs text-slate-700">
                 No persisted Driver / Unit / Load / Vendor / Customer / deduction tags on this row yet. Draft fields
                 below are not Law §9 links until Post / Categorize commits them.
               </p>

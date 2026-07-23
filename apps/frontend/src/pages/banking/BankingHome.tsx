@@ -664,7 +664,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
         <div className="space-y-3">
           {!factoringVirtualSummary.lastAdvanceAt && factoringReserve === 0 && factoringChargebacks === 0 ? (
             <div
-              className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950"
+              className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
               data-testid="banking-factoring-entry-unproven-banner"
             >
               <p className="font-semibold">Factoring Banking entry has no proven Faro advance / reserve / chargeback activity yet.</p>
@@ -735,7 +735,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
         <div className="space-y-3">
           {tiles.filter((t) => Boolean(t.is_relay)).length === 0 ? (
             <div
-              className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950"
+              className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
               data-testid="banking-relay-entry-unproven-banner"
             >
               <p className="font-semibold">No Relay card / fuel-wallet bank tiles are mapped for this company yet.</p>
@@ -809,7 +809,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
       {activeTab === "statement_import" ? (
         <div className="space-y-3">
           <div
-            className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950"
+            className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
             data-testid="banking-statement-import-not-recon-proof-banner"
           >
             <p className="font-semibold">Statement Import is an input path — not reconciliation proof.</p>
@@ -890,7 +890,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
       {activeTab === "settings" ? (
         <div className="space-y-3">
           <div
-            className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950"
+            className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
             data-testid="banking-settings-not-ops-complete-banner"
           >
             <p className="font-semibold">Settings links configure Banking — they do not complete Match/Categorize or reconcile.</p>
