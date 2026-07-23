@@ -4,9 +4,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
+# CI-COVERAGE FIX (2026-07-23): NO `branches:` filter on the PR trigger, so stacked
+# PRs (base = another feature branch) get the same gate coverage as PRs targeting
+# main. All steps validate committed files (.github/branch-protection-config.json,
+# CODEOWNERS) — base-agnostic.
 on:
   pull_request:
-    branches: [main]
+    types: [opened, synchronize, reopened]
   push:
     branches: [main]
 
