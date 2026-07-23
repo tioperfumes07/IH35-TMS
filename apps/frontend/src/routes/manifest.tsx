@@ -169,6 +169,9 @@ const PrepaidExpensesPage = React.lazy(() => import("../pages/accounting/Prepaid
 const RevenueRecognitionPage = React.lazy(() => import("../pages/accounting/RevenueRecognitionPage").then((m) => ({ default: m.RevenueRecognitionPage })));
 const FixedAssetsPage = React.lazy(() => import("../pages/accounting/FixedAssetsPage").then((m) => ({ default: m.FixedAssetsPage })));
 const AllocationsPage = React.lazy(() => import("../pages/accounting/AllocationsPage").then((m) => ({ default: m.AllocationsPage })));
+const MaintenanceShopHubPage = React.lazy(() =>
+  import("../pages/accounting/MaintenanceShopHubPage").then((m) => ({ default: m.MaintenanceShopHubPage }))
+);
 const QboReconcileCapturesPage = React.lazy(() => import("../pages/accounting/QboReconcileCapturesPage").then((m) => ({ default: m.QboReconcileCapturesPage })));
 const AccountTypeCatalogPage = React.lazy(() => import("../pages/accounting/AccountTypeCatalogPage").then((m) => ({ default: m.AccountTypeCatalogPage })));
 const MyAccountantPage = React.lazy(() => import("../pages/accounting/MyAccountantPage").then((m) => ({ default: m.MyAccountantPage })));
@@ -3476,7 +3479,7 @@ export const ROUTES = React.Children.toArray(
           path="/accounting/maintenance-shop"
           element={
             <ProtectedRoute>
-              <Navigate to="/maintenance" replace />
+              <MaintenanceShopHubPage />
             </ProtectedRoute>
           }
         />
@@ -3607,6 +3610,13 @@ export const ROUTES = React.Children.toArray(
               <MonthClosePage />
             </ProtectedRoute>
           }
+        />
+        {/* DUALPATH-09 (2026-07-22): IH35_ARCHITECTURAL_DESIGN.md tab "Period Close" — operators and
+            deep links expect /accounting/period-close while the Live wizard is MonthClosePage at
+            /accounting/month-close. Redirect the alias; never delete the canonical mount (Rule 07). */}
+        <Route
+          path="/accounting/period-close"
+          element={<Navigate to="/accounting/month-close" replace />}
         />
         <Route
           path="/accounting/audit-trail"

@@ -1,5 +1,7 @@
 import { SelectCombobox } from "../../shared/SelectCombobox";
 import { MoneyInput } from "../MoneyInput";
+import { ReferenceSelect } from "../../parity/ReferenceSelect";
+
 export type CategoryLine = {
   id: string;
   expense_category_uuid?: string;
@@ -47,6 +49,9 @@ type Props = {
   onQuickCreateCategory?: (lineId: string) => void;
   onQuickCreateItem?: (lineId: string) => void;
   onQuickCreatePart?: (lineId: string, subId: string) => void;
+  /** When set, Category uses ReferenceSelect with inline "+ Add new" (QBO) instead of external + Create. */
+  operatingCompanyId?: string;
+  onCategoryOptionCreated?: (lineId: string, opt: { id: string; label: string }) => void;
   partsLaborMode: "none" | "parts-only" | "parts-and-labor";
   onSectionAChange: (lines: CategoryLine[]) => void;
   onSectionBChange: (lines: ItemLine[]) => void;
@@ -92,6 +97,8 @@ export function CostBreakdownBox({
   onQuickCreateCategory,
   onQuickCreateItem,
   onQuickCreatePart,
+  operatingCompanyId,
+  onCategoryOptionCreated,
   partsLaborMode,
   onSectionAChange,
   onSectionBChange,
@@ -135,36 +142,65 @@ export function CostBreakdownBox({
                   {sectionA.lines.map((line) => (
                     <tr key={line.id} className="border-t border-gray-100">
                       <td className="px-2 py-1">
-                        <div className="flex items-center gap-1">
-                          <SelectCombobox
-                            disabled={readOnly}
-                            value={line.expense_category_uuid ?? ""}
-                            onChange={(event) =>
+                        {operatingCompanyId && !readOnly ? (
+                          <ReferenceSelect
+                            value={line.expense_category_uuid ?? null}
+                            onChange={(next) =>
                               onSectionAChange(
                                 sectionA.lines.map((entry) =>
-                                  entry.id === line.id ? { ...entry, expense_category_uuid: event.target.value } : entry
+                                  entry.id === line.id ? { ...entry, expense_category_uuid: next ?? undefined } : entry
                                 )
                               )
                             }
-                            className="w-full rounded-sm border border-gray-300 px-2 py-1"
-                          >
-                            <option value="">Select category...</option>
-                            {expenseCategoryOptions.map((option) => (
-                              <option key={option.id} value={option.id}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </SelectCombobox>
-                          <button
-                            type="button"
-                            disabled={readOnly}
-                            onClick={() => onQuickCreateCategory?.(line.id)}
-                            className="rounded-sm border border-gray-300 px-2 py-1 text-[11px]"
-                            aria-label="Quick create category"
-                          >
-                            + Create
-                          </button>
-                        </div>
+                            options={expenseCategoryOptions.map((option) => ({
+                              value: option.id,
+                              label: option.label,
+                            }))}
+                            createKind="category"
+                            operatingCompanyId={operatingCompanyId}
+                            placeholder="Select category…"
+                            addNewLabel="+ Add new category"
+                            onOptionCreated={(opt) => {
+                              onSectionAChange(
+                                sectionA.lines.map((entry) =>
+                                  entry.id === line.id ? { ...entry, expense_category_uuid: opt.value } : entry
+                                )
+                              );
+                              onCategoryOptionCreated?.(line.id, { id: opt.value, label: opt.label });
+                            }}
+                          />
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <SelectCombobox
+                              disabled={readOnly}
+                              value={line.expense_category_uuid ?? ""}
+                              onChange={(event) =>
+                                onSectionAChange(
+                                  sectionA.lines.map((entry) =>
+                                    entry.id === line.id ? { ...entry, expense_category_uuid: event.target.value } : entry
+                                  )
+                                )
+                              }
+                              className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                            >
+                              <option value="">Select category...</option>
+                              {expenseCategoryOptions.map((option) => (
+                                <option key={option.id} value={option.id}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </SelectCombobox>
+                            <button
+                              type="button"
+                              disabled={readOnly}
+                              onClick={() => onQuickCreateCategory?.(line.id)}
+                              className="rounded-sm border border-gray-300 px-2 py-1 text-[11px]"
+                              aria-label="Quick create category"
+                            >
+                              + Create
+                            </button>
+                          </div>
+                        )}
                       </td>
                       <td className="px-2 py-1">
                         <input

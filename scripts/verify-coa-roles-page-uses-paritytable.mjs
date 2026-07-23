@@ -53,8 +53,12 @@ function assertMigrated(src) {
   if (!src.includes("upsertMutation.mutate({ role: row.role, account_id: value })")) {
     errors.push(`${PAGE}: must keep the per-row Save handler (upsertCoaRole mutation) unchanged`);
   }
-  if (!src.includes("ReferenceSelect") || !src.includes('createKind="category"')) {
-    errors.push(`${PAGE}: must keep the per-row ReferenceSelect account picker (createKind=category)`);
+  // createKind must be "account", not "category". A CoA ROLE binds a role to a GL ACCOUNT, so the
+  // inline "+ Add new" has to open the account wizard and write catalogs.accounts — the same table
+  // this picker reads (picker law: writes what it reads). Pinning "category" here made the guard
+  // assert the wrong value and blocked the correction.
+  if (!src.includes("ReferenceSelect") || !src.includes('createKind="account"')) {
+    errors.push(`${PAGE}: must keep the per-row ReferenceSelect account picker (createKind=account)`);
   }
   return errors;
 }
@@ -66,7 +70,7 @@ function selftest() {
     const columns = [
       { key: "role", label: "Role" },
       { key: "account_id", label: "Account", render: (row) => (
-        <ReferenceSelect createKind="category" value={value} onChange={() => {}} /> ) },
+        <ReferenceSelect createKind="account" value={value} onChange={() => {}} /> ) },
       { key: "is_active", label: "Status" },
       { key: "updated_at", label: "Updated" },
       { key: "action", label: "Action", render: (row) => (
