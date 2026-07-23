@@ -1464,7 +1464,7 @@ export const ROUTES = React.Children.toArray(
           path="/banking/categorize"
           element={
             <ProtectedRoute>
-              <Navigate to="/banking/transactions?type=uncategorized" replace />
+              <Navigate to="/banking/transactions" replace />
             </ProtectedRoute>
           }
         />
