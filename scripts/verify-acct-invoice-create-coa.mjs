@@ -1,0 +1,170 @@
+#!/usr/bin/env node
+/**
+ * Guard: Invoice create uses income CoA ReferenceSelect + optional load linkage (15/22).
+ * Proves PATCH source_load_id uniqueness (load_already_invoiced) mirrors from-load idempotency.
+ *
+ * Self-test: node scripts/verify-acct-invoice-create-coa.mjs --selftest
+ */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { runExecutableGuard } from "./guard-executable-contract.mjs";
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const LABEL = "verify-acct-invoice-create-coa";
+
+const fail = (m) => {
+  console.error(`FAIL: ${m}`);
+  process.exit(1);
+};
+
+function read(rel) {
+  const p = path.join(root, rel);
+  if (!fs.existsSync(p)) fail(`missing ${rel}`);
+  return fs.readFileSync(p, "utf8");
+}
+
+function checkInvoiceCreateCoa(files) {
+  const byRel = Object.fromEntries(files.map(({ rel, source }) => [rel, source]));
+  const base = byRel["apps/frontend/src/pages/accounting/modals/InvoiceTypeModalBase.tsx"] ?? "";
+  const linesRoute = byRel["apps/backend/src/accounting/invoice-lines.routes.ts"] ?? "";
+  const invoicesRoute = byRel["apps/backend/src/accounting/invoices.routes.ts"] ?? "";
+  const fromLoad = byRel["apps/backend/src/accounting/from-load.ts"] ?? "";
+  const api = byRel["apps/frontend/src/api/accounting.ts"] ?? "";
+  const violations = [];
+
+  if (!base.includes('createKind="account"')) violations.push("InvoiceTypeModalBase must use ReferenceSelect createKind=account for income CoA");
+  if (!base.includes("getCoaAccounts")) violations.push("InvoiceTypeModalBase must load entity-scoped CoA via getCoaAccounts");
+  if (!base.includes("listLoads")) violations.push("InvoiceTypeModalBase must list loads for optional load linkage");
+  if (!base.includes("operating_company_id")) violations.push("InvoiceTypeModalBase catalogs must be entity-scoped");
+  if (!base.includes("addInvoiceLine")) violations.push("InvoiceTypeModalBase must persist line with income account at create");
+  if (!base.includes("patchInvoice")) violations.push("InvoiceTypeModalBase must patch source_load_id when load linked");
+  if (!base.includes('createKind="customer"')) violations.push("InvoiceTypeModalBase must keep customer ReferenceSelect");
+
+  if (!linesRoute.includes("account_id: z.string().uuid().optional()")) {
+    violations.push("invoice-lines create schema must accept optional account_id");
+  }
+  if (!linesRoute.includes("assertExplicitIncomeAccount")) {
+    violations.push("invoice-lines route must validate explicit income account_id");
+  }
+
+  if (!invoicesRoute.includes("source_load_id: z.string().uuid().nullable().optional()")) {
+    violations.push("invoice patch schema must accept source_load_id for draft linkage");
+  }
+  if (!invoicesRoute.includes("findConflictingInvoiceForLoad")) {
+    violations.push("invoice PATCH must call findConflictingInvoiceForLoad before accepting source_load_id");
+  }
+  if (!invoicesRoute.includes("load_already_invoiced")) {
+    violations.push("invoice PATCH must return 409 load_already_invoiced when load is already invoiced");
+  }
+  if (!fromLoad.includes("findConflictingInvoiceForLoad")) {
+    violations.push("from-load must export findConflictingInvoiceForLoad for shared load uniqueness");
+  }
+  if (!fromLoad.includes("voided_at IS NULL")) {
+    violations.push("from-load idempotency must ignore voided invoices (voided_at IS NULL)");
+  }
+
+  if (!api.includes("account_id?: string")) violations.push("addInvoiceLine API must expose account_id");
+  if (!api.includes("source_load_id: string | null")) violations.push("patchInvoice API must expose source_load_id");
+
+  return violations;
+}
+
+function loadRepositoryFixture() {
+  return [
+    {
+      rel: "apps/frontend/src/pages/accounting/modals/InvoiceTypeModalBase.tsx",
+      source: read("apps/frontend/src/pages/accounting/modals/InvoiceTypeModalBase.tsx"),
+    },
+    {
+      rel: "apps/backend/src/accounting/invoice-lines.routes.ts",
+      source: read("apps/backend/src/accounting/invoice-lines.routes.ts"),
+    },
+    {
+      rel: "apps/backend/src/accounting/invoices.routes.ts",
+      source: read("apps/backend/src/accounting/invoices.routes.ts"),
+    },
+    {
+      rel: "apps/backend/src/accounting/from-load.ts",
+      source: read("apps/backend/src/accounting/from-load.ts"),
+    },
+    {
+      rel: "apps/frontend/src/api/accounting.ts",
+      source: read("apps/frontend/src/api/accounting.ts"),
+    },
+  ];
+}
+
+const goodFixture = [
+  {
+    rel: "apps/backend/src/accounting/invoices.routes.ts",
+    source: [
+      `import { buildInvoiceFromLoad, findConflictingInvoiceForLoad } from "./from-load.js";`,
+      `source_load_id: z.string().uuid().nullable().optional(),`,
+      `const conflict = await findConflictingInvoiceForLoad(`,
+      `if (conflict) return { code: 409 as const, error: "load_already_invoiced" };`,
+    ].join("\n"),
+  },
+  {
+    rel: "apps/backend/src/accounting/from-load.ts",
+    source: [
+      `export async function findConflictingInvoiceForLoad(`,
+      `AND i.voided_at IS NULL`,
+    ].join("\n"),
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/modals/InvoiceTypeModalBase.tsx",
+    source: [
+      `createKind="account"`,
+      `getCoaAccounts`,
+      `listLoads`,
+      `operating_company_id`,
+      `addInvoiceLine`,
+      `patchInvoice`,
+      `createKind="customer"`,
+    ].join("\n"),
+  },
+  {
+    rel: "apps/backend/src/accounting/invoice-lines.routes.ts",
+    source: [`account_id: z.string().uuid().optional()`, `assertExplicitIncomeAccount`].join("\n"),
+  },
+  {
+    rel: "apps/frontend/src/api/accounting.ts",
+    source: [`account_id?: string`, `source_load_id: string | null`].join("\n"),
+  },
+];
+
+const badFixture = [
+  {
+    rel: "apps/backend/src/accounting/invoices.routes.ts",
+    source: [
+      `source_load_id: z.string().uuid().nullable().optional(),`,
+      `if ("source_load_id" in body.data) add("source_load_id", body.data.source_load_id ?? null);`,
+    ].join("\n"),
+  },
+  {
+    rel: "apps/backend/src/accounting/from-load.ts",
+    source: `AND i.source_load_id = $2`,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/modals/InvoiceTypeModalBase.tsx",
+    source: `createKind="category"`,
+  },
+  {
+    rel: "apps/backend/src/accounting/invoice-lines.routes.ts",
+    source: ``,
+  },
+  {
+    rel: "apps/frontend/src/api/accounting.ts",
+    source: ``,
+  },
+];
+
+runExecutableGuard({
+  label: LABEL,
+  checker: checkInvoiceCreateCoa,
+  loadRepositoryFixture,
+  goodFixture,
+  badFixture,
+  expectedBadViolationSubstrings: ["findConflictingInvoiceForLoad", "load_already_invoiced"],
+});
