@@ -34,8 +34,10 @@ describe("resolveEntityRoute", () => {
     expect(resolveEntityRoute("bill", "id1")).toBe("/accounting/bills/id1");
   });
 
-  it("resolves cash_advance to query-param drill-through (Law §9 2026-07-22)", () => {
-    expect(resolveEntityRoute("cash_advance", "adv-1")).toBe("/cash-advances?advance_id=adv-1");
+  it("resolves payment, bill_payment, and transfer (Law §9 match candidates)", () => {
+    expect(resolveEntityRoute("payment", "pay-1")).toBe("/accounting/payments/pay-1");
+    expect(resolveEntityRoute("bill_payment", "bp-1")).toBe("/accounting/bill-payments/bp-1");
+    expect(resolveEntityRoute("transfer", "tr-1")).toBe("/banking/transfers?transfer_id=tr-1");
   });
 });
 

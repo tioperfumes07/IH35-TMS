@@ -7,6 +7,7 @@ import {
   type BankMatchCandidateKind,
 } from "../../../api/banking";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 import { useToast } from "../../../components/Toast";
 import { useListState } from "../../../components/list-state";
 import { formatUsdCents } from "../../../lib/money";
@@ -37,19 +38,29 @@ const KIND_LABELS: Record<BankMatchCandidateKind, string> = {
   expense: "Expense",
 };
 
+const KIND_ENTITY: Record<BankMatchCandidateKind, EntityKind> = {
+  payment: "payment",
+  bill_payment: "bill_payment",
+  transfer: "transfer",
+  je: "journal_entry",
+  bill: "bill",
+  expense: "expense",
+};
+
 function formatMoneyCents(cents: number | null | undefined) {
   if (cents == null || Number.isNaN(Number(cents))) return "—";
   return formatUsdCents(Math.abs(Number(cents)));
 }
 
-function kindBadge(kind: BankMatchCandidateKind) {
+function kindBadge(kind: BankMatchCandidateKind, id: string) {
   return (
-    <span
+    <EntityLink
+      kind={KIND_ENTITY[kind]}
+      id={id}
+      label={KIND_LABELS[kind]}
       data-testid="match-candidate-kind"
-      className="inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700"
-    >
-      {KIND_LABELS[kind]}
-    </span>
+      className="inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700 hover:underline"
+    />
   );
 }
 
@@ -197,7 +208,7 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
                       checked={isSelected}
                       onChange={() => setSelectedId(c.ledger_entry_id)}
                     />
-                    {kindBadge(c.ledger_entry_kind)}
+                    {kindBadge(c.ledger_entry_kind, c.ledger_entry_id)}
                     {isTopAuto ? (
                       <span
                         data-testid="match-candidate-top"

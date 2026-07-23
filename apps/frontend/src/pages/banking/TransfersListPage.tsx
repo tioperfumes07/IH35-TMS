@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { getPlaidBankAccounts, getTransfer, listTransfers, revokeTransfer, type Transfer, type TransferType } from "../../api/banking";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -32,6 +32,8 @@ export function TransfersListPage() {
   const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const [searchParams] = useSearchParams();
+  const deepLinkTransferId = searchParams.get("transfer_id")?.trim() || "";
 
   const [fromDate, setFromDate] = useState(new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString().slice(0, 10));
   const [toDate, setToDate] = useState(new Date().toISOString().slice(0, 10));
@@ -62,11 +64,22 @@ export function TransfersListPage() {
       }),
     enabled: Boolean(companyId),
   });
+  const deepLinkTransferQuery = useQuery({
+    queryKey: ["banking", "transfer", companyId, deepLinkTransferId],
+    queryFn: () => getTransfer(deepLinkTransferId, companyId).then((r) => r.transfer),
+    enabled: Boolean(companyId && deepLinkTransferId),
+  });
 
-  const rows = transfersQuery.data?.transfers ?? [];
-  const hasNext = rows.length === PAGE_SIZE;
+  const rows = useMemo(() => {
+    const listed = transfersQuery.data?.transfers ?? [];
+    const deep = deepLinkTransferQuery.data;
+    if (!deepLinkTransferId || !deep) return listed;
+    if (listed.some((t) => t.id === deep.id)) return listed;
+    return [deep, ...listed];
+  }, [transfersQuery.data?.transfers, deepLinkTransferQuery.data, deepLinkTransferId]);
+  const hasNext = (transfersQuery.data?.transfers ?? []).length === PAGE_SIZE;
   // Empty message renders only once the transfers query settles, never mid-fetch.
-  const listState = useListState(transfersQuery, rows.length === 0);
+  const listState = useListState(transfersQuery, (transfersQuery.data?.transfers ?? []).length === 0 && !deepLinkTransferId);
   const accountNameMap = useMemo(() => {
     const map = new Map<string, string>();
     for (const account of bankAccountsQuery.data?.accounts ?? []) {
@@ -282,6 +295,9 @@ export function TransfersListPage() {
         storageKey="banking-transfers-list"
         tableTestId="banking-transfers-list-table"
         initialPageSize={PAGE_SIZE}
+        rowClassName={(row) =>
+          deepLinkTransferId && row.id === deepLinkTransferId ? "bg-slate-100 ring-1 ring-slate-400" : ""
+        }
         // Settled-only empty text (LIST-EMPTY-1): only supplied once listState resolves to "empty",
         // never mid-fetch, so ParityTable's own gate never flashes a false empty.
         emptyText={listState.isEmpty ? "No transfers found for this filter." : undefined}

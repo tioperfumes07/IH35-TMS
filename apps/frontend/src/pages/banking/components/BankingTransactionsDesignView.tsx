@@ -131,9 +131,11 @@ const MATCH_CANDIDATE_KIND_LABELS: Record<BankMatchCandidateKind, string> = {
   expense: "Expense",
 };
 
-// Only kinds with a real EntityLink route map here — "payment"/"bill_payment"/"transfer" have no
-// EntityLink kind (and no per-id detail route) yet, so those candidates keep the plain badge.
-const MATCH_CANDIDATE_ENTITY_KIND: Partial<Record<BankMatchCandidateKind, EntityKind>> = {
+// Match candidates — EntityLink for every kind with a real detail route (Law §9).
+const MATCH_CANDIDATE_ENTITY_KIND: Record<BankMatchCandidateKind, EntityKind> = {
+  payment: "payment",
+  bill_payment: "bill_payment",
+  transfer: "transfer",
   je: "journal_entry",
   bill: "bill",
   expense: "expense",
@@ -1994,18 +1996,12 @@ export function BankingTransactionsDesignView({
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5">
-                      {MATCH_CANDIDATE_ENTITY_KIND[candidate.ledger_entry_kind] ? (
-                        <EntityLink
-                          kind={MATCH_CANDIDATE_ENTITY_KIND[candidate.ledger_entry_kind]!}
-                          id={candidate.ledger_entry_id}
-                          label={MATCH_CANDIDATE_KIND_LABELS[candidate.ledger_entry_kind]}
-                          className="inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700 hover:underline"
-                        />
-                      ) : (
-                        <span className="inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700">
-                          {MATCH_CANDIDATE_KIND_LABELS[candidate.ledger_entry_kind]}
-                        </span>
-                      )}
+                      <EntityLink
+                        kind={MATCH_CANDIDATE_ENTITY_KIND[candidate.ledger_entry_kind]}
+                        id={candidate.ledger_entry_id}
+                        label={MATCH_CANDIDATE_KIND_LABELS[candidate.ledger_entry_kind]}
+                        className="inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700 hover:underline"
+                      />
                       {candidate.auto_match ? (
                         <span className="inline-flex items-center rounded-sm bg-slate-800 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
                           Best match
