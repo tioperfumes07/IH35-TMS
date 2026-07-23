@@ -6,7 +6,7 @@ import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { enqueueEmail } from "../email/queue.service.js";
 import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.service.js";
 import { nextInvoiceDisplayId } from "./display-id.js";
-import { buildInvoiceFromLoad } from "./from-load.js";
+import { buildInvoiceFromLoad, findConflictingInvoiceForLoad } from "./from-load.js";
 import {
   assertLoadRevenueHasSourceLoad,
   assertRevenueLinesHaveIncomeAccount,
@@ -641,6 +641,13 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         if (String(loadRow.customer_id) !== String(oldRow.customer_id)) {
           return { code: 422 as const, error: "load_customer_mismatch" };
         }
+        const conflict = await findConflictingInvoiceForLoad(
+          client,
+          query.data.operating_company_id,
+          body.data.source_load_id,
+          params.data.id
+        );
+        if (conflict) return { code: 409 as const, error: "load_already_invoiced" };
       }
 
       const setParts: string[] = [];
