@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -80,15 +81,38 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
           </div>
         </div>
 
-        {detail.je_preview.purchase_je && (
-          <div className="mb-4 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
-            <p className="font-semibold mb-1">GL Posting Preview (GATED — flag OFF)</p>
-            <p>Purchase JE: Dr Prepaid Asset {fmtCents(detail.total_amount_cents)} / Cr Cash {fmtCents(detail.total_amount_cents)}</p>
-            {detail.je_preview.amortization_je_template && (
-              <p>Per-period JE: Dr Expense {fmtCents(detail.period_amount_cents)} / Cr Prepaid {fmtCents(detail.period_amount_cents)}</p>
-            )}
-          </div>
-        )}
+        <div className="mb-4 grid grid-cols-1 gap-2 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700 sm:grid-cols-2">
+          {detail.purchase_je_id ? (
+            <p>
+              Purchase JE:{" "}
+              <EntityLink kind="journal_entry" id={detail.purchase_je_id} label={detail.purchase_je_id.slice(0, 8)} />
+            </p>
+          ) : null}
+          {detail.asset_account_id ? (
+            <p>
+              Prepaid GL: <EntityLink kind="account" id={detail.asset_account_id} />
+            </p>
+          ) : null}
+          {detail.expense_account_id ? (
+            <p>
+              Expense GL: <EntityLink kind="account" id={detail.expense_account_id} />
+            </p>
+          ) : null}
+          {detail.payment_account_id ? (
+            <p>
+              Payment GL: <EntityLink kind="account" id={detail.payment_account_id} />
+            </p>
+          ) : null}
+          {detail.je_preview.purchase_je ? (
+            <p className="sm:col-span-2 font-semibold">
+              GL Posting Preview (GATED — flag OFF): Dr Prepaid Asset {fmtCents(detail.total_amount_cents)} / Cr Cash{" "}
+              {fmtCents(detail.total_amount_cents)}
+              {detail.je_preview.amortization_je_template
+                ? ` · Per-period Dr Expense ${fmtCents(detail.period_amount_cents)} / Cr Prepaid ${fmtCents(detail.period_amount_cents)}`
+                : ""}
+            </p>
+          ) : null}
+        </div>
 
         <div className="overflow-y-auto flex-1">
           <ParityTable<PrepaidAmortRow>
@@ -205,12 +229,33 @@ export function PrepaidExpensesPage() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [statusFilter, setStatusFilter] = useState("");
   const [offset, setOffset] = useState(0);
-  const [detailId, setDetailId] = useState<string | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(searchParams.get("asset_id"));
   const [showCreate, setShowCreate] = useState(false);
   const limit = 50;
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
+
+  useEffect(() => {
+    const assetId = searchParams.get("asset_id");
+    if (assetId) setDetailId(assetId);
+  }, [searchParams]);
+
+  const openDetail = (id: string) => {
+    setDetailId(id);
+    const next = new URLSearchParams(searchParams);
+    next.set("asset_id", id);
+    setSearchParams(next, { replace: true });
+  };
+
+  const closeDetail = () => {
+    setDetailId(null);
+    if (!searchParams.get("asset_id")) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("asset_id");
+    setSearchParams(next, { replace: true });
+  };
 
   const listQuery = useQuery({
     queryKey: ["prepaid-expenses", operatingCompanyId, statusFilter, offset],
@@ -236,7 +281,7 @@ export function PrepaidExpensesPage() {
         label: "Description",
         sortable: true,
         render: (row) => (
-          <button onClick={() => setDetailId(row.id)} className="text-slate-700 hover:underline text-left font-medium">{row.description}</button>
+          <button onClick={() => openDetail(row.id)} className="text-slate-700 hover:underline text-left font-medium">{row.description}</button>
         ),
       },
       { key: "purchase_date", label: "Purchase Date", sortable: true, render: (row) => fmtDate(row.purchase_date) },
@@ -275,11 +320,11 @@ export function PrepaidExpensesPage() {
         label: "Actions",
         alwaysVisible: true,
         render: (row) => (
-          <button onClick={() => setDetailId(row.id)} className="text-xs text-slate-700 hover:underline">Schedule</button>
+          <button onClick={() => openDetail(row.id)} className="text-xs text-slate-700 hover:underline">Schedule</button>
         ),
       },
     ],
-    [],
+    [openDetail],
   );
 
   const filterBar = (
@@ -321,7 +366,7 @@ export function PrepaidExpensesPage() {
           onCreated={() => queryClient.invalidateQueries({ queryKey: ["prepaid-expenses", operatingCompanyId] })} />
       )}
       {detailId && detail && !detailLoading && (
-        <SchedulePanel detail={detail} onClose={() => setDetailId(null)} />
+        <SchedulePanel detail={detail} onClose={closeDetail} />
       )}
 
       {isError ? <p className="text-sm text-red-600 py-2 text-center">Failed to load prepaid expenses.</p> : null}

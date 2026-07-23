@@ -69,6 +69,12 @@ function postingEntityKind(type: string | null | undefined): EntityKind | null {
       return "matter";
     case "liability":
       return "liability";
+    case "prepaid_asset":
+    case "prepaid_amortization":
+      return "prepaid_asset";
+    case "fixed_asset":
+    case "fixed_asset_depreciation":
+      return "fixed_asset";
     default:
       return null;
   }
