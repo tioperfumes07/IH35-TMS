@@ -728,7 +728,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
         <div className="space-y-3">
           {tiles.filter((t) => Boolean(t.is_relay)).length === 0 ? (
             <div
-              className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950"
+              className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
               data-testid="banking-relay-entry-unproven-banner"
             >
               <p className="font-semibold">No Relay card / fuel-wallet bank tiles are mapped for this company yet.</p>
