@@ -89,7 +89,7 @@ function DetailPanel({ detail, onClose }: { detail: RevenueContractDetail; onClo
           <div><div className="text-xs text-gray-500">Deferred balance</div><div className="tabular-nums font-semibold">{fmtCents(detail.deferred_balance_cents)}</div></div>
         </div>
 
-        <div className="mb-3 rounded-sm border border-gray-200 bg-gray-50 px-3 py-2 text-xs" data-testid="revenue-recognition-reverse-drill">
+        <div className="mb-3 border-t border-gray-200 pt-2 text-xs" data-testid="revenue-recognition-reverse-drill">
           <div className="font-semibold text-gray-700 mb-1">Source links</div>
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-gray-600">
             <span>
