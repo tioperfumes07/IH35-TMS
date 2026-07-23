@@ -1,10 +1,10 @@
--- 202607740000_guard_holds_driver_vendor_billable_credit_idempotency.sql
+-- 202607750000_guard_holds_driver_vendor_billable_credit_idempotency.sql
 --
 -- GUARD HOLD BATCH — owner-applied (Jorge), 2026-07-23.
 -- Closes 4 of the 5 HOLD items found in the Accounting guard review. The 5th (vendor credits vs
 -- bills.paid_cents) is deliberately NOT here — it is a CODE fix, see the note at the bottom.
 --
--- Numbering: main's current max is 202607730000; this is strictly above it.
+-- Numbering: main's max was 202607730000. NOTE: 202607740000 is already claimed by PR #3250 (held claim-WO-bill FK migration), so this is renumbered to 202607750000 to avoid a filename collision.
 -- Safety: additive only. No DROP, no DELETE, no UPDATE of existing rows, no backfill.
 --         Every statement is idempotent (IF NOT EXISTS / guarded DO block), so re-running is safe.
 -- RLS/grants: adds NO new table and NO new schema, so migration 0065's grants and the existing
