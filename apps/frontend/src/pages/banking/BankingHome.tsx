@@ -563,7 +563,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             accounts={plaidAccountsQuery.data?.accounts ?? []}
             selectedAccountId={selectedAccountId}
             onSelectAccount={setSelectedAccountId}
-            onManageConnections={() => setActiveTab("accounts")}
+            onManageConnections={() => navigate(BANKING_TAB_PATH.plaid_connections)}
             initialTransactionType={transactionsInitialFilter}
             highlightTransactionId={deepLinkTxnId}
             onDataChanged={() => {
@@ -792,6 +792,31 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               <ActionButton onClick={() => navigate(BANKING_TAB_PATH.reconciliation)}>Open Reconciliation</ActionButton>
             </div>
           </div>
+        </div>
+      ) : null}
+
+      {activeTab === "plaid_connections" ? (
+        <div className="space-y-3" data-testid="banking-plaid-connections-tab">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Plaid Connections</p>
+            <p className="mb-3 text-sm text-gray-700">
+              Live bank feed config — connect, reconnect, and inspect items. Same panel remains on Accounts and Settings
+              (additive; never removed).
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <ActionButton onClick={() => navigate(BANKING_TAB_PATH.settings)}>Open Banking Settings</ActionButton>
+              <ActionButton onClick={() => navigate("/banking/cash-gl-setup")}>Cash GL setup</ActionButton>
+            </div>
+          </div>
+          <BankingPlaidConnectionsPanel companyId={companyId} />
+          <PlaidSyncStatusPanel operatingCompanyId={companyId} />
+          <PlaidLink
+            operatingCompanyId={companyId}
+            onSuccess={() => {
+              void queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts", companyId] });
+            }}
+            label="Connect via PlaidLink"
+          />
         </div>
       ) : null}
 

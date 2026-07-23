@@ -1369,6 +1369,14 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/banking/plaid-connections"
+          element={
+            <ProtectedRoute>
+              <BankingHomePage initialTab="plaid_connections" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/banking/settings"
           element={
             <ProtectedRoute>
