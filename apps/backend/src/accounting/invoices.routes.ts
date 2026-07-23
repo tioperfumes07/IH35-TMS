@@ -6,7 +6,7 @@ import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { enqueueEmail } from "../email/queue.service.js";
 import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.service.js";
 import { nextInvoiceDisplayId } from "./display-id.js";
-import { buildInvoiceFromLoad } from "./from-load.js";
+import { buildInvoiceFromLoad, findConflictingInvoiceForLoad } from "./from-load.js";
 import {
   assertLoadRevenueHasSourceLoad,
   assertRevenueLinesHaveIncomeAccount,
@@ -83,6 +83,7 @@ const patchBodySchema = z
     ar_email_snapshot: z.string().trim().max(200).nullable().optional(),
     ar_phone_snapshot: z.string().trim().max(50).nullable().optional(),
     currency_code: z.enum(["USD", "MXN"]).optional(),
+    source_load_id: z.string().uuid().nullable().optional(),
   })
   .refine((value) => Object.keys(value).length > 0, { message: "at least one field is required" });
 
@@ -624,6 +625,34 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       if (!oldRow) return { code: 404 as const, error: "invoice_not_found" };
       if (String(oldRow.status) !== "draft") return { code: 409 as const, error: "invoice_not_draft" };
 
+      if ("source_load_id" in body.data && body.data.source_load_id) {
+        const loadRes = await client.query(
+          `
+            SELECT customer_id
+            FROM mdata.loads
+            WHERE id = $1
+              AND operating_company_id = $2
+              -- soft_deleted_at: an archived load must never become the revenue source of an
+              -- invoice. The UI picker excludes them; the endpoint did not.
+              AND soft_deleted_at IS NULL
+            LIMIT 1
+          `,
+          [body.data.source_load_id, query.data.operating_company_id]
+        );
+        const loadRow = loadRes.rows[0] ?? null;
+        if (!loadRow) return { code: 404 as const, error: "load_not_found" };
+        if (String(loadRow.customer_id) !== String(oldRow.customer_id)) {
+          return { code: 422 as const, error: "load_customer_mismatch" };
+        }
+        const conflict = await findConflictingInvoiceForLoad(
+          client,
+          query.data.operating_company_id,
+          body.data.source_load_id,
+          params.data.id
+        );
+        if (conflict) return { code: 409 as const, error: "load_already_invoiced" };
+      }
+
       const setParts: string[] = [];
       const values: unknown[] = [];
       const add = (col: string, value: unknown) => {
@@ -639,6 +668,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       if ("ar_email_snapshot" in body.data) add("ar_email_snapshot", body.data.ar_email_snapshot ?? null);
       if ("ar_phone_snapshot" in body.data) add("ar_phone_snapshot", body.data.ar_phone_snapshot ?? null);
       if ("currency_code" in body.data) add("currency_code", body.data.currency_code);
+      if ("source_load_id" in body.data) add("source_load_id", body.data.source_load_id ?? null);
       add("updated_by_user_id", user.uuid);
       add("updated_at", new Date().toISOString());
       values.push(params.data.id);
