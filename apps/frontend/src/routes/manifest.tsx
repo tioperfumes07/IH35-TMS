@@ -169,6 +169,9 @@ const PrepaidExpensesPage = React.lazy(() => import("../pages/accounting/Prepaid
 const RevenueRecognitionPage = React.lazy(() => import("../pages/accounting/RevenueRecognitionPage").then((m) => ({ default: m.RevenueRecognitionPage })));
 const FixedAssetsPage = React.lazy(() => import("../pages/accounting/FixedAssetsPage").then((m) => ({ default: m.FixedAssetsPage })));
 const AllocationsPage = React.lazy(() => import("../pages/accounting/AllocationsPage").then((m) => ({ default: m.AllocationsPage })));
+const MaintenanceShopHubPage = React.lazy(() =>
+  import("../pages/accounting/MaintenanceShopHubPage").then((m) => ({ default: m.MaintenanceShopHubPage }))
+);
 const QboReconcileCapturesPage = React.lazy(() => import("../pages/accounting/QboReconcileCapturesPage").then((m) => ({ default: m.QboReconcileCapturesPage })));
 const AccountTypeCatalogPage = React.lazy(() => import("../pages/accounting/AccountTypeCatalogPage").then((m) => ({ default: m.AccountTypeCatalogPage })));
 const MyAccountantPage = React.lazy(() => import("../pages/accounting/MyAccountantPage").then((m) => ({ default: m.MyAccountantPage })));
@@ -3475,7 +3478,7 @@ export const ROUTES = React.Children.toArray(
           path="/accounting/maintenance-shop"
           element={
             <ProtectedRoute>
-              <Navigate to="/maintenance" replace />
+              <MaintenanceShopHubPage />
             </ProtectedRoute>
           }
         />
