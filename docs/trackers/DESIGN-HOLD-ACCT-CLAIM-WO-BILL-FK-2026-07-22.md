@@ -26,14 +26,19 @@ link — **no** claim FK. `maintenance.work_orders` (migration `0049`) carries `
 
 ---
 
-## 1. Current schema (verified against migration files in this worktree)
+## 1. Current schema (Neon prod live-verified 2026-07-22)
 
-| Table | Canonical name | Existing relevant columns | Existing claim FK |
+**Neon:** project `tiny-field-89581227` · branch `br-fancy-credit-akjnd07a` · db `neondb`.
+Column/FK existence via `information_schema` / `pg_catalog` (no RLS bypass needed for DDL metadata).
+Cross-link probe for `claim_id` / `work_order_id` / `vendor_bill_id` / `expense_id` /
+`insurance_claim_id` across the four tables returned **empty** — none of those missing hops exist on prod.
+
+| Table | Canonical name | Existing relevant columns (prod) | Existing claim FK |
 |---|---|---|---|
-| Claim | `insurance.claim` (`0285`) | `id`, `tenant_id`, `policy_id`, `asset_id`, `accident_report_id` / `load_id` / `driver_id` (`202607410000`), economics cols (`202607730000`, held) | — (this is the target) |
-| Work order | `maintenance.work_orders` (`0049`) | `id`, `operating_company_id`, `unit_id`, `vendor_id`, `display_id` | **none** |
-| Vendor bill | `accounting.bills` | `id`, `operating_company_id`, `vendor_id`/`vendor_uuid` (soft text), `linked_work_order_uuid` + `unit_id` (hard FK, `202607050810` — already live/non-held) | **none** |
-| Expense | `accounting.expenses` | `id`, `operating_company_id`, `driver_uuid`, `unit_id`, `load_id`, `linked_work_order_uuid` (`202606290071`) + `unit_id` (`202607050810`) | **none** |
+| Claim | `insurance.claim` | `id`, `tenant_id`, `operating_company_id`, `policy_id`, `asset_id`, `accident_report_id`, `load_id`, `driver_id`, economics cols (`fault` / `driver_responsible` / `trailer_id` / `deductible_cents` / `recovery_rail` / `repair_books_treatment` — already live) | — (this is the target) |
+| Work order | `maintenance.work_orders` | `id`, `operating_company_id`, `unit_id`, `driver_id`, `load_id`, `vendor_id`, `display_id`, … | **none** (no `claim_id` / `insurance_claim_id`) |
+| Vendor bill | `accounting.bills` | `id`, `operating_company_id`, `vendor_id`/`vendor_uuid` (soft text), **`linked_work_order_uuid`** → `maintenance.work_orders(id)` (`bills_linked_work_order_uuid_fkey`), **`unit_id`** → `mdata.units`, `mdata_vendor_id`, … | **none** |
+| Expense | `accounting.expenses` | `id`, `operating_company_id`, `driver_uuid`, `load_id`, **`linked_work_order_uuid`** → `maintenance.work_orders(id)` (`expenses_linked_work_order_uuid_fkey`), **`unit_id`**, … | **none** |
 
 **Already wired (do NOT re-touch):** WO ↔ Bill/Expense hard FK (`linked_work_order_uuid` +
 `unit_id`) — live per `docs/trackers/LAW-E2E-MAINTENANCE-WO-BILL-LINKAGE-2026-07-21.md`. Claim → its

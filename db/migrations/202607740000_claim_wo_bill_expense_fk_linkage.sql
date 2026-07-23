@@ -13,9 +13,13 @@
 -- Neon `information_schema` (RLS-bypass) introspection: accounting.expenses carries driver_uuid /
 -- unit_id / load_id / linked_work_order_uuid / payment_account_uuid / journal_entry_id — no claim_id.
 -- accounting.bills carries source / source_system / the WO link — no claim_id. maintenance.work_orders
--- (0049) carries unit_id / vendor_id — no claim_id. So a claim that causes a repair (WO) or a direct
--- cost (bill/expense — e.g. a deductible payment or a third-party invoice) cannot be walked forward
--- from insurance.claim to the money/ops record, or reverse from the WO/bill/expense back to the claim.
+-- (0049) carries unit_id / vendor_id — no claim_id. Re-verified live on Neon prod
+-- br-fancy-credit-akjnd07a 2026-07-22: none of claim_id / insurance_claim_id / work_order_id /
+-- vendor_bill_id / expense_id exist on any of the four tables; WO↔Bill/Expense IS already
+-- hard-FK'd via linked_work_order_uuid (bills_*/expenses_*_fkey live). So a claim that causes a
+-- repair (WO) or a direct cost (bill/expense — e.g. a deductible payment or a third-party invoice)
+-- cannot be walked forward from insurance.claim to the money/ops record, or reverse from the
+-- WO/bill/expense back to the claim.
 --
 -- NAMING: uses `insurance_claim_id` (NOT bare `claim_id`) to match the established convention for every
 -- existing FK that points INTO insurance.claim — legal.matters.insurance_claim_id (P4-02),
