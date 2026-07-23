@@ -9,6 +9,7 @@ import {
 } from "../../../api/banking";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { formatDateUS } from "../../../lib/formatDate";
 import { RegisterToolbar } from "./RegisterToolbar";
@@ -37,6 +38,8 @@ function timelineToRegisterRow(row: EscrowDriverTimelineRow): Record<string, unk
     category: row.bucket ?? row.entry_type ?? "escrow",
     // Doc-18 defect #12 — carry the driver forward so the row is clickable (drill to the driver profile).
     driver_id: row.driver_id ?? "",
+    settlement_id: row.settlement_id ?? "",
+    settlement_line_id: row.settlement_line_id ?? "",
   };
 }
 
@@ -55,6 +58,8 @@ function registerToEscrowRow(row: Record<string, unknown>): Record<string, unkno
     // Doc-18 defect #12 — the account-level register now surfaces driver_id (banking.routes.ts fix),
     // so a row can drill through to the driver even in the "All drivers" view.
     driver_id: String(row.driver_id ?? ""),
+    settlement_id: String(row.settlement_id ?? ""),
+    settlement_line_id: String(row.settlement_line_id ?? ""),
   };
 }
 
@@ -115,6 +120,22 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
       },
       { key: "status", label: "Status", render: (row) => String(row.status ?? "synced") },
       { key: "category", label: "Category", render: (row) => String(row.category ?? "escrow") },
+      {
+        key: "settlement_id",
+        label: "Settlement",
+        render: (row) => {
+          const sid = String(row.settlement_id ?? "").trim();
+          if (!sid) return <span className="text-xs text-slate-500">—</span>;
+          return (
+            <EntityLink
+              kind="settlement"
+              id={sid}
+              label={sid.slice(0, 8)}
+              data-testid="banking-escrow-settlement-link"
+            />
+          );
+        },
+      },
     ],
     [],
   );
@@ -137,7 +158,7 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
             but still unmatched.
           </p>
           <div className="mt-2 flex flex-wrap gap-3">
-            <Link to="/drivers/settlements" className="font-medium text-slate-800 underline">
+            <Link to="/driver-finance/settlements" className="font-medium text-slate-800 underline">
               Settlements
             </Link>
             <Link to="/banking/transactions?type=uncategorized" className="font-medium text-slate-800 underline">

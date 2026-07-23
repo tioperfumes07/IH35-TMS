@@ -279,6 +279,9 @@ export type EscrowDriverTimelineRow = {
   amount: number;
   memo: string | null;
   created_at: string;
+  /** Canonical driver_finance.driver_settlements id when this ledger row was posted from a settlement. */
+  settlement_id?: string | null;
+  settlement_line_id?: string | null;
 };
 
 function q(companyId: string) {
