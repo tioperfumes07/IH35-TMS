@@ -21,6 +21,14 @@ const idParamsSchema = z.object({
   id: z.string().uuid(),
 });
 
+// SAF-F11: void is reason-REQUIRED. The route previously accepted no body and wrote
+// `void_reason = COALESCE(void_reason, 'voided via endpoint')`, so every void landed in the audit
+// trail with a placeholder and no accountable explanation. Void-cancel governance is reason-required;
+// min(3) matches the accounting void contract and VoidReasonModal's default minLength.
+const voidBodySchema = z.object({
+  void_reason: z.string().trim().min(3).max(500),
+});
+
 const dotInspectionSchema = z.object({
   inspection_date: z.string(),
   driver_id: z.string().uuid().optional(),
@@ -332,18 +340,20 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    const body = voidBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
 
     const payload = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
       const updated = await client.query(
         `
           UPDATE safety.dot_inspections
-          SET voided_at = now(), voided_by = $2, void_reason = COALESCE(void_reason, 'voided via endpoint')
+          SET voided_at = now(), voided_by = $2, void_reason = $4
           WHERE id = $1
             AND operating_company_id = $3
             AND voided_at IS NULL
           RETURNING *
         `,
-        [params.data.id, user.uuid, query.data.operating_company_id]
+        [params.data.id, user.uuid, query.data.operating_company_id, body.data.void_reason]
       );
       const row = updated.rows[0];
       if (!row) return null;
@@ -351,7 +361,7 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
         client,
         user.uuid,
         "safety.dot_inspection.voided",
-        { dot_inspection_id: row.id },
+        { dot_inspection_id: row.id, void_reason: body.data.void_reason },
         "info",
         "P3-T11.17.2-SAFETY-V6.4"
       );

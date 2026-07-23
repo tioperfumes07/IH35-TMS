@@ -13,6 +13,14 @@ const idParamsSchema = z.object({
   id: z.string().uuid(),
 });
 
+// SAF-F11: void is reason-REQUIRED. This route accepted no body and wrote
+// `void_reason = COALESCE(void_reason, 'voided via endpoint')`, so a voided complaint carried a
+// placeholder instead of an accountable explanation — on a record type that is owner-privacy gated
+// and evidentiary. min(3) matches the accounting void contract and VoidReasonModal's default.
+const voidBodySchema = z.object({
+  void_reason: z.string().trim().min(3).max(500),
+});
+
 const complaintSchema = z.object({
   filed_at: z.string().datetime().optional(),
   complainant_type: z.enum(["driver", "customer", "employee", "external", "anonymous"]),
@@ -225,22 +233,31 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    const body = voidBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
 
     const voided = await withCompany(user.uuid, appRole, query.data.operating_company_id, async (client) => {
       const res = await client.query(
         `
           UPDATE safety.complaints
-          SET voided_at = now(), voided_by = $2, void_reason = COALESCE(void_reason, 'voided via endpoint')
+          SET voided_at = now(), voided_by = $2, void_reason = $4
           WHERE id = $1
             AND operating_company_id = $3
             AND voided_at IS NULL
           RETURNING *
         `,
-        [params.data.id, user.uuid, query.data.operating_company_id]
+        [params.data.id, user.uuid, query.data.operating_company_id, body.data.void_reason]
       );
       const row = res.rows[0];
       if (!row) return null;
-      await appendCrudAudit(client, user.uuid, "safety.complaint.voided", { complaint_id: row.id }, "warning", "P3-T11.17.2-SAFETY-V6.4");
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "safety.complaint.voided",
+        { complaint_id: row.id, void_reason: body.data.void_reason },
+        "warning",
+        "P3-T11.17.2-SAFETY-V6.4"
+      );
       return row;
     });
     if (!voided) return reply.code(404).send({ error: "complaint_not_found" });

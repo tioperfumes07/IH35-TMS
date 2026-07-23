@@ -10,6 +10,7 @@ import { listComplaintTypes } from "../../../api/catalogs-safety";
 import { listDrivers } from "../../../api/mdata";
 import { useAuth } from "../../../auth/useAuth";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useListState } from "../../../components/list-state";
@@ -110,8 +111,10 @@ export function ComplaintsTab() {
     },
   });
 
+  // SAF-F11: void is reason-required (owner-gated, evidentiary record).
+  const [voidTargetId, setVoidTargetId] = useState<string | null>(null);
   const voidMutation = useMutation({
-    mutationFn: (id: string) => voidComplaintV64(companyId, id),
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => voidComplaintV64(companyId, id, reason),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["safety-v64", "complaints", companyId] });
     },
@@ -171,7 +174,7 @@ export function ComplaintsTab() {
               type="button"
               className="text-red-700 underline disabled:opacity-60"
               disabled={voidMutation.isPending || Boolean(row.voided_at)}
-              onClick={() => voidMutation.mutate(String(row.id))}
+              onClick={() => setVoidTargetId(String(row.id))}
             >
               {row.voided_at ? "Voided" : "Void"}
             </button>
@@ -255,6 +258,18 @@ export function ComplaintsTab() {
         emptyText="No complaints found."
         storageKey="safety-complaints"
         exportFilename="complaints"
+      />
+      <VoidReasonModal
+        open={voidTargetId !== null}
+        title="Void Complaint"
+        entityRef={voidTargetId ? `Complaint ${voidTargetId}` : undefined}
+        postsReversingEntry={false}
+        onClose={() => setVoidTargetId(null)}
+        onSubmit={async (reason) => {
+          if (!voidTargetId) return;
+          await voidMutation.mutateAsync({ id: voidTargetId, reason });
+          setVoidTargetId(null);
+        }}
       />
     </div>
   );
