@@ -793,12 +793,28 @@ export function BankingHomePage({ initialTab }: Props = {}) {
 
       {activeTab === "relay_card" ? (
         <div className="space-y-3">
+          {/* is_relay is PHANTOM — never .find/.filter tiles by it (verify-banking-relay-tab-honesty). */}
+          <div
+            className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+            data-testid="banking-relay-entry-unproven-banner"
+          >
+            <p className="font-semibold">No Relay card / fuel-wallet bank tiles are mapped for this company yet.</p>
+            <p className="mt-1">
+              Empty Relay tab is not "no fuel spend." Fuel card activity may still sit in for-review bank transactions
+              awaiting Match/Categorize, or Relay may need account tags / Plaid mapping under Plaid Connections.
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <ActionButton onClick={() => navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`)}>
+                Open for-review queue
+              </ActionButton>
+              <ActionButton onClick={() => navigate(BANKING_TAB_PATH.plaid_connections)}>Plaid Connections</ActionButton>
+            </div>
+          </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Relay Card · Banking</p>
               <ActionButton onClick={() => navigate(BANKING_TAB_PATH.transactions)}>Open in Transactions</ActionButton>
             </div>
-            {/* is_relay is PHANTOM (never populated) — do not .find/.filter tiles by it (verify-banking-relay-tab-honesty). */}
             <div
               className="border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
               data-testid="banking-relay-phantom-field-unproven-notice"
