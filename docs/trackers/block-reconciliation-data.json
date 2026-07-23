@@ -1,6 +1,6 @@
 {
- "date": "2026-07-22",
- "generated_at_iso": "2026-07-22T19:48:44.908Z",
+ "date": "2026-07-23",
+ "generated_at_iso": "2026-07-23T03:49:17.888Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
@@ -13162,10 +13162,130 @@
  ],
  "merged_prs": [
   {
+   "number": 3280,
+   "title": "fix(accounting): maintenance-shop hub under Accounting subnav (47/47)",
+   "mergedAt": "2026-07-23T03:48:50Z",
+   "branch": "acct-maintenance-shop-hub-20260722"
+  },
+  {
+   "number": 3277,
+   "title": "fix(accounting): Integration transactions EntityLink reverse (44/46)",
+   "mergedAt": "2026-07-23T03:42:59Z",
+   "branch": "fix-acct-integration-txn-entitylink"
+  },
+  {
+   "number": 3272,
+   "title": "fix(accounting): dispute queue driver EntityLink reverse (39/40)",
+   "mergedAt": "2026-07-23T03:47:03Z",
+   "branch": "fix/acct-dispute-queue-driver-entitylink"
+  },
+  {
+   "number": 3271,
+   "title": "fix(accounting): pre-settlements driver + settlement EntityLink reverse (38/40)",
+   "mergedAt": "2026-07-23T03:44:08Z",
+   "branch": "fix/acct-pre-settlements-reverse"
+  },
+  {
+   "number": 3259,
+   "title": "fix(accounting): Factor reconciliation ledger invoice EntityLink (26/28)",
+   "mergedAt": "2026-07-23T03:25:10Z",
+   "branch": "fix/acct-factor-recon-invoice-link"
+  },
+  {
+   "number": 3257,
+   "title": "fix(accounting): New Account drawer silently discarded 4 collected fields [FINANCIAL / HOLD]",
+   "mergedAt": "2026-07-23T03:06:52Z",
+   "branch": "fix/acct-account-create-field-drop"
+  },
+  {
+   "number": 3256,
+   "title": "fix(accounting): Receipts reverse linkage + ParityDrawer (22/24)",
+   "mergedAt": "2026-07-23T03:14:28Z",
+   "branch": "fix/acct-receipts-reverse"
+  },
+  {
+   "number": 3255,
+   "title": "fix(accounting): A/P aging Open bills has_balance drill (21/24)",
+   "mergedAt": "2026-07-23T03:25:30Z",
+   "branch": "fix/acct-ap-aging-drill"
+  },
+  {
+   "number": 3253,
+   "title": "fix(accounting): period-close alias → month-close (20/24)",
+   "mergedAt": "2026-07-23T03:14:09Z",
+   "branch": "fix/acct-recurring-dualpath"
+  },
+  {
+   "number": 3245,
+   "title": "fix(accounting): Bill void UI wired to governed void (14/24)",
+   "mergedAt": "2026-07-23T03:29:38Z",
+   "branch": "fix/acct-bill-void-ui"
+  },
+  {
+   "number": 3244,
+   "title": "fix(accounting): Expense list JE/vendor reverse columns (18/24)",
+   "mergedAt": "2026-07-23T03:08:31Z",
+   "branch": "fix/acct-expense-list-reverse"
+  },
+  {
+   "number": 3242,
+   "title": "fix(accounting): Templates tab in Accounting SUBNAV (16/24)",
+   "mergedAt": "2026-07-23T03:01:11Z",
+   "branch": "fix/acct-posting-templates-subnav"
+  },
+  {
+   "number": 3241,
+   "title": "fix(accounting): Bill Total equals line sum when tax display-only (13/24)",
+   "mergedAt": "2026-07-23T03:01:03Z",
+   "branch": "fix/acct-bill-total-tax-lie"
+  },
+  {
+   "number": 3240,
+   "title": "fix(catalogs): scope listCatalogAccounts on money-adjacent pickers (11/24)",
+   "mergedAt": "2026-07-23T03:00:58Z",
+   "branch": "fix/acct-catalog-scope"
+  },
+  {
+   "number": 3239,
+   "title": "fix(accounting): Recurring Bill wizard line CoA + generate bill_lines (9/24)",
+   "mergedAt": "2026-07-23T03:00:52Z",
+   "branch": "fix/acct-recurring-bill-wizard"
+  },
+  {
+   "number": 3238,
+   "title": "fix(accounting): Receive Payment deposit CoA picker (7/24)",
+   "mergedAt": "2026-07-23T03:00:45Z",
+   "branch": "fix/acct-receive-payment-deposit"
+  },
+  {
+   "number": 3237,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-23T02:35:17Z",
+   "branch": "chore/tracker-artifacts-sync-29952475747"
+  },
+  {
+   "number": 3236,
+   "title": "fix(accounting): A/P picker createKind=account (8/24)",
+   "mergedAt": "2026-07-23T03:00:11Z",
+   "branch": "fix/acct-ap-createkind-account"
+  },
+  {
    "number": 3233,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-07-22T19:22:39Z",
    "branch": "chore/tracker-artifacts-sync-29949191374"
+  },
+  {
+   "number": 3232,
+   "title": "feat(accounting): Allocations page — list + SUBNAV (3/24)",
+   "mergedAt": "2026-07-23T02:57:25Z",
+   "branch": "fix/acct-allocations"
+  },
+  {
+   "number": 3231,
+   "title": "feat(accounting): Manual JE create on Accounting hub (4/6)",
+   "mergedAt": "2026-07-22T21:56:12Z",
+   "branch": "fix/acct-manual-je-hub"
   },
   {
    "number": 3230,
@@ -16640,130 +16760,16 @@
    "title": "chore(skill): add ih35-code-review adversarial review skill",
    "mergedAt": "2026-07-14T13:03:15Z",
    "branch": "chore/skill-code-review"
-  },
-  {
-   "number": 2476,
-   "title": "fix(module-legal): legal module verified non-financial defect fixes",
-   "mergedAt": "2026-07-14T12:41:20Z",
-   "branch": "fix/module-legal-defects"
-  },
-  {
-   "number": 2475,
-   "title": "fix(module-eld): ELD module verified non-financial defect fixes",
-   "mergedAt": "2026-07-14T12:15:37Z",
-   "branch": "fix/module-eld-defects"
-  },
-  {
-   "number": 2474,
-   "title": "fix(module-docs): docs module verified non-financial defect fixes",
-   "mergedAt": "2026-07-14T11:56:57Z",
-   "branch": "fix/module-docs-defects"
-  },
-  {
-   "number": 2473,
-   "title": "fix(module-dispatch): dispatch module verified non-financial defect fixes",
-   "mergedAt": "2026-07-14T11:42:56Z",
-   "branch": "fix/module-dispatch-defects"
-  },
-  {
-   "number": 2472,
-   "title": "fix(module-inventory): inventory module verified non-financial defect fixes",
-   "mergedAt": "2026-07-14T11:28:08Z",
-   "branch": "fix/module-inventory-defects"
-  },
-  {
-   "number": 2471,
-   "title": "fix(module-fleet): fleet module verified non-financial defect fixes",
-   "mergedAt": "2026-07-14T11:19:30Z",
-   "branch": "fix/module-fleet-defects"
-  },
-  {
-   "number": 2470,
-   "title": "fix(module-13): cash-flow module verified non-financial defect fixes",
-   "mergedAt": "2026-07-14T11:03:10Z",
-   "branch": "fix/module-13-cashflow-defects"
-  },
-  {
-   "number": 2469,
-   "title": "fix(module-09): driver module verified non-financial defect fixes",
-   "mergedAt": "2026-07-14T06:34:06Z",
-   "branch": "fix/module-09-driver-defects-wt"
-  },
-  {
-   "number": 2468,
-   "title": "feat(ui): DatePicker + no-dead-click guards + straggler date-input fixes (UI standard)",
-   "mergedAt": "2026-07-14T05:57:44Z",
-   "branch": "feat/ui-standard-datepicker-clickthrough-guards"
-  },
-  {
-   "number": 2467,
-   "title": "fix(banking): Bank Register + COA nav buttons + click-through register rows (QBO parity)",
-   "mergedAt": "2026-07-14T05:11:04Z",
-   "branch": "fix/banking-nav-and-register-clickthrough"
-  },
-  {
-   "number": 2466,
-   "title": "fix(banking): inline \"+ Add new\" (ReferenceSelect) in categorization dropdowns (design-law §7)",
-   "mergedAt": "2026-07-14T05:38:14Z",
-   "branch": "fix/banking-categorization-inline-create"
-  },
-  {
-   "number": 2465,
-   "title": "fix(ci): restore fast parallel db.tests (serial caused 15min timeout on every PR)",
-   "mergedAt": "2026-07-14T04:39:11Z",
-   "branch": "fix/ci-parallel-restore-fast"
-  },
-  {
-   "number": 2464,
-   "title": "feat(qbo): kill the QBO write-out path (reconcile-only lock) + guard",
-   "mergedAt": "2026-07-14T12:27:20Z",
-   "branch": "feat/qbo-write-kill"
-  },
-  {
-   "number": 2463,
-   "title": "fix(fuel): wire History tab + Import button to existing backend",
-   "mergedAt": "2026-07-14T06:23:28Z",
-   "branch": "fix/fuel-history-import-wire"
-  },
-  {
-   "number": 2462,
-   "title": "fix(compliance): wire Violations + HOS History tabs to existing endpoints",
-   "mergedAt": "2026-07-14T05:25:14Z",
-   "branch": "fix/compliance-violations-hos-wire"
-  },
-  {
-   "number": 2461,
-   "title": "fix(maintenance): mount Road Service route (was a live 404)",
-   "mergedAt": "2026-07-14T06:57:26Z",
-   "branch": "fix/maint-road-service-route-mount"
-  },
-  {
-   "number": 2460,
-   "title": "fix(ci): verify:local-ci runs db.tests + serial db.tests kill the flaky (permanent fix for post-push failures)",
-   "mergedAt": "2026-07-14T03:09:47Z",
-   "branch": "fix/verify-local-ci-runs-db-tests"
-  },
-  {
-   "number": 2459,
-   "title": "feat(acct): QBO-parity Bills/Invoices list columns, badges, and vendor/customer filters",
-   "mergedAt": "2026-07-14T04:50:58Z",
-   "branch": "feat/qbo-parity-bills-invoices-lists"
-  },
-  {
-   "number": 2458,
-   "title": "feat(banking): wire the QBO-style account-tiles home + sync strip (orphaned → live)",
-   "mergedAt": "2026-07-14T04:26:37Z",
-   "branch": "feat/qbo-parity-banking-home"
-  },
-  {
-   "number": 2457,
-   "title": "feat(vendors): QBO-parity list filters/columns (1099?/Status) + W-9/1099 profile tab",
-   "mergedAt": "2026-07-14T06:45:27Z",
-   "branch": "feat/qbo-parity-vendors"
   }
  ],
- "merged_pr_total": 2931,
+ "merged_pr_total": 2951,
  "hold_for_jorge": [
+  {
+   "number": 3257,
+   "title": "fix(accounting): New Account drawer silently discarded 4 collected fields [FINANCIAL / HOLD]",
+   "mergedAt": "2026-07-23T03:06:52Z",
+   "category": "HOLD"
+  },
   {
    "number": 3228,
    "title": "fix(insurance): WIZARD-CLAIM-ECONOMICS-DEPTH slice 2 — fault/responsibility/trailer/deductible/recovery/books [HOLD / FINANCIAL]",
