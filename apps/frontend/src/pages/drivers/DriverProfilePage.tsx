@@ -35,6 +35,7 @@ import { driverDisplayName, summarizeDriverDqf } from "../../lib/driverDqf";
 import { DriverDqfComplianceChip } from "./components/DriverDqfComplianceChip";
 import { DriverDqfPanel } from "./components/DriverDqfPanel";
 import { DriverLateArrivalCard } from "../../components/drivers/DriverLateArrivalCard";
+import { resolveApiUrl } from "../../api/client";
 
 interface LayoverSummary {
   total_layovers: number;
@@ -49,8 +50,7 @@ function LayoverSummaryCard({ driverId, companyId }: { driverId: string; company
   const { data, isLoading } = useQuery<{ data: LayoverSummary[] }>({
     queryKey: ["driver-layovers-summary", driverId, companyId],
     queryFn: async () => {
-      const res = await fetch(
-        `/api/v1/dispatch/layovers?operating_company_id=${encodeURIComponent(companyId)}&driver=${encodeURIComponent(driverId)}&from=${from}&to=${to}`,
+      const res = await fetch(resolveApiUrl(`/api/v1/dispatch/layovers?operating_company_id=${encodeURIComponent(companyId)}&driver=${encodeURIComponent(driverId)}&from=${from}&to=${to}`),
         { credentials: "include" }
       );
       if (!res.ok) throw new Error("Failed");

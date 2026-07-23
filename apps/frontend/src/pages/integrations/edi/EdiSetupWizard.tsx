@@ -34,8 +34,7 @@ async function createPartner(body: Record<string, unknown>) {
 }
 
 async function testPartnerConnection(companyId: string, partnerUuid: string) {
-  const res = await fetch(
-    `/api/integrations/edi/partners/${partnerUuid}/test-connection?operating_company_id=${companyId}`,
+  const res = await fetch(resolveApiUrl(`/api/integrations/edi/partners/${partnerUuid}/test-connection?operating_company_id=${companyId}`),
     { method: "POST", credentials: "include" }
   );
   if (!res.ok) throw new Error("Connection test failed");

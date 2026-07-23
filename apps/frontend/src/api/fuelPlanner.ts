@@ -1,4 +1,5 @@
 import { apiRequest, apiRequestFormData } from "./client";
+import { resolveApiUrl } from "./client";
 
 export type LovesSyncStatus = {
   last_synced_at: string | null;
@@ -144,11 +145,10 @@ export async function uploadLovesPrices(
   file: File,
   ifMatch?: string | null
 ): Promise<{ rows_added: number; rows_updated: number; rows_skipped: number; etag: string | null }> {
-  const base = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
-  const url = `${base ? base.replace(/\/$/, "") : ""}/api/v1/fuel/loves-prices/upload?${q(companyId)}`;
+  const url = `/api/v1/fuel/loves-prices/upload?${q(companyId)}`;
   const form = new FormData();
   form.append("file", file);
-  const response = await fetch(url, {
+  const response = await fetch(resolveApiUrl(url), {
     method: "POST",
     credentials: "include",
     headers: ifMatch ? { "If-Match": ifMatch } : undefined,

@@ -4,6 +4,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { resolveApiUrl } from "../../api/client";
 
 interface DispatcherStats {
   dispatcher_id: string | null;
@@ -41,8 +42,7 @@ export function BookingGapReport() {
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery<{ data: { dispatchers: DispatcherStats[] } }>({
     queryKey: ["booking-gap", operatingCompanyId, from, to],
     queryFn: async () => {
-      const res = await fetch(
-        `/api/v1/dispatch/analytics/booking-gap?operating_company_id=${encodeURIComponent(operatingCompanyId)}&from=${from}&to=${to}`,
+      const res = await fetch(resolveApiUrl(`/api/v1/dispatch/analytics/booking-gap?operating_company_id=${encodeURIComponent(operatingCompanyId)}&from=${from}&to=${to}`),
         { credentials: "include" }
       );
       if (!res.ok) throw new Error("Failed to load booking gap report");

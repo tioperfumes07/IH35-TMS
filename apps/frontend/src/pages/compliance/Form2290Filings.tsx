@@ -3,17 +3,23 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { resolveApiUrl } from "../../api/client";
 
 type Filing = Record<string, unknown>;
 
+// SAF-F06: these page-local helpers called bare fetch(path), so with
+// VITE_API_BASE_URL set and NO /api rewrite on the static site the request hit
+// app.ih35dispatch.com and got index.html back with HTTP 200 — res.ok was true, the
+// !res.ok guard never fired, and res.json() threw on HTML. Every load failed silently
+// and rendered as empty data. resolveApiUrl() is the shared client's URL resolver.
 async function apiGet(path: string) {
-  const res = await fetch(path, { credentials: "include" });
+  const res = await fetch(resolveApiUrl(path), { credentials: "include" });
   if (!res.ok) throw new Error(`request_failed_${res.status}`);
   return res.json();
 }
 
 async function apiPost(path: string, body?: unknown) {
-  const res = await fetch(path, {
+  const res = await fetch(resolveApiUrl(path), {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },

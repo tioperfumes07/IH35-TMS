@@ -18,6 +18,7 @@ import { LegalModuleTabs } from "../LegalModuleTabs";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { formatDateUS, formatDateTimeUS } from "../../../lib/formatDate";
 import { formatUsd, formatUsdCents } from "../../../lib/money";
+import { resolveApiUrl } from "../../../api/client";
 import {
   formStateToUpdatePayload,
   LegalMatterFormFields,
@@ -154,9 +155,8 @@ export function LegalMatterDetailPage() {
 
   async function downloadDoc(documentId: string) {
     const path = legalMattersApi.documentDownloadUrl(companyId, id, documentId);
-    const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
-    const url = API_BASE_URL ? `${API_BASE_URL.replace(/\/$/, "")}${path}` : new URL(path, window.location.origin).toString();
-    const res = await fetch(url, { credentials: "include" });
+    const url = path;
+    const res = await fetch(resolveApiUrl(url), { credentials: "include" });
     const json = (await res.json()) as { download_url?: string; error?: string };
     if (!res.ok || !json.download_url) return;
     window.open(json.download_url, "_blank", "noopener,noreferrer");
