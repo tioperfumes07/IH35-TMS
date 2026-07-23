@@ -208,7 +208,7 @@ describeIntegration("FIN-18 settlement GL posting (real Postgres)", () => {
         await db.query(
           `INSERT INTO catalogs.account_role_bindings (role_key, account_id, operating_company_id)
            VALUES ($1,$2::uuid,$3::uuid)
-           ON CONFLICT (operating_company_id, role_key) DO UPDATE
+           ON CONFLICT (operating_company_id, role_key) WHERE (operating_company_id IS NOT NULL) DO UPDATE
              SET account_id = EXCLUDED.account_id,
                  operating_company_id = EXCLUDED.operating_company_id,
                  deactivated_at = NULL`,
