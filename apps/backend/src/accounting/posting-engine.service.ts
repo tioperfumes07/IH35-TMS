@@ -284,6 +284,10 @@ async function resolveCustomerPaymentDepositAccount(
       WHERE id = $1::uuid
         AND operating_company_id = $2::uuid
         AND deactivated_at IS NULL
+        -- is_postable: a non-postable HEADER account (e.g. a parent roll-up) must never become the
+        -- debit leg. A historical row pointing at one now falls through to the bank bridge and then
+        -- to the undeposited_funds / cash_clearing role, both of which enforce postability.
+        AND is_postable = true
       LIMIT 1
     `,
     [raw, operatingCompanyId]
