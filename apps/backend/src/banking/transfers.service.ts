@@ -360,12 +360,36 @@ export async function listTransfers(input: {
           fb.account_name AS from_bank_name,
           tb.account_name AS to_bank_name,
           fa.account_name AS from_coa_name,
-          ta.account_name AS to_coa_name
+          ta.account_name AS to_coa_name,
+          je.journal_entry_id
         FROM banking.transfers t
         LEFT JOIN banking.bank_accounts fb ON fb.id = t.from_account_id
         LEFT JOIN banking.bank_accounts tb ON tb.id = t.to_account_id
         LEFT JOIN catalogs.accounts fa ON fa.id = t.from_account_id
         LEFT JOIN catalogs.accounts ta ON ta.id = t.to_account_id
+        LEFT JOIN LATERAL (
+          SELECT COALESCE(
+            (
+              SELECT jep.journal_entry_uuid::text
+              FROM accounting.journal_entry_postings jep
+              WHERE jep.operating_company_id = t.operating_company_id
+                AND jep.source_transaction_type = 'transfer'
+                AND jep.source_transaction_id = t.id::text
+              ORDER BY jep.line_sequence ASC
+              LIMIT 1
+            ),
+            (
+              SELECT jep.journal_entry_uuid::text
+              FROM accounting.transaction_source_links tsl
+              JOIN accounting.journal_entry_postings jep ON jep.id = tsl.journal_entry_posting_id
+              WHERE tsl.operating_company_id = t.operating_company_id
+                AND tsl.linked_object_type = 'transfer'
+                AND tsl.linked_object_id = t.id::text
+              ORDER BY tsl.created_at ASC
+              LIMIT 1
+            )
+          ) AS journal_entry_id
+        ) je ON TRUE
         WHERE ${whereSql}
         ORDER BY t.transfer_date DESC, t.created_at DESC
         LIMIT $${values.length - 1} OFFSET $${values.length}
@@ -381,10 +405,35 @@ export async function getTransferDetail(transferId: string, operatingCompanyId: 
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
     const transferRes = await client.query(
       `
-        SELECT *
-        FROM banking.transfers
-        WHERE id = $1
-          AND operating_company_id = $2
+        SELECT
+          t.*,
+          je.journal_entry_id
+        FROM banking.transfers t
+        LEFT JOIN LATERAL (
+          SELECT COALESCE(
+            (
+              SELECT jep.journal_entry_uuid::text
+              FROM accounting.journal_entry_postings jep
+              WHERE jep.operating_company_id = t.operating_company_id
+                AND jep.source_transaction_type = 'transfer'
+                AND jep.source_transaction_id = t.id::text
+              ORDER BY jep.line_sequence ASC
+              LIMIT 1
+            ),
+            (
+              SELECT jep.journal_entry_uuid::text
+              FROM accounting.transaction_source_links tsl
+              JOIN accounting.journal_entry_postings jep ON jep.id = tsl.journal_entry_posting_id
+              WHERE tsl.operating_company_id = t.operating_company_id
+                AND tsl.linked_object_type = 'transfer'
+                AND tsl.linked_object_id = t.id::text
+              ORDER BY tsl.created_at ASC
+              LIMIT 1
+            )
+          ) AS journal_entry_id
+        ) je ON TRUE
+        WHERE t.id = $1
+          AND t.operating_company_id = $2
         LIMIT 1
       `,
       [transferId, operatingCompanyId]
