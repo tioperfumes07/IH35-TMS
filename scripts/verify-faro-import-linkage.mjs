@@ -61,4 +61,14 @@ if (errors.length) {
   for (const e of errors) console.error(`  ${e}`);
   process.exit(1);
 }
+
+// PHANTOM-COLUMN GUARD: mdata.customers has customer_name, NOT name (0008_mdata_init.sql:100).
+// The enrichment query shipped `c.name::text AS customer_name`, which raises 42703 and — because
+// the throw is not a FaroCsvImportError — rethrows as a 500, killing the preview for EVERY CSV.
+const faroSrc = fs.readFileSync(path.join(ROOT, "apps/backend/src/factoring/faro-csv-import.ts"), "utf8");
+if (/\bc\.name\b/.test(faroSrc)) {
+  console.error("FAIL: faro-csv-import references c.name — mdata.customers has customer_name, not name (42703 -> 500 on every preview)");
+  process.exit(1);
+}
+
 console.log(`${LABEL} PASS`);

@@ -218,9 +218,11 @@ export async function enrichFaroPreviewLines(
         i.id::text,
         i.display_id::text,
         i.customer_id::text,
-        c.name::text AS customer_name
+        c.customer_name::text AS customer_name
       FROM accounting.invoices i
-      LEFT JOIN mdata.customers c ON c.id = i.customer_id
+      LEFT JOIN mdata.customers c
+             ON c.id = i.customer_id
+            AND c.operating_company_id = i.operating_company_id
       WHERE i.operating_company_id = $1::uuid
         AND i.display_id = ANY($2::text[])
     `,
