@@ -1,6 +1,6 @@
 {
  "date": "2026-07-23",
- "generated_at_iso": "2026-07-23T19:49:31.666Z",
+ "generated_at_iso": "2026-07-23T20:48:13.797Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
@@ -799,10 +799,10 @@
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #2829 title-match only, unverified",
+   "evidence": "PR #3348 title-match only, unverified",
    "name": "",
    "registered_on": null,
-   "pr": 2829
+   "pr": 3348
   },
   {
    "id": "f-02-jump-to-tab-nonstandard",
@@ -13162,6 +13162,18 @@
  ],
  "merged_prs": [
   {
+   "number": 3358,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-23T20:11:57Z",
+   "branch": "chore/tracker-artifacts-sync-30039498613"
+  },
+  {
+   "number": 3357,
+   "title": "fix(safety): safety records were undrillable — add reverse EntityLink linkage (SAF-F33)",
+   "mergedAt": "2026-07-23T20:11:40Z",
+   "branch": "fix/saf-f33-safety-entitylink-reverse"
+  },
+  {
    "number": 3356,
    "title": "fix(safety): accidents list showed raw driver/unit uuids + swallowed errors (SAF-F26)",
    "mergedAt": "2026-07-23T19:47:10Z",
@@ -13192,6 +13204,12 @@
    "branch": "fix/combobox-listbox-portal-paritytable"
   },
   {
+   "number": 3348,
+   "title": "[HOLD-FOR-JORGE · FINANCIAL] SAF-F01 — escrow Forfeit route + damage_recovery account",
+   "mergedAt": "2026-07-23T20:47:23Z",
+   "branch": "fix/saf-f01-escrow-forfeit"
+  },
+  {
    "number": 3347,
    "title": "[HOLD-FOR-JORGE] feat(accounting): Cost of Labor seed TRANSP+USMCA draft (WO #4)",
    "mergedAt": "2026-07-23T19:48:45Z",
@@ -13202,6 +13220,12 @@
    "title": "[HOLD-FOR-JORGE] fix(banking): cash-GL is_postable DB trigger (WO #6)",
    "mergedAt": "2026-07-23T18:10:23Z",
    "branch": "fix/banking-cash-gl-postable-trigger"
+  },
+  {
+   "number": 3345,
+   "title": "[HOLD-FOR-JORGE] fix(catalogs): drop global UNIQUE(role_key) on bindings (WO #5)",
+   "mergedAt": "2026-07-23T20:05:11Z",
+   "branch": "fix/drop-global-role-key-unique"
   },
   {
    "number": 3344,
@@ -16736,34 +16760,16 @@
    "title": "fix(relay): client-side date filter + one fetch per backfill company",
    "mergedAt": "2026-07-16T18:41:31Z",
    "branch": "fix/relay-ingest-hang"
-  },
-  {
-   "number": 2563,
-   "title": "fix(425c): regression guard — never hardcode petition_date",
-   "mergedAt": "2026-07-16T18:18:59Z",
-   "branch": "fix/425c-petition-date"
-  },
-  {
-   "number": 2562,
-   "title": "fix(frontend): dead click-through sweep (audit misses)",
-   "mergedAt": "2026-07-16T18:18:43Z",
-   "branch": "fix/dead-clickthrough-sweep"
-  },
-  {
-   "number": 2561,
-   "title": "fix(frontend): EntityLink reverse-drill on accounting surfaces",
-   "mergedAt": "2026-07-16T17:42:17Z",
-   "branch": "fix/entitylink-reverse-drill-accounting"
-  },
-  {
-   "number": 2560,
-   "title": "fix(accounting): grouped sub-nav tabs navigate again (nav-split)",
-   "mergedAt": "2026-07-16T17:36:21Z",
-   "branch": "fix/accounting-subnav-navigate"
   }
  ],
  "merged_pr_total": 3000,
  "hold_for_jorge": [
+  {
+   "number": 3348,
+   "title": "[HOLD-FOR-JORGE · FINANCIAL] SAF-F01 — escrow Forfeit route + damage_recovery account",
+   "mergedAt": "2026-07-23T20:47:23Z",
+   "category": "HOLD"
+  },
   {
    "number": 3347,
    "title": "[HOLD-FOR-JORGE] feat(accounting): Cost of Labor seed TRANSP+USMCA draft (WO #4)",
@@ -16774,6 +16780,12 @@
    "number": 3346,
    "title": "[HOLD-FOR-JORGE] fix(banking): cash-GL is_postable DB trigger (WO #6)",
    "mergedAt": "2026-07-23T18:10:23Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3345,
+   "title": "[HOLD-FOR-JORGE] fix(catalogs): drop global UNIQUE(role_key) on bindings (WO #5)",
+   "mergedAt": "2026-07-23T20:05:11Z",
    "category": "HOLD"
   },
   {
