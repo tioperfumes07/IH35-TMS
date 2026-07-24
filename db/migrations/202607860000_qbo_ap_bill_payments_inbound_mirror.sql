@@ -2,6 +2,8 @@
 -- Jorge's hand, then ledger-backfill so prod db:migrate skips it. Registered in
 -- db/migrations/.held-migrations.json.
 --
+-- CANONICAL-CHECK: qbo_ap_bill_payment_mirror. Read-only INBOUND QBO BillPayment staging clone (mdata). Distinct from accounting.bill_payments (TMS/QBO projected subledger). No GL. Parallel to mdata.qbo_ap_bills.
+--
 -- QBO-AP-BILLPAY-PULL-1 — INBOUND QuickBooks A/P payment (BillPayment) mirror.
 --
 -- WHY: The QBO→TMS A/P clone (mdata.qbo_ap_bills -> accounting.bills, held 202606290110 + puller
