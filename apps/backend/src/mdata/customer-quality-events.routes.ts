@@ -119,8 +119,13 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     const reasons = await withCurrentUser(authUser.uuid, async (client) => {
-      const values: unknown[] = [];
-      const filters: string[] = [];
+      // customer_quality_event_reasons is per-entity + FORCE RLS (202607920000). Resolve the caller's
+      // company and set the GUC so the read returns the entity's rows; also filter explicitly.
+      const companyId = await resolveOperatingCompanyId(client, authUser.uuid);
+      if (!companyId) return null;
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+      const values: unknown[] = [companyId];
+      const filters: string[] = ["r.operating_company_id = $1"];
       if (!parsedQuery.data.include_inactive) filters.push("r.is_active = true", "r.deactivated_at IS NULL");
       if (parsedQuery.data.event_type) {
         values.push(parsedQuery.data.event_type);
@@ -129,7 +134,7 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
       const res = await client.query(
         `
-          SELECT r.id, r.code, r.label, r.description, r.event_type, r.severity, r.is_active, r.deactivated_at
+          SELECT r.id, r.operating_company_id, r.code, r.label, r.description, r.event_type, r.severity, r.is_active, r.deactivated_at
           FROM catalogs.customer_quality_event_reasons r
           ${whereClause}
           ORDER BY
@@ -141,6 +146,7 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
       );
       return res.rows;
     });
+    if (reasons === null) return reply.code(403).send({ error: "forbidden" });
     return { reasons };
   });
 
@@ -161,6 +167,8 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
       // a foreign customer id can only ever return the caller's own entity's rows.
       const companyId = await resolveOperatingCompanyId(client, authUser.uuid);
       if (!companyId) return { error: "mdata_customer_not_found" as const };
+      // Set the GUC so the LEFT JOIN on the per-entity reasons catalog resolves under FORCE RLS.
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
 
       const customerRes = await client.query(
         `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
@@ -209,7 +217,16 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
     if (body.event_date > todayIsoDate()) return reply.code(400).send({ error: "event_date_in_future" });
 
     const created = await withCurrentUser(authUser.uuid, async (client) => {
-      const customerRes = await client.query(`SELECT id FROM mdata.customers WHERE id = $1 LIMIT 1`, [parsedParams.data.customer_id]);
+      // Resolve the caller's company, scope the customer check to it (closes the id-only XE-IDOR the
+      // GET already fixed), and set the GUC so the per-entity reason lookup below resolves in the
+      // customer's entity (customer_quality_event_reasons is FORCE RLS).
+      const companyId = await resolveOperatingCompanyId(client, authUser.uuid);
+      if (!companyId) return { error: "mdata_customer_not_found" as const };
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+      const customerRes = await client.query(
+        `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        [parsedParams.data.customer_id, companyId]
+      );
       if (!customerRes.rows[0]) return { error: "mdata_customer_not_found" as const };
 
       let normalizedSeverity = body.severity;

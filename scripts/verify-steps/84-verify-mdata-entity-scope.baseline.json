@@ -646,11 +646,6 @@
       "preview": "`SELECT oos_since::text FROM mdata.units WHERE id = $1::uuid LIMIT 1`"
     },
     {
-      "key": "apps/backend/src/mdata/customer-quality-events.routes.ts#764d74ba62f61188773fe1797ed9ca5e658d6ef0",
-      "file": "apps/backend/src/mdata/customer-quality-events.routes.ts",
-      "preview": "`SELECT id FROM mdata.customers WHERE id = $1 LIMIT 1`"
-    },
-    {
       "key": "apps/backend/src/mdata/customer-quality-events.routes.ts#87fe8feb6d3023207639c13cac897a9e354ab3a5",
       "file": "apps/backend/src/mdata/customer-quality-events.routes.ts",
       "preview": "` SELECT e.id, e.customer_id, e.event_type, e.event_date, e.severity, e.summary, e.details, e.reason_id, r.code AS reaso"
