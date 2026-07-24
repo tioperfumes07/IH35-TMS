@@ -2201,6 +2201,7 @@
       "is_active",
       "is_required",
       "name",
+      "operating_company_id",
       "sort_order",
       "unit",
       "updated_at",
@@ -2215,6 +2216,7 @@
       "id",
       "is_active",
       "name",
+      "operating_company_id",
       "sort_order",
       "updated_at",
       "updated_by_user_id"

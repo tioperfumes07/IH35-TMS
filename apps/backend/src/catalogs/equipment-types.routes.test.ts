@@ -5,6 +5,14 @@ import { registerEquipmentTypeRoutes } from "./equipment-types.routes.js";
 const dryVanCanonicalId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 
 const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
+  // Per-entity scoping resolves the caller's company before the collision check; give the Owner mock
+  // a company so the test drives the real 409 path instead of the 403 no-company refusal.
+  if (sql.includes("user_accessible_company_ids") || sql.includes("default_company_id")) {
+    return { rows: [{ id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd" }] };
+  }
+  if (sql.includes("set_config('app.operating_company_id'")) {
+    return { rows: [] };
+  }
   if (sql.includes("FROM catalogs.equipment_types et") && sql.includes("regexp_replace")) {
     const normalizedCode = String(values?.[0] ?? "");
     if (normalizedCode === "dry-van") {

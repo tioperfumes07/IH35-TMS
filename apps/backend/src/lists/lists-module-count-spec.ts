@@ -67,7 +67,7 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
     { table: "tractor_statuses", activeFilter: "is_active", companyScoped: true },
     { table: "trailer_statuses", activeFilter: "is_active", companyScoped: true },
     { table: "asset_condition_codes", activeFilter: "is_active", companyScoped: true },
-    { table: "equipment_types", activeFilter: "is_active", companyScoped: false },
+    { table: "equipment_types", activeFilter: "is_active", companyScoped: true },
     { table: "tire_positions", activeFilter: "is_active", companyScoped: false },
     { table: "unit_ownership_types", activeFilter: "is_active", companyScoped: true },
     { table: "trailer_types", activeFilter: "is_active", companyScoped: true },

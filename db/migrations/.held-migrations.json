@@ -444,6 +444,14 @@
     {
       "file": "202607920000_customer_quality_reasons_per_entity.sql",
       "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] LST per-entity catalog customer_quality_event_reasons (owner ruling 2026-07-24). opco + copy-to-every-entity + UNIQUE(opco,code) + FORCE RLS + REVOKE DELETE; quality-event handlers resolve the customer company + GUC. Owner applies on Neon, ledger-backfills."
+    },
+    {
+      "file": "202607910000_equipment_types_per_entity.sql",
+      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] LST per-entity equipment_types + templates (renumbered off Cursor 880). APPLIED on prod (ledger 7cec7823; committed file drifted to d8bbefec via a fix(ci) rewrite — see checksum-overrides). Do NOT re-run/edit. Forward repair = 911."
+    },
+    {
+      "file": "202607911000_equipment_types_norm_dedupe_per_entity.sql",
+      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] Forward repair for 910: sets deactivated_at on the 4 half-deactivated equipment_types copies (DRY-VAN/OVERSIZE on USMCA+TRK) that 910's seed left is_active=false/deactivated_at=NULL. Load-bearing for the collision guard. Owner applies + ledger-backfills (sha 7c44216e). Do NOT renumber/edit/drop."
     }
   ]
 }

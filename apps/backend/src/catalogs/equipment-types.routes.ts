@@ -4,6 +4,22 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { normalizeEquipmentTypeKey } from "./equipment-type-normalize.js";
+import { resolveOperatingCompanyId, OperatingCompanyMembershipError } from "../auth/operating-company-scope.js";
+
+// equipment_types + equipment_line_item_templates are per-entity (migration 202607880000). Resolve the
+// caller's company (their DEFAULT when the param is omitted) and set the app.operating_company_id GUC
+// the FORCE-RLS company_scope policy reads, so every read/write is entity-scoped. Returns null only
+// when the user has no accessible company (callers translate to 403).
+async function scopeToCompany(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ id: string }> }> },
+  userId: string,
+  requested?: string | null
+): Promise<string | null> {
+  const operatingCompanyId = await resolveOperatingCompanyId(client, userId, requested ?? null);
+  if (!operatingCompanyId) return null;
+  await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+  return operatingCompanyId;
+}
 
 const lineItemUnitSchema = z.enum([
   "per_loaded_mile",
@@ -19,6 +35,11 @@ const idParamSchema = z.object({ id: z.string().uuid() });
 
 const listQuerySchema = z.object({
   include_inactive: z.enum(["true", "false"]).optional(),
+  operating_company_id: z.string().uuid().optional(),
+});
+
+const companyQuerySchema = z.object({
+  operating_company_id: z.string().uuid().optional(),
 });
 
 const createEquipmentTypeSchema = z.object({
@@ -103,6 +124,12 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
     const includeInactive = parsedQuery.data.include_inactive === "true";
 
     return withCurrentUser(user.uuid, async (client) => {
+      const operatingCompanyId = await scopeToCompany(client, user.uuid, parsedQuery.data.operating_company_id).catch((error) => {
+        if (error instanceof OperatingCompanyMembershipError) return null;
+        throw error;
+      });
+      if (!operatingCompanyId) return reply.code(403).send({ error: "forbidden" });
+      // Reads are entity-scoped by FORCE RLS via the GUC set above; the join/filters are unchanged.
       const filter = includeInactive ? "" : "WHERE et.is_active = true AND et.deactivated_at IS NULL";
       const res = await client.query(
         `
@@ -139,8 +166,15 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
     if (!user) return;
     const parsed = idParamSchema.safeParse(req.params);
     if (!parsed.success) return sendValidationError(reply, parsed.error);
+    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     return withCurrentUser(user.uuid, async (client) => {
+      const operatingCompanyId = await scopeToCompany(client, user.uuid, parsedQuery.data.operating_company_id).catch((error) => {
+        if (error instanceof OperatingCompanyMembershipError) return null;
+        throw error;
+      });
+      if (!operatingCompanyId) return reply.code(403).send({ error: "forbidden" });
       const res = await client.query(
         `
           SELECT
@@ -178,12 +212,19 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
     if (!user) return;
     const parsed = createEquipmentTypeSchema.safeParse(req.body ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
+    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
     const lineItemCodes = parsed.data.line_items.map((lineItem) => lineItem.code);
     if (new Set(lineItemCodes).size !== lineItemCodes.length) {
       return reply.code(400).send({ error: "duplicate_line_item_codes_in_request" });
     }
 
     return withCurrentUser(user.uuid, async (client) => {
+      const operatingCompanyId = await scopeToCompany(client, user.uuid, parsedQuery.data.operating_company_id).catch((error) => {
+        if (error instanceof OperatingCompanyMembershipError) return null;
+        throw error;
+      });
+      if (!operatingCompanyId) return reply.code(403).send({ error: "forbidden" });
       const normalizedCode = normalizeEquipmentTypeKey(parsed.data.code);
       const normalizedName = normalizeEquipmentTypeKey(parsed.data.name);
       const collisionRes = await client.query<{ id: string }>(
@@ -214,11 +255,11 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
       try {
         const insertEq = await client.query(
           `
-            INSERT INTO catalogs.equipment_types (code, name, description, sort_order, created_by_user_id, updated_by_user_id)
-            VALUES ($1, $2, $3, $4, $5, $5)
+            INSERT INTO catalogs.equipment_types (operating_company_id, code, name, description, sort_order, created_by_user_id, updated_by_user_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $6)
             RETURNING id
           `,
-          [parsed.data.code, parsed.data.name, parsed.data.description ?? null, parsed.data.sort_order, user.uuid]
+          [operatingCompanyId, parsed.data.code, parsed.data.name, parsed.data.description ?? null, parsed.data.sort_order, user.uuid]
         );
         const newId = String(insertEq.rows[0].id);
 
@@ -226,11 +267,11 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
           await client.query(
             `
               INSERT INTO catalogs.equipment_line_item_templates (
-                equipment_type_id, code, name, description, unit, sort_order, is_required, created_by_user_id, updated_by_user_id
+                operating_company_id, equipment_type_id, code, name, description, unit, sort_order, is_required, created_by_user_id, updated_by_user_id
               )
-              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9)
             `,
-            [newId, item.code, item.name, item.description ?? null, item.unit, item.sort_order, item.is_required, user.uuid]
+            [operatingCompanyId, newId, item.code, item.name, item.description ?? null, item.unit, item.sort_order, item.is_required, user.uuid]
           );
         }
 
@@ -264,8 +305,15 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
     const parsedBody = updateEquipmentTypeSchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     return withCurrentUser(user.uuid, async (client) => {
+      const operatingCompanyId = await scopeToCompany(client, user.uuid, parsedQuery.data.operating_company_id).catch((error) => {
+        if (error instanceof OperatingCompanyMembershipError) return null;
+        throw error;
+      });
+      if (!operatingCompanyId) return reply.code(403).send({ error: "forbidden" });
       const fields: string[] = [];
       const values: unknown[] = [];
       for (const [key, value] of Object.entries(parsedBody.data)) {
@@ -279,6 +327,7 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
       values.push(user.uuid);
       fields.push(`updated_by_user_id = $${values.length}`);
       values.push(parsedParams.data.id);
+      // WHERE id is entity-scoped by FORCE RLS via the GUC — a cross-entity id simply matches no row.
       const res = await client.query(
         `UPDATE catalogs.equipment_types SET ${fields.join(", ")} WHERE id = $${values.length} RETURNING id`,
         values
@@ -307,18 +356,31 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
     const parsedBody = createLineItemTemplateSchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     return withCurrentUser(user.uuid, async (client) => {
+      const operatingCompanyId = await scopeToCompany(client, user.uuid, parsedQuery.data.operating_company_id).catch((error) => {
+        if (error instanceof OperatingCompanyMembershipError) return null;
+        throw error;
+      });
+      if (!operatingCompanyId) return reply.code(403).send({ error: "forbidden" });
+      // The parent equipment type must belong to the caller's entity — a template that pointed at
+      // another entity's equipment_type would break the same-entity invariant (the FK check bypasses
+      // RLS). This SELECT is RLS-scoped, so a cross-entity parent id returns no row -> 404.
+      const parentRes = await client.query(`SELECT id FROM catalogs.equipment_types WHERE id = $1 LIMIT 1`, [parsedParams.data.id]);
+      if (parentRes.rows.length === 0) return reply.code(404).send({ error: "equipment_type_not_found" });
       try {
         const res = await client.query(
           `
             INSERT INTO catalogs.equipment_line_item_templates (
-              equipment_type_id, code, name, description, unit, sort_order, is_required, created_by_user_id, updated_by_user_id
+              operating_company_id, equipment_type_id, code, name, description, unit, sort_order, is_required, created_by_user_id, updated_by_user_id
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9)
             RETURNING id
           `,
           [
+            operatingCompanyId,
             parsedParams.data.id,
             parsedBody.data.code,
             parsedBody.data.name,
@@ -360,8 +422,15 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
     const parsedBody = updateLineItemTemplateSchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     return withCurrentUser(user.uuid, async (client) => {
+      const operatingCompanyId = await scopeToCompany(client, user.uuid, parsedQuery.data.operating_company_id).catch((error) => {
+        if (error instanceof OperatingCompanyMembershipError) return null;
+        throw error;
+      });
+      if (!operatingCompanyId) return reply.code(403).send({ error: "forbidden" });
       const fields: string[] = [];
       const values: unknown[] = [];
       for (const [key, value] of Object.entries(parsedBody.data)) {
@@ -375,6 +444,7 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
       values.push(user.uuid);
       fields.push(`updated_by_user_id = $${values.length}`);
       values.push(parsedParams.data.id);
+      // WHERE id is entity-scoped by FORCE RLS via the GUC.
       const res = await client.query(
         `UPDATE catalogs.equipment_line_item_templates SET ${fields.join(", ")} WHERE id = $${values.length} RETURNING id`,
         values
