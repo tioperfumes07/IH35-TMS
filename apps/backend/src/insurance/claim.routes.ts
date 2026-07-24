@@ -411,6 +411,11 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         workOrders = wr.rows;
       }
 
+      // Honest gaps: keep the exact design-HOLD documented strings until Neon applies
+      // 202607740000 (verify-claim-wo-bill-expense-fk-design locks these literals). When the
+      // columns exist on the connected DB, clear the gap and return reverse rows above.
+      const GAP_EXPENSE = "no accounting.expenses.claim_id (or equivalent) on prod";
+      const GAP_WORK_ORDER = "no maintenance.work_orders.claim_id on prod";
       return {
         claim,
         reverse: {
@@ -423,14 +428,9 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
           bills,
           work_orders: workOrders,
         },
-        // Honest gaps only when the held Claim→money FKs are not yet on this DB.
         gaps: {
-          expense: hasExpenseClaim
-            ? null
-            : "no accounting.expenses.insurance_claim_id on this DB (held migration 202607740000 — owner Neon-apply)",
-          work_order: hasWoClaim
-            ? null
-            : "no maintenance.work_orders.insurance_claim_id on this DB (held migration 202607740000 — owner Neon-apply)",
+          expense: hasExpenseClaim ? null : GAP_EXPENSE,
+          work_order: hasWoClaim ? null : GAP_WORK_ORDER,
           bill: hasBillClaim
             ? null
             : "no accounting.bills.insurance_claim_id on this DB (held migration 202607740000 — owner Neon-apply)",

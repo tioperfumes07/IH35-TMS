@@ -258,7 +258,7 @@ describe("insurance claim routes", () => {
     };
     expect(body.claim.id).toBe("11111111-1111-4111-8111-111111111111");
     expect(body.reverse.accidents).toEqual([]);
-    expect(body.gaps.expense).toContain("no accounting.expenses.insurance_claim_id");
+    expect(body.gaps.expense).toContain("no accounting.expenses.claim_id");
   });
 
   it("PATCH enforces tenant isolation", async () => {
