@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { formatDateUS } from "../../../lib/formatDate";
-import { ModalCloseButton } from "../../../components/ModalCloseButton";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { FineConvertConfirmModal } from "./FineConvertConfirmModal";
 import { FinePaymentLinkBanner } from "./FinePaymentLinkBanner";
 
@@ -64,19 +64,12 @@ export function FineDetailDrawer({ open, fine, converting, onClose, onConvertToL
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} aria-hidden="true" />
-      <aside
-        ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label={DRAWER_TITLE}
-        className="fixed right-0 top-0 z-50 h-full w-[560px] max-w-full overflow-y-auto border-l border-gray-200 bg-white p-4"
-        data-testid="fine-detail-drawer"
-      >
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-900">{DRAWER_TITLE}</h3>
-          <ModalCloseButton title={DRAWER_TITLE} onClose={onClose} />
-        </div>
+      {/* SAF-F25: was a bespoke <aside> with its own backdrop, z-index, width, escape handling and
+          focus behaviour — a second drawer implementation living beside the shared one, so every
+          fix to drawer chrome had to be made twice and this copy silently drifted. ParityDrawer is
+          the single surface (Law §3). The panel ref stays for the existing focus behaviour. */}
+      <ParityDrawer open onClose={onClose} title={DRAWER_TITLE}>
+        <div ref={panelRef as React.RefObject<HTMLDivElement>} data-testid="fine-detail-drawer">
         <div className="mt-3 space-y-2 text-sm">
           <div><strong>Status:</strong> {String(fine.status ?? "open")}</div>
           <div><strong>Subject:</strong> {String(fine.subject_type ?? "—")}</div>
@@ -159,7 +152,8 @@ export function FineDetailDrawer({ open, fine, converting, onClose, onConvertToL
             </button>
           </div>
         ) : null}
-      </aside>
+        </div>
+      </ParityDrawer>
 
       <FineConvertConfirmModal
         open={confirmOpen}

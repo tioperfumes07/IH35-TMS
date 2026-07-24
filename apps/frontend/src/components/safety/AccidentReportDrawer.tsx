@@ -13,6 +13,7 @@ import { listUnits, listVendors } from "../../api/mdata";
 import { listDispatchLoads } from "../../api/dispatch";
 import { Button } from "../Button";
 import { EntityLink } from "../shared/EntityLink";
+import { ParityDrawer } from "../parity/ParityDrawer";
 import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../forms/TwoSectionLineEditor";
 import { TotalsStack } from "../forms/shared/TotalsStack";
@@ -195,14 +196,16 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} data-testid="accident-drawer-backdrop" />
-      <aside className="fixed right-0 top-0 z-50 h-full w-[480px] max-w-[95vw] overflow-y-auto border-l border-gray-200 bg-white p-4 text-xs" data-testid="accident-report-drawer">
-        <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-sm font-semibold">{createMode ? "Create Accident Report" : "Accident Damage Details"}</h3>
-          <button type="button" className="text-gray-500 underline" onClick={onClose}>
-            Close
-          </button>
-        </div>
+      {/* SAF-F25: was a bespoke <aside> plus a hand-rolled backdrop — a THIRD drawer implementation
+          with its own z-index, width, close affordance and no shared escape/focus handling. Every
+          drawer-chrome fix had to be repeated here and this copy drifted. ParityDrawer is the single
+          surface (Law §3). The evidence/photo body is unchanged. */}
+      <ParityDrawer
+        open
+        onClose={onClose}
+        title={createMode ? "Create Accident Report" : "Accident Damage Details"}
+      >
+        <div className="text-xs" data-testid="accident-report-drawer">
         {createMode ? (
           <div className="mb-2 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-700">
             Office intake uses this form layout. Persisted reports also arrive from the driver mobile app or maintenance work order conversion.
@@ -491,7 +494,8 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
         <div className="mt-2">
           <TotalsStack subtotal={subtotal} taxRate={taxRate} onTaxRateChange={setTaxRate} grandLabel="Accident Total = A + B" />
         </div>
-      </aside>
+        </div>
+      </ParityDrawer>
     </>
   );
 }
