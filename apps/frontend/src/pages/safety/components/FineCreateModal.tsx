@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createSafetyFine } from "../../../api/safety";
-import { listDrivers } from "../../../api/mdata";
+import { listDrivers, listUnits } from "../../../api/mdata";
+import { listDispatchLoads } from "../../../api/dispatch";
 import { Button } from "../../../components/Button";
 import { Combobox } from "../../../components/Combobox";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
@@ -28,12 +29,49 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
   const [amountUsd, setAmountUsd] = useState("");
   const [notes, setNotes] = useState("");
   const [driverCreateOpen, setDriverCreateOpen] = useState(false);
+  // SAF-F19: safety.civil_fines has carried related_load_id / related_unit_id / source_doc_id since
+  // migration 0050, and the CREATE ROUTE already accepts all three — the creator simply never asked
+  // for them, so every fine landed with those FKs null. An overweight ticket that belongs to a
+  // specific load and truck was stored as if it belonged to nothing.
+  const [relatedLoadId, setRelatedLoadId] = useState<string | null>(null);
+  const [relatedUnitId, setRelatedUnitId] = useState<string | null>(null);
 
   const driversQuery = useQuery({
     queryKey: ["safety", "fine-create", "drivers", operatingCompanyId],
     queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, status: "Active", limit: 200 }),
     enabled: open && Boolean(operatingCompanyId),
   });
+
+  const unitsQuery = useQuery({
+    queryKey: ["safety", "fine-create", "units", operatingCompanyId],
+    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: 200 }),
+    enabled: open && Boolean(operatingCompanyId),
+  });
+
+  const loadsQuery = useQuery({
+    queryKey: ["safety", "fine-create", "loads", operatingCompanyId],
+    queryFn: () =>
+      listDispatchLoads({ operating_company_id: operatingCompanyId, view: "loads", status: [], limit: 200, offset: 0 }),
+    enabled: open && Boolean(operatingCompanyId),
+  });
+
+  const unitOptions = useMemo(
+    () =>
+      ((unitsQuery.data?.units ?? []) as Array<Record<string, unknown>>).map((u) => ({
+        value: String(u.id ?? ""),
+        label: String(u.unit_number ?? u.id ?? ""),
+      })),
+    [unitsQuery.data]
+  );
+
+  const loadOptions = useMemo(
+    () =>
+      ((loadsQuery.data?.loads ?? []) as Array<Record<string, unknown>>).map((l) => ({
+        value: String(l.id ?? ""),
+        label: String(l.load_number ?? l.reference ?? l.id ?? ""),
+      })),
+    [loadsQuery.data]
+  );
 
   const driverOptions = useMemo(
     () =>
@@ -54,6 +92,9 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
         violation_description: violationDescription,
         issued_date: issuedDate,
         amount_cents: Math.round(Number(amountUsd || 0) * 100),
+        // SAF-F19: the route has always accepted these; nothing was collecting them.
+        related_load_id: relatedLoadId || null,
+        related_unit_id: relatedUnitId || null,
         notes: notes || null,
       }),
     onSuccess: () => {
@@ -140,6 +181,26 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
                 onChange={(event) => setViolationDescription(event.target.value)}
                 className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
                 required
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-600">Related unit</label>
+              <Combobox
+                options={unitOptions}
+                value={relatedUnitId}
+                onChange={setRelatedUnitId}
+                placeholder="Select unit"
+                loading={unitsQuery.isLoading}
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-600">Related load</label>
+              <Combobox
+                options={loadOptions}
+                value={relatedLoadId}
+                onChange={setRelatedLoadId}
+                placeholder="Select load"
+                loading={loadsQuery.isLoading}
               />
             </div>
             <div className="flex flex-col gap-1">

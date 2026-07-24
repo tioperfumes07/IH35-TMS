@@ -16,6 +16,14 @@ const idParamsSchema = z.object({
 
 const createBodySchema = z.object({
   violation_type: z.enum(["FMCSA_audit", "DOT_inspection", "CSA_intervention", "state_audit", "IRP", "IFTA", "other"]),
+  // SAF-F15: safety.company_violations has always carried violation_type_uuid — the FK to
+  // catalogs.company_violation_types — and the create route never set it, so EVERY violation created
+  // in the UI landed with a null catalog FK. That is not cosmetic: company-violations.service.ts
+  // resolves the default fine amount from `existing.violation_type_uuid`, so with the FK null the
+  // catalog amount can never resolve and the flow falls through to E_VIOLATION_AMOUNT_REQUIRED.
+  // The enum above stays as the DOT CATEGORY (it is CHECK-constrained and is not the same thing as
+  // a catalog row); this is the specific catalogued type that carries the default amount.
+  violation_type_uuid: z.string().uuid().nullable().optional(),
   violation_basic: z.string().nullable().optional(),
   violation_severity: z.enum(["warning", "minor", "major", "severe", "OOS"]),
   reported_date: z.string(),
@@ -148,11 +156,11 @@ export async function registerSafetyCompanyViolationsRoutes(app: FastifyInstance
       const res = await client.query(
         `
           INSERT INTO safety.company_violations (
-            operating_company_id, violation_type, violation_basic, violation_severity, reported_date,
+            operating_company_id, violation_type, violation_type_uuid, violation_basic, violation_severity, reported_date,
             description, corrective_action_plan, corrective_action_due_date, related_drivers, related_units,
             related_fine_ids, source_doc_id, notes, created_by_user_id, updated_by_user_id
           ) VALUES (
-            $1,$2,$3,$4,$5::date,$6,$7,$8::date,$9::jsonb,$10::jsonb,$11::jsonb,$12,$13,$14,$14
+            $1,$2,$15,$3,$4,$5::date,$6,$7,$8::date,$9::jsonb,$10::jsonb,$11::jsonb,$12,$13,$14,$14
           )
           RETURNING *
         `,
@@ -171,6 +179,7 @@ export async function registerSafetyCompanyViolationsRoutes(app: FastifyInstance
           body.data.source_doc_id ?? null,
           body.data.notes ?? null,
           user.uuid,
+          body.data.violation_type_uuid ?? null,
         ]
       );
       const row = res.rows[0] ?? null;

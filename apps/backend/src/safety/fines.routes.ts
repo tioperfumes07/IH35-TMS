@@ -132,11 +132,24 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
       const res = await client.query(
         `
           SELECT cf.*,
-                 NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS subject_driver_name
+                 NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS subject_driver_name,
+                 -- SAF-F19: the drawer now shows the related unit and load. Without these names the
+                 -- links would render a truncated uuid as their label — the exact defect SAF-F18 and
+                 -- SAF-F26 fixed on the driver/unit columns of the sibling lists.
+                 u.unit_number  AS related_unit_number,
+                 l.load_number  AS related_load_number
           FROM safety.civil_fines cf
           LEFT JOIN mdata.drivers d
             ON d.id = cf.subject_driver_id
            AND d.operating_company_id = cf.operating_company_id
+          -- mdata.units has NO operating_company_id — scope by owner OR current lessee.
+          LEFT JOIN mdata.units u
+            ON u.id = cf.related_unit_id
+           AND (u.owner_company_id = cf.operating_company_id
+                OR u.currently_leased_to_company_id = cf.operating_company_id)
+          LEFT JOIN mdata.loads l
+            ON l.id = cf.related_load_id
+           AND l.operating_company_id = cf.operating_company_id
           WHERE ${filters.join(" AND ")}
           ORDER BY cf.issued_date DESC, cf.created_at DESC
           LIMIT 500

@@ -92,6 +92,37 @@ export function FineDetailDrawer({ open, fine, converting, onClose, onConvertToL
           ) : null}
           <div><strong>Violation:</strong> {String(fine.violation_description ?? "—")}</div>
           <div><strong>Authority:</strong> {String(fine.issued_by_authority ?? "—")}</div>
+          {/* SAF-F19: the fine has always been able to name the load and unit it came from
+              (safety.civil_fines.related_load_id / related_unit_id, migration 0050) and the drawer
+              never showed either — so an overweight ticket could not be traced to the truck or the
+              trip that earned it. Both drill through; absent values say so rather than rendering an
+              empty row that looks like missing data. */}
+          <div>
+            <strong>Related unit:</strong>{" "}
+            {fine.related_unit_id ? (
+              <EntityLink
+                kind="unit"
+                id={String(fine.related_unit_id)}
+                label={(fine.related_unit_number as string | undefined) ?? String(fine.related_unit_id).slice(0, 8)}
+                data-testid="fine-related-unit-link"
+              />
+            ) : (
+              "—"
+            )}
+          </div>
+          <div>
+            <strong>Related load:</strong>{" "}
+            {fine.related_load_id ? (
+              <EntityLink
+                kind="load"
+                id={String(fine.related_load_id)}
+                label={(fine.related_load_number as string | undefined) ?? String(fine.related_load_id).slice(0, 8)}
+                data-testid="fine-related-load-link"
+              />
+            ) : (
+              "—"
+            )}
+          </div>
           <div><strong>Issued date:</strong> {formatDateUS(fine.issued_date)}</div>
           <div><strong>Amount:</strong> ${(Number(fine.amount_cents ?? 0) / 100).toFixed(2)}</div>
           <div>
