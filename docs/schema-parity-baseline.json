@@ -2184,10 +2184,10 @@
       "id",
       "is_active",
       "label",
+      "operating_company_id",
       "severity",
       "updated_at",
-      "updated_by_user_id",
-      "operating_company_id"
+      "updated_by_user_id"
     ],
     "catalogs.equipment_line_item_templates": [
       "code",
