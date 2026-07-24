@@ -1,0 +1,53 @@
+---
+description: HARD — no EntityLink/honesty/N-of-M theater on accounting/banking; Desktop finding + live density or UNVERIFIED; Rule 21/22 already failed once without CI teeth
+alwaysApply: true
+---
+
+# RULE 23 — NO MONEY THEATER (2026-07-24) — FINAL CONTROL
+
+**Why this exists:** Jul 21–24 Cursor shipped ~250 accounting/banking PRs. Live Neon still had payments/expenses/bill_payments = 0, money mirrors empty, bank matched_je ≈ 3/10k. EntityLink columns, honesty banners, and “47/47” waves were sold as progress. **Rules 21–22 were already alwaysApply and were ignored.** Memory failed. This rule + CI guard fail closed.
+
+**Trust ledger:** `~/Desktop/IH35-CURSOR-AUDIT/CURSOR-ACCT-BANKING-PR-FLOOD-AUDIT-2026-07-24.md`  
+**Module audits (canonical):** `~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md` · `banking.md` · `lists.md`  
+**DoD:** `docs/specs/DEFINITION-OF-DONE.md` (§10 anti-theater)
+
+## Forbidden (accounting · banking · settlements money · QBO money sync)
+
+You MAY NOT open or merge a PR that is primarily:
+
+1. **EntityLink-only** — change `kind=`, add a reverse column/link, or rename a display id with **no** write path, FK population, projector/puller, or Neon density change.
+2. **Honesty-banner-only** — amber empty-state copy admitting 0 rows while the ranked FAIL is missing economics/linkage.
+3. **Fake N-of-M / PR-volume scoreboard** — “12/24”, “47/47”, “250 PRs”, “module done” while `docs/module-completion/<module>.json` still has `complete:false` or open FAIL/UNVERIFIED items (Rule **24** is the only N-of-M that counts).
+4. **REMAINING: none** on a chrome hop that leaves live economics unchanged.
+5. **Any claim of module COMPLETE** without Desktop audit + Neon `lucia` proof for that module’s money leaves.
+
+## Required before ANY money PR (Claude consolidated 2026-07-24 — DoD §10)
+
+Commit + PR body MUST include (git fails otherwise — verify-step 1430):
+
+1. **FINDING** + **LANE** (HOLD / FINANCIAL-HOLD / …)
+2. **DOD-A…E** (active path · wizard · linkage F+R · purpose→econ · evidence)
+3. **VERIFY-1…8** (chrome · picker · wiring · deep linkage · catalogs · economics · tabs · RLS)
+4. **MIGRATE:** when touching `db/migrations/`
+5. Rule 16: ROOT CAUSE / FIX / GUARD / LIVE PROOF|UNVERIFIED / REMAINING
+6. One ranked finding per PR. Economics density = Neon counts leave 0 (or named owner blocker).
+
+## Allowed without density move
+
+- True dual-path bugs (e.g. bulk categorize skipping the same poster as single-row) — still need FINDING ID + UNVERIFIED density named.
+- Financial HOLD design docs Jorge requested.
+- Guards that fail on the defect.
+
+## Owner merge law (Claude coder)
+
+Refuse merge of theater. Require `JORGE-APPROVED` on financial. Cursor builds; Claude merges. Volume ≠ Done.
+
+## CI teeth (mechanical — not memory)
+
+1. `.husky/commit-msg` → `check-commit-evidence.mjs` rejects incomplete money commits locally  
+2. verify-step **1430** `verify-no-money-theater` fails CI if FINDING/LANE/DOD-A…E/VERIFY-1…8/MODULE_PROGRESS missing or theater subject without write path  
+3. verify-step **1431** `verify-module-completion` fails CI if manifests illegal / scoreboards stale / false “module done” claims  
+4. Autoload guard fails CI if checklist / Rule 23 / Rule 24 / MODULE_PROGRESS / 1430 / 1431 pointers are deleted from AGENTS.md / CLAUDE.md / 00-always-read-first / ih35-tms-standards
+## Tie-breakers
+
+Busy < correct · banner < wire · EntityLink < FK+density · CI-green < Neon · memory < this file + CI.

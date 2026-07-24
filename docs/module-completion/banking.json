@@ -1,0 +1,182 @@
+{
+  "module": "banking",
+  "title": "Banking (Module 4)",
+  "complete": false,
+  "as_of": "2026-07-24T23:30:00Z",
+  "live_sha": "2088757",
+  "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md",
+  "spec_sources": [
+    "docs/specs/DEFINITION-OF-DONE.md",
+    "docs/specs/EVERY-PR-AUDIT-CHECKLIST.md",
+    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md#module-4--banking",
+    "docs/approved-screens/4-Banking_Homepage.png"
+  ],
+  "items": [
+    {
+      "id": "BANK-ECON-01",
+      "title": "Bank feed present (transactions > 0)",
+      "layers": [
+        "DOD-A",
+        "VERIFY-6"
+      ],
+      "spec": "Banking feed",
+      "status": "PASS",
+      "evidence": "Neon lucia: bank_transactions\u224810622",
+      "pr": null
+    },
+    {
+      "id": "BANK-ECON-02",
+      "title": "matched_journal_entry_id density meaningful (not \u22480%)",
+      "layers": [
+        "DOD-C",
+        "DOD-D",
+        "VERIFY-4",
+        "VERIFY-6"
+      ],
+      "spec": "Match/Categorize \u2192 JE",
+      "status": "FAIL",
+      "evidence": "matched_je=3 / ~10622",
+      "pr": "#3424"
+    },
+    {
+      "id": "BANK-ECON-03",
+      "title": "banking.transfers rows > 0 when operators record transfers OR honest empty with poster path proven",
+      "layers": [
+        "DOD-D",
+        "VERIFY-6"
+      ],
+      "spec": "Transfers \u00b7 #3134 Option 1 owner",
+      "status": "FAIL",
+      "evidence": "transfers=0",
+      "pr": null
+    },
+    {
+      "id": "BANK-ECON-04",
+      "title": "reconciliation_sessions > 0 with zero-diff closure (#3417)",
+      "layers": [
+        "DOD-D",
+        "VERIFY-6"
+      ],
+      "spec": "Reconciliation",
+      "status": "FAIL",
+      "evidence": "reconciliation_sessions=0",
+      "pr": "#3417"
+    },
+    {
+      "id": "BANK-ECON-05",
+      "title": "All bank_accounts bound to ledger_account_id (Cash GL)",
+      "layers": [
+        "DOD-C",
+        "VERIFY-5"
+      ],
+      "spec": "Cash GL setup",
+      "status": "FAIL",
+      "evidence": "8/16 with ledger_account_id",
+      "pr": null
+    },
+    {
+      "id": "BANK-SURF-01",
+      "title": "Banking Home + account detail \u2014 DoD A\u2013E",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C",
+        "DOD-D",
+        "DOD-E"
+      ],
+      "spec": "Architectural Banking tabs",
+      "status": "UNVERIFIED",
+      "evidence": "Routes live; full picker/wizard matrix not re-run",
+      "pr": null
+    },
+    {
+      "id": "BANK-SURF-02",
+      "title": "Categorize / Match \u2014 VERIFY-1..8 + JE when flag ON",
+      "layers": [
+        "VERIFY-1",
+        "VERIFY-2",
+        "VERIFY-3",
+        "VERIFY-4",
+        "VERIFY-6"
+      ],
+      "spec": "QBO banking parity",
+      "status": "FAIL",
+      "evidence": "JE density 3/10k; bulk categorize HOLD #3424",
+      "pr": "#3424"
+    },
+    {
+      "id": "BANK-SURF-03",
+      "title": "Transfers UI + poster path \u2014 live economics",
+      "layers": [
+        "DOD-D",
+        "VERIFY-3",
+        "VERIFY-6"
+      ],
+      "spec": "Transfers tab",
+      "status": "FAIL",
+      "evidence": "transfers=0; owner Option 1 for unpaired feed",
+      "pr": null
+    },
+    {
+      "id": "BANK-SURF-04",
+      "title": "Reconciliation workspace \u2014 live session + zero-diff",
+      "layers": [
+        "DOD-D",
+        "VERIFY-6",
+        "VERIFY-1"
+      ],
+      "spec": "Recon",
+      "status": "FAIL",
+      "evidence": "sessions=0",
+      "pr": "#3417"
+    },
+    {
+      "id": "BANK-SURF-05",
+      "title": "Factoring / Escrow / Relay / Plaid / Statement Import \u2014 active path + honest empty",
+      "layers": [
+        "DOD-A",
+        "DOD-E",
+        "VERIFY-7"
+      ],
+      "spec": "Banking entry tabs \u00b7 never-delete",
+      "status": "UNVERIFIED",
+      "evidence": "Tabs reachable; economics not module-closed",
+      "pr": null
+    },
+    {
+      "id": "BANK-LINK-01",
+      "title": "Bank txn \u2194 Bill/Payment/Transfer EntityLink both-way with Neon FKs",
+      "layers": [
+        "DOD-C",
+        "VERIFY-4"
+      ],
+      "spec": "Law \u00a79 banking",
+      "status": "UNVERIFIED",
+      "evidence": "Code paths exist; density proves almost no JE links",
+      "pr": null
+    },
+    {
+      "id": "BANK-CTRL-01",
+      "title": "BANK_FEED_GL_POSTING_ENABLED default OFF; no invented JE",
+      "layers": [
+        "VERIFY-6",
+        "VERIFY-8"
+      ],
+      "spec": "Parallel books",
+      "status": "PASS",
+      "evidence": "Flags OFF by design; poster gated",
+      "pr": null
+    },
+    {
+      "id": "BANK-GATE-01",
+      "title": "Every banking money PR uses EVERY-PR checklist \u2014 process closed",
+      "layers": [
+        "DOD-E"
+      ],
+      "spec": "verify-step 1430",
+      "status": "OPEN",
+      "evidence": "Gate on #3430",
+      "pr": "#3430"
+    }
+  ]
+}
