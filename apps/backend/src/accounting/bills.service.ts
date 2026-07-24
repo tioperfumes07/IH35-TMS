@@ -148,6 +148,10 @@ type BillPaymentRow = {
   // BANKREC-LISTSTATUS-01 (read-only, additive): true iff this bill_payment has an ACTIVE
   // (auto_matched|user_matched) bank.reconciliation_matches row.
   is_reconciled: boolean;
+  /** Law §9 — resolved from the existing bill_payment posting; no new JE is created here. */
+  journal_entry_id?: string | null;
+  /** Law §9 reverse drill from a bill payment to its canonical bank-feed transaction. */
+  matched_bank_transaction_id?: string | null;
 };
 
 type BillMutationClient = {
@@ -170,6 +174,31 @@ const BILL_PAYMENT_IS_RECONCILED_SQL = `
       AND rm.ledger_entry_id = bp.id
       AND rm.operating_company_id = bp.operating_company_id
       AND rm.match_state IN ('auto_matched', 'user_matched')
+  )
+`;
+
+// Law §9 reverse drill sources. Both are read-only projections: a bill payment is never allowed to
+// synthesize a JE or a bank row from this list/detail read path.
+const BILL_PAYMENT_JOURNAL_ENTRY_ID_SQL = `
+  (
+    SELECT jep.journal_entry_uuid::text
+    FROM accounting.journal_entry_postings jep
+    WHERE jep.operating_company_id = bp.operating_company_id
+      AND jep.source_transaction_type = 'bill_payment'
+      AND jep.source_transaction_id = bp.id::text
+    ORDER BY jep.created_at ASC
+    LIMIT 1
+  )
+`;
+
+const BILL_PAYMENT_BANK_TRANSACTION_ID_SQL = `
+  (
+    SELECT bt.id::text
+    FROM banking.bank_transactions bt
+    WHERE bt.operating_company_id = bp.operating_company_id
+      AND bt.matched_bill_payment_id = bp.id
+    ORDER BY bt.transaction_date DESC, bt.created_at DESC
+    LIMIT 1
   )
 `;
 
@@ -475,7 +504,10 @@ export async function listBillPaymentsForBill(userId: string, operatingCompanyId
     if (!billRes.rows[0]) return null;
     const res = await client.query<BillPaymentRow>(
       `
-        SELECT bp.*, ${BILL_PAYMENT_IS_RECONCILED_SQL} AS is_reconciled
+        SELECT bp.*,
+               ${BILL_PAYMENT_IS_RECONCILED_SQL} AS is_reconciled,
+               ${BILL_PAYMENT_JOURNAL_ENTRY_ID_SQL} AS journal_entry_id,
+               ${BILL_PAYMENT_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
         FROM accounting.bill_payments bp
         WHERE bp.bill_id = $1
           AND bp.operating_company_id = $2
@@ -614,7 +646,10 @@ export async function listBillPayments(
     values.push(options.limit, options.offset);
     const res = await client.query<BillPaymentRow>(
       `
-        SELECT bp.*, ${BILL_PAYMENT_IS_RECONCILED_SQL} AS is_reconciled
+        SELECT bp.*,
+               ${BILL_PAYMENT_IS_RECONCILED_SQL} AS is_reconciled,
+               ${BILL_PAYMENT_JOURNAL_ENTRY_ID_SQL} AS journal_entry_id,
+               ${BILL_PAYMENT_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
         FROM accounting.bill_payments bp
         WHERE ${where.join(" AND ")}
         ORDER BY bp.payment_date DESC, bp.created_at DESC
@@ -760,6 +795,7 @@ export async function getBillPaymentDetail(userId: string, operatingCompanyId: s
     const paymentRes = await client.query<
       BillPaymentRow & {
         journal_entry_id: string | null;
+        matched_bank_transaction_id: string | null;
         vendor_name: string | null;
         bill_number: string | null;
       }
@@ -770,14 +806,9 @@ export async function getBillPaymentDetail(userId: string, operatingCompanyId: s
           v.vendor_name,
           b.bill_number,
           (
-            SELECT jep.journal_entry_uuid::text
-            FROM accounting.journal_entry_postings jep
-            WHERE jep.operating_company_id = bp.operating_company_id
-              AND jep.source_transaction_type = 'bill_payment'
-              AND jep.source_transaction_id = bp.id::text
-            ORDER BY jep.created_at ASC
-            LIMIT 1
-          ) AS journal_entry_id
+            ${BILL_PAYMENT_JOURNAL_ENTRY_ID_SQL}
+          ) AS journal_entry_id,
+          ${BILL_PAYMENT_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
         FROM accounting.bill_payments bp
         -- v.id is uuid; accounting.bill_payments.vendor_id is text (verified on the Neon prod
         -- branch br-fancy-credit-akjnd07a, 2026-07-22). Comparing them directly raises
@@ -805,6 +836,7 @@ export async function getBillPaymentDetail(userId: string, operatingCompanyId: s
         ...row,
         amount_cents: Number(row.amount_cents ?? Math.round(Number(row.amount ?? 0) * 100)),
         journal_entry_id: row.journal_entry_id ?? null,
+        matched_bank_transaction_id: row.matched_bank_transaction_id ?? null,
         vendor_name: row.vendor_name ?? null,
         bill_number: row.bill_number ?? null,
       },
