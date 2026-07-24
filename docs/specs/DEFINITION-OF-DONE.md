@@ -12,7 +12,8 @@ MORE PROTECTIVE reading wins.**
 Enforced by:
 
 - `scripts/verify-definition-of-done-evidence.mjs` (verify-step 1324) — Rule 16 evidence on every app/db commit
-- `scripts/verify-no-money-theater.mjs` (verify-step 1430) — **full DoD A–E + VERIFY 1–5 confirmations** on every accounting/banking/QBO-money commit; theater subjects fail closed
+- `scripts/verify-no-money-theater.mjs` (verify-step 1430) — **full DoD A–E + VERIFY 1–8 + MODULE_PROGRESS** on every accounting/banking/QBO-money commit; theater subjects fail closed
+- `scripts/verify-module-completion.mjs` (verify-step 1431) — module **N of M** manifests; `complete:true` illegal while items open
 - `.husky/commit-msg` → `scripts/check-commit-evidence.mjs` (local reject; CI is the real gate)
 
 ---
@@ -233,20 +234,39 @@ Touches `apps/**/accounting|banking|qbo-sync|qbo/**` or `pages/accounting|bankin
 | **VERIFY-6** | §2.6 | Economics CPA-grade — header+lines; JE when ON; control roles; flags; no QBO write-back |
 | **VERIFY-7** | §2.7 | Tab / design law (Rule 05) — no missing/invented tabs |
 | **VERIFY-8** | §2.8 | Security / entity / RLS — FORCE RLS, GUC, security_invoker, grants |
+| **MODULE_PROGRESS** | Rule 24 | `accounting N of M` and/or `banking N of M` — **must match** `docs/module-completion/<module>.json` |
 | **MIGRATE** | §7 | `N/A` or number/idempotent/FORCE RLS/throwaway validate/no hardcoded UUID |
 | **ROOT CAUSE / FIX / GUARD / LIVE PROOF / REMAINING** | §3–4 | Rule 16 + guard FAIL-on-bug / verify-steps only |
 
 Values: `PASS` · `N/A` · `FAIL` · `UNVERIFIED — <reason>`.
 
-**Forbidden:** EntityLink-only · honesty-banner-only · N-of-M “module done” while density 0 ·
-`REMAINING: none` on chrome hops · weakening guards · `package.json` / `locked-guards.yml` thrash.
+**Forbidden:** EntityLink-only · honesty-banner-only · claiming “module done” from PR volume while
+manifest `complete:false` · `REMAINING: none` on chrome hops · weakening guards ·
+`package.json` / `locked-guards.yml` thrash.
 
 Template (printed by the guard on failure) — see `MONEY_DOD_COMMIT_TEMPLATE` in
 `scripts/verify-no-money-theater.mjs`.
+
+---
+
+## 11. Module COMPLETE = N of M checklist (permanent · mechanical)
+
+**Not** “how many PRs.” **Yes** every item in `docs/module-completion/<module>.{json,md}`.
+
+| Module | Progress source | COMPLETE when |
+|---|---|---|
+| Accounting | `docs/module-completion/accounting.md` | N === M and `complete: true` |
+| Banking | `docs/module-completion/banking.md` | N === M and `complete: true` |
+
+Each item maps to DoD A–E + VERIFY 1–8 + Neon `lucia` evidence (or owner HOLD with tracker + future block).  
+CI: verify-step **1431**. Session law: Rule **24**.
+
+As of 2026-07-24 live audit: **Accounting 3 of 25** · **Banking 2 of 13** · neither COMPLETE.
+
 ---
 
 **Cross-refs:** `docs/trackers/FULL-SYSTEM-AUDIT-AND-WIRING-MASTER-PLAN-2026-07-22.md` ·
 `docs/specs/QUALITY-STANDARD-LOCKED.md` · `docs/specs/STOP-THE-THRASH-WORKORDER-2026-07-17.md` ·
 `.cursor/rules/14-linkage-law-enforcement.mdc` · `.cursor/rules/16-fix-not-patch-evidence-law.mdc` ·
-`.cursor/rules/23-no-money-theater-prs.mdc` ·
-`CLAUDE.md` §1/§9 · `AGENTS.md`.
+`.cursor/rules/23-no-money-theater-prs.mdc` · `.cursor/rules/24-module-completion-n-of-m.mdc` ·
+`docs/module-completion/SCHEMA.md` · `CLAUDE.md` §1/§9 · `AGENTS.md`.

@@ -2,7 +2,7 @@
 
 > **★ DEFINITION OF DONE (owner-agreed, BINDING — read before you call anything done):** [docs/specs/DEFINITION-OF-DONE.md](docs/specs/DEFINITION-OF-DONE.md) — five DONE layers (DOD-A…E) + evidence. **CI-green is the floor, not the verdict.**
 >
-> **★ EVERY PR AUDIT CHECKLIST (Claude-consolidated, BINDING, every session):** [docs/specs/EVERY-PR-AUDIT-CHECKLIST.md](docs/specs/EVERY-PR-AUDIT-CHECKLIST.md) — FINDING · LANE · DOD-A…E · **VERIFY-1…8** · MIGRATE · Rule 16. Money commits missing these keys **FAIL** commit-msg + verify-step **1430** (`verify-no-money-theater`). Rule **23** bans EntityLink/honesty theater. Also enforced by verify-step **1324**.
+> **★ EVERY PR AUDIT CHECKLIST (Claude-consolidated, BINDING, every session):** [docs/specs/EVERY-PR-AUDIT-CHECKLIST.md](docs/specs/EVERY-PR-AUDIT-CHECKLIST.md) — FINDING · LANE · DOD-A…E · **VERIFY-1…8** · **MODULE_PROGRESS** · MIGRATE · Rule 16. Money commits missing these keys **FAIL** commit-msg + verify-step **1430** (`verify-no-money-theater`). Rule **23** bans EntityLink/honesty theater. Rule **24** — module DONE = **N of M** checklist items in [docs/module-completion/](docs/module-completion/) (CI **1431**). Also enforced by verify-step **1324**.
 
 > **Rule #0 (LOCKED):** Before any work, read [docs/specs/QUALITY-STANDARD-LOCKED.md](docs/specs/QUALITY-STANDARD-LOCKED.md) — the first standing quality law; it supersedes other docs on hardline conflict.
 

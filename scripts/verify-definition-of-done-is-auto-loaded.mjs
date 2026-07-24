@@ -6,6 +6,9 @@
  *   - docs/specs/EVERY-PR-AUDIT-CHECKLIST.md exists (Claude consolidated list)
  *   - each entry point names VERIFY-1 and verify-step 1430 (mechanical money gate)
  *   - .cursor/rules/23-no-money-theater-prs.mdc exists (alwaysApply theater ban)
+ *   - .cursor/rules/24-module-completion-n-of-m.mdc exists (alwaysApply N-of-M law)
+ *   - docs/module-completion/SCHEMA.md + accounting/banking manifests exist
+ *   - each entry point names MODULE_PROGRESS and verify-step 1431
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -15,6 +18,10 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DOD = "docs/specs/DEFINITION-OF-DONE.md";
 const CHECKLIST = "docs/specs/EVERY-PR-AUDIT-CHECKLIST.md";
 const RULE23 = ".cursor/rules/23-no-money-theater-prs.mdc";
+const RULE24 = ".cursor/rules/24-module-completion-n-of-m.mdc";
+const MODULE_SCHEMA = "docs/module-completion/SCHEMA.md";
+const MODULE_ACCT = "docs/module-completion/accounting.json";
+const MODULE_BANK = "docs/module-completion/banking.json";
 const ENTRY_POINTS = [
   ["AGENTS.md", "the repo's agent-coordination entry point"],
   ["docs/CLAUDE.md", "the durable handoff context every Claude session reads"],
@@ -41,6 +48,18 @@ export function assertDodIsAutoLoaded(sources) {
   if (!get(RULE23)) {
     problems.push(`${RULE23}: missing — Rule 23 alwaysApply theater ban must exist.`);
   }
+  if (!get(RULE24)) {
+    problems.push(`${RULE24}: missing — Rule 24 alwaysApply module N-of-M law must exist.`);
+  }
+  if (!get(MODULE_SCHEMA)) {
+    problems.push(`${MODULE_SCHEMA}: missing — module completion schema must be tracked.`);
+  }
+  if (!get(MODULE_ACCT)) {
+    problems.push(`${MODULE_ACCT}: missing — accounting N-of-M manifest required.`);
+  }
+  if (!get(MODULE_BANK)) {
+    problems.push(`${MODULE_BANK}: missing — banking N-of-M manifest required.`);
+  }
 
   for (const [rel, why] of ENTRY_POINTS) {
     const src = get(rel);
@@ -56,13 +75,28 @@ export function assertDodIsAutoLoaded(sources) {
     if (!src.includes("1430") && !src.includes("verify-no-money-theater")) {
       problems.push(`${rel}: does not mention verify-step 1430 / verify-no-money-theater — gate would be invisible.`);
     }
+    if (!src.includes("MODULE_PROGRESS") && !src.includes("module-completion")) {
+      problems.push(`${rel}: does not mention MODULE_PROGRESS / module-completion — Rule 24 would not autoload.`);
+    }
+    if (!src.includes("1431") && !src.includes("verify-module-completion")) {
+      problems.push(`${rel}: does not mention verify-step 1431 / verify-module-completion — N-of-M gate invisible.`);
+    }
   }
 
   return problems;
 }
 
 if (SELFTEST) {
-  const files = [DOD, CHECKLIST, RULE23, ...ENTRY_POINTS.map(([rel]) => rel)];
+  const files = [
+    DOD,
+    CHECKLIST,
+    RULE23,
+    RULE24,
+    MODULE_SCHEMA,
+    MODULE_ACCT,
+    MODULE_BANK,
+    ...ENTRY_POINTS.map(([rel]) => rel),
+  ];
   const live = Object.fromEntries(files.map((rel) => [rel, getSafe(rel)]));
   function getSafe(rel) {
     try {
@@ -98,6 +132,8 @@ if (SELFTEST) {
   expectCaught("dod-deleted", { ...live, [DOD]: "" }, "the Definition of Done is missing");
   expectCaught("checklist-deleted", { ...live, [CHECKLIST]: "" }, CHECKLIST);
   expectCaught("rule23-deleted", { ...live, [RULE23]: "" }, RULE23);
+  expectCaught("rule24-deleted", { ...live, [RULE24]: "" }, RULE24);
+  expectCaught("module-acct-deleted", { ...live, [MODULE_ACCT]: "" }, MODULE_ACCT);
 
   const liveProblems = assertDodIsAutoLoaded(live);
   if (liveProblems.length) failures.push(`live FAIL: ${liveProblems.join(" | ")}`);
@@ -118,5 +154,5 @@ if (problems.length) {
   process.exit(1);
 }
 console.log(
-  `${LABEL} OK — DoD + EVERY-PR checklist + Rule 23 wired into ${ENTRY_POINTS.length} auto-load entry points`
+  `${LABEL} OK — DoD + EVERY-PR + Rule 23/24 + module-completion wired into ${ENTRY_POINTS.length} auto-load entry points`
 );

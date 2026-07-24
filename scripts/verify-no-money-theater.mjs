@@ -8,14 +8,16 @@
  *   (Claude coder paste 2026-07-24 17:56 CDT)
  *
  * Required keys:
- *   FINDING · LANE · DOD-A..E · VERIFY-1..8 · ROOT CAUSE · FIX · GUARD · LIVE PROOF|UNVERIFIED · REMAINING
+ *   FINDING · LANE · DOD-A..E · VERIFY-1..8 · MODULE_PROGRESS · ROOT CAUSE · FIX · GUARD · LIVE PROOF|UNVERIFIED · REMAINING
  * Migration commits also: MIGRATE: …
  *
- * Theater subjects (EntityLink/honesty/N-of-M) without write/pull/post path → FAIL.
+ * Theater subjects (EntityLink/honesty/fake N-of-M) without write/pull/post path → FAIL.
+ * MODULE_PROGRESS N of M must match docs/module-completion/<module>.json (Rule 24).
  */
 import { execSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { loadManifests, scoreManifest } from "./verify-module-completion.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-no-money-theater";
@@ -48,6 +50,7 @@ const REQUIRED_KEYS = [
   { key: "VERIFY-6", re: /\bVERIFY-6\s*:\s*\S+/i },
   { key: "VERIFY-7", re: /\bVERIFY-7\s*:\s*\S+/i },
   { key: "VERIFY-8", re: /\bVERIFY-8\s*:\s*\S+/i },
+  { key: "MODULE_PROGRESS", re: /\bMODULE_PROGRESS\s*:\s*(accounting|banking)\s+\d+\s+of\s+\d+/i },
   { key: "ROOT CAUSE", re: /root cause/i },
   { key: "FIX", re: /(^|\n)\s*FIX\b|FIX:/i },
   { key: "GUARD", re: /guard/i },
@@ -56,7 +59,47 @@ const REQUIRED_KEYS = [
 ];
 
 const THEATER_SUBJECT_RE =
-  /\b(entitylink|honesty|empty-state|empty state|\d+\s*\/\s*\d+|module complete|module done)\b/i;
+  /\b(entitylink|honesty|empty-state|empty state|module complete|module done)\b/i;
+
+const MODULE_PROGRESS_LINE_RE =
+  /\bMODULE_PROGRESS\s*:\s*(accounting|banking)\s+(\d+)\s+of\s+(\d+)/gi;
+
+function manifestScores() {
+  const out = {};
+  for (const { data } of loadManifests()) {
+    out[data.module] = scoreManifest(data);
+  }
+  return out;
+}
+
+export function assertModuleProgressMatches(text, files, scores = manifestScores()) {
+  const problems = [];
+  const needsAcct = files.some((f) => /accounting|qbo-sync|\/qbo\//i.test(f));
+  const needsBank = files.some((f) => /banking/i.test(f));
+  const lines = [...text.matchAll(MODULE_PROGRESS_LINE_RE)];
+  const reported = Object.fromEntries(lines.map((m) => [m[1].toLowerCase(), { N: +m[2], M: +m[3] }]));
+
+  for (const mod of ["accounting", "banking"]) {
+    const need = mod === "accounting" ? needsAcct : needsBank;
+    if (!need) continue;
+    const sc = scores[mod];
+    if (!sc) {
+      problems.push(`MODULE_PROGRESS required for ${mod} but docs/module-completion/${mod}.json missing`);
+      continue;
+    }
+    const rep = reported[mod];
+    if (!rep) {
+      problems.push(`money commit missing MODULE_PROGRESS: ${mod} ${sc.progress}`);
+      continue;
+    }
+    if (rep.N !== sc.N || rep.M !== sc.M) {
+      problems.push(
+        `MODULE_PROGRESS: ${mod} ${rep.N} of ${rep.M} does not match manifest ${sc.progress} — update docs/module-completion/${mod}.json in this PR or fix the line`
+      );
+    }
+  }
+  return problems;
+}
 
 const sh = (cmd) => {
   try {
@@ -90,17 +133,21 @@ export function assertNoMoneyTheater(commits) {
         );
       }
 
+      for (const p of assertModuleProgressMatches(text, c.files)) {
+        problems.push(`${short} ${p}`);
+      }
+
       const appMoney = c.files.filter((f) => MONEY_PATH_RE.test(f) && f.startsWith("apps/"));
       const hasWritePath = appMoney.some((f) => WRITE_PATH_RE.test(f));
       if ((THEATER_SUBJECT_RE.test(c.subject) || /entitylink/i.test(text)) && !hasWritePath) {
         problems.push(
-          `${short} "${c.subject.slice(0, 64)}" money THEATER (EntityLink/honesty/N-of-M) ` +
+          `${short} "${c.subject.slice(0, 64)}" money THEATER (EntityLink/honesty) ` +
             `without write/pull/post/migration path — Rule 23`
         );
       }
 
       if (/\b(module complete|module done|accounting done|banking done)\b/i.test(text) && !/UNVERIFIED/i.test(text)) {
-        problems.push(`${short} claims module done without UNVERIFIED — DoD §10`);
+        problems.push(`${short} claims module done without UNVERIFIED — DoD §10 / Rule 24`);
       }
     }
 
@@ -149,6 +196,10 @@ VERIFY-6: PASS|N/A|FAIL|UNVERIFIED — Economics CPA-grade
 VERIFY-7: PASS|N/A|FAIL|UNVERIFIED — Tab / design law (Rule 05)
 VERIFY-8: PASS|N/A|FAIL|UNVERIFIED — Security / entity / RLS
 
+MODULE_PROGRESS: accounting N of M
+MODULE_PROGRESS: banking N of M
+ITEMS_TOUCHED: ACCT-… | BANK-…
+
 MIGRATE: N/A | <number · idempotent · FORCE RLS · throwaway validate · no hardcoded UUID>
 
 ROOT CAUSE: …
@@ -167,6 +218,11 @@ if (SELFTEST) {
     }
   };
 
+  const acct = scoreManifest(
+    loadManifests().find((m) => m.data.module === "accounting")?.data || {
+      items: [],
+    }
+  );
   const fullBody = `
 FINDING: ACCT-F01
 LANE: FINANCIAL-HOLD
@@ -183,6 +239,8 @@ VERIFY-5: N/A
 VERIFY-6: UNVERIFIED — payments 0
 VERIFY-7: N/A
 VERIFY-8: PASS — RLS unchanged
+MODULE_PROGRESS: accounting ${acct.progress}
+ITEMS_TOUCHED: ACCT-PULL-01
 MIGRATE: N/A
 ROOT CAUSE: duplicate resolve
 FIX: reuse resolver
@@ -215,6 +273,22 @@ REMAINING: ACCT-F01
       },
     ],
     false
+  );
+
+  expect(
+    "wrong-module-progress",
+    [
+      {
+        sha: "eeeeeeeee",
+        subject: "fix(accounting): progress lie",
+        body: fullBody.replace(
+          `MODULE_PROGRESS: accounting ${acct.progress}`,
+          "MODULE_PROGRESS: accounting 99 of 99"
+        ),
+        files: ["apps/backend/src/qbo-sync/qbo-ar-payments-puller.ts"],
+      },
+    ],
+    true
   );
 
   expect(

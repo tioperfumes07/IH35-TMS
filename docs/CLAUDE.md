@@ -2,7 +2,7 @@
 
 > **★ DEFINITION OF DONE (BINDING):** `docs/specs/DEFINITION-OF-DONE.md` — DOD-A…E + §10. CI-green is the floor, not the verdict.
 >
-> **★ EVERY PR AUDIT CHECKLIST (BINDING, every session):** `docs/specs/EVERY-PR-AUDIT-CHECKLIST.md` — FINDING · LANE · DOD-A…E · **VERIFY-1…8** · MIGRATE · Rule 16. Missing keys → commit-msg reject + verify-step **1430** (`verify-no-money-theater`). Rule 23 theater ban.
+> **★ EVERY PR AUDIT CHECKLIST (BINDING, every session):** `docs/specs/EVERY-PR-AUDIT-CHECKLIST.md` — FINDING · LANE · DOD-A…E · **VERIFY-1…8** · **MODULE_PROGRESS** · MIGRATE · Rule 16. Missing keys → commit-msg reject + verify-step **1430** (`verify-no-money-theater`). Rule 23 theater ban. Rule 24 — module DONE = **N of M** in `docs/module-completion/` (CI **1431**).
 
 > **SESSION LAW (auto-loaded every Cursor session):** `docs/specs/CURSOR-OPERATING-CONSTITUTION.md` + Rule #0 `docs/specs/QUALITY-STANDARD-LOCKED.md` + Law of the Land `docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md` + always-apply `.cursor/rules/00`–`07` + `10`–`15`. Trust over speed. Verify live. No guess / patch / defer. Never delete modules — only add. Multi-agent review required on non-trivial/financial work.
 

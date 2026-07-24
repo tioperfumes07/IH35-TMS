@@ -2,11 +2,13 @@
 
 **As of:** 2026-07-24 17:56 CDT (Claude coder consolidation)  
 **Repo law:** `docs/specs/DEFINITION-OF-DONE.md` §10  
-**CI:** verify-step **1430** (`verify-no-money-theater`) + **1324** (Rule 16)  
+**CI:** verify-step **1430** (`verify-no-money-theater`) + **1431** (`verify-module-completion`) + **1324** (Rule 16)  
 **Local:** `.husky/commit-msg` → `check-commit-evidence.mjs`  
+**Module N of M:** `docs/module-completion/<module>.md` (Rule **24**)  
 **PR:** https://github.com/tioperfumes07/IH35-TMS/pull/3430
 
-This is **everything that applies to every money PR** — Cursor and Claude same list.
+This is **everything that applies to every money PR** — Cursor and Claude same list.  
+**Module COMPLETE ≠ PR count.** COMPLETE = every checklist item PASS (or owner HOLD).
 
 ---
 
@@ -50,7 +52,20 @@ Chrome-only / nested-+Create-only / docs-only **never** closes a module.
 
 ---
 
-## 3 · Evidence block (Rule 16)
+## 3 · Module progress (Rule 24) → `MODULE_PROGRESS`
+
+```
+MODULE_PROGRESS: accounting N of M
+MODULE_PROGRESS: banking N of M
+ITEMS_TOUCHED: ACCT-… | BANK-…
+```
+
+`N of M` must match `docs/module-completion/<module>.json` after this PR’s status updates.  
+Scoreboards: `docs/module-completion/accounting.md` · `banking.md`.
+
+---
+
+## 4 · Evidence block (Rule 16)
 
 ```
 ROOT CAUSE: …
@@ -64,7 +79,7 @@ Also: **FINDING:** `ACCT-F##` / `BANK-F##` / `LST-F##` from Desktop module audit
 
 ---
 
-## 4 · Guard rules
+## 5 · Guard rules
 
 - Every bug fix ships a static CI guard — no guard = not done  
 - Guard FAIL on bug / PASS on fix (prove vs main)  
@@ -75,21 +90,21 @@ Also: **FINDING:** `ACCT-F##` / `BANK-F##` / `LST-F##` from Desktop module audit
 
 ---
 
-## 5 · Verification traps
+## 6 · Verification traps
 
 - Prod wins (Neon) · 0 is not absence (re-run + lucia) · 200 ≠ success (content-type)  
 - No string-grep systemic claims · pipes mask exit codes · baseline main first · deploy by ancestry  
 
 ---
 
-## 6 · Merge gates
+## 7 · Merge gates
 
 - Merge = deploy · financial / migration / catalogs / mdata → **your OK** · no self-merge money  
 - Flag flips + opening balances = owner only  
 
 ---
 
-## 7 · Migration PRs → `MIGRATE:`
+## 8 · Migration PRs → `MIGRATE:`
 
 Number above main max · idempotent · dynamic `org.companies` (no hardcoded UUID) · FORCE RLS ·
 REVOKE DELETE · grants · void-not-delete · append-only audit · validate on **local throwaway** only ·
@@ -97,14 +112,15 @@ checksum override same PR or forward · baselines as needed.
 
 ---
 
-## 8 · Honest reporting
+## 9 · Honest reporting
 
-Skipped/failed named · UNVERIFIED + blocker · “8 of 12” not “complete” · correct prior claims.
+Skipped/failed named · UNVERIFIED + blocker · “8 of 12” / “N of M” not “complete” · correct prior claims.
 
 ---
 
 ## Git fail closed
 
-Missing any of: `FINDING` · `LANE` · `DOD-A`…`E` · `VERIFY-1`…`8` · Rule 16 · (`MIGRATE` if migration)  
+Missing any of: `FINDING` · `LANE` · `DOD-A`…`E` · `VERIFY-1`…`8` · `MODULE_PROGRESS` · Rule 16 · (`MIGRATE` if migration)  
 → **commit-msg reject** and/or **CI 1430 FAIL**.  
+Stale / illegal module manifests → **CI 1431 FAIL**.  
 `--no-verify` does **not** skip CI.

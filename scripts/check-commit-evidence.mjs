@@ -7,10 +7,10 @@
  * file's assertion instead of re-implementing it, so the local hook and the CI gate can never drift
  * apart ù a second copy of a rule is a rule that will disagree with itself.
  *
- * Money paths ALSO run assertNoMoneyTheater (DoD ß10 / verify-step 1430) ó FINDING + LANE +
- * DOD-A..E + VERIFY-1..8 + Rule 16 required or the commit is rejected.
+ * Money paths ALSO run assertNoMoneyTheater (DoD ù10 / verify-step 1430) ù FINDING + LANE +
+ * DOD-A..E + VERIFY-1..8 + MODULE_PROGRESS + Rule 16 required or the commit is rejected.
  *
- * HONEST LIMIT: `git commit --no-verify` skips this hook. CI verify-steps 1324 + 1430 cannot be
+ * HONEST LIMIT: `git commit --no-verify` skips this hook. CI verify-steps 1324 + 1430 + 1431 cannot be
  * bypassed. verify-step 1324 asserts this hook still exists.
  *
  * Exit 0 = allowed. Exit 1 = commit rejected with the template printed.
@@ -83,11 +83,11 @@ same rule on every branch commit and cannot be bypassed.
 `);
   if (isMoneyAppCommit(files)) {
     console.error(`
-MONEY PATH (accounting / banking / qbo-sync) ù also required (DoD ù10 / Rule 23):
+MONEY PATH (accounting / banking / qbo-sync) ó also required (DoD ß10 / Rules 23ñ24):
 
 ${MONEY_DOD_COMMIT_TEMPLATE}
 
-CI: verify-step 1430 (verify-no-money-theater) cannot be bypassed.
+CI: verify-steps 1430 (verify-no-money-theater) + 1431 (verify-module-completion) cannot be bypassed.
 `);
   }
   process.exit(1);

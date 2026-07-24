@@ -17,7 +17,7 @@ You MAY NOT open or merge a PR that is primarily:
 
 1. **EntityLink-only** — change `kind=`, add a reverse column/link, or rename a display id with **no** write path, FK population, projector/puller, or Neon density change.
 2. **Honesty-banner-only** — amber empty-state copy admitting 0 rows while the ranked FAIL is missing economics/linkage.
-3. **N-of-M scoreboard** — “12/24”, “47/47”, “module done” while Desktop A–E or live subledger density still FAIL/UNVERIFIED.
+3. **Fake N-of-M / PR-volume scoreboard** — “12/24”, “47/47”, “250 PRs”, “module done” while `docs/module-completion/<module>.json` still has `complete:false` or open FAIL/UNVERIFIED items (Rule **24** is the only N-of-M that counts).
 4. **REMAINING: none** on a chrome hop that leaves live economics unchanged.
 5. **Any claim of module COMPLETE** without Desktop audit + Neon `lucia` proof for that module’s money leaves.
 
@@ -45,9 +45,9 @@ Refuse merge of theater. Require `JORGE-APPROVED` on financial. Cursor builds; C
 ## CI teeth (mechanical — not memory)
 
 1. `.husky/commit-msg` → `check-commit-evidence.mjs` rejects incomplete money commits locally  
-2. verify-step **1430** `verify-no-money-theater` fails CI if FINDING/LANE/DOD-A…E/VERIFY-1…8 missing or theater subject without write path  
-3. verify-step that auto-loads DoD fails CI if `EVERY-PR-AUDIT-CHECKLIST.md` / Rule 23 / VERIFY-1 / 1430 pointers are deleted from AGENTS.md / CLAUDE.md / 00-always-read-first / ih35-tms-standards
-
+2. verify-step **1430** `verify-no-money-theater` fails CI if FINDING/LANE/DOD-A…E/VERIFY-1…8/MODULE_PROGRESS missing or theater subject without write path  
+3. verify-step **1431** `verify-module-completion` fails CI if manifests illegal / scoreboards stale / false “module done” claims  
+4. Autoload guard fails CI if checklist / Rule 23 / Rule 24 / MODULE_PROGRESS / 1430 / 1431 pointers are deleted from AGENTS.md / CLAUDE.md / 00-always-read-first / ih35-tms-standards
 ## Tie-breakers
 
 Busy < correct · banner < wire · EntityLink < FK+density · CI-green < Neon · memory < this file + CI.
