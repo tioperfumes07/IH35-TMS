@@ -93,37 +93,37 @@ Precedence: prod-verified FACTS resolve prod > guard > repo > doc > memory; owne
 Locked 2026-05-07 (P3-T11.17.2 schema + P3-T11.17.3 UI + hotfix-1).  
 Top hover-dropdown navigation only for Safety. Never side panel (Jorge G3).
 
-### Safety module structure (21 tabs, 8 groups)
+### Safety module structure — 28 tabs / 9 groups (canonical)
 
-1. Driver Files & Training
-   - Driver Files
-   - Drug & Alcohol
-   - Safety Meetings
-2. Hours & Fatigue
-   - Hours of Service
-   - HOS Violations
-3. Inspections & FMCSA
-   - Vehicle Inspections-IDVR
-   - DOT Inspections
-   - CSA Score
-   - DOT Compliance
-4. Incidents & Claims
-   - Accidents & Incidents
-   - Damage Reports
-   - Trailer Interchanges
-   - Cargo Claims
-5. Fines & Discipline
-   - Internal Fines
-   - External Fines
-   - Complaints (privacy-gated for Owner/Admin/Safety)
-6. Driver Financial Safety
-   - Escrow Record
-7. Compliance Docs & Monitoring
-   - Insurance
-   - Permits
-   - Integrity Reports
-8. Settings
-   - Settings
+**SOURCE OF TRUTH = `apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts`**
+(`SAFETY_GROUPS`, with `SAFETY_CANONICAL_TAB_COUNT` / `SAFETY_CANONICAL_GROUP_COUNT`), enforced by
+`scripts/verify-safety-count-nav-integrity.mjs` + `verify-safety-tab-coverage.mjs`. Never trust a
+count written in prose — including this one; read the array.
+
+SAF-F28 (2026-07-24): this section previously claimed **21 tabs / 8 groups** while the config, both
+CI guards and `docs/specs/IH35_ARCHITECTURAL_DESIGN.md` all said 28/9. The doc had been left behind
+by four groups' worth of build. It is corrected below, and the pointer above is the durable fix —
+a hardcoded inventory in prose will drift again the next time a tab lands.
+
+1. Driver Files & Training — Driver Files · Drug & Alcohol · Safety Meetings
+2. Hours & Fatigue — Hours of Service · HOS Violations
+3. Inspections & FMCSA — Vehicle Inspections-IDVR · DOT Inspections · Driver Scoring · CSA Score ·
+   DOT Compliance
+4. Incidents & Claims — Safety Events · Accidents & Incidents · Damage Reports ·
+   Trailer Interchanges · Cargo Claims
+5. Fines & Discipline — Internal Fines · External Fines · Complaints (privacy-gated to
+   Owner/Admin/Safety)
+6. Driver Financial Safety — Escrow Record
+7. Compliance Docs & Monitoring — Geofence Alerts · Insurance · Permits · Integrity Reports ·
+   Position History
+8. Workforce Planning — Driver Scheduler · Leave Requests · Leave Balances
+9. Settings — Settings
+
+**Alias tabs** (`SAFETY_ALIAS_TABS`) are secondary entry points rendered inside a group's dropdown
+and deliberately NOT part of the canonical 28 — adding them to `SAFETY_GROUPS` breaks the count
+guards. Currently: Cert Expiry, Training Programs, Training Records, ELD Audit Trail,
+Photo Comparison, 425C Audit Trail, Safety Reports (the last six were mounted routes with zero
+inbound links until SAF-F22).
 
 ### Safety UI lock notes
 
