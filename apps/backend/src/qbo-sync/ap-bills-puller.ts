@@ -436,7 +436,7 @@ export async function projectApBillLinesToLedger(
           'A' AS section,
           CASE
             WHEN line->>'DetailType' = 'AccountBasedExpenseLineDetail' THEN acct.id
-            WHEN line->>'DetailType' = 'ItemBasedExpenseLineDetail' THEN item_acct.id
+            WHEN line->>'DetailType' = 'ItemBasedExpenseLineDetail' THEN COALESCE(item_acct.id, qbo_item_acct.id)
             ELSE NULL
           END AS account_id
         FROM accounting.bills b
@@ -460,6 +460,13 @@ export async function projectApBillLinesToLedger(
           ON item_acct.id = ci.default_expense_account_id
          AND item_acct.operating_company_id = b.operating_company_id
          AND item_acct.deactivated_at IS NULL
+        LEFT JOIN mdata.qbo_items qi
+          ON qi.operating_company_id = b.operating_company_id
+         AND qi.qbo_id = line->'ItemBasedExpenseLineDetail'->'ItemRef'->>'value'
+        LEFT JOIN catalogs.accounts qbo_item_acct
+          ON qbo_item_acct.operating_company_id = b.operating_company_id
+         AND qbo_item_acct.qbo_account_id = qi.payload_json->'ExpenseAccountRef'->>'value'
+         AND qbo_item_acct.deactivated_at IS NULL
         WHERE b.operating_company_id = $1::uuid
           AND b.source_system = 'qbo'
           AND line->>'DetailType' IN ('AccountBasedExpenseLineDetail', 'ItemBasedExpenseLineDetail')
