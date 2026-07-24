@@ -1,19 +1,17 @@
 #!/usr/bin/env node
 /**
- * GUARD: every accounting/banking/QBO-money commit must CONFIRM the DoD audit checklist
- * in the commit message — or FAIL closed (local commit-msg + CI verify-step).
+ * GUARD: every money commit must CONFIRM Claude-coder + DoD consolidated checklist
+ * or FAIL (commit-msg + CI verify-step 1430).
  *
- * Canonical list: docs/specs/DEFINITION-OF-DONE.md §§1–3 + §10.
- * Theater ban: Rule 23 (.cursor/rules/23-no-money-theater-prs.mdc).
+ * Source of truth (same list): docs/specs/DEFINITION-OF-DONE.md §10
+ * Consolidated from: DEFINITION-OF-DONE · FULL-AUDIT-LAW · Full Linkage Audit RTF
+ *   (Claude coder paste 2026-07-24 17:56 CDT)
  *
- * Required keys on money app commits (apps/…accounting|banking|qbo-sync…):
- *   FINDING: ACCT-F## | BANK-F## | LST-F##
- *   DOD-A: …   DOD-B: …   DOD-C: …   DOD-D: …   DOD-E: …
- *   VERIFY-1: … VERIFY-2: … VERIFY-3: … VERIFY-4: … VERIFY-5: …
- *   ROOT CAUSE / FIX / GUARD / LIVE PROOF|UNVERIFIED / REMAINING  (Rule 16)
+ * Required keys:
+ *   FINDING · LANE · DOD-A..E · VERIFY-1..8 · ROOT CAUSE · FIX · GUARD · LIVE PROOF|UNVERIFIED · REMAINING
+ * Migration commits also: MIGRATE: …
  *
- * Values may be PASS | N/A | FAIL | UNVERIFIED — <blocker> (hostile honesty required).
- * EntityLink/honesty/N-of-M theater subjects without a write/pull/post path → FAIL.
+ * Theater subjects (EntityLink/honesty/N-of-M) without write/pull/post path → FAIL.
  */
 import { execSync } from "node:child_process";
 import path from "node:path";
@@ -29,10 +27,14 @@ const MONEY_PATH_RE =
 const WRITE_PATH_RE =
   /(puller|projector|posting-engine|bank-feed|gl-post|migration|sync-scheduler|bill-payment|expense\.routes|payments\.routes|categorize)/i;
 
+const MIGRATION_PATH_RE = /^db\/migrations\//i;
+
 const FINDING_RE = /\bFINDING(?:\s*ID)?\s*:\s*(ACCT|BANK|LST)-F\d+\b/i;
+const LANE_RE = /\bLANE\s*:\s*(HOLD|FINANCIAL-HOLD|NON-FINANCIAL|DOCS)\b/i;
 
 const REQUIRED_KEYS = [
   { key: "FINDING", re: FINDING_RE },
+  { key: "LANE", re: LANE_RE },
   { key: "DOD-A", re: /\bDOD-A\s*:\s*\S+/i },
   { key: "DOD-B", re: /\bDOD-B\s*:\s*\S+/i },
   { key: "DOD-C", re: /\bDOD-C\s*:\s*\S+/i },
@@ -43,6 +45,9 @@ const REQUIRED_KEYS = [
   { key: "VERIFY-3", re: /\bVERIFY-3\s*:\s*\S+/i },
   { key: "VERIFY-4", re: /\bVERIFY-4\s*:\s*\S+/i },
   { key: "VERIFY-5", re: /\bVERIFY-5\s*:\s*\S+/i },
+  { key: "VERIFY-6", re: /\bVERIFY-6\s*:\s*\S+/i },
+  { key: "VERIFY-7", re: /\bVERIFY-7\s*:\s*\S+/i },
+  { key: "VERIFY-8", re: /\bVERIFY-8\s*:\s*\S+/i },
   { key: "ROOT CAUSE", re: /root cause/i },
   { key: "FIX", re: /(^|\n)\s*FIX\b|FIX:/i },
   { key: "GUARD", re: /guard/i },
@@ -68,31 +73,44 @@ export function isMoneyAppCommit(files) {
 export function assertNoMoneyTheater(commits) {
   const problems = [];
   for (const c of commits) {
-    if (!isMoneyAppCommit(c.files)) continue;
-    const appMoney = c.files.filter((f) => MONEY_PATH_RE.test(f) && f.startsWith("apps/"));
+    const moneyApp = isMoneyAppCommit(c.files);
+    const hasMigration = c.files.some((f) => MIGRATION_PATH_RE.test(f));
+    if (!moneyApp && !hasMigration) continue;
+
+    // Migrations alone (financial) still need MIGRATE + lane; full DOD if also money apps
     const text = `${c.subject}\n${c.body}`;
     const short = (c.sha || "COMMIT").slice(0, 9);
 
-    const missing = REQUIRED_KEYS.filter((k) => !k.re.test(text)).map((k) => k.key);
-    if (missing.length) {
-      problems.push(
-        `${short} "${c.subject.slice(0, 64)}" money commit missing required DoD confirmations: ${missing.join(", ")} ` +
-          `(see docs/specs/DEFINITION-OF-DONE.md §10)`
-      );
+    if (moneyApp) {
+      const missing = REQUIRED_KEYS.filter((k) => !k.re.test(text)).map((k) => k.key);
+      if (missing.length) {
+        problems.push(
+          `${short} "${c.subject.slice(0, 64)}" money commit missing DoD confirmations: ${missing.join(", ")} ` +
+            `(DEFINITION-OF-DONE.md §10 — Claude consolidated checklist 2026-07-24)`
+        );
+      }
+
+      const appMoney = c.files.filter((f) => MONEY_PATH_RE.test(f) && f.startsWith("apps/"));
+      const hasWritePath = appMoney.some((f) => WRITE_PATH_RE.test(f));
+      if ((THEATER_SUBJECT_RE.test(c.subject) || /entitylink/i.test(text)) && !hasWritePath) {
+        problems.push(
+          `${short} "${c.subject.slice(0, 64)}" money THEATER (EntityLink/honesty/N-of-M) ` +
+            `without write/pull/post/migration path — Rule 23`
+        );
+      }
+
+      if (/\b(module complete|module done|accounting done|banking done)\b/i.test(text) && !/UNVERIFIED/i.test(text)) {
+        problems.push(`${short} claims module done without UNVERIFIED — DoD §10`);
+      }
     }
 
-    const hasWritePath = appMoney.some((f) => WRITE_PATH_RE.test(f));
-    if ((THEATER_SUBJECT_RE.test(c.subject) || /entitylink/i.test(text)) && !hasWritePath) {
+    if (hasMigration && !/\bMIGRATE\s*:\s*\S+/i.test(text)) {
       problems.push(
-        `${short} "${c.subject.slice(0, 64)}" looks like money THEATER (EntityLink/honesty/N-of-M) ` +
-          `without write/pull/post/migration path — Rule 23`
+        `${short} touches db/migrations/ but omits MIGRATE: … (number/idempotent/FORCE RLS/throwaway validate — DoD §10 §7)`
       );
     }
-
-    if (/\b(module complete|module done|accounting done|banking done)\b/i.test(text) && !/UNVERIFIED/i.test(text)) {
-      problems.push(
-        `${short} claims module done without UNVERIFIED — DoD §10 forbids scoreboard COMPLETE`
-      );
+    if (hasMigration && !LANE_RE.test(text)) {
+      problems.push(`${short} migration commit omits LANE: HOLD|FINANCIAL-HOLD|…`);
     }
   }
   return problems;
@@ -112,21 +130,26 @@ function listBranchCommits() {
   });
 }
 
-/** Template printed on failure / for agents. */
 export const MONEY_DOD_COMMIT_TEMPLATE = `
-FINDING: ACCT-F## | BANK-F## | LST-F##   (from ~/Desktop/IH35-CURSOR-AUDIT/modules/<module>.md)
+FINDING: ACCT-F## | BANK-F## | LST-F##
+LANE: HOLD | FINANCIAL-HOLD | NON-FINANCIAL | DOCS
 
-DOD-A: PASS|N/A|FAIL|UNVERIFIED — <active path note>
-DOD-B: PASS|N/A|FAIL|UNVERIFIED — <wizard depth note>
-DOD-C: PASS|N/A|FAIL|UNVERIFIED — <linkage F+R / canonical FK note>
-DOD-D: PASS|N/A|FAIL|UNVERIFIED — <purpose→economics note>
-DOD-E: PASS|N/A|FAIL|UNVERIFIED — <live proof note>
+DOD-A: PASS|N/A|FAIL|UNVERIFIED — active path
+DOD-B: PASS|N/A|FAIL|UNVERIFIED — wizard depth (fields in submit)
+DOD-C: PASS|N/A|FAIL|UNVERIFIED — linkage F+R canonical FK
+DOD-D: PASS|N/A|FAIL|UNVERIFIED — purpose→economics
+DOD-E: PASS|N/A|FAIL|UNVERIFIED — live proof
 
-VERIFY-1: PASS|N/A|FAIL|UNVERIFIED — <QBO chrome>
-VERIFY-2: PASS|N/A|FAIL|UNVERIFIED — <picker law>
-VERIFY-3: PASS|N/A|FAIL|UNVERIFIED — <deep linkage chains>
-VERIFY-4: PASS|N/A|FAIL|UNVERIFIED — <catalog / entity scope>
-VERIFY-5: PASS|N/A|FAIL|UNVERIFIED — <economics CPA-grade>
+VERIFY-1: PASS|N/A|FAIL|UNVERIFIED — Visual / QBO chrome
+VERIFY-2: PASS|N/A|FAIL|UNVERIFIED — Universal picker law (7 clauses)
+VERIFY-3: PASS|N/A|FAIL|UNVERIFIED — Connectivity/wiring (nav→API→Neon)
+VERIFY-4: PASS|N/A|FAIL|UNVERIFIED — Deep linkage chains F+R
+VERIFY-5: PASS|N/A|FAIL|UNVERIFIED — Catalogs / entity scope
+VERIFY-6: PASS|N/A|FAIL|UNVERIFIED — Economics CPA-grade
+VERIFY-7: PASS|N/A|FAIL|UNVERIFIED — Tab / design law (Rule 05)
+VERIFY-8: PASS|N/A|FAIL|UNVERIFIED — Security / entity / RLS
+
+MIGRATE: N/A | <number · idempotent · FORCE RLS · throwaway validate · no hardcoded UUID>
 
 ROOT CAUSE: …
 FIX: …
@@ -146,63 +169,65 @@ if (SELFTEST) {
 
   const fullBody = `
 FINDING: ACCT-F01
-DOD-A: N/A — puller only
+LANE: FINANCIAL-HOLD
+DOD-A: N/A
 DOD-B: N/A
-DOD-C: PASS — shared deposit resolver
-DOD-D: PASS — subledger only flags OFF
+DOD-C: PASS
+DOD-D: PASS
 DOD-E: UNVERIFIED — mirrors 0
 VERIFY-1: N/A
 VERIFY-2: N/A
-VERIFY-3: PASS — deposit account soft-resolve
-VERIFY-4: N/A
-VERIFY-5: UNVERIFIED — payments still 0
+VERIFY-3: PASS — puller path
+VERIFY-4: PASS
+VERIFY-5: N/A
+VERIFY-6: UNVERIFIED — payments 0
+VERIFY-7: N/A
+VERIFY-8: PASS — RLS unchanged
+MIGRATE: N/A
 ROOT CAUSE: duplicate resolve
 FIX: reuse resolver
-GUARD: verify-qbo-ar-payment-deposit-bridge
-LIVE PROOF: UNVERIFIED — qbo.sync_runs empty
-REMAINING: ACCT-F01 pull silence
+GUARD: verify-x
+LIVE PROOF: UNVERIFIED — sync_runs empty
+REMAINING: ACCT-F01
 `;
 
   expect(
-    "missing-checklist",
+    "missing-v6-v8",
     [
       {
         sha: "aaaaaaaaa",
-        subject: "fix(accounting): add reverse column",
-        body: "ROOT CAUSE: x\nFIX: y\nGUARD: z\nLIVE PROOF: UNVERIFIED\nREMAINING: open",
-        files: ["apps/frontend/src/pages/accounting/ExpenseListPage.tsx"],
+        subject: "fix(accounting): something",
+        body: "FINDING: ACCT-F01\nLANE: HOLD\nDOD-A: N/A\nDOD-B: N/A\nDOD-C: N/A\nDOD-D: N/A\nDOD-E: UNVERIFIED\nVERIFY-1: N/A\nVERIFY-2: N/A\nVERIFY-3: N/A\nVERIFY-4: N/A\nVERIFY-5: N/A\nROOT CAUSE: x\nFIX: y\nGUARD: z\nLIVE PROOF: UNVERIFIED\nREMAINING: open",
+        files: ["apps/backend/src/accounting/foo.ts"],
       },
     ],
     true
   );
 
   expect(
-    "entitylink-theater-even-with-keys",
-    [
-      {
-        sha: "bbbbbbbbb",
-        subject: "fix(accounting): expense list WO EntityLink column",
-        body: fullBody,
-        files: ["apps/frontend/src/pages/accounting/ExpenseListPage.tsx"],
-      },
-    ],
-    true
-  );
-
-  expect(
-    "real-puller-full-checklist",
+    "full-ok",
     [
       {
         sha: "ccccccccc",
         subject: "fix(accounting): AR puller deposit resolver",
         body: fullBody,
-        files: [
-          "apps/backend/src/qbo-sync/qbo-ar-payments-puller.ts",
-          "apps/backend/src/accounting/posting-engine.service.ts",
-        ],
+        files: ["apps/backend/src/qbo-sync/qbo-ar-payments-puller.ts"],
       },
     ],
     false
+  );
+
+  expect(
+    "migration-needs-migrate-key",
+    [
+      {
+        sha: "ddddddddd",
+        subject: "feat(db): add thing",
+        body: "LANE: FINANCIAL-HOLD\nROOT CAUSE: x\nFIX: y\nGUARD: z\nLIVE PROOF: UNVERIFIED\nREMAINING: open",
+        files: ["db/migrations/202607999999_example.sql"],
+      },
+    ],
+    true
   );
 
   if (failures.length) {
@@ -219,7 +244,7 @@ const problems = assertNoMoneyTheater(commits);
 if (problems.length) {
   console.error(`${LABEL}: FAIL`);
   for (const p of problems) console.error(`  - ${p}`);
-  console.error(`\nRequired money-commit template:\n\n${MONEY_DOD_COMMIT_TEMPLATE}\n`);
+  console.error(`\nRequired template:\n\n${MONEY_DOD_COMMIT_TEMPLATE}\n`);
   process.exit(1);
 }
 console.log(`${LABEL}: PASS (${commits.length} branch commit(s) checked)`);

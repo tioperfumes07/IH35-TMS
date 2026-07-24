@@ -198,51 +198,51 @@ module appeared in no finding at all.)
 
 ---
 
-## 10. EVERY money PR — audit checklist (git-enforced)
+## 10. EVERY money PR — Claude-consolidated checklist (git-enforced)
 
-Touches `apps/**/accounting|banking|qbo-sync|qbo/**` or `pages/accounting|banking/**`.  
-**Commit message + PR body MUST include every line below** or verify-step **1430** / commit-msg **FAIL**.
+**Binding source (2026-07-24):** same list Claude coder consolidated from this file +
+`FULL-AUDIT-LAW-AGREED-2026-07-22.md` + Full Linkage Audit RTF. Desktop:
+`~/Desktop/IH35-CURSOR-AUDIT/EVERY-PR-DOD-CHECKLIST-GIT-GATE-2026-07-24.md`.
 
-| Confirm | What you are auditing / fixing |
-|---|---|
-| **FINDING:** `ACCT-F##` / `BANK-F##` / `LST-F##` | Ranked id from `~/Desktop/IH35-CURSOR-AUDIT/modules/<module>.md` — no PR without it |
-| **DOD-A** Active path | New design on real route; no dual-path / ComingSoon while Live exists |
-| **DOD-B** Wizard depth | Every rendered field controlled + in submit payload (or N/A) |
-| **DOD-C** Linkage F+R | Canonical FKs both ways — EntityLink-only is FAIL / theater |
-| **DOD-D** Purpose→economics | Correct money object for purpose; no silent default |
-| **DOD-E** Evidence | Neon/live proof **or** `UNVERIFIED — <blocker>` |
-| **VERIFY-1** Chrome | QBO ParityDrawer / money chrome for surfaces touched |
-| **VERIFY-2** Picker | Entity-scoped catalog; inline `+ Add new`; write = read table |
-| **VERIFY-3** Deep linkage | Claim/WO/Expense/Bill/Payment chains F+R as applicable |
-| **VERIFY-4** Catalog scope | TRANSP + USMCA; no cross-entity leak |
-| **VERIFY-5** Economics | Header+lines; flags honest; density or named blocker |
-| **ROOT CAUSE / FIX / GUARD / LIVE PROOF / REMAINING** | Rule 16 evidence block |
+Touches `apps/**/accounting|banking|qbo-sync|qbo/**` or `pages/accounting|banking/**`
+(and `db/migrations/**` for MIGRATE/LANE).  
+**Commit + PR body MUST include every key** or verify-step **1430** / commit-msg **FAIL**.
 
-Allowed values per DOD-/VERIFY- line: `PASS` · `N/A` · `FAIL` · `UNVERIFIED — <reason>`.
+### §0 Before code (process — not all git-parsed)
 
-**Forbidden:** EntityLink-only · honesty-banner-only · N-of-M “module done” while density still 0 · `REMAINING: none` on chrome hops.
+- `git fetch` + current `main` · fresh branch · never `git add -A`
+- Read spec / approved screen first — never build from a defect list alone
+- Classify lane: financial → build-and-HOLD, never self-merge
 
-Template (also printed by the guard on failure):
+### Required commit keys
 
-```
-FINDING: ACCT-F##
-DOD-A: …
-DOD-B: …
-DOD-C: …
-DOD-D: …
-DOD-E: …
-VERIFY-1: …
-VERIFY-2: …
-VERIFY-3: …
-VERIFY-4: …
-VERIFY-5: …
-ROOT CAUSE: …
-FIX: …
-GUARD: …
-LIVE PROOF: … OR UNVERIFIED — …
-REMAINING: …
-```
+| Key | Claude section | What you confirm |
+|---|---|---|
+| **FINDING** | ranked audit | `ACCT-F##` / `BANK-F##` / `LST-F##` from Desktop module audit |
+| **LANE** | §0 / merge | `HOLD` · `FINANCIAL-HOLD` · `NON-FINANCIAL` · `DOCS` |
+| **DOD-A** | §1 A | Active path — registered, mounted, nav leaf; no dual-path / ComingSoon twin |
+| **DOD-B** | §1 B | Wizard depth — every rendered field controlled **and** in submit payload |
+| **DOD-C** | §1 C | Law §9 F+R — canonical FKs both ways; memo/uuid-in-name/jsonb ids = FAIL |
+| **DOD-D** | §1 D | Purpose → economics — no silent default |
+| **DOD-E** | §1 E | Live proof or `UNVERIFIED — <blocker>` |
+| **VERIFY-1** | §2.1 | Visual / QBO chrome (ParityDrawer, calendar, Due, + Create/+ Book, drawer-on-drawer) |
+| **VERIFY-2** | §2.2 | Universal picker law — all 7 clauses |
+| **VERIFY-3** | §2.3 | Connectivity/wiring — nav → route → API → canonical Neon table (not RETIRE) |
+| **VERIFY-4** | §2.4 | Deep linkage chains F+R (claim / WO / expense / bill+payment as applicable) |
+| **VERIFY-5** | §2.5 | Catalogs / entity scope — TRANSP+USMCA; units owner/lease; no cross-entity leak |
+| **VERIFY-6** | §2.6 | Economics CPA-grade — header+lines; JE when ON; control roles; flags; no QBO write-back |
+| **VERIFY-7** | §2.7 | Tab / design law (Rule 05) — no missing/invented tabs |
+| **VERIFY-8** | §2.8 | Security / entity / RLS — FORCE RLS, GUC, security_invoker, grants |
+| **MIGRATE** | §7 | `N/A` or number/idempotent/FORCE RLS/throwaway validate/no hardcoded UUID |
+| **ROOT CAUSE / FIX / GUARD / LIVE PROOF / REMAINING** | §3–4 | Rule 16 + guard FAIL-on-bug / verify-steps only |
 
+Values: `PASS` · `N/A` · `FAIL` · `UNVERIFIED — <reason>`.
+
+**Forbidden:** EntityLink-only · honesty-banner-only · N-of-M “module done” while density 0 ·
+`REMAINING: none` on chrome hops · weakening guards · `package.json` / `locked-guards.yml` thrash.
+
+Template (printed by the guard on failure) — see `MONEY_DOD_COMMIT_TEMPLATE` in
+`scripts/verify-no-money-theater.mjs`.
 ---
 
 **Cross-refs:** `docs/trackers/FULL-SYSTEM-AUDIT-AND-WIRING-MASTER-PLAN-2026-07-22.md` ·
