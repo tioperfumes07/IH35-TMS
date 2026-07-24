@@ -272,6 +272,8 @@ export type BillPayment = {
   is_reconciled?: boolean;
   /** Law §9 — resolved from journal_entry_postings (no column on bill_payments). */
   journal_entry_id?: string | null;
+  /** Law §9 — canonical banking.bank_transactions row matched to this payment, if any. */
+  matched_bank_transaction_id?: string | null;
 };
 
 function withCompany(path: string, operatingCompanyId: string) {

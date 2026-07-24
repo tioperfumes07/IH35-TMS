@@ -23,7 +23,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites, ensureSecondEntityLoad } from "../../../test-helpers/db-fixture.js";
 import { TEST_OWNER_USER_ID } from "../../../test-helpers/constants.js";
-import { listBillPayments, listBillPaymentsForBill, listBills } from "../bills.service.js";
+import { getBillPaymentDetail, listBillPayments, listBillPaymentsForBill, listBills } from "../bills.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -158,6 +158,17 @@ describeIntegration("BANKREC-LISTSTATUS-01 bills/bill-payments reconciliation st
 
     // Active match for payment A — this is the ONLY row that should flip is_reconciled true.
     await seedMatch(companyId, ownBankTxnId, paymentA, "auto_matched");
+    // Match service writes the canonical bank-side reverse FK. The list/detail projection must expose
+    // this direct banking.bank_transactions relation, not only a reconciled boolean from bank.* history.
+    await bypass(companyId, async () => {
+      await db.query(
+        `UPDATE banking.bank_transactions
+            SET matched_bill_payment_id = $1::uuid
+          WHERE id = $2::uuid
+            AND operating_company_id = $3::uuid`,
+        [paymentA, ownBankTxnId, companyId]
+      );
+    });
     // Rejected match for payment B — must NOT count as matched (the reversed/void analog).
     await seedMatch(companyId, ownBankTxnId, paymentB, "rejected");
     // Active match for payment B, but under the FOREIGN entity — must NOT count (entity isolation).
@@ -183,6 +194,11 @@ describeIntegration("BANKREC-LISTSTATUS-01 bills/bill-payments reconciliation st
     expect(payRowB).toBeTruthy();
     expect(payRowA!.is_reconciled).toBe(true);
     expect(payRowB!.is_reconciled).toBe(false);
+    expect(payRowA!.matched_bank_transaction_id).toBe(ownBankTxnId);
+    expect(payRowB!.matched_bank_transaction_id).toBeNull();
+
+    const paymentDetail = await getBillPaymentDetail(TEST_OWNER_USER_ID, companyId, paymentA);
+    expect(paymentDetail?.payment.matched_bank_transaction_id).toBe(ownBankTxnId);
 
     // --- Bill detail payments sub-list (GET /api/v1/accounting/bills/:id/payments) ---
     const paymentsForBillA = await listBillPaymentsForBill(TEST_OWNER_USER_ID, companyId, billA);
