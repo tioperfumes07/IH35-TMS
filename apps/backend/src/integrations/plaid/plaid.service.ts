@@ -20,6 +20,7 @@ import { withCircuitBreaker } from "../../lib/circuit-breaker/index.js";
 import { getPlaidClient, getPlaidEnvForAudit } from "./plaid-client.js";
 import { markPlaidItemSyncSucceeded } from "./plaid-sync-state.js";
 import { decryptPlaidAccessToken, encryptPlaidAccessToken } from "./plaid-token-crypto.js";
+import { plaidMaskOwnershipViolation } from "../../banking/plaid-mask-ownership.js";
 
 type SyncCounts = {
   added: number;
@@ -280,6 +281,11 @@ export async function exchangePublicToken(publicToken: string, operatingCompanyI
     // withCompanyScope pattern every read route uses) — this does NOT bypass RLS: the writes can
     // still only touch the scoped opco, so a USMCA connect can never write a TRANSP/TRK row.
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    const companyCodeRes = await client.query<{ code: string }>(
+      `SELECT code FROM org.companies WHERE id = $1::uuid LIMIT 1`,
+      [operatingCompanyId]
+    );
+    const companyCode = companyCodeRes.rows[0]?.code ?? "";
     for (const account of accountsResponse.data.accounts) {
       const accountName = account.name || account.official_name || "Bank Account";
       const accountType = mapPlaidTypeToAccountType(account.subtype || account.type);
@@ -287,6 +293,27 @@ export async function exchangePublicToken(publicToken: string, operatingCompanyI
       const accountMask = account.mask ?? null;
       const currentBalance = toCents(account.balances.current);
       const availableBalance = toCents(account.balances.available ?? account.balances.current);
+
+      // Owner 2026-07-23: shared WF login — refuse wrong-entity bank rows by last-4.
+      const ownershipFail = plaidMaskOwnershipViolation(companyCode, accountMask);
+      if (ownershipFail) {
+        await appendCrudAudit(
+          client,
+          actorUserId,
+          "banking.plaid.mask_ownership_rejected",
+          {
+            resource_type: "banking.bank_accounts",
+            operating_company_id: operatingCompanyId,
+            account_mask: ownershipFail.mask,
+            owner_company_code: ownershipFail.owner,
+            attempted_company_code: ownershipFail.attempted,
+            plaid_account_id: account.account_id,
+          },
+          "warning",
+          "PLAID-MASK-OWNERSHIP-2026-07-23"
+        );
+        continue;
+      }
 
       const existing = await client.query<{ id: string }>(
         `
