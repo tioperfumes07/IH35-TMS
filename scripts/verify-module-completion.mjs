@@ -139,7 +139,7 @@ function renderStatusDoc(manifests, coverage) {
         `| [${mark}] ${b.id} | ${b.title} | ${(b.findings ?? []).join(", ") || "—"} | ` +
           `${b.hold === true ? "**YES**" : b.hold === null ? "?" : "no"} | ` +
           `${(b.prs ?? []).map((p) => `#${p}`).join(", ") || "—"} | \`${b.status}\` | ` +
-          `${String(b.evidence ?? "").replace(/\|/g, "\\|") || "—"} |`
+          `${String(b.evidence ?? "").replace(/\\/g, "\\\\").replace(/\|/g, "\\|") || "—"} |`
       );
     }
     lines.push("");
