@@ -8,6 +8,7 @@ import { reconcileChartOfAccounts } from "./chart-of-accounts-reconciler.js";
 import { pullItemsFromQbo } from "./items-puller.js";
 import { reconcileItems } from "./items-reconciler.js";
 import { pullApBillsFromQbo, projectApBillsToLedger } from "./ap-bills-puller.js";
+import { pullApBillPaymentsFromQbo, projectApBillPaymentsToLedger } from "./ap-bill-payments-puller.js";
 import { countUnresolvedDrift, detectDriftForCompany } from "./drift-detector.js";
 import { maybeFireDriftAlert } from "./sync-alerts.js";
 
@@ -102,6 +103,26 @@ async function runScheduledSyncForCompany(
         header_line_sum_mismatch: res.lines.headerLineSumMismatch,
       },
       "[qbo-sync-scheduler] ap_bills_project complete (headers + incremental lines from payload_json)"
+    );
+    return res;
+  }, failures, log);
+
+  // Inbound A/P PAYMENTS (QBO BillPayment -> mdata.qbo_ap_bill_payments mirror -> accounting.bill_payments).
+  // MUST run AFTER ap_bills_project so the bills the payments link to are already projected (a payment whose
+  // bill isn't projected yet is left in the mirror as paymentsUnlinked, never invented). Both stages are
+  // internally gated by default-OFF flags (QBO_AP_BILL_PAYMENT_MIRROR_PULL_ENABLED /
+  // QBO_AP_BILL_PAYMENTS_PROJECTION_ENABLED) and idempotent (upsert), so re-running is safe. NO GL poster.
+  await runStep("ap_bill_payments_pull", operatingCompanyId, () => pullApBillPaymentsFromQbo(operatingCompanyId), failures, log);
+  await runStep("ap_bill_payments_project", operatingCompanyId, async () => {
+    const res = await projectApBillPaymentsToLedger(operatingCompanyId);
+    log?.info(
+      {
+        operating_company_id: operatingCompanyId,
+        enabled: res.enabled,
+        rows_projected: res.rowsProjected,
+        payments_unlinked: res.paymentsUnlinked,
+      },
+      "[qbo-sync-scheduler] ap_bill_payments_project complete (fan-out BillPayment -> bill_payments allocations)"
     );
     return res;
   }, failures, log);
