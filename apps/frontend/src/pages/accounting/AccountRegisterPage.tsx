@@ -390,7 +390,7 @@ export function AccountRegisterPage() {
             <optgroup label="Chart of accounts">
               {coaPickerAccounts.map((a) => (
                 <option key={a.id} value={a.id}>
-                  {a.account_number} · {a.account_name}
+                  {a.account_name}
                 </option>
               ))}
             </optgroup>

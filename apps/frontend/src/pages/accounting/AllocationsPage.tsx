@@ -146,7 +146,7 @@ export function AllocationsPage() {
               id={row.coa_account_id}
               label={
                 <>
-                  {row.gl_account_number ? <span className="text-gray-400">{row.gl_account_number} · </span> : null}
+                  
                   {row.gl_account_name}
                 </>
               }

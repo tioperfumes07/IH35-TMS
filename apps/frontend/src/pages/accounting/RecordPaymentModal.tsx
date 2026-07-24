@@ -71,7 +71,7 @@ export function buildReceivePaymentDepositOptions(input: {
     const uf = input.coaAccounts.find((a) => a.id === input.undepositedFundsAccountId);
     push(
       input.undepositedFundsAccountId,
-      uf ? `${uf.account_number || "COA"} — ${uf.account_name}` : "Undeposited Funds",
+      uf ? uf.account_name : "Undeposited Funds",
       "Undeposited Funds"
     );
   }
@@ -96,7 +96,7 @@ export function buildReceivePaymentDepositOptions(input: {
   for (const account of input.coaAccounts) {
     const type = String(account.account_type ?? "");
     if (!DEPOSIT_COA_TYPES.has(type)) continue;
-    push(account.id, `${account.account_number || "COA"} — ${account.account_name}`, type || "Asset");
+    push(account.id, account.account_name, type || "Asset");
   }
 
   return options;

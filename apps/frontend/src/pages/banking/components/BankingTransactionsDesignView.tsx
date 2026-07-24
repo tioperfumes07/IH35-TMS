@@ -781,7 +781,7 @@ export function BankingTransactionsDesignView({
     const account = (coaQuery.data?.accounts ?? []).find((a) => a.id === draft.accountId);
     const categoryKind =
       account?.account_name ||
-      (account?.account_number ? String(account.account_number) : "") ||
+      (account?.account_name ? String(account.account_name) : "") ||
       "Uncategorized";
     setPostingTxId(tx.id);
     try {
@@ -927,8 +927,7 @@ export function BankingTransactionsDesignView({
       return;
     }
     const categoryKind =
-      account.account_name ||
-      (account.account_number ? String(account.account_number) : "") ||
+      (account.account_name ? String(account.account_name) : "") ||
       "Uncategorized";
     setBulkCategorizeBusy(true);
     try {
@@ -1706,7 +1705,7 @@ export function BankingTransactionsDesignView({
                   options={(coaQuery.data?.accounts ?? []).map((account) => ({
                     value: account.id,
                     label: account.account_name,
-                    type: account.account_number ? String(account.account_number) : undefined,
+                    type: account.account_type ? String(account.account_type) : undefined,
                   }))}
                   createKind="category"
                   operatingCompanyId={companyId}
@@ -2715,7 +2714,7 @@ export function BankingTransactionsDesignView({
                   options={(coaQuery.data?.accounts ?? []).map((account) => ({
                     value: account.id,
                     label: account.account_name,
-                    type: account.account_number ? String(account.account_number) : undefined,
+                    type: account.account_type ? String(account.account_type) : undefined,
                   }))}
                   createKind="category"
                   operatingCompanyId={companyId}

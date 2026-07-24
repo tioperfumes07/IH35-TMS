@@ -68,7 +68,7 @@ export function buildBankTransferPickerOptions(input: {
     .filter((account) => !linkedLedgerIds.has(String(account.id)))
     .map((account) => ({
       id: String(account.id),
-      name: `${account.account_number || "COA"} - ${account.account_name}`,
+      name: account.account_name,
       kind: "coa",
     }));
 

@@ -48,7 +48,7 @@ export function WorkOrderCreateModal({ operatingCompanyId, onLinesChange }: Prop
     () =>
       (categoriesQuery.data ?? []).map((row) => ({
         id: String(row.id),
-        label: `${row.account_number ?? row.qbo_id ?? ""} · ${row.name}`.trim(),
+        label: `${row.name}`.trim(),
       })),
     [categoriesQuery.data]
   );

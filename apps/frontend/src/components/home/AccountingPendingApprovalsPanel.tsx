@@ -15,11 +15,9 @@ function accountLabel(account: {
   account_name: string | null;
   coa_role: string | null;
 }): string {
-  const num = account.account_number ?? "";
   const name = account.account_name ?? "";
-  const base = [num, name].filter(Boolean).join(" ");
-  if (account.coa_role) return `${base || "Account"} (${account.coa_role})`;
-  return base || "Account";
+  if (account.coa_role) return `${name || "Account"} (${account.coa_role})`;
+  return name || "Account";
 }
 
 export function AccountingPendingApprovalsPanel({ data, isLoading }: Props) {

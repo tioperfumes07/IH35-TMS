@@ -15,17 +15,17 @@ describe("referenceOptionLabels — QBO Name + Type", () => {
     });
   });
 
-  it("coaAccountReferenceOption uses account_type (not account_number) as Type", () => {
+  it("coaAccountReferenceOption uses name-only label and account_type as Type (numbers off by default)", () => {
     expect(
       coaAccountReferenceOption({
         id: "a1",
-        account_number: "1135",
+        account_number: "QBO-1150040124",
         account_name: "BOA-CHECKING-1135",
         account_type: "Bank",
       })
     ).toEqual({
       value: "a1",
-      label: "1135 · BOA-CHECKING-1135",
+      label: "BOA-CHECKING-1135",
       type: "Bank",
     });
   });

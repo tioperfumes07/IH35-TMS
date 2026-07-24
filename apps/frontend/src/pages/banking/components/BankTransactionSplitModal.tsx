@@ -347,7 +347,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                         options={(coaQuery.data?.accounts ?? []).map((a) => ({
                           value: a.id,
                           label: a.account_name,
-                          type: a.account_number ?? undefined,
+                          type: a.account_type ?? undefined,
                         }))}
                         createKind="category"
                         operatingCompanyId={companyId}

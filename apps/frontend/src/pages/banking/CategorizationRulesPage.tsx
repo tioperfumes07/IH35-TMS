@@ -238,7 +238,7 @@ export function CategorizationRulesPage() {
               onChange={(next) => setCoaAccountId(next ?? "")}
               options={(accountsQuery.data?.accounts ?? []).map((account) => ({
                 value: account.id,
-                label: `${account.account_number} - ${account.account_name}`,
+                label: account.account_name,
               }))}
               createKind="category"
               addNewLabel="+ Add new account"

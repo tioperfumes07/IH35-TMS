@@ -79,7 +79,7 @@ export function ApplyToBillForm({ value, onChange, operatingCompanyId }: Props) 
         )
         .map((acct) => ({
           value: acct.id,
-          label: acct.account_number ? `${acct.account_number} · ${acct.account_name}` : acct.account_name,
+          label: acct.account_name,
           type: acct.account_type ?? undefined,
         })),
     [accountsQuery.data?.accounts]

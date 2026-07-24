@@ -16,6 +16,7 @@ import { companyToday } from "../../../lib/businessDate";
 import { ChartOfAccountsSyncPanel } from "../../accounting/ChartOfAccountsSyncPanel";
 import { AccountDrawer } from "./AccountDrawer";
 import { CoaBatchActions } from "./CoaBatchActions";
+import { useShowAccountNumbers } from "../../../lib/useShowAccountNumbers";
 import {
   applyCollapsedVisibility,
   buildCoaListRows,
@@ -97,7 +98,8 @@ function syncBadgeClasses(badge: CoaListRow["syncBadge"]) {
 function buildColumns(
   collapsedParentIds: Set<string>,
   onToggleCollapse: (parentId: string) => void,
-  onEditRow: (row: CoaListRow) => void
+  onEditRow: (row: CoaListRow) => void,
+  showAccountNumbers: boolean
 ): ListViewColumn<CoaListRow>[] {
   return [
     {
@@ -106,6 +108,8 @@ function buildColumns(
       width: 110,
       sortType: "text",
       pinned: true,
+      // Owner 2026-07-23: QBO/CoA numbers junk — hidden unless toggle ON.
+      visible: showAccountNumbers,
       render: (row) => <span className="font-medium tracking-normal [font-variant-ligatures:none]">{row.number}</span>,
     },
     {
@@ -218,7 +222,7 @@ export function ChartOfAccountsListPage() {
   const companyId = selectedCompanyId ?? "";
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE_DEFAULT);
-  const [sortKey, setSortKey] = useState("number");
+  const [sortKey, setSortKey] = useState("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("active");
@@ -231,6 +235,7 @@ export function ChartOfAccountsListPage() {
   // wrapper). Rows whose catalog metadata carries the reconciler's `drift_detected` sync status
   // (set by qbo-sync/chart-of-accounts-reconciler.ts) are shown; all other rows are hidden.
   const [driftOnly, setDriftOnly] = useState(false);
+  const [showAccountNumbers, setShowAccountNumbers] = useShowAccountNumbers();
 
   const asOfDate = useMemo(() => companyToday(), []);
 
@@ -329,9 +334,10 @@ export function ChartOfAccountsListPage() {
           setDrawerMode("edit");
           setDrawerAccount(catalogRowToCatalogAccount(raw));
           setDrawerOpen(true);
-        }
+        },
+        showAccountNumbers
       ),
-    [collapsedParentIds, catalogQuery.data]
+    [collapsedParentIds, catalogQuery.data, showAccountNumbers]
   );
 
   const sort: SortConfig = {
@@ -424,22 +430,37 @@ export function ChartOfAccountsListPage() {
               </>
             )}
             filterBarSlot={
-              <div className="flex items-center gap-1 rounded-sm border border-gray-300 p-0.5 text-xs">
-                {(["all", "active", "inactive"] as const).map((value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => {
-                      setStatusFilter(value);
-                      setPage(1);
-                    }}
-                    className={`rounded px-2 py-1 capitalize ${
-                      statusFilter === value ? "bg-[#1f2a44] text-white" : "text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    {value}
-                  </button>
-                ))}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1 rounded-sm border border-gray-300 p-0.5 text-xs">
+                  {(["all", "active", "inactive"] as const).map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => {
+                        setStatusFilter(value);
+                        setPage(1);
+                      }}
+                      className={`rounded px-2 py-1 capitalize ${
+                        statusFilter === value ? "bg-[#1f2a44] text-white" : "text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      {value}
+                    </button>
+                  ))}
+                </div>
+                <label
+                  className="flex cursor-pointer items-center gap-1.5 rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-700"
+                  data-testid="coa-show-account-numbers-toggle"
+                  title="Show QBO / CoA account numbers in this list (off by default — owner ruling 2026-07-23)"
+                >
+                  <input
+                    type="checkbox"
+                    className="rounded-sm border-gray-300"
+                    checked={showAccountNumbers}
+                    onChange={(event) => setShowAccountNumbers(event.target.checked)}
+                  />
+                  Show account numbers
+                </label>
               </div>
             }
             batchActions={({ selectedIds }) => (
