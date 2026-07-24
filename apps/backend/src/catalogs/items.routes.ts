@@ -1,10 +1,12 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import type { PoolClient } from "pg";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { isCatalogWriteRole } from "../auth/role-helpers.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { enqueueTmsItemPushRequested } from "../qbo/tms-item-push-chain.service.js";
 
 const itemTypeSchema = z.enum(["Service", "Inventory", "NonInventory", "Bundle", "Discount", "Charge"]);
@@ -15,6 +17,7 @@ const listQuerySchema = z.object({
   status: z.enum(["active", "inactive"]).optional(),
   search: z.string().trim().min(1).max(100).optional(),
   item_type: itemTypeSchema.optional(),
+  operating_company_id: z.string().uuid().optional(),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -69,6 +72,24 @@ function mapItemConflict(constraint?: string): string {
   return "catalog_item_conflict";
 }
 
+// LST — catalogs.items is FORCE RLS with a NOT NULL operating_company_id (migration af2). Reading
+// under withCurrentUser WITHOUT setting `app.operating_company_id` returns ZERO rows (is_lucia_bypass()
+// is false for ih35_app), so this route's GET returned an EMPTY list for all 189 prod items and its
+// INSERT 500'd on the NOT NULL opco — verified on the prod branch 2026-07-24. This helper sets the GUC
+// for the active entity and asserts membership, exactly like the sibling accounts/classes catalog
+// routes (catalogs/accounts.routes.ts withScopedCompany).
+async function withScopedCompany<T>(
+  userId: string,
+  operatingCompanyId: string,
+  fn: (client: PoolClient) => Promise<T>,
+) {
+  return withCurrentUser(userId, async (client) => {
+    await assertCompanyMembership(client, userId, operatingCompanyId);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    return fn(client);
+  });
+}
+
 export async function registerItemRoutes(app: FastifyInstance) {
   app.get("/api/v1/catalogs/items", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
@@ -77,7 +98,14 @@ export async function registerItemRoutes(app: FastifyInstance) {
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const { limit, offset, status, search, item_type } = parsed.data;
 
-    const items = await withCurrentUser(authUser.uuid, async (client) => {
+    // Resolve the active entity (explicit param, else the user's default/accessible) and read its
+    // per-entity items UNDER the RLS GUC. Without this the af2 RLS returns 0 rows.
+    const operatingCompanyId =
+      parsed.data.operating_company_id ??
+      (await withCurrentUser(authUser.uuid, (client) => resolveOperatingCompanyId(client, authUser.uuid)));
+    if (!operatingCompanyId) return { items: [] };
+
+    const items = await withScopedCompany(authUser.uuid, operatingCompanyId, async (client) => {
       const values: unknown[] = [];
       const filters: string[] = [];
       if (status === "active") filters.push("deactivated_at IS NULL");
@@ -123,16 +151,22 @@ export async function registerItemRoutes(app: FastifyInstance) {
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const b = parsed.data;
 
+    const operatingCompanyId =
+      b.operating_company_id ??
+      (await withCurrentUser(authUser.uuid, (client) => resolveOperatingCompanyId(client, authUser.uuid)));
+    if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_required" });
+
     try {
-      const created = await withCurrentUser(authUser.uuid, async (client) => {
+      const created = await withScopedCompany(authUser.uuid, operatingCompanyId, async (client) => {
         const res = await client.query(
           `
             INSERT INTO catalogs.items (
+              operating_company_id,
               item_name, item_code, item_type, description, unit_price_cents,
               default_income_account_id, default_expense_account_id, default_class_id,
               qbo_item_id, taxable, notes, created_by_user_id, updated_by_user_id
             ) VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$12
+              $13,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$12
             )
             RETURNING
               id, item_name, item_code, item_type, description, unit_price_cents,
@@ -153,6 +187,7 @@ export async function registerItemRoutes(app: FastifyInstance) {
             b.taxable,
             b.notes ?? null,
             authUser.uuid,
+            operatingCompanyId,
           ]
         );
         const row = res.rows[0];
@@ -164,14 +199,11 @@ export async function registerItemRoutes(app: FastifyInstance) {
           item_code: row.item_code,
           item_type: row.item_type,
         });
-        const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
-        if (operatingCompanyId) {
-          await enqueueTmsItemPushRequested(client, {
-            operating_company_id: operatingCompanyId,
-            item_id: String(row.id),
-            operation: "create",
-          });
-        }
+        await enqueueTmsItemPushRequested(client, {
+          operating_company_id: operatingCompanyId,
+          item_id: String(row.id),
+          operation: "create",
+        });
         return row;
       });
       return reply.code(201).send(created);
@@ -191,7 +223,12 @@ export async function registerItemRoutes(app: FastifyInstance) {
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
-    const row = await withCurrentUser(authUser.uuid, async (client) => {
+    const operatingCompanyId = await withCurrentUser(authUser.uuid, (client) =>
+      resolveOperatingCompanyId(client, authUser.uuid)
+    );
+    if (!operatingCompanyId) return reply.code(404).send({ error: "catalog_item_not_found" });
+
+    const row = await withScopedCompany(authUser.uuid, operatingCompanyId, async (client) => {
       const res = await client.query(
         `
           SELECT
@@ -244,8 +281,13 @@ export async function registerItemRoutes(app: FastifyInstance) {
     values.push(parsedParams.data.id);
     const idIdx = values.length;
 
+    const operatingCompanyId =
+      b.operating_company_id ??
+      (await withCurrentUser(authUser.uuid, (client) => resolveOperatingCompanyId(client, authUser.uuid)));
+    if (!operatingCompanyId) return reply.code(404).send({ error: "catalog_item_not_found" });
+
     try {
-      const updated = await withCurrentUser(authUser.uuid, async (client) => {
+      const updated = await withScopedCompany(authUser.uuid, operatingCompanyId, async (client) => {
         const oldRes = await client.query(
           `
             SELECT
@@ -287,14 +329,11 @@ export async function registerItemRoutes(app: FastifyInstance) {
           resource_type: "catalogs.items",
           changes,
         });
-        const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
-        if (operatingCompanyId) {
-          await enqueueTmsItemPushRequested(client, {
-            operating_company_id: operatingCompanyId,
-            item_id: String(updatedRow.id),
-            operation: "update",
-          });
-        }
+        await enqueueTmsItemPushRequested(client, {
+          operating_company_id: operatingCompanyId,
+          item_id: String(updatedRow.id),
+          operation: "update",
+        });
         return updatedRow;
       });
       if (!updated) return reply.code(404).send({ error: "catalog_item_not_found" });
@@ -316,7 +355,12 @@ export async function registerItemRoutes(app: FastifyInstance) {
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
-    const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
+    const operatingCompanyId = await withCurrentUser(authUser.uuid, (client) =>
+      resolveOperatingCompanyId(client, authUser.uuid)
+    );
+    if (!operatingCompanyId) return reply.code(404).send({ error: "catalog_item_not_found" });
+
+    const deactivated = await withScopedCompany(authUser.uuid, operatingCompanyId, async (client) => {
       const oldRes = await client.query(
         `
           SELECT id, deactivated_at
@@ -351,14 +395,11 @@ export async function registerItemRoutes(app: FastifyInstance) {
         resource_type: "catalogs.items",
         was_already_deactivated: wasAlreadyDeactivated,
       });
-      const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
-      if (operatingCompanyId) {
-        await enqueueTmsItemPushRequested(client, {
-          operating_company_id: operatingCompanyId,
-          item_id: String(oldRow.id),
-          operation: "update",
-        });
-      }
+      await enqueueTmsItemPushRequested(client, {
+        operating_company_id: operatingCompanyId,
+        item_id: String(oldRow.id),
+        operation: "update",
+      });
 
       return { id: oldRow.id, deactivated_at: deactivatedAt, was_already_deactivated: wasAlreadyDeactivated };
     });
