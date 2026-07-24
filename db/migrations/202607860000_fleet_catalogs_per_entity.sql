@@ -36,9 +36,15 @@
 
 DO $mig$
 DECLARE
-  v_transp uuid := '91e0bf0a-133f-4ce8-a734-2586cfa66d96';  -- IH 35 Transportation (operating)
-  v_usmca  uuid := '5c854333-6ea5-4faa-af31-67cb272fef80';  -- USMCA Freight (operating)
-  v_trk    uuid := 'b49a737b-6cf0-43bb-8758-a6c8ff8a2c4e';  -- IH 35 Trucking (asset holder)
+  -- Resolve the entities DYNAMICALLY from org.companies (never hardcode UUIDs): on prod these are the
+  -- real TRANSP/TRK/USMCA rows, on a fresh-from-0001 CI DB they are whatever org.companies was seeded
+  -- with (gen_random_uuid()) — so the FK to org.companies always holds. "Primary" owns the existing
+  -- global rows (prefer TRANSP's known prod id if present, else the earliest active company for
+  -- determinism); every OTHER active company gets an identical copy ("same catalog for all entities").
+  v_primary uuid := COALESCE(
+    (SELECT id FROM org.companies WHERE id = '91e0bf0a-133f-4ce8-a734-2586cfa66d96' AND deactivated_at IS NULL),
+    (SELECT id FROM org.companies WHERE deactivated_at IS NULL ORDER BY created_at, id LIMIT 1)
+  );
   v_tbl    text;
   v_seed   uuid;
   v_tables text[] := ARRAY[
@@ -46,16 +52,19 @@ DECLARE
     'trailer_types','lease_terms','tractor_statuses','trailer_statuses'
   ];
 BEGIN
+  IF v_primary IS NULL THEN
+    RAISE EXCEPTION 'fleet_catalogs_per_entity: no active org.companies row to own the catalogs';
+  END IF;
   -- 1) STRUCTURE: audit columns (4 tables lack them) + operating_company_id, then scope keys.
   FOREACH v_tbl IN ARRAY v_tables LOOP
     -- Harmonize audit columns (nullable, matching the 4 tables that already have them).
     EXECUTE format('ALTER TABLE catalogs.%I ADD COLUMN IF NOT EXISTS created_by_user_id uuid', v_tbl);
     EXECUTE format('ALTER TABLE catalogs.%I ADD COLUMN IF NOT EXISTS updated_by_user_id uuid', v_tbl);
 
-    -- Add the entity column, backfill existing (global) rows to TRANSP, then lock NOT NULL.
+    -- Add the entity column, backfill existing (global) rows to the primary company, then lock NOT NULL.
     EXECUTE format('ALTER TABLE catalogs.%I ADD COLUMN IF NOT EXISTS operating_company_id uuid', v_tbl);
     EXECUTE format('UPDATE catalogs.%I SET operating_company_id = $1 WHERE operating_company_id IS NULL', v_tbl)
-      USING v_transp;
+      USING v_primary;
     EXECUTE format('ALTER TABLE catalogs.%I ALTER COLUMN operating_company_id SET NOT NULL', v_tbl);
 
     -- FK to org.companies (idempotent).
@@ -75,20 +84,20 @@ BEGIN
     END IF;
   END LOOP;
 
-  -- 2) SEED: copy the TRANSP catalog to USMCA + TRK, same values, fresh PKs ("same catalog for all
-  --    entities"). Guarded by org.companies existence so a DB missing an entity row cannot FK-fail.
-  --    ON CONFLICT keeps this a no-op on re-run and on any code already present for that entity.
+  -- 2) SEED: copy the primary company's catalog to EVERY OTHER active company, same values, fresh PKs
+  --    ("same catalog for all entities"). v_seed iterates real org.companies rows only, so the FK
+  --    always holds; ON CONFLICT keeps this a no-op on re-run and on any code already present.
   FOREACH v_tbl IN ARRAY v_tables LOOP
-    FOREACH v_seed IN ARRAY ARRAY[v_usmca, v_trk] LOOP
-      IF EXISTS (SELECT 1 FROM org.companies WHERE id = v_seed) THEN
-        EXECUTE format(
-          'INSERT INTO catalogs.%I (operating_company_id, code, name, description, sort_order, is_active)
-             SELECT $1, code, name, description, sort_order, is_active
-             FROM catalogs.%I
-             WHERE operating_company_id = $2
-           ON CONFLICT (operating_company_id, code) DO NOTHING',
-          v_tbl, v_tbl) USING v_seed, v_transp;
-      END IF;
+    FOR v_seed IN
+      SELECT id FROM org.companies WHERE deactivated_at IS NULL AND id <> v_primary
+    LOOP
+      EXECUTE format(
+        'INSERT INTO catalogs.%I (operating_company_id, code, name, description, sort_order, is_active)
+           SELECT $1, code, name, description, sort_order, is_active
+           FROM catalogs.%I
+           WHERE operating_company_id = $2
+         ON CONFLICT (operating_company_id, code) DO NOTHING',
+        v_tbl, v_tbl) USING v_seed, v_primary;
     END LOOP;
   END LOOP;
 
