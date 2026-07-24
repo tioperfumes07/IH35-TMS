@@ -266,7 +266,7 @@ async function resolveBankLedgerAccountId(
  * - free-text "ops_checking" (broken slug — never a GL id)
  * Fail soft to undeposited_funds / cash_clearing so historical rows can still post.
  */
-async function resolveCustomerPaymentDepositAccount(
+export async function resolveCustomerPaymentDepositAccount(
   client: DbClient,
   operatingCompanyId: string,
   depositedTo: string | null | undefined
