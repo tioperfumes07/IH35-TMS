@@ -213,7 +213,7 @@ export function PaymentDetailPage() {
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Deposited to</span>
-          <span className="text-sm text-gray-900"><EntityLink kind="bank_account" id={payment.deposited_to_account_id || undefined} label={payment.deposited_to_account_id ? payment.deposited_to_account_id.slice(0, 8) : "-"} /></span>
+          <span className="text-sm text-gray-900"><EntityLink kind="account" id={payment.deposited_to_account_id || undefined} label={payment.deposited_to_account_id ? payment.deposited_to_account_id.slice(0, 8) : "-"} /></span>
         </DataPanelRow>
       </DataPanel>
 
