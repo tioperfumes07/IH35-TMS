@@ -250,6 +250,15 @@ export type BillDetailLine = {
   load_number: string | null;
 };
 
+export type VendorCreditApplicationForBill = {
+  id: string;
+  credit_id: string;
+  display_id: string;
+  applied_cents: number;
+  applied_at: string;
+  voided_at: string | null;
+};
+
 export type BillPayment = {
   id: string;
   operating_company_id: string;
@@ -667,6 +676,7 @@ export function getVendorBill(id: string, operatingCompanyId: string) {
     bill: VendorBill;
     lines: BillDetailLine[];
     payments: BillPayment[];
+    vendor_credit_applications: VendorCreditApplicationForBill[];
     audit_events: Array<Record<string, unknown>>;
   }>(withCompany(`/api/v1/accounting/bills/${id}`, operatingCompanyId));
 }

@@ -96,6 +96,63 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
     return { credits: rows };
   });
 
+  // Law §9 reverse drill-through: a credit must expose every bill it reduced.
+  // Read-only and company-scoped; this route does not calculate or post any GL.
+  app.get("/api/v1/accounting/vendor-credits/:id", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const params = idParamSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+
+    const detail = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const creditRes = await client.query(
+        `SELECT
+           id,
+           vendor_id,
+           display_id,
+           status,
+           issue_date,
+           amount_cents,
+           amount_applied_cents,
+           amount_unapplied_cents,
+           notes,
+           created_at,
+           created_by_user_id
+         FROM accounting.vendor_credits
+         WHERE id = $1
+           AND operating_company_id = $2
+         LIMIT 1`,
+        [params.data.id, query.data.operating_company_id]
+      );
+      const credit = creditRes.rows[0];
+      if (!credit) return null;
+
+      const applicationsRes = await client.query(
+        `SELECT
+           vca.id,
+           vca.bill_id,
+           b.bill_number,
+           vca.applied_cents,
+           vca.applied_at,
+           vca.voided_at
+         FROM accounting.vendor_credit_applications vca
+         JOIN accounting.bills b
+           ON b.id = vca.bill_id
+          AND b.operating_company_id = vca.operating_company_id
+         WHERE vca.credit_id = $1
+           AND vca.operating_company_id = $2
+         ORDER BY vca.applied_at DESC, vca.id DESC`,
+        [params.data.id, query.data.operating_company_id]
+      );
+      return { credit, applications: applicationsRes.rows };
+    });
+
+    if (!detail) return reply.code(404).send({ error: "vendor_credit_not_found" });
+    return detail;
+  });
+
   // POST /api/v1/accounting/vendor-credits
   app.post("/api/v1/accounting/vendor-credits", async (req, reply) => {
     const user = currentAuthUser(req, reply);
