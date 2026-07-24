@@ -102,6 +102,7 @@ export function BillDetailPage() {
   const bill = detailQuery.data?.bill;
   const lines = detailQuery.data?.lines ?? [];
   const payments = detailQuery.data?.payments ?? [];
+  const vendorCreditApplications = detailQuery.data?.vendor_credit_applications ?? [];
 
   if (!bill) return <div className="p-4 text-sm text-red-600">Bill not found.</div>;
 
@@ -345,6 +346,29 @@ export function BillDetailPage() {
           sortDirection={sortDirection}
           onSortChange={onSortChange}
         />
+      </DataPanel>
+
+      <DataPanel title="Vendor credits">
+        <div className="space-y-2" data-testid="bill-detail-vendor-credit-applications">
+          {vendorCreditApplications.length === 0 ? (
+            <p className="text-sm text-slate-500">No vendor credits applied to this bill.</p>
+          ) : (
+            vendorCreditApplications.map((application) => (
+              <div key={application.id} className="flex items-center justify-between gap-3 rounded-sm border border-slate-200 px-3 py-2">
+                <Link
+                  to={`/accounting/vendor-credits?credit_id=${encodeURIComponent(application.credit_id)}`}
+                  className="text-sm font-medium text-slate-800 hover:underline"
+                >
+                  {application.display_id}
+                </Link>
+                <div className="text-right text-xs text-slate-600">
+                  <div className="font-semibold text-slate-900">{money(application.applied_cents)}</div>
+                  <div>{application.voided_at ? "Voided application" : `Applied ${formatDateUS(application.applied_at)}`}</div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </DataPanel>
     </AccountingSubNavWrapper>
   );

@@ -676,6 +676,34 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
       `,
       [billId, operatingCompanyId]
     );
+    // Law §9 reverse drill-through: a bill must expose every active or voided vendor-credit
+    // application that references it. This is read-only subledger evidence; no GL is calculated here.
+    const vendorCreditApplicationsRes = await client.query<{
+      id: string;
+      credit_id: string;
+      display_id: string;
+      applied_cents: string | number;
+      applied_at: string;
+      voided_at: string | null;
+    }>(
+      `
+        SELECT
+          vca.id::text AS id,
+          vca.credit_id::text AS credit_id,
+          vc.display_id,
+          vca.applied_cents,
+          vca.applied_at,
+          vca.voided_at
+        FROM accounting.vendor_credit_applications vca
+        JOIN accounting.vendor_credits vc
+          ON vc.id = vca.credit_id
+         AND vc.operating_company_id = vca.operating_company_id
+        WHERE vca.bill_id = $1::uuid
+          AND vca.operating_company_id = $2::uuid
+        ORDER BY vca.applied_at DESC, vca.id DESC
+      `,
+      [billId, operatingCompanyId]
+    );
     const linesRes = await client.query<{
       id: string;
       line_sequence: number;
@@ -747,6 +775,14 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
       payments: paymentsRes.rows.map((row) => ({
         ...row,
         amount_cents: Number(row.amount_cents ?? Math.round(Number(row.amount ?? 0) * 100)),
+      })),
+      vendor_credit_applications: vendorCreditApplicationsRes.rows.map((row) => ({
+        id: row.id,
+        credit_id: row.credit_id,
+        display_id: row.display_id,
+        applied_cents: Number(row.applied_cents ?? 0),
+        applied_at: row.applied_at,
+        voided_at: row.voided_at,
       })),
       audit_events: auditEvents,
     };
