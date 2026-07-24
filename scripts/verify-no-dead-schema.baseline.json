@@ -2819,12 +2819,6 @@
       "migration": "0051_p3_t11_17_2_safety_v6_4_schema.sql"
     },
     {
-      "object": "safety.internal_fines.voided_reason",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "0050_two_section_v5_and_safety_restructure.sql"
-    },
-    {
       "object": "safety.random_pool.completed_test_id",
       "kind": "COLUMN",
       "verdict": "none",

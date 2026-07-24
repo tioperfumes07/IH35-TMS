@@ -110,11 +110,21 @@ export async function registerSafetyCompanyViolationsRoutes(app: FastifyInstance
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
         `
-          SELECT *
-          FROM safety.company_violations
-          WHERE operating_company_id = $1
-            AND deactivated_at IS NULL
-          ORDER BY reported_date DESC, created_at DESC
+          -- SAF-F29: related ids come from the JOIN TABLES, never the retired jsonb columns.
+          -- Aggregated as arrays so the response shape stays a single row per violation while the
+          -- underlying relationships are real FKs that can be queried in reverse (driver -> its
+          -- violations), which a jsonb array could never support.
+          SELECT cv.*,
+                 COALESCE((SELECT array_agg(d.driver_id) FROM safety.company_violation_drivers d
+                            WHERE d.violation_id = cv.id AND d.is_active), '{}') AS related_driver_ids,
+                 COALESCE((SELECT array_agg(u.unit_id) FROM safety.company_violation_units u
+                            WHERE u.violation_id = cv.id AND u.is_active), '{}') AS related_unit_ids,
+                 COALESCE((SELECT array_agg(f.fine_id) FROM safety.company_violation_fines f
+                            WHERE f.violation_id = cv.id AND f.is_active), '{}') AS related_civil_fine_ids
+          FROM safety.company_violations cv
+          WHERE cv.operating_company_id = $1
+            AND cv.deactivated_at IS NULL
+          ORDER BY cv.reported_date DESC, cv.created_at DESC
           LIMIT 500
         `,
         [query.data.operating_company_id]
@@ -157,32 +167,55 @@ export async function registerSafetyCompanyViolationsRoutes(app: FastifyInstance
         `
           INSERT INTO safety.company_violations (
             operating_company_id, violation_type, violation_type_uuid, violation_basic, violation_severity, reported_date,
-            description, corrective_action_plan, corrective_action_due_date, related_drivers, related_units,
-            related_fine_ids, source_doc_id, notes, created_by_user_id, updated_by_user_id
+            description, corrective_action_plan, corrective_action_due_date, source_doc_id, notes,
+            created_by_user_id, updated_by_user_id
           ) VALUES (
-            $1,$2,$15,$3,$4,$5::date,$6,$7,$8::date,$9::jsonb,$10::jsonb,$11::jsonb,$12,$13,$14,$14
+            $1,$2,$3,$4,$5,$6::date,$7,$8,$9::date,$10,$11,$12,$12
           )
           RETURNING *
         `,
         [
           query.data.operating_company_id,
           body.data.violation_type,
+          body.data.violation_type_uuid ?? null,
           body.data.violation_basic ?? null,
           body.data.violation_severity,
           body.data.reported_date,
           body.data.description,
           body.data.corrective_action_plan ?? null,
           body.data.corrective_action_due_date ?? null,
-          JSON.stringify(body.data.related_drivers ?? null),
-          JSON.stringify(body.data.related_units ?? null),
-          JSON.stringify(body.data.related_fine_ids ?? null),
           body.data.source_doc_id ?? null,
           body.data.notes ?? null,
           user.uuid,
-          body.data.violation_type_uuid ?? null,
         ]
       );
       const row = res.rows[0] ?? null;
+
+      // SAF-F29: related drivers / units / fines go into the JOIN TABLES, not a jsonb array.
+      // A jsonb array of ids has no FK, no cascade and no reverse query — it can name a deleted or
+      // wrong row and nothing notices. Each insert is FK-checked, so an id that does not resolve
+      // fails the request rather than being silently stored.
+      if (row) {
+        const linkSets: Array<{ table: string; column: string; ids: unknown }> = [
+          { table: "company_violation_drivers", column: "driver_id", ids: body.data.related_drivers },
+          { table: "company_violation_units", column: "unit_id", ids: body.data.related_units },
+          { table: "company_violation_fines", column: "fine_id", ids: body.data.related_fine_ids },
+        ];
+        for (const { table, column, ids } of linkSets) {
+          if (!Array.isArray(ids)) continue;
+          for (const rawId of ids) {
+            const id = String(rawId ?? "");
+            if (!/^[0-9a-fA-F-]{36}$/.test(id)) continue;
+            await client.query(
+              `INSERT INTO safety.${table} (operating_company_id, violation_id, ${column}, created_by_user_id)
+               VALUES ($1, $2, $3, $4)
+               ON CONFLICT DO NOTHING`,
+              [query.data.operating_company_id, row.id, id, user.uuid]
+            );
+          }
+        }
+      }
+
       if (row) {
         await appendCrudAudit(
           client,

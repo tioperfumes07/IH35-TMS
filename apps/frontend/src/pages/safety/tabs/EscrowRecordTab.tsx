@@ -71,7 +71,20 @@ export function EscrowRecordTab() {
       { key: "current_balance", label: "Current Balance", sortable: true, render: (row) => `$${row.current_balance.toFixed(2)}` },
       { key: "pre_clause_total", label: "Pre-clause", sortable: true, render: (row) => `$${row.pre_clause_total.toFixed(2)}` },
       { key: "post_clause_total", label: "Post-clause", sortable: true, render: (row) => `$${row.post_clause_total.toFixed(2)}` },
-      { key: "accumulation_rate_pct", label: "Accumulation Rate", sortable: true, render: (row) => `${row.accumulation_rate_pct.toFixed(2)}%` },
+      {
+        // SAF-F09: NULL means no escrow target is configured for this entity/driver. It renders as
+        // "Not configured", never as 0% or a number computed against an invented denominator — a
+        // fabricated percentage on a forfeiture screen is worse than an honest blank.
+        key: "accumulation_rate_pct",
+        label: "Accumulation Rate",
+        sortable: true,
+        render: (row) =>
+          row.accumulation_rate_pct == null ? (
+            <span className="text-slate-400">Not configured</span>
+          ) : (
+            `${row.accumulation_rate_pct.toFixed(2)}%`
+          ),
+      },
       { key: "forfeiture_history_count", label: "Forfeiture History", sortable: true },
       {
         key: "action",

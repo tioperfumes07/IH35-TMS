@@ -74,8 +74,15 @@ export function assertFineLinksAndViolationCatalog(sources) {
   if (!/violation_type_uuid/.test(src[VIOLATION_ROUTES])) {
     problems.push(`${VIOLATION_ROUTES}: create does not accept violation_type_uuid — the catalog FK stays null and the catalogued default fine amount can never resolve.`);
   }
-  const insertBlock = src[VIOLATION_ROUTES].slice(src[VIOLATION_ROUTES].indexOf("INSERT INTO safety.company_violations"));
-  if (insertBlock && !insertBlock.slice(0, 900).includes("violation_type_uuid")) {
+  // Check the COLUMN LIST specifically — between `INSERT INTO safety.company_violations (` and the
+  // matching `) VALUES`. A fixed-length window over the whole block was offset-brittle: it also
+  // spanned the params array (`body.data.violation_type_uuid`), so removing the column still left a
+  // match and the check silently passed (SAF-F29 shifted the bytes and exposed this). The column
+  // list is the thing that decides persistence, so assert on exactly it.
+  const insertIdx = src[VIOLATION_ROUTES].indexOf("INSERT INTO safety.company_violations");
+  const afterInsert = insertIdx >= 0 ? src[VIOLATION_ROUTES].slice(insertIdx) : "";
+  const columnList = afterInsert.slice(afterInsert.indexOf("("), afterInsert.indexOf(") VALUES"));
+  if (afterInsert && !columnList.includes("violation_type_uuid")) {
     problems.push(`${VIOLATION_ROUTES}: violation_type_uuid is accepted but not in the INSERT column list — accepted-and-discarded is worse than not accepting it.`);
   }
 

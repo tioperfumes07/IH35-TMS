@@ -38,6 +38,13 @@ const idParamsSchema = z.object({
   id: z.string().uuid(),
 });
 
+// SAF-F20 void (gated batch item 2): reason-REQUIRED, void-not-delete. The voided_at /
+// voided_reason / voided_by_user_id columns ship in migration 202607820000, so this route lands
+// WITH that migration — never before it. Deploy order is apply-then-merge.
+const voidBodySchema = z.object({
+  void_reason: z.string().trim().min(3).max(500),
+});
+
 const createBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   incident_type: incidentTypeSchema,
@@ -58,6 +65,18 @@ const createBodySchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .nullable()
     .optional(),
+  // SAF-F34 (gated batch item 3) — the ask-rail. OWNER RULING: ALWAYS ASK. 'ask' means undecided
+  // and posts NOTHING; the rail records where damage_amount_cents is meant to go, and each rail
+  // carries its own counterparty FK. This is PERSISTENCE AND READ ONLY — no GL, no journal entry,
+  // no flag. Columns ship in migration 202607820000, so this lands with it.
+  recovery_rail: z
+    .enum(["expense", "bill_to_responsible_party", "insurance_receivable", "driver_recovery", "ask"])
+    .default("ask"),
+  recovery_expense_account_id: z.string().uuid().nullable().optional(),
+  responsible_party_vendor_id: z.string().uuid().nullable().optional(),
+  responsible_party_customer_id: z.string().uuid().nullable().optional(),
+  insurance_claim_id: z.string().uuid().nullable().optional(),
+  recovery_driver_id: z.string().uuid().nullable().optional(),
 });
 
 // SAF-F20 — damage reports, trailer interchanges and cargo claims were CREATE-ONLY. The cluster
@@ -293,7 +312,13 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
             damage_amount_cents,
             claim_reason_code,
             claimant_customer_id,
-            claim_filed_at
+            claim_filed_at,
+            recovery_rail,
+            recovery_expense_account_id,
+            responsible_party_vendor_id,
+            responsible_party_customer_id,
+            insurance_claim_id,
+            recovery_driver_id
           )
           VALUES (
             $1, $2,
@@ -317,6 +342,12 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
           claimReasonCode,
           claimantCustomerId,
           claimFiledAt,
+          body.data.recovery_rail,
+          body.data.recovery_expense_account_id ?? null,
+          body.data.responsible_party_vendor_id ?? null,
+          body.data.responsible_party_customer_id ?? null,
+          body.data.insurance_claim_id ?? null,
+          body.data.recovery_driver_id ?? null,
         ]
       );
       const row = res.rows[0];
@@ -531,5 +562,52 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
       return reply.code(409).send({ error: "incident_status_unchanged", message: `This incident is already ${outcome.status}.` });
     }
     return { incident: outcome.row };
+  });
+
+  /**
+   * SAF-F20 — void an incident (void-not-delete). Owner/Administrator only.
+   *
+   * A voided incident is immutable and drops out of the operational list. It is never DELETEd: the
+   * record of what was filed, and why it was retracted, is exactly what an insurer or an auditor
+   * asks for. "closed" is a lifecycle outcome; "voided" is a retraction — collapsing the two would
+   * lose the distinction, which is why safety.incidents gets its own void columns rather than an
+   * extra status value.
+   */
+  app.post("/api/v1/safety/incidents/:id/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!["Owner", "Administrator"].includes(user.role)) return reply.code(403).send({ error: "forbidden" });
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
+    const body = voidBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+
+    const voided = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const res = await client.query(
+        `
+          UPDATE safety.incidents
+          SET voided_at = now(), voided_reason = $3, voided_by_user_id = $4, updated_at = now()
+          WHERE id = $1 AND operating_company_id = $2 AND voided_at IS NULL
+          RETURNING *
+        `,
+        [params.data.id, query.data.operating_company_id, body.data.void_reason, user.uuid]
+      );
+      const row = res.rows[0];
+      if (!row) return null;
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "safety.incident.voided",
+        { incident_id: row.id, incident_type: row.incident_type, void_reason: body.data.void_reason },
+        "warning",
+        "SAF-F20-INCIDENT-VOID"
+      );
+      return row;
+    });
+
+    if (!voided) return reply.code(404).send({ error: "incident_not_found" });
+    return { incident: voided };
   });
 }

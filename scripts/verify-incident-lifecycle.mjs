@@ -53,7 +53,7 @@ export function assertIncidentLifecycle(sources) {
   if (/"incident_type"/.test(src[ROUTES].slice(src[ROUTES].indexOf("const PATCHABLE = ["), src[ROUTES].indexOf("] as const")))) {
     problems.push(`${ROUTES}: incident_type is patchable — changing it silently moves a record between surfaces and regulatory shapes.`);
   }
-  if (!/reason: z\.string\(\)\.trim\(\)\.min\(3\)/.test(src[ROUTES])) {
+  if (!/(?<!void_)reason: z\.string\(\)\.trim\(\)\.min\(3\)/.test(src[ROUTES])) {
     problems.push(`${ROUTES}: the status change is not reason-required — a closed incident with no recorded reason cannot answer "why?" to an insurer or auditor.`);
   }
 
@@ -105,7 +105,16 @@ if (SELFTEST) {
     { ...live, [ROUTES]: live[ROUTES].replace('const PATCHABLE = [\n      "incident_at",', 'const PATCHABLE = [\n      "incident_type",\n      "incident_at",') },
     "incident_type is patchable");
   expectCaught("status-reason-made-optional",
-    { ...live, [ROUTES]: live[ROUTES].replace("reason: z.string().trim().min(3).max(500),", "reason: z.string().optional(),") },
+    {
+      ...live,
+      [ROUTES]: live[ROUTES].replace(
+        /const statusBodySchema = z\.object\(\{\s*status: z\.enum\(\["open", "investigating", "closed"\]\),\s*reason: z\.string\(\)\.trim\(\)\.min\(3\)\.max\(500\),\s*\}\)/,
+        `const statusBodySchema = z.object({
+  status: z.enum(["open", "investigating", "closed"]),
+  reason: z.string().optional(),
+})`,
+      ),
+    },
     "not reason-required");
   expectCaught("fields-locked-again",
     { ...live, [SURFACE]: live[SURFACE].replace("const formEditable = createMode || editMode;", "const formEditable = createMode;") },
