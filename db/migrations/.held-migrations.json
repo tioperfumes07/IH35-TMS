@@ -402,6 +402,21 @@
     {
       "file": "202607860000_fleet_catalogs_per_entity.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] LST per-entity catalogs (owner ruling 2026-07-24 'lists and catalogs should be per entity, but we use the same catalog for all entities'). Converts 8 GLOBAL fleet/asset reference catalogs (asset_condition_codes, asset_locations, asset_statuses, unit_ownership_types, trailer_types, lease_terms, tractor_statuses, trailer_statuses) to per-entity: add operating_company_id (backfill existing rows -> TRANSP so no reference moves), COPY TRANSP rows to USMCA + TRK with fresh PKs (same values), swap UNIQUE(code) -> UNIQUE(operating_company_id, code), ENABLE+FORCE RLS with the standard GUC company_scope policy (matches catalogs.load_types). Also harmonizes created_by_user_id/updated_by_user_id onto the 4 tables that lacked them (the shared fleet factory POST wrote those columns and 500'd on those 4 -> 0 rows) and REVOKEs DELETE (void-not-delete). These 8 have ZERO inbound FKs (verified Neon br-fancy-credit-akjnd07a 2026-07-24). Backend fleet/factory.ts made config-driven (companyScoped) in the same PR so the app scopes reads/writes to the entity; equipment_types (dual-surface) + the 6 dispatch/driver catalogs with unscopable mdata referencing tables are explicitly OUT of this batch. Idempotent apply-twice. Owner applies on a Neon branch, then ledger-backfills with the sha256 of the COMMITTED file on main."
+    },
+    {
+      "file": "202607860000_qbo_ap_bill_payments_inbound_mirror.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] QBO-AP-BILLPAY-PULL-1 — read-only INBOUND mirror mdata.qbo_ap_bill_payments of every QBO BillPayment (staging clone the ap-bill-payments-puller writes, gated QBO_AP_BILL_PAYMENT_MIRROR_PULL_ENABLED default OFF). FORCED entity-RLS + office read policy + ih35_app grants (no DELETE). Storage only, NO GL. Verified on Neon br-fancy-credit-akjnd07a: mdata.qbo_ap_bill_payments does NOT exist. Additive/idempotent, apply-twice safe on throwaway PG. Run only on a Neon branch by Jorge, then ledger-backfill."
+    },
+    {
+      "file": "202607860100_bill_payments_qbo_composite_unique_and_ap_bill_payment_flags.sql",
+      "requires_held": [
+        "202607860000_qbo_ap_bill_payments_inbound_mirror.sql"
+      ],
+      "held_apply_order": [
+        "202607860000_qbo_ap_bill_payments_inbound_mirror.sql",
+        "202607860100_bill_payments_qbo_composite_unique_and_ap_bill_payment_flags.sql"
+      ],
+      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] QBO-AP-BILLPAY-PULL-2 — replace accounting.bill_payments partial unique uq_bill_payments_company_qbo_bp_id (operating_company_id, qbo_bill_payment_id) with the FAN-OUT-safe composite uq_bill_payments_company_qbo_bp_bill (operating_company_id, qbo_bill_payment_id, bill_id) so one QBO BillPayment can project N (payment,bill) allocation rows, and register the two default-OFF flags QBO_AP_BILL_PAYMENT_MIRROR_PULL_ENABLED / QBO_AP_BILL_PAYMENTS_PROJECTION_ENABLED (NO per-entity override — owner enables per entity later). Composite is a STRICT SUPERSET of the current prod 2-col unique (verified live on Neon br-fancy-credit-akjnd07a) so no existing row can newly conflict. Posts nothing, NO GL. Additive/idempotent, apply-twice safe. Run only on a Neon branch by Jorge, then ledger-backfill."
     }
   ]
 }
