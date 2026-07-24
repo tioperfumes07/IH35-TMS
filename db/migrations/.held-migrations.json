@@ -367,6 +367,33 @@
         "202607820000_safety_relational_linkage_and_lifecycle.sql",
         "202607830000_escrow_target_settings.sql"
       ]
+    },
+    {
+      "file": "202607820000_safety_relational_linkage_and_lifecycle.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Safety gated batch items 1-4: F29 join tables (company_violation_drivers/_units/_fines, FORCED RLS, no DELETE grant, jsonb backfill with a 0-orphan ABORT), incident void columns (void-not-delete + CHECK), F34 ask-rail columns (recovery_rail DEFAULT 'ask', per-rail FKs, SCHEMA ONLY — posts nothing), Clearinghouse query_type/reference_number/document_id. Owner applies on a Neon branch, then ledger-backfills with the sha256 of the COMMITTED file on main.",
+      "held_apply_order": [
+        "202607820000_safety_relational_linkage_and_lifecycle.sql",
+        "202607830000_escrow_target_settings.sql",
+        "202607840000_revoke_delete_safety_join_tables.sql"
+      ]
+    },
+    {
+      "file": "202607830000_escrow_target_settings.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Safety gated batch item 5 (SAF-F09): driver_finance.escrow_settings per-entity escrow target seeded 250000 cents (=$2,500, owner decision 2026-07-24) for TRANSP + USMCA only (TRK is the asset holder and runs no drivers), plus driver_pay_settings.escrow_target_cents per-driver override. Kills the hardcoded ESCROW_TARGET_DEFAULT = 1000. Owner applies on a Neon branch, then ledger-backfills.",
+      "held_apply_order": [
+        "202607820000_safety_relational_linkage_and_lifecycle.sql",
+        "202607830000_escrow_target_settings.sql",
+        "202607840000_revoke_delete_safety_join_tables.sql"
+      ]
+    },
+    {
+      "file": "202607840000_revoke_delete_safety_join_tables.sql",
+      "held_apply_order": [
+        "202607820000_safety_relational_linkage_and_lifecycle.sql",
+        "202607830000_escrow_target_settings.sql",
+        "202607840000_revoke_delete_safety_join_tables.sql"
+      ],
+      "reason": "[HOLD-FOR-JORGE — TIER 1] SAF-F29-GRANTS — REVOKE DELETE from ih35_app on the three company-violation join tables. GRANT is additive and the safety schema's default privilege is ih35_app=arwd (the d is DELETE), so 202607820000's GRANT SELECT,INSERT,UPDATE sat on top of an INHERITED DELETE. Local validation could not catch it — the local DB's default privileges differ from prod. Owner already ran a bare REVOKE on prod; this makes it permanent + CI-consistent. Idempotent no-op when already revoked."
     }
   ]
 }
