@@ -961,14 +961,31 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
 
       const latestTest = latestTestRes.rows[0] ?? null;
       const blockedResults = new Set(["positive", "refusal", "adulterated", "substituted"]);
-      const isBlocked = latestTest ? blockedResults.has(String(latestTest.result)) : false;
+      const testBlocked = latestTest ? blockedResults.has(String(latestTest.result)) : false;
+
+      // SAF-F07-CH: this endpoint already FETCHED the latest Clearinghouse query above and then
+      // computed is_blocked from the drug test ALONE — so a driver prohibited by the Clearinghouse
+      // (49 CFR §382.701, typically a violation reported by a PREVIOUS employer, which never appears
+      // in our own test tables) was reported as eligible. The answer was on the payload the whole
+      // time; nothing read it. `pending`/`error` are not prohibitions — a query that has not returned
+      // or that failed is not evidence of a violation.
+      const latestClearinghouse = latestClearinghouseRes.rows[0] ?? null;
+      const clearinghouseBlocked = String(latestClearinghouse?.query_status ?? "") === "record_found";
+
+      const isBlocked = testBlocked || clearinghouseBlocked;
+      const blockReason = testBlocked
+        ? `drug_test_${String(latestTest?.result ?? "unknown")}`
+        : clearinghouseBlocked
+          ? "clearinghouse_record_found"
+          : null;
+
       return {
         driver_id: params.data.driver_id,
         is_blocked: isBlocked,
-        block_reason: isBlocked ? `drug_test_${String(latestTest?.result ?? "unknown")}` : null,
+        block_reason: blockReason,
         latest_test: latestTest,
         latest_random_pool: latestPoolRes.rows[0] ?? null,
-        latest_clearinghouse_query: latestClearinghouseRes.rows[0] ?? null,
+        latest_clearinghouse_query: latestClearinghouse,
       };
     });
 

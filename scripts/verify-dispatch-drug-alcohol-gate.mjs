@@ -33,6 +33,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const GATE = "apps/backend/src/dispatch/driver-qualification.service.ts";
+const ELIGIBILITY = "apps/backend/src/dispatch/loads.routes.ts";
 const LABEL = "verify-dispatch-drug-alcohol-gate";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -41,7 +42,27 @@ const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^[ \t]*
 
 export function assertDispatchDrugAlcoholGate(sources) {
   const src = stripComments(sources?.[GATE] ?? read(GATE));
+  const eligibility = stripComments(sources?.[ELIGIBILITY] ?? read(ELIGIBILITY));
   const problems = [];
+
+  // SAF-F07-CH — the Clearinghouse half (49 CFR 382.701). It is the ONLY source for a violation
+  // reported by a PREVIOUS employer, which never appears in our own test tables.
+  if (!src.includes("safety.clearinghouse_query")) {
+    problems.push(`${GATE}: does not read safety.clearinghouse_query — a driver prohibited by the FMCSA Clearinghouse would be dispatched.`);
+  }
+  if (src.includes("safety.clearinghouse_queries")) {
+    problems.push(`${GATE}: references safety.clearinghouse_queries (plural) — that table does not exist. The real one is safety.clearinghouse_query (migration 0270); a second table would be split-brain.`);
+  }
+  if (!src.includes(`"clearinghouse_prohibited"`)) {
+    problems.push(`${GATE}: DriverQualificationReason has no "clearinghouse_prohibited" — the gate cannot express a Clearinghouse block.`);
+  }
+  if (!/query_status = 'record_found'/.test(src) || !/query_status = 'clear'/.test(src)) {
+    problems.push(`${GATE}: Clearinghouse prohibition/resolution must use query_status record_found / clear (safety.clearinghouse_query_status_enum).`);
+  }
+  // The eligibility endpoint fetched the Clearinghouse answer and ignored it — same fail-open.
+  if (!/clearinghouseBlocked/.test(eligibility) || !/record_found/.test(eligibility)) {
+    problems.push(`${ELIGIBILITY}: driver dispatch-eligibility computes is_blocked without the Clearinghouse result, even though it already queries it — a prohibited driver reads as eligible.`);
+  }
 
   // 1. The blocking reasons exist and are actually pushed.
   for (const reason of ["drug_alcohol_positive", "drug_alcohol_refusal"]) {
@@ -97,7 +118,7 @@ export function assertDispatchDrugAlcoholGate(sources) {
 }
 
 if (SELFTEST) {
-  const live = { [GATE]: read(GATE) };
+  const live = { [GATE]: read(GATE), [ELIGIBILITY]: read(ELIGIBILITY) };
   const failures = [];
   const expectCaught = (name, mutated, needle) => {
     if (JSON.stringify(mutated) === JSON.stringify(live)) {
@@ -110,6 +131,16 @@ if (SELFTEST) {
     }
   };
 
+  expectCaught(
+    "clearinghouse-check-removed",
+    { ...live, [GATE]: live[GATE].split("safety.clearinghouse_query").join("safety.some_other_table") },
+    "does not read safety.clearinghouse_query"
+  );
+  expectCaught(
+    "eligibility-ignores-clearinghouse-again",
+    { ...live, [ELIGIBILITY]: live[ELIGIBILITY].split("clearinghouseBlocked").join("false /* ignored */") },
+    "computes is_blocked without the Clearinghouse result"
+  );
   expectCaught(
     "second-table-dropped",
     { [GATE]: live[GATE].split("safety.da_test_records").join("safety.some_other_table") },
@@ -154,7 +185,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 7 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 9 planted defects caught, live sources clean`);
   process.exit(0);
 }
 

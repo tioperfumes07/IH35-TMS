@@ -52,7 +52,11 @@ export type DriverQualificationReason =
   | "medical_card_expired"
   | "hazmat_endorsement_missing"
   | "drug_alcohol_positive"
-  | "drug_alcohol_refusal";
+  | "drug_alcohol_refusal"
+  // SAF-F07-CH: FMCSA Clearinghouse prohibition (49 CFR §382.701). This is the ONLY source for a
+  // violation reported by a PREVIOUS employer — such a violation never appears in our own
+  // safety.drug_test / safety.da_test_records at all, so without this the gate is blind to it.
+  | "clearinghouse_prohibited";
 
 export type DriverQualificationBlock = {
   driverId: string;
@@ -63,6 +67,8 @@ export type DriverQualificationBlock = {
   hazmatEndorsementExpiresAt: string | null;
   /** Date of the unresolved D&A violation that prohibits dispatch, when there is one. */
   drugAlcoholViolationAt: string | null;
+  /** Date of the unresolved Clearinghouse "information found" result, when there is one. */
+  clearinghouseProhibitedSince: string | null;
 };
 
 /**
@@ -185,6 +191,53 @@ export async function assertDriverQualifiedForLoad(
   );
   const daBlock = daRows.rows[0] ?? null;
 
+  // SAF-F07-CH — FMCSA Clearinghouse prohibition (49 CFR §382.701).
+  //
+  // The Clearinghouse is the ONLY source for a violation reported by a PREVIOUS employer — such a
+  // violation never appears in safety.drug_test or safety.da_test_records at all, so without this
+  // the gate stays blind to it no matter how complete our own testing record is.
+  //
+  // Reads the EXISTING safety.clearinghouse_query (migration 0270, live on prod, RLS-scoped) — NOT a
+  // new table. dispatch/loads.routes.ts already returns `latest_clearinghouse_query` on its
+  // driver-eligibility payload and then computes `is_blocked` from the drug test ALONE, so the
+  // Clearinghouse answer was already being fetched and ignored. Status enum
+  // safety.clearinghouse_query_status_enum: clear | record_found | pending | error.
+  //
+  // Same unresolved-event shape as the D&A check above, deliberately: `record_found` prohibits until
+  // a STRICTLY LATER `clear` resolves it. An equal timestamp does not clear — an ambiguous clearance
+  // is not a clearance.
+  //
+  // `pending` and `error` are NOT prohibitions: a query that has not returned, or that failed, is not
+  // evidence of a violation. Voided rows are excluded (void-not-delete: a voided query is not
+  // evidence). Fail-closed: a direct query, no to_regclass fallback — the table has existed since
+  // 0270, and a guarded fallback would silently skip a federal prohibition check.
+  const chRows = await client.query<{ prohibited_since: string | null }>(
+    `
+      WITH found AS (
+        SELECT queried_at
+        FROM safety.clearinghouse_query
+        WHERE driver_id = $1::uuid AND operating_company_id = $2::uuid
+          AND voided_at IS NULL AND query_status = 'record_found'
+        ORDER BY queried_at DESC
+        LIMIT 1
+      ),
+      cleared AS (
+        SELECT queried_at
+        FROM safety.clearinghouse_query
+        WHERE driver_id = $1::uuid AND operating_company_id = $2::uuid
+          AND voided_at IS NULL AND query_status = 'clear'
+        ORDER BY queried_at DESC
+        LIMIT 1
+      )
+      SELECT (SELECT queried_at FROM found)::text AS prohibited_since
+      WHERE (SELECT queried_at FROM found) IS NOT NULL
+        AND ((SELECT queried_at FROM cleared) IS NULL
+             OR (SELECT queried_at FROM cleared) <= (SELECT queried_at FROM found))
+    `,
+    [driverId, operatingCompanyId]
+  );
+  const chBlock = chRows.rows[0] ?? null;
+
   const reasons: DriverQualificationReason[] = [];
   if (dr.is_deactivated) reasons.push("driver_deactivated");
   if (dr.is_archived) reasons.push("driver_archived");
@@ -196,6 +249,7 @@ export async function assertDriverQualifiedForLoad(
   if (daBlock) {
     reasons.push(daBlock.violation_kind === "positive" ? "drug_alcohol_positive" : "drug_alcohol_refusal");
   }
+  if (chBlock) reasons.push("clearinghouse_prohibited");
 
   if (reasons.length === 0) return null;
 
@@ -207,6 +261,7 @@ export async function assertDriverQualifiedForLoad(
     medicalExpiryDate: dr.med_expiry_date,
     hazmatEndorsementExpiresAt: dr.hazmat_endorsement_expires_at,
     drugAlcoholViolationAt: daBlock?.violation_at ?? null,
+    clearinghouseProhibitedSince: chBlock?.prohibited_since ?? null,
   };
 }
 
