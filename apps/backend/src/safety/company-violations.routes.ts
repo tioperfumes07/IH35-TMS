@@ -170,13 +170,14 @@ export async function registerSafetyCompanyViolationsRoutes(app: FastifyInstance
             description, corrective_action_plan, corrective_action_due_date, source_doc_id, notes,
             created_by_user_id, updated_by_user_id
           ) VALUES (
-            $1,$2,$13,$3,$4,$5::date,$6,$7,$8::date,$9,$10,$11,$11
+            $1,$2,$3,$4,$5,$6::date,$7,$8,$9::date,$10,$11,$12,$12
           )
           RETURNING *
         `,
         [
           query.data.operating_company_id,
           body.data.violation_type,
+          body.data.violation_type_uuid ?? null,
           body.data.violation_basic ?? null,
           body.data.violation_severity,
           body.data.reported_date,
@@ -186,7 +187,6 @@ export async function registerSafetyCompanyViolationsRoutes(app: FastifyInstance
           body.data.source_doc_id ?? null,
           body.data.notes ?? null,
           user.uuid,
-          body.data.violation_type_uuid ?? null,
         ]
       );
       const row = res.rows[0] ?? null;
