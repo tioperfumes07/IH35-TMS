@@ -22,6 +22,8 @@ type Props = {
   disabled?: boolean;
   required?: boolean;
   className?: string;
+  /** SAF-F31 — pass-through for server-side type-ahead (see components/Combobox.tsx). */
+  onSearch?: (query: string) => void;
 };
 
 export function Combobox({
@@ -33,6 +35,7 @@ export function Combobox({
   onAddNew,
   disabled = false,
   className,
+  onSearch,
 }: Props) {
   const mapped: BaseOption[] = options.map((option) => ({
     value: option.value,
@@ -47,6 +50,7 @@ export function Combobox({
       placeholder={placeholder}
       disabled={disabled}
       className={className}
+      onSearch={onSearch}
       allowAddNew={
         allowAddNew && onAddNew
           ? {

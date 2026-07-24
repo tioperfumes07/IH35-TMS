@@ -18,6 +18,15 @@ type ComboboxProps = {
   disabled?: boolean;
   allowClear?: boolean;
   allowAddNew?: { label: string; onAdd: (query: string) => void };
+  /**
+   * SAF-F31 — server-side type-ahead. Pickers that fetch a capped page (limit 200) silently hide
+   * everything past the cap: with 300 units, the 250th could not be selected at all and nothing told
+   * the operator. When provided, this fires on every query change so the parent can refetch from the
+   * server, and local filtering is skipped (the server already filtered — filtering again would drop
+   * server matches whose label does not literally contain the typed text).
+   * Optional and additive: every existing call site keeps its current client-side behaviour.
+   */
+  onSearch?: (query: string) => void;
   filterMode?: "contains" | "startsWith" | "fuzzy";
   /** Focus target for form validation (`[data-field="…"]`). */
   dataField?: string;
@@ -95,6 +104,7 @@ export function Combobox({
   filterMode = "contains",
   dataField,
   className,
+  onSearch,
 }: ComboboxProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -107,8 +117,20 @@ export function Combobox({
   const selectedOption = useMemo(() => options.find((option) => option.value === value) ?? null, [options, value]);
   const displayValue = open ? query : selectedOption?.label ?? "";
 
+  // SAF-F31: tell the parent what was typed so it can refetch server-side. Effect (not inline in the
+  // input handler) so a programmatic query reset also reaches the parent and cannot leave the picker
+  // showing results for a term the box no longer contains.
+  useEffect(() => {
+    if (!onSearch) return;
+    onSearch(query);
+  }, [onSearch, query]);
+
   const filteredOptions = useMemo(() => {
     const sourceOptions = options.filter((option) => !option.disabled);
+    // When the server did the filtering, do not filter again — a server match whose label does not
+    // literally contain the typed text (a unit matched by VIN, a load matched by customer) would be
+    // dropped on the way to the screen.
+    if (onSearch) return sourceOptions.slice(0, MAX_VISIBLE_OPTIONS);
     if (!query.trim()) {
       return sourceOptions.slice(0, MAX_VISIBLE_OPTIONS);
     }
@@ -124,7 +146,7 @@ export function Combobox({
       })
       .map((entry) => entry.option)
       .slice(0, MAX_VISIBLE_OPTIONS);
-  }, [filterMode, options, query]);
+  }, [filterMode, onSearch, options, query]);
 
   // QB-STD-1/2: "+ Add new" is always the FIRST row when allowAddNew is configured — visible
   // the moment the dropdown opens, before any keystroke. No typed-query gate.

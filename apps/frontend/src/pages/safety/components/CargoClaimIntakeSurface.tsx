@@ -17,8 +17,9 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { ReferenceSelect, type ReferenceOption } from "../../../components/parity/ReferenceSelect";
 import { formatDateUS } from "../../../lib/formatDate";
 import { companyNow } from "../../../lib/businessDate";
-import { useListState } from "../../../components/list-state";
 import { formatUsdCents } from "../../../lib/money";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 type Props = {
   operatingCompanyId: string;
@@ -121,7 +122,8 @@ export function CargoClaimIntakeSurface({
 
   const rows = listQuery.data?.incidents ?? [];
   // LIST-EMPTY: the empty message renders only after the incidents query settles.
-  const listState = useListState(listQuery, rows.length === 0);
+
+
   const reasons = reasonsQuery.data?.rows ?? [];
   const customers = customersQuery.data?.customers ?? [];
   const customerOptions: ReferenceOption[] = customers.map((c) => ({
@@ -138,6 +140,75 @@ export function CargoClaimIntakeSurface({
   const allUnits = (unitsQuery.data?.units ?? []) as UnifiedUnit[];
   const trucks = useMemo(() => allUnits.filter((u) => u.kind !== "trailer"), [allUnits]);
   const trailers = useMemo(() => allUnits.filter((u) => u.kind === "trailer"), [allUnits]);
+
+  // Name lookups for the table's drill-through labels — both catalogs are already loaded for the
+  // creator's pickers, so this adds no request. Falling back to a truncated uuid only when a row
+  // references something outside the loaded page.
+  const customerNameById = useMemo(
+    () => new Map(customers.map((c) => [String(c.id), String(c.name ?? "")])),
+    [customers]
+  );
+  const loadNumberById = useMemo(
+    () =>
+      new Map(
+        (loads as Array<Record<string, unknown>>).map((l) => [
+          String(l.id ?? ""),
+          String(l.load_number ?? l.reference ?? ""),
+        ])
+      ),
+    [loads]
+  );
+
+  // SAF-F21: Claimant and Load are the two links a cargo claim lives or dies by — the claim is
+  // FROM a customer and ABOUT a load. Both are canonical FKs on safety.incidents
+  // (claimant_customer_id, load_id) and neither was ever shown. Names come from the pickers'
+  // already-loaded catalogs, so the links carry a label rather than a truncated uuid.
+  const claimColumns = useMemo<ParityColumn<Record<string, unknown>>[]>(
+    () => [
+      { key: "incident_at", label: "Date of loss", sortable: true, render: (row) => formatDateUS(row.incident_at) },
+      { key: "claim_reason_code", label: "Reason", render: (row) => String(row.claim_reason_code ?? "—") },
+      {
+        key: "claimant_customer_id",
+        label: "Claimant",
+        render: (row) =>
+          row.claimant_customer_id ? (
+            <EntityLink
+              kind="customer"
+              id={String(row.claimant_customer_id)}
+              label={customerNameById.get(String(row.claimant_customer_id)) ?? String(row.claimant_customer_id).slice(0, 8)}
+            />
+          ) : (
+            "—"
+          ),
+      },
+      {
+        key: "load_id",
+        label: "Load",
+        render: (row) =>
+          row.load_id ? (
+            <EntityLink
+              kind="load"
+              id={String(row.load_id)}
+              label={loadNumberById.get(String(row.load_id)) ?? String(row.load_id).slice(0, 8)}
+            />
+          ) : (
+            "—"
+          ),
+      },
+      { key: "damage_amount_cents", label: "Claimed", sortable: true, render: (row) => formatCents(row.damage_amount_cents) },
+      { key: "status", label: "Status", sortable: true, render: (row) => String(row.status ?? "open") },
+      {
+        key: "action",
+        label: "Action",
+        render: (row) => (
+          <button type="button" className="text-slate-700 underline" onClick={() => setSelectedId(String(row.id))}>
+            {detailLabel}
+          </button>
+        ),
+      },
+    ],
+    [customerNameById, loadNumberById, detailLabel]
+  );
 
   const detail = detailQuery.data?.incident ?? null;
   const photoCount = Array.isArray(detail?.photo_keys) ? (detail?.photo_keys as unknown[]).length : 0;
@@ -406,41 +477,22 @@ export function CargoClaimIntakeSurface({
         </div>
       ) : null}
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-xs" data-testid={`${pageTestId}-table`}>
-          <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
-            <tr>
-              <th className="px-2 py-1 text-left">Date of loss</th>
-              <th className="px-2 py-1 text-left">Reason</th>
-              <th className="px-2 py-1 text-left">Claimed</th>
-              <th className="px-2 py-1 text-left">Status</th>
-              <th className="px-2 py-1 text-left">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={String(row.id)} className="border-t border-gray-100">
-                <td className="px-2 py-1">{formatDateUS(row.incident_at)}</td>
-                <td className="px-2 py-1">{String(row.claim_reason_code ?? "—")}</td>
-                <td className="px-2 py-1">{formatCents(row.damage_amount_cents)}</td>
-                <td className="px-2 py-1">{String(row.status ?? "open")}</td>
-                <td className="px-2 py-1">
-                  <button type="button" className="text-slate-700 underline" onClick={() => setSelectedId(String(row.id))}>
-                    {detailLabel}
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {listState.isEmpty ? (
-              <tr>
-                <td colSpan={5} className="px-2 py-3 text-center text-slate-500">
-                  No records found.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      {/* SAF-F21: this was a hand-rolled HTML table element — outside the shared QBO-parity grammar, so it had no
+          density toggle, no column sizing, no export, and no per-page control that every other list
+          in the app has. It also showed neither the CLAIMANT nor the LOAD, which are the two things
+          a cargo claim is actually about, and nothing on the row drilled anywhere. A claim you
+          cannot trace to its customer or its load is a number in a list. */}
+      <ParityTable<Record<string, unknown>>
+        columns={claimColumns}
+        rows={rows}
+        rowKey={(row) => String(row.id ?? "")}
+        loading={listQuery.isLoading}
+        emptyText="No records found."
+        storageKey="safety-cargo-claims"
+        exportFilename="cargo-claims"
+        tableTestId={`${pageTestId}-table`}
+        rowTestId={(row) => `${pageTestId}-row-${String(row.id ?? "")}`}
+      />
 
       {selectedId ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid={`${pageTestId}-detail`}>
