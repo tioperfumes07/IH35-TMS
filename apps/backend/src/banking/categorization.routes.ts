@@ -679,7 +679,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
           );
           // CRUD/spine audit parity with the single-row categorize route above (#2585 review follow-up):
           // same event class + source tag per affected ID, with bulk:true so the trail distinguishes the
-          // path. Audit-only — this route posts no GL.
+          // path. GL posting runs after this company-scope txn commits (see maybePostBankCategorizationToGl below).
           await appendCrudAudit(
             client,
             user.uuid,
@@ -723,7 +723,34 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       );
     }
 
-    return { categorized_count: result.categorized_count, errors: result.errors };
+    // CHAIN-05 parity: the bulk endpoint reaches the same terminal "categorized" state as the
+    // single-row route above, so it must invoke the same existing flag-gated poster for every row it
+    // actually categorized. The poster owns all financial checks (flag, bank cash-GL bridge,
+    // cross-entity/postable account validation, transfer/bill interlocks, balance, idempotency) and
+    // stamps matched_journal_entry_id only when it posts. Run after the categorization/audit writes
+    // commit, because the poster opens its own transaction and must re-read the persisted row.
+    const bankFeedGl: Array<{ bank_transaction_id: string; posted: boolean; reason?: string; message?: string }> = [];
+    for (const id of result.categorizedIds) {
+      try {
+        const posting = await maybePostBankCategorizationToGl({
+          companyId: body.data.operating_company_id,
+          actorUserUuid: String(user.uuid),
+          bankTransactionId: id,
+        });
+        bankFeedGl.push({ bank_transaction_id: id, ...posting });
+      } catch (error) {
+        // Match the single-row route's transparent outcome: categorization remains committed and the
+        // caller receives the exact posting failure rather than a fake success.
+        bankFeedGl.push({
+          bank_transaction_id: id,
+          posted: false,
+          reason: "post_failed",
+          message: String((error as Error)?.message ?? error),
+        });
+      }
+    }
+
+    return { categorized_count: result.categorized_count, errors: result.errors, bank_feed_gl: bankFeedGl };
   });
 
   app.post("/api/v1/banking/transactions/:id/transfer", async (req, reply) => {
