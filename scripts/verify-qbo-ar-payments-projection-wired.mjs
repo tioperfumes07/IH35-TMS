@@ -56,6 +56,27 @@ export function analyzePuller(text) {
   if (!text.includes("source_system") || !/'qbo'/.test(text)) {
     failures.push("qbo-ar-payments-puller.ts must project rows as source_system='qbo'.");
   }
+  // Idle-in-transaction root fix: projection must be set-based, not a per-row await loop.
+  const projIdx = text.indexOf("export async function projectArPaymentsToLedger");
+  if (projIdx < 0) {
+    failures.push("qbo-ar-payments-puller.ts missing export async function projectArPaymentsToLedger.");
+  } else {
+    const projectFn = text.slice(projIdx);
+    if (!/INSERT\s+INTO\s+accounting\.payments/i.test(projectFn) || !/FROM\s+mdata\.qbo_ar_payments/i.test(projectFn)) {
+      failures.push(
+        "projectArPaymentsToLedger must use set-based INSERT INTO accounting.payments … FROM mdata.qbo_ar_payments " +
+          "(idle_in_transaction timeout — no per-row await loop)."
+      );
+    }
+    if (/for\s*\(\s*const\s+\w+\s+of\s+mirror\.rows\s*\)/.test(projectFn)) {
+      failures.push(
+        "projectArPaymentsToLedger still loops mirror.rows — that pattern caused prod idle_in_transaction FATAL (IH35-TMS-PROD-25)."
+      );
+    }
+    if (!/INSERT\s+INTO\s+accounting\.payment_applications/i.test(projectFn)) {
+      failures.push("projectArPaymentsToLedger must set-based INSERT into accounting.payment_applications.");
+    }
+  }
   return failures;
 }
 
@@ -126,8 +147,15 @@ if (process.argv.includes("--selftest")) {
     const A = "QBO_AR_PAYMENT_MIRROR_PULL_ENABLED";
     const B = "QBO_AR_PAYMENTS_PROJECTION_ENABLED";
     await isEnabled(client, A, { operating_company_id });
-    source_system, 'qbo',`;
-  const badEnv = `const A = process.env.QBO_AR_PAYMENT_MIRROR_PULL_ENABLED === "true";`;
+    source_system, 'qbo',
+    export async function projectArPaymentsToLedger() {
+      await client.query(\`INSERT INTO accounting.payments SELECT FROM mdata.qbo_ar_payments\`);
+      await client.query(\`INSERT INTO accounting.payment_applications SELECT …\`);
+    }`;
+  const badEnv = `const A = process.env.QBO_AR_PAYMENT_MIRROR_PULL_ENABLED === "true";
+    export async function projectArPaymentsToLedger() {
+      for (const m of mirror.rows) { await client.query("x"); }
+    }`;
   const badPoster = goodPuller + "\n postJournalEntry(client, je);";
   const goodSched = `runStep("ar_payments_pull", id, () => pullArPaymentsFromQbo(id));
     runStep("ar_payments_project", id, () => projectArPaymentsToLedger(id));`;
