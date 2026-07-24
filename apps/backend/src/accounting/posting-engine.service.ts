@@ -84,7 +84,8 @@ export type PostingErrorCode =
   | "BANK_CATEGORIZATION_NOT_POSTING_ELIGIBLE"
   | "TRANSFER_NOT_POSTING_ELIGIBLE"
   | "QBO_BILL_POST_GL_REFUSED"
-  | "QBO_BILL_PAYMENT_POST_GL_REFUSED";
+  | "QBO_BILL_PAYMENT_POST_GL_REFUSED"
+  | "EXPENSE_POST_GL_REFUSED";
 
 export class PostingEngineError extends Error {
   code: PostingErrorCode;
@@ -843,10 +844,12 @@ async function buildExpenseLines(client: DbClient, operatingCompanyId: string, s
     vendor_uuid: string | null;
     memo: string | null;
     expense_number: string | null;
+    qbo_purchase_id: string | null;
   }>(
     `
       SELECT id::text, status::text, posting_status::text, transaction_date::text,
-             total_amount_cents::bigint, payment_account_uuid::text, vendor_uuid::text, memo, expense_number
+             total_amount_cents::bigint, payment_account_uuid::text, vendor_uuid::text, memo, expense_number,
+             qbo_purchase_id::text
       FROM accounting.expenses
       WHERE operating_company_id = $1::uuid AND id::text = $2
       LIMIT 1
@@ -858,6 +861,16 @@ async function buildExpenseLines(client: DbClient, operatingCompanyId: string, s
   if (!exp) throw new PostingEngineError("SOURCE_NOT_FOUND", "Expense not found");
   if (exp.status === "void" || exp.posting_status === "reversed") {
     throw new PostingEngineError("EXPENSE_NOT_POSTING_ELIGIBLE", "Voided/reversed expense is not posting-eligible");
+  }
+  // Parallel books: a QBO-origin expense (projected from a QBO Purchase — qbo_purchase_id set) already
+  // has its GL economics in QuickBooks. It is projected into accounting.expenses as SUBLEDGER ONLY
+  // (posting_status='unposted'). Refuse to build a second TMS journal entry for it — mirrors the
+  // buildBillLines QBO_BILL_POST_GL_REFUSED guard. Never invent GL for source_system=qbo.
+  if ((exp.qbo_purchase_id ?? "").trim() !== "") {
+    throw new PostingEngineError(
+      "EXPENSE_POST_GL_REFUSED",
+      "Refusing Expense→GL post for a QBO-origin expense (qbo_purchase_id set) — parallel books; QBO already holds this spend's GL. Do not invent a second TMS journal entry."
+    );
   }
 
   const lineRows = await client.query<{
@@ -1839,7 +1852,11 @@ export async function postSourceTransaction(input: PostSourceInput, actor: Actor
         error.code !== "BANK_CATEGORIZATION_NOT_POSTING_ELIGIBLE" &&
         error.code !== "TRANSFER_NOT_POSTING_ELIGIBLE" &&
         error.code !== "QBO_BILL_POST_GL_REFUSED" &&
+<<<<<<< HEAD
         error.code !== "QBO_BILL_PAYMENT_POST_GL_REFUSED"
+=======
+        error.code !== "EXPENSE_POST_GL_REFUSED"
+>>>>>>> f9245bf9f ([HOLD] feat(accounting): project QBO Purchase → accounting.expenses (subledger only))
       ) {
         await markBatchFailed(actor, input.operating_company_id, sourceType, sourceId, idempotencyKey);
       }

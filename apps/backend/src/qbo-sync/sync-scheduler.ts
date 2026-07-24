@@ -9,6 +9,7 @@ import { pullItemsFromQbo } from "./items-puller.js";
 import { reconcileItems } from "./items-reconciler.js";
 import { pullApBillsFromQbo, projectApBillsToLedger } from "./ap-bills-puller.js";
 import { pullApBillPaymentsFromQbo, projectApBillPaymentsToLedger } from "./ap-bill-payments-puller.js";
+import { pullPurchasesFromQbo, projectPurchasesToExpenses } from "./qbo-purchases-puller.js";
 import { countUnresolvedDrift, detectDriftForCompany } from "./drift-detector.js";
 import { maybeFireDriftAlert } from "./sync-alerts.js";
 
@@ -123,6 +124,27 @@ async function runScheduledSyncForCompany(
         payments_unlinked: res.paymentsUnlinked,
       },
       "[qbo-sync-scheduler] ap_bill_payments_project complete (fan-out BillPayment -> bill_payments allocations)"
+    );
+    return res;
+  }, failures, log);
+
+  // Inbound QBO Purchases (cash/card spend) -> mdata.qbo_purchases mirror -> accounting.expenses + expense_lines.
+  // ISOLATED like the A/P stages: MUST run even if an earlier step failed (so a transient COA/items/AP blip
+  // never silently skips the expense clone). Both stages are internally gated by default-OFF flags
+  // (QBO_PURCHASES_MIRROR_PULL_ENABLED / QBO_EXPENSES_PROJECTION_ENABLED) and idempotent (header upsert /
+  // line upsert by (expense_id,line_sequence)). SUBLEDGER ONLY — NO GL poster on this path; the posting
+  // engine additionally REFUSES to post qbo-sourced expenses (EXPENSE_POST_GL_REFUSED).
+  await runStep("qbo_purchases_pull", operatingCompanyId, () => pullPurchasesFromQbo(operatingCompanyId), failures, log);
+  await runStep("qbo_purchases_project", operatingCompanyId, async () => {
+    const res = await projectPurchasesToExpenses(operatingCompanyId);
+    log?.info(
+      {
+        operating_company_id: operatingCompanyId,
+        enabled: res.enabled,
+        expenses_projected: res.expensesProjected,
+        lines_projected: res.linesProjected,
+      },
+      "[qbo-sync-scheduler] qbo_purchases_project complete (expense headers + lines from payload_json)"
     );
     return res;
   }, failures, log);
