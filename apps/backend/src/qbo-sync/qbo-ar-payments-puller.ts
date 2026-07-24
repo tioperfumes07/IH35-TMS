@@ -41,6 +41,7 @@ import { qboCompanyContext, qboPaginateEntity } from "../integrations/qbo/qbo-cl
 import { withLuciaBypass } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { nextPaymentDisplayId } from "../accounting/display-id.js";
+import { resolveCustomerPaymentDepositAccount } from "../accounting/posting-engine.service.js";
 import { QBO_AR_PAYMENTS_MIRROR_SYNC_KIND } from "./qbo-ar-payments-sync-kind.js";
 
 // Default-OFF financial flags (financial cluster — HOLD for owner approval). SINGLE SOURCE OF TRUTH is the
@@ -419,10 +420,11 @@ export async function projectArPaymentsToLedger(operatingCompanyId: string): Pro
         continue;
       }
 
-      // Resolve the deposit-to GL account (QBO DepositToAccountRef) via catalogs.accounts.qbo_account_id
-      // — nullable; a payment can project into the subledger with no resolvable deposit account (GL is
-      // refused for qbo-sourced payments regardless — see posting-engine QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED).
-      let depositAccountUuid: string | null = null;
+      // Resolve QBO DepositToAccountRef to the local CoA id first, then reuse the posting engine's
+      // customer-payment resolver. That resolver validates the account is postable, handles a legacy
+      // banking.bank_accounts id through ledger_account_id, and falls back to the company cash-like role.
+      // QBO-sourced payments remain subledger-only; the posting engine refuses their GL posting.
+      let qboDepositAccountId: string | null = null;
       if (m.deposit_to_account_qbo_id) {
         const a = await client.query<{ id: string }>(
           `
@@ -432,8 +434,9 @@ export async function projectArPaymentsToLedger(operatingCompanyId: string): Pro
           `,
           [operatingCompanyId, m.deposit_to_account_qbo_id]
         );
-        depositAccountUuid = a.rows[0]?.id ?? null;
+        qboDepositAccountId = a.rows[0]?.id ?? null;
       }
+      const depositAccountUuid = await resolveCustomerPaymentDepositAccount(client, operatingCompanyId, qboDepositAccountId);
 
       const paymentMethod = mapPaymentMethod(m.payment_method_name);
       const paymentDate = m.txn_date ?? new Date().toISOString().slice(0, 10);
