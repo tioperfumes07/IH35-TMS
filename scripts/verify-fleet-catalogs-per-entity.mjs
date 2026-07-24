@@ -62,17 +62,12 @@ export function assertFleetPerEntity(sources) {
   // 2) Registered as held.
   if (!get(HELD).includes("202607860000_fleet_catalogs_per_entity.sql")) errs.push("202607860000 is not registered in .held-migrations.json");
 
-  // 3) The 8 fleet configs are companyScoped:true; equipment_types is NOT scoped.
+  // 3) The 8 fleet configs are companyScoped:true. (equipment_types is converted separately by
+  //    202607880000 and may also be scoped — so this asserts AT LEAST the 8, not exactly 8. Its own
+  //    guard verify:equipment-types-per-entity owns the equipment_types assertion.)
   const index = get(INDEX);
   const scopedCount = (index.match(/companyScoped:\s*true/g) || []).length;
-  if (scopedCount !== 8) errs.push(`fleet/index.ts must mark exactly 8 catalogs companyScoped:true (found ${scopedCount})`);
-  const eqAt = index.indexOf('"Equipment Types"');
-  if (eqAt >= 0) {
-    const blockStart = index.lastIndexOf("createCatalogRoutes", eqAt);
-    const blockEnd = index.indexOf("});", eqAt);
-    const eqBlock = index.slice(blockStart, blockEnd >= 0 ? blockEnd : eqAt);
-    if (/companyScoped:\s*true/.test(eqBlock)) errs.push("equipment_types must stay GLOBAL (dual write-surface) — do not mark it companyScoped");
-  }
+  if (scopedCount < 8) errs.push(`fleet/index.ts must mark at least the 8 fleet catalogs companyScoped:true (found ${scopedCount})`);
 
   // 4) The factory scopes by entity when companyScoped.
   const factory = get(FACTORY);
@@ -80,14 +75,15 @@ export function assertFleetPerEntity(sources) {
   if (!/companyScoped\s*===\s*true/.test(factory)) errs.push("factory must branch on config.companyScoped");
   if (!/INSERT INTO catalogs\.\$\{config\.tableName\} \(operating_company_id,/.test(factory)) errs.push("factory scoped INSERT must write operating_company_id as the first column");
 
-  // 5) Count spec: the 8 are companyScoped:true, equipment_types + tire_positions stay false.
+  // 5) Count spec: the 8 are companyScoped:true; tire_positions stays false (still global —
+  //    equipment_types is asserted by its own guard once 202607880000 converts it).
   const spec = get(SPEC);
   const fleetBlock = spec.slice(spec.indexOf("fleet: ["), spec.indexOf("]", spec.indexOf("fleet: [")) + 1);
   for (const t of PER_ENTITY) {
     const line = fleetBlock.split("\n").find((l) => l.includes(`"${t}"`)) || "";
     if (!/companyScoped:\s*true/.test(line)) errs.push(`count spec: fleet.${t} must be companyScoped:true (converted to per-entity)`);
   }
-  for (const t of ["equipment_types", "tire_positions"]) {
+  for (const t of ["tire_positions"]) {
     const line = fleetBlock.split("\n").find((l) => l.includes(`"${t}"`)) || "";
     if (!/companyScoped:\s*false/.test(line)) errs.push(`count spec: fleet.${t} must stay companyScoped:false (still global)`);
   }
@@ -108,7 +104,7 @@ if (SELFTEST) {
   };
 
   expectCaught("factory-scope-removed", { ...live, [FACTORY]: live[FACTORY].replace(/withCompanyScope/g, "withPlainScope") }, "withCompanyScope");
-  expectCaught("index-flags-flipped", { ...live, [INDEX]: live[INDEX].replace(/companyScoped:\s*true/g, "companyScoped: false") }, "exactly 8 catalogs companyScoped:true");
+  expectCaught("index-flags-flipped", { ...live, [INDEX]: live[INDEX].replace(/companyScoped:\s*true/g, "companyScoped: false") }, "at least the 8 fleet catalogs companyScoped:true");
   expectCaught("spec-flag-flipped", { ...live, [SPEC]: live[SPEC].replace('{ table: "asset_statuses", activeFilter: "is_active", companyScoped: true }', '{ table: "asset_statuses", activeFilter: "is_active", companyScoped: false }') }, "fleet.asset_statuses must be companyScoped:true");
   expectCaught("mig-force-rls-removed", { ...live, [MIG]: live[MIG].replace(/FORCE ROW LEVEL SECURITY/g, "no rls") }, "FORCE ROW LEVEL SECURITY");
   expectCaught("mig-hardcoded-uuid", { ...live, [MIG]: live[MIG].replace("SELECT id FROM org.companies WHERE deactivated_at IS NULL AND id <> v_primary", "unnest(ARRAY[v_usmca, v_trk])") }, "resolve entities dynamically");

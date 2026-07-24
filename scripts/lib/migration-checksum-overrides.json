@@ -187,7 +187,7 @@
     "filename": "0327_drug_alcohol_program.sql",
     "ledger_checksum": "24929c568028992304aec36c7baa1504a2900692d6dc4deb5c009b44560e5952",
     "disk_checksum": "53ec4796c74792c6e6714352170e053c5d8b9e455dfcb6dd8908a2c8e1d88f4d",
-    "reason": "GAP-81 (#636): migration shipped with `TO app_user` (wrong role) and operating_company_id TEXT (should be UUID). Fixed before first production deploy — never applied to prod. Local ledger recorded original SHA; override accepts corrected version.",
+    "reason": "GAP-81 (#636): migration shipped with `TO app_user` (wrong role) and operating_company_id TEXT (should be UUID). Fixed before first production deploy \u2014 never applied to prod. Local ledger recorded original SHA; override accepts corrected version.",
     "added_at": "2026-06-07",
     "added_in_pr": "hotfix/0327-drug-alcohol-app-user"
   },
@@ -257,8 +257,16 @@
     "filename": "202607820000_safety_relational_linkage_and_lifecycle.sql",
     "ledger_checksum": "578a6d7d7f2ae3f2e58bf44ebf36b757d6898748dd14e10c7bfe6bf71293c3b3",
     "disk_checksum": "8fa5d8e6854aac1dd54da22f5d54c1c7489c296760bd5f06b6c45ef9d39ef10d",
-    "reason": "PROD DEPLOY OUTAGE 2026-07-24: Neon ledger applied intermediate commit 2da2649ff (checksum 578a6d7d…) for #3380 safety join tables; main later landed 3319894fa with literal ENABLE/FORCE RLS (disk 8fa5d8e6…) so verify-rls-migration-scan can see them. Dynamic EXECUTE in the applied body already ran ENABLE+FORCE on the three join tables, so end state matches; db:migrate still refuses on the EXISTING ledger row before any follow-up. Override unblocks Render preDeploy. Do not edit this applied file again — any further DDL needs a new migration.",
+    "reason": "PROD DEPLOY OUTAGE 2026-07-24: Neon ledger applied intermediate commit 2da2649ff (checksum 578a6d7d\u2026) for #3380 safety join tables; main later landed 3319894fa with literal ENABLE/FORCE RLS (disk 8fa5d8e6\u2026) so verify-rls-migration-scan can see them. Dynamic EXECUTE in the applied body already ran ENABLE+FORCE on the three join tables, so end state matches; db:migrate still refuses on the EXISTING ledger row before any follow-up. Override unblocks Render preDeploy. Do not edit this applied file again \u2014 any further DDL needs a new migration.",
     "added_at": "2026-07-24",
     "added_in_pr": "PROD-DEPLOY-UNBLOCK-202607820000"
+  },
+  {
+    "filename": "202607910000_equipment_types_per_entity.sql",
+    "ledger_checksum": "7cec7823d98cc2dc4328ed60e2d5c7ff2a718b6772b5e992132613d630210638",
+    "disk_checksum": "d8bbefecbbcdd69cbda37c536d840a984799f9f4e31dd2df9759941313263eeb",
+    "reason": "fix(ci) bot rewrote the applied 910 migration after prod-apply (dropped nothing semantic; the applied seed never carried deactivated_at). Prod ledger 7cec7823 vs committed d8bbefec; the forward repair is 911 (norm-dedupe). Do not re-run 910; do not edit it.",
+    "added_at": "2026-07-24",
+    "added_in_pr": "LST-3405-equipment-types-per-entity"
   }
 ]

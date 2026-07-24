@@ -37,6 +37,7 @@ export async function registerFleetCatalogRoutes(app: FastifyInstance) {
     routePrefix: "/api/v1/catalogs/fleet",
     displayName: "Equipment Types",
     codeRegex: /^[A-Z][A-Z0-9_-]+$/,
+    companyScoped: true,
   });
 
   createCatalogRoutes(app, {

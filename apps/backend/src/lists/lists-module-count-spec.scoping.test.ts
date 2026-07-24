@@ -21,9 +21,10 @@ describe("lists module count spec — companyScoped matches catalog shape", () =
     "lease_terms",
     "asset_statuses",
     "asset_locations",
+    "equipment_types", // converted by 202607880000 (parent + line-item templates)
   ]);
   // Still global (no operating_company_id column) — companyScoped MUST stay false or the count 42703s.
-  const FLEET_STILL_GLOBAL = new Set(["equipment_types", "tire_positions"]);
+  const FLEET_STILL_GLOBAL = new Set(["tire_positions"]);
 
   it("fleet catalog companyScoped flags match each table's actual per-entity shape", () => {
     const fleet = LISTS_MODULE_COUNT_SPECS.fleet ?? [];
