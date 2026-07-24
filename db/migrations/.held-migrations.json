@@ -347,6 +347,10 @@
     {
       "file": "202607810000_accident_reports_capture_fields.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] SAF-F05 — add 7 additive text columns to safety.accident_reports (police_report_number, insurance_claim_number, location, third_party_name, third_party_plate, vendor_invoice_number, bill_or_expense_ref) the accident wizard rendered but silently discarded (no columns existed, verified on Neon br-fancy-credit-akjnd07a). All nullable text, no backfill, inherit table FORCED RLS + 0065 safety-schema grants. insurance_claim_number is the external insurer number, distinct from the insurance_claim_id FK. Posts nothing. Claude migration block 202607810000 (LANE-ASSIGNMENT §2a). Run only on a Neon branch by Jorge, then ledger-backfill."
+    },
+    {
+      "file": "202607850000_safety_evidence_revoke_delete.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Part B schema-wide DELETE hardening: narrow the safety schema default privilege (arwd -> no DELETE) + REVOKE DELETE on 48 safety EVIDENCE tables (void-not-delete/append-only/audit), KEEPING DELETE on 12 rules/config/alert/transient tables (per-table reasoning in the file). Root: 0065 blanket-granted DELETE + set the arwd default. Owner applies on Neon + ledger-backfills."
     }
   ]
 }
