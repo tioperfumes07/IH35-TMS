@@ -25,6 +25,8 @@ async function withCompany<T>(userId: string, companyId: string, fn: (client: an
   });
 }
 
+const READ_RL = { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } };
+
 export async function registerDriverFinanceDebtRoutes(app: FastifyInstance) {
   /**
    * SAF-F09 — the driver's escrow target, resolved from configuration instead of a client constant.
@@ -38,7 +40,7 @@ export async function registerDriverFinanceDebtRoutes(app: FastifyInstance) {
    * `accumulation_rate_pct` is NULL when no target is configured. The UI must render that as unknown
    * — never fall back to a constant, which is the defect this replaces.
    */
-  app.get("/api/v1/driver-finance/drivers/:id/escrow-target", async (req, reply) => {
+  app.get("/api/v1/driver-finance/drivers/:id/escrow-target", READ_RL, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = paramsSchema.safeParse(req.params ?? {});
@@ -63,7 +65,7 @@ export async function registerDriverFinanceDebtRoutes(app: FastifyInstance) {
     };
   });
 
-  app.get("/api/v1/driver-finance/drivers/:id/debt-summary", async (req, reply) => {
+  app.get("/api/v1/driver-finance/drivers/:id/debt-summary", READ_RL, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = paramsSchema.safeParse(req.params ?? {});
