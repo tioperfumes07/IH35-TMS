@@ -115,6 +115,7 @@ type BillRow = {
   memo: string | null;
   coa_account_id: string | null;
   qbo_bill_id: string | null;
+  source_system: string | null;
   created_at: string;
   updated_at: string;
   revoked_at: string | null;
@@ -1116,13 +1117,19 @@ export async function payBill(input: PayBillInput, userId: string) {
       "P5-D2-BILL-PAYMENT"
     );
 
-    // When posting is ON for this entity, post the balanced DR ap_control / CR bank JE ATOMICALLY in THIS
-    // transaction (GUARD 2026-07-11: the bank-balance cache and the GL cash account are SEPARATE stores —
-    // recording −amount in both is correct double-entry + cache coherence, not double-counting). Running it
-    // on the same client means a posting failure rolls back the payment insert + bill update + bank
-    // decrement together — bank and GL can never diverge. Idempotent (one batch per bill_payment). When OFF,
-    // the payment + bank decrement above stand as-is (no regression) and no JE is written.
-    if (glPostingEnabled) {
+    // Parallel books: QBO-origin bills never receive a TMS Bill→GL leg. Attempting BillPayment→GL
+    // would throw BILL_AP_NOT_POSTED (or invent a second JE) and — because posting runs in THIS txn —
+    // roll back the entire subledger payment. Skip GL for source_system=qbo; keep payment + bank cache.
+    const isQboBill = String(bill.source_system ?? "").toLowerCase() === "qbo";
+
+    // When posting is ON for this entity (and the bill is TMS-native), post the balanced DR ap_control /
+    // CR bank JE ATOMICALLY in THIS transaction (GUARD 2026-07-11: the bank-balance cache and the GL cash
+    // account are SEPARATE stores — recording −amount in both is correct double-entry + cache coherence,
+    // not double-counting). Running it on the same client means a posting failure rolls back the payment
+    // insert + bill update + bank decrement together — bank and GL can never diverge. Idempotent (one
+    // batch per bill_payment). When OFF, the payment + bank decrement above stand as-is (no regression)
+    // and no JE is written.
+    if (glPostingEnabled && !isQboBill) {
       await postSourceTransactionInClientTx(
         client,
         {
@@ -1137,9 +1144,11 @@ export async function payBill(input: PayBillInput, userId: string) {
     return {
       ...paymentRes.rows[0],
       amount_cents: Number(paymentRes.rows[0].amount_cents ?? Math.round(Number(paymentRes.rows[0].amount ?? 0) * 100)),
-      gl_posting: glPostingEnabled
-        ? ({ posted: true } as const)
-        : ({ posted: false, reason: "blocked_flag_off" } as const),
+      gl_posting: isQboBill
+        ? ({ posted: false, reason: "qbo_parallel_books" } as const)
+        : glPostingEnabled
+          ? ({ posted: true } as const)
+          : ({ posted: false, reason: "blocked_flag_off" } as const),
     };
   });
 
