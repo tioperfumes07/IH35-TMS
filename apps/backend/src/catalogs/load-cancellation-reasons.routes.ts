@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
@@ -70,26 +71,16 @@ export async function registerLoadCancellationReasonRoutes(app: FastifyInstance)
 
     const includeInactive = parsedQuery.data.include_inactive === "true";
     const rows = await withCurrentUser(user.uuid, async (client) => {
-      let operatingCompanyId = parsedQuery.data.operating_company_id ?? null;
-      if (!operatingCompanyId) {
-        const resolvedCompanyRes = await client.query<{ id: string }>(
-          `
-            SELECT c.id
-            FROM identity.users u
-            JOIN org.companies c ON c.id = u.default_company_id
-            WHERE u.id = $1
-              AND c.id IN (SELECT org.user_accessible_company_ids())
-            UNION
-            SELECT c.id
-            FROM org.companies c
-            WHERE c.id IN (SELECT org.user_accessible_company_ids())
-            ORDER BY id
-            LIMIT 1
-          `,
-          [user.uuid]
-        );
-        operatingCompanyId = resolvedCompanyRes.rows[0]?.id ?? null;
-      }
+      // LST-F05: was an inline `UNION … ORDER BY id LIMIT 1` that picked the LOWEST accessible UUID
+      // across ALL companies, LOSING the user's default — and USMCA (5c854333…) < TRANSP (91e0bf0a…),
+      // so a param-omitting call hijacked TRANSP's default to USMCA. Repointed to the canonical
+      // resolveOperatingCompanyId, which does COALESCE(default, lowest) and validates membership
+      // (the same resolver items/accounts/classes already use).
+      const operatingCompanyId = await resolveOperatingCompanyId(
+        client,
+        user.uuid,
+        parsedQuery.data.operating_company_id ?? null
+      );
       if (!operatingCompanyId) return [];
 
       const values: unknown[] = [operatingCompanyId];
