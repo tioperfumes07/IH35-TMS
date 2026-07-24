@@ -1,5 +1,7 @@
 # IH35-TMS — Durable Handoff Context
 
+> **★★ PER-PR CHECKLIST (read FIRST, every PR):** `docs/specs/PER-PR-CHECKLIST.md` — the consolidated list of everything audited and fixed in **every** PR (5 DONE layers · 8 audit layers · evidence block · guard rules · verification traps · merge gates · migration rules). Enforced in CI on the PR body and the commits.
+
 > **★ DEFINITION OF DONE (BINDING):** `docs/specs/DEFINITION-OF-DONE.md` — the canonical "done" bar (5 DONE layers + 5 VERIFY layers + the evidence block + guard rules). Read it before claiming any block complete; CI-green is the floor, not the verdict.
 
 > **SESSION LAW (auto-loaded every Cursor session):** `docs/specs/CURSOR-OPERATING-CONSTITUTION.md` + Rule #0 `docs/specs/QUALITY-STANDARD-LOCKED.md` + Law of the Land `docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md` + always-apply `.cursor/rules/00`–`07` + `10`–`15`. Trust over speed. Verify live. No guess / patch / defer. Never delete modules — only add. Multi-agent review required on non-trivial/financial work.

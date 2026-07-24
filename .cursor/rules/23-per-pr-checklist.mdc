@@ -1,0 +1,50 @@
+---
+description: The consolidated per-PR checklist — everything audited and fixed in every PR (auto-load)
+alwaysApply: true
+---
+
+# RULE 23 — THE PER-PR CHECKLIST IS AUTO-LOADED LAW
+
+**Canonical file: `docs/specs/PER-PR-CHECKLIST.md`. Open it before starting any PR.**
+
+It consolidates the Definition of Done, the Full Audit Law, the Linkage Law, Rule 16 and Rule 17 into
+one list so the standard cannot be missed by being scattered across six files. It does not replace
+any of them — **on conflict the MORE PROTECTIVE reading wins.**
+
+## The nine sections (all apply to every PR)
+
+0. **Before writing a line** — sync main, fresh branch, read the spec first, classify the lane
+1. **Five DONE layers** — A active path · B wizard depth (every rendered field in the submit payload)
+   · C forward **and reverse** canonical FKs (memo-only = FAIL) · D purpose→economics · E evidence
+2. **Eight audit layers** — QBO chrome · universal picker law (7 clauses, inline `+ Add new` as the
+   FIRST ROW INSIDE the dropdown, writing the table the picker reads) · connectivity/wiring ·
+   deep linkage chains forward+reverse · catalogs/entity scope (TRANSP **and** USMCA) · CPA-grade
+   economics (header **plus lines**, balanced JE, no TMS→QBO write-back) · tab/design law ·
+   security/entity/RLS
+3. **Evidence block** — `ROOT CAUSE / FIX / GUARD / LIVE PROOF / REMAINING` in the **PR body and the
+   squash message**. `LIVE PROOF` names a real artifact (sha, endpoint, row count, screenshot) or says
+   `UNVERIFIED` + blocker. **The bare word "verified" is not proof**
+4. **Guard rules** — every fix ships a guard; it must FAIL on the bug and PASS on the fix; the
+   `--selftest` must be capable of failing; wiring via `scripts/verify-steps/NNNN-*.mjs` ONLY
+   (package.json `verify:*` is forbidden); **never weaken a guard to go green**
+5. **Verification discipline** — prod wins · a 0 is not proof, re-run with a positive control · a 200
+   is not success (check content-type) · grep is not a systemic check · pipes mask exit codes ·
+   baseline before blaming your change · deploy verified by ancestry
+6. **Merge gates** — merge to `main` IS the deploy; financial cluster / migrations /
+   `accounting.*`/`catalogs.*`/`mdata.*` / dependency bumps = **STOP for the owner**; prod DB access
+   gated per connection; flag flips are the owner's sole decision
+7. **Migration PRs** — number above main's max · idempotent · dynamic `org.companies` (never a
+   hardcoded UUID) · seed carries `deactivated_at` · `UNIQUE(opco, code)` · FORCE RLS · REVOKE DELETE
+   · validate on a local throwaway DB · **never edit an applied migration** (override in the same PR,
+   or a forward migration — no third option) · regenerate baselines and the prod-ledger manifest
+8. **Honest reporting** — say what was skipped or failed · `UNVERIFIED` + blocker over a guess ·
+   "8 of 12" not "complete" · correct your own earlier claim when it changes a decision
+
+## Enforcement (this rule is not honour-system)
+
+- `.github/pull_request_template.md` pre-fills the §3 block
+- `scripts/check-commit-evidence.mjs` — husky `commit-msg` hook
+- `.github/workflows/pr-evidence-block.yml` — validates the **PR body** (what actually lands)
+- `scripts/verify-definition-of-done-evidence.mjs` (verify-step 1324) — validates commits
+
+Both CI checks require **labelled lines** and a **real proof artifact**, not a bare keyword.

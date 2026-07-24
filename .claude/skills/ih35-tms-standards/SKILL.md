@@ -10,6 +10,7 @@ description: >-
 
 # IH35-TMS — Operating Standards
 
+> **★★ PER-PR CHECKLIST (read FIRST, every PR):** `docs/specs/PER-PR-CHECKLIST.md` — the single consolidated list of everything audited and fixed in **every** PR: 5 DONE layers · 8 audit layers (QBO chrome · universal picker law · connectivity/wiring · deep forward+reverse linkage · catalogs/entity scope · CPA-grade economics · tab/design law · security/RLS) · the evidence block · guard rules · verification traps · merge gates · migration rules. Consolidated because scattered law is skipped law; enforced in CI on the PR body **and** the commits.
 > **★ DEFINITION OF DONE (BINDING, every session):** `docs/specs/DEFINITION-OF-DONE.md` — the canonical "done" bar: 5 DONE layers (active path · wizard depth · forward **and reverse** linkage · purpose→economics · evidence) + 5 VERIFY layers (QBO chrome · universal picker law · deep linkage chains · catalogs/entity scope · CPA-grade economics) + the required PR evidence block + guard rules. CI-green is the floor, not the verdict.
 > **Rule #0 (LOCKED, every session):** `docs/specs/QUALITY-STANDARD-LOCKED.md` — hardline quality law.
 > **Cursor charter (every session):** `docs/specs/CURSOR-OPERATING-CONSTITUTION.md` — permanent operating constitution; more conservative reading wins on conflict.
