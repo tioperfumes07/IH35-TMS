@@ -18,6 +18,8 @@ import { Combobox, type ComboboxOption } from "../../Combobox";
 import { MoneyInput } from "../../forms/MoneyInput";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
+import { formatAccountDisplayLabel } from "../../../lib/show-account-numbers";
+import { formatReferenceTypeLabel } from "../referenceOptionLabels";
 
 // FIX-03: mirror ItemEditorModal's account-type filters + carrier default so the two Product/Service
 // creators behave identically (QBO parity: an item's income account is a referenced record, not text).
@@ -84,14 +86,22 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
     () =>
       accounts
         .filter((a) => a.account_type && INCOME_TYPES.includes(a.account_type))
-        .map((a) => ({ value: a.id, label: a.account_name, sublabel: a.account_number })),
+        .map((a) => ({
+          value: a.id,
+          label: formatAccountDisplayLabel(a),
+          sublabel: formatReferenceTypeLabel(a.account_type),
+        })),
     [accounts]
   );
   const expenseOptions: ComboboxOption[] = useMemo(
     () =>
       accounts
         .filter((a) => a.account_type && EXPENSE_TYPES.includes(a.account_type))
-        .map((a) => ({ value: a.id, label: a.account_name, sublabel: a.account_number })),
+        .map((a) => ({
+          value: a.id,
+          label: formatAccountDisplayLabel(a),
+          sublabel: formatReferenceTypeLabel(a.account_type),
+        })),
     [accounts]
   );
 

@@ -14,7 +14,7 @@
  *   - vendor / customer / account / service → InlineCreateDrawer (rich BK7 forms; account gated)
  *   - item / category / part / class → QuickCreateEntityModal (ParityDrawer shell)
  */
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Combobox, type ComboboxOption } from "../Combobox";
 import {
   QuickCreateEntityModal,
@@ -25,7 +25,7 @@ import { InlineCreateDrawer, type InlineCreateKind } from "./InlineCreateDrawer"
 export type ReferenceOption = {
   value: string;
   label: string;
-  /** Shown after the name, QBO-style "Name + Type" (e.g. "BOA-CHECKING-1135 Bank"). */
+  /** Shown after the name, QBO-style "Name + Type" (e.g. "Checking · Bank"). Never an account number. */
   type?: string;
 };
 
@@ -66,8 +66,25 @@ export function ReferenceSelect({
 }: ReferenceSelectProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const [created, setCreated] = useState<ReferenceOption[]>([]);
+  // Account pickers: QBO-style Account Type filter (not a flat name-only list).
+  const [typeFilter, setTypeFilter] = useState<string>("");
 
-  const comboOptions: ComboboxOption[] = [...options, ...created].map((o) => ({
+  const typeChoices = useMemo(() => {
+    if (createKind !== "account") return [] as string[];
+    const set = new Set<string>();
+    for (const o of [...options, ...created]) {
+      if (o.type) set.add(o.type);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [createKind, options, created]);
+
+  const visibleOptions = useMemo(() => {
+    const all = [...options, ...created];
+    if (createKind !== "account" || !typeFilter) return all;
+    return all.filter((o) => o.type === typeFilter);
+  }, [options, created, createKind, typeFilter]);
+
+  const comboOptions: ComboboxOption[] = visibleOptions.map((o) => ({
     value: o.value,
     label: o.label,
     sublabel: o.type,
@@ -87,7 +104,27 @@ export function ReferenceSelect({
 
   return (
     <div className="flex items-center gap-2">
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 space-y-1">
+        {createKind === "account" && typeChoices.length > 0 ? (
+          <label className="flex items-center gap-2 text-[11px] text-gray-600">
+            <span className="shrink-0 font-medium">Type</span>
+            <select
+              value={typeFilter}
+              onChange={(event) => setTypeFilter(event.target.value)}
+              disabled={disabled}
+              data-testid="reference-select-account-type-filter"
+              className="h-7 min-w-0 flex-1 rounded-sm border border-gray-300 bg-white px-1.5 text-[12px] text-gray-800 focus:border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400 disabled:bg-gray-100"
+              aria-label="Filter accounts by type"
+            >
+              <option value="">All account types</option>
+              {typeChoices.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
         {/* QB-STD-1/2: the "+" row lives inside the Combobox dropdown as its permanent first row.
         No external button — the Combobox allowAddNew now always-shows the row on open. */}
         <Combobox

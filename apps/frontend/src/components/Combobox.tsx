@@ -27,30 +27,41 @@ type ComboboxProps = {
 const MAX_VISIBLE_OPTIONS = 50;
 const LISTBOX_MAX_HEIGHT = 256;
 
-function scoreOption(label: string, query: string, filterMode: NonNullable<ComboboxProps["filterMode"]>) {
-  const normalizedLabel = label.trim().toLowerCase();
+function scoreOption(label: string, query: string, filterMode: NonNullable<ComboboxProps["filterMode"]>, sublabel?: string) {
   const normalizedQuery = query.trim().toLowerCase();
   if (!normalizedQuery) return 0;
 
-  if (filterMode === "startsWith") {
-    return normalizedLabel.startsWith(normalizedQuery) ? 0 : null;
-  }
-  if (filterMode === "fuzzy") {
-    let score = 0;
-    let position = 0;
-    for (const character of normalizedQuery) {
-      const nextPosition = normalizedLabel.indexOf(character, position);
-      if (nextPosition === -1) return null;
-      score += nextPosition === position ? 1 : 2;
-      position = nextPosition + 1;
+  const scoreOne = (raw: string) => {
+    const normalizedLabel = raw.trim().toLowerCase();
+    if (!normalizedLabel) return null;
+    if (filterMode === "startsWith") {
+      return normalizedLabel.startsWith(normalizedQuery) ? 0 : null;
     }
-    return score;
-  }
+    if (filterMode === "fuzzy") {
+      let score = 0;
+      let position = 0;
+      for (const character of normalizedQuery) {
+        const nextPosition = normalizedLabel.indexOf(character, position);
+        if (nextPosition === -1) return null;
+        score += nextPosition === position ? 1 : 2;
+        position = nextPosition + 1;
+      }
+      return score;
+    }
 
-  if (normalizedLabel.startsWith(normalizedQuery)) return 0;
-  const containsAt = normalizedLabel.indexOf(normalizedQuery);
-  if (containsAt >= 0) return 100 + containsAt;
-  return null;
+    if (normalizedLabel.startsWith(normalizedQuery)) return 0;
+    const containsAt = normalizedLabel.indexOf(normalizedQuery);
+    if (containsAt >= 0) return 100 + containsAt;
+    return null;
+  };
+
+  const labelScore = scoreOne(label);
+  const typeScore = sublabel ? scoreOne(sublabel) : null;
+  // Prefer name matches; type/sublabel matches (e.g. typing "Expense") still surface the row.
+  if (labelScore === null && typeScore === null) return null;
+  if (labelScore === null) return 1000 + (typeScore ?? 0);
+  if (typeScore === null) return labelScore;
+  return Math.min(labelScore, 1000 + typeScore);
 }
 
 function measureListboxStyle(anchor: HTMLElement): CSSProperties {
@@ -115,7 +126,7 @@ export function Combobox({
     return sourceOptions
       .map((option) => ({
         option,
-        score: scoreOption(option.label, query, filterMode),
+        score: scoreOption(option.label, query, filterMode, option.sublabel),
       }))
       .filter((entry): entry is { option: ComboboxOption; score: number } => entry.score !== null)
       .sort((a, b) => {

@@ -4,12 +4,15 @@ import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { createPartsInventoryPurchase } from "../../../api/maintenance";
 import { createVendor, createCustomer } from "../../../api/mdata";
-import { chartOfAccountsCatalogClient, classesCatalogClient, itemsCatalogClient } from "../../../api/catalogs-accounting";
+import { createCatalogAccount } from "../../../api/catalog-accounts";
+import { classesCatalogClient, itemsCatalogClient } from "../../../api/catalogs-accounting";
 import { fetchAccountTypeCatalog, detailTypesForAccountType, ACCOUNT_TYPE_GROUPS } from "../../../api/coa-list";
 import { getCoaAccounts } from "../../../api/banking";
 import { Combobox, type ComboboxOption } from "../../../components/Combobox";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
+import { formatAccountDisplayLabel } from "../../../lib/show-account-numbers";
+import { formatReferenceTypeLabel } from "../../../components/parity/referenceOptionLabels";
 
 // FIX-03: an item's income/expense account is a REFERENCED catalogs.accounts record (QBO parity), not
 // text. Mirror ItemEditorModal's type filters + carrier default so quick-create + full editor agree.
@@ -115,14 +118,22 @@ export function QuickCreateEntityModal({
     () =>
       accounts
         .filter((a) => a.account_type && INCOME_TYPES.includes(a.account_type))
-        .map((a) => ({ value: a.id, label: a.account_name, sublabel: a.account_number })),
+        .map((a) => ({
+          value: a.id,
+          label: formatAccountDisplayLabel(a),
+          sublabel: formatReferenceTypeLabel(a.account_type),
+        })),
     [accounts]
   );
   const expenseOptions: ComboboxOption[] = useMemo(
     () =>
       accounts
         .filter((a) => a.account_type && EXPENSE_TYPES.includes(a.account_type))
-        .map((a) => ({ value: a.id, label: a.account_name, sublabel: a.account_number })),
+        .map((a) => ({
+          value: a.id,
+          label: formatAccountDisplayLabel(a),
+          sublabel: formatReferenceTypeLabel(a.account_type),
+        })),
     [accounts]
   );
   // Carrier default: preselect "Sales of Service Income" for a sellable item when nothing is chosen.
@@ -203,24 +214,18 @@ export function QuickCreateEntityModal({
         onCreated({ id: String(res.id), label: parsed.data.name });
       } else if (kind === "category") {
         // FIX-02: full QBO COA classification — persist the CHOSEN account_type (8-value COA group
-        // enum) + Detail Type, never a hard-coded Expense. Writes to catalogs.accounts (canonical) —
-        // same table getCoaAccounts reads via /api/v1/catalogs/accounts. chartOfAccountsCatalogClient
-        // maps to tableName:"accounts" in the factory (NOT the gated NewAccountDrawerForm path).
+        // enum) + Detail Type. Writes via canonical /api/v1/catalogs/accounts (account_number optional).
+        // Owner 2026-07-23: never invent slug+timestamp account numbers.
         if (!parsed.data.accountType) {
           pushToast("Account type is required.", "error");
           return;
         }
-        const rawSlug = parsed.data.name.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 12) || "ACCT";
-        const safeSlug = /^[A-Z]/.test(rawSlug) ? rawSlug : `E${rawSlug}`;
-        // Timestamp suffix avoids account_number unique-constraint violations on same-name creates.
-        const accountCode = `${safeSlug}${String(Date.now()).slice(-6)}`;
-        const res = await chartOfAccountsCatalogClient.create(operatingCompanyId, {
-          code: accountCode,
-          display_name: parsed.data.name,
-          metadata: {
-            account_type: parsed.data.accountType,
-            account_subtype: parsed.data.detailType?.trim() || undefined,
-          },
+        const res = await createCatalogAccount({
+          account_name: parsed.data.name,
+          account_type: parsed.data.accountType,
+          account_number: null,
+          account_subtype: parsed.data.detailType?.trim() || undefined,
+          operating_company_id: operatingCompanyId,
         });
         onCreated({ id: String(res.id), label: parsed.data.name });
       } else if (kind === "class") {

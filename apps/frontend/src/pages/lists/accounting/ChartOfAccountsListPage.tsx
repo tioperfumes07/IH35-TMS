@@ -20,24 +20,17 @@ import { useShowAccountNumbers } from "../../../lib/useShowAccountNumbers";
 import {
   applyCollapsedVisibility,
   buildCoaListRows,
+  filterCoaHierarchySearch,
   orderCoaHierarchy,
   statementTag,
   type CoaListRow,
+  type CoaSiblingSortKey,
 } from "./coa-list-utils";
 
 const PAGE_SIZE_DEFAULT = 50;
 
-const FILTERS: ListViewFilter[] = [
-  {
-    id: "statement",
-    label: "View",
-    type: "multiselect",
-    options: [
-      { value: "BS", label: "Balance sheet" },
-      { value: "P&L", label: "Profit & loss" },
-    ],
-  },
-];
+const SIBLING_SORT_KEYS = new Set<string>(["number", "name", "acct_type", "detail_type", "status"]);
+const FLAT_SORT_KEYS = new Set(["qb_balance", "bank_balance"]);
 
 function catalogRowToCatalogAccount(row: AccountingCatalogRow): CatalogAccount {
   const meta = row.metadata;
@@ -134,7 +127,13 @@ function buildColumns(
           ) : (
             <span className="w-3 shrink-0" />
           )}
-          <span className="truncate">{row.name}</span>
+          <span
+            className={`truncate ${row.hasChildren ? "font-semibold underline decoration-slate-400 underline-offset-2" : ""}`}
+            title={row.hasChildren ? "Parent account — has subaccounts" : undefined}
+            data-testid={row.hasChildren ? "coa-parent-account-name" : undefined}
+          >
+            {row.name}
+          </span>
         </div>
       ),
     },
@@ -222,10 +221,12 @@ export function ChartOfAccountsListPage() {
   const companyId = selectedCompanyId ?? "";
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE_DEFAULT);
+  // Default: name among siblings — preserves parent→subaccount nesting (QBO). Never flat-sort by name.
   const [sortKey, setSortKey] = useState("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("active");
+  const [searchQuery, setSearchQuery] = useState("");
   const [collapsedParentIds, setCollapsedParentIds] = useState<Set<string>>(() => new Set());
   const [drawerMode, setDrawerMode] = useState<"create" | "edit">("create");
   const [drawerAccount, setDrawerAccount] = useState<CatalogAccount | null>(null);
@@ -281,13 +282,43 @@ export function ChartOfAccountsListPage() {
     return ids;
   }, [catalogQuery.data]);
 
+  const listFilters = useMemo<ListViewFilter[]>(() => {
+    const typeOptions = Array.from(new Set(baseRows.map((row) => row.acct_type).filter((t) => t && t !== "—")))
+      .sort((a, b) => a.localeCompare(b))
+      .map((value) => ({ value, label: value }));
+    return [
+      {
+        id: "statement",
+        label: "View",
+        type: "multiselect",
+        options: [
+          { value: "BS", label: "Balance sheet" },
+          { value: "P&L", label: "Profit & loss" },
+        ],
+      },
+      {
+        id: "acct_type",
+        label: "Account type",
+        type: "multiselect",
+        options: typeOptions,
+      },
+    ];
+  }, [baseRows]);
+
   const filteredRows = useMemo(() => {
-    let rows = orderCoaHierarchy(baseRows);
-    rows = applyCollapsedVisibility(rows, collapsedParentIds);
+    const siblingKey: CoaSiblingSortKey = SIBLING_SORT_KEYS.has(sortKey)
+      ? (sortKey as CoaSiblingSortKey)
+      : "name";
+    let rows = orderCoaHierarchy(baseRows, { siblingSort: siblingKey, siblingDir: sortDir });
 
     const statementFilter = activeFilters.find((filter) => filter.filterId === "statement");
     if (statementFilter && statementFilter.values.length > 0) {
       rows = rows.filter((row) => statementFilter.values.includes(row.statement));
+    }
+
+    const typeFilter = activeFilters.find((filter) => filter.filterId === "acct_type");
+    if (typeFilter && typeFilter.values.length > 0) {
+      rows = rows.filter((row) => typeFilter.values.includes(row.acct_type));
     }
 
     if (statusFilter === "active") rows = rows.filter((row) => row.is_active);
@@ -295,21 +326,33 @@ export function ChartOfAccountsListPage() {
 
     if (driftOnly) rows = rows.filter((row) => driftAccountIds.has(row.id));
 
-    if (sortKey) {
-      const currencyColumns = new Set(["qb_balance", "bank_balance"]);
+    rows = filterCoaHierarchySearch(rows, searchQuery);
+    rows = applyCollapsedVisibility(rows, collapsedParentIds);
+
+    // Balance columns only: flat sort is intentional (rank by $, hierarchy not meaningful).
+    if (FLAT_SORT_KEYS.has(sortKey)) {
       const sorted = [...rows].sort((a, b) => {
-        const av = String((a as Record<string, unknown>)[sortKey] ?? "");
-        const bv = String((b as Record<string, unknown>)[sortKey] ?? "");
-        const cmp = currencyColumns.has(sortKey)
-          ? (parseFloat(av.replace(/[$,]/g, "")) || 0) - (parseFloat(bv.replace(/[$,]/g, "")) || 0)
-          : av.localeCompare(bv, undefined, { sensitivity: "base", numeric: true });
-        return sortDir === "asc" ? cmp : -cmp;
+        const av =
+          parseFloat(String((a as Record<string, unknown>)[sortKey] ?? "").replace(/[$,]/g, "")) || 0;
+        const bv =
+          parseFloat(String((b as Record<string, unknown>)[sortKey] ?? "").replace(/[$,]/g, "")) || 0;
+        return sortDir === "asc" ? av - bv : bv - av;
       });
       rows = sorted;
     }
 
     return rows;
-  }, [activeFilters, baseRows, collapsedParentIds, driftAccountIds, driftOnly, sortDir, sortKey, statusFilter]);
+  }, [
+    activeFilters,
+    baseRows,
+    collapsedParentIds,
+    driftAccountIds,
+    driftOnly,
+    searchQuery,
+    sortDir,
+    sortKey,
+    statusFilter,
+  ]);
 
   const pageRows = useMemo(() => {
     const start = (page - 1) * pageSize;
@@ -412,7 +455,7 @@ export function ChartOfAccountsListPage() {
             rowKey={(row) => row.id}
             pagination={pagination}
             sort={sort}
-            filters={FILTERS}
+            filters={listFilters}
             onFilterChange={(filters) => {
               setActiveFilters(filters);
               setPage(1);
@@ -430,7 +473,7 @@ export function ChartOfAccountsListPage() {
               </>
             )}
             filterBarSlot={
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex w-full min-w-0 flex-wrap items-center gap-2">
                 <div className="flex items-center gap-1 rounded-sm border border-gray-300 p-0.5 text-xs">
                   {(["all", "active", "inactive"] as const).map((value) => (
                     <button
@@ -448,6 +491,18 @@ export function ChartOfAccountsListPage() {
                     </button>
                   ))}
                 </div>
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(event) => {
+                    setSearchQuery(event.target.value);
+                    setPage(1);
+                  }}
+                  placeholder="Search accounts…"
+                  aria-label="Search chart of accounts"
+                  data-testid="coa-list-search"
+                  className="h-8 min-w-[200px] flex-1 rounded-sm border border-gray-300 px-2.5 text-xs text-gray-800 placeholder:text-gray-400 focus:border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400"
+                />
                 <label
                   className="flex cursor-pointer items-center gap-1.5 rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-700"
                   data-testid="coa-show-account-numbers-toggle"

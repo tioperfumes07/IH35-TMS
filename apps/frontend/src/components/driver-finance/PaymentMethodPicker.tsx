@@ -6,6 +6,8 @@ import { Button } from "../Button";
 import { getCoaAccounts } from "../../api/banking";
 import { createPaymentMethod, listPaymentMethods } from "../../api/paymentMethods";
 import { useToast } from "../Toast";
+import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
+import { formatReferenceTypeLabel } from "../parity/referenceOptionLabels";
 
 type Props = {
   operatingCompanyId: string;
@@ -84,7 +86,11 @@ export function PaymentMethodPicker({ operatingCompanyId, value, onChange, disab
             <span className="text-xs font-medium text-gray-600">GL account (cash/bank)</span>
             <div className="mt-1">
               <Combobox
-                options={(accountsQuery.data?.accounts ?? []).map((a) => ({ value: a.id, label: a.account_name, sublabel: a.account_number }))}
+                options={(accountsQuery.data?.accounts ?? []).map((a) => ({
+                  value: a.id,
+                  label: formatAccountDisplayLabel(a),
+                  sublabel: formatReferenceTypeLabel(a.account_type),
+                }))}
                 value={glAccountId}
                 onChange={setGlAccountId}
                 placeholder="Select GL account (optional)"

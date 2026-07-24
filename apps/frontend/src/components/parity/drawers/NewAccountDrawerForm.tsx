@@ -1,9 +1,10 @@
 /**
  * BK7 — New Account drawer form (two-column + cascade + lock flag).
  *
- * LEFT: Account name, Account number, Account type (8-value COA enum, statement-grouped),
- *   Detail type (LIVE from catalogs.detail_types via account-type-catalog — no hardcoded arrays),
- *   sub-account toggle → parent selector, description, billable + lock flags.
+ * LEFT: Account name, Account number (optional — never invent slugs), Account type
+ *   (QBO catalog codes BANK/EXP/… statement-grouped), Detail type cascaded from that
+ *   ONE catalog code (not all Asset/Expense subtypes merged), sub-account toggle →
+ *   parent selector, description, lock flag.
  * RIGHT: Live BS/P&L preview from the fetched account-type catalog.
  *
  * GATE: Account create commit was FINANCIAL/GATED until owner GO 2026-07-22
@@ -14,17 +15,17 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Lock } from "lucide-react";
-import { chartOfAccountsCatalogClient } from "../../../api/catalogs-accounting";
+import { createCatalogAccount } from "../../../api/catalog-accounts";
 import { getCoaAccounts } from "../../../api/banking";
 import {
-  ACCOUNT_TYPE_GROUPS,
-  ACCOUNT_TYPES,
-  COA_ENUM_TO_CATALOG_CODES,
-  detailTypesForAccountType,
+  CATALOG_CODE_TO_COA_ENUM,
+  detailTypesForCatalogCode,
   fetchAccountTypeCatalog,
   type AccountTypeCatalogEntry,
   type CoaAccountType,
 } from "../../../api/coa-list";
+import { formatAccountDisplayLabel } from "../../../lib/show-account-numbers";
+import { formatReferenceTypeLabel } from "../referenceOptionLabels";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
 
@@ -33,12 +34,14 @@ const ACCOUNT_CREATE_GATED = false; // Owner GO 2026-07-22 — all companies
 type FormState = {
   name: string;
   accountNumber: string;
+  /** QBO Account Type catalog code (BANK, EXP, …). */
+  catalogTypeCode: string;
+  /** Stored 8-value enum on catalogs.accounts.account_type. */
   accountType: CoaAccountType | "";
   detailType: string;
   isSubaccount: boolean;
   parentAccount: string;
   description: string;
-  billableExpenses: boolean;
   lockAccount: boolean;
 };
 
@@ -54,12 +57,12 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
   const [form, setForm] = useState<FormState>({
     name: "",
     accountNumber: "",
+    catalogTypeCode: "",
     accountType: "",
     detailType: "",
     isSubaccount: false,
     parentAccount: "",
     description: "",
-    billableExpenses: false,
     lockAccount: false,
   });
 
@@ -71,9 +74,19 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
   });
 
   const detailOptions = useMemo(
-    () => detailTypesForAccountType(typeCatalogQuery.data, form.accountType),
-    [typeCatalogQuery.data, form.accountType],
+    () => detailTypesForCatalogCode(typeCatalogQuery.data, form.catalogTypeCode),
+    [typeCatalogQuery.data, form.catalogTypeCode],
   );
+
+  const accountTypePickerGroups = useMemo(() => {
+    const data = typeCatalogQuery.data ?? [];
+    const bs = data.filter((e) => e.statement === "BS").sort((a, b) => a.sortOrder - b.sortOrder);
+    const pl = data.filter((e) => e.statement === "P&L").sort((a, b) => a.sortOrder - b.sortOrder);
+    return [
+      { label: "Balance Sheet", entries: bs },
+      { label: "Profit & Loss", entries: pl },
+    ];
+  }, [typeCatalogQuery.data]);
 
   // Parent-account roster for the sub-account picker — entity-scoped (catalogs.accounts is per-entity
   // under FORCE-RLS), fetched only while the sub-account toggle is on.
@@ -84,31 +97,44 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
     enabled: Boolean(operatingCompanyId) && form.isSubaccount,
   });
 
+  // Also load accounts when suggesting next number (create path).
+  const allAccountsQuery = useQuery({
+    queryKey: ["coa-accounts-for-number-suggest", operatingCompanyId],
+    queryFn: () => getCoaAccounts(operatingCompanyId),
+    staleTime: 5 * 60 * 1000,
+    enabled: Boolean(operatingCompanyId),
+  });
+
   const parentOptions = useMemo(
-    () => (parentAccountsQuery.data?.accounts ?? []).filter((a) => !a.deactivated_at),
-    [parentAccountsQuery.data],
+    () =>
+      (parentAccountsQuery.data?.accounts ?? [])
+        .filter((a) => !a.deactivated_at)
+        .filter((a) => !form.accountType || a.account_type === form.accountType),
+    [parentAccountsQuery.data, form.accountType],
   );
+
+  const suggestedAccountNumber = useMemo(() => {
+    const rows = allAccountsQuery.data?.accounts ?? [];
+    const nums = rows
+      .map((a) => String(a.account_number ?? "").trim())
+      .filter((n) => /^\d+$/.test(n))
+      .map((n) => parseInt(n, 10))
+      .filter((n) => Number.isFinite(n));
+    if (nums.length === 0) return "";
+    return String(Math.max(...nums) + 1);
+  }, [allAccountsQuery.data]);
 
   const previewEntry = useMemo<AccountTypeCatalogEntry | null>(() => {
     const data = typeCatalogQuery.data;
-    if (!data || !form.accountType) return null;
-    const codes = new Set(COA_ENUM_TO_CATALOG_CODES[form.accountType] ?? []);
-    const matches = data.filter(
-      (e) => codes.has(e.code) || e.accountType === form.accountType || e.code === form.accountType,
-    );
-    if (matches.length === 0) return null;
-    if (form.detailType) {
-      const withDetail = matches.find((e) => e.detailTypes.some((dt) => dt.name === form.detailType));
-      if (withDetail) return withDetail;
-    }
-    return matches[0];
-  }, [typeCatalogQuery.data, form.accountType, form.detailType]);
+    if (!data || !form.catalogTypeCode) return null;
+    return data.find((e) => e.code === form.catalogTypeCode) ?? null;
+  }, [typeCatalogQuery.data, form.catalogTypeCode]);
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({
       ...prev,
       [key]: value,
-      ...(key === "accountType" ? { detailType: "" } : {}),
+      ...(key === "catalogTypeCode" ? { detailType: "", parentAccount: "" } : {}),
     }));
   }
 
@@ -122,39 +148,24 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
       pushToast("Account name is required.", "error");
       return;
     }
-    if (!form.accountType) {
+    if (!form.catalogTypeCode || !form.accountType) {
       pushToast("Account type is required.", "error");
-      return;
-    }
-    if (!ACCOUNT_TYPES.includes(form.accountType)) {
-      pushToast("Account type is invalid.", "error");
       return;
     }
     setSaving(true);
     try {
-      // QB-STD-5: canonical catalogs.accounts (same table getCoaAccounts reads).
-      const rawSlug = form.name.trim().replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 12) || "ACCT";
-      const safeSlug = /^[A-Z]/.test(rawSlug) ? rawSlug : `E${rawSlug}`;
-      const accountCode = form.accountNumber.trim() || `${safeSlug}${String(Date.now()).slice(-6)}`;
-      // DATA-LOSS FIX: this form collects Description, Parent account and Lock account, and the
-      // create body dropped all three — the row landed with notes NULL, parent_account_id NULL and
-      // is_locked FALSE while the toast said "Account created". An operator who ticked "Lock
-      // account" on a control account got a freely-postable account and no warning. The backend
-      // has always accepted them (catalogs/accounting/index.ts: descriptionColumn "notes",
-      // metadata parent_account_id + is_locked); only the client was lossy.
-      const res = await chartOfAccountsCatalogClient.create(operatingCompanyId, {
-        code: accountCode,
-        display_name: form.name.trim(),
-        description: form.description.trim() || undefined,
-        metadata: {
-          account_type: form.accountType,
-          account_subtype: form.detailType || undefined,
-          // Only send a parent when the sub-account toggle is on, so unticking it cannot leave a
-          // stale parent behind. parent_account_id is a real FK (catalogs.accounts(id), 0010).
-          parent_account_id: form.isSubaccount && form.parentAccount ? form.parentAccount : null,
-          is_locked: form.lockAccount,
-          is_billable_expense: form.billableExpenses,
-        },
+      // Canonical POST /api/v1/catalogs/accounts — account_number is optional/nullable.
+      // Never invent slug+timestamp junk via the accounting-factory code column.
+      const res = await createCatalogAccount({
+        account_name: form.name.trim(),
+        account_type: form.accountType,
+        account_number: form.accountNumber.trim() || null,
+        account_subtype: form.detailType.trim() || undefined,
+        notes: form.description.trim() || undefined,
+        parent_account_id:
+          form.isSubaccount && form.parentAccount ? form.parentAccount : undefined,
+        is_locked: form.lockAccount,
+        operating_company_id: operatingCompanyId || undefined,
       });
       onCreated({ id: String(res.id), label: form.name.trim() });
       pushToast("Account created", "success");
@@ -176,33 +187,59 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
               className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
               value={form.name}
               onChange={(e) => set("name", e.target.value)}
-              placeholder="e.g. BOA-CHECKING-1135"
+              placeholder="e.g. Checking"
               autoFocus
             />
           </label>
 
           <label className="block">
-            <span className="text-xs font-medium text-gray-700">Account number</span>
+            <span className="text-xs font-medium text-gray-700">
+              Account number <span className="font-normal text-gray-400">(optional)</span>
+            </span>
             <input
               className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
               value={form.accountNumber}
               onChange={(e) => set("accountNumber", e.target.value)}
-              placeholder="e.g. 1000"
+              placeholder={suggestedAccountNumber ? `e.g. ${suggestedAccountNumber}` : "e.g. 1000"}
+              data-testid="inline-account-number-input"
             />
+            {!form.accountNumber.trim() && suggestedAccountNumber ? (
+              <button
+                type="button"
+                className="mt-1 text-[11px] font-semibold text-slate-700 hover:underline"
+                onClick={() => set("accountNumber", suggestedAccountNumber)}
+              >
+                Use next number {suggestedAccountNumber}
+              </button>
+            ) : null}
           </label>
 
           <label className="block">
             <span className="text-xs font-medium text-gray-700">Account type *</span>
             <select
               className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
-              value={form.accountType}
-              onChange={(e) => set("accountType", e.target.value as CoaAccountType | "")}
+              value={form.catalogTypeCode}
+              disabled={typeCatalogQuery.isLoading}
+              onChange={(e) => {
+                const code = e.target.value;
+                const enumType = (CATALOG_CODE_TO_COA_ENUM[code] ?? "") as CoaAccountType | "";
+                setForm((prev) => ({
+                  ...prev,
+                  catalogTypeCode: code,
+                  accountType: enumType,
+                  detailType: "",
+                  parentAccount: "",
+                }));
+              }}
+              data-testid="inline-account-type-select"
             >
               <option value="">Select a type…</option>
-              {ACCOUNT_TYPE_GROUPS.map((group) => (
+              {accountTypePickerGroups.map((group) => (
                 <optgroup key={group.label} label={group.label}>
-                  {group.types.map((t) => (
-                    <option key={t} value={t}>{t}</option>
+                  {group.entries.map((entry) => (
+                    <option key={entry.code} value={entry.code}>
+                      {entry.accountType}
+                    </option>
                   ))}
                 </optgroup>
               ))}
@@ -223,19 +260,22 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
             <select
               className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
               value={form.detailType}
-              disabled={!form.accountType || detailOptions.length === 0}
+              disabled={!form.catalogTypeCode || detailOptions.length === 0}
               onChange={(e) => set("detailType", e.target.value)}
               aria-label="Detail type"
+              data-testid="inline-detail-type-select"
             >
               <option value="">
-                {!form.accountType
+                {!form.catalogTypeCode
                   ? "Select account type first…"
                   : detailOptions.length === 0
                     ? "No detail types available"
                     : "Select a detail type…"}
               </option>
               {detailOptions.map((d) => (
-                <option key={d.id} value={d.name}>{d.name}</option>
+                <option key={d.id} value={d.name}>
+                  {d.name}
+                </option>
               ))}
             </select>
           </div>
@@ -250,36 +290,24 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
             Is sub-account
           </label>
 
-          {form.isSubaccount && (
+          {form.isSubaccount ? (
             <label className="block">
               <span className="text-xs font-medium text-gray-700">Parent account</span>
-              {/*
-                Was a free-text box ("Parent account name or number"). parent_account_id is a uuid FK
-                into catalogs.accounts, so typed text could NEVER resolve to a parent — the field was
-                unpersistable by construction. Now a real entity-scoped picker off the same
-                catalogs.accounts the chart reads, so the value IS the FK.
-              */}
               <select
                 className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
                 value={form.parentAccount}
                 onChange={(e) => set("parentAccount", e.target.value)}
               >
-                <option value="">
-                  {parentAccountsQuery.isPending
-                    ? "Loading accounts…"
-                    : parentOptions.length === 0
-                      ? "No accounts available for this company"
-                      : "Select a parent account…"}
-                </option>
+                <option value="">Select parent…</option>
                 {parentOptions.map((a) => (
                   <option key={a.id} value={a.id}>
-                    
-                    {a.account_name}
+                    {formatAccountDisplayLabel(a)}
+                    {a.account_type ? ` · ${formatReferenceTypeLabel(a.account_type)}` : ""}
                   </option>
                 ))}
               </select>
             </label>
-          )}
+          ) : null}
 
           <label className="block">
             <span className="text-xs font-medium text-gray-700">Description</span>
@@ -289,22 +317,6 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
               value={form.description}
               onChange={(e) => set("description", e.target.value)}
             />
-          </label>
-
-          {/*
-            Now persisted: migration 202607750000 added catalogs.accounts.is_billable_expense, and
-            the catalogs accounting factory maps it in selectMetadataSql + create/update. Previously
-            this control had NO storage and was silently discarded on every save, so it was disabled
-            and labelled rather than left lying.
-          */}
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input
-              type="checkbox"
-              checked={form.billableExpenses}
-              onChange={(e) => set("billableExpenses", e.target.checked)}
-              className="h-4 w-4 rounded-sm border-gray-300"
-            />
-            Use for billable expenses
           </label>
 
           <label className="flex items-center gap-2 text-sm text-gray-700">
@@ -319,24 +331,29 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
           </label>
         </div>
 
-        <div className="rounded-sm border border-gray-200 bg-slate-50 p-3 text-sm text-gray-700">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Where this lands</p>
+        <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-3">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Preview</div>
           {previewEntry ? (
-            <div className="mt-2 space-y-1">
-              <p className="font-medium text-gray-900">{form.accountType}</p>
-              {form.detailType && (
-                <p className="mt-0.5 text-gray-500">Detail type: {form.detailType}</p>
-              )}
-              <p className="text-gray-600">{previewEntry.statement}</p>
-              <p className="text-xs text-gray-500">
-                Normal balance: {previewEntry.normalBalance} · Default: {previewEntry.defaultAction}
-              </p>
+            <div className="space-y-1.5 text-xs text-slate-700">
+              <div className="font-semibold text-slate-900">{form.name.trim() || "Untitled account"}</div>
+              <div className="flex justify-between gap-3">
+                <span className="text-slate-500">Type</span>
+                <span className="text-right">
+                  {previewEntry.accountType}
+                  {form.detailType ? ` › ${form.detailType}` : ""}
+                </span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span className="text-slate-500">Statement</span>
+                <span>{previewEntry.statement === "BS" ? "Balance Sheet" : "Profit & Loss"}</span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span className="text-slate-500">Normal balance</span>
+                <span>{previewEntry.normalBalance}</span>
+              </div>
             </div>
           ) : (
-            <p className="mt-2 text-gray-500">Select an account type to preview statement placement.</p>
-          )}
-          {typeCatalogQuery.isError && (
-            <p className="mt-2 text-xs text-red-700">Could not load detail-type catalog. Retry or open Lists → Detail Type.</p>
+            <p className="text-xs text-slate-500">Select an account type to preview statement placement.</p>
           )}
         </div>
       </div>
@@ -345,16 +362,16 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
         <button
           type="button"
           onClick={onClose}
-          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+          className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
         >
           Cancel
         </button>
         <button
           type="submit"
-          disabled={saving || ACCOUNT_CREATE_GATED}
-          className="rounded-sm bg-slate-800 px-3 py-1.5 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-60"
+          disabled={saving}
+          className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#162033] disabled:opacity-50"
         >
-          {ACCOUNT_CREATE_GATED ? "Awaiting approval — contact Jorge" : saving ? "Saving…" : "+ Create"}
+          {saving ? "Creating…" : "Create"}
         </button>
       </div>
     </form>

@@ -10,15 +10,17 @@ import {
 } from "../../../api/catalog-accounts";
 import {
   fetchAccountTypeCatalog,
-  detailTypesForAccountType,
-  ACCOUNT_TYPE_GROUPS,
-  COA_ENUM_TO_CATALOG_CODES,
+  detailTypesForCatalogCode,
+  resolveCatalogCodeForAccount,
+  CATALOG_CODE_TO_COA_ENUM,
   type AccountTypeCatalogEntry,
 } from "../../../api/coa-list";
 import { getCoaAccounts } from "../../../api/banking";
 import { Button } from "../../../components/Button";
 import { Combobox, type ComboboxOption } from "../../../components/Combobox";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { formatAccountDisplayLabel } from "../../../lib/show-account-numbers";
+import { formatReferenceTypeLabel } from "../../../components/parity/referenceOptionLabels";
 
 type Mode = "create" | "edit";
 
@@ -52,6 +54,9 @@ const GROUP_LABELS: Record<string, string> = {
 type FormState = {
   account_name: string;
   account_number: string;
+  /** QBO Account Type catalog code (BANK, EXP, …) — drives Detail Type list. */
+  catalog_type_code: string;
+  /** Stored 8-value enum on catalogs.accounts.account_type. */
   account_type: string;
   account_subtype: string;
   notes: string;
@@ -66,7 +71,8 @@ function emptyForm(): FormState {
   return {
     account_name: "",
     account_number: "",
-    account_type: "Expense",
+    catalog_type_code: "",
+    account_type: "",
     account_subtype: "",
     notes: "",
     opening_balance_cents: "",
@@ -77,10 +83,11 @@ function emptyForm(): FormState {
   };
 }
 
-function formFromAccount(account: CatalogAccount): FormState {
+function formFromAccount(account: CatalogAccount, catalog?: AccountTypeCatalogEntry[]): FormState {
   return {
     account_name: account.account_name,
     account_number: account.account_number ?? "",
+    catalog_type_code: resolveCatalogCodeForAccount(catalog, account.account_type, account.account_subtype),
     account_type: account.account_type,
     account_subtype: account.account_subtype ?? "",
     notes: account.notes ?? "",
@@ -133,9 +140,19 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
   });
 
   const detailTypesForType = useMemo<AccountTypeCatalogEntry["detailTypes"]>(
-    () => detailTypesForAccountType(typeCatalogQuery.data, form.account_type),
-    [typeCatalogQuery.data, form.account_type],
+    () => detailTypesForCatalogCode(typeCatalogQuery.data, form.catalog_type_code),
+    [typeCatalogQuery.data, form.catalog_type_code],
   );
+
+  const accountTypePickerGroups = useMemo(() => {
+    const data = typeCatalogQuery.data ?? [];
+    const bs = data.filter((e) => e.statement === "BS").sort((a, b) => a.sortOrder - b.sortOrder);
+    const pl = data.filter((e) => e.statement === "P&L").sort((a, b) => a.sortOrder - b.sortOrder);
+    return [
+      { label: "Balance Sheet", entries: bs },
+      { label: "Profit & Loss", entries: pl },
+    ];
+  }, [typeCatalogQuery.data]);
 
   // Parent-account candidates for the subaccount picker. getCoaAccounts is entity-scoped server-side
   // (passes operating_company_id → af1 RLS), so this NEVER lists another entity's accounts. We further
@@ -156,36 +173,37 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
       .filter((a) => a.id !== account?.id)
       .map((a) => ({
         value: a.id,
-        label: a.account_name,
-        sublabel: a.account_number || undefined,
+        label: formatAccountDisplayLabel(a),
+        sublabel: formatReferenceTypeLabel(a.account_type),
       }));
   }, [parentAccountsQuery.data, form.account_type, account?.id]);
 
-  // Live preview metadata — sourced from the fetched account_types catalog, NOT hardcoded. Find the
-  // catalog entry the selected COA group enum maps to; when a Detail Type is chosen, prefer the exact
-  // entry that owns that detail type (e.g. Asset+Checking → the "Bank" entry → BS / Debit / Register).
+  /** Suggest next numeric account number (optional) — never invent slug/QBO junk. */
+  const suggestedAccountNumber = useMemo(() => {
+    const rows = parentAccountsQuery.data?.accounts ?? [];
+    const nums = rows
+      .map((a) => String(a.account_number ?? "").trim())
+      .filter((n) => /^\d+$/.test(n))
+      .map((n) => parseInt(n, 10))
+      .filter((n) => Number.isFinite(n));
+    if (nums.length === 0) return "";
+    return String(Math.max(...nums) + 1);
+  }, [parentAccountsQuery.data]);
+
+  // Live preview metadata — sourced from the fetched account_types catalog, NOT hardcoded.
   const previewEntry = useMemo<AccountTypeCatalogEntry | null>(() => {
     const data = typeCatalogQuery.data;
-    if (!data || !form.account_type) return null;
-    const codes = new Set(COA_ENUM_TO_CATALOG_CODES[form.account_type] ?? []);
-    const matches = data.filter(
-      (e) => codes.has(e.code) || e.accountType === form.account_type || e.code === form.account_type,
-    );
-    if (matches.length === 0) return null;
-    if (form.account_subtype) {
-      const withDetail = matches.find((e) => e.detailTypes.some((dt) => dt.name === form.account_subtype));
-      if (withDetail) return withDetail;
-    }
-    return matches[0];
-  }, [typeCatalogQuery.data, form.account_type, form.account_subtype]);
+    if (!data || !form.catalog_type_code) return null;
+    return data.find((e) => e.code === form.catalog_type_code) ?? null;
+  }, [typeCatalogQuery.data, form.catalog_type_code]);
 
   useEffect(() => {
     if (!open) return;
-    setForm(account ? formFromAccount(account) : emptyForm());
+    setForm(account ? formFromAccount(account, typeCatalogQuery.data) : emptyForm());
     setErrors({});
     setSubmitError("");
     setConfirmArchive(false);
-  }, [open, account]);
+  }, [open, account, typeCatalogQuery.data]);
 
   const isLocked = mode === "edit" && (account?.is_locked === true);
   const isArchived = mode === "edit" && Boolean(account?.deactivated_at);
@@ -199,7 +217,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
   function validate(): boolean {
     const next: Partial<Record<keyof FormState, string>> = {};
     if (!form.account_name.trim()) next.account_name = "Account Name is required.";
-    if (!form.account_type) next.account_type = "Account Type is required.";
+    if (!form.catalog_type_code || !form.account_type) next.account_type = "Account Type is required.";
     if (form.opening_balance_cents.trim() && Number.isNaN(parseFloat(form.opening_balance_cents))) {
       next.opening_balance_cents = "Enter a valid dollar amount.";
     }
@@ -349,7 +367,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
               <FieldError msg={errors.account_name} />
             </FieldLabel>
 
-            {/* Account Number (optional) */}
+            {/* Account Number (optional) — leave blank or enter the real number; do not invent slugs. */}
             <FieldLabel label="Account Number">
               <span className="ml-1 font-normal text-gray-400">(optional)</span>
               <input
@@ -357,31 +375,45 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
                 value={form.account_number}
                 disabled={readOnly}
                 onChange={(e) => setField("account_number", e.target.value)}
-                placeholder="e.g. 6000"
+                placeholder={suggestedAccountNumber ? `e.g. ${suggestedAccountNumber}` : "e.g. 6000"}
                 className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
+                data-testid="account-number-input"
               />
+              {!readOnly && suggestedAccountNumber && !form.account_number.trim() ? (
+                <button
+                  type="button"
+                  className="mt-1 text-[11px] font-semibold text-slate-700 hover:underline"
+                  onClick={() => setField("account_number", suggestedAccountNumber)}
+                  data-testid="suggest-account-number"
+                >
+                  Use next number {suggestedAccountNumber}
+                </button>
+              ) : null}
               <FieldError msg={errors.account_number} />
             </FieldLabel>
 
-            {/* Account Type */}
+            {/* Account Type — QBO catalog types (Bank, Expenses, …), not the 8-value GL enum alone. */}
             <FieldLabel label="Account Type" required>
               <select
-                value={form.account_type}
-                disabled={readOnly}
+                value={form.catalog_type_code}
+                disabled={readOnly || typeCatalogQuery.isLoading}
                 onChange={(e) => {
-                  setField("account_type", e.target.value);
+                  const code = e.target.value;
+                  const enumType = CATALOG_CODE_TO_COA_ENUM[code] ?? "";
+                  setField("catalog_type_code", code);
+                  setField("account_type", enumType);
                   setField("account_subtype", "");
-                  // A parent must share the new account_type, so clear any stale same-type selection.
                   setField("parent_account_id", "");
                 }}
                 className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
+                data-testid="account-type-select"
               >
-                <option value="">Select type…</option>
-                {ACCOUNT_TYPE_GROUPS.map((group) => (
+                <option value="">Select account type…</option>
+                {accountTypePickerGroups.map((group) => (
                   <optgroup key={group.label} label={group.label}>
-                    {group.types.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
+                    {group.entries.map((entry) => (
+                      <option key={entry.code} value={entry.code}>
+                        {entry.accountType}
                       </option>
                     ))}
                   </optgroup>
@@ -390,7 +422,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
               <FieldError msg={errors.account_type} />
             </FieldLabel>
 
-            {/* Detail Type (cascaded) — live catalogs.detail_types; manage customs via Lists */}
+            {/* Detail Type — cascaded from the selected QBO Account Type only */}
             <FieldLabel label="Detail Type">
               <div className="mt-1 flex items-center justify-end">
                 <Link
@@ -403,12 +435,17 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
               </div>
               <select
                 value={form.account_subtype}
-                disabled={readOnly || detailTypesForType.length === 0}
+                disabled={readOnly || !form.catalog_type_code || detailTypesForType.length === 0}
                 onChange={(e) => setField("account_subtype", e.target.value)}
                 className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
+                data-testid="detail-type-select"
               >
                 <option value="">
-                  {detailTypesForType.length === 0 ? "No detail types available" : "Select detail type…"}
+                  {!form.catalog_type_code
+                    ? "Select account type first…"
+                    : detailTypesForType.length === 0
+                      ? "No detail types available"
+                      : "Select detail type…"}
                 </option>
                 {detailTypesForType.map((dt) => (
                   <option key={dt.id} value={dt.name}>
@@ -594,7 +631,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
                       : "border-gray-300 text-gray-600 hover:border-gray-400 hover:bg-gray-50"
                   } disabled:opacity-50`}
                 >
-                  {confirmArchive ? "Confirm Archive?" : "Archive"}
+                  {confirmArchive ? "Confirm Make inactive?" : "Make inactive"}
                 </button>
               ) : null}
             </div>

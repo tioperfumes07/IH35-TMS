@@ -117,11 +117,33 @@ export function buildCoaListRows(
   });
 }
 
-export function orderCoaHierarchy(rows: CoaListRow[]): CoaListRow[] {
+/** Sibling keys that re-order WITHIN a parent without flattening the tree (QBO CoA behavior). */
+export type CoaSiblingSortKey = "number" | "name" | "acct_type" | "detail_type" | "status";
+
+export type OrderCoaHierarchyOpts = {
+  siblingSort?: CoaSiblingSortKey;
+  siblingDir?: "asc" | "desc";
+};
+
+function compareCoaSiblings(a: CoaListRow, b: CoaListRow, key: CoaSiblingSortKey, dir: "asc" | "desc"): number {
+  const av = String((a as Record<string, unknown>)[key] ?? "");
+  const bv = String((b as Record<string, unknown>)[key] ?? "");
+  const cmp = av.localeCompare(bv, undefined, { sensitivity: "base", numeric: true });
+  return dir === "asc" ? cmp : -cmp;
+}
+
+/**
+ * Depth-first CoA order: each parent followed by its children.
+ * Column sorts must call this with siblingSort — NEVER flat-sort the whole list by name
+ * (that destroys parent→subaccount nesting; owner 2026-07-23 / QBO parity).
+ */
+export function orderCoaHierarchy(rows: CoaListRow[], opts?: OrderCoaHierarchyOpts): CoaListRow[] {
+  const siblingSort = opts?.siblingSort ?? "name";
+  const siblingDir = opts?.siblingDir ?? "asc";
   const byId = new Map(rows.map((row) => [row.id, row]));
   const roots = rows
     .filter((row) => !row.parent_account_id || !byId.has(row.parent_account_id))
-    .sort((a, b) => a.number.localeCompare(b.number, undefined, { numeric: true }));
+    .sort((a, b) => compareCoaSiblings(a, b, siblingSort, siblingDir));
 
   const ordered: CoaListRow[] = [];
   const visit = (row: CoaListRow, depth: number) => {
@@ -129,7 +151,7 @@ export function orderCoaHierarchy(rows: CoaListRow[]): CoaListRow[] {
     const children = row.childIds
       .map((id) => byId.get(id))
       .filter((child): child is CoaListRow => Boolean(child))
-      .sort((a, b) => a.number.localeCompare(b.number, undefined, { numeric: true }));
+      .sort((a, b) => compareCoaSiblings(a, b, siblingSort, siblingDir));
     for (const child of children) visit(child, depth + 1);
   };
 
@@ -139,6 +161,27 @@ export function orderCoaHierarchy(rows: CoaListRow[]): CoaListRow[] {
     if (!visited.has(row.id)) ordered.push({ ...row, depth: 0 });
   }
   return ordered;
+}
+
+/**
+ * Search keeps matching rows and every ancestor so subaccounts stay under their parent.
+ */
+export function filterCoaHierarchySearch(rows: CoaListRow[], query: string): CoaListRow[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return rows;
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  const keep = new Set<string>();
+  for (const row of rows) {
+    const hay = `${row.name} ${row.number} ${row.acct_type} ${row.detail_type}`.toLowerCase();
+    if (!hay.includes(q)) continue;
+    keep.add(row.id);
+    let parentId = row.parent_account_id;
+    while (parentId) {
+      keep.add(parentId);
+      parentId = byId.get(parentId)?.parent_account_id ?? null;
+    }
+  }
+  return rows.filter((row) => keep.has(row.id));
 }
 
 export function applyCollapsedVisibility(rows: CoaListRow[], collapsedParentIds: Set<string>): CoaListRow[] {

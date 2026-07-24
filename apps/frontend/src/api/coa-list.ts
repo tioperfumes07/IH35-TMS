@@ -83,7 +83,40 @@ export const COA_ENUM_TO_CATALOG_CODES: Record<string, string[]> = {
   OtherExpense: ["OEXP"],
 };
 
-// Detail types available for a chosen account_type enum, derived from the LIVE account-type catalog.
+/** Inverse of COA_ENUM_TO_CATALOG_CODES — QBO Account Type code → catalogs.accounts.account_type enum. */
+export const CATALOG_CODE_TO_COA_ENUM: Record<string, CoaAccountType> = {
+  BANK: "Asset",
+  AR: "Asset",
+  OCA: "Asset",
+  FA: "Asset",
+  OA: "Asset",
+  CC: "Liability",
+  AP: "Liability",
+  OCL: "Liability",
+  LTL: "Liability",
+  EQ: "Equity",
+  INC: "Income",
+  OINC: "OtherIncome",
+  COGS: "CostOfGoodsSold",
+  EXP: "Expense",
+  OEXP: "OtherExpense",
+};
+
+/**
+ * Detail types for ONE QBO Account Type catalog row (e.g. BANK → Checking/Savings only).
+ * Do NOT merge all Asset subtypes — that is the bug that dumped every detail under Expense/Asset.
+ */
+export function detailTypesForCatalogCode(
+  catalog: AccountTypeCatalogEntry[] | undefined,
+  catalogCode: string,
+): AccountTypeCatalogEntry["detailTypes"] {
+  if (!catalog || !catalogCode) return [];
+  const entry = catalog.find((e) => e.code === catalogCode);
+  if (!entry) return [];
+  return [...entry.detailTypes].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
+}
+
+/** @deprecated Prefer detailTypesForCatalogCode — merges every catalog code under an 8-value enum. */
 export function detailTypesForAccountType(
   catalog: AccountTypeCatalogEntry[] | undefined,
   accountType: string,
@@ -93,7 +126,7 @@ export function detailTypesForAccountType(
   const out: AccountTypeCatalogEntry["detailTypes"] = [];
   const seen = new Set<string>();
   for (const e of catalog) {
-    if (!(codes.has(e.code) || e.accountType === accountType || e.code === accountType)) continue;
+    if (!codes.has(e.code)) continue;
     for (const dt of e.detailTypes) {
       if (seen.has(dt.name)) continue;
       seen.add(dt.name);
@@ -101,6 +134,23 @@ export function detailTypesForAccountType(
     }
   }
   return out;
+}
+
+/** Resolve which catalog Account Type code an existing account should map to (edit mode). */
+export function resolveCatalogCodeForAccount(
+  catalog: AccountTypeCatalogEntry[] | undefined,
+  accountType: string,
+  accountSubtype: string | null | undefined,
+): string {
+  if (!catalog?.length) return "";
+  const subtype = String(accountSubtype ?? "").trim();
+  if (subtype) {
+    const byDetail = catalog.find((e) => e.detailTypes.some((dt) => dt.name === subtype));
+    if (byDetail) return byDetail.code;
+  }
+  const codes = COA_ENUM_TO_CATALOG_CODES[accountType] ?? [];
+  const first = catalog.find((e) => codes.includes(e.code));
+  return first?.code ?? "";
 }
 
 export function fetchAccountBalances(operatingCompanyId: string, asOfDate: string) {
