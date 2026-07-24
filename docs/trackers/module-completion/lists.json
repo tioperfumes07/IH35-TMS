@@ -1,0 +1,187 @@
+{
+  "module": "lists",
+  "audit_file": "~/Desktop/IH35-CURSOR-AUDIT/modules/lists.md",
+  "audit_date": "2026-07-23",
+  "settlement_file": "~/Desktop/IH35-CURSOR-AUDIT/modules/lists-PROD-SETTLEMENT-2026-07-24.md",
+  "M": 14,
+  "status_definitions": {
+    "not_started": "no PR opened",
+    "pr_open": "PR open, not merged",
+    "partially_merged_unverified": "some findings merged; boundary incomplete",
+    "merged_unverified": "all findings merged; NOT live-verified - claimed, not proven",
+    "verified": "live proof recorded in evidence - the ONLY status that counts toward N",
+    "unmapped": "boundary exists in the audit but has not been transcribed here"
+  },
+  "note": "N counts ONLY status=verified. Merged is not done (DEFINITION-OF-DONE.md).",
+  "boundaries": [
+    {
+      "id": "LST-B01",
+      "title": "Repoint /lists hub ribbon off the QBO remote-count view",
+      "findings": [
+        "F01"
+      ],
+      "hold": false,
+      "prs": [],
+      "status": "not_started",
+      "evidence": "PROD-SETTLED 2026-07-24: feed is NOT dark (fresh 17:10Z, real values) - structural half stands"
+    },
+    {
+      "id": "LST-B02",
+      "title": "Fleet catalogs per-entity + metadata + code uniqueness",
+      "findings": [
+        "F02",
+        "F02b",
+        "F07",
+        "F24"
+      ],
+      "hold": true,
+      "prs": [
+        3397,
+        3405,
+        3387
+      ],
+      "status": "merged_unverified",
+      "evidence": "PROD-SETTLED: 9/10 fleet catalogs carry operating_company_id + FORCE RLS; tire_positions global by design"
+    },
+    {
+      "id": "LST-B03",
+      "title": "payment_terms / posting_templates / account_role_bindings per-entity",
+      "findings": [
+        "F03"
+      ],
+      "hold": true,
+      "prs": [],
+      "status": "partially_merged_unverified",
+      "evidence": "PROD-SETTLED: account_role_bindings ALREADY has opco; payment_terms + posting_templates still global"
+    },
+    {
+      "id": "LST-B04",
+      "title": "Cancel-load FK repoint + cancellation-reason consolidation",
+      "findings": [
+        "F04"
+      ],
+      "hold": true,
+      "prs": [],
+      "status": "not_started",
+      "evidence": "PROD-CONFIRMED P0: load_cancellations.reason_code NOT NULL -> legacy catalog; 36/36 active modern codes violate it"
+    },
+    {
+      "id": "LST-B05",
+      "title": "Kill the lowest-UUID entity hijack in 3 routes",
+      "findings": [
+        "F05"
+      ],
+      "hold": true,
+      "prs": [
+        3389
+      ],
+      "status": "merged_unverified",
+      "evidence": ""
+    },
+    {
+      "id": "LST-B06",
+      "title": "WO cost-context repoint to canonical category/item tables",
+      "findings": [
+        "F06",
+        "F26"
+      ],
+      "hold": true,
+      "prs": [],
+      "status": "not_started",
+      "evidence": ""
+    },
+    {
+      "id": "LST-B07",
+      "title": "Require OCID on /catalogs/accounts",
+      "findings": [
+        "F08"
+      ],
+      "hold": true,
+      "prs": [],
+      "status": "not_started",
+      "evidence": ""
+    },
+    {
+      "id": "LST-B08",
+      "title": "account_role_bindings global UNIQUE drop (USMCA blocker)",
+      "findings": [
+        "F09"
+      ],
+      "hold": true,
+      "prs": [
+        3345
+      ],
+      "status": "merged_unverified",
+      "evidence": "PROD-SETTLED: REFUTED/RESOLVED - uq_account_role_bindings_company_role_key exists, no global unique"
+    },
+    {
+      "id": "LST-B09",
+      "title": "/lists/driver/teams stub: build or archive",
+      "findings": [
+        "F10"
+      ],
+      "hold": false,
+      "prs": [],
+      "status": "not_started",
+      "evidence": ""
+    },
+    {
+      "id": "LST-B10",
+      "title": "Brokers catalog: real roster or honest banner",
+      "findings": [
+        "F11"
+      ],
+      "hold": false,
+      "prs": [],
+      "status": "not_started",
+      "evidence": ""
+    },
+    {
+      "id": "LST-B11",
+      "title": "Maintenance parts (4-way) + services (2-way) consolidation",
+      "findings": [
+        "F12",
+        "F15"
+      ],
+      "hold": false,
+      "prs": [],
+      "status": "not_started",
+      "evidence": ""
+    },
+    {
+      "id": "LST-B12",
+      "title": "Hub-unreachable routes into DOMAIN_CONFIG",
+      "findings": [
+        "F13",
+        "F18"
+      ],
+      "hold": false,
+      "prs": [],
+      "status": "not_started",
+      "evidence": "EXTENDED: driver_load_statuses also unreachable (my LST-F3)"
+    },
+    {
+      "id": "LST-B13",
+      "title": "postable_only param on account pickers",
+      "findings": [
+        "F14"
+      ],
+      "hold": true,
+      "prs": [],
+      "status": "not_started",
+      "evidence": "PROD-SETTLED: exposure is 2 rows fleet-wide (TRANSP 1, TRK 1, USMCA 0) - real but not P0-sized"
+    },
+    {
+      "id": "LST-B14",
+      "title": "Count-spec completion + skipped-table disclosure",
+      "findings": [
+        "F20",
+        "F21"
+      ],
+      "hold": false,
+      "prs": [],
+      "status": "not_started",
+      "evidence": "PROD-QUANTIFIED: understates TRANSP by 548 active rows, TRK/USMCA by 289 each; +13 JE literal"
+    }
+  ]
+}

@@ -1,0 +1,371 @@
+{
+  "module": "safety",
+  "audit_file": "~/Desktop/IH35-CURSOR-AUDIT/modules/safety.md",
+  "audit_date": "2026-07-23",
+  "M": 30,
+  "status_definitions": {
+    "not_started": "no PR opened",
+    "pr_open": "PR open, not merged",
+    "partially_merged_unverified": "some findings merged; boundary incomplete",
+    "merged_unverified": "all findings merged; NOT live-verified - claimed, not proven",
+    "verified": "live proof recorded in evidence[] - the ONLY status that counts toward N",
+    "unmapped": "boundary exists in the audit but has not been transcribed here"
+  },
+  "note": "N counts ONLY status=verified. Merged is not done (DEFINITION-OF-DONE.md).",
+  "boundaries": [
+    {
+      "id": "SAF-B01",
+      "title": "Escrow forfeiture endpoint + economics",
+      "findings": [
+        "F01"
+      ],
+      "hold": true,
+      "prs": [
+        3348
+      ],
+      "status": "merged_unverified",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B02",
+      "title": "Apply held migrations for the fine->deduction chain",
+      "findings": [
+        "F02",
+        "F03"
+      ],
+      "hold": true,
+      "prs": [],
+      "status": "not_started",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B03",
+      "title": "Apply held migrations for the claim reverse graph",
+      "findings": [
+        "F04"
+      ],
+      "hold": true,
+      "prs": [],
+      "status": "not_started",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B04",
+      "title": "Accident wizard field persistence + validation + widened guard",
+      "findings": [
+        "F05",
+        "F30"
+      ],
+      "hold": false,
+      "prs": [
+        3353,
+        3384
+      ],
+      "status": "merged_unverified",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B05",
+      "title": "Base-less fetch sweep + guard (+2290 honesty)",
+      "findings": [
+        "F06",
+        "F32"
+      ],
+      "hold": false,
+      "prs": [
+        3336
+      ],
+      "status": "partially_merged_unverified",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B06",
+      "title": "D&A / RTD block in the driver-qualification gate",
+      "findings": [
+        "F07"
+      ],
+      "hold": false,
+      "prs": [
+        3375
+      ],
+      "status": "merged_unverified",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B07",
+      "title": "Held-column consumer guard",
+      "findings": [
+        "F08"
+      ],
+      "hold": false,
+      "prs": [
+        3384
+      ],
+      "status": "merged_unverified",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B08",
+      "title": "Escrow invented KPI + signed-clause source of truth",
+      "findings": [
+        "F09"
+      ],
+      "hold": true,
+      "prs": [
+        3380
+      ],
+      "status": "merged_unverified",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B09",
+      "title": "Escrow forfeit drawer/pickers/validation",
+      "findings": [
+        "F10"
+      ],
+      "hold": true,
+      "prs": [
+        3381
+      ],
+      "status": "merged_unverified",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B10",
+      "title": "Void-reason governance (DOT inspections, complaints)",
+      "findings": [
+        "F11"
+      ],
+      "hold": false,
+      "prs": [
+        3339
+      ],
+      "status": "merged_unverified",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B11",
+      "title": "Internal-fine lifecycle routes + row actions",
+      "findings": [
+        "F12"
+      ],
+      "hold": false,
+      "prs": [
+        3371
+      ],
+      "status": "merged_unverified",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B12",
+      "title": "External-fine actions wired",
+      "findings": [
+        "F13"
+      ],
+      "hold": false,
+      "prs": [],
+      "status": "not_started",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B13",
+      "title": "DOT/HOS creator pickers",
+      "findings": [
+        "F14"
+      ],
+      "hold": false,
+      "prs": [
+        3340
+      ],
+      "status": "merged_unverified",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B14",
+      "title": "Bind the 3 orphan safety catalogs to their creators",
+      "findings": [
+        "F15"
+      ],
+      "hold": false,
+      "prs": [
+        3376
+      ],
+      "status": "merged_unverified",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B15",
+      "title": "Driver profile: fines / complaints / D&A reverse views",
+      "findings": [
+        "F16"
+      ],
+      "hold": false,
+      "prs": [
+        3363
+      ],
+      "status": "merged_unverified",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B16",
+      "title": "Unit + trailer profile safety reverse section",
+      "findings": [
+        "F17"
+      ],
+      "hold": false,
+      "prs": [
+        3365
+      ],
+      "status": "merged_unverified",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B17",
+      "title": "External fines driver column + detail driver link",
+      "findings": [
+        "F18"
+      ],
+      "hold": false,
+      "prs": [
+        3354
+      ],
+      "status": "merged_unverified",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B18",
+      "title": "External fine load / unit / document capture",
+      "findings": [
+        "F19"
+      ],
+      "hold": false,
+      "prs": [
+        3376
+      ],
+      "status": "merged_unverified",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B19",
+      "title": "Incidents cluster edit + status lifecycle + void",
+      "findings": [
+        "F20"
+      ],
+      "hold": false,
+      "prs": [
+        3377
+      ],
+      "status": "merged_unverified",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B20",
+      "title": "Cargo claims ParityTable + links",
+      "findings": [
+        "F21"
+      ],
+      "hold": false,
+      "prs": [
+        3379
+      ],
+      "status": "merged_unverified",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B21",
+      "title": "Orphan-route nav entry points",
+      "findings": [
+        "F22",
+        "F23",
+        "F35"
+      ],
+      "hold": false,
+      "prs": [
+        3370
+      ],
+      "status": "merged_unverified",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B22",
+      "title": "UNMAPPED - transcribe from safety.md section J row 22",
+      "findings": [],
+      "hold": null,
+      "prs": [],
+      "status": "unmapped",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B23",
+      "title": "UNMAPPED - transcribe from safety.md section J row 23",
+      "findings": [],
+      "hold": null,
+      "prs": [],
+      "status": "unmapped",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B24",
+      "title": "UNMAPPED - transcribe from safety.md section J row 24",
+      "findings": [],
+      "hold": null,
+      "prs": [],
+      "status": "unmapped",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B25",
+      "title": "UNMAPPED - transcribe from safety.md section J row 25",
+      "findings": [],
+      "hold": null,
+      "prs": [],
+      "status": "unmapped",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B26",
+      "title": "UNMAPPED - transcribe from safety.md section J row 26",
+      "findings": [],
+      "hold": null,
+      "prs": [],
+      "status": "unmapped",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B27",
+      "title": "UNMAPPED - transcribe from safety.md section J row 27",
+      "findings": [],
+      "hold": null,
+      "prs": [],
+      "status": "unmapped",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B28",
+      "title": "UNMAPPED - transcribe from safety.md section J row 28",
+      "findings": [],
+      "hold": null,
+      "prs": [],
+      "status": "unmapped",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B29",
+      "title": "UNMAPPED - transcribe from safety.md section J row 29",
+      "findings": [],
+      "hold": null,
+      "prs": [],
+      "status": "unmapped",
+      "evidence": ""
+    },
+    {
+      "id": "SAF-B30",
+      "title": "UNMAPPED - transcribe from safety.md section J row 30",
+      "findings": [],
+      "hold": null,
+      "prs": [],
+      "status": "unmapped",
+      "evidence": ""
+    }
+  ]
+}
