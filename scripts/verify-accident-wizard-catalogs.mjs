@@ -113,4 +113,78 @@ if (!hasLinkMigration) {
   fail("no migration adds unit_id/vendor_id/load_id (ADD COLUMN IF NOT EXISTS) to safety.accident_reports");
 }
 
-console.log(`${TAG} OK — catalogs wired to real pickers; office creator persists driver/unit/vendor/load links with audit emit + additive migration.`);
+
+// 7) SAF-F30 — EVERY rendered field must be CONTROLLED and present in the SUBMIT PAYLOAD.
+//    This is the assertion whose absence let SAF-F05 through: the wizard rendered 20 fields and
+//    submitted 6, and this guard reported OK because it only ever looked at 4 catalog pickers.
+//
+//    Each entry pairs the field's data-testid (proof it is rendered) with the payload key it must
+//    reach (proof it is saved). A field present in the UI and absent from the payload is a silent
+//    data-loss bug on an evidence record — the operator types it, the drawer accepts it, and it is
+//    gone the moment they hit save.
+const FIELD_TO_PAYLOAD_KEY = [
+  ["accident-police-report-number", "police_report_number"],
+  ["accident-insurance-claim-number", "insurance_claim_number"],
+  ["accident-location", "location"],
+  ["accident-third-party-name", "third_party_name"],
+  ["accident-third-party-plate", "third_party_plate"],
+  ["accident-vendor-invoice-number", "vendor_invoice_number"],
+  ["accident-bill-or-expense-ref", "bill_or_expense_ref"],
+  ["accident-memo", "description"],
+  ["accident-incident-date", "accident_at"],
+  ["accident-at-fault", "at_fault"],
+  ["accident-preventable", "preventable"],
+];
+
+for (const [testId, payloadKey] of FIELD_TO_PAYLOAD_KEY) {
+  const rendered = src.includes(`data-testid="${testId}"`);
+  const inPayload = new RegExp(`${payloadKey}\\s*:`).test(src);
+  if (rendered && !inPayload) {
+    fail(
+      `${DRAWER} renders "${testId}" but never puts "${payloadKey}" in the submit payload — ` +
+        `the operator types it and it is discarded on save (the SAF-F05 defect class).`
+    );
+  }
+  if (!rendered && inPayload) {
+    fail(
+      `${DRAWER} sends "${payloadKey}" but renders no "${testId}" field — the payload carries a value ` +
+        `nothing can set, which is either dead code or a field that was removed without its writer.`
+    );
+  }
+}
+
+// 8) SAF-F30 — a LABELLED field whose input is UNCONTROLLED.
+//
+//    This is the exact shape of the SAF-F05 defect, recovered from the pre-fix file rather than
+//    imagined: the drawer rendered
+//        <Field label="Police Report Number">
+//          <input className="h-8 w-full rounded-sm border border-gray-300 px-2" />
+//        </Field>
+//    — no value=, no onChange, no data-testid. It looked like a working field, accepted typing, and
+//    dropped every character on save. Seven fields had that shape.
+//
+//    My first attempt at this assertion keyed on data-testid and PASSED on the pre-fix file, because
+//    those inputs had no testid to key on. A guard that cannot see the defect it was written for is
+//    theatre, so the assertion now keys on what was actually there: the <Field label="..."> wrapper.
+const FIELD_BLOCK = /<Field\s+label="([^"]+)"[^>]*>([\s\S]*?)<\/Field>/g;
+let fieldMatch;
+while ((fieldMatch = FIELD_BLOCK.exec(src)) !== null) {
+  const [, label, body] = fieldMatch;
+  const control = body.match(/<(input|textarea)\b[^>]*>/);
+  if (!control) continue; // pickers/comboboxes carry their own binding
+  const tag = control[0];
+  if (/type="file"|type="checkbox"/.test(tag)) continue;
+  // A readOnly/disabled input is a DISPLAY field — it cannot lose typing because it accepts none.
+  // The live drawer has one (Class: `readOnly value="Auto class"`), and flagging it was a false
+  // positive on this guard's first run. The defect is specifically an EDITABLE input with no binding.
+  if (/\breadOnly\b|\bdisabled\b/.test(tag)) continue;
+  // value= in either form: {expr} or a literal. Absence of any binding is the defect.
+  if (!/value=/.test(tag)) {
+    fail(
+      `${DRAWER} field "${label}" is an UNCONTROLLED <${control[1]}> (no value= binding) — it renders, ` +
+        `accepts typing, and its content is discarded on save. This is the SAF-F05 defect class.`
+    );
+  }
+}
+
+console.log(`${TAG} OK — catalogs wired to real pickers; every rendered field is controlled AND reaches the submit payload; office creator persists driver/unit/vendor/load links with audit emit + additive migration.`);
