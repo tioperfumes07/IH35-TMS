@@ -60,6 +60,44 @@ const createBodySchema = z.object({
     .optional(),
 });
 
+// SAF-F20 — damage reports, trailer interchanges and cargo claims were CREATE-ONLY. The cluster
+// surface returned early from saveCreate unless `createMode`, every input was `disabled={!createMode}`,
+// and the cargo-claim detail was five read-only lines. So an incident could be filed with a wrong
+// amount, a wrong unit, or a wrong description and NEVER corrected, and one filed in error stayed
+// "open" forever because there was no way to close it. safety.incidents.status has accepted
+// open | investigating | closed since migration 0345 and nothing could set it past the default.
+//
+// Only fields that already exist on the table are patchable. Type is NOT patchable: an incident's
+// incident_type decides which surface owns it and which regulatory shape applies (a damage report is
+// not a cargo claim), so changing it would silently move a record between modules.
+const patchBodySchema = z
+  .object({
+    incident_at: z.string().datetime({ offset: true }).optional(),
+    location: z.string().max(500).optional(),
+    description: z.string().max(4000).optional(),
+    driver_id: z.string().uuid().nullable().optional(),
+    unit_id: z.string().uuid().nullable().optional(),
+    trailer_id: z.string().uuid().nullable().optional(),
+    load_id: z.string().uuid().nullable().optional(),
+    interchange_party: z.string().max(200).nullable().optional(),
+    damage_amount_cents: z.coerce.number().int().min(0).optional(),
+    claim_reason_code: z.string().trim().max(80).nullable().optional(),
+    claimant_customer_id: z.string().uuid().nullable().optional(),
+    claim_filed_at: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .nullable()
+      .optional(),
+  })
+  .refine((body) => Object.keys(body).length > 0, { message: "no_fields_to_update" });
+
+// Status is its own route, not a patch field: closing an incident is an accountable decision, not a
+// field edit, and it is reason-required so the record says WHY it was closed.
+const statusBodySchema = z.object({
+  status: z.enum(["open", "investigating", "closed"]),
+  reason: z.string().trim().min(3).max(500),
+});
+
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
   return req.user;
@@ -354,5 +392,144 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
 
     if (!result) return reply.code(404).send({ error: "incident_not_found" });
     return result;
+  });
+
+  /**
+   * SAF-F20 — edit an incident. Only real columns, never the type.
+   *
+   * Built as an explicit column allow-list rather than a spread of the parsed body: a dynamic
+   * `SET ${Object.keys(body)}` would let any future schema addition reach the UPDATE unreviewed, and
+   * on a table carrying damage_amount_cents that is not a risk worth taking for brevity.
+   */
+  app.patch("/api/v1/safety/incidents/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!isSafetyMutationAllowed(user.role)) return reply.code(403).send({ error: "forbidden" });
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
+    const body = patchBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+
+    const PATCHABLE = [
+      "incident_at",
+      "location",
+      "description",
+      "driver_id",
+      "unit_id",
+      "trailer_id",
+      "load_id",
+      "interchange_party",
+      "damage_amount_cents",
+      "claim_reason_code",
+      "claimant_customer_id",
+      "claim_filed_at",
+    ] as const;
+
+    const updated = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const sets: string[] = [];
+      const values: unknown[] = [params.data.id, query.data.operating_company_id];
+      for (const column of PATCHABLE) {
+        const value = (body.data as Record<string, unknown>)[column];
+        if (value === undefined) continue;
+        values.push(value);
+        sets.push(`${column} = $${values.length}`);
+      }
+      if (sets.length === 0) return null;
+      const res = await client.query(
+        `
+          UPDATE safety.incidents
+          SET ${sets.join(", ")}, updated_at = now()
+          WHERE id = $1 AND operating_company_id = $2
+          RETURNING *
+        `,
+        values
+      );
+      const row = res.rows[0];
+      if (!row) return null;
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "safety.incident.updated",
+        { incident_id: row.id, incident_type: row.incident_type, changed_fields: Object.keys(body.data) },
+        "info",
+        "SAF-F20-INCIDENT-LIFECYCLE"
+      );
+      return row;
+    });
+
+    if (!updated) return reply.code(404).send({ error: "incident_not_found" });
+    return { incident: updated };
+  });
+
+  /**
+   * SAF-F20 — status lifecycle (open -> investigating -> closed, and reopen).
+   *
+   * Reason-required: an incident closed without a recorded reason leaves no answer to "why is this
+   * $4,000 damage report closed?" months later, which is exactly the question an insurer or an
+   * auditor asks. The reason is appended to the description trail, not stored in a column, because
+   * safety.incidents has no reason column and inventing one needs a migration.
+   */
+  app.post("/api/v1/safety/incidents/:id/status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!isSafetyMutationAllowed(user.role)) return reply.code(403).send({ error: "forbidden" });
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
+    const body = statusBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+
+    const outcome = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const current = await client.query(
+        `SELECT id, status, incident_type FROM safety.incidents WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        [params.data.id, query.data.operating_company_id]
+      );
+      const row = current.rows[0];
+      if (!row) return { kind: "not_found" as const };
+      if (row.status === body.data.status) return { kind: "unchanged" as const, status: row.status };
+
+      const res = await client.query(
+        `
+          UPDATE safety.incidents
+          SET status = $3,
+              description = COALESCE(description || E'\n', '') || $4,
+              updated_at = now()
+          WHERE id = $1 AND operating_company_id = $2
+          RETURNING *
+        `,
+        [
+          params.data.id,
+          query.data.operating_company_id,
+          body.data.status,
+          `[${body.data.status.toUpperCase()}] ${body.data.reason}`,
+        ]
+      );
+      const updatedRow = res.rows[0];
+      if (!updatedRow) return { kind: "not_found" as const };
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "safety.incident.status_changed",
+        {
+          incident_id: updatedRow.id,
+          incident_type: updatedRow.incident_type,
+          previous_status: row.status,
+          new_status: body.data.status,
+          reason: body.data.reason,
+        },
+        body.data.status === "closed" ? "warning" : "info",
+        "SAF-F20-INCIDENT-LIFECYCLE"
+      );
+      return { kind: "ok" as const, row: updatedRow };
+    });
+
+    if (outcome.kind === "not_found") return reply.code(404).send({ error: "incident_not_found" });
+    if (outcome.kind === "unchanged") {
+      return reply.code(409).send({ error: "incident_status_unchanged", message: `This incident is already ${outcome.status}.` });
+    }
+    return { incident: outcome.row };
   });
 }
