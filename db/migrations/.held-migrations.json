@@ -432,6 +432,21 @@
         "202607870000_qbo_expenses_projection_key_and_flags.sql"
       ],
       "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] QBO-EXPENSES-PULL-2 — partial UNIQUE index accounting.uq_expenses_company_qbo_purchase_id (idempotency key for the Purchase->expenses projection upsert) + register QBO_PURCHASES_MIRROR_PULL_ENABLED / QBO_EXPENSES_PROJECTION_ENABLED in lib.feature_flags DEFAULT OFF. BUILD-AND-HOLD: seeds NO per-entity ON override — owner flips ON per-entity after Neon-apply. Subledger only, NO GL posting. Additive/idempotent. NOT YET applied on prod — owner Neon-apply + ledger-backfill."
+    },
+    {
+      "file": "202607880000_qbo_purchases_inbound_mirror.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] QBO-EXPENSES-PULL-1 — inbound QuickBooks Purchase mirror table mdata.qbo_purchases (read-only clone, upsert by qbo_id; FORCED RLS + 0065 grants; full row in payload_json for line projection). Additive/idempotent, CI fresh-from-0001 builds it. Reconcile-only, NO GL. NOT YET applied on prod — throwaway PG apply-twice; owner Neon-apply + ledger-backfill."
+    },
+    {
+      "file": "202607890000_qbo_expenses_projection_key_and_flags.sql",
+      "requires_held": [
+        "202607880000_qbo_purchases_inbound_mirror.sql"
+      ],
+      "held_apply_order": [
+        "202607880000_qbo_purchases_inbound_mirror.sql",
+        "202607890000_qbo_expenses_projection_key_and_flags.sql"
+      ],
+      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] QBO-EXPENSES-PULL-2 — partial UNIQUE index accounting.uq_expenses_company_qbo_purchase_id (idempotency key for the Purchase->expenses projection upsert) + register QBO_PURCHASES_MIRROR_PULL_ENABLED / QBO_EXPENSES_PROJECTION_ENABLED in lib.feature_flags DEFAULT OFF. BUILD-AND-HOLD: seeds NO per-entity ON override — owner flips ON per-entity after Neon-apply. Subledger only, NO GL posting. Additive/idempotent. NOT YET applied on prod — owner Neon-apply + ledger-backfill."
     }
   ]
 }

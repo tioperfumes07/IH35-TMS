@@ -9,7 +9,7 @@
 --
 -- This adds a read-only INBOUND mirror of every QBO Purchase (mdata.qbo_purchases), the safe staging
 -- clone the qbo-purchases-puller writes (gated QBO_PURCHASES_MIRROR_PULL_ENABLED, default OFF — companion
--- migration 202607870000). A second, separately gated step (QBO_EXPENSES_PROJECTION_ENABLED, default OFF)
+-- migration 202607890000). A second, separately gated step (QBO_EXPENSES_PROJECTION_ENABLED, default OFF)
 -- projects this mirror into accounting.expenses (qbo_purchase_id set) + accounting.expense_lines. The full
 -- QBO row is retained in payload_json so the line projection (Stage 2b) can read Purchase.Line[] without a
 -- second network round-trip or a second mirror table.

@@ -1,6 +1,6 @@
 -- [HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] QBO-EXPENSES-PULL-2 — projection idempotency key + flags.
 -- DO NOT RUN ON PROD. Run ONLY on a Neon branch by Jorge's hand, then ledger-backfill so prod db:migrate
--- HELD-SKIPs it. Registered in db/migrations/.held-migrations.json. Companion to 202607860000 (the mirror
+-- HELD-SKIPs it. Registered in db/migrations/.held-migrations.json. Companion to 202607880000 (the mirror
 -- table). GL is NOT posted by this path (QuickBooks owns GL for qbo-sourced rows).
 --
 -- WHAT:
