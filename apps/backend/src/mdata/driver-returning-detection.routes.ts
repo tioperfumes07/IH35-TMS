@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
 type QueryableClient = {
@@ -160,6 +161,13 @@ export async function registerDriverReturningDetectionRoutes(app: FastifyInstanc
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
 
     const response = await withCurrentUser(authUser.uuid, async (client) => {
+      // driver_termination_reasons is per-entity + FORCE RLS. This is a CROSS-entity safety search
+      // (a driver terminated at one entity may apply at another), so set the caller's company GUC:
+      // the termination-reason label resolves for same-entity matches and degrades to null (never
+      // wrong) for cross-entity ones. The safety signal — that the person was terminated, and the
+      // severity — lives on the event row itself (e.severity), so it is preserved regardless.
+      const opco = await resolveOperatingCompanyId(client, authUser.uuid, null);
+      if (opco) await client.query("SELECT set_config('app.operating_company_id', $1, true)", [opco]);
       const detection = await findReturningDriverMatches(client, parsedBody.data);
       if (detection.returning_driver) {
         await appendCrudAudit(
