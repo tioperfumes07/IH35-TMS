@@ -749,6 +749,7 @@
     "202607870000_driver_load_statuses_per_entity.sql::operating_company_id",
     "202607880000_qbo_purchases_inbound_mirror.sql::account_qbo_id",
     "202607880000_qbo_purchases_inbound_mirror.sql::entity_qbo_id",
-    "202607880000_qbo_purchases_inbound_mirror.sql::qbo_id"
+    "202607880000_qbo_purchases_inbound_mirror.sql::qbo_id",
+    "202607890000_driver_termination_reasons_per_entity.sql::operating_company_id"
   ]
 }
