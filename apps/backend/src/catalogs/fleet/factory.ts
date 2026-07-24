@@ -26,7 +26,12 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
     code: z.string().trim().regex(config.codeRegex),
     display_name: z.string().trim().min(1).max(160),
     description: z.string().trim().max(500).optional(),
-    metadata: z.record(z.string(), z.unknown()).optional().default({}),
+    // SAF/LST — verified on prod 2026-07-24: NO fleet catalog table
+    // (tractor_statuses, trailer_statuses, asset_condition_codes, equipment_types,
+    // unit_ownership_types, trailer_types, lease_terms, asset_statuses, asset_locations) has a
+    // `metadata` column. This schema previously ACCEPTED metadata and the INSERT then discarded it
+    // (the "accepted by the API is not done" anti-pattern). Removed so the contract matches the
+    // schema — zod strips the modal's vestigial metadata:{} payload silently, no error.
     is_active: z.boolean().default(true),
     sort_order: z.coerce.number().int().min(0).max(10000).default(50),
   });
@@ -35,7 +40,6 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
       code: z.string().trim().regex(config.codeRegex).optional(),
       display_name: z.string().trim().min(1).max(160).optional(),
       description: z.string().trim().max(500).nullable().optional(),
-      metadata: z.record(z.string(), z.unknown()).optional(),
       is_active: z.boolean().optional(),
       sort_order: z.coerce.number().int().min(0).max(10000).optional(),
     })
@@ -68,7 +72,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
             t.code,
             t.name AS display_name,
             t.description,
-            '{}'::jsonb AS metadata,
+            '{}'::jsonb AS metadata,  -- stable-empty: fleet catalogs have no metadata column (contract compat only)
             t.is_active,
             t.sort_order,
             t.created_at,
@@ -103,7 +107,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
             code,
             name AS display_name,
             description,
-            '{}'::jsonb AS metadata,
+            '{}'::jsonb AS metadata,  -- stable-empty: fleet catalogs have no metadata column (contract compat only)
             is_active,
             sort_order,
             created_at,
@@ -138,7 +142,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
         `
           INSERT INTO catalogs.${config.tableName} (code, name, description, is_active, sort_order, created_by_user_id, updated_by_user_id)
           VALUES ($1,$2,$3,$4,$5,$6,$6)
-          RETURNING id, code, name AS display_name, description, '{}'::jsonb AS metadata, is_active, sort_order, created_at, updated_at
+          RETURNING id, code, name AS display_name, description, '{}'::jsonb AS metadata,  -- stable-empty: fleet catalogs have no metadata column (contract compat only) is_active, sort_order, created_at, updated_at
         `,
         [b.code, b.display_name, b.description ?? null, b.is_active, b.sort_order, authUser.uuid]
       );
@@ -202,7 +206,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
           UPDATE catalogs.${config.tableName}
           SET ${fields.join(", ")}
           WHERE id = $${values.length}
-          RETURNING id, code, name AS display_name, description, '{}'::jsonb AS metadata, is_active, sort_order, created_at, updated_at
+          RETURNING id, code, name AS display_name, description, '{}'::jsonb AS metadata,  -- stable-empty: fleet catalogs have no metadata column (contract compat only) is_active, sort_order, created_at, updated_at
         `,
         values
       );

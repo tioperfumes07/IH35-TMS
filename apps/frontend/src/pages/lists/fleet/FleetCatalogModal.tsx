@@ -77,7 +77,6 @@ export function FleetCatalogModal({ open, operatingCompanyId, displayName, clien
         description: form.description.trim() || undefined,
         sort_order: form.sort_order,
         is_active: form.is_active,
-        metadata: row?.metadata ?? {},
       };
       if (mode === "create") {
         await client.create(operatingCompanyId, body);
