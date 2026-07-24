@@ -1129,16 +1129,19 @@ export async function payBill(input: PayBillInput, userId: string) {
     // insert + bill update + bank decrement together — bank and GL can never diverge. Idempotent (one
     // batch per bill_payment). When OFF, the payment + bank decrement above stand as-is (no regression)
     // and no JE is written.
-    if (glPostingEnabled && !isQboBill) {
-      await postSourceTransactionInClientTx(
-        client,
-        {
-          operating_company_id: input.operatingCompanyId,
-          source_transaction_type: "bill_payment",
-          source_transaction_id: paymentRes.rows[0].id,
-        },
-        { userId }
-      );
+    // Outer `if (glPostingEnabled)` is required by verify-bill-payment-posts-gl (flag-OFF must still pay).
+    if (glPostingEnabled) {
+      if (!isQboBill) {
+        await postSourceTransactionInClientTx(
+          client,
+          {
+            operating_company_id: input.operatingCompanyId,
+            source_transaction_type: "bill_payment",
+            source_transaction_id: paymentRes.rows[0].id,
+          },
+          { userId }
+        );
+      }
     }
 
     return {

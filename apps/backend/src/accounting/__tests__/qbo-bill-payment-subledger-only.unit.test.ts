@@ -21,6 +21,6 @@ describe("QBO bill payment subledger-only (static contract)", () => {
 
   it("payBill skips GL for QBO bills and reports qbo_parallel_books", () => {
     expect(bills).toContain("qbo_parallel_books");
-    expect(bills).toContain("glPostingEnabled && !isQboBill");
+    expect(bills).toMatch(/if\s*\(\s*glPostingEnabled\s*\)\s*\{[\s\S]*?if\s*\(\s*!isQboBill\s*\)\s*\{[\s\S]*?postSourceTransactionInClientTx/);
   });
 });

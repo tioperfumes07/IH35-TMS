@@ -35,11 +35,16 @@ if (!/source_system[\s\S]{0,80}qbo[\s\S]{0,200}QBO_BILL_PAYMENT_POST_GL_REFUSED/
 if (!/qbo_parallel_books/.test(bills)) {
   failures.push("payBill must surface gl_posting reason qbo_parallel_books for QBO bills");
 }
-if (!/isQboBill/.test(bills) || !/glPostingEnabled && !isQboBill/.test(bills)) {
-  failures.push("payBill must skip in-txn BillPayment→GL for QBO bills (do not roll back subledger)");
+if (!/isQboBill/.test(bills)) {
+  failures.push("payBill must detect QBO bills via isQboBill");
 }
-if (/if \(glPostingEnabled\) \{\s*await postSourceTransactionInClientTx/.test(bills)) {
-  failures.push("payBill must not unconditionally post GL when flag ON (QBO carve-out required)");
+// Nested gate: if (glPostingEnabled) { if (!isQboBill) { post... } } — preserves flag-OFF pay path
+// (verify-bill-payment-posts-gl) AND skips invent JE for QBO (parallel books).
+if (!/if\s*\(\s*glPostingEnabled\s*\)\s*\{[\s\S]*?if\s*\(\s*!isQboBill\s*\)\s*\{[\s\S]*?postSourceTransactionInClientTx/.test(bills)) {
+  failures.push("payBill must nest JE post as if(glPostingEnabled){ if(!isQboBill){ post... } } (QBO carve-out + flag gate)");
+}
+if (/if\s*\(\s*glPostingEnabled\s*\)\s*\{\s*await\s+postSourceTransactionInClientTx/.test(bills)) {
+  failures.push("payBill must not post GL for every flag-ON bill (QBO carve-out required between gate and post)");
 }
 
 if (failures.length) {
