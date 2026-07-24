@@ -1015,6 +1015,31 @@ export function listSafetyIncidents(
   );
 }
 
+/**
+ * SAF-F20 — incident lifecycle. `updateSafetyIncident` patches only real columns (never
+ * incident_type: that decides which surface and which regulatory shape owns the record).
+ * `setSafetyIncidentStatus` is reason-REQUIRED — a $4,000 damage report closed with no recorded
+ * reason has no answer to "why?" when an insurer or auditor asks months later.
+ */
+export function updateSafetyIncident(id: string, companyId: string, body: Record<string, unknown>) {
+  return apiRequest<{ incident: Record<string, unknown> }>(
+    `/api/v1/safety/incidents/${encodeURIComponent(id)}?${q(companyId)}`,
+    { method: "PATCH", body }
+  );
+}
+
+export function setSafetyIncidentStatus(
+  id: string,
+  companyId: string,
+  status: "open" | "investigating" | "closed",
+  reason: string
+) {
+  return apiRequest<{ incident: Record<string, unknown> }>(
+    `/api/v1/safety/incidents/${encodeURIComponent(id)}/status?${q(companyId)}`,
+    { method: "POST", body: { status, reason } }
+  );
+}
+
 export function getSafetyIncident(id: string, companyId: string) {
   return apiRequest<{ incident: Record<string, unknown> }>(`/api/v1/safety/incidents/${id}?${q(companyId)}`);
 }

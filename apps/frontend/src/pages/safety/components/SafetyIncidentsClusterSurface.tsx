@@ -5,6 +5,8 @@ import {
   createSafetyIncident,
   getSafetyIncident,
   listSafetyIncidents,
+  setSafetyIncidentStatus,
+  updateSafetyIncident,
   uploadSafetyIncidentPhoto,
   type SafetyIncidentType,
 } from "../../../api/safety";
@@ -137,6 +139,15 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
   });
 
   const createMode = String(selected?.id ?? "") === "__create__";
+  // SAF-F20: these three surfaces were CREATE-ONLY — every field was disabled once the record
+  // existed, so an incident filed with the wrong amount, unit or description could never be
+  // corrected, and one filed in error stayed "open" forever. `formEditable` is what the FIELDS gate
+  // on; `createMode` still gates create-only affordances (the Save-then-add-photos hint, the create
+  // button) so nothing about the create flow changes.
+  const [editMode, setEditMode] = useState(false);
+  const formEditable = createMode || editMode;
+  const [statusReason, setStatusReason] = useState("");
+  const [statusTarget, setStatusTarget] = useState<"open" | "investigating" | "closed" | null>(null);
 
   // Drivers + fleet feed BOTH the create pickers AND the list Driver/Unit columns, so they
   // load whenever a company is selected. limit:200 avoids the 50-cap picker landmine.
@@ -463,7 +474,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             {has("incident_date") ? (
               <label className="block">
                 <span className="text-slate-600">Incident date</span>
-                {createMode ? (
+                {formEditable ? (
                   <DatePicker
                     value={str(selected?.incident_date)}
                     onChange={(v) => setField("incident_date", v)}
@@ -479,7 +490,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             {has("driver_id") ? (
               <label className="block">
                 <span className="text-slate-600">Driver</span>
-                {createMode ? (
+                {formEditable ? (
                   <div className="mt-1" data-testid={`${config.pageTestId}-field-driver_id`}>
                     <DriverPickerWithCreate
                       operatingCompanyId={operatingCompanyId}
@@ -499,7 +510,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             {has("unit_id") ? (
               <label className="block">
                 <span className="text-slate-600">Unit</span>
-                {createMode ? (
+                {formEditable ? (
                   <select
                     className={inputCls}
                     value={str(selected?.unit_id)}
@@ -528,7 +539,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                 <span className="text-slate-600">
                   Trailer{config.requiredExtraFields.includes("trailer_id") ? " *" : ""}
                 </span>
-                {createMode ? (
+                {formEditable ? (
                   <select
                     className={inputCls}
                     value={str(selected?.trailer_id)}
@@ -553,7 +564,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             {has("load_id") ? (
               <label className="block">
                 <span className="text-slate-600">Load</span>
-                {createMode ? (
+                {formEditable ? (
                   <select
                     className={inputCls}
                     value={str(selected?.load_id)}
@@ -576,7 +587,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             {has("interchange_party") ? (
               <label className="block">
                 <span className="text-slate-600">Interchange party</span>
-                {createMode ? (
+                {formEditable ? (
                   <input
                     className={inputCls}
                     maxLength={200}
@@ -593,7 +604,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             {has("damage_amount_cents") ? (
               <label className="block">
                 <span className="text-slate-600">Estimated damage amount</span>
-                {createMode ? (
+                {formEditable ? (
                   <div className="mt-1" data-testid={`${config.pageTestId}-field-damage_amount_cents`}>
                     <MoneyInput
                       ariaLabel="Estimated damage amount"
@@ -617,7 +628,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                 <input
                   className={inputCls}
                   value={str(detail?.location)}
-                  disabled={!createMode}
+                  disabled={!formEditable}
                   data-testid={`${config.pageTestId}-field-location`}
                   onChange={(e) => setField("location", e.target.value)}
                 />
@@ -630,7 +641,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                   className={inputCls}
                   rows={3}
                   value={str(detail?.description)}
-                  disabled={!createMode}
+                  disabled={!formEditable}
                   data-testid={`${config.pageTestId}-field-description`}
                   onChange={(e) => setField("description", e.target.value)}
                 />
@@ -653,6 +664,86 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             {!createMode && config.incidentType === "damage_report" && detail?.id ? (
               <div className="mt-3">
                 <DamageReportDetail damageUuid={String(detail.id)} operatingCompanyId={operatingCompanyId} />
+              </div>
+            ) : null}
+
+            {!createMode && detail?.id ? (
+              <div className="space-y-2 rounded-sm border border-gray-200 p-2" data-testid={`${config.pageTestId}-lifecycle`}>
+                <div className="text-slate-600">
+                  Status: <span className="font-semibold text-slate-800">{str(detail?.status) || "open"}</span>
+                </div>
+                {/* SAF-F20: a status change is an accountable decision, not a field edit — the reason
+                    is required before the transition can be sent, matching every other close/void
+                    contract in the app. */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {(["open", "investigating", "closed"] as const)
+                    .filter((next) => next !== (str(detail?.status) || "open"))
+                    .map((next) => (
+                      <button
+                        key={next}
+                        type="button"
+                        className={
+                          statusTarget === next
+                            ? "rounded-sm border border-[#1f2a44] px-2 py-1 font-semibold text-[#1f2a44]"
+                            : "rounded-sm border border-gray-300 px-2 py-1 text-slate-600"
+                        }
+                        data-testid={`${config.pageTestId}-status-${next}`}
+                        onClick={() => setStatusTarget((cur) => (cur === next ? null : next))}
+                      >
+                        {next === "open" ? "Reopen" : next === "closed" ? "Close" : "Investigate"}
+                      </button>
+                    ))}
+                </div>
+                {statusTarget ? (
+                  <div className="space-y-1">
+                    <input
+                      className={inputCls}
+                      placeholder="Reason (required)"
+                      value={statusReason}
+                      data-testid={`${config.pageTestId}-status-reason`}
+                      onChange={(e) => setStatusReason(e.target.value)}
+                    />
+                    <Button
+                      size="sm"
+                      disabled={statusReason.trim().length < 3}
+                      data-testid={`${config.pageTestId}-status-apply`}
+                      onClick={() => {
+                        if (!detail?.id || !statusTarget) return;
+                        void setSafetyIncidentStatus(
+                          String(detail.id),
+                          operatingCompanyId,
+                          statusTarget,
+                          statusReason.trim()
+                        ).then(async () => {
+                          setStatusTarget(null);
+                          setStatusReason("");
+                          await queryClient.invalidateQueries({ queryKey: ["safety", "incidents"] });
+                        });
+                      }}
+                    >
+                      Apply status
+                    </Button>
+                  </div>
+                ) : null}
+                {editMode ? (
+                  <Button
+                    size="sm"
+                    data-testid={`${config.pageTestId}-save-edit-btn`}
+                    onClick={() => {
+                      if (!detail?.id) return;
+                      void updateSafetyIncident(String(detail.id), operatingCompanyId, {
+                        location: str(detail?.location),
+                        description: str(detail?.description),
+                        damage_amount_cents: Number(detail?.damage_amount_cents ?? 0),
+                      }).then(async () => {
+                        setEditMode(false);
+                        await queryClient.invalidateQueries({ queryKey: ["safety", "incidents"] });
+                      });
+                    }}
+                  >
+                    Save changes
+                  </Button>
+                ) : null}
               </div>
             ) : null}
 
