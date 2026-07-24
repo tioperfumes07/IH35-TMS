@@ -85,7 +85,8 @@ export type PostingErrorCode =
   | "TRANSFER_NOT_POSTING_ELIGIBLE"
   | "QBO_BILL_POST_GL_REFUSED"
   | "QBO_BILL_PAYMENT_POST_GL_REFUSED"
-  | "EXPENSE_POST_GL_REFUSED";
+  | "EXPENSE_POST_GL_REFUSED"
+  | "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED";
 
 export class PostingEngineError extends Error {
   code: PostingErrorCode;
@@ -991,9 +992,12 @@ async function buildCustomerPaymentLines(client: DbClient, operatingCompanyId: s
     display_id: string | null;
     deposited_to_account_id: string | null;
     voided_at: string | null;
+    source_system: string | null;
+    qbo_payment_id: string | null;
   }>(
     `
-      SELECT id::text, payment_date::text, amount_cents::bigint, display_id, deposited_to_account_id, voided_at::text
+      SELECT id::text, payment_date::text, amount_cents::bigint, display_id, deposited_to_account_id, voided_at::text,
+             source_system::text, qbo_payment_id
       FROM accounting.payments
       WHERE operating_company_id = $1::uuid
         AND id::text = $2
@@ -1005,6 +1009,17 @@ async function buildCustomerPaymentLines(client: DbClient, operatingCompanyId: s
   const payment = paymentRes.rows[0];
   if (!payment) throw new PostingEngineError("SOURCE_NOT_FOUND", "Customer payment not found");
   if (payment.voided_at) throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Voided customer payment is not posting-eligible");
+
+  // Parallel books: a QBO-origin customer payment (projected from a QBO Payment — qbo_payment_id set)
+  // already has its GL recorded IN QuickBooks. Posting it here would invent a second TMS journal entry
+  // for a receipt QuickBooks already owns — refuse (mirrors QBO_BILL_PAYMENT_POST_GL_REFUSED /
+  // EXPENSE_POST_GL_REFUSED). Never invent GL for source_system=qbo.
+  if ((payment.source_system ?? "").toLowerCase() === "qbo" || (payment.qbo_payment_id ?? "").trim() !== "") {
+    throw new PostingEngineError(
+      "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED",
+      "Refusing Customer Payment→GL post for a QBO-origin payment (source_system=qbo / qbo_payment_id set) — parallel books; QBO already holds this receipt's GL. Do not invent a second TMS journal entry."
+    );
+  }
 
   const arAccountId = await resolveArAccountForCompany(client, operatingCompanyId);
   if (!arAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AR account mapping is missing");
@@ -1853,7 +1868,8 @@ export async function postSourceTransaction(input: PostSourceInput, actor: Actor
         error.code !== "TRANSFER_NOT_POSTING_ELIGIBLE" &&
         error.code !== "QBO_BILL_POST_GL_REFUSED" &&
         error.code !== "QBO_BILL_PAYMENT_POST_GL_REFUSED" &&
-        error.code !== "EXPENSE_POST_GL_REFUSED"
+        error.code !== "EXPENSE_POST_GL_REFUSED" &&
+        error.code !== "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED"
       ) {
         await markBatchFailed(actor, input.operating_company_id, sourceType, sourceId, idempotencyKey);
       }

@@ -10,6 +10,7 @@ import { reconcileItems } from "./items-reconciler.js";
 import { pullApBillsFromQbo, projectApBillsToLedger } from "./ap-bills-puller.js";
 import { pullApBillPaymentsFromQbo, projectApBillPaymentsToLedger } from "./ap-bill-payments-puller.js";
 import { pullPurchasesFromQbo, projectPurchasesToExpenses } from "./qbo-purchases-puller.js";
+import { pullArPaymentsFromQbo, projectArPaymentsToLedger } from "./qbo-ar-payments-puller.js";
 import { countUnresolvedDrift, detectDriftForCompany } from "./drift-detector.js";
 import { maybeFireDriftAlert } from "./sync-alerts.js";
 
@@ -145,6 +146,31 @@ async function runScheduledSyncForCompany(
         lines_projected: res.linesProjected,
       },
       "[qbo-sync-scheduler] qbo_purchases_project complete (expense headers + lines from payload_json)"
+    );
+    return res;
+  }, failures, log);
+
+  // Inbound QBO A/R receipts (Payment) -> mdata.qbo_ar_payments mirror -> accounting.payments +
+  // payment_applications. ISOLATED like the AP/expense stages: MUST run even if an earlier step failed.
+  // Both stages are internally gated by default-OFF flags (QBO_AR_PAYMENT_MIRROR_PULL_ENABLED /
+  // QBO_AR_PAYMENTS_PROJECTION_ENABLED) and idempotent (header upsert on the existing
+  // uq_payments_company_qbo_payment_id; allocation upsert on the existing uq_payment_applications_target).
+  // SUBLEDGER ONLY — NO GL poster on this path; the posting engine additionally REFUSES to post
+  // qbo-sourced customer payments (QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED). Runs AFTER the AP stages
+  // (ap_bills/ap_bill_payments/qbo_purchases) per the AP-side sequencing convention.
+  await runStep("ar_payments_pull", operatingCompanyId, () => pullArPaymentsFromQbo(operatingCompanyId), failures, log);
+  await runStep("ar_payments_project", operatingCompanyId, async () => {
+    const res = await projectArPaymentsToLedger(operatingCompanyId);
+    log?.info(
+      {
+        operating_company_id: operatingCompanyId,
+        enabled: res.enabled,
+        payments_projected: res.paymentsProjected,
+        customers_unresolved: res.customersUnresolved,
+        applications_projected: res.applicationsProjected,
+        applications_unlinked: res.applicationsUnlinked,
+      },
+      "[qbo-sync-scheduler] ar_payments_project complete (payment headers + invoice allocations from payload_json)"
     );
     return res;
   }, failures, log);
