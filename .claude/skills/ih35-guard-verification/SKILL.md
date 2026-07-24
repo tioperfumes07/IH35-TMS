@@ -44,6 +44,14 @@ A count/list of **0** is often a masked failure, not truth:
 - **Wrong endpoint/param**: a 400/silent-400 (e.g. an invalid sort key, a wrong stats type) returns empty.
 - **Rule:** on an unexpected 0/empty, RE-RUN with the scope proven correct (context set, error surfaced)
   before claiming absence. "Don't trust a string-grep systemic check" — test the actual endpoint / diff the query.
+- **`accounting.chart_of_accounts_roles` historically needed the opco GUC, not just the lucia bypass**: its
+  policy `coa_roles_company_scope` (0223) checked ONLY `app.operating_company_id` with no
+  `app.bypass_rls='lucia'` escape branch, so `SET app.bypass_rls='lucia'` alone returned a FALSE 0 (89 live
+  rows, TRANSP-scoped=31) — a real gap on this specific table's policy text, not a masked read. After
+  `202607900000_coa_roles_rls_bypass_lucia.sql` (mirrors `202607610000_qbo_connections_rls_bypass_escape.sql`)
+  is Neon-applied, the lucia bypass alone works for reads; writes still require the real
+  `app.operating_company_id` (WITH CHECK unchanged — no new write authority). Until Jorge applies it on Neon,
+  still `SET app.operating_company_id` for this one table.
 
 ## 4. Sync before you conclude "it's missing"
 The local clone routinely lags `origin/main` by many merged PRs. `git fetch origin` + `gh pr list --state all`

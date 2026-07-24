@@ -394,6 +394,10 @@
         "202607840000_revoke_delete_safety_join_tables.sql"
       ],
       "reason": "[HOLD-FOR-JORGE — TIER 1] SAF-F29-GRANTS — REVOKE DELETE from ih35_app on the three company-violation join tables. GRANT is additive and the safety schema's default privilege is ih35_app=arwd (the d is DELETE), so 202607820000's GRANT SELECT,INSERT,UPDATE sat on top of an INHERITED DELETE. Local validation could not catch it — the local DB's default privileges differ from prod. Owner already ran a bare REVOKE on prod; this makes it permanent + CI-consistent. Idempotent no-op when already revoked."
+    },
+    {
+      "file": "202607900000_coa_roles_rls_bypass_lucia.sql",
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL CLUSTER / RLS-POLICY CHANGE] Fix false-empty audit landmine — accounting.chart_of_accounts_roles policy coa_roles_company_scope (0223) checks ONLY app.operating_company_id with no `app.bypass_rls='lucia'` escape (Rule 10). Adds the escape to USING only (read visibility); WITH CHECK unchanged, so no new write authority. 89 live rows exist (TRANSP-scoped=31) that a lucia-bypass read currently sees as a false 0. Mirrors 202607610000_qbo_connections_rls_bypass_escape.sql exactly. FORCE RLS status unchanged. Run only on a Neon branch by Jorge, then ledger-backfill."
     }
   ]
 }
