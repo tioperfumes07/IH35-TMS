@@ -380,7 +380,7 @@ export function RecordExpenseForm({
               }));
             }}
             options={paymentAccountOptions.map((row) => ({ value: row.id, label: row.label }))}
-            createKind="category"
+            createKind="account"
             addNewLabel="+ Add new account"
             operatingCompanyId={operatingCompanyId}
             placeholder="Select bank/cash account…"
