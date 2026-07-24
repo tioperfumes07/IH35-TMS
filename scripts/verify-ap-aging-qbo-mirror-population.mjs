@@ -104,8 +104,16 @@ export function assertGuard(src) {
     errs.push(`${PATHS.puller}: must not use process.env gate`);
   }
   if (
-    /INSERT INTO mdata\.qbo_ap_bills[\s\S]*FROM accounting\.bills/.test(puller) ||
-    /FROM accounting\.bills[\s\S]*INSERT INTO mdata\.qbo_ap_bills/.test(puller)
+    (() => {
+      // Scope invent-check to Stage 1 only — Stage 2b legitimately SELECTs FROM accounting.bills
+      // when projecting payload_json Line[] into accounting.bill_lines (parallel books, not invent).
+      const stage2b = puller.indexOf("export async function projectApBillLinesToLedger");
+      const stage1 = stage2b >= 0 ? puller.slice(0, stage2b) : puller;
+      return (
+        /INSERT INTO mdata\.qbo_ap_bills[\s\S]*FROM accounting\.bills/.test(stage1) ||
+        /FROM accounting\.bills[\s\S]*INSERT INTO mdata\.qbo_ap_bills/.test(stage1)
+      );
+    })()
   ) {
     errs.push(`${PATHS.puller}: must never invent mirror rows from TMS bills`);
   }
