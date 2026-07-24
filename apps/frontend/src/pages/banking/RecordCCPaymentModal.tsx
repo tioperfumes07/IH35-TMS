@@ -196,7 +196,7 @@ export function RecordCCPaymentModal({
               value={liabilityAccountId}
               onChange={setLiabilityAccountId}
               options={liabilityOptions}
-              createKind="category"
+              createKind="account"
               addNewLabel="+ Add new account"
               operatingCompanyId={operatingCompanyId}
               placeholder="Select liability account…"
