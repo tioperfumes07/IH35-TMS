@@ -134,6 +134,7 @@ export function EscrowRecordTab() {
       <EscrowForfeitModal
         open={Boolean(selected)}
         row={selected}
+        operatingCompanyId={operatingCompanyId}
         loading={forfeitMutation.isPending}
         onClose={() => setSelected(null)}
         onConfirm={(payload) => {
