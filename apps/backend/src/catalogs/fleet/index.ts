@@ -10,6 +10,7 @@ export async function registerFleetCatalogRoutes(app: FastifyInstance) {
     routePrefix: "/api/v1/catalogs/fleet",
     displayName: "Tractor Statuses",
     codeRegex: /^[A-Z][A-Z0-9-]+$/,
+    companyScoped: true,
   });
 
   createCatalogRoutes(app, {
@@ -18,6 +19,7 @@ export async function registerFleetCatalogRoutes(app: FastifyInstance) {
     routePrefix: "/api/v1/catalogs/fleet",
     displayName: "Trailer Statuses",
     codeRegex: /^[A-Z][A-Z0-9-]+$/,
+    companyScoped: true,
   });
 
   createCatalogRoutes(app, {
@@ -26,6 +28,7 @@ export async function registerFleetCatalogRoutes(app: FastifyInstance) {
     routePrefix: "/api/v1/catalogs/fleet",
     displayName: "Asset Condition Codes",
     codeRegex: /^[A-Z][A-Z0-9-]+$/,
+    companyScoped: true,
   });
 
   createCatalogRoutes(app, {
@@ -42,6 +45,7 @@ export async function registerFleetCatalogRoutes(app: FastifyInstance) {
     routePrefix: "/api/v1/catalogs/fleet",
     displayName: "Unit Ownership Types",
     codeRegex: /^[A-Z][A-Z0-9-]+$/,
+    companyScoped: true,
   });
 
   createCatalogRoutes(app, {
@@ -50,6 +54,7 @@ export async function registerFleetCatalogRoutes(app: FastifyInstance) {
     routePrefix: "/api/v1/catalogs/fleet",
     displayName: "Trailer Types",
     codeRegex: /^[A-Z][A-Z0-9-]+$/,
+    companyScoped: true,
   });
 
   createCatalogRoutes(app, {
@@ -58,6 +63,7 @@ export async function registerFleetCatalogRoutes(app: FastifyInstance) {
     routePrefix: "/api/v1/catalogs/fleet",
     displayName: "Lease Terms",
     codeRegex: /^[A-Z][A-Z0-9-]+$/,
+    companyScoped: true,
   });
 
   createCatalogRoutes(app, {
@@ -66,6 +72,7 @@ export async function registerFleetCatalogRoutes(app: FastifyInstance) {
     routePrefix: "/api/v1/catalogs/fleet",
     displayName: "Asset Statuses",
     codeRegex: /^[A-Z][A-Z0-9-]+$/,
+    companyScoped: true,
   });
 
   createCatalogRoutes(app, {
@@ -74,5 +81,6 @@ export async function registerFleetCatalogRoutes(app: FastifyInstance) {
     routePrefix: "/api/v1/catalogs/fleet",
     displayName: "Asset Locations",
     codeRegex: /^[A-Z][A-Z0-9-]+$/,
+    companyScoped: true,
   });
 }

@@ -3,7 +3,16 @@ import { z } from "zod";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { isCatalogWriteRole } from "../../auth/role-helpers.js";
-import { companyQuerySchema, currentAuthUser, idParamSchema, listQuerySchema, validationError } from "./shared.js";
+import {
+  companyQuerySchema,
+  companyScopedCompanyQuerySchema,
+  companyScopedListQuerySchema,
+  currentAuthUser,
+  idParamSchema,
+  listQuerySchema,
+  validationError,
+  withCompanyScope,
+} from "./shared.js";
 
 type CatalogFactoryConfig = {
   tableName: string;
@@ -12,6 +21,17 @@ type CatalogFactoryConfig = {
   displayName: string;
   codeRegex: RegExp;
   readOnly?: boolean;
+  // PER-ENTITY (owner ruling 2026-07-24): when true, the catalog carries operating_company_id and
+  // every read/write is membership-checked + RLS-scoped to that entity via withCompanyScope, and the
+  // uniqueness of `code` is per-entity. When false/omitted the catalog stays GLOBAL (its historical
+  // behavior) — used by tables not yet converted (e.g. equipment_types, whose dual write-surface is
+  // handled in a separate PR). Migration 202607860000 makes the 8 fleet/asset catalogs companyScoped.
+  companyScoped?: boolean;
+};
+
+// Minimal structural client — matches both withCurrentUser's client and withCompanyScope's DbClient.
+type DbClient = {
+  query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
 };
 
 const tableNameGuard = /^[a-z_]+$/;
@@ -21,17 +41,27 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
   if (!tableNameGuard.test(config.tableName)) throw new Error(`invalid_table_name_for_catalog_factory: ${config.tableName}`);
   if (!urlSegmentGuard.test(config.urlSegment)) throw new Error(`invalid_url_segment_for_catalog_factory: ${config.urlSegment}`);
 
+  const scoped = config.companyScoped === true;
   const basePath = `${config.routePrefix}/${config.urlSegment}`;
+  // operating_company_id column is projected only for scoped catalogs (the global ones don't have it).
+  const opcoSelect = scoped ? "t.operating_company_id," : "";
+  const opcoSelectBare = scoped ? "operating_company_id," : "";
+
+  // Run `fn` under the right scope: per-entity catalogs go through withCompanyScope (membership +
+  // GUC + RLS); global catalogs keep the plain withCurrentUser path. Both hand `fn` a DbClient.
+  const run = <T,>(userId: string, operatingCompanyId: string | null, fn: (client: DbClient) => Promise<T>) =>
+    scoped && operatingCompanyId
+      ? withCompanyScope(userId, operatingCompanyId, fn)
+      : withCurrentUser(userId, (client) => fn(client as unknown as DbClient));
+
   const createBodySchema = z.object({
     code: z.string().trim().regex(config.codeRegex),
     display_name: z.string().trim().min(1).max(160),
     description: z.string().trim().max(500).optional(),
-    // SAF/LST — verified on prod 2026-07-24: NO fleet catalog table
-    // (tractor_statuses, trailer_statuses, asset_condition_codes, equipment_types,
-    // unit_ownership_types, trailer_types, lease_terms, asset_statuses, asset_locations) has a
-    // `metadata` column. This schema previously ACCEPTED metadata and the INSERT then discarded it
-    // (the "accepted by the API is not done" anti-pattern). Removed so the contract matches the
-    // schema — zod strips the modal's vestigial metadata:{} payload silently, no error.
+    // SAF/LST — verified on prod 2026-07-24: NO fleet catalog table has a `metadata` column. This
+    // schema previously ACCEPTED metadata and the INSERT then discarded it (the "accepted by the API
+    // is not done" anti-pattern). Removed so the contract matches the schema — zod strips the modal's
+    // vestigial metadata:{} payload silently, no error.
     is_active: z.boolean().default(true),
     sort_order: z.coerce.number().int().min(0).max(10000).default(50),
   });
@@ -48,13 +78,18 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
   app.get(basePath, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
-    const parsed = listQuerySchema.safeParse(req.query ?? {});
+    const parsed = (scoped ? companyScopedListQuerySchema : listQuerySchema).safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
     const q = parsed.data;
+    const opco = scoped ? (q as { operating_company_id: string }).operating_company_id : null;
 
-    const payload = await withCurrentUser(authUser.uuid, async (client) => {
+    const payload = await run(authUser.uuid, opco, async (client) => {
       const values: unknown[] = [];
       const where: string[] = [];
+      if (scoped && opco) {
+        values.push(opco);
+        where.push(`t.operating_company_id = $${values.length}`);
+      }
       if (q.is_active === "true") where.push("t.is_active = true AND t.deactivated_at IS NULL");
       if (q.is_active === "false") where.push("(t.is_active = false OR t.deactivated_at IS NOT NULL)");
       if (q.search) {
@@ -69,6 +104,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
         `
           SELECT
             t.id,
+            ${opcoSelect}
             t.code,
             t.name AS display_name,
             t.description,
@@ -96,14 +132,22 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return validationError(reply, parsedParams.error);
-    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+    const parsedQuery = (scoped ? companyScopedCompanyQuerySchema : companyQuerySchema).safeParse(req.query ?? {});
     if (!parsedQuery.success) return validationError(reply, parsedQuery.error);
+    const opco = scoped ? (parsedQuery.data as { operating_company_id: string }).operating_company_id : null;
 
-    const row = await withCurrentUser(authUser.uuid, async (client) => {
+    const row = await run(authUser.uuid, opco, async (client) => {
+      const values: unknown[] = [parsedParams.data.id];
+      let where = "WHERE id = $1";
+      if (scoped && opco) {
+        values.push(opco);
+        where += ` AND operating_company_id = $${values.length}`;
+      }
       const res = await client.query(
         `
           SELECT
             id,
+            ${opcoSelectBare}
             code,
             name AS display_name,
             description,
@@ -113,10 +157,10 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
             created_at,
             updated_at
           FROM catalogs.${config.tableName}
-          WHERE id = $1
+          ${where}
           LIMIT 1
         `,
-        [parsedParams.data.id]
+        values
       );
       return res.rows[0] ?? null;
     });
@@ -129,28 +173,45 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
     if (!authUser) return;
     if (config.readOnly) return reply.code(405).send({ error: "catalog_read_only" });
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
-    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+    const parsedQuery = (scoped ? companyScopedCompanyQuerySchema : companyQuerySchema).safeParse(req.query ?? {});
     if (!parsedQuery.success) return validationError(reply, parsedQuery.error);
     const parsedBody = createBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return validationError(reply, parsedBody.error);
     const b = parsedBody.data;
+    const opco = scoped ? (parsedQuery.data as { operating_company_id: string }).operating_company_id : null;
 
-    const created = await withCurrentUser(authUser.uuid, async (client) => {
-      const conflict = await client.query(`SELECT id FROM catalogs.${config.tableName} WHERE code = $1 LIMIT 1`, [b.code]);
+    const created = await run(authUser.uuid, opco, async (client) => {
+      // Code uniqueness is per-entity when scoped, global otherwise.
+      const conflict =
+        scoped && opco
+          ? await client.query(`SELECT id FROM catalogs.${config.tableName} WHERE operating_company_id = $1 AND code = $2 LIMIT 1`, [opco, b.code])
+          : await client.query(`SELECT id FROM catalogs.${config.tableName} WHERE code = $1 LIMIT 1`, [b.code]);
       if (conflict.rows.length > 0) return { error: `catalog_${config.tableName}_code_conflict` as const };
-      const res = await client.query(
-        `
-          INSERT INTO catalogs.${config.tableName} (code, name, description, is_active, sort_order, created_by_user_id, updated_by_user_id)
-          VALUES ($1,$2,$3,$4,$5,$6,$6)
-          RETURNING id, code, name AS display_name, description, '{}'::jsonb AS metadata,  -- stable-empty: fleet catalogs have no metadata column (contract compat only) is_active, sort_order, created_at, updated_at
-        `,
-        [b.code, b.display_name, b.description ?? null, b.is_active, b.sort_order, authUser.uuid]
-      );
+
+      const res =
+        scoped && opco
+          ? await client.query(
+              `
+                INSERT INTO catalogs.${config.tableName} (operating_company_id, code, name, description, is_active, sort_order, created_by_user_id, updated_by_user_id)
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$7)
+                RETURNING id, operating_company_id, code, name AS display_name, description, '{}'::jsonb AS metadata,  -- stable-empty: fleet catalogs have no metadata column (contract compat only) is_active, sort_order, created_at, updated_at
+              `,
+              [opco, b.code, b.display_name, b.description ?? null, b.is_active, b.sort_order, authUser.uuid]
+            )
+          : await client.query(
+              `
+                INSERT INTO catalogs.${config.tableName} (code, name, description, is_active, sort_order, created_by_user_id, updated_by_user_id)
+                VALUES ($1,$2,$3,$4,$5,$6,$6)
+                RETURNING id, code, name AS display_name, description, '{}'::jsonb AS metadata,  -- stable-empty: fleet catalogs have no metadata column (contract compat only) is_active, sort_order, created_at, updated_at
+              `,
+              [b.code, b.display_name, b.description ?? null, b.is_active, b.sort_order, authUser.uuid]
+            );
       const row = res.rows[0];
       await appendCrudAudit(client, authUser.uuid, `catalogs.${config.tableName}_created`, {
         resource_id: row.id,
         resource_type: `catalogs.${config.tableName}`,
         code: row.code,
+        operating_company_id: opco ?? undefined,
         catalog_display_name: config.displayName,
       });
       return { row };
@@ -167,18 +228,23 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return validationError(reply, parsedParams.error);
-    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+    const parsedQuery = (scoped ? companyScopedCompanyQuerySchema : companyQuerySchema).safeParse(req.query ?? {});
     if (!parsedQuery.success) return validationError(reply, parsedQuery.error);
     const parsedBody = updateBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return validationError(reply, parsedBody.error);
     const b = parsedBody.data;
+    const opco = scoped ? (parsedQuery.data as { operating_company_id: string }).operating_company_id : null;
 
-    const updated = await withCurrentUser(authUser.uuid, async (client) => {
+    const updated = await run(authUser.uuid, opco, async (client) => {
       if (b.code) {
-        const conflict = await client.query(`SELECT id FROM catalogs.${config.tableName} WHERE code = $1 AND id <> $2 LIMIT 1`, [
-          b.code,
-          parsedParams.data.id,
-        ]);
+        const conflict =
+          scoped && opco
+            ? await client.query(`SELECT id FROM catalogs.${config.tableName} WHERE operating_company_id = $1 AND code = $2 AND id <> $3 LIMIT 1`, [
+                opco,
+                b.code,
+                parsedParams.data.id,
+              ])
+            : await client.query(`SELECT id FROM catalogs.${config.tableName} WHERE code = $1 AND id <> $2 LIMIT 1`, [b.code, parsedParams.data.id]);
         if (conflict.rows.length > 0) return { error: `catalog_${config.tableName}_code_conflict` as const };
       }
 
@@ -200,12 +266,18 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
       add("updated_at", new Date().toISOString());
       add("updated_by_user_id", authUser.uuid);
       values.push(parsedParams.data.id);
+      const idIdx = values.length;
+      let where = `WHERE id = $${idIdx}`;
+      if (scoped && opco) {
+        values.push(opco);
+        where += ` AND operating_company_id = $${values.length}`;
+      }
 
       const res = await client.query(
         `
           UPDATE catalogs.${config.tableName}
           SET ${fields.join(", ")}
-          WHERE id = $${values.length}
+          ${where}
           RETURNING id, code, name AS display_name, description, '{}'::jsonb AS metadata,  -- stable-empty: fleet catalogs have no metadata column (contract compat only) is_active, sort_order, created_at, updated_at
         `,
         values
@@ -215,6 +287,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
       await appendCrudAudit(client, authUser.uuid, `catalogs.${config.tableName}_updated`, {
         resource_id: row.id,
         resource_type: `catalogs.${config.tableName}`,
+        operating_company_id: opco ?? undefined,
         catalog_display_name: config.displayName,
       });
       return { row };
@@ -234,10 +307,17 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return validationError(reply, parsedParams.error);
-    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+    const parsedQuery = (scoped ? companyScopedCompanyQuerySchema : companyQuerySchema).safeParse(req.query ?? {});
     if (!parsedQuery.success) return validationError(reply, parsedQuery.error);
+    const opco = scoped ? (parsedQuery.data as { operating_company_id: string }).operating_company_id : null;
 
-    const result = await withCurrentUser(authUser.uuid, async (client) => {
+    const result = await run(authUser.uuid, opco, async (client) => {
+      const values: unknown[] = [parsedParams.data.id, authUser.uuid];
+      let where = "WHERE id = $1";
+      if (scoped && opco) {
+        values.push(opco);
+        where += ` AND operating_company_id = $${values.length}`;
+      }
       const res = await client.query(
         `
           UPDATE catalogs.${config.tableName}
@@ -245,16 +325,17 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
               deactivated_at = now(),
               updated_at = now(),
               updated_by_user_id = $2
-          WHERE id = $1
+          ${where}
           RETURNING id, code
         `,
-        [parsedParams.data.id, authUser.uuid]
+        values
       );
       if (res.rows.length === 0) return null;
       await appendCrudAudit(client, authUser.uuid, `catalogs.${config.tableName}_deactivated`, {
         resource_id: res.rows[0].id,
         resource_type: `catalogs.${config.tableName}`,
         code: res.rows[0].code,
+        operating_company_id: opco ?? undefined,
         catalog_display_name: config.displayName,
       });
       return { ok: true };

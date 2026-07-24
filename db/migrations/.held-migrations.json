@@ -398,6 +398,10 @@
     {
       "file": "202607900000_coa_roles_rls_bypass_lucia.sql",
       "reason": "[HOLD-FOR-JORGE — FINANCIAL CLUSTER / RLS-POLICY CHANGE] Fix false-empty audit landmine — accounting.chart_of_accounts_roles policy coa_roles_company_scope (0223) checks ONLY app.operating_company_id with no `app.bypass_rls='lucia'` escape (Rule 10). Adds the escape to USING only (read visibility); WITH CHECK unchanged, so no new write authority. 89 live rows exist (TRANSP-scoped=31) that a lucia-bypass read currently sees as a false 0. Mirrors 202607610000_qbo_connections_rls_bypass_escape.sql exactly. FORCE RLS status unchanged. Run only on a Neon branch by Jorge, then ledger-backfill."
+    },
+    {
+      "file": "202607860000_fleet_catalogs_per_entity.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] LST per-entity catalogs (owner ruling 2026-07-24 'lists and catalogs should be per entity, but we use the same catalog for all entities'). Converts 8 GLOBAL fleet/asset reference catalogs (asset_condition_codes, asset_locations, asset_statuses, unit_ownership_types, trailer_types, lease_terms, tractor_statuses, trailer_statuses) to per-entity: add operating_company_id (backfill existing rows -> TRANSP so no reference moves), COPY TRANSP rows to USMCA + TRK with fresh PKs (same values), swap UNIQUE(code) -> UNIQUE(operating_company_id, code), ENABLE+FORCE RLS with the standard GUC company_scope policy (matches catalogs.load_types). Also harmonizes created_by_user_id/updated_by_user_id onto the 4 tables that lacked them (the shared fleet factory POST wrote those columns and 500'd on those 4 -> 0 rows) and REVOKEs DELETE (void-not-delete). These 8 have ZERO inbound FKs (verified Neon br-fancy-credit-akjnd07a 2026-07-24). Backend fleet/factory.ts made config-driven (companyScoped) in the same PR so the app scopes reads/writes to the entity; equipment_types (dual-surface) + the 6 dispatch/driver catalogs with unscopable mdata referencing tables are explicitly OUT of this batch. Idempotent apply-twice. Owner applies on a Neon branch, then ledger-backfills with the sha256 of the COMMITTED file on main."
     }
   ]
 }
