@@ -534,6 +534,8 @@ export type ExpenseListRow = {
   line_description: string | null;
   is_reconciled: boolean;
   journal_entry_id: string | null;
+  linked_work_order_uuid: string | null;
+  work_order_display_id: string | null;
 };
 
 export function listExpenses(

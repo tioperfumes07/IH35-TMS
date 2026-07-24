@@ -130,6 +130,19 @@ export function ExpensesListPage() {
       render: (r) => <EntityLink kind="load" id={r.load_id} label={r.load_number ?? (r.load_id ? r.load_id.slice(0, 8) : undefined)} />,
     },
     {
+      key: "linked_work_order_uuid",
+      label: "WO",
+      sortable: true,
+      sortValue: (r) => r.work_order_display_id ?? r.linked_work_order_uuid ?? "",
+      render: (r) => (
+        <EntityLink
+          kind="work_order"
+          id={r.linked_work_order_uuid ?? undefined}
+          label={r.work_order_display_id ?? (r.linked_work_order_uuid ? r.linked_work_order_uuid.slice(0, 8) : undefined)}
+        />
+      ),
+    },
+    {
       key: "vendor_uuid",
       label: "Vendor",
       sortable: true,
