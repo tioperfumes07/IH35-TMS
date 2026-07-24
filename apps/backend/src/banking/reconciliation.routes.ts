@@ -649,8 +649,11 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
       return { varianceCents: variance, bookBalanceCents: summary.bookBalanceCents };
     });
 
-    if (Math.abs(varianceCents) > 1000 && !body.data.force_complete) {
-      return reply.code(409).send({ error: "variance_exceeds_tolerance", variance_cents: varianceCents });
+    // A reconciliation only closes ordinarily at exactly $0.00 difference. An Owner may make an
+    // explicitly reasoned exception for any non-zero variance; a hidden under-$10 tolerance would
+    // certify an unreconciled cash balance without an accountable override.
+    if (varianceCents !== 0 && !body.data.force_complete) {
+      return reply.code(409).send({ error: "reconciliation_difference_not_zero", variance_cents: varianceCents });
     }
     if (body.data.force_complete) {
       if (user.role !== "Owner") return reply.code(403).send({ error: "force_complete_requires_owner" });

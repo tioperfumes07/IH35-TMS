@@ -199,8 +199,9 @@ export function ReconciliationWorkspacePage() {
 
   const canComplete = auth.user?.role === "Owner" || auth.user?.role === "Administrator" || auth.user?.role === "Accountant";
   const isOwner = auth.user?.role === "Owner";
-  const absVariance = Math.abs(summary.varianceCents);
-  const needsForceComplete = absVariance >= 1000;
+  // Reconciliation is ordinary-complete only at exactly $0.00. Any non-zero difference needs an
+  // Owner's explicit, reasoned override; never silently certify an under-$10 variance.
+  const needsForceComplete = summary.varianceCents !== 0;
 
   // 0441-mod8: wire Auto-Match → existing bank-recon auto_matched_candidates worklist
   // (BankReconciliationPage accept/reject). No new scoring/GL — session period + account only.
