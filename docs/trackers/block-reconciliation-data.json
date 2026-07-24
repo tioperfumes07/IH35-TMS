@@ -1,6 +1,6 @@
 {
  "date": "2026-07-24",
- "generated_at_iso": "2026-07-24T14:16:55.993Z",
+ "generated_at_iso": "2026-07-24T17:38:54.601Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
@@ -2819,7 +2819,7 @@
    "evidence": "all 1 file(s) on main",
    "name": "",
    "registered_on": null,
-   "pr": 73
+   "pr": null
   },
   {
    "id": "BLOCK-J-MASTER-DATA-GRANT",
@@ -13162,6 +13162,48 @@
  ],
  "merged_prs": [
   {
+   "number": 3408,
+   "title": "[HOLD] feat(lists): per-entity driver_termination_reasons (owner ruling 2026-07-24)",
+   "mergedAt": "2026-07-24T17:37:57Z",
+   "branch": "feat/lst-driver-termination-reasons-per-entity"
+  },
+  {
+   "number": 3403,
+   "title": "[HOLD] feat(lists): per-entity driver_load_statuses (owner ruling 2026-07-24)",
+   "mergedAt": "2026-07-24T16:47:38Z",
+   "branch": "feat/lst-driver-load-statuses-per-entity"
+  },
+  {
+   "number": 3401,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-24T15:39:06Z",
+   "branch": "chore/tracker-artifacts-sync-30100297113"
+  },
+  {
+   "number": 3400,
+   "title": "[HOLD] fix(accounting): CoA roles RLS accepts app.bypass_rls=lucia",
+   "mergedAt": "2026-07-24T14:37:16Z",
+   "branch": "fix/coa-roles-rls-bypass-lucia"
+  },
+  {
+   "number": 3399,
+   "title": "[HOLD] feat(accounting): project QBO Purchase → accounting.expenses (subledger only)",
+   "mergedAt": "2026-07-24T15:38:38Z",
+   "branch": "fix/qbo-expenses-projection"
+  },
+  {
+   "number": 3398,
+   "title": "[HOLD] feat(accounting): project QBO BillPayment → bill_payments (subledger only)",
+   "mergedAt": "2026-07-24T15:18:46Z",
+   "branch": "fix/qbo-bill-payments-projection"
+  },
+  {
+   "number": 3397,
+   "title": "[HOLD] feat(lists): per-entity fleet/asset catalogs — 8 tables (owner ruling 2026-07-24)",
+   "mergedAt": "2026-07-24T15:01:01Z",
+   "branch": "feat/lst-fleet-catalogs-per-entity"
+  },
+  {
    "number": 3396,
    "title": "fix(accounting): bank/cash pickers use createKind=account (+ Add new account)",
    "mergedAt": "2026-07-24T13:10:40Z",
@@ -13172,6 +13214,18 @@
    "title": "fix(ops): unblock Render — checksum override for 202607820000",
    "mergedAt": "2026-07-24T12:53:13Z",
    "branch": "hotfix/predeploy-checksum-202607820000"
+  },
+  {
+   "number": 3394,
+   "title": "fix(lists): the /api/v1/catalogs/items route returned 0 items under RLS (LST)",
+   "mergedAt": "2026-07-24T14:19:11Z",
+   "branch": "fix/lst-items-route-rls-scope"
+  },
+  {
+   "number": 3393,
+   "title": "[HOLD] fix(accounting): QBO bill Pay Bill records subledger only",
+   "mergedAt": "2026-07-24T14:18:57Z",
+   "branch": "fix/qbo-bill-payment-subledger-only"
   },
   {
    "number": 3389,
@@ -16706,64 +16760,52 @@
    "title": "ci: wire verify-owner-todays-attention guard into locked-guards — GUARD-WIRE-G5",
    "mergedAt": "2026-07-17T03:52:51Z",
    "branch": "fix/wire-owner-todays-attention-guard"
-  },
-  {
-   "number": 2602,
-   "title": "feat(accounting): BANK-SORT-ROLLOUT-ACCT — Bills + Expenses URL sort",
-   "mergedAt": "2026-07-17T03:30:34Z",
-   "branch": "fix/bank-sort-rollout-acct"
-  },
-  {
-   "number": 2601,
-   "title": "HOLD: fix(banking): Search-all SQL before LIMIT + honest draft sorts",
-   "mergedAt": "2026-07-17T02:58:22Z",
-   "branch": "fix/match-search-q-and-honest-sort"
-  },
-  {
-   "number": 2600,
-   "title": "HOLD: feat(banking): QBO register/recon parity + match Search all",
-   "mergedAt": "2026-07-17T02:37:39Z",
-   "branch": "fix/banking-qbo-deposits-and-parity"
-  },
-  {
-   "number": 2599,
-   "title": "HOLD: feat(banking): Relay wallet QBO parity — breakdown, columns, deposits, From/To",
-   "mergedAt": "2026-07-17T00:53:46Z",
-   "branch": "fix/relay-banking-qbo-parity"
-  },
-  {
-   "number": 2598,
-   "title": "fix(relay): wallet bank feed empty — load_status enum coalesce 22P02",
-   "mergedAt": "2026-07-17T00:11:34Z",
-   "branch": "fix/relay-wallet-feed-backfill-verify"
-  },
-  {
-   "number": 2597,
-   "title": "fix(ui): Bank Transactions sort/group QBO parity (audit gap #5)",
-   "mergedAt": "2026-07-16T23:32:06Z",
-   "branch": "fix/bank-register-sort-group"
-  },
-  {
-   "number": 2596,
-   "title": "fix(accounting): BillsPage honors ?bill_id= deep-link",
-   "mergedAt": "2026-07-17T00:05:08Z",
-   "branch": "fix/bills-page-bill-id-deeplink"
-  },
-  {
-   "number": 2595,
-   "title": "fix(ui): CI-lock EntityLink expense deep-link (audit 99)",
-   "mergedAt": "2026-07-16T23:32:56Z",
-   "branch": "fix/entitylink-expense-guard"
-  },
-  {
-   "number": 2594,
-   "title": "ci(load-test): install k6 from dl.k6.io (fix GitHub 503 reds)",
-   "mergedAt": "2026-07-16T23:15:02Z",
-   "branch": "fix/k6-ci-install-dl-k6"
   }
  ],
  "merged_pr_total": 3000,
  "hold_for_jorge": [
+  {
+   "number": 3408,
+   "title": "[HOLD] feat(lists): per-entity driver_termination_reasons (owner ruling 2026-07-24)",
+   "mergedAt": "2026-07-24T17:37:57Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3403,
+   "title": "[HOLD] feat(lists): per-entity driver_load_statuses (owner ruling 2026-07-24)",
+   "mergedAt": "2026-07-24T16:47:38Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3400,
+   "title": "[HOLD] fix(accounting): CoA roles RLS accepts app.bypass_rls=lucia",
+   "mergedAt": "2026-07-24T14:37:16Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3399,
+   "title": "[HOLD] feat(accounting): project QBO Purchase → accounting.expenses (subledger only)",
+   "mergedAt": "2026-07-24T15:38:38Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3398,
+   "title": "[HOLD] feat(accounting): project QBO BillPayment → bill_payments (subledger only)",
+   "mergedAt": "2026-07-24T15:18:46Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3397,
+   "title": "[HOLD] feat(lists): per-entity fleet/asset catalogs — 8 tables (owner ruling 2026-07-24)",
+   "mergedAt": "2026-07-24T15:01:01Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3393,
+   "title": "[HOLD] fix(accounting): QBO bill Pay Bill records subledger only",
+   "mergedAt": "2026-07-24T14:18:57Z",
+   "category": "HOLD"
+  },
   {
    "number": 3388,
    "title": "[HOLD] fix(accounting): map QBO Item ExpenseAccountRef → CoA",
