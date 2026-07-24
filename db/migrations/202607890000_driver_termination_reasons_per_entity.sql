@@ -48,8 +48,10 @@ BEGIN
   END IF;
 
   FOR v_seed IN SELECT id FROM org.companies WHERE deactivated_at IS NULL AND id <> v_primary LOOP
-    INSERT INTO catalogs.driver_termination_reasons (operating_company_id, code, label, description, severity, is_active)
-      SELECT v_seed, code, label, description, severity, is_active
+    -- Carry deactivated_at (not just is_active) so a copied deactivated row stays a proper deactivated
+    -- row, never a half-deactivated is_active=false + deactivated_at=NULL state.
+    INSERT INTO catalogs.driver_termination_reasons (operating_company_id, code, label, description, severity, is_active, deactivated_at)
+      SELECT v_seed, code, label, description, severity, is_active, deactivated_at
       FROM catalogs.driver_termination_reasons
       WHERE operating_company_id = v_primary
     ON CONFLICT (operating_company_id, code) DO NOTHING;
