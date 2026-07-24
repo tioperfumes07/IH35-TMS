@@ -48,11 +48,15 @@ describeIntegration("QBO-AP-PULL Stage 2 projection -> A/P aging (real Postgres)
   const qboBillMatchedId = `QBOBILL-M-${tag}`;
   const qboBillUnmatchedId = `QBOBILL-U-${tag}`;
   const nativeBillId = randomUUID();
+  const coaAccountId = randomUUID();
+  const qboAccountId = `QBOACCT-${tag}`;
 
   // Hand-checked cents.
   const MATCHED_CENTS = 5_000_000; // $50,000.00 open, matched to a local vendor
   const UNMATCHED_CENTS = 250_000; // $2,500.00 open, no local vendor
   const NATIVE_CENTS = 1_111; //     $11.11 open, TMS-native (must not be touched/doubled)
+  const LINE1_DOLLARS = 30000; // $30,000
+  const LINE2_DOLLARS = 20000; // $20,000 — sum matches MATCHED_CENTS
 
   beforeAll(async () => {
     companyId = await ensureIntegrationPrerequisites();
@@ -78,6 +82,14 @@ describeIntegration("QBO-AP-PULL Stage 2 projection -> A/P aging (real Postgres)
       [vendorNativeUuid, companyId, `AP-PROJ Native Vendor ${tag}`]
     );
 
+    // Local CoA account the AccountBased line maps to via qbo_account_id.
+    await db.query(
+      `INSERT INTO catalogs.accounts
+         (id, operating_company_id, account_number, account_name, account_type, qbo_account_id, is_postable)
+       VALUES ($1::uuid,$2::uuid,$3,$4,'Expense',$5,true)`,
+      [coaAccountId, companyId, `6${tag.slice(0, 4)}`, `AP-PROJ Expense ${tag}`, qboAccountId]
+    );
+
     // TMS-native open bill (source_system default 'tms', qbo_bill_id NULL) — must never be doubled.
     await db.query(
       `INSERT INTO accounting.bills
@@ -86,18 +98,75 @@ describeIntegration("QBO-AP-PULL Stage 2 projection -> A/P aging (real Postgres)
       [nativeBillId, companyId, vendorNativeUuid, `NATIVE-${tag}`, NATIVE_CENTS]
     );
 
+    const matchedPayload = {
+      Id: qboBillMatchedId,
+      TotalAmt: MATCHED_CENTS / 100,
+      Line: [
+        {
+          Id: "1",
+          LineNum: 1,
+          Amount: LINE1_DOLLARS,
+          DetailType: "AccountBasedExpenseLineDetail",
+          Description: "Line A",
+          AccountBasedExpenseLineDetail: { AccountRef: { value: qboAccountId, name: "Expense" } },
+        },
+        {
+          Id: "2",
+          LineNum: 2,
+          Amount: LINE2_DOLLARS,
+          DetailType: "AccountBasedExpenseLineDetail",
+          Description: "Line B",
+          AccountBasedExpenseLineDetail: { AccountRef: { value: qboAccountId, name: "Expense" } },
+        },
+        {
+          Id: "3",
+          DetailType: "DescriptionOnly",
+          Description: "Should be skipped",
+        },
+      ],
+    };
+
     // Two inbound QBO mirror rows: one matches a local vendor, one has no local vendor.
     await db.query(
       `INSERT INTO mdata.qbo_ap_bills
-         (operating_company_id, qbo_id, doc_number, vendor_qbo_id, vendor_name, txn_date, due_date, total_cents, balance_cents, active)
-       VALUES ($1::uuid,$2,$3,$4,$5, CURRENT_DATE - 20, CURRENT_DATE - 15, $6, $6, true)`,
-      [companyId, qboBillMatchedId, `QB-M-${tag}`, qboVendorMatchedId, `AP-PROJ Matched Vendor ${tag}`, MATCHED_CENTS]
+         (operating_company_id, qbo_id, doc_number, vendor_qbo_id, vendor_name, txn_date, due_date, total_cents, balance_cents, active, payload_json)
+       VALUES ($1::uuid,$2,$3,$4,$5, CURRENT_DATE - 20, CURRENT_DATE - 15, $6, $6, true, $7::jsonb)`,
+      [
+        companyId,
+        qboBillMatchedId,
+        `QB-M-${tag}`,
+        qboVendorMatchedId,
+        `AP-PROJ Matched Vendor ${tag}`,
+        MATCHED_CENTS,
+        JSON.stringify(matchedPayload),
+      ]
     );
     await db.query(
       `INSERT INTO mdata.qbo_ap_bills
-         (operating_company_id, qbo_id, doc_number, vendor_qbo_id, vendor_name, txn_date, due_date, total_cents, balance_cents, active)
-       VALUES ($1::uuid,$2,$3,$4,$5, CURRENT_DATE - 20, CURRENT_DATE - 15, $6, $6, true)`,
-      [companyId, qboBillUnmatchedId, `QB-U-${tag}`, qboVendorUnmatchedId, `QBO Only Vendor ${tag}`, UNMATCHED_CENTS]
+         (operating_company_id, qbo_id, doc_number, vendor_qbo_id, vendor_name, txn_date, due_date, total_cents, balance_cents, active, payload_json)
+       VALUES ($1::uuid,$2,$3,$4,$5, CURRENT_DATE - 20, CURRENT_DATE - 15, $6, $6, true, $7::jsonb)`,
+      [
+        companyId,
+        qboBillUnmatchedId,
+        `QB-U-${tag}`,
+        qboVendorUnmatchedId,
+        `QBO Only Vendor ${tag}`,
+        UNMATCHED_CENTS,
+        JSON.stringify({
+          Id: qboBillUnmatchedId,
+          TotalAmt: UNMATCHED_CENTS / 100,
+          Line: [
+            {
+              Id: "1",
+              LineNum: 1,
+              Amount: UNMATCHED_CENTS / 100,
+              DetailType: "ItemBasedExpenseLineDetail",
+              Description: "Item line unmapped",
+              ItemBasedExpenseLineDetail: { ItemRef: { value: `ITEM-${tag}`, name: "Unknown" } },
+            },
+          ],
+        }),
+      ]
     );
 
     await db.query("COMMIT");
@@ -106,6 +175,15 @@ describeIntegration("QBO-AP-PULL Stage 2 projection -> A/P aging (real Postgres)
   afterAll(async () => {
     if (db) {
       // Superuser cleanup (RLS bypassed): remove only this run's committed fixtures + projected rows.
+      await db
+        .query(
+          `DELETE FROM accounting.bill_lines WHERE bill_id IN (
+             SELECT id FROM accounting.bills
+             WHERE operating_company_id = $1::uuid AND (id = $2::uuid OR qbo_bill_id = ANY($3::text[]))
+           )`,
+          [companyId, nativeBillId, [qboBillMatchedId, qboBillUnmatchedId]]
+        )
+        .catch(() => {});
       await db
         .query(`DELETE FROM accounting.bills WHERE operating_company_id = $1::uuid AND (id = $2::uuid OR qbo_bill_id = ANY($3::text[]))`, [
           companyId,
@@ -118,6 +196,9 @@ describeIntegration("QBO-AP-PULL Stage 2 projection -> A/P aging (real Postgres)
           companyId,
           [qboBillMatchedId, qboBillUnmatchedId],
         ])
+        .catch(() => {});
+      await db
+        .query(`DELETE FROM catalogs.accounts WHERE id = $1::uuid`, [coaAccountId])
         .catch(() => {});
       await db
         .query(`DELETE FROM mdata.vendors WHERE id = ANY($1::uuid[])`, [[vendorMatchedUuid, vendorNativeUuid]])
@@ -171,17 +252,29 @@ describeIntegration("QBO-AP-PULL Stage 2 projection -> A/P aging (real Postgres)
     const res = await mod.projectApBillsToLedger(companyId);
     expect(res.enabled).toBe(true);
     expect(res.rowsProjected).toBeGreaterThanOrEqual(2);
+    expect(res.lines.enabled).toBe(true);
+    expect(res.lines.linesProjected).toBeGreaterThanOrEqual(3); // 2 AccountBased + 1 ItemBased
 
     // Exactly one accounting.bills row per QBO bill, source_system='qbo', matched vendor linked.
     expect(await billRowCount(qboBillMatchedId)).toBe(1);
-    const matched = await db.query<{ source_system: string; vendor_uuid: string; amount_cents: string; status: string }>(
-      `SELECT source_system, vendor_uuid, amount_cents, status FROM accounting.bills WHERE operating_company_id=$1::uuid AND qbo_bill_id=$2`,
+    const matched = await db.query<{ source_system: string; vendor_uuid: string; amount_cents: string; status: string; id: string }>(
+      `SELECT id::text, source_system, vendor_uuid, amount_cents, status FROM accounting.bills WHERE operating_company_id=$1::uuid AND qbo_bill_id=$2`,
       [companyId, qboBillMatchedId]
     );
     expect(matched.rows[0]!.source_system).toBe("qbo");
     expect(matched.rows[0]!.vendor_uuid).toBe(vendorMatchedUuid);
     expect(Number(matched.rows[0]!.amount_cents)).toBe(MATCHED_CENTS);
     expect(matched.rows[0]!.status).toBe("unpaid");
+
+    // Stage 2b: AccountBased lines projected with mapped account_id; DescriptionOnly skipped.
+    const lines = await db.query<{ n: string; with_acct: string }>(
+      `SELECT count(*)::int AS n,
+              count(*) FILTER (WHERE account_id = $2::uuid)::int AS with_acct
+       FROM accounting.bill_lines WHERE bill_id = $1::uuid`,
+      [matched.rows[0]!.id, coaAccountId]
+    );
+    expect(Number(lines.rows[0]!.n)).toBe(2);
+    expect(Number(lines.rows[0]!.with_acct)).toBe(2);
 
     // The A/P aging (what FIN-20 reads) now returns the QBO bill under its matched LOCAL vendor.
     expect(await agingOpenCents(vendorMatchedUuid)).toBe(MATCHED_CENTS);
@@ -203,7 +296,21 @@ describeIntegration("QBO-AP-PULL Stage 2 projection -> A/P aging (real Postgres)
   it("flag ON: idempotent re-run creates no duplicate and does not change the aging; native bill not doubled", async () => {
     const mod = await import("../ap-bills-puller.js");
     await mod.projectApBillsToLedger(companyId);
+    const mid = await db.query<{ n: string }>(
+      `SELECT count(*)::int AS n FROM accounting.bill_lines bl
+       JOIN accounting.bills b ON b.id = bl.bill_id
+       WHERE b.operating_company_id=$1::uuid AND b.qbo_bill_id=$2`,
+      [companyId, qboBillMatchedId]
+    );
     await mod.projectApBillsToLedger(companyId);
+    const after = await db.query<{ n: string }>(
+      `SELECT count(*)::int AS n FROM accounting.bill_lines bl
+       JOIN accounting.bills b ON b.id = bl.bill_id
+       WHERE b.operating_company_id=$1::uuid AND b.qbo_bill_id=$2`,
+      [companyId, qboBillMatchedId]
+    );
+    expect(Number(after.rows[0]!.n)).toBe(Number(mid.rows[0]!.n));
+    expect(Number(after.rows[0]!.n)).toBe(2);
 
     expect(await billRowCount(qboBillMatchedId)).toBe(1);
     expect(await billRowCount(qboBillUnmatchedId)).toBe(1);
