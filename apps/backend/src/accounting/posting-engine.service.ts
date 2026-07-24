@@ -82,7 +82,8 @@ export type PostingErrorCode =
   | "INVOICE_LOAD_SOURCE_REQUIRED"
   | "EXPENSE_NOT_POSTING_ELIGIBLE"
   | "BANK_CATEGORIZATION_NOT_POSTING_ELIGIBLE"
-  | "TRANSFER_NOT_POSTING_ELIGIBLE";
+  | "TRANSFER_NOT_POSTING_ELIGIBLE"
+  | "QBO_BILL_POST_GL_REFUSED";
 
 export class PostingEngineError extends Error {
   code: PostingErrorCode;
@@ -695,6 +696,7 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
     memo: string | null;
     bill_number: string | null;
     revoked_at: string | null;
+    source_system: string | null;
   }>(
     `
       SELECT
@@ -706,7 +708,8 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
         coa_account_id::text,
         memo,
         bill_number,
-        revoked_at::text
+        revoked_at::text,
+        source_system::text
       FROM accounting.bills
       WHERE operating_company_id = $1::uuid
         AND id::text = $2
@@ -719,6 +722,15 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
   if (!bill) throw new PostingEngineError("SOURCE_NOT_FOUND", "Bill not found");
   if (bill.revoked_at || bill.status === "void" || bill.status === "voided") {
     throw new PostingEngineError("BILL_NOT_POSTING_ELIGIBLE", "Voided bill is not posting-eligible");
+  }
+  // Parallel books: QBO-origin bills already have A/P economics in QBO. Projecting Line[] into
+  // accounting.bill_lines must NOT unlock a second TMS JE via post-gl (BILL_GL_POSTING_ENABLED is ON
+  // for live entities). Mirror the JE-push refuse pattern — clone/reconcile only, never invent GL.
+  if ((bill.source_system ?? "").toLowerCase() === "qbo") {
+    throw new PostingEngineError(
+      "QBO_BILL_POST_GL_REFUSED",
+      "Refusing Bill→GL post for source_system=qbo — parallel books; QBO already holds this A/P. Do not invent a second TMS journal entry."
+    );
   }
 
   const apAccountId = await resolveApAccountForCompany(client, operatingCompanyId);
@@ -1803,7 +1815,8 @@ export async function postSourceTransaction(input: PostSourceInput, actor: Actor
         error.code !== "PAYMENT_NOT_POSTING_ELIGIBLE" &&
         error.code !== "ADVANCE_NOT_POSTING_ELIGIBLE" &&
         error.code !== "BANK_CATEGORIZATION_NOT_POSTING_ELIGIBLE" &&
-        error.code !== "TRANSFER_NOT_POSTING_ELIGIBLE"
+        error.code !== "TRANSFER_NOT_POSTING_ELIGIBLE" &&
+        error.code !== "QBO_BILL_POST_GL_REFUSED"
       ) {
         await markBatchFailed(actor, input.operating_company_id, sourceType, sourceId, idempotencyKey);
       }
