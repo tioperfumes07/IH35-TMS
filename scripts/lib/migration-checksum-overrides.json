@@ -252,5 +252,13 @@
     "reason": "PROD DEPLOY OUTAGE 2026-07-23: applied by hand on Neon from an INTERMEDIATE state of PR #3345, so the prod ledger recorded that draft's checksum while main carries the final merged text. Every backend deploy since 20:11 CT failed pre-deploy on 'modified after apply'. The migration body is a single idempotent 'ALTER TABLE catalogs.account_role_bindings DROP CONSTRAINT IF EXISTS account_role_bindings_role_key_key;' inside BEGIN/COMMIT, so both texts converge on the identical end state and no DDL is skipped by accepting the disk text. A follow-up migration cannot fix this - db:migrate refuses on the EXISTING ledger row before it ever reaches a new file.",
     "added_at": "2026-07-23",
     "added_in_pr": "PROD-DEPLOY-UNBLOCK-202607770000"
+  },
+  {
+    "filename": "202607820000_safety_relational_linkage_and_lifecycle.sql",
+    "ledger_checksum": "578a6d7d7f2ae3f2e58bf44ebf36b757d6898748dd14e10c7bfe6bf71293c3b3",
+    "disk_checksum": "8fa5d8e6854aac1dd54da22f5d54c1c7489c296760bd5f06b6c45ef9d39ef10d",
+    "reason": "PROD DEPLOY OUTAGE 2026-07-24: Neon ledger applied intermediate commit 2da2649ff (checksum 578a6d7d…) for #3380 safety join tables; main later landed 3319894fa with literal ENABLE/FORCE RLS (disk 8fa5d8e6…) so verify-rls-migration-scan can see them. Dynamic EXECUTE in the applied body already ran ENABLE+FORCE on the three join tables, so end state matches; db:migrate still refuses on the EXISTING ledger row before any follow-up. Override unblocks Render preDeploy. Do not edit this applied file again — any further DDL needs a new migration.",
+    "added_at": "2026-07-24",
+    "added_in_pr": "PROD-DEPLOY-UNBLOCK-202607820000"
   }
 ]
