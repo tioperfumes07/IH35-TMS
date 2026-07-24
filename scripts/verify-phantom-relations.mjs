@@ -109,6 +109,7 @@ const KNOWN_PHANTOM_DEBT = [
   { rel: "accounting.vendor_credit_applications", why: "[HOLD-FOR-JORGE] forward-ref — CUSTVEND-PAR-1 vendor-credit application junction table; ships in gated migration 202607170000_custvend_par1_vendor_credit_applications.sql (not yet applied to prod). Read/insert by vendor-credits.routes.ts apply/void paths; no GL posting. Remove from debt when that migration merges." },
   { rel: "mdata.qbo_ap_bill_payments", why: "[HOLD-FOR-JORGE] forward-ref to HELD 202607860000_qbo_ap_bill_payments_inbound_mirror.sql; table+puller ship same PR; owner Neon-applies then merge. DELETE THIS ENTRY when migration applied on prod." },
   { rel: "mdata.qbo_purchases", why: "[HOLD-FOR-JORGE] forward-ref to HELD 202607880000_qbo_purchases_inbound_mirror.sql; table+puller same PR; owner Neon-applies then merge. DELETE THIS ENTRY when applied on prod." },
+  { rel: "mdata.qbo_ar_payments", why: "[HOLD-FOR-JORGE] forward-ref to HELD 202607920000_qbo_ar_payments_inbound_mirror.sql; table+puller same PR; owner Neon-applies then merge. DELETE THIS ENTRY when applied on prod." },
 ];
 const KNOWN = new Map(KNOWN_PHANTOM_DEBT.map((d) => [d.rel, d.why]));
 

@@ -443,15 +443,30 @@
     },
     {
       "file": "202607920000_customer_quality_reasons_per_entity.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] LST per-entity catalog customer_quality_event_reasons (owner ruling 2026-07-24). opco + copy-to-every-entity + UNIQUE(opco,code) + FORCE RLS + REVOKE DELETE; quality-event handlers resolve the customer company + GUC. Owner applies on Neon, ledger-backfills."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] LST per-entity catalog customer_quality_event_reasons (owner ruling 2026-07-24). opco + copy-to-every-entity + UNIQUE(opco,code) + FORCE RLS + REVOKE DELETE; quality-event handlers resolve the customer company + GUC. Owner applies on Neon, ledger-backfills."
     },
     {
       "file": "202607910000_equipment_types_per_entity.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] LST per-entity equipment_types + templates (renumbered off Cursor 880). APPLIED on prod (ledger 7cec7823; committed file drifted to d8bbefec via a fix(ci) rewrite — see checksum-overrides). Do NOT re-run/edit. Forward repair = 911."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] LST per-entity equipment_types + templates (renumbered off Cursor 880). APPLIED on prod (ledger 7cec7823; committed file drifted to d8bbefec via a fix(ci) rewrite — see checksum-overrides). Do NOT re-run/edit. Forward repair = 911."
     },
     {
       "file": "202607911000_equipment_types_norm_dedupe_per_entity.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] Forward repair for 910: sets deactivated_at on the 4 half-deactivated equipment_types copies (DRY-VAN/OVERSIZE on USMCA+TRK) that 910's seed left is_active=false/deactivated_at=NULL. Load-bearing for the collision guard. Owner applies + ledger-backfills (sha 7c44216e). Do NOT renumber/edit/drop."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Forward repair for 910: sets deactivated_at on the 4 half-deactivated equipment_types copies (DRY-VAN/OVERSIZE on USMCA+TRK) that 910's seed left is_active=false/deactivated_at=NULL. Load-bearing for the collision guard. Owner applies + ledger-backfills (sha 7c44216e). Do NOT renumber/edit/drop."
+    },
+    {
+      "file": "202607920000_qbo_ar_payments_inbound_mirror.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] QBO-AR-PAYMENTS-PULL-1 — inbound QuickBooks Payment (Receive Payment / Deposit against an invoice) mirror table mdata.qbo_ar_payments (read-only clone, upsert by qbo_id; FORCED RLS + 0065-pattern grants; full row in payload_json so Stage 2b can fan Line[].LinkedTxn(Invoice) allocations without a second QBO round-trip). Additive/idempotent, CI fresh-from-0001 builds it. Reconcile-only, NO GL. Verified on Neon br-fancy-credit-akjnd07a 2026-07-24: mdata.qbo_ar_payments/qbo_payments/qbo_deposits do NOT exist; accounting.payments = 0 rows. NOT YET applied on prod — throwaway PG apply-twice; owner Neon-apply + ledger-backfill."
+    },
+    {
+      "file": "202607930000_qbo_ar_payments_projection_flags.sql",
+      "requires_held": [
+        "202607920000_qbo_ar_payments_inbound_mirror.sql"
+      ],
+      "held_apply_order": [
+        "202607920000_qbo_ar_payments_inbound_mirror.sql",
+        "202607930000_qbo_ar_payments_projection_flags.sql"
+      ],
+      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] QBO-AR-PAYMENTS-PULL-2 — register QBO_AR_PAYMENT_MIRROR_PULL_ENABLED / QBO_AR_PAYMENTS_PROJECTION_ENABLED in lib.feature_flags DEFAULT OFF. No new idempotency-key index needed: accounting.payments already carries uq_payments_company_qbo_payment_id (migration 0178) as the header projection's ON CONFLICT target, and accounting.payment_applications already carries uq_payment_applications_target (payment_id, target_kind, target_id) (migration 0222) as the allocation fan-out's ON CONFLICT target — both verified live on Neon br-fancy-credit-akjnd07a 2026-07-24, no schema change required. BUILD-AND-HOLD: seeds NO per-entity ON override — owner flips ON per-entity after Neon-apply. Subledger only, NO GL posting (posting engine additionally refuses QBO-sourced customer payments via QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED). Additive/idempotent. NOT YET applied on prod — owner Neon-apply + ledger-backfill."
     }
   ]
 }
