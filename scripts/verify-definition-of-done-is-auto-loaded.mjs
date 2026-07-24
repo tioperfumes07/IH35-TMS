@@ -1,16 +1,11 @@
 #!/usr/bin/env node
 /**
- * GUARD: the Definition of Done is referenced by every file a coder auto-loads.
+ * GUARD: Definition of Done + EVERY-PR checklist are referenced by every auto-loaded entry point.
  *
- * WHY THIS EXISTS (owner directive 2026-07-23)
- * `docs/specs/DEFINITION-OF-DONE.md` was written, merged, and enforced at verify-step 1324 — and was
- * referenced by NONE of the four files an agent actually reads at session start: AGENTS.md,
- * docs/CLAUDE.md, .cursor/rules/00-always-read-first.mdc (alwaysApply), and the ih35-tms-standards
- * skill. The DoD's own opening line says it: "Scattered law is skipped law." A standard that exists
- * but is not pointed at from the entry points is a standard nobody loads.
- *
- * This guard makes the pointers structural. Deleting the DoD reference from any auto-loaded entry
- * point fails CI instead of quietly reverting the repo to "whatever the agent remembered."
+ * Deleting pointers fails CI. Also requires:
+ *   - docs/specs/EVERY-PR-AUDIT-CHECKLIST.md exists (Claude consolidated list)
+ *   - each entry point names VERIFY-1 and verify-step 1430 (mechanical money gate)
+ *   - .cursor/rules/23-no-money-theater-prs.mdc exists (alwaysApply theater ban)
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -18,6 +13,8 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DOD = "docs/specs/DEFINITION-OF-DONE.md";
+const CHECKLIST = "docs/specs/EVERY-PR-AUDIT-CHECKLIST.md";
+const RULE23 = ".cursor/rules/23-no-money-theater-prs.mdc";
 const ENTRY_POINTS = [
   ["AGENTS.md", "the repo's agent-coordination entry point"],
   ["docs/CLAUDE.md", "the durable handoff context every Claude session reads"],
@@ -31,15 +28,33 @@ const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
 
 export function assertDodIsAutoLoaded(sources) {
   const problems = [];
+  const get = (rel) => sources?.[rel] ?? (fs.existsSync(path.join(ROOT, rel)) ? read(rel) : "");
 
-  if (!(sources?.[DOD] ?? (fs.existsSync(path.join(ROOT, DOD)) ? read(DOD) : ""))) {
+  if (!get(DOD)) {
     problems.push(`${DOD}: the Definition of Done is missing — every entry point below points at nothing.`);
+  }
+  if (!get(CHECKLIST)) {
+    problems.push(
+      `${CHECKLIST}: missing — Claude-consolidated EVERY-PR checklist must be tracked so sessions autoload it.`
+    );
+  }
+  if (!get(RULE23)) {
+    problems.push(`${RULE23}: missing — Rule 23 alwaysApply theater ban must exist.`);
   }
 
   for (const [rel, why] of ENTRY_POINTS) {
-    const src = sources?.[rel] ?? read(rel);
+    const src = get(rel);
     if (!src.includes(DOD)) {
-      problems.push(`${rel}: does not reference ${DOD} — ${why}, so the DONE bar would not be in context. Scattered law is skipped law.`);
+      problems.push(`${rel}: does not reference ${DOD} — ${why}.`);
+    }
+    if (!src.includes(CHECKLIST)) {
+      problems.push(`${rel}: does not reference ${CHECKLIST} — money PR checklist would not autoload.`);
+    }
+    if (!src.includes("VERIFY-1")) {
+      problems.push(`${rel}: does not mention VERIFY-1 — DoD §10 confirm keys would not be in context.`);
+    }
+    if (!src.includes("1430") && !src.includes("verify-no-money-theater")) {
+      problems.push(`${rel}: does not mention verify-step 1430 / verify-no-money-theater — gate would be invisible.`);
     }
   }
 
@@ -47,12 +62,19 @@ export function assertDodIsAutoLoaded(sources) {
 }
 
 if (SELFTEST) {
-  const files = [DOD, ...ENTRY_POINTS.map(([rel]) => rel)];
-  const live = Object.fromEntries(files.map((rel) => [rel, read(rel)]));
+  const files = [DOD, CHECKLIST, RULE23, ...ENTRY_POINTS.map(([rel]) => rel)];
+  const live = Object.fromEntries(files.map((rel) => [rel, getSafe(rel)]));
+  function getSafe(rel) {
+    try {
+      return read(rel);
+    } catch {
+      return "";
+    }
+  }
   const failures = [];
   const expectCaught = (name, mutated, needle) => {
     if (JSON.stringify(mutated) === JSON.stringify(live)) {
-      failures.push(`${name}: inert mutation — the guard was never actually exercised`);
+      failures.push(`${name}: inert mutation`);
       return;
     }
     const problems = assertDodIsAutoLoaded(mutated);
@@ -63,22 +85,29 @@ if (SELFTEST) {
 
   for (const [rel] of ENTRY_POINTS) {
     expectCaught(
-      `pointer-removed-from-${rel}`,
+      `dod-pointer-removed-${rel}`,
       { ...live, [rel]: live[rel].split(DOD).join("docs/specs/SOME-OTHER-DOC.md") },
-      `${rel}: does not reference`
+      `${rel}: does not reference ${DOD}`
+    );
+    expectCaught(
+      `checklist-pointer-removed-${rel}`,
+      { ...live, [rel]: live[rel].split(CHECKLIST).join("docs/specs/OTHER-CHECKLIST.md") },
+      `${rel}: does not reference ${CHECKLIST}`
     );
   }
-  expectCaught("dod-itself-deleted", { ...live, [DOD]: "" }, "the Definition of Done is missing");
+  expectCaught("dod-deleted", { ...live, [DOD]: "" }, "the Definition of Done is missing");
+  expectCaught("checklist-deleted", { ...live, [CHECKLIST]: "" }, CHECKLIST);
+  expectCaught("rule23-deleted", { ...live, [RULE23]: "" }, RULE23);
 
   const liveProblems = assertDodIsAutoLoaded(live);
-  if (liveProblems.length) failures.push(`live sources FAIL (false positive): ${liveProblems.join(" | ")}`);
+  if (liveProblems.length) failures.push(`live FAIL: ${liveProblems.join(" | ")}`);
 
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:`);
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 5 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS`);
   process.exit(0);
 }
 
@@ -88,4 +117,6 @@ if (problems.length) {
   for (const p of problems) console.error(`  ${p}`);
   process.exit(1);
 }
-console.log(`${LABEL} OK — the Definition of Done is referenced by all ${ENTRY_POINTS.length} auto-loaded entry points`);
+console.log(
+  `${LABEL} OK — DoD + EVERY-PR checklist + Rule 23 wired into ${ENTRY_POINTS.length} auto-load entry points`
+);

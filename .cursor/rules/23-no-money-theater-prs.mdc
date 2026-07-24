@@ -42,9 +42,11 @@ Commit + PR body MUST include (git fails otherwise — verify-step 1430):
 
 Refuse merge of theater. Require `JORGE-APPROVED` on financial. Cursor builds; Claude merges. Volume ≠ Done.
 
-## CI teeth
+## CI teeth (mechanical — not memory)
 
-`scripts/verify-no-money-theater.mjs` (verify-step) fails branch commits that look like EntityLink/honesty theater on money paths without FINDING ID.
+1. `.husky/commit-msg` → `check-commit-evidence.mjs` rejects incomplete money commits locally  
+2. verify-step **1430** `verify-no-money-theater` fails CI if FINDING/LANE/DOD-A…E/VERIFY-1…8 missing or theater subject without write path  
+3. verify-step that auto-loads DoD fails CI if `EVERY-PR-AUDIT-CHECKLIST.md` / Rule 23 / VERIFY-1 / 1430 pointers are deleted from AGENTS.md / CLAUDE.md / 00-always-read-first / ih35-tms-standards
 
 ## Tie-breakers
 

@@ -1,6 +1,8 @@
 # IH35-TMS — Agent coordination
 
-> **★ DEFINITION OF DONE (owner-agreed, BINDING — read before you call anything done):** [docs/specs/DEFINITION-OF-DONE.md](docs/specs/DEFINITION-OF-DONE.md) — the single canonical statement of "done": the five DONE layers (active path, wizard depth, forward **and reverse** linkage, purpose→economics, evidence), the five VERIFY layers (QBO chrome, universal picker law, deep linkage chains, catalogs/entity scope, CPA-grade economics), the required evidence block, and the guard rules. **CI-green is the floor, not the verdict. "Merged" is not done.** Enforced by `scripts/verify-definition-of-done-evidence.mjs` (verify-step 1324).
+> **★ DEFINITION OF DONE (owner-agreed, BINDING — read before you call anything done):** [docs/specs/DEFINITION-OF-DONE.md](docs/specs/DEFINITION-OF-DONE.md) — five DONE layers (DOD-A…E) + evidence. **CI-green is the floor, not the verdict.**
+>
+> **★ EVERY PR AUDIT CHECKLIST (Claude-consolidated, BINDING, every session):** [docs/specs/EVERY-PR-AUDIT-CHECKLIST.md](docs/specs/EVERY-PR-AUDIT-CHECKLIST.md) — FINDING · LANE · DOD-A…E · **VERIFY-1…8** · MIGRATE · Rule 16. Money commits missing these keys **FAIL** commit-msg + verify-step **1430** (`verify-no-money-theater`). Rule **23** bans EntityLink/honesty theater. Also enforced by verify-step **1324**.
 
 > **Rule #0 (LOCKED):** Before any work, read [docs/specs/QUALITY-STANDARD-LOCKED.md](docs/specs/QUALITY-STANDARD-LOCKED.md) — the first standing quality law; it supersedes other docs on hardline conflict.
 
