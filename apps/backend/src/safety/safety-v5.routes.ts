@@ -361,7 +361,13 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
    * disputing never silently reverses a recovery. Voiding is the transition that must refuse when a
    * liability exists (below).
    */
-  app.patch("/api/v1/safety/internal-fines/:id/dispute", async (req, reply) => {
+  // Rate-limited per the repo pattern (config.rateLimit, cf. accounting/expenses.routes.ts).
+  // 30/min: a state transition on a punitive record is an operator action, not a polling read.
+  // CodeQL js/missing-rate-limiting flags an authorized route without it, and it is right to.
+  app.patch(
+    "/api/v1/safety/internal-fines/:id/dispute",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!validateRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -442,7 +448,10 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
    * owing money for a fine that no longer exists — the same silent-overcharge shape as the reduce
    * path fixed in #3341.
    */
-  app.post("/api/v1/safety/internal-fines/:id/void", async (req, reply) => {
+  app.post(
+    "/api/v1/safety/internal-fines/:id/void",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!["Owner", "Administrator"].includes(user.role)) return reply.code(403).send({ error: "forbidden" });

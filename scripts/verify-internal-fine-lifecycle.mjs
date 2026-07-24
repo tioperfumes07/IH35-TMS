@@ -35,8 +35,16 @@ const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
 const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^[ \t]*\/\/.*$/gm, "");
 
 /** Slice the void handler so assertions cannot be satisfied by unrelated code elsewhere in the file. */
+// Route matchers are FORMAT-AGNOSTIC on purpose: adding the repo's `{ config: { rateLimit } }`
+// second argument reformats the registration across lines, and an assertion keyed to the one-line
+// shape would report "no void route" for a route that is right there — a false alarm that teaches
+// the next person to distrust the guard.
+const DISPUTE_ROUTE = /app\.patch\(\s*"\/api\/v1\/safety\/internal-fines\/:id\/dispute"/;
+const VOID_ROUTE = /app\.post\(\s*"\/api\/v1\/safety\/internal-fines\/:id\/void"/;
+
 function voidHandler(routeSrc) {
-  const start = routeSrc.indexOf('app.post("/api/v1/safety/internal-fines/:id/void"');
+  const match = VOID_ROUTE.exec(routeSrc);
+  const start = match ? match.index : -1;
   if (start === -1) return "";
   const rest = routeSrc.slice(start);
   const end = rest.indexOf("app.post(\"/api/v1/safety/v5/complaints\"");
@@ -49,7 +57,7 @@ export function assertInternalFineLifecycle(sources) {
   const problems = [];
 
   // 1. Both transitions exist.
-  if (!src[ROUTES].includes('app.patch("/api/v1/safety/internal-fines/:id/dispute"')) {
+  if (!DISPUTE_ROUTE.test(src[ROUTES])) {
     problems.push(`${ROUTES}: no dispute route — a driver has no recorded way to contest an internal fine.`);
   }
   const vh = voidHandler(src[ROUTES]);
@@ -120,7 +128,7 @@ if (SELFTEST) {
 
   expectCaught(
     "dispute-route-removed",
-    { ...live, [ROUTES]: live[ROUTES].replace('app.patch("/api/v1/safety/internal-fines/:id/dispute"', 'app.patch("/api/v1/safety/internal-fines/:id/something-else"') },
+    { ...live, [ROUTES]: live[ROUTES].replace('/api/v1/safety/internal-fines/:id/dispute', '/api/v1/safety/internal-fines/:id/something-else') },
     "no dispute route"
   );
   expectCaught(
