@@ -567,24 +567,6 @@
     },
     {
       "schema": "catalogs",
-      "table": "asset_condition_codes",
-      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
-      "phase": "P1"
-    },
-    {
-      "schema": "catalogs",
-      "table": "asset_locations",
-      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
-      "phase": "P1"
-    },
-    {
-      "schema": "catalogs",
-      "table": "asset_statuses",
-      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
-      "phase": "P1"
-    },
-    {
-      "schema": "catalogs",
       "table": "audit_event_types",
       "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
       "phase": "P1"
@@ -657,12 +639,6 @@
     },
     {
       "schema": "catalogs",
-      "table": "lease_terms",
-      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
-      "phase": "P1"
-    },
-    {
-      "schema": "catalogs",
       "table": "mexico_states",
       "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
       "phase": "P1"
@@ -682,30 +658,6 @@
     {
       "schema": "catalogs",
       "table": "tire_positions",
-      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
-      "phase": "P1"
-    },
-    {
-      "schema": "catalogs",
-      "table": "tractor_statuses",
-      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
-      "phase": "P1"
-    },
-    {
-      "schema": "catalogs",
-      "table": "trailer_statuses",
-      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
-      "phase": "P1"
-    },
-    {
-      "schema": "catalogs",
-      "table": "trailer_types",
-      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
-      "phase": "P1"
-    },
-    {
-      "schema": "catalogs",
-      "table": "unit_ownership_types",
       "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
       "phase": "P1"
     },
@@ -790,7 +742,7 @@
     {
       "schema": "events",
       "table": "event_log",
-      "reason": "needs FK from 'operating_company_id' to org.companies(id) | needs FORCE ROW LEVEL SECURITY (RLS on but FORCE off) — GUC NAME IS NOT THE GAP (already reconciled): migration 202607090000 fixed events.log_event() to derive app.current_operating_company_id from its own p_operating_company_id argument, so every caller is correct by construction. What remains: (b) operating_company_id has NO foreign key to org.companies, and (d) RLS is enabled but NOT FORCED — migration 202607080100_event_log_force_rls_blocked_pending_guc_fix.sql is the tracked no-op placeholder documenting that FORCE is a deliberate separate follow-up (P0-a), to be authored only after a Neon-branch re-verification that forcing does not reject any spine-emit writer. Do not force this table as a side effect of closing this backlog entry.",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id) — GUC NAME IS NOT THE GAP (already reconciled): migration 202607090000 fixed events.log_event() to derive app.current_operating_company_id from its own p_operating_company_id argument, so every caller is correct by construction. What remains: (b) operating_company_id has NO foreign key to org.companies, and (d) RLS is enabled but NOT FORCED — migration 202607080100_event_log_force_rls_blocked_pending_guc_fix.sql is the tracked no-op placeholder documenting that FORCE is a deliberate separate follow-up (P0-a), to be authored only after a Neon-branch re-verification that forcing does not reject any spine-emit writer. Do not force this table as a side effect of closing this backlog entry.",
       "phase": "other"
     },
     {
@@ -838,6 +790,12 @@
     {
       "schema": "identity",
       "table": "workflow_requests",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "ifta",
+      "table": "personal_conveyance_miles_by_quarter",
       "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
       "phase": "P1"
     },
@@ -1212,12 +1170,6 @@
       "table": "unit_period",
       "reason": "needs FK from 'operating_company_id' to org.companies(id)",
       "phase": "P4"
-    },
-    {
-      "schema": "ifta",
-      "table": "personal_conveyance_miles_by_quarter",
-      "reason": "entity-scoped transitively via preparation_id → ifta.quarterly_preparations.operating_company_id (same pattern as state_miles_by_quarter / state_gallons_by_quarter / state_tax_by_quarter); no direct scoping column — BLOCK-03 additive table, P1 backlog parity with sibling ifta.* tables",
-      "phase": "P1"
     }
   ]
 }
