@@ -34,7 +34,7 @@ export function CashGlSetupPage() {
   });
 
   const coaOptions = useMemo(
-    () => (query.data?.coa_cash_accounts ?? []).map((a) => ({ value: a.id, label: `${a.account_number} · ${a.account_name}` })),
+    () => (query.data?.coa_cash_accounts ?? []).map((a) => ({ value: a.id, label: a.account_name })),
     [query.data]
   );
   const banks = query.data?.bank_accounts ?? [];

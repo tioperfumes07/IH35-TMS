@@ -123,10 +123,10 @@ export function ExpenseCategoryMapPage() {
       key: "account_number",
       label: "Account",
       sortable: true,
-      sortValue: (row) => `${row.account_number ?? "?"} - ${row.account_name ?? row.account_id}`,
+      sortValue: (row) => `${row.account_name ?? row.account_id}`,
       render: (row) => (
         <>
-          {row.account_number ?? "?"} - {row.account_name ?? row.account_id}
+          {row.account_name ?? row.account_id}
         </>
       ),
     },
@@ -253,7 +253,7 @@ export function ExpenseCategoryMapPage() {
                     onChange={(next) => setForm((prev) => ({ ...prev, account_id: next ?? "" }))}
                     options={accounts.map((account) => ({
                       value: account.id,
-                      label: `${account.account_number} - ${account.account_name}`,
+                      label: account.account_name,
                     }))}
                     createKind="account"
                     addNewLabel="+ Add new account"
@@ -264,7 +264,7 @@ export function ExpenseCategoryMapPage() {
                 </div>
                 <p className="mt-1 text-[11px] text-gray-500">
                   {selectedAccount
-                    ? `Selected: ${selectedAccount.account_number} - ${selectedAccount.account_name}`
+                    ? `Selected: ${selectedAccount.account_name}`
                     : "Pick from chart of accounts."}
                 </p>
               </label>

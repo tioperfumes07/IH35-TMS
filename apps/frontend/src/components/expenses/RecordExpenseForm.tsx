@@ -132,7 +132,7 @@ export function RecordExpenseForm({
         .filter((acct) => acct.is_postable && acct.account_type === "Asset" && !acct.deactivated_at)
         .map((acct) => ({
           id: acct.id,
-          label: acct.account_number ? `${acct.account_number} · ${acct.account_name}` : acct.account_name,
+          label: acct.account_name,
         })),
     [paymentAccountsQuery.data?.accounts]
   );
@@ -146,7 +146,7 @@ export function RecordExpenseForm({
       .filter((acct) => acct.is_postable && !acct.deactivated_at && EXPENSE_TYPES.has(String(acct.account_type)))
       .map((acct) => ({
         id: String(acct.id),
-        label: acct.account_number ? `${acct.account_number} · ${acct.account_name}` : acct.account_name,
+        label: acct.account_name,
         qboId: acct.qbo_account_id,
       }));
     if (fromCoa.length > 0) return fromCoa;

@@ -45,7 +45,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
     () =>
       (accountsQuery.data?.accounts ?? []).map((account) => ({
         value: account.id,
-        label: `${account.account_number} - ${account.account_name}`,
+        label: account.account_name,
       })),
     [accountsQuery.data]
   );

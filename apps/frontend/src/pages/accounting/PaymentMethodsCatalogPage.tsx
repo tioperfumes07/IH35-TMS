@@ -55,7 +55,7 @@ export function PaymentMethodsCatalogPage() {
     enabled: (createOpen || Boolean(editId)) && Boolean(companyId),
   });
   const accountOptions = useMemo(
-    () => (accountsQuery.data?.accounts ?? []).map((a) => ({ value: a.id, label: a.account_name, type: a.account_number ?? undefined })),
+    () => (accountsQuery.data?.accounts ?? []).map((a) => ({ value: a.id, label: a.account_name, type: a.account_type ?? undefined })),
     [accountsQuery.data]
   );
   const accountNameById = useMemo(() => {

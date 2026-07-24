@@ -21,6 +21,28 @@ import type { PoolClient } from "pg";
 // Fail-closed: a DIRECT client.query (mdata.drivers always exists); any DB error propagates and
 // aborts the caller's transaction rather than being swallowed into "qualified".
 
+// SAF-F07: the gate consulted CDL, DOT medical, hazmat endorsement and driver status — and NOTHING
+// about drug & alcohol. A driver who tested POSITIVE or REFUSED a test could still be assigned and
+// dispatched. Under 49 CFR §382.501 a driver is immediately removed from safety-sensitive functions
+// after a positive/refusal and stays prohibited until the return-to-duty process completes; the data
+// to enforce that was already being collected and was simply never read by the gate.
+//
+// TWO tables hold D&A results and BOTH are live-written today — the gate reads both on purpose:
+//   • safety.drug_test        (0270) — written by drug-program.routes.ts, which is what the office UI
+//                              posts to (POST /api/v1/safety/drug-program/tests). Result is the enum
+//                              safety.drug_test_result_enum: negative | positive | refusal |
+//                              adulterated | substituted | cancelled. Soft-deletable (voided_at).
+//   • safety.da_test_records  (0327) — written by drug-alcohol/program.service.ts (the newer D&A
+//                              program module). Result: pending | negative | positive | refused |
+//                              cancelled. No voided_at column.
+// Reading only one would leave a real hole: a positive recorded through the office UI lands in
+// drug_test, so a gate that read only da_test_records would wave that driver straight through.
+// Which of the two is canonical is an OPEN owner/canonicalization decision (Linkage Law C2) — until
+// it is settled, the safe reading is the union, never a guess.
+//
+// Per FMCSA, `adulterated` and `substituted` are refusals-to-test, so they disqualify exactly like a
+// refusal. `cancelled` is NOT a violation (a cancelled test never happened). `pending` is not a
+// violation either — a result that has not come back is not evidence of one.
 export type DriverQualificationReason =
   | "driver_deactivated"
   | "driver_archived"
@@ -28,7 +50,13 @@ export type DriverQualificationReason =
   | "cdl_expired"
   | "medical_card_missing"
   | "medical_card_expired"
-  | "hazmat_endorsement_missing";
+  | "hazmat_endorsement_missing"
+  | "drug_alcohol_positive"
+  | "drug_alcohol_refusal"
+  // SAF-F07-CH: FMCSA Clearinghouse prohibition (49 CFR §382.701). This is the ONLY source for a
+  // violation reported by a PREVIOUS employer — such a violation never appears in our own
+  // safety.drug_test / safety.da_test_records at all, so without this the gate is blind to it.
+  | "clearinghouse_prohibited";
 
 export type DriverQualificationBlock = {
   driverId: string;
@@ -37,6 +65,10 @@ export type DriverQualificationBlock = {
   cdlExpiresAt: string | null;
   medicalExpiryDate: string | null;
   hazmatEndorsementExpiresAt: string | null;
+  /** Date of the unresolved D&A violation that prohibits dispatch, when there is one. */
+  drugAlcoholViolationAt: string | null;
+  /** Date of the unresolved Clearinghouse "information found" result, when there is one. */
+  clearinghouseProhibitedSince: string | null;
 };
 
 /**
@@ -105,6 +137,107 @@ export async function assertDriverQualifiedForLoad(
   const dr = credRows.rows[0];
   if (!dr) return null;
 
+  // SAF-F07 — unresolved D&A violation check (49 CFR §382.501 removal from safety-sensitive duty).
+  //
+  // A violation prohibits dispatch until the return-to-duty process clears it. "Cleared" means a
+  // return_to_duty test with a NEGATIVE result collected AFTER the violation — not merely the
+  // existence of an RTD row, and not a later negative random (a routine negative does not end a
+  // prohibition). If the violation and its clearance share a timestamp the driver stays blocked:
+  // an ambiguous clearance is not a clearance.
+  //
+  // Voided drug_test rows are excluded (void-not-delete: a voided test is not evidence).
+  // da_test_records has no voided_at column, so nothing to exclude there.
+  const daRows = await client.query<{ violation_at: string | null; violation_kind: string | null }>(
+    `
+      WITH violations AS (
+        SELECT dt.test_date::timestamptz AS at,
+               CASE WHEN dt.result::text = 'positive' THEN 'positive' ELSE 'refusal' END AS kind
+        FROM safety.drug_test dt
+        WHERE dt.driver_id = $1::uuid
+          AND dt.operating_company_id = $2::uuid
+          AND dt.voided_at IS NULL
+          AND dt.result::text IN ('positive', 'refusal', 'adulterated', 'substituted')
+        UNION ALL
+        SELECT COALESCE(dr2.collected_at, dr2.scheduled_at, dr2.created_at) AS at,
+               CASE WHEN dr2.result = 'positive' THEN 'positive' ELSE 'refusal' END AS kind
+        FROM safety.da_test_records dr2
+        WHERE dr2.driver_uuid = $1::uuid
+          AND dr2.operating_company_id = $2::uuid
+          AND dr2.result IN ('positive', 'refused')
+      ),
+      clearances AS (
+        SELECT dt.test_date::timestamptz AS at
+        FROM safety.drug_test dt
+        WHERE dt.driver_id = $1::uuid
+          AND dt.operating_company_id = $2::uuid
+          AND dt.voided_at IS NULL
+          AND dt.test_type = 'return_to_duty'
+          AND dt.result::text = 'negative'
+        UNION ALL
+        SELECT COALESCE(dr3.collected_at, dr3.scheduled_at, dr3.created_at) AS at
+        FROM safety.da_test_records dr3
+        WHERE dr3.driver_uuid = $1::uuid
+          AND dr3.operating_company_id = $2::uuid
+          AND dr3.test_type = 'return_to_duty'
+          AND dr3.result = 'negative'
+      )
+      SELECT v.at::text AS violation_at, v.kind AS violation_kind
+      FROM violations v
+      WHERE NOT EXISTS (SELECT 1 FROM clearances c WHERE c.at > v.at)
+      ORDER BY v.at DESC NULLS LAST
+      LIMIT 1
+    `,
+    [driverId, operatingCompanyId]
+  );
+  const daBlock = daRows.rows[0] ?? null;
+
+  // SAF-F07-CH — FMCSA Clearinghouse prohibition (49 CFR §382.701).
+  //
+  // The Clearinghouse is the ONLY source for a violation reported by a PREVIOUS employer — such a
+  // violation never appears in safety.drug_test or safety.da_test_records at all, so without this
+  // the gate stays blind to it no matter how complete our own testing record is.
+  //
+  // Reads the EXISTING safety.clearinghouse_query (migration 0270, live on prod, RLS-scoped) — NOT a
+  // new table. dispatch/loads.routes.ts already returns `latest_clearinghouse_query` on its
+  // driver-eligibility payload and then computes `is_blocked` from the drug test ALONE, so the
+  // Clearinghouse answer was already being fetched and ignored. Status enum
+  // safety.clearinghouse_query_status_enum: clear | record_found | pending | error.
+  //
+  // Same unresolved-event shape as the D&A check above, deliberately: `record_found` prohibits until
+  // a STRICTLY LATER `clear` resolves it. An equal timestamp does not clear — an ambiguous clearance
+  // is not a clearance.
+  //
+  // `pending` and `error` are NOT prohibitions: a query that has not returned, or that failed, is not
+  // evidence of a violation. Voided rows are excluded (void-not-delete: a voided query is not
+  // evidence). Fail-closed: a direct query, no to_regclass fallback — the table has existed since
+  // 0270, and a guarded fallback would silently skip a federal prohibition check.
+  const chRows = await client.query<{ prohibited_since: string | null }>(
+    `
+      WITH found AS (
+        SELECT queried_at
+        FROM safety.clearinghouse_query
+        WHERE driver_id = $1::uuid AND operating_company_id = $2::uuid
+          AND voided_at IS NULL AND query_status = 'record_found'
+        ORDER BY queried_at DESC
+        LIMIT 1
+      ),
+      cleared AS (
+        SELECT queried_at
+        FROM safety.clearinghouse_query
+        WHERE driver_id = $1::uuid AND operating_company_id = $2::uuid
+          AND voided_at IS NULL AND query_status = 'clear'
+        ORDER BY queried_at DESC
+        LIMIT 1
+      )
+      SELECT (SELECT queried_at FROM found)::text AS prohibited_since
+      WHERE (SELECT queried_at FROM found) IS NOT NULL
+        AND ((SELECT queried_at FROM cleared) IS NULL
+             OR (SELECT queried_at FROM cleared) <= (SELECT queried_at FROM found))
+    `,
+    [driverId, operatingCompanyId]
+  );
+  const chBlock = chRows.rows[0] ?? null;
+
   const reasons: DriverQualificationReason[] = [];
   if (dr.is_deactivated) reasons.push("driver_deactivated");
   if (dr.is_archived) reasons.push("driver_archived");
@@ -113,6 +246,10 @@ export async function assertDriverQualifiedForLoad(
   if (dr.med_missing) reasons.push("medical_card_missing");
   else if (dr.med_expired) reasons.push("medical_card_expired");
   if (isHazmat && dr.hazmat_blocked) reasons.push("hazmat_endorsement_missing");
+  if (daBlock) {
+    reasons.push(daBlock.violation_kind === "positive" ? "drug_alcohol_positive" : "drug_alcohol_refusal");
+  }
+  if (chBlock) reasons.push("clearinghouse_prohibited");
 
   if (reasons.length === 0) return null;
 
@@ -123,6 +260,8 @@ export async function assertDriverQualifiedForLoad(
     cdlExpiresAt: dr.cdl_expires_at,
     medicalExpiryDate: dr.med_expiry_date,
     hazmatEndorsementExpiresAt: dr.hazmat_endorsement_expires_at,
+    drugAlcoholViolationAt: daBlock?.violation_at ?? null,
+    clearinghouseProhibitedSince: chBlock?.prohibited_since ?? null,
   };
 }
 

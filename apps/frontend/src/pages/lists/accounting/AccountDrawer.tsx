@@ -475,8 +475,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
                 </div>
                 <div className="space-y-1.5 text-xs text-slate-700">
                   <div className="font-semibold text-slate-900" data-testid="preview-name">
-                    {(form.account_number ? `${form.account_number} ` : "") +
-                      (form.account_name.trim() || "Untitled account")}
+                    {(form.account_name.trim() || "Untitled account")}
                   </div>
                   <div className="flex justify-between gap-3">
                     <span className="text-slate-500">Classification</span>

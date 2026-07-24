@@ -129,14 +129,14 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
     () =>
       accounts
         .filter((a) => a.account_type && INCOME_TYPES.includes(a.account_type))
-        .map((a) => ({ value: a.id, label: a.account_name, type: a.account_number ?? undefined })),
+        .map((a) => ({ value: a.id, label: a.account_name, type: a.account_type ?? undefined })),
     [accounts]
   );
   const expenseOptions = useMemo(
     () =>
       accounts
         .filter((a) => a.account_type && EXPENSE_TYPES.includes(a.account_type))
-        .map((a) => ({ value: a.id, label: a.account_name, type: a.account_number ?? undefined })),
+        .map((a) => ({ value: a.id, label: a.account_name, type: a.account_type ?? undefined })),
     [accounts]
   );
   const categoryOptions = useMemo(

@@ -188,7 +188,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                         <span className="text-[#8A92AB]">Posts as</span>
                         <span className="text-[#1A1F36]">
                           {preview.resolved_account
-                            ? `${preview.resolved_account.posting_side} → ${preview.resolved_account.account_number ?? ""} ${preview.resolved_account.account_name ?? ""}`
+                            ? `${preview.resolved_account.posting_side} → ${preview.resolved_account.account_name ?? ""}`
                             : "account mapping not found"}
                         </span>
                         <span className="text-[#8A92AB]">Pay from</span>

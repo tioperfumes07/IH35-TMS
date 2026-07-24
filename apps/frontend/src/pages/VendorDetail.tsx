@@ -169,7 +169,7 @@ export function VendorDetailPage() {
     () =>
       (expenseAccountsQuery.data?.accounts ?? [])
         .filter((a) => a.account_type === "Expense")
-        .map((a) => ({ value: a.id, label: a.account_number ? `${a.account_number} — ${a.account_name}` : a.account_name })),
+        .map((a) => ({ value: a.id, label: a.account_name })),
     [expenseAccountsQuery.data]
   );
 

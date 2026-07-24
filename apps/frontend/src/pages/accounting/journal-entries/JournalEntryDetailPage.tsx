@@ -136,14 +136,14 @@ const postingColumns: Array<ParityColumn<JournalEntryPosting>> = [
     label: "Account",
     sortable: true,
     sortValue: (posting) =>
-      `${posting.account_number ? `${posting.account_number} - ` : ""}${posting.account_name || posting.account_id}`,
+      `$${posting.account_name || posting.account_id}`,
     render: (posting) => (
       <Link
         to={`/accounting/chart-of-accounts/register/${posting.account_id}`}
         className="text-slate-700 hover:underline"
         onClick={(event) => event.stopPropagation()}
       >
-        {posting.account_number ? `${posting.account_number} - ` : ""}
+        
         {posting.account_name || posting.account_id}
       </Link>
     ),

@@ -1,4 +1,5 @@
 import type { ReferenceOption } from "./ReferenceSelect";
+import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 
 /** QBO-style secondary label shown after the primary name in ReferenceSelect dropdowns. */
 export function formatReferenceTypeLabel(raw: string | null | undefined): string | undefined {
@@ -33,15 +34,19 @@ export function customerReferenceOption(customer: {
   return { value: customer.id, label: customer.name, ...(type ? { type } : {}) };
 }
 
-/** Chart-of-accounts row — primary label mirrors QBO account picker; type is the GL account type (Bank, Expense, …). */
+/**
+ * Chart-of-accounts row for pickers.
+ * Primary label = account name only by default (owner 2026-07-23: QBO numbers are junk).
+ * Respects ih35.showAccountNumbers when the user toggles numbers ON in CoA / reports.
+ * Type column stays the GL account type (Bank, Expense, …) — never the account number.
+ */
 export function coaAccountReferenceOption(account: {
   id: string;
   account_name: string;
   account_type?: string | null;
   account_number?: string | null;
 }): ReferenceOption {
-  const number = String(account.account_number ?? "").trim();
-  const label = number ? `${number} · ${account.account_name}` : account.account_name;
+  const label = formatAccountDisplayLabel(account);
   const type = formatReferenceTypeLabel(account.account_type);
   return { value: account.id, label, ...(type ? { type } : {}) };
 }

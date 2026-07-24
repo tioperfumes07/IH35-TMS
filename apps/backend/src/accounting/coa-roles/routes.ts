@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../shared.js";
+import { requiredCoaRolesForCompanyCode } from "./entity-required-roles.js";
 import { COA_ROLE_VALUES } from "./resolver.service.js";
 
 const roleSchema = z.enum(COA_ROLE_VALUES);
@@ -126,6 +127,13 @@ export async function registerCoaRolesRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
 
     const status = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const company = await client.query(
+        `SELECT code FROM org.companies WHERE id = $1::uuid LIMIT 1`,
+        [query.data.operating_company_id]
+      );
+      const companyCode = String((company.rows[0] as { code?: string } | undefined)?.code ?? "");
+      const required = requiredCoaRolesForCompanyCode(companyCode);
+
       const rows = await client.query(
         `
           SELECT role
@@ -136,9 +144,11 @@ export async function registerCoaRolesRoutes(app: FastifyInstance) {
         [query.data.operating_company_id]
       );
       const mapped = new Set(rows.rows.map((row: unknown) => String((row as { role?: string }).role ?? "")));
-      const missing = COA_ROLE_VALUES.filter((role) => !mapped.has(role));
+      const missing = required.filter((role) => !mapped.has(role));
       return {
-        required_roles: COA_ROLE_VALUES,
+        company_code: companyCode || null,
+        required_roles: required,
+        all_roles: COA_ROLE_VALUES,
         mapped_roles: Array.from(mapped.values()).sort(),
         missing_roles: missing,
         valid: missing.length === 0,
