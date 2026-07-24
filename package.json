@@ -96,7 +96,6 @@
     "verify:static": "node scripts/verify-static.mjs",
     "verify:local-ci": "node scripts/verify-local-ci.mjs",
     "verify:unit-retire-open-wo-gate": "node scripts/verify-unit-retire-open-wo-gate.mjs",
-    "verify:fleet-catalogs-per-entity": "node scripts/verify-fleet-catalogs-per-entity.mjs",
     "verify:fleet-edit-save-wired": "node scripts/verify-fleet-edit-save-wired.mjs",
     "verify:fleet-roster-create-actions": "node scripts/verify-fleet-roster-create-actions.mjs",
     "verify:fleet-insurance-summary-rendered": "node scripts/verify-fleet-insurance-summary-rendered.mjs",
