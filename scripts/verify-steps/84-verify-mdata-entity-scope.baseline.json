@@ -36,21 +36,6 @@
       "preview": "`SELECT * FROM mdata.customers WHERE id = $1 LIMIT 1`"
     },
     {
-      "key": "apps/backend/src/accounting/invoices.routes.ts#a4c6a69f91918c24fe52e897037128c83f539b95",
-      "file": "apps/backend/src/accounting/invoices.routes.ts",
-      "preview": "` SELECT i.*, c.customer_name, fa.display_id AS factoring_display_id, COALESCE(l.customer_chargeback_requested, false) A"
-    },
-    {
-      "key": "apps/backend/src/accounting/invoices.routes.ts#f6dbbf3aa7348017cf397a2744a413f96ebab6dd",
-      "file": "apps/backend/src/accounting/invoices.routes.ts",
-      "preview": "` SELECT COALESCE( NULLIF(TRIM(c.ap_email), ''), NULLIF(TRIM(c.billing_email), ''), NULLIF(TRIM(c.ar_email), ''), NULLIF"
-    },
-    {
-      "key": "apps/backend/src/accounting/invoices.routes.ts#f8371b3b8d39004c3c290a79f4e17dbeb3f7114b",
-      "file": "apps/backend/src/accounting/invoices.routes.ts",
-      "preview": "` SELECT i.*, c.customer_name, fa.display_id AS factoring_display_id, COALESCE(l.customer_chargeback_requested, false) A"
-    },
-    {
       "key": "apps/backend/src/accounting/payments.routes.ts#0b702ce3d1f37c59733830ec922c7393d23a5e7b",
       "file": "apps/backend/src/accounting/payments.routes.ts",
       "preview": "` SELECT p.*, c.customer_name FROM accounting.payments p JOIN mdata.customers c ON c.id = p.customer_id WHERE ${where.jo"
@@ -199,11 +184,6 @@
       "key": "apps/backend/src/data-infra/data-infra.service.ts#5bba799cd6b0962f044ff17c13b137061d9788a6",
       "file": "apps/backend/src/data-infra/data-infra.service.ts",
       "preview": "` SELECT l.*, e.equipment_number, v.vendor_name AS lender_vendor_name FROM banking.equipment_loans l JOIN mdata.equipmen"
-    },
-    {
-      "key": "apps/backend/src/dispatch/arch-tabs.service.ts#7947bc3a9dd5b66fe8b83a47acf3208f29052705",
-      "file": "apps/backend/src/dispatch/arch-tabs.service.ts",
-      "preview": "` SELECT h.id, h.load_id, h.assignment_method, h.reason_code, h.notes, h.assigned_at, l.load_number, CONCAT_WS(' ', pd.f"
     },
     {
       "key": "apps/backend/src/dispatch/assignments/quicksave.service.ts#ba80700d506989960471ffa79dba940f014aa7ca",
@@ -386,11 +366,6 @@
       "preview": "` SELECT sd.*, concat_ws(' ', dr.first_name, dr.last_name) AS driver_name, s.display_id AS settlement_display_id FROM dr"
     },
     {
-      "key": "apps/backend/src/driver-finance/settlement-payment.service.ts#66278908aacbf2e3e0047f3705e91fb955e6c9ca",
-      "file": "apps/backend/src/driver-finance/settlement-payment.service.ts",
-      "preview": "`SELECT ${column.column_name}::text AS token FROM mdata.drivers WHERE id = $1 LIMIT 1`"
-    },
-    {
       "key": "apps/backend/src/driver-finance/settlements.routes.ts#56bbfa86009a68e1abfee947a4e5ae1d21b6c72d",
       "file": "apps/backend/src/driver-finance/settlements.routes.ts",
       "preview": "` SELECT s.id, s.display_id, s.operating_company_id, s.period_start, s.period_end, s.net_pay, d.email, d.first_name, d.l"
@@ -514,16 +489,6 @@
       "key": "apps/backend/src/insurance/policy-unit-fleet.service.ts#8735b41cc3b0fc81d29ec727d3602ec2dc6fe9d7",
       "file": "apps/backend/src/insurance/policy-unit-fleet.service.ts",
       "preview": "` SELECT id::text FROM catalogs.accounts ${where.length > 0 ? `"
-    },
-    {
-      "key": "apps/backend/src/insurance/policy.routes.ts#de446b55eba102d1ce22f9a3db5d55c6c796514a",
-      "file": "apps/backend/src/insurance/policy.routes.ts",
-      "preview": "` SELECT a.id::text, a.unit_code, a.asset_type, a.status FROM mdata.assets a WHERE a.tenant_id = $1::uuid AND ( a.id = $"
-    },
-    {
-      "key": "apps/backend/src/integrations/fmcsa/safer.service.ts#23acf3e3511e45d7369d27157d77704b4038e009",
-      "file": "apps/backend/src/integrations/fmcsa/safer.service.ts",
-      "preview": "` SELECT id, operating_company_id, customer_name, mc_number, dot_number, fmcsa_verified_at, fmcsa_last_checked_at, fmcsa"
     },
     {
       "key": "apps/backend/src/integrations/qbo/qbo-vendor-linkage.service.ts#1ef48529c0f8f6cf923063a0b413e2b3a7d0ced5",
@@ -731,6 +696,11 @@
       "preview": "` SELECT id, curp, cdl_number, cdl_state FROM mdata.drivers WHERE id = $1 LIMIT 1 `"
     },
     {
+      "key": "apps/backend/src/mdata/driver-safety-events.routes.ts#c2c50fc4d6b5d87f9055d9d61c4dabf79d1cdae6",
+      "file": "apps/backend/src/mdata/driver-safety-events.routes.ts",
+      "preview": "`SELECT operating_company_id FROM mdata.drivers WHERE id = $1 LIMIT 1`"
+    },
+    {
       "key": "apps/backend/src/mdata/driver-team.service.ts#1f45569ae7eb42aaa6c2bbc356fafa9a9b6da888",
       "file": "apps/backend/src/mdata/driver-team.service.ts",
       "preview": "` SELECT id FROM mdata.loads WHERE team_id = $1 AND status = ANY($2::mdata.load_status_enum[]) AND soft_deleted_at IS NU"
@@ -816,31 +786,6 @@
       "preview": "` SELECT el.id, el.equipment_id, el.event_type, el.event_at, el.from_unit_id, el.to_unit_id, el.from_location_id, el.to_"
     },
     {
-      "key": "apps/backend/src/mdata/equipment.routes.ts#1148edd5b425bcd20189ea89ad61fd5697fb99ad",
-      "file": "apps/backend/src/mdata/equipment.routes.ts",
-      "preview": "` SELECT id, equipment_number, vin, equipment_type, make, model, year, status, current_unit_id, current_location_id, own"
-    },
-    {
-      "key": "apps/backend/src/mdata/equipment.routes.ts#11e77210d30795b568584e942f1e505bef2659e2",
-      "file": "apps/backend/src/mdata/equipment.routes.ts",
-      "preview": "` SELECT id, deactivated_at FROM mdata.equipment WHERE id = $1 LIMIT 1 `"
-    },
-    {
-      "key": "apps/backend/src/mdata/equipment.routes.ts#b59312f7e2e883e894c9f0735e38e8a8b0d438d2",
-      "file": "apps/backend/src/mdata/equipment.routes.ts",
-      "preview": "` SELECT id, equipment_number, vin, equipment_type, make, model, year, status, current_unit_id, current_location_id, own"
-    },
-    {
-      "key": "apps/backend/src/mdata/loads.routes.ts#5eac589addf095467f769660a3c18b90cf9192db",
-      "file": "apps/backend/src/mdata/loads.routes.ts",
-      "preview": "` SELECT COUNT(*)::int AS total_count FROM mdata.loads l JOIN mdata.customers c ON c.id = l.customer_id LEFT JOIN mdata."
-    },
-    {
-      "key": "apps/backend/src/mdata/loads.routes.ts#f3b8ad9dcf9f11d760054599b0a975585e86cbfc",
-      "file": "apps/backend/src/mdata/loads.routes.ts",
-      "preview": "`SELECT id FROM mdata.loads WHERE id = $1 LIMIT 1`"
-    },
-    {
       "key": "apps/backend/src/mdata/reclassify.routes.ts#be035d08e04547577a2a73232c6c05d521653381",
       "file": "apps/backend/src/mdata/reclassify.routes.ts",
       "preview": "`SELECT entity_classification, qbo_classification_ref FROM mdata.customers WHERE id = $1 LIMIT 1`"
@@ -861,11 +806,6 @@
       "preview": "` SELECT id, equipment_number, vin, make, model, year, status, equipment_type, reefer_year, reefer_brand, owner_company_"
     },
     {
-      "key": "apps/backend/src/mdata/units.routes.ts#7c70074b12029312aabb2631e527f6114ecd3aa1",
-      "file": "apps/backend/src/mdata/units.routes.ts",
-      "preview": "`SELECT * FROM mdata.units WHERE id = $1 LIMIT 1`"
-    },
-    {
       "key": "apps/backend/src/mdata/units.routes.ts#8db4498966ea90a1e7c92a1767391ce61f918a65",
       "file": "apps/backend/src/mdata/units.routes.ts",
       "preview": "` SELECT id, unit_number, vin, make, model, year, license_plate, license_state, status, assigned_driver_id, owner_compan"
@@ -874,11 +814,6 @@
       "key": "apps/backend/src/mdata/units.routes.ts#a5d8f6b73b24ce0e542ac81770c965697a23da69",
       "file": "apps/backend/src/mdata/units.routes.ts",
       "preview": "`SELECT count(*)::int AS total FROM mdata.units ${whereClause}`"
-    },
-    {
-      "key": "apps/backend/src/mdata/units.routes.ts#cc4d3b7b39aadc1759b9bc65f5f4dcb36d0a1514",
-      "file": "apps/backend/src/mdata/units.routes.ts",
-      "preview": "` SELECT id, deactivated_at, status FROM mdata.units WHERE id = $1 LIMIT 1 `"
     },
     {
       "key": "apps/backend/src/mdata/workflow-routes.ts#06d209e0574b34aa0c319ec8c7a7d1e07ce5dedf",
@@ -956,11 +891,6 @@
       "preview": "` SELECT ds.id, ds.submitted_at, ds.type, ds.has_major_defect, ds.has_any_defect, ds.follow_up_wo_id, ds.driver_id, ds.u"
     },
     {
-      "key": "apps/backend/src/safety/events/safety-events.routes.ts#ee304eb2a93592933ffe59d1458392317904382a",
-      "file": "apps/backend/src/safety/events/safety-events.routes.ts",
-      "preview": "` SELECT e.id::text, e.operating_company_id::text, e.event_type, e.severity, e.status, e.kpi_bucket, e.subject_type, e.s"
-    },
-    {
       "key": "apps/backend/src/safety/fines.routes.ts#f2802d7044b6ae2434f36fe503bcdd3f17f6b9a0",
       "file": "apps/backend/src/safety/fines.routes.ts",
       "preview": "`SELECT id, status FROM mdata.drivers WHERE id = $1 LIMIT 1`"
@@ -989,21 +919,6 @@
       "key": "apps/backend/src/seed/csv-seed-import.ts#a473ba16a3b835d47793b45386dc46495362cb49",
       "file": "apps/backend/src/seed/csv-seed-import.ts",
       "preview": "`SELECT id FROM mdata.equipment WHERE equipment_number = $1 LIMIT 1`"
-    },
-    {
-      "key": "apps/backend/src/settlements/disputes/disputes.routes.ts#232dc689a1c3fba424d23525682814391bf29487",
-      "file": "apps/backend/src/settlements/disputes/disputes.routes.ts",
-      "preview": "` SELECT d.*, dr.first_name || ' ' || dr.last_name AS driver_name, s.display_id AS settlement_display_id FROM settlement"
-    },
-    {
-      "key": "apps/backend/src/settlements/pre-settlements.routes.ts#f5ece784f4b7d44219b8690e3dc3b95042a97c5f",
-      "file": "apps/backend/src/settlements/pre-settlements.routes.ts",
-      "preview": "` SELECT s.id::text, s.driver_id::text, s.pay_period_start::text, s.pay_period_end::text, s.status, s.gross_cents, s.ded"
-    },
-    {
-      "key": "apps/backend/src/settlements/team-splits/team-splits.routes.ts#745bc2e7111c09f635c22684223b3c41161d87b7",
-      "file": "apps/backend/src/settlements/team-splits/team-splits.routes.ts",
-      "preview": "` SELECT c.*, p.first_name || ' ' || p.last_name AS primary_driver_name, s.first_name || ' ' || s.last_name AS secondary"
     },
     {
       "key": "apps/backend/src/settlements/trip-link.engine.ts#09cb9f3a9443c8a91338551f40898c1b789e23ec",

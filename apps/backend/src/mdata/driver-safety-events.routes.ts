@@ -3,6 +3,29 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { resolveOperatingCompanyId, OperatingCompanyMembershipError } from "../auth/operating-company-scope.js";
+
+type ScopeClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
+
+// catalogs.driver_termination_reasons is per-entity (migration 202607890000). Two scope entry points:
+//  - scopeToCallerCompany: for the catalog CRUD (admin manages THEIR entity's list) — resolves the
+//    caller's DEFAULT company (or an explicit param) and sets the app.operating_company_id GUC.
+//  - scopeToDriverCompany: for the referencing safety-event handlers — the reason must resolve in the
+//    DRIVER's entity, so set the GUC from mdata.drivers.operating_company_id.
+async function scopeToCallerCompany(client: ScopeClient, userId: string, requested?: string | null): Promise<string | null> {
+  const operatingCompanyId = await resolveOperatingCompanyId(client, userId, requested ?? null);
+  if (!operatingCompanyId) return null;
+  await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+  return operatingCompanyId;
+}
+
+async function scopeToDriverCompany(client: ScopeClient, driverId: string): Promise<string | null> {
+  const res = await client.query(`SELECT operating_company_id FROM mdata.drivers WHERE id = $1 LIMIT 1`, [driverId]);
+  const opco = res.rows[0]?.operating_company_id as string | undefined;
+  if (!opco) return null;
+  await client.query("SELECT set_config('app.operating_company_id', $1, true)", [opco]);
+  return opco;
+}
 
 const safetyReadableRoles = new Set(["Owner", "Administrator", "Manager", "Safety"]);
 const eventTypeSchema = z.enum(["termination", "incident", "complaint", "commendation", "dispute"]);
@@ -97,15 +120,21 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
         .union([z.boolean(), z.string()])
         .optional()
         .transform((value) => value === true || value === "true"),
+      operating_company_id: z.string().uuid().optional(),
     });
     const parsedQuery = querySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     const reasons = await withCurrentUser(authUser.uuid, async (client) => {
+      const opco = await scopeToCallerCompany(client, authUser.uuid, parsedQuery.data.operating_company_id).catch((e) => {
+        if (e instanceof OperatingCompanyMembershipError) return null;
+        throw e;
+      });
+      if (!opco) return null;
       const whereClause = parsedQuery.data.include_inactive ? "" : "WHERE is_active = true AND deactivated_at IS NULL";
       const result = await client.query(
         `
-          SELECT id, code, label, description, severity, is_active, deactivated_at
+          SELECT id, operating_company_id, code, label, description, severity, is_active, deactivated_at
           FROM catalogs.driver_termination_reasons
           ${whereClause}
           ORDER BY
@@ -120,6 +149,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
       return result.rows;
     });
 
+    if (reasons === null) return reply.code(403).send({ error: "forbidden" });
     return { reasons };
   });
 
@@ -139,19 +169,26 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
       description: z.string().trim().max(1000).nullable().optional(),
       severity: severitySchema,
     });
+    const parsedQuery = z.object({ operating_company_id: z.string().uuid().optional() }).safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
     const parsedBody = bodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const b = parsedBody.data;
 
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
+        const opco = await scopeToCallerCompany(client, authUser.uuid, parsedQuery.data.operating_company_id).catch((e) => {
+          if (e instanceof OperatingCompanyMembershipError) return null;
+          throw e;
+        });
+        if (!opco) return null;
         const res = await client.query(
           `
-            INSERT INTO catalogs.driver_termination_reasons (code, label, description, severity, created_by_user_id, updated_by_user_id)
-            VALUES ($1, $2, $3, $4, $5, $5)
-            RETURNING id, code, label, description, severity, is_active, deactivated_at
+            INSERT INTO catalogs.driver_termination_reasons (operating_company_id, code, label, description, severity, created_by_user_id, updated_by_user_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $6)
+            RETURNING id, operating_company_id, code, label, description, severity, is_active, deactivated_at
           `,
-          [b.code, b.label, b.description ?? null, b.severity, authUser.uuid]
+          [opco, b.code, b.label, b.description ?? null, b.severity, authUser.uuid]
         );
         const row = res.rows[0];
         await appendCrudAudit(client, authUser.uuid, "catalogs.driver_termination_reasons_created", {
@@ -161,6 +198,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
         });
         return row;
       });
+      if (created === null) return reply.code(403).send({ error: "forbidden" });
       return reply.code(201).send({ reason: created });
     } catch (error) {
       if ((error as { code?: string }).code === "23505") return reply.code(409).send({ error: "termination_reason_code_conflict" });
@@ -210,6 +248,12 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
 
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
+        const opco = await scopeToCallerCompany(client, authUser.uuid, null).catch((e) => {
+          if (e instanceof OperatingCompanyMembershipError) return null;
+          throw e;
+        });
+        if (!opco) return null;
+        // WHERE id is entity-scoped by FORCE RLS via the GUC set above.
         const res = await client.query(
           `
             UPDATE catalogs.driver_termination_reasons
@@ -243,6 +287,12 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
     const updated = await withCurrentUser(authUser.uuid, async (client) => {
+      const opco = await scopeToCallerCompany(client, authUser.uuid, null).catch((e) => {
+        if (e instanceof OperatingCompanyMembershipError) return null;
+        throw e;
+      });
+      if (!opco) return null;
+      // WHERE id is entity-scoped by FORCE RLS via the GUC.
       const res = await client.query(
         `
           UPDATE catalogs.driver_termination_reasons
@@ -420,6 +470,9 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     const rows = await withCurrentUser(authUser.uuid, async (client) => {
+      // driver_termination_reasons is per-entity + FORCE RLS; set the GUC from the driver's company so
+      // the LEFT JOIN on the reasons catalog resolves (otherwise tr.* would come back NULL).
+      await scopeToDriverCompany(client, parsedParams.data.driver_id);
       const filters = ["e.driver_id = $1"];
       if (!parsedQuery.data.include_voided) {
         filters.push("e.voided_at IS NULL");
@@ -497,6 +550,9 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
       );
       const driver = driverRes.rows[0];
       if (!driver) return null;
+      // Set the GUC from the driver's company so the per-entity termination-reason lookup below
+      // resolves in the driver's entity (driver_termination_reasons is FORCE RLS).
+      await scopeToDriverCompany(client, parsedParams.data.driver_id);
 
       let normalizedSeverity = body.severity;
       if (body.event_type === "termination") {
