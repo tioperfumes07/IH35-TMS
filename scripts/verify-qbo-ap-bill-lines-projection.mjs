@@ -6,8 +6,8 @@
  * bills≈16k / bill_lines≈1. Mirror already stores full QBO Bill JSON including Line[].
  *
  * Contract:
- *   - projectApBillLinesToLedger (or Stage 2) INSERT INTO accounting.bill_lines
- *   - reads payload_json->'Line'
+ *   - projectApBillLinesToLedger INSERT/UPSERT INTO accounting.bill_lines from payload_json->'Line'
+ *   - incremental: ON CONFLICT + IS DISTINCT FROM; orphan DELETE via NOT EXISTS (no full wipe each tick)
  *   - does not invent a single line from header amount when Line missing
  *   - does not call GL / posting engine from the A/P puller
  *   - DescriptionOnly skipped; AccountBased + ItemBased only
@@ -43,6 +43,22 @@ if (!/payload_json\s*->\s*'Line'|payload_json->'Line'/.test(puller)) {
 }
 if (!/INSERT INTO accounting\.bill_lines/.test(puller)) {
   failures.push("projector must INSERT INTO accounting.bill_lines");
+}
+if (!/ON CONFLICT \(bill_id, line_sequence\)/.test(puller)) {
+  failures.push("projector must upsert on (bill_id, line_sequence)");
+}
+if (!/IS DISTINCT FROM/.test(puller)) {
+  failures.push("upsert must use IS DISTINCT FROM so identical re-runs do not thrash audit");
+}
+if (!/NOT EXISTS/.test(puller) || !/DELETE FROM accounting\.bill_lines/.test(puller)) {
+  failures.push("projector must orphan-delete via NOT EXISTS (not leave stale QBO lines)");
+}
+// Forbid company-wide wipe of all QBO lines before insert (scheduler thrash / audit flood).
+if (
+  /DELETE FROM accounting\.bill_lines[\s\S]{0,500}source_system = 'qbo'[\s\S]{0,200}\);/.test(puller) &&
+  !/DELETE FROM accounting\.bill_lines[\s\S]{0,800}NOT EXISTS/.test(puller)
+) {
+  failures.push("must not full-wipe QBO bill_lines each tick; require orphan NOT EXISTS delete only");
 }
 if (!/AccountBasedExpenseLineDetail/.test(puller) || !/ItemBasedExpenseLineDetail/.test(puller)) {
   failures.push("projector must handle AccountBased + ItemBased expense lines");

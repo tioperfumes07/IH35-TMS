@@ -67,9 +67,12 @@ describe("ap-bills-puller Stage 1 transaction boundaries (static behavioral cont
   });
 
   it("idempotent upsert by (operating_company_id, qbo_id) — never invents from accounting.bills", () => {
-    expect(pullerSrc).toContain("ON CONFLICT (operating_company_id, qbo_id)");
-    expect(pullerSrc).not.toMatch(/FROM accounting\.bills[\s\S]*INSERT INTO mdata\.qbo_ap_bills/);
-    expect(pullerSrc).not.toMatch(/INSERT INTO mdata\.qbo_ap_bills[\s\S]*FROM accounting\.bills/);
+    // Scope to Stage 1 only — Stage 2b legitimately reads FROM accounting.bills for line projection.
+    const stage2b = pullerSrc.indexOf("export async function projectApBillLinesToLedger");
+    const stage1Src = stage2b >= 0 ? pullerSrc.slice(0, stage2b) : pullerSrc;
+    expect(stage1Src).toContain("ON CONFLICT (operating_company_id, qbo_id)");
+    expect(stage1Src).not.toMatch(/FROM accounting\.bills[\s\S]*INSERT INTO mdata\.qbo_ap_bills/);
+    expect(stage1Src).not.toMatch(/INSERT INTO mdata\.qbo_ap_bills[\s\S]*FROM accounting\.bills/);
   });
 
   it("does not write TMS→QBO", () => {

@@ -85,7 +85,8 @@ async function runScheduledSyncForCompany(
   // Inbound A/P (QBO Bills -> mdata.qbo_ap_bills mirror -> accounting.bills + bill_lines). MUST run even if
   // an earlier step failed — that isolation IS the A/P-shows-$0 / bill_lines≈1 fix. Both stages are
   // internally gated by default-OFF flags (QBO_AP_MIRROR_PULL_ENABLED / QBO_AP_BILLS_PROJECTION_ENABLED)
-  // and idempotent (upsert / delete+insert lines), so re-running is safe. NO GL poster on this path.
+  // and idempotent (header upsert / incremental line upsert + orphan-delete), so re-running is safe.
+  // NO GL poster on this path.
   await runStep("ap_bills_pull", operatingCompanyId, () => pullApBillsFromQbo(operatingCompanyId), failures, log);
   await runStep(
     "ap_bills_project",
@@ -98,11 +99,12 @@ async function runScheduledSyncForCompany(
           enabled: res.enabled,
           rows_projected: res.rowsProjected,
           lines_projected: res.lines.linesProjected,
+          lines_orphan_deleted: res.lines.linesOrphanDeleted,
           lines_unmapped_account: res.lines.linesUnmappedAccount,
           lines_unmapped_item: res.lines.linesUnmappedItem,
           header_line_sum_mismatch: res.lines.headerLineSumMismatch,
         },
-        "[qbo-sync-scheduler] ap_bills_project complete (headers + lines from payload_json)"
+        "[qbo-sync-scheduler] ap_bills_project complete (headers + incremental lines from payload_json)"
       );
       return res;
     },

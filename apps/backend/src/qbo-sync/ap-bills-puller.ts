@@ -49,7 +49,10 @@ export type ApBillsPullResult = {
 
 export type ApBillLinesProjectResult = {
   enabled: boolean;
+  /** Rows touched by upsert (insert + real updates). No-ops with identical values are not counted. */
   linesProjected: number;
+  /** QBO-sourced bill_lines removed because they no longer appear in payload_json money lines. */
+  linesOrphanDeleted: number;
   linesUnmappedAccount: number;
   linesUnmappedItem: number;
   headerLineSumMismatch: number;
@@ -363,9 +366,14 @@ export async function pullApBillsFromQbo(operatingCompanyId: string): Promise<Ap
 /**
  * Stage 2b — project QBO Bill Line[] from mdata.qbo_ap_bills.payload_json into accounting.bill_lines.
  *
- * Idempotent: DELETE existing lines for source_system='qbo' bills in this entity, then INSERT from
- * payload_json. Never touches TMS-native bill lines. Never invents a single line from header totals
- * when Line is missing. Never calls the GL poster.
+ * Incremental / scheduler-safe:
+ *   1) UPSERT money lines from payload_json (ON CONFLICT), updating only when values IS DISTINCT FROM
+ *      so identical re-runs do not thrash audit.row_changes / trg_audit_bill_lines.
+ *   2) DELETE only orphan QBO lines that no longer appear in the payload (NOT EXISTS), never a
+ *      company-wide wipe of all QBO bill_lines each 4h tick.
+ *
+ * Never touches TMS-native bill lines. Never invents a single line from header totals when Line is
+ * missing. Never calls the GL poster.
  *
  * AccountBased → catalogs.accounts via qbo_account_id.
  * ItemBased → catalogs.items.default_expense_account_id when qbo_item_id matches; else account_id NULL.
@@ -378,11 +386,27 @@ export async function projectApBillLinesToLedger(
   const empty: ApBillLinesProjectResult = {
     enabled: false,
     linesProjected: 0,
+    linesOrphanDeleted: 0,
     linesUnmappedAccount: 0,
     linesUnmappedItem: 0,
     headerLineSumMismatch: 0,
     projectedAt,
   };
+
+  // Safe line_sequence: non-numeric LineNum/Id must not abort the whole txn (::int cast).
+  const lineSeqSql = `
+    COALESCE(
+      CASE
+        WHEN (line->>'LineNum') ~ '^[0-9]+$' AND (line->>'LineNum')::int > 0
+          THEN (line->>'LineNum')::int
+      END,
+      CASE
+        WHEN (line->>'Id') ~ '^[0-9]+$' AND (line->>'Id')::int > 0
+          THEN (line->>'Id')::int
+      END,
+      t.ordinality::int
+    )
+  `;
 
   return withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
@@ -393,18 +417,6 @@ export async function projectApBillLinesToLedger(
             operating_company_id: operatingCompanyId,
           });
     if (!enabled) return empty;
-
-    // Replace projected lines for QBO-sourced bills only (TMS-native lines untouched).
-    await client.query(
-      `
-        DELETE FROM accounting.bill_lines bl
-        USING accounting.bills b
-        WHERE bl.bill_id = b.id
-          AND b.operating_company_id = $1::uuid
-          AND b.source_system = 'qbo'
-      `,
-      [operatingCompanyId]
-    );
 
     const insertRes = await client.query(
       `
@@ -418,11 +430,7 @@ export async function projectApBillLinesToLedger(
         )
         SELECT
           b.id AS bill_id,
-          COALESCE(
-            NULLIF((NULLIF(line->>'LineNum', ''))::int, 0),
-            NULLIF((NULLIF(line->>'Id', ''))::int, 0),
-            t.ordinality::int
-          ) AS line_sequence,
+          ${lineSeqSql} AS line_sequence,
           COALESCE((NULLIF(line->>'Amount', ''))::numeric, 0) AS amount,
           NULLIF(line->>'Description', '') AS description,
           'A' AS section,
@@ -460,11 +468,42 @@ export async function projectApBillLinesToLedger(
           description = EXCLUDED.description,
           account_id = EXCLUDED.account_id,
           section = EXCLUDED.section
+        WHERE accounting.bill_lines.amount IS DISTINCT FROM EXCLUDED.amount
+           OR accounting.bill_lines.description IS DISTINCT FROM EXCLUDED.description
+           OR accounting.bill_lines.account_id IS DISTINCT FROM EXCLUDED.account_id
+           OR accounting.bill_lines.section IS DISTINCT FROM EXCLUDED.section
+      `,
+      [operatingCompanyId]
+    );
+
+    // Orphan delete only — never wipe all QBO lines each scheduler tick.
+    const orphanRes = await client.query(
+      `
+        DELETE FROM accounting.bill_lines bl
+        USING accounting.bills b
+        WHERE bl.bill_id = b.id
+          AND b.operating_company_id = $1::uuid
+          AND b.source_system = 'qbo'
+          AND NOT EXISTS (
+            SELECT 1
+            FROM mdata.qbo_ap_bills m
+            CROSS JOIN LATERAL jsonb_array_elements(
+              CASE
+                WHEN jsonb_typeof(m.payload_json->'Line') = 'array' THEN m.payload_json->'Line'
+                ELSE '[]'::jsonb
+              END
+            ) WITH ORDINALITY AS t(line, ordinality)
+            WHERE m.operating_company_id = b.operating_company_id
+              AND m.qbo_id = b.qbo_bill_id
+              AND line->>'DetailType' IN ('AccountBasedExpenseLineDetail', 'ItemBasedExpenseLineDetail')
+              AND (${lineSeqSql}) = bl.line_sequence
+          )
       `,
       [operatingCompanyId]
     );
 
     const linesProjected = insertRes.rowCount ?? 0;
+    const linesOrphanDeleted = orphanRes.rowCount ?? 0;
 
     const unmapped = await client.query<{
       lines_unmapped_account: string;
@@ -475,11 +514,7 @@ export async function projectApBillLinesToLedger(
           SELECT
             b.id AS bill_id,
             line->>'DetailType' AS detail_type,
-            COALESCE(
-              NULLIF((NULLIF(line->>'LineNum', ''))::int, 0),
-              NULLIF((NULLIF(line->>'Id', ''))::int, 0),
-              t.ordinality::int
-            ) AS line_sequence
+            ${lineSeqSql} AS line_sequence
           FROM accounting.bills b
           INNER JOIN mdata.qbo_ap_bills m
             ON m.operating_company_id = b.operating_company_id
@@ -530,6 +565,7 @@ export async function projectApBillLinesToLedger(
     return {
       enabled: true,
       linesProjected,
+      linesOrphanDeleted,
       linesUnmappedAccount: Number(unmapped.rows[0]?.lines_unmapped_account ?? 0),
       linesUnmappedItem: Number(unmapped.rows[0]?.lines_unmapped_item ?? 0),
       headerLineSumMismatch: Number(mismatch.rows[0]?.n ?? 0),
@@ -642,6 +678,7 @@ export async function projectApBillsToLedger(operatingCompanyId: string): Promis
       lines: {
         enabled: false,
         linesProjected: 0,
+        linesOrphanDeleted: 0,
         linesUnmappedAccount: 0,
         linesUnmappedItem: 0,
         headerLineSumMismatch: 0,

@@ -97,6 +97,12 @@ describeIntegration("QBO-AP-PULL Stage 2 projection -> A/P aging (real Postgres)
        VALUES ($1::uuid,$2::uuid,$3,$3,$4, CURRENT_DATE - 10, CURRENT_DATE - 5, $5, 0, 'unpaid')`,
       [nativeBillId, companyId, vendorNativeUuid, `NATIVE-${tag}`, NATIVE_CENTS]
     );
+    // Plant a TMS-native line so Stage 2b cannot silently wipe non-QBO lines (coverage for DELETE scope).
+    await db.query(
+      `INSERT INTO accounting.bill_lines (bill_id, line_sequence, amount, description, section)
+       VALUES ($1::uuid, 1, $2::numeric, 'TMS native line must survive QBO reproject', 'A')`,
+      [nativeBillId, NATIVE_CENTS / 100]
+    );
 
     const matchedPayload = {
       Id: qboBillMatchedId,
@@ -323,5 +329,11 @@ describeIntegration("QBO-AP-PULL Stage 2 projection -> A/P aging (real Postgres)
       [companyId, nativeBillId]
     );
     expect(Number(native.rows[0]!.n)).toBe(1);
+    const nativeLines = await db.query<{ n: string; desc: string }>(
+      `SELECT count(*)::int AS n, max(description) AS desc FROM accounting.bill_lines WHERE bill_id=$1::uuid`,
+      [nativeBillId]
+    );
+    expect(Number(nativeLines.rows[0]!.n)).toBe(1);
+    expect(nativeLines.rows[0]!.desc).toContain("TMS native line must survive");
   });
 });
