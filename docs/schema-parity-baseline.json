@@ -10114,6 +10114,30 @@
       "template_name",
       "to_phone",
       "variables"
+    ],
+    "mdata.qbo_purchases": [
+      "account_name",
+      "account_qbo_id",
+      "active",
+      "created_at",
+      "currency",
+      "doc_number",
+      "entity_name",
+      "entity_qbo_id",
+      "entity_type",
+      "id",
+      "last_seen_at",
+      "mirrored_at",
+      "operating_company_id",
+      "payload_json",
+      "payment_type",
+      "private_note",
+      "qbo_id",
+      "qbo_sync_token",
+      "qbo_updated_at",
+      "total_cents",
+      "txn_date",
+      "updated_at"
     ]
   }
 }
