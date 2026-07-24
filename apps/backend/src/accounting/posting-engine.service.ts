@@ -1852,11 +1852,8 @@ export async function postSourceTransaction(input: PostSourceInput, actor: Actor
         error.code !== "BANK_CATEGORIZATION_NOT_POSTING_ELIGIBLE" &&
         error.code !== "TRANSFER_NOT_POSTING_ELIGIBLE" &&
         error.code !== "QBO_BILL_POST_GL_REFUSED" &&
-<<<<<<< HEAD
-        error.code !== "QBO_BILL_PAYMENT_POST_GL_REFUSED"
-=======
+        error.code !== "QBO_BILL_PAYMENT_POST_GL_REFUSED" &&
         error.code !== "EXPENSE_POST_GL_REFUSED"
->>>>>>> f9245bf9f ([HOLD] feat(accounting): project QBO Purchase → accounting.expenses (subledger only))
       ) {
         await markBatchFailed(actor, input.operating_company_id, sourceType, sourceId, idempotencyKey);
       }
