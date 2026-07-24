@@ -43,6 +43,12 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
   const { pushToast } = useToast();
   const [uploading, setUploading] = useState(false);
   const [spawnedWoDisplayId, setSpawnedWoDisplayId] = useState<string | null>(null);
+  // SAF-F31: these pickers fetch limit:200 with no server-side search, so with more than 200 units
+  // (or loads, or vendors) the rest were unselectable and nothing said so — a silent truncation on
+  // an evidence record. The term is sent to the server, which already supports `search`.
+  const [unitSearch, setUnitSearch] = useState("");
+  const [loadSearch, setLoadSearch] = useState("");
+  const [vendorSearch, setVendorSearch] = useState("");
   // SAF-F35: the spawn response already returns the WO's uuid; only the display id was kept, so the
   // spawned work order was a dead-end string. Keeping the id makes it a real drill-through.
   const [spawnedWoId, setSpawnedWoId] = useState<string | null>(null);
@@ -112,18 +118,18 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
   const scopeReady = open && Boolean(operatingCompanyId);
 
   const unitsQuery = useQuery({
-    queryKey: ["accident", "units", operatingCompanyId],
-    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: 200 }),
+    queryKey: ["accident", "units", operatingCompanyId, unitSearch],
+    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: 200, search: unitSearch || undefined }),
     enabled: scopeReady,
   });
   const vendorsQuery = useQuery({
-    queryKey: ["accident", "vendors", operatingCompanyId],
-    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, limit: 200 }),
+    queryKey: ["accident", "vendors", operatingCompanyId, vendorSearch],
+    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, limit: 200, search: vendorSearch || undefined }),
     enabled: scopeReady,
   });
   const loadsQuery = useQuery({
-    queryKey: ["accident", "loads", operatingCompanyId],
-    queryFn: () => listDispatchLoads({ operating_company_id: operatingCompanyId, view: "loads", status: [], limit: 200, offset: 0 }),
+    queryKey: ["accident", "loads", operatingCompanyId, loadSearch],
+    queryFn: () => listDispatchLoads({ operating_company_id: operatingCompanyId, view: "loads", status: [], limit: 200, offset: 0, search: loadSearch || undefined }),
     enabled: scopeReady,
   });
 
@@ -270,6 +276,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                   value={unitId || null}
                   placeholder="Search unit…"
                   onChange={(next) => setUnitId(next ?? "")}
+                  onSearch={setUnitSearch}
                 />
               </div>
             </Field>
@@ -283,6 +290,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                   onChange={(next) => setVendorId(next ?? "")}
                   createKind="vendor"
                   operatingCompanyId={operatingCompanyId}
+                  onSearch={setVendorSearch}
                 />
               </div>
             </Field>
@@ -293,6 +301,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                   value={loadId || null}
                   placeholder="Search load…"
                   onChange={(next) => setLoadId(next ?? "")}
+                  onSearch={setLoadSearch}
                 />
               </div>
             </Field>

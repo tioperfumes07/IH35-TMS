@@ -47,6 +47,8 @@ export type ReferenceSelectProps = {
   onOptionCreated?: (opt: ReferenceOption) => void;
   /** Slot to keep an existing control (e.g. account lock toggle) beside the select. */
   lockControl?: ReactNode;
+  /** SAF-F31 — server-side type-ahead pass-through (see components/Combobox.tsx). */
+  onSearch?: (query: string) => void;
 };
 
 const INLINE_KINDS = new Set<ReferenceCreateKind>(["vendor", "customer", "account", "service"]);
@@ -58,6 +60,7 @@ export function ReferenceSelect({
   createKind,
   operatingCompanyId,
   placeholder,
+  onSearch,
   disabled,
   loading,
   addNewLabel,
@@ -92,6 +95,7 @@ export function ReferenceSelect({
         No external button — the Combobox allowAddNew now always-shows the row on open. */}
         <Combobox
           options={comboOptions}
+          onSearch={onSearch}
           value={value}
           onChange={onChange}
           placeholder={placeholder}
