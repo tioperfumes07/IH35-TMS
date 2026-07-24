@@ -1,6 +1,6 @@
 {
- "date": "2026-07-23",
- "generated_at_iso": "2026-07-23T21:07:06.395Z",
+ "date": "2026-07-24",
+ "generated_at_iso": "2026-07-24T07:10:08.274Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
@@ -13162,6 +13162,132 @@
  ],
  "merged_prs": [
   {
+   "number": 3389,
+   "title": "fix(lists): cancellation-reason catalogs hijacked the default entity to USMCA (LST-F05)",
+   "mergedAt": "2026-07-24T06:44:22Z",
+   "branch": "fix/lst-catalog-default-entity-hijack"
+  },
+  {
+   "number": 3387,
+   "title": "fix(lists): fleet catalog accepted a metadata field no fleet table can store (LST)",
+   "mergedAt": "2026-07-24T06:44:16Z",
+   "branch": "fix/lst-fleet-catalog-metadata-phantom"
+  },
+  {
+   "number": 3385,
+   "title": "[HOLD-FOR-JORGE] fix(safety): schema-wide DELETE hardening — 48 evidence tables + narrow the arwd default (Part B)",
+   "mergedAt": "2026-07-24T06:50:53Z",
+   "branch": "fix/saf-schema-wide-delete-hardening"
+  },
+  {
+   "number": 3384,
+   "title": "fix(safety): guards that certified broken code + a stale doc (SAF-F30/F08/F28)",
+   "mergedAt": "2026-07-24T06:21:14Z",
+   "branch": "fix/saf-f30-f08-f28-guards-and-docs"
+  },
+  {
+   "number": 3381,
+   "title": "fix(safety): a money action asked operators to type a raw uuid; three drawer implementations (SAF-F10/F25)",
+   "mergedAt": "2026-07-24T06:08:28Z",
+   "branch": "fix/saf-f10-f25-money-chrome"
+  },
+  {
+   "number": 3380,
+   "title": "[HOLD-FOR-JORGE] feat(safety): gated batch — F29 join tables, incident void, F34 ask-rail, Clearinghouse query_type, F09 escrow target",
+   "mergedAt": "2026-07-24T07:09:16Z",
+   "branch": "feat/saf-gated-batch-f09-f29-f34-void-clearinghouse"
+  },
+  {
+   "number": 3379,
+   "title": "fix(safety): cargo claims off the shared grid; safety pickers truncated at 200 (SAF-F21/F31)",
+   "mergedAt": "2026-07-24T02:34:54Z",
+   "branch": "fix/saf-f21-f31-cargo-claims-and-picker-search"
+  },
+  {
+   "number": 3378,
+   "title": "fix(accounting): CoA optional recoveries + QBO create/list UX",
+   "mergedAt": "2026-07-24T02:06:43Z",
+   "branch": "fix/coa-optional-unused-recoveries"
+  },
+  {
+   "number": 3377,
+   "title": "fix(safety): damage reports, interchanges and cargo claims were create-only (SAF-F20)",
+   "mergedAt": "2026-07-24T02:06:34Z",
+   "branch": "fix/saf-f20-incident-lifecycle"
+  },
+  {
+   "number": 3376,
+   "title": "fix(safety): fines lost their load/unit links; violations never carried the catalog FK (SAF-F19/F15)",
+   "mergedAt": "2026-07-24T02:06:30Z",
+   "branch": "fix/saf-f19-f15-fine-links-and-catalogs"
+  },
+  {
+   "number": 3375,
+   "title": "fix(safety): FMCSA Clearinghouse prohibition never blocked dispatch (SAF-F07-CH)",
+   "mergedAt": "2026-07-24T00:56:50Z",
+   "branch": "feat/saf-clearinghouse-queries"
+  },
+  {
+   "number": 3373,
+   "title": "[HOLD-FOR-JORGE] fix(accounting,banking): entity CoA validate + WF Plaid mask ownership",
+   "mergedAt": "2026-07-24T00:27:28Z",
+   "branch": "fix/acct-banking-audit-wiring"
+  },
+  {
+   "number": 3372,
+   "title": "docs(law): the Definition of Done is referenced by every auto-loaded coder entry point",
+   "mergedAt": "2026-07-24T00:27:08Z",
+   "branch": "docs/definition-of-done-is-auto-loaded"
+  },
+  {
+   "number": 3371,
+   "title": "fix(safety): an internal fine could be imposed but never disputed or voided (SAF-F12)",
+   "mergedAt": "2026-07-24T01:16:37Z",
+   "branch": "fix/saf-f12-internal-fine-lifecycle"
+  },
+  {
+   "number": 3370,
+   "title": "fix(safety): 7 mounted-but-unreachable routes + 2 dead drill-throughs (SAF-F22/F35/F23)",
+   "mergedAt": "2026-07-24T00:26:44Z",
+   "branch": "fix/saf-f22-f35-f23-safety-reverse-and-orphans"
+  },
+  {
+   "number": 3369,
+   "title": "fix(accounting): hide CoA/QBO account numbers by default",
+   "mergedAt": "2026-07-24T00:26:38Z",
+   "branch": "fix/coa-hide-account-numbers"
+  },
+  {
+   "number": 3368,
+   "title": "fix(deploy): every backend deploy since 20:11 CT failed — migration checksum drift",
+   "mergedAt": "2026-07-23T22:22:11Z",
+   "branch": "fix/prod-deploy-checksum-override-202607770000"
+  },
+  {
+   "number": 3366,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-23T21:22:38Z",
+   "branch": "chore/tracker-artifacts-sync-30044844579"
+  },
+  {
+   "number": 3365,
+   "title": "fix(safety): unit + trailer profiles showed no accidents, DOT inspections or DVIRs (SAF-F17)",
+   "mergedAt": "2026-07-23T21:38:49Z",
+   "branch": "fix/saf-f17-asset-profile-safety-reverse"
+  },
+  {
+   "number": 3363,
+   "title": "fix(safety): driver profile showed no fines, complaints or D&A tests (SAF-F16)",
+   "mergedAt": "2026-07-23T21:10:09Z",
+   "branch": "fix/saf-f16-driver-profile-safety-reverse"
+  },
+  {
+   "number": 3362,
+   "title": "docs(handoff): next-Claude-coder handoff — laws, lanes, linkage audit, traps",
+   "mergedAt": "2026-07-23T21:38:59Z",
+   "branch": "docs/handoff-claude-coder"
+  },
+  {
    "number": 3360,
    "title": "fix(safety): internal-fine reason create was an external link, not inline (SAF-F24)",
    "mergedAt": "2026-07-23T20:51:38Z",
@@ -16634,136 +16760,28 @@
    "title": "ci(guards): wire verify:frontend-version-stamp into locked-guards (B-B residual)",
    "mergedAt": "2026-07-16T21:50:28Z",
    "branch": "fix/wire-frontend-version-stamp-locked-guards"
-  },
-  {
-   "number": 2587,
-   "title": "ci(guards): wire verify:banking-fromto-derived into locked-guards (B-A4 residual)",
-   "mergedAt": "2026-07-16T21:50:26Z",
-   "branch": "fix/wire-banking-fromto-locked-guards"
-  },
-  {
-   "number": 2586,
-   "title": "HOLD: Inventory Purchase History missing SoR (no fake stock ledger)",
-   "mergedAt": "2026-07-16T22:30:09Z",
-   "branch": "hold/inventory-purchase-history-sor"
-  },
-  {
-   "number": 2585,
-   "title": "fix(banking): honest categorize UX — real bulk categorize + honest-disabled paperclip (audit gap #15)",
-   "mergedAt": "2026-07-17T00:36:31Z",
-   "branch": "fix/banking-categorize-ux-honesty"
-  },
-  {
-   "number": 2584,
-   "title": "fix(drivers): remove dead profile actions",
-   "mergedAt": "2026-07-16T21:49:46Z",
-   "branch": "fix/driver-profile-dead-actions"
-  },
-  {
-   "number": 2583,
-   "title": "guard(425c): CI lock — never hardcode petition_date (audit gap #17)",
-   "mergedAt": "2026-07-17T01:33:51Z",
-   "branch": "fix/425c-petition-date"
-  },
-  {
-   "number": 2582,
-   "title": "ci(settlement): B-C.P4 retire-write + route-mount G4 lock",
-   "mergedAt": "2026-07-16T22:29:56Z",
-   "branch": "fix/bcp4-retire-write-guard"
-  },
-  {
-   "number": 2581,
-   "title": "fix(ops): B-D3 restore-drill data-integrity assertion",
-   "mergedAt": "2026-07-16T21:11:41Z",
-   "branch": "fix/bd3-restore-drill-integrity"
-  },
-  {
-   "number": 2580,
-   "title": "fix(ci): B-D4 tighten no-silent-failure guards (extend, not rebuild)",
-   "mergedAt": "2026-07-16T22:03:11Z",
-   "branch": "fix/bd4-tighten-silent-failure-guards"
-  },
-  {
-   "number": 2579,
-   "title": "fix(ci): B-D2 coverage-of-coverage meta-guard (package.json + CI)",
-   "mergedAt": "2026-07-16T21:18:07Z",
-   "branch": "fix/bd2-coverage-meta-guard"
-  },
-  {
-   "number": 2577,
-   "title": "fix(ui): B-A3 dead-click KPIs — wire real / honest-disable rest",
-   "mergedAt": "2026-07-16T20:59:06Z",
-   "branch": "fix/dead-click-kpis-honest"
-  },
-  {
-   "number": 2576,
-   "title": "fix(ci): squash-inspect every file in hold-merge-gate (B-A5)",
-   "mergedAt": "2026-07-16T20:58:55Z",
-   "branch": "fix/hold-merge-gate-squash-inspection"
-  },
-  {
-   "number": 2575,
-   "title": "ci(guard): wire verify:banking-empty-state-entity-aware into locked-guards (B-A1)",
-   "mergedAt": "2026-07-16T20:58:37Z",
-   "branch": "ci/wire-banking-empty-state-guard"
-  },
-  {
-   "number": 2574,
-   "title": "fix(finance-hub): honest reachable OFF state at /finance/hub (audit gap #14)",
-   "mergedAt": "2026-07-16T20:50:27Z",
-   "branch": "fix/finance-hub-off-wall"
-  },
-  {
-   "number": 2573,
-   "title": "fix(nav): canonicalize sidebar HOME to /home (audit gap #12)",
-   "mergedAt": "2026-07-16T20:53:45Z",
-   "branch": "fix/sidebar-home-canonical"
-  },
-  {
-   "number": 2572,
-   "title": "fix(factoring): FACT chargeback advance EntityLinks + CI guard",
-   "mergedAt": "2026-07-16T20:44:37Z",
-   "branch": "fix/fact-chargebacks-entitylinks"
-  },
-  {
-   "number": 2571,
-   "title": "feat(banking): Relay Fuel Wallet bank feed + auto-linkage",
-   "mergedAt": "2026-07-16T21:47:54Z",
-   "branch": "fix/relay-wallet-bank-feed"
-  },
-  {
-   "number": 2570,
-   "title": "fix(connectivity): honor audit-log and fault-drafts deep-link params",
-   "mergedAt": "2026-07-16T20:23:59Z",
-   "branch": "fix/entitylink-dead-query-params"
-  },
-  {
-   "number": 2569,
-   "title": "fix(docs): wire Missing Required / Recent Uploads KPI clicks",
-   "mergedAt": "2026-07-16T20:42:25Z",
-   "branch": "fix/docs-kpi-dead-clicks"
-  },
-  {
-   "number": 2568,
-   "title": "fix(accounting): Maint Create Expense/Bill = QBO side panels",
-   "mergedAt": "2026-07-16T20:23:34Z",
-   "branch": "fix/accounting-maint-qbo-side-panels"
-  },
-  {
-   "number": 2567,
-   "title": "fix(relay): use Mike-confirmed dtstart/dtend + 10s pull gap",
-   "mergedAt": "2026-07-16T19:47:03Z",
-   "branch": "fix/relay-dtstart-dtend"
-  },
-  {
-   "number": 2566,
-   "title": "fix(relay): breaker timeout must exceed fetch AbortController",
-   "mergedAt": "2026-07-16T19:09:14Z",
-   "branch": "fix/relay-breaker-timeout-hierarchy"
   }
  ],
  "merged_pr_total": 3000,
  "hold_for_jorge": [
+  {
+   "number": 3385,
+   "title": "[HOLD-FOR-JORGE] fix(safety): schema-wide DELETE hardening — 48 evidence tables + narrow the arwd default (Part B)",
+   "mergedAt": "2026-07-24T06:50:53Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3380,
+   "title": "[HOLD-FOR-JORGE] feat(safety): gated batch — F29 join tables, incident void, F34 ask-rail, Clearinghouse query_type, F09 escrow target",
+   "mergedAt": "2026-07-24T07:09:16Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3373,
+   "title": "[HOLD-FOR-JORGE] fix(accounting,banking): entity CoA validate + WF Plaid mask ownership",
+   "mergedAt": "2026-07-24T00:27:28Z",
+   "category": "HOLD"
+  },
   {
    "number": 3353,
    "title": "[HOLD-FOR-JORGE] fix(safety): accident wizard discarded 7 evidence fields on save (SAF-F05)",
