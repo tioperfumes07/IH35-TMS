@@ -72,6 +72,32 @@ async function upsertMirror(client: PoolClient, operatingCompanyId: string, row:
   );
 }
 
+/**
+ * QBO Item.ExpenseAccountRef.value → catalogs.accounts.id via qbo_account_id (entity-scoped).
+ * Used so ItemBased bill lines can resolve CoA without inventing accounts.
+ */
+export async function resolveDefaultExpenseAccountId(
+  client: PoolClient,
+  operatingCompanyId: string,
+  row: Record<string, unknown>
+): Promise<string | null> {
+  const expenseRef = row.ExpenseAccountRef as Record<string, unknown> | undefined;
+  const qboAccountId = expenseRef?.value != null ? String(expenseRef.value).trim() : "";
+  if (!qboAccountId) return null;
+  const res = await client.query<{ id: string }>(
+    `
+      SELECT id::text AS id
+      FROM catalogs.accounts
+      WHERE operating_company_id = $1::uuid
+        AND qbo_account_id = $2
+        AND deactivated_at IS NULL
+      LIMIT 1
+    `,
+    [operatingCompanyId, qboAccountId]
+  );
+  return res.rows[0]?.id ?? null;
+}
+
 async function upsertCatalogItem(client: PoolClient, operatingCompanyId: string, row: Record<string, unknown>): Promise<void> {
   const qboId = String(row.Id ?? "");
   if (!qboId) return;
@@ -83,6 +109,7 @@ async function upsertCatalogItem(client: PoolClient, operatingCompanyId: string,
   const unitPrice =
     typeof rawPrice === "number" ? Math.round(rawPrice * 100) : rawPrice != null ? Math.round(Number(rawPrice) * 100) : null;
   const active = row.Active === undefined ? true : Boolean(row.Active);
+  const defaultExpenseAccountId = await resolveDefaultExpenseAccountId(client, operatingCompanyId, row);
 
   // AF-2 made catalogs.items per-entity: operating_company_id is NOT NULL and the single-col unique on
   // qbo_item_id was replaced by (operating_company_id, qbo_item_id). This write must carry
@@ -96,26 +123,39 @@ async function upsertCatalogItem(client: PoolClient, operatingCompanyId: string,
         item_type,
         unit_price_cents,
         qbo_item_id,
+        default_expense_account_id,
         notes,
         deactivated_at,
         qbo_synced_at,
         qbo_sync_status,
         qbo_sync_error
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,now(),'synced',NULL)
+      VALUES ($1,$2,$3,$4,$5,$6,$7::uuid,$8,$9,now(),'synced',NULL)
       ON CONFLICT (operating_company_id, qbo_item_id) WHERE qbo_item_id IS NOT NULL
       DO UPDATE SET
         item_name = EXCLUDED.item_name,
         item_code = EXCLUDED.item_code,
         item_type = EXCLUDED.item_type,
         unit_price_cents = EXCLUDED.unit_price_cents,
-        deactivated_at = CASE WHEN $9::boolean THEN NULL ELSE COALESCE(catalogs.items.deactivated_at, now()) END,
+        default_expense_account_id = COALESCE(EXCLUDED.default_expense_account_id, catalogs.items.default_expense_account_id),
+        deactivated_at = CASE WHEN $10::boolean THEN NULL ELSE COALESCE(catalogs.items.deactivated_at, now()) END,
         qbo_synced_at = now(),
         qbo_sync_status = 'synced',
         qbo_sync_error = NULL,
         updated_at = now()
     `,
-    [operatingCompanyId, name, sku ?? `QBO-${qboId}`, itemType, unitPrice, qboId, `Synced from QBO (${operatingCompanyId})`, active ? null : new Date(), active]
+    [
+      operatingCompanyId,
+      name,
+      sku ?? `QBO-${qboId}`,
+      itemType,
+      unitPrice,
+      qboId,
+      defaultExpenseAccountId,
+      `Synced from QBO (${operatingCompanyId})`,
+      active ? null : new Date(),
+      active,
+    ]
   );
 }
 
