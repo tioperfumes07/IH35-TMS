@@ -53,8 +53,10 @@ BEGIN
   -- 2) SEED: copy the primary company's catalog to every OTHER active company (same values, fresh PKs).
   --    `phase` is NOT NULL and must be carried. v_seed iterates real org.companies rows only (FK-safe).
   FOR v_seed IN SELECT id FROM org.companies WHERE deactivated_at IS NULL AND id <> v_primary LOOP
-    INSERT INTO catalogs.driver_load_statuses (operating_company_id, code, name, description, phase, sort_order, is_active)
-      SELECT v_seed, code, name, description, phase, sort_order, is_active
+    -- Carry deactivated_at (not just is_active) so a copied deactivated row stays a proper deactivated
+    -- row, never a half-deactivated is_active=false + deactivated_at=NULL state.
+    INSERT INTO catalogs.driver_load_statuses (operating_company_id, code, name, description, phase, sort_order, is_active, deactivated_at)
+      SELECT v_seed, code, name, description, phase, sort_order, is_active, deactivated_at
       FROM catalogs.driver_load_statuses
       WHERE operating_company_id = v_primary
     ON CONFLICT (operating_company_id, code) DO NOTHING;
