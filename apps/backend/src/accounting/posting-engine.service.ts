@@ -83,7 +83,8 @@ export type PostingErrorCode =
   | "EXPENSE_NOT_POSTING_ELIGIBLE"
   | "BANK_CATEGORIZATION_NOT_POSTING_ELIGIBLE"
   | "TRANSFER_NOT_POSTING_ELIGIBLE"
-  | "QBO_BILL_POST_GL_REFUSED";
+  | "QBO_BILL_POST_GL_REFUSED"
+  | "QBO_BILL_PAYMENT_POST_GL_REFUSED";
 
 export class PostingEngineError extends Error {
   code: PostingErrorCode;
@@ -1077,14 +1078,35 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
     );
   }
 
+  // Parallel books: QBO-origin bills never get a TMS Bill→GL leg (#3386 QBO_BILL_POST_GL_REFUSED).
+  // Paying them must NOT invent a TMS bill_payment JE either — that would DR ap_control with no matching
+  // TMS CR (BILL_AP_NOT_POSTED) or invent a second cash/AP story already in QBO. Subledger payment stands;
+  // refuse GL here so payBill can skip without rolling back the payment row.
+  if (!payment.bill_id) {
+    throw new PostingEngineError("BILL_AP_NOT_POSTED", "Bill payment has no bill_id; cannot verify the bill's A/P leg is posted");
+  }
+  const billSrcRes = await client.query<{ source_system: string | null }>(
+    `
+      SELECT source_system::text
+      FROM accounting.bills
+      WHERE operating_company_id = $1::uuid
+        AND id::text = $2
+      LIMIT 1
+    `,
+    [operatingCompanyId, payment.bill_id]
+  );
+  if ((billSrcRes.rows[0]?.source_system ?? "").toLowerCase() === "qbo") {
+    throw new PostingEngineError(
+      "QBO_BILL_PAYMENT_POST_GL_REFUSED",
+      "Refusing BillPayment→GL post for source_system=qbo — parallel books; QBO already holds this A/P settlement. TMS records the subledger payment only."
+    );
+  }
+
   // CHAIN-04 GAP #3 — accrual-sequencing guard (bill-posted-first). The payment JE always does
   // DR ap_control / CR bank, which ASSUMES CHAIN-03 already posted DR expense / CR ap_control for
   // this bill. If the bill's A/P leg was never posted, debiting ap_control here has no matching
   // credit -> A/P goes NEGATIVE and the QBO A/P tie-out breaks. Refuse to post; NEVER post an A/P
   // leg from the payment path (design doc §10-A open decision #2 = enforce bill-posted-first).
-  if (!payment.bill_id) {
-    throw new PostingEngineError("BILL_AP_NOT_POSTED", "Bill payment has no bill_id; cannot verify the bill's A/P leg is posted");
-  }
   const billPosting = await getPostingBySource(client, operatingCompanyId, "bill", payment.bill_id, "initial_post");
   if (!billPosting || billPosting.result !== "already_posted") {
     throw new PostingEngineError(
@@ -1816,7 +1838,8 @@ export async function postSourceTransaction(input: PostSourceInput, actor: Actor
         error.code !== "ADVANCE_NOT_POSTING_ELIGIBLE" &&
         error.code !== "BANK_CATEGORIZATION_NOT_POSTING_ELIGIBLE" &&
         error.code !== "TRANSFER_NOT_POSTING_ELIGIBLE" &&
-        error.code !== "QBO_BILL_POST_GL_REFUSED"
+        error.code !== "QBO_BILL_POST_GL_REFUSED" &&
+        error.code !== "QBO_BILL_PAYMENT_POST_GL_REFUSED"
       ) {
         await markBatchFailed(actor, input.operating_company_id, sourceType, sourceId, idempotencyKey);
       }

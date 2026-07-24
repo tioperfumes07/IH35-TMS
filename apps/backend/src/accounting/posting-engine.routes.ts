@@ -49,7 +49,7 @@ const reverseBodySchema = z.object({
 });
 
 function mapPostingError(error: PostingEngineError) {
-  if (error.code === "INVOICE_NOT_POSTING_ELIGIBLE" || error.code === "BILL_NOT_POSTING_ELIGIBLE" || error.code === "PAYMENT_NOT_POSTING_ELIGIBLE" || error.code === "QBO_BILL_POST_GL_REFUSED") {
+  if (error.code === "INVOICE_NOT_POSTING_ELIGIBLE" || error.code === "BILL_NOT_POSTING_ELIGIBLE" || error.code === "PAYMENT_NOT_POSTING_ELIGIBLE" || error.code === "QBO_BILL_POST_GL_REFUSED" || error.code === "QBO_BILL_PAYMENT_POST_GL_REFUSED") {
     return { statusCode: 409, body: { error: error.code.toLowerCase(), message: error.message } };
   }
   if (error.code === "SOURCE_NOT_FOUND") {
