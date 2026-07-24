@@ -113,13 +113,20 @@ CREATE INDEX IF NOT EXISTS idx_cv_fines_company_violation
 CREATE INDEX IF NOT EXISTS idx_cv_fines_reverse
   ON safety.company_violation_fines (operating_company_id, fine_id) WHERE is_active;
 
+-- Explicit ENABLE (scanner + runtime). Dynamic EXECUTE alone is invisible to
+-- verify-rls-migration-scan, which requires a literal ALTER TABLE … ENABLE.
+ALTER TABLE safety.company_violation_drivers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE safety.company_violation_units ENABLE ROW LEVEL SECURITY;
+ALTER TABLE safety.company_violation_fines ENABLE ROW LEVEL SECURITY;
+ALTER TABLE safety.company_violation_drivers FORCE ROW LEVEL SECURITY;
+ALTER TABLE safety.company_violation_units FORCE ROW LEVEL SECURITY;
+ALTER TABLE safety.company_violation_fines FORCE ROW LEVEL SECURITY;
+
 DO $$
 DECLARE t text;
 BEGIN
   FOREACH t IN ARRAY ARRAY['company_violation_drivers','company_violation_units','company_violation_fines']
   LOOP
-    EXECUTE format('ALTER TABLE safety.%I ENABLE ROW LEVEL SECURITY', t);
-    EXECUTE format('ALTER TABLE safety.%I FORCE ROW LEVEL SECURITY', t);
     EXECUTE format('DROP POLICY IF EXISTS %I ON safety.%I', t || '_tenant_scope', t);
     EXECUTE format($p$
       CREATE POLICY %I ON safety.%I
