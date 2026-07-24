@@ -288,84 +288,128 @@
     },
     {
       "id": "SAF-B22",
-      "title": "UNMAPPED - transcribe from safety.md section J row 22",
-      "findings": [],
-      "hold": null,
-      "prs": [],
-      "status": "unmapped",
+      "title": "Escrow tab drill-through (driver/settlement/GL/bank)",
+      "findings": [
+        "F23"
+      ],
+      "hold": true,
+      "prs": [
+        3370
+      ],
+      "status": "merged_unverified",
       "evidence": ""
     },
     {
       "id": "SAF-B23",
-      "title": "UNMAPPED - transcribe from safety.md section J row 23",
-      "findings": [],
-      "hold": null,
-      "prs": [],
-      "status": "unmapped",
+      "title": "Internal-fine inline + Add new reason",
+      "findings": [
+        "F24"
+      ],
+      "hold": false,
+      "prs": [
+        3360
+      ],
+      "status": "merged_unverified",
       "evidence": ""
     },
     {
       "id": "SAF-B24",
-      "title": "UNMAPPED - transcribe from safety.md section J row 24",
-      "findings": [],
-      "hold": null,
-      "prs": [],
-      "status": "unmapped",
+      "title": "ParityDrawer migration (3 surfaces)",
+      "findings": [
+        "F25"
+      ],
+      "hold": false,
+      "prs": [
+        3381
+      ],
+      "status": "merged_unverified",
       "evidence": ""
     },
     {
       "id": "SAF-B25",
-      "title": "UNMAPPED - transcribe from safety.md section J row 25",
-      "findings": [],
-      "hold": null,
-      "prs": [],
-      "status": "unmapped",
+      "title": "Accidents list name resolution + pickers",
+      "findings": [
+        "F26"
+      ],
+      "hold": false,
+      "prs": [
+        3356
+      ],
+      "status": "merged_unverified",
       "evidence": ""
     },
     {
       "id": "SAF-B26",
-      "title": "UNMAPPED - transcribe from safety.md section J row 26",
-      "findings": [],
-      "hold": null,
+      "title": "De-duplicate the 7 double-registered routes + guard",
+      "findings": [
+        "F27"
+      ],
+      "hold": false,
       "prs": [],
-      "status": "unmapped",
+      "status": "not_started",
       "evidence": ""
     },
     {
       "id": "SAF-B27",
-      "title": "UNMAPPED - transcribe from safety.md section J row 27",
-      "findings": [],
-      "hold": null,
-      "prs": [],
-      "status": "unmapped",
+      "title": "Docs drift: docs/CLAUDE.md section 7 -> 28/9",
+      "findings": [
+        "F28"
+      ],
+      "hold": false,
+      "prs": [
+        3384
+      ],
+      "status": "merged_unverified",
       "evidence": ""
     },
     {
       "id": "SAF-B28",
-      "title": "UNMAPPED - transcribe from safety.md section J row 28",
-      "findings": [],
-      "hold": null,
-      "prs": [],
-      "status": "unmapped",
+      "title": "company_violations JSONB -> real FKs (migration)",
+      "findings": [
+        "F29"
+      ],
+      "hold": true,
+      "prs": [
+        3380
+      ],
+      "status": "merged_unverified",
       "evidence": ""
     },
     {
       "id": "SAF-B29",
-      "title": "UNMAPPED - transcribe from safety.md section J row 29",
-      "findings": [],
-      "hold": null,
-      "prs": [],
-      "status": "unmapped",
+      "title": "Server-side type-ahead for the 200-cap pickers",
+      "findings": [
+        "F31"
+      ],
+      "hold": false,
+      "prs": [
+        3379
+      ],
+      "status": "merged_unverified",
       "evidence": ""
     },
     {
       "id": "SAF-B30",
-      "title": "UNMAPPED - transcribe from safety.md section J row 30",
-      "findings": [],
-      "hold": null,
-      "prs": [],
-      "status": "unmapped",
+      "title": "EntityLink safety kinds + safety detail routes",
+      "findings": [
+        "F33",
+        "F35"
+      ],
+      "hold": false,
+      "prs": [
+        3357,
+        3370
+      ],
+      "status": "merged_unverified",
       "evidence": ""
+    }
+  ],
+  "design_first_no_pr": [
+    {
+      "finding": "F34",
+      "title": "incident/claim -> accounting document",
+      "hold": true,
+      "note": "owner decision required; deliberately NOT a boundary (audit section J footer)"
     }
   ]
 }

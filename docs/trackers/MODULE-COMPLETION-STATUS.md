@@ -7,10 +7,14 @@ this file is regenerated and CI fails if it drifts (verify-step 1423).
 **N counts ONLY boundaries with `status: "verified"` — a recorded live proof.**
 `merged_unverified` means the code shipped but nobody proved it works: it does NOT count.
 
+**Module coverage: 2 of 30 modules have a completion manifest.**
+Untracked modules are listed with a reason in `docs/trackers/module-completion/_coverage.json`;
+a module that is neither tracked nor exempted fails CI.
+
 | Module | N of M verified | merged, unverified | not started | unmapped | HOLD (owner-gated) |
 |---|---|---|---|---|---|
 | **lists** | **0 of 14** | 4 | 10 | 0 | 8 |
-| **safety** | **0 of 30** | 18 | 3 | 9 | 5 |
+| **safety** | **0 of 30** | 26 | 4 | 0 | 7 |
 
 ## lists — 0 of 14 verified
 
@@ -61,13 +65,13 @@ Audit: `~/Desktop/IH35-CURSOR-AUDIT/modules/safety.md`
 | [ ] SAF-B19 | Incidents cluster edit + status lifecycle + void | F20 | no | #3377 | `merged_unverified` | — |
 | [ ] SAF-B20 | Cargo claims ParityTable + links | F21 | no | #3379 | `merged_unverified` | — |
 | [ ] SAF-B21 | Orphan-route nav entry points | F22, F23, F35 | no | #3370 | `merged_unverified` | — |
-| [ ] SAF-B22 | UNMAPPED - transcribe from safety.md section J row 22 | — | ? | — | `unmapped` | — |
-| [ ] SAF-B23 | UNMAPPED - transcribe from safety.md section J row 23 | — | ? | — | `unmapped` | — |
-| [ ] SAF-B24 | UNMAPPED - transcribe from safety.md section J row 24 | — | ? | — | `unmapped` | — |
-| [ ] SAF-B25 | UNMAPPED - transcribe from safety.md section J row 25 | — | ? | — | `unmapped` | — |
-| [ ] SAF-B26 | UNMAPPED - transcribe from safety.md section J row 26 | — | ? | — | `unmapped` | — |
-| [ ] SAF-B27 | UNMAPPED - transcribe from safety.md section J row 27 | — | ? | — | `unmapped` | — |
-| [ ] SAF-B28 | UNMAPPED - transcribe from safety.md section J row 28 | — | ? | — | `unmapped` | — |
-| [ ] SAF-B29 | UNMAPPED - transcribe from safety.md section J row 29 | — | ? | — | `unmapped` | — |
-| [ ] SAF-B30 | UNMAPPED - transcribe from safety.md section J row 30 | — | ? | — | `unmapped` | — |
+| [ ] SAF-B22 | Escrow tab drill-through (driver/settlement/GL/bank) | F23 | **YES** | #3370 | `merged_unverified` | — |
+| [ ] SAF-B23 | Internal-fine inline + Add new reason | F24 | no | #3360 | `merged_unverified` | — |
+| [ ] SAF-B24 | ParityDrawer migration (3 surfaces) | F25 | no | #3381 | `merged_unverified` | — |
+| [ ] SAF-B25 | Accidents list name resolution + pickers | F26 | no | #3356 | `merged_unverified` | — |
+| [ ] SAF-B26 | De-duplicate the 7 double-registered routes + guard | F27 | no | — | `not_started` | — |
+| [ ] SAF-B27 | Docs drift: docs/CLAUDE.md section 7 -> 28/9 | F28 | no | #3384 | `merged_unverified` | — |
+| [ ] SAF-B28 | company_violations JSONB -> real FKs (migration) | F29 | **YES** | #3380 | `merged_unverified` | — |
+| [ ] SAF-B29 | Server-side type-ahead for the 200-cap pickers | F31 | no | #3379 | `merged_unverified` | — |
+| [ ] SAF-B30 | EntityLink safety kinds + safety detail routes | F33, F35 | no | #3357, #3370 | `merged_unverified` | — |
 

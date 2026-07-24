@@ -98,7 +98,7 @@ export function summarise(m) {
   };
 }
 
-function renderStatusDoc(manifests) {
+function renderStatusDoc(manifests, coverage) {
   const lines = [];
   lines.push("# Module completion — N of M (GENERATED — do not hand-edit)");
   lines.push("");
@@ -109,6 +109,12 @@ function renderStatusDoc(manifests) {
   lines.push("**N counts ONLY boundaries with `status: \"verified\"` — a recorded live proof.**");
   lines.push("`merged_unverified` means the code shipped but nobody proved it works: it does NOT count.");
   lines.push("");
+  if (coverage) {
+    lines.push(`**Module coverage: ${coverage.tracked} of ${coverage.total} modules have a completion manifest.**`);
+    lines.push("Untracked modules are listed with a reason in `docs/trackers/module-completion/_coverage.json`;");
+    lines.push("a module that is neither tracked nor exempted fails CI.");
+    lines.push("");
+  }
   lines.push("| Module | N of M verified | merged, unverified | not started | unmapped | HOLD (owner-gated) |");
   lines.push("|---|---|---|---|---|---|");
   for (const m of manifests) {
@@ -141,13 +147,55 @@ function renderStatusDoc(manifests) {
   return lines.join("\n") + "\n";
 }
 
+const SIDEBAR_CONFIG = "apps/frontend/src/components/layout/sidebar-config.ts";
+
+/**
+ * "Every module" must be mechanical too, or modules simply go unreported. The canonical module list
+ * is SIDEBAR_ITEM_IDS (the same array verify-sidebar-contract.mjs enforces) — never a number written
+ * in prose. A module with no manifest is a FAIL, not an omission.
+ */
+export function readSidebarModuleIds(source) {
+  const m = source.match(/export const SIDEBAR_ITEM_IDS = \[([\s\S]*?)\] as const;/);
+  if (!m) return null;
+  return [...m[1].matchAll(/"([a-z0-9_-]+)"/g)].map((x) => x[1]);
+}
+
+/** Modules that legitimately have no audit boundary set yet must be listed with a REASON, not silently absent. */
+export function assertEveryModuleCovered(moduleIds, manifestNames, exemptions) {
+  const problems = [];
+  const have = new Set(manifestNames);
+  const exempt = new Map(Object.entries(exemptions ?? {}));
+  for (const id of moduleIds) {
+    if (have.has(id)) continue;
+    if (exempt.has(id)) {
+      if (!String(exempt.get(id) ?? "").trim()) {
+        problems.push(`module "${id}" is exempted from completion tracking with an EMPTY reason.`);
+      }
+      continue;
+    }
+    problems.push(
+      `module "${id}" has no docs/trackers/module-completion/${id}.json and no exemption reason. ` +
+        `Every module in SIDEBAR_ITEM_IDS reports "N of M" — add the manifest or record why not.`
+    );
+  }
+  for (const id of exempt.keys()) {
+    if (!moduleIds.includes(id)) problems.push(`exemption for "${id}" does not match any SIDEBAR_ITEM_IDS module.`);
+  }
+  return problems;
+}
+
 function loadManifests() {
   if (!fs.existsSync(DIR)) return [];
   return fs
     .readdirSync(DIR)
-    .filter((f) => f.endsWith(".json"))
+    .filter((f) => f.endsWith(".json") && !f.startsWith("_"))
     .sort()
     .map((f) => JSON.parse(fs.readFileSync(path.join(DIR, f), "utf8")));
+}
+
+function loadCoverage() {
+  const p = path.join(DIR, "_coverage.json");
+  return fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, "utf8")) : { exemptions: {} };
 }
 
 const IS_MAIN = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
@@ -181,6 +229,19 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
   // 6. Duplicate ids must fail.
   expect("dup-id", (m) => { m.M = 2; m.boundaries.push({ ...m.boundaries[0] }); }, "duplicate boundary id");
 
+  // 7-9: "every module" coverage assertions.
+  const covP = (ids, names, ex) => assertEveryModuleCovered(ids, names, ex);
+  if (!covP(["safety", "dispatch"], ["safety"], {}).some((p) => p.includes('module "dispatch" has no')))
+    failures.push("untracked-module: a module with no manifest and no exemption was NOT caught");
+  if (!covP(["safety", "dispatch"], ["safety"], { dispatch: "  " }).some((p) => p.includes("EMPTY reason")))
+    failures.push("empty-exemption-reason: NOT caught");
+  if (!covP(["safety"], ["safety"], { ghost: "x" }).some((p) => p.includes("does not match any SIDEBAR_ITEM_IDS")))
+    failures.push("stale-exemption: NOT caught");
+  if (covP(["safety", "dispatch"], ["safety"], { dispatch: "not yet audited" }).length)
+    failures.push("false positive: a properly-exempted module was flagged");
+  if (!readSidebarModuleIds('export const SIDEBAR_ITEM_IDS = [\n  "home",\n  "safety",\n] as const;'))
+    failures.push("readSidebarModuleIds failed to parse a valid array");
+
   // Negative: a properly-evidenced verified boundary must NOT be flagged.
   const ok = validateManifest({
     module: "t", M: 1,
@@ -202,7 +263,7 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 6 planted defects caught; evidenced/honest/complete manifests not flagged`);
+  console.log(`${LABEL} SELFTEST PASS — 10 planted defects caught; evidenced/honest/complete manifests not flagged`);
   process.exit(0);
 }
 
@@ -210,7 +271,22 @@ if (IS_MAIN) {
   const manifests = loadManifests();
   const problems = manifests.flatMap((m) => validateManifest(m));
 
-  const rendered = renderStatusDoc(manifests);
+  // "For every module" — enforced against SIDEBAR_ITEM_IDS, never a number in prose.
+  const sidebarSrc = path.join(ROOT, SIDEBAR_CONFIG);
+  if (!fs.existsSync(sidebarSrc)) {
+    problems.push(`${SIDEBAR_CONFIG} is missing — cannot establish the canonical module list.`);
+  } else {
+    const ids = readSidebarModuleIds(fs.readFileSync(sidebarSrc, "utf8"));
+    if (!ids || ids.length === 0) {
+      problems.push(`could not parse SIDEBAR_ITEM_IDS from ${SIDEBAR_CONFIG}`);
+    } else {
+      const cov = loadCoverage();
+      problems.push(...assertEveryModuleCovered(ids, manifests.map((m) => m.module), cov.exemptions));
+      globalThis.__moduleCoverage = { total: ids.length, tracked: manifests.length };
+    }
+  }
+
+  const rendered = renderStatusDoc(manifests, globalThis.__moduleCoverage);
   if (process.argv.includes("--write")) {
     fs.writeFileSync(STATUS_DOC, rendered);
     console.log(`${LABEL}: wrote ${path.relative(ROOT, STATUS_DOC)}`);

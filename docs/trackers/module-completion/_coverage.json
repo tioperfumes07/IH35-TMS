@@ -1,0 +1,33 @@
+{
+  "_comment": "Modules with no completion manifest MUST appear here with a reason. An empty reason fails CI. Delete an entry when its manifest lands.",
+  "exemptions": {
+    "home": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "tasks": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "fuel": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "dispatch": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "driver-hub": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "maintenance": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "compliance": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "drivers": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "fleet": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "insurance": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "legal": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "eld": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "cash-flow": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "settlements": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "accounting": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "bank": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "factoring": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "finance": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "customers": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "vendors": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "inventory": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "form_425": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "reports": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "docs": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "users": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "help": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "program": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed.",
+    "system": "NOT YET AUDITED \u2014 awaiting its turn in the owner-locked module sequence (Accounting, Banking, then remaining product order; Compliance last). No boundary set exists, so no N of M can be claimed."
+  }
+}
