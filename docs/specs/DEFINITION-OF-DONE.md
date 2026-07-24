@@ -9,7 +9,11 @@ Before this file existed the standard was real but scattered across
 skipped law. **This file consolidates them; it does not replace or soften any of them. On conflict the
 MORE PROTECTIVE reading wins.**
 
-Enforced by `scripts/verify-definition-of-done-evidence.mjs` (verify-step 1324).
+Enforced by:
+
+- `scripts/verify-definition-of-done-evidence.mjs` (verify-step 1324) — Rule 16 evidence on every app/db commit
+- `scripts/verify-no-money-theater.mjs` (verify-step 1430) — **full DoD A–E + VERIFY 1–5 confirmations** on every accounting/banking/QBO-money commit; theater subjects fail closed
+- `.husky/commit-msg` → `scripts/check-commit-evidence.mjs` (local reject; CI is the real gate)
 
 ---
 
@@ -194,7 +198,55 @@ module appeared in no finding at all.)
 
 ---
 
+## 10. EVERY money PR — audit checklist (git-enforced)
+
+Touches `apps/**/accounting|banking|qbo-sync|qbo/**` or `pages/accounting|banking/**`.  
+**Commit message + PR body MUST include every line below** or verify-step **1430** / commit-msg **FAIL**.
+
+| Confirm | What you are auditing / fixing |
+|---|---|
+| **FINDING:** `ACCT-F##` / `BANK-F##` / `LST-F##` | Ranked id from `~/Desktop/IH35-CURSOR-AUDIT/modules/<module>.md` — no PR without it |
+| **DOD-A** Active path | New design on real route; no dual-path / ComingSoon while Live exists |
+| **DOD-B** Wizard depth | Every rendered field controlled + in submit payload (or N/A) |
+| **DOD-C** Linkage F+R | Canonical FKs both ways — EntityLink-only is FAIL / theater |
+| **DOD-D** Purpose→economics | Correct money object for purpose; no silent default |
+| **DOD-E** Evidence | Neon/live proof **or** `UNVERIFIED — <blocker>` |
+| **VERIFY-1** Chrome | QBO ParityDrawer / money chrome for surfaces touched |
+| **VERIFY-2** Picker | Entity-scoped catalog; inline `+ Add new`; write = read table |
+| **VERIFY-3** Deep linkage | Claim/WO/Expense/Bill/Payment chains F+R as applicable |
+| **VERIFY-4** Catalog scope | TRANSP + USMCA; no cross-entity leak |
+| **VERIFY-5** Economics | Header+lines; flags honest; density or named blocker |
+| **ROOT CAUSE / FIX / GUARD / LIVE PROOF / REMAINING** | Rule 16 evidence block |
+
+Allowed values per DOD-/VERIFY- line: `PASS` · `N/A` · `FAIL` · `UNVERIFIED — <reason>`.
+
+**Forbidden:** EntityLink-only · honesty-banner-only · N-of-M “module done” while density still 0 · `REMAINING: none` on chrome hops.
+
+Template (also printed by the guard on failure):
+
+```
+FINDING: ACCT-F##
+DOD-A: …
+DOD-B: …
+DOD-C: …
+DOD-D: …
+DOD-E: …
+VERIFY-1: …
+VERIFY-2: …
+VERIFY-3: …
+VERIFY-4: …
+VERIFY-5: …
+ROOT CAUSE: …
+FIX: …
+GUARD: …
+LIVE PROOF: … OR UNVERIFIED — …
+REMAINING: …
+```
+
+---
+
 **Cross-refs:** `docs/trackers/FULL-SYSTEM-AUDIT-AND-WIRING-MASTER-PLAN-2026-07-22.md` ·
 `docs/specs/QUALITY-STANDARD-LOCKED.md` · `docs/specs/STOP-THE-THRASH-WORKORDER-2026-07-17.md` ·
 `.cursor/rules/14-linkage-law-enforcement.mdc` · `.cursor/rules/16-fix-not-patch-evidence-law.mdc` ·
+`.cursor/rules/23-no-money-theater-prs.mdc` ·
 `CLAUDE.md` §1/§9 · `AGENTS.md`.
