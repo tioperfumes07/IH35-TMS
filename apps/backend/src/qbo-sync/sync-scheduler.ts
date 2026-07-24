@@ -88,29 +88,23 @@ async function runScheduledSyncForCompany(
   // and idempotent (header upsert / incremental line upsert + orphan-delete), so re-running is safe.
   // NO GL poster on this path.
   await runStep("ap_bills_pull", operatingCompanyId, () => pullApBillsFromQbo(operatingCompanyId), failures, log);
-  await runStep(
-    "ap_bills_project",
-    operatingCompanyId,
-    async () => {
-      const res = await projectApBillsToLedger(operatingCompanyId);
-      log?.info(
-        {
-          operating_company_id: operatingCompanyId,
-          enabled: res.enabled,
-          rows_projected: res.rowsProjected,
-          lines_projected: res.lines.linesProjected,
-          lines_orphan_deleted: res.lines.linesOrphanDeleted,
-          lines_unmapped_account: res.lines.linesUnmappedAccount,
-          lines_unmapped_item: res.lines.linesUnmappedItem,
-          header_line_sum_mismatch: res.lines.headerLineSumMismatch,
-        },
-        "[qbo-sync-scheduler] ap_bills_project complete (headers + incremental lines from payload_json)"
-      );
-      return res;
-    },
-    failures,
-    log
-  );
+  await runStep("ap_bills_project", operatingCompanyId, async () => {
+    const res = await projectApBillsToLedger(operatingCompanyId);
+    log?.info(
+      {
+        operating_company_id: operatingCompanyId,
+        enabled: res.enabled,
+        rows_projected: res.rowsProjected,
+        lines_projected: res.lines.linesProjected,
+        lines_orphan_deleted: res.lines.linesOrphanDeleted,
+        lines_unmapped_account: res.lines.linesUnmappedAccount,
+        lines_unmapped_item: res.lines.linesUnmappedItem,
+        header_line_sum_mismatch: res.lines.headerLineSumMismatch,
+      },
+      "[qbo-sync-scheduler] ap_bills_project complete (headers + incremental lines from payload_json)"
+    );
+    return res;
+  }, failures, log);
 
   await runStep(
     "drift_detect",
