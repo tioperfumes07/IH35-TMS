@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 
 const catalogDepartmentSchema = z.enum(["dispatch", "safety", "accounting", "identity", "operations"]);
 const catalogCodeSchema = z.enum([
@@ -218,6 +219,12 @@ export async function registerCatalogRegistryRoutes(app: FastifyInstance) {
     if (!user) return;
 
     return withCurrentUser(user.uuid, async (client) => {
+      // Several catalogs the registry counts/previews are per-entity with FORCE RLS (accounts, classes,
+      // items, and now driver_load_statuses). Set the caller's company GUC so those reads return the
+      // entity's rows instead of a false 0; still-global catalogs are unaffected.
+      const operatingCompanyId = await resolveOperatingCompanyId(client, user.uuid, null);
+      if (operatingCompanyId) await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+
       const registryRes = await client.query(
         `
           SELECT id, code, name, description, department, route_path, icon_label, sort_order
@@ -264,6 +271,11 @@ export async function registerCatalogRegistryRoutes(app: FastifyInstance) {
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
     return withCurrentUser(user.uuid, async (client) => {
+      // Same entity GUC as the registry index — per-entity catalog previews (e.g. driver_load_statuses)
+      // return the caller's rows under FORCE RLS instead of a false-empty preview.
+      const operatingCompanyId = await resolveOperatingCompanyId(client, user.uuid, null);
+      if (operatingCompanyId) await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+
       const registryRes = await client.query(
         `
           SELECT code, name, route_path

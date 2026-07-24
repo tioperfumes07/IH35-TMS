@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { resolveOperatingCompanyId, OperatingCompanyMembershipError } from "../auth/operating-company-scope.js";
 
 const idParamSchema = z.object({ id: z.string().uuid() });
 const phaseSchema = z.enum([
@@ -17,7 +18,27 @@ const phaseSchema = z.enum([
 
 const listQuerySchema = z.object({
   include_inactive: z.enum(["true", "false"]).optional(),
+  operating_company_id: z.string().uuid().optional(),
 });
+
+const companyQuerySchema = z.object({
+  operating_company_id: z.string().uuid().optional(),
+});
+
+// driver_load_statuses is per-entity (migration 202607870000): resolve the caller's company (their
+// DEFAULT when the param is omitted — same grammar as the cancellation-reason catalogs) and set the
+// app.operating_company_id GUC the FORCE-RLS company_scope policy reads. Returns null only when the
+// user has no accessible company, which the callers translate to 403.
+async function scopeToCompany(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ id: string }> }> },
+  userId: string,
+  requested?: string | null
+): Promise<string | null> {
+  const operatingCompanyId = await resolveOperatingCompanyId(client, userId, requested ?? null);
+  if (!operatingCompanyId) return null;
+  await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+  return operatingCompanyId;
+}
 
 const createDriverLoadStatusSchema = z.object({
   code: z
@@ -68,49 +89,63 @@ export async function registerDriverLoadStatusRoutes(app: FastifyInstance) {
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    return withCurrentUser(user.uuid, async (client) => {
-      const includeInactive = parsedQuery.data.include_inactive === "true";
-      const filter = includeInactive ? "" : "WHERE deactivated_at IS NULL AND is_active = true";
-      const res = await client.query(
-        `
-          SELECT
-            id,
-            code,
-            name,
-            description,
-            phase,
-            sort_order,
-            is_active,
-            deactivated_at,
-            created_at,
-            updated_at,
-            created_by_user_id,
-            updated_by_user_id
-          FROM catalogs.driver_load_statuses
-          ${filter}
-          ORDER BY phase, sort_order, name
-        `
-      );
-      return { statuses: res.rows };
-    });
+    try {
+      return await withCurrentUser(user.uuid, async (client) => {
+        const operatingCompanyId = await scopeToCompany(client, user.uuid, parsedQuery.data.operating_company_id);
+        if (!operatingCompanyId) return reply.code(403).send({ error: "forbidden" });
+        const includeInactive = parsedQuery.data.include_inactive === "true";
+        const activeFilter = includeInactive ? "" : " AND deactivated_at IS NULL AND is_active = true";
+        const res = await client.query(
+          `
+            SELECT
+              id,
+              operating_company_id,
+              code,
+              name,
+              description,
+              phase,
+              sort_order,
+              is_active,
+              deactivated_at,
+              created_at,
+              updated_at,
+              created_by_user_id,
+              updated_by_user_id
+            FROM catalogs.driver_load_statuses
+            WHERE operating_company_id = $1${activeFilter}
+            ORDER BY phase, sort_order, name
+          `,
+          [operatingCompanyId]
+        );
+        return { statuses: res.rows };
+      });
+    } catch (error) {
+      if (error instanceof OperatingCompanyMembershipError) return reply.code(403).send({ error: "forbidden" });
+      throw error;
+    }
   });
 
   app.post("/api/v1/catalogs/driver-load-statuses", async (req, reply) => {
     const user = ensureAdmin(req, reply);
     if (!user) return;
+    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
     const parsedBody = createDriverLoadStatusSchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
 
     try {
       return await withCurrentUser(user.uuid, async (client) => {
+        const operatingCompanyId = await scopeToCompany(client, user.uuid, parsedQuery.data.operating_company_id);
+        if (!operatingCompanyId) return reply.code(403).send({ error: "forbidden" });
         const res = await client.query(
           `
             INSERT INTO catalogs.driver_load_statuses (
-              code, name, description, phase, sort_order, created_by_user_id, updated_by_user_id
-            ) VALUES ($1, $2, $3, $4, $5, $6, $6)
-            RETURNING id, code, name, description, phase, sort_order, is_active, deactivated_at, created_at, updated_at
+              operating_company_id, code, name, description, phase, sort_order, created_by_user_id, updated_by_user_id
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
+            RETURNING id, operating_company_id, code, name, description, phase, sort_order, is_active, deactivated_at, created_at, updated_at
           `,
           [
+            operatingCompanyId,
             parsedBody.data.code,
             parsedBody.data.name,
             parsedBody.data.description ?? null,
@@ -136,6 +171,7 @@ export async function registerDriverLoadStatusRoutes(app: FastifyInstance) {
         return reply.code(201).send({ status: row });
       });
     } catch (error) {
+      if (error instanceof OperatingCompanyMembershipError) return reply.code(403).send({ error: "forbidden" });
       if ((error as { code?: string }).code === "23505") {
         return reply.code(409).send({ error: "driver_load_status_code_conflict" });
       }
@@ -148,10 +184,18 @@ export async function registerDriverLoadStatusRoutes(app: FastifyInstance) {
     if (!user) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
     const parsedBody = updateDriverLoadStatusSchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
 
     return withCurrentUser(user.uuid, async (client) => {
+      const operatingCompanyId = await scopeToCompany(client, user.uuid, parsedQuery.data.operating_company_id).catch((error) => {
+        if (error instanceof OperatingCompanyMembershipError) return null;
+        throw error;
+      });
+      if (!operatingCompanyId) return reply.code(403).send({ error: "forbidden" });
+
       const fields: string[] = [];
       const values: unknown[] = [];
       for (const [key, value] of Object.entries(parsedBody.data)) {
@@ -171,14 +215,18 @@ export async function registerDriverLoadStatusRoutes(app: FastifyInstance) {
       values.push(user.uuid);
       fields.push(`updated_by_user_id = $${values.length}`);
       values.push(parsedParams.data.id);
+      const idIdx = values.length;
+      values.push(operatingCompanyId);
+      const opcoIdx = values.length;
 
       try {
         const res = await client.query(
           `
             UPDATE catalogs.driver_load_statuses
             SET ${fields.join(", ")}
-            WHERE id = $${values.length}
-            RETURNING id, code, name, description, phase, sort_order, is_active, deactivated_at, created_at, updated_at
+            WHERE id = $${idIdx}
+              AND operating_company_id = $${opcoIdx}
+            RETURNING id, operating_company_id, code, name, description, phase, sort_order, is_active, deactivated_at, created_at, updated_at
           `,
           values
         );
