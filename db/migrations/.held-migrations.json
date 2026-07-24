@@ -351,6 +351,22 @@
     {
       "file": "202607850000_safety_evidence_revoke_delete.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] Part B schema-wide DELETE hardening: narrow the safety schema default privilege (arwd -> no DELETE) + REVOKE DELETE on 48 safety EVIDENCE tables (void-not-delete/append-only/audit), KEEPING DELETE on 12 rules/config/alert/transient tables (per-table reasoning in the file). Root: 0065 blanket-granted DELETE + set the arwd default. Owner applies on Neon + ledger-backfills."
+    },
+    {
+      "file": "202607820000_safety_relational_linkage_and_lifecycle.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Safety gated batch items 1-4: F29 join tables (company_violation_drivers/_units/_fines, FORCED RLS, no DELETE grant, jsonb backfill with a 0-orphan ABORT), incident void columns (void-not-delete + CHECK), F34 ask-rail columns (recovery_rail DEFAULT 'ask', per-rail FKs, SCHEMA ONLY — posts nothing), Clearinghouse query_type/reference_number/document_id. Owner applies on a Neon branch, then ledger-backfills with the sha256 of the COMMITTED file on main.",
+      "held_apply_order": [
+        "202607820000_safety_relational_linkage_and_lifecycle.sql",
+        "202607830000_escrow_target_settings.sql"
+      ]
+    },
+    {
+      "file": "202607830000_escrow_target_settings.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Safety gated batch item 5 (SAF-F09): driver_finance.escrow_settings per-entity escrow target seeded 250000 cents (=$2,500, owner decision 2026-07-24) for TRANSP + USMCA only (TRK is the asset holder and runs no drivers), plus driver_pay_settings.escrow_target_cents per-driver override. Kills the hardcoded ESCROW_TARGET_DEFAULT = 1000. Owner applies on a Neon branch, then ledger-backfills.",
+      "held_apply_order": [
+        "202607820000_safety_relational_linkage_and_lifecycle.sql",
+        "202607830000_escrow_target_settings.sql"
+      ]
     }
   ]
 }

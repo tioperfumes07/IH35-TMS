@@ -208,7 +208,8 @@ export type EscrowRecordRow = {
   current_balance: number;
   pre_clause_total: number;
   post_clause_total: number;
-  accumulation_rate_pct: number;
+  /** NULL when no escrow target is configured — unknown stays unknown (SAF-F09). */
+  accumulation_rate_pct: number | null;
   forfeiture_history_count: number;
   has_signed_clause: boolean;
 };
@@ -223,7 +224,29 @@ export type EscrowForfeitAttempt = {
   created_at: string;
 };
 
-const ESCROW_TARGET_DEFAULT = 1000;
+// SAF-F09 — the hardcoded ESCROW_TARGET_DEFAULT = 1000 is GONE. It was invented in the client and
+// drove accumulation math on real money; verified on prod, there was no config it was standing in
+// for. The target now comes from GET /api/v1/driver-finance/drivers/:id/escrow-target, which
+// resolves per-driver override -> per-entity default (seeded to 250000 cents = $2,500 by owner
+// decision 2026-07-24). When nothing is configured the API returns null and the rate stays NULL —
+// unknown must render as unknown, never as a number computed against a guess.
+export type DriverEscrowTarget = {
+  driver_id: string;
+  escrow_target_cents: number | null;
+  target_source: "driver_override" | "entity_default" | "none";
+  has_signed_clause: boolean;
+  accumulation_rate_pct: number | null;
+};
+
+export function getDriverEscrowTarget(driverId: string, companyId: string, balanceCents: number) {
+  const qs = new URLSearchParams({
+    operating_company_id: companyId,
+    balance_cents: String(Math.round(balanceCents)),
+  });
+  return apiRequest<DriverEscrowTarget>(
+    `/api/v1/driver-finance/drivers/${encodeURIComponent(driverId)}/escrow-target?${qs.toString()}`
+  );
+}
 
 function isForfeitEntry(entryType: unknown) {
   return String(entryType ?? "")
@@ -274,8 +297,12 @@ export async function listEscrowRecords(companyId: string) {
     const postClause = Number(debt?.escrow_post_clause ?? 0);
     const currentBalance = Number(driver.escrow_balance ?? preClause + postClause);
     const forfeitCount = timeline.filter((row) => isForfeitEntry(row.entry_type)).length;
-    const hasSignedClause =
-      postClause > 0 || timeline.some((row) => String(row.bucket ?? "").toLowerCase() === "post_clause");
+    // SAF-F09: has_signed_clause and the target now come from the server, which reads a real signed
+    // contract instance and the escrow configuration. The old inference — postClause > 0 || a
+    // timeline bucket existing — was a data side-effect gating the forfeiture of a driver's money.
+    const escrowTarget = await getDriverEscrowTarget(driverId, companyId, Math.round(currentBalance * 100)).catch(
+      () => null
+    );
 
     records.push({
       id: driverId,
@@ -283,9 +310,9 @@ export async function listEscrowRecords(companyId: string) {
       current_balance: currentBalance,
       pre_clause_total: preClause,
       post_clause_total: postClause,
-      accumulation_rate_pct: Math.max(0, Math.min(100, (currentBalance / ESCROW_TARGET_DEFAULT) * 100)),
+      accumulation_rate_pct: escrowTarget?.accumulation_rate_pct ?? null,
       forfeiture_history_count: forfeitCount,
-      has_signed_clause: hasSignedClause,
+      has_signed_clause: Boolean(escrowTarget?.has_signed_clause),
     });
   }
 

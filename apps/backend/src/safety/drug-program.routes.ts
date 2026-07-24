@@ -73,6 +73,14 @@ const createClearinghouseQuerySchema = z.object({
   consent_on_file: z.boolean().default(false),
   expires_at: z.string().optional(),
   notes: z.string().optional(),
+  // SAF-F07-CH (gated batch item 4) — 49 CFR §382.701 distinguishes the PRE-EMPLOYMENT FULL query
+  // from the ANNUAL LIMITED one. Without persisting which was run, the annual cadence cannot be
+  // tracked and a DOT auditor cannot be shown that the obligation was met. reference_number +
+  // document_id make the record answerable at audit instead of from memory.
+  // Columns ship in migration 202607820000 — this lands with it.
+  query_type: z.enum(["pre_employment_full", "annual_limited", "full"]).default("annual_limited"),
+  reference_number: z.string().trim().max(200).optional(),
+  document_id: z.string().uuid().optional(),
 });
 
 type Queryable = {
@@ -399,7 +407,10 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
             queried_at,
             consent_on_file,
             expires_at,
-            notes
+            notes,
+            query_type,
+            reference_number,
+            document_id
           )
           VALUES (
             $1,
@@ -408,7 +419,10 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
             COALESCE($4::timestamptz, now()),
             $5,
             $6::date,
-            $7
+            $7,
+            $8,
+            $9,
+            $10
           )
           RETURNING *
         `,
@@ -420,6 +434,9 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
           body.data.consent_on_file,
           body.data.expires_at ?? null,
           body.data.notes ?? null,
+          body.data.query_type,
+          body.data.reference_number ?? null,
+          body.data.document_id ?? null,
         ]
       );
       await appendCrudAudit(
