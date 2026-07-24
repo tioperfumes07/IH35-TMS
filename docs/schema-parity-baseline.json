@@ -3729,6 +3729,7 @@
       "created_at",
       "created_by_user_id",
       "driver_id",
+      "escrow_target_cents",
       "flsa_min_wage_cents_per_hour",
       "net_pay_floor_pct",
       "operating_company_id",
@@ -3969,6 +3970,14 @@
       "settlement_id",
       "settlement_line_id",
       "transaction_type"
+    ],
+    "driver_finance.escrow_settings": [
+      "created_at",
+      "escrow_target_cents",
+      "is_active",
+      "operating_company_id",
+      "updated_at",
+      "updated_by_user_id"
     ],
     "driver_finance.payrun_gl_runs": [
       "created_at",
@@ -8628,6 +8637,7 @@
     "safety.clearinghouse_query": [
       "consent_on_file",
       "created_at",
+      "document_id",
       "driver_id",
       "expires_at",
       "id",
@@ -8635,9 +8645,39 @@
       "operating_company_id",
       "queried_at",
       "query_status",
+      "query_type",
+      "reference_number",
       "updated_at",
       "voided_at",
       "voided_reason"
+    ],
+    "safety.company_violation_drivers": [
+      "created_at",
+      "created_by_user_id",
+      "driver_id",
+      "id",
+      "is_active",
+      "operating_company_id",
+      "violation_id"
+    ],
+    "safety.company_violation_fines": [
+      "created_at",
+      "created_by_user_id",
+      "fine_id",
+      "id",
+      "if",
+      "is_active",
+      "operating_company_id",
+      "violation_id"
+    ],
+    "safety.company_violation_units": [
+      "created_at",
+      "created_by_user_id",
+      "id",
+      "is_active",
+      "operating_company_id",
+      "unit_id",
+      "violation_id"
     ],
     "safety.company_violations": [
       "audit_export_doc_id",
@@ -9216,23 +9256,35 @@
       "created_at",
       "damage_amount_cents",
       "description",
+      "document_id",
       "driver_id",
       "evidence_uuids",
       "final_resolution_status",
       "id",
       "incident_at",
       "incident_type",
+      "insurance_claim_id",
       "interchange_party",
       "load_id",
       "location",
       "operating_company_id",
       "parent_incident_id",
       "photo_keys",
+      "query_type",
+      "recovery_driver_id",
+      "recovery_expense_account_id",
+      "recovery_rail",
+      "reference_number",
       "reported_at",
+      "responsible_party_customer_id",
+      "responsible_party_vendor_id",
       "status",
       "trailer_id",
       "unit_id",
-      "updated_at"
+      "updated_at",
+      "voided_at",
+      "voided_by_user_id",
+      "voided_reason"
     ],
     "safety.integrity_alert_events": [
       "acknowledged_at",
