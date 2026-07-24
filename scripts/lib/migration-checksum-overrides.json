@@ -187,7 +187,7 @@
     "filename": "0327_drug_alcohol_program.sql",
     "ledger_checksum": "24929c568028992304aec36c7baa1504a2900692d6dc4deb5c009b44560e5952",
     "disk_checksum": "53ec4796c74792c6e6714352170e053c5d8b9e455dfcb6dd8908a2c8e1d88f4d",
-    "reason": "GAP-81 (#636): migration shipped with `TO app_user` (wrong role) and operating_company_id TEXT (should be UUID). Fixed before first production deploy \u2014 never applied to prod. Local ledger recorded original SHA; override accepts corrected version.",
+    "reason": "GAP-81 (#636): migration shipped with `TO app_user` (wrong role) and operating_company_id TEXT (should be UUID). Fixed before first production deploy — never applied to prod. Local ledger recorded original SHA; override accepts corrected version.",
     "added_at": "2026-06-07",
     "added_in_pr": "hotfix/0327-drug-alcohol-app-user"
   },
@@ -257,7 +257,7 @@
     "filename": "202607820000_safety_relational_linkage_and_lifecycle.sql",
     "ledger_checksum": "578a6d7d7f2ae3f2e58bf44ebf36b757d6898748dd14e10c7bfe6bf71293c3b3",
     "disk_checksum": "8fa5d8e6854aac1dd54da22f5d54c1c7489c296760bd5f06b6c45ef9d39ef10d",
-    "reason": "PROD DEPLOY OUTAGE 2026-07-24: Neon ledger applied intermediate commit 2da2649ff (checksum 578a6d7d\u2026) for #3380 safety join tables; main later landed 3319894fa with literal ENABLE/FORCE RLS (disk 8fa5d8e6\u2026) so verify-rls-migration-scan can see them. Dynamic EXECUTE in the applied body already ran ENABLE+FORCE on the three join tables, so end state matches; db:migrate still refuses on the EXISTING ledger row before any follow-up. Override unblocks Render preDeploy. Do not edit this applied file again \u2014 any further DDL needs a new migration.",
+    "reason": "PROD DEPLOY OUTAGE 2026-07-24: Neon ledger applied intermediate commit 2da2649ff (checksum 578a6d7d…) for #3380 safety join tables; main later landed 3319894fa with literal ENABLE/FORCE RLS (disk 8fa5d8e6…) so verify-rls-migration-scan can see them. Dynamic EXECUTE in the applied body already ran ENABLE+FORCE on the three join tables, so end state matches; db:migrate still refuses on the EXISTING ledger row before any follow-up. Override unblocks Render preDeploy. Do not edit this applied file again — any further DDL needs a new migration.",
     "added_at": "2026-07-24",
     "added_in_pr": "PROD-DEPLOY-UNBLOCK-202607820000"
   },
@@ -268,5 +268,21 @@
     "reason": "fix(ci) bot rewrote the applied 910 migration after prod-apply (dropped nothing semantic; the applied seed never carried deactivated_at). Prod ledger 7cec7823 vs committed d8bbefec; the forward repair is 911 (norm-dedupe). Do not re-run 910; do not edit it.",
     "added_at": "2026-07-24",
     "added_in_pr": "LST-3405-equipment-types-per-entity"
+  },
+  {
+    "filename": "202607870000_driver_load_statuses_per_entity.sql",
+    "ledger_checksum": "cde8dfee0cabd77683527b7cc045ebbb34d0a069db7ec5297517580266c759da",
+    "disk_checksum": "ad06d44b3dc06146e261edc409369f3c4c4bfbcdb3c06340b3aef677d412c0fe",
+    "reason": "Applied on prod (ledger cde8dfee) then the committed file was edited post-apply to carry deactivated_at in the seed (parity with #3405). No data drift: driver_load_statuses had no deactivated primary rows, so the seed change is a no-op on prod (GUARD sweep: 0 half-deactivated). Accept the historical drift; do not re-run. Never edit an applied migration.",
+    "added_at": "2026-07-24",
+    "added_in_pr": "DEPLOY-UNBLOCK-870-890"
+  },
+  {
+    "filename": "202607890000_driver_termination_reasons_per_entity.sql",
+    "ledger_checksum": "1c6faa42401f68de00e67e1557152f58aeef1b61ca40cf22164941f8c599bea2",
+    "disk_checksum": "cb4bb778f5cbe0dd8dc0387bacd9859fbd7c16c662f3fe724a284e39cbfc76c7",
+    "reason": "Applied on prod (ledger 1c6faa42) then the committed file was edited post-apply to carry deactivated_at in the seed (parity with #3405). No data drift: driver_termination_reasons had no deactivated primary rows (GUARD sweep: 0 half-deactivated). Accept the historical drift; do not re-run. Never edit an applied migration.",
+    "added_at": "2026-07-24",
+    "added_in_pr": "DEPLOY-UNBLOCK-870-890"
   }
 ]
