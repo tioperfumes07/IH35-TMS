@@ -27,17 +27,18 @@
 
 BEGIN;
 
--- 1) Replace the 2-col partial unique with the fan-out-safe composite (opco, qbo_bill_payment_id, bill_id).
 DROP INDEX IF EXISTS accounting.uq_bill_payments_company_qbo_bp_id;
+-- Fan-out-safe composite replaces the 2-col partial unique (opco, qbo_bill_payment_id, bill_id).
+-- Comment kept BELOW DROP so verify-migration-application-consistency's statement splitter
+-- (which does not strip -- line comments) still sees a leading DROP INDEX keyword.
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_bill_payments_company_qbo_bp_bill
   ON accounting.bill_payments (operating_company_id, qbo_bill_payment_id, bill_id)
   WHERE qbo_bill_payment_id IS NOT NULL;
 
--- 2) Register both flags in the catalog, DEFAULT OFF (isEnabled() returns false when a row/override is
---    absent, so this is SAFE-OFF). NO per-entity override is seeded — owner enables per entity later.
 DO $$
 BEGIN
+  -- Register both flags DEFAULT OFF. No per-entity override seeded — owner enables later.
   IF to_regclass('lib.feature_flags') IS NOT NULL THEN
     INSERT INTO lib.feature_flags (flag_key, description, default_enabled, rollout_pct)
     VALUES
