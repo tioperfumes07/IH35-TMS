@@ -1,6 +1,6 @@
 {
  "date": "2026-07-24",
- "generated_at_iso": "2026-07-24T16:48:37.741Z",
+ "generated_at_iso": "2026-07-24T19:08:12.579Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
@@ -13162,6 +13162,54 @@
  ],
  "merged_prs": [
   {
+   "number": 3417,
+   "title": "[HOLD] fix(banking): require zero-difference reconciliation closure",
+   "mergedAt": "2026-07-24T19:06:43Z",
+   "branch": "fix/banking-recon-zero-variance-20260724"
+  },
+  {
+   "number": 3416,
+   "title": "fix(deploy): checksum-override for applied 870/890 edited post-apply — unblocks ALL deploys",
+   "mergedAt": "2026-07-24T19:07:46Z",
+   "branch": "fix/deploy-unblock-870-890-checksum-override"
+  },
+  {
+   "number": 3413,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-24T19:07:34Z",
+   "branch": "chore/tracker-artifacts-sync-30116119476"
+  },
+  {
+   "number": 3411,
+   "title": "[HOLD] feat(accounting): QBO Receive Payment (AR) -> accounting.payments projection, flags OFF",
+   "mergedAt": "2026-07-24T19:07:25Z",
+   "branch": "fix/qbo-ar-payments-projection"
+  },
+  {
+   "number": 3410,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-24T18:14:03Z",
+   "branch": "chore/tracker-artifacts-sync-30110446230"
+  },
+  {
+   "number": 3409,
+   "title": "[HOLD] feat(lists): per-entity customer_quality_event_reasons (owner ruling 2026-07-24)",
+   "mergedAt": "2026-07-24T18:13:58Z",
+   "branch": "feat/lst-customer-quality-reasons-per-entity"
+  },
+  {
+   "number": 3408,
+   "title": "[HOLD] feat(lists): per-entity driver_termination_reasons (owner ruling 2026-07-24)",
+   "mergedAt": "2026-07-24T17:37:57Z",
+   "branch": "feat/lst-driver-termination-reasons-per-entity"
+  },
+  {
+   "number": 3405,
+   "title": "[HOLD] feat(lists): per-entity equipment_types + line-item templates (stacked on #3397)",
+   "mergedAt": "2026-07-24T18:34:58Z",
+   "branch": "feat/lst-equipment-types-per-entity"
+  },
+  {
    "number": 3403,
    "title": "[HOLD] feat(lists): per-entity driver_load_statuses (owner ruling 2026-07-24)",
    "mergedAt": "2026-07-24T16:47:38Z",
@@ -16712,58 +16760,40 @@
    "title": "fix(accounting): URL-persist sort on A/P Aging page — BANK-SORT-ACCT-AP2",
    "mergedAt": "2026-07-17T12:46:49Z",
    "branch": "fix/bank-sort-ap-aging-url"
-  },
-  {
-   "number": 2609,
-   "title": "feat(accounting): BANK-SORT-ROLLOUT-ACCT — Customers/Vendors/AP-Aging URL sort",
-   "mergedAt": "2026-07-17T05:50:03Z",
-   "branch": "fix/bank-sort-custvend"
-  },
-  {
-   "number": 2608,
-   "title": "fix(banking): derive Relay Fuel Wallet balance from its ledger, not a frozen Plaid-only column",
-   "mergedAt": "2026-07-17T14:40:45Z",
-   "branch": "fix/relay-wallet-balance-honesty"
-  },
-  {
-   "number": 2607,
-   "title": "fix(ops): BANK-SORT-ROLLOUT-OPS — URL-persisted ASC/DESC sort (dispatch, settlements, fleet/WO)",
-   "mergedAt": "2026-07-17T05:28:33Z",
-   "branch": "fix/bank-sort-rollout-ops"
-  },
-  {
-   "number": 2606,
-   "title": "feat(eld): wire live-duty/violations/unidentified tabs to real data — ELD-LIVE-DATA",
-   "mergedAt": "2026-07-17T03:52:54Z",
-   "branch": "feat/eld-tabs-live-data"
-  },
-  {
-   "number": 2605,
-   "title": "fix(safety): HOS violation void reason + real create action — HOS-VIOL-UX",
-   "mergedAt": "2026-07-17T05:33:10Z",
-   "branch": "fix/hos-violations-void-and-create"
-  },
-  {
-   "number": 2604,
-   "title": "fix(legal): wire matter edit UI + breadcrumb tail — LEGAL-MATTER-EDIT",
-   "mergedAt": "2026-07-17T12:30:48Z",
-   "branch": "fix/legal-matter-edit-wiring"
-  },
-  {
-   "number": 2603,
-   "title": "ci: wire verify-owner-todays-attention guard into locked-guards — GUARD-WIRE-G5",
-   "mergedAt": "2026-07-17T03:52:51Z",
-   "branch": "fix/wire-owner-todays-attention-guard"
-  },
-  {
-   "number": 2602,
-   "title": "feat(accounting): BANK-SORT-ROLLOUT-ACCT — Bills + Expenses URL sort",
-   "mergedAt": "2026-07-17T03:30:34Z",
-   "branch": "fix/bank-sort-rollout-acct"
   }
  ],
  "merged_pr_total": 3000,
  "hold_for_jorge": [
+  {
+   "number": 3417,
+   "title": "[HOLD] fix(banking): require zero-difference reconciliation closure",
+   "mergedAt": "2026-07-24T19:06:43Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3411,
+   "title": "[HOLD] feat(accounting): QBO Receive Payment (AR) -> accounting.payments projection, flags OFF",
+   "mergedAt": "2026-07-24T19:07:25Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3409,
+   "title": "[HOLD] feat(lists): per-entity customer_quality_event_reasons (owner ruling 2026-07-24)",
+   "mergedAt": "2026-07-24T18:13:58Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3408,
+   "title": "[HOLD] feat(lists): per-entity driver_termination_reasons (owner ruling 2026-07-24)",
+   "mergedAt": "2026-07-24T17:37:57Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3405,
+   "title": "[HOLD] feat(lists): per-entity equipment_types + line-item templates (stacked on #3397)",
+   "mergedAt": "2026-07-24T18:34:58Z",
+   "category": "HOLD"
+  },
   {
    "number": 3403,
    "title": "[HOLD] feat(lists): per-entity driver_load_statuses (owner ruling 2026-07-24)",
