@@ -56,22 +56,24 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
     { table: "fuel_grades", activeFilter: "is_active", companyScoped: true },
     { table: "fuel_dispatch_routes", activeFilter: "is_active", companyScoped: true },
   ],
-  // Fleet catalogs are GLOBAL (no operating_company_id) — created by the fleet factory / 0153 with a
-  // globally-unique `code`, NOT company-scoped like the maintenance/fuel catalogs. Marking these
-  // companyScoped would add `WHERE operating_company_id = $1` and 42703 (column does not exist) → 500,
-  // which the to_regclass table-existence guard cannot catch. Verified on prod: equipment_types /
-  // trailer_types / lease_terms / asset_statuses / asset_locations all lack operating_company_id.
+  // Fleet catalogs — PER-ENTITY as of migration 202607860000 (owner ruling 2026-07-24: "lists and
+  // catalogs should be per entity, but we use the same catalog for all entities"). The 8 converted
+  // tables carry operating_company_id + FORCE RLS, so their count adds `WHERE operating_company_id = $1`
+  // (the count route always sets app.operating_company_id, so RLS + the explicit filter agree).
+  // STILL GLOBAL: equipment_types (dual write-surface — converted in a follow-up PR) and tire_positions
+  // (never converted) — both lack operating_company_id, so companyScoped MUST stay false for them or
+  // the count adds a filter on a column that does not exist → 42703 → 500.
   fleet: [
-    { table: "tractor_statuses", activeFilter: "is_active", companyScoped: false },
-    { table: "trailer_statuses", activeFilter: "is_active", companyScoped: false },
-    { table: "asset_condition_codes", activeFilter: "is_active", companyScoped: false },
+    { table: "tractor_statuses", activeFilter: "is_active", companyScoped: true },
+    { table: "trailer_statuses", activeFilter: "is_active", companyScoped: true },
+    { table: "asset_condition_codes", activeFilter: "is_active", companyScoped: true },
     { table: "equipment_types", activeFilter: "is_active", companyScoped: false },
     { table: "tire_positions", activeFilter: "is_active", companyScoped: false },
-    { table: "unit_ownership_types", activeFilter: "is_active", companyScoped: false },
-    { table: "trailer_types", activeFilter: "is_active", companyScoped: false },
-    { table: "lease_terms", activeFilter: "is_active", companyScoped: false },
-    { table: "asset_statuses", activeFilter: "is_active", companyScoped: false },
-    { table: "asset_locations", activeFilter: "is_active", companyScoped: false },
+    { table: "unit_ownership_types", activeFilter: "is_active", companyScoped: true },
+    { table: "trailer_types", activeFilter: "is_active", companyScoped: true },
+    { table: "lease_terms", activeFilter: "is_active", companyScoped: true },
+    { table: "asset_statuses", activeFilter: "is_active", companyScoped: true },
+    { table: "asset_locations", activeFilter: "is_active", companyScoped: true },
   ],
   accounting: [
     { table: "accounts", activeFilter: "deactivated_at", companyScoped: false },
