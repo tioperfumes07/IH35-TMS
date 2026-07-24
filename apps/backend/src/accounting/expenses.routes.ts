@@ -100,6 +100,7 @@ const createExpenseBodySchema = z.object({
   // HARD cross-module link (maintenance): persist the WO + unit id as a real FK, not just a memo string.
   work_order_id: z.string().uuid().optional().nullable(),
   unit_id: z.string().uuid().optional().nullable(),
+  insurance_claim_id: z.string().uuid().optional().nullable(),
   location_lat: z.number().finite().optional(),
   location_lng: z.number().finite().optional(),
 });
@@ -485,6 +486,12 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         if (hasUnitId) {
           columns.push(`unit_id`);
           values.push(body.unit_id ?? null);
+        }
+
+        const hasInsuranceClaimId = await columnExists(client, "accounting", "expenses", "insurance_claim_id");
+        if (hasInsuranceClaimId) {
+          columns.push(`insurance_claim_id`);
+          values.push(body.insurance_claim_id ?? null);
         }
 
         const placeholders = columns.map((_, i) => `$${i + 1}`).join(", ");

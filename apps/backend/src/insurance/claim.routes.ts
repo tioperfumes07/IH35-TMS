@@ -365,6 +365,52 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         ),
       ]);
 
+      const colExists = async (schema: string, table: string, column: string) => {
+        const r = await client.query(
+          `SELECT 1 FROM information_schema.columns WHERE table_schema=$1 AND table_name=$2 AND column_name=$3`,
+          [schema, table, column]
+        );
+        return (r.rowCount ?? 0) > 0;
+      };
+      const hasExpenseClaim = await colExists("accounting", "expenses", "insurance_claim_id");
+      const hasBillClaim = await colExists("accounting", "bills", "insurance_claim_id");
+      const hasWoClaim = await colExists("maintenance", "work_orders", "insurance_claim_id");
+
+      let expenses: unknown[] = [];
+      let bills: unknown[] = [];
+      let workOrders: unknown[] = [];
+      if (hasExpenseClaim) {
+        const er = await client.query(
+          `SELECT id::text, total_amount_cents::text, status, transaction_date::text
+             FROM accounting.expenses
+            WHERE operating_company_id = $1::uuid AND insurance_claim_id = $2::uuid
+            ORDER BY transaction_date DESC NULLS LAST LIMIT 50`,
+          [query.data.operating_company_id, params.data.id]
+        );
+        expenses = er.rows;
+      }
+      if (hasBillClaim) {
+        const br = await client.query(
+          `SELECT id::text, bill_number, amount_cents::text, status, bill_date::text
+             FROM accounting.bills
+            WHERE operating_company_id = $1::uuid AND insurance_claim_id = $2::uuid
+              AND revoked_at IS NULL
+            ORDER BY bill_date DESC NULLS LAST LIMIT 50`,
+          [query.data.operating_company_id, params.data.id]
+        );
+        bills = br.rows;
+      }
+      if (hasWoClaim) {
+        const wr = await client.query(
+          `SELECT id::text, display_id, status
+             FROM maintenance.work_orders
+            WHERE operating_company_id = $1::uuid AND insurance_claim_id = $2::uuid
+            ORDER BY created_at DESC NULLS LAST LIMIT 50`,
+          [query.data.operating_company_id, params.data.id]
+        );
+        workOrders = wr.rows;
+      }
+
       return {
         claim,
         reverse: {
@@ -373,11 +419,21 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
           matters: matters.rows,
           incidents: incidents.rows,
           damage_continuity_chains: chains.rows,
+          expenses,
+          bills,
+          work_orders: workOrders,
         },
-        // Honest gap: no expense/WO/settlement FK to insurance.claim exists on prod — do not invent.
+        // Honest gaps only when the held Claim→money FKs are not yet on this DB.
         gaps: {
-          expense: "no accounting.expenses.claim_id (or equivalent) on prod",
-          work_order: "no maintenance.work_orders.claim_id on prod",
+          expense: hasExpenseClaim
+            ? null
+            : "no accounting.expenses.insurance_claim_id on this DB (held migration 202607740000 — owner Neon-apply)",
+          work_order: hasWoClaim
+            ? null
+            : "no maintenance.work_orders.insurance_claim_id on this DB (held migration 202607740000 — owner Neon-apply)",
+          bill: hasBillClaim
+            ? null
+            : "no accounting.bills.insurance_claim_id on this DB (held migration 202607740000 — owner Neon-apply)",
           settlement_deduction: "no driver_finance.driver_settlement_deductions.source claim FK on prod",
         },
       };
