@@ -13,6 +13,12 @@
 //            A/P. void-not-delete: rows are only ever upserted, never deleted. NO GL/journal posting
 //            is performed here — this only populates the A/P subledger; GL stays QBO's job.
 //
+//   Stage 2b projectApBillLinesToLedger()  same flag
+//            Projects payload_json->'Line' into accounting.bill_lines for QBO-sourced bills.
+//            Root cause of bill_lines≈1 vs bills≈16k was header-only Stage 2. Mirror already stores
+//            the full QBO Bill JSON including Line[]. Idempotent delete+insert scoped to
+//            source_system='qbo' only — never touches TMS-native lines. NO GL poster.
+//
 // Both flags default OFF (financial cluster — HOLD for owner approval). Stage 1 follows the G5-2
 // customers-puller pattern: HTTP pagination OUTSIDE any DB transaction; upsert in a short txn;
 // qbo.sync_runs audit rows commit in their OWN transactions so a data-txn failure cannot roll back
@@ -41,11 +47,79 @@ export type ApBillsPullResult = {
   pulledAt: string;
 };
 
+export type ApBillLinesProjectResult = {
+  enabled: boolean;
+  /** Rows touched by upsert (insert + real updates). No-ops with identical values are not counted. */
+  linesProjected: number;
+  /** QBO-sourced bill_lines removed because they no longer appear in payload_json money lines. */
+  linesOrphanDeleted: number;
+  linesUnmappedAccount: number;
+  linesUnmappedItem: number;
+  headerLineSumMismatch: number;
+  projectedAt: string;
+};
+
 export type ApBillsProjectResult = {
   enabled: boolean;
   rowsProjected: number;
   projectedAt: string;
+  lines: ApBillLinesProjectResult;
 };
+
+/** Detail types that carry money on a QBO Bill. DescriptionOnly is skipped (no amount economics). */
+export const QBO_BILL_MONEY_LINE_DETAIL_TYPES = [
+  "AccountBasedExpenseLineDetail",
+  "ItemBasedExpenseLineDetail",
+] as const;
+
+export type QboBillMoneyLineDetailType = (typeof QBO_BILL_MONEY_LINE_DETAIL_TYPES)[number];
+
+/** Pure helper — kept exportable for unit tests (no DB). */
+export function isQboBillMoneyLineDetailType(detailType: unknown): detailType is QboBillMoneyLineDetailType {
+  return (
+    detailType === "AccountBasedExpenseLineDetail" || detailType === "ItemBasedExpenseLineDetail"
+  );
+}
+
+/**
+ * Pure helper: extract AccountRef / ItemRef ids from one QBO Line object.
+ * Never invents amounts from the bill header — caller must skip when Line[] is missing.
+ */
+export function parseQboBillLineRefs(line: Record<string, unknown>): {
+  detailType: string;
+  accountQboId: string | null;
+  itemQboId: string | null;
+  amount: number | null;
+  description: string | null;
+  lineNum: number | null;
+} {
+  const detailType = line.DetailType != null ? String(line.DetailType) : "";
+  const amountRaw = line.Amount;
+  const amount =
+    typeof amountRaw === "number"
+      ? amountRaw
+      : amountRaw != null && Number.isFinite(Number(amountRaw))
+        ? Number(amountRaw)
+        : null;
+  const description = line.Description != null ? String(line.Description) : null;
+  const lineNumRaw = line.LineNum ?? line.Id;
+  const lineNum =
+    lineNumRaw != null && Number.isFinite(Number(lineNumRaw)) ? Math.trunc(Number(lineNumRaw)) : null;
+
+  let accountQboId: string | null = null;
+  let itemQboId: string | null = null;
+  if (detailType === "AccountBasedExpenseLineDetail") {
+    const detail = line.AccountBasedExpenseLineDetail as Record<string, unknown> | undefined;
+    const ref = detail?.AccountRef as Record<string, unknown> | undefined;
+    accountQboId = ref?.value != null ? String(ref.value) : null;
+  } else if (detailType === "ItemBasedExpenseLineDetail") {
+    const detail = line.ItemBasedExpenseLineDetail as Record<string, unknown> | undefined;
+    const ref = detail?.ItemRef as Record<string, unknown> | undefined;
+    itemQboId = ref?.value != null ? String(ref.value) : null;
+  }
+
+  return { detailType, accountQboId, itemQboId, amount, description, lineNum };
+}
 
 function metaUpdatedAt(row: Record<string, unknown>): Date | null {
   const meta = row.MetaData as Record<string, unknown> | undefined;
@@ -290,10 +364,230 @@ export async function pullApBillsFromQbo(operatingCompanyId: string): Promise<Ap
 }
 
 /**
+ * Stage 2b — project QBO Bill Line[] from mdata.qbo_ap_bills.payload_json into accounting.bill_lines.
+ *
+ * Incremental / scheduler-safe:
+ *   1) UPSERT money lines from payload_json (ON CONFLICT), updating only when values IS DISTINCT FROM
+ *      so identical re-runs do not thrash audit.row_changes / trg_audit_bill_lines.
+ *   2) DELETE only orphan QBO lines that no longer appear in the payload (NOT EXISTS), never a
+ *      company-wide wipe of all QBO bill_lines each 4h tick.
+ *
+ * Never touches TMS-native bill lines. Never invents a single line from header totals when Line is
+ * missing. Never calls the GL poster.
+ *
+ * AccountBased → catalogs.accounts via qbo_account_id.
+ * ItemBased → catalogs.items.default_expense_account_id when qbo_item_id matches; else account_id NULL.
+ */
+export async function projectApBillLinesToLedger(
+  operatingCompanyId: string,
+  opts?: { skipFlagCheck?: boolean }
+): Promise<ApBillLinesProjectResult> {
+  const projectedAt = new Date().toISOString();
+  const empty: ApBillLinesProjectResult = {
+    enabled: false,
+    linesProjected: 0,
+    linesOrphanDeleted: 0,
+    linesUnmappedAccount: 0,
+    linesUnmappedItem: 0,
+    headerLineSumMismatch: 0,
+    projectedAt,
+  };
+
+  // Safe line_sequence: non-numeric LineNum/Id must not abort the whole txn (::int cast).
+  const lineSeqSql = `
+    COALESCE(
+      CASE
+        WHEN (line->>'LineNum') ~ '^[0-9]+$' AND (line->>'LineNum')::int > 0
+          THEN (line->>'LineNum')::int
+      END,
+      CASE
+        WHEN (line->>'Id') ~ '^[0-9]+$' AND (line->>'Id')::int > 0
+          THEN (line->>'Id')::int
+      END,
+      t.ordinality::int
+    )
+  `;
+
+  return withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    const enabled =
+      opts?.skipFlagCheck === true
+        ? true
+        : await isEnabled(client, AP_BILLS_PROJECTION_FLAG, {
+            operating_company_id: operatingCompanyId,
+          });
+    if (!enabled) return empty;
+
+    const insertRes = await client.query(
+      `
+        INSERT INTO accounting.bill_lines (
+          bill_id,
+          line_sequence,
+          amount,
+          description,
+          section,
+          account_id
+        )
+        SELECT
+          b.id AS bill_id,
+          ${lineSeqSql} AS line_sequence,
+          COALESCE((NULLIF(line->>'Amount', ''))::numeric, 0) AS amount,
+          NULLIF(line->>'Description', '') AS description,
+          'A' AS section,
+          CASE
+            WHEN line->>'DetailType' = 'AccountBasedExpenseLineDetail' THEN acct.id
+            WHEN line->>'DetailType' = 'ItemBasedExpenseLineDetail' THEN COALESCE(item_acct.id, qbo_item_acct.id)
+            ELSE NULL
+          END AS account_id
+        FROM accounting.bills b
+        INNER JOIN mdata.qbo_ap_bills m
+          ON m.operating_company_id = b.operating_company_id
+         AND m.qbo_id = b.qbo_bill_id
+        CROSS JOIN LATERAL jsonb_array_elements(
+          CASE
+            WHEN jsonb_typeof(m.payload_json->'Line') = 'array' THEN m.payload_json->'Line'
+            ELSE '[]'::jsonb
+          END
+        ) WITH ORDINALITY AS t(line, ordinality)
+        LEFT JOIN catalogs.accounts acct
+          ON acct.operating_company_id = b.operating_company_id
+         AND acct.qbo_account_id = line->'AccountBasedExpenseLineDetail'->'AccountRef'->>'value'
+         AND acct.deactivated_at IS NULL
+        LEFT JOIN catalogs.items ci
+          ON ci.operating_company_id = b.operating_company_id
+         AND ci.qbo_item_id = line->'ItemBasedExpenseLineDetail'->'ItemRef'->>'value'
+        LEFT JOIN catalogs.accounts item_acct
+          ON item_acct.id = ci.default_expense_account_id
+         AND item_acct.operating_company_id = b.operating_company_id
+         AND item_acct.deactivated_at IS NULL
+        LEFT JOIN mdata.qbo_items qi
+          ON qi.operating_company_id = b.operating_company_id
+         AND qi.qbo_id = line->'ItemBasedExpenseLineDetail'->'ItemRef'->>'value'
+        LEFT JOIN catalogs.accounts qbo_item_acct
+          ON qbo_item_acct.operating_company_id = b.operating_company_id
+         AND qbo_item_acct.qbo_account_id = qi.payload_json->'ExpenseAccountRef'->>'value'
+         AND qbo_item_acct.deactivated_at IS NULL
+        WHERE b.operating_company_id = $1::uuid
+          AND b.source_system = 'qbo'
+          AND line->>'DetailType' IN ('AccountBasedExpenseLineDetail', 'ItemBasedExpenseLineDetail')
+        ON CONFLICT (bill_id, line_sequence) DO UPDATE SET
+          amount = EXCLUDED.amount,
+          description = EXCLUDED.description,
+          account_id = EXCLUDED.account_id,
+          section = EXCLUDED.section
+        WHERE accounting.bill_lines.amount IS DISTINCT FROM EXCLUDED.amount
+           OR accounting.bill_lines.description IS DISTINCT FROM EXCLUDED.description
+           OR accounting.bill_lines.account_id IS DISTINCT FROM EXCLUDED.account_id
+           OR accounting.bill_lines.section IS DISTINCT FROM EXCLUDED.section
+      `,
+      [operatingCompanyId]
+    );
+
+    // Orphan delete only — never wipe all QBO lines each scheduler tick.
+    const orphanRes = await client.query(
+      `
+        DELETE FROM accounting.bill_lines bl
+        USING accounting.bills b
+        WHERE bl.bill_id = b.id
+          AND b.operating_company_id = $1::uuid
+          AND b.source_system = 'qbo'
+          AND NOT EXISTS (
+            SELECT 1
+            FROM mdata.qbo_ap_bills m
+            CROSS JOIN LATERAL jsonb_array_elements(
+              CASE
+                WHEN jsonb_typeof(m.payload_json->'Line') = 'array' THEN m.payload_json->'Line'
+                ELSE '[]'::jsonb
+              END
+            ) WITH ORDINALITY AS t(line, ordinality)
+            WHERE m.operating_company_id = b.operating_company_id
+              AND m.qbo_id = b.qbo_bill_id
+              AND line->>'DetailType' IN ('AccountBasedExpenseLineDetail', 'ItemBasedExpenseLineDetail')
+              AND (${lineSeqSql}) = bl.line_sequence
+          )
+      `,
+      [operatingCompanyId]
+    );
+
+    const linesProjected = insertRes.rowCount ?? 0;
+    const linesOrphanDeleted = orphanRes.rowCount ?? 0;
+
+    const unmapped = await client.query<{
+      lines_unmapped_account: string;
+      lines_unmapped_item: string;
+    }>(
+      `
+        WITH money_lines AS (
+          SELECT
+            b.id AS bill_id,
+            line->>'DetailType' AS detail_type,
+            ${lineSeqSql} AS line_sequence
+          FROM accounting.bills b
+          INNER JOIN mdata.qbo_ap_bills m
+            ON m.operating_company_id = b.operating_company_id
+           AND m.qbo_id = b.qbo_bill_id
+          CROSS JOIN LATERAL jsonb_array_elements(
+            CASE
+              WHEN jsonb_typeof(m.payload_json->'Line') = 'array' THEN m.payload_json->'Line'
+              ELSE '[]'::jsonb
+            END
+          ) WITH ORDINALITY AS t(line, ordinality)
+          WHERE b.operating_company_id = $1::uuid
+            AND b.source_system = 'qbo'
+            AND line->>'DetailType' IN ('AccountBasedExpenseLineDetail', 'ItemBasedExpenseLineDetail')
+        )
+        SELECT
+          count(*) FILTER (
+            WHERE ml.detail_type = 'AccountBasedExpenseLineDetail' AND bl.account_id IS NULL
+          )::int AS lines_unmapped_account,
+          count(*) FILTER (
+            WHERE ml.detail_type = 'ItemBasedExpenseLineDetail' AND bl.account_id IS NULL
+          )::int AS lines_unmapped_item
+        FROM money_lines ml
+        INNER JOIN accounting.bill_lines bl
+          ON bl.bill_id = ml.bill_id
+         AND bl.line_sequence = ml.line_sequence
+      `,
+      [operatingCompanyId]
+    );
+
+    const mismatch = await client.query<{ n: string }>(
+      `
+        SELECT count(*)::int AS n
+        FROM accounting.bills b
+        WHERE b.operating_company_id = $1::uuid
+          AND b.source_system = 'qbo'
+          AND ABS(
+            COALESCE(b.amount_cents, 0)
+            - COALESCE((
+                SELECT ROUND(SUM(bl.amount) * 100)::bigint
+                FROM accounting.bill_lines bl
+                WHERE bl.bill_id = b.id
+              ), 0)
+          ) > 1
+      `,
+      [operatingCompanyId]
+    );
+
+    return {
+      enabled: true,
+      linesProjected,
+      linesOrphanDeleted,
+      linesUnmappedAccount: Number(unmapped.rows[0]?.lines_unmapped_account ?? 0),
+      linesUnmappedItem: Number(unmapped.rows[0]?.lines_unmapped_item ?? 0),
+      headerLineSumMismatch: Number(mismatch.rows[0]?.n ?? 0),
+      projectedAt,
+    };
+  });
+}
+
+/**
  * Stage 2 — project the QBO A/P mirror into accounting.bills (source_system='qbo'). Set-based,
  * idempotent upsert on the existing uq_bills_company_qbo_bill_id key. Vendor linkage resolves
  * mdata.vendors via qbo_vendor_id so the aging view can render names. Bills with no positive total
  * are skipped (accounting.bills enforces amount_cents > 0). No-op unless the QBO_AP_BILLS_PROJECTION_ENABLED feature flag is ON for this entity.
+ *
+ * After headers, projects bill_lines from payload_json (Stage 2b). NO GL/journal posting.
  */
 export async function projectApBillsToLedger(operatingCompanyId: string): Promise<ApBillsProjectResult> {
   const projectedAt = new Date().toISOString();
@@ -383,5 +677,24 @@ export async function projectApBillsToLedger(operatingCompanyId: string): Promis
     rowsProjected = res.rowCount ?? 0;
   });
 
-  return { enabled, rowsProjected, projectedAt };
+  if (!enabled) {
+    return {
+      enabled: false,
+      rowsProjected: 0,
+      projectedAt,
+      lines: {
+        enabled: false,
+        linesProjected: 0,
+        linesOrphanDeleted: 0,
+        linesUnmappedAccount: 0,
+        linesUnmappedItem: 0,
+        headerLineSumMismatch: 0,
+        projectedAt,
+      },
+    };
+  }
+
+  // Flag already proven ON in this call — skip re-check so lines share the same gate decision.
+  const lines = await projectApBillLinesToLedger(operatingCompanyId, { skipFlagCheck: true });
+  return { enabled: true, rowsProjected, projectedAt, lines };
 }
