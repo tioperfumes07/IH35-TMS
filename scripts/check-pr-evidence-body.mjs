@@ -17,6 +17,7 @@
  * Usage:  node scripts/check-pr-evidence-body.mjs --body-file <path> --files-file <path>
  *         node scripts/check-pr-evidence-body.mjs --selftest
  */
+import { execSync } from "node:child_process";
 import fs from "node:fs";
 import { EVIDENCE_KEYS, proofLineIsSubstantiated } from "./verify-definition-of-done-evidence.mjs";
 
@@ -111,12 +112,41 @@ if (process.argv.includes("--selftest")) {
   );
   refute("docs-only-pr-is-exempt", "just docs", ["docs/x.md"]);
 
+  // ── PRE-FIX FIXTURES: the REAL PR bodies this guard exists because of ──────────────────────────
+  // The five per-entity Lists PRs merged with no evidence block while the old keyword-anywhere
+  // regexes went green. They are committed verbatim under scripts/__fixtures__/pr-bodies/ so the
+  // guard is proven against real source, not a synthetic string. A selftest that only compares
+  // literals declared inside the script proves nothing (DEFINITION-OF-DONE.md §4).
+  const FIXTURE_DIR = new URL("./__fixtures__/pr-bodies/", import.meta.url);
+  const readFixture = (n) => fs.readFileSync(new URL(`pr-${n}.md`, FIXTURE_DIR), "utf8");
+  const NON_COMPLIANT = [3397, 3403, 3405, 3408, 3409];
+  for (const n of NON_COMPLIANT) {
+    const body = readFixture(n);
+    if (!/\S/.test(body)) {
+      failures.push(`fixture pr-${n}.md is empty — an empty fixture proves nothing, re-capture it`);
+      continue;
+    }
+    const problems = assertPrBodyEvidence(body, APP);
+    if (!problems.length) {
+      failures.push(`PRE-FIX FIXTURE #${n}: the tightened guard did NOT reject this real non-compliant PR body`);
+    }
+  }
+  // And it must PASS on a real compliant PR body from the same day/module.
+  const compliant = readFixture(3387);
+  const compliantProblems = assertPrBodyEvidence(compliant, APP);
+  if (compliantProblems.length) {
+    failures.push(`PRE-FIX FIXTURE #3387 (compliant) was wrongly rejected: ${compliantProblems.join(" | ")}`);
+  }
+
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:`);
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 4 planted defects caught; compliant, heading-form, UNVERIFIED and docs-only bodies not flagged`);
+  console.log(
+    `${LABEL} SELFTEST PASS — 4 planted defects + 5 real pre-fix PR bodies (#3397/#3403/#3405/#3408/#3409) ` +
+      `rejected; real compliant body #3387, heading-form, UNVERIFIED and docs-only not flagged`
+  );
   process.exit(0);
 }
 
@@ -124,13 +154,49 @@ const arg = (name) => {
   const i = process.argv.indexOf(name);
   return i === -1 ? null : process.argv[i + 1];
 };
+
+/**
+ * The PR BODY is the gate. Resolution order, and the SOURCE IS ALWAYS PRINTED so a silent fallback
+ * can never be mistaken for a real check:
+ *   1. $GITHUB_EVENT_PATH -> .pull_request.body   (authoritative in CI)
+ *   2. --body-file                                 (explicit path)
+ *   3. commit message                              (LOCAL ONLY — announced as a weaker check)
+ */
+function resolveBody(bodyFile) {
+  const eventPath = process.env.GITHUB_EVENT_PATH;
+  if (eventPath && fs.existsSync(eventPath)) {
+    try {
+      const ev = JSON.parse(fs.readFileSync(eventPath, "utf8"));
+      if (typeof ev?.pull_request?.body === "string") {
+        return { body: ev.pull_request.body, source: "PR body (GITHUB_EVENT_PATH .pull_request.body)" };
+      }
+    } catch {
+      /* fall through to the next source */
+    }
+  }
+  if (bodyFile && fs.existsSync(bodyFile)) {
+    return { body: fs.readFileSync(bodyFile, "utf8"), source: `PR body (--body-file ${bodyFile})` };
+  }
+  try {
+    const msg = execSync("git log -1 --format=%B", { encoding: "utf8" });
+    return {
+      body: msg,
+      source: "COMMIT MESSAGE fallback — no PR context available; this is the weaker local check, not the CI gate",
+    };
+  } catch {
+    return { body: "", source: "no source available" };
+  }
+}
+
 const bodyFile = arg("--body-file");
 const filesFile = arg("--files-file");
-if (!bodyFile || !filesFile) {
-  console.error(`${LABEL}: usage --body-file <path> --files-file <path> [--selftest]`);
+if (!filesFile) {
+  console.error(`${LABEL}: usage --files-file <path> [--body-file <path>] [--selftest]`);
   process.exit(2);
 }
-const body = fs.existsSync(bodyFile) ? fs.readFileSync(bodyFile, "utf8") : "";
+const resolved = resolveBody(bodyFile);
+console.log(`${LABEL}: evidence source = ${resolved.source}`);
+const body = resolved.body;
 const files = fs.existsSync(filesFile)
   ? fs.readFileSync(filesFile, "utf8").split(/\r?\n/).filter(Boolean)
   : [];

@@ -44,5 +44,7 @@ jobs:
             git diff --name-only "origin/${{ github.event.pull_request.base.ref }}"...HEAD > /tmp/pr-files.txt
           echo "changed files: $(wc -l < /tmp/pr-files.txt)"
 
-      - name: Check evidence block
+      - name: Check evidence block (PR body from the event payload)
         run: node scripts/check-pr-evidence-body.mjs --body-file /tmp/pr-body.txt --files-file /tmp/pr-files.txt
+        # GITHUB_EVENT_PATH is set by Actions, so the script reads .pull_request.body directly and
+        # prints which source it used; --body-file remains an explicit belt-and-braces fallback.
