@@ -1,47 +1,50 @@
 # CoA roles — entity required matrix + Neon gap (2026-07-23)
 
 **Law:** `docs/specs/DEFINITION-OF-DONE.md` · primary table `accounting.chart_of_accounts_roles`  
-**Owner designations required** before Neon writes for missing/suspect binds. Cursor does not invent GL mappings.
+**Owner designations:** UI (not Neon INSERT). Cursor does not invent GL mappings.
 
 ## Required-by-entity (validate)
 
 | Bucket | TRANSP | TRK | USMCA |
 |---|---|---|---|
 | Core (AR/AP/cash/undeposited/revenue/expense/RE/uncategorized/`cash_dip`) | required | required | required |
-| Driver pay + recoveries + escrow | required | **not required** | required |
+| Driver pay + **used** recoveries (advance, damage, abandonment) + escrow + reimbursement | required | **not required** | required |
 | Factoring secured-borrowing | required | **not required** | **not required** (launch) |
-| ASC 842 lease suite | not required | required | not required |
+| ASC 842 lease suite (`rental_income` / `lease_receivable` / …) | not required | required | not required |
 | Property tax | required | required | required |
-| `sales_tax_payable`, `cash_basis_adjustment_equity` | optional | optional | optional |
 
-Code: `apps/backend/src/accounting/coa-roles/entity-required-roles.ts`
+### Optional (designatable; validate ignores)
 
-## Neon live (bypass lucia · prod branch) — 2026-07-23 evening
+| Role | Why optional |
+|---|---|
+| `sales_tax_payable` | Freight not sales-taxed (owner) |
+| `cash_basis_adjustment_equity` | Cash-basis equity plug only if CPA creates dedicated account |
+| `lease_recovery` | No OO / no driver lease withhold (owner 2026-07-23) |
+| `insurance_recovery` | No driver insurance share recovery (owner) |
+| `fuel_advance_recovery` | No fuel float advance recovery in model (owner) |
+| `other_recovery` | Catch-all unused (owner) |
 
-| Entity | Active roles | Missing vs entity-required (compute) |
+Code: `apps/backend/src/accounting/coa-roles/entity-required-roles.ts`  
+Guard: `scripts/verify-coa-optional-unused-recoveries.mjs` (step **1410**)
+
+## Neon live (bypass lucia · prod `br-fancy-credit-akjnd07a`) — 2026-07-23 evening (owner paste)
+
+| Entity | Active roles | Missing vs **updated** required |
 |---|---:|---|
-| TRANSP missing | `advance_recovery`, `insurance_recovery`, `fuel_advance_recovery`, `other_recovery`, `reimbursement_expense` |
+| TRANSP | 26 | **none** (fuel/insurance/other optional; advance + reimbursement designated) |
 | TRK | 24 | **none** vs TRK-required |
-| USMCA | 18 | `cash_dip`, `expense_default`, `driver_pay_expense`, `driver_payroll_clearing`, `reimbursement_expense`, `advance_recovery`, `damage_recovery`, `lease_recovery`, `insurance_recovery`, `fuel_advance_recovery`, `other_recovery` |
+| USMCA | 25 | **none** (lease/fuel/insurance/other optional) |
 
-## DIP resolve (cash_dip → bank.ledger_account_id)
+### Suspect binds (owner review — DoD layer D/E; not blockers for validate)
 
-| Entity | cash_dip CoA | Bank mask | Status |
-|---|---|---|---|
-| TRANSP | WF - General Operating 6103 | …6103 | **should RESOLVE** |
-| TRK | BUSINESS CHECKING …3500 | …3500 | **should RESOLVE** |
-| USMCA | *(none)* | …3224 → BoA Operating | **FAIL until designated** |
+- TRANSP/USMCA `cash_clearing` + `undeposited_funds` → same Undeposited Funds
+- TRANSP/USMCA `driver_payroll_clearing` → Driver Cash Advance (clearing vs receivable)
+- TRANSP `lease_recovery` → “Leased Trucks from IH35 TRUCKING” (**expense**, wrong role semantics — deactivate role later; keep account)
+- TRK `damage_recovery` + `escrow_liability_default` → same Damage Claim Escrow
+- TRK `rental_income` + `revenue_default` → same Equipment Rental Income (lessor OK if intentional)
 
-## Suspect binds (owner review — DoD layer D/E)
+## Owner action status
 
-- TRANSP `cash_clearing` → Undeposited Funds (duplicates `undeposited_funds`)
-- TRANSP `driver_payroll_clearing` → Driver Cash Advance (asset)
-- TRANSP `damage_recovery` + `escrow_liability_default` → same 2025 escrow
-- TRANSP …6129 / …6137 cash-GL names still BOA-/loan-labeled
-- TRK has `driver_pay_expense` / factoring-adjacent roles despite lessor-only ops
-
-## Owner action
-
-1. Designate USMCA missing required roles in CoA Roles UI (esp. `cash_dip` → BoA Operating, `expense_default`, `driver_pay_expense`).
-2. Confirm or correct TRANSP suspect binds.
-3. Optionally deactivate TRK N/A factoring/driver roles (never delete accounts).
+1. ~~Designate USMCA / TRANSP required roles in UI~~ **DONE** (owner 2026-07-23)
+2. Optional unused recoveries → code matrix (**this fix**)
+3. Suspect double-binds → CPA/owner cleanup wave (tracker; not silent Neon rewrite)
