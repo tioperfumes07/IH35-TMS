@@ -35,24 +35,26 @@ export function CoaAsymmetryReportPanel({ enabled }: Props) {
 
       {data ? (
         <div className="space-y-4 text-sm text-slate-800">
-          <table className="w-full max-w-xl border-collapse text-left text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 text-xs uppercase text-slate-600">
-                <th className="py-1 pr-4">Entity</th>
-                <th className="py-1 pr-4 text-right">Postable</th>
-                <th className="py-1 text-right">Active total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.postable_by_entity.map((row) => (
-                <tr key={row.entity_code} className="border-b border-slate-200">
-                  <td className="py-1 pr-4 font-medium">{row.entity_code}</td>
-                  <td className="py-1 pr-4 text-right tabular-nums">{row.postable}</td>
-                  <td className="py-1 text-right tabular-nums">{row.total_active}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full max-w-xl border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-xs uppercase text-slate-600">
+                  <th className="py-1 pr-4">Entity</th>
+                  <th className="py-1 pr-4 text-right">Postable</th>
+                  <th className="py-1 text-right">Active total</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {data.postable_by_entity.map((row) => (
+                  <tr key={row.entity_code} className="border-b border-slate-200">
+                    <td className="py-1 pr-4 font-medium">{row.entity_code}</td>
+                    <td className="py-1 pr-4 text-right tabular-nums">{row.postable}</td>
+                    <td className="py-1 text-right tabular-nums">{row.total_active}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           <div className="grid gap-2 sm:grid-cols-2">
             <p>
