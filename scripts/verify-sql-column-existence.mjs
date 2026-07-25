@@ -65,6 +65,8 @@ const TARGET_TABLES = new Set([
   "driver_finance.driver_settlement_deductions",
   "driver_finance.deduction_schedule",
   "catalogs.items",
+  "driver_finance.escrow_ledger",
+  "driver_finance.escrow_balances",
   "maintenance.work_orders",
   "maintenance.work_order_lines",
   "dispatch.equipment_transfer_requests",
@@ -176,6 +178,32 @@ export function analyzeSql(sql, schema) {
       /\b([a-z_][a-z0-9_]*)\s+in\s*\(/gi,
       /\bset\s+([a-z_][a-z0-9_]*)\s*=/gi,
     ];
+    // ORDER BY / GROUP BY were NOT inspected before 2026-07-25. That blind spot is what let
+    // `ORDER BY posted_at` ship against driver_finance.escrow_ledger, whose timestamp is created_at —
+    // Postgres 42703, a hard 500 on a live read endpoint, with CI green. A phantom column in ORDER BY
+    // is exactly as fatal as one in WHERE; only the clause differed.
+    // Handled apart from the patterns above because the clause is a comma-separated LIST whose terms
+    // may carry ASC/DESC/NULLS FIRST — a single-capture regex would see only the first column.
+    // ORDER BY may legally name a SELECT-list OUTPUT ALIAS rather than a real column —
+      // `EXTRACT(...) AS age_days ... ORDER BY age_days` is valid SQL. Collect every `AS <name>` and
+      // exclude those, or this check would flag three correct queries (recognition_date,
+      // service_location, age_days) and get itself allowlisted into uselessness.
+      const outputAliases = new Set();
+      for (const am of low.matchAll(/\bas\s+([a-z_][a-z0-9_]*)/gi)) outputAliases.add(am[1]);
+      const seenSort = new Set();
+    const sortClauseRe = /\b(?:order|group)\s+by\s+([^)]*?)(?:\s+limit\b|\s+offset\b|\s+fetch\b|$)/gi;
+    let sc;
+    while ((sc = sortClauseRe.exec(low))) {
+      for (const raw of sc[1].split(",")) {
+        const term = raw.trim().replace(/\s+(asc|desc)\b/g, "").replace(/\s+nulls\s+(first|last)\b/g, "").trim();
+        // identifiers only — ordinals (ORDER BY 1), expressions and function calls cannot be resolved
+        // to a column by regex and would produce false positives.
+        if (!/^[a-z_][a-z0-9_]*$/.test(term)) continue;
+        if (SQL_NOISE.has(term) || aliasToTable.has(term) || outputAliases.has(term) || seenSort.has(term)) continue;
+        seenSort.add(term);
+        if (!cols.has(term)) violations.push({ table, column: term, ctx: `ORDER/GROUP BY ${term}` });
+      }
+    }
     const seen = new Set();
     for (const re of patterns) {
       let m;
