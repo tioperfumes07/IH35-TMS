@@ -53,6 +53,9 @@ type CreateBillInput = {
   // constraints are added by migration 202607050810.
   workOrderId?: string | null;
   unitId?: string | null;
+  // Claim→Bill hop (held migration 202607740000). Only persisted when the column exists on the
+  // connected DB (colExists) — Neon may not have owner-applied the held DDL yet.
+  insuranceClaimId?: string | null;
   // Draft id used by UploadZone for create-time bill attachments; reconciled onto the real bill id in
   // the same txn (Option B inc 2 — docs/specs/ATTACHMENT-DRAFT-LINKAGE-FIX.md).
   attachmentDraftId?: string | null;
@@ -597,6 +600,107 @@ export async function listWorkOrderLinkedFinancials(
   });
 }
 
+/**
+ * Reverse drill-through for Claim→Bill/Expense (held migration 202607740000): given an
+ * insurance.claim id, return bills + expenses + work orders that reference it via
+ * insurance_claim_id. Column-gated so pre-Neon-apply DBs return empty lists (never 500).
+ */
+export async function listClaimLinkedFinancials(
+  userId: string,
+  operatingCompanyId: string,
+  insuranceClaimId: string
+): Promise<{
+  bills: Array<{ id: string; bill_number: string | null; bill_date: string | null; amount_cents: number; status: string | null; memo: string | null }>;
+  expenses: Array<{ id: string; transaction_date: string | null; total_amount_cents: number; status: string | null; memo: string | null }>;
+  work_orders: Array<{ id: string; display_id: string | null; status: string | null }>;
+  columns_present: { bills: boolean; expenses: boolean; work_orders: boolean };
+}> {
+  return withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    const colExists = async (schema: string, table: string, column: string): Promise<boolean> => {
+      const r = await client.query(
+        `SELECT 1 FROM information_schema.columns WHERE table_schema=$1 AND table_name=$2 AND column_name=$3`,
+        [schema, table, column]
+      );
+      return (r.rowCount ?? 0) > 0;
+    };
+
+    const hasBillCol = await colExists("accounting", "bills", "insurance_claim_id");
+    const hasExpenseCol = await colExists("accounting", "expenses", "insurance_claim_id");
+    const hasWoCol = await colExists("maintenance", "work_orders", "insurance_claim_id");
+
+    let bills: Array<{ id: string; bill_number: string | null; bill_date: string | null; amount_cents: number; status: string | null; memo: string | null }> = [];
+    if (hasBillCol) {
+      const res = await client.query(
+        `SELECT b.id::text AS id, b.bill_number, b.bill_date::text AS bill_date,
+                COALESCE(b.amount_cents, 0)::bigint AS amount_cents, b.status, b.memo
+           FROM accounting.bills b
+          WHERE b.operating_company_id = $1
+            AND b.insurance_claim_id = $2
+            AND b.revoked_at IS NULL
+          ORDER BY b.bill_date DESC NULLS LAST, b.created_at DESC`,
+        [operatingCompanyId, insuranceClaimId]
+      );
+      bills = res.rows.map((r: Record<string, unknown>) => ({
+        id: String(r.id),
+        bill_number: (r.bill_number as string) ?? null,
+        bill_date: (r.bill_date as string) ?? null,
+        amount_cents: Number(r.amount_cents ?? 0),
+        status: (r.status as string) ?? null,
+        memo: (r.memo as string) ?? null,
+      }));
+    }
+
+    let expenses: Array<{ id: string; transaction_date: string | null; total_amount_cents: number; status: string | null; memo: string | null }> = [];
+    if (hasExpenseCol) {
+      const hasMemo = await colExists("accounting", "expenses", "memo");
+      const res = await client.query(
+        `SELECT e.id::text AS id, e.transaction_date::text AS transaction_date,
+                COALESCE(e.total_amount_cents, 0)::bigint AS total_amount_cents, e.status,
+                ${hasMemo ? "e.memo" : "NULL::text AS memo"}
+           FROM accounting.expenses e
+          WHERE e.operating_company_id = $1
+            AND e.insurance_claim_id = $2
+            AND e.status <> 'void'
+          ORDER BY e.transaction_date DESC NULLS LAST, e.created_at DESC`,
+        [operatingCompanyId, insuranceClaimId]
+      );
+      expenses = res.rows.map((r: Record<string, unknown>) => ({
+        id: String(r.id),
+        transaction_date: (r.transaction_date as string) ?? null,
+        total_amount_cents: Number(r.total_amount_cents ?? 0),
+        status: (r.status as string) ?? null,
+        memo: (r.memo as string) ?? null,
+      }));
+    }
+
+    let work_orders: Array<{ id: string; display_id: string | null; status: string | null }> = [];
+    if (hasWoCol) {
+      const res = await client.query(
+        `SELECT wo.id::text AS id, wo.display_id, wo.status
+           FROM maintenance.work_orders wo
+          WHERE wo.operating_company_id = $1
+            AND wo.insurance_claim_id = $2
+          ORDER BY wo.created_at DESC NULLS LAST
+          LIMIT 100`,
+        [operatingCompanyId, insuranceClaimId]
+      );
+      work_orders = res.rows.map((r: Record<string, unknown>) => ({
+        id: String(r.id),
+        display_id: (r.display_id as string) ?? null,
+        status: (r.status as string) ?? null,
+      }));
+    }
+
+    return {
+      bills,
+      expenses,
+      work_orders,
+      columns_present: { bills: hasBillCol, expenses: hasExpenseCol, work_orders: hasWoCol },
+    };
+  });
+}
+
 export async function listBills(
   userId: string,
   operatingCompanyId: string,
@@ -899,8 +1003,41 @@ export async function createBill(input: CreateBillInput, userId: string) {
 
   const bill = await withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
+    const claimCol = await client.query(
+      `SELECT 1 FROM information_schema.columns
+        WHERE table_schema='accounting' AND table_name='bills' AND column_name='insurance_claim_id'`
+    );
+    const hasInsuranceClaimId = (claimCol.rowCount ?? 0) > 0;
+    const insuranceClaimId = hasInsuranceClaimId ? (input.insuranceClaimId ?? null) : null;
+
     const res = await client.query<BillRow>(
+      hasInsuranceClaimId
+        ? `
+        INSERT INTO accounting.bills (
+          operating_company_id,
+          vendor_id,
+          vendor_uuid,
+          bill_number,
+          bill_date,
+          due_date,
+          amount_cents,
+          total_amount,
+          paid_cents,
+          paid_amount,
+          status,
+          memo,
+          coa_account_id,
+          linked_work_order_uuid,
+          unit_id,
+          insurance_claim_id,
+          created_by_user_id,
+          created_at,
+          updated_at
+        )
+        VALUES ($1,$2,$2,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$13,$10,now(),now())
+        RETURNING *
       `
+        : `
         INSERT INTO accounting.bills (
           operating_company_id,
           vendor_id,
@@ -924,20 +1061,36 @@ export async function createBill(input: CreateBillInput, userId: string) {
         VALUES ($1,$2,$2,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$10,now(),now())
         RETURNING *
       `,
-      [
-        input.operatingCompanyId,
-        input.vendorId,
-        input.billNumber ?? null,
-        input.billDate,
-        input.dueDate ?? null,
-        input.amountCents,
-        input.amountCents / 100,
-        input.memo ?? null,
-        input.coaAccountId ?? null,
-        userId,
-        input.workOrderId ?? null,
-        input.unitId ?? null,
-      ]
+      hasInsuranceClaimId
+        ? [
+            input.operatingCompanyId,
+            input.vendorId,
+            input.billNumber ?? null,
+            input.billDate,
+            input.dueDate ?? null,
+            input.amountCents,
+            input.amountCents / 100,
+            input.memo ?? null,
+            input.coaAccountId ?? null,
+            userId,
+            input.workOrderId ?? null,
+            input.unitId ?? null,
+            insuranceClaimId,
+          ]
+        : [
+            input.operatingCompanyId,
+            input.vendorId,
+            input.billNumber ?? null,
+            input.billDate,
+            input.dueDate ?? null,
+            input.amountCents,
+            input.amountCents / 100,
+            input.memo ?? null,
+            input.coaAccountId ?? null,
+            userId,
+            input.workOrderId ?? null,
+            input.unitId ?? null,
+          ]
     );
     if ((res.rowCount ?? 0) === 0 || !res.rows[0]) throw new Error("bill_insert_failed");
     const created = normalizeBill(res.rows[0]);

@@ -132,4 +132,49 @@ describeIntegration("bills.routes integration", () => {
     const body = res.json() as { rows?: unknown };
     expect(Array.isArray(body.rows)).toBe(true);
   });
+
+  it("GET /api/v1/accounting/claims/:id/linked-financials rejects unauthenticated callers", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: `/api/v1/accounting/claims/${randomUUID()}/linked-financials?operating_company_id=${companyId}`,
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("GET /api/v1/accounting/claims/:id/linked-financials rejects Dispatcher callers", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: `/api/v1/accounting/claims/${randomUUID()}/linked-financials?operating_company_id=${companyId}`,
+      headers: testAuthHeaders(undefined, "Dispatcher"),
+    });
+    expect(res.statusCode).toBe(403);
+  });
+
+  it("GET /api/v1/accounting/claims/:id/linked-financials returns envelope for accounting roles", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: `/api/v1/accounting/claims/${randomUUID()}/linked-financials?operating_company_id=${companyId}`,
+      headers: testAuthHeaders(undefined, "Owner"),
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as Record<string, unknown>;
+    expect(body).toBeTruthy();
+  });
+
+  it("GET /api/v1/accounting/work-orders/:id/linked-financials rejects unauthenticated callers", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: `/api/v1/accounting/work-orders/${randomUUID()}/linked-financials?operating_company_id=${companyId}`,
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("GET /api/v1/accounting/work-orders/:id/linked-financials returns envelope for accounting roles", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: `/api/v1/accounting/work-orders/${randomUUID()}/linked-financials?operating_company_id=${companyId}`,
+      headers: testAuthHeaders(undefined, "Accountant"),
+    });
+    expect(res.statusCode).toBe(200);
+  });
 });
