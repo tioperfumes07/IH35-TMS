@@ -40,7 +40,11 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           printf '%s' "$PR_BODY" > /tmp/pr-body.txt
-          git diff --name-only "$BASE_SHA" "$HEAD_SHA" > /tmp/pr-files.txt || \
+          # Three-dot (merge-base-aware) diff on purpose: two-dot compares the trees directly, so a
+          # branch that has gone stale against a fast-moving main pulls in every intervening
+          # main-only file too — wrongly tripping isAppAffecting() for PRs that never touched
+          # apps/ or db/ themselves. Three-dot scopes the diff to what this branch actually changed.
+          git diff --name-only "$BASE_SHA"..."$HEAD_SHA" > /tmp/pr-files.txt || \
             git diff --name-only "origin/${{ github.event.pull_request.base.ref }}"...HEAD > /tmp/pr-files.txt
           echo "changed files: $(wc -l < /tmp/pr-files.txt)"
 
