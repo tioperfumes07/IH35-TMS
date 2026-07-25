@@ -524,6 +524,7 @@ export function registerJournalEntryTypesReadOnlyRoutes(app: FastifyInstance) {
     nameColumn: "display_name",
     descriptionColumn: "description",
     activeMode: "is_active",
-    readOnly: true,
+    // ACCT-F02 — global taxonomy; JE create/edit picker read=writes the same catalogs.journal_entry_types table.
+    readOnly: false,
   });
 }
