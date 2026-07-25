@@ -72,6 +72,16 @@ export function FinesPage({ operatingCompanyId }: Props) {
     }
   }, [fineIdParam, rows, searchParams, setSearchParams]);
 
+  // SAF-B12: the drawer's lifecycle actions (contest / dismiss / reduce / link-payment) invalidate this
+  // query. `selectedFine` is a snapshot of the row taken when the drawer opened, so on its own the drawer
+  // would keep rendering the PRE-action status and amount after a successful write — the operator would
+  // see "open" on a fine they just contested and reasonably conclude nothing happened. Re-point at the
+  // refetched row DURING RENDER (not in an effect — that would be a cascading setState). If the new status
+  // filters the row out of the list we keep the last snapshot so the drawer does not blank out.
+  const activeFine = selectedFine
+    ? rows.find((row) => String(row.id) === String(selectedFine.id)) ?? selectedFine
+    : null;
+
   // Migrated to the shared QBO-parity grid — columns, order, and the per-row "Open" action are
   // preserved verbatim (§7 additive-only).
   const columns: Array<ParityColumn<FineRow>> = [
@@ -202,8 +212,8 @@ export function FinesPage({ operatingCompanyId }: Props) {
       />
 
       <FineDetailDrawer
-        open={Boolean(selectedFine)}
-        fine={selectedFine}
+        open={Boolean(activeFine)}
+        fine={activeFine}
         operatingCompanyId={operatingCompanyId}
         converting={convertMutation.isPending}
         onClose={() => setSelectedFine(null)}
