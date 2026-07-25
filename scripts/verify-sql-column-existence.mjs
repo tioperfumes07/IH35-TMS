@@ -64,6 +64,7 @@ const TARGET_TABLES = new Set([
   "driver_finance.driver_settlements",
   "driver_finance.driver_settlement_deductions",
   "driver_finance.deduction_schedule",
+  "catalogs.items",
   "maintenance.work_orders",
   "maintenance.work_order_lines",
   "dispatch.equipment_transfer_requests",
