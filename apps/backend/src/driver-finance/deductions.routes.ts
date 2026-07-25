@@ -144,7 +144,12 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
       // resolved company's rows. driver_finance.escrow_ledger.operating_company_id
       // is NOT NULL (migration 202606120600). No posting/GL/amount logic changes.
       const res = await client.query(
-        `SELECT * FROM driver_finance.escrow_ledger WHERE driver_id = $1 AND operating_company_id = $2 ORDER BY posted_at DESC LIMIT 200`,
+        // ORDER BY created_at, NOT posted_at. driver_finance.escrow_ledger has no posted_at column
+        // (202606120600_d1_settlement_approval.sql defines created_at; no later migration adds one),
+        // so this query raised Postgres 42703 and the endpoint returned 500 on every call.
+        // posted_at DOES exist — on accounting.escrow_postings (0234_block_23_escrow_posting_flow.sql:29),
+        // the OTHER half of the escrow split-brain. The column name was carried across from that table.
+        `SELECT * FROM driver_finance.escrow_ledger WHERE driver_id = $1 AND operating_company_id = $2 ORDER BY created_at DESC LIMIT 200`,
         [params.data.id, query.data.operating_company_id]
       );
       return res.rows;
