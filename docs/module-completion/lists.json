@@ -203,7 +203,7 @@
       ],
       "spec": "FORCE RLS invariant",
       "status": "FAIL",
-      "evidence": "Neon lucia pg_class.relrowsecurity=false on catalogs.account_types, catalogs.cancellation_reasons, catalogs.wo_cancellation_reasons.",
+      "evidence": "SPLIT + SHARPENED 2026-07-25 (packet block 14). Neon lucia br-fancy-credit-akjnd07a: relrowsecurity=false on catalogs.account_types (15 rows) and catalogs.wo_cancellation_reasons (6). ENTITY-LEAK HALF CLEARED: neither table has an operating_company_id column, so no entity owns any row and there is nothing to leak across entities — the earlier 'RLS OFF -> cross-entity leak (P1)' framing was mis-filed. STILL FAIL on the other half: with RLS off, write authorisation on both rests entirely on the ih35_app grant, whereas the comparable global taxonomy catalogs.tire_positions restricts writes to Owner/Administrator via policy. Bringing account_types + wo_cancellation_reasons to that standard is an ADDITIVE owner-gated HELD migration, not a doc fix, so this item stays FAIL. Third table named in the original evidence, catalogs.cancellation_reasons, is the LST-F17 legacy global table being archived under ruling A (never dropped) and is tracked there, not here. Classification of all five global/shared-canonical catalogs is now recorded in docs/trackers/FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md SS A.1 and pinned to lists-module-count-spec.ts by verify-steps/1358.",
       "pr": null,
       "owner_hold": false,
       "tracker": null,
