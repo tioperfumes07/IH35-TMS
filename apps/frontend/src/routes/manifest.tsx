@@ -4206,22 +4206,6 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
-          path="/compliance"
-          element={
-            <ProtectedRoute>
-              <ComplianceDashboardPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/notifications"
-          element={
-            <ProtectedRoute>
-              <NotificationCenterPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/dev/bulk-demo"
           element={
             <ProtectedRoute>

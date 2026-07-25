@@ -121,8 +121,8 @@
       ],
       "spec": "Law \u00a79 \u00b7 ACCT-F02",
       "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25: still 16 rows / 0 inbound FKs; journal_entries has NO journal_entry_type_id column on prod. PR #3440 [HOLD] adds additive nullable FK col \u2014 migration 202607960000 NOT yet Neon-applied. Remains FAIL until owner Neon-apply + inbound density re-measure.",
-      "pr": "#3440"
+      "evidence": "GUARD 2026-07-25 (§2b): 202607960000 in NEITHER prod ledger — genuinely UNAPPLIED; prod journal_entries has NO journal_entry_type_id (lucia). #3440 MERGED≠APPLIED. HOLD PR wires picker + verify-je-type-fk (step 1484); ACCT-LINK-01 stays FAIL until owner Neon-apply + inbound FK density re-measure.",
+      "pr": "HOLD — ACCT-F02"
     },
     {
       "id": "ACCT-LINK-02",
@@ -133,8 +133,11 @@
         "VERIFY-5"
       ],
       "spec": "Law \u00a79 \u00b7 ACCT-F03",
-      "status": "FAIL",
-      "evidence": "FROZEN pending owner LINK-02: WIRE|LOCK \u2014 144 detail_types / 0 inbound FKs; accounts.account_subtype text only. Do not wire FK without unlock (ACCT-02).",
+      "status": "HOLD",
+      "owner_hold": true,
+      "tracker": "docs/trackers/ACCT-F03-DETAIL-TYPES-OWNER-LOCK-2026-07-25.md",
+      "future_block": "ACCT-02 (requires written owner unlock DETAIL_TYPES_FK_OWNER_UNLOCK + CPA review)",
+      "evidence": "OWNER-LOCK 2026-07-25: account_subtype stays TEXT; detail_types 144 rows all-NULL opco / 0 inbound FKs by design. Regression guard scripts/verify-detail-types-owner-lock.mjs. Do NOT wire FK without unlock marker.",
       "pr": null
     },
     {
@@ -158,7 +161,7 @@
       ],
       "spec": "ACCT-F07",
       "status": "FAIL",
-      "evidence": "HOLD PR #3446: additive same-entity FK expense_lines\u2192catalogs.expense_categories (mig 202608020000). FAIL until Neon-apply proves FK + inbound density (lucia).",
+      "evidence": "MERGED\u2260APPLIED: PR #3446 merged @ 7a0c3614 (ACCT-LINK-04 mig 202608020000 on main + static wiring guard 1433/1478 PASS). Prod 2026-07-25 (lucia): catalogs.expense_categories still 0 inbound FKs; expense_lines lacks operating_company_id + composite FK. Held migration NOT in prod ledger. FAIL until owner Neon-apply + inbound density re-proof. Honesty: docs/trackers/MERGED-NOT-APPLIED-ACCT-F07-F08-2026-07-25.md",
       "pr": "#3446"
     },
     {
@@ -170,7 +173,7 @@
       ],
       "spec": "ACCT-F08",
       "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25: still 0 inbound FKs; posting_batches has NO posting_template_id column on prod; catalogs.posting_templates still 0 rows (lucia-verified true empty, not RLS-masked). PR #3444 [HOLD] adds posting_batches -> posting_templates consumer stamp \u2014 NOT yet Neon-applied. Remains FAIL until owner Neon-apply.",
+      "evidence": "MERGED\u2260APPLIED: PR #3444 merged @ 1d90a178 (ACCT-LINK-05 mig 202607950000 on main + static wiring guard 1433/1479 PASS). Prod 2026-07-25 (lucia): 0 inbound FKs on posting_templates; posting_batches has NO posting_template_id/source_template_code; catalog 0 rows (true empty). Per-entity scope = owner design Q \u2014 do NOT auto-scope. FAIL until owner Neon-apply. Honesty: docs/trackers/MERGED-NOT-APPLIED-ACCT-F07-F08-2026-07-25.md",
       "pr": "#3444"
     },
     {
@@ -207,7 +210,7 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Bills \u25be",
       "status": "UNVERIFIED",
-      "evidence": "Frozen map docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md. Structural DoD guard scripts/verify-acct-surf-01-bills.mjs (route+ParityDrawer+submit payload+canonical accounting.bills). Desktop Expected vs Actual: ~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md. Stays UNVERIFIED until TRANSP+USMCA browser re-click + reverse density unit/claim/WO > 0 (Rule 23 \u2014 no structural PASS flip).",
+      "evidence": "Sweep matrix docs/trackers/ACCT-SURF-DOD-SWEEP-MATRIX-2026-07-25.json (16 leaves \u00d7 TRANSP+USMCA \u00d7 DoD/VERIFY). Frozen map ACCT-08-SURF-SURFACE-MAP. Structural guard verify-acct-surf-01-bills.mjs. Stays UNVERIFIED until browser re-click (Rule 23).",
       "pr": "#3477"
     },
     {
@@ -289,8 +292,8 @@
       ],
       "spec": "ACCT-F02 \u00b7 JE tab",
       "status": "FAIL",
-      "evidence": "JE type island; 8 JEs sparse",
-      "pr": null
+      "evidence": "GUARD 2026-07-25: migration 202607960000 genuinely UNAPPLIED on prod (MERGED\u2260APPLIED). Picker wired on ManualJEModal (accounting + banking) reading/writing catalogs.journal_entry_types; reverse drill on JournalEntryDetailPage \u2192 /lists/accounting/journal-entry-types. Stays FAIL until Neon-apply proves FK + typed density on live JEs.",
+      "pr": "HOLD — ACCT-F02"
     },
     {
       "id": "ACCT-SURF-06",
@@ -301,8 +304,11 @@
         "VERIFY-2"
       ],
       "spec": "ACCT-F03 \u00b7 CoA",
-      "status": "FAIL",
-      "evidence": "text subtype only; ACCT-LINK-02 FROZEN \u2014 owner WIRE vs LOCK. SURF DoD FAIL documented; no FK PR.",
+      "status": "HOLD",
+      "owner_hold": true,
+      "tracker": "docs/trackers/ACCT-F03-DETAIL-TYPES-OWNER-LOCK-2026-07-25.md",
+      "future_block": "ACCT-02 (requires written owner unlock DETAIL_TYPES_FK_OWNER_UNLOCK + CPA review)",
+      "evidence": "OWNER-LOCK: CoA persists account_subtype TEXT (picker may read detail_types catalog for UX only). ACCT-LINK-02 HOLD — not a linkage defect. SURF chrome reachable; FK wiring deferred by owner.",
       "pr": null
     },
     {
