@@ -47,7 +47,7 @@
       ],
       "spec": "Transfers \u00b7 #3134 Option 1 owner",
       "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25 03:41Z: transfers=0 \u2014 still true empty. Code+UI wired (createTransfer). PR #3445 [HOLD] fixes bank-feed mark-as-transfer to mint/link a real banking.transfers row via markBankFeedLineAsTransfer() \u2014 reuses existing createTransfer() poster, no new migration/flag. NOT yet merged. Remains FAIL until merged + operator uses it + Neon re-count > 0.",
+      "evidence": "LIVE REFRESH 2026-07-25 16:50Z: transfers=0 — still true empty on prod. markBankFeedLineAsTransfer() mint path wired (#3445 merged on main): bank-feed mark-as-transfer mints/links real banking.transfers row via insertTransferInClient, flag-gated OFF. GUARD: verify-step 1481 (verify-bank-econ-03-transfer-path-wired). FAIL until operator records a transfer + Neon re-count > 0.",
       "pr": "#3445"
     },
     {
@@ -116,7 +116,7 @@
       ],
       "spec": "Transfers tab",
       "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25 03:41Z: transfers=0; owner Option 1 for unpaired feed still open; see BANK-ECON-03 (PR #3445 HOLD not yet merged)",
+      "evidence": "LIVE REFRESH 2026-07-25 16:50Z: transfers=0; mark-as-transfer + Transfers surface wired (#3445 merged). Empty-state honesty banner refuses fake all-clear. verify-step 1481 pins wiring; FAIL until operator use → count>0. See BANK-ECON-03.",
       "pr": "#3445"
     },
     {

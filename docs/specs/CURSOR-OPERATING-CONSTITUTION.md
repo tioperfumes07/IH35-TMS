@@ -113,6 +113,7 @@ Escalate to a higher tier the moment a task touches money, schema, RLS, migratio
 
 ## 9. PRODUCT & DESIGN LOCKS (additive-only — never silently redesign)
 - **ADDITIVE ONLY. ARCHIVE, never DELETE.** Never remove/reorder modules/pages/sidebar/columns/fields/tabs/routes. Sole exception: the owner says "remove X" in chat. Void-not-delete on data (`voided_at`/`archived_at`/`deactivated_at`); append-only WORM audit.
+  - Fixture carve-out (OWNER RULING 2026-07-25): verified test/demo **rows** may be permanently DELETED under owner authorisation, scoped by an EXACT business identifier — never by `is_sample_data`, which is false on 176 real rows and true on 17 fixtures (banned + CI-enforced by verify-step 1488). Modules, surfaces, routes, columns and tables are NOT covered and stay archive-only.
 - **Vocab:** `+ Create` / `+ Book` only (never `+ New`/`+ Add`). "Escrow" not "Forfeitures". Central Time always.
 - **Design fidelity is law:** match the approved screens + `IH35_ARCHITECTURAL_DESIGN.md`. Expense/Bill/Bill-payment = **QBO side panels** (§7.6 lock). Tables use the shared **ParityTable** grammar (sort/resizable columns). Inline "+ Add new ___" at the end of every reference dropdown. Locked palette; no emojis in headers/sidebar/tables; all nav on the top bar; the 80px navy sidebar is the only left panel.
 - **Tab counts are owner decisions, not bugs** — if design-vs-code tab counts differ, get an owner ruling; never delete tabs to "match."

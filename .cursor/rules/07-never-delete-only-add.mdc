@@ -16,6 +16,24 @@ Owner permanent law (2026-07-15). Always apply.
 - Consolidation of duplicate *forms* may wire shared components **behind every existing entry point** — entry points stay; internals may share.
 - Schema: prefer additive migrations. Do not drop columns/tables that hold financial history without an explicit owner-locked migration plan (separate from this UI law).
 
+## Scope of the law — what it protects, and the one thing it does not (OWNER RULING 2026-07-25)
+
+This law protects **ARCHITECTURE, BLUEPRINT, DESIGN, LINKAGE, SCHEMA (tables/columns), and REAL BUSINESS
+DATA**. It does **NOT** protect test / demo / sample **fixture rows**.
+
+- Verified test or demo data — vendors, drivers, trucks, trailers, units, customers, work/repair orders,
+  loads, any test or demo row — **CAN and WILL be permanently DELETED** under owner authorisation. Where the
+  owner rules to delete a verified fixture, that ruling overrides the archive-only default.
+- The carve-out is for **ROWS ONLY**. Modules, surfaces, routes, tabs, columns and tables are untouched by it
+  — those remain archive-never-delete with no exception beyond "the owner says remove X" in chat.
+- **Scope every fixture delete by an EXACT business identifier**, never by a flag. `is_sample_data` is
+  measured FALSE on 176 real rows and TRUE on 17 fixtures (prod, 2026-07-25) — zero signal. Deleting rows
+  filtered on that flag alone is **BANNED** and CI-enforced by
+  `scripts/verify-steps/1488-verify-no-is-sample-data-purge.mjs`.
+- A fixture purge must carry: derived counts (never hardcoded), a fail-loud pre-flight that aborts if any
+  real row references a fixture row, FK-safe delete order, and the owner override stated in both the
+  migration header and the PR body.
+
 ## Opening-balance / cutover date edits (companion restraint)
 
 - Do **not** blind find-replace `06/30`, `07/01`, or `202606…` across the repo.
