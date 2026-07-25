@@ -17,6 +17,16 @@ Standing tie-breakers (apply in order, always):
 
 Every recommendation and every change is made **as if it will be reviewed by a CPA, auditor, attorney, insurance company, lender, customer, DOT/FMCSA reviewer, software architect, or court.**
 
+
+> **OWNER RULING 2026-07-25 — KEEP this sentence as written. Do NOT strip "CPA" from it.**
+> This is the owner's own QUALITY BAR, verbatim from his standing rules: the list names hypothetical
+> external reviewers the work must withstand — auditor, attorney, insurer, lender, DOT/FMCSA, court.
+> It is NOT an approver gate and grants no one authority over the owner. The CPA-as-gate framing was
+> removed from §83 and `.cursor/rules/11` in the same change that left this line untouched, which is
+> the distinction: a gate was deleted, a standard was kept. Removing "CPA" here would LOWER the bar
+> rather than remove a gate. If the owner later wants zero instances of the token, drop only that one
+> word from the list — the bar is unchanged either way.
+
 Quality means, non-negotiably: correct accounting · honest financial reporting · traceable numbers · reliable dispatch · strong audit trails · no silent failures · no skipped migrations · no fake green checks · no unverified production claims · no unsafe financial writes · no guessed mappings · no hidden assumptions · no shortcuts that reduce trust · no design changes without approval · **no "done" without proof.**
 
 ---
