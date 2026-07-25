@@ -473,6 +473,10 @@
       "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] LST-F04 cancel-load P0. dispatch.load_cancellations.reason_code is NOT NULL with an FK to the RETIRE table catalogs.cancellation_reasons (9 rows, RLS OFF), while the writer reads the canonical per-entity catalogs.load_cancellation_reasons — all 12 active per-entity codes (36 rows / 3 entities) are absent from the legacy set, so a normal cancel violates a NOT-NULL-backed FK. Drops the legacy FK and relaxes NOT NULL. Does NOT make reason_code_id NOT NULL and does NOT drop the legacy table (gated on the writer repoint being live on prod). Verified on prod br-fancy-credit-akjnd07a 2026-07-24."
     },
     {
+      "file": "202607960000_journal_entries_type_fk.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] ACCT-LINK-01 — additive nullable accounting.journal_entries.journal_entry_type_id → catalogs.journal_entry_types(id) + partial index. Closes the AF-5 metadata-only island (catalog had 16 rows / 0 inbound FKs). App create path is col-gated until Neon-apply. No GL math. NOT YET applied on prod — throwaway PG apply-twice; owner Neon-apply + ledger-backfill; then re-measure inbound FK density before flipping ACCT-LINK-01 to PASS."
+    },
+    {
       "file": "202607950000_catalogs_items_backfill_from_qbo_mirror.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] LST-PICKER-02 companion. The item picker read mdata.qbo_items (mirror) while inline create wrote catalogs.items (canonical); the code fix repoints the readers. Prod 2026-07-25: catalogs.items TRANSP 189 / TRK 0 / USMCA 0 vs mdata.qbo_items TRANSP 180 / TRK 48 — repointing alone would EMPTY TRK's picker, so this additively backfills mirror-only items into the canonical catalog, same-entity, idempotent, skipping any qbo_item_id or name already present. No GL effect."
     }

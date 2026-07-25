@@ -798,6 +798,7 @@
       "error",
       "id",
       "idempotency_key",
+      "journal_entry_type_id",
       "kind",
       "last_qbo_synced_at",
       "memo",
