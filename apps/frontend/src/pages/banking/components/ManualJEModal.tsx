@@ -7,6 +7,7 @@ import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useToast } from "../../../components/Toast";
+import { JournalEntryTypePicker } from "../../../components/accounting/JournalEntryTypePicker";
 
 type Props = {
   open: boolean;
@@ -22,6 +23,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [memo, setMemo] = useState("");
   const [referenceNumber, setReferenceNumber] = useState("");
+  const [journalEntryTypeId, setJournalEntryTypeId] = useState<string | null>(null);
   const [lines, setLines] = useState<
     Array<{ account_id: string; class_id: string; entity_uuid: string; debit: number; credit: number; description: string }>
   >([
@@ -74,6 +76,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
     setDate(new Date().toISOString().slice(0, 10));
     setMemo("");
     setReferenceNumber("");
+    setJournalEntryTypeId(null);
     setLines([
       { account_id: "", class_id: "", entity_uuid: "", debit: 0, credit: 0, description: "" },
       { account_id: "", class_id: "", entity_uuid: "", debit: 0, credit: 0, description: "" },
@@ -129,6 +132,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
       await createJournalEntry(operatingCompanyId, {
         entry_date: date,
         memo: combinedMemo,
+        journal_entry_type_id: journalEntryTypeId,
         source: "manual",
         postings,
       });
@@ -254,6 +258,16 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
             <label className="block">
               Reference number (optional)
               <input className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2" value={referenceNumber} onChange={(e) => setReferenceNumber(e.target.value)} />
+            </label>
+            <label className="block">
+              Journal entry type
+              <div className="mt-1">
+                <JournalEntryTypePicker
+                  operatingCompanyId={operatingCompanyId}
+                  value={journalEntryTypeId}
+                  onChange={setJournalEntryTypeId}
+                />
+              </div>
             </label>
             <label className="block">
               Memo
