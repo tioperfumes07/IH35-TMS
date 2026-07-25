@@ -8,7 +8,7 @@
 >
 > - **Author role:** Planner (multi-agent orchestration, Rule 11). Builder / Financial-Accounting / GUARD are **separate** agents on the future PR. The Planner writes no GL math.
 > - **Branch:** `docs/load-preinvoice-official-invoice-hold` (fresh from `origin/main` @ `d8370fe83`).
-> - **Spec sources (Rule 01):** `IH35_MASTER_BLUEPRINT_v3_FULL.md`, `IH35_UNIFIED_BLUEPRINT_ADDITIONS.md`, `IH35_ARCHITECTURAL_DESIGN.md`; Law of the Land `ARCHITECTURE-BLUEPRINT-2026-07-05.md`; CPA locks `.claude/skills/ih35-cpa-accounting-decisions`; never-delete `.cursor/rules/07`.
+> - **Spec sources (Rule 01):** `IH35_MASTER_BLUEPRINT_v3_FULL.md`, `IH35_UNIFIED_BLUEPRINT_ADDITIONS.md`, `IH35_ARCHITECTURAL_DESIGN.md`; Law of the Land `ARCHITECTURE-BLUEPRINT-2026-07-05.md`; CPA locks `.claude/skills/ih35-accounting-decisions`; never-delete `.cursor/rules/07`.
 > - **Companion designs (reuse, do not duplicate):** `DESIGN-load-revenue-capture-auto-invoice-tonu.md`, `DESIGN-tonu-cancellation-ar-and-accessorial-coa-HOLD.md`, `DESIGN-cpa-step3-coa-role-map-CORRECTED-HOLD.md`.
 > - **Doc-only exception:** Rule 02 §Exception — this commit touches no code logic.
 

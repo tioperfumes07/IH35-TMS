@@ -3,7 +3,7 @@
 // Maps the QBO 12/31/2024 Balance Sheet (transp-2024-12-31-source.ts) to catalogs.accounts (TRANSP,
 // entity-scoped), and assembles a REVIEWABLE opening journal-entry PREVIEW — it never calls
 // createJournalEntry, never writes to accounting.journal_entries, and never posts anything. Opening
-// balances are OWNER-ENTERED ONLY (skill `ih35-cpa-accounting-decisions` §0/§2; constitution §1.4/§1.6):
+// balances are OWNER-ENTERED ONLY (skill `ih35-accounting-decisions` §0/§2; constitution §1.4/§1.6):
 // this module's entire job ends at "here is the balanced JE, and here is what didn't map" — Jorge reviews
 // and posts by hand (e.g. through the existing manual JE screen), never through code this file writes.
 //

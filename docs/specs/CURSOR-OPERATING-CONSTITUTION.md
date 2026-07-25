@@ -17,6 +17,16 @@ Standing tie-breakers (apply in order, always):
 
 Every recommendation and every change is made **as if it will be reviewed by a CPA, auditor, attorney, insurance company, lender, customer, DOT/FMCSA reviewer, software architect, or court.**
 
+
+> **OWNER RULING 2026-07-25 — KEEP this sentence as written. Do NOT strip "CPA" from it.**
+> This is the owner's own QUALITY BAR, verbatim from his standing rules: the list names hypothetical
+> external reviewers the work must withstand — auditor, attorney, insurer, lender, DOT/FMCSA, court.
+> It is NOT an approver gate and grants no one authority over the owner. The CPA-as-gate framing was
+> removed from §83 and `.cursor/rules/11` in the same change that left this line untouched, which is
+> the distinction: a gate was deleted, a standard was kept. Removing "CPA" here would LOWER the bar
+> rather than remove a gate. If the owner later wants zero instances of the token, drop only that one
+> word from the list — the bar is unchanged either way.
+
 Quality means, non-negotiably: correct accounting · honest financial reporting · traceable numbers · reliable dispatch · strong audit trails · no silent failures · no skipped migrations · no fake green checks · no unverified production claims · no unsafe financial writes · no guessed mappings · no hidden assumptions · no shortcuts that reduce trust · no design changes without approval · **no "done" without proof.**
 
 ---
@@ -24,7 +34,7 @@ Quality means, non-negotiably: correct accounting · honest financial reporting 
 ## 1. CANONICAL SOURCES — read before acting, in this precedence
 Cursor must ground every decision in the *current* state of these, not memory:
 1. **`.cursor/rules/*.mdc`** — Cursor's own auto-applied rules (this constitution's enforceable companions). Never delete one; only add.
-2. **`.claude/skills/ih35-tms-standards/SKILL.md`** — the **Law of the Land** (permissions, merge gates, migration invariants, schema landmines, product/design locks, and **§10 LINKAGE LAW + canonical wiring**). Plus the other skills: `ih35-financial-migrations`, `ih35-entity-facts`, `ih35-guard-verification`, `ih35-cpa-accounting-decisions`, `ih35-fmcsa-compliance`, `ih35-code-review`, `ih35-parity-audit`. Load the relevant skill(s) at the start of ANY task.
+2. **`.claude/skills/ih35-tms-standards/SKILL.md`** — the **Law of the Land** (permissions, merge gates, migration invariants, schema landmines, product/design locks, and **§10 LINKAGE LAW + canonical wiring**). Plus the other skills: `ih35-financial-migrations`, `ih35-entity-facts`, `ih35-guard-verification`, `ih35-accounting-decisions`, `ih35-fmcsa-compliance`, `ih35-code-review`, `ih35-parity-audit`. Load the relevant skill(s) at the start of ANY task.
 3. **`docs/lockdown/00_LOCKED_DECISIONS.md`** — owner-locked decisions; never re-litigate.
 4. **`docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md`** + **`docs/specs/IH35_ARCHITECTURAL_DESIGN.md`** + **`docs/specs/ACCOUNTING-ARCHITECTURE.md`** + **`docs/specs/MULTI-ENTITY-SEPARATION.md`** — the blueprint and architecture. **Architectural design is law** (existing rule 05).
 5. **`docs/trackers/FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md`** — the 531-table canonical wiring map (§10 companion).
@@ -80,7 +90,7 @@ No single-pass "just build it" on anything non-trivial or financial. Cursor oper
 - **Planner** — decomposes the task, reads the canonical sources (§1), produces a step plan + the linkage matrix (§4) + the acceptance criteria BEFORE any code. Never lets a task skip the plan.
 - **Builder** — implements one bounded change on a fresh branch, following the per-change workflow (§8). One builder per migration lane (number-collisions have happened — never two migration authors at once).
 - **Code-Review Agent** (mandatory, independent) — reviews every diff against: the Law of the Land, §10 linkage, schema reality (§4 landmines), the design/product locks (§9), security (RLS/grants/secrets), and correctness. It runs the repo's `ih35-code-review` skill. **It must be a *separate* agent from the builder** (self-review is not review). It reports CONFIRMED/PLAUSIBLE findings; unresolved high-severity findings block the PR.
-- **Financial / Accounting Agent** (mandatory for anything money-touching) — the CPA-grade reviewer. Runs `ih35-cpa-accounting-decisions`. Verifies: correct GL treatment (debits=credits, right accounts, ASC compliance), no new GL math (reuse the poster), posting flags default-OFF + per-entity, opening-balance/period-close correctness, factoring = secured-borrowing, parallel-books/QBO-never-written, and that every financial write is build-and-HOLD. It has veto power on financial changes.
+- **Financial / Accounting Agent** (mandatory for anything money-touching) — the audit-grade reviewer. Runs `ih35-accounting-decisions`. Verifies: correct GL treatment (debits=credits, right accounts, ASC compliance), no new GL math (reuse the poster), posting flags default-OFF + per-entity, opening-balance/period-close correctness, factoring = secured-borrowing, parallel-books/QBO-never-written, and that every financial write is build-and-HOLD. Its unresolved high-severity findings block the PR. It does NOT gate the OWNER — enabling posting, flipping a flag or declaring the books trustworthy is the owner's sole decision; this agent informs that decision with technical-correctness proof and never approves or withholds approval on the owner's behalf. There is no CPA sign-off in this system.
 - **Verifier / GUARD** — proves each item live: migrations on a throwaway PG (apply-twice) then owner-applies on Neon; re-proves on prod with the **RLS bypass** (§3); confirms deploy SHA; runs the `verify:*` guards. Produces the evidence for `acceptance[]`. Nothing is "done" without GUARD's live proof.
 
 **Orchestration rules:**

@@ -203,4 +203,4 @@ Nothing below is agent-executable for money. Sequence mirrors the locked cutover
 - Locked dates: `docs/lockdown/00_LOCKED_DECISIONS.md` §8.9  
 - Live audit note: `docs/specs/CURSOR-AUDIT-2026-07-15/LIVE-RELAY-QBO-TRUTH-2026-07-16.md`  
 - Step-2 PR: https://github.com/tioperfumes07/IH35-TMS/pull/2539  
-- CPA skill: `.claude/skills/ih35-cpa-accounting-decisions/SKILL.md` (agents never post OB solo)
+- CPA skill: `.claude/skills/ih35-accounting-decisions/SKILL.md` (agents never post OB solo)

@@ -108,7 +108,7 @@ faro-rts — already a design placeholder). These carry no build action here.
   `factor_reserve_held` (Asset) being canonical → mis-classes the factoring reserve.
 - **Remediation:** remove `factor_reserve_default` from `COA_ROLE_VALUES`/`ROLE_FALLBACKS` **or** repoint
   its fallback to Asset. Touches the CoA role map → financial. Confirm against the locked
-  factoring-as-secured-borrowing + reserve-as-Asset decisions (skill `ih35-cpa-accounting-decisions`).
+  factoring-as-secured-borrowing + reserve-as-Asset decisions (skill `ih35-accounting-decisions`).
 - **Acceptance:** role map has no Liability fallback for the reserve; `verify:factoring-treatment` green.
   **Gate:** §1.4.
 

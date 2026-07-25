@@ -10,17 +10,28 @@
  * CHROME-11: nested create uses ParityDrawer / InlineCreateDrawer — never a centered Modal
  * stacked on top of an already-open money drawer.
  *
- * Two inline-create backends, by kind:
- *   - vendor / customer / account / service → InlineCreateDrawer (rich BK7 forms; account gated)
- *   - item / category / part / class → QuickCreateEntityModal (ParityDrawer shell)
+ * LST-PICKER-01 — CONFIG-DRIVEN. Create kinds used to be a hardcoded union of six dispatched by a
+ * hardcoded `INLINE_KINDS` Set, so ~68 of 75 catalogs could not have inline create without someone
+ * authoring a new form component. The kind list and its backend now come from
+ * ./catalogPickerRegistry — adding a catalog is a config entry, not a component.
+ *
+ * Three inline-create backends, chosen by `config.backend` (never by a Set in this file):
+ *   - "inline-drawer"      vendor / customer / account / service → InlineCreateDrawer (account gated)
+ *   - "quick-create-modal" item / category / part / class → QuickCreateEntityModal (ParityDrawer)
+ *   - "catalog"            every config-driven catalog → CatalogQuickCreateDrawer (generic, no new
+ *                          component per catalog; the config supplies fields + the create call)
  */
 import { useState, type ReactNode } from "react";
 import { Combobox, type ComboboxOption } from "../Combobox";
-import {
-  QuickCreateEntityModal,
-  type QuickCreateKind,
-} from "../forms/shared/QuickCreateEntityModal";
+import { QuickCreateEntityModal, type QuickCreateKind } from "../forms/shared/QuickCreateEntityModal";
 import { InlineCreateDrawer, type InlineCreateKind } from "./InlineCreateDrawer";
+import { CatalogQuickCreateDrawer } from "./CatalogQuickCreateDrawer";
+import {
+  catalogAddNewLabel,
+  getCatalogPickerConfig,
+  type CatalogCreateResult,
+  type CatalogPickerKey,
+} from "./catalogPickerRegistry";
 
 export type ReferenceOption = {
   value: string;
@@ -29,7 +40,12 @@ export type ReferenceOption = {
   type?: string;
 };
 
-export type ReferenceCreateKind = QuickCreateKind | "service" | "account";
+/**
+ * Every create kind the registry knows. Derived from the config — adding a catalog widens this type
+ * automatically, so a new catalog needs no edit here. `QuickCreateKind` is kept in the union purely
+ * so the original six keep type-checking identically at their ~42 existing call sites.
+ */
+export type ReferenceCreateKind = CatalogPickerKey | QuickCreateKind | "service" | "account";
 
 export type ReferenceSelectProps = {
   value: string | null;
@@ -49,9 +65,15 @@ export type ReferenceSelectProps = {
   lockControl?: ReactNode;
   /** SAF-F31 — server-side type-ahead pass-through (see components/Combobox.tsx). */
   onSearch?: (query: string) => void;
+  /**
+   * Which field of the created record becomes the selected value. Defaults to "id".
+   *
+   * QB-STD-5 (selection survives reload): a picker whose options are keyed by the catalog `code`
+   * (e.g. the accessorial editor) must select the new row by its CODE, otherwise the id selected at
+   * create time matches no option after the list refetches and the selection silently empties.
+   */
+  createdValueField?: "id" | "code";
 };
-
-const INLINE_KINDS = new Set<ReferenceCreateKind>(["vendor", "customer", "account", "service"]);
 
 export function ReferenceSelect({
   value,
@@ -66,9 +88,13 @@ export function ReferenceSelect({
   addNewLabel,
   onOptionCreated,
   lockControl,
+  createdValueField = "id",
 }: ReferenceSelectProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const [created, setCreated] = useState<ReferenceOption[]>([]);
+
+  // The single dispatch decision, read from config instead of a hardcoded Set in this file.
+  const config = getCatalogPickerConfig(createKind as CatalogPickerKey);
 
   const comboOptions: ComboboxOption[] = [...options, ...created].map((o) => ({
     value: o.value,
@@ -76,17 +102,18 @@ export function ReferenceSelect({
     sublabel: o.type,
   }));
 
-  const addLabel = addNewLabel ?? `+ Add new ${createKind}`;
+  const addLabel = addNewLabel ?? catalogAddNewLabel(createKind as CatalogPickerKey);
 
-  function handleCreated(rec: { id: string; label: string }) {
-    const opt: ReferenceOption = { value: rec.id, label: rec.label };
+  function handleCreated(rec: CatalogCreateResult) {
+    // QB-STD-5: select by whichever field the caller's options are keyed on, so the selection still
+    // resolves after the parent refetches the canonical list.
+    const selected = createdValueField === "code" && rec.code ? rec.code : rec.id;
+    const opt: ReferenceOption = { value: selected, label: rec.label };
     setCreated((prev) => [...prev, opt]);
     onOptionCreated?.(opt);
-    onChange(rec.id); // return to parent with the new value selected
+    onChange(selected); // return to parent with the new value selected
     setCreateOpen(false);
   }
-
-  const useInline = INLINE_KINDS.has(createKind);
 
   return (
     <div className="flex items-center gap-2">
@@ -105,7 +132,7 @@ export function ReferenceSelect({
         />
       </div>
       {lockControl}
-      {useInline ? (
+      {config.backend === "inline-drawer" ? (
         <InlineCreateDrawer
           open={createOpen}
           kind={createKind as InlineCreateKind}
@@ -113,7 +140,7 @@ export function ReferenceSelect({
           onClose={() => setCreateOpen(false)}
           onCreated={handleCreated}
         />
-      ) : (
+      ) : config.backend === "quick-create-modal" ? (
         <QuickCreateEntityModal
           open={createOpen}
           operatingCompanyId={operatingCompanyId}
@@ -121,7 +148,18 @@ export function ReferenceSelect({
           onClose={() => setCreateOpen(false)}
           onCreated={handleCreated}
         />
-      )}
+      ) : createOpen ? (
+        // Mounted only while open. The generic drawer consumes the Toast context, and a picker must
+        // not require a ToastProvider ancestor merely to render its closed create surface. The two
+        // legacy backends above keep their always-mounted `open={createOpen}` form untouched.
+        <CatalogQuickCreateDrawer
+          open
+          config={config}
+          operatingCompanyId={operatingCompanyId}
+          onClose={() => setCreateOpen(false)}
+          onCreated={handleCreated}
+        />
+      ) : null}
     </div>
   );
 }
