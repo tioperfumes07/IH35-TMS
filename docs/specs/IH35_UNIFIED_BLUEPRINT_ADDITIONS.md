@@ -1361,8 +1361,8 @@ Canonical detail: `docs/specs/TMS-QBO-PARALLEL-BOOKS.md` + CPA skill. Layers are
 - `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` (this section)
 - `docs/specs/TMS-QBO-PARALLEL-BOOKS.md`
 - `docs/specs/ACCOUNTING-ARCHITECTURE.md`
-- `.claude/skills/ih35-cpa-accounting-decisions/SKILL.md`
-- `.claude/skills/ih35-cpa-accounting-decisions/resources/locked-decisions-reference.md`
+- `.claude/skills/ih35-accounting-decisions/SKILL.md`
+- `.claude/skills/ih35-accounting-decisions/resources/locked-decisions-reference.md`
 - `docs/trackers/FINANCIAL-OWNER-UNBLOCK-PACKET.md` (stale invoice-create recognition line corrected)
 
 ### Guard (Rule 17 — auto-discovered)
@@ -1822,7 +1822,7 @@ TMS recognizes at delivery, QBO at invoice — the timing gap is a **KNOWN recon
 ### Canonical surfaces
 
 - `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` (this section)
-- `.claude/skills/ih35-cpa-accounting-decisions/SKILL.md` (§5 pointer)
+- `.claude/skills/ih35-accounting-decisions/SKILL.md` (§5 pointer)
 
 ### Guard (Rule 17)
 

@@ -25,7 +25,7 @@ Law §9 + CPA secured-borrowing model (Faro): factoring is **borrowing**, not sa
 | Source | Relevance |
 |---|---|
 | Architecture Blueprint §9 + Faro terms | Advance → liability/reserve/fee → JE; invoice linkage |
-| CPA skill `ih35-cpa-accounting-decisions` | Secured borrowing (not sale/derecognition) |
+| CPA skill `ih35-accounting-decisions` | Secured borrowing (not sale/derecognition) |
 | ASC 470 | Debt / borrowing presentation |
 | McLeod / Alvys factoring ops | Batch → advance → reserve release → recourse |
 

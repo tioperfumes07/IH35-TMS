@@ -4,7 +4,7 @@
 **Branch:** `design/cpa-step3-coa-role-map-hold`
 **CPA posture:** reuse the existing poster · **no new GL math** · flags stay as-is · no writes to Neon/prod.
 
-Binds to: `docs/specs/QUALITY-STANDARD-LOCKED.md`, `docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md` (§4, §5, §6), skills `ih35-cpa-accounting-decisions`, `ih35-financial-migrations`, `ih35-tms-standards`. Rule 07 (never delete/rename — only ADD; archive duplicates). Rule 13 (financial cluster — owner-gated). Rule 16 (fix root cause, no patch).
+Binds to: `docs/specs/QUALITY-STANDARD-LOCKED.md`, `docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md` (§4, §5, §6), skills `ih35-accounting-decisions`, `ih35-financial-migrations`, `ih35-tms-standards`. Rule 07 (never delete/rename — only ADD; archive duplicates). Rule 13 (financial cluster — owner-gated). Rule 16 (fix root cause, no patch).
 
 Standards match: QuickBooks / NetSuite **control-account** pattern (post by a designated role → account; the **system never guesses** a GL account) + McLeod/Alvys accessorial breakout (Detention / Layover / Lumper / TONU / Other). GAAP: ASC 606 (line-haul + accessorial revenue), ASC 860 (factoring = secured borrowing; reserve = receivable-from-factor, NOT cash).
 
