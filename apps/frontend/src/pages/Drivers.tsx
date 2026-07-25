@@ -20,13 +20,15 @@ import {
 import { getSamsaraHealth } from "../api/samsara";
 import { Button } from "../components/Button";
 import { DataTable } from "../components/DataTable";
+import { ListErrorState } from "../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
 import { DataPanel } from "../components/layout/DataPanel";
 import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { KpiCard } from "../components/layout/KpiCard";
 import { KpiStrip } from "../components/layout/KpiStrip";
 import { PageHeader } from "../components/layout/PageHeader";
 import { PreSettlementsPanel } from "../components/driver-finance/PreSettlementsPanel";
-import { dataTableErrorState } from "../lib/tableError";
+import { dataTableErrorState, formatQueryErrorDetail } from "../lib/tableError";
 import { Modal } from "../components/Modal";
 import { ActionButton } from "../components/shared/ActionButton";
 import { EntityLink } from "../components/shared/EntityLink";
@@ -60,6 +62,7 @@ import {
   type DriversExtendedSubtabId,
 } from "./drivers/driversExtendedSubtabs";
 import { DRIVERS_SUBTAB_PATH, driversSubtabFromPath } from "../router/route-manifest";
+import type { Driver } from "../types/api";
 
 export { DRIVERS_MODULE_NAV_PATHS };
 
@@ -99,6 +102,48 @@ function formatDate(value: string | null) {
 function formatMoney(value: number) {
   return formatUsd(value);
 }
+
+// BANK-R-01 (qbo-parity-resizable-columns-everywhere): Drivers roster grid column contract for the
+// shared ParityTable (sort/resize/gear/per-page persist) — 1:1 with the prior DataTable columns.
+const driversRosterColumns: ParityColumn<Driver>[] = [
+  {
+    key: "name",
+    label: "Name",
+    sortable: true,
+    className: "max-w-[220px] whitespace-nowrap",
+    sortValue: (row) => `${row.first_name} ${row.last_name}`,
+    render: (row) => {
+      const v = `${row.first_name} ${row.last_name}`;
+      return (
+        <span title={v} className="single-line-name">
+          {v}
+        </span>
+      );
+    },
+  },
+  { key: "phone", label: "Phone" },
+  { key: "cdl_number", label: "CDL #", cellClass: "code-cell" },
+  {
+    key: "cdl_expires_at",
+    label: "CDL Expires",
+    // GLOBAL-TABLE-ALIGNMENT (Block A): dates are numeric — right-align so they line up by place.
+    className: "text-right",
+    cellClass: "text-right",
+    render: (row) => formatDate(row.cdl_expires_at),
+  },
+  {
+    key: "status",
+    label: "Status",
+    render: (row) => <StatusBadge status={row.status} />,
+  },
+  {
+    key: "hire_date",
+    label: "Hire Date",
+    className: "text-right",
+    cellClass: "text-right",
+    render: (row) => formatDate(row.hire_date),
+  },
+];
 
 // Some aggregate rows (e.g. debtAlertRows) fall back to a driver NAME string as the "id" when the
 // source record has no driver_id — guard EntityLink so it never fabricates a route to a non-uuid.
@@ -630,50 +675,22 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   className="h-8 w-full max-w-xs rounded-sm border border-gray-300 px-2 text-[13px]"
                 />
               </div>
-              <DataTable
-                rows={driversRowsFiltered}
-                tableKey="drivers-roster"
-                loading={driversQuery.isLoading}
-                errorState={dataTableErrorState(driversQuery.error, () => void driversQuery.refetch())}
-                rowKey={(row) => row.id}
-                onRowClick={(row) => navigate(`/drivers/${row.id}`)}
-                columns={[
-                  {
-                    key: "name",
-                    label: "Name",
-                    sortable: true,
-                    className: "max-w-[220px] whitespace-nowrap",
-                    render: (row) => {
-                      const v = `${row.first_name} ${row.last_name}`;
-                      return (
-                        <span title={v} className="single-line-name">
-                          {v}
-                        </span>
-                      );
-                    },
-                  },
-                  { key: "phone", label: "Phone" },
-                  { key: "cdl_number", label: "CDL #", cellClass: "code-cell" },
-                  {
-                    key: "cdl_expires_at",
-                    label: "CDL Expires",
-                    // GLOBAL-TABLE-ALIGNMENT (Block A): dates are numeric — right-align so they line up by place.
-                    numeric: true,
-                    render: (row) => formatDate(row.cdl_expires_at),
-                  },
-                  {
-                    key: "status",
-                    label: "Status",
-                    render: (row) => <StatusBadge status={row.status} />,
-                  },
-                  {
-                    key: "hire_date",
-                    label: "Hire Date",
-                    numeric: true,
-                    render: (row) => formatDate(row.hire_date),
-                  },
-                ]}
-              />
+              {driversQuery.isError ? (
+                <ListErrorState
+                  title="Couldn't load drivers"
+                  {...formatQueryErrorDetail(driversQuery.error)}
+                  onRetry={() => void driversQuery.refetch()}
+                />
+              ) : (
+                <ParityTable
+                  rows={driversRowsFiltered}
+                  storageKey="drivers-roster"
+                  loading={driversQuery.isLoading}
+                  rowKey={(row) => row.id}
+                  onRowClick={(row) => navigate(`/drivers/${row.id}`)}
+                  columns={driversRosterColumns}
+                />
+              )}
             </>
           ) : null}
           {subnavTab === "settlements" || subnavTab === "pre_settlements" ? (

@@ -198,7 +198,21 @@ export function assertNoLeakTestPollution(sources) {
     }
     const code = text.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
     // Only scripts that actually open a connection AND insert business rows are fixture writers.
-    const writes = BUSINESS_INSERT.test(code);
+    // The INSERT pattern must be inside a real .query()/.execute() call — not anywhere in the file —
+    // or a static guard's own selftest fixture (a string used as mock data to test ANOTHER file's
+    // source, never executed as SQL here) reads as a live INSERT. Same false-positive class as the
+    // double-entry-balance-trigger comment-quoting case above, one level indirect: scripts/verify-je-
+    // type-fk.mjs's selftest fixture contains the literal text "INSERT INTO accounting.journal_entries ("
+    // as a regex-match fixture for another file's source; this file's only real DB call is a SELECT.
+    let writes = false;
+    const queryCall = /\.(?:query|execute)\s*\(\s*[`'"]([\s\S]*?)[`'"]\s*[,)]/g;
+    let queryMatch;
+    while ((queryMatch = queryCall.exec(code))) {
+      if (BUSINESS_INSERT.test(queryMatch[1])) {
+        writes = true;
+        break;
+      }
+    }
     const connects = /new Pool\s*\(|new Client\s*\(/.test(code);
     if (!writes || !connects) continue;
     if (OPERATOR_TOOLS.has(rel)) continue; // deliberate prod tool, runbook-documented

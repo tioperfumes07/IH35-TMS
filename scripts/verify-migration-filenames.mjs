@@ -52,6 +52,27 @@ const HISTORICAL_DUP_ALLOWLIST = new Set([
   "0221", "0222", "0223", "0224", "0233", "0234", "0340", "0363",
 ]);
 
+// Timestamp identity = the leading 12 digits of the new-format scheme.
+const TIMESTAMP_IDENTITY = /^(\d{12})_.+\.sql$/i;
+
+// 2026-07-25: the legacy arm above deliberately excluded 12-digit files ("strictly about legacy-number
+// reuse"), on the reasoning that new migrations use the timestamp format so no NEW legacy collision can
+// appear. That left the format where every future migration actually lands completely unguarded — and 11
+// timestamp numbers on main are already shared by two files each. This is not theoretical: a coder hit a
+// live collision on 202607960000 this same day (main had merged journal_entries_type_fk.sql under that
+// number) and had to renumber to 202607970000. Nothing failed; it was caught by hand.
+//
+// Same-numbered files DO both apply — db-migrate keys on the full filename, so nothing is silently skipped.
+// The danger is ORDER: two migrations sharing a number are applied in whatever order the rest of the
+// filename sorts, which is arbitrary. If one depends on the other, that dependency holds by luck.
+// Grandfathered below; only a NEW timestamp collision fails. Do NOT extend this list to make a new
+// collision pass — bump the new file to the next free timestamp.
+const HISTORICAL_TIMESTAMP_DUP_ALLOWLIST = new Set([
+  "202606071500", "202606071800", "202606080112", "202606080205", "202607051000",
+  "202607051200", "202607052300", "202607860000", "202607890000", "202607920000",
+  "202607950000",
+]);
+
 function fail(lines) {
   console.error("verify:migration-filenames FAILED");
   for (const line of lines) console.error(`- ${line}`);
@@ -117,11 +138,42 @@ for (const identity of HISTORICAL_DUP_ALLOWLIST) {
   }
 }
 
+// Same two arms for the 12-digit timestamp scheme — the format all new migrations use.
+const byTimestamp = new Map();
+for (const name of sqlFiles) {
+  const m = TIMESTAMP_IDENTITY.exec(name);
+  if (!m) continue;
+  const identity = m[1];
+  if (!byTimestamp.has(identity)) byTimestamp.set(identity, []);
+  byTimestamp.get(identity).push(name);
+}
+
+for (const [identity, files] of byTimestamp) {
+  if (files.length > 1 && !HISTORICAL_TIMESTAMP_DUP_ALLOWLIST.has(identity)) {
+    violations.push(
+      `NEW duplicate timestamp migration number "${identity}" — ${files.sort().join(", ")}. ` +
+        `Two migrations must never share a leading number: both apply, but their relative order is ` +
+        `decided by the rest of the filename, so any dependency between them holds only by accident. ` +
+        `Re-check main's current max at push time and bump the new file to the next free number.`
+    );
+  }
+}
+
+for (const identity of HISTORICAL_TIMESTAMP_DUP_ALLOWLIST) {
+  if ((byTimestamp.get(identity)?.length ?? 0) <= 1) {
+    violations.push(
+      `allowlisted historical timestamp dup "${identity}" no longer collides — remove it from ` +
+        `HISTORICAL_TIMESTAMP_DUP_ALLOWLIST.`
+    );
+  }
+}
+
 if (violations.length > 0) {
   fail(violations);
 }
 
 console.log(
   `verify:migration-filenames OK — ${sqlFiles.length} migration file(s), all match a recognized ` +
-    `naming pattern; no NEW duplicate legacy number (grandfathered pairs=${HISTORICAL_DUP_ALLOWLIST.size}).`
+    `naming pattern; no NEW duplicate number in either scheme (grandfathered: ` +
+    `legacy=${HISTORICAL_DUP_ALLOWLIST.size}, timestamp=${HISTORICAL_TIMESTAMP_DUP_ALLOWLIST.size}).`
 );
