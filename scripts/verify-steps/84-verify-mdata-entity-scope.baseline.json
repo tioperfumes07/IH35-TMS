@@ -666,6 +666,21 @@
       "preview": "`SELECT count(*)::int AS total FROM mdata.customers ${whereClause}`"
     },
     {
+      "key": "apps/backend/src/mdata/dispatcher-safety-events.routes.ts#74b41af463ffb2ffa52f68fd5c53836834f0e931",
+      "file": "apps/backend/src/mdata/dispatcher-safety-events.routes.ts",
+      "preview": "`SELECT operating_company_id FROM mdata.loads WHERE id = $1 LIMIT 1`"
+    },
+    {
+      "key": "apps/backend/src/mdata/dispatcher-safety-events.routes.ts#c2c50fc4d6b5d87f9055d9d61c4dabf79d1cdae6",
+      "file": "apps/backend/src/mdata/dispatcher-safety-events.routes.ts",
+      "preview": "`SELECT operating_company_id FROM mdata.drivers WHERE id = $1 LIMIT 1`"
+    },
+    {
+      "key": "apps/backend/src/mdata/dispatcher-safety-events.routes.ts#cec6f044b4c6231b688375d864b78306769e5cf5",
+      "file": "apps/backend/src/mdata/dispatcher-safety-events.routes.ts",
+      "preview": "`SELECT operating_company_id FROM mdata.customers WHERE id = $1 LIMIT 1`"
+    },
+    {
       "key": "apps/backend/src/mdata/dispatcher-safety-events.routes.ts#d74224c9ea8253bfc9a3c9159a7705e58d1fff0b",
       "file": "apps/backend/src/mdata/dispatcher-safety-events.routes.ts",
       "preview": "` SELECT u.id, u.email, u.role, EXISTS (SELECT 1 FROM mdata.drivers d WHERE d.identity_user_id = u.id) AS has_driver_rec"

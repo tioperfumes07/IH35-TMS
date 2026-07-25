@@ -1128,6 +1128,12 @@
       "table": "unit_period",
       "reason": "needs FK from 'operating_company_id' to org.companies(id)",
       "phase": "P4"
+    },
+    {
+      "schema": "catalogs",
+      "table": "account_role_bindings",
+      "reason": "needs opco-scoped RLS policy (currently: 3 policies, none scope 'operating_company_id' against current_setting('app.operating_company_id'|'app.current_operating_company_id') OR org.user_accessible_company_ids()/org.user_company_access membership) — PARTIALLY MIGRATED, not un-migrated: migration 202607010700_account_role_bindings_per_entity.sql added a NULLABLE operating_company_id + a resolver-side entity guard, but a GLOBAL role_key UNIQUE constraint still exists, which blocks true per-entity rows (two entities can't both have a 'default_ar_control' binding). Current policies are role-only (no operating_company_id comparison) — pending the unique-constraint drop before real per-entity RLS can be written.",
+      "phase": "other"
     }
   ]
 }
