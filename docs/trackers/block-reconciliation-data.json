@@ -1,6 +1,6 @@
 {
  "date": "2026-07-25",
- "generated_at_iso": "2026-07-25T07:44:01.349Z",
+ "generated_at_iso": "2026-07-25T08:31:17.322Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
@@ -13173,10 +13173,22 @@
  ],
  "merged_prs": [
   {
+   "number": 3480,
+   "title": "fix(entity-scope): LST-F05 — lowest-UUID hijack was live in 5 places, not the 3 audited",
+   "mergedAt": "2026-07-25T07:44:57Z",
+   "branch": "fix/lst-f05-lowest-uuid-entity-hijack-sweep"
+  },
+  {
    "number": 3479,
    "title": "docs(lists): LST-RLS-01 — catalog scoping decided by opco VALUES + policy, not column presence",
    "mergedAt": "2026-07-25T07:28:04Z",
    "branch": "feat/block14-catalog-scoping-classification"
+  },
+  {
+   "number": 3478,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-25T08:05:40Z",
+   "branch": "chore/tracker-artifacts-sync"
   },
   {
    "number": 3477,
@@ -13251,6 +13263,12 @@
    "branch": "hold/acct-06-08-surf-dod-20260725"
   },
   {
+   "number": 3463,
+   "title": "[HOLD-FOR-JORGE · FINANCIAL] fix(lists): LST-F03 payment_terms + posting_templates per-entity",
+   "mergedAt": "2026-07-25T08:07:07Z",
+   "branch": "hold/lst-f03-payment-terms-posting-templates-20260725"
+  },
+  {
    "number": 3461,
    "title": "docs(accounting): ACCT-F09 reconcile architectural design to grouped PNG nav",
    "mergedAt": "2026-07-25T05:11:35Z",
@@ -13267,6 +13285,12 @@
    "title": "[HOLD] fix(banking): BANK-04/05 structural DoD guards (SURF+LINK+cashbind)",
    "mergedAt": "2026-07-25T07:21:29Z",
    "branch": "hold/bank-04-surf-structural-guards-20260725"
+  },
+  {
+   "number": 3458,
+   "title": "[HOLD-FOR-JORGE · FINANCIAL] fix(lists): LST-F09 — account_role_bindings entity-scope finish (USMCA blocker)",
+   "mergedAt": "2026-07-25T08:30:31Z",
+   "branch": "hold/lst-f09-role-bindings-entity-scope-20260725"
   },
   {
    "number": 3457,
@@ -16747,30 +16771,6 @@
    "title": "fix(fleet): wire Assign Truck ActionBar deeplink (0441-mod5)",
    "mergedAt": "2026-07-17T18:58:45Z",
    "branch": "fix/fleet-assign-truck-deeplink"
-  },
-  {
-   "number": 2667,
-   "title": "fix(banking): BankAccountDetail is_credit-aware amounts (0441-mod8)",
-   "mergedAt": "2026-07-17T21:48:03Z",
-   "branch": "fix/banking-plaid-sign-deposits"
-  },
-  {
-   "number": 2666,
-   "title": "fix(platform): HOME quick-jump counts from canonical nav (0441-mod1)",
-   "mergedAt": "2026-07-17T21:35:57Z",
-   "branch": "fix/home-quickjump-canonical-counts"
-  },
-  {
-   "number": 2665,
-   "title": "fix(banking): Factoring virtual panel FE wiring (0441-mod8)",
-   "mergedAt": "2026-07-17T19:22:20Z",
-   "branch": "fix/banking-factoring-virtual-fe"
-  },
-  {
-   "number": 2664,
-   "title": "fix(dispatch): wire OCR queue Reprocess OCR action (0441-mod4)",
-   "mergedAt": "2026-07-17T19:22:17Z",
-   "branch": "fix/dispatch-ocr-reprocess-ui"
   }
  ],
  "merged_pr_total": 3000,
@@ -16842,6 +16842,12 @@
    "category": "HOLD"
   },
   {
+   "number": 3463,
+   "title": "[HOLD-FOR-JORGE · FINANCIAL] fix(lists): LST-F03 payment_terms + posting_templates per-entity",
+   "mergedAt": "2026-07-25T08:07:07Z",
+   "category": "HOLD"
+  },
+  {
    "number": 3460,
    "title": "[HOLD] fix(accounting): ACCT-F04 reverse density — unit/claim/WO drill + create stamp",
    "mergedAt": "2026-07-25T06:56:39Z",
@@ -16851,6 +16857,12 @@
    "number": 3459,
    "title": "[HOLD] fix(banking): BANK-04/05 structural DoD guards (SURF+LINK+cashbind)",
    "mergedAt": "2026-07-25T07:21:29Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3458,
+   "title": "[HOLD-FOR-JORGE · FINANCIAL] fix(lists): LST-F09 — account_role_bindings entity-scope finish (USMCA blocker)",
+   "mergedAt": "2026-07-25T08:30:31Z",
    "category": "HOLD"
   },
   {
