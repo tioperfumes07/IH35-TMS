@@ -966,6 +966,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     try {
+      // Subledger categorize commits first; CHAIN-05 poster runs after (own txn), same as categorize-bulk.
       const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
         bulkCategorizeTransactions(client, {
           operatingCompanyId: query.data.operating_company_id,
@@ -975,7 +976,27 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
           qboAccountId: body.data.qbo_account_id,
         })
       );
-      return { ok: true, updated_count: result.updated_count };
+
+      const bankFeedGl: Array<{ bank_transaction_id: string; posted: boolean; reason?: string; message?: string }> = [];
+      for (const id of result.categorizedIds) {
+        try {
+          const posting = await maybePostBankCategorizationToGl({
+            companyId: query.data.operating_company_id,
+            actorUserUuid: String(user.uuid),
+            bankTransactionId: id,
+          });
+          bankFeedGl.push({ bank_transaction_id: id, ...posting });
+        } catch (error) {
+          bankFeedGl.push({
+            bank_transaction_id: id,
+            posted: false,
+            reason: "post_failed",
+            message: String((error as Error)?.message ?? error),
+          });
+        }
+      }
+
+      return { ok: true, updated_count: result.updated_count, bank_feed_gl: bankFeedGl };
     } catch (error) {
       const message = String((error as Error)?.message ?? "bulk_categorize_failed");
       const mapped = mapBulkError(reply, message);
