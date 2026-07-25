@@ -115,7 +115,9 @@ export function CreateMultipleBillsPage() {
     // Entity-scoped CoA (never the user's default-company chart). listCatalogAccounts (not
     // getCoaAccounts) because its row shape carries is_postable / account_subtype — both filters
     // below need them, and getCoaAccounts's narrower row type does not expose is_postable.
-    queryFn: () => listCatalogAccounts({ status: "active", operating_company_id: companyId }),
+    // LST-F14: posting A/P + expense pickers — server-side is_postable=true.
+    queryFn: () =>
+      listCatalogAccounts({ status: "active", operating_company_id: companyId, postable_only: true }),
     enabled: Boolean(companyId),
   });
 
