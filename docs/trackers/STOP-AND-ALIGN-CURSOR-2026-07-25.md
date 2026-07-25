@@ -9,10 +9,18 @@
 ## In-flight triage → GUARD
 | Item | Class | Action |
 |---|---|---|
-| SWEEP-C6 guard PR | C6 STEP 1 | Ship now (verify-step 1503) |
+| SWEEP-C6 guard PR | C6 STEP 1 | **SHIPPED** #3555 @ 842a93e0 (verify-step 1503) |
 | #3551 SAFETY FINE-GL | **C6 instance** | HOLD — absorb in C6 fix wave |
 | #3526 ACCT-R-03 CoA merge | module-domain | KEEP HELD |
-| #3554 LINK-02 | catalog FK | Neon owner DDL; not a money poster |
-| Solo ACCT-R money/GL | → C6 | STOP until C6 guard on main |
+| #3554 LINK-02 | catalog FK | Neon-applied; owner unlock + checksum; merge after CI green |
+| #3556 registry truth-up | hot-file | Claude squash-merge first (held=0) |
+| Solo ACCT-R money/GL | → C6 | STOP until C6 fix wave |
+
+## LINK-02 (finish)
+| Item | State |
+|---|---|
+| Code PR | [#3554](https://github.com/tioperfumes07/IH35-TMS/pull/3554) |
+| Neon DDL | **Applied** checksum `4d66df41…` @ 2026-07-25T22:15:16Z |
+| Owner unlock | `DETAIL_TYPES_FK_OWNER_UNLOCK` in migration + checksum override |
 
 See also: `docs/trackers/SWEEP-C6-GUARD-FIRST-2026-07-25.md`
