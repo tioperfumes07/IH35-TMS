@@ -315,7 +315,7 @@
       ],
       "spec": "Architectural design Accounting tabs",
       "status": "UNVERIFIED",
-      "evidence": "period-close\u2192month-close, audit-trail, posting-lineage mounted; Desktop SURF DoD UNVERIFIED click-through.",
+      "evidence": "period-close\u2192month-close Navigate alias + MonthClosePage + AccountingAuditTrailPage + PostingLineagePage mounted; guard 1463 structural DoD; Desktop SURF DoD UNVERIFIED click-through.",
       "pr": null
     },
     {
