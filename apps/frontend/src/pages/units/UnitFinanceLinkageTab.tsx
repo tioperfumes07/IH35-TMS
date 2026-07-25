@@ -1,10 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { getUnitFinanceLinkage } from "../../api/unit-finance-linkage";
+import { listUnitLinkedFinancials } from "../../api/accounting";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 type UnitFinanceLinkageTabProps = {
   unitId: string;
@@ -21,6 +23,12 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
     enabled: Boolean(unitId && companyId),
   });
 
+  const linkedMoneyQuery = useQuery({
+    queryKey: ["unit-linked-financials", unitId, companyId],
+    queryFn: () => listUnitLinkedFinancials(unitId, companyId),
+    enabled: Boolean(unitId && companyId),
+  });
+
   if (linkageQuery.isError) {
     return <ListErrorBanner onRetry={() => void linkageQuery.refetch()} />;
   }
@@ -34,6 +42,8 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
 
   const hasAny =
     data.fixed_assets.length > 0 || data.leases.length > 0 || data.equipment_loans.length > 0;
+  const linkedBills = linkedMoneyQuery.data?.bills ?? [];
+  const linkedExpenses = linkedMoneyQuery.data?.expenses ?? [];
 
   return (
     <div className="space-y-4" data-testid="unit-finance-linkage-tab">
@@ -42,6 +52,46 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
       </p>
 
       <LinkedBankTransactionsPanel companyId={companyId} linkage={{ kind: "unit_id", id: unitId }} />
+
+      <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-linked-financials">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold text-slate-900">Linked Bills / Expenses</h3>
+          <Link to="/accounting/bills" className="text-xs text-slate-700 hover:underline">
+            Open Bills →
+          </Link>
+        </div>
+        {linkedMoneyQuery.isLoading ? (
+          <p className="text-sm text-gray-500">Loading bills &amp; expenses for this unit…</p>
+        ) : null}
+        {linkedMoneyQuery.isError ? (
+          <p className="text-sm text-amber-800">Linked-financials lookup unavailable in this backend build.</p>
+        ) : null}
+        {linkedMoneyQuery.data && linkedBills.length === 0 && linkedExpenses.length === 0 ? (
+          <p className="text-sm text-gray-500">
+            No bills or expenses stamp <code className="text-xs">unit_id</code> on this unit yet (ACCT-LINK-03 density).
+          </p>
+        ) : null}
+        {linkedBills.length > 0 ? (
+          <ul className="mb-2 divide-y divide-gray-100">
+            {linkedBills.map((b) => (
+              <li key={b.id} className="flex flex-wrap items-center justify-between gap-2 py-1.5 text-sm">
+                <EntityLink kind="bill" id={b.id} label={b.bill_number ?? b.id.slice(0, 8)} />
+                <span className="text-xs tabular-nums text-gray-600">{fmtCents(b.amount_cents)}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        {linkedExpenses.length > 0 ? (
+          <ul className="divide-y divide-gray-100">
+            {linkedExpenses.map((e) => (
+              <li key={e.id} className="flex flex-wrap items-center justify-between gap-2 py-1.5 text-sm">
+                <EntityLink kind="expense" id={e.id} label={e.id.slice(0, 8)} />
+                <span className="text-xs tabular-nums text-gray-600">{fmtCents(e.total_amount_cents)}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </section>
 
       <section className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between gap-2">

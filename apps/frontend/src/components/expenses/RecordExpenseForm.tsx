@@ -100,7 +100,13 @@ export function RecordExpenseForm({
     // Entity-scoped full chart (USMCA/TRANSP) — never default-company CoA. No explicit limit so
     // listCatalogAccounts pages the FULL chart (backend caps limit at 200; the chart has 371),
     // keeping the oldest payment accounts selectable (G9-H6).
-    queryFn: () => listCatalogAccounts({ status: "active", operating_company_id: operatingCompanyId }),
+    // LST-F14: server-side is_postable filter (client filter remains defense-in-depth).
+    queryFn: () =>
+      listCatalogAccounts({
+        status: "active",
+        operating_company_id: operatingCompanyId,
+        postable_only: true,
+      }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });
