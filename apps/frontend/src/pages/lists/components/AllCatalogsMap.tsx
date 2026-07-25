@@ -61,6 +61,9 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
       // LST-A-01 — catalog was mounted at /catalogs/driver-load-statuses but absent from the hub map.
       { name: "Driver Load Statuses", description: "In-trip / stop status taxonomy for driver updates", live: true, catalogKey: "driver-load-statuses" },
       { name: "Termination Reasons", description: "Offboarding reason taxonomy", live: true, catalogKey: "termination-reasons" },
+      // LST-F10 — /lists/driver/teams was route-mounted but absent from the hub map (unreachable
+      // from nav). buildCatalogPath("drivers","teams") → /lists/driver/teams (drivers→driver).
+      { name: "Driver Teams", description: "Primary + secondary driver pairings (team roster)", live: true, catalogKey: "teams" },
     ],
   },
   {

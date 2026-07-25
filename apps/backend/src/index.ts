@@ -150,6 +150,7 @@ import { registerDriverInboxReportingRoutes } from "./driver-finance/inbox-repor
 import { registerOwnerApprovalPortalRoutes } from "./driver-finance/owner-approval.routes.js";
 import { registerAbandonmentRoutes } from "./driver-finance/abandonment.routes.js";
 import { registerSettlementsDisputesRoutes } from "./settlements/disputes/disputes.routes.js";
+import { registerSettlementApprovalRoutes } from "./settlements/approval.routes.js";
 import { registerAutoDeductionPolicyRoutes } from "./settlements/auto-deductions/policy.routes.js";
 import { registerSettlementDisputeRoutes } from "./driver-finance/settlement-dispute.routes.js";
 import { registerHomeRoutes } from "./home/home.routes.js";
@@ -876,6 +877,9 @@ async function main() {
   await registerCustomerContractRoutes(app);
   await registerWeeklyCloseRoutes(app);
   await registerSettlementsDisputesRoutes(app);
+  // ACCT-R-13 (2026-07-25): built but never mounted (live 404 on all 9 endpoints). SettlementsMvp
+  // (registerSettlementsMvpRoutes) stays UNMOUNTED — see scripts/verify-no-orphan-routes.mjs.
+  await registerSettlementApprovalRoutes(app);
   await registerSettlementDisputeRoutes(app);
   await registerAutoDeductionPolicyRoutes(app);
   await registerDriverFinanceSettlementHtmlRoutes(app);

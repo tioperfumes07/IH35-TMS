@@ -105,7 +105,14 @@ export function Form2290Filings() {
         <div>
           <h2 className="text-sm font-semibold text-slate-900">Form 2290 filings</h2>
           <p className="text-xs text-slate-600">
-            HVUT annual filing · due {deadline?.deadline ?? "Aug 31"} ({deadline?.days_remaining ?? "—"} days remaining)
+            {/* No fabricated fallback. This previously rendered a hardcoded August-31 literal whenever
+                the endpoint had not answered — a regulatory date invented by the UI, indistinguishable
+                from a real one, and wrong for every vehicle not first used in July. Under Rule 15 an
+                unknown filing deadline must read as unknown. Guarded by verify-step 1500. */}
+            HVUT annual filing ·{" "}
+            {deadline?.deadline
+              ? `due ${deadline.deadline} (${deadline.days_remaining} days remaining)`
+              : "due date unavailable — could not load the filing deadline"}
           </p>
         </div>
         <button

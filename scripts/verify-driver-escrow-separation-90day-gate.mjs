@@ -37,9 +37,9 @@ if (!service.includes("isEligibleForRelease(separation.eligible_release_date)"))
 }
 if (!service.includes('actor.role !== "Owner"')) fail("release function must be Owner-only (money-moving action)");
 if (!service.includes("releaseEscrow(")) fail("release function must reuse the existing Block-23 releaseEscrow() — no new GL math");
-if (service.includes("posting_type") && service.includes("'forfeiture'")) {
-  fail("this build must NOT introduce a new escrow posting_type — the damage-forfeiture credit account is a deferred CPA decision (see design doc)");
-}
+// SAF-ORPH-01/02 (2026-07-25): posting_type='forfeiture' is now the signed decrement path on
+// accounting.apply_escrow_posting_delta (mig 202608070000). Separation RELEASE still uses releaseEscrow();
+// this gate must not forbid the forfeit posting_type on unrelated escrow services.
 
 if (!migration.includes("DRIVER_ESCROW_SEPARATION_RETURN_ENABLED") || !migration.includes("false")) {
   fail("migration must seed the flag DEFAULT OFF");
