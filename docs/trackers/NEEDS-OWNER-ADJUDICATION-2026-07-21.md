@@ -13,7 +13,7 @@ Owner rulings recorded after the read-only adjudication below. These do **not** 
 ---
 
 
-> Read-only adjudication of the 106 `pile=NEEDS-OWNER` items in `docs/trackers/block-audit-piles-2026-07-21.json` against the owner/CPA saved rulings (`docs/lockdown/00_LOCKED_DECISIONS.md`, `docs/LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md`, `.claude/skills/ih35-cpa-accounting-decisions`, `ih35-entity-facts`, `docs/specs/DESIGN-load-revenue-capture-auto-invoice-tonu.md`, the linkage law). No trackers modified, nothing committed/merged. Rulings are quoted, never guessed.
+> Read-only adjudication of the 106 `pile=NEEDS-OWNER` items in `docs/trackers/block-audit-piles-2026-07-21.json` against the owner/CPA saved rulings (`docs/lockdown/00_LOCKED_DECISIONS.md`, `docs/LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md`, `.claude/skills/ih35-accounting-decisions`, `ih35-entity-facts`, `docs/specs/DESIGN-load-revenue-capture-auto-invoice-tonu.md`, the linkage law). No trackers modified, nothing committed/merged. Rulings are quoted, never guessed.
 
 ## Counts per verdict
 

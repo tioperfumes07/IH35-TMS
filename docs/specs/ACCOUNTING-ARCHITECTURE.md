@@ -183,7 +183,7 @@ does not erase Layer 1.
 **Scope of this section:** governance / decision lock only. No executable GL math, no migration, no money-flag flip.
 Companion surfaces: `docs/specs/TMS-QBO-PARALLEL-BOOKS.md`,
 `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` (same-dated section),
-`.claude/skills/ih35-cpa-accounting-decisions/` (+ reference card),
+`.claude/skills/ih35-accounting-decisions/` (+ reference card),
 `docs/trackers/FINANCIAL-OWNER-UNBLOCK-PACKET.md` (stale invoice-create line corrected).
 Guard: `scripts/verify-cpa-answers-phase1-decisions.mjs` (Rule-17 auto-discovered verify-step).
 

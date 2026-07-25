@@ -4,7 +4,7 @@
 **Item:** `audit2-internal-controls-approval-workflow` (accounting-module GAP lane, 2026-07-21).
 **No route mount, no code change, no Neon write ships with this document.**
 
-Binds to: `docs/specs/QUALITY-STANDARD-LOCKED.md` (Rule #0), `.cursor/rules/13-financial-and-accounting-law.mdc` (settlement approve/finalize + escrow ledger writes = financial cluster, owner-gated), `.cursor/rules/14-linkage-law-enforcement.mdc`, `.cursor/rules/16-fix-not-patch-evidence-law.mdc`. Skills: `ih35-code-review`, `ih35-cpa-accounting-decisions`.
+Binds to: `docs/specs/QUALITY-STANDARD-LOCKED.md` (Rule #0), `.cursor/rules/13-financial-and-accounting-law.mdc` (settlement approve/finalize + escrow ledger writes = financial cluster, owner-gated), `.cursor/rules/14-linkage-law-enforcement.mdc`, `.cursor/rules/16-fix-not-patch-evidence-law.mdc`. Skills: `ih35-code-review`, `ih35-accounting-decisions`.
 
 ---
 

@@ -166,4 +166,4 @@ role) is **bound but not referenced** by the poster — it exists for the option
 
 ---
 **Reminder:** this is design. The poster is §1.4 financial — never self-merged, CPA-gated, flag-OFF. See
-`ih35-cpa-accounting-decisions` (factoring = secured borrowing) and `ih35-financial-migrations` (build rules).
+`ih35-accounting-decisions` (factoring = secured borrowing) and `ih35-financial-migrations` (build rules).

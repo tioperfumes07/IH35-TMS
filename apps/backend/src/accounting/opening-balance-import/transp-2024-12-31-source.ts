@@ -2,7 +2,7 @@
 // (IH 35 Transportation LLC), pulled 2026-07-06 (docs/OPENING-BALANCES-TRANSP-2024-12-31.md).
 //
 // Values are QBO's own signed-actual figures (per the CPA-locked opening-balance decision: "opening = QBO
-// BS 12/31/2024 signed-actual, NOT natural-side" — skill `ih35-cpa-accounting-decisions` §2 /
+// BS 12/31/2024 signed-actual, NOT natural-side" — skill `ih35-accounting-decisions` §2 /
 // docs/lockdown/00_LOCKED_DECISIONS.md). "Signed-actual" means each leaf account's reported sign is taken
 // AS-IS (an asset can be negative/overdrawn, a liability can be negative/debit-balance) — never forced
 // into a "assets are always debits" natural-side assumption. See `signedCentsToDebitCredit` in
@@ -53,7 +53,7 @@ export const TRANSP_OPENING_BALANCE_SOURCE_LINES: readonly OpeningBalanceSourceL
 
   // ── Assets — Accounts Receivable (total -$538,278.66) ───────────────────────────────────────────
   // "Unauthorized Expenses" lines are receivables pursued in bankruptcy court — NEVER written off /
-  // reclassed to expense (locked decision, memory `ih35-cpa-accounting-decisions` §6).
+  // reclassed to expense (locked decision, memory `ih35-accounting-decisions` §6).
   { qbo_account_label: "A/R (A/R)", amount_cents: -96_198_352, account_type: "Asset", category: "accounts_receivable" },
   { qbo_account_label: "Unauthorized Expenses Anarely Alcazar", amount_cents: 7_325_348, account_type: "Asset", category: "accounts_receivable" },
   { qbo_account_label: "Unauthorized Expenses Ignacio Muñoz", amount_cents: 35_045_138, account_type: "Asset", category: "accounts_receivable" },

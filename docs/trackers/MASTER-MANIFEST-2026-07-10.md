@@ -395,7 +395,7 @@ Money-posting GL flags ON for TRANSP+TRK is DELIBERATE: TMS posts in PARALLEL wi
 - **coder12-audit-spine** [accounting]: The doc's literal ask was that EVERY financial posting batch calls events.log_event (the canonical 13-arg function). The actual repo does NOT do this uniformly: apps/backend/src/accounting/bank-recon/__tests__/coder-12-s
 - **factoring-fact-par-1-outbound-submission** [accounting]: Doc (07-02) said 'batches exist internally but submission to the factor is manual/outside the TMS' — repo now shows a full built submit-batch route + workqueue + packet assembly, dated after the audit.
 - **0473-1-9-driver-settlement-net-pay-model** [accounting]: This doc's stated 10% floor is stale — superseded by the 07-04 owner lock of 5% (see 0008-c), which is what the repo now implements.
-- **0285-acct-gap1-no-auto-gl-posting** [accounting]: 0285 frames this as a 'Critical Gap' to fix, but per the CPA-locked architecture (skill ih35-cpa-accounting-decisions, memory accounting-architecture-parallel-clone-reconcile) this is an intentional, owner-approved desig
+- **0285-acct-gap1-no-auto-gl-posting** [accounting]: 0285 frames this as a 'Critical Gap' to fix, but per the CPA-locked architecture (skill ih35-accounting-decisions, memory accounting-architecture-parallel-clone-reconcile) this is an intentional, owner-approved desig
 - **0285-banking-transfer-gl-gap-not-caught** [accounting]: 0285's Banking 'Critical Gaps: None identified' / 'Create Transfer — Status: Implemented' directly contradicts memory 'banking-posting-flags-go-nogo-2026-07-06', which found this exact path live and unflagged-corrupting 
 - **db249-missing-fks-duplicate-of-0279-flows** [accounting]: Duplicate finding of 0279's Flow 1/2/3/8/9 missing-FK items; item #3 (expense->deduction FK) is stale/already fixed.
 - **factoring-sale-vs-secured-borrowing-treatment** [accounting]: The 2026-07-01 finding doc's premise (poster models factoring as customer_payment removing A/R, no liability booked) is now stale — the live code has since been rearchitected to the liability model.
@@ -666,7 +666,7 @@ Money-posting GL flags ON for TRANSP+TRK is DELIBERATE: TMS posts in PARALLEL wi
     - spec: NONE
 - `0473-1-4-factoring-asc860-sale-vs-secured-borrowing` **needs-design** (tier-1) — CPA ruling needed: does FARO factoring transfer control (sale) or not (secured borrowing) under ASC 860's 3-pa
     - diff: written CPA ruling on ASC 860 sale-vs-borrowing for the actual FARO contract terms
-    - evidence: Doc's Section 3.8 locks the engine design as 'Reuse posting engine, no new GL math; every entry balances; append-only audit' and skill ih35-cpa-accounting-decisions / memory locked
+    - evidence: Doc's Section 3.8 locks the engine design as 'Reuse posting engine, no new GL math; every entry balances; append-only audit' and skill ih35-accounting-decisions / memory locked
     - spec: NONE
 - `0473-1-6-wo-void-reversal-grain` **needs-design** (tier-1) — Confirm WO void reverses at the whole-bill grain (one net-zero mirror JE, both entries kept) rather than line-
     - diff: CPA written confirmation of the whole-bill-mirror-reversal design

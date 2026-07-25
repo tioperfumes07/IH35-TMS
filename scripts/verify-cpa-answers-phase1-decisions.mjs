@@ -26,8 +26,8 @@ const ROOT = process.cwd();
 const LABEL = "verify-cpa-answers-phase1-decisions";
 
 const CANONICAL_DOCS = [
-  ".claude/skills/ih35-cpa-accounting-decisions/SKILL.md",
-  ".claude/skills/ih35-cpa-accounting-decisions/resources/locked-decisions-reference.md",
+  ".claude/skills/ih35-accounting-decisions/SKILL.md",
+  ".claude/skills/ih35-accounting-decisions/resources/locked-decisions-reference.md",
   "docs/specs/TMS-QBO-PARALLEL-BOOKS.md",
   "docs/specs/ACCOUNTING-ARCHITECTURE.md",
   "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
@@ -36,16 +36,16 @@ const CANONICAL_DOCS = [
 
 /** Sanitized decision surfaces — must stay free of private-source / PII patterns. */
 const SANITIZED_DOCS = new Set([
-  ".claude/skills/ih35-cpa-accounting-decisions/SKILL.md",
-  ".claude/skills/ih35-cpa-accounting-decisions/resources/locked-decisions-reference.md",
+  ".claude/skills/ih35-accounting-decisions/SKILL.md",
+  ".claude/skills/ih35-accounting-decisions/resources/locked-decisions-reference.md",
   "docs/specs/TMS-QBO-PARALLEL-BOOKS.md",
   "docs/specs/ACCOUNTING-ARCHITECTURE.md",
 ]);
 
 /** Docs that must carry the full Phase-1 Faro / dual-basis / delivery lock text. */
 const FULL_LOCK_DOCS = [
-  ".claude/skills/ih35-cpa-accounting-decisions/SKILL.md",
-  ".claude/skills/ih35-cpa-accounting-decisions/resources/locked-decisions-reference.md",
+  ".claude/skills/ih35-accounting-decisions/SKILL.md",
+  ".claude/skills/ih35-accounting-decisions/resources/locked-decisions-reference.md",
   "docs/specs/TMS-QBO-PARALLEL-BOOKS.md",
   "docs/specs/ACCOUNTING-ARCHITECTURE.md",
   "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
@@ -56,8 +56,8 @@ const FULL_LOCK_DOCS = [
  * Layer 1 historical · Layer 2 Ch.11 cutover · Layer 3 dual-run validation.
  */
 const THREE_LAYER_DOCS = [
-  ".claude/skills/ih35-cpa-accounting-decisions/SKILL.md",
-  ".claude/skills/ih35-cpa-accounting-decisions/resources/locked-decisions-reference.md",
+  ".claude/skills/ih35-accounting-decisions/SKILL.md",
+  ".claude/skills/ih35-accounting-decisions/resources/locked-decisions-reference.md",
   "docs/specs/TMS-QBO-PARALLEL-BOOKS.md",
   "docs/specs/ACCOUNTING-ARCHITECTURE.md",
 ];
@@ -175,8 +175,8 @@ function checker(docs) {
   }
 
   for (const rel of [
-    ".claude/skills/ih35-cpa-accounting-decisions/SKILL.md",
-    ".claude/skills/ih35-cpa-accounting-decisions/resources/locked-decisions-reference.md",
+    ".claude/skills/ih35-accounting-decisions/SKILL.md",
+    ".claude/skills/ih35-accounting-decisions/resources/locked-decisions-reference.md",
   ]) {
     const entry = docs.find(([pathRel]) => pathRel === rel);
     const source = entry?.[1] ?? "";
