@@ -150,7 +150,7 @@ function checkRoutes(src, failures) {
     failures.push(`${ROUTES}: merge must assert company membership and set the entity GUC before touching catalogs.accounts`);
   }
   // CodeQL js/missing-rate-limiting: Owner-only authorization routes still need per-route throttling (global:false).
-  if (!new RegExp(`${MERGE_ENDPOINT.replace(/\//g, "\\/")}"[\\s\\S]{0,200}rateLimit:\\s*\\{`).test(src)) {
+  if (!/\/api\/v1\/catalogs\/accounts\/:id\/merge"[\s\S]{0,200}rateLimit:\s*\{/.test(src)) {
     failures.push(
       `${ROUTES}: POST ${MERGE_ENDPOINT} must declare config.rateLimit — Owner-only merge is a high-impact remap and must not be brute-forceable`
     );
@@ -173,6 +173,14 @@ function checkService(src, failures) {
   if (!/operating_company_id = \$3/.test(src)) {
     failures.push(
       `${SERVICE}: every remount UPDATE must be entity-scoped (operating_company_id bind) — a merge may never rewrite another entity's configuration`
+    );
+  }
+
+  // The account lookup must be entity-scoped by an explicit predicate, not only by the RLS GUC:
+  // an unscoped read could make another entity's account the survivor of a merge.
+  if (!/FROM catalogs\.accounts WHERE id = \$1 AND operating_company_id = \$2/.test(src)) {
+    failures.push(
+      `${SERVICE}: the account lookup must carry an explicit operating_company_id predicate — relying on the RLS GUC alone lets a mis-scoped session merge across entities`
     );
   }
 
@@ -326,6 +334,7 @@ const GOOD_FIXTURE = {
     // account_role_bindings chart_of_accounts_roles expense_category_account_map
     throw new AccountMergeError("E_MERGE_ACCOUNT_TYPE_MISMATCH", 409);
     throw new AccountMergeError("E_MERGE_HISTORICAL_POSTINGS_FORBIDDEN", 400);
+    SELECT cols FROM catalogs.accounts WHERE id = $1 AND operating_company_id = $2 LIMIT 1
     UPDATE x SET y = $1 WHERE y = $2 AND operating_company_id = $3
     INSERT INTO catalogs.account_merge_records (...)
     SET deactivated_at = COALESCE(deactivated_at, now()),
@@ -448,6 +457,18 @@ function plantedMutationSuite() {
   };
   if (!collectFailures(mutableLedger).some((f) => f.includes("append-only"))) {
     console.error(`${LABEL} SELFTEST FAILED — an editable merge ledger was not caught`);
+    process.exit(1);
+  }
+
+  const unscopedAccountRead = {
+    ...good,
+    service: good.service.replace(
+      "FROM catalogs.accounts WHERE id = $1 AND operating_company_id = $2",
+      "FROM catalogs.accounts WHERE id = $1"
+    ),
+  };
+  if (!collectFailures(unscopedAccountRead).some((f) => f.includes("explicit operating_company_id predicate"))) {
+    console.error(`${LABEL} SELFTEST FAILED — an unscoped catalogs.accounts read was not caught`);
     process.exit(1);
   }
 

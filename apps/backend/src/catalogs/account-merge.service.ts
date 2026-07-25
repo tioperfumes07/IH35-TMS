@@ -121,8 +121,23 @@ async function columnExists(client: MergeClient, schema: string, table: string, 
   return res.rows.length > 0;
 }
 
-async function loadAccount(client: MergeClient, id: string): Promise<AccountRow | null> {
-  const res = await client.query(`SELECT ${ACCOUNT_COLS} FROM catalogs.accounts WHERE id = $1 LIMIT 1`, [id]);
+/**
+ * Entity-scoped by an explicit predicate, not only by the RLS GUC. The route does set
+ * app.operating_company_id and catalogs.accounts is FORCE RLS, but a merge re-points configuration
+ * across nine tables: if the GUC were ever unset, mis-set, or the call reached here from a
+ * bypass-capable session, an unscoped lookup would happily load ANOTHER entity's account and let it
+ * become the survivor. The predicate makes the entity a precondition of the read instead of a
+ * property of the surrounding session.
+ */
+async function loadAccount(
+  client: MergeClient,
+  id: string,
+  operatingCompanyId: string,
+): Promise<AccountRow | null> {
+  const res = await client.query(
+    `SELECT ${ACCOUNT_COLS} FROM catalogs.accounts WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+    [id, operatingCompanyId],
+  );
   return (res.rows[0] as AccountRow | undefined) ?? null;
 }
 
@@ -191,7 +206,7 @@ export async function mergeAccountsOnClient(
     throw new AccountMergeError("E_VALIDATION", 400, { field: "source_account_ids", message: "at least one required" });
   }
 
-  const target = await loadAccount(client, input.targetAccountId);
+  const target = await loadAccount(client, input.targetAccountId, input.operatingCompanyId);
   if (!target) throw new AccountMergeError("E_MERGE_TARGET_NOT_FOUND", 404, { account_id: input.targetAccountId });
   if (target.deactivated_at !== null) {
     throw new AccountMergeError("E_MERGE_TARGET_ARCHIVED", 409, { account_id: target.id });
@@ -206,7 +221,7 @@ export async function mergeAccountsOnClient(
   const merged: MergedSourceResult[] = [];
 
   for (const sourceId of input.sourceAccountIds) {
-    const source = await loadAccount(client, sourceId);
+    const source = await loadAccount(client, sourceId, input.operatingCompanyId);
     // RLS already restricts the read to the active entity, so "not found" here IS "not in this entity".
     if (!source) throw new AccountMergeError("E_MERGE_SOURCE_NOT_FOUND", 404, { account_id: sourceId });
     assertMergeCompatible(target, source);
