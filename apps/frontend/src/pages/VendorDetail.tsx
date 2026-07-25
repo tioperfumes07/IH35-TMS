@@ -153,7 +153,12 @@ export function VendorDetailPage() {
   });
 
   // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
-  const paymentTermsQuery = useQuery({ queryKey: ["payment-term-options"], queryFn: listPaymentTermOptions, staleTime: 5 * 60 * 1000 });
+  const paymentTermsQuery = useQuery({
+    queryKey: ["payment-term-options", companyId],
+    queryFn: () => listPaymentTermOptions(companyId),
+    enabled: Boolean(companyId),
+    staleTime: 5 * 60 * 1000,
+  });
   const paymentTermOptions = useMemo(
     () => (paymentTermsQuery.data?.payment_terms ?? []).map((t) => ({ value: t.id, label: `${t.terms_name} (${t.days_until_due}d)` })),
     [paymentTermsQuery.data]

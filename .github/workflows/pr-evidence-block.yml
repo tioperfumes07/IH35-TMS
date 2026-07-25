@@ -1,0 +1,50 @@
+name: PR Evidence Block (Rule 16)
+
+# docs/specs/DEFINITION-OF-DONE.md §3 requires the evidence block in the PR BODY — the thing a
+# reviewer reads and the thing that becomes the squash-merge message. Until this workflow existed
+# that sentence had NO enforcement: verify-definition-of-done-evidence.mjs inspects commits over
+# `merge-base..HEAD`, which is empty on main and never sees the PR body or the squash message.
+#
+# Runs on `edited` too, so fixing the body re-runs the check without a new push.
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  evidence-block:
+    name: PR body carries the Rule 16 evidence block
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Guard selftest (must be capable of failing)
+        run: node scripts/check-pr-evidence-body.mjs --selftest
+
+      - name: Collect PR body and changed files
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          printf '%s' "$PR_BODY" > /tmp/pr-body.txt
+          git diff --name-only "$BASE_SHA" "$HEAD_SHA" > /tmp/pr-files.txt || \
+            git diff --name-only "origin/${{ github.event.pull_request.base.ref }}"...HEAD > /tmp/pr-files.txt
+          echo "changed files: $(wc -l < /tmp/pr-files.txt)"
+
+      - name: Check evidence block (PR body from the event payload)
+        run: node scripts/check-pr-evidence-body.mjs --body-file /tmp/pr-body.txt --files-file /tmp/pr-files.txt
+        # GITHUB_EVENT_PATH is set by Actions, so the script reads .pull_request.body directly and
+        # prints which source it used; --body-file remains an explicit belt-and-braces fallback.

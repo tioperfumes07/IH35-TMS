@@ -1,0 +1,169 @@
+#!/usr/bin/env node
+/**
+ * ACCT-SURF-03 — Bill payment deep structural DoD.
+ *
+ * Frozen map: docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md
+ * Desktop: ~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md
+ *
+ *   node scripts/verify-acct-surf-03-bill-payment.mjs
+ *   node scripts/verify-acct-surf-03-bill-payment.mjs --selftest
+ */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const LABEL = "verify-acct-surf-03-bill-payment";
+
+const FILES = {
+  map: "docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md",
+  manifest: "apps/frontend/src/routes/manifest.tsx",
+  subnav: "apps/frontend/src/pages/accounting/subnav-manifest.ts",
+  list: "apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx",
+  pay: "apps/frontend/src/pages/accounting/PayBillModal.tsx",
+  api: "apps/frontend/src/api/accounting.ts",
+  reverseGuard: "scripts/verify-bill-payment-list-reverse-links.mjs",
+};
+
+function read(rel) {
+  return fs.readFileSync(path.join(ROOT, rel), "utf8");
+}
+
+function routeBlock(manifest, routePath) {
+  const escaped = routePath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = new RegExp(`path=["']${escaped}["'][\\s\\S]{0,500}?(?=path=["']|$)`);
+  const m = manifest.match(re);
+  return m ? m[0] : "";
+}
+
+function contractErrors(src) {
+  const errors = [];
+  if (!src.map.includes("ACCT-SURF-03") || !src.map.includes("/accounting/bill-payments")) {
+    errors.push("frozen map missing ACCT-SURF-03 → /accounting/bill-payments");
+  }
+
+  const block = routeBlock(src.manifest, "/accounting/bill-payments");
+  if (!block) errors.push("DOD-A: missing route /accounting/bill-payments");
+  else {
+    if (/ComingSoonPage/.test(block)) {
+      errors.push("DOD-A: /accounting/bill-payments must not mount ComingSoonPage");
+    }
+    if (!block.includes("<BillPaymentsListPage")) {
+      errors.push("DOD-A: must render <BillPaymentsListPage />");
+    }
+  }
+  if (!src.subnav.includes("/accounting/bill-payments")) {
+    errors.push("DOD-A / NEVER-DELETE: Bill payment leaf missing from subnav");
+  }
+
+  if (!src.pay.includes("ParityDrawer") || !src.pay.includes("<ParityDrawer")) {
+    errors.push("VERIFY-1: PayBillModal must use ParityDrawer");
+  }
+  if (!src.list.includes("PayBillModal")) {
+    errors.push("DOD-A: BillPaymentsListPage must mount PayBillModal");
+  }
+
+  for (const needle of [
+    "payment_date:",
+    "amount_cents:",
+    "payment_method:",
+    "from_bank_account_id:",
+  ]) {
+    if (!src.pay.includes(needle)) {
+      errors.push(`DOD-B: PayBillModal submit payload missing ${needle}`);
+    }
+  }
+
+  if (!src.pay.includes("getAllAccounts") && !src.pay.includes("listBankAccounts")) {
+    errors.push("VERIFY-2: PayBillModal must load bank accounts from banking API (entity-scoped)");
+  }
+  if (!src.pay.includes("DatePicker")) {
+    errors.push("VERIFY-1: PayBillModal must use DatePicker for payment date");
+  }
+  if (!src.pay.includes("MoneyInput")) {
+    errors.push("VERIFY-1: PayBillModal must use MoneyInput for amount");
+  }
+
+  if (!src.api.includes("function payVendorBill")) {
+    errors.push("VERIFY-3: missing payVendorBill API helper");
+  } else {
+    const idx = src.api.indexOf("function payVendorBill");
+    const slice = src.api.slice(idx, idx + 1200);
+    if (!slice.includes("/api/v1/accounting/bills/") || !slice.includes("/pay") || !slice.includes('method: "POST"')) {
+      errors.push("VERIFY-3: payVendorBill must POST /api/v1/accounting/bills/:id/pay");
+    }
+  }
+
+  // Reverse linkage already guarded — require that companion guard file stays present.
+  if (!src.reverseGuard.includes("journal_entry_id") || !src.reverseGuard.includes("matched_bank_transaction_id")) {
+    errors.push("VERIFY-4: verify-bill-payment-list-reverse-links must assert JE + bank reverse legs");
+  }
+  if (!src.list.includes('kind="journal_entry"') && !src.list.includes("kind=\"journal_entry\"")) {
+    errors.push("VERIFY-4: BillPaymentsListPage must EntityLink journal_entry");
+  }
+  if (!src.list.includes('kind="bill"')) {
+    errors.push("VERIFY-4: BillPaymentsListPage must EntityLink bill");
+  }
+  if (!src.list.includes('kind="vendor"')) {
+    errors.push("VERIFY-4: BillPaymentsListPage must EntityLink vendor");
+  }
+
+  const service = read("apps/backend/src/accounting/bills.service.ts");
+  if (!service.includes("INSERT INTO accounting.bill_payments")) {
+    errors.push("VERIFY-3: payBill must INSERT INTO accounting.bill_payments (canonical)");
+  }
+  if (/INSERT INTO\s+bank\.bill_payments|INSERT INTO\s+payroll\./i.test(service)) {
+    errors.push("VERIFY-3: payBill must not write RETIRE schemas");
+  }
+
+  return errors;
+}
+
+function selftest() {
+  const good = {
+    map: "ACCT-SURF-03 `/accounting/bill-payments`",
+    manifest: 'path="/accounting/bill-payments"\n<BillPaymentsListPage />\n',
+    subnav: "/accounting/bill-payments",
+    list: 'PayBillModal\nkind="journal_entry"\nkind="bill"\nkind="vendor"\n',
+    pay: [
+      "ParityDrawer",
+      "<ParityDrawer",
+      "payment_date:",
+      "amount_cents:",
+      "payment_method:",
+      "from_bank_account_id:",
+      "getAllAccounts",
+      "DatePicker",
+      "MoneyInput",
+    ].join("\n"),
+    api: 'export function payVendorBill(){ return apiRequest(`/api/v1/accounting/bills/${id}/pay`, { method: "POST" }) }',
+    reverseGuard: "journal_entry_id matched_bank_transaction_id",
+  };
+  if (contractErrors(good).length) {
+    console.error(`${LABEL} --selftest FAIL good:`, contractErrors(good));
+    process.exit(1);
+  }
+  const thin = { ...good, pay: "export function PayBillModal(){ return <div>thin</div> }" };
+  if (!contractErrors(thin).some((e) => e.includes("ParityDrawer"))) {
+    console.error(`${LABEL} --selftest FAIL thin pay modal not caught`);
+    process.exit(1);
+  }
+  console.log(`${LABEL}: selftest PASS`);
+}
+
+if (process.argv.includes("--selftest")) {
+  selftest();
+  process.exit(0);
+}
+
+const src = Object.fromEntries(Object.entries(FILES).map(([k, rel]) => [k, read(rel)]));
+const errors = contractErrors(src);
+if (errors.length) {
+  console.error(`${LABEL}: FAIL`);
+  for (const e of errors) console.error(`  - ${e}`);
+  process.exit(1);
+}
+console.log(
+  `${LABEL}: PASS — ACCT-SURF-03 Bill payment structural DoD; live browser still UNVERIFIED`
+);
+process.exit(0);

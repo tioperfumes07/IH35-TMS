@@ -1,6 +1,6 @@
 {
  "date": "2026-07-25",
- "generated_at_iso": "2026-07-25T08:31:17.322Z",
+ "generated_at_iso": "2026-07-25T14:06:10.332Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
@@ -13173,6 +13173,18 @@
  ],
  "merged_prs": [
   {
+   "number": 3489,
+   "title": "fix(lists): LST-CAT-07 — registry accepted codes its stats and preview could never serve",
+   "mergedAt": "2026-07-25T14:04:53Z",
+   "branch": "fix/lst-cat-07-registry-code-parity"
+  },
+  {
+   "number": 3481,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-25T08:45:38Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 3480,
    "title": "fix(entity-scope): LST-F05 — lowest-UUID hijack was live in 5 places, not the 3 audited",
    "mergedAt": "2026-07-25T07:44:57Z",
@@ -16759,18 +16771,6 @@
    "title": "fix(drivers): wire Teams tab so team roster is reachable (0441-mod5)",
    "mergedAt": "2026-07-17T19:22:25Z",
    "branch": "fix/drivers-teams-tab-reachable"
-  },
-  {
-   "number": 2669,
-   "title": "fix(inventory): Parts & Stock read via apiRequest (0441-mod13)",
-   "mergedAt": "2026-07-17T19:22:22Z",
-   "branch": "fix/inventory-read-path-api-request"
-  },
-  {
-   "number": 2668,
-   "title": "fix(fleet): wire Assign Truck ActionBar deeplink (0441-mod5)",
-   "mergedAt": "2026-07-17T18:58:45Z",
-   "branch": "fix/fleet-assign-truck-deeplink"
   }
  ],
  "merged_pr_total": 3000,
