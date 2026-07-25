@@ -479,7 +479,35 @@
       "owner_hold": false,
       "tracker": null,
       "future_block": null
+    },
+    {
+      "id": "SAF-B33",
+      "title": "Safety tables are RLS-protected and entity-scoped",
+      "layers": [
+        "VERIFY-8"
+      ],
+      "spec": "DEFINITION-OF-DONE.md VERIFY-8 / FORCE RLS invariant",
+      "status": "PASS",
+      "evidence": "PROD-VERIFIED 2026-07-25, Neon lucia br-fancy-credit-akjnd07a, RLS-immune pg_class: safety schema has 64 base tables — relrowsecurity TRUE on 64/64 and relforcerowsecurity TRUE on 64/64, ZERO without RLS. 69 operating_company_id columns across the schema and 31 inbound FKs into safety tables. This is materially stronger than catalogs.*, where 3 tables (account_types, cancellation_reasons, wo_cancellation_reasons) have RLS OFF.",
+      "pr": null,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B34",
+      "title": "Safety renders under USMCA and is entity-scoped (no cross-entity leak)",
+      "layers": [
+        "VERIFY-5"
+      ],
+      "spec": "DEFINITION-OF-DONE.md VERIFY-5 — TRANSP and USMCA",
+      "status": "PASS",
+      "evidence": "BROWSER-VERIFIED 2026-07-25 22:29 CT, app.ih35dispatch.com/safety, switched company via the COMPANY CONTEXT switcher from 'IH 35 Transportation' to 'USMCA Freight' (toast: 'Switched to USMCA Freight'). The Safety module renders fully under USMCA with all nav groups. Entity scoping is PROVEN by the KPI differing per entity: ACTIVE DRIVERS reads 77 on USMCA vs 82 on TRANSP. Neon lucia confirms mdata.drivers active = USMCA 78 / TRANSP 83, and safety.routes.ts:170 applies EXCLUDE_PSEUDO_DRIVERS_SQL, so 78-1=77 and 83-1=82 exactly. The tile is entity-scoped, not blended. SCOPE LIMIT: this proves the module renders and the dashboard KPI is scoped; it does NOT prove per-tab wizard or economics parity on USMCA — those remain UNVERIFIED and data-blocked.",
+      "pr": null,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
     }
   ],
-  "M": 32
+  "M": 34
 }

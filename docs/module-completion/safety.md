@@ -1,10 +1,10 @@
 # Module completion — Safety (Module 3)
 
-**PROGRESS: 3 of 32** · complete: `false` · as_of: 2026-07-25T00:45:00Z · live_sha: `2088757`
+**PROGRESS: 5 of 34** · complete: `false` · as_of: 2026-07-25T00:45:00Z · live_sha: `2088757`
 
 | Status | Count |
 |---|---:|
-| PASS | 3 |
+| PASS | 5 |
 | HOLD | 0 |
 | OPEN | 4 |
 | FAIL | 1 |
@@ -44,5 +44,7 @@
 | `SAF-B30` | **UNVERIFIED** | EntityLink safety kinds + safety detail routes | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3357 |
 | `SAF-B31` | **FAIL** | No Safety surface is a static placeholder | BROWSER-VERIFIED 2026-07-24 19:59 CT, app.ih35dispatch.com/safety as tioperfumes07@gmail.com, company 'IH 35 Transportation' (TRANSP), live_sha 2088757. 2 of 34 Safety surfaces render static placeholders with no data binding: /safety/audit-425c (pages/safety/audit-425c/Audit425cPage.tsx, 11 lines, no query) and /safety/reports (pages/safety/reports/SafetyReportsPage.tsx, 11 lines, no query). Both are route-registered and ALIAS-reachable, so an operator can navigate to a dead page. | — |
 | `SAF-B32` | **PASS** | Safety KPI tiles read real sources (not permanent zeros) | BROWSER-VERIFIED 2026-07-24 19:59 CT, app.ih35dispatch.com/safety as tioperfumes07@gmail.com, company 'IH 35 Transportation' (TRANSP), live_sha 2088757. ACTIVE DRIVERS tile reads 82. Verified honest, not a stub: Neon lucia shows mdata.drivers active for TRANSP = 83, and safety.routes.ts:170 applies EXCLUDE_PSEUDO_DRIVERS_SQL, so 83 minus 1 pseudo-driver = 82 exactly. The remaining tiles read 0 and that is ALSO honest — safety.* has 64 tables and only 7 carry any rows (driver_safety_scores 161, fuel_gps_matches 143, document_alert_rules 21, anomaly_alert_rules 18, integrity_alert_rules 17, permit_renewal_reminders 3, safety_settings 3). There are no safety events, accidents, fines or violations on prod to display. | 3334 |
+| `SAF-B33` | **PASS** | Safety tables are RLS-protected and entity-scoped | PROD-VERIFIED 2026-07-25, Neon lucia br-fancy-credit-akjnd07a, RLS-immune pg_class: safety schema has 64 base tables — relrowsecurity TRUE on 64/64 and relforcerowsecurity TRUE on 64/64, ZERO without RLS. 69 operating_company_id columns across the schema and 31 inbound FKs into safety tables. This is materially stronger than catalogs.*, where 3 tables (account_types, cancellation_reasons, wo_cancellation_reasons) have RLS OFF. | — |
+| `SAF-B34` | **PASS** | Safety renders under USMCA and is entity-scoped (no cross-entity leak) | BROWSER-VERIFIED 2026-07-25 22:29 CT, app.ih35dispatch.com/safety, switched company via the COMPANY CONTEXT switcher from 'IH 35 Transportation' to 'USMCA Freight' (toast: 'Switched to USMCA Freight'). The Safety module renders fully under USMCA with all nav groups. Entity scoping is PROVEN by the KPI differing per entity: ACTIVE DRIVERS reads 77 on USMCA vs 82 on TRANSP. Neon lucia confirms mdata.drivers active = USMCA 78 / TRANSP 83, and safety.routes.ts:170 applies EXCLUDE_PSEUDO_DRIVERS_SQL, so 78-1=77 and 83-1=82 exactly. The tile is entity-scoped, not blended. SCOPE LIMIT: this proves the module renders and the dashboard KPI is scoped; it does NOT prove per-tab wizard or economics parity on USMCA — those remain UNVERIFIED and data-blocked. | — |
 
 Desktop audit: ~/Desktop/IH35-CURSOR-AUDIT/modules/safety.md
