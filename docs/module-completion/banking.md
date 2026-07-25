@@ -10,6 +10,21 @@
 | FAIL | 4 |
 | UNVERIFIED | 3 |
 
+## RANKED BANKING FAIL LIST (published M — every future banking PR cites a row here)
+
+_PERMANENT-FIX §1 (BANK-00) — no Banking PR may land without citing a row here; M binds to items[] above and never freezes below live leaves (Rule 21/24)._
+
+| Rank | ID | P | Title | Canonical target | Bound item(s) (live status) | Fix block |
+|---|---|---|---|---|---|---|
+| 1 | `BANK-F01` | P0 | bank feed → JE density ~3/10628; no bulk categorize→GL poster density | banking.bank_transactions→accounting.journal_entries | `BANK-ECON-02`:FAIL · `BANK-SURF-02`:FAIL | BANK-ECON-02 |
+| 2 | `BANK-F02` | P0 | banking.transfers = 0; no linked transfer write from a bank line | banking.transfers | `BANK-ECON-03`:FAIL · `BANK-SURF-03`:FAIL | BANK-ECON-03/BANK-SURF-03 |
+| 3 | `BANK-F03` | P0 | banking.reconciliation_sessions = 0; no reconcile flow; RLS root cause | banking.reconciliation_sessions | `BANK-ECON-04`:HOLD · `BANK-SURF-04`:HOLD | BANK-ECON-04/BANK-SURF-04 |
+| 4 | `BANK-F04` | P1 | counterparty stored as memo, not a vendor/customer FK | mdata.vendors / mdata.customers | `BANK-LINK-01`:UNVERIFIED | BANK-SURF-01/02/05+BANK-LINK-01 |
+| 5 | `BANK-F05` | P1 | surfaces (feed/register/account-detail/rules) entity-scope not both-way drilled | banking.* | `BANK-SURF-01`:UNVERIFIED · `BANK-SURF-02`:FAIL · `BANK-SURF-05`:UNVERIFIED | BANK-SURF-01/02/05 |
+| 6 | `BANK-F06` | P2 | money-gate honesty: flags OFF + MODULE_PROGRESS = manifest | docs/module-completion/banking.json | `BANK-CTRL-01`:PASS · `BANK-GATE-01`:PASS | BANK-CTRL-01+BANK-GATE-01 |
+| 7 | `BANK-F07` | P0 | no per-surface DoD A–E + VERIFY 1–8 sweep across Banking leaves | docs/module-completion/banking.json (binding) | `BANK-SURF-01`:UNVERIFIED · `BANK-SURF-02`:FAIL · `BANK-SURF-04`:HOLD · `BANK-SURF-05`:UNVERIFIED · `BANK-LINK-01`:UNVERIFIED | BANK-MODULE-DOD (maps to the SURF/LINK leaves above — no separate manifest item invented) |
+| — | `BANK-P01` | PASS | bank_accounts 7/7 active cash-bound (legitimate PASS, keep-guard) | banking.bank_accounts | `BANK-ECON-05`:PASS | BANK-ECON-05+BANK-GATE-01 |
+
 | ID | Status | Title | Evidence | PR |
 |---|---|---|---|---|
 | `BANK-ECON-01` | **PASS** | Bank feed present (transactions > 0) | LIVE REFRESH 2026-07-25 03:41Z: bank_transactions=10628 (+6 vs prior read) | — |
