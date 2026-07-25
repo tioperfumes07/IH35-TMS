@@ -2,7 +2,7 @@
   "module": "banking",
   "title": "Banking (Module 4)",
   "complete": false,
-  "as_of": "2026-07-25T03:41:00.000Z",
+  "as_of": "2026-07-25T04:34:39.000Z",
   "live_sha": "a3f9c12",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md",
   "spec_sources": [
@@ -88,8 +88,8 @@
       ],
       "spec": "Architectural Banking tabs",
       "status": "UNVERIFIED",
-      "evidence": "Routes live; full picker/wizard matrix not re-run",
-      "pr": null
+      "evidence": "Structural mount guarded (#3459 verify-bank-surf-home-detail / step 1439): /banking + /banking/accounts/:id + banking.* API. DoD A\u2013E + VERIFY 1\u20138 browser click-through TRANSP+USMCA still required \u2014 structural \u2260 SURF PASS (Rule 23).",
+      "pr": "#3459"
     },
     {
       "id": "BANK-SURF-02",
@@ -144,8 +144,8 @@
       ],
       "spec": "Banking entry tabs \u00b7 never-delete",
       "status": "UNVERIFIED",
-      "evidence": "Tabs reachable; economics not module-closed",
-      "pr": null
+      "evidence": "Structural entry-tabs guarded (#3459/#3462 verify-bank-surf-entry-tabs / step 1440): Factoring/Escrow/Relay/Plaid/Statement Import routes mounted (never-delete). Browser DoD click-through still UNVERIFIED \u2014 not flipped to PASS.",
+      "pr": "#3459"
     },
     {
       "id": "BANK-LINK-01",
@@ -156,8 +156,8 @@
       ],
       "spec": "Law \u00a79 banking",
       "status": "UNVERIFIED",
-      "evidence": "Code paths exist; density proves almost no JE links",
-      "pr": null
+      "evidence": "Structural counterparty wiring guarded (#3459/#3464 verify-bank-surfaces-and-counterparty / step 1441); Neon lucia counterparty_fk sparse (2). Both-way live density + browser reverse drill still UNVERIFIED \u2014 not flipped to PASS.",
+      "pr": "#3459"
     },
     {
       "id": "BANK-CTRL-01",
