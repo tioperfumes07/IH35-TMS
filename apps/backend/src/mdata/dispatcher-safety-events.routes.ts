@@ -20,6 +20,11 @@ async function scopeToCallerCompany(client: ScopeClient, userId: string, request
   return operatingCompanyId;
 }
 
+// The three lookups below read operating_company_id by raw id BEFORE app.operating_company_id is
+// set — that's the point, they're how we learn which company to scope into. This is safe because
+// mdata.loads/drivers/customers SELECT RLS gates on identity.current_user_id() -> org company
+// membership (loads_select_office/loads_select_driver, drivers_select, customers_select), not on
+// the operating_company_id GUC — a related id outside the caller's companies returns zero rows.
 async function scopeToRelatedEntity(
   client: ScopeClient,
   userId: string,
