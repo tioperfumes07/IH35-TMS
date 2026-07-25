@@ -16,6 +16,11 @@
 -- TRK has 48 items that exist ONLY in the mirror. This backfills them into the canonical catalog so
 -- no entity loses its picker when the readers move.
 --
+-- CORRECTED 2026-07-25 (owner/GUARD): the first committed version copied EVERY mirror row, including
+-- QBO 'Category'/'Group' pseudo-items, which catalogs.items CHECK items_item_type_check rejects — it
+-- would have aborted on prod. It passed CI only because the CI seed contains no Category rows, a
+-- CI-does-not-reflect-prod gap. Guarded now by scripts/verify-items-backfill-type-allowlist.mjs.
+--
 -- SAFETY:
 --   * ADDITIVE only — inserts, never updates or deletes an existing catalogs.items row.
 --   * Same-entity only — operating_company_id is copied straight from the mirror row; nothing crosses entities.
@@ -42,6 +47,12 @@ SELECT
 FROM mdata.qbo_items q
 WHERE q.name IS NOT NULL
   AND btrim(q.name) <> ''
+  -- Only real item types. catalogs.items carries CHECK items_item_type_check allowing exactly
+  -- Service / Inventory / NonInventory / Bundle / Discount / Charge. The QBO mirror also holds
+  -- 'Category' (28 rows) and 'Group' (1) pseudo-items, which are QBO grouping nodes, NOT items —
+  -- copying them raises a CHECK violation and aborts the whole backfill. TRANSP's canonical catalog
+  -- already excludes them, so this keeps TRK consistent rather than importing a different shape.
+  AND q.item_type IN ('Service','Inventory','NonInventory','Bundle','Discount','Charge')
   AND NOT EXISTS (
     SELECT 1
     FROM catalogs.items c
@@ -66,6 +77,7 @@ BEGIN
   FROM (
     SELECT q.operating_company_id
     FROM mdata.qbo_items q
+    WHERE q.item_type IN ('Service','Inventory','NonInventory','Bundle','Discount','Charge')
     GROUP BY q.operating_company_id
     HAVING count(*) > 0
        AND NOT EXISTS (
