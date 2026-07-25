@@ -12,15 +12,20 @@ const LINK_ROLES = ["Owner", "Administrator", "Manager", "Safety"];
 const lookupBodySchema = z.object({
   type: z.enum(["usdot", "mc"]),
   value: z.string().trim().min(1).max(40),
+  operating_company_id: z.string().uuid().optional(),
 });
 
 const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(20),
   offset: z.coerce.number().int().min(0).default(0),
+  operating_company_id: z.string().uuid().optional(),
 });
 
 const linkParamsSchema = z.object({ id: z.string().uuid() });
-const linkBodySchema = z.object({ lookup_id: z.string().uuid() });
+const linkBodySchema = z.object({
+  lookup_id: z.string().uuid(),
+  operating_company_id: z.string().uuid().optional(),
+});
 
 type AuthUser = { uuid: string; role: string };
 
@@ -74,7 +79,12 @@ export async function registerFmcsaRoutes(app: FastifyInstance) {
     if (!lookupValue) return reply.code(400).send({ error: "lookup_value_invalid" });
 
     const result = await withCurrentUser(authUser.uuid, async (client) => {
-      const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+      // LST-F05: use shared resolver (default company first) — never UNION…ORDER BY id LIMIT 1.
+      const operatingCompanyId = await resolveOperatingCompanyId(
+        client,
+        authUser.uuid,
+        parsedBody.data.operating_company_id ?? null
+      );
       if (!operatingCompanyId) throw new Error("operating_company_not_found");
 
       const cached = await client.query(
@@ -283,7 +293,11 @@ export async function registerFmcsaRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     const lookups = await withCurrentUser(authUser.uuid, async (client) => {
-      const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+      const operatingCompanyId = await resolveOperatingCompanyId(
+        client,
+        authUser.uuid,
+        parsedQuery.data.operating_company_id ?? null
+      );
       if (!operatingCompanyId) return [];
 
       const res = await client.query(

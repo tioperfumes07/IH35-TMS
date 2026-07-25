@@ -58,6 +58,8 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
       { name: "CDL Restrictions", description: "Restriction code reference set", live: true, catalogKey: "restrictions" },
       { name: "Medical Card Status", description: "DOT medical card status codes", live: true, catalogKey: "medical-card-status" },
       { name: "Employment Status", description: "Driver employment classification codes", live: true, catalogKey: "employment-status" },
+      // LST-A-01 — catalog was mounted at /catalogs/driver-load-statuses but absent from the hub map.
+      { name: "Driver Load Statuses", description: "In-trip / stop status taxonomy for driver updates", live: true, catalogKey: "driver-load-statuses" },
       { name: "Termination Reasons", description: "Offboarding reason taxonomy", live: true, catalogKey: "termination-reasons" },
     ],
   },
@@ -210,6 +212,7 @@ export function buildCatalogPath(domain: string, catalogKey: string): string {
       restrictions: "/lists/drivers/restrictions",
       "medical-card-status": "/lists/drivers/medical-card-status",
       "employment-status": "/lists/drivers/employment-status",
+      "driver-load-statuses": "/lists/drivers/driver-load-statuses",
       "termination-reasons": "/lists/drivers/termination-reasons",
     };
     const driversReferencePath = driversReferenceRouteMap[catalogKey];

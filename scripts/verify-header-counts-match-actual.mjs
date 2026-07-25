@@ -17,7 +17,7 @@ const EXPECTED_TABLE_COUNTS = {
   maintenance: 9,
   safety: 6, // +complaint_types, +dot_violation_types, +cargo_claim_reasons
   dispatch: 5, // +load_cancellation_reasons
-  drivers: 10, // +driver_termination_reasons
+  drivers: 11, // +driver_termination_reasons +driver_load_statuses (LST-A-01 hub)
   accounting: 16, // +journal_entry_types, +account_types, +detail_types, +void_cancel_reasons
 };
 
