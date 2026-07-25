@@ -52,6 +52,19 @@ function ensureRole(reply: FastifyReply, role: string, allowed: string[]) {
   return true;
 }
 
+// LST-F05 (2026-07-25): this file used to define its OWN resolveOperatingCompanyId here, shadowing the
+// canonical one, with the inline `SELECT default … UNION SELECT any accessible … ORDER BY id LIMIT 1`
+// fallback. The UNION put the user's DEFAULT company and every accessible company on equal footing and
+// then took the LOWEST UUID, losing the default — and USMCA (5c854333…) sorts below TRANSP (91e0bf0a…),
+// so a TRANSP user's FMCSA lookup was attributed to USMCA and cached under the wrong entity.
+//
+// load-cancellation-reasons and void-cancel-reasons were repointed at the canonical resolver earlier; this
+// third route was missed because the local copy has the SAME NAME, so a grep for resolveOperatingCompanyId
+// showed call sites and read as already-fixed. The canonical resolver does COALESCE(default, lowest) and
+// validates membership (403 on a foreign id rather than a silent empty list).
+//
+// The local definition is deleted; the import below is the canonical one.
+
 export async function registerFmcsaRoutes(app: FastifyInstance) {
   app.post("/api/v1/catalogs/fmcsa/lookup", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
