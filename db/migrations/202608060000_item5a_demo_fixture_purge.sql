@@ -102,6 +102,9 @@ DECLARE
   r record;
   v_offenders text;
   v_problems text := '';
+  v_src_pk_col text;
+  v_src_id_expr text;
+  v_self_excl text;
 BEGIN
   FOR r IN
     SELECT con.conname,
@@ -122,19 +125,61 @@ BEGIN
        AND (tgt_ns.nspname || '.' || tgt.relname) IN
            ('mdata.units', 'mdata.drivers', 'mdata.loads', 'maintenance.work_orders')
   LOOP
+    -- Resolve the SOURCE table's real identifying expression for offender reporting. Do NOT
+    -- assume a column literally named "id" — many FK-source tables in this schema key on
+    -- "uuid", on a composite PK, or (rarely) on no PK at all. Prefer the source table's actual
+    -- single-column PK; fall back to ctid (always present) when there isn't one. This is
+    -- diagnostic-only (offender identification), so ctid is a safe, always-valid fallback.
+    v_src_pk_col := NULL;
+    SELECT src_att2.attname
+      INTO v_src_pk_col
+      FROM pg_index idx
+      JOIN pg_attribute src_att2
+        ON src_att2.attrelid = idx.indrelid AND src_att2.attnum = idx.indkey[0]
+     WHERE idx.indrelid = (quote_ident(r.src_schema) || '.' || quote_ident(r.src_table))::regclass
+       AND idx.indisprimary
+       AND array_length(idx.indkey, 1) = 1;
+
+    IF v_src_pk_col IS NOT NULL THEN
+      v_src_id_expr := format('s.%I::text', v_src_pk_col);
+    ELSE
+      v_src_id_expr := 's.ctid::text';
+    END IF;
+
+    -- Self-exclusion: a referencing row that is ITSELF one of the demo rows about to be purged
+    -- is not an offender. This can only ever apply when the source table IS one of the four
+    -- purge targets (a unit referencing a driver, a load referencing a unit, etc.) — and those
+    -- four tables are verified (see file header) to always expose a single-column "id" PK. For
+    -- every other source table this branch is structurally unreachable, so we omit the clause
+    -- entirely rather than reference a literal "id" column that table may not have.
+    IF (r.src_schema || '.' || r.src_table) IN
+       ('mdata.units', 'mdata.drivers', 'mdata.loads', 'maintenance.work_orders') THEN
+      v_self_excl := format(
+        'AND NOT (%L = %L AND s.id IN (SELECT id FROM %I))',
+        r.src_schema || '.' || r.src_table,
+        r.src_schema || '.' || r.src_table,
+        CASE r.src_schema || '.' || r.src_table
+          WHEN 'mdata.units'             THEN '_demo_units'
+          WHEN 'mdata.drivers'           THEN '_demo_drivers'
+          WHEN 'mdata.loads'             THEN '_demo_loads'
+          ELSE '_demo_wos'
+        END
+      );
+    ELSE
+      v_self_excl := '';
+    END IF;
+
     -- The referencing row is an offender unless it is itself part of the demo set being removed.
     EXECUTE format($q$
-      SELECT string_agg(DISTINCT x.id::text, ', ')
+      SELECT string_agg(DISTINCT x.id, ', ')
         FROM (
-          SELECT s.id
+          SELECT %s AS id
             FROM %I.%I s
            WHERE s.%I IN (SELECT id FROM %s)
-             AND NOT (%L = 'mdata.units'             AND s.id IN (SELECT id FROM _demo_units))
-             AND NOT (%L = 'mdata.drivers'           AND s.id IN (SELECT id FROM _demo_drivers))
-             AND NOT (%L = 'mdata.loads'             AND s.id IN (SELECT id FROM _demo_loads))
-             AND NOT (%L = 'maintenance.work_orders' AND s.id IN (SELECT id FROM _demo_wos))
+             %s
            LIMIT 25
         ) x $q$,
+      v_src_id_expr,
       r.src_schema, r.src_table, r.src_column,
       CASE r.tgt_schema || '.' || r.tgt_table
         WHEN 'mdata.units'             THEN '_demo_units'
@@ -142,8 +187,7 @@ BEGIN
         WHEN 'mdata.loads'             THEN '_demo_loads'
         ELSE '_demo_wos'
       END,
-      r.src_schema || '.' || r.src_table, r.src_schema || '.' || r.src_table,
-      r.src_schema || '.' || r.src_table, r.src_schema || '.' || r.src_table
+      v_self_excl
     ) INTO v_offenders;
 
     IF v_offenders IS NOT NULL THEN
