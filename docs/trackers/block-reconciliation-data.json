@@ -1,6 +1,6 @@
 {
- "date": "2026-07-25",
- "generated_at_iso": "2026-07-25T03:10:13.897Z",
+ "date": "2026-07-24",
+ "generated_at_iso": "2026-07-25T03:18:14.562Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
@@ -13162,6 +13162,12 @@
  ],
  "merged_prs": [
   {
+   "number": 3447,
+   "title": "chore(deps): bump brace-expansion from 5.0.7 to 5.0.8 in /apps/driver-pwa in the npm_and_yarn group across 1 directory",
+   "mergedAt": "2026-07-25T03:17:06Z",
+   "branch": "dependabot/npm_and_yarn/apps/driver-pwa/npm_and_yarn-aa0c14d59f"
+  },
+  {
    "number": 3443,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-07-25T03:09:41Z",
@@ -16754,12 +16760,6 @@
    "title": "fix(dispatch): archive orphan DispatchList dead duplicate (0243-c1-4)",
    "mergedAt": "2026-07-17T17:51:44Z",
    "branch": "fix/dispatchlist-orphan-archive"
-  },
-  {
-   "number": 2633,
-   "title": "fix(platform): wire orphan-FK inventory guard into CI (0010-f1)",
-   "mergedAt": "2026-07-17T15:35:37Z",
-   "branch": "fix/orphan-fk-guard-ci-wired"
   }
  ],
  "merged_pr_total": 3000,
