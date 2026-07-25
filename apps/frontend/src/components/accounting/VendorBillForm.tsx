@@ -193,11 +193,7 @@ export function VendorBillForm({
     // getCoaAccounts) because its row shape carries is_postable — the A/P filter below needs it.
     // LST-F14: posting A/P picker — server-side is_postable=true (never header/non-postable).
     queryFn: () =>
-      listCatalogAccounts({
-        status: "active",
-        operating_company_id: operatingCompanyId,
-        postable_only: true,
-      }),
+      listCatalogAccounts({ status: "active", operating_company_id: operatingCompanyId, postable_only: true }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });
