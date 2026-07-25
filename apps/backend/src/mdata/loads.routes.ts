@@ -9,6 +9,7 @@ import { effectiveDeliverySelectSql } from "../dispatch/effective-delivery.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { companyBusinessDateCompact } from "../lib/company-business-date.js";
+import { writeLoadCancellationRecord } from "../dispatch/cancellation.service.js";
 
 const loadStatusSchema = z.enum([
   "draft",
@@ -844,13 +845,26 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         return { error: "cancellation_reason_required" as const };
       }
 
+      // OWNER DECISION 4 (2026-07-25): this route is the SECOND cancel path — the Dispatch Kanban's
+      // "Cancelled" drop column calls it. It used to validate the reason, flip mdata.loads.status, and record
+      // the reason only inside an audit-log JSON string: NO dispatch.load_cancellations row, no
+      // reason_code_id, nothing for the reverse surface or the cancellation reports to read. A
+      // status->cancelled with no record is a silent failure and an audit gap (Rule 21). The owner ruled it
+      // must WRITE A REAL CANCELLATION RECORD through the same canonical flow rather than be blocked.
+      //
+      // `dispatch.load_cancellations.cancellation_notes` is NOT NULL with no default on prod, so a cancel
+      // without notes cannot produce a record. Notes are therefore required here exactly as the canonical
+      // cancelLoad() requires them (>= 20 chars) — "no silent status flip, no reason-less cancel".
+      let resolvedReason: { id: string; reason_code: string; billable_to_customer_default: boolean } | null = null;
       if (newStatus === "cancelled" && cancellationReasonCode) {
         const reasonRes = await client.query<{
+          id: string;
           reason_code: string;
           requires_owner_approval: boolean;
+          billable_to_customer_default: boolean;
         }>(
           `
-            SELECT reason_code, requires_owner_approval
+            SELECT id, reason_code, requires_owner_approval, billable_to_customer_default
             FROM catalogs.load_cancellation_reasons
             WHERE reason_code = $1
               AND operating_company_id = $2
@@ -864,6 +878,14 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         if (reason.requires_owner_approval && !isOwnerRole(authUser.role)) {
           return { error: "owner_approval_required" as const };
         }
+        if (!cancellationNotes || cancellationNotes.trim().length < 20) {
+          return { error: "cancellation_notes_min_20" as const };
+        }
+        resolvedReason = {
+          id: reason.id,
+          reason_code: reason.reason_code,
+          billable_to_customer_default: reason.billable_to_customer_default,
+        };
       }
 
       const updateRes = await client.query(
@@ -899,6 +921,26 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       );
 
       if (row.status === "cancelled") {
+        // OWNER DECISION 4: write the canonical cancellation record through the SAME single writer the
+        // dispatch cancel route uses, so this path can never again flip a status without one.
+        let cancellationRecordId: string | null = null;
+        if (resolvedReason) {
+          const rec = await writeLoadCancellationRecord(client, {
+            operating_company_id: current.operating_company_id,
+            load_id: row.id,
+            reason_code: resolvedReason.reason_code,
+            reason_code_id: resolvedReason.id,
+            cancellation_notes: (cancellationNotes ?? "").trim(),
+            billable_to_customer: resolvedReason.billable_to_customer_default,
+            cancellation_charge_cents: null,
+            // Owner-approval-required reasons are refused above for non-Owners, so anything reaching here
+            // is approved.
+            status: "approved",
+            cancelled_by_user_id: authUser.uuid,
+          });
+          cancellationRecordId = rec.rows[0]?.id ?? null;
+        }
+
         await appendCrudAudit(
           client,
           authUser.uuid,
@@ -911,6 +953,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             from_status: current.status,
             to_status: row.status,
             reason_code: cancellationReasonCode ?? null,
+            // The canonical FK, not just a memo string — this is what makes the audit row traceable to the
+            // catalog entry and the cancellation record (Rule 14 both-way linkage).
+            reason_code_id: resolvedReason?.id ?? null,
+            load_cancellation_id: cancellationRecordId,
             notes: cancellationNotes ?? null,
           },
           "warning",
@@ -945,6 +991,12 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       }
       if (result.error === "cancellation_reason_invalid") {
         return reply.code(400).send({ error: "cancellation_reason_invalid" });
+      }
+      // OWNER DECISION 4: notes are required on this path too, because
+      // dispatch.load_cancellations.cancellation_notes is NOT NULL on prod — without them no cancellation
+      // record can be written, which is the silent-status-flip the decision forbids.
+      if (result.error === "cancellation_notes_min_20") {
+        return reply.code(400).send({ error: "cancellation_notes_min_20" });
       }
       if (result.error === "owner_approval_required") {
         return reply.code(403).send({ error: "owner_approval_required" });
