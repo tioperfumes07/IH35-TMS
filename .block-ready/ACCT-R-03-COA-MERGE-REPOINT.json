@@ -21,7 +21,9 @@
     "docs/module-completion/accounting.md",
     "docs/trackers/ACCT-R-03-COA-MERGE-2026-07-25.md",
     "docs/schema-parity-baseline.json",
-    "scripts/verify-phantom-relations.mjs"
+    "scripts/verify-phantom-relations.mjs",
+    "docs/trackers/ACCT-SURF-DOD-SWEEP-MATRIX-2026-07-25.json",
+    "docs/trackers/ACCT-SURF-DOD-SWEEP-MATRIX-2026-07-25.md"
   ],
   "runtime_path": "src",
   "db_required": true,
