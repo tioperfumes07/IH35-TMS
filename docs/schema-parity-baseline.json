@@ -458,7 +458,6 @@
       "load_id",
       "load_required",
       "opened_at",
-      "operating_company_id",
       "outcome",
       "parent_line_uuid",
       "part_location_codes",
@@ -475,7 +474,8 @@
       "service_item_uuid",
       "severity",
       "violation_type_id",
-      "violation_type_uuid"
+      "violation_type_uuid",
+      "operating_company_id"
     ],
     "accounting.expenses": [
       "created_at",
@@ -2133,6 +2133,7 @@
       "id",
       "is_active",
       "label",
+      "operating_company_id",
       "severity",
       "updated_at",
       "updated_by_user_id"
@@ -2242,9 +2243,6 @@
       "rows_total",
       "started_at",
       "status"
-    ],
-    "catalogs.expense_categories": [
-      "operating_company_id"
     ],
     "catalogs.file_categories": [
       "applies_to",
@@ -10175,6 +10173,9 @@
       "template_name",
       "to_phone",
       "variables"
+    ],
+    "catalogs.expense_categories": [
+      "operating_company_id"
     ]
   }
 }
