@@ -1562,8 +1562,8 @@
         "DOD-A"
       ],
       "spec": "safety.md section J boundary 26 (findings F27)",
-      "status": "OPEN",
-      "evidence": "No PR opened. Boundary from ~/Desktop/IH35-CURSOR-AUDIT/modules/safety.md section J.",
+      "status": "PASS",
+      "evidence": "PREMISE REFUTED then acceptance met by evidence, 2026-07-25. The finding claimed 7 double-registered Safety routes. There are ZERO: apps/frontend/src/routes/manifest.tsx on origin/main has 28 absolute path=\"/safety...\" registrations and 28 unique — verified three times independently (my scan, a separate reviewing agent, and a re-scan on current main). The acceptance criterion \"exactly one registration each\" therefore already holds. What the sweep DID find is a real duplicate-registration defect elsewhere: /compliance and /notifications were each registered twice as byte-identical <Route> blocks ~2700 lines apart, so the second copy of each was unreachable — removed in PR #3522, unique route surface unchanged at 546. The guard half of this item is satisfied by scripts/verify-steps/1484-verify-no-duplicate-route-registrations.mjs (#3522), which asserts uniqueness of ABSOLUTE route paths and is proven to FAIL on the pre-fix manifest naming both paths. It deliberately does NOT flag the three relative children that legitimately repeat under different parents (settings, hos, loads/:id — office portal vs driver app, different URLs and components); scoping it to leading-slash paths is what lets the assertion be true without an allowlist.",
       "pr": null,
       "owner_hold": false,
       "tracker": null,

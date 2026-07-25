@@ -1,12 +1,12 @@
 # Module completion — Safety (Module 3)
 
-**PROGRESS: 6 of 37** · complete: `false` · as_of: 2026-07-25T15:30:00.000Z · live_sha: `7875de6`
+**PROGRESS: 7 of 37** · complete: `false` · as_of: 2026-07-25T15:30:00.000Z · live_sha: `7875de6`
 
 | Status | Count |
 |---|---:|
-| PASS | 6 |
+| PASS | 7 |
 | HOLD | 0 |
-| OPEN | 5 |
+| OPEN | 4 |
 | FAIL | 3 |
 | UNVERIFIED | 23 |
 
@@ -37,7 +37,7 @@
 | `SAF-B23` | **UNVERIFIED** | Internal-fine inline + Add new reason | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3360 |
 | `SAF-B24` | **UNVERIFIED** | ParityDrawer migration (3 surfaces) | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3381 |
 | `SAF-B25` | **UNVERIFIED** | Accidents list name resolution + pickers | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3356 |
-| `SAF-B26` | **OPEN** | De-duplicate 7 double-registered routes + guard | No PR opened. Boundary from ~/Desktop/IH35-CURSOR-AUDIT/modules/safety.md section J. | — |
+| `SAF-B26` | **PASS** | De-duplicate 7 double-registered routes + guard | PREMISE REFUTED then acceptance met by evidence, 2026-07-25. The finding claimed 7 double-registered Safety routes. There are ZERO: apps/frontend/src/routes/manifest.tsx on origin/main has 28 absolute path="/safety..." registrations and 28 unique — verified three times independently (my scan, a separate reviewing agent, and a re-scan on current main). The acceptance criterion "exactly one registration each" therefore already holds. What the sweep DID find is a real duplicate-registration defect elsewhere: /compliance and /notifications were each registered twice as byte-identical <Route> blocks ~2700 lines apart, so the second copy of each was unreachable — removed in PR #3522, unique route surface unchanged at 546. The guard half of this item is satisfied by scripts/verify-steps/1484-verify-no-duplicate-route-registrations.mjs (#3522), which asserts uniqueness of ABSOLUTE route paths and is proven to FAIL on the pre-fix manifest naming both paths. It deliberately does NOT flag the three relative children that legitimately repeat under different parents (settings, hos, loads/:id — office portal vs driver app, different URLs and components); scoping it to leading-slash paths is what lets the assertion be true without an allowlist. | — |
 | `SAF-B27` | **PASS** | Docs drift: docs/CLAUDE.md section 7 -> 28/9 | REPO-VERIFIED 2026-07-25: docs/CLAUDE.md section 7 now states 28 tabs / 9 groups and points at SAFETY_TABS_CONFIG.ts as source of truth, matching the config array (28 SAFETY_GROUPS entries confirmed by full enumeration) and both count guards. The stale 21/8 claim is gone. | 3384 |
 | `SAF-B28` | **UNVERIFIED** | company_violations JSONB -> real FKs (migration) | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3380 |
 | `SAF-B29` | **UNVERIFIED** | Server-side type-ahead for 200-cap pickers | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3379 |
