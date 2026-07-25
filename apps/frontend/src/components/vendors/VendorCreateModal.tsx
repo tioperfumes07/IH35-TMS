@@ -125,7 +125,13 @@ export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) 
   // Option-B (vendor-customer-categorization-option-b): recommendation only, pre-fills bill lines.
   const expenseAccountsQuery = useQuery({
     queryKey: ["catalog-accounts", "expense-for-vendor-default", operatingCompanyId],
-    queryFn: () => listCatalogAccounts({ status: "active", operating_company_id: operatingCompanyId }),
+    // LST-F14: default expense account is a posting target — postable_only.
+    queryFn: () =>
+      listCatalogAccounts({
+        status: "active",
+        operating_company_id: operatingCompanyId,
+        postable_only: true,
+      }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 5 * 60 * 1000,
   });
