@@ -798,7 +798,6 @@
       "error",
       "id",
       "idempotency_key",
-      "journal_entry_type_id",
       "kind",
       "last_qbo_synced_at",
       "memo",
@@ -826,7 +825,8 @@
       "version_int",
       "void_reason",
       "voided_at",
-      "voided_by_user_id"
+      "voided_by_user_id",
+      "journal_entry_type_id"
     ],
     "accounting.journal_entry_postings": [
       "account_id",
@@ -1033,8 +1033,10 @@
       "idempotency_key",
       "operating_company_id",
       "posting_batch_id",
+      "posting_template_id",
       "reversal_of_line_id",
       "reversed_by_line_id",
+      "source_template_code",
       "source_transaction_id",
       "source_transaction_line_id",
       "source_transaction_type",

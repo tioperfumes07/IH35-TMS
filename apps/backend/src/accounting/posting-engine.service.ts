@@ -182,6 +182,20 @@ function normalizeSourceType(value: string): PostingSourceType {
   return normalized;
 }
 
+// ACCT-LINK-05: catalogs.posting_templates is a code-mirrored catalog (MUST 3.18.5.4) keyed by
+// template_code. Every posting_batches row stamps source_template_code (the PostingSourceType code
+// constant it was built from) unconditionally, and best-effort resolves posting_template_id when a
+// matching active template row exists. Until the owner seeds catalogs.posting_templates this always
+// returns null (table is empty on prod as of 2026-07-24) — that is expected, not an error; new batches
+// self-resolve automatically the instant templates are seeded, no code change needed then.
+export async function resolvePostingTemplateId(client: DbClient, templateCode: string): Promise<string | null> {
+  const res = await client.query<{ id: string }>(
+    `SELECT id::text FROM catalogs.posting_templates WHERE template_code = $1 AND is_active = true LIMIT 1`,
+    [templateCode]
+  );
+  return res.rows[0]?.id ?? null;
+}
+
 function normalizeSourceId(raw: string): string {
   const trimmed = raw.trim();
   if (!trimmed) throw new PostingEngineError("SOURCE_NOT_FOUND", "source_transaction_id must not be empty");
@@ -1687,6 +1701,7 @@ async function markBatchFailed(
 ) {
   await withCurrentUser(actor.userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    const postingTemplateId = await resolvePostingTemplateId(client, sourceType);
     await client.query(
       `
         INSERT INTO accounting.posting_batches (
@@ -1696,14 +1711,16 @@ async function markBatchFailed(
           source_transaction_id,
           idempotency_key,
           created_by_user_id,
+          posting_template_id,
+          source_template_code,
           created_at,
           updated_at
         )
-        VALUES ($1::uuid, 'failed', $2, $3, $4, $5::uuid, now(), now())
+        VALUES ($1::uuid, 'failed', $2, $3, $4, $5::uuid, $6::uuid, $7, now(), now())
         ON CONFLICT (operating_company_id, idempotency_key) WHERE idempotency_key IS NOT NULL
         DO UPDATE SET batch_status = 'failed', updated_at = now()
       `,
-      [operatingCompanyId, sourceType, sourceId, idempotencyKey, actor.userId]
+      [operatingCompanyId, sourceType, sourceId, idempotencyKey, actor.userId, postingTemplateId, sourceType]
     );
   });
 }
@@ -1761,6 +1778,7 @@ async function executePostingOnClient(client: DbClient, ctx: PostingExecCtx): Pr
   await ensureOpenPeriod(client, input.operating_company_id, draft.postingDate);
   assertBalanced(draft.lines);
 
+  const postingTemplateId = await resolvePostingTemplateId(client, sourceType);
   const batch = await client.query<{ id: string }>(
     `
       INSERT INTO accounting.posting_batches (
@@ -1770,13 +1788,15 @@ async function executePostingOnClient(client: DbClient, ctx: PostingExecCtx): Pr
         source_transaction_id,
         idempotency_key,
         created_by_user_id,
+        posting_template_id,
+        source_template_code,
         created_at,
         updated_at
       )
-      VALUES ($1::uuid, 'queued', $2, $3, $4, $5::uuid, now(), now())
+      VALUES ($1::uuid, 'queued', $2, $3, $4, $5::uuid, $6::uuid, $7, now(), now())
       RETURNING id::text
     `,
-    [input.operating_company_id, sourceType, sourceId, idempotencyKey, actor.userId]
+    [input.operating_company_id, sourceType, sourceId, idempotencyKey, actor.userId, postingTemplateId, sourceType]
   );
   const postingBatchId = batch.rows[0]?.id;
   if (!postingBatchId) throw new Error("posting_batch_create_failed");
@@ -1948,6 +1968,7 @@ async function executeSourceReversalOnClient(
     posting_purpose: "reversal",
   });
 
+  const reversalPostingTemplateId = await resolvePostingTemplateId(client, sourceType);
   const reversalBatch = await client.query<{ id: string }>(
     `
       INSERT INTO accounting.posting_batches (
@@ -1957,13 +1978,15 @@ async function executeSourceReversalOnClient(
         source_transaction_id,
         idempotency_key,
         created_by_user_id,
+        posting_template_id,
+        source_template_code,
         created_at,
         updated_at
       )
-      VALUES ($1::uuid, 'in_progress', $2, $3, $4, $5::uuid, now(), now())
+      VALUES ($1::uuid, 'in_progress', $2, $3, $4, $5::uuid, $6::uuid, $7, now(), now())
       RETURNING id::text
     `,
-    [input.operating_company_id, sourceType, sourceId, idempotencyKey, actor.userId]
+    [input.operating_company_id, sourceType, sourceId, idempotencyKey, actor.userId, reversalPostingTemplateId, sourceType]
   );
   const reversalBatchId = reversalBatch.rows[0]?.id;
   if (!reversalBatchId) throw new Error("reversal_batch_create_failed");

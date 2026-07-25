@@ -24,7 +24,7 @@
 | `ACCT-LINK-02` | **FAIL** | detail_types canonical FK from catalogs.accounts (not text subtype only) | 144 rows 0 inbound FKs; accounts.account_subtype text | — |
 | `ACCT-LINK-03` | **FAIL** | Bill unit_id / insurance_claim_id / linked_work_order_uuid density > 0 where applicable | vendor_id=16212; unit/claim/wo = 0 | #3425 |
 | `ACCT-LINK-04` | **FAIL** | expense_categories inbound FK from expense lines | 0 inbound FKs | — |
-| `ACCT-LINK-05` | **FAIL** | posting_templates inbound FK from consumers (WF-053) | 0 inbound FKs | — |
+| `ACCT-LINK-05` | **FAIL** | posting_templates inbound FK from consumers (WF-053) | 0 inbound FKs on prod (unchanged) — root cause fixed in #3444 [HOLD]: posting_batches.posting_template_id FK + source_template_code stamp wired into every posting_batches writer (posting-engine.service.ts x3, fuel-posting/poster.service.ts x1); catalogs.posting_templates re-verified 0 rows WITH lucia bypass (owner/CPA-seeded, Rule 13). Stays FAIL until owner Neon-applies the held migration + seeds templates (density gap named in PR, not silently deferred). | #3444 |
 | `ACCT-SURF-01` | **UNVERIFIED** | Bills family — DoD A–E + VERIFY 1–8 on live surfaces | Lines dense; bill_payments=6479 live; wizard depth not re-audited field-by-field 2026-07-25 | — |
 | `ACCT-SURF-02` | **FAIL** | Expenses — DoD A–E + VERIFY 1–8 with live rows | expenses=0 — cannot prove reverse/economics live until #3433 deploy + projection ON | #3433 |
 | `ACCT-SURF-03` | **UNVERIFIED** | Bill payment — DoD A–E + VERIFY 1–8 with live rows | bill_payments=6479 density PASS; DoD A–E + VERIFY 1–8 surface click-through not re-run 2026-07-25 | — |
