@@ -6,15 +6,25 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const COUNT_SPEC = path.join(ROOT, "apps/backend/src/lists/lists-module-count-spec.ts");
 
+// Ratchet: these must be bumped IN THE SAME PR that adds a catalog to the count spec, so a table
+// can never be added or dropped silently. Updated 2026-07-25 by the count-spec completion —
+// nine live catalogs were on the Lists hub but absent from the spec, so the badges understated
+// TRANSP by 548 active rows (SAFETY 30 vs 372, DISPATCH 6 vs 18, DRIVERS 48 vs 64, ACCOUNTING 531
+// vs 709, all browser-verified against Neon).
 const EXPECTED_TABLE_COUNTS = {
   fleet: 10,
   fuel: 12,
   maintenance: 9,
-  accounting: 12,
+  safety: 6, // +complaint_types, +dot_violation_types, +cargo_claim_reasons
+  dispatch: 5, // +load_cancellation_reasons
+  drivers: 10, // +driver_termination_reasons
+  accounting: 16, // +journal_entry_types, +account_types, +detail_types, +void_cancel_reasons
 };
 
-const ACCOUNTING_JOURNAL_ENTRY_TYPES_COUNT = 3;
-const EXPECTED_ACCOUNTING_HEADER = EXPECTED_TABLE_COUNTS.accounting + ACCOUNTING_JOURNAL_ENTRY_TYPES_COUNT;
+// The accounting header total no longer has a literal bolted on: ACCOUNTING_JOURNAL_ENTRY_TYPES_COUNT
+// was a hardcoded `3` ADDED to the live count while catalogs.journal_entry_types held 16 rows. It is
+// now a normal count-spec row, so the header total is simply the table count.
+const EXPECTED_ACCOUNTING_HEADER = EXPECTED_TABLE_COUNTS.accounting;
 
 const HOOK_CONSUMERS = [
   "apps/frontend/src/components/layout/SubNavCounts.tsx",
@@ -51,15 +61,16 @@ for (const [domain, expected] of Object.entries(EXPECTED_TABLE_COUNTS)) {
   }
 }
 
-const journalConstant = specSource.match(/ACCOUNTING_JOURNAL_ENTRY_TYPES_COUNT\s*=\s*(\d+)/);
-const journalCount = Number(journalConstant?.[1] ?? 0);
-if (journalCount !== ACCOUNTING_JOURNAL_ENTRY_TYPES_COUNT) {
-  fail(`ACCOUNTING_JOURNAL_ENTRY_TYPES_COUNT expected ${ACCOUNTING_JOURNAL_ENTRY_TYPES_COUNT}, found ${journalCount}`);
+// The literal must STAY dead. If an exported *_COUNT constant is ever re-added to the count spec and
+// summed into a module total, that is the defect this file now guards against — not a value to check.
+if (/export\s+const\s+ACCOUNTING_JOURNAL_ENTRY_TYPES_COUNT\s*=\s*\d+/.test(specSource)) {
+  fail(
+    "ACCOUNTING_JOURNAL_ENTRY_TYPES_COUNT was re-introduced as a hardcoded literal. journal_entry_types " +
+      "is a real table (16 rows on prod) and must be counted as a normal count-spec row."
+  );
 }
-
-const accountingHeader = EXPECTED_TABLE_COUNTS.accounting + journalCount;
-if (accountingHeader !== EXPECTED_ACCOUNTING_HEADER) {
-  fail(`accounting header total expected ${EXPECTED_ACCOUNTING_HEADER}, computed ${accountingHeader}`);
+if (/\b(count|total)\s*\+=\s*\d+/.test(specSource)) {
+  fail("a numeric literal is being added to a live module count in lists-module-count-spec.ts");
 }
 
 for (const rel of HOOK_CONSUMERS) {

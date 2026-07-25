@@ -50,6 +50,6 @@ describe("countModuleRecords — missing-table resilience (#P3)", () => {
   it("still adds the accounting journal-entry constant when tables are missing", async () => {
     const client = mockClient(new Set(), 0);
     const count = await countModuleRecords(client as unknown as CountClient, "accounting", "00000000-0000-0000-0000-000000000000");
-    expect(count).toBe(3); // 0 live rows + ACCOUNTING_JOURNAL_ENTRY_TYPES_COUNT
+    expect(count).toBe(0); // 0 live rows; the hardcoded +3 literal was removed 2026-07-25 (journal_entry_types is a real count-spec row now)
   });
 });

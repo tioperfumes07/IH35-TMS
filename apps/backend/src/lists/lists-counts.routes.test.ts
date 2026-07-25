@@ -56,8 +56,10 @@ describe("lists-counts routes", () => {
       });
 
       expect(response.statusCode).toBe(200);
-      const expectedBase = module === "accounting" ? 15 : 12;
-      expect(response.json()).toEqual({ count: expectedBase });
+      // Every module count is now a single query result with no per-module literal added on top —
+      // accounting's ACCOUNTING_JOURNAL_ENTRY_TYPES_COUNT=3 stub (12 + 3 = 15) was removed in
+      // #3441; journal_entry_types is counted like any other real table via the mocked query.
+      expect(response.json()).toEqual({ count: 12 });
     });
   }
 
