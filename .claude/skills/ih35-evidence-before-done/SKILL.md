@@ -58,7 +58,7 @@ Use `docs/templates/ACCEPTANCE-EVIDENCE-BLOCK.md`. Minimum fields:
 
 - **Builder** implements bounded fix
 - **Independent reviewer** (`ih35-code-review`) — not the builder
-- **Financial agent** (`ih35-cpa-accounting-decisions`) — VETO on money/schema
+- **Financial agent** (`ih35-accounting-decisions`) — VETO on money/schema
 - **GUARD** proves live acceptance[]
 
 ## 7. Connectors to use (in order)

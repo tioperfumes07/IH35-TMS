@@ -123,7 +123,7 @@ Totals: 49 findings — 31 STILL-OPEN / 15 ALREADY-FIXED / 3 UNVERIFIABLE. GATED
 - STATE: STILL-OPEN — `db/migrations/0313_border_crossing_wizard.sql:24-25` adds `commodity TEXT`/`commodity_value_cents BIGINT` (free text, no FK). No commodity→GL-account mapping table or code exists anywhere in accounting/catalogs/mdata.
 - ROOT CAUSE: Commodity is stored as free text for border paperwork only; no lookup ties a commodity type to a revenue/COGS account.
 - FILES: db/migrations/0313_border_crossing_wizard.sql; apps/backend/src/mdata/loads.routes.ts; new migration for a commodity-GL map table
-- FIX STEPS: 1) Get Jorge/CPA sign-off on whether commodity-level GL mapping is even wanted (may be redundant with existing customer/lane-level mapping — check `ih35-cpa-accounting-decisions` first). 2) If approved: gated migration for `catalogs.commodity_gl_map(commodity_code, revenue_account_id, is_active)` with FORCE RLS + grants. 3) Add a normalization step so free-text `commodity` maps to a controlled `commodity_code`. 4) Wire the mapping into the GL posting service that determines revenue account.
+- FIX STEPS: 1) Get Jorge/CPA sign-off on whether commodity-level GL mapping is even wanted (may be redundant with existing customer/lane-level mapping — check `ih35-accounting-decisions` first). 2) If approved: gated migration for `catalogs.commodity_gl_map(commodity_code, revenue_account_id, is_active)` with FORCE RLS + grants. 3) Add a normalization step so free-text `commodity` maps to a controlled `commodity_code`. 4) Wire the mapping into the GL posting service that determines revenue account.
 - GUARD: N/A yet (nothing built) — once built: verify-commodity-gl-map-fk-integrity.mjs.
 
 ---
@@ -1948,7 +1948,7 @@ behind; verification used `git show origin/main:<path>` / `git grep <pat> origin
 - ROOT CAUSE: `docs/accounting/FACTORING-ASC860-DETERMINATION.md` does not exist; no ASC-860 memo anywhere in the repo (only `.block-ready` stub JSON files reference the id).
 - FILES: (new) `docs/accounting/FACTORING-ASC860-DETERMINATION.md`.
 - FIX STEPS:
-  1. Draft the memo stating the sale-vs-secured-borrowing determination for Faro factoring (already locked as secured-borrowing per `ih35-cpa-accounting-decisions` skill / CPA rulings) with the ASC 860-10 criteria walkthrough (control, recourse, servicing).
+  1. Draft the memo stating the sale-vs-secured-borrowing determination for Faro factoring (already locked as secured-borrowing per `ih35-accounting-decisions` skill / CPA rulings) with the ASC 860-10 criteria walkthrough (control, recourse, servicing).
   2. Route to Jorge/CPA for sign-off before treating it as final (this is a legal/audit-evidence document, not code).
 - GUARD: n/a (documentation). Recommend adding a repo-root doc-presence check if audit-evidence docs are tracked elsewhere.
 

@@ -26,10 +26,10 @@ const LABEL = "verify-revenue-recognition-two-event-latch-decisions";
 
 const CANONICAL_DOCS = [
   "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
-  ".claude/skills/ih35-cpa-accounting-decisions/SKILL.md",
+  ".claude/skills/ih35-accounting-decisions/SKILL.md",
 ];
 
-const SANITIZED_DOCS = new Set([".claude/skills/ih35-cpa-accounting-decisions/SKILL.md"]);
+const SANITIZED_DOCS = new Set([".claude/skills/ih35-accounting-decisions/SKILL.md"]);
 
 /** Anchors that must appear in BOTH surfaces (additions.md + skill pointer). */
 const REQUIRED_ANCHORS_BOTH = [

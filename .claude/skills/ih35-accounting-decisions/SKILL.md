@@ -1,5 +1,5 @@
 ---
-name: ih35-cpa-accounting-decisions
+name: ih35-accounting-decisions
 description: >-
   The CPA/owner-LOCKED accounting decisions for IH35-TMS — the parallel double-books architecture, the
   opening-balance basis and cutover, factoring-as-secured-borrowing, driver escrow = liability, cash-basis
