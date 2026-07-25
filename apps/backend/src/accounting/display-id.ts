@@ -88,6 +88,32 @@ export async function nextCreditMemoDisplayId(client: Queryable, operatingCompan
   return `${prefix}${String(nextNumber).padStart(4, "0")}`;
 }
 
+export async function nextVendorCreditDisplayId(client: Queryable, operatingCompanyId: string, referenceDate: Date = new Date()) {
+  const year = toYear(referenceDate);
+  const prefix = `VC-${year}-`;
+  await withDisplayLock(client, `accounting.vendor_credit.display_id:${operatingCompanyId}:${year}`);
+  const res = await client.query<{ next_number: number }>(
+    `
+      SELECT COALESCE(
+        MAX(
+          CASE
+            WHEN display_id LIKE $2 || '%' THEN right(display_id, 4)::int
+            ELSE 0
+          END
+        ),
+        0
+      ) + 1 AS next_number
+      FROM accounting.vendor_credits
+      WHERE operating_company_id = $1
+        AND issue_date >= make_date($3, 1, 1)
+        AND issue_date < make_date($3 + 1, 1, 1)
+    `,
+    [operatingCompanyId, prefix, year]
+  );
+  const nextNumber = Number(res.rows[0]?.next_number ?? 1);
+  return `${prefix}${String(nextNumber).padStart(4, "0")}`;
+}
+
 export async function nextFactoringDisplayId(client: Queryable, operatingCompanyId: string, referenceDate: Date = new Date()) {
   const year = toYear(referenceDate);
   const prefix = `FAC-${year}-`;

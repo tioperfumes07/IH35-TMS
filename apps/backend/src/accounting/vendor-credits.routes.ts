@@ -3,6 +3,8 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import { nextVendorCreditDisplayId } from "./display-id.js";
+import { resolveVendorIdentitySet } from "./vendor-identity.js";
 
 // CUSTVEND-PAR-1: Vendor credit CRUD + apply-to-bill + void.
 // NO GL posting — marks QBO-parity data only. GL rides the existing bill-GL chain when flags turn ON.
@@ -11,9 +13,14 @@ import { companyBusinessDate } from "../lib/company-business-date.js";
 const idParamSchema = z.object({ id: z.string().uuid() });
 
 const createBodySchema = z.object({
-  vendor_id: z.string().trim().min(1),
+  // mdata.vendors.id — a uuid. Free-form text here reached `WHERE id = $1` and made Postgres raise
+  // 22P02 (a 500) instead of answering "unknown vendor".
+  vendor_id: z.string().trim().uuid(),
   issue_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   amount_cents: z.coerce.number().int().positive(),
+  // accounting.vendor_credits has NO coa_account_id column (verified on the Neon prod branch), so a
+  // value here was accepted and dropped. Refused loudly instead — a designated GL account that
+  // silently disappears is the "empty binding / silent skip" defect class.
   coa_account_id: z.string().uuid().optional().nullable(),
   notes: z.string().trim().max(2000).optional().nullable(),
 });
@@ -42,12 +49,6 @@ const listQuerySchema = companyQuerySchema.extend({
 
 function canWriteVendorCredits(role: string) {
   return ["Owner", "Administrator", "Manager", "Accountant"].includes(role);
-}
-
-function nextVendorCreditDisplayId(nowDate: string, seq: number): string {
-  const year = nowDate.slice(0, 4);
-  const pad = String(seq).padStart(4, "0");
-  return `VC-${year}-${pad}`;
 }
 
 export async function registerVendorCreditsRoutes(app: FastifyInstance) {
@@ -164,6 +165,13 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
     const body = createBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
 
+    if (body.data.coa_account_id != null) {
+      return reply.code(422).send({
+        error: "coa_account_id_not_persisted",
+        detail: "accounting.vendor_credits has no GL account column; the credit rides the bill GL chain",
+      });
+    }
+
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const vendorRes = await client.query(
         `SELECT id FROM mdata.vendors WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
@@ -173,13 +181,14 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
 
       const issueDate = body.data.issue_date ?? companyBusinessDate();
 
-      const seqRes = await client.query(
-        `SELECT COUNT(*)::int + 1 AS seq
-         FROM accounting.vendor_credits
-         WHERE operating_company_id = $1 AND display_id LIKE $2`,
-        [query.data.operating_company_id, `VC-${issueDate.slice(0, 4)}-%`]
+      // Canonical generator (same advisory-lock + MAX pattern as invoices/payments/credit memos).
+      // The private COUNT(*)+1 this replaced took no lock, so two concurrent creates produced the
+      // same VC number and one of them died on vendor_credits_operating_company_id_display_id_key.
+      const displayId = await nextVendorCreditDisplayId(
+        client,
+        query.data.operating_company_id,
+        new Date(`${issueDate}T00:00:00Z`)
       );
-      const displayId = nextVendorCreditDisplayId(issueDate, Number(seqRes.rows[0]?.seq ?? 1));
 
       const insRes = await client.query(
         `INSERT INTO accounting.vendor_credits
@@ -230,13 +239,21 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const creditRes = await client.query(
-        `SELECT id, status, amount_unapplied_cents FROM accounting.vendor_credits
+        `SELECT id, status, vendor_id, amount_unapplied_cents FROM accounting.vendor_credits
          WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
         [params.data.id, query.data.operating_company_id]
       );
       const credit = creditRes.rows[0];
       if (!credit) return { code: 404 as const, error: "vendor_credit_not_found" };
       if (credit.status === "voided") return { code: 409 as const, error: "vendor_credit_voided" };
+
+      // A credit belongs to ONE vendor. The bill lookup below is keyed only by id + company, so
+      // vendor A's credit could settle vendor B's bill — an A/P misstatement on both vendors.
+      // Identity set, not equality: the credit carries an mdata.vendors uuid while QBO-sourced
+      // bills carry the QBO vendor id.
+      const creditVendorIdentities = new Set(
+        await resolveVendorIdentitySet(client, query.data.operating_company_id, String(credit.vendor_id))
+      );
 
       const totalApplying = body.data.applications.reduce((s, a) => s + a.applied_cents, 0);
       const unapplied = Number(credit.amount_unapplied_cents);
@@ -252,12 +269,26 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
       const applicationIds: string[] = [];
       for (const app of body.data.applications) {
         const billRes = await client.query(
-          `SELECT id, amount_cents, paid_cents FROM accounting.bills
-           WHERE id = $1 AND operating_company_id = $2 AND revoked_at IS NULL LIMIT 1`,
+          `SELECT id, amount_cents, paid_cents,
+                  COALESCE(NULLIF(vendor_id, ''), NULLIF(vendor_uuid, '')) AS vendor_id
+             FROM accounting.bills
+            WHERE id = $1 AND operating_company_id = $2 AND revoked_at IS NULL LIMIT 1`,
           [app.bill_id, query.data.operating_company_id]
         );
         const bill = billRes.rows[0];
         if (!bill) return { code: 404 as const, error: `bill_not_found:${app.bill_id}` };
+
+        if (!bill.vendor_id || !creditVendorIdentities.has(String(bill.vendor_id))) {
+          return {
+            code: 422 as const,
+            error: "bill_vendor_mismatch",
+            detail: {
+              bill_id: app.bill_id,
+              bill_vendor_id: bill.vendor_id ?? null,
+              credit_vendor_id: String(credit.vendor_id),
+            },
+          };
+        }
 
         // CAP THE APPLICATION AT THE BILL'S REMAINING BALANCE.
         // amount_cents and paid_cents were already SELECTed above and then never used, so the only
@@ -333,7 +364,12 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
       return { code: 200 as const, data: { applicationIds } };
     });
 
-    if ("error" in result) return reply.code(result.code).send({ error: result.error });
+    if ("error" in result) {
+      // Refusals carry the numbers the operator needs (remaining credit, bill balance, the two
+      // vendor ids). Sending only `error` made a legitimate refusal look like an opaque failure.
+      const { code, ...payload } = result;
+      return reply.code(code).send(payload);
+    }
     return reply.code(result.code).send(result.data);
   });
 
