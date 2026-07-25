@@ -2,7 +2,7 @@
   "module": "accounting",
   "title": "Accounting (Module 3)",
   "complete": false,
-  "as_of": "2026-07-25T16:29:00.000Z",
+  "as_of": "2026-07-25T17:30:00.000Z",
   "live_sha": "a3f9c12",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md",
   "spec_sources": [
@@ -172,6 +172,20 @@
       "status": "FAIL",
       "evidence": "LIVE REFRESH 2026-07-25: still 0 inbound FKs; posting_batches has NO posting_template_id column on prod; catalogs.posting_templates still 0 rows (lucia-verified true empty, not RLS-masked). PR #3444 [HOLD] adds posting_batches -> posting_templates consumer stamp \u2014 NOT yet Neon-applied. Remains FAIL until owner Neon-apply.",
       "pr": "#3444"
+    },
+    {
+      "id": "ACCT-LINK-06",
+      "title": "bank feed matched_journal_entry_id density + categorize→GL poster wired (ACCT-F05)",
+      "layers": [
+        "DOD-C",
+        "DOD-D",
+        "VERIFY-4",
+        "VERIFY-6"
+      ],
+      "spec": "ACCT-F05 · companion BANK-ECON-02",
+      "status": "FAIL",
+      "evidence": "LIVE REFRESH 2026-07-25: matched_je=3/10622 (lucia); categorized_at_not_null=3. Wiring PASS on main: #3424 bulk+single categorize→maybePostBankCategorizationToGl→postSourceTransaction(bank_categorization)+matched_journal_entry_id lockstep stamp; BANK_FEED_GL_POSTING_ENABLED default OFF. Density is ops backlog — poster works when used; not a broken poster. GUARD: verify-bankfeed-je-match (step 1486). Remains FAIL until operator categorization volume moves matched_JE density.",
+      "pr": "#3424"
     },
     {
       "id": "ACCT-SURF-01",
