@@ -1,6 +1,6 @@
 {
-  "_note": "PINNED snapshot of the PROD migration ledger (_system._schema_migrations) checksums for the modern window (filename >= 202606010000 — every held + recent migration; older ones are stable auto-applied). SOURCE OF TRUTH for verify-prod-ledger-checksum-parity: every committed migration whose filename is in this map MUST hash (sha256) to its pinned value, OR have a matching entry in scripts/lib/migration-checksum-overrides.json (ledger_checksum == pinned, disk_checksum == committed). This closes the gap the 2026-07-24 deploy outage exposed: the from-0001 'reject edited applied migrations' guard did NOT compare committed checksums to the PROD ledger, so a post-apply edit went green in CI and only failed at deploy. Regenerate from prod (SELECT json_object_agg(filename, checksum) FROM _system._schema_migrations WHERE filename >= '202606010000') when new migrations are applied on prod. Generated 2026-07-24.",
-  "generated_at": "2026-07-24",
+  "_note": "PINNED snapshot of the PROD migration ledger (_system._schema_migrations) checksums for the modern window (filename >= 202606010000 \u2014 every held + recent migration; older ones are stable auto-applied). SOURCE OF TRUTH for verify-prod-ledger-checksum-parity: every committed migration whose filename is in this map MUST hash (sha256) to its pinned value, OR have a matching entry in scripts/lib/migration-checksum-overrides.json (ledger_checksum == pinned, disk_checksum == committed). This closes the gap the 2026-07-24 deploy outage exposed: the from-0001 'reject edited applied migrations' guard did NOT compare committed checksums to the PROD ledger, so a post-apply edit went green in CI and only failed at deploy. Regenerate from prod (SELECT json_object_agg(filename, checksum) FROM _system._schema_migrations WHERE filename >= '202606010000') when new migrations are applied on prod. Generated 2026-07-24. | Refreshed 2026-07-25 after GUARD Neon-apply of held batch (checksums from _system._schema_migrations; disk sha256 verified match).",
+  "generated_at": "2026-07-25",
   "window_from": "202606010000",
   "checksums": {
     "202606071000_search_universal_index.sql": "6b35bc2dd610238293024e391dbc5c7859fa81b52cf2bc866faf447e83c32727",
@@ -364,6 +364,27 @@
     "202607900000_coa_roles_rls_bypass_lucia.sql": "f20dac13353d4f7724ae06d71af03283015a972094e64c0d6224741f904e2d51",
     "202607910000_equipment_types_per_entity.sql": "7cec7823d98cc2dc4328ed60e2d5c7ff2a718b6772b5e992132613d630210638",
     "202607911000_equipment_types_norm_dedupe_per_entity.sql": "7c44216e880128fd7d09031fc26315c89f543c96fe2bf92c3e090d9003d6c23b",
-    "202607920000_customer_quality_reasons_per_entity.sql": "2ff256eaba4d924414c64b5e320ba3f4e7e1bf23ccd3de057caf7f28eca77f6b"
+    "202607920000_customer_quality_reasons_per_entity.sql": "2ff256eaba4d924414c64b5e320ba3f4e7e1bf23ccd3de057caf7f28eca77f6b",
+    "202607690000_bank_tx_capture_fields.sql": "024121991f0e8e85ee4603812df6172aaca4a65dee83180740be8713e0471c3d",
+    "202607740000_claim_wo_bill_expense_fk_linkage.sql": "458751fbd1c675a85dc9837e97abdd8c07b7e34027407ee03de9f4051fc26e05",
+    "202607760000_cash_dip_coa_role.sql": "1ae6163c12fa2dd8918136de6fcde1786f5f690da0d506ec5e4da1ec6555a006",
+    "202607840000_revoke_delete_safety_join_tables.sql": "c542df80c6ec7d1954e42f6f5bd7d7199625f2ece2358d77f0ebce5041da86ff",
+    "202607860000_qbo_ap_bill_payments_inbound_mirror.sql": "bdd478c842d5ca9cfbd5e3253c6f2a9c3d5cae60f7035c8e5b679b7b6c9a64c3",
+    "202607860100_bill_payments_qbo_composite_unique_and_ap_bill_payment_flags.sql": "8d1554322c5762193decd46c0712d3e9a334529317162840b8455d4cb98eb7ec",
+    "202607880000_qbo_purchases_inbound_mirror.sql": "c0a6af86a1c8567af5d4f6e187207f65b0932753d04b3040be9a9dcd9a519a19",
+    "202607890000_qbo_expenses_projection_key_and_flags.sql": "893c98bc0018b3086b310c3bf7c40139ff9e9e0ce48ed6b5e02d54222fa77fda",
+    "202607920000_qbo_ar_payments_inbound_mirror.sql": "60efcdfa81ea9e7e4a7afbc442cc0f930cdd17ce558e0ce94e64541859a0b5eb",
+    "202607930000_qbo_ar_payments_projection_flags.sql": "ee66860629d36749d0dcbcdcdbc8f70baebc4b06baee47bcc4b766a7dcd528ef",
+    "202607940000_load_cancellations_drop_legacy_reason_fk.sql": "a24e75ceb13a58022f2356e8b3009d0ec03d0f81ddc59687d2949b82ebb3300e",
+    "202607950000_catalogs_items_backfill_from_qbo_mirror.sql": "e52a0e701a71eacfdf04916dd54a807ee51fc0bdfe18bc719dcd4523c8980a92",
+    "202607950000_posting_batches_template_link.sql": "64c41b336b03ec4bbf06792cb603f93f14d7783b0dbecff6db02e1692145fbfb",
+    "202607960000_journal_entries_type_fk.sql": "4020a9a3dd55e5f04367203750bcdd7b9440069cc73ca614e4c4bd0c429e7c1f",
+    "202607990000_account_role_bindings_entity_scope_finish.sql": "1a0c046996778f465d86ecb277a5ba14d715f9e40babcff03e5df77dfac9e805",
+    "202608000000_payment_terms_posting_templates_per_entity.sql": "a11ae930cb43c34153409b8a770d7df8748c0ff7a17dba4276b756c0f39089a6",
+    "202608010000_dispatcher_error_reasons_per_entity.sql": "ec9784d8b6baf9b0be527c29ab4fc69b7f03c7d56dfcfac9887c3506bab3cc51",
+    "202608020000_acct_link_04_expense_lines_expense_category_fk.sql": "2a1109d38f7743721bc0e3d5b5d68b2adab2e9d081a4b7ae316f40c28662a743",
+    "202608030000_bank_accounts_rls_bypass_lucia.sql": "31f9595a050dcc7b88fbf61d77949ba720672f7f11d02ff6b08eadff6f9c5e5f",
+    "202608040000_payment_terms_consumer_remap_same_entity.sql": "58845cbda4b5290ce2c68cca0a0e46c1e1a0fcaca2ca9189ddd6b3e581eef14e",
+    "202608050000_bank_link_01_counterparty_same_entity_fk.sql": "c35d5052f67edca32ae49a5f3d7100b71ee3d5b18926b42f7171ea6b3723b626"
   }
 }

@@ -47,7 +47,7 @@
       ],
       "spec": "DoD VERIFY-6 \u00b7 Receive Payment",
       "status": "FAIL",
-      "evidence": "FAIL-BY-DESIGN (ACCT-F01/F06 record block 2026-07-25) \u2014 not a bug chase: payments=0 because QBO_AR_PAYMENTS_PROJECTION_ENABLED is OFF BY OWNER DESIGN (parallel books, reconcile-only; flags default OFF per Rule 13), not a code defect. Neon lucia 2026-07-25: payments=0 payment_applications=0; qbo_ar_payments=23830 (mirror populated); pull ON + sync_runs ar_payments_inbound_mirror success 23:12Z. The prior idle-in-transaction crash (Sentry IH35-TMS-PROD-25) is fixed + merged as #3433 (set-based INSERT\u2026SELECT in projectArPaymentsToLedger, qbo-ar-payments-puller.ts) \u2014 code-level anti-pattern absence re-verified by guard verify-projection-flags-off-by-design (step 1468). Stays FAIL until the owner opts in per-entity + CPA sign-off flips the flag ON; deploy-SHA ancestry / post-deploy live re-pull are UNVERIFIED \u2014 GUARD re-verify required.",
+      "evidence": "FAIL-BY-DESIGN KEEP 2026-07-25: QBO_AR_PAYMENTS_PROJECTION_ENABLED default_enabled=false on Neon (lucia). Owner decision: projection flags stay OFF (parallel books, reconcile-only). Schema for AR payment mirrors may exist; do NOT flip flag. payments=0 correct-at-0 until CPA/owner unlock.",
       "pr": "#3433"
     },
     {
@@ -60,7 +60,7 @@
       ],
       "spec": "DoD VERIFY-6 \u00b7 Expense chain",
       "status": "FAIL",
-      "evidence": "FAIL-BY-DESIGN (ACCT-F01/F06 record block 2026-07-25) \u2014 not a bug chase: expenses=0 because QBO_EXPENSES_PROJECTION_ENABLED is OFF BY OWNER DESIGN (parallel books, reconcile-only; flags default OFF per Rule 13), not a code defect. Neon lucia 2026-07-25: expenses=0 expense_lines=0; qbo_purchases=27984 (mirror populated); pull ON + sync_runs qbo_purchases_inbound_mirror success\u00d72 last 23:25Z. The prior idle-in-transaction crash (Sentry IH35-TMS-PROD-25) is fixed + merged as #3433 (set-based INSERT\u2026SELECT in projectPurchasesToExpenses, qbo-purchases-puller.ts) \u2014 code-level anti-pattern absence re-verified by guard verify-projection-flags-off-by-design (step 1468). Stays FAIL until the owner opts in per-entity + CPA sign-off flips the flag ON; deploy-SHA ancestry / post-deploy live re-pull are UNVERIFIED \u2014 GUARD re-verify required.",
+      "evidence": "FAIL-BY-DESIGN KEEP 2026-07-25: QBO_EXPENSES_PROJECTION_ENABLED default_enabled=false on Neon (lucia). Owner decision: projection flags stay OFF. expenses=0 correct-at-0 until CPA/owner unlock.",
       "pr": "#3433"
     },
     {
@@ -120,8 +120,8 @@
         "VERIFY-4"
       ],
       "spec": "Law \u00a79 \u00b7 ACCT-F02",
-      "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25: still 16 rows / 0 inbound FKs; journal_entries has NO journal_entry_type_id column on prod. PR #3440 [HOLD] adds additive nullable FK col \u2014 migration 202607960000 NOT yet Neon-applied. Remains FAIL until owner Neon-apply + inbound density re-measure.",
+      "status": "UNVERIFIED",
+      "evidence": "SCHEMA-LIVE 2026-07-25: journal_entries.journal_entry_type_id + FK journal_entries_journal_entry_type_id_fkey present (mig 202607960000 applied+ledgered). inbound typed density still 0/8 JEs \u2014 needs ops backfill/picker use + browser DoD. NOT PASS (Rule 23).",
       "pr": "#3440"
     },
     {
@@ -134,7 +134,7 @@
       ],
       "spec": "Law \u00a79 \u00b7 ACCT-F03",
       "status": "FAIL",
-      "evidence": "FROZEN pending owner LINK-02: WIRE|LOCK \u2014 144 detail_types / 0 inbound FKs; accounts.account_subtype text only. Do not wire FK without unlock (ACCT-02).",
+      "evidence": "FROZEN pending owner LINK-02: WIRE|LOCK \u2014 144 detail_types / 0 inbound FKs; accounts.account_subtype text only. Do not wire FK without unlock (ACCT-02). | 2026-07-25: owner decision STILL OPEN \u2014 detail_types WIRE|LOCK (keep text subtype); no code.",
       "pr": null
     },
     {
@@ -157,8 +157,8 @@
         "VERIFY-5"
       ],
       "spec": "ACCT-F07",
-      "status": "FAIL",
-      "evidence": "HOLD PR #3446: additive same-entity FK expense_lines\u2192catalogs.expense_categories (mig 202608020000). FAIL until Neon-apply proves FK + inbound density (lucia).",
+      "status": "UNVERIFIED",
+      "evidence": "SCHEMA-LIVE 2026-07-25: expense_lines_expense_category_same_entity_fkey present (mig 202608020000; column expense_category_uuid). Needs inbound density + browser. NOT PASS.",
       "pr": "#3446"
     },
     {
@@ -169,8 +169,8 @@
         "VERIFY-5"
       ],
       "spec": "ACCT-F08",
-      "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25: still 0 inbound FKs; posting_batches has NO posting_template_id column on prod; catalogs.posting_templates still 0 rows (lucia-verified true empty, not RLS-masked). PR #3444 [HOLD] adds posting_batches -> posting_templates consumer stamp \u2014 NOT yet Neon-applied. Remains FAIL until owner Neon-apply.",
+      "status": "UNVERIFIED",
+      "evidence": "SCHEMA-LIVE 2026-07-25: posting_batches.posting_template_id + source_template_code + FK present (mig 202607950000). catalogs.posting_templates still 0 rows \u2014 needs seed/ops + browser. NOT PASS.",
       "pr": "#3444"
     },
     {
@@ -262,7 +262,7 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Receive Payment",
       "status": "FAIL",
-      "evidence": "payments=0 with QBO_AR_PAYMENTS_PROJECTION_ENABLED OFF by owner decision \u2014 correct-at-0 (not a flag-flip chase).",
+      "evidence": "FAIL-BY-DESIGN KEEP 2026-07-25: payments surface empty while QBO_AR_PAYMENTS_PROJECTION_ENABLED OFF by owner. Not a schema gap. Browser still required before any PASS claim.",
       "pr": "#3433"
     },
     {
@@ -274,8 +274,8 @@
         "VERIFY-7"
       ],
       "spec": "ACCT-F02 \u00b7 JE tab",
-      "status": "FAIL",
-      "evidence": "JE type island; 8 JEs sparse",
+      "status": "UNVERIFIED",
+      "evidence": "SCHEMA-LIVE 2026-07-25 (LINK-01/JE type FK). Browser DoD TRANSP+USMCA still blocked (session gate). Do NOT PASS without authenticated click-through (Rule 23). No new structural SURF guards.",
       "pr": null
     },
     {
@@ -327,7 +327,7 @@
       ],
       "spec": "Law \u00a79 cross-module",
       "status": "UNVERIFIED",
-      "evidence": "Frozen map docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md. Structural DoD guard scripts/verify-acct-surf-09-crosslinks.mjs (routes+More▾+EntityLink+canonical factoring_advances/escrow_*/driver_settlements). Desktop Expected vs Actual: ~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md. Stays UNVERIFIED until TRANSP+USMCA browser cross-link economics + Neon density proof (Rule 23 — no structural PASS flip). LINK-02 detail_types FK FROZEN.",
+      "evidence": "Frozen map docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md. Structural DoD guard scripts/verify-acct-surf-09-crosslinks.mjs (routes+More\u25be+EntityLink+canonical factoring_advances/escrow_*/driver_settlements). Desktop Expected vs Actual: ~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md. Stays UNVERIFIED until TRANSP+USMCA browser cross-link economics + Neon density proof (Rule 23 \u2014 no structural PASS flip). LINK-02 detail_types FK FROZEN.",
       "pr": null
     },
     {
@@ -365,5 +365,8 @@
       "evidence": "#3430 merged on main (sha fc1cf13); verify-steps 1430+1431 + Rule 24 live; money PRs require MODULE_PROGRESS trailers",
       "pr": "#3430"
     }
-  ]
+  ],
+  "pass_count": 8,
+  "total_count": 25,
+  "updated_at": "2026-07-25"
 }
