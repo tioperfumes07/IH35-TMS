@@ -48,7 +48,13 @@ export function ApplyToBillForm({ value, onChange, operatingCompanyId }: Props) 
   });
   const accountsQuery = useQuery({
     queryKey: ["categorize-bill", "ap-accounts", operatingCompanyId],
-    queryFn: () => listCatalogAccounts({ status: "active", operating_company_id: operatingCompanyId }),
+    // LST-F14: apply-to-bill payment account — server-side is_postable=true.
+    queryFn: () =>
+      listCatalogAccounts({
+        status: "active",
+        operating_company_id: operatingCompanyId,
+        postable_only: true,
+      }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });
