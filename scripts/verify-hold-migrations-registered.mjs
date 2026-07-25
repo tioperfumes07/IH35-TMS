@@ -10,6 +10,12 @@
 //   (1) every migration whose header carries the marker MUST be registered, and
 //   (2) every registered file MUST still carry the marker and exist.
 // So a held migration can never drift out of held-state unnoticed, and a new one can't be added untracked.
+//
+// 2026-07-25 GUARD split: the registry carries TWO arrays — `held` (genuinely unapplied) and
+// `applied_held` (marker still present on disk, but confirmed already applied on prod). Both are
+// "registered" for marker-parity purposes: a file's applied/unapplied STATE is orthogonal to whether
+// it still needs to be tracked so it can never silently fire on prod. Only
+// scripts/verify-held-registry-ledger-parity.mjs cares which of the two arrays a file sits in.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -24,7 +30,9 @@ const errs = [];
 let registry;
 try { registry = JSON.parse(fs.readFileSync(REG_PATH, "utf8")); }
 catch { console.error(`[${LABEL}] FAILED — missing/invalid ${path.relative(ROOT, REG_PATH)}`); process.exit(1); }
-const registered = new Set((registry.held || []).map((h) => h.file));
+const registered = new Set(
+  [...(registry.held || []), ...(registry.applied_held || [])].map((h) => h.file)
+);
 
 // (1) every marked migration is registered
 const markedOnDisk = new Set();

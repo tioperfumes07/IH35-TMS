@@ -53,7 +53,9 @@ export function check({ migration, registry }) {
       f.push(`${REGISTRY}: invalid JSON`);
       return f;
     }
-    const entry = (parsed.held || []).find((h) => h.file === path.basename(MIGRATION));
+    const entry = [...(parsed.held || []), ...(parsed.applied_held || [])].find(
+      (h) => h.file === path.basename(MIGRATION)
+    );
     if (!entry) {
       f.push(`${REGISTRY}: ${path.basename(MIGRATION)} must be registered as held (or db:migrate fires it on prod)`);
     } else if (!/HOLD-FOR-JORGE/.test(String(entry.reason ?? ""))) {

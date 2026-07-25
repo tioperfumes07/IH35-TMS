@@ -26,13 +26,23 @@ export const HELD_REGISTRY_FILENAME = ".held-migrations.json";
 
 /**
  * Load the set of held migration filenames from db/migrations/.held-migrations.json.
+ *
+ * The registry (since the 2026-07-25 GUARD split) carries TWO arrays: `held` (genuinely
+ * unapplied — absent from both the canonical and mirror prod ledgers) and `applied_held`
+ * (still carries the DO-NOT-RUN marker on disk, but confirmed already applied on prod). The
+ * runtime skip in scripts/db-migrate.mjs always resolves an already-ledgered file via the
+ * ledger check BEFORE it ever reaches shouldSkipHeldOnProd(), so `applied_held` membership
+ * here is defense-in-depth, not the primary control: if a ledger row were ever missing for
+ * one of those files, this union still refuses to re-run it on prod rather than silently
+ * applying it a second time. Rule 06 — more protective reading wins.
  * @param {string} migrationsDir absolute path to the db/migrations directory
- * @returns {Set<string>} set of held migration filenames
+ * @returns {Set<string>} set of held migration filenames (held + applied_held)
  */
 export function loadHeldSet(migrationsDir) {
   const p = path.join(migrationsDir, HELD_REGISTRY_FILENAME);
   const parsed = JSON.parse(fs.readFileSync(p, "utf8"));
-  return new Set((parsed.held || []).map((h) => h.file).filter(Boolean));
+  const files = [...(parsed.held || []), ...(parsed.applied_held || [])].map((h) => h.file).filter(Boolean);
+  return new Set(files);
 }
 
 /**

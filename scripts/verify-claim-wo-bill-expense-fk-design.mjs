@@ -86,7 +86,9 @@ export function computeFailures(sources) {
       errors.push(`${REGISTRY_PATH}: invalid JSON`);
       return errors;
     }
-    const entry = (parsed.held || []).find((h) => h.file === path.basename(MIGRATION_PATH));
+    const entry = [...(parsed.held || []), ...(parsed.applied_held || [])].find(
+      (h) => h.file === path.basename(MIGRATION_PATH)
+    );
     if (!entry) {
       errors.push(`${REGISTRY_PATH}: ${path.basename(MIGRATION_PATH)} must be registered as held (or db:migrate fires it on prod)`);
     } else if (!/HOLD-FOR-JORGE/.test(String(entry.reason ?? ""))) {
