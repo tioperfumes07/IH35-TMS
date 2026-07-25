@@ -89,6 +89,8 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
     { table: "asset_locations", activeFilter: "is_active", companyScoped: true },
   ],
   accounting: [
+    // Entity scope for accounts/classes/items is FORCE RLS + GUC, not an explicit
+    // operating_company_id filter (companyScoped:true would under/over-count vs policy).
     { table: "accounts", activeFilter: "deactivated_at", companyScoped: false },
     { table: "classes", activeFilter: "deactivated_at", companyScoped: false },
     { table: "payment_terms", activeFilter: "deactivated_at", companyScoped: false },

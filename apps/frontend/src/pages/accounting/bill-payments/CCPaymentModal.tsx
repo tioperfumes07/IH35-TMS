@@ -39,7 +39,13 @@ export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSave
 
   const accountsQuery = useQuery({
     queryKey: ["cc-bill-payment", "liability-accounts", operatingCompanyId],
-    queryFn: () => listCatalogAccounts({ status: "active", operating_company_id: operatingCompanyId }),
+    // LST-F14: CC payment account picker — server-side is_postable=true.
+    queryFn: () =>
+      listCatalogAccounts({
+        status: "active",
+        operating_company_id: operatingCompanyId,
+        postable_only: true,
+      }),
     enabled: open && Boolean(operatingCompanyId),
     staleTime: 60_000,
   });
