@@ -14,17 +14,23 @@ function canAccessCoaAsymmetryReport(role: string): boolean {
 }
 
 export async function registerCoaAsymmetryReportRoutes(app: FastifyInstance) {
-  app.get("/api/v1/accounting/coa-asymmetry-report", async (req, reply) => {
-    const user = currentAuthUser(req, reply);
-    if (!user) return;
+  // rateLimit matches sibling accounting read routes. CodeQL js/missing-rate-limiting flags an
+  // authorizing handler with no limit (enumeration / expensive CoA grouped scan DoS).
+  app.get(
+    "/api/v1/accounting/coa-asymmetry-report",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
 
-    if (!canAccessCoaAsymmetryReport(String(user.role ?? ""))) {
-      return reply.code(403).send({ error: "forbidden" });
-    }
+      if (!canAccessCoaAsymmetryReport(String(user.role ?? ""))) {
+        return reply.code(403).send({ error: "forbidden" });
+      }
 
-    const report = await getCoaAsymmetryReport({ userId: user.uuid });
-    return reply.code(200).send(report);
-  });
+      const report = await getCoaAsymmetryReport({ userId: user.uuid });
+      return reply.code(200).send(report);
+    },
+  );
 }
 
 export default fp(async (app) => {
