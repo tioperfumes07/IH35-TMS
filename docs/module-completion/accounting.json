@@ -134,7 +134,7 @@
       ],
       "spec": "Law \u00a79 \u00b7 ACCT-F03",
       "status": "FAIL",
-      "evidence": "144 rows 0 inbound FKs; accounts.account_subtype text",
+      "evidence": "FROZEN pending owner LINK-02: WIRE|LOCK \u2014 144 detail_types / 0 inbound FKs; accounts.account_subtype text only. Do not wire FK without unlock (ACCT-02).",
       "pr": null
     },
     {
@@ -239,7 +239,7 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Bill payment \u25be",
       "status": "UNVERIFIED",
-      "evidence": "bill_payments=6479 density PASS; DoD A\u2013E + VERIFY 1\u20138 surface click-through not re-run 2026-07-25",
+      "evidence": "bill_payments=6479; Desktop SURF DoD UNVERIFIED \u2014 TRANSP+USMCA click-through not re-run. Structural route+PayBill ParityDrawer PASS (verify-accounting-money-creator-matrix).",
       "pr": null
     },
     {
@@ -288,7 +288,7 @@
       ],
       "spec": "ACCT-F03 \u00b7 CoA",
       "status": "FAIL",
-      "evidence": "text subtype only",
+      "evidence": "text subtype only; ACCT-LINK-02 FROZEN \u2014 owner WIRE vs LOCK. SURF DoD FAIL documented; no FK PR.",
       "pr": null
     },
     {
@@ -301,7 +301,7 @@
       ],
       "spec": "Law \u00a79 reverse",
       "status": "UNVERIFIED",
-      "evidence": "UI exists; live density for payments/expenses not proven",
+      "evidence": "Routes mounted (account-register + transactions); Desktop SURF DoD UNVERIFIED browser reverse.",
       "pr": null
     },
     {
@@ -314,7 +314,7 @@
       ],
       "spec": "Architectural design Accounting tabs",
       "status": "UNVERIFIED",
-      "evidence": "Routes mounted; full click-through not re-run this audit",
+      "evidence": "period-close\u2192month-close, audit-trail, posting-lineage mounted; Desktop SURF DoD UNVERIFIED click-through.",
       "pr": null
     },
     {
@@ -326,7 +326,7 @@
       ],
       "spec": "Law \u00a79 cross-module",
       "status": "UNVERIFIED",
-      "evidence": "Nav leaves exist; economics density not module-closed",
+      "evidence": "factoring/escrow/settlements nav leaves present; Desktop SURF DoD UNVERIFIED cross-link economics.",
       "pr": null
     },
     {

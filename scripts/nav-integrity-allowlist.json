@@ -348,7 +348,11 @@
     },
     {
       "path": "/catalogs/driver-load-statuses",
-      "reason": "Legacy catalog route \u2014 Block 43"
+      "reason": "Legacy catalog route \u2014 Block 43 (retained; Lists hub uses /lists/drivers/driver-load-statuses)"
+    },
+    {
+      "path": "/lists/drivers/driver-load-statuses",
+      "reason": "LST-A-01 — Driver Load Statuses reachable from Lists hub (same DriverLoadStatusesPage)"
     },
     {
       "path": "/catalogs/accounts",
