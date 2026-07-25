@@ -1,327 +1,130 @@
 ---
 name: ih35-tms-standards
-description: >-
-  Load at the start of ANY IH35-TMS work. Bound by Rule #0 docs/specs/QUALITY-STANDARD-LOCKED.md
-  (hardline: no guess/patch/defer; trust over speed) and Law of the Land
-  docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md. Durable operating standards — permissions,
-  merge gates, migration/schema invariants, landmines, product/design locks. When this skill and
-  a handoff disagree, QUALITY-STANDARD-LOCKED wins, then this skill.
+description: The durable operating standards for the IH35-TMS repository — permissions and merge gates, migration/schema invariants, per-change workflow, schema landmines, product and design locks, communication norms, the LINKAGE LAW + canonical wiring map (§10), the COMPLETE 24-rule governing index (§11), and the 18-key money-PR git gate (§12). Load this at the start of ANY work in this repo. Version-controlled companion to the (git-excluded) root CLAUDE.md. When this skill and a handoff doc disagree, this skill wins; on any rule conflict the source .cursor/rule wins and the MORE PROTECTIVE reading wins.
 ---
 
 # IH35-TMS — Operating Standards
 
-> **★ DEFINITION OF DONE (BINDING, every session):** `docs/specs/DEFINITION-OF-DONE.md` — DOD-A…E + §10.
-> **★ EVERY PR AUDIT CHECKLIST (BINDING, every session):** `docs/specs/EVERY-PR-AUDIT-CHECKLIST.md` — FINDING · LANE · DOD-A…E · **VERIFY-1…8** · **MODULE_PROGRESS** · MIGRATE · Rule 16. Money commits missing keys **FAIL** verify-step **1430** (`verify-no-money-theater`) + commit-msg. Rule 23 bans theater. Rule 24 — module DONE = **N of M** in `docs/module-completion/` (CI **1431**).
-> **★★ PER-PR CHECKLIST (read FIRST, every PR):** `docs/specs/PER-PR-CHECKLIST.md` — the single consolidated list of everything audited and fixed in **every** PR: 5 DONE layers · 8 audit layers (QBO chrome · universal picker law · connectivity/wiring · deep forward+reverse linkage · catalogs/entity scope · CPA-grade economics · tab/design law · security/RLS) · the evidence block · guard rules · verification traps · merge gates · migration rules. Consolidated because scattered law is skipped law; enforced in CI on the PR body **and** the commits.
-> **Rule #0 (LOCKED, every session):** `docs/specs/QUALITY-STANDARD-LOCKED.md` — hardline quality law.
-> **Cursor charter (every session):** `docs/specs/CURSOR-OPERATING-CONSTITUTION.md` — permanent operating constitution; more conservative reading wins on conflict.
-> **Law of the Land:** `docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md` — total connectivity / linkage checklist.
-> **Cursor auto-load:** `.cursor/rules/00`–`07` + `10`–`18` + `dual-lane-never-idle.mdc` (`alwaysApply: true`).
-> **Evidence before done:** `.claude/skills/ih35-evidence-before-done/SKILL.md` + Rule 16 `.cursor/rules/16-fix-not-patch-evidence-law.mdc`.
+This system holds **live financial and legal-evidence data** for a real operating carrier (IH35 Dispatch /
+IH35 Trucking, Laredo TX ↔ Mexico). Treat every change as production-affecting. **§1 (permissions) overrides
+everything. When unsure, STOP and ask.**
 
-
-This system holds **live financial and legal-evidence data** for a real operating carrier
-(IH35 Dispatch / IH35 Trucking, Laredo TX ↔ Mexico). Treat every change as production-affecting.
-**§1 (permissions) overrides everything else. When unsure, STOP and ask.**
-
-## §0. LAW OF THE LAND — VERIFY EVERYTHING, NEVER GUESS (supreme, permanent — 2026-07-10)
-After days lost to unverified "done": **everything is verified against live evidence — no guessing, ever.**
-- **Schema/columns/enums/tables → verify against the Neon PROD branch** (RLS-immune `information_schema`/`pg_catalog`),
-  NOT memory, NOT a migration file, NOT this skill. Prod has diverged from migrations repeatedly — **prod wins.**
-- **Built/wired → read the actual file + confirm route registered / component mounted / guard wired.** A file
-  existing is NOT proof. **A fix works → verified live** (endpoint / health-sha / DB row / browser). CI-green is NOT done.
-- **Empty grep / 0-count → RE-RUN before it is a verdict** (RLS masks accounting/catalogs/mdata to 0).
-- **Forbidden:** guessing, assuming, inferring, trusting another agent's "verified", or reporting any verdict
-  without an evidence field. When you cannot verify, say **"UNVERIFIED — needs live check"**, never a guess.
-- **Definition of done = the block's `acceptance[]` resolves** (file + route mounted + migration on prod +
-  column populated + guard wired + live proof) — NOT "merged", NOT "CI-green".
-- **Precedence — split FACTS vs DECISIONS (they resolve differently):**
-  - *Prod-verified FACTS* (schema/columns/enums/tables/live state): **prod (live Neon) > CI guard > repo/reference > sweep/audit/doc > memory.** A doc, a migration file, this skill, or another agent's "verified" **never** overrides prod. Prod has diverged from migrations repeatedly — re-verify against prod.
-  - *Owner DECISIONS* (approvals, canonical picks, merges, flag flips): **owner-in-writing is AUTHORITY and is never overridden by a doc, guard, or agent claim.** A guard/acceptance can prove a fact; it can never overrule the owner's decision.
+## §0. LAW OF THE LAND — VERIFY EVERYTHING, NEVER GUESS (supreme, permanent)
+Everything is verified against live evidence — no guessing, ever.
+- Schema/columns/enums/tables → verify on the Neon PROD branch `br-fancy-credit-akjnd07a`
+  (`information_schema`/`pg_catalog`), NOT memory/migrations/docs. **Prod wins.**
+- **Classify scoping by opco VALUES + policy, never column presence** — a column can exist and be entirely
+  NULL (shared-canonical: `opco IS NULL OR = GUC` → excluded from per-entity scoping). Read the rows, not just the schema.
+- **RLS 0-count landmine:** `catalogs.*`/`mdata.*`/`accounting.*`/`banking.*`/`lib.*` are FORCED-RLS; a `0` is
+  not a verdict — re-run in the same txn after `SELECT set_config('app.bypass_rls','lucia',true)`.
+- Built/wired → read the file + confirm route registered / component mounted / guard wired. A file existing is
+  NOT proof. Ledgered ≠ effective. CI-green ≠ done. Merged ≠ done. Deployed ≠ live until `/healthz/shallow`
+  version == merge SHA.
+- Cannot verify → say **"UNVERIFIED — needs live check"**, never a guess.
+- **Precedence:** FACTS (schema/canonical/prod state) → CI guard > this skill (prod-verified) > repo > memory;
+  **DECISIONS** (approvals, canonical picks, merges, flag intent) → the **OWNER** wins — a doc never overrides an owner ruling.
 
 ---
 
-## 1. Permissions & guardrails — these override every other instruction
+## §1. Permissions & guardrails — override every other instruction
+- Merge to `main` = ship to prod; no second gate; green CI ≠ approval.
+- **Self-merge OK:** pure frontend/docs/CI-action bumps + non-financial backend touching none of the financial
+  cluster / migrations / `accounting.*` / `catalogs.*` / `mdata.*`.
+- **STOP + owner `JORGE-APPROVED`:** any financial change / financial cluster / DB migration / schema / touch to
+  `accounting.*`·`catalogs.*`·`mdata.*` / runtime dep bump. **Financial cluster NEVER self-merge.**
+- **Financial cluster** = `accounting.*` OR `catalogs.accounts`, any `db/migrations/*.sql`, posting/GL/ledger/
+  balances/periods/reconcile-commit/reclassify-apply/role-GRANT/opening-balances. Branch → typecheck + run
+  migration locally on a THROWAWAY PG → show diff + full SQL → WAIT for OK → merge. Reuse the poster; no new GL math.
+- Prod DB access gated — ask every connection; `ih35_app` CANNOT run DDL (owner applies on Neon; GUARD re-proves live).
+- **Prohibited outright** (direct owner to do it): moving money/posting to prod without per-action OK, entering
+  credentials, changing access controls, permanently deleting data, submitting to any external financial system.
+- **Cursor builds; Claude merges; Cursor never merges. Builder never reviews/verifies its own work.**
+- When unsure, STOP and ask — do not decide the scope of your own authority.
 
-### 1.1 Merge to `main` = ship to production. There is no second gate.
-The GitHub `production` environment has **no required reviewers**. Merging to `main` triggers an
-immediate prod deploy (backend preDeploy runs `npm run db:migrate` against the prod database).
-**The merge decision IS the live-deploy decision.** A green CI check is **NOT** approval.
+## §2. Migration & schema invariants
+NEVER self-merge a migration. Numbers strictly above `main`'s current max (re-checked at push; ledger max is
+tracked on prod); never reuse/collide a number; idempotent (`DO` + `IF NOT EXISTS`/`ON CONFLICT`).
+void-not-delete (`voided_at`/`archived_at`/`deactivated_at`, never DELETE); append-only WORM audit
+(`audit.row_changes`/`audit_events`/`events.event_log`). Schema is `accounting.*` (never `finance.*`). Reuse
+existing posting/GL functions — write NO new GL math. UUIDv7 PKs; `security_invoker=true` on every view;
+`operating_company_id` RLS; before any `accounting`/`catalogs` read `SET app.operating_company_id` or counts
+lie; FORCED-RLS pattern `identity.is_lucia_bypass() OR operating_company_id::text = current_setting(
+'app.operating_company_id', true)`; lockstep INSERT; new schema needs GRANTs for `ih35_app`; CREATE OR REPLACE
+VIEW is append-only (new cols appended); every bug fix ships a static CI guard. Local `npm run db:migrate` can
+silently hit PROD — validate on a LOCAL PG (`DATABASE_DIRECT_URL= DATABASE_URL=<local>`); never
+`ALLOW_PROD_MIGRATE=1`.
 
-### 1.2 What you may self-merge on green CI (no asking)
-- Pure-frontend UI changes, docs, CI-action version bumps (e.g. `actions/checkout`).
-- **Non-financial** backend changes (routes/services/endpoints/cron/telematics) that touch NONE of:
-  the financial cluster (§1.4), DB migrations, or `accounting.*` / `catalogs.*` / `mdata.*` (schema OR data).
+## §3. Workflow — sync first (local clone lags main); fresh branch per change; build/verify locally
+(`tsc -b`, `vitest`, relevant `verify-*`) before every commit/push — never skip the hook, fix the
+underlying hook failure instead; `gh pr create` with root-cause+scope+verification; merge only per §1
+(squash); verify deploy by health-SHA ancestry; never `git add -A` (untracked `.claude/worktrees`).
 
-Standing rule: **always** auto-create the PR, fix CI errors, and resolve conflicts; **auto-merge +
-deploy** when non-financial and green. Preparing any PR (branch, code, push, get CI green) is always fine.
+## §4. Schema reality & landmines (verify names against prod before writing SQL)
+No `ih35_app.*` data schema. loads=`mdata.loads` (`rate_total_cents`=GROSS; `assigned_primary_driver_id`);
+`mdata.units` has `owner_company_id`+`currently_leased_to_company_id` (NOT `operating_company_id`);
+bills=`accounting.bills`/`bill_payments`/`payments`(`voided_at`); bank=`banking.bank_transactions`
+(`is_credit`); driver earnings=`driver_finance.settlement_lines`; HOS=`hos.duty_status_events`. Verify enum
+members on prod; DRIVER hazmat=`mdata.drivers.endorsement_h`; every diesel/roadside expense FKs to a load.
+Don't trust string-grep systemic checks.
 
-### 1.3 STOP and get the owner's explicit "OK to merge" BEFORE merging
-- ANY **financial** backend change, and anything in the financial cluster (§1.4).
-- ANY DB migration / schema change.
-- ANY touch to `accounting.*`, `catalogs.*`, `mdata.*` (schema OR data).
-- ANY runtime dependency bump (not CI-action bumps).
+## §5. Where things live / how to verify
+Remote = the GitHub repo (schema truth = `db/migrations/`, prod wins). DB = Neon prod branch (gated §1).
+Deploy = Render. Health `GET /api/v1/healthz/shallow`. Specs `docs/specs/`; locked
+`docs/lockdown/00_LOCKED_DECISIONS.md`; wiring `docs/trackers/FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md`;
+blocks `.block-ready/*.json`; `npm run reconcile:blocks`.
 
-The owner signals approval by applying the **`JORGE-APPROVED`** label (or saying "OK to merge" in chat).
-Once labeled/approved and CI is green → merge (squash) without re-asking, then roll into the next block.
+## §6. Business context
+Multi-entity TRANSP (active carrier, `operating_company_id 91e0bf0a-133f-4ce8-a734-2586cfa66d96`), TRK (asset
+holder), USMCA (future, hidden until launch). **Accounting = PARALLEL double-books (not a sync): QBO is
+system-of-record; CLONE-ONCE + RECONCILE-ONLY; NO write-back; money-posting flags default OFF until CPA + Neon
+tie-out.** Factoring = secured borrowing/recourse; drivers Mexican-B1 1099 (wage/fee, never % of linehaul).
+US GAAP/ASC — Ch.11 = ASC 470-60 (NOT 852), 606 revenue, 842 leases; cutover 04/01/2026, OB 03/31 owner-entered.
 
-### 1.4 Financial cluster — NEVER self-merge, no exceptions
-Financial cluster = anything touching `accounting.*` OR `catalogs.accounts`, any `db/migrations/*.sql`,
-posting/GL/ledger, balances, accounting periods, reconcile-commit, reclassify-apply, role/GRANT changes,
-opening balances. A migration or `accounting.*`/`catalogs.accounts` touch makes the **whole PR financial**
-even if it also has UI files. For these:
-branch → typecheck + run migration **locally** → show the owner `git diff --staged --stat` + the **full SQL**
-→ **WAIT for explicit approval** → only then merge. Opening balances are **owner-entered only**.
-Never build finance/posting logic solo (design docs are fine). Default env flags **OFF**.
+## §7. Product & design locks (additive-only — never silently redesign)
+ADDITIVE-ONLY, archive never delete. Vocab `+ Create`/`+ Book` (never `+ New`/`+ Add`); "Escrow" not
+"Forfeitures"; single-line names. Nav on top bar; 80px navy sidebar only; sidebar count = `SIDEBAR_ITEM_IDS`.
+Palette locked. KEEP TMS custom fields + lock-account. Inline `+ Add new` at the end of every reference
+dropdown, writing the same canonical table it reads. WO ID `WO-{UNIT}-{TYPE}-{MM-DD-YYYY}-{NNNN}-{V5}`.
 
-### 1.5 Production database access is gated — ask every single time
-Direct prod DB access — console OR `psql`, **even read-only SELECTs** — is **not** a standing capability.
-Ask before each connection. Never keep/reuse/record prod connection strings. Verify schema from
-`db/migrations/` + public health endpoints instead (§5).
+## §8. Communication norms
+Deliver, don't ask (except §1 STOPs); foreground work; show diffs; no silent retries; report honestly; correct
+your own earlier claims when they'd change a decision; lead with the deeper structural point.
 
-### 1.6 Prohibited outright (direct the owner to do it himself, even if asked)
-Moving money / sending payments / posting financial entries to prod without per-action OK; entering
-credentials into forms; changing access controls or sharing/permissions; permanently deleting data;
-submitting anything to a factoring or any external financial system.
+## §9. Drift prevention & definition of done
+If two files contradict, flag both + ask which is canonical. DoD = code matches real schema; local+CI green;
+merged per §1; deploy verified live; UI confirmed; `acceptance[]` resolves on live evidence. Update this skill
+when you learn/correct a durable rule.
 
-### 1.7 When unsure, STOP and ask. Surface the decision; don't self-authorize. This is the #1 expectation.
-Do **not** decide the scope of your own authority.
-
-**Golden rule:** non-financial frontend/docs you may ship on green; **anything backend, schema,
-financial, or money-moving — and any prod DB access — STOP and get explicit OK.** Green CI is not approval.
-
----
-
-## 2. Migration & schema invariants (carry into every change)
-- **NEVER self-merge a migration.** Migration numbers strictly above `main`'s current max, re-checked at
-  push time; never reuse/collide a number. Idempotent migrations (`DO` blocks + `IF NOT EXISTS` / `ON CONFLICT`).
-- **void-not-delete:** set `voided_at` / `archived_at` / `deactivated_at`, never `DELETE`. Append-only audit —
-  never `UPDATE`/`DELETE` `audit_events` / `audit.row_changes` / `events.event_log` (WORM). Every table gets
-  `is_active` + audit.
-- Schema is **`accounting.*`** (never `finance.*`). Audit is **`audit.row_changes`**.
-- **Reuse EXISTING posting/GL functions — write NO new GL math.** Reuse allocation infra.
-- UUIDv7 server-generated PKs. `security_invoker=true` on every view. `operating_company_id` RLS scoping.
-  Before any `accounting`/`catalogs` read: `SET app.operating_company_id` or counts lie.
-- FORCED RLS pattern: `identity.is_lucia_bypass() OR operating_company_id::text = current_setting('app.operating_company_id', true)`.
-- Lockstep INSERT pattern (column array + values array + placeholders grow together).
-- Runtime DB role is `ih35_app` (a **role/grant target, not a data schema** — see §4). New schema →
-  add GRANTs (migration 0065 pattern + DEFAULT PRIVILEGES) or it 500s at runtime.
-- **Every bug fix gets a static CI guard** (a `scripts/verify-*.mjs`) so it can't regress.
-- **CREATE OR REPLACE VIEW is append-only** — new view columns must be APPENDED at the end; a mid-list
-  insert errors "cannot change name of view column". Apply view-touching migrations on a local CI DB first.
-
-### Local migration validation is a landmine — read this
-- `npm run db:migrate` in this clone can **silently hit PROD** (`.env` may carry prod direct-URL creds and
-  the runner prefers `DATABASE_DIRECT_URL`). SAFE form: validate against a local Postgres, e.g.
-  `DATABASE_DIRECT_URL= DATABASE_URL=<local> npm run db:migrate`, and always verify `current_database()` /
-  `inet_server_addr()` before trusting a connection.
-- **Never set `ALLOW_PROD_MIGRATE=1` locally.** Prod DDL/seed is the owner's hand; the coder stops at a local
-  test DB. A migration that validates on a prod-COPY can still FAIL CI (build-typecheck + security-audit run
-  `db:migrate` on a FRESH DB from 0001) — never `RAISE` on absent runtime/synced data; JOIN gracefully.
-
----
-
-## 3. Workflow (per change)
-1. **Sync first.** The local clone routinely lags `origin/main` by many merged PRs. Always `git fetch origin`
-   + `gh pr list --state all`, then `git checkout main && git pull --ff-only` before concluding anything is
-   missing or before branching. (Treating local `git log` as truth has produced false "the work is lost"
-   conclusions.)
-2. **Fresh branch per change.** `feat/...`, `fix/...`, `chore/...`.
-3. **Build/verify locally.** Frontend: `cd apps/frontend && npx tsc -b --pretty false` (ignore the
-   pre-existing `@sentry/react` env error) + `npx vitest run <files>`. UI responsiveness:
-   `node scripts/verify-mobile-responsive-audit.mjs` (must be `new_vs_baseline=0`). Run the `verify-*`
-   scripts relevant to your change.
-4. **Pipeline truth (owner-locked 2026-07-18):** never bypass branch freshness or a real red guard. The
-   pre-push hook previously shell-sourced `.env`, allowing test override variables to suppress all checks;
-   manifest resolution could also select another branch's block. These are P0 defects, not authorized noise.
-   Until their repairs land, classify every failure from its exact output and obtain explicit branch-specific
-   owner authorization before any bypass. CI is an independent backstop, never a justification for stale push.
-   **Push gates fail closed:** run the normal hooks and fix dirty/conflict/freshness/test failures. A
-   capability may skip locally only when the gate's explicit preflight names both the missing capability and
-   its server-required CI equivalent. Error-text matching is never authorization to bypass a hook.
-5. **PR:** `gh pr create` with root-cause + scope + verification in the body.
-6. **Merge:** only per §1. Squash: `gh pr merge <n> --squash --delete-branch`.
-7. **Verify deploy:** poll `/api/v1/healthz/shallow` until `version` == your merge short-sha; confirm deep
-   `/api/v1/healthz` green; for UI, confirm in the browser.
-8. **Never `git add -A` blindly** — the repo has untracked `.claude/worktrees/` that must never be committed.
-   Stage explicit paths.
-9. End commit messages with a `Co-Authored-By:` line when pairing.
+## §10. LINKAGE LAW + CANONICAL WIRING (total-connectivity constitution)
+Before ANY block declare: (a) you read `FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md` + `01-LINKAGE-LAW`; (b)
+canonical target (`to_regclass`, NOT a RETIRE table); (c) the cross-module linkage matrix; (d) deployed SHA vs
+`origin/main`. **RETIRE → canonical:** `driver_finance.*` (RETIRE `payroll.*`/`settlement.*`); `mdata.qbo_*`
+mirror read-only, projections WRITE `accounting.*` (RETIRE `accounting.qbo_*`); `banking.*` (RETIRE `bank.*`);
+`maintenance.*` (RETIRE `maint.*`); `mdata.vendors`; `mdata.loads`; cancellation reasons =
+`catalogs.load_cancellation_reasons` (owner ruling A; archive legacy `catalogs.cancellation_reasons`, never
+drop). **Hub tables:** org.companies, identity.users, mdata.drivers/units/loads/customers/vendors,
+catalogs.accounts, maintenance.work_orders, accounting.journal_entries. Every record links both-way to
+financial primitives AND ops modules AND the hubs; entity-scope every link; a block with no linkage declaration
+is a defect (guards G1–G4). **RESERVE/holdback/retainage accounts in `catalogs.accounts` are OWNER-MANUAL only —
+never create/import/reclassify/merge/deactivate (Rule 19).**
 
 ---
 
-### 3.1 Truthful runner + throughput law
+## §11. THE 24 `.cursor/rules` — COMPLETE GOVERNING INDEX (all always-apply; source rule wins on conflict)
+- **00 always-read-first** · **01 spec-sources** (MASTER_BLUEPRINT_v3 + UNIFIED_ADDITIONS + ARCHITECTURAL_DESIGN) · **02 respond-before-code** (post spec-review acknowledgment BEFORE code) · **03 display-ids** (server-generated) · **04 locked-invariants** (RLS/security_invoker/lockstep/append-only-audit/void-not-delete/idempotent/WF-012·017·038·044·050·053·064/425C-exclusion/+Create) · **05 architectural-design-is-law** (tab count = design; `verify:arch-design`) · **06 quality-hardline** (trust>speed; false-empty) · **07 never-delete-only-add** (= §F.24) · **10 verification-and-neon-rls** (prod wins; lucia re-run; ledgered≠effective) · **11 multi-agent-orchestration** (planner→builder→independent code-review→financial-agent VETO→GUARD; builder never self-reviews) · **12 model-tiering** (highest model for money/schema/RLS/migration/review; escalate when in doubt) · **13 financial-and-accounting-law** (build-and-HOLD; reuse poster; parallel books; QBO never written; flags OFF; ASC 470-60/606/842) · **14 linkage-law-enforcement** (§10) · **15 research-mandate** (cite the standard) · **16 fix-not-patch-evidence-law** (ROOT CAUSE/FIX/GUARD/LIVE PROOF/REMAINING) · **17 no-guard-hotfile-thrash** (verify-steps only) · **18 pipeline-truth-and-throughput** (fail-closed runner; single-domain PRs; law = governance-only PR) · **19 owner-manual-reserve-accounts** · **21 full-system-no-partial-amnesia** (M grows; wave-slice ≠ module) · **22 session-boot-announce** (`NEW SESSION · rules autoloaded · tiered model in force`) · **23 no-money-theater-prs** (18-key gate; CI 1430; Cursor builds/Claude merges) · **24 module-completion-n-of-m** (manifest N of M; CI 1431) · **dual-lane-never-idle** (Lane A Lists/Safety/Drivers, Lane B Dispatch/Maintenance).
+(No rules 08/09/20 exist.)
 
-- `verify:pre-commit` is untrusted until command failures throw and the step runner rejects nonzero returns.
-- Before landing that repair, enumerate return-based steps and their current reds. Newly exposed reds are
-  defects to fix with evidence—never weaken, skip, allowlist, or revert the runner to regain green.
-- De-duplicate CI only after proving each discovered wrapper executes the same control and propagates failure.
-- Keep PRs one-domain/frozen-scope; law files use a governance-only owner-reviewed PR.
-- Required workflows gain `merge_group`; Jorge alone applies the one-item Merge Queue Ruleset. Retire blanket
-  local zero-behind enforcement only after the queue proves combined-main freshness.
-- Canonical work order: `docs/specs/CURSOR-PIPELINE-REPAIR-WORKORDER-2026-07-18.md`.
-
----
-
-## 4. Schema reality & landmines (verify names against `db/migrations/` before writing SQL)
-Bugs recur because services were written against **schema names that don't exist.**
-- **There is NO `ih35_app.*` data schema** — any query against `ih35_app.<table>` 500s.
-- loads = **`mdata.loads`** (`status` enum `mdata.load_status_enum`, `rate_total_cents` = GROSS customer rate,
-  `assigned_primary_driver_id`, `soft_deleted_at`); stops = **`mdata.load_stops`**.
-- **`mdata.customers.customer_name`**; **`mdata.drivers`** (`first_name`/`last_name`, `deactivated_at`,
-  `archived_at` — no `full_name`); **`mdata.vendors.vendor_name`**.
-- **`mdata.units`** has **`owner_company_id`** (TRK owns) + **`currently_leased_to_company_id`** (lease) —
-  **NOT `operating_company_id`** (recurring 500 source). Scope unit subqueries by `id` / owner / lessee.
-- bills = **`accounting.bills`** / **`accounting.bill_payments`** / **`accounting.payments`** (`voided_at`);
-  bank = **`banking.bank_transactions`** (`is_credit` bool); driver earnings =
-  **`driver_finance.settlement_lines`** (→ `driver_settlements`); HOS = **`hos.duty_status_events`** (append-only).
-- `load_status_enum` members (verified on prod branch `br-fancy-credit-akjnd07a`, 2026-07-10):
-  `draft, booked, planned, assigned, dispatched, at_pickup, in_transit, at_delivery, delivered, invoiced,
-  paid, closed, cancelled, unassigned, assigned_not_dispatched, delivered_pending_docs, completed_docs_received`.
-  It does NOT end at `'cancelled'` (4 more follow). `'abandoned'`/`'driver_walkoff'`/`'driver_no_show'` are
-  **NOT** enum members — writing them as the enum FAILS; cast `::text` before comparing those.
-- **NO `mdata.loads.hazmat` and NO `mdata.loads.hazmat_endorsement_required`** — verified absent on prod
-  (2026-07-10). Load-level hazmat lives in the `quicksave_pending_fields` jsonb. DRIVER hazmat endorsement =
-  **`mdata.drivers.endorsement_h`** (bool). (Earlier "hazmat columns ARE present" text was stale — corrected
-  vs prod.)
-- Every diesel/roadside expense MUST FK to a load (critical).
-- **Don't trust a string-grep "systemic check."** Test the actual endpoints or diff each query's identifiers
-  against migrations. Most phantom-schema hits are guarded fallbacks (`to_regclass`/`tableExists`), not bugs —
-  check the guard + real columns before "fixing."
+## §12. THE 18-KEY MONEY-PR GIT GATE (Rule 23/24 — CI 1430/1431/1324 fail closed)
+`FINDING` · `LANE` · `DOD-A`…`E` · `VERIFY-1`…`8` · `MODULE_PROGRESS: <module> N of M` · `ITEMS_TOUCHED` ·
+`MIGRATE` · `ROOT CAUSE`/`FIX`/`GUARD`/`LIVE PROOF`/`REMAINING`. Values `PASS`·`N/A`·`FAIL`·`UNVERIFIED—reason`;
+one ranked finding per PR. Full text: `docs/specs/DEFINITION-OF-DONE.md` + `docs/specs/EVERY-PR-AUDIT-CHECKLIST.md` +
+`docs/specs/LAW-OF-THE-LAND-COMPLETE.md`.
 
 ---
 
-## 5. Where things live / how to verify without prod DB
-- **Remote (source of truth):** the GitHub repo. Schema truth = `db/migrations/`.
-- **DB:** Neon Postgres, prod branch. **Gated — §1.5.**
-- **Deploy:** Render (`render.yaml`). Backend + frontend + driver PWA + cron.
-- **Health/version (no creds):** `GET /api/v1/healthz/shallow` → `{version: <short sha>}`; deep
-  `/api/v1/healthz` → Postgres/Neon, migrations ledger, Redis, object store.
-- **Specs / source of truth:** `docs/specs/` (blueprints, QBO parity in `docs/specs/qbo-parity/`).
-  Locked decisions: `docs/lockdown/00_LOCKED_DECISIONS.md`. Deferred work: `docs/trackers/DEFERRED-ITEMS.md`.
-  Block registry: `.block-ready/*.json`. Built/pending truth: `npm run reconcile:blocks`.
-- **Tech stack:** Node 22 + Fastify + TS (`apps/backend`); Vite + React + TS (`apps/frontend`); driver PWA
-  (`apps/driver-pwa`); Postgres/Neon; Redis + outbox; Cloudflare R2; Auth Lucia + Google OAuth.
-
----
-
-## 6. Business context
-- **Multi-entity:** `TRANSP` (operating carrier, active), `TRK` (asset holder, owns units/equipment),
-  `USMCA` (future carrier, launches July 2026, hidden until then). `mdata.*`/`catalogs.*` RLS is
-  role-scoped, not entity-scoped today — cross-entity leaks are masked now and break at USMCA launch;
-  entity-scope remediation must land before USMCA.
-- **Accounting architecture is PARALLEL double-books** (not a sync): TMS + QBO run **in parallel indefinitely —
-  no fixed cutover date**. **QuickBooks is the source of truth**; CLONE-ONCE + RECONCILE-ONLY; **NO write-back**.
-  JE/entity push behind default-OFF kill-switches. The **twice-daily RECONCILIATION is the trust mechanism** —
-  a correctness test that flags every transaction whose categorization differs.
-- **Factoring** is treated as secured-borrowing/recourse. Drivers are Mexican B1 (W-8BEN, yearly renewal).
-- **Enabling money-posting / flipping any GL flag / declaring the system trustworthy is the OWNER's SOLE
-  decision — NO external, CPA, or accountant sign-off, ever.** GUARD supplies technical-correctness proof
-  (Neon tie-out, 0-orphan, balanced-JE) to **inform** the decision; it **never gates** it. Env flags default
-  **OFF** and are flipped only by the owner. See project doc
-  `docs/OWNER-RULING-flag-flips-sole-owner-decision-2026-07-11.md`.
-
----
-
-## 7. Product & design locks (additive-only — never silently redesign)
-- **ADDITIVE-ONLY:** never delete/remove/reorder existing modules/pages/sidebar/columns/fields/tabs/routes.
-  **ARCHIVE, never DELETE.** Sole exception: the owner says "remove X" in chat.
-- **Vocab:** **`+ Create`** / **`+ Book`** only — never `+ New` / `+ Add`. "Escrow" not "Forfeitures".
-  Single-line names/headings. Block names = phase + task (e.g. "P3-T11.17.1"), not "Block 1".
-- **Navigation:** ALL nav on the TOP horizontal bar. The 80px navy sidebar (`rgb(27,35,51)`) is the ONLY left
-  panel — never add a second sidebar / side group labels / accordion left tree. Sidebar item count is defined
-  by the config array `SIDEBAR_ITEM_IDS` in `sidebar-config.ts` and enforced by `verify-sidebar-contract.mjs`
-  (source of truth = the config array, never a hardcoded number). Module headers have a ← back-arrow + breadcrumb.
-- **Palette LOCKED:** `--navy #1f2a44`, `--navy-dk #0f1729`, `--slate #334155`, `--slate-lt #64748b`,
-  `--bg #f8fafc`, `--green-pill #d1fae5` (Class pill only), `--red #dc2626` (delete/Accident only). No
-  recoloring the sidebar. No yellow/green section bands. No purple/blue/pink. No emojis in
-  headers/sidebar/tables. No middle-dot ( · ) subtitle lists below an H1.
-- **KEEP** existing TMS trucking custom fields (Settlement No, Truck No, Pickup/Delivery Date, SB-Load No,
-  Empty/Loaded Miles, Work Order) and the **lock-account** control wherever they exist.
-- **Inline "+ Add new ___"** belongs at the end of every reference dropdown (opens a mini-create without
-  closing the parent panel). Tables use the shared QBO-parity grammar + density tokens + resizable columns
-  (CI-guarded — do not remove).
-- WO display ID: `WO-{UNIT}-{TYPE}-{MM-DD-YYYY}-{NNNN}-{V5}`; 7 immutable source types IS/ES/AC/ET/RT/IT/RS.
-  Class auto-derive `{UNIT}-{LASTNAME}` (the only field allowed green).
-- Detailed screen specs live in `docs/specs/qbo-parity/` — read them before building accounting UI.
-
----
-
-## 8. Communication norms
-- **Deliver, don't ask.** Ship the work first; don't pepper with "should I?" — except where §1 requires a STOP.
-  In auto-mode/track work, execute the scope in order and stack PRs; the owner merges the gated ones. STOP only
-  at finance / locked-page / explicit STOP-decision gates.
-- The owner is **visual and fast-moving** — judges by what renders, wants momentum. Foreground work, show your
-  diffs (`git diff --staged --stat`), confirm `pwd`/branch/status. **No silent retries** — on an unexpected
-  error, STOP and surface the exact error.
-- Do **not** use multiple-choice menus for decisions — make the call and proceed; when genuinely blocked,
-  relay a plain ISSUES list, not a choose-one.
-- All-caps and Spanish/English mixing is normal — don't comment on it, don't sanitize.
-- "yes" / "approved" / "DONE" / "WORKING PERFECT" / "all pass" = move forward, no acknowledgment paragraph.
-- Central Time (Laredo, TX) always. **Never suggest rest, breaks, or stepping away.**
-- **Report outcomes honestly** — if a step was skipped or a check failed, say so. Lead with the deeper
-  structural/decision-shaping point, not only tactical refinements.
-
----
-
-## 9. Drift prevention & definition of done
-- If two project files contradict (drift), **flag it, name both files, ask which is canonical** — don't
-  silently pick one.
-- **Definition of done:** code matches real schema (§4); local + CI green; merged per §1; deploy verified live
-  via health endpoint; UI confirmed in the browser. Cross-check against specs/memory BEFORE saying "done."
-- When you learn a durable new rule or correct a wrong one, update this skill (or the root CLAUDE.md /
-  auto-memory) in the same session, so the next agent starts knowing it. That is how we stop the forgetting.
-
----
-
-## §10. LINKAGE LAW + CANONICAL WIRING (auto-load — supreme with §0, permanent)
-
-This section exists because it kept being "not in context": the LINKAGE law + canonical table map lived
-only in tracker files no session auto-loads, so fresh sessions started blind on wiring and produced
-canonical-direction errors (e.g. SETTLE-FK repointed a FK toward the RETIRE `payroll` table). This skill
-auto-loads for every session, so the law lives here now. Enforced by CI guards G1–G4.
-
-**(a) OPENING MOVE — before any block:** READ `docs/trackers/FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md`
-(canonical/RETIRE map §A, hub tables §E, full 531-table inventory) and the LINKAGE-LAW clauses (below /
-`01-LINKAGE-LAW`). **These override code-reads for canonical direction.** Then verify the specific table
-against **prod** (§0). Never infer the canonical table from whichever one the code happens to write today —
-the code is often the bug.
-
-**(b) CANONICAL TABLE DECISIONS — NEVER write (INSERT/UPDATE) or FK a RETIRE table** (G4 fails CI on it):
-| Concept | ✅ CANONICAL | ⛔ RETIRE (read-only during retirement, never a new write/FK) |
-|---|---|---|
-| Driver settlement | **`driver_finance.*`** | `payroll.driver_settlements` / `payroll.driver_settlement_line_items` / `settlement.*` |
-| QBO mirror | **`mdata.qbo_*`** | `accounting.qbo_accounts` / `accounting.qbo_vendors` / `accounting.qbo_customers` |
-| Banking | **`banking.*`** | `bank.*` |
-| Maintenance | **`maintenance.*`** | `maint.part` / `maint.pm_schedule` / `maint.position_*` / `maint.part_position_assignment` |
-| Vendors (AP truth) | **`mdata.vendors`** | WO picker writing `mdata.qbo_vendors`; keep `catalogs.maintenance_vendors.metadata.mdata_vendor_id` FK |
-| Loads | **`mdata.loads`** | verify `dispatch.loads` before use |
-| Cancellation reasons | **`catalogs.load_cancellation_reasons`** | `catalogs.cancellation_reasons` (legacy global, no `operating_company_id`, RLS OFF, 9 rows — retiring) |
-(DECISIONS still open — owner picks: `geo.*` guard-vs-name, `reporting.*` lockdown-vs-guard.)
-
-**(c) HUB TABLES — every record must connect back to its backbone** (FINAL §E; keep clean, never orphan):
-`org.companies` (385 refs) · `identity.users` (214) · `mdata.drivers` (100) · `mdata.units` (67) ·
-`mdata.loads` (59) · `catalogs.accounts` (26) · `mdata.customers` (25) · `maintenance.work_orders` (21) ·
-`mdata.vendors` (18) · `accounting.journal_entries` (17) · `docs.files` (10) · `mdata.equipment` (10).
-
-**(d) CROSS-MODULE LINKAGE MATRIX (Clause 3) — a record missing a link is a DEFECT, not "done":** every
-record links **both ways** to (i) its **financial primitives** — vendor / customer / bill / expense /
-bill-payment / journal-entry / liability-or-asset account — AND (ii) every relevant **operational module** —
-safety, insurance, legal, maintenance, dispatch, driver, unit, trailer, load. Build the link, or declare an
-explicit `N/A → deferred` in the block. **Silence is a defect.** (e.g. a safety event touching insurance must
-wire safety↔insurance↔legal↔maintenance, not only its money leg.)
-
-**(e) LINKAGE-LAW clauses C1–C9:** C1 name **and prove** every table (vs prod) · C2 prove no duplicate/split-brain
-(pick the canonical, don't add a 2nd) · C3 declare the cross-module linkage matrix (d) · C4 same-entity FK +
-FORCED RLS (`operating_company_id`/`tenant_id`) · C5 wiring **is part of the build**, not a follow-up · C6
-machine-checkable `acceptance[]` at cut time (kinds: table/column/fk/rls/route/mounted/guard/data/live/design/
-effective) · C7 G1–G4 guards **enforce** the law (registry-complete, acceptance, guard-wired, canonical-writes)
-— they don't rely on diligence · C8 an `acceptance[]` can prove a fact but can **never** prove "wrong"/overrule
-the owner · C9 **additive-only** — archive, never delete/reorder.
-
-## Quick gate check (run this in your head before every merge)
-1. Does the diff touch `accounting.*`, `catalogs.accounts`, any `db/migrations/*.sql`, posting/GL/balances,
-   grants/RLS, or money movement? → **financial → STOP, needs owner approval (§1.4).**
-2. Any other migration / `catalogs.*` / `mdata.*` schema or data, or a runtime dependency bump? →
-   **STOP, needs owner approval (§1.3).**
-3. Prod DB access of any kind, even read-only? → **ask first, every time (§1.5).**
-4. Otherwise non-financial + green CI? → **auto-create PR, fix CI, resolve conflicts, squash-merge, verify deploy.**
+## Quick gate check (run in your head before every merge)
+1. Touches `accounting.*`/`catalogs.accounts`/`db/migrations/*`/posting/GL/balances/grants/RLS/money? → **financial → STOP, owner approval (§1).**
+2. Other migration/`catalogs.*`/`mdata.*` schema-or-data, or runtime dep bump? → **STOP, owner approval.**
+3. Prod DB access of any kind? → **ask first, every time.**
+4. Writing/FK-ing a RETIRE table, or shipping a block with no linkage declaration, or touching a reserve account? → **STOP (§10/Rule 19).**
+5. Otherwise non-financial + green CI? → auto-PR, fix CI, resolve conflicts, squash-merge, verify deploy.

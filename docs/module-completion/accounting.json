@@ -157,8 +157,8 @@
         "VERIFY-5"
       ],
       "spec": "ACCT-F07",
-      "status": "UNVERIFIED",
-      "evidence": "SCHEMA-LIVE 2026-07-25: expense_lines_expense_category_same_entity_fkey present (mig 202608020000; column expense_category_uuid). Needs inbound density + browser. NOT PASS.",
+      "status": "FAIL",
+      "evidence": "MERGED\u2260APPLIED: PR #3446 merged @ 7a0c3614 (ACCT-LINK-04 mig 202608020000 on main + static wiring guard 1433/1478 PASS). Prod 2026-07-25 (lucia): catalogs.expense_categories still 0 inbound FKs; expense_lines lacks operating_company_id + composite FK. Held migration NOT in prod ledger. FAIL until owner Neon-apply + inbound density re-proof. Honesty: docs/trackers/MERGED-NOT-APPLIED-ACCT-F07-F08-2026-07-25.md",
       "pr": "#3446"
     },
     {
@@ -169,8 +169,8 @@
         "VERIFY-5"
       ],
       "spec": "ACCT-F08",
-      "status": "UNVERIFIED",
-      "evidence": "SCHEMA-LIVE 2026-07-25: posting_batches.posting_template_id + source_template_code + FK present (mig 202607950000). catalogs.posting_templates still 0 rows \u2014 needs seed/ops + browser. NOT PASS.",
+      "status": "FAIL",
+      "evidence": "MERGED\u2260APPLIED: PR #3444 merged @ 1d90a178 (ACCT-LINK-05 mig 202607950000 on main + static wiring guard 1433/1479 PASS). Prod 2026-07-25 (lucia): 0 inbound FKs on posting_templates; posting_batches has NO posting_template_id/source_template_code; catalog 0 rows (true empty). Per-entity scope = owner design Q \u2014 do NOT auto-scope. FAIL until owner Neon-apply. Honesty: docs/trackers/MERGED-NOT-APPLIED-ACCT-F07-F08-2026-07-25.md",
       "pr": "#3444"
     },
     {
