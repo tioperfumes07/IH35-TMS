@@ -24,7 +24,7 @@ function read(rel) {
 
 function contractErrors(sources) {
   const errors = [];
-  const { service, routes, api, claimsTab, unitTab, form } = sources;
+  const { service, routes, api, claimsTab, unitTab, woDetail, billDetail, form } = sources;
 
   for (const fn of ["listWorkOrderLinkedFinancials", "listClaimLinkedFinancials", "listUnitLinkedFinancials"]) {
     if (!service.includes(`export async function ${fn}`)) {
@@ -76,6 +76,31 @@ function contractErrors(sources) {
     errors.push("UnitFinanceLinkageTab must surface unit-linked bills/expenses");
   }
 
+  if (
+    !woDetail.includes("listWorkOrderLinkedFinancials") ||
+    !woDetail.includes('data-testid="wo-linked-financials"') ||
+    !woDetail.includes('tableTestId="wo-detail-linked-bills-parity"')
+  ) {
+    errors.push("WorkOrderDetailPage must reverse-drill linked bills/expenses via listWorkOrderLinkedFinancials");
+  }
+
+  for (const needle of [
+    'bill.unit_id ?',
+    'kind="unit"',
+    'bill.linked_work_order_uuid ?',
+    'kind="work_order"',
+    "bill.insurance_claim_id ?",
+    'kind="claim"',
+  ]) {
+    if (!billDetail.includes(needle)) {
+      errors.push(`BillDetailPage must reverse-drill bill→unit/claim/WO (${needle})`);
+    }
+  }
+
+  if (!api.includes("insurance_claim_id?: string | null")) {
+    errors.push("VendorBill type must expose insurance_claim_id for bill-detail reverse drill");
+  }
+
   return errors;
 }
 
@@ -89,6 +114,8 @@ function selftest(sources) {
     ["drop unit route", { ...sources, routes: sources.routes.replaceAll("/api/v1/accounting/units/:id/linked-financials", "/api/v1/accounting/units/:id/missing") }],
     ["drop unit service", { ...sources, service: sources.service.replaceAll("listUnitLinkedFinancials", "listUnitHidden") }],
     ["drop claim UI", { ...sources, claimsTab: sources.claimsTab.replaceAll("graph.reverse.bills", "graph.reverse.hidden") }],
+    ["drop WO UI", { ...sources, woDetail: sources.woDetail.replaceAll("listWorkOrderLinkedFinancials", "listWorkOrderHidden") }],
+    ["drop bill→claim drill", { ...sources, billDetail: sources.billDetail.replaceAll('kind="claim"', 'kind="hidden"') }],
   ];
   for (const [name, mutated] of mutations) {
     if (contractErrors(mutated).length === 0) {
@@ -105,6 +132,8 @@ const sources = {
   api: read("apps/frontend/src/api/accounting.ts"),
   claimsTab: read("apps/frontend/src/pages/insurance/ClaimsTab.tsx"),
   unitTab: read("apps/frontend/src/pages/units/UnitFinanceLinkageTab.tsx"),
+  woDetail: read("apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx"),
+  billDetail: read("apps/frontend/src/pages/accounting/BillDetailPage.tsx"),
   form: read("apps/frontend/src/components/accounting/VendorBillForm.tsx"),
 };
 
