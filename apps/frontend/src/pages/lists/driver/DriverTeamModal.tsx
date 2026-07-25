@@ -93,10 +93,10 @@ export function DriverTeamModal({ open, operatingCompanyId, mode, team, onClose,
     const next: Record<string, string> = {};
     if (!form.team_name.trim()) next.team_name = "Team Name is required.";
     if (form.team_name.trim().length > 200) next.team_name = "Team Name must be 200 characters or fewer.";
-    if (!form.primary_driver_id) next.primary_driver_id = "Primary Driver is required.";
-    if (!form.secondary_driver_id) next.secondary_driver_id = "Secondary Driver is required.";
+    if (!form.primary_driver_id) next.primary_driver = "Primary Driver is required.";
+    if (!form.secondary_driver_id) next.secondary_driver = "Secondary Driver is required.";
     if (form.primary_driver_id && form.primary_driver_id === form.secondary_driver_id) {
-      next.secondary_driver_id = "Primary and Secondary must be two different drivers.";
+      next.secondary_driver = "Primary and Secondary must be two different drivers.";
     }
     if (form.effective_from && form.effective_from > maxEffectiveFromIso()) {
       next.effective_from = "Effective From can't be more than 30 days in the future.";
@@ -209,7 +209,7 @@ export function DriverTeamModal({ open, operatingCompanyId, mode, team, onClose,
                 open={open}
                 placeholder="Select primary driver"
               />
-              {errors.primary_driver_id ? <div className="mt-1 text-[11px] text-red-700">{errors.primary_driver_id}</div> : null}
+              {errors.primary_driver ? <div className="mt-1 text-[11px] text-red-700">{errors.primary_driver}</div> : null}
             </div>
 
             <div className="block text-xs font-semibold text-gray-600">
@@ -223,7 +223,7 @@ export function DriverTeamModal({ open, operatingCompanyId, mode, team, onClose,
                 open={open}
                 placeholder="Select secondary driver"
               />
-              {errors.secondary_driver_id ? <div className="mt-1 text-[11px] text-red-700">{errors.secondary_driver_id}</div> : null}
+              {errors.secondary_driver ? <div className="mt-1 text-[11px] text-red-700">{errors.secondary_driver}</div> : null}
             </div>
 
             <div className="block text-xs font-semibold text-gray-600">
