@@ -1,6 +1,6 @@
 {
  "date": "2026-07-25",
- "generated_at_iso": "2026-07-25T14:06:10.332Z",
+ "generated_at_iso": "2026-07-25T16:33:15.226Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
@@ -13173,10 +13173,70 @@
  ],
  "merged_prs": [
   {
+   "number": 3493,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-25T16:24:49Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 3492,
+   "title": "fix(guards): 1324 evidence gate accepted bare \"verified\" and never checked REMAINING",
+   "mergedAt": "2026-07-25T16:24:42Z",
+   "branch": "fix/dod-evidence-gate-1324-hardening"
+  },
+  {
+   "number": 3491,
+   "title": "fix(guards): LST-SEED-01 follow-up — my prod refusal had an off-switch and my guard passed on the defect",
+   "mergedAt": "2026-07-25T16:31:26Z",
+   "branch": "fix/prod-refusal-offswitch-and-commit-guard"
+  },
+  {
+   "number": 3490,
+   "title": "[HOLD] LST-F03: payment_terms/posting_templates writable routes + consumer remap",
+   "mergedAt": "2026-07-25T16:24:29Z",
+   "branch": "hold/lst-f03-writable-routes-remap-20260725"
+  },
+  {
    "number": 3489,
    "title": "fix(lists): LST-CAT-07 — registry accepted codes its stats and preview could never serve",
    "mergedAt": "2026-07-25T14:04:53Z",
    "branch": "fix/lst-cat-07-registry-code-parity"
+  },
+  {
+   "number": 3488,
+   "title": "docs(lists): LST-F17 — reconcile the cancellation-reasons canonical direction to owner ruling A",
+   "mergedAt": "2026-07-25T16:24:20Z",
+   "branch": "fix/lst-f17-cancellation-canonical-ruling-a"
+  },
+  {
+   "number": 3487,
+   "title": "feat(banking): [HOLD] BANK-F06 / BANK-SURF-05 entry-tabs deep structural DoD guard",
+   "mergedAt": "2026-07-25T16:23:43Z",
+   "branch": "hold/bank-surf-05-dod-20260725"
+  },
+  {
+   "number": 3486,
+   "title": "feat(banking): [HOLD] BANK-F04 / BANK-SURF-01 deep structural DoD guard",
+   "mergedAt": "2026-07-25T16:23:36Z",
+   "branch": "hold/bank-surf-01-dod-20260725"
+  },
+  {
+   "number": 3485,
+   "title": "[HOLD] ACCT-08: ACCT-SURF-09 Factoring/Escrow/Settlements cross-link DoD guard",
+   "mergedAt": "2026-07-25T16:23:29Z",
+   "branch": "hold/acct-surf-09-crosslinks-dod-20260725"
+  },
+  {
+   "number": 3483,
+   "title": "[HOLD] ACCT-08: ACCT-SURF-07 Account Register deep DoD guard",
+   "mergedAt": "2026-07-25T16:22:55Z",
+   "branch": "hold/acct-surf-07-register-dod-20260725"
+  },
+  {
+   "number": 3482,
+   "title": "[HOLD] ACCT-08: ACCT-SURF-03 Bill payment deep DoD guard",
+   "mergedAt": "2026-07-25T16:22:46Z",
+   "branch": "hold/acct-surf-03-bill-payment-dod-20260725"
   },
   {
    "number": 3481,
@@ -16711,70 +16771,46 @@
    "title": "fix(customers): COI + Create vocab (0441-mod9)",
    "mergedAt": "2026-07-17T19:22:49Z",
    "branch": "fix/open-fe-coi-create-vocab"
-  },
-  {
-   "number": 2679,
-   "title": "fix(drivers): atomic suspend endpoint (0441-mod5)",
-   "mergedAt": "2026-07-17T21:17:13Z",
-   "branch": "fix/0441-mod5-suspend-non-atomic"
-  },
-  {
-   "number": 2678,
-   "title": "fix(drivers): border credentials edit on driver profile (0441-mod5)",
-   "mergedAt": "2026-07-17T22:36:21Z",
-   "branch": "fix/border-creds-edit"
-  },
-  {
-   "number": 2677,
-   "title": "fix(h-01): entity badge + switcher share selectedCompany",
-   "mergedAt": "2026-07-17T22:26:06Z",
-   "branch": "fix/h01-entity-badge-single-source"
-  },
-  {
-   "number": 2676,
-   "title": "fix(fuel): wire expensive states settings to catalogs.expensive_states (0441-mod3)",
-   "mergedAt": "2026-07-17T19:11:41Z",
-   "branch": "fix/fuel-expensive-states-catalog"
-  },
-  {
-   "number": 2675,
-   "title": "fix(inventory): reorder threshold + low-stock on Parts & Stock (0441-mod13)",
-   "mergedAt": "2026-07-17T22:13:24Z",
-   "branch": "fix/inventory-reorder-threshold-ui"
-  },
-  {
-   "number": 2674,
-   "title": "fix(platform): QBO sync stale pill last OK + Sync now (h-02)",
-   "mergedAt": "2026-07-17T22:00:11Z",
-   "branch": "fix/qbo-sync-stale-sync-now"
-  },
-  {
-   "number": 2673,
-   "title": "fix(fuel): remove redundant Jump to tab dropdown (f-02)",
-   "mergedAt": "2026-07-17T19:11:43Z",
-   "branch": "fix/fuel-jump-to-tab-standard"
-  },
-  {
-   "number": 2672,
-   "title": "fix(vendors): reject TEST-VENDOR names on create and update (VEND-3)",
-   "mergedAt": "2026-07-17T19:08:06Z",
-   "branch": "fix/vend3-reject-test-vendor-name"
-  },
-  {
-   "number": 2671,
-   "title": "fix(banking): wire Create backdated check (0441-mod8-backdated-check-dead)",
-   "mergedAt": "2026-07-17T19:59:00Z",
-   "branch": "fix/0441-mod8-backdated-check-dead"
-  },
-  {
-   "number": 2670,
-   "title": "fix(drivers): wire Teams tab so team roster is reachable (0441-mod5)",
-   "mergedAt": "2026-07-17T19:22:25Z",
-   "branch": "fix/drivers-teams-tab-reachable"
   }
  ],
  "merged_pr_total": 3000,
  "hold_for_jorge": [
+  {
+   "number": 3490,
+   "title": "[HOLD] LST-F03: payment_terms/posting_templates writable routes + consumer remap",
+   "mergedAt": "2026-07-25T16:24:29Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3487,
+   "title": "feat(banking): [HOLD] BANK-F06 / BANK-SURF-05 entry-tabs deep structural DoD guard",
+   "mergedAt": "2026-07-25T16:23:43Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3486,
+   "title": "feat(banking): [HOLD] BANK-F04 / BANK-SURF-01 deep structural DoD guard",
+   "mergedAt": "2026-07-25T16:23:36Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3485,
+   "title": "[HOLD] ACCT-08: ACCT-SURF-09 Factoring/Escrow/Settlements cross-link DoD guard",
+   "mergedAt": "2026-07-25T16:23:29Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3483,
+   "title": "[HOLD] ACCT-08: ACCT-SURF-07 Account Register deep DoD guard",
+   "mergedAt": "2026-07-25T16:22:55Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3482,
+   "title": "[HOLD] ACCT-08: ACCT-SURF-03 Bill payment deep DoD guard",
+   "mergedAt": "2026-07-25T16:22:46Z",
+   "category": "HOLD"
+  },
   {
    "number": 3477,
    "title": "[HOLD] ACCT-08: freeze SURF-01…09 map + SURF-01 Bills deep DoD guard",
