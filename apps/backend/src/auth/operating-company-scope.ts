@@ -112,16 +112,41 @@ export async function resolveOperatingCompanyId(
     if (!isValidOperatingCompanyUuid(requested)) {
       throw new OperatingCompanyMembershipError();
     }
+    // GRANTLESS-403 (2026-07-25, live defect found while closing the M1 membership gap):
+    // org.user_accessible_company_ids() returns ALL active companies for role Owner, and otherwise the
+    // caller's org.user_company_access rows. Four NON-Owner accounts on prod carry a default_company_id
+    // but have ZERO grant rows — Administrator, Dispatcher, Manager and Safety — so that set is EMPTY for
+    // them and this check threw a 403 for EVERY explicitly-named company, including their own default.
+    // With 546 frontend files passing operating_company_id (driver-catalog CRUD sends it on every call),
+    // those accounts were being refused on real surfaces.
+    //
+    // The two paths contradicted each other: the default-resolution path below hands these users their
+    // default company, while this path refused that very same company. The second clause makes them agree
+    // — a caller with NO grant rows may name their OWN default and nothing else. It is not a widening:
+    // they already receive that company implicitly. Any other company still 403s, and a user who DOES
+    // have grants is still held strictly to them.
+    //
+    // The ROOT cause is data, not code: those four users should have org.user_company_access rows. That is
+    // an org.* data change and therefore owner-gated — see REMAINING in the PR body.
     const membership = await client.query(
       `
         SELECT c.id
         FROM org.companies c
         WHERE c.id = $1
           AND c.deactivated_at IS NULL
-          AND c.id IN (SELECT org.user_accessible_company_ids())
+          AND (
+            c.id IN (SELECT org.user_accessible_company_ids())
+            OR (
+              NOT EXISTS (
+                SELECT 1 FROM org.user_company_access a
+                WHERE a.user_id = $2 AND a.deactivated_at IS NULL
+              )
+              AND c.id = (SELECT u.default_company_id FROM identity.users u WHERE u.id = $2)
+            )
+          )
         LIMIT 1
       `,
-      [requested]
+      [requested, userId]
     );
     if (membership.rows.length === 0) {
       throw new OperatingCompanyMembershipError();
@@ -160,6 +185,23 @@ export async function resolveDefaultOperatingCompanyId(
           JOIN org.companies c ON c.id = u.default_company_id
           WHERE u.id = $1
             AND c.deactivated_at IS NULL
+            -- M1 (2026-07-25, independent review): arm 2 filtered by membership and arm 1 did not, so a
+            -- user whose default_company_id sat OUTSIDE their accessible set resolved to a company they
+            -- are not a member of — and at reports/scheduled-report-admin that id is fed straight into
+            -- set_config('app.operating_company_id', …), running the whole request's RLS under it.
+            -- Prod-verified LATENT when found (0 users match that shape), but the extraction in #3480
+            -- spread the unfiltered arm to four more call sites, so it is closed here.
+            --
+            -- The NOT EXISTS clause is load-bearing: four non-Owner accounts have a default but ZERO
+            -- org.user_company_access rows, so a bare membership predicate would resolve them to NULL and
+            -- lock them out. They keep their default; everyone who HAS grants is held to them.
+            AND (
+              c.id IN (SELECT org.user_accessible_company_ids())
+              OR NOT EXISTS (
+                SELECT 1 FROM org.user_company_access a
+                WHERE a.user_id = $1 AND a.deactivated_at IS NULL
+              )
+            )
         ),
         (
           SELECT c.id
