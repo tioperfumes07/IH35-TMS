@@ -13,6 +13,15 @@ export function stripComments(sql) {
   return sql.replace(/--[^\n]*/g, "");
 }
 
+// Escapes every regex metacharacter INCLUDING backslash itself, so a
+// dotted identifier such as "mdata.loads" can be interpolated into a
+// RegExp literal without altering the intended match (CodeQL
+// js/incomplete-sanitization: a partial escape that skips "\\" lets a
+// crafted identifier re-open the pattern).
+export function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export function loadCorpus() {
   if (!fs.existsSync(MIGRATIONS)) return "";
   return fs
@@ -36,7 +45,7 @@ export function balancedBody(sql, open) {
 }
 
 export function createBodies(corpus, child) {
-  const childEsc = child.replace(/\./g, "\\.");
+  const childEsc = escapeRegExp(child);
   const re = new RegExp(`CREATE\\s+TABLE\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?${childEsc}\\s*\\(`, "gi");
   const bodies = [];
   let m;
@@ -51,7 +60,7 @@ export function createBodies(corpus, child) {
 }
 
 export function alterStatements(corpus, child) {
-  const childEsc = child.replace(/\./g, "\\.");
+  const childEsc = escapeRegExp(child);
   const re = new RegExp(`ALTER\\s+TABLE\\s+(?:IF\\s+EXISTS\\s+)?${childEsc}\\b`, "gi");
   const out = [];
   let m;
@@ -63,7 +72,7 @@ export function alterStatements(corpus, child) {
 }
 
 export function hasEnforcedFk(corpus, child, parentIdCol, parent) {
-  const parentEsc = parent.replace(/\./g, "\\.");
+  const parentEsc = escapeRegExp(parent);
   const colEsc = parentIdCol.replace(/[^a-z0-9_]/gi, "");
   const inline = new RegExp(`\\b${colEsc}\\b[^,()]*\\bREFERENCES\\s+${parentEsc}\\s*\\(`, "i");
   for (const body of createBodies(corpus, child)) {
@@ -86,15 +95,15 @@ export function hasOwnScopeColumn(corpus, child) {
 }
 
 export function hasForceRls(corpus, table) {
-  const esc = table.replace(/\./g, "\\.");
+  const esc = escapeRegExp(table);
   return new RegExp(`ALTER\\s+TABLE\\s+(?:IF\\s+EXISTS\\s+)?${esc}\\s+FORCE\\s+ROW\\s+LEVEL\\s+SECURITY`, "i").test(
     corpus,
   );
 }
 
 export function hasParentIsolationPolicy(corpus, child, parentIdCol, parent, parentScopeCol = "operating_company_id") {
-  const childEsc = child.replace(/\./g, "\\.");
-  const parentEsc = parent.replace(/\./g, "\\.");
+  const childEsc = escapeRegExp(child);
+  const parentEsc = escapeRegExp(parent);
   const colEsc = parentIdCol.replace(/[^a-z0-9_]/gi, "");
   const scopeEsc = parentScopeCol.replace(/[^a-z0-9_]/gi, "");
   const blockRe = new RegExp(`CREATE\\s+POLICY[\\s\\S]*?ON\\s+${childEsc}\\b[\\s\\S]*?;`, "gi");
