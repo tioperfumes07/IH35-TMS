@@ -4,7 +4,7 @@
 **Item:** `0091-m-lists-2` (accounting-module GAP lane, 2026-07-21).
 **No code, no migration, no Neon write ships with this document.**
 
-Binds to: `docs/specs/QUALITY-STANDARD-LOCKED.md` (Rule #0), `docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md` (linkage law), `.cursor/rules/07-never-delete-only-add.mdc` (archive-never-delete), `.cursor/rules/13-financial-and-accounting-law.mdc` (financial cluster = owner-gated; no new GL math solo), `.cursor/rules/16-fix-not-patch-evidence-law.mdc`. Skills: `ih35-cpa-accounting-decisions`, `ih35-financial-migrations`.
+Binds to: `docs/specs/QUALITY-STANDARD-LOCKED.md` (Rule #0), `docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md` (linkage law), `.cursor/rules/07-never-delete-only-add.mdc` (archive-never-delete), `.cursor/rules/13-financial-and-accounting-law.mdc` (financial cluster = owner-gated; no new GL math solo), `.cursor/rules/16-fix-not-patch-evidence-law.mdc`. Skills: `ih35-accounting-decisions`, `ih35-financial-migrations`.
 
 ---
 

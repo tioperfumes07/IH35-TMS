@@ -10,7 +10,7 @@
 >   are **separate** agents on the future PR.
 > - Spec sources: Rule 01 (`IH35_MASTER_BLUEPRINT_v3_FULL.md`, `IH35_UNIFIED_BLUEPRINT_ADDITIONS.md`,
 >   `IH35_ARCHITECTURAL_DESIGN.md`), Law of the Land (`ARCHITECTURE-BLUEPRINT-2026-07-05.md`),
->   CPA locks (`.claude/skills/ih35-cpa-accounting-decisions`), never-delete law (`.cursor/rules/07`).
+>   CPA locks (`.claude/skills/ih35-accounting-decisions`), never-delete law (`.cursor/rules/07`).
 > - Doc-only exception: Rule 02 §Exception — this commit touches no code logic.
 
 ---

@@ -1,0 +1,396 @@
+{
+  "_comment": "0519-es1-58 unscoped-table scope-proof registry (ACCT-R-12). Source: entity-isolation remediation_backlog P1 no-opco rows + accounting.expense_lines.",
+  "auditClaimCount": 58,
+  "enumeratedCount": 57,
+  "tables": [
+    {
+      "table": "accounting.ar_collection_contacts",
+      "forceRlsStatus": "deferred",
+      "disposition": "scope_proof_deferred"
+    },
+    {
+      "table": "accounting.bill_lines",
+      "forceRlsStatus": "enforced",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "bill_id",
+      "parent": "accounting.bills",
+      "fkStatus": "deferred",
+      "parentIsolationStatus": "enforced"
+    },
+    {
+      "table": "accounting.expense_lines",
+      "forceRlsStatus": "enforced",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "expense_id",
+      "parent": "accounting.expenses",
+      "fkStatus": "enforced",
+      "parentIsolationStatus": "enforced"
+    },
+    {
+      "table": "accounting.line_category_load_required",
+      "forceRlsStatus": "enforced",
+      "disposition": "global_by_design"
+    },
+    {
+      "table": "accounting.recurring_bill_generation_log",
+      "forceRlsStatus": "deferred",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "recurring_bill_id",
+      "parent": "accounting.recurring_bills",
+      "fkStatus": "deferred",
+      "parentIsolationStatus": "deferred"
+    },
+    {
+      "table": "audit.audit_events",
+      "forceRlsStatus": "enforced",
+      "disposition": "infra_control_plane"
+    },
+    {
+      "table": "catalogs.account_types",
+      "forceRlsStatus": "deferred",
+      "disposition": "global_by_design"
+    },
+    {
+      "table": "catalogs.audit_event_types",
+      "forceRlsStatus": "deferred",
+      "disposition": "global_by_design"
+    },
+    {
+      "table": "catalogs.cancellation_reasons",
+      "forceRlsStatus": "deferred",
+      "disposition": "global_by_design"
+    },
+    {
+      "table": "catalogs.catalog_registry",
+      "forceRlsStatus": "enforced",
+      "disposition": "global_by_design"
+    },
+    {
+      "table": "catalogs.excel_upload_jobs",
+      "forceRlsStatus": "enforced",
+      "disposition": "infra_control_plane"
+    },
+    {
+      "table": "catalogs.file_categories",
+      "forceRlsStatus": "enforced",
+      "disposition": "global_by_design"
+    },
+    {
+      "table": "catalogs.journal_entry_types",
+      "forceRlsStatus": "enforced",
+      "disposition": "global_by_design"
+    },
+    {
+      "table": "catalogs.mexico_states",
+      "forceRlsStatus": "enforced",
+      "disposition": "global_by_design"
+    },
+    {
+      "table": "catalogs.tire_positions",
+      "forceRlsStatus": "deferred",
+      "disposition": "global_by_design"
+    },
+    {
+      "table": "catalogs.us_states",
+      "forceRlsStatus": "enforced",
+      "disposition": "global_by_design"
+    },
+    {
+      "table": "catalogs.wo_cancellation_reasons",
+      "forceRlsStatus": "deferred",
+      "disposition": "global_by_design"
+    },
+    {
+      "table": "catalogs.workflow_requests",
+      "forceRlsStatus": "enforced",
+      "disposition": "infra_control_plane"
+    },
+    {
+      "table": "compliance.appraisal_districts",
+      "forceRlsStatus": "enforced",
+      "disposition": "global_by_design"
+    },
+    {
+      "table": "compliance.form_425c_exhibit_a_entries",
+      "forceRlsStatus": "deferred",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "filing_id",
+      "parent": "compliance.form_425c_filings",
+      "fkStatus": "deferred",
+      "parentIsolationStatus": "deferred"
+    },
+    {
+      "table": "compliance.form_425c_exhibit_b_entries",
+      "forceRlsStatus": "deferred",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "filing_id",
+      "parent": "compliance.form_425c_filings",
+      "fkStatus": "deferred",
+      "parentIsolationStatus": "deferred"
+    },
+    {
+      "table": "dispatch.load_eta_predictions",
+      "forceRlsStatus": "deferred",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "load_id",
+      "parent": "mdata.loads",
+      "fkStatus": "enforced",
+      "parentIsolationStatus": "enforced"
+    },
+    {
+      "table": "docs.file_links",
+      "forceRlsStatus": "enforced",
+      "disposition": "infra_control_plane"
+    },
+    {
+      "table": "expense_attribution.expense_seq_per_load",
+      "forceRlsStatus": "deferred",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "load_id",
+      "parent": "mdata.loads",
+      "fkStatus": "enforced",
+      "parentIsolationStatus": "enforced"
+    },
+    {
+      "table": "identity.workflow_requests",
+      "forceRlsStatus": "enforced",
+      "disposition": "infra_control_plane"
+    },
+    {
+      "table": "ifta.personal_conveyance_miles_by_quarter",
+      "forceRlsStatus": "enforced",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "quarter_id",
+      "parent": "ifta.quarter_reports",
+      "fkStatus": "deferred",
+      "parentIsolationStatus": "deferred"
+    },
+    {
+      "table": "ifta.state_gallons_by_quarter",
+      "forceRlsStatus": "deferred",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "quarter_id",
+      "parent": "ifta.quarter_reports",
+      "fkStatus": "deferred",
+      "parentIsolationStatus": "deferred"
+    },
+    {
+      "table": "ifta.state_miles_by_quarter",
+      "forceRlsStatus": "deferred",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "quarter_id",
+      "parent": "ifta.quarter_reports",
+      "fkStatus": "deferred",
+      "parentIsolationStatus": "deferred"
+    },
+    {
+      "table": "ifta.state_tax_by_quarter",
+      "forceRlsStatus": "deferred",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "quarter_id",
+      "parent": "ifta.quarter_reports",
+      "fkStatus": "deferred",
+      "parentIsolationStatus": "deferred"
+    },
+    {
+      "table": "maintenance.wo_status_history",
+      "forceRlsStatus": "enforced",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "work_order_id",
+      "parent": "maintenance.work_orders",
+      "fkStatus": "enforced",
+      "parentIsolationStatus": "enforced"
+    },
+    {
+      "table": "maintenance.work_order_lines",
+      "forceRlsStatus": "enforced",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "work_order_id",
+      "parent": "maintenance.work_orders",
+      "fkStatus": "deferred",
+      "parentIsolationStatus": "enforced"
+    },
+    {
+      "table": "mdata.customer_contacts",
+      "forceRlsStatus": "enforced",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "customer_id",
+      "parent": "mdata.customers",
+      "fkStatus": "deferred",
+      "parentIsolationStatus": "deferred"
+    },
+    {
+      "table": "mdata.customer_quality_events",
+      "forceRlsStatus": "enforced",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "customer_id",
+      "parent": "mdata.customers",
+      "fkStatus": "enforced",
+      "parentIsolationStatus": "enforced"
+    },
+    {
+      "table": "mdata.dispatcher_safety_events",
+      "forceRlsStatus": "enforced",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "dispatcher_id",
+      "parent": "mdata.dispatchers",
+      "fkStatus": "deferred",
+      "parentIsolationStatus": "deferred"
+    },
+    {
+      "table": "mdata.driver_cdl_endorsements",
+      "forceRlsStatus": "enforced",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "driver_id",
+      "parent": "mdata.drivers",
+      "fkStatus": "enforced",
+      "parentIsolationStatus": "enforced"
+    },
+    {
+      "table": "mdata.driver_cdl_restrictions",
+      "forceRlsStatus": "enforced",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "driver_id",
+      "parent": "mdata.drivers",
+      "fkStatus": "enforced",
+      "parentIsolationStatus": "enforced"
+    },
+    {
+      "table": "mdata.driver_equipment_qualifications",
+      "forceRlsStatus": "enforced",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "driver_id",
+      "parent": "mdata.drivers",
+      "fkStatus": "enforced",
+      "parentIsolationStatus": "deferred"
+    },
+    {
+      "table": "mdata.driver_pay_rates",
+      "forceRlsStatus": "enforced",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "driver_id",
+      "parent": "mdata.drivers",
+      "fkStatus": "deferred",
+      "parentIsolationStatus": "deferred"
+    },
+    {
+      "table": "mdata.driver_safety_events",
+      "forceRlsStatus": "enforced",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "driver_id",
+      "parent": "mdata.drivers",
+      "fkStatus": "enforced",
+      "parentIsolationStatus": "deferred"
+    },
+    {
+      "table": "mdata.equipment",
+      "forceRlsStatus": "enforced",
+      "disposition": "dual_ownership"
+    },
+    {
+      "table": "mdata.equipment_log",
+      "forceRlsStatus": "enforced",
+      "disposition": "dual_ownership"
+    },
+    {
+      "table": "mdata.load_stops",
+      "forceRlsStatus": "deferred",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "load_id",
+      "parent": "mdata.loads",
+      "fkStatus": "enforced",
+      "parentIsolationStatus": "enforced"
+    },
+    {
+      "table": "mdata.units",
+      "forceRlsStatus": "enforced",
+      "disposition": "dual_ownership"
+    },
+    {
+      "table": "mdata.workflow_requests",
+      "forceRlsStatus": "enforced",
+      "disposition": "infra_control_plane"
+    },
+    {
+      "table": "notifications.user_notification_preferences",
+      "forceRlsStatus": "deferred",
+      "disposition": "infra_control_plane"
+    },
+    {
+      "table": "ops.program_board_notes",
+      "forceRlsStatus": "enforced",
+      "disposition": "infra_control_plane"
+    },
+    {
+      "table": "outbox.events",
+      "forceRlsStatus": "deferred",
+      "disposition": "infra_control_plane"
+    },
+    {
+      "table": "outbox.outbox_queue",
+      "forceRlsStatus": "deferred",
+      "disposition": "infra_control_plane"
+    },
+    {
+      "table": "reports.scheduled_delivery_log",
+      "forceRlsStatus": "deferred",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "scheduled_report_id",
+      "parent": "reports.scheduled_reports",
+      "fkStatus": "deferred",
+      "parentIsolationStatus": "enforced"
+    },
+    {
+      "table": "settlements.settlement_disputes",
+      "forceRlsStatus": "deferred",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "settlement_id",
+      "parent": "driver_finance.driver_settlements",
+      "fkStatus": "enforced",
+      "parentIsolationStatus": "enforced"
+    },
+    {
+      "table": "shipper_portal.portal_password_reset_tokens",
+      "forceRlsStatus": "deferred",
+      "disposition": "infra_control_plane"
+    },
+    {
+      "table": "shipper_portal.portal_sessions",
+      "forceRlsStatus": "deferred",
+      "disposition": "infra_control_plane"
+    },
+    {
+      "table": "tasks.note",
+      "forceRlsStatus": "deferred",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "task_id",
+      "parent": "tasks.tasks",
+      "fkStatus": "deferred",
+      "parentIsolationStatus": "enforced"
+    },
+    {
+      "table": "tasks.status_history",
+      "forceRlsStatus": "deferred",
+      "disposition": "inherit_via_parent",
+      "parentIdCol": "task_id",
+      "parent": "tasks.tasks",
+      "fkStatus": "deferred",
+      "parentIsolationStatus": "enforced"
+    },
+    {
+      "table": "tasks.task_type_seed",
+      "forceRlsStatus": "deferred",
+      "disposition": "global_by_design"
+    },
+    {
+      "table": "usmca_ops.activation_audit",
+      "forceRlsStatus": "deferred",
+      "disposition": "infra_control_plane"
+    },
+    {
+      "table": "usmca_ops.activation_state",
+      "forceRlsStatus": "deferred",
+      "disposition": "infra_control_plane"
+    }
+  ]
+}

@@ -75,7 +75,7 @@ categorization differs between the two books. That reconciliation is the **conti
 Older PARALLEL-BOOKS wording (2026-07-11) that declared the 12/31/2025 SoR framing **retired** and named
 QBO the indefinite sole source of truth is **superseded by this three-layer model** (owner/CPA release
 correction 2026-07-19). `docs/specs/ACCOUNTING-ARCHITECTURE.md` and
-`.claude/skills/ih35-cpa-accounting-decisions/` must state the same three layers. Ceremony language for
+`.claude/skills/ih35-accounting-decisions/` must state the same three layers. Ceremony language for
 **QBO-PUSH** flips (event-gated, to-the-cent tieout) remains valid for kill-switch flips — it does **not**
 retire Layer 1’s historical transaction authority dates. Clone-once, reconcile-only, no write-back,
 flags-OFF, factoring = secured borrowing, and escrow = liability remain locked.
@@ -84,7 +84,7 @@ flags-OFF, factoring = secured borrowing, and escrow = liability remain locked.
 
 Governance-only lock (no executable posting/migration in this phase). Full narrative:
 `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` (2026-07-18 CPA Answers section) and
-`.claude/skills/ih35-cpa-accounting-decisions/`.
+`.claude/skills/ih35-accounting-decisions/`.
 
 0. **Three-layer SoR model (same as above):** (1) historical transaction authority — QBO through
    **12/31/2025**, TMS ledger authority from **2026-01-01**; (2) Ch.11 operating/GL cutover — OB
@@ -138,4 +138,4 @@ Governance-only lock (no executable posting/migration in this phase). Full narra
 - `docs/OWNER-RULING-flag-flips-sole-owner-decision-2026-07-11.md` — owner ruling on flag-flips as the
   owner's sole decision (money/GL flips); does not retire Layer 1 historical SoR dates.
 - `docs/lockdown/00_LOCKED_DECISIONS.md` §8 — the registered locked decision.
-- `.claude/skills/ih35-cpa-accounting-decisions/SKILL.md` — locked CPA decision skill + reference card.
+- `.claude/skills/ih35-accounting-decisions/SKILL.md` — locked CPA decision skill + reference card.

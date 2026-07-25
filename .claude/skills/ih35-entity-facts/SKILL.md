@@ -49,4 +49,4 @@ local CLAUDE.md/secrets, never hard-code them in tracked code.
 
 ---
 Cross-refs: [[cross-entity-leak-audit-usmca]], [[multi-entity-coa-path-b]], [[legal-finance-ownership-option-b]],
-[[finance-engine-decisions-locked]], [[ih35-cpa-accounting-decisions]]. The one rule: **know which entity, every time.**
+[[finance-engine-decisions-locked]], [[ih35-accounting-decisions]]. The one rule: **know which entity, every time.**

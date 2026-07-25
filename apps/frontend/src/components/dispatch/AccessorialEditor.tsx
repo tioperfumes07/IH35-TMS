@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { additionalChargesCatalogClient } from "../../api/catalogs-dispatch";
-import { SelectCombobox } from "../shared/SelectCombobox";
+import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { MoneyInput } from "../forms/MoneyInput";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
@@ -82,10 +82,13 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
 
   function handleCodeChange(id: string, code: string) {
     const option = catalogOptions.find((o) => o.value === code);
+    const existing = rows.find((r) => r.id === id);
     onRowsChange(
       updateRow(rows, id, {
         code,
-        description: option?.description ?? option?.label ?? "",
+        // A code created inline is not in catalogOptions until the refetch lands — keep whatever
+        // description the row already had rather than blanking it in that window.
+        description: option?.description ?? option?.label ?? existing?.description ?? "",
       })
     );
   }
@@ -100,19 +103,23 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
         key: "code",
         label: "Code",
         sortable: true,
+        // LST-PICKER-03: the accessorial code picker now inherits the shared picker law — "+ Create
+        // Accessorial charge" is the permanent FIRST ROW INSIDE the dropdown (no external button),
+        // and the create writes catalogs.additional_charges, the same table this list reads, so a
+        // code created mid-booking is still there after a reload. Options are keyed by `code`, so
+        // createdValueField="code" selects the new row by the value this editor actually stores.
         render: (row) => (
-          <SelectCombobox
-            value={row.code}
-            onChange={(event) => handleCodeChange(row.id, event.target.value)}
-            className="h-7 w-full min-w-28 text-xs"
-          >
-            <option value="">{catalogQuery.isLoading ? "Loading codes…" : "Select code"}</option>
-            {catalogOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </SelectCombobox>
+          <ReferenceSelect
+            value={row.code || null}
+            onChange={(next) => handleCodeChange(row.id, next ?? "")}
+            options={catalogOptions.map((o) => ({ value: o.value, label: o.label }))}
+            createKind="additional_charge"
+            operatingCompanyId={operatingCompanyId}
+            createdValueField="code"
+            loading={catalogQuery.isLoading}
+            placeholder="Select code"
+            onOptionCreated={() => void catalogQuery.refetch()}
+          />
         ),
       },
       {
@@ -156,7 +163,7 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
         ),
       },
     ];
-  }, [catalogOptions, catalogQuery.isLoading, onRowsChange, rows]);
+  }, [catalogOptions, catalogQuery, operatingCompanyId, onRowsChange, rows]);
 
   const catalogErr = catalogQuery.error as { status?: number; message?: string } | null;
 
