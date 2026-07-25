@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 
-const MIGRATION = "db/migrations/202607940000_journal_entries_type_fk.sql";
+const MIGRATION = "db/migrations/202607960000_journal_entries_type_fk.sql";
 const HELD = "db/migrations/.held-migrations.json";
 const SERVICE = "apps/backend/src/accounting/journal-entries.service.ts";
 const ROUTES = "apps/backend/src/accounting/journal-entries.routes.ts";
@@ -47,7 +47,7 @@ if (mig) {
 }
 
 const held = read(HELD);
-if (held && !held.includes("202607940000_journal_entries_type_fk.sql")) {
+if (held && !held.includes("202607960000_journal_entries_type_fk.sql")) {
   fail(`${HELD} missing ledger entry for ${MIGRATION}`);
 }
 
