@@ -23,10 +23,11 @@ type CatalogFactoryConfig = {
   readOnly?: boolean;
   // PER-ENTITY (owner ruling 2026-07-24): when true, the catalog carries operating_company_id and
   // every read/write is membership-checked + RLS-scoped to that entity via withCompanyScope, and the
-  // uniqueness of `code` is per-entity. When false/omitted the catalog stays GLOBAL (its historical
-  // behavior) — used by tables not yet converted (e.g. equipment_types, whose dual write-surface is
-  // handled in a separate PR). Migration 202607860000 makes the 8 fleet/asset catalogs companyScoped.
-  companyScoped?: boolean;
+  // uniqueness of `code` is per-entity. REQUIRED explicitly (LST-F02b) — omitting used to default to
+  // GLOBAL and silently re-introduce the entity-blind factory. tire_positions is GLOBAL-BY-DESIGN and
+  // lives in tire-positions.routes.ts (not this factory). Migration 202607860000 + equipment_types
+  // conversion cover the companyScoped:true fleet catalogs registered in index.ts.
+  companyScoped: boolean;
 };
 
 // Minimal structural client — matches both withCurrentUser's client and withCompanyScope's DbClient.

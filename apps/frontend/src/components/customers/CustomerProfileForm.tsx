@@ -450,7 +450,13 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
   // that pre-fills invoice lines — the user can always override it. Scoped to Income-type accounts.
   const incomeAccountsQuery = useQuery({
     queryKey: ["catalog-accounts", "income-for-customer-default", operatingCompanyId],
-    queryFn: () => listCatalogAccounts({ status: "active", operating_company_id: operatingCompanyId }),
+    // LST-F14: default income account is a posting target — postable_only.
+    queryFn: () =>
+      listCatalogAccounts({
+        status: "active",
+        operating_company_id: operatingCompanyId,
+        postable_only: true,
+      }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 5 * 60 * 1000,
   });
