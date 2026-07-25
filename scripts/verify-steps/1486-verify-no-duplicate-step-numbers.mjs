@@ -1,11 +1,16 @@
-// 1483-verify-no-duplicate-step-numbers — verify-step NUMBER uniqueness ratchet.
+// 1486-verify-no-duplicate-step-numbers — verify-step NUMBER uniqueness ratchet.
 //
 // Deliberately a NUMBERED step, not an `_meta-` file. Rule 17 wires guards through
 // `scripts/verify-steps/NNNN-*.mjs` only, and the runner in verify-pre-commit.mjs filters with
 // `!f.startsWith("_")` — an underscore-prefixed guard would never execute under it and would need a second
 // registration in scripts/verify-guards/ to run at all. A guard that polices numbering while being exempt
-// from numbering is also the weaker design: 1483 is claimed like any other, so this file is subject to the
+// from numbering is also the weaker design: 1486 is claimed like any other, so this file is subject to the
 // rule it enforces.
+//
+// Originally authored as 1483 — which collided with 1483-verify-held-registry-ledger-parity.mjs on an open
+// branch. A duplicate-number guard that itself duplicated a number is the strongest possible argument for
+// its own existence: I checked the numbers in MY tree and not the ones already claimed in open PRs. Claiming
+// a number requires checking open branches too, not just main.
 //
 // WHY THIS EXISTS: 87 distinct numeric-prefix collision groups exist in scripts/verify-steps/ — one number
 // is shared by SIX files. It does NOT shadow anything: verify-pre-commit.mjs enumerates full filenames and
