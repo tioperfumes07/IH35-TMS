@@ -579,12 +579,6 @@
     },
     {
       "schema": "catalogs",
-      "table": "dispatcher_error_reasons",
-      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
-      "phase": "P1"
-    },
-    {
-      "schema": "catalogs",
       "table": "excel_upload_jobs",
       "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
       "phase": "P1"
@@ -1122,18 +1116,6 @@
       "table": "unit_period",
       "reason": "needs FK from 'operating_company_id' to org.companies(id)",
       "phase": "P4"
-    },
-    {
-      "schema": "catalogs",
-      "table": "payment_terms",
-      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
-      "phase": "P1"
-    },
-    {
-      "schema": "catalogs",
-      "table": "posting_templates",
-      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
-      "phase": "P1"
     }
   ]
 }
