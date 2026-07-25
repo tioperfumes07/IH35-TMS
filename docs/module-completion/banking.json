@@ -2,8 +2,8 @@
   "module": "banking",
   "title": "Banking (Module 4)",
   "complete": false,
-  "as_of": "2026-07-25T04:34:39.000Z",
-  "live_sha": "a3f9c12",
+  "as_of": "2026-07-25T16:50:00.000Z",
+  "live_sha": "b4c3158",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md",
   "spec_sources": [
     "docs/specs/DEFINITION-OF-DONE.md",
@@ -35,7 +35,7 @@
       ],
       "spec": "Match/Categorize \u2192 JE",
       "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25 03:41Z: matched_je=3/10628; categorized_at_not_null=3 \u2014 unchanged since last read. Poster works when used (#3424 on main). Density is ops backlog \u2014 not a broken poster.",
+      "evidence": "LIVE REFRESH 2026-07-25 16:50Z: matched_je=3/10628; categorized_at_not_null=3 — unchanged. Poster path wired (#3424 merged on main): bulk categorize→maybePostBankCategorizationToGl sets matched_journal_entry_id when flag ON. Density is ops backlog — not a broken poster. GUARD: verify-step 1480 (verify-bank-econ-02-poster-path-wired). FAIL until operator categorizes at scale + Neon re-count.",
       "pr": "#3424"
     },
     {
@@ -104,7 +104,7 @@
       ],
       "spec": "QBO banking parity",
       "status": "FAIL",
-      "evidence": "Same as BANK-ECON-02: 10619 pending; when categorized (n=3) JE stamped 100%. Active UI calls /categorize-bulk with poster after #3424.",
+      "evidence": "Same as BANK-ECON-02: 10625 pending; when categorized (n=3) JE stamped 100%. Active UI calls /categorize-bulk with poster (#3424 merged). verify-step 1480 pins wiring; density FAIL is ops backlog.",
       "pr": "#3424"
     },
     {
