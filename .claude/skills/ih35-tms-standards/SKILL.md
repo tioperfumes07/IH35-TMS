@@ -55,9 +55,9 @@ silently hit PROD — validate on a LOCAL PG (`DATABASE_DIRECT_URL= DATABASE_URL
 `ALLOW_PROD_MIGRATE=1`.
 
 ## §3. Workflow — sync first (local clone lags main); fresh branch per change; build/verify locally
-(`tsc -b`, `vitest`, relevant `verify-*`); commit/push with `--no-verify` only for env-broken hooks and let CI
-gate; `gh pr create` with root-cause+scope+verification; merge only per §1 (squash); verify deploy by
-health-SHA ancestry; never `git add -A` (untracked `.claude/worktrees`).
+(`tsc -b`, `vitest`, relevant `verify-*`) before every commit/push — never skip the hook, fix the
+underlying hook failure instead; `gh pr create` with root-cause+scope+verification; merge only per §1
+(squash); verify deploy by health-SHA ancestry; never `git add -A` (untracked `.claude/worktrees`).
 
 ## §4. Schema reality & landmines (verify names against prod before writing SQL)
 No `ih35_app.*` data schema. loads=`mdata.loads` (`rate_total_cents`=GROSS; `assigned_primary_driver_id`);
