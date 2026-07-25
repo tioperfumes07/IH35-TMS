@@ -483,6 +483,10 @@
     {
       "file": "202607960000_journal_entries_type_fk.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] ACCT-LINK-01 — additive nullable accounting.journal_entries.journal_entry_type_id → catalogs.journal_entry_types(id) + partial index. Closes the AF-5 metadata-only island (catalog had 16 rows / 0 inbound FKs). App create path is col-gated until Neon-apply. No GL math. NOT YET applied on prod — throwaway PG apply-twice; owner Neon-apply + ledger-backfill; then re-measure inbound FK density before flipping ACCT-LINK-01 to PASS."
+    },
+    {
+      "file": "202607970000_complaint_types_per_entity_parity_seed.sql",
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL] LST-SEED-01 — catalogs.complaint_types DATA parity seed. Prod (lucia, br-fancy-credit-akjnd07a 2026-07-25): TRANSP 271/271 active, TRK 12/12, USMCA 12/12; 295 rows / 271 distinct type_code, so TRK+USMCA codes are a strict subset of TRANSP and the copy inserts exactly 259+259=518 rows. Table is ALREADY scoped (opco NOT NULL + FK, UNIQUE(operating_company_id,type_code), relforcerowsecurity=true, policy complaint_types_tenant_scope_usmca1) — this is a seed, NOT a conversion, and the existing NULLIF/::uuid policy is deliberately left untouched (replacing it with a ::text company_scope policy would regress verify-rls-uuid-cast-nullif). Also REVOKEs the stray DELETE that ih35_app still held on this table. Primary resolved dynamically by org.companies.code='TRANSP' with an earliest-active fallback — NO hardcoded UUID. Additive INSERT-only + ON CONFLICT DO NOTHING (Invariant #24: no DROP/DELETE/TRUNCATE); in-migration parity assertion RAISEs if any active entity is off parity. NOT YET applied on prod — validated apply-twice on a local throwaway Postgres; owner applies on Neon then both-ledger backfills to the committed sha256; GUARD re-verifies 271/271/271 live."
     }
   ]
 }
