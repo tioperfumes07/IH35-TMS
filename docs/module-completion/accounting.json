@@ -2,8 +2,8 @@
   "module": "accounting",
   "title": "Accounting (Module 3)",
   "complete": false,
-  "as_of": "2026-07-24T23:30:00Z",
-  "live_sha": "2088757",
+  "as_of": "2026-07-25T00:06:12.016Z",
+  "live_sha": "fc1cf13",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md",
   "spec_sources": [
     "docs/specs/DEFINITION-OF-DONE.md",
@@ -19,7 +19,7 @@
         "DOD-D",
         "VERIFY-6"
       ],
-      "spec": "DoD VERIFY-6 economics \u2014 never header-only",
+      "spec": "DoD VERIFY-6 economics — never header-only",
       "status": "PASS",
       "evidence": "Neon lucia: bills=16212 bill_lines=155049 (2026-07-24)",
       "pr": "#3382"
@@ -32,9 +32,9 @@
         "DOD-E",
         "VERIFY-6"
       ],
-      "spec": "DoD VERIFY-6 \u00b7 Bill+BillPayment chain",
-      "status": "FAIL",
-      "evidence": "Neon lucia: bill_payments=0; qbo_ap_bill_payments=0; projection flag OFF",
+      "spec": "DoD VERIFY-6 · Bill+BillPayment chain",
+      "status": "PASS",
+      "evidence": "Neon lucia 2026-07-25: bill_payments=6479 (all qbo-sourced); qbo_ap_bill_payments=6313; QBO_AP_BILL_PAYMENTS_PROJECTION_ENABLED=true TRANSP; sync_runs ap_bill_payments_inbound_mirror success×2 last 23:23Z",
       "pr": "#3398"
     },
     {
@@ -45,10 +45,10 @@
         "DOD-E",
         "VERIFY-6"
       ],
-      "spec": "DoD VERIFY-6 \u00b7 Receive Payment",
+      "spec": "DoD VERIFY-6 · Receive Payment",
       "status": "FAIL",
-      "evidence": "Neon lucia: payments=0; qbo_ar_payments=0; pull flag ON but qbo.sync_runs empty",
-      "pr": "#3411"
+      "evidence": "Neon lucia 2026-07-25: payments=0 payment_applications=0; qbo_ar_payments=23830; pull ON + sync_runs ar_payments_inbound_mirror success 23:12Z; QBO_AR_PAYMENTS_PROJECTION_ENABLED=false TRANSP pending #3433 deploy (idle_in_transaction FATAL)",
+      "pr": "#3433"
     },
     {
       "id": "ACCT-ECON-04",
@@ -58,10 +58,10 @@
         "DOD-E",
         "VERIFY-6"
       ],
-      "spec": "DoD VERIFY-6 \u00b7 Expense chain",
+      "spec": "DoD VERIFY-6 · Expense chain",
       "status": "FAIL",
-      "evidence": "Neon lucia: expenses=0; qbo_purchases=0",
-      "pr": "#3399"
+      "evidence": "Neon lucia 2026-07-25: expenses=0 expense_lines=0; qbo_purchases=27984; pull ON + sync_runs qbo_purchases_inbound_mirror success×2 last 23:25Z; QBO_EXPENSES_PROJECTION_ENABLED=false TRANSP pending #3433",
+      "pr": "#3433"
     },
     {
       "id": "ACCT-ECON-05",
@@ -72,7 +72,7 @@
       ],
       "spec": "Vendor credit apply/void",
       "status": "FAIL",
-      "evidence": "Neon lucia: vendor_credits=0",
+      "evidence": "Neon lucia 2026-07-25: vendor_credits=0 — path exists (#3426) but no live rows",
       "pr": "#3426"
     },
     {
@@ -83,10 +83,10 @@
         "VERIFY-6",
         "DOD-E"
       ],
-      "spec": "ACCT-F01 \u00b7 inbound wiring",
-      "status": "FAIL",
-      "evidence": "qbo.sync_runs=0 rows; mirrors exist empty despite pull flag ON",
-      "pr": null
+      "spec": "ACCT-F01 · inbound wiring",
+      "status": "PASS",
+      "evidence": "Neon lucia 2026-07-25: qbo_ar_payments=23830; qbo.sync_runs kind=ar_payments_inbound_mirror status=success n=1 completed 2026-07-24T23:12:22Z",
+      "pr": "#3411"
     },
     {
       "id": "ACCT-PULL-02",
@@ -96,8 +96,8 @@
         "VERIFY-6"
       ],
       "spec": "ACCT-F01 AP side",
-      "status": "FAIL",
-      "evidence": "mdata.qbo_ap_bill_payments=0",
+      "status": "PASS",
+      "evidence": "Neon lucia 2026-07-25: qbo_ap_bill_payments=6313; sync_runs ap_bill_payments_inbound_mirror success×2 last 2026-07-24T23:23:41Z",
       "pr": "#3398"
     },
     {
@@ -108,8 +108,8 @@
         "VERIFY-6"
       ],
       "spec": "ACCT-F01 expense side",
-      "status": "FAIL",
-      "evidence": "mdata.qbo_purchases=0",
+      "status": "PASS",
+      "evidence": "Neon lucia 2026-07-25: qbo_purchases=27984; sync_runs qbo_purchases_inbound_mirror success×2 last 2026-07-24T23:25:26Z",
       "pr": "#3399"
     },
     {
@@ -119,7 +119,7 @@
         "DOD-C",
         "VERIFY-4"
       ],
-      "spec": "Law \u00a79 \u00b7 ACCT-F02",
+      "spec": "Law §9 · ACCT-F02",
       "status": "FAIL",
       "evidence": "16 rows, 0 inbound FKs; JE has no type column",
       "pr": null
@@ -132,7 +132,7 @@
         "VERIFY-4",
         "VERIFY-5"
       ],
-      "spec": "Law \u00a79 \u00b7 ACCT-F03",
+      "spec": "Law §9 · ACCT-F03",
       "status": "FAIL",
       "evidence": "144 rows 0 inbound FKs; accounts.account_subtype text",
       "pr": null
@@ -144,7 +144,7 @@
         "DOD-C",
         "VERIFY-4"
       ],
-      "spec": "ACCT-F04 \u00b7 Claim/WO reverse",
+      "spec": "ACCT-F04 · Claim/WO reverse",
       "status": "FAIL",
       "evidence": "vendor_id=16212; unit/claim/wo = 0",
       "pr": "#3425"
@@ -175,7 +175,7 @@
     },
     {
       "id": "ACCT-SURF-01",
-      "title": "Bills family \u2014 DoD A\u2013E + VERIFY 1\u20138 on live surfaces",
+      "title": "Bills family — DoD A–E + VERIFY 1–8 on live surfaces",
       "layers": [
         "DOD-A",
         "DOD-B",
@@ -191,14 +191,14 @@
         "VERIFY-7",
         "VERIFY-8"
       ],
-      "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Bills \u25be",
+      "spec": "EVERY-PR-AUDIT-CHECKLIST · Bills ▾",
       "status": "UNVERIFIED",
-      "evidence": "Lines dense; payment density 0; wizard depth not re-audited field-by-field 2026-07-24",
+      "evidence": "Lines dense; bill_payments=6479 live; wizard depth not re-audited field-by-field 2026-07-25",
       "pr": null
     },
     {
       "id": "ACCT-SURF-02",
-      "title": "Expenses \u2014 DoD A\u2013E + VERIFY 1\u20138 with live rows",
+      "title": "Expenses — DoD A–E + VERIFY 1–8 with live rows",
       "layers": [
         "DOD-A",
         "DOD-B",
@@ -214,14 +214,14 @@
         "VERIFY-7",
         "VERIFY-8"
       ],
-      "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Expenses \u25be",
+      "spec": "EVERY-PR-AUDIT-CHECKLIST · Expenses ▾",
       "status": "FAIL",
-      "evidence": "expenses=0 \u2014 cannot prove reverse/economics live",
-      "pr": null
+      "evidence": "expenses=0 — cannot prove reverse/economics live until #3433 deploy + projection ON",
+      "pr": "#3433"
     },
     {
       "id": "ACCT-SURF-03",
-      "title": "Bill payment \u2014 DoD A\u2013E + VERIFY 1\u20138 with live rows",
+      "title": "Bill payment — DoD A–E + VERIFY 1–8 with live rows",
       "layers": [
         "DOD-A",
         "DOD-B",
@@ -237,14 +237,14 @@
         "VERIFY-7",
         "VERIFY-8"
       ],
-      "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Bill payment \u25be",
-      "status": "FAIL",
-      "evidence": "bill_payments=0",
+      "spec": "EVERY-PR-AUDIT-CHECKLIST · Bill payment ▾",
+      "status": "UNVERIFIED",
+      "evidence": "bill_payments=6479 density PASS; DoD A–E + VERIFY 1–8 surface click-through not re-run 2026-07-25",
       "pr": null
     },
     {
       "id": "ACCT-SURF-04",
-      "title": "Receive Payment \u2014 DoD A\u2013E + VERIFY 1\u20138 with live rows",
+      "title": "Receive Payment — DoD A–E + VERIFY 1–8 with live rows",
       "layers": [
         "DOD-A",
         "DOD-B",
@@ -260,33 +260,33 @@
         "VERIFY-7",
         "VERIFY-8"
       ],
-      "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Receive Payment",
+      "spec": "EVERY-PR-AUDIT-CHECKLIST · Receive Payment",
       "status": "FAIL",
-      "evidence": "payments=0",
-      "pr": null
+      "evidence": "payments=0 — blocked on AR projection OFF (#3433)",
+      "pr": "#3433"
     },
     {
       "id": "ACCT-SURF-05",
-      "title": "Journal Entries \u2014 type catalog wired + reverse drill",
+      "title": "Journal Entries — type catalog wired + reverse drill",
       "layers": [
         "DOD-C",
         "VERIFY-4",
         "VERIFY-7"
       ],
-      "spec": "ACCT-F02 \u00b7 JE tab",
+      "spec": "ACCT-F02 · JE tab",
       "status": "FAIL",
       "evidence": "JE type island; 8 JEs sparse",
       "pr": null
     },
     {
       "id": "ACCT-SURF-06",
-      "title": "Chart of Accounts / Detail Types \u2014 canonical detail_type link",
+      "title": "Chart of Accounts / Detail Types — canonical detail_type link",
       "layers": [
         "DOD-C",
         "VERIFY-5",
         "VERIFY-2"
       ],
-      "spec": "ACCT-F03 \u00b7 CoA",
+      "spec": "ACCT-F03 · CoA",
       "status": "FAIL",
       "evidence": "text subtype only",
       "pr": null
@@ -299,14 +299,14 @@
         "VERIFY-3",
         "VERIFY-4"
       ],
-      "spec": "Law \u00a79 reverse",
+      "spec": "Law §9 reverse",
       "status": "UNVERIFIED",
       "evidence": "UI exists; live density for payments/expenses not proven",
       "pr": null
     },
     {
       "id": "ACCT-SURF-08",
-      "title": "Period close / Audit trail / Posting lineage \u2014 active path + evidence",
+      "title": "Period close / Audit trail / Posting lineage — active path + evidence",
       "layers": [
         "DOD-A",
         "DOD-E",
@@ -319,24 +319,24 @@
     },
     {
       "id": "ACCT-SURF-09",
-      "title": "Factoring / Escrow / Settlements cross-links from Accounting More \u25be",
+      "title": "Factoring / Escrow / Settlements cross-links from Accounting More ▾",
       "layers": [
         "DOD-C",
         "VERIFY-4"
       ],
-      "spec": "Law \u00a79 cross-module",
+      "spec": "Law §9 cross-module",
       "status": "UNVERIFIED",
       "evidence": "Nav leaves exist; economics density not module-closed",
       "pr": null
     },
     {
       "id": "ACCT-CTRL-01",
-      "title": "Parallel books \u2014 refuse invented TMS JE for qbo-sourced money",
+      "title": "Parallel books — refuse invented TMS JE for qbo-sourced money",
       "layers": [
         "VERIFY-6",
         "VERIFY-8"
       ],
-      "spec": "DoD owner money locks \u00b7 #3386/#3393",
+      "spec": "DoD owner money locks · #3386/#3393",
       "status": "PASS",
       "evidence": "Refuse-GL paths merged; flags default OFF",
       "pr": "#3386"
@@ -348,20 +348,20 @@
         "VERIFY-5",
         "VERIFY-8"
       ],
-      "spec": "DoD VERIFY-5 \u00b7 #3400",
+      "spec": "DoD VERIFY-5 · #3400",
       "status": "PASS",
       "evidence": "chart_of_accounts_roles=89 with lucia",
       "pr": "#3400"
     },
     {
       "id": "ACCT-GATE-01",
-      "title": "Every money PR uses EVERY-PR checklist (VERIFY-1..8) \u2014 process closed",
+      "title": "Every money PR uses EVERY-PR checklist (VERIFY-1..8) — process closed",
       "layers": [
         "DOD-E"
       ],
-      "spec": "docs/specs/EVERY-PR-AUDIT-CHECKLIST.md \u00b7 verify-step 1430",
-      "status": "OPEN",
-      "evidence": "Gate on #3430 \u2014 not yet on main as of audit",
+      "spec": "docs/specs/EVERY-PR-AUDIT-CHECKLIST.md · verify-step 1430",
+      "status": "PASS",
+      "evidence": "#3430 merged on main (sha fc1cf13); verify-steps 1430+1431 + Rule 24 live; money PRs require MODULE_PROGRESS trailers",
       "pr": "#3430"
     }
   ]
