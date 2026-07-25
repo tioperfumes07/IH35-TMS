@@ -2,7 +2,7 @@
   "module": "accounting",
   "title": "Accounting (Module 3)",
   "complete": false,
-  "as_of": "2026-07-25T03:41:00.000Z",
+  "as_of": "2026-07-25T16:29:00.000Z",
   "live_sha": "a3f9c12",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md",
   "spec_sources": [
@@ -47,7 +47,7 @@
       ],
       "spec": "DoD VERIFY-6 \u00b7 Receive Payment",
       "status": "FAIL",
-      "evidence": "Neon lucia 2026-07-25: payments=0 payment_applications=0; qbo_ar_payments=23830; pull ON + sync_runs ar_payments_inbound_mirror success 23:12Z; QBO_AR_PAYMENTS_PROJECTION_ENABLED=false TRANSP pending #3433 deploy (idle_in_transaction FATAL)",
+      "evidence": "FAIL-BY-DESIGN (ACCT-F01/F06 record block 2026-07-25) \u2014 not a bug chase: payments=0 because QBO_AR_PAYMENTS_PROJECTION_ENABLED is OFF BY OWNER DESIGN (parallel books, reconcile-only; flags default OFF per Rule 13), not a code defect. Neon lucia 2026-07-25: payments=0 payment_applications=0; qbo_ar_payments=23830 (mirror populated); pull ON + sync_runs ar_payments_inbound_mirror success 23:12Z. The prior idle-in-transaction crash (Sentry IH35-TMS-PROD-25) is fixed + merged as #3433 (set-based INSERT\u2026SELECT in projectArPaymentsToLedger, qbo-ar-payments-puller.ts) \u2014 code-level anti-pattern absence re-verified by guard verify-projection-flags-off-by-design (step 1468). Stays FAIL until the owner opts in per-entity + CPA sign-off flips the flag ON; deploy-SHA ancestry / post-deploy live re-pull are UNVERIFIED \u2014 GUARD re-verify required.",
       "pr": "#3433"
     },
     {
@@ -60,7 +60,7 @@
       ],
       "spec": "DoD VERIFY-6 \u00b7 Expense chain",
       "status": "FAIL",
-      "evidence": "Neon lucia 2026-07-25: expenses=0 expense_lines=0; qbo_purchases=27984; pull ON + sync_runs qbo_purchases_inbound_mirror success\u00d72 last 23:25Z; QBO_EXPENSES_PROJECTION_ENABLED=false TRANSP pending #3433",
+      "evidence": "FAIL-BY-DESIGN (ACCT-F01/F06 record block 2026-07-25) \u2014 not a bug chase: expenses=0 because QBO_EXPENSES_PROJECTION_ENABLED is OFF BY OWNER DESIGN (parallel books, reconcile-only; flags default OFF per Rule 13), not a code defect. Neon lucia 2026-07-25: expenses=0 expense_lines=0; qbo_purchases=27984 (mirror populated); pull ON + sync_runs qbo_purchases_inbound_mirror success\u00d72 last 23:25Z. The prior idle-in-transaction crash (Sentry IH35-TMS-PROD-25) is fixed + merged as #3433 (set-based INSERT\u2026SELECT in projectPurchasesToExpenses, qbo-purchases-puller.ts) \u2014 code-level anti-pattern absence re-verified by guard verify-projection-flags-off-by-design (step 1468). Stays FAIL until the owner opts in per-entity + CPA sign-off flips the flag ON; deploy-SHA ancestry / post-deploy live re-pull are UNVERIFIED \u2014 GUARD re-verify required.",
       "pr": "#3433"
     },
     {
@@ -72,7 +72,7 @@
       ],
       "spec": "Vendor credit apply/void",
       "status": "FAIL",
-      "evidence": "Neon lucia 2026-07-25: vendor_credits=0, vendor_credit_applications=0. Path was NOT usable: bills.vendor_id holds the QBO vendor id on 16211 of 16212 bills while a credit holds an mdata.vendors uuid, so the apply picker resolved 0 bills (mdata.vendors.qbo_vendor_id bridges 16211). Bridge + cross-vendor refusal + canonical VC numbering shipped and proven on a migrated throwaway Postgres (9 lifecycle assertions incl. planted-failure); guard verify-vendor-credit-live-path (step 1436). Still FAIL: no live prod row \u2014 PASS needs one operator credit applied after deploy, or owner acceptance of honest-empty",
+      "evidence": "Neon lucia 2026-07-25: vendor_credits=0, vendor_credit_applications=0. Path was NOT usable: bills.vendor_id holds the QBO vendor id on 16211 of 16212 bills while a credit holds an mdata.vendors uuid, so the apply picker resolved 0 bills (mdata.vendors.qbo_vendor_id bridges 16211). Bridge + cross-vendor refusal + canonical VC numbering shipped and proven on a migrated throwaway Postgres (9 lifecycle assertions incl. planted-failure); guard verify-vendor-credit-live-path (step 1436). Still FAIL: no live prod row \u2014 PASS needs one operator credit applied after deploy, or owner acceptance of honest-empty. (ACCT-F01/F06 note 2026-07-25: this FAIL is a SEPARATE root cause from ECON-03/04 \u2014 the vendor-bridge picker gap, NOT the projection-flags-off design \u2014 do not conflate the two.)",
       "pr": "#3426"
     },
     {
@@ -321,7 +321,7 @@
       ],
       "spec": "Architectural design Accounting tabs",
       "status": "UNVERIFIED",
-      "evidence": "period-close\u2192month-close, audit-trail, posting-lineage mounted; Desktop SURF DoD UNVERIFIED click-through.",
+      "evidence": "period-close\u2192month-close Navigate alias + MonthClosePage + AccountingAuditTrailPage + PostingLineagePage mounted; guard 1463 structural DoD; Desktop SURF DoD UNVERIFIED click-through.",
       "pr": null
     },
     {
