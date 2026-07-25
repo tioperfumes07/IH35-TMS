@@ -9,7 +9,7 @@
   "allowed_files": [
     ".block-ready/REVENUE-RECOGNITION-TWO-EVENT-LATCH-2026-07-19.json",
     "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
-    ".claude/skills/ih35-cpa-accounting-decisions/SKILL.md",
+    ".claude/skills/ih35-accounting-decisions/SKILL.md",
     "scripts/verify-revenue-recognition-two-event-latch-decisions.mjs",
     "scripts/verify-steps/933-verify-revenue-recognition-two-event-latch-decisions.mjs"
   ],

@@ -8,7 +8,7 @@
 > - Block: `flow6-auto-payment-application` (accounting drain)
 > - Branch: `design/flow6-auto-payment-application-hold` (fresh from `origin/main` @ `e2db37a74`)
 > - Spec sources: Rule 01 blueprint set; Law of the Land linkage; CPA locks
->   (`.claude/skills/ih35-cpa-accounting-decisions`); Rule 07 never-delete.
+>   (`.claude/skills/ih35-accounting-decisions`); Rule 07 never-delete.
 
 ---
 

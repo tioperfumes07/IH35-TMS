@@ -38,7 +38,7 @@ not close** (§5), surfaced per CLAUDE.md §9 (drift prevention: flag it, don't 
 | Chargeback (customer never pays) | `postFactoringChargebackEvent` (lines 387-453) | (A) DR `factoring_advance_liability` + DR `default_interest_expense` / CR `cash_clearing` (repay Faro) **and** (B) DR `factoring_recoursed_ar` / CR `ar_control` (move the receivable off trade A/R) | **Yes — B is the OTHER place A/R can go down** (customer defaulted; the receivable is pursued directly, not written off) |
 
 This is **exactly** the secured-borrowing lifecycle Jorge specified and the CPA-locked decision (skill
-`ih35-cpa-accounting-decisions` §3: factoring = secured borrowing, NOT a sale; Advance=liability,
+`ih35-accounting-decisions` §3: factoring = secured borrowing, NOT a sale; Advance=liability,
 Reserve=asset). The wiring point that actually fires `postFactoringCustomerPaymentEvent` is the
 `/factoring-advances/:id/reserve-held` route (`factoring-advances.routes.ts` line 498) — its own comment
 states the design intent verbatim: *"the reserve_held transition IS the 'customer paid the factor

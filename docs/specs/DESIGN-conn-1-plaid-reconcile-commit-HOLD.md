@@ -6,7 +6,7 @@
   already correctly reads `PENDING (GATED)`. This doc records the honest verdict and the exact owner ceremony
   so the block stops looping through the audit as an ambiguous "gap".
 - **Branch:** `design/conn-1-plaid-reconcile-commit-hold` (pinned to `origin/main` @ `e2db37a74`)
-- **CPA posture (loaded `ih35-cpa-accounting-decisions`):** reuse the existing poster; write NO new GL math;
+- **CPA posture (loaded `ih35-accounting-decisions`):** reuse the existing poster; write NO new GL math;
   flags default OFF; the commit is the **owner's hand** — the builder never runs a live reconcile-commit.
 
 ---
