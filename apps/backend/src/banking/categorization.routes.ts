@@ -794,7 +794,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     // BANK-ECON-03 / BANK-SURF-03 root-cause fix (0285-banking-transfer-gl-gap Option 1, owner-approved
     // #3134): "mark as transfer" must actually mint (or link to) a real banking.transfers row — reusing
     // the already-proven createTransfer() poster — not just tag banking.bank_transactions columns.
-    let linkResult: { transfer_id: string; minted: boolean };
+    let linkResult: { transfer_id: string; minted: boolean; changed: boolean };
     try {
       linkResult = await markBankFeedLineAsTransfer({
         operatingCompanyId: companyId,
@@ -812,24 +812,33 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
         message === "transfer_not_found" ||
         message === "transfer_account_not_accessible" ||
         message === "transfer_amount_must_be_positive" ||
-        message === "self_transfer_not_allowed"
+        message === "self_transfer_not_allowed" ||
+        message === "transfer_link_failed"
       ) {
         return reply.code(409).send({ error: message });
       }
       throw error;
     }
 
-    await withCompanyScope(user.uuid, companyId, (client) =>
-      enqueueAccountingOutbox(client, companyId, "qbo.bank_transaction.categorized", "bank_transaction", params.data.id, {
-        bank_transaction_id: params.data.id,
-        category_kind: "transfer",
-        transfer_kind: body.data.transfer_kind,
-        paired_transaction_id: body.data.paired_transaction_id ?? null,
-        transfer_id: linkResult.transfer_id,
-      })
-    );
+    // Gate outbox on actual change — idempotent retries must not spam qbo.sync_runs (review #3445 MEDIUM).
+    if (linkResult.changed) {
+      await withCompanyScope(user.uuid, companyId, (client) =>
+        enqueueAccountingOutbox(client, companyId, "qbo.bank_transaction.categorized", "bank_transaction", params.data.id, {
+          bank_transaction_id: params.data.id,
+          category_kind: "transfer",
+          transfer_kind: body.data.transfer_kind,
+          paired_transaction_id: body.data.paired_transaction_id ?? null,
+          transfer_id: linkResult.transfer_id,
+        })
+      );
+    }
 
-    return { ok: true, transfer_id: linkResult.transfer_id, minted: linkResult.minted };
+    return {
+      ok: true,
+      transfer_id: linkResult.transfer_id,
+      minted: linkResult.minted,
+      changed: linkResult.changed,
+    };
   });
 
   app.post("/api/v1/banking/transactions/:id/skip", async (req, reply) => {

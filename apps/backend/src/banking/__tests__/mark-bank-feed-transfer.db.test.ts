@@ -265,4 +265,37 @@ describeIntegration("BANK-ECON-03 — mark-transfer mints a real banking.transfe
     );
     expect(rows.every((r) => r.matched_transfer_id === first.transfer_id)).toBe(true);
   });
+
+  it("concurrent mark calls for the same feed line mint exactly ONE banking.transfers row", async () => {
+    const txn = await seedFeedLine(fromBankAccountId, 45_600, false);
+    const [a, b] = await Promise.all([
+      markBankFeedLineAsTransfer({
+        operatingCompanyId: companyId,
+        bankTransactionId: txn,
+        destinationBankAccountId: toBankAccountId,
+        transferKind: "out",
+        userId,
+      }),
+      markBankFeedLineAsTransfer({
+        operatingCompanyId: companyId,
+        bankTransactionId: txn,
+        destinationBankAccountId: toBankAccountId,
+        transferKind: "out",
+        userId,
+      }),
+    ]);
+    transferIds.push(a.transfer_id, b.transfer_id);
+    expect(a.transfer_id).toBe(b.transfer_id);
+    expect([a.minted, b.minted].filter(Boolean)).toHaveLength(1);
+    expect([a.changed, b.changed].filter(Boolean).length).toBeGreaterThanOrEqual(1);
+
+    const mintedForTxn = await scopedRead<{ id: string }>(
+      `SELECT t.id::text
+       FROM banking.transfers t
+       JOIN banking.bank_transactions bt ON bt.matched_transfer_id = t.id
+       WHERE bt.id = $1::uuid AND t.revoked_at IS NULL`,
+      [txn]
+    );
+    expect(mintedForTxn).toHaveLength(1);
+  });
 });
