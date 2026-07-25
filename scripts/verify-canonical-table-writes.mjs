@@ -42,7 +42,15 @@ const RETIRE = [
   { pat: "maint\\.pm_schedule", canonical: "maintenance.pm_schedule" },
   { pat: "maint\\.position_\\w+", canonical: "maintenance.position_*" },
   { pat: "maint\\.part", canonical: "maintenance.part" },
-  { pat: "catalogs\\.load_cancellation_reasons", canonical: "catalogs.cancellation_reasons" },
+  // CORRECTED 2026-07-25 — this entry was INVERTED. It declared the MODERN per-entity table as
+  // RETIRE and the LEGACY global table as canonical, so a regression writing the legacy table passed
+  // while every correct write to the canonical table was flagged (6 were baselined as "violations").
+  // Prod (br-fancy-credit-akjnd07a) + the migrations agree on the real direction:
+  //   catalogs.cancellation_reasons        — legacy global, NO operating_company_id, relrowsecurity=false, 9 rows
+  //   catalogs.load_cancellation_reasons   — canonical per-entity, operating_company_id NOT NULL, FORCE RLS, 63 rows
+  // db/migrations/202606300130_load_cancellations_per_entity_fk.sql header states verbatim that
+  // load_cancellation_reasons is "the go-forward home". Precedence: prod > guard > doc.
+  { pat: "catalogs\\.cancellation_reasons", canonical: "catalogs.load_cancellation_reasons" },
 ];
 const RETIRE_ALT = RETIRE.map((r) => r.pat).join("|");
 // WRITE = INSERT INTO / UPDATE / REFERENCES (covers FK ... REFERENCES + CREATE ... REFERENCES). NOT SELECT.
