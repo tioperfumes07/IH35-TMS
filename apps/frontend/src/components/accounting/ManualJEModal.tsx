@@ -8,6 +8,7 @@ import { useToast } from "../Toast";
 import { DatePicker } from "../forms/DatePicker";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { companyToday } from "../../lib/businessDate";
+import { JournalEntryTypePicker } from "./JournalEntryTypePicker";
 
 type Props = {
   open: boolean;
@@ -39,6 +40,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
   const [date, setDate] = useState(companyToday());
   const [memo, setMemo] = useState("");
   const [referenceNumber, setReferenceNumber] = useState("");
+  const [journalEntryTypeId, setJournalEntryTypeId] = useState<string | null>(null);
   const [lines, setLines] = useState<LineRow[]>([emptyLine(), emptyLine()]);
   const [loading, setLoading] = useState(false);
 
@@ -87,6 +89,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
     setDate(companyToday());
     setMemo("");
     setReferenceNumber("");
+    setJournalEntryTypeId(null);
     setLines([emptyLine(), emptyLine()]);
   };
 
@@ -138,6 +141,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
         entry_date: date,
         memo: memo.trim() || undefined,
         reference_number: referenceNumber.trim() || undefined,
+        journal_entry_type_id: journalEntryTypeId,
         source: "manual",
         postings,
       });
@@ -181,6 +185,16 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
                 value={referenceNumber}
                 onChange={(e) => setReferenceNumber(e.target.value)}
               />
+            </label>
+            <label className="block">
+              Journal entry type
+              <div className="mt-1">
+                <JournalEntryTypePicker
+                  operatingCompanyId={operatingCompanyId}
+                  value={journalEntryTypeId}
+                  onChange={setJournalEntryTypeId}
+                />
+              </div>
             </label>
             <label className="block">
               Memo

@@ -7,7 +7,7 @@ export function JournalEntryTypesListPage() {
       client={journalEntryTypesCatalogClient}
       displayName="Journal Entry Types"
       breadcrumbPath="Lists & Catalogs / Accounting / Journal Entry Types"
-      readOnly
+      readOnly={false}
       metadataSummary={(row) => row.description || "Journal source type"}
     />
   );

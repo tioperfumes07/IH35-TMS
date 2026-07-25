@@ -1047,6 +1047,9 @@ export type JournalEntry = {
   operating_company_id: string;
   entry_date: string;
   memo: string | null;
+  journal_entry_type_id?: string | null;
+  journal_entry_type_code?: string | null;
+  journal_entry_type_name?: string | null;
   status: JournalEntryStatus;
   source: JournalEntrySource;
   created_by_user_id: string | null;
@@ -1118,6 +1121,15 @@ export function getJournalEntrySourceLinks(id: string, operatingCompanyId: strin
   );
 }
 
+export function listJournalEntryTypesForJe(operatingCompanyId: string) {
+  return apiRequest<{
+    rows: Array<{ id: string; code: string; display_name: string; description: string | null; is_active: boolean }>;
+    total: number;
+  }>(
+    `/api/v1/catalogs/accounting/journal-entry-types?operating_company_id=${encodeURIComponent(operatingCompanyId)}&is_active=true&limit=200`
+  );
+}
+
 export function createJournalEntry(
   operatingCompanyId: string,
   payload: {
@@ -1125,6 +1137,8 @@ export function createJournalEntry(
     memo?: string;
     reference_number?: string;
     source?: JournalEntrySource;
+    journal_entry_type_id?: string | null;
+    journal_entry_type_code?: string | null;
     postings: Array<{
       account_id: string;
       class_id?: string | null;
