@@ -7,7 +7,7 @@ import { companyBusinessDate } from "../../lib/company-business-date.js";
 type EscrowHolderType = "driver" | "vendor" | "factor" | "other";
 type EscrowPurpose = "driver_bond" | "repair_reserve" | "factor_reserve" | "other";
 type EscrowPostingType = "deposit" | "release" | "adjustment";
-type EscrowSourceType = "driver_settlement" | "factoring_advance" | "vendor_bill" | "manual" | "reconciliation";
+export type EscrowSourceType = "driver_settlement" | "factoring_advance" | "vendor_bill" | "manual" | "reconciliation";
 
 type EscrowAccount = {
   id: string;
@@ -401,6 +401,94 @@ export async function depositEscrow(
   actor: { userId: string; role: string }
 ) {
   return postEscrowTransaction({ ...input, posting_type: "deposit" }, actor);
+}
+
+/**
+ * ACCT-R-01 (0007-pattern-5 escrow split-brain finding) — record a GL-linked escrow posting WITHOUT
+ * creating a second journal entry. Use this when the JE already exists (e.g. the settlement pay-run's
+ * OWN composite JE already carries the escrow-liability credit leg via
+ * driver-finance/escrow-resolver.service.ts's resolveDriverEscrowLiabilityAccount) or when the caller
+ * intentionally posts no JE (e.g. the D1 per-line approval flow's escrow_for_claims hold).
+ *
+ * ROOT CAUSE this closes: driver_finance.escrow_balances / escrow_ledger (the operational per-driver
+ * running-balance store settlement-payrun-close.service.ts and settlements/approval.service.ts write on
+ * every contribution/hold) and accounting.escrow_accounts.balance_cents (the GL-linked liability balance
+ * driver-finance/escrow-separation.service.ts's releaseDriverEscrowSeparation() reads as authoritative
+ * before calling releaseEscrow()) were NEVER kept in sync — every contribution landed only in
+ * driver_finance.*, so accounting.escrow_accounts.balance_cents stayed at 0 and a real driver's escrow
+ * would release as $0 (or throw escrow_release_exceeds_balance) on separation, despite the JE having
+ * correctly credited the liability account all along. This does NOT redirect or stop the
+ * driver_finance.* writes (Rule 07 — they remain the live operational ledger multiple UI surfaces read:
+ * banking escrow visualizer, driver escrow history tab, pre-settlements deductions queue, the $2,000-cap
+ * check). It ONLY keeps accounting.escrow_accounts.balance_cents in sync by inserting the append-only
+ * accounting.escrow_postings row — the AFTER INSERT trigger accounting.apply_escrow_posting_delta()
+ * (migration 0234) atomically applies the balance delta. NO new GL math — reuses the existing trigger.
+ *
+ * Fails loud if the driver has no provisioned accounting.escrow_accounts bridge (should never happen on
+ * the settlement pay-run path — resolveDriverEscrowLiabilityAccount already asserts it upstream) UNLESS
+ * opts.failSoft=true (used by the legacy D1 per-line approval path, which can run before a driver's
+ * bridge is provisioned).
+ */
+export async function recordEscrowPostingOnly(
+  client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
+  input: {
+    operating_company_id: string;
+    driver_id: string;
+    posting_type: "deposit" | "release";
+    amount_cents: number;
+    source_type: EscrowSourceType;
+    source_id?: string | null;
+    note?: string | null;
+    posted_by_user_id: string;
+    linked_journal_entry_id?: string | null;
+  },
+  opts?: { failSoft?: boolean }
+): Promise<{ posted: boolean; escrow_account_id: string | null; posting_id: string | null }> {
+  const amount = cents(input.amount_cents);
+  if (amount <= 0) return { posted: false, escrow_account_id: null, posting_id: null };
+
+  const bridge = await client.query<{ id: string }>(
+    `
+      SELECT id::text
+      FROM accounting.escrow_accounts
+      WHERE operating_company_id = $1::uuid
+        AND holder_id = $2::uuid
+        AND holder_type = 'driver'
+      LIMIT 1
+    `,
+    [input.operating_company_id, input.driver_id]
+  );
+  const escrowAccountId = bridge.rows[0]?.id ?? null;
+  if (!escrowAccountId) {
+    if (opts?.failSoft) return { posted: false, escrow_account_id: null, posting_id: null };
+    throw new Error(
+      `escrow_account_bridge_missing: driver ${input.driver_id} has no accounting.escrow_accounts bridge (holder_type='driver') — ` +
+        `cannot sync the canonical GL liability balance (ACCT-R-01)`
+    );
+  }
+
+  const posting = await client.query<{ id: string }>(
+    `
+      INSERT INTO accounting.escrow_postings (
+        operating_company_id, escrow_account_id, posting_type, amount_cents,
+        source_type, source_id, note, posted_at, posted_by_user_id, linked_journal_entry_id
+      )
+      VALUES ($1::uuid, $2::uuid, $3, $4::bigint, $5, $6::uuid, $7, now(), $8::uuid, $9::uuid)
+      RETURNING id::text
+    `,
+    [
+      input.operating_company_id,
+      escrowAccountId,
+      input.posting_type,
+      amount,
+      input.source_type,
+      input.source_id ?? null,
+      input.note ?? null,
+      input.posted_by_user_id,
+      input.linked_journal_entry_id ?? null,
+    ]
+  );
+  return { posted: true, escrow_account_id: escrowAccountId, posting_id: posting.rows[0]?.id ?? null };
 }
 
 export async function releaseEscrow(
