@@ -2156,10 +2156,10 @@
     },
     {
       "id": "0441-mod7-bill-subnav-filters-not-creators_UI",
-      "pile": "GAP",
+      "pile": "BUILT",
       "module": "accounting",
-      "status_reconcile": "AUDIT-NOTE",
-      "evidence": "OPEN: Maintenance/Repair/Fuel/Driver bill subnav links route to a filtered list, not a create flow, inconsistent with Vendor bill/Multiple bills in the same subnav group",
+      "status_reconcile": "DONE",
+      "evidence": "BUILT 2026-07-25 (ACCT-R-09): manifest Navigate ?category=X&create=1 for maintenance/repair/fuel/driver; guard verify-bill-subnav-creators.mjs + verify-step 1484",
       "fin": true,
       "block_id": "0441-mod7-bill-subnav-filters-not-creators_UI"
     },
@@ -2201,10 +2201,10 @@
     },
     {
       "id": "0441-mod7-myaccountant-flag-no-seed",
-      "pile": "GAP",
+      "pile": "BUILT",
       "module": "accounting",
-      "status_reconcile": "AUDIT-NOTE",
-      "evidence": "OPEN: no seed migration for MY_ACCOUNTANT_ENABLED in db/migrations/ (consistent with other flags' pattern); flag is discoverable only via an Owner typing the exact key [closure needs live proof]",
+      "status_reconcile": "DONE",
+      "evidence": "BUILT 2026-07-25 (ACCT-R-10): migration 202607590000_my_accountant_flag_seed.sql; Neon lucia lib.feature_flags MY_ACCOUNTANT_ENABLED default_enabled=false; guard verify-myaccountant-flag-seeded.mjs + verify-step 1485",
       "fin": true,
       "block_id": "0441-mod7-myaccountant-flag-no-seed"
     },
@@ -3092,10 +3092,10 @@
     },
     {
       "id": "audit4-tax-return-automation",
-      "pile": "GAP",
+      "pile": "BUILT",
       "module": "accounting",
-      "status_reconcile": "AUDIT-NOTE",
-      "evidence": "OPEN: 1) The sales-tax return module (prepare/file/mark-paid) is built but never registered into the app (apps/backend/src/index.ts has no import of accounting/sales-tax/sales-tax.routes.ts) — orphaned, needs wiring or an expl",
+      "status_reconcile": "DONE",
+      "evidence": "BUILT 2026-07-25 (ACCT-R-14): sales-tax/sales-tax.routes.ts autoloaded via registerAccountingRoutes; FE SalesTaxPage + subnav Sales tax; Neon accounting.sales_tax_returns exists; guard verify-acct-r14-sales-tax-autoload.mjs + verify-step 1486",
       "fin": true,
       "block_id": "audit4-tax-return-automation"
     },
@@ -5909,10 +5909,10 @@
     },
     {
       "id": "fh-unit-allocation-ui-view-missing",
-      "pile": "GAP",
+      "pile": "BUILT",
       "module": "accounting",
-      "status_reconcile": "AUDIT-NOTE",
-      "evidence": "OPEN: No frontend page/route/api-client for the Unit-Allocation (FH-7) read-only view exists anywhere in the repo.",
+      "status_reconcile": "DONE",
+      "evidence": "BUILT 2026-07-25 (ACCT-R-22): AllocationsPage + api/allocations.ts + allocations.routes.ts; verify-steps/1251-verify-allocations-page.mjs",
       "fin": true,
       "block_id": "fh-unit-allocation-ui-view-missing"
     },
@@ -7853,10 +7853,10 @@
     },
     {
       "id": "h-05-home-kpi-no-date-range-toggle",
-      "pile": "GAP",
+      "pile": "BUILT",
       "module": "accounting",
-      "status_reconcile": "AUDIT-NOTE",
-      "evidence": "OPEN: No 7d/30d/MTD/YTD date-range selector on the Home KPI row in either home page variant.",
+      "status_reconcile": "DONE",
+      "evidence": "BUILT 2026-07-25 (ACCT-R-26): HomeKpiRangeToggle on OwnerHome/DefaultHome; verify-steps/1215-verify-home-kpi-range-toggle.mjs",
       "fin": true,
       "block_id": "h-05-home-kpi-no-date-range-toggle"
     },
