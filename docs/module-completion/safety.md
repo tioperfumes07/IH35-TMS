@@ -1,24 +1,24 @@
 # Module completion — Safety (Module 3)
 
-**PROGRESS: 3 of 32** · complete: `false` · as_of: 2026-07-25T00:45:00Z · live_sha: `2088757`
+**PROGRESS: 6 of 32** · complete: `false` · as_of: 2026-07-25T04:30:00Z · live_sha: `2088757`
 
 | Status | Count |
 |---|---:|
-| PASS | 3 |
+| PASS | 6 |
 | HOLD | 0 |
-| OPEN | 4 |
+| OPEN | 2 |
 | FAIL | 1 |
-| UNVERIFIED | 24 |
+| UNVERIFIED | 23 |
 
 | ID | Status | Title | Evidence | PR |
 |---|---|---|---|---|
 | `SAF-B01` | **UNVERIFIED** | Escrow forfeiture endpoint + economics | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3348 |
-| `SAF-B02` | **OPEN** | Fine->deduction chain held migrations applied | No PR opened. Boundary from ~/Desktop/IH35-CURSOR-AUDIT/modules/safety.md section J. | — |
-| `SAF-B03` | **OPEN** | Claim reverse graph held migrations applied | No PR opened. Boundary from ~/Desktop/IH35-CURSOR-AUDIT/modules/safety.md section J. | — |
+| `SAF-B02` | **PASS** | Fine->deduction chain held migrations applied | NEON lucia 2026-07-25 br-fancy-credit-akjnd07a: safety.civil_fines.driver_settlement_deduction_id EXISTS (uuid); driver_finance.driver_settlement_deductions.load_id + source_bank_transaction_id EXIST. Ledgered in _system._schema_migrations + ih35_migrations.applied_migrations (202607080000, 202606272300, 202607070100). .held-migrations.json stamped applied_on_prod:true (was stale-false — honesty defect, not absent columns). Economics F+R click-through still UNVERIFIED separately (no live convert smoke this PR). | — |
+| `SAF-B03` | **PASS** | Claim reverse graph held migrations applied | NEON lucia 2026-07-25: safety.accident_reports.insurance_claim_id, legal.matters.insurance_claim_id, safety.incidents.auto_created_claim_id all EXIST (uuid). Migrations 202607250000 + 202607240000 ledgered 2026-07-11. applied_on_prod stamped true. Claim-graph browser F+R still UNVERIFIED (data-blocked — insurance.claim row density / click-through). | — |
 | `SAF-B04` | **UNVERIFIED** | Accident wizard persists every rendered field | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3353 |
 | `SAF-B05` | **UNVERIFIED** | Base-less fetch sweep + guard | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3336 |
 | `SAF-B06` | **UNVERIFIED** | D&A / RTD block in driver-qualification gate | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3375 |
-| `SAF-B07` | **UNVERIFIED** | Held-column consumer guard | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3384 |
+| `SAF-B07` | **PASS** | Held-column consumer guard | SAF-F08 root fix: scripts/verify-schema-parity-from-prod.mjs + verify-step 1437. Prod truth = docs/schema-parity-prod-evidence.json (information_schema lucia snapshot br-fancy-credit-akjnd07a 2026-07-25), NOT migration-parsed schema-parity-baseline.json. --selftest plants held/unapplied phantom column (FALSE-PASS + PHANTOM CONSUMER) and must FAIL; prod-present held column does not fail. Prior verify-held-column-consumers (PR 3384) capability-skipped without DB — insufficient for the false-PASS class. | 3457 |
 | `SAF-B08` | **UNVERIFIED** | Escrow KPI + signed-clause source of truth | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3380 |
 | `SAF-B09` | **UNVERIFIED** | Escrow forfeit drawer + pickers + validation | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3381 |
 | `SAF-B10` | **UNVERIFIED** | Void-reason governance (DOT inspections, complaints) | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3339 |
