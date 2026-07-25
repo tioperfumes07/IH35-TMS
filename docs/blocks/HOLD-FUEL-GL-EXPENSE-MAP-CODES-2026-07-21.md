@@ -69,7 +69,7 @@ For each entity that will post fuel (start **TRANSP**; TRK/USMCA only when inges
 
 | `category_kind` | `category_code` (exact) | Suggested reuse (owner choice) |
 |---|---|---|
-| `fuel` | `diesel` | May point at existing **6100 Fuel Expense** if CPA agrees one account for all fuel kinds |
+| `fuel` | `diesel` | May point at existing **6100 Fuel Expense** if the OWNER decides one account for all fuel kinds |
 | `fuel` | `def` | Same or separate DEF expense account |
 | `fuel` | `reefer` | Same or reefer-specific |
 | `fuel` | `oil` | Same or oil/lube |
@@ -87,7 +87,7 @@ After designate: owner-gated **idempotent re-flush** of unposted Relay rows (sta
 
 ```
 ROOT CAUSE: poster looks up diesel|def|reefer|oil|misc; prod maps only category_code=fuel → every flush fails closed.
-FIX: owner-designated maps for the five codes (reuse existing 6100 if CPA OK) + gated re-flush.
+FIX: owner-designated maps for the five codes (reuse existing 6100 if the OWNER approves) + gated re-flush.
 GUARD: scripts/verify-fuel-gl-map-codes-no-silent-alias.mjs (this HOLD) + planted post after designate.
 LIVE PROOF: fuel_event batch >0, posted_to_gl>0 for a planted txn, health sha matches merge — OR UNVERIFIED.
 REMAINING: none after live proof / OR tracker id for backfill of 1499 historical rows.

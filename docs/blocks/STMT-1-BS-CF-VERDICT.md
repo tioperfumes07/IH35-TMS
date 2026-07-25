@@ -22,7 +22,7 @@ fence is respected because nothing needed building).
 - Fetches via `getCashFlowStatementReport({ operating_company_id, … })`, `enabled` on company.
 - Renders **Operating / Investing / Financing** sections with lines + section totals, plus KPIs:
   **Net cash change, Cash at start, Cash at end**.
-- **Accrual basis only** — by design, "always accrual basis per CPA sign-off" (so no basis selector here,
+- **Accrual basis only** — by design, "always accrual basis per OWNER decision" (so no basis selector here,
   consistent with the locked decision that Cash Flow remains accrual-only).
 - Export PDF / XLSX; error banner, loading, and empty states.
 
