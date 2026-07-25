@@ -5,6 +5,72 @@ function isOwner(role: string) {
   return role === "Owner";
 }
 
+/**
+ * THE single writer of a load-cancellation record. Client-accepting so it can be called from inside an
+ * already-open transaction.
+ *
+ * Extracted 2026-07-25 (owner decision 4). A SECOND cancel path existed —
+ * `PATCH /api/v1/mdata/loads/:id/status` with `new_status="cancelled"`, which the Dispatch Kanban's
+ * "Cancelled" drop column calls. It validated the reason against the canonical per-entity catalog, flipped
+ * `mdata.loads.status`, and wrote the reason into an audit-log JSON string — but never inserted a
+ * `dispatch.load_cancellations` row at all. No `reason_code_id`, no cancellation record, nothing for the
+ * reverse surface or the cancellation reports to read. A status→cancelled with no record is a silent failure
+ * and an audit gap (Rule 21).
+ *
+ * Owner ruling: route the Kanban cancel through the SAME canonical flow rather than blocking it. Having ONE
+ * client-accepting writer is what makes that true by construction — a second hand-rolled INSERT is exactly
+ * how the five copies of the lowest-UUID resolver (LST-F05) happened.
+ *
+ * Canonical target: `dispatch.load_cancellations.reason_code_id` -> `catalogs.load_cancellation_reasons(id)`
+ * (LST-F17 ruling A, per-entity, FORCE RLS). `reason_code` text is kept for display only; the legacy
+ * `catalogs.cancellation_reasons` is RETIRE — archived, never written.
+ */
+export async function writeLoadCancellationRecord(
+  client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> },
+  input: {
+    operating_company_id: string;
+    load_id: string;
+    reason_code: string;
+    reason_code_id: string;
+    cancellation_notes: string;
+    billable_to_customer: boolean;
+    cancellation_charge_cents: number | null;
+    status: "requested" | "approved";
+    cancelled_by_user_id: string;
+  }
+) {
+  return client.query<{ id: string; status: string }>(
+    `
+      INSERT INTO dispatch.load_cancellations (
+        operating_company_id, load_id, reason_code, reason_code_id, cancellation_notes,
+        billable_to_customer, cancellation_charge_cents, status, cancelled_by_user_id, cancelled_at
+      )
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,now())
+      ON CONFLICT (load_id) DO UPDATE
+      SET reason_code = EXCLUDED.reason_code,
+          reason_code_id = EXCLUDED.reason_code_id,
+          cancellation_notes = EXCLUDED.cancellation_notes,
+          billable_to_customer = EXCLUDED.billable_to_customer,
+          cancellation_charge_cents = EXCLUDED.cancellation_charge_cents,
+          status = EXCLUDED.status,
+          cancelled_by_user_id = EXCLUDED.cancelled_by_user_id,
+          cancelled_at = EXCLUDED.cancelled_at
+      RETURNING id, status
+    `,
+    [
+      input.operating_company_id,
+      input.load_id,
+      input.reason_code,
+      input.reason_code_id,
+      input.cancellation_notes,
+      input.billable_to_customer,
+      input.cancellation_charge_cents,
+      input.status,
+      input.cancelled_by_user_id,
+    ]
+  );
+}
+
 export async function cancelLoad(
   userId: string,
   role: string,
@@ -64,36 +130,17 @@ export async function cancelLoad(
       if (!reason) throw new Error("E_REASON_NOT_FOUND");
 
       const pendingOwnerApproval = reason.requires_owner_approval && !isOwner(role);
-      const row = await client.query<{ id: string; status: string }>(
-        `
-          INSERT INTO dispatch.load_cancellations (
-            operating_company_id, load_id, reason_code, reason_code_id, cancellation_notes,
-            billable_to_customer, cancellation_charge_cents, status, cancelled_by_user_id, cancelled_at
-          )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,now())
-          ON CONFLICT (load_id) DO UPDATE
-          SET reason_code = EXCLUDED.reason_code,
-              reason_code_id = EXCLUDED.reason_code_id,
-              cancellation_notes = EXCLUDED.cancellation_notes,
-              billable_to_customer = EXCLUDED.billable_to_customer,
-              cancellation_charge_cents = EXCLUDED.cancellation_charge_cents,
-              status = EXCLUDED.status,
-              cancelled_by_user_id = EXCLUDED.cancelled_by_user_id,
-              cancelled_at = EXCLUDED.cancelled_at
-          RETURNING id, status
-        `,
-        [
-          input.operating_company_id,
-          input.load_id,
-          input.reason_code,
-          reason.id,
-          input.cancellation_notes.trim(),
-          input.billable_to_customer ?? reason.billable_to_customer_default,
-          input.cancellation_charge_cents ?? null,
-          pendingOwnerApproval ? "requested" : "approved",
-          userId,
-        ]
-      );
+      const row = await writeLoadCancellationRecord(client, {
+        operating_company_id: input.operating_company_id,
+        load_id: input.load_id,
+        reason_code: input.reason_code,
+        reason_code_id: reason.id,
+        cancellation_notes: input.cancellation_notes.trim(),
+        billable_to_customer: input.billable_to_customer ?? reason.billable_to_customer_default,
+        cancellation_charge_cents: input.cancellation_charge_cents ?? null,
+        status: pendingOwnerApproval ? "requested" : "approved",
+        cancelled_by_user_id: userId,
+      });
 
       if (!pendingOwnerApproval) {
         await client.query(
