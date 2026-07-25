@@ -291,6 +291,12 @@ export function BillDetailPage() {
             <EntityLink kind="work_order" id={bill.linked_work_order_uuid} label={bill.linked_work_order_uuid.slice(0, 8)} />
           </DataPanelRow>
         ) : null}
+        {bill.insurance_claim_id ? (
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Insurance claim</span>
+            <EntityLink kind="claim" id={bill.insurance_claim_id} label={bill.insurance_claim_id.slice(0, 8)} />
+          </DataPanelRow>
+        ) : null}
         {/*
           REVERSE DRILL (Law §9): a bill split across units writes accounting.bill_unit_allocation
           rows, and the Allocations tab can filter by bill_id — but the bill itself had no hop into
