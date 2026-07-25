@@ -143,6 +143,12 @@ function checkRoutes(src, failures) {
   if (!/assertCompanyMembership/.test(src) || !/set_config\('app\.operating_company_id'/.test(src)) {
     failures.push(`${ROUTES}: merge must assert company membership and set the entity GUC before touching catalogs.accounts`);
   }
+  // CodeQL js/missing-rate-limiting: Owner-only authorization routes still need per-route throttling (global:false).
+  if (!new RegExp(`${MERGE_ENDPOINT.replace(/\//g, "\\/")}"[\\s\\S]{0,200}rateLimit:\\s*\\{`).test(src)) {
+    failures.push(
+      `${ROUTES}: POST ${MERGE_ENDPOINT} must declare config.rateLimit — Owner-only merge is a high-impact remap and must not be brute-forceable`
+    );
+  }
 }
 
 function checkService(src, failures) {

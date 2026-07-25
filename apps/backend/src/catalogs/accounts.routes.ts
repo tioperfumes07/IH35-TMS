@@ -554,7 +554,7 @@ export async function registerAccountRoutes(app: FastifyInstance) {
   // which archived rows and left every child account and config pointer still designating them. This
   // endpoint reparents the children, remounts the config pointers, writes the append-only merge record
   // and archives the source — all inside ONE transaction under the entity GUC.
-  app.post("/api/v1/catalogs/accounts/:id/merge", async (req, reply) => {
+  app.post("/api/v1/catalogs/accounts/:id/merge", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     // Owner-only per blueprint 3.18.12 (`accounting.account.merge`): a merge silently re-points every
