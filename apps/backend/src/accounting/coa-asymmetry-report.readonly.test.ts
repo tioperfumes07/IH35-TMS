@@ -25,7 +25,8 @@ describe("ACCT-CoA-ASYMMETRY — static read-only invariant", () => {
       /\b(update|insert\s+into|delete\s+from)\b[\s\S]{0,120}\b(reserve|holdback|retainage)\b/i;
     for (const file of files) {
       const src = fs.readFileSync(file, "utf8");
-      expect(/\bis_postable\s*=/.test(src), `${path.basename(file)} must not assign is_postable`).toBe(false);
+      // Narrowed to a SET-clause assignment (real mutation), not a WHERE-clause equality read.
+      expect(/\bset\b[\s\S]{0,200}\bis_postable\s*=/i.test(src), `${path.basename(file)} must not assign is_postable`).toBe(false);
       expect(reserveMutation.test(src), `${path.basename(file)} must not mutate reserve/holdback/retainage`).toBe(false);
     }
   });
