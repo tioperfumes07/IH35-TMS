@@ -121,7 +121,7 @@ export function CoaBatchActions({ selectedIds, rows, operatingCompanyId, onCompl
         >
           Merge accounts
         </Button>
-        {error ? <span className="text-xs text-red-600">{error}</span> : null}
+        {error ? <span className="text-xs text-slate-700">{error}</span> : null}
       </div>
 
       <Modal
@@ -138,7 +138,7 @@ export function CoaBatchActions({ selectedIds, rows, operatingCompanyId, onCompl
             place that designates a merged account for future postings — item default accounts, account role
             bindings, expense category mappings, banking rules — is repointed to it.
           </p>
-          <p className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          <p className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
             <strong>Posted history stays where it is.</strong> Journal entries, bills, invoices and expenses already
             posted to a merged account keep pointing at that account, so prior-period reports do not change. The
             merged accounts are archived — never deleted — and stop accepting new postings. Merging is Owner-only
@@ -178,7 +178,7 @@ export function CoaBatchActions({ selectedIds, rows, operatingCompanyId, onCompl
             </p>
           ) : null}
           {mismatchedTypes.length > 0 ? (
-            <p className="text-xs text-red-600">
+            <p className="text-xs text-slate-700">
               Accounts of a different type cannot be merged: {mismatchedTypes.map((row) => row.number).join(", ")} are
               not {targetRow?.acct_type}.
             </p>
