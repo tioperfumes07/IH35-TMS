@@ -207,7 +207,7 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Bills \u25be",
       "status": "UNVERIFIED",
-      "evidence": "Frozen map docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md. Structural DoD guard scripts/verify-acct-surf-01-bills.mjs (route+ParityDrawer+submit payload+canonical accounting.bills). Desktop Expected vs Actual: ~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md. Stays UNVERIFIED until TRANSP+USMCA browser re-click + reverse density unit/claim/WO > 0 (Rule 23 \u2014 no structural PASS flip).",
+      "evidence": "Sweep matrix docs/trackers/ACCT-SURF-DOD-SWEEP-MATRIX-2026-07-25.json (16 leaves \u00d7 TRANSP+USMCA \u00d7 DoD/VERIFY). Frozen map ACCT-08-SURF-SURFACE-MAP. Structural guard verify-acct-surf-01-bills.mjs. Stays UNVERIFIED until browser re-click (Rule 23).",
       "pr": "#3477"
     },
     {
