@@ -259,6 +259,8 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
     descriptionColumn: "description",
     activeMode: "deactivated_at",
     readOnly: true,
+    // LST-F09: per-entity under FORCE RLS company_scope (migration 202607990000).
+    entityScoped: true,
     selectMetadataSql: ["'account_id', t.account_id"],
   });
 
