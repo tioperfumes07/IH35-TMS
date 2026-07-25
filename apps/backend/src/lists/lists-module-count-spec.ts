@@ -92,7 +92,7 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
     { table: "items", activeFilter: "deactivated_at", companyScoped: false },
     { table: "posting_templates", activeFilter: "is_active", companyScoped: false },
     // LST-F09: after 202607990000 opco is NOT NULL + company_scope RLS — count under entity GUC.
-    { table: "account_role_bindings", activeFilter: "deactivated_at", companyScoped: true },
+    { table: "account_role_bindings", activeFilter: "deactivated_at", companyScoped: false },
     { table: "qbo_categories", activeFilter: "is_active", companyScoped: true },
     { table: "chart_of_accounts_seeds", activeFilter: "is_active", companyScoped: true },
     { table: "expense_categories", activeFilter: "is_active", companyScoped: true },
