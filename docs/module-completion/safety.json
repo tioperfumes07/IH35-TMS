@@ -109,7 +109,7 @@
       ],
       "spec": "safety.md section J boundary 7 (findings F08)",
       "status": "PASS",
-      "evidence": "SAF-F08 root fix: scripts/verify-schema-parity-from-prod.mjs + verify-step 1436. Prod truth = docs/schema-parity-prod-evidence.json (information_schema lucia snapshot br-fancy-credit-akjnd07a 2026-07-25), NOT migration-parsed schema-parity-baseline.json. --selftest plants held/unapplied phantom column (FALSE-PASS + PHANTOM CONSUMER) and must FAIL; prod-present held column does not fail. Prior verify-held-column-consumers (PR 3384) capability-skipped without DB — insufficient for the false-PASS class.",
+      "evidence": "SAF-F08 root fix: scripts/verify-schema-parity-from-prod.mjs + verify-step 1437. Prod truth = docs/schema-parity-prod-evidence.json (information_schema lucia snapshot br-fancy-credit-akjnd07a 2026-07-25), NOT migration-parsed schema-parity-baseline.json. --selftest plants held/unapplied phantom column (FALSE-PASS + PHANTOM CONSUMER) and must FAIL; prod-present held column does not fail. Prior verify-held-column-consumers (PR 3384) capability-skipped without DB — insufficient for the false-PASS class.",
       "pr": null,
       "owner_hold": false,
       "tracker": null,
