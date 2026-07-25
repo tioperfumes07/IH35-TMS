@@ -1055,7 +1055,7 @@
       ],
       "spec": "safety.md section J boundary 18 (findings F19)",
       "status": "FAIL",
-      "evidence": "VERIFIED FAIL 2026-07-25. Load and unit are done (FineCreateModal.tsx:96-97,190,200; FineDetailDrawer.tsx:95-112) but source_doc_id is accepted by the route (fines.routes.ts:36,204,223) and collected by NO UI \u2014 zero frontend references. Separately issued_by_authority is free text (fines.routes.ts:28 z.string().min(1)), never modelled as an FK to mdata.vendors, so 'authority as EntityLink' is a SCHEMA change and there is no AP path to the authority. No guard asserts document capture or authority. PREMISE STALE: F19 describes a raw-UUID/picker gap that no longer exists \u2014 F18's work removed it.",
+      "evidence": "VERIFIED FAIL 2026-07-25. Load and unit are done (FineCreateModal.tsx:96-97,190,200; FineDetailDrawer.tsx:95-112) but source_doc_id is accepted by the route (fines.routes.ts:36,204,223) and collected by NO UI \u2014 zero frontend references. Separately issued_by_authority is free text (fines.routes.ts:28 z.string().min(1)), never modelled as an FK to mdata.vendors, so 'authority as EntityLink' is a SCHEMA change and there is no AP path to the authority. No guard asserts document capture or authority. PREMISE STALE: F19 describes a raw-UUID/picker gap that no longer exists \u2014 F18's work removed it. GUARD LANE 2026-07-25 \u2014 FINE MONEY MODEL (consolidated under SWEEP-C6). issued_by_authority -> mdata.vendors FK is the A/P path and is built as ONE coherent fine->authority-vendor->AP->GL chain together with #3551 (donor, not merged standalone) on top of #3547's merged lifecycle UI. HELD, owner-gated, flag OFF, existing poster, no new GL math. NOT this coder's to build.",
       "pr": 3376,
       "owner_hold": false,
       "tracker": null,
@@ -1115,7 +1115,7 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL \u2014 self-mergeable on green CI per \u00a71.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "GUARD LANE 2026-07-25 \u2014 FINE MONEY MODEL (consolidated under SWEEP-C6). issued_by_authority -> mdata.vendors FK is the A/P path and is built as ONE coherent fine->authority-vendor->AP->GL chain together with #3551 (donor, not merged standalone) on top of #3547's merged lifecycle UI. HELD, owner-gated, flag OFF, existing poster, no new GL math. NOT this coder's to build."
     },
     {
       "id": "SAF-B19",
@@ -1648,7 +1648,7 @@
       ],
       "spec": "safety.md section J boundary 28 (findings F29)",
       "status": "FAIL",
-      "evidence": "VERIFIED FAIL 2026-07-25 \u2014 application code, NOT an unapplied migration. Junctions exist with FORCE RLS and a 0-orphan backfill abort (202607820000), the GET reads junctions (company-violations.routes.ts:118-123) and CREATE writes them (:200-202). But PATCH still writes the RETIRED jsonb columns and never touches the junctions (:258-266, sets.push(`${key} = $${idx}::jsonb`), schema :50-52) \u2014 so editing a violation's related drivers/units/fines SILENTLY NO-OPS, because the read side uses junctions. Guard 1344's cutover check matches JSON.stringify(body.data.related_...) while the PATCH uses JSON.stringify(value ?? null), so the guard cannot see this write path. PREMISE CORRECTED: 202607820000 IS applied on prod (in the pinned ledger snapshot, checksum 578a6d7d, applied_on_prod:true); the genuinely unapplied sibling is 202607840000.",
+      "evidence": "VERIFIED FAIL 2026-07-25 \u2014 application code, NOT an unapplied migration. Junctions exist with FORCE RLS and a 0-orphan backfill abort (202607820000), the GET reads junctions (company-violations.routes.ts:118-123) and CREATE writes them (:200-202). But PATCH still writes the RETIRED jsonb columns and never touches the junctions (:258-266, sets.push(`${key} = $${idx}::jsonb`), schema :50-52) \u2014 so editing a violation's related drivers/units/fines SILENTLY NO-OPS, because the read side uses junctions. Guard 1344's cutover check matches JSON.stringify(body.data.related_...) while the PATCH uses JSON.stringify(value ?? null), so the guard cannot see this write path. PREMISE CORRECTED: 202607820000 IS applied on prod (in the pinned ledger snapshot, checksum 578a6d7d, applied_on_prod:true); the genuinely unapplied sibling is 202607840000. GUARD LANE 2026-07-25 \u2014 SWEEP-C2 (RETIRE-schema live writes). The PATCH at company-violations.routes.ts:258-266 writes the retired jsonb columns and never touches the junctions, so editing a violation's related drivers/units/fines SILENTLY NO-OPS because the GET reads junctions. Repoint the writer to canonical. NOT this coder's to build.",
       "pr": 3380,
       "owner_hold": true,
       "tracker": null,
@@ -1708,7 +1708,7 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL \u2014 self-mergeable on green CI per \u00a71.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "GUARD LANE 2026-07-25 \u2014 SWEEP-C2 (RETIRE-schema live writes). The PATCH at company-violations.routes.ts:258-266 writes the retired jsonb columns and never touches the junctions, so editing a violation's related drivers/units/fines SILENTLY NO-OPS because the GET reads junctions. Repoint the writer to canonical. NOT this coder's to build."
     },
     {
       "id": "SAF-B29",
