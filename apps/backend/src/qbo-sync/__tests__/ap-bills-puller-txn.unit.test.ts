@@ -107,12 +107,28 @@ describe("ap-bills-puller Stage 1 runtime behavior (mocked)", () => {
     });
   });
 
-  it("returns enabled:false when pull flag is OFF (no network, no audit)", async () => {
+  it("returns enabled:false when pull flag is OFF (no network; writes cancelled sync_run)", async () => {
     isEnabled.mockResolvedValue(false);
+    const queries: Array<{ sql: string; params: unknown[] }> = [];
+    withLuciaBypass.mockImplementation(async (fn: (client: unknown) => Promise<unknown>) => {
+      const client = {
+        query: vi.fn(async (sql: string, params: unknown[] = []) => {
+          queries.push({ sql, params });
+          if (sql.includes("to_regclass('qbo.sync_runs')")) return { rows: [{ ok: true }] };
+          if (sql.includes("INSERT INTO qbo.sync_runs")) return { rows: [{ id: "run-off" }] };
+          return { rows: [] };
+        }),
+      };
+      return fn(client);
+    });
     const result = await pullApBillsFromQbo(companyId);
     expect(result).toMatchObject({ enabled: false, rowsPulled: 0, rowsUpserted: 0 });
     expect(qboPaginateEntity).not.toHaveBeenCalled();
     expect(qboCompanyContext).not.toHaveBeenCalled();
+    const insert = queries.find((q) => q.sql.includes("INSERT INTO qbo.sync_runs"));
+    expect(insert).toBeTruthy();
+    expect(insert!.sql).toMatch(/'cancelled'/);
+    expect(String(insert!.params[2])).toContain("flag_disabled");
   });
 
   it("runs HTTP pagination before upsert txn; commits success audit after upsert", async () => {

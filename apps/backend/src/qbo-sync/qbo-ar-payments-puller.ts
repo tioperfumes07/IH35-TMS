@@ -43,6 +43,7 @@ import { isEnabled } from "../lib/feature-flags/service.js";
 import { nextPaymentDisplayId } from "../accounting/display-id.js";
 import { resolveCustomerPaymentDepositAccount } from "../accounting/posting-engine.service.js";
 import { QBO_AR_PAYMENTS_MIRROR_SYNC_KIND } from "./qbo-ar-payments-sync-kind.js";
+import { recordFlagDisabledMirrorSyncRun } from "./record-flag-disabled-sync-run.js";
 
 // Default-OFF financial flags (financial cluster — HOLD for owner approval). SINGLE SOURCE OF TRUTH is the
 // DB feature flag resolved PER-ENTITY via isEnabled() (lib.feature_flag_overrides keyed on
@@ -282,6 +283,13 @@ export async function pullArPaymentsFromQbo(operatingCompanyId: string): Promise
     return isEnabled(client, AR_PAYMENT_MIRROR_PULL_FLAG, { operating_company_id: operatingCompanyId });
   });
   if (!enabled) {
+    // Durable audit: OFF must not look like a dead cron (no sync_runs row).
+    await recordFlagDisabledMirrorSyncRun({
+      operatingCompanyId,
+      kind: QBO_AR_PAYMENTS_MIRROR_SYNC_KIND,
+      flagKey: AR_PAYMENT_MIRROR_PULL_FLAG,
+      mirrorTable: "mdata.qbo_ar_payments",
+    });
     return { enabled: false, rowsPulled: 0, rowsUpserted: 0, pulledAt };
   }
 
