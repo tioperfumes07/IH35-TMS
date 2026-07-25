@@ -64,7 +64,7 @@
     },
     {
       "id": "BANK-ECON-05",
-      "title": "All bank_accounts bound to ledger_account_id (Cash GL)",
+      "title": "All live bank_accounts (deactivated_at IS NULL) bound to ledger_account_id (Cash GL)",
       "layers": [
         "DOD-C",
         "VERIFY-5"
