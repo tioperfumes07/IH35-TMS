@@ -82,7 +82,13 @@ export async function registerAccountingCatalogLookupRoutes(app: FastifyInstance
 
     const rows = await withCompanyScope(user.uuid, oc, async (client) => {
       const values: unknown[] = [oc];
-      const filters = ["operating_company_id = $1::uuid", "active = true"];
+      // LIVE INCIDENT FIX (LST-PICKER-02, 2026-07-25): this read was repointed from the QBO mirror
+      // mdata.qbo_items to canonical catalogs.items but kept the mirror's `active = true` predicate.
+      // catalogs.items has NO `active` and no `is_active` column — 0010_catalogs_init.sql models
+      // lifecycle as `deactivated_at timestamptz` and no later migration adds one (verified against
+      // db/migrations AND live prod under lucia). Postgres raised 42703 undefined_column, so this
+      // endpoint returned 500 on EVERY call and the item picker was dead in production.
+      const filters = ["operating_company_id = $1::uuid", "deactivated_at IS NULL"];
       if (kind === "service") {
         filters.push(`lower(trim(coalesce(item_type, ''))) IN ('service', 'noninventory')`);
       } else if (kind === "inventory") {
