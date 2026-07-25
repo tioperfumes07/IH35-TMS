@@ -1,14 +1,14 @@
 # Module completion — Safety (Module 3)
 
-**PROGRESS: 0 of 30** · complete: `false` · as_of: 2026-07-25T00:45:00Z · live_sha: `2088757`
+**PROGRESS: 3 of 32** · complete: `false` · as_of: 2026-07-25T00:45:00Z · live_sha: `2088757`
 
 | Status | Count |
 |---|---:|
-| PASS | 0 |
+| PASS | 3 |
 | HOLD | 0 |
 | OPEN | 4 |
-| FAIL | 0 |
-| UNVERIFIED | 26 |
+| FAIL | 1 |
+| UNVERIFIED | 24 |
 
 | ID | Status | Title | Evidence | PR |
 |---|---|---|---|---|
@@ -32,15 +32,17 @@
 | `SAF-B18` | **UNVERIFIED** | External fine load / unit / document capture | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3376 |
 | `SAF-B19` | **UNVERIFIED** | Incidents cluster edit + lifecycle + void | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3377 |
 | `SAF-B20` | **UNVERIFIED** | Cargo claims ParityTable + links | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3379 |
-| `SAF-B21` | **UNVERIFIED** | Orphan-route nav entry points | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3370 |
+| `SAF-B21` | **PASS** | Orphan-route nav entry points | BROWSER-VERIFIED 2026-07-24 19:59 CT, app.ih35dispatch.com/safety as tioperfumes07@gmail.com, company 'IH 35 Transportation' (TRANSP), live_sha 2088757. Safety module renders with all top nav groups. Full route audit of SAFETY_TABS_CONFIG.ts vs routes/manifest.tsx:1541-1616: all 34 config tabs (28 SAFETY_GROUPS + 6 SAFETY_ALIAS_TABS) are route-registered AND component-mounted; ZERO orphans — aliases are merged into each group's dropdown as real NavLinks by SafetyGroupNav.tsx:16. No ComingSoonPage anywhere under pages/safety. This boundary's entire scope (orphan routes / dead drill-throughs) is closed. | 3370 |
 | `SAF-B22` | **UNVERIFIED** | Escrow tab drill-through (driver/settlement/GL/bank) | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3370 |
 | `SAF-B23` | **UNVERIFIED** | Internal-fine inline + Add new reason | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3360 |
 | `SAF-B24` | **UNVERIFIED** | ParityDrawer migration (3 surfaces) | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3381 |
 | `SAF-B25` | **UNVERIFIED** | Accidents list name resolution + pickers | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3356 |
 | `SAF-B26` | **OPEN** | De-duplicate 7 double-registered routes + guard | No PR opened. Boundary from ~/Desktop/IH35-CURSOR-AUDIT/modules/safety.md section J. | — |
-| `SAF-B27` | **UNVERIFIED** | Docs drift: docs/CLAUDE.md section 7 -> 28/9 | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3384 |
+| `SAF-B27` | **PASS** | Docs drift: docs/CLAUDE.md section 7 -> 28/9 | REPO-VERIFIED 2026-07-25: docs/CLAUDE.md section 7 now states 28 tabs / 9 groups and points at SAFETY_TABS_CONFIG.ts as source of truth, matching the config array (28 SAFETY_GROUPS entries confirmed by full enumeration) and both count guards. The stale 21/8 claim is gone. | 3384 |
 | `SAF-B28` | **UNVERIFIED** | company_violations JSONB -> real FKs (migration) | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3380 |
 | `SAF-B29` | **UNVERIFIED** | Server-side type-ahead for 200-cap pickers | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3379 |
 | `SAF-B30` | **UNVERIFIED** | EntityLink safety kinds + safety detail routes | Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module. | 3357 |
+| `SAF-B31` | **FAIL** | No Safety surface is a static placeholder | BROWSER-VERIFIED 2026-07-24 19:59 CT, app.ih35dispatch.com/safety as tioperfumes07@gmail.com, company 'IH 35 Transportation' (TRANSP), live_sha 2088757. 2 of 34 Safety surfaces render static placeholders with no data binding: /safety/audit-425c (pages/safety/audit-425c/Audit425cPage.tsx, 11 lines, no query) and /safety/reports (pages/safety/reports/SafetyReportsPage.tsx, 11 lines, no query). Both are route-registered and ALIAS-reachable, so an operator can navigate to a dead page. | — |
+| `SAF-B32` | **PASS** | Safety KPI tiles read real sources (not permanent zeros) | BROWSER-VERIFIED 2026-07-24 19:59 CT, app.ih35dispatch.com/safety as tioperfumes07@gmail.com, company 'IH 35 Transportation' (TRANSP), live_sha 2088757. ACTIVE DRIVERS tile reads 82. Verified honest, not a stub: Neon lucia shows mdata.drivers active for TRANSP = 83, and safety.routes.ts:170 applies EXCLUDE_PSEUDO_DRIVERS_SQL, so 83 minus 1 pseudo-driver = 82 exactly. The remaining tiles read 0 and that is ALSO honest — safety.* has 64 tables and only 7 carry any rows (driver_safety_scores 161, fuel_gps_matches 143, document_alert_rules 21, anomaly_alert_rules 18, integrity_alert_rules 17, permit_renewal_reminders 3, safety_settings 3). There are no safety events, accidents, fines or violations on prod to display. | 3334 |
 
 Desktop audit: ~/Desktop/IH35-CURSOR-AUDIT/modules/safety.md

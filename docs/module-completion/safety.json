@@ -315,8 +315,8 @@
         "VERIFY-7"
       ],
       "spec": "safety.md section J boundary 21 (findings F22,F23,F35)",
-      "status": "UNVERIFIED",
-      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "status": "PASS",
+      "evidence": "BROWSER-VERIFIED 2026-07-24 19:59 CT, app.ih35dispatch.com/safety as tioperfumes07@gmail.com, company 'IH 35 Transportation' (TRANSP), live_sha 2088757. Safety module renders with all top nav groups. Full route audit of SAFETY_TABS_CONFIG.ts vs routes/manifest.tsx:1541-1616: all 34 config tabs (28 SAFETY_GROUPS + 6 SAFETY_ALIAS_TABS) are route-registered AND component-mounted; ZERO orphans — aliases are merged into each group's dropdown as real NavLinks by SafetyGroupNav.tsx:16. No ComingSoonPage anywhere under pages/safety. This boundary's entire scope (orphan routes / dead drill-throughs) is closed.",
       "pr": 3370,
       "owner_hold": false,
       "tracker": null,
@@ -400,8 +400,8 @@
         "DOD-E"
       ],
       "spec": "safety.md section J boundary 27 (findings F28)",
-      "status": "UNVERIFIED",
-      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "status": "PASS",
+      "evidence": "REPO-VERIFIED 2026-07-25: docs/CLAUDE.md section 7 now states 28 tabs / 9 groups and points at SAFETY_TABS_CONFIG.ts as source of truth, matching the config array (28 SAFETY_GROUPS entries confirmed by full enumeration) and both count guards. The stale 21/8 claim is gone.",
       "pr": 3384,
       "owner_hold": false,
       "tracker": null,
@@ -450,6 +450,36 @@
       "owner_hold": false,
       "tracker": null,
       "future_block": null
+    },
+    {
+      "id": "SAF-B31",
+      "title": "No Safety surface is a static placeholder",
+      "layers": [
+        "DOD-A"
+      ],
+      "spec": "DEFINITION-OF-DONE.md 1.A — no ComingSoon/stub while a live tab exists",
+      "status": "FAIL",
+      "evidence": "BROWSER-VERIFIED 2026-07-24 19:59 CT, app.ih35dispatch.com/safety as tioperfumes07@gmail.com, company 'IH 35 Transportation' (TRANSP), live_sha 2088757. 2 of 34 Safety surfaces render static placeholders with no data binding: /safety/audit-425c (pages/safety/audit-425c/Audit425cPage.tsx, 11 lines, no query) and /safety/reports (pages/safety/reports/SafetyReportsPage.tsx, 11 lines, no query). Both are route-registered and ALIAS-reachable, so an operator can navigate to a dead page.",
+      "pr": null,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B32",
+      "title": "Safety KPI tiles read real sources (not permanent zeros)",
+      "layers": [
+        "DOD-E",
+        "VERIFY-3"
+      ],
+      "spec": "safety.md F-dashboard / PR #3334",
+      "status": "PASS",
+      "evidence": "BROWSER-VERIFIED 2026-07-24 19:59 CT, app.ih35dispatch.com/safety as tioperfumes07@gmail.com, company 'IH 35 Transportation' (TRANSP), live_sha 2088757. ACTIVE DRIVERS tile reads 82. Verified honest, not a stub: Neon lucia shows mdata.drivers active for TRANSP = 83, and safety.routes.ts:170 applies EXCLUDE_PSEUDO_DRIVERS_SQL, so 83 minus 1 pseudo-driver = 82 exactly. The remaining tiles read 0 and that is ALSO honest — safety.* has 64 tables and only 7 carry any rows (driver_safety_scores 161, fuel_gps_matches 143, document_alert_rules 21, anomaly_alert_rules 18, integrity_alert_rules 17, permit_renewal_reminders 3, safety_settings 3). There are no safety events, accidents, fines or violations on prod to display.",
+      "pr": 3334,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
     }
-  ]
+  ],
+  "M": 32
 }
