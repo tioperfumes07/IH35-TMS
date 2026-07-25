@@ -11,6 +11,7 @@ import {
   reversePostedSourceTransactionInClientTx,
 } from "./posting-engine.service.js";
 import { isBillPaymentGlPostingEnabled } from "./bill-payment-gl.service.js";
+import { vendorIdentitySetSql } from "./vendor-identity.js";
 import {
   auditVoid,
   canVoid,
@@ -399,7 +400,13 @@ export async function listBillsByVendor(
 ) {
   const rows = await withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
-    const where: string[] = ["b.operating_company_id = $1", "COALESCE(NULLIF(b.vendor_id,''), NULLIF(b.vendor_uuid,'')) = $2"];
+    // ACCT-ECON-05: match EITHER identifier space. Callers pass an mdata.vendors uuid (vendor
+    // detail A/P tab, vendor-credit apply picker) while QBO-sourced bills carry the QBO vendor id,
+    // so an equality test on the raw value returned zero rows for 16211 of 16212 prod bills.
+    const where: string[] = [
+      "b.operating_company_id = $1",
+      `COALESCE(NULLIF(b.vendor_id,''), NULLIF(b.vendor_uuid,'')) IN ${vendorIdentitySetSql(1, 2)}`,
+    ];
     const values: unknown[] = [operatingCompanyId, vendorId];
     if (options.fromDate) {
       values.push(options.fromDate);
@@ -701,6 +708,85 @@ export async function listClaimLinkedFinancials(
   });
 }
 
+/**
+ * Reverse drill-through for Unit→Bill/Expense (ACCT-F04): given an mdata.units id, return bills +
+ * expenses that reference it via unit_id. Column-gated; entity-scoped; read-only.
+ */
+export async function listUnitLinkedFinancials(
+  userId: string,
+  operatingCompanyId: string,
+  unitId: string
+): Promise<{
+  bills: Array<{ id: string; bill_number: string | null; bill_date: string | null; amount_cents: number; status: string | null; memo: string | null }>;
+  expenses: Array<{ id: string; transaction_date: string | null; total_amount_cents: number; status: string | null; memo: string | null }>;
+  columns_present: { bills: boolean; expenses: boolean };
+}> {
+  return withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    const colExists = async (schema: string, table: string, column: string): Promise<boolean> => {
+      const r = await client.query(
+        `SELECT 1 FROM information_schema.columns WHERE table_schema=$1 AND table_name=$2 AND column_name=$3`,
+        [schema, table, column]
+      );
+      return (r.rowCount ?? 0) > 0;
+    };
+
+    const hasBillCol = await colExists("accounting", "bills", "unit_id");
+    const hasExpenseCol = await colExists("accounting", "expenses", "unit_id");
+
+    let bills: Array<{ id: string; bill_number: string | null; bill_date: string | null; amount_cents: number; status: string | null; memo: string | null }> = [];
+    if (hasBillCol) {
+      const res = await client.query(
+        `SELECT b.id::text AS id, b.bill_number, b.bill_date::text AS bill_date,
+                COALESCE(b.amount_cents, 0)::bigint AS amount_cents, b.status, b.memo
+           FROM accounting.bills b
+          WHERE b.operating_company_id = $1
+            AND b.unit_id = $2
+            AND b.revoked_at IS NULL
+          ORDER BY b.bill_date DESC NULLS LAST, b.created_at DESC`,
+        [operatingCompanyId, unitId]
+      );
+      bills = res.rows.map((r: Record<string, unknown>) => ({
+        id: String(r.id),
+        bill_number: (r.bill_number as string) ?? null,
+        bill_date: (r.bill_date as string) ?? null,
+        amount_cents: Number(r.amount_cents ?? 0),
+        status: (r.status as string) ?? null,
+        memo: (r.memo as string) ?? null,
+      }));
+    }
+
+    let expenses: Array<{ id: string; transaction_date: string | null; total_amount_cents: number; status: string | null; memo: string | null }> = [];
+    if (hasExpenseCol) {
+      const hasMemo = await colExists("accounting", "expenses", "memo");
+      const res = await client.query(
+        `SELECT e.id::text AS id, e.transaction_date::text AS transaction_date,
+                COALESCE(e.total_amount_cents, 0)::bigint AS total_amount_cents, e.status,
+                ${hasMemo ? "e.memo" : "NULL::text AS memo"}
+           FROM accounting.expenses e
+          WHERE e.operating_company_id = $1
+            AND e.unit_id = $2
+            AND e.status <> 'void'
+          ORDER BY e.transaction_date DESC NULLS LAST, e.created_at DESC`,
+        [operatingCompanyId, unitId]
+      );
+      expenses = res.rows.map((r: Record<string, unknown>) => ({
+        id: String(r.id),
+        transaction_date: (r.transaction_date as string) ?? null,
+        total_amount_cents: Number(r.total_amount_cents ?? 0),
+        status: (r.status as string) ?? null,
+        memo: (r.memo as string) ?? null,
+      }));
+    }
+
+    return {
+      bills,
+      expenses,
+      columns_present: { bills: hasBillCol, expenses: hasExpenseCol },
+    };
+  });
+}
+
 export async function listBills(
   userId: string,
   operatingCompanyId: string,
@@ -718,7 +804,12 @@ export async function listBills(
     return listAllBillsForCompany(userId, operatingCompanyId, options);
   }
   const rows = await listBillsByVendor(userId, operatingCompanyId, options.vendorId, options);
-  const vendorNames = await resolveVendorDisplayMap(operatingCompanyId, [options.vendorId]);
+  // Resolve names from the ROWS, not from the requested id: a vendor asked for by mdata uuid now
+  // returns bills keyed by that vendor's QBO id, and a map built from the uuid would miss them.
+  const vendorNames = await resolveVendorDisplayMap(
+    operatingCompanyId,
+    [...new Set(rows.map((r) => r.vendor_id).filter((v): v is string => Boolean(v)))]
+  );
   return rows.map((r) => ({
     ...r,
     vendor_name: r.vendor_id ? vendorNames[r.vendor_id] ?? r.vendor_id : null,
