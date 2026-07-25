@@ -1,0 +1,37 @@
+{
+  "block_id": "ACCT-F10",
+  "status": "BUILD",
+  "classification": "FINANCIAL-HOLD",
+  "phase": "module-completion/accounting",
+  "task": "ACCT-F10 — map thin HOLD PRs #3423-#3429 to accounting.json manifest items; MERGED≠APPLIED; no PR-volume credit; guard verify-thin-hold-pr-manifest-map",
+  "branch": "hold/acct-f10-thin-hold-pr-manifest-map-20260725",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/ACCT-F10-THIN-HOLD-PR-MANIFEST-MAP.json",
+    "docs/trackers/ACCT-F10-THIN-HOLD-PR-MANIFEST-MAP-2026-07-25.json",
+    "docs/trackers/ACCT-F10-THIN-HOLD-PR-MANIFEST-MAP-2026-07-25.md",
+    "scripts/verify-thin-hold-pr-manifest-map.mjs",
+    "scripts/verify-steps/1469-verify-thin-hold-pr-manifest-map.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "map file exists with all 7 PRs bound",
+      "status": "PASS",
+      "evidence": "docs/trackers/ACCT-F10-THIN-HOLD-PR-MANIFEST-MAP-2026-07-25.json"
+    },
+    {
+      "check": "guard green + --selftest",
+      "status": "PASS",
+      "evidence": "scripts/verify-thin-hold-pr-manifest-map.mjs"
+    },
+    {
+      "check": "zero credited_for_n (no FAIL→PASS)",
+      "status": "PASS",
+      "evidence": "summary.credited_for_n=0; accounting.json untouched"
+    }
+  ]
+}
