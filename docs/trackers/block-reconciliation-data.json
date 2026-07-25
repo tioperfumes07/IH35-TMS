@@ -1,6 +1,6 @@
 {
- "date": "2026-07-24",
- "generated_at_iso": "2026-07-24T18:15:05.513Z",
+ "date": "2026-07-25",
+ "generated_at_iso": "2026-07-25T03:10:13.897Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
@@ -13162,6 +13162,162 @@
  ],
  "merged_prs": [
   {
+   "number": 3443,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-25T03:09:41Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 3442,
+   "title": "[HOLD-FOR-JORGE · FINANCIAL] fix(lists): LST-PICKER-02 — item picker read the QBO mirror while create wrote the canonical catalog",
+   "mergedAt": "2026-07-25T03:09:19Z",
+   "branch": "fix/lst-picker-02-item-canonical-table"
+  },
+  {
+   "number": 3441,
+   "title": "fix(lists): count spec missed 9 live catalogs + a hardcoded 3 — badges understated TRANSP by 548 rows",
+   "mergedAt": "2026-07-25T02:14:36Z",
+   "branch": "fix/lists-count-spec-completion"
+  },
+  {
+   "number": 3439,
+   "title": "fix(guards): canonical-write map had cancellation reasons INVERTED — legacy writes passed silently",
+   "mergedAt": "2026-07-25T02:06:54Z",
+   "branch": "fix/canonical-write-guard-inverted-cancellation-reasons"
+  },
+  {
+   "number": 3438,
+   "title": "[HOLD] fix(banking): legacy /bulk-categorize must call bank-feed GL poster",
+   "mergedAt": "2026-07-25T01:50:46Z",
+   "branch": "hold/bank-bulk-categorize-gl-parity-20260724"
+  },
+  {
+   "number": 3437,
+   "title": "[HOLD] fix(accounting): Stage-1 QBO pull flag-OFF writes cancelled sync_run",
+   "mergedAt": "2026-07-25T01:50:38Z",
+   "branch": "hold/qbo-flag-off-sync-run-20260724"
+  },
+  {
+   "number": 3436,
+   "title": "[HOLD-FOR-JORGE · FINANCIAL] fix(dispatch): LST-F04 cancel-load wrote a reason FK'd to the RETIRE catalog",
+   "mergedAt": "2026-07-25T02:07:10Z",
+   "branch": "fix/lst-f04-cancel-load-canonical-reason-fk"
+  },
+  {
+   "number": 3435,
+   "title": "feat(module-completion): safety + lists manifests — 0 of 30 and 5 of 14, prod-evidenced",
+   "mergedAt": "2026-07-25T03:09:09Z",
+   "branch": "feat/module-completion-safety-lists"
+  },
+  {
+   "number": 3434,
+   "title": "docs(module-completion): refresh accounting/banking N-of-M from Neon truth",
+   "mergedAt": "2026-07-25T00:50:26Z",
+   "branch": "feat/acct-banking-scoreboard-truth-20260724"
+  },
+  {
+   "number": 3433,
+   "title": "[HOLD] fix(accounting): set-based QBO expenses+AR projection (idle_in_transaction FATAL)",
+   "mergedAt": "2026-07-25T01:50:02Z",
+   "branch": "hold/qbo-projection-idle-tx-20260724"
+  },
+  {
+   "number": 3430,
+   "title": "fix(ci): money PRs must confirm DoD A–E + VERIFY 1–8 or FAIL (autoload)",
+   "mergedAt": "2026-07-24T23:53:59Z",
+   "branch": "hold/no-money-theater-gate-20260724"
+  },
+  {
+   "number": 3429,
+   "title": "[HOLD] fix(accounting): QBO AR puller reuses customer-payment deposit resolver",
+   "mergedAt": "2026-07-24T23:43:24Z",
+   "branch": "hold/qbo-ar-deposit-bridge-20260724"
+  },
+  {
+   "number": 3428,
+   "title": "[HOLD] fix(accounting): expense list WO reverse EntityLink column",
+   "mergedAt": "2026-07-24T23:43:22Z",
+   "branch": "hold/acct-expense-list-wo-reverse-20260724"
+  },
+  {
+   "number": 3427,
+   "title": "[HOLD] fix(accounting): Bill payments list JE/bank reverse links",
+   "mergedAt": "2026-07-24T23:43:19Z",
+   "branch": "fix/banking-bill-payment-list-reverse-20260724"
+  },
+  {
+   "number": 3426,
+   "title": "[HOLD] fix(accounting): vendor credit apply/void UI + bill reverse drill",
+   "mergedAt": "2026-07-24T23:43:38Z",
+   "branch": "hold/accounting-vendor-credit-active-path"
+  },
+  {
+   "number": 3425,
+   "title": "[HOLD] fix(accounting): wire Claim→Bill/Expense/WO insurance_claim_id (col-gated)",
+   "mergedAt": "2026-07-25T01:49:55Z",
+   "branch": "hold/acct-claim-wo-bill-wire-20260724"
+  },
+  {
+   "number": 3424,
+   "title": "[HOLD] fix(banking): bulk categorize must call bank-feed GL poster",
+   "mergedAt": "2026-07-24T23:50:23Z",
+   "branch": "hold/banking-match-je-density-20260724"
+  },
+  {
+   "number": 3423,
+   "title": "[HOLD] fix(accounting): Payment detail deposit EntityLink uses CoA account",
+   "mergedAt": "2026-07-24T23:43:17Z",
+   "branch": "hold/acct-payment-deposit-entitylink-20260724"
+  },
+  {
+   "number": 3422,
+   "title": "chore(deps): bump find-my-way from 9.6.0 to 9.7.0",
+   "mergedAt": "2026-07-25T02:31:36Z",
+   "branch": "dependabot/npm_and_yarn/find-my-way-9.7.0"
+  },
+  {
+   "number": 3421,
+   "title": "chore(deps-dev): bump postcss from 8.5.16 to 8.5.23 in /apps/driver-pwa in the npm_and_yarn group across 1 directory",
+   "mergedAt": "2026-07-25T03:01:31Z",
+   "branch": "dependabot/npm_and_yarn/apps/driver-pwa/npm_and_yarn-6b7f7a8c69"
+  },
+  {
+   "number": 3420,
+   "title": "fix(ci): tracker-sync uses ONE reusable PR (stop the CONFLICTING tracker-PR wall)",
+   "mergedAt": "2026-07-24T19:31:23Z",
+   "branch": "fix/ci-tracker-sync-single-reusable-pr"
+  },
+  {
+   "number": 3418,
+   "title": "feat(ci): prod-ledger checksum-parity guard — close the post-apply-edit gap (owner rule 2)",
+   "mergedAt": "2026-07-24T19:31:04Z",
+   "branch": "feat/ci-prod-ledger-checksum-parity-guard"
+  },
+  {
+   "number": 3417,
+   "title": "[HOLD] fix(banking): require zero-difference reconciliation closure",
+   "mergedAt": "2026-07-24T19:06:43Z",
+   "branch": "fix/banking-recon-zero-variance-20260724"
+  },
+  {
+   "number": 3416,
+   "title": "fix(deploy): checksum-override for applied 870/890 edited post-apply — unblocks ALL deploys",
+   "mergedAt": "2026-07-24T19:07:46Z",
+   "branch": "fix/deploy-unblock-870-890-checksum-override"
+  },
+  {
+   "number": 3413,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-24T19:07:34Z",
+   "branch": "chore/tracker-artifacts-sync-30116119476"
+  },
+  {
+   "number": 3411,
+   "title": "[HOLD] feat(accounting): QBO Receive Payment (AR) -> accounting.payments projection, flags OFF",
+   "mergedAt": "2026-07-24T19:07:25Z",
+   "branch": "fix/qbo-ar-payments-projection"
+  },
+  {
    "number": 3410,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-07-24T18:14:03Z",
@@ -13178,6 +13334,12 @@
    "title": "[HOLD] feat(lists): per-entity driver_termination_reasons (owner ruling 2026-07-24)",
    "mergedAt": "2026-07-24T17:37:57Z",
    "branch": "feat/lst-driver-termination-reasons-per-entity"
+  },
+  {
+   "number": 3405,
+   "title": "[HOLD] feat(lists): per-entity equipment_types + line-item templates (stacked on #3397)",
+   "mergedAt": "2026-07-24T18:34:58Z",
+   "branch": "feat/lst-equipment-types-per-entity"
   },
   {
    "number": 3403,
@@ -16598,172 +16760,100 @@
    "title": "fix(platform): wire orphan-FK inventory guard into CI (0010-f1)",
    "mergedAt": "2026-07-17T15:35:37Z",
    "branch": "fix/orphan-fk-guard-ci-wired"
-  },
-  {
-   "number": 2632,
-   "title": "fix(accounting): company-tz today defaults (0091-g6-1)",
-   "mergedAt": "2026-07-17T17:32:34Z",
-   "branch": "fix/acct-utc-today-defaults"
-  },
-  {
-   "number": 2630,
-   "title": "fix(safety): Log Event occurred_at time field (s-06)",
-   "mergedAt": "2026-07-17T17:38:53Z",
-   "branch": "fix/safety-fe-next"
-  },
-  {
-   "number": 2629,
-   "title": "fix(accounting): QBO Name+Type reference option labels",
-   "mergedAt": "2026-07-17T15:37:19Z",
-   "branch": "fix/bank-fe-next"
-  },
-  {
-   "number": 2628,
-   "title": "fix(banking): wire Auto-Match Suggestions button (0441-mod8)",
-   "mergedAt": "2026-07-17T15:08:36Z",
-   "branch": "fix/bank-automatch-button-wired"
-  },
-  {
-   "number": 2627,
-   "title": "fix(accounting): mount cashflow/forecast/finance-hub routes (0441-mod10)",
-   "mergedAt": "2026-07-17T15:26:50Z",
-   "branch": "fix/cashflow-routes-mounted"
-  },
-  {
-   "number": 2626,
-   "title": "fix(dispatch): enforce cancel owner-approval gate (0441-mod4)",
-   "mergedAt": "2026-07-17T15:37:04Z",
-   "branch": "fix/dispatch-cancel-approval-gate"
-  },
-  {
-   "number": 2625,
-   "title": "fix(banking): remove verified orphan dead pages (0441-mod8)",
-   "mergedAt": "2026-07-17T15:01:07Z",
-   "branch": "fix/bank-orphan-pages-dead-code"
-  },
-  {
-   "number": 2624,
-   "title": "fix(accounting): bill subnav opens creators (0441-mod7)",
-   "mergedAt": "2026-07-17T15:00:43Z",
-   "branch": "fix/bill-subnav-creators"
-  },
-  {
-   "number": 2623,
-   "title": "fix(banking): Section7 palette ratchet (0441-mod8)",
-   "mergedAt": "2026-07-17T16:58:01Z",
-   "branch": "fix/bank-section7-palette"
-  },
-  {
-   "number": 2622,
-   "title": "fix(maint): wire Maintenance Settings Save (0441-mod2)",
-   "mergedAt": "2026-07-17T15:41:42Z",
-   "branch": "fix/maint-settings-save-wired"
-  },
-  {
-   "number": 2621,
-   "title": "fix(maint): DVIR follow_up_wo writes defects table + set-once grant (0441-mod2)",
-   "mergedAt": "2026-07-17T15:27:07Z",
-   "branch": "fix/dvir-followup-wo-wrong-table"
-  },
-  {
-   "number": 2620,
-   "title": "fix(maint): add Fault Drafts/Rules to module nav (0441 orphan-nav)",
-   "mergedAt": "2026-07-17T14:32:47Z",
-   "branch": "fix/maint-fault-drafts-orphan-nav"
-  },
-  {
-   "number": 2619,
-   "title": "DO-NOT-MERGE: fix(fleet) roster + Create Unit/Trailer (0441-mod9)",
-   "mergedAt": "2026-07-17T14:40:54Z",
-   "branch": "fix/fleet-roster-create-actions"
-  },
-  {
-   "number": 2618,
-   "title": "fix(crm): BANK-SORT-ROLLOUT-CRM — URL-persist name sort on legacy customers/vendors rosters",
-   "mergedAt": "2026-07-17T14:07:17Z",
-   "branch": "fix/bank-sort-crm-rosters"
-  },
-  {
-   "number": 2617,
-   "title": "fix(drivers): preserve training expiry on create",
-   "mergedAt": "2026-07-17T14:06:45Z",
-   "branch": "fix/driver-training-expiry-field"
-  },
-  {
-   "number": 2616,
-   "title": "fix(reports): maint cost-per-unit FE↔API field bind (0441-mod11)",
-   "mergedAt": "2026-07-17T13:49:46Z",
-   "branch": "fix/maint-cost-per-unit-field-bind"
-  },
-  {
-   "number": 2615,
-   "title": "fix(safety): KPI/alerts drill to specific driver/unit — SAFETY-KPI-DRILLTHROUGH",
-   "mergedAt": "2026-07-17T13:31:48Z",
-   "branch": "fix/safety-home-kpi-drillthrough"
-  },
-  {
-   "number": 2614,
-   "title": "fix(safety): Cert Expiry distinct ExpiryDashboard route — SAFETY-2",
-   "mergedAt": "2026-07-17T12:56:50Z",
-   "branch": "fix/safety-cert-expiry-nav-route"
-  },
-  {
-   "number": 2613,
-   "title": "fix(maintenance): PM schedule create form (no nil UUID)",
-   "mergedAt": "2026-07-17T13:02:10Z",
-   "branch": "fix/pm-schedule-create-form"
-  },
-  {
-   "number": 2612,
-   "title": "fix(dispatch): wire In shop board to live maintenance feed (DISPATCH-IN-SHOP-FEED)",
-   "mergedAt": "2026-07-17T13:01:49Z",
-   "branch": "fix/dispatch-in-shop-feed"
-  },
-  {
-   "number": 2611,
-   "title": "fix(legal): LEGAL-BREADCRUMB-TAIL-4 — Privacy/Terms breadcrumbs + guard",
-   "mergedAt": "2026-07-17T13:14:21Z",
-   "branch": "fix/legal-breadcrumb-tail-4"
-  },
-  {
-   "number": 2610,
-   "title": "fix(accounting): URL-persist sort on A/P Aging page — BANK-SORT-ACCT-AP2",
-   "mergedAt": "2026-07-17T12:46:49Z",
-   "branch": "fix/bank-sort-ap-aging-url"
-  },
-  {
-   "number": 2609,
-   "title": "feat(accounting): BANK-SORT-ROLLOUT-ACCT — Customers/Vendors/AP-Aging URL sort",
-   "mergedAt": "2026-07-17T05:50:03Z",
-   "branch": "fix/bank-sort-custvend"
-  },
-  {
-   "number": 2608,
-   "title": "fix(banking): derive Relay Fuel Wallet balance from its ledger, not a frozen Plaid-only column",
-   "mergedAt": "2026-07-17T14:40:45Z",
-   "branch": "fix/relay-wallet-balance-honesty"
-  },
-  {
-   "number": 2607,
-   "title": "fix(ops): BANK-SORT-ROLLOUT-OPS — URL-persisted ASC/DESC sort (dispatch, settlements, fleet/WO)",
-   "mergedAt": "2026-07-17T05:28:33Z",
-   "branch": "fix/bank-sort-rollout-ops"
-  },
-  {
-   "number": 2606,
-   "title": "feat(eld): wire live-duty/violations/unidentified tabs to real data — ELD-LIVE-DATA",
-   "mergedAt": "2026-07-17T03:52:54Z",
-   "branch": "feat/eld-tabs-live-data"
-  },
-  {
-   "number": 2605,
-   "title": "fix(safety): HOS violation void reason + real create action — HOS-VIOL-UX",
-   "mergedAt": "2026-07-17T05:33:10Z",
-   "branch": "fix/hos-violations-void-and-create"
   }
  ],
  "merged_pr_total": 3000,
  "hold_for_jorge": [
+  {
+   "number": 3442,
+   "title": "[HOLD-FOR-JORGE · FINANCIAL] fix(lists): LST-PICKER-02 — item picker read the QBO mirror while create wrote the canonical catalog",
+   "mergedAt": "2026-07-25T03:09:19Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3438,
+   "title": "[HOLD] fix(banking): legacy /bulk-categorize must call bank-feed GL poster",
+   "mergedAt": "2026-07-25T01:50:46Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3437,
+   "title": "[HOLD] fix(accounting): Stage-1 QBO pull flag-OFF writes cancelled sync_run",
+   "mergedAt": "2026-07-25T01:50:38Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3436,
+   "title": "[HOLD-FOR-JORGE · FINANCIAL] fix(dispatch): LST-F04 cancel-load wrote a reason FK'd to the RETIRE catalog",
+   "mergedAt": "2026-07-25T02:07:10Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3433,
+   "title": "[HOLD] fix(accounting): set-based QBO expenses+AR projection (idle_in_transaction FATAL)",
+   "mergedAt": "2026-07-25T01:50:02Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3430,
+   "title": "fix(ci): money PRs must confirm DoD A–E + VERIFY 1–8 or FAIL (autoload)",
+   "mergedAt": "2026-07-24T23:53:59Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3429,
+   "title": "[HOLD] fix(accounting): QBO AR puller reuses customer-payment deposit resolver",
+   "mergedAt": "2026-07-24T23:43:24Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3428,
+   "title": "[HOLD] fix(accounting): expense list WO reverse EntityLink column",
+   "mergedAt": "2026-07-24T23:43:22Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3427,
+   "title": "[HOLD] fix(accounting): Bill payments list JE/bank reverse links",
+   "mergedAt": "2026-07-24T23:43:19Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3426,
+   "title": "[HOLD] fix(accounting): vendor credit apply/void UI + bill reverse drill",
+   "mergedAt": "2026-07-24T23:43:38Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3425,
+   "title": "[HOLD] fix(accounting): wire Claim→Bill/Expense/WO insurance_claim_id (col-gated)",
+   "mergedAt": "2026-07-25T01:49:55Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3424,
+   "title": "[HOLD] fix(banking): bulk categorize must call bank-feed GL poster",
+   "mergedAt": "2026-07-24T23:50:23Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3423,
+   "title": "[HOLD] fix(accounting): Payment detail deposit EntityLink uses CoA account",
+   "mergedAt": "2026-07-24T23:43:17Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3417,
+   "title": "[HOLD] fix(banking): require zero-difference reconciliation closure",
+   "mergedAt": "2026-07-24T19:06:43Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3411,
+   "title": "[HOLD] feat(accounting): QBO Receive Payment (AR) -> accounting.payments projection, flags OFF",
+   "mergedAt": "2026-07-24T19:07:25Z",
+   "category": "HOLD"
+  },
   {
    "number": 3409,
    "title": "[HOLD] feat(lists): per-entity customer_quality_event_reasons (owner ruling 2026-07-24)",
@@ -16774,6 +16864,12 @@
    "number": 3408,
    "title": "[HOLD] feat(lists): per-entity driver_termination_reasons (owner ruling 2026-07-24)",
    "mergedAt": "2026-07-24T17:37:57Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3405,
+   "title": "[HOLD] feat(lists): per-entity equipment_types + line-item templates (stacked on #3397)",
+   "mergedAt": "2026-07-24T18:34:58Z",
    "category": "HOLD"
   },
   {
