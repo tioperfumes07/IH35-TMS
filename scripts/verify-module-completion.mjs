@@ -108,6 +108,38 @@ export function assertManifestShape(file, data) {
   return problems;
 }
 
+/**
+ * Renders the ranked FAIL registry (PERMANENT-FIX §1 / Rule 21) into the manifest markdown when a
+ * module's JSON carries `ranked_fail_registry.rows`. Deriving the per-row Status from the live
+ * `items[]` (instead of a hand-typed field) means a FAIL cannot be silently flipped to PASS by
+ * editing prose — it can only change by actually changing the bound item's own status.
+ */
+export function renderRankedFailRegistry(data) {
+  const registry = data.ranked_fail_registry;
+  const rows = Array.isArray(registry?.rows) ? registry.rows : [];
+  if (!rows.length) return [];
+  const byId = new Map((data.items || []).map((it) => [it.id, it]));
+  const lines = [
+    "",
+    `## RANKED ${data.module.toUpperCase()} FAIL LIST (published M — every future ${data.module} PR cites a row here)`,
+    "",
+  ];
+  if (registry.source) lines.push(`_${registry.source}_`, "");
+  lines.push(
+    "| Rank | ID | P | Title | Canonical target | Bound item(s) (live status) | Fix block |",
+    "|---|---|---|---|---|---|---|"
+  );
+  for (const row of rows) {
+    const boundStatus = (row.bound_items || [])
+      .map((id) => `\`${id}\`:${byId.get(id)?.status || "MISSING"}`)
+      .join(" · ");
+    lines.push(
+      `| ${row.rank ?? "—"} | \`${row.id}\` | ${row.priority} | ${String(row.title || "").replace(/\|/g, "/")} | ${String(row.canonical_target || "").replace(/\|/g, "/")} | ${boundStatus} | ${String(row.fix_block || "").replace(/\|/g, "/")} |`
+    );
+  }
+  return lines;
+}
+
 export function renderMarkdown(data, score) {
   const lines = [
     `# Module completion — ${data.title || data.module}`,
@@ -120,6 +152,7 @@ export function renderMarkdown(data, score) {
   const counts = { PASS: 0, HOLD: 0, OPEN: 0, FAIL: 0, UNVERIFIED: 0 };
   for (const it of data.items) counts[it.status] = (counts[it.status] || 0) + 1;
   for (const [k, v] of Object.entries(counts)) lines.push(`| ${k} | ${v} |`);
+  lines.push(...renderRankedFailRegistry(data));
   lines.push("", "| ID | Status | Title | Evidence | PR |", "|---|---|---|---|---|");
   for (const it of data.items) {
     lines.push(
