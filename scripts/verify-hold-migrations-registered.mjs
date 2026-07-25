@@ -31,7 +31,10 @@ let registry;
 try { registry = JSON.parse(fs.readFileSync(REG_PATH, "utf8")); }
 catch { console.error(`[${LABEL}] FAILED — missing/invalid ${path.relative(ROOT, REG_PATH)}`); process.exit(1); }
 const registered = new Set(
-  [...(registry.held || []), ...(registry.applied_held || [])].map((h) => h.file)
+  // Every array section counts as registered — discovered dynamically, never a hardcoded list of names.
+  // The `superseded` section added 2026-07-25 was invisible to a hardcoded [held, applied_held] union, so a
+  // correctly-registered file reported as "carries a DO-NOT-RUN marker but is NOT in the registry".
+  Object.values(registry).filter(Array.isArray).flat().map((h) => h?.file)
 );
 
 // (1) every marked migration is registered

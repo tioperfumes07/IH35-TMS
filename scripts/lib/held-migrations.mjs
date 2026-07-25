@@ -41,7 +41,22 @@ export const HELD_REGISTRY_FILENAME = ".held-migrations.json";
 export function loadHeldSet(migrationsDir) {
   const p = path.join(migrationsDir, HELD_REGISTRY_FILENAME);
   const parsed = JSON.parse(fs.readFileSync(p, "utf8"));
-  const files = [...(parsed.held || []), ...(parsed.applied_held || [])].map((h) => h.file).filter(Boolean);
+  // Union EVERY array section, discovered dynamically — never an explicit list of section names.
+  //
+  // 2026-07-25: the registry gained a third section, `superseded` (202607790000 — its premise is false on
+  // prod; applying it would DUPLICATE a CoA account that already exists for all three entities). With a
+  // hardcoded [held, applied_held] union that file silently left the prod-skip set and became an ordinary
+  // pending migration, armed to fire on the next deploy and cause exactly that duplication. Adding a section
+  // to a JSON file must never be able to arm a migration.
+  //
+  // Every section here means the same thing to the RUNNER — "never auto-apply on prod". The sections differ
+  // only in WHY (not yet applied / already applied / never to be applied), which is reporting, not behaviour.
+  // Iterating the object keeps that true for any section added later, without another incident to teach it.
+  const files = Object.values(parsed)
+    .filter(Array.isArray)
+    .flat()
+    .map((h) => h?.file)
+    .filter(Boolean);
   return new Set(files);
 }
 

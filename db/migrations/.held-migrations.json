@@ -1,71 +1,6 @@
 {
   "note": "HELD MIGRATIONS — each carries a 'DO NOT RUN ON PROD' marker and must run ONLY on a Neon branch by Jorge's hand, then be ledger-backfilled so prod db:migrate skips it. verify:hold-migrations-registered enforces bidirectional parity: every migration whose header says DO-NOT-RUN must be listed here, and every entry here must still carry the marker — so a held migration can never silently lose its marker (which would let db:migrate fire it on prod).",
-  "held": [
-    {
-      "file": "202607690000_bank_tx_capture_fields.sql",
-      "reason": "[HOLD-FOR-JORGE — FINANCIAL] 0441-mod8-tx-fields-captured-not-sent — additive capture-field persistence on banking.bank_transactions (check_number text, categorization_class_id uuid FK catalogs.classes, categorization_location text, is_billable boolean default false, tags text) so the categorize panel's Check no./Class/Location/Billable/Tags survive Post instead of evaporating as a draft-only overlay. ADDITIVE + IDEMPOTENT; nullable/default — no backfill. No GL rows, no flags, no RLS change (columns inherit the table's FORCED RLS + grants). NOT YET applied on prod — GUARD validates on throwaway Postgres apply-twice, owner applies on Neon then ledger-backfills; CI fresh-from-0001 builds the columns."
-    },
-    {
-      "file": "202607760000_cash_dip_coa_role.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 1] Widen accounting.chart_of_accounts_roles.role CHECK (+ cash_dip for settlement BillPayment DIP cash). TRUE SUPERSET of 202607710000's 34 values. No account_id seed. Owner Neon-applies then designates cash_dip → QBO-1150040141 (WF General Operating 6103) for TRANSP via CoaRolesPage."
-    },
-    {
-      "file": "202607790000_cost_of_labor_mexico_drivers_transp_usmca.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 1 · NEEDS OWNER+CPA CONFIRM] Seed Cost of Labor–Mexico Drivers on TRANSP+USMCA. Account numbers NULL until CPA confirms. Type/subtype match TRK QBO-204 structure. Then designate driver_pay_expense."
-    },
-    {
-      "file": "202607840000_revoke_delete_safety_join_tables.sql",
-      "held_apply_order": [
-        "202607820000_safety_relational_linkage_and_lifecycle.sql",
-        "202607830000_escrow_target_settings.sql",
-        "202607840000_revoke_delete_safety_join_tables.sql"
-      ],
-      "reason": "[HOLD-FOR-JORGE — TIER 1] SAF-F29-GRANTS — REVOKE DELETE from ih35_app on the three company-violation join tables. GRANT is additive and the safety schema's default privilege is ih35_app=arwd (the d is DELETE), so 202607820000's GRANT SELECT,INSERT,UPDATE sat on top of an INHERITED DELETE. Local validation could not catch it — the local DB's default privileges differ from prod. Owner already ran a bare REVOKE on prod; this makes it permanent + CI-consistent. Idempotent no-op when already revoked."
-    },
-    {
-      "file": "202607950000_posting_batches_template_link.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] ACCT-LINK-05 — closes catalogs.posting_templates 0-inbound-FK island-catalog defect. Additive accounting.posting_batches.posting_template_id uuid FK -> catalogs.posting_templates(id) ON DELETE SET NULL + source_template_code text stamp + partial index (WHERE NOT NULL) for reverse drill. NO seed rows (catalogs.posting_templates debit_account_id/credit_account_id are NOT NULL CoA picks — owner/CPA territory per Rule 13; re-verified truly 0 rows on Neon br-fancy-credit-akjnd07a WITH app.bypass_rls='lucia', not RLS-masked). All-NULL on add so the inline FK holds trivially, no backfill, no RLS/grant change (inherits table's existing FORCED RLS). Companion code change stamps source_template_code on every posting_batches insert going forward (posting-engine.service.ts) so the FK self-resolves the instant the owner seeds templates + runs the named one-time backfill in the migration's POST-APPLY VERIFY comment. Run only on a Neon branch by Jorge, then ledger-backfill."
-    },
-    {
-      "file": "202607960000_journal_entries_type_fk.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] ACCT-LINK-01 — additive nullable accounting.journal_entries.journal_entry_type_id → catalogs.journal_entry_types(id) + partial index. Closes the AF-5 metadata-only island (catalog had 16 rows / 0 inbound FKs). App create path is col-gated until Neon-apply. No GL math. NOT YET applied on prod — throwaway PG apply-twice; owner Neon-apply + ledger-backfill; then re-measure inbound FK density before flipping ACCT-LINK-01 to PASS."
-    },
-    {
-      "file": "202607990000_account_role_bindings_entity_scope_finish.sql",
-      "reason": "[HOLD-FOR-JORGE — FINANCIAL] LST-F09 — finish catalogs.account_role_bindings entity-scope: opco NOT NULL, UNIQUE(opco,role_key), FORCE RLS company_scope GUC policy (replaces role-based select/insert/update), REVOKE DELETE. Companion route writes/filters operating_company_id + sets app.operating_company_id. Dynamic org.companies.code='TRANSP' primary — no hardcoded UUID. Table is 0 rows on prod (lucia 2026-07-25). NOT YET applied — owner Neon-apply + ledger-backfill; GUARD re-verifies."
-    },
-    {
-      "file": "202608000000_payment_terms_posting_templates_per_entity.sql",
-      "reason": "[HOLD-FOR-JORGE — FINANCIAL] LST-F03 — catalogs.payment_terms + catalogs.posting_templates per-entity conversion: add operating_company_id NOT NULL, UNIQUE(opco, name/code), FORCE RLS company_scope, REVOKE DELETE, seed identical payment_terms to every active entity (qbo_terms_id nulled on copies to avoid global UNIQUE collision). posting_templates 0 rows on prod — structure only until owner seeds. Dynamic org.companies.code=TRANSP. NEVER-DELETE (§F.24). Companion factory entityScoped:true."
-    },
-    {
-      "file": "202608010000_dispatcher_error_reasons_per_entity.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 1] LST-CAT-06 — catalogs.dispatcher_error_reasons per-entity (owner ruling 2026-07-24 + load-derived entity). Prod lucia: 25 rows, no opco, role-only RLS policies. Adds operating_company_id, seeds every active entity, UNIQUE(opco,code), company_scope FORCE RLS, REVOKE DELETE. Companion route scopes GUC from related load first. NEVER-DELETE (§F.24). Owner Neon-apply + ledger-backfill."
-    },
-    {
-      "file": "202608020000_acct_link_04_expense_lines_expense_category_fk.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] ACCT-LINK-04 (ACCT-F07) — catalogs.expense_categories has 0 inbound FKs on prod. accounting.expense_lines.expense_category_uuid has been an unconstrained bare uuid since migration 0050, which was authored before the category catalog arrived in 0152, so it was never constrained and never entity-scoped. Adds accounting.expense_lines.operating_company_id (inline FK org.companies, backfilled from the parent expense), a BEFORE INSERT/UPDATE trigger that derives it from the parent so no writer can leave it NULL or disagree with its header, composite UNIQUE (operating_company_id, id) on catalogs.expense_categories + accounting.expenses, and the two SAME-ENTITY composite FKs: line->expense and the ACCT-LINK-04 link line->catalogs.expense_categories. A single-column FK was rejected on purpose — it would satisfy the audit count while still allowing a cross-entity category. MATCH SIMPLE keeps uncategorized lines legal (QBO-style). POSTS NOTHING: no JE, no GL math, no posting flag, no delete. Prod state verified on Neon br-fancy-credit-akjnd07a 2026-07-24 (RLS-honest per-entity read, since the company_scope policy has no lucia-bypass branch): catalogs.expense_categories=9 rows metadata={}, catalogs.qbo_categories=0, accounting.expenses=0, accounting.expense_lines=0 — a zero-backfill window. Throwaway PG apply-twice idempotent + 6 behavioral assertions green. Owner applies on a Neon branch, then ledger-backfills."
-    },
-    {
-      "file": "202608030000_bank_accounts_rls_bypass_lucia.sql",
-      "reason": "[HOLD-FOR-JORGE — FINANCIAL CLUSTER / RLS-POLICY CHANGE] BANK-ECON-04 / BANK-SURF-04 root-cause fix — banking.bank_accounts policy bank_accounts_company_scope (0072) checks ONLY app.operating_company_id with no `app.bypass_rls='lucia'` escape. POST /reconciliation/start and /upload-statement resolve a bare bank_account_id's operating_company_id via withLuciaBypass (sentinel company id) BEFORE the real company is known, so every attempt 404s bank_account_not_found before insert — proven live (16 bank_accounts, 0 reconciliation_sessions, Neon lucia bypass 2026-07-24/25) and reproduced on local migrated Postgres in this PR's integration test. Adds escape to USING only; WITH CHECK unchanged. Mirrors 202607610000 / 202607900000. Renumbered to 202608030000 ABOVE main file max 202608020000 after #3446 landed. Owner Neon-applies then ledger-backfills."
-    },
-    {
-      "file": "202608040000_payment_terms_consumer_remap_same_entity.sql",
-      "requires_held": [
-        "202608000000_payment_terms_posting_templates_per_entity.sql"
-      ],
-      "held_apply_order": [
-        "202608000000_payment_terms_posting_templates_per_entity.sql",
-        "202608040000_payment_terms_consumer_remap_same_entity.sql"
-      ],
-      "reason": "[HOLD-FOR-JORGE — FINANCIAL] LST-F03 follow-up — after payment_terms per-entity clone, remap mdata.customers/vendors + accounting.invoices.payment_terms_id to same-entity clone by terms_name so company_scope JOINs do not false-empty (detail_types trap class). PREREQ 202608000000. Dynamic org — no hardcoded UUID. NEVER-DELETE §F.24. Prod 2026-07-25: 0 customers/vendors with payment_terms_id (remap is no-op today, load-bearing when terms attach)."
-    },
-    {
-      "file": "202608050000_bank_link_01_counterparty_same_entity_fk.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] BANK-LINK-01 (ranked FAIL BANK-F04) — banking.bank_transactions.categorization_vendor_id / categorization_customer_id have been BARE unconstrained uuid columns since migration 0165 (no REFERENCES, no entity check) even though categorization.routes.ts already writes + JOINs them against mdata.vendors/mdata.customers by convention. Adds composite UNIQUE (operating_company_id, id) on mdata.vendors + mdata.customers, then the two SAME-ENTITY composite FKs bank_tx_categorization_vendor_same_entity_fkey / _customer_same_entity_fkey (mirrors the ACCT-LINK-04 same-entity pattern — a single-column FK would allow a cross-entity counterparty leak). Guarded 0-orphan RAISE EXCEPTION before each ADD CONSTRAINT. categorization_memo (display text) untouched/retained. POSTS NOTHING: no JE, no GL account, no posting flag, no feature flag. Additive/idempotent, no RLS/grant change (inherits each table's existing FORCE RLS + 0065 grants), no hardcoded UUID. Run only on a Neon branch by Jorge, then ledger-backfill; GUARD (scripts/verify-steps/1482) re-verifies the constraint shape post-apply."
-    }
-  ],
+  "_integrity_note": "Every entry appears EXACTLY ONCE (file is the key). applied_on_prod MUST agree with the pinned prod-ledger snapshot scripts/lib/prod-migration-ledger-checksums.json for any file inside its window (>= 202606010000). Enforced by scripts/verify-steps/1361-verify-held-registry-integrity.mjs. Repaired 2026-07-25: 119 entries collapsed to 110 (9 duplicates, 7 of them carrying contradictory applied_on_prod), and 79 entries that were already applied on prod were stamped. Before the repair, verify-schema-parity-from-prod (step 1437) derived held-unapplied columns from this file and therefore treated applied migrations as unapplied.",
   "applied_held": [
     {
       "file": "202606272100_af1_catalogs_accounts_per_entity.sql",
@@ -700,7 +635,111 @@
       "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] LST-PICKER-02 companion. The item picker read mdata.qbo_items (mirror) while inline create wrote catalogs.items (canonical); the code fix repoints the readers. Prod 2026-07-25: catalogs.items TRANSP 189 / TRK 0 / USMCA 0 vs mdata.qbo_items TRANSP 180 / TRK 48 — repointing alone would EMPTY TRK's picker, so this additively backfills mirror-only items into the canonical catalog, same-entity, idempotent, skipping any qbo_item_id or name already present. No GL effect.",
       "applied_on_prod": true,
       "applied_evidence": "GUARD live cross-check 2026-07-25 (Neon tiny-field-89581227 br-fancy-credit-akjnd07a, set_config('app.bypass_rls','lucia',true)): present in _system._schema_migrations (canonical applied ledger). See docs/trackers/GUARD-HELD-REGISTRY-LEDGER-CROSSCHECK-2026-07-25.md §1/§3."
+    },
+    {
+      "file": "202607690000_bank_tx_capture_fields.sql",
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL] 0441-mod8-tx-fields-captured-not-sent — additive capture-field persistence on banking.bank_transactions (check_number text, categorization_class_id uuid FK catalogs.classes, categorization_location text, is_billable boolean default false, tags text) so the categorize panel's Check no./Class/Location/Billable/Tags survive Post instead of evaporating as a draft-only overlay. ADDITIVE + IDEMPOTENT; nullable/default — no backfill. No GL rows, no flags, no RLS change (columns inherit the table's FORCED RLS + grants). NOT YET applied on prod — GUARD validates on throwaway Postgres apply-twice, owner applies on Neon then ledger-backfills; CI fresh-from-0001 builds the columns.",
+      "applied_on_prod": true,
+      "applied_ledger_checksum": "024121991f0e8e85ee4603812df6172aaca4a65dee83180740be8713e0471c3d",
+      "applied_evidence": "APPLIED on prod 2026-07-25 (owner Neon-apply, neondb_owner, br-fancy-credit-akjnd07a). GUARD live read of _system._schema_migrations; both ledgers backfilled. Ledger checksum = sha256(repo file), independently recomputed from the committed file — 12/12 match — so no checksum override is needed. Record: claude/NEON-APPLY-HELD-MIGRATIONS-FINAL-2026-07-25."
+    },
+    {
+      "file": "202607760000_cash_dip_coa_role.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Widen accounting.chart_of_accounts_roles.role CHECK (+ cash_dip for settlement BillPayment DIP cash). TRUE SUPERSET of 202607710000's 34 values. No account_id seed. Owner Neon-applies then designates cash_dip → QBO-1150040141 (WF General Operating 6103) for TRANSP via CoaRolesPage.",
+      "applied_on_prod": true,
+      "applied_ledger_checksum": "1ae6163c12fa2dd8918136de6fcde1786f5f690da0d506ec5e4da1ec6555a006",
+      "applied_evidence": "APPLIED on prod 2026-07-25 (owner Neon-apply, neondb_owner, br-fancy-credit-akjnd07a). GUARD live read of _system._schema_migrations; both ledgers backfilled. Ledger checksum = sha256(repo file), independently recomputed from the committed file — 12/12 match — so no checksum override is needed. Record: claude/NEON-APPLY-HELD-MIGRATIONS-FINAL-2026-07-25."
+    },
+    {
+      "file": "202607840000_revoke_delete_safety_join_tables.sql",
+      "held_apply_order": [
+        "202607820000_safety_relational_linkage_and_lifecycle.sql",
+        "202607830000_escrow_target_settings.sql",
+        "202607840000_revoke_delete_safety_join_tables.sql"
+      ],
+      "reason": "[HOLD-FOR-JORGE — TIER 1] SAF-F29-GRANTS — REVOKE DELETE from ih35_app on the three company-violation join tables. GRANT is additive and the safety schema's default privilege is ih35_app=arwd (the d is DELETE), so 202607820000's GRANT SELECT,INSERT,UPDATE sat on top of an INHERITED DELETE. Local validation could not catch it — the local DB's default privileges differ from prod. Owner already ran a bare REVOKE on prod; this makes it permanent + CI-consistent. Idempotent no-op when already revoked.",
+      "applied_on_prod": true,
+      "applied_ledger_checksum": "c542df80c6ec7d1954e42f6f5bd7d7199625f2ece2358d77f0ebce5041da86ff",
+      "applied_evidence": "APPLIED on prod 2026-07-25 (owner Neon-apply, neondb_owner, br-fancy-credit-akjnd07a). GUARD live read of _system._schema_migrations; both ledgers backfilled. Ledger checksum = sha256(repo file), independently recomputed from the committed file — 12/12 match — so no checksum override is needed. Record: claude/NEON-APPLY-HELD-MIGRATIONS-FINAL-2026-07-25."
+    },
+    {
+      "file": "202607950000_posting_batches_template_link.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] ACCT-LINK-05 — closes catalogs.posting_templates 0-inbound-FK island-catalog defect. Additive accounting.posting_batches.posting_template_id uuid FK -> catalogs.posting_templates(id) ON DELETE SET NULL + source_template_code text stamp + partial index (WHERE NOT NULL) for reverse drill. NO seed rows (catalogs.posting_templates debit_account_id/credit_account_id are NOT NULL CoA picks — owner/CPA territory per Rule 13; re-verified truly 0 rows on Neon br-fancy-credit-akjnd07a WITH app.bypass_rls='lucia', not RLS-masked). All-NULL on add so the inline FK holds trivially, no backfill, no RLS/grant change (inherits table's existing FORCED RLS). Companion code change stamps source_template_code on every posting_batches insert going forward (posting-engine.service.ts) so the FK self-resolves the instant the owner seeds templates + runs the named one-time backfill in the migration's POST-APPLY VERIFY comment. Run only on a Neon branch by Jorge, then ledger-backfill.",
+      "applied_on_prod": true,
+      "applied_ledger_checksum": "64c41b336b03ec4bbf06792cb603f93f14d7783b0dbecff6db02e1692145fbfb",
+      "applied_evidence": "APPLIED on prod 2026-07-25 (owner Neon-apply, neondb_owner, br-fancy-credit-akjnd07a). GUARD live read of _system._schema_migrations; both ledgers backfilled. Ledger checksum = sha256(repo file), independently recomputed from the committed file — 12/12 match — so no checksum override is needed. Record: claude/NEON-APPLY-HELD-MIGRATIONS-FINAL-2026-07-25."
+    },
+    {
+      "file": "202607960000_journal_entries_type_fk.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] ACCT-LINK-01 — additive nullable accounting.journal_entries.journal_entry_type_id → catalogs.journal_entry_types(id) + partial index. Closes the AF-5 metadata-only island (catalog had 16 rows / 0 inbound FKs). App create path is col-gated until Neon-apply. No GL math. NOT YET applied on prod — throwaway PG apply-twice; owner Neon-apply + ledger-backfill; then re-measure inbound FK density before flipping ACCT-LINK-01 to PASS.",
+      "applied_on_prod": true,
+      "applied_ledger_checksum": "4020a9a3dd55e5f04367203750bcdd7b9440069cc73ca614e4c4bd0c429e7c1f",
+      "applied_evidence": "APPLIED on prod 2026-07-25 (owner Neon-apply, neondb_owner, br-fancy-credit-akjnd07a). GUARD live read of _system._schema_migrations; both ledgers backfilled. Ledger checksum = sha256(repo file), independently recomputed from the committed file — 12/12 match — so no checksum override is needed. Record: claude/NEON-APPLY-HELD-MIGRATIONS-FINAL-2026-07-25."
+    },
+    {
+      "file": "202607990000_account_role_bindings_entity_scope_finish.sql",
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL] LST-F09 — finish catalogs.account_role_bindings entity-scope: opco NOT NULL, UNIQUE(opco,role_key), FORCE RLS company_scope GUC policy (replaces role-based select/insert/update), REVOKE DELETE. Companion route writes/filters operating_company_id + sets app.operating_company_id. Dynamic org.companies.code='TRANSP' primary — no hardcoded UUID. Table is 0 rows on prod (lucia 2026-07-25). NOT YET applied — owner Neon-apply + ledger-backfill; GUARD re-verifies.",
+      "applied_on_prod": true,
+      "applied_ledger_checksum": "1a0c046996778f465d86ecb277a5ba14d715f9e40babcff03e5df77dfac9e805",
+      "applied_evidence": "APPLIED on prod 2026-07-25 (owner Neon-apply, neondb_owner, br-fancy-credit-akjnd07a). GUARD live read of _system._schema_migrations; both ledgers backfilled. Ledger checksum = sha256(repo file), independently recomputed from the committed file — 12/12 match — so no checksum override is needed. Record: claude/NEON-APPLY-HELD-MIGRATIONS-FINAL-2026-07-25."
+    },
+    {
+      "file": "202608000000_payment_terms_posting_templates_per_entity.sql",
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL] LST-F03 — catalogs.payment_terms + catalogs.posting_templates per-entity conversion: add operating_company_id NOT NULL, UNIQUE(opco, name/code), FORCE RLS company_scope, REVOKE DELETE, seed identical payment_terms to every active entity (qbo_terms_id nulled on copies to avoid global UNIQUE collision). posting_templates 0 rows on prod — structure only until owner seeds. Dynamic org.companies.code=TRANSP. NEVER-DELETE (§F.24). Companion factory entityScoped:true.",
+      "applied_on_prod": true,
+      "applied_ledger_checksum": "a11ae930cb43c34153409b8a770d7df8748c0ff7a17dba4276b756c0f39089a6",
+      "applied_evidence": "APPLIED on prod 2026-07-25 (owner Neon-apply, neondb_owner, br-fancy-credit-akjnd07a). GUARD live read of _system._schema_migrations; both ledgers backfilled. Ledger checksum = sha256(repo file), independently recomputed from the committed file — 12/12 match — so no checksum override is needed. Record: claude/NEON-APPLY-HELD-MIGRATIONS-FINAL-2026-07-25."
+    },
+    {
+      "file": "202608010000_dispatcher_error_reasons_per_entity.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] LST-CAT-06 — catalogs.dispatcher_error_reasons per-entity (owner ruling 2026-07-24 + load-derived entity). Prod lucia: 25 rows, no opco, role-only RLS policies. Adds operating_company_id, seeds every active entity, UNIQUE(opco,code), company_scope FORCE RLS, REVOKE DELETE. Companion route scopes GUC from related load first. NEVER-DELETE (§F.24). Owner Neon-apply + ledger-backfill.",
+      "applied_on_prod": true,
+      "applied_ledger_checksum": "ec9784d8b6baf9b0be527c29ab4fc69b7f03c7d56dfcfac9887c3506bab3cc51",
+      "applied_evidence": "APPLIED on prod 2026-07-25 (owner Neon-apply, neondb_owner, br-fancy-credit-akjnd07a). GUARD live read of _system._schema_migrations; both ledgers backfilled. Ledger checksum = sha256(repo file), independently recomputed from the committed file — 12/12 match — so no checksum override is needed. Record: claude/NEON-APPLY-HELD-MIGRATIONS-FINAL-2026-07-25."
+    },
+    {
+      "file": "202608020000_acct_link_04_expense_lines_expense_category_fk.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] ACCT-LINK-04 (ACCT-F07) — catalogs.expense_categories has 0 inbound FKs on prod. accounting.expense_lines.expense_category_uuid has been an unconstrained bare uuid since migration 0050, which was authored before the category catalog arrived in 0152, so it was never constrained and never entity-scoped. Adds accounting.expense_lines.operating_company_id (inline FK org.companies, backfilled from the parent expense), a BEFORE INSERT/UPDATE trigger that derives it from the parent so no writer can leave it NULL or disagree with its header, composite UNIQUE (operating_company_id, id) on catalogs.expense_categories + accounting.expenses, and the two SAME-ENTITY composite FKs: line->expense and the ACCT-LINK-04 link line->catalogs.expense_categories. A single-column FK was rejected on purpose — it would satisfy the audit count while still allowing a cross-entity category. MATCH SIMPLE keeps uncategorized lines legal (QBO-style). POSTS NOTHING: no JE, no GL math, no posting flag, no delete. Prod state verified on Neon br-fancy-credit-akjnd07a 2026-07-24 (RLS-honest per-entity read, since the company_scope policy has no lucia-bypass branch): catalogs.expense_categories=9 rows metadata={}, catalogs.qbo_categories=0, accounting.expenses=0, accounting.expense_lines=0 — a zero-backfill window. Throwaway PG apply-twice idempotent + 6 behavioral assertions green. Owner applies on a Neon branch, then ledger-backfills.",
+      "applied_on_prod": true,
+      "applied_ledger_checksum": "2a1109d38f7743721bc0e3d5b5d68b2adab2e9d081a4b7ae316f40c28662a743",
+      "applied_evidence": "APPLIED on prod 2026-07-25 (owner Neon-apply, neondb_owner, br-fancy-credit-akjnd07a). GUARD live read of _system._schema_migrations; both ledgers backfilled. Ledger checksum = sha256(repo file), independently recomputed from the committed file — 12/12 match — so no checksum override is needed. Record: claude/NEON-APPLY-HELD-MIGRATIONS-FINAL-2026-07-25."
+    },
+    {
+      "file": "202608030000_bank_accounts_rls_bypass_lucia.sql",
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL CLUSTER / RLS-POLICY CHANGE] BANK-ECON-04 / BANK-SURF-04 root-cause fix — banking.bank_accounts policy bank_accounts_company_scope (0072) checks ONLY app.operating_company_id with no `app.bypass_rls='lucia'` escape. POST /reconciliation/start and /upload-statement resolve a bare bank_account_id's operating_company_id via withLuciaBypass (sentinel company id) BEFORE the real company is known, so every attempt 404s bank_account_not_found before insert — proven live (16 bank_accounts, 0 reconciliation_sessions, Neon lucia bypass 2026-07-24/25) and reproduced on local migrated Postgres in this PR's integration test. Adds escape to USING only; WITH CHECK unchanged. Mirrors 202607610000 / 202607900000. Renumbered to 202608030000 ABOVE main file max 202608020000 after #3446 landed. Owner Neon-applies then ledger-backfills.",
+      "applied_on_prod": true,
+      "applied_ledger_checksum": "31f9595a050dcc7b88fbf61d77949ba720672f7f11d02ff6b08eadff6f9c5e5f",
+      "applied_evidence": "APPLIED on prod 2026-07-25 (owner Neon-apply, neondb_owner, br-fancy-credit-akjnd07a). GUARD live read of _system._schema_migrations; both ledgers backfilled. Ledger checksum = sha256(repo file), independently recomputed from the committed file — 12/12 match — so no checksum override is needed. Record: claude/NEON-APPLY-HELD-MIGRATIONS-FINAL-2026-07-25."
+    },
+    {
+      "file": "202608040000_payment_terms_consumer_remap_same_entity.sql",
+      "requires_held": [
+        "202608000000_payment_terms_posting_templates_per_entity.sql"
+      ],
+      "held_apply_order": [
+        "202608000000_payment_terms_posting_templates_per_entity.sql",
+        "202608040000_payment_terms_consumer_remap_same_entity.sql"
+      ],
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL] LST-F03 follow-up — after payment_terms per-entity clone, remap mdata.customers/vendors + accounting.invoices.payment_terms_id to same-entity clone by terms_name so company_scope JOINs do not false-empty (detail_types trap class). PREREQ 202608000000. Dynamic org — no hardcoded UUID. NEVER-DELETE §F.24. Prod 2026-07-25: 0 customers/vendors with payment_terms_id (remap is no-op today, load-bearing when terms attach).",
+      "applied_on_prod": true,
+      "applied_ledger_checksum": "58845cbda4b5290ce2c68cca0a0e46c1e1a0fcaca2ca9189ddd6b3e581eef14e",
+      "applied_evidence": "APPLIED on prod 2026-07-25 (owner Neon-apply, neondb_owner, br-fancy-credit-akjnd07a). GUARD live read of _system._schema_migrations; both ledgers backfilled. Ledger checksum = sha256(repo file), independently recomputed from the committed file — 12/12 match — so no checksum override is needed. Record: claude/NEON-APPLY-HELD-MIGRATIONS-FINAL-2026-07-25."
+    },
+    {
+      "file": "202608050000_bank_link_01_counterparty_same_entity_fk.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] BANK-LINK-01 (ranked FAIL BANK-F04) — banking.bank_transactions.categorization_vendor_id / categorization_customer_id have been BARE unconstrained uuid columns since migration 0165 (no REFERENCES, no entity check) even though categorization.routes.ts already writes + JOINs them against mdata.vendors/mdata.customers by convention. Adds composite UNIQUE (operating_company_id, id) on mdata.vendors + mdata.customers, then the two SAME-ENTITY composite FKs bank_tx_categorization_vendor_same_entity_fkey / _customer_same_entity_fkey (mirrors the ACCT-LINK-04 same-entity pattern — a single-column FK would allow a cross-entity counterparty leak). Guarded 0-orphan RAISE EXCEPTION before each ADD CONSTRAINT. categorization_memo (display text) untouched/retained. POSTS NOTHING: no JE, no GL account, no posting flag, no feature flag. Additive/idempotent, no RLS/grant change (inherits each table's existing FORCE RLS + 0065 grants), no hardcoded UUID. Run only on a Neon branch by Jorge, then ledger-backfill; GUARD (scripts/verify-steps/1482) re-verifies the constraint shape post-apply.",
+      "applied_on_prod": true,
+      "applied_ledger_checksum": "c35d5052f67edca32ae49a5f3d7100b71ee3d5b18926b42f7171ea6b3723b626",
+      "applied_evidence": "APPLIED on prod 2026-07-25 (owner Neon-apply, neondb_owner, br-fancy-credit-akjnd07a). GUARD live read of _system._schema_migrations; both ledgers backfilled. Ledger checksum = sha256(repo file), independently recomputed from the committed file — 12/12 match — so no checksum override is needed. Record: claude/NEON-APPLY-HELD-MIGRATIONS-FINAL-2026-07-25."
     }
   ],
-  "_integrity_note": "Every entry appears EXACTLY ONCE (file is the key). applied_on_prod MUST agree with the pinned prod-ledger snapshot scripts/lib/prod-migration-ledger-checksums.json for any file inside its window (>= 202606010000). Enforced by scripts/verify-steps/1361-verify-held-registry-integrity.mjs. Repaired 2026-07-25: 119 entries collapsed to 110 (9 duplicates, 7 of them carrying contradictory applied_on_prod), and 79 entries that were already applied on prod were stamped. Before the repair, verify-schema-parity-from-prod (step 1437) derived held-unapplied columns from this file and therefore treated applied migrations as unapplied."
+  "superseded": [
+    {
+      "file": "202607790000_cost_of_labor_mexico_drivers_transp_usmca.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 · NEEDS OWNER+CPA CONFIRM] Seed Cost of Labor–Mexico Drivers on TRANSP+USMCA. Account numbers NULL until CPA confirms. Type/subtype match TRK QBO-204 structure. Then designate driver_pay_expense.",
+      "superseded": true,
+      "applied_evidence": "SUPERSEDED — never to be applied. Owner + GUARD 2026-07-25: absent from BOTH ledgers AND its premise is FALSE on prod. It would create a \"Cost of Labor-Mexico Drivers\" account, but driver-pay cost-of-labor accounts ALREADY exist and driver_pay_expense is ALREADY designated for all three entities in accounting.chart_of_accounts_roles (TRANSP QBO-1150040140; USMCA 5100; TRK QBO-204). Applying it would DUPLICATE the CoA. RETAINED in the registry rather than delisted: the registry IS the prod-skip set, so removing it would turn it into an ordinary pending migration and fire it on the next deploy — causing exactly the duplication this classification exists to prevent."
+    }
+  ],
+  "held": []
 }

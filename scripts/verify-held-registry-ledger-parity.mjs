@@ -44,25 +44,28 @@ const SELFTEST = process.argv.includes("--selftest");
 // live-verified 2026-07-25 under app.bypass_rls='lucia'. Changing this list is an owner-reviewed
 // governance decision (a file only leaves this set when GUARD re-proves it applied, or the owner
 // Neon-applies + ledger-backfills it and GUARD re-proves the ledger row).
-export const EXPECTED_HELD_12 = [
-  "202607690000_bank_tx_capture_fields.sql",
-  "202607760000_cash_dip_coa_role.sql",
-  "202607790000_cost_of_labor_mexico_drivers_transp_usmca.sql",
-  "202607840000_revoke_delete_safety_join_tables.sql",
-  "202607950000_posting_batches_template_link.sql",
-  "202607960000_journal_entries_type_fk.sql",
-  "202607990000_account_role_bindings_entity_scope_finish.sql",
-  "202608000000_payment_terms_posting_templates_per_entity.sql",
-  "202608010000_dispatcher_error_reasons_per_entity.sql",
-  "202608020000_acct_link_04_expense_lines_expense_category_fk.sql",
-  "202608030000_bank_accounts_rls_bypass_lucia.sql",
-  "202608040000_payment_terms_consumer_remap_same_entity.sql",
-  // Added after the 2026-07-25 12-file cross-check snapshot: 202608050000 is the highest-numbered
-  // migration in the registry, postdating every file above (including 202608040000, itself still
-  // held) — migrations apply in numeric order, so it cannot be applied while an earlier-numbered
-  // held file is not. #3512's own PR proves it HELD/not-Neon-applied (verify-bank-link-01-
-  // counterparty-fk.mjs; no prod counterparty_fk density claimed).
-  "202608050000_bank_link_01_counterparty_same_entity_fk.sql",
+export const EXPECTED_HELD = [
+  // EMPTY as of 2026-07-25 — there are ZERO genuinely-unapplied held migrations on prod.
+  //
+  // This list previously held 13 files. It emptied exactly the way its own charter allows ("a file only
+  // leaves this set when GUARD re-proves it applied, or the owner Neon-applies + ledger-backfills it and
+  // GUARD re-proves the ledger row"). Both happened:
+  //   * 12 were owner Neon-applied 2026-07-25 (neondb_owner, br-fancy-credit-akjnd07a), both ledgers
+  //     backfilled, GUARD live-read _system._schema_migrations. Each ledger checksum equals sha256 of the
+  //     committed file — independently recomputed here, 12/12 match — so no override is needed. They are
+  //     now in `applied_held`.
+  //   * 202607790000_cost_of_labor_mexico_drivers_transp_usmca.sql is in NEITHER ledger and is now
+  //     `superseded`: its premise is false on prod. Driver-pay cost-of-labor accounts already exist and
+  //     driver_pay_expense is already designated for all three entities in
+  //     accounting.chart_of_accounts_roles, so applying it would DUPLICATE the CoA. Never apply it.
+  //
+  // Superseded correction worth keeping: the previous entry for 202608050000 argued it MUST still be held
+  // because "migrations apply in numeric order, so it cannot be applied while an earlier-numbered held file
+  // is not." That inference was wrong — GUARD's live ledger read shows it applied (checksum
+  // c35d5052…3723b626). Live evidence outranks reasoning about ordering.
+  //
+  // An empty list still asserts something strong: `held` must be EMPTY. Any file appearing there fails the
+  // (2) check below until GUARD re-proves it unapplied and it is re-listed with a fresh citation.
 ];
 
 /**
@@ -71,7 +74,7 @@ export const EXPECTED_HELD_12 = [
  * @param {{held?: Array<{file:string, applied_on_prod?: boolean}>, applied_held?: Array<{file:string, applied_on_prod?: boolean}>}} registry
  * @returns {string[]} problems (empty = PASS)
  */
-export function assertHeldRegistryLedgerParity(registry) {
+export function assertHeldRegistryLedgerParity(registry, expectedHeld = EXPECTED_HELD) {
   const problems = [];
   const held = Array.isArray(registry?.held) ? registry.held : [];
   const appliedHeld = Array.isArray(registry?.applied_held) ? registry.applied_held : [];
@@ -96,8 +99,8 @@ export function assertHeldRegistryLedgerParity(registry) {
 
   // (2) `held` equals EXACTLY the 12-file allowlist — no more, no fewer.
   const heldFiles = new Set(held.map((h) => h.file).filter(Boolean));
-  const expected = new Set(EXPECTED_HELD_12);
-  const missing = EXPECTED_HELD_12.filter((f) => !heldFiles.has(f));
+  const expected = new Set(expectedHeld);
+  const missing = expectedHeld.filter((f) => !heldFiles.has(f));
   const extra = [...heldFiles].filter((f) => !expected.has(f));
   if (missing.length) {
     problems.push(
@@ -106,7 +109,7 @@ export function assertHeldRegistryLedgerParity(registry) {
   }
   if (extra.length) {
     problems.push(
-      `held[] has ${extra.length} unexpected file(s) not in the GUARD §3 12-file allowlist: ${extra.join(", ")} — either GUARD re-proved this file unapplied (update EXPECTED_HELD_12 with a fresh GUARD cross-check citation) or it drifted back into held[] by mistake`
+      `held[] has ${extra.length} unexpected file(s) not in the GUARD §3 allowlist: ${extra.join(", ")} — either GUARD re-proved this file unapplied (update EXPECTED_HELD with a fresh GUARD cross-check citation) or it drifted back into held[] by mistake`
     );
   }
 
@@ -144,15 +147,23 @@ if (SELFTEST) {
   if (live.length) failures.push(`live registry NOT reconciled:\n  ${live.join("\n  ")}`);
 
   // 1) duplicate across held + applied_held must be caught.
-  if (real.held.length === 0 || real.applied_held.length === 0) {
-    failures.push("selftest: real registry has an empty held[] or applied_held[] — cannot plant fixtures");
+  // Arms 1-3 use a SYNTHETIC allowlist + synthetic held[], not the live registry. The real held[] is
+  // legitimately EMPTY now (zero genuinely-unapplied migrations on prod), and a selftest that can only run
+  // when live data happens to be non-empty is a selftest that silently stops testing — the exact
+  // can't-fail shape this repo has been removing. Passing `expectedHeld` explicitly keeps every arm real
+  // regardless of what prod looks like.
+  const SYN_HELD = [{ file: "209999990001_synthetic_unapplied.sql", reason: "selftest fixture" }];
+  const SYN_ALLOW = ["209999990001_synthetic_unapplied.sql"];
+
+  if (real.applied_held.length === 0) {
+    failures.push("selftest: real registry has an empty applied_held[] — cannot plant the duplicate fixture");
   } else {
     const dupFile = real.applied_held[0].file;
     const withDup = {
-      held: [...real.held, { file: dupFile, reason: "planted dup" }],
+      held: [...SYN_HELD, { file: dupFile, reason: "planted dup" }],
       applied_held: real.applied_held,
     };
-    const caught = assertHeldRegistryLedgerParity(withDup);
+    const caught = assertHeldRegistryLedgerParity(withDup, [...SYN_ALLOW, dupFile]);
     if (!caught.some((e) => e.includes(dupFile) && e.includes("appears"))) {
       failures.push("selftest: cross-array duplicate was NOT caught");
     }
@@ -160,8 +171,8 @@ if (SELFTEST) {
 
   // 2) held[] missing one of the 12 must be caught.
   {
-    const withMissing = { held: real.held.slice(1), applied_held: real.applied_held };
-    const caught = assertHeldRegistryLedgerParity(withMissing);
+    const withMissing = { held: [], applied_held: real.applied_held };
+    const caught = assertHeldRegistryLedgerParity(withMissing, SYN_ALLOW);
     if (!caught.some((e) => e.includes("is missing"))) {
       failures.push("selftest: held[] missing an allowlisted file was NOT caught");
     }
@@ -170,10 +181,10 @@ if (SELFTEST) {
   // 3) held[] with an extra (unexpected) file must be caught.
   {
     const withExtra = {
-      held: [...real.held, { file: "209999990000_not_on_the_allowlist.sql", reason: "planted extra" }],
+      held: [...SYN_HELD, { file: "209999990000_not_on_the_allowlist.sql", reason: "planted extra" }],
       applied_held: real.applied_held,
     };
-    const caught = assertHeldRegistryLedgerParity(withExtra);
+    const caught = assertHeldRegistryLedgerParity(withExtra, SYN_ALLOW);
     if (!caught.some((e) => e.includes("unexpected"))) {
       failures.push("selftest: held[] with an unexpected extra file was NOT caught");
     }

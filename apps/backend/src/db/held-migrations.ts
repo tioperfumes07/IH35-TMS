@@ -33,12 +33,16 @@ const HELD_REGISTRY_FILENAME = ".held-migrations.json";
 export function loadHeldMigrationSet(repoRoot: string): Set<string> {
   try {
     const p = path.join(repoRoot, "db", "migrations", HELD_REGISTRY_FILENAME);
-    const parsed = JSON.parse(fs.readFileSync(p, "utf8")) as {
-      held?: Array<{ file?: string }>;
-      applied_held?: Array<{ file?: string }>;
-    };
-    const files = [...(parsed.held ?? []), ...(parsed.applied_held ?? [])]
-      .map((h) => h.file)
+    // Union EVERY array section, discovered dynamically — never a hardcoded list of section names.
+    // The registry gained a third section (`superseded`) on 2026-07-25; a hardcoded
+    // [held, applied_held] union silently dropped it, which is how a JSON edit can arm a migration.
+    // Mirrors loadHeldSet in scripts/lib/held-migrations.mjs — the boot guard and the runner's
+    // firewall must agree on the set, or one of them is wrong at the worst possible moment.
+    const parsed = JSON.parse(fs.readFileSync(p, "utf8")) as Record<string, unknown>;
+    const files = Object.values(parsed)
+      .filter((v): v is Array<{ file?: string }> => Array.isArray(v))
+      .flat()
+      .map((h) => h?.file)
       .filter((f): f is string => Boolean(f));
     return new Set(files);
   } catch {
