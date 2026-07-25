@@ -73,5 +73,5 @@ Per type/group, Jorge/CPA choose one of:
 | Does | Does not |
 |---|---|
 | Surfaces grouped diff + frozen counts | Toggle `is_postable` |
-| Adds count-stability guard (fixture) | Seed / delete / merge accounts |
-| | Claim Lists “same catalog” applies to CoA |
+| GET `/api/v1/accounting/coa-asymmetry-report` + Chart of Accounts owner panel | Seed / delete / merge accounts |
+| Adds read-only guard (`verify-coa-asymmetry-readonly`) | Claim Lists “same catalog” applies to CoA |

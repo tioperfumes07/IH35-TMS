@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { fetchHomeWoStatusCounts, type HomeWoStatusCount } from "../../../api/home";
+import { fetchHomeWoStatusCountsDetailed, type HomeWoLinkedEconomics, type HomeWoStatusCount } from "../../../api/home";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
 import { formatWoStatusLabel } from "../../../lib/chartLegend";
+import { formatUsdCents } from "../../../lib/money";
 
 const STATUS_COLORS: Record<HomeWoStatusCount["status"], string> = {
   draft: "#94a3b8",
@@ -31,12 +32,41 @@ type Props = {
 };
 type ChartStatus = HomeWoStatusCount["status"] | "unknown";
 
+// ACCT-R-07 (0280-42-wo-to-expense-flow): footer summarizing the accounting.bills/expenses side
+// of the WO-to-expense flow — the join the widget previously lacked. `unverifiable` is surfaced
+// honestly (never a fabricated $0) with the named reason so a schema gap is visible, not hidden.
+function LinkedEconomicsFooter({ linkedEconomics }: { linkedEconomics: HomeWoLinkedEconomics | undefined }) {
+  if (!linkedEconomics) return null;
+  if (linkedEconomics.status === "unverifiable") {
+    return (
+      <p className="mt-2 text-xs text-slate-400" title={linkedEconomics.unverifiable_reason}>
+        WO → bill/expense linkage: unverifiable ({linkedEconomics.unverifiable_reason})
+      </p>
+    );
+  }
+  const { total_linked_bill_amount_cents, total_linked_expense_amount_cents, wo_with_expense_flow_count } = linkedEconomics;
+  if (total_linked_bill_amount_cents === 0 && total_linked_expense_amount_cents === 0) {
+    return <p className="mt-2 text-xs text-slate-500">No linked bills or expenses yet for these work orders.</p>;
+  }
+  return (
+    <p className="mt-2 text-xs text-slate-600">
+      Linked bills {formatUsdCents(total_linked_bill_amount_cents)} · linked expenses{" "}
+      {formatUsdCents(total_linked_expense_amount_cents)} · {wo_with_expense_flow_count} WO
+      {wo_with_expense_flow_count === 1 ? "" : "s"} with accounting activity
+    </p>
+  );
+}
+
 export function WOStatusPieChart({ operatingCompanyId }: Props) {
   const cid = operatingCompanyId ?? "";
 
+  // ACCT-R-07 (0280-42-wo-to-expense-flow): single fetch returns both the WO status counts AND
+  // their linked accounting.bills/accounting.expenses economics (canonical linked_work_order_uuid
+  // FK join) — the widget previously showed WO counts with no visibility into whether those WOs
+  // had actually produced accounting documents.
   const query = useQuery({
     queryKey: ["home", "wo-status-counts", cid],
-    queryFn: () => fetchHomeWoStatusCounts(cid),
+    queryFn: () => fetchHomeWoStatusCountsDetailed(cid),
     enabled: Boolean(cid),
   });
 
@@ -53,7 +83,8 @@ export function WOStatusPieChart({ operatingCompanyId }: Props) {
     return <ListErrorState title="Couldn't load WO status" status={status} message={message} onRetry={() => void query.refetch()} />;
   }
 
-  const rows = query.data ?? [];
+  const rows = query.data?.counts ?? [];
+  const linkedEconomics = query.data?.linked_economics;
   const total = rows.reduce((s, r) => s + r.count, 0);
 
   if (total === 0) {
@@ -63,6 +94,7 @@ export function WOStatusPieChart({ operatingCompanyId }: Props) {
         <div className="flex h-[260px] items-center justify-center rounded-sm border border-dashed border-slate-200 text-sm text-slate-500">
           No open work orders.
         </div>
+        <LinkedEconomicsFooter linkedEconomics={linkedEconomics} />
       </div>
     );
   }
@@ -112,6 +144,7 @@ export function WOStatusPieChart({ operatingCompanyId }: Props) {
           <Legend verticalAlign="middle" align="right" layout="vertical" formatter={(value: string) => formatWoStatusLabel(value)} />
         </PieChart>
       </ResponsiveContainer>
+      <LinkedEconomicsFooter linkedEconomics={linkedEconomics} />
     </div>
   );
 }

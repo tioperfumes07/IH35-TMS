@@ -64,6 +64,198 @@ function officeRole(role: string) {
   return role !== "Driver";
 }
 
+// ACCT-R-07 (0280-42-wo-to-expense-flow): canonical WO status buckets, shared by the WO count
+// query AND the linked bill/expense economics query below so both aggregations classify a raw
+// maintenance.work_orders.status the same way (a single source of truth for the bucket mapping).
+const WO_STATUS_BUCKET_KEYS = [
+  "draft",
+  "open",
+  "in_progress",
+  "awaiting_parts",
+  "completed",
+  "cancelled",
+  "unknown",
+] as const;
+type WoStatusBucket = (typeof WO_STATUS_BUCKET_KEYS)[number];
+
+function bucketizeWoStatus(raw: unknown): WoStatusBucket {
+  const k = String(raw ?? "").toLowerCase();
+  if (k === "draft") return "draft";
+  if (k === "open") return "open";
+  if (k.includes("progress")) return "in_progress";
+  if (k.includes("await") || k.includes("parts")) return "awaiting_parts";
+  if (k.includes("complete")) return "completed";
+  if (k.includes("cancel")) return "cancelled";
+  return "unknown";
+}
+
+type SimpleClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
+
+async function relationExists(client: SimpleClient, qualifiedName: string): Promise<boolean> {
+  const res = await client.query<{ ok: boolean }>(`SELECT to_regclass($1) IS NOT NULL AS ok`, [qualifiedName]);
+  return Boolean(res.rows[0]?.ok);
+}
+
+async function columnExists(client: SimpleClient, schema: string, table: string, column: string): Promise<boolean> {
+  const res = await client.query<{ ok: number }>(
+    `SELECT 1 AS ok FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 AND column_name = $3 LIMIT 1`,
+    [schema, table, column]
+  );
+  return Boolean(res.rows[0]?.ok);
+}
+
+type WoLinkedEconomicsBucket = {
+  bill_count: number;
+  bill_amount_cents: number;
+  expense_count: number;
+  expense_amount_cents: number;
+};
+
+type WoLinkedEconomics =
+  | {
+      status: "ok";
+      buckets: Record<WoStatusBucket, WoLinkedEconomicsBucket>;
+      wo_with_expense_flow_count: number;
+      total_linked_bill_amount_cents: number;
+      total_linked_expense_amount_cents: number;
+    }
+  | { status: "unverifiable"; unverifiable_reason: string };
+
+function emptyLinkedEconomicsBuckets(): Record<WoStatusBucket, WoLinkedEconomicsBucket> {
+  const buckets = {} as Record<WoStatusBucket, WoLinkedEconomicsBucket>;
+  for (const k of WO_STATUS_BUCKET_KEYS) {
+    buckets[k] = { bill_count: 0, bill_amount_cents: 0, expense_count: 0, expense_amount_cents: 0 };
+  }
+  return buckets;
+}
+
+/**
+ * ACCT-R-07 (0280-42-wo-to-expense-flow): the WO status-count widget previously counted work
+ * orders only — it had no join to the accounting side, so a user could not see whether the WOs
+ * driving a status bucket had actually produced a bill/expense. This joins
+ * maintenance.work_orders -> accounting.bills / accounting.expenses via the canonical
+ * linked_work_order_uuid FK (migration 202607050810_wo_bill_expense_hard_fk_link.sql; hardened
+ * from a soft/memo-only link to a real FK) — never invented columns, always to_regclass/
+ * information_schema-verified before the join runs. Two separate GROUP BY queries (not one join)
+ * so a WO with N bills AND M expenses cannot fan-out and double-count either side's SUM.
+ * Voided/reversed documents (accounting.bills.revoked_at, accounting.expenses.voided_at) are
+ * excluded — a reversed bill/expense is not live economics.
+ */
+async function computeWoLinkedEconomics(
+  client: SimpleClient,
+  operatingCompanyId: string
+): Promise<WoLinkedEconomics> {
+  const [woOk, billsOk, expensesOk] = await Promise.all([
+    relationExists(client, "maintenance.work_orders"),
+    relationExists(client, "accounting.bills"),
+    relationExists(client, "accounting.expenses"),
+  ]);
+  if (!woOk) return { status: "unverifiable", unverifiable_reason: "maintenance.work_orders not present" };
+  if (!billsOk && !expensesOk) {
+    return { status: "unverifiable", unverifiable_reason: "accounting.bills and accounting.expenses not present" };
+  }
+
+  const [billsLinkCol, billsAmountCol, billsRevokedCol, expensesLinkCol, expensesAmountCol, expensesVoidedCol] =
+    await Promise.all([
+      billsOk ? columnExists(client, "accounting", "bills", "linked_work_order_uuid") : Promise.resolve(false),
+      billsOk ? columnExists(client, "accounting", "bills", "amount_cents") : Promise.resolve(false),
+      billsOk ? columnExists(client, "accounting", "bills", "revoked_at") : Promise.resolve(false),
+      expensesOk ? columnExists(client, "accounting", "expenses", "linked_work_order_uuid") : Promise.resolve(false),
+      expensesOk ? columnExists(client, "accounting", "expenses", "total_amount_cents") : Promise.resolve(false),
+      expensesOk ? columnExists(client, "accounting", "expenses", "voided_at") : Promise.resolve(false),
+    ]);
+
+  const canJoinBills = billsOk && billsLinkCol && billsAmountCol;
+  const canJoinExpenses = expensesOk && expensesLinkCol && expensesAmountCol;
+  if (!canJoinBills && !canJoinExpenses) {
+    return {
+      status: "unverifiable",
+      unverifiable_reason: "linked_work_order_uuid/amount columns not present on accounting.bills or accounting.expenses",
+    };
+  }
+
+  const buckets = emptyLinkedEconomicsBuckets();
+  let totalBillCents = 0;
+  let totalExpenseCents = 0;
+
+  if (canJoinBills) {
+    const res = await client.query<{ status: string; c: string; cents: string }>(
+      `
+        SELECT wo.status::text AS status, COUNT(*)::text AS c,
+               COALESCE(SUM(GREATEST(COALESCE(b.amount_cents, ROUND(COALESCE(b.total_amount, 0) * 100)::bigint), 0)), 0)::text AS cents
+        FROM accounting.bills b
+        JOIN maintenance.work_orders wo ON wo.id = b.linked_work_order_uuid
+        WHERE b.operating_company_id = $1::uuid
+          AND wo.operating_company_id = $1::uuid
+          ${billsRevokedCol ? "AND b.revoked_at IS NULL" : ""}
+        GROUP BY wo.status
+      `,
+      [operatingCompanyId]
+    );
+    for (const row of res.rows) {
+      const bucket = bucketizeWoStatus(row.status);
+      const count = Number(row.c ?? 0);
+      const cents = Number(row.cents ?? 0);
+      buckets[bucket].bill_count += count;
+      buckets[bucket].bill_amount_cents += cents;
+      totalBillCents += cents;
+    }
+  }
+
+  if (canJoinExpenses) {
+    const res = await client.query<{ status: string; c: string; cents: string }>(
+      `
+        SELECT wo.status::text AS status, COUNT(*)::text AS c,
+               COALESCE(SUM(e.total_amount_cents), 0)::text AS cents
+        FROM accounting.expenses e
+        JOIN maintenance.work_orders wo ON wo.id = e.linked_work_order_uuid
+        WHERE e.operating_company_id = $1::uuid
+          AND wo.operating_company_id = $1::uuid
+          ${expensesVoidedCol ? "AND e.voided_at IS NULL" : ""}
+        GROUP BY wo.status
+      `,
+      [operatingCompanyId]
+    );
+    for (const row of res.rows) {
+      const bucket = bucketizeWoStatus(row.status);
+      const count = Number(row.c ?? 0);
+      const cents = Number(row.cents ?? 0);
+      buckets[bucket].expense_count += count;
+      buckets[bucket].expense_amount_cents += cents;
+      totalExpenseCents += cents;
+    }
+  }
+
+  const existsClauses: string[] = [];
+  if (canJoinBills) {
+    existsClauses.push(
+      `EXISTS (SELECT 1 FROM accounting.bills b WHERE b.linked_work_order_uuid = wo.id${billsRevokedCol ? " AND b.revoked_at IS NULL" : ""})`
+    );
+  }
+  if (canJoinExpenses) {
+    existsClauses.push(
+      `EXISTS (SELECT 1 FROM accounting.expenses e WHERE e.linked_work_order_uuid = wo.id${expensesVoidedCol ? " AND e.voided_at IS NULL" : ""})`
+    );
+  }
+  const flowRes = await client.query<{ c: string }>(
+    `
+      SELECT COUNT(*)::text AS c
+      FROM maintenance.work_orders wo
+      WHERE wo.operating_company_id = $1::uuid
+        AND (${existsClauses.join(" OR ")})
+    `,
+    [operatingCompanyId]
+  );
+
+  return {
+    status: "ok",
+    buckets,
+    wo_with_expense_flow_count: Number(flowRes.rows[0]?.c ?? 0),
+    total_linked_bill_amount_cents: totalBillCents,
+    total_linked_expense_amount_cents: totalExpenseCents,
+  };
+}
+
 function authed(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
   return req.user as { uuid: string; role: string };
@@ -149,20 +341,27 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
           [parsed.data.operating_company_id]
         );
         for (const row of res.rows) {
-          const k = String(row.status ?? "").toLowerCase();
-          const n = Number(row.c ?? 0);
-          if (k === "draft") out.draft += n;
-          else if (k === "open") out.open += n;
-          else if (k.includes("progress")) out.in_progress += n;
-          else if (k.includes("await") || k.includes("parts")) out.awaiting_parts += n;
-          else if (k.includes("complete")) out.completed += n;
-          else if (k.includes("cancel")) out.cancelled += n;
-          else out.unknown += n;
+          const bucket = bucketizeWoStatus(row.status);
+          out[bucket] += Number(row.c ?? 0);
         }
-        return out;
       } catch {
         return out;
       }
+
+      // ACCT-R-07 (0280-42-wo-to-expense-flow): join to accounting.bills/accounting.expenses via
+      // the canonical linked_work_order_uuid FK — additive field, never breaks the pre-existing
+      // { draft, open, ... } shape consumers already read. Never fabricate $0 on a query error —
+      // surface it as `unverifiable` with a named reason instead of silently swallowing it.
+      let linked_economics: WoLinkedEconomics;
+      try {
+        linked_economics = await computeWoLinkedEconomics(client, parsed.data.operating_company_id);
+      } catch (err) {
+        linked_economics = {
+          status: "unverifiable",
+          unverifiable_reason: err instanceof Error ? err.message : "wo_linked_economics_query_failed",
+        };
+      }
+      return { ...out, linked_economics };
     });
   });
 
