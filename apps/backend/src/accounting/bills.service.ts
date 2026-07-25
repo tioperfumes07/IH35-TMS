@@ -11,6 +11,7 @@ import {
   reversePostedSourceTransactionInClientTx,
 } from "./posting-engine.service.js";
 import { isBillPaymentGlPostingEnabled } from "./bill-payment-gl.service.js";
+import { vendorIdentitySetSql } from "./vendor-identity.js";
 import {
   auditVoid,
   canVoid,
@@ -399,7 +400,13 @@ export async function listBillsByVendor(
 ) {
   const rows = await withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
-    const where: string[] = ["b.operating_company_id = $1", "COALESCE(NULLIF(b.vendor_id,''), NULLIF(b.vendor_uuid,'')) = $2"];
+    // ACCT-ECON-05: match EITHER identifier space. Callers pass an mdata.vendors uuid (vendor
+    // detail A/P tab, vendor-credit apply picker) while QBO-sourced bills carry the QBO vendor id,
+    // so an equality test on the raw value returned zero rows for 16211 of 16212 prod bills.
+    const where: string[] = [
+      "b.operating_company_id = $1",
+      `COALESCE(NULLIF(b.vendor_id,''), NULLIF(b.vendor_uuid,'')) IN ${vendorIdentitySetSql(1, 2)}`,
+    ];
     const values: unknown[] = [operatingCompanyId, vendorId];
     if (options.fromDate) {
       values.push(options.fromDate);
@@ -718,7 +725,12 @@ export async function listBills(
     return listAllBillsForCompany(userId, operatingCompanyId, options);
   }
   const rows = await listBillsByVendor(userId, operatingCompanyId, options.vendorId, options);
-  const vendorNames = await resolveVendorDisplayMap(operatingCompanyId, [options.vendorId]);
+  // Resolve names from the ROWS, not from the requested id: a vendor asked for by mdata uuid now
+  // returns bills keyed by that vendor's QBO id, and a map built from the uuid would miss them.
+  const vendorNames = await resolveVendorDisplayMap(
+    operatingCompanyId,
+    [...new Set(rows.map((r) => r.vendor_id).filter((v): v is string => Boolean(v)))]
+  );
   return rows.map((r) => ({
     ...r,
     vendor_name: r.vendor_id ? vendorNames[r.vendor_id] ?? r.vendor_id : null,
