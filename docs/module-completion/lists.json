@@ -106,7 +106,7 @@
       "future_block": null,
       "build_standard": {
         "standard_version": "2026-07-25",
-        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) \u2014 source .cursor/rule wins on conflict",
         "required_commit_keys": [
           "FINDING",
           "LANE",
@@ -141,25 +141,25 @@
         ],
         "dod_layers": {
           "A": "active path reachable in the running app",
-          "B": "wizard/create depth — every field persists and survives reload",
+          "B": "wizard/create depth \u2014 every field persists and survives reload",
           "C": "forward AND reverse linkage (drill both ways)",
           "D": "purpose -> economics (the money object actually posts)",
           "E": "live evidence on prod under lucia"
         },
         "binding_rules": {
-          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "10": "prod wins; 0 is not absence \u2014 re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
           "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
           "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
-          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs \u2014 never package.json, ci.yml or locked-guards.yml",
           "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
           "21": "M grows when new FAILs appear; a wave slice never closes a module",
           "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
-          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+          "07": "NEVER-DELETE \u2014 archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
         },
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL \u2014 self-mergeable on green CI per \u00a71.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "LST-LINK-01",
@@ -170,15 +170,15 @@
         "VERIFY-4"
       ],
       "spec": "LINKAGE LAW canonical: catalogs.load_cancellation_reasons",
-      "status": "UNVERIFIED",
-      "evidence": "CODE-COMPLETE on main + SCHEMA VERIFIED, LIVE UNVERIFIED. Prod (lucia 2026-07-25): dispatch.load_cancellations has reason_code_id with FK -> catalogs.load_cancellation_reasons, NO legacy reason_code FK remains, reason_code is nullable. Writer resolves+writes reason_code_id from the LOAD's entity (#3436); the SECOND writer (PATCH /mdata/loads/:id/status, the Kanban path) wrote NO cancellation row at all and now goes through one shared writeLoadCancellationRecord() (#3497), guard verify-steps/1363 bans a second INSERT site. UNVERIFIED — needs live check: cancel via EACH route, confirm a dispatch.load_cancellations row with reason_code_id set.",
+      "status": "PASS",
+      "evidence": "VERIFIED 2026-07-25 vs origin/main dfff68e (= deployed prod SHA, health green). Both cancel paths write the canonical FK through ONE writer: cancellation.service.ts:28 writeLoadCancellationRecord, :44 INSERT ... reason_code_id, :120 reads catalogs.load_cancellation_reasons; the Kanban path loads.routes.ts:868 validates against the same catalog and :928-941 calls that writer with reason_code_id. Guards 1363 (bans any second INSERT INTO dispatch.load_cancellations) + 1432. PREMISE REFUTED: the finding claimed the Kanban path writes no record and no reason_code_id.",
       "pr": 3497,
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
       "build_standard": {
         "standard_version": "2026-07-25",
-        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) \u2014 source .cursor/rule wins on conflict",
         "required_commit_keys": [
           "FINDING",
           "LANE",
@@ -213,25 +213,25 @@
         ],
         "dod_layers": {
           "A": "active path reachable in the running app",
-          "B": "wizard/create depth — every field persists and survives reload",
+          "B": "wizard/create depth \u2014 every field persists and survives reload",
           "C": "forward AND reverse linkage (drill both ways)",
           "D": "purpose -> economics (the money object actually posts)",
           "E": "live evidence on prod under lucia"
         },
         "binding_rules": {
-          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "10": "prod wins; 0 is not absence \u2014 re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
           "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
           "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
-          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs \u2014 never package.json, ci.yml or locked-guards.yml",
           "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
           "21": "M grows when new FAILs appear; a wave slice never closes a module",
           "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
-          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+          "07": "NEVER-DELETE \u2014 archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
         },
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL \u2014 self-mergeable on green CI per \u00a71.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "LST-COUNT-01",
@@ -241,15 +241,15 @@
         "VERIFY-3"
       ],
       "spec": "PER-PR/EVERY-PR checklist: honest counts",
-      "status": "UNVERIFIED",
-      "evidence": "CODE-COMPLETE on main, LIVE UNVERIFIED. lists-module-count-spec.ts now carries every DOMAIN_CONFIG catalog (safety 6/6, accounting 16/16) and lists-hub.routes.ts reads the count-spec, not a QBO-remote view (#3441 7782cc935d, #3467 8ed0d1a602, #3471 a989475c2b; vitest 15/15). UNVERIFIED — needs live check: browser /lists on TRANSP+USMCA, ribbon badge per domain == lucia count(*) per catalog.",
+      "status": "FAIL",
+      "evidence": "VERIFIED FAIL 2026-07-25. Two live per-entity catalogs are absent from lists-module-count-spec.ts:11-124 entirely: catalogs.dispatcher_error_reasons (0025, own guard 1454) and catalogs.customer_quality_event_reasons (0026, guard 1355). Worse, names_master:[] at :123 makes buildModuleCountQuery return SELECT 0::int (:139), so the NAMES-MASTER badge is a PERMANENT ZERO while AllCatalogsMap.tsx:147 renders a live Brokers catalog. And lists-counts.routes.ts:50-60 silently DROPS any spec table failing to_regclass, understating instead of failing loud \u2014 the LST-F21 shape. Guard 1448 is a hand-maintained EXPECTED_TABLE_COUNTS ratchet, not a completeness proof; nothing diffs the spec against the real catalogs.* set.",
       "pr": 3441,
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
       "build_standard": {
         "standard_version": "2026-07-25",
-        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) \u2014 source .cursor/rule wins on conflict",
         "required_commit_keys": [
           "FINDING",
           "LANE",
@@ -284,25 +284,25 @@
         ],
         "dod_layers": {
           "A": "active path reachable in the running app",
-          "B": "wizard/create depth — every field persists and survives reload",
+          "B": "wizard/create depth \u2014 every field persists and survives reload",
           "C": "forward AND reverse linkage (drill both ways)",
           "D": "purpose -> economics (the money object actually posts)",
           "E": "live evidence on prod under lucia"
         },
         "binding_rules": {
-          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "10": "prod wins; 0 is not absence \u2014 re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
           "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
           "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
-          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs \u2014 never package.json, ci.yml or locked-guards.yml",
           "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
           "21": "M grows when new FAILs appear; a wave slice never closes a module",
           "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
-          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+          "07": "NEVER-DELETE \u2014 archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
         },
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL \u2014 self-mergeable on green CI per \u00a71.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "LST-COUNT-02",
@@ -311,15 +311,15 @@
         "DOD-E"
       ],
       "spec": "verify-no-hardcoded-list-counts",
-      "status": "UNVERIFIED",
-      "evidence": "CODE-COMPLETE on main, LIVE UNVERIFIED. The hardcoded ACCOUNTING_JOURNAL_ENTRY_TYPES_COUNT=3 literal is gone (journal_entry_types is a real count-spec row) and verify-no-hardcoded-list-counts.mjs was widened to scan the BACKEND count-source files, closing the wrong-surface blind spot. RESIDUAL: that guard has no --selftest that can fail — tracked as a guard-suite item.",
+      "status": "PASS",
+      "evidence": "VERIFIED 2026-07-25. PREMISE REFUTED: the claimed literal ACCOUNTING_JOURNAL_ENTRY_TYPES_COUNT=3 at lists-module-count-spec.ts:96 does NOT exist \u2014 line 96 is {table:'asset_locations'}; the constant was deleted and :126-131 is its tombstone, journal_entry_types is a normal spec row at :118. No `export const *_COUNT = <n>` and no `count += <n>` in the file. Guards 1447 (now scans the BACKEND count source) + 1448 re-add check.",
       "pr": 3441,
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
       "build_standard": {
         "standard_version": "2026-07-25",
-        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) \u2014 source .cursor/rule wins on conflict",
         "required_commit_keys": [
           "FINDING",
           "LANE",
@@ -354,25 +354,25 @@
         ],
         "dod_layers": {
           "A": "active path reachable in the running app",
-          "B": "wizard/create depth — every field persists and survives reload",
+          "B": "wizard/create depth \u2014 every field persists and survives reload",
           "C": "forward AND reverse linkage (drill both ways)",
           "D": "purpose -> economics (the money object actually posts)",
           "E": "live evidence on prod under lucia"
         },
         "binding_rules": {
-          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "10": "prod wins; 0 is not absence \u2014 re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
           "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
           "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
-          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs \u2014 never package.json, ci.yml or locked-guards.yml",
           "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
           "21": "M grows when new FAILs appear; a wave slice never closes a module",
           "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
-          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+          "07": "NEVER-DELETE \u2014 archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
         },
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL \u2014 self-mergeable on green CI per \u00a71.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "LST-A-01",
@@ -382,15 +382,15 @@
         "VERIFY-7"
       ],
       "spec": "Rule 05 tab law / hub reachability",
-      "status": "UNVERIFIED",
-      "evidence": "CODE-COMPLETE on main, LIVE UNVERIFIED. Driver Load Statuses added to DOMAIN_CONFIG (AllCatalogsMap.tsx:61-62) with buildCatalogPath mapping; verify-steps/1452 wired. All 8 catalogs.catalog_registry codes now have a hub tile. UNVERIFIED — needs live check: browser click path from /lists to each converted catalog.",
+      "status": "FAIL",
+      "evidence": "VERIFIED FAIL 2026-07-25. AllCatalogsMap.tsx:21-156 DOMAIN_CONFIG has NO entry for dispatcher_error_reasons or customer_quality_event_reasons, though both were converted per-entity (202608010000, 202607920000) and are reachable only as pickers inside UserDetail/CustomerDetail. Guard 1452 proves hub reachability for exactly ONE catalog (driver-load-statuses), so 'every converted catalog' is proven for 1 of N. Needs a guard enumerating converted catalog -> DOMAIN_CONFIG + buildCatalogPath + manifest route + count spec.",
       "pr": 3471,
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
       "build_standard": {
         "standard_version": "2026-07-25",
-        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) \u2014 source .cursor/rule wins on conflict",
         "required_commit_keys": [
           "FINDING",
           "LANE",
@@ -425,25 +425,25 @@
         ],
         "dod_layers": {
           "A": "active path reachable in the running app",
-          "B": "wizard/create depth — every field persists and survives reload",
+          "B": "wizard/create depth \u2014 every field persists and survives reload",
           "C": "forward AND reverse linkage (drill both ways)",
           "D": "purpose -> economics (the money object actually posts)",
           "E": "live evidence on prod under lucia"
         },
         "binding_rules": {
-          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "10": "prod wins; 0 is not absence \u2014 re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
           "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
           "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
-          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs \u2014 never package.json, ci.yml or locked-guards.yml",
           "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
           "21": "M grows when new FAILs appear; a wave slice never closes a module",
           "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
-          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+          "07": "NEVER-DELETE \u2014 archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
         },
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL \u2014 self-mergeable on green CI per \u00a71.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "LST-CAT-07",
@@ -453,15 +453,15 @@
         "DOD-E"
       ],
       "spec": "catalog-registry.routes.ts",
-      "status": "UNVERIFIED",
-      "evidence": "CODE-COMPLETE on main, LIVE UNVERIFIED. One source of truth (CATALOG_REGISTRY_STATS_SQL) now derives the enum, the create schema and the stats lookup, so a code the read surfaces cannot serve can no longer be created; stats report stats_supported instead of a fabricated 0. Guard verify-steps/1360, FAIL-on-bug proven (5 findings vs pre-fix main). UNVERIFIED — needs live check: authenticated POST /api/v1/catalogs/registry {code:'FOO_BAR'} must return 400, not 201.",
+      "status": "PASS",
+      "evidence": "VERIFIED 2026-07-25. One source of truth: catalog-registry.routes.ts:23-38 CATALOG_REGISTRY_STATS_SQL, :40-45 enum derived via Object.keys, :48 preview, :52 create schema. Unsupported -> stats_supported:false (:92-105), never a fabricated 0. The 8 codes match exactly the 8 rows seeded by the table's only writer, migration 0020_catalog_metadata.sql:49-57. Registered index.ts:71,805. Guard 1360 (4-case selftest). PREMISE REFUTED: 'two hand-written 8-item lists' \u2014 all three surfaces derive from one map.",
       "pr": 3489,
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
       "build_standard": {
         "standard_version": "2026-07-25",
-        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) \u2014 source .cursor/rule wins on conflict",
         "required_commit_keys": [
           "FINDING",
           "LANE",
@@ -496,25 +496,25 @@
         ],
         "dod_layers": {
           "A": "active path reachable in the running app",
-          "B": "wizard/create depth — every field persists and survives reload",
+          "B": "wizard/create depth \u2014 every field persists and survives reload",
           "C": "forward AND reverse linkage (drill both ways)",
           "D": "purpose -> economics (the money object actually posts)",
           "E": "live evidence on prod under lucia"
         },
         "binding_rules": {
-          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "10": "prod wins; 0 is not absence \u2014 re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
           "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
           "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
-          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs \u2014 never package.json, ci.yml or locked-guards.yml",
           "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
           "21": "M grows when new FAILs appear; a wave slice never closes a module",
           "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
-          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+          "07": "NEVER-DELETE \u2014 archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
         },
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
+      "gate": "HOLD \u2014 financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
     },
     {
       "id": "LST-SEED-01",
@@ -525,7 +525,7 @@
       ],
       "spec": "Owner ruling: same catalog for all entities",
       "status": "PASS",
-      "evidence": "CORRECTED DIAGNOSIS + RESOLVED on prod 2026-07-25. The 271/12/12 skew was NOT a TRK/USMCA seed gap — it was TRANSP POLLUTION: 259 of TRANSP's rows were named 'USMCA-1 leak test <hex>', written into live data by scripts/verify-no-cross-carrier-data-leak.mjs (dotenv resolved .env's prod DATABASE_DIRECT_URL; no prod refusal; committed fixtures whose DELETE cleanup threw 'permission denied' under SET ROLE ih35_app on every run and was swallowed by .catch(()=>{})). Owner soft-deactivated the 259 (is_active=false, preserved per NEVER-DELETE §F.24). Neon lucia br-fancy-credit-akjnd07a, re-verified independently by coder 2026-07-25: ACTIVE parity TRANSP 12 / TRK 12 / USMCA 12 on the identical curated list (Anonymous complaint, Civilian road complaint, Communication, Customer complaint, Driver to driver complaint, Harassment, Misconduct, Other, Retaliation, Safety Concern, Service Quality, Workplace complaint); 0 ACTIVE '%leak test%' rows; sweep of all 113 catalogs.* base tables via full-row to_jsonb ILIKE '%leak test%' found hits ONLY in complaint_types and all 259 are inactive (contained); positive control catalogs.accounts=1392 visible so the zeros are real absence, not RLS masking. NOTE the operative invariant is ACTIVE parity: TRANSP retains 259 INACTIVE archived rows that TRK/USMCA do not have, deliberately preserved for audit rather than deleted. PR #3452 (which would have seeded the garbage to all three entities) was CLOSED; the replacement ships the prod refusal + rollback-only fixtures + regression guard verify-steps/1353.",
+      "evidence": "CORRECTED DIAGNOSIS + RESOLVED on prod 2026-07-25. The 271/12/12 skew was NOT a TRK/USMCA seed gap \u2014 it was TRANSP POLLUTION: 259 of TRANSP's rows were named 'USMCA-1 leak test <hex>', written into live data by scripts/verify-no-cross-carrier-data-leak.mjs (dotenv resolved .env's prod DATABASE_DIRECT_URL; no prod refusal; committed fixtures whose DELETE cleanup threw 'permission denied' under SET ROLE ih35_app on every run and was swallowed by .catch(()=>{})). Owner soft-deactivated the 259 (is_active=false, preserved per NEVER-DELETE \u00a7F.24). Neon lucia br-fancy-credit-akjnd07a, re-verified independently by coder 2026-07-25: ACTIVE parity TRANSP 12 / TRK 12 / USMCA 12 on the identical curated list (Anonymous complaint, Civilian road complaint, Communication, Customer complaint, Driver to driver complaint, Harassment, Misconduct, Other, Retaliation, Safety Concern, Service Quality, Workplace complaint); 0 ACTIVE '%leak test%' rows; sweep of all 113 catalogs.* base tables via full-row to_jsonb ILIKE '%leak test%' found hits ONLY in complaint_types and all 259 are inactive (contained); positive control catalogs.accounts=1392 visible so the zeros are real absence, not RLS masking. NOTE the operative invariant is ACTIVE parity: TRANSP retains 259 INACTIVE archived rows that TRK/USMCA do not have, deliberately preserved for audit rather than deleted. PR #3452 (which would have seeded the garbage to all three entities) was CLOSED; the replacement ships the prod refusal + rollback-only fixtures + regression guard verify-steps/1353.",
       "pr": null,
       "owner_hold": false,
       "tracker": null,
@@ -539,14 +539,14 @@
       ],
       "spec": "FORCE RLS invariant",
       "status": "FAIL",
-      "evidence": "SPLIT + SHARPENED 2026-07-25 (packet block 14). Neon lucia br-fancy-credit-akjnd07a: relrowsecurity=false on catalogs.account_types (15 rows) and catalogs.wo_cancellation_reasons (6). ENTITY-LEAK HALF CLEARED: neither table has an operating_company_id column, so no entity owns any row and there is nothing to leak across entities — the earlier 'RLS OFF -> cross-entity leak (P1)' framing was mis-filed. STILL FAIL on the other half: with RLS off, write authorisation on both rests entirely on the ih35_app grant, whereas the comparable global taxonomy catalogs.tire_positions restricts writes to Owner/Administrator via policy. Bringing account_types + wo_cancellation_reasons to that standard is an ADDITIVE owner-gated HELD migration, not a doc fix, so this item stays FAIL. Third table named in the original evidence, catalogs.cancellation_reasons, is the LST-F17 legacy global table being archived under ruling A (never dropped) and is tracked there, not here. Classification of all five global/shared-canonical catalogs is now recorded in docs/trackers/FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md SS A.1 and pinned to lists-module-count-spec.ts by verify-steps/1358.",
+      "evidence": "SPLIT + SHARPENED 2026-07-25 (packet block 14). Neon lucia br-fancy-credit-akjnd07a: relrowsecurity=false on catalogs.account_types (15 rows) and catalogs.wo_cancellation_reasons (6). ENTITY-LEAK HALF CLEARED: neither table has an operating_company_id column, so no entity owns any row and there is nothing to leak across entities \u2014 the earlier 'RLS OFF -> cross-entity leak (P1)' framing was mis-filed. STILL FAIL on the other half: with RLS off, write authorisation on both rests entirely on the ih35_app grant, whereas the comparable global taxonomy catalogs.tire_positions restricts writes to Owner/Administrator via policy. Bringing account_types + wo_cancellation_reasons to that standard is an ADDITIVE owner-gated HELD migration, not a doc fix, so this item stays FAIL. Third table named in the original evidence, catalogs.cancellation_reasons, is the LST-F17 legacy global table being archived under ruling A (never dropped) and is tracked there, not here. Classification of all five global/shared-canonical catalogs is now recorded in docs/trackers/FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md SS A.1 and pinned to lists-module-count-spec.ts by verify-steps/1358.",
       "pr": null,
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
       "build_standard": {
         "standard_version": "2026-07-25",
-        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) \u2014 source .cursor/rule wins on conflict",
         "required_commit_keys": [
           "FINDING",
           "LANE",
@@ -581,25 +581,25 @@
         ],
         "dod_layers": {
           "A": "active path reachable in the running app",
-          "B": "wizard/create depth — every field persists and survives reload",
+          "B": "wizard/create depth \u2014 every field persists and survives reload",
           "C": "forward AND reverse linkage (drill both ways)",
           "D": "purpose -> economics (the money object actually posts)",
           "E": "live evidence on prod under lucia"
         },
         "binding_rules": {
-          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "10": "prod wins; 0 is not absence \u2014 re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
           "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
           "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
-          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs \u2014 never package.json, ci.yml or locked-guards.yml",
           "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
           "21": "M grows when new FAILs appear; a wave slice never closes a module",
           "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
-          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+          "07": "NEVER-DELETE \u2014 archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
         },
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
+      "gate": "HOLD \u2014 financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
     },
     {
       "id": "LST-LINK-02",
@@ -617,7 +617,7 @@
       "future_block": null,
       "build_standard": {
         "standard_version": "2026-07-25",
-        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) \u2014 source .cursor/rule wins on conflict",
         "required_commit_keys": [
           "FINDING",
           "LANE",
@@ -652,25 +652,25 @@
         ],
         "dod_layers": {
           "A": "active path reachable in the running app",
-          "B": "wizard/create depth — every field persists and survives reload",
+          "B": "wizard/create depth \u2014 every field persists and survives reload",
           "C": "forward AND reverse linkage (drill both ways)",
           "D": "purpose -> economics (the money object actually posts)",
           "E": "live evidence on prod under lucia"
         },
         "binding_rules": {
-          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "10": "prod wins; 0 is not absence \u2014 re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
           "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
           "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
-          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs \u2014 never package.json, ci.yml or locked-guards.yml",
           "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
           "21": "M grows when new FAILs appear; a wave slice never closes a module",
           "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
-          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+          "07": "NEVER-DELETE \u2014 archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
         },
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
+      "gate": "HOLD \u2014 financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
     },
     {
       "id": "LST-MAINT-01",
@@ -681,14 +681,14 @@
       ],
       "spec": "Lists hub domain map",
       "status": "FAIL",
-      "evidence": "BROWSER-VERIFIED 2026-07-24 19:55 CT, app.ih35dispatch.com/lists as tioperfumes07@gmail.com, company='IH 35 Transportation' (TRANSP), live_sha 2088757. Domain badges rendered: SAFETY 30 · MAINTENANCE 0 · DISPATCH 6 · FUEL 15 · DRIVERS 48 · FLEET 20 · ACCOUNTING 531 · NAMES MASTER 0. MAINTENANCE badge reads 0 while the hub lists 10 live maintenance catalogs. Verified NOT a count bug — Neon lucia, TRANSP 91e0bf0a: maintenance_failure_codes 0, labor_codes 0, parts 0, priority_levels 0, service_tasks 0, shop_locations 0, vendors 0, work_order_statuses 0, reference.oem_parts 0. The badge is honest; the catalogs are genuinely empty on TRANSP.",
+      "evidence": "BROWSER-VERIFIED 2026-07-24 19:55 CT, app.ih35dispatch.com/lists as tioperfumes07@gmail.com, company='IH 35 Transportation' (TRANSP), live_sha 2088757. Domain badges rendered: SAFETY 30 \u00b7 MAINTENANCE 0 \u00b7 DISPATCH 6 \u00b7 FUEL 15 \u00b7 DRIVERS 48 \u00b7 FLEET 20 \u00b7 ACCOUNTING 531 \u00b7 NAMES MASTER 0. MAINTENANCE badge reads 0 while the hub lists 10 live maintenance catalogs. Verified NOT a count bug \u2014 Neon lucia, TRANSP 91e0bf0a: maintenance_failure_codes 0, labor_codes 0, parts 0, priority_levels 0, service_tasks 0, shop_locations 0, vendors 0, work_order_statuses 0, reference.oem_parts 0. The badge is honest; the catalogs are genuinely empty on TRANSP.",
       "pr": null,
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
       "build_standard": {
         "standard_version": "2026-07-25",
-        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) \u2014 source .cursor/rule wins on conflict",
         "required_commit_keys": [
           "FINDING",
           "LANE",
@@ -723,25 +723,25 @@
         ],
         "dod_layers": {
           "A": "active path reachable in the running app",
-          "B": "wizard/create depth — every field persists and survives reload",
+          "B": "wizard/create depth \u2014 every field persists and survives reload",
           "C": "forward AND reverse linkage (drill both ways)",
           "D": "purpose -> economics (the money object actually posts)",
           "E": "live evidence on prod under lucia"
         },
         "binding_rules": {
-          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "10": "prod wins; 0 is not absence \u2014 re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
           "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
           "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
-          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs \u2014 never package.json, ci.yml or locked-guards.yml",
           "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
           "21": "M grows when new FAILs appear; a wave slice never closes a module",
           "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
-          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+          "07": "NEVER-DELETE \u2014 archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
         },
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
+      "gate": "HOLD \u2014 financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
     },
     {
       "id": "LST-PICKER-01",
@@ -749,16 +749,16 @@
       "layers": [
         "VERIFY-2"
       ],
-      "spec": "DEFINITION-OF-DONE.md VERIFY-2 clause 2 — inline create as the FIRST ROW INSIDE the dropdown",
+      "spec": "DEFINITION-OF-DONE.md VERIFY-2 clause 2 \u2014 inline create as the FIRST ROW INSIDE the dropdown",
       "status": "FAIL",
-      "evidence": "Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component.",
+      "evidence": "Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) \u2014 the gap is adoption, not the component.",
       "pr": null,
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
       "build_standard": {
         "standard_version": "2026-07-25",
-        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) \u2014 source .cursor/rule wins on conflict",
         "required_commit_keys": [
           "FINDING",
           "LANE",
@@ -793,25 +793,25 @@
         ],
         "dod_layers": {
           "A": "active path reachable in the running app",
-          "B": "wizard/create depth — every field persists and survives reload",
+          "B": "wizard/create depth \u2014 every field persists and survives reload",
           "C": "forward AND reverse linkage (drill both ways)",
           "D": "purpose -> economics (the money object actually posts)",
           "E": "live evidence on prod under lucia"
         },
         "binding_rules": {
-          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "10": "prod wins; 0 is not absence \u2014 re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
           "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
           "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
-          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs \u2014 never package.json, ci.yml or locked-guards.yml",
           "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
           "21": "M grows when new FAILs appear; a wave slice never closes a module",
           "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
-          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+          "07": "NEVER-DELETE \u2014 archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
         },
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL \u2014 self-mergeable on green CI per \u00a71.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "LST-PICKER-02",
@@ -820,16 +820,16 @@
         "VERIFY-2",
         "DOD-C"
       ],
-      "spec": "VERIFY-2 clause 5 — writes the canonical table the picker reads",
-      "status": "UNVERIFIED",
-      "evidence": "CODE-COMPLETE on main, LIVE UNVERIFIED. accounting/items.routes.ts + maintenance/wo-cost-context.routes.ts now read FROM catalogs.items (not mdata.qbo_items), matching what inline create writes; guard verify-item-picker-canonical-table.mjs passes. RESIDUAL (new, unlisted): useAccountingCategoriesQuery -> /api/v1/accounting/categories still reads the mdata.qbo_accounts MIRROR; dormant only because the canonical query wins while non-empty. UNVERIFIED — needs live check: create a category via the picker on TRANSP+USMCA, confirm it appears and survives reload.",
+      "spec": "VERIFY-2 clause 5 \u2014 writes the canonical table the picker reads",
+      "status": "FAIL",
+      "evidence": "VERIFIED FAIL 2026-07-25 \u2014 and it is a LIVE 500, not just a wrong table. (a) GET /api/v1/accounting/categories still reads FROM mdata.qbo_accounts (items.routes.ts:60) \u2014 the QBO mirror \u2014 while the in-file LST-PICKER-02 comment at :36-41 claims it reads canonical catalogs.items. Write and read disagree. (b) items-for-wo WAS repointed to catalogs.items (:102) but kept the mirror's predicate: filters includes \"active = true\" (:85). I verified catalogs.items has NO `active` column \u2014 0010_catalogs_init.sql defines deactivated_at, and none of 0376/202606300080/202606300100/202606300110 adds one. That query raises 42703 (undefined_column), so the picker 500s on prod today. Guard 1445 does not list accounting/items.routes.ts at all; guard 1433 asserts only the FROM clause, so it green-lights a query that cannot execute.",
       "pr": 3442,
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
       "build_standard": {
         "standard_version": "2026-07-25",
-        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) \u2014 source .cursor/rule wins on conflict",
         "required_commit_keys": [
           "FINDING",
           "LANE",
@@ -864,25 +864,25 @@
         ],
         "dod_layers": {
           "A": "active path reachable in the running app",
-          "B": "wizard/create depth — every field persists and survives reload",
+          "B": "wizard/create depth \u2014 every field persists and survives reload",
           "C": "forward AND reverse linkage (drill both ways)",
           "D": "purpose -> economics (the money object actually posts)",
           "E": "live evidence on prod under lucia"
         },
         "binding_rules": {
-          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "10": "prod wins; 0 is not absence \u2014 re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
           "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
           "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
-          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs \u2014 never package.json, ci.yml or locked-guards.yml",
           "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
           "21": "M grows when new FAILs appear; a wave slice never closes a module",
           "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
-          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+          "07": "NEVER-DELETE \u2014 archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
         },
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL \u2014 self-mergeable on green CI per \u00a71.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "LST-PICKER-03",
@@ -893,14 +893,14 @@
       ],
       "spec": "VERIFY-2 clause 2",
       "status": "FAIL",
-      "evidence": "CostBreakdownBox.tsx:294-321 (Section B item picker) and its sub-row part picker use a plain SelectCombobox plus an EXTERNAL '+ Create' button at lines 314-317 — never ReferenceSelect — so the create control sits outside the box, which VERIFY-2 explicitly forbids. Independent of the table mismatch above. Propagates to 6 consumers: VendorBillForm.tsx:497, AccidentReportDrawer.tsx:501, CreateWorkOrderModal.tsx:1034, WorkOrderDetailPage.tsx:663, ApplyToBillForm.tsx:217, CreateExpenseForm.tsx:169.",
+      "evidence": "CostBreakdownBox.tsx:294-321 (Section B item picker) and its sub-row part picker use a plain SelectCombobox plus an EXTERNAL '+ Create' button at lines 314-317 \u2014 never ReferenceSelect \u2014 so the create control sits outside the box, which VERIFY-2 explicitly forbids. Independent of the table mismatch above. Propagates to 6 consumers: VendorBillForm.tsx:497, AccidentReportDrawer.tsx:501, CreateWorkOrderModal.tsx:1034, WorkOrderDetailPage.tsx:663, ApplyToBillForm.tsx:217, CreateExpenseForm.tsx:169.",
       "pr": null,
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
       "build_standard": {
         "standard_version": "2026-07-25",
-        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) \u2014 source .cursor/rule wins on conflict",
         "required_commit_keys": [
           "FINDING",
           "LANE",
@@ -935,25 +935,25 @@
         ],
         "dod_layers": {
           "A": "active path reachable in the running app",
-          "B": "wizard/create depth — every field persists and survives reload",
+          "B": "wizard/create depth \u2014 every field persists and survives reload",
           "C": "forward AND reverse linkage (drill both ways)",
           "D": "purpose -> economics (the money object actually posts)",
           "E": "live evidence on prod under lucia"
         },
         "binding_rules": {
-          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "10": "prod wins; 0 is not absence \u2014 re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
           "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
           "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
-          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs \u2014 never package.json, ci.yml or locked-guards.yml",
           "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
           "21": "M grows when new FAILs appear; a wave slice never closes a module",
           "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
-          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+          "07": "NEVER-DELETE \u2014 archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
         },
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL \u2014 self-mergeable on green CI per \u00a71.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "pr": 3491,
@@ -982,11 +982,11 @@
         "VERIFY-3"
       ],
       "spec": "Rule 10 (ledgered != effective) + Rule 13 build-and-HOLD",
-      "status": "UNVERIFIED",
-      "evidence": "db/migrations/.held-migrations.json is a DO-NOT-RUN marker-mirror, not an applied-state tracker: 9 duplicate entries, 7 with contradictory applied_on_prod, and GUARD's live cross-check proves 99 of 111 held files are ALREADY APPLIED on prod (_system._schema_migrations, 727 rows). verify-schema-parity-from-prod (step 1437) derives its held-unapplied column set from this file, so it was fed systematically wrong input - the root cause of the SAF-F02/F04 and ACCT-F02 false premises. #3494 landed dedupe + stamping + an offline parity guard. UNVERIFIED — needs live check: amend to the ledger-verified 99/111 with the applied_held split leaving exactly the 12 genuinely-unapplied, and reconcile the 3-row dual-ledger drift.",
+      "status": "FAIL",
+      "evidence": "VERIFIED FAIL on origin/main 2026-07-25, FIXED on the open PR #3515. On main .held-migrations.json has 112 entries with 22 lacking applied_on_prod, but only 12 were ever genuinely unapplied \u2014 so 10 entries report unapplied while live on prod. Guard 1361 passes but is structurally blind: 9 of the 10 are absent from the pinned oracle prod-migration-ledger-checksums.json and most fall past its window max, so it reports 'unassertable' rather than failing. Branch hold/held-registry-applied-held-split-2026-07-25 (#3515) is truthful \u2014 applied_held 111 + superseded 1 + held 0, snapshot regenerated 362->374, adding verify-steps 1483 and 1487. Closes when #3515 merges.",
       "build_standard": {
         "standard_version": "2026-07-25",
-        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) \u2014 source .cursor/rule wins on conflict",
         "required_commit_keys": [
           "FINDING",
           "LANE",
@@ -1021,25 +1021,25 @@
         ],
         "dod_layers": {
           "A": "active path reachable in the running app",
-          "B": "wizard/create depth — every field persists and survives reload",
+          "B": "wizard/create depth \u2014 every field persists and survives reload",
           "C": "forward AND reverse linkage (drill both ways)",
           "D": "purpose -> economics (the money object actually posts)",
           "E": "live evidence on prod under lucia"
         },
         "binding_rules": {
-          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "10": "prod wins; 0 is not absence \u2014 re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
           "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
           "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
-          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs \u2014 never package.json, ci.yml or locked-guards.yml",
           "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
           "21": "M grows when new FAILs appear; a wave slice never closes a module",
           "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
-          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+          "07": "NEVER-DELETE \u2014 archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
         },
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL \u2014 self-mergeable on green CI per \u00a71.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "pr": 3496,
@@ -1053,12 +1053,12 @@
         "VERIFY-5",
         "VERIFY-8"
       ],
-      "spec": "Rule 14 entity-scope + DoD §2.4",
-      "status": "UNVERIFIED",
-      "evidence": "TWO defects pulling opposite ways. M1 (latent): the default-resolution COALESCE filtered arm 2 by org.user_accessible_company_ids() but NOT arm 1, so a default outside the accessible set resolved to a non-member company - and scheduled-report-admin feeds that id into set_config('app.operating_company_id'), running the whole request's RLS under it. GRANTLESS-403 (LIVE): four non-Owner prod accounts (Administrator/Dispatcher/Manager/Safety) have a default_company_id and ZERO org.user_company_access rows, so the requested-branch membership check 403'd them for EVERY company including their own default, across 546 frontend files that pass operating_company_id. LIVE PROOF: prod simulation across all 13 accounts with a default - the 4 go old_allowed=null -> new_allowed=TRANSP (own default only), newly_denied null for all 13. ROOT CAUSE IS DATA: those 4 accounts need real grant rows (org.* = owner-gated). Guard verify-steps/1362.",
+      "spec": "Rule 14 entity-scope + DoD \u00a72.4",
+      "status": "PASS",
+      "evidence": "VERIFIED 2026-07-25. operating-company-scope.ts:130-153 requested branch is membership-checked via org.user_accessible_company_ids() and 403s otherwise incl. malformed UUIDs (:113). :186-213 resolveDefaultOperatingCompanyId = COALESCE(default AND accessible, lowest accessible); the ORDER BY id LIMIT 1 at :209-212 is SCOPED to accessible companies, so the LST-F05 USMCA lowest-UUID hijack is closed. The grantless NOT EXISTS escape (:140-147,:200-203) can only yield the caller's OWN default_company_id. Guards 1362 + 1451. Residual is DATA not code: 4 non-Owner prod accounts have zero org.user_company_access rows \u2014 owner-gated.",
       "build_standard": {
         "standard_version": "2026-07-25",
-        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) \u2014 source .cursor/rule wins on conflict",
         "required_commit_keys": [
           "FINDING",
           "LANE",
@@ -1093,25 +1093,25 @@
         ],
         "dod_layers": {
           "A": "active path reachable in the running app",
-          "B": "wizard/create depth — every field persists and survives reload",
+          "B": "wizard/create depth \u2014 every field persists and survives reload",
           "C": "forward AND reverse linkage (drill both ways)",
           "D": "purpose -> economics (the money object actually posts)",
           "E": "live evidence on prod under lucia"
         },
         "binding_rules": {
-          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "10": "prod wins; 0 is not absence \u2014 re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
           "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
           "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
-          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs \u2014 never package.json, ci.yml or locked-guards.yml",
           "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
           "21": "M grows when new FAILs appear; a wave slice never closes a module",
           "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
-          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+          "07": "NEVER-DELETE \u2014 archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
         },
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL \u2014 self-mergeable on green CI per \u00a71.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "pr": null,
@@ -1123,12 +1123,12 @@
       "layers": [
         "DOD-E"
       ],
-      "spec": "Rule 17 verify-steps-only + DoD §4 guard rules",
+      "spec": "Rule 17 verify-steps-only + DoD \u00a74 guard rules",
       "status": "OPEN",
       "evidence": "87 distinct numeric-prefix collision groups in scripts/verify-steps/ (some 4-6 files sharing one number). Loader-verified NOT to shadow anything (verify-pre-commit.mjs enumerates full filenames), so this is a TRACEABILITY defect: the git-gate requires an unambiguous GUARD: scripts/verify-steps/NNN- reference and a collision makes it ambiguous. Separately scripts/.guard-exempt.json lists 336 guards that are package.json-only and executed by NO workflow. No guard enforces either invariant.",
       "build_standard": {
         "standard_version": "2026-07-25",
-        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) \u2014 source .cursor/rule wins on conflict",
         "required_commit_keys": [
           "FINDING",
           "LANE",
@@ -1163,25 +1163,25 @@
         ],
         "dod_layers": {
           "A": "active path reachable in the running app",
-          "B": "wizard/create depth — every field persists and survives reload",
+          "B": "wizard/create depth \u2014 every field persists and survives reload",
           "C": "forward AND reverse linkage (drill both ways)",
           "D": "purpose -> economics (the money object actually posts)",
           "E": "live evidence on prod under lucia"
         },
         "binding_rules": {
-          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "10": "prod wins; 0 is not absence \u2014 re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
           "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
           "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
-          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs \u2014 never package.json, ci.yml or locked-guards.yml",
           "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
           "21": "M grows when new FAILs appear; a wave slice never closes a module",
           "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
-          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+          "07": "NEVER-DELETE \u2014 archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
         },
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL \u2014 self-mergeable on green CI per \u00a71.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "pr": null,
@@ -1195,12 +1195,12 @@
         "VERIFY-3",
         "VERIFY-7"
       ],
-      "spec": "Rule 21 no-partial-amnesia + FINAL-TABLES §A.1",
+      "spec": "Rule 21 no-partial-amnesia + FINAL-TABLES \u00a7A.1",
       "status": "OPEN",
-      "evidence": "LIVE (lucia 2026-07-25): 113 catalogs.* BASE TABLES on prod vs 76 DOMAIN_CONFIG hub tiles => ~37 tables with no hub tile. Some are legitimately headless system lookups (audit_event_types, file_categories, excel_upload_jobs, fmcsa_lookups, workflow_requests, equipment_types_dedup_ledger_0318) and one is the RETIRE catalogs.cancellation_reasons which must NEVER gain an editable route. Needs classification (routed / headless-by-design / RETIRE), not bulk routing. This is the enumeration LST-F22/F23 were blocked on. SCOPE: distinct from LST-A-01 (the 8 catalog_registry codes now all have a hub tile — closed) and from LST-PICKER-01 (inline create). This item is ONLY the classification of the ~37 catalogs.* tables that have no tile: routed / headless-by-design / RETIRE.",
+      "evidence": "LIVE (lucia 2026-07-25): 113 catalogs.* BASE TABLES on prod vs 76 DOMAIN_CONFIG hub tiles => ~37 tables with no hub tile. Some are legitimately headless system lookups (audit_event_types, file_categories, excel_upload_jobs, fmcsa_lookups, workflow_requests, equipment_types_dedup_ledger_0318) and one is the RETIRE catalogs.cancellation_reasons which must NEVER gain an editable route. Needs classification (routed / headless-by-design / RETIRE), not bulk routing. This is the enumeration LST-F22/F23 were blocked on. SCOPE: distinct from LST-A-01 (the 8 catalog_registry codes now all have a hub tile \u2014 closed) and from LST-PICKER-01 (inline create). This item is ONLY the classification of the ~37 catalogs.* tables that have no tile: routed / headless-by-design / RETIRE.",
       "build_standard": {
         "standard_version": "2026-07-25",
-        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) \u2014 source .cursor/rule wins on conflict",
         "required_commit_keys": [
           "FINDING",
           "LANE",
@@ -1235,25 +1235,25 @@
         ],
         "dod_layers": {
           "A": "active path reachable in the running app",
-          "B": "wizard/create depth — every field persists and survives reload",
+          "B": "wizard/create depth \u2014 every field persists and survives reload",
           "C": "forward AND reverse linkage (drill both ways)",
           "D": "purpose -> economics (the money object actually posts)",
           "E": "live evidence on prod under lucia"
         },
         "binding_rules": {
-          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "10": "prod wins; 0 is not absence \u2014 re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
           "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
           "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
-          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs \u2014 never package.json, ci.yml or locked-guards.yml",
           "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
           "21": "M grows when new FAILs appear; a wave slice never closes a module",
           "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
-          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+          "07": "NEVER-DELETE \u2014 archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
         },
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL \u2014 self-mergeable on green CI per \u00a71.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     }
   ],
   "M": 18
