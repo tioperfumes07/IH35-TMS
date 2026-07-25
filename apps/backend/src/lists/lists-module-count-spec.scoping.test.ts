@@ -54,4 +54,43 @@ describe("lists module count spec — companyScoped matches catalog shape", () =
       }
     }
   });
+
+  // Added 2026-07-25 with the count-spec completion. The SHARED-CANONICAL trap: a table can HAVE
+  // operating_company_id and still need companyScoped:false, because every row is NULL by design and
+  // its policy reads `opco IS NULL OR = current_setting(...)`. Filtering on the column would count 0.
+  // These three values are prod-verified (Neon lucia, br-fancy-credit-akjnd07a) and must not be
+  // "corrected" by a future reader without re-checking prod.
+  it("accounting global / shared-canonical catalogs stay companyScoped:false", () => {
+    const GLOBAL_BY_PROD = new Map<string, string>([
+      ["journal_entry_types", "no operating_company_id; policy qual:true — global reference taxonomy"],
+      ["account_types", "no operating_company_id; RLS is OFF entirely on prod — global"],
+      ["detail_types", "HAS operating_company_id but ALL rows are NULL (shared canonical system set); policy is `opco IS NULL OR = GUC`. companyScoped:true would count 0."],
+      ["accounts", "entity correctness comes from FORCE RLS + the GUC, not an explicit filter"],
+      ["classes", "as accounts"],
+      ["items", "as accounts"],
+      ["payment_terms", "no operating_company_id on prod — global"],
+      ["posting_templates", "no operating_company_id on prod — global"],
+      ["account_role_bindings", "has opco but 0 rows; counted under RLS"],
+    ]);
+    for (const spec of LISTS_MODULE_COUNT_SPECS.accounting ?? []) {
+      const reason = GLOBAL_BY_PROD.get(spec.table);
+      if (reason) {
+        expect(spec.companyScoped, `accounting.${spec.table} must stay companyScoped:false — ${reason}`).toBe(false);
+      } else {
+        expect(spec.companyScoped, `accounting.${spec.table} is per-entity on prod → companyScoped:true`).toBe(true);
+      }
+    }
+  });
+
+  it("safety / dispatch / drivers catalogs.* rows are per-entity (reference.* stay global)", () => {
+    for (const domain of ["safety", "dispatch", "drivers"] as const) {
+      for (const spec of LISTS_MODULE_COUNT_SPECS[domain] ?? []) {
+        if (spec.schema === "reference") {
+          expect(spec.companyScoped, `${domain}.${spec.table} (reference) is global`).toBe(false);
+        } else {
+          expect(spec.companyScoped, `${domain}.${spec.table} (catalogs) is per-entity on prod`).toBe(true);
+        }
+      }
+    }
+  });
 });
