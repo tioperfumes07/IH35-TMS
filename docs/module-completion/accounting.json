@@ -72,7 +72,7 @@
       ],
       "spec": "Vendor credit apply/void",
       "status": "FAIL",
-      "evidence": "Neon lucia 2026-07-25: vendor_credits=0, vendor_credit_applications=0. Path was NOT usable: bills.vendor_id holds the QBO vendor id on 16211 of 16212 bills while a credit holds an mdata.vendors uuid, so the apply picker resolved 0 bills (mdata.vendors.qbo_vendor_id bridges 16211). Bridge + cross-vendor refusal + canonical VC numbering shipped and proven on a migrated throwaway Postgres (9 lifecycle assertions incl. planted-failure); guard verify-vendor-credit-live-path (step 1436). Still FAIL: no live prod row — PASS needs one operator credit applied after deploy, or owner acceptance of honest-empty",
+      "evidence": "Neon lucia 2026-07-25: vendor_credits=0, vendor_credit_applications=0. Path was NOT usable: bills.vendor_id holds the QBO vendor id on 16211 of 16212 bills while a credit holds an mdata.vendors uuid, so the apply picker resolved 0 bills (mdata.vendors.qbo_vendor_id bridges 16211). Bridge + cross-vendor refusal + canonical VC numbering shipped and proven on a migrated throwaway Postgres (9 lifecycle assertions incl. planted-failure); guard verify-vendor-credit-live-path (step 1436). Still FAIL: no live prod row \u2014 PASS needs one operator credit applied after deploy, or owner acceptance of honest-empty",
       "pr": "#3426"
     },
     {
@@ -193,7 +193,7 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Bills \u25be",
       "status": "UNVERIFIED",
-      "evidence": "Frozen map docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md. Structural DoD guard scripts/verify-acct-surf-01-bills.mjs (route+ParityDrawer+submit payload+canonical accounting.bills). Desktop Expected vs Actual: ~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md. Stays UNVERIFIED until TRANSP+USMCA browser re-click + reverse density unit/claim/WO > 0 (Rule 23 — no structural PASS flip).",
+      "evidence": "Frozen map docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md. Structural DoD guard scripts/verify-acct-surf-01-bills.mjs (route+ParityDrawer+submit payload+canonical accounting.bills). Desktop Expected vs Actual: ~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md. Stays UNVERIFIED until TRANSP+USMCA browser re-click + reverse density unit/claim/WO > 0 (Rule 23 \u2014 no structural PASS flip).",
       "pr": "#3477"
     },
     {
@@ -216,7 +216,7 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Expenses \u25be",
       "status": "FAIL",
-      "evidence": "expenses=0 with QBO_EXPENSES_PROJECTION_ENABLED OFF by owner decision — correct-at-0 (not a flag-flip chase). Surface chrome may be structurally wired; economics stay FAIL until owner unlocks projection + Neon density.",
+      "evidence": "expenses=0 with QBO_EXPENSES_PROJECTION_ENABLED OFF by owner decision \u2014 correct-at-0 (not a flag-flip chase). Surface chrome may be structurally wired; economics stay FAIL until owner unlocks projection + Neon density.",
       "pr": "#3433"
     },
     {
@@ -239,8 +239,8 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Bill payment \u25be",
       "status": "UNVERIFIED",
-      "evidence": "bill_payments=6479; Desktop SURF DoD UNVERIFIED \u2014 TRANSP+USMCA click-through not re-run. Structural route+PayBill ParityDrawer PASS (verify-accounting-money-creator-matrix).",
-      "pr": null
+      "evidence": "Frozen map docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md. Structural DoD guard scripts/verify-acct-surf-03-bill-payment.mjs (step 1461): route+ParityDrawer+pay payload+payVendorBill\u2192accounting.bill_payments+JE/bank reverse EntityLinks. Neon bill_payments density live; stays UNVERIFIED until TRANSP+USMCA browser re-click (Rule 23).",
+      "pr": "#PENDING"
     },
     {
       "id": "ACCT-SURF-04",
@@ -262,7 +262,7 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Receive Payment",
       "status": "FAIL",
-      "evidence": "payments=0 with QBO_AR_PAYMENTS_PROJECTION_ENABLED OFF by owner decision — correct-at-0 (not a flag-flip chase).",
+      "evidence": "payments=0 with QBO_AR_PAYMENTS_PROJECTION_ENABLED OFF by owner decision \u2014 correct-at-0 (not a flag-flip chase).",
       "pr": "#3433"
     },
     {
