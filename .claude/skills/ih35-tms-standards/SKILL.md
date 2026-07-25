@@ -117,7 +117,7 @@ never create/import/reclassify/merge/deactivate (Rule 19).**
 ## §12. THE 18-KEY MONEY-PR GIT GATE (Rule 23/24 — CI 1430/1431/1324 fail closed)
 `FINDING` · `LANE` · `DOD-A`…`E` · `VERIFY-1`…`8` · `MODULE_PROGRESS: <module> N of M` · `ITEMS_TOUCHED` ·
 `MIGRATE` · `ROOT CAUSE`/`FIX`/`GUARD`/`LIVE PROOF`/`REMAINING`. Values `PASS`·`N/A`·`FAIL`·`UNVERIFIED—reason`;
-one ranked finding per PR. Full text: `docs/specs/DEFINITION-OF-DONE.md` + `EVERY-PR-AUDIT-CHECKLIST.md` +
+one ranked finding per PR. Full text: `docs/specs/DEFINITION-OF-DONE.md` + `docs/specs/EVERY-PR-AUDIT-CHECKLIST.md` +
 `docs/specs/LAW-OF-THE-LAND-COMPLETE.md`.
 
 ---
