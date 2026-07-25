@@ -19,7 +19,8 @@ export function run(root = ROOT) {
   // Numbers must not invent QBO-* for TRANSP/USMCA in VALUES (NULL ok)
   if (/VALUES[\s\S]*'TRANSP'[\s\S]*'QBO-/.test(mig)) f.push("must not invent TRANSP account_number without CPA confirm");
   const held = JSON.parse(fs.readFileSync(path.join(root, HELD), "utf8"));
-  if (!(held.held || []).some((h) => h.file === path.basename(MIG))) f.push("must register held");
+  const registered = [...(held.held ?? []), ...(held.applied_held ?? []), ...(held.superseded ?? [])];
+  if (!registered.some((h) => h.file === path.basename(MIG))) f.push("must register held");
   return f;
 }
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);

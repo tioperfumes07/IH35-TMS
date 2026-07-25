@@ -75,12 +75,16 @@ export function run(root = ROOT) {
     failures.push(`missing ${HELD}`);
   } else {
     const held = readJson(root, HELD);
-    const entry = (held.held || []).find((h) => h.file === MIG_BASENAME);
-    if (!entry) {
+    // 2026-07-25 GUARD registry split: a migration Neon-applied and ledger-verified moves to
+    // applied_held[] (owner-confirmed live proof), not held[]. applied_on_prod:true there is the
+    // EXPECTED state — only a held[] entry flagged applied is the contradictory half-migrated shape.
+    const inHeld = (held.held || []).find((h) => h.file === MIG_BASENAME);
+    const inAppliedHeld = (held.applied_held || []).find((h) => h.file === MIG_BASENAME);
+    if (!inHeld && !inAppliedHeld) {
       failures.push(`${MIG_BASENAME} must remain registered in .held-migrations.json (MERGED≠APPLIED)`);
-    } else if (entry.applied_on_prod === true) {
+    } else if (inHeld && inHeld.applied_on_prod === true) {
       failures.push(
-        `${MIG_BASENAME} must NOT be marked applied_on_prod until owner Neon-applies (Rule 10 / MERGED≠APPLIED)`
+        `${MIG_BASENAME} is applied_on_prod:true but still sits in held[] — move it to applied_held[]`
       );
     }
   }
@@ -188,12 +192,16 @@ if (process.argv.includes("--selftest")) {
     }
     copyTree(MANIFEST);
 
+    // The migration is legitimately in applied_held[] on the real repo (Neon-applied, ledger-verified
+    // 2026-07-25) — applied_on_prod:true there is the EXPECTED state, not a defect. The contradictory
+    // shape this selftest must still catch is the file sitting in held[] (not applied_held[]) while
+    // ALSO flagged applied — a half-migrated registry entry the 2026-07-25 split should never produce.
     const held = readJson(temp, HELD);
-    const entry = held.held.find((h) => h.file === MIG_BASENAME);
-    entry.applied_on_prod = true;
+    held.held = held.held ?? [];
+    held.held.push({ file: MIG_BASENAME, applied_on_prod: true, reason: "selftest: half-migrated shape" });
     write(temp, HELD, JSON.stringify(held, null, 2) + "\n");
     if (!run(temp).some((f) => f.includes("applied_on_prod"))) {
-      throw new Error("applied_on_prod on held migration was not detected");
+      throw new Error("applied_on_prod on a held[] (not applied_held[]) migration was not detected");
     }
 
     console.log("verify-bank-econ-04-honesty-keep --selftest OK");
