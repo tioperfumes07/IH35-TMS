@@ -6,7 +6,7 @@
  * Uses GET /api/v1/dispatch/factoring-queue (factoring-queue.routes.ts).
  * FARO Reserve summary strip reuses existing factoring summary API.
  */
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getFactoringSummary } from "../../api/factoring";
@@ -15,6 +15,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useListState } from "../../components/list-state";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -136,8 +137,101 @@ export function FactoringQueuePage() {
     return acc;
   }, {});
 
-  // Empty state renders only once the queue query settles (never mid-fetch).
   const listState = useListState(queueQ, filtered.length === 0);
+  const emptyText = listState.isEmpty
+    ? search.trim() || stageFilter !== "ALL"
+      ? "No loads match the current filter."
+      : "No delivered loads in factoring queue."
+    : undefined;
+
+  const columns = useMemo<Array<ParityColumn<FactoringQueueRow>>>(
+    () => [
+      {
+        key: "load_number",
+        label: "Load #",
+        sortable: true,
+        className: "font-medium",
+        render: (row) => (
+          <Link
+            to={`/dispatch?view=loads&load_id=${row.load_id}`}
+            className="text-slate-700 hover:underline"
+          >
+            {row.load_number}
+          </Link>
+        ),
+      },
+      {
+        key: "customer_name",
+        label: "Customer",
+        sortable: true,
+        render: (row) => row.customer_name ?? "—",
+      },
+      {
+        key: "delivery_city",
+        label: "Delivery",
+        render: (row) => [row.delivery_city, row.delivery_state].filter(Boolean).join(", ") || "—",
+      },
+      {
+        key: "delivered_at",
+        label: "Delivered",
+        sortable: true,
+        render: (row) => fmtD(row.delivered_at),
+      },
+      {
+        key: "rate_total_cents",
+        label: "Rate",
+        sortable: true,
+        render: (row) => fmtM(row.rate_total_cents, row.currency_code),
+      },
+      {
+        key: "packet_stage",
+        label: "Status",
+        sortable: true,
+        render: (row) => (
+          <>
+            <span
+              className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold ${
+                STAGE_PILL[row.packet_stage]
+              }`}
+            >
+              {STAGE_LABELS[row.packet_stage]}
+            </span>
+            {row.packet_approved_at && row.packet_stage === "PACKET_READY" ? (
+              <div className="mt-0.5 text-[10px] text-slate-700">✓ Approved</div>
+            ) : null}
+          </>
+        ),
+      },
+      {
+        key: "missing_doc_types",
+        label: "Missing Docs",
+        render: (row) =>
+          row.missing_doc_types.length === 0 ? (
+            <span className="text-[10px] text-slate-700">✓ Complete</span>
+          ) : (
+            <span className="text-[10px] text-slate-700">
+              Missing: {row.missing_doc_types.join(", ")}
+            </span>
+          ),
+      },
+      {
+        key: "invoice_display_id",
+        label: "Invoice",
+        render: (row) =>
+          row.invoice_id ? (
+            <Link
+              to={`/accounting/invoices/${row.invoice_id}`}
+              className="text-slate-700 hover:underline"
+            >
+              {row.invoice_display_id ?? "Invoice"}
+            </Link>
+          ) : (
+            <span className="text-slate-700">No invoice</span>
+          ),
+      },
+    ],
+    [],
+  );
 
   if (!companyId) {
     return (
@@ -239,92 +333,17 @@ export function FactoringQueuePage() {
         </div>
       </div>
 
-      {/* Queue table */}
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="border-b bg-gray-50 text-left text-[11px] uppercase tracking-wide text-gray-500">
-            <tr>
-              <th className="px-3 py-2">Load #</th>
-              <th className="px-3 py-2">Customer</th>
-              <th className="px-3 py-2">Delivery</th>
-              <th className="px-3 py-2">Delivered</th>
-              <th className="px-3 py-2">Rate</th>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">Missing Docs</th>
-              <th className="px-3 py-2">Invoice</th>
-            </tr>
-          </thead>
-          <tbody>
-            {queueQ.isLoading ? (
-              <tr>
-                <td colSpan={8} className="px-3 py-8 text-center text-gray-500">
-                  Loading factoring queue…
-                </td>
-              </tr>
-            ) : listState.isEmpty ? (
-              <tr>
-                <td colSpan={8} className="px-3 py-8 text-center text-gray-500">
-                  {rows.length === 0 ? "No delivered loads in factoring queue." : "No loads match the current filter."}
-                </td>
-              </tr>
-            ) : (
-              filtered.map((row) => (
-                <tr key={row.load_id} className="border-b last:border-b-0 hover:bg-gray-50">
-                  <td className="px-3 py-2 font-medium">
-                    <Link
-                      to={`/dispatch?view=loads&load_id=${row.load_id}`}
-                      className="text-slate-700 hover:underline"
-                    >
-                      {row.load_number}
-                    </Link>
-                  </td>
-                  <td className="px-3 py-2 text-gray-700">{row.customer_name ?? "—"}</td>
-                  <td className="px-3 py-2 text-gray-600">
-                    {[row.delivery_city, row.delivery_state].filter(Boolean).join(", ") || "—"}
-                  </td>
-                  <td className="px-3 py-2 text-gray-600">{fmtD(row.delivered_at)}</td>
-                  <td className="px-3 py-2 text-gray-700">
-                    {fmtM(row.rate_total_cents, row.currency_code)}
-                  </td>
-                  <td className="px-3 py-2">
-                    <span
-                      className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold ${
-                        STAGE_PILL[row.packet_stage]
-                      }`}
-                    >
-                      {STAGE_LABELS[row.packet_stage]}
-                    </span>
-                    {row.packet_approved_at && row.packet_stage === "PACKET_READY" ? (
-                      <div className="mt-0.5 text-[10px] text-slate-700">✓ Approved</div>
-                    ) : null}
-                  </td>
-                  <td className="px-3 py-2">
-                    {row.missing_doc_types.length === 0 ? (
-                      <span className="text-[10px] text-slate-700">✓ Complete</span>
-                    ) : (
-                      <span className="text-[10px] text-slate-700">
-                        Missing: {row.missing_doc_types.join(", ")}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2 text-gray-600 text-xs">
-                    {row.invoice_id ? (
-                      <Link
-                        to={`/accounting/invoices/${row.invoice_id}`}
-                        className="text-slate-700 hover:underline"
-                      >
-                        {row.invoice_display_id ?? "Invoice"}
-                      </Link>
-                    ) : (
-                      <span className="text-slate-700">No invoice</span>
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      {/* Queue table — shared ParityTable (GLOBAL-COLS-01 / ACCT-R-25 Phase A adoption) */}
+      <ParityTable<FactoringQueueRow>
+        columns={columns}
+        rows={filtered}
+        rowKey={(row) => row.load_id}
+        loading={queueQ.isLoading}
+        emptyText={emptyText}
+        storageKey="dispatch-factoring-queue"
+        tableTestId="factoring-queue-table"
+        exportFilename="factoring-queue"
+      />
 
       {filtered.length > 0 ? (
         <p className="text-right text-xs text-gray-400">
