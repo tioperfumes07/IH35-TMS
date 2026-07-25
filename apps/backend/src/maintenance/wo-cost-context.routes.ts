@@ -26,7 +26,7 @@ export async function registerWoCostContextRoutes(app: FastifyInstance) {
           WHERE operating_company_id = $1::uuid
             AND active = true
             AND coalesce(account_type, '') IN ('Expense', 'Cost of Goods Sold', 'Other Expense')
-          ORDER BY name ASC
+          ORDER BY item_name ASC
           LIMIT 500
         `,
         [oc]
@@ -34,10 +34,13 @@ export async function registerWoCostContextRoutes(app: FastifyInstance) {
 
       const itemsRes = await client.query(
         `
-          SELECT id, qbo_id, name, item_type, unit_price_cents, mirrored_at
-          FROM mdata.qbo_items
+          -- LST-PICKER-02: canonical catalogs.items (the table the inline create writes), not the
+          -- mdata.qbo_items MIRROR. qbo_synced_at stands in for the mirror's mirrored_at.
+          SELECT id, qbo_item_id AS qbo_id, item_name AS name, item_type, unit_price_cents,
+                 qbo_synced_at AS mirrored_at
+          FROM catalogs.items
           WHERE operating_company_id = $1::uuid
-            AND active = true
+            AND deactivated_at IS NULL
             AND (
               lower(trim(coalesce(item_type, ''))) IN ('inventory', 'service')
               OR lower(replace(trim(coalesce(item_type, '')), ' ', '')) = 'noninventory'

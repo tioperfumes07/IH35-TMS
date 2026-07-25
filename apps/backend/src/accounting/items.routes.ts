@@ -33,7 +33,12 @@ export async function registerAccountingCatalogLookupRoutes(app: FastifyInstance
 
     const rows = await withCompanyScope(user.uuid, oc, async (client) => {
       const values: unknown[] = [oc];
-      const filters = ["operating_company_id = $1::uuid", "active = true"];
+      // LST-PICKER-02: read the CANONICAL catalogs.items — the same table the inline "+ Add new item"
+      // quick-create writes (QuickCreateEntityModal). This endpoint previously read mdata.qbo_items,
+      // the QBO MIRROR, so an item created from the WO/Bill quick-create was invisible in this very
+      // picker after reload. Column mapping: item_name->name, item_code->sku, qbo_item_id->qbo_id,
+      // deactivated_at IS NULL replaces the mirror's `active` flag.
+      const filters = ["operating_company_id = $1::uuid", "deactivated_at IS NULL"];
       if (type === "expense") {
         values.push(EXPENSE_ACCOUNT_TYPES);
         filters.push(`coalesce(account_type, '') = ANY($${values.length}::text[])`);
@@ -83,20 +88,20 @@ export async function registerAccountingCatalogLookupRoutes(app: FastifyInstance
       } else if (kind === "inventory") {
         filters.push(`lower(trim(coalesce(item_type, ''))) = 'inventory'`);
       } else if (kind === "labor") {
-        filters.push(`lower(trim(coalesce(name, ''))) LIKE '%labor%'`);
+        filters.push(`lower(trim(coalesce(item_name, ''))) LIKE '%labor%'`);
       }
       if (search) {
         values.push(`%${search}%`);
         const idx = values.length;
-        filters.push(`(name ILIKE $${idx} OR coalesce(sku, '') ILIKE $${idx})`);
+        filters.push(`(item_name ILIKE $${idx} OR coalesce(item_code, '') ILIKE $${idx})`);
       }
       values.push(limit);
       const res = await client.query(
         `
-          SELECT id, qbo_id, name, item_type, unit_price_cents
-          FROM mdata.qbo_items
+          SELECT id, qbo_item_id AS qbo_id, item_name AS name, item_type, unit_price_cents
+          FROM catalogs.items
           WHERE ${filters.join(" AND ")}
-          ORDER BY name ASC
+          ORDER BY item_name ASC
           LIMIT $${values.length}
         `,
         values
