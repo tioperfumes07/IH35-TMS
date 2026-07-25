@@ -22,4 +22,9 @@ if (!migration.includes("CREATE TRIGGER trg_apply_escrow_posting_delta")) {
   fail("migration must attach balance update trigger to escrow_postings");
 }
 
+const signFix = path.join(process.cwd(), "db/migrations/202608070000_escrow_forfeit_posting_type_sign_and_flag_seed.sql");
+if (!fs.existsSync(signFix)) fail("missing SAF-ORPH sign-fix migration 202608070000");
+const sign = fs.readFileSync(signFix, "utf8");
+if (!sign.includes("posting_type = 'forfeiture'")) fail("sign-fix mig must handle forfeiture");
+if (!/RAISE EXCEPTION/.test(sign)) fail("sign-fix mig must RAISE on unknown posting_type");
 console.log("verify:escrow-amount-conservation — OK");

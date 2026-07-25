@@ -6,8 +6,14 @@ import { companyBusinessDate } from "../../lib/company-business-date.js";
 
 type EscrowHolderType = "driver" | "vendor" | "factor" | "other";
 type EscrowPurpose = "driver_bond" | "repair_reserve" | "factor_reserve" | "other";
-type EscrowPostingType = "deposit" | "release" | "adjustment";
-export type EscrowSourceType = "driver_settlement" | "factoring_advance" | "vendor_bill" | "manual" | "reconciliation";
+type EscrowPostingType = "deposit" | "release" | "adjustment" | "forfeiture";
+export type EscrowSourceType =
+  | "driver_settlement"
+  | "factoring_advance"
+  | "vendor_bill"
+  | "manual"
+  | "reconciliation"
+  | "forfeit";
 
 type EscrowAccount = {
   id: string;
@@ -422,7 +428,8 @@ export async function depositEscrow(
  * banking escrow visualizer, driver escrow history tab, pre-settlements deductions queue, the $2,000-cap
  * check). It ONLY keeps accounting.escrow_accounts.balance_cents in sync by inserting the append-only
  * accounting.escrow_postings row — the AFTER INSERT trigger accounting.apply_escrow_posting_delta()
- * (migration 0234) atomically applies the balance delta. NO new GL math — reuses the existing trigger.
+ * (migration 0234; sign-fixed by 202608070000) atomically applies the balance delta:
+ * deposit +, release −, forfeiture −; unknown posting_type RAISE. NO new GL math.
  *
  * Fails loud if the driver has no provisioned accounting.escrow_accounts bridge (should never happen on
  * the settlement pay-run path — resolveDriverEscrowLiabilityAccount already asserts it upstream) UNLESS
@@ -434,7 +441,7 @@ export async function recordEscrowPostingOnly(
   input: {
     operating_company_id: string;
     driver_id: string;
-    posting_type: "deposit" | "release";
+    posting_type: "deposit" | "release" | "forfeiture";
     amount_cents: number;
     source_type: EscrowSourceType;
     source_id?: string | null;
