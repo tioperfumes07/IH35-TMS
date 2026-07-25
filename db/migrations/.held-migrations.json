@@ -480,7 +480,11 @@
     },
     {
       "file": "202607790000_cost_of_labor_mexico_drivers_transp_usmca.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1 \u00b7 NEEDS OWNER+CPA CONFIRM] Seed Cost of Labor\u2013Mexico Drivers on TRANSP+USMCA. Account numbers NULL until CPA confirms. Type/subtype match TRK QBO-204 structure. Then designate driver_pay_expense."
+      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1 \u00b7 FINANCIAL] Seed catalogs.accounts 'Cost of Labor\u2013Mexico Drivers' on TRANSP+USMCA (CostOfGoodsSold/CostOfLaborCos). OWNER 2026-07-25: INTERNAL numbers TRANSP/USMCA=6890 (not QBO). CPA locked name. Awaiting Neon hand-apply + ledger + driver_pay_expense role repoint.",
+      "owner_locked_numbers": {
+        "TRANSP": "6890",
+        "USMCA": "6890"
+      }
     },
     {
       "file": "202607770000_drop_account_role_bindings_global_unique.sql",

@@ -1,25 +1,19 @@
--- [HOLD-FOR-JORGE — TIER 1 · §1.4 FINANCIAL CLUSTER · NEEDS OWNER+CPA CONFIRM]
+-- [HOLD-FOR-JORGE — TIER 1 · §1.4 FINANCIAL CLUSTER]
 -- Seed "Cost of Labor–Mexico Drivers" on TRANSP + USMCA (lane defect B / WO item 4).
 --
--- *** DO NOT RUN ON PROD. DO NOT SELF-MERGE. Account NUMBERS are intentionally unset until
---     OWNER+CPA confirm. Type/subtype below MATCH TRK's live QBO-204 structure
---     (CostOfGoodsSold / CostOfLaborCos) — still confirm before apply. ***
---
 -- ROOT CAUSE: driver_pay_expense cannot be designated on TRANSP/USMCA because the expense
--- account exists only on TRK (QBO-204 CL-Contractor Labor Mexico Driver-(689)). Settlements
+-- account existed only on TRK (QBO-204 CL-Contractor Labor Mexico Driver-(689)). Settlements
 -- run on TRANSP (+ USMCA). CPA locked name: "Cost of Labor–Mexico Drivers".
 --
--- TRK reference (prod, RLS bypass lucia — structure only, do NOT copy the number blindly):
---   account_number = QBO-204
---   account_type   = CostOfGoodsSold
---   account_subtype= CostOfLaborCos
---   is_postable    = true
+-- TRK reference (structure only): CostOfGoodsSold / CostOfLaborCos / is_postable=true.
 --
--- BEFORE Neon apply, replace NULL account_number values below with OWNER+CPA confirmed numbers
--- (unique per entity under uq_accounts_company_account_number). Until then this migration is a
--- NO-OP (INSERT filters out NULL numbers). Resolve entities BY org.companies.code — never hardcode UUIDs.
+-- OWNER RULING 2026-07-25 (chat): no external/QBO number — use INTERNAL TMS numbers.
+--   TRANSP account_number = 6890
+--   USMCA  account_number = 6890
+--   (unique per entity under uq_accounts_company_account_number; mirrors TRK's "689" labor family)
 --
--- After seed: owner designates driver_pay_expense → this account per entity on CoA Roles.
+-- Resolve entities BY org.companies.code — never hardcode UUIDs.
+-- After seed: designate driver_pay_expense → this account per entity (separate Neon paste).
 
 BEGIN;
 
@@ -35,10 +29,8 @@ SELECT
   'USD',
   c.id
 FROM (VALUES
-  -- OWNER+CPA: set account_number for TRANSP (NULL = skip / no-op)
-  ('TRANSP'::text, NULL::text, 'Cost of Labor–Mexico Drivers'::text, 'CostOfGoodsSold'::text, 'CostOfLaborCos'::text),
-  -- OWNER+CPA: set account_number for USMCA (NULL = skip / no-op)
-  ('USMCA'::text,  NULL::text, 'Cost of Labor–Mexico Drivers'::text, 'CostOfGoodsSold'::text, 'CostOfLaborCos'::text)
+  ('TRANSP'::text, '6890'::text, 'Cost of Labor–Mexico Drivers'::text, 'CostOfGoodsSold'::text, 'CostOfLaborCos'::text),
+  ('USMCA'::text,  '6890'::text, 'Cost of Labor–Mexico Drivers'::text, 'CostOfGoodsSold'::text, 'CostOfLaborCos'::text)
 ) AS v(company_code, account_number, account_name, account_type, account_subtype)
 JOIN org.companies c ON c.code = v.company_code AND c.deactivated_at IS NULL
 WHERE v.account_number IS NOT NULL
@@ -57,11 +49,10 @@ ON CONFLICT (operating_company_id, account_number) DO NOTHING;
 
 COMMIT;
 
--- POST-DEPLOY (after numbers filled + applied):
---   SET app.bypass_rls = 'lucia';
+-- POST-DEPLOY VERIFY:
+--   SELECT set_config('app.bypass_rls','lucia',true);
 --   SELECT c.code, a.account_number, a.account_name, a.account_type, a.account_subtype
 --   FROM catalogs.accounts a
 --   JOIN org.companies c ON c.id = a.operating_company_id
 --   WHERE a.account_name = 'Cost of Labor–Mexico Drivers'
 --     AND c.code IN ('TRANSP','USMCA');
---   Then CoA Roles: designate driver_pay_expense per entity.

@@ -1940,3 +1940,18 @@ Claim economics owner locks (2026-07-22 — FINAL):
 1. Driver deductible recovery rail = **always ask** (escrow / settlement / split)
 2. Uninsured repair = **Choice Z always ask** expense vs capitalize; **no $ threshold**. If **driver fault**, driver owes **full** company-funded repair (e.g. $8,000), recovered via always-ask rail.
 3. Deductible books = **Option C** (expense residual + Driver A/R) — LOCKED
+
+---
+
+## 2026-07-25 — Cost of Labor–Mexico Drivers INTERNAL account numbers (LOCKED)
+
+CPA already locked the **name** (`Cost of Labor–Mexico Drivers`, CostOfGoodsSold / CostOfLaborCos) for `driver_pay_expense` (Desktop `CPA ANSWERS.docx` + `CPA-ANSWERS-ALREADY-LOCKED-2026-07-23.md`).
+
+**Owner ruling 2026-07-25:** numbers are **internal TMS**, not external/QBO:
+
+| Entity | account_number | account_name |
+|---|---|---|
+| TRANSP | `6890` | Cost of Labor–Mexico Drivers |
+| USMCA | `6890` | Cost of Labor–Mexico Drivers |
+
+Migration: `db/migrations/202607790000_cost_of_labor_mexico_drivers_transp_usmca.sql`. Neon paste: `docs/trackers/NEON-APPLY-COST-OF-LABOR-MEXICO-6890-2026-07-25.md`. After seed, repoint `accounting.chart_of_accounts_roles.driver_pay_expense` → these rows (TRANSP was incorrectly on Nomina QBO-1150040140).
