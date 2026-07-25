@@ -746,6 +746,89 @@ export async function fetchHomeWoStatusCounts(companyId: string): Promise<HomeWo
   return coerceWoStatusCounts(raw);
 }
 
+// ACCT-R-07 (0280-42-wo-to-expense-flow): per-status-bucket linked bill/expense economics —
+// additive sibling to HomeWoStatusCount so the WO status widget can show whether a bucket's work
+// orders actually flowed into accounting (accounting.bills / accounting.expenses via the
+// canonical linked_work_order_uuid FK), not just the raw WO count.
+export type HomeWoLinkedEconomicsBucket = {
+  bill_count: number;
+  bill_amount_cents: number;
+  expense_count: number;
+  expense_amount_cents: number;
+};
+
+export type HomeWoLinkedEconomicsBuckets = Record<
+  "draft" | "open" | "in_progress" | "awaiting_parts" | "completed" | "cancelled" | "unknown",
+  HomeWoLinkedEconomicsBucket
+>;
+
+export type HomeWoLinkedEconomics =
+  | {
+      status: "ok";
+      buckets: HomeWoLinkedEconomicsBuckets;
+      wo_with_expense_flow_count: number;
+      total_linked_bill_amount_cents: number;
+      total_linked_expense_amount_cents: number;
+    }
+  | { status: "unverifiable"; unverifiable_reason: string };
+
+const WO_LINKED_ECONOMICS_BUCKET_KEYS = [...WO_STATUSES, "unknown"] as const;
+
+function emptyLinkedEconomicsBucket(): HomeWoLinkedEconomicsBucket {
+  return { bill_count: 0, bill_amount_cents: 0, expense_count: 0, expense_amount_cents: 0 };
+}
+
+function coerceWoLinkedEconomics(raw: unknown): HomeWoLinkedEconomics {
+  if (!raw || typeof raw !== "object") {
+    return { status: "unverifiable", unverifiable_reason: "wo_linked_economics_missing_from_response" };
+  }
+  const o = raw as Record<string, unknown>;
+  if (o.status === "unverifiable") {
+    return {
+      status: "unverifiable",
+      unverifiable_reason: typeof o.unverifiable_reason === "string" ? o.unverifiable_reason : "unknown",
+    };
+  }
+  if (o.status !== "ok" || !o.buckets || typeof o.buckets !== "object") {
+    return { status: "unverifiable", unverifiable_reason: "wo_linked_economics_shape_unrecognized" };
+  }
+  const rawBuckets = o.buckets as Record<string, unknown>;
+  const buckets = {} as HomeWoLinkedEconomicsBuckets;
+  for (const key of WO_LINKED_ECONOMICS_BUCKET_KEYS) {
+    const b = rawBuckets[key];
+    if (!b || typeof b !== "object") {
+      buckets[key] = emptyLinkedEconomicsBucket();
+      continue;
+    }
+    const bo = b as Record<string, unknown>;
+    buckets[key] = {
+      bill_count: num(bo.bill_count),
+      bill_amount_cents: num(bo.bill_amount_cents),
+      expense_count: num(bo.expense_count),
+      expense_amount_cents: num(bo.expense_amount_cents),
+    };
+  }
+  return {
+    status: "ok",
+    buckets,
+    wo_with_expense_flow_count: num(o.wo_with_expense_flow_count),
+    total_linked_bill_amount_cents: num(o.total_linked_bill_amount_cents),
+    total_linked_expense_amount_cents: num(o.total_linked_expense_amount_cents),
+  };
+}
+
+/** Single-fetch variant returning both the WO status counts AND their linked accounting economics. */
+export async function fetchHomeWoStatusCountsDetailed(
+  companyId: string
+): Promise<{ counts: HomeWoStatusCount[]; linked_economics: HomeWoLinkedEconomics }> {
+  const raw = await apiRequest<unknown>(withCompany("/api/v1/home/wo-status-counts", companyId));
+  const o = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+  return {
+    counts: coerceWoStatusCounts(raw),
+    linked_economics: coerceWoLinkedEconomics(o.linked_economics),
+  };
+}
+
 export async function fetchHomeFleetUtilization(companyId: string): Promise<HomeFleetUtilization> {
   const raw = await apiRequest<Record<string, unknown>>(withCompany("/api/v1/home/fleet-utilization", companyId));
   return {

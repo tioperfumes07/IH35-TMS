@@ -14,6 +14,8 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { companyToday } from "../../../lib/businessDate";
 import { ChartOfAccountsSyncPanel } from "../../accounting/ChartOfAccountsSyncPanel";
+import { CoaAsymmetryReportPanel } from "../../accounting/CoaAsymmetryReportPanel";
+import { useAuth } from "../../../auth/useAuth";
 import { AccountDrawer } from "./AccountDrawer";
 import { CoaBatchActions } from "./CoaBatchActions";
 import { useShowAccountNumbers } from "../../../lib/useShowAccountNumbers";
@@ -219,7 +221,10 @@ function buildColumns(
 
 export function ChartOfAccountsListPage() {
   const { selectedCompanyId } = useCompanyContext();
+  const { user } = useAuth();
   const companyId = selectedCompanyId ?? "";
+  const showCoaAsymmetry =
+    user?.role === "Owner" || user?.role === "Administrator";
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE_DEFAULT);
   const [sortKey, setSortKey] = useState("name");
@@ -393,6 +398,8 @@ export function ChartOfAccountsListPage() {
       {companyId ? (
         <ChartOfAccountsSyncPanel operatingCompanyId={companyId} onDriftFilterToggle={setDriftOnly} />
       ) : null}
+
+      <CoaAsymmetryReportPanel enabled={showCoaAsymmetry} />
 
       {driftOnly ? (
         <p className="text-sm text-slate-700">
