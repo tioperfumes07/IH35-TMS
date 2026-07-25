@@ -31,6 +31,7 @@
  */
 
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { recordEscrowPostingOnly } from "../accounting/escrow/service.js";
 
 type Queryable = {
   query: <R = unknown>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -308,7 +309,7 @@ export async function approveLineItem(
 
   // If this is an escrow hold, update running balance
   if (row.category === 'escrow_for_claims' && amountCents < 0) {
-    await updateEscrowBalance(client, row.settlement_id, amountCents, 'hold', input.lineItemId);
+    await updateEscrowBalance(client, row.settlement_id, amountCents, 'hold', input.lineItemId, input.approvedBy);
   }
 }
 
@@ -358,13 +359,23 @@ export async function rejectLineItem(
 
 /**
  * Update escrow running balance (driver_finance.escrow_balances / escrow_ledger — natively CENTS).
+ *
+ * ACCT-R-01 (0007-pattern-5 escrow split-brain finding): also syncs accounting.escrow_accounts.balance_cents
+ * — the GL-linked liability balance driver-finance/escrow-separation.service.ts's
+ * releaseDriverEscrowSeparation() reads as authoritative — via recordEscrowPostingOnly (appends an
+ * accounting.escrow_postings row; the existing DB trigger applies the delta, NO new GL math/JE). This
+ * path posts no JE of its own (see file header), so linked_journal_entry_id is null. failSoft=true: this
+ * legacy D1 per-line approval flow can run for a driver whose accounting.escrow_accounts bridge is not
+ * yet provisioned — skip the sync rather than block the line approval (never silently duplicate a write,
+ * but also never hard-fail an approval on a missing bridge outside this flow's control).
  */
 async function updateEscrowBalance(
   client: Queryable,
   settlementId: string,
   amountCents: number,
   transactionType: 'hold' | 'release',
-  lineItemId: string
+  lineItemId: string,
+  approvedByUserId: string
 ): Promise<void> {
   // Get driver from the canonical settlement header
   const settlementResult = await client.query<{ driver_id: string; operating_company_id: string }>(`
@@ -425,6 +436,22 @@ async function updateEscrowBalance(
       `Escrow ${transactionType} from settlement line item`
     ]);
   }
+
+  await recordEscrowPostingOnly(
+    client,
+    {
+      operating_company_id,
+      driver_id,
+      posting_type: transactionType === 'hold' ? 'deposit' : 'release',
+      amount_cents: amt,
+      source_type: 'driver_settlement',
+      source_id: lineItemId,
+      note: `Escrow ${transactionType} from settlement line item (settlement ${settlementId})`,
+      posted_by_user_id: approvedByUserId,
+      linked_journal_entry_id: null,
+    },
+    { failSoft: true }
+  );
 }
 
 /**
