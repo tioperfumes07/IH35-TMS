@@ -66,6 +66,12 @@ export const EXPECTED_HELD = [
   //
   // An empty list still asserts something strong: `held` must be EMPTY. Any file appearing there fails the
   // (2) check below until GUARD re-proves it unapplied and it is re-listed with a fresh citation.
+  //
+  // 202608070000_escrow_forfeit_posting_type_sign_and_flag_seed.sql — added by #3542 (merged after this
+  // allowlist was last written). Genuinely unapplied: absent from both _system._schema_migrations and
+  // ih35_migrations.applied_migrations as of 2026-07-25 (it postdates every migration GUARD's 2026-07-25
+  // cross-check covered). Owner Neon-applies + ledger-backfills before it can leave this list.
+  "202608070000_escrow_forfeit_posting_type_sign_and_flag_seed.sql",
 ];
 
 /**
