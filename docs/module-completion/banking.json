@@ -88,8 +88,8 @@
       ],
       "spec": "Architectural Banking tabs",
       "status": "UNVERIFIED",
-      "evidence": "Structural mount guarded (#3459 verify-bank-surf-home-detail / step 1439): /banking + /banking/accounts/:id + banking.* API. DoD A\u2013E + VERIFY 1\u20138 browser click-through TRANSP+USMCA still required \u2014 structural \u2260 SURF PASS (Rule 23).",
-      "pr": "#3459"
+      "evidence": "Deep structural DoD guarded (verify-bank-surf-01-dod / step 1465): /banking + /banking/accounts/:id + AccountTilesRow Factoring/Escrow never-delete + BankingTransactionsDesignView on detail + canonical /api/v1/banking/*. Prior step 1439 route pin retained. DoD A\u2013E + VERIFY 1\u20138 browser click-through TRANSP+USMCA still required \u2014 structural \u2260 SURF PASS (Rule 23).",
+      "pr": "OPEN \u2014 Cotulla-08 BANK-08 SURF-01"
     },
     {
       "id": "BANK-SURF-02",
