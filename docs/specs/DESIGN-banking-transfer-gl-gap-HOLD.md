@@ -6,7 +6,7 @@
   transfer JE from the bank-feed categorize path ships in a **separate owner-gated PR** after `JORGE-APPROVED`
   and a per-entity Neon tie-out.
 - **Branch:** `design/0285-banking-transfer-gl-hold` (pinned to `origin/main` @ `e2db37a74`)
-- **CPA posture (loaded `ih35-cpa-accounting-decisions`):** **reuse the existing poster, write NO new GL math**;
+- **CPA posture (loaded `ih35-accounting-decisions`):** **reuse the existing poster, write NO new GL math**;
   all money-posting flags stay **default OFF**, per-entity override only; an agent never posts/moves money —
   the flip is the owner's hand.
 - **Rule 13 (financial cluster → build-and-HOLD):** never self-merge; HOLD for owner even when a future fix is

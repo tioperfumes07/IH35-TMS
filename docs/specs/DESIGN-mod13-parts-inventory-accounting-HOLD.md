@@ -8,7 +8,7 @@
 > - Block: `0441-mod13-inventory-accounting-none` (accounting drain)
 > - Branch: `design/mod13-parts-inventory-accounting-hold` (fresh from `origin/main` @ `e2db37a74`)
 > - Spec sources: Rule 01 blueprint set; Law of the Land linkage; CPA locks
->   (`.claude/skills/ih35-cpa-accounting-decisions`); Rule 07 never-delete.
+>   (`.claude/skills/ih35-accounting-decisions`); Rule 07 never-delete.
 > - **This design decides an accounting POLICY (periodic vs perpetual) — it is owner/CPA-gated. No method
 >   is implemented until the owner rules §5.**
 

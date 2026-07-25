@@ -1,8 +1,14 @@
 #!/usr/bin/env node
 /**
- * WARNING-only: scan backend TS for qualified SQL table refs schema.table and report
- * tables never introduced by CREATE TABLE in db/migrations/*.sql (static parse).
- * Does not understand views, temp tables, or dynamic SQL — conservative omissions expected.
+ * STATIC schema contract check — migration-file parser only (no live DB).
+ *
+ * Scans backend TS for qualified SQL table refs schema.table and reports tables never
+ * introduced by CREATE TABLE in db/migrations/*.sql. Does not understand views, temp
+ * tables, or dynamic SQL — conservative omissions expected.
+ *
+ * LIVE complement (prod truth): scripts/audit-schema.mjs → docs/schema/SCHEMA-MANIFEST.json
+ * pulls pg_catalog + information_schema from Neon with bypass_rls=lucia. Use the live manifest
+ * for prod-drift audits; this script is CI-static migration-parse only (ACCT-R-02 split).
  */
 import fs from "fs";
 import path from "path";

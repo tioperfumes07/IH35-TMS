@@ -1642,7 +1642,7 @@
    "source_doc": "0285__CASCADE-07-04-2026-PHASE-1-FINANCIAL-SPINE-AUDIT-Final-Complete.md",
    "title": "Accounting: no automatic GL posting in TMS \u2014 GL posting is flag-gated (BILL_GL_POSTING_ENABLED, EXPENSE_GL_POSTING_ENABLED) and the system relies on QBO sync for GL posting instead of direct TMS-side posting",
    "verdict": "built",
-   "evidence": "This matches the LOCKED architecture per skill ih35-cpa-accounting-decisions / memory 'accounting-architecture-parallel-clone-reconcile': PARALLEL double-books, QBO=Source of Record through 12/31/2025, no write-back \u2014 i.e. the doc's 'gap' is actually the deliberately-designed architecture, not a defect. apps/backend/src/lib/feature-flags default-OFF pattern for BILL_GL_POSTING_ENABLED/EXPENSE_GL_POSTING_ENABLED is consistent with CPA-locked decisions (posting OFF by default, flags default OFF per \u00a71.4).",
+   "evidence": "This matches the LOCKED architecture per skill ih35-accounting-decisions / memory 'accounting-architecture-parallel-clone-reconcile': PARALLEL double-books, QBO=Source of Record through 12/31/2025, no write-back \u2014 i.e. the doc's 'gap' is actually the deliberately-designed architecture, not a defect. apps/backend/src/lib/feature-flags default-OFF pattern for BILL_GL_POSTING_ENABLED/EXPENSE_GL_POSTING_ENABLED is consistent with CPA-locked decisions (posting OFF by default, flags default OFF per \u00a71.4).",
    "missing": "",
    "spec": "docs/lockdown/00_LOCKED_DECISIONS.md",
    "acceptance": [
@@ -1662,7 +1662,7 @@
    "tier": "tier-1",
    "db_touch": true,
    "prod_check_needed": "confirm BILL_GL_POSTING_ENABLED / EXPENSE_GL_POSTING_ENABLED flag states on prod match the CPA-locked default-OFF posture",
-   "contradicts_prod_or_repo": "0285 frames this as a 'Critical Gap' to fix, but per the CPA-locked architecture (skill ih35-cpa-accounting-decisions, memory accounting-architecture-parallel-clone-reconcile) this is an intentional, owner-approved design decision (QBO remains Source of Record through 12/31/2025; TMS-side GL posting is deliberately flag-gated OFF by default), not a defect to close.",
+   "contradicts_prod_or_repo": "0285 frames this as a 'Critical Gap' to fix, but per the CPA-locked architecture (skill ih35-accounting-decisions, memory accounting-architecture-parallel-clone-reconcile) this is an intentional, owner-approved design decision (QBO remains Source of Record through 12/31/2025; TMS-side GL posting is deliberately flag-gated OFF by default), not a defect to close.",
    "status": "superseded",
    "superseded_by": "docs/lockdown/00_LOCKED_DECISIONS.md (CPA-locked parallel double-books architecture)",
    "_src": "rows-FINDINGS-1.json",
@@ -6069,7 +6069,7 @@
    "verdict": "built",
    "evidence": "apps/backend/src/accounting/settlement-posting/{settlement-posting.service.ts,settlement-posting.math.ts,settlement-bill-payment-posting.service.ts} + db/migrations/202606290010_settlement_gl_posting_foundation.sql + 202607060900_settlement_bill_payment_posting.sql + 202607052300_per_entity_posting_flag_golive.sql (this migration sets SETTLEMENT_GL_POSTING_ENABLED = ON for TRANSP, OFF for TRK/USMCA). CONSENT_MISSING and ACCOUNT_ROLE_BINDING_MISSING error codes are implemented in settlement-posting.service.ts as gates before posting.",
    "missing": "Cannot confirm from repo alone whether live TRANSP settlements are actually posting balanced JEs successfully with the flag ON, or whether they are failing on CONSENT_MISSING (see the 0076 Repair-Program finding that this exact flag was ON in prod with a broken posting path as of 2026-07-04).",
-   "spec": "docs/specs/qbo-parity/ (posting spine), see also skill ih35-cpa-accounting-decisions",
+   "spec": "docs/specs/qbo-parity/ (posting spine), see also skill ih35-accounting-decisions",
    "acceptance": [
     {
      "kind": "file",
@@ -9128,13 +9128,13 @@
    "source_doc": "0473__IH35-FINANCIAL-ACCOUNTING-AUDIT-FOR-CPA-2026-06-30.md",
    "title": "CPA ruling needed: does FARO factoring transfer control (sale) or not (secured borrowing) under ASC 860's 3-part control test -- material to the DIP lien",
    "verdict": "needs-design",
-   "evidence": "Doc's Section 3.8 locks the engine design as 'Reuse posting engine, no new GL math; every entry balances; append-only audit' and skill ih35-cpa-accounting-decisions / memory locked-decisions confirm factoring-as-secured-borrowing is the CPA-facing recommendation, but this doc explicitly states 'get it in writing' from the CPA \u2014 an unresolved legal/accounting ruling, not a code gap. Repo build supports both treatments per-factor per the doc.",
+   "evidence": "Doc's Section 3.8 locks the engine design as 'Reuse posting engine, no new GL math; every entry balances; append-only audit' and skill ih35-accounting-decisions / memory locked-decisions confirm factoring-as-secured-borrowing is the CPA-facing recommendation, but this doc explicitly states 'get it in writing' from the CPA \u2014 an unresolved legal/accounting ruling, not a code gap. Repo build supports both treatments per-factor per the doc.",
    "missing": "written CPA ruling on ASC 860 sale-vs-borrowing for the actual FARO contract terms",
    "spec": "NONE",
    "acceptance": [
     {
      "kind": "design",
-     "spec": "NONE \u2014 awaiting CPA ruling; skill ih35-cpa-accounting-decisions documents the locked default (secured borrowing)"
+     "spec": "NONE \u2014 awaiting CPA ruling; skill ih35-accounting-decisions documents the locked default (secured borrowing)"
     }
    ],
    "linkage": {
@@ -30780,7 +30780,7 @@
    "verdict": "built",
    "evidence": "apps/backend/src/accounting/factoring-posting/poster.service.ts header comments (lines 3-36) explicitly document the sale-model->secured-borrowing rewrite; :346,350,421-422,570,574,762 resolveRoleAccount(...,'factoring_advance_liability') used at funding/release/chargeback; :29 comment 'funding never credits ar_control'; :250,619 chargeback A/R-relief leg documented separately from funding. Matches the CODER-34 directive's 5-step lifecycle almost exactly.",
    "missing": "flag-OFF/live-posting status not independently confirmed here (would require checking lib.feature_flags on prod for FACTORING_GL_POSTING_ENABLED and confirming the PR is still un-merged/HOLD per the doc's TIER-1 requirement \u2014 this is inherently a prod+PR-state check, not a repo-content check)",
-   "spec": "NONE \u2014 per skill ih35-cpa-accounting-decisions this is CPA/owner-LOCKED accounting policy (secured borrowing), governing doc is the CPA ruling referenced in the block package (01_FINDING/02_ACCOUNTING/03_WORKFLOW/04_COA-AND-ROLES), not an approved-screen",
+   "spec": "NONE \u2014 per skill ih35-accounting-decisions this is CPA/owner-LOCKED accounting policy (secured borrowing), governing doc is the CPA ruling referenced in the block package (01_FINDING/02_ACCOUNTING/03_WORKFLOW/04_COA-AND-ROLES), not an approved-screen",
    "acceptance": [
     {
      "kind": "file",
