@@ -59,43 +59,60 @@ COMMIT;
 
 ---
 
-### Paste 3 — prove effect (same txn · RLS bypass)
+### Paste 3 — prove effect (catalog only — never touches missing columns)
+
+Run **after** Paste 1 succeeds. Do **not** `SELECT detail_type_id` until `col_exists` is true.
 
 ```sql
-BEGIN;
 SELECT set_config('app.bypass_rls', 'lucia', true);
 
 SELECT
-  (SELECT EXISTS (
-     SELECT 1 FROM information_schema.columns
-     WHERE table_schema = 'catalogs' AND table_name = 'accounts' AND column_name = 'detail_type_id'
-   )) AS col_exists,
-  (SELECT EXISTS (
-     SELECT 1 FROM pg_constraint
-     WHERE conname = 'accounts_detail_type_id_fkey'
-       AND conrelid = 'catalogs.accounts'::regclass
-   )) AS fk_exists,
-  (SELECT EXISTS (
-     SELECT 1 FROM pg_proc p
-     JOIN pg_namespace n ON n.oid = p.pronamespace
-     WHERE n.nspname = 'catalogs' AND p.proname = 'accounts_detail_type_scope_check'
-   )) AS trigger_fn_exists,
-  (SELECT count(*)::int FROM catalogs.accounts WHERE detail_type_id IS NOT NULL) AS backfilled_nonnull,
-  (SELECT count(*)::int FROM catalogs.accounts WHERE account_subtype IS NOT NULL AND detail_type_id IS NULL) AS leftover_null,
-  (SELECT EXISTS (
-     SELECT 1 FROM _system._schema_migrations
-     WHERE filename = '202608080000_acct_link_02_accounts_detail_type_fk.sql'
-   )) AS system_ledger,
-  (SELECT EXISTS (
-     SELECT 1 FROM ih35_migrations.applied_migrations
-     WHERE name = '202608080000_acct_link_02_accounts_detail_type_fk.sql'
-   )) AS ih35_ledger;
-
-COMMIT;
+  EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'catalogs' AND table_name = 'accounts'
+      AND column_name = 'detail_type_id'
+  ) AS col_exists,
+  EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'accounts_detail_type_id_fkey'
+      AND conrelid = 'catalogs.accounts'::regclass
+  ) AS fk_exists,
+  EXISTS (
+    SELECT 1 FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'catalogs' AND p.proname = 'accounts_detail_type_scope_check'
+  ) AS trigger_fn_exists,
+  EXISTS (
+    SELECT 1 FROM pg_trigger t
+    JOIN pg_class c ON c.oid = t.tgrelid
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'catalogs' AND c.relname = 'accounts'
+      AND t.tgname = 'trg_accounts_detail_type_scope' AND NOT t.tgisinternal
+  ) AS trigger_exists,
+  EXISTS (
+    SELECT 1 FROM _system._schema_migrations
+    WHERE filename = '202608080000_acct_link_02_accounts_detail_type_fk.sql'
+  ) AS system_ledger,
+  EXISTS (
+    SELECT 1 FROM ih35_migrations.applied_migrations
+    WHERE name = '202608080000_acct_link_02_accounts_detail_type_fk.sql'
+  ) AS ih35_ledger;
 ```
 
-**PASS:** `col_exists` / `fk_exists` / `trigger_fn_exists` / both ledgers = true.  
+**Only if `col_exists` is true** — separate query (skip if false):
+
+```sql
+SELECT set_config('app.bypass_rls', 'lucia', true);
+SELECT
+  count(*) FILTER (WHERE detail_type_id IS NOT NULL)::int AS backfilled_nonnull,
+  count(*) FILTER (WHERE account_subtype IS NOT NULL AND detail_type_id IS NULL)::int AS leftover_null
+FROM catalogs.accounts;
+```
+
+**PASS:** `col_exists` / `fk_exists` / `trigger_fn_exists` / `trigger_exists` / both ledgers = true.  
 `backfilled_nonnull` > 0 expected; `leftover_null` may be > 0 (CamelCase leftovers — re-save fixes).
+
+**False-ledger trap:** if ledgers are true but `col_exists` is false, Paste 1 never ran — run Paste 1A–1E below; do **not** re-run Paste 2.
 
 ## After PASS
 
