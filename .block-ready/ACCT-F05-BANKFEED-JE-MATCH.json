@@ -1,0 +1,38 @@
+{
+  "block_id": "ACCT-F05-BANKFEED-JE-MATCH",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "module-completion/accounting",
+  "task": "ACCT-F05 (F05) — bank feed matched_journal_entry_id ~3/10622 honesty KEEP. #3424 on main wires bulk+single categorize→maybePostBankCategorizationToGl→postSourceTransaction(bank_categorization)+matched_journal_entry_id stamp. Guard verify-bankfeed-je-match (step 1486) locks wiring; scoreboard ACCT-LINK-06 + BANK-ECON-02 stay FAIL (ops backlog density). FINANCIAL-HOLD — no flag flip.",
+  "branch": "hold/acct-f05-bankfeed-je-honesty-keep",
+  "lane": "coord",
+  "allowed_files": [
+    ".block-ready/ACCT-F05-BANKFEED-JE-MATCH.json",
+    "scripts/verify-bankfeed-je-match.mjs",
+    "scripts/verify-steps/1486-verify-bankfeed-je-match.mjs",
+    "docs/module-completion/accounting.json",
+    "docs/module-completion/accounting.md"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "poster + matched_journal_entry_id wiring structural",
+      "status": "PASS",
+      "evidence": "verify-bankfeed-je-match delegates bulk poster guard + asserts postSourceTransaction bank_categorization + lockstep stamp"
+    },
+    {
+      "check": "live matched_JE density meaningful",
+      "status": "FAIL (ops backlog)",
+      "evidence": "Neon lucia ~3/10622 — honest FAIL; guard rejects PASS flip"
+    },
+    {
+      "check": "guard selftest planted failures",
+      "status": "PASS",
+      "evidence": "selftest removes stamp + flips ACCT-LINK-06 to PASS — both detected"
+    }
+  ],
+  "note": "HOLD — FINANCIAL-HOLD honesty/keep. Do NOT merge without JORGE-APPROVED. No density theater."
+}
