@@ -825,7 +825,8 @@
       "version_int",
       "void_reason",
       "voided_at",
-      "voided_by_user_id"
+      "voided_by_user_id",
+      "journal_entry_type_id"
     ],
     "accounting.journal_entry_postings": [
       "account_id",

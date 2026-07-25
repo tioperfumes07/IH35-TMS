@@ -44,6 +44,12 @@ describe("TransferModal — source assertions", () => {
     expect(source).toContain("amount_cents");
     expect(source).toContain("Save transfer");
   });
+
+  // BANK-ECON-03 / BANK-SURF-03 — mark-transfer must LINK to the transfer createTransfer() already
+  // minted, never mint a second banking.transfers row for the same cash movement.
+  it("passes existing_transfer_id so mark-transfer never mints a second ledger row", () => {
+    expect(source).toContain("existing_transfer_id: created.transfer.id");
+  });
 });
 
 describe("TransferModal — render smoke", () => {

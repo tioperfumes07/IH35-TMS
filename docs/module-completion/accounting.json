@@ -120,9 +120,9 @@
         "VERIFY-4"
       ],
       "spec": "Law §9 · ACCT-F02",
-      "status": "FAIL",
-      "evidence": "16 rows, 0 inbound FKs; JE has no type column",
-      "pr": null
+      "status": "UNVERIFIED",
+      "evidence": "Repo: migration 202607960000 + col-gated createJournalEntry writes GENERAL (or caller type). Neon: column not applied yet — re-measure inbound FK density after owner Neon-apply before PASS.",
+      "pr": "#3440"
     },
     {
       "id": "ACCT-LINK-02",

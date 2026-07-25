@@ -100,7 +100,7 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved, pref
     if (!valid) return;
     setSaving(true);
     try {
-      await createTransfer(operatingCompanyId, {
+      const created = await createTransfer(operatingCompanyId, {
         transfer_type: "bank_to_bank",
         from_account_id: fromAccountId,
         from_account_kind: "bank" as TransferAccountKind,
@@ -114,9 +114,12 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved, pref
         try {
           // linkBankTransactionId is the bank-feed row for the OUTGOING leg (money leaving fromAccountId);
           // tag it as an inter-account transfer to toAccountId so bank-feed GL posting skips it.
+          // existing_transfer_id: the ledger row was ALREADY minted above — this call must only LINK
+          // (matched_transfer_id), never mint a second banking.transfers row (BANK-ECON-03).
           await markBankTransactionTransfer(linkBankTransactionId, operatingCompanyId, {
             destination_bank_account_id: toAccountId,
             transfer_kind: "out",
+            existing_transfer_id: created.transfer.id,
           });
         } catch {
           /* optional — the createTransfer ledger entry above is the source of truth either way */

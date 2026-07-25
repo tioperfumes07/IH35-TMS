@@ -143,6 +143,81 @@ async function updateBankBalance(
   );
 }
 
+type DbClient = {
+  query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number | null }>;
+};
+
+/** Insert + balance bump + audit on an existing client/txn. Caller commits, then may call maybePostTransferGl. */
+async function insertTransferInClient(client: DbClient, input: TransferInput, userId: string): Promise<TransferRow> {
+  const fromOwned = await validateAccountOwnership(client, input.operatingCompanyId, input.fromAccountId, input.fromAccountKind);
+  const toOwned = await validateAccountOwnership(client, input.operatingCompanyId, input.toAccountId, input.toAccountKind);
+  if (!fromOwned || !toOwned) throw new Error("transfer_account_not_accessible");
+
+  const insertRes = await client.query<TransferRow>(
+    `
+      INSERT INTO banking.transfers (
+        operating_company_id,
+        transfer_type,
+        from_account_id,
+        from_account_kind,
+        to_account_id,
+        to_account_kind,
+        amount_cents,
+        transfer_date,
+        memo,
+        reference_number,
+        created_by_user_id,
+        created_at,
+        updated_at
+      )
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,now(),now())
+      RETURNING id, operating_company_id, from_account_id, from_account_kind, to_account_id, to_account_kind, amount_cents, revoked_at
+    `,
+    [
+      input.operatingCompanyId,
+      input.transferType,
+      input.fromAccountId,
+      input.fromAccountKind,
+      input.toAccountId,
+      input.toAccountKind,
+      input.amountCents,
+      input.transferDate,
+      input.memo ?? null,
+      input.referenceNumber ?? null,
+      userId,
+    ]
+  );
+  if ((insertRes.rowCount ?? 0) === 0 || !insertRes.rows[0]) {
+    throw new Error("transfer_insert_failed");
+  }
+  const created = insertRes.rows[0];
+
+  if (input.fromAccountKind === "bank") {
+    await updateBankBalance(client, input.fromAccountId, input.operatingCompanyId, -Math.abs(input.amountCents));
+  }
+  if (input.toAccountKind === "bank") {
+    await updateBankBalance(client, input.toAccountId, input.operatingCompanyId, Math.abs(input.amountCents));
+  }
+
+  await appendCrudAudit(
+    client,
+    userId,
+    "banking.transfer.created",
+    {
+      resource_type: "banking.transfers",
+      resource_id: created.id,
+      operating_company_id: input.operatingCompanyId,
+      transfer_type: input.transferType,
+      from_account_id: input.fromAccountId,
+      to_account_id: input.toAccountId,
+      amount_cents: input.amountCents,
+    },
+    "info",
+    "P5-D1-TRANSFER"
+  );
+  return created;
+}
+
 export async function createTransfer(input: TransferInput, userId: string) {
   if (input.amountCents <= 0) throw new Error("transfer_amount_must_be_positive");
   if (input.fromAccountId === input.toAccountId && input.fromAccountKind === input.toAccountKind) {
@@ -151,78 +226,11 @@ export async function createTransfer(input: TransferInput, userId: string) {
 
   const transfer = await withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
-    const fromOwned = await validateAccountOwnership(client, input.operatingCompanyId, input.fromAccountId, input.fromAccountKind);
-    const toOwned = await validateAccountOwnership(client, input.operatingCompanyId, input.toAccountId, input.toAccountKind);
-    if (!fromOwned || !toOwned) throw new Error("transfer_account_not_accessible");
-
-    const insertRes = await client.query<TransferRow>(
-      `
-        INSERT INTO banking.transfers (
-          operating_company_id,
-          transfer_type,
-          from_account_id,
-          from_account_kind,
-          to_account_id,
-          to_account_kind,
-          amount_cents,
-          transfer_date,
-          memo,
-          reference_number,
-          created_by_user_id,
-          created_at,
-          updated_at
-        )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,now(),now())
-        RETURNING id, operating_company_id, from_account_id, from_account_kind, to_account_id, to_account_kind, amount_cents, revoked_at
-      `,
-      [
-        input.operatingCompanyId,
-        input.transferType,
-        input.fromAccountId,
-        input.fromAccountKind,
-        input.toAccountId,
-        input.toAccountKind,
-        input.amountCents,
-        input.transferDate,
-        input.memo ?? null,
-        input.referenceNumber ?? null,
-        userId,
-      ]
-    );
-    if ((insertRes.rowCount ?? 0) === 0 || !insertRes.rows[0]) {
-      throw new Error("transfer_insert_failed");
-    }
-    const created = insertRes.rows[0];
-
-    if (input.fromAccountKind === "bank") {
-      await updateBankBalance(client, input.fromAccountId, input.operatingCompanyId, -Math.abs(input.amountCents));
-    }
-    if (input.toAccountKind === "bank") {
-      await updateBankBalance(client, input.toAccountId, input.operatingCompanyId, Math.abs(input.amountCents));
-    }
-
-    await appendCrudAudit(
-      client,
-      userId,
-      "banking.transfer.created",
-      {
-        resource_type: "banking.transfers",
-        resource_id: created.id,
-        operating_company_id: input.operatingCompanyId,
-        transfer_type: input.transferType,
-        from_account_id: input.fromAccountId,
-        to_account_id: input.toAccountId,
-        amount_cents: input.amountCents,
-      },
-      "info",
-      "P5-D1-TRANSFER"
-    );
-    return created;
+    return insertTransferInClient(client, input, userId);
   });
 
-  // BANKING-GL-COMPLETION — post the balanced JE (Dr destination / Cr source) AFTER the transfer row is
-  // committed above (postSourceTransaction opens its OWN transaction on its own connection; calling it
-  // from inside the still-open insert transaction would self-deadlock on the row's own lock). No-ops when
+  // BANKING-GL-COMPLETION — post the balanced JE AFTER the transfer row is committed (postSourceTransaction
+  // opens its OWN transaction; calling it inside the insert txn would self-deadlock). No-ops when
   // TRANSFER_GL_POSTING_ENABLED resolves false for this entity (the default).
   await maybePostTransferGl(transfer.operating_company_id, transfer.id, userId, "initial_post");
 
@@ -240,6 +248,265 @@ export async function createTransfer(input: TransferInput, userId: string) {
   );
 
   return transfer;
+}
+
+type MarkBankFeedTransferInput = {
+  operatingCompanyId: string;
+  bankTransactionId: string;
+  destinationBankAccountId: string;
+  transferKind: "in" | "out";
+  pairedTransactionId?: string | null;
+  /** When the caller (RecordTransferModal/TransferModal) already minted the transfer via createTransfer,
+   *  pass its id here so this call ONLY stamps the linkage — it must never mint a SECOND banking.transfers
+   *  row for the same cash movement (that would double the balance bump + double-count the GL). */
+  existingTransferId?: string | null;
+  userId: string;
+};
+
+type BankFeedTransactionRow = {
+  id: string;
+  operating_company_id: string;
+  bank_account_id: string | null;
+  amount_cents: string | number | null;
+  transaction_date: string;
+  categorization_memo: string | null;
+  description: string | null;
+  matched_transfer_id: string | null;
+};
+
+async function loadBankTransactionForTransfer(
+  client: DbClient,
+  bankTransactionId: string,
+  operatingCompanyId: string,
+  opts?: { forUpdate?: boolean }
+) {
+  const forUpdate = opts?.forUpdate ? " FOR UPDATE" : "";
+  const res = await client.query<BankFeedTransactionRow>(
+    `
+      SELECT id, operating_company_id, bank_account_id, amount_cents, transaction_date::text AS transaction_date,
+             categorization_memo, description, matched_transfer_id::text AS matched_transfer_id
+      FROM banking.bank_transactions
+      WHERE id = $1
+        AND operating_company_id = $2
+      LIMIT 1${forUpdate}
+    `,
+    [bankTransactionId, operatingCompanyId]
+  );
+  return res.rows[0] ?? null;
+}
+
+async function stampBankTransactionTransferLink(
+  client: DbClient,
+  input: {
+    bankTransactionId: string;
+    operatingCompanyId: string;
+    transferId: string;
+    destinationBankAccountId: string;
+    transferKind: "in" | "out";
+    pairedTransactionId: string | null;
+  }
+): Promise<boolean> {
+  // Conditional stamp: only claim the row when matched_transfer_id is still NULL (race loser no-ops).
+  const res = await client.query(
+    `
+      UPDATE banking.bank_transactions
+      SET
+        status = 'transfer',
+        category = 'transfer',
+        category_kind = 'transfer',
+        destination_bank_account_id = $2,
+        transfer_kind = $3,
+        paired_transaction_id = COALESCE($4, paired_transaction_id),
+        matched_transfer_id = $5,
+        skip_reason = NULL,
+        investigate_note = NULL,
+        categorized_at = now(),
+        updated_at = now()
+      WHERE id = $1
+        AND operating_company_id = $6
+        AND matched_transfer_id IS NULL
+    `,
+    [
+      input.bankTransactionId,
+      input.destinationBankAccountId,
+      input.transferKind,
+      input.pairedTransactionId,
+      input.transferId,
+      input.operatingCompanyId,
+    ]
+  );
+  return (res.rowCount ?? 0) > 0;
+}
+
+/**
+ * BANK-ECON-03 / BANK-SURF-03 root-cause fix (0285-banking-transfer-gl-gap Option 1, owner-approved
+ * #3134) — ROOT CAUSE: the bank-feed "mark as transfer" action tagged banking.bank_transactions with
+ * transfer_kind/destination_bank_account_id but never minted a banking.transfers row, so the movement
+ * never had a paired ledger entry and TRANSFER_GL_POSTING_ENABLED had nothing to post against. This
+ * pairs the feed line to the destination account and mints the transfer via the EXISTING insert path
+ * (Surface A) — NO new GL math, single dedupe key (matched_transfer_id) shared with
+ * bank-feed-gl-posting.service.ts's "is_transfer" interlock and bank-recon's match.service.ts.
+ *
+ * Concurrency / double-mint safety (independent review #3445 HIGH):
+ *   - One withCurrentUser txn holds pg_advisory_xact_lock(bank_txn) + SELECT … FOR UPDATE on the feed
+ *     line, then insertTransferInClient + stamp in the SAME transaction. Concurrent callers serialize;
+ *     createTransfer()'s separate-connection mint path is NOT used here (that was the TOCTOU hole).
+ *   - Stamp is also conditional (matched_transfer_id IS NULL).
+ *   - existingTransferId / already-linked / paired-leg reuse → link-only, mints nothing.
+ *
+ * Return `changed` so the route can gate outbox enqueue (independent review #3445 MEDIUM): idempotent
+ * retries that touch nothing must not spam accounting.outbox_events → qbo.sync_runs.
+ */
+export async function markBankFeedLineAsTransfer(input: MarkBankFeedTransferInput) {
+  const { operatingCompanyId, bankTransactionId, destinationBankAccountId, transferKind, userId } = input;
+  const pairedTransactionId = input.pairedTransactionId ?? null;
+
+  const result = await withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    // Serialize concurrent mark-as-transfer for THIS feed line (hashtext key matches cash-advance / QBO pullers).
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1::text))`, [
+      `banking.mark_transfer:${bankTransactionId}`,
+    ]);
+
+    const txn = await loadBankTransactionForTransfer(client, bankTransactionId, operatingCompanyId, {
+      forUpdate: true,
+    });
+    if (!txn) throw new Error("bank_txn_not_found");
+
+    // Idempotent: already linked — never re-mint, never re-stamp, never signal "changed".
+    if (txn.matched_transfer_id) {
+      return { transfer_id: txn.matched_transfer_id, minted: false as const, changed: false as const };
+    }
+
+    let transferId: string;
+    let minted = false;
+
+    if (input.existingTransferId) {
+      const owned = await client.query<{ id: string }>(
+        `SELECT id FROM banking.transfers WHERE id = $1 AND operating_company_id = $2 AND revoked_at IS NULL LIMIT 1`,
+        [input.existingTransferId, operatingCompanyId]
+      );
+      if (!owned.rows[0]?.id) throw new Error("transfer_not_found");
+      transferId = owned.rows[0].id;
+    } else if (pairedTransactionId) {
+      const paired = await loadBankTransactionForTransfer(client, pairedTransactionId, operatingCompanyId, {
+        forUpdate: true,
+      });
+      if (paired?.matched_transfer_id) {
+        transferId = paired.matched_transfer_id;
+      } else {
+        const created = await mintTransferForBankFeedLineInClient(client, input, txn);
+        transferId = created.id;
+        minted = true;
+      }
+    } else {
+      const created = await mintTransferForBankFeedLineInClient(client, input, txn);
+      transferId = created.id;
+      minted = true;
+    }
+
+    const stamped = await stampBankTransactionTransferLink(client, {
+      bankTransactionId,
+      operatingCompanyId,
+      transferId,
+      destinationBankAccountId,
+      transferKind,
+      pairedTransactionId,
+    });
+    if (!stamped) {
+      // Lost the claim after lock release edge (should be rare under advisory+FOR UPDATE) — adopt winner.
+      const again = await loadBankTransactionForTransfer(client, bankTransactionId, operatingCompanyId);
+      if (again?.matched_transfer_id) {
+        return { transfer_id: again.matched_transfer_id, minted: false as const, changed: false as const };
+      }
+      throw new Error("transfer_link_failed");
+    }
+
+    if (pairedTransactionId) {
+      await client.query(
+        `
+          UPDATE banking.bank_transactions
+          SET
+            status = 'transfer',
+            category = 'transfer',
+            category_kind = 'transfer',
+            paired_transaction_id = $1,
+            matched_transfer_id = $2,
+            categorized_at = now(),
+            updated_at = now()
+          WHERE id = $3
+            AND operating_company_id = $4
+            AND matched_transfer_id IS NULL
+        `,
+        [bankTransactionId, transferId, pairedTransactionId, operatingCompanyId]
+      );
+    }
+    await appendCrudAudit(
+      client,
+      userId,
+      "banking.transaction.transfer.linked",
+      {
+        resource_type: "banking.bank_transactions",
+        resource_id: bankTransactionId,
+        operating_company_id: operatingCompanyId,
+        transfer_id: transferId,
+        minted,
+        paired_transaction_id: pairedTransactionId,
+      },
+      "info",
+      "BANK-ECON-03-MARK-TRANSFER"
+    );
+
+    return { transfer_id: transferId, minted, changed: true as const };
+  });
+
+  // GL + sync only when THIS call minted (createTransfer posts after its own commit; we mirror that).
+  if (result.minted) {
+    await maybePostTransferGl(operatingCompanyId, result.transfer_id, userId, "initial_post");
+    await enqueueSyncJob(
+      operatingCompanyId,
+      "transfer",
+      result.transfer_id,
+      payloadHash({
+        transfer_id: result.transfer_id,
+        transfer_type: "bank_to_bank",
+        bank_transaction_id: bankTransactionId,
+      }),
+      userId
+    );
+  }
+
+  return result;
+}
+
+async function mintTransferForBankFeedLineInClient(
+  client: DbClient,
+  input: MarkBankFeedTransferInput,
+  txn: BankFeedTransactionRow
+) {
+  if (!txn.bank_account_id) throw new Error("transfer_account_not_accessible");
+  const amountCents = Math.abs(Number(txn.amount_cents ?? 0));
+  if (!Number.isFinite(amountCents) || amountCents <= 0) throw new Error("transfer_amount_must_be_positive");
+
+  const fromAccountId = input.transferKind === "out" ? txn.bank_account_id : input.destinationBankAccountId;
+  const toAccountId = input.transferKind === "out" ? input.destinationBankAccountId : txn.bank_account_id;
+  const memo = txn.categorization_memo?.trim() || txn.description?.trim() || undefined;
+
+  return insertTransferInClient(
+    client,
+    {
+      operatingCompanyId: input.operatingCompanyId,
+      transferType: "bank_to_bank",
+      fromAccountId,
+      fromAccountKind: "bank",
+      toAccountId,
+      toAccountKind: "bank",
+      amountCents,
+      transferDate: txn.transaction_date,
+      memo,
+    },
+    input.userId
+  );
 }
 
 export async function revokeTransfer(transferId: string, operatingCompanyId: string, reason: string, userId: string) {

@@ -29,6 +29,8 @@ const createJournalEntryBodySchema = z.object({
   memo: z.string().trim().max(2000).nullable().optional(),
   reference_number: z.string().trim().max(100).nullable().optional(),
   source: sourceSchema.optional().default("manual"),
+  journal_entry_type_id: z.string().uuid().nullable().optional(),
+  journal_entry_type_code: z.string().trim().min(1).max(64).nullable().optional(),
   postings: z.array(postingSchema).min(2),
 });
 
@@ -71,6 +73,8 @@ export async function registerJournalEntryRoutes(app: FastifyInstance) {
           entry_date: body.data.entry_date,
           memo: combinedMemo,
           source: body.data.source,
+          journal_entry_type_id: body.data.journal_entry_type_id,
+          journal_entry_type_code: body.data.journal_entry_type_code,
           postings: body.data.postings,
         },
         { userId: user.uuid, role: user.role }
@@ -81,7 +85,8 @@ export async function registerJournalEntryRoutes(app: FastifyInstance) {
       if (
         message === "journal_entry_min_two_lines_required" ||
         message === "journal_entry_requires_debit_and_credit" ||
-        message === "journal_entry_not_balanced"
+        message === "journal_entry_not_balanced" ||
+        message === "journal_entry_type_not_found"
       ) {
         return reply.code(400).send({ error: message });
       }
