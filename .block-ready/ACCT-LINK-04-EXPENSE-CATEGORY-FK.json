@@ -1,0 +1,58 @@
+{
+  "block_id": "ACCT-LINK-04-EXPENSE-CATEGORY-FK",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "module-completion/accounting",
+  "task": "ACCT-LINK-04 (spec ACCT-F07) — catalogs.expense_categories has 0 inbound FKs on prod. accounting.expense_lines.expense_category_uuid has been an unconstrained dangling pointer since migration 0050 (authored before catalogs.expense_categories arrived in 0152). HELD migration 202607950000 gives accounting.expense_lines its own operating_company_id, derives it from the parent expense in a BEFORE trigger, and adds the SAME-ENTITY composite FK (operating_company_id, expense_category_uuid) -> catalogs.expense_categories (operating_company_id, id) plus the line->expense same-entity FK. Writers wired entity-scoped: POST /api/v1/expenses accepts expense_category_id and rejects a category from another entity (409 expense_category_not_in_entity_catalog); the QBO purchases projection stamps a category only when exactly one active category in the entity binds the resolved GL account; the WO->expense line copy validates the work order's category (sourced from catalogs.qbo_categories) against catalogs.expense_categories before copying it. POSTS NOTHING — no JE, no GL math, no posting flag. Tier 1 FINANCIAL: builder STOPS at branch-proof; owner Neon-applies; GUARD re-proves on prod.",
+  "branch": "hold/acct-link-04-expense-category-fk-20260724",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/ACCT-LINK-04-EXPENSE-CATEGORY-FK.json",
+    "db/migrations/202607950000_acct_link_04_expense_lines_expense_category_fk.sql",
+    "apps/backend/src/accounting/expense-category-catalog.ts",
+    "apps/backend/src/accounting/expenses.routes.ts",
+    "apps/backend/src/qbo-sync/qbo-purchases-puller.ts",
+    "apps/backend/src/maintenance/two-section-service.ts",
+    "scripts/verify-expense-category-fk-wired.mjs",
+    "scripts/verify-steps/1433-verify-expense-category-fk-wired.mjs",
+    "docs/module-completion/accounting.json",
+    "docs/module-completion/accounting.md"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "throwaway PG apply-twice idempotent",
+      "status": "PASS",
+      "evidence": "postgres:16 fixture mirroring prod shape; second apply emits only IF-NOT-EXISTS notices"
+    },
+    {
+      "check": "pg_constraint shows expense_lines_expense_category_same_entity_fkey referencing catalogs.expense_categories (operating_company_id, id)",
+      "status": "PASS (throwaway PG)",
+      "evidence": "FOREIGN KEY (operating_company_id, expense_category_uuid) REFERENCES catalogs.expense_categories(operating_company_id, id)"
+    },
+    {
+      "check": "cross-entity category refused; same-entity accepted; uncategorized line still legal; writer-supplied wrong entity corrected by trigger",
+      "status": "PASS (throwaway PG)",
+      "evidence": "6 behavioral assertions A1-A6 green"
+    },
+    {
+      "check": "guard wired via verify-steps (Rule 17 — no package.json / ci.yml / locked-guards edit)",
+      "status": "PASS",
+      "evidence": "scripts/verify-steps/1433-verify-expense-category-fk-wired.mjs; selftest catches single-column FK, silent category drop, ambiguous projection stamp"
+    },
+    {
+      "check": "prod inbound FK count on catalogs.expense_categories",
+      "status": "UNVERIFIED — still 0",
+      "evidence": "Neon br-fancy-credit-akjnd07a 2026-07-24: 0 inbound FKs. Blocked on owner Neon-apply; ih35_app cannot run DDL. ACCT-LINK-04 stays FAIL."
+    },
+    {
+      "check": "category density on accounting.expense_lines",
+      "status": "UNVERIFIED — 0 rows",
+      "evidence": "accounting.expenses=0 and accounting.expense_lines=0 on prod; catalogs.expense_categories metadata={} on all 9 rows so no category->account binding exists yet. Density needs the owner's Lists-hub bindings."
+    }
+  ],
+  "note": "HOLD — financial cluster. Do NOT merge without JORGE-APPROVED + owner Neon-apply."
+}
