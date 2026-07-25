@@ -31,7 +31,7 @@
 | `ACCT-SURF-04` | **FAIL** | Receive Payment — DoD A–E + VERIFY 1–8 with live rows | payments=0 with QBO_AR_PAYMENTS_PROJECTION_ENABLED OFF by owner decision — correct-at-0 (not a flag-flip chase). | #3433 |
 | `ACCT-SURF-05` | **FAIL** | Journal Entries — type catalog wired + reverse drill | JE type island; 8 JEs sparse | — |
 | `ACCT-SURF-06` | **FAIL** | Chart of Accounts / Detail Types — canonical detail_type link | text subtype only; ACCT-LINK-02 FROZEN — owner WIRE vs LOCK. SURF DoD FAIL documented; no FK PR. | — |
-| `ACCT-SURF-07` | **UNVERIFIED** | Account Register + All Transactions reverse to money docs | Routes mounted (account-register + transactions); Desktop SURF DoD UNVERIFIED browser reverse. | — |
+| `ACCT-SURF-07` | **UNVERIFIED** | Account Register + All Transactions reverse to money docs | Routes mounted (account-register + transactions); sourceRoute + detail_path reverse drill guarded (verify-acct-surf-07-register step 1462); Desktop SURF DoD UNVERIFIED browser TRANSP+USMCA click-through. | — |
 | `ACCT-SURF-08` | **UNVERIFIED** | Period close / Audit trail / Posting lineage — active path + evidence | period-close→month-close, audit-trail, posting-lineage mounted; Desktop SURF DoD UNVERIFIED click-through. | — |
 | `ACCT-SURF-09` | **UNVERIFIED** | Factoring / Escrow / Settlements cross-links from Accounting More ▾ | factoring/escrow/settlements nav leaves present; Desktop SURF DoD UNVERIFIED cross-link economics. | — |
 | `ACCT-CTRL-01` | **PASS** | Parallel books — refuse invented TMS JE for qbo-sourced money | Refuse-GL paths merged; flags default OFF | #3386 |

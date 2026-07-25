@@ -295,13 +295,14 @@
       "id": "ACCT-SURF-07",
       "title": "Account Register + All Transactions reverse to money docs",
       "layers": [
+        "DOD-A",
         "DOD-C",
         "VERIFY-3",
         "VERIFY-4"
       ],
       "spec": "Law \u00a79 reverse",
       "status": "UNVERIFIED",
-      "evidence": "Routes mounted (account-register + transactions); Desktop SURF DoD UNVERIFIED browser reverse.",
+      "evidence": "Routes mounted (account-register + transactions); sourceRoute + detail_path reverse drill guarded (verify-acct-surf-07-register step 1462); Desktop SURF DoD UNVERIFIED browser TRANSP+USMCA click-through.",
       "pr": null
     },
     {
