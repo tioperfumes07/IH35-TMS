@@ -175,8 +175,12 @@ if (SELFTEST) {
     (reg) => {
       // The duplicate/contradictory check only scans held[] (held and applied_held are separate
       // lists post-repair). Synthesize the pre-repair shape directly: the same file twice in
-      // held[], once flagged applied_on_prod:true and once unset.
-      const f = reg.held[0].file;
+      // held[], once flagged applied_on_prod:true and once unset. held[] may legitimately be
+      // empty (every migration reconciled to applied_held) so this uses a synthetic filename
+      // rather than reading an entry out of held[0] — the duplicate check only cares that the
+      // same string appears twice with contradictory flags, not that the file is a real migration.
+      const f = "0000000000_selftest_duplicate_fixture.sql";
+      reg.held.push({ file: f, reason: "duplicate entry as it existed before the repair" });
       reg.held.push({ file: f, applied_on_prod: true, reason: "duplicate entry as it existed before the repair" });
     },
     "CONTRADICTORY",
@@ -196,22 +200,34 @@ if (SELFTEST) {
   expectCaught(
     "flag-claims-applied-but-ledger-disagrees",
     (reg) => {
-      const e = reg.held.find((x) => x.applied_on_prod !== true && x.file >= "202606010000");
-      if (e) e.applied_on_prod = true;
+      // held[] may legitimately be empty (every migration reconciled to applied_held), so this
+      // can't rely on finding an existing entry — synthesize one whose filename sorts inside the
+      // pinned snapshot's window (so section 3 doesn't dismiss it as unassertable) but that is not
+      // itself one of the snapshot's real checksummed files.
+      const snap = JSON.parse(live[SNAPSHOT]);
+      reg.held.push({
+        file: `${snap.window_from}_selftest_not_in_ledger.sql`,
+        reason: "synthetic entry for the ledger-disagreement fixture",
+        applied_on_prod: true,
+      });
     },
     "NOT in the prod ledger snapshot",
   );
   expectCaught(
     "illegal-false-flag",
     (reg) => {
-      reg.held[0].applied_on_prod = false;
+      reg.held.push({
+        file: "0000000000_selftest_illegal_flag.sql",
+        reason: "synthetic entry for the illegal-flag fixture",
+        applied_on_prod: false,
+      });
     },
     "only legal value is boolean true",
   );
   expectCaught(
     "entry-without-a-reason",
     (reg) => {
-      reg.held[1].reason = "";
+      reg.held.push({ file: "0000000000_selftest_no_reason.sql", reason: "" });
     },
     'no meaningful "reason"',
   );

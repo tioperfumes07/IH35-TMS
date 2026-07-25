@@ -66,7 +66,12 @@ export function evaluate({ migrationSql, heldRegistryJson, routesSrc, listSrc, v
   } catch {
     failures.push(`${HELD_REGISTRY_REL} — invalid JSON`);
   }
-  if (held && !(held.held ?? []).some((h) => h.file === "202607690000_bank_tx_capture_fields.sql")) {
+  if (
+    held &&
+    ![...(held.held ?? []), ...(held.applied_held ?? [])].some(
+      (h) => h.file === "202607690000_bank_tx_capture_fields.sql"
+    )
+  ) {
     failures.push(`${HELD_REGISTRY_REL} — 202607690000_bank_tx_capture_fields.sql not registered as held`);
   }
 
