@@ -2,7 +2,7 @@
   "module": "banking",
   "title": "Banking (Module 4)",
   "complete": false,
-  "as_of": "2026-07-25T04:32:48.689Z",
+  "as_of": "2026-07-25T04:33:18.638Z",
   "live_sha": "fc1cf13",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md",
   "spec_sources": [
@@ -151,9 +151,9 @@
         "VERIFY-4"
       ],
       "spec": "Law \u00a79 banking",
-      "status": "UNVERIFIED",
-      "evidence": "Code paths exist; density proves almost no JE links",
-      "pr": null
+      "status": "PASS",
+      "evidence": "BANK-F07 structural: categorization.routes persists categorization_vendor_id/customer_id + JOIN mdata.vendors/customers; EntityLink payment/bill_payment/transfer/bank_transaction both-way; banking.* writes only (no RETIRE bank.* in banking/). Guard verify-bank-surfaces-and-counterparty (+step 1441). Neon lucia counterparty_fk=2 (sparse density residual under BANK-F01).",
+      "pr": "#3459"
     },
     {
       "id": "BANK-CTRL-01",
