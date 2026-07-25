@@ -57,6 +57,12 @@ export const EXPECTED_HELD_12 = [
   "202608020000_acct_link_04_expense_lines_expense_category_fk.sql",
   "202608030000_bank_accounts_rls_bypass_lucia.sql",
   "202608040000_payment_terms_consumer_remap_same_entity.sql",
+  // Added after the 2026-07-25 12-file cross-check snapshot: 202608050000 is the highest-numbered
+  // migration in the registry, postdating every file above (including 202608040000, itself still
+  // held) — migrations apply in numeric order, so it cannot be applied while an earlier-numbered
+  // held file is not. #3512's own PR proves it HELD/not-Neon-applied (verify-bank-link-01-
+  // counterparty-fk.mjs; no prod counterparty_fk density claimed).
+  "202608050000_bank_link_01_counterparty_same_entity_fk.sql",
 ];
 
 /**
