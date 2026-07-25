@@ -45,33 +45,11 @@ const SELFTEST = process.argv.includes("--selftest");
 // governance decision (a file only leaves this set when GUARD re-proves it applied, or the owner
 // Neon-applies + ledger-backfills it and GUARD re-proves the ledger row).
 export const EXPECTED_HELD = [
-  // EMPTY as of 2026-07-25 — there are ZERO genuinely-unapplied held migrations on prod.
-  //
-  // This list previously held 13 files. It emptied exactly the way its own charter allows ("a file only
-  // leaves this set when GUARD re-proves it applied, or the owner Neon-applies + ledger-backfills it and
-  // GUARD re-proves the ledger row"). Both happened:
-  //   * 12 were owner Neon-applied 2026-07-25 (neondb_owner, br-fancy-credit-akjnd07a), both ledgers
-  //     backfilled, GUARD live-read _system._schema_migrations. Each ledger checksum equals sha256 of the
-  //     committed file — independently recomputed here, 12/12 match — so no override is needed. They are
-  //     now in `applied_held`.
-  //   * 202607790000_cost_of_labor_mexico_drivers_transp_usmca.sql WAS owner Neon-applied 2026-07-25
-  //     (ledger checksum d709ac50…); a later commit left disk at 8429d949… — accepted via
-  //     migration-checksum-overrides (DEPLOY-UNBLOCK-MEXICO-790). Now in `applied_held`, not
-  //     `superseded`. The prior "absent from both ledgers / never apply" note was stale vs live Neon.
-  //
-  // Superseded correction worth keeping: the previous entry for 202608050000 argued it MUST still be held
-  // because "migrations apply in numeric order, so it cannot be applied while an earlier-numbered held file
-  // is not." That inference was wrong — GUARD's live ledger read shows it applied (checksum
-  // c35d5052…3723b626). Live evidence outranks reasoning about ordering.
-  //
-  // An empty list still asserts something strong: `held` must be EMPTY. Any file appearing there fails the
-  // (2) check below until GUARD re-proves it unapplied and it is re-listed with a fresh citation.
-  //
-  // 202608070000_escrow_forfeit_posting_type_sign_and_flag_seed.sql — added by #3542 (merged after this
-  // allowlist was last written). Genuinely unapplied: absent from both _system._schema_migrations and
-  // ih35_migrations.applied_migrations as of 2026-07-25 (it postdates every migration GUARD's 2026-07-25
-  // cross-check covered). Owner Neon-applies + ledger-backfills before it can leave this list.
-  "202608070000_escrow_forfeit_posting_type_sign_and_flag_seed.sql",
+  // EMPTY as of the 2026-07-25 registry truth-up (+ #3558 Mexico override). Zero genuinely-unapplied
+  // held migrations remain on prod. 202608070000 left this list the way the charter allows — re-proved
+  // APPLIED on prod (both ledgers; applied_by jorge-neon-hand-apply @ 21:46:04Z) — so it lives in
+  // applied_held. 202607790000 is applied_held with checksum override (DEPLOY-UNBLOCK-MEXICO-790).
+  // Demo purge 202608060000 is deliberately NOT here: file lives on #3530/#3557 and is NOT applied.
 ];
 
 /**

@@ -81,11 +81,20 @@ export function assertStatic(root = ROOT) {
     problems.push(`missing ${HELD}`);
   } else {
     const held = JSON.parse(read(root, HELD));
-    const entry = (held.held || []).find((h) => h.file === MIG_BASENAME);
-    if (!entry) {
-      problems.push(`${HELD}: missing held entry for ${MIG_BASENAME}`);
-    } else if (entry.applied_on_prod === true) {
-      problems.push(`${HELD}: ${MIG_BASENAME} must not claim applied_on_prod until owner Neon-applies`);
+    const pending = (held.held || []).find((h) => h.file === MIG_BASENAME);
+    const applied = (held.applied_held || []).find((h) => h.file === MIG_BASENAME);
+    if (pending && applied) {
+      problems.push(`${HELD}: ${MIG_BASENAME} must not appear in both held[] and applied_held[]`);
+    } else if (pending) {
+      if (pending.applied_on_prod === true) {
+        problems.push(`${HELD}: ${MIG_BASENAME} in held[] must not claim applied_on_prod (move to applied_held after Neon-apply)`);
+      }
+    } else if (applied) {
+      if (applied.applied_on_prod !== true) {
+        problems.push(`${HELD}: ${MIG_BASENAME} in applied_held[] must set applied_on_prod:true`);
+      }
+    } else {
+      problems.push(`${HELD}: missing held or applied_held entry for ${MIG_BASENAME}`);
     }
   }
 
