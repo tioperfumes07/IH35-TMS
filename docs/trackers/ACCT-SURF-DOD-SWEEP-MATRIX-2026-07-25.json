@@ -8,7 +8,7 @@
   "desktop_clickthrough": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md",
   "module_progress": {
     "N": 8,
-    "M": 26,
+    "M": 27,
     "note": "Structural sweep matrix only — no FAIL→PASS; browser click-through remains UNVERIFIED per cell unless STRUCTURAL guard cited"
   },
   "entities": ["TRANSP", "USMCA"],
