@@ -21,7 +21,7 @@
       ],
       "spec": "safety.md section J boundary 1 (findings F01)",
       "status": "UNVERIFIED",
-      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "evidence": "SHARPENED 2026-07-25 (prod, lucia). The route is NOT a 404 — registerDriverEscrowForfeitRoutes is registered (index.ts:144,887) and the client path matches. It returns 409 escrow_forfeit_gl_posting_flag_off FOREVER because lib.feature_flags has ZERO rows for DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED and an unknown key resolves false — so there is no enable path in existence, which is worse than OFF. Migration 202607800000 is APPLIED (source_type CHECK accepts \"forfeit\" on prod), so it was never the blocker. Two DISTINCT defects behind this boundary are tracked separately and must not be double-counted here: SAF-ORPH-01 (trigger money-direction) and SAF-ORPH-02 (split-brain subledger). Registering the flag row is owner-only (Rule 13); no agent flips it.",
       "pr": 3348,
       "owner_hold": true,
       "tracker": null,
@@ -183,7 +183,7 @@
       ],
       "spec": "safety.md section J boundary 12 (findings F13)",
       "status": "OPEN",
-      "evidence": "No PR opened. Boundary from ~/Desktop/IH35-CURSOR-AUDIT/modules/safety.md section J.",
+      "evidence": "CODE-VERIFIED 2026-07-25. The backend state machine is FULLY BUILT and audited on safety.civil_fines — contest (fines.routes.ts:463), dismiss (:494), reduce (:525, with an owner-ruling guard against reducing a converted fine), link-payment (:616) — and has ZERO frontend callers. FineDetailDrawer.tsx renders only \"Convert to Driver Liability\"; apps/frontend/src/api/safety.ts exports no caller for any of the four. Fix is frontend wiring only, no backend change. SEPARATE and FINANCIAL: civil_fines.issued_by_authority is free text with no mdata.vendors FK, so there is no AP path to the authority — that half is build-and-HOLD.",
       "pr": null,
       "owner_hold": false,
       "tracker": null,
@@ -493,7 +493,7 @@
       ],
       "spec": "Rule 13 financial + driver escrow = LIABILITY (owner-locked)",
       "status": "FAIL",
-      "evidence": "P0 MONEY DIRECTION, prod-verified verbatim. accounting.apply_escrow_posting_delta(): deposit -> +amount, release -> -amount, ELSE -> +amount. The forfeit posts posting_type='adjustment' with a POSITIVE amount, so a forfeiture INCREASES accounting.escrow_accounts.balance_cents while the JE DEBITS (reduces) the escrow liability - GL and subledger diverge by 2x the forfeit. LATENT: all escrow subledgers are 0 rows on prod and DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED has NO row in lib.feature_flags at all (unknown key resolves false), so the route returns 409 forever and there is no enable path. FINANCIAL - build-and-HOLD, CPA VETO, owner Neon-applies; no agent flips that flag."
+      "evidence": "P0 MONEY DIRECTION, prod-verified verbatim. accounting.apply_escrow_posting_delta(): deposit -> +amount, release -> -amount, ELSE -> +amount. The forfeit posts posting_type='adjustment' with a POSITIVE amount, so a forfeiture INCREASES accounting.escrow_accounts.balance_cents while the JE DEBITS (reduces) the escrow liability - GL and subledger diverge by 2x the forfeit. LATENT: all escrow subledgers are 0 rows on prod and DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED has NO row in lib.feature_flags at all (unknown key resolves false), so the route returns 409 forever and there is no enable path. FINANCIAL - build-and-HOLD, CPA VETO, owner Neon-applies; no agent flips that flag. SCOPE: distinct from SAF-B01 (endpoint reachability) and SAF-ORPH-02 (which subledger is written) — this item is ONLY the trigger sign."
     },
     {
       "pr": null,
@@ -508,7 +508,7 @@
       ],
       "spec": "Rule 14 both-way linkage + driver_finance.* canonical",
       "status": "FAIL",
-      "evidence": "SPLIT-BRAIN subledger. The forfeit writes accounting.escrow_postings only, while EVERY driver-facing balance reads driver_finance.escrow_balances / escrow_ledger (banking escrow visualizer + register, driver-detail Escrow History, the over-draw guard in escrow-forfeit.service.ts). So the balance the over-draw check reads NEVER decrements - the same escrow could be forfeited repeatedly - and no driver-facing surface shows a forfeit. driver_finance.escrow_ledger already carries an UNUSED 'forfeit' value in its transaction_type CHECK. LATENT: both subledgers are 0 rows on prod today. Fixing SAF-ORPH-01 alone leaves this open, so they are ONE CPA review."
+      "evidence": "SPLIT-BRAIN subledger. The forfeit writes accounting.escrow_postings only, while EVERY driver-facing balance reads driver_finance.escrow_balances / escrow_ledger (banking escrow visualizer + register, driver-detail Escrow History, the over-draw guard in escrow-forfeit.service.ts). So the balance the over-draw check reads NEVER decrements - the same escrow could be forfeited repeatedly - and no driver-facing surface shows a forfeit. driver_finance.escrow_ledger already carries an UNUSED 'forfeit' value in its transaction_type CHECK. LATENT: both subledgers are 0 rows on prod today. Fixing SAF-ORPH-01 alone leaves this open, so they are ONE CPA review. SCOPE: distinct from SAF-B01 and SAF-ORPH-01; overlaps SAF-B22 (escrow drill-through) which stays the UI-side boundary."
     },
     {
       "pr": null,
@@ -557,21 +557,6 @@
       "spec": "Rule 05 tab law + Rule 21 (wave slice != module)",
       "status": "OPEN",
       "evidence": "COVERAGE GAP, not a defect. SAFETY_TABS_CONFIG.ts declares SAFETY_CANONICAL_TAB_COUNT=28 / GROUP_COUNT=9, but the 32 SAF-B## items are BOUNDARIES, not tabs - there is no per-tab item and no per-tab sweep has run. 23 of the 32 boundaries are UNVERIFIED with the identical evidence 'Code merged; NO live proof'. Until a per-tab click-through exists on TRANSP+USMCA, Safety tab coverage is UNKNOWN rather than complete. This is the single largest blocker in the module."
-    },
-    {
-      "pr": null,
-      "owner_hold": false,
-      "tracker": null,
-      "future_block": null,
-      "id": "SAF-ORPH-06",
-      "title": "External-fine lifecycle actions reachable from the UI",
-      "layers": [
-        "DOD-A",
-        "DOD-B"
-      ],
-      "spec": "DoD §1A active path",
-      "status": "OPEN",
-      "evidence": "Four FULLY BUILT, audited backend routes on safety.civil_fines - contest (fines.routes.ts:463), dismiss (:494), reduce (:525, with an owner-ruling guard against reducing a converted fine), link-payment (:616) - have ZERO frontend callers. FineDetailDrawer.tsx renders only 'Convert to Driver Liability'; apps/frontend/src/api/safety.ts exports no caller for any of the four. Also civil_fines.issued_by_authority is free text with no mdata.vendors FK, so there is no AP path to the authority at all (that half is FINANCIAL-HOLD)."
     }
   ],
   "M": 32
