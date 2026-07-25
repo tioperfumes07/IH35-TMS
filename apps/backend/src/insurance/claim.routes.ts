@@ -411,9 +411,9 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         workOrders = wr.rows;
       }
 
-      // Honest gaps: keep the exact design-HOLD documented strings until Neon applies
-      // 202607740000 (verify-claim-wo-bill-expense-fk-design locks these literals). When the
-      // columns exist on the connected DB, clear the gap and return reverse rows above.
+      // Honest gaps: keep the exact design-HOLD documented strings when columns are absent
+      // (verify-claim-wo-bill-expense-fk-design locks these literals). Prod Neon already has
+      // insurance_claim_id on bills/expenses/WOs (2026-07-25); gaps.* are null when present.
       const GAP_EXPENSE = "no accounting.expenses.claim_id (or equivalent) on prod";
       const GAP_WORK_ORDER = "no maintenance.work_orders.claim_id on prod";
       return {
