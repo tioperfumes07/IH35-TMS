@@ -191,7 +191,13 @@ export function VendorBillForm({
     queryKey: ["vendor-bill-form", "ap-accounts", operatingCompanyId],
     // Entity-scoped CoA (never the user's default-company chart). listCatalogAccounts (not
     // getCoaAccounts) because its row shape carries is_postable — the A/P filter below needs it.
-    queryFn: () => listCatalogAccounts({ status: "active", operating_company_id: operatingCompanyId }),
+    // LST-F14: posting A/P picker — server-side is_postable=true (never header/non-postable).
+    queryFn: () =>
+      listCatalogAccounts({
+        status: "active",
+        operating_company_id: operatingCompanyId,
+        postable_only: true,
+      }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });
