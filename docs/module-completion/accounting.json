@@ -72,7 +72,7 @@
       ],
       "spec": "Vendor credit apply/void",
       "status": "FAIL",
-      "evidence": "Neon lucia 2026-07-25: vendor_credits=0 — path exists (#3426) but no live rows",
+      "evidence": "Neon lucia 2026-07-25: vendor_credits=0, vendor_credit_applications=0. Path was NOT usable: bills.vendor_id holds the QBO vendor id on 16211 of 16212 bills while a credit holds an mdata.vendors uuid, so the apply picker resolved 0 bills (mdata.vendors.qbo_vendor_id bridges 16211). Bridge + cross-vendor refusal + canonical VC numbering shipped and proven on a migrated throwaway Postgres (9 lifecycle assertions incl. planted-failure); guard verify-vendor-credit-live-path (step 1436). Still FAIL: no live prod row — PASS needs one operator credit applied after deploy, or owner acceptance of honest-empty",
       "pr": "#3426"
     },
     {
