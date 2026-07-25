@@ -41,6 +41,8 @@ const createAccountBodySchema = z.object({
   account_name: z.string().trim().min(1).max(200),
   account_type: accountTypeSchema,
   account_subtype: z.string().trim().max(100).optional(),
+  /** LINK-02 — preferred over free-text account_subtype when present. */
+  detail_type_id: z.string().uuid().optional().nullable(),
   parent_account_id: z.string().uuid().optional(),
   qbo_account_id: z.string().trim().max(100).optional(),
   qbo_account_qrn: z.string().trim().max(200).optional(),
@@ -59,6 +61,7 @@ const updateAccountBodySchema = z
     account_name: z.string().trim().min(1).max(200).optional(),
     account_type: accountTypeSchema.optional(),
     account_subtype: z.string().trim().max(100).nullable().optional(),
+    detail_type_id: z.string().uuid().nullable().optional(),
     parent_account_id: z.string().uuid().nullable().optional(),
     qbo_account_id: z.string().trim().max(100).nullable().optional(),
     qbo_account_qrn: z.string().trim().max(200).nullable().optional(),
@@ -74,12 +77,39 @@ const updateAccountBodySchema = z
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
 
 const ACCOUNT_SELECT_COLS = `
-  id, account_number, account_name, account_type, account_subtype, parent_account_id,
+  id, account_number, account_name, account_type, account_subtype, detail_type_id, parent_account_id,
   qbo_account_id, qbo_account_qrn, is_postable, currency_code,
   opening_balance_cents, opening_balance_as_of,
-  is_locked, notes,
+  is_locked, notes, operating_company_id,
   created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
 `;
+
+/** Resolve detail_type_id → display subtype name; validates entity + account_type match. */
+async function resolveDetailType(
+  client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> },
+  args: { detail_type_id: string; operating_company_id: string; account_type: string },
+): Promise<{ ok: true; name: string } | { ok: false; error: string }> {
+  const res = await client.query(
+    `
+      SELECT dt.name, at.code AS type_code, at.name AS type_name
+      FROM catalogs.detail_types dt
+      JOIN catalogs.account_types at ON at.id = dt.account_type_id
+      WHERE dt.id = $1
+        AND dt.is_active = true
+        AND (dt.operating_company_id IS NULL OR dt.operating_company_id = $2::uuid)
+      LIMIT 1
+    `,
+    [args.detail_type_id, args.operating_company_id],
+  );
+  const row = res.rows[0];
+  if (!row) return { ok: false, error: "detail_type_not_found" };
+  const typeCode = String(row.type_code ?? "");
+  const typeName = String(row.type_name ?? "");
+  if (args.account_type !== typeCode && args.account_type !== typeName) {
+    return { ok: false, error: "detail_type_account_type_mismatch" };
+  }
+  return { ok: true, name: String(row.name) };
+}
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -204,16 +234,29 @@ export async function registerAccountRoutes(app: FastifyInstance) {
         if (!operatingCompanyId) return { __no_company: true } as const;
         await assertCompanyMembership(client, authUser.uuid, operatingCompanyId);
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+
+        let detailTypeId: string | null = b.detail_type_id ?? null;
+        let accountSubtype: string | null = b.account_subtype ?? null;
+        if (detailTypeId) {
+          const resolved = await resolveDetailType(client, {
+            detail_type_id: detailTypeId,
+            operating_company_id: operatingCompanyId,
+            account_type: b.account_type,
+          });
+          if (!resolved.ok) return { __detail_type_error: resolved.error } as const;
+          accountSubtype = resolved.name;
+        }
+
         const res = await client.query(
           `
             INSERT INTO catalogs.accounts (
-              account_number, account_name, account_type, account_subtype, parent_account_id,
+              account_number, account_name, account_type, account_subtype, detail_type_id, parent_account_id,
               qbo_account_id, qbo_account_qrn, is_postable, currency_code,
               opening_balance_cents, opening_balance_as_of,
               is_locked, notes,
               operating_company_id, created_by_user_id, updated_by_user_id
             ) VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$15
+              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$16
             )
             RETURNING ${ACCOUNT_SELECT_COLS}
           `,
@@ -221,7 +264,8 @@ export async function registerAccountRoutes(app: FastifyInstance) {
             b.account_number ?? null,
             b.account_name,
             b.account_type,
-            b.account_subtype ?? null,
+            accountSubtype,
+            detailTypeId,
             b.parent_account_id ?? null,
             b.qbo_account_id ?? null,
             b.qbo_account_qrn ?? null,
@@ -254,12 +298,15 @@ export async function registerAccountRoutes(app: FastifyInstance) {
       if (created && typeof created === "object" && "__no_company" in created) {
         return reply.code(400).send({ error: "operating_company_id_required" });
       }
+      if (created && typeof created === "object" && "__detail_type_error" in created) {
+        return reply.code(400).send({ error: (created as { __detail_type_error: string }).__detail_type_error });
+      }
       return reply.code(201).send(created);
     } catch (err) {
       const code = (err as { code?: string }).code;
       const constraint = (err as { constraint?: string }).constraint;
       if (code === "23505") return reply.code(409).send({ error: mapAccountConflict(constraint), field: constraint ?? null });
-      if (code === "23503") return reply.code(400).send({ error: "invalid_parent_account_id" });
+      if (code === "23503") return reply.code(400).send({ error: "invalid_parent_or_detail_type_fk" });
       if (code === "23514") return reply.code(400).send({ error: "invalid_account_check_constraint" });
       throw err;
     }
@@ -309,30 +356,6 @@ export async function registerAccountRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "cannot_self_reference" });
     }
 
-    const setParts: string[] = [];
-    const values: unknown[] = [];
-    const add = (col: string, val: unknown) => {
-      values.push(val);
-      setParts.push(`${col} = $${values.length}`);
-    };
-    if ("account_number" in b) add("account_number", b.account_number ?? null);
-    if ("account_name" in b) add("account_name", b.account_name ?? null);
-    if ("account_type" in b) add("account_type", b.account_type);
-    if ("account_subtype" in b) add("account_subtype", b.account_subtype ?? null);
-    if ("parent_account_id" in b) add("parent_account_id", b.parent_account_id ?? null);
-    if ("qbo_account_id" in b) add("qbo_account_id", b.qbo_account_id ?? null);
-    if ("qbo_account_qrn" in b) add("qbo_account_qrn", b.qbo_account_qrn ?? null);
-    if ("is_postable" in b) add("is_postable", b.is_postable);
-    if ("currency_code" in b) add("currency_code", b.currency_code ?? null);
-    if ("opening_balance_cents" in b) add("opening_balance_cents", b.opening_balance_cents ?? null);
-    if ("opening_balance_as_of" in b) add("opening_balance_as_of", b.opening_balance_as_of ?? null);
-    if ("is_locked" in b) add("is_locked", b.is_locked);
-    if ("notes" in b) add("notes", b.notes ?? null);
-    if ("deactivated_at" in b) add("deactivated_at", b.deactivated_at ?? null);
-    add("updated_by_user_id", authUser.uuid);
-    values.push(parsedParams.data.id);
-    const idIdx = values.length;
-
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
         // Scope to the active entity so af1 RLS lets us read + update this per-entity account.
@@ -357,6 +380,45 @@ export async function registerAccountRoutes(app: FastifyInstance) {
           return { __locked: true } as const;
         }
 
+        let patchBody = { ...b };
+        if ("detail_type_id" in patchBody && patchBody.detail_type_id) {
+          const accountType = String(patchBody.account_type ?? oldRow.account_type ?? "");
+          const resolved = await resolveDetailType(client, {
+            detail_type_id: patchBody.detail_type_id,
+            operating_company_id: operatingCompanyId ?? String(oldRow.operating_company_id ?? ""),
+            account_type: accountType,
+          });
+          if (!resolved.ok) return { __detail_type_error: resolved.error } as const;
+          if (!("account_subtype" in patchBody)) {
+            patchBody = { ...patchBody, account_subtype: resolved.name };
+          }
+        }
+
+        const setParts: string[] = [];
+        const values: unknown[] = [];
+        const add = (col: string, val: unknown) => {
+          values.push(val);
+          setParts.push(`${col} = $${values.length}`);
+        };
+        if ("account_number" in patchBody) add("account_number", patchBody.account_number ?? null);
+        if ("account_name" in patchBody) add("account_name", patchBody.account_name ?? null);
+        if ("account_type" in patchBody) add("account_type", patchBody.account_type);
+        if ("account_subtype" in patchBody) add("account_subtype", patchBody.account_subtype ?? null);
+        if ("detail_type_id" in patchBody) add("detail_type_id", patchBody.detail_type_id ?? null);
+        if ("parent_account_id" in patchBody) add("parent_account_id", patchBody.parent_account_id ?? null);
+        if ("qbo_account_id" in patchBody) add("qbo_account_id", patchBody.qbo_account_id ?? null);
+        if ("qbo_account_qrn" in patchBody) add("qbo_account_qrn", patchBody.qbo_account_qrn ?? null);
+        if ("is_postable" in patchBody) add("is_postable", patchBody.is_postable);
+        if ("currency_code" in patchBody) add("currency_code", patchBody.currency_code ?? null);
+        if ("opening_balance_cents" in patchBody) add("opening_balance_cents", patchBody.opening_balance_cents ?? null);
+        if ("opening_balance_as_of" in patchBody) add("opening_balance_as_of", patchBody.opening_balance_as_of ?? null);
+        if ("is_locked" in patchBody) add("is_locked", patchBody.is_locked);
+        if ("notes" in patchBody) add("notes", patchBody.notes ?? null);
+        if ("deactivated_at" in patchBody) add("deactivated_at", patchBody.deactivated_at ?? null);
+        add("updated_by_user_id", authUser.uuid);
+        values.push(parsedParams.data.id);
+        const idIdx = values.length;
+
         const res = await client.query(
           `
             UPDATE catalogs.accounts
@@ -369,7 +431,7 @@ export async function registerAccountRoutes(app: FastifyInstance) {
         const updatedRow = res.rows[0] ?? null;
         if (!updatedRow) return null;
         const changes = buildPatchChanges(
-          b as unknown as Record<string, unknown>,
+          patchBody as unknown as Record<string, unknown>,
           oldRow as Record<string, unknown>,
           updatedRow as Record<string, unknown>
         );
@@ -389,6 +451,9 @@ export async function registerAccountRoutes(app: FastifyInstance) {
       });
       if (!updated) return reply.code(404).send({ error: "catalog_account_not_found" });
       if ("__locked" in updated) return reply.code(423).send({ error: "account_is_locked" });
+      if ("__detail_type_error" in updated) {
+        return reply.code(400).send({ error: (updated as { __detail_type_error: string }).__detail_type_error });
+      }
       return updated;
     } catch (err) {
       const code = (err as { code?: string }).code;

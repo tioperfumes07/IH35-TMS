@@ -26,6 +26,7 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
     selectMetadataSql: [
       "'account_type', t.account_type::text",
       "'account_subtype', t.account_subtype",
+      "'detail_type_id', t.detail_type_id",
       "'parent_account_id', t.parent_account_id",
       "'is_postable', t.is_postable",
       "'currency_code', t.currency_code",
@@ -39,6 +40,7 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
     createMapper: (metadata) => ({
       account_type: String(metadata.account_type ?? "Expense"),
       account_subtype: (metadata.account_subtype as string | null | undefined) ?? null,
+      detail_type_id: (metadata.detail_type_id as string | null | undefined) ?? null,
       parent_account_id: (metadata.parent_account_id as string | null | undefined) ?? null,
       is_postable: metadata.is_postable === undefined ? true : Boolean(metadata.is_postable),
       currency_code: String(metadata.currency_code ?? "USD"),
@@ -57,6 +59,7 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
     updateMapper: (metadata) => ({
       ...(metadata.account_type !== undefined ? { account_type: String(metadata.account_type) } : {}),
       ...(metadata.account_subtype !== undefined ? { account_subtype: metadata.account_subtype as string | null } : {}),
+      ...(metadata.detail_type_id !== undefined ? { detail_type_id: metadata.detail_type_id as string | null } : {}),
       ...(metadata.parent_account_id !== undefined ? { parent_account_id: metadata.parent_account_id as string | null } : {}),
       ...(metadata.is_postable !== undefined ? { is_postable: Boolean(metadata.is_postable) } : {}),
       ...(metadata.currency_code !== undefined ? { currency_code: String(metadata.currency_code) } : {}),

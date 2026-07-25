@@ -6,6 +6,8 @@ export type CatalogAccount = {
   account_name: string;
   account_type: string;
   account_subtype: string | null;
+  /** LINK-02 — FK to catalogs.detail_types when Neon mig applied. */
+  detail_type_id?: string | null;
   parent_account_id: string | null;
   qbo_account_id: string | null;
   qbo_account_qrn: string | null;
@@ -27,6 +29,7 @@ export type CreateCatalogAccountBody = {
   account_type: string;
   account_number?: string | null;
   account_subtype?: string | null;
+  detail_type_id?: string | null;
   parent_account_id?: string | null;
   is_postable?: boolean;
   currency_code?: string;

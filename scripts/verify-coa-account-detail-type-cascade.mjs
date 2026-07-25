@@ -52,11 +52,18 @@ if (!src) {
   if (!/detailTypesForType/.test(src)) failures.push("Detail Type select must cascade off detailTypesForType");
   if (!/detailTypesForType\.map/.test(src)) failures.push("Detail Type <option>s must render from detailTypesForType");
 
-  // 4. Changing Account Type resets the Detail Type (no stale cross-type subtype).
+  // 4. Changing Account Type resets the Detail Type (no stale cross-type subtype / FK).
   const onChangeIdx = src.indexOf('setField("account_type"');
-  const onChangeBlock = onChangeIdx >= 0 ? src.slice(onChangeIdx, onChangeIdx + 240) : "";
+  const onChangeBlock = onChangeIdx >= 0 ? src.slice(onChangeIdx, onChangeIdx + 280) : "";
   if (!/setField\("account_subtype", ""\)/.test(onChangeBlock)) {
     failures.push("changing Account Type must reset account_subtype (Detail Type)");
+  }
+  // LINK-02: FK id must reset with the text cache (owner WIRE 2026-07-25).
+  if (!/setField\("detail_type_id", ""\)/.test(onChangeBlock)) {
+    failures.push("changing Account Type must reset detail_type_id (LINK-02 FK)");
+  }
+  if (!/detail_type_id/.test(src)) {
+    failures.push("AccountDrawer must wire detail_type_id (LINK-02 FK, not text-only)");
   }
 }
 
