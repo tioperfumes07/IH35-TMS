@@ -50,7 +50,8 @@
     },
     {
       "file": "202607240000_incidents_auto_claim_fk.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 1] P4-05 — safety.incidents.auto_created_claim_id -> insurance.claim FK (NOT VALID, ON DELETE SET NULL; GUARD 0-orphan check + VALIDATE on Neon). Safety->Insurance referential integrity."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P4-05 — safety.incidents.auto_created_claim_id -> insurance.claim FK (NOT VALID, ON DELETE SET NULL; GUARD 0-orphan check + VALIDATE on Neon). Safety->Insurance referential integrity. APPLIED on prod Neon + ledger-backfilled (verified 2026-07-25 lucia). SAF-F04 — Neon 2026-07-25: safety.incidents.auto_created_claim_id EXISTS; ledgered 2026-07-11. applied_on_prod was stale-false.",
+      "applied_on_prod": true
     },
     {
       "file": "202607210000_detention_requests_invoice_fk.sql",
@@ -62,7 +63,8 @@
     },
     {
       "file": "202606272300_deduction_line_load_id_direct.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 1] Load↔Advance: carry load_id DIRECTLY on the settlement deduction line"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Load↔Advance: carry load_id DIRECTLY on the settlement deduction line APPLIED on prod Neon + ledger-backfilled (verified 2026-07-25 lucia). SAF-F03 — Neon br-fancy-credit-akjnd07a 2026-07-25: driver_finance.driver_settlement_deductions.load_id EXISTS; ledgered _system._schema_migrations 2026-06-28 + ih35_migrations mirror. applied_on_prod was stale-false (honesty bug).",
+      "applied_on_prod": true
     },
     {
       "file": "202606300050_drivers_hire_date_source.sql",
@@ -106,11 +108,13 @@
     },
     {
       "file": "202607070100_bank_categorize_unit_trip_driver_deduction.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-6b — Unit + Trip(Load) dimensions + Item(Products&Services) linkage on bank categorize + driver auto-deduction (fine→driver→settlement, flag OFF)"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-6b — Unit + Trip(Load) dimensions + Item(Products&Services) linkage on bank categorize + driver auto-deduction (fine→driver→settlement, flag OFF) APPLIED on prod Neon + ledger-backfilled (verified 2026-07-25 lucia). SAF-F03 — Neon 2026-07-25: source_bank_transaction_id EXISTS on driver_settlement_deductions; ledgered 2026-07-05. applied_on_prod was stale-false.",
+      "applied_on_prod": true
     },
     {
       "file": "202607080000_settlement_contract_terms.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 1] Settlement contract-terms computation engine (driver hire-contract bonuses/deductions)"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Settlement contract-terms computation engine (driver hire-contract bonuses/deductions) APPLIED on prod Neon + ledger-backfilled (verified 2026-07-25 lucia). SAF-F02 — Neon 2026-07-25: safety.civil_fines.driver_settlement_deduction_id EXISTS (uuid); ledgered 2026-07-06. applied_on_prod was stale-false — column never absent on prod.",
+      "applied_on_prod": true
     },
     {
       "file": "202607080100_event_log_force_rls_blocked_pending_guc_fix.sql",
@@ -166,7 +170,8 @@
     },
     {
       "file": "202607110200_civil_fines_voidable.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 1] P2 civil_fines void-not-delete"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P2 civil_fines void-not-delete APPLIED on prod Neon + ledger-backfilled (verified 2026-07-25 lucia). Neon 2026-07-25: civil_fines void columns present; ledgered 2026-07-11 class. Stamp applied_on_prod so SAF-F08 guard does not false-FAIL.",
+      "applied_on_prod": true
     },
     {
       "file": "202607110210_maintenance_wo_lines_status_history_rls.sql",
@@ -250,7 +255,8 @@
     },
     {
       "file": "202607250000_phase4_crossmodule_fks.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 1] PHASE-4 BATCH (P4-01/02/03) — safety.accident_reports.insurance_claim_id, legal.matters.{insurance_claim_id,insurance_lawsuit_id,incident_id,unit_id}, mdata.assets.unit_id — additive cols + FKs to canonical (insurance.claim/lawsuit, safety.incidents, mdata.units). GUARD-verified 0 orphans. Backfill+resolver+route fix deferred."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] PHASE-4 BATCH (P4-01/02/03) — safety.accident_reports.insurance_claim_id, legal.matters.{insurance_claim_id,insurance_lawsuit_id,incident_id,unit_id}, mdata.assets.unit_id — additive cols + FKs to canonical (insurance.claim/lawsuit, safety.incidents, mdata.units). GUARD-verified 0 orphans. Backfill+resolver+route fix deferred. APPLIED on prod Neon + ledger-backfilled (verified 2026-07-25 lucia). SAF-F04 — Neon 2026-07-25: safety.accident_reports.insurance_claim_id + legal.matters.insurance_claim_id EXIST; ledgered 2026-07-11. applied_on_prod was stale-false.",
+      "applied_on_prod": true
     },
     {
       "file": "202607230000_work_orders_unit_driver_fk.sql",
@@ -346,7 +352,8 @@
     },
     {
       "file": "202607810000_accident_reports_capture_fields.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 1] SAF-F05 — add 7 additive text columns to safety.accident_reports (police_report_number, insurance_claim_number, location, third_party_name, third_party_plate, vendor_invoice_number, bill_or_expense_ref) the accident wizard rendered but silently discarded (no columns existed, verified on Neon br-fancy-credit-akjnd07a). All nullable text, no backfill, inherit table FORCED RLS + 0065 safety-schema grants. insurance_claim_number is the external insurer number, distinct from the insurance_claim_id FK. Posts nothing. Claude migration block 202607810000 (LANE-ASSIGNMENT §2a). Run only on a Neon branch by Jorge, then ledger-backfill."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] SAF-F05 — add 7 additive text columns to safety.accident_reports (police_report_number, insurance_claim_number, location, third_party_name, third_party_plate, vendor_invoice_number, bill_or_expense_ref) the accident wizard rendered but silently discarded (no columns existed, verified on Neon br-fancy-credit-akjnd07a). All nullable text, no backfill, inherit table FORCED RLS + 0065 safety-schema grants. insurance_claim_number is the external insurer number, distinct from the insurance_claim_id FK. Posts nothing. Claude migration block 202607810000 (LANE-ASSIGNMENT §2a). Run only on a Neon branch by Jorge, then ledger-backfill. APPLIED on prod Neon + ledger-backfilled (verified 2026-07-25 lucia). Neon 2026-07-25: accident_reports capture text cols present (police_report_number etc.); ledgered. Stamp applied_on_prod for SAF-F08 honesty.",
+      "applied_on_prod": true
     },
     {
       "file": "202607850000_safety_evidence_revoke_delete.sql",
