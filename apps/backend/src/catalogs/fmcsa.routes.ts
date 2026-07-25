@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { lookupCarrierByMC, lookupCarrierByUSDOT } from "../lib/fmcsa-client.js";
 
@@ -46,28 +47,18 @@ function ensureRole(reply: FastifyReply, role: string, allowed: string[]) {
   return true;
 }
 
-async function resolveOperatingCompanyId(
-  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ id: string }> }> },
-  userId: string
-) {
-  const res = await client.query(
-    `
-      SELECT c.id
-      FROM identity.users u
-      JOIN org.companies c ON c.id = u.default_company_id
-      WHERE u.id = $1
-        AND c.deactivated_at IS NULL
-      UNION
-      SELECT c.id
-      FROM org.companies c
-      WHERE c.id IN (SELECT org.user_accessible_company_ids())
-      ORDER BY id
-      LIMIT 1
-    `,
-    [userId]
-  );
-  return res.rows[0]?.id ?? null;
-}
+// LST-F05 (2026-07-25): this file used to define its OWN resolveOperatingCompanyId here, shadowing the
+// canonical one, with the inline `SELECT default … UNION SELECT any accessible … ORDER BY id LIMIT 1`
+// fallback. The UNION put the user's DEFAULT company and every accessible company on equal footing and
+// then took the LOWEST UUID, losing the default — and USMCA (5c854333…) sorts below TRANSP (91e0bf0a…),
+// so a TRANSP user's FMCSA lookup was attributed to USMCA and cached under the wrong entity.
+//
+// load-cancellation-reasons and void-cancel-reasons were repointed at the canonical resolver earlier; this
+// third route was missed because the local copy has the SAME NAME, so a grep for resolveOperatingCompanyId
+// showed call sites and read as already-fixed. The canonical resolver does COALESCE(default, lowest) and
+// validates membership (403 on a foreign id rather than a silent empty list).
+//
+// The local definition is deleted; the import below is the canonical one.
 
 export async function registerFmcsaRoutes(app: FastifyInstance) {
   app.post("/api/v1/catalogs/fmcsa/lookup", async (req, reply) => {

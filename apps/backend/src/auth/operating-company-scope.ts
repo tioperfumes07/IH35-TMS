@@ -128,11 +128,29 @@ export async function resolveOperatingCompanyId(
     }
     return requested;
   }
-  // Prefer the user's DEFAULT company; only fall back to the lowest accessible UUID if there is none.
-  // (The old `UNION … ORDER BY id LIMIT 1` picked the minimum UUID across ALL accessible companies, so
-  // the default was lost. That silently flipped a multi-entity Owner's param-omitting endpoints to
-  // whichever entity had the lowest id — and USMCA (5c854333…) < TRANSP (91e0bf0a…), so activating
-  // USMCA would hijack TRANSP's default resolution. Explicit COALESCE(default, lowest) fixes it.)
+  return resolveDefaultOperatingCompanyId(client, userId);
+}
+
+/**
+ * Resolve the company to use when the caller did not name one: the user's DEFAULT, falling back to the
+ * lowest accessible UUID only when there is no default.
+ *
+ * Exported because this exact resolution was hand-rolled in five other places, and every copy had it
+ * WRONG in the same way (LST-F05). The broken shape was:
+ *
+ *     SELECT default … UNION SELECT any accessible … ORDER BY id LIMIT 1
+ *
+ * The UNION puts the user's default and every accessible company on EQUAL footing and then takes the
+ * minimum UUID, so the default is lost. USMCA (5c854333…) sorts below TRANSP (91e0bf0a…), so once USMCA
+ * exists, a TRANSP user's param-omitting request silently resolves to USMCA. Explicit
+ * COALESCE(default, lowest) is the fix, and having ONE exported implementation is what stops copy six.
+ */
+export async function resolveDefaultOperatingCompanyId(
+  client: {
+    query: (sql: string, values: unknown[]) => Promise<{ rows: Array<{ id: string }> }>;
+  },
+  userId: string
+): Promise<string | null> {
   const res = await client.query(
     `
       SELECT COALESCE(
