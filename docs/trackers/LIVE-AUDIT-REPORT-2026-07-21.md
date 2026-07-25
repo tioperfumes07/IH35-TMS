@@ -20,8 +20,8 @@
 
 | Pile | v2 (authoritative) | v1 (superseded) |
 |---|---:|---:|
-| BUILT | 722 | 667 |
-| GAP | 291 | 36 |
+| BUILT | 727 | 667 |
+| GAP | 286 | 36 |
 | NEEDS-PROD | 24 | 71 |
 | NEEDS-OWNER | 105 | 28 |
 | NOISE | 39 | 383 |
@@ -93,7 +93,7 @@
 
 ## Full GAP list
 
-See `docs/trackers/LIVE-AUDIT-GAPS-2026-07-21.md` (291 items).
+See `docs/trackers/LIVE-AUDIT-GAPS-2026-07-21.md` (286 items).
 
 ## Caveat
 

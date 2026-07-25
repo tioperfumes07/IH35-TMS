@@ -6,8 +6,8 @@
     "active_reconcile": 1191
   },
   "totals": {
-    "BUILT": 722,
-    "GAP": 291,
+    "BUILT": 727,
+    "GAP": 286,
     "NEEDS-PROD": 24,
     "NEEDS-OWNER": 105,
     "NOISE": 39,
