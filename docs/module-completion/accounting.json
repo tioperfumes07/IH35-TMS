@@ -2,7 +2,7 @@
   "module": "accounting",
   "title": "Accounting (Module 3)",
   "complete": false,
-  "as_of": "2026-07-25T17:30:00.000Z",
+  "as_of": "2026-07-25T19:00:00.000Z",
   "live_sha": "a3f9c12",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md",
   "spec_sources": [
@@ -178,16 +178,16 @@
     },
     {
       "id": "ACCT-LINK-06",
-      "title": "bank feed matched_journal_entry_id density + categorize→GL poster wired (ACCT-F05)",
+      "title": "bank feed matched_journal_entry_id density + categorize\u2192GL poster wired (ACCT-F05)",
       "layers": [
         "DOD-C",
         "DOD-D",
         "VERIFY-4",
         "VERIFY-6"
       ],
-      "spec": "ACCT-F05 · companion BANK-ECON-02",
+      "spec": "ACCT-F05 \u00b7 companion BANK-ECON-02",
       "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25: matched_je=3/10622 (lucia); categorized_at_not_null=3. Wiring PASS on main: #3424 bulk+single categorize→maybePostBankCategorizationToGl→postSourceTransaction(bank_categorization)+matched_journal_entry_id lockstep stamp; BANK_FEED_GL_POSTING_ENABLED default OFF. Density is ops backlog — poster works when used; not a broken poster. GUARD: verify-bankfeed-je-match (step 1486). Remains FAIL until operator categorization volume moves matched_JE density.",
+      "evidence": "LIVE REFRESH 2026-07-25: matched_je=3/10622 (lucia); categorized_at_not_null=3. Wiring PASS on main: #3424 bulk+single categorize\u2192maybePostBankCategorizationToGl\u2192postSourceTransaction(bank_categorization)+matched_journal_entry_id lockstep stamp; BANK_FEED_GL_POSTING_ENABLED default OFF. Density is ops backlog \u2014 poster works when used; not a broken poster. GUARD: verify-bankfeed-je-match (step 1486). Remains FAIL until operator categorization volume moves matched_JE density.",
       "pr": "#3424"
     },
     {
@@ -347,7 +347,7 @@
       ],
       "spec": "Law \u00a79 cross-module",
       "status": "UNVERIFIED",
-      "evidence": "Frozen map docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md. Structural DoD guard scripts/verify-acct-surf-09-crosslinks.mjs (routes+More▾+EntityLink+canonical factoring_advances/escrow_*/driver_settlements). Desktop Expected vs Actual: ~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md. Stays UNVERIFIED until TRANSP+USMCA browser cross-link economics + Neon density proof (Rule 23 — no structural PASS flip). LINK-02 detail_types FK FROZEN.",
+      "evidence": "Frozen map docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md. Structural DoD guard scripts/verify-acct-surf-09-crosslinks.mjs (routes+More\u25be+EntityLink+canonical factoring_advances/escrow_*/driver_settlements). Desktop Expected vs Actual: ~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md. Stays UNVERIFIED until TRANSP+USMCA browser cross-link economics + Neon density proof (Rule 23 \u2014 no structural PASS flip). LINK-02 detail_types FK FROZEN.",
       "pr": null
     },
     {
@@ -384,6 +384,22 @@
       "status": "PASS",
       "evidence": "#3430 merged on main (sha fc1cf13); verify-steps 1430+1431 + Rule 24 live; money PRs require MODULE_PROGRESS trailers",
       "pr": "#3430"
+    },
+    {
+      "id": "ACCT-R-11",
+      "title": "Bank categorize capture fields sent to API and persisted on bank_transactions",
+      "layers": [
+        "DOD-B",
+        "DOD-C",
+        "VERIFY-2",
+        "VERIFY-3"
+      ],
+      "spec": "0441-mod8-tx-fields-captured-not-sent \u00b7 ACCT-R-11",
+      "status": "UNVERIFIED",
+      "evidence": "Wiring on main + static guard verify-acct-r11-tx-fields-sent (step 1490) PASS. LIVE PROOF UNVERIFIED \u2014 need authenticated TRANSP+USMCA categorize\u2192reload hydrate before PASS (Rule 23). mig 202607690000 already Neon-applied 2026-07-25.",
+      "pr": null
     }
-  ]
+  ],
+  "pass_count": 8,
+  "total_count": 27
 }

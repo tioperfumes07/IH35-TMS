@@ -22,6 +22,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { fileURLToPath } from "node:url";
 
 const MIGRATION_REL = "db/migrations/202607690000_bank_tx_capture_fields.sql";
 const HELD_REGISTRY_REL = "db/migrations/.held-migrations.json";
@@ -226,8 +227,11 @@ function runSelftest() {
   console.log("[verify-bank-tx-capture-fields-persisted] --selftest OK");
 }
 
-if (process.argv.includes("--selftest")) {
-  runSelftest();
-} else {
-  runReal();
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) {
+  if (process.argv.includes("--selftest")) {
+    runSelftest();
+  } else {
+    runReal();
+  }
 }
