@@ -74,7 +74,7 @@
       ],
       "spec": "Cash GL setup",
       "status": "PASS",
-      "evidence": "Neon lucia 2026-07-25: of 16 bank_accounts, 9 deactivated (unbound OK); 7 live (deactivated_at IS NULL) all have ledger_account_id (7/7). Prior 8/16 FAIL counted deactivated duplicates.",
+      "evidence": "Neon lucia 2026-07-25: of 16 bank_accounts, 9 deactivated (unbound OK); 7 live (deactivated_at IS NULL) all have ledger_account_id (7/7). Prior 8/16 FAIL counted deactivated duplicates. Keep-guard: scripts/verify-bank-account-cashbind.mjs + verify-step 1442 (active-only; never deletes deactivated).",
       "pr": null
     },
     {
@@ -158,8 +158,8 @@
       ],
       "spec": "Law \u00a79 banking",
       "status": "UNVERIFIED",
-      "evidence": "Structural counterparty wiring guarded (#3459/#3464 verify-bank-surfaces-and-counterparty / step 1441); Neon lucia counterparty_fk sparse (2). Both-way live density + browser reverse drill still UNVERIFIED \u2014 not flipped to PASS.",
-      "pr": "#3459"
+      "evidence": "2026-07-25 BANK-LINK-01 migration authored (HELD, not Neon-applied): db/migrations/202608050000_bank_link_01_counterparty_same_entity_fk.sql closes the DB-schema half step 1441 could not see \u2014 categorization_vendor_id/categorization_customer_id were bare unconstrained uuid since migration 0165 (code wrote/JOINed them by convention only, no DB enforcement). Adds SAME-ENTITY composite FKs bank_tx_categorization_vendor_same_entity_fkey / _customer_same_entity_fkey (mirrors ACCT-LINK-04 202608020000) + UNIQUE(operating_company_id,id) on mdata.vendors/mdata.customers; 0-orphan RAISE EXCEPTION guard before each ADD CONSTRAINT; categorization_memo retained untouched. PROVEN on throwaway Postgres (docker ih35-tms-verify-db, isolated db): fresh-from-0001 apply clean, raw SQL re-run apply-twice idempotent (all 4 constraints already-present, no error), FORCE RLS confirmed on all 3 tables (relforcerowsecurity=t), and a planted cross-entity insert (vendor of company A on a bank_transactions row of company B) correctly REJECTED with foreign_key_violation while the same-entity insert succeeded. Guard: scripts/verify-bank-link-01-counterparty-fk.mjs + verify-steps/1482 (structural, both selftest and real-file checks green). Prior step 1441 (code-level) still green, unaffected. Still UNVERIFIED on prod: migration is HELD/NOT Neon-applied \u2014 owner must apply on a Neon branch + ledger-backfill, then GUARD re-measures live counterparty_fk density under lucia + browser both-way reverse-drill before this flips to PASS (Rule 23 \u2014 not flipped this turn).",
+      "pr": "HOLD \u2014 see hold/bank-link-01-counterparty-fk-20260725 (companion to #3459/#3464/step 1441)"
     },
     {
       "id": "BANK-CTRL-01",
@@ -181,9 +181,95 @@
       ],
       "spec": "verify-step 1430",
       "status": "PASS",
-      "evidence": "#3430 merged on main (sha fc1cf13); verify-step 1430 enforces EVERY-PR checklist trailers on banking money commits",
+      "evidence": "#3430 merged on main (sha fc1cf13); verify-step 1430 enforces EVERY-PR checklist trailers on banking money commits. BANK-ECON-05 cash-bind keep-guard (verify-step 1442) confirms MODULE_PROGRESS honesty (pass_count=4, complete=false).",
       "pr": "#3430"
     }
   ],
+  "ranked_fail_registry": {
+    "source": "PERMANENT-FIX \u00a71 (BANK-00) \u2014 no Banking PR may land without citing a row here; M binds to items[] above and never freezes below live leaves (Rule 21/24).",
+    "rows": [
+      {
+        "id": "BANK-F01",
+        "rank": 1,
+        "priority": "P0",
+        "title": "bank feed \u2192 JE density ~3/10628; no bulk categorize\u2192GL poster density",
+        "canonical_target": "banking.bank_transactions\u2192accounting.journal_entries",
+        "bound_items": ["BANK-ECON-02", "BANK-SURF-02"],
+        "seed_claim": "LIVE REFRESH 2026-07-25 03:41Z (banking.md BANK-ECON-02): matched_je=3/10628 \u2014 cited, not re-derived here.",
+        "fix_block": "BANK-ECON-02"
+      },
+      {
+        "id": "BANK-F02",
+        "rank": 2,
+        "priority": "P0",
+        "title": "banking.transfers = 0; no linked transfer write from a bank line",
+        "canonical_target": "banking.transfers",
+        "bound_items": ["BANK-ECON-03", "BANK-SURF-03"],
+        "seed_claim": "LIVE REFRESH 2026-07-25 03:41Z (banking.md BANK-ECON-03): transfers=0; PR #3445 [HOLD] not yet merged.",
+        "fix_block": "BANK-ECON-03/BANK-SURF-03"
+      },
+      {
+        "id": "BANK-F03",
+        "rank": 3,
+        "priority": "P0",
+        "title": "banking.reconciliation_sessions = 0; no reconcile flow; RLS root cause",
+        "canonical_target": "banking.reconciliation_sessions",
+        "bound_items": ["BANK-ECON-04", "BANK-SURF-04"],
+        "seed_claim": "banking.md BANK-ECON-04: sessions=0 on prod; root cause (bank_accounts RLS lucia-bypass escape missing) proven on throwaway Postgres; fix HELD pending owner Neon-apply.",
+        "fix_block": "BANK-ECON-04/BANK-SURF-04"
+      },
+      {
+        "id": "BANK-F04",
+        "rank": 4,
+        "priority": "P1",
+        "title": "counterparty stored as memo, not a vendor/customer FK",
+        "canonical_target": "mdata.vendors / mdata.customers",
+        "bound_items": ["BANK-LINK-01"],
+        "seed_claim": "banking.md BANK-LINK-01: Neon lucia counterparty_fk sparse (2); both-way live density + browser reverse drill UNVERIFIED.",
+        "fix_block": "BANK-SURF-01/02/05+BANK-LINK-01"
+      },
+      {
+        "id": "BANK-F05",
+        "rank": 5,
+        "priority": "P1",
+        "title": "surfaces (feed/register/account-detail/rules) entity-scope not both-way drilled",
+        "canonical_target": "banking.*",
+        "bound_items": ["BANK-SURF-01", "BANK-SURF-02", "BANK-SURF-05"],
+        "seed_claim": "banking.md BANK-SURF-01/02/05: structural mount guarded; TRANSP+USMCA browser click-through DoD A\u2013E + VERIFY 1\u20138 still UNVERIFIED.",
+        "fix_block": "BANK-SURF-01/02/05"
+      },
+      {
+        "id": "BANK-F06",
+        "rank": 6,
+        "priority": "P2",
+        "title": "money-gate honesty: flags OFF + MODULE_PROGRESS = manifest",
+        "canonical_target": "docs/module-completion/banking.json",
+        "bound_items": ["BANK-CTRL-01", "BANK-GATE-01"],
+        "seed_claim": "banking.md: BANK_FEED_GL_POSTING_ENABLED default OFF (BANK-CTRL-01); EVERY-PR checklist process closed via verify-step 1430 (BANK-GATE-01).",
+        "fix_block": "BANK-CTRL-01+BANK-GATE-01",
+        "deviation_note": "Source package's literal fix-block column reads 'BANK-ECON-05+BANK-GATE-01' (appears to duplicate the BANK-P01 row). Corrected here to the items that actually carry the row's own claim (flags-OFF control + gate-process), per Rule 06 correct-over-easy \u2014 BANK-ECON-05 (cash-GL binding) is unrelated to 'money-gate honesty'."
+      },
+      {
+        "id": "BANK-F07",
+        "rank": 7,
+        "priority": "P0",
+        "title": "no per-surface DoD A\u2013E + VERIFY 1\u20138 sweep across Banking leaves",
+        "canonical_target": "docs/module-completion/banking.json (binding)",
+        "bound_items": ["BANK-SURF-01", "BANK-SURF-02", "BANK-SURF-04", "BANK-SURF-05", "BANK-LINK-01"],
+        "seed_claim": "banking.md: 4 PASS / 2 qualifying HOLD of 13 (6 of 13); remaining 5 SURF/LINK leaves are FAIL/HOLD/UNVERIFIED \u2014 module-wide sweep incomplete (Rule 21/22).",
+        "fix_block": "BANK-MODULE-DOD (maps to the SURF/LINK leaves above \u2014 no separate manifest item invented)"
+      },
+      {
+        "id": "BANK-P01",
+        "rank": null,
+        "priority": "PASS",
+        "title": "bank_accounts 7/7 active cash-bound (legitimate PASS, keep-guard)",
+        "canonical_target": "banking.bank_accounts",
+        "bound_items": ["BANK-ECON-05"],
+        "seed_claim": "banking.md BANK-ECON-05: Neon lucia 2026-07-25 \u2014 7 live (deactivated_at IS NULL) bank_accounts, all 7 bound to ledger_account_id.",
+        "fix_block": "BANK-ECON-05+BANK-GATE-01"
+      }
+    ]
+  },
   "pass_count": 4
 }
