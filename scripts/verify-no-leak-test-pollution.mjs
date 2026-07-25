@@ -136,6 +136,18 @@ export function assertNoLeakTestPollution(sources) {
   if (!/\bROLLBACK\b/.test(harnessCode)) {
     errs.push(`${HARNESS}: fixture transaction must be ROLLED BACK — never committed and then deleted`);
   }
+  // H2/H1 CORRECTION 2026-07-25 (independent review). Requiring the presence of "ROLLBACK" was not a
+  // check at all: the PRE-FIX harness already contained that word in its runWithBypass/runScoped catch
+  // arms, so the assertion could never distinguish the bug from the fix. Worse, nothing forbade COMMIT —
+  // a harness that COMMITs each fixture and rolls back only on error (which IS the LST-SEED-01 defect,
+  // 259 rows accumulating in live catalogs.complaint_types) passed this guard with zero problems.
+  // Banning COMMIT outright is the assertion that actually holds: a fixture must never be durable.
+  const commitStmt = harnessCode.match(/\bCOMMIT\b/);
+  if (commitStmt) {
+    errs.push(
+      `${HARNESS}: contains COMMIT — fixture rows must NEVER be committed. A harness that commits and rolls back only on error is exactly the defect that put 259 test rows into live catalogs.complaint_types.`,
+    );
+  }
   if (!/rolledBack/.test(harnessCode)) {
     errs.push(`${HARNESS}: must track whether the fixture transaction rolled back and exit non-zero if not`);
   }
@@ -144,8 +156,22 @@ export function assertNoLeakTestPollution(sources) {
       `${HARNESS}: DELETEs from a business table — forbidden by §F.24, and it silently failed under SET ROLE ih35_app (no DELETE grant). Roll the fixture transaction back instead.`,
     );
   }
+  // The residue probe must actually QUERY, not be a hardcoded pass. `let residue = 0` with the probe
+  // deleted satisfied a bare /residue/ token check while proving nothing.
   if (!/residue/.test(harnessCode)) {
     errs.push(`${HARNESS}: must prove on a FRESH connection that 0 fixture rows survived (the missing assertion)`);
+  } else {
+    if (!/residue\s*=\s*-1/.test(harnessCode)) {
+      errs.push(
+        `${HARNESS}: the residue counter must start at -1 (unknown) so a probe that never runs fails closed; initialising it to 0 asserts success without measuring anything`,
+      );
+    }
+    if (!/residue\s*=\s*Number\(/.test(harnessCode)) {
+      errs.push(`${HARNESS}: residue must be assigned from a queried count, not a literal`);
+    }
+    if (!/pool\.connect\(\)/.test(harnessCode.slice(harnessCode.indexOf("finally")))) {
+      errs.push(`${HARNESS}: the residue probe must open its own connection AFTER the fixture transaction is rolled back`);
+    }
   }
 
   // ── 3. no OTHER fixture-writing script may insert into business schemas without the refusal ───────
@@ -258,6 +284,21 @@ if (SELFTEST) {
     },
     "forbidden by §F.24",
   );
+  // H1: the realistic mixed shape the old assertions could not see — commit each fixture, roll back only
+  // on error. This IS LST-SEED-01. The previous selftest only replaced ALL ROLLBACKs with COMMIT, which
+  // was the single variant a presence-regex could catch.
+  expectCaught(
+    "harness-commits-fixtures-but-keeps-rollback-in-finally",
+    { ...live, [HARNESS]: live[HARNESS].replace(
+        'fixtureIds.push({ table: table.name, id: String(inserted) });',
+        'fixtureIds.push({ table: table.name, id: String(inserted) });\n        await client.query("COMMIT");\n        await client.query("BEGIN");') },
+    "contains COMMIT",
+  );
+  expectCaught(
+    "residue-hardcoded-to-zero",
+    { ...live, [HARNESS]: live[HARNESS].replace("let residue = -1;", "let residue = 0;") },
+    "must start at -1",
+  );
   expectCaught(
     "harness-residue-check-removed",
     { ...live, [HARNESS]: live[HARNESS].replace(/residue/g, "unchecked") },
@@ -304,7 +345,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 11 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 13 planted defects caught, live sources clean`);
   process.exit(0);
 }
 

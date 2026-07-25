@@ -11,10 +11,15 @@
 //
 // The control belongs in ONE place so a second fixture-writing script cannot repeat it.
 //
-// DESIGN CHOICE — fixture writers fail CLOSED with NO escape hatch. A script that INSERTs test rows has
-// no legitimate reason to run against production, so there is deliberately no override env var. In
-// particular this must never reuse `ALLOW_PROD_MIGRATE`: prod deploys set that for the real migration
-// step, so honouring it here would re-open the exact hole on every deploy.
+// DESIGN CHOICE — fixture writers fail CLOSED. There is no override env var, and (H2, 2026-07-25) env
+// marker lists can only WIDEN the refusal, never replace it. The decision is an ALLOWLIST: a writer may
+// proceed only against a demonstrably local host, so a prod endpoint named via Neon's options=endpoint SNI
+// form, or reached through a localhost tunnel, is refused too.
+//
+// A script that INSERTs test rows has no legitimate reason to run against production, so there is
+// deliberately no override env var. In particular this must never reuse `ALLOW_PROD_MIGRATE`: prod
+// deploys set that for the real migration step, so honouring it here would re-open the hole on every
+// deploy.
 
 const DEFAULT_PROD_HOST_MARKERS = "ep-broad-block-akykk7bw";
 
@@ -43,20 +48,59 @@ export function resolveTargetDb(connectionString) {
   return m ? m[1] : "?";
 }
 
-// Host substrings that identify the production compute endpoint. Extend via PROD_HOST_BLOCKLIST
-// (comma-separated) if the prod endpoint ever changes; PROD_MIGRATE_BLOCKLIST is honoured too so this
-// stays in step with the marker list db-migrate.mjs already uses.
+// Host substrings that identify the production compute endpoint.
+//
+// CORRECTED 2026-07-25 (independent review, finding H2). The first version of this read
+//   (env.PROD_HOST_BLOCKLIST || env.PROD_MIGRATE_BLOCKLIST || DEFAULT_PROD_HOST_MARKERS)
+// which REPLACES the default rather than extending it, so `PROD_MIGRATE_BLOCKLIST=zzz` disarmed the
+// refusal entirely and prod was ALLOWED. That variable is legitimately used by scripts/db-migrate.mjs,
+// so any shell or CI job that set it for the migrator silently disabled this guard for every fixture
+// writer — while the comment claimed "Extend via" and the header claimed "there is NO override flag".
+// Both were false. Env markers are now UNIONED with the default, which can therefore only ever widen.
 export function prodHostMarkers(env = process.env) {
-  return (env.PROD_HOST_BLOCKLIST || env.PROD_MIGRATE_BLOCKLIST || DEFAULT_PROD_HOST_MARKERS)
+  const extra = [env.PROD_HOST_BLOCKLIST, env.PROD_MIGRATE_BLOCKLIST]
+    .filter(Boolean)
+    .join(",");
+  return [DEFAULT_PROD_HOST_MARKERS, extra]
+    .filter(Boolean)
+    .join(",")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
 }
 
+// Hosts a fixture writer is permitted to touch. A blocklist can only ever enumerate the prod endpoints
+// somebody remembered; an allowlist fails closed on everything else — including a localhost pgbouncer or
+// SSH tunnel that forwards to prod, which no host blocklist can detect.
+const LOCAL_HOST_ALLOWLIST = [/^localhost$/i, /^127\.0\.0\.1$/, /^::1$/, /^\[::1\]$/, /^\/.*/ /* unix socket path */];
+
+// Neon also accepts the endpoint id OUTSIDE the hostname, as a libpq option:
+//   postgres://user:pw@pg.neon.tech/db?options=endpoint%3Dep-broad-block-akykk7bw
+// The hostname there carries no marker at all, so hostname matching alone misses it.
+function connectionStringNamesProdEndpoint(connectionString, markers) {
+  if (!connectionString) return false;
+  const decoded = (() => {
+    try {
+      return decodeURIComponent(connectionString);
+    } catch {
+      return connectionString;
+    }
+  })();
+  return markers.some((marker) => decoded.includes(marker));
+}
+
 export function targetIsProd(connectionString, env = process.env) {
   const host = resolveTargetHost(connectionString);
-  if (!host) return false; // local unix socket / no host — never the prod endpoint
-  return prodHostMarkers(env).some((marker) => host.includes(marker));
+  const markers = prodHostMarkers(env);
+
+  // Any appearance of a prod endpoint id anywhere in the connection string — hostname, or the
+  // `options=endpoint%3D…` SNI form — is production.
+  if (connectionStringNamesProdEndpoint(connectionString, markers)) return true;
+  if (host && markers.some((marker) => host.includes(marker))) return true;
+
+  // Allowlist tail: anything that is not demonstrably local is treated as production for a writer.
+  if (!host) return false; // no host at all = local unix socket
+  return !LOCAL_HOST_ALLOWLIST.some((re) => re.test(host));
 }
 
 /**
