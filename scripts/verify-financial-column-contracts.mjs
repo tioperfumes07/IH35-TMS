@@ -42,6 +42,11 @@ const KNOWN_COLUMNS = {
     "source_transaction_id", "idempotency_key", "created_by_user_id",
     "created_at", "updated_at", "completed_at", "error_message", "line_count",
     "source_type", "source_id",
+    // ACCT-LINK-05 (held migration 202607950000_posting_batches_template_link.sql):
+    // additive posting_template_id FK -> catalogs.posting_templates(id) + source_template_code
+    // code-constant stamp. Held for owner Neon-apply; referenced by code ahead of prod apply so
+    // every writer self-resolves the instant the migration lands + templates are seeded.
+    "posting_template_id", "source_template_code",
   ]),
   "accounting.transaction_source_links": new Set([
     "id", "operating_company_id", "journal_entry_posting_id", "linked_object_type",
