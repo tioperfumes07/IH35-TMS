@@ -485,8 +485,8 @@
       "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] ACCT-LINK-01 — additive nullable accounting.journal_entries.journal_entry_type_id → catalogs.journal_entry_types(id) + partial index. Closes the AF-5 metadata-only island (catalog had 16 rows / 0 inbound FKs). App create path is col-gated until Neon-apply. No GL math. NOT YET applied on prod — throwaway PG apply-twice; owner Neon-apply + ledger-backfill; then re-measure inbound FK density before flipping ACCT-LINK-01 to PASS."
     },
     {
-      "file": "202608010000_dispatcher_error_reasons_per_entity.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 1] LST-CAT-06 — catalogs.dispatcher_error_reasons per-entity (owner ruling 2026-07-24 + load-derived entity). Prod lucia: 25 rows, no opco, role-only RLS policies. Adds operating_company_id, seeds every active entity, UNIQUE(opco,code), company_scope FORCE RLS, REVOKE DELETE. Companion route scopes GUC from related load first. NEVER-DELETE (§F.24). Owner Neon-apply + ledger-backfill."
+      "file": "202608000000_payment_terms_posting_templates_per_entity.sql",
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL] LST-F03 — catalogs.payment_terms + catalogs.posting_templates per-entity conversion: add operating_company_id NOT NULL, UNIQUE(opco, name/code), FORCE RLS company_scope, REVOKE DELETE, seed identical payment_terms to every active entity (qbo_terms_id nulled on copies to avoid global UNIQUE collision). posting_templates 0 rows on prod — structure only until owner seeds. Dynamic org.companies.code=TRANSP. NEVER-DELETE (§F.24). Companion factory entityScoped:true."
     },
     {
       "file": "202608020000_acct_link_04_expense_lines_expense_category_fk.sql",
@@ -530,6 +530,10 @@
       "file": "202607810000_accident_reports_capture_fields.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] SAF-F05 — add 7 additive text columns to safety.accident_reports (police_report_number, insurance_claim_number, location, third_party_name, third_party_plate, vendor_invoice_number, bill_or_expense_ref) the accident wizard rendered but silently discarded (no columns existed, verified on Neon br-fancy-credit-akjnd07a). All nullable text, no backfill, inherit table FORCED RLS + 0065 safety-schema grants. insurance_claim_number is the external insurer number, distinct from the insurance_claim_id FK. Posts nothing. Claude migration block 202607810000 (LANE-ASSIGNMENT §2a). Run only on a Neon branch by Jorge, then ledger-backfill. APPLIED on prod Neon + ledger-backfilled (verified 2026-07-25 lucia). Neon 2026-07-25: accident_reports capture text cols present (police_report_number etc.); ledgered. Stamp applied_on_prod for SAF-F08 honesty.",
       "applied_on_prod": true
+    },
+    {
+      "file": "202608010000_dispatcher_error_reasons_per_entity.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] LST-CAT-06 — catalogs.dispatcher_error_reasons per-entity (owner ruling 2026-07-24 + load-derived entity). Prod lucia: 25 rows, no opco, role-only RLS policies. Adds operating_company_id, seeds every active entity, UNIQUE(opco,code), company_scope FORCE RLS, REVOKE DELETE. Companion route scopes GUC from related load first. NEVER-DELETE (§F.24). Owner Neon-apply + ledger-backfill."
     }
   ]
 }

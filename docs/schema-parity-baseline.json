@@ -2133,10 +2133,10 @@
       "id",
       "is_active",
       "label",
-      "operating_company_id",
       "severity",
       "updated_at",
-      "updated_by_user_id"
+      "updated_by_user_id",
+      "operating_company_id"
     ],
     "catalogs.dot_violation_types": [
       "basic_category",
@@ -2467,6 +2467,7 @@
       "early_payment_discount_pct",
       "id",
       "notes",
+      "operating_company_id",
       "qbo_terms_id",
       "terms_name",
       "updated_at",
@@ -2483,6 +2484,7 @@
       "description",
       "id",
       "is_active",
+      "operating_company_id",
       "template_code",
       "template_name",
       "updated_at",
