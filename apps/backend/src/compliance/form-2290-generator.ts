@@ -87,17 +87,108 @@ export function computeForm2290Vehicles(
   });
 }
 
+// ── Form 2290 HVUT due dates (SAF-F32) ─────────────────────────────────────────────────────────
+//
+// IRS rule: the return is due the LAST DAY OF THE MONTH FOLLOWING the month in which the vehicle was
+// first used on public highways during the tax period (July 1 – June 30). Aug 31 is therefore only
+// correct for a vehicle first used in JULY. A truck first used in November is due December 31, not
+// the following August — this module previously returned Aug 31 for every unit regardless of first use,
+// which under-reports the deadline for every mid-year acquisition.
+//
+// When that date falls on a Saturday, Sunday or legal holiday, the filing is timely on the next
+// business day.
+
+const MS_PER_DAY = 86_400_000;
+
+function utc(y: number, m: number, d: number) {
+  return new Date(Date.UTC(y, m, d));
+}
+
+/** nth (1-based) weekday of a month; nth = -1 means the LAST such weekday. */
+function nthWeekdayOfMonth(year: number, month: number, weekday: number, nth: number): Date {
+  if (nth === -1) {
+    const last = utc(year, month + 1, 0);
+    const back = (last.getUTCDay() - weekday + 7) % 7;
+    return utc(year, month, last.getUTCDate() - back);
+  }
+  const first = utc(year, month, 1);
+  const forward = (weekday - first.getUTCDay() + 7) % 7;
+  return utc(year, month, 1 + forward + (nth - 1) * 7);
+}
+
+/**
+ * US federal holidays observed in `year`, as YYYY-MM-DD.
+ *
+ * Fixed-date holidays carry their OBSERVED date: a Saturday holiday is observed the preceding Friday
+ * and a Sunday holiday the following Monday (5 U.S.C. 6103). That rule is why Dec 31 can be a holiday
+ * at all — when Jan 1 falls on a Saturday, New Year's Day is observed on Dec 31 of the prior year,
+ * and Dec 31 is a Form 2290 due date for vehicles first used in November.
+ */
+export function usFederalHolidays(year: number): Set<string> {
+  const out = new Set<string>();
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  const observed = (d: Date) => {
+    const day = d.getUTCDay();
+    if (day === 6) return new Date(d.getTime() - MS_PER_DAY); // Saturday -> Friday
+    if (day === 0) return new Date(d.getTime() + MS_PER_DAY); // Sunday -> Monday
+    return d;
+  };
+  for (const [m, d] of [[0, 1], [5, 19], [6, 4], [10, 11], [11, 25]] as const) {
+    out.add(iso(observed(utc(year, m, d))));
+  }
+  // A Jan 1 that falls on a Saturday is observed on Dec 31 of the PREVIOUS year — so next year's
+  // New Year's Day can land inside this year's calendar. Without this, Dec 31 is missed.
+  out.add(iso(observed(utc(year + 1, 0, 1))));
+  out.add(iso(nthWeekdayOfMonth(year, 0, 1, 3)));   // MLK Jr — 3rd Monday of January
+  out.add(iso(nthWeekdayOfMonth(year, 1, 1, 3)));   // Washington's Birthday — 3rd Monday of February
+  out.add(iso(nthWeekdayOfMonth(year, 4, 1, -1)));  // Memorial Day — LAST Monday of May (can be May 31)
+  out.add(iso(nthWeekdayOfMonth(year, 8, 1, 1)));   // Labor Day — 1st Monday of September
+  out.add(iso(nthWeekdayOfMonth(year, 9, 1, 2)));   // Columbus Day — 2nd Monday of October
+  out.add(iso(nthWeekdayOfMonth(year, 10, 4, 4)));  // Thanksgiving — 4th Thursday of November
+  return out;
+}
+
+/** Roll forward off Saturdays, Sundays and federal holidays. */
+export function nextBusinessDay(date: Date): Date {
+  let d = new Date(date.getTime());
+  // Recomputed per iteration: rolling off Dec 31 crosses into the next year's holiday set.
+  for (let i = 0; i < 10; i += 1) {
+    const day = d.getUTCDay();
+    const isWeekend = day === 0 || day === 6;
+    const isHoliday = usFederalHolidays(d.getUTCFullYear()).has(d.toISOString().slice(0, 10));
+    if (!isWeekend && !isHoliday) return d;
+    d = new Date(d.getTime() + MS_PER_DAY);
+  }
+  return d;
+}
+
+/**
+ * PER-UNIT due date: last day of the month following first use, shifted off weekends/holidays.
+ * `firstUse` is any YYYY-MM-DD in the month of first use.
+ */
+export function form2290DueDateForFirstUse(firstUse: string): string {
+  const used = new Date(`${firstUse.slice(0, 10)}T00:00:00Z`);
+  if (Number.isNaN(used.getTime())) throw new Error(`form2290DueDateForFirstUse: invalid date ${firstUse}`);
+  // Day 0 of month+2 is the last day of month+1 — the month FOLLOWING first use. Date normalises the
+  // December rollover (month index 12 -> January of the next year) without a special case.
+  const lastDayOfNextMonth = utc(used.getUTCFullYear(), used.getUTCMonth() + 2, 0);
+  return nextBusinessDay(lastDayOfNextMonth).toISOString().slice(0, 10);
+}
+
+/**
+ * The ANNUAL deadline — the one the compliance banner shows when no specific unit is in context.
+ * It is the July-first-use case, i.e. Aug 31, now business-day shifted.
+ *
+ * getUTCMonth() is 0-indexed: July=6, August=7, September=8. During all of August the current year's
+ * deadline is still today-or-future, so it remains upcoming; only from September (month > 7) has it
+ * passed and we roll to next year. (`>= 7` here would bump the whole of August a year forward.)
+ */
 export function upcomingForm2290Deadline(reference = new Date()): { deadline: string; daysRemaining: number } {
   const year = reference.getUTCFullYear();
-  // getUTCMonth() is 0-indexed: July=6, August=7, September=8.
-  // The Form 2290 annual deadline is Aug 31 (for vehicles first used in July, tax period begins Jul 1).
-  // During all of August the current year's Aug 31 is still today-or-future, so it remains the upcoming
-  // deadline; only from September onward (month > 7) has this year's Aug 31 passed and we roll to next year.
-  // Using `>= 7` here bumped the entire month of August a full year forward (off-by-one at the boundary).
   const month = reference.getUTCMonth();
   const deadlineYear = month > 7 ? year + 1 : year;
-  const deadline = new Date(Date.UTC(deadlineYear, 7, 31));
-  const daysRemaining = Math.ceil((deadline.getTime() - reference.getTime()) / 86_400_000);
+  const deadline = nextBusinessDay(utc(deadlineYear, 7, 31));
+  const daysRemaining = Math.ceil((deadline.getTime() - reference.getTime()) / MS_PER_DAY);
   return { deadline: deadline.toISOString().slice(0, 10), daysRemaining };
 }
 
