@@ -40,6 +40,8 @@ export type VendorBillFormSubmitPayload = {
   // HARD cross-module link (maintenance): real FKs — only present when linkage props / unit picker set.
   work_order_id?: string;
   unit_id?: string;
+  /** Claim→Bill reverse density — only when linkedClaimId prop set. */
+  insurance_claim_id?: string;
   /** Real bill lines — required for vendor create; createBill persists these in the same txn. */
   lines: VendorBillFormLinePayload[];
 };
@@ -55,6 +57,8 @@ type Props = {
   linkedWoId?: string;
   /** Optional WO-context unit prefill + unit_id fallback when the picker is empty. */
   linkedUnitId?: string;
+  /** Optional insurance.claim id — stamps insurance_claim_id on create (ACCT-F04 reverse density). */
+  linkedClaimId?: string;
   /** Human-readable WO id for memo + banner (maintenance linkage). */
   linkedWoDisplayId?: string;
   /** Pre-select bill type tab (maintenance | repair | fuel | driver | vendor). */
@@ -110,6 +114,7 @@ export function VendorBillForm({
   onSubmit,
   linkedWoId,
   linkedUnitId,
+  linkedClaimId,
   linkedWoDisplayId,
   initialBillType,
   submitLabel = "Create bill",
@@ -323,6 +328,7 @@ export function VendorBillForm({
       // HARD cross-module FKs — only when linkage / picker supplies them.
       ...(linkedWoId ? { work_order_id: linkedWoId } : {}),
       ...(resolvedUnitId ? { unit_id: resolvedUnitId } : {}),
+      ...(linkedClaimId ? { insurance_claim_id: linkedClaimId } : {}),
     });
   }
 
@@ -332,6 +338,14 @@ export function VendorBillForm({
       {linkedWoId && linkedWoDisplayId ? (
         <div className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700">
           Linked — <EntityLink kind="work_order" id={linkedWoId} label={linkedWoDisplayId} />
+        </div>
+      ) : null}
+      {linkedClaimId ? (
+        <div
+          className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700"
+          data-testid="vendor-bill-linked-claim"
+        >
+          Linked claim — <EntityLink kind="claim" id={linkedClaimId} label={linkedClaimId.slice(0, 8)} />
         </div>
       ) : null}
       <TypeTabBar tabs={BILL_TYPE_TABS} activeId={billType} onChange={setBillType} />
