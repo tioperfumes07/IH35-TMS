@@ -2,8 +2,8 @@
   "module": "lists",
   "title": "Lists / Catalogs (Module 12)",
   "complete": false,
-  "as_of": "2026-07-25T05:30:00.000Z",
-  "live_sha": "f3fe299",
+  "as_of": "2026-07-25T15:30:00.000Z",
+  "live_sha": "7875de6",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/lists.md",
   "prod_settlement": "~/Desktop/IH35-CURSOR-AUDIT/modules/lists-PROD-SETTLEMENT-2026-07-24.md",
   "spec_sources": [
@@ -114,9 +114,9 @@
         "VERIFY-4"
       ],
       "spec": "LINKAGE LAW canonical: catalogs.load_cancellation_reasons",
-      "status": "FAIL",
-      "evidence": "Neon lucia: dispatch.load_cancellations has BOTH FKs; reason_code is NOT NULL -> catalogs.cancellation_reasons (legacy, 9 rows, RLS OFF); 36/36 active per-entity codes absent from legacy. cancellation.service.ts:47-80 reads the per-entity catalog and writes only reason_code, never reason_code_id. P0.",
-      "pr": null,
+      "status": "UNVERIFIED",
+      "evidence": "CODE-COMPLETE on main + SCHEMA VERIFIED, LIVE UNVERIFIED. Prod (lucia 2026-07-25): dispatch.load_cancellations has reason_code_id with FK -> catalogs.load_cancellation_reasons, NO legacy reason_code FK remains, reason_code is nullable. Writer resolves+writes reason_code_id from the LOAD's entity (#3436); the SECOND writer (PATCH /mdata/loads/:id/status, the Kanban path) wrote NO cancellation row at all and now goes through one shared writeLoadCancellationRecord() (#3497), guard verify-steps/1363 bans a second INSERT site. UNVERIFIED — needs live check: cancel via EACH route, confirm a dispatch.load_cancellations row with reason_code_id set.",
+      "pr": 3497,
       "owner_hold": false,
       "tracker": null,
       "future_block": null
@@ -129,9 +129,9 @@
         "VERIFY-3"
       ],
       "spec": "PER-PR/EVERY-PR checklist: honest counts",
-      "status": "FAIL",
-      "evidence": "BROWSER-VERIFIED 2026-07-24 19:55 CT, app.ih35dispatch.com/lists as tioperfumes07@gmail.com, company='IH 35 Transportation' (TRANSP), live_sha 2088757. Domain badges rendered: SAFETY 30 · MAINTENANCE 0 · DISPATCH 6 · FUEL 15 · DRIVERS 48 · FLEET 20 · ACCOUNTING 531 · NAMES MASTER 0. Understatement now proven end-to-end: SAFETY badge 30 vs true 372 (+complaint_types 271, +dot_violation_types 71, +cargo_claim_reasons 0) = -342; DISPATCH 6 vs 18 (+load_cancellation_reasons 12) = -12; DRIVERS 48 vs 64 (+driver_termination_reasons 16) = -16; ACCOUNTING 531 vs 709 (+account_types 15, +detail_types 144, +void_cancel_reasons 6, +JE 16-vs-literal-3 = 13) = -178. TOTAL TRANSP understatement 548 active rows — matches the static prediction exactly.",
-      "pr": null,
+      "status": "UNVERIFIED",
+      "evidence": "CODE-COMPLETE on main, LIVE UNVERIFIED. lists-module-count-spec.ts now carries every DOMAIN_CONFIG catalog (safety 6/6, accounting 16/16) and lists-hub.routes.ts reads the count-spec, not a QBO-remote view (#3441 7782cc935d, #3467 8ed0d1a602, #3471 a989475c2b; vitest 15/15). UNVERIFIED — needs live check: browser /lists on TRANSP+USMCA, ribbon badge per domain == lucia count(*) per catalog.",
+      "pr": 3441,
       "owner_hold": false,
       "tracker": null,
       "future_block": null
@@ -143,9 +143,9 @@
         "DOD-E"
       ],
       "spec": "verify-no-hardcoded-list-counts",
-      "status": "FAIL",
-      "evidence": "lists-module-count-spec.ts:96 ACCOUNTING_JOURNAL_ENTRY_TYPES_COUNT=3 added to the live count; Neon lucia catalogs.journal_entry_types=16 all active. Guard scans only 4 frontend files so it cannot see it.",
-      "pr": null,
+      "status": "UNVERIFIED",
+      "evidence": "CODE-COMPLETE on main, LIVE UNVERIFIED. The hardcoded ACCOUNTING_JOURNAL_ENTRY_TYPES_COUNT=3 literal is gone (journal_entry_types is a real count-spec row) and verify-no-hardcoded-list-counts.mjs was widened to scan the BACKEND count-source files, closing the wrong-surface blind spot. RESIDUAL: that guard has no --selftest that can fail — tracked as a guard-suite item.",
+      "pr": 3441,
       "owner_hold": false,
       "tracker": null,
       "future_block": null
@@ -158,9 +158,9 @@
         "VERIFY-7"
       ],
       "spec": "Rule 05 tab law / hub reachability",
-      "status": "FAIL",
-      "evidence": "BROWSER-VERIFIED 2026-07-24 19:55 CT, app.ih35dispatch.com/lists as tioperfumes07@gmail.com, company='IH 35 Transportation' (TRANSP), live_sha 2088757. Domain badges rendered: SAFETY 30 · MAINTENANCE 0 · DISPATCH 6 · FUEL 15 · DRIVERS 48 · FLEET 20 · ACCOUNTING 531 · NAMES MASTER 0. Drivers domain renders exactly 10 catalogs (CDL Endorsements, CDL Restrictions, Driver Deduction Types, Driver Pay Types, Employment Status, Escrow Types, License Classes, Medical Card Status, Pay Rate Templates, Termination Reasons). 'Driver Load Statuses' is ABSENT from the hub map although the route /catalogs/driver-load-statuses is mounted and the catalog is in catalogs.catalog_registry with 39 rows. Zero click path from Lists.",
-      "pr": null,
+      "status": "UNVERIFIED",
+      "evidence": "CODE-COMPLETE on main, LIVE UNVERIFIED. Driver Load Statuses added to DOMAIN_CONFIG (AllCatalogsMap.tsx:61-62) with buildCatalogPath mapping; verify-steps/1452 wired. All 8 catalogs.catalog_registry codes now have a hub tile. UNVERIFIED — needs live check: browser click path from /lists to each converted catalog.",
+      "pr": 3471,
       "owner_hold": false,
       "tracker": null,
       "future_block": null
@@ -173,9 +173,9 @@
         "DOD-E"
       ],
       "spec": "catalog-registry.routes.ts",
-      "status": "FAIL",
-      "evidence": "POST accepts any code matching ^[A-Z][A-Z0-9_]+$ but fetchCatalogStats returns item_count 0 for codes outside a hardcoded 8-entry map and the preview zod enum 400s. Neon lucia: catalog_registry=8 rows (latent today).",
-      "pr": null,
+      "status": "UNVERIFIED",
+      "evidence": "CODE-COMPLETE on main, LIVE UNVERIFIED. One source of truth (CATALOG_REGISTRY_STATS_SQL) now derives the enum, the create schema and the stats lookup, so a code the read surfaces cannot serve can no longer be created; stats report stats_supported instead of a fabricated 0. Guard verify-steps/1360, FAIL-on-bug proven (5 findings vs pre-fix main). UNVERIFIED — needs live check: authenticated POST /api/v1/catalogs/registry {code:'FOO_BAR'} must return 400, not 201.",
+      "pr": 3489,
       "owner_hold": false,
       "tracker": null,
       "future_block": null
@@ -261,9 +261,9 @@
         "DOD-C"
       ],
       "spec": "VERIFY-2 clause 5 — writes the canonical table the picker reads",
-      "status": "FAIL",
-      "evidence": "CONFIRMED MISMATCH on kind 'item': the picker READS mdata.qbo_items (the QBO mirror) via accounting/items.routes.ts:88-105 and maintenance/wo-cost-context.routes.ts:35-49, while inline create WRITES catalogs.items (canonical) via QuickCreateEntityModal.tsx:174-203. An item created from the WO/Bill quick-create is INVISIBLE in that same picker after reload — the exact 'diesel category never appears' failure. NOTE, correcting the 2026-07-23 lists.md audit: it claimed TWO mismatches (item and category); 'category' now reads AND writes catalogs.accounts and is CLEAN. Only 'item' mismatches. vendor/customer/account/class/service/part all verified same-table. Lane: items.routes.ts is accounting (Cursor) and wo-cost-context is maintenance — flagged, not built here.",
-      "pr": null,
+      "status": "UNVERIFIED",
+      "evidence": "CODE-COMPLETE on main, LIVE UNVERIFIED. accounting/items.routes.ts + maintenance/wo-cost-context.routes.ts now read FROM catalogs.items (not mdata.qbo_items), matching what inline create writes; guard verify-item-picker-canonical-table.mjs passes. RESIDUAL (new, unlisted): useAccountingCategoriesQuery -> /api/v1/accounting/categories still reads the mdata.qbo_accounts MIRROR; dormant only because the canonical query wins while non-empty. UNVERIFIED — needs live check: create a category via the picker on TRANSP+USMCA, confirm it appears and survives reload.",
+      "pr": 3442,
       "owner_hold": false,
       "tracker": null,
       "future_block": null
@@ -282,6 +282,82 @@
       "owner_hold": false,
       "tracker": null,
       "future_block": null
+    },
+    {
+      "pr": 3491,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null,
+      "id": "LST-ORPH-01",
+      "title": "No fixture writer can reach production",
+      "layers": [
+        "DOD-E",
+        "VERIFY-8"
+      ],
+      "spec": "Rule 10 verification discipline + Rule 07 never-delete",
+      "status": "PASS",
+      "evidence": "ROOT CAUSE of LST-SEED-01. verify-no-cross-carrier-data-leak.mjs had NO prod refusal (dotenv resolves .env's prod DATABASE_DIRECT_URL) and wrote 259 'USMCA-1 leak test' rows into live catalogs.complaint_types; its DELETE cleanup threw permission-denied under SET ROLE ih35_app on EVERY run and was swallowed by .catch(()=>{}). Fixed: shared prod-target refusal (#3476) hardened to a union+allowlist that also catches Neon's options=endpoint SNI form and localhost tunnels (#3491); harness rebuilt to rollback-only fixtures. LIVE PROOF: matrix - prod direct/SNI/both env overrides/unknown host all REFUSED, localhost+socket ALLOWED; harness 3/3 PASS with 0 residue. Guard verify-steps/1353, 13 planted defects."
+    },
+    {
+      "pr": 3494,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null,
+      "id": "LST-ORPH-02",
+      "title": "Held-migration registry reports applied state truthfully",
+      "layers": [
+        "DOD-E",
+        "VERIFY-3"
+      ],
+      "spec": "Rule 10 (ledgered != effective) + Rule 13 build-and-HOLD",
+      "status": "UNVERIFIED",
+      "evidence": "db/migrations/.held-migrations.json is a DO-NOT-RUN marker-mirror, not an applied-state tracker: 9 duplicate entries, 7 with contradictory applied_on_prod, and GUARD's live cross-check proves 99 of 111 held files are ALREADY APPLIED on prod (_system._schema_migrations, 727 rows). verify-schema-parity-from-prod (step 1437) derives its held-unapplied column set from this file, so it was fed systematically wrong input - the root cause of the SAF-F02/F04 and ACCT-F02 false premises. #3494 landed dedupe + stamping + an offline parity guard. UNVERIFIED — needs live check: amend to the ledger-verified 99/111 with the applied_held split leaving exactly the 12 genuinely-unapplied, and reconcile the 3-row dual-ledger drift."
+    },
+    {
+      "pr": 3496,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null,
+      "id": "LST-ORPH-03",
+      "title": "Entity resolver never resolves a company the caller cannot access",
+      "layers": [
+        "DOD-C",
+        "VERIFY-5",
+        "VERIFY-8"
+      ],
+      "spec": "Rule 14 entity-scope + DoD §2.4",
+      "status": "UNVERIFIED",
+      "evidence": "TWO defects pulling opposite ways. M1 (latent): the default-resolution COALESCE filtered arm 2 by org.user_accessible_company_ids() but NOT arm 1, so a default outside the accessible set resolved to a non-member company - and scheduled-report-admin feeds that id into set_config('app.operating_company_id'), running the whole request's RLS under it. GRANTLESS-403 (LIVE): four non-Owner prod accounts (Administrator/Dispatcher/Manager/Safety) have a default_company_id and ZERO org.user_company_access rows, so the requested-branch membership check 403'd them for EVERY company including their own default, across 546 frontend files that pass operating_company_id. LIVE PROOF: prod simulation across all 13 accounts with a default - the 4 go old_allowed=null -> new_allowed=TRANSP (own default only), newly_denied null for all 13. ROOT CAUSE IS DATA: those 4 accounts need real grant rows (org.* = owner-gated). Guard verify-steps/1362."
+    },
+    {
+      "pr": null,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null,
+      "id": "LST-ORPH-04",
+      "title": "Guard-suite integrity: unique step numbers + no unwired guards",
+      "layers": [
+        "DOD-E"
+      ],
+      "spec": "Rule 17 verify-steps-only + DoD §4 guard rules",
+      "status": "OPEN",
+      "evidence": "87 distinct numeric-prefix collision groups in scripts/verify-steps/ (some 4-6 files sharing one number). Loader-verified NOT to shadow anything (verify-pre-commit.mjs enumerates full filenames), so this is a TRACEABILITY defect: the git-gate requires an unambiguous GUARD: scripts/verify-steps/NNN- reference and a collision makes it ambiguous. Separately scripts/.guard-exempt.json lists 336 guards that are package.json-only and executed by NO workflow. No guard enforces either invariant."
+    },
+    {
+      "pr": null,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null,
+      "id": "LST-ORPH-05",
+      "title": "Catalog inventory reconciled: every catalogs.* table classified",
+      "layers": [
+        "DOD-A",
+        "VERIFY-3",
+        "VERIFY-7"
+      ],
+      "spec": "Rule 21 no-partial-amnesia + FINAL-TABLES §A.1",
+      "status": "OPEN",
+      "evidence": "LIVE (lucia 2026-07-25): 113 catalogs.* BASE TABLES on prod vs 76 DOMAIN_CONFIG hub tiles => ~37 tables with no hub tile. Some are legitimately headless system lookups (audit_event_types, file_categories, excel_upload_jobs, fmcsa_lookups, workflow_requests, equipment_types_dedup_ledger_0318) and one is the RETIRE catalogs.cancellation_reasons which must NEVER gain an editable route. Needs classification (routed / headless-by-design / RETIRE), not bulk routing. This is the enumeration LST-F22/F23 were blocked on."
     }
   ],
   "M": 18

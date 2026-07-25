@@ -2,8 +2,8 @@
   "module": "safety",
   "title": "Safety (Module 3)",
   "complete": false,
-  "as_of": "2026-07-25T04:30:00Z",
-  "live_sha": "2088757",
+  "as_of": "2026-07-25T15:30:00.000Z",
+  "live_sha": "7875de6",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/safety.md",
   "spec_sources": [
     "docs/specs/DEFINITION-OF-DONE.md",
@@ -479,6 +479,99 @@
       "owner_hold": false,
       "tracker": null,
       "future_block": null
+    },
+    {
+      "pr": null,
+      "owner_hold": false,
+      "tracker": "docs/trackers/ESCROW-FORFEIT-DESIGN-HOLD-2026-07-25.md",
+      "future_block": "SAF-ORPH-01-FIX",
+      "id": "SAF-ORPH-01",
+      "title": "Escrow forfeiture moves the balance in the correct direction",
+      "layers": [
+        "DOD-D",
+        "VERIFY-6"
+      ],
+      "spec": "Rule 13 financial + driver escrow = LIABILITY (owner-locked)",
+      "status": "FAIL",
+      "evidence": "P0 MONEY DIRECTION, prod-verified verbatim. accounting.apply_escrow_posting_delta(): deposit -> +amount, release -> -amount, ELSE -> +amount. The forfeit posts posting_type='adjustment' with a POSITIVE amount, so a forfeiture INCREASES accounting.escrow_accounts.balance_cents while the JE DEBITS (reduces) the escrow liability - GL and subledger diverge by 2x the forfeit. LATENT: all escrow subledgers are 0 rows on prod and DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED has NO row in lib.feature_flags at all (unknown key resolves false), so the route returns 409 forever and there is no enable path. FINANCIAL - build-and-HOLD, CPA VETO, owner Neon-applies; no agent flips that flag."
+    },
+    {
+      "pr": null,
+      "owner_hold": false,
+      "tracker": "docs/trackers/ESCROW-FORFEIT-DESIGN-HOLD-2026-07-25.md",
+      "future_block": "SAF-ORPH-01-FIX",
+      "id": "SAF-ORPH-02",
+      "title": "Escrow forfeiture writes the canonical driver subledger",
+      "layers": [
+        "DOD-C",
+        "VERIFY-4"
+      ],
+      "spec": "Rule 14 both-way linkage + driver_finance.* canonical",
+      "status": "FAIL",
+      "evidence": "SPLIT-BRAIN subledger. The forfeit writes accounting.escrow_postings only, while EVERY driver-facing balance reads driver_finance.escrow_balances / escrow_ledger (banking escrow visualizer + register, driver-detail Escrow History, the over-draw guard in escrow-forfeit.service.ts). So the balance the over-draw check reads NEVER decrements - the same escrow could be forfeited repeatedly - and no driver-facing surface shows a forfeit. driver_finance.escrow_ledger already carries an UNUSED 'forfeit' value in its transaction_type CHECK. LATENT: both subledgers are 0 rows on prod today. Fixing SAF-ORPH-01 alone leaves this open, so they are ONE CPA review."
+    },
+    {
+      "pr": null,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null,
+      "id": "SAF-ORPH-03",
+      "title": "Forfeiture Audit panel can render a row",
+      "layers": [
+        "DOD-A",
+        "DOD-E"
+      ],
+      "spec": "Rule 04 no phantom columns + Rule 16 no swallowed errors",
+      "status": "OPEN",
+      "evidence": "PHANTOM COLUMN, prod-verified. driver_finance.escrow_ledger has 11 columns and NO posted_at, yet deductions.routes.ts:147 does ORDER BY posted_at -> 42703, swallowed by getEscrowDriverTimeline(...).catch(()=>({timeline:[]})). forfeiture_history_count is therefore always 0 and the Safety Forfeiture Audit panel is STRUCTURALLY incapable of ever showing a row. Non-financial, builder's lane: order by created_at (what sibling readers use) + a guard failing on ORDER BY of a column absent from the table."
+    },
+    {
+      "pr": null,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null,
+      "id": "SAF-ORPH-04",
+      "title": "Form 2290 deadline is per-unit and business-day correct",
+      "layers": [
+        "DOD-D",
+        "DOD-E"
+      ],
+      "spec": "Rule 15 research mandate — IRS Form 2290 instructions / FMCSA",
+      "status": "OPEN",
+      "evidence": "The hardcoded 'Aug 31' STRING was removed, but the server computation it now trusts is still wrong twice. upcomingForm2290Deadline() always returns Aug 31 for the WHOLE company, ignoring per-unit first use - per IRS Form 2290 a vehicle first used after July is due the last day of the month following first use (a truck placed in service in October is due Nov 30) and this banner would never surface it; the per-unit proration that exists affects the TAX AMOUNT, not the DUE DATE. And there is NO weekend/holiday shift: Aug 31 2026 is a Monday so it is dormant, but 2024 (Saturday) and 2025 (Sunday) would have mis-rendered. The existing guard asserts only ISO shape and a 0-366 bound, so it would catch neither."
+    },
+    {
+      "pr": null,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null,
+      "id": "SAF-ORPH-05",
+      "title": "Every Safety tab passes a DoD click-through",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-E",
+        "VERIFY-1",
+        "VERIFY-7"
+      ],
+      "spec": "Rule 05 tab law + Rule 21 (wave slice != module)",
+      "status": "OPEN",
+      "evidence": "COVERAGE GAP, not a defect. SAFETY_TABS_CONFIG.ts declares SAFETY_CANONICAL_TAB_COUNT=28 / GROUP_COUNT=9, but the 32 SAF-B## items are BOUNDARIES, not tabs - there is no per-tab item and no per-tab sweep has run. 23 of the 32 boundaries are UNVERIFIED with the identical evidence 'Code merged; NO live proof'. Until a per-tab click-through exists on TRANSP+USMCA, Safety tab coverage is UNKNOWN rather than complete. This is the single largest blocker in the module."
+    },
+    {
+      "pr": null,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null,
+      "id": "SAF-ORPH-06",
+      "title": "External-fine lifecycle actions reachable from the UI",
+      "layers": [
+        "DOD-A",
+        "DOD-B"
+      ],
+      "spec": "DoD §1A active path",
+      "status": "OPEN",
+      "evidence": "Four FULLY BUILT, audited backend routes on safety.civil_fines - contest (fines.routes.ts:463), dismiss (:494), reduce (:525, with an owner-ruling guard against reducing a converted fine), link-payment (:616) - have ZERO frontend callers. FineDetailDrawer.tsx renders only 'Convert to Driver Liability'; apps/frontend/src/api/safety.ts exports no caller for any of the four. Also civil_fines.issued_by_authority is free text with no mdata.vendors FK, so there is no AP path to the authority at all (that half is FINANCIAL-HOLD)."
     }
   ],
   "M": 32
