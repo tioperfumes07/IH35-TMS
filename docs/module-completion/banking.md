@@ -1,14 +1,14 @@
 # Module completion — Banking (Module 4)
 
-**PROGRESS: 5 of 13** · complete: `false` · as_of: 2026-07-25T04:31:53.470Z · live_sha: `fc1cf13`
+**PROGRESS: 6 of 13** · complete: `false` · as_of: 2026-07-25T04:32:48.689Z · live_sha: `fc1cf13`
 
 | Status | Count |
 |---|---:|
-| PASS | 5 |
+| PASS | 6 |
 | HOLD | 0 |
 | OPEN | 0 |
 | FAIL | 6 |
-| UNVERIFIED | 2 |
+| UNVERIFIED | 1 |
 
 | ID | Status | Title | Evidence | PR |
 |---|---|---|---|---|
@@ -21,7 +21,7 @@
 | `BANK-SURF-02` | **FAIL** | Categorize / Match — VERIFY-1..8 + JE when flag ON | Same as BANK-ECON-02: 10619 pending; when categorized (n=3) JE stamped 100%. Active UI calls /categorize-bulk with poster after #3424. | #3424 |
 | `BANK-SURF-03` | **FAIL** | Transfers UI + poster path — live economics | transfers=0; owner Option 1 for unpaired feed | — |
 | `BANK-SURF-04` | **FAIL** | Reconciliation workspace — live session + zero-diff | sessions=0 | #3417 |
-| `BANK-SURF-05` | **UNVERIFIED** | Factoring / Escrow / Relay / Plaid / Statement Import — active path + honest empty | Tabs reachable; economics not module-closed | — |
+| `BANK-SURF-05` | **PASS** | Factoring / Escrow / Relay / Plaid / Statement Import — active path + honest empty | BANK-F06 structural: Factoring/Escrow/Relay/Plaid/Statement Import routes+tabs+sidebar mounted (never-delete). Guard verify-bank-surf-entry-tabs (+step 1440). Neon economics for money leaves remain under BANK-F01–F03. | #3459 |
 | `BANK-LINK-01` | **UNVERIFIED** | Bank txn ↔ Bill/Payment/Transfer EntityLink both-way with Neon FKs | Code paths exist; density proves almost no JE links | — |
 | `BANK-CTRL-01` | **PASS** | BANK_FEED_GL_POSTING_ENABLED default OFF; no invented JE | Flags OFF by design; poster gated | — |
 | `BANK-GATE-01` | **PASS** | Every banking money PR uses EVERY-PR checklist — process closed | #3430 merged on main (sha fc1cf13); verify-step 1430 enforces EVERY-PR checklist trailers on banking money commits | #3430 |

@@ -2,7 +2,7 @@
   "module": "banking",
   "title": "Banking (Module 4)",
   "complete": false,
-  "as_of": "2026-07-25T04:31:53.470Z",
+  "as_of": "2026-07-25T04:32:48.689Z",
   "live_sha": "fc1cf13",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md",
   "spec_sources": [
@@ -139,9 +139,9 @@
         "VERIFY-7"
       ],
       "spec": "Banking entry tabs \u00b7 never-delete",
-      "status": "UNVERIFIED",
-      "evidence": "Tabs reachable; economics not module-closed",
-      "pr": null
+      "status": "PASS",
+      "evidence": "BANK-F06 structural: Factoring/Escrow/Relay/Plaid/Statement Import routes+tabs+sidebar mounted (never-delete). Guard verify-bank-surf-entry-tabs (+step 1440). Neon economics for money leaves remain under BANK-F01\u2013F03.",
+      "pr": "#3459"
     },
     {
       "id": "BANK-LINK-01",
