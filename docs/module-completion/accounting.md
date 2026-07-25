@@ -1,14 +1,14 @@
 # Module completion — Accounting (Module 3)
 
-**PROGRESS: 9 of 27** · complete: `false` · as_of: 2026-07-25T19:00:00.000Z · live_sha: `a3f9c12`
+**PROGRESS: 8 of 27** · complete: `false` · as_of: 2026-07-25T19:00:00.000Z · live_sha: `a3f9c12`
 
 | Status | Count |
 |---|---:|
-| PASS | 9 |
+| PASS | 8 |
 | HOLD | 0 |
 | OPEN | 0 |
 | FAIL | 13 |
-| UNVERIFIED | 5 |
+| UNVERIFIED | 6 |
 
 | ID | Status | Title | Evidence | PR |
 |---|---|---|---|---|
@@ -38,6 +38,6 @@
 | `ACCT-CTRL-01` | **PASS** | Parallel books — refuse invented TMS JE for qbo-sourced money | Refuse-GL paths merged; flags default OFF | #3386 |
 | `ACCT-CTRL-02` | **PASS** | CoA roles resolvable under lucia + company GUC (not false-empty) | chart_of_accounts_roles=89 with lucia | #3400 |
 | `ACCT-GATE-01` | **PASS** | Every money PR uses EVERY-PR checklist (VERIFY-1..8) — process closed | #3430 merged on main (sha fc1cf13); verify-steps 1430+1431 + Rule 24 live; money PRs require MODULE_PROGRESS trailers | #3430 |
-| `ACCT-R-11` | **PASS** | Bank categorize capture fields sent to API and persisted on bank_transactions | BankingTransactionsDesignView postTransaction sends check_number/class_id/location/is_billable/tags; categorization.routes.ts accepts + UPDATE persists all five columns; Plaid list SELECT hydrates; held migration 202607690000 owner-applied on Neon prod 2026-07-25; guard verify-acct-r11-tx-fields-sent step 1490. Desktop browser TRANSP+USMCA click-through UNVERIFIED. | — |
+| `ACCT-R-11` | **UNVERIFIED** | Bank categorize capture fields sent to API and persisted on bank_transactions | Wiring on main + static guard verify-acct-r11-tx-fields-sent (step 1490) PASS. LIVE PROOF UNVERIFIED — need authenticated TRANSP+USMCA categorize→reload hydrate before PASS (Rule 23). mig 202607690000 already Neon-applied 2026-07-25. | — |
 
 Desktop audit: ~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md
