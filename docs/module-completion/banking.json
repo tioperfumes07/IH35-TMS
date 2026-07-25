@@ -59,11 +59,12 @@
         "VERIFY-6"
       ],
       "spec": "Reconciliation",
-      "status": "FAIL",
+      "status": "HOLD",
+      "owner_hold": true,
       "tracker": "hold/bank-econ-04-recon-session-live-path-20260725",
-      "future_block": "BANK-ECON-04-OPS \u2014 run recon start/complete until reconciliation_sessions>0; browser DoD (mig 202608030000 already Neon-applied)",
-      "evidence": "REWRITE 2026-07-25: db/migrations/202608030000_bank_accounts_rls_bypass_lucia.sql is APPLIED on Neon \u2014 not a Neon-apply HOLD. Schema unblocked. Neon lucia reconciliation_sessions still 0 = ops-density / browser (or residual app bug chase with fresh evidence). Do not re-hold for owner Neon-apply of 202608030000. Flags stay OFF. OWNER decides cutover. See docs/trackers/acct-bank-remaining-blocks-2026-07-25/BANK-ECON-04-recon-sessions-ops-density.md",
-      "pr": "schema-live \u2014 ops/browser remaining"
+      "future_block": "BANK-ECON-04-NEON-APPLY \u2014 Neon-applied 2026-07-25 18:12:30; GUARD re-verifies reconciliation_sessions>0 with app.bypass_rls='lucia' live on prod (ops/browser proof still pending)",
+      "evidence": "Owner Neon-apply completed 2026-07-25 18:12:30 by neondb_owner (mig 202608030000, PR #3454 merged). GUARD live-verified both ledgers (_system._schema_migrations + ih35_migrations), checksum 31f959\u20265e5f matches repo file. LIVE: banking.bank_accounts now has 2 lucia-bypass policies. Root cause (proven live 2026-07-25): banking.bank_accounts policy bank_accounts_company_scope (0072) had no app.bypass_rls='lucia' escape \u2014 POST /reconciliation/start and /upload-statement resolve bank_account_id via withLuciaBypass (sentinel operating_company_id) BEFORE the real company is known, so every attempt 404s bank_account_not_found before any INSERT, for every operator, since table creation. Reproduced the exact 404 on a local migrated Postgres by reverting the policy, then reproduced 4/4 green (start, role-gate 403, #3417 zero-diff close, non-zero-variance Owner-only force-close w/ reason) with the fix applied \u2014 apps/backend/src/banking/__tests__/reconciliation-start-session-live-path.integration.test.ts. Still HOLD, not PASS: applied \u2260 audited \u2014 reconciliation_sessions>0 ops/browser re-proof (Rule 23) not yet performed. GUARD: verify-bank-accounts-rls-bypass-lucia + verify-banking-recon-start-session-wired + verify-bank-econ-04-honesty-keep (step 1485).",
+      "pr": "#3454 MERGED \u2014 Neon-applied 2026-07-25 18:12:30 (hold/bank-econ-04-recon-session-live-path-20260725)"
     },
     {
       "id": "BANK-ECON-05",
@@ -129,11 +130,12 @@
         "VERIFY-1"
       ],
       "spec": "Recon",
-      "status": "UNVERIFIED",
+      "status": "HOLD",
+      "owner_hold": true,
       "tracker": "hold/bank-econ-04-recon-session-live-path-20260725",
-      "future_block": "BANK-SURF-04-OPS \u2014 browser recon workspace TRANSP+USMCA after sessions>0 (mig 202608030000 applied)",
-      "evidence": "REWRITE 2026-07-25: companion to BANK-ECON-04 \u2014 202608030000 APPLIED. Workspace wiring treated live; SURF PASS blocked only by ops/browser proof (Rule 23), not Neon-apply. See BANK-SURF-04-recon-workspace-ops-browser.md in acct-bank-remaining-blocks packet.",
-      "pr": "schema-live \u2014 ops/browser remaining"
+      "future_block": "BANK-ECON-04-NEON-APPLY \u2014 Neon-applied 2026-07-25 18:12:30; GUARD re-verifies reconciliation_sessions>0 with app.bypass_rls='lucia' live on prod (ops/browser proof still pending)",
+      "evidence": "Owner Neon-apply completed 2026-07-25 18:12:30 by neondb_owner (PR #3454 MERGED, mig 202608030000, checksum 31f959\u20265e5f, see BANK-ECON-04 for full evidence + live-Postgres proof). Workspace UI, POST /start, POST /complete, and #3417 zero-diff logic are all correctly wired and correctly implemented \u2014 the account lookup ahead of them no longer 404s first now that the lucia-bypass policy escape is live. Still HOLD, not PASS: applied \u2260 audited \u2014 reconciliation_sessions>0 ops/browser re-proof (Rule 23) not yet performed. KEEP-GUARD: verify-bank-econ-04-honesty-keep (step 1485).",
+      "pr": "#3454 MERGED \u2014 Neon-applied 2026-07-25 18:12:30 (hold/bank-econ-04-recon-session-live-path-20260725)"
     },
     {
       "id": "BANK-SURF-05",
