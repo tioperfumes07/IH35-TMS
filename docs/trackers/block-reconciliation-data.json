@@ -1,26 +1,26 @@
 {
  "date": "2026-07-25",
- "generated_at_iso": "2026-07-25T04:14:12.819Z",
+ "generated_at_iso": "2026-07-25T07:44:01.349Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
   "NEEDS-VERIFY": 72,
-  "DONE": 670,
+  "DONE": 671,
   "AUDIT-NOTE": 415
  },
  "universe": {
-  "total_blocks_after_dedup": 1191,
+  "total_blocks_after_dedup": 1192,
   "by_source_after_dedup": {
-   ".block-ready": 1019,
+   ".block-ready": 1020,
    "program": 61,
    "enterprise-29": 29,
    "accounting": 25,
    "gap-spec": 57
   },
   "raw_file_counts": {
-   ".block-ready (*.json files)": 1372,
+   ".block-ready (*.json files)": 1373,
    ".block-ready retired (dup/stale/superseded, excluded)": 348,
-   ".block-ready active (counted)": 1024
+   ".block-ready active (counted)": 1025
   },
   "note": "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by UNIQUE block_id, EXCLUDING files with EXPLICIT retirement markers (_DUP/_STALE/_SUPERSEDED underscore suffixes, status superseded/duplicate/dup/stale, or superseded_by/duplicate_of). Hyphen descriptive …-stale/…-duplicate live defect IDs are NOT retired by filename alone. So the block count is neither the raw .block-ready file count nor inflated by duplicate/retired registrations."
  },
@@ -799,10 +799,10 @@
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #3348 title-match only, unverified",
+   "evidence": "PR #3467 title-match only, unverified",
    "name": "",
    "registered_on": null,
-   "pr": 3348
+   "pr": 3467
   },
   {
    "id": "f-02-jump-to-tab-nonstandard",
@@ -1946,6 +1946,17 @@
    "name": "Accounting integrity: verify and extend 4 items (period lock CI, bank-recon cron, accounting probes, CoA role bindings s",
    "registered_on": null,
    "pr": 816
+  },
+  {
+   "id": "ACCT-LINK-04-EXPENSE-CATEGORY-FK",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #3446 merged 2026-07-25",
+   "name": "ACCT-LINK-04 (spec ACCT-F07) — catalogs.expense_categories has 0 inbound FKs on prod. accounting.expense_lines.expense_c",
+   "registered_on": null,
+   "pr": 3446
   },
   {
    "id": "ACCT-QBOPAR-00-DESIGN-LOCK",
@@ -13162,6 +13173,144 @@
  ],
  "merged_prs": [
   {
+   "number": 3479,
+   "title": "docs(lists): LST-RLS-01 — catalog scoping decided by opco VALUES + policy, not column presence",
+   "mergedAt": "2026-07-25T07:28:04Z",
+   "branch": "feat/block14-catalog-scoping-classification"
+  },
+  {
+   "number": 3477,
+   "title": "[HOLD] ACCT-08: freeze SURF-01…09 map + SURF-01 Bills deep DoD guard",
+   "mergedAt": "2026-07-25T07:43:23Z",
+   "branch": "hold/acct-surf-01-bills-dod-20260725"
+  },
+  {
+   "number": 3476,
+   "title": "fix(lists): LST-SEED-01 — a test harness wrote 259 rows into live catalogs.complaint_types",
+   "mergedAt": "2026-07-25T05:20:22Z",
+   "branch": "fix/lst-seed-01-leak-test-pollution-guard"
+  },
+  {
+   "number": 3474,
+   "title": "[HOLD] docs(acct/lists): CoA is_postable asymmetry OWNER-EYES",
+   "mergedAt": "2026-07-25T07:24:41Z",
+   "branch": "hold/coa-postable-asymmetry-owner-eyes-20260725"
+  },
+  {
+   "number": 3473,
+   "title": "[HOLD] docs(lists)+guard: GLOBAL-BY-DESIGN catalog registry",
+   "mergedAt": "2026-07-25T07:24:32Z",
+   "branch": "hold/lst-global-by-design-registry-20260725"
+  },
+  {
+   "number": 3472,
+   "title": "[HOLD-FOR-JORGE · FINANCIAL] fix(lists): LST-CAT-06 — dispatcher_error_reasons per-entity",
+   "mergedAt": "2026-07-25T07:43:16Z",
+   "branch": "hold/lst-cat-06-dispatcher-error-reasons-20260725"
+  },
+  {
+   "number": 3471,
+   "title": "[HOLD] fix(lists): LST-A-01 — Driver Load Statuses on Lists hub",
+   "mergedAt": "2026-07-25T07:22:08Z",
+   "branch": "hold/lst-a01-driver-load-statuses-hub-20260725"
+  },
+  {
+   "number": 3470,
+   "title": "[HOLD] fix(lists): LST-F05 — FMCSA stops lowest-UUID entity hijack",
+   "mergedAt": "2026-07-25T07:24:06Z",
+   "branch": "hold/lst-f05-no-lowest-uuid-20260725"
+  },
+  {
+   "number": 3469,
+   "title": "[HOLD] docs(lists)+guard: LST-PICKER-01 inventory + universal picker law",
+   "mergedAt": "2026-07-25T07:22:02Z",
+   "branch": "hold/lst-picker-01-inventory-guard-20260725"
+  },
+  {
+   "number": 3468,
+   "title": "[HOLD] fix(lists): LST-F02b — fleet factory requires explicit companyScoped",
+   "mergedAt": "2026-07-25T07:02:28Z",
+   "branch": "hold/lst-f02-fleet-factory-explicit-scope-20260725"
+  },
+  {
+   "number": 3467,
+   "title": "[HOLD] fix(lists): LST-F01/COUNT — hub inventory from count-spec not QBO view",
+   "mergedAt": "2026-07-25T07:02:21Z",
+   "branch": "hold/lst-f01-count-hub-canonical-20260725"
+  },
+  {
+   "number": 3466,
+   "title": "[HOLD] fix(lists): LST-F06 — expense-category pickers read catalogs.accounts",
+   "mergedAt": "2026-07-25T07:01:57Z",
+   "branch": "hold/lst-f06-expense-category-canonical-20260725"
+  },
+  {
+   "number": 3465,
+   "title": "[HOLD] docs+guards(accounting): ACCT-06/08 SURF structural DoD + creator matrix",
+   "mergedAt": "2026-07-25T07:16:58Z",
+   "branch": "hold/acct-06-08-surf-dod-20260725"
+  },
+  {
+   "number": 3461,
+   "title": "docs(accounting): ACCT-F09 reconcile architectural design to grouped PNG nav",
+   "mergedAt": "2026-07-25T05:11:35Z",
+   "branch": "docs/acct-05-tab-design-reconcile-20260725"
+  },
+  {
+   "number": 3460,
+   "title": "[HOLD] fix(accounting): ACCT-F04 reverse density — unit/claim/WO drill + create stamp",
+   "mergedAt": "2026-07-25T06:56:39Z",
+   "branch": "hold/acct-03-reverse-density-20260725"
+  },
+  {
+   "number": 3459,
+   "title": "[HOLD] fix(banking): BANK-04/05 structural DoD guards (SURF+LINK+cashbind)",
+   "mergedAt": "2026-07-25T07:21:29Z",
+   "branch": "hold/bank-04-surf-structural-guards-20260725"
+  },
+  {
+   "number": 3457,
+   "title": "[HOLD] SAF-F08: schema-parity from prod evidence (held false-PASS)",
+   "mergedAt": "2026-07-25T07:21:54Z",
+   "branch": "pkt6/pkt6-safety-20260724"
+  },
+  {
+   "number": 3456,
+   "title": "[HOLD] fix(lists): LST-F14 posting account pickers request postable_only",
+   "mergedAt": "2026-07-25T06:57:07Z",
+   "branch": "hold/lst-f14-account-pickers-postable-only"
+  },
+  {
+   "number": 3455,
+   "title": "docs(banking): BANK-00 publish ranked BANK-F## FAIL list (M=10)",
+   "mergedAt": "2026-07-25T07:24:14Z",
+   "branch": "pkt6/bank-00-ranked-fail-list"
+  },
+  {
+   "number": 3454,
+   "title": "[HOLD] fix(banking): BANK-ECON-04/BANK-SURF-04 root cause — bank_accounts RLS blocks every reconciliation start",
+   "mergedAt": "2026-07-25T06:52:59Z",
+   "branch": "hold/bank-econ-04-recon-session-live-path-20260725"
+  },
+  {
+   "number": 3453,
+   "title": "[HOLD] fix(accounting): vendor credit apply resolves QBO-keyed bills (ACCT-ECON-05)",
+   "mergedAt": "2026-07-25T06:49:17Z",
+   "branch": "hold/acct-econ-05-vendor-credit-live-path-20260725"
+  },
+  {
+   "number": 3451,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-25T04:41:29Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 3450,
+   "title": "docs(module-completion): live refresh evidence — sha + open-PR linkage, no flips",
+   "mergedAt": "2026-07-25T04:33:27Z",
+   "branch": "docs/module-completion-live-refresh-20260725-v2"
+  },
+  {
    "number": 3449,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-07-25T03:58:06Z",
@@ -13178,6 +13327,12 @@
    "title": "chore(deps): bump brace-expansion from 5.0.7 to 5.0.8 in /apps/driver-pwa in the npm_and_yarn group across 1 directory",
    "mergedAt": "2026-07-25T03:17:06Z",
    "branch": "dependabot/npm_and_yarn/apps/driver-pwa/npm_and_yarn-aa0c14d59f"
+  },
+  {
+   "number": 3446,
+   "title": "[HOLD] ACCT-LINK-04 — same-entity FK from expense lines to catalogs.expense_categories",
+   "mergedAt": "2026-07-25T06:37:23Z",
+   "branch": "hold/acct-link-04-expense-category-fk-20260724"
   },
   {
    "number": 3445,
@@ -16616,154 +16771,118 @@
    "title": "fix(dispatch): wire OCR queue Reprocess OCR action (0441-mod4)",
    "mergedAt": "2026-07-17T19:22:17Z",
    "branch": "fix/dispatch-ocr-reprocess-ui"
-  },
-  {
-   "number": 2663,
-   "title": "fix(banking): RecordTransferModal bank-to-bank mark-transfer link (0441-mod8)",
-   "mergedAt": "2026-07-17T19:01:10Z",
-   "branch": "fix/0441-mod8-record-transfer-mark-transfer"
-  },
-  {
-   "number": 2662,
-   "title": "fix(insurance): bridge units.id → assets.id on policy/claim create (0441-mod6)",
-   "mergedAt": "2026-07-17T20:57:58Z",
-   "branch": "fix/insurance-units-assets-bridge"
-  },
-  {
-   "number": 2661,
-   "title": "fix(drivers): require operating_company_id on getDriver (d5)",
-   "mergedAt": "2026-07-17T19:02:30Z",
-   "branch": "fix/driver-profile-scope-d5"
-  },
-  {
-   "number": 2660,
-   "title": "fix(safety): notify stakeholders on severe safety events (0278-gap3)",
-   "mergedAt": "2026-07-17T19:02:48Z",
-   "branch": "fix/0278-safety-gap3-auto-notifications"
-  },
-  {
-   "number": 2659,
-   "title": "fix(accounting): /accounting/expenses → list, create on /new",
-   "mergedAt": "2026-07-17T19:03:06Z",
-   "branch": "fix/expenses-list-route-canonical"
-  },
-  {
-   "number": 2658,
-   "title": "HOLD: fix(safety): accident edit status columns + no silent fail (0441-mod6)",
-   "mergedAt": "2026-07-17T20:45:34Z",
-   "branch": "fix/safety-accident-edit-status-0441-mod6"
-  },
-  {
-   "number": 2657,
-   "title": "fix(accounting): invoice detail customer EntityLink (0441-mod7)",
-   "mergedAt": "2026-07-17T19:03:44Z",
-   "branch": "fix/invoice-detail-customer-entitylink"
-  },
-  {
-   "number": 2656,
-   "title": "ci(cost): stop load-test-nightly firing on package.json/ci.yml",
-   "mergedAt": "2026-07-17T18:53:24Z",
-   "branch": "ci/load-test-trigger-tighten"
-  },
-  {
-   "number": 2655,
-   "title": "ci(cost): path-filter heavy workflows off unrelated PRs",
-   "mergedAt": "2026-07-17T17:25:26Z",
-   "branch": "ci/trim-heavy-workflow-triggers"
-  },
-  {
-   "number": 2654,
-   "title": "fix(fleet): unit loan/lease/depreciation drill-through (0441-mod13)",
-   "mergedAt": "2026-07-17T20:13:03Z",
-   "branch": "fix/equipment-loan-lease-link"
-  },
-  {
-   "number": 2653,
-   "title": "fix(accounting): ItemEditor account pickers allowAddNew (ps-a)",
-   "mergedAt": "2026-07-17T19:46:28Z",
-   "branch": "fix/item-editor-account-addnew"
-  },
-  {
-   "number": 2652,
-   "title": "fix(insurance): render fleet insurance_summary (0441-mod9)",
-   "mergedAt": "2026-07-17T16:45:45Z",
-   "branch": "fix/fleet-insurance-summary-render"
-  },
-  {
-   "number": 2651,
-   "title": "fix(accounting): isPostingFlag recognizes *_VOID_ENABLED (0091-h3-3) [HOLD]",
-   "mergedAt": "2026-07-17T17:45:02Z",
-   "branch": "fix/is-posting-flag-void"
-  },
-  {
-   "number": 2650,
-   "title": "HOLD: fix(safety): Log Event DOT-required fields (s-07)",
-   "mergedAt": "2026-07-17T20:26:16Z",
-   "branch": "fix/safety-log-event-dot-fields"
-  },
-  {
-   "number": 2649,
-   "title": "fix(accounting): seed MY_ACCOUNTANT flag (0441-mod7) [HOLD]",
-   "mergedAt": "2026-07-17T17:33:03Z",
-   "branch": "fix/myaccountant-flag-seed"
-  },
-  {
-   "number": 2648,
-   "title": "fix(accounting): JE list row opens detail (0441-mod7)",
-   "mergedAt": "2026-07-17T16:45:48Z",
-   "branch": "fix/je-list-row-deeplink"
-  },
-  {
-   "number": 2647,
-   "title": "fix(dispatch): honest/real Map view (0441-mod4)",
-   "mergedAt": "2026-07-17T19:05:46Z",
-   "branch": "fix/dispatch-mapview-honest"
-  },
-  {
-   "number": 2646,
-   "title": "fix(maint): wire WO mdata_vendor_id vendor linkage (0441-mod9)",
-   "mergedAt": "2026-07-17T18:51:00Z",
-   "branch": "fix/maint-wo-vendor-linkage"
-  },
-  {
-   "number": 2645,
-   "title": "fix(maint): shared open-WO predicate for KPI+list (maint2)",
-   "mergedAt": "2026-07-17T16:45:50Z",
-   "branch": "fix/maint-open-wos-kpi-consistency"
-  },
-  {
-   "number": 2644,
-   "title": "fix(dispatch): cancel reasons use catalogs.load_cancellation_reasons",
-   "mergedAt": "2026-07-17T18:29:21Z",
-   "branch": "fix/dispatch-cancel-reason-catalog"
-  },
-  {
-   "number": 2643,
-   "title": "fix(safety): mount damage-continuity worker (0441-mod6)",
-   "mergedAt": "2026-07-17T16:45:53Z",
-   "branch": "fix/damage-continuity-worker-mount"
-  },
-  {
-   "number": 2642,
-   "title": "fix(maint): road-service source_type RS (0441-mod2)",
-   "mergedAt": "2026-07-17T16:45:55Z",
-   "branch": "fix/road-service-source-type-rs"
-  },
-  {
-   "number": 2641,
-   "title": "fix(legal): wire matter edit Save to PATCH endpoint (0441-mod12)",
-   "mergedAt": "2026-07-17T16:45:58Z",
-   "branch": "fix/legal-matter-patch-wired"
-  },
-  {
-   "number": 2640,
-   "title": "fix(banking): refetch reconciliation workspace after match/unmatch (0441-mod8)",
-   "mergedAt": "2026-07-17T16:46:00Z",
-   "branch": "fix/banking-recon-workspace-refetch"
   }
  ],
  "merged_pr_total": 3000,
  "hold_for_jorge": [
+  {
+   "number": 3477,
+   "title": "[HOLD] ACCT-08: freeze SURF-01…09 map + SURF-01 Bills deep DoD guard",
+   "mergedAt": "2026-07-25T07:43:23Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3474,
+   "title": "[HOLD] docs(acct/lists): CoA is_postable asymmetry OWNER-EYES",
+   "mergedAt": "2026-07-25T07:24:41Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3473,
+   "title": "[HOLD] docs(lists)+guard: GLOBAL-BY-DESIGN catalog registry",
+   "mergedAt": "2026-07-25T07:24:32Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3472,
+   "title": "[HOLD-FOR-JORGE · FINANCIAL] fix(lists): LST-CAT-06 — dispatcher_error_reasons per-entity",
+   "mergedAt": "2026-07-25T07:43:16Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3471,
+   "title": "[HOLD] fix(lists): LST-A-01 — Driver Load Statuses on Lists hub",
+   "mergedAt": "2026-07-25T07:22:08Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3470,
+   "title": "[HOLD] fix(lists): LST-F05 — FMCSA stops lowest-UUID entity hijack",
+   "mergedAt": "2026-07-25T07:24:06Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3469,
+   "title": "[HOLD] docs(lists)+guard: LST-PICKER-01 inventory + universal picker law",
+   "mergedAt": "2026-07-25T07:22:02Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3468,
+   "title": "[HOLD] fix(lists): LST-F02b — fleet factory requires explicit companyScoped",
+   "mergedAt": "2026-07-25T07:02:28Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3467,
+   "title": "[HOLD] fix(lists): LST-F01/COUNT — hub inventory from count-spec not QBO view",
+   "mergedAt": "2026-07-25T07:02:21Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3466,
+   "title": "[HOLD] fix(lists): LST-F06 — expense-category pickers read catalogs.accounts",
+   "mergedAt": "2026-07-25T07:01:57Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3465,
+   "title": "[HOLD] docs+guards(accounting): ACCT-06/08 SURF structural DoD + creator matrix",
+   "mergedAt": "2026-07-25T07:16:58Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3460,
+   "title": "[HOLD] fix(accounting): ACCT-F04 reverse density — unit/claim/WO drill + create stamp",
+   "mergedAt": "2026-07-25T06:56:39Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3459,
+   "title": "[HOLD] fix(banking): BANK-04/05 structural DoD guards (SURF+LINK+cashbind)",
+   "mergedAt": "2026-07-25T07:21:29Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3457,
+   "title": "[HOLD] SAF-F08: schema-parity from prod evidence (held false-PASS)",
+   "mergedAt": "2026-07-25T07:21:54Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3456,
+   "title": "[HOLD] fix(lists): LST-F14 posting account pickers request postable_only",
+   "mergedAt": "2026-07-25T06:57:07Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3454,
+   "title": "[HOLD] fix(banking): BANK-ECON-04/BANK-SURF-04 root cause — bank_accounts RLS blocks every reconciliation start",
+   "mergedAt": "2026-07-25T06:52:59Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3453,
+   "title": "[HOLD] fix(accounting): vendor credit apply resolves QBO-keyed bills (ACCT-ECON-05)",
+   "mergedAt": "2026-07-25T06:49:17Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3446,
+   "title": "[HOLD] ACCT-LINK-04 — same-entity FK from expense lines to catalogs.expense_categories",
+   "mergedAt": "2026-07-25T06:37:23Z",
+   "category": "HOLD"
+  },
   {
    "number": 3445,
    "title": "[HOLD] fix(banking): mark-as-transfer mints/links a real banking.transfers row (BANK-ECON-03 / BANK-SURF-03)",
