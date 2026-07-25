@@ -1,0 +1,10 @@
+{
+  "as_of": "2026-07-25",
+  "branch": "br-fancy-credit-akjnd07a",
+  "note": "OWNER-EYES freeze — do not change is_postable to make these match. Re-verify with lucia GROUP BY.",
+  "postable_by_company_code": {
+    "TRK": 947,
+    "TRANSP": 389,
+    "USMCA": 53
+  }
+}

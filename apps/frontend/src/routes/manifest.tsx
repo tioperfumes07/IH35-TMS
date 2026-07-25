@@ -2333,6 +2333,14 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/lists/drivers/driver-load-statuses"
+          element={
+            <ProtectedRoute>
+              <DriverLoadStatusesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/lists/maintenance/failure-codes"
           element={
             <ProtectedRoute>

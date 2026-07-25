@@ -40,6 +40,9 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
     { table: "employment_statuses", activeFilter: "archived_at", companyScoped: false, schema: "reference" },
     // Converted per-entity by #3408 (migration 202607890000); prod: 16 active per entity.
     { table: "driver_termination_reasons", activeFilter: "is_active", companyScoped: true },
+    // Converted per-entity by #3403 (migration 202607870000); prod: 13 active per entity.
+    // Hub reachability = LST-A-01; must also count in the Drivers domain badge.
+    { table: "driver_load_statuses", activeFilter: "is_active", companyScoped: true },
   ],
   maintenance: [
     { table: "maintenance_failure_codes", activeFilter: "is_active", companyScoped: true },
