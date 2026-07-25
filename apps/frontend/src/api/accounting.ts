@@ -1346,6 +1346,9 @@ export const COA_ROLE_VALUES = [
   "abandonment_chargeback_recovery",
   // DIP operating cash
   "cash_dip",
+  // SAFETY FINE-GL HOP — company-paid civil fine expense. Owner designates the account on this page;
+  // it has no shape-fallback, so it stays unresolved (and nothing posts) until designated.
+  "civil_fines_expense",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];
