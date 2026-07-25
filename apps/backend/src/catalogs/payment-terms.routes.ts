@@ -4,12 +4,18 @@ import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { isCatalogWriteRole } from "../auth/role-helpers.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const listQuerySchema = z.object({
+  operating_company_id: z.string().uuid(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
   status: z.enum(["active", "inactive"]).optional(),
   search: z.string().trim().min(1).max(100).optional(),
+});
+
+const companyQuerySchema = z.object({
+  operating_company_id: z.string().uuid(),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -26,6 +32,7 @@ const paymentTermsBaseSchema = z.object({
 
 const createBodySchema = paymentTermsBaseSchema
   .extend({
+    operating_company_id: z.string().uuid(),
     terms_name: z.string().trim().min(1).max(200),
     days_until_due: z.coerce.number().int().min(0),
   })
@@ -70,17 +77,42 @@ function mapConflict(constraint?: string): string {
   return "catalog_payment_terms_conflict";
 }
 
+/** LST-F03: FORCE RLS company_scope requires entity GUC on every CRUD path. */
+async function withEntityScope<T>(
+  userId: string,
+  operatingCompanyId: string,
+  fn: (client: {
+    query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
+  }) => Promise<T>
+): Promise<T> {
+  await assertCompanyMembership(userId, operatingCompanyId);
+  return withCurrentUser(userId, async (client) => {
+    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+    return fn(client);
+  });
+}
+
+const SELECT_COLS = `
+  id, operating_company_id, terms_name, days_until_due, early_payment_discount_pct, early_payment_discount_days,
+  qbo_terms_id, notes, created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+`;
+
 export async function registerPaymentTermsRoutes(app: FastifyInstance) {
   app.get("/api/v1/catalogs/payment-terms", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
-    if (!parsed.success) return sendValidationError(reply, parsed.error);
-    const { limit, offset, status, search } = parsed.data;
+    if (!parsed.success) {
+      if (!(req.query as { operating_company_id?: string } | undefined)?.operating_company_id) {
+        return reply.code(400).send({ error: "operating_company_id_required" });
+      }
+      return sendValidationError(reply, parsed.error);
+    }
+    const { operating_company_id: opco, limit, offset, status, search } = parsed.data;
 
-    const payment_terms = await withCurrentUser(authUser.uuid, async (client) => {
-      const values: unknown[] = [];
-      const filters: string[] = [];
+    const payment_terms = await withEntityScope(authUser.uuid, opco, async (client) => {
+      const values: unknown[] = [opco];
+      const filters: string[] = ["operating_company_id = $1"];
       if (status === "active") filters.push("deactivated_at IS NULL");
       if (status === "inactive") filters.push("deactivated_at IS NOT NULL");
       if (search) {
@@ -90,14 +122,11 @@ export async function registerPaymentTermsRoutes(app: FastifyInstance) {
       }
       values.push(limit);
       values.push(offset);
-      const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
       const res = await client.query(
         `
-          SELECT
-            id, terms_name, days_until_due, early_payment_discount_pct, early_payment_discount_days, qbo_terms_id, notes,
-            created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+          SELECT ${SELECT_COLS}
           FROM catalogs.payment_terms
-          ${whereClause}
+          WHERE ${filters.join(" AND ")}
           ORDER BY created_at DESC
           LIMIT $${values.length - 1}
           OFFSET $${values.length}
@@ -119,20 +148,19 @@ export async function registerPaymentTermsRoutes(app: FastifyInstance) {
     const b = parsed.data;
 
     try {
-      const created = await withCurrentUser(authUser.uuid, async (client) => {
+      const created = await withEntityScope(authUser.uuid, b.operating_company_id, async (client) => {
         const res = await client.query(
           `
             INSERT INTO catalogs.payment_terms (
-              terms_name, days_until_due, early_payment_discount_pct, early_payment_discount_days, qbo_terms_id, notes,
-              created_by_user_id, updated_by_user_id
+              operating_company_id, terms_name, days_until_due, early_payment_discount_pct, early_payment_discount_days,
+              qbo_terms_id, notes, created_by_user_id, updated_by_user_id
             ) VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$7
+              $1,$2,$3,$4,$5,$6,$7,$8,$8
             )
-            RETURNING
-              id, terms_name, days_until_due, early_payment_discount_pct, early_payment_discount_days, qbo_terms_id, notes,
-              created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+            RETURNING ${SELECT_COLS}
           `,
           [
+            b.operating_company_id,
             b.terms_name,
             b.days_until_due,
             b.early_payment_discount_pct ?? null,
@@ -147,6 +175,7 @@ export async function registerPaymentTermsRoutes(app: FastifyInstance) {
           resource_id: row.id,
           resource_type: "catalogs.payment_terms",
           id: row.id,
+          operating_company_id: row.operating_company_id,
           terms_name: row.terms_name,
           days_until_due: row.days_until_due,
         });
@@ -167,18 +196,18 @@ export async function registerPaymentTermsRoutes(app: FastifyInstance) {
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return reply.code(400).send({ error: "operating_company_id_required" });
 
-    const row = await withCurrentUser(authUser.uuid, async (client) => {
+    const row = await withEntityScope(authUser.uuid, parsedQuery.data.operating_company_id, async (client) => {
       const res = await client.query(
         `
-          SELECT
-            id, terms_name, days_until_due, early_payment_discount_pct, early_payment_discount_days, qbo_terms_id, notes,
-            created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+          SELECT ${SELECT_COLS}
           FROM catalogs.payment_terms
-          WHERE id = $1
+          WHERE id = $1 AND operating_company_id = $2
           LIMIT 1
         `,
-        [parsedParams.data.id]
+        [parsedParams.data.id, parsedQuery.data.operating_company_id]
       );
       return res.rows[0] ?? null;
     });
@@ -192,9 +221,12 @@ export async function registerPaymentTermsRoutes(app: FastifyInstance) {
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return reply.code(400).send({ error: "operating_company_id_required" });
     const parsedBody = updateBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const b = parsedBody.data;
+    const opco = parsedQuery.data.operating_company_id;
 
     const setParts: string[] = [];
     const values: unknown[] = [];
@@ -212,19 +244,19 @@ export async function registerPaymentTermsRoutes(app: FastifyInstance) {
     add("updated_by_user_id", authUser.uuid);
     values.push(parsedParams.data.id);
     const idIdx = values.length;
+    values.push(opco);
+    const opcoIdx = values.length;
 
     try {
-      const updated = await withCurrentUser(authUser.uuid, async (client) => {
+      const updated = await withEntityScope(authUser.uuid, opco, async (client) => {
         const oldRes = await client.query(
           `
-            SELECT
-              id, terms_name, days_until_due, early_payment_discount_pct, early_payment_discount_days, qbo_terms_id, notes,
-              created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+            SELECT ${SELECT_COLS}
             FROM catalogs.payment_terms
-            WHERE id = $1
+            WHERE id = $1 AND operating_company_id = $2
             LIMIT 1
           `,
-          [parsedParams.data.id]
+          [parsedParams.data.id, opco]
         );
         const oldRow = oldRes.rows[0] ?? null;
         if (!oldRow) return null;
@@ -233,10 +265,8 @@ export async function registerPaymentTermsRoutes(app: FastifyInstance) {
           `
             UPDATE catalogs.payment_terms
             SET ${setParts.join(", ")}
-            WHERE id = $${idIdx}
-            RETURNING
-              id, terms_name, days_until_due, early_payment_discount_pct, early_payment_discount_days, qbo_terms_id, notes,
-              created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+            WHERE id = $${idIdx} AND operating_company_id = $${opcoIdx}
+            RETURNING ${SELECT_COLS}
           `,
           values
         );
@@ -271,16 +301,19 @@ export async function registerPaymentTermsRoutes(app: FastifyInstance) {
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return reply.code(400).send({ error: "operating_company_id_required" });
+    const opco = parsedQuery.data.operating_company_id;
 
-    const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
+    const deactivated = await withEntityScope(authUser.uuid, opco, async (client) => {
       const oldRes = await client.query(
         `
           SELECT id, deactivated_at
           FROM catalogs.payment_terms
-          WHERE id = $1
+          WHERE id = $1 AND operating_company_id = $2
           LIMIT 1
         `,
-        [parsedParams.data.id]
+        [parsedParams.data.id, opco]
       );
       const oldRow = oldRes.rows[0] ?? null;
       if (!oldRow) return null;
@@ -291,12 +324,13 @@ export async function registerPaymentTermsRoutes(app: FastifyInstance) {
         const res = await client.query(
           `
             UPDATE catalogs.payment_terms
-            SET deactivated_at = now(), updated_by_user_id = $2
+            SET deactivated_at = now(), updated_by_user_id = $3
             WHERE id = $1
+              AND operating_company_id = $2
               AND deactivated_at IS NULL
             RETURNING id, deactivated_at
           `,
-          [parsedParams.data.id, authUser.uuid]
+          [parsedParams.data.id, opco, authUser.uuid]
         );
         deactivatedAt = (res.rows[0]?.deactivated_at as string | undefined) ?? deactivatedAt;
         wasAlreadyDeactivated = false;

@@ -12,6 +12,7 @@ description: >-
 
 > **★ DEFINITION OF DONE (BINDING, every session):** `docs/specs/DEFINITION-OF-DONE.md` — DOD-A…E + §10.
 > **★ EVERY PR AUDIT CHECKLIST (BINDING, every session):** `docs/specs/EVERY-PR-AUDIT-CHECKLIST.md` — FINDING · LANE · DOD-A…E · **VERIFY-1…8** · **MODULE_PROGRESS** · MIGRATE · Rule 16. Money commits missing keys **FAIL** verify-step **1430** (`verify-no-money-theater`) + commit-msg. Rule 23 bans theater. Rule 24 — module DONE = **N of M** in `docs/module-completion/` (CI **1431**).
+> **★★ PER-PR CHECKLIST (read FIRST, every PR):** `docs/specs/PER-PR-CHECKLIST.md` — the single consolidated list of everything audited and fixed in **every** PR: 5 DONE layers · 8 audit layers (QBO chrome · universal picker law · connectivity/wiring · deep forward+reverse linkage · catalogs/entity scope · CPA-grade economics · tab/design law · security/RLS) · the evidence block · guard rules · verification traps · merge gates · migration rules. Consolidated because scattered law is skipped law; enforced in CI on the PR body **and** the commits.
 > **Rule #0 (LOCKED, every session):** `docs/specs/QUALITY-STANDARD-LOCKED.md` — hardline quality law.
 > **Cursor charter (every session):** `docs/specs/CURSOR-OPERATING-CONSTITUTION.md` — permanent operating constitution; more conservative reading wins on conflict.
 > **Law of the Land:** `docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md` — total connectivity / linkage checklist.

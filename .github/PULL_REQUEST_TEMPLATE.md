@@ -5,6 +5,7 @@
 
 ## Mandatory spec-review checklist (REQUIRED — PR cannot merge if any are unchecked)
 
+- [ ] **I worked `docs/specs/PER-PR-CHECKLIST.md`** — the consolidated per-PR standard (5 DONE layers · 8 audit layers · evidence block · guard rules · verification traps · merge gates · migration rules). The evidence block below is **CI-enforced on this PR body** by `.github/workflows/pr-evidence-block.yml`: each section must be its own labelled line, and LIVE PROOF must name a real artifact (sha / endpoint / row count / screenshot) or say `UNVERIFIED: <blocker>`.
 - [ ] I read `docs/specs/CURSOR-PERMANENT-RULES.md`
 - [ ] I read the relevant section of `docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md`
 - [ ] I read all relevant entries in `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md`

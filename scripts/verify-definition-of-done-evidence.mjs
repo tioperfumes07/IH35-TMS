@@ -31,7 +31,14 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-definition-of-done-evidence";
 const DOD = "docs/specs/DEFINITION-OF-DONE.md";
 const HOOK = ".husky/commit-msg";
-const SELFTEST = process.argv.includes("--selftest");
+/**
+ * Only self-execute when run directly. Without this, `import`ing this module from another guard
+ * (check-pr-evidence-body.mjs) inherits its `--selftest` argv, runs THIS selftest, and
+ * `process.exit(0)`s before the importer's own selftest executes — making the importer's selftest
+ * structurally incapable of failing. Caught while wiring the PR-body guard.
+ */
+const IS_MAIN = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const SELFTEST = IS_MAIN && process.argv.includes("--selftest");
 
 const sh = (cmd) => {
   try {
@@ -41,12 +48,51 @@ const sh = (cmd) => {
   }
 };
 
-const EVIDENCE_KEYS = [
-  { key: "ROOT CAUSE", re: /root cause/i },
-  { key: "FIX", re: /(^|\n)\s*fix\b|fix:/i },
-  { key: "GUARD", re: /guard/i },
-  { key: "LIVE PROOF or UNVERIFIED", re: /(live proof|verified|verification|unverified)/i },
+/**
+ * Each section must appear as its own LABELLED LINE — `ROOT CAUSE:` / `### ROOT CAUSE` / `**GUARD:**`.
+ *
+ * The previous regexes matched a bare keyword ANYWHERE in the message: `/guard/i` passed on the word
+ * "guard" in prose, `/(live proof|verified|…)/i` passed on the word "verified", and `/\bfix\b/`
+ * passed automatically on any `fix(scope):` subject. REMAINING was not checked at all. Five merged
+ * per-entity catalog PRs (#3397/#3403/#3405/#3408/#3409) carried none of the block and still went
+ * green. A label at line start cannot be satisfied by prose. See docs/specs/PER-PR-CHECKLIST.md §3.
+ */
+const label = (name) => new RegExp(String.raw`^[\s>*_#\-]*${name}\b\s*:?`, "im");
+
+export const EVIDENCE_KEYS = [
+  { key: "ROOT CAUSE", re: label("ROOT CAUSE") },
+  { key: "FIX", re: label("FIX") },
+  { key: "GUARD", re: label("GUARD") },
+  { key: "LIVE PROOF or UNVERIFIED", re: /^[\s>*_#\-]*(LIVE PROOF|UNVERIFIED)\b\s*:?/im },
+  { key: "REMAINING", re: label("REMAINING") },
 ];
+
+/**
+ * LIVE PROOF must name an ARTIFACT — a sha, an endpoint/URL, a count, a screenshot path — or declare
+ * UNVERIFIED with a blocker. The bare word "verified" is an assertion, not evidence (PER-PR §3).
+ */
+const PROOF_ARTIFACT = /([0-9a-f]{7,40}\b|https?:\/\/|\/api\/|\brows?\b|\bcount\b|\d|screenshot|healthz)/i;
+
+const IS_LABEL_LINE = /^[\s>*_#\-]*(ROOT CAUSE|FIX|GUARD|LIVE PROOF|UNVERIFIED|REMAINING)\b/i;
+
+/**
+ * The proof can sit on the label line (`LIVE PROOF: healthz 2088757`) or beneath it in the
+ * PR-template heading form (`### LIVE PROOF` / newline / `healthz sha 2088757`). Read the label's
+ * own remainder PLUS the lines under it, up to the next label — otherwise the template's own
+ * shape is flagged, which the selftest caught.
+ */
+export function proofLineIsSubstantiated(text) {
+  const lines = text.split(/\r?\n/);
+  const start = lines.findIndex((l) => /^[\s>*_#\-]*(LIVE PROOF|UNVERIFIED)\b/i.test(l));
+  if (start === -1) return true; // absence is already reported by EVIDENCE_KEYS
+  const isUnverified = /^[\s>*_#\-]*UNVERIFIED\b/i.test(lines[start]);
+  const head = lines[start].replace(/^[\s>*_#\-]*(LIVE PROOF|UNVERIFIED)\b\s*:?/i, "");
+  const rest = [];
+  for (let i = start + 1; i < lines.length && !IS_LABEL_LINE.test(lines[i]); i += 1) rest.push(lines[i]);
+  const section = [head, ...rest].join(" ").trim();
+  // UNVERIFIED needs a named blocker (any substance); LIVE PROOF needs a concrete artifact.
+  return isUnverified ? /\S/.test(section) : PROOF_ARTIFACT.test(section);
+}
 
 /** A commit is "app-affecting" when it touches shipped code. */
 function isAppAffecting(files) {
@@ -98,7 +144,13 @@ export function assertDoDEvidence(commits, opts = {}) {
     if (missing.length) {
       problems.push(
         `${short} "${subject.slice(0, 60)}" touches app code but its message omits the Rule 16 evidence ` +
-          `block section(s): ${missing.join(", ")}. See ${DOD} §3.`
+          `block section(s): ${missing.join(", ")}. Each must be its own labelled line. See ${DOD} §3.`
+      );
+    } else if (!proofLineIsSubstantiated(text)) {
+      problems.push(
+        `${short} "${subject.slice(0, 60)}" has a LIVE PROOF/UNVERIFIED line that names no artifact. ` +
+          `Give a sha, endpoint, row count or screenshot — or "UNVERIFIED: <blocker>". ` +
+          `The word "verified" alone is an assertion, not evidence. See docs/specs/PER-PR-CHECKLIST.md §3.`
       );
     }
 
@@ -191,6 +243,59 @@ if (SELFTEST) {
   // Case 6: a hook that exists but no longer calls the shared checker is inert and must fail.
   expect("hook-inert", [good], "the hook is inert", { hookPresent: true, hookWired: false });
 
+  // Case 7: REMAINING omitted — previously not checked at all, so it always passed.
+  expect(
+    "missing-remaining",
+    [{ ...good, body: "ROOT CAUSE: y\nFIX: z\nGUARD: scripts/verify-x.mjs\nLIVE PROOF: endpoint 200" }],
+    "REMAINING"
+  );
+
+  // Case 8: THE REAL REGRESSION — the shape of the five merged per-entity catalog PRs. Prose that
+  // happens to contain the words "guard" and "verified" but carries no labelled block. The old
+  // keyword-anywhere regexes passed this; labelled lines must not.
+  expect(
+    "prose-keywords-not-a-block",
+    [
+      {
+        ...good,
+        subject: "feat(lists): per-entity fleet catalogs",
+        body:
+          "Each entity owns its rows. The shared guard covers the 8 tables and this was verified on prod.\n" +
+          "Migration adds operating_company_id and forces RLS.",
+      },
+    ],
+    "omits the Rule 16 evidence block"
+  );
+
+  // Case 9: a LIVE PROOF line that asserts rather than evidences.
+  expect(
+    "proof-without-artifact",
+    [{ ...good, body: "ROOT CAUSE: y\nFIX: z\nGUARD: scripts/verify-x.mjs\nLIVE PROOF: verified\nREMAINING: none" }],
+    "names no artifact"
+  );
+
+  // Negative: the PR-template heading form (### ROOT CAUSE, no colon) must NOT be flagged.
+  const headingForm = assertDoDEvidence([
+    {
+      ...good,
+      body:
+        "### ROOT CAUSE\nmechanism\n### FIX\nchange\n### GUARD\nscripts/verify-x.mjs\n" +
+        "### LIVE PROOF\nhealthz sha 2088757\n### REMAINING\nnone",
+    },
+  ]);
+  if (headingForm.length) failures.push(`false-positive on the PR-template heading form: ${headingForm.join(" | ")}`);
+
+  // Negative: an honest UNVERIFIED with a named blocker must NOT be flagged.
+  const unverified = assertDoDEvidence([
+    {
+      ...good,
+      body:
+        "ROOT CAUSE: y\nFIX: z\nGUARD: scripts/verify-x.mjs\n" +
+        "UNVERIFIED: prod DB access is gated, owner must run the Neon check\nREMAINING: the live check",
+    },
+  ]);
+  if (unverified.length) failures.push(`false-positive on an honest UNVERIFIED: ${unverified.join(" | ")}`);
+
   // Negative: a compliant commit must NOT be flagged, and a docs-only commit is exempt.
   const clean = assertDoDEvidence([good]);
   if (clean.length) failures.push(`false-positive on a compliant commit: ${clean.join(" | ")}`);
@@ -204,15 +309,19 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 6 planted defects caught, compliant + docs-only commits not flagged`);
+  console.log(`${LABEL} SELFTEST PASS — 9 planted defects caught; compliant, heading-form, honest-UNVERIFIED and docs-only commits not flagged`);
   process.exit(0);
 }
 
-const problems = assertDoDEvidence(collectBranchCommits());
-if (problems.length) {
+// Guarded by IS_MAIN for the same reason as SELFTEST: importing this module must not run the
+// branch scan (it printed a spurious "OK" line into the importer's output before this was added).
+const problems = IS_MAIN ? assertDoDEvidence(collectBranchCommits()) : [];
+if (IS_MAIN && problems.length) {
   console.error(`${LABEL} FAILED — Definition of Done not satisfied:`);
   for (const p of problems) console.error(`  ${p}`);
   console.error(`\nCanonical standard: ${DOD}`);
   process.exit(1);
 }
-console.log(`${LABEL} OK — branch commits carry evidence, guards, and legal guard wiring`);
+if (IS_MAIN) {
+  console.log(`${LABEL} OK — branch commits carry evidence, guards, and legal guard wiring`);
+}

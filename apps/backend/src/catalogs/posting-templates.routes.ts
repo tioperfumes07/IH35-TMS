@@ -4,17 +4,24 @@ import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { isCatalogWriteRole } from "../auth/role-helpers.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const listQuerySchema = z.object({
+  operating_company_id: z.string().uuid(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
   status: z.enum(["active", "inactive"]).optional(),
   search: z.string().trim().min(1).max(100).optional(),
 });
 
+const companyQuerySchema = z.object({
+  operating_company_id: z.string().uuid(),
+});
+
 const idParamSchema = z.object({ id: z.string().uuid() });
 
 const createBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
   template_name: z.string().trim().min(1).max(200),
   template_code: z.string().trim().min(1).max(100),
   description: z.string().trim().max(2000).optional(),
@@ -54,17 +61,71 @@ function mapConflict(constraint?: string): string {
   return "catalog_posting_template_conflict";
 }
 
+/** LST-F03: FORCE RLS company_scope requires entity GUC on every CRUD path. */
+async function withEntityScope<T>(
+  userId: string,
+  operatingCompanyId: string,
+  fn: (client: {
+    query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
+  }) => Promise<T>
+): Promise<T> {
+  await assertCompanyMembership(userId, operatingCompanyId);
+  return withCurrentUser(userId, async (client) => {
+    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+    return fn(client);
+  });
+}
+
+const SELECT_COLS = `
+  id, operating_company_id, template_name, template_code, description, debit_account_id, credit_account_id,
+  default_class_id, default_memo, is_active,
+  created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+`;
+
+async function assertSameEntityAccounts(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }> },
+  opco: string,
+  debitId: string,
+  creditId: string,
+  classId?: string | null
+): Promise<"ok" | "invalid_account_or_class_reference"> {
+  const acct = await client.query(
+    `SELECT id FROM catalogs.accounts
+      WHERE operating_company_id = $1
+        AND deactivated_at IS NULL
+        AND id = ANY($2::uuid[])`,
+    [opco, [debitId, creditId]]
+  );
+  const ids = new Set(acct.rows.map((r) => String(r.id)));
+  if (!ids.has(debitId) || !ids.has(creditId)) return "invalid_account_or_class_reference";
+  if (classId) {
+    const cls = await client.query(
+      `SELECT id FROM catalogs.classes
+        WHERE id = $1 AND operating_company_id = $2 AND deactivated_at IS NULL
+        LIMIT 1`,
+      [classId, opco]
+    );
+    if (!cls.rows[0]) return "invalid_account_or_class_reference";
+  }
+  return "ok";
+}
+
 export async function registerPostingTemplateRoutes(app: FastifyInstance) {
   app.get("/api/v1/catalogs/posting-templates", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
-    if (!parsed.success) return sendValidationError(reply, parsed.error);
-    const { limit, offset, status, search } = parsed.data;
+    if (!parsed.success) {
+      if (!(req.query as { operating_company_id?: string } | undefined)?.operating_company_id) {
+        return reply.code(400).send({ error: "operating_company_id_required" });
+      }
+      return sendValidationError(reply, parsed.error);
+    }
+    const { operating_company_id: opco, limit, offset, status, search } = parsed.data;
 
-    const posting_templates = await withCurrentUser(authUser.uuid, async (client) => {
-      const values: unknown[] = [];
-      const filters: string[] = [];
+    const posting_templates = await withEntityScope(authUser.uuid, opco, async (client) => {
+      const values: unknown[] = [opco];
+      const filters: string[] = ["operating_company_id = $1"];
       if (status === "active") filters.push("is_active = true");
       if (status === "inactive") filters.push("is_active = false");
       if (search) {
@@ -74,15 +135,11 @@ export async function registerPostingTemplateRoutes(app: FastifyInstance) {
       }
       values.push(limit);
       values.push(offset);
-      const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
       const res = await client.query(
         `
-          SELECT
-            id, template_name, template_code, description, debit_account_id, credit_account_id,
-            default_class_id, default_memo, is_active,
-            created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+          SELECT ${SELECT_COLS}
           FROM catalogs.posting_templates
-          ${whereClause}
+          WHERE ${filters.join(" AND ")}
           ORDER BY created_at DESC
           LIMIT $${values.length - 1}
           OFFSET $${values.length}
@@ -108,21 +165,32 @@ export async function registerPostingTemplateRoutes(app: FastifyInstance) {
     }
 
     try {
-      const created = await withCurrentUser(authUser.uuid, async (client) => {
+      const created = await withEntityScope(authUser.uuid, b.operating_company_id, async (client) => {
+        const ok = await assertSameEntityAccounts(
+          client,
+          b.operating_company_id,
+          b.debit_account_id,
+          b.credit_account_id,
+          b.default_class_id ?? null
+        );
+        if (ok !== "ok") {
+          const err = new Error(ok);
+          (err as { code?: string }).code = "23503";
+          throw err;
+        }
+
         const res = await client.query(
           `
             INSERT INTO catalogs.posting_templates (
-              template_name, template_code, description, debit_account_id, credit_account_id,
+              operating_company_id, template_name, template_code, description, debit_account_id, credit_account_id,
               default_class_id, default_memo, is_active, created_by_user_id, updated_by_user_id
             ) VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$8,$9,$9
+              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$10
             )
-            RETURNING
-              id, template_name, template_code, description, debit_account_id, credit_account_id,
-              default_class_id, default_memo, is_active,
-              created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+            RETURNING ${SELECT_COLS}
           `,
           [
+            b.operating_company_id,
             b.template_name,
             b.template_code,
             b.description ?? null,
@@ -139,6 +207,7 @@ export async function registerPostingTemplateRoutes(app: FastifyInstance) {
           resource_id: row.id,
           resource_type: "catalogs.posting_templates",
           id: row.id,
+          operating_company_id: row.operating_company_id,
           template_name: row.template_name,
           template_code: row.template_code,
           is_active: row.is_active,
@@ -160,19 +229,18 @@ export async function registerPostingTemplateRoutes(app: FastifyInstance) {
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return reply.code(400).send({ error: "operating_company_id_required" });
 
-    const row = await withCurrentUser(authUser.uuid, async (client) => {
+    const row = await withEntityScope(authUser.uuid, parsedQuery.data.operating_company_id, async (client) => {
       const res = await client.query(
         `
-          SELECT
-            id, template_name, template_code, description, debit_account_id, credit_account_id,
-            default_class_id, default_memo, is_active,
-            created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+          SELECT ${SELECT_COLS}
           FROM catalogs.posting_templates
-          WHERE id = $1
+          WHERE id = $1 AND operating_company_id = $2
           LIMIT 1
         `,
-        [parsedParams.data.id]
+        [parsedParams.data.id, parsedQuery.data.operating_company_id]
       );
       return res.rows[0] ?? null;
     });
@@ -186,9 +254,12 @@ export async function registerPostingTemplateRoutes(app: FastifyInstance) {
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return reply.code(400).send({ error: "operating_company_id_required" });
     const parsedBody = updateBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const b = parsedBody.data;
+    const opco = parsedQuery.data.operating_company_id;
 
     const setParts: string[] = [];
     const values: unknown[] = [];
@@ -207,20 +278,19 @@ export async function registerPostingTemplateRoutes(app: FastifyInstance) {
     add("updated_by_user_id", authUser.uuid);
     values.push(parsedParams.data.id);
     const idIdx = values.length;
+    values.push(opco);
+    const opcoIdx = values.length;
 
     try {
-      const updated = await withCurrentUser(authUser.uuid, async (client) => {
+      const updated = await withEntityScope(authUser.uuid, opco, async (client) => {
         const oldRes = await client.query(
           `
-            SELECT
-              id, template_name, template_code, description, debit_account_id, credit_account_id,
-              default_class_id, default_memo, is_active,
-              created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+            SELECT ${SELECT_COLS}
             FROM catalogs.posting_templates
-            WHERE id = $1
+            WHERE id = $1 AND operating_company_id = $2
             LIMIT 1
           `,
-          [parsedParams.data.id]
+          [parsedParams.data.id, opco]
         );
         const oldRow = oldRes.rows[0] ?? null;
         if (!oldRow) return null;
@@ -229,16 +299,21 @@ export async function registerPostingTemplateRoutes(app: FastifyInstance) {
         if (finalDebit === finalCredit) {
           return { error: "debit_credit_must_differ" as const };
         }
+        const classId =
+          "default_class_id" in b ? (b.default_class_id ?? null) : (oldRow.default_class_id as string | null);
+        const ok = await assertSameEntityAccounts(client, opco, finalDebit, finalCredit, classId);
+        if (ok !== "ok") {
+          const err = new Error(ok);
+          (err as { code?: string }).code = "23503";
+          throw err;
+        }
 
         const res = await client.query(
           `
             UPDATE catalogs.posting_templates
             SET ${setParts.join(", ")}
-            WHERE id = $${idIdx}
-            RETURNING
-              id, template_name, template_code, description, debit_account_id, credit_account_id,
-              default_class_id, default_memo, is_active,
-              created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+            WHERE id = $${idIdx} AND operating_company_id = $${opcoIdx}
+            RETURNING ${SELECT_COLS}
           `,
           values
         );
@@ -289,16 +364,19 @@ export async function registerPostingTemplateRoutes(app: FastifyInstance) {
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return reply.code(400).send({ error: "operating_company_id_required" });
+    const opco = parsedQuery.data.operating_company_id;
 
-    const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
+    const deactivated = await withEntityScope(authUser.uuid, opco, async (client) => {
       const oldRes = await client.query(
         `
           SELECT id, is_active
           FROM catalogs.posting_templates
-          WHERE id = $1
+          WHERE id = $1 AND operating_company_id = $2
           LIMIT 1
         `,
-        [parsedParams.data.id]
+        [parsedParams.data.id, opco]
       );
       const oldRow = oldRes.rows[0] ?? null;
       if (!oldRow) return null;
@@ -309,11 +387,11 @@ export async function registerPostingTemplateRoutes(app: FastifyInstance) {
         const res = await client.query(
           `
             UPDATE catalogs.posting_templates
-            SET is_active = false, updated_by_user_id = $2
-            WHERE id = $1
+            SET is_active = false, updated_by_user_id = $3
+            WHERE id = $1 AND operating_company_id = $2
             RETURNING id, is_active
           `,
-          [parsedParams.data.id, authUser.uuid]
+          [parsedParams.data.id, opco, authUser.uuid]
         );
         isActive = Boolean(res.rows[0]?.is_active ?? false);
       }
