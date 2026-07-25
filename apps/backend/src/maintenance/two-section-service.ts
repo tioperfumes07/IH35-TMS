@@ -1,3 +1,4 @@
+import { resolveExpenseCategoryById } from "../accounting/expense-category-catalog.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { resolveBillLineAccountId } from "../bills/bill-line-account-resolution.service.js";
 
@@ -493,6 +494,18 @@ async function copyToAccountingLines(
           // (amount = amount_cents/100), kept for one release then dropped in
           // CLEANUP-EXPENSE-LINES-DROP-AMOUNT-DOLLARS.
           const amountCents = Math.round(asNumber(row.amount) * 100);
+          // ACCT-LINK-04: work_order_lines.expense_category_uuid points at catalogs.qbo_categories,
+          // while accounting.expense_lines.expense_category_uuid is FK'd to catalogs.expense_categories
+          // (held migration 202607950000). Copy the pointer only when it resolves in THIS entity's
+          // expense-category catalog; otherwise the projected line is uncategorized. The work order
+          // keeps its own category either way — nothing is deleted, and the copy can never violate
+          // the FK or cross an entity.
+          const projectedCategoryId = row.expense_category_uuid
+            ? await resolveExpenseCategoryById(client, {
+                operatingCompanyId,
+                categoryId: row.expense_category_uuid,
+              })
+            : null;
           return client.query<{ id: string }>(
             `
               INSERT INTO accounting.expense_lines (
@@ -509,7 +522,7 @@ async function copyToAccountingLines(
               row.description,
               row.section,
               parentMapped,
-              row.expense_category_uuid,
+              projectedCategoryId,
               row.service_item_uuid,
               row.part_uuid,
               row.labor_rate_uuid,
