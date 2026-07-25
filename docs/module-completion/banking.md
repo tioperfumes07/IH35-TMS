@@ -28,7 +28,7 @@ finding to `docs/module-completion/banking.json`. Seed counts below are GUARD-ve
 | [#3464](https://github.com/tioperfumes07/IH35-TMS/pull/3464) | BANK-F07 | LINK-01 structural PASS |
 | — | BANK-F05 | Docs-only map to #3424 (no duplicate PR) |
 
-**MODULE_PROGRESS claim after stack merges:** banking **7 of 13** (from 4 of 13). Remaining FAIL: ECON-02/03/04 + SURF-02/03/04.
+**MODULE_PROGRESS claim after stack merges:** banking **4 of 13** (structural guards do not flip SURF/LINK — Rule 23). Remaining FAIL: ECON-02/03/04 + SURF-02/03/04.
 
 
 | PR | State | Finding / manifest | What it covers |
