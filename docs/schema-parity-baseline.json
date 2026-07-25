@@ -474,7 +474,8 @@
       "service_item_uuid",
       "severity",
       "violation_type_id",
-      "violation_type_uuid"
+      "violation_type_uuid",
+      "operating_company_id"
     ],
     "accounting.expenses": [
       "created_at",
@@ -10172,6 +10173,9 @@
       "template_name",
       "to_phone",
       "variables"
+    ],
+    "catalogs.expense_categories": [
+      "operating_company_id"
     ]
   }
 }
