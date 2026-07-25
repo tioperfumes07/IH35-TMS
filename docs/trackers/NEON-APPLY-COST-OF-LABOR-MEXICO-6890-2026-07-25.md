@@ -144,3 +144,12 @@ EXISTS (
 ```
 
 **Expect:** two rows (TRANSP/USMCA) `6890` · roles both point at `6890` · both ledgers true.
+
+
+## Owner paste results (recorded 2026-07-25)
+
+- **M1:** Statement executed successfully (BEGIN → INSERT 2 → COMMIT)
+- **M2:** Statement executed successfully (both ledger INSERTs)
+- **M3:** Statement executed successfully (UPDATE 2 → INSERT → COMMIT)
+- **M4:** TRANSP+USMCA accounts `6890` · both `driver_pay_expense` roles → `6890`
+- Independent Neon re-proof: accounts + roles + both ledgers **true**

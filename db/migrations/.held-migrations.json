@@ -484,7 +484,9 @@
       "owner_locked_numbers": {
         "TRANSP": "6890",
         "USMCA": "6890"
-      }
+      },
+      "applied_on_prod": true,
+      "applied_evidence": "Owner hand-apply 2026-07-25 Boxes M1\u2013M4 PASS on br-fancy-credit-akjnd07a: TRANSP+USMCA catalogs.accounts 6890 Cost of Labor\u2013Mexico Drivers seeded; driver_pay_expense roles UPDATE 2 rows \u2192 6890; both ledgers true; sha256 d709ac509f113e7f42e7bf9f7b94c0fa0ef740f5157a7598f7d76402c8096101. Independent Neon MCP re-proof same day."
     },
     {
       "file": "202607770000_drop_account_role_bindings_global_unique.sql",
