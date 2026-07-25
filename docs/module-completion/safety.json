@@ -1343,7 +1343,7 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "HOLD \u2014 adjacent to CURSOR's #3533 escrow stack. The missing settlement/GL/bank drill-throughs read accounting.escrow_* and driver_finance escrow tables; building them now risks colliding with that work. Frontend-only EntityLink additions, no writes \u2014 awaiting owner routing."
+      "gate": "THIS CODER'S LANE \u2014 but BUILD LAST. Owner routing 2026-07-25: no lane conflict, because the three missing drill-throughs (settlement / GL JE / bank txn) only READ accounting.escrow_* as frontend EntityLinks and write nothing. Sequenced after Cursor's escrow fix #3542 is APPLIED, so the tab renders the corrected balance instead of the frozen one \u2014 building it first would ship a surface that drills into a number known to be wrong."
     },
     {
       "id": "SAF-B23",
