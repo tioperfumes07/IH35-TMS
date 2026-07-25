@@ -1268,13 +1268,23 @@ export function deactivateCustomerLane(customerId: string, laneId: string, opera
   });
 }
 
-export function listPaymentTermOptions() {
-  return apiRequest<{ payment_terms: PaymentTermOption[] }>("/api/v1/catalogs/payment-terms?status=active&limit=200");
+export function listPaymentTermOptions(operatingCompanyId: string) {
+  const query = new URLSearchParams({
+    operating_company_id: operatingCompanyId,
+    status: "active",
+    limit: "200",
+  });
+  return apiRequest<{ payment_terms: PaymentTermOption[] }>(`/api/v1/catalogs/payment-terms?${query.toString()}`);
 }
 
 // Inline "+ Add new payment term" support (reference-dropdown keystone). Non-financial
 // catalog create — the same catalog the customer.payment_terms_id FK references.
-export function createPaymentTermOption(body: { terms_name: string; days_until_due: number; notes?: string | null }) {
+export function createPaymentTermOption(body: {
+  operating_company_id: string;
+  terms_name: string;
+  days_until_due: number;
+  notes?: string | null;
+}) {
   return apiRequest<PaymentTermOption>("/api/v1/catalogs/payment-terms", { method: "POST", body });
 }
 

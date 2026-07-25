@@ -117,7 +117,12 @@ export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) 
   const [formError, setFormError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; vendor_code?: string }>({});
 
-  const paymentTermsQuery = useQuery({ queryKey: ["payment-term-options"], queryFn: listPaymentTermOptions, staleTime: 5 * 60 * 1000 });
+  const paymentTermsQuery = useQuery({
+    queryKey: ["payment-term-options", operatingCompanyId],
+    queryFn: () => listPaymentTermOptions(operatingCompanyId),
+    enabled: Boolean(operatingCompanyId),
+    staleTime: 5 * 60 * 1000,
+  });
   const paymentTermOptions = useMemo(
     () => (paymentTermsQuery.data?.payment_terms ?? []).map((t) => ({ value: t.id, label: `${t.terms_name} (${t.days_until_due}d)` })),
     [paymentTermsQuery.data]

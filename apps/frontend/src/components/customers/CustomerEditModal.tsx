@@ -40,9 +40,9 @@ export function CustomerEditModal({ open, customer, operatingCompanyId, saving =
 
   const companyId = operatingCompanyId ?? customer?.operating_company_id ?? "";
   const paymentTermsQuery = useQuery({
-    queryKey: ["payment-term-options"],
-    queryFn: () => listPaymentTermOptions().then((r) => r.payment_terms),
-    enabled: open,
+    queryKey: ["payment-term-options", companyId],
+    queryFn: () => listPaymentTermOptions(companyId).then((r) => r.payment_terms),
+    enabled: open && Boolean(companyId),
   });
   const paymentTermOptions = useMemo(() => paymentTermsQuery.data ?? [], [paymentTermsQuery.data]);
 
