@@ -23,9 +23,9 @@ finding to `docs/module-completion/banking.json`. Seed counts below are GUARD-ve
 | PR | Finding | What |
 |---|---|---|
 | [#3455](https://github.com/tioperfumes07/IH35-TMS/pull/3455) | BANK-F00 / BANK-00 | Ranked FAIL list M=10 published |
-| [#3459](https://github.com/tioperfumes07/IH35-TMS/pull/3459) | BANK-F04 + BANK-F10 | SURF-01 PASS + cashbind/GATE keep-guards |
-| [#3462](https://github.com/tioperfumes07/IH35-TMS/pull/3462) | BANK-F06 | SURF-05 structural PASS |
-| [#3464](https://github.com/tioperfumes07/IH35-TMS/pull/3464) | BANK-F07 | LINK-01 structural PASS |
+| [#3459](https://github.com/tioperfumes07/IH35-TMS/pull/3459) | BANK-F04 + BANK-F10 | SURF-01 structural guards (stay UNVERIFIED) + cashbind/GATE keep-guards |
+| #3462/#3464 | BANK-F06/F07 | CLOSED as duplicate of #3459 — false PASS rejected (Rule 23) |
+
 | — | BANK-F05 | Docs-only map to #3424 (no duplicate PR) |
 
 **MODULE_PROGRESS claim after stack merges:** banking **4 of 13** (structural guards do not flip SURF/LINK — Rule 23). Remaining FAIL: ECON-02/03/04 + SURF-02/03/04.

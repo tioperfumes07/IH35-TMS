@@ -23,12 +23,12 @@ finding to `docs/module-completion/banking.json`. Seed counts below are GUARD-ve
 | PR | Finding | What |
 |---|---|---|
 | [#3455](https://github.com/tioperfumes07/IH35-TMS/pull/3455) | BANK-F00 / BANK-00 | Ranked FAIL list M=10 published |
-| [#3459](https://github.com/tioperfumes07/IH35-TMS/pull/3459) | BANK-F04 + BANK-F10 | SURF-01 PASS + cashbind/GATE keep-guards |
-| [#3462](https://github.com/tioperfumes07/IH35-TMS/pull/3462) | BANK-F06 | SURF-05 structural PASS |
-| [#3464](https://github.com/tioperfumes07/IH35-TMS/pull/3464) | BANK-F07 | LINK-01 structural PASS |
+| [#3459](https://github.com/tioperfumes07/IH35-TMS/pull/3459) | BANK-F04 + BANK-F10 | SURF-01 UNVERIFIED (structural guarded) + cashbind/GATE keep-guards |
+| [#3462](https://github.com/tioperfumes07/IH35-TMS/pull/3462) | BANK-F06 | SURF-05 structural guarded (UNVERIFIED) |
+| [#3464](https://github.com/tioperfumes07/IH35-TMS/pull/3464) | BANK-F07 | LINK-01 structural guarded (UNVERIFIED) |
 | — | BANK-F05 | Docs-only map to #3424 (no duplicate PR) |
 
-**MODULE_PROGRESS claim after stack merges:** banking **7 of 13** (from 4 of 13). Remaining FAIL: ECON-02/03/04 + SURF-02/03/04.
+**MODULE_PROGRESS claim after stack merges:** banking **4 of 13** (from 4 of 13). Remaining FAIL: ECON-02/03/04 + SURF-02/03/04.
 
 
 | PR | State | Finding / manifest | What it covers |
