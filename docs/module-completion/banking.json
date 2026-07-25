@@ -73,7 +73,7 @@
       ],
       "spec": "Cash GL setup",
       "status": "PASS",
-      "evidence": "Neon lucia 2026-07-25: of 16 bank_accounts, 9 deactivated (unbound OK); 7 live (deactivated_at IS NULL) all have ledger_account_id (7/7). Prior 8/16 FAIL counted deactivated duplicates.",
+      "evidence": "Neon lucia 2026-07-25: of 16 bank_accounts, 9 deactivated (unbound OK); 7 live (deactivated_at IS NULL) all have ledger_account_id (7/7). Prior 8/16 FAIL counted deactivated duplicates. Keep-guard: scripts/verify-bank-account-cashbind.mjs + verify-step 1442 (active-only; never deletes deactivated).",
       "pr": null
     },
     {
@@ -179,7 +179,7 @@
       ],
       "spec": "verify-step 1430",
       "status": "PASS",
-      "evidence": "#3430 merged on main (sha fc1cf13); verify-step 1430 enforces EVERY-PR checklist trailers on banking money commits",
+      "evidence": "#3430 merged on main (sha fc1cf13); verify-step 1430 enforces EVERY-PR checklist trailers on banking money commits. BANK-ECON-05 cash-bind keep-guard (verify-step 1442) confirms MODULE_PROGRESS honesty (pass_count=4, complete=false).",
       "pr": "#3430"
     }
   ],
