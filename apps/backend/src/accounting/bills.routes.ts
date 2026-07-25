@@ -146,7 +146,11 @@ export async function registerBillsRoutes(app: FastifyInstance) {
   // Reverse drill-through for the WO↔bill/expense HARD link: list the bills + expenses that FK-reference
   // a given work order. Read-only (SELECT), company-scoped. Powers the WO detail "Linked Bills / Expenses"
   // section — the reverse half of the bidirectional link (forward half = FK persisted on create).
-  app.get("/api/v1/accounting/work-orders/:id/linked-financials", async (req, reply) => {
+  // rateLimit: CodeQL js/missing-rate-limiting flags authorizing reverse-drill routes.
+  app.get(
+    "/api/v1/accounting/work-orders/:id/linked-financials",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -163,7 +167,10 @@ export async function registerBillsRoutes(app: FastifyInstance) {
   });
 
   // Reverse drill-through for Claim→Bill/Expense/WO (held migration 202607740000).
-  app.get("/api/v1/accounting/claims/:id/linked-financials", async (req, reply) => {
+  app.get(
+    "/api/v1/accounting/claims/:id/linked-financials",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
