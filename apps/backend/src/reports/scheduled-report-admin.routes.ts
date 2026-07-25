@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { resolveDefaultOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -31,23 +32,10 @@ export async function registerScheduledReportAdminRoutes(app: FastifyInstance) {
     const reportId = parsed.data.report_id as ScheduledReportId;
 
     const companyAndRoles = await withCurrentUser(user.uuid, async (client) => {
-      const companyRes = await client.query(
-        `
-          SELECT c.id
-          FROM identity.users u
-          JOIN org.companies c ON c.id = u.default_company_id
-          WHERE u.id = $1
-            AND c.deactivated_at IS NULL
-          UNION
-          SELECT c.id
-          FROM org.companies c
-          WHERE c.id IN (SELECT org.user_accessible_company_ids())
-          ORDER BY id
-          LIMIT 1
-        `,
-        [user.uuid]
-      );
-      const operatingCompanyId = (companyRes.rows[0]?.id as string | undefined) ?? null;
+      // LST-F05: this resolved the LOWEST accessible UUID rather than the user's default and then fed it
+      // straight into set_config('app.operating_company_id', …) below — poisoning the GUC for the whole
+      // request. USMCA (5c854333…) sorts below TRANSP (91e0bf0a…).
+      const operatingCompanyId = await resolveDefaultOperatingCompanyId(client, user.uuid);
       if (!operatingCompanyId) return null;
 
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);

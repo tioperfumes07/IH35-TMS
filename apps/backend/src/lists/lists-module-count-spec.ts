@@ -93,6 +93,8 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
     // operating_company_id filter (companyScoped:true would under/over-count vs policy).
     { table: "accounts", activeFilter: "deactivated_at", companyScoped: false },
     { table: "classes", activeFilter: "deactivated_at", companyScoped: false },
+    // LST-F03 migration 202608000000 adds opco (HELD / not on prod yet). Count-spec must
+    // stay companyScoped:false until Neon apply — otherwise WHERE opco=$1 → 42703 on live prod.
     { table: "payment_terms", activeFilter: "deactivated_at", companyScoped: false },
     { table: "items", activeFilter: "deactivated_at", companyScoped: false },
     { table: "posting_templates", activeFilter: "is_active", companyScoped: false },

@@ -534,6 +534,10 @@
     {
       "file": "202608010000_dispatcher_error_reasons_per_entity.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] LST-CAT-06 — catalogs.dispatcher_error_reasons per-entity (owner ruling 2026-07-24 + load-derived entity). Prod lucia: 25 rows, no opco, role-only RLS policies. Adds operating_company_id, seeds every active entity, UNIQUE(opco,code), company_scope FORCE RLS, REVOKE DELETE. Companion route scopes GUC from related load first. NEVER-DELETE (§F.24). Owner Neon-apply + ledger-backfill."
+    },
+    {
+      "file": "202608000000_payment_terms_posting_templates_per_entity.sql",
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL] LST-F03 — catalogs.payment_terms + catalogs.posting_templates per-entity conversion: add operating_company_id NOT NULL, UNIQUE(opco, name/code), FORCE RLS company_scope, REVOKE DELETE, seed identical payment_terms to every active entity (qbo_terms_id nulled on copies to avoid global UNIQUE collision). posting_templates 0 rows on prod — structure only until owner seeds. Dynamic org.companies.code=TRANSP. NEVER-DELETE (§F.24). Companion factory entityScoped:true."
     }
   ]
 }

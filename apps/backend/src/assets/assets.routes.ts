@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { withCurrentUser } from "../auth/db.js";
+import { resolveDefaultOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
 const assetTypeSchema = z.enum(["tractor", "dry_van", "reefer", "flatbed", "personnel_vehicle", "other"]);
@@ -77,7 +78,10 @@ function isWriteRole(role: string): boolean {
   return role === "Owner" || role === "Administrator" || role === "Manager" || role === "Accountant";
 }
 
-async function resolveOperatingCompanyId(
+// Thin assets-local wrapper: different signature from the canonical resolver (takes userId, not a client)
+// and opens its own withCurrentUser. Renamed 2026-07-25 so it no longer SHADOWS the canonical name —
+// a same-named local copy is what let the fmcsa instance of LST-F05 read as already-fixed.
+async function resolveAssetsOperatingCompanyId(
   userId: string,
   requested?: string
 ): Promise<string | null> {
@@ -85,25 +89,11 @@ async function resolveOperatingCompanyId(
     await assertCompanyMembership(userId, requested);
     return requested;
   }
-  return withCurrentUser(userId, async (client) => {
-    const res = await client.query(
-      `
-        SELECT c.id
-        FROM identity.users u
-        JOIN org.companies c ON c.id = u.default_company_id
-        WHERE u.id = $1
-          AND c.deactivated_at IS NULL
-        UNION
-        SELECT c.id
-        FROM org.companies c
-        WHERE c.id IN (SELECT org.user_accessible_company_ids())
-        ORDER BY id
-        LIMIT 1
-      `,
-      [userId]
-    );
-    return res.rows[0]?.id ?? null;
-  });
+  // LST-F05: the fallback here was `SELECT default … UNION SELECT any accessible … ORDER BY id LIMIT 1`,
+  // which drops the user's default and takes the lowest UUID (USMCA 5c854333… < TRANSP 91e0bf0a…).
+  // Delegated to the single canonical implementation. The `requested` branch above already validates
+  // membership and is unchanged.
+  return withCurrentUser(userId, async (client) => resolveDefaultOperatingCompanyId(client, userId));
 }
 
 export async function registerAssetsRoutes(app: FastifyInstance) {
@@ -114,7 +104,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
     const { limit, offset, type, status, active, operating_company_id } = parsedQuery.data;
 
-    const resolvedCompanyId = await resolveOperatingCompanyId(authUser.uuid, operating_company_id);
+    const resolvedCompanyId = await resolveAssetsOperatingCompanyId(authUser.uuid, operating_company_id);
     if (!resolvedCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
     const assets = await withCurrentUser(authUser.uuid, async (client) => {
@@ -180,7 +170,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
     const parsedQuery = z.object({ operating_company_id: z.string().uuid().optional() }).safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const resolvedCompanyId = await resolveOperatingCompanyId(authUser.uuid, parsedQuery.data.operating_company_id);
+    const resolvedCompanyId = await resolveAssetsOperatingCompanyId(authUser.uuid, parsedQuery.data.operating_company_id);
     if (!resolvedCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
     const asset = await withCurrentUser(authUser.uuid, async (client) => {
@@ -226,7 +216,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
     const parsedQuery = companyScopeQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const resolvedCompanyId = await resolveOperatingCompanyId(authUser.uuid, parsedQuery.data.operating_company_id);
+    const resolvedCompanyId = await resolveAssetsOperatingCompanyId(authUser.uuid, parsedQuery.data.operating_company_id);
     if (!resolvedCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
     const history = await withCurrentUser(authUser.uuid, async (client) => {
@@ -264,7 +254,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const body = parsedBody.data;
 
-    const resolvedCompanyId = await resolveOperatingCompanyId(authUser.uuid, body.operating_company_id);
+    const resolvedCompanyId = await resolveAssetsOperatingCompanyId(authUser.uuid, body.operating_company_id);
     if (!resolvedCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
     try {
@@ -326,7 +316,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const body = parsedBody.data;
 
-    const resolvedCompanyId = await resolveOperatingCompanyId(authUser.uuid, body.operating_company_id);
+    const resolvedCompanyId = await resolveAssetsOperatingCompanyId(authUser.uuid, body.operating_company_id);
     if (!resolvedCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
     const values: unknown[] = [];
@@ -383,7 +373,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const body = parsedBody.data;
 
-    const resolvedCompanyId = await resolveOperatingCompanyId(authUser.uuid, body.operating_company_id);
+    const resolvedCompanyId = await resolveAssetsOperatingCompanyId(authUser.uuid, body.operating_company_id);
     if (!resolvedCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
     const updated = await withCurrentUser(authUser.uuid, async (client) => {
@@ -457,7 +447,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
     const parsedQuery = companyScopeQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const resolvedCompanyId = await resolveOperatingCompanyId(authUser.uuid, parsedQuery.data.operating_company_id);
+    const resolvedCompanyId = await resolveAssetsOperatingCompanyId(authUser.uuid, parsedQuery.data.operating_company_id);
     if (!resolvedCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
     const summary = await withCurrentUser(authUser.uuid, async (client) => {
