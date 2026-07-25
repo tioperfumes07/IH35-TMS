@@ -355,6 +355,7 @@
     "202607760000_cash_dip_coa_role.sql": "1ae6163c12fa2dd8918136de6fcde1786f5f690da0d506ec5e4da1ec6555a006",
     "202607770000_drop_account_role_bindings_global_unique.sql": "4575fe02113eee81b92b4e08752f740cd28f960b66bfbf2ab023d9cf27402cb8",
     "202607780000_bank_account_cash_gl_postable_trigger.sql": "b60a11f62654cc3c328c9d1a3f04ff3b8e045533e4c401f0028e49f9ca0610bf",
+    "202607790000_cost_of_labor_mexico_drivers_transp_usmca.sql": "d709ac509f113e7f42e7bf9f7b94c0fa0ef740f5157a7598f7d76402c8096101",
     "202607800000_escrow_forfeit_source_type_and_damage_recovery_designation.sql": "8010368d2a87546273f8dee717a43c320dc34a2b7b0511e615e278b9b1e3c3ff",
     "202607810000_accident_reports_capture_fields.sql": "9e9549fad7c36d54da1a469247911617abd6b173dd8637b4763e8f6a81f0bb1b",
     "202607820000_safety_relational_linkage_and_lifecycle.sql": "578a6d7d7f2ae3f2e58bf44ebf36b757d6898748dd14e10c7bfe6bf71293c3b3",
