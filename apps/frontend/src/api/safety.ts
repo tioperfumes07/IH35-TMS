@@ -1173,3 +1173,71 @@ export type SafetyInspectionCleanRate = {
 export function getSafetyInspectionCleanRate(companyId: string) {
   return apiRequest<SafetyInspectionCleanRate>(`/api/v1/safety/dot-inspections/clean-rate?${q(companyId)}`);
 }
+
+// ── SAF-B12 — external-fine lifecycle callers ────────────────────────────────────────────────────
+// The four routes below have existed and been audited in apps/backend/src/safety/fines.routes.ts
+// since BT-3-SAFETY-GAPS-FILL, but had ZERO frontend callers: the only thing an operator could do
+// with an external (authority-issued) fine was "Convert to Driver Liability". A wrongly-issued
+// citation could not be contested, dismissed, reduced, or marked paid from the UI.
+//
+// Every signature below is transcribed from the route's own zod schema — no invented fields:
+//   POST /api/v1/safety/fines/:id/contest       body updateStatusBody { notes?: string.min(1) }
+//   POST /api/v1/safety/fines/:id/dismiss       body updateStatusBody { notes?: string.min(1) }
+//   POST /api/v1/safety/fines/:id/reduce        body reduceFineBody   { amount_cents: int>=0, reason: string.min(1) }
+//   POST /api/v1/safety/fines/:id/link-payment  body linkPaymentBody  { bank_transaction_id: uuid,
+//                                                                       paid_date: string.min(1),
+//                                                                       paid_amount_cents: int>=0 }
+// All four return the updated safety.civil_fines row; all four require role Owner/Administrator/Safety.
+
+/** POST /api/v1/safety/fines/:id/contest — status → 'contested'. `notes` is optional (zod .min(1) when sent). */
+export function contestSafetyFine(fineId: string, companyId: string, notes?: string) {
+  const body: { notes?: string } = {};
+  if (notes && notes.trim().length > 0) body.notes = notes.trim();
+  return apiRequest<Record<string, unknown>>(
+    `/api/v1/safety/fines/${encodeURIComponent(fineId)}/contest?${q(companyId)}`,
+    { method: "POST", body }
+  );
+}
+
+/** POST /api/v1/safety/fines/:id/dismiss — status → 'dismissed'. `notes` is optional (zod .min(1) when sent). */
+export function dismissSafetyFine(fineId: string, companyId: string, notes?: string) {
+  const body: { notes?: string } = {};
+  if (notes && notes.trim().length > 0) body.notes = notes.trim();
+  return apiRequest<Record<string, unknown>>(
+    `/api/v1/safety/fines/${encodeURIComponent(fineId)}/dismiss?${q(companyId)}`,
+    { method: "POST", body }
+  );
+}
+
+/**
+ * POST /api/v1/safety/fines/:id/reduce — amount_cents := new amount, status → 'reduced', reason appended
+ * to notes. The server refuses (409 `fine_already_converted_to_liability`) when the fine already carries a
+ * converted_to_liability_id, and (409 `fine_voided`) when voided_at is set — OWNER RULING 2026-07-23
+ * Option B. The UI mirrors those two gates; it does not replace them.
+ */
+export function reduceSafetyFine(
+  fineId: string,
+  companyId: string,
+  body: { amount_cents: number; reason: string }
+) {
+  return apiRequest<Record<string, unknown>>(
+    `/api/v1/safety/fines/${encodeURIComponent(fineId)}/reduce?${q(companyId)}`,
+    { method: "POST", body }
+  );
+}
+
+/**
+ * POST /api/v1/safety/fines/:id/link-payment — records which banking.bank_transactions row paid this
+ * fine and flips status → 'paid'. Writes ONLY safety.civil_fines (paid_via_bank_transaction_id, paid_date,
+ * paid_amount_cents, status) plus two audit rows; it posts no GL entry and touches no accounting.* object.
+ */
+export function linkSafetyFinePayment(
+  fineId: string,
+  companyId: string,
+  body: { bank_transaction_id: string; paid_date: string; paid_amount_cents: number }
+) {
+  return apiRequest<Record<string, unknown>>(
+    `/api/v1/safety/fines/${encodeURIComponent(fineId)}/link-payment?${q(companyId)}`,
+    { method: "POST", body }
+  );
+}
