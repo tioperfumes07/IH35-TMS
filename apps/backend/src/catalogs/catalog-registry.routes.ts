@@ -6,22 +6,50 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 
 const catalogDepartmentSchema = z.enum(["dispatch", "safety", "accounting", "identity", "operations"]);
-const catalogCodeSchema = z.enum([
-  "EQUIPMENT_TYPES",
-  "DRIVER_LOAD_STATUSES",
-  "CHART_OF_ACCOUNTS",
-  "CLASSES",
-  "ITEMS",
-  "PAYMENT_TERMS",
-  "POSTING_TEMPLATES",
-  "ACCOUNT_ROLE_BINDINGS",
-]);
+
+// LST-CAT-07 — SINGLE SOURCE OF TRUTH for which registry codes this module can actually serve.
+//
+// The defect: the WRITE surface (`createCatalogRegistrySchema.code`) accepted any
+// /^[A-Z][A-Z0-9_]+$/ string, while both READ surfaces were a hand-maintained 8-entry list — a zod
+// enum for preview and a separate `statsByCode` map for stats. So `POST /api/v1/catalogs/registry`
+// with code `FOO_BAR` returned 201, and from then on stats reported `item_count: 0` FOREVER (a silent
+// zero indistinguishable from an empty catalog) while preview returned 400. Two independently
+// maintained lists, no mechanism keeping them equal.
+//
+// Root fix: define the supported set ONCE, with its stats query attached, and derive every surface
+// from it — the enum, the create schema, and the stats lookup. A code that cannot be served can no
+// longer be created, and an unsupported code already in the table reports `stats_supported: false`
+// instead of a fake 0.
+const CATALOG_REGISTRY_STATS_SQL = {
+  EQUIPMENT_TYPES:
+    "SELECT count(*)::int AS item_count, MAX(updated_at) AS last_updated_at FROM catalogs.equipment_types WHERE deactivated_at IS NULL AND is_active = true",
+  DRIVER_LOAD_STATUSES:
+    "SELECT count(*)::int AS item_count, MAX(updated_at) AS last_updated_at FROM catalogs.driver_load_statuses WHERE deactivated_at IS NULL AND is_active = true",
+  CHART_OF_ACCOUNTS:
+    "SELECT count(*)::int AS item_count, MAX(updated_at) AS last_updated_at FROM catalogs.accounts WHERE deactivated_at IS NULL",
+  CLASSES: "SELECT count(*)::int AS item_count, MAX(updated_at) AS last_updated_at FROM catalogs.classes WHERE deactivated_at IS NULL",
+  ITEMS: "SELECT count(*)::int AS item_count, MAX(updated_at) AS last_updated_at FROM catalogs.items WHERE deactivated_at IS NULL",
+  PAYMENT_TERMS:
+    "SELECT count(*)::int AS item_count, MAX(updated_at) AS last_updated_at FROM catalogs.payment_terms WHERE deactivated_at IS NULL",
+  POSTING_TEMPLATES:
+    "SELECT count(*)::int AS item_count, MAX(updated_at) AS last_updated_at FROM catalogs.posting_templates WHERE deactivated_at IS NULL",
+  ACCOUNT_ROLE_BINDINGS:
+    "SELECT count(*)::int AS item_count, MAX(updated_at) AS last_updated_at FROM catalogs.account_role_bindings WHERE deactivated_at IS NULL",
+} as const;
+
+export const CATALOG_REGISTRY_CODES = Object.keys(CATALOG_REGISTRY_STATS_SQL) as [
+  keyof typeof CATALOG_REGISTRY_STATS_SQL,
+  ...Array<keyof typeof CATALOG_REGISTRY_STATS_SQL>,
+];
+
+const catalogCodeSchema = z.enum(CATALOG_REGISTRY_CODES);
 
 const idParamSchema = z.object({ id: z.string().uuid() });
 const codeParamSchema = z.object({ code: catalogCodeSchema });
 
 const createCatalogRegistrySchema = z.object({
-  code: z.string().trim().regex(/^[A-Z][A-Z0-9_]+$/).min(2).max(80),
+  // Derived from the same set the read surfaces use — never a permissive regex (that WAS the defect).
+  code: catalogCodeSchema,
   name: z.string().trim().min(1).max(120),
   description: z.string().trim().max(500).optional(),
   department: catalogDepartmentSchema,
@@ -62,28 +90,19 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 async function fetchCatalogStats(client: { query: (sql: string) => Promise<{ rows: Array<Record<string, unknown>> }> }, code: string) {
-  const statsByCode: Record<string, string> = {
-    EQUIPMENT_TYPES:
-      "SELECT count(*)::int AS item_count, MAX(updated_at) AS last_updated_at FROM catalogs.equipment_types WHERE deactivated_at IS NULL AND is_active = true",
-    DRIVER_LOAD_STATUSES:
-      "SELECT count(*)::int AS item_count, MAX(updated_at) AS last_updated_at FROM catalogs.driver_load_statuses WHERE deactivated_at IS NULL AND is_active = true",
-    CHART_OF_ACCOUNTS:
-      "SELECT count(*)::int AS item_count, MAX(updated_at) AS last_updated_at FROM catalogs.accounts WHERE deactivated_at IS NULL",
-    CLASSES: "SELECT count(*)::int AS item_count, MAX(updated_at) AS last_updated_at FROM catalogs.classes WHERE deactivated_at IS NULL",
-    ITEMS: "SELECT count(*)::int AS item_count, MAX(updated_at) AS last_updated_at FROM catalogs.items WHERE deactivated_at IS NULL",
-    PAYMENT_TERMS:
-      "SELECT count(*)::int AS item_count, MAX(updated_at) AS last_updated_at FROM catalogs.payment_terms WHERE deactivated_at IS NULL",
-    POSTING_TEMPLATES:
-      "SELECT count(*)::int AS item_count, MAX(updated_at) AS last_updated_at FROM catalogs.posting_templates WHERE deactivated_at IS NULL",
-    ACCOUNT_ROLE_BINDINGS:
-      "SELECT count(*)::int AS item_count, MAX(updated_at) AS last_updated_at FROM catalogs.account_role_bindings WHERE deactivated_at IS NULL",
-  };
-  const sql = statsByCode[code];
-  if (!sql) return { item_count: 0, last_updated_at: null as string | null };
+  const sql = (CATALOG_REGISTRY_STATS_SQL as Record<string, string | undefined>)[code];
+  if (!sql) {
+    // LST-CAT-07: previously this returned `item_count: 0`, which is indistinguishable from a genuinely
+    // empty catalog — a fake number presented as data. Creation of an unsupported code is now rejected
+    // at the write surface, so this branch is only reachable for a legacy row; it reports the truth
+    // (stats not available for this code) rather than inventing a count.
+    return { item_count: 0, last_updated_at: null as string | null, stats_supported: false };
+  }
   const res = await client.query(sql);
   return {
     item_count: Number(res.rows[0]?.item_count ?? 0),
     last_updated_at: (res.rows[0]?.last_updated_at as string | null) ?? null,
+    stats_supported: true,
   };
 }
 
