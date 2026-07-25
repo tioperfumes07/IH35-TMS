@@ -2,7 +2,7 @@
   "module": "banking",
   "title": "Banking (Module 4)",
   "complete": false,
-  "as_of": "2026-07-25T00:08:10.792Z",
+  "as_of": "2026-07-25T00:18:26.090Z",
   "live_sha": "fc1cf13",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md",
   "spec_sources": [
@@ -35,7 +35,7 @@
       ],
       "spec": "Match/Categorize → JE",
       "status": "FAIL",
-      "evidence": "Neon lucia 2026-07-25: matched_journal_entry_id=3 / 10622 (~0.03%)",
+      "evidence": "Neon lucia 2026-07-25: matched_je=3/10622; categorized=3; pending_categorization=10619; categorized∧JE NULL=0. Poster works when used (#3424 on main). Density is ops backlog — not a broken poster.",
       "pr": "#3424"
     },
     {
@@ -47,7 +47,7 @@
       ],
       "spec": "Transfers · #3134 Option 1 owner",
       "status": "FAIL",
-      "evidence": "transfers=0",
+      "evidence": "Neon lucia 2026-07-25: transfers=0. Code+UI wired (createTransfer); never used by operators. Feed mark-transfer does not insert banking.transfers.",
       "pr": null
     },
     {
@@ -59,7 +59,7 @@
       ],
       "spec": "Reconciliation",
       "status": "FAIL",
-      "evidence": "reconciliation_sessions=0",
+      "evidence": "Neon lucia 2026-07-25: reconciliation_sessions=0. Workspace+start session wired (#3417 zero-diff); no session ever started.",
       "pr": "#3417"
     },
     {
@@ -101,7 +101,7 @@
       ],
       "spec": "QBO banking parity",
       "status": "FAIL",
-      "evidence": "JE density 3/10k; bulk categorize HOLD #3424",
+      "evidence": "Same as BANK-ECON-02: 10619 pending; when categorized (n=3) JE stamped 100%. Active UI calls /categorize-bulk with poster after #3424.",
       "pr": "#3424"
     },
     {
