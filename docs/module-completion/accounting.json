@@ -121,8 +121,8 @@
       ],
       "spec": "Law \u00a79 \u00b7 ACCT-F02",
       "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25: still 16 rows / 0 inbound FKs; journal_entries has NO journal_entry_type_id column on prod. PR #3440 [HOLD] adds additive nullable FK col \u2014 migration 202607960000 NOT yet Neon-applied. Remains FAIL until owner Neon-apply + inbound density re-measure.",
-      "pr": "#3440"
+      "evidence": "GUARD 2026-07-25 (§2b): 202607960000 in NEITHER prod ledger — genuinely UNAPPLIED; prod journal_entries has NO journal_entry_type_id (lucia). #3440 MERGED≠APPLIED. HOLD PR wires picker + verify-je-type-fk (step 1484); ACCT-LINK-01 stays FAIL until owner Neon-apply + inbound FK density re-measure.",
+      "pr": "HOLD — ACCT-F02"
     },
     {
       "id": "ACCT-LINK-02",
@@ -161,7 +161,7 @@
       ],
       "spec": "ACCT-F07",
       "status": "FAIL",
-      "evidence": "HOLD PR #3446: additive same-entity FK expense_lines\u2192catalogs.expense_categories (mig 202608020000). FAIL until Neon-apply proves FK + inbound density (lucia).",
+      "evidence": "MERGED\u2260APPLIED: PR #3446 merged @ 7a0c3614 (ACCT-LINK-04 mig 202608020000 on main + static wiring guard 1433/1478 PASS). Prod 2026-07-25 (lucia): catalogs.expense_categories still 0 inbound FKs; expense_lines lacks operating_company_id + composite FK. Held migration NOT in prod ledger. FAIL until owner Neon-apply + inbound density re-proof. Honesty: docs/trackers/MERGED-NOT-APPLIED-ACCT-F07-F08-2026-07-25.md",
       "pr": "#3446"
     },
     {
@@ -173,7 +173,7 @@
       ],
       "spec": "ACCT-F08",
       "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25: still 0 inbound FKs; posting_batches has NO posting_template_id column on prod; catalogs.posting_templates still 0 rows (lucia-verified true empty, not RLS-masked). PR #3444 [HOLD] adds posting_batches -> posting_templates consumer stamp \u2014 NOT yet Neon-applied. Remains FAIL until owner Neon-apply.",
+      "evidence": "MERGED\u2260APPLIED: PR #3444 merged @ 1d90a178 (ACCT-LINK-05 mig 202607950000 on main + static wiring guard 1433/1479 PASS). Prod 2026-07-25 (lucia): 0 inbound FKs on posting_templates; posting_batches has NO posting_template_id/source_template_code; catalog 0 rows (true empty). Per-entity scope = owner design Q \u2014 do NOT auto-scope. FAIL until owner Neon-apply. Honesty: docs/trackers/MERGED-NOT-APPLIED-ACCT-F07-F08-2026-07-25.md",
       "pr": "#3444"
     },
     {
@@ -292,8 +292,8 @@
       ],
       "spec": "ACCT-F02 \u00b7 JE tab",
       "status": "FAIL",
-      "evidence": "JE type island; 8 JEs sparse",
-      "pr": null
+      "evidence": "GUARD 2026-07-25: migration 202607960000 genuinely UNAPPLIED on prod (MERGED\u2260APPLIED). Picker wired on ManualJEModal (accounting + banking) reading/writing catalogs.journal_entry_types; reverse drill on JournalEntryDetailPage \u2192 /lists/accounting/journal-entry-types. Stays FAIL until Neon-apply proves FK + typed density on live JEs.",
+      "pr": "HOLD — ACCT-F02"
     },
     {
       "id": "ACCT-SURF-06",

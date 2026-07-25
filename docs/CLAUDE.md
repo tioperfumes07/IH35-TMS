@@ -1,5 +1,7 @@
 # IH35-TMS — Durable Handoff Context
 
+> **Consolidated index:** docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md — the complete 24-rule + 18-key-gate map (source .cursor/rule wins on conflict).
+
 > **★ DEFINITION OF DONE (BINDING):** `docs/specs/DEFINITION-OF-DONE.md` — DOD-A…E + §10. CI-green is the floor, not the verdict.
 >
 > **★ EVERY PR AUDIT CHECKLIST (BINDING, every session):** `docs/specs/EVERY-PR-AUDIT-CHECKLIST.md` — FINDING · LANE · DOD-A…E · **VERIFY-1…8** · **MODULE_PROGRESS** · MIGRATE · Rule 16. Missing keys → commit-msg reject + verify-step **1430** (`verify-no-money-theater`). Rule 23 theater ban. Rule 24 — module DONE = **N of M** in `docs/module-completion/` (CI **1431**).
