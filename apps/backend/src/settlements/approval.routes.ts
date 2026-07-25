@@ -38,6 +38,9 @@ const assignTripLinkSchema = z.object({
   queue_id: z.string().uuid(),
   load_id: z.string().uuid(),
   load_number: z.string().min(1),
+  // ACCT-R-13 (2026-07-25): previously absent entirely — assignTripLink took no company predicate
+  // at all, so any authenticated user could reassign ANY entity's queued trip-link row by queue_id.
+  operating_company_id: z.string().uuid().optional(),
 });
 
 const generatePdfSchema = z.object({
@@ -65,12 +68,15 @@ export async function registerSettlementApprovalRoutes(app: FastifyInstance) {
 
     const { id } = req.params as { id: string };
     const query = req.query as Record<string, unknown>;
-    const operatingCompanyId = String(query.operating_company_id || "");
-    if (!operatingCompanyId) {
-      return reply.code(400).send({ error: "operating_company_id required" });
-    }
+    const requestedCompanyId = String(query.operating_company_id || "") || null;
 
     return withCurrentUser(user.uuid, async (client) => {
+      // ACCT-R-13 (2026-07-25): membership-checked, not raw-trusted — a Manager/Payroll user at one
+      // entity could otherwise read another entity's settlement summary by swapping this param.
+      const operatingCompanyId = await resolveOperatingCompanyId(client, user.uuid, requestedCompanyId);
+      if (!operatingCompanyId) {
+        return reply.code(400).send({ error: "operating_company_id required" });
+      }
       const summary = await approvalService.getSettlementSummary(client, id, operatingCompanyId);
       if (!summary) {
         return reply.code(404).send({ error: "settlement not found" });
@@ -112,12 +118,15 @@ export async function registerSettlementApprovalRoutes(app: FastifyInstance) {
     }
 
     const query = req.query as Record<string, unknown>;
-    const operatingCompanyId = String(query.operating_company_id || "");
-    if (!operatingCompanyId) {
-      return reply.code(400).send({ error: "operating_company_id required" });
-    }
+    const requestedCompanyId = String(query.operating_company_id || "") || null;
 
     return withCurrentUser(user.uuid, async (client) => {
+      // ACCT-R-13 (2026-07-25): financial write (settlement_lines + escrow ledger) — membership
+      // check is load-bearing, not defense-in-depth.
+      const operatingCompanyId = await resolveOperatingCompanyId(client, user.uuid, requestedCompanyId);
+      if (!operatingCompanyId) {
+        return reply.code(400).send({ error: "operating_company_id required" });
+      }
       await approvalService.approveLineItem(client, {
         lineItemId: parsed.data.line_item_id,
         approvedBy: user.uuid,
@@ -138,12 +147,14 @@ export async function registerSettlementApprovalRoutes(app: FastifyInstance) {
     }
 
     const query = req.query as Record<string, unknown>;
-    const operatingCompanyId = String(query.operating_company_id || "");
-    if (!operatingCompanyId) {
-      return reply.code(400).send({ error: "operating_company_id required" });
-    }
+    const requestedCompanyId = String(query.operating_company_id || "") || null;
 
     return withCurrentUser(user.uuid, async (client) => {
+      // ACCT-R-13 (2026-07-25): financial write — membership check is load-bearing.
+      const operatingCompanyId = await resolveOperatingCompanyId(client, user.uuid, requestedCompanyId);
+      if (!operatingCompanyId) {
+        return reply.code(400).send({ error: "operating_company_id required" });
+      }
       await approvalService.rejectLineItem(client, {
         lineItemId: parsed.data.line_item_id,
         rejectedBy: user.uuid,
@@ -165,12 +176,15 @@ export async function registerSettlementApprovalRoutes(app: FastifyInstance) {
     }
 
     const query = req.query as Record<string, unknown>;
-    const operatingCompanyId = String(query.operating_company_id || "");
-    if (!operatingCompanyId) {
-      return reply.code(400).send({ error: "operating_company_id required" });
-    }
+    const requestedCompanyId = String(query.operating_company_id || "") || null;
 
     return withCurrentUser(user.uuid, async (client) => {
+      // ACCT-R-13 (2026-07-25): flips settlement status that downstream posting reads —
+      // membership check is load-bearing.
+      const operatingCompanyId = await resolveOperatingCompanyId(client, user.uuid, requestedCompanyId);
+      if (!operatingCompanyId) {
+        return reply.code(400).send({ error: "operating_company_id required" });
+      }
       await approvalService.approveSettlement(client, parsed.data.settlement_id, user.uuid, operatingCompanyId);
       return { success: true, status: 'approved' };
     });
@@ -187,12 +201,14 @@ export async function registerSettlementApprovalRoutes(app: FastifyInstance) {
     }
 
     const query = req.query as Record<string, unknown>;
-    const operatingCompanyId = String(query.operating_company_id || "");
-    if (!operatingCompanyId) {
-      return reply.code(400).send({ error: "operating_company_id required" });
-    }
+    const requestedCompanyId = String(query.operating_company_id || "") || null;
 
     return withCurrentUser(user.uuid, async (client) => {
+      // ACCT-R-13 (2026-07-25): gates PDF generation eligibility — membership check is load-bearing.
+      const operatingCompanyId = await resolveOperatingCompanyId(client, user.uuid, requestedCompanyId);
+      if (!operatingCompanyId) {
+        return reply.code(400).send({ error: "operating_company_id required" });
+      }
       await approvalService.finalizeSettlement(client, parsed.data.settlement_id, operatingCompanyId);
       return { success: true, status: 'finalized' };
     });
@@ -246,13 +262,27 @@ export async function registerSettlementApprovalRoutes(app: FastifyInstance) {
     }
 
     return withCurrentUser(user.uuid, async (client) => {
-      await tripLinkEngine.assignTripLink(
+      // ACCT-R-13 (2026-07-25): membership-checked before the queue row can be reassigned — the
+      // resolved id is passed as a WHERE predicate inside assignTripLink, not just logged.
+      const operatingCompanyId = await resolveOperatingCompanyId(
+        client,
+        user.uuid,
+        parsed.data.operating_company_id ?? null
+      );
+      if (!operatingCompanyId) {
+        return reply.code(400).send({ error: "operating_company_id required" });
+      }
+      const updated = await tripLinkEngine.assignTripLink(
         client,
         parsed.data.queue_id,
         parsed.data.load_id,
         parsed.data.load_number,
-        user.uuid
+        user.uuid,
+        operatingCompanyId
       );
+      if (!updated) {
+        return reply.code(404).send({ error: "trip_link_queue_row_not_found" });
+      }
       return { success: true };
     });
   });
