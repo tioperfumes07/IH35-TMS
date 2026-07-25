@@ -540,6 +540,10 @@
       "reason": "[HOLD-FOR-JORGE \u2014 FINANCIAL] LST-F03 \u2014 catalogs.payment_terms + catalogs.posting_templates per-entity conversion: add operating_company_id NOT NULL, UNIQUE(opco, name/code), FORCE RLS company_scope, REVOKE DELETE, seed identical payment_terms to every active entity (qbo_terms_id nulled on copies to avoid global UNIQUE collision). posting_templates 0 rows on prod \u2014 structure only until owner seeds. Dynamic org.companies.code=TRANSP. NEVER-DELETE (\u00a7F.24). Companion factory entityScoped:true."
     },
     {
+      "file": "202608050000_bank_link_01_counterparty_same_entity_fk.sql",
+      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1 \u00b7 FINANCIAL CLUSTER] BANK-LINK-01 (ranked FAIL BANK-F04) \u2014 banking.bank_transactions.categorization_vendor_id / categorization_customer_id have been BARE unconstrained uuid columns since migration 0165 (no REFERENCES, no entity check) even though categorization.routes.ts already writes + JOINs them against mdata.vendors/mdata.customers by convention. Adds composite UNIQUE (operating_company_id, id) on mdata.vendors + mdata.customers, then the two SAME-ENTITY composite FKs bank_tx_categorization_vendor_same_entity_fkey / _customer_same_entity_fkey (mirrors the ACCT-LINK-04 same-entity pattern \u2014 a single-column FK would allow a cross-entity counterparty leak). Guarded 0-orphan RAISE EXCEPTION before each ADD CONSTRAINT. categorization_memo (display text) untouched/retained. POSTS NOTHING: no JE, no GL account, no posting flag, no feature flag. Additive/idempotent, no RLS/grant change (inherits each table's existing FORCE RLS + 0065 grants), no hardcoded UUID. Run only on a Neon branch by Jorge, then ledger-backfill; GUARD (scripts/verify-steps/1482) re-verifies the constraint shape post-apply."
+    },
+    {
       "file": "202608040000_payment_terms_consumer_remap_same_entity.sql",
       "requires_held": [
         "202608000000_payment_terms_posting_templates_per_entity.sql"
