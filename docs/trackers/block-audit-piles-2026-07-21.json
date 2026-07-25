@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-07-25T17:49:59Z",
+  "generated_at": "2026-07-21T14:47:40.344735+00:00",
   "base_sha": "cde575b6463a3a3ac158a152d32d6bf219e1b72c",
   "denominators": {
     "raw_block_ready": 1366,
     "active_reconcile": 1191
   },
   "totals": {
-    "BUILT": 733,
-    "GAP": 259,
+    "BUILT": 727,
+    "GAP": 286,
     "NEEDS-PROD": 24,
-    "NEEDS-OWNER": 104,
-    "NOISE": 61,
+    "NEEDS-OWNER": 105,
+    "NOISE": 39,
     "UNVERIFIED": 10
   },
   "by_module": {
@@ -374,18 +374,12 @@
     },
     {
       "id": "0091-h3-3",
-      "pile": "BUILT",
+      "pile": "GAP",
       "module": "accounting",
-      "status_reconcile": "DONE",
-      "evidence": "PURGE 2026-07-25 [BUILT] was GAP → BUILT. lib/feature-flags/service.ts isPostingFlag() includes /_VOID_ENABLED$/ branch + WO_VOID_ENABLED enumerated",
+      "status_reconcile": "NEEDS-VERIFY",
+      "evidence": "OPEN: isPostingFlag() (service.ts:85) has no `/_VOID_ENABLED$/` branch and VOID_ENFORCEMENT_ENABLED + WO_VOID_ENABLED are enumerated in NEITHER POSTING_FLAG_KEYS nor PER_ENTITY_ONLY_FLAG_KEYS, so a single global default_enable",
       "fin": true,
-      "block_id": "0091-h3-3",
-      "purge_20260725": {
-        "verdict": "BUILT",
-        "from_pile": "GAP",
-        "to_pile": "BUILT",
-        "maps_to": null
-      }
+      "block_id": "0091-h3-3"
     },
     {
       "id": "0091-h5-1",
@@ -479,33 +473,21 @@
     },
     {
       "id": "0242-no-auto-customer-charge-on-cancellation",
-      "pile": "NOISE",
+      "pile": "NEEDS-OWNER",
       "module": "accounting",
-      "status_reconcile": "NOISE",
-      "evidence": "PURGE 2026-07-25 [NOISE] was NEEDS-OWNER → NOISE. Wave5 intentional: TONU fee NOT automatic (owner ruling #3129). Auto-AR framing superseded — not an open GAP.",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "backlog-verify NEEDS-OWNER (owner/CPA ruling required)",
       "fin": true,
-      "block_id": "0242-no-auto-customer-charge-on-cancellation",
-      "purge_20260725": {
-        "verdict": "NOISE",
-        "from_pile": "NEEDS-OWNER",
-        "to_pile": "NOISE",
-        "maps_to": null
-      }
+      "block_id": "0242-no-auto-customer-charge-on-cancellation"
     },
     {
       "id": "0242-no-auto-equipment-log-on-transfer",
-      "pile": "NOISE",
+      "pile": "GAP",
       "module": "banking",
-      "status_reconcile": "NOISE",
-      "evidence": "PURGE 2026-07-25 [WRONG_MODULE] was GAP → NOISE. wrong_module: dispatch/equipment transfer → mdata.equipment_log; not accounting/banking product debt",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "OPEN: mdata.equipment_transfers -> mdata.equipment_log link: finalizeDualAckTransfer/confirmTransfer never INSERTs into mdata.equipment_log, so the UI's Equipment Log tab never gets an automatic entry on transfer completion.",
       "fin": true,
-      "block_id": "0242-no-auto-equipment-log-on-transfer",
-      "purge_20260725": {
-        "verdict": "WRONG_MODULE",
-        "from_pile": "GAP",
-        "to_pile": "NOISE",
-        "maps_to": null
-      }
+      "block_id": "0242-no-auto-equipment-log-on-transfer"
     },
     {
       "id": "0242-no-auto-escrow-deduction-driver-fault-can",
@@ -1040,18 +1022,12 @@
     },
     {
       "id": "0251-gap22-lumper-expense_VERIFY",
-      "pile": "NOISE",
+      "pile": "GAP",
       "module": "accounting",
-      "status_reconcile": "NOISE",
-      "evidence": "PURGE 2026-07-25 [STALE_MAP_SCOREBOARD] was GAP → NOISE. expenses subledger 0 with QBO_EXPENSES_PROJECTION_ENABLED OFF by design — tracked ACCT-ECON-04; lumper→expense is same flag gate. maps_to=ACCT-ECON-04.",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "OPEN: no accounting.expenses INSERT FK'd to the load for carrier-paid lumper charges",
       "fin": true,
-      "block_id": "0251-gap22-lumper-expense_VERIFY",
-      "purge_20260725": {
-        "verdict": "STALE_MAP_SCOREBOARD",
-        "from_pile": "GAP",
-        "to_pile": "NOISE",
-        "maps_to": "ACCT-ECON-04"
-      }
+      "block_id": "0251-gap22-lumper-expense_VERIFY"
     },
     {
       "id": "0251-gap3-vendor-invoice-linkage",
@@ -1478,18 +1454,12 @@
     },
     {
       "id": "0285-banking-transfer-gl-gap_VERIFY",
-      "pile": "NOISE",
+      "pile": "GAP",
       "module": "banking",
-      "status_reconcile": "NOISE",
-      "evidence": "PURGE 2026-07-25 [STALE_MAP_SCOREBOARD] was GAP → NOISE. scoreboard dup: transfers=0 + mark-as-transfer poster tracked as BANK-ECON-03/BANK-SURF-03 (#3445 HOLD) maps_to=BANK-ECON-03.",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "OPEN: banking.bank_transactions transfer category_kind='transfer' has zero GL-posting call path (not even flag-gated) — inter-account bank transfers never get an accounting.journal_entries linkage regardless of BANK_FEED_GL_PO",
       "fin": true,
-      "block_id": "0285-banking-transfer-gl-gap_VERIFY",
-      "purge_20260725": {
-        "verdict": "STALE_MAP_SCOREBOARD",
-        "from_pile": "GAP",
-        "to_pile": "NOISE",
-        "maps_to": "BANK-ECON-03"
-      }
+      "block_id": "0285-banking-transfer-gl-gap_VERIFY"
     },
     {
       "id": "0285-df-gap1-no-escrow-for-cash-advances",
@@ -1538,18 +1508,12 @@
     },
     {
       "id": "0441-mod10-cashflow-accounting-routes-dead",
-      "pile": "BUILT",
+      "pile": "GAP",
       "module": "accounting",
-      "status_reconcile": "DONE",
-      "evidence": "PURGE 2026-07-25 [BUILT] was GAP → BUILT. registerCashFlowRoutes + registerCashForecastRoutes mounted apps/backend/src/index.ts:1062-1063",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "OPEN: registerCashForecastRoutes/registerCashFlowRoutes still not mounted in index.ts; /accounting/cash-forecast nav still points at the dead route instead of the live registerCashFlowModuleRoutes module (index.ts:1006) or the",
       "fin": true,
-      "block_id": "0441-mod10-cashflow-accounting-routes-dead",
-      "purge_20260725": {
-        "verdict": "BUILT",
-        "from_pile": "GAP",
-        "to_pile": "BUILT",
-        "maps_to": null
-      }
+      "block_id": "0441-mod10-cashflow-accounting-routes-dead"
     },
     {
       "id": "0441-mod10-cashflow-driverpay-hardcoded-empty",
@@ -1886,18 +1850,12 @@
     },
     {
       "id": "0441-mod2-wo-split-brain",
-      "pile": "NOISE",
+      "pile": "GAP",
       "module": "banking",
-      "status_reconcile": "NOISE",
-      "evidence": "PURGE 2026-07-25 [WRONG_MODULE] was GAP → NOISE. wrong_module: maintenance WO console split-brain (next_wo_display_id); misfiled under banking",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "OPEN: POST /api/v1/work-orders (Console path) still not consolidated onto maintenance.next_wo_display_id(); two live create paths writing maintenance.work_orders with two ID formats persists.",
       "fin": true,
-      "block_id": "0441-mod2-wo-split-brain",
-      "purge_20260725": {
-        "verdict": "WRONG_MODULE",
-        "from_pile": "GAP",
-        "to_pile": "NOISE",
-        "maps_to": null
-      }
+      "block_id": "0441-mod2-wo-split-brain"
     },
     {
       "id": "0441-mod3-fuel-compliance-not-available-rows",
@@ -1991,18 +1949,12 @@
     },
     {
       "id": "0441-mod4-dispatch-settings-localstorage-only",
-      "pile": "NOISE",
+      "pile": "GAP",
       "module": "accounting",
-      "status_reconcile": "NOISE",
-      "evidence": "PURGE 2026-07-25 [WRONG_MODULE] was GAP → NOISE. wrong_module: dispatch settings localStorage-only; not accounting product debt",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "OPEN: no backend table/endpoint persists default_sort, alert thresholds, or auto-routing toggles — still localStorage-only",
       "fin": true,
-      "block_id": "0441-mod4-dispatch-settings-localstorage-only",
-      "purge_20260725": {
-        "verdict": "WRONG_MODULE",
-        "from_pile": "GAP",
-        "to_pile": "NOISE",
-        "maps_to": null
-      }
+      "block_id": "0441-mod4-dispatch-settings-localstorage-only"
     },
     {
       "id": "0441-mod5-actionbar-dead-links",
@@ -2150,18 +2102,12 @@
     },
     {
       "id": "0441-mod6-hos-violations-source-enum-mismatch",
-      "pile": "NOISE",
+      "pile": "GAP",
       "module": "banking",
-      "status_reconcile": "NOISE",
-      "evidence": "PURGE 2026-07-25 [WRONG_MODULE] was GAP → NOISE. wrong_module: safety.hos_violations source enum mismatch; misfiled under banking",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "OPEN: Two vocabularies for safety.hos_violations.source remain unreconciled; the list endpoint's source filter can never match rows the create endpoint writes.",
       "fin": true,
-      "block_id": "0441-mod6-hos-violations-source-enum-mismatch",
-      "purge_20260725": {
-        "verdict": "WRONG_MODULE",
-        "from_pile": "GAP",
-        "to_pile": "NOISE",
-        "maps_to": null
-      }
+      "block_id": "0441-mod6-hos-violations-source-enum-mismatch"
     },
     {
       "id": "0441-mod6-hos-violations-void-hardcoded-reason",
@@ -2210,10 +2156,10 @@
     },
     {
       "id": "0441-mod7-bill-subnav-filters-not-creators_UI",
-      "pile": "GAP",
+      "pile": "BUILT",
       "module": "accounting",
-      "status_reconcile": "AUDIT-NOTE",
-      "evidence": "OPEN: Maintenance/Repair/Fuel/Driver bill subnav links route to a filtered list, not a create flow, inconsistent with Vendor bill/Multiple bills in the same subnav group",
+      "status_reconcile": "DONE",
+      "evidence": "BUILT 2026-07-25 (ACCT-R-09): manifest Navigate ?category=X&create=1 for maintenance/repair/fuel/driver; guard verify-bill-subnav-creators.mjs + verify-step 1484",
       "fin": true,
       "block_id": "0441-mod7-bill-subnav-filters-not-creators_UI"
     },
@@ -2255,27 +2201,21 @@
     },
     {
       "id": "0441-mod7-myaccountant-flag-no-seed",
-      "pile": "GAP",
+      "pile": "BUILT",
       "module": "accounting",
-      "status_reconcile": "AUDIT-NOTE",
-      "evidence": "OPEN: no seed migration for MY_ACCOUNTANT_ENABLED in db/migrations/ (consistent with other flags' pattern); flag is discoverable only via an Owner typing the exact key [closure needs live proof]",
+      "status_reconcile": "DONE",
+      "evidence": "BUILT 2026-07-25 (ACCT-R-10): migration 202607590000_my_accountant_flag_seed.sql; Neon lucia lib.feature_flags MY_ACCOUNTANT_ENABLED default_enabled=false; guard verify-myaccountant-flag-seeded.mjs + verify-step 1485",
       "fin": true,
       "block_id": "0441-mod7-myaccountant-flag-no-seed"
     },
     {
       "id": "0441-mod8-auto-match-button-dead",
-      "pile": "BUILT",
+      "pile": "GAP",
       "module": "banking",
-      "status_reconcile": "DONE",
-      "evidence": "PURGE 2026-07-25 [BUILT] was GAP → BUILT. ReconciliationWorkspace canOpenAutoMatchSuggestions → BankReconciliationPage auto_matched_candidates (#2667 drain doc STALE)",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "OPEN: Button remains disabled/dead; not wired to the auto_matched_candidates worklist flow.",
       "fin": true,
-      "block_id": "0441-mod8-auto-match-button-dead",
-      "purge_20260725": {
-        "verdict": "BUILT",
-        "from_pile": "GAP",
-        "to_pile": "BUILT",
-        "maps_to": null
-      }
+      "block_id": "0441-mod8-auto-match-button-dead"
     },
     {
       "id": "0441-mod8-backdated-check-dead",
@@ -2297,18 +2237,12 @@
     },
     {
       "id": "0441-mod8-plaid-sign-deposits-negative",
-      "pile": "BUILT",
+      "pile": "GAP",
       "module": "banking",
-      "status_reconcile": "DONE",
-      "evidence": "PURGE 2026-07-25 [BUILT] was GAP → BUILT. BankingTransactionsDesignView + BankAccountDetail use is_credit-aware spentReceived/formatUsdCents; guard verify-banking-bankaccountdetail-is-credit-amounts",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "OPEN: BankAccountDetail.tsx transaction table still needs is_credit-aware sign handling (deposits render as negative amounts).",
       "fin": true,
-      "block_id": "0441-mod8-plaid-sign-deposits-negative",
-      "purge_20260725": {
-        "verdict": "BUILT",
-        "from_pile": "GAP",
-        "to_pile": "BUILT",
-        "maps_to": null
-      }
+      "block_id": "0441-mod8-plaid-sign-deposits-negative"
     },
     {
       "id": "0441-mod8-section7-palette-violation",
@@ -2348,18 +2282,12 @@
     },
     {
       "id": "0441-mod9-customer-taxonomy-mismatch",
-      "pile": "NOISE",
+      "pile": "GAP",
       "module": "banking",
-      "status_reconcile": "NOISE",
-      "evidence": "PURGE 2026-07-25 [WRONG_MODULE] was GAP → NOISE. wrong_module: Customers.tsx vs CustomerDetail.tsx tab taxonomy drift; customers module not banking",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "OPEN: Customers.tsx list-preview panel taxonomy (12 tabs) still does not match CustomerDetail.tsx full-page taxonomy (13 tabs) — no shared vocabulary, no 'Billing & Receivables'/'Lanes & Pricing'/'Contracts'/'Portal Users'/'Lo",
       "fin": true,
-      "block_id": "0441-mod9-customer-taxonomy-mismatch",
-      "purge_20260725": {
-        "verdict": "WRONG_MODULE",
-        "from_pile": "GAP",
-        "to_pile": "NOISE",
-        "maps_to": null
-      }
+      "block_id": "0441-mod9-customer-taxonomy-mismatch"
     },
     {
       "id": "0441-mod9-customers-list-12-tabs-9-stubs",
@@ -2525,18 +2453,12 @@
     },
     {
       "id": "0473-2-7-bank-transactions-uncategorized-plaid",
-      "pile": "NOISE",
+      "pile": "GAP",
       "module": "banking",
-      "status_reconcile": "NOISE",
-      "evidence": "PURGE 2026-07-25 [STALE_MAP_SCOREBOARD] was GAP → NOISE. scoreboard dup: matched_je=3/10667 uncategorized backlog canonical in BANK-ECON-02/ACCT-LINK-06 maps_to=BANK-ECON-02.",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "GAP-CONFIRMED — 8,817 uncategorized Plaid-sourced bank_transactions (status=pending_categorization) on prod (TRANSP 3,991 + TRK 4,695 + USMCA 131). Review-state cross-check: 10,424 rows review_state=for_review + pending_categorization. Operational/data backlog, not a wiring defect. [Neon MCP RLS-bypass read 2026-07-21 ~22:55 UTC on br-fancy-credit-akjnd07a; docs/trackers/NEEDS-PROD-NEON-VERDICTS-2026-07-21.md §2]",
       "fin": true,
-      "block_id": "0473-2-7-bank-transactions-uncategorized-plaid",
-      "purge_20260725": {
-        "verdict": "STALE_MAP_SCOREBOARD",
-        "from_pile": "GAP",
-        "to_pile": "NOISE",
-        "maps_to": "BANK-ECON-02"
-      }
+      "block_id": "0473-2-7-bank-transactions-uncategorized-plaid"
     },
     {
       "id": "0490-critical-g11-1-deduction-consent-template",
@@ -2729,18 +2651,12 @@
     },
     {
       "id": "0519-fl1-2649-bank-tx-uncategorized_DISPATCH",
-      "pile": "NOISE",
+      "pile": "GAP",
       "module": "banking",
-      "status_reconcile": "NOISE",
-      "evidence": "PURGE 2026-07-25 [STALE_MAP_SCOREBOARD] was GAP → NOISE. scoreboard dup: duplicate uncategorized bank tx count claim; canonical BANK-ECON-02 (matched_je=3/10667) maps_to=BANK-ECON-02.",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "GAP-CONFIRMED (count STALE) — live uncategorized bank_transactions = 10,424 (not the claimed 2,649): TRANSP 5,598 + TRK 4,695 + USMCA 131 of 10,427 total. Only 3 rows ever categorized. Re-scope any dispatch block from 2,649 → 10,424. [Neon MCP RLS-bypass read 2026-07-21 ~22:55 UTC on br-fancy-credit-akjnd07a; docs/trackers/NEEDS-PROD-NEON-VERDICTS-2026-07-21.md §5]",
       "fin": true,
-      "block_id": "0519-fl1-2649-bank-tx-uncategorized_DISPATCH",
-      "purge_20260725": {
-        "verdict": "STALE_MAP_SCOREBOARD",
-        "from_pile": "GAP",
-        "to_pile": "NOISE",
-        "maps_to": "BANK-ECON-02"
-      }
+      "block_id": "0519-fl1-2649-bank-tx-uncategorized_DISPATCH"
     },
     {
       "id": "0519-lg1-5-nullable-financial-columns_DISPATCH",
@@ -2771,18 +2687,12 @@
     },
     {
       "id": "0519-ri1-689-orphan-fk-columns",
-      "pile": "BUILT",
+      "pile": "GAP",
       "module": "accounting",
-      "status_reconcile": "DONE",
-      "evidence": "PURGE 2026-07-25 [BUILT] was GAP → BUILT. verify-orphan-fk-inventory.mjs wired via verify-step 126; baseline ratchet on main",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "OPEN: verify-orphan-fk-inventory guard is built but not wired into any executed CI path (orphaned = false protection); accounting.bill_lines.bill_id and accounting.bills.vendor_id still lack real FKs; the real bills->vendors F",
       "fin": true,
-      "block_id": "0519-ri1-689-orphan-fk-columns",
-      "purge_20260725": {
-        "verdict": "BUILT",
-        "from_pile": "GAP",
-        "to_pile": "BUILT",
-        "maps_to": null
-      }
+      "block_id": "0519-ri1-689-orphan-fk-columns"
     },
     {
       "id": "0519-sf1-82-drivers-0-settlements",
@@ -2813,33 +2723,21 @@
     },
     {
       "id": "a-03-expenses-fullpage-form-not-list-drawer",
-      "pile": "BUILT",
+      "pile": "GAP",
       "module": "accounting",
-      "status_reconcile": "DONE",
-      "evidence": "PURGE 2026-07-25 [BUILT] was GAP → BUILT. REFUTED: manifest.tsx routes /accounting/expenses → ExpensesListPage (list not wizard)",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "OPEN: [REFUTED by adversarial pass] The accounting-subnav path is genuinely fixed as described: subnav-manifest.ts:216 href=/accounting/expenses/list, ExpensesListPage.tsx:169-183 +Create opens RecordExpenseModal (ParityDrawer",
       "fin": true,
-      "block_id": "a-03-expenses-fullpage-form-not-list-drawer",
-      "purge_20260725": {
-        "verdict": "BUILT",
-        "from_pile": "GAP",
-        "to_pile": "BUILT",
-        "maps_to": null
-      }
+      "block_id": "a-03-expenses-fullpage-form-not-list-drawer"
     },
     {
       "id": "a-05-bills-no-page-level-create-button",
-      "pile": "BUILT",
+      "pile": "GAP",
       "module": "accounting",
-      "status_reconcile": "DONE",
-      "evidence": "PURGE 2026-07-25 [BUILT] was GAP → BUILT. BillsPage.tsx actions + Create button data-testid=bills-create-cta wired",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "OPEN: actions prop with a page-level '+ Create Bill' button on BillsPage.tsx's AccountingSubNavWrapper (contrast with ExpensesListPage.tsx which now has this pattern, see a-03).",
       "fin": true,
-      "block_id": "a-05-bills-no-page-level-create-button",
-      "purge_20260725": {
-        "verdict": "BUILT",
-        "from_pile": "GAP",
-        "to_pile": "BUILT",
-        "maps_to": null
-      }
+      "block_id": "a-05-bills-no-page-level-create-button"
     },
     {
       "id": "A1-AUDIT-SPINE-LINK-COLUMNS",
@@ -2924,18 +2822,12 @@
     },
     {
       "id": "accounting-2-ap-aging-qbo-mirror-population",
-      "pile": "BUILT",
+      "pile": "GAP",
       "module": "accounting",
-      "status_reconcile": "DONE",
-      "evidence": "PURGE 2026-07-25 [BUILT] was GAP → BUILT. ap-aging.service.ts + ap-bills-puller + verify-ap-aging-qbo-mirror-population (step 925) on main; bill mirror populated per ACCT-ECON-02",
+      "status_reconcile": "PENDING",
+      "evidence": "reconcile PENDING — [verified 2026-07-12] agent: mirror table unpopulated; inbound-sync PR #1682 CLOSED unmerged",
       "fin": true,
-      "block_id": "accounting-2-ap-aging-qbo-mirror-population",
-      "purge_20260725": {
-        "verdict": "BUILT",
-        "from_pile": "GAP",
-        "to_pile": "BUILT",
-        "maps_to": null
-      }
+      "block_id": "accounting-2-ap-aging-qbo-mirror-population"
     },
     {
       "id": "accounting-sortable-headers-guard-wiring",
@@ -3200,27 +3092,21 @@
     },
     {
       "id": "audit4-tax-return-automation",
-      "pile": "GAP",
+      "pile": "BUILT",
       "module": "accounting",
-      "status_reconcile": "AUDIT-NOTE",
-      "evidence": "OPEN: 1) The sales-tax return module (prepare/file/mark-paid) is built but never registered into the app (apps/backend/src/index.ts has no import of accounting/sales-tax/sales-tax.routes.ts) — orphaned, needs wiring or an expl",
+      "status_reconcile": "DONE",
+      "evidence": "BUILT 2026-07-25 (ACCT-R-14): sales-tax/sales-tax.routes.ts autoloaded via registerAccountingRoutes; FE SalesTaxPage + subnav Sales tax; Neon accounting.sales_tax_returns exists; guard verify-acct-r14-sales-tax-autoload.mjs + verify-step 1486",
       "fin": true,
       "block_id": "audit4-tax-return-automation"
     },
     {
       "id": "audit5-fraud-anomaly-detection",
-      "pile": "BUILT",
+      "pile": "GAP",
       "module": "accounting",
-      "status_reconcile": "DONE",
-      "evidence": "PURGE 2026-07-25 [BUILT] was GAP → BUILT. REFUTED partial: integrity/anomaly-detector.service.ts + routes mounted index.ts:857,1050 + worker cron",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "OPEN: [REFUTED by adversarial pass] All 4 files exist, but the clai",
       "fin": true,
-      "block_id": "audit5-fraud-anomaly-detection",
-      "purge_20260725": {
-        "verdict": "BUILT",
-        "from_pile": "GAP",
-        "to_pile": "BUILT",
-        "maps_to": null
-      }
+      "block_id": "audit5-fraud-anomaly-detection"
     },
     {
       "id": "audit7-cost-center-tracking",
@@ -3260,18 +3146,12 @@
     },
     {
       "id": "BANK-18-KEYSTONE-CATEGORIZE-REGISTER",
-      "pile": "BUILT",
+      "pile": "GAP",
       "module": "banking",
-      "status_reconcile": "DONE",
-      "evidence": "PURGE 2026-07-25 [BUILT] was GAP → BUILT. BankAccountDetail mounts BankingTransactionsDesignView; guard verify-banking-register-categorize-capable (step 1208) on main (#3131/#2371 lineage)",
+      "status_reconcile": "NEEDS-VERIFY",
+      "evidence": "reconcile NEEDS-VERIFY, evidence shows missing — 2/4 signature file(s) on main — partial, unverified",
       "fin": true,
-      "block_id": "BANK-18-KEYSTONE-CATEGORIZE-REGISTER",
-      "purge_20260725": {
-        "verdict": "BUILT",
-        "from_pile": "GAP",
-        "to_pile": "BUILT",
-        "maps_to": null
-      }
+      "block_id": "BANK-18-KEYSTONE-CATEGORIZE-REGISTER"
     },
     {
       "id": "BANK-SORT-ROLLOUT-ACCT",
@@ -3347,18 +3227,12 @@
     },
     {
       "id": "banking-grid-sort-resize-rows-per-page",
-      "pile": "NOISE",
+      "pile": "GAP",
       "module": "accounting",
-      "status_reconcile": "NOISE",
-      "evidence": "PURGE 2026-07-25 [WRONG_MODULE] was GAP → NOISE. Misfiled under module=accounting; banking grid sort tracked under banking / BANK-SORT rollouts already merged (#2602/#2609).",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "OPEN: Clickable asc/desc sort on the transaction grid headers — every TableHeaderCell instance still hardcodes sortable={false}, matches manifest exactly.",
       "fin": true,
-      "block_id": "banking-grid-sort-resize-rows-per-page",
-      "purge_20260725": {
-        "verdict": "WRONG_MODULE",
-        "from_pile": "GAP",
-        "to_pile": "NOISE",
-        "maps_to": null
-      }
+      "block_id": "banking-grid-sort-resize-rows-per-page"
     },
     {
       "id": "BANKING-RECON-DEEPLINK-H4",
@@ -3497,18 +3371,12 @@
     },
     {
       "id": "biz-flow-6-no-automatic-invoice-sending",
-      "pile": "NOISE",
+      "pile": "GAP",
       "module": "accounting",
-      "status_reconcile": "NOISE",
-      "evidence": "PURGE 2026-07-25 [NOISE] was GAP → NOISE. duplicate of flow6-auto-invoice-sending (same block_id class)",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "OPEN: Automatic email-on-create trigger (or a reminder schedule) — the manual /send endpoint exists and works, but nothing calls it automatically when an invoice is created via buildInvoiceFromLoad.",
       "fin": true,
-      "block_id": "biz-flow-6-no-automatic-invoice-sending",
-      "purge_20260725": {
-        "verdict": "NOISE",
-        "from_pile": "GAP",
-        "to_pile": "NOISE",
-        "maps_to": null
-      }
+      "block_id": "biz-flow-6-no-automatic-invoice-sending"
     },
     {
       "id": "biz-flow-6-payment-application-manual_DISPATCH",
@@ -3530,18 +3398,12 @@
     },
     {
       "id": "biz-flow-8-no-equipment-log-auto-update",
-      "pile": "NOISE",
+      "pile": "GAP",
       "module": "banking",
-      "status_reconcile": "NOISE",
-      "evidence": "PURGE 2026-07-25 [NOISE] was GAP → NOISE. duplicate equipment_log-on-transfer cluster (4x); wrong_module dispatch/equipment",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "OPEN: dual-confirm.service.ts / request.service.ts never INSERT into mdata.equipment_log on transfer confirm — the existing log table and its route are orphaned from the transfer flow (audit trail only comes from appendCrudAud",
       "fin": true,
-      "block_id": "biz-flow-8-no-equipment-log-auto-update",
-      "purge_20260725": {
-        "verdict": "NOISE",
-        "from_pile": "GAP",
-        "to_pile": "NOISE",
-        "maps_to": null
-      }
+      "block_id": "biz-flow-8-no-equipment-log-auto-update"
     },
     {
       "id": "biz-flow-8-no-transfer-notifications",
@@ -4679,18 +4541,12 @@
     },
     {
       "id": "CONN-1-plaid-reconcile-commit",
-      "pile": "NOISE",
+      "pile": "GAP",
       "module": "banking",
-      "status_reconcile": "NOISE",
-      "evidence": "PURGE 2026-07-25 [STALE_MAP_SCOREBOARD] was GAP → NOISE. scoreboard dup: reconciliation_sessions=0 root cause tracked BANK-ECON-04 (RLS lucia-bypass HELD migration) maps_to=BANK-ECON-04.",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "GAP-CONFIRMED — banking.reconciliation_sessions = 0 rows all entities (true zero with RLS bypass). Reconcile-commit routes wired but never exercised in prod. Usage/adoption gap, not a code gap. [Neon MCP RLS-bypass read 2026-07-21 ~22:55 UTC on br-fancy-credit-akjnd07a; docs/trackers/NEEDS-PROD-NEON-VERDICTS-2026-07-21.md §6]",
       "fin": true,
-      "block_id": "CONN-1-plaid-reconcile-commit",
-      "purge_20260725": {
-        "verdict": "STALE_MAP_SCOREBOARD",
-        "from_pile": "GAP",
-        "to_pile": "NOISE",
-        "maps_to": "BANK-ECON-04"
-      }
+      "block_id": "CONN-1-plaid-reconcile-commit"
     },
     {
       "id": "CONN-2-factoring-faro",
@@ -5099,18 +4955,12 @@
     },
     {
       "id": "dispatch-sweep-gap-21",
-      "pile": "NOISE",
+      "pile": "GAP",
       "module": "accounting",
-      "status_reconcile": "NOISE",
-      "evidence": "PURGE 2026-07-25 [WRONG_MODULE] was GAP → NOISE. wrong_module: dispatch active-loads KPI invoice-status column; misfiled accounting",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "OPEN: No invoice-status column/join on the active-loads KPI query.",
       "fin": true,
-      "block_id": "dispatch-sweep-gap-21",
-      "purge_20260725": {
-        "verdict": "WRONG_MODULE",
-        "from_pile": "GAP",
-        "to_pile": "NOISE",
-        "maps_to": null
-      }
+      "block_id": "dispatch-sweep-gap-21"
     },
     {
       "id": "dispatch-sweep-gap-22",
@@ -5447,18 +5297,12 @@
     },
     {
       "id": "driverprofile-1-companion-tier1-rls-hardening",
-      "pile": "NOISE",
+      "pile": "GAP",
       "module": "accounting",
-      "status_reconcile": "NOISE",
-      "evidence": "PURGE 2026-07-25 [WRONG_MODULE] was GAP → NOISE. wrong_module: driver profile RLS hardening; PR #1742 frontend-only — drivers/platform not accounting",
+      "status_reconcile": "PENDING",
+      "evidence": "reconcile PENDING — [verified 2026-07-12] agent: PR #1742 frontend test/UI only, zero RLS/backend touched",
       "fin": true,
-      "block_id": "driverprofile-1-companion-tier1-rls-hardening",
-      "purge_20260725": {
-        "verdict": "WRONG_MODULE",
-        "from_pile": "GAP",
-        "to_pile": "NOISE",
-        "maps_to": null
-      }
+      "block_id": "driverprofile-1-companion-tier1-rls-hardening"
     },
     {
       "id": "E1-SMOKE-SERVICE-TOKEN-AUTH",
@@ -5525,18 +5369,12 @@
     },
     {
       "id": "expenses-list-routing-bug",
-      "pile": "NOISE",
+      "pile": "GAP",
       "module": "accounting",
-      "status_reconcile": "NOISE",
-      "evidence": "PURGE 2026-07-25 [NOISE] was GAP → NOISE. duplicate of a-03-expenses-fullpage-form-not-list-drawer (same routing fix)",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "OPEN: Same gap as expenses-list-route-still-shows-create-wizard: canonical /accounting/expenses shows the wizard, not the list. The block's evidence field asserting 'no bug reproduced' does not match current repo state.",
       "fin": true,
-      "block_id": "expenses-list-routing-bug",
-      "purge_20260725": {
-        "verdict": "NOISE",
-        "from_pile": "GAP",
-        "to_pile": "NOISE",
-        "maps_to": null
-      }
+      "block_id": "expenses-list-routing-bug"
     },
     {
       "id": "f-01-fuel-home-stub",
@@ -6071,10 +5909,10 @@
     },
     {
       "id": "fh-unit-allocation-ui-view-missing",
-      "pile": "GAP",
+      "pile": "BUILT",
       "module": "accounting",
-      "status_reconcile": "AUDIT-NOTE",
-      "evidence": "OPEN: No frontend page/route/api-client for the Unit-Allocation (FH-7) read-only view exists anywhere in the repo.",
+      "status_reconcile": "DONE",
+      "evidence": "BUILT 2026-07-25 (ACCT-R-22): AllocationsPage + api/allocations.ts + allocations.routes.ts; verify-steps/1251-verify-allocations-page.mjs",
       "fin": true,
       "block_id": "fh-unit-allocation-ui-view-missing"
     },
@@ -6521,18 +6359,12 @@
     },
     {
       "id": "fk-equipment-transfer-log-0289",
-      "pile": "NOISE",
+      "pile": "GAP",
       "module": "banking",
-      "status_reconcile": "NOISE",
-      "evidence": "PURGE 2026-07-25 [NOISE] was GAP → NOISE. duplicate equipment_log-on-transfer cluster (4x); wrong_module dispatch/equipment",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "OPEN: No FK/column links dispatch.equipment_transfer_requests (or mdata.equipment_transfers) to mdata.equipment_log; no code path writes an equipment_log row from a transfer confirm.",
       "fin": true,
-      "block_id": "fk-equipment-transfer-log-0289",
-      "purge_20260725": {
-        "verdict": "NOISE",
-        "from_pile": "GAP",
-        "to_pile": "NOISE",
-        "maps_to": null
-      }
+      "block_id": "fk-equipment-transfer-log-0289"
     },
     {
       "id": "fk-escrow-termination-0289",
@@ -6644,18 +6476,12 @@
     },
     {
       "id": "flow3-cancellation-auto-customer-charge",
-      "pile": "NOISE",
+      "pile": "GAP",
       "module": "accounting",
-      "status_reconcile": "NOISE",
-      "evidence": "PURGE 2026-07-25 [NOISE] was GAP → NOISE. duplicate intent of 0242-no-auto-customer-charge (intentional no auto-invoice on cancel)",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "OPEN: No trigger in cancellation.service.ts creates an accounting.invoices row/line when billable_to_customer=true.",
       "fin": true,
-      "block_id": "flow3-cancellation-auto-customer-charge",
-      "purge_20260725": {
-        "verdict": "NOISE",
-        "from_pile": "GAP",
-        "to_pile": "NOISE",
-        "maps_to": null
-      }
+      "block_id": "flow3-cancellation-auto-customer-charge"
     },
     {
       "id": "flow3-cancellation-auto-escrow-deduction",
@@ -6695,18 +6521,12 @@
     },
     {
       "id": "flow6-auto-payment-application",
-      "pile": "NOISE",
+      "pile": "GAP",
       "module": "accounting",
-      "status_reconcile": "NOISE",
-      "evidence": "PURGE 2026-07-25 [STALE_MAP_SCOREBOARD] was GAP → NOISE. Auto-apply AR payments blocked while QBO_AR_PAYMENTS_PROJECTION_ENABLED OFF by design — tracked as ACCT-ECON-03 FAIL-by-design. maps_to=ACCT-ECON-03.",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "OPEN: No auto-apply mode; caller must always supply explicit target applications. No unapplied-payment alert found.",
       "fin": true,
-      "block_id": "flow6-auto-payment-application",
-      "purge_20260725": {
-        "verdict": "STALE_MAP_SCOREBOARD",
-        "from_pile": "GAP",
-        "to_pile": "NOISE",
-        "maps_to": "ACCT-ECON-03"
-      }
+      "block_id": "flow6-auto-payment-application"
     },
     {
       "id": "flow7-auto-team-assignment",
@@ -6719,33 +6539,21 @@
     },
     {
       "id": "flow8-equipment-transfer-notifications",
-      "pile": "NOISE",
+      "pile": "GAP",
       "module": "banking",
-      "status_reconcile": "NOISE",
-      "evidence": "PURGE 2026-07-25 [NOISE] was GAP → NOISE. duplicate equipment transfer cluster; wrong_module dispatch/notifications",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "OPEN: No notification wiring (email/SMS/PWA) on transfer initiate/confirm in the current dual-confirm engine.",
       "fin": true,
-      "block_id": "flow8-equipment-transfer-notifications",
-      "purge_20260725": {
-        "verdict": "NOISE",
-        "from_pile": "GAP",
-        "to_pile": "NOISE",
-        "maps_to": null
-      }
+      "block_id": "flow8-equipment-transfer-notifications"
     },
     {
       "id": "flow8-no-auto-equipment-log-notify",
-      "pile": "NOISE",
+      "pile": "GAP",
       "module": "banking",
-      "status_reconcile": "NOISE",
-      "evidence": "PURGE 2026-07-25 [NOISE] was GAP → NOISE. duplicate equipment_log-on-transfer cluster (4x); wrong_module dispatch/equipment",
+      "status_reconcile": "AUDIT-NOTE",
+      "evidence": "OPEN: No auto-insert into mdata.equipment_log and no driver notification on transfer confirm, in either the legacy mdata engine or the canonical dispatch engine.",
       "fin": true,
-      "block_id": "flow8-no-auto-equipment-log-notify",
-      "purge_20260725": {
-        "verdict": "NOISE",
-        "from_pile": "GAP",
-        "to_pile": "NOISE",
-        "maps_to": null
-      }
+      "block_id": "flow8-no-auto-equipment-log-notify"
     },
     {
       "id": "flow9-safety-event-auto-escrow-deduction",
@@ -8045,10 +7853,10 @@
     },
     {
       "id": "h-05-home-kpi-no-date-range-toggle",
-      "pile": "GAP",
+      "pile": "BUILT",
       "module": "accounting",
-      "status_reconcile": "AUDIT-NOTE",
-      "evidence": "OPEN: No 7d/30d/MTD/YTD date-range selector on the Home KPI row in either home page variant.",
+      "status_reconcile": "DONE",
+      "evidence": "BUILT 2026-07-25 (ACCT-R-26): HomeKpiRangeToggle on OwnerHome/DefaultHome; verify-steps/1215-verify-home-kpi-range-toggle.mjs",
       "fin": true,
       "block_id": "h-05-home-kpi-no-date-range-toggle"
     },
@@ -9247,18 +9055,12 @@
     },
     {
       "id": "ps-a-item-editor-account-pickers-no-addnew",
-      "pile": "BUILT",
+      "pile": "GAP",
       "module": "accounting",
-      "status_reconcile": "DONE",
-      "evidence": "PURGE 2026-07-25 [BUILT] was GAP → BUILT. ItemEditorModal.tsx ReferenceSelect createKind=account on income+expense pickers (keystone inline create)",
+      "status_reconcile": "NEEDS-VERIFY",
+      "evidence": "OPEN: allowAddNew prop on the Income account Combobox (ItemEditorModal.tsx ~line 362) and the Expense account Combobox (~line 425), matching the pattern already used on the Category picker at line 318.",
       "fin": true,
-      "block_id": "ps-a-item-editor-account-pickers-no-addnew",
-      "purge_20260725": {
-        "verdict": "BUILT",
-        "from_pile": "GAP",
-        "to_pile": "BUILT",
-        "maps_to": null
-      }
+      "block_id": "ps-a-item-editor-account-pickers-no-addnew"
     },
     {
       "id": "public-audit-log-partitions-no-rls",
@@ -11001,15 +10803,7 @@
       "NEEDS-OWNER": 28,
       "NOISE": 383
     },
-    "classify_agent": "e893f4e5-a8f5-43dc-9c23-820b32c366d6",
-    "acct_bank_pile_purge_20260725": {
-      "changed": 33,
-      "pending_before": {
-        "accounting": 61,
-        "banking": 19
-      },
-      "doc": "docs/trackers/ACCT-BANK-PILE-PURGE-2026-07-25.md"
-    }
+    "classify_agent": "e893f4e5-a8f5-43dc-9c23-820b32c366d6"
   },
   "critical_gaps": [
     {
@@ -11115,238 +10909,5 @@
     "total": 1191,
     "frozen": true,
     "note": "AS-OF population for this dated audit. Frozen at capture so the artifact is immutable and reproducible forever. Publishing a new as-of is a deliberate act: re-run this generator with --recapture against the then-current reconciler."
-  },
-  "purge_20260725_changed": [
-    {
-      "id": "0091-h3-3",
-      "from": "GAP",
-      "to": "BUILT",
-      "verdict": "BUILT",
-      "maps_to": null
-    },
-    {
-      "id": "0242-no-auto-customer-charge-on-cancellation",
-      "from": "NEEDS-OWNER",
-      "to": "NOISE",
-      "verdict": "NOISE",
-      "maps_to": null
-    },
-    {
-      "id": "0242-no-auto-equipment-log-on-transfer",
-      "from": "GAP",
-      "to": "NOISE",
-      "verdict": "WRONG_MODULE",
-      "maps_to": null
-    },
-    {
-      "id": "0251-gap22-lumper-expense_VERIFY",
-      "from": "GAP",
-      "to": "NOISE",
-      "verdict": "STALE_MAP_SCOREBOARD",
-      "maps_to": "ACCT-ECON-04"
-    },
-    {
-      "id": "0285-banking-transfer-gl-gap_VERIFY",
-      "from": "GAP",
-      "to": "NOISE",
-      "verdict": "STALE_MAP_SCOREBOARD",
-      "maps_to": "BANK-ECON-03"
-    },
-    {
-      "id": "0441-mod10-cashflow-accounting-routes-dead",
-      "from": "GAP",
-      "to": "BUILT",
-      "verdict": "BUILT",
-      "maps_to": null
-    },
-    {
-      "id": "0441-mod2-wo-split-brain",
-      "from": "GAP",
-      "to": "NOISE",
-      "verdict": "WRONG_MODULE",
-      "maps_to": null
-    },
-    {
-      "id": "0441-mod4-dispatch-settings-localstorage-only",
-      "from": "GAP",
-      "to": "NOISE",
-      "verdict": "WRONG_MODULE",
-      "maps_to": null
-    },
-    {
-      "id": "0441-mod6-hos-violations-source-enum-mismatch",
-      "from": "GAP",
-      "to": "NOISE",
-      "verdict": "WRONG_MODULE",
-      "maps_to": null
-    },
-    {
-      "id": "0441-mod8-auto-match-button-dead",
-      "from": "GAP",
-      "to": "BUILT",
-      "verdict": "BUILT",
-      "maps_to": null
-    },
-    {
-      "id": "0441-mod8-plaid-sign-deposits-negative",
-      "from": "GAP",
-      "to": "BUILT",
-      "verdict": "BUILT",
-      "maps_to": null
-    },
-    {
-      "id": "0441-mod9-customer-taxonomy-mismatch",
-      "from": "GAP",
-      "to": "NOISE",
-      "verdict": "WRONG_MODULE",
-      "maps_to": null
-    },
-    {
-      "id": "0473-2-7-bank-transactions-uncategorized-plaid",
-      "from": "GAP",
-      "to": "NOISE",
-      "verdict": "STALE_MAP_SCOREBOARD",
-      "maps_to": "BANK-ECON-02"
-    },
-    {
-      "id": "0519-fl1-2649-bank-tx-uncategorized_DISPATCH",
-      "from": "GAP",
-      "to": "NOISE",
-      "verdict": "STALE_MAP_SCOREBOARD",
-      "maps_to": "BANK-ECON-02"
-    },
-    {
-      "id": "0519-ri1-689-orphan-fk-columns",
-      "from": "GAP",
-      "to": "BUILT",
-      "verdict": "BUILT",
-      "maps_to": null
-    },
-    {
-      "id": "a-03-expenses-fullpage-form-not-list-drawer",
-      "from": "GAP",
-      "to": "BUILT",
-      "verdict": "BUILT",
-      "maps_to": null
-    },
-    {
-      "id": "a-05-bills-no-page-level-create-button",
-      "from": "GAP",
-      "to": "BUILT",
-      "verdict": "BUILT",
-      "maps_to": null
-    },
-    {
-      "id": "accounting-2-ap-aging-qbo-mirror-population",
-      "from": "GAP",
-      "to": "BUILT",
-      "verdict": "BUILT",
-      "maps_to": null
-    },
-    {
-      "id": "audit5-fraud-anomaly-detection",
-      "from": "GAP",
-      "to": "BUILT",
-      "verdict": "BUILT",
-      "maps_to": null
-    },
-    {
-      "id": "BANK-18-KEYSTONE-CATEGORIZE-REGISTER",
-      "from": "GAP",
-      "to": "BUILT",
-      "verdict": "BUILT",
-      "maps_to": null
-    },
-    {
-      "id": "banking-grid-sort-resize-rows-per-page",
-      "from": "GAP",
-      "to": "NOISE",
-      "verdict": "WRONG_MODULE",
-      "maps_to": null
-    },
-    {
-      "id": "biz-flow-6-no-automatic-invoice-sending",
-      "from": "GAP",
-      "to": "NOISE",
-      "verdict": "NOISE",
-      "maps_to": null
-    },
-    {
-      "id": "biz-flow-8-no-equipment-log-auto-update",
-      "from": "GAP",
-      "to": "NOISE",
-      "verdict": "NOISE",
-      "maps_to": null
-    },
-    {
-      "id": "CONN-1-plaid-reconcile-commit",
-      "from": "GAP",
-      "to": "NOISE",
-      "verdict": "STALE_MAP_SCOREBOARD",
-      "maps_to": "BANK-ECON-04"
-    },
-    {
-      "id": "dispatch-sweep-gap-21",
-      "from": "GAP",
-      "to": "NOISE",
-      "verdict": "WRONG_MODULE",
-      "maps_to": null
-    },
-    {
-      "id": "driverprofile-1-companion-tier1-rls-hardening",
-      "from": "GAP",
-      "to": "NOISE",
-      "verdict": "WRONG_MODULE",
-      "maps_to": null
-    },
-    {
-      "id": "expenses-list-routing-bug",
-      "from": "GAP",
-      "to": "NOISE",
-      "verdict": "NOISE",
-      "maps_to": null
-    },
-    {
-      "id": "fk-equipment-transfer-log-0289",
-      "from": "GAP",
-      "to": "NOISE",
-      "verdict": "NOISE",
-      "maps_to": null
-    },
-    {
-      "id": "flow3-cancellation-auto-customer-charge",
-      "from": "GAP",
-      "to": "NOISE",
-      "verdict": "NOISE",
-      "maps_to": null
-    },
-    {
-      "id": "flow6-auto-payment-application",
-      "from": "GAP",
-      "to": "NOISE",
-      "verdict": "STALE_MAP_SCOREBOARD",
-      "maps_to": "ACCT-ECON-03"
-    },
-    {
-      "id": "flow8-equipment-transfer-notifications",
-      "from": "GAP",
-      "to": "NOISE",
-      "verdict": "NOISE",
-      "maps_to": null
-    },
-    {
-      "id": "flow8-no-auto-equipment-log-notify",
-      "from": "GAP",
-      "to": "NOISE",
-      "verdict": "NOISE",
-      "maps_to": null
-    },
-    {
-      "id": "ps-a-item-editor-account-pickers-no-addnew",
-      "from": "GAP",
-      "to": "BUILT",
-      "verdict": "BUILT",
-      "maps_to": null
-    }
-  ]
+  }
 }
