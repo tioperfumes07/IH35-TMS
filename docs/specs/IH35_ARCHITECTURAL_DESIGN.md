@@ -201,31 +201,44 @@ For IS/IT (internal):
 ### Top action button
 **+ Create Manual JE** (Owner-only above threshold)
 
-### Sub-nav tabs (14 — Phase 5 expanded)
+### Sub-nav (LOCKED — approved PNG grouped model · ACCT-F09 reconcile 2026-07-25)
 
-| Tab | What it shows | Phase |
-|-----|---------------|-------|
-| **Dashboard** | P&L summary + cash flow + AR aging + AP aging | Phase 5 |
-| **Chart of Accounts** | Full COA hierarchy + edit | Phase 5 |
-| **Bills (AP)** | Vendor bills with payment status | Phase 5 (currently QBO) |
-| **Invoices (AR)** | Customer invoices with factoring status | Phase 5 |
-| **Journal Entries** | All JE with manual JE attestation | Phase 5 |
-| **Account Register** | Per-account running-balance ledger + audit history (read-only; D5/CA-05) | Phase 5 |
-| **Posting Templates** | WF-053 cross-module posting service config | Phase 5 |
-| **Allocations** | Multi-unit cost allocation (Section 3.14). Live MVP: `/accounting/allocations` (Accounting sub-nav → More ▾), read-only list of `accounting.bill_unit_allocation` joined to bill/vendor/unit/GL, re-allocate via existing `BillAllocationPanel` (Accounting PR 3/6, 2026-07-22). Full 3.14 engine (periods, amortized JE, rotating-allocator, `manual_amount` method per FH-7) remains Phase 5. | Phase 5 |
-| **Customer Credits / Chargebacks** | Memo + chargeback workflow (P5-T6) | Phase 5 |
-| **QBO Sync Status** | Live sync log + drift detection during parallel run | Phase 5 |
-| **Period Close** | Month-end close checklist + Owner sign-off | Phase 5 |
-| **Audit Trail** | Append-only event log | Phase 5 |
-| **Receipts** | Expense/bill/payment attachment proof + reverse drill | Phase 5 |
-| **Undeposited Funds** | CoA role deep-link into Account Register | Phase 5 |
-| **Settings** | Posting rules · Class config · Default accounts | Owner only |
+**Source of truth:** `docs/approved-screens/3-Accounting-Dropdown.png` + live
+`apps/frontend/src/pages/accounting/subnav-manifest.ts` (`ACCOUNTING_SUB_NAV_ITEMS`).
+Rule 05: the approved PNG/nav wins. **NEVER-DELETE (§F.24):** every routed surface stays
+reachable; nothing is removed to “match” an older flat tab table.
+
+**Live top row (exact):**
+Accounting · Bills ▾ · Expenses ▾ · Bill payment ▾ · Maintenance & shop ▾ · Vendors · Customers · Reports · More ▾
+
+| Group | Leaves (routes stay mounted) | Notes |
+|-------|------------------------------|-------|
+| **Accounting** | `/accounting` hub / dashboard KPIs | Home |
+| **Bills ▾** | Bill, Maintenance/Repair/Fuel/Driver/Vendor bill, Multiple, Recurring | PNG Bills family |
+| **Expenses ▾** | Expenses List, Expenses (creator hub), Receipts | Receipts = attachment proof |
+| **Bill payment ▾** | Bill payment, Vendor balances/credits, Accounts payable, AP Aging | AP side |
+| **Maintenance & shop ▾** | Maintenance & shop hub + shop-cost bill shortcuts | Cross-link to Bills ▾ |
+| **Vendors / Customers / Reports** | Top-level leaves | PNG top nodes |
+| **More ▾ — AR** | Invoices, Receive Payment, Undeposited Funds, AR Aging, Collections | Former flat “Invoices (AR)” |
+| **More ▾ — Factoring / settlements** | Factoring, Faro CSV, Factor recon, Settlements, Pre-settlements, Escrow, queues | Cross-module |
+| **More ▾ — Ledger** | Journal entries, Account Register, All Transactions, Recurring / Integration txns | Former flat JE / Register |
+| **More ▾ — Period / analysis** | Sales tax, Month close, Period close, Period comparison, Cash forecast, Multi-entity | Period Close + analysis |
+| **More ▾ — Back office** | Revenue recognition, Fixed assets, Allocations, Prepaid, My accountant, Payroll | Allocations MVP live |
+| **More ▾ — Audit / sync / catalogs** | Audit trail, Posting lineage, Posting Templates (Lists), QBO sync drift, Chart of Accounts, Account Type / Detail Type, Payment methods, Expense category map, CoA roles | CoA + Settings + QBO Sync Status live here |
+
+**Archived flat inventory (NOT rendered — retained for CI/history only):** the pre-redesign
+14-row Phase-5 table (Dashboard · CoA · Bills · Invoices · JE · Account Register · Posting
+Templates · Allocations · Customer Credits · QBO Sync · Period Close · Audit Trail · Receipts ·
+Undeposited Funds · Settings) is **superseded as the live nav model** by the grouped PNG above.
+Code still exports `ACCOUNTING_CLEAN_TABS` / `ACCOUNTING_MORE_TABS` for legacy guards; they are
+**not** the rendered sub-nav. Do not delete those routes or exports.
 
 ### KPI row — 6 cards
 Net Income (MTD) · Gross Margin % · AR Total · AP Total · Cash on Hand · Net Cash Flow (30d)
 
 ### Phase 3 placeholder messaging
-Sub-nav routes show: "Available after accounting cutover (Phase 5)" — wired in T11.14 Catalog UI placeholder block
+Historical: early Phase-3 hubs showed cutover placeholders. Live Accounting surfaces are mounted
+routes under the grouped nav above (not ComingSoon twins for money leaves).
 
 ---
 
