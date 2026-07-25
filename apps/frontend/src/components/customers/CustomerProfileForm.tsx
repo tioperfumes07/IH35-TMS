@@ -481,7 +481,11 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
     setSavingTerm(true);
     setTermError("");
     try {
-      const created = await createPaymentTermOption({ terms_name: name, days_until_due: days });
+      const created = await createPaymentTermOption({
+        operating_company_id: operatingCompanyId,
+        terms_name: name,
+        days_until_due: days,
+      });
       setLocalTerms((prev) => [...prev, created]);
       onPaymentTermCreated?.(created);
       onPatch({ payment_terms_id: created.id });

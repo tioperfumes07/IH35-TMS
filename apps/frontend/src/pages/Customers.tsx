@@ -280,9 +280,9 @@ export function CustomersPage() {
     enabled: Boolean(companyId),
   });
   const paymentTermsQuery = useQuery({
-    queryKey: ["payment-term-options"],
-    queryFn: () => listPaymentTermOptions().then((r) => r.payment_terms),
-    enabled: createOpen,
+    queryKey: ["payment-term-options", companyId],
+    queryFn: () => listPaymentTermOptions(companyId).then((r) => r.payment_terms),
+    enabled: createOpen && Boolean(companyId),
   });
   // LIST-EMPTY-1: shared list-state status — children render "No customers found."
   // only once this settles, never during the roster fetch.
