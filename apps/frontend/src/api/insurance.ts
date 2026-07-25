@@ -237,10 +237,15 @@ export type InsuranceClaimGraph = {
     matters: Array<{ id: string; matter_number: string; insurance_claim_id: string | null; status: string; type: string }>;
     incidents: Array<{ id: string; auto_created_claim_id: string | null; incident_type: string | null; incident_at: string | null }>;
     damage_continuity_chains: Array<{ id: string; insurance_claim_id: string | null; final_resolution_status: string | null }>;
+    /** ACCT-F04 reverse density — populated when insurance_claim_id columns exist (prod). */
+    bills?: Array<{ id: string; bill_number: string | null; amount_cents?: string; status: string | null; bill_date?: string | null }>;
+    expenses?: Array<{ id: string; total_amount_cents?: string; status: string | null; transaction_date?: string | null }>;
+    work_orders?: Array<{ id: string; display_id: string | null; status: string | null }>;
   };
   gaps: {
-    expense: string;
-    work_order: string;
+    expense: string | null;
+    work_order: string | null;
+    bill?: string | null;
     settlement_deduction: string;
   };
 };
