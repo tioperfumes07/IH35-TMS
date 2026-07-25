@@ -36,22 +36,29 @@ or a replay against `origin/main`) and PASS on the corrected shape. Never weaken
 | S6 | `verify-catalog-factory-coverage.mjs` | **backend-only** — never opens `apps/frontend`. `GENERIC_CATALOG_REGISTRY` has **1** entry while migrations create **63** `catalogs.*` tables, so "catalog wired on the backend but unrenderable in the UI" passes | `scripts/verify-catalog-factory-coverage.mjs:8,122-140`; `apps/frontend/src/hooks/useCatalogQuery.ts:86-108` |
 | S10 | `verify-safety-count-nav-integrity.mjs` + `verify-safety-tab-coverage.mjs` | string-match a `28`/`9` constant across 5 files and check exactly **one** hardcoded link; neither reads `sidebar-config.ts` or any router. A tab added to config but never linked from nav — **mounted-but-unlinked**, the SAF-F22 class — passes both | `verify-safety-count-nav-integrity.mjs:39-44,62`; `verify-safety-tab-coverage.mjs:87-90` |
 
-## SILENT-SKIP CLASS (green without checking anything)
+## SILENT-SKIP CLASS — **CORRECTED 2026-07-25, my first pass overclaimed**
 
-**6 guards print `OK`/`PASS` when `DATABASE_URL` is unset** — indistinguishable from a real pass:
-`verify-coa-roles.mjs:67` · `verify-csa-score-pull-recency.mjs:39` ·
-`verify-fmcsa-safer-customer-coverage.mjs:43` · `verify-no-test-units-in-prod.mjs:37-38` ·
-`verify-launch-toggle-audit-trail.mjs:48` · `verify-usmca-seed-completeness.mjs:44`.
+The original entry listed 6 guards as silently skipping. That was wrong and is corrected here,
+because it would have sent work at 4 guards that are fine. `ci.yml`'s `build-typecheck` job runs a
+real postgres service and applies migrations via `verify:pre-commit` **before** these guards, and it
+exports `DATABASE_URL`/`DATABASE_DIRECT_URL`. So their no-DB branch is dead code in CI and their DB
+branch genuinely executes:
 
-A second tier (~14) says `SKIP`/`CAPABILITY SKIP` and still exits 0 — more honest, but the
-substantive DB check still never ran and CI is still green. Includes
-`verify-safety-evidence-no-delete-grant.mjs` and `verify-safety-schema-delete-hardening.mjs`
-(shipped by #3380/#3385 with **no `--selftest` at all**).
+- `verify-csa-score-pull-recency.mjs` (ci.yml:241) · `verify-fmcsa-safer-customer-coverage.mjs`
+  (ci.yml:247) · `verify-launch-toggle-audit-trail.mjs` (ci.yml:286) ·
+  `verify-usmca-seed-completeness.mjs` (ci.yml:283) — **all four DO run their DB checks.**
+  (Some trivially pass on an empty fresh-CI table — a legitimate no-data case, not a fake pass.)
 
-Guards that correctly **hard-fail** instead: `verify-equipment-types-no-collision.mjs:15-17`,
-`verify-no-cross-carrier-data-leak.mjs:14-15`, `verify-double-entry-balance-trigger.mjs:231-234`,
-`verify-entity-isolation.mjs:333-336`, `verify-m2-integrity-position-history.mjs:18-20`,
-`verify-no-orphan-migration-ledger-entries.mjs:10-14` — these are the pattern to copy.
+**Only TWO are genuinely never-run, and both are real holes:**
+
+| # | Guard | The hole |
+|---|---|---|
+| S11 | `scripts/verify-coa-roles.mjs` | **Never invoked in CI at all** — no `package.json` script, no `ci.yml` step, no `verify-steps/` entry. Already baselined in `scripts/.guard-exempt.json:89`: *"pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually"*. It has simply never protected anything. **Accounting/CoA subject matter — flagged to Cursor's lane, not wired here.** |
+| S12 | `scripts/verify-no-test-units-in-prod.mjs` | Wired (via `verify:arch-design` → verify-step 05) and CI **does** supply `DATABASE_URL`, but the DB branch additionally requires `ENABLE_LIVE_DB_UNIT_TEST_GUARD=true`, which **no workflow ever sets** (`grep` across `.github/workflows/*.yml` → zero hits). So the live check has **never executed**; only the static branch runs, while the output still reads `OK`. |
+
+**The lesson for this register:** "prints OK without a DB" is a *symptom*, not the finding. The finding
+is whether CI actually reaches the substantive branch. Four guards looked guilty and were innocent.
+Verify the CI job's env before calling a guard dead.
 
 ## INERT SELFTESTS
 

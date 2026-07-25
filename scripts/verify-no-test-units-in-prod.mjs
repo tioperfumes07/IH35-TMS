@@ -33,9 +33,16 @@ async function main() {
   }
 
   const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
+  // The live check requires BOTH a connection string and the opt-in flag. CI supplies DATABASE_URL
+  // (ci.yml build-typecheck runs a real postgres service) but NO workflow has ever set
+  // ENABLE_LIVE_DB_UNIT_TEST_GUARD, so this branch has always been taken and the DB check has never
+  // run — while the output still said "OK", which is indistinguishable from a real pass. Say
+  // SKIPPED-DB-CHECK out loud instead, and name which precondition was missing, so a reader can tell
+  // a skipped guard from a passing one. See docs/trackers/GUARD-SHAPE-VS-SUBSTANCE-REGISTER.md S12.
   if (!connectionString || process.env.ENABLE_LIVE_DB_UNIT_TEST_GUARD !== "true") {
+    const missing = !connectionString ? "DATABASE_URL is unset" : "ENABLE_LIVE_DB_UNIT_TEST_GUARD is not 'true'";
     console.log(
-      "verify:no-test-units-in-prod — OK (static checks passed; live DB check skipped, set ENABLE_LIVE_DB_UNIT_TEST_GUARD=true to enforce)"
+      `verify:no-test-units-in-prod — static checks PASSED · SKIPPED-DB-CHECK (${missing}); the live prod-unit scan did NOT run`
     );
     return;
   }
