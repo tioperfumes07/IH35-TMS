@@ -1,0 +1,455 @@
+{
+  "module": "safety",
+  "title": "Safety (Module 3)",
+  "complete": false,
+  "as_of": "2026-07-25T00:45:00Z",
+  "live_sha": "2088757",
+  "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/safety.md",
+  "spec_sources": [
+    "docs/specs/DEFINITION-OF-DONE.md",
+    "docs/specs/EVERY-PR-AUDIT-CHECKLIST.md",
+    "apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts"
+  ],
+  "note": "26 boundaries have merged code but ZERO live proof -> UNVERIFIED, which does NOT count toward N. safety.md section J: CLICK-THROUGH FAIL, ECONOMICS SMOKE UNVERIFIED, REVERSE/LAW section 9 FAIL.",
+  "items": [
+    {
+      "id": "SAF-B01",
+      "title": "Escrow forfeiture endpoint + economics",
+      "layers": [
+        "DOD-D",
+        "VERIFY-6"
+      ],
+      "spec": "safety.md section J boundary 1 (findings F01)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3348,
+      "owner_hold": true,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B02",
+      "title": "Fine->deduction chain held migrations applied",
+      "layers": [
+        "DOD-C",
+        "DOD-D"
+      ],
+      "spec": "safety.md section J boundary 2 (findings F02,F03)",
+      "status": "OPEN",
+      "evidence": "No PR opened. Boundary from ~/Desktop/IH35-CURSOR-AUDIT/modules/safety.md section J.",
+      "pr": null,
+      "owner_hold": true,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B03",
+      "title": "Claim reverse graph held migrations applied",
+      "layers": [
+        "DOD-C",
+        "VERIFY-4"
+      ],
+      "spec": "safety.md section J boundary 3 (findings F04)",
+      "status": "OPEN",
+      "evidence": "No PR opened. Boundary from ~/Desktop/IH35-CURSOR-AUDIT/modules/safety.md section J.",
+      "pr": null,
+      "owner_hold": true,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B04",
+      "title": "Accident wizard persists every rendered field",
+      "layers": [
+        "DOD-B"
+      ],
+      "spec": "safety.md section J boundary 4 (findings F05,F30)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3353,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B05",
+      "title": "Base-less fetch sweep + guard",
+      "layers": [
+        "DOD-A",
+        "DOD-E"
+      ],
+      "spec": "safety.md section J boundary 5 (findings F06,F32)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3336,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B06",
+      "title": "D&A / RTD block in driver-qualification gate",
+      "layers": [
+        "DOD-D",
+        "VERIFY-3"
+      ],
+      "spec": "safety.md section J boundary 6 (findings F07)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3375,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B07",
+      "title": "Held-column consumer guard",
+      "layers": [
+        "DOD-E"
+      ],
+      "spec": "safety.md section J boundary 7 (findings F08)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3384,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B08",
+      "title": "Escrow KPI + signed-clause source of truth",
+      "layers": [
+        "DOD-D",
+        "DOD-E"
+      ],
+      "spec": "safety.md section J boundary 8 (findings F09)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3380,
+      "owner_hold": true,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B09",
+      "title": "Escrow forfeit drawer + pickers + validation",
+      "layers": [
+        "DOD-B",
+        "VERIFY-1",
+        "VERIFY-2"
+      ],
+      "spec": "safety.md section J boundary 9 (findings F10)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3381,
+      "owner_hold": true,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B10",
+      "title": "Void-reason governance (DOT inspections, complaints)",
+      "layers": [
+        "DOD-D"
+      ],
+      "spec": "safety.md section J boundary 10 (findings F11)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3339,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B11",
+      "title": "Internal-fine lifecycle routes + row actions",
+      "layers": [
+        "DOD-A",
+        "DOD-B"
+      ],
+      "spec": "safety.md section J boundary 11 (findings F12)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3371,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B12",
+      "title": "External-fine actions wired",
+      "layers": [
+        "DOD-B"
+      ],
+      "spec": "safety.md section J boundary 12 (findings F13)",
+      "status": "OPEN",
+      "evidence": "No PR opened. Boundary from ~/Desktop/IH35-CURSOR-AUDIT/modules/safety.md section J.",
+      "pr": null,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B13",
+      "title": "DOT/HOS creator pickers (no raw uuids)",
+      "layers": [
+        "VERIFY-2"
+      ],
+      "spec": "safety.md section J boundary 13 (findings F14)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3340,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B14",
+      "title": "Bind the 3 orphan safety catalogs to creators",
+      "layers": [
+        "DOD-C",
+        "VERIFY-2"
+      ],
+      "spec": "safety.md section J boundary 14 (findings F15)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3376,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B15",
+      "title": "Driver profile reverse: fines/complaints/D&A",
+      "layers": [
+        "DOD-C",
+        "VERIFY-4"
+      ],
+      "spec": "safety.md section J boundary 15 (findings F16)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3363,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B16",
+      "title": "Unit + trailer profile safety reverse section",
+      "layers": [
+        "DOD-C",
+        "VERIFY-4"
+      ],
+      "spec": "safety.md section J boundary 16 (findings F17)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3365,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B17",
+      "title": "External fines driver column + detail link",
+      "layers": [
+        "DOD-C"
+      ],
+      "spec": "safety.md section J boundary 17 (findings F18)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3354,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B18",
+      "title": "External fine load / unit / document capture",
+      "layers": [
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "safety.md section J boundary 18 (findings F19)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3376,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B19",
+      "title": "Incidents cluster edit + lifecycle + void",
+      "layers": [
+        "DOD-A",
+        "DOD-B"
+      ],
+      "spec": "safety.md section J boundary 19 (findings F20)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3377,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B20",
+      "title": "Cargo claims ParityTable + links",
+      "layers": [
+        "VERIFY-1",
+        "DOD-C"
+      ],
+      "spec": "safety.md section J boundary 20 (findings F21)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3379,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B21",
+      "title": "Orphan-route nav entry points",
+      "layers": [
+        "DOD-A",
+        "VERIFY-7"
+      ],
+      "spec": "safety.md section J boundary 21 (findings F22,F23,F35)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3370,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B22",
+      "title": "Escrow tab drill-through (driver/settlement/GL/bank)",
+      "layers": [
+        "DOD-C",
+        "VERIFY-4"
+      ],
+      "spec": "safety.md section J boundary 22 (findings F23)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3370,
+      "owner_hold": true,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B23",
+      "title": "Internal-fine inline + Add new reason",
+      "layers": [
+        "VERIFY-2"
+      ],
+      "spec": "safety.md section J boundary 23 (findings F24)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3360,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B24",
+      "title": "ParityDrawer migration (3 surfaces)",
+      "layers": [
+        "VERIFY-1"
+      ],
+      "spec": "safety.md section J boundary 24 (findings F25)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3381,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B25",
+      "title": "Accidents list name resolution + pickers",
+      "layers": [
+        "VERIFY-2"
+      ],
+      "spec": "safety.md section J boundary 25 (findings F26)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3356,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B26",
+      "title": "De-duplicate 7 double-registered routes + guard",
+      "layers": [
+        "DOD-A"
+      ],
+      "spec": "safety.md section J boundary 26 (findings F27)",
+      "status": "OPEN",
+      "evidence": "No PR opened. Boundary from ~/Desktop/IH35-CURSOR-AUDIT/modules/safety.md section J.",
+      "pr": null,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B27",
+      "title": "Docs drift: docs/CLAUDE.md section 7 -> 28/9",
+      "layers": [
+        "DOD-E"
+      ],
+      "spec": "safety.md section J boundary 27 (findings F28)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3384,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B28",
+      "title": "company_violations JSONB -> real FKs (migration)",
+      "layers": [
+        "DOD-C",
+        "VERIFY-4"
+      ],
+      "spec": "safety.md section J boundary 28 (findings F29)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3380,
+      "owner_hold": true,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B29",
+      "title": "Server-side type-ahead for 200-cap pickers",
+      "layers": [
+        "VERIFY-2"
+      ],
+      "spec": "safety.md section J boundary 29 (findings F31)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3379,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "SAF-B30",
+      "title": "EntityLink safety kinds + safety detail routes",
+      "layers": [
+        "DOD-C",
+        "VERIFY-4"
+      ],
+      "spec": "safety.md section J boundary 30 (findings F33,F35)",
+      "status": "UNVERIFIED",
+      "evidence": "Code merged; NO live proof. No browser click-through and no Neon economics smoke was run for this boundary. safety.md section J records CLICK-THROUGH: FAIL/UNVERIFIED and ECONOMICS SMOKE: UNVERIFIED for the whole module.",
+      "pr": 3357,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    }
+  ]
+}

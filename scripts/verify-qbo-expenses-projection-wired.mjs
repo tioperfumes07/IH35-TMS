@@ -47,6 +47,24 @@ export function analyzePuller(text) {
   for (const flag of FLAGS) {
     if (!text.includes(flag)) failures.push(`qbo-purchases-puller.ts no longer references ${flag} — a stage gate was lost.`);
   }
+  // Idle-in-transaction root fix: projection must be set-based INSERT…SELECT, not a per-row await loop.
+  const projIdx = text.indexOf("export async function projectPurchasesToExpenses");
+  if (projIdx < 0) {
+    failures.push("qbo-purchases-puller.ts missing export async function projectPurchasesToExpenses.");
+  } else {
+    const projectFn = text.slice(projIdx);
+    if (!/INSERT\s+INTO\s+accounting\.expenses/i.test(projectFn) || !/SELECT[\s\S]*FROM\s+mdata\.qbo_purchases/i.test(projectFn)) {
+      failures.push(
+        "projectPurchasesToExpenses must use set-based INSERT INTO accounting.expenses … SELECT … FROM mdata.qbo_purchases " +
+          "(idle_in_transaction timeout — no per-row await loop)."
+      );
+    }
+    if (/for\s*\(\s*const\s+\w+\s+of\s+mirror\.rows\s*\)/.test(projectFn)) {
+      failures.push(
+        "projectPurchasesToExpenses still loops mirror.rows — that pattern caused prod idle_in_transaction FATAL (IH35-TMS-PROD-25)."
+      );
+    }
+  }
   return failures;
 }
 
@@ -108,8 +126,14 @@ if (process.argv.includes("--selftest")) {
   const goodPuller = `import { isEnabled } from "../lib/feature-flags/service.js";
     const PURCHASES_MIRROR_PULL_FLAG = "QBO_PURCHASES_MIRROR_PULL_ENABLED";
     const EXPENSES_PROJECTION_FLAG = "QBO_EXPENSES_PROJECTION_ENABLED";
-    await isEnabled(client, PURCHASES_MIRROR_PULL_FLAG, { operating_company_id });`;
-  const badEnv = `const A = process.env.QBO_PURCHASES_MIRROR_PULL_ENABLED === "true";`;
+    await isEnabled(client, PURCHASES_MIRROR_PULL_FLAG, { operating_company_id });
+    export async function projectPurchasesToExpenses() {
+      await client.query(\`INSERT INTO accounting.expenses (...) SELECT ... FROM mdata.qbo_purchases m\`);
+    }`;
+  const badEnv = `const A = process.env.QBO_PURCHASES_MIRROR_PULL_ENABLED === "true";
+    export async function projectPurchasesToExpenses() {
+      for (const m of mirror.rows) { await client.query("x"); }
+    }`;
   const goodSched = `runStep("qbo_purchases_pull", id, () => pullPurchasesFromQbo(id));
     runStep("qbo_purchases_project", id, () => projectPurchasesToExpenses(id));`;
   const badSched = `runStep("ap_bills_pull", id, () => pullApBillsFromQbo(id));`;

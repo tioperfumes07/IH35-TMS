@@ -1,0 +1,228 @@
+{
+  "module": "lists",
+  "title": "Lists / Catalogs (Module 12)",
+  "complete": false,
+  "as_of": "2026-07-25T00:30:00Z",
+  "live_sha": "2088757",
+  "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/lists.md",
+  "prod_settlement": "~/Desktop/IH35-CURSOR-AUDIT/modules/lists-PROD-SETTLEMENT-2026-07-24.md",
+  "spec_sources": [
+    "docs/specs/DEFINITION-OF-DONE.md",
+    "docs/specs/EVERY-PR-AUDIT-CHECKLIST.md",
+    "docs/trackers/LANE-ASSIGNMENT-2026-07-23.md"
+  ],
+  "items": [
+    {
+      "id": "LST-CAT-01",
+      "title": "Fleet/asset catalogs per-entity (8 tables)",
+      "layers": [
+        "DOD-C",
+        "VERIFY-5",
+        "VERIFY-8"
+      ],
+      "spec": "Owner ruling 2026-07-24 per-entity catalogs",
+      "status": "PASS",
+      "evidence": "Neon lucia 2026-07-24 br-fancy-credit-akjnd07a: 9/10 fleet catalogs carry operating_company_id AND relforcerowsecurity=true (tractor_statuses, trailer_statuses, asset_condition_codes, equipment_types, unit_ownership_types, trailer_types, lease_terms, asset_statuses, asset_locations); tire_positions global by design. Positive control catalogs.accounts=1392.",
+      "pr": 3397,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "LST-CAT-02",
+      "title": "equipment_types per-entity + no half-deactivated rows",
+      "layers": [
+        "DOD-C",
+        "DOD-E",
+        "VERIFY-5"
+      ],
+      "spec": "Per-entity conversion + collision guard",
+      "status": "PASS",
+      "evidence": "Neon lucia: half_deactivated (is_active=false AND deactivated_at IS NULL) = 0; each entity 7 total / 5 active / 2 properly deactivated; 0 normalized-code collisions. Repaired by migration 202607911000 (prod ledger 7c44216e, applied 18:16Z).",
+      "pr": 3405,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "LST-CAT-03",
+      "title": "driver_load_statuses per-entity",
+      "layers": [
+        "DOD-C",
+        "VERIFY-5"
+      ],
+      "spec": "Per-entity conversion",
+      "status": "PASS",
+      "evidence": "Neon lucia: catalogs.driver_load_statuses = 39 rows = 13 x 3 entities; opco present; FORCE RLS true.",
+      "pr": 3403,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "LST-CAT-04",
+      "title": "driver_termination_reasons per-entity",
+      "layers": [
+        "DOD-C",
+        "VERIFY-5"
+      ],
+      "spec": "Per-entity conversion",
+      "status": "PASS",
+      "evidence": "Neon lucia: 48 rows = 16 x 3 entities (TRANSP/TRK/USMCA each 16 active); opco present; FORCE RLS true.",
+      "pr": 3408,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "LST-CAT-05",
+      "title": "customer_quality_event_reasons per-entity",
+      "layers": [
+        "DOD-C",
+        "VERIFY-5"
+      ],
+      "spec": "Per-entity conversion",
+      "status": "PASS",
+      "evidence": "Neon lucia: 72 rows = 24 x 3 entities; opco present; FORCE RLS true.",
+      "pr": 3409,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "LST-CAT-06",
+      "title": "dispatcher_error_reasons per-entity (load-derived entity)",
+      "layers": [
+        "DOD-C",
+        "DOD-D",
+        "VERIFY-5"
+      ],
+      "spec": "Owner ruling: derive entity from related load/dispatch, never dispatcher default company",
+      "status": "OPEN",
+      "evidence": "Neon lucia: 25 rows, NO operating_company_id column; RLS is ROLE-scoped only (der_select_owner_admin / der_modify_owner_only), not entity-scoped.",
+      "pr": null,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "LST-LINK-01",
+      "title": "Cancel-load writes the canonical per-entity reason FK",
+      "layers": [
+        "DOD-C",
+        "VERIFY-3",
+        "VERIFY-4"
+      ],
+      "spec": "LINKAGE LAW canonical: catalogs.load_cancellation_reasons",
+      "status": "FAIL",
+      "evidence": "Neon lucia: dispatch.load_cancellations has BOTH FKs; reason_code is NOT NULL -> catalogs.cancellation_reasons (legacy, 9 rows, RLS OFF); 36/36 active per-entity codes absent from legacy. cancellation.service.ts:47-80 reads the per-entity catalog and writes only reason_code, never reason_code_id. P0.",
+      "pr": null,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "LST-COUNT-01",
+      "title": "Lists hub domain badges count every live catalog",
+      "layers": [
+        "DOD-E",
+        "VERIFY-3"
+      ],
+      "spec": "PER-PR/EVERY-PR checklist: honest counts",
+      "status": "FAIL",
+      "evidence": "9 live catalogs absent from LISTS_MODULE_COUNT_SPECS + a hardcoded literal 3 for journal_entry_types (real table = 16 rows). Understates TRANSP by 548 active rows, TRK/USMCA by 289 each (Neon lucia counts).",
+      "pr": null,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "LST-COUNT-02",
+      "title": "No hardcoded list counts anywhere in the count source",
+      "layers": [
+        "DOD-E"
+      ],
+      "spec": "verify-no-hardcoded-list-counts",
+      "status": "FAIL",
+      "evidence": "lists-module-count-spec.ts:96 ACCOUNTING_JOURNAL_ENTRY_TYPES_COUNT=3 added to the live count; Neon lucia catalogs.journal_entry_types=16 all active. Guard scans only 4 frontend files so it cannot see it.",
+      "pr": null,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "LST-A-01",
+      "title": "Every converted catalog reachable from the Lists hub",
+      "layers": [
+        "DOD-A",
+        "VERIFY-7"
+      ],
+      "spec": "Rule 05 tab law / hub reachability",
+      "status": "FAIL",
+      "evidence": "driver_load_statuses is mounted at /catalogs/driver-load-statuses and present in catalogs.catalog_registry, but absent from DOMAIN_CONFIG; grep of apps/frontend/src/pages/lists for driver-load-statuses = 0 hits.",
+      "pr": null,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "LST-CAT-07",
+      "title": "Catalog registry stats/preview support every registered catalog",
+      "layers": [
+        "DOD-B",
+        "DOD-E"
+      ],
+      "spec": "catalog-registry.routes.ts",
+      "status": "FAIL",
+      "evidence": "POST accepts any code matching ^[A-Z][A-Z0-9_]+$ but fetchCatalogStats returns item_count 0 for codes outside a hardcoded 8-entry map and the preview zod enum 400s. Neon lucia: catalog_registry=8 rows (latent today).",
+      "pr": null,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "LST-SEED-01",
+      "title": "Per-entity catalogs carry the SAME values on every entity",
+      "layers": [
+        "DOD-C",
+        "VERIFY-5"
+      ],
+      "spec": "Owner ruling: same catalog for all entities",
+      "status": "FAIL",
+      "evidence": "Neon lucia: catalogs.complaint_types active = TRANSP 271 / TRK 12 / USMCA 12. TRK and USMCA each missing ~259 rows. All other converted catalogs are even (dot_violation_types 71/71/71, driver_termination_reasons 16/16/16, load_cancellation_reasons 12/12/12, void_cancel_reasons 6/6/6).",
+      "pr": null,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "LST-RLS-01",
+      "title": "All catalogs.* carry RLS",
+      "layers": [
+        "VERIFY-8"
+      ],
+      "spec": "FORCE RLS invariant",
+      "status": "FAIL",
+      "evidence": "Neon lucia pg_class.relrowsecurity=false on catalogs.account_types, catalogs.cancellation_reasons, catalogs.wo_cancellation_reasons.",
+      "pr": null,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "LST-LINK-02",
+      "title": "Catalogs are referenced (no FK islands)",
+      "layers": [
+        "DOD-C",
+        "VERIFY-4"
+      ],
+      "spec": "Law of the Land total connectivity",
+      "status": "FAIL",
+      "evidence": "Neon lucia pg_constraint inbound-FK sweep: 0 inbound FKs on journal_entry_types(16), detail_types(144), dot_violation_types(213), driver_load_statuses(39), cargo_claim_reasons(0), tire_positions(0), wo_cancellation_reasons(6). accounting.journal_entries does not FK journal_entry_types; catalogs.accounts does not FK detail_types.",
+      "pr": null,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    }
+  ]
+}

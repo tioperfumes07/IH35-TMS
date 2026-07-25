@@ -10,7 +10,8 @@ description: >-
 
 # IH35-TMS — Operating Standards
 
-> **★ DEFINITION OF DONE (BINDING, every session):** `docs/specs/DEFINITION-OF-DONE.md` — the canonical "done" bar: 5 DONE layers (active path · wizard depth · forward **and reverse** linkage · purpose→economics · evidence) + 5 VERIFY layers (QBO chrome · universal picker law · deep linkage chains · catalogs/entity scope · CPA-grade economics) + the required PR evidence block + guard rules. CI-green is the floor, not the verdict.
+> **★ DEFINITION OF DONE (BINDING, every session):** `docs/specs/DEFINITION-OF-DONE.md` — DOD-A…E + §10.
+> **★ EVERY PR AUDIT CHECKLIST (BINDING, every session):** `docs/specs/EVERY-PR-AUDIT-CHECKLIST.md` — FINDING · LANE · DOD-A…E · **VERIFY-1…8** · **MODULE_PROGRESS** · MIGRATE · Rule 16. Money commits missing keys **FAIL** verify-step **1430** (`verify-no-money-theater`) + commit-msg. Rule 23 bans theater. Rule 24 — module DONE = **N of M** in `docs/module-completion/` (CI **1431**).
 > **Rule #0 (LOCKED, every session):** `docs/specs/QUALITY-STANDARD-LOCKED.md` — hardline quality law.
 > **Cursor charter (every session):** `docs/specs/CURSOR-OPERATING-CONSTITUTION.md` — permanent operating constitution; more conservative reading wins on conflict.
 > **Law of the Land:** `docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md` — total connectivity / linkage checklist.
@@ -293,7 +294,7 @@ the code is often the bug.
 | Maintenance | **`maintenance.*`** | `maint.part` / `maint.pm_schedule` / `maint.position_*` / `maint.part_position_assignment` |
 | Vendors (AP truth) | **`mdata.vendors`** | WO picker writing `mdata.qbo_vendors`; keep `catalogs.maintenance_vendors.metadata.mdata_vendor_id` FK |
 | Loads | **`mdata.loads`** | verify `dispatch.loads` before use |
-| Cancellation reasons | **`catalogs.cancellation_reasons`** | `catalogs.load_cancellation_reasons` (as a write/Cancel target) |
+| Cancellation reasons | **`catalogs.load_cancellation_reasons`** | `catalogs.cancellation_reasons` (legacy global, no `operating_company_id`, RLS OFF, 9 rows — retiring) |
 (DECISIONS still open — owner picks: `geo.*` guard-vs-name, `reporting.*` lockdown-vs-guard.)
 
 **(c) HUB TABLES — every record must connect back to its backbone** (FINAL §E; keep clean, never orphan):

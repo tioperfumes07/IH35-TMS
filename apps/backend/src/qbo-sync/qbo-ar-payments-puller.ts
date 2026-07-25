@@ -40,8 +40,8 @@ import type { PoolClient } from "pg";
 import { qboCompanyContext, qboPaginateEntity } from "../integrations/qbo/qbo-client.js";
 import { withLuciaBypass } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
-import { nextPaymentDisplayId } from "../accounting/display-id.js";
 import { QBO_AR_PAYMENTS_MIRROR_SYNC_KIND } from "./qbo-ar-payments-sync-kind.js";
+import { recordFlagDisabledMirrorSyncRun } from "./record-flag-disabled-sync-run.js";
 
 // Default-OFF financial flags (financial cluster — HOLD for owner approval). SINGLE SOURCE OF TRUTH is the
 // DB feature flag resolved PER-ENTITY via isEnabled() (lib.feature_flag_overrides keyed on
@@ -92,21 +92,6 @@ function refValue(row: Record<string, unknown>, key: string): { value: string | 
   const value = ref?.value != null ? String(ref.value) : null;
   const name = ref?.name != null ? String(ref.name) : null;
   return { value, name };
-}
-
-/** Map a QBO PaymentMethodRef.name (free-text QBO catalog entry) onto the payments.payment_method CHECK
- *  enum ('ach'|'wire'|'check'|'cash'|'factoring_advance'|'factoring_reserve'|'credit_card'|'other'). QBO
- *  Payment (unlike BillPayment) has no fixed PayType, only a name lookup — never invent a value outside
- *  the CHECK; default 'other' when unrecognized. */
-function mapPaymentMethod(name: string | null): string {
-  const n = (name ?? "").toLowerCase();
-  if (!n) return "other";
-  if (n.includes("ach") || n.includes("e-check") || n.includes("echeck")) return "ach";
-  if (n.includes("wire")) return "wire";
-  if (n.includes("check")) return "check";
-  if (n.includes("cash")) return "cash";
-  if (n.includes("credit") || n.includes("card")) return "credit_card";
-  return "other";
 }
 
 async function upsertArPaymentMirror(client: PoolClient, operatingCompanyId: string, row: Record<string, unknown>): Promise<void> {
@@ -281,6 +266,13 @@ export async function pullArPaymentsFromQbo(operatingCompanyId: string): Promise
     return isEnabled(client, AR_PAYMENT_MIRROR_PULL_FLAG, { operating_company_id: operatingCompanyId });
   });
   if (!enabled) {
+    // Durable audit: OFF must not look like a dead cron (no sync_runs row).
+    await recordFlagDisabledMirrorSyncRun({
+      operatingCompanyId,
+      kind: QBO_AR_PAYMENTS_MIRROR_SYNC_KIND,
+      flagKey: AR_PAYMENT_MIRROR_PULL_FLAG,
+      mirrorTable: "mdata.qbo_ar_payments",
+    });
     return { enabled: false, rowsPulled: 0, rowsUpserted: 0, pulledAt };
   }
 
@@ -350,22 +342,38 @@ export function parsePaymentLinkedInvoices(payload: unknown): LinkedInvoiceAlloc
 }
 
 /**
- * Stage 2 + 2b — project the QBO Payment mirror into accounting.payments (header, ON CONFLICT on the
- * EXISTING uq_payments_company_qbo_payment_id — one row per QBO Payment, no header fan-out) +
- * accounting.payment_applications (one row per (payment, invoice) allocation, ON CONFLICT on the
- * EXISTING uq_payment_applications_target). display_id is server-generated via nextPaymentDisplayId
- * (Rule 03) on first projection only — never regenerated on re-run. Unresolved customers (no
- * mdata.customers.qbo_customer_id match) and unresolved invoice allocations (no accounting.invoices.
- * qbo_invoice_id match) are SKIPPED and counted, never invented; the mirror/partial state is retained for
- * a later pass to resolve. accounting.payments.amount_applied_cents / accounting.invoices.
- * amount_paid_cents are maintained by the existing pmt_app_recompute_* triggers (0060) — never written
- * directly here. NO GL posting (source_system='qbo'; the posting engine refuses to post it). No-op unless
- * QBO_AR_PAYMENTS_PROJECTION_ENABLED is ON for this entity.
+ * Stage 2 + 2b — project the QBO Payment mirror into accounting.payments + payment_applications.
+ *
+ * ROOT FIX (Sentry IH35-TMS-PROD-25 / idle_in_transaction_session_timeout):
+ * Set-based INSERT…SELECT / UPDATE (mirror bill_payments + expenses). The prior per-row await loop
+ * (incl. nextPaymentDisplayId + deposit resolver per mirror) held one withLuciaBypass txn open across
+ * ~23k payments; Postgres idle_in_transaction timeout killed the connection, rolled the projection
+ * to 0 rows, and the uncaught pool error bounced the API worker.
+ *
+ * Flag check = own short txn; projection = separate short txn (never shared with Stage 1 QBO HTTP).
+ * display_id assigned once via year-partitioned row_number + existing MAX (Rule 03) — never rewritten
+ * on UPDATE. Unresolved customers/invoices skipped+counted. NO GL. No-op unless
+ * QBO_AR_PAYMENTS_PROJECTION_ENABLED ON for this entity.
  */
 export async function projectArPaymentsToLedger(operatingCompanyId: string): Promise<ArPaymentsProjectResult> {
   const projectedAt = new Date().toISOString();
 
   let enabled = false;
+  await withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    enabled = await isEnabled(client, AR_PAYMENTS_PROJECTION_FLAG, { operating_company_id: operatingCompanyId });
+  });
+  if (!enabled) {
+    return {
+      enabled: false,
+      paymentsProjected: 0,
+      customersUnresolved: 0,
+      applicationsProjected: 0,
+      applicationsUnlinked: 0,
+      projectedAt,
+    };
+  }
+
   let paymentsProjected = 0;
   let customersUnresolved = 0;
   let applicationsProjected = 0;
@@ -373,204 +381,308 @@ export async function projectArPaymentsToLedger(operatingCompanyId: string): Pro
 
   await withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
-    enabled = await isEnabled(client, AR_PAYMENTS_PROJECTION_FLAG, { operating_company_id: operatingCompanyId });
-    if (!enabled) return;
+    // Serialize display_id allocation for this company (same advisory key family as nextPaymentDisplayId).
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [
+      `accounting.payment.display_id:${operatingCompanyId}:qbo_project`,
+    ]);
 
-    const mirror = await client.query<{
-      qbo_id: string;
-      qbo_sync_token: string | null;
-      customer_qbo_id: string | null;
-      txn_date: string | null;
-      total_cents: string | number;
-      deposit_to_account_qbo_id: string | null;
-      payment_method_name: string | null;
-      payment_ref_num: string | null;
-      private_note: string | null;
-      payload_json: unknown;
-    }>(
+    const unresolvedCust = await client.query<{ n: string }>(
       `
-        SELECT qbo_id, qbo_sync_token, customer_qbo_id, txn_date::text AS txn_date,
-               total_cents, deposit_to_account_qbo_id, payment_method_name, payment_ref_num,
-               private_note, payload_json
-        FROM mdata.qbo_ar_payments
-        WHERE operating_company_id = $1::uuid
-          AND active = true
-          AND total_cents > 0
-        ORDER BY txn_date NULLS LAST, qbo_id
+        SELECT count(*)::text AS n
+        FROM mdata.qbo_ar_payments m
+        WHERE m.operating_company_id = $1::uuid
+          AND m.active = true
+          AND m.total_cents > 0
+          AND (
+            m.customer_qbo_id IS NULL
+            OR NOT EXISTS (
+              SELECT 1 FROM mdata.customers c
+              WHERE c.operating_company_id = m.operating_company_id
+                AND c.qbo_customer_id = m.customer_qbo_id
+            )
+          )
+      `,
+      [operatingCompanyId]
+    );
+    customersUnresolved = Number(unresolvedCust.rows[0]?.n ?? 0);
+
+    // Update already-projected headers (never touch display_id).
+    await client.query(
+      `
+        UPDATE accounting.payments p
+        SET
+          customer_id = c.id,
+          payment_date = COALESCE(m.txn_date, CURRENT_DATE),
+          amount_cents = m.total_cents,
+          reference = m.payment_ref_num,
+          deposited_to_account_id = dep.id,
+          payment_method = CASE
+            WHEN m.payment_method_name IS NULL OR btrim(m.payment_method_name) = '' THEN 'other'
+            WHEN lower(m.payment_method_name) LIKE '%ach%'
+              OR lower(m.payment_method_name) LIKE '%e-check%'
+              OR lower(m.payment_method_name) LIKE '%echeck%' THEN 'ach'
+            WHEN lower(m.payment_method_name) LIKE '%wire%' THEN 'wire'
+            WHEN lower(m.payment_method_name) LIKE '%check%' THEN 'check'
+            WHEN lower(m.payment_method_name) LIKE '%cash%' THEN 'cash'
+            WHEN lower(m.payment_method_name) LIKE '%credit%'
+              OR lower(m.payment_method_name) LIKE '%card%' THEN 'credit_card'
+            ELSE 'other'
+          END,
+          notes = m.private_note,
+          qbo_sync_token = m.qbo_sync_token,
+          source = 'qbo_clone',
+          last_qbo_synced_at = now()
+        FROM mdata.qbo_ar_payments m
+        JOIN mdata.customers c
+          ON c.operating_company_id = m.operating_company_id
+         AND c.qbo_customer_id = m.customer_qbo_id
+        LEFT JOIN catalogs.accounts dep
+          ON dep.operating_company_id = m.operating_company_id
+         AND dep.qbo_account_id = m.deposit_to_account_qbo_id
+         AND dep.deactivated_at IS NULL
+         AND dep.is_postable = true
+        WHERE p.operating_company_id = $1::uuid
+          AND p.qbo_payment_id = m.qbo_id
+          AND m.operating_company_id = $1::uuid
+          AND m.active = true
+          AND m.total_cents > 0
       `,
       [operatingCompanyId]
     );
 
-    for (const m of mirror.rows) {
-      const totalCents = Number(m.total_cents ?? 0);
-
-      // Resolve the payer customer (QBO Payment CustomerRef) — REQUIRED (accounting.payments.customer_id
-      // is NOT NULL). Never invent a customer: skip and leave in the mirror for a later customers pull.
-      let customerUuid: string | null = null;
-      if (m.customer_qbo_id) {
-        const c = await client.query<{ id: string }>(
-          `SELECT id::text FROM mdata.customers WHERE operating_company_id = $1::uuid AND qbo_customer_id = $2 LIMIT 1`,
-          [operatingCompanyId, m.customer_qbo_id]
-        );
-        customerUuid = c.rows[0]?.id ?? null;
-      }
-      if (!customerUuid) {
-        customersUnresolved += 1;
-        continue;
-      }
-
-      // Resolve the deposit-to GL account (QBO DepositToAccountRef) via catalogs.accounts.qbo_account_id
-      // — nullable; a payment can project into the subledger with no resolvable deposit account (GL is
-      // refused for qbo-sourced payments regardless — see posting-engine QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED).
-      let depositAccountUuid: string | null = null;
-      if (m.deposit_to_account_qbo_id) {
-        const a = await client.query<{ id: string }>(
-          `
-            SELECT id::text FROM catalogs.accounts
-            WHERE operating_company_id = $1::uuid AND qbo_account_id = $2 AND deactivated_at IS NULL
-            LIMIT 1
-          `,
-          [operatingCompanyId, m.deposit_to_account_qbo_id]
-        );
-        depositAccountUuid = a.rows[0]?.id ?? null;
-      }
-
-      const paymentMethod = mapPaymentMethod(m.payment_method_name);
-      const paymentDate = m.txn_date ?? new Date().toISOString().slice(0, 10);
-
-      // Idempotent header: does this QBO Payment already have a projected row? display_id is
-      // server-generated (Rule 03) and must be assigned ONCE — never regenerated on re-run — so this is a
-      // check-then-act (not a single INSERT..ON CONFLICT) unlike the AP/expense projections, which don't
-      // carry a display_id. The partial-unique uq_payments_company_qbo_payment_id is the safety net against
-      // a race (this projection runs single-threaded per company from the scheduler tick).
-      const existing = await client.query<{ id: string }>(
-        `SELECT id::text FROM accounting.payments WHERE operating_company_id = $1::uuid AND qbo_payment_id = $2 LIMIT 1`,
-        [operatingCompanyId, m.qbo_id]
-      );
-
-      let paymentId: string;
-      if (existing.rows[0]?.id) {
-        paymentId = existing.rows[0].id;
-        await client.query(
-          `
-            UPDATE accounting.payments
-            SET customer_id = $1::uuid,
-                payment_date = $2::date,
-                amount_cents = $3,
-                reference = $4,
-                deposited_to_account_id = $5,
-                payment_method = $6,
-                notes = $7,
-                qbo_sync_token = $8,
-                source = 'qbo_clone',
-                last_qbo_synced_at = now()
-            WHERE id = $9::uuid
-          `,
-          [
-            customerUuid,
-            paymentDate,
-            totalCents,
-            m.payment_ref_num,
-            depositAccountUuid,
-            paymentMethod,
-            m.private_note,
-            m.qbo_sync_token,
-            paymentId,
-          ]
-        );
-      } else {
-        const displayId = await nextPaymentDisplayId(client, operatingCompanyId, new Date(`${paymentDate}T00:00:00.000Z`));
-        const ins = await client.query<{ id: string }>(
-          `
-            INSERT INTO accounting.payments (
-              operating_company_id,
-              customer_id,
-              display_id,
-              payment_method,
-              payment_date,
-              reference,
-              amount_cents,
-              deposited_to_account_id,
-              notes,
-              payment_source_kind,
-              qbo_payment_id,
-              qbo_sync_token,
-              source_system,
-              source,
-              last_qbo_synced_at
-            )
-            VALUES ($1::uuid,$2::uuid,$3,$4,$5::date,$6,$7,$8,$9,'qbo_sync',$10,$11,'qbo','qbo_clone',now())
-            ON CONFLICT (operating_company_id, qbo_payment_id) WHERE qbo_payment_id IS NOT NULL
-            DO UPDATE SET
-              customer_id = EXCLUDED.customer_id,
-              payment_date = EXCLUDED.payment_date,
-              amount_cents = EXCLUDED.amount_cents,
-              reference = EXCLUDED.reference,
-              deposited_to_account_id = EXCLUDED.deposited_to_account_id,
-              payment_method = EXCLUDED.payment_method,
-              notes = EXCLUDED.notes,
-              qbo_sync_token = EXCLUDED.qbo_sync_token,
-              last_qbo_synced_at = now()
-            RETURNING id::text
-          `,
-          [
-            operatingCompanyId,
-            customerUuid,
-            displayId,
-            paymentMethod,
-            paymentDate,
-            m.payment_ref_num,
-            totalCents,
-            depositAccountUuid,
-            m.private_note,
+    // Insert new headers with year-scoped display_ids (PMT-YYYY-NNNNN).
+    const inserted = await client.query(
+      `
+        WITH eligible AS (
+          SELECT
+            m.operating_company_id,
             m.qbo_id,
             m.qbo_sync_token,
-          ]
-        );
-        const newId = ins.rows[0]?.id;
-        if (!newId) continue;
-        paymentId = newId;
-      }
-      paymentsProjected += 1;
-
-      // Stage 2b — fan out Line[].LinkedTxn(Invoice) allocations. Unresolved invoices (not yet mirrored
-      // into accounting.invoices) are SKIPPED and counted — never invented; the mirror payload_json keeps
-      // the allocation available for a later pass once the invoice exists.
-      const allocations = parsePaymentLinkedInvoices(m.payload_json);
-      for (const alloc of allocations) {
-        const inv = await client.query<{ id: string }>(
-          `SELECT id::text FROM accounting.invoices WHERE operating_company_id = $1::uuid AND qbo_invoice_id = $2 LIMIT 1`,
-          [operatingCompanyId, alloc.invoiceQboId]
-        );
-        const invoiceUuid = inv.rows[0]?.id;
-        if (!invoiceUuid) {
-          applicationsUnlinked += 1;
-          continue;
-        }
-        await client.query(
-          `
-            INSERT INTO accounting.payment_applications (
-              operating_company_id,
-              payment_id,
-              invoice_id,
-              target_kind,
-              target_id,
-              amount_cents,
-              amount_applied
+            c.id AS customer_id,
+            COALESCE(m.txn_date, CURRENT_DATE) AS payment_date,
+            m.total_cents,
+            m.payment_ref_num,
+            m.private_note,
+            dep.id AS deposited_to_account_id,
+            CASE
+              WHEN m.payment_method_name IS NULL OR btrim(m.payment_method_name) = '' THEN 'other'
+              WHEN lower(m.payment_method_name) LIKE '%ach%'
+                OR lower(m.payment_method_name) LIKE '%e-check%'
+                OR lower(m.payment_method_name) LIKE '%echeck%' THEN 'ach'
+              WHEN lower(m.payment_method_name) LIKE '%wire%' THEN 'wire'
+              WHEN lower(m.payment_method_name) LIKE '%check%' THEN 'check'
+              WHEN lower(m.payment_method_name) LIKE '%cash%' THEN 'cash'
+              WHEN lower(m.payment_method_name) LIKE '%credit%'
+                OR lower(m.payment_method_name) LIKE '%card%' THEN 'credit_card'
+              ELSE 'other'
+            END AS payment_method,
+            EXTRACT(YEAR FROM COALESCE(m.txn_date, CURRENT_DATE))::int AS yr
+          FROM mdata.qbo_ar_payments m
+          JOIN mdata.customers c
+            ON c.operating_company_id = m.operating_company_id
+           AND c.qbo_customer_id = m.customer_qbo_id
+          LEFT JOIN catalogs.accounts dep
+            ON dep.operating_company_id = m.operating_company_id
+           AND dep.qbo_account_id = m.deposit_to_account_qbo_id
+           AND dep.deactivated_at IS NULL
+           AND dep.is_postable = true
+          WHERE m.operating_company_id = $1::uuid
+            AND m.active = true
+            AND m.total_cents > 0
+            AND NOT EXISTS (
+              SELECT 1 FROM accounting.payments p
+              WHERE p.operating_company_id = m.operating_company_id
+                AND p.qbo_payment_id = m.qbo_id
             )
-            VALUES ($1::uuid, $2::uuid, $3::uuid, 'invoice', $3::uuid, $4, $5)
-            ON CONFLICT (payment_id, target_kind, target_id)
-            DO UPDATE SET
-              invoice_id = EXCLUDED.invoice_id,
-              amount_cents = EXCLUDED.amount_cents,
-              amount_applied = EXCLUDED.amount_applied
-          `,
-          [operatingCompanyId, paymentId, invoiceUuid, alloc.amountCents, alloc.amountCents / 100]
-        );
-        applicationsProjected += 1;
-      }
-    }
+        ),
+        year_max AS (
+          SELECT
+            EXTRACT(YEAR FROM payment_date)::int AS yr,
+            COALESCE(
+              MAX(
+                CASE
+                  WHEN display_id ~ '^PMT-[0-9]{4}-[0-9]{5}$' THEN right(display_id, 5)::int
+                  ELSE 0
+                END
+              ),
+              0
+            ) AS max_n
+          FROM accounting.payments
+          WHERE operating_company_id = $1::uuid
+          GROUP BY 1
+        ),
+        numbered AS (
+          SELECT
+            e.*,
+            row_number() OVER (PARTITION BY e.yr ORDER BY e.payment_date, e.qbo_id) AS rn
+          FROM eligible e
+        )
+        INSERT INTO accounting.payments (
+          operating_company_id,
+          customer_id,
+          display_id,
+          payment_method,
+          payment_date,
+          reference,
+          amount_cents,
+          deposited_to_account_id,
+          notes,
+          payment_source_kind,
+          qbo_payment_id,
+          qbo_sync_token,
+          source_system,
+          source,
+          last_qbo_synced_at
+        )
+        SELECT
+          n.operating_company_id,
+          n.customer_id,
+          'PMT-' || n.yr::text || '-' || lpad((COALESCE(ym.max_n, 0) + n.rn)::text, 5, '0'),
+          n.payment_method,
+          n.payment_date,
+          n.payment_ref_num,
+          n.total_cents,
+          n.deposited_to_account_id,
+          n.private_note,
+          'qbo_sync',
+          n.qbo_id,
+          n.qbo_sync_token,
+          'qbo',
+          'qbo_clone',
+          now()
+        FROM numbered n
+        LEFT JOIN year_max ym ON ym.yr = n.yr
+        ON CONFLICT (operating_company_id, qbo_payment_id) WHERE qbo_payment_id IS NOT NULL
+        DO UPDATE SET
+          customer_id = EXCLUDED.customer_id,
+          payment_date = EXCLUDED.payment_date,
+          amount_cents = EXCLUDED.amount_cents,
+          reference = EXCLUDED.reference,
+          deposited_to_account_id = EXCLUDED.deposited_to_account_id,
+          payment_method = EXCLUDED.payment_method,
+          notes = EXCLUDED.notes,
+          qbo_sync_token = EXCLUDED.qbo_sync_token,
+          last_qbo_synced_at = now()
+      `,
+      [operatingCompanyId]
+    );
+    paymentsProjected = inserted.rowCount ?? 0;
+
+    // Count all active projected headers for observability (inserts + already present after update).
+    const projectedCount = await client.query<{ n: string }>(
+      `
+        SELECT count(*)::text AS n
+        FROM accounting.payments p
+        JOIN mdata.qbo_ar_payments m
+          ON m.operating_company_id = p.operating_company_id
+         AND m.qbo_id = p.qbo_payment_id
+        WHERE p.operating_company_id = $1::uuid
+          AND m.active = true
+          AND m.total_cents > 0
+      `,
+      [operatingCompanyId]
+    );
+    paymentsProjected = Number(projectedCount.rows[0]?.n ?? paymentsProjected);
+
+    const apps = await client.query(
+      `
+        WITH exploded AS (
+          SELECT
+            m.operating_company_id,
+            m.qbo_id AS qbo_payment_id,
+            (lt->>'TxnId') AS linked_invoice_qbo_id,
+            (lt->>'TxnType') AS linked_txn_type,
+            ROUND(COALESCE((line->>'Amount')::numeric, 0) * 100)::bigint AS line_amount_cents
+          FROM mdata.qbo_ar_payments m
+          CROSS JOIN LATERAL jsonb_array_elements(COALESCE(m.payload_json->'Line', '[]'::jsonb)) AS line
+          CROSS JOIN LATERAL jsonb_array_elements(COALESCE(line->'LinkedTxn', '[]'::jsonb)) AS lt
+          WHERE m.operating_company_id = $1::uuid
+            AND m.active = true
+            AND m.total_cents > 0
+        ),
+        agg AS (
+          SELECT
+            operating_company_id,
+            qbo_payment_id,
+            linked_invoice_qbo_id,
+            SUM(line_amount_cents)::bigint AS amount_cents
+          FROM exploded
+          WHERE linked_txn_type = 'Invoice'
+            AND linked_invoice_qbo_id IS NOT NULL
+            AND line_amount_cents > 0
+          GROUP BY operating_company_id, qbo_payment_id, linked_invoice_qbo_id
+        )
+        INSERT INTO accounting.payment_applications (
+          operating_company_id,
+          payment_id,
+          invoice_id,
+          target_kind,
+          target_id,
+          amount_cents,
+          amount_applied
+        )
+        SELECT
+          a.operating_company_id,
+          p.id,
+          i.id,
+          'invoice',
+          i.id,
+          a.amount_cents,
+          (a.amount_cents / 100.0)
+        FROM agg a
+        JOIN accounting.payments p
+          ON p.operating_company_id = a.operating_company_id
+         AND p.qbo_payment_id = a.qbo_payment_id
+        JOIN accounting.invoices i
+          ON i.operating_company_id = a.operating_company_id
+         AND i.qbo_invoice_id = a.linked_invoice_qbo_id
+        ON CONFLICT (payment_id, target_kind, target_id)
+        DO UPDATE SET
+          invoice_id = EXCLUDED.invoice_id,
+          amount_cents = EXCLUDED.amount_cents,
+          amount_applied = EXCLUDED.amount_applied
+      `,
+      [operatingCompanyId]
+    );
+    applicationsProjected = apps.rowCount ?? 0;
+
+    const unlinked = await client.query<{ n: string }>(
+      `
+        WITH exploded AS (
+          SELECT
+            m.operating_company_id,
+            (lt->>'TxnId') AS linked_invoice_qbo_id,
+            (lt->>'TxnType') AS linked_txn_type,
+            ROUND(COALESCE((line->>'Amount')::numeric, 0) * 100)::bigint AS line_amount_cents
+          FROM mdata.qbo_ar_payments m
+          CROSS JOIN LATERAL jsonb_array_elements(COALESCE(m.payload_json->'Line', '[]'::jsonb)) AS line
+          CROSS JOIN LATERAL jsonb_array_elements(COALESCE(line->'LinkedTxn', '[]'::jsonb)) AS lt
+          WHERE m.operating_company_id = $1::uuid
+            AND m.active = true
+            AND m.total_cents > 0
+        )
+        SELECT count(*)::text AS n
+        FROM exploded e
+        WHERE e.linked_txn_type = 'Invoice'
+          AND e.linked_invoice_qbo_id IS NOT NULL
+          AND e.line_amount_cents > 0
+          AND NOT EXISTS (
+            SELECT 1 FROM accounting.invoices i
+            WHERE i.operating_company_id = e.operating_company_id
+              AND i.qbo_invoice_id = e.linked_invoice_qbo_id
+          )
+      `,
+      [operatingCompanyId]
+    );
+    applicationsUnlinked = Number(unlinked.rows[0]?.n ?? 0);
   });
 
-  return { enabled, paymentsProjected, customersUnresolved, applicationsProjected, applicationsUnlinked, projectedAt };
+  return {
+    enabled: true,
+    paymentsProjected,
+    customersUnresolved,
+    applicationsProjected,
+    applicationsUnlinked,
+    projectedAt,
+  };
 }

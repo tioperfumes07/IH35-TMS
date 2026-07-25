@@ -5,21 +5,27 @@
  * This is the fast local half of the same rule CI enforces in
  * scripts/verify-definition-of-done-evidence.mjs (verify-step 1324). It deliberately IMPORTS that
  * file's assertion instead of re-implementing it, so the local hook and the CI gate can never drift
- * apart ‚Äî a second copy of a rule is a rule that will disagree with itself.
+ * apart ù a second copy of a rule is a rule that will disagree with itself.
  *
- * HONEST LIMIT: `git commit --no-verify` skips this hook, and this repo routinely uses --no-verify
- * because the pre-commit hook runs a root tsc that fails on deps not installed here. So this hook is
- * EARLY FEEDBACK, not the gate. The gate is CI step 1324, which cannot be bypassed. verify-step 1324
- * additionally asserts this hook still exists, so deleting it fails CI.
+ * Money paths ALSO run assertNoMoneyTheater (DoD ù10 / verify-step 1430) ù FINDING + LANE +
+ * DOD-A..E + VERIFY-1..8 + MODULE_PROGRESS + Rule 16 required or the commit is rejected.
+ *
+ * HONEST LIMIT: `git commit --no-verify` skips this hook. CI verify-steps 1324 + 1430 + 1431 cannot be
+ * bypassed. verify-step 1324 asserts this hook still exists.
  *
  * Exit 0 = allowed. Exit 1 = commit rejected with the template printed.
  */
 import fs from "node:fs";
 import { execSync } from "node:child_process";
 import { assertDoDEvidence } from "./verify-definition-of-done-evidence.mjs";
+import {
+  assertNoMoneyTheater,
+  isMoneyAppCommit,
+  MONEY_DOD_COMMIT_TEMPLATE,
+} from "./verify-no-money-theater.mjs";
 
 const msgFile = process.argv[2];
-if (!msgFile) process.exit(0); // not invoked as a hook ‚Äî nothing to check
+if (!msgFile) process.exit(0);
 
 let raw = "";
 try {
@@ -28,7 +34,6 @@ try {
   process.exit(0);
 }
 
-// Strip comment lines git adds to the template.
 const message = raw
   .split("\n")
   .filter((l) => !l.startsWith("#"))
@@ -38,7 +43,6 @@ const message = raw
 const [subject = "", ...rest] = message.split("\n");
 const body = rest.join("\n");
 
-// Merge / revert / fixup / squash commits carry no defect of their own.
 if (/^(Merge|Revert|fixup!|squash!)\b/i.test(subject.trim())) process.exit(0);
 
 let files = [];
@@ -52,11 +56,15 @@ try {
 }
 if (files.length === 0) process.exit(0);
 
-const problems = assertDoDEvidence([{ sha: "STAGED".padEnd(40, "0"), subject, body, files }]);
+const staged = [{ sha: "STAGED".padEnd(40, "0"), subject, body, files }];
+const problems = assertDoDEvidence(staged);
+if (isMoneyAppCommit(files)) {
+  for (const p of assertNoMoneyTheater(staged)) problems.push(p);
+}
 
 if (problems.length) {
-  console.error("\n[31mCommit rejected ‚Äî Definition of Done not satisfied:[0m\n");
-  for (const p of problems) console.error("  ‚Ä¢ " + p.replace(/^STAGED0+\s*/, ""));
+  console.error("\n\u001b[31mCommit rejected ù Definition of Done not satisfied:\u001b[0m\n");
+  for (const p of problems) console.error("  ù " + p.replace(/^STAGED0+\s*/, ""));
   console.error(`
 This commit touches shipped code (apps/ or db/), so its message must carry the
 Rule 16 evidence block. Template:
@@ -66,13 +74,22 @@ Rule 16 evidence block. Template:
   ROOT CAUSE: the actual mechanism, not the symptom
   FIX:        what changed, and why this is the root fix rather than a patch
   GUARD:      scripts/verify-*.mjs + scripts/verify-steps/NNNN-*.mjs
-  LIVE PROOF: endpoint / health sha / DB row / browser ‚Äî or UNVERIFIED + blocker
+  LIVE PROOF: endpoint / health sha / DB row / browser ù or UNVERIFIED + blocker
   REMAINING:  what is still open
 
 Canonical standard: docs/specs/DEFINITION-OF-DONE.md
 Bypassing with --no-verify does NOT skip this: CI verify-step 1324 enforces the
 same rule on every branch commit and cannot be bypassed.
 `);
+  if (isMoneyAppCommit(files)) {
+    console.error(`
+MONEY PATH (accounting / banking / qbo-sync) ó also required (DoD ß10 / Rules 23ñ24):
+
+${MONEY_DOD_COMMIT_TEMPLATE}
+
+CI: verify-steps 1430 (verify-no-money-theater) + 1431 (verify-module-completion) cannot be bypassed.
+`);
+  }
   process.exit(1);
 }
 

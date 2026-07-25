@@ -16,6 +16,15 @@ export type VendorCredit = {
   created_by_user_id: string | null;
 };
 
+export type VendorCreditApplication = {
+  id: string;
+  bill_id: string;
+  bill_number: string | null;
+  applied_cents: number;
+  applied_at: string;
+  voided_at: string | null;
+};
+
 export type CreditLimitExceededError = {
   error: "credit_limit_exceeded";
   exposure_cents: number;
@@ -42,6 +51,15 @@ export function createVendorCredit(
   return apiRequest<VendorCredit>(
     `/api/v1/accounting/vendor-credits?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
     { method: "POST", body: payload }
+  );
+}
+
+export function getVendorCredit(
+  operatingCompanyId: string,
+  creditId: string
+): Promise<{ credit: VendorCredit; applications: VendorCreditApplication[] }> {
+  return apiRequest<{ credit: VendorCredit; applications: VendorCreditApplication[] }>(
+    `/api/v1/accounting/vendor-credits/${encodeURIComponent(creditId)}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
   );
 }
 

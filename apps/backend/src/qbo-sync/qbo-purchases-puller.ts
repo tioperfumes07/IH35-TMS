@@ -28,6 +28,7 @@ import { qboCompanyContext, qboPaginateEntity } from "../integrations/qbo/qbo-cl
 import { withLuciaBypass } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { QBO_PURCHASES_MIRROR_SYNC_KIND } from "./qbo-purchases-sync-kind.js";
+import { recordFlagDisabledMirrorSyncRun } from "./record-flag-disabled-sync-run.js";
 
 // Default-OFF financial flags (financial cluster — HOLD for owner approval). SINGLE SOURCE OF TRUTH is the
 // DB feature flag resolved PER-ENTITY via isEnabled() (lib.feature_flag_overrides keyed on
@@ -249,6 +250,13 @@ export async function pullPurchasesFromQbo(operatingCompanyId: string): Promise<
     return isEnabled(client, PURCHASES_MIRROR_PULL_FLAG, { operating_company_id: operatingCompanyId });
   });
   if (!enabled) {
+    // Durable audit: OFF must not look like a dead cron (no sync_runs row).
+    await recordFlagDisabledMirrorSyncRun({
+      operatingCompanyId,
+      kind: QBO_PURCHASES_MIRROR_SYNC_KIND,
+      flagKey: PURCHASES_MIRROR_PULL_FLAG,
+      mirrorTable: "mdata.qbo_purchases",
+    });
     return { enabled: false, rowsPulled: 0, rowsUpserted: 0, pulledAt };
   }
 
@@ -326,154 +334,148 @@ export function parsePurchaseLines(payload: unknown): PurchaseLine[] {
 
 /**
  * Stage 2 + 2b — project the QBO Purchase mirror into accounting.expenses (header) + accounting.expense_lines.
- * Idempotent: header upsert on uq_expenses_company_qbo_purchase_id; lines upsert on UNIQUE(expense_id,
- * line_sequence) (delete-free — void-not-delete). posting_status stays 'unposted' (NO GL — QuickBooks owns
- * GL for qbo-sourced rows; the posting engine refuses to post them). No-op unless the
- * QBO_EXPENSES_PROJECTION_ENABLED flag is ON for this entity.
+ *
+ * ROOT FIX (Sentry IH35-TMS-PROD-25 / idle_in_transaction_session_timeout):
+ * Must be set-based INSERT…SELECT (same pattern as projectApBillPaymentsToLedger / ops backfill).
+ * The prior per-row await loop held one withLuciaBypass txn open across tens of thousands of
+ * round-trips; Postgres marked the session idle_in_transaction, killed the connection, rolled
+ * the entire projection back to 0 rows, and the uncaught pool error bounced the API worker.
+ *
+ * Flag check runs in its OWN short txn; projection runs in a separate short txn. Never shares a
+ * connection/tx with Stage 1 QBO HTTP pull. posting_status stays 'unposted' (NO GL). No-op unless
+ * QBO_EXPENSES_PROJECTION_ENABLED is ON for this entity.
  */
 export async function projectPurchasesToExpenses(operatingCompanyId: string): Promise<PurchasesProjectResult> {
   const projectedAt = new Date().toISOString();
 
   let enabled = false;
-  let expensesProjected = 0;
-  let linesProjected = 0;
-
   await withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
     enabled = await isEnabled(client, EXPENSES_PROJECTION_FLAG, { operating_company_id: operatingCompanyId });
-    if (!enabled) return;
+  });
+  if (!enabled) {
+    return { enabled: false, expensesProjected: 0, linesProjected: 0, projectedAt };
+  }
 
-    const mirror = await client.query<{
-      qbo_id: string;
-      entity_qbo_id: string | null;
-      entity_type: string | null;
-      txn_date: string | null;
-      total_cents: string | number;
-      private_note: string | null;
-      payload_json: unknown;
-    }>(
+  let expensesProjected = 0;
+  let linesProjected = 0;
+
+  // Separate short txn — busy set-based SQL only (no per-row awaits, no QBO network).
+  await withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+
+    const header = await client.query(
       `
-        SELECT qbo_id, entity_qbo_id, entity_type, txn_date::text AS txn_date,
-               total_cents, private_note, payload_json
-        FROM mdata.qbo_purchases
-        WHERE operating_company_id = $1::uuid
-          AND active = true
-          AND total_cents > 0
-        ORDER BY txn_date NULLS LAST, qbo_id
+        INSERT INTO accounting.expenses (
+          operating_company_id, qbo_purchase_id, vendor_uuid, transaction_date,
+          total_amount_cents, memo, status, posting_status, qbo_sync_pending, is_active, created_at, updated_at
+        )
+        SELECT
+          m.operating_company_id,
+          m.qbo_id,
+          v.id,
+          COALESCE(m.txn_date, CURRENT_DATE),
+          m.total_cents,
+          m.private_note,
+          'posted', 'unposted', false, true, now(), now()
+        FROM mdata.qbo_purchases m
+        LEFT JOIN mdata.vendors v
+          ON v.operating_company_id = m.operating_company_id
+         AND v.qbo_vendor_id = m.entity_qbo_id
+         AND (m.entity_type IS NULL OR m.entity_type = 'Vendor')
+        WHERE m.operating_company_id = $1::uuid
+          AND m.active = true
+          AND m.total_cents > 0
+        ON CONFLICT (operating_company_id, qbo_purchase_id) WHERE qbo_purchase_id IS NOT NULL
+        DO UPDATE SET
+          vendor_uuid = EXCLUDED.vendor_uuid,
+          transaction_date = EXCLUDED.transaction_date,
+          total_amount_cents = EXCLUDED.total_amount_cents,
+          memo = EXCLUDED.memo,
+          is_active = true,
+          updated_at = now()
       `,
       [operatingCompanyId]
     );
+    expensesProjected = header.rowCount ?? 0;
 
-    for (const m of mirror.rows) {
-      const totalCents = Number(m.total_cents ?? 0);
-      // Resolve the payee vendor (QBO Purchase EntityRef of type Vendor) — nullable link.
-      let vendorUuid: string | null = null;
-      if (m.entity_qbo_id && (m.entity_type == null || m.entity_type === "Vendor")) {
-        const v = await client.query<{ id: string }>(
-          `
-            SELECT id::text FROM mdata.vendors
-            WHERE operating_company_id = $1::uuid AND qbo_vendor_id = $2
-            LIMIT 1
-          `,
-          [operatingCompanyId, m.entity_qbo_id]
-        );
-        vendorUuid = v.rows[0]?.id ?? null;
-      }
+    const lines = await client.query(
+      `
+        WITH src AS (
+          SELECT
+            e.id AS expense_id,
+            e.operating_company_id,
+            ln.ord AS orig_ord,
+            (ln.elem->>'Amount')::numeric AS amt,
+            ln.elem->>'Description' AS description,
+            ln.elem->'AccountBasedExpenseLineDetail'->'AccountRef'->>'value' AS account_qbo_id
+          FROM accounting.expenses e
+          JOIN mdata.qbo_purchases m
+            ON m.operating_company_id = e.operating_company_id
+           AND m.qbo_id = e.qbo_purchase_id
+          CROSS JOIN LATERAL jsonb_array_elements(COALESCE(m.payload_json->'Line', '[]'::jsonb))
+            WITH ORDINALITY AS ln(elem, ord)
+          WHERE e.operating_company_id = $1::uuid
+            AND e.qbo_purchase_id IS NOT NULL
+            AND COALESCE((ln.elem->>'Amount')::numeric, 0) > 0
+        ),
+        seq AS (
+          SELECT
+            src.*,
+            row_number() OVER (PARTITION BY src.expense_id ORDER BY src.orig_ord)::int AS line_sequence
+          FROM src
+        )
+        INSERT INTO accounting.expense_lines (
+          expense_id, line_sequence, amount, amount_cents, description, expense_account_uuid, ps_category_qbo_id, section
+        )
+        SELECT
+          s.expense_id,
+          s.line_sequence,
+          s.amt,
+          round(s.amt * 100)::bigint,
+          s.description,
+          ca.id,
+          s.account_qbo_id,
+          'B'
+        FROM seq s
+        LEFT JOIN catalogs.accounts ca
+          ON ca.operating_company_id = s.operating_company_id
+         AND ca.qbo_account_id = s.account_qbo_id
+         AND ca.deactivated_at IS NULL
+        ON CONFLICT (expense_id, line_sequence)
+        DO UPDATE SET
+          amount = EXCLUDED.amount,
+          amount_cents = EXCLUDED.amount_cents,
+          description = EXCLUDED.description,
+          expense_account_uuid = EXCLUDED.expense_account_uuid,
+          ps_category_qbo_id = EXCLUDED.ps_category_qbo_id
+      `,
+      [operatingCompanyId]
+    );
+    linesProjected = lines.rowCount ?? 0;
 
-      // Stage 2 — upsert the expense header. status='posted' (finalized doc); posting_status='unposted'
-      // (NO TMS GL — QuickBooks owns GL for the qbo-sourced row).
-      const header = await client.query<{ id: string }>(
-        `
-          INSERT INTO accounting.expenses (
-            operating_company_id,
-            qbo_purchase_id,
-            vendor_uuid,
-            transaction_date,
-            total_amount_cents,
-            memo,
-            status,
-            posting_status,
-            qbo_sync_pending,
-            is_active,
-            created_at,
-            updated_at
-          )
-          VALUES ($1::uuid, $2, $3::uuid, COALESCE($4::date, CURRENT_DATE), $5, $6, 'posted', 'unposted', false, true, now(), now())
-          ON CONFLICT (operating_company_id, qbo_purchase_id) WHERE qbo_purchase_id IS NOT NULL
-          DO UPDATE SET
-            vendor_uuid = EXCLUDED.vendor_uuid,
-            transaction_date = EXCLUDED.transaction_date,
-            total_amount_cents = EXCLUDED.total_amount_cents,
-            memo = EXCLUDED.memo,
-            is_active = true,
-            updated_at = now()
-          RETURNING id::text
-        `,
-        [operatingCompanyId, m.qbo_id, vendorUuid, m.txn_date, totalCents, m.private_note]
-      );
-      const expenseId = header.rows[0]?.id;
-      if (!expenseId) continue;
-      expensesProjected += 1;
-
-      // Stage 2b — project lines. Synthesize a single header-total line when QBO shipped no usable lines.
-      let parsed = parsePurchaseLines(m.payload_json);
-      if (parsed.length === 0) {
-        parsed = [{ amountCents: totalCents, description: m.private_note, accountQboId: null }];
-      }
-
-      let seq = 1;
-      for (const line of parsed) {
-        // Resolve the line's GL account via catalogs.accounts (entity-scoped, active, postable) — nullable.
-        let expenseAccountUuid: string | null = null;
-        if (line.accountQboId) {
-          const a = await client.query<{ id: string }>(
-            `
-              SELECT id::text FROM catalogs.accounts
-              WHERE operating_company_id = $1::uuid
-                AND qbo_account_id = $2
-                AND deactivated_at IS NULL
-              LIMIT 1
-            `,
-            [operatingCompanyId, line.accountQboId]
-          );
-          expenseAccountUuid = a.rows[0]?.id ?? null;
-        }
-        await client.query(
-          `
-            INSERT INTO accounting.expense_lines (
-              expense_id,
-              line_sequence,
-              amount,
-              amount_cents,
-              description,
-              expense_account_uuid,
-              ps_category_qbo_id,
-              section
-            )
-            VALUES ($1::uuid, $2, $3, $4, $5, $6::uuid, $7, 'B')
-            ON CONFLICT (expense_id, line_sequence)
-            DO UPDATE SET
-              amount = EXCLUDED.amount,
-              amount_cents = EXCLUDED.amount_cents,
-              description = EXCLUDED.description,
-              expense_account_uuid = EXCLUDED.expense_account_uuid,
-              ps_category_qbo_id = EXCLUDED.ps_category_qbo_id
-          `,
-          [
-            expenseId,
-            seq,
-            line.amountCents / 100,
-            line.amountCents,
-            line.description,
-            expenseAccountUuid,
-            line.accountQboId,
-          ]
-        );
-        linesProjected += 1;
-        seq += 1;
-      }
-    }
+    const synth = await client.query(
+      `
+        INSERT INTO accounting.expense_lines (
+          expense_id, line_sequence, amount, amount_cents, description, section
+        )
+        SELECT
+          e.id,
+          1,
+          (e.total_amount_cents / 100.0),
+          e.total_amount_cents,
+          e.memo,
+          'B'
+        FROM accounting.expenses e
+        WHERE e.operating_company_id = $1::uuid
+          AND e.qbo_purchase_id IS NOT NULL
+          AND NOT EXISTS (SELECT 1 FROM accounting.expense_lines l WHERE l.expense_id = e.id)
+        ON CONFLICT (expense_id, line_sequence) DO NOTHING
+      `,
+      [operatingCompanyId]
+    );
+    linesProjected += synth.rowCount ?? 0;
   });
 
-  return { enabled, expensesProjected, linesProjected, projectedAt };
+  return { enabled: true, expensesProjected, linesProjected, projectedAt };
 }

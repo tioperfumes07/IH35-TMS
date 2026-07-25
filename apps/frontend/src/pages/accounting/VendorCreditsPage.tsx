@@ -2,19 +2,26 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { listVendors } from "../../api/mdata";
+import { listVendorBills, type VendorBill } from "../../api/accounting";
 import {
+  applyVendorCredit,
   createVendorCredit,
+  getVendorCredit,
   listVendorCredits,
+  voidVendorCredit,
   type VendorCredit,
+  type VendorCreditApplication,
   type VendorCreditStatus,
 } from "../../api/vendor-credits";
 import { Button } from "../../components/Button";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { CollapsedListFilters } from "../../components/table";
 import { useToast } from "../../components/Toast";
 import { useAuth } from "../../auth/useAuth";
@@ -38,8 +45,14 @@ export function VendorCreditsPage() {
   const canWrite = WRITE_ROLES.has(user?.role ?? "");
 
   const vendorFilter = searchParams.get("vendor_id") ?? "";
+  const deepLinkCreditId = searchParams.get("credit_id");
   const [statusFilter, setStatusFilter] = useState<VendorCreditStatus | "">("");
   const [createOpen, setCreateOpen] = useState(false);
+  const [selectedCreditId, setSelectedCreditId] = useState<string | null>(deepLinkCreditId);
+  const [applyOpen, setApplyOpen] = useState(false);
+  const [applyBillId, setApplyBillId] = useState<string | null>(null);
+  const [applyAmountCents, setApplyAmountCents] = useState<number | null>(null);
+  const [voidOpen, setVoidOpen] = useState(false);
   const [createVendorId, setCreateVendorId] = useState<string | null>(vendorFilter || null);
   const [createAmountCents, setCreateAmountCents] = useState<number | null>(null);
   const [createNotes, setCreateNotes] = useState("");
@@ -67,6 +80,21 @@ export function VendorCreditsPage() {
       }),
     enabled: Boolean(companyId),
   });
+  const selectedCredit = useMemo(
+    () => (creditsQuery.data?.credits ?? []).find((credit) => credit.id === selectedCreditId) ?? null,
+    [creditsQuery.data?.credits, selectedCreditId],
+  );
+  const creditDetailQuery = useQuery({
+    queryKey: ["accounting", "vendor-credit", companyId, selectedCreditId],
+    queryFn: () => getVendorCredit(companyId, selectedCreditId!),
+    enabled: Boolean(companyId && selectedCreditId),
+  });
+  const credit = creditDetailQuery.data?.credit ?? selectedCredit;
+  const vendorBillsQuery = useQuery({
+    queryKey: ["accounting", "vendor-credit-open-bills", companyId, credit?.vendor_id],
+    queryFn: () => listVendorBills(companyId, { vendor_id: credit!.vendor_id, has_balance: true, limit: 500 }),
+    enabled: Boolean(companyId && credit?.vendor_id && applyOpen),
+  });
 
   const createMut = useMutation({
     mutationFn: () =>
@@ -83,6 +111,37 @@ export function VendorCreditsPage() {
       await queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-credits", companyId] });
     },
     onError: (err) => pushToast(err instanceof Error ? err.message : "Create failed", "error"),
+  });
+  const applyMut = useMutation({
+    mutationFn: () =>
+      applyVendorCredit(companyId, selectedCreditId!, [
+        { bill_id: applyBillId as string, applied_cents: applyAmountCents as number },
+      ]),
+    onSuccess: async () => {
+      pushToast("Vendor credit applied to bill", "success");
+      setApplyOpen(false);
+      setApplyBillId(null);
+      setApplyAmountCents(null);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-credits", companyId] }),
+        queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-credit", companyId, selectedCreditId] }),
+        queryClient.invalidateQueries({ queryKey: ["accounting", "bills"] }),
+      ]);
+    },
+    onError: (err) => pushToast(err instanceof Error ? err.message : "Apply failed", "error"),
+  });
+  const voidMut = useMutation({
+    mutationFn: (reason: string) => voidVendorCredit(companyId, selectedCreditId!, reason),
+    onSuccess: async () => {
+      pushToast("Vendor credit voided", "success");
+      setVoidOpen(false);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-credits", companyId] }),
+        queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-credit", companyId, selectedCreditId] }),
+        queryClient.invalidateQueries({ queryKey: ["accounting", "bills"] }),
+      ]);
+    },
+    onError: (err) => pushToast(err instanceof Error ? err.message : "Void failed", "error"),
   });
 
   const columns = useMemo<Array<ParityColumn<VendorCredit>>>(
@@ -183,6 +242,7 @@ export function VendorCreditsPage() {
           storageKey="accounting-vendor-credits"
           tableTestId="vendor-credits-table"
           emptyText="No vendor credits found."
+          onRowClick={(row) => setSelectedCreditId(row.id)}
         />
       )}
 
@@ -245,6 +305,171 @@ export function VendorCreditsPage() {
           </label>
         </div>
       </ParityDrawer>
+
+      <ParityDrawer
+        open={Boolean(selectedCreditId)}
+        onClose={() => setSelectedCreditId(null)}
+        title={credit?.display_id ?? "Vendor credit"}
+        size="wide"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={() => setSelectedCreditId(null)}>
+              Close
+            </Button>
+            {canWrite && credit && credit.status !== "voided" && Number(credit.amount_unapplied_cents) > 0 ? (
+              <Button type="button" onClick={() => setApplyOpen(true)}>
+                Apply to bill
+              </Button>
+            ) : null}
+            {canWrite && credit && credit.status !== "voided" ? (
+              <Button type="button" variant="danger" onClick={() => setVoidOpen(true)}>
+                Void
+              </Button>
+            ) : null}
+          </div>
+        }
+      >
+        {creditDetailQuery.isLoading ? <p className="text-sm text-slate-500">Loading vendor credit...</p> : null}
+        {creditDetailQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load vendor credit"
+            status={0}
+            message={(creditDetailQuery.error as Error)?.message}
+            onRetry={() => void creditDetailQuery.refetch()}
+          />
+        ) : null}
+        {credit ? (
+          <div className="space-y-4 text-sm">
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-sm border border-slate-200 bg-slate-50 p-3">
+              <div>
+                <dt className="text-xs font-semibold text-slate-600">Vendor</dt>
+                <dd className="mt-0.5">
+                  <EntityLink kind="vendor" id={credit.vendor_id} />
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold text-slate-600">Issue date</dt>
+                <dd className="mt-0.5 text-slate-900">{formatDateUS(credit.issue_date)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold text-slate-600">Credit amount</dt>
+                <dd className="mt-0.5 font-semibold text-slate-900">{money(credit.amount_cents)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold text-slate-600">Unapplied</dt>
+                <dd className="mt-0.5 font-semibold text-slate-900">{money(credit.amount_unapplied_cents)}</dd>
+              </div>
+            </dl>
+            {credit.notes ? (
+              <div>
+                <h3 className="text-xs font-semibold text-slate-600">Notes</h3>
+                <p className="mt-1 whitespace-pre-wrap text-slate-800">{credit.notes}</p>
+              </div>
+            ) : null}
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900">Applied bills</h3>
+              <VendorCreditApplications applications={creditDetailQuery.data?.applications ?? []} />
+            </div>
+          </div>
+        ) : null}
+      </ParityDrawer>
+
+      <ParityDrawer
+        open={applyOpen}
+        onClose={() => {
+          setApplyOpen(false);
+          setApplyBillId(null);
+          setApplyAmountCents(null);
+        }}
+        title="Apply vendor credit to bill"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={() => setApplyOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              loading={applyMut.isPending}
+              disabled={!applyBillId || !applyAmountCents || applyAmountCents <= 0 || applyMut.isPending}
+              onClick={() => applyMut.mutate()}
+            >
+              Apply credit
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-3 text-sm">
+          <p className="text-slate-600">
+            Available credit: <span className="font-semibold text-slate-900">{money(Number(credit?.amount_unapplied_cents ?? 0))}</span>
+          </p>
+          {vendorBillsQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load open bills"
+              status={0}
+              message={(vendorBillsQuery.error as Error)?.message}
+              onRetry={() => void vendorBillsQuery.refetch()}
+            />
+          ) : null}
+          <label className="block">
+            <span className="text-xs font-medium text-slate-600">Open bill *</span>
+            <div className="mt-1">
+              <SelectCombobox
+                value={applyBillId ?? ""}
+                onChange={(event) => setApplyBillId(event.target.value || null)}
+                disabled={vendorBillsQuery.isLoading}
+                aria-label="Open bill"
+              >
+                <option value="">Select an open bill</option>
+                {(vendorBillsQuery.data?.rows ?? []).map((bill: VendorBill) => (
+                  <option key={bill.id} value={bill.id}>
+                    {bill.bill_number ?? bill.id.slice(0, 8)} — {money(Math.max(0, Number(bill.amount_cents) - Number(bill.paid_cents)))}
+                  </option>
+                ))}
+              </SelectCombobox>
+            </div>
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium text-slate-600">Apply amount *</span>
+            <div className="mt-1">
+              <MoneyInput valueCents={applyAmountCents} onChangeCents={setApplyAmountCents} ariaLabel="Vendor credit apply amount" />
+            </div>
+          </label>
+          <p className="text-xs text-slate-500">
+            The server verifies both the remaining credit and the selected bill&apos;s remaining balance before recording the application.
+          </p>
+        </div>
+      </ParityDrawer>
+
+      <VoidReasonModal
+        open={voidOpen}
+        title="Void vendor credit"
+        entityRef={credit ? `${credit.display_id} · ${money(credit.amount_cents)}` : undefined}
+        minLength={1}
+        postsReversingEntry={false}
+        onClose={() => setVoidOpen(false)}
+        onSubmit={async (reason) => {
+          await voidMut.mutateAsync(reason);
+        }}
+      />
     </AccountingSubNavWrapper>
+  );
+}
+
+function VendorCreditApplications({ applications }: { applications: VendorCreditApplication[] }) {
+  if (applications.length === 0) {
+    return <p className="mt-1 text-sm text-slate-500">No bills have been credited yet.</p>;
+  }
+  return (
+    <div className="mt-2 space-y-2">
+      {applications.map((application) => (
+        <div key={application.id} className="flex items-center justify-between gap-3 rounded-sm border border-slate-200 px-3 py-2">
+          <EntityLink kind="bill" id={application.bill_id} label={application.bill_number ?? application.bill_id.slice(0, 8)} />
+          <div className="text-right text-xs text-slate-600">
+            <div className="font-semibold text-slate-900">{money(application.applied_cents)}</div>
+            <div>{application.voided_at ? "Voided application" : `Applied ${formatDateUS(application.applied_at)}`}</div>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

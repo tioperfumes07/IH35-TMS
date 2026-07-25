@@ -4,7 +4,6 @@ import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
-  ACCOUNTING_JOURNAL_ENTRY_TYPES_COUNT,
   buildModuleCountQuery,
   LISTS_MODULE_COUNT_SPECS,
   LISTS_MODULE_KEYS,
@@ -65,11 +64,8 @@ export async function countModuleRecords(
     sql,
     presentSpecs.some((spec) => spec.companyScoped) ? [operatingCompanyId] : []
   );
-  let count = Number(res.rows[0]?.count ?? 0);
-  if (module === "accounting") {
-    count += ACCOUNTING_JOURNAL_ENTRY_TYPES_COUNT;
-  }
-  return count;
+  // journal_entry_types is now a real count-spec row, not a hardcoded literal added on top.
+  return Number(res.rows[0]?.count ?? 0);
 }
 
 export async function registerListsCountsRoutes(app: FastifyInstance) {

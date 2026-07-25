@@ -13,12 +13,20 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
     { table: "internal_fine_reasons", activeFilter: "is_active", companyScoped: true },
     { table: "civil_fine_types", activeFilter: "is_active", companyScoped: true },
     { table: "company_violation_types", activeFilter: "is_active", companyScoped: true },
+    // Added 2026-07-25 — live on the hub since day one but never counted, so the SAFETY badge read
+    // 30 while the module held 372 rows on TRANSP. Prod-verified shapes (Neon lucia,
+    // br-fancy-credit-akjnd07a): each has operating_company_id + is_active + FORCE RLS.
+    { table: "complaint_types", activeFilter: "is_active", companyScoped: true },
+    { table: "dot_violation_types", activeFilter: "is_active", companyScoped: true },
+    { table: "cargo_claim_reasons", activeFilter: "is_active", companyScoped: true },
   ],
   dispatch: [
     { table: "load_types", activeFilter: "is_active", companyScoped: true },
     { table: "detention_reasons", activeFilter: "is_active", companyScoped: true },
     { table: "pickup_time_types", activeFilter: "is_active", companyScoped: true },
     { table: "additional_charges", activeFilter: "is_active", companyScoped: true },
+    // Prod-verified: operating_company_id + is_active + FORCE RLS, 12 active codes per entity.
+    { table: "load_cancellation_reasons", activeFilter: "is_active", companyScoped: true },
   ],
   drivers: [
     { table: "pay_rate_templates", activeFilter: "is_active", companyScoped: true },
@@ -30,6 +38,8 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
     { table: "cdl_restrictions", activeFilter: "archived_at", companyScoped: false, schema: "reference" },
     { table: "medical_card_statuses", activeFilter: "archived_at", companyScoped: false, schema: "reference" },
     { table: "employment_statuses", activeFilter: "archived_at", companyScoped: false, schema: "reference" },
+    // Converted per-entity by #3408 (migration 202607890000); prod: 16 active per entity.
+    { table: "driver_termination_reasons", activeFilter: "is_active", companyScoped: true },
   ],
   maintenance: [
     { table: "maintenance_failure_codes", activeFilter: "is_active", companyScoped: true },
@@ -88,12 +98,29 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
     { table: "payment_methods", activeFilter: "is_active", companyScoped: true },
     { table: "tax_codes", activeFilter: "is_active", companyScoped: true },
     { table: "currency_codes", activeFilter: "is_active", companyScoped: true },
+    // Added 2026-07-25. companyScoped values are PROD-VERIFIED, not inferred — getting these wrong
+    // yields a silent 0 (filtering an all-NULL column) or a 42703 500 (filtering a missing column):
+    //   journal_entry_types — NO operating_company_id, policy `qual: true` → GLOBAL, companyScoped false.
+    //     Replaces the hardcoded ACCOUNTING_JOURNAL_ENTRY_TYPES_COUNT = 3; prod holds 16 active rows,
+    //     so the badge was understated by 13 and could never move when the catalog changed.
+    //   account_types — NO operating_company_id and RLS is OFF entirely → GLOBAL, companyScoped false.
+    //   detail_types — HAS operating_company_id but every row is NULL by design (SHARED CANONICAL:
+    //     policy is `operating_company_id IS NULL OR = current_setting(...)`, i.e. one system set
+    //     shared by all entities). companyScoped MUST stay false or this counts 0.
+    { table: "journal_entry_types", activeFilter: "is_active", companyScoped: false },
+    { table: "account_types", activeFilter: "is_active", companyScoped: false },
+    { table: "detail_types", activeFilter: "is_active", companyScoped: false },
+    { table: "void_cancel_reasons", activeFilter: "is_active", companyScoped: true },
   ],
   names_master: [],
 };
 
-/** Code-defined journal entry types (read-only catalog route). */
-export const ACCOUNTING_JOURNAL_ENTRY_TYPES_COUNT = 3;
+// REMOVED 2026-07-25 — ACCOUNTING_JOURNAL_ENTRY_TYPES_COUNT was a hardcoded literal `3` ADDED to the
+// live accounting count. AF-5 had already replaced the 3-row in-file array with a real
+// catalogs.journal_entry_types table (migration 202607120000 seeds 16 codes; the route reads the
+// table — see catalogs/accounting/factory.ts). The stub was removed from the route and left in the
+// count, so the badge was permanently understated by 13 and could not move. It is now a normal
+// count-spec row above.
 
 export const LISTS_MODULE_KEYS = Object.keys(LISTS_MODULE_COUNT_SPECS);
 

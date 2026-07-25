@@ -250,6 +250,15 @@ export type BillDetailLine = {
   load_number: string | null;
 };
 
+export type VendorCreditApplicationForBill = {
+  id: string;
+  credit_id: string;
+  display_id: string;
+  applied_cents: number;
+  applied_at: string;
+  voided_at: string | null;
+};
+
 export type BillPayment = {
   id: string;
   operating_company_id: string;
@@ -272,6 +281,8 @@ export type BillPayment = {
   is_reconciled?: boolean;
   /** Law §9 — resolved from journal_entry_postings (no column on bill_payments). */
   journal_entry_id?: string | null;
+  /** Law §9 — canonical banking.bank_transactions row matched to this payment, if any. */
+  matched_bank_transaction_id?: string | null;
 };
 
 function withCompany(path: string, operatingCompanyId: string) {
@@ -534,6 +545,8 @@ export type ExpenseListRow = {
   line_description: string | null;
   is_reconciled: boolean;
   journal_entry_id: string | null;
+  linked_work_order_uuid: string | null;
+  work_order_display_id: string | null;
 };
 
 export function listExpenses(
@@ -663,6 +676,7 @@ export function getVendorBill(id: string, operatingCompanyId: string) {
     bill: VendorBill;
     lines: BillDetailLine[];
     payments: BillPayment[];
+    vendor_credit_applications: VendorCreditApplicationForBill[];
     audit_events: Array<Record<string, unknown>>;
   }>(withCompany(`/api/v1/accounting/bills/${id}`, operatingCompanyId));
 }

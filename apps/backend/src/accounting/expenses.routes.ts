@@ -100,6 +100,7 @@ const createExpenseBodySchema = z.object({
   // HARD cross-module link (maintenance): persist the WO + unit id as a real FK, not just a memo string.
   work_order_id: z.string().uuid().optional().nullable(),
   unit_id: z.string().uuid().optional().nullable(),
+  insurance_claim_id: z.string().uuid().optional().nullable(),
   location_lat: z.number().finite().optional(),
   location_lng: z.number().finite().optional(),
 });
@@ -153,6 +154,8 @@ export type ExpenseListRow = {
   line_description: string | null;
   is_reconciled: boolean;
   journal_entry_id: string | null;
+  linked_work_order_uuid: string | null;
+  work_order_display_id: string | null;
 };
 
 /**
@@ -209,11 +212,13 @@ export async function queryExpensesList(
         e.vendor_uuid::text                          AS vendor_uuid,
         e.driver_uuid::text                          AS driver_uuid,
         e.journal_entry_id::text                     AS journal_entry_id,
+        e.linked_work_order_uuid::text               AS linked_work_order_uuid,
         e.created_at                                 AS created_at,
         v.vendor_name                                AS vendor_name,
         dr.first_name                                AS driver_first_name,
         dr.last_name                                 AS driver_last_name,
         l.load_number                                AS load_number,
+        wo.display_id                                AS work_order_display_id,
         (
           SELECT el.description
           FROM accounting.expense_lines el
@@ -233,6 +238,7 @@ export async function queryExpensesList(
       LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid
       LEFT JOIN mdata.drivers dr ON dr.id = e.driver_uuid
       LEFT JOIN mdata.loads l ON l.id = e.load_id
+      LEFT JOIN maintenance.work_orders wo ON wo.id = e.linked_work_order_uuid
       WHERE ${where.join(" AND ")}
       ORDER BY e.transaction_date DESC, e.created_at DESC
       LIMIT $${limitIdx} OFFSET $${offsetIdx}
@@ -480,6 +486,12 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         if (hasUnitId) {
           columns.push(`unit_id`);
           values.push(body.unit_id ?? null);
+        }
+
+        const hasInsuranceClaimId = await columnExists(client, "accounting", "expenses", "insurance_claim_id");
+        if (hasInsuranceClaimId) {
+          columns.push(`insurance_claim_id`);
+          values.push(body.insurance_claim_id ?? null);
         }
 
         const placeholders = columns.map((_, i) => `$${i + 1}`).join(", ");

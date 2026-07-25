@@ -11,6 +11,7 @@ import {
   listBillPaymentsForBill,
   listBills,
   listWorkOrderLinkedFinancials,
+  listClaimLinkedFinancials,
   listVendorBalances,
   payBill,
   voidBill,
@@ -71,6 +72,7 @@ const createBillBodySchema = z.object({
   // HARD cross-module link (maintenance): persist the WO + unit id as a real FK, not just a memo string.
   work_order_id: z.string().uuid().optional().nullable(),
   unit_id: z.string().uuid().optional().nullable(),
+  insurance_claim_id: z.string().uuid().optional().nullable(),
   attachment_draft_id: z.string().uuid().optional().nullable(),
   // LAW-E2E #3167 — vendor Bill create must send real lines (not memo-only). When present, createBill
   // persists accounting.bill_lines in the same txn; empty array fails closed.
@@ -144,7 +146,11 @@ export async function registerBillsRoutes(app: FastifyInstance) {
   // Reverse drill-through for the WO↔bill/expense HARD link: list the bills + expenses that FK-reference
   // a given work order. Read-only (SELECT), company-scoped. Powers the WO detail "Linked Bills / Expenses"
   // section — the reverse half of the bidirectional link (forward half = FK persisted on create).
-  app.get("/api/v1/accounting/work-orders/:id/linked-financials", async (req, reply) => {
+  // rateLimit: CodeQL js/missing-rate-limiting flags authorizing reverse-drill routes.
+  app.get(
+    "/api/v1/accounting/work-orders/:id/linked-financials",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -158,6 +164,25 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       params.data.id
     );
     return result;
+  });
+
+  // Reverse drill-through for Claim→Bill/Expense/WO (held migration 202607740000).
+  app.get(
+    "/api/v1/accounting/claims/:id/linked-financials",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    return listClaimLinkedFinancials(
+      String(user.uuid),
+      query.data.operating_company_id,
+      params.data.id
+    );
   });
 
   app.get("/api/v1/accounting/bills/:id/payments", async (req, reply) => {
@@ -210,6 +235,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
           coaAccountId: body.data.coa_account_id,
           workOrderId: body.data.work_order_id,
           unitId: body.data.unit_id,
+          insuranceClaimId: body.data.insurance_claim_id,
           attachmentDraftId: body.data.attachment_draft_id,
           lines: body.data.lines?.map((line) => ({
             accountId: line.account_id,
