@@ -1,6 +1,6 @@
 {
  "date": "2026-07-25",
- "generated_at_iso": "2026-07-25T16:25:36.667Z",
+ "generated_at_iso": "2026-07-25T16:33:15.226Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
@@ -13185,6 +13185,12 @@
    "branch": "fix/dod-evidence-gate-1324-hardening"
   },
   {
+   "number": 3491,
+   "title": "fix(guards): LST-SEED-01 follow-up — my prod refusal had an off-switch and my guard passed on the defect",
+   "mergedAt": "2026-07-25T16:31:26Z",
+   "branch": "fix/prod-refusal-offswitch-and-commit-guard"
+  },
+  {
    "number": 3490,
    "title": "[HOLD] LST-F03: payment_terms/posting_templates writable routes + consumer remap",
    "mergedAt": "2026-07-25T16:24:29Z",
@@ -16765,12 +16771,6 @@
    "title": "fix(customers): COI + Create vocab (0441-mod9)",
    "mergedAt": "2026-07-17T19:22:49Z",
    "branch": "fix/open-fe-coi-create-vocab"
-  },
-  {
-   "number": 2679,
-   "title": "fix(drivers): atomic suspend endpoint (0441-mod5)",
-   "mergedAt": "2026-07-17T21:17:13Z",
-   "branch": "fix/0441-mod5-suspend-non-atomic"
   }
  ],
  "merged_pr_total": 3000,
