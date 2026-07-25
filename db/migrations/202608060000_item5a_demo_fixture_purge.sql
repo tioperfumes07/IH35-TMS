@@ -56,6 +56,16 @@
 
 BEGIN;
 
+-- ── 0. RLS BYPASS — REQUIRED, and the reason is a near-miss worth recording ────────────────
+-- mdata.units / drivers / loads carry FORCE ROW LEVEL SECURITY, which applies policies even to the
+-- table owner. Run without this and every demo row is INVISIBLE: step 2 reports
+-- "matched: units=0 drivers=0 loads=0 work_orders=0 (total=0)" and every derived assertion in step 4
+-- passes TRIVIALLY, because deleted == counted == 0. The migration would COMMIT, delete nothing, and
+-- report a clean run — a silent no-op indistinguishable from a successful purge.
+-- That is exactly what happened on the first prod attempt (2026-07-25); only an unrelated error
+-- stopped it. A zero match must never be mistaken for success — see the guard in step 2.
+SET LOCAL app.bypass_rls = 'lucia';
+
 -- ── 1. Identify demo rows by EXACT identifier ──────────────────────────────────────────────
 -- vendors and customers are scoped even though both are 0 today, so a future demo row of that
 -- shape is caught by the same purge instead of surviving it.
@@ -82,6 +92,7 @@ CREATE TEMP TABLE _demo_customers ON COMMIT DROP AS
 DO $$
 DECLARE
   v_u int; v_d int; v_l int; v_w int; v_v int; v_c int;
+  v_visible_units bigint; v_est_units bigint;
 BEGIN
   SELECT count(*) INTO v_u FROM _demo_units;
   SELECT count(*) INTO v_d FROM _demo_drivers;
@@ -91,6 +102,28 @@ BEGIN
   SELECT count(*) INTO v_c FROM _demo_customers;
   RAISE NOTICE 'ITEM-5a demo fixtures matched: units=% drivers=% loads=% work_orders=% vendors=% customers=% (total=%)',
     v_u, v_d, v_l, v_w, v_v, v_c, v_u + v_d + v_l + v_w + v_v + v_c;
+
+  -- ZERO IS NOT ABSENCE. If nothing matched but mdata.units plainly holds rows, the session is
+  -- almost certainly RLS-masked rather than genuinely clean, and continuing would report a
+  -- successful purge that deleted nothing. Fail loudly instead. A genuinely-clean database (already
+  -- purged, or a fresh CI database from 0001) has no visible units either, so this cannot misfire
+  -- there: it only trips when rows exist AND none are visible.
+  IF (v_u + v_d + v_l + v_w + v_v + v_c) = 0 THEN
+    -- Discriminate MASKED from genuinely-CLEAN using an RLS-IMMUNE signal. A visible count cannot do
+    -- it: under FORCE RLS a masked session sees 0 everywhere, and an already-purged database also
+    -- sees 0 demo rows — the two are indistinguishable from inside the policy. pg_class.reltuples is
+    -- catalog metadata and is not filtered by RLS, so it reveals rows the session cannot read.
+    --   masked        -> visible units = 0 BUT reltuples > 0   -> ABORT
+    --   already clean -> visible units > 0 (the real fleet)    -> proceed as a no-op
+    --   fresh CI DB   -> visible 0 AND reltuples 0             -> proceed as a no-op
+    SELECT count(*) INTO v_visible_units FROM mdata.units;
+    SELECT COALESCE(reltuples, 0)::bigint INTO v_est_units
+      FROM pg_class WHERE oid = 'mdata.units'::regclass;
+    IF v_visible_units = 0 AND v_est_units > 0 THEN
+      RAISE EXCEPTION 'ITEM-5a ABORTED — matched 0 demo rows and mdata.units reads 0 visible rows, but pg_class estimates ~% rows. The session is RLS-masked (FORCE RLS + no app.bypass_rls). Refusing to report a no-op as a successful purge.', v_est_units;
+    END IF;
+    RAISE NOTICE 'ITEM-5a: nothing to purge — % visible unit(s), no demo identifiers present. Continuing as a no-op.', v_visible_units;
+  END IF;
 END $$;
 
 -- ── 3. FAIL-LOUD referential pre-flight ────────────────────────────────────────────────────
@@ -155,7 +188,7 @@ BEGIN
     IF (r.src_schema || '.' || r.src_table) IN
        ('mdata.units', 'mdata.drivers', 'mdata.loads', 'maintenance.work_orders') THEN
       v_self_excl := format(
-        'AND NOT (%L = %L AND s.id IN (SELECT id FROM %I))',
+        'AND NOT (%L = %L AND s.id::text IN (SELECT id::text FROM %I))',
         r.src_schema || '.' || r.src_table,
         r.src_schema || '.' || r.src_table,
         CASE r.src_schema || '.' || r.src_table
@@ -175,7 +208,7 @@ BEGIN
         FROM (
           SELECT %s AS id
             FROM %I.%I s
-           WHERE s.%I IN (SELECT id FROM %s)
+           WHERE s.%I::text IN (SELECT id::text FROM %s)
              %s
            LIMIT 25
         ) x $q$,
