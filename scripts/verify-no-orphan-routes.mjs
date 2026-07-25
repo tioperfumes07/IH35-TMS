@@ -43,8 +43,24 @@ const ALLOWLIST = new Map([
   ["registerSettlementPaymentRoutes", "HELD financial — moves settlement payments; needs owner OK"],
   ["registerCategorizationRulesRoutes", "HELD — banking categorization rules; owner review"],
   // --- Collision/unsafe: mounting duplicates an existing route -> boot crash. Do NOT mount. ---
-  ["registerSettlementsMvpRoutes", "UNSAFE — collides with mounted settlement routes (FST_ERR_DUPLICATED_ROUTE)"],
-  ["registerSettlementApprovalRoutes", "UNSAFE — collides with SettlementsMvp on /settlements/:id/approve"],
+  // ACCT-R-13 (2026-07-25): registerSettlementApprovalRoutes is now MOUNTED (index.ts) — removed
+  // from this list. Its old reason ("collides with SettlementsMvp on /settlements/:id/approve") was
+  // stale/imprecise even before the mount: approval.routes defines the STATIC path
+  // POST /api/v1/settlements/approve (no boot-crash risk vs mvp's dynamic :id/approve — different
+  // Fastify route trees), and mvp is itself unmounted, so there was never a live collision. The
+  // real historical blocker was the entity-scoping gap fixed in this same PR (6 of 9 handlers
+  // trusted a client-supplied operating_company_id with no membership check — see
+  // docs/specs/DESIGN-settlement-approval-safe-mount-HOLD.md and
+  // docs/trackers/CODER-BUILD-INSTRUCTIONS-2026-07-19.md ticket 0091-g1-3).
+  // registerSettlementsMvpRoutes STAYS unmounted — verified 2026-07-25 that none of its 4 routes
+  // (POST /api/v1/settlements/preview, POST /api/v1/settlements, GET /api/v1/settlements/:id/pdf,
+  // POST /api/v1/settlements/:id/approve) share an exact method+path with any currently-mounted
+  // route (including the now-mounted approval routes above), so "collides ... boot crash" was also
+  // imprecise for this entry; the real reason to keep it unmounted is DUAL-PATH risk — it is a
+  // second, independent settlement-creation/approval write path alongside the canonical
+  // driver_finance settlement engine (driver-finance/settlements.routes.ts), not yet consolidated.
+  // Do not mount without a dual-path consolidation decision (separate finding).
+  ["registerSettlementsMvpRoutes", "UNSAFE — dual write path duplicating the canonical driver_finance settlement engine (not a boot-crash collision — re-verified 2026-07-25); keep unmounted pending consolidation"],
   // --- In-flight mount PRs (remove once merged) ---
   // --- Newly surfaced by this guard (2026-06) — backlog, not yet triaged for frontend usage.
   //     Each is genuinely unmounted (0 call sites). TODO: triage real-404-bug vs dead-code, then
