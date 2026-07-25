@@ -28,6 +28,7 @@ import { qboCompanyContext, qboPaginateEntity } from "../integrations/qbo/qbo-cl
 import { withLuciaBypass } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { QBO_PURCHASES_MIRROR_SYNC_KIND } from "./qbo-purchases-sync-kind.js";
+import { recordFlagDisabledMirrorSyncRun } from "./record-flag-disabled-sync-run.js";
 
 // Default-OFF financial flags (financial cluster — HOLD for owner approval). SINGLE SOURCE OF TRUTH is the
 // DB feature flag resolved PER-ENTITY via isEnabled() (lib.feature_flag_overrides keyed on
@@ -249,6 +250,13 @@ export async function pullPurchasesFromQbo(operatingCompanyId: string): Promise<
     return isEnabled(client, PURCHASES_MIRROR_PULL_FLAG, { operating_company_id: operatingCompanyId });
   });
   if (!enabled) {
+    // Durable audit: OFF must not look like a dead cron (no sync_runs row).
+    await recordFlagDisabledMirrorSyncRun({
+      operatingCompanyId,
+      kind: QBO_PURCHASES_MIRROR_SYNC_KIND,
+      flagKey: PURCHASES_MIRROR_PULL_FLAG,
+      mirrorTable: "mdata.qbo_purchases",
+    });
     return { enabled: false, rowsPulled: 0, rowsUpserted: 0, pulledAt };
   }
 

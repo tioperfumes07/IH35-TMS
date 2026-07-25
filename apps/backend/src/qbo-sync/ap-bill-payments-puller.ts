@@ -28,6 +28,7 @@ import { qboCompanyContext, qboPaginateEntity } from "../integrations/qbo/qbo-cl
 import { withLuciaBypass } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { AP_BILL_PAYMENTS_MIRROR_SYNC_KIND } from "./ap-bill-payments-sync-kind.js";
+import { recordFlagDisabledMirrorSyncRun } from "./record-flag-disabled-sync-run.js";
 
 // Default-OFF financial flags. SINGLE SOURCE OF TRUTH is the DB feature flag resolved PER-ENTITY via
 // isEnabled() (lib.feature_flag_overrides keyed on operating_company_id) — NOT a process.env var.
@@ -256,6 +257,13 @@ export async function pullApBillPaymentsFromQbo(operatingCompanyId: string): Pro
     return isEnabled(client, AP_BILL_PAYMENT_MIRROR_PULL_FLAG, { operating_company_id: operatingCompanyId });
   });
   if (!enabled) {
+    // Durable audit: OFF must not look like a dead cron (no sync_runs row).
+    await recordFlagDisabledMirrorSyncRun({
+      operatingCompanyId,
+      kind: AP_BILL_PAYMENTS_MIRROR_SYNC_KIND,
+      flagKey: AP_BILL_PAYMENT_MIRROR_PULL_FLAG,
+      mirrorTable: "mdata.qbo_ap_bill_payments",
+    });
     return { enabled: false, rowsPulled: 0, rowsUpserted: 0, pulledAt };
   }
 
