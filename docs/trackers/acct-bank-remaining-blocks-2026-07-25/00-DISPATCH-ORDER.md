@@ -58,3 +58,8 @@
 
 - `ACCT-R-02` `0033-audit-schema-manifest-tool` — The literal live-Neon-pull manifest generator (scripts/audit-schema
 - `ACCT-R-27` `ledger-write-proof-operational-not-found` — apps/backend/src/accounting/__proofs__/core-ledger-write-proof
+
+## Scoreboard supplements (see 00-SCOREBOARD-BLOCKS.md)
+1. ACCT-ECON-05 (FINANCIAL-HOLD)
+2. BANK-ECON-04 / BANK-SURF-04 / BANK-LINK-01 (ops/browser — migs applied)
+3. BANK-F08 · BANK-F09 (deep-wizard)
