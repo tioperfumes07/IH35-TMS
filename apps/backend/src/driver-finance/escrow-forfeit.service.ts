@@ -159,6 +159,43 @@ export async function forfeitDriverEscrow(
         throw new EscrowForfeitError("E_ESCROW_ACCOUNT_MISSING", "no accounting.escrow_accounts bridge row for this driver");
       }
 
+      // ESC-FORFEIT-SPLIT — SAME TRANSACTION as accounting.escrow_postings above.
+      // Root cause: forfeit wrote accounting.escrow_postings (+ optional driver_liabilities) but never
+      // touched driver_finance.escrow_balances / escrow_ledger, so the driver-facing balance froze and
+      // overstated what the driver is owed. escrow_ledger CHECK already permits transaction_type='forfeit'.
+      // Decrement current_balance_cents and append the ledger row so both stores reconcile after forfeit.
+      // (Sign math for accounting.escrow_accounts lives in apply_escrow_posting_delta / #3542 — not here.)
+      const dfBal = await client.query<{ id: string; current_balance_cents: string }>(
+        `UPDATE driver_finance.escrow_balances
+         SET current_balance_cents = current_balance_cents - $3::bigint,
+             last_updated_at = now()
+         WHERE operating_company_id = $1::uuid
+           AND driver_id = $2::uuid
+           AND current_balance_cents >= $3::bigint
+         RETURNING id::text, current_balance_cents::bigint`,
+        [input.operating_company_id, input.driver_uuid, amountCents]
+      );
+      const dfRow = dfBal.rows[0];
+      if (!dfRow) {
+        throw new EscrowForfeitError(
+          "E_ESCROW_BALANCES_MISSING",
+          "driver_finance.escrow_balances missing or insufficient — refusing split-brain forfeit (accounting posted without driver-facing decrement)"
+        );
+      }
+      await client.query(
+        `INSERT INTO driver_finance.escrow_ledger
+           (operating_company_id, driver_id, escrow_balance_id, transaction_type, amount_cents, running_balance_cents, description)
+         VALUES ($1::uuid, $2::uuid, $3::uuid, 'forfeit', $4::bigint, $5::bigint, $6)`,
+        [
+          input.operating_company_id,
+          input.driver_uuid,
+          dfRow.id,
+          amountCents,
+          Number(dfRow.current_balance_cents),
+          `Forfeit: ${input.reason}`,
+        ]
+      );
+
       // Linked branch: decrement the specific debt in the subledger (never below zero).
       let linkedDecremented = false;
       if (input.linked_liability_id) {
