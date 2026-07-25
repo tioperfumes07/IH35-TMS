@@ -1,0 +1,38 @@
+{
+  "block_id": "BANK-ECON-05-GATE-01",
+  "status": "BUILD",
+  "classification": "FINANCIAL-HOLD",
+  "phase": "module-completion/banking",
+  "task": "BANK-ECON-05 + BANK-GATE-01 keep-guard only. Prior audit reported stale 8/16 by counting 9 deactivated bank_accounts; live Neon truth is 7/7 active (deactivated_at IS NULL) cash-bound. Ship static keep-guard pinning active-only invariant + money-gate honesty (pass_count=4 of 13, complete=false, flags OFF). No DDL/DML — never deletes/deactivates. Extends scripts/verify-bank-account-cashbind.mjs + verify-step 1442.",
+  "branch": "hold/bank-econ-05-cash-bind-keep-guard-20260725",
+  "lane": "B",
+  "allowed_files": [
+    ".block-ready/BANK-ECON-05-GATE-01-CASH-BIND-KEEP-GUARD.json",
+    "scripts/verify-bank-account-cashbind.mjs",
+    "scripts/verify-steps/1442-verify-bank-account-cashbind.mjs",
+    "docs/module-completion/banking.json",
+    "docs/module-completion/banking.md"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "verify-bank-account-cashbind --selftest PASS",
+      "status": "PASS",
+      "evidence": "Planted failures: missing bind UPDATE, 8/16 evidence, missing deactivated_at IS NULL filter"
+    },
+    {
+      "check": "verify-bank-account-cashbind live repo PASS",
+      "status": "PASS",
+      "evidence": "BANK-ECON-05 + BANK-GATE-01 + BANK-CTRL-01 PASS pinned; pass_count=4; complete=false"
+    },
+    {
+      "check": "Neon lucia active=active_cash_bound per entity (7/7 aggregate)",
+      "status": "UNVERIFIED",
+      "evidence": "Backbone 2026-07-25: 7 live / 7 bound; 9 deactivated excluded. Owner GUARD re-run Step-1 SQL on br-fancy-credit-akjnd07a required before crediting live proof on merge."
+    }
+  ],
+  "note": "HOLD — FINANCIAL-HOLD protect-only. Do NOT merge without JORGE-APPROVED. Do NOT flip BANK-ECON-02/03/04 or SURF FAILs."
+}
