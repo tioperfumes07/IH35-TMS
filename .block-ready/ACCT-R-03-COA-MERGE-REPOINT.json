@@ -19,7 +19,9 @@
     "scripts/verify-steps/1488-verify-acct-r03-coa-merge-repoint.mjs",
     "docs/module-completion/accounting.json",
     "docs/module-completion/accounting.md",
-    "docs/trackers/ACCT-R-03-COA-MERGE-2026-07-25.md"
+    "docs/trackers/ACCT-R-03-COA-MERGE-2026-07-25.md",
+    "docs/schema-parity-baseline.json",
+    "scripts/verify-phantom-relations.mjs"
   ],
   "runtime_path": "src",
   "db_required": true,

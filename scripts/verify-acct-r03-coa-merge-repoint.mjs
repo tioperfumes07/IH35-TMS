@@ -26,6 +26,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { runExecutableGuard } from "./guard-executable-contract.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-acct-r03-coa-merge-repoint";
@@ -36,6 +37,20 @@ const ROUTES = "apps/backend/src/catalogs/accounts.routes.ts";
 const SERVICE = "apps/backend/src/catalogs/account-merge.service.ts";
 const MIGRATION = "db/migrations/202608060000_acct_r03_catalogs_account_merge_records.sql";
 const HELD_LEDGER = "db/migrations/.held-migrations.json";
+
+/**
+ * The fixture the checker reasons over. Keeping the key -> path map in one place is what lets the
+ * SAME checker run against the real repository and against the planted fixtures: a selftest that
+ * exercises a different code path than the real run proves nothing.
+ */
+const FIXTURE_FILES = {
+  feBatch: FE_BATCH,
+  feApi: FE_API,
+  routes: ROUTES,
+  service: SERVICE,
+  migration: MIGRATION,
+  ledger: HELD_LEDGER,
+};
 
 const MERGE_ENDPOINT = "/api/v1/catalogs/accounts/:id/merge";
 const MERGE_RECORDS_TABLE = "catalogs.account_merge_records";
@@ -49,15 +64,6 @@ const REQUIRED_REMOUNT_COLUMNS = [
   "chart_of_accounts_roles",
   "expense_category_account_map",
 ];
-
-function read(rel, failures) {
-  const abs = path.join(ROOT, rel);
-  if (!fs.existsSync(abs)) {
-    failures.push(`missing ${rel}`);
-    return "";
-  }
-  return fs.readFileSync(abs, "utf8");
-}
 
 function sliceFunction(src, startNeedle) {
   const start = src.indexOf(startNeedle);
@@ -262,6 +268,9 @@ function checkHeldLedger(raw, failures) {
 
 export function collectFailures(files) {
   const failures = [];
+  for (const [key, rel] of Object.entries(FIXTURE_FILES)) {
+    if (typeof files[key] !== "string") failures.push(`missing ${rel}`);
+  }
   checkFrontend(files.feBatch, failures);
   checkFrontendApi(files.feApi, failures);
   checkRoutes(files.routes, failures);
@@ -271,78 +280,107 @@ export function collectFailures(files) {
   return failures;
 }
 
-function selftest() {
-  const good = {
-    feBatch: `
-      const handleMerge = async () => {
-        await mergeCatalogAccounts({ targetAccountId, sourceAccountIds, operatingCompanyId, reason });
-      };
+/** Reads the REAL repository into the same shape the planted fixtures use. */
+function loadRepositoryFixture() {
+  const files = {};
+  for (const [key, rel] of Object.entries(FIXTURE_FILES)) {
+    const abs = path.join(ROOT, rel);
+    files[key] = fs.existsSync(abs) ? fs.readFileSync(abs, "utf8") : null;
+  }
+  return files;
+}
 
-      return (
-        <p>Posted history stays where it is. The merged accounts are archived — never deleted.</p>
-      );
-    `,
-    feApi: `
-      export function mergeCatalogAccounts(input) {
-        return apiRequest("/api/v1/catalogs/accounts/x/merge", {
-          method: "POST",
-          body: { operating_company_id: input.operatingCompanyId, migrate_historical_postings: false },
-        });
-      }
-    `,
-    routes: `
-      app.post("${MERGE_ENDPOINT}", async (req, reply) => {
-        if (authUser.role !== "Owner") return reply.code(403).send({});
-        await assertCompanyMembership(client, authUser.uuid, operatingCompanyId);
-        await client.query(\`SELECT set_config('app.operating_company_id', $1::text, true)\`, [operatingCompanyId]);
-        await mergeAccountsOnClient(client, input, authUser.uuid);
+/**
+ * The good fixture: the smallest source set that represents a CORRECT merge. It is shared by the
+ * executable guard contract and by the planted-mutation suite below, so both exercise the same
+ * checker as the real repository run.
+ */
+const GOOD_FIXTURE = {
+  feBatch: `
+    const handleMerge = async () => {
+      await mergeCatalogAccounts({ targetAccountId, sourceAccountIds, operatingCompanyId, reason });
+    };
+
+    return (
+      <p>Posted history stays where it is. The merged accounts are archived — never deleted.</p>
+    );
+  `,
+  feApi: `
+    export function mergeCatalogAccounts(input) {
+      return apiRequest("/api/v1/catalogs/accounts/x/merge", {
+        method: "POST",
+        body: { operating_company_id: input.operatingCompanyId, migrate_historical_postings: false },
       });
-    `,
-    service: `
-      // parent_account_id default_income_account_id default_expense_account_id
-      // account_role_bindings chart_of_accounts_roles expense_category_account_map
-      throw new AccountMergeError("E_MERGE_ACCOUNT_TYPE_MISMATCH", 409);
-      throw new AccountMergeError("E_MERGE_HISTORICAL_POSTINGS_FORBIDDEN", 400);
-      UPDATE x SET y = $1 WHERE y = $2 AND operating_company_id = $3
-      INSERT INTO catalogs.account_merge_records (...)
-      SET deactivated_at = COALESCE(deactivated_at, now()),
-      appendCrudAudit(client, actorUserId, "catalogs.account_merged", {}, "critical");
-      // WF-064 owner notification
-    `,
-    migration: `
-      -- HOLD-FOR-JORGE — FINANCIAL CLUSTER
-      -- DO NOT RUN ON PROD.
-      DO $mig$ BEGIN
-        CREATE TABLE IF NOT EXISTS catalogs.account_merge_records (id uuid PRIMARY KEY);
-        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'account_merge_records_source_ne_target_chk') THEN
-          ALTER TABLE catalogs.account_merge_records ADD CONSTRAINT account_merge_records_source_ne_target_chk CHECK (source_account_id <> target_account_id);
-        END IF;
-        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'account_merge_records_reason_len_chk') THEN
-          ALTER TABLE catalogs.account_merge_records ADD CONSTRAINT account_merge_records_reason_len_chk CHECK (char_length(reason) >= 20);
-        END IF;
-        ALTER TABLE catalogs.account_merge_records
-          ADD CONSTRAINT account_merge_records_source_same_entity_fkey
-          FOREIGN KEY (operating_company_id, source_account_id)
-          REFERENCES catalogs.accounts (operating_company_id, id);
-        ALTER TABLE catalogs.account_merge_records
-          ADD CONSTRAINT account_merge_records_target_same_entity_fkey
-          FOREIGN KEY (operating_company_id, target_account_id)
-          REFERENCES catalogs.accounts (operating_company_id, id);
-        ALTER TABLE catalogs.account_merge_records FORCE ROW LEVEL SECURITY;
-        CREATE POLICY company_scope ON catalogs.account_merge_records
-          FOR ALL USING (identity.is_lucia_bypass() OR true) WITH CHECK (identity.is_lucia_bypass() OR true);
-      END $mig$;
-      REVOKE UPDATE, DELETE ON catalogs.account_merge_records FROM ih35_app;
-    `,
-    ledger: JSON.stringify({
-      held: [
-        {
-          file: "202608060000_acct_r03_catalogs_account_merge_records.sql",
-          reason: "[HOLD-FOR-JORGE — FINANCIAL CLUSTER] test",
-        },
-      ],
-    }),
-  };
+    }
+  `,
+  routes: `
+    app.post("${MERGE_ENDPOINT}", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
+      if (authUser.role !== "Owner") return reply.code(403).send({});
+      await assertCompanyMembership(client, authUser.uuid, operatingCompanyId);
+      await client.query(\`SELECT set_config('app.operating_company_id', $1::text, true)\`, [operatingCompanyId]);
+      await mergeAccountsOnClient(client, input, authUser.uuid);
+    });
+  `,
+  service: `
+    // parent_account_id default_income_account_id default_expense_account_id
+    // account_role_bindings chart_of_accounts_roles expense_category_account_map
+    throw new AccountMergeError("E_MERGE_ACCOUNT_TYPE_MISMATCH", 409);
+    throw new AccountMergeError("E_MERGE_HISTORICAL_POSTINGS_FORBIDDEN", 400);
+    UPDATE x SET y = $1 WHERE y = $2 AND operating_company_id = $3
+    INSERT INTO catalogs.account_merge_records (...)
+    SET deactivated_at = COALESCE(deactivated_at, now()),
+    appendCrudAudit(client, actorUserId, "catalogs.account_merged", {}, "critical");
+    // WF-064 owner notification
+  `,
+  migration: `
+    -- HOLD-FOR-JORGE — FINANCIAL CLUSTER
+    -- DO NOT RUN ON PROD.
+    DO $mig$ BEGIN
+      CREATE TABLE IF NOT EXISTS catalogs.account_merge_records (id uuid PRIMARY KEY);
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'account_merge_records_source_ne_target_chk') THEN
+        ALTER TABLE catalogs.account_merge_records ADD CONSTRAINT account_merge_records_source_ne_target_chk CHECK (source_account_id <> target_account_id);
+      END IF;
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'account_merge_records_reason_len_chk') THEN
+        ALTER TABLE catalogs.account_merge_records ADD CONSTRAINT account_merge_records_reason_len_chk CHECK (char_length(reason) >= 20);
+      END IF;
+      ALTER TABLE catalogs.account_merge_records
+        ADD CONSTRAINT account_merge_records_source_same_entity_fkey
+        FOREIGN KEY (operating_company_id, source_account_id)
+        REFERENCES catalogs.accounts (operating_company_id, id);
+      ALTER TABLE catalogs.account_merge_records
+        ADD CONSTRAINT account_merge_records_target_same_entity_fkey
+        FOREIGN KEY (operating_company_id, target_account_id)
+        REFERENCES catalogs.accounts (operating_company_id, id);
+      ALTER TABLE catalogs.account_merge_records FORCE ROW LEVEL SECURITY;
+      CREATE POLICY company_scope ON catalogs.account_merge_records
+        FOR ALL USING (identity.is_lucia_bypass() OR true) WITH CHECK (identity.is_lucia_bypass() OR true);
+    END $mig$;
+    REVOKE UPDATE, DELETE ON catalogs.account_merge_records FROM ih35_app;
+  `,
+  ledger: JSON.stringify({
+    held: [
+      {
+        file: "202608060000_acct_r03_catalogs_account_merge_records.sql",
+        reason: "[HOLD-FOR-JORGE — FINANCIAL CLUSTER] test",
+      },
+    ],
+  }),
+};
+
+/**
+ * The bad fixture is the ACTUAL shipped defect, not a strawman: handleMerge looped the catalog
+ * DEACTIVATE endpoint over each source account and called that a merge.
+ */
+const BAD_FIXTURE = {
+  ...GOOD_FIXTURE,
+  feBatch: GOOD_FIXTURE.feBatch.replace(
+    "await mergeCatalogAccounts({ targetAccountId, sourceAccountIds, operatingCompanyId, reason });",
+    "for (const source of mergeSources) { await chartOfAccountsCatalogClient.deactivate(source.id, operatingCompanyId); }"
+  ),
+};
+
+function plantedMutationSuite() {
+  const good = GOOD_FIXTURE;
 
   const baseline = collectFailures(good);
   if (baseline.length) {
@@ -351,15 +389,8 @@ function selftest() {
     process.exit(1);
   }
 
-  // THE defect: handleMerge loops deactivate instead of merging.
-  const deactivateOnly = {
-    ...good,
-    feBatch: good.feBatch.replace(
-      "await mergeCatalogAccounts({ targetAccountId, sourceAccountIds, operatingCompanyId, reason });",
-      "for (const source of mergeSources) { await chartOfAccountsCatalogClient.deactivate(source.id, operatingCompanyId); }"
-    ),
-  };
-  const deactivateFailures = collectFailures(deactivateOnly);
+  // THE defect: handleMerge loops deactivate instead of merging. Same fixture the contract runs.
+  const deactivateFailures = collectFailures(BAD_FIXTURE);
   if (!deactivateFailures.some((f) => f.includes("mergeCatalogAccounts"))) {
     console.error(`${LABEL} SELFTEST FAILED — a deactivate-only handleMerge was not caught (this IS the bug)`);
     process.exit(1);
@@ -420,6 +451,15 @@ function selftest() {
     process.exit(1);
   }
 
+  const unthrottled = {
+    ...good,
+    routes: good.routes.replace(' { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } },', ""),
+  };
+  if (!collectFailures(unthrottled).some((f) => f.includes("rateLimit"))) {
+    console.error(`${LABEL} SELFTEST FAILED — an unthrottled Owner-only merge route was not caught`);
+    process.exit(1);
+  }
+
   const unregistered = { ...good, ledger: JSON.stringify({ held: [] }) };
   if (!collectFailures(unregistered).some((f) => f.includes("missing registration"))) {
     console.error(`${LABEL} SELFTEST FAILED — an unregistered held migration was not caught`);
@@ -429,28 +469,20 @@ function selftest() {
   console.log(`${LABEL}: selftest PASS`);
 }
 
-if (process.argv.includes("--selftest")) {
-  selftest();
-  process.exit(0);
-}
+// The shared executable contract runs the SAME checker against the real repository, the good fixture
+// and the planted-bad fixture, and reports machine-checkable evidence that the bad one really fails.
+runExecutableGuard({
+  label: LABEL,
+  checker: collectFailures,
+  loadRepositoryFixture,
+  goodFixture: GOOD_FIXTURE,
+  badFixture: BAD_FIXTURE,
+  expectedBadViolationSubstrings: ["mergeCatalogAccounts", "still calls a deactivate path"],
+});
 
-const failures = [];
-const files = {
-  feBatch: read(FE_BATCH, failures),
-  feApi: read(FE_API, failures),
-  routes: read(ROUTES, failures),
-  service: read(SERVICE, failures),
-  migration: read(MIGRATION, failures),
-  ledger: read(HELD_LEDGER, failures),
-};
-failures.push(...collectFailures(files));
-
-if (failures.length) {
-  console.error(`${LABEL}: FAIL`);
-  for (const f of failures) console.error(`  - ${f}`);
-  process.exit(1);
+// Depth beyond the contract's single good/bad pair: eight more planted mutations, one per way this
+// merge could rot back into a rename. Skipped under --guard-contract-report so the machine-readable
+// report line stays the only thing block-ready has to parse.
+if (process.argv.includes("--selftest") && !process.argv.includes("--guard-contract-report")) {
+  plantedMutationSuite();
 }
-console.log(
-  `${LABEL}: PASS — CoA merge reparents children, remounts config pointers, writes ${MERGE_RECORDS_TABLE}, archives the source, refuses history rewrite (BUILD-AND-HOLD; migration not yet Neon-applied)`
-);
-process.exit(0);
