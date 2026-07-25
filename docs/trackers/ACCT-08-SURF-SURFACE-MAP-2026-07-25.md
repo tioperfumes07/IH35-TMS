@@ -2,7 +2,7 @@
 
 **Packet:** Cotulla-08 / ACCT-08 · **Lane:** FINANCIAL-HOLD · **Module:** Accounting  
 **Scoreboard:** `docs/module-completion/accounting.json` — accounting **8 of 25** (no SURF FAIL→PASS without Neon lucia + browser click-through).  
-**Structural companion:** PR #3465 (`verify-acct-surfaces-structural`) — OPEN; this map is the freeze law for all ACCT-08 PRs.  
+**Structural companion:** sweep matrix `docs/trackers/ACCT-SURF-DOD-SWEEP-MATRIX-2026-07-25.json` + guard verify-step **1476**; surface map freeze below.  
 **Desktop click-through matrix:** `~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md`
 
 > Freeze rule: every ACCT-SURF-0x PR cites exactly one row below. Do not invent a second surface mapping.  

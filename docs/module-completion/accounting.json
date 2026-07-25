@@ -133,8 +133,11 @@
         "VERIFY-5"
       ],
       "spec": "Law \u00a79 \u00b7 ACCT-F03",
-      "status": "FAIL",
-      "evidence": "FROZEN pending owner LINK-02: WIRE|LOCK \u2014 144 detail_types / 0 inbound FKs; accounts.account_subtype text only. Do not wire FK without unlock (ACCT-02). | 2026-07-25: owner decision STILL OPEN \u2014 detail_types WIRE|LOCK (keep text subtype); no code.",
+      "status": "HOLD",
+      "owner_hold": true,
+      "tracker": "docs/trackers/ACCT-F03-DETAIL-TYPES-OWNER-LOCK-2026-07-25.md",
+      "future_block": "ACCT-02 (requires written owner unlock DETAIL_TYPES_FK_OWNER_UNLOCK + CPA review)",
+      "evidence": "OWNER-LOCK 2026-07-25: account_subtype stays TEXT; detail_types 144 rows all-NULL opco / 0 inbound FKs by design. Regression guard scripts/verify-detail-types-owner-lock.mjs. Do NOT wire FK without unlock marker.",
       "pr": null
     },
     {
@@ -207,7 +210,7 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Bills \u25be",
       "status": "UNVERIFIED",
-      "evidence": "Frozen map docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md. Structural DoD guard scripts/verify-acct-surf-01-bills.mjs (route+ParityDrawer+submit payload+canonical accounting.bills). Desktop Expected vs Actual: ~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md. Stays UNVERIFIED until TRANSP+USMCA browser re-click + reverse density unit/claim/WO > 0 (Rule 23 \u2014 no structural PASS flip).",
+      "evidence": "Sweep matrix docs/trackers/ACCT-SURF-DOD-SWEEP-MATRIX-2026-07-25.json (16 leaves \u00d7 TRANSP+USMCA \u00d7 DoD/VERIFY). Frozen map ACCT-08-SURF-SURFACE-MAP. Structural guard verify-acct-surf-01-bills.mjs. Stays UNVERIFIED until browser re-click (Rule 23).",
       "pr": "#3477"
     },
     {
@@ -301,8 +304,11 @@
         "VERIFY-2"
       ],
       "spec": "ACCT-F03 \u00b7 CoA",
-      "status": "FAIL",
-      "evidence": "text subtype only; ACCT-LINK-02 FROZEN \u2014 owner WIRE vs LOCK. SURF DoD FAIL documented; no FK PR.",
+      "status": "HOLD",
+      "owner_hold": true,
+      "tracker": "docs/trackers/ACCT-F03-DETAIL-TYPES-OWNER-LOCK-2026-07-25.md",
+      "future_block": "ACCT-02 (requires written owner unlock DETAIL_TYPES_FK_OWNER_UNLOCK + CPA review)",
+      "evidence": "OWNER-LOCK: CoA persists account_subtype TEXT (picker may read detail_types catalog for UX only). ACCT-LINK-02 HOLD — not a linkage defect. SURF chrome reachable; FK wiring deferred by owner.",
       "pr": null
     },
     {

@@ -4,6 +4,7 @@
   "complete": false,
   "as_of": "2026-07-25T16:50:00.000Z",
   "live_sha": "b4c3158",
+  "sweep_matrix": "docs/trackers/BANK-MODULE-DOD-SWEEP-MATRIX-2026-07-25.json",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md",
   "spec_sources": [
     "docs/specs/DEFINITION-OF-DONE.md",
@@ -58,12 +59,12 @@
         "VERIFY-6"
       ],
       "spec": "Reconciliation",
-      "status": "UNVERIFIED",
-      "owner_hold": false,
-      "tracker": "docs/trackers/NEON-HELD-APPLIED-REFRESH-2026-07-25.md",
-      "future_block": "BANK-ECON-04-BROWSER-OPS \u2014 authenticated recon start/close TRANSP+USMCA after schema-live",
-      "evidence": "SCHEMA-LIVE 2026-07-25: banking.bank_accounts policy bank_accounts_company_scope now includes app.bypass_rls='lucia' escape (mig 202608030000 applied+ledgered; lucia policy using_expr verified). reconciliation_sessions still 0 \u2014 needs ops start-session + browser. NOT PASS. Unblocks path; does not prove sessions.",
-      "pr": "HOLD \u2014 see hold/bank-econ-04-recon-session-live-path-20260725 (companion to #3417)"
+      "status": "HOLD",
+      "owner_hold": true,
+      "tracker": "hold/bank-econ-04-recon-session-live-path-20260725",
+      "future_block": "BANK-ECON-04-NEON-APPLY — owner applies db/migrations/202608030000_bank_accounts_rls_bypass_lucia.sql on a Neon branch + ledger-backfills; GUARD re-verifies reconciliation_sessions>0 with app.bypass_rls='lucia' live on prod",
+      "evidence": "2026-07-25 CORRECTION: NOT ops-empty. Root cause proven live: banking.bank_accounts policy bank_accounts_company_scope (0072) has no app.bypass_rls='lucia' escape. POST /reconciliation/start and /upload-statement resolve bank_account_id via withLuciaBypass (sentinel operating_company_id) BEFORE the real company is known -> every single attempt 404s bank_account_not_found before any INSERT, for every operator, since table creation -> this is why sessions=0, not because #3417's zero-diff logic is unused. Reproduced the exact 404 on a local migrated Postgres by reverting the policy, then reproduced 4/4 green (start, role-gate 403, #3417 zero-diff close, non-zero-variance Owner-only force-close w/ reason) with the fix applied — apps/backend/src/banking/__tests__/reconciliation-start-session-live-path.integration.test.ts. FIX: db/migrations/202608030000_bank_accounts_rls_bypass_lucia.sql (USING-only escape, mirrors 202607610000/202607900000; WITH CHECK unchanged, no new write authority) — MERGED #3454 on main but MERGED≠APPLIED on Neon; HELD in .held-migrations.json, owner Neon-apply required before this actually unblocks prod. GUARD: verify-bank-accounts-rls-bypass-lucia + verify-banking-recon-start-session-wired + verify-bank-econ-04-honesty-keep (step 1485). Until Jorge applies the migration on Neon + ledger-backfills, reconciliation_sessions STAYS 0 on prod — the fix is proven correct but not yet live.",
+      "pr": "#3454 MERGED — Neon apply pending (hold/bank-econ-04-recon-session-live-path-20260725)"
     },
     {
       "id": "BANK-ECON-05",
@@ -129,12 +130,12 @@
         "VERIFY-1"
       ],
       "spec": "Recon",
-      "status": "UNVERIFIED",
-      "owner_hold": false,
-      "tracker": "docs/trackers/NEON-HELD-APPLIED-REFRESH-2026-07-25.md",
-      "future_block": "BANK-SURF-04-BROWSER \u2014 authenticated recon workspace DoD",
-      "evidence": "SCHEMA-LIVE 2026-07-25 (BANK-ECON-04 RLS bypass). Workspace path unblocked at schema; sessions=0 until ops. Rule 23: NOT PASS without authenticated TRANSP+USMCA click-through. No new SURF structural guards.",
-      "pr": "HOLD \u2014 see hold/bank-econ-04-recon-session-live-path-20260725 (companion to #3417)"
+      "status": "HOLD",
+      "owner_hold": true,
+      "tracker": "hold/bank-econ-04-recon-session-live-path-20260725",
+      "future_block": "BANK-ECON-04-NEON-APPLY — owner applies db/migrations/202608030000_bank_accounts_rls_bypass_lucia.sql on a Neon branch + ledger-backfills; GUARD re-verifies reconciliation_sessions>0 with app.bypass_rls='lucia' live on prod",
+      "evidence": "sessions=0 root cause = banking.bank_accounts RLS bypass_rls escape missing (see BANK-ECON-04 for full evidence + fix + guard + live-Postgres proof). Workspace UI, POST /start, POST /complete, and #3417 zero-diff logic are all correctly wired and correctly implemented — the account lookup ahead of them 404s first. #3454 MERGED on main; MERGED≠APPLIED on Neon — owner Neon-apply of db/migrations/202608030000_bank_accounts_rls_bypass_lucia.sql required before sessions can go > 0 on prod. KEEP-GUARD: verify-bank-econ-04-honesty-keep (step 1485).",
+      "pr": "#3454 MERGED — Neon apply pending (hold/bank-econ-04-recon-session-live-path-20260725)"
     },
     {
       "id": "BANK-SURF-05",
@@ -148,6 +149,25 @@
       "status": "UNVERIFIED",
       "evidence": "Deep structural DoD guarded (verify-bank-surf-05-dod / step 1466): Factoring/Escrow/Relay/Plaid/Statement Import routes mount BankingHomePage initialTab + tab bodies (DriverEscrowTabContent, StatementUpload, BankingPlaidConnectionsPanel) \u2014 no ComingSoon twin; sidebar flyout never-delete. Prior step 1440 route pin retained. Browser DoD click-through still UNVERIFIED \u2014 not flipped to PASS (Rule 23).",
       "pr": "OPEN \u2014 Cotulla-08 BANK-08 SURF-05"
+    },
+    {
+      "id": "BANK-SURF-06",
+      "title": "Categorization rules \u2014 DoD A\u2013E + VERIFY 1\u20138",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C",
+        "DOD-D",
+        "DOD-E",
+        "VERIFY-1",
+        "VERIFY-2",
+        "VERIFY-3",
+        "VERIFY-7"
+      ],
+      "spec": "Rules tab \u00b7 M grew via BANK-MODULE-DOD sweep",
+      "status": "UNVERIFIED",
+      "evidence": "SURF-Rules enumerated in docs/trackers/BANK-MODULE-DOD-SWEEP-MATRIX-2026-07-25.json; CategorizationRulesPage mounted /banking/categorization-rules. Browser TRANSP+USMCA click-through pending \u2014 structural route pin only; not flipped to PASS (Rule 23).",
+      "pr": "HOLD \u2014 hold/bank-module-dod-sweep-matrix-20260725"
     },
     {
       "id": "BANK-LINK-01",
