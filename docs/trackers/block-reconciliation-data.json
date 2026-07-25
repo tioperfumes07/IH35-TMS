@@ -1,6 +1,6 @@
 {
  "date": "2026-07-25",
- "generated_at_iso": "2026-07-25T03:43:26.789Z",
+ "generated_at_iso": "2026-07-25T04:14:12.819Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
@@ -13162,6 +13162,12 @@
  ],
  "merged_prs": [
   {
+   "number": 3449,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-25T03:58:06Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 3448,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-07-25T03:32:07Z",
@@ -13172,6 +13178,18 @@
    "title": "chore(deps): bump brace-expansion from 5.0.7 to 5.0.8 in /apps/driver-pwa in the npm_and_yarn group across 1 directory",
    "mergedAt": "2026-07-25T03:17:06Z",
    "branch": "dependabot/npm_and_yarn/apps/driver-pwa/npm_and_yarn-aa0c14d59f"
+  },
+  {
+   "number": 3445,
+   "title": "[HOLD] fix(banking): mark-as-transfer mints/links a real banking.transfers row (BANK-ECON-03 / BANK-SURF-03)",
+   "mergedAt": "2026-07-25T03:57:41Z",
+   "branch": "fix/bank-feed-mark-transfer-writes-transfers-20260724"
+  },
+  {
+   "number": 3444,
+   "title": "[HOLD] ACCT-LINK-05: posting_batches -> catalogs.posting_templates consumer stamp",
+   "mergedAt": "2026-07-25T04:13:27Z",
+   "branch": "hold/acct-link-05-posting-template-consumers-20260724"
   },
   {
    "number": 3443,
@@ -13190,6 +13208,12 @@
    "title": "fix(lists): count spec missed 9 live catalogs + a hardcoded 3 — badges understated TRANSP by 548 rows",
    "mergedAt": "2026-07-25T02:14:36Z",
    "branch": "fix/lists-count-spec-completion"
+  },
+  {
+   "number": 3440,
+   "title": "[HOLD] ACCT-LINK-01: journal_entries → journal_entry_types FK",
+   "mergedAt": "2026-07-25T03:57:23Z",
+   "branch": "hold/acct-je-type-fk-20260724"
   },
   {
    "number": 3439,
@@ -16736,38 +16760,32 @@
    "title": "fix(banking): refetch reconciliation workspace after match/unmatch (0441-mod8)",
    "mergedAt": "2026-07-17T16:46:00Z",
    "branch": "fix/banking-recon-workspace-refetch"
-  },
-  {
-   "number": 2639,
-   "title": "fix(dispatch): block unit assignment when is_oos (0441-mod2)",
-   "mergedAt": "2026-07-17T18:17:12Z",
-   "branch": "fix/dispatch-oos-unit-block"
-  },
-  {
-   "number": 2638,
-   "title": "fix(security): magic-byte gate + harden xlsx uploads (0091-h2-1)",
-   "mergedAt": "2026-07-17T18:03:53Z",
-   "branch": "fix/xlsx-upload-harden"
-  },
-  {
-   "number": 2636,
-   "title": "ci(concurrency): auto-cancel stale in-flight runs per branch on re-push",
-   "mergedAt": "2026-07-17T15:42:59Z",
-   "branch": "ci/workflow-concurrency-cancel-stale"
-  },
-  {
-   "number": 2635,
-   "title": "fix(dispatch): enforce load-status gate on driver PWA arrival/departure (0243-g9-h4)",
-   "mergedAt": "2026-07-17T16:42:31Z",
-   "branch": "fix/driver-pwa-load-status-gate"
   }
  ],
  "merged_pr_total": 3000,
  "hold_for_jorge": [
   {
+   "number": 3445,
+   "title": "[HOLD] fix(banking): mark-as-transfer mints/links a real banking.transfers row (BANK-ECON-03 / BANK-SURF-03)",
+   "mergedAt": "2026-07-25T03:57:41Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3444,
+   "title": "[HOLD] ACCT-LINK-05: posting_batches -> catalogs.posting_templates consumer stamp",
+   "mergedAt": "2026-07-25T04:13:27Z",
+   "category": "HOLD"
+  },
+  {
    "number": 3442,
    "title": "[HOLD-FOR-JORGE · FINANCIAL] fix(lists): LST-PICKER-02 — item picker read the QBO mirror while create wrote the canonical catalog",
    "mergedAt": "2026-07-25T03:09:19Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3440,
+   "title": "[HOLD] ACCT-LINK-01: journal_entries → journal_entry_types FK",
+   "mergedAt": "2026-07-25T03:57:23Z",
    "category": "HOLD"
   },
   {
