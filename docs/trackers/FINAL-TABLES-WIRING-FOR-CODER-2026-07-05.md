@@ -25,6 +25,81 @@
 | Loads | `mdata.loads` (canonical) vs `dispatch.loads` | verify `dispatch.loads` — if a real 2nd table, consolidate to mdata.loads or clarify purpose |
 | Cancellation reasons | `catalogs.cancellation_reasons` (read by Cancel-Load) vs `catalogs.load_cancellation_reasons` (edited by Lists) | **point the Lists page at `cancellation_reasons`**; retire/merge the decoy |
 
+### A.1 CATALOG SCOPING CLASSIFICATION — five classes, decided by prod VALUES + POLICY (not by the column)
+
+**Added 2026-07-25 (LST-RLS-01 / packet block 14). All rows below are prod-verified on Neon
+`br-fancy-credit-akjnd07a` with `SET app.bypass_rls='lucia'`; positive control `catalogs.accounts` = 1392
+visible, so a 0 here is real absence, not RLS masking.**
+
+Two wrong rules have already been written from partial evidence, and each would have caused a real defect:
+
+1. *"`account_types`, `wo_cancellation_reasons`, `detail_types`, `tire_positions`, `journal_entry_types` are
+   global reference taxonomies, RLS-off by design."* — **WRONG on three counts.** `detail_types` HAS
+   `operating_company_id`; `journal_entry_types` and `tire_positions` have RLS **enabled AND forced**.
+2. *"`companyScoped:false` iff the table has no `operating_company_id` column."* — **WRONG.** The column
+   describes current state, not design intent. `payment_terms` and `posting_templates` also have no column,
+   yet they are catalogs each entity should own — converting them is the whole point of packet blocks 04/05.
+   And `detail_types` HAS the column while still requiring `companyScoped:false`.
+
+The discriminator is the pair **(what the values are, what the policy says)** plus **design intent**:
+
+| Class | Test | Tables (prod-verified 2026-07-25) | `companyScoped` |
+|---|---|---|---|
+| **A — global reference taxonomy, RLS OFF** | no `operating_company_id`; `relrowsecurity=false` | `account_types` (15 rows), `wo_cancellation_reasons` (6) | `false` |
+| **B — global taxonomy, RLS forced but policy `qual:true`** | no opco; RLS forced; every policy unconditional | `journal_entry_types` (16) — `journal_entry_types_read`/`_write` both `true` | `false` |
+| **C — global taxonomy, RLS forced with role-gated writes** | no opco; RLS forced; `global_read` true + Owner/Administrator writes | `tire_positions` (0 rows) | `false` |
+| **D — SHARED CANONICAL** | HAS opco, **every row NULL**, read `opco IS NULL OR = GUC`, write `opco = GUC AND NOT is_system` | `detail_types` — 144 rows, **144 NULL, 0 non-null** | `false` — **scoping it reads 0 of 144** |
+| **E — entity-blind DEFECT, conversion pending** | no opco but the catalog is business data each entity should own | `payment_terms`, `posting_templates`, `account_role_bindings` (has opco, 0 rows) → **blocks 05**; fleet catalogs → **block 04** | `false` **today**, `true` after the owner-gated conversion |
+
+**Classified but deliberately NOT counted:** `wo_cancellation_reasons` (class A, 6 rows) has a mounted
+read-only route (`apps/backend/src/catalogs/wo-cancellation-reasons.routes.ts`, registered in
+`catalogs/index.ts`) and **zero frontend callers** — a dead surface, so it is absent from
+`lists-module-count-spec.ts` and the hub does not count it. If it is ever wired to a picker it must
+arrive as `companyScoped:false`. Recording this matters because an unexplained absence from the count
+spec is indistinguishable from the LST-COUNT-01 undercount.
+
+Genuinely per-entity catalogs (opco populated + FORCE RLS + GUC policy) are `companyScoped:true` — 52 of
+them in `lists-module-count-spec.ts` today. `accounts` / `classes` / `items` are a deliberate sub-case: entity
+correctness comes from FORCE RLS + the GUC rather than an explicit filter, so they stay `false`.
+
+**Re-run to re-verify any row above:**
+```sql
+SET app.bypass_rls='lucia';
+SELECT c.relname, c.relrowsecurity AS rls_on, c.relforcerowsecurity AS rls_forced,
+       EXISTS(SELECT 1 FROM information_schema.columns col
+              WHERE col.table_schema='catalogs' AND col.table_name=c.relname
+                AND col.column_name='operating_company_id') AS has_opco
+FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+WHERE n.nspname='catalogs' AND c.relname IN
+  ('account_types','wo_cancellation_reasons','journal_entry_types','tire_positions','detail_types');
+-- Class D check — the one that matters, and the one the column alone cannot answer:
+SELECT count(*) total, count(*) FILTER (WHERE operating_company_id IS NULL) opco_null
+FROM catalogs.detail_types;                      -- 144 / 144
+SELECT polname, pg_get_expr(polqual, polrelid) FROM pg_policy
+WHERE polrelid='catalogs.detail_types'::regclass;  -- read: opco IS NULL OR = GUC ; write: = GUC AND NOT is_system
+```
+
+**Mis-filed finding, CLEARED:** an earlier audit flagged `account_types` and `wo_cancellation_reasons` as
+"RLS OFF → cross-entity leak (P1)." There is nothing to leak *across entities* — neither table has an
+`operating_company_id`, so no entity owns any row. That half of the finding is closed.
+**What is NOT cleared:** with RLS off, write authorisation on those two tables rests entirely on the
+`ih35_app` grant, where `tire_positions` (class C) restricts writes to Owner/Administrator. Making classes A
+and B match class C is an additive owner-gated HELD migration, tracked under `LST-RLS-01`, not a doc fix.
+
+**FK islands — decided, do not re-open:**
+
+- `journal_entry_types` — the island is being closed by `202607960000_journal_entries_type_fk.sql`
+  (ACCT-LINK-01, PR #3440). **MERGED IS NOT APPLIED:** verified on prod 2026-07-25 (lucia) the migration is
+  **absent from `_system._schema_migrations`**, `accounting.journal_entries` still has **no** type column and
+  **no** FK to `journal_entry_types`, and the prod ledger tail stops at `202607950000`. The island is still
+  OPEN on prod until the owner applies it. Accounting lane — reported here, not touched.
+- `detail_types` — **frozen owner decision (ACCT-02 / LINK-02): keep the text subtype lock. Do NOT wire an
+  FK.** `catalogs.accounts` has no `detail_type_id` column and none is to be added.
+
+**Enforcement:** `scripts/verify-steps/1358-verify-catalog-scoping-classification.mjs` pins this table to
+`apps/backend/src/lists/lists-module-count-spec.ts`, so the doc and the code cannot drift apart — the exact
+failure mode that produced the cancellation-reasons contradiction in §A.
+
 ### B. CROSS-SCHEMA NAME COLLISIONS (same table name in ≥2 schemas → ambiguous; review each — consolidate or rename for clarity)
 - `assets` → `fixed_assets.assets`, `mdata.assets`
 - `attachments` → `chat.attachments`, `documents.attachments`
