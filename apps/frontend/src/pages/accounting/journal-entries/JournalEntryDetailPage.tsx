@@ -242,6 +242,25 @@ export function JournalEntryDetailPage() {
           <span className="text-sm text-gray-900">{formatDateUS(entry.entry_date)}</span>
         </DataPanelRow>
         <DataPanelRow>
+          <span className="text-xs font-semibold text-gray-600">Journal entry type</span>
+          <span className="text-sm text-gray-900">
+            {entry.journal_entry_type_name || entry.journal_entry_type_code ? (
+              <Link
+                to="/lists/accounting/journal-entry-types"
+                className="text-slate-700 hover:underline"
+                data-testid="journal-entry-type-link"
+              >
+                {entry.journal_entry_type_name ?? entry.journal_entry_type_code}
+                {entry.journal_entry_type_code && entry.journal_entry_type_name
+                  ? ` (${entry.journal_entry_type_code})`
+                  : ""}
+              </Link>
+            ) : (
+              "—"
+            )}
+          </span>
+        </DataPanelRow>
+        <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Source</span>
           <span className="text-sm text-gray-900">{entry.source}</span>
         </DataPanelRow>

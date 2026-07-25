@@ -35,7 +35,7 @@ async function hasReversalLinkageColumns(client: QueryableClient): Promise<boole
   return present;
 }
 
-// ACCT-LINK-01 — journal_entry_type_id ships in HELD migration 202607940000 (owner Neon-apply).
+// ACCT-LINK-01 — journal_entry_type_id ships in HELD migration 202607960000 (owner Neon-apply).
 // Same expand/contract pattern as reversal linkage: tolerate absence until applied.
 let journalEntryTypeColumnPresent = false;
 async function hasJournalEntryTypeColumn(client: QueryableClient): Promise<boolean> {
@@ -744,26 +744,37 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
 export async function getJournalEntryDetail(userId: string, operatingCompanyId: string, journalEntryId: string) {
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    const typeColPresent = await hasJournalEntryTypeColumn(client);
+    const typeSelect = typeColPresent
+      ? `je.journal_entry_type_id::text,
+          jet.code AS journal_entry_type_code,
+          jet.display_name AS journal_entry_type_name,`
+      : `NULL::text AS journal_entry_type_id,
+          NULL::text AS journal_entry_type_code,
+          NULL::text AS journal_entry_type_name,`;
+    const typeJoin = typeColPresent ? "LEFT JOIN catalogs.journal_entry_types jet ON jet.id = je.journal_entry_type_id" : "";
     const headerRes = await client.query(
       `
         SELECT
-          id,
-          operating_company_id::text,
-          entry_date::text,
-          memo,
-          status,
-          source,
-          created_by_user_id::text,
-          voided_at::text,
-          voided_by_user_id::text,
-          void_reason,
-          qbo_journal_entry_id,
-          qbo_sync_pending,
-          created_at::text,
-          updated_at::text
-        FROM accounting.journal_entries
-        WHERE id = $1
-          AND operating_company_id = $2
+          je.id,
+          je.operating_company_id::text,
+          je.entry_date::text,
+          je.memo,
+          je.status,
+          je.source,
+          je.created_by_user_id::text,
+          je.voided_at::text,
+          je.voided_by_user_id::text,
+          je.void_reason,
+          ${typeSelect}
+          je.qbo_journal_entry_id,
+          je.qbo_sync_pending,
+          je.created_at::text,
+          je.updated_at::text
+        FROM accounting.journal_entries je
+        ${typeJoin}
+        WHERE je.id = $1
+          AND je.operating_company_id = $2
         LIMIT 1
       `,
       [journalEntryId, operatingCompanyId]

@@ -120,9 +120,9 @@
         "VERIFY-4"
       ],
       "spec": "Law \u00a79 \u00b7 ACCT-F02",
-      "status": "UNVERIFIED",
-      "evidence": "SCHEMA-LIVE 2026-07-25: journal_entries.journal_entry_type_id + FK journal_entries_journal_entry_type_id_fkey present (mig 202607960000 applied+ledgered). inbound typed density still 0/8 JEs \u2014 needs ops backfill/picker use + browser DoD. NOT PASS (Rule 23).",
-      "pr": "#3440"
+      "status": "FAIL",
+      "evidence": "GUARD 2026-07-25 (§2b): 202607960000 in NEITHER prod ledger — genuinely UNAPPLIED; prod journal_entries has NO journal_entry_type_id (lucia). #3440 MERGED≠APPLIED. HOLD PR wires picker + verify-je-type-fk (step 1484); ACCT-LINK-01 stays FAIL until owner Neon-apply + inbound FK density re-measure.",
+      "pr": "HOLD — ACCT-F02"
     },
     {
       "id": "ACCT-LINK-02",
@@ -288,9 +288,9 @@
         "VERIFY-7"
       ],
       "spec": "ACCT-F02 \u00b7 JE tab",
-      "status": "UNVERIFIED",
-      "evidence": "SCHEMA-LIVE 2026-07-25 (LINK-01/JE type FK). Browser DoD TRANSP+USMCA still blocked (session gate). Do NOT PASS without authenticated click-through (Rule 23). No new structural SURF guards.",
-      "pr": null
+      "status": "FAIL",
+      "evidence": "GUARD 2026-07-25: migration 202607960000 genuinely UNAPPLIED on prod (MERGED\u2260APPLIED). Picker wired on ManualJEModal (accounting + banking) reading/writing catalogs.journal_entry_types; reverse drill on JournalEntryDetailPage \u2192 /lists/accounting/journal-entry-types. Stays FAIL until Neon-apply proves FK + typed density on live JEs.",
+      "pr": "HOLD — ACCT-F02"
     },
     {
       "id": "ACCT-SURF-06",
