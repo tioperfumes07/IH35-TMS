@@ -9,7 +9,7 @@
   "allowed_files": [
     ".block-ready/ACCT-F05-BANKFEED-JE-MATCH.json",
     "scripts/verify-bankfeed-je-match.mjs",
-    "scripts/verify-steps/1486-verify-bankfeed-je-match.mjs",
+    "scripts/verify-steps/1507-verify-bankfeed-je-match.mjs",
     "docs/module-completion/accounting.json",
     "docs/module-completion/accounting.md"
   ],
