@@ -458,6 +458,7 @@
       "load_id",
       "load_required",
       "opened_at",
+      "operating_company_id",
       "outcome",
       "parent_line_uuid",
       "part_location_codes",
@@ -798,6 +799,7 @@
       "error",
       "id",
       "idempotency_key",
+      "journal_entry_type_id",
       "kind",
       "last_qbo_synced_at",
       "memo",
@@ -825,8 +827,7 @@
       "version_int",
       "void_reason",
       "voided_at",
-      "voided_by_user_id",
-      "journal_entry_type_id"
+      "voided_by_user_id"
     ],
     "accounting.journal_entry_postings": [
       "account_id",
@@ -2241,6 +2242,9 @@
       "rows_total",
       "started_at",
       "status"
+    ],
+    "catalogs.expense_categories": [
+      "operating_company_id"
     ],
     "catalogs.file_categories": [
       "applies_to",
