@@ -2,7 +2,7 @@
   "module": "banking",
   "title": "Banking (Module 4)",
   "complete": false,
-  "as_of": "2026-07-25T03:41:00.000Z",
+  "as_of": "2026-07-25T04:34:39.000Z",
   "live_sha": "a3f9c12",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md",
   "spec_sources": [
@@ -26,16 +26,16 @@
     },
     {
       "id": "BANK-ECON-02",
-      "title": "matched_journal_entry_id density meaningful (not ≈0%)",
+      "title": "matched_journal_entry_id density meaningful (not \u22480%)",
       "layers": [
         "DOD-C",
         "DOD-D",
         "VERIFY-4",
         "VERIFY-6"
       ],
-      "spec": "Match/Categorize → JE",
+      "spec": "Match/Categorize \u2192 JE",
       "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25 03:41Z: matched_je=3/10628; categorized_at_not_null=3 — unchanged since last read. Poster works when used (#3424 on main). Density is ops backlog — not a broken poster.",
+      "evidence": "LIVE REFRESH 2026-07-25 03:41Z: matched_je=3/10628; categorized_at_not_null=3 \u2014 unchanged since last read. Poster works when used (#3424 on main). Density is ops backlog \u2014 not a broken poster.",
       "pr": "#3424"
     },
     {
@@ -45,9 +45,9 @@
         "DOD-D",
         "VERIFY-6"
       ],
-      "spec": "Transfers · #3134 Option 1 owner",
+      "spec": "Transfers \u00b7 #3134 Option 1 owner",
       "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25 03:41Z: transfers=0 — still true empty. Code+UI wired (createTransfer). PR #3445 [HOLD] fixes bank-feed mark-as-transfer to mint/link a real banking.transfers row via markBankFeedLineAsTransfer() — reuses existing createTransfer() poster, no new migration/flag. NOT yet merged. Remains FAIL until merged + operator uses it + Neon re-count > 0.",
+      "evidence": "LIVE REFRESH 2026-07-25 03:41Z: transfers=0 \u2014 still true empty. Code+UI wired (createTransfer). PR #3445 [HOLD] fixes bank-feed mark-as-transfer to mint/link a real banking.transfers row via markBankFeedLineAsTransfer() \u2014 reuses existing createTransfer() poster, no new migration/flag. NOT yet merged. Remains FAIL until merged + operator uses it + Neon re-count > 0.",
       "pr": "#3445"
     },
     {
@@ -59,7 +59,7 @@
       ],
       "spec": "Reconciliation",
       "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25 03:41Z: reconciliation_sessions=0 — unchanged. Workspace+start session wired (#3417 zero-diff); no session ever started.",
+      "evidence": "LIVE REFRESH 2026-07-25 03:41Z: reconciliation_sessions=0 \u2014 unchanged. Workspace+start session wired (#3417 zero-diff); no session ever started.",
       "pr": "#3417"
     },
     {
@@ -76,7 +76,7 @@
     },
     {
       "id": "BANK-SURF-01",
-      "title": "Banking Home + account detail — DoD A–E",
+      "title": "Banking Home + account detail \u2014 DoD A\u2013E",
       "layers": [
         "DOD-A",
         "DOD-B",
@@ -86,12 +86,12 @@
       ],
       "spec": "Architectural Banking tabs",
       "status": "UNVERIFIED",
-      "evidence": "Routes live; full picker/wizard matrix not re-run",
-      "pr": null
+      "evidence": "Structural mount guarded (#3459 verify-bank-surf-home-detail / step 1439): /banking + /banking/accounts/:id + banking.* API. DoD A\u2013E + VERIFY 1\u20138 browser click-through TRANSP+USMCA still required \u2014 structural \u2260 SURF PASS (Rule 23).",
+      "pr": "#3459"
     },
     {
       "id": "BANK-SURF-02",
-      "title": "Categorize / Match — VERIFY-1..8 + JE when flag ON",
+      "title": "Categorize / Match \u2014 VERIFY-1..8 + JE when flag ON",
       "layers": [
         "VERIFY-1",
         "VERIFY-2",
@@ -106,7 +106,7 @@
     },
     {
       "id": "BANK-SURF-03",
-      "title": "Transfers UI + poster path — live economics",
+      "title": "Transfers UI + poster path \u2014 live economics",
       "layers": [
         "DOD-D",
         "VERIFY-3",
@@ -119,7 +119,7 @@
     },
     {
       "id": "BANK-SURF-04",
-      "title": "Reconciliation workspace — live session + zero-diff",
+      "title": "Reconciliation workspace \u2014 live session + zero-diff",
       "layers": [
         "DOD-D",
         "VERIFY-6",
@@ -132,28 +132,28 @@
     },
     {
       "id": "BANK-SURF-05",
-      "title": "Factoring / Escrow / Relay / Plaid / Statement Import — active path + honest empty",
+      "title": "Factoring / Escrow / Relay / Plaid / Statement Import \u2014 active path + honest empty",
       "layers": [
         "DOD-A",
         "DOD-E",
         "VERIFY-7"
       ],
-      "spec": "Banking entry tabs · never-delete",
+      "spec": "Banking entry tabs \u00b7 never-delete",
       "status": "UNVERIFIED",
-      "evidence": "Tabs reachable; economics not module-closed",
-      "pr": null
+      "evidence": "Structural entry-tabs guarded (#3459/#3462 verify-bank-surf-entry-tabs / step 1440): Factoring/Escrow/Relay/Plaid/Statement Import routes mounted (never-delete). Browser DoD click-through still UNVERIFIED \u2014 not flipped to PASS.",
+      "pr": "#3459"
     },
     {
       "id": "BANK-LINK-01",
-      "title": "Bank txn ↔ Bill/Payment/Transfer EntityLink both-way with Neon FKs",
+      "title": "Bank txn \u2194 Bill/Payment/Transfer EntityLink both-way with Neon FKs",
       "layers": [
         "DOD-C",
         "VERIFY-4"
       ],
-      "spec": "Law §9 banking",
+      "spec": "Law \u00a79 banking",
       "status": "UNVERIFIED",
-      "evidence": "Code paths exist; density proves almost no JE links",
-      "pr": null
+      "evidence": "Structural counterparty wiring guarded (#3459/#3464 verify-bank-surfaces-and-counterparty / step 1441); Neon lucia counterparty_fk sparse (2). Both-way live density + browser reverse drill still UNVERIFIED \u2014 not flipped to PASS.",
+      "pr": "#3459"
     },
     {
       "id": "BANK-CTRL-01",
@@ -169,7 +169,7 @@
     },
     {
       "id": "BANK-GATE-01",
-      "title": "Every banking money PR uses EVERY-PR checklist — process closed",
+      "title": "Every banking money PR uses EVERY-PR checklist \u2014 process closed",
       "layers": [
         "DOD-E"
       ],

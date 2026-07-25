@@ -27,3 +27,9 @@
 | `BANK-GATE-01` | **PASS** | Every banking money PR uses EVERY-PR checklist — process closed | #3430 merged on main (sha fc1cf13); verify-step 1430 enforces EVERY-PR checklist trailers on banking money commits | #3430 |
 
 Desktop audit: ~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md
+
+## PACKET-6 structural guards (2026-07-25) — honesty
+
+CI guards for Banking Home/detail, entry tabs, counterparty link shape, and cashbind keep-green shipped in #3459 (steps 1439–1442).
+**These do NOT flip BANK-SURF-01/05 or BANK-LINK-01 to PASS** — Rule 23: structural mount < DoD A–E click-through + Neon density.
+Scoreboard remains **4 of 13** until browser/Neon proof moves items.
