@@ -2,7 +2,7 @@
   "module": "accounting",
   "title": "Accounting (Module 3)",
   "complete": false,
-  "as_of": "2026-07-25T17:30:00.000Z",
+  "as_of": "2026-07-25T19:00:00.000Z",
   "live_sha": "a3f9c12",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md",
   "spec_sources": [
@@ -378,6 +378,20 @@
       "status": "PASS",
       "evidence": "#3430 merged on main (sha fc1cf13); verify-steps 1430+1431 + Rule 24 live; money PRs require MODULE_PROGRESS trailers",
       "pr": "#3430"
+    },
+    {
+      "id": "ACCT-R-11",
+      "title": "Bank categorize capture fields sent to API and persisted on bank_transactions",
+      "layers": [
+        "DOD-B",
+        "DOD-C",
+        "VERIFY-2",
+        "VERIFY-3"
+      ],
+      "spec": "0441-mod8-tx-fields-captured-not-sent \u00b7 ACCT-R-11",
+      "status": "PASS",
+      "evidence": "BankingTransactionsDesignView postTransaction sends check_number/class_id/location/is_billable/tags; categorization.routes.ts accepts + UPDATE persists all five columns; Plaid list SELECT hydrates; held migration 202607690000 owner-applied on Neon prod 2026-07-25; guard verify-acct-r11-tx-fields-sent step 1490. Desktop browser TRANSP+USMCA click-through UNVERIFIED.",
+      "pr": null
     }
   ]
 }

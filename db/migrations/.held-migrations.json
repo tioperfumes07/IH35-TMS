@@ -444,7 +444,9 @@
     },
     {
       "file": "202607690000_bank_tx_capture_fields.sql",
-      "reason": "[HOLD-FOR-JORGE — FINANCIAL] 0441-mod8-tx-fields-captured-not-sent — additive capture-field persistence on banking.bank_transactions (check_number text, categorization_class_id uuid FK catalogs.classes, categorization_location text, is_billable boolean default false, tags text) so the categorize panel's Check no./Class/Location/Billable/Tags survive Post instead of evaporating as a draft-only overlay. ADDITIVE + IDEMPOTENT; nullable/default — no backfill. No GL rows, no flags, no RLS change (columns inherit the table's FORCED RLS + grants). NOT YET applied on prod — GUARD validates on throwaway Postgres apply-twice, owner applies on Neon then ledger-backfills; CI fresh-from-0001 builds the columns."
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL] 0441-mod8-tx-fields-captured-not-sent — additive capture-field persistence on banking.bank_transactions (check_number text, categorization_class_id uuid FK catalogs.classes, categorization_location text, is_billable boolean default false, tags text) so the categorize panel's Check no./Class/Location/Billable/Tags survive Post instead of evaporating as a draft-only overlay. ADDITIVE + IDEMPOTENT; nullable/default — no backfill. No GL rows, no flags, no RLS change (columns inherit the table's FORCED RLS + grants). Owner Neon-applied on prod branch br-fancy-credit-akjnd07a (ACCT-R-11 2026-07-25); CI fresh-from-0001 builds the columns via held apply.",
+      "applied_on_prod": true,
+      "applied_evidence": "Owner Neon apply ACCT-R-11 2026-07-25 — banking.bank_transactions check_number/categorization_class_id/categorization_location/is_billable/tags; wiring guard verify-acct-r11-tx-fields-sent (step 1490)"
     },
     {
       "file": "202607710000_payrun_abandonment_chargeback_coa_role.sql",
