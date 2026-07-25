@@ -176,8 +176,16 @@ if (SELFTEST) {
   expectCaught(
     "flag-claims-applied-but-ledger-disagrees",
     (reg) => {
-      const e = reg.held.find((x) => x.applied_on_prod !== true && x.file >= "202606010000");
-      if (e) e.applied_on_prod = true;
+      // held[] may legitimately have every entry already applied_on_prod:true, so this can't rely
+      // on finding an unstamped entry — synthesize one whose filename sorts inside the pinned
+      // snapshot's window (so section 3 doesn't dismiss it as unassertable) but that is not itself
+      // one of the snapshot's real checksummed files.
+      const snap = JSON.parse(live[SNAPSHOT]);
+      reg.held.push({
+        file: `${snap.window_from}_selftest_not_in_ledger.sql`,
+        reason: "synthetic entry for the ledger-disagreement fixture",
+        applied_on_prod: true,
+      });
     },
     "NOT in the prod ledger snapshot",
   );
