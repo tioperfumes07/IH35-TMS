@@ -74,14 +74,14 @@ export function run(root = ROOT) {
   if (!fs.existsSync(heldPath)) {
     failures.push(`missing ${HELD}`);
   } else {
+    // Owner confirmed live 2026-07-25 (GUARD, both ledgers + live objects) that this migration is
+    // genuinely applied on prod. applied_on_prod:true is now the correct, expected state — the
+    // manifest (checked below) stays HOLD because applied != audited-pass, not because the
+    // registry must pretend the migration is still pending.
     const held = readJson(root, HELD);
     const entry = (held.held || []).find((h) => h.file === MIG_BASENAME);
     if (!entry) {
       failures.push(`${MIG_BASENAME} must remain registered in .held-migrations.json (MERGED≠APPLIED)`);
-    } else if (entry.applied_on_prod === true) {
-      failures.push(
-        `${MIG_BASENAME} must NOT be marked applied_on_prod until owner Neon-applies (Rule 10 / MERGED≠APPLIED)`
-      );
     }
   }
 
@@ -188,12 +188,14 @@ if (process.argv.includes("--selftest")) {
     }
     copyTree(MANIFEST);
 
+    // applied_on_prod:true is the owner-confirmed live state (2026-07-25 GUARD, both ledgers +
+    // live objects) — no longer a defect to catch. The regression this guard must still catch is
+    // the registry entry disappearing entirely.
     const held = readJson(temp, HELD);
-    const entry = held.held.find((h) => h.file === MIG_BASENAME);
-    entry.applied_on_prod = true;
+    held.held = held.held.filter((h) => h.file !== MIG_BASENAME);
     write(temp, HELD, JSON.stringify(held, null, 2) + "\n");
-    if (!run(temp).some((f) => f.includes("applied_on_prod"))) {
-      throw new Error("applied_on_prod on held migration was not detected");
+    if (!run(temp).some((f) => f.includes("must remain registered"))) {
+      throw new Error("removing the migration from .held-migrations.json was not detected");
     }
 
     console.log("verify-bank-econ-04-honesty-keep --selftest OK");
