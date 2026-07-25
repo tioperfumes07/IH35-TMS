@@ -88,7 +88,7 @@ export function JournalEntryTypePicker({ operatingCompanyId, value, onChange, di
           <label className="block">
             Code
             <input
-              className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2"
+              className="mt-1 h-12 w-full rounded-sm border border-gray-300 px-2"
               value={draftCode}
               onChange={(event) => setDraftCode(event.target.value)}
             />
@@ -96,7 +96,7 @@ export function JournalEntryTypePicker({ operatingCompanyId, value, onChange, di
           <label className="block">
             Display name
             <input
-              className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2"
+              className="mt-1 h-12 w-full rounded-sm border border-gray-300 px-2"
               value={draftName}
               onChange={(event) => setDraftName(event.target.value)}
             />
