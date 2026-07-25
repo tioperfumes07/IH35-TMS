@@ -1,6 +1,6 @@
 {
- "date": "2026-07-24",
- "generated_at_iso": "2026-07-25T03:18:14.562Z",
+ "date": "2026-07-25",
+ "generated_at_iso": "2026-07-25T03:43:26.789Z",
  "counts": {
   "PENDING": 6,
   "PENDING (GATED)": 28,
@@ -13162,6 +13162,12 @@
  ],
  "merged_prs": [
   {
+   "number": 3448,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-25T03:32:07Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 3447,
    "title": "chore(deps): bump brace-expansion from 5.0.7 to 5.0.8 in /apps/driver-pwa in the npm_and_yarn group across 1 directory",
    "mergedAt": "2026-07-25T03:17:06Z",
@@ -16754,12 +16760,6 @@
    "title": "fix(dispatch): enforce load-status gate on driver PWA arrival/departure (0243-g9-h4)",
    "mergedAt": "2026-07-17T16:42:31Z",
    "branch": "fix/driver-pwa-load-status-gate"
-  },
-  {
-   "number": 2634,
-   "title": "fix(dispatch): archive orphan DispatchList dead duplicate (0243-c1-4)",
-   "mergedAt": "2026-07-17T17:51:44Z",
-   "branch": "fix/dispatchlist-orphan-archive"
   }
  ],
  "merged_pr_total": 3000,
