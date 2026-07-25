@@ -2,8 +2,8 @@
   "module": "lists",
   "title": "Lists / Catalogs (Module 12)",
   "complete": false,
-  "as_of": "2026-07-25T00:30:00Z",
-  "live_sha": "2088757",
+  "as_of": "2026-07-25T05:30:00.000Z",
+  "live_sha": "f3fe299",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/lists.md",
   "prod_settlement": "~/Desktop/IH35-CURSOR-AUDIT/modules/lists-PROD-SETTLEMENT-2026-07-24.md",
   "spec_sources": [
@@ -188,8 +188,8 @@
         "VERIFY-5"
       ],
       "spec": "Owner ruling: same catalog for all entities",
-      "status": "FAIL",
-      "evidence": "Neon lucia: catalogs.complaint_types active = TRANSP 271 / TRK 12 / USMCA 12. TRK and USMCA each missing ~259 rows. All other converted catalogs are even (dot_violation_types 71/71/71, driver_termination_reasons 16/16/16, load_cancellation_reasons 12/12/12, void_cancel_reasons 6/6/6). BROWSER: SAFETY badge reads 30 on TRANSP, consistent with the skew.",
+      "status": "PASS",
+      "evidence": "CORRECTED DIAGNOSIS + RESOLVED on prod 2026-07-25. The 271/12/12 skew was NOT a TRK/USMCA seed gap — it was TRANSP POLLUTION: 259 of TRANSP's rows were named 'USMCA-1 leak test <hex>', written into live data by scripts/verify-no-cross-carrier-data-leak.mjs (dotenv resolved .env's prod DATABASE_DIRECT_URL; no prod refusal; committed fixtures whose DELETE cleanup threw 'permission denied' under SET ROLE ih35_app on every run and was swallowed by .catch(()=>{})). Owner soft-deactivated the 259 (is_active=false, preserved per NEVER-DELETE §F.24). Neon lucia br-fancy-credit-akjnd07a, re-verified independently by coder 2026-07-25: ACTIVE parity TRANSP 12 / TRK 12 / USMCA 12 on the identical curated list (Anonymous complaint, Civilian road complaint, Communication, Customer complaint, Driver to driver complaint, Harassment, Misconduct, Other, Retaliation, Safety Concern, Service Quality, Workplace complaint); 0 ACTIVE '%leak test%' rows; sweep of all 113 catalogs.* base tables via full-row to_jsonb ILIKE '%leak test%' found hits ONLY in complaint_types and all 259 are inactive (contained); positive control catalogs.accounts=1392 visible so the zeros are real absence, not RLS masking. NOTE the operative invariant is ACTIVE parity: TRANSP retains 259 INACTIVE archived rows that TRK/USMCA do not have, deliberately preserved for audit rather than deleted. PR #3452 (which would have seeded the garbage to all three entities) was CLOSED; the replacement ships the prod refusal + rollback-only fixtures + regression guard verify-steps/1353.",
       "pr": null,
       "owner_hold": false,
       "tracker": null,
