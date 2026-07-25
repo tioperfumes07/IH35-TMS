@@ -14,4 +14,10 @@ describe("RecordTransferModal — mark-transfer wiring (0441-mod8)", () => {
     expect(source).not.toContain("known-broken/mismatched");
     expect(source).not.toContain("intentionally left for manual categorization");
   });
+
+  // BANK-ECON-03 / BANK-SURF-03 — mark-transfer must LINK to the transfer createTransfer() already
+  // minted, never mint a second banking.transfers row for the same cash movement.
+  it("passes existing_transfer_id so mark-transfer never mints a second ledger row", () => {
+    expect(source).toContain("existing_transfer_id: response.transfer.id");
+  });
 });

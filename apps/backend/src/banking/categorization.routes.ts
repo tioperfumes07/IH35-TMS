@@ -10,6 +10,7 @@ import { bankTransactionHiddenFilterSql, isBankAccountHideEnabled } from "./bank
 import { maybePostBankDriverAdvanceForCategorization } from "./bank-driver-advance.service.js";
 import { maybeCreateBankCategorizationDriverDeduction } from "./bank-driver-expense-deduction.service.js";
 import { maybePostBankCategorizationToGl } from "./bank-feed-gl-posting.service.js";
+import { markBankFeedLineAsTransfer } from "./transfers.service.js";
 import {
   BULK_TXN_MAX,
   bulkCategorizeTransactions,
@@ -92,6 +93,10 @@ const transferBodySchema = z.object({
   destination_bank_account_id: z.string().uuid(),
   transfer_kind: z.enum(["in", "out"]),
   paired_transaction_id: z.string().uuid().optional(),
+  // BANK-ECON-03 / BANK-SURF-03 — when RecordTransferModal/TransferModal already minted the transfer via
+  // POST /api/v1/banking/transfers (createTransfer), pass its id so THIS call only stamps the linkage
+  // (matched_transfer_id) instead of minting a SECOND banking.transfers row for the same cash movement.
+  existing_transfer_id: z.string().uuid().optional(),
 });
 
 const skipBodySchema = z.object({
@@ -766,7 +771,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
 
     const companyId = query.data.operating_company_id;
 
-    const result = await withCompanyScope(user.uuid, companyId, async (client) => {
+    const statusCheck = await withCompanyScope(user.uuid, companyId, async (client) => {
       const txnRes = await client.query(
         `
           SELECT status
@@ -779,66 +784,52 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       const txn = txnRes.rows[0] as { status: string | null } | undefined;
       if (!txn) return { code: 404 as const, error: "transaction_not_found" };
       const st = String(txn.status ?? "");
-      if (st !== "pending_categorization" && st !== "uncategorized") {
+      if (st !== "pending_categorization" && st !== "uncategorized" && st !== "transfer") {
         return { code: 409 as const, error: "transaction_not_pending_categorization" };
       }
+      return { code: 200 as const };
+    });
+    if ("error" in statusCheck) return reply.code(statusCheck.code).send({ error: statusCheck.error });
 
-      await client.query(
-        `
-          UPDATE banking.bank_transactions
-          SET
-            status = 'transfer',
-            category = 'transfer',
-            category_kind = 'transfer',
-            destination_bank_account_id = $2,
-            transfer_kind = $3,
-            paired_transaction_id = $4,
-            categorized_at = now(),
-            updated_at = now(),
-            skip_reason = NULL,
-            investigate_note = NULL
-          WHERE id = $1
-            AND operating_company_id = $5
-        `,
-        [params.data.id, body.data.destination_bank_account_id, body.data.transfer_kind, body.data.paired_transaction_id ?? null, companyId]
-      );
-
-      if (body.data.paired_transaction_id) {
-        await client.query(
-          `
-            UPDATE banking.bank_transactions
-            SET
-              status = 'transfer',
-              category = 'transfer',
-              category_kind = 'transfer',
-              paired_transaction_id = $1,
-              categorized_at = now(),
-              updated_at = now()
-            WHERE id = $2
-              AND operating_company_id = $3
-          `,
-          [params.data.id, body.data.paired_transaction_id, companyId]
-        );
+    // BANK-ECON-03 / BANK-SURF-03 root-cause fix (0285-banking-transfer-gl-gap Option 1, owner-approved
+    // #3134): "mark as transfer" must actually mint (or link to) a real banking.transfers row — reusing
+    // the already-proven createTransfer() poster — not just tag banking.bank_transactions columns.
+    let linkResult: { transfer_id: string; minted: boolean };
+    try {
+      linkResult = await markBankFeedLineAsTransfer({
+        operatingCompanyId: companyId,
+        bankTransactionId: params.data.id,
+        destinationBankAccountId: body.data.destination_bank_account_id,
+        transferKind: body.data.transfer_kind,
+        pairedTransactionId: body.data.paired_transaction_id ?? null,
+        existingTransferId: body.data.existing_transfer_id ?? null,
+        userId: user.uuid,
+      });
+    } catch (error) {
+      const message = String((error as Error)?.message ?? "transfer_link_failed");
+      if (
+        message === "bank_txn_not_found" ||
+        message === "transfer_not_found" ||
+        message === "transfer_account_not_accessible" ||
+        message === "transfer_amount_must_be_positive" ||
+        message === "self_transfer_not_allowed"
+      ) {
+        return reply.code(409).send({ error: message });
       }
+      throw error;
+    }
 
-      await enqueueAccountingOutbox(client, companyId, "qbo.bank_transaction.categorized", "bank_transaction", params.data.id, {
+    await withCompanyScope(user.uuid, companyId, (client) =>
+      enqueueAccountingOutbox(client, companyId, "qbo.bank_transaction.categorized", "bank_transaction", params.data.id, {
         bank_transaction_id: params.data.id,
         category_kind: "transfer",
         transfer_kind: body.data.transfer_kind,
         paired_transaction_id: body.data.paired_transaction_id ?? null,
-      });
+        transfer_id: linkResult.transfer_id,
+      })
+    );
 
-      await appendCrudAudit(client, user.uuid, "banking.transaction.transfer.p6_t11204", {
-        resource_type: "banking.bank_transactions",
-        resource_id: params.data.id,
-        operating_company_id: companyId,
-      });
-
-      return { code: 200 as const, data: { ok: true } };
-    });
-
-    if ("error" in result) return reply.code(result.code).send({ error: result.error });
-    return result.data;
+    return { ok: true, transfer_id: linkResult.transfer_id, minted: linkResult.minted };
   });
 
   app.post("/api/v1/banking/transactions/:id/skip", async (req, reply) => {
