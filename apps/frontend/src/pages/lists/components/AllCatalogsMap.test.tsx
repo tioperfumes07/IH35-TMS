@@ -67,6 +67,7 @@ describe("Lists reorg — buildCatalogPath (shared resolver)", () => {
   it("resolves dispatch, drivers-reference, names, and default paths", () => {
     expect(buildCatalogPath("dispatch", "load-types")).toBe("/lists/dispatch/load-types");
     expect(buildCatalogPath("drivers", "license-classes")).toBe("/lists/drivers/license-classes");
+    expect(buildCatalogPath("drivers", "driver-load-statuses")).toBe("/lists/drivers/driver-load-statuses");
     expect(buildCatalogPath("drivers", "pay-types")).toBe("/lists/driver/pay-types"); // normalized + default
     expect(buildCatalogPath("names_master", "brokers")).toBe("/lists/names/brokers");
     expect(buildCatalogPath("accounting", "chart-of-accounts")).toBe("/lists/accounting/chart-of-accounts");
