@@ -21,7 +21,7 @@
       ],
       "spec": "safety.md section J boundary 1 (findings F01)",
       "status": "UNVERIFIED",
-      "evidence": "CODE-VERIFIED, BLOCKED ON A FLAG THAT CANNOT BE TURNED ON. Route escrow-forfeit.routes.ts:41 registered at index.ts:887; service :88-97,110-170 has the over-draw guard, flag gate, JE via createJournalEntryOnClient and escrow_postings source_type='forfeit'; prereq migration 202607800000 applied_on_prod:true. Guard 1328 (4 planted defects). BLOCKER: DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED has NO seed migration anywhere, and feature-flags/service.ts:277-279 resolves an unknown key false \u2014 so every forfeit 409s escrow_forfeit_gl_posting_flag_off. There is no enable path in existence, which is worse than OFF. SETTLES IT: SELECT flag_key,default_enabled FROM lib.feature_flags WHERE flag_key='DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED' plus the overrides table, on prod. Flag stays OFF; no agent flips it. PREMISE REFUTED: the finding names safety.driver_escrow / driver_escrow_transactions, which do not exist \u2014 the real surface is accounting.escrow_accounts / escrow_postings + driver_finance.driver_liabilities.",
+      "evidence": "CODE-VERIFIED, BLOCKED ON A FLAG THAT CANNOT BE TURNED ON. Route escrow-forfeit.routes.ts:41 registered at index.ts:887; service :88-97,110-170 has the over-draw guard, flag gate, JE via createJournalEntryOnClient and escrow_postings source_type='forfeit'; prereq migration 202607800000 applied_on_prod:true. Guard 1328 (4 planted defects). BLOCKER: DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED has NO seed migration anywhere, and feature-flags/service.ts:277-279 resolves an unknown key false \u2014 so every forfeit 409s escrow_forfeit_gl_posting_flag_off. There is no enable path in existence, which is worse than OFF. SETTLES IT: SELECT flag_key,default_enabled FROM lib.feature_flags WHERE flag_key='DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED' plus the overrides table, on prod. Flag stays OFF; no agent flips it. PREMISE REFUTED: the finding names safety.driver_escrow / driver_escrow_transactions, which do not exist \u2014 the real surface is accounting.escrow_accounts / escrow_postings + driver_finance.driver_liabilities. FLAG SEED REASSIGNED 2026-07-25: GUARD confirmed live that lib.feature_flags has ZERO rows for DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED (columns {flag_key, description, default_enabled, rollout_pct, created_at}), so there is no enable path in existence. Seeding it belongs with the escrow money-direction fix in CURSOR's #3533 stack, not here \u2014 it is meaningless until that lands. Seed default_enabled=false; the OWNER enables afterwards. No agent flips it. The ROUTE itself is code-verified registered (escrow-forfeit.routes.ts:41, index.ts:887) and stays this coder's surface.",
       "pr": 3348,
       "owner_hold": true,
       "tracker": null,
@@ -1343,7 +1343,7 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "HOLD \u2014 financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
+      "gate": "HOLD \u2014 adjacent to CURSOR's #3533 escrow stack. The missing settlement/GL/bank drill-throughs read accounting.escrow_* and driver_finance escrow tables; building them now risks colliding with that work. Frontend-only EntityLink additions, no writes \u2014 awaiting owner routing."
     },
     {
       "id": "SAF-B23",
@@ -1949,7 +1949,7 @@
       ],
       "spec": "Rule 13 financial + driver escrow = LIABILITY (owner-locked)",
       "status": "FAIL",
-      "evidence": "P0 MONEY DIRECTION, prod-verified verbatim. accounting.apply_escrow_posting_delta(): deposit -> +amount, release -> -amount, ELSE -> +amount. The forfeit posts posting_type='adjustment' with a POSITIVE amount, so a forfeiture INCREASES accounting.escrow_accounts.balance_cents while the JE DEBITS (reduces) the escrow liability - GL and subledger diverge by 2x the forfeit. LATENT: all escrow subledgers are 0 rows on prod and DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED has NO row in lib.feature_flags at all (unknown key resolves false), so the route returns 409 forever and there is no enable path. FINANCIAL - build-and-HOLD, CPA VETO, owner Neon-applies; no agent flips that flag. SCOPE: distinct from SAF-B01 (endpoint reachability) and SAF-ORPH-02 (which subledger is written) \u2014 this item is ONLY the trigger sign.",
+      "evidence": "P0 MONEY DIRECTION, prod-verified verbatim. accounting.apply_escrow_posting_delta(): deposit -> +amount, release -> -amount, ELSE -> +amount. The forfeit posts posting_type='adjustment' with a POSITIVE amount, so a forfeiture INCREASES accounting.escrow_accounts.balance_cents while the JE DEBITS (reduces) the escrow liability - GL and subledger diverge by 2x the forfeit. LATENT: all escrow subledgers are 0 rows on prod and DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED has NO row in lib.feature_flags at all (unknown key resolves false), so the route returns 409 forever and there is no enable path. FINANCIAL - build-and-HOLD, CPA VETO, owner Neon-applies; no agent flips that flag. SCOPE: distinct from SAF-B01 (endpoint reachability) and SAF-ORPH-02 (which subledger is written) \u2014 this item is ONLY the trigger sign. LANE REASSIGNED 2026-07-25 \u2014 OWNER STANDDOWN: this is CURSOR's lane, stacking on #3533 (ACCT-R-01 escrow canonical write-path sync, MERGED). The Lists+Safety coder must NOT touch accounting.apply_escrow_posting_delta or any accounting.escrow_* object. Do not rebuild this here.",
       "build_standard": {
         "standard_version": "2026-07-25",
         "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) \u2014 source .cursor/rule wins on conflict",
@@ -2005,7 +2005,7 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "HOLD \u2014 financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
+      "gate": "HOLD \u2014 CURSOR LANE (#3533 stack). Not this coder. Owner standdown 2026-07-25."
     },
     {
       "pr": null,
@@ -2020,7 +2020,7 @@
       ],
       "spec": "Rule 14 both-way linkage + driver_finance.* canonical",
       "status": "FAIL",
-      "evidence": "SPLIT-BRAIN subledger. The forfeit writes accounting.escrow_postings only, while EVERY driver-facing balance reads driver_finance.escrow_balances / escrow_ledger (banking escrow visualizer + register, driver-detail Escrow History, the over-draw guard in escrow-forfeit.service.ts). So the balance the over-draw check reads NEVER decrements - the same escrow could be forfeited repeatedly - and no driver-facing surface shows a forfeit. driver_finance.escrow_ledger already carries an UNUSED 'forfeit' value in its transaction_type CHECK. LATENT: both subledgers are 0 rows on prod today. Fixing SAF-ORPH-01 alone leaves this open, so they are ONE CPA review. SCOPE: distinct from SAF-B01 and SAF-ORPH-01; overlaps SAF-B22 (escrow drill-through) which stays the UI-side boundary.",
+      "evidence": "SPLIT-BRAIN subledger. The forfeit writes accounting.escrow_postings only, while EVERY driver-facing balance reads driver_finance.escrow_balances / escrow_ledger (banking escrow visualizer + register, driver-detail Escrow History, the over-draw guard in escrow-forfeit.service.ts). So the balance the over-draw check reads NEVER decrements - the same escrow could be forfeited repeatedly - and no driver-facing surface shows a forfeit. driver_finance.escrow_ledger already carries an UNUSED 'forfeit' value in its transaction_type CHECK. LATENT: both subledgers are 0 rows on prod today. Fixing SAF-ORPH-01 alone leaves this open, so they are ONE CPA review. SCOPE: distinct from SAF-B01 and SAF-ORPH-01; overlaps SAF-B22 (escrow drill-through) which stays the UI-side boundary. LANE REASSIGNED 2026-07-25 \u2014 OWNER STANDDOWN: this is CURSOR's lane, stacking on #3533 (ACCT-R-01 escrow canonical write-path sync, MERGED). The Lists+Safety coder must NOT touch accounting.apply_escrow_posting_delta or any accounting.escrow_* object. Do not rebuild this here.",
       "build_standard": {
         "standard_version": "2026-07-25",
         "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) \u2014 source .cursor/rule wins on conflict",
@@ -2076,7 +2076,7 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "HOLD \u2014 financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
+      "gate": "HOLD \u2014 CURSOR LANE (#3533 stack). Not this coder. Owner standdown 2026-07-25."
     },
     {
       "pr": null,
