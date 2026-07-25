@@ -27,6 +27,7 @@ vi.mock("../forms/shared/QuickCreateEntityModal", () => ({
 }));
 
 import { ReferenceSelect } from "./ReferenceSelect";
+import { ToastProvider } from "../Toast";
 
 describe("ReferenceSelect (A2)", () => {
   function setup() {
@@ -66,5 +67,61 @@ describe("ReferenceSelect (A2)", () => {
     fireEvent.click(screen.getByText("mock-create"));
     expect(onChange).toHaveBeenCalledWith("new-1");
     expect(screen.queryByTestId("inline-create")).toBeNull();
+  });
+});
+
+// LST-PICKER-01/03 — the config-driven path. These assert the DEFECT is gone: a catalog outside the
+// original hardcoded six now gets inline create with no new component and no edit to ReferenceSelect.
+describe("ReferenceSelect — config-driven catalogs (LST-PICKER-01)", () => {
+  function renderCatalogPicker(props: Partial<React.ComponentProps<typeof ReferenceSelect>> = {}) {
+    const onChange = vi.fn();
+    render(
+      <ToastProvider>
+        <ReferenceSelect
+          value={null}
+          onChange={onChange}
+          options={[{ value: "FSC", label: "Fuel Surcharge" }]}
+          createKind="additional_charge"
+          operatingCompanyId="00000000-0000-4000-8000-000000000001"
+          {...props}
+        />
+      </ToastProvider>,
+    );
+    return { onChange };
+  }
+
+  function openDropdown() {
+    fireEvent.focus(screen.getByRole("combobox"));
+    fireEvent.click(screen.getByRole("combobox"));
+  }
+
+  it('offers "+ Create" as the FIRST ROW INSIDE the dropdown for a catalog kind the union never had', () => {
+    renderCatalogPicker();
+    openDropdown();
+    const options = screen.getAllByRole("option");
+    expect(options[0]).toHaveTextContent("+ Create Accessorial charge");
+    // §7 vocabulary: never "+ New" / "+ Add" on a config-driven catalog.
+    expect(options[0].textContent).not.toMatch(/\+ (New|Add)\b/);
+  });
+
+  it("opens the ONE generic catalog drawer — not a per-catalog component", () => {
+    renderCatalogPicker();
+    openDropdown();
+    expect(screen.queryByTestId("catalog-quick-create-drawer")).toBeNull();
+    fireEvent.click(screen.getByRole("option", { name: /\+ Create Accessorial charge/i }));
+    expect(screen.getByTestId("catalog-quick-create-drawer")).toBeInTheDocument();
+  });
+
+  it("shows the operator which canonical table the create writes (clause 5, visible)", () => {
+    renderCatalogPicker();
+    openDropdown();
+    fireEvent.click(screen.getByRole("option", { name: /\+ Create Accessorial charge/i }));
+    expect(screen.getByTestId("catalog-quick-create-target")).toHaveTextContent("catalogs.additional_charges");
+  });
+
+  it("keeps the legacy six on their original label and backend", () => {
+    renderCatalogPicker({ createKind: "customer", options: [] });
+    openDropdown();
+    expect(screen.getByRole("option", { name: /\+ Add new customer/i })).toBeInTheDocument();
   });
 });

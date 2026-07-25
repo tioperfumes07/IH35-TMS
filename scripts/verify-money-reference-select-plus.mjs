@@ -55,8 +55,20 @@ if (!map.includes("ReferenceSelect")) {
 }
 
 const ref = read("apps/frontend/src/components/parity/ReferenceSelect.tsx");
-if (!ref.includes("InlineCreateDrawer") || !ref.includes('"vendor"') || !ref.includes('"customer"')) {
-  failures.push("ReferenceSelect must route vendor/customer through InlineCreateDrawer");
+// LST-PICKER-01 made the picker config-driven: the kind→backend mapping moved out of a hardcoded
+// Set in ReferenceSelect and into catalogPickerRegistry.ts. The REQUIREMENT is unchanged and this
+// check is now stronger — it asserts vendor/customer are actually CONFIGURED onto the inline-drawer
+// backend, where the old check only proved the two strings appeared somewhere in the component
+// (a comment would have satisfied it).
+if (!ref.includes("InlineCreateDrawer")) {
+  failures.push("ReferenceSelect must keep rendering InlineCreateDrawer");
+}
+const pickerRegistry = read("apps/frontend/src/components/parity/catalogPickerRegistry.ts");
+for (const kind of ["vendor", "customer"]) {
+  const entry = new RegExp(`\\n  ${kind}: \\{[\\s\\S]*?\\n  \\},`).exec(pickerRegistry);
+  if (!entry || !/backend:\s*"inline-drawer"/.test(entry[0])) {
+    failures.push(`ReferenceSelect must route ${kind} through InlineCreateDrawer (catalogPickerRegistry backend)`);
+  }
 }
 
 const quick = read("apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx");

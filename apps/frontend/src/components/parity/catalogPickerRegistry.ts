@@ -1,0 +1,405 @@
+/**
+ * LST-PICKER-01/03 — the per-catalog picker CONFIG REGISTRY.
+ *
+ * THE DEFECT THIS REPLACES
+ * ------------------------
+ * The shared picker capability (ReferenceSelect) already documented the 7-clause picker law and was
+ * adopted by ~42 call sites, but its create kinds were a HARDCODED UNION OF SIX
+ * (`QuickCreateKind = "vendor" | "customer" | "item" | "category" | "part" | "class"`) dispatched to
+ * two FORKED backends by a hardcoded `INLINE_KINDS` Set. A catalog outside those six could not have
+ * inline create at all without someone authoring a brand-new form component — so ~68 of 75 catalogs
+ * had no "+ Create" row in their consuming picker.
+ *
+ * Adding a catalog is now a CONFIG ENTRY in this file. No new component, no new Set member, no edit
+ * to ReferenceSelect.
+ *
+ * VERIFY-2 CLAUSE 5 IS THE HARD RULE
+ * ----------------------------------
+ * Inline create MUST write the SAME canonical table the picker READS, or the created row vanishes on
+ * reload. Every entry therefore declares `readTable` / `writeTable` / `readEndpoint` / `writeEndpoint`
+ * plus the backend `evidence` (file:line) that proves it. For `backend: "catalog"` entries the two
+ * endpoints are the SAME REST collection served by one route factory that interpolates a single
+ * `config.tableName` into both the list SELECT and the create INSERT — read/write parity holds by
+ * construction, not by hope. `scripts/verify-lst-picker-config-driven.mjs` fails the build if any
+ * catalog-backed entry ever declares divergent tables or endpoints.
+ *
+ * ZERO BEHAVIOUR CHANGE FOR THE ORIGINAL SIX
+ * ------------------------------------------
+ * vendor / customer / account / service keep routing to InlineCreateDrawer; item / category / part /
+ * class keep routing to QuickCreateEntityModal; their "+ Add new ___" default label is unchanged
+ * (explicitly the allowed inline mini-create form per scripts/verify-create-vocab-section7.mjs:39).
+ * Only the DISPATCH mechanism moved from a hardcoded Set into `backend` on the config.
+ */
+import { apiRequest } from "../../api/client";
+
+/**
+ * Which create surface a key renders.
+ *  - "inline-drawer"      → InlineCreateDrawer (rich BK7 forms; account commit is financial-gated)
+ *  - "quick-create-modal" → QuickCreateEntityModal (ParityDrawer shell, bespoke per-kind fields)
+ *  - "catalog"            → CatalogQuickCreateDrawer, driven ENTIRELY by `fields` + `create` below.
+ *                           This is the config-driven path: new catalogs use it and add NO component.
+ */
+export type CatalogPickerBackend = "inline-drawer" | "quick-create-modal" | "catalog";
+
+export type CatalogCreateField = {
+  name: "display_name" | "code" | "description";
+  label: string;
+  required?: boolean;
+  maxLength?: number;
+  placeholder?: string;
+  help?: string;
+  multiline?: boolean;
+};
+
+export type CatalogCreateResult = {
+  id: string;
+  label: string;
+  /** Catalog `code` column. Pickers whose option value IS the code select on this instead of `id`. */
+  code?: string;
+};
+
+export type CatalogPickerConfig = {
+  /** The `createKind` a caller passes to <ReferenceSelect>. */
+  key: string;
+  /** Singular human noun. Drives the dropdown's first row and the create drawer title. */
+  label: string;
+  backend: CatalogPickerBackend;
+  /** Canonical schema-qualified table the picker READS. */
+  readTable: string;
+  /** Canonical schema-qualified table inline create WRITES. VERIFY-2 cl.5: MUST equal readTable. */
+  writeTable: string;
+  /** REST collection the picker lists from. */
+  readEndpoint: string;
+  /** REST collection inline create POSTs to. Same collection ⇒ same table, by construction. */
+  writeEndpoint: string;
+  /** Every catalog here is entity-scoped: operating_company_id is required on read AND on write. */
+  entityScoped: true;
+  /**
+   * "same-endpoint-verified" — one route factory interpolates one tableName into SELECT and INSERT.
+   * "legacy-bespoke-form"    — pre-existing hand-written create form; table recorded for the record.
+   */
+  readWriteParity: "same-endpoint-verified" | "legacy-bespoke-form";
+  /** Backend file:line proving the read table equals the write table. Never a bare assertion. */
+  evidence: string;
+  /** Only for backend "catalog": the fields the generic drawer renders. */
+  fields?: readonly CatalogCreateField[];
+  /** Only for backend "catalog": the POST. Entity id is always the first argument. */
+  create?: (operatingCompanyId: string, values: CatalogCreateValues) => Promise<CatalogCreateResult>;
+};
+
+export type CatalogCreateValues = {
+  display_name: string;
+  code?: string;
+  description?: string;
+};
+
+/**
+ * Catalog `code` columns are constrained to /^[A-Z][A-Z0-9-]+$/ by every route factory
+ * (e.g. apps/backend/src/catalogs/dispatch/shared.ts:40). Derive a compliant code from the display
+ * name when the operator does not type one, so a quick inline create never 400s on a format rule the
+ * operator was never shown.
+ */
+export function deriveCatalogCode(displayName: string, explicit?: string): string {
+  const source = (explicit ?? "").trim() || displayName;
+  let code = source
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 24);
+  if (!/^[A-Z]/.test(code)) code = `C-${code}`.slice(0, 24);
+  code = code.replace(/-+$/g, "");
+  if (code.length < 2) code = "CATALOG";
+  return code;
+}
+
+const CATALOG_FIELDS: readonly CatalogCreateField[] = [
+  { name: "display_name", label: "Name", required: true, maxLength: 160 },
+  {
+    name: "code",
+    label: "Code",
+    maxLength: 24,
+    placeholder: "Auto-derived from the name",
+    help: "Uppercase letters, digits and hyphens. Leave blank to derive it from the name.",
+  },
+  { name: "description", label: "Description", maxLength: 500, multiline: true },
+];
+
+/**
+ * The ONE create call every config-driven catalog uses.
+ *
+ * It POSTs to the config's `endpoint` — the SAME collection the picker lists from — because every
+ * per-entity catalog route factory (dispatch/shared.ts:192, driver/factory.ts:134, fuel/factory.ts:134)
+ * exposes the identical contract: POST {basePath}?operating_company_id=… with {code, display_name,
+ * description?}. Going through the endpoint string rather than a per-catalog client singleton is what
+ * makes "add a catalog = add a config entry" literally true, and keeps this registry from importing
+ * every catalog API module just to reach a `.create`.
+ */
+function catalogCreate(endpoint: string) {
+  return async (operatingCompanyId: string, values: CatalogCreateValues): Promise<CatalogCreateResult> => {
+    const code = deriveCatalogCode(values.display_name, values.code);
+    const displayName = values.display_name.trim();
+    // Entity scoping is not optional: the route 400s without it, and an unscoped catalog row would
+    // leak across TRANSP / TRK / USMCA.
+    const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+    const created = await apiRequest<{ id: string; code?: string }>(`${endpoint}?${query.toString()}`, {
+      method: "POST",
+      body: {
+        code,
+        display_name: displayName,
+        description: values.description?.trim() || undefined,
+      },
+    });
+    return { id: String(created.id), label: displayName, code: created.code ?? code };
+  };
+}
+
+function catalogEntry(entry: {
+  key: string;
+  label: string;
+  table: string;
+  endpoint: string;
+  evidence: string;
+}): CatalogPickerConfig {
+  // Read table === write table and read endpoint === write endpoint, expressed ONCE so the two can
+  // never drift apart in a later edit. This is VERIFY-2 clause 5 enforced structurally.
+  return {
+    key: entry.key,
+    label: entry.label,
+    backend: "catalog",
+    readTable: entry.table,
+    writeTable: entry.table,
+    readEndpoint: entry.endpoint,
+    writeEndpoint: entry.endpoint,
+    entityScoped: true,
+    readWriteParity: "same-endpoint-verified",
+    evidence: entry.evidence,
+    fields: CATALOG_FIELDS,
+    create: catalogCreate(entry.endpoint),
+  };
+}
+
+/**
+ * THE REGISTRY. One entry per catalog. Adding a catalog is adding an object here.
+ *
+ * NOT wired on purpose (each is a real finding, reported in the PR body rather than papered over):
+ *  - /api/v1/catalogs/fleet/*        — POST/PATCH emit invalid SQL: the RETURNING list at
+ *    apps/backend/src/catalogs/fleet/factory.ts:198 (also :206, :282) ends in a `--` comment that
+ *    swallows the rest of the line, leaving a trailing comma → 42601. Every fleet create 500s today.
+ *  - /api/v1/catalogs/maintenance/*  — registerMaintenanceCatalogRoutes is defined at
+ *    apps/backend/src/catalogs/maintenance/index.ts:4 and NEVER mounted in apps/backend/src/index.ts
+ *    → every maintenance catalog create 404s.
+ *  - /api/v1/catalogs/accounting/payment-terms — codeColumn and nameColumn are BOTH "terms_name"
+ *    (apps/backend/src/catalogs/accounting/index.ts:100-101) → INSERT names the column twice → 42701.
+ *  - /api/v1/catalogs/safety/*       — each safety catalog uses bespoke column names
+ *    (type_code/type_name, reason_code/reason_name, violation_code/display_name), so none accepts the
+ *    generic {code, display_name} body. Needs per-catalog field maps; also owned by in-flight branches.
+ *  - /api/v1/catalogs/driver/{license-classes,endorsements,restrictions,...} — READ/WRITE DIVERGENCE:
+ *    that surface reads and writes catalogs.*, while the canonical /api/v1/lists/drivers/* surface
+ *    reads and writes reference.*. A row created on one is invisible on the other → fails clause 5.
+ *  - /api/v1/accounting/categories   — reads mdata.qbo_accounts, creates into catalogs.* (clause-5
+ *    violation). Out of scope here; another PR owns it.
+ *  - /api/v1/catalogs/driver/escrow-types — endpoint is healthy, but escrow is financial-cluster and
+ *    this lane is frontend-only. Deliberately deferred to an owner-gated block.
+ */
+export const CATALOG_PICKER_CONFIGS = {
+  // ── The original six, unchanged. Only the DISPATCH moved out of a hardcoded Set. ──────────────
+  vendor: {
+    key: "vendor",
+    label: "vendor",
+    backend: "inline-drawer",
+    readTable: "mdata.vendors",
+    writeTable: "mdata.vendors",
+    readEndpoint: "/api/v1/mdata/vendors",
+    writeEndpoint: "/api/v1/mdata/vendors",
+    entityScoped: true,
+    readWriteParity: "legacy-bespoke-form",
+    evidence: "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx:149-162 (QB-STD-5 canonical fix)",
+  },
+  customer: {
+    key: "customer",
+    label: "customer",
+    backend: "inline-drawer",
+    readTable: "mdata.customers",
+    writeTable: "mdata.customers",
+    readEndpoint: "/api/v1/mdata/customers",
+    writeEndpoint: "/api/v1/mdata/customers",
+    entityScoped: true,
+    readWriteParity: "legacy-bespoke-form",
+    evidence: "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx:164-173 (D1-1)",
+  },
+  account: {
+    key: "account",
+    label: "account",
+    backend: "inline-drawer",
+    readTable: "catalogs.accounts",
+    writeTable: "catalogs.accounts",
+    readEndpoint: "/api/v1/catalogs/accounts",
+    writeEndpoint: "/api/v1/catalogs/accounting/chart-of-accounts",
+    entityScoped: true,
+    readWriteParity: "legacy-bespoke-form",
+    evidence: "apps/backend/src/catalogs/accounting/index.ts:17 (tableName catalogs.accounts) — create commit is FINANCIAL-GATED in NewAccountDrawerForm",
+  },
+  // NOTE: every legacy `label` is byte-identical to its key so `catalogAddNewLabel` reproduces the
+  // previous `+ Add new ${createKind}` string exactly. Do not "improve" these — the six must not move.
+  service: {
+    key: "service",
+    label: "service",
+    backend: "inline-drawer",
+    readTable: "catalogs.items",
+    writeTable: "catalogs.items",
+    readEndpoint: "/api/v1/catalogs/accounting/items",
+    writeEndpoint: "/api/v1/catalogs/accounting/items",
+    entityScoped: true,
+    readWriteParity: "legacy-bespoke-form",
+    evidence: "apps/frontend/src/components/parity/drawers/NewServiceDrawerForm.tsx:5 (QB-STD-5) + apps/backend/src/catalogs/accounting/index.ts:145",
+  },
+  item: {
+    key: "item",
+    label: "item",
+    backend: "quick-create-modal",
+    readTable: "catalogs.items",
+    writeTable: "catalogs.items",
+    readEndpoint: "/api/v1/catalogs/accounting/items",
+    writeEndpoint: "/api/v1/catalogs/accounting/items",
+    entityScoped: true,
+    readWriteParity: "legacy-bespoke-form",
+    evidence: "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx:174-203 (QB-STD-5)",
+  },
+  category: {
+    key: "category",
+    label: "category",
+    backend: "quick-create-modal",
+    readTable: "catalogs.accounts",
+    writeTable: "catalogs.accounts",
+    readEndpoint: "/api/v1/catalogs/accounts",
+    writeEndpoint: "/api/v1/catalogs/accounting/chart-of-accounts",
+    entityScoped: true,
+    readWriteParity: "legacy-bespoke-form",
+    evidence: "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx:204-225 (FIX-02)",
+  },
+  class: {
+    key: "class",
+    label: "class",
+    backend: "quick-create-modal",
+    readTable: "catalogs.classes",
+    writeTable: "catalogs.classes",
+    readEndpoint: "/api/v1/catalogs/accounting/classes",
+    writeEndpoint: "/api/v1/catalogs/accounting/classes",
+    entityScoped: true,
+    readWriteParity: "legacy-bespoke-form",
+    evidence: "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx:226-239 (QB-STD-5)",
+  },
+  part: {
+    key: "part",
+    label: "part",
+    backend: "quick-create-modal",
+    readTable: "maintenance.parts_inventory",
+    writeTable: "maintenance.parts_inventory",
+    readEndpoint: "/api/v1/maintenance/parts-inventory",
+    writeEndpoint: "/api/v1/maintenance/parts-inventory/purchases",
+    entityScoped: true,
+    readWriteParity: "legacy-bespoke-form",
+    evidence: "apps/backend/src/maintenance/parts-inventory.routes.ts:44 (SELECT) and :63 (INSERT) — both maintenance.parts_inventory",
+  },
+
+  // ── Batch 1, config-driven. Every one verified: one route factory, one tableName, SELECT+INSERT. ──
+  // Dispatch — apps/backend/src/catalogs/dispatch/shared.ts:104 builds `catalogs.${tableName}` once
+  // and uses it for the list SELECT (:138) and the create INSERT (:204).
+  load_type: catalogEntry({
+    key: "load_type",
+    label: "Load type",
+    table: "catalogs.load_types",
+    endpoint: "/api/v1/catalogs/dispatch/load-types",
+    evidence: "apps/backend/src/catalogs/dispatch/shared.ts:104,138,204 — one tableName, SELECT and INSERT",
+  }),
+  detention_reason: catalogEntry({
+    key: "detention_reason",
+    label: "Detention reason",
+    table: "catalogs.detention_reasons",
+    endpoint: "/api/v1/catalogs/dispatch/detention-reasons",
+    evidence: "apps/backend/src/catalogs/dispatch/shared.ts:104,138,204 — one tableName, SELECT and INSERT",
+  }),
+  pickup_time_type: catalogEntry({
+    key: "pickup_time_type",
+    label: "Pickup time type",
+    table: "catalogs.pickup_time_types",
+    endpoint: "/api/v1/catalogs/dispatch/pickup-time-types",
+    evidence: "apps/backend/src/catalogs/dispatch/shared.ts:104,138,204 — one tableName, SELECT and INSERT",
+  }),
+  additional_charge: catalogEntry({
+    key: "additional_charge",
+    label: "Accessorial charge",
+    table: "catalogs.additional_charges",
+    endpoint: "/api/v1/catalogs/dispatch/additional-charges",
+    evidence: "apps/backend/src/catalogs/dispatch/shared.ts:104,138,204 — one tableName, SELECT and INSERT",
+  }),
+
+  // Driver — apps/backend/src/catalogs/driver/factory.ts: SELECT :94 and INSERT :172 both
+  // `catalogs.${config.tableName}`. escrow-types deliberately excluded (financial cluster).
+  pay_rate_template: catalogEntry({
+    key: "pay_rate_template",
+    label: "Pay rate template",
+    table: "catalogs.pay_rate_templates",
+    endpoint: "/api/v1/catalogs/driver/pay-rate-templates",
+    evidence: "apps/backend/src/catalogs/driver/factory.ts:94,172 + driver/index.ts:6 tableName pay_rate_templates",
+  }),
+  driver_deduction_type: catalogEntry({
+    key: "driver_deduction_type",
+    label: "Driver deduction type",
+    table: "catalogs.driver_deduction_types",
+    endpoint: "/api/v1/catalogs/driver/deduction-types",
+    evidence: "apps/backend/src/catalogs/driver/factory.ts:94,172 + driver/index.ts:14 tableName driver_deduction_types",
+  }),
+  driver_pay_type: catalogEntry({
+    key: "driver_pay_type",
+    label: "Driver pay type",
+    table: "catalogs.driver_pay_types",
+    endpoint: "/api/v1/catalogs/driver/pay-types",
+    evidence: "apps/backend/src/catalogs/driver/factory.ts:94,172 + driver/index.ts:22 tableName driver_pay_types",
+  }),
+
+  // Fuel — apps/backend/src/catalogs/fuel/factory.ts: SELECT :83 and INSERT :159 both
+  // `catalogs.${config.tableName}`.
+  fuel_card_type: catalogEntry({
+    key: "fuel_card_type",
+    label: "Fuel card type",
+    table: "catalogs.fuel_card_types",
+    endpoint: "/api/v1/catalogs/fuel/card-types",
+    evidence: "apps/backend/src/catalogs/fuel/factory.ts:83,159 + fuel/index.ts:6 tableName fuel_card_types",
+  }),
+  fuel_exception_type: catalogEntry({
+    key: "fuel_exception_type",
+    label: "Fuel exception type",
+    table: "catalogs.fuel_exception_types",
+    endpoint: "/api/v1/catalogs/fuel/exception-types",
+    evidence: "apps/backend/src/catalogs/fuel/factory.ts:83,159 + fuel/index.ts:14 tableName fuel_exception_types",
+  }),
+  fuel_station_brand: catalogEntry({
+    key: "fuel_station_brand",
+    label: "Fuel station brand",
+    table: "catalogs.fuel_station_brands",
+    endpoint: "/api/v1/catalogs/fuel/station-brands",
+    evidence: "apps/backend/src/catalogs/fuel/factory.ts:83,159 + fuel/index.ts:22 tableName fuel_station_brands",
+  }),
+} as const satisfies Record<string, CatalogPickerConfig>;
+
+/** Every create kind <ReferenceSelect> accepts — derived from the config, never hand-maintained. */
+export type CatalogPickerKey = keyof typeof CATALOG_PICKER_CONFIGS;
+
+export const CATALOG_PICKER_KEYS = Object.keys(CATALOG_PICKER_CONFIGS) as CatalogPickerKey[];
+
+export function getCatalogPickerConfig(key: CatalogPickerKey): CatalogPickerConfig {
+  return CATALOG_PICKER_CONFIGS[key];
+}
+
+/**
+ * The dropdown's permanent FIRST ROW label (QB-STD-1/2).
+ *
+ * The original six keep "+ Add new ___" verbatim — the one "+ Add" form §7 allows, whitelisted at
+ * scripts/verify-create-vocab-section7.mjs:39 — so nothing about them changes. Config-driven catalogs
+ * use the §7 preferred "+ Create ___".
+ */
+export function catalogAddNewLabel(key: CatalogPickerKey): string {
+  const config = CATALOG_PICKER_CONFIGS[key];
+  return config.backend === "catalog" ? `+ Create ${config.label}` : `+ Add new ${config.label}`;
+}
