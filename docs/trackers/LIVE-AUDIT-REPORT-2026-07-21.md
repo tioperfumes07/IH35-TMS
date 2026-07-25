@@ -13,18 +13,18 @@
 
 **Base SHA:** `cde575b6463a3a3ac158a152d32d6bf219e1b72c`  
 **Deploy SHA:** `de92db2` (lag)  
-**Generated:** 2026-07-25T17:49:59Z  
+**Generated:** 2026-07-21T14:47:40.344735+00:00  
 **Re-perform:** `node scripts/ops/publish-live-audit-2026-07-21.mjs --check`
 
 ## Headline (active universe = 1,191)
 
 | Pile | v2 (authoritative) | v1 (superseded) |
 |---|---:|---:|
-| BUILT | 733 | 667 |
-| GAP | 259 | 36 |
+| BUILT | 727 | 667 |
+| GAP | 286 | 36 |
 | NEEDS-PROD | 24 | 71 |
-| NEEDS-OWNER | 104 | 28 |
-| NOISE | 61 | 383 |
+| NEEDS-OWNER | 105 | 28 |
+| NOISE | 39 | 383 |
 | UNVERIFIED | 10 | — |
 | **SUM** | **1191** | 1185 |
 
@@ -93,7 +93,7 @@
 
 ## Full GAP list
 
-See `docs/trackers/LIVE-AUDIT-GAPS-2026-07-21.md` (259 items).
+See `docs/trackers/LIVE-AUDIT-GAPS-2026-07-21.md` (286 items).
 
 ## Caveat
 
