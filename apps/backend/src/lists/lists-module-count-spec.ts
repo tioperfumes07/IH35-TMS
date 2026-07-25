@@ -88,10 +88,11 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
   accounting: [
     { table: "accounts", activeFilter: "deactivated_at", companyScoped: false },
     { table: "classes", activeFilter: "deactivated_at", companyScoped: false },
-    // LST-F03: payment_terms + posting_templates gain opco via 202608000000.
-    { table: "payment_terms", activeFilter: "deactivated_at", companyScoped: true },
+    // LST-F03 migration 202608000000 adds opco (HELD / not on prod yet). Count-spec must
+    // stay companyScoped:false until Neon apply — otherwise WHERE opco=$1 → 42703 on live prod.
+    { table: "payment_terms", activeFilter: "deactivated_at", companyScoped: false },
     { table: "items", activeFilter: "deactivated_at", companyScoped: false },
-    { table: "posting_templates", activeFilter: "is_active", companyScoped: true },
+    { table: "posting_templates", activeFilter: "is_active", companyScoped: false },
     { table: "account_role_bindings", activeFilter: "deactivated_at", companyScoped: false },
     { table: "qbo_categories", activeFilter: "is_active", companyScoped: true },
     { table: "chart_of_accounts_seeds", activeFilter: "is_active", companyScoped: true },
