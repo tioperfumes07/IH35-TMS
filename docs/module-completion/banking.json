@@ -2,8 +2,8 @@
   "module": "banking",
   "title": "Banking (Module 4)",
   "complete": false,
-  "as_of": "2026-07-25T04:34:39.000Z",
-  "live_sha": "a3f9c12",
+  "as_of": "2026-07-25T16:50:00.000Z",
+  "live_sha": "b4c3158",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md",
   "spec_sources": [
     "docs/specs/DEFINITION-OF-DONE.md",
@@ -35,7 +35,7 @@
       ],
       "spec": "Match/Categorize \u2192 JE",
       "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25 03:41Z: matched_je=3/10628; categorized_at_not_null=3 \u2014 unchanged since last read. Poster works when used (#3424 on main). Density is ops backlog \u2014 not a broken poster.",
+      "evidence": "LIVE REFRESH 2026-07-25 16:50Z: matched_je=3/10628; categorized_at_not_null=3 — unchanged. Poster path wired (#3424 merged on main): bulk categorize→maybePostBankCategorizationToGl sets matched_journal_entry_id when flag ON. Density is ops backlog — not a broken poster. GUARD: verify-step 1480 (verify-bank-econ-02-poster-path-wired). FAIL until operator categorizes at scale + Neon re-count.",
       "pr": "#3424"
     },
     {
@@ -103,7 +103,7 @@
       ],
       "spec": "QBO banking parity",
       "status": "FAIL",
-      "evidence": "Same as BANK-ECON-02: 10619 pending; when categorized (n=3) JE stamped 100%. Active UI calls /categorize-bulk with poster after #3424.",
+      "evidence": "Same as BANK-ECON-02: 10625 pending; when categorized (n=3) JE stamped 100%. Active UI calls /categorize-bulk with poster (#3424 merged). verify-step 1480 pins wiring; density FAIL is ops backlog.",
       "pr": "#3424"
     },
     {
@@ -156,8 +156,8 @@
       ],
       "spec": "Law \u00a79 banking",
       "status": "UNVERIFIED",
-      "evidence": "Structural counterparty wiring guarded (#3459/#3464 verify-bank-surfaces-and-counterparty / step 1441); Neon lucia counterparty_fk sparse (2). Both-way live density + browser reverse drill still UNVERIFIED \u2014 not flipped to PASS.",
-      "pr": "#3459"
+      "evidence": "2026-07-25 BANK-LINK-01 migration authored (HELD, not Neon-applied): db/migrations/202608050000_bank_link_01_counterparty_same_entity_fk.sql closes the DB-schema half step 1441 could not see \u2014 categorization_vendor_id/categorization_customer_id were bare unconstrained uuid since migration 0165 (code wrote/JOINed them by convention only, no DB enforcement). Adds SAME-ENTITY composite FKs bank_tx_categorization_vendor_same_entity_fkey / _customer_same_entity_fkey (mirrors ACCT-LINK-04 202608020000) + UNIQUE(operating_company_id,id) on mdata.vendors/mdata.customers; 0-orphan RAISE EXCEPTION guard before each ADD CONSTRAINT; categorization_memo retained untouched. PROVEN on throwaway Postgres (docker ih35-tms-verify-db, isolated db): fresh-from-0001 apply clean, raw SQL re-run apply-twice idempotent (all 4 constraints already-present, no error), FORCE RLS confirmed on all 3 tables (relforcerowsecurity=t), and a planted cross-entity insert (vendor of company A on a bank_transactions row of company B) correctly REJECTED with foreign_key_violation while the same-entity insert succeeded. Guard: scripts/verify-bank-link-01-counterparty-fk.mjs + verify-steps/1482 (structural, both selftest and real-file checks green). Prior step 1441 (code-level) still green, unaffected. Still UNVERIFIED on prod: migration is HELD/NOT Neon-applied \u2014 owner must apply on a Neon branch + ledger-backfill, then GUARD re-measures live counterparty_fk density under lucia + browser both-way reverse-drill before this flips to PASS (Rule 23 \u2014 not flipped this turn).",
+      "pr": "HOLD \u2014 see hold/bank-link-01-counterparty-fk-20260725 (companion to #3459/#3464/step 1441)"
     },
     {
       "id": "BANK-CTRL-01",
