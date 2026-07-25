@@ -483,6 +483,10 @@
     {
       "file": "202607960000_journal_entries_type_fk.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] ACCT-LINK-01 — additive nullable accounting.journal_entries.journal_entry_type_id → catalogs.journal_entry_types(id) + partial index. Closes the AF-5 metadata-only island (catalog had 16 rows / 0 inbound FKs). App create path is col-gated until Neon-apply. No GL math. NOT YET applied on prod — throwaway PG apply-twice; owner Neon-apply + ledger-backfill; then re-measure inbound FK density before flipping ACCT-LINK-01 to PASS."
+    },
+    {
+      "file": "202608010000_dispatcher_error_reasons_per_entity.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] LST-CAT-06 — catalogs.dispatcher_error_reasons per-entity (owner ruling 2026-07-24 + load-derived entity). Prod lucia: 25 rows, no opco, role-only RLS policies. Adds operating_company_id, seeds every active entity, UNIQUE(opco,code), company_scope FORCE RLS, REVOKE DELETE. Companion route scopes GUC from related load first. NEVER-DELETE (§F.24). Owner Neon-apply + ledger-backfill."
     }
   ]
 }
