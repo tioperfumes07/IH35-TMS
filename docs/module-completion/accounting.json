@@ -170,8 +170,8 @@
       ],
       "spec": "ACCT-F08",
       "status": "FAIL",
-      "evidence": "0 inbound FKs",
-      "pr": null
+      "evidence": "0 inbound FKs on prod (unchanged) — root cause fixed in #3444 [HOLD]: posting_batches.posting_template_id FK + source_template_code stamp wired into every posting_batches writer (posting-engine.service.ts x3, fuel-posting/poster.service.ts x1); catalogs.posting_templates re-verified 0 rows WITH lucia bypass (owner/CPA-seeded, Rule 13). Stays FAIL until owner Neon-applies the held migration + seeds templates (density gap named in PR, not silently deferred).",
+      "pr": "#3444"
     },
     {
       "id": "ACCT-SURF-01",
