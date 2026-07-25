@@ -15,8 +15,14 @@ export function run(root = ROOT) {
   }
   if (!/'TRANSP'/.test(mig) || !/'USMCA'/.test(mig)) f.push("must target TRANSP and USMCA");
   if (!/Cost of Labor/.test(mig)) f.push("must seed Cost of Labor–Mexico Drivers name");
-  if (!/OWNER\+CPA|OWNER\+CPA CONFIRM|NEEDS OWNER\+CPA/i.test(mig)) f.push("must flag OWNER+CPA confirm for account numbers");
-  // Numbers must not invent QBO-* for TRANSP/USMCA in VALUES (NULL ok)
+  // Account numbers must be either honestly pending (OWNER+CPA confirm language, NULL numbers) or
+  // reflect an actual, dated owner ruling (2026-07-25: use INTERNAL TMS numbers, not QBO-derived) —
+  // never silently invented.
+  const isPending = /OWNER\+CPA|OWNER\+CPA CONFIRM|NEEDS OWNER\+CPA/i.test(mig);
+  const isRuled = /OWNER RULING \d{4}-\d{2}-\d{2}/i.test(mig);
+  if (!isPending && !isRuled) f.push("must flag OWNER+CPA confirm for account numbers, or document a dated OWNER RULING");
+  // A TRANSP/USMCA account_number must never be an invented QBO-* number — NULL (still pending) or an
+  // explicit INTERNAL number under an OWNER RULING are the only legitimate shapes.
   if (/VALUES[\s\S]*'TRANSP'[\s\S]*'QBO-/.test(mig)) f.push("must not invent TRANSP account_number without CPA confirm");
   const held = JSON.parse(fs.readFileSync(path.join(root, HELD), "utf8"));
   if (!(held.held || []).some((h) => h.file === path.basename(MIG))) f.push("must register held");

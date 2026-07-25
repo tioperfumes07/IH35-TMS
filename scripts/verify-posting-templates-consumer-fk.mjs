@@ -75,13 +75,13 @@ export function collectHonestyFailures(opts = {}) {
       parsed = null;
     }
     if (parsed) {
+      // Owner confirmed live 2026-07-25 (GUARD, both ledgers + live objects) that this migration is
+      // genuinely applied on prod. applied_on_prod:true is now the correct, expected state — the
+      // manifest (checked below) stays FAIL because applied != audited-pass, not because the
+      // registry must pretend the migration is still pending.
       const entry = (parsed.held ?? []).find((e) => e.file === MIGRATION);
       if (!entry) {
         failures.push(`${HELD_MANIFEST}: ${MIGRATION} not registered`);
-      } else if (entry.applied_on_prod === true) {
-        failures.push(
-          `${HELD_MANIFEST}: ${MIGRATION} has applied_on_prod:true — flip manifest to PASS in apply PR instead`
-        );
       }
     }
   }

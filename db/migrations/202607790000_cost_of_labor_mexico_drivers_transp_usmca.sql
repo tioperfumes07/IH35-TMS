@@ -1,6 +1,12 @@
 -- [HOLD-FOR-JORGE — TIER 1 · §1.4 FINANCIAL CLUSTER]
 -- Seed "Cost of Labor–Mexico Drivers" on TRANSP + USMCA (lane defect B / WO item 4).
 --
+-- *** DO NOT RUN ON PROD via a normal deploy. Applied on prod by owner hand-apply 2026-07-25
+--     (see db/migrations/.held-migrations.json applied_evidence) — this marker stays so the
+--     registry/marker parity guard (verify-hold-migrations-registered) keeps tracking it and
+--     db-migrate.mjs's held-skip logic still recognizes it as owner-applied-only, not a normal
+--     pending migration. ***
+--
 -- ROOT CAUSE: driver_pay_expense cannot be designated on TRANSP/USMCA because the expense
 -- account existed only on TRK (QBO-204 CL-Contractor Labor Mexico Driver-(689)). Settlements
 -- run on TRANSP (+ USMCA). CPA locked name: "Cost of Labor–Mexico Drivers".
