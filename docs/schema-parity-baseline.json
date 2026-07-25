@@ -798,6 +798,7 @@
       "error",
       "id",
       "idempotency_key",
+      "journal_entry_type_id",
       "kind",
       "last_qbo_synced_at",
       "memo",
@@ -825,8 +826,7 @@
       "version_int",
       "void_reason",
       "voided_at",
-      "voided_by_user_id",
-      "journal_entry_type_id"
+      "voided_by_user_id"
     ],
     "accounting.journal_entry_postings": [
       "account_id",
@@ -2132,6 +2132,7 @@
       "id",
       "is_active",
       "label",
+      "operating_company_id",
       "severity",
       "updated_at",
       "updated_by_user_id"
