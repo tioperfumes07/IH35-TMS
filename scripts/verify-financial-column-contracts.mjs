@@ -29,6 +29,10 @@ const KNOWN_COLUMNS = {
     "id", "operating_company_id", "entry_date", "memo", "status", "source",
     "created_by_user_id", "qbo_sync_pending", "created_at", "updated_at",
     "idempotency_key", "qbo_idempotency_key",
+    // HELD 202607340000 — JE void reversal linkage (col-gated in service)
+    "reversed_by_je_id", "reverses_je_id",
+    // HELD 202607940000 — ACCT-LINK-01 catalogs.journal_entry_types FK (col-gated in service)
+    "journal_entry_type_id",
   ]),
   "accounting.journal_entry_postings": new Set([
     "id", "operating_company_id", "journal_entry_uuid", "line_sequence",
