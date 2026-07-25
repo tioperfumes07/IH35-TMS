@@ -236,6 +236,8 @@ export type VendorBill = {
   journal_entry_id?: string | null;
   unit_id?: string | null;
   linked_work_order_uuid?: string | null;
+  /** ACCT-F04 reverse drill — present when accounting.bills.insurance_claim_id column exists. */
+  insurance_claim_id?: string | null;
 };
 
 export type BillDetailLine = {
