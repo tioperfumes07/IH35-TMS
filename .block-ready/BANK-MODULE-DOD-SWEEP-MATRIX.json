@@ -1,0 +1,44 @@
+{
+  "block_id": "BANK-MODULE-DOD",
+  "status": "HOLD",
+  "classification": "FINANCIAL",
+  "phase": "module-completion/banking",
+  "task": "BANK-MODULE-DOD — per-surface DoD A–E + VERIFY 1–8 structural sweep matrix across 8 Banking leaves × TRANSP+USMCA, bound to banking.json (M 13→14), guard verify-step 1477. FINANCIAL-HOLD: evidence + manifest reconciliation only; no DDL/DML; no FAIL→PASS.",
+  "branch": "hold/bank-module-dod-sweep-matrix-20260725",
+  "lane": "B",
+  "allowed_files": [
+    ".block-ready/BANK-MODULE-DOD-SWEEP-MATRIX.json",
+    "docs/trackers/BANK-MODULE-DOD-SWEEP-MATRIX-2026-07-25.json",
+    "docs/trackers/BANK-MODULE-DOD-SWEEP-MATRIX-2026-07-25.md",
+    "docs/module-completion/banking.json",
+    "docs/module-completion/banking.md",
+    "scripts/verify-bank-surface-dod-sweep.mjs",
+    "scripts/verify-steps/1477-verify-bank-surface-dod-sweep.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "8+ surfaces × TRANSP+USMCA × DoD A–E + VERIFY 1–8 matrix with evidence per cell",
+      "status": "PASS",
+      "evidence": "docs/trackers/BANK-MODULE-DOD-SWEEP-MATRIX-2026-07-25.json (208 cells)"
+    },
+    {
+      "check": "banking.json M grown to 14; BANK-SURF-06 Rules leaf added UNVERIFIED",
+      "status": "PASS",
+      "evidence": "docs/module-completion/banking.json items.length=14; no FAIL→PASS"
+    },
+    {
+      "check": "verify-bank-surface-dod-sweep --selftest + live run green",
+      "status": "PASS",
+      "evidence": "scripts/verify-steps/1477-verify-bank-surface-dod-sweep.mjs"
+    },
+    {
+      "check": "Live browser TRANSP+USMCA click-through per cell",
+      "status": "UNVERIFIED",
+      "evidence": "158 UNVERIFIED cells — fix blocks BANK-MODULE-DOD-CLICK-* open"
+    }
+  ]
+}

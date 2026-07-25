@@ -6,6 +6,26 @@
       "preview": "`SELECT account_number::text AS account_number, account_name::text AS account_name FROM catalogs.accounts WHERE id = $1:"
     },
     {
+      "key": "apps/backend/src/accounting/coa-asymmetry-report.service.ts#20a6ae5627fba58869fd5af4f8c9199a19e5a5e7",
+      "file": "apps/backend/src/accounting/coa-asymmetry-report.service.ts",
+      "preview": "` WITH postable AS ( SELECT a.account_number, a.account_type, c.code AS entity_code FROM catalogs.accounts a JOIN org.co"
+    },
+    {
+      "key": "apps/backend/src/accounting/coa-asymmetry-report.service.ts#5d4d1a4a73230a63f6212ecb074219b4c2cfc5af",
+      "file": "apps/backend/src/accounting/coa-asymmetry-report.service.ts",
+      "preview": "` SELECT c.code AS entity_code, count(*) FILTER (WHERE a.is_postable AND a.deactivated_at IS NULL)::bigint AS postable, "
+    },
+    {
+      "key": "apps/backend/src/accounting/coa-asymmetry-report.service.ts#5f3fcd866dc642339d2685772d7669f678b77eae",
+      "file": "apps/backend/src/accounting/coa-asymmetry-report.service.ts",
+      "preview": "` WITH postable AS ( SELECT a.account_number, a.account_name, a.account_type, c.code AS entity_code FROM catalogs.accoun"
+    },
+    {
+      "key": "apps/backend/src/accounting/coa-asymmetry-report.service.ts#7185df7c925309dda34043881d39bd59ca371f13",
+      "file": "apps/backend/src/accounting/coa-asymmetry-report.service.ts",
+      "preview": "` WITH postable AS ( SELECT a.account_number, c.code AS entity_code FROM catalogs.accounts a JOIN org.companies c ON c.i"
+    },
+    {
       "key": "apps/backend/src/accounting/collections.service.ts#bb72c21d1183aa03a839ce32384694ea47bde34f",
       "file": "apps/backend/src/accounting/collections.service.ts",
       "preview": "` SELECT t.id::text, t.operating_company_id::text, t.customer_id::text, c.customer_name, t.invoice_id::text, t.owed_cent"
