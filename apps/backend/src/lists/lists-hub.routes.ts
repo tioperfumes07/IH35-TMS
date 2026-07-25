@@ -3,6 +3,11 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import {
+  buildModuleCountQuery,
+  LISTS_MODULE_COUNT_SPECS,
+  type ModuleCountTableSpec,
+} from "./lists-module-count-spec.js";
 
 const COMPANY_QUERY = z.object({
   operating_company_id: z.string().uuid(),
@@ -31,22 +36,74 @@ async function withCompanyScope<T>(
   });
 }
 
+function displayNameForTable(table: string): string {
+  return table
+    .split("_")
+    .map((w) => (w.length ? w[0]!.toUpperCase() + w.slice(1) : w))
+    .join(" ");
+}
+
+function catalogKeyForTable(table: string): string {
+  return table.replace(/_/g, "-");
+}
+
+/** LST-F01: per-catalog row_count from the same count-spec the domain badges use — never QBO remote view. */
+async function buildCanonicalInventory(
+  client: {
+    query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
+  },
+  operatingCompanyId: string
+) {
+  const inventory: Array<{
+    domain: string;
+    catalog_key: string;
+    display_name: string;
+    row_count: number;
+  }> = [];
+
+  for (const [domain, specs] of Object.entries(LISTS_MODULE_COUNT_SPECS)) {
+    for (const spec of specs) {
+      const present = await client.query<{ ok: boolean }>(
+        `SELECT to_regclass($1) IS NOT NULL AS ok`,
+        [`${spec.schema ?? "catalogs"}.${spec.table}`]
+      );
+      if (!present.rows[0]?.ok) {
+        inventory.push({
+          domain,
+          catalog_key: catalogKeyForTable(spec.table),
+          display_name: displayNameForTable(spec.table),
+          row_count: 0,
+        });
+        continue;
+      }
+      const one: ModuleCountTableSpec[] = [spec];
+      const sql = buildModuleCountQuery(one);
+      const res = await client.query<{ count?: number }>(
+        sql,
+        spec.companyScoped ? [operatingCompanyId] : []
+      );
+      inventory.push({
+        domain,
+        catalog_key: catalogKeyForTable(spec.table),
+        display_name: displayNameForTable(spec.table),
+        row_count: Number(res.rows[0]?.count ?? 0),
+      });
+    }
+  }
+
+  inventory.sort((a, b) => a.domain.localeCompare(b.domain) || a.display_name.localeCompare(b.display_name));
+  return inventory;
+}
+
 export async function registerListsHubRoutes(app: FastifyInstance) {
   app.get("/api/v1/lists/inventory", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = COMPANY_QUERY.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
-    const inventory = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const res = await client.query(
-        `
-          SELECT domain, catalog_key, display_name, row_count
-          FROM views.catalogs_inventory
-          ORDER BY domain, display_name
-        `
-      );
-      return res.rows;
-    });
+    const inventory = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
+      buildCanonicalInventory(client, query.data.operating_company_id)
+    );
     return { inventory };
   });
 
@@ -137,4 +194,3 @@ export async function registerListsHubRoutes(app: FastifyInstance) {
     return reply.code(202).send(result);
   });
 }
-

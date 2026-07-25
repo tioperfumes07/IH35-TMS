@@ -291,15 +291,51 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                     Incident {i.incident_type ?? i.id.slice(0, 8)}
                   </Link>
                 ))}
+                {(graph.reverse.bills ?? []).map((b) => (
+                  <EntityLink
+                    key={b.id}
+                    kind="bill"
+                    id={b.id}
+                    label={b.bill_number ?? `Bill ${b.id.slice(0, 8)}`}
+                    className="mr-2 text-slate-700 underline"
+                    data-testid={`claim-reverse-bill-${b.id}`}
+                  />
+                ))}
+                {(graph.reverse.expenses ?? []).map((e) => (
+                  <EntityLink
+                    key={e.id}
+                    kind="expense"
+                    id={e.id}
+                    label={`Expense ${e.id.slice(0, 8)}`}
+                    className="mr-2 text-slate-700 underline"
+                    data-testid={`claim-reverse-expense-${e.id}`}
+                  />
+                ))}
+                {(graph.reverse.work_orders ?? []).map((wo) => (
+                  <EntityLink
+                    key={wo.id}
+                    kind="work_order"
+                    id={wo.id}
+                    label={wo.display_id ?? `WO ${wo.id.slice(0, 8)}`}
+                    className="mr-2 text-slate-700 underline"
+                    data-testid={`claim-reverse-wo-${wo.id}`}
+                  />
+                ))}
                 {graph.reverse.accidents.length === 0 &&
                 graph.reverse.lawsuits.length === 0 &&
                 graph.reverse.matters.length === 0 &&
-                graph.reverse.incidents.length === 0
+                graph.reverse.incidents.length === 0 &&
+                (graph.reverse.bills ?? []).length === 0 &&
+                (graph.reverse.expenses ?? []).length === 0 &&
+                (graph.reverse.work_orders ?? []).length === 0
                   ? "none linked yet"
                   : null}
               </div>
-              <p className="md:col-span-2 text-[11px] text-slate-500">
-                Expense / WO / settlement FKs not on schema yet — {graph.gaps.expense.split(" ")[0]} gap documented by API.
+              <p className="md:col-span-2 text-[11px] text-slate-500" data-testid="claim-graph-money-gaps">
+                {graph.gaps.bill || graph.gaps.expense || graph.gaps.work_order
+                  ? `Money FK gaps: ${[graph.gaps.bill, graph.gaps.expense, graph.gaps.work_order].filter(Boolean).join(" · ")}`
+                  : "Bill / expense / WO insurance_claim_id columns present — reverse lists above when density > 0."}
+                {" · "}Settlement: {graph.gaps.settlement_deduction}
               </p>
             </div>
           ) : null}

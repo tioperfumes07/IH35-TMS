@@ -7,6 +7,7 @@ import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope 
 import { attributeExpenseToLoad } from "../expense-attribution/attribute.service.js";
 import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
+import { resolveExpenseCategoryId } from "./expense-category-catalog.js";
 import { postSourceTransaction, reversePostedSourceTransaction, PostingEngineError } from "./posting-engine.service.js";
 import { canVoid, isVoidEnforcementEnabled } from "./void.service.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
@@ -92,6 +93,10 @@ const createExpenseBodySchema = z.object({
   // CoA row that has no QBO bridge yet — parallel-books: TMS chart is authoritative for posting.
   category_qbo_id: z.string().trim().min(1).optional(),
   category_account_id: z.string().uuid().optional(),
+  // ACCT-LINK-04: the operator's expense CATEGORY (catalogs.expense_categories), distinct from the GL
+  // account above. Optional and entity-scoped; when absent the route falls back to the category whose
+  // metadata unambiguously binds the resolved GL account, and leaves the line uncategorized otherwise.
+  expense_category_id: z.string().uuid().optional().nullable(),
   expense_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   amount_cents: z.coerce.number().int().positive(),
   vendor_uuid: z.string().uuid().optional(),
@@ -455,6 +460,19 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           if (!categoryAccountId) return { categoryUnbridged: true as const };
         }
 
+        // ACCT-LINK-04: resolve the expense CATEGORY against this entity's own catalog. An explicit id
+        // that does not resolve is rejected rather than dropped — silently writing an uncategorized
+        // line after the operator picked a category is the kind of quiet miscategorization the
+        // category link exists to prevent.
+        const expenseCategoryId = await resolveExpenseCategoryId(client, {
+          operatingCompanyId: body.operating_company_id,
+          categoryId: body.expense_category_id ?? null,
+          accountId: categoryAccountId,
+        });
+        if (body.expense_category_id && !expenseCategoryId) {
+          return { categoryNotInEntityCatalog: true as const };
+        }
+
         const columns: string[] = ["operating_company_id", "status", "transaction_date", "total_amount_cents"];
         const values: unknown[] = [body.operating_company_id, "posted", body.expense_date, body.amount_cents];
 
@@ -519,11 +537,19 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           // amount_cents = the integer-cents spine; the legacy numeric `amount` column mirrors it in
           // dollars (same idiom as the /post synthesizer). Cents stays authoritative.
           const cents = body.amount_cents;
+          const lineColumns = ["expense_id", "line_sequence", "amount_cents", "amount", "description", "expense_account_uuid"];
+          const lineValues: unknown[] = [expenseId, 1, cents, cents / 100, body.memo ?? "Expense", categoryAccountId];
+
+          // Column-gated so a DB that predates migration 0050 still writes the line.
+          if (expenseCategoryId && (await columnExists(client, "accounting", "expense_lines", "expense_category_uuid"))) {
+            lineColumns.push("expense_category_uuid");
+            lineValues.push(expenseCategoryId);
+          }
+
           await client.query(
-            `INSERT INTO accounting.expense_lines
-               (expense_id, line_sequence, amount_cents, amount, description, expense_account_uuid)
-             VALUES ($1::uuid, 1, $2, $3, $4, $5::uuid)`,
-            [expenseId, cents, cents / 100, body.memo ?? "Expense", categoryAccountId]
+            `INSERT INTO accounting.expense_lines (${lineColumns.join(", ")})
+             VALUES (${lineColumns.map((_, i) => `$${i + 1}`).join(", ")})`,
+            lineValues
           );
         }
 
@@ -625,6 +651,11 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         return reply.code(409).send({
           error: "category_not_in_ledger_chart",
           detail: "The selected QBO expense category is not yet bridged into this entity's chart of accounts. Sync/complete the CoA migration for this account before recording the expense.",
+        });
+      if ("categoryNotInEntityCatalog" in payload)
+        return reply.code(409).send({
+          error: "expense_category_not_in_entity_catalog",
+          detail: "The selected expense category does not belong to this operating company, or is inactive. Pick a category from this entity's Expense Categories list.",
         });
       void withCompanyScope(user.uuid, (payload as { operating_company_id?: string })?.operating_company_id ?? body.operating_company_id, (client) =>
         emitAccountingSpineEvent(client, {

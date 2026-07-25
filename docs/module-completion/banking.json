@@ -2,7 +2,7 @@
   "module": "banking",
   "title": "Banking (Module 4)",
   "complete": false,
-  "as_of": "2026-07-25T03:41:00.000Z",
+  "as_of": "2026-07-25T04:34:39.000Z",
   "live_sha": "a3f9c12",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md",
   "spec_sources": [
@@ -26,16 +26,16 @@
     },
     {
       "id": "BANK-ECON-02",
-      "title": "matched_journal_entry_id density meaningful (not ≈0%)",
+      "title": "matched_journal_entry_id density meaningful (not \u22480%)",
       "layers": [
         "DOD-C",
         "DOD-D",
         "VERIFY-4",
         "VERIFY-6"
       ],
-      "spec": "Match/Categorize → JE",
+      "spec": "Match/Categorize \u2192 JE",
       "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25 03:41Z: matched_je=3/10628; categorized_at_not_null=3 — unchanged since last read. Poster works when used (#3424 on main). Density is ops backlog — not a broken poster.",
+      "evidence": "LIVE REFRESH 2026-07-25 03:41Z: matched_je=3/10628; categorized_at_not_null=3 \u2014 unchanged since last read. Poster works when used (#3424 on main). Density is ops backlog \u2014 not a broken poster.",
       "pr": "#3424"
     },
     {
@@ -45,9 +45,9 @@
         "DOD-D",
         "VERIFY-6"
       ],
-      "spec": "Transfers · #3134 Option 1 owner",
+      "spec": "Transfers \u00b7 #3134 Option 1 owner",
       "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25 03:41Z: transfers=0 — still true empty. Code+UI wired (createTransfer). PR #3445 [HOLD] fixes bank-feed mark-as-transfer to mint/link a real banking.transfers row via markBankFeedLineAsTransfer() — reuses existing createTransfer() poster, no new migration/flag. NOT yet merged. Remains FAIL until merged + operator uses it + Neon re-count > 0.",
+      "evidence": "LIVE REFRESH 2026-07-25 03:41Z: transfers=0 \u2014 still true empty. Code+UI wired (createTransfer). PR #3445 [HOLD] fixes bank-feed mark-as-transfer to mint/link a real banking.transfers row via markBankFeedLineAsTransfer() \u2014 reuses existing createTransfer() poster, no new migration/flag. NOT yet merged. Remains FAIL until merged + operator uses it + Neon re-count > 0.",
       "pr": "#3445"
     },
     {
@@ -58,10 +58,12 @@
         "VERIFY-6"
       ],
       "spec": "Reconciliation",
-      "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25 03:41Z: reconciliation_sessions=0 — unchanged. Workspace+start session wired (#3417 zero-diff); no session ever started.",
-      "pr": "#3417"
-    },
+      "status": "HOLD",
+      "owner_hold": true,
+      "tracker": "hold/bank-econ-04-recon-session-live-path-20260725",
+      "future_block": "BANK-ECON-04-NEON-APPLY — owner applies db/migrations/202608030000_bank_accounts_rls_bypass_lucia.sql on a Neon branch + ledger-backfills; GUARD re-verifies reconciliation_sessions>0 with app.bypass_rls='lucia' live on prod",
+      "evidence": "2026-07-25 CORRECTION: NOT ops-empty. Root cause proven live: banking.bank_accounts policy bank_accounts_company_scope (0072) has no app.bypass_rls='lucia' escape. POST /reconciliation/start and /upload-statement resolve bank_account_id via withLuciaBypass (sentinel operating_company_id) BEFORE the real company is known -> every single attempt 404s bank_account_not_found before any INSERT, for every operator, since table creation -> this is why sessions=0, not because #3417's zero-diff logic is unused. Reproduced the exact 404 on a local migrated Postgres by reverting the policy, then reproduced 4/4 green (start, role-gate 403, #3417 zero-diff close, non-zero-variance Owner-only force-close w/ reason) with the fix applied — apps/backend/src/banking/__tests__/reconciliation-start-session-live-path.integration.test.ts. FIX: db/migrations/202608030000_bank_accounts_rls_bypass_lucia.sql (USING-only escape, mirrors 202607610000/202607900000; WITH CHECK unchanged, no new write authority) — HELD, financial cluster, owner Neon-apply required before this actually unblocks prod. GUARD: scripts/verify-bank-accounts-rls-bypass-lucia.mjs (static) + scripts/verify-banking-recon-start-session-wired.mjs (static wiring pin). Until Jorge applies the migration on Neon + ledger-backfills, reconciliation_sessions STAYS 0 on prod — the fix is proven correct but not yet live.",
+      "pr": "HOLD — see hold/bank-econ-04-recon-session-live-path-20260725 (companion to #3417)"    },
     {
       "id": "BANK-ECON-05",
       "title": "All live bank_accounts (deactivated_at IS NULL) bound to ledger_account_id (Cash GL)",
@@ -76,7 +78,7 @@
     },
     {
       "id": "BANK-SURF-01",
-      "title": "Banking Home + account detail — DoD A–E",
+      "title": "Banking Home + account detail \u2014 DoD A\u2013E",
       "layers": [
         "DOD-A",
         "DOD-B",
@@ -86,12 +88,12 @@
       ],
       "spec": "Architectural Banking tabs",
       "status": "UNVERIFIED",
-      "evidence": "Routes live; full picker/wizard matrix not re-run",
-      "pr": null
+      "evidence": "Structural mount guarded (#3459 verify-bank-surf-home-detail / step 1439): /banking + /banking/accounts/:id + banking.* API. DoD A\u2013E + VERIFY 1\u20138 browser click-through TRANSP+USMCA still required \u2014 structural \u2260 SURF PASS (Rule 23).",
+      "pr": "#3459"
     },
     {
       "id": "BANK-SURF-02",
-      "title": "Categorize / Match — VERIFY-1..8 + JE when flag ON",
+      "title": "Categorize / Match \u2014 VERIFY-1..8 + JE when flag ON",
       "layers": [
         "VERIFY-1",
         "VERIFY-2",
@@ -106,7 +108,7 @@
     },
     {
       "id": "BANK-SURF-03",
-      "title": "Transfers UI + poster path — live economics",
+      "title": "Transfers UI + poster path \u2014 live economics",
       "layers": [
         "DOD-D",
         "VERIFY-3",
@@ -119,41 +121,43 @@
     },
     {
       "id": "BANK-SURF-04",
-      "title": "Reconciliation workspace — live session + zero-diff",
+      "title": "Reconciliation workspace \u2014 live session + zero-diff",
       "layers": [
         "DOD-D",
         "VERIFY-6",
         "VERIFY-1"
       ],
       "spec": "Recon",
-      "status": "FAIL",
-      "evidence": "sessions=0",
-      "pr": "#3417"
-    },
+      "status": "HOLD",
+      "owner_hold": true,
+      "tracker": "hold/bank-econ-04-recon-session-live-path-20260725",
+      "future_block": "BANK-ECON-04-NEON-APPLY — owner applies db/migrations/202608030000_bank_accounts_rls_bypass_lucia.sql on a Neon branch + ledger-backfills; GUARD re-verifies reconciliation_sessions>0 with app.bypass_rls='lucia' live on prod",
+      "evidence": "sessions=0 root cause = banking.bank_accounts RLS bypass_rls escape missing (see BANK-ECON-04 for full evidence + fix + guard + live-Postgres proof). Workspace UI, POST /start, POST /complete, and #3417 zero-diff logic are all correctly wired and correctly implemented — the account lookup ahead of them 404s first. Owner Neon-apply of db/migrations/202608030000_bank_accounts_rls_bypass_lucia.sql required before sessions can go > 0 on prod.",
+      "pr": "HOLD — see hold/bank-econ-04-recon-session-live-path-20260725 (companion to #3417)"    },
     {
       "id": "BANK-SURF-05",
-      "title": "Factoring / Escrow / Relay / Plaid / Statement Import — active path + honest empty",
+      "title": "Factoring / Escrow / Relay / Plaid / Statement Import \u2014 active path + honest empty",
       "layers": [
         "DOD-A",
         "DOD-E",
         "VERIFY-7"
       ],
-      "spec": "Banking entry tabs · never-delete",
+      "spec": "Banking entry tabs \u00b7 never-delete",
       "status": "UNVERIFIED",
-      "evidence": "Tabs reachable; economics not module-closed",
-      "pr": null
+      "evidence": "Structural entry-tabs guarded (#3459/#3462 verify-bank-surf-entry-tabs / step 1440): Factoring/Escrow/Relay/Plaid/Statement Import routes mounted (never-delete). Browser DoD click-through still UNVERIFIED \u2014 not flipped to PASS.",
+      "pr": "#3459"
     },
     {
       "id": "BANK-LINK-01",
-      "title": "Bank txn ↔ Bill/Payment/Transfer EntityLink both-way with Neon FKs",
+      "title": "Bank txn \u2194 Bill/Payment/Transfer EntityLink both-way with Neon FKs",
       "layers": [
         "DOD-C",
         "VERIFY-4"
       ],
-      "spec": "Law §9 banking",
+      "spec": "Law \u00a79 banking",
       "status": "UNVERIFIED",
-      "evidence": "Code paths exist; density proves almost no JE links",
-      "pr": null
+      "evidence": "Structural counterparty wiring guarded (#3459/#3464 verify-bank-surfaces-and-counterparty / step 1441); Neon lucia counterparty_fk sparse (2). Both-way live density + browser reverse drill still UNVERIFIED \u2014 not flipped to PASS.",
+      "pr": "#3459"
     },
     {
       "id": "BANK-CTRL-01",
@@ -169,7 +173,7 @@
     },
     {
       "id": "BANK-GATE-01",
-      "title": "Every banking money PR uses EVERY-PR checklist — process closed",
+      "title": "Every banking money PR uses EVERY-PR checklist \u2014 process closed",
       "layers": [
         "DOD-E"
       ],
@@ -178,5 +182,6 @@
       "evidence": "#3430 merged on main (sha fc1cf13); verify-step 1430 enforces EVERY-PR checklist trailers on banking money commits",
       "pr": "#3430"
     }
-  ]
+  ],
+  "pass_count": 4
 }

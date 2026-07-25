@@ -40,6 +40,9 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
     { table: "employment_statuses", activeFilter: "archived_at", companyScoped: false, schema: "reference" },
     // Converted per-entity by #3408 (migration 202607890000); prod: 16 active per entity.
     { table: "driver_termination_reasons", activeFilter: "is_active", companyScoped: true },
+    // Converted per-entity by #3403 (migration 202607870000); prod: 13 active per entity.
+    // Hub reachability = LST-A-01; must also count in the Drivers domain badge.
+    { table: "driver_load_statuses", activeFilter: "is_active", companyScoped: true },
   ],
   maintenance: [
     { table: "maintenance_failure_codes", activeFilter: "is_active", companyScoped: true },
@@ -86,11 +89,16 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
     { table: "asset_locations", activeFilter: "is_active", companyScoped: true },
   ],
   accounting: [
+    // Entity scope for accounts/classes/items is FORCE RLS + GUC, not an explicit
+    // operating_company_id filter (companyScoped:true would under/over-count vs policy).
     { table: "accounts", activeFilter: "deactivated_at", companyScoped: false },
     { table: "classes", activeFilter: "deactivated_at", companyScoped: false },
+    // LST-F03 migration 202608000000 adds opco (HELD / not on prod yet). Count-spec must
+    // stay companyScoped:false until Neon apply — otherwise WHERE opco=$1 → 42703 on live prod.
     { table: "payment_terms", activeFilter: "deactivated_at", companyScoped: false },
     { table: "items", activeFilter: "deactivated_at", companyScoped: false },
     { table: "posting_templates", activeFilter: "is_active", companyScoped: false },
+    // LST-F09: schema has opco + RLS, but Neon still 0 rows — keep companyScoped:false until density / intentional flip.
     { table: "account_role_bindings", activeFilter: "deactivated_at", companyScoped: false },
     { table: "qbo_categories", activeFilter: "is_active", companyScoped: true },
     { table: "chart_of_accounts_seeds", activeFilter: "is_active", companyScoped: true },

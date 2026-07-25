@@ -474,7 +474,8 @@
       "service_item_uuid",
       "severity",
       "violation_type_id",
-      "violation_type_uuid"
+      "violation_type_uuid",
+      "operating_company_id"
     ],
     "accounting.expenses": [
       "created_at",
@@ -798,6 +799,7 @@
       "error",
       "id",
       "idempotency_key",
+      "journal_entry_type_id",
       "kind",
       "last_qbo_synced_at",
       "memo",
@@ -825,8 +827,7 @@
       "version_int",
       "void_reason",
       "voided_at",
-      "voided_by_user_id",
-      "journal_entry_type_id"
+      "voided_by_user_id"
     ],
     "accounting.journal_entry_postings": [
       "account_id",
@@ -2134,7 +2135,8 @@
       "label",
       "severity",
       "updated_at",
-      "updated_by_user_id"
+      "updated_by_user_id",
+      "operating_company_id"
     ],
     "catalogs.dot_violation_types": [
       "basic_category",
@@ -2465,6 +2467,7 @@
       "early_payment_discount_pct",
       "id",
       "notes",
+      "operating_company_id",
       "qbo_terms_id",
       "terms_name",
       "updated_at",
@@ -2481,6 +2484,7 @@
       "description",
       "id",
       "is_active",
+      "operating_company_id",
       "template_code",
       "template_name",
       "updated_at",
@@ -10171,6 +10175,9 @@
       "template_name",
       "to_phone",
       "variables"
+    ],
+    "catalogs.expense_categories": [
+      "operating_company_id"
     ]
   }
 }

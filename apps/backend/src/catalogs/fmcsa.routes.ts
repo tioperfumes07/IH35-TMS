@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { lookupCarrierByMC, lookupCarrierByUSDOT } from "../lib/fmcsa-client.js";
 
@@ -11,15 +12,20 @@ const LINK_ROLES = ["Owner", "Administrator", "Manager", "Safety"];
 const lookupBodySchema = z.object({
   type: z.enum(["usdot", "mc"]),
   value: z.string().trim().min(1).max(40),
+  operating_company_id: z.string().uuid().optional(),
 });
 
 const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(20),
   offset: z.coerce.number().int().min(0).default(0),
+  operating_company_id: z.string().uuid().optional(),
 });
 
 const linkParamsSchema = z.object({ id: z.string().uuid() });
-const linkBodySchema = z.object({ lookup_id: z.string().uuid() });
+const linkBodySchema = z.object({
+  lookup_id: z.string().uuid(),
+  operating_company_id: z.string().uuid().optional(),
+});
 
 type AuthUser = { uuid: string; role: string };
 
@@ -46,28 +52,18 @@ function ensureRole(reply: FastifyReply, role: string, allowed: string[]) {
   return true;
 }
 
-async function resolveOperatingCompanyId(
-  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ id: string }> }> },
-  userId: string
-) {
-  const res = await client.query(
-    `
-      SELECT c.id
-      FROM identity.users u
-      JOIN org.companies c ON c.id = u.default_company_id
-      WHERE u.id = $1
-        AND c.deactivated_at IS NULL
-      UNION
-      SELECT c.id
-      FROM org.companies c
-      WHERE c.id IN (SELECT org.user_accessible_company_ids())
-      ORDER BY id
-      LIMIT 1
-    `,
-    [userId]
-  );
-  return res.rows[0]?.id ?? null;
-}
+// LST-F05 (2026-07-25): this file used to define its OWN resolveOperatingCompanyId here, shadowing the
+// canonical one, with the inline `SELECT default … UNION SELECT any accessible … ORDER BY id LIMIT 1`
+// fallback. The UNION put the user's DEFAULT company and every accessible company on equal footing and
+// then took the LOWEST UUID, losing the default — and USMCA (5c854333…) sorts below TRANSP (91e0bf0a…),
+// so a TRANSP user's FMCSA lookup was attributed to USMCA and cached under the wrong entity.
+//
+// load-cancellation-reasons and void-cancel-reasons were repointed at the canonical resolver earlier; this
+// third route was missed because the local copy has the SAME NAME, so a grep for resolveOperatingCompanyId
+// showed call sites and read as already-fixed. The canonical resolver does COALESCE(default, lowest) and
+// validates membership (403 on a foreign id rather than a silent empty list).
+//
+// The local definition is deleted; the import below is the canonical one.
 
 export async function registerFmcsaRoutes(app: FastifyInstance) {
   app.post("/api/v1/catalogs/fmcsa/lookup", async (req, reply) => {
@@ -83,7 +79,12 @@ export async function registerFmcsaRoutes(app: FastifyInstance) {
     if (!lookupValue) return reply.code(400).send({ error: "lookup_value_invalid" });
 
     const result = await withCurrentUser(authUser.uuid, async (client) => {
-      const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+      // LST-F05: use shared resolver (default company first) — never UNION…ORDER BY id LIMIT 1.
+      const operatingCompanyId = await resolveOperatingCompanyId(
+        client,
+        authUser.uuid,
+        parsedBody.data.operating_company_id ?? null
+      );
       if (!operatingCompanyId) throw new Error("operating_company_not_found");
 
       const cached = await client.query(
@@ -292,7 +293,11 @@ export async function registerFmcsaRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     const lookups = await withCurrentUser(authUser.uuid, async (client) => {
-      const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+      const operatingCompanyId = await resolveOperatingCompanyId(
+        client,
+        authUser.uuid,
+        parsedQuery.data.operating_company_id ?? null
+      );
       if (!operatingCompanyId) return [];
 
       const res = await client.query(

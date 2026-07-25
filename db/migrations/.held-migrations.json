@@ -487,6 +487,61 @@
     {
       "file": "202607970000_complaint_types_per_entity_parity_seed.sql",
       "reason": "[HOLD-FOR-JORGE — FINANCIAL] LST-SEED-01 — catalogs.complaint_types DATA parity seed. Prod (lucia, br-fancy-credit-akjnd07a 2026-07-25): TRANSP 271/271 active, TRK 12/12, USMCA 12/12; 295 rows / 271 distinct type_code, so TRK+USMCA codes are a strict subset of TRANSP and the copy inserts exactly 259+259=518 rows. Table is ALREADY scoped (opco NOT NULL + FK, UNIQUE(operating_company_id,type_code), relforcerowsecurity=true, policy complaint_types_tenant_scope_usmca1) — this is a seed, NOT a conversion, and the existing NULLIF/::uuid policy is deliberately left untouched (replacing it with a ::text company_scope policy would regress verify-rls-uuid-cast-nullif). Also REVOKEs the stray DELETE that ih35_app still held on this table. Primary resolved dynamically by org.companies.code='TRANSP' with an earliest-active fallback — NO hardcoded UUID. Additive INSERT-only + ON CONFLICT DO NOTHING (Invariant #24: no DROP/DELETE/TRUNCATE); in-migration parity assertion RAISEs if any active entity is off parity. NOT YET applied on prod — validated apply-twice on a local throwaway Postgres; owner applies on Neon then both-ledger backfills to the committed sha256; GUARD re-verifies 271/271/271 live."
+    },
+    {
+      "file": "202607990000_account_role_bindings_entity_scope_finish.sql",
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL] LST-F09 — finish catalogs.account_role_bindings entity-scope: opco NOT NULL, UNIQUE(opco,role_key), FORCE RLS company_scope GUC policy (replaces role-based select/insert/update), REVOKE DELETE. Companion route writes/filters operating_company_id + sets app.operating_company_id. Dynamic org.companies.code='TRANSP' primary — no hardcoded UUID. Table is 0 rows on prod (lucia 2026-07-25). NOT YET applied — owner Neon-apply + ledger-backfill; GUARD re-verifies."
+    },
+    {
+      "file": "202608020000_acct_link_04_expense_lines_expense_category_fk.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] ACCT-LINK-04 (ACCT-F07) — catalogs.expense_categories has 0 inbound FKs on prod. accounting.expense_lines.expense_category_uuid has been an unconstrained bare uuid since migration 0050, which was authored before the category catalog arrived in 0152, so it was never constrained and never entity-scoped. Adds accounting.expense_lines.operating_company_id (inline FK org.companies, backfilled from the parent expense), a BEFORE INSERT/UPDATE trigger that derives it from the parent so no writer can leave it NULL or disagree with its header, composite UNIQUE (operating_company_id, id) on catalogs.expense_categories + accounting.expenses, and the two SAME-ENTITY composite FKs: line->expense and the ACCT-LINK-04 link line->catalogs.expense_categories. A single-column FK was rejected on purpose — it would satisfy the audit count while still allowing a cross-entity category. MATCH SIMPLE keeps uncategorized lines legal (QBO-style). POSTS NOTHING: no JE, no GL math, no posting flag, no delete. Prod state verified on Neon br-fancy-credit-akjnd07a 2026-07-24 (RLS-honest per-entity read, since the company_scope policy has no lucia-bypass branch): catalogs.expense_categories=9 rows metadata={}, catalogs.qbo_categories=0, accounting.expenses=0, accounting.expense_lines=0 — a zero-backfill window. Throwaway PG apply-twice idempotent + 6 behavioral assertions green. Owner applies on a Neon branch, then ledger-backfills."
+    },
+    {
+      "file": "202608030000_bank_accounts_rls_bypass_lucia.sql",
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL CLUSTER / RLS-POLICY CHANGE] BANK-ECON-04 / BANK-SURF-04 root-cause fix — banking.bank_accounts policy bank_accounts_company_scope (0072) checks ONLY app.operating_company_id with no `app.bypass_rls='lucia'` escape. POST /reconciliation/start and /upload-statement resolve a bare bank_account_id's operating_company_id via withLuciaBypass (sentinel company id) BEFORE the real company is known, so every attempt 404s bank_account_not_found before insert — proven live (16 bank_accounts, 0 reconciliation_sessions, Neon lucia bypass 2026-07-24/25) and reproduced on local migrated Postgres in this PR's integration test. Adds escape to USING only; WITH CHECK unchanged. Mirrors 202607610000 / 202607900000. Renumbered to 202608030000 ABOVE main file max 202608020000 after #3446 landed. Owner Neon-applies then ledger-backfills."
+    },
+    {
+      "file": "202607240000_incidents_auto_claim_fk.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P4-05 — safety.incidents.auto_created_claim_id -> insurance.claim FK (NOT VALID, ON DELETE SET NULL; GUARD 0-orphan check + VALIDATE on Neon). Safety->Insurance referential integrity. APPLIED on prod Neon + ledger-backfilled (verified 2026-07-25 lucia). SAF-F04 — Neon 2026-07-25: safety.incidents.auto_created_claim_id EXISTS; ledgered 2026-07-11. applied_on_prod was stale-false.",
+      "applied_on_prod": true
+    },
+    {
+      "file": "202606272300_deduction_line_load_id_direct.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Load↔Advance: carry load_id DIRECTLY on the settlement deduction line APPLIED on prod Neon + ledger-backfilled (verified 2026-07-25 lucia). SAF-F03 — Neon br-fancy-credit-akjnd07a 2026-07-25: driver_finance.driver_settlement_deductions.load_id EXISTS; ledgered _system._schema_migrations 2026-06-28 + ih35_migrations mirror. applied_on_prod was stale-false (honesty bug).",
+      "applied_on_prod": true
+    },
+    {
+      "file": "202607070100_bank_categorize_unit_trip_driver_deduction.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-6b — Unit + Trip(Load) dimensions + Item(Products&Services) linkage on bank categorize + driver auto-deduction (fine→driver→settlement, flag OFF) APPLIED on prod Neon + ledger-backfilled (verified 2026-07-25 lucia). SAF-F03 — Neon 2026-07-25: source_bank_transaction_id EXISTS on driver_settlement_deductions; ledgered 2026-07-05. applied_on_prod was stale-false.",
+      "applied_on_prod": true
+    },
+    {
+      "file": "202607080000_settlement_contract_terms.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Settlement contract-terms computation engine (driver hire-contract bonuses/deductions) APPLIED on prod Neon + ledger-backfilled (verified 2026-07-25 lucia). SAF-F02 — Neon 2026-07-25: safety.civil_fines.driver_settlement_deduction_id EXISTS (uuid); ledgered 2026-07-06. applied_on_prod was stale-false — column never absent on prod.",
+      "applied_on_prod": true
+    },
+    {
+      "file": "202607110200_civil_fines_voidable.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P2 civil_fines void-not-delete APPLIED on prod Neon + ledger-backfilled (verified 2026-07-25 lucia). Neon 2026-07-25: civil_fines void columns present; ledgered 2026-07-11 class. Stamp applied_on_prod so SAF-F08 guard does not false-FAIL.",
+      "applied_on_prod": true
+    },
+    {
+      "file": "202607250000_phase4_crossmodule_fks.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] PHASE-4 BATCH (P4-01/02/03) — safety.accident_reports.insurance_claim_id, legal.matters.{insurance_claim_id,insurance_lawsuit_id,incident_id,unit_id}, mdata.assets.unit_id — additive cols + FKs to canonical (insurance.claim/lawsuit, safety.incidents, mdata.units). GUARD-verified 0 orphans. Backfill+resolver+route fix deferred. APPLIED on prod Neon + ledger-backfilled (verified 2026-07-25 lucia). SAF-F04 — Neon 2026-07-25: safety.accident_reports.insurance_claim_id + legal.matters.insurance_claim_id EXIST; ledgered 2026-07-11. applied_on_prod was stale-false.",
+      "applied_on_prod": true
+    },
+    {
+      "file": "202607810000_accident_reports_capture_fields.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] SAF-F05 — add 7 additive text columns to safety.accident_reports (police_report_number, insurance_claim_number, location, third_party_name, third_party_plate, vendor_invoice_number, bill_or_expense_ref) the accident wizard rendered but silently discarded (no columns existed, verified on Neon br-fancy-credit-akjnd07a). All nullable text, no backfill, inherit table FORCED RLS + 0065 safety-schema grants. insurance_claim_number is the external insurer number, distinct from the insurance_claim_id FK. Posts nothing. Claude migration block 202607810000 (LANE-ASSIGNMENT §2a). Run only on a Neon branch by Jorge, then ledger-backfill. APPLIED on prod Neon + ledger-backfilled (verified 2026-07-25 lucia). Neon 2026-07-25: accident_reports capture text cols present (police_report_number etc.); ledgered. Stamp applied_on_prod for SAF-F08 honesty.",
+      "applied_on_prod": true
+    },
+    {
+      "file": "202608010000_dispatcher_error_reasons_per_entity.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] LST-CAT-06 — catalogs.dispatcher_error_reasons per-entity (owner ruling 2026-07-24 + load-derived entity). Prod lucia: 25 rows, no opco, role-only RLS policies. Adds operating_company_id, seeds every active entity, UNIQUE(opco,code), company_scope FORCE RLS, REVOKE DELETE. Companion route scopes GUC from related load first. NEVER-DELETE (§F.24). Owner Neon-apply + ledger-backfill."
+    },
+    {
+      "file": "202608000000_payment_terms_posting_templates_per_entity.sql",
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL] LST-F03 — catalogs.payment_terms + catalogs.posting_templates per-entity conversion: add operating_company_id NOT NULL, UNIQUE(opco, name/code), FORCE RLS company_scope, REVOKE DELETE, seed identical payment_terms to every active entity (qbo_terms_id nulled on copies to avoid global UNIQUE collision). posting_templates 0 rows on prod — structure only until owner seeds. Dynamic org.companies.code=TRANSP. NEVER-DELETE (§F.24). Companion factory entityScoped:true."
     }
   ]
 }

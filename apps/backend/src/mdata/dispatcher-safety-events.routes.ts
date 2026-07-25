@@ -2,7 +2,66 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
+
+type ScopeClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
+
+// LST-CAT-06 — catalogs.dispatcher_error_reasons is per-entity + FORCE RLS company_scope.
+// Prefer related LOAD's operating_company_id (owner ruling); else driver/customer; else caller.
+async function setOperatingCompanyGuc(client: ScopeClient, operatingCompanyId: string): Promise<void> {
+  await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+}
+
+async function scopeToCallerCompany(client: ScopeClient, userId: string, requested?: string | null): Promise<string | null> {
+  const operatingCompanyId = await resolveOperatingCompanyId(client, userId, requested ?? null);
+  if (!operatingCompanyId) return null;
+  await setOperatingCompanyGuc(client, operatingCompanyId);
+  return operatingCompanyId;
+}
+
+// The three lookups below read operating_company_id by raw id BEFORE app.operating_company_id is
+// set — that's the point, they're how we learn which company to scope into. This is safe because
+// mdata.loads/drivers/customers SELECT RLS gates on identity.current_user_id() -> org company
+// membership (loads_select_office/loads_select_driver, drivers_select, customers_select), not on
+// the operating_company_id GUC — a related id outside the caller's companies returns zero rows.
+async function scopeToRelatedEntity(
+  client: ScopeClient,
+  userId: string,
+  related: { loadId?: string | null; driverId?: string | null; customerId?: string | null }
+): Promise<string | null> {
+  if (related.loadId) {
+    const res = await client.query<{ operating_company_id: string }>(
+      `SELECT operating_company_id FROM mdata.loads WHERE id = $1 LIMIT 1`,
+      [related.loadId]
+    );
+    const opco = res.rows[0]?.operating_company_id;
+    if (!opco) return null;
+    await setOperatingCompanyGuc(client, opco);
+    return opco;
+  }
+  if (related.driverId) {
+    const res = await client.query<{ operating_company_id: string }>(
+      `SELECT operating_company_id FROM mdata.drivers WHERE id = $1 LIMIT 1`,
+      [related.driverId]
+    );
+    const opco = res.rows[0]?.operating_company_id;
+    if (!opco) return null;
+    await setOperatingCompanyGuc(client, opco);
+    return opco;
+  }
+  if (related.customerId) {
+    const res = await client.query<{ operating_company_id: string }>(
+      `SELECT operating_company_id FROM mdata.customers WHERE id = $1 LIMIT 1`,
+      [related.customerId]
+    );
+    const opco = res.rows[0]?.operating_company_id;
+    if (!opco) return null;
+    await setOperatingCompanyGuc(client, opco);
+    return opco;
+  }
+  return scopeToCallerCompany(client, userId, null);
+}
 
 const ownerAdminRoles = new Set(["Owner", "Administrator"]);
 const eventTypeSchema = z.enum([
@@ -26,6 +85,7 @@ const userParamsSchema = z.object({ user_id: uuidSchema });
 const eventParamsSchema = z.object({ user_id: uuidSchema, event_id: uuidSchema });
 const reasonsQuerySchema = z.object({
   event_type: eventTypeSchema.optional(),
+  operating_company_id: uuidSchema.optional(),
   include_inactive: z
     .union([z.boolean(), z.string()])
     .optional()
@@ -36,6 +96,7 @@ const listQuerySchema = z.object({
     .union([z.boolean(), z.string()])
     .optional()
     .transform((value) => value === true || value === "true"),
+  operating_company_id: uuidSchema.optional(),
 });
 
 const createDispatcherSafetyEventBodySchema = z
@@ -212,6 +273,9 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     const reasons = await withCurrentUser(authUser.uuid, async (client) => {
+      const opco = await scopeToCallerCompany(client, authUser.uuid, parsedQuery.data.operating_company_id ?? null);
+      if (!opco) return [];
+
       const values: unknown[] = [];
       const filters: string[] = [];
       if (!parsedQuery.data.include_inactive) {
@@ -224,7 +288,7 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
       const res = await client.query(
         `
-          SELECT r.id, r.code, r.label, r.description, r.event_type, r.severity, r.is_active, r.deactivated_at
+          SELECT r.id, r.operating_company_id, r.code, r.label, r.description, r.event_type, r.severity, r.is_active, r.deactivated_at
           FROM catalogs.dispatcher_error_reasons r
           ${whereClause}
           ORDER BY
@@ -252,6 +316,8 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
     const rows = await withCurrentUser(authUser.uuid, async (client) => {
       const trackable = await ensureTrackableDispatcherUser(client, parsedParams.data.user_id);
       if ("error" in trackable) return trackable;
+      // Reason JOIN is FORCE RLS — set GUC so labels resolve for the active entity context.
+      await scopeToCallerCompany(client, authUser.uuid, parsedQuery.data.operating_company_id ?? null);
       const filters = ["e.dispatcher_user_id = $1"];
       if (!parsedQuery.data.include_voided) {
         filters.push("e.voided_at IS NULL");
@@ -320,6 +386,19 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
     const created = await withCurrentUser(authUser.uuid, async (client) => {
       const trackable = await ensureTrackableDispatcherUser(client, parsedParams.data.user_id);
       if ("error" in trackable) return trackable;
+
+      // Owner ruling LST-CAT-06: entity from related load/dispatch first — never dispatcher default alone.
+      const opco = await scopeToRelatedEntity(client, authUser.uuid, {
+        loadId: body.related_load_id,
+        driverId: body.related_driver_id,
+        customerId: body.related_customer_id,
+      });
+      if (!opco) {
+        if (body.related_load_id) return { error: "related_load_not_found" as const };
+        if (body.related_driver_id) return { error: "related_driver_not_found" as const };
+        if (body.related_customer_id) return { error: "related_customer_not_found" as const };
+        return { error: "operating_company_required" as const };
+      }
 
       let normalizedSeverity = body.severity;
       if (body.error_reason_id) {
@@ -401,6 +480,14 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
       if (created.error === "invalid_error_reason") return reply.code(400).send({ error: created.error });
       if (created.error === "error_reason_event_type_mismatch") return reply.code(400).send({ error: created.error });
       if (created.error === "error_reason_severity_mismatch") return reply.code(400).send({ error: created.error });
+      if (
+        created.error === "related_load_not_found" ||
+        created.error === "related_driver_not_found" ||
+        created.error === "related_customer_not_found" ||
+        created.error === "operating_company_required"
+      ) {
+        return reply.code(400).send({ error: created.error });
+      }
     }
 
     return reply.code(201).send({ event: created });

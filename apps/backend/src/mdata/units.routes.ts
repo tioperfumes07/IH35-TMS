@@ -4,7 +4,7 @@ import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { countOpenWorkOrdersForUnit } from "../kpi/canonical-kpis.js";
 import { requireAuth } from "../auth/session-middleware.js";
-import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
+import { resolveDefaultOperatingCompanyId, resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { buildUnitAggregate } from "./unit-aggregate.service.js";
 import { registerUnitDefaultDriverRoutes } from "./unit-default-driver.routes.js";
 import { registerUnitDocumentsRoutes } from "./unit-documents.routes.js";
@@ -123,23 +123,9 @@ async function resolveAssetCompanyIds(
 
   let resolvedLeasedId = leasedCompanyId ?? null;
   if (!resolvedLeasedId) {
-    const res = await client.query(
-      `
-        SELECT c.id
-        FROM identity.users u
-        JOIN org.companies c ON c.id = u.default_company_id
-        WHERE u.id = $1
-          AND c.deactivated_at IS NULL
-        UNION
-        SELECT c.id
-        FROM org.companies c
-        WHERE c.id IN (SELECT org.user_accessible_company_ids())
-        ORDER BY id
-        LIMIT 1
-      `,
-      [userId]
-    );
-    resolvedLeasedId = res.rows[0]?.id ?? null;
+    // LST-F05: this picked the LOWEST accessible UUID instead of the user's default, so a TRANSP
+    // dispatcher creating a unit/equipment leased it to USMCA (5c854333… < 91e0bf0a…).
+    resolvedLeasedId = await resolveDefaultOperatingCompanyId(client, userId);
   }
 
   return { resolvedOwnerId, resolvedLeasedId };

@@ -101,6 +101,8 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
     nameColumn: "terms_name",
     descriptionColumn: "notes",
     activeMode: "deactivated_at",
+    // LST-F03: per-entity after 202608000000 (FORCE RLS company_scope).
+    entityScoped: true,
     requiredMetadata: ["net_days"],
     selectMetadataSql: [
       "'net_days', t.days_until_due",
@@ -243,6 +245,8 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
     descriptionColumn: "description",
     activeMode: "is_active",
     readOnly: true,
+    // LST-F03: per-entity after 202608000000 (FORCE RLS company_scope).
+    entityScoped: true,
     selectMetadataSql: [
       "'debit_account_id', t.debit_account_id",
       "'credit_account_id', t.credit_account_id",
@@ -259,6 +263,8 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
     descriptionColumn: "description",
     activeMode: "deactivated_at",
     readOnly: true,
+    // LST-F09: per-entity under FORCE RLS company_scope (migration 202607990000).
+    entityScoped: true,
     selectMetadataSql: ["'account_id', t.account_id"],
   });
 
