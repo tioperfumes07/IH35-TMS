@@ -135,6 +135,30 @@ export function BillPaymentsListPage() {
       { key: "vendor_id", label: "Vendor ID", sortable: true, render: (row) => <EntityLink kind="vendor" id={row.vendor_id} /> },
       { key: "reference_number", label: "Reference", sortable: true, sortValue: (row) => row.reference_number ?? row.check_number ?? "", render: (row) => row.reference_number ?? row.check_number ?? "-" },
       { key: "memo", label: "Memo", sortable: true, sortValue: (row) => row.memo ?? "", render: (row) => row.memo ?? "-" },
+      {
+        key: "journal_entry_id",
+        label: "JE",
+        sortable: true,
+        render: (row) => (
+          <EntityLink
+            kind="journal_entry"
+            id={row.journal_entry_id ?? undefined}
+            label={row.journal_entry_id ? row.journal_entry_id.slice(0, 8) : undefined}
+          />
+        ),
+      },
+      {
+        key: "matched_bank_transaction_id",
+        label: "Bank transaction",
+        sortable: true,
+        render: (row) => (
+          <EntityLink
+            kind="bank_transaction"
+            id={row.matched_bank_transaction_id ?? undefined}
+            label={row.matched_bank_transaction_id ? row.matched_bank_transaction_id.slice(0, 8) : undefined}
+          />
+        ),
+      },
       { key: "is_reconciled", label: "Reconciled", sortable: true, sortValue: (row) => (row.is_reconciled ? 1 : 0), render: (row) => <ReconciledBadge isReconciled={row.is_reconciled} /> },
       {
         key: "actions",

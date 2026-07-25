@@ -1,0 +1,182 @@
+{
+  "module": "banking",
+  "title": "Banking (Module 4)",
+  "complete": false,
+  "as_of": "2026-07-25T00:18:26.090Z",
+  "live_sha": "fc1cf13",
+  "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md",
+  "spec_sources": [
+    "docs/specs/DEFINITION-OF-DONE.md",
+    "docs/specs/EVERY-PR-AUDIT-CHECKLIST.md",
+    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md#module-4--banking",
+    "docs/approved-screens/4-Banking_Homepage.png"
+  ],
+  "items": [
+    {
+      "id": "BANK-ECON-01",
+      "title": "Bank feed present (transactions > 0)",
+      "layers": [
+        "DOD-A",
+        "VERIFY-6"
+      ],
+      "spec": "Banking feed",
+      "status": "PASS",
+      "evidence": "Neon lucia 2026-07-25: bank_transactions=10622",
+      "pr": null
+    },
+    {
+      "id": "BANK-ECON-02",
+      "title": "matched_journal_entry_id density meaningful (not ≈0%)",
+      "layers": [
+        "DOD-C",
+        "DOD-D",
+        "VERIFY-4",
+        "VERIFY-6"
+      ],
+      "spec": "Match/Categorize → JE",
+      "status": "FAIL",
+      "evidence": "Neon lucia 2026-07-25: matched_je=3/10622; categorized=3; pending_categorization=10619; categorized∧JE NULL=0. Poster works when used (#3424 on main). Density is ops backlog — not a broken poster.",
+      "pr": "#3424"
+    },
+    {
+      "id": "BANK-ECON-03",
+      "title": "banking.transfers rows > 0 when operators record transfers OR honest empty with poster path proven",
+      "layers": [
+        "DOD-D",
+        "VERIFY-6"
+      ],
+      "spec": "Transfers · #3134 Option 1 owner",
+      "status": "FAIL",
+      "evidence": "Neon lucia 2026-07-25: transfers=0. Code+UI wired (createTransfer); never used by operators. Feed mark-transfer does not insert banking.transfers.",
+      "pr": null
+    },
+    {
+      "id": "BANK-ECON-04",
+      "title": "reconciliation_sessions > 0 with zero-diff closure (#3417)",
+      "layers": [
+        "DOD-D",
+        "VERIFY-6"
+      ],
+      "spec": "Reconciliation",
+      "status": "FAIL",
+      "evidence": "Neon lucia 2026-07-25: reconciliation_sessions=0. Workspace+start session wired (#3417 zero-diff); no session ever started.",
+      "pr": "#3417"
+    },
+    {
+      "id": "BANK-ECON-05",
+      "title": "All live bank_accounts (deactivated_at IS NULL) bound to ledger_account_id (Cash GL)",
+      "layers": [
+        "DOD-C",
+        "VERIFY-5"
+      ],
+      "spec": "Cash GL setup",
+      "status": "PASS",
+      "evidence": "Neon lucia 2026-07-25: of 16 bank_accounts, 9 deactivated (unbound OK); 7 live (deactivated_at IS NULL) all have ledger_account_id (7/7). Prior 8/16 FAIL counted deactivated duplicates.",
+      "pr": null
+    },
+    {
+      "id": "BANK-SURF-01",
+      "title": "Banking Home + account detail — DoD A–E",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C",
+        "DOD-D",
+        "DOD-E"
+      ],
+      "spec": "Architectural Banking tabs",
+      "status": "UNVERIFIED",
+      "evidence": "Routes live; full picker/wizard matrix not re-run",
+      "pr": null
+    },
+    {
+      "id": "BANK-SURF-02",
+      "title": "Categorize / Match — VERIFY-1..8 + JE when flag ON",
+      "layers": [
+        "VERIFY-1",
+        "VERIFY-2",
+        "VERIFY-3",
+        "VERIFY-4",
+        "VERIFY-6"
+      ],
+      "spec": "QBO banking parity",
+      "status": "FAIL",
+      "evidence": "Same as BANK-ECON-02: 10619 pending; when categorized (n=3) JE stamped 100%. Active UI calls /categorize-bulk with poster after #3424.",
+      "pr": "#3424"
+    },
+    {
+      "id": "BANK-SURF-03",
+      "title": "Transfers UI + poster path — live economics",
+      "layers": [
+        "DOD-D",
+        "VERIFY-3",
+        "VERIFY-6"
+      ],
+      "spec": "Transfers tab",
+      "status": "FAIL",
+      "evidence": "transfers=0; owner Option 1 for unpaired feed",
+      "pr": null
+    },
+    {
+      "id": "BANK-SURF-04",
+      "title": "Reconciliation workspace — live session + zero-diff",
+      "layers": [
+        "DOD-D",
+        "VERIFY-6",
+        "VERIFY-1"
+      ],
+      "spec": "Recon",
+      "status": "FAIL",
+      "evidence": "sessions=0",
+      "pr": "#3417"
+    },
+    {
+      "id": "BANK-SURF-05",
+      "title": "Factoring / Escrow / Relay / Plaid / Statement Import — active path + honest empty",
+      "layers": [
+        "DOD-A",
+        "DOD-E",
+        "VERIFY-7"
+      ],
+      "spec": "Banking entry tabs · never-delete",
+      "status": "UNVERIFIED",
+      "evidence": "Tabs reachable; economics not module-closed",
+      "pr": null
+    },
+    {
+      "id": "BANK-LINK-01",
+      "title": "Bank txn ↔ Bill/Payment/Transfer EntityLink both-way with Neon FKs",
+      "layers": [
+        "DOD-C",
+        "VERIFY-4"
+      ],
+      "spec": "Law §9 banking",
+      "status": "UNVERIFIED",
+      "evidence": "Code paths exist; density proves almost no JE links",
+      "pr": null
+    },
+    {
+      "id": "BANK-CTRL-01",
+      "title": "BANK_FEED_GL_POSTING_ENABLED default OFF; no invented JE",
+      "layers": [
+        "VERIFY-6",
+        "VERIFY-8"
+      ],
+      "spec": "Parallel books",
+      "status": "PASS",
+      "evidence": "Flags OFF by design; poster gated",
+      "pr": null
+    },
+    {
+      "id": "BANK-GATE-01",
+      "title": "Every banking money PR uses EVERY-PR checklist — process closed",
+      "layers": [
+        "DOD-E"
+      ],
+      "spec": "verify-step 1430",
+      "status": "PASS",
+      "evidence": "#3430 merged on main (sha fc1cf13); verify-step 1430 enforces EVERY-PR checklist trailers on banking money commits",
+      "pr": "#3430"
+    }
+  ]
+}

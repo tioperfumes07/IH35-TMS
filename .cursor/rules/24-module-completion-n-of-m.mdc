@@ -1,0 +1,61 @@
+---
+description: HARD — module DONE = N of M checklist items PASS (or owner HOLD), never PR volume; manifests + CI 1431
+alwaysApply: true
+---
+
+# RULE 24 — MODULE COMPLETION = N of M (2026-07-24) — PERMANENT
+
+**Why this exists:** Jorge asked for a permanent, mechanical answer to “is Accounting / Banking done?” after ~250 money PRs left live economics empty. **PR count is not the metric.** Checklist items with Neon/spec proof are.
+
+## Machine source of truth
+
+| Module | Manifest | Scoreboard |
+|---|---|---|
+| Accounting | `docs/module-completion/accounting.json` | `docs/module-completion/accounting.md` |
+| Banking | `docs/module-completion/banking.json` | `docs/module-completion/banking.md` |
+| Schema | `docs/module-completion/SCHEMA.md` | — |
+
+**PROGRESS: N of M** = count of items with `status: PASS` (or qualifying owner `HOLD` with `owner_hold` + `tracker` + `future_block`).
+
+**`complete: true` is ILLEGAL** while any item is OPEN / FAIL / UNVERIFIED / non-qualifying HOLD.  
+CI: verify-step **1431** (`verify-module-completion`).
+
+## Forbidden
+
+1. Claiming “accounting done”, “banking done”, or “module complete” while that module’s `complete !== true`.
+2. Using PR volume (“250 PRs”, “47/47 waves”) as proof of module DONE.
+3. Setting `complete: true` without every item PASS (or qualifying HOLD).
+4. Leaving `*.md` scoreboards stale vs `*.json` (run `node scripts/verify-module-completion.mjs --write-md`).
+
+## Required on every money commit (with Rule 23 / DoD §10)
+
+```
+MODULE_PROGRESS: accounting N of M
+# and/or
+MODULE_PROGRESS: banking N of M
+ITEMS_TOUCHED: ACCT-… | BANK-…
+```
+
+`N of M` **must match** the current manifest score for that module (update the JSON in the same PR when an item moves to PASS).
+
+## How a module becomes COMPLETE
+
+1. Every checklist item → `PASS` with LIVE Neon (`bypass_rls=lucia`) + DoD A–E + VERIFY 1–8 evidence in the item, **or** owner-written HOLD with tracker + future block id.
+2. Set `complete: true` in the JSON; regenerate `.md`.
+3. Desktop module audit (`~/Desktop/IH35-CURSOR-AUDIT/modules/<module>.md`) agrees — no ranked FAIL open for that module’s money leaves.
+4. Claude coder merge only after `JORGE-APPROVED` on financial.
+
+## Session header (Rule 20 companion)
+
+When working a money module, open with:
+
+```
+BLOCK: …
+MODULE: accounting|banking
+PROGRESS: N of M pending-items-closed · see docs/module-completion/<module>.md
+STATUS: …
+```
+
+## Tie-breakers
+
+PR volume < checklist N of M · CI-green < Neon density · memory < manifest + verify-step 1431.

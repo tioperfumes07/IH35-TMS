@@ -90,6 +90,16 @@ export function BillPaymentDetailPage() {
             <EntityLink kind="journal_entry" id={payment.journal_entry_id} label={payment.journal_entry_id.slice(0, 8)} />
           </DataPanelRow>
         ) : null}
+        {payment.matched_bank_transaction_id ? (
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Bank transaction</span>
+            <EntityLink
+              kind="bank_transaction"
+              id={payment.matched_bank_transaction_id}
+              label={payment.matched_bank_transaction_id.slice(0, 8)}
+            />
+          </DataPanelRow>
+        ) : null}
         {payment.reference_number ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Reference</span>
