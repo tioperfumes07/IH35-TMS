@@ -1,13 +1,13 @@
 # Module completion — Accounting (Module 3)
 
-**PROGRESS: 10 of 27** · complete: `false` · as_of: 2026-07-25T19:00:00.000Z · live_sha: `a3f9c12`
+**PROGRESS: 10 of 28** · complete: `false` · as_of: 2026-07-25T19:00:00.000Z · live_sha: `a3f9c12`
 
 | Status | Count |
 |---|---:|
 | PASS | 8 |
 | HOLD | 2 |
 | OPEN | 0 |
-| FAIL | 11 |
+| FAIL | 12 |
 | UNVERIFIED | 6 |
 
 | ID | Status | Title | Evidence | PR |
@@ -32,6 +32,7 @@
 | `ACCT-SURF-04` | **FAIL** | Receive Payment — DoD A–E + VERIFY 1–8 with live rows | payments=0 with QBO_AR_PAYMENTS_PROJECTION_ENABLED OFF by owner decision — correct-at-0 (not a flag-flip chase). | #3433 |
 | `ACCT-SURF-05` | **FAIL** | Journal Entries — type catalog wired + reverse drill | GUARD 2026-07-25: migration 202607960000 genuinely UNAPPLIED on prod (MERGED≠APPLIED). Picker wired on ManualJEModal (accounting + banking) reading/writing catalogs.journal_entry_types; reverse drill on JournalEntryDetailPage → /lists/accounting/journal-entry-types. Stays FAIL until Neon-apply proves FK + typed density on live JEs. | HOLD — ACCT-F02 |
 | `ACCT-SURF-06` | **HOLD** | Chart of Accounts / Detail Types — canonical detail_type link | OWNER-LOCK: CoA persists account_subtype TEXT (picker may read detail_types catalog for UX only). ACCT-LINK-02 HOLD — not a linkage defect. SURF chrome reachable; FK wiring deferred by owner. | — |
+| `ACCT-R-03` | **FAIL** | Chart of Accounts merge is a real merge (repoint + merge record), not deactivate-only | CoaBatchActions.handleMerge looped the catalog DEACTIVATE endpoint over every source account, so child accounts kept an archived parent and every config pointer kept designating an account nobody can post to. HOLD PR adds POST /api/v1/catalogs/accounts/:id/merge (Owner-only) + held migration 202608060000 for the append-only SAME-ENTITY merge ledger. FAIL until owner Neon-applies and a live merge proves a merge_records row plus 0 stale config pointers under lucia. | #3526 HOLD |
 | `ACCT-SURF-07` | **UNVERIFIED** | Account Register + All Transactions reverse to money docs | Routes mounted (account-register + transactions); sourceRoute + detail_path reverse drill guarded (verify-acct-surf-07-register step 1462); Desktop SURF DoD UNVERIFIED browser TRANSP+USMCA click-through. | — |
 | `ACCT-SURF-08` | **UNVERIFIED** | Period close / Audit trail / Posting lineage — active path + evidence | period-close→month-close Navigate alias + MonthClosePage + AccountingAuditTrailPage + PostingLineagePage mounted; guard 1463 structural DoD; Desktop SURF DoD UNVERIFIED click-through. | — |
 | `ACCT-SURF-09` | **UNVERIFIED** | Factoring / Escrow / Settlements cross-links from Accounting More ▾ | Frozen map docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md. Structural DoD guard scripts/verify-acct-surf-09-crosslinks.mjs (routes+More▾+EntityLink+canonical factoring_advances/escrow_*/driver_settlements). Desktop Expected vs Actual: ~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md. Stays UNVERIFIED until TRANSP+USMCA browser cross-link economics + Neon density proof (Rule 23 — no structural PASS flip). LINK-02 detail_types FK FROZEN. | — |

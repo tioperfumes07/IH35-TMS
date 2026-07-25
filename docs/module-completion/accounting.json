@@ -312,6 +312,21 @@
       "pr": null
     },
     {
+      "id": "ACCT-R-03",
+      "title": "Chart of Accounts merge is a real merge (repoint + merge record), not deactivate-only",
+      "layers": [
+        "DOD-A",
+        "DOD-C",
+        "VERIFY-3",
+        "VERIFY-4",
+        "VERIFY-8"
+      ],
+      "spec": "ACCT-F13 \u00b7 blueprint MUST 3.18.4.3",
+      "status": "FAIL",
+      "evidence": "CoaBatchActions.handleMerge looped the catalog DEACTIVATE endpoint over every source account, so child accounts kept an archived parent and every config pointer (catalogs.items default_income/expense_account_id, catalogs.account_role_bindings, accounting.chart_of_accounts_roles, accounting.expense_category_account_map, banking rules, asset-class / loan / escrow bindings) kept designating an account nobody can post to. No merge record existed at all \u2014 catalogs.account_merge_records is absent from every migration on origin/main. HOLD PR adds POST /api/v1/catalogs/accounts/:id/merge (Owner-only, entity-GUC scoped, one lockstep transaction) + held migration 202608060000 for the append-only SAME-ENTITY merge ledger. FAIL until the owner Neon-applies and a live merge proves a merge_records row plus 0 stale config pointers under lucia.",
+      "pr": "ACCT-R-03 HOLD"
+    },
+    {
       "id": "ACCT-SURF-07",
       "title": "Account Register + All Transactions reverse to money docs",
       "layers": [

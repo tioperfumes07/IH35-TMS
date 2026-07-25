@@ -1,6 +1,10 @@
 import { useMemo, useState } from "react";
 import { chartOfAccountsCatalogClient } from "../../../api/catalogs-accounting";
-import { deactivateCatalogAccount } from "../../../api/coa-list";
+import {
+  COA_MERGE_REASON_MIN_LENGTH,
+  deactivateCatalogAccount,
+  mergeCatalogAccounts,
+} from "../../../api/coa-list";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import type { CoaListRow } from "./coa-list-utils";
@@ -17,6 +21,7 @@ export function CoaBatchActions({ selectedIds, rows, operatingCompanyId, onCompl
   const [error, setError] = useState("");
   const [mergeOpen, setMergeOpen] = useState(false);
   const [mergeTargetId, setMergeTargetId] = useState("");
+  const [mergeReason, setMergeReason] = useState("");
 
   const selectedRows = useMemo(
     () => rows.filter((row) => selectedIds.includes(row.id)),
@@ -27,6 +32,24 @@ export function CoaBatchActions({ selectedIds, rows, operatingCompanyId, onCompl
     () => selectedRows.filter((row) => row.id !== mergeTargetId),
     [mergeTargetId, selectedRows]
   );
+
+  // Blueprint MUST 3.18.4.3 step 2 — same account type or the merge is refused server-side
+  // (E_MERGE_ACCOUNT_TYPE_MISMATCH). Surfaced here so the operator sees it before submitting.
+  const targetRow = selectedRows.find((row) => row.id === mergeTargetId);
+  const mismatchedTypes = useMemo(
+    () => (targetRow ? mergeSources.filter((row) => row.acct_type !== targetRow.acct_type) : []),
+    [mergeSources, targetRow]
+  );
+
+  const reasonTooShort = mergeReason.trim().length < COA_MERGE_REASON_MIN_LENGTH;
+  const canSubmitMerge =
+    !busy && Boolean(mergeTargetId) && mergeSources.length > 0 && !reasonTooShort && mismatchedTypes.length === 0;
+
+  const closeMerge = () => {
+    setMergeOpen(false);
+    setMergeTargetId("");
+    setMergeReason("");
+  };
 
   const handleMakeInactive = async () => {
     if (selectedIds.length === 0) return;
@@ -53,26 +76,24 @@ export function CoaBatchActions({ selectedIds, rows, operatingCompanyId, onCompl
     }
   };
 
+  // ACCT-R-03 — this used to loop the DEACTIVATE endpoint over the sources, which archived rows and
+  // called it a merge: child accounts kept an archived parent and every config pointer (item default
+  // accounts, role bindings, expense-category map, banking rules, …) kept designating an account
+  // nobody could post to. It now calls the real merge endpoint, which does that repointing, writes
+  // the append-only merge record, and archives the source in one transaction.
   const handleMerge = async () => {
-    if (!mergeTargetId || mergeSources.length === 0) return;
-    const target = selectedRows.find((row) => row.id === mergeTargetId);
-    const confirmed = window.confirm(
-      `Merge ${mergeSources.length} account${mergeSources.length === 1 ? "" : "s"} into "${target?.name ?? "selected target"}"? Source accounts will be archived (never deleted).`
-    );
-    if (!confirmed) return;
+    if (!canSubmitMerge || !mergeTargetId) return;
 
     setBusy(true);
     setError("");
     try {
-      for (const source of mergeSources) {
-        try {
-          await chartOfAccountsCatalogClient.deactivate(source.id, operatingCompanyId);
-        } catch {
-          await deactivateCatalogAccount(source.id);
-        }
-      }
-      setMergeOpen(false);
-      setMergeTargetId("");
+      await mergeCatalogAccounts({
+        targetAccountId: mergeTargetId,
+        sourceAccountIds: mergeSources.map((row) => row.id),
+        operatingCompanyId,
+        reason: mergeReason.trim(),
+      });
+      closeMerge();
       onComplete();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to merge accounts");
@@ -93,6 +114,8 @@ export function CoaBatchActions({ selectedIds, rows, operatingCompanyId, onCompl
           disabled={busy || selectedIds.length < 2}
           onClick={() => {
             setMergeTargetId(selectedRows[0]?.id ?? "");
+            setMergeReason("");
+            setError("");
             setMergeOpen(true);
           }}
         >
@@ -106,12 +129,20 @@ export function CoaBatchActions({ selectedIds, rows, operatingCompanyId, onCompl
         title="Merge accounts"
         onClose={() => {
           if (busy) return;
-          setMergeOpen(false);
+          closeMerge();
         }}
       >
         <div className="space-y-3 text-sm">
           <p className="text-slate-600">
-            Choose the surviving account. Other selected accounts will be archived via the existing catalog deactivate service.
+            Choose the surviving account. Sub-accounts of the merged accounts are reparented onto it, and every
+            place that designates a merged account for future postings — item default accounts, account role
+            bindings, expense category mappings, banking rules — is repointed to it.
+          </p>
+          <p className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+            <strong>Posted history stays where it is.</strong> Journal entries, bills, invoices and expenses already
+            posted to a merged account keep pointing at that account, so prior-period reports do not change. The
+            merged accounts are archived — never deleted — and stop accepting new postings. Merging is Owner-only
+            and is recorded permanently in the account merge log.
           </p>
           <label className="block space-y-1">
             <span className="text-xs font-medium text-slate-700">Surviving account</span>
@@ -128,11 +159,35 @@ export function CoaBatchActions({ selectedIds, rows, operatingCompanyId, onCompl
               ))}
             </select>
           </label>
+          <label className="block space-y-1">
+            <span className="text-xs font-medium text-slate-700">
+              Reason (required, at least {COA_MERGE_REASON_MIN_LENGTH} characters)
+            </span>
+            <textarea
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
+              rows={3}
+              value={mergeReason}
+              onChange={(event) => setMergeReason(event.target.value)}
+              disabled={busy}
+              placeholder="Why are these accounts being consolidated?"
+            />
+          </label>
+          {mergeTargetId && reasonTooShort ? (
+            <p className="text-xs text-slate-500">
+              {Math.max(0, COA_MERGE_REASON_MIN_LENGTH - mergeReason.trim().length)} more character(s) needed.
+            </p>
+          ) : null}
+          {mismatchedTypes.length > 0 ? (
+            <p className="text-xs text-red-600">
+              Accounts of a different type cannot be merged: {mismatchedTypes.map((row) => row.number).join(", ")} are
+              not {targetRow?.acct_type}.
+            </p>
+          ) : null}
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" disabled={busy} onClick={() => setMergeOpen(false)}>
+            <Button type="button" variant="secondary" disabled={busy} onClick={closeMerge}>
               Cancel
             </Button>
-            <Button type="button" disabled={busy || !mergeTargetId || mergeSources.length === 0} onClick={() => void handleMerge()}>
+            <Button type="button" disabled={!canSubmitMerge} onClick={() => void handleMerge()}>
               Merge
             </Button>
           </div>

@@ -7,6 +7,11 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { isCatalogWriteRole } from "../auth/role-helpers.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { enqueueTmsAccountPushRequested } from "../qbo/tms-account-push-chain.service.js";
+import {
+  AccountMergeError,
+  MERGE_REASON_MIN_LENGTH,
+  mergeAccountsOnClient,
+} from "./account-merge.service.js";
 
 const accountTypeSchema = z.enum([
   "Asset",
@@ -75,6 +80,15 @@ const updateAccountBodySchema = z
     operating_company_id: z.string().uuid().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
+
+// Blueprint MUST 3.18.4.3 / §3.18.9: merge is Owner-only, needs a reason of at least 20 characters,
+// and defaults to leaving historical postings on the source account.
+const mergeAccountsBodySchema = z.object({
+  source_account_ids: z.array(z.string().uuid()).min(1).max(50),
+  reason: z.string().trim().min(MERGE_REASON_MIN_LENGTH).max(2000),
+  migrate_historical_postings: z.boolean().default(false),
+  operating_company_id: z.string().uuid().optional(),
+});
 
 const ACCOUNT_SELECT_COLS = `
   id, account_number, account_name, account_type, account_subtype, detail_type_id, parent_account_id,
@@ -532,5 +546,81 @@ export async function registerAccountRoutes(app: FastifyInstance) {
     if (!deactivated) return reply.code(404).send({ error: "catalog_account_not_found" });
     if ("__locked" in deactivated) return reply.code(423).send({ error: "account_is_locked" });
     return deactivated;
+  });
+
+  // ACCT-R-03 — a REAL Chart-of-Accounts merge. :id is the surviving (target) account.
+  //
+  // The COA list's "Merge accounts" button used to loop the deactivate endpoint over the sources,
+  // which archived rows and left every child account and config pointer still designating them. This
+  // endpoint reparents the children, remounts the config pointers, writes the append-only merge record
+  // and archives the source — all inside ONE transaction under the entity GUC.
+  app.post("/api/v1/catalogs/accounts/:id/merge", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    // Owner-only per blueprint 3.18.12 (`accounting.account.merge`): a merge silently re-points every
+    // future posting that used to designate the source, so it is not a catalog-write-role action.
+    if (authUser.role !== "Owner") {
+      return reply.code(403).send({
+        error: "E_PERMISSION_DENIED",
+        message: "Action 'catalogs.account.merge' requires Owner role",
+        details: { caller_role: authUser.role, required_roles: ["owner"] },
+      });
+    }
+    const parsedParams = idParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedBody = mergeAccountsBodySchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+    const b = parsedBody.data;
+
+    try {
+      const result = await withCurrentUser(authUser.uuid, async (client) => {
+        const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
+        if (!operatingCompanyId) return { __no_company: true } as const;
+        await assertCompanyMembership(client, authUser.uuid, operatingCompanyId);
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+
+        const merged = await mergeAccountsOnClient(
+          client,
+          {
+            targetAccountId: parsedParams.data.id,
+            sourceAccountIds: b.source_account_ids,
+            operatingCompanyId,
+            reason: b.reason,
+            migrateHistoricalPostings: b.migrate_historical_postings,
+          },
+          authUser.uuid,
+        );
+
+        // Same outbox hop the deactivate route already performs for an archived account, so a merged
+        // source and a hand-archived source stay indistinguishable downstream.
+        for (const m of merged.merged) {
+          await enqueueTmsAccountPushRequested(client, {
+            operating_company_id: operatingCompanyId,
+            account_id: m.source_account_id,
+            operation: "update",
+          });
+        }
+
+        return {
+          target_account_id: merged.target.id,
+          operating_company_id: operatingCompanyId,
+          migrate_historical_postings: false,
+          merged: merged.merged,
+        };
+      });
+
+      if (result && "__no_company" in result) {
+        return reply.code(400).send({ error: "operating_company_id_required" });
+      }
+      return reply.code(200).send(result);
+    } catch (err) {
+      if (err instanceof AccountMergeError) {
+        return reply.code(err.httpStatus).send({ error: err.code, details: err.details });
+      }
+      const code = (err as { code?: string }).code;
+      if (code === "23503") return reply.code(400).send({ error: "invalid_account_reference" });
+      if (code === "23514") return reply.code(400).send({ error: "invalid_merge_check_constraint" });
+      throw err;
+    }
   });
 }
