@@ -17,6 +17,7 @@ import { Button } from "../../../components/Button";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { formatDateUS } from "../../../lib/formatDate";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { DriverTeamModal } from "./DriverTeamModal";
@@ -54,8 +55,22 @@ const TEAM_COLUMNS: Array<ParityColumn<MdataDriverTeam>> = [
     sortable: true,
     render: (row) => <>{row.relationship || "—"}</>,
   },
-  { key: "effective_from", label: "Effective From", sortable: true, render: (row) => <>{row.effective_from || "—"}</> },
-  { key: "effective_to", label: "Effective To", sortable: true, render: (row) => <>{row.effective_to || "—"}</> },
+  // Dates are MM/DD/YYYY in the UI — a raw ISO YYYY-MM-DD must never reach the operator
+  // (verify-no-iso-date-display). Sorting still uses the ISO value so order stays correct.
+  {
+    key: "effective_from",
+    label: "Effective From",
+    sortable: true,
+    sortValue: (row) => row.effective_from ?? "",
+    render: (row) => <>{formatDateUS(row.effective_from) || "—"}</>,
+  },
+  {
+    key: "effective_to",
+    label: "Effective To",
+    sortable: true,
+    sortValue: (row) => row.effective_to ?? "",
+    render: (row) => <>{formatDateUS(row.effective_to) || "—"}</>,
+  },
   {
     key: "is_active",
     label: "Status",
