@@ -1,6 +1,6 @@
 # Module completion — Banking (Module 4)
 
-**PROGRESS: 6 of 13** · complete: `false` · as_of: 2026-07-25T16:50:00.000Z · live_sha: `b4c3158`
+**PROGRESS: 6 of 14** · complete: `false` · as_of: 2026-07-25T16:50:00.000Z · live_sha: `b4c3158`
 
 | Status | Count |
 |---|---:|
@@ -8,7 +8,7 @@
 | HOLD | 2 |
 | OPEN | 0 |
 | FAIL | 4 |
-| UNVERIFIED | 3 |
+| UNVERIFIED | 4 |
 
 ## RANKED BANKING FAIL LIST (published M — every future banking PR cites a row here)
 
@@ -37,6 +37,7 @@ _PERMANENT-FIX §1 (BANK-00) — no Banking PR may land without citing a row her
 | `BANK-SURF-03` | **FAIL** | Transfers UI + poster path — live economics | LIVE REFRESH 2026-07-25 16:50Z: transfers=0; mark-as-transfer + Transfers surface wired (#3445 merged). Empty-state honesty banner refuses fake all-clear. verify-step 1481 pins wiring; FAIL until operator use → count>0. See BANK-ECON-03. | #3445 |
 | `BANK-SURF-04` | **HOLD** | Reconciliation workspace — live session + zero-diff | sessions=0 root cause = banking.bank_accounts RLS bypass_rls escape missing (see BANK-ECON-04 for full evidence + fix + guard + live-Postgres proof). Workspace UI, POST /start, POST /complete, and #3417 zero-diff logic are all correctly wired and correctly implemented — the account lookup ahead of them 404s first. Owner Neon-apply of db/migrations/202608030000_bank_accounts_rls_bypass_lucia.sql required before sessions can go > 0 on prod. | HOLD — see hold/bank-econ-04-recon-session-live-path-20260725 (companion to #3417) |
 | `BANK-SURF-05` | **UNVERIFIED** | Factoring / Escrow / Relay / Plaid / Statement Import — active path + honest empty | Deep structural DoD guarded (verify-bank-surf-05-dod / step 1466): Factoring/Escrow/Relay/Plaid/Statement Import routes mount BankingHomePage initialTab + tab bodies (DriverEscrowTabContent, StatementUpload, BankingPlaidConnectionsPanel) — no ComingSoon twin; sidebar flyout never-delete. Prior step 1440 route pin retained. Browser DoD click-through still UNVERIFIED — not flipped to PASS (Rule 23). | OPEN — Cotulla-08 BANK-08 SURF-05 |
+| `BANK-SURF-06` | **UNVERIFIED** | Categorization rules — DoD A–E + VERIFY 1–8 | SURF-Rules enumerated in docs/trackers/BANK-MODULE-DOD-SWEEP-MATRIX-2026-07-25.json; CategorizationRulesPage mounted /banking/categorization-rules. Browser TRANSP+USMCA click-through pending — structural route pin only; not flipped to PASS (Rule 23). | HOLD — hold/bank-module-dod-sweep-matrix-20260725 |
 | `BANK-LINK-01` | **UNVERIFIED** | Bank txn ↔ Bill/Payment/Transfer EntityLink both-way with Neon FKs | 2026-07-25 BANK-LINK-01 migration authored (HELD, not Neon-applied): db/migrations/202608050000_bank_link_01_counterparty_same_entity_fk.sql closes the DB-schema half step 1441 could not see — categorization_vendor_id/categorization_customer_id were bare unconstrained uuid since migration 0165 (code wrote/JOINed them by convention only, no DB enforcement). Adds SAME-ENTITY composite FKs bank_tx_categorization_vendor_same_entity_fkey / _customer_same_entity_fkey (mirrors ACCT-LINK-04 202608020000) + UNIQUE(operating_company_id,id) on mdata.vendors/mdata.customers; 0-orphan RAISE EXCEPTION guard before each ADD CONSTRAINT; categorization_memo retained untouched. PROVEN on throwaway Postgres (docker ih35-tms-verify-db, isolated db): fresh-from-0001 apply clean, raw SQL re-run apply-twice idempotent (all 4 constraints already-present, no error), FORCE RLS confirmed on all 3 tables (relforcerowsecurity=t), and a planted cross-entity insert (vendor of company A on a bank_transactions row of company B) correctly REJECTED with foreign_key_violation while the same-entity insert succeeded. Guard: scripts/verify-bank-link-01-counterparty-fk.mjs + verify-steps/1482 (structural, both selftest and real-file checks green). Prior step 1441 (code-level) still green, unaffected. Still UNVERIFIED on prod: migration is HELD/NOT Neon-applied — owner must apply on a Neon branch + ledger-backfill, then GUARD re-measures live counterparty_fk density under lucia + browser both-way reverse-drill before this flips to PASS (Rule 23 — not flipped this turn). | HOLD — see hold/bank-link-01-counterparty-fk-20260725 (companion to #3459/#3464/step 1441) |
 | `BANK-CTRL-01` | **PASS** | BANK_FEED_GL_POSTING_ENABLED default OFF; no invented JE | Flags OFF by design; poster gated | — |
 | `BANK-GATE-01` | **PASS** | Every banking money PR uses EVERY-PR checklist — process closed | #3430 merged on main (sha fc1cf13); verify-step 1430 enforces EVERY-PR checklist trailers on banking money commits. BANK-ECON-05 cash-bind keep-guard (verify-step 1442) confirms MODULE_PROGRESS honesty (pass_count=4, complete=false). | #3430 |
