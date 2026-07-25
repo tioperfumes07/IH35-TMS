@@ -20,7 +20,7 @@
 | `ACCT-PULL-01` | **PASS** | QBO AR Payment mirror pull writes rows + qbo.sync_runs | Neon lucia 2026-07-25: qbo_ar_payments=23830; qbo.sync_runs kind=ar_payments_inbound_mirror status=success n=1 completed 2026-07-24T23:12:22Z | #3411 |
 | `ACCT-PULL-02` | **PASS** | QBO BillPayment mirror pull writes rows | Neon lucia 2026-07-25: qbo_ap_bill_payments=6313; sync_runs ap_bill_payments_inbound_mirror success×2 last 2026-07-24T23:23:41Z | #3398 |
 | `ACCT-PULL-03` | **PASS** | QBO Purchase mirror pull writes rows | Neon lucia 2026-07-25: qbo_purchases=27984; sync_runs qbo_purchases_inbound_mirror success×2 last 2026-07-24T23:25:26Z | #3399 |
-| `ACCT-LINK-01` | **UNVERIFIED** | journal_entry_types inbound FK from journal_entries (not island) | Repo: migration 202607940000 + col-gated createJournalEntry writes GENERAL (or caller type). Neon: column not applied yet — re-measure inbound FK density after owner Neon-apply before PASS. | #3440 |
+| `ACCT-LINK-01` | **UNVERIFIED** | journal_entry_types inbound FK from journal_entries (not island) | Repo: migration 202607960000 + col-gated createJournalEntry writes GENERAL (or caller type). Neon: column not applied yet — re-measure inbound FK density after owner Neon-apply before PASS. | #3440 |
 | `ACCT-LINK-02` | **FAIL** | detail_types canonical FK from catalogs.accounts (not text subtype only) | 144 rows 0 inbound FKs; accounts.account_subtype text | — |
 | `ACCT-LINK-03` | **FAIL** | Bill unit_id / insurance_claim_id / linked_work_order_uuid density > 0 where applicable | vendor_id=16212; unit/claim/wo = 0 | #3425 |
 | `ACCT-LINK-04` | **FAIL** | expense_categories inbound FK from expense lines | 0 inbound FKs | — |
