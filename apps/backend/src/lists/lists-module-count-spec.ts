@@ -86,11 +86,12 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
     { table: "asset_locations", activeFilter: "is_active", companyScoped: true },
   ],
   accounting: [
-    // AF-1/AF-2/AF-3: accounts/classes/items are per-entity on prod — count under entity GUC.
-    { table: "accounts", activeFilter: "deactivated_at", companyScoped: true },
-    { table: "classes", activeFilter: "deactivated_at", companyScoped: true },
+    // Entity scope for accounts/classes/items is FORCE RLS + GUC, not an explicit
+    // operating_company_id filter (companyScoped:true would under/over-count vs policy).
+    { table: "accounts", activeFilter: "deactivated_at", companyScoped: false },
+    { table: "classes", activeFilter: "deactivated_at", companyScoped: false },
     { table: "payment_terms", activeFilter: "deactivated_at", companyScoped: false },
-    { table: "items", activeFilter: "deactivated_at", companyScoped: true },
+    { table: "items", activeFilter: "deactivated_at", companyScoped: false },
     { table: "posting_templates", activeFilter: "is_active", companyScoped: false },
     { table: "account_role_bindings", activeFilter: "deactivated_at", companyScoped: false },
     { table: "qbo_categories", activeFilter: "is_active", companyScoped: true },
