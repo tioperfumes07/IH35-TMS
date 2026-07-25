@@ -475,6 +475,10 @@
     {
       "file": "202607950000_posting_batches_template_link.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] ACCT-LINK-05 — closes catalogs.posting_templates 0-inbound-FK island-catalog defect. Additive accounting.posting_batches.posting_template_id uuid FK -> catalogs.posting_templates(id) ON DELETE SET NULL + source_template_code text stamp + partial index (WHERE NOT NULL) for reverse drill. NO seed rows (catalogs.posting_templates debit_account_id/credit_account_id are NOT NULL CoA picks — owner/CPA territory per Rule 13; re-verified truly 0 rows on Neon br-fancy-credit-akjnd07a WITH app.bypass_rls='lucia', not RLS-masked). All-NULL on add so the inline FK holds trivially, no backfill, no RLS/grant change (inherits table's existing FORCED RLS). Companion code change stamps source_template_code on every posting_batches insert going forward (posting-engine.service.ts) so the FK self-resolves the instant the owner seeds templates + runs the named one-time backfill in the migration's POST-APPLY VERIFY comment. Run only on a Neon branch by Jorge, then ledger-backfill."
+    },
+    {
+      "file": "202607950000_catalogs_items_backfill_from_qbo_mirror.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] LST-PICKER-02 companion. The item picker read mdata.qbo_items (mirror) while inline create wrote catalogs.items (canonical); the code fix repoints the readers. Prod 2026-07-25: catalogs.items TRANSP 189 / TRK 0 / USMCA 0 vs mdata.qbo_items TRANSP 180 / TRK 48 — repointing alone would EMPTY TRK's picker, so this additively backfills mirror-only items into the canonical catalog, same-entity, idempotent, skipping any qbo_item_id or name already present. No GL effect."
     }
   ]
 }
