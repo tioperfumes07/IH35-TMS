@@ -1,13 +1,13 @@
 # Module completion — Accounting (Module 3)
 
-**PROGRESS: 8 of 25** · complete: `false` · as_of: 2026-07-25T16:29:00.000Z · live_sha: `a3f9c12`
+**PROGRESS: 8 of 26** · complete: `false` · as_of: 2026-07-25T17:30:00.000Z · live_sha: `a3f9c12`
 
 | Status | Count |
 |---|---:|
 | PASS | 8 |
 | HOLD | 0 |
 | OPEN | 0 |
-| FAIL | 12 |
+| FAIL | 13 |
 | UNVERIFIED | 5 |
 
 | ID | Status | Title | Evidence | PR |
@@ -25,6 +25,7 @@
 | `ACCT-LINK-03` | **FAIL** | Bill unit_id / insurance_claim_id / linked_work_order_uuid density > 0 where applicable | vendor_id=16212; unit/claim/wo = 0 | #3425 |
 | `ACCT-LINK-04` | **FAIL** | expense_categories inbound FK from expense lines | HOLD PR #3446: additive same-entity FK expense_lines→catalogs.expense_categories (mig 202608020000). FAIL until Neon-apply proves FK + inbound density (lucia). | #3446 |
 | `ACCT-LINK-05` | **FAIL** | posting_templates inbound FK from consumers (WF-053) | LIVE REFRESH 2026-07-25: still 0 inbound FKs; posting_batches has NO posting_template_id column on prod; catalogs.posting_templates still 0 rows (lucia-verified true empty, not RLS-masked). PR #3444 [HOLD] adds posting_batches -> posting_templates consumer stamp — NOT yet Neon-applied. Remains FAIL until owner Neon-apply. | #3444 |
+| `ACCT-LINK-06` | **FAIL** | bank feed matched_journal_entry_id density + categorize→GL poster wired (ACCT-F05) | LIVE REFRESH 2026-07-25: matched_je=3/10622 (lucia); categorized_at_not_null=3. Wiring PASS on main: #3424 bulk+single categorize→maybePostBankCategorizationToGl→postSourceTransaction(bank_categorization)+matched_journal_entry_id lockstep stamp; BANK_FEED_GL_POSTING_ENABLED default OFF. Density is ops backlog — poster works when used; not a broken poster. GUARD: verify-bankfeed-je-match (step 1486). Remains FAIL until operator categorization volume moves matched_JE density. | #3424 |
 | `ACCT-SURF-01` | **UNVERIFIED** | Bills family — DoD A–E + VERIFY 1–8 on live surfaces | Frozen map docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md. Structural DoD guard scripts/verify-acct-surf-01-bills.mjs (route+ParityDrawer+submit payload+canonical accounting.bills). Desktop Expected vs Actual: ~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md. Stays UNVERIFIED until TRANSP+USMCA browser re-click + reverse density unit/claim/WO > 0 (Rule 23 — no structural PASS flip). | #3477 |
 | `ACCT-SURF-02` | **FAIL** | Expenses — DoD A–E + VERIFY 1–8 with live rows | expenses=0 with QBO_EXPENSES_PROJECTION_ENABLED OFF by owner decision — correct-at-0 (not a flag-flip chase). Surface chrome may be structurally wired; economics stay FAIL until owner unlocks projection + Neon density. | #3433 |
 | `ACCT-SURF-03` | **UNVERIFIED** | Bill payment — DoD A–E + VERIFY 1–8 with live rows | Frozen map docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md. Structural DoD guard scripts/verify-acct-surf-03-bill-payment.mjs (step 1461): route+ParityDrawer+pay payload+payVendorBill→accounting.bill_payments+JE/bank reverse EntityLinks. Neon bill_payments density live; stays UNVERIFIED until TRANSP+USMCA browser re-click (Rule 23). | #PENDING |
