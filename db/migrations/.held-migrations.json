@@ -471,6 +471,10 @@
     {
       "file": "202607940000_load_cancellations_drop_legacy_reason_fk.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] LST-F04 cancel-load P0. dispatch.load_cancellations.reason_code is NOT NULL with an FK to the RETIRE table catalogs.cancellation_reasons (9 rows, RLS OFF), while the writer reads the canonical per-entity catalogs.load_cancellation_reasons — all 12 active per-entity codes (36 rows / 3 entities) are absent from the legacy set, so a normal cancel violates a NOT-NULL-backed FK. Drops the legacy FK and relaxes NOT NULL. Does NOT make reason_code_id NOT NULL and does NOT drop the legacy table (gated on the writer repoint being live on prod). Verified on prod br-fancy-credit-akjnd07a 2026-07-24."
+    },
+    {
+      "file": "202607950000_posting_batches_template_link.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] ACCT-LINK-05 — closes catalogs.posting_templates 0-inbound-FK island-catalog defect. Additive accounting.posting_batches.posting_template_id uuid FK -> catalogs.posting_templates(id) ON DELETE SET NULL + source_template_code text stamp + partial index (WHERE NOT NULL) for reverse drill. NO seed rows (catalogs.posting_templates debit_account_id/credit_account_id are NOT NULL CoA picks — owner/CPA territory per Rule 13; re-verified truly 0 rows on Neon br-fancy-credit-akjnd07a WITH app.bypass_rls='lucia', not RLS-masked). All-NULL on add so the inline FK holds trivially, no backfill, no RLS/grant change (inherits table's existing FORCED RLS). Companion code change stamps source_template_code on every posting_batches insert going forward (posting-engine.service.ts) so the FK self-resolves the instant the owner seeds templates + runs the named one-time backfill in the migration's POST-APPLY VERIFY comment. Run only on a Neon branch by Jorge, then ledger-backfill."
     }
   ]
 }

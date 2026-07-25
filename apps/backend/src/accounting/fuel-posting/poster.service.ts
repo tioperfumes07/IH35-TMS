@@ -1,6 +1,13 @@
 import { withLuciaBypass } from "../../auth/db.js";
 import { resolveAccountForCategory } from "../expense-category-map/resolver.service.js";
 import { resolveRoleAccountOptional } from "../coa-roles/resolver.service.js";
+import { resolvePostingTemplateId } from "../posting-engine.service.js";
+
+// ACCT-LINK-05: fuel_event is a hardcoded source_transaction_type literal outside the shared
+// PostingSourceType union (fuel posting has its own poster, not the generic posting-engine). Stamp the
+// same code-constant onto posting_batches so it participates in the ACCT-LINK-05 inbound FK + reverse
+// drill exactly like every other source type once catalogs.posting_templates is seeded.
+const FUEL_EVENT_TEMPLATE_CODE = "fuel_event";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -240,6 +247,7 @@ export async function postFuelExpenseFromEvent(input: FuelPostingInput): Promise
       },
     ];
 
+    const postingTemplateId = await resolvePostingTemplateId(client, FUEL_EVENT_TEMPLATE_CODE);
     const batchInsert = await client.query<{ id: string }>(
       `
         INSERT INTO accounting.posting_batches (
@@ -249,13 +257,15 @@ export async function postFuelExpenseFromEvent(input: FuelPostingInput): Promise
           source_transaction_id,
           idempotency_key,
           created_by_user_id,
+          posting_template_id,
+          source_template_code,
           created_at,
           updated_at
         )
-        VALUES ($1::uuid, 'in_progress', 'fuel_event', $2, $3, $4::uuid, now(), now())
+        VALUES ($1::uuid, 'in_progress', 'fuel_event', $2, $3, $4::uuid, $5::uuid, $6, now(), now())
         RETURNING id::text
       `,
-      [input.operating_company_id, input.fuel_event_id, idempotencyKey, input.actor_user_id]
+      [input.operating_company_id, input.fuel_event_id, idempotencyKey, input.actor_user_id, postingTemplateId, FUEL_EVENT_TEMPLATE_CODE]
     );
     const postingBatchId = batchInsert.rows[0]?.id;
     if (!postingBatchId) throw new Error("fuel_posting_batch_create_failed");
