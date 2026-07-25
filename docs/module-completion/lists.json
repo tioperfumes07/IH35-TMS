@@ -238,6 +238,51 @@
       "owner_hold": false,
       "tracker": null,
       "future_block": null
+    },
+    {
+      "id": "LST-PICKER-01",
+      "title": "Every catalog has an inline '+ Add new' in its consuming picker",
+      "layers": [
+        "VERIFY-2"
+      ],
+      "spec": "DEFINITION-OF-DONE.md VERIFY-2 clause 2 — inline create as the FIRST ROW INSIDE the dropdown",
+      "status": "FAIL",
+      "evidence": "Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component.",
+      "pr": null,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "LST-PICKER-02",
+      "title": "Inline create writes the SAME table the picker reads",
+      "layers": [
+        "VERIFY-2",
+        "DOD-C"
+      ],
+      "spec": "VERIFY-2 clause 5 — writes the canonical table the picker reads",
+      "status": "FAIL",
+      "evidence": "CONFIRMED MISMATCH on kind 'item': the picker READS mdata.qbo_items (the QBO mirror) via accounting/items.routes.ts:88-105 and maintenance/wo-cost-context.routes.ts:35-49, while inline create WRITES catalogs.items (canonical) via QuickCreateEntityModal.tsx:174-203. An item created from the WO/Bill quick-create is INVISIBLE in that same picker after reload — the exact 'diesel category never appears' failure. NOTE, correcting the 2026-07-23 lists.md audit: it claimed TWO mismatches (item and category); 'category' now reads AND writes catalogs.accounts and is CLEAN. Only 'item' mismatches. vendor/customer/account/class/service/part all verified same-table. Lane: items.routes.ts is accounting (Cursor) and wo-cost-context is maintenance — flagged, not built here.",
+      "pr": null,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
+    },
+    {
+      "id": "LST-PICKER-03",
+      "title": "Inline create is the first row INSIDE the dropdown, not an outside button",
+      "layers": [
+        "VERIFY-2",
+        "VERIFY-1"
+      ],
+      "spec": "VERIFY-2 clause 2",
+      "status": "FAIL",
+      "evidence": "CostBreakdownBox.tsx:294-321 (Section B item picker) and its sub-row part picker use a plain SelectCombobox plus an EXTERNAL '+ Create' button at lines 314-317 — never ReferenceSelect — so the create control sits outside the box, which VERIFY-2 explicitly forbids. Independent of the table mismatch above. Propagates to 6 consumers: VendorBillForm.tsx:497, AccidentReportDrawer.tsx:501, CreateWorkOrderModal.tsx:1034, WorkOrderDetailPage.tsx:663, ApplyToBillForm.tsx:217, CreateExpenseForm.tsx:169.",
+      "pr": null,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null
     }
-  ]
+  ],
+  "M": 18
 }
