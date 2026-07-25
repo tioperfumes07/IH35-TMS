@@ -10,6 +10,9 @@
 -- PREREQ: 202608000000_payment_terms_posting_templates_per_entity.sql (opco column + seed).
 -- Idempotent: only updates rows where pointed terms.opco <> consumer.opco AND a same-name clone exists.
 -- NEVER-DELETE (§F.24).
+--
+-- NOTE: Postgres forbids referencing the UPDATE target alias inside a FROM-JOIN ON clause
+-- ("invalid reference to FROM-clause entry"). Keep consumer.opco predicates in WHERE only.
 
 BEGIN;
 SELECT set_config('app.bypass_rls', 'lucia', true);
@@ -35,10 +38,10 @@ BEGIN
        SET payment_terms_id = tgt.id
       FROM catalogs.payment_terms src
       JOIN catalogs.payment_terms tgt
-        ON tgt.operating_company_id = c.operating_company_id
-       AND tgt.terms_name = src.terms_name
+        ON tgt.terms_name = src.terms_name
      WHERE c.payment_terms_id IS NOT NULL
        AND src.id = c.payment_terms_id
+       AND tgt.operating_company_id = c.operating_company_id
        AND src.operating_company_id IS DISTINCT FROM c.operating_company_id;
   END IF;
 
@@ -52,10 +55,10 @@ BEGIN
        SET payment_terms_id = tgt.id
       FROM catalogs.payment_terms src
       JOIN catalogs.payment_terms tgt
-        ON tgt.operating_company_id = v.operating_company_id
-       AND tgt.terms_name = src.terms_name
+        ON tgt.terms_name = src.terms_name
      WHERE v.payment_terms_id IS NOT NULL
        AND src.id = v.payment_terms_id
+       AND tgt.operating_company_id = v.operating_company_id
        AND src.operating_company_id IS DISTINCT FROM v.operating_company_id;
   END IF;
 
@@ -69,10 +72,10 @@ BEGIN
        SET payment_terms_id = tgt.id
       FROM catalogs.payment_terms src
       JOIN catalogs.payment_terms tgt
-        ON tgt.operating_company_id = i.operating_company_id
-       AND tgt.terms_name = src.terms_name
+        ON tgt.terms_name = src.terms_name
      WHERE i.payment_terms_id IS NOT NULL
        AND src.id = i.payment_terms_id
+       AND tgt.operating_company_id = i.operating_company_id
        AND src.operating_company_id IS DISTINCT FROM i.operating_company_id;
   END IF;
 END
