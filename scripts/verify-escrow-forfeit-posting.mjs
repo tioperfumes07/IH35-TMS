@@ -58,6 +58,12 @@ export function assertForfeitPosting(sources) {
   if (!/posting_type:\s*["']forfeiture["']/.test(svc)) {
     problems.push(`${SERVICE}: escrow_postings row must use posting_type='forfeiture' (trigger decrements balance).`);
   }
+  if (!/UPDATE\s+driver_finance\.escrow_balances/.test(svc)) {
+    problems.push(`${SERVICE}: must UPDATE driver_finance.escrow_balances (driver-visible) — accounting-only forfeit is a split-brain half-close.`);
+  }
+  if (!/INSERT\s+INTO\s+driver_finance\.escrow_ledger/.test(svc)) {
+    problems.push(`${SERVICE}: must append driver_finance.escrow_ledger transaction_type='forfeit'.`);
+  }
   if (/posting_type:\s*["']adjustment["']|'adjustment'/.test(svc)) {
     problems.push(`${SERVICE}: posting_type='adjustment' is forbidden — 0234 ELSE→+ inflated the liability on forfeit.`);
   }

@@ -21,8 +21,12 @@
 
 ## DELTA PROOF (throwaway `ih35-tms-verify-db` :54329)
 - Apply-twice of 202608070000: OK
-- deposit +50000 → balance UP; forfeiture −20000 → balance DOWN; adjustment RAISE
-- Guard: `IH35_ESCROW_FORFEIT_DELTA_DSN=… node scripts/verify-escrow-forfeit-sign-delta.mjs` → `DELTA_PROOF_OK`
+- **Both subledgers** move in lockstep:
+  - `accounting.escrow_accounts.balance_cents` (canonical / trigger)
+  - `driver_finance.escrow_balances.current_balance_cents` (driver-visible)
+- deposit +50000 → both UP and equal; forfeiture −20000 → both DOWN and equal; adjustment RAISE
+- Service fails loud (`E_ESCROW_BALANCES_MISSING`) if driver_finance cannot move — no accounting-only forfeit
+- Guard: `IH35_ESCROW_FORFEIT_DELTA_DSN=… node scripts/verify-escrow-forfeit-sign-delta.mjs` → `DELTA_PROOF_OK both-subledgers`
 
 ## OWNER
 Neon-apply + ledger-backfill. **Do not flip the flag.**

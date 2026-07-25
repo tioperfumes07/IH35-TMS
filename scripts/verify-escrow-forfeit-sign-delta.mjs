@@ -99,6 +99,24 @@ export function assertStatic(root = ROOT) {
   if (/posting_type:\s*["']adjustment["']|'adjustment'/.test(forfeit)) {
     problems.push(`${FORFEIT_SVC}: must not use posting_type='adjustment' (ELSE→+ bug)`);
   }
+  // SAF-ORPH (d): both subledgers must move — accounting + driver_finance
+  if (!/UPDATE\s+driver_finance\.escrow_balances/.test(forfeit)) {
+    problems.push(
+      `${FORFEIT_SVC}: must UPDATE driver_finance.escrow_balances on forfeit (driver-visible balance) — accounting-only is a split-brain half-close`
+    );
+  }
+  if (!/current_balance_cents\s*=\s*current_balance_cents\s*-\s*\$/.test(forfeit) && !/current_balance_cents\s*-\s*/.test(forfeit)) {
+    problems.push(`${FORFEIT_SVC}: driver_finance.escrow_balances.current_balance_cents must decrement`);
+  }
+  if (!/INSERT\s+INTO\s+driver_finance\.escrow_ledger/.test(forfeit)) {
+    problems.push(`${FORFEIT_SVC}: must append driver_finance.escrow_ledger forfeit history row`);
+  }
+  if (!/['"]forfeit['"]/.test(forfeit) || !/transaction_type/.test(forfeit)) {
+    problems.push(`${FORFEIT_SVC}: escrow_ledger row must use transaction_type='forfeit'`);
+  }
+  if (!/E_ESCROW_BALANCES_MISSING|split-brain/.test(forfeit)) {
+    problems.push(`${FORFEIT_SVC}: must fail loud when driver_finance.escrow_balances cannot move (no accounting-only forfeit)`);
+  }
 
   const escrowSvc = stripComments(read(root, ESCROW_SVC));
   if (!/posting_type:\s*"deposit"\s*\|\s*"release"\s*\|\s*"forfeiture"/.test(escrowSvc)) {
@@ -115,19 +133,25 @@ function runThrowawayDelta() {
     throw new Error("refusing delta DSN that looks like prod — use local throwaway only");
   }
   // Entire proof is one transaction that ROLLBACKs — no durable fixture pollution.
+  // Asserts BOTH subledgers move in lockstep (canonical accounting.escrow_accounts AND
+  // driver-visible driver_finance.escrow_balances) — mirrors forfeitDriverEscrow dual-write.
   const sql = `
 BEGIN;
 SELECT set_config('app.bypass_rls','lucia',true);
 DO $proof$
 DECLARE
   v_opco uuid;
-  v_holder uuid := gen_random_uuid();
+  v_driver uuid;
   v_coa uuid;
   v_escrow uuid;
+  v_df_bal uuid;
   v_user uuid;
-  v_bal0 bigint;
-  v_bal1 bigint;
-  v_bal2 bigint;
+  v_acct0 bigint;
+  v_acct1 bigint;
+  v_acct2 bigint;
+  v_df0 bigint;
+  v_df1 bigint;
+  v_df2 bigint;
   v_dep bigint := 50000;
   v_for bigint := 20000;
 BEGIN
@@ -148,29 +172,75 @@ BEGIN
   END IF;
   IF v_coa IS NULL OR v_user IS NULL THEN RAISE EXCEPTION 'missing coa/user fixture'; END IF;
 
+  INSERT INTO mdata.drivers (first_name, last_name, phone, operating_company_id, status)
+  VALUES ('Delta', 'Proof', '+1555' || lpad((floor(random()*1e7))::int::text, 7, '0'), v_opco, 'Active')
+  RETURNING id INTO v_driver;
+
   INSERT INTO accounting.escrow_accounts (
     operating_company_id, holder_id, holder_type, purpose, coa_account_id, balance_cents, status
-  ) VALUES (v_opco, v_holder, 'driver', 'driver_bond', v_coa, 0, 'active')
+  ) VALUES (v_opco, v_driver, 'driver', 'driver_bond', v_coa, 0, 'active')
   RETURNING id INTO v_escrow;
 
-  SELECT balance_cents INTO v_bal0 FROM accounting.escrow_accounts WHERE id = v_escrow;
+  INSERT INTO driver_finance.escrow_balances (
+    operating_company_id, driver_id, total_held_cents, total_released_cents, current_balance_cents
+  ) VALUES (v_opco, v_driver, 0, 0, 0)
+  RETURNING id INTO v_df_bal;
 
+  SELECT balance_cents INTO v_acct0 FROM accounting.escrow_accounts WHERE id = v_escrow;
+  SELECT current_balance_cents INTO v_df0 FROM driver_finance.escrow_balances WHERE id = v_df_bal;
+
+  -- Contribution: accounting deposit (trigger +) + driver_finance hold (+)
   INSERT INTO accounting.escrow_postings (
     operating_company_id, escrow_account_id, posting_type, amount_cents, source_type,
     note, posted_by_user_id
   ) VALUES (v_opco, v_escrow, 'deposit', v_dep, 'manual', 'delta-proof deposit', v_user);
-  SELECT balance_cents INTO v_bal1 FROM accounting.escrow_accounts WHERE id = v_escrow;
-  IF v_bal1 <> v_bal0 + v_dep THEN
-    RAISE EXCEPTION 'deposit delta FAIL: bal0=% bal1=% expected=%', v_bal0, v_bal1, v_bal0 + v_dep;
+  UPDATE driver_finance.escrow_balances
+     SET total_held_cents = total_held_cents + v_dep,
+         current_balance_cents = current_balance_cents + v_dep,
+         last_updated_at = now()
+   WHERE id = v_df_bal;
+  INSERT INTO driver_finance.escrow_ledger
+    (operating_company_id, driver_id, escrow_balance_id, transaction_type, amount_cents, running_balance_cents, description)
+  VALUES (v_opco, v_driver, v_df_bal, 'hold', v_dep, v_df0 + v_dep, 'delta-proof deposit');
+
+  SELECT balance_cents INTO v_acct1 FROM accounting.escrow_accounts WHERE id = v_escrow;
+  SELECT current_balance_cents INTO v_df1 FROM driver_finance.escrow_balances WHERE id = v_df_bal;
+  IF v_acct1 <> v_acct0 + v_dep THEN
+    RAISE EXCEPTION 'accounting deposit FAIL: % → % expected %', v_acct0, v_acct1, v_acct0 + v_dep;
+  END IF;
+  IF v_df1 <> v_df0 + v_dep THEN
+    RAISE EXCEPTION 'driver_finance deposit FAIL: % → % expected %', v_df0, v_df1, v_df0 + v_dep;
+  END IF;
+  IF v_acct1 <> v_df1 THEN
+    RAISE EXCEPTION 'split-brain after deposit: accounting=% driver_finance=%', v_acct1, v_df1;
   END IF;
 
+  -- Forfeit: accounting forfeiture (trigger −) + driver_finance forfeit (−) — BOTH must move
   INSERT INTO accounting.escrow_postings (
     operating_company_id, escrow_account_id, posting_type, amount_cents, source_type,
     note, posted_by_user_id
   ) VALUES (v_opco, v_escrow, 'forfeiture', v_for, 'forfeit', 'delta-proof forfeit', v_user);
-  SELECT balance_cents INTO v_bal2 FROM accounting.escrow_accounts WHERE id = v_escrow;
-  IF v_bal2 <> v_bal1 - v_for THEN
-    RAISE EXCEPTION 'forfeiture delta FAIL: bal1=% bal2=% expected=% (would be + if ELSE bug)', v_bal1, v_bal2, v_bal1 - v_for;
+  UPDATE driver_finance.escrow_balances
+     SET current_balance_cents = current_balance_cents - v_for,
+         last_updated_at = now()
+   WHERE id = v_df_bal AND current_balance_cents >= v_for;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'driver_finance forfeit UPDATE matched 0 rows';
+  END IF;
+  INSERT INTO driver_finance.escrow_ledger
+    (operating_company_id, driver_id, escrow_balance_id, transaction_type, amount_cents, running_balance_cents, description)
+  VALUES (v_opco, v_driver, v_df_bal, 'forfeit', v_for, v_df1 - v_for, 'delta-proof forfeit');
+
+  SELECT balance_cents INTO v_acct2 FROM accounting.escrow_accounts WHERE id = v_escrow;
+  SELECT current_balance_cents INTO v_df2 FROM driver_finance.escrow_balances WHERE id = v_df_bal;
+  IF v_acct2 <> v_acct1 - v_for THEN
+    RAISE EXCEPTION 'accounting forfeit FAIL: % → % expected % (ELSE→+ bug?)', v_acct1, v_acct2, v_acct1 - v_for;
+  END IF;
+  IF v_df2 <> v_df1 - v_for THEN
+    RAISE EXCEPTION 'driver_finance forfeit FAIL: % → % expected % (visible balance frozen)', v_df1, v_df2, v_df1 - v_for;
+  END IF;
+  IF v_acct2 <> v_df2 THEN
+    RAISE EXCEPTION 'split-brain after forfeit: accounting=% driver_finance=%', v_acct2, v_df2;
   END IF;
 
   -- Prove adjustment still fails loud (no ELSE→+)
@@ -188,7 +258,7 @@ BEGIN
     END IF;
   END;
 
-  RAISE NOTICE 'DELTA_PROOF_OK deposit+% forfeit-% final=%', v_dep, v_for, v_bal2;
+  RAISE NOTICE 'DELTA_PROOF_OK both-subledgers deposit+% forfeit-% acct=% df=%', v_dep, v_for, v_acct2, v_df2;
 END
 $proof$;
 ROLLBACK;
@@ -200,10 +270,14 @@ ROLLBACK;
   if (r.status !== 0) {
     throw new Error(`throwaway delta failed: ${r.stderr || r.stdout}`);
   }
-  if (!/DELTA_PROOF_OK/.test((r.stderr || "") + (r.stdout || ""))) {
+  const out = (r.stderr || "") + (r.stdout || "");
+  if (!/DELTA_PROOF_OK/.test(out)) {
     throw new Error("throwaway delta ran but missing DELTA_PROOF_OK notice");
   }
-  return "DELTA_PROOF_OK";
+  if (!/both-subledgers/.test(out)) {
+    throw new Error("throwaway delta must assert both-subledgers (accounting + driver_finance)");
+  }
+  return "DELTA_PROOF_OK both-subledgers";
 }
 
 if (process.argv.includes("--selftest")) {
