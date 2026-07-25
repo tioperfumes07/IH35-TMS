@@ -25,7 +25,63 @@
       "pr": 3348,
       "owner_hold": true,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
     },
     {
       "id": "SAF-B02",
@@ -69,7 +125,63 @@
       "pr": 3353,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "SAF-B05",
@@ -84,7 +196,63 @@
       "pr": 3336,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "SAF-B06",
@@ -99,7 +267,63 @@
       "pr": 3375,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "SAF-B07",
@@ -128,7 +352,63 @@
       "pr": 3380,
       "owner_hold": true,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "SAF-B09",
@@ -144,7 +424,63 @@
       "pr": 3381,
       "owner_hold": true,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "SAF-B10",
@@ -158,7 +494,63 @@
       "pr": 3339,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "SAF-B11",
@@ -173,7 +565,63 @@
       "pr": 3371,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
     },
     {
       "id": "SAF-B12",
@@ -187,7 +635,63 @@
       "pr": null,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
     },
     {
       "id": "SAF-B13",
@@ -201,7 +705,63 @@
       "pr": 3340,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "SAF-B14",
@@ -216,7 +776,63 @@
       "pr": 3376,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "SAF-B15",
@@ -231,7 +847,63 @@
       "pr": 3363,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "SAF-B16",
@@ -246,7 +918,63 @@
       "pr": 3365,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "SAF-B17",
@@ -260,7 +988,63 @@
       "pr": 3354,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "SAF-B18",
@@ -275,7 +1059,63 @@
       "pr": 3376,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "SAF-B19",
@@ -290,7 +1130,63 @@
       "pr": 3377,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "SAF-B20",
@@ -305,7 +1201,63 @@
       "pr": 3379,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "SAF-B21",
@@ -335,7 +1287,63 @@
       "pr": 3370,
       "owner_hold": true,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
     },
     {
       "id": "SAF-B23",
@@ -349,7 +1357,63 @@
       "pr": 3360,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "SAF-B24",
@@ -363,7 +1427,63 @@
       "pr": 3381,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "SAF-B25",
@@ -377,7 +1497,63 @@
       "pr": 3356,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "SAF-B26",
@@ -391,7 +1567,63 @@
       "pr": null,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "SAF-B27",
@@ -420,7 +1652,63 @@
       "pr": 3380,
       "owner_hold": true,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "SAF-B29",
@@ -434,7 +1722,63 @@
       "pr": 3379,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "SAF-B30",
@@ -449,7 +1793,63 @@
       "pr": 3357,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "SAF-B31",
@@ -463,7 +1863,63 @@
       "pr": null,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     },
     {
       "id": "SAF-B32",
@@ -493,7 +1949,63 @@
       ],
       "spec": "Rule 13 financial + driver escrow = LIABILITY (owner-locked)",
       "status": "FAIL",
-      "evidence": "P0 MONEY DIRECTION, prod-verified verbatim. accounting.apply_escrow_posting_delta(): deposit -> +amount, release -> -amount, ELSE -> +amount. The forfeit posts posting_type='adjustment' with a POSITIVE amount, so a forfeiture INCREASES accounting.escrow_accounts.balance_cents while the JE DEBITS (reduces) the escrow liability - GL and subledger diverge by 2x the forfeit. LATENT: all escrow subledgers are 0 rows on prod and DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED has NO row in lib.feature_flags at all (unknown key resolves false), so the route returns 409 forever and there is no enable path. FINANCIAL - build-and-HOLD, CPA VETO, owner Neon-applies; no agent flips that flag. SCOPE: distinct from SAF-B01 (endpoint reachability) and SAF-ORPH-02 (which subledger is written) — this item is ONLY the trigger sign."
+      "evidence": "P0 MONEY DIRECTION, prod-verified verbatim. accounting.apply_escrow_posting_delta(): deposit -> +amount, release -> -amount, ELSE -> +amount. The forfeit posts posting_type='adjustment' with a POSITIVE amount, so a forfeiture INCREASES accounting.escrow_accounts.balance_cents while the JE DEBITS (reduces) the escrow liability - GL and subledger diverge by 2x the forfeit. LATENT: all escrow subledgers are 0 rows on prod and DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED has NO row in lib.feature_flags at all (unknown key resolves false), so the route returns 409 forever and there is no enable path. FINANCIAL - build-and-HOLD, CPA VETO, owner Neon-applies; no agent flips that flag. SCOPE: distinct from SAF-B01 (endpoint reachability) and SAF-ORPH-02 (which subledger is written) — this item is ONLY the trigger sign.",
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
     },
     {
       "pr": null,
@@ -508,7 +2020,63 @@
       ],
       "spec": "Rule 14 both-way linkage + driver_finance.* canonical",
       "status": "FAIL",
-      "evidence": "SPLIT-BRAIN subledger. The forfeit writes accounting.escrow_postings only, while EVERY driver-facing balance reads driver_finance.escrow_balances / escrow_ledger (banking escrow visualizer + register, driver-detail Escrow History, the over-draw guard in escrow-forfeit.service.ts). So the balance the over-draw check reads NEVER decrements - the same escrow could be forfeited repeatedly - and no driver-facing surface shows a forfeit. driver_finance.escrow_ledger already carries an UNUSED 'forfeit' value in its transaction_type CHECK. LATENT: both subledgers are 0 rows on prod today. Fixing SAF-ORPH-01 alone leaves this open, so they are ONE CPA review. SCOPE: distinct from SAF-B01 and SAF-ORPH-01; overlaps SAF-B22 (escrow drill-through) which stays the UI-side boundary."
+      "evidence": "SPLIT-BRAIN subledger. The forfeit writes accounting.escrow_postings only, while EVERY driver-facing balance reads driver_finance.escrow_balances / escrow_ledger (banking escrow visualizer + register, driver-detail Escrow History, the over-draw guard in escrow-forfeit.service.ts). So the balance the over-draw check reads NEVER decrements - the same escrow could be forfeited repeatedly - and no driver-facing surface shows a forfeit. driver_finance.escrow_ledger already carries an UNUSED 'forfeit' value in its transaction_type CHECK. LATENT: both subledgers are 0 rows on prod today. Fixing SAF-ORPH-01 alone leaves this open, so they are ONE CPA review. SCOPE: distinct from SAF-B01 and SAF-ORPH-01; overlaps SAF-B22 (escrow drill-through) which stays the UI-side boundary.",
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
     },
     {
       "pr": null,
@@ -523,7 +2091,63 @@
       ],
       "spec": "Rule 04 no phantom columns + Rule 16 no swallowed errors",
       "status": "OPEN",
-      "evidence": "PHANTOM COLUMN, prod-verified. driver_finance.escrow_ledger has 11 columns and NO posted_at, yet deductions.routes.ts:147 does ORDER BY posted_at -> 42703, swallowed by getEscrowDriverTimeline(...).catch(()=>({timeline:[]})). forfeiture_history_count is therefore always 0 and the Safety Forfeiture Audit panel is STRUCTURALLY incapable of ever showing a row. Non-financial, builder's lane: order by created_at (what sibling readers use) + a guard failing on ORDER BY of a column absent from the table."
+      "evidence": "PHANTOM COLUMN, prod-verified. driver_finance.escrow_ledger has 11 columns and NO posted_at, yet deductions.routes.ts:147 does ORDER BY posted_at -> 42703, swallowed by getEscrowDriverTimeline(...).catch(()=>({timeline:[]})). forfeiture_history_count is therefore always 0 and the Safety Forfeiture Audit panel is STRUCTURALLY incapable of ever showing a row. Non-financial, builder's lane: order by created_at (what sibling readers use) + a guard failing on ORDER BY of a column absent from the table.",
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
     },
     {
       "pr": null,
@@ -538,7 +2162,63 @@
       ],
       "spec": "Rule 15 research mandate — IRS Form 2290 instructions / FMCSA",
       "status": "OPEN",
-      "evidence": "The hardcoded 'Aug 31' STRING was removed, but the server computation it now trusts is still wrong twice. upcomingForm2290Deadline() always returns Aug 31 for the WHOLE company, ignoring per-unit first use - per IRS Form 2290 a vehicle first used after July is due the last day of the month following first use (a truck placed in service in October is due Nov 30) and this banner would never surface it; the per-unit proration that exists affects the TAX AMOUNT, not the DUE DATE. And there is NO weekend/holiday shift: Aug 31 2026 is a Monday so it is dormant, but 2024 (Saturday) and 2025 (Sunday) would have mis-rendered. The existing guard asserts only ISO shape and a 0-366 bound, so it would catch neither."
+      "evidence": "The hardcoded 'Aug 31' STRING was removed, but the server computation it now trusts is still wrong twice. upcomingForm2290Deadline() always returns Aug 31 for the WHOLE company, ignoring per-unit first use - per IRS Form 2290 a vehicle first used after July is due the last day of the month following first use (a truck placed in service in October is due Nov 30) and this banner would never surface it; the per-unit proration that exists affects the TAX AMOUNT, not the DUE DATE. And there is NO weekend/holiday shift: Aug 31 2026 is a Monday so it is dormant, but 2024 (Saturday) and 2025 (Sunday) would have mis-rendered. The existing guard asserts only ISO shape and a 0-366 bound, so it would catch neither.",
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
     },
     {
       "pr": null,
@@ -556,7 +2236,63 @@
       ],
       "spec": "Rule 05 tab law + Rule 21 (wave slice != module)",
       "status": "OPEN",
-      "evidence": "COVERAGE GAP, not a defect. SAFETY_TABS_CONFIG.ts declares SAFETY_CANONICAL_TAB_COUNT=28 / GROUP_COUNT=9, but the 32 SAF-B## items are BOUNDARIES, not tabs - there is no per-tab item and no per-tab sweep has run. 23 of the 32 boundaries are UNVERIFIED with the identical evidence 'Code merged; NO live proof'. Until a per-tab click-through exists on TRANSP+USMCA, Safety tab coverage is UNKNOWN rather than complete. This is the single largest blocker in the module."
+      "evidence": "COVERAGE GAP, not a defect. SAFETY_TABS_CONFIG.ts declares SAFETY_CANONICAL_TAB_COUNT=28 / GROUP_COUNT=9, but the 32 SAF-B## items are BOUNDARIES, not tabs - there is no per-tab item and no per-tab sweep has run. 23 of the 32 boundaries are UNVERIFIED with the identical evidence 'Code merged; NO live proof'. Until a per-tab click-through exists on TRANSP+USMCA, Safety tab coverage is UNKNOWN rather than complete. This is the single largest blocker in the module.",
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth — every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence — re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs — never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE — archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
     }
   ],
   "M": 32
