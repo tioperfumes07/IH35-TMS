@@ -467,6 +467,10 @@
         "202607930000_qbo_ar_payments_projection_flags.sql"
       ],
       "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] QBO-AR-PAYMENTS-PULL-2 — register QBO_AR_PAYMENT_MIRROR_PULL_ENABLED / QBO_AR_PAYMENTS_PROJECTION_ENABLED in lib.feature_flags DEFAULT OFF. No new idempotency-key index needed: accounting.payments already carries uq_payments_company_qbo_payment_id (migration 0178) as the header projection's ON CONFLICT target, and accounting.payment_applications already carries uq_payment_applications_target (payment_id, target_kind, target_id) (migration 0222) as the allocation fan-out's ON CONFLICT target — both verified live on Neon br-fancy-credit-akjnd07a 2026-07-24, no schema change required. BUILD-AND-HOLD: seeds NO per-entity ON override — owner flips ON per-entity after Neon-apply. Subledger only, NO GL posting (posting engine additionally refuses QBO-sourced customer payments via QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED). Additive/idempotent. NOT YET applied on prod — owner Neon-apply + ledger-backfill."
+    },
+    {
+      "file": "202607940000_load_cancellations_drop_legacy_reason_fk.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] LST-F04 cancel-load P0. dispatch.load_cancellations.reason_code is NOT NULL with an FK to the RETIRE table catalogs.cancellation_reasons (9 rows, RLS OFF), while the writer reads the canonical per-entity catalogs.load_cancellation_reasons — all 12 active per-entity codes (36 rows / 3 entities) are absent from the legacy set, so a normal cancel violates a NOT-NULL-backed FK. Drops the legacy FK and relaxes NOT NULL. Does NOT make reason_code_id NOT NULL and does NOT drop the legacy table (gated on the writer repoint being live on prod). Verified on prod br-fancy-credit-akjnd07a 2026-07-24."
     }
   ]
 }
