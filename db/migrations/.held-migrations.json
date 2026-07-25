@@ -731,6 +731,12 @@
       "applied_on_prod": true,
       "applied_ledger_checksum": "c35d5052f67edca32ae49a5f3d7100b71ee3d5b18926b42f7171ea6b3723b626",
       "applied_evidence": "APPLIED on prod 2026-07-25 (owner Neon-apply, neondb_owner, br-fancy-credit-akjnd07a). GUARD live read of _system._schema_migrations; both ledgers backfilled. Ledger checksum = sha256(repo file), independently recomputed from the committed file — 12/12 match — so no checksum override is needed. Record: claude/NEON-APPLY-HELD-MIGRATIONS-FINAL-2026-07-25."
+    },
+    {
+      "file": "202608070000_escrow_forfeit_posting_type_sign_and_flag_seed.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] SAF-ORPH-01/02 / ACCT-R-01 trigger half (stacks on merged #3533). CREATE OR REPLACE accounting.apply_escrow_posting_delta: deposit +, release −, forfeiture −, ELSE RAISE (fixes 0234 ELSE→+ that inflated accounting.escrow_accounts on forfeit). Expands posting_type CHECK with forfeiture. Seeds DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED default_enabled=false (0 rows on prod 2026-07-25 — no enable path). No per-entity overrides. No flag flip. Latent while clause-gated (0 signed driver contract_instances). Owner Neon-applies + ledger-backfill; GUARD re-proves function text + flag row + throwaway delta.",
+      "applied_on_prod": true,
+      "applied_evidence": "[escrow forfeit sign + flag seed] LIVE-VERIFIED on prod 2026-07-25 (tiny-field-89581227 / br-fancy-credit-akjnd07a) by joining _system._schema_migrations to ih35_migrations.applied_migrations: present in BOTH ledgers."
     }
   ],
   "superseded": [
@@ -741,10 +747,5 @@
       "applied_evidence": "SUPERSEDED — never to be applied. Owner + GUARD 2026-07-25: absent from BOTH ledgers AND its premise is FALSE on prod. It would create a \"Cost of Labor-Mexico Drivers\" account, but driver-pay cost-of-labor accounts ALREADY exist and driver_pay_expense is ALREADY designated for all three entities in accounting.chart_of_accounts_roles (TRANSP QBO-1150040140; USMCA 5100; TRK QBO-204). Applying it would DUPLICATE the CoA. RETAINED in the registry rather than delisted: the registry IS the prod-skip set, so removing it would turn it into an ordinary pending migration and fire it on the next deploy — causing exactly the duplication this classification exists to prevent."
     }
   ],
-  "held": [
-    {
-      "file": "202608070000_escrow_forfeit_posting_type_sign_and_flag_seed.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] SAF-ORPH-01/02 / ACCT-R-01 trigger half (stacks on merged #3533). CREATE OR REPLACE accounting.apply_escrow_posting_delta: deposit +, release −, forfeiture −, ELSE RAISE (fixes 0234 ELSE→+ that inflated accounting.escrow_accounts on forfeit). Expands posting_type CHECK with forfeiture. Seeds DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED default_enabled=false (0 rows on prod 2026-07-25 — no enable path). No per-entity overrides. No flag flip. Latent while clause-gated (0 signed driver contract_instances). Owner Neon-applies + ledger-backfill; GUARD re-proves function text + flag row + throwaway delta."
-    }
-  ]
+  "held": []
 }
