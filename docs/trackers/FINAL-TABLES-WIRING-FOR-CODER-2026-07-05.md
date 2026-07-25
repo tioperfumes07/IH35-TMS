@@ -93,6 +93,16 @@ and B match class C is an additive owner-gated HELD migration, tracked under `LS
   **absent from `_system._schema_migrations`**, `accounting.journal_entries` still has **no** type column and
   **no** FK to `journal_entry_types`, and the prod ledger tail stops at `202607950000`. The island is still
   OPEN on prod until the owner applies it. Accounting lane — reported here, not touched.
+- `expense_categories` — consumer FK shipped in `202608020000_acct_link_04_expense_lines_expense_category_fk.sql`
+  (ACCT-LINK-04 / ACCT-F07, PR #3446 @ `7a0c3614`). **MERGED IS NOT APPLIED:** prod still has **0 inbound FKs**
+  on `catalogs.expense_categories`; `accounting.expense_lines` lacks `operating_company_id` and the same-entity
+  composite FK. Static wiring guards 1433 + honesty 1478 PASS on main; manifest ACCT-LINK-04 stays **FAIL** until
+  owner Neon-apply. Tracker: `docs/trackers/MERGED-NOT-APPLIED-ACCT-F07-F08-2026-07-25.md`.
+- `posting_templates` — consumer FK shipped in `202607950000_posting_batches_template_link.sql`
+  (ACCT-LINK-05 / ACCT-F08, PR #3444 @ `1d90a178`). **MERGED IS NOT APPLIED:** prod still has **0 inbound FKs**;
+  `accounting.posting_batches` has **no** `posting_template_id` column; catalog is 0 rows (true empty, lucia).
+  Whether templates should be per-entity is an **owner design question** — do NOT auto-scope. Static wiring 1433 +
+  honesty 1479 PASS on main; manifest ACCT-LINK-05 stays **FAIL** until owner Neon-apply. Same tracker doc.
 - `detail_types` — **frozen owner decision (ACCT-02 / LINK-02): keep the text subtype lock. Do NOT wire an
   FK.** `catalogs.accounts` has no `detail_type_id` column and none is to be added.
 
