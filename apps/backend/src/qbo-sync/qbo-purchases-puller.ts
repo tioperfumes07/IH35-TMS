@@ -426,7 +426,8 @@ export async function projectPurchasesToExpenses(operatingCompanyId: string): Pr
           FROM src
         )
         INSERT INTO accounting.expense_lines (
-          expense_id, line_sequence, amount, amount_cents, description, expense_account_uuid, ps_category_qbo_id, section
+          expense_id, line_sequence, amount, amount_cents, description, expense_account_uuid, ps_category_qbo_id, section,
+          expense_category_uuid
         )
         SELECT
           s.expense_id,
@@ -436,19 +437,36 @@ export async function projectPurchasesToExpenses(operatingCompanyId: string): Pr
           s.description,
           ca.id,
           s.account_qbo_id,
-          'B'
+          'B',
+          CASE WHEN ecm.matches = 1 THEN ecm.id END
         FROM seq s
         LEFT JOIN catalogs.accounts ca
           ON ca.operating_company_id = s.operating_company_id
          AND ca.qbo_account_id = s.account_qbo_id
          AND ca.deactivated_at IS NULL
+        -- ACCT-LINK-04: QBO Purchase lines carry an AccountRef, never a category. The only honest
+        -- bridge to catalogs.expense_categories is the category's own account binding — the same
+        -- metadata the posting engine reads forward — and only when exactly one active category in
+        -- this entity claims the account. Ambiguous or unbound leaves the line uncategorized.
+        LEFT JOIN LATERAL (
+          SELECT min(ec.id) AS id, count(*) AS matches
+          FROM catalogs.expense_categories ec
+          WHERE ec.operating_company_id = s.operating_company_id
+            AND ec.is_active
+            AND COALESCE(
+                  NULLIF(ec.metadata->>'account_id', ''),
+                  NULLIF(ec.metadata->>'account_uuid', ''),
+                  NULLIF(ec.metadata->>'coa_account_id', '')
+                ) = ca.id::text
+        ) ecm ON ca.id IS NOT NULL
         ON CONFLICT (expense_id, line_sequence)
         DO UPDATE SET
           amount = EXCLUDED.amount,
           amount_cents = EXCLUDED.amount_cents,
           description = EXCLUDED.description,
           expense_account_uuid = EXCLUDED.expense_account_uuid,
-          ps_category_qbo_id = EXCLUDED.ps_category_qbo_id
+          ps_category_qbo_id = EXCLUDED.ps_category_qbo_id,
+          expense_category_uuid = COALESCE(EXCLUDED.expense_category_uuid, accounting.expense_lines.expense_category_uuid)
       `,
       [operatingCompanyId]
     );
