@@ -1,0 +1,236 @@
+#!/usr/bin/env node
+/**
+ * ACCT-F08 / ACCT-LINK-05 — MERGED≠APPLIED honesty guard.
+ *
+ * Layer 1: delegate to verify-posting-batches-template-link.mjs (migration + writers on main).
+ * Layer 2: fail closed if manifest pretends PASS, held migration is marked applied_on_prod,
+ *          posting_templates gets auto-scoped without owner unlock, or honesty doc missing.
+ *
+ * CI-static — no DB. Prod FK density is owner Neon-apply + live re-proof.
+ */
+import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const LABEL = "verify-posting-templates-consumer-fk";
+
+const WIRED_GUARD = "scripts/verify-posting-batches-template-link.mjs";
+const HELD_MANIFEST = "db/migrations/.held-migrations.json";
+const MIGRATION = "202607950000_posting_batches_template_link.sql";
+const MANIFEST = "docs/module-completion/accounting.json";
+const HONESTY_DOC = "docs/trackers/MERGED-NOT-APPLIED-ACCT-F07-F08-2026-07-25.md";
+const MERGED_PR = "#3444";
+const MERGE_SHA = "1d90a17828cbeba353f4c89ef49d5a868f1aefb9";
+const MANIFEST_ITEM = "ACCT-LINK-05";
+
+function read(rel) {
+  const abs = path.join(ROOT, rel);
+  if (!fs.existsSync(abs)) return { missing: rel, text: "" };
+  return { text: fs.readFileSync(abs, "utf8") };
+}
+
+function runWiredGuard() {
+  const r = spawnSync("node", [path.join(ROOT, WIRED_GUARD)], { cwd: ROOT, encoding: "utf8" });
+  if (r.status !== 0) {
+    return [`${WIRED_GUARD} failed — merged static wiring regressed:\n${r.stderr || r.stdout}`];
+  }
+  return [];
+}
+
+export function collectHonestyFailures(opts = {}) {
+  const failures = [];
+  const root = opts.root ?? ROOT;
+
+  const migPath = path.join(root, "db/migrations", MIGRATION);
+  if (!fs.existsSync(migPath)) {
+    failures.push(`missing held migration db/migrations/${MIGRATION} on main`);
+  } else {
+    const mig = fs.readFileSync(migPath, "utf8");
+    if (!/HOLD-FOR-JORGE/i.test(mig)) {
+      failures.push(`${MIGRATION}: must carry HOLD-FOR-JORGE marker`);
+    }
+    if (!/posting_template_id uuid REFERENCES catalogs\.posting_templates/i.test(mig)) {
+      failures.push(`${MIGRATION}: must add posting_template_id FK to catalogs.posting_templates`);
+    }
+    if (!/source_template_code/i.test(mig)) {
+      failures.push(`${MIGRATION}: must add source_template_code stamp column`);
+    }
+    // F08 wires consumer FK to GLOBAL posting_templates — must not add opco in this migration
+    if (/ALTER TABLE catalogs\.posting_templates[\s\S]*operating_company_id/i.test(mig)) {
+      failures.push(`${MIGRATION}: must not add operating_company_id to posting_templates (owner design Q — separate LST-F03 block)`);
+    }
+  }
+
+  const held = read(path.relative(ROOT, path.join(root, HELD_MANIFEST)));
+  if (held.missing) {
+    failures.push(`missing ${held.missing}`);
+  } else {
+    let parsed;
+    try {
+      parsed = JSON.parse(held.text);
+    } catch {
+      failures.push(`${HELD_MANIFEST}: invalid JSON`);
+      parsed = null;
+    }
+    if (parsed) {
+      const entry = (parsed.held ?? []).find((e) => e.file === MIGRATION);
+      if (!entry) {
+        failures.push(`${HELD_MANIFEST}: ${MIGRATION} not registered`);
+      } else if (entry.applied_on_prod === true) {
+        failures.push(
+          `${HELD_MANIFEST}: ${MIGRATION} has applied_on_prod:true — flip manifest to PASS in apply PR instead`
+        );
+      }
+    }
+  }
+
+  const acct = read(path.relative(ROOT, path.join(root, MANIFEST)));
+  if (acct.missing) {
+    failures.push(`missing ${acct.missing}`);
+  } else {
+    let data;
+    try {
+      data = JSON.parse(acct.text);
+    } catch {
+      failures.push(`${MANIFEST}: invalid JSON`);
+      data = null;
+    }
+    if (data) {
+      const item = (data.items ?? []).find((i) => i.id === MANIFEST_ITEM);
+      if (!item) {
+        failures.push(`${MANIFEST}: missing item ${MANIFEST_ITEM}`);
+      } else {
+        if (item.status === "PASS") {
+          failures.push(`${MANIFEST_ITEM} is PASS but prod FK not Neon-applied — MERGED≠APPLIED theater`);
+        }
+        if (item.status !== "FAIL") {
+          failures.push(`${MANIFEST_ITEM} must stay FAIL until Neon-apply (got ${item.status})`);
+        }
+        const ev = String(item.evidence ?? "");
+        if (!/Neon-apply|NOT yet Neon-applied|0 inbound FK/i.test(ev)) {
+          failures.push(`${MANIFEST_ITEM} evidence must name prod gap + Neon-apply`);
+        }
+        if (!String(item.pr ?? "").includes("3444")) {
+          failures.push(`${MANIFEST_ITEM} must reference merged PR ${MERGED_PR}`);
+        }
+      }
+    }
+  }
+
+  const doc = read(path.relative(ROOT, path.join(root, HONESTY_DOC)));
+  if (doc.missing) {
+    failures.push(`missing honesty doc ${HONESTY_DOC}`);
+  } else {
+    if (!/MERGED\s*≠\s*APPLIED|MERGED IS NOT APPLIED/i.test(doc.text)) {
+      failures.push(`${HONESTY_DOC}: must state MERGED≠APPLIED`);
+    }
+    if (!doc.text.includes(MERGE_SHA.slice(0, 12))) {
+      failures.push(`${HONESTY_DOC}: must record merge SHA for ${MERGED_PR}`);
+    }
+    if (!/1479/.test(doc.text)) {
+      failures.push(`${HONESTY_DOC}: must reference verify-step 1479`);
+    }
+    if (!/ACCT-F08|ACCT-LINK-05/.test(doc.text)) {
+      failures.push(`${HONESTY_DOC}: must cover ACCT-F08 / ACCT-LINK-05`);
+    }
+    if (!/owner design question|do NOT auto-scope/i.test(doc.text)) {
+      failures.push(`${HONESTY_DOC}: must surface posting_templates per-entity owner question`);
+    }
+  }
+
+  return failures;
+}
+
+function selftest() {
+  const failures = [];
+  const goodRoot = fs.mkdtempSync("/tmp/acct-f08-honesty-");
+  try {
+    fs.mkdirSync(path.join(goodRoot, "db/migrations"), { recursive: true });
+    fs.mkdirSync(path.join(goodRoot, "docs/module-completion"), { recursive: true });
+    fs.mkdirSync(path.join(goodRoot, "docs/trackers"), { recursive: true });
+
+    fs.writeFileSync(
+      path.join(goodRoot, "db/migrations", MIGRATION),
+      "-- HOLD-FOR-JORGE\nADD COLUMN IF NOT EXISTS posting_template_id uuid REFERENCES catalogs.posting_templates(id);\nADD COLUMN IF NOT EXISTS source_template_code text;\n"
+    );
+    fs.writeFileSync(
+      path.join(goodRoot, HELD_MANIFEST),
+      JSON.stringify({ held: [{ file: MIGRATION, reason: "hold" }] })
+    );
+    fs.writeFileSync(
+      path.join(goodRoot, MANIFEST),
+      JSON.stringify({
+        module: "accounting",
+        complete: false,
+        items: [
+          {
+            id: MANIFEST_ITEM,
+            status: "FAIL",
+            evidence: "0 inbound FKs — PR #3444 NOT yet Neon-applied",
+            pr: "#3444",
+          },
+        ],
+      })
+    );
+    fs.writeFileSync(
+      path.join(goodRoot, HONESTY_DOC),
+      `# MERGED ≠ APPLIED\n${MERGE_SHA}\n1479 verify-posting-templates-consumer-fk\nACCT-F08 ACCT-LINK-05\nowner design question — do NOT auto-scope\n`
+    );
+
+    if (collectHonestyFailures({ root: goodRoot }).length) {
+      failures.push("good fixture rejected");
+    }
+
+    fs.writeFileSync(
+      path.join(goodRoot, MANIFEST),
+      JSON.stringify({
+        module: "accounting",
+        complete: false,
+        items: [{ id: MANIFEST_ITEM, status: "PASS", evidence: "fake", pr: "#3444" }],
+      })
+    );
+    if (!collectHonestyFailures({ root: goodRoot }).some((f) => f.includes("MERGED≠APPLIED"))) {
+      failures.push("PASS manifest not caught");
+    }
+  } finally {
+    fs.rmSync(goodRoot, { recursive: true, force: true });
+  }
+
+  if (failures.length) {
+    console.error(`${LABEL} SELFTEST FAILED:`);
+    for (const f of failures) console.error(`  ${f}`);
+    process.exit(1);
+  }
+  console.log(`${LABEL}: selftest PASS`);
+}
+
+if (process.argv.includes("--selftest")) {
+  selftest();
+  process.exit(0);
+}
+
+if (process.argv.includes("--honesty-only")) {
+  const failures = collectHonestyFailures();
+  if (failures.length) {
+    console.error(`${LABEL}: FAIL`);
+    for (const f of failures) console.error(`  - ${f}`);
+    process.exit(1);
+  }
+  console.log(`${LABEL}: honesty layer OK — ${MANIFEST_ITEM} stays FAIL until owner Neon-apply`);
+  process.exit(0);
+}
+
+const failures = [...runWiredGuard(), ...collectHonestyFailures()];
+if (failures.length) {
+  console.error(`${LABEL}: FAIL`);
+  for (const f of failures) console.error(`  - ${f}`);
+  process.exit(1);
+}
+
+console.log(
+  `${LABEL}: OK — static wiring on main (${WIRED_GUARD}) + ${MANIFEST_ITEM} honestly FAIL ` +
+    `(merged ${MERGED_PR} @ ${MERGE_SHA.slice(0, 12)}…; prod FK awaits owner Neon-apply of ${MIGRATION})`
+);
+process.exit(0);
