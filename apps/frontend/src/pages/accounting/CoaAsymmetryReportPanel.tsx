@@ -18,12 +18,12 @@ export function CoaAsymmetryReportPanel({ enabled }: Props) {
 
   return (
     <section
-      className="mb-4 rounded-sm border border-amber-200 bg-amber-50/60 p-4"
+      className="mb-4 rounded-sm border border-slate-200 bg-slate-100 p-4"
       data-testid="coa-asymmetry-report-panel"
     >
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-sm font-semibold text-slate-900">Entity CoA asymmetry (read-only)</h2>
-        <span className="text-xs font-medium uppercase tracking-wide text-amber-800">Owner-eyes · change nothing</span>
+        <span className="text-xs font-medium uppercase tracking-wide text-slate-700">Owner-eyes · change nothing</span>
       </div>
       <p className="mb-3 text-xs text-slate-700">
         Grouped diff across TRK / TRANSP / USMCA postable charts. Reserve / holdback / retainage accounts are
@@ -37,7 +37,7 @@ export function CoaAsymmetryReportPanel({ enabled }: Props) {
         <div className="space-y-4 text-sm text-slate-800">
           <table className="w-full max-w-xl border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b border-amber-200 text-xs uppercase text-slate-600">
+              <tr className="border-b border-slate-200 text-xs uppercase text-slate-600">
                 <th className="py-1 pr-4">Entity</th>
                 <th className="py-1 pr-4 text-right">Postable</th>
                 <th className="py-1 text-right">Active total</th>
@@ -45,7 +45,7 @@ export function CoaAsymmetryReportPanel({ enabled }: Props) {
             </thead>
             <tbody>
               {data.postable_by_entity.map((row) => (
-                <tr key={row.entity_code} className="border-b border-amber-100">
+                <tr key={row.entity_code} className="border-b border-slate-200">
                   <td className="py-1 pr-4 font-medium">{row.entity_code}</td>
                   <td className="py-1 pr-4 text-right tabular-nums">{row.postable}</td>
                   <td className="py-1 text-right tabular-nums">{row.total_active}</td>
