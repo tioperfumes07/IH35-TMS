@@ -1955,3 +1955,37 @@ CPA already locked the **name** (`Cost of Labor–Mexico Drivers`, CostOfGoodsSo
 | USMCA | `6890` | Cost of Labor–Mexico Drivers |
 
 Migration: `db/migrations/202607790000_cost_of_labor_mexico_drivers_transp_usmca.sql`. Neon paste: `docs/trackers/NEON-APPLY-COST-OF-LABOR-MEXICO-6890-2026-07-25.md`. After seed, repoint `accounting.chart_of_accounts_roles.driver_pay_expense` → these rows (TRANSP was incorrectly on Nomina QBO-1150040140).
+
+---
+
+## 2026-07-25 — Catalog per-entity + detail-types WIRE + QBO flags LATER (LOCKED)
+
+Owner chat rulings (plain language → law):
+
+### 1. LST-F17 / all catalogs — per-company boxes, same shape
+
+**Ruling: Option A (extended to all catalogs).**
+
+- Every company (TRANSP / TRK / USMCA) has **its own catalog rows** scoped by `operating_company_id`.
+- Structure / seed parity is the same across companies (same kinds of reasons/types), but each company can **add / edit / deactivate for that company only**.
+- Cancel-load canonical write = per-entity `catalogs.cancellation_reasons` (add `operating_company_id` — absent on Neon 2026-07-25). Linkage-law RETIRE of a global-only table is resolved toward this per-entity catalog (never DELETE module/surface — additive migrate + seed parity).
+- Same pattern for other Lists catalogs unless a doc explicitly marks GLOBAL-BY-DESIGN.
+
+### 2. LINK-02 / detail types — WIRE + create + cascade by account type
+
+**Ruling: WIRE (not LOCK text-only).**
+
+- `catalogs.accounts` must gain a real FK to `catalogs.detail_types` (additive `detail_type_id`; keep `account_subtype` text as display/cache during transition if needed).
+- When creating/editing an account: choosing **Account Type** must show **only** detail types for that type (cascade). No “all detail types for every type.”
+- Operator must be able to **+ Create detail type** in-app (Lists → Detail Types and/or nested from account drawer), fully wired (API + RLS + company scope + `account_type_id`). Example: Account Type = Other Expense → create detail type **Trailer Repairs** even if Vehicle Repairs already exists.
+- Live note 2026-07-25: `catalogs.detail_types` already has `operating_company_id` + `account_type_id` (144 rows); Lists create page exists; account drawer still writes **text** `account_subtype` and `accounts.detail_type_id` column is **absent** — FK wire is the remaining gap.
+
+### 3. QBO projection flags — LATER
+
+**Ruling: leave OFF** until the software is finished enough to begin formal testing. Do not flip:
+
+- `QBO_EXPENSES_PROJECTION_ENABLED`
+- `QBO_AR_PAYMENTS_PROJECTION_ENABLED`
+- (nor escrow forfeit GL flag)
+
+Reply tokens recorded: `LST-F17: A` · `LINK-02: WIRE` · `FLAGS: LATER`.
