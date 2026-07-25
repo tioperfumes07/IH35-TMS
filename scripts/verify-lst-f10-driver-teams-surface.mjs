@@ -165,6 +165,17 @@ function contractErrors(src) {
     errors.push("WRONG-BACKEND: driver-teams client must call /api/v1/mdata/driver-teams, not the split API");
   }
 
+  // ---- shared-control locks (caught by locked-guards on the first push) --------------------------
+  if (/type\s*=\s*["']date["']/.test(modal)) {
+    errors.push("SHARED-CONTROL: DriverTeamModal must use <DatePicker>, never a raw <input type=\"date\">");
+  }
+  if (!modal.includes("DatePicker")) {
+    errors.push("SHARED-CONTROL: DriverTeamModal must render the shared DatePicker for Effective From");
+  }
+  if (!modal.includes("DriverPickerWithCreate")) {
+    errors.push("PICKER-LAW: DriverTeamModal must use DriverPickerWithCreate (inherits inline + Create driver)");
+  }
+
   // ---- §7 product locks -------------------------------------------------------------------------
   if (!page.includes("+ Create")) {
     errors.push('§7 vocabulary: DriverTeamsPage must offer "+ Create"');
@@ -211,6 +222,8 @@ function selftest() {
       "updateMdataDriverTeam",
       "deactivateMdataDriverTeam",
       "replaceMdataDriverTeamDriver",
+      "<DriverPickerWithCreate operatingCompanyId={id} />",
+      "<DatePicker value={form.effective_from} />",
     ].join("\n"),
     api: [
       "export function listMdataDriverTeams(params) {",
@@ -301,6 +314,25 @@ function selftest() {
     process.exit(1);
   }
 
+  // The exact regression locked-guards caught on the first push of this branch.
+  const rawDateInput = { ...good, modal: `${good.modal}\n<input type="date" value={form.effective_from} />` };
+  if (!contractErrors(rawDateInput).some((e) => e.includes("raw <input"))) {
+    console.error(`${LABEL} --selftest FAIL: raw <input type="date"> not caught`);
+    process.exit(1);
+  }
+
+  const noDatePicker = { ...good, modal: good.modal.replace("<DatePicker value={form.effective_from} />", "") };
+  if (!contractErrors(noDatePicker).some((e) => e.includes("shared DatePicker"))) {
+    console.error(`${LABEL} --selftest FAIL: dropped DatePicker not caught`);
+    process.exit(1);
+  }
+
+  const noDriverPicker = { ...good, modal: good.modal.replace("<DriverPickerWithCreate operatingCompanyId={id} />", "") };
+  if (!contractErrors(noDriverPicker).some((e) => e.startsWith("PICKER-LAW:"))) {
+    console.error(`${LABEL} --selftest FAIL: dropped DriverPickerWithCreate not caught`);
+    process.exit(1);
+  }
+
   const badVocab = { ...good, page: good.page.replace("+ Create", "+ New") };
   if (!contractErrors(badVocab).some((e) => e.includes("vocabulary"))) {
     console.error(`${LABEL} --selftest FAIL: "+ New" vocabulary not caught`);
@@ -325,7 +357,7 @@ function selftest() {
     process.exit(1);
   }
 
-  console.log(`${LABEL}: selftest PASS (9 defect fixtures rejected, good fixture accepted)`);
+  console.log(`${LABEL}: selftest PASS (12 defect fixtures rejected, good fixture accepted)`);
 }
 
 if (process.argv.includes("--selftest")) {

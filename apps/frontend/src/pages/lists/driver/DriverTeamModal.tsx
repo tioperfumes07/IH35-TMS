@@ -23,6 +23,7 @@ import {
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
+import { DatePicker } from "../../../components/forms/DatePicker";
 
 type Props = {
   open: boolean;
@@ -225,17 +226,18 @@ export function DriverTeamModal({ open, operatingCompanyId, mode, team, onClose,
               {errors.secondary_driver_id ? <div className="mt-1 text-[11px] text-red-700">{errors.secondary_driver_id}</div> : null}
             </div>
 
-            <label className="block text-xs font-semibold text-gray-600">
+            <div className="block text-xs font-semibold text-gray-600">
               Effective From
-              <input
-                type="date"
+              {/* Shared DatePicker only — a raw native date input is forbidden (verify:no-raw-date-input). */}
+              <DatePicker
+                data-testid="driver-team-effective-from"
+                className="mt-1"
                 value={form.effective_from}
                 max={maxEffectiveFromIso()}
-                onChange={(event) => setForm((value) => ({ ...value, effective_from: event.target.value }))}
-                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+                onChange={(next) => setForm((value) => ({ ...value, effective_from: next }))}
               />
               {errors.effective_from ? <div className="mt-1 text-[11px] text-red-700">{errors.effective_from}</div> : null}
-            </label>
+            </div>
           </>
         ) : null}
 
