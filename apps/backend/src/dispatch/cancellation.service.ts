@@ -38,13 +38,20 @@ export async function cancelLoad(
       );
       if (!loadRes.rows[0]?.id) throw new Error("E_LOAD_NOT_FOUND");
 
+      // LST-F04: select the catalog row's id as well. `reason_code_id` is the CANONICAL link
+      // (FK -> catalogs.load_cancellation_reasons, per-entity, FORCE RLS). The legacy `reason_code`
+      // text column used to be NOT NULL with an FK to the RETIRE table catalogs.cancellation_reasons
+      // (9 global rows) — none of the per-entity codes exist there, so writing only the text made a
+      // normal cancel violate a NOT-NULL-backed FK. Migration 202607940000 drops that legacy FK;
+      // this writer now persists the canonical id and keeps the text for display only.
       const reasonRes = await client.query<{
+        id: string;
         reason_code: string;
         billable_to_customer_default: boolean;
         requires_owner_approval: boolean;
       }>(
         `
-          SELECT reason_code, billable_to_customer_default, requires_owner_approval
+          SELECT id, reason_code, billable_to_customer_default, requires_owner_approval
           FROM catalogs.load_cancellation_reasons
           WHERE reason_code = $1
             AND operating_company_id = $2
@@ -60,12 +67,13 @@ export async function cancelLoad(
       const row = await client.query<{ id: string; status: string }>(
         `
           INSERT INTO dispatch.load_cancellations (
-            operating_company_id, load_id, reason_code, cancellation_notes,
+            operating_company_id, load_id, reason_code, reason_code_id, cancellation_notes,
             billable_to_customer, cancellation_charge_cents, status, cancelled_by_user_id, cancelled_at
           )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,now())
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,now())
           ON CONFLICT (load_id) DO UPDATE
           SET reason_code = EXCLUDED.reason_code,
+              reason_code_id = EXCLUDED.reason_code_id,
               cancellation_notes = EXCLUDED.cancellation_notes,
               billable_to_customer = EXCLUDED.billable_to_customer,
               cancellation_charge_cents = EXCLUDED.cancellation_charge_cents,
@@ -78,6 +86,7 @@ export async function cancelLoad(
           input.operating_company_id,
           input.load_id,
           input.reason_code,
+          reason.id,
           input.cancellation_notes.trim(),
           input.billable_to_customer ?? reason.billable_to_customer_default,
           input.cancellation_charge_cents ?? null,
