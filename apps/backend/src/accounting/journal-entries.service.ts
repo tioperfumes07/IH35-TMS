@@ -35,6 +35,45 @@ async function hasReversalLinkageColumns(client: QueryableClient): Promise<boole
   return present;
 }
 
+// ACCT-LINK-01 — journal_entry_type_id ships in HELD migration 202607940000 (owner Neon-apply).
+// Same expand/contract pattern as reversal linkage: tolerate absence until applied.
+let journalEntryTypeColumnPresent = false;
+async function hasJournalEntryTypeColumn(client: QueryableClient): Promise<boolean> {
+  if (journalEntryTypeColumnPresent) return true;
+  const res = await client.query<{ n: number }>(
+    `SELECT count(*)::int AS n
+       FROM information_schema.columns
+      WHERE table_schema = 'accounting'
+        AND table_name = 'journal_entries'
+        AND column_name = 'journal_entry_type_id'`
+  );
+  const present = Number(res.rows[0]?.n ?? 0) === 1;
+  if (present) journalEntryTypeColumnPresent = true;
+  return present;
+}
+
+async function resolveJournalEntryTypeId(
+  client: QueryableClient,
+  input: { journal_entry_type_id?: string | null; journal_entry_type_code?: string | null; source?: JournalEntrySource }
+): Promise<string | null> {
+  if (input.journal_entry_type_id) {
+    const byId = await client.query<{ id: string }>(
+      `SELECT id::text FROM catalogs.journal_entry_types WHERE id = $1::uuid AND is_active = true LIMIT 1`,
+      [input.journal_entry_type_id]
+    );
+    if (!byId.rows[0]?.id) throw new Error("journal_entry_type_not_found");
+    return byId.rows[0].id;
+  }
+  const code = (input.journal_entry_type_code ?? (input.source === "manual" ? "GENERAL" : null))?.trim();
+  if (!code) return null;
+  const byCode = await client.query<{ id: string }>(
+    `SELECT id::text FROM catalogs.journal_entry_types WHERE lower(code) = lower($1) AND is_active = true LIMIT 1`,
+    [code]
+  );
+  if (!byCode.rows[0]?.id) throw new Error("journal_entry_type_not_found");
+  return byCode.rows[0].id;
+}
+
 type CreatePostingInput = {
   account_id: string;
   class_id?: string | null;
@@ -49,6 +88,10 @@ export type CreateJournalEntryInput = {
   entry_date: string;
   memo?: string | null;
   source?: JournalEntrySource;
+  /** catalogs.journal_entry_types.id — optional; defaults to GENERAL for source=manual when column present */
+  journal_entry_type_id?: string | null;
+  /** catalogs.journal_entry_types.code — optional alternate to id */
+  journal_entry_type_code?: string | null;
   postings: CreatePostingInput[];
 };
 
@@ -132,8 +175,44 @@ export async function createJournalEntryOnClient(
   }
 
   await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
-  const headerRes = await client.query<CreateJournalEntryHeader>(
-    `
+  const typeColPresent = await hasJournalEntryTypeColumn(client);
+  const typeId = typeColPresent
+    ? await resolveJournalEntryTypeId(client, {
+        journal_entry_type_id: input.journal_entry_type_id,
+        journal_entry_type_code: input.journal_entry_type_code,
+        source: input.source ?? "manual",
+      })
+    : null;
+
+  const headerRes = typeColPresent
+    ? await client.query<CreateJournalEntryHeader>(
+        `
+      INSERT INTO accounting.journal_entries (
+        operating_company_id,
+        entry_date,
+        memo,
+        status,
+        source,
+        journal_entry_type_id,
+        created_by_user_id,
+        qbo_sync_pending,
+        created_at,
+        updated_at
+      )
+      VALUES ($1,$2::date,$3,'posted',$4,$5::uuid,$6,true,now(),now())
+      RETURNING id, operating_company_id::text, entry_date::text, memo, status, source, qbo_sync_pending, created_at::text
+    `,
+        [
+          input.operating_company_id,
+          input.entry_date,
+          input.memo ?? null,
+          input.source ?? "manual",
+          typeId,
+          actor.userId,
+        ]
+      )
+    : await client.query<CreateJournalEntryHeader>(
+        `
       INSERT INTO accounting.journal_entries (
         operating_company_id,
         entry_date,
@@ -148,8 +227,8 @@ export async function createJournalEntryOnClient(
       VALUES ($1,$2::date,$3,'posted',$4,$5,true,now(),now())
       RETURNING id, operating_company_id::text, entry_date::text, memo, status, source, qbo_sync_pending, created_at::text
     `,
-    [input.operating_company_id, input.entry_date, input.memo ?? null, input.source ?? "manual", actor.userId]
-  );
+        [input.operating_company_id, input.entry_date, input.memo ?? null, input.source ?? "manual", actor.userId]
+      );
   const header = headerRes.rows[0];
   if (!header?.id) throw new Error("journal_entry_insert_failed");
 

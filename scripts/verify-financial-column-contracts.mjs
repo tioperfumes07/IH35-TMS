@@ -29,6 +29,10 @@ const KNOWN_COLUMNS = {
     "id", "operating_company_id", "entry_date", "memo", "status", "source",
     "created_by_user_id", "qbo_sync_pending", "created_at", "updated_at",
     "idempotency_key", "qbo_idempotency_key",
+    // HELD 202607340000 — JE void reversal linkage (col-gated in service)
+    "reversed_by_je_id", "reverses_je_id",
+    // HELD 202607960000 — ACCT-LINK-01 catalogs.journal_entry_types FK (col-gated in service)
+    "journal_entry_type_id",
   ]),
   "accounting.journal_entry_postings": new Set([
     "id", "operating_company_id", "journal_entry_uuid", "line_sequence",
@@ -42,6 +46,11 @@ const KNOWN_COLUMNS = {
     "source_transaction_id", "idempotency_key", "created_by_user_id",
     "created_at", "updated_at", "completed_at", "error_message", "line_count",
     "source_type", "source_id",
+    // ACCT-LINK-05 (held migration 202607950000_posting_batches_template_link.sql):
+    // additive posting_template_id FK -> catalogs.posting_templates(id) + source_template_code
+    // code-constant stamp. Held for owner Neon-apply; referenced by code ahead of prod apply so
+    // every writer self-resolves the instant the migration lands + templates are seeded.
+    "posting_template_id", "source_template_code",
   ]),
   "accounting.transaction_source_links": new Set([
     "id", "operating_company_id", "journal_entry_posting_id", "linked_object_type",
