@@ -19,14 +19,22 @@ export async function registerWoCostContextRoutes(app: FastifyInstance) {
     const oc = parsed.data.operating_company_id;
 
     const payload = await withCompanyScope(user.uuid, oc, async (client) => {
+      // LST-F06 / LST-PICKER-02 leftover: Category picker must read the CANONICAL CoA
+      // (catalogs.accounts) — the same table inline "+ Add new account/category" writes — not
+      // mdata.qbo_accounts (mirror). Postable expense-type leaves only (VERIFY-6 / LST-F14).
       const expenseCategoriesRes = await client.query(
         `
-          SELECT id, qbo_id, name, account_type, mirrored_at
-          FROM mdata.qbo_accounts
+          SELECT id,
+                 qbo_account_id AS qbo_id,
+                 account_name AS name,
+                 account_type,
+                 updated_at AS mirrored_at
+          FROM catalogs.accounts
           WHERE operating_company_id = $1::uuid
-            AND active = true
-            AND coalesce(account_type, '') IN ('Expense', 'Cost of Goods Sold', 'Other Expense')
-          ORDER BY item_name ASC
+            AND deactivated_at IS NULL
+            AND is_postable = true
+            AND account_type IN ('Expense', 'CostOfGoodsSold', 'OtherExpense')
+          ORDER BY account_name ASC
           LIMIT 500
         `,
         [oc]

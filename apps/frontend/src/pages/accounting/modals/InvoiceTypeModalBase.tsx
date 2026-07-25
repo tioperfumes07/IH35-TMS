@@ -119,7 +119,13 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
     queryKey: ["invoice-type-modal", "income-accounts", operatingCompanyId],
     // listCatalogAccounts (not getCoaAccounts): its row shape carries is_postable, which the
     // income filter below needs. getCoaAccounts' CoaAccountPickerRow omits it.
-    queryFn: () => listCatalogAccounts({ status: "active", operating_company_id: operatingCompanyId }),
+    // LST-F14: income account posting picker — server-side is_postable=true.
+    queryFn: () =>
+      listCatalogAccounts({
+        status: "active",
+        operating_company_id: operatingCompanyId,
+        postable_only: true,
+      }),
     enabled: Boolean(operatingCompanyId) && open,
     staleTime: 60_000,
   });
