@@ -18,6 +18,7 @@ These are standing law. They load via always-apply Cursor rules AND must be trea
 5. **`.cursor/rules/06` + `10`–`18`** — always-apply companions (quality, Neon/RLS verification, multi-agent, model tiering, financial law, linkage, research mandate, **fix-not-patch evidence law**, guard hot-file control, and pipeline truth/throughput).
 6. **`.cursor/rules/05-architectural-design-is-law.mdc`** + **`docs/specs/IH35_ARCHITECTURAL_DESIGN.md`** — tab count / tab name law.
 7. **`.cursor/rules/07-never-delete-only-add.mdc`** — never delete modules/surfaces; only add.
+- **Consolidated index:** docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md — the complete 24-rule + 18-key-gate map (source .cursor/rule wins on conflict).
 
 Also load skills `.claude/skills/ih35-tms-standards/SKILL.md` (operating standards) and **`.claude/skills/ih35-evidence-before-done/SKILL.md`** (fix root cause, evidence before done).
 
