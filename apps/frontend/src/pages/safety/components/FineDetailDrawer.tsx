@@ -4,6 +4,7 @@ import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { FineConvertConfirmModal } from "./FineConvertConfirmModal";
+import { FineLifecycleActions } from "./FineLifecycleActions";
 import { FinePaymentLinkBanner } from "./FinePaymentLinkBanner";
 
 type Props = {
@@ -18,7 +19,15 @@ type Props = {
 
 const DRAWER_TITLE = "Fine Detail";
 
-export function FineDetailDrawer({ open, fine, converting, onClose, onConvertToLiability }: Props) {
+export function FineDetailDrawer({
+  open,
+  fine,
+  operatingCompanyId,
+  converting,
+  onClose,
+  onConvertToLiability,
+  onUpdated,
+}: Props) {
   const panelRef = useRef<HTMLElement>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -152,6 +161,17 @@ export function FineDetailDrawer({ open, fine, converting, onClose, onConvertToL
             </button>
           </div>
         ) : null}
+
+        {/* SAF-B12: contest / dismiss / reduce / link-payment. These four routes have existed and been
+            audited in apps/backend/src/safety/fines.routes.ts since BT-3-SAFETY-GAPS-FILL and had ZERO
+            frontend callers — the drawer's only action was "Convert to Driver Liability", so a wrongly
+            issued authority citation could not be contested or dismissed at all. Every state gate inside
+            is transcribed from the route handler; the server rule is mirrored, never replaced. */}
+        <FineLifecycleActions
+          fine={fine}
+          operatingCompanyId={operatingCompanyId}
+          onUpdated={onUpdated}
+        />
         </div>
       </ParityDrawer>
 
