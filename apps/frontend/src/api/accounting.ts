@@ -720,6 +720,8 @@ export function createVendorBill(
     // HARD cross-module link (maintenance): real FK to the WO + unit, persisted server-side (not just memo).
     work_order_id?: string;
     unit_id?: string;
+    /** Claim→Bill reverse density (ACCT-F04) — stamps accounting.bills.insurance_claim_id when column present. */
+    insurance_claim_id?: string;
     attachment_draft_id?: string;
     /** LAW-E2E #3167 — real bill_lines payloads (not memo-only). */
     lines: Array<{
@@ -750,6 +752,27 @@ export type WorkOrderLinkedFinancials = {
 export function listWorkOrderLinkedFinancials(workOrderId: string, operatingCompanyId: string) {
   return apiRequest<WorkOrderLinkedFinancials>(
     withCompany(`/api/v1/accounting/work-orders/${workOrderId}/linked-financials`, operatingCompanyId)
+  );
+}
+
+export type ClaimLinkedFinancials = WorkOrderLinkedFinancials & {
+  work_orders: Array<{ id: string; display_id: string | null; status: string | null }>;
+  columns_present: { bills: boolean; expenses: boolean; work_orders: boolean };
+};
+
+export function listClaimLinkedFinancials(claimId: string, operatingCompanyId: string) {
+  return apiRequest<ClaimLinkedFinancials>(
+    withCompany(`/api/v1/accounting/claims/${claimId}/linked-financials`, operatingCompanyId)
+  );
+}
+
+export type UnitLinkedFinancials = WorkOrderLinkedFinancials & {
+  columns_present: { bills: boolean; expenses: boolean };
+};
+
+export function listUnitLinkedFinancials(unitId: string, operatingCompanyId: string) {
+  return apiRequest<UnitLinkedFinancials>(
+    withCompany(`/api/v1/accounting/units/${unitId}/linked-financials`, operatingCompanyId)
   );
 }
 

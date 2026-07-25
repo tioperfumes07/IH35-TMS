@@ -12,6 +12,7 @@ import {
   listBills,
   listWorkOrderLinkedFinancials,
   listClaimLinkedFinancials,
+  listUnitLinkedFinancials,
   listVendorBalances,
   payBill,
   voidBill,
@@ -179,6 +180,25 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     return listClaimLinkedFinancials(
+      String(user.uuid),
+      query.data.operating_company_id,
+      params.data.id
+    );
+  });
+
+  // Reverse drill-through for Unit→Bill/Expense (ACCT-F04 / ACCT-LINK-03).
+  app.get(
+    "/api/v1/accounting/units/:id/linked-financials",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    return listUnitLinkedFinancials(
       String(user.uuid),
       query.data.operating_company_id,
       params.data.id
