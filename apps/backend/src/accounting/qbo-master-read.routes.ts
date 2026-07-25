@@ -342,19 +342,25 @@ export async function registerQboMasterReadRoutes(app: FastifyInstance) {
       let cursorSql = "";
       if (cur) {
         values.push(cur.mirrored_at, cur.id);
-        cursorSql = `AND (qa.mirrored_at, qa.id) < ($${values.length - 1}::timestamptz, $${values.length}::uuid)`;
+        cursorSql = `AND (qa.updated_at, qa.id) < ($${values.length - 1}::timestamptz, $${values.length}::uuid)`;
       }
       values.push(limit + 1);
       const limIdx = values.length;
+      // LST-F06: expense-category list reads canonical catalogs.accounts (not mdata.qbo_accounts).
       const res = await client.query(
         `
-          SELECT qa.id, qa.qbo_id, qa.name AS display_name, qa.active AS is_active, qa.mirrored_at AS last_synced_at
-          FROM mdata.qbo_accounts qa
+          SELECT qa.id,
+                 qa.qbo_account_id AS qbo_id,
+                 qa.account_name AS display_name,
+                 (qa.deactivated_at IS NULL) AS is_active,
+                 qa.updated_at AS last_synced_at
+          FROM catalogs.accounts qa
           WHERE qa.operating_company_id = $1::uuid
-            AND qa.active = true
-            AND coalesce(qa.account_type, '') IN ('Expense', 'Cost of Goods Sold', 'Other Expense')
+            AND qa.deactivated_at IS NULL
+            AND qa.is_postable = true
+            AND qa.account_type IN ('Expense', 'CostOfGoodsSold', 'OtherExpense')
             ${cursorSql}
-          ORDER BY qa.mirrored_at DESC, qa.id DESC
+          ORDER BY qa.updated_at DESC, qa.id DESC
           LIMIT $${limIdx}
         `,
         values
