@@ -233,9 +233,12 @@ export function RecordTransferModal({
           try {
             const destinationBankAccountId = seedAccountSide === "to" ? fromAccountId : toAccountId;
             const transferKind = seedAccountSide === "to" ? "in" : "out";
+            // existing_transfer_id: the ledger row was ALREADY minted above — this call must only LINK
+            // (matched_transfer_id), never mint a second banking.transfers row (BANK-ECON-03).
             await markBankTransactionTransfer(linkBankTransactionId, operatingCompanyId, {
               destination_bank_account_id: destinationBankAccountId,
               transfer_kind: transferKind,
+              existing_transfer_id: response.transfer.id,
             });
           } catch {
             // Best-effort only — createTransfer ledger entry above is source of truth.

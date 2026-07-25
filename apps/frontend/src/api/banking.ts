@@ -667,17 +667,31 @@ export function categorizeTransactionsBulk(
 /** Marks a bank transaction as an inter-account transfer (excludes it from cash-flow / bank-feed GL
  *  posting — see bank-feed-gl-posting.service.ts's own-transfer skip). Repointed to the REAL backend
  *  route `POST /api/v1/banking/transactions/:id/transfer` (categorization.routes.ts) whose body
- *  contract is `{ destination_bank_account_id, transfer_kind, paired_transaction_id? }` — the prior
- *  `/mark-transfer` path 404'd and the old `{ from_account_id, to_account_id }` body never matched. */
+ *  contract is `{ destination_bank_account_id, transfer_kind, paired_transaction_id?, existing_transfer_id? }`
+ *  — the prior `/mark-transfer` path 404'd and the old `{ from_account_id, to_account_id }` body never
+ *  matched.
+ *  BANK-ECON-03 / BANK-SURF-03 — the route now MINTS a real `banking.transfers` row via `createTransfer()`
+ *  when no `existing_transfer_id` is given (the root-cause fix: "mark as transfer" used to only tag
+ *  columns, never inserting a paired ledger row). Callers that already minted the transfer directly (this
+ *  file's own `createTransfer`) MUST pass `existing_transfer_id` so this call links instead of minting a
+ *  second transfer for the same cash movement. */
 export function markBankTransactionTransfer(
   transactionId: string,
   companyId: string,
-  body: { destination_bank_account_id: string; transfer_kind: "in" | "out"; paired_transaction_id?: string }
+  body: {
+    destination_bank_account_id: string;
+    transfer_kind: "in" | "out";
+    paired_transaction_id?: string;
+    existing_transfer_id?: string;
+  }
 ) {
-  return apiRequest<{ ok: boolean }>(`/api/v1/banking/transactions/${transactionId}/transfer?${q(companyId)}`, {
-    method: "POST",
-    body,
-  });
+  return apiRequest<{ ok: boolean; transfer_id: string; minted: boolean }>(
+    `/api/v1/banking/transactions/${transactionId}/transfer?${q(companyId)}`,
+    {
+      method: "POST",
+      body,
+    }
+  );
 }
 
 /** Skip / exclude a transaction from review (P6-T11204). BE serves POST
