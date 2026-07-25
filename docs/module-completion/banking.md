@@ -1,13 +1,13 @@
 # Module completion — Banking (Module 4)
 
-**PROGRESS: 3 of 13** · complete: `false` · as_of: 2026-07-25T00:06:12.016Z · live_sha: `fc1cf13`
+**PROGRESS: 4 of 13** · complete: `false` · as_of: 2026-07-25T00:08:10.792Z · live_sha: `fc1cf13`
 
 | Status | Count |
 |---|---:|
-| PASS | 3 |
+| PASS | 4 |
 | HOLD | 0 |
 | OPEN | 0 |
-| FAIL | 7 |
+| FAIL | 6 |
 | UNVERIFIED | 3 |
 
 | ID | Status | Title | Evidence | PR |
@@ -16,7 +16,7 @@
 | `BANK-ECON-02` | **FAIL** | matched_journal_entry_id density meaningful (not ≈0%) | Neon lucia 2026-07-25: matched_journal_entry_id=3 / 10622 (~0.03%) | #3424 |
 | `BANK-ECON-03` | **FAIL** | banking.transfers rows > 0 when operators record transfers OR honest empty with poster path proven | transfers=0 | — |
 | `BANK-ECON-04` | **FAIL** | reconciliation_sessions > 0 with zero-diff closure (#3417) | reconciliation_sessions=0 | #3417 |
-| `BANK-ECON-05` | **FAIL** | All bank_accounts bound to ledger_account_id (Cash GL) | Neon lucia 2026-07-25: 8/16 bank_accounts have ledger_account_id | — |
+| `BANK-ECON-05` | **PASS** | All bank_accounts bound to ledger_account_id (Cash GL) | Neon lucia 2026-07-25: of 16 bank_accounts, 9 deactivated (unbound OK); 7 live (deactivated_at IS NULL) all have ledger_account_id (7/7). Prior 8/16 FAIL counted deactivated duplicates. | — |
 | `BANK-SURF-01` | **UNVERIFIED** | Banking Home + account detail — DoD A–E | Routes live; full picker/wizard matrix not re-run | — |
 | `BANK-SURF-02` | **FAIL** | Categorize / Match — VERIFY-1..8 + JE when flag ON | JE density 3/10k; bulk categorize HOLD #3424 | #3424 |
 | `BANK-SURF-03` | **FAIL** | Transfers UI + poster path — live economics | transfers=0; owner Option 1 for unpaired feed | — |
