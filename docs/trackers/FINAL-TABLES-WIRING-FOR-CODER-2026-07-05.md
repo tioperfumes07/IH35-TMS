@@ -197,7 +197,7 @@
 
 ### catalogs  (39)
 - `catalogs.account_role_bindings` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — account role bindings · out→3 in←0 · leaf · →catalogs.accounts, identity.users, org.companies
-- `catalogs.account_types` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — account types · out→0 in←1 · root/ref
+- `catalogs.account_types` — **GLOBAL-BY-DESIGN** (no `operating_company_id`; shared CoA type taxonomy; `companyScoped:false`; do NOT per-entity convert — see `docs/trackers/GLOBAL-BY-DESIGN-CATALOGS-2026-07-25.md`) · out→0 in←1 · root/ref
 - `catalogs.accounts` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — accounts · out→2 in←26 · wired · →identity.users, org.companies
 - `catalogs.audit_event_types` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — audit event types · out→0 in←0 · island(by-design)
 - `catalogs.cancellation_reasons` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — cancellation reasons · out→0 in←1 · root/ref
@@ -217,6 +217,7 @@
 - `catalogs.equipment_line_item_templates` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — equipment line item templates · out→1 in←1 · wired · →catalogs.equipment_types
 - `catalogs.equipment_types` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — equipment types · out→0 in←3 · root/ref
 - `catalogs.equipment_types_dedup_ledger_0318` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — equipment types dedup ledger 0318 · out→2 in←0 · leaf · →?.before, catalogs.equipment_types
+- `catalogs.tire_positions` — **GLOBAL-BY-DESIGN** (no `operating_company_id`; excluded from fleet per-entity conversion; `companyScoped:false` — see `docs/trackers/GLOBAL-BY-DESIGN-CATALOGS-2026-07-25.md`) · out→0 in←0 · island(by-design)
 - `catalogs.excel_upload_jobs` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — excel upload jobs · out→0 in←0 · island(by-design)
 - `catalogs.file_categories` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — file categories · out→0 in←1 · root/ref
 - `catalogs.fmcsa_lookups` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — fmcsa lookups · out→2 in←1 · wired · →identity.users, org.companies
@@ -233,7 +234,7 @@
 - `catalogs.posting_templates` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — posting templates · out→3 in←0 · leaf · →catalogs.accounts, catalogs.classes, identity.users
 - `catalogs.us_states` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — us states · out→0 in←0 · island(by-design)
 - `catalogs.void_cancel_reasons` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — void cancel reasons · out→2 in←1 · wired · →identity.users, org.companies
-- `catalogs.wo_cancellation_reasons` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — wo cancellation reasons · out→0 in←0 · island(by-design)
+- `catalogs.wo_cancellation_reasons` — **GLOBAL-BY-DESIGN** (no `operating_company_id`; shared WO cancel taxonomy; do NOT per-entity convert — see `docs/trackers/GLOBAL-BY-DESIGN-CATALOGS-2026-07-25.md`) · out→0 in←0 · island(by-design)
 - `catalogs.workflow_requests` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — workflow requests · out→1 in←0 · leaf · →identity.users
 
 ### chat  (5)
