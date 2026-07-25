@@ -46,6 +46,10 @@ export type CoaAsymmetryReport = {
 
 const num = (v: unknown): number => Number(v ?? 0);
 
+// Deliberately cross-entity (no operating_company_id filter): this report's whole purpose is
+// comparing TRK/TRANSP/USMCA postable counts side by side, gated by role (Owner/Admin only, checked
+// in the route) rather than per-request entity scope. See verify-steps/84-verify-mdata-entity-scope
+// baseline for the allowlisted queries this produces.
 export async function getCoaAsymmetryReport(input: { userId: string }): Promise<CoaAsymmetryReport> {
   return withCurrentUser(input.userId, async (client) => {
     await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
