@@ -153,8 +153,13 @@ async function probeCrossTenantIsolation(client) {
       result.detail = "TRANSP fixture invisible under USMCA operating_company_id scope";
     }
 
+    // void-not-delete: ih35_app has DELETE REVOKEd on catalogs.complaint_types (LST-SEED-01).
+    // Deactivate the probe fixture instead of DELETE — matches production catalog law.
     await runWithBypass(client, async () => {
-      await client.query(`DELETE FROM catalogs.complaint_types WHERE id = $1`, [fixtureId]);
+      await client.query(
+        `UPDATE catalogs.complaint_types SET is_active = false WHERE id = $1`,
+        [fixtureId],
+      );
     });
   } catch (err) {
     result.passed = false;

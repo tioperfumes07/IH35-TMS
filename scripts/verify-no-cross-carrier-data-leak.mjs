@@ -154,7 +154,11 @@ try {
         await client.query(`DELETE FROM qbo_sync.drift_log WHERE id = $1`, [row.id]);
       }
       if (row.table === "catalogs.complaint_types") {
-        await client.query(`DELETE FROM catalogs.complaint_types WHERE id = $1`, [row.id]);
+        // void-not-delete — DELETE REVOKEd on catalogs.complaint_types (LST-SEED-01)
+        await client.query(
+          `UPDATE catalogs.complaint_types SET is_active = false WHERE id = $1`,
+          [row.id],
+        );
       }
     }
   }).catch(() => {});
