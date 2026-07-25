@@ -74,7 +74,7 @@ async function assertTxnIdsTenantScoped(
 export async function bulkCategorizeTransactions(
   client: PoolClient,
   input: BulkCategorizeInput
-): Promise<{ updated_count: number }> {
+): Promise<{ updated_count: number; categorizedIds: string[] }> {
   if (input.txnIds.length > BULK_TXN_MAX) {
     throw new Error("bulk_txn_limit_exceeded");
   }
@@ -138,7 +138,8 @@ export async function bulkCategorizeTransactions(
     }
 
     await client.query("COMMIT");
-    return { updated_count: input.txnIds.length };
+    // Caller posts CHAIN-05 GL AFTER this txn commits (poster opens its own txn).
+    return { updated_count: input.txnIds.length, categorizedIds: [...input.txnIds] };
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
