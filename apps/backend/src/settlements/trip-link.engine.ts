@@ -243,15 +243,22 @@ export async function queueForTripLink(
 
 /**
  * Assign a load to a queued expense (manual override).
+ *
+ * ACCT-R-13 (2026-07-25): `operatingCompanyId` is now a REQUIRED entity-scope predicate on the
+ * UPDATE — before this fix the WHERE clause was `id = $3` only, so any authenticated caller could
+ * assign a load to another entity's queued trip-link row by guessing/enumerating `queueId`.
+ * Returns `true` when a row was actually updated so the caller can 404 a cross-entity/unknown id
+ * instead of silently reporting success.
  */
 export async function assignTripLink(
   client: Queryable,
   queueId: string,
   loadId: string,
   loadNumber: string,
-  assignedBy: string
-): Promise<void> {
-  await client.query(`
+  assignedBy: string,
+  operatingCompanyId: string
+): Promise<boolean> {
+  const result = await client.query<{ id: string }>(`
     UPDATE driver_finance.trip_link_queue
     SET 
       assigned_load_id = $1,
@@ -259,5 +266,8 @@ export async function assignTripLink(
       assigned_by = $2,
       status = 'assigned'
     WHERE id = $3
-  `, [loadId, assignedBy, queueId]);
+      AND operating_company_id = $4
+    RETURNING id
+  `, [loadId, assignedBy, queueId, operatingCompanyId]);
+  return result.rows.length > 0;
 }

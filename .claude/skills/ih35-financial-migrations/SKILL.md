@@ -46,6 +46,11 @@ Every statement must be safe to run twice:
 
 ## 3. void-not-delete / append-only
 - No `DELETE`. Soft-delete via `voided_at` / `archived_at` / `deactivated_at` / `is_active = false`.
+  - **Exception — verified test/demo fixture ROWS (owner ruling 2026-07-25).** Those may be hard-DELETEd
+    under explicit owner authorisation, scoped by an EXACT business identifier, never by `is_sample_data`
+    (false on 176 real rows, true on 17 fixtures — banned, CI-enforced by verify-step 1488). Requires derived
+    counts, a fail-loud pre-flight for real rows referencing fixtures, FK-safe order, and the override stated
+    in the migration header and PR body. Business rows, columns and tables are NOT covered.
 - Grants on such tables are `SELECT, INSERT, UPDATE` — **never DELETE**.
 - Audit/evidence tables (anything recording "what happened") are **append-only**: grant `SELECT, INSERT`
   only (no UPDATE, no DELETE). Never `UPDATE`/`DELETE` `audit.row_changes` / `audit_events` /

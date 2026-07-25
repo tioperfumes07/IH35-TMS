@@ -14,6 +14,7 @@ These invariants are non-negotiable. Every block MUST enforce them. Violations a
 - **Lockstep INSERT pattern** for atomic transactions involving multiple tables
 - **Append-only audit events** on every mutation (insert/update/state-change)
 - **Permanent records** — void records, never `DELETE FROM`. Use `voided_at` + `voided_by` columns.
+  - Fixture carve-out (OWNER RULING 2026-07-25): verified test/demo **rows** may be permanently DELETED under owner authorisation, scoped by an EXACT business identifier — never by `is_sample_data`, which is false on 176 real rows and true on 17 fixtures (banned + CI-enforced by verify-step 1488). Modules, surfaces, routes, columns and tables are NOT covered and stay archive-only.
 - **Migrations idempotent** — use `DO $$ BEGIN ... END $$;` blocks with `IF NOT EXISTS` guards
 - **Cache from `master_data.drivers` NEVER used in render path** (Part 4.5.4.2 of formal blueprint) — render path must always read from canonical source
 - **Single-link constraint** per WF-012 — one bank txn maps to one entity link

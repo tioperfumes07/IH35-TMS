@@ -1,6 +1,7 @@
 import * as client from "./client";
 import {
   fetchHomeWoStatusCounts,
+  fetchHomeWoStatusCountsDetailed,
   fetchHomeWeeklyRevenue,
   fetchHomeOpenLoadsCount,
   fetchHomeDriversOnDuty,
@@ -32,6 +33,47 @@ describe("home-widgets FE↔BE response contract", () => {
     const rows = await fetchHomeWoStatusCounts("c1");
     const byStatus = Object.fromEntries(rows.map((r) => [r.status, r.count]));
     expect(byStatus).toMatchObject({ open: 2, in_progress: 3, awaiting_parts: 4, completed: 5, cancelled: 6, draft: 1 });
+  });
+
+  // ACCT-R-07 (0280-42-wo-to-expense-flow): pins the FE reader to the exact additive
+  // `linked_economics` shape home-widgets.routes.ts returns from computeWoLinkedEconomics — a
+  // future rename on either side must fail here, not silently render $0.
+  it("wo-status-counts: reads additive linked_economics { status: 'ok', buckets, totals }", async () => {
+    vi.spyOn(client, "apiRequest").mockResolvedValue({
+      draft: 0,
+      open: 0,
+      in_progress: 0,
+      awaiting_parts: 0,
+      completed: 2,
+      cancelled: 0,
+      unknown: 0,
+      linked_economics: {
+        status: "ok",
+        buckets: {
+          completed: { bill_count: 1, bill_amount_cents: 12345, expense_count: 1, expense_amount_cents: 6789 },
+        },
+        wo_with_expense_flow_count: 2,
+        total_linked_bill_amount_cents: 12345,
+        total_linked_expense_amount_cents: 6789,
+      },
+    } as never);
+    const { counts, linked_economics } = await fetchHomeWoStatusCountsDetailed("c1");
+    expect(counts.find((r) => r.status === "completed")?.count).toBe(2);
+    expect(linked_economics).toMatchObject({
+      status: "ok",
+      wo_with_expense_flow_count: 2,
+      total_linked_bill_amount_cents: 12345,
+      total_linked_expense_amount_cents: 6789,
+    });
+    if (linked_economics.status === "ok") {
+      expect(linked_economics.buckets.completed).toMatchObject({ bill_count: 1, expense_count: 1 });
+    }
+  });
+
+  it("wo-status-counts: linked_economics falls back to unverifiable on malformed/missing shape (never fabricates $0)", async () => {
+    vi.spyOn(client, "apiRequest").mockResolvedValue({ draft: 0, open: 0 } as never);
+    const { linked_economics } = await fetchHomeWoStatusCountsDetailed("c1");
+    expect(linked_economics.status).toBe("unverifiable");
   });
 
   it("weekly-revenue: reads { days: [{ date, cents, invoice_basis, gl_posted }] }", async () => {
