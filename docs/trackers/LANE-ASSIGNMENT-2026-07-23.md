@@ -49,6 +49,22 @@ main's max is `202607780000`, so:
 | **CURSOR** | `202607790000` – `202607799999` (…790000, 791000, …) then `2026078` even-thousand blocks it opens |
 | **CLAUDE** | `202607800000` – `202607809999` (…800000, 801000, …) |
 
+> **⚠ CORRECTED 2026-07-25 — the reserved blocks above are now BELOW main's max and cannot be used.**
+> Main's max migration is `202607930000`, so both reserved blocks are exhausted/overtaken. The two
+> rules in force contradicted each other: this table says "claim your reserved block", while
+> `CLAUDE.md` §2 and `docs/specs/PER-PR-CHECKLIST.md` §7 say "strictly above main's current max,
+> re-checked at push time".
+>
+> **RESOLUTION — the hard invariant wins:** always claim the next free number **strictly above
+> main's current max**, re-checked at push time. A number below main's max would apply out of order
+> on a fresh from-0001 CI database, which is the failure the invariant exists to prevent; a lane
+> collision merely causes a rename. To keep lanes apart *above* the max, take the next free
+> **even-thousand** block and record it here in the same PR:
+>
+> | Claimed above main's max | Lane | Migration |
+> |---|---|---|
+> | `202607940000` | CLAUDE | `202607940000_load_cancellations_drop_legacy_reason_fk.sql` (HELD) |
+
 Rule: **claim the next free number in your own reserved block, and re-check at push time** (the same
 discipline as verify-steps). When a lane exhausts its block, it opens the next `…N0000` block that no
 migration or open PR in either lane has claimed, and records it here in the same commit. A migration
