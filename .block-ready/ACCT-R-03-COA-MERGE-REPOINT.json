@@ -3,7 +3,7 @@
   "status": "BUILD",
   "classification": "FINANCIAL",
   "phase": "module-completion/accounting",
-  "task": "ACCT-R-03 (ranked ACCT-F13) / pile 0091-m-lists-2 — the Chart-of-Accounts 'Merge accounts' action was deactivate-only. CoaBatchActions.handleMerge looped the catalog DEACTIVATE endpoint over every source account, so child accounts kept pointing at an archived parent and every config pointer that DESIGNATES an account for future postings (catalogs.items.default_income/expense_account_id, catalogs.account_role_bindings, accounting.chart_of_accounts_roles, accounting.expense_category_account_map, accounting.banking_rules, accounting.escrow_accounts, fixed_assets.asset_classes, finance.loans, banking.bank_accounts.ledger_account_id) kept designating an account nobody could post to. catalogs.account_merge_records — required by blueprint MUST 3.18.4.3 step 5 — did not exist in any migration, so no record of a merge was ever written. This block adds the real merge: POST /api/v1/catalogs/accounts/:id/merge (Owner-only per 3.18.12, entity-GUC scoped, one lockstep transaction) reparents children, remounts every config pointer same-entity, writes the append-only merge record, archives (never deletes) the source, emits catalogs.account_merged (critical) + the WF-064 owner-notification workflow event. Posted history is NOT moved: MUST 3.18.4.3 step 3 and MUST 3.18.7.1 make history immutable, so migrate_historical_postings=true is REFUSED with E_MERGE_HISTORICAL_POSTINGS_FORBIDDEN rather than silently rewriting journal postings. POSTS NOTHING — no JE, no GL math, no posting flag, no feature flag. Tier 1 FINANCIAL: builder STOPS at branch-proof; owner Neon-applies migration 202608060000; GUARD re-proves on prod.",
+  "task": "ACCT-R-03 (ranked ACCT-F13) / pile 0091-m-lists-2 \u2014 the Chart-of-Accounts 'Merge accounts' action was deactivate-only. CoaBatchActions.handleMerge looped the catalog DEACTIVATE endpoint over every source account, so child accounts kept pointing at an archived parent and every config pointer that DESIGNATES an account for future postings (catalogs.items.default_income/expense_account_id, catalogs.account_role_bindings, accounting.chart_of_accounts_roles, accounting.expense_category_account_map, accounting.banking_rules, accounting.escrow_accounts, fixed_assets.asset_classes, finance.loans, banking.bank_accounts.ledger_account_id) kept designating an account nobody could post to. catalogs.account_merge_records \u2014 required by blueprint MUST 3.18.4.3 step 5 \u2014 did not exist in any migration, so no record of a merge was ever written. This block adds the real merge: POST /api/v1/catalogs/accounts/:id/merge (Owner-only per 3.18.12, entity-GUC scoped, one lockstep transaction) reparents children, remounts every config pointer same-entity, writes the append-only merge record, archives (never deletes) the source, emits catalogs.account_merged (critical) + the WF-064 owner-notification workflow event. Posted history is NOT moved: MUST 3.18.4.3 step 3 and MUST 3.18.7.1 make history immutable, so migrate_historical_postings=true is REFUSED with E_MERGE_HISTORICAL_POSTINGS_FORBIDDEN rather than silently rewriting journal postings. POSTS NOTHING \u2014 no JE, no GL math, no posting flag, no feature flag. Tier 1 FINANCIAL: builder STOPS at branch-proof; owner Neon-applies migration 202608060000; GUARD re-proves on prod.",
   "branch": "hold/acct-r03-coa-merge-20260725",
   "lane": "A",
   "allowed_files": [
@@ -16,7 +16,7 @@
     "apps/frontend/src/api/coa-list.ts",
     "apps/frontend/src/pages/lists/accounting/CoaBatchActions.tsx",
     "scripts/verify-acct-r03-coa-merge-repoint.mjs",
-    "scripts/verify-steps/1487-verify-acct-r03-coa-merge-repoint.mjs",
+    "scripts/verify-steps/1488-verify-acct-r03-coa-merge-repoint.mjs",
     "docs/module-completion/accounting.json",
     "docs/module-completion/accounting.md",
     "docs/trackers/ACCT-R-03-COA-MERGE-2026-07-25.md"
@@ -39,7 +39,7 @@
     {
       "check": "service unit test proves a merge repoints every declared config pointer and never touches a history pointer",
       "status": "PASS",
-      "evidence": "apps/backend/src/catalogs/account-merge.service.test.ts — 9 tests green (vitest run)"
+      "evidence": "apps/backend/src/catalogs/account-merge.service.test.ts \u2014 9 tests green (vitest run)"
     },
     {
       "check": "backend typecheck green",
@@ -49,17 +49,17 @@
     {
       "check": "held migration registered + marker intact",
       "status": "PASS",
-      "evidence": "verify-hold-migrations-registered: OK — 113 held migrations"
+      "evidence": "verify-hold-migrations-registered: OK \u2014 113 held migrations"
     },
     {
       "check": "migration applied twice on a throwaway Postgres (idempotent)",
-      "status": "UNVERIFIED",
-      "evidence": "no local Postgres available in this worktree session; migration uses CREATE TABLE IF NOT EXISTS / pg_constraint IF NOT EXISTS / DROP POLICY IF EXISTS throughout. Must be apply-twice validated before owner Neon-apply."
+      "status": "PASS",
+      "evidence": "throwaway docker postgres:16-alpine (same image CI uses): full chain applied clean (202608060000 last, 'Migrations applied successfully'), then the SQL file re-executed via psql ON_ERROR_STOP=1 -> only 'already exists, skipping' NOTICEs, DO/GRANT/REVOKE ok. Effect verified: relrowsecurity=t relforcerowsecurity=t, company_scope policy polcmd='*', both same-entity composite FKs present, ih35_app has_table_privilege INSERT=t SELECT=t UPDATE=f DELETE=f. Negative tests: cross-entity record REFUSED (foreign_key_violation), self-merge REFUSED (check), reason<20 REFUSED (check), and a legitimate same-entity record ACCEPTED as positive control so the refusals are not vacuous."
     },
     {
       "check": "catalogs.account_merge_records exists on prod with company_scope FORCE RLS and append-only grants",
       "status": "UNVERIFIED",
-      "evidence": "BUILD-AND-HOLD — owner Neon-applies 202608060000 then ledger-backfills; GUARD re-proves under app.bypass_rls='lucia'."
+      "evidence": "BUILD-AND-HOLD \u2014 owner Neon-applies 202608060000 then ledger-backfills; GUARD re-proves under app.bypass_rls='lucia'."
     },
     {
       "check": "live merge writes a merge record and leaves 0 stale config pointers at the source",

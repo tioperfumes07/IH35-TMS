@@ -39,7 +39,7 @@ guard rather than a review note.
 | Service | `apps/backend/src/catalogs/account-merge.service.ts` — declarative `CONFIG_REMOUNT_TARGETS`; every remount UPDATE is entity-scoped; writes the merge record; archives (`deactivated_at` + `is_postable=false`) the source; emits `catalogs.account_merged` (critical) and the WF-064 owner-notification `workflow.requested` event. |
 | Route | `POST /api/v1/catalogs/accounts/:id/merge` — Owner-only (`E_PERMISSION_DENIED` otherwise), membership asserted, `app.operating_company_id` GUC set, whole merge inside one `withCurrentUser` transaction. |
 | Frontend | `handleMerge` calls `mergeCatalogAccounts()`; modal collects the required reason, blocks a cross-type merge before submit, and states plainly that posted history stays on the merged account and that merged accounts are archived, never deleted. |
-| Guard | `scripts/verify-acct-r03-coa-merge-repoint.mjs` + `scripts/verify-steps/1487-…` |
+| Guard | `scripts/verify-acct-r03-coa-merge-repoint.mjs` + `scripts/verify-steps/1488-…` |
 
 ## Deliberate refusal: `migrate_historical_postings: true`
 
@@ -63,10 +63,27 @@ interaction analysis. It is not deferred silently — it is refused loudly at ru
 
 ## What is NOT proven yet (UNVERIFIED)
 
-1. Migration apply-twice on a throwaway Postgres — no local Postgres in this session. The SQL is
-   `IF NOT EXISTS` guarded throughout but must be apply-twice validated before Neon-apply.
-2. `catalogs.account_merge_records` on prod — the migration is HELD; the owner applies it.
-3. A live merge writing a record with 0 stale pointers at the source — requires (1) + (2) + an Owner
+1. `catalogs.account_merge_records` on prod — the migration is HELD; the owner applies it on Neon and
+   ledger-backfills, then GUARD re-proves the table, policy and grants under `app.bypass_rls='lucia'`.
+2. A live merge writing a record with 0 stale pointers at the source — requires (1) plus an Owner
    browser session.
 
-Until all three land, `ACCT-R-03` stays **FAIL** in `docs/module-completion/accounting.json`.
+Until both land, `ACCT-R-03` stays **FAIL** in `docs/module-completion/accounting.json`.
+
+## What IS proven locally (throwaway Postgres, 2026-07-25)
+
+Migration **apply-twice is no longer UNVERIFIED**. Validated on a throwaway `postgres:16-alpine`
+container — the same image CI uses — never on prod:
+
+* full migration chain applies clean with `202608060000` last (`Migrations applied successfully`);
+* re-executing the same SQL file under `ON_ERROR_STOP=1` produces only
+  `relation ... already exists, skipping` NOTICEs — **idempotent**;
+* effect asserted, not assumed: `relrowsecurity = t`, `relforcerowsecurity = t`, `company_scope`
+  policy `polcmd = '*'`, both same-entity composite FKs present, and
+  `has_table_privilege('ih35_app', …)` = INSERT `t` / SELECT `t` / **UPDATE `f` / DELETE `f`**
+  (append-only holds at the grant level, not just in the migration text);
+* behaviour asserted with a **positive control** so the refusals are not vacuous — a cross-entity
+  merge record is REFUSED (`foreign_key_violation`), a self-merge is REFUSED (check), a reason under
+  20 chars is REFUSED (check), and a legitimate same-entity record is **ACCEPTED**.
+
+This proves the schema is correct and safe to apply. It does **not** prove anything about prod.
