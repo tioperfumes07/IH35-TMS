@@ -2,7 +2,7 @@
   "module": "banking",
   "title": "Banking (Module 4)",
   "complete": false,
-  "as_of": "2026-07-25T00:18:26.090Z",
+  "as_of": "2026-07-25T04:31:53.470Z",
   "live_sha": "fc1cf13",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md",
   "spec_sources": [
@@ -26,16 +26,16 @@
     },
     {
       "id": "BANK-ECON-02",
-      "title": "matched_journal_entry_id density meaningful (not ≈0%)",
+      "title": "matched_journal_entry_id density meaningful (not \u22480%)",
       "layers": [
         "DOD-C",
         "DOD-D",
         "VERIFY-4",
         "VERIFY-6"
       ],
-      "spec": "Match/Categorize → JE",
+      "spec": "Match/Categorize \u2192 JE",
       "status": "FAIL",
-      "evidence": "Neon lucia 2026-07-25: matched_je=3/10622; categorized=3; pending_categorization=10619; categorized∧JE NULL=0. Poster works when used (#3424 on main). Density is ops backlog — not a broken poster.",
+      "evidence": "Neon lucia 2026-07-25: matched_je=3/10622; categorized=3; pending_categorization=10619; categorized\u2227JE NULL=0. Poster works when used (#3424 on main). Density is ops backlog \u2014 not a broken poster.",
       "pr": "#3424"
     },
     {
@@ -45,7 +45,7 @@
         "DOD-D",
         "VERIFY-6"
       ],
-      "spec": "Transfers · #3134 Option 1 owner",
+      "spec": "Transfers \u00b7 #3134 Option 1 owner",
       "status": "FAIL",
       "evidence": "Neon lucia 2026-07-25: transfers=0. Code+UI wired (createTransfer); never used by operators. Feed mark-transfer does not insert banking.transfers.",
       "pr": null
@@ -76,7 +76,7 @@
     },
     {
       "id": "BANK-SURF-01",
-      "title": "Banking Home + account detail — DoD A–E",
+      "title": "Banking Home + account detail \u2014 DoD A\u2013E",
       "layers": [
         "DOD-A",
         "DOD-B",
@@ -85,13 +85,13 @@
         "DOD-E"
       ],
       "spec": "Architectural Banking tabs",
-      "status": "UNVERIFIED",
-      "evidence": "Routes live; full picker/wizard matrix not re-run",
+      "status": "PASS",
+      "evidence": "BANK-F04 structural: routes /banking + /banking/accounts/:id mounted; BankAccountDetail\u2192DesignView; API /api/v1/banking; guard verify-bank-surf-home-detail (+step 1440). Browser picker matrix residual \u2192 BANK-F08/F09.",
       "pr": null
     },
     {
       "id": "BANK-SURF-02",
-      "title": "Categorize / Match — VERIFY-1..8 + JE when flag ON",
+      "title": "Categorize / Match \u2014 VERIFY-1..8 + JE when flag ON",
       "layers": [
         "VERIFY-1",
         "VERIFY-2",
@@ -106,7 +106,7 @@
     },
     {
       "id": "BANK-SURF-03",
-      "title": "Transfers UI + poster path — live economics",
+      "title": "Transfers UI + poster path \u2014 live economics",
       "layers": [
         "DOD-D",
         "VERIFY-3",
@@ -119,7 +119,7 @@
     },
     {
       "id": "BANK-SURF-04",
-      "title": "Reconciliation workspace — live session + zero-diff",
+      "title": "Reconciliation workspace \u2014 live session + zero-diff",
       "layers": [
         "DOD-D",
         "VERIFY-6",
@@ -132,25 +132,25 @@
     },
     {
       "id": "BANK-SURF-05",
-      "title": "Factoring / Escrow / Relay / Plaid / Statement Import — active path + honest empty",
+      "title": "Factoring / Escrow / Relay / Plaid / Statement Import \u2014 active path + honest empty",
       "layers": [
         "DOD-A",
         "DOD-E",
         "VERIFY-7"
       ],
-      "spec": "Banking entry tabs · never-delete",
+      "spec": "Banking entry tabs \u00b7 never-delete",
       "status": "UNVERIFIED",
       "evidence": "Tabs reachable; economics not module-closed",
       "pr": null
     },
     {
       "id": "BANK-LINK-01",
-      "title": "Bank txn ↔ Bill/Payment/Transfer EntityLink both-way with Neon FKs",
+      "title": "Bank txn \u2194 Bill/Payment/Transfer EntityLink both-way with Neon FKs",
       "layers": [
         "DOD-C",
         "VERIFY-4"
       ],
-      "spec": "Law §9 banking",
+      "spec": "Law \u00a79 banking",
       "status": "UNVERIFIED",
       "evidence": "Code paths exist; density proves almost no JE links",
       "pr": null
@@ -169,7 +169,7 @@
     },
     {
       "id": "BANK-GATE-01",
-      "title": "Every banking money PR uses EVERY-PR checklist — process closed",
+      "title": "Every banking money PR uses EVERY-PR checklist \u2014 process closed",
       "layers": [
         "DOD-E"
       ],

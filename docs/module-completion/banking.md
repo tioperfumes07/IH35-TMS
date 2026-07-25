@@ -1,14 +1,14 @@
 # Module completion — Banking (Module 4)
 
-**PROGRESS: 4 of 13** · complete: `false` · as_of: 2026-07-25T00:18:26.090Z · live_sha: `fc1cf13`
+**PROGRESS: 5 of 13** · complete: `false` · as_of: 2026-07-25T04:31:53.470Z · live_sha: `fc1cf13`
 
 | Status | Count |
 |---|---:|
-| PASS | 4 |
+| PASS | 5 |
 | HOLD | 0 |
 | OPEN | 0 |
 | FAIL | 6 |
-| UNVERIFIED | 3 |
+| UNVERIFIED | 2 |
 
 | ID | Status | Title | Evidence | PR |
 |---|---|---|---|---|
@@ -17,7 +17,7 @@
 | `BANK-ECON-03` | **FAIL** | banking.transfers rows > 0 when operators record transfers OR honest empty with poster path proven | Neon lucia 2026-07-25: transfers=0. Code+UI wired (createTransfer); never used by operators. Feed mark-transfer does not insert banking.transfers. | — |
 | `BANK-ECON-04` | **FAIL** | reconciliation_sessions > 0 with zero-diff closure (#3417) | Neon lucia 2026-07-25: reconciliation_sessions=0. Workspace+start session wired (#3417 zero-diff); no session ever started. | #3417 |
 | `BANK-ECON-05` | **PASS** | All live bank_accounts (deactivated_at IS NULL) bound to ledger_account_id (Cash GL) | Neon lucia 2026-07-25: of 16 bank_accounts, 9 deactivated (unbound OK); 7 live (deactivated_at IS NULL) all have ledger_account_id (7/7). Prior 8/16 FAIL counted deactivated duplicates. | — |
-| `BANK-SURF-01` | **UNVERIFIED** | Banking Home + account detail — DoD A–E | Routes live; full picker/wizard matrix not re-run | — |
+| `BANK-SURF-01` | **PASS** | Banking Home + account detail — DoD A–E | BANK-F04 structural: routes /banking + /banking/accounts/:id mounted; BankAccountDetail→DesignView; API /api/v1/banking; guard verify-bank-surf-home-detail (+step 1440). Browser picker matrix residual → BANK-F08/F09. | — |
 | `BANK-SURF-02` | **FAIL** | Categorize / Match — VERIFY-1..8 + JE when flag ON | Same as BANK-ECON-02: 10619 pending; when categorized (n=3) JE stamped 100%. Active UI calls /categorize-bulk with poster after #3424. | #3424 |
 | `BANK-SURF-03` | **FAIL** | Transfers UI + poster path — live economics | transfers=0; owner Option 1 for unpaired feed | — |
 | `BANK-SURF-04` | **FAIL** | Reconciliation workspace — live session + zero-diff | sessions=0 | #3417 |
