@@ -2,8 +2,8 @@
   "module": "accounting",
   "title": "Accounting (Module 3)",
   "complete": false,
-  "as_of": "2026-07-25T00:06:12.016Z",
-  "live_sha": "fc1cf13",
+  "as_of": "2026-07-25T03:41:00.000Z",
+  "live_sha": "a3f9c12",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md",
   "spec_sources": [
     "docs/specs/DEFINITION-OF-DONE.md",
@@ -120,8 +120,8 @@
         "VERIFY-4"
       ],
       "spec": "Law §9 · ACCT-F02",
-      "status": "UNVERIFIED",
-      "evidence": "Repo: migration 202607960000 + col-gated createJournalEntry writes GENERAL (or caller type). Neon: column not applied yet — re-measure inbound FK density after owner Neon-apply before PASS.",
+      "status": "FAIL",
+      "evidence": "LIVE REFRESH 2026-07-25: still 16 rows / 0 inbound FKs; journal_entries has NO journal_entry_type_id column on prod. PR #3440 [HOLD] adds additive nullable FK col — migration 202607960000 NOT yet Neon-applied. Remains FAIL until owner Neon-apply + inbound density re-measure.",
       "pr": "#3440"
     },
     {
@@ -158,8 +158,8 @@
       ],
       "spec": "ACCT-F07",
       "status": "FAIL",
-      "evidence": "0 inbound FKs",
-      "pr": null
+      "evidence": "LIVE REFRESH 2026-07-25: still 0 inbound FKs on catalogs.expense_categories (9 rows, re-verified WITH bypass since company_scope has no lucia branch); expense_lines.expense_category_uuid still bare unconstrained uuid. PR #3446 [HOLD] adds same-entity FK, migration 202607950000 NOT yet Neon-applied. Remains FAIL until owner Neon-apply.",
+      "pr": "#3446"
     },
     {
       "id": "ACCT-LINK-05",
@@ -170,7 +170,7 @@
       ],
       "spec": "ACCT-F08",
       "status": "FAIL",
-      "evidence": "0 inbound FKs on prod (unchanged) — root cause fixed in #3444 [HOLD]: posting_batches.posting_template_id FK + source_template_code stamp wired into every posting_batches writer (posting-engine.service.ts x3, fuel-posting/poster.service.ts x1); catalogs.posting_templates re-verified 0 rows WITH lucia bypass (owner/CPA-seeded, Rule 13). Stays FAIL until owner Neon-applies the held migration + seeds templates (density gap named in PR, not silently deferred).",
+      "evidence": "LIVE REFRESH 2026-07-25: still 0 inbound FKs; posting_batches has NO posting_template_id column on prod; catalogs.posting_templates still 0 rows (lucia-verified true empty, not RLS-masked). PR #3444 [HOLD] adds posting_batches -> posting_templates consumer stamp — NOT yet Neon-applied. Remains FAIL until owner Neon-apply.",
       "pr": "#3444"
     },
     {

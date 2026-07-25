@@ -21,7 +21,7 @@
       ],
       "spec": "Banking feed",
       "status": "PASS",
-      "evidence": "Neon lucia 2026-07-25: bank_transactions=10622",
+      "evidence": "LIVE REFRESH 2026-07-25 03:41Z: bank_transactions=10628 (+6 vs prior read)",
       "pr": null
     },
     {
@@ -35,7 +35,7 @@
       ],
       "spec": "Match/Categorize \u2192 JE",
       "status": "FAIL",
-      "evidence": "Neon lucia 2026-07-25: matched_je=3/10622; categorized=3; pending_categorization=10619; categorized\u2227JE NULL=0. Poster works when used (#3424 on main). Density is ops backlog \u2014 not a broken poster.",
+      "evidence": "LIVE REFRESH 2026-07-25 03:41Z: matched_je=3/10628; categorized_at_not_null=3 — unchanged since last read. Poster works when used (#3424 on main). Density is ops backlog — not a broken poster.",
       "pr": "#3424"
     },
     {
@@ -47,8 +47,8 @@
       ],
       "spec": "Transfers \u00b7 #3134 Option 1 owner",
       "status": "FAIL",
-      "evidence": "Neon lucia 2026-07-25: transfers=0. Code+UI wired (createTransfer); never used by operators. Feed mark-transfer does not insert banking.transfers.",
-      "pr": null
+      "evidence": "LIVE REFRESH 2026-07-25 03:41Z: transfers=0 — still true empty. Code+UI wired (createTransfer). PR #3445 [HOLD] fixes bank-feed mark-as-transfer to mint/link a real banking.transfers row via markBankFeedLineAsTransfer() — reuses existing createTransfer() poster, no new migration/flag. NOT yet merged. Remains FAIL until merged + operator uses it + Neon re-count > 0.",
+      "pr": "#3445"
     },
     {
       "id": "BANK-ECON-04",
@@ -59,7 +59,7 @@
       ],
       "spec": "Reconciliation",
       "status": "FAIL",
-      "evidence": "Neon lucia 2026-07-25: reconciliation_sessions=0. Workspace+start session wired (#3417 zero-diff); no session ever started.",
+      "evidence": "LIVE REFRESH 2026-07-25 03:41Z: reconciliation_sessions=0 — unchanged. Workspace+start session wired (#3417 zero-diff); no session ever started.",
       "pr": "#3417"
     },
     {
@@ -114,8 +114,8 @@
       ],
       "spec": "Transfers tab",
       "status": "FAIL",
-      "evidence": "transfers=0; owner Option 1 for unpaired feed",
-      "pr": null
+      "evidence": "LIVE REFRESH 2026-07-25 03:41Z: transfers=0; owner Option 1 for unpaired feed still open; see BANK-ECON-03 (PR #3445 HOLD not yet merged)",
+      "pr": "#3445"
     },
     {
       "id": "BANK-SURF-04",
