@@ -8,14 +8,6 @@
     "count": 1,
     "reason": "baselined 2026-07-11 — pre-existing INSERT INTO bank.reconciliation_matches; retire to banking.*"
   },
-  "apps/backend/src/catalogs/load-cancellation-reasons.routes.ts::catalogs.load_cancellation_reasons::INSERT INTO": {
-    "count": 1,
-    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO catalogs.load_cancellation_reasons; retire to catalogs.cancellation_reasons"
-  },
-  "apps/backend/src/catalogs/load-cancellation-reasons.routes.ts::catalogs.load_cancellation_reasons::UPDATE": {
-    "count": 3,
-    "reason": "baselined 2026-07-11 — pre-existing UPDATE catalogs.load_cancellation_reasons; retire to catalogs.cancellation_reasons"
-  },
   "apps/backend/src/maint/parts.routes.ts::maint.part::INSERT INTO": {
     "count": 1,
     "reason": "baselined 2026-07-11 — pre-existing INSERT INTO maint.part; retire to maintenance.part"
@@ -87,14 +79,6 @@
   "apps/backend/src/sync/qbo-vendors-push.ts::accounting.qbo_vendors::UPDATE": {
     "count": 4,
     "reason": "baselined 2026-07-11 — pre-existing UPDATE accounting.qbo_vendors; retire to mdata.qbo_vendors"
-  },
-  "db/migrations/0035_load_cancellation_reasons.sql::catalogs.load_cancellation_reasons::INSERT INTO": {
-    "count": 1,
-    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO catalogs.load_cancellation_reasons; retire to catalogs.cancellation_reasons"
-  },
-  "db/migrations/0123_p6_pre_ledger_drift_reconciliation.sql::catalogs.load_cancellation_reasons::INSERT INTO": {
-    "count": 1,
-    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO catalogs.load_cancellation_reasons; retire to catalogs.cancellation_reasons"
   },
   "db/migrations/0233_block_22_driver_settlement_engine.sql::payroll.driver_settlements::REFERENCES": {
     "count": 1,
@@ -184,14 +168,6 @@
     "count": 1,
     "reason": "baselined 2026-07-11 — pre-existing UPDATE payroll.driver_settlement_line_items; retire to driver_finance.*"
   },
-  "db/migrations/202606300130_load_cancellations_per_entity_fk.sql::catalogs.load_cancellation_reasons::INSERT INTO": {
-    "count": 1,
-    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO catalogs.load_cancellation_reasons; retire to catalogs.cancellation_reasons"
-  },
-  "db/migrations/202606300130_load_cancellations_per_entity_fk.sql::catalogs.load_cancellation_reasons::REFERENCES": {
-    "count": 1,
-    "reason": "baselined 2026-07-11 — pre-existing REFERENCES catalogs.load_cancellation_reasons; retire to catalogs.cancellation_reasons"
-  },
   "apps/backend/src/settlements/disputes/disputes.routes.ts::settlements.settlement_disputes::INSERT INTO": {
     "count": 1,
     "reason": "B-C.P4 — legacy plural RETIRE disputes create; repoint P2e → driver_finance.driver_settlement_disputes"
@@ -211,5 +187,21 @@
   "apps/backend/src/settlements/team-splits/team-splits.routes.ts::settlements.team_split_load_overrides::INSERT INTO": {
     "count": 1,
     "reason": "B-C.P4 — legacy plural RETIRE load override create; shrink on P2f/P3"
+  },
+  "db/migrations/0101_p5_f4_cancellation_reasons.sql::catalogs.cancellation_reasons::INSERT INTO": {
+    "count": 1,
+    "reason": "HISTORICAL — 0101 is the migration that CREATED and seeded the legacy global catalogs.cancellation_reasons. Applied on prod and checksum-frozen; it cannot be rewritten. Retirement path: migration 202607940000 drops the legacy FK from dispatch.load_cancellations, then a follow-up drops the table."
+  },
+  "db/migrations/0101_p5_f4_cancellation_reasons.sql::catalogs.cancellation_reasons::REFERENCES": {
+    "count": 1,
+    "reason": "HISTORICAL — 0101 created the legacy FK dispatch.load_cancellations.reason_code -> catalogs.cancellation_reasons. That FK is the LST-F04 P0 and is dropped by 202607940000."
+  },
+  "db/migrations/0123_p6_pre_ledger_drift_reconciliation.sql::catalogs.cancellation_reasons::INSERT INTO": {
+    "count": 1,
+    "reason": "HISTORICAL — 0123 seeds the legacy table; applied and checksum-frozen."
+  },
+  "db/migrations/0123_p6_pre_ledger_drift_reconciliation.sql::catalogs.cancellation_reasons::REFERENCES": {
+    "count": 1,
+    "reason": "HISTORICAL — 0123 re-declares the legacy FK; applied and checksum-frozen. Dropped by 202607940000."
   }
 }

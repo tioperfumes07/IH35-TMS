@@ -294,7 +294,7 @@ the code is often the bug.
 | Maintenance | **`maintenance.*`** | `maint.part` / `maint.pm_schedule` / `maint.position_*` / `maint.part_position_assignment` |
 | Vendors (AP truth) | **`mdata.vendors`** | WO picker writing `mdata.qbo_vendors`; keep `catalogs.maintenance_vendors.metadata.mdata_vendor_id` FK |
 | Loads | **`mdata.loads`** | verify `dispatch.loads` before use |
-| Cancellation reasons | **`catalogs.cancellation_reasons`** | `catalogs.load_cancellation_reasons` (as a write/Cancel target) |
+| Cancellation reasons | **`catalogs.load_cancellation_reasons`** | `catalogs.cancellation_reasons` (legacy global, no `operating_company_id`, RLS OFF, 9 rows — retiring) |
 (DECISIONS still open — owner picks: `geo.*` guard-vs-name, `reporting.*` lockdown-vs-guard.)
 
 **(c) HUB TABLES — every record must connect back to its backbone** (FINAL §E; keep clean, never orphan):

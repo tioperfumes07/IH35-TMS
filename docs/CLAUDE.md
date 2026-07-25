@@ -36,7 +36,8 @@ The LINKAGE law + canonical table map now lives in the **auto-loaded** skill
 Before writing any block, read SKILL §10 + `docs/trackers/FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md`
 (canonical/RETIRE §A, hub tables §E). **Never write/FK a RETIRE table** — canonical: `driver_finance.*`
 (not `payroll.*`/`settlement.*`), `mdata.qbo_*` (not `accounting.qbo_*`), `banking.*` (not `bank.*`),
-`maintenance.*` (not `maint.*`), `mdata.vendors`, `mdata.loads`, `catalogs.cancellation_reasons`.
+`maintenance.*` (not `maint.*`), `mdata.vendors`, `mdata.loads`, `catalogs.load_cancellation_reasons`
+(NOT `catalogs.cancellation_reasons` — that is the legacy global table, retiring; corrected 2026-07-25).
 Enforced by CI guards **G1–G4** (registry-complete, acceptance, guard-wired, canonical-table-writes).
 Precedence: prod-verified FACTS resolve prod > guard > repo > doc > memory; owner DECISIONS are AUTHORITY.
 
