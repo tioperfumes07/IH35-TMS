@@ -26,6 +26,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { createJournalEntry } from "../accounting/journal-entries.service.js";
+import { recordEscrowPostingOnly } from "../accounting/escrow/service.js";
 import {
   DEFAULT_ESCROW_PER_SETTLEMENT_CONTRIBUTION_CENTS,
   computeCappedEscrowContributionCents,
@@ -533,6 +534,26 @@ export async function closeSettlementPayRun(
         WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
       [payrunRunId, opco, je.id]
     );
+
+    // ACCT-R-01: keep accounting.escrow_accounts.balance_cents (the GL-linked liability balance
+    // releaseDriverEscrowSeparation() trusts) in sync with the driver_finance.escrow_balances /
+    // escrow_ledger contribution just recorded above. The JE leg already credited the driver's escrow
+    // liability sub-account (resolveDriverEscrowLiabilityAccount, above) — this does NOT post a second
+    // JE, it only appends the accounting.escrow_postings audit row so the existing DB trigger
+    // (accounting.apply_escrow_posting_delta, migration 0234) applies the balance delta.
+    if (escrowContributionCents > 0) {
+      await recordEscrowPostingOnly(client, {
+        operating_company_id: opco,
+        driver_id: settlement.driver_id,
+        posting_type: "deposit",
+        amount_cents: escrowContributionCents,
+        source_type: "driver_settlement",
+        source_id: settlementId,
+        note: `${label} — escrow contribution (capped @ $2,000)`,
+        posted_by_user_id: actor.userId,
+        linked_journal_entry_id: je.id,
+      });
+    }
 
     // Records-only disbursement: stamp the chosen method + reference + both-way bank-txn link. No money moves.
     let disbursementRecorded = false;

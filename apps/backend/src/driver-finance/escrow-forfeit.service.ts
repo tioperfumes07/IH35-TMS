@@ -26,12 +26,14 @@
 //   - resolveRoleAccount(..., "damage_recovery") → the CR account via the PRIMARY CoA resolver; throws
 //     (fail loud) when undesignated.
 //   - createJournalEntryOnClient → balanced-or-abort JE inside the caller-owned tx.
-//   - accounting.escrow_postings row: posting_type='adjustment' (NO new posting_type), source_type='forfeit'.
+//   - accounting.escrow_postings via recordEscrowPostingOnly: posting_type='forfeiture'
+//     (trigger 202608070000 decrements balance), source_type='forfeit'.
 
 import { withCurrentUser } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { createJournalEntryOnClient } from "../accounting/journal-entries.service.js";
 import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
+import { recordEscrowPostingOnly } from "../accounting/escrow/service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import {
@@ -139,35 +141,23 @@ export async function forfeitDriverEscrow(
         actor
       );
 
-      // Record the movement on the accounting escrow subsystem: posting_type='adjustment' (NOT a new
-      // posting_type), source_type='forfeit'. escrow_account_id is the driver's bridge row.
-      const escrowAccountRow = await client.query<{ id: string }>(
-        `SELECT id::text FROM accounting.escrow_accounts
-         WHERE operating_company_id = $1::uuid AND holder_id = $2::uuid AND holder_type = 'driver' LIMIT 1`,
-        [input.operating_company_id, input.driver_uuid]
-      );
-      const escrowAccountId = escrowAccountRow.rows[0]?.id;
-      if (!escrowAccountId) {
+      // Record on accounting.escrow_postings via the #3533 helper so apply_escrow_posting_delta
+      // (202608070000) decrements the canonical balance (forfeiture −). Never raw INSERT with
+      // posting_type='adjustment' — that hit the 0234 ELSE→+ branch and inflated the liability.
+      const posting = await recordEscrowPostingOnly(client as never, {
+        operating_company_id: input.operating_company_id,
+        driver_id: input.driver_uuid,
+        posting_type: "forfeiture",
+        amount_cents: amountCents,
+        source_type: "forfeit",
+        source_id: input.linked_liability_id ?? null,
+        note: `Forfeit: ${input.reason}`,
+        posted_by_user_id: actor.userId,
+        linked_journal_entry_id: je.id,
+      });
+      if (!posting.posted || !posting.posting_id) {
         throw new EscrowForfeitError("E_ESCROW_ACCOUNT_MISSING", "no accounting.escrow_accounts bridge row for this driver");
       }
-
-      const posting = await client.query<{ id: string }>(
-        `INSERT INTO accounting.escrow_postings (
-           operating_company_id, escrow_account_id, posting_type, amount_cents, source_type,
-           source_id, note, posted_at, posted_by_user_id, linked_journal_entry_id
-         )
-         VALUES ($1::uuid,$2::uuid,'adjustment',$3::bigint,'forfeit',$4::uuid,$5,now(),$6::uuid,$7::uuid)
-         RETURNING id::text`,
-        [
-          input.operating_company_id,
-          escrowAccountId,
-          amountCents,
-          input.linked_liability_id ?? null,
-          `Forfeit: ${input.reason}`,
-          actor.userId,
-          je.id,
-        ]
-      );
 
       // Linked branch: decrement the specific debt in the subledger (never below zero).
       let linkedDecremented = false;
@@ -192,7 +182,7 @@ export async function forfeitDriverEscrow(
           amount_cents: amountCents,
           reason: input.reason,
           journal_entry_id: je.id,
-          escrow_posting_id: posting.rows[0]?.id,
+          escrow_posting_id: posting.posting_id,
           linked_liability_id: input.linked_liability_id ?? null,
         },
         "warning",
@@ -203,7 +193,7 @@ export async function forfeitDriverEscrow(
       return {
         result: "posted" as const,
         journal_entry_id: je.id,
-        escrow_posting_id: posting.rows[0]?.id ?? "",
+        escrow_posting_id: posting.posting_id ?? "",
         amount_cents: amountCents,
         linked_liability_decremented: linkedDecremented,
       };

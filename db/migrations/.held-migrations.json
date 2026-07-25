@@ -665,7 +665,12 @@
         "202608040000_payment_terms_consumer_remap_same_entity.sql"
       ],
       "reason": "[HOLD-FOR-JORGE — FINANCIAL] LST-F03 follow-up — after payment_terms per-entity clone, remap mdata.customers/vendors + accounting.invoices.payment_terms_id to same-entity clone by terms_name so company_scope JOINs do not false-empty (detail_types trap class). PREREQ 202608000000. Dynamic org — no hardcoded UUID. NEVER-DELETE §F.24. Prod 2026-07-25: 0 customers/vendors with payment_terms_id (remap is no-op today, load-bearing when terms attach)."
+    },
+    {
+      "file": "202608070000_escrow_forfeit_posting_type_sign_and_flag_seed.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] SAF-ORPH-01/02 / ACCT-R-01 trigger half (stacks on merged #3533). CREATE OR REPLACE accounting.apply_escrow_posting_delta: deposit +, release −, forfeiture −, ELSE RAISE (fixes 0234 ELSE→+ that inflated accounting.escrow_accounts on forfeit). Expands posting_type CHECK with forfeiture. Seeds DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED default_enabled=false (0 rows on prod 2026-07-25 — no enable path). No per-entity overrides. No flag flip. Latent while clause-gated (0 signed driver contract_instances). Owner Neon-applies + ledger-backfill; GUARD re-proves function text + flag row + throwaway delta."
     }
+
   ],
   "_integrity_note": "Every entry appears EXACTLY ONCE (file is the key). applied_on_prod MUST agree with the pinned prod-ledger snapshot scripts/lib/prod-migration-ledger-checksums.json for any file inside its window (>= 202606010000). Enforced by scripts/verify-steps/1361-verify-held-registry-integrity.mjs. Repaired 2026-07-25: 119 entries collapsed to 110 (9 duplicates, 7 of them carrying contradictory applied_on_prod), and 79 entries that were already applied on prod were stamped. Before the repair, verify-schema-parity-from-prod (step 1437) derived held-unapplied columns from this file and therefore treated applied migrations as unapplied."
 }

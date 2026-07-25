@@ -1140,3 +1140,36 @@ export function updatePermitRenewalReminder(
     }
   );
 }
+
+// ─── SAF-B31: Safety Reports surface readers ─────────────────────────────────
+// Both endpoints below already exist and are registered on main. Nothing here invents a route.
+//   GET /api/v1/safety/reports/:report_id         apps/backend/src/safety/reports/safety-reports.routes.ts:39
+//   GET /api/v1/safety/dot-inspections/clean-rate apps/backend/src/routes/safety/dot-inspections.ts:78
+// Both are entity-scoped server-side (assertCompanyMembership + app.operating_company_id).
+//
+// NOTE (deliberate omission): the backend ALSO registers
+// GET /api/v1/safety/reports/:report_id/export.xlsx, but `renderSafetyReportXlsx()` ignores both the
+// company and the report and writes a hardcoded ["safety.sample", 0] row
+// (safety-reports.routes.ts:29-36). That is a stub, not an export of this entity's data, so SAF-B31
+// deliberately does NOT wire an XLSX control to it — a control that downloads fabricated numbers on a
+// compliance screen is worse than no control. The ParityTable CSV export (real rendered rows) is used
+// instead. Wiring XLSX requires a BACKEND fix, which is out of scope for this frontend-only block.
+
+export type SafetyReportRollupRow = { event_class: string; total: number };
+
+export function getSafetyReportRollup(companyId: string, reportId: string) {
+  return apiRequest<{ report_id: string; rows: SafetyReportRollupRow[] }>(
+    `/api/v1/safety/reports/${encodeURIComponent(reportId)}?${q(companyId)}`
+  );
+}
+
+export type SafetyInspectionCleanRate = {
+  clean_rate_percent: number | null;
+  total_inspections: number;
+  clean_inspections: number;
+  trailing_months: number;
+};
+
+export function getSafetyInspectionCleanRate(companyId: string) {
+  return apiRequest<SafetyInspectionCleanRate>(`/api/v1/safety/dot-inspections/clean-rate?${q(companyId)}`);
+}

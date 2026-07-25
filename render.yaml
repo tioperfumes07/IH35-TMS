@@ -12,6 +12,14 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 22
+      # G4-DEPLOY (0243-g4 / ACCT-R-04): preDeploy ci:boot-aggregate-smoke must assert against a
+      # fixed TRANSP-owned unit, not the newest live row (one bad unit must not gate every deploy).
+      # Set both UUIDs in the Render dashboard for ih35-tms-backend (TRANSP operating_company_id +
+      # a stable mdata.units.id owned/leased to that company). See docs/testing/boot-aggregate-smoke-env.md.
+      - key: IH35_SMOKE_UNIT_ID
+        sync: false
+      - key: IH35_SMOKE_OPERATING_COMPANY_ID
+        sync: false
 
   - type: static
     name: ih35-tms-frontend

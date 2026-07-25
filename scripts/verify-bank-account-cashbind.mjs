@@ -9,7 +9,7 @@
  * Static pins:
  * - Cash GL GET/PUT routes filter deactivated_at IS NULL (active-only bind surface)
  * - banking.json BANK-ECON-05 + BANK-GATE-01 + BANK-CTRL-01 remain PASS
- * - pass_count matches PASS items (MODULE_PROGRESS honesty — 4 of 13)
+ * - pass_count matches PASS items (MODULE_PROGRESS honesty — 4 of 14)
  * - verify-step 1430 money-theater gate stays wired
  *
  * --selftest: missing bind UPDATE, 8/16 evidence, missing active filter, dishonest pass_count.
@@ -124,8 +124,8 @@ export function run(root = ROOT) {
     failures.push(`banking.json pass_count (${parsed.pass_count}) must equal PASS item count (${passOnly}) — dishonest MODULE_PROGRESS`);
   }
   const { N, M } = scoreManifest(parsed);
-  if (M !== 13) {
-    failures.push(`banking manifest must have 13 items (got ${M}) — do not shrink M to fake progress`);
+  if (M !== 14) {
+    failures.push(`banking manifest must have 14 items (got ${M}) — do not shrink M to fake progress`);
   }
   if (parsed.complete === true) {
     failures.push("banking complete:true is ILLEGAL while economics FAILs remain — money-gate must stay honest");
@@ -179,6 +179,7 @@ if (process.argv.includes("--selftest")) {
         { id: "BANK-SURF-03", status: "FAIL", evidence: "transfers" },
         { id: "BANK-SURF-04", status: "HOLD", owner_hold: true, tracker: "t", future_block: "b", evidence: "rls" },
         { id: "BANK-SURF-05", status: "UNVERIFIED", evidence: "structural" },
+        { id: "BANK-SURF-06", status: "UNVERIFIED", evidence: "structural" },
         { id: "BANK-LINK-01", status: "UNVERIFIED", evidence: "sparse" },
       ],
     })
