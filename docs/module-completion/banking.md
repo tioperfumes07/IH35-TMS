@@ -1,6 +1,6 @@
 # Module completion — Banking (Module 4)
 
-**PROGRESS: 6 of 13** · complete: `false` · as_of: 2026-07-25T04:34:39.000Z · live_sha: `a3f9c12`
+**PROGRESS: 6 of 14** · complete: `false` · as_of: 2026-07-25T16:45:00.000Z · live_sha: `a3f9c12`
 
 | Status | Count |
 |---|---:|
@@ -8,7 +8,7 @@
 | HOLD | 2 |
 | OPEN | 0 |
 | FAIL | 4 |
-| UNVERIFIED | 3 |
+| UNVERIFIED | 4 |
 
 | ID | Status | Title | Evidence | PR |
 |---|---|---|---|---|
@@ -22,6 +22,7 @@
 | `BANK-SURF-03` | **FAIL** | Transfers UI + poster path — live economics | LIVE REFRESH 2026-07-25 03:41Z: transfers=0; owner Option 1 for unpaired feed still open; see BANK-ECON-03 (PR #3445 HOLD not yet merged) | #3445 |
 | `BANK-SURF-04` | **HOLD** | Reconciliation workspace — live session + zero-diff | sessions=0 root cause = banking.bank_accounts RLS bypass_rls escape missing (see BANK-ECON-04 for full evidence + fix + guard + live-Postgres proof). Workspace UI, POST /start, POST /complete, and #3417 zero-diff logic are all correctly wired and correctly implemented — the account lookup ahead of them 404s first. Owner Neon-apply of db/migrations/202608030000_bank_accounts_rls_bypass_lucia.sql required before sessions can go > 0 on prod. | HOLD — see hold/bank-econ-04-recon-session-live-path-20260725 (companion to #3417) |
 | `BANK-SURF-05` | **UNVERIFIED** | Factoring / Escrow / Relay / Plaid / Statement Import — active path + honest empty | Deep structural DoD guarded (verify-bank-surf-05-dod / step 1466): Factoring/Escrow/Relay/Plaid/Statement Import routes mount BankingHomePage initialTab + tab bodies (DriverEscrowTabContent, StatementUpload, BankingPlaidConnectionsPanel) — no ComingSoon twin; sidebar flyout never-delete. Prior step 1440 route pin retained. Browser DoD click-through still UNVERIFIED — not flipped to PASS (Rule 23). | OPEN — Cotulla-08 BANK-08 SURF-05 |
+| `BANK-SURF-06` | **UNVERIFIED** | Categorization rules — DoD A–E + VERIFY 1–8 | SURF-Rules enumerated in docs/trackers/BANK-MODULE-DOD-SWEEP-MATRIX-2026-07-25.json; CategorizationRulesPage mounted /banking/categorization-rules. Browser TRANSP+USMCA click-through pending — structural route pin only; not flipped to PASS (Rule 23). | HOLD — hold/bank-module-dod-sweep-matrix-20260725 |
 | `BANK-LINK-01` | **UNVERIFIED** | Bank txn ↔ Bill/Payment/Transfer EntityLink both-way with Neon FKs | Structural counterparty wiring guarded (#3459/#3464 verify-bank-surfaces-and-counterparty / step 1441); Neon lucia counterparty_fk sparse (2). Both-way live density + browser reverse drill still UNVERIFIED — not flipped to PASS. | #3459 |
 | `BANK-CTRL-01` | **PASS** | BANK_FEED_GL_POSTING_ENABLED default OFF; no invented JE | Flags OFF by design; poster gated | — |
 | `BANK-GATE-01` | **PASS** | Every banking money PR uses EVERY-PR checklist — process closed | #3430 merged on main (sha fc1cf13); verify-step 1430 enforces EVERY-PR checklist trailers on banking money commits | #3430 |

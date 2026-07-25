@@ -2,8 +2,9 @@
   "module": "banking",
   "title": "Banking (Module 4)",
   "complete": false,
-  "as_of": "2026-07-25T04:34:39.000Z",
+  "as_of": "2026-07-25T16:45:00.000Z",
   "live_sha": "a3f9c12",
+  "sweep_matrix": "docs/trackers/BANK-MODULE-DOD-SWEEP-MATRIX-2026-07-25.json",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md",
   "spec_sources": [
     "docs/specs/DEFINITION-OF-DONE.md",
@@ -146,6 +147,25 @@
       "status": "UNVERIFIED",
       "evidence": "Deep structural DoD guarded (verify-bank-surf-05-dod / step 1466): Factoring/Escrow/Relay/Plaid/Statement Import routes mount BankingHomePage initialTab + tab bodies (DriverEscrowTabContent, StatementUpload, BankingPlaidConnectionsPanel) \u2014 no ComingSoon twin; sidebar flyout never-delete. Prior step 1440 route pin retained. Browser DoD click-through still UNVERIFIED \u2014 not flipped to PASS (Rule 23).",
       "pr": "OPEN \u2014 Cotulla-08 BANK-08 SURF-05"
+    },
+    {
+      "id": "BANK-SURF-06",
+      "title": "Categorization rules \u2014 DoD A\u2013E + VERIFY 1\u20138",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C",
+        "DOD-D",
+        "DOD-E",
+        "VERIFY-1",
+        "VERIFY-2",
+        "VERIFY-3",
+        "VERIFY-7"
+      ],
+      "spec": "Rules tab \u00b7 M grew via BANK-MODULE-DOD sweep",
+      "status": "UNVERIFIED",
+      "evidence": "SURF-Rules enumerated in docs/trackers/BANK-MODULE-DOD-SWEEP-MATRIX-2026-07-25.json; CategorizationRulesPage mounted /banking/categorization-rules. Browser TRANSP+USMCA click-through pending \u2014 structural route pin only; not flipped to PASS (Rule 23).",
+      "pr": "HOLD \u2014 hold/bank-module-dod-sweep-matrix-20260725"
     },
     {
       "id": "BANK-LINK-01",
