@@ -1,13 +1,13 @@
 # Module completion — Accounting (Module 3)
 
-**PROGRESS: 8 of 25** · complete: `false` · as_of: 2026-07-25T03:41:00.000Z · live_sha: `a3f9c12`
+**PROGRESS: 10 of 25** · complete: `false` · as_of: 2026-07-25T03:41:00.000Z · live_sha: `a3f9c12`
 
 | Status | Count |
 |---|---:|
 | PASS | 8 |
-| HOLD | 0 |
+| HOLD | 2 |
 | OPEN | 0 |
-| FAIL | 12 |
+| FAIL | 10 |
 | UNVERIFIED | 5 |
 
 | ID | Status | Title | Evidence | PR |
@@ -21,7 +21,7 @@
 | `ACCT-PULL-02` | **PASS** | QBO BillPayment mirror pull writes rows | Neon lucia 2026-07-25: qbo_ap_bill_payments=6313; sync_runs ap_bill_payments_inbound_mirror success×2 last 2026-07-24T23:23:41Z | #3398 |
 | `ACCT-PULL-03` | **PASS** | QBO Purchase mirror pull writes rows | Neon lucia 2026-07-25: qbo_purchases=27984; sync_runs qbo_purchases_inbound_mirror success×2 last 2026-07-24T23:25:26Z | #3399 |
 | `ACCT-LINK-01` | **FAIL** | journal_entry_types inbound FK from journal_entries (not island) | LIVE REFRESH 2026-07-25: still 16 rows / 0 inbound FKs; journal_entries has NO journal_entry_type_id column on prod. PR #3440 [HOLD] adds additive nullable FK col — migration 202607960000 NOT yet Neon-applied. Remains FAIL until owner Neon-apply + inbound density re-measure. | #3440 |
-| `ACCT-LINK-02` | **FAIL** | detail_types canonical FK from catalogs.accounts (not text subtype only) | FROZEN pending owner LINK-02: WIRE/LOCK — 144 detail_types / 0 inbound FKs; accounts.account_subtype text only. Do not wire FK without unlock (ACCT-02). | — |
+| `ACCT-LINK-02` | **HOLD** | detail_types canonical FK from catalogs.accounts (not text subtype only) | OWNER-LOCK 2026-07-25: account_subtype stays TEXT; detail_types 144 rows all-NULL opco / 0 inbound FKs by design. Regression guard scripts/verify-detail-types-owner-lock.mjs. Do NOT wire FK without unlock marker. | — |
 | `ACCT-LINK-03` | **FAIL** | Bill unit_id / insurance_claim_id / linked_work_order_uuid density > 0 where applicable | vendor_id=16212; unit/claim/wo = 0 | #3425 |
 | `ACCT-LINK-04` | **FAIL** | expense_categories inbound FK from expense lines | HOLD PR #3446: additive same-entity FK expense_lines→catalogs.expense_categories (mig 202608020000). FAIL until Neon-apply proves FK + inbound density (lucia). | #3446 |
 | `ACCT-LINK-05` | **FAIL** | posting_templates inbound FK from consumers (WF-053) | LIVE REFRESH 2026-07-25: still 0 inbound FKs; posting_batches has NO posting_template_id column on prod; catalogs.posting_templates still 0 rows (lucia-verified true empty, not RLS-masked). PR #3444 [HOLD] adds posting_batches -> posting_templates consumer stamp — NOT yet Neon-applied. Remains FAIL until owner Neon-apply. | #3444 |
@@ -30,7 +30,7 @@
 | `ACCT-SURF-03` | **UNVERIFIED** | Bill payment — DoD A–E + VERIFY 1–8 with live rows | Frozen map docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md. Structural DoD guard scripts/verify-acct-surf-03-bill-payment.mjs (step 1461): route+ParityDrawer+pay payload+payVendorBill→accounting.bill_payments+JE/bank reverse EntityLinks. Neon bill_payments density live; stays UNVERIFIED until TRANSP+USMCA browser re-click (Rule 23). | #PENDING |
 | `ACCT-SURF-04` | **FAIL** | Receive Payment — DoD A–E + VERIFY 1–8 with live rows | payments=0 with QBO_AR_PAYMENTS_PROJECTION_ENABLED OFF by owner decision — correct-at-0 (not a flag-flip chase). | #3433 |
 | `ACCT-SURF-05` | **FAIL** | Journal Entries — type catalog wired + reverse drill | JE type island; 8 JEs sparse | — |
-| `ACCT-SURF-06` | **FAIL** | Chart of Accounts / Detail Types — canonical detail_type link | text subtype only; ACCT-LINK-02 FROZEN — owner WIRE vs LOCK. SURF DoD FAIL documented; no FK PR. | — |
+| `ACCT-SURF-06` | **HOLD** | Chart of Accounts / Detail Types — canonical detail_type link | OWNER-LOCK: CoA persists account_subtype TEXT (picker may read detail_types catalog for UX only). ACCT-LINK-02 HOLD — not a linkage defect. SURF chrome reachable; FK wiring deferred by owner. | — |
 | `ACCT-SURF-07` | **UNVERIFIED** | Account Register + All Transactions reverse to money docs | Routes mounted (account-register + transactions); sourceRoute + detail_path reverse drill guarded (verify-acct-surf-07-register step 1462); Desktop SURF DoD UNVERIFIED browser TRANSP+USMCA click-through. | — |
 | `ACCT-SURF-08` | **UNVERIFIED** | Period close / Audit trail / Posting lineage — active path + evidence | period-close→month-close, audit-trail, posting-lineage mounted; Desktop SURF DoD UNVERIFIED click-through. | — |
 | `ACCT-SURF-09` | **UNVERIFIED** | Factoring / Escrow / Settlements cross-links from Accounting More ▾ | Frozen map docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md. Structural DoD guard scripts/verify-acct-surf-09-crosslinks.mjs (routes+More▾+EntityLink+canonical factoring_advances/escrow_*/driver_settlements). Desktop Expected vs Actual: ~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md. Stays UNVERIFIED until TRANSP+USMCA browser cross-link economics + Neon density proof (Rule 23 — no structural PASS flip). LINK-02 detail_types FK FROZEN. | — |
