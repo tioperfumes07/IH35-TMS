@@ -31,11 +31,19 @@ BEGIN
     RAISE EXCEPTION 'dispatcher_error_reasons_per_entity: no active org.companies row to own the catalog';
   END IF;
 
-  ALTER TABLE catalogs.dispatcher_error_reasons ADD COLUMN IF NOT EXISTS operating_company_id uuid;
+  -- Inline REFERENCES required by verify-orphan-fk-inventory (named constraint alone is not enough).
+  ALTER TABLE catalogs.dispatcher_error_reasons
+    ADD COLUMN IF NOT EXISTS operating_company_id uuid REFERENCES org.companies(id);
   UPDATE catalogs.dispatcher_error_reasons SET operating_company_id = v_primary WHERE operating_company_id IS NULL;
   ALTER TABLE catalogs.dispatcher_error_reasons ALTER COLUMN operating_company_id SET NOT NULL;
 
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'dispatcher_error_reasons_opco_fk') THEN
+  -- Named FK for clarity when the column already existed without an inline REFERENCES (re-apply path).
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conrelid = 'catalogs.dispatcher_error_reasons'::regclass
+      AND contype = 'f'
+      AND pg_get_constraintdef(oid) ILIKE '%operating_company_id%REFERENCES org.companies%'
+  ) THEN
     ALTER TABLE catalogs.dispatcher_error_reasons
       ADD CONSTRAINT dispatcher_error_reasons_opco_fk FOREIGN KEY (operating_company_id) REFERENCES org.companies(id);
   END IF;
