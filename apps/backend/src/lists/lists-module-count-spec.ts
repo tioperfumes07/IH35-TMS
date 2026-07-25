@@ -86,10 +86,11 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
     { table: "asset_locations", activeFilter: "is_active", companyScoped: true },
   ],
   accounting: [
-    { table: "accounts", activeFilter: "deactivated_at", companyScoped: false },
-    { table: "classes", activeFilter: "deactivated_at", companyScoped: false },
+    // AF-1/AF-2/AF-3: accounts/classes/items are per-entity on prod — count under entity GUC.
+    { table: "accounts", activeFilter: "deactivated_at", companyScoped: true },
+    { table: "classes", activeFilter: "deactivated_at", companyScoped: true },
     { table: "payment_terms", activeFilter: "deactivated_at", companyScoped: false },
-    { table: "items", activeFilter: "deactivated_at", companyScoped: false },
+    { table: "items", activeFilter: "deactivated_at", companyScoped: true },
     { table: "posting_templates", activeFilter: "is_active", companyScoped: false },
     { table: "account_role_bindings", activeFilter: "deactivated_at", companyScoped: false },
     { table: "qbo_categories", activeFilter: "is_active", companyScoped: true },
