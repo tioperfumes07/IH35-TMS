@@ -1,5 +1,25 @@
 # Block 6 — Demo/Test Purge Plan (SHOW-FIRST, GATED)
 
+> ## ⚠ SUPERSEDED IN PART — OWNER RULING 2026-07-25
+>
+> This plan's **"soft-archive, never hard-delete"** requirement is **superseded for verified demo/test
+> fixture ROWS**. The owner ruled that NEVER-DELETE protects architecture, blueprint, design, linkage,
+> schema and real business data — **not** test/demo fixtures, which may be permanently DELETED under
+> owner authorisation.
+>
+> The implementation is `db/migrations/202608060000_item5a_demo_fixture_purge.sql` (HELD — owner
+> Neon-applies), which hard-DELETEs 17 fixtures scoped by exact business identifier.
+>
+> **Everything else in this plan still stands**, and two of its requirements are now stricter, not looser:
+> * Scope by an EXACT identifier, never by `is_sample_data` — that flag is false on 176 real rows and true
+>   on 17 fixtures (prod, 2026-07-25). Flag-filtered deletes are BANNED and CI-enforced by verify-step 1488.
+> * `DEMO-106` has a REAL-format VIN (`1GD473C89NJ123106`). Any VIN-pattern scoping silently orphans it.
+>   Units are scoped by `unit_number LIKE 'DEMO-%'`.
+>
+> The reversibility requirement below is intentionally NOT met for these 17 rows: the owner authorised a
+> permanent delete. Retained here unchanged as the record of what the pre-ruling standard was.
+
+
 **The go-live gate.** Soft-archive (never hard-delete) the demo/test rows still live in prod so
 tomorrow's real-data dispatch starts clean. **Mutates real prod rows → mandatory GUARD eyeball +
 Jorge OK before anything runs (like 2E #1041). Nothing self-merges.**
