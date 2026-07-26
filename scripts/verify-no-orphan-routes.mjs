@@ -27,6 +27,7 @@ const SRC = "apps/backend/src";
 const ALLOWLIST = new Map([
   // --- Dead code: built then abandoned, no frontend caller (leave unmounted) ---
   ["registerBankingManualJeRoutes", "ARCHIVED 2026-06-24 (Tier-1 H-1) — dead path, unmounted; original in manual-je.routes.deprecated.ts. Canonical JE = /api/v1/accounting/journal-entries."],
+  ["registerDeepHealthRoutes", "ARCHIVED 2026-07-26 — was never mounted (GET /api/v1/healthz/deep 404s in prod), and its handler reads tables that do not exist. Deliberately NOT given auth: adding a guard would have resurrected dead code against a phantom schema. Unmounted + archived is the safe state; verify-step 1590 asserts it stays unauthenticated-unreachable."],
   ["registerAccountingReconciliationRoutes", "dead code — no frontend caller (2026-06 sweep)"],
   ["registerBrokerUpdateRoutes", "dead code — no frontend caller"],
   ["registerDamageContinuityRoutes", "dead code — no frontend caller"],
