@@ -56,6 +56,14 @@ export const COA_ROLE_VALUES = [
   // DELIBERATELY absent from ROLE_FALLBACKS below: a penalties/fines account must be DESIGNATED by the
   // owner, never shape-matched by name or subtype, so this role fails CLOSED until designated.
   "civil_fines_expense",
+  // MNT-ECON-01 (migration 202609030000) — standalone parts purchase expense (periodic / expense-on-
+  // purchase). Dr maintenance_parts_expense / Cr ap_control (vendor) or cash_clearing (cash).
+  // DELIBERATELY absent from ROLE_FALLBACKS — owner designates; fails closed until then.
+  "maintenance_parts_expense",
+  // MNT-ECON-04 (migration 202609050000) — warranty reimbursement recovery credit.
+  // Dr cash_clearing / Cr warranty_recovery. Owner designates (contra-expense — NEVER sales income).
+  // DELIBERATELY absent from ROLE_FALLBACKS.
+  "warranty_recovery",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];

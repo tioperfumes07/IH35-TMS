@@ -4,6 +4,7 @@ import { isEnabled } from "../lib/feature-flags/service.js";
 import { postSourceTransaction, PostingEngineError } from "../accounting/posting-engine.service.js";
 import { postBillPaymentGlIfEnabled } from "../accounting/bill-payment-gl.service.js";
 import { withCurrentUser } from "../auth/db.js";
+import { assertBankTxnsNotInReconciledSession } from "./closed-session-immutability.js";
 
 const BILL_GL_POSTING_FLAG_KEY = "BILL_GL_POSTING_ENABLED";
 
@@ -87,6 +88,7 @@ export async function bulkCategorizeTransactions(
   await client.query("BEGIN");
   try {
     await assertTxnIdsTenantScoped(client, input.operatingCompanyId, input.txnIds);
+    await assertBankTxnsNotInReconciledSession(client, input.txnIds, input.operatingCompanyId);
 
     const categoryKind = `${input.psCategory}::${input.psItem}`;
     const memo = JSON.stringify({
@@ -173,6 +175,7 @@ export async function bulkPostTransactionsAsBills(
   let created: Array<{ billId: string; billPaymentId: string }> = [];
   try {
     await assertTxnIdsTenantScoped(client, input.operatingCompanyId, input.txnIds);
+    await assertBankTxnsNotInReconciledSession(client, input.txnIds, input.operatingCompanyId);
 
     const txRes = await client.query<{
       id: string;

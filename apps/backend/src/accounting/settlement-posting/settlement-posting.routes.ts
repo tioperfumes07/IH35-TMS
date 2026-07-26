@@ -1,15 +1,39 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { companyQuerySchema, currentAuthUser, validationError } from "../shared.js";
 import { SettlementPostingError } from "./settlement-posting.math.js";
-import { postSettlementToGl, reverseSettlementGlPosting } from "./settlement-posting.service.js";
+import { reverseSettlementGlPosting } from "./settlement-posting.service.js";
 import { chargeRecoverFromDriverExpense } from "./recover-from-driver.service.js";
 import { getDriverBucketBalances } from "./bucket-ledger.service.js";
 
 const financeRoles = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
+
+// =====================================================================================================
+// SET-01 (2026-07-26) — RETIRE the FIN-18 single-JE settlement poster HTTP entry.
+// postSettlementToGl mis-routes escrow / cash-advance to generic {type}_recovery buckets.
+// Canonical path: POST /api/v1/driver-finance/settlements/:id/payrun-close → closeSettlementPayRun
+// (per-driver escrow LIABILITY + advance_recovery ASSET). Mirror payroll settlement 308 retirement.
+// Do NOT call postSettlementToGl from this route. Service retained for tests / void helpers only.
+// Guard: scripts/verify-no-deprecated-settlement-poster-mounted.mjs
+// =====================================================================================================
+
+const CANONICAL_SETTLEMENTS = "/api/v1/driver-finance/settlements";
+
+function retiredSettlementPost(reply: FastifyReply, settlementId?: string) {
+  const canonical = settlementId
+    ? `${CANONICAL_SETTLEMENTS}/${settlementId}/payrun-close`
+    : CANONICAL_SETTLEMENTS;
+  reply.header("location", canonical);
+  return reply.code(308).send({
+    error: "gone",
+    message:
+      "FIN-18 POST /api/v1/accounting/settlement-posting/post is retired. Use the canonical payrun-close path (per-driver escrow liability + cash-advance asset).",
+    canonical_endpoint: canonical,
+  });
+}
 
 function ensureFinanceUser(req: Parameters<typeof currentAuthUser>[0], reply: Parameters<typeof currentAuthUser>[1]) {
   const user = currentAuthUser(req, reply);
@@ -43,34 +67,11 @@ const recoverBody = z.object({ expense_id: z.string().uuid() });
 const driverBucketsQuery = companyQuerySchema.extend({ driver_id: z.string().uuid() });
 
 export async function registerSettlementPostingRoutes(app: FastifyInstance) {
-  // Post a finalized/locked settlement to the GL (flag-gated; OFF => no-op).
+  // RETIRED (SET-01) — never posts via FIN-18; 308 to canonical payrun-close.
   app.post("/api/v1/accounting/settlement-posting/post", async (req, reply) => {
-    const user = ensureFinanceUser(req, reply);
-    if (!user) return;
-    const query = companyQuerySchema.safeParse(req.query ?? {});
-    if (!query.success) return validationError(reply, query.error);
-    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const body = postBody.safeParse(req.body ?? {});
-    if (!body.success) return validationError(reply, body.error);
-    try {
-      const result = await postSettlementToGl(
-        {
-          operatingCompanyId: query.data.operating_company_id,
-          settlementId: body.data.settlement_id,
-          floorOverride: body.data.floor_override
-            ? { authorizedByUserId: body.data.floor_override.authorized_by_user_id, reason: body.data.floor_override.reason }
-            : null,
-        },
-        { userId: user.uuid }
-      );
-      return reply.code(result.result === "posted" ? 201 : 200).send(result);
-    } catch (error) {
-      if (error instanceof SettlementPostingError) {
-        const m = mapError(error);
-        return reply.code(m.statusCode).send(m.body);
-      }
-      throw error;
-    }
+    const settlementId = body.success ? body.data.settlement_id : undefined;
+    return retiredSettlementPost(reply, settlementId);
   });
 
   // Reverse a posted settlement (reversing JE + bucket restore; never delete).
