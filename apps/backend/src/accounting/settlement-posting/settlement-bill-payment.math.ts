@@ -65,6 +65,10 @@ export function bucketRecoveryRoleKey(deductionType: string): string {
   // the FIN-18 registry. Escrow never reaches here (it credits the driver's own liability sub-account).
   const t = String(deductionType ?? "").trim().toLowerCase();
   if (t === "cash_advance_repayment" || t === "cash_advance") return "advance_recovery";
+  // BANK-DOM-06: the registered role is fuel_advance_recovery — there is no 'fuel_recovery' role in
+  // chart_of_accounts_roles or account_role_bindings, so the derived key would fail closed on every
+  // fuel deduction (including the fuel-card overage recovery this alias exists to serve).
+  if (t === "fuel") return "fuel_advance_recovery";
   return `${t}_recovery`;
 }
 

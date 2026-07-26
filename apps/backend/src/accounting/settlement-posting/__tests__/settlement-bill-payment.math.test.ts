@@ -43,6 +43,15 @@ describe("settlement-bill-payment.math", () => {
     expect(bucketRecoveryRoleKey("lease")).toBe("lease_recovery");
   });
 
+  it("BANK-DOM-06: 'fuel' maps to the REGISTERED fuel_advance_recovery role, never 'fuel_recovery'", () => {
+    // There is no 'fuel_recovery' entry in chart_of_accounts_roles / account_role_bindings, so the
+    // naive `${type}_recovery` derivation fails closed on every fuel deduction — including the
+    // fuel-card overage recovery. Regression lock for the alias.
+    expect(bucketRecoveryRoleKey("fuel")).toBe("fuel_advance_recovery");
+    expect(bucketRecoveryRoleKey("FUEL")).toBe("fuel_advance_recovery");
+    expect(bucketRecoveryRoleKey(" fuel ")).toBe("fuel_advance_recovery");
+  });
+
   it("allocates deductions across bills oldest-first, capped at each gross; sum == min(D,G)", () => {
     // Blueprint worked example: bills 525,480,510 (=1515), deductions 275.
     const alloc = allocateDeductionsAcrossBills([52500, 48000, 51000], 27500);

@@ -53,6 +53,14 @@ export type CreateSettlementDeductionInput = {
    * drill-through (bank txn ⇄ deduction). Non-bank sources leave it null.
    */
   sourceBankTransactionId?: string | null;
+  /**
+   * Optional originating fuel-card transaction (fuel.fuel_transactions). BANK-DOM-06: the recoverable
+   * portion of an over-limit / non-fuel fleet-card purchase carries the source fuel transaction
+   * DIRECTLY for reverse drill-through (fuel txn ⇄ deduction). A partial UNIQUE index on
+   * (operating_company_id, source_fuel_transaction_id) makes the recovery idempotent at the DB level,
+   * so a re-imported card file cannot double-charge the driver. Non-fuel sources leave it null.
+   */
+  sourceFuelTransactionId?: string | null;
   createdByUserId: string;
 };
 
@@ -69,6 +77,7 @@ export type SettlementDeductionRow = {
   load_id: string | null;
   bucket_id: string | null;
   source_bank_transaction_id: string | null;
+  source_fuel_transaction_id: string | null;
   created_at: string;
 };
 
@@ -85,6 +94,7 @@ const RETURNING_COLUMNS = `
   load_id,
   bucket_id,
   source_bank_transaction_id,
+  source_fuel_transaction_id,
   created_at::text AS created_at
 `;
 
@@ -134,13 +144,15 @@ export async function createSettlementDeduction(
         load_id,
         bucket_id,
         source_bank_transaction_id,
+        source_fuel_transaction_id,
         remaining_balance_cents
       )
       -- A3-2: initialise the carry-forward balance to the full amount on insert (status defaults to
       -- 'pending'). The recovery engine treats NULL as = amount_cents (A3-1 lock); this just makes
       -- new rows explicit going forward. $4 = amount_cents. $8 = load_id (direct trace, nullable),
-      -- $9 = bucket_id (recover-from-driver), $10 = source_bank_transaction_id (BLOCK-6b provenance).
-      VALUES ($1, $2, $3, $4, $5, NULL, $6, $7, $8, $9, $10, $4)
+      -- $9 = bucket_id (recover-from-driver), $10 = source_bank_transaction_id (BLOCK-6b provenance),
+      -- $11 = source_fuel_transaction_id (BANK-DOM-06 fuel-card overage provenance).
+      VALUES ($1, $2, $3, $4, $5, NULL, $6, $7, $8, $9, $10, $11, $4)
       RETURNING ${RETURNING_COLUMNS}
     `,
     [
@@ -154,6 +166,7 @@ export async function createSettlementDeduction(
       input.loadId ?? null,
       input.bucketId ?? null,
       input.sourceBankTransactionId ?? null,
+      input.sourceFuelTransactionId ?? null,
     ]
   );
 
@@ -174,6 +187,7 @@ export async function createSettlementDeduction(
       source_pending_id: input.sourcePendingId ?? null,
       bucket_id: input.bucketId ?? null,
       source_bank_transaction_id: input.sourceBankTransactionId ?? null,
+      source_fuel_transaction_id: input.sourceFuelTransactionId ?? null,
       load_id: input.loadId ?? null,
     },
     "info",

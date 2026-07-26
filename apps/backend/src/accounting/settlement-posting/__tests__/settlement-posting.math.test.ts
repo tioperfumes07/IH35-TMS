@@ -54,6 +54,13 @@ describe("FIN-18 settlement posting math", () => {
     expect(bucketRecoveryRoleKey("Advance")).toBe("advance_recovery");
   });
 
+  it("BANK-DOM-06: 'fuel' maps to the REGISTERED fuel_advance_recovery role, never 'fuel_recovery'", () => {
+    // FIN-18 resolves this key against the role designation table and FAILS CLOSED on an unknown
+    // key. 'fuel_recovery' is not a registered role; 'fuel_advance_recovery' is.
+    expect(bucketRecoveryRoleKey("fuel")).toBe("fuel_advance_recovery");
+    expect(bucketRecoveryRoleKey("Fuel")).toBe("fuel_advance_recovery");
+  });
+
   it("buildSettlementIdempotencyKey is deterministic + purpose-scoped", () => {
     const a = buildSettlementIdempotencyKey("OPCO", "SETT", "initial_post");
     expect(a).toBe("ih35:settlement-gl:v1:opco:sett:initial_post");

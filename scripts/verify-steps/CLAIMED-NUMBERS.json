@@ -1352,6 +1352,7 @@
     "1560": "1560-verify-route-manifest-parity.mjs",
     "1580": "1580-verify-no-jsonb-id-array-as-fk.mjs",
     "1599": "1599-verify-step-number-registry.mjs",
+    "1608": "1608-verify-fuel-card-overage-driver-recovery.mjs",
     "1612": "1612-verify-healthz-no-raw-error-leak.mjs"
   }
 }
