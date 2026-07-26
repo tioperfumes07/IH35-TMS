@@ -4,14 +4,19 @@ import { PageHeader } from "../../../components/layout/PageHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { formatUsd } from "../../../lib/money";
+import { DrillKpiCard } from "../../../components/layout/DrillKpiCard";
 
-function Card({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
-      <div className="text-[11px] uppercase tracking-wide text-gray-500">{label}</div>
-      <div className="mt-1 text-lg font-semibold text-gray-900">{value}</div>
-    </div>
-  );
+// C8: every legal-report figure opens the matters list it was rolled up from, and a figure the
+// payload does not carry renders "—" rather than "$0 at risk" / "0 deadlines".
+function Card({ label, value, to }: { label: string; value: string | number | null; to: string }) {
+  return <DrillKpiCard size="md" label={label} value={value} to={to} />;
+}
+
+/** Absent stays absent. */
+function countOrNull(raw: unknown): number | null {
+  if (raw === null || raw === undefined) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
 }
 
 // Locked palette (§7): no red/orange/yellow section bands — severity is distinguished by neutral
@@ -64,19 +69,36 @@ export function LegalReportsLandingPage() {
             <div className="text-[11px] uppercase tracking-wide text-gray-500">Open by severity</div>
             <SeverityChips bySeverity={(s.open_by_severity as Record<string, number>) ?? {}} />
           </div>
-          <Card label="Amount at risk (open)" value={formatUsd(s.total_amount_at_risk as number | string | null | undefined)} />
-          <Card label="Amount we seek (plaintiff)" value={formatUsd(s.total_amount_we_seek as number | string | null | undefined)} />
-          <Card label="Closed matters (count)" value={String((s.settlement_history as { closed_n?: number })?.closed_n ?? 0)} />
+          <Card
+            label="Amount at risk (open)"
+            value={formatUsd(s.total_amount_at_risk as number | string | null | undefined)}
+            to="/legal/matters"
+          />
+          <Card
+            label="Amount we seek (plaintiff)"
+            value={formatUsd(s.total_amount_we_seek as number | string | null | undefined)}
+            to="/legal/matters"
+          />
+          <Card
+            label="Closed matters (count)"
+            value={countOrNull((s.settlement_history as { closed_n?: number })?.closed_n)}
+            to="/legal/matters"
+          />
           <Card
             label="Avg settled claim"
             value={
               (s.settlement_history as { avg_settled_claim?: string | null })?.avg_settled_claim != null
                 ? formatUsd((s.settlement_history as { avg_settled_claim?: string })?.avg_settled_claim)
-                : "—"
+                : null
             }
+            to="/legal/matters"
           />
-          <Card label="Deadlines (30d)" value={String(s.deadlines_next_30_days ?? 0)} />
-          <Card label="SOL within 90d" value={String(s.statute_limitations_approaching_90d ?? 0)} />
+          <Card label="Deadlines (30d)" value={countOrNull(s.deadlines_next_30_days)} to="/legal/matters" />
+          <Card
+            label="SOL within 90d"
+            value={countOrNull(s.statute_limitations_approaching_90d)}
+            to="/legal/matters"
+          />
         </div>
       )}
     </div>

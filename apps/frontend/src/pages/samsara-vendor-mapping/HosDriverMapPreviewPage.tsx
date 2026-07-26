@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchHosDriverMapPreview, type DriverMapRow } from "../../api/telematics";
 import { BackArrowHeader } from "../../components/layout/BackArrowHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 
 function ConfidencePill({ confidence }: { confidence: DriverMapRow["confidence"] }) {
   const cls =
@@ -18,14 +20,21 @@ function BasisPill({ basis }: { basis: DriverMapRow["match_basis"] }) {
   return <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">{basis}</span>;
 }
 
-function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
-  return (
-    <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
-      <div className="text-[11px] uppercase tracking-wide text-gray-500">{label}</div>
-      <div className="mt-0.5 text-lg font-semibold text-gray-900">{value}</div>
-      {sub && <div className="text-[11px] text-gray-400">{sub}</div>}
-    </div>
-  );
+/**
+ * C8: a drill target is REQUIRED. The confidence counts filter the driver-map table below (that IS
+ * the record set they count); the roster/driver counts open the driver list.
+ */
+type StatCardProps = { label: string; value: string | number | null; sub?: string } & (
+  | { to: string; onClick?: never; unavailable?: never }
+  | { onClick: () => void; to?: never; unavailable?: never }
+  | { unavailable: string; to?: never; onClick?: never }
+);
+
+function StatCard(props: StatCardProps) {
+  const { label, value, sub, to, onClick, unavailable } = props;
+  if (to) return <DrillKpiCard size="md" label={label} value={value} hint={sub} to={to} />;
+  if (unavailable) return <DrillKpiCard size="md" label={label} value={value} hint={sub} unavailable={unavailable} />;
+  return <DrillKpiCard size="md" label={label} value={value} hint={sub} onClick={onClick!} />;
 }
 
 export function HosDriverMapPreviewPage() {
@@ -40,6 +49,9 @@ export function HosDriverMapPreviewPage() {
   });
 
   const d = q.data;
+  // C8: the confidence KPIs drill into the table below — additive filter, all rows by default.
+  const [confidenceFilter, setConfidenceFilter] = useState<DriverMapRow["confidence"] | null>(null);
+  const visibleRows = (d?.rows ?? []).filter((row) => !confidenceFilter || row.confidence === confidenceFilter);
 
   return (
     <div className="space-y-4">
@@ -59,20 +71,40 @@ export function HosDriverMapPreviewPage() {
         <>
           {/* Summary stats */}
           <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
-            <StatCard label="Our active drivers" value={d.our_active_drivers} />
-            <StatCard label="Samsara roster" value={d.samsara_roster} />
-            <StatCard label="High-confidence" value={d.counts.matched_high} sub="license or phone" />
-            <StatCard label="Low-confidence" value={d.counts.matched_low} sub="name only" />
-            <StatCard label="Unmatched" value={d.counts.unmatched} />
+            <StatCard label="Our active drivers" value={d.our_active_drivers} to="/drivers" />
+            <StatCard label="Samsara roster" value={d.samsara_roster} onClick={() => setConfidenceFilter(null)} />
+            <StatCard
+              label="High-confidence"
+              value={d.counts.matched_high}
+              sub="license or phone"
+              onClick={() => setConfidenceFilter("high")}
+            />
+            <StatCard
+              label="Low-confidence"
+              value={d.counts.matched_low}
+              sub="name only"
+              onClick={() => setConfidenceFilter("low")}
+            />
+            <StatCard label="Unmatched" value={d.counts.unmatched} onClick={() => setConfidenceFilter("none")} />
           </div>
 
           {/* Downstream diagnostics */}
           <div className="rounded-sm border border-gray-200 bg-white px-4 py-3">
             <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Downstream — HOS clock pull diagnostics</div>
             <div className="grid gap-2 sm:grid-cols-4">
-              <StatCard label="Active driver query" value={d.downstream.active_driver_query_count} sub="drivers matched by pull query" />
-              <StatCard label="Open assignments" value={d.downstream.open_vehicle_driver_assignments} sub="telematics.vehicle_driver_assignments" />
-              <StatCard label="Linked in integrations" value={d.downstream.linked_samsara_drivers} sub="samsara_drivers.local_driver_id" />
+              <StatCard label="Active driver query" value={d.downstream.active_driver_query_count} sub="drivers matched by pull query" to="/drivers" />
+              <StatCard
+                label="Open assignments"
+                value={d.downstream.open_vehicle_driver_assignments}
+                sub="telematics.vehicle_driver_assignments"
+                unavailable="telematics.vehicle_driver_assignments has no list screen — this count is a pull diagnostic only."
+              />
+              <StatCard
+                label="Linked in integrations"
+                value={d.downstream.linked_samsara_drivers}
+                sub="samsara_drivers.local_driver_id"
+                to="/samsara/vendor-mapping-integrity"
+              />
               <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
                 <div className="text-[11px] uppercase tracking-wide text-gray-500">Last HOS pull</div>
                 {d.downstream.last_hos_clocks_pull ? (
@@ -123,7 +155,7 @@ export function HosDriverMapPreviewPage() {
                 </tr>
               </thead>
               <tbody>
-                {d.rows.map((row) => (
+                {visibleRows.map((row) => (
                   <tr key={row.local_driver_id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
                     <td className="px-3 py-2 font-medium text-gray-900">{row.driver_name}</td>
                     <td className="px-3 py-2 font-mono text-gray-600">{row.cdl_number ?? "—"}</td>

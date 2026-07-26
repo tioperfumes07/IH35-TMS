@@ -4,12 +4,13 @@ import { useSearchParams } from "react-router-dom";
 import { getActiveLiabilities, getLiabilitiesByDriver, getLiabilitiesKpis, getLiabilityDetail } from "../../api/liabilities";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { LiabilitiesKpiRow } from "./components/LiabilitiesKpiRow";
+import { LIABILITY_TABS, LiabilitiesKpiRow } from "./components/LiabilitiesKpiRow";
 import { LiabilitiesTable } from "./components/LiabilitiesTable";
 import { LiabilityDetailDrawer } from "./components/LiabilityDetailDrawer";
 import { SendAckRequestModal } from "./components/SendAckRequestModal";
 
-const SUBNAV = ["All Active", "By Driver", "By Type", "Pending Acknowledgments", "Paid Off"] as const;
+// C8: the tab list is owned by LiabilitiesKpiRow so a KPI drill and a tab click cannot drift apart.
+const SUBNAV = LIABILITY_TABS;
 
 export function LiabilitiesHomePage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -92,7 +93,7 @@ export function LiabilitiesHomePage() {
         </div>
       </div>
 
-      <LiabilitiesKpiRow kpis={kpisQuery.data} />
+      <LiabilitiesKpiRow kpis={kpisQuery.data} onSelectTab={setTab} />
       <LiabilitiesTable
         rows={rows}
         onOpenDetail={(row) => {
