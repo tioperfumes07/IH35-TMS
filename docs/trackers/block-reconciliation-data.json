@@ -1,6 +1,6 @@
 {
  "date": "2026-07-26",
- "generated_at_iso": "2026-07-26T20:07:21.164Z",
+ "generated_at_iso": "2026-07-26T20:42:35.833Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 28,
@@ -13418,10 +13418,22 @@
    "branch": "hold/acct-dom-01-je-approval-design"
   },
   {
+   "number": 3597,
+   "title": "fix(maintenance): MNT-ECON-05 wire dead Save header on WO detail",
+   "mergedAt": "2026-07-26T20:21:56Z",
+   "branch": "fix/mnt-econ-05-wo-save-header"
+  },
+  {
    "number": 3595,
    "title": "[HOLD-FOR-JORGE] fix(maintenance): MNT-LINK-04 vendor catalog → mdata.vendors AP FK",
    "mergedAt": "2026-07-26T19:24:12Z",
    "branch": "hold/mnt-link-04-vendor-ap"
+  },
+  {
+   "number": 3593,
+   "title": "[HOLD-FOR-JORGE · FINANCIAL] fix(driver-finance): escrow forfeit had no signed-clause gate — and paper signatures were unrepresentable",
+   "mergedAt": "2026-07-26T20:41:42Z",
+   "branch": "fix/escrow-forfeit-signed-clause-gate"
   },
   {
    "number": 3592,
@@ -13452,6 +13464,12 @@
    "title": "C5 FIX: canonical load navigation — kill the /dispatch/loads/:id facade (guard 1555 GREEN)",
    "mergedAt": "2026-07-26T19:52:00Z",
    "branch": "sweep/c5-canonical-load-nav-fix"
+  },
+  {
+   "number": 3586,
+   "title": "fix(guard): 1430 money gate reported \"PASS (0 branch commit(s) checked)\" — empty input is no longer success",
+   "mergedAt": "2026-07-26T20:41:13Z",
+   "branch": "fix/harden-money-theater-zero-commit-fake-green"
   },
   {
    "number": 3585,
@@ -16968,24 +16986,6 @@
    "title": "fix(insurance): TypeCatalogAdmin §7 + Create type labels (punchlist 230)",
    "mergedAt": "2026-07-20T02:55:51Z",
    "branch": "ops/insurance-type-catalog-create-vocab"
-  },
-  {
-   "number": 2783,
-   "title": "fix(factoring): FactorAdmin primary CTA + Create Factor",
-   "mergedAt": "2026-07-20T03:19:43Z",
-   "branch": "ops/factor-admin-create-vocab"
-  },
-  {
-   "number": 2782,
-   "title": "fix(insurance): §7 vocab on Claims/Lawsuits create CTAs",
-   "mergedAt": "2026-07-20T03:08:45Z",
-   "branch": "ops/insurance-create-vocab"
-  },
-  {
-   "number": 2781,
-   "title": "fix(ci): factoring-balance JE dates use companyBusinessDate (UTC midnight flake)",
-   "mergedAt": "2026-07-20T01:48:48Z",
-   "branch": "ops/fix-factoring-balance-asof-flake"
   }
  ],
  "merged_pr_total": 3000,
@@ -17006,6 +17006,12 @@
    "number": 3595,
    "title": "[HOLD-FOR-JORGE] fix(maintenance): MNT-LINK-04 vendor catalog → mdata.vendors AP FK",
    "mergedAt": "2026-07-26T19:24:12Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3593,
+   "title": "[HOLD-FOR-JORGE · FINANCIAL] fix(driver-finance): escrow forfeit had no signed-clause gate — and paper signatures were unrepresentable",
+   "mergedAt": "2026-07-26T20:41:42Z",
    "category": "HOLD"
   },
   {
