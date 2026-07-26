@@ -10,6 +10,7 @@ import { applyBankingRulesForTransaction } from "./banking-rules.engine.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { emitBankingSpineEvent } from "./banking-spine-emit.js";
 import { assertBankAccountUsable, bankTransactionHiddenFilterSql, isBankAccountHideEnabled } from "./bank-account-visibility.js";
+import { computeAdjustedBalanceSummary } from "./adjusted-balance-rec.js";
 
 const startBodySchema = z.object({
   bank_account_id: z.string().uuid(),
@@ -115,24 +116,31 @@ async function loadSession(
 }
 
 function computeSummaryFromTransactions(
-  transactions: Array<{ amount_cents: number; is_credit: boolean; matched_load_id: string | null; matched_bill_id: string | null; matched_settlement_id: string | null }>
+  transactions: Array<{
+    amount_cents: number;
+    is_credit: boolean;
+    reconciliation_cleared?: boolean | null;
+    matched_load_id?: string | null;
+    matched_bill_id?: string | null;
+    matched_settlement_id?: string | null;
+  }>,
+  opts: { beginningBalanceCents: number; statementEndingCents: number }
 ) {
-  let matchedCreditsCents = 0;
-  let matchedDebitsCents = 0;
-
-  for (const transaction of transactions) {
-    const isMatched = Boolean(transaction.matched_load_id || transaction.matched_bill_id || transaction.matched_settlement_id);
-    if (!isMatched) continue;
-    const amountAbs = Math.abs(Number(transaction.amount_cents ?? 0));
-    if (transaction.is_credit) matchedCreditsCents += amountAbs;
-    else matchedDebitsCents += amountAbs;
-  }
-  const bookBalanceCents = matchedCreditsCents - matchedDebitsCents;
-  return {
-    matchedCreditsCents,
-    matchedDebitsCents,
-    bookBalanceCents,
-  };
+  // BANK-DOM-03: prefer explicit reconciliation_cleared. Until operators clear rows, fall back to
+  // prior matched_* linkage so existing sessions are not stuck at all-uncleared.
+  const anyCleared = transactions.some((t) => Boolean(t.reconciliation_cleared));
+  const normalized = transactions.map((t) => ({
+    amount_cents: t.amount_cents,
+    is_credit: t.is_credit,
+    reconciliation_cleared: anyCleared
+      ? Boolean(t.reconciliation_cleared)
+      : Boolean(t.matched_load_id || t.matched_bill_id || t.matched_settlement_id),
+  }));
+  return computeAdjustedBalanceSummary({
+    beginningBalanceCents: opts.beginningBalanceCents,
+    statementEndingCents: opts.statementEndingCents,
+    transactions: normalized,
+  });
 }
 
 async function relationExists(relation: string) {
@@ -248,31 +256,79 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     if (!usable) return reply.code(404).send({ error: "bank_account_not_found" });
 
     const created = await withCompanyScope(user.uuid, accountContext.operating_company_id, async (client) => {
-      const insertRes = await client.query<{ id: string }>(
+      const priorRes = await client.query<{ statement_balance_cents: string | number | null }>(
         `
-          INSERT INTO banking.reconciliation_sessions (
-            operating_company_id,
-            bank_account_id,
-            period_start,
-            period_end,
-            statement_balance_cents,
-            book_balance_cents,
-            variance_cents,
-            status,
-            created_at,
-            updated_at
-          )
-          VALUES ($1,$2,$3,$4,$5,0,$5,'open',now(),now())
-          RETURNING id
+          SELECT statement_balance_cents
+          FROM banking.reconciliation_sessions
+          WHERE bank_account_id = $1
+            AND operating_company_id = $2
+            AND status = 'reconciled'
+          ORDER BY reconciled_at DESC NULLS LAST, created_at DESC
+          LIMIT 1
         `,
-        [
-          accountContext.operating_company_id,
-          body.data.bank_account_id,
-          body.data.period_start,
-          body.data.period_end,
-          body.data.statement_balance_cents,
-        ]
+        [body.data.bank_account_id, accountContext.operating_company_id]
       );
+      const beginningBalanceCents = Number(priorRes.rows[0]?.statement_balance_cents ?? 0);
+
+      // BANK-DOM-03 columns are HELD — CI/prod may not have them until Neon-apply.
+      // Prefer adjusted-balance INSERT; fall back to pre-DOM-03 shape on undefined_column.
+      let insertRes: { rows: Array<{ id: string }> };
+      try {
+        insertRes = await client.query<{ id: string }>(
+          `
+            INSERT INTO banking.reconciliation_sessions (
+              operating_company_id,
+              bank_account_id,
+              period_start,
+              period_end,
+              statement_balance_cents,
+              beginning_balance_cents,
+              book_balance_cents,
+              variance_cents,
+              status,
+              created_at,
+              updated_at
+            )
+            VALUES ($1,$2,$3,$4,$5,$6,$6,$5::bigint-$6::bigint,'open',now(),now())
+            RETURNING id
+          `,
+          [
+            accountContext.operating_company_id,
+            body.data.bank_account_id,
+            body.data.period_start,
+            body.data.period_end,
+            body.data.statement_balance_cents,
+            beginningBalanceCents,
+          ]
+        );
+      } catch (err) {
+        if ((err as { code?: string }).code !== "42703") throw err;
+        insertRes = await client.query<{ id: string }>(
+          `
+            INSERT INTO banking.reconciliation_sessions (
+              operating_company_id,
+              bank_account_id,
+              period_start,
+              period_end,
+              statement_balance_cents,
+              book_balance_cents,
+              variance_cents,
+              status,
+              created_at,
+              updated_at
+            )
+            VALUES ($1,$2,$3,$4,$5,$5,0,'open',now(),now())
+            RETURNING id
+          `,
+          [
+            accountContext.operating_company_id,
+            body.data.bank_account_id,
+            body.data.period_start,
+            body.data.period_end,
+            body.data.statement_balance_cents,
+          ]
+        );
+      }
       const sessionId = insertRes.rows[0]?.id;
       if (!sessionId) return null;
       await appendCrudAudit(
@@ -340,6 +396,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
         plaid_category: string[];
         pending: boolean;
         is_credit: boolean;
+        reconciliation_cleared: boolean;
         matched_load_id: string | null;
         matched_bill_id: string | null;
         matched_settlement_id: string | null;
@@ -357,6 +414,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
             plaid_category,
             pending,
             is_credit,
+            reconciliation_cleared,
             matched_load_id,
             matched_bill_id,
             matched_settlement_id,
@@ -371,20 +429,50 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
       );
 
       const transactions = txnRes.rows;
-      const summary = computeSummaryFromTransactions(transactions);
-      const varianceCents = Number(session.statement_balance_cents) - Number(summary.bookBalanceCents);
-
-      await client.query(
-        `
-          UPDATE banking.reconciliation_sessions
-          SET
-            book_balance_cents = $2,
-            variance_cents = $3,
-            updated_at = now()
-          WHERE id = $1
-        `,
-        [session.id, summary.bookBalanceCents, varianceCents]
+      const beginningBalanceCents = Number(
+        (session as { beginning_balance_cents?: number | string | null }).beginning_balance_cents ?? 0
       );
+      const summary = computeSummaryFromTransactions(transactions, {
+        beginningBalanceCents,
+        statementEndingCents: Number(session.statement_balance_cents ?? 0),
+      });
+      const varianceCents = summary.varianceCents;
+
+      try {
+        await client.query(
+          `
+            UPDATE banking.reconciliation_sessions
+            SET
+              book_balance_cents = $2,
+              variance_cents = $3,
+              deposits_in_transit_cents = $4,
+              outstanding_checks_cents = $5,
+              adjusted_bank_balance_cents = $6,
+              adjusted_book_balance_cents = $7,
+              updated_at = now()
+            WHERE id = $1
+          `,
+          [
+            session.id,
+            summary.bookBalanceCents,
+            varianceCents,
+            summary.depositsInTransitCents,
+            summary.outstandingChecksCents,
+            summary.adjustedBankBalanceCents,
+            summary.adjustedBookBalanceCents,
+          ]
+        );
+      } catch (err) {
+        if ((err as { code?: string }).code !== "42703") throw err;
+        await client.query(
+          `
+            UPDATE banking.reconciliation_sessions
+            SET book_balance_cents = $2, variance_cents = $3, updated_at = now()
+            WHERE id = $1
+          `,
+          [session.id, summary.bookBalanceCents, varianceCents]
+        );
+      }
 
       const matchedTransactions = transactions.filter((row) => Boolean(row.matched_load_id || row.matched_bill_id || row.matched_settlement_id));
       const unmatchedTransactions = transactions.filter((row) => !(row.matched_load_id || row.matched_bill_id || row.matched_settlement_id));
@@ -471,15 +559,77 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
         },
         summary: {
           statement_balance_cents: Number(session.statement_balance_cents),
+          beginning_balance_cents: summary.beginningBalanceCents,
+          cleared_credits_cents: summary.clearedCreditsCents,
+          cleared_debits_cents: summary.clearedDebitsCents,
+          deposits_in_transit_cents: summary.depositsInTransitCents,
+          outstanding_checks_cents: summary.outstandingChecksCents,
+          adjusted_bank_balance_cents: summary.adjustedBankBalanceCents,
+          adjusted_book_balance_cents: summary.adjustedBookBalanceCents,
           matched_credits_cents: summary.matchedCreditsCents,
           matched_debits_cents: summary.matchedDebitsCents,
           book_balance_cents: summary.bookBalanceCents,
           variance_cents: varianceCents,
         },
+        cleared_transactions: transactions.filter((row) => Boolean(row.reconciliation_cleared)),
+        uncleared_transactions: transactions.filter((row) => !row.reconciliation_cleared),
       };
     });
 
     return payload;
+  });
+
+  app.post("/api/v1/banking/reconciliation/:sessionId/clear", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
+
+    const params = sessionParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
+    const body = z
+      .object({
+        transaction_id: z.string().uuid(),
+        cleared: z.boolean(),
+      })
+      .safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+
+    const session = await loadSession(user.uuid, params.data.sessionId, query.data.operating_company_id);
+    if (!session) return reply.code(404).send({ error: "session_not_found" });
+    if (session.status === "reconciled") {
+      return reply.code(409).send({ error: "reconciled_session_locked" });
+    }
+
+    const updated = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const res = await client.query<{ id: string }>(
+        `
+          UPDATE banking.bank_transactions
+          SET
+            reconciliation_cleared = $3,
+            reconciliation_session_id = CASE WHEN $3 THEN $4::uuid ELSE reconciliation_session_id END,
+            updated_at = now()
+          WHERE id = $1
+            AND operating_company_id = $2
+            AND bank_account_id = $5
+            AND transaction_date BETWEEN $6 AND $7
+          RETURNING id
+        `,
+        [
+          body.data.transaction_id,
+          query.data.operating_company_id,
+          body.data.cleared,
+          session.id,
+          session.bank_account_id,
+          session.period_start,
+          session.period_end,
+        ]
+      );
+      return Boolean(res.rows[0]);
+    });
+    if (!updated) return reply.code(404).send({ error: "transaction_not_found" });
+    return { ok: true, transaction_id: body.data.transaction_id, cleared: body.data.cleared };
   });
 
   app.post("/api/v1/banking/reconciliation/:sessionId/match", async (req, reply) => {
@@ -633,10 +783,18 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     const session = await loadSession(user.uuid, params.data.sessionId, query.data.operating_company_id);
     if (!session) return reply.code(404).send({ error: "session_not_found" });
 
-    const { varianceCents } = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const txnRes = await client.query<{ amount_cents: number; is_credit: boolean; matched_load_id: string | null; matched_bill_id: string | null; matched_settlement_id: string | null }>(
+    const { varianceCents, summary } = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const txnRes = await client.query<{
+        amount_cents: number;
+        is_credit: boolean;
+        reconciliation_cleared: boolean;
+        matched_load_id: string | null;
+        matched_bill_id: string | null;
+        matched_settlement_id: string | null;
+      }>(
         `
-          SELECT amount_cents, is_credit, matched_load_id, matched_bill_id, matched_settlement_id
+          SELECT amount_cents, is_credit, reconciliation_cleared,
+                 matched_load_id, matched_bill_id, matched_settlement_id
           FROM banking.bank_transactions
           WHERE bank_account_id = $1
             AND operating_company_id = $2
@@ -644,9 +802,14 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
         `,
         [session.bank_account_id, query.data.operating_company_id, session.period_start, session.period_end]
       );
-      const summary = computeSummaryFromTransactions(txnRes.rows);
-      const variance = Number(session.statement_balance_cents) - Number(summary.bookBalanceCents);
-      return { varianceCents: variance, bookBalanceCents: summary.bookBalanceCents };
+      const beginningBalanceCents = Number(
+        (session as { beginning_balance_cents?: number | string | null }).beginning_balance_cents ?? 0
+      );
+      const summaryInner = computeSummaryFromTransactions(txnRes.rows, {
+        beginningBalanceCents,
+        statementEndingCents: Number(session.statement_balance_cents ?? 0),
+      });
+      return { varianceCents: summaryInner.varianceCents, summary: summaryInner };
     });
 
     // A reconciliation only closes ordinarily at exactly $0.00 difference. An Owner may make an
@@ -664,29 +827,69 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     }
 
     const transactionsToSync = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      await client.query(
-        `
-          UPDATE banking.reconciliation_sessions
-          SET
-            status = 'reconciled',
-            reconciled_by_user_id = $2,
-            reconciled_at = now(),
-            variance_cents = $3,
-            updated_at = now(),
-            notes = CASE
-              WHEN $4::text IS NULL THEN notes
-              WHEN notes IS NULL OR notes = '' THEN $4::text
-              ELSE concat(notes, E'\\n', $4::text)
-            END
-          WHERE id = $1
-        `,
-        [
-          session.id,
-          user.uuid,
-          varianceCents,
-          body.data.force_complete ? `force_complete_reason: ${body.data.reason}` : null,
-        ]
-      );
+      const completeParams = [
+        session.id,
+        user.uuid,
+        varianceCents,
+        body.data.force_complete ? `force_complete_reason: ${body.data.reason}` : null,
+        summary.bookBalanceCents,
+        summary.depositsInTransitCents,
+        summary.outstandingChecksCents,
+        summary.adjustedBankBalanceCents,
+        summary.adjustedBookBalanceCents,
+      ] as const;
+      try {
+        await client.query(
+          `
+            UPDATE banking.reconciliation_sessions
+            SET
+              status = 'reconciled',
+              reconciled_by_user_id = $2,
+              reconciled_at = now(),
+              variance_cents = $3,
+              book_balance_cents = $5,
+              deposits_in_transit_cents = $6,
+              outstanding_checks_cents = $7,
+              adjusted_bank_balance_cents = $8,
+              adjusted_book_balance_cents = $9,
+              updated_at = now(),
+              notes = CASE
+                WHEN $4::text IS NULL THEN notes
+                WHEN notes IS NULL OR notes = '' THEN $4::text
+                ELSE concat(notes, E'\\n', $4::text)
+              END
+            WHERE id = $1
+          `,
+          [...completeParams]
+        );
+      } catch (err) {
+        if ((err as { code?: string }).code !== "42703") throw err;
+        await client.query(
+          `
+            UPDATE banking.reconciliation_sessions
+            SET
+              status = 'reconciled',
+              reconciled_by_user_id = $2,
+              reconciled_at = now(),
+              variance_cents = $3,
+              book_balance_cents = $5,
+              updated_at = now(),
+              notes = CASE
+                WHEN $4::text IS NULL THEN notes
+                WHEN notes IS NULL OR notes = '' THEN $4::text
+                ELSE concat(notes, E'\\n', $4::text)
+              END
+            WHERE id = $1
+          `,
+          [
+            session.id,
+            user.uuid,
+            varianceCents,
+            body.data.force_complete ? `force_complete_reason: ${body.data.reason}` : null,
+            summary.bookBalanceCents,
+          ]
+        );
+      }
       // BANK-DOM-02: stamp membership so later mutations have an explicit session link
       // (date-window membership remains a second defense in the immutability guard).
       await client.query(
