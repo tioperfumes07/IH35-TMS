@@ -1,6 +1,6 @@
 {
  "date": "2026-07-26",
- "generated_at_iso": "2026-07-26T20:23:01.477Z",
+ "generated_at_iso": "2026-07-26T21:11:49.721Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 28,
@@ -13388,10 +13388,22 @@
  ],
  "merged_prs": [
   {
+   "number": 3608,
+   "title": "[HOLD-FOR-JORGE · FINANCIAL] feat(banking): BANK-DOM-05 intercompany transfers — reciprocal legs that net to zero",
+   "mergedAt": "2026-07-26T21:11:01Z",
+   "branch": "sweep/bank-dom-05-intercompany-transfers"
+  },
+  {
    "number": 3607,
    "title": "[HOLD-FOR-JORGE] SET-01 — retire mounted deprecated FIN-18 settlement poster (308 → payrun-close)",
    "mergedAt": "2026-07-26T19:39:19Z",
    "branch": "hold/set-01-retire-deprecated-settlement-poster"
+  },
+  {
+   "number": 3605,
+   "title": "docs(accounting): lock ACCT-DOM-01 D1–D6 owner decisions",
+   "mergedAt": "2026-07-26T21:03:36Z",
+   "branch": "docs/acct-dom-01-owner-decisions"
   },
   {
    "number": 3604,
@@ -13418,6 +13430,12 @@
    "branch": "hold/acct-dom-01-je-approval-design"
   },
   {
+   "number": 3598,
+   "title": "chore(tracker): refresh reconcile + phase-manifest artifacts (unblocks locked-guards on every open PR)",
+   "mergedAt": "2026-07-26T20:45:48Z",
+   "branch": "chore/tracker-refresh-2026-07-26"
+  },
+  {
    "number": 3597,
    "title": "fix(maintenance): MNT-ECON-05 wire dead Save header on WO detail",
    "mergedAt": "2026-07-26T20:21:56Z",
@@ -13428,6 +13446,12 @@
    "title": "[HOLD-FOR-JORGE] fix(maintenance): MNT-LINK-04 vendor catalog → mdata.vendors AP FK",
    "mergedAt": "2026-07-26T19:24:12Z",
    "branch": "hold/mnt-link-04-vendor-ap"
+  },
+  {
+   "number": 3593,
+   "title": "[HOLD-FOR-JORGE · FINANCIAL] fix(driver-finance): escrow forfeit had no signed-clause gate — and paper signatures were unrepresentable",
+   "mergedAt": "2026-07-26T20:41:42Z",
+   "branch": "fix/escrow-forfeit-signed-clause-gate"
   },
   {
    "number": 3592,
@@ -13458,6 +13482,12 @@
    "title": "C5 FIX: canonical load navigation — kill the /dispatch/loads/:id facade (guard 1555 GREEN)",
    "mergedAt": "2026-07-26T19:52:00Z",
    "branch": "sweep/c5-canonical-load-nav-fix"
+  },
+  {
+   "number": 3586,
+   "title": "fix(guard): 1430 money gate reported \"PASS (0 branch commit(s) checked)\" — empty input is no longer success",
+   "mergedAt": "2026-07-26T20:41:13Z",
+   "branch": "fix/harden-money-theater-zero-commit-fake-green"
   },
   {
    "number": 3585,
@@ -16956,40 +16986,16 @@
    "title": "fix(eld): ELD subnav ?tab= URL sync (Ops F)",
    "mergedAt": "2026-07-20T03:21:50Z",
    "branch": "ops/eld-tabs-url-sync"
-  },
-  {
-   "number": 2786,
-   "title": "fix(ci): renumber insurance type-catalog verify-step 962→976",
-   "mergedAt": "2026-07-20T03:21:45Z",
-   "branch": "ops/fix-962-collision"
-  },
-  {
-   "number": 2785,
-   "title": "chore(trackers): 2nd retirement pass — apply owner decisions (504→453 audit-notes)",
-   "mergedAt": "2026-07-20T03:15:08Z",
-   "branch": "chore/audit-note-purge-2-decisions-2026-07-19"
-  },
-  {
-   "number": 2784,
-   "title": "fix(insurance): TypeCatalogAdmin §7 + Create type labels (punchlist 230)",
-   "mergedAt": "2026-07-20T02:55:51Z",
-   "branch": "ops/insurance-type-catalog-create-vocab"
-  },
-  {
-   "number": 2783,
-   "title": "fix(factoring): FactorAdmin primary CTA + Create Factor",
-   "mergedAt": "2026-07-20T03:19:43Z",
-   "branch": "ops/factor-admin-create-vocab"
-  },
-  {
-   "number": 2782,
-   "title": "fix(insurance): §7 vocab on Claims/Lawsuits create CTAs",
-   "mergedAt": "2026-07-20T03:08:45Z",
-   "branch": "ops/insurance-create-vocab"
   }
  ],
  "merged_pr_total": 3000,
  "hold_for_jorge": [
+  {
+   "number": 3608,
+   "title": "[HOLD-FOR-JORGE · FINANCIAL] feat(banking): BANK-DOM-05 intercompany transfers — reciprocal legs that net to zero",
+   "mergedAt": "2026-07-26T21:11:01Z",
+   "category": "HOLD"
+  },
   {
    "number": 3607,
    "title": "[HOLD-FOR-JORGE] SET-01 — retire mounted deprecated FIN-18 settlement poster (308 → payrun-close)",
@@ -17006,6 +17012,12 @@
    "number": 3595,
    "title": "[HOLD-FOR-JORGE] fix(maintenance): MNT-LINK-04 vendor catalog → mdata.vendors AP FK",
    "mergedAt": "2026-07-26T19:24:12Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3593,
+   "title": "[HOLD-FOR-JORGE · FINANCIAL] fix(driver-finance): escrow forfeit had no signed-clause gate — and paper signatures were unrepresentable",
+   "mergedAt": "2026-07-26T20:41:42Z",
    "category": "HOLD"
   },
   {
