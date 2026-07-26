@@ -1916,6 +1916,29 @@
       "status",
       "updated_at"
     ],
+    "banking.intercompany_entity_pairs": [
+      "counterparty_company_id",
+      "created_at",
+      "created_by_user_id",
+      "deactivated_at",
+      "deactivated_by_user_id",
+      "id",
+      "intercompany_account_id",
+      "intercompany_leg",
+      "intercompany_transfer_group_id",
+      "notes",
+      "operating_company_id",
+      "updated_at"
+    ],
+    "banking.intercompany_transfer_groups": [
+      "counterparty_company_id",
+      "created_at",
+      "created_by_user_id",
+      "id",
+      "intercompany_leg",
+      "intercompany_transfer_group_id",
+      "operating_company_id"
+    ],
     "banking.reconciliation_matches": [
       "bank_transaction_id",
       "created_at",
@@ -1930,15 +1953,20 @@
       "updated_at"
     ],
     "banking.reconciliation_sessions": [
+      "adjusted_bank_balance_cents",
+      "adjusted_book_balance_cents",
       "auto_match_run_at",
       "auto_match_suggestions_count",
       "bank_account_id",
+      "beginning_balance_cents",
       "book_balance_cents",
       "created_at",
+      "deposits_in_transit_cents",
       "finalized_at",
       "id",
       "notes",
       "operating_company_id",
+      "outstanding_checks_cents",
       "period_end",
       "period_start",
       "reconciled_at",
@@ -1949,12 +1977,7 @@
       "statement_balance_cents",
       "status",
       "updated_at",
-      "variance_cents",
-      "adjusted_bank_balance_cents",
-      "adjusted_book_balance_cents",
-      "beginning_balance_cents",
-      "deposits_in_transit_cents",
-      "outstanding_checks_cents"
+      "variance_cents"
     ],
     "banking.transaction_categories": [
       "coa_account_id",
@@ -1968,11 +1991,14 @@
     ],
     "banking.transfers": [
       "amount_cents",
+      "counterparty_company_id",
       "created_at",
       "created_by_user_id",
       "from_account_id",
       "from_account_kind",
       "id",
+      "intercompany_leg",
+      "intercompany_transfer_group_id",
       "memo",
       "operating_company_id",
       "qbo_journal_entry_id",

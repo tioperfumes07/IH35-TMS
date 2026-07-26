@@ -235,6 +235,21 @@
       "status": "FAIL",
       "evidence": "NEW LEAF 2026-07-25 (Rule 21 M-grows): settings/reports/email-queue surfaces need deep-wizard VERIFY. Dispatch: docs/trackers/acct-bank-remaining-blocks-2026-07-25/BANK-F09-settings-reports-email-queue-deep-wizard.md",
       "pr": null
+    },
+    {
+      "id": "BANK-DOM-05",
+      "title": "Intercompany transfers (TRANSP<->TRK<->USMCA) \u2014 reciprocal legs netting to zero",
+      "layers": [
+        "DOD-C",
+        "DOD-D",
+        "VERIFY-3",
+        "VERIFY-5",
+        "VERIFY-6"
+      ],
+      "spec": "docs/blocks/class-sweeps/BLOCKS-BANKING-DOM-2026-07-26.txt",
+      "status": "OPEN",
+      "evidence": "Code + guard 1556 GREEN; migration 202609160000 HELD, validated apply-twice on throwaway localhost. NOT LIVE: banking.intercompany_entity_pairs still MISSING on prod (verified 2026-07-26, lucia, positive control mdata.vendors=2789). Closes when GUARD Neon-applies + a TRANSP<->USMCA transfer is proven to net to zero on live data.",
+      "pr": null
     }
   ],
   "ranked_fail_registry": {
@@ -346,9 +361,20 @@
         ],
         "seed_claim": "banking.md BANK-ECON-05: Neon lucia 2026-07-25 \u2014 7 live (deactivated_at IS NULL) bank_accounts, all 7 bound to ledger_account_id.",
         "fix_block": "BANK-ECON-05+BANK-GATE-01"
+      },
+      {
+        "id": "BANK-F08",
+        "rank": 8,
+        "priority": "P2",
+        "title": "transfers are intra-entity only \u2014 an inter-entity movement is unrepresentable, so no intercompany due-to/due-from nets to zero on consolidation",
+        "canonical_target": "banking.transfers + banking.intercompany_entity_pairs -> catalogs.accounts (system_purpose intercompany_<x>)",
+        "bound_items": [
+          "BANK-DOM-05"
+        ],
+        "seed_claim": "PROD 2026-07-26 (lucia, positive control mdata.vendors=2789): transfers.service.ts:106,140 bind BOTH legs to one operating_company_id; banking.intercompany_entity_pairs MISSING; only USMCA carries an intercompany account (8000 / intercompany_ih35), TRANSP and TRK carry none. consolidated-statements.service.ts identifies intercompany by vendor/customer NAME because no entity-pair map exists."
       }
     ]
   },
   "pass_count": 4,
-  "total_count": 16
+  "total_count": 17
 }

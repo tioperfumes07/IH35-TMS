@@ -1,12 +1,12 @@
 # Module completion — Banking (Module 4)
 
-**PROGRESS: 6 of 16** · complete: `false` · as_of: 2026-07-25T16:50:00.000Z · live_sha: `b4c3158`
+**PROGRESS: 6 of 17** · complete: `false` · as_of: 2026-07-25T16:50:00.000Z · live_sha: `b4c3158`
 
 | Status | Count |
 |---|---:|
 | PASS | 4 |
 | HOLD | 2 |
-| OPEN | 0 |
+| OPEN | 1 |
 | FAIL | 6 |
 | UNVERIFIED | 4 |
 
@@ -24,6 +24,7 @@ _PERMANENT-FIX §1 (BANK-00) — no Banking PR may land without citing a row her
 | 6 | `BANK-F06` | P2 | money-gate honesty: flags OFF + MODULE_PROGRESS = manifest | docs/module-completion/banking.json | `BANK-CTRL-01`:PASS · `BANK-GATE-01`:PASS | BANK-CTRL-01+BANK-GATE-01 |
 | 7 | `BANK-F07` | P0 | no per-surface DoD A–E + VERIFY 1–8 sweep across Banking leaves | docs/module-completion/banking.json (binding) | `BANK-SURF-01`:UNVERIFIED · `BANK-SURF-02`:FAIL · `BANK-SURF-04`:HOLD · `BANK-SURF-05`:UNVERIFIED · `BANK-LINK-01`:UNVERIFIED | BANK-MODULE-DOD (maps to the SURF/LINK leaves above — no separate manifest item invented) |
 | — | `BANK-P01` | PASS | bank_accounts 7/7 active cash-bound (legitimate PASS, keep-guard) | banking.bank_accounts | `BANK-ECON-05`:PASS | BANK-ECON-05+BANK-GATE-01 |
+| 8 | `BANK-F08` | P2 | transfers are intra-entity only — an inter-entity movement is unrepresentable, so no intercompany due-to/due-from nets to zero on consolidation | banking.transfers + banking.intercompany_entity_pairs -> catalogs.accounts (system_purpose intercompany_<x>) | `BANK-DOM-05`:OPEN |  |
 
 | ID | Status | Title | Evidence | PR |
 |---|---|---|---|---|
@@ -43,5 +44,6 @@ _PERMANENT-FIX §1 (BANK-00) — no Banking PR may land without citing a row her
 | `BANK-GATE-01` | **PASS** | Every banking money PR uses EVERY-PR checklist — process closed | #3430 merged on main (sha fc1cf13); verify-step 1430 enforces EVERY-PR checklist trailers on banking money commits. BANK-ECON-05 cash-bind keep-guard (verify-step 1442) confirms MODULE_PROGRESS honesty (pass_count=4, complete=false). | #3430 |
 | `BANK-F08` | **FAIL** | Categorization Rules + automatch deep-wizard DoD | NEW LEAF 2026-07-25 (Rule 21 M-grows): /banking/categorization-rules mounted but no deep-wizard DoD/VERIFY leaf. Dispatch: docs/trackers/acct-bank-remaining-blocks-2026-07-25/BANK-F08-categorization-rules-automatch-depth.md | — |
 | `BANK-F09` | **FAIL** | Banking settings / reports / email-queue deep-wizard DoD | NEW LEAF 2026-07-25 (Rule 21 M-grows): settings/reports/email-queue surfaces need deep-wizard VERIFY. Dispatch: docs/trackers/acct-bank-remaining-blocks-2026-07-25/BANK-F09-settings-reports-email-queue-deep-wizard.md | — |
+| `BANK-DOM-05` | **OPEN** | Intercompany transfers (TRANSP<->TRK<->USMCA) — reciprocal legs netting to zero | Code + guard 1556 GREEN; migration 202609160000 HELD, validated apply-twice on throwaway localhost. NOT LIVE: banking.intercompany_entity_pairs still MISSING on prod (verified 2026-07-26, lucia, positive control mdata.vendors=2789). Closes when GUARD Neon-applies + a TRANSP<->USMCA transfer is proven to net to zero on live data. | — |
 
 Desktop audit: ~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md

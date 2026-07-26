@@ -1349,6 +1349,7 @@
     "1552": "1552-verify-acct-bank-remaining-packet.mjs",
     "1553": "1553-verify-no-native-datetime-input.mjs",
     "1555": "1555-verify-canonical-load-nav.mjs",
+    "1556": "1556-verify-bank-dom-05-intercompany-reciprocal-legs.mjs",
     "1558": "1558-verify-no-dead-kpi-cards.mjs",
     "1560": "1560-verify-route-manifest-parity.mjs",
     "1580": "1580-verify-no-jsonb-id-array-as-fk.mjs",
