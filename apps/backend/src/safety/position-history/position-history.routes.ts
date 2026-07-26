@@ -99,6 +99,7 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
           p.part_name as part_name
         FROM maintenance.position_history ph
         LEFT JOIN mdata.units u ON u.id = ph.unit_id
+          AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)
         LEFT JOIN maint.position_set ps ON ps.id = ph.position_set_id
         LEFT JOIN maint.part p ON p.id = ph.part_id
         WHERE ${where.join(" AND ")}
@@ -142,6 +143,7 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
           p.part_name as part_name
         FROM maintenance.position_history ph
         LEFT JOIN mdata.units u ON u.id = ph.unit_id
+          AND (u.owner_company_id = $2 OR u.currently_leased_to_company_id = $2)
         LEFT JOIN maint.position_set ps ON ps.id = ph.position_set_id
         LEFT JOIN maint.part p ON p.id = ph.part_id
         WHERE ph.id = $1 AND ph.operating_company_id = $2
@@ -247,6 +249,7 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
           p.part_name as part_name
         FROM maintenance.position_history ph
         LEFT JOIN mdata.units u ON u.id = ph.unit_id
+          AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)
         LEFT JOIN maint.position_set ps ON ps.id = ph.position_set_id
         LEFT JOIN maint.part p ON p.id = ph.part_id
         WHERE ph.operating_company_id = $1
