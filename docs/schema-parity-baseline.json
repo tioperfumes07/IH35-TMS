@@ -10245,6 +10245,23 @@
       "template_name",
       "to_phone",
       "variables"
+    ],
+    "accounting.warranty_reimburse_postings": [
+      "amount_cents",
+      "created_at",
+      "created_by_user_id",
+      "entry_date",
+      "expense_je_id",
+      "id",
+      "is_active",
+      "memo",
+      "operating_company_id",
+      "status",
+      "updated_at",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id",
+      "warranty_claim_id"
     ]
   }
 }

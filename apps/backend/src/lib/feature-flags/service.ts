@@ -63,6 +63,8 @@ export const POSTING_FLAG_KEYS: ReadonlySet<string> = new Set([
   // global rollout/default flip can never turn fine posting on for EVERY entity (incl. USMCA / TRK).
   // Default OFF; seeded default_enabled=false by migration 202608110000.
   "SAFETY_FINE_GL_POSTING_ENABLED",
+  // MNT-ECON-04: warranty reimburse → balanced JE. Default OFF (migration 202609050000).
+  "WARRANTY_REIMBURSE_GL_POSTING_ENABLED",
   "SETTLEMENT_GL_POSTING_ENABLED",
   // BANKING-GL-COMPLETION: banking.transfers (bank_to_bank / cc_payment / cash_deposit /
   // owner_contribution / owner_distribution) -> GL posting via postSourceTransaction('transfer').

@@ -68,6 +68,8 @@ export const EXPECTED_HELD = [
   // SWEEP-C11 driver sub-catalog split-brain DB-level write lock (renumbered off 202609030000 —
   // that slot is MNT-ECON-01 on #3581).
   "202609040000_sweep_c11_driver_subcatalog_split_brain_lock.sql",
+  // MNT-ECON-04
+  "202609050000_mnt_econ_04_warranty_reimburse_gl_hop.sql",
 ];
 
 /**
