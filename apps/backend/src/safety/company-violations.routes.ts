@@ -143,8 +143,22 @@ export async function registerSafetyCompanyViolationsRoutes(app: FastifyInstance
     if (!query.success) return sendValidationError(reply, query.error);
 
     const row = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      // SAF-B28: this was a bare `SELECT *`, so the detail read returned the RETIRED jsonb columns
+      // and none of the join-table arrays that LIST (:117-123) already returns. Once PATCH writes
+      // the join tables, a bare SELECT * would make every link edit appear to vanish on reload —
+      // the operator would see the frozen jsonb, not what they just saved. Same aggregation as
+      // LIST, same column names, so detail and list agree.
       const res = await client.query(
-        `SELECT * FROM safety.company_violations WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT cv.*,
+                COALESCE((SELECT array_agg(d.driver_id) FROM safety.company_violation_drivers d
+                           WHERE d.violation_id = cv.id AND d.is_active), '{}') AS related_driver_ids,
+                COALESCE((SELECT array_agg(u.unit_id) FROM safety.company_violation_units u
+                           WHERE u.violation_id = cv.id AND u.is_active), '{}') AS related_unit_ids,
+                COALESCE((SELECT array_agg(f.fine_id) FROM safety.company_violation_fines f
+                           WHERE f.violation_id = cv.id AND f.is_active), '{}') AS related_civil_fine_ids
+           FROM safety.company_violations cv
+          WHERE cv.id = $1 AND cv.operating_company_id = $2
+          LIMIT 1`,
         [params.data.id, query.data.operating_company_id]
       );
       return res.rows[0] ?? null;
@@ -250,20 +264,26 @@ export async function registerSafetyCompanyViolationsRoutes(app: FastifyInstance
     const entries = Object.entries(body.data).filter(([, value]) => value !== undefined);
     if (entries.length === 0) return reply.code(400).send({ error: "no_changes" });
 
+    // SAF-B28: the three retired jsonb columns are handled by the join-table sync below and are
+    // NEVER written here. The create path stopped writing them when SAF-F29 landed, but this PATCH
+    // kept going — so an operator edit wrote ids into a column no reader consumes, while the join
+    // tables the readers DO consume went untouched. That split is what makes the auto-fine trigger
+    // miss a driver on create->close, and it is what blocks 202609130000 §3 (whose stop-write
+    // trigger would raise 0A000 on every edit that still writes them).
+    const LINK_KEYS = ["related_drivers", "related_units", "related_fine_ids"] as const;
+    type LinkKey = (typeof LINK_KEYS)[number];
+    const isLinkKey = (k: string): k is LinkKey => (LINK_KEYS as readonly string[]).includes(k);
+    const columnEntries = entries.filter(([key]) => !isLinkKey(key));
+    const linkEntries = entries.filter(([key]) => isLinkKey(key));
+
     const updated = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const values: unknown[] = [];
       const sets: string[] = [];
-      for (const [key, value] of entries) {
-        values.push(
-          key === "related_drivers" || key === "related_units" || key === "related_fine_ids"
-            ? JSON.stringify(value ?? null)
-            : value
-        );
+      for (const [key, value] of columnEntries) {
+        values.push(value);
         const idx = values.length;
         if (key === "reported_date" || key === "corrective_action_due_date" || key === "corrective_action_completed_date") {
           sets.push(`${key} = $${idx}::date`);
-        } else if (key === "related_drivers" || key === "related_units" || key === "related_fine_ids") {
-          sets.push(`${key} = $${idx}::jsonb`);
         } else {
           sets.push(`${key} = $${idx}`);
         }
@@ -281,6 +301,58 @@ export async function registerSafetyCompanyViolationsRoutes(app: FastifyInstance
         values
       );
       const row = res.rows[0] ?? null;
+
+      // SAF-B28 join-table SYNC — the edit-path mirror of the create path's link inserts.
+      //
+      // Semantics match what an operator means by editing the list: ids present in the payload are
+      // linked (or RE-linked, if previously retired), ids absent from the payload are retired. Only
+      // a key actually sent in the PATCH body is synced, so an edit that touches just the narrative
+      // fields leaves the links completely alone — absent is not the same as empty.
+      //
+      // Retirement is `is_active = false`, NOT a DELETE: DELETE is REVOKEd on all three tables
+      // (202607840000) and void-not-delete is repo law. This also matters for correctness, because
+      // the auto-fine trigger's driver lookup filters on `cvd.is_active` — so a retired link stops
+      // producing a fine without destroying the record that it once existed.
+      if (row) {
+        const linkTargets: Record<LinkKey, { table: string; column: string }> = {
+          related_drivers: { table: "company_violation_drivers", column: "driver_id" },
+          related_units: { table: "company_violation_units", column: "unit_id" },
+          related_fine_ids: { table: "company_violation_fines", column: "fine_id" },
+        };
+        for (const [key, value] of linkEntries) {
+          if (!isLinkKey(key)) continue;
+          const { table, column } = linkTargets[key];
+          const ids = Array.isArray(value)
+            ? value.map((raw) => String(raw ?? "")).filter((id) => /^[0-9a-fA-F-]{36}$/.test(id))
+            : [];
+
+          for (const id of ids) {
+            // FK-checked, so an id that does not resolve fails the request instead of being stored
+            // as an unverifiable string — the whole reason the jsonb array was retired.
+            await client.query(
+              `INSERT INTO safety.${table} (operating_company_id, violation_id, ${column}, created_by_user_id, is_active)
+               VALUES ($1, $2, $3, $4, TRUE)
+               ON CONFLICT (violation_id, ${column})
+               DO UPDATE SET is_active = TRUE`,
+              [query.data.operating_company_id, row.id, id, user.uuid]
+            );
+          }
+
+          // Retire every link the operator dropped. `<> ALL` is NULL-safe against an empty array
+          // here because the array is always a well-formed uuid[] (possibly zero-length), and a
+          // zero-length array retires every link — which is exactly what clearing the field means.
+          await client.query(
+            `UPDATE safety.${table}
+                SET is_active = FALSE
+              WHERE violation_id = $1
+                AND operating_company_id = $2
+                AND is_active
+                AND ${column} <> ALL ($3::uuid[])`,
+            [row.id, query.data.operating_company_id, ids]
+          );
+        }
+      }
+
       if (row) {
         await appendCrudAudit(
           client,
