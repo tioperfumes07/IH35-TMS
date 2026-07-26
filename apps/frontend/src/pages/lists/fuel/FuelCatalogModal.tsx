@@ -118,7 +118,7 @@ export function FuelCatalogModal({ open, operatingCompanyId, displayName, client
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={mode === "create" ? `New ${displayName}` : `Edit ${displayName}`}>
+    <Modal variant="drawer" open={open} onClose={onClose} title={mode === "create" ? `New ${displayName}` : `Edit ${displayName}`}>
       <div className="space-y-3">
         <label className="block text-xs font-semibold text-gray-600">
           Code

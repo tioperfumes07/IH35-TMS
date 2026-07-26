@@ -174,7 +174,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
         </div>
       ) : null}
 
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create Meeting">
+      <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Create Meeting">
         <form
           className="space-y-3"
           data-testid="safety-meeting-create-modal"

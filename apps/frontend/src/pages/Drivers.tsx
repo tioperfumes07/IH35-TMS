@@ -808,7 +808,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
         </>
       ) : null}
 
-      <Modal open={teamCreateOpen} onClose={() => setTeamCreateOpen(false)} title="Create Team">
+      <Modal variant="drawer" open={teamCreateOpen} onClose={() => setTeamCreateOpen(false)} title="Create Team">
         <form
           className="grid grid-cols-1 gap-2 md:grid-cols-2"
           onSubmit={(event) => {

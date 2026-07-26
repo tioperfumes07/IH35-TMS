@@ -1,3 +1,14 @@
+/**
+ * C7-WIDE-WIZARD-EXCEPTION — Book Load stays a WIDE WIZARD, not the shared 480px create drawer.
+ *
+ * Owner-ratified. C7 moved every "+ Create"/"+ Book" surface onto `<Modal variant="drawer">`;
+ * this one and Create Work Order are the two ratified exceptions. Booking a load is a multi-step
+ * wizard over customer + equipment + stops + rate + pre-dispatch validation — it needs the width,
+ * and squeezing it into a 480px column would hide the validation panel behind a scroll.
+ * scripts/verify-create-surface-is-drawer.mjs enforces this in BOTH directions: it will fail if
+ * this file is quietly drawer-ised, and it will fail if this annotation is removed or the file is
+ * renamed without moving the exception with it.
+ */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useForm, type UseFormSetValue } from "react-hook-form";

@@ -221,7 +221,7 @@ export function PartsMasterDataPage() {
         />
       </div>
 
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create Part">
+      <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Create Part">
         <div className="space-y-2">
           <div className="grid grid-cols-2 gap-2">
             <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Part number" value={draft.part_number} onChange={(e) => setDraft((p) => ({ ...p, part_number: e.target.value }))} />

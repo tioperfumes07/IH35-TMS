@@ -435,7 +435,7 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
       ) : null}
 
       {isFullPage ? (
-        <Modal title="Create COI Request" open={requestOpen} onClose={() => setRequestOpen(false)}>
+        <Modal variant="drawer" title="Create COI Request" open={requestOpen} onClose={() => setRequestOpen(false)}>
           {createFormFields}
           <div className="mt-3 flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setRequestOpen(false)}>

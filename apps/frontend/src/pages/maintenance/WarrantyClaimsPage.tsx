@@ -189,7 +189,7 @@ export function WarrantyClaimsPage() {
         />
       </section>
 
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="+ Create Claim">
+      <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="+ Create Claim">
         <div className="space-y-3 text-sm">
           <label className="block text-xs">
             Part description

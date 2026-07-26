@@ -40,7 +40,7 @@ export function FaultRuleModal({ initial, onClose, onSave, saving }: Props) {
   }, [initial]);
 
   return (
-    <Modal open title={title} onClose={onClose}>
+    <Modal variant="drawer" open title={title} onClose={onClose}>
       <div className="space-y-3 text-sm">
         <label className="block">
           <span className="text-gray-600">Fault code</span>

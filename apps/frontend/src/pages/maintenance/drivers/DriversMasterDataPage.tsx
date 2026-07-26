@@ -211,7 +211,7 @@ export function DriversMasterDataPage() {
         />
       </div>
 
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create Driver">
+      <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Create Driver">
         <div className="space-y-2">
           <div className="grid grid-cols-2 gap-2">
             <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="First name" value={draft.first_name} onChange={(e) => setDraft((p) => ({ ...p, first_name: e.target.value }))} />

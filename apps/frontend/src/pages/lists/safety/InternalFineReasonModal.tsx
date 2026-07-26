@@ -107,7 +107,7 @@ export function InternalFineReasonModal({ open, companyId, row, onClose, onSaved
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={isEdit ? "Edit Internal Fine Reason" : "Create Internal Fine Reason"}>
+    <Modal variant="drawer" open={open} onClose={onClose} title={isEdit ? "Edit Internal Fine Reason" : "Create Internal Fine Reason"}>
       <div className="space-y-3">
         <label className="block text-xs font-semibold text-gray-600">
           Reason Code

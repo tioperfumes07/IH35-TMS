@@ -85,7 +85,7 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
   const canSubmit = Boolean(draft.equipment_number.trim() && draft.equipment_type) && !createMutation.isPending;
 
   return (
-    <Modal open={open} title="Create Trailer" onClose={resetAndClose} modalKind="fleet-create-trailer" sizePreset="md">
+    <Modal variant="drawer" open={open} title="Create Trailer" onClose={resetAndClose} modalKind="fleet-create-trailer" sizePreset="md">
       <form
         data-testid="fleet-create-trailer-form"
         className="space-y-3"

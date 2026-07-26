@@ -265,6 +265,7 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
   return (
     <>
     <Modal
+      variant="drawer"
       open={open}
       onClose={onClose}
       title={mode === "create" ? "New product/service" : `Edit: ${row?.display_name ?? ""}`}

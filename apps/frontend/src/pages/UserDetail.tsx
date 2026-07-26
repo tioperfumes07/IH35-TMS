@@ -423,7 +423,7 @@ export function UserDetailPage() {
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-500">Select an operating company to view activity.</div>
       ) : null}
 
-      <Modal open={addEventOpen} onClose={() => setAddEventOpen(false)} title="Create Dispatcher Safety Event">
+      <Modal variant="drawer" open={addEventOpen} onClose={() => setAddEventOpen(false)} title="Create Dispatcher Safety Event">
         <form
           className="space-y-3"
           onSubmit={async (event) => {

@@ -225,7 +225,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
   const inputCls = "mt-1 w-full rounded-sm border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-800 focus:border-slate-300 focus:outline-hidden";
 
   return (
-    <Modal open={open} onClose={onClose} title="Create task" modalKind="create-task" sizePreset="md">
+    <Modal variant="drawer" open={open} onClose={onClose} title="Create task" modalKind="create-task" sizePreset="md">
       <form
         className="space-y-3"
         onSubmit={(e) => {

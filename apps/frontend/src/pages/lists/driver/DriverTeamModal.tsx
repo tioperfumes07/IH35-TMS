@@ -182,7 +182,7 @@ export function DriverTeamModal({ open, operatingCompanyId, mode, team, onClose,
   const readOnlyMembership = mode === "edit" && team && !team.is_active;
 
   return (
-    <Modal open={open} onClose={onClose} title={mode === "create" ? "Create Driver Team" : "Edit Driver Team"}>
+    <Modal variant="drawer" open={open} onClose={onClose} title={mode === "create" ? "Create Driver Team" : "Edit Driver Team"}>
       <div className="space-y-3">
         <label className="block text-xs font-semibold text-gray-600">
           Team Name

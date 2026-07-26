@@ -375,7 +375,7 @@ export function DailyTasksPage() {
         />
       )}
 
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Quick Create Task">
+      <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Quick Create Task">
         <div className="space-y-3 text-xs">
           <div>
             <label htmlFor="daily-task-title" className="mb-1 block text-[11px] font-semibold uppercase text-slate-600">
