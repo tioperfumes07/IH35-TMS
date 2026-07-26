@@ -6,6 +6,7 @@ import { listCustomers, listVendors } from "../../../api/mdata";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { DatePicker } from "../../../components/forms/DatePicker";
+import { DateTimePicker } from "../../../components/forms/DateTimePicker";
 import { Combobox } from "../../../components/shared/Combobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 
@@ -273,10 +274,28 @@ export function CreateWOSectionIdentification({
       {bucket === "roadside" ? (
         <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-4">
           <Field label="Roadside Callout At *">
-            <input type="datetime-local" {...register("roadside_callout_at")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+            {/* Same watch/setValue bridge this file already uses for the DatePicker above —
+                DateTimePicker is not an <input>, so it cannot take a register() spread. */}
+            {setValue ? (
+              <DateTimePicker
+                aria-label="Roadside Callout At"
+                value={watch("roadside_callout_at") || ""}
+                onChange={(v) => setValue("roadside_callout_at", v, { shouldDirty: true })}
+              />
+            ) : (
+              <input {...register("roadside_callout_at")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+            )}
           </Field>
           <Field label="Roadside Arrived At">
-            <input type="datetime-local" {...register("roadside_arrived_at")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+            {setValue ? (
+              <DateTimePicker
+                aria-label="Roadside Arrived At"
+                value={watch("roadside_arrived_at") || ""}
+                onChange={(v) => setValue("roadside_arrived_at", v, { shouldDirty: true })}
+              />
+            ) : (
+              <input {...register("roadside_arrived_at")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+            )}
           </Field>
           <Field label="Roadside Provider Vendor ID *">
             <input {...register("roadside_provider_vendor_id")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />

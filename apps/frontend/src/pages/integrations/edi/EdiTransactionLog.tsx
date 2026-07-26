@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 import { resolveApiUrl } from "../../../api/client";
 import { useMemo, useState } from "react";
 import { PageHeader } from "../../../components/layout/PageHeader";
@@ -64,7 +65,7 @@ const COLUMNS: Array<ParityColumn<EdiMessage>> = [
     label: "Received",
     sortable: true,
     sortValue: (row) => row.received_at,
-    render: (row) => <span className="text-xs">{row.received_at}</span>,
+    render: (row) => <span className="text-xs">{formatDateTimeUS(row.received_at)}</span>,
   },
 ];
 

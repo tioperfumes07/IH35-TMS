@@ -3,6 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { recordLoadAbandonment } from "../../api/abandonment";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
+import { DateTimePicker } from "../../components/forms/DateTimePicker";
 import { useToast } from "../../components/Toast";
 
 type Props = {
@@ -50,7 +51,7 @@ export function AbandonmentReportModal({ loadId, operatingCompanyId, defaultDriv
         </label>
         <label className="block text-xs font-semibold text-slate-600">
           Abandonment time (local)
-          <input type="datetime-local" className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-2" value={abandonmentEventAt} onChange={(e) => setAbandonmentEventAt(e.target.value)} />
+          <DateTimePicker className="mt-1 w-full" aria-label="Abandonment time (local)" value={abandonmentEventAt} onChange={setAbandonmentEventAt} />
         </label>
         <label className="block text-xs font-semibold text-slate-600">
           Location (optional)

@@ -19,6 +19,7 @@ import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 type MountDraft = {
   position_code: string;
@@ -255,7 +256,7 @@ export function TireProgramPage() {
 
   const eventColumns = useMemo<ParityColumn<MaintenanceTireEventRow>[]>(
     () => [
-      { key: "created_at", label: "When", sortable: true, render: (row) => row.created_at ?? "—" },
+      { key: "created_at", label: "When", sortable: true, render: (row) => formatDateTimeUS(row.created_at) || "—" },
       { key: "event_type", label: "Event", sortable: true, render: (row) => row.event_type_label ?? row.event_type },
       {
         key: "to_position_code",

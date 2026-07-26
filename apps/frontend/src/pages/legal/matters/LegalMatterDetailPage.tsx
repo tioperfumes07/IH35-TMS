@@ -17,6 +17,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { formatDateUS, formatDateTimeUS } from "../../../lib/formatDate";
+import { DateTimePicker } from "../../../components/forms/DateTimePicker";
 import { formatUsd, formatUsdCents } from "../../../lib/money";
 import { resolveApiUrl } from "../../../api/client";
 import {
@@ -447,11 +448,10 @@ export function LegalMatterDetailPage() {
                     value={dlTitle}
                     onChange={(e) => setDlTitle(e.target.value)}
                   />
-                  <input
-                    type="datetime-local"
-                    className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
+                  <DateTimePicker
+                    aria-label="Deadline date and time"
                     value={dlAt}
-                    onChange={(e) => setDlAt(e.target.value)}
+                    onChange={setDlAt}
                   />
                   <input
                     className="rounded-sm border border-gray-200 px-2 py-1 text-sm"

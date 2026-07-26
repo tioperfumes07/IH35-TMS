@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../forms/DatePicker";
+import { DateTimePicker } from "../forms/DateTimePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Modal } from "../Modal";
 import { useToast } from "../Toast";
@@ -322,12 +323,12 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
           </div>
           <div>
             <label className={labelCls} htmlFor="create-task-alarm">Alarm (reminder)</label>
-            <input
+            <DateTimePicker
               id="create-task-alarm"
-              type="datetime-local"
               className={inputCls}
+              aria-label="Alarm (reminder)"
               value={alarmAt}
-              onChange={(e) => setAlarmAt(e.target.value)}
+              onChange={setAlarmAt}
             />
           </div>
         </div>

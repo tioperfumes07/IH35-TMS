@@ -15,6 +15,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useListState } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { formatDateUS } from "../../lib/formatDate";
 
 const PAGE_SIZE = 50;
 
@@ -93,7 +94,7 @@ export function TransfersListPage() {
   // hand-rolled table markup.
   const columns = useMemo<ParityColumn<Transfer>[]>(
     () => [
-      { key: "transfer_date", label: "Date", sortable: true, render: (row) => row.transfer_date },
+      { key: "transfer_date", label: "Date", sortable: true, render: (row) => formatDateUS(row.transfer_date) },
       {
         key: "transfer_type",
         label: "Type",

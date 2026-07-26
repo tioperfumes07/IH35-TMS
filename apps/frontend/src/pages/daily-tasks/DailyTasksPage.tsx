@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, CheckCircle2, Clock3, ListChecks, UserRound } from "lucide-react";
+import { DateTimePicker } from "../../components/forms/DateTimePicker";
 import {
   acceptDailyTask,
   completeDailyTask,
@@ -442,12 +443,12 @@ export function DailyTasksPage() {
             <label htmlFor="daily-task-due" className="mb-1 block text-[11px] font-semibold uppercase text-slate-600">
               Due Date / Time
             </label>
-            <input
+            <DateTimePicker
               id="daily-task-due"
-              type="datetime-local"
-              className="w-full rounded-sm border border-slate-300 px-2 py-1.5"
+              className="w-full"
+              aria-label="Due Date / Time"
               value={dueLocal}
-              onChange={(event) => setDueLocal(event.target.value)}
+              onChange={setDueLocal}
               min={toDateTimeLocalValue(new Date(Date.now() - 60_000))}
             />
           </div>

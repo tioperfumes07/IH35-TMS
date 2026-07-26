@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { formatDateUS } from "../../lib/formatDate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -442,7 +443,7 @@ export function ReconciliationWorkspacePage() {
                     } border-b border-gray-100`}
                   >
                     <div className="flex items-center justify-between text-xs text-gray-600">
-                      <span>{tx.transaction_date}</span>
+                      <span>{formatDateUS(tx.transaction_date)}</span>
                       <span className={matched ? "text-slate-700" : "text-gray-500"}>{matched ? "Matched" : "Unmatched"}</span>
                     </div>
                     <div className="truncate text-sm font-medium text-gray-900">{tx.description || "Bank transaction"}</div>
@@ -502,7 +503,7 @@ export function ReconciliationWorkspacePage() {
                       label={event.id.slice(0, 8)}
                     />
                   </div>
-                  <div className="text-xs text-gray-600">{event.event_date}</div>
+                  <div className="text-xs text-gray-600">{formatDateUS(event.event_date)}</div>
                 </button>
               ))}
             </div>

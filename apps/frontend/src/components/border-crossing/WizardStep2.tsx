@@ -1,4 +1,5 @@
 import type { PortOfEntry, WizardFormState } from "./borderCrossingApi";
+import { DateTimePicker } from "../forms/DateTimePicker";
 import { CbpWaitTimesWidget } from "./CbpWaitTimesWidget";
 
 type Props = {
@@ -31,11 +32,11 @@ export function WizardStep2({ form, ports, onChange }: Props) {
         </label>
         <label className="block text-sm">
           Planned crossing date *
-          <input
-            type="datetime-local"
-            className="mt-1 w-full rounded-sm border px-2 py-1.5"
+          <DateTimePicker
+            className="mt-1 w-full"
+            aria-label="Planned crossing date"
             value={form.plannedDate}
-            onChange={(e) => onChange({ plannedDate: e.target.value })}
+            onChange={(v) => onChange({ plannedDate: v })}
           />
         </label>
         {selected?.cbp_port_code ? (

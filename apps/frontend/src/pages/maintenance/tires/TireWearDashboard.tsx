@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import { apiRequest } from "../../../api/client";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { formatDateUS } from "../../../lib/formatDate";
 
 type AxleGroup = "all" | "steer" | "drive" | "trailer";
 
@@ -67,7 +68,7 @@ export function TireWearDashboard() {
       { key: "tire_position", label: "Position", sortable: true, render: (row) => row.tire_position },
       { key: "current_depth_32nds", label: "Depth", render: (row) => `${row.current_depth_32nds ?? "—"}/32"` },
       { key: "threshold_32nds", label: "Threshold", render: (row) => `${row.threshold_32nds}/32"` },
-      { key: "projected_replacement_date", label: "Projected", sortable: true, render: (row) => row.projected_replacement_date ?? "—" },
+      { key: "projected_replacement_date", label: "Projected", sortable: true, render: (row) => formatDateUS(row.projected_replacement_date) || "—" },
       {
         key: "days_until_replacement",
         label: "Days",

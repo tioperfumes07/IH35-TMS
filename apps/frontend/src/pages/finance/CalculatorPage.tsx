@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDateUS } from "../../lib/formatDate";
 import { Link } from "react-router-dom";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
@@ -100,7 +101,7 @@ export function CalculatorPage() {
                 <dt>Monthly payment</dt><dd className="text-right font-medium text-slate-800">{dollars(s.monthly_payment_cents)}</dd>
                 <dt>Total interest</dt><dd className="text-right">{dollars(s.total_interest_cents)}</dd>
                 <dt>Total paid</dt><dd className="text-right">{dollars(s.total_payments_cents)}</dd>
-                <dt>Payoff date</dt><dd className="text-right">{s.payoff_date}</dd>
+                <dt>Payoff date</dt><dd className="text-right">{formatDateUS(s.payoff_date)}</dd>
               </dl>
               <div className="mt-3">
                 <ParityTable<CalcPreviewRow>

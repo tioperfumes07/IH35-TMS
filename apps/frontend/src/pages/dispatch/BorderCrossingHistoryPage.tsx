@@ -5,6 +5,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { CustomsTimePill } from "../../components/dispatch/CustomsTimePill";
 import { resolveApiUrl } from "../../api/client";
+import { formatDateUS } from "../../lib/formatDate";
 
 type CrossingRow = {
   id: string;
@@ -48,7 +49,7 @@ export function BorderCrossingHistoryPage() {
   // Migrated to the shared QBO-parity grid — columns and order preserved; row click still opens the
   // detail aside (§7 additive-only).
   const columns: Array<ParityColumn<CrossingRow>> = [
-    { key: "crossing_date", label: "Date", sortable: true, render: (row) => row.planned_crossing_date ?? row.crossing_date },
+    { key: "crossing_date", label: "Date", sortable: true, render: (row) => formatDateUS(row.planned_crossing_date ?? row.crossing_date) },
     { key: "direction", label: "Direction", sortable: true, className: "capitalize", cellClass: "capitalize" },
     {
       key: "port_of_entry",
