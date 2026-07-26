@@ -2,7 +2,7 @@
  * GAP-69 — Driver Manager home KPI bar
  */
 
-import { KpiCard } from "../layout/KpiCard";
+import { DrillKpiCard } from "../layout/DrillKpiCard";
 
 export type DriverManagerKpiSnapshot = {
   unread_driver_comms: number;
@@ -20,6 +20,8 @@ const ACCENT = {
   neutral: undefined,
 } as const;
 
+// C8: `to` is REQUIRED here — every tile on this bar drills to its records — and `value` accepts
+// null so an absent snapshot renders "—" instead of a fabricated 0.
 function KpiTile({
   label,
   value,
@@ -28,17 +30,12 @@ function KpiTile({
   to,
 }: {
   label: string;
-  value: number;
+  value: number | null;
   hint: string;
   accent?: string;
-  to?: string;
+  to: string;
 }) {
-  return (
-    <div className="space-y-1">
-      <KpiCard label={label} number={value} accent={accent} to={to} />
-      <p className="px-1 text-[11px] text-slate-500">{hint}</p>
-    </div>
-  );
+  return <DrillKpiCard size="md" label={label} value={value} hint={hint} accent={accent} to={to} />;
 }
 
 export function DriverManagerKpiBar({ kpis, loading }: Props) {
@@ -52,33 +49,33 @@ export function DriverManagerKpiBar({ kpis, loading }: Props) {
     );
   }
 
-  const snapshot = kpis ?? {
-    unread_driver_comms: 0,
-    late_arrivals_7d: 0,
-    pending_settlements: 0,
-  };
+  // C8 · HONEST UI: an absent payload renders "—", not a reassuring row of zeroes.
+  const snapshot: Partial<DriverManagerKpiSnapshot> = kpis ?? {};
+  const value = (key: keyof DriverManagerKpiSnapshot) => snapshot[key] ?? null;
+  // Accent only when there is a real, positive reading — never because a value is absent.
+  const elevated = (key: keyof DriverManagerKpiSnapshot) => typeof snapshot[key] === "number" && (snapshot[key] as number) > 0;
 
   return (
     <div className="grid gap-3 sm:grid-cols-3" aria-label="Driver manager KPIs">
       <KpiTile
         label="Unread driver comms"
-        value={snapshot.unread_driver_comms}
+        value={value("unread_driver_comms")}
         hint="Inbound messages from drivers awaiting review"
-        accent={snapshot.unread_driver_comms > 0 ? ACCENT.warning : ACCENT.neutral}
+        accent={elevated("unread_driver_comms") ? ACCENT.warning : ACCENT.neutral}
         to="/drivers/messages"
       />
       <KpiTile
         label="Late arrivals (7d)"
-        value={snapshot.late_arrivals_7d}
+        value={value("late_arrivals_7d")}
         hint="Stop arrivals past scheduled window this week"
-        accent={snapshot.late_arrivals_7d > 0 ? ACCENT.warning : ACCENT.neutral}
+        accent={elevated("late_arrivals_7d") ? ACCENT.warning : ACCENT.neutral}
         to="/dispatch/alerts/late-arrivals"
       />
       <KpiTile
         label="Pending settlements"
-        value={snapshot.pending_settlements}
+        value={value("pending_settlements")}
         hint="Draft or submitted settlements needing validation"
-        accent={snapshot.pending_settlements > 0 ? ACCENT.warning : ACCENT.neutral}
+        accent={elevated("pending_settlements") ? ACCENT.warning : ACCENT.neutral}
         to="/driver-finance/settlements"
       />
     </div>

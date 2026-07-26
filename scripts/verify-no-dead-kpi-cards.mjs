@@ -113,8 +113,18 @@ const PLACEHOLDER_REASON = /^\s*(?:|-|—|n\/?a|tbd|todo|fixme|\?+|none|pending)
  * non-drillable metric (a computed ratio, a balance assertion) can be honest instead of dead — it
  * must never become the one-word way to re-admit a dead card. Lower this when a real drill target
  * is built; never raise it.
+ *
+ * At the close of C8 it is 5 render sites, every one named here so it can be argued with:
+ *   1. pages/profitability/KpiStrip.tsx — the six-metric map. The Profitability module has NO data
+ *      source at all (ByLane/ByType/ByCustomer/ByLoad all declare `const rows = []`); the strip used
+ *      to print six hardcoded "-". Building the aggregate endpoint is a backend change.
+ *   2. pages/insurance/InsuranceLanding.tsx — "Recent COI request count". COI requests are tracked
+ *      per customer (Customers → COI tab); there is no company-wide COI list to open.
+ *   3. pages/samsara-vendor-mapping/HosDriverMapPreviewPage.tsx — "Open assignments". A pull
+ *      diagnostic over telematics.vehicle_driver_assignments, which has no list screen.
+ *   4-5. the two local factories' pass-through renders for the three tiles above.
  */
-const UNAVAILABLE_BUDGET = 0;
+const UNAVAILABLE_BUDGET = 5;
 
 // ---------------------------------------------------------------------------------------------
 // Source scanning. JSX attribute values nest braces, template literals and quotes, so a plain
@@ -263,15 +273,32 @@ const inScope = (rel) => IN_SCOPE_PREFIXES.some((p) => rel.startsWith(p));
 // Channel A — local card factories and their call sites.
 // ---------------------------------------------------------------------------------------------
 
+/**
+ * Body of a locally-declared `type X = …` / `interface X { … }`, so a component that takes
+ * `props: XProps` instead of destructuring is still classified. Without this, `function
+ * StatCard(props: StatCardProps)` is invisible to the guard — a one-refactor evasion.
+ */
+function resolveTypeBody(src, typeName) {
+  const re = new RegExp(`(?:type\\s+${typeName}\\s*=|interface\\s+${typeName}\\s*)`, "g");
+  const m = re.exec(src);
+  if (!m) return "";
+  // Take everything up to the next top-level declaration — unions across several object literals
+  // (a discriminated drill-target union) must all be seen.
+  const rest = src.slice(m.index + m[0].length);
+  const stop = /\n(?:export\s+)?(?:type|interface|function|const|class)\s/.exec(rest);
+  return stop ? rest.slice(0, stop.index) : rest;
+}
+
 /** Locally-declared card factories in one (comment-blanked) source. */
 export function findCardFactories(src) {
   const re =
-    /(?:export\s+)?(?:function\s+([A-Z][A-Za-z0-9_]*)\s*\(\s*\{([^}]*)\}|const\s+([A-Z][A-Za-z0-9_]*)\s*(?::[^=]*?)?=\s*\(\s*\{([^}]*)\})/g;
+    /(?:export\s+)?(?:function\s+([A-Z][A-Za-z0-9_]*)\s*\(\s*(?:\{([^}]*)\}|\w+\s*:\s*([A-Z][A-Za-z0-9_]*))|const\s+([A-Z][A-Za-z0-9_]*)\s*(?::[^=]*?)?=\s*\(\s*(?:\{([^}]*)\}|\w+\s*:\s*([A-Z][A-Za-z0-9_]*)))/g;
   const out = [];
   let m;
   while ((m = re.exec(src))) {
-    const name = m[1] ?? m[3];
-    const props = m[2] ?? m[4] ?? "";
+    const name = m[1] ?? m[4];
+    const typeRef = m[3] ?? m[6];
+    const props = m[2] ?? m[5] ?? (typeRef ? resolveTypeBody(src, typeRef) : "");
     if (!CARD_NAME.test(name) || NOT_CARD_NAME.test(name)) continue;
     if (!LABEL_PROP.test(props) || !VALUE_PROP.test(props)) continue;
     if (/\bonChange\b/.test(props)) continue; // a form control, not a metric
@@ -397,7 +424,12 @@ export function scanHandRolledChrome(files) {
  */
 const LITERAL_VALUE = /^\s*(?:(["'`])((?:(?!\$\{).)*)\1|-?\d+(?:\.\d+)?)\s*$/s;
 const ZERO_FALLBACK = /(?:\?\?|\|\|)\s*(?:0\b|["']0["']|["']-["'])/;
-const SNAPSHOT_FALLBACK = /\?\?\s*\{/;
+/**
+ * A POPULATED object fallback (`kpis ?? { open: 0, late: 0 }`) invents a whole strip of readings.
+ * An EMPTY one (`kpis ?? {}`) is the honest shape — every field stays undefined and therefore
+ * renders "—" — so it is deliberately not claimed. The distinction is the defect, not the operator.
+ */
+const SNAPSHOT_FALLBACK = /\?\?\s*\{\s*[^}\s]/;
 /** A value element: the big number line of a hand-rolled tile. */
 const VALUE_CLASS = /\bfont-(?:semibold|bold)\b/;
 
@@ -503,7 +535,7 @@ export function primitiveErrors(source) {
   if (!/export type DrillKpiCardProps = KpiDrillTarget &/.test(flat)) {
     errors.push(`PRIMITIVE-UNION: DrillKpiCardProps must intersect KpiDrillTarget so the target is REQUIRED`);
   }
-  if (/DrillKpiCardProps = [^;]*\b(?:to|onClick|unavailable)\?:/.test(flat)) {
+  if (/DrillKpiCardProps = KpiDrillTarget & \{[^}]*\b(?:to|onClick|unavailable)\?:/.test(flat)) {
     errors.push(`PRIMITIVE-UNION: DrillKpiCardProps re-declares a drill prop as optional — that defeats the union`);
   }
   if (!/<Link\b/.test(flat)) errors.push(`PRIMITIVE: ${PRIMITIVE_FILE} must render a <Link> for the \`to\` target`);
@@ -624,83 +656,69 @@ export function DrillKpiCard(props: DrillKpiCardProps) {
 }
 `;
 
-function selftest() {
-  const failures = [];
-  /** The fixture budget is 1 so the good fixture may exercise the honest state; the real tree is
-   *  judged against UNAVAILABLE_BUDGET. The budget mutation below plants 2 and must still trip. */
-  const OPTS = { unavailableBudget: 1 };
+/**
+ * SELFTEST FIXTURES live at module scope on purpose. Keeping ~300 lines of JSX-in-strings
+ * inside `function selftest()` defeats scripts/verify-selftests-can-fail.mjs: its
+ * brace-balancer counts `{` inside string literals, truncates the body, and then cannot see
+ * the `process.exit(1)`. A meta-guard that reads this file must be able to read it
+ * correctly — the fix is to keep the function short, never to weaken the meta-guard.
+ */
+/** The fixture budget is 1 so the good fixture may exercise the honest state; the real tree is
+ *  judged against UNAVAILABLE_BUDGET. The budget mutation plants 2 and must still trip. */
+const SELFTEST_OPTS = { unavailableBudget: 1 };
 
-  const good = {
-    primitive: GOOD_PRIMITIVE,
-    files: {
-      [`${SRC}/pages/x/BoardPage.tsx`]:
-        'function StatTile({ label, value, to }: { label: string; value: number; to?: string }) {\n' +
-        "  return <Link to={to ?? '/x'}>{label}{value}</Link>;\n}\n" +
-        '<StatTile label="Open" value={n} to="/x/open" />\n' +
-        '<DrillKpiCard label="Late" value={late} onClick={openLate} />\n' +
-        '<DrillKpiCard label="Ratio" value={ratio} unavailable="Computed from the rows above — no record list." />',
-      // Classifier controls — none of these may be claimed.
-      [`${SRC}/pages/x/DetailPanel.tsx`]:
-        'function DetailRow({ label, value }: { label: string; value: string }) { return <div>{label}{value}</div>; }\n' +
-        '<DetailRow label="Brand" value={u.brand} />',
-      [`${SRC}/pages/x/EditForm.tsx`]:
-        'function StatField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {\n' +
-        "  return <input value={value} onChange={(e) => onChange(e.target.value)} />;\n}\n" +
-        '<StatField label="Name" value={v} onChange={set} />',
-      [`${SRC}/components/vehicle-profile/ReeferSection.tsx`]:
-        'function Card({ label, value }: { label: string; value: string }) { return <div>{label}{value}</div>; }\n' +
-        '<Card label="Brand / model" value={reefer.brand} />',
-      [`${SRC}/pages/x/CommentedOut.tsx`]:
-        '// legacy: <Card label="Ghost" value={n} />\nfunction Card({ label, value }: { label: string; value: number }) {\n' +
-        "  return <Link to='/g'>{label}{value}</Link>;\n}\nexport const nothing = 1;",
-      // Controls for the two narrowings above: a live-backed template literal is not "hardcoded",
-      // and a skeleton / error shell wearing card chrome is not a card.
-      [`${SRC}/pages/x/TemplateKpiBar.tsx`]:
-        'export function TemplateKpiBar({ total }: { total: number }) {\n' +
-        '  return <DrillKpiCard label="Spend" value={`$${total.toLocaleString()}`} to="/x/spend" />;\n}',
-      [`${SRC}/pages/x/ShellKpiCard.tsx`]:
-        'export function ShellKpiCard({ loading, failed }: { loading: boolean; failed: boolean }) {\n' +
-        '  if (loading) return <div className="rounded-sm border border-slate-200 bg-white p-3">' +
-        '<div className="h-6 animate-pulse rounded-sm bg-slate-100" /></div>;\n' +
-        '  if (failed) return <div className="rounded-sm border border-slate-200 bg-white p-3">' +
-        "<ListErrorState title=\"Couldn't load\" /></div>;\n" +
-        '  return <DrillKpiCard label="Open" value={n} to="/x/open" />;\n}',
-      [`${SRC}/pages/x/GoodKpiRow.tsx`]:
-        'export function GoodKpiRow({ kpis }: { kpis?: Record<string, number> }) {\n' +
-        "  return <div className=\"grid grid-cols-3 gap-2\">{[['Open', kpis?.open ?? null]].map(([l, v]) => (\n" +
-        '    <DrillKpiCard key={l} label={l} value={v} to="/x/open" />\n  ))}</div>;\n}",',
-    },
-  };
+const GOOD_FIXTURE = {
+  primitive: GOOD_PRIMITIVE,
+  files: {
+    [`${SRC}/pages/x/BoardPage.tsx`]:
+      'function StatTile({ label, value, to }: { label: string; value: number; to?: string }) {\n' +
+      "  return <Link to={to ?? '/x'}>{label}{value}</Link>;\n}\n" +
+      '<StatTile label="Open" value={n} to="/x/open" />\n' +
+      '<DrillKpiCard label="Late" value={late} onClick={openLate} />\n' +
+      '<DrillKpiCard label="Ratio" value={ratio} unavailable="Computed from the rows above — no record list." />',
+    // Classifier controls — none of these may be claimed.
+    [`${SRC}/pages/x/DetailPanel.tsx`]:
+      'function DetailRow({ label, value }: { label: string; value: string }) { return <div>{label}{value}</div>; }\n' +
+      '<DetailRow label="Brand" value={u.brand} />',
+    [`${SRC}/pages/x/EditForm.tsx`]:
+      'function StatField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {\n' +
+      "  return <input value={value} onChange={(e) => onChange(e.target.value)} />;\n}\n" +
+      '<StatField label="Name" value={v} onChange={set} />',
+    [`${SRC}/components/vehicle-profile/ReeferSection.tsx`]:
+      'function Card({ label, value }: { label: string; value: string }) { return <div>{label}{value}</div>; }\n' +
+      '<Card label="Brand / model" value={reefer.brand} />',
+    [`${SRC}/pages/x/CommentedOut.tsx`]:
+      '// legacy: <Card label="Ghost" value={n} />\nfunction Card({ label, value }: { label: string; value: number }) {\n' +
+      "  return <Link to='/g'>{label}{value}</Link>;\n}\nexport const nothing = 1;",
+    // Controls for the two narrowings above: a live-backed template literal is not "hardcoded",
+    // and a skeleton / error shell wearing card chrome is not a card.
+    [`${SRC}/pages/x/TemplateKpiBar.tsx`]:
+      'export function TemplateKpiBar({ total }: { total: number }) {\n' +
+      '  return <DrillKpiCard label="Spend" value={`$${total.toLocaleString()}`} to="/x/spend" />;\n}',
+    [`${SRC}/pages/x/ShellKpiCard.tsx`]:
+      'export function ShellKpiCard({ loading, failed }: { loading: boolean; failed: boolean }) {\n' +
+      '  if (loading) return <div className="rounded-sm border border-slate-200 bg-white p-3">' +
+      '<div className="h-6 animate-pulse rounded-sm bg-slate-100" /></div>;\n' +
+      '  if (failed) return <div className="rounded-sm border border-slate-200 bg-white p-3">' +
+      "<ListErrorState title=\"Couldn't load\" /></div>;\n" +
+      '  return <DrillKpiCard label="Open" value={n} to="/x/open" />;\n}',
+    [`${SRC}/pages/x/EmptyFallbackKpiBar.tsx`]:
+      'export function EmptyFallbackKpiBar({ kpis }: { kpis?: { open?: number } }) {\n' +
+      '  const snapshot = kpis ?? {};\n  return <DrillKpiCard label="Open" value={snapshot.open ?? null} to="/x" />;\n}',
+    [`${SRC}/pages/x/GoodKpiRow.tsx`]:
+      'export function GoodKpiRow({ kpis }: { kpis?: Record<string, number> }) {\n' +
+      "  return <div className=\"grid grid-cols-3 gap-2\">{[['Open', kpis?.open ?? null]].map(([l, v]) => (\n" +
+      '    <DrillKpiCard key={l} label={l} value={v} to="/x/open" />\n  ))}</div>;\n}",',
+  },
+};
 
-  const clean = contractErrors(good, OPTS);
-  if (clean.length) failures.push(`good fixture is NOT clean:\n      ${clean.join("\n      ")}`);
 
-  // Prove the classifier claims cards and refuses non-cards.
-  const claimed = scanCardRenders(good.files).map((r) => `${r.file}:${r.tag}`);
-  for (const must of [`${SRC}/pages/x/BoardPage.tsx:StatTile`, `${SRC}/pages/x/BoardPage.tsx:DrillKpiCard`]) {
-    if (!claimed.includes(must)) failures.push(`classifier MISSED a card render: ${must}`);
-  }
-  for (const mustNot of [
-    `${SRC}/pages/x/DetailPanel.tsx:DetailRow`, // a detail row is not a metric
-    `${SRC}/pages/x/EditForm.tsx:StatField`, // a form control is not a metric
-    `${SRC}/components/vehicle-profile/ReeferSection.tsx:Card`, // a record-detail panel is not a primary surface
-  ]) {
-    if (claimed.includes(mustNot)) failures.push(`classifier over-claimed a non-card: ${mustNot}`);
-  }
-  if (scanCardRenders(good.files).some((r) => r.file.endsWith("CommentedOut.tsx") && !r.live)) {
-    failures.push("classifier claimed a commented-out card render — comments are prose, not call sites");
-  }
-  if (scanHonesty(good.files).some((h) => h.file.endsWith("TemplateKpiBar.tsx"))) {
-    failures.push("honesty scan claimed an interpolated template literal — that is live-backed formatting");
-  }
-  if (scanHandRolledChrome(good.files).some((c) => c.file.endsWith("ShellKpiCard.tsx"))) {
-    failures.push("chrome scan claimed a loading skeleton / error shell — those hold no metric");
-  }
+const withFile = (base, rel, source) => ({ ...base, files: { ...base.files, [rel]: source } });
+const withPrimitive = (base, next) => ({ ...base, primitive: next });
 
-  const withFile = (base, rel, source) => ({ ...base, files: { ...base.files, [rel]: source } });
-  const withPrimitive = (base, next) => ({ ...base, primitive: next });
 
-  const mutations = [
+function selftestMutations(good) {
+  return [
     [
       "a card factory call site passes no drill target",
       withFile(
@@ -721,6 +739,19 @@ function selftest() {
           '<KpiTile label="Open WOs" value={n} />'
       ),
       /DEAD-CARD: .*BrandNewHome/,
+    ],
+    [
+      // Found while migrating: HosDriverMapPreviewPage's StatCard took `props: StatCardProps`, so an
+      // earlier draft of this classifier could not see it at all. One refactor was a full evasion.
+      "a card factory takes `props: XProps` instead of destructuring, hiding from the classifier",
+      withFile(
+        good,
+        `${SRC}/pages/x/TypedProps.tsx`,
+        "type StatTileProps = { label: string; value: number };\n" +
+          "function StatTile(props: StatTileProps) { return <div>{props.label}{props.value}</div>; }\n" +
+          '<StatTile label="Open" value={n} />'
+      ),
+      /DEAD-CARD: .*TypedProps/,
     ],
     [
       "a shared DrillKpiCard render forgets its target",
@@ -814,7 +845,7 @@ function selftest() {
         good,
         `${SRC}/pages/x/Budget.tsx`,
         Array.from(
-          { length: OPTS.unavailableBudget + 1 },
+          { length: SELFTEST_OPTS.unavailableBudget + 1 },
           (_, i) => `<DrillKpiCard label="M${i}" value={v} unavailable="No record list backs this ratio." />`
         ).join("\n")
       ),
@@ -897,6 +928,41 @@ function selftest() {
     ["the shared primitive disappears", withPrimitive(good, MISSING), /PRIMITIVE: missing file/],
   ];
 
+}
+
+function selftest() {
+  const failures = [];
+  const good = GOOD_FIXTURE;
+  const OPTS = SELFTEST_OPTS;
+  const clean = contractErrors(good, OPTS);
+  if (clean.length) failures.push(`good fixture is NOT clean:\n      ${clean.join("\n      ")}`);
+
+  // Prove the classifier claims cards and refuses non-cards.
+  const claimed = scanCardRenders(good.files).map((r) => `${r.file}:${r.tag}`);
+  for (const must of [`${SRC}/pages/x/BoardPage.tsx:StatTile`, `${SRC}/pages/x/BoardPage.tsx:DrillKpiCard`]) {
+    if (!claimed.includes(must)) failures.push(`classifier MISSED a card render: ${must}`);
+  }
+  for (const mustNot of [
+    `${SRC}/pages/x/DetailPanel.tsx:DetailRow`, // a detail row is not a metric
+    `${SRC}/pages/x/EditForm.tsx:StatField`, // a form control is not a metric
+    `${SRC}/components/vehicle-profile/ReeferSection.tsx:Card`, // a record-detail panel is not a primary surface
+  ]) {
+    if (claimed.includes(mustNot)) failures.push(`classifier over-claimed a non-card: ${mustNot}`);
+  }
+  if (scanCardRenders(good.files).some((r) => r.file.endsWith("CommentedOut.tsx") && !r.live)) {
+    failures.push("classifier claimed a commented-out card render — comments are prose, not call sites");
+  }
+  if (scanHonesty(good.files).some((h) => h.file.endsWith("TemplateKpiBar.tsx"))) {
+    failures.push("honesty scan claimed an interpolated template literal — that is live-backed formatting");
+  }
+  if (scanHandRolledChrome(good.files).some((c) => c.file.endsWith("ShellKpiCard.tsx"))) {
+    failures.push("chrome scan claimed a loading skeleton / error shell — those hold no metric");
+  }
+  if (scanHonesty(good.files).some((h) => h.file.endsWith("EmptyFallbackKpiBar.tsx"))) {
+    failures.push("honesty scan claimed `kpis ?? {}` — an EMPTY fallback leaves every field undefined, which is honest");
+  }
+
+  const mutations = selftestMutations(good);
   for (const [name, fixture, expected] of mutations) {
     const found = contractErrors(fixture, OPTS);
     if (!found.some((e) => expected.test(e))) {

@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
+import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 
 type Props = {
   operatingCompanyId: string;
@@ -20,23 +21,6 @@ const BUCKET_LABEL: Record<string, string> = {
   external: "External",
   roadside: "Roadside",
 };
-
-// KPI tiles → the filtered Active-WOs list (00-MASTER-LINK-MAP: KPI tile → the list it represents).
-function BucketTile({ label, value, bucket }: { label: string; value: number; bucket?: string }) {
-  const cls = "rounded-sm border border-gray-200 bg-white px-2 py-1 text-left text-[11px] hover:bg-gray-50";
-  const inner = (
-    <>
-      <div className="text-[10px] uppercase tracking-wide text-gray-500">{label}</div>
-      <div className="font-semibold">{value}</div>
-    </>
-  );
-  if (!bucket) return <div className={cls.replace(" hover:bg-gray-50", "")}>{inner}</div>;
-  return (
-    <Link to={`/maintenance/active-wos?bucket=${encodeURIComponent(bucket)}`} className={cls}>
-      {inner}
-    </Link>
-  );
-}
 
 export function ServiceLocationPage({ operatingCompanyId }: Props) {
   const kpisQuery = useQuery({
@@ -94,10 +78,13 @@ export function ServiceLocationPage({ operatingCompanyId }: Props) {
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-        <BucketTile label="In-House" value={kpis.in_house_count} bucket="in_house" />
-        <BucketTile label="External" value={kpis.external_count} bucket="external" />
-        <BucketTile label="Roadside" value={kpis.roadside_count} bucket="roadside" />
-        <BucketTile label="Locations" value={kpis.unique_locations} />
+        {/* C8: KPI tile → the list it represents (00-MASTER-LINK-MAP). "Locations" is a distinct-count
+            over the table already rendered below, so it drills to that tab rather than to a WO filter
+            that would not match the figure. */}
+        <DrillKpiCard label="In-House" value={kpis.in_house_count} to="/maintenance/active-wos?bucket=in_house" />
+        <DrillKpiCard label="External" value={kpis.external_count} to="/maintenance/active-wos?bucket=external" />
+        <DrillKpiCard label="Roadside" value={kpis.roadside_count} to="/maintenance/active-wos?bucket=roadside" />
+        <DrillKpiCard label="Locations" value={kpis.unique_locations} to="/maintenance/service-location" />
       </div>
 
       {rowsQuery.isError ? (
