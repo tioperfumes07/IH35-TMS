@@ -6,15 +6,15 @@ import { listDispatchAssignmentHistory } from "../../api/dispatch";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 
 export function AssignmentHistoryPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [driverId, setDriverId] = useState<string | null>(null);
+  const [driverId, setDriverId] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [reason, setReason] = useState("");
@@ -23,7 +23,7 @@ export function AssignmentHistoryPage() {
     queryKey: ["dispatch", "assignment-history-global", companyId, driverId, from, to, reason],
     queryFn: () =>
       listDispatchAssignmentHistory(companyId, {
-        driver_id: driverId?.trim() || undefined,
+        driver_id: driverId.trim() || undefined,
         from: from || undefined,
         to: to || undefined,
         reason: reason.trim() || undefined,
@@ -83,13 +83,16 @@ export function AssignmentHistoryPage() {
       <section className="grid gap-3 rounded-sm border bg-white p-4 md:grid-cols-4">
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">Driver</label>
+          {/* C1 PICKER LAW: was a raw-UUID box. allowCreate={false} — a FILTER narrows rows that
+              already exist; offering to create a driver from a filter is nonsense, and no reference
+              product (QBO, NetSuite, McLeod, Alvys) does it. */}
           <EntityPicker
             kind="driver"
             operatingCompanyId={companyId}
-            value={driverId}
-            onChange={setDriverId}
-            placeholder="Filter by driver"
+            value={driverId || null}
+            onChange={(next) => setDriverId(next ?? "")}
             allowCreate={false}
+            placeholder="All drivers"
           />
         </div>
         <div className="flex flex-col gap-1">

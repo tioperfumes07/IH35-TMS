@@ -30,6 +30,12 @@ type ComboboxProps = {
   filterMode?: "contains" | "startsWith" | "fuzzy";
   /** Focus target for form validation (`[data-field="…"]`). */
   dataField?: string;
+  /**
+   * C1: `data-testid` for the text input. Additive. A call site that REPLACES a plain `<input
+   * data-testid="…">` with this picker must be able to keep the exact id its existing tests and any
+   * e2e selector already target — converting a control must never silently break a test's handle.
+   */
+  dataTestId?: string;
   className?: string;
 };
 
@@ -103,6 +109,7 @@ export function Combobox({
   allowAddNew,
   filterMode = "contains",
   dataField,
+  dataTestId,
   className,
   onSearch,
 }: ComboboxProps) {
@@ -370,6 +377,7 @@ export function Combobox({
         <input
           type="text"
           data-field={dataField}
+          data-testid={dataTestId}
           value={displayValue}
           onChange={(event) => {
             setQuery(event.target.value);

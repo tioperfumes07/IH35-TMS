@@ -219,34 +219,82 @@ const EXEMPTIONS = [
     reason:
       "@archived surface as above; the live successor ComplaintsTab.tsx renders a bounded complaint-type selector instead of a raw uuid box. Left untouched under ARCHIVE-not-DELETE.",
   },
-  // ---- C1-WAVE-2 call sites (EntityPicker primitive ships in this PR; migrate next) ----
-  { file: `${SRC}/components/border-crossing/WizardStep1.tsx`, field: "loadId", category: "blocked-needs-backend", blocker: "Border-crossing wizard lacks stable operatingCompanyId at this step; EntityPicker requires it. C1-WAVE-2 wires opco then swaps to EntityPicker kind=load.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
-  { file: `${SRC}/components/border-crossing/WizardStep1.tsx`, field: "unitId", category: "blocked-needs-backend", blocker: "Same WizardStep1 opco plumbing gap as loadId.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
-  { file: `${SRC}/components/border-crossing/WizardStep1.tsx`, field: "driverId", category: "blocked-needs-backend", blocker: "Same WizardStep1 opco plumbing gap as loadId.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
-  { file: `${SRC}/components/dispatch/EquipmentTransferModal.tsx`, field: "equipmentUuid", category: "blocked-needs-backend", blocker: "EquipmentTransferModal must keep equipment+driver trio atomic; swap to EntityPicker kinds in C1-WAVE-2 with shared opco.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
-  { file: `${SRC}/components/dispatch/EquipmentTransferModal.tsx`, field: "fromDriver", category: "blocked-needs-backend", blocker: "Same EquipmentTransferModal atomic trio as equipmentUuid.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
-  { file: `${SRC}/components/dispatch/EquipmentTransferModal.tsx`, field: "toDriver", category: "blocked-needs-backend", blocker: "Same EquipmentTransferModal atomic trio as equipmentUuid.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
-  { file: `${SRC}/pages/accounting/BillPaymentsListPage.tsx`, field: "vendorId", category: "blocked-needs-backend", blocker: "Filter-only field on a list page; needs opco from page context + EntityPicker kind=vendor in C1-WAVE-2.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
-  { file: `${SRC}/pages/accounting/InvoicesListPage.tsx`, field: "batchId", category: "blocked-needs-backend", blocker: "Factoring advance batch is not an EntityPicker kind yet — needs factoring.batches list endpoint + registry entry (factoring lane).", reason: "No EntityPicker kind for factoring advance batch yet — factoring-lane registry entry required before swap." },
-  { file: `${SRC}/pages/customers/CoiTab.tsx`, field: "requestPolicyId", category: "blocked-needs-backend", blocker: "COI policy roster endpoint is insurance-lane; no EntityPicker kind=policy yet.", reason: "No EntityPicker kind for insurance COI policy yet — insurance-lane roster + registry entry required." },
-  { file: `${SRC}/pages/dispatch/InTransitIssuesPage.tsx`, field: "loadId", category: "blocked-needs-backend", blocker: "Filter field; C1-WAVE-2 swaps to EntityPicker kind=load with page opco.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
-  { file: `${SRC}/pages/maintenance/WarrantyClaimsPage.tsx`, field: "detectWoId", category: "blocked-needs-backend", blocker: "Work-order roster is maintenance-lane; no EntityPicker kind=work_order yet.", reason: "No EntityPicker kind for maintenance work order yet — maintenance-lane roster + registry entry required." },
-  { file: `${SRC}/pages/reports/audit/AuditReportPage.tsx`, field: "driverFilter", category: "blocked-needs-backend", blocker: "Reports page opco + EntityPicker kind=driver wiring is C1-WAVE-2.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
-  { file: `${SRC}/pages/safety/drug-alcohol/TestSchedulingPanel.tsx`, field: "driverUuid", category: "blocked-needs-backend", blocker: "Panel must receive operatingCompanyId before EntityPicker; C1-WAVE-2.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
-  { file: `${SRC}/pages/safety/IdvrPage.tsx`, field: "driverFilter", category: "blocked-needs-backend", blocker: "Idvr filters need page opco + EntityPicker; C1-WAVE-2.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
-  { file: `${SRC}/pages/safety/IdvrPage.tsx`, field: "unitFilter", category: "blocked-needs-backend", blocker: "Idvr filters need page opco + EntityPicker; C1-WAVE-2.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
-  { file: `${SRC}/pages/safety/SafetyEventsPage.tsx`, field: "subject_driver_id", category: "blocked-needs-backend", blocker: "Create form needs opco-scoped EntityPicker; C1-WAVE-2.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
-  { file: `${SRC}/pages/safety/SafetyEventsPage.tsx`, field: "subject_unit_id", category: "blocked-needs-backend", blocker: "Create form needs opco-scoped EntityPicker; C1-WAVE-2.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
 ];
 
 /**
  * The exemption list is a RATCHET: it may shrink, never grow. Raising this number is a visible,
  * reviewable edit to the guard itself — which is the point. It is not a threshold to tune.
  */
-const EXEMPTION_CEILING = 30;
+const EXEMPTION_CEILING = 13;
 
 /** An "admin-audit-forensic-id" exemption must actually live on an admin/audit surface. */
 const AUDIT_PATH = /\/(admin|audit)\/|AuditTrail|AuditLog|ActivityLog|audit-log/;
+
+// =================================================================================================
+// NO-ENFORCED-FK FINDINGS — a SECOND, separate ratchet (the EXEMPTIONS ceiling above is untouched).
+//
+// OWNER RULING (2026-07-25), binding: "Every picker must write the SAME canonical table it reads,
+// and any raw-uuid it replaces must resolve to an ENFORCED FK, not a memo." A raw-UUID box replaced
+// by a picker that writes into a jsonb memo, a bare text/uuid column with no REFERENCES, or a
+// different table than it reads is NOT fixed — it is the same defect wearing a dropdown, because
+// the database will still accept an orphan while the dropdown implies it cannot. The repo already
+// has that shape on record: catalogs.maintenance_vendors keeps mdata_vendor_id INSIDE a metadata
+// jsonb with an app-level existence check and no FK.
+//
+// So these fields stay as raw inputs ON PURPOSE and are reported, not claimed. Each names the
+// unconstrained column, the migration line that declares it, and the remedy (an FK migration — a
+// schema change, which is the other lane's and is HELD for the owner; C1 is frontend-only).
+//
+// THIS LIST IS SELF-INVALIDATING, which is the point: the guard READS db/migrations and FAILS if
+// the cited column ever acquires a REFERENCES clause or an ADD CONSTRAINT ... FOREIGN KEY. The day
+// the FK lands, this guard turns red and says "migrate the call site" — the finding cannot rot.
+// =================================================================================================
+const NO_ENFORCED_FK = [
+  {
+    file: `${SRC}/components/border-crossing/WizardStep1.tsx`,
+    field: "loadId",
+    column: "mdata.unit_border_crossings.load_id",
+    migration: "db/migrations/0295_vehicle_profile_part1.sql",
+    writePath: "apps/backend/src/border-crossing/border-crossing-wizard.routes.ts:139 (INSERT)",
+    remedy:
+      "ADD CONSTRAINT ... FOREIGN KEY (load_id) REFERENCES mdata.loads(id) on mdata.unit_border_crossings, then migrate this field to <EntityPicker kind=\"load\">. Schema change — other lane, HELD for the owner.",
+  },
+  {
+    file: `${SRC}/components/border-crossing/WizardStep1.tsx`,
+    field: "driverId",
+    column: "mdata.unit_border_crossings.driver_id",
+    migration: "db/migrations/0295_vehicle_profile_part1.sql",
+    writePath: "apps/backend/src/border-crossing/border-crossing-wizard.routes.ts:139 (INSERT)",
+    remedy:
+      "ADD CONSTRAINT ... FOREIGN KEY (driver_id) REFERENCES mdata.drivers(id) on mdata.unit_border_crossings, then migrate this field to <EntityPicker kind=\"driver\">. Schema change — other lane, HELD for the owner.",
+  },
+  {
+    file: `${SRC}/components/dispatch/EquipmentTransferModal.tsx`,
+    field: "equipmentUuid",
+    column: "dispatch.equipment_transfer_requests.equipment_uuid",
+    migration: "db/migrations/202606080204_equipment_transfer_requests.sql",
+    writePath: "apps/backend/src/dispatch/equipment-transfer/request.service.ts:81 (INSERT)",
+    remedy:
+      "Two defects, both other-lane: (1) no FK on equipment_uuid; (2) request.service.ts:56-66 validates the id against mdata.equipment ONLY with no branch on equipment_kind, while the modal offers \"truck\" — so the accepted table and any unit roster disagree. Resolve the kind->table contract first, then add the FK, then migrate this field.",
+  },
+];
+
+/** Second ratchet, independent of EXEMPTION_CEILING. May only SHRINK. */
+const NO_ENFORCED_FK_CEILING = 3;
+
+/**
+ * The §10(b) RETIRE / canonical map. A picker may NEVER read or write the right-hand side.
+ * Owner-restated 2026-07-25; CI guard G4 fails on a write/FK to one of these.
+ */
+const RETIRE_TABLES = [
+  [/^payroll\./i, "driver settlement lives in driver_finance.*"],
+  [/^settlement\./i, "driver settlement lives in driver_finance.*"],
+  [/^accounting\.qbo_/i, "the QBO mirror is mdata.qbo_* and is never pickable"],
+  [/^bank\./i, "banking lives in banking.*"],
+  [/^maint\./i, "maintenance lives in maintenance.* (maint.part / maint.pm_schedule / maint.position_* are RETIRE)"],
+  [/^dispatch\.loads$/i, "loads live in mdata.loads"],
+  [/^catalogs\.cancellation_reasons$/i, "legacy: no operating_company_id, RLS OFF, retiring — use catalogs.load_cancellation_reasons"],
+];
 
 // =================================================================================================
 // JSX scanning — a brace/quote-aware walker, because JSX attribute values nest braces, ternaries
@@ -495,6 +543,75 @@ export function contractErrors(src) {
     }
   }
 
+  // ---- 1b. NO-ENFORCED-FK FINDINGS — the owner's enforced-FK clause, mechanised ----------------
+  // Each entry is a raw input left in place ON PURPOSE. It must still describe live code, and the
+  // claim "this column has no FK" is VERIFIED against db/migrations rather than trusted.
+  if (NO_ENFORCED_FK.length > NO_ENFORCED_FK_CEILING) {
+    errors.push(
+      `FK-RATCHET: ${NO_ENFORCED_FK.length} no-enforced-FK findings exceeds the ceiling of ` +
+        `${NO_ENFORCED_FK_CEILING}. This list may only SHRINK — add the FK and migrate the call site.`
+    );
+  }
+  for (const finding of NO_ENFORCED_FK) {
+    const k = key(finding.file, finding.field);
+    if (seen.has(k)) errors.push(`FK-DUP: ${k} is both an exemption and a no-enforced-FK finding.`);
+    seen.add(k);
+
+    if (!hitKeys.has(k)) {
+      errors.push(
+        `FK-STALE: no-enforced-FK finding ${k} matches no raw-uuid input any more. If the field was ` +
+          `migrated, delete the finding; a finding that no longer describes real code is a hole.`
+      );
+    }
+    if (!finding.remedy || finding.remedy.trim().length < 40) {
+      errors.push(`FK-REMEDY: ${k} names no remedy. A finding without a remedy is an excuse.`);
+    }
+
+    // THE SELF-INVALIDATING PART: read the migration and prove the column really is unconstrained.
+    // The moment someone adds the FK, this fires and demands the call site be migrated.
+    const parts = String(finding.column ?? "").split(".");
+    const bareColumn = parts.length === 3 ? parts[2] : null;
+    const qualifiedTable = parts.length === 3 ? `${parts[0]}.${parts[1]}` : null;
+    const sql = src.migrations?.[finding.migration];
+    if (!bareColumn) {
+      errors.push(`FK-COLUMN: ${k} does not name a schema.table.column.`);
+    } else if (!sql || sql === MISSING) {
+      errors.push(`FK-EVIDENCE: ${k} cites ${finding.migration}, which does not exist.`);
+    } else {
+      // SCOPED TO THE TABLE. An earlier draft searched every migration for `FOREIGN KEY (load_id)`
+      // and fired on OTHER tables that legitimately have a load_id FK — a false FK-RESOLVED that
+      // would have pushed a field to be "migrated" onto a column that is still unconstrained. The
+      // check now only considers statements that mention this finding's own schema.table.
+      const escaped = qualifiedTable.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const statements = Object.values(src.migrations ?? {})
+        .flatMap((body) => String(body).split(";"))
+        .filter((stmt) => new RegExp(`(^|[^a-z0-9_.])${escaped}([^a-z0-9_]|$)`, "i").test(stmt));
+
+      const declared = String(sql)
+        .split(";")
+        .filter((stmt) => new RegExp(`(^|[^a-z0-9_.])${escaped}([^a-z0-9_]|$)`, "i").test(stmt))
+        .some((stmt) => new RegExp(`(^|[\\s(,])${bareColumn}\\s+uuid`, "i").test(stmt));
+      if (!declared) {
+        errors.push(
+          `FK-EVIDENCE: ${k} cites ${finding.migration} but that migration declares no ` +
+            `\`${bareColumn} uuid\` column on ${qualifiedTable}. The finding's evidence does not hold.`
+        );
+      }
+
+      const nowConstrained = statements.some(
+        (stmt) =>
+          new RegExp(`FOREIGN\\s+KEY\\s*\\(\\s*${bareColumn}\\s*\\)`, "i").test(stmt) ||
+          new RegExp(`(^|[\\s(,])${bareColumn}\\s+uuid[^,)]*REFERENCES`, "i").test(stmt)
+      );
+      if (nowConstrained) {
+        errors.push(
+          `FK-RESOLVED: ${finding.column} now HAS an enforced foreign key. The no-enforced-FK finding ` +
+            `for ${k} is obsolete — delete it and migrate the field to <EntityPicker>.`
+        );
+      }
+    }
+  }
+
   // ---- 2. THE SWEEP — every unexempted raw-uuid input ------------------------------------------
   for (const hit of hits) {
     if (seen.has(key(hit.file, hit.field))) continue;
@@ -525,10 +642,25 @@ export function contractErrors(src) {
     if (!/operatingCompanyId/.test(p)) {
       errors.push(`PRIMITIVE-SCOPE: ${PICKER_FILE} never references operatingCompanyId — the roster must be entity-scoped.`);
     }
-    if (!/shell="drawer"|variant="drawer"/.test(p)) {
+    // TIGHTENED in the fix half (never weakened): the original assertion looked for the literal
+    // `shell="drawer"`, which forced the component to duplicate a whole create element per shell
+    // just to satisfy a regex. The real contract is TWO rules, and both are now asserted:
+    //   (a) the shell/variant handed to the create surface resolves to a drawer — a ternary is fine,
+    //       because CHROME-11 legitimately picks ParityDrawer when the picker is already inside a
+    //       money drawer and C7's 480px Modal drawer otherwise;
+    //   (b) the picker must DELEGATE to the entity's real create surface and never render a dialog
+    //       shell of its own. A bare `<Modal>` here would be exactly the second shell C7 forbids,
+    //       and the old regex would have happily passed one that carried variant="drawer".
+    if (!/(?:shell|variant)\s*=\s*(?:"drawer"|\{[^}]*"drawer")/.test(p)) {
       errors.push(
-        `PRIMITIVE-DRAWER: ${PICKER_FILE} never opens its create surface in the C7 drawer ` +
-          `(shell="drawer" / variant="drawer"). C1 composes onto C7; it must not build a second shell.`
+        `PRIMITIVE-DRAWER: ${PICKER_FILE} never hands its create surface a drawer shell ` +
+          `(shell/variant resolving to "drawer"). C1 composes onto C7's drawer.`
+      );
+    }
+    if (/<Modal[\s/>]/.test(p)) {
+      errors.push(
+        `PRIMITIVE-SHELL: ${PICKER_FILE} renders its own <Modal>. The picker must DELEGATE to the ` +
+          `entity's real create surface, never build a second dialog shell.`
       );
     }
   }
@@ -564,6 +696,15 @@ export function contractErrors(src) {
         }
         if (/\bqbo_|\.qbo_/i.test(table)) {
           errors.push(`REGISTRY-MIRROR: kind "${kind}" targets QBO mirror ${table}. The picker law forbids it.`);
+        }
+        // §10(b) canonical/RETIRE map, owner-restated 2026-07-25. CI guard G4 fails on a write/FK
+        // to any of these; a picker must never surface one in the first place.
+        for (const [pattern, canonical] of RETIRE_TABLES) {
+          if (pattern.test(table)) {
+            errors.push(
+              `REGISTRY-RETIRE-MAP: kind "${kind}" targets ${table}, which is on the §10(b) RETIRE map — ${canonical}.`
+            );
+          }
         }
       }
     }
@@ -615,11 +756,31 @@ function selftest() {
 
   const goodReferenceSelect = 'const config = getCatalogPickerConfig(createKind);\nif (config.backend === "inline-drawer") return null;';
 
+  // Migration fixtures for the no-enforced-FK findings: the column exists as a bare `uuid` with no
+  // REFERENCES anywhere. If a real finding's migration ever stops looking like this, the guard says so.
+  // Several findings can cite the SAME migration (0295 declares both load_id and driver_id), so
+  // group the columns per file rather than letting the last one win.
+  const goodMigrations = {};
+  for (const f of NO_ENFORCED_FK) {
+    const [schema, table, col] = f.column.split(".");
+    goodMigrations[f.migration] =
+      `${goodMigrations[f.migration] ?? `CREATE TABLE ${schema}.${table} (\n  id uuid PRIMARY KEY,`}\n  ${col} uuid,`;
+  }
+  for (const k of Object.keys(goodMigrations)) goodMigrations[k] += "\n  other text\n);\n";
+  // NEGATIVE CONTROL for the table-scoping fix: a DIFFERENT table that legitimately FKs a column of
+  // the same name must NOT resolve the finding. An earlier draft searched every migration globally
+  // and fired FK-RESOLVED off an unrelated table — which would have pushed a field to be migrated
+  // onto a column that is still unconstrained. The good fixture carries that decoy permanently.
+  goodMigrations["db/migrations/0001_unrelated_table_with_same_column_names.sql"] =
+    "CREATE TABLE other.some_table (\n  id uuid PRIMARY KEY,\n  load_id uuid REFERENCES mdata.loads(id),\n  driver_id uuid REFERENCES mdata.drivers(id),\n  equipment_uuid uuid REFERENCES mdata.equipment(id)\n);\n" +
+    "ALTER TABLE other.another_table ADD CONSTRAINT fk_z FOREIGN KEY (load_id) REFERENCES mdata.loads(id);\n";
+
   const good = {
     picker: goodPicker,
     registry: goodRegistry,
     referenceSelect: goodReferenceSelect,
     catalogRegistry: "export const CATALOG_PICKERS = {};",
+    migrations: goodMigrations,
     files: {
       [PICKER_FILE]: goodPicker,
       [REFERENCE_SELECT_FILE]: goodReferenceSelect,
@@ -661,6 +822,11 @@ function selftest() {
       (ex.category === "archived-superseded" ? "/** @archived */\n" : "") +
       fields.map((f) => `<input value={form.${f.field}} placeholder="uuid" />`).join("\n");
   }
+  // Same for the no-enforced-FK findings: their raw inputs are still live on purpose.
+  for (const f of NO_ENFORCED_FK) {
+    const fields = NO_ENFORCED_FK.filter((e) => e.file === f.file);
+    good.files[f.file] = fields.map((x) => `<input value={form.${x.field}} placeholder="uuid" />`).join("\n");
+  }
 
   const clean = contractErrors(good);
   if (clean.length) failures.push(`good fixture is NOT clean:\n      ${clean.join("\n      ")}`);
@@ -693,13 +859,24 @@ function selftest() {
     if (claimed.some((k) => k.startsWith(`${file}#`))) failures.push(`classifier OVER-claimed ${what}: ${file}`);
   }
 
+  // NEGATIVE CONTROL for the tightened drawer rule: CHROME-11 legitimately chooses ParityDrawer
+  // when the picker sits inside an open money drawer and C7's Modal drawer otherwise, so the
+  // ternary shell form is the SHIPPED shape and must not be flagged.
+  const ternaryShell = {
+    ...good,
+    picker: goodPicker.replace('shell="drawer"', 'shell={nestedInDrawer ? "drawer" : "modal"}'),
+  };
+  if (contractErrors(ternaryShell).some((e) => /PRIMITIVE-DRAWER/.test(e))) {
+    failures.push("drawer rule OVER-claimed: the CHROME-11 ternary shell form must be accepted.");
+  }
+
   const withFile = (base, rel, source) => ({ ...base, files: { ...base.files, [rel]: source } });
 
   const mutations = [
     [
       "a raw-uuid input survives the sweep (placeholder arm)",
-      withFile(good, `${SRC}/pages/x/SurvivePlaceholder.tsx`, '<input value={loadId} placeholder="UUID of load" />'),
-      /PICKER-LAW: .*SurvivePlaceholder.*loadId/,
+      withFile(good, `${SRC}/pages/dispatch/InTransitIssuesPage.tsx`, '<input value={loadId} placeholder="UUID of load" />'),
+      /PICKER-LAW: .*InTransitIssuesPage.*loadId/,
     ],
     [
       "a raw-uuid input survives the sweep (bound-state arm, non-uuid placeholder)",
@@ -754,9 +931,14 @@ function selftest() {
       /PRIMITIVE-SCOPE/,
     ],
     [
-      "inline create abandons the C7 drawer for a second shell",
+      "inline create abandons the C7 drawer for another shape",
       { ...good, picker: goodPicker.replace('shell="drawer"', 'shell="popover"') },
       /PRIMITIVE-DRAWER/,
+    ],
+    [
+      "the picker builds its own dialog shell instead of delegating to the entity's create surface",
+      { ...good, picker: goodPicker.replace("<config.Create", "<Modal variant=\"drawer\"><config.Create") },
+      /PRIMITIVE-SHELL/,
     ],
     ["the registry is deleted", { ...good, registry: MISSING }, /REGISTRY: missing file/],
     [
@@ -799,6 +981,65 @@ function selftest() {
       "the catalog picker registry is removed",
       { ...good, catalogRegistry: MISSING },
       /ADDITIVE: .*catalogPickerRegistry/,
+    ],
+    [
+      "a kind is pointed at a §10(b) RETIRE-map table (maint.* instead of maintenance.*)",
+      { ...good, registry: goodRegistry.replace(/"mdata\.units"/g, '"maint.part"') },
+      /REGISTRY-RETIRE-MAP: .*maint\.part/,
+    ],
+    [
+      "a kind is pointed at the legacy cancellation-reasons catalog",
+      { ...good, registry: goodRegistry.replace(/"mdata\.units"/g, '"catalogs.cancellation_reasons"') },
+      /REGISTRY-RETIRE-MAP: .*cancellation_reasons/,
+    ],
+    [
+      "a no-enforced-FK finding is kept after the field was migrated (a rotting hole)",
+      {
+        ...good,
+        files: { ...good.files, [`${SRC}/components/dispatch/EquipmentTransferModal.tsx`]: '<EntityPicker kind="unit" />' },
+      },
+      /FK-STALE: .*EquipmentTransferModal/,
+    ],
+    [
+      "THE FK LANDS: the cited column acquires REFERENCES, so the finding must be retired and the field migrated",
+      {
+        ...good,
+        migrations: {
+          ...good.migrations,
+          "db/migrations/0295_vehicle_profile_part1.sql":
+            "CREATE TABLE mdata.unit_border_crossings (\n  load_id uuid REFERENCES mdata.loads(id),\n  driver_id uuid\n);\n",
+        },
+      },
+      /FK-RESOLVED: mdata\.unit_border_crossings\.load_id now HAS an enforced foreign key/,
+    ],
+    [
+      "THE FK LANDS via a separate ADD CONSTRAINT migration",
+      {
+        ...good,
+        migrations: {
+          ...good.migrations,
+          "db/migrations/9999_later.sql":
+            "ALTER TABLE dispatch.equipment_transfer_requests ADD CONSTRAINT fk_x FOREIGN KEY (equipment_uuid) REFERENCES mdata.equipment(id);",
+        },
+      },
+      /FK-RESOLVED: dispatch\.equipment_transfer_requests\.equipment_uuid/,
+    ],
+    [
+      "a finding cites a migration that does not exist",
+      { ...good, migrations: {} },
+      /FK-EVIDENCE: .*does not exist/,
+    ],
+    [
+      "a finding cites a migration that never declares the column (fabricated evidence)",
+      {
+        ...good,
+        migrations: {
+          ...good.migrations,
+          "db/migrations/0295_vehicle_profile_part1.sql":
+            "CREATE TABLE mdata.unit_border_crossings (id uuid PRIMARY KEY);",
+        },
+      },
+      /FK-EVIDENCE: .*declares no/,
     ],
     [
       "an archived-superseded exemption loses its @archived marker (i.e. the file went live again)",
@@ -903,7 +1144,55 @@ function selftest() {
   EXEMPTIONS.length = 0;
   EXEMPTIONS.push(...original);
 
-  const total = mutations.length + tableMutations.length;
+  // The no-enforced-FK findings table has its own rules; same technique, restored afterwards.
+  const originalFk = NO_ENFORCED_FK.slice();
+  const fkTableMutations = [
+    [
+      "a no-enforced-FK finding names no remedy",
+      () => {
+        NO_ENFORCED_FK.length = 0;
+        NO_ENFORCED_FK.push({ ...originalFk[0], remedy: "later" });
+      },
+      /FK-REMEDY/,
+    ],
+    [
+      "the no-enforced-FK list grows past its ceiling",
+      () => {
+        NO_ENFORCED_FK.length = 0;
+        for (let i = 0; i <= NO_ENFORCED_FK_CEILING; i += 1) NO_ENFORCED_FK.push({ ...originalFk[0], field: `f${i}` });
+      },
+      /FK-RATCHET/,
+    ],
+    [
+      "a field is BOTH exempted and filed as a no-enforced-FK finding (double-counted silence)",
+      () => {
+        NO_ENFORCED_FK.length = 0;
+        NO_ENFORCED_FK.push({ ...originalFk[0], file: original[0].file, field: original[0].field });
+      },
+      /FK-DUP/,
+    ],
+    [
+      "a finding does not name a schema.table.column",
+      () => {
+        NO_ENFORCED_FK.length = 0;
+        NO_ENFORCED_FK.push({ ...originalFk[0], column: "somewhere" });
+      },
+      /FK-COLUMN/,
+    ],
+  ];
+  for (const [name, mutate, expected] of fkTableMutations) {
+    mutate();
+    const found = contractErrors(good);
+    if (!found.some((e) => expected.test(e))) {
+      failures.push(
+        `mutation NOT caught: ${name}\n      expected ${expected}\n      got: ${found.join(" | ") || "(no errors)"}`
+      );
+    }
+  }
+  NO_ENFORCED_FK.length = 0;
+  NO_ENFORCED_FK.push(...originalFk);
+
+  const total = mutations.length + tableMutations.length + fkTableMutations.length;
   if (failures.length) {
     console.error(`FAIL ${LABEL} --selftest:\n  - ${failures.join("\n  - ")}`);
     process.exit(1);
@@ -949,6 +1238,26 @@ function collectFrontendFiles() {
   return files;
 }
 
+/**
+ * Every db/migrations/*.sql, so the no-enforced-FK findings can be VERIFIED against the schema
+ * source of truth in the repo instead of believed. Read-only; no database is touched.
+ */
+function collectMigrations() {
+  const out = {};
+  const dir = path.join(ROOT, "db", "migrations");
+  let entries;
+  try {
+    entries = fs.readdirSync(dir);
+  } catch {
+    return out;
+  }
+  for (const name of entries) {
+    if (!name.endsWith(".sql")) continue;
+    out[`db/migrations/${name}`] = fs.readFileSync(path.join(dir, name), "utf8");
+  }
+  return out;
+}
+
 const IS_ENTRY = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 
 if (!IS_ENTRY) {
@@ -962,6 +1271,7 @@ if (!IS_ENTRY) {
     registry: read(REGISTRY_FILE),
     referenceSelect: read(REFERENCE_SELECT_FILE),
     catalogRegistry: read(CATALOG_REGISTRY_FILE),
+    migrations: collectMigrations(),
     files,
   };
   const errors = contractErrors(src);
@@ -978,5 +1288,12 @@ if (!IS_ENTRY) {
   if (blocked.length) {
     console.log(`  REMAINING — ${blocked.length} field(s) blocked on a backend change (reported, not wired):`);
     for (const b of blocked) console.log(`    · ${b.file} \`${b.field}\` — ${b.blocker.split(".")[0]}.`);
+  }
+  if (NO_ENFORCED_FK.length) {
+    console.log(
+      `  REMAINING — ${NO_ENFORCED_FK.length} field(s) left as raw inputs because the target column has ` +
+        `NO ENFORCED FK (owner ruling: a picker over an unconstrained column is the same defect wearing a dropdown):`
+    );
+    for (const f of NO_ENFORCED_FK) console.log(`    · ${f.column} — verified unconstrained in ${f.migration}`);
   }
 }

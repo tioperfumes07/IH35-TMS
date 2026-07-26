@@ -6,6 +6,7 @@ import { getSafetyDvirSubmissions } from "../../api/safety";
 import { useListState } from "../../components/list-state";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 
 type Props = {
   operatingCompanyId: string;
@@ -123,24 +124,34 @@ export function IdvrPage({ operatingCompanyId }: Props) {
                 data-testid="idvr-filter-to"
               />
             </label>
+            {/* C1 PICKER LAW: both were raw-UUID boxes. These are FILTERS, so allowCreate={false} —
+                a filter narrows existing DVIR rows and must not create a driver or a unit. */}
             <label className="text-[11px] text-slate-600">
-              Driver ID
-              <input
-                value={driverFilter}
-                onChange={(event) => setDriverFilter(event.target.value)}
-                className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
-                placeholder="UUID"
-                data-testid="idvr-filter-driver"
+              Driver
+              <EntityPicker
+                kind="driver"
+                operatingCompanyId={operatingCompanyId}
+                value={driverFilter || null}
+                onChange={(next) => setDriverFilter(next ?? "")}
+                allowCreate={false}
+                placeholder="All drivers"
+                className="mt-1"
+                dataField="idvr-filter-driver"
+                dataTestId="idvr-filter-driver"
               />
             </label>
             <label className="text-[11px] text-slate-600">
-              Unit ID
-              <input
-                value={unitFilter}
-                onChange={(event) => setUnitFilter(event.target.value)}
-                className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
-                placeholder="UUID"
-                data-testid="idvr-filter-unit"
+              Unit
+              <EntityPicker
+                kind="unit"
+                operatingCompanyId={operatingCompanyId}
+                value={unitFilter || null}
+                onChange={(next) => setUnitFilter(next ?? "")}
+                allowCreate={false}
+                placeholder="All units"
+                className="mt-1"
+                dataField="idvr-filter-unit"
+                dataTestId="idvr-filter-unit"
               />
             </label>
           </div>

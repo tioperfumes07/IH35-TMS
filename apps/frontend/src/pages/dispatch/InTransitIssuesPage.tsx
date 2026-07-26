@@ -14,6 +14,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 
 export function InTransitIssuesPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -152,12 +153,15 @@ export function InTransitIssuesPage() {
           }}
         >
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600">Load ID</label>
-            <input
-              value={loadId}
-              onChange={(event) => setLoadId(event.target.value)}
-              className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
-              placeholder="UUID of load"
+            <label className="text-xs font-semibold text-gray-600">Load</label>
+            {/* C1 PICKER LAW: was a raw-UUID box. An in-transit issue whose load_id is blank or
+                mistyped is an exception report attached to nothing. */}
+            <EntityPicker
+              kind="load"
+              operatingCompanyId={companyId}
+              value={loadId || null}
+              onChange={(next) => setLoadId(next ?? "")}
+              placeholder="Select load"
             />
           </div>
           <div className="flex flex-col gap-1">
