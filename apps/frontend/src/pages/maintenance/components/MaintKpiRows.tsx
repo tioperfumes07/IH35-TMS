@@ -1,36 +1,50 @@
 import type { MaintenanceKpis } from "../../../api/maintenance";
+import { DrillKpiCard } from "../../../components/layout/DrillKpiCard";
 
 type Props = {
   kpis: MaintenanceKpis;
 };
 
-function Card({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]">
-      <div className="text-[10px] uppercase tracking-wide text-gray-500">{label}</div>
-      <div className="font-semibold">{value}</div>
-    </div>
-  );
+/**
+ * C8 — the maintenance KPI strip, rendered on every maintenance tab.
+ *
+ * Was: 7 bare <div> tiles, each reading `Number(x ?? 0)`. Two defects at once — the operator could
+ * not click through to the work orders the number counted, and a field the payload does not carry
+ * (`tire_alerts` has no producer anywhere) rendered a confident `0` instead of "no data". Now every
+ * tile drills to the list it represents, and an absent figure renders "—".
+ */
+
+/** Absent stays absent: only a real number is shown, never a substituted zero. */
+function pick(...candidates: Array<unknown>): number | null {
+  for (const candidate of candidates) {
+    if (candidate === null || candidate === undefined) continue;
+    const n = Number(candidate);
+    if (Number.isFinite(n)) return n;
+  }
+  return null;
 }
+
+const days = (n: number | null) => (n === null ? null : `${n.toFixed(1)} d`);
+const usd = (n: number | null) => (n === null ? null : `$${n.toLocaleString()}`);
 
 export function MaintKpiRows({ kpis }: Props) {
   const dynamicKpis = kpis as Record<string, unknown>;
-  const pastDue = Number(dynamicKpis.past_due ?? kpis.past_due_pm ?? 0);
-  const avgCloseDays = Number(dynamicKpis.avg_close_days ?? kpis.avg_wo_age_days ?? 0);
-  const openDollars = Number(dynamicKpis.open_dollars ?? kpis.mtd_repair_cost ?? 0);
-  const tireAlerts = Number(dynamicKpis.tire_alerts ?? 0);
-  const pmDue = Number(dynamicKpis.pm_due ?? kpis.past_due_pm ?? 0);
-  const dotOo = Number(dynamicKpis.dot_oos ?? kpis.out_of_service ?? 0);
+  const pastDue = pick(dynamicKpis.past_due, kpis.past_due_pm);
+  const avgCloseDays = pick(dynamicKpis.avg_close_days, kpis.avg_wo_age_days);
+  const openDollars = pick(dynamicKpis.open_dollars, kpis.mtd_repair_cost);
+  const tireAlerts = pick(dynamicKpis.tire_alerts);
+  const pmDue = pick(dynamicKpis.pm_due, kpis.past_due_pm);
+  const dotOo = pick(dynamicKpis.dot_oos, kpis.out_of_service);
 
   return (
     <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-7">
-        <Card label="Open WOs" value={kpis.open_wos} />
-        <Card label="Past Due" value={pastDue} />
-        <Card label="Avg Close" value={`${avgCloseDays.toFixed(1)} d`} />
-        <Card label="Open $" value={`$${openDollars.toLocaleString()}`} />
-        <Card label="Tire Alerts" value={tireAlerts} />
-        <Card label="PM Due" value={pmDue} />
-        <Card label="DOT O/O" value={dotOo} />
+      <DrillKpiCard label="Open WOs" value={pick(kpis.open_wos)} to="/maintenance/active-wos" />
+      <DrillKpiCard label="Past Due" value={pastDue} to="/maintenance/pm-schedule" />
+      <DrillKpiCard label="Avg Close" value={days(avgCloseDays)} to="/maintenance/work-orders" />
+      <DrillKpiCard label="Open $" value={usd(openDollars)} to="/maintenance/active-wos" />
+      <DrillKpiCard label="Tire Alerts" value={tireAlerts} to="/maintenance/tire-wear" />
+      <DrillKpiCard label="PM Due" value={pmDue} to="/maintenance/pm-schedule" />
+      <DrillKpiCard label="DOT O/O" value={dotOo} to="/maintenance/severe-repairs" />
     </div>
   );
 }

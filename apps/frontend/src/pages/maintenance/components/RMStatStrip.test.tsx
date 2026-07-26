@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import { RMStatStrip } from "./RMStatStrip";
 import type { MaintenanceKpis } from "../../../api/maintenance";
@@ -27,20 +28,46 @@ const KPIS = {
   parts_low_stock: 4,
 } as unknown as MaintenanceKpis;
 
+const LABELS = [
+  "Open WOs",
+  "In Progress",
+  "Awaiting Parts",
+  "PM Due Soon",
+  "Severe / OOS",
+  "Road Service",
+  "Parts Low-Stock",
+  "MTD Cost",
+];
+
+const renderStrip = (kpis: MaintenanceKpis) =>
+  render(
+    <MemoryRouter>
+      <RMStatStrip kpis={kpis} />
+    </MemoryRouter>
+  );
+
 describe("RMStatStrip", () => {
   it("renders all 8 R&M stat tiles in the DOM", () => {
-    render(<RMStatStrip kpis={KPIS} />);
-    for (const label of [
-      "Open WOs",
-      "In Progress",
-      "Awaiting Parts",
-      "PM Due Soon",
-      "Severe / OOS",
-      "Road Service",
-      "Parts Low-Stock",
-      "MTD Cost",
-    ]) {
+    renderStrip(KPIS);
+    for (const label of LABELS) {
       expect(screen.getByText(label)).toBeInTheDocument();
     }
+  });
+
+  // C8 — every tile is a real drill target, not a dead click.
+  it("gives all 8 tiles a drill destination", () => {
+    const { container } = renderStrip(KPIS);
+    expect(container.querySelectorAll("[data-kpi-drill]")).toHaveLength(LABELS.length);
+    expect(screen.getByLabelText("Open WOs — view records")).toHaveAttribute(
+      "href",
+      "/maintenance/active-wos"
+    );
+  });
+
+  // C8 — a count the payload does not carry renders "—", never a fabricated 0.
+  it("renders an absent count as an em-dash instead of zero", () => {
+    const { container } = renderStrip({ open_wos: 7 } as unknown as MaintenanceKpis);
+    expect(screen.getAllByText("—").length).toBeGreaterThan(0);
+    expect(container.querySelectorAll("[data-kpi-drill]")).toHaveLength(LABELS.length);
   });
 });

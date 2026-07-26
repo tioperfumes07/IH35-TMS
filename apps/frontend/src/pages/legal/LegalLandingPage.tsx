@@ -5,17 +5,9 @@ import { legalContractsApi } from "../../api/legal-contracts";
 import { legalTemplatesApi } from "../../api/legal-templates";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { LegalModuleTabs } from "./LegalModuleTabs";
-
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
-      <div className="text-[11px] uppercase tracking-wide text-gray-500">{label}</div>
-      <div className="mt-1 text-xl font-semibold text-gray-900">{value}</div>
-    </div>
-  );
-}
 
 export function LegalLandingPage() {
   const navigate = useNavigate();
@@ -79,10 +71,11 @@ export function LegalLandingPage() {
       <LegalModuleTabs activeTabId="contracts" />
 
       <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Active Templates" value={metrics.activeTemplates} />
-        <StatCard label="Pending Signatures" value={metrics.pendingSignatures} />
-        <StatCard label="Recently Signed (30d)" value={metrics.recentlySigned} />
-        <StatCard label="Expiring Contracts (60d)" value={metrics.expiringContracts} />
+        {/* C8: every metric opens the list it was counted from. */}
+        <DrillKpiCard size="md" label="Active Templates" value={metrics.activeTemplates} to="/legal/templates" />
+        <DrillKpiCard size="md" label="Pending Signatures" value={metrics.pendingSignatures} to="/legal/contracts" />
+        <DrillKpiCard size="md" label="Recently Signed (30d)" value={metrics.recentlySigned} to="/legal/contracts" />
+        <DrillKpiCard size="md" label="Expiring Contracts (60d)" value={metrics.expiringContracts} to="/legal/contracts" />
       </div>
 
       <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-700">

@@ -1,15 +1,30 @@
 import type { FuelDashboard, LovesSyncStatus } from "../../../api/fuelPlanner";
+import { DrillKpiCard } from "../../../components/layout/DrillKpiCard";
 
 type Props = {
   dashboard: FuelDashboard | undefined;
   lovesSyncStatus?: LovesSyncStatus | undefined;
 };
 
-function lovesSyncTone(lovesSyncAt: string | null, status?: LovesSyncStatus["status"]) {
-  if (!lovesSyncAt) return status === "error" ? "text-red-700" : "text-slate-700";
+/**
+ * C8 — the fuel KPI strip.
+ *
+ * Was: seven hand-rolled <div> tiles, all dead clicks, and every figure `Number(x ?? 0)` so a fuel
+ * dashboard that failed to load reported `$0` spend and `0.0` fleet MPG. Now each tile opens the
+ * list it summarises and an absent figure renders "—". Same seven labels, same order.
+ *
+ * The sync-freshness signal is preserved but moved onto the shared card's §7 tones (amber = stale /
+ * never synced, red = sync error); the raw text-red-700 / text-green-700 classes the strip used are
+ * outside the locked palette.
+ */
+function lovesSyncTone(
+  lovesSyncAt: string | null,
+  status?: LovesSyncStatus["status"]
+): "default" | "critical" | "warning" {
+  if (status === "error") return "critical";
+  if (!lovesSyncAt) return "warning";
   const ageHours = (Date.now() - new Date(lovesSyncAt).getTime()) / 3600000;
-  if (status === "error") return "text-red-700";
-  return ageHours > 2 || status === "stale" ? "text-slate-700" : "text-gray-900";
+  return ageHours > 2 || status === "stale" ? "warning" : "default";
 }
 
 function formatLovesSyncLabel(
@@ -21,28 +36,40 @@ function formatLovesSyncLabel(
   return new Date(syncedAt).toLocaleTimeString();
 }
 
+/** Absent stays absent. */
+function metric(raw: number | null | undefined): number | null {
+  if (raw === null || raw === undefined) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+const fixed = (n: number | null, digits: number, prefix = "", suffix = "") =>
+  n === null ? null : `${prefix}${n.toFixed(digits)}${suffix}`;
+
 export function FuelKpiRow({ dashboard, lovesSyncStatus }: Props) {
   const lovesSyncAt = lovesSyncStatus?.last_synced_at ?? dashboard?.loves_sync_at ?? null;
-  const cards = [
-    ["Active Plans", `${dashboard?.active_plans ?? 0}`],
-    ["MTD Spend", `$${Number(dashboard?.mtd_spend ?? 0).toFixed(0)}`],
-    ["Avg $/gal", `$${Number(dashboard?.avg_price_per_gallon ?? 0).toFixed(2)}`],
-    ["MTD Savings", `$${Number(dashboard?.mtd_savings ?? 0).toFixed(0)}`],
-    ["Compliance %", `${Number(dashboard?.compliance_pct ?? 0).toFixed(1)}%`],
-    ["Fleet MPG", `${Number(dashboard?.fleet_mpg ?? 0).toFixed(1)}`],
-    ["Loves Sync", formatLovesSyncLabel(dashboard, lovesSyncStatus)],
-  ] as const;
 
   return (
     <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-7">
-      {cards.map(([label, value], idx) => (
-        <div key={label} className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]">
-          <div className="text-[10px] uppercase text-gray-500">{label}</div>
-          <div className={`font-semibold ${idx === 3 ? "text-green-700" : idx === 6 ? lovesSyncTone(lovesSyncAt, lovesSyncStatus?.status) : ""}`}>
-            {value}
-          </div>
-        </div>
-      ))}
+      <DrillKpiCard label="Active Plans" value={metric(dashboard?.active_plans)} to="/fuel/planner" />
+      <DrillKpiCard label="MTD Spend" value={fixed(metric(dashboard?.mtd_spend), 0, "$")} to="/fuel/history" />
+      <DrillKpiCard
+        label="Avg $/gal"
+        value={fixed(metric(dashboard?.avg_price_per_gallon), 2, "$")}
+        to="/fuel/history"
+      />
+      <DrillKpiCard label="MTD Savings" value={fixed(metric(dashboard?.mtd_savings), 0, "$")} to="/fuel/planner" />
+      <DrillKpiCard
+        label="Compliance %"
+        value={fixed(metric(dashboard?.compliance_pct), 1, "", "%")}
+        to="/fuel/compliance"
+      />
+      <DrillKpiCard label="Fleet MPG" value={fixed(metric(dashboard?.fleet_mpg), 1)} to="/fuel/history" />
+      <DrillKpiCard
+        label="Loves Sync"
+        value={formatLovesSyncLabel(dashboard, lovesSyncStatus)}
+        valueTone={lovesSyncTone(lovesSyncAt, lovesSyncStatus?.status)}
+        to="/fuel/loves-prices"
+      />
     </div>
   );
 }

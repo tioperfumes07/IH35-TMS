@@ -25,6 +25,7 @@ import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { DrillKpiCard } from "../../../components/layout/DrillKpiCard";
 import { ApiError } from "../../../api/client";
 import {
   getSafetyInspectionCleanRate,
@@ -56,14 +57,9 @@ function errorStatus(error: unknown): number {
   return error instanceof ApiError ? error.status : 0;
 }
 
-function MetricCard({ label, value, detail }: { label: string; value: string; detail: string }) {
-  return (
-    <div className="rounded-sm border border-gray-200 bg-white p-3">
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="mt-1 text-lg font-semibold text-slate-900">{value}</div>
-      <div className="mt-1 text-[11px] text-slate-500">{detail}</div>
-    </div>
-  );
+// C8: `to` is REQUIRED — each rollup opens the inspection records it was computed from.
+function MetricCard({ label, value, detail, to }: { label: string; value: string; detail: string; to: string }) {
+  return <DrillKpiCard size="md" label={label} value={value} hint={detail} to={to} />;
 }
 
 export default function SafetyReportsPage() {
@@ -192,6 +188,7 @@ export default function SafetyReportsPage() {
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           label="Roadside Pass Rate"
+          to="/safety/dot-inspections"
           value={
             cleanRateQuery.isLoading ? "Loading..." : metricText(toNullableNumber(cleanRate?.clean_rate_percent), "%")
           }
@@ -203,16 +200,19 @@ export default function SafetyReportsPage() {
         />
         <MetricCard
           label="Out of Service (latest period)"
+          to="/safety/dot-inspections"
           value={currentCsaQuery.isLoading ? "Loading..." : metricText(toNullableNumber(current?.total_oos))}
           detail={current ? `Period ending ${formatDateUS(current.period_end)}` : "No CSA period computed yet"}
         />
         <MetricCard
           label="Internal Inspection Points"
+          to="/safety/csa-fmcsa-trend"
           value={currentCsaQuery.isLoading ? "Loading..." : metricText(toNullableNumber(current?.total_violations))}
           detail="Internal rollup, not an FMCSA BASIC percentile"
         />
         <MetricCard
           label="Inspections (latest period)"
+          to="/safety/dot-inspections"
           value={currentCsaQuery.isLoading ? "Loading..." : metricText(toNullableNumber(current?.total_inspections))}
           detail={current ? `Computed by ${String(current.computed_by ?? "-")}` : "No CSA period computed yet"}
         />
