@@ -3,11 +3,16 @@
 // POST /api/v1/driver-finance/escrow/:driverId/forfeit — the endpoint EscrowForfeitModal calls via
 // api/driverFinance.ts. Before this it 404'd (no handler existed). Owner/Administrator only (money-moving),
 // matching the release action's Owner-gated posture.
+//
+// TWO gates, both required (LEGAL-PAPER-01, 2026-07-26): canForfeit(role) — WHO may act — and
+// has_signed_clause — WHETHER the record authorises taking the money. See the gate below.
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
+import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { forfeitDriverEscrow, EscrowForfeitError } from "./escrow-forfeit.service.js";
+import { resolveDriverEscrowTarget } from "./escrow-target.service.js";
 
 const driverParamsSchema = z.object({ driverId: z.string().uuid() });
 
@@ -55,6 +60,38 @@ export async function registerDriverEscrowForfeitRoutes(app: FastifyInstance) {
       }
 
       await assertCompanyMembership(user.uuid, body.data.operating_company_id);
+
+      // SIGNED-CLAUSE GATE (LEGAL-PAPER-01, 2026-07-26). Until now this endpoint gated ONLY on
+      // requireAuth + canForfeit(role): an Owner could forfeit a driver's escrow with no signed
+      // authorisation on file at all. The READ path next door
+      // (debt.routes.ts → /escrow-target) already resolved has_signed_clause and the UI shows it —
+      // so the number was displayed, and then ignored by the one call that actually takes the
+      // money. Deducting from a worker's held funds without signed authorisation is wage-deduction
+      // exposure (DOL / TX Payday Law) and, with escrow booked as a Chapter-11 liability, an
+      // estate-property problem too. Role is WHO may act; the signed clause is WHETHER anyone may.
+      //
+      // Same resolver as the read path — resolveDriverEscrowTarget — deliberately: one definition
+      // of "signed", so the screen and the gate can never disagree. No new logic, no new GL math.
+      const clause = await withCurrentUser(user.uuid, async (client) => {
+        await client.query("SELECT set_config('app.operating_company_id', $1, true)", [
+          body.data.operating_company_id,
+        ]);
+        return resolveDriverEscrowTarget(client, {
+          driverId: body.data.driver_uuid,
+          operatingCompanyId: body.data.operating_company_id,
+        });
+      });
+      if (!clause.hasSignedClause) {
+        // Fail CLOSED and loud, before anything is posted. 409, not 403: the caller is authorised,
+        // the RECORD is not — and the remedy is a document, not a permission.
+        return reply.code(409).send({
+          error: "escrow_forfeit_no_signed_clause",
+          message:
+            "No signed driver contract authorises this forfeiture. File the signed contract " +
+            "(e-signed, or paper with the scan attached) before forfeiting escrow. Nothing was posted.",
+          driver_uuid: body.data.driver_uuid,
+        });
+      }
 
       try {
         const result = await forfeitDriverEscrow(

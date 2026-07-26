@@ -25,8 +25,16 @@ import type { PoolClient } from "pg";
  * It previously came from `postClause > 0 || timeline.some(bucket === 'post_clause')`: an INFERENCE
  * from a data side-effect, gating the forfeiture of a driver's money. Escrow accumulating past a
  * bucket boundary is not evidence that anyone signed anything. It now reads a real signed contract:
- * a legal.contract_instances row for this driver with status 'signed_electronically', signed_at set
- * and voided_at null.
+ * a legal.contract_instances row for this driver that is SIGNED, signed_at set and voided_at null.
+ *
+ * WIDENED 2026-07-26 (LEGAL-PAPER-01). Jorge's driver contracts are signed ON PAPER. Verified on the
+ * prod branch this session: legal.contract_instance_status held exactly
+ * draft|sent|viewed|signed_electronically|voided|expired — no value meant a wet signature — and the
+ * table had 0 rows (bypass_rls='lucia' count, cross-checked against n_live_tup). So this predicate
+ * read FALSE for every genuinely signed paper contract. The two wrong fixes were rejected by the
+ * owner: disabling the gate (it is a Chapter-11 escrow-liability control) and backdating paper as
+ * signed_electronically (a false legal record). Held migration 202609140000 adds 'signed_on_paper';
+ * this predicate now accepts it, and only when the SCAN of the executed original is attached.
  *
  * DECLARED DEFERRAL (verified on prod, not assumed): legal.contract_instances has NO escrow-target
  * and NO escrow-clause column, and 0 rows. So (a) the per-contract TARGET OVERRIDE is deferred to
@@ -74,9 +82,20 @@ export async function resolveDriverEscrowTarget(
           WHERE ci.signer_type = 'driver'
             AND ci.signer_entity_id = $1::uuid
             AND ci.operating_company_id = $2::uuid
-            AND ci.status = 'signed_electronically'
+            -- Both SIGNED states count. ::text on purpose, twice over: (a) it is a read predicate,
+            -- and (b) migration 202609140000, which adds 'signed_on_paper' to
+            -- legal.contract_instance_status, is HELD and NOT yet applied on prod. An unqualified
+            -- enum literal would raise 22P02 invalid_text_representation on every call until the
+            -- owner applies it, taking the escrow-target read AND the forfeit gate down. The cast
+            -- compares label text, so this is correct before and after the apply.
+            AND ci.status::text IN ('signed_electronically', 'signed_on_paper')
             AND ci.signed_at IS NOT NULL
             AND ci.voided_at IS NULL
+            -- A wet signature only counts when the scan of the executed original is attached.
+            -- Mirrors contract_instances_paper_signature_evidence_check (202609140000) so the
+            -- application refuses the unbacked claim even on a database where the CHECK has not
+            -- landed yet. Never trust "paper" without the paper.
+            AND (ci.status::text <> 'signed_on_paper' OR ci.signed_pdf_attachment_id IS NOT NULL)
         ) AS has_signed_clause
     `,
     [driverId, operatingCompanyId]

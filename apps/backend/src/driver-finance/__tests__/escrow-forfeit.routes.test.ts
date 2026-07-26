@@ -12,12 +12,27 @@ import { dollarsToCents } from "../escrow-forfeit.service.js";
 const COMPANY = "91e0bf0a-133f-4ce8-a734-2586cfa66d96";
 const DRIVER = "33333333-3333-4333-8333-333333333333";
 
-const { mockForfeit } = vi.hoisted(() => ({ mockForfeit: vi.fn() }));
+const { mockForfeit, mockResolveTarget } = vi.hoisted(() => ({
+  mockForfeit: vi.fn(),
+  mockResolveTarget: vi.fn(),
+}));
 
 vi.mock("../escrow-forfeit.service.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../escrow-forfeit.service.js")>();
   return { ...actual, forfeitDriverEscrow: mockForfeit };
 });
+
+// LEGAL-PAPER-01 — the forfeit route now resolves has_signed_clause through the SAME resolver the
+// read path uses. Stubbed here so the route contract can be exercised without a database; the
+// resolver's own SQL (which is what widened for signed_on_paper) is covered in escrow-target tests.
+vi.mock("../escrow-target.service.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../escrow-target.service.js")>();
+  return { ...actual, resolveDriverEscrowTarget: mockResolveTarget };
+});
+vi.mock("../../auth/db.js", () => ({
+  withCurrentUser: async (_userUuid: string, fn: (client: unknown) => Promise<unknown>) =>
+    fn({ query: async () => ({ rows: [] }) }),
+}));
 
 vi.mock("../../auth/session-middleware.js", () => ({ requireAuth: () => true }));
 vi.mock("../../_helpers/company-membership-guard.js", () => ({
@@ -43,6 +58,9 @@ describe("POST /escrow/:driverId/forfeit route", () => {
 
   beforeEach(async () => {
     mockForfeit.mockReset();
+    mockResolveTarget.mockReset();
+    // Default: a signed contract IS on file, so the other cases exercise what they mean to.
+    mockResolveTarget.mockResolvedValue({ targetCents: 250000, source: "entity_default", hasSignedClause: true });
     role = "Owner";
     app = Fastify({ logger: false });
     app.decorateRequest("user", null);
@@ -92,6 +110,24 @@ describe("POST /escrow/:driverId/forfeit route", () => {
   it("requires a reason of at least 3 chars", async () => {
     const res = await post(body({ reason: "x" }));
     expect(res.statusCode).toBe(400);
+  });
+
+  it("refuses the forfeit when no signed contract authorises it — and posts nothing", async () => {
+    mockResolveTarget.mockResolvedValue({ targetCents: 250000, source: "entity_default", hasSignedClause: false });
+    const res = await post(body());
+    expect(res.statusCode).toBe(409);
+    expect(res.json().error).toBe("escrow_forfeit_no_signed_clause");
+    // The gate must run BEFORE the money mover — not alongside it.
+    expect(mockForfeit).not.toHaveBeenCalled();
+  });
+
+  it("resolves the signed clause for the SAME driver and entity as the forfeit", async () => {
+    mockForfeit.mockResolvedValue({ result: "flag_off" });
+    await post(body());
+    expect(mockResolveTarget).toHaveBeenCalledWith(
+      expect.anything(),
+      { driverId: DRIVER, operatingCompanyId: COMPANY }
+    );
   });
 
   it("surfaces flag_off as a loud 409 (posting dark by default)", async () => {
