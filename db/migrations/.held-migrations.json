@@ -53,6 +53,14 @@
   "_integrity_note": "Every entry appears EXACTLY ONCE (file is the key). applied_on_prod MUST agree with the pinned prod-ledger snapshot scripts/lib/prod-migration-ledger-checksums.json for any file inside its window (>= 202606010000). Enforced by scripts/verify-steps/1361-verify-held-registry-integrity.mjs. Repaired 2026-07-25: 119 entries collapsed to 110 (9 duplicates, 7 of them carrying contradictory applied_on_prod), and 79 entries that were already applied on prod were stamped. Before the repair, verify-schema-parity-from-prod (step 1437) derived held-unapplied columns from this file and therefore treated applied migrations as unapplied.",
   "applied_held": [
     {
+      "file": "202609110000_bank_dom_04_reconciling_item_aging.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 FINANCIAL] BANK-DOM-04 reconciling-item aging/classification columns. No GL. Owner Neon-applies then ledger-backfills.",
+      "added_at": "2026-07-26",
+      "block": "BANK-DOM-04",
+      "applied_on_prod": true,
+      "applied_evidence": "Devin direct Neon query 2026-07-26 (project tiny-field-89581227, _system._schema_migrations): filename='202609110000_bank_dom_04_reconciling_item_aging.sql', checksum=3d873699eabb93a160265dc25c4c016505ff8ff7cf9a11631a7ab623d1b10af0, applied_at=2026-07-26T17:31:50.058Z, applied_by=cursor-owner-batch-2026-07-26."
+    },
+    {
       "file": "202609100000_mnt_link_04_maintenance_vendor_ap_link.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] MNT-LINK-04 — catalogs.maintenance_vendors.linked_vendor_id → mdata.vendors + road_service_tickets.vendor_id RETIRE FK (qbo_vendors) → mdata.vendors. No GL.",
       "applied_on_prod": true,

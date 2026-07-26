@@ -11,6 +11,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { emitBankingSpineEvent } from "./banking-spine-emit.js";
 import { assertBankAccountUsable, bankTransactionHiddenFilterSql, isBankAccountHideEnabled } from "./bank-account-visibility.js";
 import { computeAdjustedBalanceSummary } from "./adjusted-balance-rec.js";
+import { ageUnclearedTransactions, type ReconcilingItemClass } from "./reconciling-item-aging.js";
 
 const startBodySchema = z.object({
   bank_account_id: z.string().uuid(),
@@ -476,6 +477,9 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
 
       const matchedTransactions = transactions.filter((row) => Boolean(row.matched_load_id || row.matched_bill_id || row.matched_settlement_id));
       const unmatchedTransactions = transactions.filter((row) => !(row.matched_load_id || row.matched_bill_id || row.matched_settlement_id));
+      // BANK-DOM-04: age + classify unmatched (uncleared) items; escalate 90+ / investigate.
+      const reconcilingItems = ageUnclearedTransactions(unmatchedTransactions);
+      const escalatedReconcilingItems = reconcilingItems.filter((item) => item.escalated);
 
       const loads = await client
         .query(
@@ -552,6 +556,8 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
         },
         matched_transactions: matchedTransactions,
         unmatched_transactions: unmatchedTransactions,
+        reconciling_items: reconcilingItems,
+        escalated_reconciling_items: escalatedReconcilingItems,
         candidates: {
           loads,
           bills,
@@ -570,6 +576,8 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           matched_debits_cents: summary.matchedDebitsCents,
           book_balance_cents: summary.bookBalanceCents,
           variance_cents: varianceCents,
+          reconciling_item_count: reconcilingItems.length,
+          escalated_reconciling_item_count: escalatedReconcilingItems.length,
         },
         cleared_transactions: transactions.filter((row) => Boolean(row.reconciliation_cleared)),
         uncleared_transactions: transactions.filter((row) => !row.reconciliation_cleared),
@@ -577,6 +585,71 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     });
 
     return payload;
+  });
+
+  app.patch("/api/v1/banking/reconciliation/:sessionId/reconciling-items/:transactionId", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
+
+    const params = z
+      .object({ sessionId: z.string().uuid(), transactionId: z.string().uuid() })
+      .safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
+    const body = z
+      .object({
+        classification: z.enum(["timing", "adjustment", "investigate"]),
+        escalate: z.boolean().optional(),
+      })
+      .safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+
+    const session = await loadSession(user.uuid, params.data.sessionId, query.data.operating_company_id);
+    if (!session) return reply.code(404).send({ error: "session_not_found" });
+    if (session.status === "reconciled") {
+      return reply.code(409).send({ error: "reconciled_session_locked" });
+    }
+
+    try {
+      const updated = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+        const classification = body.data.classification as ReconcilingItemClass;
+        const escalate = body.data.escalate ?? classification === "investigate";
+        const res = await client.query(
+          `
+            UPDATE banking.bank_transactions
+            SET
+              reconciling_item_class = $4,
+              reconciling_item_escalated_at = CASE WHEN $5 THEN COALESCE(reconciling_item_escalated_at, now()) ELSE NULL END,
+              updated_at = now()
+            WHERE id = $1
+              AND bank_account_id = $2
+              AND operating_company_id = $3
+            RETURNING id, reconciling_item_class, reconciling_item_escalated_at
+          `,
+          [
+            params.data.transactionId,
+            session.bank_account_id,
+            query.data.operating_company_id,
+            classification,
+            escalate,
+          ]
+        );
+        return res.rows[0] ?? null;
+      });
+      if (!updated) return reply.code(404).send({ error: "transaction_not_found" });
+      return { ok: true, item: updated };
+    } catch (err) {
+      const code = (err as { code?: string }).code;
+      if (code === "42703") {
+        return reply.code(503).send({
+          error: "reconciling_item_columns_pending_neon_apply",
+          message: "BANK-DOM-04 migration not yet applied on this database",
+        });
+      }
+      throw err;
+    }
   });
 
   app.post("/api/v1/banking/reconciliation/:sessionId/clear", async (req, reply) => {

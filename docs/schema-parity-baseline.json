@@ -1853,6 +1853,8 @@
       "reconciled_obligation_type",
       "reconciliation_cleared",
       "reconciliation_session_id",
+      "reconciling_item_class",
+      "reconciling_item_escalated_at",
       "result_bill_id",
       "review_state",
       "reviewed_at",
