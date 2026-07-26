@@ -263,7 +263,7 @@ function main() {
   );
 }
 
-const isDirect = process.argv[1] && path.resolve(process.argv[1]).endsWith("1521-verify-global-catalog-write-authz.mjs");
+const isDirect = process.argv[1] && path.resolve(process.argv[1]).endsWith("1522-verify-global-catalog-write-authz.mjs");
 if (isDirect) main();
 
 export default {
@@ -271,7 +271,7 @@ export default {
   async run(ctx) {
     // Self-contained (no scripts/verify-*.mjs shim): selftest first so a hollow assertion fails loudly,
     // then the real check. Both run in a child process so a process.exit cannot kill the whole run.
-    ctx.run("node", ["scripts/verify-steps/1521-verify-global-catalog-write-authz.mjs", "--selftest"]);
-    return ctx.run("node", ["scripts/verify-steps/1521-verify-global-catalog-write-authz.mjs"]);
+    ctx.run("node", ["scripts/verify-steps/1522-verify-global-catalog-write-authz.mjs", "--selftest"]);
+    return ctx.run("node", ["scripts/verify-steps/1522-verify-global-catalog-write-authz.mjs"]);
   },
 };
