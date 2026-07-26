@@ -47,7 +47,7 @@
     },
     {
       "table": "catalogs.account_types",
-      "forceRlsStatus": "deferred",
+      "forceRlsStatus": "enforced",
       "disposition": "global_by_design"
     },
     {
@@ -97,7 +97,7 @@
     },
     {
       "table": "catalogs.wo_cancellation_reasons",
-      "forceRlsStatus": "deferred",
+      "forceRlsStatus": "enforced",
       "disposition": "global_by_design"
     },
     {

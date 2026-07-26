@@ -1,5 +1,11 @@
 {
   "note": "HELD MIGRATIONS — each carries a 'DO NOT RUN ON PROD' marker and must run ONLY on a Neon branch by Jorge's hand, then be ledger-backfilled so prod db:migrate skips it. verify:hold-migrations-registered enforces bidirectional parity: every migration whose header says DO-NOT-RUN must be listed here, and every entry here must still carry the marker — so a held migration can never silently lose its marker (which would let db:migrate fire it on prod).",
+  "held": [
+    {
+      "file": "202608120000_item5a_demo_purge_recursive_cascade.sql",
+      "reason": "[HOLD-FOR-JORGE — ITEM 5a] Recursive FK-cascade purge of the 17 verified demo fixtures under the owner ruling of 2026-07-25, plus repair of 176 mis-flagged REAL rows and a deprecating COMMENT on is_sample_data. REPLACES the hand-ordered 202608060000, which cannot satisfy 326 FKs across 191 tables. Auto-cascade is auditable because it REFUSES: aborts if the closure reaches accounting/banking/driver_finance/payroll/safety, or exceeds 50,000 rows. Owner Neon-applies after GUARD re-verifies on a fresh branch."
+    }
+  ],
   "_integrity_note": "Every entry appears EXACTLY ONCE (file is the key). applied_on_prod MUST agree with the pinned prod-ledger snapshot scripts/lib/prod-migration-ledger-checksums.json for any file inside its window (>= 202606010000). Enforced by scripts/verify-steps/1361-verify-held-registry-integrity.mjs. Repaired 2026-07-25: 119 entries collapsed to 110 (9 duplicates, 7 of them carrying contradictory applied_on_prod), and 79 entries that were already applied on prod were stamped. Before the repair, verify-schema-parity-from-prod (step 1437) derived held-unapplied columns from this file and therefore treated applied migrations as unapplied.",
   "applied_held": [
     {
@@ -454,13 +460,6 @@
       "applied_evidence": "GUARD live cross-check 2026-07-25 (Neon tiny-field-89581227 br-fancy-credit-akjnd07a, set_config('app.bypass_rls','lucia',true)): present in _system._schema_migrations (canonical applied ledger). See docs/trackers/GUARD-HELD-REGISTRY-LEDGER-CROSSCHECK-2026-07-25.md §1/§3."
     },
     {
-      "file": "202607690000_bank_tx_capture_fields.sql",
-      "reason": "[HOLD-FOR-JORGE — FINANCIAL] 0441-mod8-tx-fields-captured-not-sent — additive capture-field persistence on banking.bank_transactions (check_number text, categorization_class_id uuid FK catalogs.classes, categorization_location text, is_billable boolean default false, tags text) so the categorize panel's Check no./Class/Location/Billable/Tags survive Post instead of evaporating as a draft-only overlay. ADDITIVE + IDEMPOTENT; nullable/default — no backfill. No GL rows, no flags, no RLS change (columns inherit the table's FORCED RLS + grants). NOT YET applied on prod — GUARD validates on throwaway Postgres apply-twice, owner applies on Neon then ledger-backfills; CI fresh-from-0001 builds the columns.",
-      "applied_on_prod": true,
-      "applied_ledger_checksum": "024121991f0e8e85ee4603812df6172aaca4a65dee83180740be8713e0471c3d",
-      "applied_evidence": "APPLIED on prod 2026-07-25 (owner Neon-apply, neondb_owner, br-fancy-credit-akjnd07a). GUARD live read of _system._schema_migrations; both ledgers backfilled. Ledger checksum = sha256(repo file), independently recomputed from the committed file — 12/12 match — so no checksum override is needed. Record: claude/NEON-APPLY-HELD-MIGRATIONS-FINAL-2026-07-25."
-    },
-    {
       "file": "202607710000_payrun_abandonment_chargeback_coa_role.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] Widen accounting.chart_of_accounts_roles.role CHECK (+ abandonment_chargeback_recovery for pay-run close). No account_id seed. Companion to 202607670000; owner Neon-applies + designates via CoaRolesPage.",
       "applied_on_prod": true,
@@ -479,13 +478,6 @@
       "applied_evidence": "GUARD live cross-check 2026-07-25 (Neon tiny-field-89581227 br-fancy-credit-akjnd07a, set_config('app.bypass_rls','lucia',true)): present in _system._schema_migrations (canonical applied ledger). See docs/trackers/GUARD-HELD-REGISTRY-LEDGER-CROSSCHECK-2026-07-25.md §1/§3."
     },
     {
-      "file": "202607760000_cash_dip_coa_role.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 1] Widen accounting.chart_of_accounts_roles.role CHECK (+ cash_dip for settlement BillPayment DIP cash). TRUE SUPERSET of 202607710000's 34 values. No account_id seed. Owner Neon-applies then designates cash_dip → QBO-1150040141 (WF General Operating 6103) for TRANSP via CoaRolesPage.",
-      "applied_on_prod": true,
-      "applied_ledger_checksum": "1ae6163c12fa2dd8918136de6fcde1786f5f690da0d506ec5e4da1ec6555a006",
-      "applied_evidence": "APPLIED on prod 2026-07-25 (owner Neon-apply, neondb_owner, br-fancy-credit-akjnd07a). GUARD live read of _system._schema_migrations; both ledgers backfilled. Ledger checksum = sha256(repo file), independently recomputed from the committed file — 12/12 match — so no checksum override is needed. Record: claude/NEON-APPLY-HELD-MIGRATIONS-FINAL-2026-07-25."
-    },
-    {
       "file": "202607770000_drop_account_role_bindings_global_unique.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] Drop catalogs.account_role_bindings GLOBAL UNIQUE(role_key). Keep per-entity uq. Table 0 rows. Legacy retiring.",
       "applied_on_prod": true,
@@ -500,12 +492,6 @@
       "applied_evidence": "GUARD live cross-check 2026-07-25 (Neon tiny-field-89581227 br-fancy-credit-akjnd07a, set_config('app.bypass_rls','lucia',true)): present in _system._schema_migrations (canonical applied ledger). See docs/trackers/GUARD-HELD-REGISTRY-LEDGER-CROSSCHECK-2026-07-25.md §1/§3.",
       "mirror_ledger_backfill_needed": true,
       "mirror_ledger_note": "Dual-ledger drift: applied per _system._schema_migrations AND live-verified by its schema effect, but ih35_migrations.applied_migrations mirror row is MISSING (owner Neon-apply of the 3-row mirror backfill — Cursor does not write this row). See GUARD doc §5."
-    },
-    {
-      "file": "202607790000_cost_of_labor_mexico_drivers_transp_usmca.sql",
-      "reason": "[HOLD-FOR-JORGE — APPLIED] Cost of Labor–Mexico Drivers seed for TRANSP+USMCA. Owner Neon-applied 2026-07-25 (neondb_owner). Prior \"superseded / never apply\" classification was stale vs live ledger — file IS on prod. Disk body later diverged from applied checksum; see migration-checksum-overrides DEPLOY-UNBLOCK-MEXICO-790. Do not re-run.",
-      "applied_on_prod": true,
-      "applied_evidence": "Neon tiny-field-89581227 br-fancy-credit-akjnd07a 2026-07-25T21:55:01.713Z: _system._schema_migrations checksum d709ac509f113e7f42e7bf9f7b94c0fa0ef740f5157a7598f7d76402c8096101. Committed disk sha256 8429d949… accepted via checksum override (do not re-apply)."
     },
     {
       "file": "202607800000_escrow_forfeit_source_type_and_damage_recovery_designation.sql",
@@ -538,18 +524,6 @@
       ],
       "applied_on_prod": true,
       "applied_evidence": "GUARD live cross-check 2026-07-25 (Neon tiny-field-89581227 br-fancy-credit-akjnd07a, set_config('app.bypass_rls','lucia',true)): present in _system._schema_migrations (canonical applied ledger). See docs/trackers/GUARD-HELD-REGISTRY-LEDGER-CROSSCHECK-2026-07-25.md §1/§3."
-    },
-    {
-      "file": "202607840000_revoke_delete_safety_join_tables.sql",
-      "held_apply_order": [
-        "202607820000_safety_relational_linkage_and_lifecycle.sql",
-        "202607830000_escrow_target_settings.sql",
-        "202607840000_revoke_delete_safety_join_tables.sql"
-      ],
-      "reason": "[HOLD-FOR-JORGE — TIER 1] SAF-F29-GRANTS — REVOKE DELETE from ih35_app on the three company-violation join tables. GRANT is additive and the safety schema's default privilege is ih35_app=arwd (the d is DELETE), so 202607820000's GRANT SELECT,INSERT,UPDATE sat on top of an INHERITED DELETE. Local validation could not catch it — the local DB's default privileges differ from prod. Owner already ran a bare REVOKE on prod; this makes it permanent + CI-consistent. Idempotent no-op when already revoked.",
-      "applied_on_prod": true,
-      "applied_ledger_checksum": "c542df80c6ec7d1954e42f6f5bd7d7199625f2ece2358d77f0ebce5041da86ff",
-      "applied_evidence": "APPLIED on prod 2026-07-25 (owner Neon-apply, neondb_owner, br-fancy-credit-akjnd07a). GUARD live read of _system._schema_migrations; both ledgers backfilled. Ledger checksum = sha256(repo file), independently recomputed from the committed file — 12/12 match — so no checksum override is needed. Record: claude/NEON-APPLY-HELD-MIGRATIONS-FINAL-2026-07-25."
     },
     {
       "file": "202607850000_safety_evidence_revoke_delete.sql",
@@ -669,6 +643,32 @@
       "applied_evidence": "GUARD live cross-check 2026-07-25 (Neon tiny-field-89581227 br-fancy-credit-akjnd07a, set_config('app.bypass_rls','lucia',true)): present in _system._schema_migrations (canonical applied ledger). See docs/trackers/GUARD-HELD-REGISTRY-LEDGER-CROSSCHECK-2026-07-25.md §1/§3."
     },
     {
+      "file": "202607690000_bank_tx_capture_fields.sql",
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL] 0441-mod8-tx-fields-captured-not-sent — additive capture-field persistence on banking.bank_transactions (check_number text, categorization_class_id uuid FK catalogs.classes, categorization_location text, is_billable boolean default false, tags text) so the categorize panel's Check no./Class/Location/Billable/Tags survive Post instead of evaporating as a draft-only overlay. ADDITIVE + IDEMPOTENT; nullable/default — no backfill. No GL rows, no flags, no RLS change (columns inherit the table's FORCED RLS + grants). NOT YET applied on prod — GUARD validates on throwaway Postgres apply-twice, owner applies on Neon then ledger-backfills; CI fresh-from-0001 builds the columns.",
+      "applied_on_prod": true,
+      "applied_ledger_checksum": "024121991f0e8e85ee4603812df6172aaca4a65dee83180740be8713e0471c3d",
+      "applied_evidence": "APPLIED on prod 2026-07-25 (owner Neon-apply, neondb_owner, br-fancy-credit-akjnd07a). GUARD live read of _system._schema_migrations; both ledgers backfilled. Ledger checksum = sha256(repo file), independently recomputed from the committed file — 12/12 match — so no checksum override is needed. Record: claude/NEON-APPLY-HELD-MIGRATIONS-FINAL-2026-07-25."
+    },
+    {
+      "file": "202607760000_cash_dip_coa_role.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Widen accounting.chart_of_accounts_roles.role CHECK (+ cash_dip for settlement BillPayment DIP cash). TRUE SUPERSET of 202607710000's 34 values. No account_id seed. Owner Neon-applies then designates cash_dip → QBO-1150040141 (WF General Operating 6103) for TRANSP via CoaRolesPage.",
+      "applied_on_prod": true,
+      "applied_ledger_checksum": "1ae6163c12fa2dd8918136de6fcde1786f5f690da0d506ec5e4da1ec6555a006",
+      "applied_evidence": "APPLIED on prod 2026-07-25 (owner Neon-apply, neondb_owner, br-fancy-credit-akjnd07a). GUARD live read of _system._schema_migrations; both ledgers backfilled. Ledger checksum = sha256(repo file), independently recomputed from the committed file — 12/12 match — so no checksum override is needed. Record: claude/NEON-APPLY-HELD-MIGRATIONS-FINAL-2026-07-25."
+    },
+    {
+      "file": "202607840000_revoke_delete_safety_join_tables.sql",
+      "held_apply_order": [
+        "202607820000_safety_relational_linkage_and_lifecycle.sql",
+        "202607830000_escrow_target_settings.sql",
+        "202607840000_revoke_delete_safety_join_tables.sql"
+      ],
+      "reason": "[HOLD-FOR-JORGE — TIER 1] SAF-F29-GRANTS — REVOKE DELETE from ih35_app on the three company-violation join tables. GRANT is additive and the safety schema's default privilege is ih35_app=arwd (the d is DELETE), so 202607820000's GRANT SELECT,INSERT,UPDATE sat on top of an INHERITED DELETE. Local validation could not catch it — the local DB's default privileges differ from prod. Owner already ran a bare REVOKE on prod; this makes it permanent + CI-consistent. Idempotent no-op when already revoked.",
+      "applied_on_prod": true,
+      "applied_ledger_checksum": "c542df80c6ec7d1954e42f6f5bd7d7199625f2ece2358d77f0ebce5041da86ff",
+      "applied_evidence": "APPLIED on prod 2026-07-25 (owner Neon-apply, neondb_owner, br-fancy-credit-akjnd07a). GUARD live read of _system._schema_migrations; both ledgers backfilled. Ledger checksum = sha256(repo file), independently recomputed from the committed file — 12/12 match — so no checksum override is needed. Record: claude/NEON-APPLY-HELD-MIGRATIONS-FINAL-2026-07-25."
+    },
+    {
       "file": "202607950000_posting_batches_template_link.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] ACCT-LINK-05 — closes catalogs.posting_templates 0-inbound-FK island-catalog defect. Additive accounting.posting_batches.posting_template_id uuid FK -> catalogs.posting_templates(id) ON DELETE SET NULL + source_template_code text stamp + partial index (WHERE NOT NULL) for reverse drill. NO seed rows (catalogs.posting_templates debit_account_id/credit_account_id are NOT NULL CoA picks — owner/CPA territory per Rule 13; re-verified truly 0 rows on Neon br-fancy-credit-akjnd07a WITH app.bypass_rls='lucia', not RLS-masked). All-NULL on add so the inline FK holds trivially, no backfill, no RLS/grant change (inherits table's existing FORCED RLS). Companion code change stamps source_template_code on every posting_batches insert going forward (posting-engine.service.ts) so the FK self-resolves the instant the owner seeds templates + runs the named one-time backfill in the migration's POST-APPLY VERIFY comment. Run only on a Neon branch by Jorge, then ledger-backfill.",
       "applied_on_prod": true,
@@ -745,18 +745,25 @@
       "applied_evidence": "[escrow forfeit sign + flag seed] LIVE-VERIFIED on prod 2026-07-25 (tiny-field-89581227 / br-fancy-credit-akjnd07a) by joining _system._schema_migrations to ih35_migrations.applied_migrations: present in BOTH ledgers."
     },
     {
+      "file": "202607790000_cost_of_labor_mexico_drivers_transp_usmca.sql",
+      "reason": "[HOLD-FOR-JORGE — APPLIED] Cost of Labor–Mexico Drivers seed for TRANSP+USMCA. Owner Neon-applied 2026-07-25 (neondb_owner). Prior \"superseded / never apply\" classification was stale vs live ledger — file IS on prod. Disk body later diverged from applied checksum; see migration-checksum-overrides DEPLOY-UNBLOCK-MEXICO-790. Do not re-run.",
+      "applied_on_prod": true,
+      "applied_evidence": "Neon tiny-field-89581227 br-fancy-credit-akjnd07a 2026-07-25T21:55:01.713Z: _system._schema_migrations checksum d709ac509f113e7f42e7bf9f7b94c0fa0ef740f5157a7598f7d76402c8096101. Committed disk sha256 8429d949… accepted via checksum override (do not re-apply)."
+    },
+    {
       "file": "202608080000_acct_link_02_accounts_detail_type_fk.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] LINK-02 owner WIRE 2026-07-25 — additive catalogs.accounts.detail_type_id FK → catalogs.detail_types + same-entity/type trigger + best-effort backfill. Keeps account_subtype text. Owner Neon-applied 2026-07-25; registry stamped with migration file on #3554.",
       "applied_on_prod": true,
       "applied_ledger_checksum": "4d66df412a4164b9e2c7b54b8d93c714b6f2557792884d9d1af9ee962e21bc39",
       "applied_evidence": "APPLIED on prod 2026-07-25 (owner Neon-apply, neondb_owner, br-fancy-credit-akjnd07a). GUARD live read of _system._schema_migrations; both ledgers backfilled."
+    },
+    {
+      "file": "202608100000_lst_rls_01_global_catalog_write_authz.sql",
+      "reason": "[HOLD-FOR-JORGE] LST-RLS-01 write-authz on two global catalogs. Owner-authorized apply; retained so db:migrate never re-runs it.",
+      "applied_on_prod": true,
+      "applied_ledger_checksum": "1deda060ecbb025c7ad2366e1fb67f707c81a1b9d8cde719cce3987a45d954ec",
+      "applied_evidence": "APPLIED ON PROD 2026-07-25 under explicit owner authorization. Live-verified after apply: both catalogs RLS enabled+forced, 3 policies each, ZERO delete policies, ih35_app privs INSERT,SELECT,UPDATE, no read regression (15/6/144). In BOTH prod ledgers; checksum = sha256 of the committed file. DO NOT RE-APPLY."
     }
   ],
-  "superseded": [],
-  "held": [
-    {
-      "file": "202608120000_item5a_demo_purge_recursive_cascade.sql",
-      "reason": "[HOLD-FOR-JORGE — ITEM 5a] Recursive FK-cascade purge of the 17 verified demo fixtures under the owner ruling of 2026-07-25, plus repair of 176 mis-flagged REAL rows and a deprecating COMMENT on is_sample_data. REPLACES the hand-ordered 202608060000, which cannot satisfy 326 FKs across 191 tables. Auto-cascade is auditable because it REFUSES: aborts if the closure reaches accounting/banking/driver_finance/payroll/safety, or exceeds 50,000 rows. Owner Neon-applies after GUARD re-verifies on a fresh branch."
-    }
-  ]
+  "superseded": []
 }
