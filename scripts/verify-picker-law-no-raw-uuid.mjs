@@ -219,13 +219,32 @@ const EXEMPTIONS = [
     reason:
       "@archived surface as above; the live successor ComplaintsTab.tsx renders a bounded complaint-type selector instead of a raw uuid box. Left untouched under ARCHIVE-not-DELETE.",
   },
+  // ---- C1-WAVE-2 call sites (EntityPicker primitive ships in this PR; migrate next) ----
+  { file: `${SRC}/components/border-crossing/WizardStep1.tsx`, field: "loadId", category: "blocked-needs-backend", blocker: "Border-crossing wizard lacks stable operatingCompanyId at this step; EntityPicker requires it. C1-WAVE-2 wires opco then swaps to EntityPicker kind=load.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
+  { file: `${SRC}/components/border-crossing/WizardStep1.tsx`, field: "unitId", category: "blocked-needs-backend", blocker: "Same WizardStep1 opco plumbing gap as loadId.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
+  { file: `${SRC}/components/border-crossing/WizardStep1.tsx`, field: "driverId", category: "blocked-needs-backend", blocker: "Same WizardStep1 opco plumbing gap as loadId.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
+  { file: `${SRC}/components/dispatch/EquipmentTransferModal.tsx`, field: "equipmentUuid", category: "blocked-needs-backend", blocker: "EquipmentTransferModal must keep equipment+driver trio atomic; swap to EntityPicker kinds in C1-WAVE-2 with shared opco.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
+  { file: `${SRC}/components/dispatch/EquipmentTransferModal.tsx`, field: "fromDriver", category: "blocked-needs-backend", blocker: "Same EquipmentTransferModal atomic trio as equipmentUuid.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
+  { file: `${SRC}/components/dispatch/EquipmentTransferModal.tsx`, field: "toDriver", category: "blocked-needs-backend", blocker: "Same EquipmentTransferModal atomic trio as equipmentUuid.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
+  { file: `${SRC}/pages/accounting/BillPaymentsListPage.tsx`, field: "vendorId", category: "blocked-needs-backend", blocker: "Filter-only field on a list page; needs opco from page context + EntityPicker kind=vendor in C1-WAVE-2.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
+  { file: `${SRC}/pages/accounting/InvoicesListPage.tsx`, field: "batchId", category: "blocked-needs-backend", blocker: "Factoring advance batch is not an EntityPicker kind yet — needs factoring.batches list endpoint + registry entry (factoring lane).", reason: "No EntityPicker kind for factoring advance batch yet — factoring-lane registry entry required before swap." },
+  { file: `${SRC}/pages/customers/CoiTab.tsx`, field: "requestPolicyId", category: "blocked-needs-backend", blocker: "COI policy roster endpoint is insurance-lane; no EntityPicker kind=policy yet.", reason: "No EntityPicker kind for insurance COI policy yet — insurance-lane roster + registry entry required." },
+  { file: `${SRC}/pages/dispatch/AssignmentHistoryPage.tsx`, field: "driverId", category: "blocked-needs-backend", blocker: "Filter field; C1-WAVE-2 swaps to EntityPicker kind=driver with page opco.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
+  { file: `${SRC}/pages/dispatch/InTransitIssuesPage.tsx`, field: "loadId", category: "blocked-needs-backend", blocker: "Filter field; C1-WAVE-2 swaps to EntityPicker kind=load with page opco.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
+  { file: `${SRC}/pages/maintenance/WarrantyClaimsPage.tsx`, field: "detectWoId", category: "blocked-needs-backend", blocker: "Work-order roster is maintenance-lane; no EntityPicker kind=work_order yet.", reason: "No EntityPicker kind for maintenance work order yet — maintenance-lane roster + registry entry required." },
+  { file: `${SRC}/pages/reports/audit/AuditReportPage.tsx`, field: "driverFilter", category: "blocked-needs-backend", blocker: "Reports page opco + EntityPicker kind=driver wiring is C1-WAVE-2.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
+  { file: `${SRC}/pages/safety/drug-alcohol/TestSchedulingPanel.tsx`, field: "driverUuid", category: "blocked-needs-backend", blocker: "Panel must receive operatingCompanyId before EntityPicker; C1-WAVE-2.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
+  { file: `${SRC}/pages/safety/IdvrPage.tsx`, field: "driverFilter", category: "blocked-needs-backend", blocker: "Idvr filters need page opco + EntityPicker; C1-WAVE-2.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
+  { file: `${SRC}/pages/safety/IdvrPage.tsx`, field: "unitFilter", category: "blocked-needs-backend", blocker: "Idvr filters need page opco + EntityPicker; C1-WAVE-2.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
+  { file: `${SRC}/pages/safety/SafetyEventsPage.tsx`, field: "subject_driver_id", category: "blocked-needs-backend", blocker: "Create form needs opco-scoped EntityPicker; C1-WAVE-2.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
+  { file: `${SRC}/pages/safety/SafetyEventsPage.tsx`, field: "subject_unit_id", category: "blocked-needs-backend", blocker: "Create form needs opco-scoped EntityPicker; C1-WAVE-2.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
 ];
 
 /**
  * The exemption list is a RATCHET: it may shrink, never grow. Raising this number is a visible,
  * reviewable edit to the guard itself — which is the point. It is not a threshold to tune.
  */
-const EXEMPTION_CEILING = 13;
+const EXEMPTION_CEILING = 31;
 
 /** An "admin-audit-forensic-id" exemption must actually live on an admin/audit surface. */
 const AUDIT_PATH = /\/(admin|audit)\/|AuditTrail|AuditLog|ActivityLog|audit-log/;
@@ -680,8 +699,8 @@ function selftest() {
   const mutations = [
     [
       "a raw-uuid input survives the sweep (placeholder arm)",
-      withFile(good, `${SRC}/pages/dispatch/InTransitIssuesPage.tsx`, '<input value={loadId} placeholder="UUID of load" />'),
-      /PICKER-LAW: .*InTransitIssuesPage.*loadId/,
+      withFile(good, `${SRC}/pages/x/SurvivePlaceholder.tsx`, '<input value={loadId} placeholder="UUID of load" />'),
+      /PICKER-LAW: .*SurvivePlaceholder.*loadId/,
     ],
     [
       "a raw-uuid input survives the sweep (bound-state arm, non-uuid placeholder)",
