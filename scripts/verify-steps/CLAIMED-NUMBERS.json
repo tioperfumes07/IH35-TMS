@@ -3,7 +3,7 @@
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",
   "_how_to_claim": "Pick the next free number in your band, add \"<number>\": \"<filename>\", commit it WITH the guard.",
   "generated_at": "2026-07-26",
-  "total_claimed": 704,
+  "total_claimed": 710,
   "known_duplicates_frozen": {
     "15": [
       "15-verify-accounting-autoload-coverage.mjs",
@@ -1356,6 +1356,7 @@
     "1602": "1602-verify-mnt-link-02-work-order-lines-fk.mjs",
     "1603": "1603-verify-bank-dom-03-adjusted-balance-rec.mjs",
     "1604": "1604-verify-mnt-link-04-maintenance-vendor-ap.mjs",
-    "1612": "1612-verify-healthz-no-raw-error-leak.mjs"
+    "1612": "1612-verify-healthz-no-raw-error-leak.mjs",
+    "1605": "1605-verify-no-deprecated-settlement-poster-mounted.mjs"
   }
 }
