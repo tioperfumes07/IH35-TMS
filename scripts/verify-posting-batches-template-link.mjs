@@ -112,7 +112,9 @@ export function assertHeldManifest(json) {
     problems.push(`${HELD_MANIFEST}: not valid JSON.`);
     return problems;
   }
-  const entries = Array.isArray(parsed?.held) ? parsed.held : Array.isArray(parsed) ? parsed : [];
+  const entries = Array.isArray(parsed)
+    ? parsed
+    : [...(parsed?.held ?? []), ...(parsed?.applied_held ?? [])];
   const fileName = path.basename(MIGRATION);
   const found = entries.some((e) => (typeof e === "string" ? e === fileName : e?.file === fileName));
   if (!found) {

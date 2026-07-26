@@ -75,12 +75,16 @@ export function collectHonestyFailures(opts = {}) {
       parsed = null;
     }
     if (parsed) {
-      const entry = (parsed.held ?? []).find((e) => e.file === MIGRATION);
-      if (!entry) {
+      // 2026-07-25 GUARD registry split: a migration Neon-applied and ledger-verified moves to
+      // applied_held[] (owner-confirmed live proof), not held[]. applied_on_prod:true there is the
+      // EXPECTED state — only a held[] entry flagged applied is the contradictory half-migrated shape.
+      const inHeld = (parsed.held ?? []).find((e) => e.file === MIGRATION);
+      const inAppliedHeld = (parsed.applied_held ?? []).find((e) => e.file === MIGRATION);
+      if (!inHeld && !inAppliedHeld) {
         failures.push(`${HELD_MANIFEST}: ${MIGRATION} not registered`);
-      } else if (entry.applied_on_prod === true) {
+      } else if (inHeld && inHeld.applied_on_prod === true) {
         failures.push(
-          `${HELD_MANIFEST}: ${MIGRATION} has applied_on_prod:true — flip manifest to PASS in apply PR instead`
+          `${HELD_MANIFEST}: ${MIGRATION} is applied_on_prod:true but still sits in held[] — move it to applied_held[]`
         );
       }
     }

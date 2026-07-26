@@ -85,7 +85,8 @@ export function run(root = ROOT) {
   }
 
   const held = JSON.parse(fs.readFileSync(path.join(root, HELD), "utf8"));
-  if (!(held.held || []).some((h) => h.file === path.basename(MIG))) {
+  const heldEntries = [...(held.held || []), ...(held.applied_held || [])];
+  if (!heldEntries.some((h) => h.file === path.basename(MIG))) {
     f.push(`must register ${path.basename(MIG)} in .held-migrations.json`);
   }
 

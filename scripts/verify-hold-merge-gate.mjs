@@ -164,6 +164,10 @@ export function analyzeMigrationSql(diffText) {
 const CONTENT_SCAN_EXCLUDE = [
   /^scripts\/verify-hold-merge-gate\.mjs$/, // this gate's own fixtures look like flips/GL writes
   /^scripts\/verify-.*\.mjs$/, // verify selftests embed SQL / flag literals by design
+  // Guard baseline / inventory JSON under scripts/ (e.g. SWEEP-C6 shrink-only baseline) quotes the
+  // exact INSERT shapes it is hunting — that is a description of a gap, not a product write. Same
+  // rationale as verify-*.mjs. Scoped to scripts/verify-* only; .block-ready / seeds stay scanned.
+  /^scripts\/verify-.*\.json$/,
   /\.md$/,
   // Documentation DATA under docs/ — same rationale as the `.md` exclusion directly above, for the
   // machine-readable twin of the same prose. Audit/tracker artifacts quote findings verbatim
@@ -376,6 +380,20 @@ function selfTest() {
         "docs/trackers/block-audit-piles-2026-07-21.json":
           '+      "evidence": "OPEN: dual-confirm.service.ts never INSERT into mdata.equipment_log on transfer confirm",\n' +
           '+      "evidence": "#3084 code-proven: apply.ts:106 INSERT INTO driver_finance.driver_settlement_deductions",\n',
+      },
+    }, want: "pass-neutral" },
+    // Guard baseline JSON quotes the INSERT shapes it hunts (#3555 SWEEP-C6) — must stay neutral.
+    { name: "scripts/verify-*.json baseline quoting INSERT INTO accounting -> neutral", in: {
+      title: "feat(guards): SWEEP-C6 guard-first",
+      labels: [],
+      changedFiles: [
+        "scripts/verify-sweep-c6-money-insert-requires-je-poster.mjs",
+        "scripts/verify-sweep-c6-money-insert-requires-je-poster.baseline.json",
+      ],
+      diffByFile: {
+        "scripts/verify-sweep-c6-money-insert-requires-je-poster.mjs": "+ // scanner\n",
+        "scripts/verify-sweep-c6-money-insert-requires-je-poster.baseline.json":
+          '+    "accounting/bills.routes.ts::INSERT INSERT INTO accounting.journal_entries",\n',
       },
     }, want: "pass-neutral" },
     // The exclusion must stay NARROW — these three prove it did not open a hole.
