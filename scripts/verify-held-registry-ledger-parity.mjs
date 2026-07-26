@@ -77,6 +77,14 @@ export const EXPECTED_HELD = [
   // MNT-ECON-04 (#3582) — genuinely applied on prod per Cursor owner-batch 2026-07-26, but that PR
   // is already merged and this registry stamp is out of scope for this PR (owner directive: skip).
   "202609050000_mnt_econ_04_warranty_reimburse_gl_hop.sql",
+  // FLT-02 real-fleet ownership data fix. GUARD cross-check 2026-07-26 on br-fancy-credit-akjnd07a
+  // (lucia, positive control mdata.vendors=2789): the FILE is absent from BOTH ledgers — genuinely
+  // unapplied as a migration — while the DATA state it produces is already true on prod (87 of 87
+  // non-sample units owner=TRK/leased_to=TRANSP, 0 exceptions), so applying it is a proven no-op.
+  // Numbered 202609250000 after TWO collisions: 202609190000 and 202609220000 were both NOT free — prod already carries
+  // 202609190000_c9_form_roundtrip_persist_columns.sql (applied 21:28Z), one of FIVE migrations
+  // applied on prod that do not exist in the repo. Reported separately; not this PR's to fix.
+  "202609250000_flt_02_real_fleet_owned_by_trk.sql",
   // BANK-DOM-05 intercompany transfers. GUARD cross-check 2026-07-26 against the prod branch
   // br-fancy-credit-akjnd07a (bypass_rls='lucia', positive control mdata.vendors=2789):
   // to_regclass('banking.intercompany_entity_pairs') = MISSING — genuinely unapplied. Leaves this
