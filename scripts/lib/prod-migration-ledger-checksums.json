@@ -377,6 +377,7 @@
     "202608020000_acct_link_04_expense_lines_expense_category_fk.sql": "2a1109d38f7743721bc0e3d5b5d68b2adab2e9d081a4b7ae316f40c28662a743",
     "202608030000_bank_accounts_rls_bypass_lucia.sql": "31f9595a050dcc7b88fbf61d77949ba720672f7f11d02ff6b08eadff6f9c5e5f",
     "202608040000_payment_terms_consumer_remap_same_entity.sql": "58845cbda4b5290ce2c68cca0a0e46c1e1a0fcaca2ca9189ddd6b3e581eef14e",
-    "202608050000_bank_link_01_counterparty_same_entity_fk.sql": "c35d5052f67edca32ae49a5f3d7100b71ee3d5b18926b42f7171ea6b3723b626"
+    "202608050000_bank_link_01_counterparty_same_entity_fk.sql": "c35d5052f67edca32ae49a5f3d7100b71ee3d5b18926b42f7171ea6b3723b626",
+    "202608080000_acct_link_02_accounts_detail_type_fk.sql": "4d66df412a4164b9e2c7b54b8d93c714b6f2557792884d9d1af9ee962e21bc39"
   }
 }

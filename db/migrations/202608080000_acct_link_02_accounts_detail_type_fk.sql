@@ -1,7 +1,11 @@
 -- [HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] DO NOT RUN ON PROD — Neon hand-apply + ledger-backfill.
 -- Registered in db/migrations/.held-migrations.json.
 --
--- LINK-02 (owner 2026-07-25 WIRE): catalogs.accounts.detail_type_id → catalogs.detail_types(id).
+-- DETAIL_TYPES_FK_OWNER_UNLOCK — owner 2026-07-25 WIRE (LINK-02): real FK
+-- catalogs.accounts.detail_type_id → catalogs.detail_types is approved. account_subtype text cache retained.
+-- Neon-applied 2026-07-25T22:15:16Z (neondb_owner); ledger checksum pinned; post-unlock comment does not re-apply.
+--
+-- LINK-02: catalogs.accounts.detail_type_id → catalogs.detail_types(id).
 -- Keeps account_subtype text as display/cache. Best-effort backfill by normalized name/qbo name.
 -- Trigger: detail type must be global (opco NULL) or same company; account_type must match.
 --
