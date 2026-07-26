@@ -157,9 +157,20 @@ function collectProblems(sources) {
     }
   }
 
-  // (5) Provenance + idempotency + both-way linkage.
-  if (deductions && !deductions.includes("source_fuel_transaction_id")) {
-    problems.push(`${DEDUCTIONS_SERVICE} must persist source_fuel_transaction_id provenance`);
+  // (5) Provenance + idempotency + both-way linkage. Persisted from OVERAGE_SERVICE (a follow-up
+  // UPDATE), NOT from the shared DEDUCTIONS_SERVICE writer (SAF-F08: that writer runs for every
+  // deduction type on prod TODAY and must never name a column that lives only on a HELD migration —
+  // see the "shared writer stays clean of held-only columns" mutation below).
+  if (service && !service.includes("source_fuel_transaction_id")) {
+    problems.push(`${OVERAGE_SERVICE} must persist source_fuel_transaction_id provenance`);
+  }
+  if (deductions && /source_fuel_transaction_id/.test(deductions)) {
+    problems.push(
+      `${DEDUCTIONS_SERVICE} is the SHARED writer for every deduction type (cash advances, fines, ` +
+        `tolls, citations, ...) and runs on prod TODAY — it must not reference ` +
+        `source_fuel_transaction_id, a column that exists only on the HELD, unapplied 202609150000 ` +
+        `migration (SAF-F08 phantom-consumer). Set that provenance from ${OVERAGE_SERVICE} instead.`
+    );
   }
   if (migration) {
     if (!new RegExp(`'${FLAG}'`).test(migration)) {
@@ -286,7 +297,14 @@ function selftest() {
     {
       name: "deduction provenance column dropped",
       sources: {
-        [DEDUCTIONS_SERVICE]: real(DEDUCTIONS_SERVICE).replaceAll("source_fuel_transaction_id", "x"),
+        [OVERAGE_SERVICE]: real(OVERAGE_SERVICE).replaceAll("source_fuel_transaction_id", "x"),
+      },
+    },
+    {
+      name: "SAF-F08 phantom consumer smuggled back into the shared deduction writer",
+      sources: {
+        [DEDUCTIONS_SERVICE]:
+          real(DEDUCTIONS_SERVICE) + "\n// source_fuel_transaction_id\n",
       },
     },
     {

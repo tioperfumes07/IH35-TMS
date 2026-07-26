@@ -155,16 +155,34 @@ export async function maybeRecoverFuelCardOverage(
         return { status: "already_recovered", deduction_id: existing.rows[0].id } as const;
       }
 
-      // REUSE the canonical deduction writer — no new receivable table, no new GL math.
+      // REUSE the canonical deduction writer — no new receivable table, no new GL math. The writer
+      // deliberately does NOT accept source_fuel_transaction_id (SAF-F08: that column lives on the
+      // HELD, not-yet-applied 202609150000 migration, and the writer's INSERT/RETURNING must only
+      // ever name columns every OTHER caller — cash advances, fines, tolls, citations — can rely on
+      // existing on prod today). We set the fuel-specific provenance link ourselves, right below,
+      // in a statement scoped to this flag-gated (default OFF) path only.
       const deduction = await createSettlementDeduction(client as unknown as Queryable, {
         driverId: candidate.driver_id as string,
         operatingCompanyId: candidate.operating_company_id,
         amountCents: overage.overage_cents,
         reason: buildOverageReason(overage, policy, totalCents),
         sourceType: "fuel",
-        sourceFuelTransactionId: candidate.fuel_transaction_id,
         createdByUserId: actorUserId,
       });
+
+      // Forward provenance (Rule 14): the deduction points back at the fuel transaction that caused
+      // it. Scoped to THIS file (outside SAF-F08's CODE_DIRS) and this flag-gated path — safe because
+      // this statement is unreachable with the flag OFF (default), i.e. before the owner has applied
+      // 202609150000 and designated a policy.
+      await client.query(
+        `
+          UPDATE driver_finance.driver_settlement_deductions
+             SET source_fuel_transaction_id = $1::uuid
+           WHERE id = $2::uuid
+             AND operating_company_id = $3::uuid
+        `,
+        [candidate.fuel_transaction_id, deduction.id, candidate.operating_company_id]
+      );
 
       // Reverse drill-through (Rule 14): the fuel transaction points back at its deduction.
       await client.query(
