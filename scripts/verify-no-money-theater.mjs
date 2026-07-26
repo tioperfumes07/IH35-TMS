@@ -13,10 +13,28 @@
  *
  * Theater subjects (EntityLink/honesty/fake N-of-M) without write/pull/post path → FAIL.
  * MODULE_PROGRESS N of M must match docs/module-completion/<module>.json (Rule 24).
+ *
+ * ZERO-COMMIT FAKE-GREEN (fixed 2026-07-25): this guard used to end with
+ *   `console.log("PASS (" + commits.length + " branch commit(s) checked)")`
+ * and `listBranchCommits()` returned `[]` whenever `git merge-base` found nothing — which is exactly
+ * what happens in a SHALLOW clone (the actions/checkout default, and the shape of every agent
+ * worktree cut with --depth). Result: `PASS (0 branch commit(s) checked)`, exit 0, on a branch whose
+ * only commit was an accounting-path EntityLink commit carrying none of the 18 keys. Verified both
+ * directions on a real --depth=1 clone: PASS before `git fetch --unshallow`, 3 problems after.
+ * The range precondition now lives in scripts/lib/branch-range-guard.mjs and REFUSES to report
+ * success on an unusable range. The single legitimate zero (HEAD *is* the merge-base — a post-merge
+ * run on main) is passed with its reason printed, never silently.
  */
 import { execSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  classifyCommitRange,
+  collectGitFacts,
+  rangeCommitShas,
+  RANGE_CODES,
+  selftestBranchRangeGuard,
+} from "./lib/branch-range-guard.mjs";
 import { loadManifests, scoreManifest } from "./verify-module-completion.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -163,18 +181,25 @@ export function assertNoMoneyTheater(commits) {
   return problems;
 }
 
-function listBranchCommits() {
-  const base = sh("git merge-base HEAD origin/main") || sh("git merge-base HEAD main");
-  if (!base) return [];
-  const log = sh(`git log --format=%H%x00%s%x00%b%x1e ${base}..HEAD`);
-  if (!log) return [];
-  return log.split("\x1e").filter(Boolean).map((chunk) => {
-    const [sha, subject, body = ""] = chunk.split("\x00");
-    const files = sh(`git diff-tree --no-commit-id --name-only -r ${sha}`)
-      .split("\n")
-      .filter(Boolean);
-    return { sha, subject: subject || "", body: body || "", files };
-  });
+/**
+ * Resolve the branch range or REFUSE. Never returns an empty list without a stated legitimate
+ * reason — that is the whole point of this function's existence (see the header note).
+ */
+function resolveBranchCommits() {
+  const facts = collectGitFacts(ROOT);
+  const shas = rangeCommitShas(facts, ROOT);
+  const verdict = classifyCommitRange({ ...facts, commitCount: shas.length });
+  if (verdict.fatal) {
+    console.error(`${LABEL}: FAIL [${verdict.code}]\n  ${verdict.fatal}`);
+    process.exit(1);
+  }
+  const commits = shas.map((sha) => ({
+    sha,
+    subject: sh(`git log -1 --format=%s ${sha}`),
+    body: sh(`git log -1 --format=%b ${sha}`),
+    files: sh(`git diff-tree --no-commit-id --name-only -r ${sha}`).split("\n").filter(Boolean),
+  }));
+  return { commits, verdict };
 }
 
 export const MONEY_DOD_COMMIT_TEMPLATE = `
@@ -304,16 +329,65 @@ REMAINING: ACCT-F01
     true
   );
 
+  // ---- ZERO-COMMIT FAKE-GREEN arms ------------------------------------------------------------
+  // The original defect had no test at all: nothing asserted that "0 commits checked" is not a pass.
+  // These arms drive the real classifier, including against genuinely shallow and orphan git repos
+  // built on disk, so the detection is proven against git rather than against a boolean.
+  for (const f of selftestBranchRangeGuard()) failures.push(`range-guard ${f}`);
+
+  // The exact input shape that produced `PASS (0 branch commit(s) checked)` must now be fatal, and
+  // the fatal must be attributable to the shallow clone rather than a generic error.
+  const shallowVerdict = classifyCommitRange({
+    shallow: true,
+    head: "f".repeat(40),
+    base: "",
+    baseRef: "origin/main",
+    baseRefExists: true,
+    commitCount: 0,
+  });
+  if (!shallowVerdict.fatal || shallowVerdict.code !== RANGE_CODES.SHALLOW_CLONE) {
+    failures.push("shallow-zero-commit: a shallow clone with an empty range did NOT fail — this is the original defect");
+  }
+  if (shallowVerdict.fatal && !/fetch --unshallow/.test(shallowVerdict.fatal)) {
+    failures.push("shallow-zero-commit: failure message does not name the actionable fix (git fetch --unshallow)");
+  }
+  const noBaseVerdict = classifyCommitRange({
+    shallow: false,
+    head: "f".repeat(40),
+    base: "",
+    baseRef: "origin/main",
+    baseRefExists: true,
+    commitCount: 0,
+  });
+  if (!noBaseVerdict.fatal || noBaseVerdict.code !== RANGE_CODES.NO_MERGE_BASE) {
+    failures.push("no-merge-base-zero-commit: an unresolvable merge-base with 0 commits did NOT fail");
+  }
+  // …and the one legitimate zero must still pass, or every post-merge run on main goes red.
+  const onBase = classifyCommitRange({
+    shallow: false,
+    head: "f".repeat(40),
+    base: "f".repeat(40),
+    baseRef: "origin/main",
+    baseRefExists: true,
+    commitCount: 0,
+  });
+  if (onBase.fatal || onBase.code !== RANGE_CODES.LEGITIMATE_ZERO) {
+    failures.push("legitimate-zero: HEAD == merge-base (post-merge main) was refused — that is a false positive");
+  }
+
   if (failures.length) {
     console.error(`${LABEL} --selftest FAIL`);
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest: PASS`);
+  console.log(
+    `${LABEL} --selftest: PASS — money-theater arms + zero-commit/shallow/orphan range arms ` +
+      `(real depth=1 clone and real orphan branch both refused; healthy range and post-merge main still pass)`
+  );
   process.exit(0);
 }
 
-const commits = listBranchCommits();
+const { commits, verdict } = resolveBranchCommits();
 const problems = assertNoMoneyTheater(commits);
 if (problems.length) {
   console.error(`${LABEL}: FAIL`);
@@ -321,4 +395,6 @@ if (problems.length) {
   console.error(`\nRequired template:\n\n${MONEY_DOD_COMMIT_TEMPLATE}\n`);
   process.exit(1);
 }
-console.log(`${LABEL}: PASS (${commits.length} branch commit(s) checked)`);
+// A PASS must always carry WHAT was checked. A bare "PASS (0 ...)" is the defect this guard shipped
+// with; the only zero that survives here is LEGITIMATE_ZERO and it prints its own reason.
+console.log(`${LABEL}: PASS — ${verdict.note} [${verdict.code}]`);

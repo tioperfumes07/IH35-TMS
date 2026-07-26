@@ -75,6 +75,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          # fetch-depth: 0 is LOAD-BEARING, not hygiene. This job runs `verify:pre-commit`, which
+          # runs the range-resolving gates: 1430 verify-no-money-theater (the 18-key money gate),
+          # 1324 verify-definition-of-done-evidence and 1431 verify-module-completion. All three
+          # resolve `git merge-base HEAD origin/main`. actions/checkout DEFAULTS to depth 1, which
+          # is a shallow clone with no origin/main and therefore no merge-base — under which those
+          # guards used to print "PASS (0 branch commit(s) checked)" and exit 0 having inspected
+          # nothing. They now REFUSE that state (scripts/lib/branch-range-guard.mjs), so removing
+          # this line turns the job red rather than silently vacuous. Do not remove it.
+          fetch-depth: 0
 
       - name: Setup Node 22
         uses: actions/setup-node@v7
