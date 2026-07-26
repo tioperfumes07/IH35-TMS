@@ -37,7 +37,6 @@
     "insurance/policy-create-atomic.service.ts::INSERT INSERT INTO banking.bank_transactions|INSERT INTO accounting.bills",
     "integrations/plaid/plaid.service.ts::INSERT INSERT INTO banking.bank_transactions",
     "integrations/relay-payments/relay-wallet-bank-feed.service.ts::INSERT INSERT INTO banking.bank_transactions",
-    "maintenance/parts-inventory.routes.ts::ANCHOR parts-purchase",
     "maintenance/two-section-service.ts::INSERT INSERT INTO accounting.bill_lines|INSERT INTO accounting.expense_lines|INSERT INTO accounting.bills|INSERT INTO accounting.expenses",
     "qbo-sync/ap-bill-payments-puller.ts::INSERT INSERT INTO accounting.bill_payments",
     "qbo-sync/ap-bills-puller.ts::INSERT INSERT INTO accounting.bill_lines|INSERT INTO accounting.bills",

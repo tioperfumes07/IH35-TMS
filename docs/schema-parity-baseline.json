@@ -10262,6 +10262,24 @@
       "voided_at",
       "voided_by_user_id",
       "warranty_claim_id"
+    ],
+    "accounting.parts_purchase_postings": [
+      "amount_cents",
+      "bill_id",
+      "created_at",
+      "created_by_user_id",
+      "entry_date",
+      "expense_je_id",
+      "id",
+      "is_active",
+      "memo",
+      "operating_company_id",
+      "parts_inventory_id",
+      "status",
+      "updated_at",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
     ]
   }
 }

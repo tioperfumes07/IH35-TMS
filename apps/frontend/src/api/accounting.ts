@@ -1349,6 +1349,8 @@ export const COA_ROLE_VALUES = [
   // SAFETY FINE-GL HOP — company-paid civil fine expense. Owner designates the account on this page;
   // it has no shape-fallback, so it stays unresolved (and nothing posts) until designated.
   "civil_fines_expense",
+  // MNT-ECON-01 — standalone parts purchase expense (periodic). Owner designates; no shape-fallback.
+  "maintenance_parts_expense",
   // MNT-ECON-04 — warranty recovery credit (contra-expense; never sales income).
   "warranty_recovery",
 ] as const;

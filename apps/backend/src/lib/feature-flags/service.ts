@@ -63,6 +63,10 @@ export const POSTING_FLAG_KEYS: ReadonlySet<string> = new Set([
   // global rollout/default flip can never turn fine posting on for EVERY entity (incl. USMCA / TRK).
   // Default OFF; seeded default_enabled=false by migration 202608110000.
   "SAFETY_FINE_GL_POSTING_ENABLED",
+  // MNT-ECON-01: standalone parts purchase → A/P bill + balanced JE. Enumerated explicitly so a
+  // global flip can never turn parts-purchase posting on for EVERY entity. Default OFF
+  // (migration 202609030000).
+  "PARTS_PURCHASE_GL_POSTING_ENABLED",
   // MNT-ECON-04: warranty reimburse → balanced JE. Default OFF (migration 202609050000).
   "WARRANTY_REIMBURSE_GL_POSTING_ENABLED",
   "SETTLEMENT_GL_POSTING_ENABLED",

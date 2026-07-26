@@ -67,7 +67,7 @@ const MONEY_INSERT_RE = new RegExp(`\\bINSERT\\s+INTO\\s+${MONEY_SCHEMA_TABLE}\\
 
 /** Existing poster / JE writers — reuse only; no new GL math. */
 const POSTER_RE =
-  /postSourceTransaction(?:InClientTx)?|createJournalEntry(?:OnClient)?|postBillGlIfEnabled|postVoidReversal|maybePostBankCategorizationToGl|postFuelExpenseFromEvent|postFactoring(?:Advance|FeeExpense|CustomerPayment|Release|Chargeback|DefaultInterest)Event|processMaintenanceWorkOrderClose|postPropertyTax(?:Accrual|Payment)|postDepreciation|recordEscrowPostingOnly|apply_escrow_posting|postWarrantyReimbursement|posting-engine\.service|from\s+["'][^"']*posting-engine/;
+  /postSourceTransaction(?:InClientTx)?|createJournalEntry(?:OnClient)?|postBillGlIfEnabled|postVoidReversal|maybePostBankCategorizationToGl|postFuelExpenseFromEvent|postFactoring(?:Advance|FeeExpense|CustomerPayment|Release|Chargeback|DefaultInterest)Event|processMaintenanceWorkOrderClose|postPropertyTax(?:Accrual|Payment)|postDepreciation|recordEscrowPostingOnly|apply_escrow_posting|postWarrantyReimbursement|postPartsInventoryPurchase|postCompanyPaidCivilFine|posting-engine\.service|from\s+["'][^"']*posting-engine/;
 
 const EXEMPT_RE = /C6-MONEY-JE-EXEMPT:/;
 
@@ -93,7 +93,11 @@ const PLANTED_ANCHORS = [
   },
 ];
 
-/** Seeds that MUST appear in the first baseline (guard-first teeth). */
+/**
+ * Confirmed seeds that must remain in the baseline UNTIL fixed (then they shrink out).
+ * parts-inventory + fines are FIXED (MNT-ECON-01 / #3551) — removed from this list so
+ * UPDATE_C6_MONEY_JE_BASELINE can shrink honestly.
+ */
 const REQUIRED_SEED_SUBSTR = [
   "two-section-service.ts",
 ];
