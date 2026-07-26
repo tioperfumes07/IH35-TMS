@@ -40,7 +40,7 @@ export async function runBankReconAutoMatchTick(
             AND bt.transaction_date >= (now() - interval '90 days')::date
             AND NOT EXISTS (
               SELECT 1
-              FROM bank.reconciliation_matches rm
+              FROM banking.reconciliation_matches rm
               WHERE rm.bank_transaction_id = bt.id
                 AND rm.operating_company_id = bt.operating_company_id
                 AND rm.match_state IN ('auto_matched', 'user_matched')

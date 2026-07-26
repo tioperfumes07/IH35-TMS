@@ -59,7 +59,7 @@ describe("bank-recon bill/expense candidates + direction awareness", () => {
       }
       if (sql.includes("FROM banking.transfers")) return { rows: [] };
       if (sql.includes("LEFT JOIN accounting.journal_entry_postings")) return { rows: [] };
-      if (sql.includes("INSERT INTO bank.reconciliation_matches")) return { rows: [] };
+      if (sql.includes("INSERT INTO banking.reconciliation_matches")) return { rows: [] };
       return { rows: [] };
     });
 
@@ -82,7 +82,7 @@ describe("bank-recon bill/expense candidates + direction awareness", () => {
 
     // Even though the top auto-match is a bill, it MUST NOT be persisted (CHECK-constraint guard →
     // stays Tier-3).
-    expect(mockQuery.mock.calls.some(([s]) => String(s).includes("INSERT INTO bank.reconciliation_matches"))).toBe(false);
+    expect(mockQuery.mock.calls.some(([s]) => String(s).includes("INSERT INTO banking.reconciliation_matches"))).toBe(false);
   });
 
   it("deposit surfaces AR payments and NEVER bills/expenses (never crosses the streams)", async () => {
@@ -98,7 +98,7 @@ describe("bank-recon bill/expense candidates + direction awareness", () => {
       if (sql.includes("FROM accounting.bill_payments")) return { rows: [] };
       if (sql.includes("FROM banking.transfers")) return { rows: [] };
       if (sql.includes("LEFT JOIN accounting.journal_entry_postings")) return { rows: [] };
-      if (sql.includes("INSERT INTO bank.reconciliation_matches")) return { rows: [] };
+      if (sql.includes("INSERT INTO banking.reconciliation_matches")) return { rows: [] };
       return { rows: [] };
     });
 

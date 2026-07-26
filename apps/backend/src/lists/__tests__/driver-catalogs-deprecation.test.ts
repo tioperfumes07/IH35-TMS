@@ -89,4 +89,77 @@ describe("deprecated catalogs.driver factory routes (A17.2)", () => {
     expect(String(warnSpy.mock.calls[0]?.[0])).toContain("[DEPRECATED]");
     expect(String(warnSpy.mock.calls[0]?.[0])).toContain(`/lists/drivers/${config.successorListsSegment}`);
   });
+
+  describe("SWEEP-C11 split-brain fix — writes permanently blocked", () => {
+    it.each(DRIVER_SUBCATALOG_CONFIGS)(
+      "POST /api/v1/catalogs/driver/$urlSegment returns 410 and never writes catalogs.$tableName",
+      async (config) => {
+        const app = await buildApp();
+        const response = await app.inject({
+          method: "POST",
+          url: `/api/v1/catalogs/driver/${config.urlSegment}?operating_company_id=${companyId}`,
+          payload: { code: "X", display_name: "Attempted split-brain write" },
+        });
+
+        expect(response.statusCode).toBe(410);
+        expect(response.json()).toMatchObject({
+          error: `catalog_${config.tableName}_write_disabled_split_brain`,
+        });
+        expect(
+          queryMock.mock.calls.some(([sql]) => String(sql).includes(`INSERT INTO catalogs.${config.tableName}`))
+        ).toBe(false);
+      }
+    );
+
+    it.each(DRIVER_SUBCATALOG_CONFIGS)(
+      "PATCH /api/v1/catalogs/driver/$urlSegment/:id returns 410 and never writes catalogs.$tableName",
+      async (config) => {
+        const app = await buildApp();
+        const response = await app.inject({
+          method: "PATCH",
+          url: `/api/v1/catalogs/driver/${config.urlSegment}/${sampleRow.id}?operating_company_id=${companyId}`,
+          payload: { display_name: "Attempted split-brain edit" },
+        });
+
+        expect(response.statusCode).toBe(410);
+        expect(response.json()).toMatchObject({
+          error: `catalog_${config.tableName}_write_disabled_split_brain`,
+        });
+        expect(
+          queryMock.mock.calls.some(([sql]) => String(sql).includes(`UPDATE catalogs.${config.tableName}`))
+        ).toBe(false);
+      }
+    );
+
+    it.each(DRIVER_SUBCATALOG_CONFIGS)(
+      "DELETE /api/v1/catalogs/driver/$urlSegment/:id returns 410 and never writes catalogs.$tableName",
+      async (config) => {
+        const app = await buildApp();
+        const response = await app.inject({
+          method: "DELETE",
+          url: `/api/v1/catalogs/driver/${config.urlSegment}/${sampleRow.id}?operating_company_id=${companyId}`,
+        });
+
+        expect(response.statusCode).toBe(410);
+        expect(response.json()).toMatchObject({
+          error: `catalog_${config.tableName}_write_disabled_split_brain`,
+        });
+        expect(
+          queryMock.mock.calls.some(([sql]) => String(sql).includes(`UPDATE catalogs.${config.tableName}`))
+        ).toBe(false);
+      }
+    );
+
+    it("GET list still works (read-only archive stays reachable — Rule 07 never-delete)", async () => {
+      const app = await buildApp();
+      const config = DRIVER_SUBCATALOG_CONFIGS[0];
+      const response = await app.inject({
+        method: "GET",
+        url: `/api/v1/catalogs/driver/${config.urlSegment}?operating_company_id=${companyId}`,
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.headers.deprecation).toBe("true");
+    });
+  });
 });

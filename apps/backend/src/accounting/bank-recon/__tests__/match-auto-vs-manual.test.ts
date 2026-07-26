@@ -19,7 +19,7 @@ function setupBaseMocks() {
     if (sql.includes("FROM accounting.bill_payments")) return { rows: [] };
     if (sql.includes("FROM banking.transfers")) return { rows: [] };
     if (sql.includes("LEFT JOIN accounting.journal_entry_postings")) return { rows: [] };
-    if (sql.includes("INSERT INTO bank.reconciliation_matches")) return { rows: [] };
+    if (sql.includes("INSERT INTO banking.reconciliation_matches")) return { rows: [] };
     return { rows: [] };
   });
 }
@@ -54,7 +54,7 @@ describe("bank-recon auto vs manual matching", () => {
       if (sql.includes("FROM accounting.bill_payments")) return { rows: [] };
       if (sql.includes("FROM banking.transfers")) return { rows: [] };
       if (sql.includes("LEFT JOIN accounting.journal_entry_postings")) return { rows: [] };
-      if (sql.includes("INSERT INTO bank.reconciliation_matches")) return { rows: [] };
+      if (sql.includes("INSERT INTO banking.reconciliation_matches")) return { rows: [] };
       return { rows: [] };
     });
 
@@ -67,7 +67,7 @@ describe("bank-recon auto vs manual matching", () => {
     expect(candidates[0]?.auto_match).toBe(true);
     expect(candidates[0]?.ledger_entry_kind).toBe("payment");
     expect(
-      mockQuery.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO bank.reconciliation_matches"))
+      mockQuery.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO banking.reconciliation_matches"))
     ).toBe(true);
   });
 
@@ -100,7 +100,7 @@ describe("bank-recon auto vs manual matching", () => {
       if (sql.includes("FROM accounting.bill_payments")) return { rows: [] };
       if (sql.includes("FROM banking.transfers")) return { rows: [] };
       if (sql.includes("LEFT JOIN accounting.journal_entry_postings")) return { rows: [] };
-      if (sql.includes("INSERT INTO bank.reconciliation_matches")) return { rows: [] };
+      if (sql.includes("INSERT INTO banking.reconciliation_matches")) return { rows: [] };
       return { rows: [] };
     });
 
@@ -111,7 +111,7 @@ describe("bank-recon auto vs manual matching", () => {
 
     expect(candidates[0]?.auto_match).toBe(false);
     expect(
-      mockQuery.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO bank.reconciliation_matches"))
+      mockQuery.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO banking.reconciliation_matches"))
     ).toBe(false);
   });
 });

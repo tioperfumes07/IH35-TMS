@@ -40,7 +40,7 @@ export async function getReconWorklist(input: {
           AND bt.transaction_date BETWEEN $3::date AND $4::date
           AND NOT EXISTS (
             SELECT 1
-            FROM bank.reconciliation_matches rm
+            FROM banking.reconciliation_matches rm
             WHERE rm.bank_transaction_id = bt.id
               AND rm.operating_company_id = bt.operating_company_id
               AND ${confirmedStateWhere()}
@@ -65,7 +65,7 @@ export async function getReconWorklist(input: {
           rm.ledger_entry_id::text AS ledger_entry_id,
           rm.match_score::numeric::float8 AS match_score,
           rm.match_state::text AS match_state
-        FROM bank.reconciliation_matches rm
+        FROM banking.reconciliation_matches rm
         JOIN banking.bank_transactions bt ON bt.id = rm.bank_transaction_id
         WHERE rm.operating_company_id = $1::uuid
           AND bt.bank_account_id = $2::uuid
@@ -114,7 +114,7 @@ export async function getReconWorklist(input: {
           COUNT(*) FILTER (
             WHERE EXISTS (
               SELECT 1
-              FROM bank.reconciliation_matches rm
+              FROM banking.reconciliation_matches rm
               WHERE rm.bank_transaction_id = period_tx.id
                 AND rm.operating_company_id = $1::uuid
                 AND ${confirmedStateWhere()}
@@ -179,7 +179,7 @@ export async function rejectReconMatch(input: {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     await client.query(
       `
-        INSERT INTO bank.reconciliation_matches (
+        INSERT INTO banking.reconciliation_matches (
           operating_company_id,
           bank_transaction_id,
           ledger_entry_kind,
@@ -231,7 +231,7 @@ export async function closeReconPeriod(input: {
           COUNT(*) FILTER (
             WHERE EXISTS (
               SELECT 1
-              FROM bank.reconciliation_matches rm
+              FROM banking.reconciliation_matches rm
               WHERE rm.bank_transaction_id = period_tx.id
                 AND rm.operating_company_id = $1::uuid
                 AND ${confirmedStateWhere()}

@@ -1,6 +1,13 @@
 import { describe, it, expect, beforeEach, afterAll } from "vitest";
 import Fastify from "fastify";
-import { registerHealthRoutes, resolveBackendVersion, backgroundJobRule } from "../health.routes.js";
+import {
+  registerHealthRoutes,
+  resolveBackendVersion,
+  backgroundJobRule,
+  toPublicHealthErrorCode,
+  HealthCheckError,
+  HEALTH_ERROR_GENERIC,
+} from "../health.routes.js";
 import { setAppReady } from "../../lib/startup-ready.js";
 
 describe("health routes", () => {
@@ -53,6 +60,83 @@ describe("health routes", () => {
     await registerHealthRoutes(app);
     const res = await app.inject({ method: "GET", url: "/api/v1/healthz/readyz" });
     expect(res.statusCode).toBe(200);
+  });
+});
+
+// SEC-HEALTHZ-01 — /api/v1/healthz is unauthenticated (session-middleware.ts returns before auth
+// for every /api/v1/healthz url), so anything in its body is world-readable. It used to publish
+// `String((error as Error)?.message ?? error)` — raw pg/ioredis/S3 driver text carrying host, port,
+// database, DB role, schema and relation names. Only a DECLARED bounded code may escape now.
+describe("SEC-HEALTHZ-01 — no raw driver text escapes to an anonymous caller", () => {
+  const REAL_DRIVER_ERRORS = [
+    // pg — credentials, role and host
+    new Error('password authentication failed for user "ih35_app"'),
+    new Error("getaddrinfo ENOTFOUND ep-fancy-credit-akjnd07a.us-east-1.aws.neon.tech"),
+    // pg — schema disclosure
+    new Error('relation "accounting.bills" does not exist'),
+    // ioredis — internal host:port
+    new Error("connect ECONNREFUSED 10.0.0.5:6379"),
+    // S3/R2 — endpoint carries the Cloudflare account id
+    Object.assign(new Error("Bad Request"), {
+      $metadata: { httpStatusCode: 400 },
+      message: "endpoint https://abc123deadbeef.r2.cloudflarestorage.com rejected the request",
+    }),
+    // non-Error throws must not slip through the `instanceof` gap either
+    "raw string throw with DATABASE_URL=postgres://ih35_app:hunter2@host/neondb",
+    { message: 'password authentication failed for user "ih35_app"' },
+    null,
+    undefined,
+  ];
+
+  it("every driver error collapses to the generic code", () => {
+    for (const err of REAL_DRIVER_ERRORS) {
+      expect(toPublicHealthErrorCode(err)).toBe(HEALTH_ERROR_GENERIC);
+    }
+  });
+
+  it("no sensitive token survives into the published code", () => {
+    const forbidden = [/ih35_app/i, /neon\.tech/i, /ECONNREFUSED/i, /accounting\./i, /r2\.cloudflarestorage/i, /postgres:\/\//i, /\d+\.\d+\.\d+\.\d+/];
+    for (const err of REAL_DRIVER_ERRORS) {
+      const published = toPublicHealthErrorCode(err);
+      for (const pattern of forbidden) {
+        expect(pattern.test(published), `"${published}" leaked ${pattern}`).toBe(false);
+      }
+    }
+  });
+
+  it("a DECLARED code is published, but its detail is not", () => {
+    expect(toPublicHealthErrorCode(new HealthCheckError("stale_jobs", "qbo.sync_queue_runner:412.5m"))).toBe(
+      "stale_jobs"
+    );
+    expect(toPublicHealthErrorCode(new HealthCheckError("unresolved_depth_high", "1483"))).toBe(
+      "unresolved_depth_high"
+    );
+    expect(toPublicHealthErrorCode(new HealthCheckError("timeout", "after_1000ms"))).toBe("timeout");
+  });
+
+  it("the real error is still preserved on the error object for server-side logging", () => {
+    const err = new HealthCheckError("stale_jobs", "qbo.sync_queue_runner:412.5m");
+    expect(err.message).toContain("qbo.sync_queue_runner:412.5m");
+    expect(err.stack).toBeTruthy();
+  });
+
+  it("an out-of-vocabulary code cannot be smuggled through HealthCheckError", () => {
+    // Interpolating driver text into the code would re-open the leak — it must fail closed.
+    const smuggled = new HealthCheckError('relation "accounting.bills" does not exist');
+    expect(smuggled.publicCode).toBe(HEALTH_ERROR_GENERIC);
+    expect(toPublicHealthErrorCode(smuggled)).toBe(HEALTH_ERROR_GENERIC);
+  });
+
+  it("every publishable code is a bounded lowercase token", () => {
+    const codes = [
+      HEALTH_ERROR_GENERIC,
+      toPublicHealthErrorCode(new HealthCheckError("timeout")),
+      toPublicHealthErrorCode(new HealthCheckError("migration_ledger_missing")),
+      toPublicHealthErrorCode(new HealthCheckError("r2_not_configured")),
+      toPublicHealthErrorCode(new HealthCheckError("queued_depth_high", "9999")),
+      "missing_redis_url",
+    ];
+    for (const code of codes) expect(code).toMatch(/^[a-z0-9_]{1,48}$/);
   });
 });
 
