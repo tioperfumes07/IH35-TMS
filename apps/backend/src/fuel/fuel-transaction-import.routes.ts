@@ -14,6 +14,7 @@ import {
   type DbClient,
 } from "./fuel-transaction-import.js";
 import { flushFuelGlPostsAfterCommit } from "../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
+import { flushFuelCardOverageAfterCommit } from "./fuel-card-overage.service.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -114,9 +115,16 @@ export async function registerFuelTransactionImportRoutes(app: FastifyInstance) 
     // AFTER COMMIT — TMS GL only (EXPENSE_GL_POSTING_ENABLED); never QBO push.
     await flushFuelGlPostsAfterCommit(result.counts.gl_post_candidates, req.log);
 
+    // AFTER COMMIT — BANK-DOM-06 card-overage -> driver receivable -> settlement deduction.
+    // Separate flag (FUEL_CARD_OVERAGE_RECOVERY_ENABLED, default OFF) and separate failure domain:
+    // the expense post and the driver recovery must not be able to break each other.
+    const overage = await flushFuelCardOverageAfterCommit(result.counts.gl_post_candidates, req.log);
+
     const { gl_post_candidates: _gl, ...publicCounts } = result.counts;
     return {
       ...publicCounts,
+      overage_recoveries_created: overage.recovered,
+      overage_recovered_cents: overage.recovered_cents,
       dead_letter_details: parsed.dead_letters.slice(0, 25),
     };
   });

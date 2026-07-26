@@ -71,7 +71,12 @@ export function breachesNetPayFloor(
 
 /** Bucket-type -> catalogs.account_role_bindings role_key for the deduction's recovery account. */
 export function bucketRecoveryRoleKey(bucketType: string): string {
-  return `${bucketType.trim().toLowerCase()}_recovery`;
+  const t = bucketType.trim().toLowerCase();
+  // BANK-DOM-06: the registered role is fuel_advance_recovery — there is no 'fuel_recovery' role in
+  // chart_of_accounts_roles or account_role_bindings, so the derived key would fail closed on every
+  // fuel deduction (including the fuel-card overage recovery this alias exists to serve).
+  if (t === "fuel") return "fuel_advance_recovery";
+  return `${t}_recovery`;
 }
 
 export type BalancedLine = { debit_or_credit: "debit" | "credit"; amount_cents: number };
