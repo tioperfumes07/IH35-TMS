@@ -44,7 +44,12 @@ function main() {
 
   const held = JSON.parse(fs.readFileSync(path.join(ROOT, HELD), "utf8"));
   const fname = path.basename(MIG);
-  if (!(held.held ?? []).some((e) => e.file === fname)) fail(`${fname} must be in held[]`);
+  // Owner confirmed live 2026-07-26 (Cursor owner-batch, GUARD direct Neon query against
+  // _system._schema_migrations) that this migration is genuinely applied on prod — it now lives in
+  // applied_held[] with applied_on_prod:true, which is the correct, expected state. Union both
+  // arrays so a registered-but-now-applied migration doesn't fall out of this guard's check.
+  const allEntries = [...(held.held ?? []), ...(held.applied_held ?? [])];
+  if (!allEntries.some((e) => e.file === fname)) fail(`${fname} must be in .held-migrations.json (held[] or applied_held[])`);
 
   console.log("verify-bank-dom-03-adjusted-balance-rec OK");
 }

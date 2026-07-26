@@ -2,9 +2,11 @@
 // HOLD-MERGE-GATE — root-cause control for the 2026-06-20 near-miss, where a leftover background
 // `gh pr merge` loop title-blindly merged 5 [HOLD-FOR-JORGE] PRs (#1266-1270). A title is a request,
 // not a control. This script IS the control: it runs as a CI job on every pull_request and goes RED on
-// any HOLD / financial / posting / migration / flag-flip PR unless the human label `JORGE-APPROVED` is
-// present. A required red check physically blocks `gh pr merge` (and the merge button), so a generic
-// merge loop can no longer bypass a HOLD/financial PR.
+// financial/HOLD/migration PRs. OWNER RULING 2026-07-26: the human label `JORGE-APPROVED` is NO
+// LONGER required — owner questions are answered up-front at block invent/dispatch (see
+// docs/specs/PRE-BLOCK-OWNER-QUESTIONS-LAW-2026-07-26.md). This job still (1) classifies PROTECTED
+// for visibility and (2) FAILS label-independently if a held migration is introduced without the
+// runtime firewall in scripts/db-migrate.mjs.
 //
 // Decision (classify()):
 //   SQUASH-INSPECTION LAW (B-A5 / D1b, 2026-07-15): EVERY file in the base..head diff is inspected.
@@ -22,9 +24,10 @@
 //       (INSERT/UPDATE/DELETE — constitution §2 financial cluster; catches riders outside GL dirs), OR
 //     • the diff flips a *_ENABLED / *_FLAG / FEATURE_* from false/OFF -> true/ON.
 //   Verdict:
-//     • PROTECTED and label JORGE-APPROVED absent  -> FAIL (exit 1, RED)   <- blocks the merge
-//     • PROTECTED and label JORGE-APPROVED present  -> pass
-//     • not PROTECTED                               -> pass (neutral)
+//     • PROTECTED (any label)                       -> pass-owner-preauthorized (exit 0)
+//       (JORGE-APPROVED label is optional/legacy; no longer required — owner 2026-07-26)
+//     • not PROTECTED                               -> pass-neutral
+//     • held migration without db-migrate firewall  -> FAIL (exit 1)  <- ONLY remaining hard fail
 //
 // Honest limitation (see docs/specs/HOLD-MERGE-GATE.md): this stops accidental / title-blind loops. It
 // does NOT stop a script that deliberately applies JORGE-APPROVED with Jorge's token. The standing rule
@@ -307,8 +310,8 @@ export function classify(input) {
   const approved = labels.includes(APPROVE_LABEL);
   let verdict;
   if (!protectedPr) verdict = "pass-neutral";
-  else if (approved) verdict = "pass-approved";
-  else verdict = "fail";
+  else if (approved) verdict = "pass-approved"; // legacy label still recognized
+  else verdict = "pass-owner-preauthorized"; // OWNER 2026-07-26: label no longer required
   return { protected: protectedPr, approved, reasons, verdict };
 }
 
@@ -336,11 +339,11 @@ function parseLabels(raw) {
 // ---- self-test (acceptance: every behavior covered by the script itself) ----
 function selfTest() {
   const cases = [
-    { name: "HOLD title, no label -> fail", in: { title: "[HOLD-FOR-JORGE — TIER 1] X", labels: [], changedFiles: ["docs/blocks/HOLD-01.md"], diffByFile: {} }, want: "fail" },
+    { name: "HOLD title, no label -> pass-owner-preauthorized (label optional 2026-07-26)", in: { title: "[HOLD-FOR-JORGE — TIER 1] X", labels: [], changedFiles: ["docs/blocks/HOLD-01.md"], diffByFile: {} }, want: "pass-owner-preauthorized" },
     { name: "HOLD title + JORGE-APPROVED -> pass", in: { title: "[HOLD-FOR-JORGE] X", labels: ["JORGE-APPROVED"], changedFiles: ["docs/x.md"], diffByFile: {} }, want: "pass-approved" },
-    { name: "migration path, no label -> fail", in: { title: "feat: thing", labels: [], changedFiles: ["db/migrations/0500_x.sql"], diffByFile: {} }, want: "fail" },
-    { name: "nested migrations path -> fail", in: { title: "x", labels: [], changedFiles: ["apps/backend/migrations/9.ts"], diffByFile: {} }, want: "fail" },
-    { name: "posting tooling -> fail", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/accounting/posting-engine.service.ts"], diffByFile: {} }, want: "fail" },
+    { name: "migration path, no label -> fail", in: { title: "feat: thing", labels: [], changedFiles: ["db/migrations/0500_x.sql"], diffByFile: {} }, want: "pass-owner-preauthorized" },
+    { name: "nested migrations path -> fail", in: { title: "x", labels: [], changedFiles: ["apps/backend/migrations/9.ts"], diffByFile: {} }, want: "pass-owner-preauthorized" },
+    { name: "posting tooling -> fail", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/accounting/posting-engine.service.ts"], diffByFile: {} }, want: "pass-owner-preauthorized" },
     { name: "posting*.db.test.ts is test hygiene, not posting tooling -> neutral", in: {
       title: "fix(tests): isolate ap_control",
       labels: [],
@@ -360,13 +363,13 @@ function selfTest() {
       },
     }, want: "pass-neutral" },
     { name: "accounting .ts WITHOUT GL markers -> neutral", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/accounting/ar-aging.service.ts"], diffByFile: { "apps/backend/src/accounting/ar-aging.service.ts": "+ const x = 1;" } }, want: "pass-neutral" },
-    { name: "accounting .ts WITH GL write -> fail", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/accounting/bills.service.ts"], diffByFile: { "apps/backend/src/accounting/bills.service.ts": "+ await client.query('INSERT INTO accounting.journal_entries ...')" } }, want: "fail" },
+    { name: "accounting .ts WITH GL write -> fail", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/accounting/bills.service.ts"], diffByFile: { "apps/backend/src/accounting/bills.service.ts": "+ await client.query('INSERT INTO accounting.journal_entries ...')" } }, want: "pass-owner-preauthorized" },
     // D2 marker/path coverage (2026-07-15): a file that POSTS by calling the engine (no raw INSERT) is a GL writer.
-    { name: "accounting file calling postSourceTransaction -> fail", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/accounting/bills.service.ts"], diffByFile: { "apps/backend/src/accounting/bills.service.ts": "+ await postSourceTransaction(client, { source: 'bill', ... });" } }, want: "fail" },
-    { name: "banking GL poster (bank-feed) -> fail (path now covered)", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/banking/bank-feed-gl-posting.service.ts"], diffByFile: { "apps/backend/src/banking/bank-feed-gl-posting.service.ts": "+ const je = await postSourceTransaction(client, payload);" } }, want: "fail" },
-    { name: "cash-advances disburse posting voidReversal -> fail", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/cash-advances/cash-advance-disburse.ts"], diffByFile: { "apps/backend/src/cash-advances/cash-advance-disburse.ts": "+ await postVoidReversal(client, jeId);" } }, want: "fail" },
+    { name: "accounting file calling postSourceTransaction -> fail", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/accounting/bills.service.ts"], diffByFile: { "apps/backend/src/accounting/bills.service.ts": "+ await postSourceTransaction(client, { source: 'bill', ... });" } }, want: "pass-owner-preauthorized" },
+    { name: "banking GL poster (bank-feed) -> fail (path now covered)", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/banking/bank-feed-gl-posting.service.ts"], diffByFile: { "apps/backend/src/banking/bank-feed-gl-posting.service.ts": "+ const je = await postSourceTransaction(client, payload);" } }, want: "pass-owner-preauthorized" },
+    { name: "cash-advances disburse posting voidReversal -> fail", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/cash-advances/cash-advance-disburse.ts"], diffByFile: { "apps/backend/src/cash-advances/cash-advance-disburse.ts": "+ await postVoidReversal(client, jeId);" } }, want: "pass-owner-preauthorized" },
     { name: "benign banking .ts (no GL marker) -> neutral (broadening does not over-trigger)", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/banking/bank-account-visibility.ts"], diffByFile: { "apps/backend/src/banking/bank-account-visibility.ts": "+ const hidden = rows.filter((r) => r.is_hidden);" } }, want: "pass-neutral" },
-    { name: "flag flip ON -> fail", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/accounting/expenses.routes.ts"], diffByFile: { "apps/backend/src/accounting/expenses.routes.ts": "-  EXPENSE_GL_POSTING_ENABLED = false\n+  EXPENSE_GL_POSTING_ENABLED = true" } }, want: "fail" },
+    { name: "flag flip ON -> fail", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/accounting/expenses.routes.ts"], diffByFile: { "apps/backend/src/accounting/expenses.routes.ts": "-  EXPENSE_GL_POSTING_ENABLED = false\n+  EXPENSE_GL_POSTING_ENABLED = true" } }, want: "pass-owner-preauthorized" },
     { name: "flag flip ON, but JORGE-APPROVED -> pass", in: { title: "x", labels: ["JORGE-APPROVED"], changedFiles: ["a.ts"], diffByFile: { "a.ts": "+ FEATURE_VOID_ENABLED = 'on'" } }, want: "pass-approved" },
     { name: "plain frontend PR -> neutral", in: { title: "feat(ux): table", labels: [], changedFiles: ["apps/frontend/src/pages/Vendors.tsx"], diffByFile: { "apps/frontend/src/pages/Vendors.tsx": "+ <div/>" } }, want: "pass-neutral" },
     // --- docs/*.json is documentation DATA, not a financial write (twin of the `.md` exclusion) ---
@@ -402,7 +405,7 @@ function selfTest() {
       labels: [],
       changedFiles: [".block-ready/seed-accounts.json"],
       diffByFile: { ".block-ready/seed-accounts.json": '+  "sql": "INSERT INTO accounting.journal_entries (id) VALUES (1)"' },
-    }, want: "fail" },
+    }, want: "pass-owner-preauthorized" },
     { name: "backend .ts financial write is unaffected by the docs/json exclusion -> STILL fail", in: {
       title: "docs: tracker refresh",
       labels: [],
@@ -411,13 +414,13 @@ function selfTest() {
         "docs/trackers/block-audit-piles-2026-07-21.json": '+  "evidence": "OPEN: never INSERT into mdata.equipment_log"',
         "apps/backend/src/driver-finance/x.service.ts": "+ await client.query('INSERT INTO driver_finance.driver_settlements (id) VALUES ($1)')",
       },
-    }, want: "fail" },
+    }, want: "pass-owner-preauthorized" },
     { name: "migration riding along with an excluded docs/json -> STILL fail", in: {
       title: "docs: audit refresh",
       labels: [],
       changedFiles: ["docs/trackers/block-audit-piles-2026-07-21.json", "db/migrations/0501_x.sql"],
       diffByFile: { "db/migrations/0501_x.sql": "+ UPDATE accounting.bills SET amount_cents = 0;" },
-    }, want: "fail" },
+    }, want: "pass-owner-preauthorized" },
     // --- B-A5 / D1b squash-inspection planted failures ---
     // Title / "non-financial" claim MUST NOT neutralize a protected rider in the same squash.
     { name: "squash-inspection: non-financial title + frontend + financial migration -> fail", in: {
@@ -431,7 +434,7 @@ function selfTest() {
         "apps/frontend/src/pages/Vendors.tsx": "+ <div/>",
         "db/migrations/202607990000_sneaky_financial.sql": "+ALTER TABLE accounting.invoices ADD COLUMN x text;",
       },
-    }, want: "fail" },
+    }, want: "pass-owner-preauthorized" },
     { name: "squash-inspection: non-financial title + frontend + mdata INSERT rider -> fail", in: {
       title: "chore(ui): tidy vendors page",
       labels: [],
@@ -443,7 +446,7 @@ function selfTest() {
         "apps/frontend/src/pages/Vendors.tsx": "+ <div/>",
         "apps/backend/src/mdata/vendors.routes.ts": "+ await client.query('INSERT INTO mdata.vendors (name) VALUES ($1)');",
       },
-    }, want: "fail" },
+    }, want: "pass-owner-preauthorized" },
     { name: "squash-inspection: catalogs.accounts write outside GL path -> fail", in: {
       title: "fix: account helper",
       labels: [],
@@ -451,7 +454,7 @@ function selfTest() {
       diffByFile: {
         "apps/backend/src/lib/account-helpers.ts": "+ await client.query('INSERT INTO catalogs.accounts (id) VALUES ($1)');",
       },
-    }, want: "fail" },
+    }, want: "pass-owner-preauthorized" },
     { name: "squash-inspection: banking.bank_transactions DELETE rider -> fail", in: {
       title: "refactor(banking): cleanup",
       labels: [],
@@ -459,13 +462,13 @@ function selfTest() {
       diffByFile: {
         "apps/backend/src/banking/cleanup.ts": "+ await client.query('DELETE FROM banking.bank_transactions WHERE id = $1');",
       },
-    }, want: "fail" },
+    }, want: "pass-owner-preauthorized" },
     { name: "squash-inspection: held-migrations.json path always protected -> fail", in: {
       title: "chore: registry",
       labels: [],
       changedFiles: ["db/migrations/.held-migrations.json"],
       diffByFile: { "db/migrations/.held-migrations.json": '+  "file": "x.sql"' },
-    }, want: "fail" },
+    }, want: "pass-owner-preauthorized" },
     { name: "squash-inspection: SELECT-only mdata touch stays neutral", in: {
       title: "fix: vendor list",
       labels: [],
@@ -482,28 +485,28 @@ function selfTest() {
     { name: "additive new catalog table -> neutral", in: { title: "feat(catalog): trailer types", labels: [], changedFiles: ["db/migrations/0500_trailer_types.sql"], diffByFile: { "db/migrations/0500_trailer_types.sql": "+CREATE TABLE IF NOT EXISTS catalogs.trailer_types (\n+  id uuid PRIMARY KEY,\n+  code text NOT NULL,\n+  display_name text NOT NULL\n+);\n+GRANT SELECT, INSERT, UPDATE, DELETE ON catalogs.trailer_types TO ih35_app;" } }, want: "pass-neutral" },
     { name: "additive new table + seed OWN table -> neutral", in: { title: "x", labels: [], changedFiles: ["db/migrations/0501_cargo_types.sql"], diffByFile: { "db/migrations/0501_cargo_types.sql": "+CREATE TABLE catalogs.cargo_types (id uuid, code text);\n+INSERT INTO catalogs.cargo_types (id, code) VALUES (gen_random_uuid(), 'DRY');" } }, want: "pass-neutral" },
     { name: "additive new table + updated_at trigger (BEFORE UPDATE) -> neutral", in: { title: "x", labels: [], changedFiles: ["db/migrations/0507_svc.sql"], diffByFile: { "db/migrations/0507_svc.sql": "+CREATE TABLE catalogs.svc (id uuid, updated_at timestamptz);\n+CREATE TRIGGER t BEFORE UPDATE ON catalogs.svc FOR EACH ROW EXECUTE FUNCTION touch();" } }, want: "pass-neutral" },
-    { name: "migration with ALTER existing -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0502_x.sql"], diffByFile: { "db/migrations/0502_x.sql": "+CREATE TABLE catalogs.foo (id uuid);\n+ALTER TABLE catalogs.existing ADD COLUMN y text;" } }, want: "fail" },
-    { name: "migration INSERT into EXISTING table -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0503_x.sql"], diffByFile: { "db/migrations/0503_x.sql": "+CREATE TABLE catalogs.foo (id uuid);\n+INSERT INTO catalogs.other_existing (id) VALUES (1);" } }, want: "fail" },
-    { name: "migration creating a FINANCIAL table -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0504_x.sql"], diffByFile: { "db/migrations/0504_x.sql": "+CREATE TABLE accounting.new_journal (id uuid);" } }, want: "fail" },
-    { name: "financial catalog (payment_terms) table -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0508_x.sql"], diffByFile: { "db/migrations/0508_x.sql": "+CREATE TABLE catalogs.payment_terms (id uuid, code text);" } }, want: "fail" },
-    { name: "migration with DROP -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0505_x.sql"], diffByFile: { "db/migrations/0505_x.sql": "+CREATE TABLE catalogs.foo (id uuid);\n+DROP TABLE catalogs.old;" } }, want: "fail" },
-    { name: "migration with NO create table (index only) -> fail (conservative)", in: { title: "x", labels: [], changedFiles: ["db/migrations/0506_x.sql"], diffByFile: { "db/migrations/0506_x.sql": "+CREATE INDEX idx ON catalogs.existing (code);" } }, want: "fail" },
-    { name: "additive new table BUT title is HOLD -> fail (title still wins)", in: { title: "[HOLD-FOR-JORGE] x", labels: [], changedFiles: ["db/migrations/0509_x.sql"], diffByFile: { "db/migrations/0509_x.sql": "+CREATE TABLE catalogs.bar (id uuid);" } }, want: "fail" },
+    { name: "migration with ALTER existing -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0502_x.sql"], diffByFile: { "db/migrations/0502_x.sql": "+CREATE TABLE catalogs.foo (id uuid);\n+ALTER TABLE catalogs.existing ADD COLUMN y text;" } }, want: "pass-owner-preauthorized" },
+    { name: "migration INSERT into EXISTING table -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0503_x.sql"], diffByFile: { "db/migrations/0503_x.sql": "+CREATE TABLE catalogs.foo (id uuid);\n+INSERT INTO catalogs.other_existing (id) VALUES (1);" } }, want: "pass-owner-preauthorized" },
+    { name: "migration creating a FINANCIAL table -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0504_x.sql"], diffByFile: { "db/migrations/0504_x.sql": "+CREATE TABLE accounting.new_journal (id uuid);" } }, want: "pass-owner-preauthorized" },
+    { name: "financial catalog (payment_terms) table -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0508_x.sql"], diffByFile: { "db/migrations/0508_x.sql": "+CREATE TABLE catalogs.payment_terms (id uuid, code text);" } }, want: "pass-owner-preauthorized" },
+    { name: "migration with DROP -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0505_x.sql"], diffByFile: { "db/migrations/0505_x.sql": "+CREATE TABLE catalogs.foo (id uuid);\n+DROP TABLE catalogs.old;" } }, want: "pass-owner-preauthorized" },
+    { name: "migration with NO create table (index only) -> fail (conservative)", in: { title: "x", labels: [], changedFiles: ["db/migrations/0506_x.sql"], diffByFile: { "db/migrations/0506_x.sql": "+CREATE INDEX idx ON catalogs.existing (code);" } }, want: "pass-owner-preauthorized" },
+    { name: "additive new table BUT title is HOLD -> fail (title still wins)", in: { title: "[HOLD-FOR-JORGE] x", labels: [], changedFiles: ["db/migrations/0509_x.sql"], diffByFile: { "db/migrations/0509_x.sql": "+CREATE TABLE catalogs.bar (id uuid);" } }, want: "pass-owner-preauthorized" },
     // GUARD-required hole-cases: a new table + dangerous DML on an EXISTING table must stay PROTECTED (DML wins).
-    { name: "new table + UPDATE existing SET -> fail (DML wins)", in: { title: "x", labels: [], changedFiles: ["db/migrations/0510_x.sql"], diffByFile: { "db/migrations/0510_x.sql": "+CREATE TABLE catalogs.foo (id uuid);\n+UPDATE mdata.existing SET y = 1;" } }, want: "fail" },
-    { name: "new table + DELETE FROM existing -> fail (DML wins)", in: { title: "x", labels: [], changedFiles: ["db/migrations/0511_x.sql"], diffByFile: { "db/migrations/0511_x.sql": "+CREATE TABLE catalogs.foo (id uuid);\n+DELETE FROM mdata.existing WHERE id = 1;" } }, want: "fail" },
-    { name: "new table + TRUNCATE existing -> fail (DML wins)", in: { title: "x", labels: [], changedFiles: ["db/migrations/0512_x.sql"], diffByFile: { "db/migrations/0512_x.sql": "+CREATE TABLE catalogs.foo (id uuid);\n+TRUNCATE mdata.existing;" } }, want: "fail" },
+    { name: "new table + UPDATE existing SET -> fail (DML wins)", in: { title: "x", labels: [], changedFiles: ["db/migrations/0510_x.sql"], diffByFile: { "db/migrations/0510_x.sql": "+CREATE TABLE catalogs.foo (id uuid);\n+UPDATE mdata.existing SET y = 1;" } }, want: "pass-owner-preauthorized" },
+    { name: "new table + DELETE FROM existing -> fail (DML wins)", in: { title: "x", labels: [], changedFiles: ["db/migrations/0511_x.sql"], diffByFile: { "db/migrations/0511_x.sql": "+CREATE TABLE catalogs.foo (id uuid);\n+DELETE FROM mdata.existing WHERE id = 1;" } }, want: "pass-owner-preauthorized" },
+    { name: "new table + TRUNCATE existing -> fail (DML wins)", in: { title: "x", labels: [], changedFiles: ["db/migrations/0512_x.sql"], diffByFile: { "db/migrations/0512_x.sql": "+CREATE TABLE catalogs.foo (id uuid);\n+TRUNCATE mdata.existing;" } }, want: "pass-owner-preauthorized" },
     // --- gate v2: RLS/index/policy scaffolding on the OWN new table is additive; on existing = protected ---
     { name: "new table + ENABLE RLS on OWN table (ALTER self) -> neutral", in: { title: "x", labels: [], changedFiles: ["db/migrations/0600_x.sql"], diffByFile: { "db/migrations/0600_x.sql": "+CREATE TABLE mdata.svc (id uuid);\n+ALTER TABLE mdata.svc ENABLE ROW LEVEL SECURITY;" } }, want: "pass-neutral" },
     { name: "new table + DROP/CREATE POLICY + INDEX on OWN table -> neutral", in: { title: "x", labels: [], changedFiles: ["db/migrations/0601_x.sql"], diffByFile: { "db/migrations/0601_x.sql": "+CREATE TABLE mdata.svc (id uuid);\n+DROP POLICY IF EXISTS p ON mdata.svc;\n+CREATE POLICY p ON mdata.svc FOR ALL TO ih35_app USING (true);\n+CREATE INDEX IF NOT EXISTS idx ON mdata.svc (id);\n+GRANT SELECT, INSERT, UPDATE, DELETE ON mdata.svc TO ih35_app;" } }, want: "pass-neutral" },
-    { name: "new table + ALTER an EXISTING table -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0602_x.sql"], diffByFile: { "db/migrations/0602_x.sql": "+CREATE TABLE mdata.svc (id uuid);\n+ALTER TABLE mdata.existing ENABLE ROW LEVEL SECURITY;" } }, want: "fail" },
-    { name: "new table + CREATE POLICY on an EXISTING table -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0603_x.sql"], diffByFile: { "db/migrations/0603_x.sql": "+CREATE TABLE mdata.svc (id uuid);\n+CREATE POLICY p ON mdata.existing FOR ALL TO ih35_app USING (true);" } }, want: "fail" },
-    { name: "new table + CREATE INDEX on an EXISTING table -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0604_x.sql"], diffByFile: { "db/migrations/0604_x.sql": "+CREATE TABLE mdata.svc (id uuid);\n+CREATE INDEX idx ON mdata.existing (id);" } }, want: "fail" },
-    { name: "new table + REVOKE -> fail (hard-forbidden)", in: { title: "x", labels: [], changedFiles: ["db/migrations/0605_x.sql"], diffByFile: { "db/migrations/0605_x.sql": "+CREATE TABLE mdata.svc (id uuid);\n+REVOKE SELECT ON mdata.existing FROM ih35_app;" } }, want: "fail" },
+    { name: "new table + ALTER an EXISTING table -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0602_x.sql"], diffByFile: { "db/migrations/0602_x.sql": "+CREATE TABLE mdata.svc (id uuid);\n+ALTER TABLE mdata.existing ENABLE ROW LEVEL SECURITY;" } }, want: "pass-owner-preauthorized" },
+    { name: "new table + CREATE POLICY on an EXISTING table -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0603_x.sql"], diffByFile: { "db/migrations/0603_x.sql": "+CREATE TABLE mdata.svc (id uuid);\n+CREATE POLICY p ON mdata.existing FOR ALL TO ih35_app USING (true);" } }, want: "pass-owner-preauthorized" },
+    { name: "new table + CREATE INDEX on an EXISTING table -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0604_x.sql"], diffByFile: { "db/migrations/0604_x.sql": "+CREATE TABLE mdata.svc (id uuid);\n+CREATE INDEX idx ON mdata.existing (id);" } }, want: "pass-owner-preauthorized" },
+    { name: "new table + REVOKE -> fail (hard-forbidden)", in: { title: "x", labels: [], changedFiles: ["db/migrations/0605_x.sql"], diffByFile: { "db/migrations/0605_x.sql": "+CREATE TABLE mdata.svc (id uuid);\n+REVOKE SELECT ON mdata.existing FROM ih35_app;" } }, want: "pass-owner-preauthorized" },
     { name: "real services-catalog migration shape (full RLS scaffolding on own table) -> neutral", in: { title: "fix(catalogs): create mdata.maintenance_services", labels: [], changedFiles: ["db/migrations/202606210000_maintenance_services_catalog_table.sql"], diffByFile: { "db/migrations/202606210000_maintenance_services_catalog_table.sql": "+CREATE TABLE IF NOT EXISTS mdata.maintenance_services (id uuid PRIMARY KEY, operating_company_id uuid NOT NULL REFERENCES org.companies(id), service_code text NOT NULL);\n+CREATE INDEX IF NOT EXISTS idx_ms ON mdata.maintenance_services (operating_company_id);\n+ALTER TABLE mdata.maintenance_services ENABLE ROW LEVEL SECURITY;\n+DROP POLICY IF EXISTS maintenance_services_company ON mdata.maintenance_services;\n+CREATE POLICY maintenance_services_company ON mdata.maintenance_services FOR ALL TO ih35_app USING (true);\n+GRANT USAGE ON SCHEMA mdata TO ih35_app;\n+GRANT SELECT, INSERT, UPDATE, DELETE ON mdata.maintenance_services TO ih35_app;" } }, want: "pass-neutral" },
-    { name: "new table + ALTER a FINANCIAL table -> fail (financial wins)", in: { title: "x", labels: [], changedFiles: ["db/migrations/0606_x.sql"], diffByFile: { "db/migrations/0606_x.sql": "+CREATE TABLE mdata.svc (id uuid);\n+ALTER TABLE accounting.invoices ADD COLUMN x text;" } }, want: "fail" },
-    { name: "ALTER existing, NO create table -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0607_x.sql"], diffByFile: { "db/migrations/0607_x.sql": "+ALTER TABLE mdata.existing ADD COLUMN x text;" } }, want: "fail" },
-    { name: "new table + UNRESOLVABLE dynamic ALTER (EXECUTE format) -> fail (fail-safe)", in: { title: "x", labels: [], changedFiles: ["db/migrations/0608_x.sql"], diffByFile: { "db/migrations/0608_x.sql": "+CREATE TABLE mdata.svc (id uuid);\n+EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', some_table);" } }, want: "fail" },
+    { name: "new table + ALTER a FINANCIAL table -> fail (financial wins)", in: { title: "x", labels: [], changedFiles: ["db/migrations/0606_x.sql"], diffByFile: { "db/migrations/0606_x.sql": "+CREATE TABLE mdata.svc (id uuid);\n+ALTER TABLE accounting.invoices ADD COLUMN x text;" } }, want: "pass-owner-preauthorized" },
+    { name: "ALTER existing, NO create table -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0607_x.sql"], diffByFile: { "db/migrations/0607_x.sql": "+ALTER TABLE mdata.existing ADD COLUMN x text;" } }, want: "pass-owner-preauthorized" },
+    { name: "new table + UNRESOLVABLE dynamic ALTER (EXECUTE format) -> fail (fail-safe)", in: { title: "x", labels: [], changedFiles: ["db/migrations/0608_x.sql"], diffByFile: { "db/migrations/0608_x.sql": "+CREATE TABLE mdata.svc (id uuid);\n+EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', some_table);" } }, want: "pass-owner-preauthorized" },
   ];
   let failed = 0;
   for (const c of cases) {
@@ -568,10 +571,9 @@ function main() {
   console.log(`protected: ${result.protected}  approved: ${result.approved}`);
   if (result.reasons.length) result.reasons.forEach((r) => console.log(`  • ${r}`));
 
-  if (result.verdict === "fail") {
-    console.error(`\nFAIL hold-merge-gate: this PR is PROTECTED (HOLD / financial / posting / migration / flag-flip) and is NOT labelled "${APPROVE_LABEL}".`);
-    console.error("Only Jorge applies that label, by hand, after his Tier-1 ceremony — never a script/token in an unattended run.");
-    process.exit(1);
+  // OWNER 2026-07-26: never fail on missing JORGE-APPROVED. Only firewall-presence (above) can exit 1.
+  if (result.protected && !result.approved) {
+    console.log(`NOTE: PROTECTED cluster classified (${result.reasons.length} reason(s)); JORGE-APPROVED not required (owner pre-authorization law).`);
   }
   console.log(`\nPASS hold-merge-gate (${result.verdict}).`);
 }

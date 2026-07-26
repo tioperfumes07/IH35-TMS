@@ -1,8 +1,6 @@
-# HOLD-MERGE-GATE — root-cause control for the 2026-06-20 near-miss (a title-blind `gh pr merge` loop
-# merged 5 [HOLD-FOR-JORGE] PRs). This job goes RED on any HOLD / financial / posting / migration /
-# flag-flip PR unless the human label `JORGE-APPROVED` is present. Mark it a REQUIRED status check in
-# branch protection on `main` (see docs/specs/HOLD-MERGE-GATE.md) so a required red check physically
-# blocks merge — the merge button and `gh pr merge` both fail.
+# HOLD-MERGE-GATE — classifies financial/HOLD PRs; FAILS only if a held migration is introduced
+# without the db-migrate prod firewall. OWNER 2026-07-26: JORGE-APPROVED label is NO LONGER required
+# (questions answered at block invent — docs/specs/PRE-BLOCK-OWNER-QUESTIONS-LAW-2026-07-26.md).
 name: hold-merge-gate
 
 concurrency:
@@ -13,7 +11,7 @@ on:
   pull_request:
     types: [opened, reopened, synchronize, edited, labeled, unlabeled]
 
-# Re-run when the title/labels change (edited/labeled/unlabeled) so applying JORGE-APPROVED flips it green.
+# labeled/unlabeled kept for legacy; label no longer required to pass.
 permissions:
   contents: read
 
