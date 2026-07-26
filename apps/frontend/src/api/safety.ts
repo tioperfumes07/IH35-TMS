@@ -498,9 +498,17 @@ export function listDaEnrollments(companyId: string) {
 }
 
 export function getDriverDrugProgramStatus(driverId: string, companyId: string) {
-  return apiRequest<{ driver_id: string; is_blocked: boolean; block_reason: string | null; latest_test: Record<string, unknown> | null }>(
-    `/api/v1/safety/drug-program/drivers/${encodeURIComponent(driverId)}/drug-status?${q(companyId)}`
-  );
+  // COMP-01: is_blocked/block_reason now come from the unified D&A prohibition evaluator shared with
+  // the dispatch qualification gate (all three live result tables + the FMCSA Clearinghouse), not from
+  // the latest safety.drug_test row alone. `block_source` names which source grounded the driver.
+  return apiRequest<{
+    driver_id: string;
+    is_blocked: boolean;
+    block_reason: string | null;
+    block_source: string | null;
+    latest_test: Record<string, unknown> | null;
+    latest_test_is_blocking: boolean;
+  }>(`/api/v1/safety/drug-program/drivers/${encodeURIComponent(driverId)}/drug-status?${q(companyId)}`);
 }
 
 export function getDriverRtdCase(driverId: string, companyId: string) {

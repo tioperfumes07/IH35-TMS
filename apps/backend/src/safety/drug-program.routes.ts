@@ -5,6 +5,9 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { isBlockingDrugTestResult } from "./drug-program.shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+// COMP-01: one unified D&A prohibition source, shared with the dispatch qualification gate.
+import { evaluateDriverDrugAlcoholStatus } from "../dispatch/driver-qualification.service.js";
+import type { PoolClient } from "pg";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -481,11 +484,28 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
       );
       const latestTest = latestTestRes.rows[0] as { result?: string } | undefined;
       const result = String(latestTest?.result ?? "");
+
+      // COMP-01: this screen-facing status used to be `isBlockingDrugTestResult(latest safety.drug_test
+      // row)` and nothing else — no Clearinghouse, no safety.da_test_records, no
+      // compliance.drug_alcohol_test_results, and latest-row-only (so a later routine negative made an
+      // unresolved §382.501 prohibition disappear from the screen). Safety staff read this tile to
+      // decide whether a driver may run. It now comes from the SAME evaluator the dispatch
+      // qualification gate enforces with, so the screen and the gate cannot disagree.
+      const daStatus = await evaluateDriverDrugAlcoholStatus(client as unknown as PoolClient, {
+        driverId: params.data.driver_id,
+        operatingCompanyId: company.data.operating_company_id,
+      });
+
       return {
         driver_id: params.data.driver_id,
-        is_blocked: isBlockingDrugTestResult(result),
-        block_reason: isBlockingDrugTestResult(result) ? `drug_test_${result}` : null,
+        is_blocked: daStatus.is_blocked,
+        block_reason: daStatus.block_reason,
+        // Which live source grounded the driver — audit trail, null when not blocked.
+        block_source: daStatus.violation?.violation_source ?? (daStatus.is_blocked ? "safety.clearinghouse_query" : null),
+        // Retained for display parity with the previous payload: the latest own-company drug test and
+        // whether that single row is itself disqualifying. This is CONTEXT, never the verdict.
         latest_test: latestTest ?? null,
+        latest_test_is_blocking: isBlockingDrugTestResult(result),
       };
     });
 

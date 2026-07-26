@@ -1002,6 +1002,7 @@
     "1608": "1608-verify-mnt-econ-05-wo-save-header.mjs",
     "1609": "1609-verify-fuel-card-overage-driver-recovery.mjs",
     "1610": "1610-verify-acct-dom-02-subledger-gl-control-rec.mjs",
+    "1611": "1611-verify-comp01-drug-alcohol-unified-source.mjs",
     "1612": "1612-verify-healthz-no-raw-error-leak.mjs"
   },
   "_note": "CLAIMED verify-step numbers. Every PR adding a verify-step MUST add its number here IN THE SAME COMMIT. Two agents claiming the same number then CONFLICT IN GIT instead of silently agreeing and reddening main afterwards.",

@@ -160,6 +160,12 @@ async function countPendingDaDraws(client: DbClient, ociId: string): Promise<Cou
   // Pending drug/alcohol tests are tracked on safety.da_test_records.result = 'pending' (same migration),
   // which is exactly this KPI ("await test scheduling or completion"). The subject column here is
   // `driver_uuid` (verified on Neon prod), NOT `driver_id`.
+  //
+  // COMP-01-B (2026-07-26): the scoping predicate was `= $1::uuid`. On PROD this table's
+  // operating_company_id is TEXT (pg_attribute, verified this session) — unlike every sibling safety
+  // table — and Postgres has no text = uuid operator, so this query 42883'd at PLAN TIME on every
+  // call, with or without rows. The tableExists() guard above cannot see that: the table DOES exist.
+  // The KPI therefore never returned a count; it returned a 500. Cast to ::text, the real type.
   if (!(await tableExists(client, "safety.da_test_records"))) return { count: 0, soleDriverId: null };
   const res = await client.query(
     `
@@ -167,7 +173,7 @@ async function countPendingDaDraws(client: DbClient, ociId: string): Promise<Cou
              count(DISTINCT driver_uuid)::int AS distinct_drivers,
              (array_agg(DISTINCT driver_uuid) FILTER (WHERE driver_uuid IS NOT NULL))[1] AS sole_driver
       FROM safety.da_test_records
-      WHERE operating_company_id = $1::uuid
+      WHERE operating_company_id = $1::text
         AND result = 'pending'
     `,
     [ociId]
