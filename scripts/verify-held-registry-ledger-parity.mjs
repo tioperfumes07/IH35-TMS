@@ -53,6 +53,8 @@ export const EXPECTED_HELD = [
   // 202608070000 (escrow forfeit sign + flag seed) is NOT here any more: it was re-proved APPLIED on
   // prod, present in BOTH _system._schema_migrations and ih35_migrations.applied_migrations, so this
   // PR moves it to applied_held. It left the list the way the charter allows, not by weakening a check.
+  // SAFETY FINE-GL HOP (#3551) — genuinely unapplied on prod; owner Neon-applies then ledger-backfills.
+  "202608110000_safety_civil_fine_expense_gl_hop.sql",
   "202608120000_item5a_demo_purge_recursive_cascade.sql",
   // ACCT-R-03 account_merge_records (#3526). BUILD-AND-HOLD — not Neon-applied; must stay in held[]
   // until owner applies 202608060000 and GUARD re-proves the ledger row.

@@ -49,6 +49,13 @@ export const COA_ROLE_VALUES = [
   "abandonment_chargeback_recovery",
   // Settlement BillPayment DIP cash bridge (lane defect A / 202607760000): was legacy-bindings-only.
   "cash_dip",
+  // SAFETY FINE-GL HOP (migration 202608110000) — the COMPANY-PAID civil fine expense leg.
+  // Dr civil_fines_expense / Cr cash_clearing, posted by accounting/safety-fine-posting/poster.service.ts
+  // behind SAFETY_FINE_GL_POSTING_ENABLED (default OFF). Driver-recovery fines do NOT use this role —
+  // they flow to driver_finance.driver_liabilities + a settlement deduction.
+  // DELIBERATELY absent from ROLE_FALLBACKS below: a penalties/fines account must be DESIGNATED by the
+  // owner, never shape-matched by name or subtype, so this role fails CLOSED until designated.
+  "civil_fines_expense",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];
