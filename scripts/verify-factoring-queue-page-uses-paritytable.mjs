@@ -44,8 +44,15 @@ function assertMigrated(src) {
   if (!src.includes("No loads match the current filter.")) {
     errors.push(`${PAGE}: must keep the filter-empty copy`);
   }
-  if (!src.includes("/dispatch?view=loads&load_id=")) {
-    errors.push(`${PAGE}: must keep load deep-link into dispatch board`);
+  // C5 (2026-07-25) TIGHTENED, NOT WEAKENED. This asserted the literal string
+  // "/dispatch?view=loads&load_id=", pinning the query-param form. The intent — "the load cell
+  // must remain a working deep-link, not plain text" — is unchanged and is now satisfied by the
+  // shared canonical primitive, which is a stricter requirement than any hand-rolled URL.
+  if (!/<EntityLink[^>]*kind=["']load["']/.test(src)) {
+    errors.push(`${PAGE}: must keep the load deep-link — <EntityLink kind="load"> (/dispatch/loads/:id)`);
+  }
+  if (src.includes("/dispatch?view=loads&load_id=")) {
+    errors.push(`${PAGE}: must not deep-link the query-param form — canonical is /dispatch/loads/:id`);
   }
   if (!src.includes("/accounting/invoices/")) {
     errors.push(`${PAGE}: must keep invoice deep-link`);
@@ -71,7 +78,7 @@ function selftest() {
       { key: "invoice_display_id", label: "Invoice" },
     ];
     const emptyText = rows.length === 0 ? "No delivered loads in factoring queue." : "No loads match the current filter.";
-    <Link to={\`/dispatch?view=loads&load_id=\${row.load_id}\`} />
+    <EntityLink kind="load" id={row.load_id} label={row.load_number} />
     <Link to={\`/accounting/invoices/\${row.invoice_id}\`} />
     <ParityTable
       storageKey="dispatch-factoring-queue"

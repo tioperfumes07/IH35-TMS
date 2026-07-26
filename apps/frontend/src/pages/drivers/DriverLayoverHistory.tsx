@@ -3,6 +3,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { resolveApiUrl } from "../../api/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ListErrorState } from "../../components/ListErrorState";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 interface LayoverRow {
@@ -55,6 +56,22 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
   const rows = data?.data ?? [];
   const columns = useMemo<ParityColumn<LayoverRow>[]>(
     () => [
+      // C5 (L5) — a layover is BY DEFINITION the gap between two loads, and the endpoint has
+      // returned both ids all along (previous_load_uuid / next_load_uuid). Neither was ever
+      // rendered, so the surface that exists to explain "why was this driver idle" could not
+      // reach either load. Additive columns, canonical drill-through.
+      {
+        key: "previous_load_uuid",
+        label: "Previous load",
+        sortable: true,
+        render: (row) => <EntityLink kind="load" id={row.previous_load_uuid} label={row.previous_load_uuid?.slice(0, 8)} />,
+      },
+      {
+        key: "next_load_uuid",
+        label: "Next load",
+        sortable: true,
+        render: (row) => <EntityLink kind="load" id={row.next_load_uuid} label={row.next_load_uuid?.slice(0, 8) ?? "—"} />,
+      },
       {
         key: "layover_started_at",
         label: "Started",

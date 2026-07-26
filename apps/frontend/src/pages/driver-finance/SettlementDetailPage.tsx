@@ -132,6 +132,10 @@ export function SettlementDetailPage() {
 
   const earnings = lines.filter((line) => String(line.line_type) === "earnings").map((line) => ({
     id: String(line.id),
+    // C5 — the load was carried on the line and then dropped here, which is why the Earnings
+    // "Load" column had nothing but the line id to show.
+    load_id: typeof line.load_id === "string" ? line.load_id : null,
+    load_number: typeof line.load_number === "string" ? line.load_number : null,
     description: String(line.description ?? ""),
     miles: Number(line.miles ?? 0),
     rate: Number(line.rate ?? 0),
