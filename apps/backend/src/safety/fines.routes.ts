@@ -5,6 +5,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { createSettlementDeduction } from "../driver-finance/deductions.service.js";
+import { postCompanyPaidCivilFine } from "../accounting/safety-fine-posting/poster.service.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -679,6 +680,39 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
       return row;
     });
     if (!updated) return reply.code(404).send({ error: "fine_not_found" });
-    return updated;
+
+    // SAFETY FINE-GL HOP — the COMPANY-PAID leg. Linking a payment IS the moment the company eats the
+    // fine: real cash left the bank. Before this, that fine reached NO ledger at all — the driver-recovery
+    // treatment had a rail (convert-to-liability above) and the company-paid treatment had none.
+    //
+    // The poster is FLAG-GATED (SAFETY_FINE_GL_POSTING_ENABLED, default OFF => zero writes) and reuses
+    // the shared accounting.createJournalEntry poster + the role resolver. It refuses any fine carrying
+    // converted_to_liability_id (that is the driver's debt, not a company expense).
+    //
+    // Posting runs AFTER the fine row is committed and NEVER fails the payment link: the operational
+    // record of the payment must survive even if the ledger leg is unresolvable (e.g. the owner has not
+    // designated civil_fines_expense yet). The outcome is returned so the caller can see it, and any
+    // error is surfaced on the response rather than swallowed silently.
+    let expensePosting: Record<string, unknown>;
+    try {
+      expensePosting = await postCompanyPaidCivilFine({
+        operating_company_id: query.data.operating_company_id,
+        fine_id: params.data.id,
+        entry_date_iso: body.data.paid_date,
+        actor_user_id: user.uuid,
+      });
+    } catch (error) {
+      req.log.error(
+        { err: error, fine_id: params.data.id, operating_company_id: query.data.operating_company_id },
+        "civil fine company-paid GL posting failed (payment link itself succeeded)"
+      );
+      expensePosting = {
+        posted: false,
+        reason: "posting_error",
+        message: error instanceof Error ? error.message : String(error),
+      };
+    }
+
+    return { ...updated, expense_posting: expensePosting };
   });
 }
