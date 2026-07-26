@@ -1,6 +1,6 @@
 {
   "_comment": "0519-ri1(a) orphan-FK inventory ratchet. Regenerate: UPDATE_ORPHAN_FK_BASELINE=1. Adding real FK constraints is owner-gated (db-integrity-hardening-0519).",
-  "count": 758,
+  "count": 759,
   "keys": [
     "0001_audit_init.sql::actor_user_uuid",
     "0003_outbox_init.sql::aggregate_id",
@@ -759,6 +759,7 @@
     "202607920000_qbo_ar_payments_inbound_mirror.sql::payment_method_qbo_id",
     "202607920000_qbo_ar_payments_inbound_mirror.sql::qbo_id",
     "202608000000_payment_terms_posting_templates_per_entity.sql::operating_company_id",
-    "202608000000_payment_terms_posting_templates_per_entity.sql::operating_company_id#2"
+    "202608000000_payment_terms_posting_templates_per_entity.sql::operating_company_id#2",
+    "202608080000_acct_link_02_accounts_detail_type_fk.sql::detail_type_id"
   ]
 }

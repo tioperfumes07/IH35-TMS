@@ -186,7 +186,7 @@ function runSelftest() {
       name: "regression: held registration removed",
       mutate: (i) => ({
         ...i,
-        heldRegistryJson: i.heldRegistryJson.replace("202607690000_bank_tx_capture_fields.sql", "0000_gone.sql"),
+        heldRegistryJson: i.heldRegistryJson.replaceAll("202607690000_bank_tx_capture_fields.sql", "0000_gone.sql"),
       }),
       expectPass: false,
     },

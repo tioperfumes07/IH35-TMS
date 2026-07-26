@@ -292,5 +292,14 @@
     "reason": "LIVE RENDER OUTAGE 2026-07-25: owner Neon-applied this file at 21:55 UTC (checksum d709ac50… on _system._schema_migrations), then the committed on-disk body diverged to 8429d949… (only git history version). db:migrate pre_deploy fails with \"modified after apply\" and blocks every subsequent deploy including #3553 fleet RETURNING fix. File remains in the held-registry skip set so it is never re-applied; accept historical ledger↔disk drift. Never edit an applied migration.",
     "added_at": "2026-07-25",
     "added_in_pr": "DEPLOY-UNBLOCK-MEXICO-790"
+  },
+  {
+    "filename": "202608080000_acct_link_02_accounts_detail_type_fk.sql",
+    "ledger_checksum": "4d66df412a4164b9e2c7b54b8d93c714b6f2557792884d9d1af9ee962e21bc39",
+    "disk_checksum": "49ec6c6c2af2bb62e8ac8ab10d260059ac90951ca4bbb2e886d7b60a123154f7",
+    "reason": "LINK-02 owner WIRE unlock: added DETAIL_TYPES_FK_OWNER_UNLOCK comment after Neon apply (ledger 4d66df41… @ 2026-07-25T22:15:16Z). Comment-only drift; do not re-apply. Never edit applied DDL again.",
+    "added_at": "2026-07-25",
+    "added_in_pr": "LINK-02-OWNER-UNLOCK-COMMENT"
   }
 ]
+

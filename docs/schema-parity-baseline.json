@@ -458,6 +458,7 @@
       "load_id",
       "load_required",
       "opened_at",
+      "operating_company_id",
       "outcome",
       "parent_line_uuid",
       "part_location_codes",
@@ -474,8 +475,7 @@
       "service_item_uuid",
       "severity",
       "violation_type_id",
-      "violation_type_uuid",
-      "operating_company_id"
+      "violation_type_uuid"
     ],
     "accounting.expenses": [
       "created_at",
@@ -1981,6 +1981,7 @@
       "created_by_user_id",
       "currency_code",
       "deactivated_at",
+      "detail_type_id",
       "id",
       "idempotency_key",
       "is_billable_expense",
@@ -2133,10 +2134,10 @@
       "id",
       "is_active",
       "label",
+      "operating_company_id",
       "severity",
       "updated_at",
-      "updated_by_user_id",
-      "operating_company_id"
+      "updated_by_user_id"
     ],
     "catalogs.dot_violation_types": [
       "basic_category",
@@ -2243,6 +2244,9 @@
       "rows_total",
       "started_at",
       "status"
+    ],
+    "catalogs.expense_categories": [
+      "operating_company_id"
     ],
     "catalogs.file_categories": [
       "applies_to",
@@ -10175,9 +10179,6 @@
       "template_name",
       "to_phone",
       "variables"
-    ],
-    "catalogs.expense_categories": [
-      "operating_company_id"
     ]
   }
 }
