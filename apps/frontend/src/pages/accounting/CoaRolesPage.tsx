@@ -48,6 +48,7 @@ const ROLE_LABELS: Record<CoaRole, string> = {
   abandonment_chargeback_recovery: "Abandonment chargeback recovery",
   cash_dip: "Cash DIP (operating)",
   civil_fines_expense: "Civil fines & penalties",
+  maintenance_parts_expense: "Maintenance parts expense",
 };
 
 export function CoaRolesPage() {
