@@ -51,7 +51,7 @@ export function DriversReferenceCatalogModal({ open, displayName, client, onClos
   }
 
   return (
-    <Modal open={open} title={`Create ${displayName}`} onClose={onClose}>
+    <Modal variant="drawer" open={open} title={`Create ${displayName}`} onClose={onClose}>
       <div className="space-y-3">
         <label className="block text-sm">
           <span className="mb-1 block text-xs font-medium text-slate-600">Code</span>

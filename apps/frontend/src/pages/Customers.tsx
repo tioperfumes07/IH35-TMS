@@ -637,7 +637,7 @@ export function CustomersPage() {
         </main>
       </div>
       )}
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create Customer" modalKind="customer-create" sizePreset="xl">
+      <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Create Customer" modalKind="customer-create" sizePreset="xl">
         <form
           className="space-y-3"
           onSubmit={(event) => {

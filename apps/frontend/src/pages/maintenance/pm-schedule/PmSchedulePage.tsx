@@ -189,6 +189,7 @@ export function PmSchedulePage() {
       </div>
 
       <Modal
+        variant="drawer"
         open={formOpen}
         title="Create PM Schedule"
         onClose={() => {

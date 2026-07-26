@@ -347,7 +347,7 @@ export function TireProgramPage() {
         </div>
       )}
 
-      <Modal open={mountOpen} onClose={() => setMountOpen(false)} title="+ Create Tire Record">
+      <Modal variant="drawer" open={mountOpen} onClose={() => setMountOpen(false)} title="+ Create Tire Record">
         <div className="space-y-3 text-sm">
           <label className="block text-xs">
             Position
@@ -412,7 +412,7 @@ export function TireProgramPage() {
         </div>
       </Modal>
 
-      <Modal open={brandOpen} onClose={() => setBrandOpen(false)} title="+ Create Brand">
+      <Modal variant="drawer" open={brandOpen} onClose={() => setBrandOpen(false)} title="+ Create Brand">
         <div className="space-y-3 text-sm">
           <label className="block text-xs">
             Brand name

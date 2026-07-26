@@ -195,7 +195,7 @@ export function DriverLoadStatusesPage() {
         </div>
       )}
 
-      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Create Driver Load Status">
+      <Modal variant="drawer" open={addOpen} onClose={() => setAddOpen(false)} title="Create Driver Load Status">
         <StatusForm
           form={createForm}
           setForm={setCreateForm}

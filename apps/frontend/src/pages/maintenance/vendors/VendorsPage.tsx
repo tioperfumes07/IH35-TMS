@@ -252,7 +252,7 @@ export function VendorsPage() {
         />
       </div>
 
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create Vendor">
+      <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Create Vendor">
         <div className="space-y-2">
           <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="Display name" value={draft.display_name} onChange={(e) => setDraft((p) => ({ ...p, display_name: e.target.value }))} />
           <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="Code (optional)" value={draft.code} onChange={(e) => setDraft((p) => ({ ...p, code: e.target.value.toUpperCase() }))} />

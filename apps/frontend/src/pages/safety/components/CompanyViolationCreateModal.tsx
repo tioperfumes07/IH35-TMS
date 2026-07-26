@@ -86,7 +86,7 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
   });
 
   return (
-    <Modal open={open} onClose={onClose} title="Create Company Violation">
+    <Modal variant="drawer" open={open} onClose={onClose} title="Create Company Violation">
       <form
         className="space-y-3"
         data-testid="company-violation-create-modal"

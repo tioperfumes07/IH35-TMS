@@ -276,7 +276,7 @@ function TerminationReasonModal({ open, initialRow, conflictError, saving, onClo
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={isEdit ? "Edit Termination Reason" : "Create Termination Reason"}>
+    <Modal variant="drawer" open={open} onClose={onClose} title={isEdit ? "Edit Termination Reason" : "Create Termination Reason"}>
       <div className="space-y-3">
         <label className="block text-xs font-semibold text-gray-600">
           Code

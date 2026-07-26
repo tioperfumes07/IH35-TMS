@@ -118,7 +118,7 @@ export function CompanyViolationTypeModal({ open, companyId, row, onClose, onSav
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={isEdit ? "Edit Company Violation Type" : "Create Company Violation Type"}>
+    <Modal variant="drawer" open={open} onClose={onClose} title={isEdit ? "Edit Company Violation Type" : "Create Company Violation Type"}>
       <div className="space-y-3">
         <label className="block text-xs font-semibold text-gray-600">
           Type Code
