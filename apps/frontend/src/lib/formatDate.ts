@@ -68,5 +68,54 @@ export function formatDateTimeUS(value: string | number | Date | null | undefine
   });
 }
 
+/**
+ * Format a `<input type="datetime-local">`-shaped LOCAL WALL-CLOCK string
+ * ("YYYY-MM-DDTHH:mm") as "MM/DD/YYYY, h:mm AM/PM" for display (C3 / DateTimePicker).
+ *
+ * This is NOT `formatDateTimeUS`. That one takes an *instant* (an ISO timestamp with a zone, or a
+ * Date) and renders it in America/Chicago. This one takes a string that has NO zone — it is the
+ * wall-clock time the operator typed. Feeding it to `new Date()` and re-projecting it into Central
+ * would shift the displayed time for any user whose browser is not already Central: a dispatcher on
+ * Pacific entering 08:00 would see it read back as 10:00. So, exactly like `formatDateUS`, we parse
+ * the calendar/clock parts directly and never construct a Date.
+ *
+ * Returns "" for empty/unparseable input so callers can render a blank field instead of "Invalid Date".
+ */
+export function formatDateTimeLocalUS(value: unknown): string {
+  if (typeof value !== "string" || value === "") return "";
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(value);
+  if (!m) return "";
+  const [, y, mo, d, hhRaw, mi] = m;
+  const hh = Number(hhRaw);
+  if (Number.isNaN(hh) || hh > 23) return "";
+  const suffix = hh < 12 ? "AM" : "PM";
+  const hour12 = hh % 12 === 0 ? 12 : hh % 12;
+  return `${mo}/${d}/${y}, ${hour12}:${mi} ${suffix}`;
+}
+
+/**
+ * Convert an ISO instant ("2026-07-25T14:30:00.000Z") to the local wall-clock "YYYY-MM-DDTHH:mm"
+ * shape that `<DateTimePicker>` (and a native datetime-local input) takes as its value.
+ *
+ * Used where state already holds an ISO instant and the picker needs the operator's wall clock —
+ * e.g. the audit-log filters, whose Reset button clears the ISO state. Deriving the picker's value
+ * from that state instead of mirroring it in a second local state is what keeps Reset working.
+ *
+ * Round-trips exactly with `new Date(localValue).toISOString()`. Returns "" for empty/unparseable
+ * input so an empty filter stays empty.
+ */
+export function isoToDateTimeLocalValue(value: string | number | Date | null | undefined): string {
+  if (value === null || value === undefined || value === "") return "";
+  const dt = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(dt.getTime())) return "";
+  return (
+    `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}` +
+    `T${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`
+  );
+}
+
 // The placeholder every date input should show. Single source of truth so the CI guard can assert it.
 export const DATE_PLACEHOLDER_US = "MM/DD/YYYY";
+
+// The placeholder every date+time input should show. Mirrors DATE_PLACEHOLDER_US.
+export const DATETIME_PLACEHOLDER_US = "MM/DD/YYYY, --:-- --";

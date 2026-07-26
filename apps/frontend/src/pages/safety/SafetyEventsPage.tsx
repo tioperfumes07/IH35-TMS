@@ -9,6 +9,7 @@ import {
   type SafetyEventLogRow,
 } from "../../api/safety";
 import { Modal } from "../../components/Modal";
+import { DateTimePicker } from "../../components/forms/DateTimePicker";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useListState } from "../../components/list-state";
 import { useSafetyUiContext } from "./SafetyLayout";
@@ -436,13 +437,11 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
         <div className="grid gap-2 sm:grid-cols-2" data-testid="safety-event-log-modal">
           <label className="flex flex-col gap-0.5 text-[10px] font-semibold uppercase text-gray-600 sm:col-span-2">
             Time of occurrence
-            <input
-              type="datetime-local"
+            <DateTimePicker
+              aria-label="Time of occurrence"
               value={toDatetimeLocalValue(draft.occurred_at)}
-              onChange={(event) =>
-                setDraft((prev) => ({ ...prev, occurred_at: fromDatetimeLocalValue(event.target.value) }))
-              }
-              className="rounded-sm border border-gray-300 px-2 py-1 text-xs font-normal normal-case"
+              onChange={(v) => setDraft((prev) => ({ ...prev, occurred_at: fromDatetimeLocalValue(v) }))}
+              className="font-normal normal-case"
               data-testid="safety-event-occurred-at"
             />
           </label>

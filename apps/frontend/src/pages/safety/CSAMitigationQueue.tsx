@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { useAuth } from "../../auth/useAuth";
@@ -140,7 +141,7 @@ export function CSAMitigationQueuePage() {
       sortable: true,
       render: (row) => (
         <>
-          {row.due_date}
+          {formatDateUS(row.due_date)}
           <div className="text-[10px] text-slate-500">{row.days_until_due} days</div>
         </>
       ),

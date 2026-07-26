@@ -29,6 +29,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
 import { useToast } from "../../components/Toast";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { formatDateUS } from "../../lib/formatDate";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 /** Matches apps/backend/src/maintenance/wo-oos-estimator.ts DEFAULT_DAILY_LOSS_CENTS */
@@ -86,7 +87,7 @@ const LINKED_BILL_COLUMNS: Array<ParityColumn<LinkedBillRow>> = [
     sortValue: (row) => row.bill_number || row.id,
     render: (row) => <EntityLink kind="bill" id={row.id} label={row.bill_number || row.id.slice(0, 8)} />,
   },
-  { key: "bill_date", label: "Date", sortable: true, render: (row) => row.bill_date || "—" },
+  { key: "bill_date", label: "Date", sortable: true, render: (row) => formatDateUS(row.bill_date) || "—" },
   { key: "status", label: "Status", sortable: true, render: (row) => row.status || "—" },
   {
     key: "amount_cents",
@@ -109,7 +110,7 @@ const LINKED_EXPENSE_COLUMNS: Array<ParityColumn<LinkedExpenseTableRow>> = [
     sortable: true,
     render: (row) => row.expense_link,
   },
-  { key: "transaction_date", label: "Date", sortable: true, render: (row) => row.transaction_date || "—" },
+  { key: "transaction_date", label: "Date", sortable: true, render: (row) => formatDateUS(row.transaction_date) || "—" },
   { key: "status", label: "Status", sortable: true, render: (row) => row.status || "—" },
   {
     key: "total_amount_cents",

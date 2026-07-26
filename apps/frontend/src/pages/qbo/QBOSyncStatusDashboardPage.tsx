@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatDateTimeUS } from "../../lib/formatDate";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -351,7 +352,7 @@ export function QBOSyncStatusDashboardPage() {
                 <li key={a.id} className="rounded-sm border border-amber-100 bg-amber-50/60 p-2">
                   <div className="font-semibold text-amber-950">{a.severity}</div>
                   <div className="text-gray-800">{a.message ?? "—"}</div>
-                  <div className="text-[10px] text-gray-500">{a.created_at}</div>
+                  <div className="text-[10px] text-gray-500">{formatDateTimeUS(a.created_at)}</div>
                   <Button className="mt-1" size="sm" onClick={() => ackMut.mutate(a.id)}>
                     Acknowledge
                   </Button>

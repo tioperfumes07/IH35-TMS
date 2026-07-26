@@ -1578,7 +1578,7 @@ export function CustomerDetailPage() {
               {qualityEvents.map((event) => (
                 <div key={event.id} className={`rounded-sm border px-3 py-2 ${event.voided_at ? "border-gray-200 bg-gray-50 text-gray-500" : "border-gray-300 bg-white"}`}>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-[11px]">{event.event_date}</span>
+                    <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-[11px]">{formatDateUS(event.event_date)}</span>
                     <StatusBadge variant={event.severity === "severe" ? "crit" : event.severity === "warning" ? "warn" : "info"}>{event.severity}</StatusBadge>
                     <span className="text-xs uppercase tracking-wide">{event.event_type.replaceAll("_", " ")}</span>
                     {event.dollar_impact_amount ? <strong className="text-sm">${Number(event.dollar_impact_amount).toFixed(2)}</strong> : null}
@@ -2100,7 +2100,7 @@ export function CustomerDetailPage() {
                   ) : null
                 }
                 columns={[
-                  { key: "date", label: "Date", sortable: true, render: (p) => p.date },
+                  { key: "date", label: "Date", sortable: true, render: (p) => formatDateUS(p.date) },
                   { key: "amount_cents", label: "Amount", sortable: true, cellClass: "text-right tabular-nums", render: (p) => formatCurrencyCents(p.amount_cents) },
                   { key: "source_kind", label: "Method", sortable: true, render: (p) => p.source_kind ?? "—" },
                   {
@@ -2187,7 +2187,7 @@ export function CustomerDetailPage() {
                   {recentInvoices.map((invoice) => (
                     <tr key={invoice.id} className="cursor-pointer border-b border-gray-100 hover:bg-gray-50" onClick={() => navigate(`/accounting/invoices/${invoice.id}`)}>
                       <td className="px-2 py-1.5 text-gray-900" onClick={(e) => e.stopPropagation()}><EntityLink kind="invoice" id={invoice.id} label={invoice.display_id} /></td>
-                      <td className="px-2 py-1.5 text-gray-700">{invoice.issue_date}</td>
+                      <td className="px-2 py-1.5 text-gray-700">{formatDateUS(invoice.issue_date)}</td>
                       <td className="px-2 py-1.5 text-gray-700">{invoice.status}</td>
                       <td className="px-2 py-1.5 text-gray-700">{(Number(invoice.total_cents ?? 0) / 100).toFixed(2)}</td>
                       <td className="px-2 py-1.5 text-gray-700">{(Number(invoice.amount_open_cents ?? 0) / 100).toFixed(2)}</td>

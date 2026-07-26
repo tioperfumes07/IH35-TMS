@@ -1,4 +1,5 @@
 import type { PortOfEntry, WizardFormState } from "./borderCrossingApi";
+import { formatDateTimeLocalUS } from "../../lib/formatDate";
 
 type Props = {
   form: WizardFormState;
@@ -27,7 +28,7 @@ export function WizardStep6({ form, ports, result }: Props) {
         </div>
         <div>
           <dt className="text-gray-500">Planned date</dt>
-          <dd>{form.plannedDate || "—"}</dd>
+          <dd>{formatDateTimeLocalUS(form.plannedDate) || "—"}</dd>
         </div>
         <div>
           <dt className="text-gray-500">Commodity</dt>
