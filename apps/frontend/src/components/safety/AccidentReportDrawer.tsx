@@ -1,4 +1,4 @@
-import type { JSX } from "react";
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -220,8 +220,16 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
         <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-2">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">Accident Damage Details</div>
           <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+            {/* SAF-B04 / C9-NOT-PERSISTED: `safety.accident_reports` has no `record_type` and no
+                `service_type` column, and the office creator (POST/PATCH /api/v1/safety/accidents,
+                CreateAccidentInput/PatchAccidentInput in api/safety.ts) accepts neither. These two
+                selects were LIVE-looking with a hardcoded value and `onChange={() => {}}`: every
+                report filed as Accident/Repair no matter what the safety officer picked, with no
+                warning. Until the owner applies the column they are rendered inert and say so —
+                never a value flattened into a jsonb memo (that is class C13). */}
             <Field label="Record Type *">
               <Combobox
+                disabled
                 options={[
                   { value: "accident", label: "Accident" },
                   { value: "damage", label: "Damage" },
@@ -230,9 +238,12 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                 value={"accident"}
                 onChange={() => {}}
               />
+              <NotStoredYet reason="Record Type is not stored yet — safety.accident_reports has no record_type column." />
             </Field>
             <Field label="Service Type">
+              {/* C9-NOT-PERSISTED: no `service_type` column on safety.accident_reports. */}
               <Combobox
+                disabled
                 options={[
                   { value: "repair", label: "Repair" },
                   { value: "replacement", label: "Replacement" },
@@ -241,6 +252,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                 value={"repair"}
                 onChange={() => {}}
               />
+              <NotStoredYet reason="Service Type is not stored yet — safety.accident_reports has no service_type column." />
             </Field>
 
             <Field label="Incident Date *">
@@ -252,12 +264,18 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
               />
             </Field>
             <Field label="Report Date">
+              {/* C9-NOT-PERSISTED: safety.accident_reports has no `report_date` column and neither
+                  CreateAccidentInput nor PatchAccidentInput carries one. B9 already documented this
+                  as display-only, but it still rendered as a live calendar the operator could set —
+                  so the value looked captured and was dropped on save. Inert until the column lands. */}
               <DatePicker
+                disabled
                 className="h-8 w-full rounded-sm border border-gray-300 px-2"
                 data-testid="accident-report-date"
                 value={reportDate}
                 onChange={setReportDate}
               />
+              <NotStoredYet reason="Report Date is display-only — it is not stored on the accident report." />
             </Field>
 
             <Field label="Driver">
@@ -497,11 +515,26 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
             />
           </div>
         ) : null}
+        {/* SAF-B04 / C9-NOT-PERSISTED: the cost-line editor and its tax rate rendered a full,
+            editable parts-and-labour grid with a running Accident Total — and NONE of it reached
+            linkPayload/saveAccident. safety.accident_reports carries no cost lines and no tax rate
+            (it has no line table at all), so an estimator could price an accident, watch the total
+            add up, press save, and lose every line with no warning. Until the owner applies the
+            cost-line table this is read-only and says where the money actually belongs: the WO
+            spawned by "Spawn WO" (source type AC) already has real, posted cost lines. */}
         <div className="mt-3">
-          <TwoSectionLineEditor mode="expense" onChange={setCostLines} partsLaborMode="parts-and-labor" />
+          <NotStoredYet reason="Accident cost lines are not stored on the report yet — use “Spawn WO” and price the work order, which posts to the ledger." />
+          <TwoSectionLineEditor readOnly mode="expense" onChange={setCostLines} partsLaborMode="parts-and-labor" />
         </div>
         <div className="mt-2">
-          <TotalsStack subtotal={subtotal} taxRate={taxRate} onTaxRateChange={setTaxRate} grandLabel="Accident Total = A + B" />
+          {/* C9-NOT-PERSISTED: no tax-rate column on the accident report; the WO carries the tax. */}
+          <TotalsStack
+            subtotal={subtotal}
+            taxRate={taxRate}
+            taxRateMode="readonly"
+            onTaxRateChange={setTaxRate}
+            grandLabel="Accident Total = A + B (estimate only — not stored)"
+          />
         </div>
         </div>
       </ParityDrawer>
@@ -509,11 +542,25 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
   );
 }
 
-function Field({ label, children, className }: { label: string; children: JSX.Element; className?: string }) {
+function Field({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
   return (
     <div className={`space-y-1 ${className ?? ""}`}>
       <label className="text-[10px] font-semibold uppercase text-gray-600">{label}</label>
       {children}
     </div>
+  );
+}
+
+/**
+ * C9 (DoD-B): the honest rendering of a field that has nowhere to land yet. A control the operator
+ * can fill and the save silently drops is the worst UI class in the product — it fabricates an
+ * evidence record. Until the owner applies the column, the control is inert and the reason is on
+ * screen, so nobody believes they captured something they did not.
+ */
+function NotStoredYet({ reason }: { reason: string }) {
+  return (
+    <p className="text-[10px] leading-tight text-slate-500" data-testid="c9-not-stored-yet">
+      {reason}
+    </p>
   );
 }

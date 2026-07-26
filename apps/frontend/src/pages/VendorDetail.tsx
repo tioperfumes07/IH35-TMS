@@ -1003,6 +1003,11 @@ export function VendorDetailPage() {
                   </p>
                   {billPayManualInvalid ? <p className="mt-1 text-red-600">Total applied cannot exceed payment amount.</p> : null}
                   <div className="mt-2 max-h-48 space-y-1 overflow-y-auto">
+                    {/* C9-NOT-PERSISTED: a disabled BillSelect kept as the section's affordance label —
+                        the real selection is the per-bill checkbox list rendered directly below, whose
+                        state (billPayInclude / billPayAmounts) IS what the payment payload carries.
+                        Already inert, so nothing the operator does here is discarded; it is annotated
+                        so the no-op handler cannot be mistaken for a wiring miss. */}
                     <BillSelect operatingCompanyId={companyId} vendorId={id} value={null} onChange={() => undefined} disabled />
                     {openBillsForPay.length === 0 ? <p className="text-gray-500">No open bills.</p> : null}
                     {openBillsForPay.map((b) => (

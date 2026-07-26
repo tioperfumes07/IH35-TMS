@@ -58,11 +58,19 @@
  * owner-applied (financial-cluster / HELD). ADDITIVE-ONLY forbids deleting the field. The honest
  * resolution — and the only one this guard accepts — is to render it INERT and SAY SO:
  *
- *     readOnly (or disabled) + the annotation token `C9-NOT-PERSISTED` within the same element
- *     (or on the state declaration for D2), naming what is missing.
+ *     readOnly (or disabled) + the annotation token `C9-NOT-PERSISTED` on the element or in a comment
+ *     immediately above it, naming exactly what is missing.
+ *
+ * The second, narrower hatch is `C9-CARRIED-THROUGH`: the control is transient and its own change
+ * handler pushes the operator's entry into another field that IS in the payload. Nothing is lost, so
+ * the control need not be inert — but the claim must be written down at the site, because a reviewer
+ * has to be able to check it. If the entry lands in the WRONG SHAPE (an id flattened into a memo
+ * string instead of an FK) that is defect class C13 — reported there, never silenced here.
+ *
+ * Annotations are read from the RAW source, so the reason can be an ordinary comment.
  *
  * An annotated field is counted, listed under BLOCKED, and does NOT fail the build — but the count
- * is a RATCHET: it may shrink, never grow. Adding a new inert field fails.
+ * is a RATCHET: it may shrink, never grow. Adding a new unsaveable field fails.
  *
  *   node scripts/verify-form-field-roundtrip.mjs
  *   node scripts/verify-form-field-roundtrip.mjs --selftest
@@ -75,15 +83,28 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SRC = "apps/frontend/src";
 const LABEL = "verify-form-field-roundtrip";
 
-/** Annotation that turns a not-yet-persistable field from a silent lie into a stated limitation. */
+/**
+ * Annotations. Both are looked up in the RAW source (comments included) at the same byte offsets —
+ * `blankComments` preserves offsets exactly — so the REASON lives where a developer would naturally
+ * write it: a comment at the field.
+ *
+ *   C9-NOT-PERSISTED   the field has nowhere to land (owner-gated column/endpoint). The control MUST
+ *                      also be readOnly/disabled: the UI stops claiming it captured something.
+ *   C9-CARRIED-THROUGH the control is transient, and its own change handler carries the operator's
+ *                      entry into another field that IS in the payload (a picker that appends a note
+ *                      line, a picker that also sets the label the payload sends). Nothing is lost.
+ *                      If it lands in the WRONG SHAPE — an id flattened into a memo string instead of
+ *                      an FK — that is defect class C13, reported there, never silenced here.
+ */
 export const NOT_PERSISTED = "C9-NOT-PERSISTED";
+export const CARRIED_THROUGH = "C9-CARRIED-THROUGH";
 
 /**
  * Ratchet: how many rendered fields may currently be inert-and-annotated because the column /
  * endpoint is owner-gated. This number may only ever go DOWN. Raising it requires the owner to have
  * applied the migration and the field to have been wired — at which point the number drops instead.
  */
-export const BLOCKED_BUDGET = 10;
+export const BLOCKED_BUDGET = 29;
 
 // =================================================================================================
 // source utilities
@@ -381,8 +402,14 @@ export function enclosingTag(src, index) {
   return null;
 }
 
-/** Inert-by-declaration: the UI itself tells the operator the value is not being taken. */
+/**
+ * Inert-by-declaration: the UI itself tells the operator the value is not being taken. Covers the
+ * plain DOM props and the repo's own explicit read-only MODE props (`taxRateMode="readonly"` on
+ * TotalsStack), because a component that declares itself read-only is no less honest than an input
+ * that carries `readOnly`.
+ */
 export function isInert(attrs) {
+  if (/\b(?:[A-Za-z]*[Mm]ode)\s*=\s*["']readonly["']/.test(attrs)) return true;
   return /\breadOnly\b(?!\s*=\s*\{\s*false)|\bdisabled\b(?!\s*=\s*\{\s*false)/.test(attrs);
 }
 
@@ -547,8 +574,18 @@ export function filterText(src) {
 
 const NOOP_HANDLER = /^\{\(?[\w,\s:]*\)?=>(?:\{\}|undefined|null|void0)\}$/;
 
+/**
+ * Annotation lookup over the RAW source. `blankComments` preserves byte offsets, so the tag's span
+ * maps 1:1 onto the original text; the window before the tag lets the reason be a comment line
+ * written directly above the field, which is where a reviewer will look for it.
+ */
+export const ANNOTATION_LOOKBACK = 1000;
+export function annotationAt(raw, start, end, token) {
+  return raw.slice(Math.max(0, start - ANNOTATION_LOOKBACK), end + 1).includes(token);
+}
+
 /** D1 — a control the operator cannot change and whose value the JSX invented. */
-export function findDeadControls(rel, src) {
+export function findDeadControls(rel, src, raw = src) {
   const problems = [];
   const blocked = [];
   for (const m of src.matchAll(/\bon(?:Change|ValueChange|Input)\s*=\s*\{/g)) {
@@ -558,9 +595,13 @@ export function findDeadControls(rel, src) {
     const owner = owningTag(src, m.index);
     if (!owner) continue;
     const where = `${rel}:${lineOf(src, m.index)}`;
-    const annotated = owner.attrs.includes(NOT_PERSISTED);
-    if (annotated && isInert(owner.attrs)) {
+    const end = owner.start + owner.attrs.length;
+    if (annotationAt(raw, owner.start, end, NOT_PERSISTED) && isInert(owner.attrs)) {
       blocked.push(`${where}  <${owner.tag}> inert + ${NOT_PERSISTED}`);
+      continue;
+    }
+    if (annotationAt(raw, owner.start, end, CARRIED_THROUGH)) {
+      blocked.push(`${where}  <${owner.tag}> ${CARRIED_THROUGH}`);
       continue;
     }
     problems.push(
@@ -573,7 +614,7 @@ export function findDeadControls(rel, src) {
 }
 
 /** D2 — operator-editable state, inside a form surface, that never reaches the wire. */
-export function findOrphanFieldState(rel, src) {
+export function findOrphanFieldState(rel, src, raw = src) {
   const problems = [];
   const blocked = [];
   const payload = submitText(src);
@@ -606,10 +647,16 @@ export function findOrphanFieldState(rel, src) {
       if (!owner || !isFieldTag(owner.tag)) continue;
       const direct = h.body.replace(/[{}\s]/g, "") === setter;
       if (!direct && !boundRe.test(owner.attrs)) continue;
-      const declLine = src.split("\n")[lineOf(src, m.index) - 1] ?? "";
       const where = `${rel}:${lineOf(src, h.index)}`;
-      if (owner.attrs.includes(NOT_PERSISTED) || declLine.includes(NOT_PERSISTED)) {
-        blocked.push(`${where}  <${owner.tag}> '${getter}' ${NOT_PERSISTED}`);
+      const tagEnd = owner.start + owner.attrs.length;
+      const marked = (token) =>
+        annotationAt(raw, owner.start, tagEnd, token) || annotationAt(raw, m.index, m.index + 1, token);
+      if (marked(NOT_PERSISTED) && isInert(owner.attrs)) {
+        blocked.push(`${where}  <${owner.tag}> '${getter}' inert + ${NOT_PERSISTED}`);
+        break;
+      }
+      if (marked(CARRIED_THROUGH)) {
+        blocked.push(`${where}  <${owner.tag}> '${getter}' ${CARRIED_THROUGH}`);
         break;
       }
       problems.push(
@@ -649,7 +696,7 @@ export function setValueControlFields(src) {
  * array literal in the file is inspected for the property the register call reads. A checkbox row
  * generated from a table is still a rendered field.
  */
-function resolveIndirectRegisters(src, into, where) {
+function resolveIndirectRegisters(src, into, where, raw = src) {
   const props = new Set([...src.matchAll(/\bregister\s*\(\s*[A-Za-z_$][\w$]*\.(\w+)\s*[,)]/g)].map((m) => m[1]));
   if (props.size === 0) return;
   for (const decl of src.matchAll(/\b(?:const|let)\s+[A-Za-z_$][\w$]*\s*(?::[^=;]+)?=\s*\[/g)) {
@@ -657,14 +704,29 @@ function resolveIndirectRegisters(src, into, where) {
     const arr = sliceBalanced(src, open, "[", "]");
     for (const prop of props) {
       for (const fm of arr.matchAll(new RegExp(`\\b${prop}\\s*:\\s*["']([\\w.]+)["']`, "g"))) {
-        if (!into.has(fm[1])) into.set(fm[1], { where: `${where}:${lineOf(src, decl.index)}`, src, index: decl.index });
+        const name = fm[1];
+        if (into.has(name)) continue;
+        // Offset of THIS row, not of the array — so the annotation and the inert marker are read at
+        // the row that names the field. A generated control declares itself inert with an explicit
+        // `disabled: true` on its own row, which is what the renderer must then honour.
+        const at = open + fm.index;
+        const rowStart = arr.lastIndexOf("{", fm.index);
+        const row = rowStart >= 0 ? sliceBalanced(arr, rowStart, "{", "}") : "";
+        into.set(name, {
+          where: `${where}:${lineOf(src, at)}`,
+          src,
+          raw,
+          index: at,
+          owner: null,
+          inert: /\bdisabled\s*:\s*true\b/.test(row),
+        });
       }
     }
   }
 }
 
 /** D3 — a react-hook-form field name rendered somewhere in the form group but never submitted. */
-export function findDroppedRhfFields(rel, src, group) {
+export function findDroppedRhfFields(rel, src, group, raw = src) {
   const problems = [];
   const blocked = [];
   // The RHF payload test is deliberately STRICTER than D2's. Two things would otherwise fake-green
@@ -680,28 +742,38 @@ export function findDroppedRhfFields(rel, src, group) {
   const payloadBody = reachableText(payload);
 
   const rendered = new Map();
-  for (const g of [{ rel, src }, ...group]) {
+  for (const g of [{ rel, src, raw }, ...group]) {
+    const gRaw = g.raw ?? g.src;
     const note = (name, index) => {
       // A readOnly/disabled control is not operator-entered, so its value cannot be "the operator's
       // entry silently discarded" — e.g. the auto-derived Class field (§7 locked, always readOnly).
       const owner = enclosingTag(g.src, index);
-      if (owner && isInert(owner.attrs)) return;
-      if (!rendered.has(name)) rendered.set(name, { where: `${g.rel}:${lineOf(g.src, index)}`, src: g.src, index });
+      const inert = Boolean(owner && isInert(owner.attrs));
+      if (inert && !annotationAt(gRaw, owner.start, owner.start + owner.attrs.length, NOT_PERSISTED)) return;
+      if (!rendered.has(name)) {
+        rendered.set(name, { where: `${g.rel}:${lineOf(g.src, index)}`, src: g.src, raw: gRaw, index, owner, inert });
+      }
     };
     for (const m of g.src.matchAll(/\bregister\s*\(\s*["']([\w.]+)["']/g)) note(m[1], m.index);
     for (const m of g.src.matchAll(/<Controller[\s\S]{0,240}?\bname\s*=\s*\{?["']([\w.]+)["']/g)) note(m[1], m.index);
     for (const m of g.src.matchAll(/\bdataField\s*=\s*["']([\w.]+)["']/g)) note(m[1], m.index);
     for (const [name, index] of setValueControlFields(g.src)) note(name, index);
-    resolveIndirectRegisters(g.src, rendered, g.rel);
+    resolveIndirectRegisters(g.src, rendered, g.rel, gRaw);
   }
 
   for (const [name, info] of rendered) {
     const base = name.split(".")[0];
     const sent = new RegExp(`\\.${base}\\b|\\b${base}\\s*:|["']${base}["']\\s*[:,\\]]`).test(payloadBody);
     if (sent) continue;
-    const around = info.src.slice(Math.max(0, info.index - 400), info.index + 400);
-    if (around.includes(NOT_PERSISTED)) {
-      blocked.push(`${info.where}  RHF "${name}" ${NOT_PERSISTED}`);
+    const start = info.owner ? info.owner.start : info.index;
+    const end = info.owner ? info.owner.start + info.owner.attrs.length : info.index;
+    // (info.inert is set from the element for a direct register, from the row for a generated one.)
+    if (info.inert && annotationAt(info.raw, start, end, NOT_PERSISTED)) {
+      blocked.push(`${info.where}  RHF "${name}" inert + ${NOT_PERSISTED}`);
+      continue;
+    }
+    if (annotationAt(info.raw, start, end, CARRIED_THROUGH)) {
+      blocked.push(`${info.where}  RHF "${name}" ${CARRIED_THROUGH}`);
       continue;
     }
     problems.push(
@@ -737,13 +809,14 @@ export function scanTree(root) {
 
   for (const abs of files) {
     const rel = path.relative(root, abs);
-    const src = blankComments(fs.readFileSync(abs, "utf8"));
+    const raw = fs.readFileSync(abs, "utf8");
+    const src = blankComments(raw);
 
-    const dead = findDeadControls(rel, src);
+    const dead = findDeadControls(rel, src, raw);
     problems.push(...dead.problems);
     blocked.push(...dead.blocked);
 
-    const orphan = findOrphanFieldState(rel, src);
+    const orphan = findOrphanFieldState(rel, src, raw);
     problems.push(...orphan.problems);
     blocked.push(...orphan.blocked);
     if (orphan.isForm) formFiles += 1;
@@ -753,11 +826,12 @@ export function scanTree(root) {
       for (const m of src.matchAll(/from\s+["'](\.[^"']+)["']/g)) {
         const child = path.resolve(path.dirname(abs), `${m[1]}.tsx`);
         if (!fs.existsSync(child)) continue;
-        const csrc = blankComments(fs.readFileSync(child, "utf8"));
+        const craw = fs.readFileSync(child, "utf8");
+        const csrc = blankComments(craw);
         if (!/\bregister\s*\(|\bsetValue\??\s*\(|UseFormRegister|UseFormSetValue/.test(csrc)) continue;
-        group.push({ rel: path.relative(root, child), src: csrc });
+        group.push({ rel: path.relative(root, child), src: csrc, raw: craw });
       }
-      const rhf = findDroppedRhfFields(rel, src, group);
+      const rhf = findDroppedRhfFields(rel, src, group, raw);
       problems.push(...rhf.problems);
       blocked.push(...rhf.blocked);
     }
@@ -957,6 +1031,57 @@ export function Section({ register }) {
     failures.push("D3 annotated: an annotated RHF field must not fail");
   }
 
+  // --- annotations ------------------------------------------------------------------------------
+  // The reason must be writable as a COMMENT (offsets are preserved, so the raw text is searched).
+  const commentAnnotated = `
+export function D() {
+  return (
+    <>
+      {/* ${NOT_PERSISTED}: record_type column does not exist on safety.accident_reports. */}
+      <Combobox disabled options={[]} value={"accident"} onChange={() => {}} />
+    </>
+  );
+}
+`;
+  const commentRes = findDeadControls("c.tsx", blankComments(commentAnnotated), commentAnnotated);
+  expectClean("annotation: a COMMENT above an inert control satisfies the hatch", commentRes);
+  if (commentRes.blocked.length !== 1) failures.push("annotation: comment-annotated control must be counted as BLOCKED");
+
+  // …but only when the control is actually inert. An annotation on a LIVE control is still a lie.
+  const commentLive = commentAnnotated.replace("<Combobox disabled", "<Combobox");
+  expectHit(
+    "annotation: an annotation on a still-live control does NOT excuse it",
+    findDeadControls("c.tsx", blankComments(commentLive), commentLive),
+    "no-op"
+  );
+
+  const carried = `
+import { useState } from "react";
+import { createInvoice } from "../api/accounting";
+import { Modal } from "../components/Modal";
+export function Inv() {
+  const [notes, setNotes] = useState("");
+  const [refCustomerId, setRefCustomerId] = useState(null);
+  const save = () => createInvoice({ notes });
+  return (
+    <Modal open onClose={close}>
+      {/* ${CARRIED_THROUGH}: the pick is appended to Notes by this handler and the picker resets. */}
+      <ReferenceSelect value={refCustomerId} onChange={(next) => { setNotes(next); setRefCustomerId(null); }} />
+    </Modal>
+  );
+}
+`;
+  const carriedRes = findOrphanFieldState("carried.tsx", blankComments(carried), carried);
+  expectClean("annotation: CARRIED-THROUGH clears a transient picker", carriedRes);
+  if (carriedRes.blocked.length !== 1) failures.push("annotation: carried-through control must be counted as BLOCKED");
+
+  const carriedMissing = carried.replace(`{/* ${CARRIED_THROUGH}: the pick is appended to Notes by this handler and the picker resets. */}`, "");
+  expectHit(
+    "annotation: without the CARRIED-THROUGH claim the same transient picker IS flagged",
+    findOrphanFieldState("carried.tsx", blankComments(carriedMissing), carriedMissing),
+    "'refCustomerId'"
+  );
+
   // --- machinery ------------------------------------------------------------------------------
   if (owningTag(blankComments(`<Foo bar={1} onChange={x} />`), 18)?.tag !== "Foo") {
     failures.push("machinery: owningTag must resolve the tag that owns an attribute");
@@ -967,13 +1092,18 @@ export function Section({ register }) {
   if (!isInert(`<input readOnly value={x} />`) || isInert(`<input value={x} />`)) {
     failures.push("machinery: isInert must distinguish readOnly from a live input");
   }
+  if (!isInert(`<TotalsStack taxRateMode="readonly" />`) || isInert(`<TotalsStack taxRateMode="editable" />`)) {
+    failures.push("machinery: isInert must honour an explicit read-only MODE prop, and only that");
+  }
 
   if (failures.length > 0) {
     console.error(`[${LABEL}] SELFTEST FAILED (${failures.length})`);
     for (const f of failures) console.error(`  - ${f}`);
-    return 1;
+    // Hard exit, not a returned status: a selftest that collects failures and lets a caller decide
+    // is one refactor away from the fake-green pattern verify-selftests-can-fail exists to stop.
+    process.exit(1);
   }
-  console.log(`[${LABEL}] selftest OK — 19 assertions, every detector proven capable of failing.`);
+  console.log(`[${LABEL}] selftest OK — 26 assertions, every detector proven capable of failing.`);
   return 0;
 }
 

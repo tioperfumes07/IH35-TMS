@@ -1072,16 +1072,24 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Type
-                      <div className="mt-0.5 inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-[11px]">
-                        <label className={`flex cursor-pointer items-center px-3 ${loadType === "broker" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}>
-                          <input type="radio" value="broker" className="hidden" {...form.register("load_type")} />
+                      {/* C9-NOT-PERSISTED: `load_type` (Broker vs Direct) is not in
+                          createDispatchLoadBodySchema and has no column on mdata.loads, so the
+                          dispatcher's choice was thrown away at save while the toggle kept showing
+                          it as set. Inert until the owner applies the column + route field. The
+                          canonical broker/direct fact today lives on the CUSTOMER record. */}
+                      <div className="mt-0.5 inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-[11px] opacity-60">
+                        <label className={`flex cursor-not-allowed items-center px-3 ${loadType === "broker" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}>
+                          <input type="radio" value="broker" disabled className="hidden" {...form.register("load_type")} />
                           Broker
                         </label>
-                        <label className={`flex cursor-pointer items-center border-l border-gray-300 px-3 ${loadType === "direct" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}>
-                          <input type="radio" value="direct" className="hidden" {...form.register("load_type")} />
+                        <label className={`flex cursor-not-allowed items-center border-l border-gray-300 px-3 ${loadType === "direct" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}>
+                          <input type="radio" value="direct" disabled className="hidden" {...form.register("load_type")} />
                           Direct
                         </label>
                       </div>
+                      <span className="mt-0.5 block normal-case tracking-normal text-[9px] text-slate-500">
+                        Not stored on the load — set Broker/Direct on the customer record.
+                      </span>
                     </label>
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Commodity
@@ -1219,8 +1227,17 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                     </label>
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Factoring company
+                      {/* C9-NOT-PERSISTED: `factoring_company_summary` is not in
+                          createDispatchLoadBodySchema and mdata.loads has no factoring column. The
+                          canonical factoring link is `mdata.customers.factoring_company_vendor_id`
+                          (migration 0022) — a CUSTOMER attribute, which is why the load never had
+                          anywhere to put this. Picking a factor here changed nothing and said
+                          nothing; now it is inert and points at the record that owns the fact.
+                          Anything that changes which factor an invoice is sold to is financial and
+                          owner-gated — not wired from a booking screen. */}
                       <SelectCombobox
                         value={factoringCompanySummary}
+                        disabled
                         onChange={(event) => form.setValue("factoring_company_summary", event.target.value, { shouldDirty: true })}
                         className="mt-0.5 h-7 w-full text-xs"
                       >
@@ -1231,6 +1248,9 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                           </option>
                         ))}
                       </SelectCombobox>
+                      <span className="mt-0.5 block normal-case tracking-normal text-[9px] text-slate-500">
+                        Not stored on the load — the factor is set on the customer record.
+                      </span>
                     </label>
                   </div>
 

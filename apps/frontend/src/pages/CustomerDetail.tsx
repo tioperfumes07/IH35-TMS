@@ -1224,6 +1224,10 @@ export function CustomerDetailPage() {
                 placeholder="Select source"
               />
             </div>
+            {/* C9-NOT-PERSISTED: server-maintained stamp (`credit_limit_updated_at`), shown so the
+                operator can see how stale a factor-sourced limit is. It is already `disabled`, so
+                nothing is silently discarded — the no-op handler exists only to satisfy the shared
+                Field signature. It is never sent back: the server owns the timestamp. */}
             <Field
               label="Last Updated"
               value={hydratedForm.credit_limit_updated_at ? new Date(hydratedForm.credit_limit_updated_at).toLocaleString() : "Not set"}

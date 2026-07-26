@@ -356,6 +356,11 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
           </div>
           <div className="space-y-1 md:col-span-2">
             <label className="text-xs font-semibold text-slate-600">Customer reference (appends to Notes)</label>
+            {/* C9-CARRIED-THROUGH: a deliberately transient picker. Its own handler appends
+                "Customer reference: <name>" to `notes` — which IS in the createInvoice payload
+                (internal_notes / customer_notes) — and then resets the picker to null, which is why
+                the state itself never appears on the wire. Nothing the operator selected is
+                discarded; the label on the field already tells them where it goes. */}
             <ReferenceSelect
               value={referenceCustomerId}
               onChange={(next) => {
