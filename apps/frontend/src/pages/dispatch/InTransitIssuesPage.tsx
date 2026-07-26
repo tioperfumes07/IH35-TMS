@@ -138,7 +138,7 @@ export function InTransitIssuesPage() {
         exportFilename="intransit-issues"
       />
 
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create In-Transit Issue">
+      <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Create In-Transit Issue">
         <form
           className="space-y-3"
           onSubmit={(event) => {

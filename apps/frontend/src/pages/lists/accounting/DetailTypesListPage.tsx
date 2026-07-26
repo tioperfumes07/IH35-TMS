@@ -231,7 +231,7 @@ function DetailTypeModal({
   const canSubmit = Boolean(form.account_type_id) && Boolean(form.name.trim());
 
   return (
-    <Modal open={open} onClose={onClose} title={mode === "create" ? "New Detail Type" : "Edit Detail Type"}>
+    <Modal variant="drawer" open={open} onClose={onClose} title={mode === "create" ? "New Detail Type" : "Edit Detail Type"}>
       <div className="space-y-3">
         <label className="block text-xs font-semibold text-gray-600">
           Account Type

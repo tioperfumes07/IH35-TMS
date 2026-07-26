@@ -8,6 +8,7 @@ import { useEscapeKey } from "../hooks/useEscapeKey";
 import { MODAL_MIN_BY_PRESET, readModalSizeFromPrefs, persistModalSize, type ModalSizePreset } from "../lib/modal-size-prefs";
 import { ConfirmDiscardDialog } from "./dialogs/ConfirmDiscardDialog";
 import { ModalCloseButton } from "./ModalCloseButton";
+import { PARITY_CREATE_DRAWER_WIDTH } from "./parity/sizing";
 import { ResizeHandle } from "./ui/ResizeHandle";
 
 type ModalProps = {
@@ -27,6 +28,23 @@ type ModalProps = {
   resizable?: boolean;
   /** Opt-in wide layout (~1140px) for two-column form modals (e.g. Create Work Order render-v5). */
   wide?: boolean;
+  /**
+   * C7 — dialog shape.
+   *
+   * `"center"` (default, unchanged) keeps the historic centered card. Every non-create dialog in
+   * the product — confirm, preview, detail, success — stays exactly as it was.
+   *
+   * `"drawer"` is the shared 480px RIGHT drawer that every "+ Create"/"+ Book" surface opens in.
+   * It is deliberately the SAME component, not a second shell, so the focus trap, the Escape
+   * handling and the unsaved-changes (ConfirmDiscardDialog) guard below are inherited identically
+   * by both shapes and cannot drift apart.
+   *
+   * Nested create stacks drawer-on-drawer: this component portals to `document.body` and its
+   * overlay is `z-50`, above ParityDrawer's `z-40` money side-panel, so a create opened FROM a
+   * money drawer lands on top of it instead of behind it (VERIFY-1). Owner-ratified exceptions
+   * that stay WIDE WIZARDS rather than drawers: Book Load and Create Work Order.
+   */
+  variant?: "center" | "drawer";
 };
 
 export function Modal({
@@ -41,14 +59,19 @@ export function Modal({
   sizePreset,
   resizable = false,
   wide = false,
+  variant = "center",
 }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [box, setBox] = useState<{ w: number; h: number } | null>(null);
   const boxRef = useRef<{ w: number; h: number } | null>(null);
 
-  const useCustomSize = Boolean(modalKind && sizePreset);
-  const resizeEnabled = resizable || true;
+  const isDrawer = variant === "drawer";
+  // The create drawer is a fixed-width right panel, so the persisted free-resize box (which sizes a
+  // centered card) does not apply to it — persisting a w/h here would fight the 480px contract.
+  const useCustomSize = Boolean(modalKind && sizePreset) && !isDrawer;
+  // Unchanged for the centered card (the `|| true` predates C7); the fixed-width drawer opts out.
+  const resizeEnabled = (resizable || true) && !isDrawer;
   const minBox = sizePreset ? MODAL_MIN_BY_PRESET[sizePreset] : { w: 320, h: 240 };
 
   const prefsQuery = useQuery({
@@ -146,19 +169,31 @@ export function Modal({
   return createPortal(
     <>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        className={
+          isDrawer
+            ? "fixed inset-0 z-50 flex justify-end bg-black/50"
+            : "fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        }
         onMouseDown={attemptClose}
       >
         <div
           ref={panelRef}
-          className={`relative flex flex-col rounded-lg bg-white shadow-xl ${
-            box
-              ? "overflow-hidden"
-              : wide
-                ? "max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-[min(72rem,calc(100vw-2rem))]"
-                : "max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-[min(42rem,calc(100vw-2rem))]"
-          }`}
-          style={panelStyle}
+          className={
+            isDrawer
+              ? `relative flex h-full max-h-full flex-col border-l border-gray-200 bg-white shadow-xl ${PARITY_CREATE_DRAWER_WIDTH}`
+              : `relative flex flex-col rounded-lg bg-white shadow-xl ${
+                  box
+                    ? "overflow-hidden"
+                    : wide
+                      ? "max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-[min(72rem,calc(100vw-2rem))]"
+                      : "max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-[min(42rem,calc(100vw-2rem))]"
+                }`
+          }
+          style={isDrawer ? undefined : panelStyle}
+          role="dialog"
+          aria-modal="true"
+          aria-label={title}
+          data-modal-variant={variant}
           onMouseDown={(event) => event.stopPropagation()}
         >
           <div className="flex shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3">

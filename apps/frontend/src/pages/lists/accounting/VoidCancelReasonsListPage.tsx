@@ -296,6 +296,7 @@ function VoidCancelReasonModal({
 
   return (
     <Modal
+      variant="drawer"
       open={open}
       onClose={onClose}
       title={mode === "create" ? "Void/Cancel Reasons · Create Entry" : "Void/Cancel Reasons · Edit Entry"}

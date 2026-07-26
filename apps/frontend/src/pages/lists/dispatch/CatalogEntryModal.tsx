@@ -78,7 +78,7 @@ export function CatalogEntryModal({ open, mode, title, initialRow, duplicateCode
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={title}>
+    <Modal variant="drawer" open={open} onClose={onClose} title={title}>
       <form
         className="space-y-3"
         onSubmit={(event) => {

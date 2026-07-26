@@ -2307,7 +2307,7 @@ export function CustomerDetailPage() {
         </div>
       ) : null}
 
-      <Modal open={laneModalOpen} onClose={() => setLaneModalOpen(false)} title={editingLane ? "Edit Lane" : "Create Lane"}>
+      <Modal variant="drawer" open={laneModalOpen} onClose={() => setLaneModalOpen(false)} title={editingLane ? "Edit Lane" : "Create Lane"}>
         <form
           className="space-y-3"
           onSubmit={async (event) => {
@@ -2390,7 +2390,7 @@ export function CustomerDetailPage() {
         </form>
       </Modal>
 
-      <Modal open={contactModalOpen} onClose={() => setContactModalOpen(false)} title={editingContact ? "Edit Contact" : "Create Contact"}>
+      <Modal variant="drawer" open={contactModalOpen} onClose={() => setContactModalOpen(false)} title={editingContact ? "Edit Contact" : "Create Contact"}>
         <form
           className="space-y-3"
           onSubmit={async (event) => {
@@ -2474,7 +2474,7 @@ export function CustomerDetailPage() {
         </form>
       </Modal>
 
-      <Modal open={qualityModalOpen} onClose={() => setQualityModalOpen(false)} title="Create Quality Event">
+      <Modal variant="drawer" open={qualityModalOpen} onClose={() => setQualityModalOpen(false)} title="Create Quality Event">
         <form
           className="space-y-3"
           onSubmit={async (event) => {

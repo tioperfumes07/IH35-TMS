@@ -146,7 +146,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
         {grouped.completed.map(renderPolicyRow)}
       </section>
 
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create auto-deduction policy">
+      <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Create auto-deduction policy">
         <form
           className="space-y-3"
           onSubmit={async (event) => {

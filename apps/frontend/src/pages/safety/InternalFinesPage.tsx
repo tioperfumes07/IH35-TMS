@@ -278,7 +278,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
         </div>
       </div>
 
-      <Modal open={reasonModalOpen} onClose={() => setReasonModalOpen(false)} title="New internal-fine reason">
+      <Modal variant="drawer" open={reasonModalOpen} onClose={() => setReasonModalOpen(false)} title="New internal-fine reason">
         <div className="space-y-2 text-xs" data-testid="internal-fine-reason-create-modal">
           <label className="block">
             <span className="text-slate-600">Reason code</span>

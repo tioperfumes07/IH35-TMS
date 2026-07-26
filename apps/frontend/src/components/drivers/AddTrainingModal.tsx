@@ -102,7 +102,7 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={`Create Training — ${driverName}`}>
+    <Modal variant="drawer" open={open} onClose={onClose} title={`Create Training — ${driverName}`}>
       <form
         className="space-y-3"
         data-testid="add-training-modal"

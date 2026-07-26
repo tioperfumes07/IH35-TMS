@@ -110,7 +110,7 @@ export function PortalUsersTab({ customerId, operatingCompanyId }: Props) {
         />
       </DataPanel>
 
-      <Modal open={open} onClose={() => setOpen(false)} title="Create portal login">
+      <Modal variant="drawer" open={open} onClose={() => setOpen(false)} title="Create portal login">
         <form
           className="space-y-3"
           onSubmit={(e) => {

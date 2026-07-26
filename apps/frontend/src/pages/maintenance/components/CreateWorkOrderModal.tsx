@@ -1,3 +1,13 @@
+/**
+ * C7-WIDE-WIZARD-EXCEPTION — Create Work Order stays a WIDE WIZARD, not the shared 480px drawer.
+ *
+ * Owner-ratified. The WO creator is the render-v5 two-column form (`<Modal wide>`): WO header +
+ * line items + parts/labor + vendor/bill terms side by side. C7 flipped every other create surface
+ * to `<Modal variant="drawer">`; this file and BookLoadModalV4 are the two ratified exceptions.
+ * scripts/verify-create-surface-is-drawer.mjs enforces this in BOTH directions: it fails if this
+ * file is drawer-ised, and it fails if this annotation disappears or the file is renamed without
+ * the exception moving with it.
+ */
 import { useEffect, type ReactNode } from "react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";

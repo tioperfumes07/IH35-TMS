@@ -94,7 +94,7 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
         ))}
       </div>
 
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create team split config">
+      <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Create team split config">
         <div className="space-y-3">
           <label className="block text-xs font-medium text-gray-700">
             Primary driver

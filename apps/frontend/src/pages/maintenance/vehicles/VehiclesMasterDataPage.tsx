@@ -223,7 +223,7 @@ export function VehiclesMasterDataPage() {
         />
       </div>
 
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create Vehicle">
+      <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Create Vehicle">
         <div className="space-y-2">
           <div className="grid grid-cols-2 gap-2">
             <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Unit Display ID" value={draft.unit_display_id} onChange={(e) => setDraft((p) => ({ ...p, unit_display_id: e.target.value }))} />

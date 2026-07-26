@@ -182,7 +182,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
         rowTestId={(p) => `training-program-row-${p.id}`}
       />
 
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create Training Program">
+      <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Create Training Program">
         <form
           className="space-y-3"
           data-testid="training-program-create-modal"
