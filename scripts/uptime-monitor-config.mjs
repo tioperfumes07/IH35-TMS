@@ -22,6 +22,14 @@ export const MONITORS = [
     alert_after_seconds: 120,
     regions: ["us", "eu"],
   },
+  // DEAD MONITOR — DO NOT "FIX" THIS BY MOUNTING THE ROUTE. `/api/v1/health/deep` answers 404 (
+  // verified against prod 2026-07-25). The module that served it was ARCHIVED on security grounds:
+  // it was unauthenticated and disclosed QuickBooks / Samsara / Plaid connection state, last-sync
+  // timestamps and raw error strings to anonymous callers. An external uptime monitor cannot
+  // authenticate, so deep health is deliberately NOT a public surface; the authenticated equivalent
+  // is the Owner-gated GET /api/v1/admin/health/deep. Use `ih35-api-shallow-health` for liveness.
+  // Repointing or removing this entry changes what the owner is alerted on, so it is left exactly as
+  // it is for the owner to decide. verify-step 1590 fails if the route is ever mounted unauthenticated.
   {
     name: "ih35-api-deep-health",
     url: `${API_BASE.replace(/\/$/, "")}/api/v1/health/deep`,

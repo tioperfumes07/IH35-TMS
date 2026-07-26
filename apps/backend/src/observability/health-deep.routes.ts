@@ -1,15 +1,38 @@
 /**
- * CLOSURE-21 — Deep health check at /api/v1/health/deep.
+ * ARCHIVED 2026-07-25 — SECURITY. This module no longer registers an HTTP route.
+ * ============================================================================
+ * It previously registered an UNAUTHENTICATED `GET /api/v1/health/deep`. The handler ran under
+ * `withLuciaBypass` (RLS bypassed) with no `requireAuth` and no role gate, and the response body
+ * disclosed, to any anonymous caller:
  *
- * Returns 200 only when every critical dependency is reachable:
- *   - Postgres  : `SELECT 1 FROM org.companies LIMIT 1` succeeds
- *   - QuickBooks: a connected token synced within the last hour
- *   - Samsara   : a noop API call returns 2xx
- *   - Plaid     : a connected item synced within the last 24 hours
+ *   - which third-party integrations this carrier uses (quickbooks / samsara / plaid, by name)
+ *   - per-integration connection state (ok | degraded | down | skipped)
+ *   - the QuickBooks and Plaid LAST-SYNC TIMESTAMPS, verbatim, in `detail`
+ *   - whether a Samsara API token is configured, and Samsara's upstream HTTP status (e.g. 401 =
+ *     the carrier's token is revoked) in `detail`
+ *   - raw driver/database error strings via `withTiming`'s catch, which returns
+ *     `String(error.message)` straight to the caller
+ *   - per-dependency `duration_ms` (a timing oracle) and whether `qbo.connections` /
+ *     `banking.plaid_items` exist in the schema
  *
- * Returns 503 with the list of failed checks when any critical dependency is
- * down. This module is additive — register it from the app bootstrap with
- * `registerDeepHealthRoutes(app)`.
+ * It was never mounted (the C10 route-parity sweep refused it), but "unmounted" is not "safe": the
+ * registrar was one import away from publishing all of the above on the public internet, and
+ * scripts/uptime-monitor-config.mjs still defines an EXTERNAL uptime monitor pointing at
+ * `/api/v1/health/deep` — i.e. there was standing pressure to mount it to make that monitor green.
+ *
+ * WHY ARCHIVED RATHER THAN AUTHENTICATED: it is a dead duplicate.
+ *   - `GET /api/v1/admin/health/deep` (apps/backend/src/admin/health-deep.routes.ts) already serves
+ *     deep health, IS mounted (index.ts), and IS gated: `requireAuth` + Owner-only + entity-scoped
+ *     via `resolveDefaultOperatingCompanyIdForUser`. Verified live: it answers 401 unauthenticated.
+ *   - Two of the four checks here query tables that DO NOT EXIST in db/migrations/: `qbo.connections`
+ *     (the real table is `integrations.qbo_connections`) and `banking.plaid_items` (no such table
+ *     anywhere). Both would short-circuit to "skipped" via `regclassExists`. Bolting auth onto a
+ *     phantom-schema duplicate would resurrect dead code instead of removing an exposure.
+ *
+ * Per Rule 07 (ARCHIVE, never DELETE) the file and its check functions are retained unchanged for
+ * history and for anyone auditing what the endpoint used to expose. Only the registrar changed, and
+ * it now THROWS: accidental future wiring fails loudly at boot instead of silently re-publishing
+ * integration state. Guarded by scripts/verify-steps/1590-verify-no-unauth-integration-state-route.mjs.
  */
 
 import type { FastifyInstance } from "fastify";
@@ -139,28 +162,27 @@ export async function runDeepDependencyChecks(): Promise<DependencyCheckResult[]
   ]);
 }
 
-/** A skipped (unconfigured) dependency does not fail the deep check. */
-function isFailing(check: DependencyCheckResult): boolean {
+/** A skipped (unconfigured) dependency does not fail the deep check.
+ *  Exported as part of the archived surface — retained (Rule 07) but no longer reachable by HTTP. */
+export function isFailing(check: DependencyCheckResult): boolean {
   return check.critical && (check.status === "down" || check.status === "degraded");
 }
 
-export function registerDeepHealthRoutes(app: FastifyInstance): void {
-  app.get("/api/v1/health/deep", async (_req, reply) => {
-    const checks = await runDeepDependencyChecks();
-    const failed = checks.filter(isFailing);
-    const ok = failed.length === 0;
+/** Message thrown when something tries to wire the archived registrar. Exported so the test can
+ *  assert the exact contract rather than matching a substring that could drift. */
+export const ARCHIVED_DEEP_HEALTH_ERROR =
+  "registerDeepHealthRoutes is ARCHIVED (security, 2026-07-25): it registered an unauthenticated " +
+  "GET /api/v1/health/deep that disclosed QuickBooks/Samsara/Plaid connection state, last-sync " +
+  "timestamps and raw error strings to anonymous callers. Use the authenticated, Owner-gated " +
+  "GET /api/v1/admin/health/deep (apps/backend/src/admin/health-deep.routes.ts) instead. Do not " +
+  "re-register this route; see the header of this file.";
 
-    if (!ok) {
-      logger.warn("health.deep.degraded", {
-        failed: failed.map((c) => `${c.name}:${c.status}`).join(","),
-      });
-    }
-
-    return reply.code(ok ? 200 : 503).send({
-      ok,
-      checked_at: new Date().toISOString(),
-      failed: failed.map((c) => c.name),
-      checks,
-    });
-  });
+/**
+ * ARCHIVED — intentionally refuses to register. Throwing (rather than quietly no-op'ing) is the
+ * point: a future aggregator import, autoload sweep or copy-paste that reaches this function fails
+ * at boot, in CI, where a human sees it — instead of silently publishing integration state.
+ */
+export function registerDeepHealthRoutes(_app: FastifyInstance): never {
+  logger.warn("health.deep.archived_registration_attempt", { route: "/api/v1/health/deep" });
+  throw new Error(ARCHIVED_DEEP_HEALTH_ERROR);
 }

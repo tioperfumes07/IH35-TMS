@@ -2,7 +2,7 @@ import Fastify from "fastify";
 import { afterEach, describe, expect, it } from "vitest";
 import { createStructuredLogger, formatStructuredLog } from "./structured-logger.js";
 import { captureSlowQuery, isSentryConfigured } from "./sentry.js";
-import { registerDeepHealthRoutes } from "./health-deep.routes.js";
+import { ARCHIVED_DEEP_HEALTH_ERROR, registerDeepHealthRoutes } from "./health-deep.routes.js";
 
 describe("observability structured logger", () => {
   it("formats JSON log entries with required fields", () => {
@@ -46,16 +46,29 @@ describe("observability sentry helpers", () => {
   });
 });
 
-describe("observability health/deep route", () => {
-  it("registers /api/v1/health/deep and returns check shape", async () => {
+// ARCHIVED 2026-07-25 (SECURITY). This suite used to assert that the module REGISTERS an
+// unauthenticated /api/v1/health/deep returning quickbooks/samsara/plaid state — i.e. it pinned the
+// defect in place. It now asserts the archived contract: the registrar refuses, and no route is
+// mounted. Successor: the Owner-gated GET /api/v1/admin/health/deep.
+describe("observability health/deep route — ARCHIVED", () => {
+  it("registerDeepHealthRoutes throws instead of registering the unauthenticated route", async () => {
     const app = Fastify();
-    registerDeepHealthRoutes(app);
+    expect(() => registerDeepHealthRoutes(app)).toThrow(/ARCHIVED/);
+    expect(() => registerDeepHealthRoutes(app)).toThrow(ARCHIVED_DEEP_HEALTH_ERROR);
+    await app.close();
+  });
+
+  it("leaves /api/v1/health/deep unmounted — an anonymous caller gets 404, not integration state", async () => {
+    const app = Fastify();
+    try {
+      registerDeepHealthRoutes(app);
+    } catch {
+      /* expected — the registrar refuses */
+    }
     await app.ready();
     const res = await app.inject({ method: "GET", url: "/api/v1/health/deep" });
-    expect([200, 503]).toContain(res.statusCode);
-    const body = res.json() as { ok: boolean; checks: { name: string; status: string }[] };
-    expect(Array.isArray(body.checks)).toBe(true);
-    expect(body.checks.map((c) => c.name).sort()).toEqual(["plaid", "postgres", "quickbooks", "samsara"]);
+    expect(res.statusCode).toBe(404);
+    expect(res.body).not.toMatch(/quickbooks|samsara|plaid/i);
     await app.close();
   });
 });
