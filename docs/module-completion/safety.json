@@ -2293,6 +2293,79 @@
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
       "gate": "HOLD \u2014 financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
+    },
+    {
+      "id": "SAF-DOM-02",
+      "title": "company_violations retired jsonb: re-backfill sweep, auto-fine trigger repoint, DB-enforced archive (held migration)",
+      "layers": [
+        "DOD-C",
+        "DOD-D",
+        "VERIFY-4",
+        "VERIFY-8"
+      ],
+      "spec": "BLOCKS-SAFETY.txt SAF-DOM-02 (C13 seed); safety.md section J boundary 28 (finding F29)",
+      "status": "OPEN",
+      "evidence": "NEW FAIL FOUND 2026-07-25 while scoping SAF-DOM-02, not previously on the board: safety.auto_create_internal_fine_from_violation() (SECURITY DEFINER, 0124:971-1101, fired by trg_auto_fine_on_violation_resolve) resolves its driver ONLY from NEW.related_drivers, the RETIRED jsonb. The create route stopped populating that column when 202607820000 (applied on prod) landed, so for every violation created through the UI since, resolve-as-monetary_fine hits 'IF v_driver_id IS NULL THEN RETURN NEW' and issues NO FINE while the endpoint returns 200 with autoCreatedInternalFineUuid:null. Proven on a throwaway postgres:16-alpine built from 0001: pre-fix function -> UPDATE 1, outcome=monetary_fine, auto_created_internal_fine_uuid NULL, 0 rows in safety.internal_fines; post-fix function -> fine created, linked, 0.05 approved, driver from the junction. Migration 202609130000 is HELD and UNAPPLIED anywhere; status stays OPEN until the owner Neon-applies it and GUARD re-proves the ledger row. Its stop-write section must not be applied before SAF-B28's PATCH repoint (C2 lane) is live.",
+      "pr": null,
+      "owner_hold": false,
+      "tracker": null,
+      "future_block": null,
+      "build_standard": {
+        "standard_version": "2026-07-25",
+        "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) \u2014 source .cursor/rule wins on conflict",
+        "required_commit_keys": [
+          "FINDING",
+          "LANE",
+          "DOD-A",
+          "DOD-B",
+          "DOD-C",
+          "DOD-D",
+          "DOD-E",
+          "VERIFY-1",
+          "VERIFY-2",
+          "VERIFY-3",
+          "VERIFY-4",
+          "VERIFY-5",
+          "VERIFY-6",
+          "VERIFY-7",
+          "VERIFY-8",
+          "MODULE_PROGRESS",
+          "ITEMS_TOUCHED",
+          "MIGRATE"
+        ],
+        "rule_16_block": [
+          "ROOT CAUSE",
+          "FIX",
+          "GUARD",
+          "LIVE PROOF",
+          "REMAINING"
+        ],
+        "enforced_by": [
+          "scripts/verify-steps/1324-verify-definition-of-done-evidence.mjs",
+          "1430-verify-no-money-theater",
+          "1431-verify-module-completion"
+        ],
+        "dod_layers": {
+          "A": "active path reachable in the running app",
+          "B": "wizard/create depth \u2014 every field persists and survives reload",
+          "C": "forward AND reverse linkage (drill both ways)",
+          "D": "purpose -> economics (the money object actually posts)",
+          "E": "live evidence on prod under lucia"
+        },
+        "binding_rules": {
+          "10": "prod wins; 0 is not absence \u2014 re-run with bypass_rls; a migration can be ledgered but ineffective, verify the EFFECT",
+          "11": "independent code-review agent MANDATORY and must differ from the builder; financial reviewer has VETO",
+          "13": "financial = build-and-HOLD, reuse the existing poster, no new GL math, flags default OFF, QBO never written",
+          "17": "guards wired ONLY via scripts/verify-steps/NNNN-*.mjs \u2014 never package.json, ci.yml or locked-guards.yml",
+          "19": "reserve/holdback/retainage accounts are OWNER-MANUAL only",
+          "21": "M grows when new FAILs appear; a wave slice never closes a module",
+          "24": "module DONE = N of M with live Neon(lucia) proof; complete:true is ILLEGAL while any item is open",
+          "07": "NEVER-DELETE \u2014 archive/void/soft-delete only; retire by stop-writing + REVOKE + deprecated COMMENT"
+        },
+        "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
+        "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
+      },
+      "gate": "HELD (schema). Migration authored, validated on a throwaway container, never run on prod. Owner applies on a Neon branch then ledger-backfills. APPLY ORDER: section 3 (stop-write) only after SAF-B28."
     }
   ],
   "M": 32
