@@ -1,4 +1,4 @@
-// 1487-verify-no-duplicate-step-numbers — verify-step NUMBER uniqueness ratchet.
+// 1533-verify-no-duplicate-step-numbers — verify-step NUMBER uniqueness ratchet.
 //
 // Deliberately a NUMBERED step, not an `_meta-` file. Rule 17 wires guards through
 // `scripts/verify-steps/NNNN-*.mjs` only, and the runner in verify-pre-commit.mjs filters with
@@ -11,8 +11,7 @@
 // branch. Renumbered to 1486, which then collided with 1486-verify-bankfeed-je-match.mjs landing on main
 // from another PR while this branch was open. A duplicate-number guard that itself duplicated a number —
 // twice — is the strongest possible argument for its own existence: checking the numbers in MY tree is not
-// enough when other open PRs and main can claim the same number before this one merges. Renumbered again to
-// 1487 during the manifest-truth-pass merge with main (2026-07-25).
+// enough when other open PRs and main can claim the same number before this one merges. Renumbered to 1533 after colliding with held-set-covers-every-section + C6 1503 on main (2026-07-26).
 //
 // WHY THIS EXISTS: 87 distinct numeric-prefix collision groups exist in scripts/verify-steps/ — one number
 // is shared by SIX files. It does NOT shadow anything: verify-pre-commit.mjs enumerates full filenames and
