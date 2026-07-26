@@ -2,7 +2,7 @@
  * GAP-68 — Safety Officer home KPI bar
  */
 
-import { KpiCard } from "../layout/KpiCard";
+import { DrillKpiCard } from "../layout/DrillKpiCard";
 
 export type SafetyKpiSnapshot = {
   open_dvir_major_defects: number;
@@ -20,6 +20,8 @@ const ACCENT = {
   neutral: undefined,
 } as const;
 
+// C8: `to` is REQUIRED here — every tile on this bar drills to its records — and `value` accepts
+// null so an absent snapshot renders "—" instead of a fabricated 0.
 function KpiTile({
   label,
   value,
@@ -28,17 +30,12 @@ function KpiTile({
   to,
 }: {
   label: string;
-  value: number;
+  value: number | null;
   hint: string;
   accent?: string;
-  to?: string;
+  to: string;
 }) {
-  return (
-    <div className="space-y-1">
-      <KpiCard label={label} number={value} accent={accent} to={to} />
-      <p className="px-1 text-[11px] text-slate-500">{hint}</p>
-    </div>
-  );
+  return <DrillKpiCard size="md" label={label} value={value} hint={hint} accent={accent} to={to} />;
 }
 
 export function SafetyKpiBar({ kpis, loading }: Props) {
@@ -52,33 +49,35 @@ export function SafetyKpiBar({ kpis, loading }: Props) {
     );
   }
 
-  const snapshot = kpis ?? {
-    open_dvir_major_defects: 0,
-    hos_violations_today: 0,
-    expiring_certs_30d: 0,
-  };
+  // C8 · HONEST UI: an absent payload must NOT be rendered as an all-clear. A safety bar showing
+  // "0 open DVIR major defects" because the query returned nothing is the most dangerous lie this
+  // app can tell; null renders "—".
+  const snapshot: Partial<SafetyKpiSnapshot> = kpis ?? {};
+  const value = (key: keyof SafetyKpiSnapshot) => snapshot[key] ?? null;
+  // Accent only when there is a real, positive reading — never because a value is absent.
+  const elevated = (key: keyof SafetyKpiSnapshot) => typeof snapshot[key] === "number" && (snapshot[key] as number) > 0;
 
   return (
     <div className="grid gap-3 sm:grid-cols-3" aria-label="Safety officer KPIs">
       <KpiTile
         label="Open DVIR major defects"
-        value={snapshot.open_dvir_major_defects}
+        value={value("open_dvir_major_defects")}
         hint="Major/critical defects awaiting resolution"
-        accent={snapshot.open_dvir_major_defects > 0 ? ACCENT.warning : ACCENT.neutral}
+        accent={elevated("open_dvir_major_defects") ? ACCENT.warning : ACCENT.neutral}
         to="/safety/idvr"
       />
       <KpiTile
         label="HOS violations today"
-        value={snapshot.hos_violations_today}
+        value={value("hos_violations_today")}
         hint="Violations recorded today"
-        accent={snapshot.hos_violations_today > 0 ? ACCENT.warning : ACCENT.neutral}
+        accent={elevated("hos_violations_today") ? ACCENT.warning : ACCENT.neutral}
         to="/safety/hos/exceptions"
       />
       <KpiTile
         label="Certs expiring (30d)"
-        value={snapshot.expiring_certs_30d}
+        value={value("expiring_certs_30d")}
         hint="CDL, medical, hazmat, TWIC within 30 days"
-        accent={snapshot.expiring_certs_30d > 0 ? ACCENT.warning : ACCENT.neutral}
+        accent={elevated("expiring_certs_30d") ? ACCENT.warning : ACCENT.neutral}
         to="/safety/cert-expiry"
       />
     </div>

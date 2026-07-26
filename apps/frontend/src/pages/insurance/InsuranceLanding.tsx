@@ -1,36 +1,45 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { getInsuranceSummary } from "../../api/insurance";
+import { getInsuranceSummary, type InsuranceDashboardSummary } from "../../api/insurance";
+import { DrillKpiCard, formatKpiValue } from "../../components/layout/DrillKpiCard";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
-function Card({
-  label,
-  value,
-  alert,
-  actionLabel,
-  actionTo,
-}: {
+/**
+ * C8: `to` is REQUIRED — every insurance KPI opens the list it counted (five of the six used to be
+ * dead clicks; only the coverage-gap tile carried a link, and only while it was alerting).
+ * `value` accepts null so a failed summary query renders "—" instead of "0 open lawsuits".
+ * The S-01 alert chrome is preserved exactly; the whole alert card is now the link, not just the
+ * small "View gap list" line inside it.
+ */
+type CardProps = {
   label: string;
-  value: number;
-  /** S-01: when true (and value > 0), render this KPI tile in the locked --red #dc2626 alert state. */
+  value: number | null;
+  /** S-01: when true (and value > 0), render this KPI tile in the locked alert state. */
   alert?: boolean;
   actionLabel?: string;
-  actionTo?: string;
-}) {
-  const isAlert = Boolean(alert) && value > 0;
+} & ({ to: string; unavailable?: never } | { unavailable: string; to?: never });
+
+function Card(props: CardProps) {
+  const { label, value, alert, actionLabel } = props;
+  if (props.to === undefined) {
+    return <DrillKpiCard size="md" label={label} value={value} unavailable={props.unavailable} />;
+  }
+  const to = props.to;
+  const isAlert = Boolean(alert) && (value ?? 0) > 0;
+  if (!isAlert) {
+    return <DrillKpiCard size="md" label={label} value={value} to={to} />;
+  }
   return (
-    <article
-      className={`rounded-sm border p-4 ${isAlert ? "border-red-300 bg-red-50" : "border-gray-200 bg-white"}`}
-      data-testid={isAlert ? "insurance-kpi-alert" : undefined}
+    <Link
+      to={to}
+      className="block rounded-sm border border-red-300 bg-red-50 p-4"
+      data-testid="insurance-kpi-alert"
+      aria-label={`${label} — view records`}
     >
-      <p className={`text-xs font-medium uppercase tracking-wide ${isAlert ? "text-red-700" : "text-slate-500"}`}>{label}</p>
-      <p className={`mt-2 text-2xl font-semibold ${isAlert ? "text-red-700" : "text-slate-900"}`}>{value}</p>
-      {isAlert && actionLabel && actionTo ? (
-        <Link to={actionTo} className="mt-2 inline-block text-xs font-semibold text-red-700 underline">
-          {actionLabel}
-        </Link>
-      ) : null}
-    </article>
+      <p className="text-xs font-medium uppercase tracking-wide text-red-700">{label}</p>
+      <p className="mt-2 text-2xl font-semibold text-red-700">{formatKpiValue(value)}</p>
+      {actionLabel ? <span className="mt-2 inline-block text-xs font-semibold text-red-700 underline">{actionLabel}</span> : null}
+    </Link>
   );
 }
 
@@ -50,13 +59,12 @@ export function InsuranceLanding() {
     return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to view insurance metrics.</div>;
   }
 
-  const m = summaryQuery.data ?? {
-    total_active_policies: 0,
-    policies_expiring_30d: 0,
-    coverage_gap_count: 0,
-    recent_coi_requests: 0,
-    open_claims: 0,
-    open_lawsuits: 0,
+  // C8 · HONEST UI: a failed/absent summary must not render six confident zeroes ("0 open
+  // lawsuits" is a legally consequential thing to fabricate). Undefined stays undefined → "—".
+  const m = summaryQuery.data;
+  const n = (key: keyof InsuranceDashboardSummary): number | null => {
+    const raw = m?.[key];
+    return typeof raw === "number" && Number.isFinite(raw) ? raw : null;
   };
 
   return (
@@ -73,18 +81,24 @@ export function InsuranceLanding() {
       ) : null}
 
       <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        <Card label="Total active policies" value={m.total_active_policies} />
-        <Card label="Policies expiring in 30 days" value={m.policies_expiring_30d} />
+        <Card label="Total active policies" value={n("total_active_policies")} to="/safety/insurance/policies" />
+        <Card label="Policies expiring in 30 days" value={n("policies_expiring_30d")} to="/safety/insurance/policies" />
         <Card
           label="Coverage gap count"
-          value={m.coverage_gap_count}
+          value={n("coverage_gap_count")}
           alert
           actionLabel="View gap list"
-          actionTo="/safety/insurance/coverage-gaps"
+          to="/safety/insurance/coverage-gaps"
         />
-        <Card label="Recent COI request count" value={m.recent_coi_requests} />
-        <Card label="Open claims count" value={m.open_claims} />
-        <Card label="Open lawsuits count" value={m.open_lawsuits} />
+        {/* COI requests are tracked per customer (Customers → COI tab); there is no company-wide COI
+            list to open, so this tile says so rather than dropping the operator on the wrong page. */}
+        <Card
+          label="Recent COI request count"
+          value={n("recent_coi_requests")}
+          unavailable="COI requests are tracked per customer — open a customer's COI tab. No company-wide COI list exists yet."
+        />
+        <Card label="Open claims count" value={n("open_claims")} to="/safety/insurance/claims" />
+        <Card label="Open lawsuits count" value={n("open_lawsuits")} to="/safety/insurance/lawsuits" />
       </section>
     </div>
   );

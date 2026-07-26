@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
+import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
@@ -384,12 +385,13 @@ export function FinancialStatementsPage() {
           {plQuery.data ? (
             <>
               <div className="grid gap-2 md:grid-cols-3">
-                <SummaryCard label="Revenue total" value={money(plQuery.data.revenue.total)} />
-                <SummaryCard label="Gross profit" value={money(plQuery.data.gross_profit)} />
+                <SummaryCard label="Revenue total" value={money(plQuery.data.revenue.total)} to="/accounting/all-transactions" />
+                <SummaryCard label="Gross profit" value={money(plQuery.data.gross_profit)} to="/accounting/all-transactions" />
                 <SummaryCard
                   label="Net income"
                   value={money(plQuery.data.net_income)}
                   tone={plQuery.data.net_income < 0 ? "negative" : "positive"}
+                  to="/accounting/all-transactions"
                 />
               </div>
               {[
@@ -433,12 +435,13 @@ export function FinancialStatementsPage() {
           {bsQuery.data ? (
             <>
               <div className="grid gap-2 md:grid-cols-3">
-                <SummaryCard label="Total assets" value={money(bsQuery.data.assets.total)} />
-                <SummaryCard label="Liabilities + equity" value={money(bsQuery.data.total_liabilities_and_equity)} />
+                <SummaryCard label="Total assets" value={money(bsQuery.data.assets.total)} to="/accounting/account-register" />
+                <SummaryCard label="Liabilities + equity" value={money(bsQuery.data.total_liabilities_and_equity)} to="/accounting/account-register" />
                 <SummaryCard
                   label="A = L + E"
                   value={bsQuery.data.balanced ? "Balanced" : "Out of balance"}
                   tone={bsQuery.data.balanced ? "positive" : "negative"}
+                  to="/accounting/account-register"
                 />
               </div>
               <StatementSection
@@ -486,12 +489,13 @@ export function FinancialStatementsPage() {
           ) : null}
           {tbQuery.data?.summary ? (
             <div className="grid gap-2 md:grid-cols-3">
-              <SummaryCard label="Grand total debits" value={money(tbQuery.data.summary.grand_total_debits)} />
-              <SummaryCard label="Grand total credits" value={money(tbQuery.data.summary.grand_total_credits)} />
+              <SummaryCard label="Grand total debits" value={money(tbQuery.data.summary.grand_total_debits)} to="/accounting/journal-entries" />
+              <SummaryCard label="Grand total credits" value={money(tbQuery.data.summary.grand_total_credits)} to="/accounting/journal-entries" />
               <SummaryCard
                 label="Debits = credits"
                 value={tbQuery.data.summary.balanced ? "Balanced" : "Out of balance"}
                 tone={tbQuery.data.summary.balanced ? "positive" : "negative"}
+                to="/accounting/journal-entries"
               />
             </div>
           ) : null}
@@ -520,14 +524,21 @@ export function FinancialStatementsPage() {
   );
 }
 
-function SummaryCard({ label, value, tone }: { label: string; value: string; tone?: "positive" | "negative" }) {
-  const border = tone === "negative" ? "border-rose-300" : tone === "positive" ? "border-slate-200" : "border-slate-200";
-  const text = tone === "negative" ? "text-rose-700" : tone === "positive" ? "text-slate-700" : "text-slate-900";
+// C8: `to` is REQUIRED — a statement headline opens the ledger it was rolled up from. The two
+// balance ASSERTIONS drill too: "Out of balance" is exactly when an accountant needs the entries.
+function SummaryCard({
+  label,
+  value,
+  tone,
+  to,
+}: {
+  label: string;
+  value: string;
+  tone?: "positive" | "negative";
+  to: string;
+}) {
   return (
-    <div className={`rounded-sm border bg-white px-3 py-2 ${border}`}>
-      <div className="text-[11px] font-semibold uppercase text-slate-500">{label}</div>
-      <div className={`text-lg font-semibold ${text}`}>{value}</div>
-    </div>
+    <DrillKpiCard size="md" label={label} value={value} valueTone={tone === "negative" ? "critical" : "default"} to={to} />
   );
 }
 
