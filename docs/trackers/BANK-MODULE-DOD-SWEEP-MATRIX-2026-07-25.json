@@ -3,8 +3,11 @@
   "lane": "FINANCIAL-HOLD",
   "as_of": "2026-07-25T16:45:00.000Z",
   "manifest_module": "banking",
-  "manifest_m": 17,
-  "entities": ["TRANSP", "USMCA"],
+  "manifest_m": 18,
+  "entities": [
+    "TRANSP",
+    "USMCA"
+  ],
   "layers": [
     "DOD-A",
     "DOD-B",
@@ -24,51 +27,85 @@
     {
       "id": "SURF-Bank-feed",
       "title": "Bank feed (Transactions)",
-      "routes": ["/banking/transactions"],
+      "routes": [
+        "/banking/transactions"
+      ],
       "canonical_table": "banking.bank_transactions",
-      "manifest_ids": ["BANK-ECON-01", "BANK-SURF-02"]
+      "manifest_ids": [
+        "BANK-ECON-01",
+        "BANK-SURF-02"
+      ]
     },
     {
       "id": "SURF-Register",
       "title": "Register (per-account transaction grid)",
-      "routes": ["/banking/accounts/:id"],
+      "routes": [
+        "/banking/accounts/:id"
+      ],
       "canonical_table": "banking.bank_transactions",
-      "manifest_ids": ["BANK-SURF-01"]
+      "manifest_ids": [
+        "BANK-SURF-01"
+      ]
     },
     {
       "id": "SURF-Account-detail",
       "title": "Account detail",
-      "routes": ["/banking/accounts/:id"],
+      "routes": [
+        "/banking/accounts/:id"
+      ],
       "canonical_table": "banking.bank_accounts",
-      "manifest_ids": ["BANK-SURF-01"]
+      "manifest_ids": [
+        "BANK-SURF-01"
+      ]
     },
     {
       "id": "SURF-Rules",
       "title": "Categorization rules",
-      "routes": ["/banking/categorization-rules"],
+      "routes": [
+        "/banking/categorization-rules"
+      ],
       "canonical_table": "banking.bank_transactions",
-      "manifest_ids": ["BANK-SURF-06"]
+      "manifest_ids": [
+        "BANK-SURF-06"
+      ]
     },
     {
       "id": "SURF-Transfers",
       "title": "Transfers",
-      "routes": ["/banking/transfers"],
+      "routes": [
+        "/banking/transfers"
+      ],
       "canonical_table": "banking.transfers",
-      "manifest_ids": ["BANK-ECON-03", "BANK-SURF-03"]
+      "manifest_ids": [
+        "BANK-ECON-03",
+        "BANK-SURF-03"
+      ]
     },
     {
       "id": "SURF-Reconcile",
       "title": "Reconciliation + workspace",
-      "routes": ["/banking/reconciliation", "/banking/reconciliation-workspace"],
+      "routes": [
+        "/banking/reconciliation",
+        "/banking/reconciliation-workspace"
+      ],
       "canonical_table": "banking.reconciliation_sessions",
-      "manifest_ids": ["BANK-ECON-04", "BANK-SURF-04"]
+      "manifest_ids": [
+        "BANK-ECON-04",
+        "BANK-SURF-04"
+      ]
     },
     {
       "id": "SURF-Bank-accounts-Cash-bind",
       "title": "Bank accounts + Cash GL bind",
-      "routes": ["/banking", "/banking/cash-gl-setup"],
+      "routes": [
+        "/banking",
+        "/banking/cash-gl-setup"
+      ],
       "canonical_table": "banking.bank_accounts",
-      "manifest_ids": ["BANK-ECON-05", "BANK-SURF-01"]
+      "manifest_ids": [
+        "BANK-ECON-05",
+        "BANK-SURF-01"
+      ]
     },
     {
       "id": "SURF-More",
@@ -81,264 +118,1059 @@
         "/banking/statement-import"
       ],
       "canonical_table": "banking.bank_accounts",
-      "manifest_ids": ["BANK-SURF-05"]
+      "manifest_ids": [
+        "BANK-SURF-05"
+      ]
     }
   ],
   "cells": {
     "SURF-Bank-feed": {
       "TRANSP": {
-        "DOD-A": { "status": "PASS", "evidence": "Route /banking/transactions live; Neon lucia bank_transactions=10628 (BANK-ECON-01)" },
-        "DOD-B": { "status": "UNVERIFIED", "evidence": "Categorize/Match field matrix browser click-through not run this sweep", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-feed-TRANSP" },
-        "DOD-C": { "status": "FAIL", "evidence": "matched_je=3/10628 (BANK-ECON-02); forward linkage sparse", "fix_block": "BANK-ECON-02" },
-        "DOD-D": { "status": "FAIL", "evidence": "Categorize density near-zero; purpose→economics not moving live rows", "fix_block": "BANK-ECON-02" },
-        "DOD-E": { "status": "UNVERIFIED", "evidence": "Per-cell browser evidence pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-feed-TRANSP" },
-        "VERIFY-1": { "status": "UNVERIFIED", "evidence": "QBO chrome ParityDrawer/calendar not re-clicked TRANSP", "fix_block": "BANK-SURF-02" },
-        "VERIFY-2": { "status": "UNVERIFIED", "evidence": "Universal picker law not re-run on categorize pickers", "fix_block": "BANK-SURF-02" },
-        "VERIFY-3": { "status": "PASS", "evidence": "Static: feed reads/writes banking.bank_transactions via /api/v1/banking/* (verify-bank-surfaces-and-counterparty)" },
-        "VERIFY-4": { "status": "FAIL", "evidence": "JE reverse drill density 3/10628 (BANK-LINK-01 sparse)", "fix_block": "BANK-LINK-01" },
-        "VERIFY-5": { "status": "PASS", "evidence": "TRANSP feed rows present under lucia; entity-scoped RLS" },
-        "VERIFY-6": { "status": "FAIL", "evidence": "matched_je=3/10628; flags OFF by design (BANK-CTRL-01 PASS)", "fix_block": "BANK-ECON-02" },
-        "VERIFY-7": { "status": "PASS", "evidence": "Feed leaf mounted; no silent-missing route" },
-        "VERIFY-8": { "status": "UNVERIFIED", "evidence": "RLS/GUC per-surface browser proof pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-feed-TRANSP" }
+        "DOD-A": {
+          "status": "PASS",
+          "evidence": "Route /banking/transactions live; Neon lucia bank_transactions=10628 (BANK-ECON-01)"
+        },
+        "DOD-B": {
+          "status": "UNVERIFIED",
+          "evidence": "Categorize/Match field matrix browser click-through not run this sweep",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-feed-TRANSP"
+        },
+        "DOD-C": {
+          "status": "FAIL",
+          "evidence": "matched_je=3/10628 (BANK-ECON-02); forward linkage sparse",
+          "fix_block": "BANK-ECON-02"
+        },
+        "DOD-D": {
+          "status": "FAIL",
+          "evidence": "Categorize density near-zero; purpose→economics not moving live rows",
+          "fix_block": "BANK-ECON-02"
+        },
+        "DOD-E": {
+          "status": "UNVERIFIED",
+          "evidence": "Per-cell browser evidence pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-feed-TRANSP"
+        },
+        "VERIFY-1": {
+          "status": "UNVERIFIED",
+          "evidence": "QBO chrome ParityDrawer/calendar not re-clicked TRANSP",
+          "fix_block": "BANK-SURF-02"
+        },
+        "VERIFY-2": {
+          "status": "UNVERIFIED",
+          "evidence": "Universal picker law not re-run on categorize pickers",
+          "fix_block": "BANK-SURF-02"
+        },
+        "VERIFY-3": {
+          "status": "PASS",
+          "evidence": "Static: feed reads/writes banking.bank_transactions via /api/v1/banking/* (verify-bank-surfaces-and-counterparty)"
+        },
+        "VERIFY-4": {
+          "status": "FAIL",
+          "evidence": "JE reverse drill density 3/10628 (BANK-LINK-01 sparse)",
+          "fix_block": "BANK-LINK-01"
+        },
+        "VERIFY-5": {
+          "status": "PASS",
+          "evidence": "TRANSP feed rows present under lucia; entity-scoped RLS"
+        },
+        "VERIFY-6": {
+          "status": "FAIL",
+          "evidence": "matched_je=3/10628; flags OFF by design (BANK-CTRL-01 PASS)",
+          "fix_block": "BANK-ECON-02"
+        },
+        "VERIFY-7": {
+          "status": "PASS",
+          "evidence": "Feed leaf mounted; no silent-missing route"
+        },
+        "VERIFY-8": {
+          "status": "UNVERIFIED",
+          "evidence": "RLS/GUC per-surface browser proof pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-feed-TRANSP"
+        }
       },
       "USMCA": {
-        "DOD-A": { "status": "UNVERIFIED", "evidence": "USMCA browser switch + feed row count not re-clicked this sweep", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-feed-USMCA" },
-        "DOD-B": { "status": "UNVERIFIED", "evidence": "USMCA categorize wizard not clicked", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-feed-USMCA" },
-        "DOD-C": { "status": "UNVERIFIED", "evidence": "USMCA linkage density not re-proven lucia", "fix_block": "BANK-LINK-01" },
-        "DOD-D": { "status": "UNVERIFIED", "evidence": "USMCA economics not re-counted", "fix_block": "BANK-ECON-02" },
-        "DOD-E": { "status": "UNVERIFIED", "evidence": "USMCA per-cell evidence pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-feed-USMCA" },
-        "VERIFY-1": { "status": "UNVERIFIED", "evidence": "USMCA QBO chrome not re-clicked", "fix_block": "BANK-SURF-02" },
-        "VERIFY-2": { "status": "UNVERIFIED", "evidence": "USMCA picker law not re-run", "fix_block": "BANK-SURF-02" },
-        "VERIFY-3": { "status": "UNVERIFIED", "evidence": "USMCA nav→API path not browser-proven", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-feed-USMCA" },
-        "VERIFY-4": { "status": "UNVERIFIED", "evidence": "USMCA reverse drill not run", "fix_block": "BANK-LINK-01" },
-        "VERIFY-5": { "status": "UNVERIFIED", "evidence": "TRANSP+USMCA both-swept requirement open for USMCA", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-feed-USMCA" },
-        "VERIFY-6": { "status": "UNVERIFIED", "evidence": "USMCA economics density not re-counted", "fix_block": "BANK-ECON-02" },
-        "VERIFY-7": { "status": "PASS", "evidence": "Route mounted entity-agnostic; USMCA opco reachable when launched" },
-        "VERIFY-8": { "status": "UNVERIFIED", "evidence": "USMCA RLS/GUC browser proof pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-feed-USMCA" }
+        "DOD-A": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA browser switch + feed row count not re-clicked this sweep",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-feed-USMCA"
+        },
+        "DOD-B": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA categorize wizard not clicked",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-feed-USMCA"
+        },
+        "DOD-C": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA linkage density not re-proven lucia",
+          "fix_block": "BANK-LINK-01"
+        },
+        "DOD-D": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA economics not re-counted",
+          "fix_block": "BANK-ECON-02"
+        },
+        "DOD-E": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA per-cell evidence pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-feed-USMCA"
+        },
+        "VERIFY-1": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA QBO chrome not re-clicked",
+          "fix_block": "BANK-SURF-02"
+        },
+        "VERIFY-2": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA picker law not re-run",
+          "fix_block": "BANK-SURF-02"
+        },
+        "VERIFY-3": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA nav→API path not browser-proven",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-feed-USMCA"
+        },
+        "VERIFY-4": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA reverse drill not run",
+          "fix_block": "BANK-LINK-01"
+        },
+        "VERIFY-5": {
+          "status": "UNVERIFIED",
+          "evidence": "TRANSP+USMCA both-swept requirement open for USMCA",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-feed-USMCA"
+        },
+        "VERIFY-6": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA economics density not re-counted",
+          "fix_block": "BANK-ECON-02"
+        },
+        "VERIFY-7": {
+          "status": "PASS",
+          "evidence": "Route mounted entity-agnostic; USMCA opco reachable when launched"
+        },
+        "VERIFY-8": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA RLS/GUC browser proof pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-feed-USMCA"
+        }
       }
     },
     "SURF-Register": {
       "TRANSP": {
-        "DOD-A": { "status": "PASS", "evidence": "BankAccountDetailPage + BankingTransactionsDesignView on /banking/accounts/:id (verify-bank-surf-01-dod step 1465)" },
-        "DOD-B": { "status": "UNVERIFIED", "evidence": "Register split/categorize wizard depth not browser-clicked", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Register-TRANSP" },
-        "DOD-C": { "status": "UNVERIFIED", "evidence": "Register reverse linkage drill not run", "fix_block": "BANK-LINK-01" },
-        "DOD-D": { "status": "UNVERIFIED", "evidence": "Register economics per-row not re-proven", "fix_block": "BANK-ECON-02" },
-        "DOD-E": { "status": "UNVERIFIED", "evidence": "Browser evidence pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Register-TRANSP" },
-        "VERIFY-1": { "status": "UNVERIFIED", "evidence": "QBO register chrome not re-clicked", "fix_block": "BANK-SURF-01" },
-        "VERIFY-2": { "status": "UNVERIFIED", "evidence": "Register pickers not re-run", "fix_block": "BANK-SURF-01" },
-        "VERIFY-3": { "status": "PASS", "evidence": "Detail reads banking.* via canonical API client" },
-        "VERIFY-4": { "status": "UNVERIFIED", "evidence": "Register F+R drill pending", "fix_block": "BANK-LINK-01" },
-        "VERIFY-5": { "status": "UNVERIFIED", "evidence": "TRANSP register click-through pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Register-TRANSP" },
-        "VERIFY-6": { "status": "UNVERIFIED", "evidence": "Register row economics not re-proven", "fix_block": "BANK-ECON-02" },
-        "VERIFY-7": { "status": "PASS", "evidence": "Register mounted on account detail; never-delete archive table retained" },
-        "VERIFY-8": { "status": "UNVERIFIED", "evidence": "RLS proof pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Register-TRANSP" }
+        "DOD-A": {
+          "status": "PASS",
+          "evidence": "BankAccountDetailPage + BankingTransactionsDesignView on /banking/accounts/:id (verify-bank-surf-01-dod step 1465)"
+        },
+        "DOD-B": {
+          "status": "UNVERIFIED",
+          "evidence": "Register split/categorize wizard depth not browser-clicked",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Register-TRANSP"
+        },
+        "DOD-C": {
+          "status": "UNVERIFIED",
+          "evidence": "Register reverse linkage drill not run",
+          "fix_block": "BANK-LINK-01"
+        },
+        "DOD-D": {
+          "status": "UNVERIFIED",
+          "evidence": "Register economics per-row not re-proven",
+          "fix_block": "BANK-ECON-02"
+        },
+        "DOD-E": {
+          "status": "UNVERIFIED",
+          "evidence": "Browser evidence pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Register-TRANSP"
+        },
+        "VERIFY-1": {
+          "status": "UNVERIFIED",
+          "evidence": "QBO register chrome not re-clicked",
+          "fix_block": "BANK-SURF-01"
+        },
+        "VERIFY-2": {
+          "status": "UNVERIFIED",
+          "evidence": "Register pickers not re-run",
+          "fix_block": "BANK-SURF-01"
+        },
+        "VERIFY-3": {
+          "status": "PASS",
+          "evidence": "Detail reads banking.* via canonical API client"
+        },
+        "VERIFY-4": {
+          "status": "UNVERIFIED",
+          "evidence": "Register F+R drill pending",
+          "fix_block": "BANK-LINK-01"
+        },
+        "VERIFY-5": {
+          "status": "UNVERIFIED",
+          "evidence": "TRANSP register click-through pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Register-TRANSP"
+        },
+        "VERIFY-6": {
+          "status": "UNVERIFIED",
+          "evidence": "Register row economics not re-proven",
+          "fix_block": "BANK-ECON-02"
+        },
+        "VERIFY-7": {
+          "status": "PASS",
+          "evidence": "Register mounted on account detail; never-delete archive table retained"
+        },
+        "VERIFY-8": {
+          "status": "UNVERIFIED",
+          "evidence": "RLS proof pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Register-TRANSP"
+        }
       },
       "USMCA": {
-        "DOD-A": { "status": "UNVERIFIED", "evidence": "USMCA account register not browser-clicked", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Register-USMCA" },
-        "DOD-B": { "status": "UNVERIFIED", "evidence": "USMCA wizard depth pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Register-USMCA" },
-        "DOD-C": { "status": "UNVERIFIED", "evidence": "USMCA linkage pending", "fix_block": "BANK-LINK-01" },
-        "DOD-D": { "status": "UNVERIFIED", "evidence": "USMCA economics pending", "fix_block": "BANK-ECON-02" },
-        "DOD-E": { "status": "UNVERIFIED", "evidence": "USMCA evidence pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Register-USMCA" },
-        "VERIFY-1": { "status": "UNVERIFIED", "evidence": "USMCA chrome pending", "fix_block": "BANK-SURF-01" },
-        "VERIFY-2": { "status": "UNVERIFIED", "evidence": "USMCA pickers pending", "fix_block": "BANK-SURF-01" },
-        "VERIFY-3": { "status": "UNVERIFIED", "evidence": "USMCA connectivity pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Register-USMCA" },
-        "VERIFY-4": { "status": "UNVERIFIED", "evidence": "USMCA F+R pending", "fix_block": "BANK-LINK-01" },
-        "VERIFY-5": { "status": "UNVERIFIED", "evidence": "USMCA both-swept open", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Register-USMCA" },
-        "VERIFY-6": { "status": "UNVERIFIED", "evidence": "USMCA economics pending", "fix_block": "BANK-ECON-02" },
-        "VERIFY-7": { "status": "PASS", "evidence": "Route entity-agnostic" },
-        "VERIFY-8": { "status": "UNVERIFIED", "evidence": "USMCA RLS pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Register-USMCA" }
+        "DOD-A": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA account register not browser-clicked",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Register-USMCA"
+        },
+        "DOD-B": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA wizard depth pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Register-USMCA"
+        },
+        "DOD-C": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA linkage pending",
+          "fix_block": "BANK-LINK-01"
+        },
+        "DOD-D": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA economics pending",
+          "fix_block": "BANK-ECON-02"
+        },
+        "DOD-E": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA evidence pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Register-USMCA"
+        },
+        "VERIFY-1": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA chrome pending",
+          "fix_block": "BANK-SURF-01"
+        },
+        "VERIFY-2": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA pickers pending",
+          "fix_block": "BANK-SURF-01"
+        },
+        "VERIFY-3": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA connectivity pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Register-USMCA"
+        },
+        "VERIFY-4": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA F+R pending",
+          "fix_block": "BANK-LINK-01"
+        },
+        "VERIFY-5": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA both-swept open",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Register-USMCA"
+        },
+        "VERIFY-6": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA economics pending",
+          "fix_block": "BANK-ECON-02"
+        },
+        "VERIFY-7": {
+          "status": "PASS",
+          "evidence": "Route entity-agnostic"
+        },
+        "VERIFY-8": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA RLS pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Register-USMCA"
+        }
       }
     },
     "SURF-Account-detail": {
       "TRANSP": {
-        "DOD-A": { "status": "PASS", "evidence": "BankAccountDetailPage live (verify-bank-surf-01-dod)" },
-        "DOD-B": { "status": "UNVERIFIED", "evidence": "Account detail actions wizard not browser-clicked", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Account-detail-TRANSP" },
-        "DOD-C": { "status": "UNVERIFIED", "evidence": "Detail hub linkage drill pending", "fix_block": "BANK-LINK-01" },
-        "DOD-D": { "status": "PASS", "evidence": "Cash bind 7/7 live accounts (BANK-ECON-05 PASS)" },
-        "DOD-E": { "status": "UNVERIFIED", "evidence": "Browser evidence pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Account-detail-TRANSP" },
-        "VERIFY-1": { "status": "UNVERIFIED", "evidence": "Detail chrome not re-clicked", "fix_block": "BANK-SURF-01" },
-        "VERIFY-2": { "status": "UNVERIFIED", "evidence": "Detail pickers pending", "fix_block": "BANK-SURF-01" },
-        "VERIFY-3": { "status": "PASS", "evidence": "banking.bank_accounts + banking.bank_transactions canonical path" },
-        "VERIFY-4": { "status": "UNVERIFIED", "evidence": "Detail F+R pending", "fix_block": "BANK-LINK-01" },
-        "VERIFY-5": { "status": "UNVERIFIED", "evidence": "TRANSP detail click-through pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Account-detail-TRANSP" },
-        "VERIFY-6": { "status": "PASS", "evidence": "ledger_account_id 7/7 on live accounts (BANK-ECON-05)" },
-        "VERIFY-7": { "status": "PASS", "evidence": "Account detail leaf in design + manifest" },
-        "VERIFY-8": { "status": "UNVERIFIED", "evidence": "RLS browser proof pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Account-detail-TRANSP" }
+        "DOD-A": {
+          "status": "PASS",
+          "evidence": "BankAccountDetailPage live (verify-bank-surf-01-dod)"
+        },
+        "DOD-B": {
+          "status": "UNVERIFIED",
+          "evidence": "Account detail actions wizard not browser-clicked",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Account-detail-TRANSP"
+        },
+        "DOD-C": {
+          "status": "UNVERIFIED",
+          "evidence": "Detail hub linkage drill pending",
+          "fix_block": "BANK-LINK-01"
+        },
+        "DOD-D": {
+          "status": "PASS",
+          "evidence": "Cash bind 7/7 live accounts (BANK-ECON-05 PASS)"
+        },
+        "DOD-E": {
+          "status": "UNVERIFIED",
+          "evidence": "Browser evidence pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Account-detail-TRANSP"
+        },
+        "VERIFY-1": {
+          "status": "UNVERIFIED",
+          "evidence": "Detail chrome not re-clicked",
+          "fix_block": "BANK-SURF-01"
+        },
+        "VERIFY-2": {
+          "status": "UNVERIFIED",
+          "evidence": "Detail pickers pending",
+          "fix_block": "BANK-SURF-01"
+        },
+        "VERIFY-3": {
+          "status": "PASS",
+          "evidence": "banking.bank_accounts + banking.bank_transactions canonical path"
+        },
+        "VERIFY-4": {
+          "status": "UNVERIFIED",
+          "evidence": "Detail F+R pending",
+          "fix_block": "BANK-LINK-01"
+        },
+        "VERIFY-5": {
+          "status": "UNVERIFIED",
+          "evidence": "TRANSP detail click-through pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Account-detail-TRANSP"
+        },
+        "VERIFY-6": {
+          "status": "PASS",
+          "evidence": "ledger_account_id 7/7 on live accounts (BANK-ECON-05)"
+        },
+        "VERIFY-7": {
+          "status": "PASS",
+          "evidence": "Account detail leaf in design + manifest"
+        },
+        "VERIFY-8": {
+          "status": "UNVERIFIED",
+          "evidence": "RLS browser proof pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Account-detail-TRANSP"
+        }
       },
       "USMCA": {
-        "DOD-A": { "status": "UNVERIFIED", "evidence": "USMCA account detail not browser-clicked", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Account-detail-USMCA" },
-        "DOD-B": { "status": "UNVERIFIED", "evidence": "USMCA wizard pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Account-detail-USMCA" },
-        "DOD-C": { "status": "UNVERIFIED", "evidence": "USMCA linkage pending", "fix_block": "BANK-LINK-01" },
-        "DOD-D": { "status": "UNVERIFIED", "evidence": "USMCA cash bind count not re-proven", "fix_block": "BANK-ECON-05" },
-        "DOD-E": { "status": "UNVERIFIED", "evidence": "USMCA evidence pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Account-detail-USMCA" },
-        "VERIFY-1": { "status": "UNVERIFIED", "evidence": "USMCA chrome pending", "fix_block": "BANK-SURF-01" },
-        "VERIFY-2": { "status": "UNVERIFIED", "evidence": "USMCA pickers pending", "fix_block": "BANK-SURF-01" },
-        "VERIFY-3": { "status": "UNVERIFIED", "evidence": "USMCA connectivity pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Account-detail-USMCA" },
-        "VERIFY-4": { "status": "UNVERIFIED", "evidence": "USMCA F+R pending", "fix_block": "BANK-LINK-01" },
-        "VERIFY-5": { "status": "UNVERIFIED", "evidence": "USMCA both-swept open", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Account-detail-USMCA" },
-        "VERIFY-6": { "status": "UNVERIFIED", "evidence": "USMCA economics pending", "fix_block": "BANK-ECON-05" },
-        "VERIFY-7": { "status": "PASS", "evidence": "Route entity-agnostic" },
-        "VERIFY-8": { "status": "UNVERIFIED", "evidence": "USMCA RLS pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Account-detail-USMCA" }
+        "DOD-A": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA account detail not browser-clicked",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Account-detail-USMCA"
+        },
+        "DOD-B": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA wizard pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Account-detail-USMCA"
+        },
+        "DOD-C": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA linkage pending",
+          "fix_block": "BANK-LINK-01"
+        },
+        "DOD-D": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA cash bind count not re-proven",
+          "fix_block": "BANK-ECON-05"
+        },
+        "DOD-E": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA evidence pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Account-detail-USMCA"
+        },
+        "VERIFY-1": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA chrome pending",
+          "fix_block": "BANK-SURF-01"
+        },
+        "VERIFY-2": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA pickers pending",
+          "fix_block": "BANK-SURF-01"
+        },
+        "VERIFY-3": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA connectivity pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Account-detail-USMCA"
+        },
+        "VERIFY-4": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA F+R pending",
+          "fix_block": "BANK-LINK-01"
+        },
+        "VERIFY-5": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA both-swept open",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Account-detail-USMCA"
+        },
+        "VERIFY-6": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA economics pending",
+          "fix_block": "BANK-ECON-05"
+        },
+        "VERIFY-7": {
+          "status": "PASS",
+          "evidence": "Route entity-agnostic"
+        },
+        "VERIFY-8": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA RLS pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Account-detail-USMCA"
+        }
       }
     },
     "SURF-Rules": {
       "TRANSP": {
-        "DOD-A": { "status": "PASS", "evidence": "CategorizationRulesPage mounted /banking/categorization-rules" },
-        "DOD-B": { "status": "UNVERIFIED", "evidence": "Rule create/edit wizard not browser-clicked", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Rules-TRANSP" },
-        "DOD-C": { "status": "UNVERIFIED", "evidence": "Rule→txn linkage drill pending", "fix_block": "BANK-SURF-06" },
-        "DOD-D": { "status": "UNVERIFIED", "evidence": "Rule economics (auto-categorize density) not proven", "fix_block": "BANK-SURF-06" },
-        "DOD-E": { "status": "UNVERIFIED", "evidence": "Browser evidence pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Rules-TRANSP" },
-        "VERIFY-1": { "status": "UNVERIFIED", "evidence": "Rules chrome not re-clicked", "fix_block": "BANK-SURF-06" },
-        "VERIFY-2": { "status": "UNVERIFIED", "evidence": "Rules pickers pending", "fix_block": "BANK-SURF-06" },
-        "VERIFY-3": { "status": "PASS", "evidence": "banking-rules.engine.ts + banking.* routes wired" },
-        "VERIFY-4": { "status": "UNVERIFIED", "evidence": "Rule F+R pending", "fix_block": "BANK-SURF-06" },
-        "VERIFY-5": { "status": "UNVERIFIED", "evidence": "TRANSP rules click-through pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Rules-TRANSP" },
-        "VERIFY-6": { "status": "UNVERIFIED", "evidence": "Rule auto-post economics not proven", "fix_block": "BANK-SURF-06" },
-        "VERIFY-7": { "status": "PASS", "evidence": "Rules leaf in banking nav; M grew via BANK-SURF-06" },
-        "VERIFY-8": { "status": "UNVERIFIED", "evidence": "RLS pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Rules-TRANSP" }
+        "DOD-A": {
+          "status": "PASS",
+          "evidence": "CategorizationRulesPage mounted /banking/categorization-rules"
+        },
+        "DOD-B": {
+          "status": "UNVERIFIED",
+          "evidence": "Rule create/edit wizard not browser-clicked",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Rules-TRANSP"
+        },
+        "DOD-C": {
+          "status": "UNVERIFIED",
+          "evidence": "Rule→txn linkage drill pending",
+          "fix_block": "BANK-SURF-06"
+        },
+        "DOD-D": {
+          "status": "UNVERIFIED",
+          "evidence": "Rule economics (auto-categorize density) not proven",
+          "fix_block": "BANK-SURF-06"
+        },
+        "DOD-E": {
+          "status": "UNVERIFIED",
+          "evidence": "Browser evidence pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Rules-TRANSP"
+        },
+        "VERIFY-1": {
+          "status": "UNVERIFIED",
+          "evidence": "Rules chrome not re-clicked",
+          "fix_block": "BANK-SURF-06"
+        },
+        "VERIFY-2": {
+          "status": "UNVERIFIED",
+          "evidence": "Rules pickers pending",
+          "fix_block": "BANK-SURF-06"
+        },
+        "VERIFY-3": {
+          "status": "PASS",
+          "evidence": "banking-rules.engine.ts + banking.* routes wired"
+        },
+        "VERIFY-4": {
+          "status": "UNVERIFIED",
+          "evidence": "Rule F+R pending",
+          "fix_block": "BANK-SURF-06"
+        },
+        "VERIFY-5": {
+          "status": "UNVERIFIED",
+          "evidence": "TRANSP rules click-through pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Rules-TRANSP"
+        },
+        "VERIFY-6": {
+          "status": "UNVERIFIED",
+          "evidence": "Rule auto-post economics not proven",
+          "fix_block": "BANK-SURF-06"
+        },
+        "VERIFY-7": {
+          "status": "PASS",
+          "evidence": "Rules leaf in banking nav; M grew via BANK-SURF-06"
+        },
+        "VERIFY-8": {
+          "status": "UNVERIFIED",
+          "evidence": "RLS pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Rules-TRANSP"
+        }
       },
       "USMCA": {
-        "DOD-A": { "status": "UNVERIFIED", "evidence": "USMCA rules not browser-clicked", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Rules-USMCA" },
-        "DOD-B": { "status": "UNVERIFIED", "evidence": "USMCA wizard pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Rules-USMCA" },
-        "DOD-C": { "status": "UNVERIFIED", "evidence": "USMCA linkage pending", "fix_block": "BANK-SURF-06" },
-        "DOD-D": { "status": "UNVERIFIED", "evidence": "USMCA economics pending", "fix_block": "BANK-SURF-06" },
-        "DOD-E": { "status": "UNVERIFIED", "evidence": "USMCA evidence pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Rules-USMCA" },
-        "VERIFY-1": { "status": "UNVERIFIED", "evidence": "USMCA chrome pending", "fix_block": "BANK-SURF-06" },
-        "VERIFY-2": { "status": "UNVERIFIED", "evidence": "USMCA pickers pending", "fix_block": "BANK-SURF-06" },
-        "VERIFY-3": { "status": "UNVERIFIED", "evidence": "USMCA connectivity pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Rules-USMCA" },
-        "VERIFY-4": { "status": "UNVERIFIED", "evidence": "USMCA F+R pending", "fix_block": "BANK-SURF-06" },
-        "VERIFY-5": { "status": "UNVERIFIED", "evidence": "USMCA both-swept open", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Rules-USMCA" },
-        "VERIFY-6": { "status": "UNVERIFIED", "evidence": "USMCA economics pending", "fix_block": "BANK-SURF-06" },
-        "VERIFY-7": { "status": "PASS", "evidence": "Route entity-agnostic" },
-        "VERIFY-8": { "status": "UNVERIFIED", "evidence": "USMCA RLS pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Rules-USMCA" }
+        "DOD-A": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA rules not browser-clicked",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Rules-USMCA"
+        },
+        "DOD-B": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA wizard pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Rules-USMCA"
+        },
+        "DOD-C": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA linkage pending",
+          "fix_block": "BANK-SURF-06"
+        },
+        "DOD-D": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA economics pending",
+          "fix_block": "BANK-SURF-06"
+        },
+        "DOD-E": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA evidence pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Rules-USMCA"
+        },
+        "VERIFY-1": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA chrome pending",
+          "fix_block": "BANK-SURF-06"
+        },
+        "VERIFY-2": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA pickers pending",
+          "fix_block": "BANK-SURF-06"
+        },
+        "VERIFY-3": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA connectivity pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Rules-USMCA"
+        },
+        "VERIFY-4": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA F+R pending",
+          "fix_block": "BANK-SURF-06"
+        },
+        "VERIFY-5": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA both-swept open",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Rules-USMCA"
+        },
+        "VERIFY-6": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA economics pending",
+          "fix_block": "BANK-SURF-06"
+        },
+        "VERIFY-7": {
+          "status": "PASS",
+          "evidence": "Route entity-agnostic"
+        },
+        "VERIFY-8": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA RLS pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Rules-USMCA"
+        }
       }
     },
     "SURF-Transfers": {
       "TRANSP": {
-        "DOD-A": { "status": "PASS", "evidence": "TransfersListPage + createTransfer poster wired" },
-        "DOD-B": { "status": "UNVERIFIED", "evidence": "Transfer modal field matrix not browser-clicked", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Transfers-TRANSP" },
-        "DOD-C": { "status": "UNVERIFIED", "evidence": "Transfer legs F+R drill pending (0 rows)", "fix_block": "BANK-LINK-01" },
-        "DOD-D": { "status": "FAIL", "evidence": "banking.transfers=0 on Neon lucia (BANK-ECON-03 FAIL)", "fix_block": "BANK-ECON-03" },
-        "DOD-E": { "status": "UNVERIFIED", "evidence": "Browser evidence pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Transfers-TRANSP" },
-        "VERIFY-1": { "status": "UNVERIFIED", "evidence": "Transfer chrome not re-clicked", "fix_block": "BANK-SURF-03" },
-        "VERIFY-2": { "status": "UNVERIFIED", "evidence": "From/To account pickers pending", "fix_block": "BANK-SURF-03" },
-        "VERIFY-3": { "status": "PASS", "evidence": "createTransfer writes banking.transfers (canonical)" },
-        "VERIFY-4": { "status": "UNVERIFIED", "evidence": "Transfer F+R pending (0 density)", "fix_block": "BANK-LINK-01" },
-        "VERIFY-5": { "status": "UNVERIFIED", "evidence": "TRANSP transfer click-through pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Transfers-TRANSP" },
-        "VERIFY-6": { "status": "FAIL", "evidence": "transfers=0 (BANK-ECON-03)", "fix_block": "BANK-ECON-03" },
-        "VERIFY-7": { "status": "PASS", "evidence": "Transfers tab mounted" },
-        "VERIFY-8": { "status": "UNVERIFIED", "evidence": "RLS pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Transfers-TRANSP" }
+        "DOD-A": {
+          "status": "PASS",
+          "evidence": "TransfersListPage + createTransfer poster wired"
+        },
+        "DOD-B": {
+          "status": "UNVERIFIED",
+          "evidence": "Transfer modal field matrix not browser-clicked",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Transfers-TRANSP"
+        },
+        "DOD-C": {
+          "status": "UNVERIFIED",
+          "evidence": "Transfer legs F+R drill pending (0 rows)",
+          "fix_block": "BANK-LINK-01"
+        },
+        "DOD-D": {
+          "status": "FAIL",
+          "evidence": "banking.transfers=0 on Neon lucia (BANK-ECON-03 FAIL)",
+          "fix_block": "BANK-ECON-03"
+        },
+        "DOD-E": {
+          "status": "UNVERIFIED",
+          "evidence": "Browser evidence pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Transfers-TRANSP"
+        },
+        "VERIFY-1": {
+          "status": "UNVERIFIED",
+          "evidence": "Transfer chrome not re-clicked",
+          "fix_block": "BANK-SURF-03"
+        },
+        "VERIFY-2": {
+          "status": "UNVERIFIED",
+          "evidence": "From/To account pickers pending",
+          "fix_block": "BANK-SURF-03"
+        },
+        "VERIFY-3": {
+          "status": "PASS",
+          "evidence": "createTransfer writes banking.transfers (canonical)"
+        },
+        "VERIFY-4": {
+          "status": "UNVERIFIED",
+          "evidence": "Transfer F+R pending (0 density)",
+          "fix_block": "BANK-LINK-01"
+        },
+        "VERIFY-5": {
+          "status": "UNVERIFIED",
+          "evidence": "TRANSP transfer click-through pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Transfers-TRANSP"
+        },
+        "VERIFY-6": {
+          "status": "FAIL",
+          "evidence": "transfers=0 (BANK-ECON-03)",
+          "fix_block": "BANK-ECON-03"
+        },
+        "VERIFY-7": {
+          "status": "PASS",
+          "evidence": "Transfers tab mounted"
+        },
+        "VERIFY-8": {
+          "status": "UNVERIFIED",
+          "evidence": "RLS pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Transfers-TRANSP"
+        }
       },
       "USMCA": {
-        "DOD-A": { "status": "UNVERIFIED", "evidence": "USMCA transfers not browser-clicked", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Transfers-USMCA" },
-        "DOD-B": { "status": "UNVERIFIED", "evidence": "USMCA wizard pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Transfers-USMCA" },
-        "DOD-C": { "status": "UNVERIFIED", "evidence": "USMCA linkage pending", "fix_block": "BANK-LINK-01" },
-        "DOD-D": { "status": "UNVERIFIED", "evidence": "USMCA transfer economics pending", "fix_block": "BANK-ECON-03" },
-        "DOD-E": { "status": "UNVERIFIED", "evidence": "USMCA evidence pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Transfers-USMCA" },
-        "VERIFY-1": { "status": "UNVERIFIED", "evidence": "USMCA chrome pending", "fix_block": "BANK-SURF-03" },
-        "VERIFY-2": { "status": "UNVERIFIED", "evidence": "USMCA pickers pending", "fix_block": "BANK-SURF-03" },
-        "VERIFY-3": { "status": "UNVERIFIED", "evidence": "USMCA connectivity pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Transfers-USMCA" },
-        "VERIFY-4": { "status": "UNVERIFIED", "evidence": "USMCA F+R pending", "fix_block": "BANK-LINK-01" },
-        "VERIFY-5": { "status": "UNVERIFIED", "evidence": "USMCA both-swept open", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Transfers-USMCA" },
-        "VERIFY-6": { "status": "UNVERIFIED", "evidence": "USMCA economics pending", "fix_block": "BANK-ECON-03" },
-        "VERIFY-7": { "status": "PASS", "evidence": "Route entity-agnostic" },
-        "VERIFY-8": { "status": "UNVERIFIED", "evidence": "USMCA RLS pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Transfers-USMCA" }
+        "DOD-A": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA transfers not browser-clicked",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Transfers-USMCA"
+        },
+        "DOD-B": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA wizard pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Transfers-USMCA"
+        },
+        "DOD-C": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA linkage pending",
+          "fix_block": "BANK-LINK-01"
+        },
+        "DOD-D": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA transfer economics pending",
+          "fix_block": "BANK-ECON-03"
+        },
+        "DOD-E": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA evidence pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Transfers-USMCA"
+        },
+        "VERIFY-1": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA chrome pending",
+          "fix_block": "BANK-SURF-03"
+        },
+        "VERIFY-2": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA pickers pending",
+          "fix_block": "BANK-SURF-03"
+        },
+        "VERIFY-3": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA connectivity pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Transfers-USMCA"
+        },
+        "VERIFY-4": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA F+R pending",
+          "fix_block": "BANK-LINK-01"
+        },
+        "VERIFY-5": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA both-swept open",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Transfers-USMCA"
+        },
+        "VERIFY-6": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA economics pending",
+          "fix_block": "BANK-ECON-03"
+        },
+        "VERIFY-7": {
+          "status": "PASS",
+          "evidence": "Route entity-agnostic"
+        },
+        "VERIFY-8": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA RLS pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Transfers-USMCA"
+        }
       }
     },
     "SURF-Reconcile": {
       "TRANSP": {
-        "DOD-A": { "status": "PASS", "evidence": "BankReconciliationPage + ReconciliationWorkspacePage mounted" },
-        "DOD-B": { "status": "UNVERIFIED", "evidence": "Recon wizard (start/upload/complete) not browser-clicked live", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Reconcile-TRANSP" },
-        "DOD-C": { "status": "UNVERIFIED", "evidence": "Session→txn linkage drill pending", "fix_block": "BANK-LINK-01" },
-        "DOD-D": { "status": "HOLD", "evidence": "reconciliation_sessions=0; RLS root cause (BANK-ECON-04 HOLD)", "fix_block": "BANK-ECON-04-NEON-APPLY" },
-        "DOD-E": { "status": "UNVERIFIED", "evidence": "Live session evidence blocked until Neon-apply", "fix_block": "BANK-ECON-04-NEON-APPLY" },
-        "VERIFY-1": { "status": "UNVERIFIED", "evidence": "Recon chrome not re-clicked", "fix_block": "BANK-SURF-04" },
-        "VERIFY-2": { "status": "UNVERIFIED", "evidence": "Recon pickers pending", "fix_block": "BANK-SURF-04" },
-        "VERIFY-3": { "status": "PASS", "evidence": "POST /reconciliation/start wired (verify-banking-recon-start-session-wired)" },
-        "VERIFY-4": { "status": "UNVERIFIED", "evidence": "Recon F+R pending (0 sessions)", "fix_block": "BANK-LINK-01" },
-        "VERIFY-5": { "status": "UNVERIFIED", "evidence": "TRANSP recon click-through pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Reconcile-TRANSP" },
-        "VERIFY-6": { "status": "HOLD", "evidence": "sessions=0; owner Neon-apply required (BANK-ECON-04)", "fix_block": "BANK-ECON-04-NEON-APPLY" },
-        "VERIFY-7": { "status": "PASS", "evidence": "Recon leaves mounted (never-delete workspace alias)" },
-        "VERIFY-8": { "status": "UNVERIFIED", "evidence": "bank_accounts RLS bypass pending owner apply", "fix_block": "BANK-ECON-04-NEON-APPLY" }
+        "DOD-A": {
+          "status": "PASS",
+          "evidence": "BankReconciliationPage + ReconciliationWorkspacePage mounted"
+        },
+        "DOD-B": {
+          "status": "UNVERIFIED",
+          "evidence": "Recon wizard (start/upload/complete) not browser-clicked live",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Reconcile-TRANSP"
+        },
+        "DOD-C": {
+          "status": "UNVERIFIED",
+          "evidence": "Session→txn linkage drill pending",
+          "fix_block": "BANK-LINK-01"
+        },
+        "DOD-D": {
+          "status": "HOLD",
+          "evidence": "reconciliation_sessions=0; RLS root cause (BANK-ECON-04 HOLD)",
+          "fix_block": "BANK-ECON-04-NEON-APPLY"
+        },
+        "DOD-E": {
+          "status": "UNVERIFIED",
+          "evidence": "Live session evidence blocked until Neon-apply",
+          "fix_block": "BANK-ECON-04-NEON-APPLY"
+        },
+        "VERIFY-1": {
+          "status": "UNVERIFIED",
+          "evidence": "Recon chrome not re-clicked",
+          "fix_block": "BANK-SURF-04"
+        },
+        "VERIFY-2": {
+          "status": "UNVERIFIED",
+          "evidence": "Recon pickers pending",
+          "fix_block": "BANK-SURF-04"
+        },
+        "VERIFY-3": {
+          "status": "PASS",
+          "evidence": "POST /reconciliation/start wired (verify-banking-recon-start-session-wired)"
+        },
+        "VERIFY-4": {
+          "status": "UNVERIFIED",
+          "evidence": "Recon F+R pending (0 sessions)",
+          "fix_block": "BANK-LINK-01"
+        },
+        "VERIFY-5": {
+          "status": "UNVERIFIED",
+          "evidence": "TRANSP recon click-through pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Reconcile-TRANSP"
+        },
+        "VERIFY-6": {
+          "status": "HOLD",
+          "evidence": "sessions=0; owner Neon-apply required (BANK-ECON-04)",
+          "fix_block": "BANK-ECON-04-NEON-APPLY"
+        },
+        "VERIFY-7": {
+          "status": "PASS",
+          "evidence": "Recon leaves mounted (never-delete workspace alias)"
+        },
+        "VERIFY-8": {
+          "status": "UNVERIFIED",
+          "evidence": "bank_accounts RLS bypass pending owner apply",
+          "fix_block": "BANK-ECON-04-NEON-APPLY"
+        }
       },
       "USMCA": {
-        "DOD-A": { "status": "UNVERIFIED", "evidence": "USMCA recon not browser-clicked", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Reconcile-USMCA" },
-        "DOD-B": { "status": "UNVERIFIED", "evidence": "USMCA wizard pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Reconcile-USMCA" },
-        "DOD-C": { "status": "UNVERIFIED", "evidence": "USMCA linkage pending", "fix_block": "BANK-LINK-01" },
-        "DOD-D": { "status": "HOLD", "evidence": "Same RLS blocker as TRANSP until Neon-apply", "fix_block": "BANK-ECON-04-NEON-APPLY" },
-        "DOD-E": { "status": "UNVERIFIED", "evidence": "USMCA evidence pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Reconcile-USMCA" },
-        "VERIFY-1": { "status": "UNVERIFIED", "evidence": "USMCA chrome pending", "fix_block": "BANK-SURF-04" },
-        "VERIFY-2": { "status": "UNVERIFIED", "evidence": "USMCA pickers pending", "fix_block": "BANK-SURF-04" },
-        "VERIFY-3": { "status": "UNVERIFIED", "evidence": "USMCA connectivity pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Reconcile-USMCA" },
-        "VERIFY-4": { "status": "UNVERIFIED", "evidence": "USMCA F+R pending", "fix_block": "BANK-LINK-01" },
-        "VERIFY-5": { "status": "UNVERIFIED", "evidence": "USMCA both-swept open", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Reconcile-USMCA" },
-        "VERIFY-6": { "status": "HOLD", "evidence": "Same economics blocker", "fix_block": "BANK-ECON-04-NEON-APPLY" },
-        "VERIFY-7": { "status": "PASS", "evidence": "Route entity-agnostic" },
-        "VERIFY-8": { "status": "UNVERIFIED", "evidence": "USMCA RLS pending", "fix_block": "BANK-ECON-04-NEON-APPLY" }
+        "DOD-A": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA recon not browser-clicked",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Reconcile-USMCA"
+        },
+        "DOD-B": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA wizard pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Reconcile-USMCA"
+        },
+        "DOD-C": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA linkage pending",
+          "fix_block": "BANK-LINK-01"
+        },
+        "DOD-D": {
+          "status": "HOLD",
+          "evidence": "Same RLS blocker as TRANSP until Neon-apply",
+          "fix_block": "BANK-ECON-04-NEON-APPLY"
+        },
+        "DOD-E": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA evidence pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Reconcile-USMCA"
+        },
+        "VERIFY-1": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA chrome pending",
+          "fix_block": "BANK-SURF-04"
+        },
+        "VERIFY-2": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA pickers pending",
+          "fix_block": "BANK-SURF-04"
+        },
+        "VERIFY-3": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA connectivity pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Reconcile-USMCA"
+        },
+        "VERIFY-4": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA F+R pending",
+          "fix_block": "BANK-LINK-01"
+        },
+        "VERIFY-5": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA both-swept open",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Reconcile-USMCA"
+        },
+        "VERIFY-6": {
+          "status": "HOLD",
+          "evidence": "Same economics blocker",
+          "fix_block": "BANK-ECON-04-NEON-APPLY"
+        },
+        "VERIFY-7": {
+          "status": "PASS",
+          "evidence": "Route entity-agnostic"
+        },
+        "VERIFY-8": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA RLS pending",
+          "fix_block": "BANK-ECON-04-NEON-APPLY"
+        }
       }
     },
     "SURF-Bank-accounts-Cash-bind": {
       "TRANSP": {
-        "DOD-A": { "status": "PASS", "evidence": "BankingHome + CashGlSetupPage mounted" },
-        "DOD-B": { "status": "UNVERIFIED", "evidence": "Cash bind wizard not browser-clicked", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-accounts-Cash-bind-TRANSP" },
-        "DOD-C": { "status": "PASS", "evidence": "bank_accounts→catalogs.accounts ledger_account_id 7/7 (BANK-ECON-05)" },
-        "DOD-D": { "status": "PASS", "evidence": "No reserve auto-select (Rule 19); live bind complete" },
-        "DOD-E": { "status": "UNVERIFIED", "evidence": "Browser bind flow evidence pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-accounts-Cash-bind-TRANSP" },
-        "VERIFY-1": { "status": "UNVERIFIED", "evidence": "Home tiles chrome not re-clicked", "fix_block": "BANK-SURF-01" },
-        "VERIFY-2": { "status": "UNVERIFIED", "evidence": "CoA picker on bind pending", "fix_block": "BANK-SURF-01" },
-        "VERIFY-3": { "status": "PASS", "evidence": "verify-bank-account-cashbind + banking.routes UPDATE ledger_account_id" },
-        "VERIFY-4": { "status": "UNVERIFIED", "evidence": "Cash GL reverse drill pending", "fix_block": "BANK-LINK-01" },
-        "VERIFY-5": { "status": "PASS", "evidence": "TRANSP 7/7 live accounts bound" },
-        "VERIFY-6": { "status": "PASS", "evidence": "BANK-ECON-05 PASS; flags OFF" },
-        "VERIFY-7": { "status": "PASS", "evidence": "Home + cash-gl-setup leaves present" },
-        "VERIFY-8": { "status": "UNVERIFIED", "evidence": "RLS browser proof pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-accounts-Cash-bind-TRANSP" }
+        "DOD-A": {
+          "status": "PASS",
+          "evidence": "BankingHome + CashGlSetupPage mounted"
+        },
+        "DOD-B": {
+          "status": "UNVERIFIED",
+          "evidence": "Cash bind wizard not browser-clicked",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-accounts-Cash-bind-TRANSP"
+        },
+        "DOD-C": {
+          "status": "PASS",
+          "evidence": "bank_accounts→catalogs.accounts ledger_account_id 7/7 (BANK-ECON-05)"
+        },
+        "DOD-D": {
+          "status": "PASS",
+          "evidence": "No reserve auto-select (Rule 19); live bind complete"
+        },
+        "DOD-E": {
+          "status": "UNVERIFIED",
+          "evidence": "Browser bind flow evidence pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-accounts-Cash-bind-TRANSP"
+        },
+        "VERIFY-1": {
+          "status": "UNVERIFIED",
+          "evidence": "Home tiles chrome not re-clicked",
+          "fix_block": "BANK-SURF-01"
+        },
+        "VERIFY-2": {
+          "status": "UNVERIFIED",
+          "evidence": "CoA picker on bind pending",
+          "fix_block": "BANK-SURF-01"
+        },
+        "VERIFY-3": {
+          "status": "PASS",
+          "evidence": "verify-bank-account-cashbind + banking.routes UPDATE ledger_account_id"
+        },
+        "VERIFY-4": {
+          "status": "UNVERIFIED",
+          "evidence": "Cash GL reverse drill pending",
+          "fix_block": "BANK-LINK-01"
+        },
+        "VERIFY-5": {
+          "status": "PASS",
+          "evidence": "TRANSP 7/7 live accounts bound"
+        },
+        "VERIFY-6": {
+          "status": "PASS",
+          "evidence": "BANK-ECON-05 PASS; flags OFF"
+        },
+        "VERIFY-7": {
+          "status": "PASS",
+          "evidence": "Home + cash-gl-setup leaves present"
+        },
+        "VERIFY-8": {
+          "status": "UNVERIFIED",
+          "evidence": "RLS browser proof pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-accounts-Cash-bind-TRANSP"
+        }
       },
       "USMCA": {
-        "DOD-A": { "status": "UNVERIFIED", "evidence": "USMCA banking home not browser-clicked", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-accounts-Cash-bind-USMCA" },
-        "DOD-B": { "status": "UNVERIFIED", "evidence": "USMCA bind wizard pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-accounts-Cash-bind-USMCA" },
-        "DOD-C": { "status": "UNVERIFIED", "evidence": "USMCA bind count not re-proven lucia", "fix_block": "BANK-ECON-05" },
-        "DOD-D": { "status": "UNVERIFIED", "evidence": "USMCA economics pending", "fix_block": "BANK-ECON-05" },
-        "DOD-E": { "status": "UNVERIFIED", "evidence": "USMCA evidence pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-accounts-Cash-bind-USMCA" },
-        "VERIFY-1": { "status": "UNVERIFIED", "evidence": "USMCA chrome pending", "fix_block": "BANK-SURF-01" },
-        "VERIFY-2": { "status": "UNVERIFIED", "evidence": "USMCA pickers pending", "fix_block": "BANK-SURF-01" },
-        "VERIFY-3": { "status": "UNVERIFIED", "evidence": "USMCA connectivity pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-accounts-Cash-bind-USMCA" },
-        "VERIFY-4": { "status": "UNVERIFIED", "evidence": "USMCA F+R pending", "fix_block": "BANK-LINK-01" },
-        "VERIFY-5": { "status": "UNVERIFIED", "evidence": "USMCA both-swept open", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-accounts-Cash-bind-USMCA" },
-        "VERIFY-6": { "status": "UNVERIFIED", "evidence": "USMCA economics pending", "fix_block": "BANK-ECON-05" },
-        "VERIFY-7": { "status": "PASS", "evidence": "Routes entity-agnostic" },
-        "VERIFY-8": { "status": "UNVERIFIED", "evidence": "USMCA RLS pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-accounts-Cash-bind-USMCA" }
+        "DOD-A": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA banking home not browser-clicked",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-accounts-Cash-bind-USMCA"
+        },
+        "DOD-B": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA bind wizard pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-accounts-Cash-bind-USMCA"
+        },
+        "DOD-C": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA bind count not re-proven lucia",
+          "fix_block": "BANK-ECON-05"
+        },
+        "DOD-D": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA economics pending",
+          "fix_block": "BANK-ECON-05"
+        },
+        "DOD-E": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA evidence pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-accounts-Cash-bind-USMCA"
+        },
+        "VERIFY-1": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA chrome pending",
+          "fix_block": "BANK-SURF-01"
+        },
+        "VERIFY-2": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA pickers pending",
+          "fix_block": "BANK-SURF-01"
+        },
+        "VERIFY-3": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA connectivity pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-accounts-Cash-bind-USMCA"
+        },
+        "VERIFY-4": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA F+R pending",
+          "fix_block": "BANK-LINK-01"
+        },
+        "VERIFY-5": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA both-swept open",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-accounts-Cash-bind-USMCA"
+        },
+        "VERIFY-6": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA economics pending",
+          "fix_block": "BANK-ECON-05"
+        },
+        "VERIFY-7": {
+          "status": "PASS",
+          "evidence": "Routes entity-agnostic"
+        },
+        "VERIFY-8": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA RLS pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-Bank-accounts-Cash-bind-USMCA"
+        }
       }
     },
     "SURF-More": {
       "TRANSP": {
-        "DOD-A": { "status": "PASS", "evidence": "Factoring/Escrow/Relay/Plaid/Statement Import mounted (verify-bank-surf-05-dod step 1466)" },
-        "DOD-B": { "status": "UNVERIFIED", "evidence": "More-tab wizards not browser-clicked", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-More-TRANSP" },
-        "DOD-C": { "status": "UNVERIFIED", "evidence": "Cross-module drill pending", "fix_block": "BANK-SURF-05" },
-        "DOD-D": { "status": "UNVERIFIED", "evidence": "Honest empty vs economics not re-proven per tab", "fix_block": "BANK-SURF-05" },
-        "DOD-E": { "status": "UNVERIFIED", "evidence": "Browser evidence pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-More-TRANSP" },
-        "VERIFY-1": { "status": "UNVERIFIED", "evidence": "More tabs chrome not re-clicked", "fix_block": "BANK-SURF-05" },
-        "VERIFY-2": { "status": "UNVERIFIED", "evidence": "More pickers pending", "fix_block": "BANK-SURF-05" },
-        "VERIFY-3": { "status": "PASS", "evidence": "verify-bank-surf-entry-tabs: never-delete routes + tab bodies" },
-        "VERIFY-4": { "status": "UNVERIFIED", "evidence": "Factoring/Escrow F+R pending", "fix_block": "BANK-SURF-05" },
-        "VERIFY-5": { "status": "UNVERIFIED", "evidence": "TRANSP More click-through pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-More-TRANSP" },
-        "VERIFY-6": { "status": "UNVERIFIED", "evidence": "Virtual bank economics separate module", "fix_block": "BANK-SURF-05" },
-        "VERIFY-7": { "status": "PASS", "evidence": "All approved More leaves swept structurally (Rule 07 never-delete)" },
-        "VERIFY-8": { "status": "UNVERIFIED", "evidence": "RLS pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-More-TRANSP" }
+        "DOD-A": {
+          "status": "PASS",
+          "evidence": "Factoring/Escrow/Relay/Plaid/Statement Import mounted (verify-bank-surf-05-dod step 1466)"
+        },
+        "DOD-B": {
+          "status": "UNVERIFIED",
+          "evidence": "More-tab wizards not browser-clicked",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-More-TRANSP"
+        },
+        "DOD-C": {
+          "status": "UNVERIFIED",
+          "evidence": "Cross-module drill pending",
+          "fix_block": "BANK-SURF-05"
+        },
+        "DOD-D": {
+          "status": "UNVERIFIED",
+          "evidence": "Honest empty vs economics not re-proven per tab",
+          "fix_block": "BANK-SURF-05"
+        },
+        "DOD-E": {
+          "status": "UNVERIFIED",
+          "evidence": "Browser evidence pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-More-TRANSP"
+        },
+        "VERIFY-1": {
+          "status": "UNVERIFIED",
+          "evidence": "More tabs chrome not re-clicked",
+          "fix_block": "BANK-SURF-05"
+        },
+        "VERIFY-2": {
+          "status": "UNVERIFIED",
+          "evidence": "More pickers pending",
+          "fix_block": "BANK-SURF-05"
+        },
+        "VERIFY-3": {
+          "status": "PASS",
+          "evidence": "verify-bank-surf-entry-tabs: never-delete routes + tab bodies"
+        },
+        "VERIFY-4": {
+          "status": "UNVERIFIED",
+          "evidence": "Factoring/Escrow F+R pending",
+          "fix_block": "BANK-SURF-05"
+        },
+        "VERIFY-5": {
+          "status": "UNVERIFIED",
+          "evidence": "TRANSP More click-through pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-More-TRANSP"
+        },
+        "VERIFY-6": {
+          "status": "UNVERIFIED",
+          "evidence": "Virtual bank economics separate module",
+          "fix_block": "BANK-SURF-05"
+        },
+        "VERIFY-7": {
+          "status": "PASS",
+          "evidence": "All approved More leaves swept structurally (Rule 07 never-delete)"
+        },
+        "VERIFY-8": {
+          "status": "UNVERIFIED",
+          "evidence": "RLS pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-More-TRANSP"
+        }
       },
       "USMCA": {
-        "DOD-A": { "status": "UNVERIFIED", "evidence": "USMCA More tabs not browser-clicked", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-More-USMCA" },
-        "DOD-B": { "status": "UNVERIFIED", "evidence": "USMCA wizard pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-More-USMCA" },
-        "DOD-C": { "status": "UNVERIFIED", "evidence": "USMCA linkage pending", "fix_block": "BANK-SURF-05" },
-        "DOD-D": { "status": "UNVERIFIED", "evidence": "USMCA economics pending", "fix_block": "BANK-SURF-05" },
-        "DOD-E": { "status": "UNVERIFIED", "evidence": "USMCA evidence pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-More-USMCA" },
-        "VERIFY-1": { "status": "UNVERIFIED", "evidence": "USMCA chrome pending", "fix_block": "BANK-SURF-05" },
-        "VERIFY-2": { "status": "UNVERIFIED", "evidence": "USMCA pickers pending", "fix_block": "BANK-SURF-05" },
-        "VERIFY-3": { "status": "UNVERIFIED", "evidence": "USMCA connectivity pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-More-USMCA" },
-        "VERIFY-4": { "status": "UNVERIFIED", "evidence": "USMCA F+R pending", "fix_block": "BANK-SURF-05" },
-        "VERIFY-5": { "status": "UNVERIFIED", "evidence": "USMCA both-swept open", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-More-USMCA" },
-        "VERIFY-6": { "status": "UNVERIFIED", "evidence": "USMCA economics pending", "fix_block": "BANK-SURF-05" },
-        "VERIFY-7": { "status": "PASS", "evidence": "Routes entity-agnostic" },
-        "VERIFY-8": { "status": "UNVERIFIED", "evidence": "USMCA RLS pending", "fix_block": "BANK-MODULE-DOD-CLICK-SURF-More-USMCA" }
+        "DOD-A": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA More tabs not browser-clicked",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-More-USMCA"
+        },
+        "DOD-B": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA wizard pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-More-USMCA"
+        },
+        "DOD-C": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA linkage pending",
+          "fix_block": "BANK-SURF-05"
+        },
+        "DOD-D": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA economics pending",
+          "fix_block": "BANK-SURF-05"
+        },
+        "DOD-E": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA evidence pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-More-USMCA"
+        },
+        "VERIFY-1": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA chrome pending",
+          "fix_block": "BANK-SURF-05"
+        },
+        "VERIFY-2": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA pickers pending",
+          "fix_block": "BANK-SURF-05"
+        },
+        "VERIFY-3": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA connectivity pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-More-USMCA"
+        },
+        "VERIFY-4": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA F+R pending",
+          "fix_block": "BANK-SURF-05"
+        },
+        "VERIFY-5": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA both-swept open",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-More-USMCA"
+        },
+        "VERIFY-6": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA economics pending",
+          "fix_block": "BANK-SURF-05"
+        },
+        "VERIFY-7": {
+          "status": "PASS",
+          "evidence": "Routes entity-agnostic"
+        },
+        "VERIFY-8": {
+          "status": "UNVERIFIED",
+          "evidence": "USMCA RLS pending",
+          "fix_block": "BANK-MODULE-DOD-CLICK-SURF-More-USMCA"
+        }
       }
     }
   }

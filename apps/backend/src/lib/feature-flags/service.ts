@@ -153,6 +153,13 @@ export const PER_ENTITY_ONLY_FLAG_KEYS: ReadonlySet<string> = new Set([
   // (TRANSP first) — a global default/rollout enable would start applying deductions for EVERY entity
   // (incl. USMCA / TRK). Per-entity override only; default OFF. Owner-controlled (Jorge flips).
   "SETTLEMENT_DEDUCTION_APPLY_ENABLED",
+  // BANK-DOM-06: recovers a fuel-card overage (over-limit spend, or a non-fuel item bought on the
+  // fleet card) from the driver by creating a real driver_settlement_deductions receivable that the
+  // FIN-18 poster later credits to fuel_advance_recovery. It takes money out of a person's paycheck,
+  // so it must be flipped ONE ENTITY AT A TIME (TRANSP first) — a global default/rollout enable would
+  // start charging drivers at EVERY entity (incl. USMCA / TRK). Per-entity override only; default OFF
+  // (seeded default_enabled=false by migration 202609150000). Owner flips.
+  "FUEL_CARD_OVERAGE_RECOVERY_ENABLED",
   // SETTLEMENT-CONTRACT-TERMS: computes the driver hire-contract bonuses/deductions (MPG +$35, referral
   // $200, late-delivery pass-through, driver fines, reimbursements) at settlement close. It writes real
   // settlement pay lines + real pending deductions (money-affecting once the GL/deduction flags are also

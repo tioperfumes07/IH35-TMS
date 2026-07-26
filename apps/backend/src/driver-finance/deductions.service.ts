@@ -53,6 +53,16 @@ export type CreateSettlementDeductionInput = {
    * drill-through (bank txn ⇄ deduction). Non-bank sources leave it null.
    */
   sourceBankTransactionId?: string | null;
+  /**
+   * NOTE (BANK-DOM-06): this shared writer deliberately does NOT accept a fuel-transaction
+   * provenance column. That column lives on a HELD, not-yet-applied migration (202609150000) —
+   * every caller of createSettlementDeduction (cash advances, fines, tolls, citations, ...) runs
+   * TODAY against prod, so this INSERT/RETURNING must only ever name columns that exist on the
+   * live database (SAF-F08: verify-schema-parity-from-prod). The fuel-card overage caller
+   * (apps/backend/src/fuel/fuel-card-overage.service.ts, outside the SAF-F08-scoped directories)
+   * sets that link itself via a follow-up UPDATE in the SAME transaction, once its migration is
+   * applied and its flag is on. Do not add held-only columns to this function's SQL.
+   */
   createdByUserId: string;
 };
 

@@ -22,6 +22,7 @@ import {
   flushFuelGlPostsAfterCommit,
   type FuelTxnGlPostCandidate,
 } from "../../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
+import { flushFuelCardOverageAfterCommit } from "../../fuel/fuel-card-overage.service.js";
 import {
   fetchAllRelayFuelTransactions,
   filterRelayFuelTransactionsByDateRange,
@@ -258,6 +259,10 @@ export function initializeRelayFuelIngestCron(app: FastifyInstance) {
       // AFTER COMMIT — TMS GL only, gated by EXPENSE_GL_POSTING_ENABLED (default OFF).
       await flushFuelGlPostsAfterCommit(pendingGlPosts, app.log);
 
+      // AFTER COMMIT — BANK-DOM-06 card-overage -> driver receivable -> settlement deduction,
+      // gated by FUEL_CARD_OVERAGE_RECOVERY_ENABLED (default OFF).
+      await flushFuelCardOverageAfterCommit(pendingGlPosts, app.log);
+
       if (failures.length > 0) {
         // Never silently swallow — surface the aggregated failure so it reaches process-level
         // logging/Sentry, exactly like any other uncaught background-job error.
@@ -402,6 +407,7 @@ export async function runRelayFuelBackfill(app: FastifyInstance, opts?: { months
   }
 
   await flushFuelGlPostsAfterCommit(pendingGlPosts, app.log);
+  await flushFuelCardOverageAfterCommit(pendingGlPosts, app.log);
 
   if (failures.length > 0) {
     throw new Error(

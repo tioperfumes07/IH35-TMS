@@ -3933,7 +3933,10 @@
       "source_expense_id",
       "source_pending_id",
       "status",
-      "updated_at"
+      "updated_at",
+      "overage_deduction_id",
+      "overage_recovered_cents",
+      "source_fuel_transaction_id"
     ],
     "driver_finance.driver_settlement_disputes": [
       "closed_at",
@@ -4803,7 +4806,9 @@
       "unit_id",
       "updated_at",
       "updated_by_user_id",
-      "vendor_id"
+      "vendor_id",
+      "overage_deduction_id",
+      "overage_recovered_cents"
     ],
     "geo.geofence_events": [
       "created_at",
@@ -10314,6 +10319,25 @@
       "template_name",
       "to_phone",
       "variables"
+    ],
+    "fuel.fuel_card_overage_policies": [
+      "created_at",
+      "created_by_user_id",
+      "driver_id",
+      "effective_from",
+      "id",
+      "is_active",
+      "notes",
+      "operating_company_id",
+      "overage_deduction_id",
+      "overage_recovered_cents",
+      "per_transaction_limit_cents",
+      "recover_non_fuel_purchases",
+      "source_fuel_transaction_id",
+      "updated_at",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
     ]
   }
 }

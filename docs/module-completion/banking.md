@@ -1,13 +1,13 @@
 # Module completion — Banking (Module 4)
 
-**PROGRESS: 6 of 17** · complete: `false` · as_of: 2026-07-25T16:50:00.000Z · live_sha: `b4c3158`
+**PROGRESS: 6 of 18** · complete: `false` · as_of: 2026-07-25T16:50:00.000Z · live_sha: `b4c3158`
 
 | Status | Count |
 |---|---:|
 | PASS | 4 |
 | HOLD | 2 |
 | OPEN | 1 |
-| FAIL | 6 |
+| FAIL | 7 |
 | UNVERIFIED | 4 |
 
 ## RANKED BANKING FAIL LIST (published M — every future banking PR cites a row here)
@@ -45,5 +45,6 @@ _PERMANENT-FIX §1 (BANK-00) — no Banking PR may land without citing a row her
 | `BANK-F08` | **FAIL** | Categorization Rules + automatch deep-wizard DoD | NEW LEAF 2026-07-25 (Rule 21 M-grows): /banking/categorization-rules mounted but no deep-wizard DoD/VERIFY leaf. Dispatch: docs/trackers/acct-bank-remaining-blocks-2026-07-25/BANK-F08-categorization-rules-automatch-depth.md | — |
 | `BANK-F09` | **FAIL** | Banking settings / reports / email-queue deep-wizard DoD | NEW LEAF 2026-07-25 (Rule 21 M-grows): settings/reports/email-queue surfaces need deep-wizard VERIFY. Dispatch: docs/trackers/acct-bank-remaining-blocks-2026-07-25/BANK-F09-settings-reports-email-queue-deep-wizard.md | — |
 | `BANK-DOM-05` | **OPEN** | Intercompany transfers (TRANSP<->TRK<->USMCA) — reciprocal legs netting to zero | Code + guard 1556 GREEN; migration 202609160000 HELD, validated apply-twice on throwaway localhost. NOT LIVE: banking.intercompany_entity_pairs still MISSING on prod (verified 2026-07-26, lucia, positive control mdata.vendors=2789). Closes when GUARD Neon-applies + a TRANSP<->USMCA transfer is proven to net to zero on live data. | — |
+| `BANK-F10` | **FAIL** | Fuel-card overage never recovered from the driver (company silently eats every over-limit / non-fuel card charge) | NEW LEAF 2026-07-26 (Rule 21 M-grows): a fleet-card purchase over the company's authorized limit — or a NON-FUEL item bought on the card — is paid in full by the company with NO recovery path; 'overage' existed nowhere in the codebase (no policy, no receivable, no deduction). Also found: bucketRecoveryRoleKey('fuel') derived 'fuel_recovery', a role registered NOWHERE, so ANY fuel deduction would have made the FIN-18 poster fail closed. Fix BUILT AND HELD on hold/bank-dom-06-fuel-expense-overage: migration 202609150000 (fuel.fuel_card_overage_policies owner-designated limit, seeded ZERO rows; deduction.source_fuel_transaction_id +FK +partial UNIQUE; reverse fuel_transactions.overage_deduction_id; FUEL_CARD_OVERAGE_RECOVERY_ENABLED default OFF), overage flushed by BOTH fuel writers, recovery reuses createSettlementDeduction with ZERO new GL math, 'fuel' aliased to the registered fuel_advance_recovery role. Validated apply-twice on a throwaway Postgres clone of the full schema (RLS enabled+FORCED, ih35_app INSERT/SELECT/UPDATE only, double-charge BLOCKED by the unique index, forward+reverse link both true). GUARD: scripts/verify-fuel-card-overage-driver-recovery.mjs + verify-step 1608 (15 defect mutations caught; FAILS on pre-fix main with 8 problems). STAYS FAIL: migration NOT applied on prod, flag OFF, no owner policy designated, zero live recoveries. Flips only after owner Neon-apply + policy designation + live Neon proof. | — |
 
 Desktop audit: ~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md
