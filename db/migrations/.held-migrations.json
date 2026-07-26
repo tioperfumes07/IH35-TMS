@@ -33,6 +33,12 @@
       "reason": "[HOLD-FOR-JORGE — migration touches catalogs.* schema] SWEEP-C11 driver sub-catalog split-brain DB-level write lock. BEFORE INSERT/UPDATE trigger on catalogs.{license_classes,cdl_endorsements,cdl_restrictions,medical_card_statuses,employment_statuses} RAISEs, defense-in-depth behind the API-level 410 (apps/backend/src/catalogs/driver/factory.ts writesBlocked). Neon lucia re-verify 2026-07-25: all 5 catalogs.* tables are 0 rows vs reference.* canonical (9/6/7/9/11) — NO backfill needed, no FK references them. Idempotent, fresh-DB-safe (to_regclass-guarded), void-not-delete (no DROP/DELETE/TRUNCATE); validated apply-twice on a throwaway Postgres 16 container (scratch table mirroring prod shape) — confirmed INSERT correctly raises and row count stays 0. Owner Neon-applies then ledger-backfills."
     },
     {
+      "file": "202609050000_mnt_econ_04_warranty_reimburse_gl_hop.sql",
+      "reason": "[HOLD-FOR-JORGE - TIER 1 FINANCIAL] MNT-ECON-04 warranty reimburse GL hop. Registers WARRANTY_REIMBURSE_GL_POSTING_ENABLED (default OFF); widens CoA-role CHECKs for warranty_recovery; creates accounting.warranty_reimburse_postings. No GL math — poster reuses createJournalEntry.",
+      "added_at": "2026-07-26",
+      "block": "MNT-ECON-04"
+    },
+    {
       "file": "202609030000_mnt_econ_01_parts_purchase_gl_hop.sql",
       "reason": "[HOLD-FOR-JORGE - TIER 1 FINANCIAL] MNT-ECON-01 parts purchase A/P+GL hop. Registers PARTS_PURCHASE_GL_POSTING_ENABLED (lib.feature_flags, default_enabled=FALSE); widens both CoA-role CHECKs as a TRUE SUPERSET to admit role maintenance_parts_expense; creates accounting.parts_purchase_postings linkage ledger (FORCE RLS, REVOKE DELETE). Creates NO catalogs.accounts row and seeds NO chart_of_accounts_roles mapping. No GL math — poster reuses createBill + postSourceTransaction + createJournalEntry.",
       "added_at": "2026-07-26",

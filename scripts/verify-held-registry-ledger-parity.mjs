@@ -70,6 +70,8 @@ export const EXPECTED_HELD = [
   "202609040000_sweep_c11_driver_subcatalog_split_brain_lock.sql",
   // MNT-ECON-01
   "202609030000_mnt_econ_01_parts_purchase_gl_hop.sql",
+  // MNT-ECON-04
+  "202609050000_mnt_econ_04_warranty_reimburse_gl_hop.sql",
 ];
 
 /**

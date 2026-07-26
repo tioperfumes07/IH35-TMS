@@ -67,7 +67,7 @@ const MONEY_INSERT_RE = new RegExp(`\\bINSERT\\s+INTO\\s+${MONEY_SCHEMA_TABLE}\\
 
 /** Existing poster / JE writers — reuse only; no new GL math. */
 const POSTER_RE =
-  /postSourceTransaction(?:InClientTx)?|createJournalEntry(?:OnClient)?|postBillGlIfEnabled|postVoidReversal|maybePostBankCategorizationToGl|postFuelExpenseFromEvent|postFactoring(?:Advance|FeeExpense|CustomerPayment|Release|Chargeback|DefaultInterest)Event|processMaintenanceWorkOrderClose|postPropertyTax(?:Accrual|Payment)|postDepreciation|recordEscrowPostingOnly|apply_escrow_posting|postPartsInventoryPurchase|postCompanyPaidCivilFine|posting-engine\.service|from\s+["'][^"']*posting-engine/;
+  /postSourceTransaction(?:InClientTx)?|createJournalEntry(?:OnClient)?|postBillGlIfEnabled|postVoidReversal|maybePostBankCategorizationToGl|postFuelExpenseFromEvent|postFactoring(?:Advance|FeeExpense|CustomerPayment|Release|Chargeback|DefaultInterest)Event|processMaintenanceWorkOrderClose|postPropertyTax(?:Accrual|Payment)|postDepreciation|recordEscrowPostingOnly|apply_escrow_posting|postWarrantyReimbursement|postPartsInventoryPurchase|postCompanyPaidCivilFine|posting-engine\.service|from\s+["'][^"']*posting-engine/;
 
 const EXEMPT_RE = /C6-MONEY-JE-EXEMPT:/;
 
@@ -99,7 +99,6 @@ const PLANTED_ANCHORS = [
  * UPDATE_C6_MONEY_JE_BASELINE can shrink honestly.
  */
 const REQUIRED_SEED_SUBSTR = [
-  "warranty.routes.ts",
   "two-section-service.ts",
 ];
 
