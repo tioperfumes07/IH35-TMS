@@ -3,19 +3,89 @@ import { HeadBucketCommand, S3Client } from "@aws-sdk/client-s3";
 import { withLuciaBypass } from "../auth/db.js";
 import { getAppReady } from "../lib/startup-ready.js";
 import { createResilientRedis, type RedisHealthStatus } from "../lib/redis.client.js";
+import { logger } from "../observability/structured-logger.js";
 
 export type HealthCheck = {
   name: string;
   ok: boolean;
   tier: "critical" | "warning";
   duration_ms: number;
+  /**
+   * PUBLIC field. Only ever a bounded code from the vocabulary below — NEVER driver text.
+   * See the SEC-HEALTHZ-01 note on `toPublicHealthErrorCode`.
+   */
   error?: string;
   status?: RedisHealthStatus;
 };
 
+// ── SEC-HEALTHZ-01 — the /api/v1/healthz body is world-readable ────────────────────────────────
+// `GET /api/v1/healthz` is UNAUTHENTICATED: session-middleware.ts returns from its preHandler for
+// every url starting `/api/v1/healthz` (so req.user is never populated on this route) and
+// csrf-origin-guard.ts exempts the same prefix. Anything this handler puts in the body is readable
+// by an anonymous caller on the public internet.
+//
+// It used to answer a failed check with `String((error as Error)?.message ?? error)` — the raw
+// driver message. pg errors carry host, port, database name, DB role, schema and relation names;
+// ioredis errors carry `connect ECONNREFUSED <host>:<port>`; the S3/R2 client carries the account
+// id in its endpoint. That is a latent information disclosure, and it was one dependency upgrade
+// away from getting worse.
+//
+// ROOT-CAUSE FIX — not a scrubber, not a blocklist. A check may only publish a code it
+// DELIBERATELY declared: `HealthCheckError` carries a bounded `publicCode` drawn from a fixed
+// vocabulary of our own literals with no interpolated values. EVERY other error — every driver
+// error, including drivers we have not adopted yet — collapses to `HEALTH_ERROR_GENERIC`. A
+// blocklist leaks the next new driver; a declare-to-publish rule structurally cannot.
+//
+// The real error is NOT swallowed: `logHealthCheckFailure` writes it server-side at full fidelity
+// (message + stack, via the structured logger) before the generic code is returned. Operators lose
+// nothing; anonymous callers learn nothing.
+//
+// The rest of the response shape is unchanged on purpose — `name`, `ok`, `tier`, `duration_ms`,
+// the 200/503 split and `/healthz/shallow`'s `{version}` are consumed by deploy verification
+// (CLAUDE.md workflow step 7), scripts/verify-deploy-parity.mjs and the System module page.
+export const HEALTH_ERROR_GENERIC = "check_failed";
+
+/** A public health code is a fixed literal: lowercase, underscores, no interpolated values. */
+const PUBLIC_HEALTH_CODE = /^[a-z0-9_]{1,48}$/;
+
+/**
+ * A check failure the endpoint is ALLOWED to name publicly. `publicCode` is the bounded token that
+ * reaches anonymous callers; `detail` (counts, job names, stack) stays in the server-side log only.
+ */
+export class HealthCheckError extends Error {
+  readonly publicCode: string;
+
+  constructor(publicCode: string, detail?: string) {
+    super(detail ? `${publicCode}: ${detail}` : publicCode);
+    this.name = "HealthCheckError";
+    // Fail closed: an out-of-vocabulary code is treated as undeclared.
+    this.publicCode = PUBLIC_HEALTH_CODE.test(publicCode) ? publicCode : HEALTH_ERROR_GENERIC;
+  }
+}
+
+/** The ONLY way an error may become response text. Undeclared ⇒ generic. */
+export function toPublicHealthErrorCode(error: unknown): string {
+  if (error instanceof HealthCheckError && PUBLIC_HEALTH_CODE.test(error.publicCode)) {
+    return error.publicCode;
+  }
+  return HEALTH_ERROR_GENERIC;
+}
+
+/** Full-fidelity server-side record of what the public body deliberately omits. */
+function logHealthCheckFailure(name: string, tier: HealthCheck["tier"], durationMs: number, error: unknown): void {
+  logger.error("health_check_failed", error, {
+    check: name,
+    tier,
+    latency_ms: durationMs,
+    public_code: toPublicHealthErrorCode(error),
+    // Server-side only. This is the string that must never reach the unauthenticated response.
+    internal_error: error instanceof Error ? error.message : String(error),
+  });
+}
+
 async function promiseTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return await new Promise<T>((resolve, reject) => {
-    const t = setTimeout(() => reject(new Error(`timeout_after_${ms}ms`)), ms);
+    const t = setTimeout(() => reject(new HealthCheckError("timeout", `after_${ms}ms`)), ms);
     promise
       .then((v) => {
         clearTimeout(t);
@@ -34,12 +104,14 @@ async function timed(name: string, tier: HealthCheck["tier"], fn: () => Promise<
     await fn();
     return { name, ok: true, tier, duration_ms: Date.now() - started };
   } catch (error) {
+    const durationMs = Date.now() - started;
+    logHealthCheckFailure(name, tier, durationMs, error);
     return {
       name,
       ok: false,
       tier,
-      duration_ms: Date.now() - started,
-      error: String((error as Error)?.message ?? error),
+      duration_ms: durationMs,
+      error: toPublicHealthErrorCode(error),
     };
   }
 }
@@ -69,7 +141,7 @@ async function checkMigrationLedger(): Promise<void> {
       1000
     );
     if (!exists.rows[0]?.ok) {
-      throw new Error("migration_ledger_missing");
+      throw new HealthCheckError("migration_ledger_missing");
     }
     await promiseTimeout(client.query(`SELECT COUNT(*)::bigint AS c FROM _system._schema_migrations`), 1000);
   });
@@ -112,13 +184,16 @@ async function checkRedisPing(): Promise<HealthCheck> {
         status: "reconnecting",
       };
     }
+    const durationMs = Date.now() - started;
+    // ioredis errors read `connect ECONNREFUSED <host>:<port>` — host:port to an anonymous caller.
+    logHealthCheckFailure("redis.ping", "critical", durationMs, error);
     return {
       name: "redis.ping",
       ok: false,
       tier: "critical",
-      duration_ms: Date.now() - started,
+      duration_ms: durationMs,
       status: "down",
-      error: String((error as Error)?.message ?? error),
+      error: toPublicHealthErrorCode(error),
     };
   } finally {
     redis.disconnect();
@@ -126,7 +201,7 @@ async function checkRedisPing(): Promise<HealthCheck> {
 }
 
 async function checkR2HeadBucket(): Promise<void> {
-  if (!r2Configured()) throw new Error("r2_not_configured");
+  if (!r2Configured()) throw new HealthCheckError("r2_not_configured");
   const accountId = process.env.R2_ACCOUNT_ID as string;
   const accessKeyId = process.env.R2_ACCESS_KEY_ID as string;
   const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY as string;
@@ -151,7 +226,8 @@ async function checkQboSyncAlertsDepth(): Promise<void> {
     );
     const c = Number(res.rows[0]?.c ?? 0);
     if (c > 100) {
-      throw new Error(`unresolved_depth_high:${c}`);
+      // The count is a DETAIL — it goes to the log, not to the anonymous body.
+      throw new HealthCheckError("unresolved_depth_high", String(c));
     }
   });
 }
@@ -166,7 +242,7 @@ async function checkEmailQueueDepth(): Promise<void> {
     );
     const c = Number(res.rows[0]?.c ?? 0);
     if (c > 1000) {
-      throw new Error(`queued_depth_high:${c}`);
+      throw new HealthCheckError("queued_depth_high", String(c));
     }
   });
 }
@@ -308,7 +384,8 @@ async function checkBackgroundJobStaleness(): Promise<void> {
     }
 
     if (stale.length > 0) {
-      throw new Error(`stale_jobs:${stale.join("|")}`);
+      // WHICH jobs are stale is operator detail — logged, never published to an anonymous caller.
+      throw new HealthCheckError("stale_jobs", stale.join("|"));
     }
   });
 }

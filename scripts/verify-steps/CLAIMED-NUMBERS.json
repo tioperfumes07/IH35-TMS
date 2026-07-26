@@ -3,7 +3,7 @@
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",
   "_how_to_claim": "Pick the next free number in your band, add \"<number>\": \"<filename>\", commit it WITH the guard.",
   "generated_at": "2026-07-26",
-  "total_claimed": 702,
+  "total_claimed": 704,
   "known_duplicates_frozen": {
     "15": [
       "15-verify-accounting-autoload-coverage.mjs",
@@ -1335,12 +1335,15 @@
     "1520": "1520-verify-acct-link-02-accounts-detail-type-fk.mjs",
     "1521": "1521-verify-sweep-c2-no-retire-writes.mjs",
     "1522": "1522-verify-global-catalog-write-authz.mjs",
+    "1523": "1523-verify-mnt-econ-01-parts-purchase-posts-gl.mjs",
+    "1524": "1524-verify-mnt-econ-04-warranty-reimburse-posts-gl.mjs",
     "1530": "1530-verify-safety-fine-company-paid-posts-gl.mjs",
     "1531": "1531-verify-0033-audit-schema-manifest-tool.mjs",
     "1532": "1532-verify-es1-unscoped-tables-scope-proof.mjs",
     "1533": "1533-verify-no-duplicate-step-numbers.mjs",
     "1534": "1534-verify-je-type-fk.mjs",
     "1535": "1535-verify-held-registry-ledger-parity.mjs",
+    "1540": "1540-verify-sweep-c11-no-entity-split-brain.mjs",
     "1550": "1550-verify-create-surface-is-drawer.mjs",
     "1551": "1551-verify-picker-law-no-raw-uuid.mjs",
     "1552": "1552-verify-acct-bank-remaining-packet.mjs",
@@ -1349,6 +1352,7 @@
     "1560": "1560-verify-route-manifest-parity.mjs",
     "1580": "1580-verify-no-jsonb-id-array-as-fk.mjs",
     "1599": "1599-verify-step-number-registry.mjs",
-    "1602": "1602-verify-bank-dom-03-adjusted-balance-rec.mjs"
+    "1603": "1603-verify-bank-dom-03-adjusted-balance-rec.mjs",
+    "1612": "1612-verify-healthz-no-raw-error-leak.mjs"
   }
 }
