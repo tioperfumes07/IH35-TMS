@@ -124,7 +124,7 @@ async function loadChecklist(client: Client, input: { operatingCompanyId: string
           COUNT(*) FILTER (
             WHERE EXISTS (
               SELECT 1
-              FROM bank.reconciliation_matches rm
+              FROM banking.reconciliation_matches rm
               WHERE rm.bank_transaction_id = bt.id
                 AND rm.operating_company_id = bt.operating_company_id
                 AND rm.match_state IN ('auto_matched', 'user_matched', 'rejected')

@@ -167,7 +167,7 @@ export type ExpenseListRow = {
  * READ-ONLY expenses list query (GAP-EXPENSES browse). SELECT only — no writes.
  * Entity-scoped by an explicit operating_company_id filter (the caller also SETs
  * app.operating_company_id via withCompanyScope so RLS agrees). is_reconciled is derived
- * from a REAL EXISTS against bank.reconciliation_matches (ledger_entry_kind='expense'),
+ * from a REAL EXISTS against banking.reconciliation_matches (ledger_entry_kind='expense'),
  * following the #1755 Bills/Bill-Payments reconciliation-status precedent; 'rejected' is
  * excluded (the only non-active match_state on that table). LEFT JOINs never drop a row.
  */
@@ -233,7 +233,7 @@ export async function queryExpensesList(
         )                                            AS line_description,
         EXISTS (
           SELECT 1
-          FROM bank.reconciliation_matches rm
+          FROM banking.reconciliation_matches rm
           WHERE rm.ledger_entry_kind = 'expense'
             AND rm.ledger_entry_id = e.id
             AND rm.operating_company_id = e.operating_company_id
@@ -257,7 +257,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
   // GAP-EXPENSES browse side (READ-ONLY). Paginated list of accounting.expenses for the Expenses
   // list screen. STRICTLY read-only — SELECT only, no INSERT/UPDATE/DELETE. Mirrors the read-only
   // reconciliation-status precedent of PR #1755 (Bills/Bill-Payments lists): a Bank Match is derived
-  // via an EXISTS against bank.reconciliation_matches (ledger_entry_kind='expense', added by
+  // via an EXISTS against banking.reconciliation_matches (ledger_entry_kind='expense', added by
   // 202607011600_bank_recon_expense_match_part2a.sql), never a hardcoded value. Entity-scoped through
   // withCompanyScope (SET app.operating_company_id → RLS) + an explicit operating_company_id filter.
   // Only real columns from 202606151300_expenses_header_phase1_foundation.sql are read.

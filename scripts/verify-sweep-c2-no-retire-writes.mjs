@@ -154,9 +154,15 @@ function loadRealFiles() {
   return files;
 }
 
-function writeBaseline(writers) {
+function writeBaseline(writers, { isBootstrap } = {}) {
   const keys = [...new Set(writers.map(writerKey))].sort();
-  const missingSeeds = REQUIRED_SEED_SUBSTR.filter((s) => !keys.some((k) => k.includes(s)));
+  // REQUIRED_SEED_SUBSTR is a bootstrap-only check ("must appear in first baseline" — see the
+  // constant's own doc comment): it exists to catch a baseline being created empty/short, hiding
+  // the confirmed writers the guard was built to inventory. Once those writers are genuinely
+  // repointed (the guard's entire shrink-only purpose), they correctly stop appearing — re-running
+  // this check forever would make the baseline permanently un-shrinkable to zero, which contradicts
+  // the guard's own design intent. So it only applies when no baseline existed before this write.
+  const missingSeeds = isBootstrap ? REQUIRED_SEED_SUBSTR.filter((s) => !keys.some((k) => k.includes(s))) : [];
   fs.writeFileSync(
     BASELINE,
     JSON.stringify(
@@ -168,7 +174,7 @@ function writeBaseline(writers) {
           "Complements verify-no-retire-table-writes (1194).",
         generated_at: new Date().toISOString(),
         count: keys.length,
-        required_seeds_present: missingSeeds.length === 0,
+        required_seeds_present: !isBootstrap || missingSeeds.length === 0,
         missing_seeds: missingSeeds,
         keys,
       },
@@ -272,7 +278,8 @@ function main() {
   const { writers } = findC2RetireWriters(files);
 
   if (process.env.UPDATE_C2_RETIRE_WRITE_BASELINE === "1") {
-    const { keys, missingSeeds } = writeBaseline(writers);
+    const isBootstrap = !fs.existsSync(BASELINE);
+    const { keys, missingSeeds } = writeBaseline(writers, { isBootstrap });
     console.log(`[${LABEL}] baseline written: ${keys.length} live RETIRE writer site(s).`);
     if (missingSeeds.length) {
       console.error(`[${LABEL}] WARN — required seeds missing: ${missingSeeds.join(", ")}`);

@@ -310,6 +310,23 @@
       "updated_at",
       "updated_by_user_id"
     ],
+    "accounting.civil_fine_postings": [
+      "amount_cents",
+      "created_at",
+      "created_by_user_id",
+      "entry_date",
+      "expense_je_id",
+      "fine_id",
+      "id",
+      "is_active",
+      "memo",
+      "operating_company_id",
+      "status",
+      "updated_at",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
+    ],
     "accounting.coa_account": [
       "active",
       "created_at",
@@ -1864,6 +1881,19 @@
       "status",
       "updated_at"
     ],
+    "banking.reconciliation_matches": [
+      "bank_transaction_id",
+      "created_at",
+      "id",
+      "ledger_entry_id",
+      "ledger_entry_kind",
+      "match_score",
+      "match_state",
+      "matched_at",
+      "matched_by_user_uuid",
+      "operating_company_id",
+      "updated_at"
+    ],
     "banking.reconciliation_sessions": [
       "auto_match_run_at",
       "auto_match_suggestions_count",
@@ -1947,6 +1977,23 @@
       "status",
       "subject",
       "updated_at"
+    ],
+    "catalogs.account_merge_records": [
+      "account_type",
+      "id",
+      "merged_at",
+      "merged_by_user_id",
+      "migrate_historical_postings",
+      "operating_company_id",
+      "reason",
+      "remounted_reference_counts",
+      "reparented_child_account_count",
+      "source_account_id",
+      "source_account_name",
+      "source_account_number",
+      "target_account_id",
+      "target_account_name",
+      "target_account_number"
     ],
     "catalogs.account_role_bindings": [
       "account_id",
@@ -6096,6 +6143,25 @@
       "operating_company_id",
       "unit_id"
     ],
+    "maintenance.position_history": [
+      "action",
+      "action_at",
+      "action_reason",
+      "actor_id",
+      "actor_name",
+      "created_at",
+      "id",
+      "notes",
+      "operating_company_id",
+      "part_id",
+      "part_number",
+      "position_code",
+      "position_set_id",
+      "source_id",
+      "source_type",
+      "unit_id",
+      "unit_type"
+    ],
     "maintenance.reefer_hours_log": [
       "archive_reason",
       "archived_at",
@@ -10179,40 +10245,6 @@
       "template_name",
       "to_phone",
       "variables"
-    ],
-    "catalogs.account_merge_records": [
-      "account_type",
-      "id",
-      "merged_at",
-      "merged_by_user_id",
-      "migrate_historical_postings",
-      "operating_company_id",
-      "reason",
-      "remounted_reference_counts",
-      "reparented_child_account_count",
-      "source_account_id",
-      "source_account_name",
-      "source_account_number",
-      "target_account_id",
-      "target_account_name",
-      "target_account_number"
-    ],
-    "accounting.civil_fine_postings": [
-      "amount_cents",
-      "created_at",
-      "created_by_user_id",
-      "entry_date",
-      "expense_je_id",
-      "fine_id",
-      "id",
-      "is_active",
-      "memo",
-      "operating_company_id",
-      "status",
-      "updated_at",
-      "void_reason",
-      "voided_at",
-      "voided_by_user_id"
     ]
   }
 }

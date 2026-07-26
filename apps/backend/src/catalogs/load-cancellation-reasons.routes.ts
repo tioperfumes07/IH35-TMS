@@ -1,3 +1,15 @@
+// C2-RETIRE-WRITE-EXEMPT: catalogs.load_cancellation_reasons is NOT a RETIRE table drifted from a
+// canonical replacement — it is a deliberate, owner-approved SEPARATE catalog from
+// catalogs.cancellation_reasons (the financial void/cancel catalog governed by
+// governance/void-cancel-executors.ts). The design decision is recorded in migration
+// 202606300030_void_cancel_reasons_catalog.sql: "load cancellations stay on the per-entity
+// catalogs.load_cancellation_reasons — separate operational domain, NOT the financial void catalog."
+// SWEEP-C2 (2026-09-02) verified this direction is CORRECT (per the owner spec's own "VERIFY direction"
+// instruction) and is not repointing it — doing so would merge two intentionally distinct catalogs and
+// break the dispatch load-cancellation domain's dedicated maker/checker workflow
+// (dispatch/cancellation.service.ts::cancelLoad / approveCancellation). This file-wide marker removes it
+// from the SWEEP-C2 write-inventory scan; verify-no-retire-table-writes.mjs (1194) KNOWN_LEGACY entry for
+// this table stays as documentation of the historical false-positive pattern match, not a pending repoint.
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { z } from "zod";
