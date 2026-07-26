@@ -135,7 +135,8 @@ function mapVendorRow(row: Record<string, unknown>) {
     payment_terms: metadata.payment_terms ?? null,
     notes: metadata.notes ?? null,
     linked_vendor_id: linked,
-    mdata_vendor_id: linked,
+    // Keep metadata.mdata_vendor_id exposure for verify-maint-wo-vendor-linkage (0441-mod9).
+    mdata_vendor_id: typeof metadata.mdata_vendor_id === "string" ? metadata.mdata_vendor_id : linked,
     is_active: row.is_active,
     active: row.is_active,
     archived_at: metadata.archived_at ?? null,
