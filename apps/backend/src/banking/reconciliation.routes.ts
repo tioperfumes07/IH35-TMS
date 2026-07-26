@@ -438,29 +438,41 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
       });
       const varianceCents = summary.varianceCents;
 
-      await client.query(
-        `
-          UPDATE banking.reconciliation_sessions
-          SET
-            book_balance_cents = $2,
-            variance_cents = $3,
-            deposits_in_transit_cents = $4,
-            outstanding_checks_cents = $5,
-            adjusted_bank_balance_cents = $6,
-            adjusted_book_balance_cents = $7,
-            updated_at = now()
-          WHERE id = $1
-        `,
-        [
-          session.id,
-          summary.bookBalanceCents,
-          varianceCents,
-          summary.depositsInTransitCents,
-          summary.outstandingChecksCents,
-          summary.adjustedBankBalanceCents,
-          summary.adjustedBookBalanceCents,
-        ]
-      );
+      try {
+        await client.query(
+          `
+            UPDATE banking.reconciliation_sessions
+            SET
+              book_balance_cents = $2,
+              variance_cents = $3,
+              deposits_in_transit_cents = $4,
+              outstanding_checks_cents = $5,
+              adjusted_bank_balance_cents = $6,
+              adjusted_book_balance_cents = $7,
+              updated_at = now()
+            WHERE id = $1
+          `,
+          [
+            session.id,
+            summary.bookBalanceCents,
+            varianceCents,
+            summary.depositsInTransitCents,
+            summary.outstandingChecksCents,
+            summary.adjustedBankBalanceCents,
+            summary.adjustedBookBalanceCents,
+          ]
+        );
+      } catch (err) {
+        if ((err as { code?: string }).code !== "42703") throw err;
+        await client.query(
+          `
+            UPDATE banking.reconciliation_sessions
+            SET book_balance_cents = $2, variance_cents = $3, updated_at = now()
+            WHERE id = $1
+          `,
+          [session.id, summary.bookBalanceCents, varianceCents]
+        );
+      }
 
       const matchedTransactions = transactions.filter((row) => Boolean(row.matched_load_id || row.matched_bill_id || row.matched_settlement_id));
       const unmatchedTransactions = transactions.filter((row) => !(row.matched_load_id || row.matched_bill_id || row.matched_settlement_id));
@@ -815,39 +827,69 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     }
 
     const transactionsToSync = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      await client.query(
-        `
-          UPDATE banking.reconciliation_sessions
-          SET
-            status = 'reconciled',
-            reconciled_by_user_id = $2,
-            reconciled_at = now(),
-            variance_cents = $3,
-            book_balance_cents = $5,
-            deposits_in_transit_cents = $6,
-            outstanding_checks_cents = $7,
-            adjusted_bank_balance_cents = $8,
-            adjusted_book_balance_cents = $9,
-            updated_at = now(),
-            notes = CASE
-              WHEN $4::text IS NULL THEN notes
-              WHEN notes IS NULL OR notes = '' THEN $4::text
-              ELSE concat(notes, E'\\n', $4::text)
-            END
-          WHERE id = $1
-        `,
-        [
-          session.id,
-          user.uuid,
-          varianceCents,
-          body.data.force_complete ? `force_complete_reason: ${body.data.reason}` : null,
-          summary.bookBalanceCents,
-          summary.depositsInTransitCents,
-          summary.outstandingChecksCents,
-          summary.adjustedBankBalanceCents,
-          summary.adjustedBookBalanceCents,
-        ]
-      );
+      const completeParams = [
+        session.id,
+        user.uuid,
+        varianceCents,
+        body.data.force_complete ? `force_complete_reason: ${body.data.reason}` : null,
+        summary.bookBalanceCents,
+        summary.depositsInTransitCents,
+        summary.outstandingChecksCents,
+        summary.adjustedBankBalanceCents,
+        summary.adjustedBookBalanceCents,
+      ] as const;
+      try {
+        await client.query(
+          `
+            UPDATE banking.reconciliation_sessions
+            SET
+              status = 'reconciled',
+              reconciled_by_user_id = $2,
+              reconciled_at = now(),
+              variance_cents = $3,
+              book_balance_cents = $5,
+              deposits_in_transit_cents = $6,
+              outstanding_checks_cents = $7,
+              adjusted_bank_balance_cents = $8,
+              adjusted_book_balance_cents = $9,
+              updated_at = now(),
+              notes = CASE
+                WHEN $4::text IS NULL THEN notes
+                WHEN notes IS NULL OR notes = '' THEN $4::text
+                ELSE concat(notes, E'\\n', $4::text)
+              END
+            WHERE id = $1
+          `,
+          [...completeParams]
+        );
+      } catch (err) {
+        if ((err as { code?: string }).code !== "42703") throw err;
+        await client.query(
+          `
+            UPDATE banking.reconciliation_sessions
+            SET
+              status = 'reconciled',
+              reconciled_by_user_id = $2,
+              reconciled_at = now(),
+              variance_cents = $3,
+              book_balance_cents = $5,
+              updated_at = now(),
+              notes = CASE
+                WHEN $4::text IS NULL THEN notes
+                WHEN notes IS NULL OR notes = '' THEN $4::text
+                ELSE concat(notes, E'\\n', $4::text)
+              END
+            WHERE id = $1
+          `,
+          [
+            session.id,
+            user.uuid,
+            varianceCents,
+            body.data.force_complete ? `force_complete_reason: ${body.data.reason}` : null,
+            summary.bookBalanceCents,
+          ]
+        );
+      }
       await appendCrudAudit(
         client,
         user.uuid,
