@@ -35,7 +35,11 @@ const EXCLUDED_TABLE_SUFFIXES = [
 // (no code/display_name/sort_order the generic factory requires). Its DEDICATED per-entity CRUD route +
 // QBO-mirror reconcile (mirroring accounts/items/classes .routes.ts) is follow-on block work; until that
 // ships it is grandfathered here — same treatment void_cancel_reasons had before its dedicated route landed.
-const KNOWN_STUB_TABLES = ["payee_tax_profile", "tax_form_thresholds", "vendor_types"];
+// account_merge_records (202608060000 ACCT-R-03) is an append-only merge audit ledger written exclusively
+// by POST /api/v1/catalogs/accounts/:id/merge — not a Lists/Excel generic CRUD catalog (no upload/export,
+// REVOKE UPDATE/DELETE). Grandfathered until a read-only audit route is spec'd; factory registration would
+// falsely imply editable catalog chrome.
+const KNOWN_STUB_TABLES = ["account_merge_records", "payee_tax_profile", "tax_form_thresholds", "vendor_types"];
 
 function fail(message) {
   console.error(`verify:catalog-factory-coverage FAIL: ${message}`);

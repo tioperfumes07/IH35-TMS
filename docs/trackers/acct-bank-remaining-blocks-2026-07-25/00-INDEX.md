@@ -3,7 +3,10 @@
 Generated from purged `block-audit-piles-2026-07-21.json` (**accounting 43 · banking 4**).
 Each file uses **COMPLIANCE-STANDARD-2026-07-25** structure (Law of the Land / DoD / VERIFY 1–8 / 18-key gate).
 
-**Not the module-completion 26.** Those stay in `docs/module-completion/*.json`. This packet wires the **remaining pile debt** so nothing is built as orphan chat work.
+**Canonical repo path (must exist on `main`):** `docs/trackers/acct-bank-remaining-blocks-2026-07-25/`  
+Guard: `scripts/verify-acct-bank-remaining-packet.mjs` (verify-step **1494**).
+
+**Not the module-completion scoreboard.** Pile = **47**. Scoreboard dispatch files are listed in `00-SCOREBOARD-BLOCKS.md` (ECON-05 / F08 / F09 + applied-mig rewrites). OWNER decides; projection flags stay OFF.
 
 ## How to dispatch
 1. **OWNER-GATE** — Jorge decides in writing; no product PR until unlock.
@@ -58,7 +61,7 @@ Each file uses **COMPLIANCE-STANDARD-2026-07-25** structure (Law of the Land / D
 | 37 | `ACCT-R-37` | `CHAIN-04-bill-payment-tieout` | accounting | NEEDS-OWNER | OWNER-GATE | P0 | `ACCT-R-37-CHAIN-04-bill-payment-tieout.md` |
 | 38 | `ACCT-R-38` | `CHAIN-06-invoice-ar-chain-proof` | accounting | NEEDS-OWNER | OWNER-GATE | P0 | `ACCT-R-38-CHAIN-06-invoice-ar-chain-proof.md` |
 | 39 | `ACCT-R-39` | `dip-mor-pre-post-petition-ap-split` | accounting | NEEDS-OWNER | OWNER-GATE | P0 | `ACCT-R-39-dip-mor-pre-post-petition-ap-split.md` |
-| 40 | `ACCT-R-40` | `factoring-asc860-cpa-control-test-open` | accounting | NEEDS-OWNER | OWNER-GATE | P0 | `ACCT-R-40-factoring-asc860-cpa-control-test-open.md` |
+| 40 | `ACCT-R-40` | `factoring-asc860-owner-control-test-open` | accounting | NEEDS-OWNER | OWNER-GATE | P0 | `ACCT-R-40-factoring-asc860-owner-control-test-open.md` |
 | 41 | `ACCT-R-41` | `flow2-customer-chargeback-driver-expense` | accounting | NEEDS-OWNER | OWNER-GATE | P0 | `ACCT-R-41-flow2-customer-chargeback-driver-expense.md` |
 | 42 | `ACCT-R-42` | `ifta-sales-tax-booking-location-confirm` | accounting | NEEDS-OWNER | OWNER-GATE | P0 | `ACCT-R-42-ifta-sales-tax-booking-location-confirm.md` |
 | 43 | `ACCT-R-43` | `usmca-unhide-entity-switcher` | accounting | NEEDS-OWNER | OWNER-GATE | P0 | `ACCT-R-43-usmca-unhide-entity-switcher.md` |
@@ -68,6 +71,7 @@ Each file uses **COMPLIANCE-STANDARD-2026-07-25** structure (Law of the Land / D
 | 47 | `BANK-R-04` | `sweepfix1727-8` | banking | NEEDS-OWNER | OWNER-GATE | P0 | `BANK-R-04-sweepfix1727-8.md` |
 
 ## Also ship with this packet
-- `COMPLIANCE-STANDARD-2026-07-25.md` (binding template)
+- `COMPLIANCE-STANDARD-2026-07-25.md` (binding template — OWNER decision language)
 - `00-DISPATCH-ORDER.md` (recommended build order)
+- `00-SCOREBOARD-BLOCKS.md` (ACCT-ECON-05 · BANK-F08 · BANK-F09 · BANK-ECON-04/SURF-04/LINK-01 rewrites)
 - Cross-link: `docs/trackers/ACCT-BANK-PILE-PURGE-2026-07-25.md` · PR #3518
