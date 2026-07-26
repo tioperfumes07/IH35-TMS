@@ -34,13 +34,6 @@
     },
     {
       "file": "202609050000_mnt_econ_04_warranty_reimburse_gl_hop.sql",
-      "applied_on_prod": false,
-      "reason": "[HOLD-FOR-JORGE - TIER 1 FINANCIAL] MNT-ECON-04 warranty reimburse GL hop. Registers WARRANTY_REIMBURSE_GL_POSTING_ENABLED (default OFF); widens CoA-role CHECKs for warranty_recovery; creates accounting.warranty_reimburse_postings. No GL math — poster reuses createJournalEntry.",
-      "added_at": "2026-07-26",
-      "block": "MNT-ECON-04"
-    },
-    {
-      "file": "202609050000_mnt_econ_04_warranty_reimburse_gl_hop.sql",
       "reason": "[HOLD-FOR-JORGE - TIER 1 FINANCIAL] MNT-ECON-04 warranty reimburse GL hop. Registers WARRANTY_REIMBURSE_GL_POSTING_ENABLED (default OFF); widens CoA-role CHECKs for warranty_recovery; creates accounting.warranty_reimburse_postings. No GL math — poster reuses createJournalEntry.",
       "added_at": "2026-07-26",
       "block": "MNT-ECON-04"
