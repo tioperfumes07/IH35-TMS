@@ -1949,7 +1949,12 @@
       "statement_balance_cents",
       "status",
       "updated_at",
-      "variance_cents"
+      "variance_cents",
+      "adjusted_bank_balance_cents",
+      "adjusted_book_balance_cents",
+      "beginning_balance_cents",
+      "deposits_in_transit_cents",
+      "outstanding_checks_cents"
     ],
     "banking.transaction_categories": [
       "coa_account_id",
