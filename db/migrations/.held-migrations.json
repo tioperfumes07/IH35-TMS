@@ -743,6 +743,14 @@
       "reason": "[HOLD-FOR-JORGE — APPLIED] Cost of Labor–Mexico Drivers seed for TRANSP+USMCA. Owner Neon-applied 2026-07-25 (neondb_owner). Prior \"superseded / never apply\" classification was stale vs live ledger — file IS on prod. Disk body later diverged from applied checksum; see migration-checksum-overrides DEPLOY-UNBLOCK-MEXICO-790. Do not re-run.",
       "applied_on_prod": true,
       "applied_evidence": "Neon tiny-field-89581227 br-fancy-credit-akjnd07a 2026-07-25T21:55:01.713Z: _system._schema_migrations checksum d709ac509f113e7f42e7bf9f7b94c0fa0ef740f5157a7598f7d76402c8096101. Committed disk sha256 8429d949… accepted via checksum override (do not re-apply)."
+    },
+    {
+      "file": "202608080000_acct_link_02_accounts_detail_type_fk.sql",
+      "reason": "LINK-02 accounts.detail_type_id FK — owner WIRE; Neon-applied checksum 4d66df412a4164b9e2c7b54b8d93c714b6f2557792884d9d1af9ee962e21bc39 @ 2026-07-25T22:15:16Z",
+      "applied_on_prod": true,
+      "applied_at": "2026-07-25T22:15:16Z",
+      "applied_by": "neondb_owner",
+      "checksum": "4d66df412a4164b9e2c7b54b8d93c714b6f2557792884d9d1af9ee962e21bc39"
     }
   ],
   "superseded": [],
