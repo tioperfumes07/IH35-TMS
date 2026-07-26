@@ -88,6 +88,142 @@ function isRouteRegistrar(name) {
 // to survive review; the empty map below is the correct starting state, and the guard is RED until
 // each of the 27 findings is either mounted or refused on the record.
 const REFUSED_MOUNTS = new Map([
+  // ── SECURITY: mounting would expose an unauthenticated endpoint ───────────────────────────────
+  [
+    "observability/health-deep.routes.ts",
+    "UNAUTHENTICATED — the handler runs under withLuciaBypass with no requireAuth, and the payload " +
+      "discloses QuickBooks / Samsara / Plaid connection and last-sync state. Mounting it would put " +
+      "integration health on the public internet. /api/v1/healthz already serves the authenticated " +
+      "deep check. Needs an auth gate before it can ever be wired.",
+  ],
+  [
+    "middleware/response-time.ts",
+    "registerPerfMetricsRoute(app, isAuthorized) takes its authorization policy as a CALLBACK — there " +
+      "is no policy in the module to verify, so mounting means CHOOSING one. That is a design " +
+      "decision, not wiring, and it is out of scope for a route-parity sweep. Already out of scope " +
+      "for scripts/verify-no-orphan-routes.mjs for the same reason (its documented middleware " +
+      "exclusion).",
+  ],
+
+  // ── BOOT-CRASH / DUPLICATE: mounting would register a path that is already served ─────────────
+  [
+    "vendors/index.ts",
+    "DUPLICATE — registerVendorRoutes only calls registerVendorListRoutes, and customers/index.ts " +
+      "(mounted) already calls it. GET /api/v1/vendors answers 401 on prod today. Mounting this " +
+      "aggregator would register the same path twice and crash Fastify at boot. It is a redundant " +
+      "wrapper, not a missing surface — a split-brain aggregator for class C11, not C10.",
+  ],
+
+  // ── DUAL WRITE PATH: a second, parallel writer beside the canonical one ───────────────────────
+  [
+    "maintenance/pre-flight/routes.ts",
+    "SPLIT-BRAIN — exports the same registrar NAME as maintenance/pre-flight-dvir.routes.ts, which IS " +
+      "mounted, and which is the one apps/frontend/src/api/maintenance.ts actually calls " +
+      "(/api/v1/maintenance/pre-flight-dvir/*). The paths differ (/pre-flight/* vs /pre-flight-dvir/*) " +
+      "so there is no boot collision, but mounting it would add a SECOND DVIR severity+routing write " +
+      "path with no consumer. Consolidate under C11 first; the name collision is also why the " +
+      "name-matching orphan guard never saw this file.",
+  ],
+  [
+    "driver-finance/settlements-mvp.routes.ts",
+    "UNSAFE dual write path duplicating the canonical driver_finance settlement engine — carried over " +
+      "verbatim from the reason recorded in scripts/verify-no-orphan-routes.mjs (re-verified 2026-07-25 " +
+      "there: not a boot collision, but a second independent settlement create/approve path). Needs a " +
+      "consolidation decision, not a mount.",
+  ],
+
+  // ── PHANTOM SCHEMA: mounting would surface a 500, not a working endpoint ──────────────────────
+  [
+    "dispatch/driver-pwa/dispatch-view.routes.ts",
+    "References a non-existent evidence table (finding recorded in scripts/verify-no-orphan-routes.mjs). " +
+      "Mounting it turns a 404 into a 500 on the driver PWA. Fix the schema reference first.",
+  ],
+
+  // ── FINANCIAL SURFACE: reachability is the owner's call, not a coder's (CLAUDE.md §1.3) ───────
+  // Each of these is READY — auth-gated, entity-scoped, no collision, no RETIRE write — and each is a
+  // ONE-LINE mount once labelled. They are held because mounting makes an accounting.* / banking /
+  // settlement data surface newly reachable, and §1.3 reserves that to the owner. Listing them here
+  // keeps them visible and cheap to action instead of quietly mounted or quietly forgotten.
+  [
+    "reports/ap-aging.routes.ts",
+    "HELD-FOR-OWNER (ready) — READ-ONLY A/P aging over views.ap_aging / accounting.ap_aging_as_of. " +
+      "Auth-gated + company-scoped, no writes, distinct path from the mounted " +
+      "/api/v1/accounting/ap-aging. apps/frontend/src/api/reports.ts calls it and gets a 404 today. " +
+      "Newly exposing an accounting.* read is a §1.3 owner decision.",
+  ],
+  [
+    "payroll-integration/aggregate.routes.ts",
+    "HELD-FOR-OWNER (ready) — aggregates TMS settlements + QBO payroll. Auth-gated + " +
+      "assertCompanyMembership + app.operating_company_id. Driver-pay money data; §1.3 owner decision. " +
+      "apps/frontend/src/hooks/usePayrollAggregate.ts calls it and gets a 404 today.",
+  ],
+  [
+    "reports/form-425c/exhibits/routes.ts",
+    "HELD-FOR-OWNER (ready) — Chapter 11 court-filing exhibits built from banking/accounting sources, " +
+      "role-gated to Owner/Administrator/Accountant. A court exhibit is the highest-consequence " +
+      "artifact in the system; making it reachable is not a wiring decision. " +
+      "apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx calls it and gets a 404 today.",
+  ],
+  [
+    "banking/categorization-rules.routes.ts",
+    "HELD financial — banking categorization rules, including POST :id/apply-historical which " +
+      "re-categorizes historical bank transactions in bulk. Reason carried over from " +
+      "scripts/verify-no-orphan-routes.mjs; owner review required.",
+  ],
+  [
+    "driver-finance/settlement-payment.routes.ts",
+    "HELD financial — marks settlement payments sent/cleared/bounced/paid. Money-moving. Reason " +
+      "carried over from scripts/verify-no-orphan-routes.mjs; owner OK required.",
+  ],
+  [
+    "banking/manual-je.routes.deprecated.ts",
+    "ARCHIVED — deliberately retained as the preserved original of an archived path (apps/backend/src/" +
+      "index.ts documents it as UNMOUNTED). Canonical JE is /api/v1/accounting/journal-entries. " +
+      "Archive-never-delete means the file stays; it must never be mounted.",
+  ],
+
+  // ── DESTRUCTIVE: mounting would make a hard DELETE reachable (void-not-delete) ────────────────
+  [
+    "scheduled-reports/scheduled-reports.routes.ts",
+    "BLOCKED on a void-not-delete violation — every handler is auth-gated, role-gated and " +
+      "company-scoped, and apps/frontend/src/api/scheduled-reports.ts calls it, but " +
+      "DELETE /api/v1/scheduled-reports/:id issues a hard `DELETE FROM reporting.scheduled_reports` " +
+      "(scheduled-reports.routes.ts:535). Mounting it makes an unrecoverable delete reachable. Needs a " +
+      "voided_at column + soft-delete first — that is a migration, and migrations are HELD.",
+  ],
+
+  // ── BEHAVIOURAL, NOT A ROUTE ──────────────────────────────────────────────────────────────────
+  [
+    "identity/seed-cleanup/archive-test-users.routes.ts",
+    "Defines NO HTTP route — it installs an onRoute hook that REPLACES the handler of " +
+      "GET /api/v1/identity/users, and must load before registerIdentityRoutes. Registering it changes " +
+      "the behaviour of an existing endpoint; that is a functional change, not route wiring.",
+  ],
+
+  // ── NO URL: mounting requires inventing a public path (a new API contract, not wiring) ────────
+  // These three default-export a Fastify plugin whose paths are RELATIVE (/rules, /fences, /kpi …),
+  // so they only have a URL once someone picks a prefix. No frontend calls any of them. Choosing the
+  // public contract for an unconsumed module is a design decision. They are also invisible to the
+  // existing orphan guard, which only looks for named `register*Routes` exports.
+  ["alerts/alert.routes.ts", "No URL without an invented prefix (relative paths, default plugin export) and no frontend caller. Mounting means designing a public contract, not wiring one."],
+  ["geofence/geofence.routes.ts", "No URL without an invented prefix (relative paths, default plugin export) and no frontend caller. Mounting means designing a public contract, not wiring one."],
+  ["profitability/profitability.routes.ts", "No URL without an invented prefix (relative paths, default plugin export) and no frontend caller. Mounting means designing a public contract, not wiring one."],
+
+  // ── DEAD CODE: no consumer; an existing, documented repo decision to leave unmounted ──────────
+  // Reasons carried over from scripts/verify-no-orphan-routes.mjs, which already recorded each of
+  // these as intentionally unmounted. Re-litigating a documented decision is out of scope for a
+  // parity sweep, and mounting code with no consumer expands runtime surface for zero benefit.
+  ["audit/dispatch-overrides.routes.ts", "Dead code — no frontend caller (2026-06 sweep; scripts/verify-no-orphan-routes.mjs)."],
+  ["brokerupdate/brokerupdate.routes.ts", "Dead code — no frontend caller (scripts/verify-no-orphan-routes.mjs)."],
+  ["safety/damage-continuity/continuity.routes.ts", "Dead code — no frontend caller (scripts/verify-no-orphan-routes.mjs). POST :id/auto-create-claim also opens a claim, which is money-adjacent."],
+  ["safety/drug-pool.routes.ts", "Dead code — no frontend caller (scripts/verify-no-orphan-routes.mjs)."],
+  ["integrations/samsara/samsara-master-sync.routes.ts", "Dead code / admin-only — no frontend caller (scripts/verify-no-orphan-routes.mjs); it also triggers an external Samsara sync that writes mdata.*."],
+  ["users/preferences/locale.routes.ts", "Dead code — no frontend caller (scripts/verify-no-orphan-routes.mjs)."],
+  ["utilization/utilization.routes.ts", "Dead code — no frontend caller (scripts/verify-no-orphan-routes.mjs)."],
+
+  // ── NO CONSUMER, newly surfaced by THIS guard (the orphan guard could not see them) ───────────
+  ["mexico-ops/mx-permits.routes.ts", "No consumer — nothing in apps/frontend or apps/driver-pwa calls /api/v1/mx-permits. Newly surfaced here: it exports `mxPermitsRoutes`, which the orphan guard's `register*Routes` pattern never matched. Triage the Mexico-ops module surface before wiring it."],
+  ["mexico-ops/mx-tolls.routes.ts", "No consumer — nothing calls /api/v1/mx-tolls. Same blind spot (`mxTollsRoutes`). Toll cost tracking is money-adjacent; triage with the Mexico-ops module, not in a wiring sweep."],
 ]);
 
 // ── MOUNT SAFETY (owner addition, 2026-07-25) ───────────────────────────────────────────────────
@@ -113,6 +249,14 @@ const SCOPE_HELPER = /\b(withCompanyScope|assertCompanyMembership|withCompany)\b
 // Modules C10 moved from 404 to mounted. Every entry is asserted mounted AND safe — so a later commit
 // cannot quietly unmount one, and cannot bolt a RETIRE write onto a route this sweep made reachable.
 const MOUNTED_BY_C10 = new Set([
+  // The eight maintenance catalogs — failure-codes, labor-codes, parts, priority-levels,
+  // service-tasks, shop-locations, vendors, work-order-statuses. All eight returned 404 on prod at
+  // version 13a2ff3 and are now registered in apps/backend/src/index.ts. The SQL, the requireAuth
+  // gate, the withCompanyScope wrapper and the isCatalogWriteRole check all live one hop away in
+  // catalogs/maintenance/factory.ts, which is why mount safety is asserted across direct imports.
+  // Writes are to catalogs.maintenance_* (CANONICAL reference data) — not RETIRE maint.* — and
+  // DELETE is a soft `is_active = false` with a CRUD audit row, so void-not-delete holds.
+  "catalogs/maintenance/index.ts",
 ]);
 
 const IGNORED_DIRS = new Set(["node_modules", "dist", "build", "__tests__", "__mocks__", "__fixtures__"]);
