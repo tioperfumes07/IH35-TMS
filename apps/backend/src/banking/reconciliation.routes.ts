@@ -270,33 +270,65 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
       );
       const beginningBalanceCents = Number(priorRes.rows[0]?.statement_balance_cents ?? 0);
 
-      const insertRes = await client.query<{ id: string }>(
-        `
-          INSERT INTO banking.reconciliation_sessions (
-            operating_company_id,
-            bank_account_id,
-            period_start,
-            period_end,
-            statement_balance_cents,
-            beginning_balance_cents,
-            book_balance_cents,
-            variance_cents,
-            status,
-            created_at,
-            updated_at
-          )
-          VALUES ($1,$2,$3,$4,$5,$6,$6,$5-$6,'open',now(),now())
-          RETURNING id
-        `,
-        [
-          accountContext.operating_company_id,
-          body.data.bank_account_id,
-          body.data.period_start,
-          body.data.period_end,
-          body.data.statement_balance_cents,
-          beginningBalanceCents,
-        ]
-      );
+      // BANK-DOM-03 columns are HELD — CI/prod may not have them until Neon-apply.
+      // Prefer adjusted-balance INSERT; fall back to pre-DOM-03 shape on undefined_column.
+      let insertRes: { rows: Array<{ id: string }> };
+      try {
+        insertRes = await client.query<{ id: string }>(
+          `
+            INSERT INTO banking.reconciliation_sessions (
+              operating_company_id,
+              bank_account_id,
+              period_start,
+              period_end,
+              statement_balance_cents,
+              beginning_balance_cents,
+              book_balance_cents,
+              variance_cents,
+              status,
+              created_at,
+              updated_at
+            )
+            VALUES ($1,$2,$3,$4,$5,$6,$6,$5-$6,'open',now(),now())
+            RETURNING id
+          `,
+          [
+            accountContext.operating_company_id,
+            body.data.bank_account_id,
+            body.data.period_start,
+            body.data.period_end,
+            body.data.statement_balance_cents,
+            beginningBalanceCents,
+          ]
+        );
+      } catch (err) {
+        if ((err as { code?: string }).code !== "42703") throw err;
+        insertRes = await client.query<{ id: string }>(
+          `
+            INSERT INTO banking.reconciliation_sessions (
+              operating_company_id,
+              bank_account_id,
+              period_start,
+              period_end,
+              statement_balance_cents,
+              book_balance_cents,
+              variance_cents,
+              status,
+              created_at,
+              updated_at
+            )
+            VALUES ($1,$2,$3,$4,$5,$5,0,'open',now(),now())
+            RETURNING id
+          `,
+          [
+            accountContext.operating_company_id,
+            body.data.bank_account_id,
+            body.data.period_start,
+            body.data.period_end,
+            body.data.statement_balance_cents,
+          ]
+        );
+      }
       const sessionId = insertRes.rows[0]?.id;
       if (!sessionId) return null;
       await appendCrudAudit(
