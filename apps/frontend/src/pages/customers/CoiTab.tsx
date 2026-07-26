@@ -17,6 +17,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { Modal } from "../../components/Modal";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
+import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 
 export type CoiTabVariant = "list-preview" | "full-page";
@@ -363,7 +364,7 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
                   key: "expires_at",
                   label: "Expires",
                   sortable: true,
-                  render: (request) => request.expires_at ?? "-",
+                  render: (request) => formatDateTimeUS(request.expires_at) || "-",
                 },
                 {
                   key: "document_url",

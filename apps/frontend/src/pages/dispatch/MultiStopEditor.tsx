@@ -4,6 +4,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { getLoadStopsForDispatch, replaceLoadStopsDispatch, type RefinedLoadStop } from "../../api/dispatch";
+import { DateTimePicker } from "../../components/forms/DateTimePicker";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
@@ -123,20 +124,20 @@ function SortableRow({
           </div>
           <div>
             <div className="text-[10px] font-semibold text-gray-500">Window start</div>
-            <input
-              type="datetime-local"
-              className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-1 text-xs"
+            <DateTimePicker
+              className="mt-0.5 w-full"
+              aria-label="Window start"
               value={row.window_start}
-              onChange={(e) => onChange(row.key, { window_start: e.target.value })}
+              onChange={(v) => onChange(row.key, { window_start: v })}
             />
           </div>
           <div>
             <div className="text-[10px] font-semibold text-gray-500">Window end</div>
-            <input
-              type="datetime-local"
-              className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-1 text-xs"
+            <DateTimePicker
+              className="mt-0.5 w-full"
+              aria-label="Window end"
               value={row.window_end}
-              onChange={(e) => onChange(row.key, { window_end: e.target.value })}
+              onChange={(v) => onChange(row.key, { window_end: v })}
             />
           </div>
           <label className="col-span-1 flex items-center gap-1 text-xs">

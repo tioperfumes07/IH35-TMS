@@ -2,6 +2,7 @@ import { PageHeader } from "../../../components/layout/PageHeader";
 import { MobileOptimizedTable } from "../../../components/shared/MobileOptimizedTable";
 import latestReport from "../../../audit/mobile-responsive/latest-report.json";
 import "../../../styles/mobile-responsive-tweaks.css";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 
 type AuditIssue = {
   id: string;
@@ -48,7 +49,7 @@ export function MobileAuditReport() {
           </div>
           <div>
             <dt className="text-xs uppercase text-gray-500">Last run</dt>
-            <dd className="text-sm font-medium">{report.generated_at || "Not yet generated in CI"}</dd>
+            <dd className="text-sm font-medium">{formatDateTimeUS(report.generated_at) || "Not yet generated in CI"}</dd>
           </div>
         </dl>
       </section>

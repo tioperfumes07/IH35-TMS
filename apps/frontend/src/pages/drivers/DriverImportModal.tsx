@@ -7,6 +7,7 @@ import {
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
+import { formatDateUS } from "../../lib/formatDate";
 
 type Props = {
   companyId: string;
@@ -33,13 +34,13 @@ const PREVIEW_COLUMNS: Array<ParityColumn<DriverImportSampleRow>> = [
     key: "hire_date",
     label: "Hire",
     sortable: true,
-    render: (row) => row.hire_date ?? "—",
+    render: (row) => formatDateUS(row.hire_date) || "—",
   },
   {
     key: "termination_date",
     label: "Term",
     sortable: true,
-    render: (row) => row.termination_date ?? "—",
+    render: (row) => formatDateUS(row.termination_date) || "—",
   },
   {
     key: "status",

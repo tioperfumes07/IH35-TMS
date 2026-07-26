@@ -10,6 +10,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 export function PmAutoEnginePage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -48,7 +49,7 @@ export function PmAutoEnginePage() {
 
   const runColumns = useMemo<ParityColumn<PmAutoEngineRunRow>[]>(
     () => [
-      { key: "started_at", label: "Started", sortable: true, render: (row) => row.started_at ?? "—" },
+      { key: "started_at", label: "Started", sortable: true, render: (row) => formatDateTimeUS(row.started_at) || "—" },
       { key: "status", label: "Status", sortable: true, render: (row) => row.status },
       { key: "schedules_evaluated", label: "Schedules", render: (row) => row.schedules_evaluated },
       { key: "work_orders_created", label: "WOs", render: (row) => row.work_orders_created },

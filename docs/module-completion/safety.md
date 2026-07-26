@@ -1,12 +1,12 @@
 # Module completion — Safety (Module 3)
 
-**PROGRESS: 12 of 37** · complete: `false` · as_of: 2026-07-25T15:30:00.000Z · live_sha: `7875de6`
+**PROGRESS: 12 of 38** · complete: `false` · as_of: 2026-07-25T15:30:00.000Z · live_sha: `7875de6`
 
 | Status | Count |
 |---|---:|
 | PASS | 12 |
 | HOLD | 0 |
-| OPEN | 3 |
+| OPEN | 4 |
 | FAIL | 15 |
 | UNVERIFIED | 7 |
 
@@ -49,5 +49,6 @@
 | `SAF-ORPH-03` | **OPEN** | Forfeiture Audit panel can render a row | PHANTOM COLUMN, prod-verified. driver_finance.escrow_ledger has 11 columns and NO posted_at, yet deductions.routes.ts:147 does ORDER BY posted_at -> 42703, swallowed by getEscrowDriverTimeline(...).catch(()=>({timeline:[]})). forfeiture_history_count is therefore always 0 and the Safety Forfeiture Audit panel is STRUCTURALLY incapable of ever showing a row. Non-financial, builder's lane: order by created_at (what sibling readers use) + a guard failing on ORDER BY of a column absent from the table. | — |
 | `SAF-ORPH-04` | **OPEN** | Form 2290 deadline is per-unit and business-day correct | The hardcoded 'Aug 31' STRING was removed, but the server computation it now trusts is still wrong twice. upcomingForm2290Deadline() always returns Aug 31 for the WHOLE company, ignoring per-unit first use - per IRS Form 2290 a vehicle first used after July is due the last day of the month following first use (a truck placed in service in October is due Nov 30) and this banner would never surface it; the per-unit proration that exists affects the TAX AMOUNT, not the DUE DATE. And there is NO weekend/holiday shift: Aug 31 2026 is a Monday so it is dormant, but 2024 (Saturday) and 2025 (Sunday) would have mis-rendered. The existing guard asserts only ISO shape and a 0-366 bound, so it would catch neither. | — |
 | `SAF-ORPH-05` | **OPEN** | Every Safety tab passes a DoD click-through | COVERAGE GAP, not a defect. SAFETY_TABS_CONFIG.ts declares SAFETY_CANONICAL_TAB_COUNT=28 / GROUP_COUNT=9, but the 32 SAF-B## items are BOUNDARIES, not tabs - there is no per-tab item and no per-tab sweep has run. 23 of the 32 boundaries are UNVERIFIED with the identical evidence 'Code merged; NO live proof'. Until a per-tab click-through exists on TRANSP+USMCA, Safety tab coverage is UNKNOWN rather than complete. This is the single largest blocker in the module. | — |
+| `SAF-DOM-02` | **OPEN** | company_violations retired jsonb: re-backfill sweep, auto-fine trigger repoint, DB-enforced archive (held migration) | NEW FAIL FOUND 2026-07-25 while scoping SAF-DOM-02, not previously on the board: safety.auto_create_internal_fine_from_violation() (SECURITY DEFINER, 0124:971-1101, fired by trg_auto_fine_on_violation_resolve) resolves its driver ONLY from NEW.related_drivers, the RETIRED jsonb. The create route stopped populating that column when 202607820000 (applied on prod) landed, so for every violation created through the UI since, resolve-as-monetary_fine hits 'IF v_driver_id IS NULL THEN RETURN NEW' and issues NO FINE while the endpoint returns 200 with autoCreatedInternalFineUuid:null. Proven on a throwaway postgres:16-alpine built from 0001: pre-fix function -> UPDATE 1, outcome=monetary_fine, auto_created_internal_fine_uuid NULL, 0 rows in safety.internal_fines; post-fix function -> fine created, linked, 0.05 approved, driver from the junction. Migration 202609130000 is HELD and UNAPPLIED anywhere; status stays OPEN until the owner Neon-applies it and GUARD re-proves the ledger row. Its stop-write section must not be applied before SAF-B28's PATCH repoint (C2 lane) is live. | — |
 
 Desktop audit: ~/Desktop/IH35-CURSOR-AUDIT/modules/safety.md

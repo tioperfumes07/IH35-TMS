@@ -30,6 +30,7 @@ import { CustomersListView } from "./customers/CustomersListView";
 import { CustomersSyncPanel } from "./customers/CustomersSyncPanel";
 import { useViewModePref } from "../hooks/useViewModePref";
 import { useUrlSort } from "../hooks/useUrlSort";
+import { formatDateUS } from "../lib/formatDate";
 
 type CustomerTabId =
   | "transaction_list"
@@ -370,7 +371,7 @@ export function CustomersPage() {
   // defaulting them hidden (toggle on via the gear) exactly as the old column chooser did.
   const txColumns = useMemo<ParityColumn<(typeof txRows)[number]>[]>(
     () => [
-      { key: "date", label: "Date", sortable: true, render: (r) => r.issue_date },
+      { key: "date", label: "Date", sortable: true, render: (r) => formatDateUS(r.issue_date) },
       { key: "type", label: "Type", sortable: true, render: (r) => String(r.invoice_type ?? "manual") },
       { key: "doc_no", label: "Doc #", render: (r) => r.display_id },
       { key: "status", label: "Status", sortable: true, render: (r) => r.status },

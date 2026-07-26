@@ -9,6 +9,7 @@ import {
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable } from "../../../components/parity/ParityTable";
 import { dqfExpiryPillClass, dqfItemStatusClass } from "../../../lib/driverDqf";
+import { formatDateUS } from "../../../lib/formatDate";
 
 type Props = {
   companyId: string;
@@ -120,14 +121,14 @@ export function DriverDqfPanel({ companyId, driverId, editable = true }: Props) 
               label: "Effective",
               sortable: true,
               cellClass: "text-slate-600",
-              render: (item) => item.effective_date ?? "—",
+              render: (item) => formatDateUS(item.effective_date) || "—",
             },
             {
               key: "expiry_date",
               label: "Expiry",
               sortable: true,
               cellClass: "text-slate-600",
-              render: (item) => item.expiry_date ?? "—",
+              render: (item) => formatDateUS(item.expiry_date) || "—",
             },
             {
               key: "expiry_pill",
