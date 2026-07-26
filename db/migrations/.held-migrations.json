@@ -737,6 +737,12 @@
       "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] SAF-ORPH-01/02 / ACCT-R-01 trigger half (stacks on merged #3533). CREATE OR REPLACE accounting.apply_escrow_posting_delta: deposit +, release −, forfeiture −, ELSE RAISE (fixes 0234 ELSE→+ that inflated accounting.escrow_accounts on forfeit). Expands posting_type CHECK with forfeiture. Seeds DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED default_enabled=false (0 rows on prod 2026-07-25 — no enable path). No per-entity overrides. No flag flip. Latent while clause-gated (0 signed driver contract_instances). Owner Neon-applies + ledger-backfill; GUARD re-proves function text + flag row + throwaway delta.",
       "applied_on_prod": true,
       "applied_evidence": "[escrow forfeit sign + flag seed] LIVE-VERIFIED on prod 2026-07-25 (tiny-field-89581227 / br-fancy-credit-akjnd07a) by joining _system._schema_migrations to ih35_migrations.applied_migrations: present in BOTH ledgers."
+    },
+    {
+      "file": "202607790000_cost_of_labor_mexico_drivers_transp_usmca.sql",
+      "reason": "[HOLD-FOR-JORGE — APPLIED] Cost of Labor–Mexico Drivers seed for TRANSP+USMCA. Owner Neon-applied 2026-07-25 (neondb_owner). Prior \"superseded / never apply\" classification was stale vs live ledger — file IS on prod. Disk body later diverged from applied checksum; see migration-checksum-overrides DEPLOY-UNBLOCK-MEXICO-790. Do not re-run.",
+      "applied_on_prod": true,
+      "applied_evidence": "Neon tiny-field-89581227 br-fancy-credit-akjnd07a 2026-07-25T21:55:01.713Z: _system._schema_migrations checksum d709ac509f113e7f42e7bf9f7b94c0fa0ef740f5157a7598f7d76402c8096101. Committed disk sha256 8429d949… accepted via checksum override (do not re-apply)."
     }
   ],
   "superseded": [
