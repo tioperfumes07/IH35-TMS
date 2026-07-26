@@ -65,6 +65,8 @@ export const EXPECTED_HELD = [
   // SWEEP-C2 / BANK-DOM-01 — brand-new this PR, genuinely unapplied on prod.
   "202609020000_c2_maintenance_position_history_canonical.sql",
   "202609020010_c2_banking_reconciliation_matches_canonical.sql",
+  // BANK-DOM-03
+  "202609080000_bank_dom_03_adjusted_balance_rec.sql",
 ];
 
 /**
