@@ -1,0 +1,39 @@
+================================================================================
+BLOCK C6 — MONEY: every money-table INSERT posts a balanced JE via the poster  (HIGHEST)
+LANE: Cursor (financial)   GATE: HELD — JORGE-APPROVED + owner Neon-applies; flags default OFF
+GUARD already open: #3555 (SWEEP-C6 guard-first). 
+DEFECT CLASS (registry): 221 money-INSERT candidates; CONFIRMED no-JE subset — maintenance parts-
+  purchase, severe-repair, warranty; safety company-paid civil fine (#3551 = a C6 instance).
+  SCOPE: all money modules (accounting.*/banking.*/driver_finance.*).
+FIX PRIMITIVE: route every money write through the EXISTING posting service (reuse the poster — NO
+  new GL math); reversal = reverse-and-replace; idempotent/exactly-once.
+
+GUARD-FIRST (L7, = #3555): FAILS on an INSERT into a money table with NO balanced-JE post in the
+  SAME transaction (behind the per-entity flag). Red output = the gap list across all money modules.
+  selftest plants one money INSERT without a JE.
+
+8-LAYER ACCEPTANCE
+L1 DATA/SCHEMA .... [DoD] money tables + journal_entries/lines canonical; enforced FKs; FORCED RLS.
+L2 ACCOUNTING ..... [DoD] BALANCED JE (header + lines) via the poster; [+] sub-ledger reconciles to
+   GL (AP aging=AP control, inventory=inventory GL, escrow subledger=escrow GL); correct control
+   account per entity; [+] idempotent/exactly-once (no double-post on retry; outbox for external);
+   reversal = reverse-and-replace; flag default OFF; reconcile-only, NEVER QBO write-back. Owner
+   money-locks §5 honored (ask-rails, expense-vs-capitalize, deductible Option C).
+L3 API/BACKEND .... [+] the money write + JE post are ONE atomic transaction; idempotency key on the
+   mutation; optimistic version lock; WF-064 2-step gate on the high-risk/destructive money actions.
+L4 UI/UX .......... [DoD] the money creator is the QBO right-side drawer (VERIFY 1); every rendered
+   money field persists; purpose→economics selector (never a silent default).
+L5 DOMAIN LINKAGE . [DoD] the money record links both-way to its operational source (WO/parts/claim/
+   fine → bill/expense → JE → audit) AND to vendor/customer + the correct liability/asset account.
+L6 SECURITY/OBS ... [+] structured log + metric + ALERT on money-post failure and sync drift; honest
+   503 on poster failure (fail-loud, never a silent no-op); no PII in logs.
+L7 TEST/CI ........ [DoD] #3555 guard (fail-on-bug/pass-on-fix, selftest). [+] money path gets a live
+   $0.05 smoke → Neon proof that the JE balanced; integration test per wired write.
+L8 CLOSURE ........ #3555 green; every flagged money write posts a balanced JE (VERIFY 6); sub-ledgers
+   reconcile to GL; flags OFF; live $0.05 smoke proof on TRANSP + USMCA; owner-gated; no QBO write-back.
+
+DoD/VERIFY: A B C D E · VERIFY 1,4,6,8. LINKAGE LAW §3 (financial primitives, balanced JE behind flag).
+EVIDENCE: ROOT CAUSE money INSERT w/o JE / FIX reuse poster, atomic+idempotent / GUARD #3555 /
+  LIVE PROOF $0.05 smoke balanced JE TRANSP+USMCA / REMAINING per-write wiring list.
+
+================================================================================

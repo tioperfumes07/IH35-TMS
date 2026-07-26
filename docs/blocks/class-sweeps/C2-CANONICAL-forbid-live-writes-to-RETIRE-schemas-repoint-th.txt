@@ -1,0 +1,44 @@
+================================================================================
+BLOCK C2 — CANONICAL: forbid live writes to RETIRE schemas + repoint the ~5 live writers
+LANE: Cursor (financial/canonical)   GATE: HELD — JORGE-APPROVED + owner Neon-applies (migration+backfill)
+DEFECT CLASS (registry, STOP-class): ~5 LIVE writers of RETIRE tables — position-history writes
+  maint.position_history/position_set/part (safety/position-history/position-history.routes.ts:88,
+  100-103,178,199); maint/parts + maint/pm retire endpoints (latent, still mounted); VERIFY
+  bank.reconciliation_matches + accounting.qbo_remote_counts direction. EXCLUDE payroll.deprecated
+  (dead/test-only → archival) and mdata.qbo_vendors (legit mirror-sync). SCOPE: LIVE writers only.
+FIX PRIMITIVE: repoint each live writer onto the canonical schema (maintenance.*/driver_finance.*/
+  banking.*); migration + backfill; Rule 07 archive (never DROP) the RETIRE table.
+
+GUARD-FIRST (L7): scripts/verify-steps/NNNN-no-live-writes-to-retire-schemas.mjs FAILS on any
+  INSERT/UPDATE/DELETE into maint.*/payroll.*/settlement.*/bank.* from non-deprecated source (source
+  allowlist for the archival shims). Red output = the live-writer list. selftest plants one live
+  retire-write + one allowlisted shim.
+
+8-LAYER ACCEPTANCE
+L1 DATA/SCHEMA .... [DoD] Canonical proven (to_regclass maintenance.position_history etc.); enforced
+   FK to unit/driver/load; FORCED RLS + entity scope; migration forward-only/idempotent/checksum-
+   ledgered; backfill of existing RETIRE rows verified (row counts match); RETIRE table archived,
+   0 new writers (grep + guard).
+L2 ACCOUNTING ..... [+] For bank.reconciliation_matches / qbo_remote_counts: prove the canonical
+   direction reconciles (subledger↔GL); reconcile-only, no QBO write-back. Else N/A(reason:
+   position-history is operational, no JE).
+L3 API/BACKEND .... [+] Repoint is ATOMIC (read-canonical + write-canonical in one txn); retire
+   endpoints return 410/deregistered, not silently mounted; idempotent backfill (re-run safe);
+   authZ unchanged and enforced.
+L4 UI/UX .......... [DoD] The surfaces feeding these writers (position history, parts, pm) now read/
+   write canonical; no user-visible change except correctness; no dead nav left by deregistration.
+L5 DOMAIN LINKAGE . [DoD] position_history → unit + driver + (source WO) both-way; canonical rows
+   reachable from the unit/driver detail. No island left behind.
+L6 SECURITY/OBS ... [+] Structured log + ALERT if any code path still targets a RETIRE schema at
+   runtime (defense in depth behind the static guard); no PII in logs.
+L7 TEST/CI ........ [DoD] The guard above. [+] Integration test: write via the surface → lands in
+   canonical, not RETIRE; backfill migration has a fresh-DB apply test.
+L8 CLOSURE ........ Guard green; grep of live RETIRE writes = 0; canonical proven live; backfill
+   reconciled on TRANSP + USMCA; RETIRE tables archived (Rule 07), never dropped.
+
+DoD/VERIFY: A B C D(where money) · VERIFY 3,4 (deep linkage),5,6 (economics where bank),8 (RLS).
+  LINKAGE LAW §1 (fix the WRITER onto canonical, don't drag the FK), §4 (same-entity FK+FORCED RLS).
+EVIDENCE BLOCK: ROOT CAUSE RETIRE writers / FIX repoint+backfill+archive / GUARD NNNN / LIVE PROOF
+  canonical row counts TRANSP+USMCA, 0 retire writers / REMAINING archival ticket ids.
+
+================================================================================

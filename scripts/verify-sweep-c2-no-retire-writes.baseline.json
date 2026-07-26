@@ -1,0 +1,20 @@
+{
+  "_comment": "SWEEP-C2 shrink-only baseline — live INSERT/UPDATE/DELETE into RETIRE schemas. Regenerate: UPDATE_C2_RETIRE_WRITE_BASELINE=1. NEW file:line keys fail CI; list may only shrink as writers are repointed. Exempt with C2-RETIRE-WRITE-EXEMPT: <reason>. Complements verify-no-retire-table-writes (1194).",
+  "generated_at": "2026-07-26T01:24:13.024Z",
+  "count": 11,
+  "required_seeds_present": true,
+  "missing_seeds": [],
+  "keys": [
+    "accounting/bank-recon/match.service.ts:464",
+    "accounting/bank-recon/recon-worklist.service.ts:182",
+    "catalogs/load-cancellation-reasons.routes.ts:123",
+    "catalogs/load-cancellation-reasons.routes.ts:200",
+    "catalogs/load-cancellation-reasons.routes.ts:250",
+    "catalogs/load-cancellation-reasons.routes.ts:290",
+    "maint/parts.routes.ts:112",
+    "maint/parts.routes.ts:173",
+    "maint/pm.routes.ts:215",
+    "maint/pm.routes.ts:300",
+    "safety/position-history/position-history.routes.ts:178"
+  ]
+}

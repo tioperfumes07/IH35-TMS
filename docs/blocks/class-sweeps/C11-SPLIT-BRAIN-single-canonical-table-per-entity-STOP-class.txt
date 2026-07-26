@@ -1,0 +1,32 @@
+================================================================================
+BLOCK C11 — SPLIT-BRAIN: single canonical table per entity (STOP-class)
+LANE: Cursor (canonical)   GATE: HELD — JORGE-APPROVED + owner Neon-applies (migration + repoint)
+DEFECT CLASS (registry, STOP-class): CONFIRMED — /catalogs/driver/* writes catalogs.* while
+  /lists/drivers/* uses reference.* → a row created on one surface is invisible on the other.
+  SCOPE: driver entity confirmed; guard verifies others.
+FIX PRIMITIVE: one canonical table per entity; repoint the divergent surface onto canonical; migrate
+  existing rows; Rule 07 archive the loser.
+
+GUARD-FIRST (L7): NNNN-no-entity-split-brain.mjs FAILS when two routes for one entity write different
+  schemas. Red output = the split-brain list. selftest plants two writers for one entity → two schemas.
+
+8-LAYER ACCEPTANCE
+L1 DATA/SCHEMA .... [DoD] single canonical table proven (to_regclass); both surfaces read/write it;
+   migrate + backfill the divergent rows (counts reconcile); enforced FK + FORCED RLS; archive the
+   loser (never DROP).
+L2 .. N/A (driver catalog is operational; money via settlements is separate). 
+L3 API/BACKEND .... [+] repoint atomic; the deprecated route redirects/deregisters; idempotent backfill.
+L4 UI/UX .......... [DoD] a driver created on either surface appears on BOTH; no invisible rows.
+L5 DOMAIN LINKAGE . [DoD] the canonical driver links both-way to unit/load/settlement/safety; no
+   orphaned rows from the archived table.
+L6 SECURITY/OBS ... [+] alert if any writer still targets the archived schema at runtime; RLS proven.
+L7 TEST/CI ........ [DoD] guard + selftest. [+] integration: create on surface A → visible on B, both
+   entities.
+L8 CLOSURE ........ Guard green; one canonical table per entity; backfill reconciled; TRANSP + USMCA;
+   archived twin has 0 new writers.
+
+DoD/VERIFY: A B C · VERIFY 3,4,5,8. LINKAGE LAW §1 (canonical is law), §4 (single-entity FK+RLS).
+EVIDENCE: ROOT CAUSE split-brain driver / FIX single canonical + repoint + backfill / GUARD NNNN /
+  LIVE PROOF create-on-A-visible-on-B TRANSP+USMCA / REMAINING other entities from guard output.
+
+================================================================================
