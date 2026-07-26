@@ -98,7 +98,14 @@ const NON_ROW_OBJECT = /^(?:field)?errors?$/i;
 // Leaves that are a COUNT derived from a date, not a date: `days_until_expiry`, `expiry_days`,
 // `overdue_count`. They render as a number and must not be date-formatted. Narrowed with a reason
 // after `days_until_expiry` (an integer on the safety expiry dashboard) was flagged.
-const NUMERIC_DERIVED_FIELD = /^(?:days?|count|num|total|n)_|_(?:days?|count|qty|cents|amount|total)$/i;
+// Split into two SEPARATE anchored patterns rather than one `^A|B$` alternation. CodeQL's
+// js/regex/missing-regexp-anchor (high) correctly flagged the combined form: in `^A|B$` the anchors
+// bind to their own branch, so the intent ("starts with a count prefix OR ends with a count
+// suffix") is right but reads as a precedence bug. Two named regexes say it unambiguously.
+const NUMERIC_DERIVED_PREFIX = /^(?:days?|count|num|total|n)_/i;
+const NUMERIC_DERIVED_SUFFIX = /_(?:days?|count|qty|cents|amount|total)$/i;
+const isNumericDerivedField = (field) =>
+  NUMERIC_DERIVED_PREFIX.test(field) || NUMERIC_DERIVED_SUFFIX.test(field);
 
 // A JSX text node holding exactly one expression container: `>{ expr }<`.
 const JSX_TEXT_EXPR = />\s*\{\s*([A-Za-z_$][\w$.]*)\s*\}\s*</g;
@@ -198,7 +205,7 @@ function isUnformattedDateExpression(expr) {
   const field = mm[1];
   if (!DATE_FIELD_NAME.test(field) && !CAMEL_DATE_FIELD_NAME.test(field)) return false;
   if (PREFORMATTED_SUFFIX.test(field)) return false;
-  if (NUMERIC_DERIVED_FIELD.test(field)) return false;
+  if (isNumericDerivedField(field)) return false;
   if (parts.length >= 2 && NON_ROW_OBJECT.test(parts[parts.length - 2])) return false;
   return true;
 }
