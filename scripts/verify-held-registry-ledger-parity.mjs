@@ -65,6 +65,18 @@ export const EXPECTED_HELD = [
   // it and GUARD re-proves the ledger row. Note its apply-order dependency: its §3 stop-write trigger
   // must not land before SAF-B28's PATCH repoint (see the registry entry's reason).
   "202609130000_saf_dom_02_company_violation_jsonb_archive.sql",
+  // SWEEP-C2 half 1 of 2 — on main via #3577; genuinely unapplied on prod until Neon-apply.
+  // (Half 2, 202609020010, moved to applied_held 2026-07-26 — Cursor owner-batch apply confirmed
+  // directly against _system._schema_migrations; see #3603.)
+  "202609020000_c2_maintenance_position_history_canonical.sql",
+  // SWEEP-C11 driver sub-catalog split-brain DB-level write lock (renumbered off 202609030000 —
+  // that slot is MNT-ECON-01 on #3581).
+  "202609040000_sweep_c11_driver_subcatalog_split_brain_lock.sql",
+  // MNT-ECON-01
+  "202609030000_mnt_econ_01_parts_purchase_gl_hop.sql",
+  // MNT-ECON-04 (#3582) — genuinely applied on prod per Cursor owner-batch 2026-07-26, but that PR
+  // is already merged and this registry stamp is out of scope for this PR (owner directive: skip).
+  "202609050000_mnt_econ_04_warranty_reimburse_gl_hop.sql",
   // LEGAL-PAPER-01 — legal.contract_instance_status 'signed_on_paper' + the paper-evidence CHECK.
   // Authored 2026-07-26 and NEVER applied anywhere; unapplied by construction, not "re-proved".
   // Live cross-check this session (Neon tiny-field-89581227 / br-fancy-credit-akjnd07a, single
