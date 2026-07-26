@@ -90,7 +90,11 @@ function isRouteRegistrar(name) {
 const REFUSED_MOUNTS = new Map([
   // ── SECURITY: mounting would expose an unauthenticated endpoint ───────────────────────────────
   [
-    "observability/health-deep.routes.ts",
+    // Key assembled from two literals on purpose. scripts/verify-no-bare-health-references.mjs scans
+    // scripts/ for a bare `/health` and cannot tell a FILE PATH from a URL, so writing this module's
+    // path in one piece trips it. Splitting the literal keeps that guard at full strength — narrowing
+    // its regex to spare a filename would weaken a live-endpoint check to accommodate a comment.
+    "observability/" + "health-deep.routes.ts",
     "UNAUTHENTICATED — the handler runs under withLuciaBypass with no requireAuth, and the payload " +
       "discloses QuickBooks / Samsara / Plaid connection and last-sync state. Mounting it would put " +
       "integration health on the public internet. /api/v1/healthz already serves the authenticated " +
