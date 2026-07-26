@@ -1,0 +1,30 @@
+================================================================================
+BLOCK C7 — CHROME: create surfaces use the shared drawer, not a centered modal
+LANE: Claude Coder      GATE: self-merge on green (shared component + UI sweep)
+DEFECT CLASS (registry): 38 create/edit surfaces on centered <Modal> across all modules. Owner-
+  ratified WIDE-WIZARD exceptions (allowlist): Book Load, WO-create. SCOPE: app-wide.
+FIX PRIMITIVE: add a right-drawer variant to the shared Modal (or a CreateDrawer) = 480px, DatePicker,
+  inline +Add-new pickers, unsaved-guard — ONE change propagates to all 38.
+
+GUARD-FIRST (L7): NNNN-create-surface-is-drawer.mjs FAILS on a +Create/+Book surface opening a
+  centered Modal instead of the drawer variant (allowlist the 2 ratified wide wizards). selftest
+  plants one centered-modal create + one allowlisted wizard.
+
+8-LAYER ACCEPTANCE
+L1 .. N/A (no schema). L2 .. N/A (money handled by C6). 
+L3 .. [+] no behavior change to the underlying create endpoints; drawer submits the same typed
+   payload (round-trip unchanged).
+L4 UI/UX .......... [DoD] 480px right drawer; DatePicker; inline +Add-new (composes with C1); unsaved-
+   changes guard; distinct empty/loading/error; no box-in-box; nested create = drawer-on-drawer,
+   never a centered modal on a money drawer (VERIFY 1).
+L5 .. N/A (surface shape only; linkage unchanged). 
+L6 .. [+] focus-trap/escape (accessibility) on the shared drawer. 
+L7 TEST/CI ........ [DoD] guard + selftest. [+] one e2e per module confirming the create drawer opens
+   + submits.
+L8 CLOSURE ........ Guard green; VERIFY 1; the 38 surfaces flipped; 2 allowlisted exceptions annotated.
+
+DoD/VERIFY: A B · VERIFY 1,7. LINKAGE LAW: N/A(shape). EXCEPTIONS: Book Load + WO-create (owner-ratified).
+EVIDENCE: ROOT CAUSE centered modals / FIX shared drawer variant / GUARD NNNN / LIVE PROOF drawer
+  opens+submits per module TRANSP+USMCA / REMAINING allowlist annotations.
+
+================================================================================

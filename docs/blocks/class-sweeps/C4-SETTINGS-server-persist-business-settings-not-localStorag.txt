@@ -1,0 +1,37 @@
+================================================================================
+BLOCK C4 — SETTINGS: server-persist business settings (not localStorage)
+LANE: Claude Coder (+ HELD if a new settings table/columns) 
+GATE: HELD if schema (JORGE-APPROVED + owner Neon-apply); else self-merge on green
+DEFECT CLASS (registry): DispatchSettings — default sort, yellow/red thresholds, 3 auto-routing
+  toggles incl. "respect HOS" (safety-relevant) — localStorage-only (DispatchSettingsPage.tsx:52-56,
+  235-238). Allowlisted (legit UI prefs, no action): i18n lang, column width, help feedback,
+  onboarding flag. SCOPE: business/module settings only.
+FIX PRIMITIVE: a server-persisted, entity-scoped settings endpoint + table (reuse an existing
+  settings table if present, e.g. maintenance.maintenance_settings pattern).
+
+GUARD-FIRST (L7): NNNN-no-localstorage-business-settings.mjs FAILS on localStorage.setItem for a
+  business/module setting; allowlist the UI-pref keys by exact name. selftest plants one business
+  setting + one allowlisted pref.
+
+8-LAYER ACCEPTANCE
+L1 DATA/SCHEMA .... [DoD/if schema] settings table entity-scoped (operating_company_id uuid FK +
+   FORCED RLS), migration forward-only/idempotent/ledgered; unique(entity,key).
+L2 .. N/A (no money). 
+L3 API/BACKEND .... [+] GET/PUT settings endpoints, typed + authZ role-gated + entity-scoped;
+   optimistic concurrency (no lost update between users); validation of threshold ranges.
+L4 UI/UX .......... [DoD] Settings survive device change + shared across users of the entity; honest
+   save/toast + unsaved-guard; EN/ES.
+L5 DOMAIN LINKAGE . [+] "respect HOS" routing toggle is a SAFETY-relevant setting — it must actually
+   gate the auto-routing path server-side, not just render.
+L6 SECURITY/OBS ... [+] Setting changes audited (who/when); RLS proven so entity A can't read B's
+   settings.
+L7 TEST/CI ........ [DoD] guard + selftest. [+] integration: set on device 1 → visible on device 2,
+   same entity; not visible cross-entity.
+L8 CLOSURE ........ Guard green; flagged settings server-persisted + entity-scoped; TRANSP + USMCA
+   isolation proven; DoD B.
+
+DoD/VERIFY: A B D(HOS gates behavior) · VERIFY 3,5,8. LINKAGE LAW: setting→entity FK.
+EVIDENCE: ROOT CAUSE localStorage settings / FIX server table+endpoint / GUARD NNNN / LIVE PROOF
+  cross-device + cross-entity isolation TRANSP/USMCA / REMAINING allowlist justification.
+
+================================================================================

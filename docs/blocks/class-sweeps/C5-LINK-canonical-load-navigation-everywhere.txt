@@ -1,0 +1,29 @@
+================================================================================
+BLOCK C5 — LINK: canonical load navigation everywhere
+LANE: Claude Coder      GATE: self-merge on green (UI/route-nav only)
+DEFECT CLASS (registry): 15 surfaces navigate ?load_id= instead of canonical /dispatch/loads/:id —
+  In-Transit (:77), Detention (DetentionBoardPage :134), + 13 others. SCOPE: dispatch app-wide.
+FIX PRIMITIVE: EntityLink kind=load → /dispatch/loads/:id (the canonical load detail route).
+
+GUARD-FIRST (L7): NNNN-canonical-load-nav.mjs FAILS on ?load_id= navigation where an EntityLink is
+  expected. selftest plants one ?load_id= link.
+
+8-LAYER ACCEPTANCE
+L1 .. [DoD] target is the canonical mdata.loads hub (not a phantom dispatch.loads). 
+L2 .. N/A. 
+L3 API/BACKEND .... [+] /dispatch/loads/:id route mounted (401 not 404); load id resolves to a real
+   record (no dead link to a nonexistent load).
+L4 UI/UX .......... [DoD] click-through EVERYWHERE — every load reference is an EntityLink; no bare
+   id strings (Geofence "Linked ref" :132-136 fixed too).
+L5 DOMAIN LINKAGE . [DoD] the load detail reads back the source surface (reverse); layover/trip-
+   pairing leg chips become links (DriverLayoverHistory, TripPairing).
+L6 .. [+] no load uuid in a query string where an EntityLink path is the norm. 
+L7 TEST/CI ........ [DoD] guard + selftest. [+] e2e: click a load ref on In-Transit + Detention →
+   lands on canonical detail.
+L8 CLOSURE ........ Guard green; ?load_id= count = 0; VERIFY 7 click-through on TRANSP + USMCA.
+
+DoD/VERIFY: A C · VERIFY 3,7. LINKAGE LAW §2 (hub: mdata.loads).
+EVIDENCE: ROOT CAUSE non-canonical load nav / FIX EntityLink kind=load / GUARD NNNN / LIVE PROOF
+  click-through TRANSP+USMCA / REMAINING none.
+
+================================================================================

@@ -1,0 +1,25 @@
+================================================================================
+BLOCK C8 — CLICK-THROUGH: no dead KPI cards on primary surfaces
+LANE: Claude Coder      GATE: self-merge on green (UI)
+DEFECT CLASS (registry): MaintKpiRows (7 dead cards on every Maintenance tab), RMStatStrip (8),
+  Service/Location tile, Fleet Open-WO count + guard-enumerated app-wide. SCOPE: app-wide.
+FIX PRIMITIVE: a clickable KPI/Stat card component that REQUIRES a drill target (onClick/href).
+
+GUARD-FIRST (L7): NNNN-no-dead-kpi-cards.mjs FAILS on a KPI/Stat card/tile on a primary surface with
+  no onClick/href. selftest plants one dead card.
+
+8-LAYER ACCEPTANCE
+L1 .. N/A. L2 .. N/A. 
+L3 .. [+] each drill target resolves to a mounted list/detail route (401 not 404). 
+L4 UI/UX .......... [DoD] every KPI/Stat card drills to its filtered list; no dead click; honest UI
+   (a number is live-backed or clearly "—").
+L5 DOMAIN LINKAGE . [DoD] the drill lands on the linked records (e.g. Open-WO count → those WOs).
+L6 .. N/A. 
+L7 TEST/CI ........ [DoD] guard + selftest. [+] e2e: click each seeded KPI → lands on its list.
+L8 CLOSURE ........ Guard green; VERIFY 7 (click-through) app-wide; TRANSP + USMCA.
+
+DoD/VERIFY: A · VERIFY 3,7. LINKAGE LAW §2 (card → its hub records).
+EVIDENCE: ROOT CAUSE dead KPI cards / FIX required-drill card / GUARD NNNN / LIVE PROOF each drills
+  TRANSP+USMCA / REMAINING none.
+
+================================================================================
