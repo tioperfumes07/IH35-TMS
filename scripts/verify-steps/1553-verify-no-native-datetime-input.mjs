@@ -1,4 +1,4 @@
-// 1552-verify-no-native-datetime-input — C3 (DATE: replace native date inputs with the shared picker).
+// 1553-verify-no-native-datetime-input — C3 (DATE: replace native date inputs with the shared picker).
 //
 // Ratchets the two date defect shapes the existing date guards structurally cannot see:
 //   (1) `<input type="datetime-local">` — verify-step 107 (verify-no-raw-date-input) covers
