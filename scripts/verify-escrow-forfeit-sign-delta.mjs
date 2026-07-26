@@ -81,11 +81,27 @@ export function assertStatic(root = ROOT) {
     problems.push(`missing ${HELD}`);
   } else {
     const held = JSON.parse(read(root, HELD));
-    const entry = (held.held || []).find((h) => h.file === MIG_BASENAME);
+    // The migration must be REGISTERED so db:migrate never auto-runs it on prod — but it may live in
+    // EITHER section. It was written when the file was still pending, so it looked only in `held` and
+    // rejected applied_on_prod outright. The owner Neon-applied it on 2026-07-25 and it is now
+    // live-verified in BOTH ledgers (_system._schema_migrations + ih35_migrations.applied_migrations),
+    // so it correctly moved to `applied_held`. Pinning it to `held` asserts a fact that has since
+    // changed, and would force the registry to lie about prod to keep a guard green.
+    // What still matters, and is still enforced: it must be registered somewhere, and the two states
+    // must not contradict each other.
+    const sections = ["held", "applied_held", "superseded"];
+    let entry = null;
+    let section = null;
+    for (const sec of sections) {
+      const hit = (held[sec] || []).find((h) => h.file === MIG_BASENAME);
+      if (hit) { entry = hit; section = sec; break; }
+    }
     if (!entry) {
-      problems.push(`${HELD}: missing held entry for ${MIG_BASENAME}`);
-    } else if (entry.applied_on_prod === true) {
-      problems.push(`${HELD}: ${MIG_BASENAME} must not claim applied_on_prod until owner Neon-applies`);
+      problems.push(`${HELD}: missing registry entry for ${MIG_BASENAME} in any section (held/applied_held/superseded) — an unregistered migration is auto-applied by db:migrate on prod`);
+    } else if (section === "held" && entry.applied_on_prod === true) {
+      problems.push(`${HELD}: ${MIG_BASENAME} sits in held[] but claims applied_on_prod — move it to applied_held`);
+    } else if (section === "applied_held" && entry.applied_on_prod !== true) {
+      problems.push(`${HELD}: ${MIG_BASENAME} sits in applied_held[] but does not carry applied_on_prod:true`);
     }
   }
 
