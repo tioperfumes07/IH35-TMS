@@ -75,7 +75,7 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
     Boolean(form.driver_id.trim() && form.violation_type.trim() && form.occurred_at) && !mutation.isPending;
 
   return (
-    <Modal open={open} onClose={onClose} title="Create HOS Violation">
+    <Modal variant="drawer" open={open} onClose={onClose} title="Create HOS Violation">
       <form
         className="space-y-3"
         data-testid="hos-violation-create-modal"

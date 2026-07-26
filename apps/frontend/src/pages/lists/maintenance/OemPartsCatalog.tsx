@@ -90,7 +90,7 @@ function OemPartsCreateModal({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Create OEM Part Template">
+    <Modal variant="drawer" open={open} onClose={onClose} title="Create OEM Part Template">
       <div className="space-y-3">
         <label className="block text-sm">
           Brand

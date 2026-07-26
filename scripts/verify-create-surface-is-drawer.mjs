@@ -93,6 +93,56 @@ const CREATE_MODE = /mode\s*===\s*["']create["']|["']create["']\s*\|\s*["']edit[
 // literals, so a plain regex mis-slices `title={a ? `x ${b}` : "y"}`).
 // ---------------------------------------------------------------------------------------------
 
+/**
+ * Blank out `//` and block comments, preserving every byte offset and newline so line numbers and
+ * slices stay exact. Required because this guard's own contract text lives in doc comments that
+ * quote the very patterns it forbids (e.g. the C7-WIDE-WIZARD-EXCEPTION headers quote
+ * `variant="drawer"` while explaining that the file must NOT use it). A guard must judge
+ * executable code, never prose.
+ */
+export function blankComments(source) {
+  let out = "";
+  let i = 0;
+  let str = null;
+  while (i < source.length) {
+    const c = source[i];
+    const next = source[i + 1];
+    if (str) {
+      out += c;
+      if (c === "\\") {
+        out += next ?? "";
+        i += 2;
+        continue;
+      }
+      if (c === str) str = null;
+      i += 1;
+      continue;
+    }
+    if (c === '"' || c === "'" || c === "`") {
+      str = c;
+      out += c;
+      i += 1;
+      continue;
+    }
+    if (c === "/" && next === "/") {
+      while (i < source.length && source[i] !== "\n") {
+        out += " ";
+        i += 1;
+      }
+      continue;
+    }
+    if (c === "/" && next === "*") {
+      const end = source.indexOf("*/", i + 2);
+      const stop = end === -1 ? source.length : end + 2;
+      for (; i < stop; i += 1) out += source[i] === "\n" ? "\n" : " ";
+      continue;
+    }
+    out += c;
+    i += 1;
+  }
+  return out;
+}
+
 /** Opening tags for `<Name ...>`, brace/string aware. */
 export function openingTags(source, name) {
   const out = [];
@@ -185,9 +235,10 @@ function resolveTitleExpr(source, expr) {
  */
 export function scanCreateSurfaces(files) {
   const surfaces = [];
-  for (const [rel, source] of Object.entries(files)) {
+  for (const [rel, raw] of Object.entries(files)) {
     if (rel === MODAL_FILE) continue; // the shell itself is not a call site
-    if (source === MISSING) continue;
+    if (raw === MISSING) continue;
+    const source = blankComments(raw);
     const tags = openingTags(source, "Modal");
     if (tags.length === 0) continue;
     const fileDeclaresCreateMode = CREATE_MODE.test(source);
@@ -328,7 +379,8 @@ export function contractErrors(src) {
         `EXCEPTIONS: ${rel} ("${label}") carries no \`${EXCEPTION_TOKEN}\` annotation — an owner-ratified exception must be readable at the code, not only in the guard.`
       );
     }
-    if (/variant=["']drawer["']/.test(source)) {
+    // Code only: the annotation itself quotes `variant="drawer"` while forbidding it.
+    if (/variant=["']drawer["']/.test(blankComments(source))) {
       errors.push(
         `EXCEPTIONS: ${rel} ("${label}") was converted to the drawer — the owner ratified it as a WIDE WIZARD. Reverse ratchet: do not drawer-ise it.`
       );
@@ -386,8 +438,13 @@ function selftest() {
       [`${SRC}/pages/x/UploadedOkModal.tsx`]: '<Modal open={open} onClose={onClose} title="Driver created successfully">ok</Modal>',
       [`${SRC}/pages/dispatch/components/BookLoadModalV4.tsx`]:
         `// ${EXCEPTION_TOKEN}: Book Load stays a wide wizard (owner-ratified).\nexport function BookLoadModalV4() { return null; }`,
+      // The real annotations QUOTE `variant="drawer"` while forbidding it, and quote `<Modal ...>`
+      // examples. Both exception fixtures reproduce that so comment-blanking is proven, not assumed.
       [`${SRC}/pages/maintenance/components/CreateWorkOrderModal.tsx`]:
-        `// ${EXCEPTION_TOKEN}: WO-create stays a wide wizard (owner-ratified).\n<Modal open={open} onClose={onClose} title="Create Work Order" wide>wo</Modal>`,
+        `/** ${EXCEPTION_TOKEN}: WO-create stays a wide wizard (owner-ratified) — never variant="drawer". */\n` +
+        '<Modal open={open} onClose={onClose} title="Create Work Order" wide>wo</Modal>',
+      [`${SRC}/pages/x/CommentedOut.tsx`]:
+        '// legacy shape, kept for reference: <Modal open={o} onClose={c} title="Create Ghost">x</Modal>\nexport const nothing = 1;',
     },
   };
 
@@ -399,7 +456,11 @@ function selftest() {
   for (const must of [`${SRC}/pages/x/CreateThingModal.tsx`, `${SRC}/pages/x/CatalogRowModal.tsx`]) {
     if (!claimed.includes(must)) failures.push(`classifier MISSED a create surface: ${must}`);
   }
-  for (const mustNot of [`${SRC}/pages/x/ConfirmVoidModal.tsx`, `${SRC}/pages/x/UploadedOkModal.tsx`]) {
+  for (const mustNot of [
+    `${SRC}/pages/x/ConfirmVoidModal.tsx`,
+    `${SRC}/pages/x/UploadedOkModal.tsx`,
+    `${SRC}/pages/x/CommentedOut.tsx`, // a commented-out example is prose, not a call site
+  ]) {
     if (claimed.includes(mustNot)) failures.push(`classifier over-claimed a non-create surface: ${mustNot}`);
   }
 
@@ -501,13 +562,22 @@ function selftest() {
       /PRIMITIVE-A11Y: .*gates focus-trap/,
     ],
     [
-      "a ratified wide wizard is quietly drawer-ised",
+      "a ratified wide wizard is quietly drawer-ised (in CODE, not in its annotation)",
       withFile(
         good,
         `${SRC}/pages/maintenance/components/CreateWorkOrderModal.tsx`,
         `// ${EXCEPTION_TOKEN}\n<Modal open={o} onClose={c} title="Create Work Order" variant="drawer">wo</Modal>`
       ),
       /EXCEPTIONS: .*ratified it as a WIDE WIZARD/,
+    ],
+    [
+      "a create surface is 'converted' only inside a comment while the code stays centered",
+      withFile(
+        good,
+        `${SRC}/pages/x/CreateThingModal.tsx`,
+        '/* TODO: pass variant="drawer" here */\n<Modal open={o} onClose={c} title="Create Thing">body</Modal>'
+      ),
+      /DRAWER-LAW: .*CreateThingModal/,
     ],
     [
       "a ratified wide wizard loses its in-source annotation",
@@ -584,7 +654,13 @@ function collectFrontendFiles() {
   return files;
 }
 
-if (process.argv.includes("--selftest")) {
+// Only act when run as the entry point — the helpers above are imported by tooling and by the
+// component test, and a module that scans the repo on import is a footgun.
+const IS_ENTRY = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (!IS_ENTRY) {
+  // imported as a library — export-only.
+} else if (process.argv.includes("--selftest")) {
   selftest();
 } else {
   const files = collectFrontendFiles();

@@ -207,7 +207,7 @@ export function CatalogEditModal({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={title} confirmDiscardOnClose isDirty={isDirty}>
+    <Modal variant="drawer" open={open} onClose={onClose} title={title} confirmDiscardOnClose isDirty={isDirty}>
       <div className="space-y-3 text-sm">
         <p className="text-xs text-muted-foreground">Catalog: {catalogName}</p>
         {fields.map((field) => {

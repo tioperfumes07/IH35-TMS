@@ -111,7 +111,7 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={`Create W-8BEN — ${driverName}`}>
+    <Modal variant="drawer" open={open} onClose={onClose} title={`Create W-8BEN — ${driverName}`}>
       <form
         className="space-y-3"
         data-testid="w8ben-modal"

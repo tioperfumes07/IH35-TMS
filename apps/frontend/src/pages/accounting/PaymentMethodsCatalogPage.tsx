@@ -205,7 +205,7 @@ export function PaymentMethodsCatalogPage() {
         </table>
       </div>
 
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Add new payment method">
+      <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Add new payment method">
         <div className="space-y-3 text-sm">
           {accountsQuery.isError ? (
             <ListErrorBanner

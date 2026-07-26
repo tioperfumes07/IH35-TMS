@@ -125,7 +125,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
         rowTestId={(row) => `training-record-row-${String(row.id)}`}
       />
 
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create Training Record">
+      <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Create Training Record">
         <form
           className="space-y-3"
           data-testid="training-record-create-modal"

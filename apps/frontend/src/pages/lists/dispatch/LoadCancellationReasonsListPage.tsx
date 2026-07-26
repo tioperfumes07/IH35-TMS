@@ -320,6 +320,7 @@ function LoadCancellationReasonModal({
 
   return (
     <Modal
+      variant="drawer"
       open={open}
       onClose={onClose}
       title={mode === "create" ? "Load Cancellation Reasons · Create Entry" : "Load Cancellation Reasons · Edit Entry"}

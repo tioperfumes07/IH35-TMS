@@ -615,6 +615,7 @@ export function UsersPage() {
       </TableSelection>
 
       <Modal
+        variant="drawer"
         open={inviteOpen}
         onClose={() => setInviteOpen(false)}
         title="Create User"

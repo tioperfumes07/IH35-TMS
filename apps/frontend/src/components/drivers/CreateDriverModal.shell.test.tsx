@@ -7,9 +7,18 @@ import { CreateDriverModal } from "./CreateDriverModal";
 
 // CHROME-11: nested call sites (VendorBillForm's "+ Create driver" inside the Bill ParityDrawer)
 // must render this SAME canonical creator (Blueprint 4.2.2.1) as a right ParityDrawer, never a
-// centered Modal stacked on top of an already-open money drawer. shell="modal" (default, used by
-// the Drivers module / Safety Driver Files / Cash-advance inline create) must keep the existing
-// centered chrome unchanged.
+// centered Modal stacked on top of an already-open money drawer.
+//
+// C7 (2026-07-25): the default shell="modal" path is no longer a CENTERED card — it is now the
+// shared `<Modal variant="drawer">` create drawer (480px, right-anchored, focus-trapped,
+// unsaved-guarded). CHROME-11's invariant is unchanged and still asserted below: the nested
+// shell="drawer" path must render ParityDrawer chrome and must NOT stack the shared Modal's
+// z-50 overlay over the caller's already-open money drawer.
+//
+// The old discriminator ("shell='modal' renders no role=dialog") was a PROXY for "this is not a
+// ParityDrawer". The shared Modal has since gained role="dialog"/aria-modal — an a11y fix, not a
+// regression — so the proxy is replaced here with the exact discriminator `data-modal-variant`,
+// which only the shared Modal emits. Strictly more precise than what it replaces.
 
 vi.mock("../../api/org", () => ({
   listMyCompanies: vi.fn().mockResolvedValue({
@@ -51,13 +60,17 @@ function wrap(ui: React.ReactElement) {
 describe("CreateDriverModal shell chrome (CHROME-11)", () => {
   afterEach(cleanup);
 
-  it("shell='modal' (default) renders the centered Modal — no ParityDrawer dialog", async () => {
+  it("shell='modal' (default) renders the shared Modal — as the C7 create drawer, not ParityDrawer", async () => {
     render(wrap(<CreateDriverModal open companyId="91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" onClose={() => {}} />));
     await screen.findByRole("heading", { name: /create driver/i });
-    // Modal's fixed centered backdrop — the Modal-on-drawer bug this block fixes.
+    // The shared Modal's own z-50 overlay (ParityDrawer's is z-40).
     expect(document.querySelector(".fixed.inset-0.z-50")).toBeTruthy();
-    // ParityDrawer always sets role="dialog" aria-label={title} — must be absent in modal mode.
-    expect(screen.queryByRole("dialog", { name: /create driver/i })).toBeNull();
+    // Only the shared Modal emits data-modal-variant — ParityDrawer never does.
+    const panel = screen.getByRole("dialog", { name: /create driver/i });
+    expect(panel.dataset.modalVariant).toBe("drawer");
+    // C7: it is the 480px right drawer, not the old centered card.
+    expect(panel.className).toContain("sm:w-[480px]");
+    expect(panel.parentElement?.className).toContain("justify-end");
   });
 
   it("shell='drawer' (nested money-drawer call sites) renders ParityDrawer chrome — no centered Modal backdrop", async () => {
@@ -67,8 +80,10 @@ describe("CreateDriverModal shell chrome (CHROME-11)", () => {
       )
     );
     // ParityDrawer renders role="dialog" aria-label={title} — the shared right-drawer shell.
-    await screen.findByRole("dialog", { name: /create driver/i });
-    // Must NOT stack the centered z-50 Modal backdrop on top of the caller's already-open drawer.
+    const panel = await screen.findByRole("dialog", { name: /create driver/i });
+    // ParityDrawer, not the shared Modal: it never emits data-modal-variant.
+    expect(panel.dataset.modalVariant).toBeUndefined();
+    // Must NOT stack the shared Modal's z-50 overlay on top of the caller's already-open drawer.
     expect(document.querySelector(".fixed.inset-0.z-50")).toBeNull();
   });
 });

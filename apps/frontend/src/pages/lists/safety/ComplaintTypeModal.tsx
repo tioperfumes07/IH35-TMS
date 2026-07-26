@@ -118,7 +118,7 @@ export function ComplaintTypeModal({ open, companyId, row, onClose, onSaved }: P
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={isEdit ? "Edit Complaint Type" : "Create Complaint Type"}>
+    <Modal variant="drawer" open={open} onClose={onClose} title={isEdit ? "Edit Complaint Type" : "Create Complaint Type"}>
       <div className="space-y-3">
         <label className="block text-xs font-semibold text-gray-600">
           Type Code

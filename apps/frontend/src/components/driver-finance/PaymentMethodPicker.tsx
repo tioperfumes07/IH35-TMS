@@ -68,7 +68,7 @@ export function PaymentMethodPicker({ operatingCompanyId, value, onChange, disab
         allowAddNew={{ label: "+ Add new payment method", onAdd: (query) => { setName(query); setCreateOpen(true); } }}
       />
 
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Add new payment method">
+      <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Add new payment method">
         <div className="space-y-3 text-sm">
           <label className="block">
             <span className="text-xs font-medium text-gray-600">Name *</span>

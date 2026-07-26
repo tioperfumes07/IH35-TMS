@@ -252,8 +252,11 @@ export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) 
     },
   });
 
+  // C7: this is the only converted surface that also passed `wide`. The prop is KEPT (additive —
+  // C7 removes nothing) but has no effect in the drawer variant, which is a fixed 480px column.
+  // Create Vendor was NOT one of the two owner-ratified wide-wizard exceptions.
   return (
-    <Modal open={open} onClose={onClose} title="Create Vendor" wide>
+    <Modal variant="drawer" open={open} onClose={onClose} title="Create Vendor" wide>
       <form
         className="space-y-4"
         onSubmit={(event) => {

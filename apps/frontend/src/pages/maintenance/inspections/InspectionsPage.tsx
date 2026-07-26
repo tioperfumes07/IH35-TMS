@@ -254,6 +254,7 @@ export function InspectionsPage() {
       </div>
 
       <Modal
+        variant="drawer"
         open={formOpen}
         title={editing ? "Edit Inspection" : "Create Inspection"}
         onClose={() => {

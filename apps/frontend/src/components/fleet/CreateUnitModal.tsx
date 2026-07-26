@@ -72,7 +72,7 @@ export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }
   const canSubmit = Boolean(draft.unit_number.trim() && draft.vin.trim()) && !createMutation.isPending;
 
   return (
-    <Modal open={open} title="Create Unit" onClose={resetAndClose} modalKind="fleet-create-unit" sizePreset="md">
+    <Modal variant="drawer" open={open} title="Create Unit" onClose={resetAndClose} modalKind="fleet-create-unit" sizePreset="md">
       <form
         data-testid="fleet-create-unit-form"
         className="space-y-3"

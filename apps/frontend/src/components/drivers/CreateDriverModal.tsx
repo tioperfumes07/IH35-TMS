@@ -909,6 +909,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
   return (
     <>
       <Modal
+        variant="drawer"
         open={open}
         onClose={onClose}
         title="Create Driver"

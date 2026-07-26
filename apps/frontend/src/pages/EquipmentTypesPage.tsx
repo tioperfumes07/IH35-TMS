@@ -395,7 +395,7 @@ export function EquipmentTypesPage() {
         </div>
       )}
 
-      <Modal open={addEquipmentOpen} onClose={() => setAddEquipmentOpen(false)} title="Create Equipment Type">
+      <Modal variant="drawer" open={addEquipmentOpen} onClose={() => setAddEquipmentOpen(false)} title="Create Equipment Type">
         <form
           className="space-y-3"
           onSubmit={async (event) => {
@@ -660,7 +660,7 @@ export function EquipmentTypesPage() {
         </form>
       </Modal>
 
-      <Modal open={lineItemTargetType !== null} onClose={() => setLineItemTargetType(null)} title="Create Line Item Template">
+      <Modal variant="drawer" open={lineItemTargetType !== null} onClose={() => setLineItemTargetType(null)} title="Create Line Item Template">
         <form
           className="space-y-3"
           onSubmit={async (event) => {

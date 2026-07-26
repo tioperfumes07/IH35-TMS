@@ -129,7 +129,7 @@ export function CargoClaimReasonModal({ open, companyId, row, onClose, onSaved }
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={isEdit ? "Edit Cargo Claim Reason" : "Create Cargo Claim Reason"}>
+    <Modal variant="drawer" open={open} onClose={onClose} title={isEdit ? "Edit Cargo Claim Reason" : "Create Cargo Claim Reason"}>
       <div className="space-y-3">
         <label className="block text-xs font-semibold text-gray-600">
           Reason Code
