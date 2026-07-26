@@ -37,6 +37,7 @@ const DEDUCTIONS_SERVICE = "apps/backend/src/driver-finance/deductions.service.t
 const BILL_PAY_MATH = "apps/backend/src/accounting/settlement-posting/settlement-bill-payment.math.ts";
 const POSTING_MATH = "apps/backend/src/accounting/settlement-posting/settlement-posting.math.ts";
 const MIGRATION = "db/migrations/202609150000_bank_dom_06_fuel_card_overage_driver_recovery.sql";
+const FLAGS_SERVICE = "apps/backend/src/lib/feature-flags/service.ts";
 
 const FLAG = "FUEL_CARD_OVERAGE_RECOVERY_ENABLED";
 
@@ -64,6 +65,7 @@ function collectProblems(sources) {
   const billPayMath = need(BILL_PAY_MATH);
   const postingMath = need(POSTING_MATH);
   const migration = need(MIGRATION);
+  const flagsService = need(FLAGS_SERVICE);
 
   // (1) Both canonical fuel writers must flush the overage path after commit.
   for (const [rel, src] of [
@@ -80,6 +82,25 @@ function collectProblems(sources) {
     if (!service.includes(FLAG)) problems.push(`${OVERAGE_SERVICE} must gate on ${FLAG}`);
     if (!service.includes("isEnabled(")) {
       problems.push(`${OVERAGE_SERVICE} must resolve the flag via isEnabled(`);
+    }
+  }
+
+  // (2b) The flag takes money out of a driver's paycheck, so it must be ENROLLED as per-entity-only.
+  // Without enrollment it is not a `*_GL_POSTING_ENABLED` pattern match and would silently fall
+  // through to the global default_enabled / rollout_pct path — one global flip would start charging
+  // drivers at EVERY entity (incl. USMCA / TRK).
+  if (flagsService) {
+    const enrolled = flagsService.slice(
+      flagsService.indexOf("PER_ENTITY_ONLY_FLAG_KEYS"),
+      flagsService.indexOf("export function isPerEntityOnlyFlag") === -1
+        ? undefined
+        : flagsService.indexOf("export function isPerEntityOnlyFlag")
+    );
+    if (!enrolled.includes(`"${FLAG}"`)) {
+      problems.push(
+        `${FLAGS_SERVICE} must enroll ${FLAG} in PER_ENTITY_ONLY_FLAG_KEYS — it charges a driver's ` +
+          `paycheck and would otherwise fall through to the GLOBAL rollout/default enable path`
+      );
     }
   }
 
@@ -289,6 +310,12 @@ function selftest() {
     {
       name: "reverse link dropped from the migration",
       sources: { [MIGRATION]: real(MIGRATION).replaceAll("overage_deduction_id", "unused_col") },
+    },
+    {
+      name: "flag un-enrolled from PER_ENTITY_ONLY_FLAG_KEYS (global flip would charge every entity)",
+      sources: {
+        [FLAGS_SERVICE]: real(FLAGS_SERVICE).replace(`  "${FLAG}",\n`, ""),
+      },
     },
   ];
 
