@@ -59,21 +59,23 @@ export const EXPECTED_HELD = [
   // ACCT-R-03 account_merge_records (#3526). BUILD-AND-HOLD — not Neon-applied; must stay in held[]
   // until owner applies 202608060000 and GUARD re-proves the ledger row.
   "202608060000_acct_r03_catalogs_account_merge_records.sql",
-  // SAF-DOM-02 — brand-new on main; never applied. Leaves this list only after owner Neon-applies +
-  // ledger-backfill + GUARD re-prove. Apply-order: stop-write trigger must not land before SAF-B28 PATCH.
+  // SAF-DOM-02 (this PR). Authored 2026-07-25 and NEVER applied anywhere — it is new on this branch,
+  // so it cannot be in a prod ledger that predates it. It is not "GUARD re-proved unapplied"; it is
+  // unapplied by construction. It leaves this list only when the owner Neon-applies + ledger-backfills
+  // it and GUARD re-proves the ledger row. Note its apply-order dependency: its §3 stop-write trigger
+  // must not land before SAF-B28's PATCH repoint (see the registry entry's reason).
   "202609130000_saf_dom_02_company_violation_jsonb_archive.sql",
-  // SWEEP-C2 half 1 of 2 — on main via #3577; genuinely unapplied on prod until Neon-apply.
-  // (Half 2, 202609020010, moved to applied_held 2026-07-26 — Cursor owner-batch apply confirmed
-  // directly against _system._schema_migrations; see #3603.)
-  "202609020000_c2_maintenance_position_history_canonical.sql",
-  // SWEEP-C11 driver sub-catalog split-brain DB-level write lock (renumbered off 202609030000 —
-  // that slot is MNT-ECON-01 on #3581).
-  "202609040000_sweep_c11_driver_subcatalog_split_brain_lock.sql",
-  // MNT-ECON-01
-  "202609030000_mnt_econ_01_parts_purchase_gl_hop.sql",
-  // MNT-ECON-04 (#3582) — genuinely applied on prod per Cursor owner-batch 2026-07-26, but that PR
-  // is already merged and this registry stamp is out of scope for this PR (owner directive: skip).
-  "202609050000_mnt_econ_04_warranty_reimburse_gl_hop.sql",
+  // LEGAL-PAPER-01 — legal.contract_instance_status 'signed_on_paper' + the paper-evidence CHECK.
+  // Authored 2026-07-26 and NEVER applied anywhere; unapplied by construction, not "re-proved".
+  // Live cross-check this session (Neon tiny-field-89581227 / br-fancy-credit-akjnd07a, single
+  // set_config('app.bypass_rls','lucia',true) statement): absent from BOTH ledgers — 0 rows in
+  // _system._schema_migrations and 0 in ih35_migrations.applied_migrations — against a positive
+  // control of 743 canonical ledger rows, so the zeroes are real and not RLS masking. Its object is
+  // likewise absent: pg_constraint has no contract_instances_paper_signature_evidence_check, and
+  // pg_enum for legal.contract_instance_status still ends at draft|sent|viewed|
+  // signed_electronically|voided|expired. Leaves this list only when the owner Neon-applies +
+  // ledger-backfills and GUARD re-proves the ledger row.
+  "202609140000_legal_contract_signed_on_paper_status.sql",
 ];
 
 /**
