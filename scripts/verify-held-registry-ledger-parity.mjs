@@ -65,12 +65,9 @@ export const EXPECTED_HELD = [
   // it and GUARD re-proves the ledger row. Note its apply-order dependency: its §3 stop-write trigger
   // must not land before SAF-B28's PATCH repoint (see the registry entry's reason).
   "202609130000_saf_dom_02_company_violation_jsonb_archive.sql",
-  // SWEEP-C2 half 1 of 2 — on main via #3577; genuinely unapplied on prod until Neon-apply.
-  // (Half 2, 202609020010, moved to applied_held 2026-07-26 — Cursor owner-batch apply confirmed
-  // directly against _system._schema_migrations; see #3603.)
+  // SWEEP-C2 half 1 of 2 — genuinely unapplied on prod until Neon-apply.
   "202609020000_c2_maintenance_position_history_canonical.sql",
-  // SWEEP-C11 driver sub-catalog split-brain DB-level write lock (renumbered off 202609030000 —
-  // that slot is MNT-ECON-01 on #3581).
+  // SWEEP-C11 driver sub-catalog split-brain DB-level write lock.
   "202609040000_sweep_c11_driver_subcatalog_split_brain_lock.sql",
   // MNT-ECON-01
   "202609030000_mnt_econ_01_parts_purchase_gl_hop.sql",

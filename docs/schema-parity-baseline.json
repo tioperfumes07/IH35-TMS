@@ -1853,6 +1853,8 @@
       "reconciled_obligation_type",
       "reconciliation_cleared",
       "reconciliation_session_id",
+      "reconciling_item_class",
+      "reconciling_item_escalated_at",
       "result_bill_id",
       "review_state",
       "reviewed_at",
@@ -1930,15 +1932,20 @@
       "updated_at"
     ],
     "banking.reconciliation_sessions": [
+      "adjusted_bank_balance_cents",
+      "adjusted_book_balance_cents",
       "auto_match_run_at",
       "auto_match_suggestions_count",
       "bank_account_id",
+      "beginning_balance_cents",
       "book_balance_cents",
       "created_at",
+      "deposits_in_transit_cents",
       "finalized_at",
       "id",
       "notes",
       "operating_company_id",
+      "outstanding_checks_cents",
       "period_end",
       "period_start",
       "reconciled_at",
@@ -1949,12 +1956,7 @@
       "statement_balance_cents",
       "status",
       "updated_at",
-      "variance_cents",
-      "adjusted_bank_balance_cents",
-      "adjusted_book_balance_cents",
-      "beginning_balance_cents",
-      "deposits_in_transit_cents",
-      "outstanding_checks_cents"
+      "variance_cents"
     ],
     "banking.transaction_categories": [
       "coa_account_id",

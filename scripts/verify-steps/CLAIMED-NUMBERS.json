@@ -993,6 +993,11 @@
     "1603": "1603-verify-bank-dom-03-adjusted-balance-rec.mjs",
     "1604": "1604-verify-mnt-link-04-maintenance-vendor-ap.mjs",
     "1605": "1605-verify-no-deprecated-settlement-poster-mounted.mjs",
+    "1606": {
+      "owner": "bank-dom-04",
+      "guard": "verify-bank-dom-04-reconciling-item-aging",
+      "pr": 3596
+    },
     "1607": {
       "owner": "escrow-forfeit-signed-clause",
       "guard": "verify-escrow-forfeit-signed-clause",
