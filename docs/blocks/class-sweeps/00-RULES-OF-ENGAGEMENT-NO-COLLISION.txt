@@ -1,0 +1,92 @@
+================================================================================
+IH35-TMS — RULES OF ENGAGEMENT · TWO LANES · NO COLLISIONS · 2026-07-26
+Cursor = financial/canonical lane · Claude Coder = UI/operational lane · GUARD verifies live.
+Owner (Jorge) applies the JORGE-APPROVED label ONLY — the CODER merges their own PR.
+================================================================================
+
+THE ONE RULE THAT PREVENTS EVERY COLLISION:
+  A coder edits ONLY files in their own lane. If your block needs a change in the other
+  lane's file, you do NOT reach across — you tell GUARD and GUARD coordinates. Two coders
+  never touch the same file in the same window.
+
+────────────────────────────────────────────────────────────────────────────────
+1) FILE OWNERSHIP (hard boundaries)
+────────────────────────────────────────────────────────────────────────────────
+CURSOR owns (Claude Coder must NOT touch):
+  • db/migrations/*.sql  (financial / canonical / RLS migrations)
+  • backend money routes + the posting-service wiring
+  • RETIRE-schema repoint code (position-history, maint/parts, maint/pm)
+  • scripts/verify-steps/  NNNN in band 1520–1549
+
+CLAUDE CODER owns (Cursor must NOT touch):
+  • apps/frontend/**  — especially the shared components:
+       Modal / CreateDrawer (C7), EntityPicker (C1), forms/DatePicker.tsx (C3)
+  • all frontend sweep call-sites (the 38 create surfaces, pickers, KPI cards, load links)
+  • backend app-router registration index (C10 route-manifest parity)
+  • the server settings endpoint + table (C4)
+  • scripts/verify-steps/  NNNN in band 1550–1599
+
+SHARED HOT FILES — SERIALIZE (Rule 17, no-hotfile-thrash). Only ONE open PR may edit each
+at a time. Before you open a PR that edits any of these, ping GUARD; GUARD holds the token
+and tells you when it is your turn. Rebase immediately before merge.
+  • db/migrations/.held-migrations.json
+  • scripts/lib/migration-checksum-overrides.json
+  • scripts/lib/prod-migration-ledger-checksums.json
+
+────────────────────────────────────────────────────────────────────────────────
+2) MIGRATION NUMBER BANDS (never pick the same number)
+────────────────────────────────────────────────────────────────────────────────
+  Cursor:       20260901xxxx – 20260910xxxx
+  Claude Coder: 20260911xxxx – 20260920xxxx
+  Before creating a migration, verify the current max on ALL refs and never reuse a number:
+     git fetch origin && git log --all --diff-filter=A --name-only --pretty=format: \
+       -- 'db/migrations/2026*' | grep -oE '2026[0-9]{8}' | sort -u | tail
+  One migration per PR. Forward-only, idempotent, checksum-ledgered. Never edit an applied
+  migration — add a new one (the 2026-07-25 outage was an edited applied migration).
+  (Already authored by GUARD, Cursor commits it: 202608160000_reconcile_cost_of_labor_mexico_6890.sql.)
+
+────────────────────────────────────────────────────────────────────────────────
+3) BRANCH DISCIPLINE (no branch mistakes)
+────────────────────────────────────────────────────────────────────────────────
+  • ALWAYS branch from freshly-fetched main:
+       git fetch origin && git switch -c <branch> origin/main
+    Never branch off a stale local main. Never commit to main directly.
+  • Naming: Cursor → sweep/c6-*, sweep/c2-*, sweep/c11-*
+            Claude Coder → sweep/c1-*, sweep/c3-*, sweep/c5-*, sweep/c7-*, sweep/c8-*, sweep/c9-*, sweep/c10-*, sweep/c4-*
+  • ONE block = ONE branch = ONE PR. Never stack unrelated blocks on one branch.
+  • Never force-push a branch another agent might be on. Only force-push your OWN feature branch.
+
+────────────────────────────────────────────────────────────────────────────────
+4) MERGE PROTOCOL — each coder merges THEIR OWN PR
+────────────────────────────────────────────────────────────────────────────────
+  a. Ship the GUARD PR first (red inventory), then the FIX PR (guard green).
+  b. Before merging: `git fetch origin && git rebase origin/main`; resolve YOUR OWN conflicts;
+     push; confirm ALL CI checks green. You fix your own failures — Rule 16 evidence body,
+     guard --selftest, typecheck, RLS scan, etc. If a check is red and you can't see why,
+     ask GUARD; do not merge red and do not weaken a guard to go green.
+  c. If the PR is HELD / financial / migration / touches accounting.*/catalogs.*/mdata.*:
+     ask Jorge to apply the JORGE-APPROVED label. Jorge labels; YOU click squash-merge.
+     (For a migration: Jorge also applies the SQL on Neon — migration → prove schema →
+     THEN ledger stamp. GUARD re-proves the ledger row before you consider it done.)
+  d. If the PR is self-mergeable (pure frontend/docs/CI, no financial cluster): merge on green.
+  e. NEVER merge the other lane's PR. NEVER edit the other lane's files.
+
+────────────────────────────────────────────────────────────────────────────────
+5) CLEAR THE ALREADY-OPEN PRs FIRST (they all touch the hot file — serialize)
+────────────────────────────────────────────────────────────────────────────────
+  Order (each rebases on the one before it, because all edit .held-migrations.json):
+    1. #3556 registry truth-up  → Claude Coder rebases on main (#3558), merges FIRST.
+    2. #3554 LINK-02 (Cursor)    → rebase, Jorge labels, Cursor merges. (file already == ledger 4d66df41)
+    3. #3549 LST-RLS-01 (Claude Coder) → rebase, Jorge labels, Claude Coder merges. (file == ledger 1deda060)
+  Only AFTER the hot file is clear do the new HELD sweeps (C6/C2/C11, C4/C9-schema) enter the
+  queue — one at a time, GUARD holds the token.
+  Demo purge: #3557 (recursive cascade) → GUARD re-verifies on a fresh branch → Jorge applies →
+  Claude Coder merges; close #3530 (superseded).
+
+────────────────────────────────────────────────────────────────────────────────
+6) WHEN IN DOUBT
+────────────────────────────────────────────────────────────────────────────────
+  Ask GUARD, never the other coder, and never reach into the other lane's files. Uncertain =
+  write "UNVERIFIED + named blocker" and stop. We never guess; prod (Neon br-fancy-credit-
+  akjnd07a) wins over memory. GUARD verifies every block live on TRANSP AND USMCA before done.
+================================================================================

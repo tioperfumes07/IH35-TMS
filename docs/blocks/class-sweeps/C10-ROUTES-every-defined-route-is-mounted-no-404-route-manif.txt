@@ -1,0 +1,26 @@
+================================================================================
+BLOCK C10 — ROUTES: every defined route is mounted (no 404) — route-manifest parity
+LANE: Claude Coder      GATE: self-merge on green (route registration; no schema)
+DEFECT CLASS (registry): 8 maintenance catalog routes defined but never mounted → 404 (found by
+  hitting endpoints, not reading them). SCOPE: app-wide, guard-enumerated.
+FIX PRIMITIVE: route-manifest parity — every *.routes.ts is registered in the app router index.ts.
+
+GUARD-FIRST (L7): NNNN-route-manifest-parity.mjs FAILS on a *.routes.ts module not registered in the
+  app router (parity check). selftest plants one defined-but-unmounted route.
+
+8-LAYER ACCEPTANCE
+L1 .. N/A. L2 .. N/A. 
+L3 API/BACKEND .... [DoD] each route mounted → 401 not 404, correct content-type (a 200 SPA fallback
+   is NOT success — VERIFY 3); typed contract + authZ intact once mounted.
+L4 UI/UX .......... [DoD] the surfaces that call these endpoints now work (no silent empty from a
+   404-masked-as-200); no dead nav.
+L5 DOMAIN LINKAGE . [+] the newly-reachable catalog routes feed the pickers (composes with C1).
+L6 .. [+] mounting doesn't expose an unauthenticated endpoint — authZ verified on each. 
+L7 TEST/CI ........ [DoD] parity guard + selftest. [+] a boot-smoke that hits each route expecting 401.
+L8 CLOSURE ........ Guard green; every defined route mounted (401 not 404); VERIFY 3 on TRANSP+USMCA.
+
+DoD/VERIFY: A · VERIFY 3. LINKAGE LAW: routes feed canonical catalogs (C1).
+EVIDENCE: ROOT CAUSE unmounted routes 404 / FIX manifest parity / GUARD NNNN / LIVE PROOF each route
+  401 not 404 / REMAINING none.
+
+================================================================================

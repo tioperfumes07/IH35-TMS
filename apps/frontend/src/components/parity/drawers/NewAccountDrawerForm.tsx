@@ -34,7 +34,9 @@ type FormState = {
   name: string;
   accountNumber: string;
   accountType: CoaAccountType | "";
+  /** Detail type display name (cache). */
   detailType: string;
+  detailTypeId: string;
   isSubaccount: boolean;
   parentAccount: string;
   description: string;
@@ -56,6 +58,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
     accountNumber: "",
     accountType: "",
     detailType: "",
+    detailTypeId: "",
     isSubaccount: false,
     parentAccount: "",
     description: "",
@@ -108,7 +111,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
     setForm((prev) => ({
       ...prev,
       [key]: value,
-      ...(key === "accountType" ? { detailType: "" } : {}),
+      ...(key === "accountType" ? { detailType: "", detailTypeId: "" } : {}),
     }));
   }
 
@@ -149,6 +152,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
         metadata: {
           account_type: form.accountType,
           account_subtype: form.detailType || undefined,
+          detail_type_id: form.detailTypeId || undefined,
           // Only send a parent when the sub-account toggle is on, so unticking it cannot leave a
           // stale parent behind. parent_account_id is a real FK (catalogs.accounts(id), 0010).
           parent_account_id: form.isSubaccount && form.parentAccount ? form.parentAccount : null,
@@ -222,9 +226,17 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
             </div>
             <select
               className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
-              value={form.detailType}
+              value={form.detailTypeId}
               disabled={!form.accountType || detailOptions.length === 0}
-              onChange={(e) => set("detailType", e.target.value)}
+              onChange={(e) => {
+                const id = e.target.value;
+                const match = detailOptions.find((d) => d.id === id);
+                setForm((prev) => ({
+                  ...prev,
+                  detailTypeId: id,
+                  detailType: match?.name ?? "",
+                }));
+              }}
               aria-label="Detail type"
             >
               <option value="">
@@ -235,7 +247,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
                     : "Select a detail type…"}
               </option>
               {detailOptions.map((d) => (
-                <option key={d.id} value={d.name}>{d.name}</option>
+                <option key={d.id} value={d.id}>{d.name}</option>
               ))}
             </select>
           </div>

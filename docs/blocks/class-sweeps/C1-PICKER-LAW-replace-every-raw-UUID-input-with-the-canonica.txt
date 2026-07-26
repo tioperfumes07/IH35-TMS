@@ -1,0 +1,45 @@
+================================================================================
+BLOCK C1 — PICKER LAW: replace every raw-UUID input with the canonical EntityPicker
+LANE: Claude Coder      GATE: self-merge on green (no schema change; UI + read-path only)
+DEFECT CLASS (registry): 27 actionable raw-UUID <input>s app-wide — safety (Complaints/IDVR/
+  SafetyEvents), accounting (BillPayments/Invoices/AuditTrail), dispatch (InTransitIssues :161,
+  AssignmentHistory :85-90, EquipmentTransfer :53-55, BorderWizardStep1 :14-38), maintenance
+  (Warranty work_order_id, Position-History unit), admin. SCOPE: app-wide sweep.
+FIX PRIMITIVE: ONE shared <EntityPicker kind={unit|driver|load|vendor|policy|wo|...}> = entity-
+  scoped catalog + inline "+ Add new" as the FIRST ROW inside the dropdown, that WRITES the same
+  canonical table it reads (extend the existing ReferenceSelect/Combobox — do not fork a new one).
+
+GUARD-FIRST (L7): scripts/verify-steps/NNNN-picker-law-no-raw-uuid.mjs FAILS on any form <input>
+  whose placeholder OR bound state matches /uuid/i (allowlist: admin audit-id lookup fields, by
+  explicit path). --selftest plants one raw-uuid input + one allowlisted field and asserts catch +
+  no-false-positive. Red output = the full instance list = the sweep worklist.
+
+8-LAYER ACCEPTANCE
+L1 DATA/SCHEMA .... [DoD] EntityPicker reads the CANONICAL table for its kind (to_regclass; never a
+   RETIRE table, never the QBO mirror mdata.qbo_*). No schema change. PASS = each kind's read maps
+   to the Part A §4 canonical table.
+L2 ACCOUNTING ..... N/A (no money write in this class — the picker selects an entity; the money post
+   is the surface's own concern, covered by C6). Reason recorded.
+L3 API/BACKEND .... [+] The "+ Add new" create goes through the entity's EXISTING service/route
+   (typed contract, authZ role-gate, entity scope server-side), NOT a raw client INSERT. New-row
+   create is idempotent (unique(entity,code) refuses a dup). 401-not-404 proven for each kind's
+   catalog endpoint.
+L4 UI/UX .......... [DoD] Inline +Add-new first row opens that entity's wizard; the created row
+   appears + is auto-selected + survives reload; company-scoped; empty/loading/zero/error states;
+   EN/ES. No centered modal on a money drawer (defers to C7).
+L5 DOMAIN LINKAGE . [DoD] The selected id is written as an ENFORCED FK to the canonical entity on
+   the parent record (not a memo/truncated uuid). Reverse surface already reads it back.
+L6 SECURITY/OBS ... [+] No UUID typed into a URL/query string (privacy). Structured log on +Add-new
+   create; RLS/entity scope enforced so a picker can't surface another tenant's rows.
+L7 TEST/CI ........ [DoD] The guard above (fail-on-bug/pass-on-fix, selftest). [+] Component test:
+   pick existing → persists; +Add-new → creates + selects + reloads. e2e on one representative
+   surface per module.
+L8 CLOSURE ........ Guard green; app-wide raw-uuid count = 0 (minus allowlist); VERIFY 2 satisfied;
+   live pick on TRANSP + USMCA on at least one surface per module.
+
+DoD/VERIFY: A(active) B(field persists) C(FK fwd+rev) · VERIFY 2 (picker law), 3 (route mounted),
+  5 (entity scope TRANSP+USMCA), 7 (click-through). LINKAGE LAW: parent record → canonical entity FK.
+EVIDENCE BLOCK (PR body): ROOT CAUSE raw-uuid inputs / FIX shared EntityPicker / GUARD NNNN /
+  LIVE PROOF picks on TRANSP+USMCA, count→0 / REMAINING explicit per-surface allowlist.
+
+================================================================================

@@ -756,6 +756,13 @@
       "applied_on_prod": true,
       "applied_ledger_checksum": "1deda060ecbb025c7ad2366e1fb67f707c81a1b9d8cde719cce3987a45d954ec",
       "applied_evidence": "APPLIED ON PROD 2026-07-25 under explicit owner authorization. Live-verified after apply: both catalogs RLS enabled+forced, 3 policies each, ZERO delete policies, ih35_app privs INSERT,SELECT,UPDATE. NO read regression (15 account types / 6 wo reasons / 144 detail types). Ledgered in BOTH prod ledgers; checksum equals sha256 of the committed file. DO NOT RE-APPLY."
+    },
+    {
+      "file": "202608080000_acct_link_02_accounts_detail_type_fk.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] LINK-02 owner WIRE 2026-07-25 — additive catalogs.accounts.detail_type_id FK → catalogs.detail_types + same-entity/type trigger + best-effort backfill. Keeps account_subtype text. Owner Neon-applied 2026-07-25; registry stamped with migration file on #3554.",
+      "applied_on_prod": true,
+      "applied_ledger_checksum": "4d66df412a4164b9e2c7b54b8d93c714b6f2557792884d9d1af9ee962e21bc39",
+      "applied_evidence": "APPLIED on prod 2026-07-25 (owner Neon-apply, neondb_owner, br-fancy-credit-akjnd07a). GUARD live read of _system._schema_migrations; both ledgers backfilled."
     }
   ],
   "superseded": []

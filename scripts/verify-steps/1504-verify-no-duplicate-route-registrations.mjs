@@ -1,4 +1,5 @@
-// 1484-verify-no-duplicate-route-registrations — one absolute route path, one registration.
+// 1504-verify-no-duplicate-route-registrations (renumbered from 1484 — collided with 3 other PRs
+// independently claiming step 1484 around the same time) — one absolute route path, one registration.
 //
 // WHY: apps/frontend/src/routes/manifest.tsx registered `/compliance` and `/notifications` TWICE each, as
 // byte-identical <Route> blocks ~2700 lines apart (same path, same element, same <ProtectedRoute> wrapper).

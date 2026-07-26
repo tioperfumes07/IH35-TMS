@@ -53,7 +53,9 @@ type FormState = {
   account_name: string;
   account_number: string;
   account_type: string;
+  /** Display name (cache); prefer detail_type_id for writes. */
   account_subtype: string;
+  detail_type_id: string;
   notes: string;
   opening_balance_cents: string;
   opening_balance_as_of: string;
@@ -68,6 +70,7 @@ function emptyForm(): FormState {
     account_number: "",
     account_type: "Expense",
     account_subtype: "",
+    detail_type_id: "",
     notes: "",
     opening_balance_cents: "",
     opening_balance_as_of: "",
@@ -83,6 +86,7 @@ function formFromAccount(account: CatalogAccount): FormState {
     account_number: account.account_number ?? "",
     account_type: account.account_type,
     account_subtype: account.account_subtype ?? "",
+    detail_type_id: account.detail_type_id ?? "",
     notes: account.notes ?? "",
     opening_balance_cents:
       account.opening_balance_cents !== null && account.opening_balance_cents !== undefined
@@ -179,6 +183,13 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
     return matches[0];
   }, [typeCatalogQuery.data, form.account_type, form.account_subtype]);
 
+  // Hydrate detail_type_id from legacy text subtype when FK not yet populated.
+  useEffect(() => {
+    if (!open || form.detail_type_id || !form.account_subtype) return;
+    const match = detailTypesForType.find((dt) => dt.name === form.account_subtype);
+    if (match) setField("detail_type_id", match.id);
+  }, [open, form.detail_type_id, form.account_subtype, detailTypesForType]);
+
   useEffect(() => {
     if (!open) return;
     setForm(account ? formFromAccount(account) : emptyForm());
@@ -227,6 +238,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
         // account_subtype + notes are .optional() (not .nullable()) on the create schema, so an empty value
         // must be omitted (undefined), NOT sent as null — sending null was the "validation_error" on save.
         account_subtype: form.account_subtype.trim() || undefined,
+        detail_type_id: form.detail_type_id.trim() || undefined,
         notes: form.notes.trim() || undefined,
         opening_balance_cents: centsFromDollarString(form.opening_balance_cents),
         opening_balance_as_of: form.opening_balance_as_of.trim() || null,
@@ -371,6 +383,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
                 onChange={(e) => {
                   setField("account_type", e.target.value);
                   setField("account_subtype", "");
+                  setField("detail_type_id", "");
                   // A parent must share the new account_type, so clear any stale same-type selection.
                   setField("parent_account_id", "");
                 }}
@@ -402,16 +415,22 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
                 </Link>
               </div>
               <select
-                value={form.account_subtype}
+                value={form.detail_type_id || ""}
                 disabled={readOnly || detailTypesForType.length === 0}
-                onChange={(e) => setField("account_subtype", e.target.value)}
+                onChange={(e) => {
+                  const id = e.target.value;
+                  const dt = detailTypesForType.find((d) => d.id === id);
+                  setField("detail_type_id", id);
+                  setField("account_subtype", dt?.name ?? "");
+                }}
                 className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
+                data-testid="account-detail-type-select"
               >
                 <option value="">
                   {detailTypesForType.length === 0 ? "No detail types available" : "Select detail type…"}
                 </option>
                 {detailTypesForType.map((dt) => (
-                  <option key={dt.id} value={dt.name}>
+                  <option key={dt.id} value={dt.id}>
                     {dt.name}
                   </option>
                 ))}
