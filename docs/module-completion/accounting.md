@@ -1,6 +1,6 @@
 # Module completion — Accounting (Module 3)
 
-**PROGRESS: 10 of 27** · complete: `false` · as_of: 2026-07-25T17:30:00.000Z · live_sha: `a3f9c12`
+**PROGRESS: 10 of 28** · complete: `false` · as_of: 2026-07-25T19:00:00.000Z · live_sha: `a3f9c12`
 
 | Status | Count |
 |---|---:|
@@ -8,7 +8,7 @@
 | HOLD | 2 |
 | OPEN | 0 |
 | FAIL | 12 |
-| UNVERIFIED | 5 |
+| UNVERIFIED | 6 |
 
 | ID | Status | Title | Evidence | PR |
 |---|---|---|---|---|
@@ -23,8 +23,8 @@
 | `ACCT-LINK-01` | **FAIL** | journal_entry_types inbound FK from journal_entries (not island) | GUARD 2026-07-25 (§2b): 202607960000 in NEITHER prod ledger — genuinely UNAPPLIED; prod journal_entries has NO journal_entry_type_id (lucia). #3440 MERGED≠APPLIED. HOLD PR wires picker + verify-je-type-fk (step 1484); ACCT-LINK-01 stays FAIL until owner Neon-apply + inbound FK density re-measure. | HOLD — ACCT-F02 |
 | `ACCT-LINK-02` | **HOLD** | detail_types canonical FK from catalogs.accounts (not text subtype only) | OWNER-LOCK 2026-07-25: account_subtype stays TEXT; detail_types 144 rows all-NULL opco / 0 inbound FKs by design. Regression guard scripts/verify-detail-types-owner-lock.mjs. Do NOT wire FK without unlock marker. | — |
 | `ACCT-LINK-03` | **FAIL** | Bill unit_id / insurance_claim_id / linked_work_order_uuid density > 0 where applicable | vendor_id=16212; unit/claim/wo = 0 | #3425 |
-| `ACCT-LINK-04` | **FAIL** | expense_categories inbound FK from expense lines | MERGED≠APPLIED: PR #3446 merged @ 7a0c3614 (ACCT-LINK-04 mig 202608020000 on main + static wiring guard 1433/1478 PASS). Prod 2026-07-25 (lucia): catalogs.expense_categories still 0 inbound FKs; expense_lines lacks operating_company_id + composite FK. Held migration NOT in prod ledger. FAIL until owner Neon-apply + inbound density re-proof. Honesty: docs/trackers/MERGED-NOT-APPLIED-ACCT-F07-F08-2026-07-25.md | #3446 |
-| `ACCT-LINK-05` | **FAIL** | posting_templates inbound FK from consumers (WF-053) | MERGED≠APPLIED: PR #3444 merged @ 1d90a178 (ACCT-LINK-05 mig 202607950000 on main + static wiring guard 1433/1479 PASS). Prod 2026-07-25 (lucia): 0 inbound FKs on posting_templates; posting_batches has NO posting_template_id/source_template_code; catalog 0 rows (true empty). Per-entity scope = owner design Q — do NOT auto-scope. FAIL until owner Neon-apply. Honesty: docs/trackers/MERGED-NOT-APPLIED-ACCT-F07-F08-2026-07-25.md | #3444 |
+| `ACCT-LINK-04` | **FAIL** | expense_categories inbound FK from expense lines | NEON-APPLIED 2026-07-25 18:12:30 by neondb_owner (mig 202608020000, PR #3446 merged @ 7a0c3614). GUARD live-verified both ledgers (_system._schema_migrations + ih35_migrations), checksum 2a1109…2a743 matches repo file. LIVE: accounting.expense_lines now has operating_company_id + same-entity composite FK + a real inbound FK to catalogs.expense_categories (island CLOSED). Still FAIL, not PASS: applied ≠ audited — inbound density + browser re-proof (Rule 23) not yet performed. Honesty: docs/trackers/MERGED-NOT-APPLIED-ACCT-F07-F08-2026-07-25.md | #3446 |
+| `ACCT-LINK-05` | **FAIL** | posting_templates inbound FK from consumers (WF-053) | Owner Neon-apply completed 2026-07-25 18:01:52 by neondb_owner (mig 202607950000, PR #3444 merged @ 1d90a178). GUARD live-verified both ledgers (_system._schema_migrations + ih35_migrations), checksum 64c41b…fbfb matches repo file. LIVE: accounting.posting_batches.posting_template_id exists. Per-entity scope = owner design Q — do NOT auto-scope. Still FAIL, not PASS: applied ≠ audited — catalog population + browser re-proof (Rule 23) not yet performed. Honesty: docs/trackers/MERGED-NOT-APPLIED-ACCT-F07-F08-2026-07-25.md | #3444 |
 | `ACCT-LINK-06` | **FAIL** | bank feed matched_journal_entry_id density + categorize→GL poster wired (ACCT-F05) | LIVE REFRESH 2026-07-25: matched_je=3/10622 (lucia); categorized_at_not_null=3. Wiring PASS on main: #3424 bulk+single categorize→maybePostBankCategorizationToGl→postSourceTransaction(bank_categorization)+matched_journal_entry_id lockstep stamp; BANK_FEED_GL_POSTING_ENABLED default OFF. Density is ops backlog — poster works when used; not a broken poster. GUARD: verify-bankfeed-je-match (step 1486). Remains FAIL until operator categorization volume moves matched_JE density. | #3424 |
 | `ACCT-SURF-01` | **UNVERIFIED** | Bills family — DoD A–E + VERIFY 1–8 on live surfaces | Sweep matrix docs/trackers/ACCT-SURF-DOD-SWEEP-MATRIX-2026-07-25.json (16 leaves × TRANSP+USMCA × DoD/VERIFY). Frozen map ACCT-08-SURF-SURFACE-MAP. Structural guard verify-acct-surf-01-bills.mjs. Stays UNVERIFIED until browser re-click (Rule 23). | #3477 |
 | `ACCT-SURF-02` | **FAIL** | Expenses — DoD A–E + VERIFY 1–8 with live rows | expenses=0 with QBO_EXPENSES_PROJECTION_ENABLED OFF by owner decision — correct-at-0 (not a flag-flip chase). Surface chrome may be structurally wired; economics stay FAIL until owner unlocks projection + Neon density. | #3433 |
@@ -39,5 +39,6 @@
 | `ACCT-CTRL-01` | **PASS** | Parallel books — refuse invented TMS JE for qbo-sourced money | Refuse-GL paths merged; flags default OFF | #3386 |
 | `ACCT-CTRL-02` | **PASS** | CoA roles resolvable under lucia + company GUC (not false-empty) | chart_of_accounts_roles=89 with lucia | #3400 |
 | `ACCT-GATE-01` | **PASS** | Every money PR uses EVERY-PR checklist (VERIFY-1..8) — process closed | #3430 merged on main (sha fc1cf13); verify-steps 1430+1431 + Rule 24 live; money PRs require MODULE_PROGRESS trailers | #3430 |
+| `ACCT-R-11` | **UNVERIFIED** | Bank categorize capture fields sent to API and persisted on bank_transactions | Wiring on main + static guard verify-acct-r11-tx-fields-sent (step 1490) PASS. LIVE PROOF UNVERIFIED — need authenticated TRANSP+USMCA categorize→reload hydrate before PASS (Rule 23). mig 202607690000 already Neon-applied 2026-07-25. | — |
 
 Desktop audit: ~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md
