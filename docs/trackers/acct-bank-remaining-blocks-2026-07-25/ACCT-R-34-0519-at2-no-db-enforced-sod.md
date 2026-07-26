@@ -10,7 +10,7 @@ Deviations from spec: None expected — if Fix invents a leaf/tab, STOP and get 
 NEW SPEC items (Rule 01): <None | list — needs Jorge approval before build>
 
 ## PROD TRUTH  [AUDIT — RE-VERIFY LIVE]
-backlog-verify NEEDS-OWNER (owner/CPA ruling required)
+backlog-verify NEEDS-OWNER (owner/OWNER ruling required)
 
 **Step 1 — reproduce (Rule 10, lucia):** Re-run the claim on Neon `br-fancy-credit-akjnd07a` with `BEGIN; SELECT set_config('app.bypass_rls','lucia',true); … ROLLBACK;` and/or click-through on live app for TRANSP **and** USMCA. Classify scoping by opco VALUES + policy, never column presence. A `0` on FORCED-RLS tables is not absence until lucia re-run. **Do not freeze PASS without this Step-1.**
 
@@ -68,4 +68,4 @@ REMAINING: owner written decision required before build
 
 ---
 ## ALL-24-RULE COMPLIANCE
-Bound by `.cursor/rules/00–24` + dual-lane-never-idle + COMPLIANCE-STANDARD-2026-07-25.md. Cursor builds; Claude merges; no Neon-apply by agent; no flag flips without CPA; Rule 23 no money theater.
+Bound by `.cursor/rules/00–24` + dual-lane-never-idle + COMPLIANCE-STANDARD-2026-07-25.md. Cursor builds; Claude merges; no Neon-apply by agent; no flag flips without OWNER; Rule 23 no money theater.
