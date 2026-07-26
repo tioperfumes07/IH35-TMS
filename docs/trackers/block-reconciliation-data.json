@@ -1,26 +1,26 @@
 {
- "date": "2026-07-25",
- "generated_at_iso": "2026-07-25T16:33:15.226Z",
+ "date": "2026-07-26",
+ "generated_at_iso": "2026-07-26T19:40:33.275Z",
  "counts": {
-  "PENDING": 6,
+  "PENDING": 18,
   "PENDING (GATED)": 28,
-  "NEEDS-VERIFY": 72,
-  "DONE": 671,
-  "AUDIT-NOTE": 415
+  "NEEDS-VERIFY": 75,
+  "DONE": 678,
+  "AUDIT-NOTE": 414
  },
  "universe": {
-  "total_blocks_after_dedup": 1192,
+  "total_blocks_after_dedup": 1213,
   "by_source_after_dedup": {
-   ".block-ready": 1020,
-   "program": 61,
+   ".block-ready": 1025,
+   "program": 77,
    "enterprise-29": 29,
    "accounting": 25,
    "gap-spec": 57
   },
   "raw_file_counts": {
-   ".block-ready (*.json files)": 1373,
+   ".block-ready (*.json files)": 1378,
    ".block-ready retired (dup/stale/superseded, excluded)": 348,
-   ".block-ready active (counted)": 1025
+   ".block-ready active (counted)": 1030
   },
   "note": "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by UNIQUE block_id, EXCLUDING files with EXPLICIT retirement markers (_DUP/_STALE/_SUPERSEDED underscore suffixes, status superseded/duplicate/dup/stale, or superseded_by/duplicate_of). Hyphen descriptive …-stale/…-duplicate live defect IDs are NOT retired by filename alone. So the block count is neither the raw .block-ready file count nor inflated by duplicate/retired registrations."
  },
@@ -252,6 +252,96 @@
    "pr": null
   },
   {
+   "id": "C1-PICKER-LAW-replace-every-raw-UUID-input-with-the-canonica",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "PICKER LAW: replace every raw-UUID input with the canonical EntityPicker",
+   "pr": null
+  },
+  {
+   "id": "C2-CANONICAL-forbid-live-writes-to-RETIRE-schemas-repoint-th",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "CANONICAL: forbid live writes to RETIRE schemas + repoint the ~5 live writers",
+   "pr": null
+  },
+  {
+   "id": "C3-DATE-replace-native-date-inputs-with-the-shared-DatePicke",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "DATE: replace native date inputs with the shared DatePicker",
+   "pr": null
+  },
+  {
+   "id": "C4-SETTINGS-server-persist-business-settings-not-localStorag",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "SETTINGS: server-persist business settings (not localStorage)",
+   "pr": null
+  },
+  {
+   "id": "C5-LINK-canonical-load-navigation-everywhere",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "LINK: canonical load navigation everywhere",
+   "pr": null
+  },
+  {
+   "id": "C6-MONEY-every-money-table-INSERT-posts-a-balanced-JE-via-th",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "MONEY: every money-table INSERT posts a balanced JE via the poster  (HIGHEST)",
+   "pr": null
+  },
+  {
+   "id": "C7-CHROME-create-surfaces-use-the-shared-drawer-not-a-center",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "CHROME: create surfaces use the shared drawer, not a centered modal",
+   "pr": null
+  },
+  {
+   "id": "C8-CLICK-THROUGH-no-dead-KPI-cards-on-primary-surfaces",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "CLICK-THROUGH: no dead KPI cards on primary surfaces",
+   "pr": null
+  },
+  {
+   "id": "C9-DoD-B-no-rendered-field-dropped-on-save-form-round-trip-c",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "DoD-B: no rendered field dropped on save (form round-trip contract)",
+   "pr": null
+  },
+  {
    "id": "chain-08-demo-data-purge",
    "source": ".block-ready",
    "fin": true,
@@ -293,6 +383,36 @@
    "name": "",
    "registered_on": null,
    "pr": 2557
+  },
+  {
+   "id": "FOR-CURSOR-2-README-ACCOUNTING-BANKING",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "DESIGN first) · ACCT-DOM-02",
+   "pr": null
+  },
+  {
+   "id": "PASTE-TO-CLAUDE-CODER",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "PASTE → CLAUDE CODER  (UI / operational lane)",
+   "pr": null
+  },
+  {
+   "id": "PASTE-TO-CURSOR",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "PASTE → CURSOR  (financial / canonical / RLS lane)",
+   "pr": null
   },
   {
    "id": "AF-1-entity-coa-fix",
@@ -577,6 +697,17 @@
    "pr": null
   },
   {
+   "id": "0033-audit-schema-manifest-tool",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #3548 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 3548
+  },
+  {
    "id": "0091-h2-1",
    "source": ".block-ready",
    "fin": true,
@@ -709,6 +840,26 @@
    "pr": 2905
   },
   {
+   "id": "C10-ROUTES-every-defined-route-is-mounted-no-404-route-manif",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #3570 title-match only, unverified",
+   "name": "ROUTES: every defined route is mounted (no 404) — route-manifest parity",
+   "pr": 3570
+  },
+  {
+   "id": "C11-SPLIT-BRAIN-single-canonical-table-per-entity-STOP-class",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #3576 title-match only, unverified",
+   "name": "SPLIT-BRAIN: single canonical table per entity (STOP-class)",
+   "pr": 3576
+  },
+  {
    "id": "C7-ACCT-SUBNAV-CHROME",
    "source": ".block-ready",
    "fin": true,
@@ -799,10 +950,10 @@
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #3467 title-match only, unverified",
+   "evidence": "PR #3498 title-match only, unverified",
    "name": "",
    "registered_on": null,
-   "pr": 3467
+   "pr": 3498
   },
   {
    "id": "f-02-jump-to-tab-nonstandard",
@@ -810,10 +961,10 @@
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #2673 title-match only, unverified",
+   "evidence": "PR #3513 title-match only, unverified",
    "name": "",
    "registered_on": null,
-   "pr": 2673
+   "pr": 3513
   },
   {
    "id": "flow2-auto-deduction-trigger-from-customer-exp",
@@ -1926,6 +2077,28 @@
    "pr": 715
   },
   {
+   "id": "ACCT-F05-BANKFEED-JE-MATCH",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #3517 merged 2026-07-25",
+   "name": "ACCT-F05 (F05) — bank feed matched_journal_entry_id ~3/10622 honesty KEEP. #3424 on main wires bulk+single categorize→ma",
+   "registered_on": null,
+   "pr": 3517
+  },
+  {
+   "id": "ACCT-F10",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #3500 merged 2026-07-25",
+   "name": "ACCT-F10 — map thin HOLD PRs #3423-#3429 to accounting.json manifest items; MERGED≠APPLIED; no PR-volume credit; guard v",
+   "registered_on": null,
+   "pr": 3500
+  },
+  {
    "id": "acct-fmcsa-fire-and-forget-retry",
    "source": ".block-ready",
    "fin": true,
@@ -2014,6 +2187,17 @@
    "pr": 815
   },
   {
+   "id": "ACCT-R-03-COA-MERGE-REPOINT",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #3526 merged 2026-07-26",
+   "name": "ACCT-R-03 (ranked ACCT-F13) / pile 0091-m-lists-2 — the Chart-of-Accounts 'Merge accounts' action was deactivate-only. C",
+   "registered_on": null,
+   "pr": 3526
+  },
+  {
    "id": "AF-0-rebaseline",
    "source": "program",
    "fin": true,
@@ -2097,6 +2281,28 @@
    "name": "",
    "registered_on": "2026-07-11",
    "pr": 3131
+  },
+  {
+   "id": "BANK-ECON-05-GATE-01",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #3502 merged 2026-07-25",
+   "name": "BANK-ECON-05 + BANK-GATE-01 keep-guard only. Prior audit reported stale 8/16 by counting 9 deactivated bank_accounts; li",
+   "registered_on": null,
+   "pr": 3502
+  },
+  {
+   "id": "BANK-MODULE-DOD",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #3509 merged 2026-07-25",
+   "name": "BANK-MODULE-DOD — per-surface DoD A–E + VERIFY 1–8 structural sweep matrix across 8 Banking leaves × TRANSP+USMCA, bound",
+   "registered_on": null,
+   "pr": 3509
   },
   {
    "id": "BANK-SORT-ROLLOUT-ACCT",
@@ -2570,9 +2776,9 @@
    "fin": true,
    "tier": "",
    "status": "DONE",
-   "evidence": "branch feat/block-27-fuel-expense-posting → PR #203 merged 2026-05-23",
+   "evidence": "all 3 named artifact(s) on main",
    "name": "block-27-fuel-expense-posting",
-   "pr": 203
+   "pr": null
   },
   {
    "id": "BLOCK-27-of-29-TIER4-CANARY",
@@ -2590,9 +2796,9 @@
    "fin": true,
    "tier": "",
    "status": "DONE",
-   "evidence": "branch feat/block-28-maintenance-ap-posting → PR #205 merged 2026-05-23",
+   "evidence": "all 5 named artifact(s) on main",
    "name": "block-28-maintenance-ap-posting",
-   "pr": 205
+   "pr": null
   },
   {
    "id": "BLOCK-28-of-29-TIER4-VENDOR-LOCKIN",
@@ -2610,9 +2816,9 @@
    "fin": true,
    "tier": "",
    "status": "DONE",
-   "evidence": "branch feat/block-29-bank-reconciliation-engine → PR #206 merged 2026-05-23",
+   "evidence": "all 6 named artifact(s) on main",
    "name": "block-29-bank-reconciliation-engine",
-   "pr": 206
+   "pr": null
   },
   {
    "id": "BLOCK-29-of-29-TIER4-KNOWN-LIMITATIONS",
@@ -2650,9 +2856,9 @@
    "fin": true,
    "tier": "",
    "status": "DONE",
-   "evidence": "branch feat/block-33-invoice-line-revenue-mapping → PR #209 merged 2026-05-23",
+   "evidence": "all 6 named artifact(s) on main",
    "name": "block-33-invoice-line-revenue-mapping",
-   "pr": 209
+   "pr": null
   },
   {
    "id": "block-34-payment-application",
@@ -2874,6 +3080,26 @@
    "name": "Driver Hub Requests — Manager/Owner approve/deny cash advance requests; approve creates a settlement deduction via creat",
    "registered_on": null,
    "pr": 694
+  },
+  {
+   "id": "BLOCKS-ACCOUNTING-DOM-2026-07-26",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "ACCOUNTING DOMAIN BLOCKS · GUARD-VERIFIED · 2026-07-26",
+   "pr": null
+  },
+  {
+   "id": "BLOCKS-BANKING-DOM-2026-07-26",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 named artifact(s) on main",
+   "name": "BANKING DOMAIN BLOCKS · GUARD-VERIFIED · 2026-07-26",
+   "pr": null
   },
   {
    "id": "bnk-03-no-last-reconciled-no-beginning-balance",
@@ -8749,17 +8975,6 @@
    "pr": null
   },
   {
-   "id": "0033-audit-schema-manifest-tool",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "0033-verify-fk-integrity-guard",
    "source": ".block-ready",
    "fin": true,
@@ -13173,6 +13388,570 @@
  ],
  "merged_prs": [
   {
+   "number": 3607,
+   "title": "[HOLD-FOR-JORGE] SET-01 — retire mounted deprecated FIN-18 settlement poster (308 → payrun-close)",
+   "mergedAt": "2026-07-26T19:39:19Z",
+   "branch": "hold/set-01-retire-deprecated-settlement-poster"
+  },
+  {
+   "number": 3604,
+   "title": "chore(gate): remove JORGE-APPROVED label requirement (owner 2026-07-26)",
+   "mergedAt": "2026-07-26T18:08:07Z",
+   "branch": "chore/remove-jorge-approved-label-gate"
+  },
+  {
+   "number": 3603,
+   "title": "chore(held): stamp BANK-DOM-01 202609020010 applied on prod",
+   "mergedAt": "2026-07-26T18:05:30Z",
+   "branch": "chore/stamp-bank-dom-01-applied"
+  },
+  {
+   "number": 3600,
+   "title": "fix(security): SEC-HEALTHZ-01 — sanitize the raw driver error the public /api/v1/healthz returned to anonymous callers",
+   "mergedAt": "2026-07-26T05:56:28Z",
+   "branch": "fix/healthz-sanitize-anonymous-error-leak"
+  },
+  {
+   "number": 3599,
+   "title": "[HOLD-FOR-JORGE] docs(accounting): ACCT-DOM-01 JE approval + SOD DESIGN",
+   "mergedAt": "2026-07-26T17:20:55Z",
+   "branch": "hold/acct-dom-01-je-approval-design"
+  },
+  {
+   "number": 3595,
+   "title": "[HOLD-FOR-JORGE] fix(maintenance): MNT-LINK-04 vendor catalog → mdata.vendors AP FK",
+   "mergedAt": "2026-07-26T19:24:12Z",
+   "branch": "hold/mnt-link-04-vendor-ap"
+  },
+  {
+   "number": 3592,
+   "title": "[HOLD-FOR-JORGE] docs(maintenance): MNT-ECON-02 severe-repair capitalize-vs-expense DESIGN",
+   "mergedAt": "2026-07-26T17:36:47Z",
+   "branch": "hold/mnt-econ-02-severe-repair-design"
+  },
+  {
+   "number": 3591,
+   "title": "[HOLD-FOR-JORGE] feat(banking): BANK-DOM-03 adjusted-balance recon (DIT + outstanding)",
+   "mergedAt": "2026-07-26T19:08:30Z",
+   "branch": "hold/bank-dom-03-adjusted-balance-rec"
+  },
+  {
+   "number": 3589,
+   "title": "[HOLD-FOR-JORGE] fix(maintenance): MNT-LINK-02 work_order_lines → work_orders FK",
+   "mergedAt": "2026-07-26T18:38:19Z",
+   "branch": "hold/mnt-link-02-work-order-lines-fk"
+  },
+  {
+   "number": 3588,
+   "title": "HOLD: BANK-DOM-02 + ACCT-DOM-03 closed period/session immutability",
+   "mergedAt": "2026-07-26T18:22:42Z",
+   "branch": "hold/bank-dom-02-acct-dom-03-closed-immutability"
+  },
+  {
+   "number": 3585,
+   "title": "fix(guard): backfill 1553 + 1580 into the claim registry — 1599 was reddening main",
+   "mergedAt": "2026-07-26T05:01:45Z",
+   "branch": "fix/backfill-claimed-numbers"
+  },
+  {
+   "number": 3583,
+   "title": "C9 FIX: guard 1570 green — 1 dropped field wired, 29 rendered inert and labelled instead of lying",
+   "mergedAt": "2026-07-26T05:01:54Z",
+   "branch": "sweep/c9-form-roundtrip-fix"
+  },
+  {
+   "number": 3582,
+   "title": "[HOLD-FOR-JORGE] fix(maintenance): MNT-ECON-04 warranty reimburse → JE via poster",
+   "mergedAt": "2026-07-26T17:35:29Z",
+   "branch": "hold/mnt-econ-04-warranty-gl"
+  },
+  {
+   "number": 3581,
+   "title": "[HOLD-FOR-JORGE] fix(maintenance): MNT-ECON-01 parts purchase → A/P + JE via poster",
+   "mergedAt": "2026-07-26T05:47:26Z",
+   "branch": "hold/mnt-econ-01-parts-purchase-gl"
+  },
+  {
+   "number": 3578,
+   "title": "fix(guard): claimed-numbers registry — turn the verify-step allocation race into a git conflict",
+   "mergedAt": "2026-07-26T04:22:46Z",
+   "branch": "chore/verify-step-number-registry"
+  },
+  {
+   "number": 3577,
+   "title": "fix(retire): SWEEP-C2 repoint 5 live RETIRE-schema writers to canonical tables [HOLD]",
+   "mergedAt": "2026-07-26T05:18:22Z",
+   "branch": "sweep/c2-retire-repoint-wave"
+  },
+  {
+   "number": 3576,
+   "title": "[HOLD-FOR-JORGE] fix(catalogs): SWEEP-C11 driver sub-catalog split-brain — block catalogs.* writes",
+   "mergedAt": "2026-07-26T05:33:53Z",
+   "branch": "sweep/c11-split-brain-guard"
+  },
+  {
+   "number": 3575,
+   "title": "C8 FIX (GREEN): required-drill KPI card — 80 dead cards wired, 37 dishonest numbers made honest",
+   "mergedAt": "2026-07-26T03:36:14Z",
+   "branch": "sweep/c8-kpi-click-through-fix"
+  },
+  {
+   "number": 3574,
+   "title": "[HOLD-FOR-JORGE] fix(safety): SAF-DOM-02 — finish the company_violations jsonb→FK archive; the auto-fine trigger has been silently issuing NO fine",
+   "mergedAt": "2026-07-26T04:22:09Z",
+   "branch": "hold/saf-dom-02-company-violations-fk"
+  },
+  {
+   "number": 3573,
+   "title": "fix(ci): drop duplicate global-catalog verify-step 1536 (keep 1522)",
+   "mergedAt": "2026-07-26T02:50:43Z",
+   "branch": "fix/drop-dup-global-catalog-1536"
+  },
+  {
+   "number": 3572,
+   "title": "C8 GUARD (RED): no dead KPI/stat cards on primary surfaces — 129-problem inventory",
+   "mergedAt": "2026-07-26T03:53:11Z",
+   "branch": "sweep/c8-kpi-click-through-guard"
+  },
+  {
+   "number": 3571,
+   "title": "fix(sweep-c3): shared DateTimePicker replaces 20 native datetime inputs; 41 raw ISO dates now format US (1553 GREEN)",
+   "mergedAt": "2026-07-26T03:42:53Z",
+   "branch": "sweep/c3-date-fix"
+  },
+  {
+   "number": 3570,
+   "title": "fix(C10): mount the 8 maintenance catalogs (404 → 401); 26 mounts refused on the record",
+   "mergedAt": "2026-07-26T03:26:51Z",
+   "branch": "sweep/c10-route-manifest-parity-fix"
+  },
+  {
+   "number": 3569,
+   "title": "fix(guard): dedupe verify-step 1521 on main — unblocks C1 and C3",
+   "mergedAt": "2026-07-26T02:24:23Z",
+   "branch": "fix/dedupe-verify-step-1521"
+  },
+  {
+   "number": 3568,
+   "title": "docs(blocks): FOR-CURSOR-2 Accounting+Banking DOM blocks (ACCT-DOM/BANK-DOM)",
+   "mergedAt": "2026-07-26T16:15:24Z",
+   "branch": "docs/for-cursor-acct-bank-dom-2026-07-26"
+  },
+  {
+   "number": 3567,
+   "title": "guard(C10): route-manifest parity — 27 defined route modules never mounted (RED by design)",
+   "mergedAt": "2026-07-26T03:45:37Z",
+   "branch": "sweep/c10-route-manifest-parity-guard"
+  },
+  {
+   "number": 3566,
+   "title": "fix(C1): shared EntityPicker — 15 raw-UUID inputs migrated, 3 unwired as no-enforced-FK findings",
+   "mergedAt": "2026-07-26T03:28:25Z",
+   "branch": "sweep/c1-picker-law-fix"
+  },
+  {
+   "number": 3565,
+   "title": "docs(module-completion): record the SAF-DOM packet + correct the stale Lists pass",
+   "mergedAt": "2026-07-26T03:26:07Z",
+   "branch": "docs/saf-dom-and-lists-corrections"
+  },
+  {
+   "number": 3564,
+   "title": "feat(sweep-c3): DATE — shared DateTimePicker + verify-step 1553 (guard-first, combined GREEN)",
+   "mergedAt": "2026-07-26T04:23:59Z",
+   "branch": "sweep/c3-date-guard"
+  },
+  {
+   "number": 3563,
+   "title": "guard(C1): picker law — no raw-UUID text input on a form (RED by design)",
+   "mergedAt": "2026-07-26T03:42:43Z",
+   "branch": "sweep/c1-picker-law-guard"
+  },
+  {
+   "number": 3562,
+   "title": "SWEEP-C2 guard-first: live RETIRE schema write inventory",
+   "mergedAt": "2026-07-26T01:40:22Z",
+   "branch": "sweep/c2-retire-writer-guard"
+  },
+  {
+   "number": 3561,
+   "title": "fix(C7): build the shared 480px create drawer once, flip all 65 centered create surfaces",
+   "mergedAt": "2026-07-26T00:55:48Z",
+   "branch": "sweep/c7-create-drawer-fix"
+  },
+  {
+   "number": 3560,
+   "title": "docs(blocks): commit the 8 class-sweep specs to the repo",
+   "mergedAt": "2026-07-26T01:09:16Z",
+   "branch": "docs/commit-class-sweep-blocks"
+  },
+  {
+   "number": 3559,
+   "title": "C7: create surfaces open the shared 480px right drawer — guard (RED) + fix (GREEN)",
+   "mergedAt": "2026-07-26T01:11:50Z",
+   "branch": "sweep/c7-create-drawer"
+  },
+  {
+   "number": 3558,
+   "title": "fix(deploy): LIVE OUTAGE — unblock Render pre_deploy (Mexico CoL checksum)",
+   "mergedAt": "2026-07-26T00:01:32Z",
+   "branch": "fix/render-unblock-mexico-checksum"
+  },
+  {
+   "number": 3557,
+   "title": "[HOLD-FOR-JORGE] ITEM 5a: replace the hand-ordered demo purge with a recursive FK cascade",
+   "mergedAt": "2026-07-26T00:23:30Z",
+   "branch": "fix/item5a-demo-purge-recursive-cascade"
+  },
+  {
+   "number": 3556,
+   "title": "chore(migrations): registry truth-up to LIVE prod — escrow stamped, held now 0",
+   "mergedAt": "2026-07-26T00:40:53Z",
+   "branch": "chore/registry-truth-up-live-prod"
+  },
+  {
+   "number": 3555,
+   "title": "feat(guards): SWEEP-C6 guard-first — money INSERT requires JE poster",
+   "mergedAt": "2026-07-26T00:22:28Z",
+   "branch": "fix/sweep-c6-money-je-guard"
+  },
+  {
+   "number": 3554,
+   "title": "[HOLD-FOR-JORGE · FINANCIAL] LINK-02: accounts.detail_type_id FK wire",
+   "mergedAt": "2026-07-26T01:08:36Z",
+   "branch": "fix/link-02-accounts-detail-type-fk"
+  },
+  {
+   "number": 3553,
+   "title": "fix(catalogs): LIVE INCIDENT — SQL comment swallows RETURNING columns, every fleet catalog create 500s",
+   "mergedAt": "2026-07-25T23:14:45Z",
+   "branch": "fix/fleet-catalog-create-500-trailing-comma"
+  },
+  {
+   "number": 3551,
+   "title": "[HOLD-FOR-JORGE] fix(safety): company-paid civil fine reached NO ledger — build the missing expense hop (SAFETY FINE-GL HOP)",
+   "mergedAt": "2026-07-26T02:50:04Z",
+   "branch": "hold/safety-fine-gl-expense-hop"
+  },
+  {
+   "number": 3550,
+   "title": "fix(lists): LST-PICKER-01/03 — the shared picker was never config-driven, so 68 of 75 catalogs could not have inline create",
+   "mergedAt": "2026-07-25T21:54:07Z",
+   "branch": "feat/lst-picker-shared-inline-create"
+  },
+  {
+   "number": 3549,
+   "title": "[HOLD-FOR-JORGE] fix(lists): LST-RLS-01 — two global catalogs had RLS OFF and DELETE granted; a Dispatcher could rewrite the QBO account-type taxonomy",
+   "mergedAt": "2026-07-26T01:37:25Z",
+   "branch": "hold/lst-rls-01-write-authz"
+  },
+  {
+   "number": 3548,
+   "title": "ACCT-R-02: live-Neon schema manifest tool (0033-audit-schema-manifest-tool)",
+   "mergedAt": "2026-07-25T21:08:42Z",
+   "branch": "acct-r02-audit-schema-manifest"
+  },
+  {
+   "number": 3547,
+   "title": "fix(safety): SAF-B12 — four external-fine lifecycle routes had ZERO frontend callers",
+   "mergedAt": "2026-07-25T20:59:37Z",
+   "branch": "fix/saf-b12-external-fine-row-actions"
+  },
+  {
+   "number": 3546,
+   "title": "chore(law): rename the CPA skill to ih35-accounting-decisions and end the CPA-as-gate framing",
+   "mergedAt": "2026-07-25T21:55:00Z",
+   "branch": "chore/rename-cpa-skill-owner-decides"
+  },
+  {
+   "number": 3545,
+   "title": "[HOLD-FOR-JORGE] ESC-FORFEIT-SPLIT: forfeit must move driver_finance escrow store",
+   "mergedAt": "2026-07-25T21:19:08Z",
+   "branch": "fix/esc-forfeit-split-driver-finance"
+  },
+  {
+   "number": 3544,
+   "title": "fix(ci): pr-evidence-block diff must be merge-base-aware (three-dot)",
+   "mergedAt": "2026-07-25T20:44:23Z",
+   "branch": "fix-evidence-block-diff-scope"
+  },
+  {
+   "number": 3543,
+   "title": "docs(blocks): commit all 86 Lists+Safety block docs to the repo — CPA stripped as an approver",
+   "mergedAt": "2026-07-25T21:03:58Z",
+   "branch": "docs/commit-lists-safety-block-docs"
+  },
+  {
+   "number": 3542,
+   "title": "[HOLD-FOR-JORGE] SAF-ORPH: escrow forfeit sign (forfeiture −) + flag seed",
+   "mergedAt": "2026-07-25T20:45:01Z",
+   "branch": "fix/acct-r01-escrow-forfeit-sign-trigger"
+  },
+  {
+   "number": 3541,
+   "title": "fix(accounting): LIVE INCIDENT — item picker 500s on phantom catalogs.items.active",
+   "mergedAt": "2026-07-25T20:10:16Z",
+   "branch": "fix/lst-picker-02-items-phantom-active"
+  },
+  {
+   "number": 3540,
+   "title": "fix(compliance): SAF-F32 — Form 2290 due date was Aug 31 for every vehicle, and its guard never ran",
+   "mergedAt": "2026-07-25T20:09:03Z",
+   "branch": "fix/saf-f32-form-2290-due-date"
+  },
+  {
+   "number": 3539,
+   "title": "fix(driver-finance): escrow ledger 500s on phantom ORDER BY posted_at (+ guard was blind to the whole clause)",
+   "mergedAt": "2026-07-25T20:51:24Z",
+   "branch": "fix/escrow-ledger-phantom-posted-at"
+  },
+  {
+   "number": 3538,
+   "title": "docs(governance): Acct+Bank remaining packet + ECON-05/F08/F09 + applied-mig rewrites",
+   "mergedAt": "2026-07-26T03:00:55Z",
+   "branch": "docs/acct-bank-packet-governance-20260725"
+  },
+  {
+   "number": 3537,
+   "title": "fix(safety): SAF-B31 — two Safety pages promised features and rendered prose; both now query real entity-scoped readers",
+   "mergedAt": "2026-07-25T20:02:12Z",
+   "branch": "fix/saf-b31-safety-placeholder-surfaces"
+  },
+  {
+   "number": 3536,
+   "title": "feat(accounting): ACCT-R-07 wire WO status-count widget to accounting.bills/expenses join",
+   "mergedAt": "2026-07-25T19:43:39Z",
+   "branch": "feat/acct-r07-0280-42-wo-to-expense-flow"
+  },
+  {
+   "number": 3535,
+   "title": "fix(lists): LST-F10 — Driver Teams was a prose placeholder over a 545-line backend nobody called",
+   "mergedAt": "2026-07-25T20:01:36Z",
+   "branch": "fix/lst-f10-driver-teams-surface"
+  },
+  {
+   "number": 3534,
+   "title": "ACCT-R-25: migrate Factoring Queue to ParityTable (Phase A)",
+   "mergedAt": "2026-07-25T19:45:47Z",
+   "branch": "fix/acct-r25-paritytable-factoring-queue"
+  },
+  {
+   "number": 3533,
+   "title": "[HOLD] FINANCIAL: ACCT-R-01 escrow canonical write-path sync (driver_finance→accounting.escrow_postings)",
+   "mergedAt": "2026-07-25T19:44:59Z",
+   "branch": "fix/acct-r01-escrow-canonical-sync"
+  },
+  {
+   "number": 3532,
+   "title": "docs(law): record the fixture carve-out so NEVER-DELETE and the demo purge stop contradicting",
+   "mergedAt": "2026-07-25T19:27:44Z",
+   "branch": "docs/never-delete-fixture-carveout"
+  },
+  {
+   "number": 3531,
+   "title": "fix(banking): Drivers roster grid migrates to shared ParityTable (BANK-R-01)",
+   "mergedAt": "2026-07-25T19:27:08Z",
+   "branch": "feat/bank-r01-qbo-parity-resizable-columns-everywhere"
+  },
+  {
+   "number": 3529,
+   "title": "fix(banking): ACCT-R-11 categorize capture fields sent to API",
+   "mergedAt": "2026-07-25T21:13:35Z",
+   "branch": "fix/acct-r11-tx-fields-sent"
+  },
+  {
+   "number": 3528,
+   "title": "ACCT-R-04: wire G4 deploy smoke env keys in render.yaml",
+   "mergedAt": "2026-07-25T20:08:27Z",
+   "branch": "fix/acct-r04-g4-deploy-smoke-env"
+  },
+  {
+   "number": 3527,
+   "title": "fix(accounting): ES1 unscoped-table scope-proof CI guard (0519-es1-58 / ACCT-R-12)",
+   "mergedAt": "2026-07-25T21:41:40Z",
+   "branch": "fix/acct-r12-es1-unscoped-scope-proof"
+  },
+  {
+   "number": 3526,
+   "title": "[HOLD] ACCT-R-03: real CoA account merge (merge_records + Owner-only)",
+   "mergedAt": "2026-07-26T02:24:04Z",
+   "branch": "hold/acct-r03-coa-merge-20260725"
+  },
+  {
+   "number": 3523,
+   "title": "fix(guard): extend migration number-collision guard to the timestamp scheme",
+   "mergedAt": "2026-07-25T19:06:19Z",
+   "branch": "fix/migration-timestamp-number-collision-guard"
+  },
+  {
+   "number": 3522,
+   "title": "fix(routes): remove two unreachable duplicate route registrations (+ guard)",
+   "mergedAt": "2026-07-25T19:26:34Z",
+   "branch": "fix/duplicate-route-registrations"
+  },
+  {
+   "number": 3521,
+   "title": "[HOLD] fix(settlements): ACCT-R-13 mount settlement approval routes + close entity-scope IDOR",
+   "mergedAt": "2026-07-25T20:20:45Z",
+   "branch": "fix/acct-r13-settlement-approval-mount"
+  },
+  {
+   "number": 3520,
+   "title": "docs(accounting): ACCT-R-09/10/14/22/26 BUILT honesty round-2",
+   "mergedAt": "2026-07-25T20:20:55Z",
+   "branch": "hold/acct-r09-r26-honesty-round2"
+  },
+  {
+   "number": 3519,
+   "title": "docs(module-completion): manifest truth pass — M grows 18/32 → 23/38, 11 orphan findings admitted",
+   "mergedAt": "2026-07-26T00:52:27Z",
+   "branch": "docs/manifest-truth-pass-lists-safety"
+  },
+  {
+   "number": 3518,
+   "title": "docs(trackers): purge Acct+Bank pile duplicates / wrong-module / BUILT",
+   "mergedAt": "2026-07-25T19:01:48Z",
+   "branch": "docs/acct-bank-pile-purge-20260725"
+  },
+  {
+   "number": 3517,
+   "title": "ACCT-F05 [HOLD]: bank feed JE match honesty guard + scoreboard FAIL",
+   "mergedAt": "2026-07-25T18:34:17Z",
+   "branch": "hold/acct-f05-bankfeed-je-honesty-keep"
+  },
+  {
+   "number": 3515,
+   "title": "migrations: held-registry applied_on_prod refresh (Neon ledger truth)",
+   "mergedAt": "2026-07-25T22:57:54Z",
+   "branch": "hold/held-registry-applied-held-split-2026-07-25"
+  },
+  {
+   "number": 3514,
+   "title": "guard(banking): BANK-ECON-04 recon RLS — Neon-applied 202608030000 (schema-live)",
+   "mergedAt": "2026-07-25T19:43:53Z",
+   "branch": "hold/bank-econ-04-honesty-keep-20260725"
+  },
+  {
+   "number": 3513,
+   "title": "ACCT-F02: JE-type picker — Neon-applied 202607960000 (schema-live)",
+   "mergedAt": "2026-07-25T19:05:48Z",
+   "branch": "hold/acct-f02-je-type-fk-honesty-20260725"
+  },
+  {
+   "number": 3512,
+   "title": "[HOLD] BANK-LINK-01: bank_transactions counterparty vendor/customer FK",
+   "mergedAt": "2026-07-25T17:35:46Z",
+   "branch": "hold/bank-link-01-counterparty-fk-20260725"
+  },
+  {
+   "number": 3511,
+   "title": "ACCT-F07+F08: LINK-04/05 — Neon-applied (schema-live, not PASS)",
+   "mergedAt": "2026-07-25T19:08:38Z",
+   "branch": "hold/acct-f07-f08-merged-not-applied-honesty-20260725"
+  },
+  {
+   "number": 3510,
+   "title": "docs(accounting): ACCT-CoA-ASYMMETRY read-only grouped diff report",
+   "mergedAt": "2026-07-25T19:43:44Z",
+   "branch": "hold/acct-coa-asymmetry-report-20260725"
+  },
+  {
+   "number": 3509,
+   "title": "feat(banking): BANK-MODULE-DOD structural sweep matrix + guard 1477 [HOLD]",
+   "mergedAt": "2026-07-25T19:43:31Z",
+   "branch": "hold/bank-module-dod-sweep-matrix-20260725"
+  },
+  {
+   "number": 3508,
+   "title": "[HOLD] ACCT-SURF-DOD-SWEEP: structural matrix + guard 1476",
+   "mergedAt": "2026-07-25T19:26:12Z",
+   "branch": "hold/acct-surf-dod-sweep-matrix-20260725"
+  },
+  {
+   "number": 3507,
+   "title": "[HOLD] guard(banking): BANK-ECON-03 transfer path wired + honest transfers=0 FAIL (verify-step 1481)",
+   "mergedAt": "2026-07-25T19:01:21Z",
+   "branch": "hold/bank-econ-03-transfer-path-wired"
+  },
+  {
+   "number": 3506,
+   "title": "[HOLD] guard(banking): BANK-ECON-02 poster path wired + honest density FAIL (verify-step 1480)",
+   "mergedAt": "2026-07-25T17:44:35Z",
+   "branch": "hold/bank-econ-02-poster-path-wired"
+  },
+  {
+   "number": 3505,
+   "title": "[HOLD] ACCT-F04: strengthen bill reverse-density guard + bill→claim drill",
+   "mergedAt": "2026-07-25T17:35:01Z",
+   "branch": "hold/acct-f04-bill-reverse-density-20260725"
+  },
+  {
+   "number": 3504,
+   "title": "[HOLD] docs(governance): Law of the Land complete index + autoload pointers",
+   "mergedAt": "2026-07-25T19:07:17Z",
+   "branch": "hold/governance-law-of-the-land-index-20260725"
+  },
+  {
+   "number": 3503,
+   "title": "[HOLD] ACCT-F03: detail_types TEXT subtype owner lock",
+   "mergedAt": "2026-07-25T19:43:09Z",
+   "branch": "hold/acct-f03-detail-types-owner-lock-20260725"
+  },
+  {
+   "number": 3502,
+   "title": "[HOLD] BANK-ECON-05/GATE-01: active cash-bind keep-guard",
+   "mergedAt": "2026-07-25T17:34:09Z",
+   "branch": "hold/bank-econ-05-cash-bind-keep-guard-20260725"
+  },
+  {
+   "number": 3501,
+   "title": "[HOLD] ACCT-F11: VERIFY-1/2 wizard picker matrix",
+   "mergedAt": "2026-07-25T17:35:09Z",
+   "branch": "hold/acct-f11-wizard-picker-matrix-20260725"
+  },
+  {
+   "number": 3500,
+   "title": "[HOLD] docs(accounting): ACCT-F10 map thin HOLD PRs #3423-#3429 to manifest",
+   "mergedAt": "2026-07-25T17:26:21Z",
+   "branch": "hold/acct-f10-thin-hold-pr-manifest-map-20260725"
+  },
+  {
+   "number": 3499,
+   "title": "[HOLD] BANK-00: ranked banking FAIL registry + guard",
+   "mergedAt": "2026-07-25T17:26:13Z",
+   "branch": "hold/bank-00-ranked-fail-registry-20260725"
+  },
+  {
+   "number": 3498,
+   "title": "[HOLD] ACCT-F01/F06: projection flags OFF by owner design",
+   "mergedAt": "2026-07-25T17:26:06Z",
+   "branch": "hold/acct-f01-f06-projection-flags-off-by-design-20260725"
+  },
+  {
+   "number": 3497,
+   "title": "fix(dispatch): Kanban cancel flipped load status without writing any cancellation record",
+   "mergedAt": "2026-07-25T16:53:19Z",
+   "branch": "fix/kanban-cancel-writes-real-cancellation-record"
+  },
+  {
+   "number": 3496,
+   "title": "fix(auth): four staff accounts were 403'd from every company including their own default",
+   "mergedAt": "2026-07-25T16:52:53Z",
+   "branch": "fix/entity-resolver-membership-and-grantless-403"
+  },
+  {
+   "number": 3495,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-25T16:53:26Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 3494,
+   "title": "[HOLD-FOR-JORGE] fix(migrations): held registry misreported 79 applied migrations as unapplied",
+   "mergedAt": "2026-07-25T17:33:44Z",
+   "branch": "fix/held-registry-integrity"
+  },
+  {
    "number": 3493,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-07-25T16:24:49Z",
@@ -13225,6 +14004,12 @@
    "title": "[HOLD] ACCT-08: ACCT-SURF-09 Factoring/Escrow/Settlements cross-link DoD guard",
    "mergedAt": "2026-07-25T16:23:29Z",
    "branch": "hold/acct-surf-09-crosslinks-dod-20260725"
+  },
+  {
+   "number": 3484,
+   "title": "[HOLD] ACCT-08: ACCT-SURF-08 Period/Audit/Lineage deep DoD guard",
+   "mergedAt": "2026-07-25T16:51:36Z",
+   "branch": "hold/acct-surf-08-period-audit-dod-20260725"
   },
   {
    "number": 3483,
@@ -16201,580 +16986,262 @@
    "title": "fix(dispatch): Close instead of Cancel Load on unsaved drawer (d-02)",
    "mergedAt": "2026-07-20T02:53:10Z",
    "branch": "ops/cancel-load-draft-close"
-  },
-  {
-   "number": 2777,
-   "title": "ops(fe): URL-sync anomaly alerts tab and severity filters",
-   "mergedAt": "2026-07-20T02:17:29Z",
-   "branch": "ops/anomaly-alerts-url-sync"
-  },
-  {
-   "number": 2776,
-   "title": "fix(recon): D-#1 restore QBO remote-count feed (RLS bypass escape on qbo_connections)",
-   "mergedAt": "2026-07-20T11:18:55Z",
-   "branch": "design/d1-recon-collector-unfreeze"
-  },
-  {
-   "number": 2775,
-   "title": "fix(alerts): sync Document Alerts tabs to ?tab= URL",
-   "mergedAt": "2026-07-20T02:10:22Z",
-   "branch": "ops/document-alerts-tab-url-v2"
-  },
-  {
-   "number": 2774,
-   "title": "fix(frontend): sync Drivers/Teams view to ?view= URL param",
-   "mergedAt": "2026-07-20T02:17:24Z",
-   "branch": "ops/drivers-teams-view-url"
-  },
-  {
-   "number": 2773,
-   "title": "fix(docs): thread selectedCompanyId into bare UploadModal callers",
-   "mergedAt": "2026-07-20T02:17:19Z",
-   "branch": "ops/docs-upload-company-scope"
-  },
-  {
-   "number": 2772,
-   "title": "fix(qbo): sync QBO Sync Status tabs to ?tab= URL",
-   "mergedAt": "2026-07-20T02:17:14Z",
-   "branch": "ops/qbo-sync-status-tab-url"
-  },
-  {
-   "number": 2771,
-   "title": "fix(cash-flow): sync Cash Flow tabs to ?tab= URL",
-   "mergedAt": "2026-07-20T02:17:10Z",
-   "branch": "ops/cash-flow-tab-url"
-  },
-  {
-   "number": 2770,
-   "title": "fix(home): sync Driver Hub tabs to ?tab= URL",
-   "mergedAt": "2026-07-20T02:17:05Z",
-   "branch": "ops/driver-hub-tab-url"
-  },
-  {
-   "number": 2767,
-   "title": "fix(safety): lock HOS create CTA as modal button",
-   "mergedAt": "2026-07-20T02:12:55Z",
-   "branch": "ops/hos-violation-link-label"
-  },
-  {
-   "number": 2766,
-   "title": "fix(legal): wire Legal matters list row deeplink",
-   "mergedAt": "2026-07-20T02:12:49Z",
-   "branch": "ops/legal-matters-row-deeplink"
-  },
-  {
-   "number": 2765,
-   "title": "fix(compliance): sync dashboard tabs to ?tab= URL",
-   "mergedAt": "2026-07-20T02:12:44Z",
-   "branch": "ops/compliance-tabs-url-sync"
-  },
-  {
-   "number": 2764,
-   "title": "fix(safety): IDVR row clickable → DVIR detail",
-   "mergedAt": "2026-07-20T02:17:00Z",
-   "branch": "ops/idvr-row-clickable"
-  },
-  {
-   "number": 2763,
-   "title": "fix(accounting): Customer + Vendor Detail URL sort persistence",
-   "mergedAt": "2026-07-19T23:47:50Z",
-   "branch": "fix/customer-vendor-detail-url-sort"
-  },
-  {
-   "number": 2762,
-   "title": "chore(trackers): purge 287 resolved/noise/duplicate audit-notes + refresh counts (2026-07-19)",
-   "mergedAt": "2026-07-20T02:37:29Z",
-   "branch": "chore/audit-note-purge-2026-07-19"
-  },
-  {
-   "number": 2761,
-   "title": "fix(accounting): Items list URL sort persistence",
-   "mergedAt": "2026-07-19T23:49:20Z",
-   "branch": "fix/items-list-url-sort"
-  },
-  {
-   "number": 2760,
-   "title": "fix(accounting): Bill Detail URL sort persistence",
-   "mergedAt": "2026-07-19T23:49:15Z",
-   "branch": "fix/bill-detail-url-sort"
-  },
-  {
-   "number": 2759,
-   "title": "fix(accounting): Factoring Detail + Invoice Detail URL sort",
-   "mergedAt": "2026-07-19T23:51:25Z",
-   "branch": "fix/factoring-invoice-detail-url-sort"
-  },
-  {
-   "number": 2758,
-   "title": "fix(accounting): Account Register URL sort persistence",
-   "mergedAt": "2026-07-19T23:32:31Z",
-   "branch": "fix/account-register-url-sort"
-  },
-  {
-   "number": 2757,
-   "title": "fix(accounting): Escrow + Audit Trail URL sort",
-   "mergedAt": "2026-07-19T23:47:39Z",
-   "branch": "fix/escrow-audittrail-url-sort"
-  },
-  {
-   "number": 2756,
-   "title": "fix(accounting): Receipts + Integration Transactions URL sort",
-   "mergedAt": "2026-07-19T23:45:47Z",
-   "branch": "fix/receipts-integration-url-sort"
-  },
-  {
-   "number": 2755,
-   "title": "fix(accounting): Invoices + Manual JE list URL sort persistence",
-   "mergedAt": "2026-07-19T23:31:58Z",
-   "branch": "fix/invoices-manualje-url-sort"
-  },
-  {
-   "number": 2754,
-   "title": "fix(accounting): Posting Lineage URL sort persistence",
-   "mergedAt": "2026-07-19T23:47:34Z",
-   "branch": "fix/posting-lineage-url-sort"
-  },
-  {
-   "number": 2753,
-   "title": "fix(accounting): Prepaid Expenses + Fixed Assets URL sort",
-   "mergedAt": "2026-07-19T23:30:51Z",
-   "branch": "fix/prepaid-fixedassets-url-sort"
-  },
-  {
-   "number": 2752,
-   "title": "chore(trackers): regenerate block reconciliation on live main (2026-07-19)",
-   "mergedAt": "2026-07-19T23:10:53Z",
-   "branch": "chore/recon-blocks-live-2026-07-19"
-  },
-  {
-   "number": 2751,
-   "title": "fix(accounting): Factoring list URL sort persistence",
-   "mergedAt": "2026-07-19T23:15:06Z",
-   "branch": "fix/factoring-list-url-sort"
-  },
-  {
-   "number": 2750,
-   "title": "fix(accounting): Payments + Bill Payments URL sort persistence",
-   "mergedAt": "2026-07-19T23:08:13Z",
-   "branch": "fix/payments-list-url-sort"
-  },
-  {
-   "number": 2749,
-   "title": "fix(reports): type library.routes DB helpers as Queryable",
-   "mergedAt": "2026-07-19T23:02:16Z",
-   "branch": "fix/reports-library-routes-queryable-client"
-  },
-  {
-   "number": 2748,
-   "title": "fix(ci): include repo root in dependency CVE scan",
-   "mergedAt": "2026-07-19T22:59:22Z",
-   "branch": "fix/sec-audit-deps-include-root"
-  },
-  {
-   "number": 2747,
-   "title": "fix(ci): honor verify-step return status in runStep",
-   "mergedAt": "2026-07-19T22:37:23Z",
-   "branch": "fix/verify-step-runner-honors-return-status"
-  },
-  {
-   "number": 2746,
-   "title": "fix(accounting): retryable Receipts list/detail query errors",
-   "mergedAt": "2026-07-19T22:17:10Z",
-   "branch": "fix/accounting-receipts-list-query-error-retry"
-  },
-  {
-   "number": 2745,
-   "title": "fix(accounting): toast void failures on PaymentMethodsCatalogPage",
-   "mergedAt": "2026-07-19T22:14:46Z",
-   "branch": "fix/payment-methods-catalog-mutation-onerror"
-  },
-  {
-   "number": 2744,
-   "title": "fix(accounting): source lineage page mutation onError toast",
-   "mergedAt": "2026-07-19T22:18:26Z",
-   "branch": "fix/posting-lineage-mutation-onerror"
-  },
-  {
-   "number": 2743,
-   "title": "fix(accounting): audit trail lineage mutation onError toast",
-   "mergedAt": "2026-07-19T22:03:42Z",
-   "branch": "fix/accounting-audit-trail-mutation-onerror"
-  },
-  {
-   "number": 2742,
-   "title": "fix(accounting): EscrowPage postings mutation onError toast",
-   "mergedAt": "2026-07-19T22:18:46Z",
-   "branch": "fix/escrow-page-mutation-onerror"
-  },
-  {
-   "number": 2741,
-   "title": "fix(frontend): CreateMultipleBills createMutation onError toast",
-   "mergedAt": "2026-07-19T22:18:07Z",
-   "branch": "fix/create-multiple-bills-mutation-onerror"
-  },
-  {
-   "number": 2740,
-   "title": "fix(accounting): CoA sync panel mutation onError toasts",
-   "mergedAt": "2026-07-19T22:02:50Z",
-   "branch": "fix/coa-sync-panel-mutation-onerror"
-  },
-  {
-   "number": 2739,
-   "title": "fix(accounting): surface PaymentDetailPage mutation failures via toast",
-   "mergedAt": "2026-07-19T22:00:49Z",
-   "branch": "fix/payment-detail-mutation-onerror"
-  },
-  {
-   "number": 2738,
-   "title": "fix(accounting): surface FactoringDetailPage lifecycle mutation errors via toast",
-   "mergedAt": "2026-07-19T21:59:50Z",
-   "branch": "fix/factoring-detail-mutation-onerror"
-  },
-  {
-   "number": 2737,
-   "title": "fix(accounting): InvoiceDetail mutation failures toast (no silent no-op)",
-   "mergedAt": "2026-07-19T21:57:27Z",
-   "branch": "fix/invoice-detail-mutation-errors"
-  },
-  {
-   "number": 2736,
-   "title": "fix(accounting): toast QBO sync drift resolve failures",
-   "mergedAt": "2026-07-19T21:59:40Z",
-   "branch": "fix/qbo-drift-resolve-mutation-onerror"
-  },
-  {
-   "number": 2735,
-   "title": "docs(accounting): LOCKED OWNER 2026-07-19 delivery revenue two-event latch (verbatim)",
-   "mergedAt": "2026-07-19T21:43:36Z",
-   "branch": "docs/revenue-recognition-lock-verbatim-2026-07-19"
-  },
-  {
-   "number": 2734,
-   "title": "fix(accounting): surface FactorReconciliationPage import failures via toast",
-   "mergedAt": "2026-07-19T21:23:57Z",
-   "branch": "fix/factor-reconciliation-import-mutation-error"
-  },
-  {
-   "number": 2733,
-   "title": "docs(accounting): lock delivery revenue recognition two-event latch (2026-07-19)",
-   "mergedAt": "2026-07-19T21:08:39Z",
-   "branch": "docs/2026-07-19-revenue-recognition-locked-decisions"
-  },
-  {
-   "number": 2732,
-   "title": "fix(guards): wire accounting sortable-header guards (BANK-SORT-ROLLOUT-ACCT)",
-   "mergedAt": "2026-07-19T20:58:12Z",
-   "branch": "fix/accounting-sortable-headers-guard-wiring"
-  },
-  {
-   "number": 2731,
-   "title": "fix(accounting): migrate PostingLineagePage to ParityTable (GLOBAL-COLS-01)",
-   "mergedAt": "2026-07-19T20:46:21Z",
-   "branch": "fix/posting-lineage-parity-table"
-  },
-  {
-   "number": 2730,
-   "title": "fix(guards): lock banking grid real sort + resize + rows-per-page",
-   "mergedAt": "2026-07-19T20:37:46Z",
-   "branch": "fix/banking-grid-sort-resize-rows-per-page"
-  },
-  {
-   "number": 2729,
-   "title": "chore(ci): wire orphan guards via verify-steps (0519-ri1)",
-   "mergedAt": "2026-07-19T20:35:01Z",
-   "branch": "chore/0519-ri1-689-orphan-fk-columns"
-  },
-  {
-   "number": 2728,
-   "title": "docs(accounting): link parallel-books canon",
-   "mergedAt": "2026-07-19T20:19:39Z",
-   "branch": "chore/arch-docs-1-parallel-books-crosslinks"
-  },
-  {
-   "number": 2727,
-   "title": "fix(guards): enforce canonical reverse-link behavior",
-   "mergedAt": "2026-07-19T17:32:51Z",
-   "branch": "fix/2726-canonical-contracts"
-  },
-  {
-   "number": 2726,
-   "title": "fix(guards): close reverse-link semantic bypasses",
-   "mergedAt": "2026-07-19T15:06:49Z",
-   "branch": "chore/0007-pattern-8-reverse-drill-through"
-  },
-  {
-   "number": 2725,
-   "title": "fix(guards): enforce reverse drill-through contracts",
-   "mergedAt": "2026-07-19T10:47:18Z",
-   "branch": "chore/0007-pattern-8-reverse-drill-through"
-  },
-  {
-   "number": 2724,
-   "title": "0280-05 factoring-balance-invoice-linkage",
-   "mergedAt": "2026-07-19T23:14:32Z",
-   "branch": "cursor/factoring-balance-invoice-linkage-7ff5"
-  },
-  {
-   "number": 2723,
-   "title": "fix(test): isolate revenue linkage DB fixtures",
-   "mergedAt": "2026-07-19T05:51:39Z",
-   "branch": "cursor/revenue-gl-linkage-isolation-0280"
-  },
-  {
-   "number": 2722,
-   "title": "fix(ci): pre-push corrective — real pg identity probe, closed env bypass, unconditional behavioral gate (#2720 follow-up)",
-   "mergedAt": "2026-07-19T03:57:56Z",
-   "branch": "cursor/pre-push-verification-safeguards-955a"
-  },
-  {
-   "number": 2721,
-   "title": "chore(trackers): revert PR #2720 unrelated tracker artifact churn",
-   "mergedAt": "2026-07-19T03:33:46Z",
-   "branch": "cursor/unrelated-tracker-artifacts-acba"
-  },
-  {
-   "number": 2720,
-   "title": "fix(ci): stop pre-push .env sourcing; harden DB capability detection",
-   "mergedAt": "2026-07-19T02:41:20Z",
-   "branch": "cursor/pre-push-database-capability-8094"
-  },
-  {
-   "number": 2719,
-   "title": "fix(tests): isolate ap_control db.tests onto unique companies (cash/CC race)",
-   "mergedAt": "2026-07-19T02:55:39Z",
-   "branch": "cursor/ap-control-test-isolation-b21d"
-  },
-  {
-   "number": 2718,
-   "title": "[HOLD-FOR-JORGE] fix(accounting): A/P aging TMS basis + QBO mirror status (ACCOUNTING-2)",
-   "mergedAt": "2026-07-19T03:11:18Z",
-   "branch": "cursor/ap-aging-qbo-mirror-population-7638"
-  },
-  {
-   "number": 2717,
-   "title": "HOLD: fail-closed vendor-bill split GL + isolate CI fixture (bank-splits integrity)",
-   "mergedAt": "2026-07-19T03:16:01Z",
-   "branch": "cursor/bank-splits-gl-integrity-6b53"
-  },
-  {
-   "number": 2716,
-   "title": "HOLD: fix(mdata): durable outbox retry for FMCSA SAFER verify (acct-fmcsa-fire-and-forget-retry)",
-   "mergedAt": "2026-07-19T06:10:29Z",
-   "branch": "cursor/fmcsa-fire-and-forget-retry-7d2d"
-  },
-  {
-   "number": 2715,
-   "title": "HOLD: CHAIN-06 invoice→A/R→Faro fail-closed chain proof (Accounting Core 25/67)",
-   "mergedAt": "2026-07-19T03:42:00Z",
-   "branch": "cursor/chain-06-invoice-a-r-proof-78ba"
-  },
-  {
-   "number": 2714,
-   "title": "0280-02: Home revenue dual-basis invoice↔GL linkage (read-only HOLD)",
-   "mergedAt": "2026-07-19T03:08:38Z",
-   "branch": "cursor/revenue-gl-linkage-e55e"
-  },
-  {
-   "number": 2713,
-   "title": "HOLD: feat(accounting): pending approvals JE/GL linkage (0280-15)",
-   "mergedAt": "2026-07-19T03:26:43Z",
-   "branch": "cursor/pending-approvals-gl-linkage-3c30"
-  },
-  {
-   "number": 2712,
-   "title": "fix(reports): A/R+A/P aging drill + ManagementReportPackage tests (rpt-par1)",
-   "mergedAt": "2026-07-19T03:43:56Z",
-   "branch": "cursor/management-report-drill-through-tests-ad9d"
-  },
-  {
-   "number": 2711,
-   "title": "fix(mdata): equipment list total/has_more pagination (0091-g9-h6)",
-   "mergedAt": "2026-07-19T02:18:35Z",
-   "branch": "cursor/equipment-trailer-pagination-contract-8c91"
-  },
-  {
-   "number": 2710,
-   "title": "HOLD: fix(reports): G5-4 eliminate N+1 deadhead reads + lane insert loops (0243-g5-4)",
-   "mergedAt": "2026-07-19T03:01:09Z",
-   "branch": "cursor/report-n-1-optimization-1720"
-  },
-  {
-   "number": 2709,
-   "title": "fix(ci): acyclic pre-push→C5→local-ci gate (no nested Postgres)",
-   "mergedAt": "2026-07-19T01:51:32Z",
-   "branch": "cursor/pre-push-pipeline-deadlock-3b0b"
-  },
-  {
-   "number": 2707,
-   "title": "docs(accounting): CPA Answers Integration Phase 1 — governance locks + guard",
-   "mergedAt": "2026-07-19T00:52:09Z",
-   "branch": "cursor/cpa-answers-integration-phase-1-3aab"
-  },
-  {
-   "number": 2706,
-   "title": "fix(ci): separate local HOLD capability from merge approval",
-   "mergedAt": "2026-07-18T23:45:13Z",
-   "branch": "fix/hold-prepush-ci-only-20260718"
-  },
-  {
-   "number": 2705,
-   "title": "HOLD: fix(accounting): make settlement reversal atomic and company-dated (0091-g6-1)",
-   "mergedAt": "2026-07-19T02:29:08Z",
-   "branch": "hold/0091-g6-1-business-date-20260718"
-  },
-  {
-   "number": 2704,
-   "title": "HOLD: decide bank transaction metadata persistence contract",
-   "mergedAt": "2026-07-19T00:51:57Z",
-   "branch": "hold/0441-mod8-tx-fields-owner-decisions"
-  },
-  {
-   "number": 2703,
-   "title": "HOLD: fix(accounting): expose stale QBO sync health",
-   "mergedAt": "2026-07-18T22:14:39Z",
-   "branch": "hold/qbo-sync-staleness"
-  },
-  {
-   "number": 2702,
-   "title": "HOLD: fix(dispatch): honor pickup date load sorting",
-   "mergedAt": "2026-07-18T22:14:34Z",
-   "branch": "fix/bug3-invoice-pickup-sort"
-  },
-  {
-   "number": 2701,
-   "title": "fix(finance): land module entry on real hub",
-   "mergedAt": "2026-07-18T20:52:32Z",
-   "branch": "fix/0451-fin2-finance-hub"
-  },
-  {
-   "number": 2700,
-   "title": "fix(accounting): expose remaining query failures",
-   "mergedAt": "2026-07-18T20:21:16Z",
-   "branch": "fix/accounting-query-errors-wave-c"
-  },
-  {
-   "number": 2699,
-   "title": "fix(accounting): expose reference query failures",
-   "mergedAt": "2026-07-18T20:04:28Z",
-   "branch": "fix/accounting-query-errors-wave-b"
-  },
-  {
-   "number": 2698,
-   "title": "fix(accounting): expose retryable query failures",
-   "mergedAt": "2026-07-18T20:07:10Z",
-   "branch": "fix/accounting-list-error-boundary"
-  },
-  {
-   "number": 2697,
-   "title": "fix(accounting): open catalog profiles before editing",
-   "mergedAt": "2026-07-18T19:45:02Z",
-   "branch": "fix/accounting-catalog-profile-debox"
-  },
-  {
-   "number": 2696,
-   "title": "fix(accounting): restore browse-first expense routing",
-   "mergedAt": "2026-07-18T18:58:16Z",
-   "branch": "fix/accounting-expenses-browse-route"
-  },
-  {
-   "number": 2695,
-   "title": "HOLD: fix(safety): reconcile canonical 28-tab inventory",
-   "mergedAt": "2026-07-18T17:03:10Z",
-   "branch": "fix/safety-28-tab-metadata"
-  },
-  {
-   "number": 2694,
-   "title": "docs(governance): lock pipeline truth and throughput law",
-   "mergedAt": "2026-07-18T16:59:01Z",
-   "branch": "docs/pipeline-truth-law-2026-07-18"
-  },
-  {
-   "number": 2693,
-   "title": "fix(ci): make schema-parity baseline deterministic",
-   "mergedAt": "2026-07-18T07:16:28Z",
-   "branch": "ci/deterministic-schema-parity-baseline"
-  },
-  {
-   "number": 2692,
-   "title": "fix(ci): wire Item Editor account guard",
-   "mergedAt": "2026-07-18T16:39:29Z",
-   "branch": "fix/item-editor-guard-step"
-  },
-  {
-   "number": 2691,
-   "title": "test(topbar): lock mobile QBO status interactions",
-   "mergedAt": "2026-07-18T04:49:23Z",
-   "branch": "fix/topbar-qbo-status-regression"
-  },
-  {
-   "number": 2690,
-   "title": "HOLD: fix(safety): make CSA and Hazmat sources honest",
-   "mergedAt": "2026-07-18T17:13:51Z",
-   "branch": "fix/csa-hazmat-source-honesty"
-  },
-  {
-   "number": 2689,
-   "title": "HOLD: fix(ci): make push gates fail closed",
-   "mergedAt": "2026-07-18T17:36:09Z",
-   "branch": "fix/push-gate-classification-freshness"
-  },
-  {
-   "number": 2688,
-   "title": "HOLD: fix(safety): replace phantom query targets",
-   "mergedAt": "2026-07-18T16:58:54Z",
-   "branch": "fix/phantom-safety-1"
-  },
-  {
-   "number": 2687,
-   "title": "fix(ci): harden driver suspend rate-limit guard",
-   "mergedAt": "2026-07-18T04:27:41Z",
-   "branch": "fix/driver-suspend-rate-limit-guard"
-  },
-  {
-   "number": 2686,
-   "title": "fix(security): remove vulnerable SheetJS runtime",
-   "mergedAt": "2026-07-18T04:08:26Z",
-   "branch": "fix/xlsx-cve-closeout"
-  },
-  {
-   "number": 2685,
-   "title": "fix(ci): Cursor Rule 17 — no guard hot-file thrash",
-   "mergedAt": "2026-07-17T22:56:47Z",
-   "branch": "fix/anti-thrash-cursor-rule"
-  },
-  {
-   "number": 2684,
-   "title": "fix(ci): wire guards via verify-steps alone (stop shared-file thrash)",
-   "mergedAt": "2026-07-17T20:32:55Z",
-   "branch": "fix/guard-wire-via-steps-only"
-  },
-  {
-   "number": 2683,
-   "title": "fix(fuel): expensive-states hint uses §7 slate (palette ratchet)",
-   "mergedAt": "2026-07-17T19:44:57Z",
-   "branch": "fix/palette-expensive-states-slate"
-  },
-  {
-   "number": 2682,
-   "title": "ci(guard): verify:sql-column-existence (durable fix for phantom-column class)",
-   "mergedAt": "2026-07-17T22:48:10Z",
-   "branch": "ci/sql-column-existence-guard"
-  },
-  {
-   "number": 2681,
-   "title": "fix(users): wire User detail Activity tab to audit spine (0441-mod11)",
-   "mergedAt": "2026-07-17T22:47:56Z",
-   "branch": "fix/0441-mod11-user-detail-activity-tab"
-  },
-  {
-   "number": 2680,
-   "title": "fix(customers): COI + Create vocab (0441-mod9)",
-   "mergedAt": "2026-07-17T19:22:49Z",
-   "branch": "fix/open-fe-coi-create-vocab"
   }
  ],
  "merged_pr_total": 3000,
  "hold_for_jorge": [
+  {
+   "number": 3607,
+   "title": "[HOLD-FOR-JORGE] SET-01 — retire mounted deprecated FIN-18 settlement poster (308 → payrun-close)",
+   "mergedAt": "2026-07-26T19:39:19Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3599,
+   "title": "[HOLD-FOR-JORGE] docs(accounting): ACCT-DOM-01 JE approval + SOD DESIGN",
+   "mergedAt": "2026-07-26T17:20:55Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3595,
+   "title": "[HOLD-FOR-JORGE] fix(maintenance): MNT-LINK-04 vendor catalog → mdata.vendors AP FK",
+   "mergedAt": "2026-07-26T19:24:12Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3592,
+   "title": "[HOLD-FOR-JORGE] docs(maintenance): MNT-ECON-02 severe-repair capitalize-vs-expense DESIGN",
+   "mergedAt": "2026-07-26T17:36:47Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3591,
+   "title": "[HOLD-FOR-JORGE] feat(banking): BANK-DOM-03 adjusted-balance recon (DIT + outstanding)",
+   "mergedAt": "2026-07-26T19:08:30Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3589,
+   "title": "[HOLD-FOR-JORGE] fix(maintenance): MNT-LINK-02 work_order_lines → work_orders FK",
+   "mergedAt": "2026-07-26T18:38:19Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3588,
+   "title": "HOLD: BANK-DOM-02 + ACCT-DOM-03 closed period/session immutability",
+   "mergedAt": "2026-07-26T18:22:42Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3582,
+   "title": "[HOLD-FOR-JORGE] fix(maintenance): MNT-ECON-04 warranty reimburse → JE via poster",
+   "mergedAt": "2026-07-26T17:35:29Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3581,
+   "title": "[HOLD-FOR-JORGE] fix(maintenance): MNT-ECON-01 parts purchase → A/P + JE via poster",
+   "mergedAt": "2026-07-26T05:47:26Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3577,
+   "title": "fix(retire): SWEEP-C2 repoint 5 live RETIRE-schema writers to canonical tables [HOLD]",
+   "mergedAt": "2026-07-26T05:18:22Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3576,
+   "title": "[HOLD-FOR-JORGE] fix(catalogs): SWEEP-C11 driver sub-catalog split-brain — block catalogs.* writes",
+   "mergedAt": "2026-07-26T05:33:53Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3574,
+   "title": "[HOLD-FOR-JORGE] fix(safety): SAF-DOM-02 — finish the company_violations jsonb→FK archive; the auto-fine trigger has been silently issuing NO fine",
+   "mergedAt": "2026-07-26T04:22:09Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3557,
+   "title": "[HOLD-FOR-JORGE] ITEM 5a: replace the hand-ordered demo purge with a recursive FK cascade",
+   "mergedAt": "2026-07-26T00:23:30Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3554,
+   "title": "[HOLD-FOR-JORGE · FINANCIAL] LINK-02: accounts.detail_type_id FK wire",
+   "mergedAt": "2026-07-26T01:08:36Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3551,
+   "title": "[HOLD-FOR-JORGE] fix(safety): company-paid civil fine reached NO ledger — build the missing expense hop (SAFETY FINE-GL HOP)",
+   "mergedAt": "2026-07-26T02:50:04Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3549,
+   "title": "[HOLD-FOR-JORGE] fix(lists): LST-RLS-01 — two global catalogs had RLS OFF and DELETE granted; a Dispatcher could rewrite the QBO account-type taxonomy",
+   "mergedAt": "2026-07-26T01:37:25Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3545,
+   "title": "[HOLD-FOR-JORGE] ESC-FORFEIT-SPLIT: forfeit must move driver_finance escrow store",
+   "mergedAt": "2026-07-25T21:19:08Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3542,
+   "title": "[HOLD-FOR-JORGE] SAF-ORPH: escrow forfeit sign (forfeiture −) + flag seed",
+   "mergedAt": "2026-07-25T20:45:01Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3533,
+   "title": "[HOLD] FINANCIAL: ACCT-R-01 escrow canonical write-path sync (driver_finance→accounting.escrow_postings)",
+   "mergedAt": "2026-07-25T19:44:59Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3526,
+   "title": "[HOLD] ACCT-R-03: real CoA account merge (merge_records + Owner-only)",
+   "mergedAt": "2026-07-26T02:24:04Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3521,
+   "title": "[HOLD] fix(settlements): ACCT-R-13 mount settlement approval routes + close entity-scope IDOR",
+   "mergedAt": "2026-07-25T20:20:45Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3520,
+   "title": "docs(accounting): ACCT-R-09/10/14/22/26 BUILT honesty round-2",
+   "mergedAt": "2026-07-25T20:20:55Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3517,
+   "title": "ACCT-F05 [HOLD]: bank feed JE match honesty guard + scoreboard FAIL",
+   "mergedAt": "2026-07-25T18:34:17Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3515,
+   "title": "migrations: held-registry applied_on_prod refresh (Neon ledger truth)",
+   "mergedAt": "2026-07-25T22:57:54Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3514,
+   "title": "guard(banking): BANK-ECON-04 recon RLS — Neon-applied 202608030000 (schema-live)",
+   "mergedAt": "2026-07-25T19:43:53Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3513,
+   "title": "ACCT-F02: JE-type picker — Neon-applied 202607960000 (schema-live)",
+   "mergedAt": "2026-07-25T19:05:48Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3512,
+   "title": "[HOLD] BANK-LINK-01: bank_transactions counterparty vendor/customer FK",
+   "mergedAt": "2026-07-25T17:35:46Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3511,
+   "title": "ACCT-F07+F08: LINK-04/05 — Neon-applied (schema-live, not PASS)",
+   "mergedAt": "2026-07-25T19:08:38Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3510,
+   "title": "docs(accounting): ACCT-CoA-ASYMMETRY read-only grouped diff report",
+   "mergedAt": "2026-07-25T19:43:44Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3509,
+   "title": "feat(banking): BANK-MODULE-DOD structural sweep matrix + guard 1477 [HOLD]",
+   "mergedAt": "2026-07-25T19:43:31Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3508,
+   "title": "[HOLD] ACCT-SURF-DOD-SWEEP: structural matrix + guard 1476",
+   "mergedAt": "2026-07-25T19:26:12Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3507,
+   "title": "[HOLD] guard(banking): BANK-ECON-03 transfer path wired + honest transfers=0 FAIL (verify-step 1481)",
+   "mergedAt": "2026-07-25T19:01:21Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3506,
+   "title": "[HOLD] guard(banking): BANK-ECON-02 poster path wired + honest density FAIL (verify-step 1480)",
+   "mergedAt": "2026-07-25T17:44:35Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3505,
+   "title": "[HOLD] ACCT-F04: strengthen bill reverse-density guard + bill→claim drill",
+   "mergedAt": "2026-07-25T17:35:01Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3504,
+   "title": "[HOLD] docs(governance): Law of the Land complete index + autoload pointers",
+   "mergedAt": "2026-07-25T19:07:17Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3503,
+   "title": "[HOLD] ACCT-F03: detail_types TEXT subtype owner lock",
+   "mergedAt": "2026-07-25T19:43:09Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3502,
+   "title": "[HOLD] BANK-ECON-05/GATE-01: active cash-bind keep-guard",
+   "mergedAt": "2026-07-25T17:34:09Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3501,
+   "title": "[HOLD] ACCT-F11: VERIFY-1/2 wizard picker matrix",
+   "mergedAt": "2026-07-25T17:35:09Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3500,
+   "title": "[HOLD] docs(accounting): ACCT-F10 map thin HOLD PRs #3423-#3429 to manifest",
+   "mergedAt": "2026-07-25T17:26:21Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3499,
+   "title": "[HOLD] BANK-00: ranked banking FAIL registry + guard",
+   "mergedAt": "2026-07-25T17:26:13Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3498,
+   "title": "[HOLD] ACCT-F01/F06: projection flags OFF by owner design",
+   "mergedAt": "2026-07-25T17:26:06Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3494,
+   "title": "[HOLD-FOR-JORGE] fix(migrations): held registry misreported 79 applied migrations as unapplied",
+   "mergedAt": "2026-07-25T17:33:44Z",
+   "category": "HOLD"
+  },
   {
    "number": 3490,
    "title": "[HOLD] LST-F03: payment_terms/posting_templates writable routes + consumer remap",
@@ -16797,6 +17264,12 @@
    "number": 3485,
    "title": "[HOLD] ACCT-08: ACCT-SURF-09 Factoring/Escrow/Settlements cross-link DoD guard",
    "mergedAt": "2026-07-25T16:23:29Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3484,
+   "title": "[HOLD] ACCT-08: ACCT-SURF-08 Period/Audit/Lineage deep DoD guard",
+   "mergedAt": "2026-07-25T16:51:36Z",
    "category": "HOLD"
   },
   {
