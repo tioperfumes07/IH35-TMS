@@ -36,13 +36,6 @@
       "file": "202609030000_mnt_econ_01_parts_purchase_gl_hop.sql",
       "reason": "[HOLD-FOR-JORGE - TIER 1 FINANCIAL] MNT-ECON-01 parts purchase A/P+GL hop. Registers PARTS_PURCHASE_GL_POSTING_ENABLED (lib.feature_flags, default_enabled=FALSE); widens both CoA-role CHECKs as a TRUE SUPERSET to admit role maintenance_parts_expense; creates accounting.parts_purchase_postings linkage ledger (FORCE RLS, REVOKE DELETE). Creates NO catalogs.accounts row and seeds NO chart_of_accounts_roles mapping. No GL math — poster reuses createBill + postSourceTransaction + createJournalEntry.",
       "added_at": "2026-07-26",
-      "block": "MNT-ECON-01",
-      "applied_on_prod": false
-    },
-    {
-      "file": "202609030000_mnt_econ_01_parts_purchase_gl_hop.sql",
-      "reason": "[HOLD-FOR-JORGE - TIER 1 FINANCIAL] MNT-ECON-01 parts purchase A/P+GL hop. Registers PARTS_PURCHASE_GL_POSTING_ENABLED (lib.feature_flags, default_enabled=FALSE); widens both CoA-role CHECKs as a TRUE SUPERSET to admit role maintenance_parts_expense; creates accounting.parts_purchase_postings linkage ledger (FORCE RLS, REVOKE DELETE). Creates NO catalogs.accounts row and seeds NO chart_of_accounts_roles mapping. No GL math — poster reuses createBill + postSourceTransaction + createJournalEntry.",
-      "added_at": "2026-07-26",
       "block": "MNT-ECON-01"
     }
   ],
