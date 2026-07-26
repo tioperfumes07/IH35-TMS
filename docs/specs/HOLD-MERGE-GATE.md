@@ -1,80 +1,30 @@
-# HOLD-MERGE-GATE
+# HOLD-MERGE-GATE (updated 2026-07-26)
 
-Root-cause control for the **2026-06-20 near-miss**: a leftover background `gh pr merge` loop
-title-blindly merged 5 `[HOLD-FOR-JORGE]` PRs (#1266–#1270) that were meant to stay open for Jorge.
-Impact was zero only because they were design docs, not posting code. **A title is a request, not a
-control.** This gate is the control.
+## Owner ruling (2026-07-26)
 
-## Squash-inspection law (B-A5 / D1b, 2026-07-15)
+**`JORGE-APPROVED` is no longer required to pass this check.**
 
-The gate classifies **every file** in the PR's `base..head` diff (`git diff --name-only` + per-file
-diff). A PR title, "non-financial" claim, or agent/block classification **never** neutralizes a
-protected file. A financial migration or `accounting.` / `catalogs.` / `mdata.` / `banking.` /
-`driver_finance.` write **cannot ride into `main` inside an otherwise-benign squash**. Planted
-self-tests lock this: mixed frontend + sneaky migration / schema-write → **FAIL** without
-`JORGE-APPROVED`.
+Jorge is not a PR reviewer. Money / product questions must be answered **before coding** (block invent / dispatch inventory). See `docs/specs/PRE-BLOCK-OWNER-QUESTIONS-LAW-2026-07-26.md`.
 
-## What it does
-`scripts/verify-hold-merge-gate.mjs` runs as the CI job **`hold-merge-gate`**
-(`.github/workflows/hold-merge-gate.yml`) on every pull request. It marks a PR **PROTECTED** if ANY of:
+Devin merges when CI is green. Agents never invent unanswered policy mid-PR.
 
-- the **title** contains `[HOLD-FOR-JORGE]` (case-insensitive), OR
-- a changed file matches a **protected path glob**: `**/*posting*.ts`, `**/*posting*.mjs`,
-  `**/held-migrations.json`, OR
-- a changed **migration** (`*.sql` / `**/migrations/**`) is **NOT provably additive-new-table**
-  (CREATE-TABLE-only neutral, 2026-06-20). A migration is **neutral** only if it `CREATE TABLE`s a new
-  table and does nothing dangerous — **no** `ALTER TABLE` / `DROP` / `DELETE FROM` / `TRUNCATE` /
-  `UPDATE … SET`, **no** financial/accounting table reference (`accounting.*`, `payment`, `invoice`,
-  `bill`, `ledger`, `journal`, `posting`, `tax`, `gl_/ap_/ar_`), and every `ALTER TABLE` / `DROP POLICY` / `CREATE POLICY` / `CREATE INDEX` / `INSERT INTO` targets **only a
-  table created in the same migration** (so the standard RLS scaffolding — `ALTER … ENABLE ROW LEVEL
-  SECURITY`, the idempotent policy recreate, indexes — on the NEW table is allowed; the same op on an
-  EXISTING table, or an unresolvable/dynamic target, stays PROTECTED). Anything else stays **PROTECTED** —
-  conservative: if it can't be proven additive-new-table, it's protected, OR
-- a changed **backend accounting/driver-finance/banking/… `.ts`** file whose diff shows **GL-write markers**
-  (`INSERT INTO accounting.journal…`, `journal_entry_postings`, `payment_applications`, post/JE helpers),
-  OR
-- **any** changed file's **added** lines contain **financial-schema DML**
-  (`INSERT INTO` / `UPDATE` / `DELETE FROM` against `accounting.` / `catalogs.` / `mdata.` / `banking.` /
-  `driver_finance.`) — path-independent squash-inspection, OR
-- the diff **flips a `*_ENABLED` / `*_FLAG` / `FEATURE_*` from false/OFF → true/ON**.
+## What this job still does
 
-Verdict:
+1. **Classifies** PROTECTED vs neutral (title HOLD, migrations, financial writes, flag flips) — log only.
+2. **Fails hard (only remaining red)** if the PR introduces a **held migration** but `scripts/db-migrate.mjs` on the branch lacks the held-migration **prod firewall** (`shouldSkipHeldOnProd`). Label cannot bypass this (2026-07-12 incident class).
 
-| Case | Result |
-|---|---|
-| PROTECTED **and** label `JORGE-APPROVED` **absent** | **FAIL (red)** — blocks merge |
-| PROTECTED **and** label `JORGE-APPROVED` present | pass |
-| not PROTECTED | pass (neutral) |
+## What it no longer does
 
-Content-based detectors (GL markers, financial-schema writes, flag-flip) skip `*.md`, test files (`*.test.*`, `*.spec.*`,
-`__tests__/`), and the gate script's own fixtures, so prose/tests that merely *mention* a flag don't
-false-positive. The migration analyzer and `*posting*` / held-registry path globs still catch the dangerous cases
-regardless. The script self-tests its full decision table on every run (`--self-test`, incl. the
-CREATE-TABLE-only migration matrix **and** B-A5 squash-inspection planted failures).
+- Does **not** require `JORGE-APPROVED`
+- Does **not** block merge of financial/HOLD PRs for missing owner label
 
-## The one human step Jorge does (once, in the GitHub UI)
-1. **Make `hold-merge-gate` a REQUIRED status check** in branch protection on `main`
-   (Settings → Branches → `main` → Require status checks to pass → add `hold-merge-gate`).
-   Once required, a red `hold-merge-gate` **physically blocks merge** — the merge button and
-   `gh pr merge` both fail. This is what stops a generic merge loop.
-2. **Only Jorge applies the `JORGE-APPROVED` label**, by hand, after his Tier-1 ceremony — **never a
-   script or token in an unattended run.** Applying/removing the label re-runs the job (the workflow
-   triggers on `labeled`/`unlabeled`/`edited`), so the check flips green/red accordingly.
+## Workflow
 
-> Create the label once if it doesn't exist: `gh label create JORGE-APPROVED --color B60205 --description "Jorge-approved: clears hold-merge-gate after Tier-1 ceremony"`.
+`.github/workflows/hold-merge-gate.yml` still runs on every PR (required check stays green when firewall OK).
 
-## Honest limitation
-This gate stops **accidental / title-blind** merge loops and the merge button. It does **NOT** stop a
-script that *deliberately* applies `JORGE-APPROVED` using Jorge's token, nor an admin force-merge. So the
-standing operational rule still holds:
+## History
 
-- **Kill all background merge-sweepers; never run a write-token `gh pr merge` loop during a HOLD window.**
-- The label is a **human** act. Don't automate it.
-
-## Verifying the gate (GUARD, before Jorge marks it required)
-1. Open a throwaway PR titled `[HOLD-FOR-JORGE] gate test` touching a dummy docs file →
-   `hold-merge-gate` goes **RED** → `gh pr merge` on it **fails**.
-2. Apply the `JORGE-APPROVED` label → the check re-runs and goes **GREEN**.
-3. A normal non-financial PR → check is **neutral/green**. Close the test PR.
-4. Planted proof (local): `npm run verify:hold-merge-gate:self-test` — mixed non-financial title +
-   financial migration / schema-write cases must print `FAIL` → overall self-test PASS.
+- 2026-06-20: title-blind HOLD merge near-miss → label gate created  
+- 2026-06-08 #815: self-merged financial migration  
+- 2026-07-12: held migration without firewall  
+- **2026-07-26:** owner removes label requirement; front-load questions instead  
