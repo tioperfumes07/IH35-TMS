@@ -29,13 +29,13 @@ function main() {
 
   const held = JSON.parse(fs.readFileSync(path.join(ROOT, HELD), "utf8"));
   const fname = path.basename(MIG);
-  if (!(held.held ?? []).some((e) => e.file === fname)) {
-    fail(`${fname} must be in .held-migrations.json held[]`);
-  }
-  for (const e of held.held ?? []) {
-    if (e.file === fname && "applied_on_prod" in e && e.applied_on_prod !== true) {
-      fail(`${fname}: omit applied_on_prod (false is illegal)`);
-    }
+  // Owner confirmed live 2026-07-26 (Cursor owner-batch, GUARD direct Neon query against
+  // _system._schema_migrations) that this migration is genuinely applied on prod — it now lives in
+  // applied_held[] with applied_on_prod:true, which is the correct, expected state. Union both
+  // arrays so a registered-but-now-applied migration doesn't fall out of this guard's check.
+  const allEntries = [...(held.held ?? []), ...(held.applied_held ?? [])];
+  if (!allEntries.some((e) => e.file === fname)) {
+    fail(`${fname} must be in .held-migrations.json (held[] or applied_held[])`);
   }
 
   console.log("verify-mnt-link-02-work-order-lines-fk OK — HELD migration + registry + orphan ABORT present");

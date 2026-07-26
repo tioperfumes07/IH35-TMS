@@ -62,18 +62,18 @@ export const EXPECTED_HELD = [
   // SAF-DOM-02 — brand-new on main; never applied. Leaves this list only after owner Neon-applies +
   // ledger-backfill + GUARD re-prove. Apply-order: stop-write trigger must not land before SAF-B28 PATCH.
   "202609130000_saf_dom_02_company_violation_jsonb_archive.sql",
-  // SWEEP-C2 / BANK-DOM-01 — on main via #3577; genuinely unapplied on prod until Neon-apply.
+  // SWEEP-C2 half 1 of 2 — on main via #3577; genuinely unapplied on prod until Neon-apply.
+  // (Half 2, 202609020010, moved to applied_held 2026-07-26 — Cursor owner-batch apply confirmed
+  // directly against _system._schema_migrations; see #3603.)
   "202609020000_c2_maintenance_position_history_canonical.sql",
-  "202609020010_c2_banking_reconciliation_matches_canonical.sql",
   // SWEEP-C11 driver sub-catalog split-brain DB-level write lock (renumbered off 202609030000 —
   // that slot is MNT-ECON-01 on #3581).
   "202609040000_sweep_c11_driver_subcatalog_split_brain_lock.sql",
   // MNT-ECON-01
   "202609030000_mnt_econ_01_parts_purchase_gl_hop.sql",
-  // MNT-ECON-04
+  // MNT-ECON-04 (#3582) — genuinely applied on prod per Cursor owner-batch 2026-07-26, but that PR
+  // is already merged and this registry stamp is out of scope for this PR (owner directive: skip).
   "202609050000_mnt_econ_04_warranty_reimburse_gl_hop.sql",
-  // MNT-LINK-02
-  "202609070000_mnt_link_02_work_order_lines_wo_fk.sql",
 ];
 
 /**
