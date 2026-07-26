@@ -6,6 +6,7 @@ import { PageHeader } from "../../../components/layout/PageHeader";
 import { Button } from "../../../components/Button";
 import { fetchAuditReport, type AuditReportParams, type AuditReportRow } from "../../../api/auditReports";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 
 const PAGE_SIZE = 100;
 
@@ -175,10 +176,18 @@ export function AuditReportPage({ title, subtitle, endpoint, extraParams, showMo
               )}
               {showDriverFilter && (
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-gray-500">Driver ID</label>
-                  <input type="text" value={driverFilter} placeholder="UUID"
-                    onChange={(e) => { setDriverFilter(e.target.value); setOffset(0); }}
-                    className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
+                  <label className="text-xs text-gray-500">Driver</label>
+                  {/* C1 PICKER LAW: was a raw-UUID box. It sits on an audit REPORT, but a driver is a
+                      first-class entity with a canonical roster, so it is NOT an opaque forensic id
+                      and does not qualify for the admin-audit exemption. FILTER → allowCreate={false}. */}
+                  <EntityPicker
+                    kind="driver"
+                    operatingCompanyId={companyId}
+                    value={driverFilter || null}
+                    onChange={(next) => { setDriverFilter(next ?? ""); setOffset(0); }}
+                    allowCreate={false}
+                    placeholder="All drivers"
+                  />
                 </div>
               )}
             </div>

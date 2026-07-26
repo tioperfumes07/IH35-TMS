@@ -14,6 +14,7 @@ import { useListState } from "../../components/list-state";
 import { useSafetyUiContext } from "./SafetyLayout";
 import { SafetyEventsTable } from "./components/SafetyEventsTable";
 import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 
 type Props = {
   operatingCompanyId: string;
@@ -496,17 +497,22 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             <option value="driver">Driver</option>
             <option value="unit">Unit</option>
           </select>
-          <input
-            value={draft.subject_driver_id}
-            onChange={(event) => setDraft((prev) => ({ ...prev, subject_driver_id: event.target.value }))}
-            placeholder="Subject driver UUID (optional)"
-            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+          {/* C1 PICKER LAW: both were raw-UUID boxes. A safety event whose subject FK is blank is a
+              DOT-reportable record attached to no driver and no unit — the exact linkage failure the
+              picker law exists to stop. */}
+          <EntityPicker
+            kind="driver"
+            operatingCompanyId={operatingCompanyId}
+            value={draft.subject_driver_id || null}
+            onChange={(next) => setDraft((prev) => ({ ...prev, subject_driver_id: next ?? "" }))}
+            placeholder="Subject driver (optional)"
           />
-          <input
-            value={draft.subject_unit_id}
-            onChange={(event) => setDraft((prev) => ({ ...prev, subject_unit_id: event.target.value }))}
-            placeholder="Subject unit UUID (optional)"
-            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+          <EntityPicker
+            kind="unit"
+            operatingCompanyId={operatingCompanyId}
+            value={draft.subject_unit_id || null}
+            onChange={(next) => setDraft((prev) => ({ ...prev, subject_unit_id: next ?? "" }))}
+            placeholder="Subject unit (optional)"
           />
           <label className="text-xs font-medium text-gray-700 sm:col-span-2">Location (DOT 390.15)</label>
           <input

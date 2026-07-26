@@ -15,6 +15,7 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 
 type ClaimDraft = {
   part_description: string;
@@ -156,12 +157,19 @@ export function WarrantyClaimsPage() {
       <div className="grid gap-3 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-[1fr_auto]">
         <label className="text-xs text-gray-700">
           Detect from work order
-          <input
-            className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
-            placeholder="Work order UUID"
-            value={detectWoId}
-            onChange={(e) => setDetectWoId(e.target.value)}
-            data-testid="warranty-detect-wo-input"
+          {/* C1 PICKER LAW: was a raw-UUID box. This is a LOOKUP action (scan a completed WO for
+              warranty-eligible parts), so allowCreate={false} — a work order is a transaction with
+              its own wide wizard and is never conjured from a dropdown. */}
+          <EntityPicker
+            kind="work_order"
+            operatingCompanyId={companyId}
+            value={detectWoId || null}
+            onChange={(next) => setDetectWoId(next ?? "")}
+            allowCreate={false}
+            placeholder="Select work order"
+            className="mt-1"
+            dataField="warranty-detect-wo-input"
+            dataTestId="warranty-detect-wo-input"
           />
         </label>
         <div className="self-end">
