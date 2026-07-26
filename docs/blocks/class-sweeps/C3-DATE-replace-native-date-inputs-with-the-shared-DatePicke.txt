@@ -1,0 +1,28 @@
+================================================================================
+BLOCK C3 — DATE: replace native date inputs with the shared DatePicker
+LANE: Claude Coder      GATE: self-merge on green (UI-only)
+DEFECT CLASS (registry): ~20 native type="date"/"datetime-local" across border-crossing
+  (WizardStep2 :34-39), tasks, admin, legal, audit, safety (HOS/events), accounting
+  (FactoringDetail). SCOPE: app-wide.
+FIX PRIMITIVE: the shared <DatePicker>/<DateTimePicker> (QBO-style calendar), timezone-correct.
+
+GUARD-FIRST (L7): NNNN-no-native-date-inputs.mjs FAILS on type="date"|"datetime-local" in a form
+  input (allowlist: none expected). selftest plants one native date input.
+
+8-LAYER ACCEPTANCE
+L1 .. N/A (no schema). L2 .. N/A (no money). 
+L3 API/BACKEND .... [+] Confirm the submitted value is an ISO/UTC contract the server expects; no
+   client-locale string leaks into a date column (round-trip test).
+L4 UI/UX .......... [DoD] One DatePicker everywhere; locale (EN/ES) + timezone correct (Laredo↔MX);
+   empty/invalid states; keyboard + ARIA (L4 accessibility [+]).
+L5 .. N/A (presentation). 
+L6 SECURITY/OBS ... N/A (no PII/URL change). 
+L7 TEST/CI ........ [DoD] guard + selftest. [+] one e2e proving a picked date persists + renders
+   correctly across timezone.
+L8 CLOSURE ........ Guard green; native-date count = 0; VERIFY 1 (chrome) + locale correct.
+
+DoD/VERIFY: A B · VERIFY 1,7. LINKAGE LAW: N/A(presentation-only, no cross-module record).
+EVIDENCE: ROOT CAUSE native dates / FIX shared DatePicker / GUARD NNNN / LIVE PROOF picked date
+  persists+renders TZ-correct / REMAINING none.
+
+================================================================================

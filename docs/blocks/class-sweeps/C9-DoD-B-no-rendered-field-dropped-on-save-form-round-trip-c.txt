@@ -1,0 +1,34 @@
+================================================================================
+BLOCK C9 — DoD-B: no rendered field dropped on save (form round-trip contract)
+LANE: Claude Coder (+ HELD where a missing column/endpoint is needed)
+GATE: HELD if schema (JORGE-APPROVED + owner Neon-apply); else self-merge on green
+DEFECT CLASS (registry): CONFIRMED — Book Load (5 equip checkboxes + pay rate + factoring), Parts
+  master (vendor_default/reorder), Warranty (claim_number), POD reject (reason), SAF-B04 (2 no-op
+  comboboxes + cost lines). SCOPE: per-form, guard/test-enumerated app-wide.
+FIX PRIMITIVE: a form field-to-payload round-trip contract — each rendered field must appear in the
+  submit payload AND survive reload; add the missing column/endpoint where the field has nowhere to land.
+
+GUARD-FIRST (L7): NNNN-form-field-roundtrip.test — for each covered form, assert every rendered
+  controlled field is present in the submit payload and re-reads after reload. selftest plants a
+  rendered-but-dropped field.
+
+8-LAYER ACCEPTANCE
+L1 DATA/SCHEMA .... [DoD/if needed] add the missing column (e.g. parts_inventory.reorder_threshold,
+   vendor_default; warranty.claim_number) — migration forward-only/idempotent/ledgered; not a
+   hardcoded NULL/0.
+L2 .. [+] where a dropped field is a money field (pay rate, factoring), the persisted value flows to
+   the correct economic object (ties to C6). Else N/A.
+L3 API/BACKEND .... [+] endpoint accepts + validates the field; atomic with the parent write; typed.
+L4 UI/UX .......... [DoD] every rendered field is controlled AND in the payload AND reloads with the
+   saved value; no silent discard; EDIT can change what CREATE captured.
+L5 DOMAIN LINKAGE . [DoD] fields that ARE links (factoring company, vendor default) persist as FKs to
+   the canonical entity, both-way.
+L6 .. N/A (unless PII field — then no-log). 
+L7 TEST/CI ........ [DoD] the round-trip test per form (this IS the guard). [+] integration per form.
+L8 CLOSURE ........ Test green per form; reload shows every saved value; TRANSP + USMCA; DoD B.
+
+DoD/VERIFY: A B C D(money fields) · VERIFY 2,6. LINKAGE LAW §3/§4 (link-fields as FKs).
+EVIDENCE: ROOT CAUSE dropped fields / FIX round-trip contract + missing columns / GUARD NNNN test /
+  LIVE PROOF create→reload shows value TRANSP+USMCA / REMAINING per-form list.
+
+================================================================================
