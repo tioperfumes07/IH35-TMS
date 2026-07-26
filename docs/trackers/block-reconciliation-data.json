@@ -1,6 +1,6 @@
 {
  "date": "2026-07-26",
- "generated_at_iso": "2026-07-26T19:40:33.275Z",
+ "generated_at_iso": "2026-07-26T20:07:21.164Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 28,
@@ -13448,10 +13448,22 @@
    "branch": "hold/bank-dom-02-acct-dom-03-closed-immutability"
   },
   {
+   "number": 3587,
+   "title": "C5 FIX: canonical load navigation — kill the /dispatch/loads/:id facade (guard 1555 GREEN)",
+   "mergedAt": "2026-07-26T19:52:00Z",
+   "branch": "sweep/c5-canonical-load-nav-fix"
+  },
+  {
    "number": 3585,
    "title": "fix(guard): backfill 1553 + 1580 into the claim registry — 1599 was reddening main",
    "mergedAt": "2026-07-26T05:01:45Z",
    "branch": "fix/backfill-claimed-numbers"
+  },
+  {
+   "number": 3584,
+   "title": "fix(security): archive the unauthenticated deep-health route (+ verify-step 1590)",
+   "mergedAt": "2026-07-26T20:06:12Z",
+   "branch": "fix/secure-health-deep-unauthenticated"
   },
   {
    "number": 3583,
@@ -16974,18 +16986,6 @@
    "title": "fix(ci): factoring-balance JE dates use companyBusinessDate (UTC midnight flake)",
    "mergedAt": "2026-07-20T01:48:48Z",
    "branch": "ops/fix-factoring-balance-asof-flake"
-  },
-  {
-   "number": 2779,
-   "title": "fix(reports): sync fuel reconciliation unmatched tabs to URL",
-   "mergedAt": "2026-07-20T02:15:20Z",
-   "branch": "ops/fuel-recon-tab-url"
-  },
-  {
-   "number": 2778,
-   "title": "fix(dispatch): Close instead of Cancel Load on unsaved drawer (d-02)",
-   "mergedAt": "2026-07-20T02:53:10Z",
-   "branch": "ops/cancel-load-draft-close"
   }
  ],
  "merged_pr_total": 3000,

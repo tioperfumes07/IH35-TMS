@@ -515,7 +515,13 @@ export function WorkOrderDetailPage() {
         <Button type="button" data-testid="wo-edit-btn" disabled={!editTarget} onClick={() => setEditing(true)}>
           Edit
         </Button>
-        <Button type="button" variant="secondary" disabled={invoiceMismatch || !id}>
+        <Button
+          type="button"
+          variant="secondary"
+          data-testid="wo-save-header-btn"
+          disabled={invoiceMismatch || !id || !editTarget}
+          onClick={() => setEditing(true)}
+        >
           Save header
         </Button>
         <Button type="button" variant="secondary" disabled={!id || !companyId} onClick={() => setCreateBillOpen(true)}>
