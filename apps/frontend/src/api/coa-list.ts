@@ -118,3 +118,49 @@ export function deactivateCatalogAccount(accountId: string) {
     { method: "POST", body: {} }
   );
 }
+
+// ── ACCT-R-03 — real Chart-of-Accounts merge ────────────────────────────────────────────────────
+// The COA list's "Merge accounts" action used to loop deactivateCatalogAccount over the sources, so
+// child accounts and every config pointer kept designating an archived account. This calls the real
+// merge endpoint (blueprint MUST 3.18.4.3): reparent children, remount config pointers, write the
+// append-only merge record, archive the source. Historical postings stay on the source by design.
+export const COA_MERGE_REASON_MIN_LENGTH = 20;
+
+export type CoaMergeSourceResult = {
+  merge_record_id: string;
+  source_account_id: string;
+  source_account_number: string | null;
+  source_account_name: string | null;
+  reparented_child_account_count: number;
+  remounted_reference_counts: Record<string, number>;
+  deactivated_at: string | null;
+};
+
+export type CoaMergeResponse = {
+  target_account_id: string;
+  operating_company_id: string;
+  migrate_historical_postings: boolean;
+  merged: CoaMergeSourceResult[];
+};
+
+export function mergeCatalogAccounts(input: {
+  targetAccountId: string;
+  sourceAccountIds: string[];
+  operatingCompanyId: string;
+  reason: string;
+}) {
+  return apiRequest<CoaMergeResponse>(
+    `/api/v1/catalogs/accounts/${encodeURIComponent(input.targetAccountId)}/merge`,
+    {
+      method: "POST",
+      body: {
+        source_account_ids: input.sourceAccountIds,
+        reason: input.reason,
+        // Blueprint MUST 3.18.7.1 — history is immutable. The server refuses `true`; the UI never
+        // offers it, so the two can't drift into a false promise.
+        migrate_historical_postings: false,
+        operating_company_id: input.operatingCompanyId,
+      },
+    }
+  );
+}

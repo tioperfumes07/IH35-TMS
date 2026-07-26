@@ -54,6 +54,9 @@ export const EXPECTED_HELD = [
   // prod, present in BOTH _system._schema_migrations and ih35_migrations.applied_migrations, so this
   // PR moves it to applied_held. It left the list the way the charter allows, not by weakening a check.
   "202608120000_item5a_demo_purge_recursive_cascade.sql",
+  // ACCT-R-03 account_merge_records (#3526). BUILD-AND-HOLD — not Neon-applied; must stay in held[]
+  // until owner applies 202608060000 and GUARD re-proves the ledger row.
+  "202608060000_acct_r03_catalogs_account_merge_records.sql",
 ];
 
 /**

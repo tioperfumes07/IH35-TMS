@@ -110,6 +110,7 @@ const KNOWN_PHANTOM_DEBT = [
   { rel: "mdata.qbo_ap_bill_payments", why: "[HOLD-FOR-JORGE] forward-ref to HELD 202607860000_qbo_ap_bill_payments_inbound_mirror.sql; table+puller ship same PR; owner Neon-applies then merge. DELETE THIS ENTRY when migration applied on prod." },
   { rel: "mdata.qbo_purchases", why: "[HOLD-FOR-JORGE] forward-ref to HELD 202607880000_qbo_purchases_inbound_mirror.sql; table+puller same PR; owner Neon-applies then merge. DELETE THIS ENTRY when applied on prod." },
   { rel: "mdata.qbo_ar_payments", why: "[HOLD-FOR-JORGE] forward-ref to HELD 202607920000_qbo_ar_payments_inbound_mirror.sql; table+puller same PR; owner Neon-applies then merge. DELETE THIS ENTRY when applied on prod." },
+  { rel: "catalogs.account_merge_records", why: "[HOLD-FOR-JORGE] forward-ref — ACCT-R-03 CoA merge audit table ships in HELD migration 202608060000_acct_r03_catalogs_account_merge_records.sql (not yet Neon-applied). DELETE THIS ENTRY when migration is applied on prod." },
 ];
 const KNOWN = new Map(KNOWN_PHANTOM_DEBT.map((d) => [d.rel, d.why]));
 

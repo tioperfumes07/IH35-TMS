@@ -2,7 +2,7 @@
 
 **Packet:** ACCT-SURF-DOD-SWEEP · **FINDING:** SURF-01..09 · **Lane:** FINANCIAL-HOLD  
 **Machine source:** `docs/trackers/ACCT-SURF-DOD-SWEEP-MATRIX-2026-07-25.json`  
-**Manifest binding:** `docs/module-completion/accounting.json` — **8 of 25** (no status flips in this PR)  
+**Manifest binding:** `docs/module-completion/accounting.json` — **8 of 27** (no status flips in this PR)  
 **Surface map (frozen):** `docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md`  
 **Guard:** `scripts/verify-acct-surface-dod-sweep.mjs` · verify-step **1476**  
 **Desktop click-through (separate):** `~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md`
