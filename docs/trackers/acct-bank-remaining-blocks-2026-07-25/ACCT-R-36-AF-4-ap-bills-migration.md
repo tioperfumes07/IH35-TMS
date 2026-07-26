@@ -68,4 +68,4 @@ REMAINING: owner written decision required before build
 
 ---
 ## ALL-24-RULE COMPLIANCE
-Bound by `.cursor/rules/00–24` + dual-lane-never-idle + COMPLIANCE-STANDARD-2026-07-25.md. Cursor builds; Claude merges; no Neon-apply by agent; no flag flips without CPA; Rule 23 no money theater.
+Bound by `.cursor/rules/00–24` + dual-lane-never-idle + COMPLIANCE-STANDARD-2026-07-25.md. Cursor builds; Claude merges; no Neon-apply by agent; no flag flips without OWNER; Rule 23 no money theater.

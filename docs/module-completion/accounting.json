@@ -47,7 +47,7 @@
       ],
       "spec": "DoD VERIFY-6 \u00b7 Receive Payment",
       "status": "FAIL",
-      "evidence": "FAIL-BY-DESIGN (ACCT-F01/F06 record block 2026-07-25) \u2014 not a bug chase: payments=0 because QBO_AR_PAYMENTS_PROJECTION_ENABLED is OFF BY OWNER DESIGN (parallel books, reconcile-only; flags default OFF per Rule 13), not a code defect. Neon lucia 2026-07-25: payments=0 payment_applications=0; qbo_ar_payments=23830 (mirror populated); pull ON + sync_runs ar_payments_inbound_mirror success 23:12Z. The prior idle-in-transaction crash (Sentry IH35-TMS-PROD-25) is fixed + merged as #3433 (set-based INSERT\u2026SELECT in projectArPaymentsToLedger, qbo-ar-payments-puller.ts) \u2014 code-level anti-pattern absence re-verified by guard verify-projection-flags-off-by-design (step 1468). Stays FAIL until the owner opts in per-entity + CPA sign-off flips the flag ON; deploy-SHA ancestry / post-deploy live re-pull are UNVERIFIED \u2014 GUARD re-verify required.",
+      "evidence": "FAIL-BY-DESIGN (ACCT-F01/F06 record block 2026-07-25) \u2014 not a bug chase: payments=0 because QBO_AR_PAYMENTS_PROJECTION_ENABLED is OFF BY OWNER DESIGN (parallel books, reconcile-only; flags default OFF per Rule 13), not a code defect. Neon lucia 2026-07-25: payments=0 payment_applications=0; qbo_ar_payments=23830 (mirror populated); pull ON + sync_runs ar_payments_inbound_mirror success 23:12Z. The prior idle-in-transaction crash (Sentry IH35-TMS-PROD-25) is fixed + merged as #3433 (set-based INSERT\u2026SELECT in projectArPaymentsToLedger, qbo-ar-payments-puller.ts) \u2014 code-level anti-pattern absence re-verified by guard verify-projection-flags-off-by-design (step 1468). Stays FAIL until the owner opts in per-entity + OWNER sign-off flips the flag ON; deploy-SHA ancestry / post-deploy live re-pull are UNVERIFIED \u2014 GUARD re-verify required.",
       "pr": "#3433"
     },
     {
@@ -60,7 +60,7 @@
       ],
       "spec": "DoD VERIFY-6 \u00b7 Expense chain",
       "status": "FAIL",
-      "evidence": "FAIL-BY-DESIGN (ACCT-F01/F06 record block 2026-07-25) \u2014 not a bug chase: expenses=0 because QBO_EXPENSES_PROJECTION_ENABLED is OFF BY OWNER DESIGN (parallel books, reconcile-only; flags default OFF per Rule 13), not a code defect. Neon lucia 2026-07-25: expenses=0 expense_lines=0; qbo_purchases=27984 (mirror populated); pull ON + sync_runs qbo_purchases_inbound_mirror success\u00d72 last 23:25Z. The prior idle-in-transaction crash (Sentry IH35-TMS-PROD-25) is fixed + merged as #3433 (set-based INSERT\u2026SELECT in projectPurchasesToExpenses, qbo-purchases-puller.ts) \u2014 code-level anti-pattern absence re-verified by guard verify-projection-flags-off-by-design (step 1468). Stays FAIL until the owner opts in per-entity + CPA sign-off flips the flag ON; deploy-SHA ancestry / post-deploy live re-pull are UNVERIFIED \u2014 GUARD re-verify required.",
+      "evidence": "FAIL-BY-DESIGN (ACCT-F01/F06 record block 2026-07-25) \u2014 not a bug chase: expenses=0 because QBO_EXPENSES_PROJECTION_ENABLED is OFF BY OWNER DESIGN (parallel books, reconcile-only; flags default OFF per Rule 13), not a code defect. Neon lucia 2026-07-25: expenses=0 expense_lines=0; qbo_purchases=27984 (mirror populated); pull ON + sync_runs qbo_purchases_inbound_mirror success\u00d72 last 23:25Z. The prior idle-in-transaction crash (Sentry IH35-TMS-PROD-25) is fixed + merged as #3433 (set-based INSERT\u2026SELECT in projectPurchasesToExpenses, qbo-purchases-puller.ts) \u2014 code-level anti-pattern absence re-verified by guard verify-projection-flags-off-by-design (step 1468). Stays FAIL until the owner opts in per-entity + OWNER sign-off flips the flag ON; deploy-SHA ancestry / post-deploy live re-pull are UNVERIFIED \u2014 GUARD re-verify required.",
       "pr": "#3433"
     },
     {
@@ -72,7 +72,7 @@
       ],
       "spec": "Vendor credit apply/void",
       "status": "FAIL",
-      "evidence": "Neon lucia 2026-07-25: vendor_credits=0, vendor_credit_applications=0. Path was NOT usable: bills.vendor_id holds the QBO vendor id on 16211 of 16212 bills while a credit holds an mdata.vendors uuid, so the apply picker resolved 0 bills (mdata.vendors.qbo_vendor_id bridges 16211). Bridge + cross-vendor refusal + canonical VC numbering shipped and proven on a migrated throwaway Postgres (9 lifecycle assertions incl. planted-failure); guard verify-vendor-credit-live-path (step 1436). Still FAIL: no live prod row \u2014 PASS needs one operator credit applied after deploy, or owner acceptance of honest-empty. (ACCT-F01/F06 note 2026-07-25: this FAIL is a SEPARATE root cause from ECON-03/04 \u2014 the vendor-bridge picker gap, NOT the projection-flags-off design \u2014 do not conflate the two.)",
+      "evidence": "REWRITE 2026-07-25: real blocker is LINKAGE \u2014 canonical accounting.qbo_vendors vs RETIRE mdata.qbo_vendors. Neon lucia 2026-07-25: accounting.qbo_vendors=2744, mdata.qbo_vendors=2780 (\u0394\u224836 on retired mirror); vendor_credits=0 / applications=0. Block: migrate/backfill entity masters into accounting.qbo_vendors, repoint writers off RETIRE mdata.qbo_vendors, then one live vendor credit (owner Neon-applies backfill). NOT a projection-flag chase; flags stay OFF. OWNER decides. Fine GL decided \u2014 no re-ask. Dispatch: docs/trackers/acct-bank-remaining-blocks-2026-07-25/ACCT-ECON-05-vendor-credits-canonical-qbo-vendors.md",
       "pr": "#3426"
     },
     {
@@ -121,8 +121,8 @@
       ],
       "spec": "Law \u00a79 \u00b7 ACCT-F02",
       "status": "FAIL",
-      "evidence": "GUARD 2026-07-25 (§2b): 202607960000 in NEITHER prod ledger — genuinely UNAPPLIED; prod journal_entries has NO journal_entry_type_id (lucia). #3440 MERGED≠APPLIED. HOLD PR wires picker + verify-je-type-fk (step 1484); ACCT-LINK-01 stays FAIL until owner Neon-apply + inbound FK density re-measure.",
-      "pr": "HOLD — ACCT-F02"
+      "evidence": "GUARD 2026-07-25 (\u00a72b): 202607960000 in NEITHER prod ledger \u2014 genuinely UNAPPLIED; prod journal_entries has NO journal_entry_type_id (lucia). #3440 MERGED\u2260APPLIED. HOLD PR wires picker + verify-je-type-fk (step 1484); ACCT-LINK-01 stays FAIL until owner Neon-apply + inbound FK density re-measure.",
+      "pr": "HOLD \u2014 ACCT-F02"
     },
     {
       "id": "ACCT-LINK-02",
@@ -293,7 +293,7 @@
       "spec": "ACCT-F02 \u00b7 JE tab",
       "status": "FAIL",
       "evidence": "GUARD 2026-07-25: migration 202607960000 genuinely UNAPPLIED on prod (MERGED\u2260APPLIED). Picker wired on ManualJEModal (accounting + banking) reading/writing catalogs.journal_entry_types; reverse drill on JournalEntryDetailPage \u2192 /lists/accounting/journal-entry-types. Stays FAIL until Neon-apply proves FK + typed density on live JEs.",
-      "pr": "HOLD — ACCT-F02"
+      "pr": "HOLD \u2014 ACCT-F02"
     },
     {
       "id": "ACCT-SURF-06",
