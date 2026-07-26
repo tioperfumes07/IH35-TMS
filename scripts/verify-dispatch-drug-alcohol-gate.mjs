@@ -60,8 +60,19 @@ export function assertDispatchDrugAlcoholGate(sources) {
     problems.push(`${GATE}: Clearinghouse prohibition/resolution must use query_status record_found / clear (safety.clearinghouse_query_status_enum).`);
   }
   // The eligibility endpoint fetched the Clearinghouse answer and ignored it — same fail-open.
-  if (!/clearinghouseBlocked/.test(eligibility) || !/record_found/.test(eligibility)) {
-    problems.push(`${ELIGIBILITY}: driver dispatch-eligibility computes is_blocked without the Clearinghouse result, even though it already queries it — a prohibited driver reads as eligible.`);
+  //
+  // COMP-01 (2026-07-26) TIGHTENED, not relaxed: the original assertion only required that the
+  // endpoint mention the Clearinghouse result somewhere while computing is_blocked locally. Local
+  // recomputation was the root problem — it is how the endpoint ended up narrower than the gate in
+  // the first place. The endpoint now delegates to evaluateDriverDrugAlcoholStatus, the SAME
+  // evaluator the gate enforces with, so the assertion is on delegation. The Clearinghouse content
+  // itself is still pinned above, on the gate file that owns the evaluator (query_status
+  // record_found / clear), so nothing that was covered has stopped being covered.
+  if (!/evaluateDriverDrugAlcoholStatus/.test(eligibility)) {
+    problems.push(`${ELIGIBILITY}: driver dispatch-eligibility does not derive is_blocked from evaluateDriverDrugAlcoholStatus — a locally recomputed verdict drifts from the gate, and a prohibited driver reads as eligible.`);
+  }
+  if (/\bconst\s+isBlocked\s*=\s*testBlocked\b/.test(eligibility)) {
+    problems.push(`${ELIGIBILITY}: is_blocked is being recomputed locally from the latest drug test again — that is exactly the narrower copy COMP-01 removed.`);
   }
 
   // 1. The blocking reasons exist and are actually pushed.
@@ -137,9 +148,20 @@ if (SELFTEST) {
     "does not read safety.clearinghouse_query"
   );
   expectCaught(
-    "eligibility-ignores-clearinghouse-again",
-    { ...live, [ELIGIBILITY]: live[ELIGIBILITY].split("clearinghouseBlocked").join("false /* ignored */") },
-    "computes is_blocked without the Clearinghouse result"
+    "eligibility-stops-delegating-to-the-shared-evaluator",
+    { ...live, [ELIGIBILITY]: live[ELIGIBILITY].split("evaluateDriverDrugAlcoholStatus").join("someLocalRecompute") },
+    "does not derive is_blocked from evaluateDriverDrugAlcoholStatus"
+  );
+  expectCaught(
+    "eligibility-recomputes-is-blocked-locally-again",
+    {
+      ...live,
+      [ELIGIBILITY]: live[ELIGIBILITY].replace(
+        "const clearinghouseBlocked =",
+        "const isBlocked = testBlocked || false;\n      const clearinghouseBlocked ="
+      ),
+    },
+    "recomputed locally from the latest drug test again"
   );
   expectCaught(
     "second-table-dropped",
@@ -185,7 +207,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 9 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 10 planted defects caught, live sources clean`);
   process.exit(0);
 }
 

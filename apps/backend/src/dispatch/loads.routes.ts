@@ -25,6 +25,10 @@ import { detectAssetCoverageGap } from "../insurance/coverage-gap.service.js";
 import { countActiveDispatchLoads, countInTransitDispatchLoads } from "./active-loads-count.js";
 import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+// COMP-01: the dispatch driver-eligibility endpoint answers the same question the qualification gate
+// enforces, so it must answer it with the same code, not its own narrower copy.
+import { evaluateDriverDrugAlcoholStatus } from "./driver-qualification.service.js";
+import type { PoolClient } from "pg";
 
 // Book Load §C relocates several stop fields to hidden, react-hook-form-registered <input>s
 // (BookLoadStopsSection.tsx). RHF reads a hidden input's value as a STRING ("" when empty), so
@@ -960,8 +964,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       );
 
       const latestTest = latestTestRes.rows[0] ?? null;
-      const blockedResults = new Set(["positive", "refusal", "adulterated", "substituted"]);
-      const testBlocked = latestTest ? blockedResults.has(String(latestTest.result)) : false;
+      const latestClearinghouse = latestClearinghouseRes.rows[0] ?? null;
 
       // SAF-F07-CH: this endpoint already FETCHED the latest Clearinghouse query above and then
       // computed is_blocked from the drug test ALONE — so a driver prohibited by the Clearinghouse
@@ -969,20 +972,28 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       // in our own test tables) was reported as eligible. The answer was on the payload the whole
       // time; nothing read it. `pending`/`error` are not prohibitions — a query that has not returned
       // or that failed is not evidence of a violation.
-      const latestClearinghouse = latestClearinghouseRes.rows[0] ?? null;
-      const clearinghouseBlocked = String(latestClearinghouse?.query_status ?? "") === "record_found";
-
-      const isBlocked = testBlocked || clearinghouseBlocked;
-      const blockReason = testBlocked
-        ? `drug_test_${String(latestTest?.result ?? "unknown")}`
-        : clearinghouseBlocked
-          ? "clearinghouse_record_found"
-          : null;
+      //
+      // COMP-01: is_blocked is no longer computed here at all. It now comes from
+      // evaluateDriverDrugAlcoholStatus — the SAME code the dispatch qualification gate enforces with
+      // — so this endpoint can never again report "eligible" for a driver the gate would refuse. The
+      // old local computation read the LATEST safety.drug_test row only: it missed an unresolved
+      // violation that a later routine negative had superseded (a routine negative does not end a
+      // §382.501 prohibition), and it was blind to both safety.da_test_records and
+      // compliance.drug_alcohol_test_results. `latestTest` / `latest_clearinghouse_query` stay on the
+      // payload unchanged — they are display context, never the verdict.
+      const daStatus = await evaluateDriverDrugAlcoholStatus(client as unknown as PoolClient, {
+        driverId: params.data.driver_id,
+        operatingCompanyId,
+      });
+      const clearinghouseBlocked = daStatus.clearinghouse_prohibited_since !== null;
 
       return {
         driver_id: params.data.driver_id,
-        is_blocked: isBlocked,
-        block_reason: blockReason,
+        is_blocked: daStatus.is_blocked,
+        block_reason: daStatus.block_reason,
+        // Which of the three live D&A result tables grounded the driver — audit trail for the
+        // dispatcher and for a DOT reviewer. Null when the block is Clearinghouse-only.
+        block_source: daStatus.violation?.violation_source ?? (clearinghouseBlocked ? "safety.clearinghouse_query" : null),
         latest_test: latestTest,
         latest_random_pool: latestPoolRes.rows[0] ?? null,
         latest_clearinghouse_query: latestClearinghouse,
