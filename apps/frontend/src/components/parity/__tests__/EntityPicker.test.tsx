@@ -1,0 +1,147 @@
+/**
+ * C1 — runtime proof of the picker law for the shared EntityPicker.
+ *
+ * The guard (scripts/verify-picker-law-no-raw-uuid.mjs) proves statically that no raw-UUID input
+ * survives and that the registry declares canonical read == write. These tests prove the BEHAVIOUR
+ * the guard can only assert the shape of:
+ *   - the roster is read company-scoped from the canonical list call;
+ *   - inline "+ Create ___" is the FIRST ROW INSIDE the dropdown, present before any keystroke;
+ *   - picking an option hands the parent the CANONICAL ID, not the label the operator saw;
+ *   - a filter (allowCreate={false}) shows no create row;
+ *   - a kind that refuses inline create (a transaction) shows no create row even by default;
+ *   - a value that is not in the roster stays visible instead of silently blanking.
+ */
+import { describe, expect, it, vi, beforeEach } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { EntityPicker } from "../EntityPicker";
+
+const listDrivers = vi.fn();
+const listLoads = vi.fn();
+
+vi.mock("../../../api/mdata", () => ({
+  listDrivers: (...args: unknown[]) => listDrivers(...args),
+  listUnits: vi.fn().mockResolvedValue({ units: [] }),
+  listVendors: vi.fn().mockResolvedValue({ vendors: [] }),
+}));
+vi.mock("../../../api/loads", () => ({ listLoads: (...args: unknown[]) => listLoads(...args) }));
+vi.mock("../../../api/maintenance", () => ({ listWorkOrders: vi.fn().mockResolvedValue({ work_orders: [] }) }));
+vi.mock("../../../api/insurance", () => ({ listInsurancePolicies: vi.fn().mockResolvedValue({ policies: [] }) }));
+vi.mock("../../../api/accounting", () => ({ listFactoringAdvances: vi.fn().mockResolvedValue({ rows: [] }) }));
+
+// The create surfaces are heavyweight real forms; C1's contract is only that the picker DELEGATES
+// to them, so they are stubbed to a marker. The guard separately forbids the picker from rendering
+// a dialog shell of its own.
+vi.mock("../../drivers/CreateDriverModal", () => ({
+  CreateDriverModal: ({ open, shell }: { open: boolean; shell?: string }) =>
+    open ? <div data-testid="create-driver-surface" data-shell={shell} /> : null,
+}));
+vi.mock("../../fleet/CreateUnitModal", () => ({ CreateUnitModal: () => null }));
+vi.mock("../../insurance/PolicyCreateModal", () => ({ PolicyCreateModal: () => null }));
+
+const COMPANY = "11111111-1111-4111-8111-111111111111";
+
+function wrap(node: React.ReactNode) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={qc}>{node}</QueryClientProvider>);
+}
+
+describe("EntityPicker (C1 picker law)", () => {
+  beforeEach(() => {
+    listDrivers.mockReset();
+    listLoads.mockReset();
+    listDrivers.mockResolvedValue({
+      drivers: [
+        { id: "drv-1", first_name: "Jane", last_name: "Driver" },
+        { id: "drv-2", first_name: "Mecor", last_name: "Lopez" },
+      ],
+    });
+    listLoads.mockResolvedValue({
+      loads: [{ id: "load-1", load_number: "LD-100", customer_name: "ACME", first_pickup_city: "Laredo" }],
+    });
+  });
+
+  it("reads the canonical roster company-scoped", async () => {
+    wrap(<EntityPicker kind="driver" operatingCompanyId={COMPANY} value={null} onChange={vi.fn()} />);
+    await waitFor(() =>
+      expect(listDrivers).toHaveBeenCalledWith(
+        expect.objectContaining({ operating_company_id: COMPANY, status: "Active", limit: 200 })
+      )
+    );
+  });
+
+  it('puts inline "+ Create driver" as the FIRST ROW inside the dropdown, before any keystroke', async () => {
+    const user = userEvent.setup();
+    wrap(<EntityPicker kind="driver" operatingCompanyId={COMPANY} value={null} onChange={vi.fn()} />);
+    await user.click(await screen.findByPlaceholderText("Select driver"));
+
+    const createRow = await screen.findByText("+ Create driver");
+    expect(createRow).toBeTruthy();
+    // FIRST row: it must precede the first roster option in document order.
+    const janeRow = await screen.findByText("Jane Driver");
+    expect(createRow.compareDocumentPosition(janeRow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("hands the parent the CANONICAL ID, not the label", async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    wrap(<EntityPicker kind="driver" operatingCompanyId={COMPANY} value={null} onChange={onChange} />);
+    await user.click(await screen.findByPlaceholderText("Select driver"));
+    await user.click(await screen.findByText("Mecor Lopez"));
+    expect(onChange).toHaveBeenCalledWith("drv-2");
+  });
+
+  it("opens the entity's real create surface in the C7 drawer shell by default", async () => {
+    const user = userEvent.setup();
+    wrap(<EntityPicker kind="driver" operatingCompanyId={COMPANY} value={null} onChange={vi.fn()} />);
+    await user.click(await screen.findByPlaceholderText("Select driver"));
+    await user.click(await screen.findByText("+ Create driver"));
+    const surface = await screen.findByTestId("create-driver-surface");
+    // shell="modal" is the shared Modal, which after C7 renders variant="drawer" (480px right
+    // drawer with focus trap + Escape + unsaved guard). shell="drawer" is CHROME-11's ParityDrawer,
+    // used only when the picker is already inside an open money drawer.
+    expect(surface.getAttribute("data-shell")).toBe("modal");
+  });
+
+  it("stacks as a ParityDrawer when nested inside an open money drawer (CHROME-11)", async () => {
+    const user = userEvent.setup();
+    wrap(<EntityPicker kind="driver" operatingCompanyId={COMPANY} value={null} onChange={vi.fn()} nestedInDrawer />);
+    await user.click(await screen.findByPlaceholderText("Select driver"));
+    await user.click(await screen.findByText("+ Create driver"));
+    expect((await screen.findByTestId("create-driver-surface")).getAttribute("data-shell")).toBe("drawer");
+  });
+
+  it("a FILTER offers no create row", async () => {
+    const user = userEvent.setup();
+    wrap(
+      <EntityPicker kind="driver" operatingCompanyId={COMPANY} value={null} onChange={vi.fn()} allowCreate={false} />
+    );
+    await user.click(await screen.findByPlaceholderText("Select driver"));
+    await screen.findByText("Jane Driver");
+    expect(screen.queryByText("+ Create driver")).toBeNull();
+  });
+
+  it("a TRANSACTION kind offers no create row even by default", async () => {
+    const user = userEvent.setup();
+    wrap(<EntityPicker kind="load" operatingCompanyId={COMPANY} value={null} onChange={vi.fn()} />);
+    await user.click(await screen.findByPlaceholderText("Select load"));
+    await screen.findByText("LD-100");
+    expect(screen.queryByText("+ Create load")).toBeNull();
+  });
+
+  it("keeps a selected value that is not in the roster visible instead of blanking it", async () => {
+    wrap(
+      <EntityPicker
+        kind="driver"
+        operatingCompanyId={COMPANY}
+        value="drv-archived"
+        onChange={vi.fn()}
+        dataTestId="picker-under-test"
+      />
+    );
+    await waitFor(() => expect(listDrivers).toHaveBeenCalled());
+    const input = (await screen.findByTestId("picker-under-test")) as HTMLInputElement;
+    await waitFor(() => expect(input.value).toBe("drv-archived"));
+  });
+});

@@ -7,6 +7,7 @@ import { useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { resolveApiUrl } from "../../../api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 
 type TestType = "pre_employment" | "random" | "post_accident" | "reasonable_suspicion" | "return_to_duty" | "follow_up";
 type TestKind = "drug" | "alcohol" | "both";
@@ -85,13 +86,17 @@ export function TestSchedulingPanel({ companyId }: Props) {
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <label className="block text-xs text-slate-600">
-          Driver UUID
-          <input
-            type="text"
-            className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1 font-mono text-xs"
-            placeholder="xxxxxxxx-xxxx-…"
-            value={driverUuid}
-            onChange={(e) => setDriverUuid(e.target.value)}
+          Driver
+          {/* C1 PICKER LAW: was a raw-UUID box whose placeholder literally showed a uuid mask. An
+              FMCSA Part 382 test scheduled against a mistyped id is a compliance record for the
+              wrong driver. */}
+          <EntityPicker
+            kind="driver"
+            operatingCompanyId={companyId}
+            value={driverUuid || null}
+            onChange={(next) => setDriverUuid(next ?? "")}
+            placeholder="Select driver"
+            className="mt-1"
           />
         </label>
 

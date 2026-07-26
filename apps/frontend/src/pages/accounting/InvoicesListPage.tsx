@@ -26,6 +26,7 @@ import { useToast } from "../../components/Toast";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 
 // INVOICE-LISTFILTER-01: real InvoiceStatus values go to the backend `status` param.
 // "with_balance" is a UI label for server-side has_balance=true (aging-compatible open AR).
@@ -456,12 +457,18 @@ export function InvoicesListPage() {
         description="Attach selected invoices to a factoring batch."
         payloadFields={
           <label className="block text-sm text-gray-700">
-            Factoring batch ID
-            <input
-              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
-              value={batchId}
-              onChange={(event) => setBatchId(event.target.value)}
-              placeholder="UUID of factoring advance batch"
+            Factoring batch
+            {/* C1 PICKER LAW: was a raw-UUID box on a BULK action — one mistyped id attaches every
+                selected invoice to the wrong factoring batch. Read-only pick: creating an advance is
+                a money document submitted to the factor, never an inline dropdown act. */}
+            <EntityPicker
+              kind="factoring_advance"
+              operatingCompanyId={selectedCompanyId ?? ""}
+              value={batchId || null}
+              onChange={(next) => setBatchId(next ?? "")}
+              enabled={factoredModalOpen}
+              placeholder="Select factoring batch"
+              className="mt-1"
             />
           </label>
         }

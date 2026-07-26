@@ -105,7 +105,12 @@ describe("dispatch arch tab pages (B21-D2)", () => {
 
   it("shows assignment history filters", async () => {
     wrap(<AssignmentHistoryPage />);
-    expect(await screen.findByPlaceholderText("Filter by driver UUID")).toBeTruthy();
+    // C1 PICKER LAW: this assertion used to PIN THE DEFECT — it required the placeholder
+    // "Filter by driver UUID", i.e. it would have failed the day the raw-uuid box was fixed. It is
+    // TIGHTENED here, not relaxed: the driver filter must now be the canonical picker, and the
+    // raw-uuid placeholder must be GONE. Both directions are asserted so neither can regress.
+    expect(await screen.findByPlaceholderText("All drivers")).toBeTruthy();
+    expect(screen.queryByPlaceholderText("Filter by driver UUID")).toBeNull();
   });
 
   it("lists at-risk loads via dispatch API", async () => {

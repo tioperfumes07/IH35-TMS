@@ -17,6 +17,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { Modal } from "../../components/Modal";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 
 export type CoiTabVariant = "list-preview" | "full-page";
 
@@ -178,12 +179,18 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
         </label>
       ) : (
         <label className="block text-xs">
-          Policy ID (optional)
-          <input
-            className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
-            value={requestPolicyId}
-            onChange={(event) => setRequestPolicyId(event.target.value)}
-            placeholder="policy uuid"
+          Policy (optional)
+          {/* C1 PICKER LAW: was a raw-UUID box. The compact (non-full-page) branch now offers the
+              SAME canonical insurance.policy roster the full-page branch lists, so a COI request
+              cannot cite a policy id the operator guessed. */}
+          <EntityPicker
+            kind="insurance_policy"
+            operatingCompanyId={operatingCompanyId ?? ""}
+            value={requestPolicyId || null}
+            onChange={(next) => setRequestPolicyId(next ?? "")}
+            enabled={requestOpen}
+            placeholder="No policy selected"
+            className="mt-0.5"
           />
         </label>
       )}
