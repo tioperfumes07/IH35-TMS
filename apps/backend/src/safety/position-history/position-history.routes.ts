@@ -85,7 +85,7 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
       }
 
       const countRes = await client.query(
-        `SELECT count(*)::text AS total FROM maint.position_history ph WHERE ${where.join(" AND ")}`,
+        `SELECT count(*)::text AS total FROM maintenance.position_history ph WHERE ${where.join(" AND ")}`,
         values
       );
 
@@ -97,8 +97,9 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
           u.license_plate as unit_license_plate,
           ps.name as position_set_name,
           p.part_name as part_name
-        FROM maint.position_history ph
+        FROM maintenance.position_history ph
         LEFT JOIN mdata.units u ON u.id = ph.unit_id
+          AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)
         LEFT JOIN maint.position_set ps ON ps.id = ph.position_set_id
         LEFT JOIN maint.part p ON p.id = ph.part_id
         WHERE ${where.join(" AND ")}
@@ -140,8 +141,9 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
           u.license_plate as unit_license_plate,
           ps.name as position_set_name,
           p.part_name as part_name
-        FROM maint.position_history ph
+        FROM maintenance.position_history ph
         LEFT JOIN mdata.units u ON u.id = ph.unit_id
+          AND (u.owner_company_id = $2 OR u.currently_leased_to_company_id = $2)
         LEFT JOIN maint.position_set ps ON ps.id = ph.position_set_id
         LEFT JOIN maint.part p ON p.id = ph.part_id
         WHERE ph.id = $1 AND ph.operating_company_id = $2
@@ -175,7 +177,7 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
       const actorName = actorResult.rows[0]?.display_name ?? "";
 
       const result = await client.query(
-        `INSERT INTO maint.position_history (
+        `INSERT INTO maintenance.position_history (
           operating_company_id, unit_id, unit_type, position_set_id, position_code,
           part_id, part_number, action, action_reason, actor_id, actor_name, action_at,
           source_type, source_id, notes
@@ -194,9 +196,9 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
         await appendCrudAudit(
           client,
           user.uuid,
-          "maint.position_history.created",
+          "maintenance.position_history.created",
           {
-            resource_type: "maint.position_history",
+            resource_type: "maintenance.position_history",
             resource_id: row.id,
             operating_company_id: data.operating_company_id,
             unit_id: data.unit_id,
@@ -245,8 +247,9 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
           u.license_plate as unit_license_plate,
           ps.name as position_set_name,
           p.part_name as part_name
-        FROM maint.position_history ph
+        FROM maintenance.position_history ph
         LEFT JOIN mdata.units u ON u.id = ph.unit_id
+          AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)
         LEFT JOIN maint.position_set ps ON ps.id = ph.position_set_id
         LEFT JOIN maint.part p ON p.id = ph.part_id
         WHERE ph.operating_company_id = $1

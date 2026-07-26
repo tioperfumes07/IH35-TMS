@@ -22,7 +22,7 @@ describe("bank recon worklist tenant isolation", () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
       if (sql.includes("FROM banking.bank_transactions bt")) return { rows: [] };
-      if (sql.includes("FROM bank.reconciliation_matches rm")) return { rows: [] };
+      if (sql.includes("FROM banking.reconciliation_matches rm")) return { rows: [] };
       if (sql.includes("WITH period_tx AS")) return { rows: [{ total_count: 0, matched_count: 0 }] };
       if (sql.includes("FROM accounting.journal_entries je")) return { rows: [] };
       return { rows: [] };
