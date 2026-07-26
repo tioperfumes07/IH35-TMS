@@ -6,6 +6,7 @@ import { listDispatchAssignmentHistory } from "../../api/dispatch";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -13,7 +14,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 export function AssignmentHistoryPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [driverId, setDriverId] = useState("");
+  const [driverId, setDriverId] = useState<string | null>(null);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [reason, setReason] = useState("");
@@ -22,7 +23,7 @@ export function AssignmentHistoryPage() {
     queryKey: ["dispatch", "assignment-history-global", companyId, driverId, from, to, reason],
     queryFn: () =>
       listDispatchAssignmentHistory(companyId, {
-        driver_id: driverId.trim() || undefined,
+        driver_id: driverId?.trim() || undefined,
         from: from || undefined,
         to: to || undefined,
         reason: reason.trim() || undefined,
@@ -81,12 +82,14 @@ export function AssignmentHistoryPage() {
 
       <section className="grid gap-3 rounded-sm border bg-white p-4 md:grid-cols-4">
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-gray-600">Driver ID</label>
-          <input
+          <label className="text-xs font-semibold text-gray-600">Driver</label>
+          <EntityPicker
+            kind="driver"
+            operatingCompanyId={companyId}
             value={driverId}
-            onChange={(event) => setDriverId(event.target.value)}
-            className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
-            placeholder="Filter by driver UUID"
+            onChange={setDriverId}
+            placeholder="Filter by driver"
+            allowCreate={false}
           />
         </div>
         <div className="flex flex-col gap-1">

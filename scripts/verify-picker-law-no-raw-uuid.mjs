@@ -229,7 +229,6 @@ const EXEMPTIONS = [
   { file: `${SRC}/pages/accounting/BillPaymentsListPage.tsx`, field: "vendorId", category: "blocked-needs-backend", blocker: "Filter-only field on a list page; needs opco from page context + EntityPicker kind=vendor in C1-WAVE-2.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
   { file: `${SRC}/pages/accounting/InvoicesListPage.tsx`, field: "batchId", category: "blocked-needs-backend", blocker: "Factoring advance batch is not an EntityPicker kind yet — needs factoring.batches list endpoint + registry entry (factoring lane).", reason: "No EntityPicker kind for factoring advance batch yet — factoring-lane registry entry required before swap." },
   { file: `${SRC}/pages/customers/CoiTab.tsx`, field: "requestPolicyId", category: "blocked-needs-backend", blocker: "COI policy roster endpoint is insurance-lane; no EntityPicker kind=policy yet.", reason: "No EntityPicker kind for insurance COI policy yet — insurance-lane roster + registry entry required." },
-  { file: `${SRC}/pages/dispatch/AssignmentHistoryPage.tsx`, field: "driverId", category: "blocked-needs-backend", blocker: "Filter field; C1-WAVE-2 swaps to EntityPicker kind=driver with page opco.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
   { file: `${SRC}/pages/dispatch/InTransitIssuesPage.tsx`, field: "loadId", category: "blocked-needs-backend", blocker: "Filter field; C1-WAVE-2 swaps to EntityPicker kind=load with page opco.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
   { file: `${SRC}/pages/maintenance/WarrantyClaimsPage.tsx`, field: "detectWoId", category: "blocked-needs-backend", blocker: "Work-order roster is maintenance-lane; no EntityPicker kind=work_order yet.", reason: "No EntityPicker kind for maintenance work order yet — maintenance-lane roster + registry entry required." },
   { file: `${SRC}/pages/reports/audit/AuditReportPage.tsx`, field: "driverFilter", category: "blocked-needs-backend", blocker: "Reports page opco + EntityPicker kind=driver wiring is C1-WAVE-2.", reason: "Deferred call-site migration after EntityPicker primitive ships — C1-WAVE-2 replaces the raw UUID box." },
@@ -244,7 +243,7 @@ const EXEMPTIONS = [
  * The exemption list is a RATCHET: it may shrink, never grow. Raising this number is a visible,
  * reviewable edit to the guard itself — which is the point. It is not a threshold to tune.
  */
-const EXEMPTION_CEILING = 31;
+const EXEMPTION_CEILING = 30;
 
 /** An "admin-audit-forensic-id" exemption must actually live on an admin/audit surface. */
 const AUDIT_PATH = /\/(admin|audit)\/|AuditTrail|AuditLog|ActivityLog|audit-log/;
