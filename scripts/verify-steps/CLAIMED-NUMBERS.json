@@ -1335,6 +1335,7 @@
     "1520": "1520-verify-acct-link-02-accounts-detail-type-fk.mjs",
     "1521": "1521-verify-sweep-c2-no-retire-writes.mjs",
     "1522": "1522-verify-global-catalog-write-authz.mjs",
+    "1523": "1523-verify-mnt-econ-01-parts-purchase-posts-gl.mjs",
     "1530": "1530-verify-safety-fine-company-paid-posts-gl.mjs",
     "1531": "1531-verify-0033-audit-schema-manifest-tool.mjs",
     "1532": "1532-verify-es1-unscoped-tables-scope-proof.mjs",
