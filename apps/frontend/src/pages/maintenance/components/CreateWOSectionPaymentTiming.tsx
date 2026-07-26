@@ -18,6 +18,10 @@ export function CreateWOSectionPaymentTiming({ register, watch, setValue }: Prop
         <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
           <div className="space-y-1">
             <label className="text-[11px] font-semibold text-gray-600">Bill Terms</label>
+            {/* C9: this select had `onChange={() => {}}`. Bill Terms IS sent (CreateWorkOrderModal
+                `bill_terms: values.bill_terms || undefined`) and the route accepts it — but the
+                handler was a no-op, so whatever the operator picked was thrown away and every WO
+                bill booked on the rendered default. Wiring setValue makes the pick real. */}
             <Combobox
               options={[
                 { value: "net_30", label: "Net 30" },
@@ -25,7 +29,7 @@ export function CreateWOSectionPaymentTiming({ register, watch, setValue }: Prop
                 { value: "net_7", label: "Net 7" },
               ]}
               value={watch("bill_terms") || "net_30"}
-              onChange={() => {}}
+              onChange={(next) => setValue("bill_terms", next ?? "net_30", { shouldDirty: true })}
             />
           </div>
           <div className="space-y-1">

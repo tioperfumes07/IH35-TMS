@@ -1053,7 +1053,12 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                 Required: this expense type must link to a load (G18).
               </div>
             ) : null}
-            <div className="mt-2"><TotalsStack subtotal={subtotal} taxRate={taxRate} onTaxRateChange={setTaxRate} grandLabel="WO Total = A + B" /></div>
+            {/* C9-NOT-PERSISTED: the WO tax rate is editable on screen and inflates the displayed
+                "WO Total", but `createWorkOrder` sends no tax field and maintenance.work_orders has
+                no tax column — the total the shop agreed to was never the total that got stored.
+                Read-only and labelled until the owner applies the column; the vendor BILL created
+                from this WO is where tax is actually captured and posted. */}
+            <div className="mt-2"><TotalsStack subtotal={subtotal} taxRate={taxRate} taxRateMode="readonly" onTaxRateChange={setTaxRate} grandLabel="WO Total = A + B (tax display only — not stored)" /></div>
           </SectionCard>
         </div>
 

@@ -85,13 +85,20 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
   const trailers = fleet
     .filter((row) => (row as { kind?: string }).kind === "trailer")
     .map((row, index) => toUnitOption(row, index));
+  // C9 (DoD-B): six equipment requirements render here; exactly ONE of them was ever sent.
+  // `requires_tarps` is in createDispatchLoadBodySchema (dispatch/loads.routes.ts) and lands on
+  // mdata.loads. The other five are in neither the route schema nor the table — the dispatcher
+  // ticked them, the load was booked, and the requirement vanished with no warning, which on a
+  // reefer or a flatbed is a driver arriving without the gear the shipper expects.
+  // C9-NOT-PERSISTED for the five: they stay visible (ADDITIVE-ONLY) but inert, and say so, until
+  // the owner applies the columns + route fields. Never flattened into a jsonb memo (class C13).
   const toggles = [
-    { field: "requires_reefer_fuel", label: "Reefer fuel" },
-    { field: "requires_pulp_probe", label: "Pulp probe" },
-    { field: "requires_locking_jacks", label: "Locking jacks" },
-    { field: "requires_tarps", label: "Tarps" },
-    { field: "requires_load_locks", label: "Load locks" },
-    { field: "requires_straps", label: "Straps" },
+    { field: "requires_reefer_fuel", label: "Reefer fuel", disabled: true },
+    { field: "requires_pulp_probe", label: "Pulp probe", disabled: true },
+    { field: "requires_locking_jacks", label: "Locking jacks", disabled: true },
+    { field: "requires_tarps", label: "Tarps", disabled: false },
+    { field: "requires_load_locks", label: "Load locks", disabled: true },
+    { field: "requires_straps", label: "Straps", disabled: true },
   ] as const;
 
   return (
@@ -224,10 +231,18 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
       </div>
       {/* RENDER-A-v2 §B: Driver pay rate / mi is TOP-LEVEL, half-row (standard field width). The separate
           "Reefer setpoint" field is REMOVED — the reefer panel's temperature IS the single setpoint. */}
+      {/* C9-NOT-PERSISTED / MONEY: `driver_pay_rate_per_mile` is not in createDispatchLoadBodySchema
+          (dispatch/loads.routes.ts) and there is no column for it on mdata.loads. It drives the
+          on-screen "estimated driver pay" preview in BookLoadModalV4 and nothing else — the booked
+          load carries no rate, so settlement never sees what the dispatcher agreed. Drivers are
+          1099 contractors paid a per-mile fee, so this is a real pay term, not a display: it must
+          land on a real column and flow to driver_finance, which is an owner-gated migration plus a
+          money route (Cursor's lane). Until then it is inert and labelled an estimate — never
+          stuffed into notes, which would make it unauditable (class C13). */}
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
         <Field
-          label="Driver pay rate / mi"
-          input={<input type="number" step="0.01" min="0" {...register("driver_pay_rate_per_mile", { valueAsNumber: true })} className="h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />}
+          label="Driver pay rate / mi (estimate only — not stored)"
+          input={<input type="number" step="0.01" min="0" readOnly {...register("driver_pay_rate_per_mile", { valueAsNumber: true })} className="h-7 w-full rounded-sm border border-gray-300 bg-gray-100 px-2 text-xs" />}
         />
       </div>
       {/* RENDER-A-v2 §B REEFER PANEL (amber, "Refrigerated") — reefer trailer only. "Temperature type"
@@ -312,14 +327,26 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
             <div className="mb-1 text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-600">Equipment</div>
             <div className="flex flex-wrap gap-1.5">
               {toggles.map((toggle) => (
-                <label key={toggle.field} className="cursor-pointer">
-                  <input type="checkbox" {...register(toggle.field)} className="peer sr-only" />
-                  <span className="inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-[0.3px] text-gray-600 ring-1 ring-gray-300 peer-checked:bg-[#1f2a44] peer-checked:text-white peer-checked:ring-[#1f2a44]">
+                <label
+                  key={toggle.field}
+                  className={toggle.disabled ? "cursor-not-allowed" : "cursor-pointer"}
+                  title={toggle.disabled ? "Not stored on the load yet — record it in the driver instructions below." : undefined}
+                >
+                  <input type="checkbox" disabled={toggle.disabled} {...register(toggle.field)} className="peer sr-only" />
+                  <span
+                    className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-[0.3px] ring-1 peer-checked:bg-[#1f2a44] peer-checked:text-white peer-checked:ring-[#1f2a44] ${
+                      toggle.disabled ? "text-slate-400 ring-gray-200" : "text-gray-600 ring-gray-300"
+                    }`}
+                  >
                     {toggle.label}
                   </span>
                 </label>
               ))}
             </div>
+            <p className="mt-1 text-[9px] leading-tight text-slate-500" data-testid="c9-equipment-not-stored">
+              Only Tarps is stored on the load today. The greyed requirements are not saved yet — put them in the
+              driver instructions below so the driver actually gets them.
+            </p>
           </div>
           <DriverInstructionsTextarea register={register as never} />
         </div>

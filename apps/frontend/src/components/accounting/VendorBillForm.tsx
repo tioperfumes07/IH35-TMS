@@ -490,6 +490,14 @@ export function VendorBillForm({
         </Field>
         <div className="md:col-span-3" />
         <Field label="Class">
+          {/* C9-CARRIED-THROUGH: the operator's pick is not lost — the same handler writes
+              `className`, which the bill memo carries (`class:<name>`), so it reaches the wire and
+              survives reload. It reaches it in the WRONG SHAPE though: a label inside a memo string
+              instead of an FK to catalogs.classes, because accounting.bills has no class column and
+              the bills route accepts none. That shape defect is tracked as class C13 (id/value in a
+              memo instead of a real column) and is owner-gated — accounting.* is financial cluster.
+              Deliberately NOT "fixed" here by stuffing the uuid into the memo as well: that would
+              create a new C13 instance while closing a C9 one. */}
           <ReferenceSelect
             value={classId}
             onChange={(next) => {

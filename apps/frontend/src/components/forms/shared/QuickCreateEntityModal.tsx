@@ -308,22 +308,41 @@ export function QuickCreateEntityModal({
               <span className="text-xs font-medium text-gray-600">Street</span>
               <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("street")} aria-label="Quick create street" />
             </label>
+            {/* C9-NOT-PERSISTED (DoD-B): everything below this line was collected and thrown away.
+                `createVendor` writes canonical mdata.vendors, which has no city/state/postal_code,
+                no account_number, no terms, no track_1099 and no default_expense_account_id — those
+                columns arrive with migration 202607110230_vendor_qbo_parity.sql, which is HELD in
+                db/migrations/.held-migrations.json and NOT yet applied on prod. An AP clerk could
+                type a full remit-to address and 1099 status into a vendor and lose all of it with a
+                success toast. Until the owner applies that migration the inputs stay (ADDITIVE-ONLY)
+                but are read-only and say so. NOT written into a notes/jsonb blob: an unauditable
+                1099 flag is worse than a missing one (class C13). Street and Tax ID above DO
+                persist (`address`, `tax_id`) and stay editable. */}
+            {/* C9-NOT-PERSISTED: no city / state / postal_code column on mdata.vendors yet. */}
             <div className="grid grid-cols-3 gap-2">
-              <label><span className="text-xs font-medium text-gray-600">City</span><input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("city")} aria-label="Quick create city" /></label>
-              <label><span className="text-xs font-medium text-gray-600">State</span><input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("state")} aria-label="Quick create state" /></label>
-              <label><span className="text-xs font-medium text-gray-600">Zip</span><input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("zip")} aria-label="Quick create zip" /></label>
+              <label><span className="text-xs font-medium text-gray-600">City</span><input readOnly className="mt-1 w-full rounded-sm border border-gray-300 bg-gray-100 px-2 py-1" {...form.register("city")} aria-label="Quick create city" /></label>
+              <label><span className="text-xs font-medium text-gray-600">State</span><input readOnly className="mt-1 w-full rounded-sm border border-gray-300 bg-gray-100 px-2 py-1" {...form.register("state")} aria-label="Quick create state" /></label>
+              <label><span className="text-xs font-medium text-gray-600">Zip</span><input readOnly className="mt-1 w-full rounded-sm border border-gray-300 bg-gray-100 px-2 py-1" {...form.register("zip")} aria-label="Quick create zip" /></label>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <label><span className="text-xs font-medium text-gray-600">Account no.</span><input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("accountNumber")} aria-label="Quick create account number" /></label>
-              <label><span className="text-xs font-medium text-gray-600">Terms</span><input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("terms")} aria-label="Quick create terms" /></label>
+              {/* C9-NOT-PERSISTED: no account_number / terms column on mdata.vendors yet. */}
+              <label><span className="text-xs font-medium text-gray-600">Account no.</span><input readOnly className="mt-1 w-full rounded-sm border border-gray-300 bg-gray-100 px-2 py-1" {...form.register("accountNumber")} aria-label="Quick create account number" /></label>
+              <label><span className="text-xs font-medium text-gray-600">Terms</span><input readOnly className="mt-1 w-full rounded-sm border border-gray-300 bg-gray-100 px-2 py-1" {...form.register("terms")} aria-label="Quick create terms" /></label>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <label><span className="text-xs font-medium text-gray-600">Tax ID (1099)</span><input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("taxId")} aria-label="Quick create tax id" /></label>
-              <label><span className="text-xs font-medium text-gray-600">Default expense account</span><input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("defaultExpenseAccount")} aria-label="Quick create default expense account" /></label>
+              {/* C9-NOT-PERSISTED: mdata.vendors.default_expense_account_id ships with the same HELD
+                  migration; a GL default is financial and is never inferred from a text box. */}
+              <label><span className="text-xs font-medium text-gray-600">Default expense account</span><input readOnly className="mt-1 w-full rounded-sm border border-gray-300 bg-gray-100 px-2 py-1" {...form.register("defaultExpenseAccount")} aria-label="Quick create default expense account" /></label>
             </div>
+            {/* C9-NOT-PERSISTED: no track_1099 column on mdata.vendors yet. */}
             <label className="flex items-center gap-2 text-xs font-medium text-gray-600">
-              <input type="checkbox" {...form.register("track1099")} aria-label="Quick create track 1099" /> Track 1099?
+              <input type="checkbox" disabled {...form.register("track1099")} aria-label="Quick create track 1099" /> Track 1099?
             </label>
+            <p className="text-[10px] leading-tight text-slate-500" data-testid="c9-vendor-details-not-stored">
+              City / State / Zip / Account no. / Terms / Default expense account / 1099 are not saved yet — set them on
+              the vendor record after creating it. Name, type, email, phone, Street and Tax ID are saved.
+            </p>
           </div>
         ) : null}
 

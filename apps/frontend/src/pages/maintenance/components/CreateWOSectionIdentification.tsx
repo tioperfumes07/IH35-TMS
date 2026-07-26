@@ -185,6 +185,11 @@ export function CreateWOSectionIdentification({
             <>
               <input type="hidden" {...register("vendor_id")} />
               <input type="hidden" {...register("vendor_qbo_id")} />
+              {/* C9-CARRIED-THROUGH: `vendor_display_name` is a derived label, not an operator
+                  field. The canonical link `vendor_id` (and `vendor_qbo_id`) IS in the createWorkOrder
+                  payload, and the same handler writes the label into `shop_name`, which the payload
+                  also carries — so nothing the operator picked is lost. Kept in form state because
+                  the header renders it. */}
               <input type="hidden" {...register("vendor_display_name")} />
               <ReferenceSelect
                 value={watch("vendor_id") || null}
@@ -231,10 +236,17 @@ export function CreateWOSectionIdentification({
         <Field label="Customer">
           {operatingCompanyId && setValue ? (
             <>
-              <input type="hidden" {...register("customer_id")} />
-              <input type="hidden" {...register("customer_qbo_id")} />
-              <input type="hidden" {...register("customer_display_name")} />
+              {/* C9-NOT-PERSISTED: this whole Customer block sits inside a `hidden` container and
+                  is registered but never sent — `createWorkOrder` has no customer field and
+                  maintenance.work_orders has no customer column. Unlike the vendor above (whose id
+                  IS sent), a WO picked against a customer would lose the link entirely, so the
+                  block is explicitly disabled rather than left as a latent trap for whoever unhides
+                  it. Wiring it needs an owner-applied column + route field. */}
+              <input type="hidden" disabled {...register("customer_id")} />
+              <input type="hidden" disabled {...register("customer_qbo_id")} />
+              <input type="hidden" disabled {...register("customer_display_name")} />
               <ReferenceSelect
+                disabled
                 value={watch("customer_id") || null}
                 onChange={(next) => {
                   const match = customerOptions.find((o) => o.value === next);
