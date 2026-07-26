@@ -1353,6 +1353,7 @@
     "1580": "1580-verify-no-jsonb-id-array-as-fk.mjs",
     "1599": "1599-verify-step-number-registry.mjs",
     "1601": "1601-verify-closed-period-immutability.mjs",
+    "1602": "1602-verify-mnt-link-02-work-order-lines-fk.mjs",
     "1603": "1603-verify-bank-dom-03-adjusted-balance-rec.mjs",
     "1612": "1612-verify-healthz-no-raw-error-leak.mjs"
   }
