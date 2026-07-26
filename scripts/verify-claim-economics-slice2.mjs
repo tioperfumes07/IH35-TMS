@@ -115,7 +115,8 @@ export function computeFailures(sources) {
       errors.push(`${REGISTRY_PATH}: invalid JSON`);
       return errors;
     }
-    const entry = (parsed.held || []).find((h) => h.file === path.basename(MIGRATION_PATH));
+    const allEntries = [...(parsed.held || []), ...(parsed.applied_held || [])];
+    const entry = allEntries.find((h) => h.file === path.basename(MIGRATION_PATH));
     if (!entry) {
       errors.push(`${REGISTRY_PATH}: ${path.basename(MIGRATION_PATH)} must be registered as held (or db:migrate fires it on prod)`);
     } else if (!/HOLD-FOR-JORGE/.test(String(entry.reason ?? ""))) {
@@ -123,7 +124,7 @@ export function computeFailures(sources) {
     }
     // Collision guard: the OLD (pre-renumber) filename must never reappear in the registry —
     // that would mean two migrations claiming 202607720000 (this slice + PR #3223 cash advance).
-    const stale = (parsed.held || []).find((h) => h.file === "202607720000_insurance_claim_economics_columns.sql");
+    const stale = allEntries.find((h) => h.file === "202607720000_insurance_claim_economics_columns.sql");
     if (stale) {
       errors.push(
         `${REGISTRY_PATH}: stale 202607720000_insurance_claim_economics_columns.sql entry present — this collides with PR #3223's 202607720000_driver_advance_wizard_depth.sql; must stay renumbered to 202607730000`,

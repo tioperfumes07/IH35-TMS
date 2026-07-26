@@ -19,6 +19,12 @@ const HELD_REGISTRY_FILENAME = ".held-migrations.json";
  * controls MUST agree — the runner refuses to run held on prod, and the boot guard
  * must not then treat that honest pending state as drift.
  *
+ * 2026-07-25 GUARD split: the registry carries TWO arrays — `held` (genuinely unapplied)
+ * and `applied_held` (marker still on disk, but confirmed already applied on prod). This
+ * unions both, same as the runner: an `applied_held` file is normally ledgered already (so
+ * it won't even reach this "held + unledgered = expected pending" check), but unioning
+ * keeps this boot guard and the runner's firewall in lockstep if that ever isn't true.
+ *
  * Fail-safe: if the registry is unreadable, returns an empty set (the guards stay
  * strict — they will still catch genuinely missing NORMAL migrations). The registry
  * ships in the deploy image (db-migrate reads it at preDeploy), so at boot it is
@@ -27,10 +33,18 @@ const HELD_REGISTRY_FILENAME = ".held-migrations.json";
 export function loadHeldMigrationSet(repoRoot: string): Set<string> {
   try {
     const p = path.join(repoRoot, "db", "migrations", HELD_REGISTRY_FILENAME);
-    const parsed = JSON.parse(fs.readFileSync(p, "utf8")) as { held?: Array<{ file?: string }> };
-    return new Set(
-      (parsed.held ?? []).map((h) => h.file).filter((f): f is string => Boolean(f))
-    );
+    // Union EVERY array section, discovered dynamically — never a hardcoded list of section names.
+    // The registry gained a third section (`superseded`) on 2026-07-25; a hardcoded
+    // [held, applied_held] union silently dropped it, which is how a JSON edit can arm a migration.
+    // Mirrors loadHeldSet in scripts/lib/held-migrations.mjs — the boot guard and the runner's
+    // firewall must agree on the set, or one of them is wrong at the worst possible moment.
+    const parsed = JSON.parse(fs.readFileSync(p, "utf8")) as Record<string, unknown>;
+    const files = Object.values(parsed)
+      .filter((v): v is Array<{ file?: string }> => Array.isArray(v))
+      .flat()
+      .map((h) => h?.file)
+      .filter((f): f is string => Boolean(f));
+    return new Set(files);
   } catch {
     return new Set<string>();
   }

@@ -115,7 +115,7 @@ function checkHeldLedger(ledgerRaw, failures) {
     failures.push(`${HELD_LEDGER}: not valid JSON`);
     return;
   }
-  const held = Array.isArray(ledger.held) ? ledger.held : [];
+  const held = [...(Array.isArray(ledger.held) ? ledger.held : []), ...(Array.isArray(ledger.applied_held) ? ledger.applied_held : [])];
   const entry = held.find((h) => h.file === "202608050000_bank_link_01_counterparty_same_entity_fk.sql");
   if (!entry) {
     failures.push(`${HELD_LEDGER}: missing registration for 202608050000_bank_link_01_counterparty_same_entity_fk.sql`);

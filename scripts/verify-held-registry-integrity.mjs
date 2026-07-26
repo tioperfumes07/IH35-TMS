@@ -58,6 +58,7 @@ export function assertHeldRegistryIntegrity(sources) {
 
   const held = Array.isArray(reg?.held) ? reg.held : null;
   if (!held) return [`${REGISTRY}: missing a "held" array`];
+  const appliedHeld = Array.isArray(reg?.applied_held) ? reg.applied_held : [];
 
   const applied = new Set(Object.keys(snap?.checksums ?? {}));
   const windowFrom = snap?.window_from;
@@ -66,7 +67,8 @@ export function assertHeldRegistryIntegrity(sources) {
   }
   const windowTo = [...applied].sort().pop();
 
-  // ── 1. every file appears EXACTLY ONCE ────────────────────────────────────────────────────────────
+  // ── 1. every file in held[] appears EXACTLY ONCE (applied_held[] is a separate list; a file only
+  //      lands there once repaired, so it is not subject to this same-list duplicate check) ─────────
   const seen = new Map();
   for (const e of held) {
     if (!e || typeof e.file !== "string") {
@@ -75,6 +77,14 @@ export function assertHeldRegistryIntegrity(sources) {
     }
     if (!seen.has(e.file)) seen.set(e.file, []);
     seen.get(e.file).push(e);
+  }
+  // Sections 2 and 3 below apply to every registered entry regardless of which list it lives in —
+  // an applied_held[] entry still needs a reason and a legal, ledger-agreeing flag.
+  const seenAll = new Map();
+  for (const e of [...held, ...appliedHeld]) {
+    if (!e || typeof e.file !== "string") continue;
+    if (!seenAll.has(e.file)) seenAll.set(e.file, []);
+    seenAll.get(e.file).push(e);
   }
   for (const [file, entries] of seen) {
     if (entries.length > 1) {
@@ -91,7 +101,7 @@ export function assertHeldRegistryIntegrity(sources) {
   }
 
   // ── 2. each entry must justify itself and use a legal flag value ──────────────────────────────────
-  for (const [file, entries] of seen) {
+  for (const [file, entries] of seenAll) {
     for (const e of entries) {
       if (!e.reason || String(e.reason).trim().length < 10) {
         errs.push(`${REGISTRY}: ${file} has no meaningful "reason" — a held migration must say why it is held`);
@@ -104,7 +114,10 @@ export function assertHeldRegistryIntegrity(sources) {
     }
   }
 
-  // ── 3. flags must AGREE with the pinned prod ledger, inside the window it covers ──────────────────
+  // ── 3. flags must AGREE with the pinned prod ledger, inside the window it covers. Scoped to held[]
+  //      only, same as section 1 — applied_held[] entries were already manually verified applied at
+  //      repair time (see applied_evidence) and the pinned snapshot is not guaranteed to be a complete
+  //      superset of every applied migration, only the ones the original cross-check covered. ─────────
   const unassertable = [];
   for (const [file, entries] of seen) {
     const flagged = entries.some((e) => e.applied_on_prod === true);
@@ -160,38 +173,61 @@ if (SELFTEST) {
   expectCaught(
     "duplicate-entry-with-contradictory-flag",
     (reg) => {
-      const applied = reg.held.find((e) => e.applied_on_prod === true);
-      reg.held.push({ file: applied.file, reason: "duplicate entry as it existed before the repair" });
+      // The duplicate/contradictory check only scans held[] (held and applied_held are separate
+      // lists post-repair). Synthesize the pre-repair shape directly: the same file twice in
+      // held[], once flagged applied_on_prod:true and once unset. held[] may legitimately be
+      // empty (every migration reconciled to applied_held) so this uses a synthetic filename
+      // rather than reading an entry out of held[0] — the duplicate check only cares that the
+      // same string appears twice with contradictory flags, not that the file is a real migration.
+      const f = "0000000000_selftest_duplicate_fixture.sql";
+      reg.held.push({ file: f, reason: "duplicate entry as it existed before the repair" });
+      reg.held.push({ file: f, applied_on_prod: true, reason: "duplicate entry as it existed before the repair" });
     },
     "CONTRADICTORY",
   );
   expectCaught(
     "applied-migration-loses-its-flag",
     (reg) => {
-      const e = reg.held.find((x) => x.applied_on_prod === true);
-      delete e.applied_on_prod;
+      // held[]'s ledger-agreement check (section 3) needs a file that IS in the pinned snapshot but
+      // unflagged in held[] — inject one directly from the snapshot rather than depending on held[]
+      // already containing a flagged entry, which no longer happens by construction post-repair.
+      const snap = JSON.parse(live[SNAPSHOT]);
+      const ledgerFile = Object.keys(snap.checksums)[0];
+      reg.held.push({ file: ledgerFile, reason: "lost its applied_on_prod flag by mistake" });
     },
     "is not flagged applied_on_prod",
   );
   expectCaught(
     "flag-claims-applied-but-ledger-disagrees",
     (reg) => {
-      const e = reg.held.find((x) => x.applied_on_prod !== true && x.file >= "202606010000");
-      if (e) e.applied_on_prod = true;
+      // held[] may legitimately be empty (every migration reconciled to applied_held), so this
+      // can't rely on finding an existing entry — synthesize one whose filename sorts inside the
+      // pinned snapshot's window (so section 3 doesn't dismiss it as unassertable) but that is not
+      // itself one of the snapshot's real checksummed files.
+      const snap = JSON.parse(live[SNAPSHOT]);
+      reg.held.push({
+        file: `${snap.window_from}_selftest_not_in_ledger.sql`,
+        reason: "synthetic entry for the ledger-disagreement fixture",
+        applied_on_prod: true,
+      });
     },
     "NOT in the prod ledger snapshot",
   );
   expectCaught(
     "illegal-false-flag",
     (reg) => {
-      reg.held[0].applied_on_prod = false;
+      reg.held.push({
+        file: "0000000000_selftest_illegal_flag.sql",
+        reason: "synthetic entry for the illegal-flag fixture",
+        applied_on_prod: false,
+      });
     },
     "only legal value is boolean true",
   );
   expectCaught(
     "entry-without-a-reason",
     (reg) => {
-      reg.held[1].reason = "";
+      reg.held.push({ file: "0000000000_selftest_no_reason.sql", reason: "" });
     },
     'no meaningful "reason"',
   );

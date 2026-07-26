@@ -83,7 +83,7 @@ export function run(root = ROOT) {
     failures.push(`${FILES.held}: missing`);
   } else {
     const held = JSON.parse(fs.readFileSync(heldPath, "utf8"));
-    const files = (held.held ?? []).map((h) => h.file);
+    const files = [...(held.held ?? []), ...(held.applied_held ?? [])].map((h) => h.file);
     if (!files.includes("202607760000_cash_dip_coa_role.sql")) {
       failures.push(`${FILES.held}: must register 202607760000_cash_dip_coa_role.sql`);
     }

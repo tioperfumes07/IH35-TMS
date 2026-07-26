@@ -14,7 +14,8 @@ export function run(root = ROOT) {
   if (!/is_postable\s*=\s*true/.test(mig)) f.push("trigger must require is_postable = true");
   if (!/trg_bank_account_cash_gl_postable/.test(mig)) f.push("missing trigger trg_bank_account_cash_gl_postable");
   const held = JSON.parse(fs.readFileSync(path.join(root, HELD), "utf8"));
-  if (!(held.held || []).some((h) => h.file === path.basename(MIG))) f.push("must register held migration");
+  const heldEntries = [...(held.held || []), ...(held.applied_held || [])];
+  if (!heldEntries.some((h) => h.file === path.basename(MIG))) f.push("must register held migration");
   // Route-level still required (#3338)
   const routes = fs.readFileSync(path.join(root, ROUTES), "utf8");
   if (!/account_not_postable/.test(routes)) f.push("banking.routes must still reject account_not_postable");
