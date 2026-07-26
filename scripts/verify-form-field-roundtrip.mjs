@@ -1099,7 +1099,9 @@ export function Inv() {
   if (failures.length > 0) {
     console.error(`[${LABEL}] SELFTEST FAILED (${failures.length})`);
     for (const f of failures) console.error(`  - ${f}`);
-    return 1;
+    // Hard exit, not a returned status: a selftest that collects failures and lets a caller decide
+    // is one refactor away from the fake-green pattern verify-selftests-can-fail exists to stop.
+    process.exit(1);
   }
   console.log(`[${LABEL}] selftest OK — 26 assertions, every detector proven capable of failing.`);
   return 0;
