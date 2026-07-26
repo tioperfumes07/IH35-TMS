@@ -687,6 +687,27 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           body.data.force_complete ? `force_complete_reason: ${body.data.reason}` : null,
         ]
       );
+      // BANK-DOM-02: stamp membership so later mutations have an explicit session link
+      // (date-window membership remains a second defense in the immutability guard).
+      await client.query(
+        `
+          UPDATE banking.bank_transactions
+          SET
+            reconciliation_session_id = $1,
+            updated_at = now()
+          WHERE bank_account_id = $2
+            AND operating_company_id = $3
+            AND transaction_date BETWEEN $4 AND $5
+            AND reconciliation_session_id IS NULL
+        `,
+        [
+          session.id,
+          session.bank_account_id,
+          query.data.operating_company_id,
+          session.period_start,
+          session.period_end,
+        ]
+      );
       await appendCrudAudit(
         client,
         user.uuid,
