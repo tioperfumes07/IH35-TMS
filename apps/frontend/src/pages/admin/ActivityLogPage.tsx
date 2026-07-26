@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchAdminActivity, type AdminActivityItem } from "../../api/admin-activity";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { DateTimePicker } from "../../components/forms/DateTimePicker";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
@@ -132,11 +133,11 @@ export function ActivityLogPage() {
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Since (local)
-            <input
-              type="datetime-local"
-              className="rounded-sm border border-gray-300 px-2 py-1 text-sm normal-case"
+            <DateTimePicker
+              className="normal-case"
+              aria-label="Since (local)"
               value={since}
-              onChange={(e) => setSince(e.target.value)}
+              onChange={setSince}
             />
           </label>
         </div>

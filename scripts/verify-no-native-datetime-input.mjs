@@ -26,7 +26,7 @@
  * WHY A SEPARATE GUARD AND NOT AN EDIT TO 107: 107's `datetime-local → NOT flagged` selftest case
  * is a deliberate, documented exemption. Deleting an assertion from another sweep's guard to make
  * room for this one is the "weaken a guard" anti-pattern even when the intent is to tighten. This
- * guard is purely ADDITIVE: 107 keeps asserting everything it asserts today, and 1552 ratchets the
+ * guard is purely ADDITIVE: 107 keeps asserting everything it asserts today, and 1553 ratchets the
  * two shapes 107 and no-iso-date-display leave uncovered.
  *
  * Reports file:LINE so the failing output IS the migration worklist.
@@ -75,8 +75,13 @@ const DATETIME_TOKEN = /["']datetime-local["']/;
 // A member expression whose FINAL segment names a date-typed column. Anchored on the property
 // name, not the object, so it is independent of how the row variable is spelled.
 const DATE_FIELD = /^(?:[A-Za-z_$][\w$]*\.)+([A-Za-z_$][\w$]*)$/;
+// NARROWED (with reason, never to go green): the expires/expiry/due/deadline family originally
+// allowed an arbitrary `_<suffix>`, which matched `expiry_pill` — a STATUS ENUM
+// ("red"|"amber"|"green"|"unknown") on the driver-DQF panel, not a date. That is a false positive,
+// and a guard that cries wolf gets allowlisted into uselessness. The family now matches only the
+// bare word or a genuine date suffix (`expiry_date`, `expires_at`, `due_on`).
 const DATE_FIELD_NAME =
-  /^(?:date|dob|(?:\w+_)?(?:date|at|on)|(?:\w*_)?(?:expires|expiry|due|deadline|birthday|anniversary)(?:_\w+)?)$/i;
+  /^(?:date|dob|(?:\w+_)?(?:date|at|on)|(?:\w*_)?(?:expires|expiry|due|deadline|birthday|anniversary)(?:_(?:date|at|on))?)$/i;
 
 // Suffixes that mean "the SERVER already formatted this for display" — rendering them bare is
 // correct and flagging them would be a false positive. Kept explicit and narrow.
@@ -90,8 +95,33 @@ const PREFORMATTED_SUFFIX = /_(?:ct|display|label|us|formatted|text)$/i;
 // "Accident date is required", so flagging it would be a false positive.
 const NON_ROW_OBJECT = /^(?:field)?errors?$/i;
 
+// Leaves that are a COUNT derived from a date, not a date: `days_until_expiry`, `expiry_days`,
+// `overdue_count`. They render as a number and must not be date-formatted. Narrowed with a reason
+// after `days_until_expiry` (an integer on the safety expiry dashboard) was flagged.
+const NUMERIC_DERIVED_FIELD = /^(?:days?|count|num|total|n)_|_(?:days?|count|qty|cents|amount|total)$/i;
+
 // A JSX text node holding exactly one expression container: `>{ expr }<`.
 const JSX_TEXT_EXPR = />\s*\{\s*([A-Za-z_$][\w$.]*)\s*\}\s*</g;
+
+// The same leak wearing an em-dash fallback: `>{ row.expiration_date ?? "—" }<` or
+// `>{ form.plannedDate || "—" }<`. This is the SAME defect — the operator still sees a raw ISO
+// string whenever the value is present — but the bare-expression pattern above cannot see it
+// because the container holds more than the member expression. Found while migrating C3
+// (border-crossing WizardStep6 rendered a full "YYYY-MM-DDTHH:mm" straight into the review step).
+const JSX_TEXT_FALLBACK = />\s*\{\s*([A-Za-z_$][\w$.]*)\s*(?:\|\||\?\?)\s*[^{}]*\}\s*</g;
+
+// The third shape: a ParityTable/column `render:` callback whose whole body is the bare date value,
+// e.g. `render: (row) => row.hire_date ?? "—"`. There is no JSX text node at all here, so neither
+// pattern above can see it, yet the cell renders raw ISO exactly the same way. Anchored on
+// `render:` specifically so a `sortValue:` accessor or a `.filter(row => row.archived_at)`
+// predicate — which never reach the screen — are not flagged.
+const RENDER_ARROW_DATE =
+  /\brender\s*:\s*\([^)]*\)\s*=>\s*([A-Za-z_$][\w$.]*)\s*(?=\?\?|\|\||[,)}\]]|$)/gm;
+
+// A camelCase date leaf (plannedDate / occurredAt / effectiveOn). The repo is overwhelmingly
+// snake_case because these are DB columns, but form state is camelCase — and form state is what a
+// review/summary step renders.
+const CAMEL_DATE_FIELD_NAME = /^[a-z][\w$]*(?:Date|At|On)$/;
 
 function stripComments(src) {
   return src
@@ -160,22 +190,32 @@ function isNativeDateTimeInputTag(tag) {
   return body != null && DATETIME_TOKEN.test(body);
 }
 
-/** Bare date-typed member expression rendered into a JSX text node. */
+/** Is this member expression a date-typed column/field that must be formatted before display? */
+function isUnformattedDateExpression(expr) {
+  const parts = expr.split(".");
+  const mm = DATE_FIELD.exec(expr);
+  if (!mm) return false;
+  const field = mm[1];
+  if (!DATE_FIELD_NAME.test(field) && !CAMEL_DATE_FIELD_NAME.test(field)) return false;
+  if (PREFORMATTED_SUFFIX.test(field)) return false;
+  if (NUMERIC_DERIVED_FIELD.test(field)) return false;
+  if (parts.length >= 2 && NON_ROW_OBJECT.test(parts[parts.length - 2])) return false;
+  return true;
+}
+
+/** Date-typed member expression rendered into a JSX text node — bare, or behind a ||/?? fallback. */
 function bareIsoDateExpressions(src) {
   const out = [];
-  let m;
-  JSX_TEXT_EXPR.lastIndex = 0;
-  while ((m = JSX_TEXT_EXPR.exec(src))) {
-    const expr = m[1];
-    const parts = expr.split(".");
-    const mm = DATE_FIELD.exec(expr);
-    if (!mm) continue;
-    const field = mm[1];
-    if (!DATE_FIELD_NAME.test(field)) continue;
-    if (PREFORMATTED_SUFFIX.test(field)) continue;
-    if (parts.length >= 2 && NON_ROW_OBJECT.test(parts[parts.length - 2])) continue;
-    out.push({ expr, line: src.slice(0, m.index).split("\n").length });
+  for (const re of [JSX_TEXT_EXPR, JSX_TEXT_FALLBACK, RENDER_ARROW_DATE]) {
+    let m;
+    re.lastIndex = 0;
+    while ((m = re.exec(src))) {
+      const expr = m[1];
+      if (!isUnformattedDateExpression(expr)) continue;
+      out.push({ expr, line: src.slice(0, m.index).split("\n").length });
+    }
   }
+  out.sort((a, b) => a.line - b.line);
   return out;
 }
 
@@ -281,6 +321,10 @@ function selftest() {
     { d: detectsIso, n: "bare {p.expires_at} → CAUGHT", src: `<span>{p.expires_at}</span>`, want: true },
     { d: detectsIso, n: "bare {t.due_date} → CAUGHT", src: `<span>{t.due_date}</span>`, want: true },
     { d: detectsIso, n: "bare {d.effective_on} → CAUGHT", src: `<span>{d.effective_on}</span>`, want: true },
+    { d: detectsIso, n: 'em-dash fallback {row.expiration_date ?? "—"} → CAUGHT', src: `<span>{row.expiration_date ?? "—"}</span>`, want: true },
+    { d: detectsIso, n: 'em-dash fallback {f.pickup_date || "—"} → CAUGHT', src: `<dd>{f.pickup_date || "—"}</dd>`, want: true },
+    { d: detectsIso, n: "camelCase form-state {form.plannedDate} → CAUGHT", src: `<dd>{form.plannedDate}</dd>`, want: true },
+    { d: detectsIso, n: 'camelCase behind a fallback {form.plannedDate || "—"} → CAUGHT', src: `<dd>{form.plannedDate || "—"}</dd>`, want: true },
     // (2) corrected shape + controls — MUST NOT be flagged
     { d: detectsIso, n: "CORRECTED {formatDateUS(row.transaction_date)} → not flagged", src: `<span>{formatDateUS(row.transaction_date)}</span>`, want: false },
     { d: detectsIso, n: "CORRECTED {formatDateTimeUS(a.created_at)} → not flagged", src: `<div>{formatDateTimeUS(a.created_at)}</div>`, want: false },
@@ -291,6 +335,20 @@ function selftest() {
     { d: detectsIso, n: "non-date field {row.status} → not flagged", src: `<span>{row.status}</span>`, want: false },
     { d: detectsIso, n: "non-date field {row.driver_name} → not flagged", src: `<span>{row.driver_name}</span>`, want: false },
     { d: detectsIso, n: "money field {row.amount_cents} → not flagged", src: `<span>{row.amount_cents}</span>`, want: false },
+    { d: detectsIso, n: 'CORRECTED fallback {formatDateUS(row.expiration_date) || "—"} → not flagged', src: `<span>{formatDateUS(row.expiration_date) || "—"}</span>`, want: false },
+    { d: detectsIso, n: 'CORRECTED fallback {formatDateTimeLocalUS(form.plannedDate) || "—"} → not flagged', src: `<dd>{formatDateTimeLocalUS(form.plannedDate) || "—"}</dd>`, want: false },
+    { d: detectsIso, n: 'non-date behind a fallback {row.status || "—"} → not flagged', src: `<span>{row.status || "—"}</span>`, want: false },
+    { d: detectsIso, n: "camelCase non-date {form.driverName} → not flagged", src: `<dd>{form.driverName}</dd>`, want: false },
+    { d: detectsIso, n: 'status enum {item.expiry_pill ?? "unknown"} → not flagged (red/amber/green, not a date)', src: `<span>{item.expiry_pill ?? "unknown"}</span>`, want: false },
+    { d: detectsIso, n: "still catches the real {p.expiry_date} despite that narrowing", src: `<span>{p.expiry_date}</span>`, want: true },
+    { d: detectsIso, n: 'render arrow `render: (row) => row.hire_date ?? "—"` → CAUGHT', src: `{ key: "hire", render: (row) => row.hire_date ?? "—" },`, want: true },
+    { d: detectsIso, n: "render arrow with no fallback → CAUGHT", src: `{ render: (item) => item.effective_date },`, want: true },
+    { d: detectsIso, n: "CORRECTED render arrow formatDateUS(...) → not flagged", src: `{ render: (row) => formatDateUS(row.hire_date) ?? "—" },`, want: false },
+    { d: detectsIso, n: "sortValue accessor → not flagged (never rendered)", src: `{ sortValue: (row) => row.hire_date },`, want: false },
+    { d: detectsIso, n: "filter predicate → not flagged (never rendered)", src: `all.filter((row) => row.archived_at)`, want: false },
+    { d: detectsIso, n: "render arrow on a non-date column → not flagged", src: `{ render: (row) => row.status ?? "—" },`, want: false },
+    { d: detectsIso, n: "date-derived COUNT {row.days_until_expiry} → not flagged (a number, not a date)", src: `<span>{row.days_until_expiry}</span>`, want: false },
+    { d: detectsIso, n: "still catches the real {row.expiry_date} next to that count", src: `<span>{row.expiry_date}</span>`, want: true },
   ];
   let failed = 0;
   for (const c of cases) {

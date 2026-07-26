@@ -4,6 +4,7 @@ import { createHosViolation } from "../../../api/safetyV64";
 import { Button } from "../../../components/Button";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { Modal } from "../../../components/Modal";
+import { DateTimePicker } from "../../../components/forms/DateTimePicker";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type Source = "samsara_auto" | "manual_office" | "dot_citation";
@@ -116,13 +117,11 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
             <label className="text-xs font-semibold text-gray-600" htmlFor="hos-vio-occurred">
               Occurred at <span className="text-red-600">*</span>
             </label>
-            <input
+            <DateTimePicker
               id="hos-vio-occurred"
-              type="datetime-local"
-              className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+              aria-label="Occurred at"
               value={toDatetimeLocalValue(form.occurred_at)}
-              onChange={(e) => setForm((v) => ({ ...v, occurred_at: fromDatetimeLocalValue(e.target.value) }))}
-              required
+              onChange={(v) => setForm((prev) => ({ ...prev, occurred_at: fromDatetimeLocalValue(v) }))}
             />
           </div>
           <div className="flex flex-col gap-1">

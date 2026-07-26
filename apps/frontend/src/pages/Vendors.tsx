@@ -22,6 +22,7 @@ import { VendorsSyncPanel } from "./vendors/VendorsSyncPanel";
 import { VendorCreateModal } from "../components/vendors/VendorCreateModal";
 import { useViewModePref } from "../hooks/useViewModePref";
 import { useUrlSort } from "../hooks/useUrlSort";
+import { formatDateUS } from "../lib/formatDate";
 
 type VendorTabId = "transaction_list" | "vendor_details" | "notes";
 
@@ -208,7 +209,7 @@ export function VendorsPage() {
   // defaulting them hidden (toggle on via the gear) exactly as the old column chooser did.
   const txColumns = useMemo<ParityColumn<(typeof txRows)[number]>[]>(
     () => [
-      { key: "date", label: "Date", sortable: true, render: (r) => r.bill_date },
+      { key: "date", label: "Date", sortable: true, render: (r) => formatDateUS(r.bill_date) },
       { key: "type", label: "Type", sortable: true, render: () => "bill" },
       { key: "doc_no", label: "Doc #", render: (r) => r.bill_number ?? r.id.slice(0, 8) },
       { key: "status", label: "Status", sortable: true, render: (r) => r.status },

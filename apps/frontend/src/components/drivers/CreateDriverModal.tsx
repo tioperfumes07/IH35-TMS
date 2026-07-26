@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { formatDateUS } from "../../lib/formatDate";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -766,7 +767,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                 {returningDetection.matched_events.map((event) => (
                   <div key={event.event_id} className="rounded-sm border border-gray-200 bg-white p-1.5">
                     <div className="flex items-center justify-between gap-2">
-                      <span>{event.event_date}</span>
+                      <span>{formatDateUS(event.event_date)}</span>
                       <StatusBadge status={event.severity} />
                     </div>
                     <div className="font-medium capitalize">{event.event_type}</div>

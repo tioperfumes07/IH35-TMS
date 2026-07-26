@@ -4,6 +4,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { createHosViolation, listHosViolations, voidHosViolation } from "../../../api/safetyV64";
 import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
+import { DateTimePicker } from "../../../components/forms/DateTimePicker";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useListState } from "../../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
@@ -134,11 +135,16 @@ export function HOSViolationsTab() {
           value={form.violation_type}
           onChange={(e) => setForm((v) => ({ ...v, violation_type: e.target.value }))}
         />
-        <input
-          className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-          type="datetime-local"
+        <DateTimePicker
+          aria-label="Occurred at"
           value={toDatetimeLocalValue(form.occurred_at)}
-          onChange={(e) => setForm((v) => ({ ...v, occurred_at: new Date(e.target.value).toISOString() }))}
+          onChange={(next) =>
+            // C3: guard the empty value. The old native input handed "" straight to
+            // `new Date("").toISOString()`, which throws RangeError: Invalid time value — clearing
+            // the field crashed the tab. Clearing now yields an empty occurred_at, which the
+            // existing submit guard already treats as incomplete.
+            setForm((v) => ({ ...v, occurred_at: next ? new Date(next).toISOString() : "" }))
+          }
         />
         <SelectCombobox
           className="rounded-sm border border-gray-300 px-2 py-1 text-xs"

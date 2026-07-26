@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { listSpineEvents, type SpineEvent } from "../../api/audit";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { DateTimePicker } from "../../components/forms/DateTimePicker";
+import { isoToDateTimeLocalValue } from "../../lib/formatDate";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
@@ -227,11 +229,11 @@ export function AuditTrailPage() {
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             From
-            <input type="datetime-local" className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal" onChange={(e) => setFromDate(e.target.value ? new Date(e.target.value).toISOString() : "")} />
+            <DateTimePicker className="normal-case font-normal" aria-label="From date" value={isoToDateTimeLocalValue(fromDate)} onChange={(v) => setFromDate(v ? new Date(v).toISOString() : "")} />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             To
-            <input type="datetime-local" className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal" onChange={(e) => setToDate(e.target.value ? new Date(e.target.value).toISOString() : "")} />
+            <DateTimePicker className="normal-case font-normal" aria-label="To date" value={isoToDateTimeLocalValue(toDate)} onChange={(v) => setToDate(v ? new Date(v).toISOString() : "")} />
           </label>
         </div>
         <div className="mt-3 flex items-center gap-2">

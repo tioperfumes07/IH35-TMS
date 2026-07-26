@@ -1,4 +1,5 @@
 import { formatDateUS } from "../../lib/formatDate";
+import { DateTimePicker } from "../../components/forms/DateTimePicker";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -292,20 +293,20 @@ export function FactoringDetailPage() {
           {action === "advance" ? (
             <label className="flex flex-col gap-1">
               <span className="text-xs font-semibold text-gray-600">Advanced at</span>
-              <input type="datetime-local" className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" value={advancedAt} onChange={(event) => setAdvancedAt(event.target.value)} />
+              <DateTimePicker aria-label="Advanced at" value={advancedAt} onChange={setAdvancedAt} />
             </label>
           ) : null}
           {action === "reserve_held" ? (
             <label className="flex flex-col gap-1">
               <span className="text-xs font-semibold text-gray-600">Collected at</span>
-              <input type="datetime-local" className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" value={collectedAt} onChange={(event) => setCollectedAt(event.target.value)} />
+              <DateTimePicker aria-label="Collected at" value={collectedAt} onChange={setCollectedAt} />
             </label>
           ) : null}
           {action === "release" ? (
             <>
               <label className="flex flex-col gap-1">
                 <span className="text-xs font-semibold text-gray-600">Released at</span>
-                <input type="datetime-local" className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" value={releasedAt} onChange={(event) => setReleasedAt(event.target.value)} />
+                <DateTimePicker aria-label="Released at" value={releasedAt} onChange={setReleasedAt} />
               </label>
               <label className="flex flex-col gap-1">
                 <span className="text-xs font-semibold text-gray-600">Factor fee (USD)</span>

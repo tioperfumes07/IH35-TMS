@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import { apiRequest } from "../../../api/client";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { formatDateUS } from "../../../lib/formatDate";
 
 type AxleGroup = "all" | "steer" | "drive";
 
@@ -71,7 +72,7 @@ export function BrakeWearDashboard() {
         render: (row) => (row.current_thickness_mm != null ? `${row.current_thickness_mm.toFixed(1)} mm` : "—"),
       },
       { key: "threshold_mm", label: "Threshold", render: (row) => `${row.threshold_mm} mm` },
-      { key: "projected_replacement_date", label: "Projected", sortable: true, render: (row) => row.projected_replacement_date ?? "—" },
+      { key: "projected_replacement_date", label: "Projected", sortable: true, render: (row) => formatDateUS(row.projected_replacement_date) || "—" },
       {
         key: "days_until_replacement",
         label: "Days",
