@@ -610,7 +610,7 @@
       ],
       "spec": "Law of the Land total connectivity",
       "status": "FAIL",
-      "evidence": "Neon lucia pg_constraint inbound-FK sweep: 0 inbound FKs on journal_entry_types(16), detail_types(144), dot_violation_types(213), driver_load_statuses(39), cargo_claim_reasons(0), tire_positions(0), wo_cancellation_reasons(6). accounting.journal_entries does not FK journal_entry_types; catalogs.accounts does not FK detail_types.",
+      "evidence": "Neon lucia pg_constraint inbound-FK sweep: 0 inbound FKs on journal_entry_types(16), detail_types(144), dot_violation_types(213), driver_load_statuses(39), cargo_claim_reasons(0), tire_positions(0), wo_cancellation_reasons(6). accounting.journal_entries does not FK journal_entry_types; catalogs.accounts does not FK detail_types. STALE PASS CORRECTED by GUARD 2026-07-26. Control accounts ARE resolved on prod \u2014 89 rows across all entities INCLUDING USMCA \u2014 so the 'unbound control roles / USMCA blocker' framing is FALSE and must not be rebuilt. Likewise 'entity-blind catalogs' is mostly WRONG: most are legitimate GLOBAL reference tables, which is the same shared-canonical class that made LST-RLS-01 write-authz-only rather than entity-scoping (company-scoping an all-NULL global under FORCE RLS returns ZERO rows). The real remaining findings are SMALLER and specific: (1) retire the EMPTY catalogs.account_role_bindings, (2) archive the RETIRE catalogs.cancellation_reasons (REVOKE + deprecating COMMENT, never DROP \u2014 Rule 07), (3) re-trace everything else against CURRENT source before building \u2014 the earlier sweep is stale and its counts must not be trusted.",
       "pr": null,
       "owner_hold": false,
       "tracker": null,
