@@ -1,12 +1,14 @@
 import { Link, useParams } from "react-router-dom";
 import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 /**
  * Reverse Law §9 for a load — bank feed rows tagged to this load.
  * Mounted at `/dispatch/loads/:id/banking` only.
- * EntityLink kind="load" stays on `/dispatch/loads/:id` → Dispatch board (`?load_id=`).
+ * EntityLink kind="load" stays on the canonical `/dispatch/loads/:id` (the Dispatch board opens
+ * the drawer from that PATH param since C5). Never hijack that target with this surface.
  * Never hijack the load-detail EntityLink target with this surface.
  */
 export function LoadBankingLinkagePage() {
@@ -31,12 +33,12 @@ export function LoadBankingLinkagePage() {
         title="Load · bank feed linkage"
         breadcrumb={["Dispatch", "Loads", id.slice(0, 8), "Banking"]}
         actions={
-          <Link
-            to={`/dispatch?load_id=${encodeURIComponent(id)}`}
+          <EntityLink
+            kind="load"
+            id={id}
+            label="Open on Dispatch board"
             className="rounded-sm border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 hover:bg-slate-50"
-          >
-            Open on Dispatch board
-          </Link>
+          />
         }
       />
       <p className="text-xs text-gray-600">

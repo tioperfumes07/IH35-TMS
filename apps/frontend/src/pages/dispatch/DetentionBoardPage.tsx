@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { useEffect, useState } from "react";
 import {
   bridgeDetentionBilling,
@@ -130,11 +131,7 @@ export function DetentionBoardPage() {
       label: "Load",
       sortable: true,
       className: "font-medium",
-      render: (event) => (
-        <Link to={`/dispatch?load_id=${encodeURIComponent(event.load_id)}`} className="text-slate-700 hover:underline">
-          {event.load_number}
-        </Link>
-      ),
+      render: (event) => <EntityLink kind="load" id={event.load_id} label={event.load_number} />,
     },
     { key: "customer_name", label: "Customer", sortable: true, render: (event) => event.customer_name ?? "—" },
     {

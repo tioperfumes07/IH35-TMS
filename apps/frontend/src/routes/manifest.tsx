@@ -632,12 +632,29 @@ function DriverSafetyProfileTab() {
   return <DriverSafetyProfilePage key={driverId} />;
 }
 
-function DispatchLoadDetailRedirect() {
+/**
+ * C5 — the canonical load address. EntityLink kind="load" (48+ callers) opens the load HERE.
+ *
+ * This used to be `DispatchLoadDetailRedirect`, whose whole body was
+ * `<Navigate to={`/dispatch?load_id=${id}`} replace />` — so the canonical route existed, passed
+ * every route audit, and then bounced straight back to the query-param board. It now renders the
+ * Dispatch board itself, which reads the `:id` PATH param (pages/Dispatch.tsx) and opens the load
+ * drawer. `?load_id=` / `?load=` remain honoured there as legacy bookmarks.
+ *
+ * Reverse Law §9 bank linkage stays at /dispatch/loads/:id/banking (LoadBankingLinkagePage) —
+ * never hijack the load-detail target with that surface.
+ */
+function DispatchLoadDetailRoute() {
   const { id } = useParams<{ id: string }>();
-  if (!id) return <Navigate to="/dispatch?view=loads" replace />;
-  // EntityLink kind="load" (48+ callers) must open the load on the Dispatch board — never a bank-feed stub.
-  // Reverse Law §9 bank linkage lives at /dispatch/loads/:id/banking (LoadBankingLinkagePage).
-  return <Navigate to={`/dispatch?load_id=${encodeURIComponent(id)}`} replace />;
+  if (!id) return <Navigate to="/dispatch/loads" replace />;
+  return <DispatchPage loadsDeepLink />;
+}
+
+/** Legacy `/loads/:id` bookmarks → the canonical `/dispatch/loads/:id` (kept, never dropped). */
+function DispatchLoadLegacyPathRedirect() {
+  const { id } = useParams<{ id: string }>();
+  if (!id) return <Navigate to="/dispatch/loads" replace />;
+  return <Navigate to={`/dispatch/loads/${encodeURIComponent(id)}`} replace />;
 }
 
 /** Legacy `/fleet/:unitId` bookmarks → canonical `/fleet/units/:id` (never collide with known fleet leaves). */
@@ -1219,7 +1236,7 @@ export const ROUTES = React.Children.toArray(
           path="/dispatch/loads/:id"
           element={
             <ProtectedRoute>
-              <DispatchLoadDetailRedirect />
+              <DispatchLoadDetailRoute />
             </ProtectedRoute>
           }
         />
@@ -4201,7 +4218,7 @@ export const ROUTES = React.Children.toArray(
           path="/loads/:id"
           element={
             <ProtectedRoute>
-              <DispatchLoadDetailRedirect />
+              <DispatchLoadLegacyPathRedirect />
             </ProtectedRoute>
           }
         />

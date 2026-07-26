@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { listCustomers, listDrivers } from "../api/mdata";
 import { type LoadStatus, useLoadsList, useUpdateLoadStatus } from "../api/loads";
@@ -111,6 +111,12 @@ export function DispatchPage({
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  // C5 — the canonical load address is the PATH `/dispatch/loads/:id`, which this page is mounted
+  // on. Before C5 that route was mounted to a component that redirected straight back to
+  // `/dispatch?load_id=`, so the canonical route was a facade and every EntityLink kind="load"
+  // still ended on a query-param board bookmark. Reading the route param here is what makes the
+  // canonical route real; `?load_id=` / `?load=` stay honoured below as legacy BOOKMARKS.
+  const { id: routeLoadId } = useParams<{ id: string }>();
   const { companies, selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
   const [newLoadOpen, setNewLoadOpen] = useState(false);
@@ -195,8 +201,10 @@ export function DispatchPage({
   });
 
   const statusMutation = useUpdateLoadStatus();
-  // Honor load_id (canonical) and legacy ?load= from older queue links so the drawer still opens.
-  const loadId = searchParams.get("load_id") ?? searchParams.get("load");
+  // Canonical first: `/dispatch/loads/:id`. `?load_id=` and the older `?load=` are kept as LEGACY
+  // BOOKMARKS (emailed board links, saved tabs) so nothing that already works stops working —
+  // C5 forbids WRITING the query form, never reading it.
+  const loadId = routeLoadId ?? searchParams.get("load_id") ?? searchParams.get("load");
   const canEdit = true;
 
   // "Reserve a Load" deep link (?book_load=1) must open the book-load modal — previously unread.
@@ -520,6 +528,14 @@ export function DispatchPage({
         canEdit={canEdit}
         operatingCompanyId={defaultCompanyIds[0] ?? ""}
         onClose={() => {
+          // On the canonical route the load id lives in the PATH — deleting a query param there
+          // would leave the drawer open forever, so step back to the board and keep the current
+          // view/filters. The legacy query-param entry still closes by dropping the param.
+          if (routeLoadId) {
+            const keep = searchParams.toString();
+            navigate(`/dispatch/loads${keep ? `?${keep}` : ""}`, { replace: true });
+            return;
+          }
           const next = new URLSearchParams(searchParams);
           next.delete("load_id");
           next.delete("load");

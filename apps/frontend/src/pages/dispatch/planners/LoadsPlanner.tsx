@@ -65,7 +65,7 @@ export function LoadsPlanner() {
   const rows = useMemo(() => loadsQuery.data ?? [], [loadsQuery.data]);
 
   const openLoad = (loadId: string) => {
-    navigate(`/dispatch?load_id=${encodeURIComponent(loadId)}`);
+    navigate(`/dispatch/loads/${encodeURIComponent(loadId)}`);
   };
 
   return (

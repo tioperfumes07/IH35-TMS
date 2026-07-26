@@ -54,7 +54,7 @@ function PlannerLoadChip({ load }: { load: PlannerLoadEvent }) {
       data-testid={`planner-load-${load.load_number}`}
       className={`mb-1 block w-full rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-left text-[11px] text-slate-700 ${isDragging ? "opacity-60" : ""}`}
       title={`${load.customer_name ?? "Load"} · ${load.pickup_city ?? ""}${load.pickup_state ? `, ${load.pickup_state}` : ""} — click to open detail`}
-      onClick={() => navigate(`/dispatch?load_id=${encodeURIComponent(load.id)}`)}
+      onClick={() => navigate(`/dispatch/loads/${encodeURIComponent(load.id)}`)}
     >
       <span className="font-semibold">{load.load_number}</span>
       <span className="block truncate text-[10px] text-slate-700">{load.customer_name ?? "—"}</span>

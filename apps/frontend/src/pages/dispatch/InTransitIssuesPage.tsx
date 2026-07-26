@@ -75,9 +75,7 @@ export function InTransitIssuesPage() {
         sortable: true,
         render: (issue) =>
           issue.load_id ? (
-            <Link to={`/dispatch?load_id=${encodeURIComponent(issue.load_id)}`} className="text-slate-700 hover:underline">
-              {issue.load_number ?? issue.load_id}
-            </Link>
+            <EntityLink kind="load" id={issue.load_id} label={issue.load_number ?? issue.load_id} />
           ) : (
             issue.load_number ?? "—"
           ),

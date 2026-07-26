@@ -22,12 +22,27 @@ const SEGMENTS: { key: Segment; label: string }[] = [
   { key: "upnorth", label: "Up north 30d+" },
 ];
 
+// C5 (L5) — every leg chip already carried `leg.load_id` and rendered as an inert <span>: the
+// board showed you the tour but gave you no way into any of its loads. The chip keeps its exact
+// §7 navy pill chrome and becomes the canonical drill-through.
 function legChip(leg: TripLeg) {
   const dest = [leg.delivery_city, leg.delivery_state].filter(Boolean).join(", ");
   return (
-    <span key={leg.load_id} className="inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[11px] font-semibold text-white" style={{ backgroundColor: TRIP_COLOR[leg.trip_type] }}>
-      {leg.trip_type}{dest ? ` · ${dest}` : ""}
-    </span>
+    <EntityLink
+      key={leg.load_id}
+      kind="load"
+      id={leg.load_id}
+      className="inline-flex hover:underline"
+      label={
+        <span
+          className="inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[11px] font-semibold text-white"
+          style={{ backgroundColor: TRIP_COLOR[leg.trip_type] }}
+        >
+          {leg.trip_type}
+          {dest ? ` · ${dest}` : ""}
+        </span>
+      }
+    />
   );
 }
 

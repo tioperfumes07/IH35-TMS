@@ -8,6 +8,7 @@
  */
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getFactoringSummary } from "../../api/factoring";
 import { apiRequest } from "../../api/client";
@@ -151,14 +152,7 @@ export function FactoringQueuePage() {
         label: "Load #",
         sortable: true,
         className: "font-medium",
-        render: (row) => (
-          <Link
-            to={`/dispatch?view=loads&load_id=${row.load_id}`}
-            className="text-slate-700 hover:underline"
-          >
-            {row.load_number}
-          </Link>
-        ),
+        render: (row) => <EntityLink kind="load" id={row.load_id} label={row.load_number} />,
       },
       {
         key: "customer_name",

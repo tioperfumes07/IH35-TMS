@@ -52,11 +52,23 @@ const RULES = [
   },
   {
     file: "apps/frontend/src/components/home/DispatcherActiveLoadsPanel.tsx",
-    label: "0280-03/09 panel: driver + unit render as record-specific drill-through Links",
+    label: "0280-03/09 panel: driver + unit + load render as record-specific drill-through links",
     patterns: [
       /to=\{`\/drivers\/\$\{encodeURIComponent\(row\.driver_id\)\}`\}/,
       /to=\{`\/fleet\/units\/\$\{encodeURIComponent\(row\.unit_id\)\}`\}/,
-      /to=\{`\/dispatch\?load_id=\$\{encodeURIComponent\(row\.id\)\}`\}/,
+      // C5 (2026-07-25) TIGHTENED, NOT WEAKENED. This pattern required the literal
+      // `to={`/dispatch?load_id=${encodeURIComponent(row.id)}`}`, so the guard PINNED the
+      // query-param form and would have failed the canonical migration. The 0280-03/09 intent —
+      // "the load is a record-specific drill-through, not a bare label" — is unchanged; the
+      // accepted shape is now the shared primitive, which resolves to /dispatch/loads/:id.
+      /<EntityLink[^>]*kind=["']load["'][^>]*id=\{row\.id\}/,
+    ],
+    // C5 — and the superseded form must not come back.
+    forbidden: [
+      {
+        pattern: /to=\{`\/dispatch\?[^`]*\bload_id=/,
+        why: "load must use EntityLink kind=\"load\" (/dispatch/loads/:id), not a ?load_id= board bookmark",
+      },
     ],
   },
 ];
@@ -84,6 +96,9 @@ function scan() {
     for (const pat of rule.patterns) {
       if (!pat.test(src)) failures.push(`${rule.file}: missing ${pat} — ${rule.label}`);
     }
+    for (const bad of rule.forbidden ?? []) {
+      if (bad.pattern.test(src)) failures.push(`${rule.file}: forbidden ${bad.pattern} — ${bad.why}`);
+    }
   }
   for (const file of DRILL_THROUGH_PANELS) {
     const src = read(file);
@@ -97,16 +112,33 @@ function scan() {
 }
 
 function selftest() {
-  // Pure-logic self-test: a source missing the driver link must be detected.
-  const good = 'x to={`/drivers/${encodeURIComponent(row.driver_id)}`} y';
-  const bad = "x <span>no link</span> y";
-  const re = RULES[1].patterns[0];
-  const pass = re.test(good) && !re.test(bad);
-  if (!pass) {
+  // Pure-logic self-test: a source missing a required link must be detected, and the superseded
+  // ?load_id= form must be detected as forbidden (C5 — otherwise the ratchet could silently
+  // relax back to the shape it used to demand).
+  const checks = [
+    [
+      "driver link required",
+      RULES[1].patterns[0].test('x to={`/drivers/${encodeURIComponent(row.driver_id)}`} y') &&
+        !RULES[1].patterns[0].test("x <span>no link</span> y"),
+    ],
+    [
+      "canonical load link required",
+      RULES[1].patterns[2].test('<EntityLink kind="load" id={row.id} label="Open" />') &&
+        !RULES[1].patterns[2].test('<Link to={`/dispatch?load_id=${encodeURIComponent(row.id)}`}>Open</Link>'),
+    ],
+    [
+      "superseded ?load_id= forbidden",
+      RULES[1].forbidden[0].pattern.test('<Link to={`/dispatch?load_id=${encodeURIComponent(row.id)}`}>Open</Link>') &&
+        !RULES[1].forbidden[0].pattern.test('<EntityLink kind="load" id={row.id} label="Open" />'),
+    ],
+  ];
+  const failed = checks.filter(([, ok]) => !ok);
+  if (failed.length) {
     console.error("verify:owner-home-linkage SELFTEST FAILED");
+    for (const [name] of failed) console.error(`  ✗ ${name}`);
     process.exit(1);
   }
-  console.log("verify:owner-home-linkage SELFTEST PASS");
+  console.log(`verify:owner-home-linkage SELFTEST PASS (${checks.length} checks)`);
   process.exit(0);
 }
 

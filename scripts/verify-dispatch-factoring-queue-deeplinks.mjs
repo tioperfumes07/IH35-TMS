@@ -31,19 +31,37 @@ function read(rel) {
   return { ok: true, src: fs.readFileSync(p, "utf8"), err: null };
 }
 
-/** Exported for --selftest planted fixtures. */
+/**
+ * Exported for --selftest planted fixtures.
+ *
+ * C5 (2026-07-25) TIGHTENED, NOT WEAKENED. This check used to REQUIRE the literal
+ * `to={`/dispatch?view=loads&load_id=${row.load_id}`}` — i.e. it pinned the query-param form in
+ * place and would have failed the canonical migration. The underlying INTENT was never "use a
+ * query string"; it was "this link must actually open the load" (pre-#2537 it emitted `?load=`,
+ * which Dispatch never read, so the drawer never opened). That intent is now satisfied by the
+ * canonical route, so the requirement moves up to `EntityLink kind="load"` and BOTH dead-producer
+ * regressions (`?load=` and `?load_id=`) stay forbidden. Strictly stronger: three assertions where
+ * there were two, and the accepted shape is the one the whole app shares.
+ */
 export function checkFactoringQueueProducer(src) {
   const failures = [];
-  // Canonical producer: load_id= (not legacy load= alone).
-  if (!/to=\{`\/dispatch\?view=loads&load_id=\$\{row\.load_id\}`\}/.test(src)) {
+  // Canonical producer: EntityLink kind="load" → /dispatch/loads/:id.
+  if (!/<EntityLink[^>]*kind=["']load["'][\s\S]{0,200}?row\.load_id/.test(src)) {
     failures.push(
-      `${QUEUE}: Factoring Queue load link must use /dispatch?view=loads&load_id=\${row.load_id}`,
+      `${QUEUE}: Factoring Queue load link must use <EntityLink kind="load" id={row.load_id} …> ` +
+        `(canonical /dispatch/loads/:id)`,
     );
   }
   // Regression: the original dead producer.
   if (/to=\{`\/dispatch\?view=loads&load=\$\{row\.load_id\}`\}/.test(src)) {
     failures.push(
-      `${QUEUE}: must not emit legacy ?load= alone (drawer never opened) — use load_id=`,
+      `${QUEUE}: must not emit legacy ?load= alone (drawer never opened) — use EntityLink kind="load"`,
+    );
+  }
+  // Regression: the superseded query-param producer (C5).
+  if (/to=\{`\/dispatch\?[^`]*\bload_id=/.test(src)) {
+    failures.push(
+      `${QUEUE}: must not emit /dispatch?…load_id= — the canonical load address is /dispatch/loads/:id`,
     );
   }
   return failures;
@@ -99,9 +117,12 @@ export function run() {
 
 if (process.argv.includes("--selftest")) {
   const goodQueue =
-    'to={`/dispatch?view=loads&load_id=${row.load_id}`}';
+    '<EntityLink kind="load" id={row.load_id} label={row.load_number} />';
   const badQueue =
     'to={`/dispatch?view=loads&load=${row.load_id}`}';
+  // C5 — the shape this guard used to REQUIRE is now a planted failure.
+  const badQueueQueryParam =
+    'to={`/dispatch?view=loads&load_id=${row.load_id}`}';
   const goodDispatch = `
     const loadId = searchParams.get("load_id") ?? searchParams.get("load");
     useEffect(() => {
@@ -120,6 +141,7 @@ if (process.argv.includes("--selftest")) {
   const checks = [
     ["good queue passes", checkFactoringQueueProducer(goodQueue).length === 0],
     ["bad queue fails", checkFactoringQueueProducer(badQueue).length > 0],
+    ["superseded ?load_id= queue producer fails", checkFactoringQueueProducer(badQueueQueryParam).length > 0],
     ["good dispatch passes", checkDispatchConsumer(goodDispatch).length === 0],
     ["dispatch missing load fallback fails", checkDispatchConsumer(badDispatchNoLoad).length > 0],
     ["dispatch missing book_load fails", checkDispatchConsumer(badDispatchNoBook).length > 0],

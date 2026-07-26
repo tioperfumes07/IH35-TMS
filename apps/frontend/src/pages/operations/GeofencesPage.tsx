@@ -4,6 +4,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import {
   createGeofence,
@@ -132,7 +133,24 @@ export function GeofencesPage() {
         key: "location_ref_id",
         label: "Linked ref",
         sortable: true,
-        render: (item) => item.location_ref_id ?? "—",
+        // C5 — this printed a bare UUID and was a dead click. NOTE, against the C5 brief: this is
+        // NOT a load reference. `GeofenceLocationKind` is
+        // customer_site | yard | vendor_site | custom | dot_inspection_station
+        // (api/geofencing.ts:3 and the identical `locationKindSchema` in
+        // apps/backend/src/telematics/geofences.routes.ts:6) — there is no load kind, so
+        // location_ref_id can never be a load id. It is drilled to the entity it actually points
+        // at; yard / custom / dot_inspection_station have no per-id detail route, so those stay
+        // plain text rather than becoming a fabricated link.
+        render: (item) => {
+          if (!item.location_ref_id) return "—";
+          if (item.location_kind === "customer_site") {
+            return <EntityLink kind="customer" id={item.location_ref_id} label={item.location_ref_id.slice(0, 8)} />;
+          }
+          if (item.location_kind === "vendor_site") {
+            return <EntityLink kind="vendor" id={item.location_ref_id} label={item.location_ref_id.slice(0, 8)} />;
+          }
+          return item.location_ref_id.slice(0, 8);
+        },
       },
       {
         key: "vertices",

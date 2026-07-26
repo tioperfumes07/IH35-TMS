@@ -1295,7 +1295,7 @@ export function DispatchBoard({
         failed={bulk.progress.failed}
         bulk_call_id={bulk.progress.bulk_call_id}
         onClose={() => bulk.setProgressOpen(false)}
-        resolveRowHref={(id) => `/dispatch?load_id=${encodeURIComponent(id)}`}
+        resolveRowHref={(id) => `/dispatch/loads/${encodeURIComponent(id)}`}
       />
 
       {quickAssignLoad ? (

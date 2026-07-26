@@ -63,11 +63,28 @@ export function assertGuard(sources) {
     errors.push(`${FILES.mapView}: map destination must consume and match the driver query`);
   }
 
-  if (!/to=\{`\/dispatch\?load_id=\$\{encodeURIComponent\(String\(load\.load_id\)\)\}`\}/.test(assignment)) {
-    errors.push(`${FILES.assignment}: current load must target encoded canonical /dispatch?load_id=`);
+  // C5 (2026-07-25) TIGHTENED, NOT WEAKENED. This required the literal
+  // `to={`/dispatch?load_id=${encodeURIComponent(String(load.load_id))}`}` and its selftest listed
+  // the CANONICAL `/dispatch/loads/:id` shape as the "legacy" bad fixture — the guard had the two
+  // exactly backwards and would have failed the migration. The intent — "the driver's current load
+  // must be a live drill-through that actually opens the load" — is unchanged and is enforced
+  // harder: the shared primitive, plus an explicit ban on the superseded form, plus the reader
+  // must now honour the PATH param (without which the canonical link opens an empty board).
+  if (!/<EntityLink[\s\S]{0,120}?kind=["']load["'][\s\S]{0,200}?load\.load_id/.test(assignment)) {
+    errors.push(
+      `${FILES.assignment}: current load must drill through <EntityLink kind="load" id={String(load.load_id)} …>`,
+    );
+  }
+  if (/to=\{`\/dispatch\?[^`]*\bload_id=/.test(assignment)) {
+    errors.push(`${FILES.assignment}: must not use the ?load_id= board bookmark — canonical is /dispatch/loads/:id`);
   }
   if (!/searchParams\.get\("load_id"\)/.test(dispatch) || !/isOpen=\{Boolean\(loadId\)\}/.test(dispatch)) {
     errors.push(`${FILES.dispatch}: dispatch destination must consume load_id and open the load drawer`);
+  }
+  if (!/\brouteLoadId\b/.test(dispatch) || !/useParams/.test(dispatch)) {
+    errors.push(
+      `${FILES.dispatch}: dispatch destination must read the /dispatch/loads/:id PATH param (useParams → routeLoadId)`,
+    );
   }
 
   return errors;
@@ -88,9 +105,11 @@ function selftest() {
       const assignTruckOpen = searchParams.get("assign_truck") === "1";
       <AssignTruckModal open={assignTruckOpen} />
     `,
-    assignment: "<Link to={`/dispatch?load_id=${encodeURIComponent(String(load.load_id))}`}>Load</Link>",
+    assignment: '<EntityLink kind="load" id={String(load.load_id)} label="Load" />',
     mapView: 'const focusDriverId = searchParams.get("driver"); positions.filter((p) => p.driver_uuid === focusDriverId);',
-    dispatch: 'const loadId = searchParams.get("load_id"); <Drawer isOpen={Boolean(loadId)} />;',
+    dispatch:
+      'const { id: routeLoadId } = useParams(); const loadId = routeLoadId ?? searchParams.get("load_id"); ' +
+      "<Drawer isOpen={Boolean(loadId)} />;",
     manifest: '<Route path="/dispatch/map" element={<MapView />} />',
     mdataApi: "export function setDriverDefaultTruck() { return apiRequest(`/default-truck`",
   };
@@ -105,11 +124,23 @@ function selftest() {
     actionBar: '<a href={`/drivers/${driverId}?assign_truck=1`}>Assign Truck</a><a href="/fleet/map">Map</a>',
     profilePage: "export function DriverProfilePage() { return null; }",
     assignModal: "export function AssignTruckModal() { return null; }",
-    assignment: '<Link to={`/dispatch/loads/${load.load_id}`}>Load</Link>',
+    // C5 — the superseded query-param link is the bad fixture now. It used to be the good one,
+    // and the canonical /dispatch/loads/:id shape used to sit here as "legacy".
+    assignment: '<Link to={`/dispatch?load_id=${encodeURIComponent(String(load.load_id))}`}>Load</Link>',
   };
   const fail = assertGuard(legacy);
   if (!fail.some((error) => error.includes("onAssignTruck")) || !fail.some((error) => error.includes("assign_truck"))) {
     console.error(`[${LABEL}] --selftest FAIL: legacy dead actions were not rejected`, fail);
+    process.exit(1);
+  }
+  if (!fail.some((error) => error.includes("EntityLink")) || !fail.some((error) => error.includes("board bookmark"))) {
+    console.error(`[${LABEL}] --selftest FAIL: the superseded ?load_id= load link was not rejected`, fail);
+    process.exit(1);
+  }
+  // The reader half must be provable too: drop the path param and the guard must say so.
+  const noPathParam = assertGuard({ ...good, dispatch: 'const loadId = searchParams.get("load_id"); <Drawer isOpen={Boolean(loadId)} />;' });
+  if (!noPathParam.some((error) => error.includes("PATH param"))) {
+    console.error(`[${LABEL}] --selftest FAIL: a searchParams-only reader was not rejected`, noPathParam);
     process.exit(1);
   }
 
