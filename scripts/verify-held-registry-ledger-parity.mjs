@@ -77,6 +77,11 @@ export const EXPECTED_HELD = [
   // MNT-ECON-04 (#3582) — genuinely applied on prod per Cursor owner-batch 2026-07-26, but that PR
   // is already merged and this registry stamp is out of scope for this PR (owner directive: skip).
   "202609050000_mnt_econ_04_warranty_reimburse_gl_hop.sql",
+  // BANK-DOM-05 intercompany transfers. GUARD cross-check 2026-07-26 against the prod branch
+  // br-fancy-credit-akjnd07a (bypass_rls='lucia', positive control mdata.vendors=2789):
+  // to_regclass('banking.intercompany_entity_pairs') = MISSING — genuinely unapplied. Leaves this
+  // list only after GUARD/owner Neon-applies + ledger-backfill + a fresh re-prove.
+  "202609160000_bank_dom_05_intercompany_transfers.sql",
   // LEGAL-PAPER-01 — legal.contract_instance_status 'signed_on_paper' + the paper-evidence CHECK.
   // Authored 2026-07-26 and NEVER applied anywhere; unapplied by construction, not "re-proved".
   // Live cross-check this session (Neon tiny-field-89581227 / br-fancy-credit-akjnd07a, single

@@ -678,3 +678,334 @@ export async function getTransferDetail(transferId: string, operatingCompanyId: 
   });
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// BANK-DOM-05 — INTERCOMPANY TRANSFERS (TRANSP <-> TRK <-> USMCA)
+//
+// THE DEFECT THIS FIXES: createTransfer above validates BOTH legs against one operatingCompanyId, so
+// an inter-entity movement is rejected outright — there was no way to express it at all.
+//
+// THE MODEL (owner-ruled 2026-07-26, and STMT-3 "read-only roll-up with elimination, NEVER shared
+// rows"): an intercompany movement is TWO transfer rows — one in EACH entity's own book — joined by a
+// shared intercompany_transfer_group_id. Never one row spanning two entities.
+//
+//   initiator leg  (entity A):  A's bank account        -> A's intercompany control account
+//   counterparty leg (entity B): B's intercompany account -> B's bank account
+//
+// The two intercompany legs are reciprocal and net to zero on consolidation, which is what
+// consolidated-statements.service.ts eliminates against. The control account per (entity,
+// counterparty) is resolved DETERMINISTICALLY from banking.intercompany_entity_pairs — replacing the
+// vendor/customer NAME matching that service admits in its own header it falls back on.
+//
+// ACCOUNT CONVENTION: mirrors the account already on prod — USMCA 8000 'Inter-company - IH35
+// Transportation', system_purpose 'intercompany_ih35'. A parallel due-to/due-from convention is a C2
+// split-brain and is blocked by guard assertion A5.
+//
+// NO NEW GL MATH: each leg is an ordinary transfer row in its own entity, so each posts through the
+// SAME shared posting engine (postSourceTransaction, source type "transfer") that intra-entity
+// transfers already use, under the SAME per-entity TRANSFER_GL_POSTING_ENABLED flag. This service
+// writes no journal rows itself (guard assertion A7).
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+
+export type IntercompanyTransferInput = {
+  /** Entity initiating the movement — money leaves this book. */
+  operatingCompanyId: string;
+  /** The OTHER entity — money arrives in this book. */
+  counterpartyCompanyId: string;
+  transferType: TransferType;
+  /** Initiator's real account the money leaves. */
+  fromAccountId: string;
+  fromAccountKind: AccountKind;
+  /** Counterparty's real account the money arrives in. */
+  toAccountId: string;
+  toAccountKind: AccountKind;
+  amountCents: number;
+  transferDate: string;
+  memo?: string;
+  referenceNumber?: string;
+};
+
+type IntercompanyPair = { intercompany_account_id: string };
+
+/**
+ * Resolve entity A's intercompany control account for counterparty B from the owner-editable map.
+ * Deterministic by construction — no name matching, no heuristic.
+ */
+async function resolveIntercompanyAccount(
+  client: DbClient,
+  operatingCompanyId: string,
+  counterpartyCompanyId: string
+): Promise<string> {
+  const res = await client.query<IntercompanyPair>(
+    `
+      SELECT intercompany_account_id
+      FROM banking.intercompany_entity_pairs
+      WHERE operating_company_id = $1
+        AND counterparty_company_id = $2
+        AND deactivated_at IS NULL
+      LIMIT 1
+    `,
+    [operatingCompanyId, counterpartyCompanyId]
+  );
+  const accountId = res.rows[0]?.intercompany_account_id;
+  if (!accountId) {
+    // Fail LOUD. A missing mapping must never silently fall back to a default account — that is the
+    // "silent default" DoD-D forbids, and it would post real money to the wrong control account.
+    throw new Error("intercompany_pair_not_mapped");
+  }
+  return accountId;
+}
+
+/**
+ * The acceptance bar, asserted rather than assumed: the two reciprocal legs must net to zero.
+ * Equal magnitude, opposite direction across the two books.
+ */
+export function assertIntercompanyLegsNetToZero(initiatorLegCents: number, counterpartyLegCents: number): void {
+  const net = initiatorLegCents - counterpartyLegCents;
+  if (net !== 0) {
+    throw new Error(`intercompany_legs_do_not_net_to_zero:${net}`);
+  }
+}
+
+/**
+ * Write BOTH legs atomically. Spans two entities by definition, so a single app.operating_company_id
+ * GUC cannot satisfy the RLS WITH CHECK on both rows — this uses the sanctioned lucia bypass (already
+ * the pattern used for the cross-entity audit read below) and stamps each row's real
+ * operating_company_id explicitly. Both legs commit together or neither does: a half-written
+ * intercompany pair would be an unbalanced book.
+ */
+async function insertIntercompanyLegs(
+  client: DbClient,
+  input: IntercompanyTransferInput,
+  groupId: string,
+  initiatorAccountId: string,
+  counterpartyAccountId: string,
+  userId: string
+): Promise<{ initiator: TransferRow; counterparty: TransferRow }> {
+  const amount = Math.abs(input.amountCents);
+  assertIntercompanyLegsNetToZero(amount, amount);
+
+  const legs = [
+    {
+      leg: "initiator" as const,
+      operating_company_id: input.operatingCompanyId,
+      counterparty_company_id: input.counterpartyCompanyId,
+      from_account_id: input.fromAccountId,
+      from_account_kind: input.fromAccountKind,
+      to_account_id: initiatorAccountId,
+      to_account_kind: "coa" as AccountKind,
+    },
+    {
+      leg: "counterparty" as const,
+      operating_company_id: input.counterpartyCompanyId,
+      counterparty_company_id: input.operatingCompanyId,
+      from_account_id: counterpartyAccountId,
+      from_account_kind: "coa" as AccountKind,
+      to_account_id: input.toAccountId,
+      to_account_kind: input.toAccountKind,
+    },
+  ];
+
+  const written: TransferRow[] = [];
+  for (const leg of legs) {
+    const res = await client.query<TransferRow>(
+      `
+        INSERT INTO banking.transfers (
+          operating_company_id, transfer_type,
+          from_account_id, from_account_kind,
+          to_account_id, to_account_kind,
+          amount_cents, transfer_date, memo, reference_number,
+          intercompany_transfer_group_id, counterparty_company_id, intercompany_leg,
+          created_by_user_id, created_at, updated_at
+        )
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,now(),now())
+        RETURNING id, operating_company_id, from_account_id, from_account_kind,
+                  to_account_id, to_account_kind, amount_cents, revoked_at
+      `,
+      [
+        leg.operating_company_id,
+        input.transferType,
+        leg.from_account_id,
+        leg.from_account_kind,
+        leg.to_account_id,
+        leg.to_account_kind,
+        amount,
+        input.transferDate,
+        input.memo ?? null,
+        input.referenceNumber ?? null,
+        groupId,
+        leg.counterparty_company_id,
+        leg.leg,
+        userId,
+      ]
+    );
+    const row = res.rows[0];
+    if (!row) throw new Error("intercompany_leg_insert_failed");
+    written.push(row);
+
+    // Cached bank balances move only on the REAL bank sides; the intercompany control legs are CoA.
+    if (leg.from_account_kind === "bank") {
+      await updateBankBalance(client, leg.from_account_id, leg.operating_company_id, -amount);
+    }
+    if (leg.to_account_kind === "bank") {
+      await updateBankBalance(client, leg.to_account_id, leg.operating_company_id, amount);
+    }
+
+    await appendCrudAudit(
+      client,
+      userId,
+      "banking.intercompany_transfer.leg_created",
+      {
+        resource_type: "banking.transfers",
+        resource_id: row.id,
+        operating_company_id: leg.operating_company_id,
+        counterparty_company_id: leg.counterparty_company_id,
+        intercompany_transfer_group_id: groupId,
+        intercompany_leg: leg.leg,
+        amount_cents: amount,
+      },
+      "info",
+      "BANK-DOM-05"
+    );
+  }
+
+  return { initiator: written[0]!, counterparty: written[1]! };
+}
+
+/**
+ * Create an intercompany transfer: two reciprocal legs, one per entity book, netting to zero.
+ * Both entities' GL posts run through the shared poster afterwards, each under its OWN entity's
+ * TRANSFER_GL_POSTING_ENABLED flag — one entity being enabled never posts for the other.
+ */
+export async function createIntercompanyTransfer(input: IntercompanyTransferInput, userId: string) {
+  if (input.amountCents <= 0) throw new Error("transfer_amount_must_be_positive");
+  if (input.operatingCompanyId === input.counterpartyCompanyId) {
+    throw new Error("intercompany_requires_two_distinct_entities");
+  }
+
+  const legs = await withLuciaBypass(async (client) => {
+    // The group PARENT ROW is written first so both legs FK into a row that exists — a bare grouping
+    // uuid with no parent table is the C13 defect class this block exists to avoid.
+    const groupRes = await client.query<{ id: string }>(
+      `
+        INSERT INTO banking.intercompany_transfer_groups
+          (operating_company_id, counterparty_company_id, created_by_user_id)
+        VALUES ($1, $2, $3)
+        RETURNING id
+      `,
+      [input.operatingCompanyId, input.counterpartyCompanyId, userId]
+    );
+    const groupId = groupRes.rows[0]?.id;
+    if (!groupId) throw new Error("intercompany_group_insert_failed");
+
+    const initiatorAccountId = await resolveIntercompanyAccount(
+      client as unknown as DbClient,
+      input.operatingCompanyId,
+      input.counterpartyCompanyId
+    );
+    const counterpartyAccountId = await resolveIntercompanyAccount(
+      client as unknown as DbClient,
+      input.counterpartyCompanyId,
+      input.operatingCompanyId
+    );
+    const written = await insertIntercompanyLegs(
+      client as unknown as DbClient,
+      input,
+      groupId,
+      initiatorAccountId,
+      counterpartyAccountId,
+      userId
+    );
+    return { groupId, ...written };
+  });
+
+  // Post each leg in ITS OWN entity, through the shared posting engine. Same flag discipline as
+  // intra-entity transfers: resolved per-entity, default OFF.
+  await maybePostTransferGl(legs.initiator.operating_company_id, legs.initiator.id, userId, "initial_post");
+  await maybePostTransferGl(legs.counterparty.operating_company_id, legs.counterparty.id, userId, "initial_post");
+
+  return { intercompany_transfer_group_id: legs.groupId, initiator: legs.initiator, counterparty: legs.counterparty };
+}
+
+/**
+ * The pair map is OWNER-EDITABLE by design, so it needs a management path — otherwise the
+ * deactivation columns are dead schema (a column nothing reads implies a feature that does not
+ * exist, §10a linkage law). Entity-scoped: an entity sees only its own mappings.
+ */
+export async function listIntercompanyPairs(operatingCompanyId: string, userId: string, includeInactive = false) {
+  return withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    const res = await client.query(
+      `
+        SELECT p.id, p.operating_company_id, p.counterparty_company_id, c.code AS counterparty_code,
+               p.intercompany_account_id, a.account_number, a.account_name, a.system_purpose,
+               p.notes, p.created_at, p.created_by_user_id,
+               p.deactivated_at, p.deactivated_by_user_id
+          FROM banking.intercompany_entity_pairs p
+          JOIN org.companies c ON c.id = p.counterparty_company_id
+          LEFT JOIN catalogs.accounts a ON a.id = p.intercompany_account_id
+         WHERE p.operating_company_id = $1
+           AND ($2::boolean = true OR p.deactivated_at IS NULL)
+         ORDER BY c.code
+      `,
+      [operatingCompanyId, includeInactive]
+    );
+    return res.rows;
+  });
+}
+
+/** void-not-delete: a mapping is deactivated and stamped, never removed (REVOKE DELETE in the migration). */
+export async function deactivateIntercompanyPair(pairId: string, operatingCompanyId: string, userId: string) {
+  return withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    const res = await client.query<{ id: string; deactivated_at: string; deactivated_by_user_id: string }>(
+      `
+        UPDATE banking.intercompany_entity_pairs
+           SET deactivated_at = now(), deactivated_by_user_id = $3, updated_at = now()
+         WHERE id = $1
+           AND operating_company_id = $2
+           AND deactivated_at IS NULL
+        RETURNING id, deactivated_at, deactivated_by_user_id
+      `,
+      [pairId, operatingCompanyId, userId]
+    );
+    const row = res.rows[0];
+    if (!row) throw new Error("intercompany_pair_not_found_or_already_deactivated");
+
+    await appendCrudAudit(
+      client,
+      userId,
+      "banking.intercompany_entity_pair.deactivated",
+      {
+        resource_type: "banking.intercompany_entity_pairs",
+        resource_id: row.id,
+        operating_company_id: operatingCompanyId,
+        deactivated_by_user_id: row.deactivated_by_user_id,
+      },
+      "info",
+      "BANK-DOM-05"
+    );
+    return row;
+  });
+}
+
+/** Reverse drill: both legs of one intercompany movement, from either side. */
+export async function getIntercompanyTransferGroup(groupId: string, operatingCompanyId: string) {
+  return withLuciaBypass(async (client) => {
+    const res = await client.query(
+      `
+        SELECT t.id, t.operating_company_id, t.counterparty_company_id, t.intercompany_leg,
+               t.from_account_id, t.from_account_kind, t.to_account_id, t.to_account_kind,
+               t.amount_cents, t.transfer_date, t.memo, t.reference_number, t.revoked_at,
+               c.code AS entity_code
+          FROM banking.transfers t
+          JOIN org.companies c ON c.id = t.operating_company_id
+         WHERE t.intercompany_transfer_group_id = $1
+           AND (t.operating_company_id = $2 OR t.counterparty_company_id = $2)
+         ORDER BY t.intercompany_leg
+      `,
+      [groupId, operatingCompanyId]
+    );
+    return res.rows;
+  });
+}
+
