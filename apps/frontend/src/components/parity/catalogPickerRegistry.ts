@@ -193,9 +193,10 @@ function catalogEntry(entry: {
  *  - /api/v1/catalogs/safety/*       — each safety catalog uses bespoke column names
  *    (type_code/type_name, reason_code/reason_name, violation_code/display_name), so none accepts the
  *    generic {code, display_name} body. Needs per-catalog field maps; also owned by in-flight branches.
- *  - /api/v1/catalogs/driver/{license-classes,endorsements,restrictions,...} — READ/WRITE DIVERGENCE:
- *    that surface reads and writes catalogs.*, while the canonical /api/v1/lists/drivers/* surface
- *    reads and writes reference.*. A row created on one is invisible on the other → fails clause 5.
+ *  - /api/v1/catalogs/driver/{license-classes,endorsements,restrictions,...} — FIXED by SWEEP-C11
+ *    (2026-07-25): this surface's POST/PATCH/DELETE now return 410 (writesBlocked, factory.ts) —
+ *    it can no longer diverge from the canonical /api/v1/lists/drivers/* (reference.*) surface.
+ *    Still not wired here on purpose: it's a read-only archive now, not a pickable create target.
  *  - /api/v1/accounting/categories   — reads mdata.qbo_accounts, creates into catalogs.* (clause-5
  *    violation). Out of scope here; another PR owns it.
  *  - /api/v1/catalogs/driver/escrow-types — endpoint is healthy, but escrow is financial-cluster and
