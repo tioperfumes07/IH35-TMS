@@ -46,7 +46,13 @@
 -- DELETE, no TRUNCATE, anywhere in this file. GET reads remain fully live (read-only archive).
 --
 -- Idempotent: CREATE OR REPLACE FUNCTION + DROP TRIGGER IF EXISTS / CREATE TRIGGER; a second
--- apply is a clean no-op. Fresh-DB-safe: every block is to_regclass-guarded, so a DB that has
+-- apply is a clean no-op. Fresh-DB-safe: every block is guarded with
+-- `IF EXISTS (SELECT 1 WHERE to_regclass('schema.table') IS NOT NULL) THEN ... END IF` (the
+-- exact form scripts/lib/migration-content-verifier.mjs's CONDITIONAL_SKIP recognizes per
+-- docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md "2026-05-25 — Verify-content conditional/
+-- transient rules" — a bare `IF to_regclass(...) IS NOT NULL THEN` is NOT recognized and trips
+-- verify:content-drift-check as a false DRIFT on any DB where the table doesn't exist yet, e.g.
+-- CI's fresh migration-replay DB, which never creates these 5 catalogs.* tables). A DB that has
 -- not yet created a given table is a clean no-op instead of an error. No GL math, no posting,
 -- no catalogs.accounts touch, no reserve/holdback/retainage account touch (Rule 19 N/A) — this
 -- is a driver reference sub-catalog, not a money table. No QBO write-back.
@@ -62,7 +68,7 @@ BEGIN;
 -- ===========================================================================================
 DO $$
 BEGIN
-  IF to_regclass('catalogs.license_classes') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 WHERE to_regclass('catalogs.license_classes') IS NOT NULL) THEN
     CREATE OR REPLACE FUNCTION catalogs.assert_license_classes_split_brain_locked()
       RETURNS trigger
       LANGUAGE plpgsql
@@ -96,7 +102,7 @@ $$;
 -- ===========================================================================================
 DO $$
 BEGIN
-  IF to_regclass('catalogs.cdl_endorsements') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 WHERE to_regclass('catalogs.cdl_endorsements') IS NOT NULL) THEN
     CREATE OR REPLACE FUNCTION catalogs.assert_cdl_endorsements_split_brain_locked()
       RETURNS trigger
       LANGUAGE plpgsql
@@ -130,7 +136,7 @@ $$;
 -- ===========================================================================================
 DO $$
 BEGIN
-  IF to_regclass('catalogs.cdl_restrictions') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 WHERE to_regclass('catalogs.cdl_restrictions') IS NOT NULL) THEN
     CREATE OR REPLACE FUNCTION catalogs.assert_cdl_restrictions_split_brain_locked()
       RETURNS trigger
       LANGUAGE plpgsql
@@ -164,7 +170,7 @@ $$;
 -- ===========================================================================================
 DO $$
 BEGIN
-  IF to_regclass('catalogs.medical_card_statuses') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 WHERE to_regclass('catalogs.medical_card_statuses') IS NOT NULL) THEN
     CREATE OR REPLACE FUNCTION catalogs.assert_medical_card_statuses_split_brain_locked()
       RETURNS trigger
       LANGUAGE plpgsql
@@ -198,7 +204,7 @@ $$;
 -- ===========================================================================================
 DO $$
 BEGIN
-  IF to_regclass('catalogs.employment_statuses') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 WHERE to_regclass('catalogs.employment_statuses') IS NOT NULL) THEN
     CREATE OR REPLACE FUNCTION catalogs.assert_employment_statuses_split_brain_locked()
       RETURNS trigger
       LANGUAGE plpgsql
