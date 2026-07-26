@@ -1930,20 +1930,15 @@
       "updated_at"
     ],
     "banking.reconciliation_sessions": [
-      "adjusted_bank_balance_cents",
-      "adjusted_book_balance_cents",
       "auto_match_run_at",
       "auto_match_suggestions_count",
       "bank_account_id",
-      "beginning_balance_cents",
       "book_balance_cents",
       "created_at",
-      "deposits_in_transit_cents",
       "finalized_at",
       "id",
       "notes",
       "operating_company_id",
-      "outstanding_checks_cents",
       "period_end",
       "period_start",
       "reconciled_at",
@@ -1954,7 +1949,12 @@
       "statement_balance_cents",
       "status",
       "updated_at",
-      "variance_cents"
+      "variance_cents",
+      "adjusted_bank_balance_cents",
+      "adjusted_book_balance_cents",
+      "beginning_balance_cents",
+      "deposits_in_transit_cents",
+      "outstanding_checks_cents"
     ],
     "banking.transaction_categories": [
       "coa_account_id",
@@ -2491,6 +2491,9 @@
       "location_code",
       "location_name",
       "operating_company_id"
+    ],
+    "catalogs.maintenance_vendors": [
+      "linked_vendor_id"
     ],
     "catalogs.mexico_states": [
       "code",

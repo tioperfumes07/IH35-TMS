@@ -44,10 +44,10 @@
   "_integrity_note": "Every entry appears EXACTLY ONCE (file is the key). applied_on_prod MUST agree with the pinned prod-ledger snapshot scripts/lib/prod-migration-ledger-checksums.json for any file inside its window (>= 202606010000). Enforced by scripts/verify-steps/1361-verify-held-registry-integrity.mjs. Repaired 2026-07-25: 119 entries collapsed to 110 (9 duplicates, 7 of them carrying contradictory applied_on_prod), and 79 entries that were already applied on prod were stamped. Before the repair, verify-schema-parity-from-prod (step 1437) derived held-unapplied columns from this file and therefore treated applied migrations as unapplied.",
   "applied_held": [
     {
-      "file": "202609080000_bank_dom_03_adjusted_balance_rec.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 1 FINANCIAL] BANK-DOM-03 adjusted-balance bank-rec (beginning_balance + DIT + outstanding checks columns on banking.reconciliation_sessions). No GL.",
+      "file": "202609100000_mnt_link_04_maintenance_vendor_ap_link.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] MNT-LINK-04 — catalogs.maintenance_vendors.linked_vendor_id → mdata.vendors + road_service_tickets.vendor_id RETIRE FK (qbo_vendors) → mdata.vendors. No GL.",
       "applied_on_prod": true,
-      "applied_evidence": "Devin direct Neon query 2026-07-26 (project tiny-field-89581227, _system._schema_migrations): filename='202609080000_bank_dom_03_adjusted_balance_rec.sql', checksum=68dc4557a4b504ad4ef403d900e3df18f03f328315004f447bf1da05fcb98ade, applied_at=2026-07-26T17:31:50.058Z, applied_by=cursor-owner-batch-2026-07-26."
+      "applied_evidence": "Devin direct Neon query 2026-07-26 (project tiny-field-89581227, _system._schema_migrations): filename='202609100000_mnt_link_04_maintenance_vendor_ap_link.sql', checksum=53c49fe929d475475f6d82981c1fd57c68415374a99a35f5b5e39d0a279c89ed, applied_at=2026-07-26T17:31:50.058Z, applied_by=cursor-owner-batch-2026-07-26."
     },
     {
       "file": "202606272100_af1_catalogs_accounts_per_entity.sql",
@@ -806,6 +806,12 @@
       "applied_evidence": "APPLIED ON PROD 2026-07-25 under explicit owner authorization. Live-verified after apply: both catalogs RLS enabled+forced, 3 policies each, ZERO delete policies, ih35_app privs INSERT,SELECT,UPDATE, no read regression (15/6/144). In BOTH prod ledgers; checksum = sha256 of the committed file. DO NOT RE-APPLY."
     },
     {
+      "file": "202609070000_mnt_link_02_work_order_lines_wo_fk.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] MNT-LINK-02 — ADD CONSTRAINT fk_work_order_lines_work_order: work_order_lines.work_order_uuid → maintenance.work_orders(id). Orphan ABORT + NOT VALID→VALIDATE. No GL.",
+      "applied_on_prod": true,
+      "applied_evidence": "Devin direct Neon query 2026-07-26 (project tiny-field-89581227, _system._schema_migrations): filename='202609070000_mnt_link_02_work_order_lines_wo_fk.sql', checksum=c6729259aa6c988bd067a3aea8cf7b4806a7f30908079cfc9d5273fb92440127, applied_at=2026-07-26T17:31:50.058Z, applied_by=cursor-owner-batch-2026-07-26."
+    },
+    {
       "file": "202609060000_closed_period_session_immutability.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1 FINANCIAL] BANK-DOM-02 + ACCT-DOM-03 closed period/session immutability. Installs banking reconciled-session mutation trigger + accounting.journal_entry_postings closed-period trigger (via parent JE entry_date / raise_if_txn_in_closed_period). No GL math, no feature flag, posts nothing.",
       "applied_on_prod": true,
@@ -818,10 +824,10 @@
       "applied_evidence": "Cursor owner-batch 2026-07-26: Neon br-fancy-credit-akjnd07a neondb_owner apply + ledger _system._schema_migrations + ih35_migrations.applied_migrations; banking.reconciliation_matches EXISTS; row_count_delta 0. Evidence docs/trackers/NEON-APPLY-BANK-DOM-01-202609020010-2026-07-26.md"
     },
     {
-      "file": "202609070000_mnt_link_02_work_order_lines_wo_fk.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 1] MNT-LINK-02 — ADD CONSTRAINT fk_work_order_lines_work_order: work_order_lines.work_order_uuid → maintenance.work_orders(id). Orphan ABORT + NOT VALID→VALIDATE. No GL.",
+      "file": "202609080000_bank_dom_03_adjusted_balance_rec.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 FINANCIAL] BANK-DOM-03 adjusted-balance bank-rec (beginning_balance + DIT + outstanding checks columns on banking.reconciliation_sessions). No GL.",
       "applied_on_prod": true,
-      "applied_evidence": "Devin direct Neon query 2026-07-26 (project tiny-field-89581227, _system._schema_migrations): filename='202609070000_mnt_link_02_work_order_lines_wo_fk.sql', checksum=c6729259aa6c988bd067a3aea8cf7b4806a7f30908079cfc9d5273fb92440127, applied_at=2026-07-26T17:31:50.058Z, applied_by=cursor-owner-batch-2026-07-26."
+      "applied_evidence": "Devin direct Neon query 2026-07-26 (project tiny-field-89581227, _system._schema_migrations): filename='202609080000_bank_dom_03_adjusted_balance_rec.sql', checksum=68dc4557a4b504ad4ef403d900e3df18f03f328315004f447bf1da05fcb98ade, applied_at=2026-07-26T17:31:50.058Z, applied_by=cursor-owner-batch-2026-07-26."
     }
   ],
   "superseded": []
