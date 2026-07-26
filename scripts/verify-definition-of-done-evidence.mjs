@@ -21,11 +21,18 @@
  *
  * This is deliberately a FLOOR, not the whole standard. Passing it does NOT mean a change is done;
  * failing it means it definitely is not.
+ *
+ * ZERO-COMMIT FAKE-GREEN (fixed 2026-07-25, same family as verify-step 1430): `collectBranchCommits`
+ * used to `return []` when `git merge-base` produced nothing, and an empty list means zero problems
+ * means "OK". In a shallow clone — the actions/checkout default and the state this repo's shared
+ * clone was actually found in — that is a green DoD gate that inspected no commits. The range
+ * precondition is now shared with 1430 via scripts/lib/branch-range-guard.mjs and refuses.
  */
 import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { classifyCommitRange, collectGitFacts, rangeCommitShas } from "./lib/branch-range-guard.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-definition-of-done-evidence";
@@ -181,10 +188,18 @@ export function assertDoDEvidence(commits, opts = {}) {
   return problems;
 }
 
+/** Set by collectBranchCommits so the PASS line can state WHAT was checked, never a bare "OK". */
+let RANGE_NOTE = "";
+
 function collectBranchCommits() {
-  const base = sh("git merge-base HEAD origin/main") || sh("git merge-base HEAD main");
-  if (!base) return [];
-  const shas = sh(`git rev-list ${base}..HEAD`).split("\n").filter(Boolean);
+  const facts = collectGitFacts(ROOT);
+  const shas = rangeCommitShas(facts, ROOT);
+  const verdict = classifyCommitRange({ ...facts, commitCount: shas.length });
+  if (verdict.fatal) {
+    console.error(`${LABEL} FAILED [${verdict.code}] — the branch range cannot be checked:\n  ${verdict.fatal}`);
+    process.exit(1);
+  }
+  RANGE_NOTE = `${verdict.note} [${verdict.code}]`;
   return shas.map((sha) => ({
     sha,
     subject: sh(`git log -1 --format=%s ${sha}`),
@@ -323,5 +338,5 @@ if (IS_MAIN && problems.length) {
   process.exit(1);
 }
 if (IS_MAIN) {
-  console.log(`${LABEL} OK — branch commits carry evidence, guards, and legal guard wiring`);
+  console.log(`${LABEL} OK — ${RANGE_NOTE}: branch commits carry evidence, guards, and legal guard wiring`);
 }

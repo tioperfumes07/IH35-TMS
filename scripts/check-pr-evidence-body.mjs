@@ -138,6 +138,20 @@ if (process.argv.includes("--selftest")) {
     failures.push(`PRE-FIX FIXTURE #3387 (compliant) was wrongly rejected: ${compliantProblems.join(" | ")}`);
   }
 
+  // EMPTY-INPUT arm: assertPrBodyEvidence() is scope-gated and correctly returns [] for an empty file
+  // list — that is why the refusal lives on the main path, and why this arm asserts the SHAPE of the
+  // hole rather than the fixed behaviour: if this ever stops being true the main-path refusal below
+  // is dead code and must be revisited.
+  if (assertPrBodyEvidence("no evidence block whatsoever", []).length) {
+    failures.push(
+      "empty-files arm: assertPrBodyEvidence([]) now reports problems — the main-path empty-list refusal " +
+        "is redundant; collapse one of the two rather than leaving a dead branch"
+    );
+  }
+  if (isAppAffecting([])) {
+    failures.push("empty-files arm: isAppAffecting([]) is true — the scope gate changed shape, re-derive the refusal");
+  }
+
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:`);
     for (const f of failures) console.error(`  ${f}`);
@@ -145,7 +159,8 @@ if (process.argv.includes("--selftest")) {
   }
   console.log(
     `${LABEL} SELFTEST PASS — 4 planted defects + 5 real pre-fix PR bodies (#3397/#3403/#3405/#3408/#3409) ` +
-      `rejected; real compliant body #3387, heading-form, UNVERIFIED and docs-only not flagged`
+      `rejected; real compliant body #3387, heading-form, UNVERIFIED and docs-only not flagged; ` +
+      `empty changed-files list refused on the main path`
   );
   process.exit(0);
 }
@@ -200,6 +215,23 @@ const body = resolved.body;
 const files = fs.existsSync(filesFile)
   ? fs.readFileSync(filesFile, "utf8").split(/\r?\n/).filter(Boolean)
   : [];
+
+// EMPTY-INPUT IS NOT SUCCESS (2026-07-25, same family as the verify-step 1430 zero-commit fake-green).
+// `isAppAffecting([])` is false, so an empty changed-files list made this guard return zero problems
+// and print OK — a green PR-body gate that read no PR. The workflow builds /tmp/pr-files.txt from
+// `git diff BASE...HEAD` with a `|| git diff origin/<base>...HEAD` fallback; if BOTH fail (shallow
+// checkout, missing base ref, deleted branch) the file is created EMPTY and the `||` still succeeds,
+// so the failure is silent. No pull request changes zero files, so zero is always a broken input.
+if (!files.length) {
+  console.error(
+    `${LABEL} FAILED — the changed-files list (${filesFile}) is EMPTY, so nothing was checked.\n` +
+      `  No pull request changes zero files: the \`git diff BASE...HEAD\` that produces this list failed\n` +
+      `  (shallow checkout, missing base ref, or an unreachable base sha) and the guard would otherwise\n` +
+      `  report OK having read no PR at all. Ensure the job checks out with \`fetch-depth: 0\` and that\n` +
+      `  the base sha is fetched.`
+  );
+  process.exit(1);
+}
 
 const problems = assertPrBodyEvidence(body, files);
 if (problems.length) {

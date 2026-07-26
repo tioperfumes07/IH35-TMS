@@ -1348,6 +1348,11 @@
     "1551": "1551-verify-picker-law-no-raw-uuid.mjs",
     "1552": "1552-verify-acct-bank-remaining-packet.mjs",
     "1553": "1553-verify-no-native-datetime-input.mjs",
+    "1554": {
+      "owner": "money-theater",
+      "guard": "verify-ci-checkout-depth-for-range-guards",
+      "note": "PR#3586"
+    },
     "1555": "1555-verify-canonical-load-nav.mjs",
     "1558": "1558-verify-no-dead-kpi-cards.mjs",
     "1560": "1560-verify-route-manifest-parity.mjs",
