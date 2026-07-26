@@ -40,6 +40,15 @@
 -- amount column is added, no journal entry is created, no feature flag is touched. QBO is never
 -- written. Idempotent (CREATE TABLE/INDEX IF NOT EXISTS, DROP POLICY IF EXISTS + CREATE, ON CONFLICT
 -- DO NOTHING copy). No hardcoded UUID literal; no org.companies seed needed.
+--
+-- SUPERSEDES: bank.reconciliation_matches (JORGE-APPROVED 2026-09-02) — owner-gated schema-relocation
+-- of the bank-transaction-to-ledger-entry MATCH LINKAGE ledger (not a new money concept: no amount,
+-- no GL account, no journal entry). scripts/canonical-ledger-registry.json has no "reconciliation" /
+-- "match" concept entry (verified: the concept is a linkage/audit table, not a payment/bill/invoice/
+-- settlement/advance/escrow ledger), so this table is flagged only because `banking` is a financial
+-- schema, not because of a concept collision. It is the direct 1:1 schema-relocation replacement for
+-- bank.reconciliation_matches (identical columns/constraints/RLS shape, full row backfill above) —
+-- SUPERSEDES is the correct declaration, not a CANONICAL-CHECK for a distinct concept.
 
 BEGIN;
 

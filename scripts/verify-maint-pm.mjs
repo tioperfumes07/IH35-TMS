@@ -43,7 +43,16 @@ const pmRoutes = readIfExists(pmRoutesPath);
 if (!pmRoutes.includes("/api/v1/maint/pm/due")) failures.push("missing_maint_pm_due_route");
 if (!pmRoutes.includes("integrations.samsara_vehicles")) failures.push("missing_samsara_odometer_join");
 if (!pmRoutes.includes("extractSamsaraOdometerMi")) failures.push("missing_pm_due_odometer_compute");
-if (!pmRoutes.includes("recomputePmScheduleDueFields")) failures.push("missing_pm_schedule_recompute_on_write");
+// SWEEP-C2 (2026-09-02): POST/PATCH /api/v1/maint/pm/schedules were retired to 410 Gone — zero live
+// frontend callers on the legacy write path (superseded by /api/v1/maintenance/pm-schedules). The
+// recompute-on-write check below no longer applies to a route that performs no writes; asserting the
+// 410 in its place, so a regression that quietly re-adds a live write WITHOUT recompute is still
+// caught. recomputePmScheduleDueFields itself is NOT deleted (Rule 07) — see the shared-helper check
+// above (missing_recomputePmScheduleDueFields) — it stays available in pm-due.shared.ts.
+if (!/app\.post\(\s*"\/api\/v1\/maint\/pm\/schedules"[\s\S]{0,200}410/.test(pmRoutes))
+  failures.push("missing_pm_schedules_post_410_gone");
+if (!/app\.patch\(\s*"\/api\/v1\/maint\/pm\/schedules\/:id"[\s\S]{0,200}410/.test(pmRoutes))
+  failures.push("missing_pm_schedules_patch_410_gone");
 
 const index = readIfExists(indexPath);
 if (!index.includes("registerMaintPartsRoutes")) failures.push("missing_registerMaintPartsRoutes");
