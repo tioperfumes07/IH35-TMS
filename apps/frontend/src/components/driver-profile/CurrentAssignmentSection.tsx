@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { EntityLink } from "../shared/EntityLink";
 
 export function CurrentAssignmentSection({
   assignment,
@@ -49,12 +50,11 @@ export function CurrentAssignmentSection({
         <div>
           <div className="font-semibold text-slate-800">Current load</div>
           {load ? (
-            <Link
-              to={`/dispatch?load_id=${encodeURIComponent(String(load.load_id))}`}
-              className="text-slate-700 hover:underline"
-            >
-              {String(load.load_number ?? load.load_id)} · {String(load.status ?? "—")}
-            </Link>
+            <EntityLink
+              kind="load"
+              id={String(load.load_id)}
+              label={`${String(load.load_number ?? load.load_id)} · ${String(load.status ?? "—")}`}
+            />
           ) : (
             <span>—</span>
           )}

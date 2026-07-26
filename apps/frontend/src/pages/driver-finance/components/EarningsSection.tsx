@@ -6,10 +6,15 @@
  * amount formatting ($X.XX), em-dash fallbacks, column order, and the Subtotal/Miles
  * footer line preserved 1:1.
  */
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 type Line = {
   id: string;
+  /** C5 — the load this earnings line was earned on (settlement_lines.load_id, the 2026-06-27
+   *  direct-trace column the parent already reads at SettlementDetailPage.tsx:118-124). */
+  load_id?: string | null;
+  load_number?: string | null;
   description: string;
   miles?: number;
   rate?: number;
@@ -21,7 +26,19 @@ type Props = {
 };
 
 const COLUMNS: Array<ParityColumn<Line>> = [
-  { key: "id", label: "Load" },
+  {
+    key: "load_id",
+    label: "Load",
+    // C5 — this column was `{ key: "id", label: "Load" }`, i.e. it printed the settlement LINE
+    // uuid under a "Load" header. Wrong id, dead click. Now the real load, drilled canonically;
+    // an em-dash when the line genuinely carries no load rather than a plausible-looking uuid.
+    render: (line) =>
+      line.load_id ? (
+        <EntityLink kind="load" id={line.load_id} label={line.load_number ?? line.load_id.slice(0, 8)} />
+      ) : (
+        "—"
+      ),
+  },
   { key: "description", label: "Description" },
   { key: "miles", label: "Miles", render: (line) => <>{line.miles ?? "—"}</> },
   { key: "rate", label: "Rate", render: (line) => <>{line.rate ?? "—"}</> },

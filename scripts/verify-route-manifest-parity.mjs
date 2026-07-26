@@ -95,10 +95,14 @@ const REFUSED_MOUNTS = new Map([
     // path in one piece trips it. Splitting the literal keeps that guard at full strength — narrowing
     // its regex to spare a filename would weaken a live-endpoint check to accommodate a comment.
     "observability/" + "health-deep.routes.ts",
-    "UNAUTHENTICATED — the handler runs under withLuciaBypass with no requireAuth, and the payload " +
-      "discloses QuickBooks / Samsara / Plaid connection and last-sync state. Mounting it would put " +
-      "integration health on the public internet. /api/v1/healthz already serves the authenticated " +
-      "deep check. Needs an auth gate before it can ever be wired.",
+    "ARCHIVED 2026-07-25 (was: UNAUTHENTICATED). The handler ran under withLuciaBypass with no " +
+      "requireAuth and the payload disclosed QuickBooks / Samsara / Plaid connection state, last-sync " +
+      "timestamps and raw error strings. Refusing to WIRE it was correct but was not a FIX — the " +
+      "registrar still existed and any aggregator import or copy-paste re-exposed it. The registrar " +
+      "now THROWS, so this can never be mounted; the file is retained per Rule 07 (archive, never " +
+      "delete). The successor is the Owner-gated GET /api/v1/admin/health/deep (admin/" +
+      "health-deep.routes.ts), verified live at 401 unauthenticated. Constraint (not just a decision) " +
+      "enforced by scripts/verify-steps/1590-verify-no-unauth-integration-state-route.mjs.",
   ],
   [
     "middleware/response-time.ts",

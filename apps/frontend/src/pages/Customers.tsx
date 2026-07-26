@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { DatePicker } from "../components/forms/DatePicker";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
 import { ListErrorState } from "../components/ListErrorState";
+import { EntityLink } from "../components/shared/EntityLink";
 import { customerQualityKind, customerQualityClass } from "../lib/quality-badge";
 import { formatUsdCents } from "../lib/money";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -377,7 +378,18 @@ export function CustomersPage() {
       { key: "status", label: "Status", sortable: true, render: (r) => r.status },
       { key: "amount", label: "Amount", render: (r) => fmtMoney(r.total_cents) },
       { key: "balance", label: "Balance", render: (r) => fmtMoney(r.amount_open_cents) },
-      { key: "load_no", label: "Load #", render: (r) => r.source_load_id ?? "—" },
+      {
+        key: "load_no",
+        label: "Load #",
+        // C5 — this printed the raw source_load_id UUID under a "Load #" header: unreadable and a
+        // dead click. Same canonical drill as every other load reference.
+        render: (r) =>
+          r.source_load_id ? (
+            <EntityLink kind="load" id={r.source_load_id} label={r.source_load_id.slice(0, 8)} />
+          ) : (
+            "—"
+          ),
+      },
       { key: "settlement_no", label: "Settlement #", defaultHidden: true, render: () => "—" },
       { key: "truck_no", label: "Truck #", defaultHidden: true, render: () => "—" },
       { key: "pickup_date", label: "Pick-up date", defaultHidden: true, render: () => "—" },

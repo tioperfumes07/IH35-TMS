@@ -119,7 +119,7 @@ export function UnifiedTimelinePlanner() {
   }, [timelineQuery.data]);
   const leaveByCell = useMemo(() => parseLeaveCells(leaveQuery.data?.leave_day_cells), [leaveQuery.data]);
 
-  const openLoad = (loadId: string) => navigate(`/dispatch?load_id=${encodeURIComponent(loadId)}`);
+  const openLoad = (loadId: string) => navigate(`/dispatch/loads/${encodeURIComponent(loadId)}`);
   const openBookForUnit = (unitId: string | null | undefined) => {
     setBookUnitId(unitId ?? null);
     setBookOpen(true);

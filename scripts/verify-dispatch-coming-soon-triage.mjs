@@ -30,7 +30,6 @@ function main() {
   }
 
   const redirects = [
-    ['path="/dispatch/loads"', 'Navigate to="/dispatch?view=loads"'],
     ['path="/dispatch/incidents"', 'Navigate to="/dispatch/alerts"'],
     ['path="/dispatch/factoring-packets"', 'Navigate to="/accounting/factoring"'],
   ];
@@ -40,14 +39,35 @@ function main() {
     }
   }
 
-  if (!manifest.includes("function DispatchLoadDetailRedirect")) {
-    failures.push("manifest missing DispatchLoadDetailRedirect helper");
+  // SWEEP-C5 — this section used to REQUIRE the defect it was written to prevent.
+  //
+  // Its original three assertions demanded `function DispatchLoadDetailRedirect`, a
+  // `/dispatch/loads` → `Navigate to="/dispatch?view=loads"` hop, and the literal
+  // "load_id=${encodeURIComponent(id)}". Together those pinned a canonical route whose entire body
+  // was a bounce back to the query-param board: /dispatch/loads/:id passed every route audit and
+  // then immediately threw the path param away. A guard that mandates the redirect is a guard that
+  // makes the real route un-shippable, so it is repointed here — not relaxed. What it now forbids
+  // is strictly MORE than what it forbade before: the bounce it once required is now a failure.
+  if (!manifest.includes('path="/dispatch/loads"') || !manifest.includes("DispatchLoadsRoute")) {
+    failures.push('manifest missing the canonical /dispatch/loads route (DispatchLoadsRoute)');
   }
   if (!manifest.includes('path="/dispatch/loads/:id"')) {
     failures.push("manifest missing /dispatch/loads/:id deep-link alias");
   }
-  if (!manifest.includes("load_id=${encodeURIComponent(id)}")) {
-    failures.push("load detail alias must preserve load_id query param");
+  if (!manifest.includes("function DispatchLoadDetailRoute")) {
+    failures.push("manifest missing DispatchLoadDetailRoute — the canonical load-detail route");
+  }
+  // The canonical detail route must RENDER the board, never Navigate away from its own path param.
+  const detailBody = manifest.match(/function DispatchLoadDetailRoute\(\)\s*\{([\s\S]*?)\n\}/);
+  if (detailBody && /Navigate\s+to=\{`\/dispatch\?load_id=/.test(detailBody[1])) {
+    failures.push(
+      "DispatchLoadDetailRoute bounces /dispatch/loads/:id back to /dispatch?load_id= — the canonical " +
+        "route must render the board with the :id PATH param, not discard it (SWEEP-C5).",
+    );
+  }
+  // Legacy bookmarks are additive-only: /loads/:id must still resolve, now onto the canonical path.
+  if (!manifest.includes("function DispatchLoadLegacyPathRedirect")) {
+    failures.push("manifest dropped DispatchLoadLegacyPathRedirect — legacy /loads/:id must keep resolving");
   }
 
   for (const label of ["Border Crossing", "Border History", "Factoring Packets"]) {
