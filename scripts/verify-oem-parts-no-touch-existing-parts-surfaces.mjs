@@ -30,8 +30,12 @@ function resolveBaseSha() {
     process.env.GITHUB_BASE_SHA || process.env.BRANCH_FRESH_BASE_SHA || process.env.PR_BASE_SHA;
   if (fromEnv) return fromEnv.trim();
 
+  // NEVER --depth 1 here: a shallow fetch mid-pipeline re-shallows the WHOLE checkout for every
+  // later verify:pre-commit step in this same process, including 1430/1324/1431's branch-range-guard
+  // (scripts/lib/branch-range-guard.mjs), which now correctly REFUSES to report success on a shallow
+  // clone. This guard is not the only reader of the working copy's history — don't truncate it.
   const baseRef = (process.env.GITHUB_BASE_REF || "main").trim();
-  runGit(["fetch", "origin", `${baseRef}:refs/remotes/origin/${baseRef}`, "--depth", "1"]);
+  runGit(["fetch", "origin", `${baseRef}:refs/remotes/origin/${baseRef}`]);
 
   const remoteRef = `origin/${baseRef}`;
   const mergeBase = runGit(["merge-base", "HEAD", remoteRef]);
