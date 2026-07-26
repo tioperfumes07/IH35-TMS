@@ -71,7 +71,8 @@ export const EXPECTED_HELD = [
   "202609040000_sweep_c11_driver_subcatalog_split_brain_lock.sql",
   // MNT-ECON-01
   "202609030000_mnt_econ_01_parts_purchase_gl_hop.sql",
-  // MNT-ECON-04
+  // MNT-ECON-04 (#3582) — genuinely applied on prod per Cursor owner-batch 2026-07-26, but that PR
+  // is already merged and this registry stamp is out of scope for this PR (owner directive: skip).
   "202609050000_mnt_econ_04_warranty_reimburse_gl_hop.sql",
 ];
 

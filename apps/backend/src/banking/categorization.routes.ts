@@ -25,6 +25,11 @@ import {
   voidSplit,
   type SplitLineInput,
 } from "./bank-transaction-splits.service.js";
+import {
+  assertBankTxnNotInReconciledSession,
+  assertBankTxnsNotInReconciledSession,
+  ReconciledSessionLockedError,
+} from "./closed-session-immutability.js";
 
 const transactionIdParamsSchema = z.object({
   id: z.string().uuid(),
@@ -146,6 +151,9 @@ const saveSplitBodySchema = z.object({
 });
 
 function mapSplitError(reply: FastifyReply, error: unknown) {
+  if (error instanceof ReconciledSessionLockedError) {
+    return reply.code(409).send({ error: error.code, message: error.message });
+  }
   if (error instanceof SplitValidationError) {
     const code = error.code === "bank_txn_not_found" ? 404 : error.code === "feature_disabled" ? 409 : 400;
     return reply.code(code).send({ error: error.code, message: error.message });
@@ -153,7 +161,10 @@ function mapSplitError(reply: FastifyReply, error: unknown) {
   return null;
 }
 
-function mapBulkError(reply: FastifyReply, message: string) {
+function mapBulkError(reply: FastifyReply, message: string, error?: unknown) {
+  if (error instanceof ReconciledSessionLockedError || message.includes("closed reconciliation session")) {
+    return reply.code(409).send({ error: "reconciled_session_locked" });
+  }
   if (message === "bulk_txn_limit_exceeded") return reply.code(400).send({ error: message, max: BULK_TXN_MAX });
   if (message === "bulk_txn_cross_tenant_or_missing") return reply.code(403).send({ error: message });
   if (message === "qbo_account_not_found") return reply.code(400).send({ error: message });
@@ -311,6 +322,14 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       );
       const txn = txnRes.rows[0] as { id: string; status: string | null } | undefined;
       if (!txn) return { code: 404 as const, error: "transaction_not_found" };
+      try {
+        await assertBankTxnNotInReconciledSession(client, params.data.id, companyId);
+      } catch (err) {
+        if (err instanceof ReconciledSessionLockedError) {
+          return { code: 409 as const, error: err.code };
+        }
+        throw err;
+      }
       const st = String(txn.status ?? "");
       if (st !== "pending_categorization" && st !== "uncategorized") {
         return { code: 409 as const, error: "transaction_not_pending_categorization" };
@@ -644,6 +663,15 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
 
       for (const id of body.data.transaction_ids) {
         try {
+          try {
+            await assertBankTxnNotInReconciledSession(client, id, body.data.operating_company_id);
+          } catch (err) {
+            if (err instanceof ReconciledSessionLockedError) {
+              errors.push({ transaction_id: id, error: err.code });
+              continue;
+            }
+            throw err;
+          }
           const res = await client.query(
             `
               UPDATE banking.bank_transactions
@@ -783,6 +811,14 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       );
       const txn = txnRes.rows[0] as { status: string | null } | undefined;
       if (!txn) return { code: 404 as const, error: "transaction_not_found" };
+      try {
+        await assertBankTxnNotInReconciledSession(client, params.data.id, companyId);
+      } catch (err) {
+        if (err instanceof ReconciledSessionLockedError) {
+          return { code: 409 as const, error: err.code };
+        }
+        throw err;
+      }
       const st = String(txn.status ?? "");
       if (st !== "pending_categorization" && st !== "uncategorized" && st !== "transfer") {
         return { code: 409 as const, error: "transaction_not_pending_categorization" };
@@ -855,6 +891,14 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     const companyId = query.data.operating_company_id;
 
     const res = await withCompanyScope(user.uuid, companyId, async (client) => {
+      try {
+        await assertBankTxnNotInReconciledSession(client, params.data.id, companyId);
+      } catch (err) {
+        if (err instanceof ReconciledSessionLockedError) {
+          return { ok: false as const, locked: true as const };
+        }
+        throw err;
+      }
       const upd = await client.query(
         `
           UPDATE banking.bank_transactions
@@ -880,6 +924,9 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       return { ok: true as const };
     });
 
+    if ("locked" in res && res.locked) {
+      return reply.code(409).send({ error: "reconciled_session_locked" });
+    }
     if (!res.ok) return reply.code(404).send({ error: "transaction_not_found" });
     void withCompanyScope(user.uuid, companyId, (client) =>
       emitBankingSpineEvent(client, {
@@ -913,6 +960,14 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     const companyId = query.data.operating_company_id;
 
     const res = await withCompanyScope(user.uuid, companyId, async (client) => {
+      try {
+        await assertBankTxnNotInReconciledSession(client, params.data.id, companyId);
+      } catch (err) {
+        if (err instanceof ReconciledSessionLockedError) {
+          return { ok: false as const, locked: true as const };
+        }
+        throw err;
+      }
       const upd = await client.query(
         `
           UPDATE banking.bank_transactions
@@ -937,6 +992,9 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       return { ok: true as const };
     });
 
+    if ("locked" in res && res.locked) {
+      return reply.code(409).send({ error: "reconciled_session_locked" });
+    }
     if (!res.ok) return reply.code(404).send({ error: "transaction_not_found" });
     void withCompanyScope(user.uuid, companyId, (client) =>
       emitBankingSpineEvent(client, {
@@ -999,7 +1057,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       return { ok: true, updated_count: result.updated_count, bank_feed_gl: bankFeedGl };
     } catch (error) {
       const message = String((error as Error)?.message ?? "bulk_categorize_failed");
-      const mapped = mapBulkError(reply, message);
+      const mapped = mapBulkError(reply, message, error);
       if (mapped) return mapped;
       throw error;
     }
@@ -1037,7 +1095,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       };
     } catch (error) {
       const message = String((error as Error)?.message ?? "bulk_post_failed");
-      const mapped = mapBulkError(reply, message);
+      const mapped = mapBulkError(reply, message, error);
       if (mapped) return mapped;
       throw error;
     }
@@ -1073,6 +1131,9 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     try {
+      await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+        assertBankTxnNotInReconciledSession(client, params.data.id, query.data.operating_company_id)
+      );
       const result = await saveSplitDraft(
         query.data.operating_company_id,
         user.uuid,
@@ -1097,6 +1158,9 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
 
     try {
+      await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+        assertBankTxnNotInReconciledSession(client, params.data.id, query.data.operating_company_id)
+      );
       const result = await commitSplit(
         query.data.operating_company_id,
         user.uuid,
@@ -1159,6 +1223,9 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
 
     try {
+      await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+        assertBankTxnNotInReconciledSession(client, params.data.id, query.data.operating_company_id)
+      );
       const result = await voidSplit(query.data.operating_company_id, user.uuid, params.data.id);
       return result;
     } catch (error) {
