@@ -125,7 +125,7 @@ type BillRow = {
   revoked_at: string | null;
   // BANKREC-LISTSTATUS-01 (read-only, additive): true iff any of the bill's non-revoked
   // bill_payments rows has an ACTIVE (auto_matched|user_matched, i.e. not rejected)
-  // bank.reconciliation_matches row (ledger_entry_kind='bill_payment'). A Bill itself is never
+  // banking.reconciliation_matches row (ledger_entry_kind='bill_payment'). A Bill itself is never
   // matched directly — 'bill' is not a valid ledger_entry_kind (see 202607011600 migration
   // comment); reconciliation happens at the bill_payment level, so this rolls that up to the bill.
   is_reconciled: boolean;
@@ -150,7 +150,7 @@ type BillPaymentRow = {
   created_at: string;
   revoked_at: string | null;
   // BANKREC-LISTSTATUS-01 (read-only, additive): true iff this bill_payment has an ACTIVE
-  // (auto_matched|user_matched) bank.reconciliation_matches row.
+  // (auto_matched|user_matched) banking.reconciliation_matches row.
   is_reconciled: boolean;
   /** Law §9 — resolved from the existing bill_payment posting; no new JE is created here. */
   journal_entry_id?: string | null;
@@ -166,14 +166,14 @@ type BillMutationClient = {
 };
 
 // BANKREC-LISTSTATUS-01: shared correlated-subquery fragments. 'rejected' is the only non-active
-// match_state on bank.reconciliation_matches (no reversed_at/voided_at column exists on this
+// match_state on banking.reconciliation_matches (no reversed_at/voided_at column exists on this
 // table — see db/migrations/0219_block_29_bank_reconciliation_matches.sql), so excluding it is
 // the reversed/void exclusion. Matches the active-match filter already used at
 // bank-recon/match.service.ts (candidate NOT EXISTS clauses).
 const BILL_PAYMENT_IS_RECONCILED_SQL = `
   EXISTS (
     SELECT 1
-    FROM bank.reconciliation_matches rm
+    FROM banking.reconciliation_matches rm
     WHERE rm.ledger_entry_kind = 'bill_payment'
       AND rm.ledger_entry_id = bp.id
       AND rm.operating_company_id = bp.operating_company_id
@@ -239,7 +239,7 @@ const BILL_IS_RECONCILED_SQL = `
   EXISTS (
     SELECT 1
     FROM accounting.bill_payments bp
-    JOIN bank.reconciliation_matches rm
+    JOIN banking.reconciliation_matches rm
       ON rm.ledger_entry_kind = 'bill_payment'
      AND rm.ledger_entry_id = bp.id
      AND rm.operating_company_id = bp.operating_company_id

@@ -43,7 +43,7 @@ describe("bank-recon resolve difference Q8 compliance", () => {
       if (sql.includes("FROM banking.bank_accounts")) {
         return { rows: [{ ledger_account_id: "cash-account-1" }] };
       }
-      if (sql.includes("INSERT INTO bank.reconciliation_matches")) {
+      if (sql.includes("INSERT INTO banking.reconciliation_matches")) {
         return { rows: [] };
       }
       if (sql.includes("INSERT INTO accounting.journal_entries")) {

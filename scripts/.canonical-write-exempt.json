@@ -1,28 +1,28 @@
 {
   "_README": "G4 canonical-write baseline (2026-07-11, count-keyed, comments stripped). Each key = pre-existing write/FK to a RETIRE table with its COUNT; live count > baseline count fails CI (a NEW retire-write, even in an already-baselined file). Retire via #07 (settlement)/#03 (qbo) etc.; lower the count when a write is repointed to canonical.",
   "apps/backend/src/accounting/bank-recon/match.service.ts::bank.reconciliation_matches::INSERT INTO": {
-    "count": 1,
-    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO bank.reconciliation_matches; retire to banking.*"
+    "count": 0,
+    "reason": "SWEEP-C2 (2026-09-02) — SHRUNK 1→0. Repointed to banking.reconciliation_matches (canonical, created by HELD migration 202609020010_c2_banking_reconciliation_matches_canonical.sql / BANK-DOM-01). Key kept at 0 as a tripwire — any future re-introduction of bank.reconciliation_matches here is a NEW violation, not a baseline re-raise."
   },
   "apps/backend/src/accounting/bank-recon/recon-worklist.service.ts::bank.reconciliation_matches::INSERT INTO": {
-    "count": 1,
-    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO bank.reconciliation_matches; retire to banking.*"
+    "count": 0,
+    "reason": "SWEEP-C2 (2026-09-02) — SHRUNK 1→0. Repointed to banking.reconciliation_matches (canonical, created by HELD migration 202609020010_c2_banking_reconciliation_matches_canonical.sql / BANK-DOM-01). Key kept at 0 as a tripwire."
   },
   "apps/backend/src/maint/parts.routes.ts::maint.part::INSERT INTO": {
-    "count": 1,
-    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO maint.part; retire to maintenance.part"
+    "count": 0,
+    "reason": "SWEEP-C2 (2026-09-02) — SHRUNK 1→0. POST /api/v1/maint/parts now returns 410 Gone (superseded by /api/v1/maintenance/parts + /api/v1/maintenance/parts-inventory; no frontend caller found for the old write endpoint). Key kept at 0 as a tripwire."
   },
   "apps/backend/src/maint/parts.routes.ts::maint.part::UPDATE": {
-    "count": 1,
-    "reason": "baselined 2026-07-11 — pre-existing UPDATE maint.part; retire to maintenance.part"
+    "count": 0,
+    "reason": "SWEEP-C2 (2026-09-02) — SHRUNK 1→0. PATCH /api/v1/maint/parts/:id now returns 410 Gone (superseded by /api/v1/maintenance/parts + /api/v1/maintenance/parts-inventory; no frontend caller found for the old write endpoint). Key kept at 0 as a tripwire."
   },
   "apps/backend/src/maint/pm.routes.ts::maint.pm_schedule::INSERT INTO": {
-    "count": 1,
-    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO maint.pm_schedule; retire to maintenance.pm_schedule"
+    "count": 0,
+    "reason": "SWEEP-C2 (2026-09-02) — SHRUNK 1→0. POST /api/v1/maint/pm/schedules now returns 410 Gone (superseded by /api/v1/maintenance/pm-schedules; no frontend caller found for the old write endpoint). Key kept at 0 as a tripwire."
   },
   "apps/backend/src/maint/pm.routes.ts::maint.pm_schedule::UPDATE": {
-    "count": 1,
-    "reason": "baselined 2026-07-11 — pre-existing UPDATE maint.pm_schedule; retire to maintenance.pm_schedule"
+    "count": 0,
+    "reason": "SWEEP-C2 (2026-09-02) — SHRUNK 1→0. PATCH /api/v1/maint/pm/schedules/:id now returns 410 Gone (superseded by /api/v1/maintenance/pm-schedules; no frontend caller found for the old write endpoint). Key kept at 0 as a tripwire."
   },
   "apps/backend/src/onboarding/usmca-carrier-bootstrap.ts::accounting.qbo_accounts::INSERT INTO": {
     "count": 1,
@@ -45,8 +45,8 @@
     "reason": "baselined 2026-07-11 — pre-existing UPDATE payroll.driver_settlements; retire to driver_finance.driver_settlements"
   },
   "apps/backend/src/safety/position-history/position-history.routes.ts::maint.position_history::INSERT INTO": {
-    "count": 1,
-    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO maint.position_history; retire to maintenance.position_*"
+    "count": 0,
+    "reason": "SWEEP-C2 (2026-09-02) — SHRUNK 1→0. Repointed to maintenance.position_history (canonical, created by HELD migration 202609020000_c2_maintenance_position_history_canonical.sql). Key kept at 0 as a tripwire."
   },
   "apps/backend/src/settlements/approval.service.ts::settlement.settlement_line::UPDATE": {
     "count": 2,
@@ -163,6 +163,14 @@
   "db/migrations/202606122230_m2_position_history.sql::maint.part::REFERENCES": {
     "count": 1,
     "reason": "baselined 2026-07-11 — pre-existing REFERENCES maint.part; retire to maintenance.part"
+  },
+  "db/migrations/202609020000_c2_maintenance_position_history_canonical.sql::maint.position_set::REFERENCES": {
+    "count": 1,
+    "reason": "SWEEP-C2 (2026-09-02) — new canonical maintenance.position_history keeps its FK to maint.position_set(id) because NO canonical maintenance.position_set exists anywhere in db/migrations (verified: only maint.position_set is ever CREATE TABLE'd, in 202606122215_m1_positioned_parts_picker.sql). The guard's own suggested canonical (maintenance.position_*) is the position_history table itself, not position_set — retiring position_set is a separate, larger positioned-parts-picker block, out of C2's named scope (repoint the maint.position_history WRITE, not the whole maint schema). Tracked as a REMAINING gap in the SWEEP-C2 PR body, not silently dropped."
+  },
+  "db/migrations/202609020000_c2_maintenance_position_history_canonical.sql::maint.part::REFERENCES": {
+    "count": 1,
+    "reason": "SWEEP-C2 (2026-09-02) — new canonical maintenance.position_history keeps its FK to maint.part(id) for the same reason as maint.position_set above: no canonical maintenance.part table exists in db/migrations (the guard's suggested 'maintenance.part' canonical does not exist — maintenance.parts_inventory is the real canonical for the maint/parts.routes.ts WRITE path, which this PR already retired via 410 Gone). Retiring the maint.part READ-reference used by position tracking is a separate future block. Tracked as a REMAINING gap in the SWEEP-C2 PR body."
   },
   "db/migrations/202606272100_af1_catalogs_accounts_per_entity.sql::payroll.driver_settlement_line_items::UPDATE": {
     "count": 1,
