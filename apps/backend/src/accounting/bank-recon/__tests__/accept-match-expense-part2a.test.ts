@@ -59,7 +59,7 @@ describe("BLOCK-01 Part 2a — expense-link accept", () => {
     // no variance JE was created (link + clear only)
     expect(mockQuery.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO accounting.journal_entries"))).toBe(false);
     // match persisted as kind 'expense'
-    expect(mockQuery.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO bank.reconciliation_matches"))).toBe(true);
+    expect(mockQuery.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO banking.reconciliation_matches"))).toBe(true);
     // bank line cleared via matched_expense_id
     const clear = mockQuery.mock.calls.find(([sql]) => String(sql).includes("UPDATE banking.bank_transactions"));
     expect(clear).toBeDefined();

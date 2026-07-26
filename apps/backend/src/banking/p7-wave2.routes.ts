@@ -138,7 +138,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
   // bills + expenses + bill_payments + transfers + payments/AR + JEs, direction-aware). The
   // operating_company_id is taken from the validated query + membership guard (server-side active
   // entity), NEVER trusted from a client body. findCandidates may auto-store a single high-confidence
-  // match into bank.reconciliation_matches — that write pre-exists, is additive, and posts NO GL, so
+  // match into banking.reconciliation_matches — that write pre-exists, is additive, and posts NO GL, so
   // this endpoint stays Tier-3.
   app.get("/api/v1/banking/transactions/:id/match-candidates", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = financeUser(req, reply);

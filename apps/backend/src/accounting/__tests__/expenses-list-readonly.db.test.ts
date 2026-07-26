@@ -5,7 +5,7 @@
  *   1. Is ENTITY-SCOPED — under a given operating_company_id it returns ONLY that entity's
  *      expenses; a second-entity expense never leaks in (explicit operating_company_id filter
  *      + accounting.expenses RLS both agree).
- *   2. Derives is_reconciled from a REAL bank.reconciliation_matches row
+ *   2. Derives is_reconciled from a REAL banking.reconciliation_matches row
  *      (ledger_entry_kind='expense', added by 202607011600_bank_recon_expense_match_part2a.sql),
  *      exactly like the #1755 Bills/Bill-Payments precedent — an ACTIVE match
  *      (auto_matched|user_matched) → matched; a 'rejected' match → still unmatched.
@@ -32,7 +32,7 @@ describeIntegration("GAP-EXPENSES expenses list read-only (real Postgres)", () =
   let ownBankTxnId: string;
   const suffix = randomUUID().slice(0, 8);
 
-  // FORCE RLS is enabled on accounting.expenses + bank.reconciliation_matches; set BOTH the bypass
+  // FORCE RLS is enabled on accounting.expenses + banking.reconciliation_matches; set BOTH the bypass
   // flag and the company scope so seed writes are permitted for the given scopeCompanyId.
   async function bypass<T>(scopeCompanyId: string, fn: () => Promise<T>): Promise<T> {
     await db.query("BEGIN");
@@ -64,7 +64,7 @@ describeIntegration("GAP-EXPENSES expenses list read-only (real Postgres)", () =
   async function seedExpenseMatch(scopeCompanyId: string, expenseId: string, matchState: "auto_matched" | "rejected"): Promise<void> {
     await bypass(scopeCompanyId, async () => {
       await db.query(
-        `INSERT INTO bank.reconciliation_matches
+        `INSERT INTO banking.reconciliation_matches
            (operating_company_id, bank_transaction_id, ledger_entry_kind, ledger_entry_id, match_state)
          VALUES ($1::uuid, $2::uuid, 'expense', $3::uuid, $4)`,
         [scopeCompanyId, ownBankTxnId, expenseId, matchState]

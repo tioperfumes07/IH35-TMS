@@ -183,7 +183,7 @@ describeIntegration(
             `DELETE FROM accounting.posting_batches WHERE source_transaction_id = ANY($1) AND source_transaction_type='bank_categorization'`,
             [bankTxns]
           );
-          await db.query(`DELETE FROM bank.reconciliation_matches WHERE bank_transaction_id = ANY($1::uuid[])`, [bankTxns]);
+          await db.query(`DELETE FROM banking.reconciliation_matches WHERE bank_transaction_id = ANY($1::uuid[])`, [bankTxns]);
           await db.query(`DELETE FROM banking.bank_transactions WHERE id = ANY($1::uuid[])`, [bankTxns]);
           await db.query(`DELETE FROM banking.transfers WHERE id = ANY($1::uuid[])`, [transferIds]);
           await db.query(`DELETE FROM banking.bank_accounts WHERE id = ANY($1::uuid[])`, [[fromBankAccountId, toBankAccountId]]);

@@ -3,7 +3,7 @@
  *
  * Proves the derived `is_reconciled` field added to listBills / listAllBillsForCompany /
  * listBillPayments / listBillPaymentsForBill in bills.service.ts is a REAL join against
- * bank.reconciliation_matches, not a hardcoded value:
+ * banking.reconciliation_matches, not a hardcoded value:
  *   - A bill_payment with an ACTIVE match (match_state IN auto_matched|user_matched) → matched.
  *     The bill rolls that up (a Bill is never matched directly — 'bill' is not a valid
  *     ledger_entry_kind; see 202607011600_bank_recon_expense_match_part2a.sql comment).
@@ -36,7 +36,7 @@ describeIntegration("BANKREC-LISTSTATUS-01 bills/bill-payments reconciliation st
   let foreignBankTxnId: string;
 
   // FORCE RLS is enabled on banking.bank_accounts / bank_transactions / accounting.bills /
-  // accounting.bill_payments / bank.reconciliation_matches (see
+  // accounting.bill_payments / banking.reconciliation_matches (see
   // 202606281050_force_rls_financial_tables.sql), so app.bypass_rls='lucia' alone does NOT skip
   // their policies for a non-owner role — the policy predicate is purely
   // operating_company_id = current_setting('app.operating_company_id'). Set BOTH so writes for a
@@ -89,7 +89,7 @@ describeIntegration("BANKREC-LISTSTATUS-01 bills/bill-payments reconciliation st
   ): Promise<void> {
     await bypass(scopeCompanyId, async () => {
       await db.query(
-        `INSERT INTO bank.reconciliation_matches
+        `INSERT INTO banking.reconciliation_matches
            (operating_company_id, bank_transaction_id, ledger_entry_kind, ledger_entry_id, match_state)
          VALUES ($1::uuid, $2::uuid, 'bill_payment', $3::uuid, $4)`,
         [scopeCompanyId, bankTransactionId, ledgerEntryId, matchState]
@@ -107,7 +107,7 @@ describeIntegration("BANKREC-LISTSTATUS-01 bills/bill-payments reconciliation st
     await db.connect();
     await db.query("SET ROLE ih35_app");
 
-    // Seed one bank account + bank transaction per entity — bank.reconciliation_matches.bank_transaction_id
+    // Seed one bank account + bank transaction per entity — banking.reconciliation_matches.bank_transaction_id
     // is a required FK into banking.bank_transactions.
     ownBankTxnId = await bypass(companyId, async () => {
       const acct = await db.query<{ id: string }>(
@@ -211,7 +211,7 @@ describeIntegration("BANKREC-LISTSTATUS-01 bills/bill-payments reconciliation st
     // but the raw match row is confirmed to exist and be active from that entity's own RLS context.
     await bypass(foreignCompanyId, async () => {
       const foreignMatch = await db.query(
-        `SELECT match_state FROM bank.reconciliation_matches
+        `SELECT match_state FROM banking.reconciliation_matches
          WHERE operating_company_id = $1::uuid AND ledger_entry_id = $2::uuid AND ledger_entry_kind = 'bill_payment'`,
         [foreignCompanyId, paymentB]
       );

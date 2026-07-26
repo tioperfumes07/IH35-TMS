@@ -11,7 +11,7 @@ import { applyCashBasisSuppression, type CashBasisEntry } from "../cash-basis/en
 export type LedgerEntryKind = "payment" | "bill_payment" | "transfer" | "je" | "bill" | "expense";
 export type MatchState = "auto_matched" | "user_matched" | "rejected";
 
-// bank.reconciliation_matches.ledger_entry_kind has a CHECK constraint. Migration
+// banking.reconciliation_matches.ledger_entry_kind has a CHECK constraint. Migration
 // 202607011600_bank_recon_expense_match_part2a.sql widened it to permit 'expense' (BLOCK-01
 // Part 2a: expense-link accept). 'bill' remains NON-persistable: recording a bill payment with
 // no GL JE is an orphan write — that's Part 2b (BLOCK-02 CHAIN-04), still gated. Inserting a kind
@@ -27,7 +27,7 @@ const PERSISTABLE_MATCH_KINDS: ReadonlySet<LedgerEntryKind> = new Set<LedgerEntr
 
 // Denormalized convenience FK on banking.bank_transactions (migration 0182 + Part 2a's
 // matched_expense_id) set to 'matched' on accept, so the Accounting Bills/Expenses lists and the
-// worklist can show clear status without re-deriving from bank.reconciliation_matches.
+// worklist can show clear status without re-deriving from banking.reconciliation_matches.
 const MATCHED_COLUMN_BY_KIND: Partial<Record<LedgerEntryKind, string>> = {
   payment: "matched_payment_id",
   bill_payment: "matched_bill_payment_id",
@@ -274,7 +274,7 @@ async function fetchLedgerCandidates(
           AND (COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0)) > 0
           AND ($5::text IS NULL OR lower(COALESCE(b.display_id, b.bill_number, b.memo, '')) LIKE $5)
           AND NOT EXISTS (
-            SELECT 1 FROM bank.reconciliation_matches m
+            SELECT 1 FROM banking.reconciliation_matches m
             WHERE m.ledger_entry_kind = 'bill'
               AND m.ledger_entry_id = b.id
               AND m.match_state IN ('auto_matched', 'user_matched')
@@ -310,7 +310,7 @@ async function fetchLedgerCandidates(
           AND e.voided_at IS NULL
           AND ($4::text IS NULL OR lower(COALESCE(e.expense_number, e.memo, '')) LIKE $4)
           AND NOT EXISTS (
-            SELECT 1 FROM bank.reconciliation_matches m
+            SELECT 1 FROM banking.reconciliation_matches m
             WHERE m.ledger_entry_kind = 'expense'
               AND m.ledger_entry_id = e.id
               AND m.match_state IN ('auto_matched', 'user_matched')
@@ -461,7 +461,7 @@ async function storeMatch(
 ) {
   await client.query(
     `
-      INSERT INTO bank.reconciliation_matches (
+      INSERT INTO banking.reconciliation_matches (
         operating_company_id,
         bank_transaction_id,
         ledger_entry_kind,
@@ -611,7 +611,7 @@ async function postDifferenceJournalEntry(
   );
 
   // CODER-12 audit-spine: link each variance posting line to the bank transaction it reconciles
-  // (per-line grain), same transaction. (The match-only path / bank.reconciliation_matches write
+  // (per-line grain), same transaction. (The match-only path / banking.reconciliation_matches write
   // posts no GL JE and gets no link.)
   for (const row of linesRes.rows) {
     await writeTransactionSourceLink(client, {
@@ -693,7 +693,7 @@ export async function findCandidates(input: {
       .sort((a, b) => b.match_score - a.match_score)
       .slice(0, 50);
 
-    // Only persist an auto-match whose kind the bank.reconciliation_matches CHECK constraint
+    // Only persist an auto-match whose kind the banking.reconciliation_matches CHECK constraint
     // accepts. 'bill'/'expense' auto-matches are returned as ranked suggestions but never written in
     // Part 1 (see PERSISTABLE_MATCH_KINDS) — that keeps this Tier-3 and avoids a CHECK-violation 500.
     const best = ranked.find((row) => row.auto_match && PERSISTABLE_MATCH_KINDS.has(row.ledger_entry_kind));
@@ -782,7 +782,7 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
 
     // Clear the bank line: mark it 'matched' + stamp the denormalized matched_<kind>_id so the
     // worklist and the Accounting Bills/Expenses lists show status without re-deriving from
-    // bank.reconciliation_matches. Column name comes from a fixed whitelist (never user input).
+    // banking.reconciliation_matches. Column name comes from a fixed whitelist (never user input).
     const matchedColumn = MATCHED_COLUMN_BY_KIND[input.ledger_entry_kind];
     if (matchedColumn) {
       await client.query(

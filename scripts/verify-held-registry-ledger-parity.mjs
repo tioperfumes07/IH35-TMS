@@ -59,12 +59,12 @@ export const EXPECTED_HELD = [
   // ACCT-R-03 account_merge_records (#3526). BUILD-AND-HOLD — not Neon-applied; must stay in held[]
   // until owner applies 202608060000 and GUARD re-proves the ledger row.
   "202608060000_acct_r03_catalogs_account_merge_records.sql",
-  // SAF-DOM-02 (this PR). Authored 2026-07-25 and NEVER applied anywhere — it is new on this branch,
-  // so it cannot be in a prod ledger that predates it. It is not "GUARD re-proved unapplied"; it is
-  // unapplied by construction. It leaves this list only when the owner Neon-applies + ledger-backfills
-  // it and GUARD re-proves the ledger row. Note its apply-order dependency: its §3 stop-write trigger
-  // must not land before SAF-B28's PATCH repoint (see the registry entry's reason).
+  // SAF-DOM-02 — brand-new on main; never applied. Leaves this list only after owner Neon-applies +
+  // ledger-backfill + GUARD re-prove. Apply-order: stop-write trigger must not land before SAF-B28 PATCH.
   "202609130000_saf_dom_02_company_violation_jsonb_archive.sql",
+  // SWEEP-C2 / BANK-DOM-01 — brand-new this PR, genuinely unapplied on prod.
+  "202609020000_c2_maintenance_position_history_canonical.sql",
+  "202609020010_c2_banking_reconciliation_matches_canonical.sql",
 ];
 
 /**
