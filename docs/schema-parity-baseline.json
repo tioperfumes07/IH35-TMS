@@ -970,6 +970,24 @@
       "payload",
       "status"
     ],
+    "accounting.parts_purchase_postings": [
+      "amount_cents",
+      "bill_id",
+      "created_at",
+      "created_by_user_id",
+      "entry_date",
+      "expense_je_id",
+      "id",
+      "is_active",
+      "memo",
+      "operating_company_id",
+      "parts_inventory_id",
+      "status",
+      "updated_at",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
+    ],
     "accounting.payment_applications": [
       "amount_applied",
       "amount_cents",
@@ -1494,6 +1512,23 @@
       "tenant_id",
       "updated_at",
       "vendor_subtype"
+    ],
+    "accounting.warranty_reimburse_postings": [
+      "amount_cents",
+      "created_at",
+      "created_by_user_id",
+      "entry_date",
+      "expense_je_id",
+      "id",
+      "is_active",
+      "memo",
+      "operating_company_id",
+      "status",
+      "updated_at",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id",
+      "warranty_claim_id"
     ],
     "admin.launch_toggles": [
       "created_at",
@@ -2451,6 +2486,9 @@
       "location_code",
       "location_name",
       "operating_company_id"
+    ],
+    "catalogs.maintenance_vendors": [
+      "linked_vendor_id"
     ],
     "catalogs.mexico_states": [
       "code",
@@ -10245,41 +10283,6 @@
       "template_name",
       "to_phone",
       "variables"
-    ],
-    "accounting.warranty_reimburse_postings": [
-      "amount_cents",
-      "created_at",
-      "created_by_user_id",
-      "entry_date",
-      "expense_je_id",
-      "id",
-      "is_active",
-      "memo",
-      "operating_company_id",
-      "status",
-      "updated_at",
-      "void_reason",
-      "voided_at",
-      "voided_by_user_id",
-      "warranty_claim_id"
-    ],
-    "accounting.parts_purchase_postings": [
-      "amount_cents",
-      "bill_id",
-      "created_at",
-      "created_by_user_id",
-      "entry_date",
-      "expense_je_id",
-      "id",
-      "is_active",
-      "memo",
-      "operating_company_id",
-      "parts_inventory_id",
-      "status",
-      "updated_at",
-      "void_reason",
-      "voided_at",
-      "voided_by_user_id"
     ]
   }
 }
