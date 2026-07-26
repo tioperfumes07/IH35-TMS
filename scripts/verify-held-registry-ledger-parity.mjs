@@ -45,11 +45,15 @@ const SELFTEST = process.argv.includes("--selftest");
 // governance decision (a file only leaves this set when GUARD re-proves it applied, or the owner
 // Neon-applies + ledger-backfills it and GUARD re-proves the ledger row).
 export const EXPECTED_HELD = [
-  // EMPTY as of the 2026-07-25 registry truth-up. Zero genuinely-unapplied held migrations remain.
-  // 202608070000_escrow_forfeit_posting_type_sign_and_flag_seed.sql left this list the way the charter
-  // allows — re-proved APPLIED on prod, present in BOTH ledgers — so it moved to applied_held.
-  // The demo purge 202608060000 is deliberately NOT here: its file lives on the #3530 branch and it is
-  // correctly NOT applied (verified absent from _system). When that PR lands it must be re-listed.
+  // The ITEM-5a recursive demo purge (#3557). Genuinely unapplied and correctly ABSENT from prod —
+  // verified absent from _system._schema_migrations on 2026-07-25. GUARD re-verifies it on a fresh
+  // Neon branch before the owner applies. It must stay listed until then so it cannot silently
+  // disappear from held[].
+  //
+  // 202608070000 (escrow forfeit sign + flag seed) is NOT here any more: it was re-proved APPLIED on
+  // prod, present in BOTH _system._schema_migrations and ih35_migrations.applied_migrations, so this
+  // PR moves it to applied_held. It left the list the way the charter allows, not by weakening a check.
+  "202608120000_item5a_demo_purge_recursive_cascade.sql",
 ];
 
 /**
