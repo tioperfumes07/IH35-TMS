@@ -2,10 +2,10 @@
 /**
  * Settlement Pay-Run — escrow-contribution CAP guard (Phase 4 GUARDS).
  *
- * Owner-locked rule: the pay-run escrow contribution is capped at $2,000 (200000 cents) per driver and
+ * Owner-locked rule: the pay-run escrow contribution is capped at $2,500 (250000 cents) per driver and
  * NEVER releases escrow itself (release/forfeit belongs only to the separate termination-separation
  * flow — accounting/escrow/service.ts's releaseEscrow — never the weekly pay-run close). Locks:
- *   (1) a 200000-cent escrow-contribution cap constant is referenced somewhere in
+ *   (1) a 250000-cent escrow-contribution cap constant is referenced somewhere in
  *       driver-finance/ + accounting/settlement-posting/.
  *   (2) the contribution amount is computed with a max(0, cap - balance) style clamp — this is also
  *       what guarantees the contribution can never go negative.
@@ -26,8 +26,15 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-settlement-escrow-cap";
 const SCAN_DIRS = ["apps/backend/src/driver-finance", "apps/backend/src/accounting/settlement-posting"];
 
-// 200000 or 200_000 (a valid JS numeric separator) — the $2,000 cap in cents.
-const CAP_NUM = "200_?000";
+// 250000 or 250_000 (a valid JS numeric separator) — the $2,500 cap in cents.
+// RAISED from 200_000 by owner ruling C2b (2026-07-26, re-confirmed in chat: "IT IS 2500 NOW"). This
+// guard previously pinned the OLD value, so it would have gone red on the correct fix and green on the
+// stale one — a guard asserting the very number it exists to protect. Tightened, never weakened.
+const CAP_NUM = "250_?000";
+// The superseded cap must not survive anywhere in the scanned money code — not as a constant and not
+// as a string stamped into a ledger row (three such literals were being written into permanent
+// financial records: a JE line description, an escrow posting note, and the escrow-ledger INSERT).
+const STALE_CAP_RE = /\b200_?000\b|\$2,000/;
 const CAP_RE = new RegExp(`escrow[\\s\\S]{0,200}${CAP_NUM}|${CAP_NUM}[\\s\\S]{0,200}escrow`, "i");
 const CLAMP_RE = new RegExp(
   `Math\\.max\\(\\s*0\\s*,\\s*[\\w.]*(?:${CAP_NUM}|[A-Z_]*ESCROW[A-Z_]*CAP[A-Z_]*)[\\w.]*\\s*-\\s*[\\w.]+\\s*\\)`,
@@ -52,7 +59,10 @@ export function assertGuard({ files }) {
   const combined = files.map((f) => stripComments(f.text)).join("\n");
 
   if (!CAP_RE.test(combined)) {
-    errors.push("no 200000-cent ($2,000) escrow-contribution cap constant found near an 'escrow' reference (in real code, not a comment)");
+    errors.push("no 250000-cent ($2,500) escrow-contribution cap constant found near an 'escrow' reference (in real code, not a comment)");
+  }
+  if (STALE_CAP_RE.test(combined)) {
+    errors.push("the superseded $2,000 / 200000 cap survives in scanned money code — owner ruling C2b raised it to $2,500; a stale literal here can be STAMPED INTO a ledger row");
   }
   if (!CLAMP_RE.test(combined)) {
     errors.push("no max(0, cap - balance) style clamp found for the escrow contribution (this is what guarantees it is never negative)");
@@ -102,7 +112,7 @@ function selftest() {
   const goodContributionFile = {
     path: "apps/backend/src/driver-finance/escrow-contribution.service.ts",
     text: `
-export const ESCROW_CONTRIBUTION_CAP_CENTS = 200000; // $2,000 escrow cap (pay-run, owner-locked)
+export const ESCROW_CONTRIBUTION_CAP_CENTS = 250000; // $2,500 escrow cap (pay-run, owner-locked C2b)
 
 export function computeEscrowContribution(currentBalanceCents) {
   return Math.max(0, ESCROW_CONTRIBUTION_CAP_CENTS - currentBalanceCents);
@@ -134,10 +144,10 @@ export async function releaseDriverEscrowOnSeparation(client, driverId) {
       want: 0,
     },
     {
-      name: "no 200000 cap constant anywhere → FAIL",
+      name: "no 250000 cap constant anywhere → FAIL",
       in: {
         files: [
-          { ...goodContributionFile, text: goodContributionFile.text.replace(/200000/g, "someDynamicLimit") },
+          { ...goodContributionFile, text: goodContributionFile.text.replace(/250000/g, "someDynamicLimit") },
           legitimateSeparationFile,
         ],
       },
@@ -176,12 +186,12 @@ export async function releaseDriverEscrowOnSeparation(client, driverId) {
       assertNoReleaseError: true,
     },
     {
-      name: "underscored numeric literal 200_000 (valid JS separator) is recognized as the cap",
+      name: "underscored numeric literal 250_000 (valid JS separator) is recognized as the cap",
       in: {
         files: [
           {
             ...goodContributionFile,
-            text: goodContributionFile.text.replace(/200000/g, "200_000"),
+            text: goodContributionFile.text.replace(/250000/g, "250_000"),
           },
           legitimateSeparationFile,
         ],
@@ -194,7 +204,7 @@ export async function releaseDriverEscrowOnSeparation(client, driverId) {
         files: [
           {
             path: "apps/backend/src/driver-finance/escrow-contribution.service.ts",
-            text: `// the escrow cap is 200000 cents ($2,000)\nexport function noop() { return null; }`,
+            text: `// the escrow cap is 250000 cents ($2,500)\nexport function noop() { return null; }`,
           },
           legitimateSeparationFile,
         ],
@@ -231,4 +241,4 @@ if (errors.length) {
   for (const e of errors) console.error(`  ✗ ${e}`);
   process.exit(1);
 }
-console.log(`[${LABEL}] OK — escrow contribution capped at 200000 cents with a max(0, cap-balance) clamp, no release/forfeit in the pay-run path.`);
+console.log(`[${LABEL}] OK — escrow contribution capped at 250000 cents ($2,500) with a max(0, cap-balance) clamp, no release/forfeit in the pay-run path.`);
