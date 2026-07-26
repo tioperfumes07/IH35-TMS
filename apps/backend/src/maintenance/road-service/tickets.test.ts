@@ -31,6 +31,7 @@ describe("road service tickets routes (CLOSURE-7)", () => {
   const companyId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
   const ticketId = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
   const unitId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+  const vendorId = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
 
   beforeEach(async () => {
     mocked.withCurrentUserMock.mockReset();
@@ -44,6 +45,9 @@ describe("road service tickets routes (CLOSURE-7)", () => {
           // Cross-tenant membership guard: the acting user is a member of the company.
           if (sql.includes("org.user_company_access")) {
             return { rows: [{ "?column?": 1 }], rowCount: 1 };
+          }
+          if (sql.includes("FROM mdata.vendors")) {
+            return { rows: [{ id: vendorId }], rowCount: 1 };
           }
           if (sql.includes("INSERT INTO maintenance.road_service_tickets")) {
             return { rows: [{ id: ticketId, status: "open", ticket_number: "RS-1001" }] };
@@ -85,6 +89,7 @@ describe("road service tickets routes (CLOSURE-7)", () => {
         operating_company_id: companyId,
         ticket_number: "RS-1001",
         vendor_name: "FleetNet",
+        vendor_id: vendorId,
         unit_id: unitId,
         service_type: "tire_change",
         initial_complaint: "Steer tire blowout on I-35",

@@ -1,6 +1,6 @@
 {
   "_comment": "SWEEP-C6 shrink-only baseline — money INSERT / planted money events without a JE poster. Regenerate: UPDATE_C6_MONEY_JE_BASELINE=1. NEW keys fail CI; list may only shrink as gaps are fixed. Exempt with inline C6-MONEY-JE-EXEMPT: <reason>. Confirmed seeds: parts-purchase, warranty, fine-link-payment (#3551→C6), two-section bills/expenses.",
-  "generated_at": "2026-07-26T04:32:47.292Z",
+  "generated_at": "2026-07-26T04:35:04.701Z",
   "count": 43,
   "required_seeds_present": true,
   "missing_seeds": [],
@@ -38,7 +38,6 @@
     "integrations/plaid/plaid.service.ts::INSERT INSERT INTO banking.bank_transactions",
     "integrations/relay-payments/relay-wallet-bank-feed.service.ts::INSERT INSERT INTO banking.bank_transactions",
     "maintenance/two-section-service.ts::INSERT INSERT INTO accounting.bill_lines|INSERT INTO accounting.expense_lines|INSERT INTO accounting.bills|INSERT INTO accounting.expenses",
-    "maintenance/warranty.routes.ts::ANCHOR warranty-reimburse",
     "qbo-sync/ap-bill-payments-puller.ts::INSERT INSERT INTO accounting.bill_payments",
     "qbo-sync/ap-bills-puller.ts::INSERT INSERT INTO accounting.bill_lines|INSERT INTO accounting.bills",
     "qbo-sync/qbo-ar-payments-puller.ts::INSERT INSERT INTO accounting.payments|INSERT INTO accounting.payment_applications",

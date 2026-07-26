@@ -5,6 +5,8 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+// MNT-ECON-04 / SWEEP-C6: reimburse → createJournalEntry behind OFF flag.
+import { postWarrantyReimbursement } from "../accounting/warranty-posting/poster.service.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -556,7 +558,17 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
     });
 
     if (!row) return reply.code(404).send({ error: "not_found" });
-    return reply.send(mapWarrantyClaimRow(row));
+
+    // MNT-ECON-04 economic hop — balanced JE behind WARRANTY_REIMBURSE_GL_POSTING_ENABLED (default OFF).
+    const gl = await postWarrantyReimbursement({
+      operating_company_id: parsed.data.operating_company_id,
+      claim_id: params.data.id,
+      actor_user_id: user.uuid,
+      entry_date_iso: new Date().toISOString().slice(0, 10),
+      reimbursement_amount_cents: parsed.data.reimbursement_amount_cents,
+    });
+
+    return reply.send({ ...mapWarrantyClaimRow(row), gl_posting: gl });
   });
 
   app.post("/api/v1/maintenance/warranty/claims/:id/archive", async (req, reply) => {

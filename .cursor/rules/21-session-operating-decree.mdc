@@ -1,0 +1,39 @@
+---
+description: Permanent speed/queue operating decree — who builds, who merges, what we stop
+alwaysApply: true
+---
+
+# RULE 21 — SESSION OPERATING DECREE (2026-07-26)
+
+**Canonical:** `docs/specs/SESSION-OPERATING-DECREE-SPEED-QUEUE-2026-07-26.md`  
+**Shared law:** `docs/specs/UNIFIED-PLATFORM-OPERATING-LAW-2026-07-26.md`  
+**Owner questions:** `docs/specs/PRE-BLOCK-OWNER-QUESTIONS-LAW-2026-07-26.md`  
+**Hold gate:** `docs/specs/HOLD-MERGE-GATE.md` (label **not** required)
+
+## Roles
+
+| Role | Who |
+|---|---|
+| Answer unanswered questions **before code** (batch inventory) | **Jorge** (once per packet) |
+| Neon prepare+apply when ordered | **Cursor** (standing order) |
+| Merge / rebase when CI green | **Devin** |
+| Build + Neon read proofs | **Cursor** |
+| Plan / CPA / inventories | **Claude** |
+
+## Owner 2026-07-26
+
+- **`JORGE-APPROVED` label NOT required** for merge. Jorge does not review PRs.
+- Ask all unanswered questions at **block invent / module inventory** — then code.
+- `hold-merge-gate` only hard-fails if held migration lacks db-migrate firewall.
+
+## STOP
+
+1. No re-asking locked money policy at merge  
+2. No L1–L8 essays — DoD A–E + VERIFY 1–8  
+3. No tab-by-tab re-audit of known classes  
+4. Agents never self-merge money without Devin  
+5. Rule 17 — no hotfile guard thrash  
+
+## Neon
+
+Reads free via MCP. Prepare+apply when Jorge ordered. No Jorge copy-paste.

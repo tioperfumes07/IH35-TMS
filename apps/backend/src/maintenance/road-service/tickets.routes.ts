@@ -18,7 +18,8 @@ const createTicketSchema = z.object({
   operating_company_id: z.string().uuid(),
   ticket_number: z.string().trim().min(1).max(80),
   vendor_name: z.string().trim().min(1).max(200),
-  vendor_id: z.string().uuid().optional(),
+  /** MNT-LINK-04: required canonical AP vendor (mdata.vendors) — no free-text-only path. */
+  vendor_id: z.string().uuid(),
   unit_id: z.string().uuid(),
   driver_id: z.string().uuid().optional(),
   call_time: z.string().datetime({ offset: true }).optional(),
@@ -122,6 +123,15 @@ export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
     if (!body.success) return reply.code(400).send({ error: "validation_error" });
 
     const row = await withCompany(user.uuid, body.data.operating_company_id, async (client) => {
+      const vendorCheck = await client.query(
+        `SELECT id FROM mdata.vendors
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL
+          LIMIT 1`,
+        [body.data.vendor_id, body.data.operating_company_id]
+      );
+      if (!vendorCheck.rows[0]) {
+        return { __error: "invalid_vendor_id" as const };
+      }
       const res = await client.query(
         `
           INSERT INTO maintenance.road_service_tickets (
@@ -152,7 +162,7 @@ export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
           body.data.operating_company_id,
           body.data.ticket_number,
           body.data.vendor_name,
-          body.data.vendor_id ?? null,
+          body.data.vendor_id,
           body.data.unit_id,
           body.data.driver_id ?? null,
           user.uuid,
@@ -177,6 +187,13 @@ export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
       );
       return ticket;
     });
+
+    if (row && typeof row === "object" && "__error" in row && row.__error === "invalid_vendor_id") {
+      return reply.code(400).send({
+        error: "invalid_vendor_id",
+        message: "vendor_id must reference an active mdata.vendors AP vendor for this entity",
+      });
+    }
 
     return reply.code(201).send({ ticket: row });
   });

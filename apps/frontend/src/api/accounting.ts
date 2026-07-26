@@ -1351,6 +1351,8 @@ export const COA_ROLE_VALUES = [
   "civil_fines_expense",
   // MNT-ECON-01 — standalone parts purchase expense (periodic). Owner designates; no shape-fallback.
   "maintenance_parts_expense",
+  // MNT-ECON-04 — warranty recovery credit (contra-expense; never sales income).
+  "warranty_recovery",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];
