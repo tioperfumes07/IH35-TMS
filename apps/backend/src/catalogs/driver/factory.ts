@@ -14,12 +14,34 @@ type CatalogFactoryConfig = {
   deprecation?: {
     navSegment: string;
     successorListsSegment: string;
+    /**
+     * SWEEP-C11 split-brain fix (2026-07-25): when true, POST/PATCH/DELETE on this route return
+     * 410 instead of writing catalogs.${tableName}. Set for tables that are a CONFIRMED
+     * split-brain LOSER against a canonical reference.* (or other) store — i.e. two live schemas
+     * both accepted writes for the "same" logical entity, and a row created on one was invisible
+     * on the other. GET stays live (read-only archive; Rule 07 never-delete). See
+     * scripts/verify-sweep-c11-no-entity-split-brain.mjs for the CI guard that keeps this flag
+     * wired, and db/migrations/202609040000_sweep_c11_driver_subcatalog_split_brain_lock.sql for
+     * the DB-level defense-in-depth trigger.
+     */
+    writesBlocked?: boolean;
   };
 };
 
 function maybeMarkDeprecated(reply: FastifyReply, config: CatalogFactoryConfig) {
   if (!config.deprecation) return;
   applyDriverCatalogDeprecation(reply, config.deprecation.navSegment, config.deprecation.successorListsSegment);
+}
+
+function sendSplitBrainWritesBlocked(reply: FastifyReply, config: CatalogFactoryConfig) {
+  const successor = config.deprecation?.successorListsSegment ?? config.urlSegment;
+  return reply.code(410).send({
+    error: `catalog_${config.tableName}_write_disabled_split_brain`,
+    message:
+      `Writes to catalogs.${config.tableName} are permanently disabled (SWEEP-C11 split-brain fix, ` +
+      `2026-07-25). This table is a confirmed split-brain LOSER — a row created here was invisible ` +
+      `on the canonical store. Use /api/v1/lists/drivers/${successor} instead.`,
+  });
 }
 
 const tableNameGuard = /^[a-z_]+$/;
@@ -147,6 +169,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
     maybeMarkDeprecated(reply, config);
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
+    if (config.deprecation?.writesBlocked) return sendSplitBrainWritesBlocked(reply, config);
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return validationError(reply, parsedQuery.error);
@@ -213,6 +236,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
     maybeMarkDeprecated(reply, config);
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
+    if (config.deprecation?.writesBlocked) return sendSplitBrainWritesBlocked(reply, config);
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return validationError(reply, parsedParams.error);
@@ -294,6 +318,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
     maybeMarkDeprecated(reply, config);
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
+    if (config.deprecation?.writesBlocked) return sendSplitBrainWritesBlocked(reply, config);
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return validationError(reply, parsedParams.error);

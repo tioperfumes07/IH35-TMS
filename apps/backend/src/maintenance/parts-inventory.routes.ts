@@ -4,6 +4,9 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+// MNT-ECON-01 / SWEEP-C6: route purchases through the shared poster (createBill +
+// postSourceTransaction / createJournalEntry). Flag OFF => inventory write only.
+import { postPartsInventoryPurchase } from "../accounting/parts-inventory-posting/poster.service.js";
 
 const querySchema = z.object({ operating_company_id: z.string().uuid() });
 const idParamsSchema = z.object({ id: z.string().uuid() });
@@ -80,7 +83,20 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
       return res.rows[0];
     });
 
-    return reply.code(201).send(row);
+    // MNT-ECON-01 economic hop — A/P bill + balanced JE behind PARTS_PURCHASE_GL_POSTING_ENABLED
+    // (default OFF). Inventory row is already committed; flag_off / zero_amount are honest no-ops.
+    const gl = await postPartsInventoryPurchase({
+      operating_company_id: query.data.operating_company_id,
+      parts_inventory_id: String(row.id),
+      actor_user_id: user.uuid,
+      entry_date_iso: new Date().toISOString().slice(0, 10),
+      part_description: body.data.part_description,
+      vendor_id: body.data.vendor_id ?? null,
+      vendor_invoice_number: body.data.vendor_invoice_number ?? null,
+      purchase_amount_dollars: body.data.purchase_amount ?? null,
+    });
+
+    return reply.code(201).send({ ...row, gl_posting: gl });
   });
 
   app.patch("/api/v1/maintenance/parts-inventory/:id/adjust", async (req, reply) => {

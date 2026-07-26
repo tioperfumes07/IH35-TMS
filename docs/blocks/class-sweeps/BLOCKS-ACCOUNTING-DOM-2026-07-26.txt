@@ -1,0 +1,52 @@
+================================================================================
+FOR CURSOR — ACCOUNTING DOMAIN BLOCKS · GUARD-VERIFIED · 2026-07-26
+Snapshot origin/main 5ce94c8. Standard: block-builder, DoD A–E + VERIFY 1–8, 8-layer, ih35-accounting-decisions
+(LOCKED — parallel books, flags OFF, QBO reconcile-only no write-back, escrow=liability, ASC 470-60). ALL FINANCIAL-HOLD:
+design + guard only; NEVER build GL-posting math solo; reuse the existing poster; opening/role seeds are the OWNER's hand.
+HEADLINE (verified): the Accounting POSTING ENGINE is strong — balanced JE + DB backstop trigger, control roles fail-loud,
+period-lock, idempotent, reverse-and-replace, QBO write-back hard-killed. No P0/P1 integrity defect. Gaps are GOVERNANCE.
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────
+ACCT-DOM-01 — No SOX JE approval workflow / no segregation of duties (preparer = poster)
+LANE: FINANCIAL-HOLD (design block — owner + control decision)   MODULE: accounting   FINDING: ACCT-DOM-01 (P2 now → P1 before TMS GL is SoR post-2025)
+PROD TRUTH [GUARD-VERIFIED 2026-07-26 via source 5ce94c8]: apps/backend/src/accounting/journal-entries.service.ts:202
+  hard-codes status='posted' (creator posts straight to GL); role-home/pending-approvals-gl.service.ts:317-318 confirms
+  journal_entries status is posted|voided only (no approval state) → control_available=false. No preparer≠poster check
+  (posted_by_user_id stored, nothing enforces separation).
+STANDARD (Rule 15): SOX 404 / NetSuite — maker-checker approval above a threshold + segregation (the person who prepares a
+  JE cannot post it); audit-support skill: automated entries SOD-exempt, closed-period corrections need a second user.
+THE FIX (DESIGN, owner-approved before build): add a JE approval state (draft→pending_approval→posted) with a threshold,
+  a maker≠checker gate (WF-064 style), append-only audit of who/when. Automated/system entries exempt. Flag-gated; no change
+  to the balanced-JE math. This is a CONTROL, so design doc + owner sign-off first (§1.4). GUARD: verify-steps that a manual
+  JE above threshold cannot be self-approved. ACCEPTANCE: maker≠checker enforced live; audit row per approval; both entities.
+
+────────────────────────────────────────────────────────────────────────────
+ACCT-DOM-02 — No standing sub-ledger → GL control-account reconciliation surface (system-wide primitive)
+LANE: FINANCIAL-HOLD (read-only report — buildable; no posting)   MODULE: accounting   FINDING: ACCT-DOM-02 (P2)
+PROD TRUTH [GUARD-VERIFIED 2026-07-26]: tie-outs exist only piecemeal (opening-balance-import.service.ts:183; settlement
+  subledger guard settlement-bill-payment-posting.service.ts:990; factoring poster.service.ts:34; posting-engine A/P-negative
+  refusal :1150) and A/P tie-out is a MANUAL prerequisite (bill-payment-gl.routes.ts:5). No accountant-facing standing report
+  that AR aging = ar_control, AP aging = ap_control, escrow subledger = escrow GL, factoring = factoring liability.
+STANDARD (Rule 15): finance:reconciliation (GL↔subledger), QuickBooks/NetSuite — every control account reconciles to its
+  subledger on a schedule. THE FIX: a READ-ONLY reconciliation surface per control account per entity (both sides move
+  together; variance flagged; no dollar threshold per RECON-01). No posting, no write-back. This is the SYSTEM-WIDE
+  subledger↔GL primitive (AR/AP/escrow/factoring/inventory-when-applicable). GUARD: verify the report ties each subledger to
+  its control role for a seeded fixture. ACCEPTANCE: report reconciles AR/AP/escrow/factoring to control on TRANSP + USMCA.
+
+────────────────────────────────────────────────────────────────────────────
+ACCT-DOM-03 — journal_entry_postings LINE table has no closed-period trigger (part of the closed-period immutability sweep)
+LANE: FINANCIAL-HOLD (migration — trigger)   MODULE: accounting   FINDING: ACCT-DOM-03 (P3 hardening; pairs with BANK-DOM-02)
+PROD TRUTH [GUARD-VERIFIED 2026-07-26]: db/migrations/0183_*close.sql:107-135 period-lock triggers guard HEADERS only
+  (journal_entries.entry_date, invoices, bills, payments, bill_payments). A balanced UPDATE of a posting LINE's amount_cents
+  on a JE dated in a closed period is NOT period-blocked (balance trigger 202606080020 checks debit=credit only, not the
+  period). Mitigated by append-only/void-not-delete convention + RLS; normal flows never UPDATE lines.
+STANDARD: period close & lock (finance:close-management) — closed periods immutable. THE FIX: extend raise_if_txn_in_closed_period
+  to journal_entry_postings (via parent JE entry_date), idempotent migration. This is one instance of the SYSTEM-WIDE
+  "no writes to a closed period/session" invariant (shares a guard with BANK-DOM-02 closed rec sessions).
+GUARD: verify-steps closed-period-immutability.mjs — FAILS on an UPDATE of a posting line / bank-rec member in a closed
+  period/session. ACCEPTANCE: closed-period line UPDATE refused live; guard green; no normal flow broken.
+
+CROSS-LISTED (owner Neon seed, from Safety): escrow_liability_default role is UNBOUND on prod (0 %escrow% bindings in
+chart_of_accounts_roles) → escrow GL post 409s. Owner seeds the escrow liability role per entity. See SAF-DOM-03.
+================================================================================
