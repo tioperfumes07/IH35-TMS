@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDateUS } from "../../lib/formatDate";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -228,7 +229,7 @@ export function DailyReconPage() {
                       ? "bg-slate-50 border-b border-slate-200"
                       : "bg-gray-50 border-b border-gray-200"
                   }`}>
-                    <span className="font-semibold text-sm text-gray-900">{day.date}</span>
+                    <span className="font-semibold text-sm text-gray-900">{formatDateUS(day.date)}</span>
                     {day.all_reconciled ? (
                       <span className="text-xs font-semibold text-slate-600">All reconciled</span>
                     ) : (

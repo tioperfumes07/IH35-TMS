@@ -32,6 +32,7 @@ import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { BillSelect } from "../components/ap/BillSelect";
 import { emptyVendorProfileMeta, parseVendorNotes, serializeVendorNotes, type VendorProfileMeta } from "../lib/vendorProfileMeta";
 import { useUrlSort } from "../hooks/useUrlSort";
+import { formatDateUS } from "../lib/formatDate";
 
 type SaferEntityStatus = {
   id: string;
@@ -1065,7 +1066,7 @@ export function VendorDetailPage() {
                 sortDirection={paySortDirection}
                 onSortChange={onPaySortChange}
                 columns={[
-                  { key: "payment_date", label: "Date", sortable: true, render: (p) => p.payment_date },
+                  { key: "payment_date", label: "Date", sortable: true, render: (p) => formatDateUS(p.payment_date) },
                   { key: "amount_cents", label: "Amount", sortable: true, cellClass: "text-right tabular-nums", render: (p) => money.format(p.amount_cents / 100) },
                   { key: "payment_method", label: "Method", sortable: true, render: (p) => p.payment_method ?? p.method ?? "—" },
                   {
@@ -1100,8 +1101,8 @@ export function VendorDetailPage() {
                   sortValue: (b) => b.bill_number ?? b.id,
                   render: (b) => <EntityLink kind="bill" id={b.id} label={b.bill_number ?? b.id.slice(0, 8)} />,
                 },
-                { key: "bill_date", label: "Date", sortable: true, render: (b) => b.bill_date },
-                { key: "due_date", label: "Due", sortable: true, render: (b) => b.due_date ?? "—" },
+                { key: "bill_date", label: "Date", sortable: true, render: (b) => formatDateUS(b.bill_date) },
+                { key: "due_date", label: "Due", sortable: true, render: (b) => formatDateUS(b.due_date) || "—" },
                 { key: "amount_cents", label: "Amount", sortable: true, cellClass: "text-right tabular-nums", render: (b) => money.format(b.amount_cents / 100) },
                 {
                   key: "balance_cents",
@@ -1139,7 +1140,7 @@ export function VendorDetailPage() {
                       <EntityLink kind="expense" id={e.id} label={e.expense_number ?? e.id.slice(0, 8)} />
                     ),
                   },
-                  { key: "transaction_date", label: "Date", sortable: true, render: (e) => e.transaction_date },
+                  { key: "transaction_date", label: "Date", sortable: true, render: (e) => formatDateUS(e.transaction_date) },
                   {
                     key: "total_amount_cents",
                     label: "Amount",
@@ -1185,7 +1186,7 @@ export function VendorDetailPage() {
                       </Link>
                     ),
                   },
-                  { key: "issue_date", label: "Issue date", sortable: true, render: (c) => c.issue_date },
+                  { key: "issue_date", label: "Issue date", sortable: true, render: (c) => formatDateUS(c.issue_date) },
                   {
                     key: "amount_unapplied_cents",
                     label: "Unapplied",

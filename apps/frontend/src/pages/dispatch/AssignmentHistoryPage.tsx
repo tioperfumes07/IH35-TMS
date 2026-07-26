@@ -9,6 +9,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 
 export function AssignmentHistoryPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -81,12 +82,17 @@ export function AssignmentHistoryPage() {
 
       <section className="grid gap-3 rounded-sm border bg-white p-4 md:grid-cols-4">
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-gray-600">Driver ID</label>
-          <input
-            value={driverId}
-            onChange={(event) => setDriverId(event.target.value)}
-            className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
-            placeholder="Filter by driver UUID"
+          <label className="text-xs font-semibold text-gray-600">Driver</label>
+          {/* C1 PICKER LAW: was a raw-UUID box. allowCreate={false} — a FILTER narrows rows that
+              already exist; offering to create a driver from a filter is nonsense, and no reference
+              product (QBO, NetSuite, McLeod, Alvys) does it. */}
+          <EntityPicker
+            kind="driver"
+            operatingCompanyId={companyId}
+            value={driverId || null}
+            onChange={(next) => setDriverId(next ?? "")}
+            allowCreate={false}
+            placeholder="All drivers"
           />
         </div>
         <div className="flex flex-col gap-1">

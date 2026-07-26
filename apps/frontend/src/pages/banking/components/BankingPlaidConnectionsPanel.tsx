@@ -23,6 +23,7 @@ import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useListState } from "../../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { formatUsdCents } from "../../../lib/money";
+import { formatDateUS } from "../../../lib/formatDate";
 
 type ItemGroup = { itemId: string; accounts: PlaidBankAccount[] };
 
@@ -275,7 +276,7 @@ export function BankingCompanyTransactionsPanel({ companyId }: { companyId: stri
         label: "Date",
         sortable: true,
         cellClass: "whitespace-nowrap text-gray-800",
-        render: (t) => t.transaction_date,
+        render: (t) => formatDateUS(t.transaction_date),
       },
       {
         key: "description",

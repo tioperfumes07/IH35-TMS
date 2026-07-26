@@ -10179,6 +10179,40 @@
       "template_name",
       "to_phone",
       "variables"
+    ],
+    "catalogs.account_merge_records": [
+      "account_type",
+      "id",
+      "merged_at",
+      "merged_by_user_id",
+      "migrate_historical_postings",
+      "operating_company_id",
+      "reason",
+      "remounted_reference_counts",
+      "reparented_child_account_count",
+      "source_account_id",
+      "source_account_name",
+      "source_account_number",
+      "target_account_id",
+      "target_account_name",
+      "target_account_number"
+    ],
+    "accounting.civil_fine_postings": [
+      "amount_cents",
+      "created_at",
+      "created_by_user_id",
+      "entry_date",
+      "expense_je_id",
+      "fine_id",
+      "id",
+      "is_active",
+      "memo",
+      "operating_company_id",
+      "status",
+      "updated_at",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
     ]
   }
 }

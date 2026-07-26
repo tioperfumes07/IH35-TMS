@@ -9,11 +9,13 @@ import {
   type SafetyEventLogRow,
 } from "../../api/safety";
 import { Modal } from "../../components/Modal";
+import { DateTimePicker } from "../../components/forms/DateTimePicker";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useListState } from "../../components/list-state";
 import { useSafetyUiContext } from "./SafetyLayout";
 import { SafetyEventsTable } from "./components/SafetyEventsTable";
 import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 
 type Props = {
   operatingCompanyId: string;
@@ -436,13 +438,11 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
         <div className="grid gap-2 sm:grid-cols-2" data-testid="safety-event-log-modal">
           <label className="flex flex-col gap-0.5 text-[10px] font-semibold uppercase text-gray-600 sm:col-span-2">
             Time of occurrence
-            <input
-              type="datetime-local"
+            <DateTimePicker
+              aria-label="Time of occurrence"
               value={toDatetimeLocalValue(draft.occurred_at)}
-              onChange={(event) =>
-                setDraft((prev) => ({ ...prev, occurred_at: fromDatetimeLocalValue(event.target.value) }))
-              }
-              className="rounded-sm border border-gray-300 px-2 py-1 text-xs font-normal normal-case"
+              onChange={(v) => setDraft((prev) => ({ ...prev, occurred_at: fromDatetimeLocalValue(v) }))}
+              className="font-normal normal-case"
               data-testid="safety-event-occurred-at"
             />
           </label>
@@ -496,17 +496,22 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             <option value="driver">Driver</option>
             <option value="unit">Unit</option>
           </select>
-          <input
-            value={draft.subject_driver_id}
-            onChange={(event) => setDraft((prev) => ({ ...prev, subject_driver_id: event.target.value }))}
-            placeholder="Subject driver UUID (optional)"
-            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+          {/* C1 PICKER LAW: both were raw-UUID boxes. A safety event whose subject FK is blank is a
+              DOT-reportable record attached to no driver and no unit — the exact linkage failure the
+              picker law exists to stop. */}
+          <EntityPicker
+            kind="driver"
+            operatingCompanyId={operatingCompanyId}
+            value={draft.subject_driver_id || null}
+            onChange={(next) => setDraft((prev) => ({ ...prev, subject_driver_id: next ?? "" }))}
+            placeholder="Subject driver (optional)"
           />
-          <input
-            value={draft.subject_unit_id}
-            onChange={(event) => setDraft((prev) => ({ ...prev, subject_unit_id: event.target.value }))}
-            placeholder="Subject unit UUID (optional)"
-            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+          <EntityPicker
+            kind="unit"
+            operatingCompanyId={operatingCompanyId}
+            value={draft.subject_unit_id || null}
+            onChange={(next) => setDraft((prev) => ({ ...prev, subject_unit_id: next ?? "" }))}
+            placeholder="Subject unit (optional)"
           />
           <label className="text-xs font-medium text-gray-700 sm:col-span-2">Location (DOT 390.15)</label>
           <input

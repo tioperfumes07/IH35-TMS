@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
@@ -36,14 +37,24 @@ function todayIso(): string {
 
 type Tone = "neutral" | "good" | "bad";
 
-function StatTile({ label, value, secondary, tone = "neutral" }: { label: string; value: string; secondary?: string; tone?: Tone }) {
-  const valueColor = tone === "good" ? "text-slate-900" : tone === "bad" ? "text-red-600" : "text-slate-900";
+// C8: `to` is REQUIRED — every modelled figure opens the records it was computed from (the GL
+// expense lines, the recognised revenue, or the loads that supplied the miles). The model itself is
+// an in-browser what-if, but its INPUTS are all real records with a screen of their own.
+function StatTile({
+  label,
+  value,
+  secondary,
+  tone = "neutral",
+  to,
+}: {
+  label: string;
+  value: string;
+  secondary?: string;
+  tone?: Tone;
+  to: string;
+}) {
   return (
-    <div className="flex flex-col justify-between rounded-sm border border-slate-200 bg-white p-4">
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</div>
-      <div className={`mt-1 text-2xl font-semibold tabular-nums ${valueColor}`}>{value}</div>
-      {secondary ? <div className="mt-1 text-xs text-slate-500">{secondary}</div> : null}
-    </div>
+    <DrillKpiCard size="md" label={label} value={value} hint={secondary} valueTone={tone === "bad" ? "critical" : "default"} to={to} />
   );
 }
 
@@ -197,23 +208,24 @@ export function BreakEvenPage() {
           {/* Headline break-even KPIs */}
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <StatTile
-              label="Break-even rate / mile"
+              label="Break-even rate / mile" to="/accounting/expenses/list"
               value={fmtPerMile(model.total_cost_per_mile_cents)}
               secondary="Total operating cost ÷ miles"
             />
             <StatTile
               label="Revenue / mile"
+              to={revenueBasis === "gl" ? "/finance/statements" : "/dispatch/loads"}
               value={fmtPerMile(model.revenue_per_mile_cents)}
               secondary={revenueBasis === "gl" ? "GL recognized revenue" : "Loads gross rate"}
             />
             <StatTile
-              label="Profit / mile"
+              label="Profit / mile" to="/finance/statements"
               value={fmtPerMile(model.profit_per_mile_cents)}
               secondary="Revenue/mi − break-even/mi"
               tone={beRateTone}
             />
             <StatTile
-              label="Break-even miles"
+              label="Break-even miles" to="/dispatch/loads"
               value={model.break_even_miles == null ? "—" : fmtInt(model.break_even_miles)}
               secondary="Miles to cover fixed cost at current margin"
             />
@@ -221,10 +233,10 @@ export function BreakEvenPage() {
 
           {/* Cost structure */}
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <StatTile label="Fixed cost / day" value={fmtPerDay(model.fixed_cost_per_day_cents)} secondary={`${fmtCents(model.fixed_cost_cents)} over ${model.days} day${model.days === 1 ? "" : "s"}`} />
-            <StatTile label="Variable cost / mile" value={fmtPerMile(model.variable_cost_per_mile_cents)} secondary={fmtCents(model.variable_cost_cents)} />
-            <StatTile label="Contribution margin / mile" value={fmtPerMile(model.contribution_margin_per_mile_cents)} secondary="Revenue/mi − variable/mi" />
-            <StatTile label="Net profit (period)" value={fmtCents(model.net_profit_cents)} secondary={`${fmtCents(model.revenue_cents)} rev − ${fmtCents(model.total_cost_cents)} cost`} tone={model.net_profit_cents >= 0 ? "good" : "bad"} />
+            <StatTile label="Fixed cost / day" to="/accounting/expenses/list" value={fmtPerDay(model.fixed_cost_per_day_cents)} secondary={`${fmtCents(model.fixed_cost_cents)} over ${model.days} day${model.days === 1 ? "" : "s"}`} />
+            <StatTile label="Variable cost / mile" to="/accounting/expenses/list" value={fmtPerMile(model.variable_cost_per_mile_cents)} secondary={fmtCents(model.variable_cost_cents)} />
+            <StatTile label="Contribution margin / mile" to="/finance/statements" value={fmtPerMile(model.contribution_margin_per_mile_cents)} secondary="Revenue/mi − variable/mi" />
+            <StatTile label="Net profit (period)" to="/finance/statements" value={fmtCents(model.net_profit_cents)} secondary={`${fmtCents(model.revenue_cents)} rev − ${fmtCents(model.total_cost_cents)} cost`} tone={model.net_profit_cents >= 0 ? "good" : "bad"} />
           </div>
 
           {/* Miles + revenue provenance */}

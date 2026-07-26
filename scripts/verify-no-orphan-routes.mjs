@@ -65,7 +65,12 @@ const ALLOWLIST = new Map([
   // --- Newly surfaced by this guard (2026-06) — backlog, not yet triaged for frontend usage.
   //     Each is genuinely unmounted (0 call sites). TODO: triage real-404-bug vs dead-code, then
   //     either mount + remove from this list, or recategorize as dead code. ---
-  ["registerMaintenanceCatalogRoutes", "backlog — catalog aggregator, unmounted; triage pending"],
+  // registerMaintenanceCatalogRoutes: triage DONE 2026-07-25 (C10 route-manifest parity) — MOUNTED in
+  // apps/backend/src/index.ts. It was never dead code: all eight catalogs (failure-codes, labor-codes,
+  // parts, priority-levels, service-tasks, shop-locations, vendors, work-order-statuses) 404'd on prod
+  // while apps/frontend/src/api/catalogs-maintenance.ts called them. Removed from this list because it
+  // is now called; scripts/verify-route-manifest-parity.mjs pins it mounted so it cannot silently
+  // regress.
   ["registerActiveDriverSetRoutes", "backlog — samsara, unmounted; triage pending"],
   ["registerForm425cExhibitsRoutes", "backlog — unmounted; triage pending"],
 ]);

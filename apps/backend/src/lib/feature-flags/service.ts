@@ -57,6 +57,12 @@ export const POSTING_FLAG_KEYS: ReadonlySet<string> = new Set([
   // migration-coverage guard and the per-entity money kill-switch both cover it — a global flip can never
   // turn property-tax GL posting on for EVERY entity (incl. USMCA).
   "PROPERTY_TAX_GL_POSTING_ENABLED",
+  // SAFETY FINE-GL HOP: the COMPANY-PAID civil fine expense leg (Dr civil_fines_expense / Cr
+  // cash_clearing), posted from the fine link-payment path. Its key matches the `*_GL_POSTING_ENABLED`
+  // pattern isPostingFlag() auto-recognizes, but it is enumerated explicitly (belt-and-suspenders) so a
+  // global rollout/default flip can never turn fine posting on for EVERY entity (incl. USMCA / TRK).
+  // Default OFF; seeded default_enabled=false by migration 202608110000.
+  "SAFETY_FINE_GL_POSTING_ENABLED",
   "SETTLEMENT_GL_POSTING_ENABLED",
   // BANKING-GL-COMPLETION: banking.transfers (bank_to_bank / cc_payment / cash_deposit /
   // owner_contribution / owner_distribution) -> GL posting via postSourceTransaction('transfer').

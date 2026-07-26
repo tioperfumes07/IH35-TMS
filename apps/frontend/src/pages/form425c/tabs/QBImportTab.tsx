@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatDateUS } from "../../../lib/formatDate";
 import { MONTHS, YEARS } from "../lib/constants";
 import { parseQBText } from "../lib/parseQBText";
 import type { CompanyKey, CompanyProfiles, QBParsedLine } from "../types";
@@ -45,7 +46,7 @@ export function QBImportTab({ activeCompany, setActiveCompany, profiles, onApply
           />
         ),
       },
-      { key: "date", label: "Date", sortable: true, render: (row) => <span className={mutedClass(row)}>{row.date}</span> },
+      { key: "date", label: "Date", sortable: true, render: (row) => <span className={mutedClass(row)}>{formatDateUS(row.date)}</span> },
       { key: "type", label: "Type", sortable: true, render: (row) => <span className={mutedClass(row)}>{row.type}</span> },
       { key: "desc", label: "Description", sortable: true, render: (row) => <span className={mutedClass(row)}>{row.desc}</span> },
       { key: "acct", label: "Account", sortable: true, render: (row) => <span className={mutedClass(row)}>{row.acct}</span> },

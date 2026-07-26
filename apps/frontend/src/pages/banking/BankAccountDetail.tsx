@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { formatDateUS } from "../../lib/formatDate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -195,7 +196,7 @@ const ARCHIVED_TX_COLUMNS: ParityColumn<PlaidBankTransaction>[] = [
   {
     key: "transaction_date",
     label: "Date",
-    render: (row) => <span className="text-gray-700">{row.transaction_date}</span>,
+    render: (row) => <span className="text-gray-700">{formatDateUS(row.transaction_date)}</span>,
   },
   {
     key: "description",

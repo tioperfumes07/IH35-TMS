@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import {
@@ -295,7 +296,7 @@ export function BankReconciliationPage() {
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-semibold text-gray-900">{row.transaction_date}</span>
+                  <span className="font-semibold text-gray-900">{formatDateUS(row.transaction_date)}</span>
                   <span className="text-gray-600">{money(row.amount_cents)}</span>
                 </div>
                 <div className="truncate text-gray-700">{row.merchant_name ?? row.description ?? "Bank transaction"}</div>

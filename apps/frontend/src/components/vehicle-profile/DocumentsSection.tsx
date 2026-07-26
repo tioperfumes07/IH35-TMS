@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { UploadModal } from "../documents/UploadModal";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
+import { formatDateUS } from "../../lib/formatDate";
 
 type DocRow = {
   file_id: string;
@@ -60,7 +61,7 @@ export function DocumentsSection({
       label: "Expiration",
       sortable: true,
       render: (row) => (
-        <span className={expColor(row.expiration_date)}>{row.expiration_date ?? "—"}</span>
+        <span className={expColor(row.expiration_date)}>{formatDateUS(row.expiration_date) || "—"}</span>
       ),
     },
     {

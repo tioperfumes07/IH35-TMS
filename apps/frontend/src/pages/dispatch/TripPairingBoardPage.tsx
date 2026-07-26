@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getTripPairingBoard, type TripLeg, type TripPairingUnitRow } from "../../api/dispatch";
 import { BookLoadModalV4 } from "./components/BookLoadModalV4";
@@ -27,15 +28,6 @@ function legChip(leg: TripLeg) {
     <span key={leg.load_id} className="inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[11px] font-semibold text-white" style={{ backgroundColor: TRIP_COLOR[leg.trip_type] }}>
       {leg.trip_type}{dest ? ` · ${dest}` : ""}
     </span>
-  );
-}
-
-function Kpi({ label, value, accent }: { label: string; value: number; accent?: string }) {
-  return (
-    <div className="rounded-sm border border-slate-200 bg-white px-3 py-1.5 text-center">
-      <div className="text-base font-bold" style={accent ? { color: accent } : undefined}>{value}</div>
-      <div className="text-[10px] uppercase tracking-wide text-slate-500">{label}</div>
-    </div>
   );
 }
 
@@ -128,12 +120,14 @@ export function TripPairingBoardPage() {
 
       {data ? (
         <div className="mb-3 grid grid-cols-3 gap-2 md:grid-cols-6">
-          <Kpi label="Active trucks" value={data.kpis.active_trucks} />
-          <Kpi label="Northbound" value={data.kpis.northbound} accent={TRIP_COLOR.NB} />
-          <Kpi label="NB unbooked" value={data.kpis.nb_unbooked} />
-          <Kpi label="Southbound" value={data.kpis.southbound} accent={TRIP_COLOR.SB} />
-          <Kpi label="SB unbooked" value={data.kpis.sb_unbooked} />
-          <Kpi label="Up north 30d+" value={data.kpis.up_north_30d} />
+          {/* C8: each KPI selects the board segment holding the rows it counted — the board below IS
+              the drill target, so a click filters instead of navigating away. */}
+          <DrillKpiCard label="Active trucks" value={data.kpis.active_trucks} onClick={() => setSegment("All")} active={segment === "All"} />
+          <DrillKpiCard label="Northbound" value={data.kpis.northbound} accent={TRIP_COLOR.NB} onClick={() => setSegment("NB")} active={segment === "NB"} />
+          <DrillKpiCard label="NB unbooked" value={data.kpis.nb_unbooked} onClick={() => setSegment("NB")} active={segment === "NB"} />
+          <DrillKpiCard label="Southbound" value={data.kpis.southbound} accent={TRIP_COLOR.SB} onClick={() => setSegment("SB")} active={segment === "SB"} />
+          <DrillKpiCard label="SB unbooked" value={data.kpis.sb_unbooked} onClick={() => setSegment("open")} active={segment === "open"} />
+          <DrillKpiCard label="Up north 30d+" value={data.kpis.up_north_30d} onClick={() => setSegment("upnorth")} active={segment === "upnorth"} />
         </div>
       ) : null}
 

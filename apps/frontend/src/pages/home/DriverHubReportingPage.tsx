@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -34,13 +35,9 @@ function fmtPct(p: number | null): string {
   return p == null ? "—" : `${p}%`;
 }
 
-function Card({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-sm border border-gray-200 bg-white p-3">
-      <div className="text-[9px] font-semibold uppercase tracking-wide text-[#8A92AB]">{label}</div>
-      <div className="mt-1 text-lg font-semibold text-[#1f2a44]">{value}</div>
-    </div>
-  );
+// C8: `to` is REQUIRED — every advance-request rollup opens the request list it counted.
+function Card({ label, value, to }: { label: string; value: string; to: string }) {
+  return <DrillKpiCard size="md" label={label} value={value} to={to} />;
 }
 
 function exportCsv(data: InboxReportingData) {
@@ -200,13 +197,13 @@ export function DriverHubReportingPage() {
       ) : data ? (
         <>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-7">
-            <Card label="Total requests" value={String(data.summary.total_requests)} />
-            <Card label="Approved" value={String(data.summary.approved)} />
-            <Card label="Denied" value={String(data.summary.denied)} />
-            <Card label="Approval rate" value={fmtPct(data.summary.approval_rate_pct)} />
-            <Card label="Avg time-to-view" value={fmtSeconds(data.summary.avg_time_to_view_seconds)} />
-            <Card label="Avg time-to-approve" value={fmtSeconds(data.summary.avg_time_to_approve_seconds)} />
-            <Card label="Approved volume" value={fmtCents(data.summary.total_approved_advance_cents)} />
+            <Card label="Total requests" value={String(data.summary.total_requests)} to="/driver-finance/cash-advance-requests" />
+            <Card label="Approved" value={String(data.summary.approved)} to="/driver-finance/cash-advance-requests" />
+            <Card label="Denied" value={String(data.summary.denied)} to="/driver-finance/cash-advance-requests" />
+            <Card label="Approval rate" value={fmtPct(data.summary.approval_rate_pct)} to="/driver-finance/cash-advance-requests" />
+            <Card label="Avg time-to-view" value={fmtSeconds(data.summary.avg_time_to_view_seconds)} to="/driver-finance/cash-advance-requests" />
+            <Card label="Avg time-to-approve" value={fmtSeconds(data.summary.avg_time_to_approve_seconds)} to="/driver-finance/cash-advance-requests" />
+            <Card label="Approved volume" value={fmtCents(data.summary.total_approved_advance_cents)} to="/cash-advances" />
           </div>
 
           <div className="rounded-sm border border-gray-200 bg-white p-2">

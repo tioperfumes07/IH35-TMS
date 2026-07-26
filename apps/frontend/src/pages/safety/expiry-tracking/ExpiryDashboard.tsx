@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../../api/client";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { formatDateUS } from "../../../lib/formatDate";
 
 type CertSeverity = "critical" | "warn" | "info";
 type CertType = "cdl" | "medical_card" | "hazmat_endorsement" | "twic" | "passport" | "drug_test";
@@ -85,7 +86,7 @@ export function ExpiryDashboard() {
     () => [
       { key: "driver_name", label: "Driver", sortable: true, render: (row) => row.driver_name },
       { key: "cert_label", label: "Certificate", sortable: true, render: (row) => row.cert_label },
-      { key: "expiry_date", label: "Expiry", sortable: true, render: (row) => row.expiry_date },
+      { key: "expiry_date", label: "Expiry", sortable: true, render: (row) => formatDateUS(row.expiry_date) },
       { key: "days_until_expiry", label: "Days", sortable: true, render: (row) => row.days_until_expiry },
       {
         key: "severity",

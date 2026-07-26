@@ -96,6 +96,10 @@ import { registerDriverCommunicationsRoutes } from "./drivers/communications.rou
 import { registerDriverAdvancesRoutes } from "./drivers/advances.routes.js";
 import { registerMaintenancePartsMasterRoutes } from "./catalogs/maintenance/parts.routes.js";
 import { registerMaintenanceServicesCatalogRoutes } from "./catalogs/maintenance/services.routes.js";
+// C10 route-manifest parity: the eight maintenance catalogs were exported here and registered
+// nowhere, so every one of them 404'd while apps/frontend/src/api/catalogs-maintenance.ts called
+// them. Distinct paths from the two lines above (`parts-master`, `services-catalog`) — no collision.
+import { registerMaintenanceCatalogRoutes } from "./catalogs/maintenance/index.js";
 import { registerDamagePhotoEvidenceRoutes } from "./safety/damage-reports/photo-evidence.routes.js";
 import { registerEdiRoutes } from "./integrations/edi/edi.routes.js";
 import { registerLoadsBulkRoutes } from "./dispatch/loads-bulk.routes.js";
@@ -830,6 +834,7 @@ async function main() {
   await registerDriverAdvancesRoutes(app);
   await registerMaintenancePartsMasterRoutes(app);
   await registerMaintenanceServicesCatalogRoutes(app);
+  await registerMaintenanceCatalogRoutes(app);
   await registerDamagePhotoEvidenceRoutes(app);
   await registerEdiRoutes(app);
   await registerLoadsBulkRoutes(app);

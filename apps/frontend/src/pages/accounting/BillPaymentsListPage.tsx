@@ -19,6 +19,7 @@ import { CCPaymentModal } from "./bill-payments/CCPaymentModal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 
 // BANKREC-LISTSTATUS-01: read-only badge derived from bank.reconciliation_matches (server-side).
 // matched = green check, unmatched = neutral. Additive column only.
@@ -226,12 +227,17 @@ export function BillPaymentsListPage() {
         >
           <div className="grid gap-2 md:grid-cols-3">
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-              Vendor ID
-              <input
-                className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
-                value={vendorId}
-                onChange={(event) => setVendorId(event.target.value)}
-                placeholder="Optional vendor UUID"
+              Vendor
+              {/* C1 PICKER LAW: was a raw-UUID box. A list FILTER, so allowCreate={false} — vendor
+                  inline create already lives on ReferenceSelect (createKind="vendor") for the forms
+                  that need it, and C1 must extend that mechanism rather than duplicate it. */}
+              <EntityPicker
+                kind="vendor"
+                operatingCompanyId={companyId}
+                value={vendorId || null}
+                onChange={(next) => setVendorId(next ?? "")}
+                allowCreate={false}
+                placeholder="All vendors"
               />
             </label>
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">

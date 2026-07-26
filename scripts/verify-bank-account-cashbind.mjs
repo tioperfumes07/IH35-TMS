@@ -124,8 +124,9 @@ export function run(root = ROOT) {
     failures.push(`banking.json pass_count (${parsed.pass_count}) must equal PASS item count (${passOnly}) — dishonest MODULE_PROGRESS`);
   }
   const { N, M } = scoreManifest(parsed);
-  if (M !== 14) {
-    failures.push(`banking manifest must have 14 items (got ${M}) — do not shrink M to fake progress`);
+  // Rule 21: M grows when new FAIL leaves appear (BANK-F08/F09). Floor is 13 — never shrink below.
+  if (M < 13) {
+    failures.push(`banking manifest must have ≥13 items (got ${M}) — do not shrink M to fake progress`);
   }
   if (parsed.complete === true) {
     failures.push("banking complete:true is ILLEGAL while economics FAILs remain — money-gate must stay honest");

@@ -34,8 +34,23 @@ export function assertGuard(sources) {
   if (!/occurred_at:\s*string/.test(page)) {
     errors.push(`${FILES.page}: EventDraft must include occurred_at: string`);
   }
-  if (!/type="datetime-local"/.test(page)) {
-    errors.push(`${FILES.page}: Log modal must expose a datetime-local input for occurred_at`);
+  // C3 (2026-07-25): this assertion used to require a native `type="datetime-local"` input. That was
+  // a PROXY for the real requirement — "the officer can set a date AND time for occurred_at". C3
+  // replaced every native datetime-local with the shared <DateTimePicker>, so pinning the native
+  // control would now pin a defect. The assertion is RETARGETED at the canonical component, not
+  // relaxed: it still requires a date+time field, and the two clauses below make it strictly
+  // TIGHTER than before by also requiring the real import and forbidding a regression back to the
+  // native control.
+  if (!/<DateTimePicker\b/.test(page)) {
+    errors.push(`${FILES.page}: Log modal must expose a date+time field for occurred_at (shared <DateTimePicker>)`);
+  }
+  if (!/from\s+"[^"]*forms\/DateTimePicker"/.test(page)) {
+    errors.push(`${FILES.page}: <DateTimePicker> must be imported from components/forms/DateTimePicker`);
+  }
+  // Reverse ratchet — the native control must never come back (verify-step 1553 enforces this
+  // app-wide; asserted here too so this modal cannot regress in isolation).
+  if (/type="datetime-local"/.test(page)) {
+    errors.push(`${FILES.page}: native type="datetime-local" is banned — use the shared <DateTimePicker> (C3)`);
   }
   if (!/data-testid="safety-event-occurred-at"/.test(page)) {
     errors.push(`${FILES.page}: occurred_at input must use data-testid="safety-event-occurred-at"`);
@@ -74,8 +89,9 @@ function selftest() {
       type EventDraft = { occurred_at: string; title: string; };
       function fromDatetimeLocalValue(local: string): string { return new Date(local).toISOString(); }
       occurred_at: draft.occurred_at,
+      import { DateTimePicker } from "../../components/forms/DateTimePicker";
       <label>Time of occurrence</label>
-      <input type="datetime-local" data-testid="safety-event-occurred-at" />
+      <DateTimePicker data-testid="safety-event-occurred-at" />
     `,
     api: `occurred_at?: string`,
     routes: `
@@ -88,10 +104,26 @@ function selftest() {
     process.exit(1);
   }
 
-  const bad = { ...good, page: good.page.replace('type="datetime-local"', 'type="text"') };
+  // Bad fixture 1: the date+time field is gone entirely.
+  const bad = { ...good, page: good.page.replace("<DateTimePicker", "<input type=\"text\"") };
   const fail = assertGuard(bad);
-  if (!fail.some((e) => e.includes("datetime-local"))) {
-    console.error(`[${LABEL}] --selftest FAIL: bad fixture not rejected`, fail);
+  if (!fail.some((e) => e.includes("date+time field"))) {
+    console.error(`[${LABEL}] --selftest FAIL: missing DateTimePicker not rejected`, fail);
+    process.exit(1);
+  }
+
+  // Bad fixture 2: regressed back to the native control (reverse ratchet must fire).
+  const regressed = { ...good, page: `${good.page}\n<input type="datetime-local" />` };
+  const regressedErrors = assertGuard(regressed);
+  if (!regressedErrors.some((e) => e.includes('native type="datetime-local" is banned'))) {
+    console.error(`[${LABEL}] --selftest FAIL: native-control regression not rejected`, regressedErrors);
+    process.exit(1);
+  }
+
+  // Bad fixture 3: component used but not imported.
+  const unimported = { ...good, page: good.page.replace('import { DateTimePicker } from "../../components/forms/DateTimePicker";', "") };
+  if (!assertGuard(unimported).some((e) => e.includes("must be imported"))) {
+    console.error(`[${LABEL}] --selftest FAIL: missing import not rejected`);
     process.exit(1);
   }
 

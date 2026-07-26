@@ -14,6 +14,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { BookLoadModal } from "./components/BookLoadModal";
 import { buildTemplateJsonFromOcrItem } from "./ocr-book-load-prefill";
 import { formatUsdCents } from "../../lib/money";
+import { formatDateUS } from "../../lib/formatDate";
 
 function formatMoney(cents: number): string {
   return formatUsdCents(Math.max(0, cents));
@@ -31,9 +32,9 @@ function ExtractedSummary({ item }: { item: OcrIntakeQueueItem }) {
         {[f.destination_city, f.destination_state].filter(Boolean).join(", ") || "—"}
       </dd>
       <dt className="text-slate-500">Pickup</dt>
-      <dd>{f.pickup_date ?? "—"}</dd>
+      <dd>{formatDateUS(f.pickup_date) || "—"}</dd>
       <dt className="text-slate-500">Delivery</dt>
-      <dd>{f.delivery_date ?? "—"}</dd>
+      <dd>{formatDateUS(f.delivery_date) || "—"}</dd>
       <dt className="text-slate-500">Rate</dt>
       <dd>{f.rate_cents ? formatMoney(Number(f.rate_cents)) : "—"}</dd>
       <dt className="text-slate-500">Confidence</dt>
