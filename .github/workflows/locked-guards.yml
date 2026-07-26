@@ -19,6 +19,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          # LOAD-BEARING: verify:block-acceptance and verify:block-registry-complete both do a
+          # forward-only `git diff origin/main...HEAD -- .block-ready/`. On the actions/checkout
+          # default (depth 1) origin/main does not exist, the diff comes back empty, and both
+          # "forward completeness" checks pass having examined zero entries. Same empty-input-is-not-
+          # success class as verify-step 1430. Do not remove.
+          fetch-depth: 0
       - uses: actions/setup-node@v7
         with:
           node-version: "22"

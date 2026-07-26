@@ -9,11 +9,18 @@
  * - Prints PROGRESS: N of M for each module
  *
  * Qualifying HOLD: status===HOLD && owner_hold===true && tracker && future_block
+ *
+ * ZERO-COMMIT FAKE-GREEN (fixed 2026-07-25, same family as verify-step 1430): the false-complete-claim
+ * arm reads branch commits, and `listBranchCommits` used to `return []` when `git merge-base` found
+ * nothing — so in a shallow clone a commit claiming "accounting done" was never read and the arm
+ * passed vacuously. Range resolution is now shared with 1430/1324 via
+ * scripts/lib/branch-range-guard.mjs, which refuses to call an unusable range a pass.
  */
 import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { classifyCommitRange, collectGitFacts, rangeCommitShas } from "./lib/branch-range-guard.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DIR = path.join(ROOT, "docs/module-completion");
@@ -184,15 +191,23 @@ export function assertNoFalseCompleteClaims(commits, manifests) {
   return problems;
 }
 
+/** Set by listBranchCommits so a PASS states which range was read, never a bare "PASS". */
+let RANGE_NOTE = "";
+
 function listBranchCommits() {
-  const base = sh("git merge-base HEAD origin/main") || sh("git merge-base HEAD main");
-  if (!base) return [];
-  const log = sh(`git log --format=%H%x00%s%x00%b%x1e ${base}..HEAD`);
-  if (!log) return [];
-  return log.split("\x1e").filter(Boolean).map((chunk) => {
-    const [sha, subject, body = ""] = chunk.split("\x00");
-    return { sha, subject: subject || "", body: body || "" };
-  });
+  const facts = collectGitFacts(ROOT);
+  const shas = rangeCommitShas(facts, ROOT);
+  const verdict = classifyCommitRange({ ...facts, commitCount: shas.length });
+  if (verdict.fatal) {
+    console.error(`${LABEL}: FAIL [${verdict.code}] — the branch range cannot be checked:\n  ${verdict.fatal}`);
+    process.exit(1);
+  }
+  RANGE_NOTE = `${verdict.note} [${verdict.code}]`;
+  return shas.map((sha) => ({
+    sha,
+    subject: sh(`git log -1 --format=%s ${sha}`),
+    body: sh(`git log -1 --format=%b ${sha}`),
+  }));
 }
 
 export function runAll(opts = {}) {
@@ -306,5 +321,5 @@ if (isMain) {
     for (const p of problems) console.error(`  - ${p}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: PASS`);
+  console.log(`${LABEL}: PASS — ${RANGE_NOTE || "manifest-only (branch commits skipped)"}`);
 }
