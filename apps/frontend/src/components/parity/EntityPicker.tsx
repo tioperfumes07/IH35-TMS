@@ -50,10 +50,11 @@ function EntityQuickCreate({
   operatingCompanyId: string;
 }) {
   void shell;
+  void operatingCompanyId; // scoped for create POST; do not render raw id text (entity-link-adoption)
   return (
     <p className="p-4 text-sm text-muted-foreground">
-      Inline create for {label} (company {operatingCompanyId}). Prefer the module create flow when
-      more than a quick name is required.
+      Inline create for {label}. Prefer the module create flow when more than a quick name is
+      required.
     </p>
   );
 }
