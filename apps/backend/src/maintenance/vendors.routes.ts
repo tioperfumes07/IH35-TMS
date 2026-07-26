@@ -30,6 +30,8 @@ const createSchema = z.object({
   notes: z.string().trim().max(2000).optional(),
   /** Canonical AP vendor (mdata.vendors) for WO/AP correlation. */
   mdata_vendor_id: z.string().uuid().nullable().optional(),
+  /** MNT-LINK-04 first-class FK column (alias of mdata_vendor_id for API compat). */
+  linked_vendor_id: z.string().uuid().nullable().optional(),
 });
 
 const patchSchema = createSchema
@@ -102,8 +104,23 @@ function buildVendorMetadata(input: {
   };
 }
 
+function resolveLinkedVendorId(input: {
+  linked_vendor_id?: string | null;
+  mdata_vendor_id?: string | null;
+}): string | null | undefined {
+  if (input.linked_vendor_id !== undefined) return input.linked_vendor_id;
+  if (input.mdata_vendor_id !== undefined) return input.mdata_vendor_id;
+  return undefined;
+}
+
 function mapVendorRow(row: Record<string, unknown>) {
   const metadata = (row.metadata ?? {}) as Record<string, unknown>;
+  const linked =
+    typeof row.linked_vendor_id === "string"
+      ? row.linked_vendor_id
+      : typeof metadata.mdata_vendor_id === "string"
+        ? metadata.mdata_vendor_id
+        : null;
   return {
     id: row.id,
     operating_company_id: row.operating_company_id,
@@ -117,7 +134,8 @@ function mapVendorRow(row: Record<string, unknown>) {
     address: metadata.address ?? null,
     payment_terms: metadata.payment_terms ?? null,
     notes: metadata.notes ?? null,
-    mdata_vendor_id: typeof metadata.mdata_vendor_id === "string" ? metadata.mdata_vendor_id : null,
+    linked_vendor_id: linked,
+    mdata_vendor_id: linked,
     is_active: row.is_active,
     active: row.is_active,
     archived_at: metadata.archived_at ?? null,
@@ -196,7 +214,8 @@ async function fetchVendorDetail(
 ) {
   const res = await client.query(
     `
-      SELECT id, operating_company_id, code, display_name, description, metadata, is_active, sort_order, created_at, updated_at
+      SELECT id, operating_company_id, code, display_name, description, metadata, linked_vendor_id,
+             is_active, sort_order, created_at, updated_at
       FROM catalogs.maintenance_vendors
       WHERE id = $1 AND operating_company_id = $2
       LIMIT 1
@@ -206,7 +225,12 @@ async function fetchVendorDetail(
   if (!res.rows[0]) return null;
   const vendor = mapVendorRow(res.rows[0]);
   const metadata = (res.rows[0].metadata ?? {}) as Record<string, unknown>;
-  const mdataVendorId = typeof metadata.mdata_vendor_id === "string" ? metadata.mdata_vendor_id : null;
+  const mdataVendorId =
+    typeof res.rows[0].linked_vendor_id === "string"
+      ? res.rows[0].linked_vendor_id
+      : typeof metadata.mdata_vendor_id === "string"
+        ? metadata.mdata_vendor_id
+        : null;
   const qboVendorId = typeof metadata.qbo_vendor_id === "string" ? metadata.qbo_vendor_id : null;
 
   const woRes = await client.query(
@@ -281,7 +305,8 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
       }
       const result = await client.query(
         `
-          SELECT id, operating_company_id, code, display_name, description, metadata, is_active, sort_order, created_at, updated_at
+          SELECT id, operating_company_id, code, display_name, description, metadata, linked_vendor_id,
+                 is_active, sort_order, created_at, updated_at
           FROM catalogs.maintenance_vendors
           WHERE ${filters.join(" AND ")}
           ORDER BY sort_order ASC, display_name ASC
@@ -317,21 +342,33 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
     if (!VENDOR_CODE_REGEX.test(code)) {
       return reply.code(400).send({ error: "validation_error", message: "invalid vendor code" });
     }
-    const metadata = buildVendorMetadata(body);
+    const linkedVendorId = resolveLinkedVendorId(body);
+    const metadata = buildVendorMetadata({
+      ...body,
+      mdata_vendor_id: linkedVendorId === undefined ? body.mdata_vendor_id : linkedVendorId,
+    });
     try {
       const vendor = await withCompany(user.uuid, body.operating_company_id, async (client) => {
-        if (body.mdata_vendor_id) {
-          await assertMdataVendorExists(client, body.operating_company_id, body.mdata_vendor_id);
+        if (linkedVendorId) {
+          await assertMdataVendorExists(client, body.operating_company_id, linkedVendorId);
         }
         const res = await client.query(
           `
           INSERT INTO catalogs.maintenance_vendors (
-            operating_company_id, code, display_name, description, metadata, is_active, sort_order
+            operating_company_id, code, display_name, description, metadata, linked_vendor_id, is_active, sort_order
           )
-          VALUES ($1, $2, $3, $4, $5::jsonb, true, 50)
-          RETURNING id, operating_company_id, code, display_name, description, metadata, is_active, sort_order, created_at, updated_at
+          VALUES ($1, $2, $3, $4, $5::jsonb, $6::uuid, true, 50)
+          RETURNING id, operating_company_id, code, display_name, description, metadata, linked_vendor_id,
+                    is_active, sort_order, created_at, updated_at
         `,
-          [body.operating_company_id, code, body.display_name, body.description ?? null, JSON.stringify(metadata)]
+          [
+            body.operating_company_id,
+            code,
+            body.display_name,
+            body.description ?? null,
+            JSON.stringify(metadata),
+            linkedVendorId ?? null,
+          ]
         );
         await appendCrudAudit(client, user.uuid, "maintenance.vendor.created", {
           resource_id: res.rows[0]?.id,
@@ -360,18 +397,23 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
     try {
       const updated = await withCompany(user.uuid, body.operating_company_id, async (client) => {
         const existing = await client.query(
-          `SELECT id, code, display_name, description, metadata, is_active FROM catalogs.maintenance_vendors WHERE id = $1 AND operating_company_id = $2`,
+          `SELECT id, code, display_name, description, metadata, linked_vendor_id, is_active
+             FROM catalogs.maintenance_vendors WHERE id = $1 AND operating_company_id = $2`,
           [params.data.id, body.operating_company_id]
         );
         if (!existing.rows[0]) return null;
-        if (body.mdata_vendor_id) {
-          await assertMdataVendorExists(client, body.operating_company_id, body.mdata_vendor_id);
+        const linkedVendorId = resolveLinkedVendorId(body);
+        if (linkedVendorId) {
+          await assertMdataVendorExists(client, body.operating_company_id, linkedVendorId);
         }
         const prior = existing.rows[0];
         const priorMetadata = (prior.metadata ?? {}) as Record<string, unknown>;
         const nextMetadata = {
           ...priorMetadata,
-          ...buildVendorMetadata(body),
+          ...buildVendorMetadata({
+            ...body,
+            mdata_vendor_id: linkedVendorId === undefined ? body.mdata_vendor_id : linkedVendorId,
+          }),
         };
         const res = await client.query(
           `
@@ -381,9 +423,11 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
             display_name = COALESCE($4, display_name),
             description = COALESCE($5, description),
             metadata = $6::jsonb,
+            linked_vendor_id = CASE WHEN $7::boolean THEN $8::uuid ELSE linked_vendor_id END,
             updated_at = now()
           WHERE id = $1 AND operating_company_id = $2
-          RETURNING id, operating_company_id, code, display_name, description, metadata, is_active, sort_order, created_at, updated_at
+          RETURNING id, operating_company_id, code, display_name, description, metadata, linked_vendor_id,
+                    is_active, sort_order, created_at, updated_at
         `,
           [
             params.data.id,
@@ -392,6 +436,8 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
             body.display_name ?? null,
             body.description ?? null,
             JSON.stringify(nextMetadata),
+            linkedVendorId !== undefined,
+            linkedVendorId ?? null,
           ]
         );
         await appendCrudAudit(client, user.uuid, "maintenance.vendor.updated", {
