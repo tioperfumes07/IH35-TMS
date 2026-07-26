@@ -399,14 +399,14 @@
       "title": "dip mor pre post petition ap split"
     },
     {
-      "file": "ACCT-R-40-factoring-asc860-cpa-control-test-open.md",
+      "file": "ACCT-R-40-factoring-asc860-owner-control-test-open.md",
       "code": "ACCT-R-40",
       "block_id": "factoring-asc860-cpa-control-test-open",
       "module": "accounting",
       "pile": "NEEDS-OWNER",
       "lane": "OWNER-GATE",
       "priority": "P0",
-      "title": "factoring asc860 cpa control test open"
+      "title": "factoring asc860 owner control test open"
     },
     {
       "file": "ACCT-R-41-flow2-customer-chargeback-driver-expense.md",
@@ -478,5 +478,69 @@
       "priority": "P0",
       "title": "sweepfix1727 8"
     }
-  ]
+  ],
+  "scoreboard_blocks": [
+    {
+      "id": "ACCT-ECON-05",
+      "finding": "ACCT-ECON-05",
+      "module": "accounting",
+      "lane": "FINANCIAL-HOLD",
+      "priority": "P0",
+      "pile": "SCOREBOARD",
+      "file": "ACCT-ECON-05-vendor-credits-canonical-qbo-vendors.md",
+      "title": "Vendor credits \u2014 canonical qbo_vendors backfill + one live credit"
+    },
+    {
+      "id": "BANK-F08",
+      "finding": "BANK-F08",
+      "module": "banking",
+      "lane": "NON-FINANCIAL",
+      "priority": "P1",
+      "pile": "SCOREBOARD",
+      "file": "BANK-F08-categorization-rules-automatch-depth.md",
+      "title": "Categorization rules / automatch deep-wizard"
+    },
+    {
+      "id": "BANK-F09",
+      "finding": "BANK-F09",
+      "module": "banking",
+      "lane": "NON-FINANCIAL",
+      "priority": "P1",
+      "pile": "SCOREBOARD",
+      "file": "BANK-F09-settings-reports-email-queue-deep-wizard.md",
+      "title": "Settings / reports / email-queue deep-wizard"
+    },
+    {
+      "id": "BANK-ECON-04",
+      "finding": "BANK-ECON-04",
+      "module": "banking",
+      "lane": "NON-FINANCIAL",
+      "priority": "P0",
+      "pile": "SCOREBOARD-REWRITE",
+      "file": "BANK-ECON-04-recon-sessions-ops-density.md",
+      "title": "Recon sessions \u2014 mig applied; ops/browser only"
+    },
+    {
+      "id": "BANK-SURF-04",
+      "finding": "BANK-SURF-04",
+      "module": "banking",
+      "lane": "NON-FINANCIAL",
+      "priority": "P0",
+      "pile": "SCOREBOARD-REWRITE",
+      "file": "BANK-SURF-04-recon-workspace-ops-browser.md",
+      "title": "Recon workspace \u2014 mig applied; ops/browser only"
+    },
+    {
+      "id": "BANK-LINK-01",
+      "finding": "BANK-LINK-01",
+      "module": "banking",
+      "lane": "NON-FINANCIAL",
+      "priority": "P1",
+      "pile": "SCOREBOARD-REWRITE",
+      "file": "BANK-LINK-01-counterparty-fk-ops-browser.md",
+      "title": "Counterparty FK \u2014 mig applied; ops/browser only"
+    }
+  ],
+  "scoreboard_count": 6,
+  "notes": "Pile blocks remain 47 (ACCT-R-01..43 + BANK-R-01..04). scoreboard_blocks are module-completion dispatch files (ECON-05/F08/F09 + applied-mig rewrites). OWNER decides. Projection flags stay OFF."
 }

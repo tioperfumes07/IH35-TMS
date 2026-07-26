@@ -58,7 +58,7 @@ VERIFY-2: <...>  Universal picker law — all 7 clauses (catalog behind it · in
 VERIFY-3: <...>  Connectivity — nav→route→UI→API→CANONICAL Neon table (never RETIRE)→same R/W→entity-scoped→flags honest
 VERIFY-4: <...>  Deep linkage chains F+R (claim/at-fault/WO/expense/bill+payment as applicable)
 VERIFY-5: <...>  Catalogs/entity scope — TRANSP AND USMCA; drivers-as-vendors; units by owner/lease; no cross-entity leak
-VERIFY-6: <...>  Economics CPA-grade — header+lines; balanced JE when flag ON; control roles; flags honest; NO TMS→QBO write-back
+VERIFY-6: <...>  Economics OWNER-grade — header+lines; balanced JE when flag ON; control roles; flags honest; NO TMS→QBO write-back
 VERIFY-7: <...>  Tab/design law (Rule 05) — every approved leaf; no silent-missing; no invented tabs; design updated same commit if count changes
 VERIFY-8: <...>  Security/RLS — FORCE RLS; correct GUC; security_invoker; grants
 MODULE_PROGRESS: <module> N of M  (must match docs/module-completion/<module>.json AFTER this PR; Rule 24; M grows when new FAILs appear, Rule 21)
