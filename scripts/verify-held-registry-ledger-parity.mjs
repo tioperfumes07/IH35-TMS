@@ -54,10 +54,10 @@ export const EXPECTED_HELD = [
   //     backfilled, GUARD live-read _system._schema_migrations. Each ledger checksum equals sha256 of the
   //     committed file — independently recomputed here, 12/12 match — so no override is needed. They are
   //     now in `applied_held`.
-  //   * 202607790000_cost_of_labor_mexico_drivers_transp_usmca.sql is in NEITHER ledger and is now
-  //     `superseded`: its premise is false on prod. Driver-pay cost-of-labor accounts already exist and
-  //     driver_pay_expense is already designated for all three entities in
-  //     accounting.chart_of_accounts_roles, so applying it would DUPLICATE the CoA. Never apply it.
+  //   * 202607790000_cost_of_labor_mexico_drivers_transp_usmca.sql WAS owner Neon-applied 2026-07-25
+  //     (ledger checksum d709ac50…); a later commit left disk at 8429d949… — accepted via
+  //     migration-checksum-overrides (DEPLOY-UNBLOCK-MEXICO-790). Now in `applied_held`, not
+  //     `superseded`. The prior "absent from both ledgers / never apply" note was stale vs live Neon.
   //
   // Superseded correction worth keeping: the previous entry for 202608050000 argued it MUST still be held
   // because "migrations apply in numeric order, so it cannot be applied while an earlier-numbered held file

@@ -284,5 +284,13 @@
     "reason": "Applied on prod (ledger 1c6faa42) then the committed file was edited post-apply to carry deactivated_at in the seed (parity with #3405). No data drift: driver_termination_reasons had no deactivated primary rows (GUARD sweep: 0 half-deactivated). Accept the historical drift; do not re-run. Never edit an applied migration.",
     "added_at": "2026-07-24",
     "added_in_pr": "DEPLOY-UNBLOCK-870-890"
+  },
+  {
+    "filename": "202607790000_cost_of_labor_mexico_drivers_transp_usmca.sql",
+    "ledger_checksum": "d709ac509f113e7f42e7bf9f7b94c0fa0ef740f5157a7598f7d76402c8096101",
+    "disk_checksum": "8429d94902bd28c3a8fdfc8958e795d8044ce36410f0ce1ba6ffe90643b5c718",
+    "reason": "LIVE RENDER OUTAGE 2026-07-25: owner Neon-applied this file at 21:55 UTC (checksum d709ac50… on _system._schema_migrations), then the committed on-disk body diverged to 8429d949… (only git history version). db:migrate pre_deploy fails with \"modified after apply\" and blocks every subsequent deploy including #3553 fleet RETURNING fix. File remains in the held-registry skip set so it is never re-applied; accept historical ledger↔disk drift. Never edit an applied migration.",
+    "added_at": "2026-07-25",
+    "added_in_pr": "DEPLOY-UNBLOCK-MEXICO-790"
   }
 ]

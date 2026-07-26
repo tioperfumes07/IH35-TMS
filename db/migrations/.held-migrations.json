@@ -488,6 +488,12 @@
       "mirror_ledger_note": "Dual-ledger drift: applied per _system._schema_migrations AND live-verified by its schema effect, but ih35_migrations.applied_migrations mirror row is MISSING (owner Neon-apply of the 3-row mirror backfill — Cursor does not write this row). See GUARD doc §5."
     },
     {
+      "file": "202607790000_cost_of_labor_mexico_drivers_transp_usmca.sql",
+      "reason": "[HOLD-FOR-JORGE — APPLIED] Cost of Labor–Mexico Drivers seed for TRANSP+USMCA. Owner Neon-applied 2026-07-25 (neondb_owner). Prior \"superseded / never apply\" classification was stale vs live ledger — file IS on prod. Disk body later diverged from applied checksum; see migration-checksum-overrides DEPLOY-UNBLOCK-MEXICO-790. Do not re-run.",
+      "applied_on_prod": true,
+      "applied_evidence": "Neon tiny-field-89581227 br-fancy-credit-akjnd07a 2026-07-25T21:55:01.713Z: _system._schema_migrations checksum d709ac509f113e7f42e7bf9f7b94c0fa0ef740f5157a7598f7d76402c8096101. Committed disk sha256 8429d949… accepted via checksum override (do not re-apply)."
+    },
+    {
       "file": "202607800000_escrow_forfeit_source_type_and_damage_recovery_designation.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1 · FINANCIAL CLUSTER] SAF-F01 escrow forfeit prereqs — (1) add 'forfeit' to accounting.escrow_postings.source_type CHECK (posting_type CHECK untouched; forfeit reuses 'adjustment'); (2) designate the existing 'damage_recovery' CoA role (already in the role CHECK) to QBO-1150040091 'Driver Accident Damages & Repairs' for TRANSP + USMCA (owner ruling 2026-07-23: forfeited escrow = recovery vs recorded loss, never income; reuse the existing account, mint none). Additive/idempotent: DROP-IF-EXISTS+ADD CHECK, INSERT ON CONFLICT DO NOTHING keyed to the partial unique uq_coa_roles_company_role_active. Posting stays dark until the owner applies this AND flips DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED (default OFF); the route fails loud otherwise. Verified vs Neon br-fancy-credit-akjnd07a (source_type CHECK, role CHECK already has damage_recovery, account exists, all escrow tables 0 rows). Run only on a Neon branch by Jorge, then ledger-backfill.",
       "applied_on_prod": true,
@@ -733,14 +739,7 @@
       "applied_evidence": "APPLIED on prod 2026-07-25 (owner Neon-apply, neondb_owner, br-fancy-credit-akjnd07a). GUARD live read of _system._schema_migrations; both ledgers backfilled. Ledger checksum = sha256(repo file), independently recomputed from the committed file — 12/12 match — so no checksum override is needed. Record: claude/NEON-APPLY-HELD-MIGRATIONS-FINAL-2026-07-25."
     }
   ],
-  "superseded": [
-    {
-      "file": "202607790000_cost_of_labor_mexico_drivers_transp_usmca.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 1 · NEEDS OWNER+CPA CONFIRM] Seed Cost of Labor–Mexico Drivers on TRANSP+USMCA. Account numbers NULL until CPA confirms. Type/subtype match TRK QBO-204 structure. Then designate driver_pay_expense.",
-      "superseded": true,
-      "applied_evidence": "SUPERSEDED — never to be applied. Owner + GUARD 2026-07-25: absent from BOTH ledgers AND its premise is FALSE on prod. It would create a \"Cost of Labor-Mexico Drivers\" account, but driver-pay cost-of-labor accounts ALREADY exist and driver_pay_expense is ALREADY designated for all three entities in accounting.chart_of_accounts_roles (TRANSP QBO-1150040140; USMCA 5100; TRK QBO-204). Applying it would DUPLICATE the CoA. RETAINED in the registry rather than delisted: the registry IS the prod-skip set, so removing it would turn it into an ordinary pending migration and fire it on the next deploy — causing exactly the duplication this classification exists to prevent."
-    }
-  ],
+  "superseded": [],
   "held": [
     {
       "file": "202608070000_escrow_forfeit_posting_type_sign_and_flag_seed.sql",
