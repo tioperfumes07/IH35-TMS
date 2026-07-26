@@ -4,7 +4,8 @@
  *
  * WHY THIS EXISTS
  * `GET /api/v1/healthz` answered a failed check with `String((error as Error)?.message ?? error)`
- * (apps/backend/src/health/health.routes.ts, pre-fix lines 42 and 121). That route is
+ * (in the `/api/v1/healthz` handler, apps/backend/src/health/health.routes.ts, pre-fix lines 42
+ * and 121). That route is
  * unauthenticated — apps/backend/src/auth/session-middleware.ts returns from its preHandler for
  * every url starting `/api/v1/healthz`, so the body is world-readable on the public internet — and
  * the strings it published come straight out of the drivers:
