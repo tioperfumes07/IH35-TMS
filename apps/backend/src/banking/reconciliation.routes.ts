@@ -289,7 +289,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
               created_at,
               updated_at
             )
-            VALUES ($1,$2,$3,$4,$5,$6,$6,$5-$6,'open',now(),now())
+            VALUES ($1,$2,$3,$4,$5,$6,$6,$5::bigint-$6::bigint,'open',now(),now())
             RETURNING id
           `,
           [
