@@ -2373,9 +2373,6 @@
       "duplicate_code",
       "duplicate_id"
     ],
-    "catalogs.escrow_types": [
-      "may_draw_escrow"
-    ],
     "catalogs.excel_upload_jobs": [
       "catalog_name",
       "completed_at",

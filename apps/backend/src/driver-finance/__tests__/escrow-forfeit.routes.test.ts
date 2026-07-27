@@ -42,7 +42,7 @@ function stubDrawCatalogOk() {
     if (/information_schema\.columns/i.test(sql)) {
       return { rows: [{ ok: true }] };
     }
-    if (/may_draw_escrow\s*=\s*true/i.test(sql) || /FROM catalogs\.escrow_types/i.test(sql)) {
+    if (/may_draw_escrow\s*=\s*true/i.test(sql) || /FROM catalogs\.driver_deduction_types/i.test(sql)) {
       return { rows: [{ code: "DAMAGE", display_name: "Damage" }] };
     }
     return { rows: [] };

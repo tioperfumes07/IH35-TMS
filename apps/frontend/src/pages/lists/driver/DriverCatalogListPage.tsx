@@ -9,7 +9,8 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { DriverCatalogModal, type DriverCatalogClient } from "./DriverCatalogModal";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
-type OptionalBooleanField = { key: "may_draw_escrow"; label: string };
+/** Catalog policy flags the owner may edit from Lists (driver_deduction_types). */
+type OptionalBooleanField = { key: "may_draw_escrow" | "survives_separation"; label: string };
 
 type Props = {
   client: DriverCatalogClient & {

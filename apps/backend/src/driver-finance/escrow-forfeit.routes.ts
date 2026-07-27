@@ -21,7 +21,7 @@ const forfeitBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   driver_uuid: z.string().uuid(),
   amount: z.number().positive(),
-  /** Catalog code from catalogs.escrow_types where may_draw_escrow=true (ND-ESC-01). */
+  /** Catalog code from catalogs.driver_deduction_types where may_draw_escrow=true (ND-ESC-01). */
   reason_code: z.string().trim().min(2).max(64),
   /** Optional free-text note appended to the catalog display name in memos. */
   reason_note: z.string().trim().max(400).optional(),
@@ -83,7 +83,7 @@ export async function registerDriverEscrowForfeitRoutes(app: FastifyInstance) {
             SELECT EXISTS (
               SELECT 1 FROM information_schema.columns
               WHERE table_schema = 'catalogs'
-                AND table_name = 'escrow_types'
+                AND table_name = 'driver_deduction_types'
                 AND column_name = 'may_draw_escrow'
             ) AS ok
           `
@@ -94,7 +94,7 @@ export async function registerDriverEscrowForfeitRoutes(app: FastifyInstance) {
         const res = await client.query(
           `
             SELECT code, display_name
-              FROM catalogs.escrow_types
+              FROM catalogs.driver_deduction_types
              WHERE operating_company_id = $1::uuid
                AND code = $2
                AND is_active = true

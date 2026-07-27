@@ -5,14 +5,14 @@ import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { Combobox } from "../../../components/Combobox";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { getLiabilitiesByDriver } from "../../../api/liabilities";
-import { escrowTypesCatalogClient } from "../../../api/catalogs-driver";
+import { driverDeductionTypesCatalogClient } from "../../../api/catalogs-driver";
 import { formatUsd } from "../../../lib/money";
 import type { EscrowRecordRow } from "../../../api/driverFinance";
 
 /**
  * SAF-F10 + SAF-F25 + ND-ESC-01 — Escrow Forfeit surface.
  *
- * Draw reason is a catalogs.escrow_types row with may_draw_escrow=true (editable in Lists),
+ * Draw reason is a catalogs.driver_deduction_types row with may_draw_escrow=true (editable in Lists),
  * not free-text. Optional note appends to the catalog display name in the JE memo.
  */
 
@@ -41,7 +41,7 @@ export function EscrowForfeitModal({ open, row, operatingCompanyId, loading, onC
   const drawReasonsQuery = useQuery({
     queryKey: ["escrow-draw-reasons", operatingCompanyId],
     queryFn: () =>
-      escrowTypesCatalogClient.list({
+      driverDeductionTypesCatalogClient.list({
         operating_company_id: operatingCompanyId,
         is_active: "true",
         limit: 200,

@@ -7,7 +7,6 @@ export function EscrowTypesListPage() {
       client={escrowTypesCatalogClient}
       displayName="Escrow Types"
       breadcrumbPath="Lists & Catalogs / Driver / Escrow Types"
-      optionalBooleans={[{ key: "may_draw_escrow", label: "May draw escrow" }]}
     />
   );
 }

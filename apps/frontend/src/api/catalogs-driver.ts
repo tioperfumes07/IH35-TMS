@@ -9,8 +9,12 @@ export type DriverCatalogRow = {
   metadata: Record<string, unknown>;
   is_active: boolean;
   sort_order: number;
-  /** ND-ESC-01 — present on escrow_types when may_draw_escrow column is live. */
+  /**
+   * ND-ESC-01 recovery policy — present on driver_deduction_types once the columns are applied.
+   * Optional by design: the backend degrades them away until the owner applies the held migration.
+   */
   may_draw_escrow?: boolean;
+  survives_separation?: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -28,6 +32,7 @@ export type DriverCatalogCreateBody = {
   sort_order?: number;
   is_active?: boolean;
   may_draw_escrow?: boolean;
+  survives_separation?: boolean;
 };
 
 export type DriverCatalogUpdateBody = Partial<DriverCatalogCreateBody>;

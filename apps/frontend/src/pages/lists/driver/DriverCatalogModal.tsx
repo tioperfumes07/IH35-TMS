@@ -20,7 +20,8 @@ export type DriverCatalogClient = {
   deactivate: (id: string, operating_company_id: string) => Promise<{ ok: true }>;
 };
 
-type OptionalBooleanField = { key: "may_draw_escrow"; label: string };
+/** Catalog policy flags the owner may edit from Lists (driver_deduction_types). */
+type OptionalBooleanField = { key: "may_draw_escrow" | "survives_separation"; label: string };
 
 type Props = {
   open: boolean;
@@ -40,7 +41,10 @@ type FormState = {
   description: string;
   sort_order: number;
   is_active: boolean;
+  // One entry per policy flag the catalog can expose. Keyed off OptionalBooleanField so adding a
+  // flag is a single edit, not a hunt through form state / reset / submit.
   may_draw_escrow: boolean;
+  survives_separation: boolean;
 };
 
 export function DriverCatalogModal({
@@ -61,6 +65,7 @@ export function DriverCatalogModal({
     sort_order: 50,
     is_active: true,
     may_draw_escrow: false,
+    survives_separation: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string>("");
@@ -75,6 +80,7 @@ export function DriverCatalogModal({
       sort_order: row?.sort_order ?? 50,
       is_active: row?.is_active ?? true,
       may_draw_escrow: Boolean(row?.may_draw_escrow),
+      survives_separation: Boolean(row?.survives_separation),
     });
     setErrors({});
     setSubmitError("");
@@ -104,8 +110,10 @@ export function DriverCatalogModal({
         is_active: form.is_active,
         metadata: row?.metadata ?? {},
       };
-      if (optionalBooleans.some((f) => f.key === "may_draw_escrow")) {
-        body.may_draw_escrow = form.may_draw_escrow;
+      // Send only the flags this catalog actually exposes — a catalog without the applied columns
+      // must not receive fields the backend would have to ignore.
+      for (const field of optionalBooleans) {
+        body[field.key] = form[field.key];
       }
       if (mode === "create") {
         await client.create(operatingCompanyId, body);

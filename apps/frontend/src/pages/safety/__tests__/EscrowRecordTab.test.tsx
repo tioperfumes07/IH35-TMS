@@ -66,7 +66,7 @@ describe("EscrowRecordTab (A23-8 + ND-ESC-01)", () => {
       status: "success",
       audit_id: "audit-1",
     });
-    vi.spyOn(catalogsDriver.escrowTypesCatalogClient, "list").mockResolvedValue({
+    vi.spyOn(catalogsDriver.driverDeductionTypesCatalogClient, "list").mockResolvedValue({
       rows: [
         {
           id: "etype-1",

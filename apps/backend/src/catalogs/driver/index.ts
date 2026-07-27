@@ -16,6 +16,10 @@ export async function registerDriverCatalogRoutes(app: FastifyInstance) {
     routePrefix: "/api/v1/catalogs/driver",
     displayName: "Driver Deduction Types",
     codeRegex: /^[A-Z][A-Z0-9-]+$/,
+    // Owner ruling 2026-07-27: driver_deduction_types is the CANONICAL recovery-reason catalog.
+    // escrow_types defines escrow BUCKETS (its seed carries a funding target) and structurally
+    // cannot express "settlement first", which is 00_LOCKED_DECISIONS 9.3's primary rule.
+    optionalBooleans: ["may_draw_escrow", "survives_separation"],
   });
 
   createCatalogRoutes(app, {
@@ -32,6 +36,5 @@ export async function registerDriverCatalogRoutes(app: FastifyInstance) {
     routePrefix: "/api/v1/catalogs/driver",
     displayName: "Escrow Types",
     codeRegex: /^[A-Z][A-Z0-9-]+$/,
-    optionalBooleans: ["may_draw_escrow"],
   });
 }

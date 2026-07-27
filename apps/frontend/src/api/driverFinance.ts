@@ -325,7 +325,7 @@ export function forfeitEscrow(
   payload: {
     operating_company_id: string;
     amount: number;
-    /** catalogs.escrow_types.code with may_draw_escrow=true (ND-ESC-01). */
+    /** catalogs.driver_deduction_types.code with may_draw_escrow=true (ND-ESC-01, canonical per owner ruling 2026-07-27). */
     reason_code: string;
     reason_note?: string;
     linked_liability_id?: string;
