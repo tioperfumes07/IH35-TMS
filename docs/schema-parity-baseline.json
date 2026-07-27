@@ -782,6 +782,7 @@
       "auto_deduct_settlement",
       "bill_to_entity_id",
       "bill_to_entity_type",
+      "broker_advance_applied_cents",
       "created_at",
       "created_by_user_id",
       "currency_code",

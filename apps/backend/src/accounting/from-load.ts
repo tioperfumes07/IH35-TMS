@@ -11,6 +11,11 @@ type BuildInvoiceInput = {
   userId: string;
   operatingCompanyId: string;
   loadId: string;
+  /**
+   * ND-INV-01 — when true, create status=proforma (non-posting projection). Default false keeps
+   * existing from-load API creating draft (operator-initiated).
+   */
+  asProforma?: boolean;
 };
 
 type BuildInvoiceResult = {
@@ -126,6 +131,7 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
   const dueDate = new Date(issueDate);
   dueDate.setUTCDate(dueDate.getUTCDate() + paymentTermsDays);
   const displayId = await nextInvoiceDisplayId(client, input.operatingCompanyId, issueDate);
+  const initialStatus = input.asProforma ? "proforma" : "draft";
 
   const invoiceRes = await client.query(
     `
@@ -143,10 +149,11 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
         payment_terms_days,
         ar_email_snapshot,
         ar_phone_snapshot,
+        invoice_type,
         created_by_user_id,
         updated_by_user_id
       ) VALUES (
-        $1,$2,$3,'draft',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$13
+        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'from_load',$14,$14
       )
       RETURNING *
     `,
@@ -154,6 +161,7 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
       input.operatingCompanyId,
       load.customer_id,
       displayId,
+      initialStatus,
       input.loadId,
       issueDate.toISOString().slice(0, 10),
       dueDate.toISOString().slice(0, 10),

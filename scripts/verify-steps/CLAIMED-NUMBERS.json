@@ -1043,14 +1043,16 @@
     "1640": "1640-verify-mnt-link-03b-wo-source-intransit-fk.mjs",
     "1641": "1641-verify-mnt-ent-01-parts-inventory-company-fk.mjs",
     "1642": "1642-verify-escrow-draw-catalog-editable.mjs",
+    "1643": "1643-verify-invoice-pipeline-proforma-to-factoring.mjs",
     "1644": "1644-verify-react-plaid-link-v5-onsuccess-null.mjs",
-    "1645": "1645-verify-escrow-forfeit-membership-before-guc.mjs"
+    "1645": "1645-verify-escrow-forfeit-membership-before-guc.mjs",
+    "1646": "1646-verify-driver-bills-auth-db-mock-exports-lucia-pool.mjs"
   },
   "_note": "CLAIMED verify-step numbers. Every PR adding a verify-step MUST add its number here IN THE SAME COMMIT. Two agents claiming the same number then CONFLICT IN GIT instead of silently agreeing and reddening main afterwards.",
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",
   "_how_to_claim": "Pick the next free number in your band, add \"<number>\": \"<filename>\", commit it WITH the guard.",
   "generated_at": "2026-07-26",
-  "total_claimed": 756,
+  "total_claimed": 758,
   "known_duplicates_frozen": {
     "15": [
       "15-verify-accounting-autoload-coverage.mjs",

@@ -7,6 +7,8 @@ import { effectiveTeamPercentsFromRow, splitTotalCents } from "../driver-finance
 import { detectAssetCoverageGap } from "../insurance/coverage-gap.service.js";
 import { bookLoadRateTotalCents } from "./book-load-accessorial.js";
 import { assertDriverQualifiedForLoad } from "./driver-qualification.service.js";
+import { buildInvoiceFromLoad } from "../accounting/from-load.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
 import {
   claimReservation,
   consumeLoadNumberReservation,
@@ -1132,6 +1134,37 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       ]
     );
     const load = loadRes.rows[0] as Record<string, unknown>;
+
+    // ND-INV-01 — auto-create NON-POSTING proforma invoice at book when pipeline flag is on.
+    // Reuses buildInvoiceFromLoad (no new GL math). Failures are loud so booking never silently
+    // skips the projection document the owner expects.
+    {
+      const pipelineOn = await isEnabled(client, "INVOICE_PROFORMA_PIPELINE_ENABLED", {
+        operating_company_id: input.operating_company_id,
+        user_uuid: input.requestingUserUuid,
+      });
+      if (pipelineOn) {
+        // Column may not exist until owner Neon-applies 202609100090 — probe once.
+        const col = await client.query<{ ok: boolean }>(
+          `
+            SELECT EXISTS (
+              SELECT 1 FROM information_schema.columns
+              WHERE table_schema = 'accounting'
+                AND table_name = 'invoices'
+                AND column_name = 'broker_advance_applied_cents'
+            ) AS ok
+          `
+        );
+        if (Boolean(col.rows[0]?.ok)) {
+          await buildInvoiceFromLoad(client, {
+            userId: input.requestingUserUuid,
+            operatingCompanyId: input.operating_company_id,
+            loadId: String(load.id),
+            asProforma: true,
+          });
+        }
+      }
+    }
 
     // C9 (migration 202609170000, HOLD-FOR-JORGE): resolve the load-level factoring override, then
     // persist all 8 new fields via the 42703-safe helper above. See writeC9HoldFieldsIfPresent's

@@ -740,6 +740,14 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       ]);
       const current = currentRes.rows[0] ?? null;
       if (!current) return { code: 404 as const, error: "invoice_not_found" };
+      if (String(current.status) === "proforma") {
+        return {
+          code: 409 as const,
+          error: "invoice_is_proforma",
+          message:
+            "Pro forma invoices are non-posting projections. Convert at POD (delivered) before send/A/R.",
+        };
+      }
       if (String(current.status) !== "draft") return { code: 409 as const, error: "invoice_not_draft" };
 
       // P-INVOICE P0 (#3177): fail closed before send — income account + load source_load_id.
