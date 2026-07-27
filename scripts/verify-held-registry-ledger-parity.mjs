@@ -80,6 +80,15 @@ export const EXPECTED_HELD = [
   // 202609190000_c9_form_roundtrip_persist_columns.sql (applied 21:28Z), one of FIVE migrations
   // applied on prod that do not exist in the repo. Reported separately; not this PR's to fix.
   "202609250000_flt_02_real_fleet_owned_by_trk.sql",
+  // Driver recovery policy per situation (owner ruling 2026-07-27). Authored today and never applied
+  // anywhere — unapplied by construction, not "GUARD re-proved unapplied". Live cross-check on
+  // br-fancy-credit-akjnd07a 2026-07-27 (lucia, positive control mdata.drivers non-zero):
+  // may_draw_escrow exists as a column in NO table in the database, and
+  // catalogs.driver_deduction_types still holds only its 3 INS-DED rows — so neither the ALTER nor
+  // the seed has run. Numbered 202609300000: prod's true ledger max is 202609280000, and both
+  // 202609190000 and 202609220000 are already taken (see FLT-02 above). Leaves this list only when
+  // the owner Neon-applies + ledger-backfills and GUARD re-proves the ledger row.
+  "202609310000_driver_deduction_type_recovery_policy.sql",
   // BANK-DOM-05 applied as 202609010010 — applied_held.
   // F9-02 applied as 202609010040 — applied_held.
   // F9-01 applied as 202609010050 — applied_held.

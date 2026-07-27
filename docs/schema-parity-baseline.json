@@ -2294,6 +2294,11 @@
       "updated_at",
       "violation_code"
     ],
+    "catalogs.driver_deduction_types": [
+      "default_recovery_rail",
+      "may_draw_escrow",
+      "survives_separation"
+    ],
     "catalogs.driver_leave_balances": [
       "created_at",
       "driver_id",
@@ -6644,6 +6649,7 @@
       "shop_address",
       "shop_name",
       "shop_phone",
+      "source_intransit_issue_id",
       "source_type",
       "status",
       "tax_rate_pct",
@@ -6668,8 +6674,7 @@
       "wo_title",
       "wo_type",
       "work_completed_at",
-      "work_started_at",
-      "source_intransit_issue_id"
+      "work_started_at"
     ],
     "master_data.customer_relationship_scores": [
       "complaint_subscore",
