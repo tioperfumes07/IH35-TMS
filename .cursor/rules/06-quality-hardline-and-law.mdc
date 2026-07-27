@@ -51,6 +51,23 @@ Every recommendation as if later reviewed by a CPA, auditor, attorney, insurance
 - Do not say done unless verified. Do not hide uncertainty.
 - Do not make financial, accounting, QBO, RLS, migration, role-mapping, period-close, production, or security decisions without proof.
 - Prefer live app (`app.ih35dispatch.com`), current repo, DB/prod evidence, and owner decisions.
+- **DENOMINATOR RULE (earned 2026-07-27):** a zero is not an answer until you can say *zero out of
+  what*. Every major defect found that day was a count with no population behind it — fuel GL (1,531
+  transactions, $620,263.88, **8** journal entries in all of prod), the layover detector (`total: 0`
+  while it had **never executed** — three independent silent failures), the severe-repair cost
+  recompute (42703 every run, so the $7,000 capitalize threshold was **never evaluated**), and the
+  fixed-asset register (two complete registers, both empty, **no create path existed**). Any surface
+  that reports a count MUST report the population it counted over, or surface "cannot run" / "no
+  evaluable data" as states DISTINCT from a genuine zero. A zero that means *broken* must never look
+  like a zero that means *clean*.
+- **ALLOWLIST RULE (earned 2026-07-27):** a guard that detects a defect is never silenced to make CI
+  green. `verify-sql-column-existence` caught a live 42703 — `maintenance.work_order_lines.work_order_id`,
+  a column that does not exist — and the finding was frozen in its allowlist as an "accepted false
+  positive". An allowlist entry is a CLAIM THAT THE GUARD IS WRONG: it must be provable against prod
+  and carry a removal condition. Prove it, or fix the bug. Equally: verify each entry individually
+  before removing — of three entries on that table, two were genuine false positives (`w.id` /
+  `w.operating_company_id` belong to `maintenance.work_orders`, misattributed by `DELETE ... USING`
+  alias handling). Over-correcting is the same failure inverted.
 - **False-empty rule:** a `0` row-count on FORCED-RLS tables (`catalogs.*`, `banking.*`, `lib.*`, `mdata.*`, `accounting.*`) is not proof of absence until re-run with `SET app.bypass_rls = 'lucia'` (or equivalent scoped GUC) in the same transaction.
 
 ## Law of the Land (canonical pointers)
