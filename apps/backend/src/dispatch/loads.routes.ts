@@ -31,6 +31,8 @@ import { evaluateDriverDrugAlcoholStatus } from "./driver-qualification.service.
 import type { PoolClient } from "pg";
 import { convertProformaToOfficial } from "../accounting/proforma-convert.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { postLoadRevenueLatch } from "../accounting/revrec-delivery-posting/poster.service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 // Book Load §C relocates several stop fields to hidden, react-hook-form-registered <input>s
 // (BookLoadStopsSection.tsx). RHF reads a hidden input's value as a STRING ("" when empty), so
@@ -1303,6 +1305,21 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           } catch (err) {
             console.warn({ err, load_id: params.data.id }, "nd_inv_01_proforma_convert_failed");
           }
+        }
+      }
+
+      // DISP-01 — two-event revenue latch (flag OFF → no-op). Earn at delivery; bill at POD.
+      if (targetStatus === "delivered_pending_docs" || targetStatus === "completed_docs_received") {
+        try {
+          await postLoadRevenueLatch({
+            operating_company_id: operatingCompanyId,
+            load_id: params.data.id,
+            target_status: targetStatus,
+            entry_date_iso: companyBusinessDate(),
+            actor_user_id: authUser.uuid,
+          });
+        } catch (err) {
+          console.warn({ err, load_id: params.data.id, targetStatus }, "disp_01_revrec_latch_failed");
         }
       }
 

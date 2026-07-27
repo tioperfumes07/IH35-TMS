@@ -73,6 +73,10 @@ export const COA_ROLE_VALUES = [
   // Dr insurance_expense / Cr ap_control. DELIBERATELY absent from ROLE_FALLBACKS — fail closed
   // until designated (never ORDER BY created_at LIMIT 2).
   "insurance_expense",
+  // DISP-01 — two-event delivery revenue latch (Unbilled Revenue 1240/1150).
+  // Dr unbilled_revenue / Cr revenue_default (earn); Dr ar_control / Cr unbilled_revenue (bill).
+  // DELIBERATELY absent from ROLE_FALLBACKS — owner designates via system_purpose bind or CoaRoles.
+  "unbilled_revenue",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];

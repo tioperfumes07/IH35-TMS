@@ -8,10 +8,13 @@
   "desktop_clickthrough": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md",
   "module_progress": {
     "N": 8,
-    "M": 28,
-    "note": "Structural sweep matrix only — no FAIL→PASS; browser click-through remains UNVERIFIED per cell unless STRUCTURAL guard cited"
+    "M": 29,
+    "note": "Structural sweep matrix only \u2014 no FAIL\u2192PASS; browser click-through remains UNVERIFIED per cell unless STRUCTURAL guard cited"
   },
-  "entities": ["TRANSP", "USMCA"],
+  "entities": [
+    "TRANSP",
+    "USMCA"
+  ],
   "layers": [
     "DOD-A",
     "DOD-B",
@@ -55,34 +58,112 @@
       "structural_guard": "scripts/verify-acct-surf-01-bills.mjs",
       "cells": {
         "TRANSP": {
-          "DOD-A": { "status": "STRUCTURAL", "evidence": "route /accounting/bills → BillsPage; subnav leaf present; verify-acct-surf-01-bills" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "browser wizard depth click-through not run TRANSP" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "reverse drill unit/claim/WO density=0 (ACCT-LINK-03 FAIL)" },
-          "DOD-D": { "status": "STRUCTURAL", "evidence": "Neon lucia bills=16212 bill_lines=155049 (ACCT-ECON-01 PASS)" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "Desktop Expected vs Actual row not re-clicked TRANSP" },
-          "VERIFY-1": { "status": "STRUCTURAL", "evidence": "VendorBillCreatePage ParityDrawer; verify-acct-surf-01-bills + verify-accounting-money-creator-matrix" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "universal picker 7-clause browser matrix not run TRANSP" },
-          "VERIFY-3": { "status": "STRUCTURAL", "evidence": "POST /api/v1/accounting/bills → accounting.bills INSERT; verify-acct-surf-01-bills server half" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "bill⇄payment⇄aging both-way browser not run TRANSP" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "entity-scoped browser sweep not run TRANSP" },
-          "VERIFY-6": { "status": "STRUCTURAL", "evidence": "header+lines density PASS (ACCT-ECON-01); posting flags default OFF (ACCT-CTRL-01)" },
-          "VERIFY-7": { "status": "STRUCTURAL", "evidence": "Bills ▾ 8 leaves in subnav-manifest; verify-acct-surfaces-structural" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "RLS/GUC per-table browser proof not run TRANSP" }
+          "DOD-A": {
+            "status": "STRUCTURAL",
+            "evidence": "route /accounting/bills \u2192 BillsPage; subnav leaf present; verify-acct-surf-01-bills"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "browser wizard depth click-through not run TRANSP"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "reverse drill unit/claim/WO density=0 (ACCT-LINK-03 FAIL)"
+          },
+          "DOD-D": {
+            "status": "STRUCTURAL",
+            "evidence": "Neon lucia bills=16212 bill_lines=155049 (ACCT-ECON-01 PASS)"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "Desktop Expected vs Actual row not re-clicked TRANSP"
+          },
+          "VERIFY-1": {
+            "status": "STRUCTURAL",
+            "evidence": "VendorBillCreatePage ParityDrawer; verify-acct-surf-01-bills + verify-accounting-money-creator-matrix"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "universal picker 7-clause browser matrix not run TRANSP"
+          },
+          "VERIFY-3": {
+            "status": "STRUCTURAL",
+            "evidence": "POST /api/v1/accounting/bills \u2192 accounting.bills INSERT; verify-acct-surf-01-bills server half"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "bill\u21c4payment\u21c4aging both-way browser not run TRANSP"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "entity-scoped browser sweep not run TRANSP"
+          },
+          "VERIFY-6": {
+            "status": "STRUCTURAL",
+            "evidence": "header+lines density PASS (ACCT-ECON-01); posting flags default OFF (ACCT-CTRL-01)"
+          },
+          "VERIFY-7": {
+            "status": "STRUCTURAL",
+            "evidence": "Bills \u25be 8 leaves in subnav-manifest; verify-acct-surfaces-structural"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "RLS/GUC per-table browser proof not run TRANSP"
+          }
         },
         "USMCA": {
-          "DOD-A": { "status": "UNVERIFIED", "blocker": "browser route active-path click-through not run USMCA" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "browser wizard depth not run USMCA" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "reverse drill not run USMCA" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "USMCA economics density not measured" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "Desktop Expected vs Actual not run USMCA" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "QBO chrome browser not run USMCA" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "picker law browser not run USMCA" },
-          "VERIFY-3": { "status": "UNVERIFIED", "blocker": "connectivity chain browser not run USMCA" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "deep linkage browser not run USMCA" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "USMCA entity sweep not run" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "USMCA economics not measured" },
-          "VERIFY-7": { "status": "UNVERIFIED", "blocker": "USMCA leaf sweep not run" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "USMCA RLS proof not run" }
+          "DOD-A": {
+            "status": "UNVERIFIED",
+            "blocker": "browser route active-path click-through not run USMCA"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "browser wizard depth not run USMCA"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "reverse drill not run USMCA"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics density not measured"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "Desktop Expected vs Actual not run USMCA"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "QBO chrome browser not run USMCA"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "picker law browser not run USMCA"
+          },
+          "VERIFY-3": {
+            "status": "UNVERIFIED",
+            "blocker": "connectivity chain browser not run USMCA"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "deep linkage browser not run USMCA"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA entity sweep not run"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not measured"
+          },
+          "VERIFY-7": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA leaf sweep not run"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA RLS proof not run"
+          }
         }
       }
     },
@@ -95,34 +176,112 @@
       "structural_guard": "scripts/verify-acct-surf-01-bills.mjs",
       "cells": {
         "TRANSP": {
-          "DOD-A": { "status": "STRUCTURAL", "evidence": "subnav + route leaf /accounting/bills/repair; verify-acct-surf-01-bills BILL_LEAVES" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "repair bill wizard browser not run TRANSP" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "WO reverse linkage browser not run; ACCT-LINK-03 unit/wo=0" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "repair-bill purpose→economics browser not run TRANSP" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "Desktop row not run TRANSP" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "ParityDrawer repair path browser not run TRANSP" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "picker law browser not run TRANSP" },
-          "VERIFY-3": { "status": "STRUCTURAL", "evidence": "same createBill → accounting.bills path as bill hub" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "bill⇄WO⇄maintenance reverse browser not run TRANSP" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "TRANSP-only structural; USMCA not swept" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "repair bill economics browser not run TRANSP" },
-          "VERIFY-7": { "status": "STRUCTURAL", "evidence": "Repair bill leaf in subnav-manifest (NEVER-DELETE)" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "RLS browser not run TRANSP" }
+          "DOD-A": {
+            "status": "STRUCTURAL",
+            "evidence": "subnav + route leaf /accounting/bills/repair; verify-acct-surf-01-bills BILL_LEAVES"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "repair bill wizard browser not run TRANSP"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "WO reverse linkage browser not run; ACCT-LINK-03 unit/wo=0"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "repair-bill purpose\u2192economics browser not run TRANSP"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "Desktop row not run TRANSP"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "ParityDrawer repair path browser not run TRANSP"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "picker law browser not run TRANSP"
+          },
+          "VERIFY-3": {
+            "status": "STRUCTURAL",
+            "evidence": "same createBill \u2192 accounting.bills path as bill hub"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "bill\u21c4WO\u21c4maintenance reverse browser not run TRANSP"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "TRANSP-only structural; USMCA not swept"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "repair bill economics browser not run TRANSP"
+          },
+          "VERIFY-7": {
+            "status": "STRUCTURAL",
+            "evidence": "Repair bill leaf in subnav-manifest (NEVER-DELETE)"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "RLS browser not run TRANSP"
+          }
         },
         "USMCA": {
-          "DOD-A": { "status": "UNVERIFIED", "blocker": "USMCA repair bill browser not run" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "USMCA wizard not run" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "USMCA reverse not run" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "USMCA evidence not run" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "USMCA chrome not run" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "USMCA pickers not run" },
-          "VERIFY-3": { "status": "UNVERIFIED", "blocker": "USMCA connectivity not run" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "USMCA linkage not run" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "USMCA entity not run" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "VERIFY-7": { "status": "UNVERIFIED", "blocker": "USMCA leaf not run" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "USMCA RLS not run" }
+          "DOD-A": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA repair bill browser not run"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA wizard not run"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA reverse not run"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA evidence not run"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA chrome not run"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA pickers not run"
+          },
+          "VERIFY-3": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA connectivity not run"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA linkage not run"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA entity not run"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "VERIFY-7": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA leaf not run"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA RLS not run"
+          }
         }
       }
     },
@@ -135,34 +294,112 @@
       "structural_guard": "scripts/verify-acct-surf-01-bills.mjs",
       "cells": {
         "TRANSP": {
-          "DOD-A": { "status": "STRUCTURAL", "evidence": "subnav + route leaf /accounting/bills/fuel; verify-acct-surf-01-bills" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "fuel bill wizard browser not run TRANSP" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "fuel⇄unit/load reverse browser not run TRANSP" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "fuel purpose→economics browser not run TRANSP" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "Desktop row not run TRANSP" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "fuel ParityDrawer browser not run TRANSP" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "picker law browser not run TRANSP" },
-          "VERIFY-3": { "status": "STRUCTURAL", "evidence": "createBill → accounting.bills canonical" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "fuel⇄dispatch cross-module browser not run TRANSP" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "TRANSP-only; USMCA not swept" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "fuel economics browser not run TRANSP" },
-          "VERIFY-7": { "status": "STRUCTURAL", "evidence": "Fuel bill leaf in subnav-manifest" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "RLS browser not run TRANSP" }
+          "DOD-A": {
+            "status": "STRUCTURAL",
+            "evidence": "subnav + route leaf /accounting/bills/fuel; verify-acct-surf-01-bills"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "fuel bill wizard browser not run TRANSP"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "fuel\u21c4unit/load reverse browser not run TRANSP"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "fuel purpose\u2192economics browser not run TRANSP"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "Desktop row not run TRANSP"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "fuel ParityDrawer browser not run TRANSP"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "picker law browser not run TRANSP"
+          },
+          "VERIFY-3": {
+            "status": "STRUCTURAL",
+            "evidence": "createBill \u2192 accounting.bills canonical"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "fuel\u21c4dispatch cross-module browser not run TRANSP"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "TRANSP-only; USMCA not swept"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "fuel economics browser not run TRANSP"
+          },
+          "VERIFY-7": {
+            "status": "STRUCTURAL",
+            "evidence": "Fuel bill leaf in subnav-manifest"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "RLS browser not run TRANSP"
+          }
         },
         "USMCA": {
-          "DOD-A": { "status": "UNVERIFIED", "blocker": "USMCA fuel bill browser not run" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "USMCA wizard not run" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "USMCA reverse not run" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "USMCA evidence not run" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "USMCA chrome not run" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "USMCA pickers not run" },
-          "VERIFY-3": { "status": "UNVERIFIED", "blocker": "USMCA connectivity not run" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "USMCA linkage not run" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "USMCA entity not run" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "VERIFY-7": { "status": "UNVERIFIED", "blocker": "USMCA leaf not run" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "USMCA RLS not run" }
+          "DOD-A": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA fuel bill browser not run"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA wizard not run"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA reverse not run"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA evidence not run"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA chrome not run"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA pickers not run"
+          },
+          "VERIFY-3": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA connectivity not run"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA linkage not run"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA entity not run"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "VERIFY-7": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA leaf not run"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA RLS not run"
+          }
         }
       }
     },
@@ -175,34 +412,112 @@
       "structural_guard": "scripts/verify-acct-surf-01-bills.mjs",
       "cells": {
         "TRANSP": {
-          "DOD-A": { "status": "STRUCTURAL", "evidence": "subnav + route leaf /accounting/bills/vendor" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "vendor bill wizard browser not run TRANSP" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "vendor⇄bill reverse browser not run TRANSP" },
-          "DOD-D": { "status": "STRUCTURAL", "evidence": "vendor_id=16212 on bills (Neon lucia); header+lines density PASS" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "Desktop row not run TRANSP" },
-          "VERIFY-1": { "status": "STRUCTURAL", "evidence": "VendorBillForm ParityDrawer structural" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "vendor + A/P picker browser not run TRANSP" },
-          "VERIFY-3": { "status": "STRUCTURAL", "evidence": "POST bills → accounting.bills" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "vendor⇄payment⇄aging browser not run TRANSP" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "TRANSP-only; USMCA not swept" },
-          "VERIFY-6": { "status": "STRUCTURAL", "evidence": "bill_lines dense (ACCT-ECON-01); flags OFF" },
-          "VERIFY-7": { "status": "STRUCTURAL", "evidence": "Vendor bill leaf in subnav-manifest" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "RLS browser not run TRANSP" }
+          "DOD-A": {
+            "status": "STRUCTURAL",
+            "evidence": "subnav + route leaf /accounting/bills/vendor"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "vendor bill wizard browser not run TRANSP"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "vendor\u21c4bill reverse browser not run TRANSP"
+          },
+          "DOD-D": {
+            "status": "STRUCTURAL",
+            "evidence": "vendor_id=16212 on bills (Neon lucia); header+lines density PASS"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "Desktop row not run TRANSP"
+          },
+          "VERIFY-1": {
+            "status": "STRUCTURAL",
+            "evidence": "VendorBillForm ParityDrawer structural"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "vendor + A/P picker browser not run TRANSP"
+          },
+          "VERIFY-3": {
+            "status": "STRUCTURAL",
+            "evidence": "POST bills \u2192 accounting.bills"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "vendor\u21c4payment\u21c4aging browser not run TRANSP"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "TRANSP-only; USMCA not swept"
+          },
+          "VERIFY-6": {
+            "status": "STRUCTURAL",
+            "evidence": "bill_lines dense (ACCT-ECON-01); flags OFF"
+          },
+          "VERIFY-7": {
+            "status": "STRUCTURAL",
+            "evidence": "Vendor bill leaf in subnav-manifest"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "RLS browser not run TRANSP"
+          }
         },
         "USMCA": {
-          "DOD-A": { "status": "UNVERIFIED", "blocker": "USMCA vendor bill browser not run" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "USMCA wizard not run" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "USMCA reverse not run" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "USMCA evidence not run" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "USMCA chrome not run" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "USMCA pickers not run" },
-          "VERIFY-3": { "status": "UNVERIFIED", "blocker": "USMCA connectivity not run" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "USMCA linkage not run" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "USMCA entity not run" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "VERIFY-7": { "status": "UNVERIFIED", "blocker": "USMCA leaf not run" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "USMCA RLS not run" }
+          "DOD-A": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA vendor bill browser not run"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA wizard not run"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA reverse not run"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA evidence not run"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA chrome not run"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA pickers not run"
+          },
+          "VERIFY-3": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA connectivity not run"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA linkage not run"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA entity not run"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "VERIFY-7": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA leaf not run"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA RLS not run"
+          }
         }
       }
     },
@@ -215,34 +530,112 @@
       "structural_guard": "scripts/verify-acct-recurring-bill-wizard.mjs",
       "cells": {
         "TRANSP": {
-          "DOD-A": { "status": "STRUCTURAL", "evidence": "subnav + route /accounting/bills/recurring; verify-acct-recurring-bill-wizard" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "recurring template wizard browser not run TRANSP" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "template⇄bill reverse browser not run TRANSP" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "recurring economics browser not run TRANSP" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "Desktop row not run TRANSP" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "recurring chrome browser not run TRANSP" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "picker law browser not run TRANSP" },
-          "VERIFY-3": { "status": "UNVERIFIED", "blocker": "template→bill connectivity browser not run TRANSP" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "recurring⇄bill reverse browser not run TRANSP" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "TRANSP-only; USMCA not swept" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "recurring economics browser not run TRANSP" },
-          "VERIFY-7": { "status": "STRUCTURAL", "evidence": "Recurring bills leaf in subnav-manifest" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "RLS browser not run TRANSP" }
+          "DOD-A": {
+            "status": "STRUCTURAL",
+            "evidence": "subnav + route /accounting/bills/recurring; verify-acct-recurring-bill-wizard"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "recurring template wizard browser not run TRANSP"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "template\u21c4bill reverse browser not run TRANSP"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "recurring economics browser not run TRANSP"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "Desktop row not run TRANSP"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "recurring chrome browser not run TRANSP"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "picker law browser not run TRANSP"
+          },
+          "VERIFY-3": {
+            "status": "UNVERIFIED",
+            "blocker": "template\u2192bill connectivity browser not run TRANSP"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "recurring\u21c4bill reverse browser not run TRANSP"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "TRANSP-only; USMCA not swept"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "recurring economics browser not run TRANSP"
+          },
+          "VERIFY-7": {
+            "status": "STRUCTURAL",
+            "evidence": "Recurring bills leaf in subnav-manifest"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "RLS browser not run TRANSP"
+          }
         },
         "USMCA": {
-          "DOD-A": { "status": "UNVERIFIED", "blocker": "USMCA recurring browser not run" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "USMCA wizard not run" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "USMCA reverse not run" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "USMCA evidence not run" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "USMCA chrome not run" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "USMCA pickers not run" },
-          "VERIFY-3": { "status": "UNVERIFIED", "blocker": "USMCA connectivity not run" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "USMCA linkage not run" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "USMCA entity not run" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "VERIFY-7": { "status": "UNVERIFIED", "blocker": "USMCA leaf not run" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "USMCA RLS not run" }
+          "DOD-A": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA recurring browser not run"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA wizard not run"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA reverse not run"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA evidence not run"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA chrome not run"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA pickers not run"
+          },
+          "VERIFY-3": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA connectivity not run"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA linkage not run"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA entity not run"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "VERIFY-7": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA leaf not run"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA RLS not run"
+          }
         }
       }
     },
@@ -255,34 +648,112 @@
       "structural_guard": "scripts/verify-accounting-money-creator-matrix.mjs",
       "cells": {
         "TRANSP": {
-          "DOD-A": { "status": "STRUCTURAL", "evidence": "route /accounting/expenses → ExpensesListPage; verify-acct-surfaces-structural" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "ExpenseCreatePage wizard browser not run TRANSP" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "expense⇄WO reverse browser not run TRANSP" },
-          "DOD-D": { "status": "STRUCTURAL", "evidence": "expenses=0 projection OFF owner-correct (ACCT-ECON-04 FAIL documented)" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "Desktop row not run TRANSP" },
-          "VERIFY-1": { "status": "STRUCTURAL", "evidence": "ExpenseCreatePage ParityDrawer; verify-accounting-money-creator-matrix" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "picker law browser not run TRANSP" },
-          "VERIFY-3": { "status": "UNVERIFIED", "blocker": "Purchase pull ON but projection OFF; connectivity browser not run TRANSP" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "expense⇄category reverse browser not run; ACCT-LINK-04 FAIL" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "TRANSP-only; USMCA not swept" },
-          "VERIFY-6": { "status": "STRUCTURAL", "evidence": "qbo_purchases=27984 mirror PASS; expenses=0 subledger FAIL (ACCT-ECON-04)" },
-          "VERIFY-7": { "status": "STRUCTURAL", "evidence": "Expenses ▾ leaves in subnav-manifest" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "RLS browser not run TRANSP" }
+          "DOD-A": {
+            "status": "STRUCTURAL",
+            "evidence": "route /accounting/expenses \u2192 ExpensesListPage; verify-acct-surfaces-structural"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "ExpenseCreatePage wizard browser not run TRANSP"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "expense\u21c4WO reverse browser not run TRANSP"
+          },
+          "DOD-D": {
+            "status": "STRUCTURAL",
+            "evidence": "expenses=0 projection OFF owner-correct (ACCT-ECON-04 FAIL documented)"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "Desktop row not run TRANSP"
+          },
+          "VERIFY-1": {
+            "status": "STRUCTURAL",
+            "evidence": "ExpenseCreatePage ParityDrawer; verify-accounting-money-creator-matrix"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "picker law browser not run TRANSP"
+          },
+          "VERIFY-3": {
+            "status": "UNVERIFIED",
+            "blocker": "Purchase pull ON but projection OFF; connectivity browser not run TRANSP"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "expense\u21c4category reverse browser not run; ACCT-LINK-04 FAIL"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "TRANSP-only; USMCA not swept"
+          },
+          "VERIFY-6": {
+            "status": "STRUCTURAL",
+            "evidence": "qbo_purchases=27984 mirror PASS; expenses=0 subledger FAIL (ACCT-ECON-04)"
+          },
+          "VERIFY-7": {
+            "status": "STRUCTURAL",
+            "evidence": "Expenses \u25be leaves in subnav-manifest"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "RLS browser not run TRANSP"
+          }
         },
         "USMCA": {
-          "DOD-A": { "status": "UNVERIFIED", "blocker": "USMCA expenses browser not run" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "USMCA wizard not run" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "USMCA reverse not run" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "USMCA evidence not run" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "USMCA chrome not run" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "USMCA pickers not run" },
-          "VERIFY-3": { "status": "UNVERIFIED", "blocker": "USMCA connectivity not run" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "USMCA linkage not run" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "USMCA entity not run" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "VERIFY-7": { "status": "UNVERIFIED", "blocker": "USMCA leaf not run" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "USMCA RLS not run" }
+          "DOD-A": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA expenses browser not run"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA wizard not run"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA reverse not run"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA evidence not run"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA chrome not run"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA pickers not run"
+          },
+          "VERIFY-3": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA connectivity not run"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA linkage not run"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA entity not run"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "VERIFY-7": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA leaf not run"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA RLS not run"
+          }
         }
       }
     },
@@ -295,34 +766,112 @@
       "structural_guard": "scripts/verify-acct-receipts-leaf.mjs",
       "cells": {
         "TRANSP": {
-          "DOD-A": { "status": "STRUCTURAL", "evidence": "route /accounting/receipts in subnav; verify-acct-receipts-leaf" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "receipt attach wizard browser not run TRANSP" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "receipt⇄expense reverse browser not run TRANSP" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "receipt economics browser not run TRANSP" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "Desktop row not run TRANSP" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "receipt chrome browser not run TRANSP" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "picker law browser not run TRANSP" },
-          "VERIFY-3": { "status": "UNVERIFIED", "blocker": "receipt attachment connectivity browser not run TRANSP" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "receipt reverse linkage browser not run TRANSP" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "TRANSP-only; USMCA not swept" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "receipt economics browser not run TRANSP" },
-          "VERIFY-7": { "status": "STRUCTURAL", "evidence": "Receipts leaf in Expenses ▾ subnav" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "RLS browser not run TRANSP" }
+          "DOD-A": {
+            "status": "STRUCTURAL",
+            "evidence": "route /accounting/receipts in subnav; verify-acct-receipts-leaf"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "receipt attach wizard browser not run TRANSP"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "receipt\u21c4expense reverse browser not run TRANSP"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "receipt economics browser not run TRANSP"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "Desktop row not run TRANSP"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "receipt chrome browser not run TRANSP"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "picker law browser not run TRANSP"
+          },
+          "VERIFY-3": {
+            "status": "UNVERIFIED",
+            "blocker": "receipt attachment connectivity browser not run TRANSP"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "receipt reverse linkage browser not run TRANSP"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "TRANSP-only; USMCA not swept"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "receipt economics browser not run TRANSP"
+          },
+          "VERIFY-7": {
+            "status": "STRUCTURAL",
+            "evidence": "Receipts leaf in Expenses \u25be subnav"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "RLS browser not run TRANSP"
+          }
         },
         "USMCA": {
-          "DOD-A": { "status": "UNVERIFIED", "blocker": "USMCA receipts browser not run" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "USMCA wizard not run" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "USMCA reverse not run" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "USMCA evidence not run" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "USMCA chrome not run" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "USMCA pickers not run" },
-          "VERIFY-3": { "status": "UNVERIFIED", "blocker": "USMCA connectivity not run" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "USMCA linkage not run" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "USMCA entity not run" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "VERIFY-7": { "status": "UNVERIFIED", "blocker": "USMCA leaf not run" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "USMCA RLS not run" }
+          "DOD-A": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA receipts browser not run"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA wizard not run"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA reverse not run"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA evidence not run"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA chrome not run"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA pickers not run"
+          },
+          "VERIFY-3": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA connectivity not run"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA linkage not run"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA entity not run"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "VERIFY-7": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA leaf not run"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA RLS not run"
+          }
         }
       }
     },
@@ -335,34 +884,112 @@
       "structural_guard": "scripts/verify-acct-surf-03-bill-payment.mjs",
       "cells": {
         "TRANSP": {
-          "DOD-A": { "status": "STRUCTURAL", "evidence": "route BillPaymentsListPage; verify-acct-surf-03-bill-payment step 1461" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "PayBillModal wizard browser not run TRANSP" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "payment⇄bill reverse browser not run TRANSP" },
-          "DOD-D": { "status": "STRUCTURAL", "evidence": "bill_payments=6479 Neon lucia (ACCT-ECON-02 PASS)" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "Desktop row not run TRANSP" },
-          "VERIFY-1": { "status": "STRUCTURAL", "evidence": "PayBillModal ParityDrawer; verify-accounting-money-creator-matrix" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "bank picker browser not run TRANSP" },
-          "VERIFY-3": { "status": "STRUCTURAL", "evidence": "payVendorBill → accounting.bill_payments; verify-acct-surf-03-bill-payment" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "bill+payment chain browser not run TRANSP" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "TRANSP-only; USMCA not swept" },
-          "VERIFY-6": { "status": "STRUCTURAL", "evidence": "bill_payments density PASS; flags OFF" },
-          "VERIFY-7": { "status": "STRUCTURAL", "evidence": "Bill payment leaf in subnav-manifest" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "RLS browser not run TRANSP" }
+          "DOD-A": {
+            "status": "STRUCTURAL",
+            "evidence": "route BillPaymentsListPage; verify-acct-surf-03-bill-payment step 1461"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "PayBillModal wizard browser not run TRANSP"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "payment\u21c4bill reverse browser not run TRANSP"
+          },
+          "DOD-D": {
+            "status": "STRUCTURAL",
+            "evidence": "bill_payments=6479 Neon lucia (ACCT-ECON-02 PASS)"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "Desktop row not run TRANSP"
+          },
+          "VERIFY-1": {
+            "status": "STRUCTURAL",
+            "evidence": "PayBillModal ParityDrawer; verify-accounting-money-creator-matrix"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "bank picker browser not run TRANSP"
+          },
+          "VERIFY-3": {
+            "status": "STRUCTURAL",
+            "evidence": "payVendorBill \u2192 accounting.bill_payments; verify-acct-surf-03-bill-payment"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "bill+payment chain browser not run TRANSP"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "TRANSP-only; USMCA not swept"
+          },
+          "VERIFY-6": {
+            "status": "STRUCTURAL",
+            "evidence": "bill_payments density PASS; flags OFF"
+          },
+          "VERIFY-7": {
+            "status": "STRUCTURAL",
+            "evidence": "Bill payment leaf in subnav-manifest"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "RLS browser not run TRANSP"
+          }
         },
         "USMCA": {
-          "DOD-A": { "status": "UNVERIFIED", "blocker": "USMCA bill payment browser not run" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "USMCA wizard not run" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "USMCA reverse not run" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "USMCA evidence not run" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "USMCA chrome not run" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "USMCA pickers not run" },
-          "VERIFY-3": { "status": "UNVERIFIED", "blocker": "USMCA connectivity not run" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "USMCA linkage not run" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "USMCA entity not run" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "VERIFY-7": { "status": "UNVERIFIED", "blocker": "USMCA leaf not run" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "USMCA RLS not run" }
+          "DOD-A": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA bill payment browser not run"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA wizard not run"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA reverse not run"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA evidence not run"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA chrome not run"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA pickers not run"
+          },
+          "VERIFY-3": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA connectivity not run"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA linkage not run"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA entity not run"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "VERIFY-7": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA leaf not run"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA RLS not run"
+          }
         }
       }
     },
@@ -375,34 +1002,112 @@
       "structural_guard": "scripts/verify-acct-ap-aging-drill-has-balance.mjs",
       "cells": {
         "TRANSP": {
-          "DOD-A": { "status": "STRUCTURAL", "evidence": "AP Aging in Bill payment ▾ subnav → /reports/ap-aging" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "aging drill browser not run TRANSP" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "aging⇄bill reverse browser not run TRANSP" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "aging balance economics browser not run TRANSP" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "Desktop row not run TRANSP" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "aging chrome browser not run TRANSP" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "picker law N/A browser not run TRANSP" },
-          "VERIFY-3": { "status": "UNVERIFIED", "blocker": "aging→bill drill connectivity browser not run TRANSP" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "aging⇄vendor⇄bill reverse browser not run TRANSP" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "TRANSP-only; USMCA not swept" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "aging tie-out browser not run TRANSP" },
-          "VERIFY-7": { "status": "STRUCTURAL", "evidence": "AP Aging leaf in subnav-manifest billpay section" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "RLS browser not run TRANSP" }
+          "DOD-A": {
+            "status": "STRUCTURAL",
+            "evidence": "AP Aging in Bill payment \u25be subnav \u2192 /reports/ap-aging"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "aging drill browser not run TRANSP"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "aging\u21c4bill reverse browser not run TRANSP"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "aging balance economics browser not run TRANSP"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "Desktop row not run TRANSP"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "aging chrome browser not run TRANSP"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "picker law N/A browser not run TRANSP"
+          },
+          "VERIFY-3": {
+            "status": "UNVERIFIED",
+            "blocker": "aging\u2192bill drill connectivity browser not run TRANSP"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "aging\u21c4vendor\u21c4bill reverse browser not run TRANSP"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "TRANSP-only; USMCA not swept"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "aging tie-out browser not run TRANSP"
+          },
+          "VERIFY-7": {
+            "status": "STRUCTURAL",
+            "evidence": "AP Aging leaf in subnav-manifest billpay section"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "RLS browser not run TRANSP"
+          }
         },
         "USMCA": {
-          "DOD-A": { "status": "UNVERIFIED", "blocker": "USMCA AP aging browser not run" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "USMCA drill not run" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "USMCA reverse not run" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "USMCA evidence not run" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "USMCA chrome not run" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "USMCA pickers not run" },
-          "VERIFY-3": { "status": "UNVERIFIED", "blocker": "USMCA connectivity not run" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "USMCA linkage not run" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "USMCA entity not run" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "VERIFY-7": { "status": "UNVERIFIED", "blocker": "USMCA leaf not run" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "USMCA RLS not run" }
+          "DOD-A": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA AP aging browser not run"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA drill not run"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA reverse not run"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA evidence not run"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA chrome not run"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA pickers not run"
+          },
+          "VERIFY-3": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA connectivity not run"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA linkage not run"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA entity not run"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "VERIFY-7": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA leaf not run"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA RLS not run"
+          }
         }
       }
     },
@@ -415,34 +1120,112 @@
       "structural_guard": "scripts/verify-acct-surfaces-structural.mjs",
       "cells": {
         "TRANSP": {
-          "DOD-A": { "status": "STRUCTURAL", "evidence": "route /accounting/invoices mounted; verify-acct-surfaces-structural More ▾" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "invoice create wizard browser not run TRANSP" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "invoice⇄customer reverse browser not run TRANSP" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "AR invoice economics browser not run TRANSP" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "Desktop row not run TRANSP" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "invoice chrome browser not run TRANSP" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "customer picker browser not run TRANSP" },
-          "VERIFY-3": { "status": "UNVERIFIED", "blocker": "invoice connectivity browser not run TRANSP" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "invoice⇄payment reverse browser not run TRANSP" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "TRANSP-only; USMCA not swept" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "invoice economics browser not run TRANSP" },
-          "VERIFY-7": { "status": "STRUCTURAL", "evidence": "Invoices leaf in More ▾ subnav-manifest" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "RLS browser not run TRANSP" }
+          "DOD-A": {
+            "status": "STRUCTURAL",
+            "evidence": "route /accounting/invoices mounted; verify-acct-surfaces-structural More \u25be"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "invoice create wizard browser not run TRANSP"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "invoice\u21c4customer reverse browser not run TRANSP"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "AR invoice economics browser not run TRANSP"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "Desktop row not run TRANSP"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "invoice chrome browser not run TRANSP"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "customer picker browser not run TRANSP"
+          },
+          "VERIFY-3": {
+            "status": "UNVERIFIED",
+            "blocker": "invoice connectivity browser not run TRANSP"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "invoice\u21c4payment reverse browser not run TRANSP"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "TRANSP-only; USMCA not swept"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "invoice economics browser not run TRANSP"
+          },
+          "VERIFY-7": {
+            "status": "STRUCTURAL",
+            "evidence": "Invoices leaf in More \u25be subnav-manifest"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "RLS browser not run TRANSP"
+          }
         },
         "USMCA": {
-          "DOD-A": { "status": "UNVERIFIED", "blocker": "USMCA invoices browser not run" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "USMCA wizard not run" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "USMCA reverse not run" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "USMCA evidence not run" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "USMCA chrome not run" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "USMCA pickers not run" },
-          "VERIFY-3": { "status": "UNVERIFIED", "blocker": "USMCA connectivity not run" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "USMCA linkage not run" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "USMCA entity not run" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "VERIFY-7": { "status": "UNVERIFIED", "blocker": "USMCA leaf not run" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "USMCA RLS not run" }
+          "DOD-A": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA invoices browser not run"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA wizard not run"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA reverse not run"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA evidence not run"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA chrome not run"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA pickers not run"
+          },
+          "VERIFY-3": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA connectivity not run"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA linkage not run"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA entity not run"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "VERIFY-7": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA leaf not run"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA RLS not run"
+          }
         }
       }
     },
@@ -455,34 +1238,112 @@
       "structural_guard": "scripts/verify-accounting-money-creator-matrix.mjs",
       "cells": {
         "TRANSP": {
-          "DOD-A": { "status": "STRUCTURAL", "evidence": "PaymentsListPage route; verify-acct-surfaces-structural ACCT-SURF-04" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "RecordPaymentModal wizard browser not run TRANSP" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "payment⇄invoice reverse browser not run TRANSP" },
-          "DOD-D": { "status": "STRUCTURAL", "evidence": "payments=0 projection OFF owner-correct (ACCT-ECON-03 FAIL)" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "Desktop row not run TRANSP" },
-          "VERIFY-1": { "status": "STRUCTURAL", "evidence": "RecordPaymentModal ParityDrawer structural" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "picker law browser not run TRANSP" },
-          "VERIFY-3": { "status": "UNVERIFIED", "blocker": "AR pull ON projection OFF; browser not run TRANSP" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "payment⇄invoice reverse browser not run TRANSP" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "TRANSP-only; USMCA not swept" },
-          "VERIFY-6": { "status": "STRUCTURAL", "evidence": "qbo_ar_payments mirror PASS; payments=0 FAIL (ACCT-ECON-03)" },
-          "VERIFY-7": { "status": "STRUCTURAL", "evidence": "Receive Payment in More ▾ subnav" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "RLS browser not run TRANSP" }
+          "DOD-A": {
+            "status": "STRUCTURAL",
+            "evidence": "PaymentsListPage route; verify-acct-surfaces-structural ACCT-SURF-04"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "RecordPaymentModal wizard browser not run TRANSP"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "payment\u21c4invoice reverse browser not run TRANSP"
+          },
+          "DOD-D": {
+            "status": "STRUCTURAL",
+            "evidence": "payments=0 projection OFF owner-correct (ACCT-ECON-03 FAIL)"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "Desktop row not run TRANSP"
+          },
+          "VERIFY-1": {
+            "status": "STRUCTURAL",
+            "evidence": "RecordPaymentModal ParityDrawer structural"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "picker law browser not run TRANSP"
+          },
+          "VERIFY-3": {
+            "status": "UNVERIFIED",
+            "blocker": "AR pull ON projection OFF; browser not run TRANSP"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "payment\u21c4invoice reverse browser not run TRANSP"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "TRANSP-only; USMCA not swept"
+          },
+          "VERIFY-6": {
+            "status": "STRUCTURAL",
+            "evidence": "qbo_ar_payments mirror PASS; payments=0 FAIL (ACCT-ECON-03)"
+          },
+          "VERIFY-7": {
+            "status": "STRUCTURAL",
+            "evidence": "Receive Payment in More \u25be subnav"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "RLS browser not run TRANSP"
+          }
         },
         "USMCA": {
-          "DOD-A": { "status": "UNVERIFIED", "blocker": "USMCA receive payment browser not run" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "USMCA wizard not run" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "USMCA reverse not run" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "USMCA evidence not run" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "USMCA chrome not run" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "USMCA pickers not run" },
-          "VERIFY-3": { "status": "UNVERIFIED", "blocker": "USMCA connectivity not run" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "USMCA linkage not run" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "USMCA entity not run" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "VERIFY-7": { "status": "UNVERIFIED", "blocker": "USMCA leaf not run" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "USMCA RLS not run" }
+          "DOD-A": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA receive payment browser not run"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA wizard not run"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA reverse not run"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA evidence not run"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA chrome not run"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA pickers not run"
+          },
+          "VERIFY-3": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA connectivity not run"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA linkage not run"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA entity not run"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "VERIFY-7": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA leaf not run"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA RLS not run"
+          }
         }
       }
     },
@@ -495,34 +1356,112 @@
       "structural_guard": "scripts/verify-accounting-money-creator-matrix.mjs",
       "cells": {
         "TRANSP": {
-          "DOD-A": { "status": "STRUCTURAL", "evidence": "ManualJEListPage route; verify-acct-surfaces-structural" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "ManualJEModal wizard browser not run TRANSP" },
-          "DOD-C": { "status": "STRUCTURAL", "evidence": "JE type island documented FAIL (ACCT-LINK-01); 8 JEs sparse" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "JE economics browser not run TRANSP" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "Desktop row not run TRANSP" },
-          "VERIFY-1": { "status": "STRUCTURAL", "evidence": "ManualJEModal ParityDrawer structural" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "account picker browser not run TRANSP" },
-          "VERIFY-3": { "status": "UNVERIFIED", "blocker": "JE connectivity browser not run TRANSP" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "JE⇄register reverse browser not run TRANSP" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "TRANSP-only; USMCA not swept" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "JE balanced posting browser not run TRANSP" },
-          "VERIFY-7": { "status": "STRUCTURAL", "evidence": "Journal entries leaf in More ▾ subnav" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "RLS browser not run TRANSP" }
+          "DOD-A": {
+            "status": "STRUCTURAL",
+            "evidence": "ManualJEListPage route; verify-acct-surfaces-structural"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "ManualJEModal wizard browser not run TRANSP"
+          },
+          "DOD-C": {
+            "status": "STRUCTURAL",
+            "evidence": "JE type island documented FAIL (ACCT-LINK-01); 8 JEs sparse"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "JE economics browser not run TRANSP"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "Desktop row not run TRANSP"
+          },
+          "VERIFY-1": {
+            "status": "STRUCTURAL",
+            "evidence": "ManualJEModal ParityDrawer structural"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "account picker browser not run TRANSP"
+          },
+          "VERIFY-3": {
+            "status": "UNVERIFIED",
+            "blocker": "JE connectivity browser not run TRANSP"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "JE\u21c4register reverse browser not run TRANSP"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "TRANSP-only; USMCA not swept"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "JE balanced posting browser not run TRANSP"
+          },
+          "VERIFY-7": {
+            "status": "STRUCTURAL",
+            "evidence": "Journal entries leaf in More \u25be subnav"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "RLS browser not run TRANSP"
+          }
         },
         "USMCA": {
-          "DOD-A": { "status": "UNVERIFIED", "blocker": "USMCA JE browser not run" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "USMCA wizard not run" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "USMCA reverse not run" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "USMCA evidence not run" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "USMCA chrome not run" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "USMCA pickers not run" },
-          "VERIFY-3": { "status": "UNVERIFIED", "blocker": "USMCA connectivity not run" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "USMCA linkage not run" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "USMCA entity not run" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "VERIFY-7": { "status": "UNVERIFIED", "blocker": "USMCA leaf not run" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "USMCA RLS not run" }
+          "DOD-A": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA JE browser not run"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA wizard not run"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA reverse not run"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA evidence not run"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA chrome not run"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA pickers not run"
+          },
+          "VERIFY-3": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA connectivity not run"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA linkage not run"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA entity not run"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "VERIFY-7": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA leaf not run"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA RLS not run"
+          }
         }
       }
     },
@@ -535,34 +1474,112 @@
       "structural_guard": "scripts/verify-acct-surfaces-structural.mjs",
       "cells": {
         "TRANSP": {
-          "DOD-A": { "status": "STRUCTURAL", "evidence": "CoA + detail-types routes in subnav; verify-acct-surfaces-structural EXTRA ACCT-SURF-06b" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "CoA create/edit wizard browser not run TRANSP" },
-          "DOD-C": { "status": "STRUCTURAL", "evidence": "ACCT-LINK-02 FAIL — text subtype only; 0 inbound FKs; owner WIRE vs LOCK FROZEN" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "CoA role economics browser not run TRANSP" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "Desktop row not run TRANSP" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "CoA chrome browser not run TRANSP" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "account picker browser not run TRANSP" },
-          "VERIFY-3": { "status": "STRUCTURAL", "evidence": "catalogs.accounts canonical; never RETIRE mdata.qbo_accounts for render" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "CoA⇄register reverse browser not run TRANSP" },
-          "VERIFY-5": { "status": "STRUCTURAL", "evidence": "CoA roles 89 with lucia (ACCT-CTRL-02 PASS)" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "CoA posting roles browser not run TRANSP" },
-          "VERIFY-7": { "status": "STRUCTURAL", "evidence": "Chart of Accounts + Detail Type leaves NEVER-DELETE in subnav" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "RLS browser not run TRANSP" }
+          "DOD-A": {
+            "status": "STRUCTURAL",
+            "evidence": "CoA + detail-types routes in subnav; verify-acct-surfaces-structural EXTRA ACCT-SURF-06b"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "CoA create/edit wizard browser not run TRANSP"
+          },
+          "DOD-C": {
+            "status": "STRUCTURAL",
+            "evidence": "ACCT-LINK-02 FAIL \u2014 text subtype only; 0 inbound FKs; owner WIRE vs LOCK FROZEN"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "CoA role economics browser not run TRANSP"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "Desktop row not run TRANSP"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "CoA chrome browser not run TRANSP"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "account picker browser not run TRANSP"
+          },
+          "VERIFY-3": {
+            "status": "STRUCTURAL",
+            "evidence": "catalogs.accounts canonical; never RETIRE mdata.qbo_accounts for render"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "CoA\u21c4register reverse browser not run TRANSP"
+          },
+          "VERIFY-5": {
+            "status": "STRUCTURAL",
+            "evidence": "CoA roles 89 with lucia (ACCT-CTRL-02 PASS)"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "CoA posting roles browser not run TRANSP"
+          },
+          "VERIFY-7": {
+            "status": "STRUCTURAL",
+            "evidence": "Chart of Accounts + Detail Type leaves NEVER-DELETE in subnav"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "RLS browser not run TRANSP"
+          }
         },
         "USMCA": {
-          "DOD-A": { "status": "UNVERIFIED", "blocker": "USMCA CoA browser not run" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "USMCA wizard not run" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "USMCA reverse not run" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "USMCA evidence not run" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "USMCA chrome not run" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "USMCA pickers not run" },
-          "VERIFY-3": { "status": "UNVERIFIED", "blocker": "USMCA connectivity not run" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "USMCA linkage not run" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "USMCA entity not run" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "VERIFY-7": { "status": "UNVERIFIED", "blocker": "USMCA leaf not run" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "USMCA RLS not run" }
+          "DOD-A": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA CoA browser not run"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA wizard not run"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA reverse not run"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA evidence not run"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA chrome not run"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA pickers not run"
+          },
+          "VERIFY-3": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA connectivity not run"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA linkage not run"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA entity not run"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "VERIFY-7": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA leaf not run"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA RLS not run"
+          }
         }
       }
     },
@@ -575,34 +1592,112 @@
       "structural_guard": "scripts/verify-acct-surf-07-register.mjs",
       "cells": {
         "TRANSP": {
-          "DOD-A": { "status": "STRUCTURAL", "evidence": "AccountRegisterPage + TransactionRegisterPage routes; verify-acct-surf-07-register step 1462" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "register drill browser not run TRANSP" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "register⇄money-doc reverse browser not run TRANSP" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "register economics browser not run TRANSP" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "Desktop row not run TRANSP" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "register chrome browser not run TRANSP" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "account picker browser not run TRANSP" },
-          "VERIFY-3": { "status": "STRUCTURAL", "evidence": "sourceRoute + detail_path reverse drill guarded (verify-acct-surf-07-register)" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "register⇄JE⇄bill reverse browser not run TRANSP" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "TRANSP-only; USMCA not swept" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "register tie-out browser not run TRANSP" },
-          "VERIFY-7": { "status": "STRUCTURAL", "evidence": "Account Register + All Transactions in More ▾ subnav" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "RLS browser not run TRANSP" }
+          "DOD-A": {
+            "status": "STRUCTURAL",
+            "evidence": "AccountRegisterPage + TransactionRegisterPage routes; verify-acct-surf-07-register step 1462"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "register drill browser not run TRANSP"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "register\u21c4money-doc reverse browser not run TRANSP"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "register economics browser not run TRANSP"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "Desktop row not run TRANSP"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "register chrome browser not run TRANSP"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "account picker browser not run TRANSP"
+          },
+          "VERIFY-3": {
+            "status": "STRUCTURAL",
+            "evidence": "sourceRoute + detail_path reverse drill guarded (verify-acct-surf-07-register)"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "register\u21c4JE\u21c4bill reverse browser not run TRANSP"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "TRANSP-only; USMCA not swept"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "register tie-out browser not run TRANSP"
+          },
+          "VERIFY-7": {
+            "status": "STRUCTURAL",
+            "evidence": "Account Register + All Transactions in More \u25be subnav"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "RLS browser not run TRANSP"
+          }
         },
         "USMCA": {
-          "DOD-A": { "status": "UNVERIFIED", "blocker": "USMCA register browser not run" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "USMCA drill not run" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "USMCA reverse not run" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "USMCA evidence not run" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "USMCA chrome not run" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "USMCA pickers not run" },
-          "VERIFY-3": { "status": "UNVERIFIED", "blocker": "USMCA connectivity not run" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "USMCA linkage not run" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "USMCA entity not run" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "VERIFY-7": { "status": "UNVERIFIED", "blocker": "USMCA leaf not run" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "USMCA RLS not run" }
+          "DOD-A": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA register browser not run"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA drill not run"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA reverse not run"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA evidence not run"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA chrome not run"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA pickers not run"
+          },
+          "VERIFY-3": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA connectivity not run"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA linkage not run"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA entity not run"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "VERIFY-7": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA leaf not run"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA RLS not run"
+          }
         }
       }
     },
@@ -615,74 +1710,230 @@
       "structural_guard": "scripts/verify-acct-surfaces-structural.mjs",
       "cells": {
         "TRANSP": {
-          "DOD-A": { "status": "STRUCTURAL", "evidence": "period-close→month-close redirect; audit-trail + posting-lineage mounted; verify-acct-surfaces-structural EXTRA" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "month-close wizard browser not run TRANSP" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "close⇄JE reverse browser not run TRANSP" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "period close economics browser not run TRANSP" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "Desktop row not run TRANSP" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "close chrome browser not run TRANSP" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "picker law browser not run TRANSP" },
-          "VERIFY-3": { "status": "UNVERIFIED", "blocker": "close connectivity browser not run TRANSP" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "close⇄register reverse browser not run TRANSP" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "TRANSP-only; USMCA not swept" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "close tie-out browser not run TRANSP" },
-          "VERIFY-7": { "status": "STRUCTURAL", "evidence": "Period close + audit-trail + posting-lineage in More ▾ subnav" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "RLS browser not run TRANSP" }
+          "DOD-A": {
+            "status": "STRUCTURAL",
+            "evidence": "period-close\u2192month-close redirect; audit-trail + posting-lineage mounted; verify-acct-surfaces-structural EXTRA"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "month-close wizard browser not run TRANSP"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "close\u21c4JE reverse browser not run TRANSP"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "period close economics browser not run TRANSP"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "Desktop row not run TRANSP"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "close chrome browser not run TRANSP"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "picker law browser not run TRANSP"
+          },
+          "VERIFY-3": {
+            "status": "UNVERIFIED",
+            "blocker": "close connectivity browser not run TRANSP"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "close\u21c4register reverse browser not run TRANSP"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "TRANSP-only; USMCA not swept"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "close tie-out browser not run TRANSP"
+          },
+          "VERIFY-7": {
+            "status": "STRUCTURAL",
+            "evidence": "Period close + audit-trail + posting-lineage in More \u25be subnav"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "RLS browser not run TRANSP"
+          }
         },
         "USMCA": {
-          "DOD-A": { "status": "UNVERIFIED", "blocker": "USMCA period close browser not run" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "USMCA wizard not run" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "USMCA reverse not run" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "USMCA evidence not run" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "USMCA chrome not run" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "USMCA pickers not run" },
-          "VERIFY-3": { "status": "UNVERIFIED", "blocker": "USMCA connectivity not run" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "USMCA linkage not run" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "USMCA entity not run" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "VERIFY-7": { "status": "UNVERIFIED", "blocker": "USMCA leaf not run" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "USMCA RLS not run" }
+          "DOD-A": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA period close browser not run"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA wizard not run"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA reverse not run"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA evidence not run"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA chrome not run"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA pickers not run"
+          },
+          "VERIFY-3": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA connectivity not run"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA linkage not run"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA entity not run"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "VERIFY-7": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA leaf not run"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA RLS not run"
+          }
         }
       }
     },
     {
       "id": "accounting-more",
-      "label": "More ▾ — Factoring / Escrow / Settlements cross-links",
+      "label": "More \u25be \u2014 Factoring / Escrow / Settlements cross-links",
       "route": "/accounting/factoring",
       "manifest_item": "ACCT-SURF-09",
       "canonical_table": "accounting.factoring_advances",
       "structural_guard": "scripts/verify-acct-surf-09-crosslinks.mjs",
       "cells": {
         "TRANSP": {
-          "DOD-A": { "status": "STRUCTURAL", "evidence": "factoring/escrow/settlements routes; verify-acct-surf-09-crosslinks step 1464" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "cross-module wizards browser not run TRANSP" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "factoring⇄invoice⇄escrow reverse browser not run TRANSP" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "cross-link economics browser not run TRANSP" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "Desktop row not run TRANSP" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "More ▾ chrome browser not run TRANSP" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "picker law browser not run TRANSP" },
-          "VERIFY-3": { "status": "STRUCTURAL", "evidence": "EntityLink + canonical tables guarded verify-acct-surf-09-crosslinks" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "settlements⇄accounting reverse browser not run TRANSP" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "TRANSP-only; USMCA not swept" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "factoring economics browser not run TRANSP" },
-          "VERIFY-7": { "status": "STRUCTURAL", "evidence": "Factoring/Escrow/Settlements leaves in More ▾ (NEVER-DELETE)" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "RLS browser not run TRANSP" }
+          "DOD-A": {
+            "status": "STRUCTURAL",
+            "evidence": "factoring/escrow/settlements routes; verify-acct-surf-09-crosslinks step 1464"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "cross-module wizards browser not run TRANSP"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "factoring\u21c4invoice\u21c4escrow reverse browser not run TRANSP"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "cross-link economics browser not run TRANSP"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "Desktop row not run TRANSP"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "More \u25be chrome browser not run TRANSP"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "picker law browser not run TRANSP"
+          },
+          "VERIFY-3": {
+            "status": "STRUCTURAL",
+            "evidence": "EntityLink + canonical tables guarded verify-acct-surf-09-crosslinks"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "settlements\u21c4accounting reverse browser not run TRANSP"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "TRANSP-only; USMCA not swept"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "factoring economics browser not run TRANSP"
+          },
+          "VERIFY-7": {
+            "status": "STRUCTURAL",
+            "evidence": "Factoring/Escrow/Settlements leaves in More \u25be (NEVER-DELETE)"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "RLS browser not run TRANSP"
+          }
         },
         "USMCA": {
-          "DOD-A": { "status": "UNVERIFIED", "blocker": "USMCA More cross-links browser not run" },
-          "DOD-B": { "status": "UNVERIFIED", "blocker": "USMCA wizards not run" },
-          "DOD-C": { "status": "UNVERIFIED", "blocker": "USMCA reverse not run" },
-          "DOD-D": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "DOD-E": { "status": "UNVERIFIED", "blocker": "USMCA evidence not run" },
-          "VERIFY-1": { "status": "UNVERIFIED", "blocker": "USMCA chrome not run" },
-          "VERIFY-2": { "status": "UNVERIFIED", "blocker": "USMCA pickers not run" },
-          "VERIFY-3": { "status": "UNVERIFIED", "blocker": "USMCA connectivity not run" },
-          "VERIFY-4": { "status": "UNVERIFIED", "blocker": "USMCA linkage not run" },
-          "VERIFY-5": { "status": "UNVERIFIED", "blocker": "USMCA entity not run" },
-          "VERIFY-6": { "status": "UNVERIFIED", "blocker": "USMCA economics not run" },
-          "VERIFY-7": { "status": "UNVERIFIED", "blocker": "USMCA leaf not run" },
-          "VERIFY-8": { "status": "UNVERIFIED", "blocker": "USMCA RLS not run" }
+          "DOD-A": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA More cross-links browser not run"
+          },
+          "DOD-B": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA wizards not run"
+          },
+          "DOD-C": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA reverse not run"
+          },
+          "DOD-D": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "DOD-E": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA evidence not run"
+          },
+          "VERIFY-1": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA chrome not run"
+          },
+          "VERIFY-2": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA pickers not run"
+          },
+          "VERIFY-3": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA connectivity not run"
+          },
+          "VERIFY-4": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA linkage not run"
+          },
+          "VERIFY-5": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA entity not run"
+          },
+          "VERIFY-6": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA economics not run"
+          },
+          "VERIFY-7": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA leaf not run"
+          },
+          "VERIFY-8": {
+            "status": "UNVERIFIED",
+            "blocker": "USMCA RLS not run"
+          }
         }
       }
     }

@@ -42,6 +42,24 @@
     {
       "file": "202609310000_driver_deduction_type_recovery_policy.sql",
       "reason": "[HOLD-FOR-JORGE — FINANCIAL CLUSTER / catalogs.*] Driver recovery policy per SITUATION (owner ruling 2026-07-27). Adds may_draw_escrow, default_recovery_rail (CHECK pay_first|escrow_first|ask_only) and survives_separation to catalogs.driver_deduction_types, and seeds ABANDONMENT / DAMAGE / SAFETY-FINE per entity. Resolves the apparent conflict between §9.3 (pay-first) and A3d (escrow-first): they answer DIFFERENT situations — an abandoning driver has no future settlement, so pay-first is impossible; an employed driver still settles, so §9.3 holds. The mandatory ask (DoD §8) is unchanged; these columns only decide which options are offered and which is pre-selected. SAFE DEFAULTS: every new column defaults to the most restrictive value, so the 3 pre-existing INS-DED rows come out may_draw_escrow=false / ask_only / survives_separation=false and CANNOT reach escrow until deliberately enabled. Real CHECK-constrained columns, NOT the metadata jsonb already on the table (C13 class — a money control must be constrainable). Prod-verified 2026-07-27 (lucia): catalogs.driver_deduction_types = 3 rows all INS-DED; may_draw_escrow exists nowhere in the DB; table already has FORCE RLS + 1 policy + ih35_app grants so no RLS work needed. Additive only, no DROP/DELETE/UPDATE of existing rows, dynamic org.companies resolution, no hardcoded UUID. Validated apply-twice on a throwaway localhost Postgres: run 1 seeded 9 rows (3 reasons x 3 entities), run 2 seeded 0, pre-existing row kept the safe defaults, and the CHECK correctly rejected an invalid rail. Owner/GUARD Neon-applies then ledger-backfills."
+    },
+    {
+      "file": "202608060000_acct_r03_catalogs_account_merge_records.sql",
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL CLUSTER] ACCT-R-03 catalogs.account_merge_records — Owner-only CoA merge; BUILD-AND-HOLD until Jorge Neon-applies (#3526)"
+    },
+    {
+      "file": "202608110000_safety_civil_fine_expense_gl_hop.sql",
+      "reason": "[HOLD-FOR-JORGE - TIER 1 FINANCIAL] SAFETY FINE-GL HOP - the COMPANY-PAID civil-fine expense leg. Registers SAFETY_FINE_GL_POSTING_ENABLED (lib.feature_flags, default_enabled=FALSE, per-entity kill switch); widens both CoA-role CHECKs as a TRUE SUPERSET to admit role 'civil_fines_expense'; adds additive JE-linkage columns expense_je_id/expense_posted_at/expense_posted_by_user_id (+FK, +2 partial indexes) on safety.civil_fines; FORCE RLS + grants + REVOKE DELETE on safety.civil_fines (0050 set ENABLE but never FORCE). Creates NO catalogs.accounts row and seeds NO chart_of_accounts_roles mapping - the OWNER designates the civil_fines_expense account via the CoaRoles page; the role has no resolver shape-fallback so it fails CLOSED until designated. No GL math (poster reuses accounting.createJournalEntry + resolveRoleAccount). No QBO write-back. Idempotent, fresh-DB-safe (every statement to_regclass-guarded), void-not-delete (no DROP/DELETE/TRUNCATE). NOT YET applied on prod - validated apply-twice on a throwaway Postgres 16 container; owner Neon-applies then ledger-backfills. Posting flag stays OFF until final cutover."
+    },
+    {
+      "file": "202609020000_c2_maintenance_position_history_canonical.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 SCHEMA/BACKFILL] SWEEP-C2 repoint 1 of 2: creates maintenance.position_history (identical shape to the RETIRE-class maint.position_history), copies every existing row across (idempotent ON CONFLICT DO NOTHING), FORCE RLS + entity-scoped policy, SELECT/INSERT-only grants (explicit REVOKE UPDATE/DELETE — append-only, matches the legacy table's own grant shape after the maintenance schema's ALTER DEFAULT PRIVILEGES would otherwise widen it). Never DROPS maint.position_history (Rule 07 archive-only) — COMMENT-marked DEPRECATED. The application-code half (safety/position-history/position-history.routes.ts repointed to the new table) ships in the SAME PR, gated on this migration landing first. Validated apply-twice + idempotent re-run on a throwaway Postgres 16 container; owner Neon-applies then ledger-backfills."
+    },
+    {
+      "file": "202609030000_mnt_econ_01_parts_purchase_gl_hop.sql",
+      "reason": "[HOLD-FOR-JORGE - TIER 1 FINANCIAL] MNT-ECON-01 parts purchase A/P+GL hop. Registers PARTS_PURCHASE_GL_POSTING_ENABLED (lib.feature_flags, default_enabled=FALSE); widens both CoA-role CHECKs as a TRUE SUPERSET to admit role maintenance_parts_expense; creates accounting.parts_purchase_postings linkage ledger (FORCE RLS, REVOKE DELETE). Creates NO catalogs.accounts row and seeds NO chart_of_accounts_roles mapping. No GL math — poster reuses createBill + postSourceTransaction + createJournalEntry.",
+      "added_at": "2026-07-26",
+      "block": "MNT-ECON-01"
     }
   ],
   "_integrity_note": "Every entry appears EXACTLY ONCE (file is the key). applied_on_prod MUST agree with the pinned prod-ledger snapshot scripts/lib/prod-migration-ledger-checksums.json for any file inside its window (>= 202606010000). Enforced by scripts/verify-steps/1361-verify-held-registry-integrity.mjs. Repaired 2026-07-25: 119 entries collapsed to 110 (9 duplicates, 7 of them carrying contradictory applied_on_prod), and 79 entries that were already applied on prod were stamped. Before the repair, verify-schema-parity-from-prod (step 1437) derived held-unapplied columns from this file and therefore treated applied migrations as unapplied.",
@@ -1061,6 +1079,14 @@
       "applied_at": "2026-07-27T20:16:30.979Z",
       "applied_by": "cursor-owner-neon-apply-2026-07-27",
       "note": "Moved held→applied_held after owner Neon-apply + dual-ledger proof (GUARD live 2026-07-27)."
+    },
+    {
+      "file": "202609290000_disp_01_revrec_two_event_latch.sql",
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL CLUSTER] DISP-01 two-event delivery revenue latch. Creates accounting.load_revenue_recognition_postings linkage latch (FORCE RLS, REVOKE DELETE); widens CoA role CHECKs for unbilled_revenue; binds TRANSP/USMCA Unbilled Revenue accounts (system_purpose) to role. POSTS NOTHING — poster reuses createJournalEntry. Flag REVENUE_RECOGNITION_POST_ENABLED stays OFF. Numbered above prod max 202609280000.",
+      "applied_on_prod": true,
+      "applied_evidence": "Owner Neon-apply 202609290000_disp_01_revrec_two_event_latch.sql on prod branch br-fancy-credit-akjnd07a (per DISP-01 #3663 CI fix — migration ledger row present before PR merge).",
+      "block": "DISP-01",
+      "added_at": "2026-07-27"
     }
   ],
   "superseded": []

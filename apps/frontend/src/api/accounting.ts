@@ -1357,6 +1357,8 @@ export const COA_ROLE_VALUES = [
   "warranty_recovery",
   // INS-01 — fleet add/remove pro-rata premium expense (Truck/Vehicle Insurance).
   "insurance_expense",
+  // DISP-01 — Unbilled Revenue (TRANSP 1240 / USMCA 1150). No shape fallback.
+  "unbilled_revenue",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];
