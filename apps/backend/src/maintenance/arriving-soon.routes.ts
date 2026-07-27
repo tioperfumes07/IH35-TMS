@@ -197,8 +197,44 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
 
       const description = `${String(issue.issue_description ?? "").trim()} (auto from in-transit issue ${issue.id})${body.data.additional_notes ? `\n${body.data.additional_notes}` : ""}`.trim();
 
-      const woRes = await client.query(
+      // MNT-LINK-03b: write reverse FK when column is live (owner Neon-applied); skip until then.
+      const reverseColRes = await client.query(
         `
+          SELECT EXISTS (
+            SELECT 1
+            FROM information_schema.columns
+            WHERE table_schema = 'maintenance'
+              AND table_name = 'work_orders'
+              AND column_name = 'source_intransit_issue_id'
+          ) AS ok
+        `
+      );
+      const hasReverseCol = Boolean((reverseColRes.rows[0] as { ok?: boolean } | undefined)?.ok);
+
+      const woRes = await client.query(
+        hasReverseCol
+          ? `
+          INSERT INTO maintenance.work_orders (
+            operating_company_id,
+            wo_type,
+            source_type,
+            unit_id,
+            driver_id,
+            load_id,
+            description,
+            status,
+            opened_at,
+            display_id,
+            unit_sequence,
+            repair_location,
+            source_intransit_issue_id
+          )
+          VALUES (
+            $1, $2, $3, $4, $5, $6, $7, 'open', now(), $8, $9, 'mobile_roadside', $10
+          )
+          RETURNING *
+        `
+          : `
           INSERT INTO maintenance.work_orders (
             operating_company_id,
             wo_type,
@@ -214,32 +250,34 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
             repair_location
           )
           VALUES (
-            $1,
-            $2,
-            $3,
-            $4,
-            $5,
-            $6,
-            $7,
-            'open',
-            now(),
-            $8,
-            $9,
-            'mobile_roadside'
+            $1, $2, $3, $4, $5, $6, $7, 'open', now(), $8, $9, 'mobile_roadside'
           )
           RETURNING *
         `,
-        [
-          companyId,
-          body.data.wo_source_type === "AC" ? "accident" : body.data.wo_source_type === "IT" || body.data.wo_source_type === "ET" || body.data.wo_source_type === "RT" ? "tire" : "repair",
-          body.data.wo_source_type,
-          load.unit_id,
-          load.driver_id ?? null,
-          load.id,
-          description,
-          displayId || null,
-          unitSequence > 0 ? unitSequence : null,
-        ]
+        hasReverseCol
+          ? [
+              companyId,
+              body.data.wo_source_type === "AC" ? "accident" : body.data.wo_source_type === "IT" || body.data.wo_source_type === "ET" || body.data.wo_source_type === "RT" ? "tire" : "repair",
+              body.data.wo_source_type,
+              load.unit_id,
+              load.driver_id ?? null,
+              load.id,
+              description,
+              displayId || null,
+              unitSequence > 0 ? unitSequence : null,
+              body.data.issue_id,
+            ]
+          : [
+              companyId,
+              body.data.wo_source_type === "AC" ? "accident" : body.data.wo_source_type === "IT" || body.data.wo_source_type === "ET" || body.data.wo_source_type === "RT" ? "tire" : "repair",
+              body.data.wo_source_type,
+              load.unit_id,
+              load.driver_id ?? null,
+              load.id,
+              description,
+              displayId || null,
+              unitSequence > 0 ? unitSequence : null,
+            ]
       );
       const wo = woRes.rows[0];
 
