@@ -4830,7 +4830,8 @@
       "unit_id",
       "updated_at",
       "updated_by_user_id",
-      "vendor_id"
+      "vendor_id",
+      "overage_event_id"
     ],
     "geo.geofence_events": [
       "created_at",
@@ -10371,6 +10372,30 @@
       "template_name",
       "to_phone",
       "variables"
+    ],
+    "fuel.fuel_card_overage_events": [
+      "approved_at",
+      "approved_by_user_id",
+      "created_at",
+      "created_by_user_id",
+      "driver_id",
+      "fuel_transaction_id",
+      "has_contract_authority",
+      "id",
+      "journal_entry_id",
+      "operating_company_id",
+      "overage_cents",
+      "overage_event_id",
+      "overage_rule",
+      "policy_id",
+      "review_reason",
+      "status",
+      "total_cents",
+      "unit_id",
+      "updated_at",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
     ]
   }
 }

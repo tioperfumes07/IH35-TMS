@@ -123,8 +123,11 @@ export async function registerFuelTransactionImportRoutes(app: FastifyInstance) 
     const { gl_post_candidates: _gl, ...publicCounts } = result.counts;
     return {
       ...publicCounts,
-      overage_recoveries_created: overage.recovered,
-      overage_recovered_cents: overage.recovered_cents,
+      overage_events_flagged: overage.flagged,
+      overage_company_variance: overage.company_variance,
+      overage_posted: overage.posted,
+      overage_attempted: overage.attempted,
+      overage_errors: overage.errors,
       dead_letter_details: parsed.dead_letters.slice(0, 25),
     };
   });

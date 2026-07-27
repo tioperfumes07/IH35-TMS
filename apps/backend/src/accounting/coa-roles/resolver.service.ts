@@ -44,6 +44,8 @@ export const COA_ROLE_VALUES = [
   "lease_recovery",
   "insurance_recovery",
   "fuel_advance_recovery",
+  // FUEL-04 — dedicated driver fuel-overage receivable (Asset 1250); never Cash Advance.
+  "fuel_overage_receivable",
   "other_recovery",
   // Pay-run close residual (#3109 left this on the legacy table): abandonment chargeback recovery credit.
   "abandonment_chargeback_recovery",
