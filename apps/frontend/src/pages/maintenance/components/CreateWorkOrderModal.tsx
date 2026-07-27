@@ -604,6 +604,8 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           wo_priority: values.wo_priority || undefined,
           service_location_type: values.service_location_type || undefined,
           repaired_by: values.repaired_by || undefined,
+          customer_id: values.customer_id || undefined,
+          tax_rate_pct: Number.isFinite(taxRate) ? taxRate : undefined,
         },
         sectionA: sectionALines,
         sectionB: sectionBLines,
@@ -1053,7 +1055,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                 Required: this expense type must link to a load (G18).
               </div>
             ) : null}
-            <div className="mt-2"><TotalsStack subtotal={subtotal} taxRate={taxRate} onTaxRateChange={setTaxRate} grandLabel="WO Total = A + B" /></div>
+            <div className="mt-2"><TotalsStack subtotal={subtotal} taxRate={taxRate} taxRateMode="editable" onTaxRateChange={setTaxRate} grandLabel="WO Total = A + B" /></div>
           </SectionCard>
         </div>
 

@@ -82,7 +82,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
   const auth = useAuth();
   const queryClient = useQueryClient();
   const [customerId, setCustomerId] = useState<string | null>(null);
-  const [referenceCustomerId, setReferenceCustomerId] = useState<string | null>(null);
+  const [showCustomerRefPicker, setShowCustomerRefPicker] = useState(false);
   const [loadId, setLoadId] = useState<string | null>(null);
   const [incomeAccountId, setIncomeAccountId] = useState<string | null>(null);
   const [lineDescription, setLineDescription] = useState("");
@@ -247,7 +247,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
   useEffect(() => {
     if (!open) return;
     setCustomerId(null);
-    setReferenceCustomerId(null);
+    setShowCustomerRefPicker(false);
     setLoadId(null);
     setIncomeAccountId(null);
     setLineDescription("");
@@ -354,27 +354,46 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
             />
             <FieldError id="load_id" message={invoiceFieldErrors.load_id} />
           </div>
-          <div className="space-y-1 md:col-span-2">
-            <label className="text-xs font-semibold text-slate-600">Customer reference (appends to Notes)</label>
-            <ReferenceSelect
-              value={referenceCustomerId}
-              onChange={(next) => {
-                if (!next) return;
-                const record = customersById.get(next);
-                const line = `Customer reference: ${record?.name ?? "Unknown"}`;
-                setNotes((prev) => (prev ? `${prev}\n${line}` : line));
-                setReferenceCustomerId(null);
-              }}
-              options={customerOptions}
-              createKind="customer"
-              operatingCompanyId={operatingCompanyId}
-              placeholder="Search customers to add a reference…"
-              onOptionCreated={(opt) => {
-                void queryClient.invalidateQueries({ queryKey: ["invoice-type-modal", "customers"] });
-                const line = `Customer reference: ${opt.label}`;
-                setNotes((prev) => (prev ? `${prev}\n${line}` : line));
-              }}
-            />
+          <div className="space-y-2 md:col-span-2">
+            {!showCustomerRefPicker ? (
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowCustomerRefPicker(true)}
+              >
+                Insert customer reference into notes
+              </Button>
+            ) : (
+              <div className="space-y-1 rounded-sm border border-slate-200 bg-slate-50 p-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-semibold text-slate-600">Pick a customer to append to Notes</span>
+                  <Button type="button" variant="tertiary" size="sm" onClick={() => setShowCustomerRefPicker(false)}>
+                    Cancel
+                  </Button>
+                </div>
+                <ReferenceSelect
+                  value={null}
+                  onChange={(next) => {
+                    if (!next) return;
+                    const record = customersById.get(next);
+                    const line = `Customer reference: ${record?.name ?? "Unknown"}`;
+                    setNotes((prev) => (prev ? `${prev}\n${line}` : line));
+                    setShowCustomerRefPicker(false);
+                  }}
+                  options={customerOptions}
+                  createKind="customer"
+                  operatingCompanyId={operatingCompanyId}
+                  placeholder="Search customers…"
+                  onOptionCreated={(opt) => {
+                    void queryClient.invalidateQueries({ queryKey: ["invoice-type-modal", "customers"] });
+                    const line = `Customer reference: ${opt.label}`;
+                    setNotes((prev) => (prev ? `${prev}\n${line}` : line));
+                    setShowCustomerRefPicker(false);
+                  }}
+                />
+              </div>
+            )}
           </div>
           <label className="text-xs font-semibold text-slate-600">
             Invoice date

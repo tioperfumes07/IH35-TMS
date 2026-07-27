@@ -85,6 +85,8 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
   const trailers = fleet
     .filter((row) => (row as { kind?: string }).kind === "trailer")
     .map((row, index) => toUnitOption(row, index));
+  // C9: all six equipment requirement chips persist on mdata.loads (requires_tarps historically;
+  // the other five via HOLD migration 202609170000).
   const toggles = [
     { field: "requires_reefer_fuel", label: "Reefer fuel" },
     { field: "requires_pulp_probe", label: "Pulp probe" },
@@ -227,7 +229,15 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
         <Field
           label="Driver pay rate / mi"
-          input={<input type="number" step="0.01" min="0" {...register("driver_pay_rate_per_mile", { valueAsNumber: true })} className="h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />}
+          input={
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              {...register("driver_pay_rate_per_mile", { valueAsNumber: true })}
+              className="h-7 w-full rounded-sm border border-gray-300 px-2 text-xs"
+            />
+          }
         />
       </div>
       {/* RENDER-A-v2 §B REEFER PANEL (amber, "Refrigerated") — reefer trailer only. "Temperature type"

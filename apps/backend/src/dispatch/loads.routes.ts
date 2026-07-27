@@ -144,6 +144,20 @@ const createDispatchLoadBodySchema = z.object({
   pre_cool: z.boolean().optional(),
   tarp_qty: z.number().int().min(0).optional(),
   tarp_size: z.string().trim().max(40).optional(),
+  // C9 (migration 202609170000, HOLD-FOR-JORGE — not yet applied to prod): the remaining five
+  // equipment-requirement chips BookLoadEquipmentSection renders (requires_tarps above already has a
+  // column). load_type is the Broker/Direct toggle; driver_pay_rate_per_mile is the driver's real
+  // 1099 per-mile pay term (not a display estimate); factoring_company_vendor_id resolves to
+  // mdata.vendors.id — accepts a UUID (preferred, what the FE now sends) or, for compatibility, the
+  // vendor's display name (resolved case-insensitively, entity-scoped, in book-load.service.ts).
+  requires_reefer_fuel: z.boolean().default(false),
+  requires_pulp_probe: z.boolean().default(false),
+  requires_locking_jacks: z.boolean().default(false),
+  requires_load_locks: z.boolean().default(false),
+  requires_straps: z.boolean().default(false),
+  load_type: z.enum(["broker", "direct"]).optional(),
+  driver_pay_rate_per_mile: z.number().min(0).optional(),
+  factoring_company_vendor_id: z.string().trim().min(1).max(200).optional(),
   lumper_amount_cents: z.number().int().min(0).default(0),
   customer_chargeback_requested: z.boolean().default(false),
   customer_chargeback_reason: z.string().trim().max(1000).optional(),
@@ -234,6 +248,17 @@ const updateDispatchLoadBodySchema = z.object({
   notes: z.string().trim().max(5000).nullable().optional(),
   requires_tarps: z.boolean().optional(),
   tarp_type: z.string().trim().max(60).nullable().optional(),
+  // C9 (migration 202609170000, HOLD-FOR-JORGE — not yet applied to prod): round-trip on Edit too.
+  // factoring_company_vendor_id is uuid-only here (the Edit wizard doesn't render the factoring
+  // combobox today — display-name resolution is a create-flow compatibility path, not needed on PATCH).
+  requires_reefer_fuel: z.boolean().optional(),
+  requires_pulp_probe: z.boolean().optional(),
+  requires_locking_jacks: z.boolean().optional(),
+  requires_load_locks: z.boolean().optional(),
+  requires_straps: z.boolean().optional(),
+  load_type: z.enum(["broker", "direct"]).nullable().optional(),
+  driver_pay_rate_per_mile: z.number().min(0).nullable().optional(),
+  factoring_company_vendor_id: z.string().uuid().nullable().optional(),
   lumper_amount_cents: z.number().int().min(0).optional(),
   customer_chargeback_requested: z.boolean().optional(),
   customer_chargeback_reason: z.string().trim().max(1000).nullable().optional(),

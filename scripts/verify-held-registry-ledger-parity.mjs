@@ -71,9 +71,6 @@ export const EXPECTED_HELD = [
   "202609040000_sweep_c11_driver_subcatalog_split_brain_lock.sql",
   // MNT-ECON-01
   "202609030000_mnt_econ_01_parts_purchase_gl_hop.sql",
-  // MNT-ECON-04 (#3582) — genuinely applied on prod per Cursor owner-batch 2026-07-26, but that PR
-  // is already merged and this registry stamp is out of scope for this PR (owner directive: skip).
-  "202609050000_mnt_econ_04_warranty_reimburse_gl_hop.sql",
   // FLT-02 real-fleet ownership data fix. GUARD cross-check 2026-07-26 on br-fancy-credit-akjnd07a
   // (lucia, positive control mdata.vendors=2789): the FILE is absent from BOTH ledgers — genuinely
   // unapplied as a migration — while the DATA state it produces is already true on prod (87 of 87
@@ -95,6 +92,8 @@ export const EXPECTED_HELD = [
   // ABSENT — accurate when authored, FALSE from 17:31Z onward, i.e. this guard was certifying a
   // migration as unapplied while prod had applied it. Moved to applied_held. It left the list the way
   // the charter allows (GUARD re-proved it applied), never by weakening a check.
+  // C9 / MNT-ECON-04 also left EXPECTED_HELD 2026-07-26 after Cursor owner Neon-apply + ledger-backfill
+  // (moved to applied_held[] with applied_on_prod:true).
 ];
 
 /**

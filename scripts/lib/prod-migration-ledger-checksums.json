@@ -1,6 +1,6 @@
 {
-  "_note": "PINNED snapshot of the PROD migration ledger (_system._schema_migrations) checksums for the modern window (filename >= 202606010000 — every held + recent migration; older ones are stable auto-applied). SOURCE OF TRUTH for verify-prod-ledger-checksum-parity: every committed migration whose filename is in this map MUST hash (sha256) to its pinned value, OR have a matching entry in scripts/lib/migration-checksum-overrides.json (ledger_checksum == pinned, disk_checksum == committed). This closes the gap the 2026-07-24 deploy outage exposed: the from-0001 'reject edited applied migrations' guard did NOT compare committed checksums to the PROD ledger, so a post-apply edit went green in CI and only failed at deploy. Regenerate from prod (SELECT json_object_agg(filename, checksum) FROM _system._schema_migrations WHERE filename >= '202606010000') when new migrations are applied on prod. Generated 2026-07-24.",
-  "generated_at": "2026-07-24",
+  "_note": "PINNED snapshot of the PROD migration ledger (_system._schema_migrations) checksums for the modern window (filename >= 202606010000 \u2014 every held + recent migration; older ones are stable auto-applied). SOURCE OF TRUTH for verify-prod-ledger-checksum-parity: every committed migration whose filename is in this map MUST hash (sha256) to its pinned value, OR have a matching entry in scripts/lib/migration-checksum-overrides.json (ledger_checksum == pinned, disk_checksum == committed). This closes the gap the 2026-07-24 deploy outage exposed: the from-0001 'reject edited applied migrations' guard did NOT compare committed checksums to the PROD ledger, so a post-apply edit went green in CI and only failed at deploy. Regenerate from prod (SELECT json_object_agg(filename, checksum) FROM _system._schema_migrations WHERE filename >= '202606010000') when new migrations are applied on prod. Generated 2026-07-24.",
+  "generated_at": "2026-07-26",
   "window_from": "202606010000",
   "checksums": {
     "202606071000_search_universal_index.sql": "6b35bc2dd610238293024e391dbc5c7859fa81b52cf2bc866faf447e83c32727",
@@ -378,6 +378,11 @@
     "202608030000_bank_accounts_rls_bypass_lucia.sql": "31f9595a050dcc7b88fbf61d77949ba720672f7f11d02ff6b08eadff6f9c5e5f",
     "202608040000_payment_terms_consumer_remap_same_entity.sql": "58845cbda4b5290ce2c68cca0a0e46c1e1a0fcaca2ca9189ddd6b3e581eef14e",
     "202608050000_bank_link_01_counterparty_same_entity_fk.sql": "c35d5052f67edca32ae49a5f3d7100b71ee3d5b18926b42f7171ea6b3723b626",
-    "202608080000_acct_link_02_accounts_detail_type_fk.sql": "4d66df412a4164b9e2c7b54b8d93c714b6f2557792884d9d1af9ee962e21bc39"
+    "202608080000_acct_link_02_accounts_detail_type_fk.sql": "4d66df412a4164b9e2c7b54b8d93c714b6f2557792884d9d1af9ee962e21bc39",
+    "202609190000_c9_form_roundtrip_persist_columns.sql": "a31f13227eaeacf473979956b1d461da6a1c6d3b8ccb0807f489fecbec595281",
+    "202609170000_c9_book_load_fields.sql": "1d4b26a598cb0d3082bc948057e6606c7a4e02d0eb2317e5d63b914063a92fcb",
+    "202609180000_c9_accident_wo_persist_columns.sql": "15764f5d177267d7db812f364529e319bce885512ad6ca1e66aa32fe1cecebc3",
+    "202609140000_legal_contract_signed_on_paper_status.sql": "64836357ad9138ff94ce36142adbfc20b451c5bd60ba3034071a5c0c84a846ce",
+    "202609050000_mnt_econ_04_warranty_reimburse_gl_hop.sql": "1805a11d96d593aaf25caeedb95ff3c547f2a3b7be3eb47032330991ba42434e"
   }
 }

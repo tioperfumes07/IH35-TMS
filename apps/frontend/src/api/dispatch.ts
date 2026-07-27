@@ -137,6 +137,14 @@ export type DispatchBookLoadPayload = {
   status?: DispatchStatus;
   booking_mode?: "single_popup" | "legacy_form";
   requires_tarps?: boolean;
+  requires_reefer_fuel?: boolean;
+  requires_pulp_probe?: boolean;
+  requires_locking_jacks?: boolean;
+  requires_load_locks?: boolean;
+  requires_straps?: boolean;
+  load_type?: "broker" | "direct";
+  driver_pay_rate_per_mile?: number;
+  factoring_company_vendor_id?: string;
   tarp_type?: string;
   // render-v6 §B reefer/tarp detail (migration 202606231400).
   reefer_temp_f?: number;

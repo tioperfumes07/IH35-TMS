@@ -29,7 +29,6 @@ import { VendorCategoryChip } from "../components/vendors/VendorCategoryChip";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { VENDOR_CATEGORY_VALUES, type VendorCategoryValue } from "../lib/vendorCategories";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
-import { BillSelect } from "../components/ap/BillSelect";
 import { emptyVendorProfileMeta, parseVendorNotes, serializeVendorNotes, type VendorProfileMeta } from "../lib/vendorProfileMeta";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { formatDateUS } from "../lib/formatDate";
@@ -1003,7 +1002,6 @@ export function VendorDetailPage() {
                   </p>
                   {billPayManualInvalid ? <p className="mt-1 text-red-600">Total applied cannot exceed payment amount.</p> : null}
                   <div className="mt-2 max-h-48 space-y-1 overflow-y-auto">
-                    <BillSelect operatingCompanyId={companyId} vendorId={id} value={null} onChange={() => undefined} disabled />
                     {openBillsForPay.length === 0 ? <p className="text-gray-500">No open bills.</p> : null}
                     {openBillsForPay.map((b) => (
                       <div key={b.id} className="flex flex-wrap items-center gap-2 border-b border-gray-100 py-1">

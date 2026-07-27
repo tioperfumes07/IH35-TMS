@@ -57,6 +57,8 @@ type CreateBillInput = {
   // Claim→Bill hop (held migration 202607740000). Only persisted when the column exists on the
   // connected DB (colExists) — Neon may not have owner-applied the held DDL yet.
   insuranceClaimId?: string | null;
+  /** QBO Class reporting dimension — persisted on accounting.bills.class_id when column present. */
+  classId?: string | null;
   // Draft id used by UploadZone for create-time bill attachments; reconciled onto the real bill id in
   // the same txn (Option B inc 2 — docs/specs/ATTACHMENT-DRAFT-LINKAGE-FIX.md).
   attachmentDraftId?: string | null;
@@ -1100,9 +1102,15 @@ export async function createBill(input: CreateBillInput, userId: string) {
     );
     const hasInsuranceClaimId = (claimCol.rowCount ?? 0) > 0;
     const insuranceClaimId = hasInsuranceClaimId ? (input.insuranceClaimId ?? null) : null;
+    const classCol = await client.query(
+      `SELECT 1 FROM information_schema.columns
+        WHERE table_schema='accounting' AND table_name='bills' AND column_name='class_id'`
+    );
+    const hasClassId = (classCol.rowCount ?? 0) > 0;
+    const classId = hasClassId ? (input.classId ?? null) : null;
 
     const res = await client.query<BillRow>(
-      hasInsuranceClaimId
+      hasInsuranceClaimId && hasClassId
         ? `
         INSERT INTO accounting.bills (
           operating_company_id,
@@ -1121,6 +1129,59 @@ export async function createBill(input: CreateBillInput, userId: string) {
           linked_work_order_uuid,
           unit_id,
           insurance_claim_id,
+          class_id,
+          created_by_user_id,
+          created_at,
+          updated_at
+        )
+        VALUES ($1,$2,$2,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$13,$14,$10,now(),now())
+        RETURNING *
+      `
+        : hasInsuranceClaimId
+        ? `
+        INSERT INTO accounting.bills (
+          operating_company_id,
+          vendor_id,
+          vendor_uuid,
+          bill_number,
+          bill_date,
+          due_date,
+          amount_cents,
+          total_amount,
+          paid_cents,
+          paid_amount,
+          status,
+          memo,
+          coa_account_id,
+          linked_work_order_uuid,
+          unit_id,
+          insurance_claim_id,
+          created_by_user_id,
+          created_at,
+          updated_at
+        )
+        VALUES ($1,$2,$2,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$13,$10,now(),now())
+        RETURNING *
+      `
+        : hasClassId
+          ? `
+        INSERT INTO accounting.bills (
+          operating_company_id,
+          vendor_id,
+          vendor_uuid,
+          bill_number,
+          bill_date,
+          due_date,
+          amount_cents,
+          total_amount,
+          paid_cents,
+          paid_amount,
+          status,
+          memo,
+          coa_account_id,
+          linked_work_order_uuid,
+          unit_id,
+          class_id,
           created_by_user_id,
           created_at,
           updated_at
@@ -1152,7 +1213,24 @@ export async function createBill(input: CreateBillInput, userId: string) {
         VALUES ($1,$2,$2,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$10,now(),now())
         RETURNING *
       `,
-      hasInsuranceClaimId
+      hasInsuranceClaimId && hasClassId
+        ? [
+            input.operatingCompanyId,
+            input.vendorId,
+            input.billNumber ?? null,
+            input.billDate,
+            input.dueDate ?? null,
+            input.amountCents,
+            input.amountCents / 100,
+            input.memo ?? null,
+            input.coaAccountId ?? null,
+            userId,
+            input.workOrderId ?? null,
+            input.unitId ?? null,
+            insuranceClaimId,
+            classId,
+          ]
+        : hasInsuranceClaimId
         ? [
             input.operatingCompanyId,
             input.vendorId,
@@ -1168,6 +1246,22 @@ export async function createBill(input: CreateBillInput, userId: string) {
             input.unitId ?? null,
             insuranceClaimId,
           ]
+        : hasClassId
+          ? [
+              input.operatingCompanyId,
+              input.vendorId,
+              input.billNumber ?? null,
+              input.billDate,
+              input.dueDate ?? null,
+              input.amountCents,
+              input.amountCents / 100,
+              input.memo ?? null,
+              input.coaAccountId ?? null,
+              userId,
+              input.workOrderId ?? null,
+              input.unitId ?? null,
+              classId,
+            ]
         : [
             input.operatingCompanyId,
             input.vendorId,

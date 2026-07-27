@@ -81,6 +81,19 @@ export type BookLoadInput = {
   pre_cool?: boolean;
   tarp_qty?: number;
   tarp_size?: string;
+  // C9 (migration 202609170000, HOLD-FOR-JORGE — not yet applied to prod): the remaining five
+  // equipment-requirement chips, the Broker/Direct toggle, the driver's real per-mile pay term, and
+  // the load-level factoring override. See the writeC9HoldFieldsIfPresent() comment below for how
+  // this stays inert (never a 500) until Jorge applies the migration.
+  requires_reefer_fuel?: boolean;
+  requires_pulp_probe?: boolean;
+  requires_locking_jacks?: boolean;
+  requires_load_locks?: boolean;
+  requires_straps?: boolean;
+  load_type?: "broker" | "direct";
+  driver_pay_rate_per_mile?: number;
+  // uuid (preferred, what the FE now sends) or a vendor display name (compatibility path).
+  factoring_company_vendor_id?: string;
   lumper_amount_cents?: number;
   customer_chargeback_requested?: boolean;
   customer_chargeback_reason?: string;
@@ -209,6 +222,74 @@ async function optionalQuery<T = Record<string, unknown>>(
     // Real query error → fail CLOSED (never silently open a dispatch gate).
     throw err;
   }
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// C9 (migration 202609170000, HOLD-FOR-JORGE — not yet applied to prod as of this write): resolves
+// the factoring company to a vendor id, entity-scoped. Accepts a uuid (what the FE now sends) or a
+// vendor display name (older-client compatibility) and returns null on no-match rather than throwing
+// — an unresolved factoring pick must never block booking the load.
+async function resolveFactoringVendorId(
+  client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
+  raw: string | undefined,
+  operatingCompanyId: string
+): Promise<string | null> {
+  const value = (raw ?? "").trim();
+  if (!value) return null;
+  const rows = UUID_RE.test(value)
+    ? await client.query<{ id: string }>(
+        `SELECT id::text AS id FROM mdata.vendors WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL LIMIT 1`,
+        [value, operatingCompanyId]
+      )
+    : await client.query<{ id: string }>(
+        `SELECT id::text AS id FROM mdata.vendors WHERE operating_company_id = $1::uuid AND lower(vendor_name) = lower($2) AND deactivated_at IS NULL LIMIT 1`,
+        [operatingCompanyId, value]
+      );
+  return rows.rows[0]?.id ?? null;
+}
+
+// C9 (migration 202609170000, HOLD-FOR-JORGE — not yet applied to prod as of this write): persists
+// the 8 new mdata.loads columns via the SAME savepoint-guarded optionalQuery used above for the
+// trailer resolve, so booking a load NEVER breaks while the migration is held — this UPDATE is
+// simply skipped (RELATION_ABSENT_CODES) until Jorge applies it, then activates with no further
+// deploy. Kept OFF the 39-column lockstep INSERT for the same reason piece_count/trip_type/reefer
+// are (comments above): those columns exist on prod today; these do not yet.
+async function writeC9HoldFieldsIfPresent(
+  client: {
+    query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
+  },
+  loadId: string,
+  input: BookLoadInput,
+  resolvedFactoringVendorId: string | null
+): Promise<void> {
+  await optionalQuery(
+    client,
+    `
+      UPDATE mdata.loads SET
+        requires_reefer_fuel = $1,
+        requires_pulp_probe = $2,
+        requires_locking_jacks = $3,
+        requires_load_locks = $4,
+        requires_straps = $5,
+        load_type = $6,
+        driver_pay_rate_per_mile = $7,
+        factoring_company_vendor_id = $8::uuid,
+        updated_at = now()
+      WHERE id = $9::uuid
+    `,
+    [
+      Boolean(input.requires_reefer_fuel),
+      Boolean(input.requires_pulp_probe),
+      Boolean(input.requires_locking_jacks),
+      Boolean(input.requires_load_locks),
+      Boolean(input.requires_straps),
+      input.load_type ?? null,
+      input.driver_pay_rate_per_mile ?? null,
+      resolvedFactoringVendorId,
+      loadId,
+    ]
+  );
 }
 
 async function collectAssignedDriverIdsForDrugGate(
@@ -1051,6 +1132,16 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       ]
     );
     const load = loadRes.rows[0] as Record<string, unknown>;
+
+    // C9 (migration 202609170000, HOLD-FOR-JORGE): resolve the load-level factoring override, then
+    // persist all 8 new fields via the 42703-safe helper above. See writeC9HoldFieldsIfPresent's
+    // comment for why this is off the lockstep INSERT.
+    const resolvedFactoringVendorId = await resolveFactoringVendorId(
+      client,
+      input.factoring_company_vendor_id,
+      input.operating_company_id
+    );
+    await writeC9HoldFieldsIfPresent(client, String(load.id), input, resolvedFactoringVendorId);
 
     // W-FIX-3b persist (post-insert, same pattern): record the selected trailer (mdata.equipment id) on the
     // REAL link dispatch.load_assignment_history.new_trailer_id — the only real sink (mdata.loads has no

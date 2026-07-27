@@ -244,6 +244,11 @@ export type CreateAccidentInput = {
   third_party_plate?: string | null;
   vendor_invoice_number?: string | null;
   bill_or_expense_ref?: string | null;
+  record_type?: "accident" | "damage" | "vandalism" | null;
+  service_type?: "repair" | "replacement" | "tow" | null;
+  report_date?: string | null;
+  tax_rate_pct?: number | null;
+  cost_lines?: Array<{ section: "A" | "B"; description?: string; amount_cents?: number; sort_order?: number }>;
 };
 
 export function createSafetyAccident(body: CreateAccidentInput) {
@@ -267,6 +272,11 @@ export type PatchAccidentInput = {
   third_party_plate?: string | null;
   vendor_invoice_number?: string | null;
   bill_or_expense_ref?: string | null;
+  record_type?: "accident" | "damage" | "vandalism" | null;
+  service_type?: "repair" | "replacement" | "tow" | null;
+  report_date?: string | null;
+  tax_rate_pct?: number | null;
+  cost_lines?: Array<{ section: "A" | "B"; description?: string; amount_cents?: number; sort_order?: number }>;
 };
 
 export function patchSafetyAccident(id: string, companyId: string, body: PatchAccidentInput) {
