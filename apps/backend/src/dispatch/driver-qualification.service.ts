@@ -72,7 +72,19 @@ export type DriverQualificationReason =
   // SAF-F07-CH: FMCSA Clearinghouse prohibition (49 CFR §382.701). This is the ONLY source for a
   // violation reported by a PREVIOUS employer — such a violation never appears in our own
   // safety.drug_test / safety.da_test_records at all, so without this the gate is blind to it.
-  | "clearinghouse_prohibited";
+  | "clearinghouse_prohibited"
+  // HOS-1: hours-of-service violation (49 CFR §395). Added 2026-07-27 because HOS enforcement had
+  // DRIFTED ACROSS PATHS — the exact failure G9-C1 created this gate to end, repeated for HOS:
+  //   book-load        -> hard 422 + audit + logged override   (correct)
+  //   quick-assign     -> throws, BUT its HOS query ended in `.catch(() => ({ rows: [] }))`, so a
+  //                       failed query returned "no violation" and the driver was assigned — fail-OPEN
+  //                       on a federal safety rule
+  //   planner reschedule -> NO HOS check at all
+  //   loads-bulk         -> NO HOS check at all
+  // Live at the time of writing: 484,004 rows in hos.duty_status_events across 76 drivers, 165 rows in
+  // views.drivers_with_hos_status, and 7 drivers flagged in violation. Two of four assignment paths
+  // would have dispatched any of those 7 without objection.
+  | "hos_violation";
 
 export type DriverQualificationBlock = {
   driverId: string;
@@ -91,6 +103,12 @@ export type DriverQualificationBlock = {
   drugAlcoholViolationSource: string | null;
   /** Date of the unresolved Clearinghouse "information found" result, when there is one. */
   clearinghouseProhibitedSince: string | null;
+  /**
+   * HOS-1: minutes until the driver's next HOS violation, from views.drivers_with_hos_status. NULL
+   * when the driver has no duty data at all — which is "unknown", not "clear". Audit/UI detail only;
+   * the block itself is driven by is_in_violation.
+   */
+  hosMinutesUntilViolation: string | null;
 };
 
 /** One unresolved D&A violation, from whichever of the three live sources recorded it. */
@@ -378,6 +396,24 @@ export async function assertDriverQualifiedForLoad(
   // 0270, and a guarded fallback would silently skip a federal prohibition check.
   const chBlock = await fetchClearinghouseProhibition(client, { driverId, operatingCompanyId });
 
+  // HOS-1 (49 CFR §395). FAIL-CLOSED by the same contract as the D&A and Clearinghouse checks above:
+  // a DIRECT query with no .catch() swallow and no to_regclass fallback. views.drivers_with_hos_status
+  // is the same source book-load already trusts. If this query fails the error PROPAGATES and aborts
+  // the caller's transaction — it is never downgraded to "no violation". A safety gate that fails open
+  // is worse than no gate, because it produces a record showing the check was performed.
+  const hosRows = await client.query<{ is_in_violation: boolean | null; minutes_until_violation: string | null }>(
+    `
+      SELECT is_in_violation, minutes_until_violation
+      FROM views.drivers_with_hos_status
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid
+      LIMIT 1
+    `,
+    [driverId, operatingCompanyId]
+  );
+  // A driver with NO row in the view has no duty data — that is "unknown", not "clear". It is not a
+  // violation on its own, so it does not block; the HOS module owns surfacing unknown-duty drivers.
+  const hosInViolation = hosRows.rows[0]?.is_in_violation === true;
+
   const reasons: DriverQualificationReason[] = [];
   if (dr.is_deactivated) reasons.push("driver_deactivated");
   if (dr.is_archived) reasons.push("driver_archived");
@@ -390,6 +426,7 @@ export async function assertDriverQualifiedForLoad(
     reasons.push(daBlock.violation_kind === "positive" ? "drug_alcohol_positive" : "drug_alcohol_refusal");
   }
   if (chBlock) reasons.push("clearinghouse_prohibited");
+  if (hosInViolation) reasons.push("hos_violation");
 
   if (reasons.length === 0) return null;
 
@@ -403,6 +440,7 @@ export async function assertDriverQualifiedForLoad(
     drugAlcoholViolationAt: daBlock?.violation_at ?? null,
     drugAlcoholViolationSource: daBlock?.violation_source ?? null,
     clearinghouseProhibitedSince: chBlock?.prohibited_since ?? null,
+    hosMinutesUntilViolation: hosRows.rows[0]?.minutes_until_violation ?? null,
   };
 }
 
