@@ -1,42 +1,16 @@
 #!/usr/bin/env node
 /**
- * verify-fixed-asset-half-year-convention (FIN-21 / ASC 360)  — GUARD-FIRST, RED BY DESIGN
+ * verify-fixed-asset-half-year-convention (FIN-21 / ASC 360 / FLT-02)
  *
- * THE DEFECT. accounting.fixed_assets.convention accepts exactly four values (DB CHECK, prod-verified
- * 2026-07-27): half_month · mid_month · half_year · full_month. But the first-period proration in
- * apps/backend/src/accounting/fixed-assets.math.ts is decided by:
+ * Guards the shared FIN-21 schedule math in apps/backend/src/accounting/fixed-assets.math.ts.
+ * Was RED BY DESIGN until FLT-02 landed the correct half_year treatment (not halfFirst).
  *
- *     const halfFirst = a.convention === "half_month" || a.convention === "mid_month";
+ * REQUIRED TREATMENT (QBO / NetSuite / McLeod / MACRS half-year):
+ *   - year 1 receives half of a full year's depreciation (6 × monthly);
+ *   - the schedule extends useful_life_months + 6 so the closing half-year sits in the tail;
+ *   - total depreciation equals cost − salvage exactly.
  *
- * `half_year` is ABSENT, so an asset booked half-year takes a FULL first period — the opposite of what
- * the convention means. Half-year exists to take HALF a year in year 1.
- *
- * WHY IT MATTERS NOW. accounting.fixed_assets has 0 rows, so nobody has been burned yet. half_year is
- * the standard fleet default and the one chosen for the 87-unit TRK backfill, so the moment a create
- * path exists this becomes 87 wrong schedules: year 1 overstated by ~six months of depreciation, the
- * final year understated by the same. fixed-assets.math.ts is shared with the FIN-21 GL poster by its
- * own header ("single source of truth"), so the wrong figure would also POST.
- *
- * WHY THIS GUARD IS RED ON MAIN. Guard-first, the repo standard (cf. #3579 / #3580): the failing guard
- * lands BEFORE the fix so the defect cannot be shipped past. It is EXPECTED to fail until the math is
- * corrected. Do not relax the assertion and do not allowlist it — a live 42703 was silenced exactly
- * that way in verify-sql-column-existence.allowlist.json earlier today.
- *
- * WHAT THE FIX MUST DO (spec for the GL-math owner; NOT applied here — depreciation math is Cursor's
- * lane). The schedule is MONTHLY, so simply adding "half_year" to `halfFirst` is WRONG: that halves the
- * first MONTH, not the first YEAR. The treatment QBO / NetSuite / McLeod implement, and MACRS
- * half-year, is:
- *   - year 1 receives half of a full year's depreciation (i.e. 6 x the monthly amount);
- *   - the schedule extends ~6 months beyond useful_life_months so the tail absorbs the other half;
- *   - total depreciation over the whole life still equals cost - salvage, to the cent.
- *
- * ALSO RECORDED: the owner-facing guidance "use mid-quarter if >40% of the year's cost lands in Q4"
- * is UNIMPLEMENTABLE today — there is no mid_quarter value in the DB CHECK. Either the CHECK gains it
- * or the guidance is dropped; it cannot currently be stored.
- *
- * STATIC by design: it reads source text, so it runs under verify:static with no build and no DB
- * (the suite runs against a dead-port sentinel). The numeric behaviour belongs in a unit test that
- * runs after the math is fixed.
+ * FORBIDDEN: folding half_year into `halfFirst` (that halves the first MONTH, not the first YEAR).
  *
  * Usage: node scripts/verify-fixed-asset-half-year-convention.mjs [--selftest]
  */
@@ -47,14 +21,35 @@ const MATH = "apps/backend/src/accounting/fixed-assets.math.ts";
 /** Conventions the DB CHECK permits, prod-verified. */
 const DB_CONVENTIONS = ["half_month", "mid_month", "half_year", "full_month"];
 
-/** PURE: does the first-period proration account for `half_year`? */
+/**
+ * PURE: half_year must be a dedicated convention path that extends the schedule by ~6 months.
+ * Adding half_year to halfFirst is explicitly NOT a pass.
+ */
 export function handlesHalfYear(src) {
-  // Find the proration predicate. Accept any shape that names half_year alongside the others —
-  // a list, a Set, a switch, or a dedicated branch — so a correct fix is not forced into one style.
-  const prorationLine = /const\s+halfFirst\s*=\s*([^;]+);/.exec(src);
-  if (!prorationLine) return { ok: false, reason: "could not locate the `halfFirst` first-period proration predicate in fixed-assets.math.ts" };
-  if (!/half_year/.test(prorationLine[1]) && !/half_year/.test(src.slice(0, prorationLine.index))) {
-    return { ok: false, reason: `first-period proration ignores the half_year convention: halfFirst = ${prorationLine[1].trim()}` };
+  const halfFirst = /const\s+halfFirst\s*=\s*([^;]+);/.exec(src);
+  if (halfFirst && /half_year/.test(halfFirst[1])) {
+    return {
+      ok: false,
+      reason:
+        "half_year is folded into halfFirst — that halves the first MONTH, not the first YEAR. Use a dedicated half_year path (Y1 = 6× monthly, life+6).",
+    };
+  }
+  const hasDedicated =
+    /convention\s*===\s*["']half_year["']/.test(src) ||
+    /case\s+["']half_year["']/.test(src) ||
+    /["']half_year["']\s*===/.test(src);
+  if (!hasDedicated) {
+    return { ok: false, reason: "no dedicated half_year convention branch in fixed-assets.math.ts" };
+  }
+  const extendsLife =
+    /useful_life_months\s*\+\s*6/.test(src) ||
+    /\blife\s*\+\s*6\b/.test(src) ||
+    /periods\s*=\s*[^\n;]*\+\s*6/.test(src);
+  if (!extendsLife) {
+    return {
+      ok: false,
+      reason: "half_year path does not extend the schedule by ~6 months (expected life + 6 / useful_life_months + 6)",
+    };
   }
   return { ok: true };
 }
@@ -62,6 +57,17 @@ export function handlesHalfYear(src) {
 /** PURE: every convention the DB allows must be reachable somewhere in the math. */
 export function unhandledConventions(src) {
   return DB_CONVENTIONS.filter((c) => !src.includes(c));
+}
+
+/** PURE: unknown conventions must fail closed (not silently full-month). */
+export function rejectsUnknownConvention(src) {
+  const hasReject =
+    /Unknown depreciation convention/.test(src) ||
+    /FIXED_ASSET_CONVENTIONS/.test(src) ||
+    /unsupported convention/i.test(src);
+  return hasReject
+    ? { ok: true }
+    : { ok: false, reason: "math never rejects an unknown convention — mid_quarter (etc.) would silently full-month" };
 }
 
 function read() {
@@ -82,26 +88,54 @@ function run() {
 
   const missing = unhandledConventions(src);
   if (missing.length) {
-    problems.push(`the DB CHECK permits convention(s) the math never mentions: ${missing.join(", ")} — an asset can be stored that the schedule cannot price`);
+    problems.push(
+      `the DB CHECK permits convention(s) the math never mentions: ${missing.join(", ")} — an asset can be stored that the schedule cannot price`
+    );
   }
+
+  const unk = rejectsUnknownConvention(src);
+  if (!unk.ok) problems.push(unk.reason);
 
   if (problems.length) {
     console.error(`[verify-fixed-asset-half-year-convention] FAILED — ${problems.length} issue(s):`);
     for (const p of problems) console.error(`  ✗ ${p}`);
-    console.error("\n  RED BY DESIGN until FIN-21 depreciation math handles half_year (see the header for the required treatment).");
-    console.error("  Fix the math. Do NOT relax this assertion and do NOT allowlist it.");
+    console.error("\n  Fix the math (Y1 = 6× monthly, life+6, total = cost−salvage). Do NOT fold half_year into halfFirst.");
     return false;
   }
-  console.log(`[verify-fixed-asset-half-year-convention] OK — all ${DB_CONVENTIONS.length} DB conventions are handled, half_year included`);
+  console.log(
+    `[verify-fixed-asset-half-year-convention] OK — half_year dedicated path + life+6; all ${DB_CONVENTIONS.length} DB conventions handled`
+  );
   return true;
 }
 
 function selftest() {
   let ok = true;
   const cases = [
-    ["current main (half_year omitted)", 'const halfFirst = a.convention === "half_month" || a.convention === "mid_month";', false],
-    ["fixed (half_year named)", 'const halfFirst = a.convention === "half_month" || a.convention === "mid_month" || a.convention === "half_year";', true],
-    ["fixed via a Set", 'const HALF = new Set(["half_month","mid_month","half_year"]);\nconst halfFirst = HALF.has(a.convention);', true],
+    [
+      "current main (half_year omitted)",
+      'const halfFirst = a.convention === "half_month" || a.convention === "mid_month";',
+      false,
+    ],
+    [
+      "WRONG fix (half_year folded into halfFirst)",
+      'const halfFirst = a.convention === "half_month" || a.convention === "mid_month" || a.convention === "half_year";',
+      false,
+    ],
+    [
+      "WRONG fix via Set",
+      'const HALF = new Set(["half_month","mid_month","half_year"]);\nconst halfFirst = HALF.has(a.convention);',
+      false,
+    ],
+    [
+      "correct dedicated branch + life+6",
+      `
+        if (a.convention === "half_year") {
+          const periods = life + 6;
+        }
+        const halfFirst = a.convention === "half_month" || a.convention === "mid_month";
+      `,
+      true,
+    ],
   ];
   for (const [name, src, shouldPass] of cases) {
     const got = handlesHalfYear(src).ok;
@@ -112,12 +146,11 @@ function selftest() {
       console.log(`SELFTEST: '${name}' -> ok=${got} as expected`);
     }
   }
-  // The predicate must be findable at all — a rename should fail loudly, not silently pass.
   if (handlesHalfYear("const somethingElse = true;").ok) {
-    console.error("SELFTEST FAIL: a missing halfFirst predicate was treated as passing");
+    console.error("SELFTEST FAIL: a missing half_year path was treated as passing");
     ok = false;
   } else {
-    console.log("SELFTEST: a missing/renamed predicate fails loudly rather than passing silently");
+    console.log("SELFTEST: a missing/renamed path fails loudly rather than passing silently");
   }
   if (!ok) process.exit(1);
   console.log("SELFTEST PASS");

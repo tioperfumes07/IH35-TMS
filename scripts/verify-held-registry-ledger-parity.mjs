@@ -109,6 +109,7 @@ export const EXPECTED_HELD = [
   // ND-INV-01 stage 1 (#3658). Authored on this branch; NEVER applied on prod — GUARD §3 allowlist
   // must list it until owner Neon-applies + ledger-backfills. Same pattern as MNT-LINK-03b / MNT-ENT-01.
   "202609100090_nd_inv_01_proforma_invoice_pipeline.sql",
+  // FLT-02 class seed Neon-applied 2026-07-27 → applied_held in .held-migrations.json (NOT EXPECTED_HELD).
 ];
 
 /**
