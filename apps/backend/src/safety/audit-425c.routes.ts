@@ -33,10 +33,16 @@ export async function registerSafetyAudit425cRoutes(app: FastifyInstance) {
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
         `
-          SELECT id, event_class, payload, emitted_at
+          -- SAF-425C-PHANTOM: this selected id and emitted_at. audit.audit_events has NEITHER
+          -- (prod-verified 2026-07-27: columns are uuid, created_at, event_class, severity, payload,
+          -- actor_user_uuid, source — exactly as docs/CLAUDE.md §8 documents them; the doc was right
+          -- and the code was wrong). Every call threw 42703, so the Form 425C Chapter 11 DIP audit
+          -- trail — the one a bankruptcy court reads — returned nothing but an error, over a table
+          -- holding 629,214 rows of which 228,953 are TRANSP's.
+          SELECT uuid AS id, event_class, payload, created_at AS emitted_at
           FROM audit.audit_events
           WHERE payload->>'operating_company_id' = $1
-          ORDER BY emitted_at DESC
+          ORDER BY created_at DESC
           LIMIT 500
         `,
         [query.data.operating_company_id]

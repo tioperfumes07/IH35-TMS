@@ -768,22 +768,41 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
 
-    const payload = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+    // SAF-B30: this endpoint used to write an audit event named "safety.accident.spawn_liability"
+    // and then return { spawned_liability_id: null } — it created NOTHING. That is worse than a
+    // no-op: it left a permanent audit record asserting a liability was spawned when none was, and
+    // driver_finance.driver_liabilities has 0 rows on prod, confirming none ever were. In an
+    // insurance or liability dispute that record is a false statement of fact.
+    //
+    // It now REFUSES, loudly, and records the refusal rather than a fictional success. The build is
+    // NOT done here on purpose: driver_finance.driver_liabilities requires original_amount /
+    // current_balance, and what a driver owes for an at-fault accident is owner-locked recovery
+    // economics (A3d: escrow first, shortfall to Driver Damage Loss; DoD-D purpose->economics —
+    // never a silent default). Guessing an amount would put a fabricated debt on a driver.
+    // Target shape is ready for that block: driver_liabilities(origin, origin_id, type,
+    // original_amount, current_balance, requires_acknowledgment, status) — origin_id takes the
+    // accident id.
+    await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       await appendCrudAudit(
         client,
         user.uuid,
-        "safety.accident.spawn_liability",
+        "safety.accident.spawn_liability_refused",
         {
           resource_type: "safety.accident_reports",
           resource_id: params.data.id,
           operating_company_id: query.data.operating_company_id,
+          reason: "recovery_amount_not_determined",
         },
-        "info",
-        "BT-3-SAFETY-LIABILITIES-REBUILD"
+        "warning",
+        "SAF-B30"
       );
-      return { accident_id: params.data.id, spawned_liability_id: null };
     });
-    return payload;
+    return reply.code(501).send({
+      error: "E_LIABILITY_SPAWN_NOT_IMPLEMENTED",
+      message:
+        "Creating a driver liability from an accident is not implemented. The recovery amount is an owner-locked decision (escrow first, shortfall to Driver Damage Loss) and must not be defaulted. No liability was created and none was implied.",
+      details: { accident_id: params.data.id, spawned_liability_id: null },
+    });
   });
 
   app.post("/api/v1/safety/accidents/:id/spawn-wo", async (req, reply) => {
