@@ -80,11 +80,7 @@ export const EXPECTED_HELD = [
   // 202609190000_c9_form_roundtrip_persist_columns.sql (applied 21:28Z), one of FIVE migrations
   // applied on prod that do not exist in the repo. Reported separately; not this PR's to fix.
   "202609250000_flt_02_real_fleet_owned_by_trk.sql",
-  // BANK-DOM-05 intercompany transfers. GUARD cross-check 2026-07-26 against the prod branch
-  // br-fancy-credit-akjnd07a (bypass_rls='lucia', positive control mdata.vendors=2789):
-  // to_regclass('banking.intercompany_entity_pairs') = MISSING — genuinely unapplied. Leaves this
-  // list only after GUARD/owner Neon-applies + ledger-backfill + a fresh re-prove.
-  "202609160000_bank_dom_05_intercompany_transfers.sql",
+  // BANK-DOM-05 applied as 202609010010 — applied_held.
   // 202609140000 (LEGAL-PAPER-01 signed_on_paper) is NOT here any more: re-proved APPLIED on prod
   // 2026-07-26T17:31:50Z (cursor-owner-batch). Live re-check on br-fancy-credit-akjnd07a, positive
   // control 762 canonical ledger rows: present in BOTH ledgers; pg_enum contract_instance_status now
