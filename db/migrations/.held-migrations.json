@@ -884,6 +884,14 @@
       "file": "202609140000_legal_contract_signed_on_paper_status.sql",
       "reason": "[APPLIED ON PROD 2026-07-26T17:31:50Z by cursor-owner-batch-2026-07-26] LEGAL-PAPER-01 legal.contract_instance_status 'signed_on_paper' + the paper-evidence CHECK. Moved out of held[] on live re-proof (br-fancy-credit-akjnd07a, positive control 762 canonical ledger rows): present in BOTH _system._schema_migrations AND ih35_migrations.applied_migrations; pg_enum contract_instance_status now reads draft,sent,viewed,signed_electronically,signed_on_paper,voided,expired; pg_constraint HAS contract_instances_paper_signature_evidence_check. The prior held[] entry asserted all three were ABSENT — true when written, false now. It left held[] the way the charter allows (re-proved applied), not by weakening a check.",
       "applied_on_prod": true
+    },
+    {
+      "file": "202609200000_set_02_driver_netpay_clearing_liability.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 FINANCIAL] SET-02 — 2170 Driver Net-Pay Clearing Liability + rebind driver_payroll_clearing for TRANSP/TRK/USMCA. NEVER touches advance_recovery.",
+      "applied_on_prod": true,
+      "applied_evidence": "Cursor owner Neon-apply 2026-07-26 (tiny-field-89581227 / br-fancy-credit-akjnd07a): checksum=80bd3835d9efbc663158f74ed7505c9ecec5223e0d84f8b29fad44b5f84603b9 applied_by=cursor-owner-set-02-2026-07-26. Live lucia: all 3 entities active driver_payroll_clearing → 2170 Liability; advance_recovery untouched on Cash Advance asset. verify-netpay-clearing-is-liability.mjs --live PASS.",
+      "added_at": "2026-07-26",
+      "block": "SET-02"
     }
   ],
   "superseded": []

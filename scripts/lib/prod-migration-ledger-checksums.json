@@ -383,6 +383,7 @@
     "202609170000_c9_book_load_fields.sql": "1d4b26a598cb0d3082bc948057e6606c7a4e02d0eb2317e5d63b914063a92fcb",
     "202609180000_c9_accident_wo_persist_columns.sql": "15764f5d177267d7db812f364529e319bce885512ad6ca1e66aa32fe1cecebc3",
     "202609140000_legal_contract_signed_on_paper_status.sql": "64836357ad9138ff94ce36142adbfc20b451c5bd60ba3034071a5c0c84a846ce",
-    "202609050000_mnt_econ_04_warranty_reimburse_gl_hop.sql": "1805a11d96d593aaf25caeedb95ff3c547f2a3b7be3eb47032330991ba42434e"
+    "202609050000_mnt_econ_04_warranty_reimburse_gl_hop.sql": "1805a11d96d593aaf25caeedb95ff3c547f2a3b7be3eb47032330991ba42434e",
+    "202609200000_set_02_driver_netpay_clearing_liability.sql": "80bd3835d9efbc663158f74ed7505c9ecec5223e0d84f8b29fad44b5f84603b9"
   }
 }
