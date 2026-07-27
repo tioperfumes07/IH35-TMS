@@ -961,22 +961,6 @@
       "applied_evidence": "Neon lucia superseded_at/superseded_reason + dual-ledger 202609010060"
     },
     {
-      "file": "202609100030_f9_04_bill_unit_allocation_supersede.sql",
-      "reason": "F9-04/05 bill_unit_allocation supersede — Neon-applied 2026-07-27; dual-ledger",
-      "applied_on_prod": true,
-      "applied_evidence": "Neon lucia: superseded_at/superseded_reason on accounting.bill_unit_allocation; dual-ledger 202609100030",
-      "block": "F9-04",
-      "added_at": "2026-07-27"
-    },
-    {
-      "file": "202609100010_ins_01_fleet_premium_insurance_expense_role.sql",
-      "reason": "INS-01 insurance_expense CoA role — fleet premium role-resolve; Neon-applied 2026-07-27; TRANSP/TRK/USMCA bound; dual-ledger stamped",
-      "applied_on_prod": true,
-      "applied_evidence": "Neon lucia: insurance_expense bound TRANSP/TRK/USMCA; renumbered 070→100010 after fuel_04 CHECK chain for CI apply-order; dual-ledger 202609100010 checksum=e4bb6f348a69ef90bcd555d733636364d29f3c4340e17d3eb7517a50995b3293 (same bytes as former 070)",
-      "block": "INS-01",
-      "added_at": "2026-07-27"
-    },
-    {
       "file": "202609010080_ins_03_refund_obligation_je_fk.sql",
       "reason": "INS-03 refund_obligation.journal_entry_id → accounting.journal_entries FK; Neon-applied 2026-07-27; 0 dangling; dual-ledger",
       "applied_on_prod": true,
@@ -993,11 +977,35 @@
       "added_at": "2026-07-27"
     },
     {
+      "file": "202609100010_ins_01_fleet_premium_insurance_expense_role.sql",
+      "reason": "INS-01 insurance_expense CoA role — fleet premium role-resolve; Neon-applied 2026-07-27; TRANSP/TRK/USMCA bound; dual-ledger stamped",
+      "applied_on_prod": true,
+      "applied_evidence": "Neon lucia: insurance_expense bound TRANSP/TRK/USMCA; renumbered 070→100010 after fuel_04 CHECK chain for CI apply-order; dual-ledger 202609100010 checksum=e4bb6f348a69ef90bcd555d733636364d29f3c4340e17d3eb7517a50995b3293 (same bytes as former 070)",
+      "block": "INS-01",
+      "added_at": "2026-07-27"
+    },
+    {
+      "file": "202609100040_fact_01_factoring_flag_transp_only.sql",
+      "reason": "FACT-01 FACTORING_GL_POSTING_ENABLED TRANSP-only — disabled TRK/USMCA overrides; Neon-applied 2026-07-27",
+      "applied_on_prod": true,
+      "applied_evidence": "Neon lucia: TRK+USMCA overrides enabled=false; TRANSP still true pending CPA sign-off; dual-ledger 202609100040",
+      "block": "FACT-01",
+      "added_at": "2026-07-27"
+    },
+    {
       "file": "202609100020_ins_02_claim_recovery_gl_hop.sql",
       "reason": "INS-02 claim recovery GL hop — linkage table + flag OFF; Neon-applied 2026-07-27; dual-ledger",
       "applied_on_prod": true,
       "applied_evidence": "Neon lucia table+FKs+flag OFF; dual-ledger 202609100020 checksum=a89d634787f466d340eeac4feaf60b518f5ed125650a4c01dc977db347df91bb (inline REFERENCES + POSTING_FLAG_KEYS)",
       "block": "INS-02",
+      "added_at": "2026-07-27"
+    },
+    {
+      "file": "202609100030_f9_04_bill_unit_allocation_supersede.sql",
+      "reason": "F9-04/05 bill_unit_allocation supersede — Neon-applied 2026-07-27; dual-ledger",
+      "applied_on_prod": true,
+      "applied_evidence": "Neon lucia: superseded_at/superseded_reason on accounting.bill_unit_allocation; dual-ledger 202609100030",
+      "block": "F9-04",
       "added_at": "2026-07-27"
     }
   ],

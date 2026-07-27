@@ -44,6 +44,6 @@ export function factoringRatioForTier(tier: "T1" | "T2" = FACTORING_DEFAULT_TIER
 // OPEN #2 — Where the daily default interest lands. The contract's Repurchase Price = Net + fees + accrued
 // interest, so interest is owed to Faro on TOP of principal → it COMPOUNDS INTO the factoring-advance
 // LIABILITY (Cr factoring_advance_liability), not netted out of the Security Reserve asset. Default = true
-// (add to liability) per the contract formula. Flip only on an explicit owner/CPA decision to draw interest
+// (add to liability) per the contract formula. Flip only on an explicit OWNER-LOCKED decision to draw interest
 // from the reserve instead.
 export const FACTORING_INTEREST_COMPOUNDS_INTO_LIABILITY = true;
