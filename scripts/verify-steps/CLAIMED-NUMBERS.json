@@ -980,6 +980,7 @@
     "1560": "1560-verify-route-manifest-parity.mjs",
     "1565": "1565-verify-hos-enforced-on-every-assignment-path.mjs",
     "1562": "1562-verify-wo-line-canonical-columns.mjs",
+    "1564": "1564-verify-layover-detector-fails-loud.mjs",
     "1561": "1561-verify-migration-no-number-collision.mjs",
     "1570": "1570-verify-form-field-roundtrip.mjs",
     "1580": "1580-verify-no-jsonb-id-array-as-fk.mjs",
