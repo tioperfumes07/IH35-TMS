@@ -1,0 +1,93 @@
+================================================================================
+CURSOR — MODULE 7 FUEL · MONEY / GL SIDE BLOCKS · 2026-07-26
+GUARD live-audited Fuel against Neon prod (br-fancy-credit-akjnd07a) + GitHub main this session.
+Standard: guard-first, 8-layer / DoD A–E + VERIFY 1–8, canonical tables, reuse poster, NO new GL math,
+HOLD every financial PR for owner Neon-apply + merge gate. USMCA ACTIVE (test); posting ON, QBO write-back OFF.
+Lane split: Cursor owns the GL/posting/receivable items here. Claude owns planner/IFTA/linkage
+(see Claude folder BLOCKS-FUEL-PLANNER-IFTA.txt) — COORDINATE, do not double-build.
+================================================================================
+
+--------------------------------------------------------------------------------
+FUEL-01 · P0 · FIN-HOLD · ~$620K of fuel expense was NEVER GL-posted (backfill flushed nothing)
+--------------------------------------------------------------------------------
+FINDING (GUARD live): EXPENSE_GL_POSTING_ENABLED is ON, but the historical fuel spend was backfilled
+  WITHOUT ever flushing the post-commit GL hook, so the journal entries were never created. The flush path
+  `flushFuelGlPostsAfterCommit` exists but was not invoked for the backfilled rows. Net: fuel expense sits
+  in the fuel tables with NO corresponding accounting.journal_entries — the P&L understates fuel cost by
+  roughly $620K and the trial balance is wrong for every affected period.
+  *** RE-VERIFY before build: reconfirm the exact unposted total and the reason the flush never ran
+  (backfill bypassed the outbox vs. hook disabled at backfill time vs. entries created but voided). Do NOT
+  trust the $620K figure as final until re-counted live with the opco GUC set — this is a materiality-driving
+  number and must be exact. ***
+ROOT-CAUSE FIX (not a patch): make the backfill and the live path share ONE posting entry point that always
+  enqueues through the outbox; write a one-time, idempotent re-flush job that posts the missing JEs for the
+  already-backfilled fuel rows (dedupe by source fuel row id so it can never double-post). Reuse the existing
+  expense poster — write NO new GL math.
+CANONICAL: fuel expense → accounting.journal_entries (+ lines) via the existing expense poster; source rows
+  keep a back-reference (journal_entry_id) so re-runs are idempotent. Vendor AP truth = mdata.vendors.
+LINKAGE (§10.3 Fuel): every posted fuel expense → Unit, Driver, Vendor, Accounting(JE), and Load (FUEL-02).
+GUARD: scripts/verify-fuel-gl-posts-exist.mjs — FAIL if any non-voided fuel expense row has NULL
+  journal_entry_id; assert re-flush is idempotent (second run posts 0). Prove RED on current prod, GREEN after flush.
+DoD: every fuel expense row posts exactly one JE; period P&L fuel cost ties to the fuel subledger; guard green;
+  owner Neon-applies + gates the PR. NO "done" until the JE count == fuel-row count live.
+
+--------------------------------------------------------------------------------
+FUEL-04 · P1 · FIN-HOLD · "Driver Fuel-Overage Receivable" account is MISSING (blocks FUEL-03)
+--------------------------------------------------------------------------------
+FINDING (GUARD live): there is no CoA account to receive a driver fuel-overage charge, so the overage engine
+  (FUEL-03) has nowhere to post. catalogs.accounts has no "Driver Fuel-Overage Receivable".
+FIX: additive CoA account "Driver Fuel-Overage Receivable" (Asset / OtherCurrentAsset / is_postable=true),
+  seeded per operating entity that runs company fuel cards (TRANSP; USMCA when it fuels). NEVER rename/delete
+  an existing account (§7 additive-only). Owner-entered / owner-Neon-applied seed.
+GUARD: scripts/verify-fuel-overage-receivable-account.mjs — assert the account exists + is_postable per entity.
+DoD: account exists on prod; FUEL-03 can resolve it by system_purpose, not by name-match.
+
+--------------------------------------------------------------------------------
+FUEL-03 · P1 · FIN-HOLD · Fuel-card overage engine is ABSENT — 9 over-cap events unprocessed
+--------------------------------------------------------------------------------
+FINDING (GUARD live): fuel.fuel_card_overage_policies has 3 rows (e.g. a $900 cap) but NO engine evaluates
+  spend against the cap. 9 over-cap fuel events sit unprocessed — no charge, no driver notice, no receivable.
+BUILD (depends on FUEL-04): an evaluator that, per fuel transaction, compares spend to the driver/card policy
+  cap; on breach it books the overage to "Driver Fuel-Overage Receivable" (FUEL-04) and records a linked
+  overage record. COMPANY-driver rule (owner-locked): the OVERAGE receivable is a real driver receivable ONLY
+  where the driver's signed contract authorizes recovery (ties to signed_on_paper #3593 / escrow-draw authority);
+  otherwise it is a company fuel-cost variance, NOT a driver charge. DEFAULT = flag for review, never
+  auto-charge a driver without contract authority. Reuse the existing poster.
+LINKAGE: overage → Driver, Unit, fuel transaction, Accounting(JE / receivable), policy row.
+GUARD: scripts/verify-fuel-overage-engine.mjs — seed an over-cap fixture; assert the receivable posts (or the
+  review flag raises) and links both ways; assert no driver is charged without contract authority.
+DoD: the 9 existing over-cap events resolve (posted or flagged w/ reason); guard green; owner gate.
+
+--------------------------------------------------------------------------------
+FUEL-02 (money side) · P1 · FIN-HOLD · Fuel is 0% load-linked — bridge hardcodes load_id NULL
+--------------------------------------------------------------------------------
+FINDING (GUARD live): `relay-fuel-canonical-bridge.ts` writes load_id = NULL for every fuel row and applies a
+  CONSTANT exemption, so 0% of fuel is attributed to a load. This violates the hard rule "every diesel/roadside
+  expense MUST FK to a load" (§4) and makes per-load cost/margin wrong on the money side.
+GUARD-first FIX: replace the hardcoded NULL + constant exemption with real resolution — match the fuel event to
+  the driver's active load at the fuel timestamp (driver + date/GPS window), and where a fuel event is genuinely
+  non-load (yard, deadhead-with-no-load), stamp an EXPLICIT exemption reason, not a blanket constant.
+NOTE — LANE: the resolution heuristic (driver/GPS/date window) is Claude's FUEL planner side. Cursor owns the
+  effect on the posted JE (cost-of-load attribution). Coordinate: Claude resolves load_id, Cursor makes the
+  poster carry it onto the JE line. Build the money side against Claude's resolved column; do not re-implement it.
+GUARD: scripts/verify-fuel-load-link-not-hardcoded.mjs — FAIL if the bridge writes a constant NULL/exemption;
+  assert posted fuel JEs carry the resolved load_id (or an explicit per-row exemption reason).
+DoD: fuel-to-load attribution > 0% and rising; no blanket exemption; posted JE cost ties to the load.
+
+--------------------------------------------------------------------------------
+FUEL-08 · P2 · FIN-HOLD · Payment method hardcoded 'cash' / 'company_direct_credit' — misroutes the credit
+--------------------------------------------------------------------------------
+FINDING (GUARD live): company_direct_credit fuel is hardcoded to settle as 'cash', so the posting credits the
+  wrong account (cash vs. the fuel-card clearing / AP liability). Real method must drive the credit side.
+FIX: resolve the credit account from the actual payment method (company card → fuel-card clearing/AP liability;
+  direct credit → the funding account), not a hardcoded 'cash'. Reuse the poster's account-resolution helper
+  (mirror INS-01's resolveRoleAccountOptional pattern) — no new GL math.
+GUARD: scripts/verify-fuel-payment-method-drives-credit.mjs — assert a company_direct_credit row does NOT
+  credit cash.
+DoD: credit side matches the real method for every fuel row; guard green; owner gate.
+
+================================================================================
+BUILD ORDER (Cursor, this file): FUEL-04 (account) → FUEL-03 (overage engine) → FUEL-01 (re-flush, after
+  RE-VERIFY of the unposted total) → FUEL-02 money side (after Claude resolves load_id) → FUEL-08.
+ALL FIN-HOLD: build + owner Neon-applies + owner merge gate. Reuse the poster. No new GL math. No RETIRE writes.
+================================================================================

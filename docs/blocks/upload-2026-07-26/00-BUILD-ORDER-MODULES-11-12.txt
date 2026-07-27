@@ -1,0 +1,47 @@
+================================================================================
+FOR CURSOR — MODULES 11 (FACTORING) + 12 (SETTLEMENTS) · FINAL VERIFIED STATUS + BUILD SEQUENCE · 2026-07-26
+GUARD live-verified on Neon prod (br-fancy-credit-akjnd07a) + code @ a51447b (== origin/main minus one guard-registry backfill).
+Every money/GL/migration block = FINANCIAL-HOLD: design + guard only; owner Neon-applies; reuse the existing poster; NEVER new GL
+math; flags default OFF; QBO reconcile-only, no write-back. You merge your own PRs on green (non-financial); financial waits for JORGE-APPROVED.
+================================================================================
+
+WHAT GUARD VERIFIED WITH ITS OWN QUERIES (not just the agent read):
+- FACT-01: FACTORING_GL_POSTING_ENABLED override enabled=true for TRK + TRANSP + USMCA (flag says "TRANSP only, default OFF until CPA sign-off"). CONFIRMED.
+- SET-02: driver_payroll_clearing → "Driver Cash Advance" ASSET, QBO-149 — identical to advance_recovery; no net-pay clearing account exists. CONFIRMED.
+- escrow_liability_default → Liability QBO-250 (correct); advance_recovery → Asset QBO-149 (correct); driver_pay_expense → Cost of Labor–Mexico Drivers (correct). MEETS.
+- org.companies.min_net_settlement_pct = 50 for all 3 entities (SET-05 floor source).
+- All settlement + factoring subledger tables 0 rows on prod (pre-launch) → every defect below is LATENT, fires on flag-on.
+
+⚠ DO NOT flip SETTLEMENT_GL_POSTING_ENABLED until SET-01 + SET-02 + SET-04 land. The mounted deprecated poster mis-routes escrow/advance.
+
+BUILD SEQUENCE — copy/paste:
+```
+CURSOR — MODULES 11 + 12 BUILD ORDER (all FIN-HOLD: design+guard; owner Neon-applies; no flag flip until told)
+
+MODULE 12 — SETTLEMENTS (do FIRST — highest money-safety risk):
+  1. SET-01  Retire the mounted deprecated FIN-18 poster route (/api/v1/accounting/settlement-posting/post → 308 to canonical).
+             Guard: verify-no-deprecated-settlement-poster-mounted.mjs.
+  2. SET-02  Provision a "Driver Net-Pay Clearing" Other-Current-Liability account + rebind driver_payroll_clearing off QBO-149.
+             (GUARD supplies the Neon account-create + rebind box; owner applies.) Guard: verify-netpay-clearing-is-liability.mjs.
+  3. SET-04  Mount the canonical postSettlementBillPayment forward route (auth + flag gated) as the single settlement→GL entry.
+             Guard: verify-canonical-settlement-poster-mounted.mjs.
+  4. SET-05  Re-assert the 5% net-pay floor in closeSettlementPayRun AFTER escrow+advance+chargeback subtraction (block, no silent cap).
+             Guard: verify-netpay-floor-at-close.mjs.
+  5. SET-03  Consolidate disputes to driver_settlement_disputes; retire the P6 writer to settlement_disputes.
+             Guard: verify-single-dispute-subledger.mjs.
+  → THEN (owner + CPA) provision per-driver escrow/advance subs, then consider the flag flip.
+
+MODULE 11 — FACTORING:
+  1. FACT-01 Scope the kill-switch: delete TRK + USMCA overrides; confirm/So disable the TRANSP override per sign-off.
+             (GUARD supplies the Neon override-cleanup box; owner applies.) Guard: verify-factoring-flag-scope.mjs. DO THIS BEFORE FACT-04.
+  2. FACT-02 Drive recourse_days from the canonical agreement (95d) + age off advanced_at; fix factoring.routes.ts + both views.
+             Guard: verify-factoring-recourse-window.mjs.
+  3. FACT-03 Replace resolveActiveFactor (majority inference) with resolveCanonicalActiveFactor. Guard: verify-single-factor-resolver.mjs.
+  4. FACT-05 Add a distinct bank-charges/wire-fee GL line (design; owner applies).
+  5. FACT-04 OWNER seeds the FARO_FULL_RECOURSE_V1 agreement + binds Faro customers (AFTER FACT-01). GUARD supplies the seed box.
+
+PROTECT (MEETS — do NOT touch): the factoring secured-borrowing engine (ASC 860, A/R retained), the canonical settlement escrow→
+liability / advance→asset wiring, the retired-payroll 308 redirect. These are correct — regressing them is a defect.
+```
+Full per-block detail: BLOCKS-FACTORING.txt, BLOCKS-SETTLEMENTS.txt (this folder).
+================================================================================

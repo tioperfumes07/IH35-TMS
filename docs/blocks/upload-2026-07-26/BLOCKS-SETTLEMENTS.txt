@@ -1,0 +1,104 @@
+================================================================================
+FOR CURSOR — DRIVER SETTLEMENTS (Module 12) DOMAIN BLOCKS · GUARD-VERIFIED · 2026-07-26
+Standard: ih35-block-builder, DoD A–E + VERIFY 1–8, Law of the Land, 8-Layer Connected-Closure.
+Code read @ a51447b (== origin/main minus #3585 guard-registry backfill — no settlement code delta).
+Provenance: [GUARD-VERIFIED-LIVE 2026-07-26] = GUARD ran the query; [AGENT-VERIFIED @a51447b · RE-VERIFY LIVE] = agent code-read.
+LOCKED: Driver Escrow = LIABILITY; Driver Cash Advance = ASSET; net-pay clearing = its own LIABILITY; 5% net-pay floor (driver keeps
+≥5% of gross, bucketed + per-event, no auto-cap); Mexican B1 drivers = Cost of Labor–Mexico Drivers (W-8BEN). All money/GL = FINANCIAL-HOLD
+(design+guard; owner Neon-applies; reuse the poster; flags OFF; no QBO write-back). ⚠ Do NOT flip SETTLEMENT_GL_POSTING_ENABLED until
+SET-01/02/04 land — the active-route mis-routing must be fixed first.
+NOTE: all settlement tables are 0 rows on prod (pre-launch, flag OFF). These are LATENT defects that FIRE on flag-on — fix before the flip.
+================================================================================
+
+ROUTE→ENGINE MAP (mounted GL-posting settlement paths) [AGENT-VERIFIED @a51447b]:
+  POST /api/v1/accounting/settlement-posting/post → postSettlementToGl (FIN-18)      escrow→generic {type}_recovery; advance→generic {type}_recovery   DEPRECATED but MOUNTED
+  POST /api/v1/driver-finance/settlements/:id/payrun-close → closeSettlementPayRun    escrow→per-driver LIABILITY sub (correct); advance→advance_recovery    canonical (payrun)
+  (none) postSettlementBillPayment (blueprint §3 LOCKED canonical)                    escrow→driver LIABILITY sub; advance→driver ASSET sub                  canonical but UNMOUNTED
+  POST /api/v1/payroll/driver-settlements/* → payroll engine                          —                                                                     retired, 308→canonical (safe)
+
+SET-01 · P1 · FIN-HOLD · Deprecated FIN-18 GL poster is MOUNTED and reachable (this proves S-01)
+PROD TRUTH [AGENT-VERIFIED @a51447b · RE-VERIFY LIVE]: settlement-posting.routes.ts:47 (app.post(".../settlement-posting/post")
+  → postSettlementToGl) is a fastify-plugin default export (:134-136) auto-mounted by accounting/index.ts:11-18 (@fastify/autoload,
+  /\.routes\.(ts|js)$/, recursive), registered index.ts:1069. The engine settlement-posting.service.ts:3-9 SELF-DECLARES
+  "DEPRECATED / SUPERSEDED … no live caller" — contradicted by the mounted route. Mis-routing: :311-343 sends every deduction to
+  {type}_recovery and never resolves the per-driver escrow-liability / cash-advance-asset subs; the canonical poster does
+  (settlement-bill-payment-posting.service.ts:165-206). On flag-on, a settlement posted through this route mis-routes escrow/advance
+  vs the locked model. Live GL: journal_entry_postings WHERE source_transaction_type='settlement' = 0 [GUARD-VERIFIED-LIVE] (flag OFF).
+CANONICAL: canonical poster = postSettlementBillPayment (accounting/settlement-posting/settlement-bill-payment-posting.service.ts:285).
+  to_regclass('driver_finance.driver_settlements') = present (canonical; RETIRE twin payroll.driver_settlements also exists — never write it).
+LINKAGE: driver ↔ settlement ↔ escrow(holder=driver, LIABILITY) ↔ driver_advance_accounts(ASSET) ↔ journal_entry_postings — the
+  FIN-18 path breaks the escrow/advance both-way link (posts to shared roles, not driver-keyed bridges).
+STANDARD: McLeod/Alvys single-subledger settlement posting; QBO/NetSuite AP — ONE canonical poster per document. Two live posters = defect.
+FIX: retire /api/v1/accounting/settlement-posting/post → 308-redirect to the canonical engine (mirror payroll/driver-settlement.routes.ts's
+  already-correct retirement) or remove the fp export. Do this BEFORE any flag flip.
+GUARD: scripts/verify-no-deprecated-settlement-poster-mounted.mjs — FAIL if settlement-posting.routes is autoloaded/registered.
+ACCEPTANCE: the deprecated route 308s to canonical; only postSettlementBillPayment + payrun-close remain as GL entry points.
+
+SET-02 · P1 · FIN-HOLD · driver_payroll_clearing (net-pay) role MIS-BOUND to the Cash-Advance ASSET
+PROD TRUTH [GUARD-VERIFIED-LIVE 2026-07-26, opco=TRANSP set]: chart_of_accounts_roles for TRANSP —
+  driver_payroll_clearing → account_name "Driver Cash Advance", account_type ASSET, qbo_account_id 149 — the IDENTICAL account to
+  advance_recovery (Asset, "Driver Cash Advance", 149). And catalogs.accounts for TRANSP has ZERO accounts named %clearing%/%net pay%.
+  FIN-18 credits the net-pay leg to this role (settlement-posting.service.ts:278-283, 337-343) → net pay would credit the Driver
+  Cash Advance ASSET (contaminating/contra-ing the advance asset) and collide with advance_recovery on QBO-149.
+CANONICAL: net-pay clearing must be its OWN Other-Current-Liability account (a payout later drains it). Locked decision names "Net-pay clearing account."
+LINKAGE: settlement net ↔ clearing LIABILITY ↔ bank payout (Dr clearing / Cr bank) — currently the clearing link points at an asset, breaking payout reconciliation.
+STANDARD: QuickBooks/NetSuite payroll clearing = a liability the payout drains; never an asset, never shared with a receivable.
+FIX (FIN-HOLD): provision a "Driver Net-Pay Clearing" Other-Current-Liability account; rebind driver_payroll_clearing to it; unbind from QBO-149.
+  GUARD provides the account-create + rebind paste-box; owner applies.
+GUARD: scripts/verify-netpay-clearing-is-liability.mjs — FAIL if driver_payroll_clearing resolves to a non-Liability account or shares an account with advance_recovery.
+ACCEPTANCE: driver_payroll_clearing → a distinct Liability account, both entities-relevant; not QBO-149.
+
+SET-03 · P2 · FIN-HOLD · Split-brain disputes — driver_finance.settlement_disputes is stranded
+PROD TRUTH [AGENT-VERIFIED @a51447b · RE-VERIFY LIVE]: both tables exist, both 0 rows. Canonical
+  driver_finance.driver_settlement_disputes has TWO live mounted writers (settlements/disputes/disputes.routes.ts:171;
+  driver-finance/settlement-dispute.service.ts:240, mounted index.ts:884,888). driver_finance.settlement_disputes has ONE orphan
+  writer (driver-finance/settlement-disputes-p6.service.ts:54) with no mounted route — a parallel dispute ledger the UI never reads.
+CANONICAL: to_regclass('driver_finance.driver_settlement_disputes') = canonical; settlement_disputes = stranded (single orphan writer).
+LINKAGE: dispute ↔ settlement ↔ driver — the P6 orphan writes off-hub.
+STANDARD: single dispute subledger (McLeod/Alvys).
+FIX: consolidate to driver_settlement_disputes; repoint/remove the P6 writer; archive settlement_disputes (Rule 07, additive). Owner confirms merge direction (facts: canonical = driver_settlement_disputes).
+GUARD: scripts/verify-single-dispute-subledger.mjs — FAIL if any code writes driver_finance.settlement_disputes.
+ACCEPTANCE: 0 writers to settlement_disputes; all disputes flow to driver_settlement_disputes.
+
+SET-04 · P2 · FIN-HOLD · The canonical Bill+BillPayment forward poster is UNMOUNTED
+PROD TRUTH [AGENT-VERIFIED @a51447b · RE-VERIFY LIVE]: grep postSettlementBillPayment in **/*.routes.ts = no matches. The
+  blueprint-§3-LOCKED canonical poster (settlement-bill-payment-posting.service.ts:285) has only its REVERSAL wired
+  (governance/void-cancel-executors.ts:21) + test callers — no forward HTTP route. So the only mounted forward GL posters are the
+  deprecated FIN-18 (SET-01) and payrun-close; the account-correct engine cannot be invoked.
+CANONICAL: postSettlementBillPayment (advance→driver Cash-Advance ASSET sub via driver_finance.driver_advance_accounts; escrow→driver
+  Escrow LIABILITY sub via accounting.escrow_accounts; resolveDriverEscrowLiabilityAccount fail-loud asserts Liability + not-Faro).
+LINKAGE: settlement ↔ driver-vendor Bill ↔ BillPayment ↔ per-driver asset/liability subs — correct both-way in code, but unreachable.
+STANDARD: driver = vendor, one Bill per load, net BillPayment to bank (McLeod/Alvys + QBO AP).
+FIX: mount a role-gated, flag-gated forward route for postSettlementBillPayment as the single canonical settlement→GL entry point;
+  retire SET-01's route into it.
+GUARD: scripts/verify-canonical-settlement-poster-mounted.mjs — FAIL if postSettlementBillPayment has no mounted forward route.
+ACCEPTANCE: the canonical poster is reachable behind auth+flag; a settlement posts escrow→liability sub and advance→asset sub (throwaway branch proof).
+
+SET-05 · P2 · 5% net-pay floor NOT re-enforced at pay-run close (it can be breached by escrow/advance/chargeback subtraction)
+PROD TRUTH [AGENT-VERIFIED @a51447b · RE-VERIFY LIVE]: the floor lives in settlement-deduction-cap.service.ts:25
+  (DEFAULT_MIN_NET_PCT=5), applied at DEDUCTION-apply time only (weekly-close.routes.ts:151; settlements-load-bookended.service.ts:369).
+  The pay-run close engine settlement-payrun-close.service.ts computes NET = gross − deductions − escrow_contribution −
+  advance_recoveries − chargebacks and guards only NET_PAY_NEGATIVE (:61,:340) — NO 5% floor. Because the floor was computed on
+  deductions BEFORE escrow/advance/chargeback are subtracted, those later subtractions can drop net below 5% of gross with no block.
+  Floor source is real: mdata.drivers.min_net_settlement_pct → org.companies.min_net_settlement_pct (= 50 on prod for all 3 entities
+  [GUARD-VERIFIED-LIVE 2026-07-26]) → env → per-apply override.
+CANONICAL: floor resolves per settlement-deduction-cap.service.ts:19-24.
+LINKAGE: settlement net ↔ driver floor policy ↔ escrow/advance withholding.
+STANDARD: owner-locked "driver keeps ≥5% of gross." Bucketed + per-event, no auto-cap (met at deduction stage; GAP at close stage).
+FIX: re-assert the RESOLVED floor in closeSettlementPayRun AFTER escrow+advance+chargeback subtraction — BLOCK (never silently cap;
+  honor an explicit owner override with actor+reason).
+GUARD: scripts/verify-netpay-floor-at-close.mjs — FAIL if closeSettlementPayRun lacks a post-withholding floor assertion.
+ACCEPTANCE: a settlement whose escrow+advance would push net < floor is blocked at close with a floor-breach error.
+
+===== MEETS — PROTECT (do NOT re-block) =====
+[GUARD-VERIFIED-LIVE 2026-07-26] Escrow = LIABILITY: escrow_liability_default → account_type Liability ("2025-Damage Claim Escrow",
+  QBO-250), is_active. Advance = ASSET: advance_recovery → Asset ("Driver Cash Advance", QBO-149). driver_pay_expense →
+  "Cost of Labor–Mexico Drivers" (CostOfGoodsSold) — matches the W-8BEN/B1 locked decision.
+[AGENT-VERIFIED @a51447b] Canonical engines wire escrow→per-driver Liability sub (resolveDriverEscrowLiabilityAccount fail-loud
+  asserts Liability + not-Faro; $2,000 cap, contribute-never-release I3) and advance→driver's Cash-Advance asset sub. Retired
+  payroll settlement engine safely 308-redirects (guard verify-no-payroll-settlement-writes.mjs). settlement_lines vs
+  settlement_contract_lines is NOT split-brain (different concepts: earning/deduction lines vs contract-terms snapshot — both legitimate).
+PROVISIONING NOTE [GUARD-VERIFIED-LIVE 2026-07-26]: accounting.escrow_accounts(holder='driver')=0 and driver_advance_accounts=0 on
+  prod — correct today (fail-loud resolvers block posting until provisioned), but the per-driver escrow/advance subs must be
+  provisioned before flag-on or the canonical poster throws DRIVER_ESCROW_ACCOUNT_UNBOUND / DRIVER_ADVANCE_ACCOUNT_MISSING.
+================================================================================

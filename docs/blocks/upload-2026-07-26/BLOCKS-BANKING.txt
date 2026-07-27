@@ -1,0 +1,77 @@
+================================================================================
+FOR CURSOR — BANKING DOMAIN BLOCKS · GUARD-VERIFIED · 2026-07-26
+Snapshot origin/main 5ce94c8. Standard: block-builder, DoD A–E + VERIFY 1–8, 8-layer, finance:reconciliation
+(bank-rec methodology, reconciling-item aging), ih35-accounting-decisions (flags OFF, reconcile-only, no QBO write-back).
+Canonical banking.* — bank.* is RETIRE (never write). Money paths = FINANCIAL-HOLD (owner Neon-applies migrations).
+HEADLINE (verified): the GL poster, transfer minter, cash-GL bind, and zero-diff session close are soundly built and
+fail-closed. The gaps are METHODOLOGY-level (real bank-rec model, aging, intercompany, canonical schema, fuel chain).
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────
+BANK-DOM-01 — Reconciliation match-ledger writes RETIRE bank.reconciliation_matches; no canonical banking.* target exists
+LANE: FINANCIAL-HOLD (owner ruling + migration)   MODULE: banking   FINDING: BANK-DOM-01 (P1 · canonical-direction)
+PROD TRUTH [GUARD-VERIFIED 2026-07-26]: to_regclass('banking.reconciliation_matches') = NULL; to_regclass(
+  'bank.reconciliation_matches') = EXISTS (RETIRE schema; the ONLY table left in bank.*). Writers: apps/backend/src/
+  accounting/bank-recon/match.service.ts:464, recon-worklist.service.ts:182 (INSERT INTO bank.reconciliation_matches);
+  reads: bills.service.ts:176/242, expenses.routes.ts:236, month-close.service.ts:127, cron/bank-recon-auto-match.cron.ts:43.
+  FK direction itself is correct (→ banking.bank_transactions).
+STANDARD (Rule 15 / Law §10.1): canonical banking.* — never write bank.*. THE FIX (owner ruling first): create canonical
+  banking.reconciliation_matches (mirror shape, FORCED RLS + grants, same FK→banking.bank_transactions), migrate existing
+  rows, repoint the 2 writers + 4 readers, Rule 07 archive bank.reconciliation_matches. GUARD: verify-steps FAILS on any
+  write to bank.*. ACCEPTANCE: 0 writers to bank.*; canonical proven (to_regclass); rows migrated (counts reconcile); both entities.
+
+────────────────────────────────────────────────────────────────────────────
+BANK-DOM-02 — Closed reconciliation sessions are NOT immutable (closed-period/session immutability sweep)
+LANE: FINANCIAL-HOLD   MODULE: banking   FINDING: BANK-DOM-02 (P1 · auditability)
+PROD TRUTH [GUARD-VERIFIED 2026-07-26]: apps/backend/src/banking/reconciliation.routes.ts:669 closes to status='reconciled'
+  but does NOT lock member rows; categorization.routes.ts + bulk-transactions.ts have ZERO reconciled/period-lock guards. A
+  transaction inside a closed zero-diff session can be re-categorized or un-cleared afterward → silently breaks the tie-out.
+STANDARD: bank rec sessions immutable once closed (QuickBooks/NetSuite reconcile lock). THE FIX: block re-categorize/un-clear/
+  amount-change on any transaction whose session is 'reconciled' (server-side, fail-loud). SHARES the guard with ACCT-DOM-03
+  (one SYSTEM-WIDE "no writes to a closed period/session" invariant). GUARD: verify-steps closed-period-immutability.mjs FAILS
+  on a mutation of a member of a reconciled session. ACCEPTANCE: mutation refused live; guard green.
+
+────────────────────────────────────────────────────────────────────────────
+BANK-DOM-03 — No true bank-rec model (no outstanding-items / deposits-in-transit; flat matched-sum tie only)
+LANE: FINANCIAL-HOLD   MODULE: banking   FINDING: BANK-DOM-03 (P1 · methodology)
+PROD TRUTH [GUARD-VERIFIED 2026-07-26]: reconciliation.routes.ts:130 bookBalanceCents = matchedCredits − matchedDebits,
+  compared flat to statement_balance_cents (:375). No beginning-balance + cleared = ending-statement structure; no register/
+  carry-forward of uncleared items. Works only for a fully-cleared period; cannot represent timing differences.
+STANDARD (Rule 15 / finance:reconciliation): bank-rec = Balance per bank ± deposits-in-transit ∓ outstanding checks ± errors
+  = adjusted; Balance per GL ± unrecorded = adjusted; difference must be 0. THE FIX: model beginning balance, cleared items,
+  outstanding checks + deposits in transit with carry-forward to the next period; the session ties GL↔bank to zero including
+  timing items. GUARD: a session with uncleared items still ties to an adjusted-balance zero. ACCEPTANCE: a period with an
+  outstanding check + a deposit-in-transit reconciles to zero on TRANSP + USMCA.
+
+────────────────────────────────────────────────────────────────────────────
+BANK-DOM-04 — Reconciling items are not aged, classified, or escalated
+LANE: FINANCIAL-HOLD   MODULE: banking   FINDING: BANK-DOM-04 (P2)
+PROD TRUTH [GUARD-VERIFIED 2026-07-26]: no aging/aged/days_outstanding/escalate/stale logic anywhere in apps/backend/src/
+  banking or accounting/bank-recon (grep clean). Uncleared/unmatched items have no timing-vs-adjustment-vs-investigate class
+  and no aging clock.
+STANDARD (finance:reconciliation): categorize (timing/adjustment/investigate), age (0-30/31-60/61-90/90+), escalate by
+  threshold. THE FIX: aging + classification + escalation on reconciling items. GUARD: an aged item over threshold surfaces
+  as an escalation. ACCEPTANCE: aged/classified reconciling-items list with escalation, live.
+
+────────────────────────────────────────────────────────────────────────────
+BANK-DOM-05 — Transfers are intra-entity only — no intercompany netting (due-to/due-from)
+LANE: FINANCIAL-HOLD   MODULE: banking   FINDING: BANK-DOM-05 (P2 · multi-entity)
+PROD TRUTH [GUARD-VERIFIED 2026-07-26]: apps/backend/src/banking/transfers.service.ts:106,140 bind both from_account and
+  to_account to a single operating_company_id=$2. A TRANSP↔USMCA (or ↔TRK) bank movement cannot be an intercompany transfer
+  with due-to/due-from that nets to zero on consolidation.
+STANDARD (ih35-entity-facts + finance:reconciliation intercompany): separate entity books + reciprocal intercompany monitoring.
+  THE FIX: intercompany transfer path posting reciprocal due-to/due-from that nets to zero; entity pair recorded both sides.
+  GUARD: an inter-entity transfer creates matched reciprocal legs. ACCEPTANCE: TRANSP↔USMCA transfer nets to zero, both books.
+
+────────────────────────────────────────────────────────────────────────────
+BANK-DOM-06 — Fuel-card diesel expense→GL is candidate-only (never posts) + no card-overage→driver-liability→settlement
+LANE: FINANCIAL-HOLD   MODULE: banking/fuel   FINDING: BANK-DOM-06 (P2)
+PROD TRUTH [GUARD-VERIFIED 2026-07-26]: apps/backend/src/fuel/fuel-transaction-import.ts:353 gl_post_candidates=[] and :438
+  only pushes candidates; the importer writes fuel.fuel_transactions (unit_id/driver_id/vendor_id/gallons) but emits NO expense
+  JE. No overage/over_limit/card→receivable/fuel-deduction path anywhere (grep clean). Loves cron imports station PRICES, not
+  card transactions (fuel-transaction-import.ts:10-12) — card import is manual CSV (fuel-transaction-import.routes.ts:83).
+STANDARD (§10.3 Fuel chain): card→unit+driver+vendor+expense GL+IFTA; overage→driver liability→settlement. THE FIX: post the
+  fuel expense JE via the poster (candidates→balanced JE, flag OFF); book card-overage as a driver receivable→settlement
+  deduction (driver_finance.*). GUARD: a fuel import with a categorized txn posts a balanced JE; an overage seeds a driver
+  liability. ACCEPTANCE: live $0.05 fuel expense JE + one overage→driver-liability, both entities. Owner-gated.
+================================================================================

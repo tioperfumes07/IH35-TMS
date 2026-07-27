@@ -234,7 +234,7 @@ export function computeRecommendedNext(state) {
     return `git checkout main && git pull --ff-only origin main && git branch -D ${state.branch}`;
   }
   if (state.behind > 0) {
-    return "npm run branch:rebuild-linear -- --source HEAD --message \"linear rebuild\"";
+    return "git cherry-pick <sha> onto fresh origin/main (preferred) OR npm run branch:rebuild-linear -- --source <sha> --message \"linear rebuild\" (commit-own patch only)";
   }
   if (state.dirtyCount > 0) {
     return "git add -A && git commit -m \"<message>\" && npm run block:ship -- \"<message>\"";

@@ -1,0 +1,68 @@
+================================================================================
+FOR CURSOR — MAINTENANCE DOMAIN BLOCKS · GUARD-VERIFIED (real source @ 13a2ff3) · 2026-07-26
+Standard: block-builder, DoD A–E + VERIFY 1–8, 8-layer, ih35-accounting-decisions. Money paths = FINANCIAL-HOLD
+(owner Neon-applies; reuse the poster; flags default OFF). Canonical = maintenance.* ; RETIRE = maint.*.
+IMPROVED SINCE 07-25 (verified FIXED — do NOT re-block): WO-close now auto-creates accounting.bills A/P + posts a
+BALANCED JE via the shared poster (maintenance-posting/poster.service.ts:163-197,382-393; gated BILL_GL_POSTING_ENABLED
+default OFF); the old unbalanced lineless internal-labor JE is REMOVED; convert-to-WO is WIRED forward
+(intransit_issues.promoted_to_wo_id SET). Those are done. The blocks below are the REMAINING money/linkage domain.
+================================================================================
+
+MNT-ECON-01 · P1 · FIN-HOLD · Standalone parts purchase posts NO A/P bill and NO GL
+PROD TRUTH [GUARD-VERIFIED @13a2ff3]: apps/backend/src/maintenance/parts-inventory.routes.ts:52-84 — POST /parts-inventory/
+  purchases only INSERTs maintenance.parts_inventory (last_purchase_amount, on_hand_qty). No Dr Inventory / Cr A/P.
+  Inventory asset inflates off-ledger.
+LINKAGE: parts_inventory→vendor (mdata.vendors ✓ per 0049) but NO bill/JE. FIX: route the purchase through the EXISTING
+  poster (Dr Inventory-or-Parts-Expense / Cr A/P via mdata.vendors), flag OFF, idempotent, reversal=reverse-and-replace.
+  Owner decides inventory-capitalize vs expense (parts are currently expensed — confirm). STANDARD: QBO/GAAP perpetual-vs-
+  periodic. GUARD: verify-steps FAILS on a parts purchase with no balanced JE (behind flag). ACCEPTANCE: live $0.05 purchase
+  → A/P bill + balanced JE, both entities. MIGRATE: none unless a control role missing.
+
+MNT-ECON-02 · P1 · FIN-HOLD · Severe-repair has no approve / capitalize-vs-expense / GL endpoint
+PROD TRUTH [GUARD-VERIFIED @13a2ff3]: apps/backend/src/maintenance/severe-repair-estimate.routes.ts:56-189 = refresh/
+  fleet-cost/per-unit/export-pdf/mark-oos/mark-back-in-service ONLY. No approve→bill/expense; no capitalize-vs-expense owner
+  prompt. Owner money-lock §8 = ALWAYS-ASK capitalize-vs-expense, NO threshold. FIX (design + owner): approve action that
+  prompts capitalize-vs-expense per event and posts via poster (capitalize → asset; expense → expense), flag OFF. GUARD:
+  no approve path posts without the capitalize-vs-expense decision. ACCEPTANCE: live approve → correct JE per owner choice.
+
+MNT-ECON-04 · P1 · FIN-HOLD · Warranty reimbursement posts NO GL / receivable / credit memo
+PROD TRUTH [GUARD-VERIFIED @13a2ff3]: apps/backend/src/maintenance/warranty.routes.ts:523-559 — /claims/:id/reimburse sets
+  status='reimbursed' + reimbursement_amount_cents + CRUD audit only. Vendor-recovery dollars never reach the ledger.
+FIX: post the recovery via poster (Dr Cash/AR-from-vendor / Cr the original repair expense — never sales income), link the
+  vendor (mdata.vendors) + source WO, flag OFF. GUARD: reimburse with no balanced JE fails. ACCEPTANCE: live reimburse → JE
+  credits the same expense, both entities.
+
+MNT-LINK-02 · P1 · FIN-HOLD (migration) · work_order_lines → work_orders is an ISLAND
+PROD TRUTH [GUARD-VERIFIED @13a2ff3]: db/migrations/0050_*:118-137 (dup CREATE 0123_*:384-392) — work_order_uuid uuid
+  NOT NULL, the ONLY FK is self-ref parent_line_uuid→work_order_lines(uuid). No FK to maintenance.work_orders; grep of all
+  migrations = no ADD CONSTRAINT wiring it. FIX: idempotent migration ADD CONSTRAINT work_order_lines.work_order_uuid →
+  maintenance.work_orders(uuid) (validate NOT VALID→VALIDATE if data), FORCED RLS unchanged. GUARD: FK-parity check.
+  ACCEPTANCE: FK enforced live, 0 orphan lines. Owner Neon-applies.
+
+MNT-ECON-05 · P2 · UI · "Save header" is a dead control on the WO money detail (regressed to clickable-but-inert)
+PROD TRUTH [GUARD-VERIFIED @13a2ff3]: apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx:517-519 — <Button
+  disabled={invoiceMismatch || !id}>Save header</Button> has NO onClick. Real edits go via CreateWorkOrderModal (PATCH
+  /work-orders/:id, work-orders.routes.ts:927). Data-loss trap: the visible Save does nothing. FIX: wire it to the PATCH or
+  remove it (owner: prefer wire). GUARD: no enabled Save button without a handler on a money surface. ACCEPTANCE: edit+save
+  persists live. (LANE: this one is UI — Claude Coder may take it; flagged here for continuity.)
+
+MNT-LINK-04 · P2 · FIN-HOLD · Maintenance-vendor catalog orphaned from AP (mdata.vendors)
+PROD TRUTH [GUARD-VERIFIED @13a2ff3]: catalogs.maintenance_vendors (0066) has NO linked_vendor_id / FK to mdata.vendors.
+  Road-service captures vendor_name FREE TEXT with only optional vendor_id (road-service/tickets.routes.ts:20-21) → a WO/bill
+  with no canonical AP vendor → orphan from AP/GL. (work_orders.vendor_id + parts_inventory.vendor_id DO → mdata.vendors,
+  0049:156,170 — so the gap is the catalog + road-service free-text path.) FIX: add catalogs.maintenance_vendors.linked_
+  vendor_id → mdata.vendors; road-service uses the canonical vendor picker (no free-text). GUARD: no WO/bill with an unlinked
+  maintenance vendor. ACCEPTANCE: road-service ticket resolves to an AP vendor, both entities. This is a C13 instance (memo→FK).
+
+MNT-ENT-01 · P3 · parts_inventory.operating_company_id is a soft column (no FK to org.companies)
+PROD TRUTH [GUARD-VERIFIED @13a2ff3]: db/migrations/0049_*:153-165 — operating_company_id uuid NOT NULL, no REFERENCES
+  org.companies(id); no later ALTER. Relies on RLS alone. FIX: ADD FK (idempotent). [RE-VERIFY LIVE RLS enforcement first.]
+
+MNT-LINK-03b · P3 · convert-to-WO has no source_intransit_issue back-ref on the WO
+PROD TRUTH [GUARD-VERIFIED @13a2ff3]: WO INSERTs store source_type text + load_id only (arriving-soon.routes.ts:202-241;
+  triage.routes.ts:80-98). Forward is wired (promoted_to_wo_id SET); reverse is reconstructable only by query. FIX: add WO.
+  source_intransit_issue_id FK for a first-class reverse link. Residual/low priority.
+
+TAG (in-flight sweeps, not blocked here): MNT-LINK-01 position-history INSERT maint.position_history
+  (position-history.routes.ts:178) = C2 STOP-class (overlaps Lists L4 maint.* writes — ONE C2 sweep fixes both).
+================================================================================

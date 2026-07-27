@@ -1,0 +1,69 @@
+================================================================================
+CURSOR — MODULE 8 INSURANCE · MONEY / GL SIDE BLOCKS · 2026-07-26
+GUARD live-audited Insurance against Neon prod (br-fancy-credit-akjnd07a) + GitHub main this session.
+Standard: guard-first, 8-layer / DoD A–E + VERIFY 1–8, canonical tables, reuse poster, NO new GL math,
+HOLD financial PRs for owner Neon-apply + merge gate. Posting ON for testing; QBO write-back OFF.
+Lane split: Cursor owns premium/claim GL + FKs on financial tables here. Claude owns the ops linkage
+(claim→load canonical table, lawsuit↔legal) — see Claude folder BLOCKS-INSURANCE-OPS.txt. COORDINATE.
+================================================================================
+
+--------------------------------------------------------------------------------
+INS-01 · P0 · FIN-HOLD · Fleet insurance premium posts to ARBITRARY oldest-2 accounts (wrong GL)
+--------------------------------------------------------------------------------
+FINDING (GUARD live): `policy-unit-fleet.service.ts` → pickFleetPremiumAccounts() resolves the premium debit/
+  credit by `ORDER BY created_at LIMIT 2` — i.e. it grabs whatever the two OLDEST accounts happen to be, not the
+  correct insurance-expense / prepaid / payable accounts. Fleet premium is being posted to arbitrary accounts.
+  This is a real GL-correctness defect: the premium expense is landing wherever, and the trial balance mislabels
+  insurance cost.
+ROOT-CAUSE FIX: resolve premium accounts by ROLE / system_purpose, not by creation order. Mirror the correct
+  pattern already in refund-obligation.service → resolveRoleAccountOptional (role-based account resolution). If a
+  required insurance role account is missing, seed it additively (owner-applied) rather than falling back to an
+  arbitrary account. Reuse the poster — no new GL math.
+CANONICAL: premium → accounting.journal_entries via the role-resolved insurance-expense / prepaid-insurance /
+  insurance-payable accounts; NEVER an ORDER-BY-created_at pick.
+LINKAGE (§10.3 Insurance): premium → Unit(s), Operating Company, Accounting(JE), policy row.
+GUARD: scripts/verify-fleet-premium-role-resolved.mjs — FAIL if the account picker uses created_at/LIMIT;
+  assert the debit/credit resolve to the role-designated insurance accounts. RED on current code, GREEN on fix.
+DoD: fleet premium posts to the correct role accounts for every entity; guard green; owner Neon-apply + gate.
+
+--------------------------------------------------------------------------------
+INS-03 · P1 · FIN-HOLD · refund_obligation.journal_entry_id has NO foreign key (dangling money link)
+--------------------------------------------------------------------------------
+FINDING (GUARD live): the refund-obligation table carries journal_entry_id but there is NO FK constraint to
+  accounting.journal_entries — the money link is by convention only and can dangle (orphaned refund pointing at a
+  non-existent / voided JE). An auditor cannot trust the tie.
+FIX: add the FK refund_obligation.journal_entry_id → accounting.journal_entries(id) (idempotent migration,
+  ON DELETE RESTRICT / no cascade — void, never delete). Backfill/validate: 0 dangling ids before adding the
+  constraint; if any dangle, surface them (do not silently drop). void-not-delete on JEs.
+GUARD: scripts/verify-refund-obligation-je-fk.mjs — assert the FK exists and 0 rows dangle.
+DoD: FK live on prod; 0 orphans; guard green; owner Neon-apply + gate (migration = financial).
+
+--------------------------------------------------------------------------------
+INS-04 · P1 · FIN-HOLD · damage_continuity_chains.insurance_claim_id has NO foreign key
+--------------------------------------------------------------------------------
+FINDING (GUARD live): damage_continuity_chains references an insurance claim via insurance_claim_id but with NO
+  FK — the safety-damage ↔ insurance-claim link (§10.3: Safety damage → Maintenance WO + Insurance claim) can
+  point at a claim that doesn't exist. Breaks the both-way linkage law (§10.3 / C3).
+FIX: add FK damage_continuity_chains.insurance_claim_id → the canonical insurance_claims table (verify the exact
+  canonical table + column name live before writing — do NOT assume; §C1). Backfill 0 dangling; RESTRICT.
+GUARD: scripts/verify-damage-chain-claim-fk.mjs — FK exists, 0 dangling, both-way reachable.
+DoD: FK live; 0 orphans; guard green; owner Neon-apply + gate.
+
+--------------------------------------------------------------------------------
+INS-02 (money side) · P2 · FIN-HOLD · Claim recovery has no money link (recovery not posted/traceable)
+--------------------------------------------------------------------------------
+FINDING (GUARD live): an insurance claim recovery (money received from the insurer) has no accounting link — the
+  recovery is not tied to a JE, so cash-in from a claim is untraceable to the claim that produced it.
+FIX: when a claim recovery is recorded, post it through the existing poster (DR cash/receivable / CR the claim's
+  cost-recovery or the originally-expensed loss account, per the claim's booked loss) and FK the recovery to its
+  JE and to the claim. Reuse poster; no new GL math. COORDINATE with Claude INS-05/06 for the claim→load / legal
+  links so the recovery is fully connected.
+LINKAGE: recovery → Insurance claim → Accounting(JE) → (originating Safety incident / Unit / Load).
+GUARD: scripts/verify-claim-recovery-posts-and-links.mjs — a recorded recovery posts one JE and links to the claim.
+DoD: every claim recovery has a JE + claim FK; guard green; owner gate.
+
+================================================================================
+BUILD ORDER (Cursor, this file): INS-01 (premium role-resolve — highest, it's actively mis-posting) →
+  INS-03 + INS-04 (FKs — cheap, high audit value) → INS-02 (recovery posting).
+ALL FIN-HOLD. Reuse the poster. No new GL math. Verify canonical table names LIVE before any FK (§C1). No RETIRE writes.
+================================================================================

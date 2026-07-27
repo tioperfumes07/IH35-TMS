@@ -63,6 +63,26 @@ test("happy path rebuilds linear commit", () => {
   assert.match(run.stdout, /branch:rebuild-linear OK/);
 });
 
+test("does NOT revert files merged into main after the source branch point", () => {
+  // Reproduces the live C5 data-loss: main advances with protected.txt after feature lands;
+  // two-dot origin/main..source would DELETE protected.txt. Commit-own patch must keep it.
+  const dir = makeRepo();
+  writeAndCommit(dir, "feature.txt", "feature\n", "feature on branch");
+  const source = runGitOrThrow(["rev-parse", "HEAD"], { cwd: dir });
+
+  runGitOrThrow(["checkout", "main"], { cwd: dir });
+  writeAndCommit(dir, "protected.txt", "keep-me\n", "later merge on main");
+  runGitOrThrow(["push", "origin", "main"], { cwd: dir });
+
+  runGitOrThrow(["checkout", "-B", "feat/test", source], { cwd: dir });
+  const run = runScript(["--source", source, "--message", "linearized"], {
+    IH35_BRANCH_TOOLING_ROOT: dir,
+  });
+  assert.equal(run.status, 0, run.stderr + run.stdout);
+  assert.equal(fs.readFileSync(path.join(dir, "protected.txt"), "utf8"), "keep-me\n");
+  assert.equal(fs.readFileSync(path.join(dir, "feature.txt"), "utf8"), "feature\n");
+});
+
 test("conflict path exits non-zero", () => {
   const dir = makeRepo();
   writeAndCommit(dir, "conflict.txt", "base\n", "base");

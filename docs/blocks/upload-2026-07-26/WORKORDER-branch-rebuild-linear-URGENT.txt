@@ -1,0 +1,42 @@
+================================================================================
+CURSOR — URGENT INFRA WORK ORDER · fix branch:rebuild-linear (reverts merged work) · 2026-07-26
+STATUS: OPEN (not DONE). GUARD confirmed the defect by reading scripts/branch-rebuild-linear.mjs on main.
+Do this BEFORE the big build push — every agent that hits the pre-push freshness gate is being pointed at a
+data-loss command. LANE: build tooling (Cursor). Non-financial; self-merge on green once fixed.
+Artifacts: scripts/branch-rebuild-linear.mjs · scripts/verify-rebuild-linear-no-revert.mjs
+================================================================================
+
+THE BUG (GUARD read scripts/branch-rebuild-linear.mjs on main):
+  function applySourceDiff(sourceSha, root) {
+    const diff = runGitOrThrow(["diff", `origin/main..${sourceSha}`], { cwd: root });   // <-- TWO-DOT
+    ...
+  }
+  then rebuildLinear() does: runGitOrThrow(["reset","--hard","origin/main"]) ; git apply --3way <that diff>.
+
+WHY IT'S A DATA-LOSS VECTOR:
+  `git diff origin/main..sourceSha` compares main's tree to your commit's tree. If anything merged into main AFTER your
+  branch point, that diff includes the REVERSAL of it. reset --hard origin/main + apply that diff re-reverses the merged work.
+  The pre-push freshness gate RECOMMENDS this command precisely when you're behind — i.e. exactly when it's dangerous.
+  Observed live: it staged 27 files reverting C5 (#3587) minutes after C5 merged, including restoring the /dispatch?load_id=
+  facade C5 existed to kill. Only caught by hand. Every agent is exposed.
+
+THE FIX (root cause):
+  - Replace the two-dot diff with a patch that is ONLY the source commit's own changes against its own parent — NOT a
+    diff-against-current-main. Options, in order of robustness (this clone is SHALLOW, so merge-base is unreliable):
+      (a) BEST: build the patch with `git format-patch <sourceSha>^..<sourceSha>` (or cherry-pick the commit) — applies the
+          commit's own diff, cannot reverse merged work, shallow-safe.
+      (b) or three-dot `git diff origin/main...<sourceSha>` (merge-base..source) — but this needs a real merge-base, which a
+          shallow clone may not have; guard against `--is-shallow-repository=true` and fall back to (a).
+  - Add a SANITY GUARD in the tool itself: after building the patch, if it would stage any file NOT present in
+    `git diff --name-only <sourceSha>^..<sourceSha>` (the commit's own touched files), ABORT — never stage foreign files.
+  - Fix the pre-push hook text so it recommends the corrected tool (or `git cherry-pick`) — not the broken path.
+
+GUARD (Rule 16/17): scripts/verify-rebuild-linear-no-revert.mjs — seed a fixture where main advanced past the source commit;
+  assert the tool's staged file set == the source commit's own touched files (no foreign/reverting files). FAIL on the current
+  two-dot version, PASS on the fix. --selftest on real source.
+
+ACCEPTANCE: on a branch behind main, branch:rebuild-linear stages ONLY the source commit's files, never reverts merged work;
+  guard green; pre-push hook points at the safe path.
+
+INTERIM (until merged): every agent uses `git cherry-pick <sha>` onto fresh main, NOT branch:rebuild-linear.
+================================================================================

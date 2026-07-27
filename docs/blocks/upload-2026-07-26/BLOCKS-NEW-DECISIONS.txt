@@ -1,0 +1,39 @@
+================================================================================
+CURSOR — PHASE-2 NEW-DECISION BLOCKS (from OWNER-DECISIONS-FINAL) · 2026-07-26
+Standard: guard-first, 8-layer/DoD A–E + VERIFY 1–8, canonical tables, reuse poster, no new GL math, HOLD for owner.
+All FINANCIAL — build + owner Neon-applies + owner merge gate. Posting flags already ON for testing (QBO write-back OFF).
+================================================================================
+
+ND-INV-01 · P1 · FIN-HOLD · Auto invoicing pipeline: Pro Forma → broker advance → POD → Official Invoice → factoring
+OWNER RULE: at load BOOK, auto-create a PRO FORMA INVOICE (non-posting draft) for projections. When the broker sends a
+  fuel/cash advance, book it as a "Broker/Customer Advance" (LIABILITY) and apply it to the pro forma (net = freight − advance).
+  At POD/close, auto-convert the pro forma to the OFFICIAL INVOICE (A/R posts) and AUTO-SUBMIT to factoring.
+UNDER IT (unchanged, locked): revenue recognized at delivery → Unbilled Revenue (1240/1150), then A/R at invoice/POD.
+  REVENUE_RECOGNITION_POST is ON for TRANSP+USMCA. TRK excluded.
+BUILD: pro_forma stage on mdata.loads (or invoices with status=proforma); broker-advance liability account + apply logic;
+  POD trigger → invoice + factoring submission (reuse the factoring engine — secured borrowing, ASC 860). Fully wired, auto.
+GUARD: verify-invoice-pipeline-proforma-to-factoring.mjs — proforma at book, advance applied+netted, POD converts + factors.
+ACCEPTANCE (live, TRANSP+USMCA): book LD → proforma; add advance → net; POD → official invoice A/R + factoring row.
+
+ND-FA-01 · P1 · FIN-HOLD · Build the FULL fixed-asset + auto-depreciation register NOW (owner: never defer)
+OWNER RULE: capitalize repairs ≥ $7,000 → "Fixed Asset – Trucks"; big expensed repairs → new "Heavy Repair Expense";
+  require a Work Order (A4-D5). accounting.fixed_assets is EMPTY (0 rows). Register TRK-owned real units, 5-yr straight-line.
+BUILD: register real TRK units into accounting.fixed_assets (unit_uuid FK); seed a 5-yr SL fixed_asset_class; generate
+  depreciation_schedule_rows; monthly autopost job behind FIXED_ASSET_AUTOPOST_ENABLED (reuse fixed-assets.math.ts, no new math);
+  capitalize-vs-expense rule at $7,000; mount the fixed-assets router (FLT-04). This is FLT-01/FLT-05/FLT-08 — coordinate w/ Claude's Fleet.
+GUARD: verify-owned-units-registered.mjs + verify-depreciation-autopost-wired.mjs + verify-capitalize-threshold-7000.mjs.
+ACCEPTANCE (live): every real TRK unit has a fixed_assets row on a 5-yr class + schedule; a month of depreciation computes on a throwaway branch.
+
+ND-ESC-01 · P1 · FIN-HOLD · Escrow cap $2,000 → $2,500 + editable draw catalog
+OWNER RULE: escrow builds to $2,500 (code caps $2,000 in settlement-payrun-close.service.ts — change it). Draw catalog with
+  `may_draw_escrow` per reason, seeded abandonment + damage + safety fines, owner can rename/add. Escrow only draws if the
+  driver's SIGNED contract authorizes it (ties to signed_on_paper #3593).
+GUARD: verify-escrow-cap-2500.mjs + verify-escrow-draw-catalog-editable.mjs.
+
+ND-C5-01 · P2 · FIN-HOLD · Factoring chargeback = COMPANY absorbs, NOT the driver
+OWNER CORRECTION: drivers are company drivers, not owner-operators. REMOVE any code path that charges a factoring chargeback
+  to a driver's settlement. A Faro chargeback books to the company (recoursed-AR / expense), never to driver_liabilities.
+GUARD: verify-chargeback-not-charged-to-driver.mjs — FAIL if a factoring chargeback writes driver_liabilities/settlement deduction.
+
+ND-IC-01 · (coordinate with Claude's BANK-DOM-05 #3608) intercompany transfer path — accounts already seeded (8000-block). Cursor owns the GL/poster review; Claude owns the transfer table + entity-pair map.
+================================================================================

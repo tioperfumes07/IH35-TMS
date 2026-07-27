@@ -1,0 +1,46 @@
+================================================================================
+FOR CURSOR — FINAL VERIFIED BLOCK STATUS (Accounting · Banking · Maintenance) · 2026-07-26
+AUTHORITATIVE final state after GUARD live verification (Neon prod + source @13a2ff3). SUPERSEDES draft status.
+ALL money/migration/GL blocks = FINANCIAL-HOLD (JORGE-APPROVED + owner Neon-applies). Design + guard only; reuse the
+existing poster; NEVER new GL math; flags default OFF; QBO reconcile-only, no write-back (locked). You merge your own PRs.
+================================================================================
+
+===== ACCOUNTING (engine is STRONG — these are governance, verified) =====
+[VERIFIED] ACCT-DOM-01 · P2 (→P1 before TMS GL is SoR post-2025) · No SOX JE approval / no segregation (preparer=poster).
+  journal-entries.service.ts:202 hard-codes status='posted'; no approval state; no maker≠checker. DESIGN + owner first.
+[VERIFIED] ACCT-DOM-02 · P2 · No standing sub-ledger↔GL control-account reconciliation surface (AR/AP/escrow/factoring).
+  Read-only report, no posting. SYSTEM-WIDE primitive.
+[VERIFIED] ACCT-DOM-03 · P3 · journal_entry_postings LINE table has no closed-period trigger (0183 guards headers only).
+  Add period-lock on lines. SHARES the "no writes to a closed period/session" guard with BANK-DOM-02.
+[CROSS-LISTED · OWNER] escrow_liability_default UNBOUND on prod (0 %escrow% bindings) → escrow post 409s. Owner seeds the
+  escrow liability role per entity. (= SAF-DOM-03 gate b.)
+[MEETS — protect] balanced JE + DB backstop trigger, control roles fail-loud, period-lock (headers), idempotent, reverse-and-
+  replace, QBO write-back hard-killed, flags OFF. No integrity defect. Do NOT "fix" the engine.
+
+===== BANKING =====
+[VERIFIED-LIVE] BANK-DOM-01 · P1 · recon match-ledger writes RETIRE bank.reconciliation_matches; canonical
+  banking.reconciliation_matches does NOT exist (to_regclass NULL, prod-confirmed); bank.* is the only stranded schema (1 table).
+  Owner ruling: create canonical + migrate + repoint 2 writers/4 readers; archive bank.*.
+[VERIFIED] BANK-DOM-02 · P1 · closed reconciliation sessions NOT immutable (reconciliation.routes.ts:669 no member lock;
+  categorization/bulk have zero period guards). SHARES the closed-period/session immutability guard with ACCT-DOM-03.
+[VERIFIED] BANK-DOM-03 · P1 · no true bank-rec model — flat matched-sum tie (reconciliation.routes.ts:130), no outstanding-
+  items/deposits-in-transit/carry-forward. Build the beginning+cleared=ending structure (finance:reconciliation methodology).
+[VERIFIED] BANK-DOM-04 · P2 · reconciling items not aged/classified/escalated (grep clean).
+[VERIFIED] BANK-DOM-05 · P2 · transfers intra-entity only (transfers.service.ts:106,140) — no intercompany due-to/due-from.
+[VERIFIED] BANK-DOM-06 · P2 · fuel-card diesel expense→GL candidate-only (fuel-transaction-import.ts:353,438 never posts) +
+  no card-overage→driver-liability→settlement; Loves cron imports PRICES not card txns (manual CSV only).
+
+===== MAINTENANCE =====
+[VERIFIED] MNT-ECON-01 · P1 · standalone parts purchase posts NO A/P bill / NO GL (parts-inventory.routes.ts:52-84).
+[VERIFIED] MNT-ECON-02 · P1 · severe-repair has no approve/capitalize-vs-expense/GL endpoint (owner money-lock §8 unmet).
+[VERIFIED] MNT-ECON-04 · P1 · warranty reimburse posts NO GL/receivable/credit-memo (warranty.routes.ts:523-559).
+[VERIFIED] MNT-LINK-02 · P1 · work_order_lines→work_orders is an ISLAND (only self-ref FK; no FK to work_orders). Add FK.
+[VERIFIED] MNT-ECON-05 · P2 · "Save header" dead control (no onClick) on WO money detail (WorkOrderDetailPage.tsx:517-519).
+[VERIFIED] MNT-LINK-04 · P2 · catalogs.maintenance_vendors no FK to mdata.vendors + road-service free-text vendor → AP orphan. C13.
+[DOWNGRADE] MNT-ENT-01 · P3→low · parts_inventory has no FK to org.companies BUT RLS is FORCED on prod (isolation holds).
+  Add the FK for completeness; not an isolation risk.
+[VERIFIED] MNT-LINK-03b · P3 · convert-to-WO has no source_intransit_issue back-ref FK on the WO (forward is wired).
+[MEETS — do NOT re-block] WO-close now auto-creates accounting.bills A/P + posts a BALANCED JE via the poster (gated OFF);
+  broken lineless internal-labor JE REMOVED; convert-to-WO WIRED forward (promoted_to_wo_id SET).
+[TAG · C2 sweep] MNT-LINK-01 position-history INSERT maint.position_history — ONE C2 sweep closes this + Lists L4 (maint/parts,pm).
+================================================================================
