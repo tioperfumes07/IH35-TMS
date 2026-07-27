@@ -19,7 +19,12 @@ type Props = {
 };
 
 function tooltip(summary: MissingRequiredSummary): string {
-  const missing = summary.required.filter((r) => !r.satisfied);
+  // `summary.required` is typed as present, but the value arrives from an API response and a payload
+  // without it (an error shape, an older server, a partial cache hydrate) makes `.filter` throw. This
+  // chip renders inside fleet/asset/vehicle profile pages, so the throw does not degrade a badge — it
+  // unmounts the whole page to the router ErrorBoundary. Treating an absent list as "nothing required"
+  // keeps the page alive and is the same reading a caller would give an empty array.
+  const missing = (summary.required ?? []).filter((r) => !r.satisfied);
   if (missing.length === 0) return "All required documents present.";
   const lines = missing.map((m) => {
     const blocks = m.enforcement === "hard_block" ? " (blocks dispatch)" : "";

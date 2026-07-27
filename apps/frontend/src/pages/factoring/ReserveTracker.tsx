@@ -279,7 +279,7 @@ export function ReserveTracker() {
   }, [batchesSubmittedQ.data, batchesFundedQ.data]);
 
   const totalSubmittedCount =
-    (batchesSubmittedQ.data?.batches.length ?? 0) + (batchesFundedQ.data?.batches.length ?? 0);
+    (batchesSubmittedQ.data?.batches?.length ?? 0) + (batchesFundedQ.data?.batches?.length ?? 0);
 
   const totalReserveHeld = useMemo(
     () => (balancesQ.data ?? []).reduce((acc, b) => acc + b.balance_cents, 0),
@@ -334,7 +334,7 @@ export function ReserveTracker() {
         <KpiCard
           label="Advances Received"
           value={fmtM(totalAdvances)}
-          sub={`${batchesFundedQ.data?.batches.length ?? 0} funded`}
+          sub={`${batchesFundedQ.data?.batches?.length ?? 0} funded`}
           disabled
           disabledReason={NOT_AVAILABLE_YET}
         />
