@@ -270,6 +270,9 @@ export type CreateWorkOrderTwoSectionPayload = {
     repaired_by?: "in_house" | "outside_vendor";
     // render-v5 §A Priority — stored value must match the mig-0310 CHECK (routine|urgent|immediate).
     wo_priority?: "routine" | "urgent" | "immediate";
+    // C9 (HOLD migration 202609180000)
+    customer_id?: string;
+    tax_rate_pct?: number;
   };
   sectionA: Array<{
     description: string;

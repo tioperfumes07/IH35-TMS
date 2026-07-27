@@ -724,6 +724,8 @@ export function createVendorBill(
     unit_id?: string;
     /** Claim→Bill reverse density (ACCT-F04) — stamps accounting.bills.insurance_claim_id when column present. */
     insurance_claim_id?: string;
+    /** QBO Class on bill header — persisted as accounting.bills.class_id when column present. */
+    class_id?: string;
     attachment_draft_id?: string;
     /** LAW-E2E #3167 — real bill_lines payloads (not memo-only). */
     lines: Array<{

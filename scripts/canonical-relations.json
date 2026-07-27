@@ -590,6 +590,7 @@
     "reports.scheduled_delivery_log",
     "reports.scheduled_reports",
     "reports.scheduled_subscriptions",
+    "safety.accident_cost_lines",
     "safety.accident_reports",
     "safety.anomaly_alert_rules",
     "safety.anomaly_alerts",

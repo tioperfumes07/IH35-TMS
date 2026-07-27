@@ -8,8 +8,11 @@ import { chartOfAccountsCatalogClient, classesCatalogClient, itemsCatalogClient 
 import { fetchAccountTypeCatalog, detailTypesForAccountType, ACCOUNT_TYPE_GROUPS } from "../../../api/coa-list";
 import { getCoaAccounts } from "../../../api/banking";
 import { Combobox, type ComboboxOption } from "../../../components/Combobox";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
+import { listPaymentTermOptions } from "../../../api/mdata";
+import { listCatalogAccounts } from "../../../api/catalog-accounts";
 
 // FIX-03: an item's income/expense account is a REFERENCED catalogs.accounts record (QBO parity), not
 // text. Mirror ItemEditorModal's type filters + carrier default so quick-create + full editor agree.
@@ -45,17 +48,16 @@ const schema = z.object({
   unitPrice: z.coerce.number().int().min(0).optional(),
   qtyReceived: z.coerce.number().int().min(1).optional(),
   location: z.string().trim().optional(),
-  // W-FIX-7b: render-v5 §D vendor fields. City/state/zip/terms/track1099 are collected in the UI
-  // but held back from the canonical create until migration 202607110230 lands on prod.
+  // W-FIX-7b: render-v5 §D vendor address + terms + 1099 + default expense account.
   street: z.string().trim().optional(),
   city: z.string().trim().optional(),
   state: z.string().trim().optional(),
   zip: z.string().trim().optional(),
   accountNumber: z.string().trim().optional(),
-  terms: z.string().trim().optional(),
+  paymentTermsId: z.string().uuid().optional().nullable(),
   taxId: z.string().trim().optional(),
   track1099: z.boolean().optional(),
-  defaultExpenseAccount: z.string().trim().optional(),
+  defaultExpenseAccountId: z.string().uuid().optional().nullable(),
   // category: full COA classification — account_type is the 8-value COA group enum, account_subtype
   // is the chosen Detail Type name (both persisted to catalogs.accounts.metadata).
   accountType: z.string().trim().optional(),
@@ -83,7 +85,28 @@ export function QuickCreateEntityModal({
   const { pushToast } = useToast();
   const [saving, setSaving] = useState(false);
   const form = useForm<FormValues>({
-    defaultValues: { name: "", company: "", email: "", phone: "", vendorType: "Other", sku: "", unitPrice: 0, qtyReceived: 1, location: "", street: "", city: "", state: "", zip: "", accountNumber: "", terms: "", taxId: "", track1099: false, defaultExpenseAccount: "", accountType: "", detailType: "" },
+    defaultValues: {
+      name: "",
+      company: "",
+      email: "",
+      phone: "",
+      vendorType: "Other",
+      sku: "",
+      unitPrice: 0,
+      qtyReceived: 1,
+      location: "",
+      street: "",
+      city: "",
+      state: "",
+      zip: "",
+      accountNumber: "",
+      paymentTermsId: null,
+      taxId: "",
+      track1099: false,
+      defaultExpenseAccountId: null,
+      accountType: "",
+      detailType: "",
+    },
   });
 
   // category: live COA Detail Type taxonomy — same source the Chart-of-Accounts page uses
@@ -104,12 +127,46 @@ export function QuickCreateEntityModal({
   const [incomeAccountId, setIncomeAccountId] = useState<string | null>(null);
   const [buyEnabled, setBuyEnabled] = useState(false);
   const [expenseAccountId, setExpenseAccountId] = useState<string | null>(null);
+  const [paymentTermsId, setPaymentTermsId] = useState<string | null>(null);
+  const [defaultExpenseAccountId, setDefaultExpenseAccountId] = useState<string | null>(null);
   const accountsQuery = useQuery({
     // Same source as the categorize row + ItemEditorModal; entity-scoped server-side.
     queryKey: ["catalogs", "accounts", "for-items", operatingCompanyId],
     queryFn: () => getCoaAccounts(operatingCompanyId),
     enabled: open && kind === "item" && !!operatingCompanyId,
   });
+  const vendorPaymentTermsQuery = useQuery({
+    queryKey: ["payment-term-options", "quick-create-vendor", operatingCompanyId],
+    queryFn: () => listPaymentTermOptions(operatingCompanyId),
+    enabled: open && kind === "vendor" && Boolean(operatingCompanyId),
+    staleTime: 5 * 60 * 1000,
+  });
+  const vendorExpenseAccountsQuery = useQuery({
+    queryKey: ["catalog-accounts", "quick-create-vendor-default-expense", operatingCompanyId],
+    queryFn: () =>
+      listCatalogAccounts({
+        status: "active",
+        operating_company_id: operatingCompanyId,
+        postable_only: true,
+      }),
+    enabled: open && kind === "vendor" && Boolean(operatingCompanyId),
+    staleTime: 5 * 60 * 1000,
+  });
+  const paymentTermOptions = useMemo(
+    () =>
+      (vendorPaymentTermsQuery.data?.payment_terms ?? []).map((t) => ({
+        value: t.id,
+        label: `${t.terms_name} (${t.days_until_due}d)`,
+      })),
+    [vendorPaymentTermsQuery.data]
+  );
+  const vendorExpenseAccountOptions = useMemo(
+    () =>
+      (vendorExpenseAccountsQuery.data?.accounts ?? [])
+        .filter((a) => a.account_type === "Expense")
+        .map((a) => ({ value: a.id, label: a.account_name, type: a.account_type ?? undefined })),
+    [vendorExpenseAccountsQuery.data]
+  );
   const accounts = accountsQuery.data?.accounts ?? [];
   const incomeOptions: ComboboxOption[] = useMemo(
     () =>
@@ -146,17 +203,19 @@ export function QuickCreateEntityModal({
     setSaving(true);
     try {
       if (kind === "vendor") {
-        // QB-STD-5: write to canonical mdata.vendors (same table listVendors reads from) so the
-        // created vendor survives reload. Previously wrote to mdata.qbo_vendors (mirror), which
-        // no vendor picker reads — the created row was invisible after refresh.
-        // Fields dropped (mirror-only, not in mdata.vendors pre-HELD migration 202607110230):
-        //   company_name, account_number, terms, track_1099, city, state, postal_code.
         const res = await createVendor({
           name: parsed.data.name,
           vendor_type: parsed.data.vendorType ?? "Other",
           email: parsed.data.email || undefined,
           phone: parsed.data.phone || undefined,
           address: parsed.data.street?.trim() || undefined,
+          city: parsed.data.city?.trim() || undefined,
+          state: parsed.data.state?.trim() || undefined,
+          postal_code: parsed.data.zip?.trim() || undefined,
+          account_number: parsed.data.accountNumber?.trim() || undefined,
+          payment_terms_id: paymentTermsId,
+          default_expense_account_id: defaultExpenseAccountId,
+          eligible_1099: parsed.data.track1099 ?? false,
           tax_id: parsed.data.taxId?.trim() || undefined,
           operating_company_id: operatingCompanyId,
         });
@@ -250,6 +309,8 @@ export function QuickCreateEntityModal({
       setIncomeAccountId(null);
       setBuyEnabled(false);
       setExpenseAccountId(null);
+      setPaymentTermsId(null);
+      setDefaultExpenseAccountId(null);
       onClose();
     } catch (error) {
       pushToast(String((error as Error).message ?? "Create failed"), "error");
@@ -298,9 +359,7 @@ export function QuickCreateEntityModal({
           </div>
         ) : null}
 
-        {/* W-FIX-7b: render-v5 §D vendor fields. Street → mdata.vendors.address (live). City/state/
-        zip/account_number/terms/track1099 are collected here but NOT sent to the canonical endpoint
-        until migration 202607110230 lands (those columns are HELD on mdata.vendors). */}
+        {/* W-FIX-7b: render-v5 §D vendor fields — all persist on POST /api/v1/mdata/vendors. */}
         {kind === "vendor" ? (
           <div className="space-y-2 rounded-sm border border-gray-100 bg-gray-50 p-2">
             <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Vendor details (optional)</div>
@@ -315,11 +374,37 @@ export function QuickCreateEntityModal({
             </div>
             <div className="grid grid-cols-2 gap-2">
               <label><span className="text-xs font-medium text-gray-600">Account no.</span><input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("accountNumber")} aria-label="Quick create account number" /></label>
-              <label><span className="text-xs font-medium text-gray-600">Terms</span><input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("terms")} aria-label="Quick create terms" /></label>
+              <label className="block">
+                <span className="text-xs font-medium text-gray-600">Payment terms</span>
+                <div className="mt-1">
+                  <Combobox
+                    options={paymentTermOptions}
+                    value={paymentTermsId}
+                    onChange={setPaymentTermsId}
+                    placeholder="Select terms"
+                    loading={vendorPaymentTermsQuery.isLoading}
+                    allowClear
+                    dataField="quick-create-payment-terms"
+                  />
+                </div>
+              </label>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <label><span className="text-xs font-medium text-gray-600">Tax ID (1099)</span><input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("taxId")} aria-label="Quick create tax id" /></label>
-              <label><span className="text-xs font-medium text-gray-600">Default expense account</span><input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("defaultExpenseAccount")} aria-label="Quick create default expense account" /></label>
+              <label className="block">
+                <span className="text-xs font-medium text-gray-600">Default expense account</span>
+                <div className="mt-1">
+                  <ReferenceSelect
+                    value={defaultExpenseAccountId}
+                    onChange={setDefaultExpenseAccountId}
+                    options={vendorExpenseAccountOptions}
+                    createKind="account"
+                    operatingCompanyId={operatingCompanyId}
+                    placeholder="Select expense account"
+                    loading={vendorExpenseAccountsQuery.isLoading}
+                  />
+                </div>
+              </label>
             </div>
             <label className="flex items-center gap-2 text-xs font-medium text-gray-600">
               <input type="checkbox" {...form.register("track1099")} aria-label="Quick create track 1099" /> Track 1099?

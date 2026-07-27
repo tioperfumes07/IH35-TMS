@@ -42,6 +42,8 @@ export type VendorBillFormSubmitPayload = {
   unit_id?: string;
   /** Claim→Bill reverse density — only when linkedClaimId prop set. */
   insurance_claim_id?: string;
+  /** QBO Class reporting dimension on bill header. */
+  class_id?: string;
   /** Real bill lines — required for vendor create; createBill persists these in the same txn. */
   lines: VendorBillFormLinePayload[];
 };
@@ -331,6 +333,7 @@ export function VendorBillForm({
       ...(linkedWoId ? { work_order_id: linkedWoId } : {}),
       ...(resolvedUnitId ? { unit_id: resolvedUnitId } : {}),
       ...(linkedClaimId ? { insurance_claim_id: linkedClaimId } : {}),
+      ...(classId ? { class_id: classId } : {}),
     });
   }
 

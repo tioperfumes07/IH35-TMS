@@ -58,6 +58,9 @@ export type TwoSectionHeader = {
   wo_priority?: "routine" | "urgent" | "immediate" | null;
   // W-FIX-8: render-v5 §A Close date/time → existing maintenance.work_orders.closed_at (no migration).
   closed_at?: string | null;
+  // C9 (HOLD migration 202609180000) — post-insert; 42703-safe until owner Neon-applies.
+  customer_id?: string | null;
+  tax_rate_pct?: number | null;
 };
 
 export type SectionALine = {
@@ -261,6 +264,22 @@ export async function createWorkOrderWithLines(
         wo.id,
       ]
     );
+  }
+
+  if (header.customer_id != null || header.tax_rate_pct != null) {
+    try {
+      await client.query(
+        `UPDATE maintenance.work_orders
+           SET customer_id = COALESCE($1::uuid, customer_id),
+               tax_rate_pct = COALESCE($2, tax_rate_pct),
+               updated_at = now()
+         WHERE id = $3`,
+        [header.customer_id ?? null, header.tax_rate_pct ?? null, wo.id]
+      );
+    } catch (err) {
+      const code = (err as { code?: string })?.code;
+      if (code !== "42703") throw err;
+    }
   }
 
   for (const line of sectionALines) {

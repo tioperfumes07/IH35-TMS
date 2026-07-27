@@ -50,6 +50,12 @@ const preventableFlag = z.boolean().nullish();
 // party, vendor invoice, bill/expense ref) — persisted via migration 202607810000. All free-text and
 // nullish so an unfilled field stays NULL.
 const accidentTextField = z.string().max(200).nullish();
+const accidentCostLineSchema = z.object({
+  section: z.enum(["A", "B"]),
+  description: z.string().max(2000).optional().default(""),
+  amount_cents: z.number().int().optional().default(0),
+  sort_order: z.number().int().optional(),
+});
 const createAccidentBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   driver_id: nullableUuid,
@@ -67,6 +73,12 @@ const createAccidentBodySchema = z.object({
   third_party_plate: accidentTextField,
   vendor_invoice_number: accidentTextField,
   bill_or_expense_ref: accidentTextField,
+  // C9 (HOLD migration 202609180000)
+  record_type: z.enum(["accident", "damage", "vandalism"]).nullish(),
+  service_type: z.enum(["repair", "replacement", "tow"]).nullish(),
+  report_date: z.string().min(1).nullish(),
+  tax_rate_pct: z.number().min(0).max(100).nullish(),
+  cost_lines: z.array(accidentCostLineSchema).optional().default([]),
 });
 const patchAccidentBodySchema = z.object({
   driver_id: nullableUuid,
@@ -84,6 +96,11 @@ const patchAccidentBodySchema = z.object({
   third_party_plate: accidentTextField,
   vendor_invoice_number: accidentTextField,
   bill_or_expense_ref: accidentTextField,
+  record_type: z.enum(["accident", "damage", "vandalism"]).nullish(),
+  service_type: z.enum(["repair", "replacement", "tow"]).nullish(),
+  report_date: z.string().min(1).nullish(),
+  tax_rate_pct: z.number().min(0).max(100).nullish(),
+  cost_lines: z.array(accidentCostLineSchema).optional(),
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
@@ -501,6 +518,57 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
         ]
       );
       const inserted = res.rows[0];
+      // C9 columns / cost lines activate only after HOLD migration 202609180000 — never 500 if absent.
+      if (inserted?.id) {
+        try {
+          await client.query(
+            `
+              UPDATE safety.accident_reports
+              SET record_type = $3,
+                  service_type = $4,
+                  report_date = $5::date,
+                  tax_rate_pct = $6
+              WHERE id = $1 AND operating_company_id = $2
+            `,
+            [
+              inserted.id,
+              companyId,
+              body.data.record_type ?? null,
+              body.data.service_type ?? null,
+              body.data.report_date ?? null,
+              body.data.tax_rate_pct ?? null,
+            ]
+          );
+        } catch (err) {
+          const code = (err as { code?: string })?.code;
+          if (code !== "42703") throw err;
+        }
+        if ((body.data.cost_lines?.length ?? 0) > 0) {
+          try {
+            let ord = 0;
+            for (const line of body.data.cost_lines ?? []) {
+              await client.query(
+                `
+                  INSERT INTO safety.accident_cost_lines (
+                    operating_company_id, accident_id, section, description, amount_cents, sort_order
+                  ) VALUES ($1, $2, $3, $4, $5, $6)
+                `,
+                [
+                  companyId,
+                  inserted.id,
+                  line.section,
+                  line.description ?? "",
+                  Number(line.amount_cents ?? 0),
+                  line.sort_order ?? ord++,
+                ]
+              );
+            }
+          } catch (err) {
+            const code = (err as { code?: string })?.code;
+            if (code !== "42P01" && code !== "42703") throw err;
+          }
+        }
+      }
       await appendCrudAudit(
         client,
         user.uuid,
@@ -557,6 +625,10 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
       { key: "third_party_plate", column: "third_party_plate" },
       { key: "vendor_invoice_number", column: "vendor_invoice_number" },
       { key: "bill_or_expense_ref", column: "bill_or_expense_ref" },
+      { key: "record_type", column: "record_type" },
+      { key: "service_type", column: "service_type" },
+      { key: "report_date", column: "report_date", cast: "::date" },
+      { key: "tax_rate_pct", column: "tax_rate_pct" },
     ];
     const setClauses: string[] = [];
     const values: unknown[] = [];

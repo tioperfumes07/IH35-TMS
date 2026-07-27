@@ -783,6 +783,7 @@ export type VendorOption = {
   print_on_check_name?: string | null;
   payment_terms_id?: string | null;
   default_expense_account_id?: string | null;
+  account_number?: string | null;
 };
 
 export function listDriverQualifications(driverId: string, includeInactive?: boolean) {
@@ -1326,6 +1327,7 @@ export type CreateVendorInput = {
   print_on_check_name?: string;
   payment_terms_id?: string | null;
   default_expense_account_id?: string | null;
+  account_number?: string;
 };
 
 export function createVendor(body: CreateVendorInput) {
@@ -1369,6 +1371,7 @@ export type UpdateVendorInput = Partial<{
   print_on_check_name: string | null;
   payment_terms_id: string | null;
   default_expense_account_id: string | null;
+  account_number: string | null;
 }>;
 
 export function updateVendor(id: string, body: UpdateVendorInput) {

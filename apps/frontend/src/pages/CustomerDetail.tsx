@@ -648,7 +648,6 @@ export function CustomerDetailPage() {
         ap_phone: hydratedForm.ap_phone || null,
         credit_limit: hydratedForm.credit_limit ? Number(hydratedForm.credit_limit) : null,
         credit_limit_source: hydratedForm.credit_limit_source ? (hydratedForm.credit_limit_source as "factor" | "manual" | "rmis_future") : null,
-        credit_limit_updated_at: hydratedForm.credit_limit_updated_at || null,
         quality_overall_flag: hydratedForm.quality_overall_flag as "preferred" | "standard" | "caution" | "avoid",
         quality_notes: hydratedForm.quality_notes || null,
         free_time_pickup_minutes: Number(hydratedForm.free_time_pickup_minutes || "0"),
@@ -1224,12 +1223,14 @@ export function CustomerDetailPage() {
                 placeholder="Select source"
               />
             </div>
-            <Field
-              label="Last Updated"
-              value={hydratedForm.credit_limit_updated_at ? new Date(hydratedForm.credit_limit_updated_at).toLocaleString() : "Not set"}
-              onChange={() => {}}
-              disabled
-            />
+            <div className="mb-2">
+              <div className="text-xs font-semibold text-gray-600">Last Updated</div>
+              <p className="mt-1 text-sm text-gray-800">
+                {hydratedForm.credit_limit_updated_at
+                  ? new Date(hydratedForm.credit_limit_updated_at).toLocaleString()
+                  : "Not set"}
+              </p>
+            </div>
             <p className="text-[11px] text-gray-500">
               If set by your factor (Faro/RTS), select Factor and let daily report sync update. Otherwise select Manual.
             </p>

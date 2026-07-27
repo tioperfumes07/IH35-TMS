@@ -1,4 +1,4 @@
-import type { JSX } from "react";
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -104,6 +104,14 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
   // no report_date column; see CreateAccidentInput/PatchAccidentInput in ../../api/safety.ts) but must
   // still use the shared calendar DatePicker like every other date field, not a raw text input.
   const [reportDate, setReportDate] = useState(() => companyToday());
+  const [recordType, setRecordType] = useState<"accident" | "damage" | "vandalism">(() => {
+    const v = str(accident?.record_type);
+    return v === "damage" || v === "vandalism" ? v : "accident";
+  });
+  const [serviceType, setServiceType] = useState<"repair" | "replacement" | "tow">(() => {
+    const v = str(accident?.service_type);
+    return v === "replacement" || v === "tow" ? v : "repair";
+  });
 
   useEffect(() => {
     setDriverId(initialDriverId);
@@ -181,6 +189,16 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
     third_party_plate: thirdPartyPlate.trim() || null,
     vendor_invoice_number: vendorInvoiceNumber.trim() || null,
     bill_or_expense_ref: billOrExpenseRef.trim() || null,
+    record_type: recordType,
+    service_type: serviceType,
+    report_date: reportDate || null,
+    tax_rate_pct: taxRate,
+    cost_lines: costLines.map((line, index) => ({
+      section: (line.section === "B" ? "B" : "A") as "A" | "B",
+      description: String(line.description ?? ""),
+      amount_cents: Math.round(Number(line.amount || 0) * 100),
+      sort_order: index,
+    })),
   };
 
   const saveAccident = () => {
@@ -227,8 +245,8 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                   { value: "damage", label: "Damage" },
                   { value: "vandalism", label: "Vandalism" },
                 ]}
-                value={"accident"}
-                onChange={() => {}}
+                value={recordType}
+                onChange={(next) => setRecordType((next as "accident" | "damage" | "vandalism") || "accident")}
               />
             </Field>
             <Field label="Service Type">
@@ -238,8 +256,8 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                   { value: "replacement", label: "Replacement" },
                   { value: "tow", label: "Tow only" },
                 ]}
-                value={"repair"}
-                onChange={() => {}}
+                value={serviceType}
+                onChange={(next) => setServiceType((next as "repair" | "replacement" | "tow") || "repair")}
               />
             </Field>
 
@@ -501,7 +519,13 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
           <TwoSectionLineEditor mode="expense" onChange={setCostLines} partsLaborMode="parts-and-labor" />
         </div>
         <div className="mt-2">
-          <TotalsStack subtotal={subtotal} taxRate={taxRate} onTaxRateChange={setTaxRate} grandLabel="Accident Total = A + B" />
+          <TotalsStack
+            subtotal={subtotal}
+            taxRate={taxRate}
+            taxRateMode="editable"
+            onTaxRateChange={setTaxRate}
+            grandLabel="Accident Total = A + B"
+          />
         </div>
         </div>
       </ParityDrawer>
@@ -509,7 +533,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
   );
 }
 
-function Field({ label, children, className }: { label: string; children: JSX.Element; className?: string }) {
+function Field({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
   return (
     <div className={`space-y-1 ${className ?? ""}`}>
       <label className="text-[10px] font-semibold uppercase text-gray-600">{label}</label>

@@ -186,7 +186,7 @@ export function CreateWOSectionIdentification({
             <>
               <input type="hidden" {...register("vendor_id")} />
               <input type="hidden" {...register("vendor_qbo_id")} />
-              <input type="hidden" {...register("vendor_display_name")} />
+              {/* Label only — shop_name/vendor_id are the persisted fields. */}
               <ReferenceSelect
                 value={watch("vendor_id") || null}
                 onChange={(next) => {
@@ -228,20 +228,16 @@ export function CreateWOSectionIdentification({
       <input type="hidden" {...register("bucket")} />
       <input type="hidden" {...register("external_vendor_id")} />
 
-      <div className="mt-2 hidden">
+      <div className="mt-2">
         <Field label="Customer">
           {operatingCompanyId && setValue ? (
             <>
-              <input type="hidden" {...register("customer_id")} />
-              <input type="hidden" {...register("customer_qbo_id")} />
-              <input type="hidden" {...register("customer_display_name")} />
+                            <input type="hidden" {...register("customer_id")} />
+                            
               <ReferenceSelect
                 value={watch("customer_id") || null}
                 onChange={(next) => {
-                  const match = customerOptions.find((o) => o.value === next);
                   setValue("customer_id", next ?? "", { shouldDirty: true });
-                  setValue("customer_qbo_id", "", { shouldDirty: true });
-                  setValue("customer_display_name", match?.label ?? "", { shouldDirty: true });
                 }}
                 options={customerOptions}
                 createKind="customer"

@@ -173,6 +173,9 @@ const createWorkOrderV5Schema = z.object({
     repaired_by: z.enum(["in_house", "outside_vendor"]).optional(),
     // render-v5 §A Priority — stored value must match the mig-0310 CHECK (routine|urgent|immediate).
     wo_priority: z.enum(["routine", "urgent", "immediate"]).optional(),
+    // C9 (HOLD migration 202609180000)
+    customer_id: z.string().uuid().optional(),
+    tax_rate_pct: z.number().min(0).max(100).optional(),
   }),
   sectionA: z.array(sectionALineSchema).default([]),
   sectionB: z.array(sectionBLineSchema).default([]),

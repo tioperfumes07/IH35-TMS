@@ -38,6 +38,7 @@ const VENDOR_SELECT_COLUMNS = `
   print_on_check_name,
   payment_terms_id,
   default_expense_account_id,
+  account_number,
   tax_id,
   notes,
   created_at,
@@ -100,6 +101,7 @@ const createVendorBodySchema = z.object({
   payment_terms_id: z.string().uuid().nullable().optional(),
   // Option-B: recommendation-only default expense account — pre-fills bill lines, never a silent post.
   default_expense_account_id: z.string().uuid().nullable().optional(),
+  account_number: z.string().trim().max(120).optional(),
   tax_id: z.string().trim().max(100).optional(),
   notes: z.string().trim().max(2000).optional(),
 });
@@ -130,6 +132,7 @@ const updateVendorBodySchema = z
     print_on_check_name: z.string().trim().max(200).nullable().optional(),
     payment_terms_id: z.string().uuid().nullable().optional(),
     default_expense_account_id: z.string().uuid().nullable().optional(),
+    account_number: z.string().trim().max(120).nullable().optional(),
     tax_id: z.string().trim().max(100).nullable().optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
     deactivated_at: z.string().datetime().nullable().optional(),
@@ -522,6 +525,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
         addOptional("print_on_check_name", b.print_on_check_name);
         addOptional("payment_terms_id", b.payment_terms_id);
         addOptional("default_expense_account_id", b.default_expense_account_id);
+        addOptional("account_number", b.account_number);
 
         const res = await client.query(
           `
@@ -645,6 +649,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     if ("print_on_check_name" in b) add("print_on_check_name", b.print_on_check_name ?? null);
     if ("payment_terms_id" in b) add("payment_terms_id", b.payment_terms_id ?? null);
     if ("default_expense_account_id" in b) add("default_expense_account_id", b.default_expense_account_id ?? null);
+    if ("account_number" in b) add("account_number", b.account_number ?? null);
     if ("tax_id" in b) add("tax_id", b.tax_id ?? null);
     if ("notes" in b) add("notes", b.notes ?? null);
     if ("deactivated_at" in b) add("deactivated_at", b.deactivated_at ?? null);

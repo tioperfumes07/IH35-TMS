@@ -118,7 +118,7 @@ type FormValues = BookLoadFormValues & {
   border_routing: string;
   cash_advance_cents: number;
   fuel_advance_cents: number;
-  factoring_company_summary: string;
+  factoring_company_vendor_id: string;
   accessorial_rows: AccessorialRow[];
   stops: Array<{
     stop_type: "pickup" | "delivery";
@@ -297,7 +297,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
       border_routing: "",
       cash_advance_cents: 0,
       fuel_advance_cents: 0,
-      factoring_company_summary: "",
+      factoring_company_vendor_id: "",
       accessorial_rows: [],
       stops: [
         { stop_type: "pickup", sequence_number: 1, city: "", state: "", country: "USA", address_line1: "", scheduled_arrival_at: "", time_window_type: "appointment" },
@@ -422,7 +422,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
   const milesPractical = form.watch("miles_practical");
   const milesDeadhead = form.watch("miles_deadhead");
   const reservedLoadNumber = form.watch("reserved_load_number");
-  const factoringCompanySummary = form.watch("factoring_company_summary");
+  const factoringCompanyVendorId = form.watch("factoring_company_vendor_id");
 
   const factoringVendorsQuery = useQuery({
     queryKey: ["book-load-factoring-vendors", operatingCompanyId],
@@ -433,7 +433,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
     () =>
       (factoringVendorsQuery.data?.vendors ?? [])
         .filter((vendor) => (vendor.vendor_type ?? "").toLowerCase().includes("factor") || (vendor.name ?? "").toLowerCase().includes("factor"))
-        .map((vendor) => ({ value: vendor.name, label: vendor.name })),
+        .map((vendor) => ({ value: vendor.id, label: vendor.name })),
     [factoringVendorsQuery.data?.vendors]
   );
 
@@ -586,6 +586,17 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
         notes: values.notes || undefined,
         booking_mode: values.booking_mode,
         requires_tarps: values.requires_tarps,
+        requires_reefer_fuel: values.requires_reefer_fuel,
+        requires_pulp_probe: values.requires_pulp_probe,
+        requires_locking_jacks: values.requires_locking_jacks,
+        requires_load_locks: values.requires_load_locks,
+        requires_straps: values.requires_straps,
+        load_type: values.load_type,
+        driver_pay_rate_per_mile:
+          Number.isFinite(values.driver_pay_rate_per_mile) && values.driver_pay_rate_per_mile > 0
+            ? values.driver_pay_rate_per_mile
+            : undefined,
+        factoring_company_vendor_id: values.factoring_company_vendor_id || undefined,
         tarp_type: values.tarp_type || undefined,
         // render-v6 §B reefer/tarp detail (migration 202606231400).
         reefer_temp_f: values.reefer_temp_f === "" ? undefined : Number(values.reefer_temp_f),
@@ -1220,8 +1231,8 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Factoring company
                       <SelectCombobox
-                        value={factoringCompanySummary}
-                        onChange={(event) => form.setValue("factoring_company_summary", event.target.value, { shouldDirty: true })}
+                        value={factoringCompanyVendorId}
+                        onChange={(event) => form.setValue("factoring_company_vendor_id", event.target.value, { shouldDirty: true })}
                         className="mt-0.5 h-7 w-full text-xs"
                       >
                         <option value="">{factoringVendorsQuery.isLoading ? "Loading factoring companies..." : "Select factoring company"}</option>
