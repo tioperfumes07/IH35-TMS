@@ -87,17 +87,14 @@ export const EXPECTED_HELD = [
   // to_regclass('banking.intercompany_entity_pairs') = MISSING — genuinely unapplied. Leaves this
   // list only after GUARD/owner Neon-applies + ledger-backfill + a fresh re-prove.
   "202609160000_bank_dom_05_intercompany_transfers.sql",
-  // LEGAL-PAPER-01 — legal.contract_instance_status 'signed_on_paper' + the paper-evidence CHECK.
-  // Authored 2026-07-26 and NEVER applied anywhere; unapplied by construction, not "re-proved".
-  // Live cross-check this session (Neon tiny-field-89581227 / br-fancy-credit-akjnd07a, single
-  // set_config('app.bypass_rls','lucia',true) statement): absent from BOTH ledgers — 0 rows in
-  // _system._schema_migrations and 0 in ih35_migrations.applied_migrations — against a positive
-  // control of 743 canonical ledger rows, so the zeroes are real and not RLS masking. Its object is
-  // likewise absent: pg_constraint has no contract_instances_paper_signature_evidence_check, and
-  // pg_enum for legal.contract_instance_status still ends at draft|sent|viewed|
-  // signed_electronically|voided|expired. Leaves this list only when the owner Neon-applies +
-  // ledger-backfills and GUARD re-proves the ledger row.
-  "202609140000_legal_contract_signed_on_paper_status.sql",
+  // 202609140000 (LEGAL-PAPER-01 signed_on_paper) is NOT here any more: re-proved APPLIED on prod
+  // 2026-07-26T17:31:50Z (cursor-owner-batch). Live re-check on br-fancy-credit-akjnd07a, positive
+  // control 762 canonical ledger rows: present in BOTH ledgers; pg_enum contract_instance_status now
+  // reads draft,sent,viewed,signed_electronically,signed_on_paper,voided,expired; pg_constraint HAS
+  // contract_instances_paper_signature_evidence_check. Its former held[] entry asserted all three were
+  // ABSENT — accurate when authored, FALSE from 17:31Z onward, i.e. this guard was certifying a
+  // migration as unapplied while prod had applied it. Moved to applied_held. It left the list the way
+  // the charter allows (GUARD re-proved it applied), never by weakening a check.
 ];
 
 /**
