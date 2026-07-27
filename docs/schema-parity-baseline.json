@@ -4471,6 +4471,8 @@
       "net_amount_cents",
       "operating_company_id",
       "reserve_amount_cents",
+      "superseded_at",
+      "superseded_reason",
       "updated_at"
     ],
     "factor.reconciliation_items": [
