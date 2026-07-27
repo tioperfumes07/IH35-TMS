@@ -200,7 +200,7 @@ function OverviewTab({ data, onOpen }: { data: SystemData; onOpen: (id: SystemTa
   const reconAlerts = recon.data?.open_findings_count ?? null;
   const syncConnected = syncHealth.data?.status === "healthy" || syncHealth.data?.status === "syncing";
   const syncBroken = syncHealth.data?.status === "error" || syncHealth.data?.needs_reconnect === true;
-  const apVendorCount = apAging.data?.vendors.length ?? null;
+  const apVendorCount = apAging.data?.vendors?.length ?? null;
   const healthGreen = health.data?.ok === true;
 
   return (
@@ -302,7 +302,7 @@ function OverviewTab({ data, onOpen }: { data: SystemData; onOpen: (id: SystemTa
 function QboReconTab({ data }: { data: SystemData }) {
   const { recon } = data;
   const apObj = findApObject(recon.data);
-  const entities = recon.data?.objects.map((o) => o.label).join(" · ");
+  const entities = recon.data?.objects?.map((o) => o.label).join(" · ");
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <Card
@@ -592,7 +592,7 @@ function ClaudeCoderTab({ data }: { data: SystemData }) {
           <div>
             <span className="text-[#7dd3fc]">health</span>{" "}
             {(["postgres.select1", "migrations.ledger", "redis.ping", "r2.head_bucket"] as const).map((n, i) => {
-              const ok = health.data?.checks.find((c) => c.name === n)?.ok;
+              const ok = health.data?.checks?.find((c) => c.name === n)?.ok;
               const short = n.split(".")[0];
               return (
                 <span key={n}>

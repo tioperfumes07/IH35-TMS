@@ -146,7 +146,7 @@ export function AccountingAuditTrailPage() {
   });
 
   const events = useMemo(
-    () => eventQuery.data?.pages.flatMap((p) => p.events ?? []) ?? [],
+    () => eventQuery.data?.pages?.flatMap((p) => p.events ?? []) ?? [],
     [eventQuery.data?.pages],
   );
 

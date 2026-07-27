@@ -255,7 +255,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
     [unitsWithoutLoad]
   );
 
-  const atRiskCount = atRiskQ.data?.loads.length ?? 0;
+  const atRiskCount = atRiskQ.data?.loads?.length ?? 0;
   const lateCount = lateQ.data?.count ?? 0;
   const atRiskLateTotal = atRiskCount + lateCount;
 

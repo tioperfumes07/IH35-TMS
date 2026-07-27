@@ -198,7 +198,7 @@ export function CoaRolesPage() {
         />
       ) : null}
 
-      {!accountsQuery.isLoading && !accountsQuery.isError && companyId && (accountsQuery.data?.accounts.length ?? 0) === 0 ? (
+      {!accountsQuery.isLoading && !accountsQuery.isError && companyId && (accountsQuery.data?.accounts?.length ?? 0) === 0 ? (
         <ListErrorBanner
           message="No postable accounts returned for this entity. Check CoA seed / entity scope — designations cannot proceed with an empty picker."
           onRetry={() => void accountsQuery.refetch()}

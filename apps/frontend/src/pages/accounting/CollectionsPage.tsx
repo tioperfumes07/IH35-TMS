@@ -186,7 +186,7 @@ export function CollectionsPage() {
                 onRetry={() => void tasksQuery.refetch()}
               />
             ) : null}
-            {!tasksQuery.isLoading && !tasksQuery.isError && (tasksQuery.data?.tasks.length ?? 0) === 0 ? <p className="px-3 py-3 text-sm text-gray-500">No tasks match current filters.</p> : null}
+            {!tasksQuery.isLoading && !tasksQuery.isError && (tasksQuery.data?.tasks?.length ?? 0) === 0 ? <p className="px-3 py-3 text-sm text-gray-500">No tasks match current filters.</p> : null}
           </div>
         </section>
 
@@ -275,7 +275,7 @@ export function CollectionsPage() {
                       <p className="mt-1 whitespace-pre-wrap">{contact.notes}</p>
                     </article>
                   ))}
-                  {!detailQuery.isLoading && (detailQuery.data?.contacts.length ?? 0) === 0 ? <p className="text-sm text-gray-500">No contact entries yet.</p> : null}
+                  {!detailQuery.isLoading && (detailQuery.data?.contacts?.length ?? 0) === 0 ? <p className="text-sm text-gray-500">No contact entries yet.</p> : null}
                 </div>
               </div>
             </div>

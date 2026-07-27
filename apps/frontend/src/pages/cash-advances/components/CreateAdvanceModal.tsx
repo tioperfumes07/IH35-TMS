@@ -191,7 +191,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
   }, [fleetQuery.data]);
 
   const selectedBill = useMemo(
-    () => billsQuery.data?.bills.find((row) => String(row.id) === linkedBillId) ?? null,
+    () => billsQuery.data?.bills?.find((row) => String(row.id) === linkedBillId) ?? null,
     [billsQuery.data?.bills, linkedBillId]
   );
 

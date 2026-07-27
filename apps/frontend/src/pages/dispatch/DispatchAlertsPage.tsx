@@ -63,12 +63,12 @@ export function DispatchAlertsPage() {
     !companyId || accidentsQ.isLoading || accidentsQ.isError ? null : openAccidentsCount(accidentsQ.data?.accidents ?? []);
 
   const cashCount =
-    !companyId || cashQ.isLoading || cashQ.isError ? null : (cashQ.data?.requests.length ?? null);
+    !companyId || cashQ.isLoading || cashQ.isError ? null : (cashQ.data?.requests?.length ?? null);
 
   const lateCount = !companyId || lateQ.isLoading || lateQ.isError ? null : (lateQ.data?.count ?? null);
 
   const intransitCount =
-    !companyId || intransitQ.isLoading || intransitQ.isError ? null : (intransitQ.data?.issues.length ?? null);
+    !companyId || intransitQ.isLoading || intransitQ.isError ? null : (intransitQ.data?.issues?.length ?? null);
 
   const cards = [
     {

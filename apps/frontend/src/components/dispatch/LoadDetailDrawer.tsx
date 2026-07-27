@@ -173,7 +173,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
     staleTime: 60_000,
   });
   const autoStatusSwitchForLoad = useMemo(
-    () => autoStatusSwitchQuery.data?.events.find((event) => event.load_uuid === load?.id) ?? null,
+    () => autoStatusSwitchQuery.data?.events?.find((event) => event.load_uuid === load?.id) ?? null,
     [autoStatusSwitchQuery.data, load?.id]
   );
 

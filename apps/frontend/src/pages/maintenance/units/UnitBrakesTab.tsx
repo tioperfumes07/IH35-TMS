@@ -114,7 +114,7 @@ export function UnitBrakesTab({ unitId, companyId }: UnitBrakesTabProps) {
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {positions.map((position) => {
-          const latest = latestQ.data?.rows.find((r) => r.brake_position === position);
+          const latest = latestQ.data?.rows?.find((r) => r.brake_position === position);
           const projection = projectionByPosition.get(position);
           const threshold = projection?.threshold_mm ?? (position.endsWith("-S") ? 6.4 : 3.2);
           return (
