@@ -1,5 +1,9 @@
 -- [HOLD-FOR-JORGE — FINANCIAL CLUSTER] DO NOT RUN ON PROD — run ONLY on a Neon branch by GUARD/owner
 -- hand, then ledger-backfill so prod db:migrate skips it.
+-- RENUMBER 2026-07-26 (URGENT): was 202609160000_bank_dom_05_intercompany_transfers.sql —
+-- that number is STAMPED on prod as 202609160000_c9_form_roundtrip_persist_columns.sql, so the
+-- runner treated BANK-DOM-05 as already-applied and never created the tables. Body unchanged;
+-- number must stay STRICTLY above live max (was 202609220000 at renumber time).
 --
 -- CANONICAL-CHECK: intercompany_entity_pair. banking.intercompany_entity_pairs is a CONFIGURATION
 -- map (entity + counterparty -> which catalogs.accounts row is that entity's intercompany control
@@ -36,6 +40,9 @@
 -- Idempotent (DO + IF NOT EXISTS + ON CONFLICT). Additive only — no DROP, no DELETE, no UPDATE of
 -- existing rows. Dynamic org.companies resolution — NO hardcoded UUID (a fresh-from-0001 CI DB seeds
 -- gen_random_uuid() companies). Validated apply-twice on a local throwaway Postgres 16.
+-- RENUMBER 2026-07-27 (BAND FIX): was 202609230000 (itself a renumber off 202609160000 c9 collision).
+-- Cursor band is 20260901xxxx–20260910xxxx per Rules of Engagement. Body unchanged.
+-- Neon already applied under 202609230000 — dual-ledger stamp adds this new filename.
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 1. The owner-editable entity-pair map.

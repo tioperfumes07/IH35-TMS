@@ -53,15 +53,6 @@ const NON_DATA_SCHEMAS = new Set(["pg_catalog", "information_schema", "pg_temp"]
  * Snapshot taken 2026-06-25 from `--list` on main; see memory bucket3-phantom-schema-disposition.
  */
 const KNOWN_PHANTOM_DEBT = [
-  // ── [HOLD-FOR-JORGE] BANK-DOM-05 intercompany transfers — migration 202609160000 is HELD ──
-  // Not a naming error and not a forward-ref to an unbuilt module: the table is CREATED by a held
-  // migration on this same branch, and held migrations apply on CI/local/Neon but never on prod by
-  // an automated deploy. GUARD cross-check 2026-07-26 on br-fancy-credit-akjnd07a (lucia, positive
-  // control mdata.vendors=2789): to_regclass = MISSING, which is exactly why it reads as phantom.
-  // REMOVE THIS ENTRY once GUARD Neon-applies 202609160000 and canonical-relations.json is
-  // regenerated — after that it can never silently reappear (that is the ratchet).
-  { rel: "banking.intercompany_entity_pairs", why: "[HOLD] BANK-DOM-05 — created by held migration 202609160000, unapplied on prod pending GUARD Neon-apply" },
-  { rel: "banking.intercompany_transfer_groups", why: "[HOLD] BANK-DOM-05 — created by held migration 202609160000, unapplied on prod pending GUARD Neon-apply" },
   // ── [HOLD-FOR-JORGE] financial fixes in flight (PR #1483) — remove when #1483 merges ──
   // ── bucket-③ HOLD / needs migration or data-model decision ──
   { rel: "accounting.qbo_payroll_links", why: "HOLD payroll — real integrations.qbo_payroll_links is per-run aggregate, not per-employee; needs data-model decision" },
