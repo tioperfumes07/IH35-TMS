@@ -1395,13 +1395,19 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         if (posted) throw new WoPostedApError(posted);
         const res = await client.query(
           `
+            -- MNT-PHANTOM-03: this matched on li.id. maintenance.work_order_lines has NO id column
+            -- (prod: 0) — its primary key is the uuid column. So this DELETE threw 42703 on every call, and
+            -- WO cost-line removal endpoint has never once executed. The posted-bill refusal above it
+            -- (WoPostedApError) was therefore also never reached in anger.
+            -- NOTE for F9-06: there is no working hard-delete here to "convert" to a soft-retire —
+            -- the endpoint must first be made to run at all. Sequencing recorded in the PR body.
             DELETE FROM maintenance.work_order_lines li
             USING maintenance.work_orders w
-            WHERE li.id = $1
+            WHERE li.uuid = $1
               AND li.work_order_uuid = w.id
               AND w.id = $2
               AND w.operating_company_id = $3
-            RETURNING li.id
+            RETURNING li.uuid
           `,
           [params.data.lid, params.data.id, companyId]
         );

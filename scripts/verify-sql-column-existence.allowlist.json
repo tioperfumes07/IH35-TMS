@@ -1,5 +1,5 @@
 {
-  "_comment": "REAL phantom-column bugs found by verify-sql-column-existence on first run (SELECT references a column absent from the prod schema baseline \u2192 500/42703 on that path; mocked tests hid them). Frozen here as a RATCHET backlog: the guard BLOCKS any NEW phantom column, these are tracked for correct per-case fixes (some are structural/unit-sensitive, not simple renames). Remove a key here as its bug is fixed. See docs/trackers. Extended 2026-07-20 with systemic-pattern-column-drift-guard TARGET_TABLES expansion backlog.",
+  "_comment": "REAL phantom-column bugs found by verify-sql-column-existence on first run (SELECT references a column absent from the prod schema baseline → 500/42703 on that path; mocked tests hid them). Frozen here as a RATCHET backlog: the guard BLOCKS any NEW phantom column, these are tracked for correct per-case fixes (some are structural/unit-sensitive, not simple renames). Remove a key here as its bug is fixed. See docs/trackers. Extended 2026-07-20 with systemic-pattern-column-drift-guard TARGET_TABLES expansion backlog.",
   "entries": [
     "apps/backend/src/accounting/bank-recon/recon-worklist.service.ts#accounting.journal_entries.reference_no",
     "apps/backend/src/accounting/invoices.routes.ts#mdata.loads.invoice_id",
@@ -70,7 +70,6 @@
     "apps/backend/src/search/universal/indexer.service.ts#mdata.drivers.driver_code",
     "apps/backend/src/settlements/trip-link.engine.ts#mdata.loads.delivery_appointment_end",
     "apps/backend/src/settlements/trip-link.engine.ts#mdata.loads.delivery_appointment_start",
-    "apps/backend/src/settlements/trip-link.engine.ts#mdata.loads.pickup_appointment_start",
-    "apps/backend/src/work-orders/work-orders.routes.ts#maintenance.work_order_lines.work_order_id"
+    "apps/backend/src/settlements/trip-link.engine.ts#mdata.loads.pickup_appointment_start"
   ]
 }

@@ -978,6 +978,7 @@
     "1558": "1558-verify-no-dead-kpi-cards.mjs",
     "1559": "1559-verify-real-owned-fleet-is-trk.mjs",
     "1560": "1560-verify-route-manifest-parity.mjs",
+    "1562": "1562-verify-wo-line-canonical-columns.mjs",
     "1561": "1561-verify-migration-no-number-collision.mjs",
     "1570": "1570-verify-form-field-roundtrip.mjs",
     "1580": "1580-verify-no-jsonb-id-array-as-fk.mjs",
