@@ -21,7 +21,7 @@ function fail(message) {
   process.exit(1);
 }
 
-function assertSource(rel, src) {
+export function assertSource(rel, src) {
   const problems = [];
   if (!/onSuccess:\s*\(\s*publicToken:\s*string\s*\|\s*null/.test(src)) {
     problems.push(`${rel}: onSuccess must type publicToken as string | null (react-plaid-link v5 PlaidLinkOnSuccess)`);
@@ -32,6 +32,26 @@ function assertSource(rel, src) {
   if (/onSuccess:\s*\(\s*publicToken:\s*string\s*[,)]/.test(src) && !/string\s*\|\s*null/.test(src)) {
     problems.push(`${rel}: bare string publicToken is incompatible with v5 (strictFunctionTypes)`);
   }
+
+  // A cast satisfies the compiler while reintroducing the exact bug: `as string` / `!` clears TS2345
+  // in one character and then POSTs a null token to the bank-connection exchange endpoint. The
+  // widened type is only worth anything if the value is actually checked, so type-level compliance
+  // achieved by casting is flagged explicitly.
+  const exchangeArg = src.match(/exchangePlaidPublicToken\s*\(([^,)]+)/);
+  if (exchangeArg && /\bas\s+string\b|!\s*$/.test(exchangeArg[1].trim())) {
+    problems.push(
+      `${rel}: exchangePlaidPublicToken is called with a cast/non-null assertion ('${exchangeArg[1].trim()}') — that silences the compiler while still sending a null token to the bank-connection endpoint`
+    );
+  }
+
+  // Order matters: a null check placed after the exchange call cannot prevent the bad request.
+  // Search for the CALL, not the import at the top of the file, which always precedes the check.
+  const guardIdx = src.search(/if\s*\(\s*!publicToken\s*\)/);
+  const callIdx = src.search(/exchangePlaidPublicToken\s*\(/);
+  if (guardIdx !== -1 && callIdx !== -1 && guardIdx > callIdx) {
+    problems.push(`${rel}: the null check appears AFTER the exchangePlaidPublicToken call — it cannot prevent the bad request`);
+  }
+
   return problems;
 }
 
@@ -55,6 +75,33 @@ function selftest() {
   }
   if (!assertSource("noGuard", noGuard).some((p) => p.includes("refuse null"))) {
     failures.push("missing null refuse not caught");
+  }
+
+  // Hand-written fixtures cannot notice when the REAL files drift away from what they model, so the
+  // live sources are exercised too: they must pass as-is, and each mutation of them must be caught.
+  for (const rel of TARGETS) {
+    const abs = path.join(ROOT, rel);
+    if (!fs.existsSync(abs)) {
+      failures.push(`${rel} missing — repoint this guard rather than deleting the check`);
+      continue;
+    }
+    const real = fs.readFileSync(abs, "utf8");
+    if (assertSource(rel, real).length) failures.push(`real source ${rel} flagged — false positive`);
+
+    const mutations = [
+      ["narrowed back to v4", real.replace(/(onSuccess:\s*\(\s*publicToken:\s*string)\s*\|\s*null/, "$1")],
+      ["null check deleted", real.replace(/if \(!publicToken\) \{[\s\S]*?\n\s{8}\}\n/, "")],
+      [
+        "cast instead of a check",
+        real
+          .replace(/if \(!publicToken\) \{[\s\S]*?\n\s{8}\}\n/, "")
+          .replace(/exchangePlaidPublicToken\(publicToken/, "exchangePlaidPublicToken(publicToken as string"),
+      ],
+    ];
+    for (const [name, mutated] of mutations) {
+      if (mutated === real) failures.push(`${rel}: mutation '${name}' changed nothing — the case cannot fail`);
+      else if (!assertSource(rel, mutated).length) failures.push(`${rel}: mutation '${name}' was not caught`);
+    }
   }
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:`);
