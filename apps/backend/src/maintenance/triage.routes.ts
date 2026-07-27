@@ -77,23 +77,55 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
       );
       const display = displayIdRes.rows[0];
 
-      const woRes = await client.query(
+      const reverseColRes = await client.query(
         `
+          SELECT EXISTS (
+            SELECT 1
+            FROM information_schema.columns
+            WHERE table_schema = 'maintenance'
+              AND table_name = 'work_orders'
+              AND column_name = 'source_intransit_issue_id'
+          ) AS ok
+        `
+      );
+      const hasReverseCol = Boolean((reverseColRes.rows[0] as { ok?: boolean } | undefined)?.ok);
+
+      const woRes = await client.query(
+        hasReverseCol
+          ? `
+          INSERT INTO maintenance.work_orders (
+            operating_company_id, wo_type, source_type, status, unit_id, driver_id, opened_at, repair_location, description, display_id, unit_sequence, source_intransit_issue_id
+          )
+          VALUES ($1,$2,'IT','open',$3,$4,now(),'mobile_roadside',$5,$6,$7,$8)
+          RETURNING id
+        `
+          : `
           INSERT INTO maintenance.work_orders (
             operating_company_id, wo_type, source_type, status, unit_id, driver_id, opened_at, repair_location, description, display_id, unit_sequence
           )
           VALUES ($1,$2,'IT','open',$3,$4,now(),'mobile_roadside',$5,$6,$7)
           RETURNING id
         `,
-        [
-          query.data.operating_company_id,
-          body.data.wo_type,
-          issue.unit_id,
-          issue.driver_id,
-          `${issue.issue_description ?? ""}\n${body.data.additional_notes ?? ""}\nGPS: ${issue.gps_lat ?? ""},${issue.gps_lng ?? ""} ${issue.gps_label ?? ""}`.trim(),
-          display?.display_id ?? null,
-          Number(display?.sequence ?? 0) || null,
-        ]
+        hasReverseCol
+          ? [
+              query.data.operating_company_id,
+              body.data.wo_type,
+              issue.unit_id,
+              issue.driver_id,
+              `${issue.issue_description ?? ""}\n${body.data.additional_notes ?? ""}\nGPS: ${issue.gps_lat ?? ""},${issue.gps_lng ?? ""} ${issue.gps_label ?? ""}`.trim(),
+              display?.display_id ?? null,
+              Number(display?.sequence ?? 0) || null,
+              params.data.issue_id,
+            ]
+          : [
+              query.data.operating_company_id,
+              body.data.wo_type,
+              issue.unit_id,
+              issue.driver_id,
+              `${issue.issue_description ?? ""}\n${body.data.additional_notes ?? ""}\nGPS: ${issue.gps_lat ?? ""},${issue.gps_lng ?? ""} ${issue.gps_label ?? ""}`.trim(),
+              display?.display_id ?? null,
+              Number(display?.sequence ?? 0) || null,
+            ]
       );
       const workOrderId = String(woRes.rows[0].id);
 
