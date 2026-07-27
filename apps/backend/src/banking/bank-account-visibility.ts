@@ -118,6 +118,15 @@ export interface BankAccountVisibilityRow {
 /** Hide a bank account row FOR THIS ENTITY ONLY (void-not-delete: sets hidden_at, never deletes).
  * Scoped by operating_company_id so an entity can only hide its OWN row — it can never reach into (or
  * affect) the other entity's row for what is conceptually "the same" real-world Wells Fargo account. */
+
+/**
+ * F9-01 — exclude voided bank_transactions (merged manual stubs retained for audit).
+ * Always on (not feature-flagged): voided rows must never double-count balances or feeds.
+ */
+export function bankTransactionActiveFilterSql(txnAlias = "bt"): string {
+  return `AND ${txnAlias}.voided_at IS NULL`;
+}
+
 export async function hideBankAccountForEntity(
   client: Queryable,
   input: HideBankAccountInput

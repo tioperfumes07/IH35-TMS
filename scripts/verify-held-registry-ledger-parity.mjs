@@ -82,6 +82,8 @@ export const EXPECTED_HELD = [
   "202609250000_flt_02_real_fleet_owned_by_trk.sql",
   // BANK-DOM-05 applied as 202609010010 — applied_held.
   // F9-02 applied as 202609010040 — applied_held.
+  // F9-01 applied as 202609010050 — applied_held.
+  // F9-01 follow-up applied as 202609010051 — applied_held.
   // 202609140000 (LEGAL-PAPER-01 signed_on_paper) is NOT here any more: re-proved APPLIED on prod
   // 2026-07-26T17:31:50Z (cursor-owner-batch). Live re-check on br-fancy-credit-akjnd07a, positive
   // control 762 canonical ledger rows: present in BOTH ledgers; pg_enum contract_instance_status now

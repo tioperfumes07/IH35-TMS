@@ -332,7 +332,16 @@ function collectExpectedObjects(migrationsDirectory) {
     let defaultSchema = RUNNER_SEARCH_PATH[0];
 
     for (const stmt of statements) {
-      const normalizedStmt = stmt.text.replace(/\s+/g, " ").trim();
+      // A `--` line comment with no preceding statement/blank line between it and the next DDL
+      // (the common repo style: "-- why this exists\nDROP INDEX ...;") is scanned over as a comment
+      // by splitStatements' tokenizer but still lands IN the raw slice() for this statement's text,
+      // since the tokenizer only skips comment CONTENT for boundary-detection, not for the output
+      // string. That glues the comment prose onto the front of the actual SQL once whitespace is
+      // collapsed below — and every object-detection regex here is anchored with `^`, so a
+      // comment-prefixed DROP/CREATE/ALTER silently fails to match ANY of them. Strip full leading
+      // comment lines first so the anchors see real SQL, not prose.
+      const withoutLeadingComments = stmt.text.replace(/^(?:\s*--[^\n]*\n)+/, "");
+      const normalizedStmt = withoutLeadingComments.replace(/\s+/g, " ").trim();
       const lowerStmt = normalizedStmt.toLowerCase();
 
       const searchPathMatch = normalizedStmt.match(/^set\s+(?:local\s+)?search_path\s+to\s+(.+)$/i);

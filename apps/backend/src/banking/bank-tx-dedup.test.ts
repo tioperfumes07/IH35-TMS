@@ -27,7 +27,7 @@ describe("bank-tx-dedup", () => {
     expect(a.length).toBe(64);
   });
 
-  it("merges manual stub into plaid row and deletes stub", async () => {
+  it("merges manual stub into plaid row and voids stub", async () => {
     const queries: Array<{ sql: string; values?: unknown[] }> = [];
     const client = {
       async query(sql: string, values?: unknown[]) {
@@ -60,7 +60,15 @@ describe("bank-tx-dedup", () => {
       normalizedDescription: "testdesc",
     });
     expect(res.merged).toBe(true);
-    expect(queries.some((q) => q.sql.includes("DELETE FROM banking.bank_transactions"))).toBe(true);
+    expect(queries.some((q) => q.sql.includes("DELETE FROM banking.bank_transactions"))).toBe(false);
+    expect(
+      queries.some(
+        (q) =>
+          q.sql.includes("UPDATE banking.bank_transactions") &&
+          q.sql.includes("voided_at") &&
+          q.sql.includes("merged_into_bank_transaction_id")
+      )
+    ).toBe(true);
     expect(queries.some((q) => q.sql.includes("UPDATE banking.bank_transactions") && q.sql.includes("receipt_evidence_r2_key"))).toBe(true);
   });
 });

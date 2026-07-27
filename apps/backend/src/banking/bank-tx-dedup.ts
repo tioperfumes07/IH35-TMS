@@ -25,7 +25,7 @@ export type MergeManualStubResult =
   | { merged: false; reason: "no_stub" | "multiple_stubs" }
   | { merged: true; stub_id: string };
 
-/** Merge a single manual receipt/intake row into a Plaid-backed row and delete the stub. */
+/** Merge a single manual receipt/intake row into a Plaid-backed row and void the stub (never DELETE). */
 export async function mergeManualBankTransactionStub(
   client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: unknown[]; rowCount?: number }> },
   args: {
@@ -53,6 +53,7 @@ export async function mergeManualBankTransactionStub(
         AND dedup_hash = $3
         AND COALESCE(source, 'manual') = 'manual'
         AND plaid_transaction_id IS NULL
+        AND voided_at IS NULL
       ORDER BY created_at ASC
       LIMIT 2
     `,
@@ -67,6 +68,7 @@ export async function mergeManualBankTransactionStub(
       SELECT receipt_evidence_r2_key, reconciled_obligation_type, reconciled_obligation_id, notes
       FROM banking.bank_transactions
       WHERE id = $1::uuid
+        AND voided_at IS NULL
       LIMIT 1
     `,
     [stubId]
@@ -93,6 +95,7 @@ export async function mergeManualBankTransactionStub(
         dedup_hash = $6::text,
         updated_at = now()
       WHERE id = $1::uuid
+        AND voided_at IS NULL
     `,
     [
       args.plaidRowId,
@@ -104,6 +107,20 @@ export async function mergeManualBankTransactionStub(
     ]
   );
 
-  await client.query(`DELETE FROM banking.bank_transactions WHERE id = $1::uuid`, [stubId]);
+  // F9-01 — void stub; retain evidence row. Clear dedup_hash so even pre-partial-index envs cannot collide.
+  await client.query(
+    `
+      UPDATE banking.bank_transactions
+      SET
+        voided_at = COALESCE(voided_at, now()),
+        voided_reason = COALESCE(voided_reason, 'merged_into_plaid'),
+        merged_into_bank_transaction_id = $2::uuid,
+        dedup_hash = NULL,
+        updated_at = now()
+      WHERE id = $1::uuid
+        AND voided_at IS NULL
+    `,
+    [stubId, args.plaidRowId]
+  );
   return { merged: true, stub_id: stubId };
 }

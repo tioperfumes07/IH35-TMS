@@ -381,6 +381,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
             FROM banking.bank_transactions bt
             WHERE bt.operating_company_id = $1
               AND bt.bank_account_id = $2
+              AND bt.voided_at IS NULL
             ORDER BY bt.transaction_date DESC, bt.created_at DESC
             LIMIT $3 OFFSET $4
           `,
@@ -428,6 +429,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
               status
             FROM banking.bank_transactions
             WHERE operating_company_id = $1
+              AND voided_at IS NULL
               AND NOT (status IN ('pending_categorization','uncategorized'))
               AND abs(amount_cents - $2) <= 500
               AND description ILIKE $3

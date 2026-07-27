@@ -11731,10 +11731,10 @@
       "kind": "table",
       "columns": [
         {
-          "name": "id",
-          "type": "uuid",
+          "name": "amount_cents",
+          "type": "bigint",
           "nullable": false,
-          "default": "gen_random_uuid()"
+          "default": null
         },
         {
           "name": "bank_account_id",
@@ -11743,140 +11743,8 @@
           "default": null
         },
         {
-          "name": "operating_company_id",
+          "name": "categorization_class_id",
           "type": "uuid",
-          "nullable": false,
-          "default": null
-        },
-        {
-          "name": "plaid_transaction_id",
-          "type": "text",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "transaction_date",
-          "type": "date",
-          "nullable": false,
-          "default": null
-        },
-        {
-          "name": "posted_date",
-          "type": "date",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "amount_cents",
-          "type": "bigint",
-          "nullable": false,
-          "default": null
-        },
-        {
-          "name": "description",
-          "type": "text",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "merchant_name",
-          "type": "text",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "plaid_category",
-          "type": "ARRAY",
-          "nullable": false,
-          "default": "'{}'::text[]"
-        },
-        {
-          "name": "pending",
-          "type": "boolean",
-          "nullable": false,
-          "default": "false"
-        },
-        {
-          "name": "is_credit",
-          "type": "boolean",
-          "nullable": false,
-          "default": "false"
-        },
-        {
-          "name": "matched_load_id",
-          "type": "uuid",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "matched_bill_id",
-          "type": "uuid",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "matched_settlement_id",
-          "type": "uuid",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "qbo_synced_at",
-          "type": "timestamp with time zone",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "qbo_id",
-          "type": "text",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "notes",
-          "type": "text",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "nullable": false,
-          "default": "now()"
-        },
-        {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "nullable": false,
-          "default": "now()"
-        },
-        {
-          "name": "coa_account_id",
-          "type": "uuid",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "status",
-          "type": "text",
-          "nullable": true,
-          "default": "'pending_categorization'::text"
-        },
-        {
-          "name": "category",
-          "type": "text",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "linked_entity_id",
-          "type": "uuid",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "category_kind",
-          "type": "text",
           "nullable": true,
           "default": null
         },
@@ -11887,7 +11755,13 @@
           "default": null
         },
         {
-          "name": "categorization_vendor_id",
+          "name": "categorization_deduction_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "categorization_driver_id",
           "type": "uuid",
           "nullable": true,
           "default": null
@@ -11899,8 +11773,20 @@
           "default": null
         },
         {
-          "name": "categorization_project_id",
+          "name": "categorization_item_id",
           "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "categorization_load_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "categorization_location",
+          "type": "text",
           "nullable": true,
           "default": null
         },
@@ -11911,44 +11797,38 @@
           "default": null
         },
         {
-          "name": "suggested_match_invoice_id",
+          "name": "categorization_project_id",
           "type": "uuid",
           "nullable": true,
           "default": null
         },
         {
-          "name": "suggested_match_bill_id",
-          "type": "uuid",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "destination_bank_account_id",
-          "type": "uuid",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "transfer_kind",
+          "name": "categorization_recover_deduction_type",
           "type": "text",
           "nullable": true,
           "default": null
         },
         {
-          "name": "paired_transaction_id",
+          "name": "categorization_recover_from_driver",
+          "type": "boolean",
+          "nullable": false,
+          "default": "false"
+        },
+        {
+          "name": "categorization_trailer_id",
           "type": "uuid",
           "nullable": true,
           "default": null
         },
         {
-          "name": "skip_reason",
-          "type": "text",
+          "name": "categorization_unit_id",
+          "type": "uuid",
           "nullable": true,
           "default": null
         },
         {
-          "name": "investigate_note",
-          "type": "text",
+          "name": "categorization_vendor_id",
+          "type": "uuid",
           "nullable": true,
           "default": null
         },
@@ -11959,16 +11839,34 @@
           "default": null
         },
         {
-          "name": "source",
+          "name": "category",
           "type": "text",
           "nullable": true,
           "default": null
         },
         {
-          "name": "normalized_description",
+          "name": "category_kind",
           "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "check_number",
+          "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "coa_account_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
           "nullable": false,
-          "default": "''::text"
+          "default": "now()"
         },
         {
           "name": "dedup_hash",
@@ -11977,43 +11875,61 @@
           "default": null
         },
         {
-          "name": "reconciled_obligation_type",
+          "name": "description",
           "type": "text",
           "nullable": true,
           "default": null
         },
         {
-          "name": "reconciled_obligation_id",
+          "name": "description_normalized",
+          "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "destination_bank_account_id",
           "type": "uuid",
           "nullable": true,
           "default": null
         },
         {
-          "name": "reviewed_at",
-          "type": "timestamp with time zone",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "receipt_evidence_r2_key",
+          "name": "excluded_reason",
           "type": "text",
           "nullable": true,
           "default": null
         },
         {
-          "name": "review_state",
-          "type": "text",
+          "name": "id",
+          "type": "uuid",
           "nullable": false,
-          "default": "'for_review'::text"
+          "default": "gen_random_uuid()"
         },
         {
-          "name": "matched_invoice_id",
+          "name": "investigate_note",
+          "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "is_billable",
+          "type": "boolean",
+          "nullable": false,
+          "default": "false"
+        },
+        {
+          "name": "is_credit",
+          "type": "boolean",
+          "nullable": false,
+          "default": "false"
+        },
+        {
+          "name": "linked_entity_id",
           "type": "uuid",
           "nullable": true,
           "default": null
         },
         {
-          "name": "matched_payment_id",
+          "name": "matched_bill_id",
           "type": "uuid",
           "nullable": true,
           "default": null
@@ -12025,7 +11941,13 @@
           "default": null
         },
         {
-          "name": "matched_transfer_id",
+          "name": "matched_expense_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "matched_invoice_id",
           "type": "uuid",
           "nullable": true,
           "default": null
@@ -12037,62 +11959,86 @@
           "default": null
         },
         {
-          "name": "suggested_vendor_id",
+          "name": "matched_load_id",
           "type": "uuid",
           "nullable": true,
           "default": null
         },
         {
-          "name": "suggested_account_id",
+          "name": "matched_payment_id",
           "type": "uuid",
           "nullable": true,
           "default": null
         },
         {
-          "name": "suggested_confidence",
-          "type": "text",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "suggested_source",
-          "type": "text",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "suggested_at",
-          "type": "timestamp with time zone",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "description_normalized",
-          "type": "text",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "excluded_reason",
-          "type": "text",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "reconciliation_session_id",
+          "name": "matched_settlement_id",
           "type": "uuid",
           "nullable": true,
           "default": null
         },
         {
-          "name": "reconciliation_cleared",
+          "name": "matched_transfer_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "merchant_name",
+          "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "merged_into_bank_transaction_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "normalized_description",
+          "type": "text",
+          "nullable": false,
+          "default": "''::text"
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "operating_company_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "paired_transaction_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "pending",
           "type": "boolean",
           "nullable": false,
           "default": "false"
         },
         {
-          "name": "source_ref",
+          "name": "plaid_category",
+          "type": "ARRAY",
+          "nullable": false,
+          "default": "'{}'::text[]"
+        },
+        {
+          "name": "plaid_transaction_id",
           "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "posted_date",
+          "type": "date",
           "nullable": true,
           "default": null
         },
@@ -12121,56 +12067,74 @@
           "default": null
         },
         {
-          "name": "categorization_driver_id",
-          "type": "uuid",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "matched_expense_id",
-          "type": "uuid",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "categorization_unit_id",
-          "type": "uuid",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "categorization_load_id",
-          "type": "uuid",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "categorization_recover_from_driver",
-          "type": "boolean",
-          "nullable": false,
-          "default": "false"
-        },
-        {
-          "name": "categorization_recover_deduction_type",
+          "name": "qbo_id",
           "type": "text",
           "nullable": true,
           "default": null
         },
         {
-          "name": "categorization_deduction_id",
+          "name": "qbo_synced_at",
+          "type": "timestamp with time zone",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "receipt_evidence_r2_key",
+          "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "reconciled_obligation_id",
           "type": "uuid",
           "nullable": true,
           "default": null
         },
         {
-          "name": "categorization_item_id",
+          "name": "reconciled_obligation_type",
+          "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "reconciliation_cleared",
+          "type": "boolean",
+          "nullable": false,
+          "default": "false"
+        },
+        {
+          "name": "reconciliation_session_id",
           "type": "uuid",
           "nullable": true,
           "default": null
         },
         {
-          "name": "categorization_trailer_id",
-          "type": "uuid",
+          "name": "review_state",
+          "type": "text",
+          "nullable": false,
+          "default": "'for_review'::text"
+        },
+        {
+          "name": "reviewed_at",
+          "type": "timestamp with time zone",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "skip_reason",
+          "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "source",
+          "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "source_ref",
+          "type": "text",
           "nullable": true,
           "default": null
         },
@@ -12181,31 +12145,85 @@
           "default": null
         },
         {
-          "name": "check_number",
+          "name": "status",
           "type": "text",
           "nullable": true,
-          "default": null
+          "default": "'pending_categorization'::text"
         },
         {
-          "name": "categorization_class_id",
+          "name": "suggested_account_id",
           "type": "uuid",
           "nullable": true,
           "default": null
         },
         {
-          "name": "categorization_location",
+          "name": "suggested_at",
+          "type": "timestamp with time zone",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "suggested_confidence",
           "type": "text",
           "nullable": true,
           "default": null
         },
         {
-          "name": "is_billable",
-          "type": "boolean",
-          "nullable": false,
-          "default": "false"
+          "name": "suggested_match_bill_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "suggested_match_invoice_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "suggested_source",
+          "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "suggested_vendor_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
         },
         {
           "name": "tags",
+          "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "transaction_date",
+          "type": "date",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "transfer_kind",
+          "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "voided_at",
+          "type": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "voided_reason",
           "type": "text",
           "nullable": true,
           "default": null

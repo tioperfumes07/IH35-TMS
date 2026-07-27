@@ -1877,7 +1877,10 @@
       "tags",
       "transaction_date",
       "transfer_kind",
-      "updated_at"
+      "updated_at",
+      "merged_into_bank_transaction_id",
+      "voided_at",
+      "voided_reason"
     ],
     "banking.equipment_loan_attributions": [
       "amount_cents",
