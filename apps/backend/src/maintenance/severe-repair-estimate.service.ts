@@ -278,12 +278,22 @@ export async function refreshEstimate(userId: string, estimate_id: string, opera
         WITH calc AS (
           SELECT
             e.id AS estimate_id,
-            COALESCE(SUM(ROUND(CASE WHEN wl.line_type = 'labor' THEN COALESCE(wl.amount, 0) ELSE 0 END * 100)), 0)::bigint AS labor_cents,
-            COALESCE(SUM(ROUND(CASE WHEN wl.line_type = 'parts' THEN COALESCE(wl.amount, 0) ELSE 0 END * 100)), 0)::bigint AS parts_cents,
-            COALESCE(SUM(ROUND(CASE WHEN wl.line_type NOT IN ('labor', 'parts') THEN COALESCE(wl.amount, 0) ELSE 0 END * 100)), 0)::bigint AS outside_cents
+            -- MNT-PHANTOM-02: this summed wl.amount joined on wl.work_order_id. NEITHER column exists
+            -- on maintenance.work_order_lines (prod: amount=0, work_order_id=0) — the real columns are
+            -- total_cost numeric(12,2) and work_order_uuid. Every recompute threw 42703, so the severe-
+            -- repair estimate never produced a figure; severe_repair_estimates is empty on prod.
+            -- These cents feed the owner-locked $7,000 capitalize-vs-expense decision (A4-D6 / MNT-ECON-02),
+            -- so a silently-failing recompute meant that threshold was never evaluated against real cost.
+            -- total_cost is dollars at scale 2, so multiplying by 100 gives cents — the original intent.
+            -- 'part' AND 'parts' are both real line_type values (the GL poster reads
+            -- IN ('part','parts','labor')); matching only 'parts' dumped every 'part' line into
+            -- outside_cents and misclassified the repair.
+            COALESCE(SUM(ROUND(CASE WHEN wl.line_type = 'labor' THEN COALESCE(wl.total_cost, 0) ELSE 0 END * 100)), 0)::bigint AS labor_cents,
+            COALESCE(SUM(ROUND(CASE WHEN wl.line_type IN ('part', 'parts') THEN COALESCE(wl.total_cost, 0) ELSE 0 END * 100)), 0)::bigint AS parts_cents,
+            COALESCE(SUM(ROUND(CASE WHEN wl.line_type NOT IN ('labor', 'part', 'parts') THEN COALESCE(wl.total_cost, 0) ELSE 0 END * 100)), 0)::bigint AS outside_cents
           FROM maintenance.severe_repair_estimates e
           JOIN maintenance.work_orders w ON w.id = e.trigger_wo_id
-          LEFT JOIN maintenance.work_order_lines wl ON wl.work_order_id = w.id
+          LEFT JOIN maintenance.work_order_lines wl ON wl.work_order_uuid = w.id
           WHERE e.id = $1
             AND e.operating_company_id = $2
           GROUP BY e.id

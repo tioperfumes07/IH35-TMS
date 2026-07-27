@@ -733,6 +733,23 @@
       "voided_at",
       "voided_reason"
     ],
+    "accounting.insurance_claim_recovery_postings": [
+      "amount_cents",
+      "claim_id",
+      "created_at",
+      "created_by_user_id",
+      "entry_date",
+      "id",
+      "is_active",
+      "journal_entry_id",
+      "memo",
+      "operating_company_id",
+      "status",
+      "updated_at",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
+    ],
     "accounting.invoice_lines": [
       "account_id",
       "created_at",
@@ -1823,6 +1840,7 @@
       "matched_settlement_id",
       "matched_transfer_id",
       "merchant_name",
+      "merged_into_bank_transaction_id",
       "normalized_description",
       "notes",
       "operating_company_id",
@@ -1878,7 +1896,6 @@
       "transaction_date",
       "transfer_kind",
       "updated_at",
-      "merged_into_bank_transaction_id",
       "voided_at",
       "voided_reason"
     ],
