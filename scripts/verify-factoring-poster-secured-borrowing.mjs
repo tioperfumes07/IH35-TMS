@@ -31,6 +31,8 @@ const ALLOWED_ROLES = new Set([
   "cash_clearing",
   "factor_reserve_held",
   "factor_fee_expense",
+  // FACT-05 — ACH/wire transaction cost (BC-Ach & Wire Fees); distinct from financing fee.
+  "factor_wire_fee",
   "factoring_advance_liability",
   "ar_control",
   "factoring_recoursed_ar",
@@ -46,6 +48,7 @@ const LEG_CONTRACT = {
       cash_clearing: "debit",
       factor_reserve_held: "debit",
       factor_fee_expense: "debit",
+      factor_wire_fee: "debit",
       factoring_advance_liability: "credit",
     },
     forbidden: ["ar_control"],
@@ -96,7 +99,9 @@ function segmentByFunction(source) {
 // role -> local var name, from `const X = await resolveRoleAccount(client, id, "role")`
 function roleVarMap(segment) {
   const map = {};
-  const re = /const\s+(\w+)\s*=\s*await\s+resolveRoleAccount\([^)]*?"([^"]+)"\s*\)/g;
+  // Match `const x = await resolveRoleAccount(..., "role")` and ACH ternary:
+  // `const x =\n  ach > 0 ? await resolveRoleAccount(..., "role") : null`.
+  const re = /(?:const|let)\s+(\w+)\s*=[\s\S]{0,120}?resolveRoleAccount\([^)]*?"([^"]+)"\s*\)/g;
   let m;
   while ((m = re.exec(segment)) !== null) map[m[1]] = m[2];
   return map;

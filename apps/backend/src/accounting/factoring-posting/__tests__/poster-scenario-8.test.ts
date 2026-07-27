@@ -101,7 +101,7 @@ function installDefaults(opts: { alreadyPosted?: boolean } = {}) {
       return { rows: [{ id: "existing-je", status: "posted", reverses_je_id: null, reversed_by_je_id: null }] };
     }
     if (alreadyPosted && sql.includes("chart_of_accounts_roles") && sql.includes("AS role")) {
-      // Exact funding legs for scenario-8 figures (incl. ACH on factor_fee_expense).
+      // Exact funding legs for scenario-8 figures (ACH on factor_wire_fee — FACT-05).
       return {
         rows: [
           {
@@ -126,7 +126,7 @@ function installDefaults(opts: { alreadyPosted?: boolean } = {}) {
             source_transaction_id: null,
           },
           {
-            role: "factor_fee_expense",
+            role: "factor_wire_fee",
             debit_or_credit: "debit",
             amount_cents: "1000",
             source_transaction_type: null,
@@ -221,9 +221,9 @@ describe("CODER-34 secured-borrowing lifecycle ($5,000 · fee 75 · reserve 75 �
     // cash = 5000 - 75 - 75 - 10 = 4840
     expect(leg(p, "cash_clearing")).toMatchObject({ debit_or_credit: "debit", amount_cents: 484000 });
     expect(leg(p, "factor_reserve_held")).toMatchObject({ debit_or_credit: "debit", amount_cents: 7500 });
-    // fee 75 + ACH 10 both hit factor_fee_expense (two debit lines) → total 8500
-    const feeLegs = p.filter((x) => x.account_id === "factor_fee_expense");
-    expect(feeLegs.map((x) => x.amount_cents).sort((a, b) => a - b)).toEqual([1000, 7500]);
+    // FACT-05 — financing fee vs ACH/wire transaction cost are distinct roles
+    expect(leg(p, "factor_fee_expense")).toMatchObject({ debit_or_credit: "debit", amount_cents: 7500 });
+    expect(leg(p, "factor_wire_fee")).toMatchObject({ debit_or_credit: "debit", amount_cents: 1000 });
     // A/R untouched at funding
     expect(leg(p, "ar_control")).toBeUndefined();
     // balances
