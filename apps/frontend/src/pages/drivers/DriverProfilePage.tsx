@@ -283,7 +283,13 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
       />
 
       <div data-testid="dp-section-1-identity">
-        <IdentityHeader driver={profileDriver} />
+        <IdentityHeader
+          driver={profileDriver}
+          employmentStatusLabel={
+            (aggregate.license as { driver_employment_status_label?: string | null } | undefined)
+              ?.driver_employment_status_label ?? null
+          }
+        />
       </div>
       <div data-testid="dp-section-2-license">
         <LicenseSection license={aggregate.license} />
