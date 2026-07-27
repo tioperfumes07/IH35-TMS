@@ -999,6 +999,14 @@
       "applied_evidence": "Neon lucia table+FKs+flag OFF; dual-ledger 202609100020 checksum=a89d634787f466d340eeac4feaf60b518f5ed125650a4c01dc977db347df91bb (inline REFERENCES + POSTING_FLAG_KEYS)",
       "block": "INS-02",
       "added_at": "2026-07-27"
+    },
+    {
+      "file": "202609100030_f9_04_bill_unit_allocation_supersede.sql",
+      "reason": "F9-04/05 bill_unit_allocation supersede — Neon-applied 2026-07-27; dual-ledger",
+      "applied_on_prod": true,
+      "applied_evidence": "Neon lucia: superseded_at/superseded_reason on accounting.bill_unit_allocation; dual-ledger 202609100030",
+      "block": "F9-04",
+      "added_at": "2026-07-27"
     }
   ],
   "superseded": []
