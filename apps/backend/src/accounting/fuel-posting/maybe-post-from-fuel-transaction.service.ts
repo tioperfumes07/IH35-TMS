@@ -12,6 +12,7 @@ import { withLuciaBypass } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import {
   postFuelExpenseFromEvent,
+  type CompanyDirectCredit,
   type FuelCategoryCode,
   type FuelPostingPath,
   type FuelPostingResult,
@@ -39,6 +40,16 @@ export type FuelTxnGlPostCandidate = {
   cash_advance?: boolean;
   /** When set, flip integrations.relay_fuel_transactions.posted_to_gl after a successful post. */
   relay_fuel_transaction_id?: string | null;
+  /**
+   * FUEL-08 — real payment method drives the company_direct credit side.
+   * Prefer explicit fuel_card_id / has_fuel_card / company_direct_credit from the caller;
+   * never hardcode "cash" for fleet-card / Relay rows.
+   */
+  fuel_card_id?: string | null;
+  /** True when a fleet/fuel card number was present on the import/ingest row. */
+  has_fuel_card?: boolean;
+  /** Explicit override — when set, wins over inferred signals. */
+  company_direct_credit?: CompanyDirectCredit;
 };
 
 export type MaybePostFuelTxnResult =
@@ -65,6 +76,57 @@ export function mapFuelTypeToPostingKind(fuelType: string): FuelCategoryCode {
 function resolvePostingPath(candidate: FuelTxnGlPostCandidate): FuelPostingPath {
   if (candidate.cash_advance && candidate.driver_id) return "driver_advance";
   return "company_direct";
+}
+
+/**
+ * FUEL-08 — company_direct credit preference from the REAL payment method.
+ * Fleet/fuel card (and Relay card-settled fuel) → AP / fuel-card clearing (`ap`).
+ * True cash / undeposited → `cash`. Never hardcode cash for card rows.
+ */
+export function resolveCompanyDirectCreditPreference(
+  candidate: FuelTxnGlPostCandidate,
+  txnSignals?: { fuel_card_id?: string | null; notes?: string | null; source?: string | null } | null
+): CompanyDirectCredit {
+  if (candidate.company_direct_credit === "ap" || candidate.company_direct_credit === "cash") {
+    return candidate.company_direct_credit;
+  }
+  if (candidate.fuel_card_id || candidate.has_fuel_card) return "ap";
+  if (txnSignals?.fuel_card_id) return "ap";
+  // Relay fleet-card settle (not cash_advance) — always card/AP, never undeposited cash.
+  if (candidate.relay_fuel_transaction_id) return "ap";
+  const notes = (txnSignals?.notes ?? "").toLowerCase();
+  if (notes.includes("card=") || notes.includes("relay_bridge=1") || notes.includes("relay_txn=")) {
+    return "ap";
+  }
+  const source = (txnSignals?.source ?? "").toLowerCase();
+  // CSV/fleet imports without an explicit cash stamp are card-settled in this operation.
+  if (source === "import") return "ap";
+  return "cash";
+}
+
+async function loadFuelTxnCreditSignals(
+  client: DbClient,
+  operatingCompanyId: string,
+  fuelTransactionId: string
+): Promise<{ fuel_card_id: string | null; notes: string | null; source: string | null }> {
+  const res = await client.query<{ fuel_card_id: string | null; notes: string | null; source: string | null }>(
+    `
+      SELECT fuel_card_id::text AS fuel_card_id,
+             notes,
+             source::text AS source
+        FROM fuel.fuel_transactions
+       WHERE id = $1::uuid
+         AND operating_company_id = $2::uuid
+       LIMIT 1
+    `,
+    [fuelTransactionId, operatingCompanyId]
+  );
+  const row = res.rows[0];
+  return {
+    fuel_card_id: row?.fuel_card_id ?? null,
+    notes: row?.notes ?? null,
+    source: row?.source ?? null,
+  };
 }
 
 async function markRelayPostedToGl(relayFuelTransactionId: string, operatingCompanyId: string): Promise<void> {
@@ -116,6 +178,18 @@ export async function maybePostFuelExpenseFromCanonicalTxn(
   if (!flagOn) return { status: "skipped_flag_off" };
 
   try {
+    const postingPath = resolvePostingPath(candidate);
+    let companyDirectCredit: CompanyDirectCredit | undefined;
+    if (postingPath === "company_direct") {
+      const txnSignals = await withLuciaBypass(async (client: DbClient) => {
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+          candidate.operating_company_id,
+        ]);
+        return loadFuelTxnCreditSignals(client, candidate.operating_company_id, candidate.fuel_transaction_id);
+      }).catch(() => null);
+      companyDirectCredit = resolveCompanyDirectCreditPreference(candidate, txnSignals);
+    }
+
     const posting = await postFuelExpenseFromEvent({
       operating_company_id: candidate.operating_company_id,
       actor_user_id: actorUserId,
@@ -123,11 +197,11 @@ export async function maybePostFuelExpenseFromCanonicalTxn(
       fuel_kind: mapFuelTypeToPostingKind(candidate.fuel_type),
       posted_at: candidate.transaction_at,
       amount_cents: amountCents,
-      posting_path: resolvePostingPath(candidate),
+      posting_path: postingPath,
       driver_id: candidate.driver_id ?? null,
       ifta_state: candidate.location_state ?? null,
       ifta_gallons: candidate.gallons ?? null,
-      company_direct_credit: "cash",
+      company_direct_credit: companyDirectCredit,
       memo: `Fuel txn ${candidate.fuel_transaction_id}`,
     });
 
