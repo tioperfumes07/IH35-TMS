@@ -321,7 +321,8 @@ export function runPrecheckPush(options = {}) {
     return {
       ok: false,
       category: GATE_RESULT_CATEGORIES.FRESHNESS,
-      reason: `local branch is ${behind} commit(s) behind origin/main — run npm run branch:rebuild-linear`,
+      reason:
+        `local branch is ${behind} commit(s) behind origin/main — prefer \`git cherry-pick <sha>\` onto a fresh branch from origin/main; or \`npm run branch:rebuild-linear -- --source <sha> --message "…"\` (commit-own patch only; never two-dot vs current main)`,
       step: "branch-freshness",
     };
   }

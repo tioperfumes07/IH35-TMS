@@ -1,0 +1,546 @@
+{
+  "generated": "2026-07-25",
+  "count": 47,
+  "by_lane": {
+    "FINANCIAL-HOLD": 18,
+    "DOCS": 2,
+    "NON-FINANCIAL": 8,
+    "OWNER-GATE": 19
+  },
+  "blocks": [
+    {
+      "file": "ACCT-R-01-0007-pattern-5-split-brain-engines.md",
+      "code": "ACCT-R-01",
+      "block_id": "0007-pattern-5-split-brain-engines",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "FINANCIAL-HOLD",
+      "priority": "P1",
+      "title": "0007 pattern 5 split brain engines"
+    },
+    {
+      "file": "ACCT-R-02-0033-audit-schema-manifest-tool.md",
+      "code": "ACCT-R-02",
+      "block_id": "0033-audit-schema-manifest-tool",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "DOCS",
+      "priority": "P2",
+      "title": "The literal live-Neon-pull manifest generator (scripts/audit-schema"
+    },
+    {
+      "file": "ACCT-R-03-0091-m-lists-2.md",
+      "code": "ACCT-R-03",
+      "block_id": "0091-m-lists-2",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "FINANCIAL-HOLD",
+      "priority": "P1",
+      "title": "'Merge accounts' does not merge \u2014 handleMerge (CoaBatchActions"
+    },
+    {
+      "file": "ACCT-R-04-0243-g4-deploy-smoke-fixed-unit-test-owner.md",
+      "code": "ACCT-R-04",
+      "block_id": "0243-g4-deploy-smoke-fixed-unit-test-owner",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "NON-FINANCIAL",
+      "priority": "P2",
+      "title": "IH35_SMOKE_UNIT_ID (and IH35_SMOKE_OPERATING_COMPANY_ID) are not set in render"
+    },
+    {
+      "file": "ACCT-R-05-0251-gap11-commodity-gl.md",
+      "code": "ACCT-R-05",
+      "block_id": "0251-gap11-commodity-gl",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "FINANCIAL-HOLD",
+      "priority": "P1",
+      "title": "The product catalog (0251-gap10) that would key GL account selection off commodity does no"
+    },
+    {
+      "file": "ACCT-R-06-0251-gap8-accessorials-gl_VERIFY.md",
+      "code": "ACCT-R-06",
+      "block_id": "0251-gap8-accessorials-gl_VERIFY",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "FINANCIAL-HOLD",
+      "priority": "P1",
+      "title": "catalogs"
+    },
+    {
+      "file": "ACCT-R-07-0280-42-wo-to-expense-flow.md",
+      "code": "ACCT-R-07",
+      "block_id": "0280-42-wo-to-expense-flow",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "FINANCIAL-HOLD",
+      "priority": "P1",
+      "title": "WO status-count widget has no join to accounting"
+    },
+    {
+      "file": "ACCT-R-08-0441-mod13-inventory-accounting-none_DESIGN.md",
+      "code": "ACCT-R-08",
+      "block_id": "0441-mod13-inventory-accounting-none_DESIGN",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "FINANCIAL-HOLD",
+      "priority": "P1",
+      "title": "parts-inventory has no FK/write path to accounting"
+    },
+    {
+      "file": "ACCT-R-09-0441-mod7-bill-subnav-filters-not-creators_UI.md",
+      "code": "ACCT-R-09",
+      "block_id": "0441-mod7-bill-subnav-filters-not-creators_UI",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "NON-FINANCIAL",
+      "priority": "P2",
+      "title": "Maintenance/Repair/Fuel/Driver bill subnav links route to a filtered list, not a create fl"
+    },
+    {
+      "file": "ACCT-R-10-0441-mod7-myaccountant-flag-no-seed.md",
+      "code": "ACCT-R-10",
+      "block_id": "0441-mod7-myaccountant-flag-no-seed",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "NON-FINANCIAL",
+      "priority": "P2",
+      "title": "no seed migration for MY_ACCOUNTANT_ENABLED in db/migrations/ (consistent with other flags"
+    },
+    {
+      "file": "ACCT-R-11-0441-mod8-tx-fields-captured-not-sent.md",
+      "code": "ACCT-R-11",
+      "block_id": "0441-mod8-tx-fields-captured-not-sent",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "FINANCIAL-HOLD",
+      "priority": "P1",
+      "title": "banking"
+    },
+    {
+      "file": "ACCT-R-12-0519-es1-58-unscoped-tables.md",
+      "code": "ACCT-R-12",
+      "block_id": "0519-es1-58-unscoped-tables",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "FINANCIAL-HOLD",
+      "priority": "P1",
+      "title": "No CI guard verifies that any of the 58 unscoped tables actually inherit scope via an enfo"
+    },
+    {
+      "file": "ACCT-R-13-audit2-internal-controls-approval-workflow.md",
+      "code": "ACCT-R-13",
+      "block_id": "audit2-internal-controls-approval-workflow",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "NON-FINANCIAL",
+      "priority": "P2",
+      "title": "settlements/approval"
+    },
+    {
+      "file": "ACCT-R-14-audit4-tax-return-automation.md",
+      "code": "ACCT-R-14",
+      "block_id": "audit4-tax-return-automation",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "FINANCIAL-HOLD",
+      "priority": "P1",
+      "title": "1) The sales-tax return module (prepare/file/mark-paid) is built but never registered into"
+    },
+    {
+      "file": "ACCT-R-15-audit7-cost-center-tracking.md",
+      "code": "ACCT-R-15",
+      "block_id": "audit7-cost-center-tracking",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "FINANCIAL-HOLD",
+      "priority": "P1",
+      "title": "A true cost-center dimension distinct from the locked unit/driver Class field, plus varian"
+    },
+    {
+      "file": "ACCT-R-16-audit8-revenue-leakage-detection.md",
+      "code": "ACCT-R-16",
+      "block_id": "audit8-revenue-leakage-detection",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "FINANCIAL-HOLD",
+      "priority": "P1",
+      "title": "Revenue leakage detection + unbilled-revenue tracking/forecasting/variance views \u2014 confirm"
+    },
+    {
+      "file": "ACCT-R-17-audit9-expense-validation-duplicate-detection.md",
+      "code": "ACCT-R-17",
+      "block_id": "audit9-expense-validation-duplicate-detection",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "FINANCIAL-HOLD",
+      "priority": "P1",
+      "title": "Duplicate-expense-entry detection + expense-policy-enforcement layer \u2014 confirmed absent, m"
+    },
+    {
+      "file": "ACCT-R-18-banking-b4-driver-vendor-account-mapping.md",
+      "code": "ACCT-R-18",
+      "block_id": "banking-b4-driver-vendor-account-mapping",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "FINANCIAL-HOLD",
+      "priority": "P1",
+      "title": "A driver-keyed default-account mapping column/table equivalent to mdata"
+    },
+    {
+      "file": "ACCT-R-19-db249-finance-schema-naming-drift.md",
+      "code": "ACCT-R-19",
+      "block_id": "db249-finance-schema-naming-drift",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "FINANCIAL-HOLD",
+      "priority": "P1",
+      "title": "The finance"
+    },
+    {
+      "file": "ACCT-R-20-db249-index-optimization-3.md",
+      "code": "ACCT-R-20",
+      "block_id": "db249-index-optimization-3",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "FINANCIAL-HOLD",
+      "priority": "P1",
+      "title": "3 composite indexes as specified do not exist on any of the 3 tables; this is a real, unbu"
+    },
+    {
+      "file": "ACCT-R-21-fact-par-1-submission-workflow.md",
+      "code": "ACCT-R-21",
+      "block_id": "fact-par-1-submission-workflow",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "FINANCIAL-HOLD",
+      "priority": "P1",
+      "title": "Only the manual_download channel is wired; no email-adapter or file-drop-adapter implement"
+    },
+    {
+      "file": "ACCT-R-22-fh-unit-allocation-ui-view-missing.md",
+      "code": "ACCT-R-22",
+      "block_id": "fh-unit-allocation-ui-view-missing",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "NON-FINANCIAL",
+      "priority": "P2",
+      "title": "No frontend page/route/api-client for the Unit-Allocation (FH-7) read-only view exists any"
+    },
+    {
+      "file": "ACCT-R-23-flow3-cancellation-billing-deduction-linkage.md",
+      "code": "ACCT-R-23",
+      "block_id": "flow3-cancellation-billing-deduction-linkage",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "FINANCIAL-HOLD",
+      "priority": "P1",
+      "title": "No cancellation_id FK column on accounting"
+    },
+    {
+      "file": "ACCT-R-24-flow6-auto-invoice-sending.md",
+      "code": "ACCT-R-24",
+      "block_id": "flow6-auto-invoice-sending",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "FINANCIAL-HOLD",
+      "priority": "P1",
+      "title": "No automatic fire of the send/email path when an invoice leaves draft; no reminder cadence"
+    },
+    {
+      "file": "ACCT-R-25-global-column-resize-sort-parity-table-phase-a.md",
+      "code": "ACCT-R-25",
+      "block_id": "global-column-resize-sort-parity-table-phase-a",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "NON-FINANCIAL",
+      "priority": "P2",
+      "title": "The primitive itself is built and its own contract guard runs in CI (ci"
+    },
+    {
+      "file": "ACCT-R-26-h-05-home-kpi-no-date-range-toggle.md",
+      "code": "ACCT-R-26",
+      "block_id": "h-05-home-kpi-no-date-range-toggle",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "NON-FINANCIAL",
+      "priority": "P2",
+      "title": "No 7d/30d/MTD/YTD date-range selector on the Home KPI row in either home page variant"
+    },
+    {
+      "file": "ACCT-R-27-ledger-write-proof-operational-not-found.md",
+      "code": "ACCT-R-27",
+      "block_id": "ledger-write-proof-operational-not-found",
+      "module": "accounting",
+      "pile": "GAP",
+      "lane": "DOCS",
+      "priority": "P2",
+      "title": "apps/backend/src/accounting/__proofs__/core-ledger-write-proof"
+    },
+    {
+      "file": "ACCT-R-28-0091-d1-2.md",
+      "code": "ACCT-R-28",
+      "block_id": "0091-d1-2",
+      "module": "accounting",
+      "pile": "NEEDS-OWNER",
+      "lane": "OWNER-GATE",
+      "priority": "P0",
+      "title": "0091 d1 2"
+    },
+    {
+      "file": "ACCT-R-29-0251-gap2-vendor-gl-linkage.md",
+      "code": "ACCT-R-29",
+      "block_id": "0251-gap2-vendor-gl-linkage",
+      "module": "accounting",
+      "pile": "NEEDS-OWNER",
+      "lane": "OWNER-GATE",
+      "priority": "P0",
+      "title": "0251 gap2 vendor gl linkage"
+    },
+    {
+      "file": "ACCT-R-30-0251-gap3-vendor-invoice-linkage.md",
+      "code": "ACCT-R-30",
+      "block_id": "0251-gap3-vendor-invoice-linkage",
+      "module": "accounting",
+      "pile": "NEEDS-OWNER",
+      "lane": "OWNER-GATE",
+      "priority": "P0",
+      "title": "0251 gap3 vendor invoice linkage"
+    },
+    {
+      "file": "ACCT-R-31-0473-1-1-default-revenue-account-unmapped-line.md",
+      "code": "ACCT-R-31",
+      "block_id": "0473-1-1-default-revenue-account-unmapped-line",
+      "module": "accounting",
+      "pile": "NEEDS-OWNER",
+      "lane": "OWNER-GATE",
+      "priority": "P0",
+      "title": "0473 1 1 default revenue account unmapped line"
+    },
+    {
+      "file": "ACCT-R-32-0473-1-6-wo-void-reversal-grain.md",
+      "code": "ACCT-R-32",
+      "block_id": "0473-1-6-wo-void-reversal-grain",
+      "module": "accounting",
+      "pile": "NEEDS-OWNER",
+      "lane": "OWNER-GATE",
+      "priority": "P0",
+      "title": "0473 1 6 wo void reversal grain"
+    },
+    {
+      "file": "ACCT-R-33-0473-1-8-tk-transp-lease-asc842.md",
+      "code": "ACCT-R-33",
+      "block_id": "0473-1-8-tk-transp-lease-asc842",
+      "module": "accounting",
+      "pile": "NEEDS-OWNER",
+      "lane": "OWNER-GATE",
+      "priority": "P0",
+      "title": "0473 1 8 tk transp lease asc842"
+    },
+    {
+      "file": "ACCT-R-34-0519-at2-no-db-enforced-sod.md",
+      "code": "ACCT-R-34",
+      "block_id": "0519-at2-no-db-enforced-sod",
+      "module": "accounting",
+      "pile": "NEEDS-OWNER",
+      "lane": "OWNER-GATE",
+      "priority": "P0",
+      "title": "0519 at2 no db enforced sod"
+    },
+    {
+      "file": "ACCT-R-35-AF-1-entity-coa-fix.md",
+      "code": "ACCT-R-35",
+      "block_id": "AF-1-entity-coa-fix",
+      "module": "accounting",
+      "pile": "NEEDS-OWNER",
+      "lane": "OWNER-GATE",
+      "priority": "P0",
+      "title": "AF 1 entity coa fix"
+    },
+    {
+      "file": "ACCT-R-36-AF-4-ap-bills-migration.md",
+      "code": "ACCT-R-36",
+      "block_id": "AF-4-ap-bills-migration",
+      "module": "accounting",
+      "pile": "NEEDS-OWNER",
+      "lane": "OWNER-GATE",
+      "priority": "P0",
+      "title": "AF 4 ap bills migration"
+    },
+    {
+      "file": "ACCT-R-37-CHAIN-04-bill-payment-tieout.md",
+      "code": "ACCT-R-37",
+      "block_id": "CHAIN-04-bill-payment-tieout",
+      "module": "accounting",
+      "pile": "NEEDS-OWNER",
+      "lane": "OWNER-GATE",
+      "priority": "P0",
+      "title": "CHAIN 04 bill payment tieout"
+    },
+    {
+      "file": "ACCT-R-38-CHAIN-06-invoice-ar-chain-proof.md",
+      "code": "ACCT-R-38",
+      "block_id": "CHAIN-06-invoice-ar-chain-proof",
+      "module": "accounting",
+      "pile": "NEEDS-OWNER",
+      "lane": "OWNER-GATE",
+      "priority": "P0",
+      "title": "CHAIN 06 invoice ar chain proof"
+    },
+    {
+      "file": "ACCT-R-39-dip-mor-pre-post-petition-ap-split.md",
+      "code": "ACCT-R-39",
+      "block_id": "dip-mor-pre-post-petition-ap-split",
+      "module": "accounting",
+      "pile": "NEEDS-OWNER",
+      "lane": "OWNER-GATE",
+      "priority": "P0",
+      "title": "dip mor pre post petition ap split"
+    },
+    {
+      "file": "ACCT-R-40-factoring-asc860-owner-control-test-open.md",
+      "code": "ACCT-R-40",
+      "block_id": "factoring-asc860-cpa-control-test-open",
+      "module": "accounting",
+      "pile": "NEEDS-OWNER",
+      "lane": "OWNER-GATE",
+      "priority": "P0",
+      "title": "factoring asc860 owner control test open"
+    },
+    {
+      "file": "ACCT-R-41-flow2-customer-chargeback-driver-expense.md",
+      "code": "ACCT-R-41",
+      "block_id": "flow2-customer-chargeback-driver-expense",
+      "module": "accounting",
+      "pile": "NEEDS-OWNER",
+      "lane": "OWNER-GATE",
+      "priority": "P0",
+      "title": "flow2 customer chargeback driver expense"
+    },
+    {
+      "file": "ACCT-R-42-ifta-sales-tax-booking-location-confirm.md",
+      "code": "ACCT-R-42",
+      "block_id": "ifta-sales-tax-booking-location-confirm",
+      "module": "accounting",
+      "pile": "NEEDS-OWNER",
+      "lane": "OWNER-GATE",
+      "priority": "P0",
+      "title": "ifta sales tax booking location confirm"
+    },
+    {
+      "file": "ACCT-R-43-usmca-unhide-entity-switcher.md",
+      "code": "ACCT-R-43",
+      "block_id": "usmca-unhide-entity-switcher",
+      "module": "accounting",
+      "pile": "NEEDS-OWNER",
+      "lane": "OWNER-GATE",
+      "priority": "P0",
+      "title": "usmca unhide entity switcher"
+    },
+    {
+      "file": "BANK-R-01-qbo-parity-resizable-columns-everywhere.md",
+      "code": "BANK-R-01",
+      "block_id": "qbo-parity-resizable-columns-everywhere",
+      "module": "banking",
+      "pile": "GAP",
+      "lane": "NON-FINANCIAL",
+      "priority": "P2",
+      "title": "Customers/Vendors/Drivers list pages (and most of the remaining 28-module catalog beyond t"
+    },
+    {
+      "file": "BANK-R-02-CONN-3-relay-internal-bank.md",
+      "code": "BANK-R-02",
+      "block_id": "CONN-3-relay-internal-bank",
+      "module": "banking",
+      "pile": "NEEDS-OWNER",
+      "lane": "OWNER-GATE",
+      "priority": "P0",
+      "title": "CONN 3 relay internal bank"
+    },
+    {
+      "file": "BANK-R-03-phase13-audit216-banking-industry.md",
+      "code": "BANK-R-03",
+      "block_id": "phase13-audit216-banking-industry",
+      "module": "banking",
+      "pile": "NEEDS-OWNER",
+      "lane": "OWNER-GATE",
+      "priority": "P0",
+      "title": "phase13 audit216 banking industry"
+    },
+    {
+      "file": "BANK-R-04-sweepfix1727-8.md",
+      "code": "BANK-R-04",
+      "block_id": "sweepfix1727-8",
+      "module": "banking",
+      "pile": "NEEDS-OWNER",
+      "lane": "OWNER-GATE",
+      "priority": "P0",
+      "title": "sweepfix1727 8"
+    }
+  ],
+  "scoreboard_blocks": [
+    {
+      "id": "ACCT-ECON-05",
+      "finding": "ACCT-ECON-05",
+      "module": "accounting",
+      "lane": "FINANCIAL-HOLD",
+      "priority": "P0",
+      "pile": "SCOREBOARD",
+      "file": "ACCT-ECON-05-vendor-credits-canonical-qbo-vendors.md",
+      "title": "Vendor credits \u2014 canonical qbo_vendors backfill + one live credit"
+    },
+    {
+      "id": "BANK-F08",
+      "finding": "BANK-F08",
+      "module": "banking",
+      "lane": "NON-FINANCIAL",
+      "priority": "P1",
+      "pile": "SCOREBOARD",
+      "file": "BANK-F08-categorization-rules-automatch-depth.md",
+      "title": "Categorization rules / automatch deep-wizard"
+    },
+    {
+      "id": "BANK-F09",
+      "finding": "BANK-F09",
+      "module": "banking",
+      "lane": "NON-FINANCIAL",
+      "priority": "P1",
+      "pile": "SCOREBOARD",
+      "file": "BANK-F09-settings-reports-email-queue-deep-wizard.md",
+      "title": "Settings / reports / email-queue deep-wizard"
+    },
+    {
+      "id": "BANK-ECON-04",
+      "finding": "BANK-ECON-04",
+      "module": "banking",
+      "lane": "NON-FINANCIAL",
+      "priority": "P0",
+      "pile": "SCOREBOARD-REWRITE",
+      "file": "BANK-ECON-04-recon-sessions-ops-density.md",
+      "title": "Recon sessions \u2014 mig applied; ops/browser only"
+    },
+    {
+      "id": "BANK-SURF-04",
+      "finding": "BANK-SURF-04",
+      "module": "banking",
+      "lane": "NON-FINANCIAL",
+      "priority": "P0",
+      "pile": "SCOREBOARD-REWRITE",
+      "file": "BANK-SURF-04-recon-workspace-ops-browser.md",
+      "title": "Recon workspace \u2014 mig applied; ops/browser only"
+    },
+    {
+      "id": "BANK-LINK-01",
+      "finding": "BANK-LINK-01",
+      "module": "banking",
+      "lane": "NON-FINANCIAL",
+      "priority": "P1",
+      "pile": "SCOREBOARD-REWRITE",
+      "file": "BANK-LINK-01-counterparty-fk-ops-browser.md",
+      "title": "Counterparty FK \u2014 mig applied; ops/browser only"
+    }
+  ],
+  "scoreboard_count": 6,
+  "notes": "Pile blocks remain 47 (ACCT-R-01..43 + BANK-R-01..04). scoreboard_blocks are module-completion dispatch files (ECON-05/F08/F09 + applied-mig rewrites). OWNER decides. Projection flags stay OFF."
+}

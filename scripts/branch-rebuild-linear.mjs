@@ -40,7 +40,12 @@ export function isDirty(cwd = repoRoot()) {
 export function listDirtyFiles(cwd = repoRoot()) {
   const status = runGitOrThrow(["status", "--porcelain"], { cwd });
   if (!status) return [];
-  return status.split(/\r?\n/).filter(Boolean).map((line) => line.slice(3).trim());
+  return status.split(/\r?\n/).filter(Boolean).map((line) => {
+    // Rename lines: "R  old -> new" — take the new path after " -> ".
+    const body = line.slice(3);
+    const arrow = body.indexOf(" -> ");
+    return (arrow >= 0 ? body.slice(arrow + 4) : body).trim();
+  });
 }
 
 export function hasGitStateMarker(cwd = repoRoot()) {
@@ -57,7 +62,6 @@ export function parseRebuildArgs(argv) {
       i += 1;
     } else if (token === "--branch" && argv[i + 1]) {
       args.branch = argv[i + 1];
-      i += 1;
     } else if (token === "--message" && argv[i + 1]) {
       args.message = argv[i + 1];
       i += 1;
@@ -77,20 +81,67 @@ function verifyCommitExists(sha, root) {
   if (!runGit(["cat-file", "-e", `${sha}^{commit}`], { cwd: root }).ok) fail(`unknown source commit: ${sha}`);
 }
 
-function applySourceDiff(sourceSha, root) {
-  const diff = runGitOrThrow(["diff", `origin/main..${sourceSha}`], { cwd: root });
-  if (!diff) return;
+/**
+ * Resolve the single parent of a non-merge commit. Merge commits are refused — their tree
+ * vs current main is ambiguous and the old two-dot path was the data-loss vector.
+ */
+export function sourceCommitParent(sourceSha, root) {
+  const line = runGitOrThrow(["rev-list", "--parents", "-n", "1", sourceSha], { cwd: root });
+  const parts = line.split(/\s+/).filter(Boolean);
+  if (parts.length < 2) fail(`source ${sourceSha} has no parent (orphan/root commit cannot be rebuilt this way)`);
+  if (parts.length > 2) {
+    fail(
+      `source ${sourceSha} is a merge commit — refuse. Cherry-pick the individual feature commits instead.`,
+    );
+  }
+  return parts[1];
+}
+
+/** Files touched by the source commit itself (parent..source). Never vs current main. */
+export function sourceCommitTouchedFiles(sourceSha, root) {
+  const parent = sourceCommitParent(sourceSha, root);
+  return runGitOrThrow(["diff", "--name-only", `${parent}..${sourceSha}`], { cwd: root })
+    .split(/\r?\n/)
+    .filter(Boolean);
+}
+
+/**
+ * Apply ONLY the source commit's own patch (parent..source).
+ *
+ * NEVER use `git diff origin/main..<source>` (two-dot vs current main): when main advanced after
+ * the branch point, that diff includes the REVERSAL of later merges — reset --hard + apply then
+ * silently undoes shipped work (observed live reverting C5 minutes after merge).
+ */
+export function applySourceDiff(sourceSha, root) {
+  const parent = sourceCommitParent(sourceSha, root);
+  const allowed = new Set(sourceCommitTouchedFiles(sourceSha, root));
+  const diff = runGitOrThrow(["diff", `${parent}..${sourceSha}`], { cwd: root });
+  if (!diff) return { allowed };
+
   const patchFile = path.join(root, ".git", "branch-rebuild-linear.patch");
   fs.writeFileSync(patchFile, `${diff}\n`, "utf8");
   const apply = runGit(["apply", "--3way", patchFile], { cwd: root });
   fs.rmSync(patchFile, { force: true });
   if (!apply.ok) {
-    const files = runGit(["diff", "--name-only", "--diff-filter=U"], { cwd: root }).stdout.split(/\r?\n/).filter(Boolean);
+    const files = runGit(["diff", "--name-only", "--diff-filter=U"], { cwd: root }).stdout
+      .split(/\r?\n/)
+      .filter(Boolean);
     console.error("Apply conflicts detected:");
     for (const file of files) console.error(`  - ${file}`);
     console.error("Resolve conflicts, then rerun with --resume");
     fail(`conflicts while applying ${sourceSha}`);
   }
+
+  // SANITY: never stage a file the source commit itself did not touch.
+  const dirty = listDirtyFiles(root);
+  const foreign = dirty.filter((f) => !allowed.has(f));
+  if (foreign.length > 0) {
+    fail(
+      `abort: applying ${sourceSha} would stage file(s) outside the source commit's own touch-set: ` +
+        `${foreign.join(", ")}. This is the old two-dot-vs-main failure mode. Use git cherry-pick instead.`,
+    );
+  }
+  return { allowed };
 }
 
 export function rebuildLinear(argv = process.argv.slice(2)) {
@@ -110,13 +161,28 @@ export function rebuildLinear(argv = process.argv.slice(2)) {
     runGitOrThrow(["rev-parse", "--verify", "origin/main"], { cwd: root });
     for (const source of args.sources) verifyCommitExists(source, root);
     const originalTip = runGitOrThrow(["rev-parse", "HEAD"], { cwd: root });
+    const allowedUnion = new Set();
     runGitOrThrow(["reset", "--hard", "origin/main"], { cwd: root });
     if (args.branch) runGitOrThrow(["checkout", "-B", args.branch], { cwd: root });
-    for (const source of args.sources) applySourceDiff(source, root);
+    for (const source of args.sources) {
+      const { allowed } = applySourceDiff(source, root);
+      for (const f of allowed) allowedUnion.add(f);
+    }
     runGitOrThrow(["add", "-A"], { cwd: root });
+    const staged = runGitOrThrow(["diff", "--cached", "--name-only"], { cwd: root })
+      .split(/\r?\n/)
+      .filter(Boolean);
+    const foreignStaged = staged.filter((f) => !allowedUnion.has(f));
+    if (foreignStaged.length > 0) {
+      fail(
+        `abort before commit: staged foreign file(s) not in any --source touch-set: ${foreignStaged.join(", ")}`,
+      );
+    }
     runGitOrThrow(["commit", "-m", args.message], { cwd: root });
     const newTip = runGitOrThrow(["rev-parse", "HEAD"], { cwd: root });
-    const filesChanged = runGitOrThrow(["diff", "--name-only", `${originalTip}..${newTip}`], { cwd: root }).split(/\r?\n/).filter(Boolean);
+    const filesChanged = runGitOrThrow(["diff", "--name-only", `${originalTip}..${newTip}`], { cwd: root })
+      .split(/\r?\n/)
+      .filter(Boolean);
     console.log("branch:rebuild-linear OK");
     console.log(`original-tip=${originalTip}`);
     console.log(`new-tip=${newTip}`);
@@ -125,7 +191,9 @@ export function rebuildLinear(argv = process.argv.slice(2)) {
     return { originalTip, newTip, filesChangedCount: filesChanged.length };
   }
 
-  const conflictFiles = runGit(["diff", "--name-only", "--diff-filter=U"], { cwd: root }).stdout.split(/\r?\n/).filter(Boolean);
+  const conflictFiles = runGit(["diff", "--name-only", "--diff-filter=U"], { cwd: root }).stdout
+    .split(/\r?\n/)
+    .filter(Boolean);
   if (conflictFiles.length > 0) fail(`unresolved conflicts remain: ${conflictFiles.join(", ")}`);
   if (!args.message) fail("--message is required with --resume");
   const originalTip = runGitOrThrow(["rev-parse", "HEAD"], { cwd: root });

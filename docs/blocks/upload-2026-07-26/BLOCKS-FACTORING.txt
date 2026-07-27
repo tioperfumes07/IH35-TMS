@@ -1,0 +1,102 @@
+================================================================================
+FOR CURSOR — FACTORING (Module 11) DOMAIN BLOCKS · GUARD-VERIFIED · 2026-07-26
+Standard: ih35-block-builder, DoD A–E + VERIFY 1–8, Law of the Land, 8-Layer Connected-Closure.
+Code read @ a51447b (== origin/main 878ce91 minus one guard-registry backfill #3585 — no factoring code delta).
+Provenance tags: [GUARD-VERIFIED-LIVE 2026-07-26] = GUARD ran the query on prod itself;
+[AGENT-VERIFIED @a51447b · RE-VERIFY LIVE] = code-read by the verification agent, re-confirm at build.
+LOCKED: Factoring = SECURED BORROWING / recourse, NOT a sale (ASC 860). A/R stays on IH35 books as pledged
+collateral; funding CREDITS a Factoring Advance LIABILITY; NO A/R derecognition. All money/GL/migration = FINANCIAL-HOLD
+(design + guard only; owner Neon-applies; reuse the existing poster; NEVER new GL math; flags default OFF; QBO reconcile-only).
+HEADLINE: the secured-borrowing ENGINE (accounting/factoring-posting/*) is CORRECT and matches every Faro term and every
+locked decision — PROTECT it. The defects are AROUND it: a kill-switch turned ON in prod, a wrong recourse day-count, an
+identity resolver the CPA vetoed, and an unseeded data foundation.
+================================================================================
+
+FACT-01 · P1 · FIN-HOLD · Factoring GL kill-switch is ENABLED in prod for ALL THREE entities — violates the flag's own contract
+PROD TRUTH [GUARD-VERIFIED-LIVE 2026-07-26]: lib.feature_flags 'FACTORING_GL_POSTING_ENABLED' has default_enabled=false,
+  description = "...Per-entity override (TRANSP only). Default OFF (kill switch) until CPA sign-off + Neon verification."
+  lib.feature_flag_overrides has THREE rows enabled=true, expires_at=NULL: TRK (b49a737b), TRANSP (91e0bf0a), USMCA (5c854333).
+  isEnabled() resolves company override OVER default ⇒ the flag is effectively ON for all three — including TRK and USMCA,
+  which the flag's own description says must NEVER carry it ("TRANSP only"), and USMCA which is the isolated future carrier.
+  Currently FAIL-CLOSED only by luck: the Faro agreement + customer bindings are unseeded (FACT-04), so every posting path
+  throws missing_faro_agreement_binding. The instant an agreement row is seeded, live GL posting fires for TRANSP without the
+  documented precondition (CPA sign-off + Neon verification) ever being re-confirmed.
+CANONICAL: to_regclass('lib.feature_flag_overrides') = lib.feature_flag_overrides (not RETIRE).
+LINKAGE: flag → accounting.factoring_advances / journal_entries+postings; per-entity gate → org.companies (TRANSP/TRK/USMCA).
+STANDARD: NetSuite/QuickBooks change-management + our own FIN-HOLD rule — a financial-posting kill switch must stay OFF until
+  its DOCUMENTED precondition is met; a TRANSP-only poster must not carry TRK/USMCA overrides.
+FIX (owner decision — GUARD provides the exact Neon boxes; owner runs them):
+  (a) OWNER/CPA confirms whether sign-off + Neon tie-out actually occurred for TRANSP. If not → disable the TRANSP override.
+  (b) Regardless of (a): DELETE the TRK and USMCA overrides — the poster is TRANSP-scoped; those entities can never legitimately
+      post Faro secured borrowing (USMCA must stay isolated at 0).
+GUARD: scripts/verify-factoring-flag-scope.mjs — FAIL if any FACTORING_GL_POSTING_ENABLED override exists for a company whose
+  code != TRANSP, or if a TRANSP override exists without a recorded sign-off marker. Wire into verify:arch-design.
+ACCEPTANCE: only a TRANSP override may exist, and only after sign-off is recorded; TRK+USMCA overrides absent (Neon proof).
+
+FACT-02 · P2 · Recourse deadline hardcoded 90d in routes AND DB views — Faro term is 95d, and the window is measured off the wrong date
+PROD TRUTH [AGENT-VERIFIED @a51447b · RE-VERIFY LIVE]: views.factoring_recourse_at_risk computes
+  recourse_expiry_date = fa.created_at + COALESCE(af.recourse_days, 90) days and filters WHERE fa.created_at >= now()-'90 days';
+  views.factoring_summary hardcodes 90 AS recourse_days; factoring.routes.ts:91 and :202 return recourse_days:90 fallback.
+  Canonical term: contract-config.ts:31 FACTORING_REPURCHASE_DEADLINE_DAYS = 95 (the accounting engine's day-95 auto-recourse
+  correctly uses 95 off advanced_at). Two problems: (1) 95 understated to 90; (2) aging measured off created_at (row insert),
+  not advanced_at (the Purchase Date the contract counts from). The 90-day created_at prune can DROP advances aged 90–95 days
+  that are still WITHIN their true 95-day recourse window — hiding at-risk receivables from the recourse pipeline.
+CANONICAL: to_regclass('views.factoring_recourse_at_risk') = present (not RETIRE); to_regclass('factoring.canonical_factor_agreements') = present.
+LINKAGE: accounting.factoring_advances → customer/AR → recourse pipeline UI, BOTH-WAY.
+STANDARD: McLeod/Alvys recourse-aging accuracy — the at-risk list must not understate the deadline nor silently drop rows.
+FIX: drive recourse_days from the effective canonical agreement (canonical_factor_agreements.repurchase_deadline_days=95) or
+  FACTORING_REPURCHASE_DEADLINE_DAYS; compute aging off advanced_at; widen/remove the 90-day created_at prune.
+GUARD: scripts/verify-factoring-recourse-window.mjs — FAIL on any hardcoded 90 in the routes/views for recourse_days, or aging off created_at.
+ACCEPTANCE: a 92-day-old advanced_at advance appears in factoring_recourse_at_risk with days_until_recourse_expiry=3, both entities-relevant.
+
+FACT-03 · P3 · resolveActiveFactor uses customer-majority inference — the exact method the CPA VETO banned for Faro identity
+PROD TRUTH [AGENT-VERIFIED @a51447b · RE-VERIFY LIVE]: factoring.routes.ts:39-60 resolves the "active factor" by
+  mdata.customers … GROUP BY factoring_company_vendor_id ORDER BY COUNT(*) DESC LIMIT 1 (majority vote). The CPA VETO in
+  home/factoring-balance-invoice-linkage.service.ts:5-9 explicitly forbids "majority inference / sole-factor / display-name
+  match" for Faro identity and mandates resolveCanonicalActiveFactor (owner-seeded canonical_factor_agreements + locked-term
+  match). Two resolvers disagree; the operational summary/settings display can label the WRONG vendor as active factor (GL is safe).
+CANONICAL: read mdata.customers only; mdata.vendors is the canonical factor identity (not RETIRE).
+LINKAGE: mdata.customers.factoring_company_vendor_id ↔ mdata.vendors ↔ factoring.canonical_factor_agreements.
+STANDARD: single source of truth for counterparty identity (NetSuite).
+FIX: replace resolveActiveFactor with resolveCanonicalActiveFactor/resolveFaroFactorIdentity so operational views and the GL
+  engine agree on ONE identity.
+GUARD: scripts/verify-single-factor-resolver.mjs — FAIL if any route resolves factor identity by GROUP BY … COUNT(*) majority.
+ACCEPTANCE: factor identity everywhere resolves via the canonical agreement resolver.
+
+FACT-04 · P2 · data-completeness · Entire factoring data foundation unseeded — module is non-operational (sequence AFTER FACT-01)
+PROD TRUTH [GUARD-VERIFIED-LIVE 2026-07-26 · non-masked, bypass set]: factoring.canonical_factor_agreements=0, factoring.factor=0,
+  factoring.batch=0, factoring.reserve_movement=0, factoring.customer_factor_assignment=0; accounting.factoring_advances=0;
+  mdata.customers(TRANSP)=1247 total, 0 with factoring_company_vendor_id set. Schema shape is correct (is_full_recourse,
+  fee_rate_tier1/2, reserve_rate, repurchase_term_days, grace_days, repurchase_deadline_days, default_interest_daily_rate).
+CANONICAL: to_regclass('factoring.canonical_factor_agreements') = present; to_regclass('accounting.factoring_advances') = present.
+LINKAGE: canonical_factor_agreements ↔ factoring.factor ↔ mdata.vendors (Faro) ↔ mdata.customers (binding) ↔ accounting.factoring_advances/GL.
+STANDARD: the CPA-locked gate requires an owner-seeded FARO_FULL_RECOURSE_V1 agreement whose terms match the locked constants
+  EXACTLY (revolving $1,000,000; tier1 1.5% / tier2 2.0%; reserve 1.5%; term 30d + 5d grace; repurchase 95d; default interest
+  0.067%/day compounded after day 35). Fail-closed until then = correct behavior; but factoring cannot go live.
+FIX (OWNER-SEED, RE-VERIFY): owner seeds the Faro agreement row + factoring.factor profile with the locked terms and binds Faro
+  customers' factoring_company_vendor_id. SEQUENCE AFTER FACT-01 so seeding does not immediately arm live posting under an
+  unverified sign-off. GUARD provides the seed paste-box on request; owner runs it.
+ACCEPTANCE: one effective FARO_FULL_RECOURSE_V1 agreement; ≥1 Faro customer bound; a $1,000 test advance posts a balanced JE on a
+  throwaway branch only (never prod without owner+CPA).
+
+FACT-05 · P3 · FIN-HOLD · ACH/wire fee collapsed into factor_fee_expense — no distinct bank-charges GL line
+PROD TRUTH [AGENT-VERIFIED @a51447b · RE-VERIFY LIVE]: poster.service.ts:961-964 books the ACH/wire leg to factor_fee_expense
+  with an inline "documented CPA/GUARD follow-up" comment. Faro terms distinguish Proceeds = Purchase Price − wire fees (a
+  transaction cost) from the Factoring Fee (a financing cost). Entry still balances — this is presentation, not a math error.
+CANONICAL: role resolves via accounting.chart_of_accounts_roles (not RETIRE); no distinct bank_charges role bound for TRANSP.
+STANDARD: QuickBooks/NetSuite separate financing fees from bank/wire charges for clean expense reporting.
+FIX: add a bank_charges / factor_wire_fee role + posting line; owner applies under FIN-HOLD.
+ACCEPTANCE: funding JE shows the wire fee on its own expense line, distinct from factor_fee_expense.
+
+===== MEETS — PROTECT (verified strong; do NOT "fix" or regress) =====
+[AGENT-VERIFIED @a51447b · RE-VERIFY LIVE] Secured-borrowing funding (ASC 860, NOT a sale): poster.service.ts:807-965 — FUNDING =
+  Dr cash_clearing + Dr factor_reserve_held + Dr factor_fee_expense (+Dr ACH) / Cr factoring_advance_liability for the FULL
+  invoice_total_cents; A/R untouched at funding (no derecognition). Cash derived so debits===credits; fails closed if fees>invoice.
+[AGENT-VERIFIED] A/R relieved only on collection: customer payment = Dr factoring_advance_liability / Cr ar_control (:1147-1168);
+  reserve release = Dr cash_clearing / Cr factor_reserve_held (:1356-1440); chargeback/recourse reclasses to factoring_recoursed_ar,
+  never to cash (:1753-1961). Default interest matches contract (0.067%/day compounded after day 35; day-95 auto-recourse off advanced_at).
+[GUARD-VERIFIED-LIVE 2026-07-26] All factoring GL roles bound + active for TRANSP: factoring_advance_liability, factor_reserve_held,
+  factor_reserve_default, factor_fee_expense, factoring_recoursed_ar, ar_assigned_to_factor, cash_clearing, ar_control.
+[AGENT-VERIFIED] Fail-closed term-validating Faro gate (resolveCanonicalActiveFactor); deterministic memo + posting-key idempotency;
+  atomic single-txn JE; deadlock retry; reuses createJournalEntry (no shared-engine edit); writes only accounting.*/factoring.* (canonical).
+================================================================================
