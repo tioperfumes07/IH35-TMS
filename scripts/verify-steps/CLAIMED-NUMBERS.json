@@ -989,6 +989,7 @@
     "1560": "1560-verify-route-manifest-parity.mjs",
     "1561": "1561-verify-migration-no-number-collision.mjs",
     "1562": "1562-verify-wo-line-canonical-columns.mjs",
+    "1563": "1563-verify-fixed-asset-half-year-convention.mjs",
     "1564": "1564-verify-layover-detector-fails-loud.mjs",
     "1565": "1565-verify-hos-enforced-on-every-assignment-path.mjs",
     "1570": "1570-verify-form-field-roundtrip.mjs",
@@ -1048,14 +1049,14 @@
     "1645": "1645-verify-escrow-forfeit-membership-before-guc.mjs",
     "1646": "1646-verify-driver-bills-auth-db-mock-exports-lucia-pool.mjs",
     "1648": "1648-verify-no-phantom-load-assignments.mjs",
-    "1563": "1563-verify-fixed-asset-half-year-convention.mjs",
+    "1649": "1649-verify-no-retired-driver-employment-status-read.mjs",
     "1659": "1659-verify-fixed-asset-classes-seeded.mjs"
   },
   "_note": "CLAIMED verify-step numbers. Every PR adding a verify-step MUST add its number here IN THE SAME COMMIT. Two agents claiming the same number then CONFLICT IN GIT instead of silently agreeing and reddening main afterwards.",
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",
   "_how_to_claim": "Pick the next free number in your band, add \"<number>\": \"<filename>\", commit it WITH the guard.",
   "generated_at": "2026-07-26",
-  "total_claimed": 761,
+  "total_claimed": 762,
   "known_duplicates_frozen": {
     "15": [
       "15-verify-accounting-autoload-coverage.mjs",
