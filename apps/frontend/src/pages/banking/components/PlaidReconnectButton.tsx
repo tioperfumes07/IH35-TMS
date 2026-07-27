@@ -51,7 +51,12 @@ export function PlaidReconnectButton({ operatingCompanyId, plaidItemId, onComple
   const plaidConfig = useMemo(
     () => ({
       token: linkToken,
-      onSuccess: (publicToken: string) => {
+      onSuccess: (publicToken: string | null) => {
+        // react-plaid-link v5: PlaidLinkOnSuccess allows public_token null — refuse and surface loudly.
+        if (!publicToken) {
+          pushToast("Plaid Link returned no public token", "error");
+          return;
+        }
         setBusy(true);
         void exchangePlaidPublicToken(publicToken, operatingCompanyId)
           .then(() => {
