@@ -10408,6 +10408,23 @@
       "template_name",
       "to_phone",
       "variables"
+    ],
+    "accounting.insurance_claim_recovery_postings": [
+      "amount_cents",
+      "claim_id",
+      "created_at",
+      "created_by_user_id",
+      "entry_date",
+      "id",
+      "is_active",
+      "journal_entry_id",
+      "memo",
+      "operating_company_id",
+      "status",
+      "updated_at",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
     ]
   }
 }

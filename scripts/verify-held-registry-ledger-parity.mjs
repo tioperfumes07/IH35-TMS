@@ -96,6 +96,7 @@ export const EXPECTED_HELD = [
   // ABSENT — accurate when authored, FALSE from 17:31Z onward, i.e. this guard was certifying a
   // migration as unapplied while prod had applied it. Moved to applied_held. It left the list the way
   // the charter allows (GUARD re-proved it applied), never by weakening a check.
+  // INS-02 applied as 202609100020 — applied_held.
   // F9-04 applied as 202609100030 — applied_held.
   // C9 / MNT-ECON-04 also left EXPECTED_HELD 2026-07-26 after Cursor owner Neon-apply + ledger-backfill
   // (moved to applied_held[] with applied_on_prod:true).
