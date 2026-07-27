@@ -1039,6 +1039,46 @@
       "applied_at": "2026-07-27T20:15:00Z",
       "applied_by": "cursor-owner-neon-apply-2026-07-27",
       "note": "Moved held→applied_held after owner Neon-apply + dual-ledger backfill."
+    },
+    {
+      "file": "202608060000_acct_r03_catalogs_account_merge_records.sql",
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL CLUSTER] ACCT-R-03 catalogs.account_merge_records — Owner Neon-applied 2026-07-27T20:15Z; registry lag fixed.",
+      "block": "ACCT-R-03",
+      "added_at": "2026-07-27",
+      "applied_on_prod": true,
+      "applied_at": "2026-07-27T20:15:36.260Z",
+      "applied_by": "cursor-owner-neon-apply-2026-07-27",
+      "note": "Moved held→applied_held after owner Neon-apply + dual-ledger proof (GUARD live 2026-07-27)."
+    },
+    {
+      "file": "202608110000_safety_civil_fine_expense_gl_hop.sql",
+      "reason": "[HOLD-FOR-JORGE - TIER 1 FINANCIAL] SAFETY FINE-GL HOP — Owner Neon-applied 2026-07-27T20:17Z; registry lag fixed.",
+      "block": "SAFETY-FINE-GL",
+      "added_at": "2026-07-27",
+      "applied_on_prod": true,
+      "applied_at": "2026-07-27T20:17:28.782Z",
+      "applied_by": "cursor-owner-neon-apply-2026-07-27",
+      "note": "Moved held→applied_held after owner Neon-apply + dual-ledger proof (GUARD live 2026-07-27)."
+    },
+    {
+      "file": "202609020000_c2_maintenance_position_history_canonical.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 SCHEMA/BACKFILL] SWEEP-C2 position_history — Owner Neon-applied 2026-07-27T20:15Z; registry lag fixed.",
+      "block": "SWEEP-C2",
+      "added_at": "2026-07-27",
+      "applied_on_prod": true,
+      "applied_at": "2026-07-27T20:15:23.040Z",
+      "applied_by": "cursor-owner-neon-apply-2026-07-27",
+      "note": "Moved held→applied_held after owner Neon-apply + dual-ledger proof (GUARD live 2026-07-27)."
+    },
+    {
+      "file": "202609030000_mnt_econ_01_parts_purchase_gl_hop.sql",
+      "reason": "[HOLD-FOR-JORGE - TIER 1 FINANCIAL] MNT-ECON-01 parts purchase GL hop — Owner Neon-applied 2026-07-27T20:16Z; registry lag fixed.",
+      "added_at": "2026-07-26",
+      "block": "MNT-ECON-01",
+      "applied_on_prod": true,
+      "applied_at": "2026-07-27T20:16:30.979Z",
+      "applied_by": "cursor-owner-neon-apply-2026-07-27",
+      "note": "Moved held→applied_held after owner Neon-apply + dual-ledger proof (GUARD live 2026-07-27)."
     }
   ],
   "superseded": []
