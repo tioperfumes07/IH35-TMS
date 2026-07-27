@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 import { postLoadReassign } from "../../api/dispatch";
@@ -24,7 +25,7 @@ describe("LoadReassignModal (P5-T17)", () => {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const onClose = vi.fn();
     render(
-      <QueryClientProvider client={qc}>
+      <MemoryRouter><QueryClientProvider client={qc}>
         <LoadReassignModal
           open
           onClose={onClose}
@@ -44,7 +45,7 @@ describe("LoadReassignModal (P5-T17)", () => {
             },
           ]}
         />
-      </QueryClientProvider>
+      </QueryClientProvider></MemoryRouter>
     );
 
     const combos = screen.getAllByRole("combobox");

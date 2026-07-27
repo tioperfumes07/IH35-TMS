@@ -1,4 +1,5 @@
 import type React from "react";
+import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -19,9 +20,9 @@ vi.mock("../../../contexts/CompanyContext", () => ({
 function wrap(ui: React.ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
-    <QueryClientProvider client={qc}>
+    <MemoryRouter><QueryClientProvider client={qc}>
       <ToastProvider>{ui}</ToastProvider>
-    </QueryClientProvider>
+    </QueryClientProvider></MemoryRouter>
   );
 }
 

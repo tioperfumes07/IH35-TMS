@@ -1,5 +1,6 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { CreateExpenseModal } from "../CreateExpenseModal";
@@ -86,7 +87,7 @@ function renderModal(onClose = vi.fn(), extra?: { linkedUnitId?: string }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const invalidateSpy = vi.spyOn(client, "invalidateQueries");
   render(
-    <QueryClientProvider client={client}>
+    <MemoryRouter><QueryClientProvider client={client}>
       <ToastProvider>
         <CreateExpenseModal
           open={true}
@@ -97,7 +98,7 @@ function renderModal(onClose = vi.fn(), extra?: { linkedUnitId?: string }) {
           onClose={onClose}
         />
       </ToastProvider>
-    </QueryClientProvider>
+    </QueryClientProvider></MemoryRouter>
   );
   return { onClose, invalidateSpy };
 }

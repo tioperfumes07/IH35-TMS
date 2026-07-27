@@ -1,3 +1,4 @@
+import { ToastProvider } from "../../../components/Toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -31,11 +32,11 @@ describe("BorderCrossingWizardPage", () => {
   it("renders six-step border crossing wizard", async () => {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
-      <QueryClientProvider client={qc}>
+      <ToastProvider><QueryClientProvider client={qc}>
         <MemoryRouter>
           <BorderCrossingWizardPage />
         </MemoryRouter>
-      </QueryClientProvider>
+      </QueryClientProvider></ToastProvider>
     );
 
     expect(await screen.findByTestId("border-crossing-wizard-page")).toBeInTheDocument();

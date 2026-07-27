@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { ToastProvider } from "../../components/Toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -50,13 +51,13 @@ function renderPage() {
     defaultOptions: { queries: { retry: false } },
   });
   return render(
-    <QueryClientProvider client={client}>
+    <ToastProvider><QueryClientProvider client={client}>
       <MemoryRouter initialEntries={["/maintenance/work-orders/wo-pilot-id"]}>
         <Routes>
           <Route path="/maintenance/work-orders/:id" element={<WorkOrderDetailPage />} />
         </Routes>
       </MemoryRouter>
-    </QueryClientProvider>,
+    </QueryClientProvider></ToastProvider>,
   );
 }
 

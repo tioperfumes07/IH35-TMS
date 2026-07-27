@@ -1,3 +1,4 @@
+import { ToastProvider } from "../../../../components/Toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -99,11 +100,11 @@ describe("ChartOfAccountsListPage", () => {
 
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
-      <QueryClientProvider client={queryClient}>
+      <ToastProvider><QueryClientProvider client={queryClient}>
         <MemoryRouter>
           <ChartOfAccountsListPage />
         </MemoryRouter>
-      </QueryClientProvider>
+      </QueryClientProvider></ToastProvider>
     );
 
     await waitFor(() => expect(screen.getByText("Cash Operating")).toBeInTheDocument());

@@ -8,7 +8,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // A raw fetch omitted the cookie and the backend requireAuth returned 401 on a valid session,
 // showing "Unable to load sync status". This test fails if the panel ever regresses to raw fetch.
 const apiRequestMock = vi.fn();
-vi.mock("../../../api/client", () => ({
+vi.mock("../../../api/client", async (importOriginal) => ({
+  // Spread the real module first: a partial factory silently makes every OTHER export
+  // `undefined`, so an unrelated import (resolveApiUrl here) throws at call time and takes the
+  // whole page down with an empty render — which reads as "nothing rendered", not "mock gap".
+  ...(await importOriginal<Record<string, unknown>>()),
   apiRequest: (...args: unknown[]) => apiRequestMock(...args),
   // resolveApiUrl intentionally throws — a sync panel that reaches for it (raw-fetch path) will fail.
   resolveApiUrl: () => {

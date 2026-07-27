@@ -5,10 +5,15 @@ import { describe, expect, it, vi } from "vitest";
 import * as mdataApi from "../../api/mdata";
 import * as dispatchApi from "../../api/dispatch";
 import * as safetyApi from "../../api/safety";
+import { MemoryRouter } from "react-router-dom";
 import { ToastProvider } from "../Toast";
 import { AccidentReportDrawer } from "./AccidentReportDrawer";
 
-vi.mock("../../api/safety", () => ({
+vi.mock("../../api/safety", async (importOriginal) => ({
+  // Spread the real module so the mock cannot rot: a component importing a NEW export from this
+  // module fails with "No <name> export is defined on the mock" rather than testing anything. Only
+  // the functions this file deliberately controls are overridden below.
+  ...(await importOriginal<Record<string, unknown>>()),
   createSafetyAccident: vi.fn().mockResolvedValue({ id: "accident-1" }),
   patchSafetyAccident: vi.fn().mockResolvedValue({ id: "accident-1" }),
   addAccidentPhoto: vi.fn().mockResolvedValue({}),
@@ -18,7 +23,11 @@ vi.mock("../../api/safety", () => ({
 }));
 
 // SC1: the four catalogs source from the real company-scoped list functions.
-vi.mock("../../api/mdata", () => ({
+vi.mock("../../api/mdata", async (importOriginal) => ({
+  // Spread the real module so the mock cannot rot: a component importing a NEW export from this
+  // module fails with "No <name> export is defined on the mock" rather than testing anything. Only
+  // the functions this file deliberately controls are overridden below.
+  ...(await importOriginal<Record<string, unknown>>()),
   listDrivers: vi.fn().mockResolvedValue({
     drivers: [{ id: "driver-uuid-1", first_name: "Alfredo", last_name: "Cazares" }],
     total: 1,
@@ -27,7 +36,11 @@ vi.mock("../../api/mdata", () => ({
   listVendors: vi.fn().mockResolvedValue({ vendors: [{ id: "vendor-uuid-1", name: "Laredo Diesel" }], total: 1 }),
 }));
 
-vi.mock("../../api/dispatch", () => ({
+vi.mock("../../api/dispatch", async (importOriginal) => ({
+  // Spread the real module so the mock cannot rot: a component importing a NEW export from this
+  // module fails with "No <name> export is defined on the mock" rather than testing anything. Only
+  // the functions this file deliberately controls are overridden below.
+  ...(await importOriginal<Record<string, unknown>>()),
   listDispatchLoads: vi.fn().mockResolvedValue({ loads: [{ id: "load-uuid-1", load_number: "LD-9001" }], total_count: 1, has_more: false }),
 }));
 
@@ -86,9 +99,15 @@ vi.mock("../forms/shared/TotalsStack", () => ({ TotalsStack: () => <div data-tes
 
 function wrap(ui: React.ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  // The drawer renders EntityLink drill-throughs (the both-way linkage the connectivity law
+  // requires), and EntityLink calls into react-router. The real app always has a Router above it;
+  // the harness did not, so every test in this file died on "useNavigate() may be used only in the
+  // context of a <Router>" before asserting anything.
   return (
     <QueryClientProvider client={client}>
-      <ToastProvider>{ui}</ToastProvider>
+      <MemoryRouter>
+        <ToastProvider>{ui}</ToastProvider>
+      </MemoryRouter>
     </QueryClientProvider>
   );
 }

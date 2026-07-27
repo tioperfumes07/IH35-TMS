@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -16,7 +17,7 @@ import type { Customer } from "../../api/mdata";
 
 function wrap(ui: React.ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return <QueryClientProvider client={client}>{ui}</QueryClientProvider>;
+  return <MemoryRouter><QueryClientProvider client={client}>{ui}</QueryClientProvider></MemoryRouter>;
 }
 
 afterEach(() => {

@@ -1,6 +1,7 @@
 import type { ComponentProps } from "react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
+import { ToastProvider } from "../../Toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   EditVehicleModal,
@@ -9,7 +10,11 @@ import {
   hasReeferLinkage,
 } from "../EditVehicleModal";
 
-vi.mock("../../../api/client", () => ({
+vi.mock("../../../api/client", async (importOriginal) => ({
+  // Spread the real module first: a partial factory silently makes every OTHER export
+  // `undefined`, so an unrelated import (resolveApiUrl here) throws at call time and takes the
+  // whole page down with an empty render — which reads as "nothing rendered", not "mock gap".
+  ...(await importOriginal<Record<string, unknown>>()),
   apiRequest: vi.fn(),
 }));
 
@@ -24,7 +29,7 @@ const mockedApiRequest = vi.mocked(apiRequest);
 function renderModal(props: Partial<ComponentProps<typeof EditVehicleModal>> = {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <QueryClientProvider client={client}>
+    <ToastProvider><QueryClientProvider client={client}>
       <EditVehicleModal
         open
         unitId="unit-1"
@@ -32,7 +37,7 @@ function renderModal(props: Partial<ComponentProps<typeof EditVehicleModal>> = {
         onClose={vi.fn()}
         {...props}
       />
-    </QueryClientProvider>
+    </QueryClientProvider></ToastProvider>
   );
 }
 

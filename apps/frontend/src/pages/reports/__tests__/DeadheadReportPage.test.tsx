@@ -8,7 +8,11 @@ vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "44444444-4444-4444-8444-444444444444", companies: [] }),
 }));
 
-vi.mock("../../../api/client", () => ({
+vi.mock("../../../api/client", async (importOriginal) => ({
+  // Spread the real module first: a partial factory silently makes every OTHER export
+  // `undefined`, so an unrelated import (resolveApiUrl here) throws at call time and takes the
+  // whole page down with an empty render — which reads as "nothing rendered", not "mock gap".
+  ...(await importOriginal<Record<string, unknown>>()),
   apiRequest: vi.fn(async () => ({
     period: { start: "2026-05-01", end: "2026-05-31", label: "last_4_weeks" },
     fleet: {

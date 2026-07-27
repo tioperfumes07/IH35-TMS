@@ -26,7 +26,11 @@ vi.mock("../../../api/maintenance", () => ({
   getMaintenancePartsTemplateUrl: vi.fn().mockReturnValue("/template"),
 }));
 
-vi.mock("../../../api/client", () => ({
+vi.mock("../../../api/client", async (importOriginal) => ({
+  // Spread the real module first: a partial factory silently makes every OTHER export
+  // `undefined`, so an unrelated import (resolveApiUrl here) throws at call time and takes the
+  // whole page down with an empty render — which reads as "nothing rendered", not "mock gap".
+  ...(await importOriginal<Record<string, unknown>>()),
   apiRequest: vi.fn().mockResolvedValue({ rules: [] }),
 }));
 
