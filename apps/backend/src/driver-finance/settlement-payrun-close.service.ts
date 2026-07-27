@@ -5,6 +5,11 @@
 // This EXTENDS the driver-settlement close with the pay-run-specific movements (owner GO 2026-07-13),
 // reusing the EXISTING accounting spine — NO new GL math, NO parallel poster:
 //   NET = gross − deductions − escrow_contribution − advance_recoveries − chargebacks
+// After that NET is computed, re-assert the owner-locked net-pay floor (default 5%, resolved
+// per-driver → company → env via resolveSettlementMinNet). Escrow/advance/chargeback can push
+// net below the floor even when deductions alone respected it at apply-time (SET-05). BLOCK —
+// never silently cap. An explicit overrideFloor {pct?/cents?, reason} (actor+reason) is required
+// to close below the resolved floor.
 // and posts them as additional BALANCED legs through the EXISTING balanced-JE poster
 // (accounting/journal-entries.service.ts createJournalEntry — debits==credits or it aborts):
 //   Dr driver-pay expense (gross)
@@ -36,6 +41,7 @@ import {
   readDriverEscrowBalanceCents,
   resolveDriverEscrowLiabilityAccount,
 } from "./escrow-resolver.service.js";
+import { resolveSettlementMinNet } from "./settlement-deduction-cap.service.js";
 
 import {
   SETTLEMENT_GL_POSTING_FLAG_KEY,
@@ -72,6 +78,7 @@ export type PayRunCloseErrorCode =
   | "ADVANCE_CLEARING_ACCOUNT_MISSING"
   | "CHARGEBACK_RECOVERY_ACCOUNT_MISSING"
   | "NET_PAY_NEGATIVE"
+  | "NET_PAY_FLOOR_BREACH"
   | "UNBALANCED_ENTRY";
 
 export class SettlementPayRunError extends Error {
@@ -294,6 +301,11 @@ export async function closeSettlementPayRun(
     bankTxnId?: string | null;
     /** Force PREVIEW (compute only, write nothing) even when the posting flag is ON. */
     previewOnly?: boolean;
+    /**
+     * SET-05 — explicit floor override for THIS close only. Required (with a non-empty reason)
+     * to close when post-withholding net would breach the resolved floor. Never silently caps.
+     */
+    overrideFloor?: { pct?: number | null; cents?: number | null; reason?: string | null } | null;
   },
   actor: Actor
 ): Promise<SettlementPayRunResult> {
@@ -353,6 +365,64 @@ export async function closeSettlementPayRun(
         "NET_PAY_NEGATIVE",
         `Settlement ${settlement.display_id ?? settlementId} net would be negative (${netCents}c) — deductions/recoveries exceed gross`,
         breakdown as unknown as Record<string, unknown>
+      );
+    }
+
+    // SET-05 — re-assert net-pay floor AFTER escrow + advance + chargeback subtraction.
+    // Deduction-apply already floors at apply-time; later withholdings can still breach it.
+    const resolvedMinNet = await resolveSettlementMinNet(client, settlement.driver_id, opco);
+    const ov = input.overrideFloor ?? null;
+    const ovReason = ov?.reason != null ? String(ov.reason).trim() : "";
+    const ovPct =
+      ov && ov.pct !== null && ov.pct !== undefined && Number.isFinite(Number(ov.pct))
+        ? Math.min(100, Math.max(0, Number(ov.pct)))
+        : null;
+    const ovCents =
+      ov && ov.cents !== null && ov.cents !== undefined && Number.isFinite(Number(ov.cents))
+        ? Math.max(0, Math.round(Number(ov.cents)))
+        : null;
+    const floorPct = ovPct ?? resolvedMinNet.pct;
+    const floorMinCents = ovCents ?? resolvedMinNet.cents;
+    const floorCents = Math.max(Math.round((grossCents * floorPct) / 100), floorMinCents);
+    // Owner-locked: never silently cap. Closing below the resolved floor requires a non-empty reason.
+    const hasExplicitOverride = ovReason.length > 0;
+
+    if (netCents < floorCents) {
+      if (!hasExplicitOverride) {
+        throw new SettlementPayRunError(
+          "NET_PAY_FLOOR_BREACH",
+          `Settlement ${settlement.display_id ?? settlementId} net ${netCents}c is below the ${floorPct}% / ${floorMinCents}c floor (${floorCents}c) after escrow/advance/chargeback — pass overrideFloor.reason to proceed`,
+          {
+            ...breakdown,
+            floor_cents: floorCents,
+            floor_pct: floorPct,
+            floor_min_cents: floorMinCents,
+            min_net_pct_source: resolvedMinNet.pctSource,
+            min_net_cents_source: resolvedMinNet.centsSource,
+          } as unknown as Record<string, unknown>
+        );
+      }
+      await appendCrudAudit(
+        client,
+        actor.userId,
+        "driver_finance.settlement.payrun_floor_override",
+        {
+          resource_type: "driver_finance.driver_settlements",
+          resource_id: settlementId,
+          operating_company_id: opco,
+          driver_id: settlement.driver_id,
+          net_cents: netCents,
+          floor_cents: floorCents,
+          floor_pct: floorPct,
+          floor_min_cents: floorMinCents,
+          override_pct: ovPct,
+          override_cents: ovCents,
+          override_reason: ovReason,
+          min_net_pct_source: resolvedMinNet.pctSource,
+          min_net_cents_source: resolvedMinNet.centsSource,
+        },
+        "warning",
+        "SET-05-NETPAY-FLOOR-CLOSE"
       );
     }
 
