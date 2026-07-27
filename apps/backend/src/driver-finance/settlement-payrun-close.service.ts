@@ -11,11 +11,13 @@
 //   Cr per-bucket {type}_recovery role account            (deductions)
 //   Cr abandonment_chargeback_recovery role account       (chargebacks)
 //   Cr cash-advance clearing (advance_recovery role)      (advance_recoveries)
-//   Cr the driver's OWN Damage-Claim escrow LIABILITY sub-account (escrow_contribution, I3 capped @ $2,000
+//   Cr the driver's OWN Damage-Claim escrow LIABILITY sub-account (escrow_contribution, capped at
+//      ESCROW_CAP_CENTS
 //      via escrow-resolver.service.ts — resolved BY THE DRIVER-KEYED BRIDGE, asserted Liability + NOT Faro)
 //   Cr cash/bank from the chosen catalogs.payment_methods.gl_account_id (net)
 //
-// I3 escrow: contribute (never release) until the driver's escrow balance reaches $2,000 (cap → 0).
+// Escrow: contribute (never release) until the driver's escrow balance reaches ESCROW_CAP_CENTS
+// (owner-locked $2,500 per C2b 2026-07-26; the cap lives in escrow-resolver.service.ts, never here).
 // Advance recovery (reuse point 3): recover the driver's un-recovered driver_finance.driver_advances
 //   (recovered_in_settlement_id IS NULL) at close, stamping recovered_in_settlement_id — IDEMPOTENT
 //   (the WHERE recovered_in_settlement_id IS NULL guard means a re-run never double-recovers).
@@ -29,10 +31,12 @@ import { createJournalEntry } from "../accounting/journal-entries.service.js";
 import { recordEscrowPostingOnly } from "../accounting/escrow/service.js";
 import {
   DEFAULT_ESCROW_PER_SETTLEMENT_CONTRIBUTION_CENTS,
+  ESCROW_CAP_CENTS,
   computeCappedEscrowContributionCents,
   readDriverEscrowBalanceCents,
   resolveDriverEscrowLiabilityAccount,
 } from "./escrow-resolver.service.js";
+
 import {
   SETTLEMENT_GL_POSTING_FLAG_KEY,
   bucketRecoveryRoleKey,
@@ -40,6 +44,15 @@ import {
   dollarsToCents,
 } from "../accounting/settlement-posting/settlement-bill-payment.math.js";
 import { isCoaRole, resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
+
+/**
+ * The escrow cap rendered for human-readable ledger text. DERIVED from ESCROW_CAP_CENTS — never a
+ * literal. These strings are written INTO the books (journal-line description, escrow-ledger
+ * description, posting note), so a hardcoded cap here does not merely mislead a reader: it stamps a
+ * false cap onto permanent financial records. Exactly what happened when the owner raised the cap to
+ * $2,500 (C2b, 2026-07-26) — three literals in this file kept claiming the old figure.
+ */
+const ESCROW_CAP_LABEL = `$${(ESCROW_CAP_CENTS / 100).toLocaleString("en-US")}`;
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -403,7 +416,7 @@ export async function closeSettlementPayRun(
         account_id: escrow.accountId,
         debit_or_credit: "credit",
         amount_cents: escrowContributionCents,
-        description: `${label} — escrow contribution (capped @ $2,000)`,
+        description: `${label} — escrow contribution (capped @ ${ESCROW_CAP_LABEL})`,
       });
     }
 
@@ -549,7 +562,7 @@ export async function closeSettlementPayRun(
         amount_cents: escrowContributionCents,
         source_type: "driver_settlement",
         source_id: settlementId,
-        note: `${label} — escrow contribution (capped @ $2,000)`,
+        note: `${label} — escrow contribution (capped @ ${ESCROW_CAP_LABEL})`,
         posted_by_user_id: actor.userId,
         linked_journal_entry_id: je.id,
       });
@@ -640,7 +653,7 @@ async function recordEscrowContribution(
         (operating_company_id, driver_id, escrow_balance_id, transaction_type, amount_cents, running_balance_cents, description)
       VALUES ($1::uuid, $2::uuid, $3::uuid, 'hold', $4, $5, $6)
     `,
-    [args.operatingCompanyId, args.driverId, balanceId, args.amountCents, newBalance, `${args.label} — escrow contribution (capped @ $2,000)`]
+    [args.operatingCompanyId, args.driverId, balanceId, args.amountCents, newBalance, `${args.label} — escrow contribution (capped @ ${ESCROW_CAP_LABEL})`]
   );
 }
 

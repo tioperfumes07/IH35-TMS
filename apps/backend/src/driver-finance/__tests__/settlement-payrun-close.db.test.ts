@@ -32,6 +32,7 @@ import {
 import { TEST_OWNER_USER_ID, TEST_ENCRYPTION_KEY } from "../../../test-helpers/constants.js";
 import { upsertDriverEscrowAccountLink } from "../../accounting/driver-subaccount-provision.service.js";
 import { closeSettlementPayRun } from "../settlement-payrun-close.service.js";
+import { ESCROW_CAP_CENTS } from "../escrow-resolver.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -47,7 +48,10 @@ function encryptTestToken(plain: string): string {
   return `${iv.toString("base64")}.${cipher.getAuthTag().toString("base64")}.${enc.toString("base64")}`;
 }
 
-const CAP = 200_000; // ESCROW_CAP_CENTS
+// Import the real constant — a duplicated literal here silently disagreed with the service when the
+// owner raised the cap to $2,500 (C2b, 2026-07-26). A test that hardcodes the value it is meant to
+// verify proves nothing.
+const CAP = ESCROW_CAP_CENTS;
 
 describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
   let db: pg.Client;

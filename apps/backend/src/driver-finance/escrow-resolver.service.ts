@@ -23,8 +23,19 @@ type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
 };
 
-/** I3 LOCKED: escrow cap = $2,000 (200,000 cents). At/over the cap the pay-run contributes 0. */
-export const ESCROW_CAP_CENTS = 200_000;
+/**
+ * OWNER-LOCKED escrow cap = **$2,500 (250,000 cents)**. At/over the cap the pay-run contributes 0.
+ *
+ * Owner ruling 2026-07-26 (decision C2b, re-confirmed in chat: "IT IS 2500 NOW") RAISES this from the
+ * earlier I3-locked $2,000. The old value was a live defect: drivers stopped contributing $500 of
+ * escrow early, leaving the buffer short of the owner's intent — and escrow must keep GROWING because
+ * a fine can arrive 30–45 days AFTER a driver leaves and escrow must still cover it.
+ *
+ * Raising the cap only increases headroom; it never claws back or re-charges an existing balance
+ * (contribution = min(standard, max(0, CAP − currentBalance))), so drivers at the old $2,000 simply
+ * resume contributing until $2,500.
+ */
+export const ESCROW_CAP_CENTS = 250_000;
 
 /**
  * Faro factoring-RESERVE asset ("Faro Escrow Account", QBO-1150040084). This is a factor reserve (an
@@ -181,9 +192,12 @@ export async function readDriverEscrowBalanceCents(
 }
 
 /**
- * I3 capped escrow contribution (PURE): contribute the standard per-settlement amount, but only up to the
- * $2,000 cap — contribution = min(standard, max(0, 200000 − currentBalance)). At/over the cap → 0. Never
- * negative. Never a release. This is THE function that performs the capped escrow contribution.
+ * Capped escrow contribution (PURE): contribute the standard per-settlement amount, but only up to the
+ * **$2,500** cap — contribution = min(standard, max(0, ESCROW_CAP_CENTS − currentBalance)). At/over the
+ * cap → 0. Never negative. Never a release. This is THE function that performs the capped escrow
+ * contribution. The cap is read from ESCROW_CAP_CENTS — never hardcode it here again: the old $2,000
+ * literal outlived the constant it described and turned this doc into a lie (owner ruling C2b,
+ * 2026-07-26). Guard verify-escrow-cap-owner-locked A2 now fails on any stale cap literal in this file.
  */
 export function computeCappedEscrowContributionCents(args: {
   currentBalanceCents: number;
