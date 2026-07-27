@@ -28,27 +28,79 @@ async function tableExists(client: PoolClient, schema: string, table: string): P
   return (res.rowCount ?? 0) > 0;
 }
 
-export async function detectLayovers(client: PoolClient, operatingCompanyId: string): Promise<number> {
+/**
+ * Thrown when the detector CANNOT run. Never conflate this with "ran and found none" — the caller
+ * must surface it distinctly, because layover is driver pay and a false zero silently underpays.
+ */
+export class LayoverDetectionUnavailableError extends Error {
+  constructor(reason: string) {
+    super(`layover detection unavailable: ${reason}`);
+    this.name = "LayoverDetectionUnavailableError";
+  }
+}
+
+/**
+ * What a detection pass actually did. `inserted` alone is a lie waiting to happen: 0 inserted from
+ * 0 resolvable deliveries is a DATA state, while 0 inserted from 40 resolvable deliveries is a real
+ * "no layovers". The caller must be able to tell them apart.
+ */
+export type LayoverDetectionResult = {
+  inserted: number;
+  /** Delivered loads whose release time could be resolved — the denominator behind `inserted`. */
+  resolvable_deliveries: number;
+};
+
+export async function detectLayovers(client: PoolClient, operatingCompanyId: string): Promise<LayoverDetectionResult> {
+  // CANONICAL SOURCES (§4, prod-verified 2026-07-27):
+  //   driver     -> mdata.loads.assigned_primary_driver_id   (populated)
+  //   delivered  -> the LAST stop_type='delivery' stop's actual_departure_at on mdata.load_stops
+  //                 (truck-release basis — McLeod/Alvys treatment, defensible in a pay dispute)
+  // The previous implementation joined mdata.load_assignments, which DOES NOT EXIST on prod (retired;
+  // canonical is dispatch.load_assignment_history) and selected l.uuid / l.delivered_at, NEITHER of
+  // which is a column on mdata.loads (its PK is id, and there is no delivered_at). It could not have
+  // run — and it returned 0 rather than saying so.
   const hasLoads = await tableExists(client, "mdata", "loads");
-  const hasAssignments = await tableExists(client, "mdata", "load_assignments");
-  if (!hasLoads || !hasAssignments) return 0;
+  const hasStops = await tableExists(client, "mdata", "load_stops");
+  if (!hasLoads) throw new LayoverDetectionUnavailableError("mdata.loads is absent");
+  if (!hasStops) throw new LayoverDetectionUnavailableError("mdata.load_stops is absent — delivery time cannot be resolved");
 
   // Find consecutive load pairs for each driver with gap > 8h
   const gaps = await client.query(
-    `WITH driver_loads AS (
+    `WITH delivered AS (
+       -- Truck-RELEASE basis: the last delivery stop's actual_departure_at. Layover accrues from when
+       -- the truck is released, not when it arrives (McLeod / Alvys treatment).
+       SELECT DISTINCT ON (s.load_id)
+              s.load_id,
+              s.actual_departure_at AS released_at
+         FROM mdata.load_stops s
+        WHERE s.stop_type = 'delivery'
+          AND s.actual_departure_at IS NOT NULL
+        ORDER BY s.load_id, s.sequence_number DESC
+     ),
+     started AS (
+       -- A load's work starts at its FIRST stop's actual arrival; that is when the next assignment
+       -- ends the layover.
+       SELECT DISTINCT ON (s.load_id)
+              s.load_id,
+              s.actual_arrival_at AS started_at
+         FROM mdata.load_stops s
+        WHERE s.actual_arrival_at IS NOT NULL
+        ORDER BY s.load_id, s.sequence_number ASC
+     ),
+     driver_loads AS (
        SELECT
-         la.driver_uuid,
-         l.uuid AS load_uuid,
+         l.assigned_primary_driver_id AS driver_uuid,
+         l.id AS load_uuid,
          l.operating_company_id,
-         l.delivered_at,
-         LEAD(l.uuid) OVER (PARTITION BY la.driver_uuid ORDER BY l.delivered_at) AS next_load_uuid,
-         LEAD(la.assigned_at) OVER (PARTITION BY la.driver_uuid ORDER BY l.delivered_at) AS next_assigned_at
+         d.released_at AS delivered_at,
+         LEAD(l.id)         OVER (PARTITION BY l.assigned_primary_driver_id ORDER BY d.released_at) AS next_load_uuid,
+         LEAD(st.started_at) OVER (PARTITION BY l.assigned_primary_driver_id ORDER BY d.released_at) AS next_assigned_at
        FROM mdata.loads l
-       JOIN mdata.load_assignments la ON la.load_uuid = l.uuid
+       JOIN delivered d ON d.load_id = l.id
+       LEFT JOIN started st ON st.load_id = l.id
        WHERE l.operating_company_id = $1
-         AND l.status = 'delivered'
-         AND l.delivered_at IS NOT NULL
-         AND la.driver_uuid IS NOT NULL
+         AND l.soft_deleted_at IS NULL
+         AND l.assigned_primary_driver_id IS NOT NULL
      )
      SELECT
        driver_uuid,
@@ -63,6 +115,20 @@ export async function detectLayovers(client: PoolClient, operatingCompanyId: str
        AND delivered_at > now() - INTERVAL '30 days'`,
     [operatingCompanyId, LAYOVER_THRESHOLD_HOURS]
   );
+
+  // The denominator: how many delivered loads this entity could even be evaluated on.
+  const resolvable = await client.query<{ n: string }>(
+    `SELECT count(*)::text AS n
+       FROM mdata.loads l
+       JOIN mdata.load_stops s ON s.load_id = l.id
+      WHERE l.operating_company_id = $1
+        AND l.soft_deleted_at IS NULL
+        AND l.assigned_primary_driver_id IS NOT NULL
+        AND s.stop_type = 'delivery'
+        AND s.actual_departure_at IS NOT NULL`,
+    [operatingCompanyId]
+  );
+  const resolvableDeliveries = Number(resolvable.rows[0]?.n ?? 0);
 
   let inserted = 0;
   for (const row of gaps.rows) {
@@ -83,7 +149,7 @@ export async function detectLayovers(client: PoolClient, operatingCompanyId: str
     );
     inserted++;
   }
-  return inserted;
+  return { inserted, resolvable_deliveries: resolvableDeliveries };
 }
 
 export async function getLayoversForDriver(
