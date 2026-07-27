@@ -69,6 +69,10 @@ export const COA_ROLE_VALUES = [
   // Dr cash_clearing / Cr warranty_recovery. Owner designates (contra-expense — NEVER sales income).
   // DELIBERATELY absent from ROLE_FALLBACKS.
   "warranty_recovery",
+  // INS-01 — fleet add/remove pro-rata premium expense (Truck/Vehicle Insurance).
+  // Dr insurance_expense / Cr ap_control. DELIBERATELY absent from ROLE_FALLBACKS — fail closed
+  // until designated (never ORDER BY created_at LIMIT 2).
+  "insurance_expense",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];

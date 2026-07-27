@@ -34182,61 +34182,7 @@
       "kind": "table",
       "columns": [
         {
-          "name": "id",
-          "type": "uuid",
-          "nullable": false,
-          "default": "gen_random_uuid()"
-        },
-        {
-          "name": "operating_company_id",
-          "type": "uuid",
-          "nullable": false,
-          "default": null
-        },
-        {
-          "name": "daily_import_id",
-          "type": "uuid",
-          "nullable": false,
-          "default": null
-        },
-        {
-          "name": "invoice_number",
-          "type": "text",
-          "nullable": false,
-          "default": null
-        },
-        {
-          "name": "customer_name",
-          "type": "text",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "load_id",
-          "type": "uuid",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "gross_amount_cents",
-          "type": "bigint",
-          "nullable": false,
-          "default": "0"
-        },
-        {
           "name": "advance_amount_cents",
-          "type": "bigint",
-          "nullable": false,
-          "default": "0"
-        },
-        {
-          "name": "reserve_amount_cents",
-          "type": "bigint",
-          "nullable": false,
-          "default": "0"
-        },
-        {
-          "name": "fee_amount_cents",
           "type": "bigint",
           "nullable": false,
           "default": "0"
@@ -34248,10 +34194,22 @@
           "default": "0"
         },
         {
-          "name": "net_amount_cents",
-          "type": "bigint",
+          "name": "created_at",
+          "type": "timestamp with time zone",
           "nullable": false,
-          "default": "0"
+          "default": "now()"
+        },
+        {
+          "name": "customer_name",
+          "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "daily_import_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
         },
         {
           "name": "due_on",
@@ -34260,10 +34218,64 @@
           "default": null
         },
         {
-          "name": "created_at",
-          "type": "timestamp with time zone",
+          "name": "fee_amount_cents",
+          "type": "bigint",
           "nullable": false,
-          "default": "now()"
+          "default": "0"
+        },
+        {
+          "name": "gross_amount_cents",
+          "type": "bigint",
+          "nullable": false,
+          "default": "0"
+        },
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "invoice_number",
+          "type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "load_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "net_amount_cents",
+          "type": "bigint",
+          "nullable": false,
+          "default": "0"
+        },
+        {
+          "name": "operating_company_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "reserve_amount_cents",
+          "type": "bigint",
+          "nullable": false,
+          "default": "0"
+        },
+        {
+          "name": "superseded_at",
+          "type": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "superseded_reason",
+          "type": "text",
+          "nullable": true,
+          "default": null
         },
         {
           "name": "updated_at",

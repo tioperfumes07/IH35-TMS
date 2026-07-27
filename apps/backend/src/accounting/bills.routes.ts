@@ -551,10 +551,17 @@ export async function registerBillsRoutes(app: FastifyInstance) {
         body.data.miles
       );
 
-      await client.query(`DELETE FROM accounting.bill_unit_allocation WHERE bill_id = $1 AND tenant_id = $2`, [
-        params.data.id,
-        query.data.operating_company_id,
-      ]);
+      await client.query(
+        `
+          UPDATE accounting.bill_unit_allocation
+          SET superseded_at = now(),
+              superseded_reason = 'reallocate'
+          WHERE bill_id = $1
+            AND tenant_id = $2
+            AND superseded_at IS NULL
+        `,
+        [params.data.id, query.data.operating_company_id]
+      );
 
       for (const row of rows) {
         await client.query(
@@ -602,7 +609,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
     const payload = await withCompanyScope(String(user.uuid), query.data.operating_company_id, async (client) => {
       const values: unknown[] = [query.data.operating_company_id, params.data.id];
-      const where = ["a.tenant_id = $1", "a.asset_id = $2", "b.operating_company_id = $1"];
+      const where = ["a.tenant_id = $1", "a.asset_id = $2", "b.operating_company_id = $1", "a.superseded_at IS NULL"];
       if (query.data.from) {
         values.push(query.data.from);
         where.push(`b.bill_date >= $${values.length}::date`);

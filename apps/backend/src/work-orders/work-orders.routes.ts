@@ -589,7 +589,10 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
 
       const woOut = { ...(wo as Record<string, unknown>), labor_cost_cents: laborCostCents };
 
-      const lines = await client.query(`SELECT * FROM maintenance.work_order_lines WHERE work_order_id = $1 ORDER BY created_at ASC`, [
+      // MNT-PHANTOM-01: this read `WHERE work_order_id = $1`. maintenance.work_order_lines has NO
+      // work_order_id column (prod: 0) — the FK column is work_order_uuid. Every call threw 42703, so
+      // the WO detail endpoint could never return its lines.
+      const lines = await client.query(`SELECT * FROM maintenance.work_order_lines WHERE work_order_uuid = $1 ORDER BY created_at ASC`, [
         params.data.id,
       ]);
       const history = await client.query(`SELECT * FROM maintenance.wo_status_history WHERE work_order_id = $1 ORDER BY created_at ASC`, [
