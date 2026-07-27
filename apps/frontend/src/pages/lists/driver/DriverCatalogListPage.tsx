@@ -11,6 +11,11 @@ import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 /** Catalog policy flags the owner may edit from Lists (driver_deduction_types). */
 type OptionalBooleanField = { key: "may_draw_escrow" | "survives_separation"; label: string };
+/**
+ * A constrained-choice policy column. `options` is passed in from the ONE place that owns the
+ * vocabulary — never re-typed per page — so the picker cannot drift from the database CHECK.
+ */
+type OptionalEnumField = { key: "default_recovery_rail"; label: string; options: readonly string[] };
 
 type Props = {
   client: DriverCatalogClient & {
@@ -26,6 +31,7 @@ type Props = {
   breadcrumbPath: string;
   /** Extra boolean columns (ND-ESC-01 may_draw_escrow on escrow_types). */
   optionalBooleans?: OptionalBooleanField[];
+  optionalEnums?: OptionalEnumField[];
 };
 
 function statusPillClass(isActive: boolean) {
@@ -34,7 +40,10 @@ function statusPillClass(isActive: boolean) {
     : "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
 }
 
-function buildColumns(optionalBooleans: OptionalBooleanField[]): Array<ParityColumn<DriverCatalogRow>> {
+function buildColumns(
+  optionalBooleans: OptionalBooleanField[],
+  optionalEnums: OptionalEnumField[]
+): Array<ParityColumn<DriverCatalogRow>> {
   const cols: Array<ParityColumn<DriverCatalogRow>> = [
     {
       key: "code",
@@ -54,7 +63,16 @@ function buildColumns(optionalBooleans: OptionalBooleanField[]): Array<ParityCol
     { key: "sort_order", label: "Order", sortable: true },
   ];
   for (const field of optionalBooleans) {
+    for (const field of optionalEnums) {
     cols.push({
+      key: field.key,
+      label: field.label,
+      sortable: true,
+      sortValue: (row) => row[field.key] ?? "",
+      render: (row) => <>{row[field.key] || "—"}</>,
+    });
+  }
+  cols.push({
       key: field.key,
       label: field.label,
       sortable: true,
@@ -81,6 +99,7 @@ export function DriverCatalogListPage({
   displayName,
   breadcrumbPath,
   optionalBooleans = [],
+  optionalEnums = [],
 }: Props) {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -105,7 +124,7 @@ export function DriverCatalogListPage({
 
   const rows = query.data?.rows ?? [];
   const total = query.data?.total ?? 0;
-  const columns = buildColumns(optionalBooleans);
+  const columns = buildColumns(optionalBooleans, optionalEnums);
 
   return (
     <div className="space-y-3">
@@ -169,6 +188,7 @@ export function DriverCatalogListPage({
         mode={modalMode}
         row={selectedRow}
         optionalBooleans={optionalBooleans}
+        optionalEnums={optionalEnums}
         onClose={() => setModalOpen(false)}
         onSaved={() => {
           void query.refetch();

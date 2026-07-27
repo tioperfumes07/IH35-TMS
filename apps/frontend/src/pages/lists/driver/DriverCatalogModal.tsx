@@ -22,6 +22,11 @@ export type DriverCatalogClient = {
 
 /** Catalog policy flags the owner may edit from Lists (driver_deduction_types). */
 type OptionalBooleanField = { key: "may_draw_escrow" | "survives_separation"; label: string };
+/**
+ * A constrained-choice policy column. `options` is passed in from the ONE place that owns the
+ * vocabulary — never re-typed per page — so the picker cannot drift from the database CHECK.
+ */
+type OptionalEnumField = { key: "default_recovery_rail"; label: string; options: readonly string[] };
 
 type Props = {
   open: boolean;
@@ -31,6 +36,7 @@ type Props = {
   mode: "create" | "edit";
   row: DriverCatalogRow | null;
   optionalBooleans?: OptionalBooleanField[];
+  optionalEnums?: OptionalEnumField[];
   onClose: () => void;
   onSaved: () => void;
 };
@@ -45,6 +51,7 @@ type FormState = {
   // flag is a single edit, not a hunt through form state / reset / submit.
   may_draw_escrow: boolean;
   survives_separation: boolean;
+  default_recovery_rail: string;
 };
 
 export function DriverCatalogModal({
@@ -55,6 +62,7 @@ export function DriverCatalogModal({
   mode,
   row,
   optionalBooleans = [],
+  optionalEnums = [],
   onClose,
   onSaved,
 }: Props) {
@@ -66,6 +74,7 @@ export function DriverCatalogModal({
     is_active: true,
     may_draw_escrow: false,
     survives_separation: false,
+    default_recovery_rail: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string>("");
@@ -81,6 +90,7 @@ export function DriverCatalogModal({
       is_active: row?.is_active ?? true,
       may_draw_escrow: Boolean(row?.may_draw_escrow),
       survives_separation: Boolean(row?.survives_separation),
+      default_recovery_rail: row?.default_recovery_rail ?? "",
     });
     setErrors({});
     setSubmitError("");
@@ -114,6 +124,11 @@ export function DriverCatalogModal({
       // must not receive fields the backend would have to ignore.
       for (const field of optionalBooleans) {
         body[field.key] = form[field.key];
+      }
+      // Omit an unset choice rather than sending "" — the column is NOT NULL with a DB default, and
+      // an empty string would fail the CHECK instead of leaving the seeded default alone.
+      for (const field of optionalEnums) {
+        if (form[field.key]) body[field.key] = form[field.key];
       }
       if (mode === "create") {
         await client.create(operatingCompanyId, body);
@@ -237,6 +252,25 @@ export function DriverCatalogModal({
               }
             />
             {field.label}
+          </label>
+        ))}
+
+        {optionalEnums.map((field) => (
+          <label key={field.key} className="flex flex-col gap-1 text-xs text-gray-700">
+            {field.label}
+            <select
+              className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              data-testid={`catalog-enum-${field.key}`}
+              value={form[field.key]}
+              onChange={(event) => setForm((value) => ({ ...value, [field.key]: event.target.value }))}
+            >
+              <option value="">(use default)</option>
+              {field.options.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
           </label>
         ))}
 

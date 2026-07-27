@@ -17,6 +17,12 @@ type CatalogFactoryConfig = {
    * applied degrades the field away instead of 500-ing the catalog.
    */
   optionalBooleans?: string[];
+  /**
+   * Extra constrained-choice text columns (e.g. default_recovery_rail). `values` MUST come from the
+   * single place that already owns the vocabulary — never re-declared here — or the catalog and the
+   * database CHECK can drift into two dialects. Same presence resolution as optionalBooleans.
+   */
+  optionalEnums?: Array<{ column: string; values: readonly string[] }>;
   deprecation?: {
     navSegment: string;
     successorListsSegment: string;
@@ -65,10 +71,13 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
   // Only POSITIVE results are cached: a column appears when a migration is applied, but never
   // disappears (void-not-delete), so a cached "exists" stays true forever, while caching "absent"
   // would pin the surface to its pre-apply shape until the process restarts.
+  const declaredEnums = (config.optionalEnums ?? []).filter((e) => /^[a-z_]+$/.test(e.column));
+  const declaredOptional = [...declaredBooleans, ...declaredEnums.map((e) => e.column)];
+
   const provenBooleans = new Set<string>();
-  async function resolveBooleans(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: unknown[] }> }) {
-    if (declaredBooleans.length === 0) return [];
-    const unproven = declaredBooleans.filter((c) => !provenBooleans.has(c));
+  async function resolveOptional(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: unknown[] }> }) {
+    if (declaredOptional.length === 0) return [];
+    const unproven = declaredOptional.filter((c) => !provenBooleans.has(c));
     if (unproven.length > 0) {
       const res = await client.query(
         `SELECT column_name
@@ -80,8 +89,9 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
       );
       for (const r of res.rows) provenBooleans.add(String((r as { column_name: string }).column_name));
     }
-    return declaredBooleans.filter((c) => provenBooleans.has(c));
+    return declaredOptional.filter((c) => provenBooleans.has(c));
   }
+  const resolveBooleans = resolveOptional;
 
   const returningColsFor = (cols: string[]) => `
             id,
@@ -104,6 +114,9 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
     is_active: z.boolean().default(true),
     sort_order: z.coerce.number().int().min(0).max(10000).default(50),
     ...Object.fromEntries(declaredBooleans.map((c) => [c, z.boolean().default(false)])),
+    ...Object.fromEntries(
+      declaredEnums.map((e) => [e.column, z.enum(e.values as [string, ...string[]]).optional()])
+    ),
   });
 
   const updateBodySchema = z
@@ -115,6 +128,9 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
       is_active: z.boolean().optional(),
       sort_order: z.coerce.number().int().min(0).max(10000).optional(),
       ...Object.fromEntries(declaredBooleans.map((c) => [c, z.boolean().optional()])),
+      ...Object.fromEntries(
+        declaredEnums.map((e) => [e.column, z.enum(e.values as [string, ...string[]]).optional()])
+      ),
     })
     .refine((value) => Object.keys(value).length > 0, { message: "at least one field is required" });
 
@@ -229,7 +245,9 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
       const availableBooleans = await resolveBooleans(client);
       const boolInsertCols = availableBooleans.length ? `, ${availableBooleans.join(", ")}` : "";
       const boolInsertPlaceholders = availableBooleans.map((_, i) => `$${8 + i}`).join(", ");
-      const boolInsertValues = availableBooleans.map((c) => Boolean((b as Record<string, unknown>)[c]));
+      const boolInsertValues = availableBooleans.map((c) =>
+        declaredBooleans.includes(c) ? Boolean((b as Record<string, unknown>)[c]) : (b as Record<string, unknown>)[c] ?? null
+      );
       const res = await client.query(
         `
           INSERT INTO catalogs.${config.tableName} (
@@ -308,7 +326,8 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
       if ("sort_order" in b) add("sort_order", b.sort_order);
       const availableBooleans = await resolveBooleans(client);
       for (const col of availableBooleans) {
-        if (col in b) add(col, Boolean((b as Record<string, unknown>)[col]));
+        if (!(col in b)) continue;
+        add(col, declaredBooleans.includes(col) ? Boolean((b as Record<string, unknown>)[col]) : (b as Record<string, unknown>)[col]);
       }
       fields.push("updated_at = now()");
       values.push(parsedParams.data.id, parsedQuery.data.operating_company_id);

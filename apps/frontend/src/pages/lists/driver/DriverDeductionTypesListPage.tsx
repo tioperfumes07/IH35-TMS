@@ -1,3 +1,4 @@
+import { INSURANCE_CLAIM_RECOVERY_RAIL_VALUES } from "../../../api/insurance";
 import { driverDeductionTypesCatalogClient } from "../../../api/catalogs-driver";
 import { DriverCatalogListPage } from "./DriverCatalogListPage";
 
@@ -10,6 +11,9 @@ export function DriverDeductionTypesListPage() {
       optionalBooleans={[
         { key: "may_draw_escrow", label: "May draw escrow" },
         { key: "survives_separation", label: "Survives separation" },
+      ]}
+      optionalEnums={[
+        { key: "default_recovery_rail", label: "Default recovery rail", options: INSURANCE_CLAIM_RECOVERY_RAIL_VALUES },
       ]}
     />
   );

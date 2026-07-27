@@ -88,6 +88,20 @@ export function check(s) {
     if (escrowBlock && /optionalBooleans/.test(escrowBlock[0])) {
       problems.push("escrow_types registers optionalBooleans — the recovery policy drifted back onto the escrow BUCKET catalog");
     }
+    // The rail must be editable from Lists, or "policy is data" is only half true: the owner could
+    // toggle whether escrow may be drawn but not change WHICH rail is pre-selected without a deploy.
+    if (!ddtBlock || !/optionalEnums/.test(ddtBlock[0]) || !/default_recovery_rail/.test(ddtBlock[0])) {
+      problems.push("driver_deduction_types must register optionalEnums for default_recovery_rail — otherwise changing the pre-selected recovery rail still needs a deployment");
+    }
+    // ...and its values must be IMPORTED from the single owner-locked declaration. A literal list of
+    // the four words here is a second dialect waiting to drift, which is the defect this whole block
+    // exists to prevent.
+    if (/optionalEnums[\s\S]{0,200}?values:\s*\[\s*["']/.test(s.index)) {
+      problems.push("the rail vocabulary is written as a literal array in index.ts — import INSURANCE_CLAIM_RECOVERY_RAIL_VALUES instead so one lock governs both sides");
+    }
+    if (!/INSURANCE_CLAIM_RECOVERY_RAIL_VALUES/.test(s.index)) {
+      problems.push("index.ts does not import INSURANCE_CLAIM_RECOVERY_RAIL_VALUES — the rail options must come from the owner-locked declaration");
+    }
   }
 
   // --- surfaces ---------------------------------------------------------------------------------
@@ -101,8 +115,13 @@ export function check(s) {
   }
 
   if (!s.deductionList) problems.push("missing DriverDeductionTypesListPage.tsx");
-  else if (!/may_draw_escrow/.test(s.deductionList)) {
-    problems.push("DriverDeductionTypesListPage must expose may_draw_escrow so the owner can edit the policy without a deployment");
+  else {
+    if (!/may_draw_escrow/.test(s.deductionList)) {
+      problems.push("DriverDeductionTypesListPage must expose may_draw_escrow so the owner can edit the policy without a deployment");
+    }
+    if (!/default_recovery_rail/.test(s.deductionList) || !/INSURANCE_CLAIM_RECOVERY_RAIL_VALUES/.test(s.deductionList)) {
+      problems.push("DriverDeductionTypesListPage must expose default_recovery_rail with the IMPORTED rail options — re-typing the four words on the page is how the picker drifts from the database CHECK");
+    }
   }
 
   if (s.escrowList && /may_draw_escrow/.test(s.escrowList)) {
@@ -143,6 +162,9 @@ function selftest() {
     ["factory back to unconditional select", { ...real, factory: real.factory.replace(/information_schema\.columns/g, "pg_class") }],
     ["policy drifts onto the bucket catalog", { ...real, escrowList: `${real.escrowList}\nmay_draw_escrow` }],
     ["modal reads the wrong catalog", { ...real, modal: real.modal.replace(/driverDeductionTypesCatalogClient/g, "escrowTypesCatalogClient") }],
+    ["rail no longer editable", { ...real, index: real.index.replace(/optionalEnums/g, "unusedEnums") }],
+    ["rail vocabulary re-typed as a literal", { ...real, index: real.index.replace(/values:\s*INSURANCE_CLAIM_RECOVERY_RAIL_VALUES/, `values: ["escrow", "settlement", "split", "ask"]`) }],
+    ["list page drops the rail column", { ...real, deductionList: real.deductionList.replace(/default_recovery_rail/g, "unused_col") }],
   ];
 
   for (const [name, mutated] of cases) {

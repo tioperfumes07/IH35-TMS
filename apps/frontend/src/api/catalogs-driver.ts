@@ -15,6 +15,7 @@ export type DriverCatalogRow = {
    */
   may_draw_escrow?: boolean;
   survives_separation?: boolean;
+  default_recovery_rail?: string;
   created_at: string;
   updated_at: string;
 };
@@ -33,6 +34,7 @@ export type DriverCatalogCreateBody = {
   is_active?: boolean;
   may_draw_escrow?: boolean;
   survives_separation?: boolean;
+  default_recovery_rail?: string;
 };
 
 export type DriverCatalogUpdateBody = Partial<DriverCatalogCreateBody>;
