@@ -919,6 +919,12 @@
       "applied_on_prod": true,
       "reason": "BANK-DOM-05 Neon-applied Cursor band",
       "applied_evidence": "Neon 2026-07-27 lucia pairs EXISTS dual-ledger"
+    },
+    {
+      "file": "202609090000_fuel_04_driver_fuel_overage_receivable.sql",
+      "applied_on_prod": true,
+      "reason": "FUEL-04 Neon-applied",
+      "applied_evidence": "Neon dual-ledger"
     }
   ],
   "superseded": []
