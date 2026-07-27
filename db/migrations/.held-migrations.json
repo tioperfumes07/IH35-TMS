@@ -975,6 +975,22 @@
       "applied_evidence": "Neon lucia: insurance_expense bound TRANSP/TRK/USMCA; renumbered 070→100010 after fuel_04 CHECK chain for CI apply-order; dual-ledger 202609100010 checksum=e4bb6f348a69ef90bcd555d733636364d29f3c4340e17d3eb7517a50995b3293 (same bytes as former 070)",
       "block": "INS-01",
       "added_at": "2026-07-27"
+    },
+    {
+      "file": "202609010080_ins_03_refund_obligation_je_fk.sql",
+      "reason": "INS-03 refund_obligation.journal_entry_id → accounting.journal_entries FK; Neon-applied 2026-07-27; 0 dangling; dual-ledger",
+      "applied_on_prod": true,
+      "applied_evidence": "Neon lucia: refund_obligation_journal_entry_id_fkey ON DELETE RESTRICT; dual-ledger 202609010080 checksum=502dfbe8757a305a2427ca09a6a881e5b1cd669244e7bc2d5ece89d502db4f00",
+      "block": "INS-03",
+      "added_at": "2026-07-27"
+    },
+    {
+      "file": "202609010090_ins_04_damage_chain_claim_fk.sql",
+      "reason": "INS-04 damage_continuity_chains.insurance_claim_id → insurance.claim FK; Neon-applied 2026-07-27; 0 dangling; dual-ledger",
+      "applied_on_prod": true,
+      "applied_evidence": "Neon lucia: damage_continuity_chains_insurance_claim_id_fkey → insurance.claim(id) RESTRICT; dual-ledger 202609010090 checksum=ae4a6722e42d98577329ea1e1be1566fe72a278a1ffbc10df2d1655ad17a9ef2",
+      "block": "INS-04",
+      "added_at": "2026-07-27"
     }
   ],
   "superseded": []
