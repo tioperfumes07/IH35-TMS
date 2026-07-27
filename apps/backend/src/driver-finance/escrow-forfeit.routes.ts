@@ -60,46 +60,24 @@ export async function registerDriverEscrowForfeitRoutes(app: FastifyInstance) {
         return reply.code(400).send({ error: "driver_id_mismatch" });
       }
 
-      await assertCompanyMembership(user.uuid, body.data.operating_company_id);
-
-      // SIGNED-CLAUSE GATE (LEGAL-PAPER-01, 2026-07-26). Until now this endpoint gated ONLY on
-      // requireAuth + canForfeit(role): an Owner could forfeit a driver's escrow with no signed
-      // authorisation on file at all. The READ path next door
-      // (debt.routes.ts → /escrow-target) already resolved has_signed_clause and the UI shows it —
-      // so the number was displayed, and then ignored by the one call that actually takes the
-      // money. Deducting from a worker's held funds without signed authorisation is wage-deduction
-      // exposure (DOL / TX Payday Law) and, with escrow booked as a Chapter-11 liability, an
-      // estate-property problem too. Role is WHO may act; the signed clause is WHETHER anyone may.
-      //
-      // Same resolver as the read path — resolveDriverEscrowTarget — deliberately: one definition
-      // of "signed", so the screen and the gate can never disagree. No new logic, no new GL math.
-      const clause = await withCurrentUser(user.uuid, async (client) => {
+      // SIGNED-CLAUSE GATE (LEGAL-PAPER-01, 2026-07-26) + ND-ESC-01 draw catalog — one tenant
+      // transaction: membership assert on the SAME client BEFORE every caller-derived GUC set
+      // (verify-company-membership-assert). Role is WHO may act; signed clause is WHETHER; catalog
+      // reason_code is WHICH draw is allowed. Same resolver as the read path so screen and gate
+      // never disagree.
+      const gate = await withCurrentUser(user.uuid, async (client) => {
+        await assertCompanyMembership(client, user.uuid, body.data.operating_company_id);
         await client.query("SELECT set_config('app.operating_company_id', $1, true)", [
           body.data.operating_company_id,
         ]);
-        return resolveDriverEscrowTarget(client, {
+        const clause = await resolveDriverEscrowTarget(client, {
           driverId: body.data.driver_uuid,
           operatingCompanyId: body.data.operating_company_id,
         });
-      });
-      if (!clause.hasSignedClause) {
-        // Fail CLOSED and loud, before anything is posted. 409, not 403: the caller is authorised,
-        // the RECORD is not — and the remedy is a document, not a permission.
-        return reply.code(409).send({
-          error: "escrow_forfeit_no_signed_clause",
-          message:
-            "No signed driver contract authorises this forfeiture. File the signed contract " +
-            "(e-signed, or paper with the scan attached) before forfeiting escrow. Nothing was posted.",
-          driver_uuid: body.data.driver_uuid,
-        });
-      }
+        if (!clause.hasSignedClause) {
+          return { status: "no_signed_clause" as const };
+        }
 
-      // ND-ESC-01 draw catalog: forfeit reason must be an active catalogs.escrow_types row with
-      // may_draw_escrow=true (abandonment / damage / safety fines seeded; owner can rename/add).
-      const drawReason = await withCurrentUser(user.uuid, async (client) => {
-        await client.query("SELECT set_config('app.operating_company_id', $1, true)", [
-          body.data.operating_company_id,
-        ]);
         const col = await client.query(
           `
             SELECT EXISTS (
@@ -133,14 +111,25 @@ export async function registerDriverEscrowForfeitRoutes(app: FastifyInstance) {
           display_name: String(row.display_name ?? row.code),
         };
       });
-      if (drawReason.status === "column_missing") {
+      if (gate.status === "no_signed_clause") {
+        // Fail CLOSED and loud, before anything is posted. 409, not 403: the caller is authorised,
+        // the RECORD is not — and the remedy is a document, not a permission.
+        return reply.code(409).send({
+          error: "escrow_forfeit_no_signed_clause",
+          message:
+            "No signed driver contract authorises this forfeiture. File the signed contract " +
+            "(e-signed, or paper with the scan attached) before forfeiting escrow. Nothing was posted.",
+          driver_uuid: body.data.driver_uuid,
+        });
+      }
+      if (gate.status === "column_missing") {
         return reply.code(409).send({
           error: "escrow_draw_catalog_not_applied",
           message:
             "Escrow draw catalog (may_draw_escrow) is not live yet — owner must Neon-apply ND-ESC-01. Nothing was posted.",
         });
       }
-      if (drawReason.status === "not_allowed") {
+      if (gate.status === "not_allowed") {
         return reply.code(409).send({
           error: "escrow_draw_reason_not_allowed",
           message:
@@ -151,8 +140,8 @@ export async function registerDriverEscrowForfeitRoutes(app: FastifyInstance) {
       }
 
       const reasonMemo = body.data.reason_note
-        ? `${drawReason.display_name} (${drawReason.code}): ${body.data.reason_note}`
-        : `${drawReason.display_name} (${drawReason.code})`;
+        ? `${gate.display_name} (${gate.code}): ${body.data.reason_note}`
+        : `${gate.display_name} (${gate.code})`;
 
       try {
         const result = await forfeitDriverEscrow(
