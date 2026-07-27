@@ -1,6 +1,9 @@
 -- [HOLD-FOR-JORGE — FINANCIAL CLUSTER] INS-02 — insurance claim recovery GL hop.
 -- *** DO NOT RUN ON PROD via db:migrate. Owner/agent Neon-applies then ledger-backfills. POSTS NOTHING. ***
 -- *** DO NOT flip INSURANCE_CLAIM_RECOVERY_GL_POSTING_ENABLED without owner designation of insurance_recovery. ***
+-- CANONICAL-CHECK: insurance_claim_recovery_posting. accounting.insurance_claim_recovery_postings is a
+-- LINKAGE ledger (claim → JE), not a money ledger. Money lives in journal_entries via createJournalEntry.
+-- Mirrors accounting.warranty_reimburse_postings / civil_fine_postings. No duplicate money subledger.
 -- Root cause: amount_paid_cents updates with no JE — insurer recovery cash is untraceable to the claim.
 -- Fix: linkage ledger + createJournalEntry (Dr cash_clearing / Cr insurance_recovery). Flag DEFAULT OFF.
 -- Cursor band. Idempotent. No new GL math.
@@ -35,9 +38,9 @@ BEGIN
 
   CREATE TABLE IF NOT EXISTS accounting.insurance_claim_recovery_postings (
     id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    operating_company_id  uuid NOT NULL,
-    claim_id              uuid NOT NULL,
-    journal_entry_id      uuid,
+    operating_company_id  uuid NOT NULL REFERENCES org.companies(id),
+    claim_id              uuid NOT NULL REFERENCES insurance.claim(id),
+    journal_entry_id      uuid REFERENCES accounting.journal_entries(id) ON DELETE RESTRICT,
     amount_cents          bigint NOT NULL CHECK (amount_cents > 0),
     entry_date            date NOT NULL,
     memo                  text,
@@ -45,13 +48,14 @@ BEGIN
                             CHECK (status IN ('posted','voided')),
     is_active             boolean NOT NULL DEFAULT true,
     voided_at             timestamptz,
-    voided_by_user_id     uuid,
+    voided_by_user_id     uuid REFERENCES identity.users(id),
     void_reason           text,
     created_at            timestamptz NOT NULL DEFAULT now(),
     updated_at            timestamptz NOT NULL DEFAULT now(),
-    created_by_user_id    uuid
+    created_by_user_id    uuid REFERENCES identity.users(id)
   );
 
+  -- Belt-and-suspenders for DBs where CREATE TABLE IF NOT EXISTS skipped an older shape without inline FKs.
   IF to_regclass('org.companies') IS NOT NULL
      AND NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_ins_claim_recovery_postings_company') THEN
     ALTER TABLE accounting.insurance_claim_recovery_postings
