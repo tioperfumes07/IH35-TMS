@@ -941,6 +941,18 @@
       "applied_on_prod": true,
       "reason": "F9-02 bill_lines void-not-delete \u2014 Neon-applied 2026-07-27; voided_at/voided_reason proved; dual-ledger stamped",
       "applied_evidence": "Neon br-fancy-credit-akjnd07a 2026-07-27 lucia: columns exist; _system+ih35 dual-ledger 202609010040"
+    },
+    {
+      "file": "202609010050_f9_01_bank_tx_stub_void_not_delete.sql",
+      "applied_on_prod": true,
+      "reason": "F9-01 bank stub void-not-delete \u2014 Neon-applied 2026-07-27; columns + partial unique proved; dual-ledger stamped",
+      "applied_evidence": "Neon br-fancy-credit-akjnd07a lucia: voided_at/merged_into + uq_bank_transactions_account_dedup_active; dual-ledger 202609010050"
+    },
+    {
+      "file": "202609010051_f9_01_bank_tx_stub_index_names_fk.sql",
+      "applied_on_prod": true,
+      "reason": "F9-01 follow-up \u2014 restore uq_bank_transactions_account_dedup name + merged_into FK; Neon-applied 2026-07-27",
+      "applied_evidence": "Neon lucia: index names restored; bank_transactions_merged_into_fkey present; dual-ledger 202609010051"
     }
   ],
   "superseded": []

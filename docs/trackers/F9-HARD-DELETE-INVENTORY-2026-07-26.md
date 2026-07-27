@@ -16,7 +16,7 @@ law is holding.
 
 ## TIER 1 — deletes a MONEY record (3)
 
-### F9-01 · `banking/bank-tx-dedup.ts:107` — deletes a BANK TRANSACTION
+### F9-01 · `banking/bank-tx-dedup.ts` — deletes a BANK TRANSACTION — **FIXED 2026-07-27** (voided_at)
 ```sql
 DELETE FROM banking.bank_transactions WHERE id = $1::uuid   -- the manual stub, after merge
 ```
