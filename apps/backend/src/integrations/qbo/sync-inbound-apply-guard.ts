@@ -59,7 +59,7 @@ async function loadBillTms(client: PoolClient, oc: string, qboId: string): Promi
         b.due_date::text,
         b.updated_at::text,
         b.last_qbo_synced_at::text,
-        (SELECT COUNT(*)::text FROM accounting.bill_lines bl WHERE bl.bill_id = b.id) AS line_count
+        (SELECT COUNT(*)::text FROM accounting.bill_lines bl WHERE bl.bill_id = b.id AND bl.voided_at IS NULL) AS line_count
       FROM accounting.bills b
       WHERE b.operating_company_id = $1::uuid AND b.qbo_bill_id = $2
       LIMIT 1

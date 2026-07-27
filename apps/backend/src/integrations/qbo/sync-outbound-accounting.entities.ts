@@ -354,6 +354,7 @@ export async function buildAccountingOutboundPayload(
           SELECT amount::text, description
           FROM accounting.bill_lines
           WHERE bill_id = $1::uuid
+            AND voided_at IS NULL
           ORDER BY line_sequence ASC
         `,
         [entityId]

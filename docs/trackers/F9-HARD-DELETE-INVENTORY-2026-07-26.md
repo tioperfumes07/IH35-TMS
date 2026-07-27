@@ -27,7 +27,7 @@ evidence was attached. If the merge maps a field wrong there is no way back.
 **Fix shape:** `voided_at` + `merged_into_bank_transaction_id` on the stub; exclude voided rows from
 feeds/balances. Void-not-delete (§2), and it preserves the merge's own audit trail.
 
-### F9-02 · `qbo-sync/ap-bills-puller.ts:497` — a SCHEDULED JOB deleting bill lines ⚑
+### F9-02 · `qbo-sync/ap-bills-puller.ts` — SCHEDULED JOB was deleting bill lines — **FIXED 2026-07-27** (voided_at)
 ```sql
 DELETE FROM accounting.bill_lines bl USING accounting.bills b ...  -- orphan sweep, every tick
 ```

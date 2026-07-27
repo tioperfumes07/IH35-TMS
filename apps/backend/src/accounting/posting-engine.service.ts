@@ -774,6 +774,7 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
         bl.category_code
       FROM accounting.bill_lines bl
       WHERE bl.bill_id::uuid = $1::uuid
+        AND bl.voided_at IS NULL
       ORDER BY bl.line_sequence ASC
     `,
     [sourceId]

@@ -210,6 +210,7 @@ export class TmsBillPushHandler implements OutboxEventHandler {
           ON b.id = bl.bill_id
          AND b.operating_company_id = $2::uuid
         WHERE bl.bill_id = $1::uuid
+          AND bl.voided_at IS NULL
         ORDER BY bl.line_sequence ASC, bl.created_at ASC
       `,
       [bill_id, operating_company_id],

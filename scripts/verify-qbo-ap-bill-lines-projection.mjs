@@ -7,7 +7,7 @@
  *
  * Contract:
  *   - projectApBillLinesToLedger INSERT/UPSERT INTO accounting.bill_lines from payload_json->'Line'
- *   - incremental: ON CONFLICT + IS DISTINCT FROM; orphan DELETE via NOT EXISTS (no full wipe each tick)
+ *   - incremental: ON CONFLICT + IS DISTINCT FROM; orphan VOID via NOT EXISTS (F9-02 — never hard-DELETE)
  *   - does not invent a single line from header amount when Line missing
  *   - does not call GL / posting engine from the A/P puller
  *   - DescriptionOnly skipped; AccountBased + ItemBased only
@@ -50,15 +50,12 @@ if (!/ON CONFLICT \(bill_id, line_sequence\)/.test(puller)) {
 if (!/IS DISTINCT FROM/.test(puller)) {
   failures.push("upsert must use IS DISTINCT FROM so identical re-runs do not thrash audit");
 }
-if (!/NOT EXISTS/.test(puller) || !/DELETE FROM accounting\.bill_lines/.test(puller)) {
-  failures.push("projector must orphan-delete via NOT EXISTS (not leave stale QBO lines)");
+// F9-02 — orphans are voided, never hard-deleted.
+if (/DELETE\s+FROM\s+accounting\.bill_lines/.test(puller)) {
+  failures.push("projector must NOT hard-DELETE bill_lines (F9-02 void-not-delete)");
 }
-// Forbid company-wide wipe of all QBO lines before insert (scheduler thrash / audit flood).
-if (
-  /DELETE FROM accounting\.bill_lines[\s\S]{0,500}source_system = 'qbo'[\s\S]{0,200}\);/.test(puller) &&
-  !/DELETE FROM accounting\.bill_lines[\s\S]{0,800}NOT EXISTS/.test(puller)
-) {
-  failures.push("must not full-wipe QBO bill_lines each tick; require orphan NOT EXISTS delete only");
+if (!/NOT EXISTS/.test(puller) || !/voided_at/.test(puller) || !/qbo_orphan_superseded/.test(puller)) {
+  failures.push("projector must orphan-void via NOT EXISTS + voided_at (not leave stale active QBO lines)");
 }
 if (!/AccountBasedExpenseLineDetail/.test(puller) || !/ItemBasedExpenseLineDetail/.test(puller)) {
   failures.push("projector must handle AccountBased + ItemBased expense lines");
@@ -79,7 +76,7 @@ if (/postBill|postExpense|posting-engine|postJournal|createJournalEntry/.test(pu
   failures.push("A/P puller must not call GL poster during QBO projection");
 }
 if (!/source_system = 'qbo'/.test(puller) && !/source_system='qbo'/.test(puller)) {
-  failures.push("line delete/insert must be scoped to source_system='qbo'");
+  failures.push("line void/insert must be scoped to source_system='qbo'");
 }
 if (!/projectApBillsToLedger\(operatingCompanyId\)/.test(scheduler) && !/projectApBillsToLedger\(/.test(scheduler)) {
   failures.push("sync-scheduler must still call projectApBillsToLedger");
@@ -99,4 +96,4 @@ if (failures.length) {
   for (const f of failures) console.error(`- ${f}`);
   process.exit(1);
 }
-console.log(`${LABEL} — OK (payload_json Line[] → bill_lines, no GL invent, scheduler + backfill wired)`);
+console.log(`${LABEL} — OK (payload_json Line[] → bill_lines, orphan-void F9-02, no GL invent, scheduler + backfill wired)`);

@@ -946,6 +946,8 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
       account_name: string | null;
       load_id: string | null;
       load_number: string | null;
+      voided_at: Date | string | null;
+      voided_reason: string | null;
     }>(
       `
         SELECT
@@ -957,7 +959,9 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
           acct.account_number,
           acct.account_name,
           bl.load_id::text AS load_id,
-          l.load_number
+          l.load_number,
+          bl.voided_at,
+          bl.voided_reason
         FROM accounting.bill_lines bl
         LEFT JOIN catalogs.accounts acct
           ON acct.id = bl.account_id
@@ -1003,6 +1007,8 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
         account_name: row.account_name,
         load_id: row.load_id,
         load_number: row.load_number,
+        voided_at: row.voided_at ?? null,
+        voided_reason: row.voided_reason ?? null,
       })),
       payments: paymentsRes.rows.map((row) => ({
         ...row,

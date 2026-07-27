@@ -243,6 +243,7 @@ async function insertBillLinesFromWorkOrder(
       SELECT linked_wo_line_uuid::text
       FROM accounting.bill_lines
       WHERE bill_id = $1::uuid
+        AND voided_at IS NULL
         AND linked_wo_line_uuid IS NOT NULL
     `,
     [billId]
@@ -308,6 +309,7 @@ async function recalcBillTotal(client: DbClient, billId: string) {
       SELECT COALESCE(SUM(amount), 0)::text AS total_amount
       FROM accounting.bill_lines
       WHERE bill_id = $1::uuid
+        AND voided_at IS NULL
     `,
     [billId]
   );
