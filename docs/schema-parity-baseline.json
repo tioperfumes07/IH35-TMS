@@ -6667,7 +6667,8 @@
       "wo_title",
       "wo_type",
       "work_completed_at",
-      "work_started_at"
+      "work_started_at",
+      "source_intransit_issue_id"
     ],
     "master_data.customer_relationship_scores": [
       "complaint_subscore",
