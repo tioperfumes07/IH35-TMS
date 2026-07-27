@@ -85,6 +85,7 @@ export const EXPECTED_HELD = [
   // F9-01 applied as 202609010050 — applied_held.
   // F9-01 follow-up applied as 202609010051 — applied_held.
   // F9-03 applied as 202609010060 — applied_held.
+  // INS-01 applied as 202609100010 — applied_held.
   // INS-03 applied as 202609010080 — applied_held.
   // INS-04 applied as 202609010090 — applied_held.
   // 202609140000 (LEGAL-PAPER-01 signed_on_paper) is NOT here any more: re-proved APPLIED on prod
