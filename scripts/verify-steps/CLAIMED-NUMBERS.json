@@ -1032,13 +1032,14 @@
     "1631": "1631-verify-no-hard-delete-faro-lines.mjs",
     "1632": "1632-verify-fleet-premium-role-resolved.mjs",
     "1633": "1633-verify-refund-obligation-je-fk.mjs",
-    "1634": "1634-verify-damage-chain-claim-fk.mjs"
+    "1634": "1634-verify-damage-chain-claim-fk.mjs",
+    "1635": "1635-verify-claim-recovery-posts-and-links.mjs"
   },
   "_note": "CLAIMED verify-step numbers. Every PR adding a verify-step MUST add its number here IN THE SAME COMMIT. Two agents claiming the same number then CONFLICT IN GIT instead of silently agreeing and reddening main afterwards.",
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",
   "_how_to_claim": "Pick the next free number in your band, add \"<number>\": \"<filename>\", commit it WITH the guard.",
   "generated_at": "2026-07-26",
-  "total_claimed": 744,
+  "total_claimed": 745,
   "known_duplicates_frozen": {
     "15": [
       "15-verify-accounting-autoload-coverage.mjs",
