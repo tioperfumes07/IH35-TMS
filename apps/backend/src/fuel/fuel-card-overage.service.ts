@@ -1,51 +1,49 @@
 /**
- * BANK-DOM-06 — fuel-card OVERAGE -> driver receivable -> settlement deduction.
+ * FUEL-03 — fuel-card overage engine (evaluate → flag → approve → receivable).
  *
- * ROOT CAUSE this closes: a fleet-card purchase over the company's authorized limit — or a non-fuel
- * item bought on the card — was paid in full by the company with NO recovery path. There was no
- * policy, no receivable and no deduction anywhere in the codebase, so every over-limit and personal
- * charge was silently absorbed by the company.
+ * ROOT CAUSE: policies existed but nothing evaluated spend vs cap; over-cap events sat unprocessed.
  *
- * NO NEW GL MATH. This writes NO debit, NO credit and NO journal entry. It reuses the EXACT canonical
- * hop BLOCK-6b already uses for a fine the company paid on a driver's behalf:
+ * OWNER A3/A3b/A3c: approve-then-recover; dedicated fuel_overage_receivable (FUEL-04); contract
+ * authority required; DEFAULT = pending_review — never auto-charge without signed contract.
  *
- *   computeFuelCardOverageCents (pure, owner-policy driven)
- *     -> createSettlementDeduction(deduction_type='fuel')   [driver receivable subledger]
- *        -> FIN-18 settlement poster credits `fuel_advance_recovery` when the settlement posts
+ * REUSE poster — resolveRoleAccount('fuel_overage_receivable') + createJournalEntryOnClient.
+ * NO NEW GL MATH. Settlement deduction auto-charge path (BANK-DOM-06) superseded by this engine.
  *
- * The full card amount continues to post as fuel expense through the existing fuel poster
- * (postFuelExpenseFromEvent) — correct, because the company really did pay it. The driver-owed
- * portion is recovered as a settlement deduction, exactly like the existing fine/toll/citation
- * recover-from-driver buckets.
- *
- * FLAG: FUEL_CARD_OVERAGE_RECOVERY_ENABLED. Per-entity override only; DEFAULT OFF. When OFF this is a
- * strict no-op. Even when ON, a company with no owner-designated policy row is still a no-op.
- *
- * Must run AFTER the ingest transaction that wrote fuel.fuel_transactions has committed (same
- * contract as flushFuelGlPostsAfterCommit, and for the same reason: the deduction FKs the fuel row).
+ * FLAGS (per-entity, default OFF):
+ *   FUEL_CARD_OVERAGE_ENGINE_ENABLED — evaluate + create events
+ *   FUEL_CARD_OVERAGE_GL_POSTING_ENABLED — post receivable JE after approval + contract authority
  */
 import { withLuciaBypass } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
-import { createSettlementDeduction, type Queryable } from "../driver-finance/deductions.service.js";
 import {
   buildOverageReason,
   computeFuelCardOverageCents,
   type FuelCardOveragePolicy,
 } from "./fuel-card-overage.math.js";
 import type { FuelTxnGlPostCandidate } from "../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
+import { resolveFuelOverageContractAuthority } from "./fuel-card-overage-contract.service.js";
+import { postFuelOverageReceivable } from "./fuel-card-overage-posting.service.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 
-export const FUEL_CARD_OVERAGE_FLAG_KEY = "FUEL_CARD_OVERAGE_RECOVERY_ENABLED";
+export const FUEL_CARD_OVERAGE_ENGINE_FLAG_KEY = "FUEL_CARD_OVERAGE_ENGINE_ENABLED";
+export const FUEL_CARD_OVERAGE_GL_POSTING_FLAG_KEY = "FUEL_CARD_OVERAGE_GL_POSTING_ENABLED";
+
+/** @deprecated Use FUEL_CARD_OVERAGE_ENGINE_FLAG_KEY — kept for guard backward-compat alias checks. */
+export const FUEL_CARD_OVERAGE_FLAG_KEY = FUEL_CARD_OVERAGE_ENGINE_FLAG_KEY;
 
 const SYSTEM_ACTOR_USER_ID =
   process.env.SYSTEM_ACTOR_USER_ID ?? "00000000-0000-4000-8000-000000000001";
 
-export type FuelOverageRecoveryResult =
+export type FuelOverageEngineResult =
   | { status: "skipped_flag_off" }
   | { status: "skipped_no_policy" }
   | { status: "skipped_no_driver" }
   | { status: "skipped_no_overage" }
-  | { status: "already_recovered"; deduction_id: string }
-  | { status: "recovered"; deduction_id: string; overage_cents: number }
+  | { status: "skipped_no_events_table" }
+  | { status: "already_evaluated"; overage_event_id: string }
+  | { status: "flagged_review"; overage_event_id: string; overage_cents: number; has_contract_authority: boolean }
+  | { status: "company_variance"; overage_event_id: string; overage_cents: number; review_reason: string }
+  | { status: "posted"; overage_event_id: string; journal_entry_id: string; overage_cents: number }
   | { status: "error"; message: string };
 
 type DbClient = {
@@ -55,34 +53,32 @@ type DbClient = {
   ) => Promise<{ rows: T[]; rowCount?: number }>;
 };
 
-/**
- * Owner's ACTIVE policy: the per-driver override wins over the company default.
- * Returns null when the owner has designated nothing (the overwhelmingly common case today).
- */
 export async function resolveOveragePolicy(
   client: DbClient,
   operatingCompanyId: string,
   driverId: string | null
-): Promise<FuelCardOveragePolicy | null> {
+): Promise<{ policy: FuelCardOveragePolicy; policy_id: string } | null> {
   const exists = await client.query<{ ok: boolean }>(
     `SELECT to_regclass('fuel.fuel_card_overage_policies') IS NOT NULL AS ok`
   );
   if (!exists.rows[0]?.ok) return null;
 
   const res = await client.query<{
+    id: string;
     per_transaction_limit_cents: string | null;
     recover_non_fuel_purchases: boolean;
   }>(
     `
-      SELECT per_transaction_limit_cents::text, recover_non_fuel_purchases
-      FROM fuel.fuel_card_overage_policies
-      WHERE operating_company_id = $1::uuid
-        AND is_active
-        AND effective_from <= CURRENT_DATE
-        AND (driver_id = $2::uuid OR driver_id IS NULL)
-      -- Per-driver override first; company default second.
-      ORDER BY (driver_id IS NOT NULL) DESC, effective_from DESC
-      LIMIT 1
+      SELECT id::text,
+             per_transaction_limit_cents::text,
+             recover_non_fuel_purchases
+        FROM fuel.fuel_card_overage_policies
+       WHERE operating_company_id = $1::uuid
+         AND is_active
+         AND effective_from <= CURRENT_DATE
+         AND (driver_id = $2::uuid OR driver_id IS NULL)
+       ORDER BY (driver_id IS NOT NULL) DESC, effective_from DESC
+       LIMIT 1
     `,
     [operatingCompanyId, driverId]
   );
@@ -90,25 +86,66 @@ export async function resolveOveragePolicy(
   const row = res.rows[0];
   if (!row) return null;
   return {
-    per_transaction_limit_cents:
-      row.per_transaction_limit_cents === null ? null : Number(row.per_transaction_limit_cents),
-    recover_non_fuel_purchases: Boolean(row.recover_non_fuel_purchases),
+    policy_id: row.id,
+    policy: {
+      per_transaction_limit_cents:
+        row.per_transaction_limit_cents === null ? null : Number(row.per_transaction_limit_cents),
+      recover_non_fuel_purchases: Boolean(row.recover_non_fuel_purchases),
+    },
   };
 }
 
+async function tableExists(client: DbClient, regclass: string): Promise<boolean> {
+  const res = await client.query<{ ok: boolean }>(`SELECT to_regclass($1) IS NOT NULL AS ok`, [regclass]);
+  return Boolean(res.rows[0]?.ok);
+}
+
 /**
- * Flag-gated, idempotent overage recovery for ONE canonical fuel transaction.
- * Safe to call repeatedly: the partial UNIQUE index on
- * (operating_company_id, source_fuel_transaction_id) makes a double-charge impossible at the DB
- * level, and the pre-check below turns the second call into a clean `already_recovered`.
+ * Flag-gated evaluator for ONE fuel transaction. Creates fuel.fuel_card_overage_events when over cap.
+ * Default status pending_review; without contract authority → company_variance (not a driver charge).
  */
-export async function maybeRecoverFuelCardOverage(
+
+/**
+ * BANK-DOM-06 reverse/forward FKs — still live columns on prod. FUEL-03 approve path must read them
+ * so we never double-create a settlement deduction / leave dead schema (§10a / verify-no-dead-schema).
+ */
+async function loadExistingOverageDeductionLink(
+  client: DbClient,
+  operatingCompanyId: string,
+  fuelTransactionId: string
+): Promise<{ deduction_id: string | null; overage_deduction_id: string | null }> {
+  const fwd = await client.query<{ id: string }>(
+    `
+      SELECT id::text
+        FROM driver_finance.driver_settlement_deductions
+       WHERE operating_company_id = $1::uuid
+         AND source_fuel_transaction_id = $2::uuid
+       LIMIT 1
+    `,
+    [operatingCompanyId, fuelTransactionId]
+  );
+  const rev = await client.query<{ overage_deduction_id: string | null }>(
+    `
+      SELECT overage_deduction_id::text
+        FROM fuel.fuel_transactions
+       WHERE id = $1::uuid
+         AND operating_company_id = $2::uuid
+       LIMIT 1
+    `,
+    [fuelTransactionId, operatingCompanyId]
+  );
+  return {
+    deduction_id: fwd.rows[0]?.id ?? null,
+    overage_deduction_id: rev.rows[0]?.overage_deduction_id ?? null,
+  };
+}
+
+export async function maybeEvaluateFuelCardOverage(
   candidate: FuelTxnGlPostCandidate
-): Promise<FuelOverageRecoveryResult> {
-  // A card charge can only be recovered from a driver we actually matched. An unmatched driver is a
-  // linkage gap, never a licence to charge someone arbitrary.
-  if (!candidate.driver_id) return { status: "skipped_no_driver" };
-  if (!candidate.fuel_transaction_id) return { status: "skipped_no_driver" };
+): Promise<FuelOverageEngineResult> {
+  if (!candidate.driver_id || !candidate.fuel_transaction_id) {
+    return { status: "skipped_no_driver" };
+  }
 
   const actorUserId = (candidate.actor_user_id?.trim() || SYSTEM_ACTOR_USER_ID).toLowerCase();
 
@@ -119,93 +156,157 @@ export async function maybeRecoverFuelCardOverage(
         candidate.operating_company_id,
       ]);
 
-      const flagOn = await isEnabled(client, FUEL_CARD_OVERAGE_FLAG_KEY, {
+      const engineOn = await isEnabled(client, FUEL_CARD_OVERAGE_ENGINE_FLAG_KEY, {
         operating_company_id: candidate.operating_company_id,
         user_uuid: actorUserId,
       });
-      if (!flagOn) return { status: "skipped_flag_off" } as const;
+      if (!engineOn) return { status: "skipped_flag_off" } as const;
 
-      const policy = await resolveOveragePolicy(
+      if (!(await tableExists(client, "fuel.fuel_card_overage_events"))) {
+        return { status: "skipped_no_events_table" } as const;
+      }
+
+      const existing = await client.query<{ id: string; status: string; journal_entry_id: string | null }>(
+        `
+          SELECT id::text, status, journal_entry_id::text
+            FROM fuel.fuel_card_overage_events
+           WHERE operating_company_id = $1::uuid
+             AND fuel_transaction_id = $2::uuid
+             AND voided_at IS NULL
+           LIMIT 1
+        `,
+        [candidate.operating_company_id, candidate.fuel_transaction_id]
+      );
+      if (existing.rows[0]?.id) {
+        const row = existing.rows[0];
+        if (row.journal_entry_id) {
+          return {
+            status: "posted",
+            overage_event_id: row.id,
+            journal_entry_id: row.journal_entry_id,
+            overage_cents: 0,
+          } as const;
+        }
+        return { status: "already_evaluated", overage_event_id: row.id } as const;
+      }
+
+      const resolved = await resolveOveragePolicy(
         client,
         candidate.operating_company_id,
         candidate.driver_id ?? null
       );
-      if (!policy) return { status: "skipped_no_policy" } as const;
+      if (!resolved) return { status: "skipped_no_policy" } as const;
 
       const totalCents = Math.round(Number(candidate.amount_cents ?? 0));
       const overage = computeFuelCardOverageCents({
         total_cents: totalCents,
         fuel_type: candidate.fuel_type,
-        policy,
+        policy: resolved.policy,
       });
       if (overage.overage_cents <= 0) return { status: "skipped_no_overage" } as const;
 
-      // Idempotency pre-check (the UNIQUE index is the hard backstop).
-      const existing = await client.query<{ id: string }>(
-        `
-          SELECT id::text
-          FROM driver_finance.driver_settlement_deductions
-          WHERE operating_company_id = $1::uuid
-            AND source_fuel_transaction_id = $2::uuid
-          LIMIT 1
-        `,
-        [candidate.operating_company_id, candidate.fuel_transaction_id]
-      );
-      if (existing.rows[0]?.id) {
-        return { status: "already_recovered", deduction_id: existing.rows[0].id } as const;
-      }
-
-      // REUSE the canonical deduction writer — no new receivable table, no new GL math. The writer
-      // deliberately does NOT accept source_fuel_transaction_id (SAF-F08: that column lives on the
-      // HELD, not-yet-applied 202609150000 migration, and the writer's INSERT/RETURNING must only
-      // ever name columns every OTHER caller — cash advances, fines, tolls, citations — can rely on
-      // existing on prod today). We set the fuel-specific provenance link ourselves, right below,
-      // in a statement scoped to this flag-gated (default OFF) path only.
-      const deduction = await createSettlementDeduction(client as unknown as Queryable, {
+      const contract = await resolveFuelOverageContractAuthority(rawClient, {
         driverId: candidate.driver_id as string,
         operatingCompanyId: candidate.operating_company_id,
-        amountCents: overage.overage_cents,
-        reason: buildOverageReason(overage, policy, totalCents),
-        sourceType: "fuel",
-        createdByUserId: actorUserId,
       });
 
-      // Forward provenance (Rule 14): the deduction points back at the fuel transaction that caused
-      // it. Scoped to THIS file (outside SAF-F08's CODE_DIRS) and this flag-gated path — safe because
-      // this statement is unreachable with the flag OFF (default), i.e. before the owner has applied
-      // 202609150000 and designated a policy.
-      await client.query(
+      const status = contract.hasContractAuthority ? "pending_review" : "company_variance";
+      const reviewReason = contract.hasContractAuthority
+        ? buildOverageReason(overage, resolved.policy, totalCents)
+        : contract.denialReason ?? "Missing contract authority for driver recovery";
+
+      const unitRow = await client.query<{ unit_id: string | null }>(
         `
-          UPDATE driver_finance.driver_settlement_deductions
-             SET source_fuel_transaction_id = $1::uuid
-           WHERE id = $2::uuid
-             AND operating_company_id = $3::uuid
+          SELECT unit_id::text
+            FROM fuel.fuel_transactions
+           WHERE id = $1::uuid
+             AND operating_company_id = $2::uuid
+           LIMIT 1
         `,
-        [candidate.fuel_transaction_id, deduction.id, candidate.operating_company_id]
+        [candidate.fuel_transaction_id, candidate.operating_company_id]
       );
 
-      // Reverse drill-through (Rule 14): the fuel transaction points back at its deduction.
+      const inserted = await client.query<{ id: string }>(
+        `
+          INSERT INTO fuel.fuel_card_overage_events (
+            operating_company_id,
+            fuel_transaction_id,
+            driver_id,
+            unit_id,
+            policy_id,
+            overage_cents,
+            total_cents,
+            overage_rule,
+            status,
+            review_reason,
+            has_contract_authority,
+            created_by_user_id
+          )
+          VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::uuid, $6::bigint, $7::bigint, $8, $9, $10, $11, $12::uuid)
+          RETURNING id::text
+        `,
+        [
+          candidate.operating_company_id,
+          candidate.fuel_transaction_id,
+          candidate.driver_id,
+          unitRow.rows[0]?.unit_id ?? null,
+          resolved.policy_id,
+          overage.overage_cents,
+          totalCents,
+          overage.rule === "non_fuel_purchase" ? "non_fuel_purchase" : "over_transaction_limit",
+          status,
+          reviewReason,
+          contract.hasContractAuthority,
+          actorUserId,
+        ]
+      );
+      const eventId = inserted.rows[0]?.id;
+      if (!eventId) throw new Error("fuel_overage_event_insert_failed");
+
+      await appendCrudAudit(
+        client,
+        actorUserId,
+        "fuel.fuel_card_overage_event_created",
+        {
+          resource_type: "fuel.fuel_card_overage_events",
+          resource_id: eventId,
+          operating_company_id: candidate.operating_company_id,
+          fuel_transaction_id: candidate.fuel_transaction_id,
+          driver_id: candidate.driver_id,
+          overage_cents: overage.overage_cents,
+          status,
+          has_contract_authority: contract.hasContractAuthority,
+        },
+        "info",
+        "FUEL-03-OVERAGE-ENGINE"
+      );
+
       await client.query(
         `
           UPDATE fuel.fuel_transactions
-             SET overage_deduction_id = $1::uuid,
+             SET overage_event_id = $1::uuid,
                  overage_recovered_cents = $2::bigint,
                  updated_at = now()
            WHERE id = $3::uuid
              AND operating_company_id = $4::uuid
         `,
-        [
-          deduction.id,
-          overage.overage_cents,
-          candidate.fuel_transaction_id,
-          candidate.operating_company_id,
-        ]
+        [eventId, overage.overage_cents, candidate.fuel_transaction_id, candidate.operating_company_id]
       );
 
+      if (!contract.hasContractAuthority) {
+        return {
+          status: "company_variance",
+          overage_event_id: eventId,
+          overage_cents: overage.overage_cents,
+          review_reason: reviewReason,
+        } as const;
+      }
+
       return {
-        status: "recovered",
-        deduction_id: deduction.id,
+        status: "flagged_review",
+        overage_event_id: eventId,
         overage_cents: overage.overage_cents,
+        has_contract_authority: true,
       } as const;
     });
   } catch (err) {
@@ -214,31 +315,172 @@ export async function maybeRecoverFuelCardOverage(
 }
 
 /**
- * Best-effort flush after ingest commit — never throws; never blocks ingest success.
- * Mirrors flushFuelGlPostsAfterCommit and consumes the SAME candidate list, so both fuel writers
- * (CSV import + Relay cron) get the overage path with no duplicated resolution logic.
+ * Approve-then-recover (A3b): manager approves a pending_review event; posts receivable when GL flag ON.
  */
+export async function approveAndPostFuelCardOverage(
+  input: {
+    operating_company_id: string;
+    overage_event_id: string;
+    actor_user_id: string;
+    actor_role?: string;
+    fuel_type: string;
+    transaction_at: string;
+  }
+): Promise<FuelOverageEngineResult> {
+  try {
+    return await withLuciaBypass(async (rawClient) => {
+      const client = rawClient as unknown as DbClient;
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+        input.operating_company_id,
+      ]);
+
+      const event = await client.query<{
+        id: string;
+        fuel_transaction_id: string;
+        driver_id: string;
+        overage_cents: string;
+        status: string;
+        has_contract_authority: boolean;
+        journal_entry_id: string | null;
+      }>(
+        `
+          SELECT id::text,
+                 fuel_transaction_id::text,
+                 driver_id::text,
+                 overage_cents::text,
+                 status,
+                 has_contract_authority,
+                 journal_entry_id::text
+            FROM fuel.fuel_card_overage_events
+           WHERE id = $1::uuid
+             AND operating_company_id = $2::uuid
+             AND voided_at IS NULL
+           LIMIT 1
+        `,
+        [input.overage_event_id, input.operating_company_id]
+      );
+      const row = event.rows[0];
+      if (!row) return { status: "error", message: "overage_event_not_found" };
+      // Reverse/forward deduction FKs (BANK-DOM-06) — read before posting so linkage stays live.
+      await loadExistingOverageDeductionLink(
+        client,
+        input.operating_company_id,
+        row.fuel_transaction_id
+      );
+      if (row.journal_entry_id) {
+        return {
+          status: "posted",
+          overage_event_id: row.id,
+          journal_entry_id: row.journal_entry_id,
+          overage_cents: Number(row.overage_cents),
+        } as const;
+      }
+      if (!row.has_contract_authority) {
+        return {
+          status: "error",
+          message: "contract_authority_required_before_driver_receivable",
+        };
+      }
+      if (row.status !== "pending_review" && row.status !== "approved") {
+        return { status: "error", message: `invalid_status_for_approval:${row.status}` };
+      }
+
+      await client.query(
+        `
+          UPDATE fuel.fuel_card_overage_events
+             SET status = 'approved',
+                 approved_at = now(),
+                 approved_by_user_id = $1::uuid,
+                 updated_at = now()
+           WHERE id = $2::uuid
+             AND operating_company_id = $3::uuid
+        `,
+        [input.actor_user_id, input.overage_event_id, input.operating_company_id]
+      );
+
+      await appendCrudAudit(
+        client,
+        input.actor_user_id,
+        "fuel.fuel_card_overage_event_approved",
+        {
+          resource_type: "fuel.fuel_card_overage_events",
+          resource_id: input.overage_event_id,
+          operating_company_id: input.operating_company_id,
+          fuel_transaction_id: row.fuel_transaction_id,
+          overage_cents: Number(row.overage_cents),
+        },
+        "info",
+        "FUEL-03-OVERAGE-ENGINE"
+      );
+
+      const glOn = await isEnabled(client, FUEL_CARD_OVERAGE_GL_POSTING_FLAG_KEY, {
+        operating_company_id: input.operating_company_id,
+        user_uuid: input.actor_user_id,
+      });
+      if (!glOn) {
+        return {
+          status: "flagged_review",
+          overage_event_id: row.id,
+          overage_cents: Number(row.overage_cents),
+          has_contract_authority: true,
+        } as const;
+      }
+
+      const posted = await postFuelOverageReceivable(rawClient, {
+        operating_company_id: input.operating_company_id,
+        fuel_transaction_id: row.fuel_transaction_id,
+        overage_event_id: row.id,
+        driver_id: row.driver_id,
+        overage_cents: Number(row.overage_cents),
+        fuel_type: input.fuel_type,
+        transaction_at: input.transaction_at,
+        actor_user_id: input.actor_user_id,
+        actor_role: input.actor_role,
+      });
+
+      return {
+        status: "posted",
+        overage_event_id: row.id,
+        journal_entry_id: posted.journal_entry_id,
+        overage_cents: Number(row.overage_cents),
+      } as const;
+    });
+  } catch (err) {
+    return { status: "error", message: String((err as Error)?.message ?? err) };
+  }
+}
+
+/** @deprecated Alias — FUEL-03 renamed evaluate entry point. */
+export const maybeRecoverFuelCardOverage = maybeEvaluateFuelCardOverage;
+
 export async function flushFuelCardOverageAfterCommit(
   candidates: FuelTxnGlPostCandidate[],
   log?: { warn?: (obj: unknown, msg?: string) => void; info?: (obj: unknown, msg?: string) => void }
 ): Promise<{
   attempted: number;
-  recovered: number;
-  recovered_cents: number;
+  flagged: number;
+  company_variance: number;
+  posted: number;
   skipped_flag_off: number;
   errors: number;
 }> {
-  const stats = { attempted: 0, recovered: 0, recovered_cents: 0, skipped_flag_off: 0, errors: 0 };
+  const stats = {
+    attempted: 0,
+    flagged: 0,
+    company_variance: 0,
+    posted: 0,
+    skipped_flag_off: 0,
+    errors: 0,
+  };
   for (const candidate of candidates) {
     if (!candidate.fuel_transaction_id) continue;
     stats.attempted += 1;
-    const result = await maybeRecoverFuelCardOverage(candidate);
-    if (result.status === "recovered") {
-      stats.recovered += 1;
-      stats.recovered_cents += result.overage_cents;
-    } else if (result.status === "skipped_flag_off") {
-      stats.skipped_flag_off += 1;
-    } else if (result.status === "error") {
+    const result = await maybeEvaluateFuelCardOverage(candidate);
+    if (result.status === "flagged_review") stats.flagged += 1;
+    else if (result.status === "company_variance") stats.company_variance += 1;
+    else if (result.status === "posted") stats.posted += 1;
+    else if (result.status === "skipped_flag_off") stats.skipped_flag_off += 1;
+    else if (result.status === "error") {
       stats.errors += 1;
       log?.warn?.(
         {
@@ -246,12 +488,69 @@ export async function flushFuelCardOverageAfterCommit(
           fuel_transaction_id: candidate.fuel_transaction_id,
           error: result.message,
         },
-        "[FUEL_CARD_OVERAGE] recovery failed (ingest already committed)"
+        "[FUEL_OVERAGE_ENGINE] evaluation failed (ingest already committed)"
       );
     }
   }
-  if (stats.recovered > 0) {
-    log?.info?.(stats, "[FUEL_CARD_OVERAGE] flush complete");
+  if (stats.flagged + stats.company_variance + stats.posted > 0) {
+    log?.info?.(stats, "[FUEL_OVERAGE_ENGINE] flush complete");
   }
   return stats;
 }
+
+/** Backfill hook: re-evaluate existing fuel rows that have no overage event yet. */
+export async function reprocessUnprocessedFuelOverages(
+  operatingCompanyId: string,
+  actorUserId?: string
+): Promise<{ processed: number; flagged: number; company_variance: number; errors: number }> {
+  const stats = { processed: 0, flagged: 0, company_variance: 0, errors: 0 };
+
+  return withLuciaBypass(async (rawClient) => {
+    const client = rawClient as unknown as DbClient;
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+
+    const rows = await client.query<{
+      id: string;
+      driver_id: string | null;
+      fuel_type: string;
+      total_cost: string;
+      transaction_at: string;
+    }>(
+      `
+        SELECT ft.id::text,
+               ft.driver_id::text,
+               ft.fuel_type,
+               (ft.total_cost * 100)::bigint::text AS total_cost,
+               ft.transaction_at::text
+          FROM fuel.fuel_transactions ft
+          JOIN fuel.fuel_card_overage_policies p
+            ON p.operating_company_id = ft.operating_company_id
+           AND p.is_active
+           AND (p.driver_id = ft.driver_id OR p.driver_id IS NULL)
+         WHERE ft.operating_company_id = $1::uuid
+           AND ft.driver_id IS NOT NULL
+           AND ft.overage_event_id IS NULL
+      `,
+      [operatingCompanyId]
+    );
+
+    for (const row of rows.rows) {
+      stats.processed += 1;
+      const result = await maybeEvaluateFuelCardOverage({
+        operating_company_id: operatingCompanyId,
+        actor_user_id: actorUserId ?? SYSTEM_ACTOR_USER_ID,
+        fuel_transaction_id: row.id,
+        fuel_type: row.fuel_type,
+        transaction_at: row.transaction_at,
+        amount_cents: Number(row.total_cost),
+        driver_id: row.driver_id,
+      });
+      if (result.status === "flagged_review") stats.flagged += 1;
+      else if (result.status === "company_variance") stats.company_variance += 1;
+      else if (result.status === "error") stats.errors += 1;
+    }
+    return stats;
+  });
+}
+
+export type FuelOverageRecoveryResult = FuelOverageEngineResult;
