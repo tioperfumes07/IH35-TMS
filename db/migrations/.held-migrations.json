@@ -953,6 +953,12 @@
       "applied_on_prod": true,
       "reason": "F9-01 follow-up \u2014 restore uq_bank_transactions_account_dedup name + merged_into FK; Neon-applied 2026-07-27",
       "applied_evidence": "Neon lucia: index names restored; bank_transactions_merged_into_fkey present; dual-ledger 202609010051"
+    },
+    {
+      "file": "202609010060_f9_03_faro_invoice_lines_supersede.sql",
+      "applied_on_prod": true,
+      "reason": "F9-03 Faro invoice lines supersede-not-delete \u2014 Neon-applied 2026-07-27; dual-ledger stamped",
+      "applied_evidence": "Neon lucia superseded_at/superseded_reason + dual-ledger 202609010060"
     }
   ],
   "superseded": []

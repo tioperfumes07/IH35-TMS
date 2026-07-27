@@ -38,7 +38,7 @@ blast radius is a scheduler tick against `accounting.*`.
 **Fix shape:** soft-delete orphans (`voided_at` + reason `qbo_orphan`) and report them, so a bad pull
 is diagnosable instead of silently erasing lines.
 
-### F9-03 · `data-infra/data-infra.service.ts:235` — factoring lines delete-and-replace
+### F9-03 · `data-infra/data-infra.service.ts` — factoring lines delete-and-replace — **FIXED 2026-07-27** (superseded_at)
 ```sql
 DELETE FROM factor.faro_invoice_lines WHERE daily_import_id = $1   -- then re-INSERT every line
 ```

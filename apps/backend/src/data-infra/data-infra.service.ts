@@ -232,7 +232,17 @@ export async function upsertFaroDailyImportOnClient(
   const importId = String(importRes.rows[0]?.id ?? "");
   if (!importId) throw new Error("faro_daily_import_upsert_failed");
 
-  await client.query(`DELETE FROM factor.faro_invoice_lines WHERE daily_import_id = $1`, [importId]);
+  await client.query(
+    `
+      UPDATE factor.faro_invoice_lines
+         SET superseded_at = COALESCE(superseded_at, now()),
+             superseded_reason = COALESCE(superseded_reason, 'faro_daily_reimport'),
+             updated_at = now()
+       WHERE daily_import_id = $1::uuid
+         AND superseded_at IS NULL
+    `,
+    [importId]
+  );
   for (const row of input.lines) {
     await client.query(
       `
@@ -329,6 +339,7 @@ export async function getFaroDailyImportDetail(userId: string, operatingCompanyI
         FROM factor.faro_invoice_lines
         WHERE daily_import_id = $1
           AND operating_company_id = $2
+          AND superseded_at IS NULL
         ORDER BY invoice_number ASC
       `,
       [importId, operatingCompanyId]
