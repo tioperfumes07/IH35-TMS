@@ -21,6 +21,15 @@ const closeBodySchema = companyQuerySchema.extend({
   standard_escrow_contribution_cents: z.coerce.number().int().min(0).max(1_000_000).optional(),
   payment_reference: z.string().trim().max(200).nullable().optional(),
   bank_txn_id: z.string().uuid().nullable().optional(),
+  /** SET-05 — required (with reason) to close when post-withholding net breaches the resolved floor. */
+  override_floor: z
+    .object({
+      pct: z.number().min(0).max(100).nullable().optional(),
+      cents: z.number().int().min(0).nullable().optional(),
+      reason: z.string().trim().min(1).max(500).nullable().optional(),
+    })
+    .nullable()
+    .optional(),
 });
 
 const AUTHORITY_ROLES = new Set(["Owner", "Administrator", "Accountant"]);
@@ -92,6 +101,7 @@ export function registerSettlementPayRunCloseRoutes(app: FastifyInstance) {
           standardEscrowContributionCents: b.data.standard_escrow_contribution_cents ?? null,
           paymentReference: b.data.payment_reference ?? null,
           bankTxnId: b.data.bank_txn_id ?? null,
+          overrideFloor: b.data.override_floor ?? null,
         },
         { userId: user.uuid }
       );
