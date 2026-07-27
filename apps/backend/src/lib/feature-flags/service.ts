@@ -416,6 +416,19 @@ export async function setOverride(
     throw new Error("override_target_required");
   }
 
+  // FACT-01 — FACTORING_GL_POSTING_ENABLED is TRANSP-only (flag contract + Faro borrower).
+  // Refuse enabling (or writing any override) for TRK/USMCA so the kill-switch cannot silently widen.
+  if (input.flag_key === "FACTORING_GL_POSTING_ENABLED" && input.operating_company_id && input.enabled) {
+    const co = await client.query<{ code: string }>(
+      `SELECT code FROM org.companies WHERE id = $1::uuid LIMIT 1`,
+      [input.operating_company_id]
+    );
+    const code = co.rows[0]?.code ?? "";
+    if (code !== "TRANSP") {
+      throw new Error("factoring_flag_transp_only");
+    }
+  }
+
   if (input.user_uuid) {
     const res = await client.query<FeatureFlagOverrideRow>(
       `
