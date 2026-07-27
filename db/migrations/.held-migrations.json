@@ -44,6 +44,18 @@
       "file": "202609250000_flt_02_real_fleet_owned_by_trk.sql",
       "reason": "[HOLD-FOR-JORGE — DATA FIX] RENUMBERED TWICE off 202609190000 then 202609220000 — both were already stamped on prod by concurrent Cursor applies; 202609250000 leaves a gap above the live max for in-flight work.sql applied 21:28Z — repo/prod number collision, reported separately). FLT-02 real fleet ownership. ALREADY APPLIED ON PROD BY HAND this session — this file exists so a fresh DB (CI/local/new Neon branch) reaches the same state and the fix lives in the repo record. Idempotent by WHERE clause; dynamic org.companies resolution, no hardcoded UUID. Prod-verified 2026-07-26 (lucia, positive control mdata.vendors=2789): 87 of 87 non-sample units already owner=TRK/leased_to=TRANSP, 0 exceptions -> NO-OP on prod. EXCLUDES fixtures (is_sample_data) so the 93 USMCA-owned sample units are NOT re-homed — they are FLT-03/FLT-07 evidence, not an isolation breach. No DELETE, no TRUNCATE, no void (owner ruling F9). Validated apply-twice on a throwaway localhost Postgres with a 5-unit fixture: run 1 moved exactly the 2 wrongly-owned real units, left the already-correct one and BOTH sample units untouched; run 2 moved 0.",
       "verify_step": "scripts/verify-steps/1559-verify-real-owned-fleet-is-trk.mjs"
+    },
+    {
+      "file": "202609100060_mnt_link_03b_wo_source_intransit_fk.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] MNT-LINK-03b — work_orders.source_intransit_issue_id → dispatch.intransit_issues reverse FK + backfill from promoted_to_wo_id. No GL.",
+      "added_at": "2026-07-27",
+      "block": "MNT-LINK-03b"
+    },
+    {
+      "file": "202609100070_mnt_ent_01_parts_inventory_company_fk.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] MNT-ENT-01 — parts_inventory.operating_company_id → org.companies FK (RLS already isolates). No GL.",
+      "added_at": "2026-07-27",
+      "block": "MNT-ENT-01"
     }
   ],
   "_integrity_note": "Every entry appears EXACTLY ONCE (file is the key). applied_on_prod MUST agree with the pinned prod-ledger snapshot scripts/lib/prod-migration-ledger-checksums.json for any file inside its window (>= 202606010000). Enforced by scripts/verify-steps/1361-verify-held-registry-integrity.mjs. Repaired 2026-07-25: 119 entries collapsed to 110 (9 duplicates, 7 of them carrying contradictory applied_on_prod), and 79 entries that were already applied on prod were stamped. Before the repair, verify-schema-parity-from-prod (step 1437) derived held-unapplied columns from this file and therefore treated applied migrations as unapplied.",

@@ -801,12 +801,6 @@
     },
     {
       "schema": "maintenance",
-      "table": "parts_inventory",
-      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
-      "phase": "P4"
-    },
-    {
-      "schema": "maintenance",
       "table": "parts_invoice_links",
       "reason": "needs FK from 'operating_company_id' to org.companies(id)",
       "phase": "P4"
