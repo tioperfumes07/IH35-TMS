@@ -337,7 +337,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
           <div className="text-xs uppercase tracking-wide text-gray-500">Recourse Days</div>
-          <div className="mt-1 font-semibold text-gray-900">{Number(summary?.recourse_days ?? 90)}</div>
+          <div className="mt-1 font-semibold text-gray-900">{Number(summary?.recourse_days ?? 95)}</div>
         </div>
       </div>
       {activeFactorVendor ? (
@@ -571,7 +571,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                 {settingsQuery.data?.current?.single_factor_invariant_ok ? "Compliant" : "Violation"}
               </span>
             </div>
-            <div className="mt-1 text-gray-700">Configured recourse period: {Number(settingsQuery.data?.current?.recourse_days ?? 90)} days</div>
+            <div className="mt-1 text-gray-700">Configured recourse period: {Number(settingsQuery.data?.current?.recourse_days ?? 95)} days</div>
           </div>
 
           <div className="rounded-sm border border-gray-200 bg-white p-3">

@@ -4,6 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { FACTORING_REPURCHASE_DEADLINE_DAYS } from "../accounting/factoring-posting/contract-config.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -88,7 +89,7 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
         operating_company_id: companyId,
         active_factor_id: summary.activeFactor?.id ?? null,
         active_factor_name: summary.activeFactor?.vendor_name ?? null,
-        recourse_days: 90,
+        recourse_days: FACTORING_REPURCHASE_DEADLINE_DAYS,
         reserve_balance: 0,
         chargeback_balance: 0,
         last_advance_at: null,
@@ -199,7 +200,7 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
         operating_company_id: companyId,
         active_factor_id: activeFactor?.id ?? null,
         active_factor_name: activeFactor?.vendor_name ?? null,
-        recourse_days: 90,
+        recourse_days: FACTORING_REPURCHASE_DEADLINE_DAYS,
         active_factor_count: 0,
         single_factor_invariant_ok: true,
       };
