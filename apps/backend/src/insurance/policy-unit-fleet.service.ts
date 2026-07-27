@@ -1,5 +1,6 @@
 import { withCurrentUser } from "../auth/db.js";
 import { createJournalEntry } from "../accounting/journal-entries.service.js";
+import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
 
 /**
  * Block E — Insurance Fleet Add/Remove pro-rata premium posting.
@@ -7,7 +8,7 @@ import { createJournalEntry } from "../accounting/journal-entries.service.js";
  * FINANCIAL RULE — NO NEW FINANCIAL CODE: the pro-rata premium delta (on add) and
  * the pro-rata premium credit (on remove) are posted ONLY through the existing
  * accounting service `createJournalEntry()`. This module computes the cents amount
- * and selects two active GL accounts; it never inserts ledger rows directly.
+ * and resolves GL accounts by CoA ROLE (INS-01); it never inserts ledger rows directly.
  */
 
 type Queryable = {
@@ -63,59 +64,27 @@ export function computeProRataPremiumDeltaCents(input: {
 }
 
 /**
- * Pick two active GL accounts for a balanced pro-rata journal entry. Mirrors the
- * driver-finance corrective-JE account selection: schema-aware so it works whether
- * or not catalogs.accounts carries operating_company_id / is_active / deactivated_at.
+ * INS-01 — resolve fleet premium Debit/Credit by CoA role (never ORDER BY created_at).
+ * Debit = insurance_expense (Truck/Vehicle Insurance). Credit = ap_control (premium payable).
+ * Fail-closed when either role is unbound.
  */
 async function pickFleetPremiumAccounts(client: Queryable, operatingCompanyId: string) {
-  const columnExists = async (column: string) => {
-    const res = await client.query<{ ok: boolean }>(
-      `
-        SELECT EXISTS (
-          SELECT 1
-          FROM information_schema.columns
-          WHERE table_schema = 'catalogs'
-            AND table_name = 'accounts'
-            AND column_name = $1
-        ) AS ok
-      `,
-      [column]
-    );
-    return Boolean(res.rows[0]?.ok);
-  };
-
-  const hasOperatingCompany = await columnExists("operating_company_id");
-  const hasIsActive = await columnExists("is_active");
-  const hasDeactivated = await columnExists("deactivated_at");
-
-  const where: string[] = [];
-  const values: unknown[] = [];
-  if (hasOperatingCompany) {
-    values.push(operatingCompanyId);
-    where.push(`(operating_company_id = $${values.length}::uuid OR operating_company_id IS NULL)`);
+  const expenseAccountId = await resolveRoleAccount(client as never, operatingCompanyId, "insurance_expense");
+  const payableAccountId = await resolveRoleAccount(client as never, operatingCompanyId, "ap_control");
+  if (!expenseAccountId || !payableAccountId) {
+    throw new Error("E_FLEET_PREMIUM_JE_ACCOUNTS_MISSING");
   }
-  if (hasIsActive) where.push(`COALESCE(is_active, true) = true`);
-  if (hasDeactivated) where.push(`deactivated_at IS NULL`);
-
-  const res = await client.query<{ id: string }>(
-    `
-      SELECT id::text
-      FROM catalogs.accounts
-      ${where.length > 0 ? `WHERE ${where.join(" AND ")}` : ""}
-      ORDER BY created_at ASC NULLS LAST, id ASC
-      LIMIT 2
-    `,
-    values
-  );
-  if (res.rows.length < 2) throw new Error("E_FLEET_PREMIUM_JE_ACCOUNTS_MISSING");
-  return { accountA: res.rows[0].id, accountB: res.rows[1].id };
+  if (expenseAccountId === payableAccountId) {
+    throw new Error("E_FLEET_PREMIUM_JE_ACCOUNTS_COLLAPSED");
+  }
+  return { expenseAccountId, payableAccountId };
 }
 
 /**
  * Log the pro-rata premium movement for a fleet add/remove via createJournalEntry().
  *
- * direction "add"    → additional premium owed   (debit accountA / credit accountB)
- * direction "remove" → pro-rata premium credit   (reversed: debit accountB / credit accountA)
+ * direction "add"    → additional premium owed   (Dr insurance_expense / Cr ap_control)
+ * direction "remove" → pro-rata premium credit   (Dr ap_control / Cr insurance_expense)
  *
  * Returns the journal entry id, or null when amountCents <= 0 (nothing to post — a
  * balanced JE requires a positive debit and credit, so zero-delta cases are skipped).
@@ -137,8 +106,10 @@ export async function recordFleetPremiumJournalEntry(params: {
     const accounts = await pickFleetPremiumAccounts(client as Queryable, params.operatingCompanyId);
     const today = new Date().toISOString().slice(0, 10);
 
-    const debitAccountId = params.direction === "add" ? accounts.accountA : accounts.accountB;
-    const creditAccountId = params.direction === "add" ? accounts.accountB : accounts.accountA;
+    const debitAccountId =
+      params.direction === "add" ? accounts.expenseAccountId : accounts.payableAccountId;
+    const creditAccountId =
+      params.direction === "add" ? accounts.payableAccountId : accounts.expenseAccountId;
     const label =
       params.direction === "add"
         ? `Insurance fleet add: pro-rata premium for asset ${params.assetId} on policy ${params.policyId}`
