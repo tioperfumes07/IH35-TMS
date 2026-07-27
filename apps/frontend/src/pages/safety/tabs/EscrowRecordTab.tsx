@@ -24,11 +24,18 @@ export function EscrowRecordTab() {
   });
 
   const forfeitMutation = useMutation({
-    mutationFn: (payload: { row: EscrowRecordRow; amount: number; reason: string; linked_liability_id?: string }) =>
+    mutationFn: (payload: {
+      row: EscrowRecordRow;
+      amount: number;
+      reason_code: string;
+      reason_note?: string;
+      linked_liability_id?: string;
+    }) =>
       forfeitEscrow(payload.row.id, {
         operating_company_id: operatingCompanyId,
         amount: payload.amount,
-        reason: payload.reason,
+        reason_code: payload.reason_code,
+        reason_note: payload.reason_note,
         linked_liability_id: payload.linked_liability_id,
       }),
     onSuccess: (result) => {

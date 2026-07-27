@@ -68,8 +68,13 @@ export function assertSafetyMoneyChrome(sources) {
     problems.push(`${FORFEIT}: the liability picker is not backed by the real per-driver catalog (GET /api/v1/liabilities/by-driver/:driver_id).`);
   }
   // F10 — reason required, amount bounded.
+  // ND-ESC-01: reasonTooShort must stay as the gate identifier (chrome selftest plants on the name)
+  // and must bind to catalog reason_code pick — not free-text length.
   if (!/reasonTooShort/.test(src[FORFEIT]) || !/submitDisabled/.test(src[FORFEIT])) {
     problems.push(`${FORFEIT}: submit is not gated on a required reason — a forfeiture with no recorded reason is unanswerable when the driver disputes it.`);
+  }
+  if (!/const reasonTooShort\s*=\s*!reasonCode/.test(src[FORFEIT])) {
+    problems.push(`${FORFEIT}: reasonTooShort must derive from catalog reasonCode pick (ND-ESC-01 may_draw_escrow) — free-text length gates are not a recorded draw reason.`);
   }
   if (!/overBalance/.test(src[FORFEIT])) {
     problems.push(`${FORFEIT}: the amount is not bounded by the driver's escrow balance — you could forfeit more escrow than exists.`);
@@ -107,6 +112,12 @@ if (SELFTEST) {
   expectCaught("reason-gate-removed",
     { ...live, [FORFEIT]: live[FORFEIT].split("reasonTooShort").join("false") },
     "not gated on a required reason");
+  expectCaught("reason-gate-not-catalog",
+    { ...live, [FORFEIT]: live[FORFEIT].replace(
+      "const reasonTooShort = !reasonCode;",
+      "const reasonTooShort = (reasonNote?.trim().length ?? 0) < 3;",
+    ) },
+    "must derive from catalog reasonCode");
   expectCaught("balance-bound-removed",
     { ...live, [FORFEIT]: live[FORFEIT].split("overBalance").join("false") },
     "not bounded by the driver's escrow balance");
