@@ -6,3 +6,4 @@ export default {
     await ctx.run("node", ["scripts/verify-claim-recovery-posts-and-links.mjs", "--selftest"]);
   },
 };
+
