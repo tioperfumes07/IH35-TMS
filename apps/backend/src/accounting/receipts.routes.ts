@@ -123,7 +123,7 @@ async function registerReceiptsRoutes(app: FastifyInstance) {
       }
       if (q) {
         conds.push(
-          `(a.filename ILIKE $${pi} OR COALESCE(a.notes,'') ILIKE $${pi} OR COALESCE(e.memo,'') ILIKE $${pi} OR COALESCE(b.vendor_name,'') ILIKE $${pi} OR COALESCE(p.display_id,'') ILIKE $${pi} OR COALESCE(c.customer_name,'') ILIKE $${pi})`
+          `(a.filename ILIKE $${pi} OR COALESCE(a.notes,'') ILIKE $${pi} OR COALESCE(e.memo,'') ILIKE $${pi} OR COALESCE(bv.vendor_name,'') ILIKE $${pi} OR COALESCE(p.display_id,'') ILIKE $${pi} OR COALESCE(c.customer_name,'') ILIKE $${pi})`
         );
         params.push(`%${q}%`);
         pi++;
@@ -133,6 +133,10 @@ async function registerReceiptsRoutes(app: FastifyInstance) {
       const joins = `
         LEFT JOIN accounting.expenses e ON e.id = a.entity_id AND a.entity_type = 'expense'
         LEFT JOIN accounting.bills b ON b.id = a.entity_id AND a.entity_type = 'bill'
+        LEFT JOIN mdata.vendors bv
+          ON bv.id::text = COALESCE(NULLIF(TRIM(b.vendor_id), ''), NULLIF(TRIM(b.vendor_uuid), ''))
+         AND a.entity_type = 'bill'
+         AND bv.operating_company_id = $1::uuid
         LEFT JOIN accounting.payments p ON p.id = a.entity_id AND a.entity_type = 'payment'
         LEFT JOIN mdata.customers c ON c.id = p.customer_id AND a.entity_type = 'payment'
                                 AND c.operating_company_id = $1::uuid
@@ -166,7 +170,7 @@ async function registerReceiptsRoutes(app: FastifyInstance) {
           b.bill_number,
           b.bill_date::text              AS bill_date,
           b.amount_cents::text           AS bill_amount_cents,
-          b.vendor_name                  AS bill_vendor_name,
+          bv.vendor_name                 AS bill_vendor_name,
           b.status                       AS bill_status,
           p.display_id                   AS payment_display_id,
           p.payment_date::text           AS payment_date,
@@ -233,7 +237,7 @@ async function registerReceiptsRoutes(app: FastifyInstance) {
           b.bill_number,
           b.bill_date::text AS bill_date,
           b.amount_cents::text AS bill_amount_cents,
-          b.vendor_name AS bill_vendor_name,
+          bv.vendor_name AS bill_vendor_name,
           b.status AS bill_status,
           p.display_id AS payment_display_id,
           p.payment_date::text AS payment_date,
@@ -244,6 +248,10 @@ async function registerReceiptsRoutes(app: FastifyInstance) {
          FROM documents.attachments a
          LEFT JOIN accounting.expenses e ON e.id = a.entity_id AND a.entity_type = 'expense'
          LEFT JOIN accounting.bills b ON b.id = a.entity_id AND a.entity_type = 'bill'
+         LEFT JOIN mdata.vendors bv
+           ON bv.id::text = COALESCE(NULLIF(TRIM(b.vendor_id), ''), NULLIF(TRIM(b.vendor_uuid), ''))
+          AND a.entity_type = 'bill'
+          AND bv.operating_company_id = $2::uuid
          LEFT JOIN accounting.payments p ON p.id = a.entity_id AND a.entity_type = 'payment'
          LEFT JOIN mdata.customers c ON c.id = p.customer_id AND a.entity_type = 'payment'
                                 AND c.operating_company_id = $2::uuid
