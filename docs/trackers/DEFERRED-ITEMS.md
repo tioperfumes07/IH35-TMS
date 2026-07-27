@@ -201,3 +201,36 @@ are pointed to Section C.
   Neon-applies, GUARD re-proves live that the lucia bypass alone now returns 3.
   **source:** Claude planning lane, 2026-07-27, while building the driver recovery policy catalog
   (PR #3660) — see `docs/specs/ESCROW-DEDUCTION-SOURCE-TYPE-RECONCILIATION-SPEC.md` §7.
+
+- **`202609300000_flt_02_fixed_asset_classes_seed.sql` is APPLIED ON PROD but ABSENT FROM THE REPO**
+  [OWNER/CURSOR LANE] ·
+  **what:** read live from `ih35_migrations.applied_migrations` on br-fancy-credit-akjnd07a 2026-07-27:
+  the row exists, `applied_at = 2026-07-27T20:15:42Z`, `applied_by = cursor-owner-neon-apply-2026-07-27`.
+  `git ls-tree origin/main db/migrations/` has NO file with that number — main's highest migration file is
+  `202609250000`. So the prod ledger max (`202609300000`) is five numbers above the repo's highest file.
+  **why it matters:** every repo-side numbering guard is structurally blind to it. `verify-migration-no-number-
+  collision` passed while `202609300000` was already consumed, and PR #3660 was authored at that exact number.
+  Caught only because the ledger was read live before push; it was renumbered to `202609310000`. The runner keys
+  on FILENAME, so a duplicate would have applied silently and left two different migrations sharing one number
+  — after which every number-keyed tool (held registry, GUARD cross-check, dual-ledger backfill) reports
+  ambiguously against it permanently. This is the same class as the five other prod-only migrations already
+  reported; this one bit within 90 minutes of being applied.
+  **what unblocks it:** backfill the file into `db/migrations/` and the held/applied registry so ledger and repo
+  stop diverging, then re-run the numbering guards. Until then, EVERY new migration number must be re-checked
+  against the LIVE ledger at push time — the repo's highest file is not a safe proxy.
+  **source:** Claude planning lane 2026-07-27 while rebasing #3660; GUARD confirmed and owned the inference
+  error (it had derived a ledger fact from the repo, Law §0).
+
+- **`accounting.fixed_asset_classes` row count is UNVERIFIED after the 07-27 seed — do not trust the audit's 0**
+  [CURSOR LANE, blocks FLT-02] ·
+  **what:** the GUARD audit recorded `accounting.fixed_asset_classes` at 0 rows. `202609300000_flt_02_fixed_asset_
+  classes_seed.sql` was applied on prod at 2026-07-27T20:15:42Z and, by its name, seeds exactly that table. So the
+  recorded 0 is almost certainly stale — but "almost certainly" is not a verified count, and the post-apply state
+  has not been read.
+  **why it matters:** the FLT-02 fixed-asset CREATE path depends on those classes existing. Building against a
+  stale 0 would produce a create path that seeds or errors when it should select; building against an assumed
+  "it's populated now" is the same guess in the other direction. Both are the guessing the Law forbids.
+  **what unblocks it:** ONE live count on br-fancy-credit-akjnd07a before FLT-02 create-path work — with a
+  positive control, since `accounting.*` is FORCED RLS and a bare 0 there is not a verdict. Trust neither the
+  audit's 0 nor this note; read it.
+  **source:** GUARD 2026-07-27, logged by Claude at GUARD's request so it cannot rot.
