@@ -49,3 +49,4 @@ requirePattern(engine, /allocation_manual_pct_sum_invalid/, "engine must reject 
 requirePattern(engine, /rows\[0\]\.allocated_amount_cents \+= totalCents - allocated/, "engine must perform penny reconciliation");
 
 console.log("verify:allocation-integrity — OK");
+
