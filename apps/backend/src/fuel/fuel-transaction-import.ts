@@ -446,6 +446,8 @@ export async function importFuelCardTransactionsForCompany(
           location_state: row.location_state,
           gallons: row.gallons,
           cash_advance: false,
+          // FUEL-08: CSV/fleet import with a card number is AP, not cash.
+          has_fuel_card: Boolean(row.card_number),
         });
       }
     } else {
