@@ -1355,6 +1355,8 @@ export const COA_ROLE_VALUES = [
   "maintenance_parts_expense",
   // MNT-ECON-04 — warranty recovery credit (contra-expense; never sales income).
   "warranty_recovery",
+  // INS-01 — fleet add/remove pro-rata premium expense (Truck/Vehicle Insurance).
+  "insurance_expense",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];

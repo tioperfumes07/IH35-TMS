@@ -50,6 +50,7 @@ const ROLE_LABELS: Record<CoaRole, string> = {
   civil_fines_expense: "Civil fines & penalties",
   maintenance_parts_expense: "Maintenance parts expense",
   warranty_recovery: "Warranty recovery (contra-expense)",
+  insurance_expense: "Insurance expense (fleet premium)",
 };
 
 export function CoaRolesPage() {
