@@ -26,11 +26,25 @@ const engine = fs.readFileSync(ENGINE_FILE, "utf8");
 
 requirePattern(migration, /CREATE TABLE IF NOT EXISTS accounting\.bill_unit_allocation/i, "migration must create bill_unit_allocation table");
 requirePattern(migration, /allocation_method IN \('equal', 'by_value', 'by_miles', 'manual_pct'\)/i, "allocation method enum/check missing required methods");
-requirePattern(migration, /UNIQUE\s*\(\s*bill_id\s*,\s*asset_id\s*\)/i, "migration must prevent duplicate asset entries per bill");
+// F9-04: active rows only — UNIQUE (bill_id, asset_id) WHERE superseded_at IS NULL (void/supersede, never DELETE).
+requirePattern(
+  migration,
+  /UNIQUE\s*\(\s*bill_id\s*,\s*asset_id\s*\)/i,
+  "migration must prevent duplicate active asset entries per bill"
+);
 requirePattern(routes, /app\.post\("\/api\/v1\/accounting\/bills\/:id\/allocate"/, "allocation route missing");
 requirePattern(routes, /app\.get\("\/api\/v1\/assets\/:id\/allocated-costs"/, "allocated-costs route missing");
-requirePattern(routes, /DELETE FROM accounting\.bill_unit_allocation/i, "allocation route must replace prior allocation rows");
+// F9-04 Law: reallocate supersedes prior rows (superseded_at), never hard-DELETE history.
+requirePattern(
+  routes,
+  /UPDATE accounting\.bill_unit_allocation[\s\S]*superseded_at\s*=\s*now\(\)/i,
+  "allocation route must supersede prior allocation rows (never DELETE)"
+);
+if (/DELETE FROM accounting\.bill_unit_allocation/i.test(routes)) {
+  fail("allocation route must NOT hard-DELETE bill_unit_allocation rows — supersede only (F9-04)");
+}
 requirePattern(routes, /SUM\(a\.allocated_amount_cents\)/i, "allocated-costs route must aggregate allocated cents");
+requirePattern(routes, /superseded_at IS NULL/i, "allocated-costs must exclude superseded rows");
 requirePattern(engine, /allocation_manual_pct_sum_invalid/, "engine must reject invalid manual percentage sums");
 requirePattern(engine, /rows\[0\]\.allocated_amount_cents \+= totalCents - allocated/, "engine must perform penny reconciliation");
 
