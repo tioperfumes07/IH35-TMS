@@ -54,7 +54,17 @@ export function PlaidLinkButton({ operatingCompanyId, onSuccess, accountType = "
   const plaidConfig = useMemo(
     () => ({
       token: linkToken,
-      onSuccess: (publicToken: string, metadata: { institution?: { name?: string | null } | null }) => {
+      // react-plaid-link v5 widened PlaidLinkOnSuccess from (public_token: string, ...) to
+      // (public_token: string | null, ...). That is not a typing nuisance to cast away — it is Plaid
+      // telling us Link can now finish WITHOUT a public token, and this handler used to feed whatever
+      // it received straight into exchangePlaidPublicToken. Casting would have POSTed a null token to
+      // the exchange endpoint and surfaced a generic "Bank connection failed" with no cause.
+      onSuccess: (publicToken: string | null, metadata: { institution?: { name?: string | null } | null }) => {
+        if (!publicToken) {
+          pushToast("Plaid returned no public token — the bank connection was not completed. Please try again.", "error");
+          setExchanging(false);
+          return;
+        }
         setExchanging(true);
         void exchangePlaidPublicToken(publicToken, operatingCompanyId)
           .then((res) => {

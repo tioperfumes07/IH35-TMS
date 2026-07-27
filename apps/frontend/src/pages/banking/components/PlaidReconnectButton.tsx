@@ -51,7 +51,15 @@ export function PlaidReconnectButton({ operatingCompanyId, plaidItemId, onComple
   const plaidConfig = useMemo(
     () => ({
       token: linkToken,
-      onSuccess: (publicToken: string) => {
+      // v5: PlaidLinkOnSuccess is (public_token: string | null, ...) — Link can complete without a
+      // token. On a RECONNECT that matters more than on a first link: silently exchanging null would
+      // leave the operator believing a broken bank feed was repaired when it was not.
+      onSuccess: (publicToken: string | null) => {
+        if (!publicToken) {
+          pushToast("Plaid returned no public token — the connection was NOT updated. Please try again.", "error");
+          setBusy(false);
+          return;
+        }
         setBusy(true);
         void exchangePlaidPublicToken(publicToken, operatingCompanyId)
           .then(() => {
