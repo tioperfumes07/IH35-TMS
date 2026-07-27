@@ -29,6 +29,8 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 // enforces, so it must answer it with the same code, not its own narrower copy.
 import { evaluateDriverDrugAlcoholStatus } from "./driver-qualification.service.js";
 import type { PoolClient } from "pg";
+import { convertProformaToOfficial } from "../accounting/proforma-convert.service.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
 
 // Book Load §C relocates several stop fields to hidden, react-hook-form-registered <input>s
 // (BookLoadStopsSection.tsx). RHF reads a hidden input's value as a STRING ("" when empty), so
@@ -1283,6 +1285,25 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           load_id: params.data.id,
           load_status: mdataStatus,
         });
+      }
+
+      // ND-INV-01 — at POD (delivered_pending_docs), convert proforma → draft so send/A/R/factoring can proceed.
+      if (targetStatus === "delivered_pending_docs") {
+        const pipelineOn = await isEnabled(client, "INVOICE_PROFORMA_PIPELINE_ENABLED", {
+          operating_company_id: operatingCompanyId,
+          user_uuid: authUser.uuid,
+        });
+        if (pipelineOn) {
+          try {
+            await convertProformaToOfficial(client, {
+              operatingCompanyId,
+              loadId: params.data.id,
+              userId: authUser.uuid,
+            });
+          } catch (err) {
+            console.warn({ err, load_id: params.data.id }, "nd_inv_01_proforma_convert_failed");
+          }
+        }
       }
 
       try {

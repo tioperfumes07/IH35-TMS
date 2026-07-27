@@ -9,6 +9,8 @@ vi.mock("../../audit/crud-audit.js", () => ({
 
 vi.mock("../../auth/db.js", () => ({
   withCurrentUser: vi.fn(),
+  // book-load → from-load (ND-INV) pulls lucia adapter which needs luciaPool at module load
+  luciaPool: {},
 }));
 
 import { appendCrudAudit } from "../../audit/crud-audit.js";

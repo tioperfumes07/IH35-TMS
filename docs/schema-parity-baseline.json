@@ -735,6 +735,23 @@
       "voided_at",
       "voided_reason"
     ],
+    "accounting.insurance_claim_recovery_postings": [
+      "amount_cents",
+      "claim_id",
+      "created_at",
+      "created_by_user_id",
+      "entry_date",
+      "id",
+      "is_active",
+      "journal_entry_id",
+      "memo",
+      "operating_company_id",
+      "status",
+      "updated_at",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
+    ],
     "accounting.invoice_lines": [
       "account_id",
       "created_at",
@@ -765,6 +782,7 @@
       "auto_deduct_settlement",
       "bill_to_entity_id",
       "bill_to_entity_type",
+      "broker_advance_applied_cents",
       "created_at",
       "created_by_user_id",
       "currency_code",
@@ -10408,23 +10426,6 @@
       "template_name",
       "to_phone",
       "variables"
-    ],
-    "accounting.insurance_claim_recovery_postings": [
-      "amount_cents",
-      "claim_id",
-      "created_at",
-      "created_by_user_id",
-      "entry_date",
-      "id",
-      "is_active",
-      "journal_entry_id",
-      "memo",
-      "operating_company_id",
-      "status",
-      "updated_at",
-      "void_reason",
-      "voided_at",
-      "voided_by_user_id"
     ]
   }
 }
