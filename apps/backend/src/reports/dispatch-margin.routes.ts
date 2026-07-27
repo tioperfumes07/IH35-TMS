@@ -56,9 +56,26 @@ export async function registerDispatchMarginRoutes(app: FastifyInstance) {
     if (hit) return hit;
 
     const payload = await withCompanyScope(user.uuid, companyId, async (client) => {
+      // DISP-PHANTOM-CLASS: the cash-basis filter read l.completed_at AND l.delivered_at — NEITHER
+      // exists on mdata.loads (verified on prod 2026-07-27: the table carries created_at and
+      // updated_at only). So every cash-basis dispatch-margin report threw 42703 and returned a 500,
+      // while the accrual basis — which only touches l.created_at — worked. A report that silently
+      // works on one basis and 500s on the other is exactly the kind of half-dead surface this audit
+      // exists to find. Delivery time lives on the last stop_type='delivery' stop's
+      // actual_departure_at (truck-release basis, consistent with booking-gap.service.ts).
       const dateFilter =
         basis === "cash"
-          ? `COALESCE(l.completed_at, l.delivered_at, l.updated_at, l.created_at)::date BETWEEN $2::date AND $3::date`
+          ? `COALESCE(
+               (SELECT ls.actual_departure_at
+                  FROM mdata.load_stops ls
+                 WHERE ls.load_id = l.id
+                   AND ls.stop_type = 'delivery'
+                   AND ls.actual_departure_at IS NOT NULL
+                 ORDER BY ls.actual_departure_at DESC
+                 LIMIT 1),
+               l.updated_at,
+               l.created_at
+             )::date BETWEEN $2::date AND $3::date`
           : `l.created_at::date BETWEEN $2::date AND $3::date`;
 
       // CODER-14 500-safety: driver_finance.settlement_lines has NO load_id (§4) — it links to a load

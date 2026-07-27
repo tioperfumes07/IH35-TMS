@@ -83,7 +83,24 @@ export async function computeLoadProfitability(
        l.status,
        COALESCE(l.rate_total_cents, 0)::bigint AS revenue_cents,
        COALESCE(l.miles_practical, l.miles_shortest, 0)::bigint AS miles,
-       COALESCE(l.delivered_at, l.updated_at, l.created_at) AS trip_end,
+       -- DISP-PHANTOM-CLASS: this read l.delivered_at, which DOES NOT EXIST on mdata.loads
+       -- (verified on prod 2026-07-27: the table has created_at and updated_at, no delivered_at and
+       -- no completed_at). Every call threw 42703, so per-load profitability — revenue vs cost per
+       -- mile, the number that decides whether a lane is worth running — returned nothing but an
+       -- error. The delivery timestamp lives on the STOP: the last stop_type='delivery' stop's
+       -- actual_departure_at (truck-release basis, same as booking-gap.service.ts). Falling back to
+       -- updated_at/created_at preserves the original intent for loads not yet delivered.
+       COALESCE(
+         (SELECT ls.actual_departure_at
+            FROM mdata.load_stops ls
+           WHERE ls.load_id = l.id
+             AND ls.stop_type = 'delivery'
+             AND ls.actual_departure_at IS NOT NULL
+           ORDER BY ls.actual_departure_at DESC
+           LIMIT 1),
+         l.updated_at,
+         l.created_at
+       ) AS trip_end,
        l.created_at AS trip_start
      FROM mdata.loads l
      WHERE l.id = $1
