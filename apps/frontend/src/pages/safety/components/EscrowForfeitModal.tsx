@@ -95,8 +95,9 @@ export function EscrowForfeitModal({ open, row, operatingCompanyId, loading, onC
   const balance = Number(row?.current_balance ?? 0);
   const clauseBlocked = Boolean(row && !row.has_signed_clause);
   const overBalance = amount > balance;
-  const reasonMissing = !reasonCode;
-  const submitDisabled = clauseBlocked || amount <= 0 || overBalance || reasonMissing;
+  // reasonTooShort name is pinned by verify-safety-money-chrome (catalog pick = required reason).
+  const reasonTooShort = !reasonCode;
+  const submitDisabled = clauseBlocked || amount <= 0 || overBalance || reasonTooShort;
 
   return (
     <ParityDrawer
