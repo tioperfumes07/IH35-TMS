@@ -33,7 +33,13 @@ export type InsuranceClaimFault = "undetermined" | "company" | "third_party" | "
  * Owner lock #1 (2026-07-22, master plan §0.1 Example A2): ALWAYS ASK — 'ask' is the permanent neutral
  * "not decided yet" state. The UI must default to 'ask' and never silently auto-advance it.
  */
-export type InsuranceClaimRecoveryRail = "escrow" | "settlement" | "split" | "ask";
+export const INSURANCE_CLAIM_RECOVERY_RAIL_VALUES = ["escrow", "settlement", "split", "ask"] as const;
+/**
+ * Derived from the array above so the type and the runtime values can never disagree. The array
+ * exists because a picker needs values, not just a type — before it, any surface offering these
+ * options had to re-type the four words, which is how a second dialect starts.
+ */
+export type InsuranceClaimRecoveryRail = (typeof INSURANCE_CLAIM_RECOVERY_RAIL_VALUES)[number];
 
 /** Owner lock #2 (2026-07-22, Choice Z): ALWAYS ASK — no dollar threshold, ever. */
 export type InsuranceClaimRepairBooksTreatment = "expense" | "capitalize" | "ask";

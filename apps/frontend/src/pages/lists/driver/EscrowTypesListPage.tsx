@@ -3,6 +3,10 @@ import { DriverCatalogListPage } from "./DriverCatalogListPage";
 
 export function EscrowTypesListPage() {
   return (
-    <DriverCatalogListPage client={escrowTypesCatalogClient} displayName="Escrow Types" breadcrumbPath="Lists & Catalogs / Driver / Escrow Types" />
+    <DriverCatalogListPage
+      client={escrowTypesCatalogClient}
+      displayName="Escrow Types"
+      breadcrumbPath="Lists & Catalogs / Driver / Escrow Types"
+    />
   );
 }

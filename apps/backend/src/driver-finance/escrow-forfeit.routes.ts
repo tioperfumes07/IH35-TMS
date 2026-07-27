@@ -21,9 +21,10 @@ const forfeitBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   driver_uuid: z.string().uuid(),
   amount: z.number().positive(),
-  reason: z.string().trim().min(3).max(500),
-  // REQUIRED shape kept as uuid, but OPTIONAL per owner ruling 2026-07-23 (two branches: linked debt, or
-  // a general forfeit crediting damage_recovery). When present it must FK a real driver_liabilities row.
+  /** Catalog code from catalogs.driver_deduction_types where may_draw_escrow=true (ND-ESC-01). */
+  reason_code: z.string().trim().min(2).max(64),
+  /** Optional free-text note appended to the catalog display name in memos. */
+  reason_note: z.string().trim().max(400).optional(),
   linked_liability_id: z.string().uuid().nullish(),
 });
 
@@ -59,29 +60,58 @@ export async function registerDriverEscrowForfeitRoutes(app: FastifyInstance) {
         return reply.code(400).send({ error: "driver_id_mismatch" });
       }
 
-      await assertCompanyMembership(user.uuid, body.data.operating_company_id);
-
-      // SIGNED-CLAUSE GATE (LEGAL-PAPER-01, 2026-07-26). Until now this endpoint gated ONLY on
-      // requireAuth + canForfeit(role): an Owner could forfeit a driver's escrow with no signed
-      // authorisation on file at all. The READ path next door
-      // (debt.routes.ts → /escrow-target) already resolved has_signed_clause and the UI shows it —
-      // so the number was displayed, and then ignored by the one call that actually takes the
-      // money. Deducting from a worker's held funds without signed authorisation is wage-deduction
-      // exposure (DOL / TX Payday Law) and, with escrow booked as a Chapter-11 liability, an
-      // estate-property problem too. Role is WHO may act; the signed clause is WHETHER anyone may.
-      //
-      // Same resolver as the read path — resolveDriverEscrowTarget — deliberately: one definition
-      // of "signed", so the screen and the gate can never disagree. No new logic, no new GL math.
-      const clause = await withCurrentUser(user.uuid, async (client) => {
+      // SIGNED-CLAUSE GATE (LEGAL-PAPER-01, 2026-07-26) + ND-ESC-01 draw catalog — one tenant
+      // transaction: membership assert on the SAME client BEFORE every caller-derived GUC set
+      // (verify-company-membership-assert). Role is WHO may act; signed clause is WHETHER; catalog
+      // reason_code is WHICH draw is allowed. Same resolver as the read path so screen and gate
+      // never disagree.
+      const gate = await withCurrentUser(user.uuid, async (client) => {
+        await assertCompanyMembership(client, user.uuid, body.data.operating_company_id);
         await client.query("SELECT set_config('app.operating_company_id', $1, true)", [
           body.data.operating_company_id,
         ]);
-        return resolveDriverEscrowTarget(client, {
+        const clause = await resolveDriverEscrowTarget(client, {
           driverId: body.data.driver_uuid,
           operatingCompanyId: body.data.operating_company_id,
         });
+        if (!clause.hasSignedClause) {
+          return { status: "no_signed_clause" as const };
+        }
+
+        const col = await client.query(
+          `
+            SELECT EXISTS (
+              SELECT 1 FROM information_schema.columns
+              WHERE table_schema = 'catalogs'
+                AND table_name = 'driver_deduction_types'
+                AND column_name = 'may_draw_escrow'
+            ) AS ok
+          `
+        );
+        if (!Boolean((col.rows[0] as { ok?: boolean } | undefined)?.ok)) {
+          return { status: "column_missing" as const };
+        }
+        const res = await client.query(
+          `
+            SELECT code, display_name
+              FROM catalogs.driver_deduction_types
+             WHERE operating_company_id = $1::uuid
+               AND code = $2
+               AND is_active = true
+               AND may_draw_escrow = true
+             LIMIT 1
+          `,
+          [body.data.operating_company_id, body.data.reason_code.toUpperCase()]
+        );
+        const row = res.rows[0] as { code?: string; display_name?: string } | undefined;
+        if (!row?.code) return { status: "not_allowed" as const };
+        return {
+          status: "ok" as const,
+          code: String(row.code),
+          display_name: String(row.display_name ?? row.code),
+        };
       });
-      if (!clause.hasSignedClause) {
+      if (gate.status === "no_signed_clause") {
         // Fail CLOSED and loud, before anything is posted. 409, not 403: the caller is authorised,
         // the RECORD is not — and the remedy is a document, not a permission.
         return reply.code(409).send({
@@ -92,6 +122,26 @@ export async function registerDriverEscrowForfeitRoutes(app: FastifyInstance) {
           driver_uuid: body.data.driver_uuid,
         });
       }
+      if (gate.status === "column_missing") {
+        return reply.code(409).send({
+          error: "escrow_draw_catalog_not_applied",
+          message:
+            "Escrow draw catalog (may_draw_escrow) is not live yet — owner must Neon-apply ND-ESC-01. Nothing was posted.",
+        });
+      }
+      if (gate.status === "not_allowed") {
+        return reply.code(409).send({
+          error: "escrow_draw_reason_not_allowed",
+          message:
+            "reason_code must be an active escrow draw reason with may_draw_escrow=true " +
+            "(seeded: ABANDONMENT, DAMAGE, SAFETY-FINE — or an owner-added reason).",
+          reason_code: body.data.reason_code,
+        });
+      }
+
+      const reasonMemo = body.data.reason_note
+        ? `${gate.display_name} (${gate.code}): ${body.data.reason_note}`
+        : `${gate.display_name} (${gate.code})`;
 
       try {
         const result = await forfeitDriverEscrow(
@@ -99,7 +149,7 @@ export async function registerDriverEscrowForfeitRoutes(app: FastifyInstance) {
             operating_company_id: body.data.operating_company_id,
             driver_uuid: body.data.driver_uuid,
             amount: body.data.amount,
-            reason: body.data.reason,
+            reason: reasonMemo,
             linked_liability_id: body.data.linked_liability_id ?? null,
           },
           { userId: user.uuid, role: user.role }
