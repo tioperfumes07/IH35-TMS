@@ -265,10 +265,15 @@ function checkHeldLedger(raw, failures) {
     failures.push(`${HELD_LEDGER}: not valid JSON`);
     return;
   }
+  // Registration may live in held[] (not yet Neon-applied) OR applied_held[] (owner Neon-applied
+  // + ledger-backfilled — #3670 2026-07-27). Both are skip-on-prod sections; either satisfies
+  // "the merge ledger migration is registered and not silently runnable."
   const held = Array.isArray(ledger.held) ? ledger.held : [];
-  const entry = held.find((h) => h.file === "202608060000_acct_r03_catalogs_account_merge_records.sql");
+  const appliedHeld = Array.isArray(ledger.applied_held) ? ledger.applied_held : [];
+  const file = "202608060000_acct_r03_catalogs_account_merge_records.sql";
+  const entry = held.find((h) => h.file === file) || appliedHeld.find((h) => h.file === file);
   if (!entry) {
-    failures.push(`${HELD_LEDGER}: missing registration for 202608060000_acct_r03_catalogs_account_merge_records.sql`);
+    failures.push(`${HELD_LEDGER}: missing registration for ${file}`);
   } else if (!/HOLD-FOR-JORGE/.test(entry.reason || "")) {
     failures.push(`${HELD_LEDGER}: registered entry must carry the HOLD-FOR-JORGE marker in its reason`);
   }
@@ -484,6 +489,25 @@ function plantedMutationSuite() {
   const unregistered = { ...good, ledger: JSON.stringify({ held: [] }) };
   if (!collectFailures(unregistered).some((f) => f.includes("missing registration"))) {
     console.error(`${LABEL} SELFTEST FAILED — an unregistered held migration was not caught`);
+    process.exit(1);
+  }
+
+  // applied_held registration (post owner Neon-apply) must PASS — same skip-on-prod semantics.
+  const appliedOnly = {
+    ...good,
+    ledger: JSON.stringify({
+      held: [],
+      applied_held: [
+        {
+          file: "202608060000_acct_r03_catalogs_account_merge_records.sql",
+          reason: "[HOLD-FOR-JORGE — FINANCIAL CLUSTER] Neon-applied; applied_held",
+          applied_on_prod: true,
+        },
+      ],
+    }),
+  };
+  if (collectFailures(appliedOnly).some((f) => f.includes("missing registration"))) {
+    console.error(`${LABEL} SELFTEST FAILED — applied_held registration was falsely rejected`);
     process.exit(1);
   }
 
