@@ -176,3 +176,28 @@ are pointed to Section C.
   `settlement-posting.math.ts`, have `settlement-bill-payment.math.ts` import it, add a guard asserting a
   single declaration repo-wide; financial-cluster → Jorge's `JORGE-APPROVED`.
   **source:** GUARD/merger post-merge verification of #3107 against locked decisions §9.2/§9.3.
+
+- **`catalogs.driver_deduction_types` RLS policy has no `lucia` escape branch — a live false-zero source**
+  [OWNER-GATED] ·
+  **what:** the table's only policy is
+  `company_scope => (operating_company_id)::text = current_setting('app.operating_company_id', true)`.
+  Unlike the FORCED-RLS pattern used elsewhere
+  (`identity.is_lucia_bypass() OR operating_company_id::text = current_setting(...)`), it has **no**
+  `app.bypass_rls='lucia'` branch. Verified live on `br-fancy-credit-akjnd07a` 2026-07-27: with the lucia
+  bypass set and demonstrably working (positive control `mdata.drivers = 178`), this table returns
+  **0 rows**, while the RLS-immune `pg_class.n_live_tup` reports **3** and the opco GUC set to TRANSP
+  returns `INS-DED`. Same gap already fixed for `accounting.chart_of_accounts_roles` (0223 →
+  `202607900000`) and `mdata.qbo_connections` (`202607610000`).
+  **why it matters:** this is the standard verification path. Any agent or GUARD pass that counts this
+  catalog under the lucia bypass — the documented way to defeat RLS masking — gets a confident **0** and
+  concludes the catalog is empty or a seed did not apply. It nearly happened during the 2026-07-27
+  recovery-policy build: the same table read 3 rows one moment and 0 the next, purely by read method.
+  The table is now the CANONICAL recovery-reason catalog (owner ruling 2026-07-27), so a false zero here
+  reads as "no reason authorises an escrow draw", which is precisely the fact the forfeit gate depends on.
+  **what unblocks it:** its own idempotent migration mirroring `202607900000` — add the
+  `identity.is_lucia_bypass() OR ...` escape branch to the USING clause **only**; `WITH CHECK` unchanged,
+  so no new write authority. Must NOT ride along on a catalog seed or the source_type reconciliation:
+  widening an RLS policy is its own owner-reviewed change. Financial cluster (`catalogs.*`) → owner
+  Neon-applies, GUARD re-proves live that the lucia bypass alone now returns 3.
+  **source:** Claude planning lane, 2026-07-27, while building the driver recovery policy catalog
+  (PR #3660) — see `docs/specs/ESCROW-DEDUCTION-SOURCE-TYPE-RECONCILIATION-SPEC.md` §7.
