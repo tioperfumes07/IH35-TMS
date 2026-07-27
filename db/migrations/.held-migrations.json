@@ -46,10 +46,6 @@
       "block": "MNT-ECON-01"
     },
     {
-      "file": "202609140000_legal_contract_signed_on_paper_status.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 1 FINANCIAL] LEGAL-PAPER-01 — makes a WET (paper) signature representable on legal.contract_instances. Prod-verified 2026-07-26 (Neon br-fancy-credit-akjnd07a, pg_catalog + bypass_rls='lucia'): legal.contract_instance_status held exactly draft|sent|viewed|signed_electronically|voided|expired and the table had 0 rows, so a paper-signed driver contract could not be recorded at all — and driver-finance's has_signed_clause, the escrow-FORFEITURE authorisation gate, therefore read FALSE for every genuinely signed contract. §1 ALTER TYPE ... ADD VALUE IF NOT EXISTS 'signed_on_paper' AFTER 'signed_electronically'. §2 CHECK contract_instances_paper_signature_evidence_check: a signed_on_paper row MUST carry signed_at AND signed_pdf_attachment_id (the EXISTING uuid column, FK documents.attachments — the scan of the executed original), so 'paper' can never be an unbacked claim. Two transactions in one file because PG forbids USING an enum value in the transaction that added it; db-migrate.mjs:228 honours the explicit BEGIN/COMMIT. Additive only: no DROP/DELETE/UPDATE, no GL math, no posting, no touch to accounting.*/catalogs.*/mdata.*, no accounting.apply_escrow_posting_delta or accounting.escrow_* (other lane). NOT applied on prod — owner applies on a Neon branch, then ledger-backfills with the sha256 of the COMMITTED file on main."
-    },
-    {
       "file": "202609250000_flt_02_real_fleet_owned_by_trk.sql",
       "reason": "[HOLD-FOR-JORGE — DATA FIX] RENUMBERED TWICE off 202609190000 then 202609220000 — both were already stamped on prod by concurrent Cursor applies; 202609250000 leaves a gap above the live max for in-flight work.sql applied 21:28Z — repo/prod number collision, reported separately). FLT-02 real fleet ownership. ALREADY APPLIED ON PROD BY HAND this session — this file exists so a fresh DB (CI/local/new Neon branch) reaches the same state and the fix lives in the repo record. Idempotent by WHERE clause; dynamic org.companies resolution, no hardcoded UUID. Prod-verified 2026-07-26 (lucia, positive control mdata.vendors=2789): 87 of 87 non-sample units already owner=TRK/leased_to=TRANSP, 0 exceptions -> NO-OP on prod. EXCLUDES fixtures (is_sample_data) so the 93 USMCA-owned sample units are NOT re-homed — they are FLT-03/FLT-07 evidence, not an isolation breach. No DELETE, no TRUNCATE, no void (owner ruling F9). Validated apply-twice on a throwaway localhost Postgres with a 5-unit fixture: run 1 moved exactly the 2 wrongly-owned real units, left the already-correct one and BOTH sample units untouched; run 2 moved 0.",
       "verify_step": "scripts/verify-steps/1559-verify-real-owned-fleet-is-trk.mjs"
@@ -857,6 +853,11 @@
       "applied_on_prod": true,
       "applied_ledger_checksum": "3992d5e30e04224c75470fe2562d09568af6f3858377fd71a6358658a40060f5",
       "applied_evidence": "Owner ordered YES NOW 2026-07-26. Neon br-fancy-credit-akjnd07a as neondb_owner non-pooler. Applied 202609150000_bank_dom_06_fuel_card_overage_driver_recovery.sql; ledger ih35_migrations.applied_migrations name=…202609150000… applied_by=cursor-owner-bank-dom-06-2026-07-26 applied_at≈2026-07-26T19:04:34Z. Live: fuel.fuel_card_overage_policies EXISTS; TRANSP policy seeded per_transaction_limit_cents=90000 recover_non_fuel_purchases=true; FUEL_CARD_OVERAGE_RECOVERY_ENABLED default_enabled=false. Owner lock: 150 gal/swipe · ~$6→$900 · personal non-fuel recover · approve then recover · TRANSP. docs/trackers/BANK-DOM-06-OWNER-ANSWERS-LOCKED-2026-07-26.md + NEON-APPLY evidence."
+    },
+    {
+      "file": "202609140000_legal_contract_signed_on_paper_status.sql",
+      "reason": "[APPLIED ON PROD 2026-07-26T17:31:50Z by cursor-owner-batch-2026-07-26] LEGAL-PAPER-01 legal.contract_instance_status 'signed_on_paper' + the paper-evidence CHECK. Moved out of held[] on live re-proof (br-fancy-credit-akjnd07a, positive control 762 canonical ledger rows): present in BOTH _system._schema_migrations AND ih35_migrations.applied_migrations; pg_enum contract_instance_status now reads draft,sent,viewed,signed_electronically,signed_on_paper,voided,expired; pg_constraint HAS contract_instances_paper_signature_evidence_check. The prior held[] entry asserted all three were ABSENT — true when written, false now. It left held[] the way the charter allows (re-proved applied), not by weakening a check.",
+      "applied_on_prod": true
     }
   ],
   "superseded": []
