@@ -930,6 +930,11 @@
       "file": "202609010020_fact_05_factor_wire_fee_role.sql",
       "reason": "FACT-05 factor_wire_fee \u2014 Neon-applied 2026-07-27; TRANSP/TRK bound to BC-Ach & Wire Fees; dual-ledger stamped",
       "applied_on_prod": true
+    },
+    {
+      "file": "202609010030_set_03_single_dispute_subledger.sql",
+      "reason": "SET-03 single dispute subledger \u2014 Neon-applied 2026-07-27; columns + PUBLIC REVOKE proved",
+      "applied_on_prod": true
     }
   ],
   "superseded": []
