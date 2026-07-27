@@ -376,14 +376,15 @@ export async function buildLaunchReadinessPayload(
 
     let settlement_disputes_open = 0;
     try {
-      const reg = await client.query(`SELECT to_regclass('driver_finance.settlement_disputes') IS NOT NULL AS ok`);
+      // SET-03 — single canonical subledger (driver_settlement_disputes); stranded table archived.
+      const reg = await client.query(`SELECT to_regclass('driver_finance.driver_settlement_disputes') IS NOT NULL AS ok`);
       if (reg.rows[0]?.ok) {
         const row = await singleRow<{ c: string }>(
           client,
           `
             SELECT COUNT(*)::text AS c
-            FROM driver_finance.settlement_disputes
-            WHERE status IN ('submitted','under_review')
+            FROM driver_finance.driver_settlement_disputes
+            WHERE status IN ('open','under_review')
               AND operating_company_id = $1
           `,
           companyParam

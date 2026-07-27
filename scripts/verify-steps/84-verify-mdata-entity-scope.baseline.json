@@ -381,11 +381,6 @@
       "preview": "` SELECT d.*, concat_ws(' ', dr.first_name, dr.last_name) AS driver_name, s.display_id AS settlement_display_id, s.perio"
     },
     {
-      "key": "apps/backend/src/driver-finance/settlement-disputes-p6.service.ts#55f65ef3b5edb673452fe431fa5e017103a69a9b",
-      "file": "apps/backend/src/driver-finance/settlement-disputes-p6.service.ts",
-      "preview": "` SELECT sd.*, concat_ws(' ', dr.first_name, dr.last_name) AS driver_name, s.display_id AS settlement_display_id FROM dr"
-    },
-    {
       "key": "apps/backend/src/driver-finance/settlements.routes.ts#56bbfa86009a68e1abfee947a4e5ae1d21b6c72d",
       "file": "apps/backend/src/driver-finance/settlements.routes.ts",
       "preview": "` SELECT s.id, s.display_id, s.operating_company_id, s.period_start, s.period_end, s.net_pay, d.email, d.first_name, d.l"
@@ -934,11 +929,6 @@
       "key": "apps/backend/src/safety/incidents/full-report.routes.ts#566b29ab6bac93e014626aefe0f96ece667beeee",
       "file": "apps/backend/src/safety/incidents/full-report.routes.ts",
       "preview": "` SELECT id, operating_company_id FROM mdata.drivers WHERE id = $1::uuid AND identity_user_id = $2::uuid AND deactivated"
-    },
-    {
-      "key": "apps/backend/src/safety/position-history/position-history.routes.ts#c053bdcf599d1ab7c744cb207f64d1c8650be4db",
-      "file": "apps/backend/src/safety/position-history/position-history.routes.ts",
-      "preview": "`SELECT ph.*, u.unit_number as unit_number, u.license_plate as unit_license_plate, ps.name as position_set_name, p.part_"
     },
     {
       "key": "apps/backend/src/seed/csv-seed-import.ts#4eec3aa9d44a2dbebae0545c2feea7e3cc2424d0",

@@ -1,3 +1,11 @@
+/**
+ * SET-03 — P6 dispute wire surface over the SINGLE canonical subledger
+ * `driver_finance.driver_settlement_disputes`.
+ *
+ * Wire contracts (reason_code / submitted / approved / denied / evidence_r2_paths) stay;
+ * storage maps onto canonical columns + status vocabulary. The stranded table
+ * `driver_finance.settlement_disputes` is @archived — no writers.
+ */
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { enqueueEmail } from "../email/queue.service.js";
@@ -7,6 +15,105 @@ import { createCorrectiveJournalEntry } from "./settlement-dispute.service.js";
 type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
 };
+
+const CANONICAL_CATEGORIES = new Set([
+  "missing_pay",
+  "wrong_deduction",
+  "miscalculated_mileage",
+  "wrong_rate",
+  "detention_not_paid",
+  "cash_advance_dispute",
+  "fine_dispute",
+  "escrow_dispute",
+  "other",
+]);
+
+/** P6 wire status → canonical CHECK status */
+function toCanonicalStatus(wire: string): string {
+  switch (wire) {
+    case "draft":
+    case "submitted":
+      return "open";
+    case "under_review":
+      return "under_review";
+    case "approved":
+      return "resolved_in_favor";
+    case "denied":
+      return "resolved_rejected";
+    case "withdrawn":
+      return "withdrawn";
+    default:
+      return "open";
+  }
+}
+
+/** Canonical status → P6 wire status (API contract) */
+function toWireStatus(canonical: string): string {
+  switch (canonical) {
+    case "open":
+      return "submitted";
+    case "under_review":
+      return "under_review";
+    case "resolved_in_favor":
+    case "partially_resolved":
+      return "approved";
+    case "resolved_rejected":
+      return "denied";
+    case "withdrawn":
+      return "withdrawn";
+    default:
+      return canonical;
+  }
+}
+
+function mapReasonToCategory(reasonCode: string): string {
+  const raw = reasonCode.trim().toLowerCase().replace(/[\s-]+/g, "_");
+  if (CANONICAL_CATEGORIES.has(raw)) return raw;
+  const aliases: Record<string, string> = {
+    missing_line: "missing_pay",
+    incorrect_rate: "wrong_rate",
+    duplicate_deduction: "wrong_deduction",
+    wrong_unit: "other",
+  };
+  return aliases[raw] ?? "other";
+}
+
+function ensureDescription(text: string): string {
+  const t = text.trim();
+  if (t.length >= 20) return t;
+  // Canonical CHECK requires ≥20 chars; pad without inventing business facts.
+  return `${t}${".".repeat(20 - t.length)}`;
+}
+
+/** SELECT list projecting canonical rows into the P6 wire shape. */
+const P6_WIRE_SELECT = `
+  d.id,
+  d.operating_company_id,
+  d.settlement_id,
+  d.settlement_line_id,
+  d.driver_id,
+  COALESCE(d.reason_code, d.dispute_category) AS reason_code,
+  d.dispute_description AS reason_text,
+  d.evidence_r2_paths,
+  d.disputed_amount_cents AS claimed_adjustment_cents,
+  d.opened_at AS submitted_at,
+  CASE d.status
+    WHEN 'open' THEN 'submitted'
+    WHEN 'under_review' THEN 'under_review'
+    WHEN 'resolved_in_favor' THEN 'approved'
+    WHEN 'partially_resolved' THEN 'approved'
+    WHEN 'resolved_rejected' THEN 'denied'
+    WHEN 'withdrawn' THEN 'withdrawn'
+    ELSE d.status
+  END AS status,
+  d.reviewed_by_user_id AS reviewer_user_id,
+  d.reviewed_at,
+  d.resolution_notes AS resolution_text,
+  d.resolution_amount_cents AS adjustment_cents,
+  d.resolution_journal_entry_id AS adjustment_journal_id,
+  d.created_at,
+  d.updated_at
+`;
 
 async function emitOutbox(client: DbClient, eventType: string, payload: Record<string, unknown>) {
   /* outbox-handler-parity: literal-types=["settlement_dispute.submitted","settlement_dispute.decided"] */
@@ -49,21 +156,27 @@ export async function submitSettlementDisputeP6(
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
     await assertDriverOwnsSettlement(client, { settlementId: input.settlement_id, driverId: input.driver_id });
 
+    const category = mapReasonToCategory(input.reason_code);
+    const description = ensureDescription(input.reason_text);
+
     const insertRes = await client.query<{ id: string }>(
       `
-        INSERT INTO driver_finance.settlement_disputes (
+        INSERT INTO driver_finance.driver_settlement_disputes (
           operating_company_id,
           settlement_id,
           settlement_line_id,
           driver_id,
+          dispute_category,
+          dispute_description,
+          disputed_amount_cents,
           reason_code,
-          reason_text,
           evidence_r2_paths,
-          claimed_adjustment_cents,
           status,
-          submitted_at
+          opened_by_driver,
+          opened_by_user_id,
+          opened_at
         )
-        VALUES ($1,$2,$3::uuid,$4,$5,$6,$7::text[],$8,'submitted', now())
+        VALUES ($1,$2,$3::uuid,$4,$5,$6,$7,$8,$9::text[],'open', true, $10::uuid, now())
         RETURNING id
       `,
       [
@@ -71,10 +184,12 @@ export async function submitSettlementDisputeP6(
         input.settlement_id,
         input.settlement_line_id ?? null,
         input.driver_id,
-        input.reason_code.trim(),
-        input.reason_text.trim(),
-        input.evidence_r2_paths ?? null,
+        category,
+        description,
         input.claimed_adjustment_cents ?? null,
+        input.reason_code.trim(),
+        input.evidence_r2_paths ?? null,
+        userId,
       ]
     );
 
@@ -86,7 +201,7 @@ export async function submitSettlementDisputeP6(
       userId,
       "driver_finance.settlement_dispute.submitted",
       {
-        resource_type: "driver_finance.settlement_disputes",
+        resource_type: "driver_finance.driver_settlement_disputes",
         resource_id: disputeId,
         settlement_id: input.settlement_id,
         driver_id: input.driver_id,
@@ -116,12 +231,12 @@ export async function listSettlementDisputesForSettlementDriverP6(
 
     const res = await client.query(
       `
-        SELECT *
-        FROM driver_finance.settlement_disputes
-        WHERE operating_company_id = $1
-          AND settlement_id = $2
-          AND driver_id = $3
-        ORDER BY submitted_at DESC
+        SELECT ${P6_WIRE_SELECT}
+        FROM driver_finance.driver_settlement_disputes d
+        WHERE d.operating_company_id = $1
+          AND d.settlement_id = $2
+          AND d.driver_id = $3
+        ORDER BY d.opened_at DESC
       `,
       [input.operating_company_id, input.settlement_id, input.driver_id]
     );
@@ -138,13 +253,14 @@ export async function withdrawSettlementDisputeP6(
 
     const updated = await client.query(
       `
-        UPDATE driver_finance.settlement_disputes
+        UPDATE driver_finance.driver_settlement_disputes
         SET status = 'withdrawn',
+            closed_at = now(),
             updated_at = now()
         WHERE id = $2
           AND operating_company_id = $1
           AND driver_id = $3
-          AND status IN ('draft','submitted')
+          AND status IN ('open')
         RETURNING id
       `,
       [input.operating_company_id, input.dispute_id, input.driver_id]
@@ -156,7 +272,7 @@ export async function withdrawSettlementDisputeP6(
       userId,
       "driver_finance.settlement_dispute.withdrawn",
       {
-        resource_type: "driver_finance.settlement_disputes",
+        resource_type: "driver_finance.driver_settlement_disputes",
         resource_id: input.dispute_id,
         driver_id: input.driver_id,
       },
@@ -176,13 +292,15 @@ export async function listSettlementDisputesForSettlementOfficeP6(
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
     const res = await client.query(
       `
-        SELECT sd.*,
+        SELECT ${P6_WIRE_SELECT},
                concat_ws(' ', dr.first_name, dr.last_name) AS driver_name
-        FROM driver_finance.settlement_disputes sd
-        JOIN mdata.drivers dr ON dr.id = sd.driver_id
-        WHERE sd.operating_company_id = $1
-          AND sd.settlement_id = $2
-        ORDER BY sd.submitted_at DESC
+        FROM driver_finance.driver_settlement_disputes d
+        JOIN mdata.drivers dr
+          ON dr.id = d.driver_id
+         AND dr.operating_company_id = d.operating_company_id
+        WHERE d.operating_company_id = $1
+          AND d.settlement_id = $2
+        ORDER BY d.opened_at DESC
       `,
       [input.operating_company_id, input.settlement_id]
     );
@@ -204,16 +322,16 @@ export async function listSettlementDisputeQueueP6(
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
 
     const values: unknown[] = [input.operating_company_id];
-    const where: string[] = [`sd.operating_company_id = $1`];
+    const where: string[] = [`d.operating_company_id = $1`];
 
     if (input.status && input.status !== "all") {
-      values.push(input.status);
-      where.push(`sd.status = $${values.length}`);
+      values.push(toCanonicalStatus(input.status));
+      where.push(`d.status = $${values.length}`);
     }
 
     if (input.driver_id) {
       values.push(input.driver_id);
-      where.push(`sd.driver_id = $${values.length}`);
+      where.push(`d.driver_id = $${values.length}`);
     }
 
     const countValues = [...values];
@@ -226,14 +344,18 @@ export async function listSettlementDisputeQueueP6(
     const res = await client.query(
       `
         SELECT
-          sd.*,
+          ${P6_WIRE_SELECT},
           concat_ws(' ', dr.first_name, dr.last_name) AS driver_name,
           s.display_id AS settlement_display_id
-        FROM driver_finance.settlement_disputes sd
-        JOIN mdata.drivers dr ON dr.id = sd.driver_id
-        JOIN driver_finance.driver_settlements s ON s.id = sd.settlement_id
+        FROM driver_finance.driver_settlement_disputes d
+        JOIN mdata.drivers dr
+          ON dr.id = d.driver_id
+         AND dr.operating_company_id = d.operating_company_id
+        JOIN driver_finance.driver_settlements s
+          ON s.id = d.settlement_id
+         AND s.operating_company_id = d.operating_company_id
         WHERE ${where.join(" AND ")}
-        ORDER BY sd.submitted_at DESC
+        ORDER BY d.opened_at DESC
         LIMIT $${limitPos} OFFSET $${offsetPos}
       `,
       values
@@ -242,7 +364,7 @@ export async function listSettlementDisputeQueueP6(
     const countRes = await client.query<{ c: string }>(
       `
         SELECT count(*)::text AS c
-        FROM driver_finance.settlement_disputes sd
+        FROM driver_finance.driver_settlement_disputes d
         WHERE ${where.join(" AND ")}
       `,
       countValues
@@ -258,14 +380,14 @@ export async function startSettlementDisputeReviewP6(userId: string, input: { op
 
     const updated = await client.query(
       `
-        UPDATE driver_finance.settlement_disputes
+        UPDATE driver_finance.driver_settlement_disputes
         SET status = 'under_review',
-            reviewer_user_id = $3,
+            reviewed_by_user_id = $3,
             reviewed_at = COALESCE(reviewed_at, now()),
             updated_at = now()
         WHERE id = $2
           AND operating_company_id = $1
-          AND status = 'submitted'
+          AND status = 'open'
         RETURNING id
       `,
       [input.operating_company_id, input.dispute_id, userId]
@@ -278,7 +400,7 @@ export async function startSettlementDisputeReviewP6(userId: string, input: { op
       userId,
       "driver_finance.settlement_dispute.review_started",
       {
-        resource_type: "driver_finance.settlement_disputes",
+        resource_type: "driver_finance.driver_settlement_disputes",
         resource_id: input.dispute_id,
       },
       "info",
@@ -310,11 +432,11 @@ export async function decideSettlementDisputeP6(
       settlement_id: string;
       driver_id: string;
       status: string;
-      claimed_adjustment_cents: string | number | null;
+      disputed_amount_cents: string | number | null;
     }>(
       `
-        SELECT id, settlement_id, driver_id, status, claimed_adjustment_cents
-        FROM driver_finance.settlement_disputes
+        SELECT id, settlement_id, driver_id, status, disputed_amount_cents
+        FROM driver_finance.driver_settlement_disputes
         WHERE id = $2
           AND operating_company_id = $1
         FOR UPDATE
@@ -325,12 +447,13 @@ export async function decideSettlementDisputeP6(
     if (!dispute) throw new Error("E_NOT_FOUND");
     if (String(dispute.status) !== "under_review") throw new Error("E_DECIDE_REQUIRES_UNDER_REVIEW");
 
-    const nextStatus = input.decision === "approved" ? "approved" : "denied";
+    const nextCanonical = input.decision === "approved" ? "resolved_in_favor" : "resolved_rejected";
+    const nextWire = toWireStatus(nextCanonical);
 
     let adjustment = Number(input.adjustment_cents ?? 0);
     if (input.decision !== "approved") adjustment = 0;
     if (input.decision === "approved" && (!Number.isFinite(adjustment) || adjustment <= 0)) {
-      const fallback = Number(dispute.claimed_adjustment_cents ?? 0);
+      const fallback = Number(dispute.disputed_amount_cents ?? 0);
       adjustment = Number.isFinite(fallback) ? fallback : 0;
     }
     if (input.decision === "approved" && adjustment <= 0) throw new Error("E_ADJUSTMENT_REQUIRED");
@@ -350,13 +473,14 @@ export async function decideSettlementDisputeP6(
 
     await client.query(
       `
-        UPDATE driver_finance.settlement_disputes
+        UPDATE driver_finance.driver_settlement_disputes
         SET status = $3,
-            reviewer_user_id = $4,
+            reviewed_by_user_id = $4,
             reviewed_at = now(),
-            resolution_text = $5,
-            adjustment_cents = $6,
-            adjustment_journal_id = $7::uuid,
+            resolution_notes = $5,
+            resolution_amount_cents = $6,
+            resolution_journal_entry_id = $7::uuid,
+            closed_at = now(),
             updated_at = now()
         WHERE id = $2
           AND operating_company_id = $1
@@ -364,7 +488,7 @@ export async function decideSettlementDisputeP6(
       [
         input.operating_company_id,
         input.dispute_id,
-        nextStatus,
+        nextCanonical,
         userId,
         input.resolution_text.trim(),
         input.decision === "approved" ? adjustment : null,
@@ -377,7 +501,7 @@ export async function decideSettlementDisputeP6(
       userId,
       "driver_finance.settlement_dispute.decided",
       {
-        resource_type: "driver_finance.settlement_disputes",
+        resource_type: "driver_finance.driver_settlement_disputes",
         resource_id: input.dispute_id,
         decision: input.decision,
         adjustment_cents: input.decision === "approved" ? adjustment : null,
@@ -445,7 +569,7 @@ export async function decideSettlementDisputeP6(
 
     return {
       id: input.dispute_id,
-      status: nextStatus,
+      status: nextWire,
       adjustment_journal_id: journalId,
       settlement_id: dispute.settlement_id,
       driver_id: dispute.driver_id,

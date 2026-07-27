@@ -85,7 +85,7 @@ describe("launch-readiness entity scoping (C2-2 regression guard)", () => {
       "mdata.loads",
       "banking.bank_transactions",
       "driver_finance.driver_settlements",
-      "driver_finance.settlement_disputes",
+      "driver_finance.driver_settlement_disputes",
       "driver_finance.cash_advance_requests",
       "qbo.sync_alerts",
     ]) {
