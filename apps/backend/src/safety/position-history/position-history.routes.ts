@@ -51,6 +51,51 @@ const createSchema = z.object({
 
 const idParamSchema = z.object({ id: z.string().uuid() });
 
+/**
+ * SWEEP-C2 landed the CODE repoint from maint.position_history to the canonical
+ * maintenance.position_history, but its migration (202609020000_c2_maintenance_position_history_
+ * canonical.sql) is HELD and still unapplied on prod — verified 2026-07-27 on br-fancy-credit-akjnd07a:
+ * to_regclass('maintenance.position_history') IS NULL while the RETIRE table maint.position_history
+ * still exists. The code therefore shipped AHEAD of its schema, and every one of these four endpoints
+ * threw a raw 42P01 — a 500 with a Postgres stack — on a Safety tab that is mounted and reachable
+ * (index.ts:955; the deployed build 9c09c8b carries it).
+ *
+ * Until the owner applies the migration this refuses HONESTLY instead of 500-ing: the caller is told
+ * exactly which migration is missing and that nothing was read or written. A 500 says "we are broken";
+ * a 503 naming the blocker says "this is switched off pending a known step", which is the difference
+ * between an outage and a gate. Same shape as the claim-economics precedent in insurance/claim.routes.ts.
+ *
+ * Positive-only cache: the table appears when the migration is applied and never disappears
+ * (void-not-delete), so a proven-present result is permanent, while caching "absent" would keep the
+ * tab dark until the process restarts even after a successful apply.
+ */
+const CANONICAL_TABLE = "maintenance.position_history";
+const REQUIRED_MIGRATION = "202609020000_c2_maintenance_position_history_canonical.sql";
+let canonicalTableProven = false;
+
+type QueryClient = { query: <R = Record<string, unknown>>(sql: string, vals?: unknown[]) => Promise<{ rows: R[] }> };
+
+async function canonicalTableReady(client: QueryClient) {
+  if (canonicalTableProven) return true;
+  const res = await client.query<{ present: boolean }>(
+    "SELECT to_regclass($1) IS NOT NULL AS present",
+    [CANONICAL_TABLE]
+  );
+  canonicalTableProven = res.rows[0]?.present === true;
+  return canonicalTableProven;
+}
+
+function sendCanonicalTableMissing(reply: FastifyReply) {
+  return reply.code(503).send({
+    error: "position_history_canonical_table_missing",
+    message:
+      `Position History is unavailable: ${CANONICAL_TABLE} does not exist on this database. ` +
+      `The SWEEP-C2 code repoint is deployed but migration ${REQUIRED_MIGRATION} has not been applied yet. ` +
+      `Nothing was read or written. The owner must apply that migration on Neon.`,
+    required_migration: REQUIRED_MIGRATION,
+  });
+}
+
 export async function positionHistoryRoutes(fastify: FastifyInstance) {
   fastify.get("/api/v1/safety/position-history", async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authUser(req, reply);
@@ -63,6 +108,7 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
     const q = parsed.data;
 
     return withCompany(user.uuid, q.operating_company_id, async (client: any) => {
+      if (!(await canonicalTableReady(client))) return sendCanonicalTableMissing(reply);
       const values: unknown[] = [q.operating_company_id];
       const where = ["ph.operating_company_id = $1"];
       let paramIdx = 1;
@@ -134,6 +180,7 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
     const { operating_company_id } = queryParsed.data;
 
     return withCompany(user.uuid, operating_company_id, async (client: any) => {
+      if (!(await canonicalTableReady(client))) return sendCanonicalTableMissing(reply);
       const result = await client.query(
         `SELECT 
           ph.*,
@@ -170,6 +217,7 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
     const data = parsed.data;
 
     return withCompany(user.uuid, data.operating_company_id, async (client: any) => {
+      if (!(await canonicalTableReady(client))) return sendCanonicalTableMissing(reply);
       const actorResult = await client.query(
         `SELECT display_name FROM identity.users WHERE id = $1`,
         [user.uuid]
@@ -240,6 +288,7 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
     const { operating_company_id, limit } = queryParsed.data;
 
     return withCompany(user.uuid, operating_company_id, async (client: any) => {
+      if (!(await canonicalTableReady(client))) return sendCanonicalTableMissing(reply);
       const result = await client.query(
         `SELECT 
           ph.*,
