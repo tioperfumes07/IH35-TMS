@@ -356,10 +356,17 @@ export async function applyMaintWoApStructuredBill(
   }
 
   if (preview.asset_id && preview.bill_total_cents > 0) {
-    await client.query(`DELETE FROM accounting.bill_unit_allocation WHERE bill_id = $1::uuid AND tenant_id = $2::uuid`, [
-      billId,
-      input.operating_company_id,
-    ]);
+    await client.query(
+      `
+        UPDATE accounting.bill_unit_allocation
+        SET superseded_at = now(),
+            superseded_reason = 'wo_ap_repost'
+        WHERE bill_id = $1::uuid
+          AND tenant_id = $2::uuid
+          AND superseded_at IS NULL
+      `,
+      [billId, input.operating_company_id]
+    );
     await client.query(
       `
         INSERT INTO accounting.bill_unit_allocation (

@@ -959,6 +959,14 @@
       "applied_on_prod": true,
       "reason": "F9-03 Faro invoice lines supersede-not-delete \u2014 Neon-applied 2026-07-27; dual-ledger stamped",
       "applied_evidence": "Neon lucia superseded_at/superseded_reason + dual-ledger 202609010060"
+    },
+    {
+      "file": "202609100030_f9_04_bill_unit_allocation_supersede.sql",
+      "reason": "F9-04/05 bill_unit_allocation supersede \u2014 Neon-applied 2026-07-27; dual-ledger",
+      "applied_on_prod": true,
+      "applied_evidence": "Neon lucia: superseded_at/superseded_reason on accounting.bill_unit_allocation; dual-ledger 202609100030",
+      "block": "F9-04",
+      "added_at": "2026-07-27"
     }
   ],
   "superseded": []
