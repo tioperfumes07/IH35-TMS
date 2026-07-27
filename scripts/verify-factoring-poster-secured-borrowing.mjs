@@ -99,7 +99,9 @@ function segmentByFunction(source) {
 // role -> local var name, from `const X = await resolveRoleAccount(client, id, "role")`
 function roleVarMap(segment) {
   const map = {};
-  const re = /const\s+(\w+)\s*=\s*await\s+resolveRoleAccount\([^)]*?"([^"]+)"\s*\)/g;
+  // Match `const x = await resolveRoleAccount(..., "role")` and ACH ternary:
+  // `const x =\n  ach > 0 ? await resolveRoleAccount(..., "role") : null`.
+  const re = /(?:const|let)\s+(\w+)\s*=[\s\S]{0,120}?resolveRoleAccount\([^)]*?"([^"]+)"\s*\)/g;
   let m;
   while ((m = re.exec(segment)) !== null) map[m[1]] = m[2];
   return map;
