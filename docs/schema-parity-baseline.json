@@ -178,7 +178,9 @@
       "service_item_uuid",
       "severity",
       "violation_type_id",
-      "violation_type_uuid"
+      "violation_type_uuid",
+      "voided_at",
+      "voided_reason"
     ],
     "accounting.bill_payments": [
       "advance_id",

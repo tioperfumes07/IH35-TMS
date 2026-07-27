@@ -78,6 +78,7 @@ export async function assertBillPsePostingEnforced(userId: string, operatingComp
         SELECT line_sequence, ps_category_qbo_id, ps_item_qbo_id, amount::text
         FROM accounting.bill_lines
         WHERE bill_id = $1::uuid
+          AND voided_at IS NULL
         ORDER BY line_sequence ASC
       `,
       [billId]

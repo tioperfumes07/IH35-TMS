@@ -1,5 +1,5 @@
 {
-  "note": "Live schema manifest (pg_catalog + information_schema, SET app.bypass_rls='lucia'). Source of truth for prod schema audits — NOT migration-parsed. Regenerate: node scripts/audit-schema.mjs --database-url=<read-only-url>",
+  "note": "Live schema manifest (pg_catalog + information_schema, SET app.bypass_rls='lucia'). Source of truth for prod schema audits \u2014 NOT migration-parsed. Regenerate: node scripts/audit-schema.mjs --database-url=<read-only-url>",
   "branch": "br-fancy-credit-akjnd07a",
   "as_of": "2026-07-25T20:53:32.113Z",
   "source": "pg_catalog + information_schema.columns (bypass_rls=lucia)",
@@ -1105,21 +1105,9 @@
       "kind": "table",
       "columns": [
         {
-          "name": "id",
+          "name": "account_id",
           "type": "uuid",
-          "nullable": false,
-          "default": "gen_random_uuid()"
-        },
-        {
-          "name": "bill_id",
-          "type": "uuid",
-          "nullable": false,
-          "default": null
-        },
-        {
-          "name": "line_sequence",
-          "type": "integer",
-          "nullable": false,
+          "nullable": true,
           "default": null
         },
         {
@@ -1129,7 +1117,19 @@
           "default": "0"
         },
         {
-          "name": "description",
+          "name": "bill_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "category_code",
+          "type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "category_kind",
           "type": "text",
           "nullable": true,
           "default": null
@@ -1141,14 +1141,8 @@
           "default": "now()"
         },
         {
-          "name": "section",
-          "type": "character",
-          "nullable": false,
-          "default": "'B'::bpchar"
-        },
-        {
-          "name": "parent_line_uuid",
-          "type": "uuid",
+          "name": "description",
+          "type": "text",
           "nullable": true,
           "default": null
         },
@@ -1159,19 +1153,37 @@
           "default": null
         },
         {
-          "name": "service_item_uuid",
+          "name": "id",
           "type": "uuid",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "part_uuid",
-          "type": "uuid",
-          "nullable": true,
-          "default": null
+          "nullable": false,
+          "default": "gen_random_uuid()"
         },
         {
           "name": "labor_rate_uuid",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "line_sequence",
+          "type": "integer",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "linked_wo_line_uuid",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "load_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "parent_line_uuid",
           "type": "uuid",
           "nullable": true,
           "default": null
@@ -1183,25 +1195,7 @@
           "default": null
         },
         {
-          "name": "linked_wo_line_uuid",
-          "type": "uuid",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "category_kind",
-          "type": "text",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "category_code",
-          "type": "text",
-          "nullable": true,
-          "default": null
-        },
-        {
-          "name": "account_id",
+          "name": "part_uuid",
           "type": "uuid",
           "nullable": true,
           "default": null
@@ -1219,8 +1213,26 @@
           "default": null
         },
         {
-          "name": "load_id",
+          "name": "section",
+          "type": "character",
+          "nullable": false,
+          "default": "'B'::bpchar"
+        },
+        {
+          "name": "service_item_uuid",
           "type": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "voided_at",
+          "type": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "voided_reason",
+          "type": "text",
           "nullable": true,
           "default": null
         }

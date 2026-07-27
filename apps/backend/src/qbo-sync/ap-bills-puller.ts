@@ -482,23 +482,30 @@ export async function projectApBillLinesToLedger(
           amount = EXCLUDED.amount,
           description = EXCLUDED.description,
           account_id = EXCLUDED.account_id,
-          section = EXCLUDED.section
+          section = EXCLUDED.section,
+          -- F9-02 — resurrect if QBO brings the line back after an orphan void.
+          voided_at = NULL,
+          voided_reason = NULL
         WHERE accounting.bill_lines.amount IS DISTINCT FROM EXCLUDED.amount
            OR accounting.bill_lines.description IS DISTINCT FROM EXCLUDED.description
            OR accounting.bill_lines.account_id IS DISTINCT FROM EXCLUDED.account_id
            OR accounting.bill_lines.section IS DISTINCT FROM EXCLUDED.section
+           OR accounting.bill_lines.voided_at IS NOT NULL
       `,
       [operatingCompanyId]
     );
 
-    // Orphan delete only — never wipe all QBO lines each scheduler tick.
+    // F9-02 — void orphans; never hard-DELETE money lines (audit evidence).
     const orphanRes = await client.query(
       `
-        DELETE FROM accounting.bill_lines bl
-        USING accounting.bills b
+        UPDATE accounting.bill_lines bl
+           SET voided_at = COALESCE(bl.voided_at, now()),
+               voided_reason = COALESCE(bl.voided_reason, 'qbo_orphan_superseded')
+        FROM accounting.bills b
         WHERE bl.bill_id = b.id
           AND b.operating_company_id = $1::uuid
           AND b.source_system = 'qbo'
+          AND bl.voided_at IS NULL
           AND NOT EXISTS (
             SELECT 1
             FROM mdata.qbo_ap_bills m
@@ -518,7 +525,7 @@ export async function projectApBillLinesToLedger(
     );
 
     const linesProjected = insertRes.rowCount ?? 0;
-    const linesOrphanDeleted = orphanRes.rowCount ?? 0;
+    const linesOrphanDeleted = orphanRes.rowCount ?? 0; // retained field name = voided count (API compat)
 
     const unmapped = await client.query<{
       lines_unmapped_account: string;
@@ -571,6 +578,7 @@ export async function projectApBillLinesToLedger(
                 SELECT ROUND(SUM(bl.amount) * 100)::bigint
                 FROM accounting.bill_lines bl
                 WHERE bl.bill_id = b.id
+                  AND bl.voided_at IS NULL
               ), 0)
           ) > 1
       `,
