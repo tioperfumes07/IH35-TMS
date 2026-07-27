@@ -45,6 +45,7 @@ const SELFTEST = process.argv.includes("--selftest");
 // governance decision (a file only leaves this set when GUARD re-proves it applied, or the owner
 // Neon-applies + ledger-backfills it and GUARD re-proves the ledger row).
 export const EXPECTED_HELD = [
+  // SET-02 left EXPECTED_HELD 2026-07-26 after Cursor owner Neon-apply + ledger-backfill.
   // The ITEM-5a recursive demo purge (#3557). Genuinely unapplied and correctly ABSENT from prod —
   // verified absent from _system._schema_migrations on 2026-07-25. GUARD re-verifies it on a fresh
   // Neon branch before the owner applies. It must stay listed until then so it cannot silently
