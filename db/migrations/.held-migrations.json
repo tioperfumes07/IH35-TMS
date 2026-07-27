@@ -892,6 +892,14 @@
       "applied_evidence": "Cursor owner Neon-apply 2026-07-26 (tiny-field-89581227 / br-fancy-credit-akjnd07a): checksum=80bd3835d9efbc663158f74ed7505c9ecec5223e0d84f8b29fad44b5f84603b9 applied_by=cursor-owner-set-02-2026-07-26. Live lucia: all 3 entities active driver_payroll_clearing → 2170 Liability; advance_recovery untouched on Cash Advance asset. verify-netpay-clearing-is-liability.mjs --live PASS.",
       "added_at": "2026-07-26",
       "block": "SET-02"
+    },
+    {
+      "file": "202609210000_intercompany_coa_8000_block_seed.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 FINANCIAL] Intercompany COA 8000-block seed (BANK-DOM-05 foundation). Idempotent NOT EXISTS seed of 6 pair accounts.",
+      "applied_on_prod": true,
+      "applied_evidence": "Cursor owner ledger 2026-07-26 checksum=cd80a3958ec823df787b957ca3d98d08fd8bf155a12b9ceaba375d0658f11c2e applied_by=cursor-owner-ic-coa-2026-07-26. Accounts were already present from earlier owner-batch; migration is idempotent (INSERT 0). verify-intercompany-coa-8000-block.mjs --live PASS.",
+      "added_at": "2026-07-26",
+      "block": "IC-COA-SEED"
     }
   ],
   "superseded": []
