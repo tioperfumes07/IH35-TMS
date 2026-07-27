@@ -11,7 +11,7 @@
  * Those stay designatable (posters still resolve them if a settlement line uses them).
  *
  * Also optional: sales_tax_payable, cash_basis_adjustment_equity (freight not sales-taxed;
- * cash-basis equity plug only if CPA creates a dedicated account).
+ * cash-basis equity plug only if OWNER creates a dedicated account).
  */
 import { COA_ROLE_VALUES, type CoaRole } from "./resolver.service.js";
 

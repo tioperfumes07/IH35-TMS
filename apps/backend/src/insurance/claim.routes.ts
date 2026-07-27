@@ -13,6 +13,7 @@ import {
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { resolveMdataAssetId } from "./resolve-asset-id.shared.js";
 import { type ClaimColumnCapabilities, getClaimColumnCapabilities } from "./claim-columns.js";
+import { postInsuranceClaimRecovery } from "../accounting/insurance-claim-recovery-posting/poster.service.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -741,6 +742,21 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         to: updated.to,
       });
     }
-    return updated.row;
+
+    // INS-02 — insurer recovery GL hop behind INSURANCE_CLAIM_RECOVERY_GL_POSTING_ENABLED (default OFF).
+    // Only when amount_paid_cents was part of this PATCH; flag OFF => gl_posting.reason=flag_off, no JE.
+    let gl_posting: Awaited<ReturnType<typeof postInsuranceClaimRecovery>> | undefined;
+    if (body.amount_paid_cents !== undefined && updated.kind === "ok" && updated.row) {
+      const paid = Number((updated.row as { amount_paid_cents?: number }).amount_paid_cents ?? body.amount_paid_cents);
+      gl_posting = await postInsuranceClaimRecovery({
+        operating_company_id: query.data.operating_company_id,
+        claim_id: params.data.id,
+        actor_user_id: user.uuid,
+        entry_date_iso: new Date().toISOString().slice(0, 10),
+        amount_paid_cents: paid,
+      });
+    }
+
+    return gl_posting ? { ...updated.row, gl_posting } : updated.row;
   });
 }

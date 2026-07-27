@@ -69,6 +69,8 @@ export const POSTING_FLAG_KEYS: ReadonlySet<string> = new Set([
   "PARTS_PURCHASE_GL_POSTING_ENABLED",
   // MNT-ECON-04: warranty reimburse → balanced JE. Default OFF (migration 202609050000).
   "WARRANTY_REIMBURSE_GL_POSTING_ENABLED",
+  // INS-02: insurer claim recovery (amount_paid) → balanced JE. Default OFF (migration 202609100020).
+  "INSURANCE_CLAIM_RECOVERY_GL_POSTING_ENABLED",
   "SETTLEMENT_GL_POSTING_ENABLED",
   // BANKING-GL-COMPLETION: banking.transfers (bank_to_bank / cc_payment / cash_deposit /
   // owner_contribution / owner_distribution) -> GL posting via postSourceTransaction('transfer').
@@ -414,6 +416,19 @@ export async function setOverride(
   assertPlausibleFlagKey(input.flag_key);
   if (!input.operating_company_id && !input.user_uuid) {
     throw new Error("override_target_required");
+  }
+
+  // FACT-01 — FACTORING_GL_POSTING_ENABLED is TRANSP-only (flag contract + Faro borrower).
+  // Refuse enabling (or writing any override) for TRK/USMCA so the kill-switch cannot silently widen.
+  if (input.flag_key === "FACTORING_GL_POSTING_ENABLED" && input.operating_company_id && input.enabled) {
+    const co = await client.query<{ code: string }>(
+      `SELECT code FROM org.companies WHERE id = $1::uuid LIMIT 1`,
+      [input.operating_company_id]
+    );
+    const code = co.rows[0]?.code ?? "";
+    if (code !== "TRANSP") {
+      throw new Error("factoring_flag_transp_only");
+    }
   }
 
   if (input.user_uuid) {
