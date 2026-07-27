@@ -959,6 +959,14 @@
       "applied_on_prod": true,
       "reason": "F9-03 Faro invoice lines supersede-not-delete \u2014 Neon-applied 2026-07-27; dual-ledger stamped",
       "applied_evidence": "Neon lucia superseded_at/superseded_reason + dual-ledger 202609010060"
+    },
+    {
+      "file": "202609100010_ins_01_fleet_premium_insurance_expense_role.sql",
+      "reason": "INS-01 insurance_expense CoA role \u2014 fleet premium role-resolve; Neon-applied 2026-07-27; TRANSP/TRK/USMCA bound; dual-ledger stamped",
+      "applied_on_prod": true,
+      "applied_evidence": "Neon lucia: insurance_expense bound TRANSP/TRK/USMCA; renumbered 070\u2192100010 after fuel_04 CHECK chain for CI apply-order; dual-ledger 202609100010 checksum=e4bb6f348a69ef90bcd555d733636364d29f3c4340e17d3eb7517a50995b3293 (same bytes as former 070)",
+      "block": "INS-01",
+      "added_at": "2026-07-27"
     }
   ],
   "superseded": []
