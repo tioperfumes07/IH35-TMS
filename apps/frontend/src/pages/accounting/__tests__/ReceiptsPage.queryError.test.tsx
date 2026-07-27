@@ -8,7 +8,11 @@ vi.mock("@tanstack/react-query", () => ({
   useQuery: vi.fn(),
 }));
 
-vi.mock("react-router-dom", () => ({
+vi.mock("react-router-dom", async (importOriginal) => ({
+  // Spread the real router first. A partial factory leaves every unlisted export undefined, so a
+  // component reaching for useSearchParams/useLocation dies with "No <name> export is defined on
+  // the mock" — a harness gap that reads like a product failure.
+  ...(await importOriginal<Record<string, unknown>>()),
   Link: ({ children }: { children: ReactNode }) => <span>{children}</span>,
 }));
 

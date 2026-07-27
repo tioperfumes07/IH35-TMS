@@ -8,6 +8,21 @@ import { ToastProvider } from "../../../components/Toast";
 import { useAuth } from "../../../auth/useAuth";
 import { CustomersPage } from "../../Customers";
 
+// The tree calls useCompanyContext, which throws outside a CompanyProvider. The real app always
+// mounts one; the harness did not, so every case died on the context error before asserting.
+// The full shape is supplied — a one-field stub just moves the crash to the next consumer.
+vi.mock("../../../contexts/CompanyContext", () => ({
+  useCompanyContext: () => ({
+    selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
+    selectedCompany: null,
+    companies: [],
+    isLoading: false,
+    setSelectedCompany: vi.fn(),
+    setDefaultCompanyForUser: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
+
+
 vi.mock("../../../auth/useAuth", () => ({
   useAuth: vi.fn(),
 }));

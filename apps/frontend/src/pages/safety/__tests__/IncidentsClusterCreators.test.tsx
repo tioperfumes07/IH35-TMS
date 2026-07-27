@@ -1,5 +1,6 @@
 import type React from "react";
 import { MemoryRouter } from "react-router-dom";
+import { ToastProvider } from "../../../components/Toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -16,7 +17,7 @@ const trailerId = "33333333-3333-4333-8333-333333333333";
 
 function wrap(ui: React.ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return <MemoryRouter><QueryClientProvider client={qc}>{ui}</QueryClientProvider></MemoryRouter>;
+  return <MemoryRouter><ToastProvider><QueryClientProvider client={qc}>{ui}</QueryClientProvider></ToastProvider></MemoryRouter>;
 }
 
 let createSpy: ReturnType<typeof vi.spyOn>;
