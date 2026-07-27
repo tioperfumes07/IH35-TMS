@@ -22,7 +22,7 @@ const RESOLVER = path.join(ROOT, "apps/backend/src/accounting/coa-roles/resolver
 const FE_API = path.join(ROOT, "apps/frontend/src/api/accounting.ts");
 const MIG = path.join(
   ROOT,
-  "db/migrations/202609010070_ins_01_fleet_premium_insurance_expense_role.sql"
+  "db/migrations/202609100010_ins_01_fleet_premium_insurance_expense_role.sql"
 );
 
 /** @param {string} service @param {string} resolver @param {string} feApi @param {string} mig */
@@ -31,7 +31,7 @@ export function check(service, resolver, feApi, mig) {
 
   if (!service) problems.push("policy-unit-fleet.service.ts missing");
   if (!resolver) problems.push("resolver.service.ts missing");
-  if (!mig) problems.push("missing migration 202609010070_ins_01_fleet_premium_insurance_expense_role.sql");
+  if (!mig) problems.push("missing migration 202609100010_ins_01_fleet_premium_insurance_expense_role.sql");
 
   if (service) {
     if (/ORDER BY\s+created_at/i.test(service) && /LIMIT\s+2/.test(service)) {
