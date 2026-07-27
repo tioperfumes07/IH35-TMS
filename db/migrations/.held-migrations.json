@@ -925,6 +925,11 @@
       "applied_on_prod": true,
       "reason": "FUEL-04 Neon-applied",
       "applied_evidence": "Neon dual-ledger"
+    },
+    {
+      "file": "202609010020_fact_05_factor_wire_fee_role.sql",
+      "reason": "FACT-05 factor_wire_fee \u2014 Neon-applied 2026-07-27; TRANSP/TRK bound to BC-Ach & Wire Fees; dual-ledger stamped",
+      "applied_on_prod": true
     }
   ],
   "superseded": []

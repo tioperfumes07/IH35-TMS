@@ -26,6 +26,9 @@ export const COA_ROLE_VALUES = [
   "default_interest_expense",
   "factor_reserve_held",
   "factor_fee_expense",
+  // FACT-05 — ACH/wire transaction fee (BC-Ach & Wire Fees); distinct from factor_fee_expense financing.
+  // DELIBERATELY absent from ROLE_FALLBACKS — unbound opcos (USMCA) fail closed when ACH>0.
+  "factor_wire_fee",
   // Business-Property Allocation (TX personal-property tax) — per-opco (TRANSP/TRK) mappings in
   // accounting.chart_of_accounts_roles, migration 202607080310_property_tax_accrual_posting.sql.
   // ACCRUAL Dr property_tax_expense / Cr property_tax_payable; PAYMENT Dr property_tax_payable / Cr cash.

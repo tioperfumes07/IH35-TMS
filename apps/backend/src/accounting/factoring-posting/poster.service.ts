@@ -836,7 +836,8 @@ function fundingExpectedLegs(opts: {
   if (opts.cash > 0) legs.push({ role: "cash_clearing", debit_or_credit: "debit", amount_cents: opts.cash });
   if (opts.reserve > 0) legs.push({ role: "factor_reserve_held", debit_or_credit: "debit", amount_cents: opts.reserve });
   if (opts.fee > 0) legs.push({ role: "factor_fee_expense", debit_or_credit: "debit", amount_cents: opts.fee });
-  if (opts.ach > 0) legs.push({ role: "factor_fee_expense", debit_or_credit: "debit", amount_cents: opts.ach });
+  // FACT-05 — ACH/wire is a transaction cost, not the Faro financing fee.
+  if (opts.ach > 0) legs.push({ role: "factor_wire_fee", debit_or_credit: "debit", amount_cents: opts.ach });
   legs.push({ role: "factoring_advance_liability", debit_or_credit: "credit", amount_cents: opts.liability });
   return legs;
 }
@@ -952,16 +953,26 @@ async function postFactoringAdvanceEventImpl(input: PostFactoringAdvanceInput): 
     const cashAccountId = await resolveRoleAccount(client, input.operating_company_id, "cash_clearing");
     const reserveAccountId = await resolveRoleAccount(client, input.operating_company_id, "factor_reserve_held");
     const feeAccountId = await resolveRoleAccount(client, input.operating_company_id, "factor_fee_expense");
+    const wireFeeAccountId =
+      ach > 0 ? await resolveRoleAccount(client, input.operating_company_id, "factor_wire_fee") : null;
     const liabilityAccountId = await resolveRoleAccount(client, input.operating_company_id, "factoring_advance_liability");
 
     const postings: Array<{ account_id: string; debit_or_credit: "debit" | "credit"; amount_cents: number; description: string }> = [];
     if (cash > 0) postings.push({ account_id: cashAccountId, debit_or_credit: "debit", amount_cents: cash, description: `${memo} — cash advanced` });
     if (reserve > 0) postings.push({ account_id: reserveAccountId, debit_or_credit: "debit", amount_cents: reserve, description: `${memo} — reserve held (due-from-factor)` });
     if (fee > 0) postings.push({ account_id: feeAccountId, debit_or_credit: "debit", amount_cents: fee, description: `${memo} — factoring fee (interest & financing)` });
-    // Bank/ACH transaction fee: a financing/transaction cost. Booked to the Factoring Fees (Interest &
-    // Financing) account as a distinct line (no separate bank_charges role is in CODER-34 scope; splitting
-    // ACH into its own account is a documented CPA/GUARD follow-up).
-    if (ach > 0) postings.push({ account_id: feeAccountId, debit_or_credit: "debit", amount_cents: ach, description: `${memo} — bank/ACH fee` });
+    // FACT-05 — ACH/wire fee on factor_wire_fee (BC-Ach & Wire Fees), distinct from factor_fee_expense.
+    if (ach > 0) {
+      if (!wireFeeAccountId) {
+        throw new Error("factor_wire_fee CoA role unbound — cannot post ACH/wire fee (FACT-05)");
+      }
+      postings.push({
+        account_id: wireFeeAccountId,
+        debit_or_credit: "debit",
+        amount_cents: ach,
+        description: `${memo} — bank/ACH wire fee`,
+      });
+    }
     postings.push({ account_id: liabilityAccountId, debit_or_credit: "credit", amount_cents: liability, description: `${memo} — factoring advance (liability)` });
 
     return { gate: "post" as const, memo, entryDate, postings, reserve, expected_legs: expectedLegs, eventKey };
