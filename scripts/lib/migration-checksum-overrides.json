@@ -187,7 +187,7 @@
     "filename": "0327_drug_alcohol_program.sql",
     "ledger_checksum": "24929c568028992304aec36c7baa1504a2900692d6dc4deb5c009b44560e5952",
     "disk_checksum": "53ec4796c74792c6e6714352170e053c5d8b9e455dfcb6dd8908a2c8e1d88f4d",
-    "reason": "GAP-81 (#636): migration shipped with `TO app_user` (wrong role) and operating_company_id TEXT (should be UUID). Fixed before first production deploy — never applied to prod. Local ledger recorded original SHA; override accepts corrected version.",
+    "reason": "GAP-81 (#636): migration shipped with `TO app_user` (wrong role) and operating_company_id TEXT (should be UUID). Fixed before first production deploy \u2014 never applied to prod. Local ledger recorded original SHA; override accepts corrected version.",
     "added_at": "2026-06-07",
     "added_in_pr": "hotfix/0327-drug-alcohol-app-user"
   },
@@ -257,7 +257,7 @@
     "filename": "202607820000_safety_relational_linkage_and_lifecycle.sql",
     "ledger_checksum": "578a6d7d7f2ae3f2e58bf44ebf36b757d6898748dd14e10c7bfe6bf71293c3b3",
     "disk_checksum": "8fa5d8e6854aac1dd54da22f5d54c1c7489c296760bd5f06b6c45ef9d39ef10d",
-    "reason": "PROD DEPLOY OUTAGE 2026-07-24: Neon ledger applied intermediate commit 2da2649ff (checksum 578a6d7d…) for #3380 safety join tables; main later landed 3319894fa with literal ENABLE/FORCE RLS (disk 8fa5d8e6…) so verify-rls-migration-scan can see them. Dynamic EXECUTE in the applied body already ran ENABLE+FORCE on the three join tables, so end state matches; db:migrate still refuses on the EXISTING ledger row before any follow-up. Override unblocks Render preDeploy. Do not edit this applied file again — any further DDL needs a new migration.",
+    "reason": "PROD DEPLOY OUTAGE 2026-07-24: Neon ledger applied intermediate commit 2da2649ff (checksum 578a6d7d\u2026) for #3380 safety join tables; main later landed 3319894fa with literal ENABLE/FORCE RLS (disk 8fa5d8e6\u2026) so verify-rls-migration-scan can see them. Dynamic EXECUTE in the applied body already ran ENABLE+FORCE on the three join tables, so end state matches; db:migrate still refuses on the EXISTING ledger row before any follow-up. Override unblocks Render preDeploy. Do not edit this applied file again \u2014 any further DDL needs a new migration.",
     "added_at": "2026-07-24",
     "added_in_pr": "PROD-DEPLOY-UNBLOCK-202607820000"
   },
@@ -289,7 +289,7 @@
     "filename": "202607790000_cost_of_labor_mexico_drivers_transp_usmca.sql",
     "ledger_checksum": "d709ac509f113e7f42e7bf9f7b94c0fa0ef740f5157a7598f7d76402c8096101",
     "disk_checksum": "8429d94902bd28c3a8fdfc8958e795d8044ce36410f0ce1ba6ffe90643b5c718",
-    "reason": "LIVE RENDER OUTAGE 2026-07-25: owner Neon-applied this file at 21:55 UTC (checksum d709ac50… on _system._schema_migrations), then the committed on-disk body diverged to 8429d949… (only git history version). db:migrate pre_deploy fails with \"modified after apply\" and blocks every subsequent deploy including #3553 fleet RETURNING fix. File remains in the held-registry skip set so it is never re-applied; accept historical ledger↔disk drift. Never edit an applied migration.",
+    "reason": "LIVE RENDER OUTAGE 2026-07-25: owner Neon-applied this file at 21:55 UTC (checksum d709ac50\u2026 on _system._schema_migrations), then the committed on-disk body diverged to 8429d949\u2026 (only git history version). db:migrate pre_deploy fails with \"modified after apply\" and blocks every subsequent deploy including #3553 fleet RETURNING fix. File remains in the held-registry skip set so it is never re-applied; accept historical ledger\u2194disk drift. Never edit an applied migration.",
     "added_at": "2026-07-25",
     "added_in_pr": "DEPLOY-UNBLOCK-MEXICO-790"
   },
@@ -297,9 +297,16 @@
     "filename": "202608080000_acct_link_02_accounts_detail_type_fk.sql",
     "ledger_checksum": "4d66df412a4164b9e2c7b54b8d93c714b6f2557792884d9d1af9ee962e21bc39",
     "disk_checksum": "49ec6c6c2af2bb62e8ac8ab10d260059ac90951ca4bbb2e886d7b60a123154f7",
-    "reason": "LINK-02 owner WIRE unlock: added DETAIL_TYPES_FK_OWNER_UNLOCK comment after Neon apply (ledger 4d66df41… @ 2026-07-25T22:15:16Z). Comment-only drift; do not re-apply. Never edit applied DDL again.",
+    "reason": "LINK-02 owner WIRE unlock: added DETAIL_TYPES_FK_OWNER_UNLOCK comment after Neon apply (ledger 4d66df41\u2026 @ 2026-07-25T22:15:16Z). Comment-only drift; do not re-apply. Never edit applied DDL again.",
     "added_at": "2026-07-25",
     "added_in_pr": "LINK-02-OWNER-UNLOCK-COMMENT"
+  },
+  {
+    "filename": "202609090020_fuel_03_overage_events_unit_fk.sql",
+    "ledger_checksum": "b41f18fc1c8a14785101e8411a80eb0586be20e73dacde9f8699cc86f6716f12",
+    "disk_checksum": "2d7b7c219aacbe6552f3d1c76136d16279c46379166626a2656acca50b8429d7",
+    "reason": "FUEL-03 follow-on unit_id FK renumber (was 202609260000->202609280000->202609090020, Cursor band-fix 2026-07-27). Comment-only drift: only the RENUMBER band-fix note changed; the DO-block DDL is byte-identical and already applied on prod (fuel_card_overage_events_unit_fkey verified live on Neon 2026-07-27). Do not re-apply. Never edit applied DDL again.",
+    "added_at": "2026-07-27",
+    "added_in_pr": "DEPLOY-HOTFIX-fuel03-090020-checksum"
   }
 ]
-
