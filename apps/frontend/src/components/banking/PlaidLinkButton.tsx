@@ -54,7 +54,12 @@ export function PlaidLinkButton({ operatingCompanyId, onSuccess, accountType = "
   const plaidConfig = useMemo(
     () => ({
       token: linkToken,
-      onSuccess: (publicToken: string, metadata: { institution?: { name?: string | null } | null }) => {
+      onSuccess: (publicToken: string | null, metadata: { institution?: { name?: string | null } | null }) => {
+        // react-plaid-link v5: PlaidLinkOnSuccess allows public_token null — refuse and surface loudly.
+        if (!publicToken) {
+          pushToast("Plaid Link returned no public token", "error");
+          return;
+        }
         setExchanging(true);
         void exchangePlaidPublicToken(publicToken, operatingCompanyId)
           .then((res) => {
