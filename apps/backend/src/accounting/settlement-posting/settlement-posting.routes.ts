@@ -5,9 +5,14 @@ import { assertCompanyMembership } from "../../_helpers/company-membership-guard
 import { withCurrentUser } from "../../auth/db.js";
 import { companyQuerySchema, currentAuthUser, validationError } from "../shared.js";
 import { SettlementPostingError } from "./settlement-posting.math.js";
+import { SettlementBillPaymentError } from "./settlement-bill-payment.math.js";
+import {
+  postSettlementBillPayment,
+} from "./settlement-bill-payment-posting.service.js";
 import { reverseSettlementGlPosting } from "./settlement-posting.service.js";
 import { chargeRecoverFromDriverExpense } from "./recover-from-driver.service.js";
 import { getDriverBucketBalances } from "./bucket-ledger.service.js";
+import { EscrowResolverError } from "../../driver-finance/escrow-resolver.service.js";
 
 const financeRoles = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
 
@@ -58,10 +63,41 @@ function mapError(error: SettlementPostingError) {
   return { statusCode: byCode[error.code] ?? 400, body: { error: error.code, message: error.message, details: error.details ?? null } };
 }
 
+function mapBillPaymentError(error: SettlementBillPaymentError) {
+  const byCode: Record<string, number> = {
+    SETTLEMENT_NOT_FOUND: 404,
+    SETTLEMENT_NOT_POSTABLE: 409,
+    DRIVER_VENDOR_MISSING: 422,
+    NO_LOAD_BILLS: 422,
+    DRIVER_PAY_ACCOUNT_MISSING: 422,
+    AP_ACCOUNT_MISSING: 422,
+    DIP_BANK_MISSING: 422,
+    DRIVER_ADVANCE_ACCOUNT_MISSING: 422,
+    DRIVER_ESCROW_ACCOUNT_MISSING: 422,
+    DEDUCTION_RECOVERY_ACCOUNT_MISSING: 422,
+    SOURCE_POSTING_LINK_MISSING: 422,
+    SETTLEMENT_TOTALS_INCONSISTENT: 422,
+    UNBALANCED_ENTRY: 422,
+  };
+  return { statusCode: byCode[error.code] ?? 400, body: { error: error.code, message: error.message, details: error.details ?? null } };
+}
+
+function mapBillPaymentRouteError(reply: FastifyReply, error: unknown) {
+  if (error instanceof SettlementBillPaymentError) {
+    const mapped = mapBillPaymentError(error);
+    return reply.code(mapped.statusCode).send(mapped.body);
+  }
+  if (error instanceof EscrowResolverError) {
+    return reply.code(409).send({ error: error.code, message: error.message, details: error.details ?? null });
+  }
+  throw error;
+}
+
 const postBody = z.object({
   settlement_id: z.string().uuid(),
   floor_override: z.object({ authorized_by_user_id: z.string().uuid(), reason: z.string().trim().min(1) }).optional().nullable(),
 });
+const billPaymentPostBody = z.object({ settlement_id: z.string().uuid() });
 const reverseBody = z.object({ settlement_id: z.string().uuid(), reason: z.string().trim().min(1) });
 const recoverBody = z.object({ expense_id: z.string().uuid() });
 const driverBucketsQuery = companyQuerySchema.extend({ driver_id: z.string().uuid() });
@@ -72,6 +108,31 @@ export async function registerSettlementPostingRoutes(app: FastifyInstance) {
     const body = postBody.safeParse(req.body ?? {});
     const settlementId = body.success ? body.data.settlement_id : undefined;
     return retiredSettlementPost(reply, settlementId);
+  });
+
+  // SET-04 — canonical Bill+BillPayment forward poster (blueprint §3). Role-gated; SETTLEMENT_GL_POSTING_ENABLED
+  // is enforced inside postSettlementBillPayment (OFF => skipped_flag_off, zero writes). Reuses the existing
+  // poster only — no new GL math.
+  app.post("/api/v1/accounting/settlement-posting/bill-payment-post", async (req, reply) => {
+    const user = ensureFinanceUser(req, reply);
+    if (!user) return;
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
+    const body = billPaymentPostBody.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+    try {
+      const result = await postSettlementBillPayment(
+        {
+          operatingCompanyId: query.data.operating_company_id,
+          settlementId: body.data.settlement_id,
+        },
+        { userId: user.uuid }
+      );
+      return reply.code(result.result === "posted" ? 201 : 200).send(result);
+    } catch (error) {
+      return mapBillPaymentRouteError(reply, error);
+    }
   });
 
   // Reverse a posted settlement (reversing JE + bucket restore; never delete).
