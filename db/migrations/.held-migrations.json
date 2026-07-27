@@ -959,6 +959,14 @@
       "applied_on_prod": true,
       "reason": "F9-03 Faro invoice lines supersede-not-delete \u2014 Neon-applied 2026-07-27; dual-ledger stamped",
       "applied_evidence": "Neon lucia superseded_at/superseded_reason + dual-ledger 202609010060"
+    },
+    {
+      "file": "202609100020_ins_02_claim_recovery_gl_hop.sql",
+      "reason": "INS-02 claim recovery GL hop \u2014 linkage table + flag OFF; Neon-applied 2026-07-27; dual-ledger",
+      "applied_on_prod": true,
+      "applied_evidence": "Neon lucia: accounting.insurance_claim_recovery_postings + flag default false; dual-ledger 202609100020",
+      "block": "INS-02",
+      "added_at": "2026-07-27"
     }
   ],
   "superseded": []
