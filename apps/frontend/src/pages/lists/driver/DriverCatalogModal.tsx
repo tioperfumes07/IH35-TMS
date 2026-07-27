@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { ApiError } from "../../../api/client";
-import type { DriverCatalogCreateBody, DriverCatalogRow, DriverCatalogUpdateBody } from "../../../api/catalogs-driver";
+import type {
+  DriverCatalogCreateBody,
+  DriverCatalogRow,
+  DriverCatalogUpdateBody,
+} from "../../../api/catalogs-driver";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 
@@ -8,9 +12,15 @@ const CODE_REGEX = /^[A-Z0-9-]+$/;
 
 export type DriverCatalogClient = {
   create: (operating_company_id: string, body: DriverCatalogCreateBody) => Promise<DriverCatalogRow>;
-  update: (id: string, operating_company_id: string, body: DriverCatalogUpdateBody) => Promise<DriverCatalogRow>;
+  update: (
+    id: string,
+    operating_company_id: string,
+    body: DriverCatalogUpdateBody
+  ) => Promise<DriverCatalogRow>;
   deactivate: (id: string, operating_company_id: string) => Promise<{ ok: true }>;
 };
+
+type OptionalBooleanField = { key: "may_draw_escrow"; label: string };
 
 type Props = {
   open: boolean;
@@ -19,6 +29,7 @@ type Props = {
   client: DriverCatalogClient;
   mode: "create" | "edit";
   row: DriverCatalogRow | null;
+  optionalBooleans?: OptionalBooleanField[];
   onClose: () => void;
   onSaved: () => void;
 };
@@ -29,15 +40,27 @@ type FormState = {
   description: string;
   sort_order: number;
   is_active: boolean;
+  may_draw_escrow: boolean;
 };
 
-export function DriverCatalogModal({ open, operatingCompanyId, displayName, client, mode, row, onClose, onSaved }: Props) {
+export function DriverCatalogModal({
+  open,
+  operatingCompanyId,
+  displayName,
+  client,
+  mode,
+  row,
+  optionalBooleans = [],
+  onClose,
+  onSaved,
+}: Props) {
   const [form, setForm] = useState<FormState>({
     code: "",
     display_name: "",
     description: "",
     sort_order: 50,
     is_active: true,
+    may_draw_escrow: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string>("");
@@ -51,6 +74,7 @@ export function DriverCatalogModal({ open, operatingCompanyId, displayName, clie
       description: row?.description ?? "",
       sort_order: row?.sort_order ?? 50,
       is_active: row?.is_active ?? true,
+      may_draw_escrow: Boolean(row?.may_draw_escrow),
     });
     setErrors({});
     setSubmitError("");
@@ -60,7 +84,9 @@ export function DriverCatalogModal({ open, operatingCompanyId, displayName, clie
     const next: Record<string, string> = {};
     if (!CODE_REGEX.test(form.code.trim())) next.code = "Use uppercase letters, numbers, and dashes only.";
     if (!form.display_name.trim()) next.display_name = "Display Name is required.";
-    if (!Number.isInteger(form.sort_order) || form.sort_order < 0) next.sort_order = "Sort Order must be 0 or greater.";
+    if (!Number.isInteger(form.sort_order) || form.sort_order < 0) {
+      next.sort_order = "Sort Order must be 0 or greater.";
+    }
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -70,7 +96,7 @@ export function DriverCatalogModal({ open, operatingCompanyId, displayName, clie
     setIsSaving(true);
     setSubmitError("");
     try {
-      const body = {
+      const body: DriverCatalogCreateBody = {
         code: form.code.trim(),
         display_name: form.display_name.trim(),
         description: form.description.trim() || undefined,
@@ -78,10 +104,13 @@ export function DriverCatalogModal({ open, operatingCompanyId, displayName, clie
         is_active: form.is_active,
         metadata: row?.metadata ?? {},
       };
+      if (optionalBooleans.some((f) => f.key === "may_draw_escrow")) {
+        body.may_draw_escrow = form.may_draw_escrow;
+      }
       if (mode === "create") {
         await client.create(operatingCompanyId, body);
       } else if (row) {
-        await client.update(row.id, operatingCompanyId, body);
+        await client.update(row.id, operatingCompanyId, body as DriverCatalogUpdateBody);
       }
       onSaved();
       onClose();
@@ -118,13 +147,20 @@ export function DriverCatalogModal({ open, operatingCompanyId, displayName, clie
   }
 
   return (
-    <Modal variant="drawer" open={open} onClose={onClose} title={mode === "create" ? `New ${displayName}` : `Edit ${displayName}`}>
+    <Modal
+      variant="drawer"
+      open={open}
+      onClose={onClose}
+      title={mode === "create" ? `New ${displayName}` : `Edit ${displayName}`}
+    >
       <div className="space-y-3">
         <label className="block text-xs font-semibold text-gray-600">
           Code
           <input
             value={form.code}
-            onChange={(event) => setForm((value) => ({ ...value, code: event.target.value.toUpperCase() }))}
+            onChange={(event) =>
+              setForm((value) => ({ ...value, code: event.target.value.toUpperCase() }))
+            }
             className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
             placeholder="EXAMPLE-CODE"
           />
@@ -133,27 +169,74 @@ export function DriverCatalogModal({ open, operatingCompanyId, displayName, clie
 
         <label className="block text-xs font-semibold text-gray-600">
           Display Name
-          <input value={form.display_name} onChange={(event) => setForm((value) => ({ ...value, display_name: event.target.value }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" />
-          {errors.display_name ? <div className="mt-1 text-[11px] text-red-700">{errors.display_name}</div> : null}
+          <input
+            value={form.display_name}
+            onChange={(event) => setForm((value) => ({ ...value, display_name: event.target.value }))}
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+          />
+          {errors.display_name ? (
+            <div className="mt-1 text-[11px] text-red-700">{errors.display_name}</div>
+          ) : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
           Description
-          <textarea value={form.description} onChange={(event) => setForm((value) => ({ ...value, description: event.target.value }))} rows={3} className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" />
+          <textarea
+            value={form.description}
+            onChange={(event) => setForm((value) => ({ ...value, description: event.target.value }))}
+            rows={3}
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+          />
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
           Sort Order
-          <input type="number" min={0} step={1} value={form.sort_order} onChange={(event) => setForm((value) => ({ ...value, sort_order: Number(event.target.value || 0) }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" />
-          {errors.sort_order ? <div className="mt-1 text-[11px] text-red-700">{errors.sort_order}</div> : null}
+          <input
+            type="number"
+            min={0}
+            step={1}
+            value={form.sort_order}
+            onChange={(event) =>
+              setForm((value) => ({ ...value, sort_order: Number(event.target.value || 0) }))
+            }
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+          />
+          {errors.sort_order ? (
+            <div className="mt-1 text-[11px] text-red-700">{errors.sort_order}</div>
+          ) : null}
         </label>
 
         <label className="flex items-center gap-2 text-xs text-gray-700">
-          <input type="checkbox" checked={form.is_active} onChange={(event) => setForm((value) => ({ ...value, is_active: event.target.checked }))} />
+          <input
+            type="checkbox"
+            checked={form.is_active}
+            onChange={(event) => setForm((value) => ({ ...value, is_active: event.target.checked }))}
+          />
           Active
         </label>
 
-        {submitError ? <div className="rounded-sm border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-800">{submitError}</div> : null}
+        {optionalBooleans.map((field) => (
+          <label
+            key={field.key}
+            className="flex items-center gap-2 text-xs text-gray-700"
+            data-testid={`catalog-bool-${field.key}`}
+          >
+            <input
+              type="checkbox"
+              checked={form[field.key]}
+              onChange={(event) =>
+                setForm((value) => ({ ...value, [field.key]: event.target.checked }))
+              }
+            />
+            {field.label}
+          </label>
+        ))}
+
+        {submitError ? (
+          <div className="rounded-sm border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-800">
+            {submitError}
+          </div>
+        ) : null}
 
         <div className="flex items-center justify-between">
           <div>

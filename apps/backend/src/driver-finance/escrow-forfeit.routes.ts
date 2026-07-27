@@ -21,9 +21,10 @@ const forfeitBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   driver_uuid: z.string().uuid(),
   amount: z.number().positive(),
-  reason: z.string().trim().min(3).max(500),
-  // REQUIRED shape kept as uuid, but OPTIONAL per owner ruling 2026-07-23 (two branches: linked debt, or
-  // a general forfeit crediting damage_recovery). When present it must FK a real driver_liabilities row.
+  /** Catalog code from catalogs.escrow_types where may_draw_escrow=true (ND-ESC-01). */
+  reason_code: z.string().trim().min(2).max(64),
+  /** Optional free-text note appended to the catalog display name in memos. */
+  reason_note: z.string().trim().max(400).optional(),
   linked_liability_id: z.string().uuid().nullish(),
 });
 
@@ -93,13 +94,73 @@ export async function registerDriverEscrowForfeitRoutes(app: FastifyInstance) {
         });
       }
 
+      // ND-ESC-01 draw catalog: forfeit reason must be an active catalogs.escrow_types row with
+      // may_draw_escrow=true (abandonment / damage / safety fines seeded; owner can rename/add).
+      const drawReason = await withCurrentUser(user.uuid, async (client) => {
+        await client.query("SELECT set_config('app.operating_company_id', $1, true)", [
+          body.data.operating_company_id,
+        ]);
+        const col = await client.query(
+          `
+            SELECT EXISTS (
+              SELECT 1 FROM information_schema.columns
+              WHERE table_schema = 'catalogs'
+                AND table_name = 'escrow_types'
+                AND column_name = 'may_draw_escrow'
+            ) AS ok
+          `
+        );
+        if (!Boolean((col.rows[0] as { ok?: boolean } | undefined)?.ok)) {
+          return { status: "column_missing" as const };
+        }
+        const res = await client.query(
+          `
+            SELECT code, display_name
+              FROM catalogs.escrow_types
+             WHERE operating_company_id = $1::uuid
+               AND code = $2
+               AND is_active = true
+               AND may_draw_escrow = true
+             LIMIT 1
+          `,
+          [body.data.operating_company_id, body.data.reason_code.toUpperCase()]
+        );
+        const row = res.rows[0] as { code?: string; display_name?: string } | undefined;
+        if (!row?.code) return { status: "not_allowed" as const };
+        return {
+          status: "ok" as const,
+          code: String(row.code),
+          display_name: String(row.display_name ?? row.code),
+        };
+      });
+      if (drawReason.status === "column_missing") {
+        return reply.code(409).send({
+          error: "escrow_draw_catalog_not_applied",
+          message:
+            "Escrow draw catalog (may_draw_escrow) is not live yet — owner must Neon-apply ND-ESC-01. Nothing was posted.",
+        });
+      }
+      if (drawReason.status === "not_allowed") {
+        return reply.code(409).send({
+          error: "escrow_draw_reason_not_allowed",
+          message:
+            "reason_code must be an active escrow draw reason with may_draw_escrow=true " +
+            "(seeded: ABANDONMENT, DAMAGE, SAFETY-FINE — or an owner-added reason).",
+          reason_code: body.data.reason_code,
+        });
+      }
+
+      const reasonMemo = body.data.reason_note
+        ? `${drawReason.display_name} (${drawReason.code}): ${body.data.reason_note}`
+        : `${drawReason.display_name} (${drawReason.code})`;
+
       try {
         const result = await forfeitDriverEscrow(
           {
             operating_company_id: body.data.operating_company_id,
             driver_uuid: body.data.driver_uuid,
             amount: body.data.amount,
-            reason: body.data.reason,
+            reason: reasonMemo,
             linked_liability_id: body.data.linked_liability_id ?? null,
           },
           { userId: user.uuid, role: user.role }

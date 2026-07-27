@@ -12,9 +12,10 @@ import { dollarsToCents } from "../escrow-forfeit.service.js";
 const COMPANY = "91e0bf0a-133f-4ce8-a734-2586cfa66d96";
 const DRIVER = "33333333-3333-4333-8333-333333333333";
 
-const { mockForfeit, mockResolveTarget } = vi.hoisted(() => ({
+const { mockForfeit, mockResolveTarget, mockQuery } = vi.hoisted(() => ({
   mockForfeit: vi.fn(),
   mockResolveTarget: vi.fn(),
+  mockQuery: vi.fn(),
 }));
 
 vi.mock("../escrow-forfeit.service.js", async (importOriginal) => {
@@ -22,16 +23,13 @@ vi.mock("../escrow-forfeit.service.js", async (importOriginal) => {
   return { ...actual, forfeitDriverEscrow: mockForfeit };
 });
 
-// LEGAL-PAPER-01 — the forfeit route now resolves has_signed_clause through the SAME resolver the
-// read path uses. Stubbed here so the route contract can be exercised without a database; the
-// resolver's own SQL (which is what widened for signed_on_paper) is covered in escrow-target tests.
 vi.mock("../escrow-target.service.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../escrow-target.service.js")>();
   return { ...actual, resolveDriverEscrowTarget: mockResolveTarget };
 });
 vi.mock("../../auth/db.js", () => ({
-  withCurrentUser: async (_userUuid: string, fn: (client: unknown) => Promise<unknown>) =>
-    fn({ query: async () => ({ rows: [] }) }),
+  withCurrentUser: async (_userUuid: string, fn: (client: { query: typeof mockQuery }) => Promise<unknown>) =>
+    fn({ query: mockQuery }),
 }));
 
 vi.mock("../../auth/session-middleware.js", () => ({ requireAuth: () => true }));
@@ -39,9 +37,21 @@ vi.mock("../../_helpers/company-membership-guard.js", () => ({
   assertCompanyMembership: vi.fn(async () => undefined),
 }));
 
+function stubDrawCatalogOk() {
+  mockQuery.mockImplementation(async (sql: string) => {
+    if (/information_schema\.columns/i.test(sql)) {
+      return { rows: [{ ok: true }] };
+    }
+    if (/may_draw_escrow\s*=\s*true/i.test(sql) || /FROM catalogs\.escrow_types/i.test(sql)) {
+      return { rows: [{ code: "DAMAGE", display_name: "Damage" }] };
+    }
+    return { rows: [] };
+  });
+}
+
 describe("dollarsToCents — exact ×100, once", () => {
   it("converts dollars to integer cents", () => {
-    expect(dollarsToCents(2000)).toBe(200000); // $2,000 → 200,000¢ (NOT 2,000 — the 100× trap)
+    expect(dollarsToCents(2000)).toBe(200000);
     expect(dollarsToCents(12.34)).toBe(1234);
     expect(dollarsToCents(0.05)).toBe(5);
   });
@@ -59,8 +69,13 @@ describe("POST /escrow/:driverId/forfeit route", () => {
   beforeEach(async () => {
     mockForfeit.mockReset();
     mockResolveTarget.mockReset();
-    // Default: a signed contract IS on file, so the other cases exercise what they mean to.
-    mockResolveTarget.mockResolvedValue({ targetCents: 250000, source: "entity_default", hasSignedClause: true });
+    mockQuery.mockReset();
+    stubDrawCatalogOk();
+    mockResolveTarget.mockResolvedValue({
+      targetCents: 250000,
+      source: "entity_default",
+      hasSignedClause: true,
+    });
     role = "Owner";
     app = Fastify({ logger: false });
     app.decorateRequest("user", null);
@@ -79,7 +94,7 @@ describe("POST /escrow/:driverId/forfeit route", () => {
     operating_company_id: COMPANY,
     driver_uuid: DRIVER,
     amount: 500,
-    reason: "Trailer door damage, driver at fault",
+    reason_code: "DAMAGE",
     ...over,
   });
 
@@ -107,26 +122,51 @@ describe("POST /escrow/:driverId/forfeit route", () => {
     expect(res.json().error).toBe("driver_id_mismatch");
   });
 
-  it("requires a reason of at least 3 chars", async () => {
-    const res = await post(body({ reason: "x" }));
+  it("requires reason_code", async () => {
+    const res = await post(body({ reason_code: "x" }));
     expect(res.statusCode).toBe(400);
   });
 
+  it("refuses a reason_code that is not may_draw_escrow", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (/information_schema\.columns/i.test(sql)) return { rows: [{ ok: true }] };
+      return { rows: [] };
+    });
+    const res = await post(body({ reason_code: "OTHER" }));
+    expect(res.statusCode).toBe(409);
+    expect(res.json().error).toBe("escrow_draw_reason_not_allowed");
+    expect(mockForfeit).not.toHaveBeenCalled();
+  });
+
   it("refuses the forfeit when no signed contract authorises it — and posts nothing", async () => {
-    mockResolveTarget.mockResolvedValue({ targetCents: 250000, source: "entity_default", hasSignedClause: false });
+    mockResolveTarget.mockResolvedValue({
+      targetCents: 250000,
+      source: "entity_default",
+      hasSignedClause: false,
+    });
     const res = await post(body());
     expect(res.statusCode).toBe(409);
     expect(res.json().error).toBe("escrow_forfeit_no_signed_clause");
-    // The gate must run BEFORE the money mover — not alongside it.
     expect(mockForfeit).not.toHaveBeenCalled();
   });
 
   it("resolves the signed clause for the SAME driver and entity as the forfeit", async () => {
     mockForfeit.mockResolvedValue({ result: "flag_off" });
     await post(body());
-    expect(mockResolveTarget).toHaveBeenCalledWith(
-      expect.anything(),
-      { driverId: DRIVER, operatingCompanyId: COMPANY }
+    expect(mockResolveTarget).toHaveBeenCalledWith(expect.anything(), {
+      driverId: DRIVER,
+      operatingCompanyId: COMPANY,
+    });
+  });
+
+  it("passes catalog display name into the forfeit reason memo", async () => {
+    mockForfeit.mockResolvedValue({ result: "flag_off" });
+    await post(body({ reason_note: "rear door" }));
+    expect(mockForfeit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reason: "Damage (DAMAGE): rear door",
+      }),
+      expect.anything()
     );
   });
 
@@ -138,7 +178,11 @@ describe("POST /escrow/:driverId/forfeit route", () => {
   });
 
   it("surfaces over_draw as 409 with the balance", async () => {
-    mockForfeit.mockResolvedValue({ result: "over_draw", balance_cents: 10000, requested_cents: 50000 });
+    mockForfeit.mockResolvedValue({
+      result: "over_draw",
+      balance_cents: 10000,
+      requested_cents: 50000,
+    });
     const res = await post(body());
     expect(res.statusCode).toBe(409);
     expect(res.json().error).toBe("escrow_forfeit_over_draw");
@@ -146,7 +190,9 @@ describe("POST /escrow/:driverId/forfeit route", () => {
   });
 
   it("surfaces an undesignated damage_recovery account as a loud 409, not a 500", async () => {
-    mockForfeit.mockRejectedValue(new Error("No active 'damage_recovery' CoA role designation (chart_of_accounts_roles)"));
+    mockForfeit.mockRejectedValue(
+      new Error("No active 'damage_recovery' CoA role designation (chart_of_accounts_roles)")
+    );
     const res = await post(body());
     expect(res.statusCode).toBe(409);
     expect(res.json().error).toBe("damage_recovery_account_undesignated");

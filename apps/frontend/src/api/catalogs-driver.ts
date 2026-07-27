@@ -9,6 +9,8 @@ export type DriverCatalogRow = {
   metadata: Record<string, unknown>;
   is_active: boolean;
   sort_order: number;
+  /** ND-ESC-01 — present on escrow_types when may_draw_escrow column is live. */
+  may_draw_escrow?: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -25,6 +27,7 @@ export type DriverCatalogCreateBody = {
   metadata?: Record<string, unknown>;
   sort_order?: number;
   is_active?: boolean;
+  may_draw_escrow?: boolean;
 };
 
 export type DriverCatalogUpdateBody = Partial<DriverCatalogCreateBody>;

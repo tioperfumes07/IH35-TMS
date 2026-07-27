@@ -32,5 +32,6 @@ export async function registerDriverCatalogRoutes(app: FastifyInstance) {
     routePrefix: "/api/v1/catalogs/driver",
     displayName: "Escrow Types",
     codeRegex: /^[A-Z][A-Z0-9-]+$/,
+    optionalBooleans: ["may_draw_escrow"],
   });
 }

@@ -2,6 +2,12 @@
   "note": "HELD MIGRATIONS — each carries a 'DO NOT RUN ON PROD' marker and must run ONLY on a Neon branch by Jorge's hand, then be ledger-backfilled so prod db:migrate skips it. verify:hold-migrations-registered enforces bidirectional parity: every migration whose header says DO-NOT-RUN must be listed here, and every entry here must still carry the marker — so a held migration can never silently lose its marker (which would let db:migrate fire it on prod).",
   "held": [
     {
+      "file": "202609100080_nd_esc_01_escrow_draw_catalog.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] ND-ESC-01 draw-catalog half — catalogs.escrow_types.may_draw_escrow + seed ABANDONMENT/DAMAGE/SAFETY-FINE. Cap half already on main (#3611). No GL math.",
+      "added_at": "2026-07-27",
+      "block": "ND-ESC-01"
+    },
+    {
       "file": "202608060000_acct_r03_catalogs_account_merge_records.sql",
       "reason": "[HOLD-FOR-JORGE — FINANCIAL CLUSTER] ACCT-R-03 catalogs.account_merge_records — Owner-only CoA merge; BUILD-AND-HOLD until Jorge Neon-applies (#3526)"
     },

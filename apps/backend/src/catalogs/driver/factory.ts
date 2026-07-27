@@ -11,19 +11,11 @@ type CatalogFactoryConfig = {
   routePrefix: string;
   displayName: string;
   codeRegex: RegExp;
+  /** Extra boolean columns (e.g. may_draw_escrow on escrow_types). Must exist on the table. */
+  optionalBooleans?: string[];
   deprecation?: {
     navSegment: string;
     successorListsSegment: string;
-    /**
-     * SWEEP-C11 split-brain fix (2026-07-25): when true, POST/PATCH/DELETE on this route return
-     * 410 instead of writing catalogs.${tableName}. Set for tables that are a CONFIRMED
-     * split-brain LOSER against a canonical reference.* (or other) store — i.e. two live schemas
-     * both accepted writes for the "same" logical entity, and a row created on one was invisible
-     * on the other. GET stays live (read-only archive; Rule 07 never-delete). See
-     * scripts/verify-sweep-c11-no-entity-split-brain.mjs for the CI guard that keeps this flag
-     * wired, and db/migrations/202609040000_sweep_c11_driver_subcatalog_split_brain_lock.sql for
-     * the DB-level defense-in-depth trigger.
-     */
     writesBlocked?: boolean;
   };
 };
@@ -56,6 +48,22 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
   }
 
   const basePath = `${config.routePrefix}/${config.urlSegment}`;
+  const optionalBooleans = (config.optionalBooleans ?? []).filter((c) => /^[a-z_]+$/.test(c));
+  const boolSelect = optionalBooleans.map((c) => `t.${c}`).join(",\n            ");
+  const boolSelectBare = optionalBooleans.join(",\n            ");
+  const returningCols = `
+            id,
+            operating_company_id,
+            code,
+            display_name,
+            description,
+            metadata,
+            is_active,
+            sort_order,
+            ${optionalBooleans.length ? `${boolSelectBare},` : ""}
+            created_at,
+            updated_at`;
+
   const createBodySchema = z.object({
     code: z.string().trim().regex(config.codeRegex),
     display_name: z.string().trim().min(1).max(160),
@@ -63,6 +71,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
     metadata: z.record(z.string(), z.unknown()).optional().default({}),
     is_active: z.boolean().default(true),
     sort_order: z.coerce.number().int().min(0).max(10000).default(50),
+    ...Object.fromEntries(optionalBooleans.map((c) => [c, z.boolean().default(false)])),
   });
 
   const updateBodySchema = z
@@ -73,6 +82,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
       metadata: z.record(z.string(), z.unknown()).optional(),
       is_active: z.boolean().optional(),
       sort_order: z.coerce.number().int().min(0).max(10000).optional(),
+      ...Object.fromEntries(optionalBooleans.map((c) => [c, z.boolean().optional()])),
     })
     .refine((value) => Object.keys(value).length > 0, { message: "at least one field is required" });
 
@@ -111,6 +121,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
             t.metadata,
             t.is_active,
             t.sort_order,
+            ${boolSelect ? `${boolSelect},` : ""}
             t.created_at,
             t.updated_at
           FROM catalogs.${config.tableName} t
@@ -141,16 +152,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
       const res = await client.query(
         `
           SELECT
-            id,
-            operating_company_id,
-            code,
-            display_name,
-            description,
-            metadata,
-            is_active,
-            sort_order,
-            created_at,
-            updated_at
+            ${returningCols}
           FROM catalogs.${config.tableName}
           WHERE id = $1
             AND operating_company_id = $2
@@ -190,23 +192,17 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
       );
       if (conflict.rows.length > 0) return { error: `catalog_${config.tableName}_code_conflict` as const };
 
+      const boolInsertCols = optionalBooleans.length ? `, ${optionalBooleans.join(", ")}` : "";
+      const boolInsertPlaceholders = optionalBooleans.map((_, i) => `$${8 + i}`).join(", ");
+      const boolInsertValues = optionalBooleans.map((c) => Boolean((b as Record<string, unknown>)[c]));
       const res = await client.query(
         `
           INSERT INTO catalogs.${config.tableName} (
-            operating_company_id, code, display_name, description, metadata, is_active, sort_order
+            operating_company_id, code, display_name, description, metadata, is_active, sort_order${boolInsertCols}
           )
-          VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7)
+          VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7${boolInsertPlaceholders ? `, ${boolInsertPlaceholders}` : ""})
           RETURNING
-            id,
-            operating_company_id,
-            code,
-            display_name,
-            description,
-            metadata,
-            is_active,
-            sort_order,
-            created_at,
-            updated_at
+            ${returningCols}
         `,
         [
           parsedQuery.data.operating_company_id,
@@ -216,6 +212,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
           JSON.stringify(b.metadata ?? {}),
           b.is_active,
           b.sort_order,
+          ...boolInsertValues,
         ]
       );
       const row = res.rows[0];
@@ -274,6 +271,9 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
       if ("metadata" in b) add("metadata", JSON.stringify(b.metadata ?? {}));
       if ("is_active" in b) add("is_active", b.is_active);
       if ("sort_order" in b) add("sort_order", b.sort_order);
+      for (const col of optionalBooleans) {
+        if (col in b) add(col, Boolean((b as Record<string, unknown>)[col]));
+      }
       fields.push("updated_at = now()");
       values.push(parsedParams.data.id, parsedQuery.data.operating_company_id);
 
@@ -284,16 +284,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
           WHERE id = $${values.length - 1}
             AND operating_company_id = $${values.length}
           RETURNING
-            id,
-            operating_company_id,
-            code,
-            display_name,
-            description,
-            metadata,
-            is_active,
-            sort_order,
-            created_at,
-            updated_at
+            ${returningCols}
         `,
         values
       );
