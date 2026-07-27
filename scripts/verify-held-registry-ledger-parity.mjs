@@ -101,6 +101,9 @@ export const EXPECTED_HELD = [
   // FACT-01 applied as 202609100040 — applied_held.
   // C9 / MNT-ECON-04 also left EXPECTED_HELD 2026-07-26 after Cursor owner Neon-apply + ledger-backfill
   // (moved to applied_held[] with applied_on_prod:true).
+  // ND-INV-01 stage 1 (#3658). Authored on this branch; NEVER applied on prod — GUARD §3 allowlist
+  // must list it until owner Neon-applies + ledger-backfills. Same pattern as MNT-LINK-03b / MNT-ENT-01.
+  "202609100090_nd_inv_01_proforma_invoice_pipeline.sql",
 ];
 
 /**
