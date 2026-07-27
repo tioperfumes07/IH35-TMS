@@ -5,6 +5,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { FACTORING_REPURCHASE_DEADLINE_DAYS } from "../accounting/factoring-posting/contract-config.js";
+import { resolveCanonicalActiveFactor } from "../home/factoring-balance-invoice-linkage.service.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -37,28 +38,18 @@ async function withCompanyScope<T>(
   });
 }
 
-async function resolveActiveFactor(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> }, companyId: string) {
-  const res = await client
-    .query(
-      `
-        SELECT v.id, v.vendor_name
-        FROM mdata.vendors v
-        JOIN (
-          SELECT factoring_company_vendor_id AS vendor_id, COUNT(*)::int AS customer_count
-          FROM mdata.customers
-          WHERE operating_company_id = $1
-            AND factoring_company_vendor_id IS NOT NULL
-          GROUP BY factoring_company_vendor_id
-          ORDER BY COUNT(*) DESC
-          LIMIT 1
-        ) c ON c.vendor_id = v.id
-        WHERE v.operating_company_id = $1
-        LIMIT 1
-      `,
-      [companyId]
-    )
-    .catch(() => ({ rows: [] as Array<Record<string, unknown>> }));
-  return res.rows[0] ?? null;
+type RouteDbClient = {
+  query: <T = Record<string, unknown>>(
+    sql: string,
+    values?: unknown[]
+  ) => Promise<{ rows: T[] }>;
+};
+
+/** Operational summary/settings — same canonical Faro identity gate as GL + Home balance. */
+async function resolveActiveFactor(client: RouteDbClient, companyId: string) {
+  const identity = await resolveCanonicalActiveFactor(client, companyId);
+  if (!identity.ok || !identity.vendorId) return null;
+  return { id: identity.vendorId, vendor_name: identity.vendorName ?? null };
 }
 
 export async function registerFactoringRoutes(app: FastifyInstance) {

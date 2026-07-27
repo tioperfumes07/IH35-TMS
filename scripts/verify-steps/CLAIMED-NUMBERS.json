@@ -1020,7 +1020,8 @@
     "07": "07-verify-canonical-schema-names.mjs",
     "08": "08-verify-outbox-handler-parity.mjs",
     "09": "09-verify-migration-application-consistency.mjs",
-    "1621": "1621-verify-canonical-settlement-poster-mounted.mjs"
+    "1621": "1621-verify-canonical-settlement-poster-mounted.mjs",
+    "1624": "1624-verify-single-factor-resolver.mjs"
   },
   "_note": "CLAIMED verify-step numbers. Every PR adding a verify-step MUST add its number here IN THE SAME COMMIT. Two agents claiming the same number then CONFLICT IN GIT instead of silently agreeing and reddening main afterwards.",
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",
