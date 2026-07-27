@@ -348,6 +348,8 @@ export async function upsertRelayFuelTransaction(
       gallons: gallons > 0 ? gallons : null,
       cash_advance: Boolean(tx.cash_advance),
       relay_fuel_transaction_id: relayFuelTransactionId,
+      // FUEL-08: Relay settle is fleet-card / AP unless cash_advance took the driver_advance path.
+      has_fuel_card: !Boolean(tx.cash_advance),
     };
   }
 
