@@ -4,6 +4,7 @@ import {
   mapFuelTypeToPostingKind,
   maybePostFuelExpenseFromCanonicalTxn,
   flushFuelGlPostsAfterCommit,
+  resolveCompanyDirectCreditPreference,
   type FuelTxnGlPostCandidate,
 } from "../maybe-post-from-fuel-transaction.service.js";
 
@@ -48,6 +49,37 @@ describe("mapFuelTypeToPostingKind", () => {
     expect(mapFuelTypeToPostingKind("reefer_diesel")).toBe("reefer");
     expect(mapFuelTypeToPostingKind("gas")).toBe("misc");
     expect(mapFuelTypeToPostingKind("other")).toBe("misc");
+  });
+});
+
+describe("resolveCompanyDirectCreditPreference", () => {
+  it("fleet/fuel card + Relay settle → ap (never cash)", () => {
+    expect(resolveCompanyDirectCreditPreference({ ...BASE, has_fuel_card: true })).toBe("ap");
+    expect(resolveCompanyDirectCreditPreference({ ...BASE, fuel_card_id: "55555555-5555-4555-8555-555555555555" })).toBe(
+      "ap"
+    );
+    expect(
+      resolveCompanyDirectCreditPreference({
+        ...BASE,
+        relay_fuel_transaction_id: "66666666-6666-4666-8666-666666666666",
+      })
+    ).toBe("ap");
+    expect(
+      resolveCompanyDirectCreditPreference(BASE, { fuel_card_id: null, notes: "card=****1234", source: "import" })
+    ).toBe("ap");
+  });
+
+  it("true cash / no card signal → cash", () => {
+    expect(resolveCompanyDirectCreditPreference(BASE)).toBe("cash");
+    expect(resolveCompanyDirectCreditPreference(BASE, { fuel_card_id: null, notes: null, source: "manual" })).toBe(
+      "cash"
+    );
+  });
+
+  it("explicit override wins", () => {
+    expect(resolveCompanyDirectCreditPreference({ ...BASE, has_fuel_card: true, company_direct_credit: "cash" })).toBe(
+      "cash"
+    );
   });
 });
 
@@ -96,6 +128,29 @@ describe("maybePostFuelExpenseFromCanonicalTxn", () => {
         amount_cents: 18244,
         posting_path: "company_direct",
         company_direct_credit: "cash",
+      })
+    );
+  });
+
+  it("FUEL-08: Relay / fleet-card company_direct does NOT credit cash", async () => {
+    mockIsEnabled.mockResolvedValue(true);
+    mockPostFuelExpenseFromEvent.mockResolvedValue({
+      result: "posted",
+      posting_batch_id: "batch-1",
+      journal_entry_id: "je-1",
+      journal_entry_posting_ids: ["jep-1"],
+      idempotency_key: "k",
+      account_resolution_trace: [],
+    });
+    await maybePostFuelExpenseFromCanonicalTxn({
+      ...BASE,
+      relay_fuel_transaction_id: "66666666-6666-4666-8666-666666666666",
+      has_fuel_card: true,
+    });
+    expect(mockPostFuelExpenseFromEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        posting_path: "company_direct",
+        company_direct_credit: "ap",
       })
     );
   });
