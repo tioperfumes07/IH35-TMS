@@ -101,6 +101,11 @@ export const EXPECTED_HELD = [
   // FACT-01 applied as 202609100040 — applied_held.
   // C9 / MNT-ECON-04 also left EXPECTED_HELD 2026-07-26 after Cursor owner Neon-apply + ledger-backfill
   // (moved to applied_held[] with applied_on_prod:true).
+  // MNT-LINK-03b + MNT-ENT-01 (PR #3655) — HOLD migs authored 2026-07-27, never Neon-applied.
+  // Absent from _system._schema_migrations by construction (new on branch). Leave this list only after
+  // owner Neon-apply + ledger-backfill and GUARD re-proves both ledger rows.
+  "202609100060_mnt_link_03b_wo_source_intransit_fk.sql",
+  "202609100070_mnt_ent_01_parts_inventory_company_fk.sql",
 ];
 
 /**
