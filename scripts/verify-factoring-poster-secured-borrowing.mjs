@@ -31,6 +31,8 @@ const ALLOWED_ROLES = new Set([
   "cash_clearing",
   "factor_reserve_held",
   "factor_fee_expense",
+  // FACT-05 — ACH/wire transaction cost (BC-Ach & Wire Fees); distinct from financing fee.
+  "factor_wire_fee",
   "factoring_advance_liability",
   "ar_control",
   "factoring_recoursed_ar",
@@ -46,6 +48,7 @@ const LEG_CONTRACT = {
       cash_clearing: "debit",
       factor_reserve_held: "debit",
       factor_fee_expense: "debit",
+      factor_wire_fee: "debit",
       factoring_advance_liability: "credit",
     },
     forbidden: ["ar_control"],
