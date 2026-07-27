@@ -2,26 +2,8 @@
   "note": "HELD MIGRATIONS — each carries a 'DO NOT RUN ON PROD' marker and must run ONLY on a Neon branch by Jorge's hand, then be ledger-backfilled so prod db:migrate skips it. verify:hold-migrations-registered enforces bidirectional parity: every migration whose header says DO-NOT-RUN must be listed here, and every entry here must still carry the marker — so a held migration can never silently lose its marker (which would let db:migrate fire it on prod).",
   "held": [
     {
-      "file": "202608060000_acct_r03_catalogs_account_merge_records.sql",
-      "reason": "[HOLD-FOR-JORGE — FINANCIAL CLUSTER] ACCT-R-03 catalogs.account_merge_records — Owner-only CoA merge; BUILD-AND-HOLD until Jorge Neon-applies (#3526)"
-    },
-    {
-      "file": "202608110000_safety_civil_fine_expense_gl_hop.sql",
-      "reason": "[HOLD-FOR-JORGE - TIER 1 FINANCIAL] SAFETY FINE-GL HOP - the COMPANY-PAID civil-fine expense leg. Registers SAFETY_FINE_GL_POSTING_ENABLED (lib.feature_flags, default_enabled=FALSE, per-entity kill switch); widens both CoA-role CHECKs as a TRUE SUPERSET to admit role 'civil_fines_expense'; adds additive JE-linkage columns expense_je_id/expense_posted_at/expense_posted_by_user_id (+FK, +2 partial indexes) on safety.civil_fines; FORCE RLS + grants + REVOKE DELETE on safety.civil_fines (0050 set ENABLE but never FORCE). Creates NO catalogs.accounts row and seeds NO chart_of_accounts_roles mapping - the OWNER designates the civil_fines_expense account via the CoaRoles page; the role has no resolver shape-fallback so it fails CLOSED until designated. No GL math (poster reuses accounting.createJournalEntry + resolveRoleAccount). No QBO write-back. Idempotent, fresh-DB-safe (every statement to_regclass-guarded), void-not-delete (no DROP/DELETE/TRUNCATE). NOT YET applied on prod - validated apply-twice on a throwaway Postgres 16 container; owner Neon-applies then ledger-backfills. Posting flag stays OFF until final cutover."
-    },
-    {
       "file": "202608120000_item5a_demo_purge_recursive_cascade.sql",
       "reason": "[HOLD-FOR-JORGE — ITEM 5a] Recursive FK-cascade purge of the 17 verified demo fixtures under the owner ruling of 2026-07-25, plus repair of 176 mis-flagged REAL rows and a deprecating COMMENT on is_sample_data. REPLACES the hand-ordered 202608060000, which cannot satisfy 326 FKs across 191 tables. Auto-cascade is auditable because it REFUSES: aborts if the closure reaches accounting/banking/driver_finance/payroll/safety, or exceeds 50,000 rows. Owner Neon-applies after GUARD re-verifies on a fresh branch."
-    },
-    {
-      "file": "202609020000_c2_maintenance_position_history_canonical.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 1 SCHEMA/BACKFILL] SWEEP-C2 repoint 1 of 2: creates maintenance.position_history (identical shape to the RETIRE-class maint.position_history), copies every existing row across (idempotent ON CONFLICT DO NOTHING), FORCE RLS + entity-scoped policy, SELECT/INSERT-only grants (explicit REVOKE UPDATE/DELETE — append-only, matches the legacy table's own grant shape after the maintenance schema's ALTER DEFAULT PRIVILEGES would otherwise widen it). Never DROPS maint.position_history (Rule 07 archive-only) — COMMENT-marked DEPRECATED. The application-code half (safety/position-history/position-history.routes.ts repointed to the new table) ships in the SAME PR, gated on this migration landing first. Validated apply-twice + idempotent re-run on a throwaway Postgres 16 container; owner Neon-applies then ledger-backfills."
-    },
-    {
-      "file": "202609030000_mnt_econ_01_parts_purchase_gl_hop.sql",
-      "reason": "[HOLD-FOR-JORGE - TIER 1 FINANCIAL] MNT-ECON-01 parts purchase A/P+GL hop. Registers PARTS_PURCHASE_GL_POSTING_ENABLED (lib.feature_flags, default_enabled=FALSE); widens both CoA-role CHECKs as a TRUE SUPERSET to admit role maintenance_parts_expense; creates accounting.parts_purchase_postings linkage ledger (FORCE RLS, REVOKE DELETE). Creates NO catalogs.accounts row and seeds NO chart_of_accounts_roles mapping. No GL math — poster reuses createBill + postSourceTransaction + createJournalEntry.",
-      "added_at": "2026-07-26",
-      "block": "MNT-ECON-01"
     },
     {
       "file": "202609040000_sweep_c11_driver_subcatalog_split_brain_lock.sql",
