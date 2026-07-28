@@ -36,9 +36,25 @@ export function findOrphanMirrorRows(rows) {
 async function main() {
   if (process.argv.includes("--selftest")) return selftest();
 
+  // LIVE-DATA GUARD, opt-in — following the established shape of verify-no-test-units-in-prod.
+  //
+  // The invariant is about PRODUCTION data. Run against CI's database it fails on legitimate test
+  // FIXTURES: tms-vendor-push-tenant-isolation.test.ts deliberately inserts an mdata.qbo_vendors row
+  // for a company with no connection, because that is the isolation it is testing. A guard that trips
+  // on a correct fixture will be allowlisted within a week, and then it protects nothing.
+  //
+  // So the live scan is explicit rather than implicit, and — per S12 of the guard shape-vs-substance
+  // register — it says SKIPPED-DB-CHECK out loud and names the missing precondition, so a skipped
+  // guard can never be mistaken for a passing one. Run it against prod with:
+  //   ENABLE_QBO_MIRROR_LEAK_LIVE_CHECK=true DATABASE_URL=<prod> node scripts/verify-qbo-mirror-requires-connection.mjs
   const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
-  if (!connectionString) {
-    console.log(`${LABEL} SKIP-capability: database → ci / build-typecheck (no DATABASE_URL).`);
+  if (!connectionString || process.env.ENABLE_QBO_MIRROR_LEAK_LIVE_CHECK !== "true") {
+    const missing = !connectionString
+      ? "DATABASE_URL is unset"
+      : "ENABLE_QBO_MIRROR_LEAK_LIVE_CHECK is not 'true'";
+    console.log(
+      `${LABEL} — selftest PASSED · SKIPPED-DB-CHECK (${missing}); the live mirror-vs-connection scan did NOT run`
+    );
     return;
   }
 
