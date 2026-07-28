@@ -124,7 +124,7 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
       try {
         const inserted = await client.query<{ id: string }>(
           `
-            INSERT INTO mdata.qbo_vendors (
+            INSERT INTO accounting.qbo_vendors (
               operating_company_id,
               qbo_id,
               display_name,
@@ -134,10 +134,8 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
               active,
               created_in_tms,
               payload_json,
-              billing_address_line1, billing_city, billing_state, billing_postal_code,
-              account_number, terms, tax_id, track_1099, default_expense_account_qbo_id
-            ) VALUES ($1, NULL, $2, $3, $4, $5, true, true, '{}'::jsonb,
-              $6, $7, $8, $9, $10, $11, $12, COALESCE($13, false), $14)
+              eligible_1099
+            ) VALUES ($1, NULL, $2, $3, $4, $5, true, true, $6::jsonb, COALESCE($7, false))
             RETURNING id
           `,
           [
@@ -146,15 +144,18 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
             body.company_name ?? null,
             body.primary_email ?? null,
             body.primary_phone ?? null,
-            body.billing_address_line1 ?? null,
-            body.billing_city ?? null,
-            body.billing_state ?? null,
-            body.billing_postal_code ?? null,
-            body.account_number ?? null,
-            body.terms ?? null,
-            body.tax_id ?? null,
+            JSON.stringify({
+              billing_address_line1: body.billing_address_line1 ?? null,
+              billing_city: body.billing_city ?? null,
+              billing_state: body.billing_state ?? null,
+              billing_postal_code: body.billing_postal_code ?? null,
+              account_number: body.account_number ?? null,
+              terms: body.terms ?? null,
+              tax_id: body.tax_id ?? null,
+              track_1099: body.track_1099 ?? false,
+              default_expense_account_qbo_id: body.default_expense_account_qbo_id ?? null,
+            }),
             body.track_1099 ?? null,
-            body.default_expense_account_qbo_id ?? null,
           ]
         );
         const mirrorId = String(inserted.rows[0]?.id ?? "");
@@ -164,7 +165,14 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
           entity: "vendor",
           operation: "create",
         });
-        await appendCrudAudit(client, String(user.uuid), "mdata.qbo.vendor.created_tms", { mirror_row_id: mirrorId }, "info", "P6-T11182");
+        await appendCrudAudit(
+          client,
+          String(user.uuid),
+          "accounting.qbo.vendor.created_tms",
+          { mirror_row_id: mirrorId },
+          "info",
+          "ACCT-F06"
+        );
         await client.query("COMMIT");
         return { id: mirrorId };
       } catch (error) {
@@ -197,7 +205,7 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
       try {
         const res = await client.query(
           `
-            UPDATE mdata.qbo_vendors
+            UPDATE accounting.qbo_vendors
             SET
               display_name = COALESCE($3, display_name),
               company_name = COALESCE($4, company_name),
@@ -228,7 +236,14 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
           entity: "vendor",
           operation: "update",
         });
-        await appendCrudAudit(client, String(user.uuid), "mdata.qbo.vendor.updated_tms", { mirror_row_id: params.data.id }, "info", "P6-T11182");
+        await appendCrudAudit(
+          client,
+          String(user.uuid),
+          "accounting.qbo.vendor.updated_tms",
+          { mirror_row_id: params.data.id },
+          "info",
+          "ACCT-F06"
+        );
         await client.query("COMMIT");
         return { kind: "ok" as const };
       } catch (error) {

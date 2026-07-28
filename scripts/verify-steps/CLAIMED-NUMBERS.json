@@ -1082,6 +1082,7 @@
     "1683": "1683-verify-migration-lane-band.mjs",
     "1684": "1684-verify-bank-f09-settings-reports-email-queue.mjs",
     "1687": "1687-verify-schema-parity-window-bounded.mjs",
+    "1691": "1691-verify-categories-read-canonical-ledger.mjs",
     "1700": "1700-verify-acct-link-03-bill-unit-density.mjs",
     "1702": "1702-verify-money-pr-local-gate.mjs",
     "1704": "1704-verify-acct-r04-deploy-smoke-closure.mjs",
@@ -1091,6 +1092,9 @@
     "1712": "1712-verify-g4-deploy-smoke-requires-fixed-unit.mjs",
     "1714": "1714-verify-acct-econ-05-canonical-qbo-vendors-map.mjs",
     "1716": "1716-verify-bank-f10-fuel-overage-recovery-wired.mjs",
+    "1718": "1718-verify-acct-econ-05-canonical-qbo-vendor-inbound-writes.mjs",
+    "1720": "1720-verify-acct-econ-05-qbo-vendor-master-reads.mjs",
+    "1722": "1722-verify-acct-f06-tms-vendor-writers.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
@@ -1104,8 +1108,8 @@
   "_note": "CLAIMED verify-step numbers. Every PR adding a verify-step MUST add its number here IN THE SAME COMMIT. Two agents claiming the same number then CONFLICT IN GIT instead of silently agreeing and reddening main afterwards.",
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",
   "_how_to_claim": "Pick the next free number in your band, add \"<number>\": \"<filename>\", commit it WITH the guard.",
-  "generated_at": "2026-07-26",
-  "total_claimed": 784,
+  "generated_at": "2026-07-28T13:11:57Z",
+  "total_claimed": 809,
   "known_duplicates_frozen": {
     "15": [
       "15-verify-accounting-autoload-coverage.mjs",

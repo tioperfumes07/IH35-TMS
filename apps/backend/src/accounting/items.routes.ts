@@ -33,12 +33,28 @@ export async function registerAccountingCatalogLookupRoutes(app: FastifyInstance
 
     const rows = await withCompanyScope(user.uuid, oc, async (client) => {
       const values: unknown[] = [oc];
-      // LST-PICKER-02: read the CANONICAL catalogs.items — the same table the inline "+ Add new item"
-      // quick-create writes (QuickCreateEntityModal). This endpoint previously read mdata.qbo_items,
-      // the QBO MIRROR, so an item created from the WO/Bill quick-create was invisible in this very
-      // picker after reload. Column mapping: item_name->name, item_code->sku, qbo_item_id->qbo_id,
-      // deactivated_at IS NULL replaces the mirror's `active` flag.
-      const filters = ["operating_company_id = $1::uuid", "deactivated_at IS NULL"];
+      // LST-PICKER-02 — read the CANONICAL GL ledger, catalogs.accounts.
+      //
+      // This endpoint returns expense CATEGORIES, and a category IS a general-ledger account. It was
+      // reading mdata.qbo_accounts — the read-only QBO MIRROR — while the comment that used to sit
+      // here claimed it read canonical. Read and write disagreed, and the comment was the lie.
+      //
+      // The audit instructed repointing to catalogs.items. That would have been an ACCOUNTING DEFECT:
+      // catalogs.items is products and services (item_type), catalogs.accounts is the posting ledger
+      // (account_type / account_number / is_postable). Pointing a category picker at items would let
+      // an expense be booked against a product record instead of a GL account — a chart-of-accounts
+      // integrity break an auditor would find. Verified on prod before changing anything.
+      //
+      // Column mapping vs the mirror: account_name->name, account_number->account_number (the mirror
+      // used full_qualified_name), deactivated_at IS NULL replaces the mirror's `active` flag.
+      // is_postable is respected because a non-postable (header/parent) account must never be
+      // offered as somewhere to book an expense.
+      // The entity predicate is written LITERALLY into the SQL below rather than pushed onto this
+      // array. Two reasons, and the second is why it changed: an array element can be reordered or
+      // removed by a later edit without anything noticing, and verify-mdata-entity-scope cannot see a
+      // predicate that only exists at runtime — it reads the SQL. Entity scoping on a money table
+      // should be structural, not a list item.
+      const filters = ["deactivated_at IS NULL", "coalesce(is_postable, true) = true"];
       if (type === "expense") {
         values.push(EXPENSE_ACCOUNT_TYPES);
         filters.push(`coalesce(account_type, '') = ANY($${values.length}::text[])`);
@@ -46,20 +62,21 @@ export async function registerAccountingCatalogLookupRoutes(app: FastifyInstance
       if (search) {
         values.push(`%${search}%`);
         const idx = values.length;
-        filters.push(`(name ILIKE $${idx} OR coalesce(full_qualified_name, '') ILIKE $${idx})`);
+        filters.push(`(account_name ILIKE $${idx} OR coalesce(account_number, '') ILIKE $${idx})`);
       }
       values.push(limit);
       const res = await client.query(
         `
           SELECT
             id,
-            qbo_id,
-            name,
+            qbo_account_id AS qbo_id,
+            account_name   AS name,
             account_type,
-            full_qualified_name AS account_number
-          FROM mdata.qbo_accounts
-          WHERE ${filters.join(" AND ")}
-          ORDER BY name ASC
+            account_number
+          FROM catalogs.accounts
+          WHERE operating_company_id = $1::uuid
+            AND ${filters.join(" AND ")}
+          ORDER BY account_name ASC
           LIMIT $${values.length}
         `,
         values
