@@ -263,3 +263,42 @@ No per-script `verify:*` loop before `block-ready`, and C5 must not nest `verify
 | --- | --- |
 | Block 9 (before C5 dedupe) | 702s |
 | Block 10 (target after C5 dedupe + pre-push slim) | ~487s |
+
+---
+
+## §N. Branch freshness is measured by OVERLAP, not by distance (permanent — 2026-07-28)
+
+**The rule:** a PR whose base is behind `origin/main` is FINE. It is stale — and must rebase — only if
+main changed a file this branch also changes, or if both touch a **globally-allocated** path.
+
+**Why this changed.** `verify:branch-fresh` previously failed whenever the base was *any* commits behind
+main. That is a hard serialization: every merge invalidates every other open PR, so N open PRs cost on the
+order of N² full CI rebuilds at ~20–40 minutes each. A single PR routinely took hours to land through no
+fault of its own, and the entire cost bought nothing — the vast majority of those rebases were between PRs
+that touched completely unrelated files. GitHub's own ruleset already sets
+`strict_required_status_checks_policy: false`; the zero-behind requirement was ours alone.
+
+**What the gate is actually for** is catching a branch that is stale *in a way that matters*: CI validated a
+combination of changes that will never exist once the branch merges. Distance from main is a proxy for that,
+and a poor one — it punishes every unrelated PR equally while catching nothing extra.
+
+**Globally-allocated paths** still force a rebase even with no file overlap, because there the collision is
+in a shared *number space* rather than a shared file:
+
+| Path | Why any concurrent change collides |
+|---|---|
+| `db/migrations/` | migration numbers are globally ordered; two lanes can pick the same one |
+| `scripts/verify-steps/` | verify-step numbers are globally allocated |
+| `package-lock.json` | lockfile resolution is global |
+
+Both real collisions on 2026-07-28 were exactly this shape — a duplicate migration number
+(`202610060000` claimed by two lanes) and a duplicate verify-step number (`1665`). Neither would be caught
+by a same-file check, which is why the coupled-path list exists and must not be dropped.
+
+**Enforcement:** `scripts/verify-branch-fresh.mjs`, proven by `scripts/verify-branch-fresh-selftest.mjs`
+(verify-step `1681`), which builds REAL throwaway git repositories and asserts all four cases: behind with no
+overlap passes; same-file, same-migration-dir and same-verify-step-dir each fail. Set `BRANCH_FRESH_MAX=0`
+plus an overlapping change to reproduce the old behaviour.
+
+**Do not "fix" a red branch-fresh by widening this rule.** If it fires, main genuinely moved underneath you
+in a way that matters — rebase.

@@ -102,10 +102,75 @@ export function verifyBranchFresh(cliArgs = process.argv.slice(2)) {
     fail((error instanceof Error ? error.message : String(error)).trim());
   }
 
+  // ── Freshness by OVERLAP, not by distance ────────────────────────────────────────────────────
+  //
+  // This gate used to fail whenever the base was ANY commits behind main. That is a hard
+  // serialization: every merge invalidates every other open PR, so N open PRs cost N^2 full CI
+  // rebuilds at ~20-40 minutes each, and a single PR can take hours to land through no fault of its
+  // own. GitHub's own ruleset already sets strict_required_status_checks_policy=false — the
+  // zero-behind rule was ours alone.
+  //
+  // What the gate is actually FOR is catching a branch that is stale in a way that matters: main
+  // changed something this branch also changed (so CI validated a combination that will never
+  // exist), or main moved something whose correctness depends on global allocation. Distance from
+  // main is a proxy for that, and a bad one — it punishes every unrelated PR equally.
+  //
+  // So: being behind is fine. Being behind ON THE SAME FILES is not.
   if (behindCount > maxBehind) {
-    fail(
-      `base ${baseSha} is ${behindCount} full-tree commit(s) behind ${mainRef}; maximum allowed is ${maxBehind}`
+    let mainFiles = [];
+    let branchFiles = [];
+    let mergeBase = "";
+    try {
+      mergeBase = runGit(["merge-base", baseSha, mainRef]);
+      mainFiles = runGit(["diff", "--name-only", `${mergeBase}..${mainRef}`]).split("\n").filter(Boolean);
+      branchFiles = runGit(["diff", "--name-only", `${mergeBase}..HEAD`]).split("\n").filter(Boolean);
+    } catch (error) {
+      // If the comparison itself cannot be made, fall back to the strict rule rather than guessing.
+      fail(
+        `base ${baseSha} is ${behindCount} commit(s) behind ${mainRef} and the overlap could not be ` +
+          `computed (${(error instanceof Error ? error.message : String(error)).trim()}) — rebase and re-run.`
+      );
+    }
+
+    const branchSet = new Set(branchFiles);
+    const overlap = mainFiles.filter((f) => branchSet.has(f));
+
+    // Paths where correctness is GLOBAL, not per-file: two PRs can touch different files here and
+    // still collide, because the thing being allocated is a number shared across the repo. Both of
+    // tonight's real collisions were exactly this — a duplicate migration number and a duplicate
+    // verify-step number — and neither would be caught by a same-file check.
+    const COUPLED = [
+      { prefix: "db/migrations/", why: "migration numbers are globally ordered; two lanes can pick the same one" },
+      { prefix: "scripts/verify-steps/", why: "verify-step numbers are globally allocated" },
+      { prefix: "package-lock.json", why: "lockfile resolution is global" },
+    ];
+    const coupled = COUPLED.filter(
+      (c) => mainFiles.some((f) => f.startsWith(c.prefix)) && branchFiles.some((f) => f.startsWith(c.prefix))
     );
+
+    if (overlap.length > 0 || coupled.length > 0) {
+      const reasons = [];
+      if (overlap.length > 0) {
+        reasons.push(
+          `main changed ${overlap.length} file(s) this branch also changes: ${overlap.slice(0, 10).join(", ")}` +
+            (overlap.length > 10 ? `, +${overlap.length - 10} more` : "")
+        );
+      }
+      for (const c of coupled) {
+        reasons.push(`both touch ${c.prefix} — ${c.why}`);
+      }
+      fail(
+        `base ${baseSha} is ${behindCount} commit(s) behind ${mainRef} AND overlaps it. Rebase.\n  - ` +
+          reasons.join("\n  - ")
+      );
+    }
+
+    console.log(
+      `verify:branch-fresh OK (base=${baseSha} behind=${behindCount} but NO overlap with ${mainRef}: ` +
+        `${mainFiles.length} file(s) moved on main, ${branchFiles.length} changed here, 0 shared, ` +
+        `no globally-allocated path touched by both) — rebase not required`
+    );
+    return { baseSha, behindCount, mainRef, maxBehind, overlapFree: true };
   }
 
   console.log(
