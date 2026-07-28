@@ -358,6 +358,7 @@ import { initializeQboHistoricalImportRunner } from "./cron/qbo-historical-impor
 import { initializeQboSyncQueueRunner } from "./cron/qbo-sync-queue-runner.js";
 import { initializeQboInboundSyncCron, stopQboInboundSyncCron } from "./cron/qbo-inbound-sync.cron.js";
 import { initializeQboCdcPollCron } from "./cron/qbo-cdc-poll.cron.js";
+import { initializeDepreciationAutopostCron } from "./cron/depreciation-autopost.cron.js";
 import { initializeRecurringTemplatesCron } from "./cron/recurring-templates.cron.js";
 import { initializeRecurringBillGeneratorWorker, stopRecurringBillGeneratorWorker } from "./jobs/recurring-bill-generator-worker.js";
 import { initializeQboTokenRefreshCron } from "./cron/qbo-token-refresh-cron.js";
@@ -1098,6 +1099,15 @@ async function main() {
     app.log.info("[STARTUP] accounting cron suite initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] accounting cron suite failed");
+  }
+
+  try {
+    // FLT-01: monthly asset-depreciation batch; per-entity FIXED_ASSET_AUTOPOST_ENABLED stays OFF
+    // unless Jorge explicitly enables it. Each eligible asset receives an append-only run receipt.
+    initializeDepreciationAutopostCron(app);
+    app.log.info("[STARTUP] depreciation-autopost cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] depreciation-autopost cron failed");
   }
 
   try {
