@@ -49,8 +49,7 @@ export const EXPECTED_HELD = [
   //   202608060000, 202608110000, 202609020000, 202609030000, 202609300000 → applied_held via #3670.
   //   202609290000 (DISP-01 latch) also applied on prod; file lands with #3663 as applied_held (not held).
 
-  // FACT-PHANTOM-01 HOLD until Jorge Neon-apply (2026-07-27).
-  "202609100100_fact_phantom_01_fact_01_factoring_summary_linkage.sql",
+  // FACT-PHANTOM-01 Neon-applied 2026-07-28 (both ledgers) → applied_held; left EXPECTED_HELD.
   "202609260000_archive_legacy_fixed_assets_schema_rule07.sql",
   "202610010010_drv_02_escrow_pending_source_type_catalog_fk.sql",
   // SET-02 left EXPECTED_HELD 2026-07-26 after Cursor owner Neon-apply + ledger-backfill.
@@ -83,15 +82,7 @@ export const EXPECTED_HELD = [
   // 202609190000_c9_form_roundtrip_persist_columns.sql (applied 21:28Z), one of FIVE migrations
   // applied on prod that do not exist in the repo. Reported separately; not this PR's to fix.
   "202609250000_flt_02_real_fleet_owned_by_trk.sql",
-  // Driver recovery policy per situation (owner ruling 2026-07-27). Authored today and never applied
-  // anywhere — unapplied by construction, not "GUARD re-proved unapplied". Live cross-check on
-  // br-fancy-credit-akjnd07a 2026-07-27 (lucia, positive control mdata.drivers non-zero):
-  // may_draw_escrow exists as a column in NO table in the database, and
-  // catalogs.driver_deduction_types still holds only its 3 INS-DED rows — so neither the ALTER nor
-  // the seed has run. Numbered 202609300000: prod's true ledger max is 202609280000, and both
-  // 202609190000 and 202609220000 are already taken (see FLT-02 above). Leaves this list only when
-  // the owner Neon-applies + ledger-backfills and GUARD re-proves the ledger row.
-  "202609310000_driver_deduction_type_recovery_policy.sql",
+  // 202609310000 driver recovery — Neon-applied 2026-07-28 (both ledgers) → applied_held.
   // FA-ARCHIVE applied Neon 2026-07-28 — now in applied_held (removed from unapplied allowlist).
   // BANK-DOM-05 applied as 202609010010 — applied_held.
   // F9-02 applied as 202609010040 — applied_held.
@@ -114,23 +105,15 @@ export const EXPECTED_HELD = [
   // FACT-01 applied as 202609100040 — applied_held.
   // C9 / MNT-ECON-04 also left EXPECTED_HELD 2026-07-26 after Cursor owner Neon-apply + ledger-backfill
   // (moved to applied_held[] with applied_on_prod:true).
-  // MNT-LINK-03b + MNT-ENT-01 (PR #3655) — HOLD migs authored 2026-07-27, never Neon-applied.
-  // Absent from _system._schema_migrations by construction (new on branch). Leave this list only after
-  // owner Neon-apply + ledger-backfill and GUARD re-proves both ledger rows.
-  "202609100060_mnt_link_03b_wo_source_intransit_fk.sql",
-  "202609100070_mnt_ent_01_parts_inventory_company_fk.sql",
-  // ND-INV-01 stage 1 (#3658). Authored on this branch; NEVER applied on prod — GUARD §3 allowlist
-  // must list it until owner Neon-applies + ledger-backfills. Same pattern as MNT-LINK-03b / MNT-ENT-01.
+  // MNT-LINK-03b + MNT-ENT-01 — Neon-applied 2026-07-28 (both ledgers) → applied_held.
+  // ND-INV-01 stage 1 (#3658). NEVER applied on prod — stays EXPECTED_HELD until Neon-apply.
   "202609100090_nd_inv_01_proforma_invoice_pipeline.sql",
   // FLT-02 class seed Neon-applied 2026-07-27 → applied_held in .held-migrations.json (NOT EXPECTED_HELD).
-  // FACT-02 HOLD until Jorge Neon-apply (2026-07-27).
-  "202610010000_fact_02_subledger_je_fk.sql",
+  // FACT-02 Neon-applied 2026-07-28 (both ledgers) → applied_held; left EXPECTED_HELD.
   // DISP-01 (#3663) owner Neon-applied 202609290000 — moved to applied_held[]; not in EXPECTED_HELD.
-  // ACCT-ECON-05 (#3712) — authored 2026-07-28; NEVER Neon-applied. Live cross-check
-  // br-fancy-credit-akjnd07a 2026-07-28 lucia: filename absent from _system._schema_migrations;
-  // accounting.qbo_vendors=2744 / mdata.qbo_vendors=2780 (Δ≈36 residual). Leaves this list only
-  // after owner Neon-apply + ledger-backfill and GUARD re-proves both ledger rows.
-  "202610121800_acct_econ_05_qbo_vendors_canonical_backfill.sql",
+  // ACCT-ECON-05 backfill Neon-applied 2026-07-28T23:52Z (Cursor, Jorge Neon authority):
+  // lucia prove accounting.qbo_vendors=2782 / mdata=2782 / residual_mdata_only=0; both ledgers row present.
+  // Left EXPECTED_HELD → applied_held[]. vendor_credits still 0 — ACCT-ECON-05 PASS still needs live credit.
 ];
 
 /**
