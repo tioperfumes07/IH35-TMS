@@ -47,6 +47,10 @@ export function analyse(inventory, routeMap) {
           `means nothing if the route comes back — remove the route or change the ruling.`
       );
     }
+    // ROUTED-READ-ONLY is legitimately routed — it is reachable for inspection but must never gain a
+    // creator (Blueprint §7.3.2.4.2: posting templates are code-managed and NOT editable in UI). The
+    // taxonomy originally lacked this class, so three code-managed catalogs were stamped HEADLESS and
+    // this guard correctly refused them for having routes. The label was wrong, not the routes.
     if (entry.classification === "HEADLESS-BY-DESIGN") {
       problems.push(
         `catalogs.${table} is classified HEADLESS-BY-DESIGN but the backend routes it. Either it is ` +
