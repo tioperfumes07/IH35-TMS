@@ -65,7 +65,15 @@ export async function countModuleRecords(
     presentSpecs.some((spec) => spec.companyScoped) ? [operatingCompanyId] : []
   );
   // journal_entry_types is now a real count-spec row, not a hardcoded literal added on top.
-  return Number(res.rows[0]?.count ?? 0);
+  //
+  // LST-COUNT-01: a dropped table used to vanish silently, so the badge UNDERSTATED and looked
+  // authoritative doing it — a number that is quietly wrong is worse than one that admits it. The
+  // count still degrades rather than 500ing (that resilience is deliberate), but the omission is now
+  // reported so it can never masquerade as a complete total.
+  const missing = specs
+    .filter((spec) => !presentSpecs.includes(spec))
+    .map((spec) => `${spec.schema ?? "catalogs"}.${spec.table}`);
+  return { count: Number(res.rows[0]?.count ?? 0), missing };
 }
 
 export async function registerListsCountsRoutes(app: FastifyInstance) {
@@ -76,10 +84,20 @@ export async function registerListsCountsRoutes(app: FastifyInstance) {
       const query = COMPANY_QUERY.safeParse(req.query ?? {});
       if (!query.success) return sendValidationError(reply, query.error);
 
-      const count = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
+      const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
         countModuleRecords(client, module, query.data.operating_company_id)
       );
-      return { count };
+      if (result.missing.length > 0) {
+        req.log.warn(
+          { module, missing: result.missing },
+          "lists count is DEGRADED — spec tables absent on this database; badge understates"
+        );
+      }
+      // `degraded` is only present when something was actually dropped, so existing consumers that
+      // read `.count` are unaffected.
+      return result.missing.length > 0
+        ? { count: result.count, degraded: true, missing_tables: result.missing }
+        : { count: result.count };
     });
   }
 }

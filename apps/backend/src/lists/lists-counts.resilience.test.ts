@@ -32,8 +32,8 @@ describe("countModuleRecords — missing-table resilience (#P3)", () => {
     // safety spec = internal_fine_reasons, civil_fine_types (MISSING on prod), company_violation_types
     const present = new Set(["catalogs.internal_fine_reasons", "catalogs.company_violation_types"]);
     const client = mockClient(present, 11);
-    const count = await countModuleRecords(client as unknown as CountClient, "safety", "00000000-0000-0000-0000-000000000000");
-    expect(count).toBe(11);
+    const result = await countModuleRecords(client as unknown as CountClient, "safety", "00000000-0000-0000-0000-000000000000");
+    expect(result.count).toBe(11);
     const countCall = client.calls.find((c) => !c.sql.includes("to_regclass"))!;
     expect(countCall.sql).not.toContain("civil_fine_types"); // missing table omitted from the sum
     expect(countCall.sql).toContain("internal_fine_reasons");
@@ -41,15 +41,15 @@ describe("countModuleRecords — missing-table resilience (#P3)", () => {
 
   it("returns 0 (never throws) when every table in a domain is missing", async () => {
     const client = mockClient(new Set(), 0);
-    const count = await countModuleRecords(client as unknown as CountClient, "fuel", "00000000-0000-0000-0000-000000000000");
-    expect(count).toBe(0);
+    const result = await countModuleRecords(client as unknown as CountClient, "fuel", "00000000-0000-0000-0000-000000000000");
+    expect(result.count).toBe(0);
     const countCall = client.calls.find((c) => !c.sql.includes("to_regclass"))!;
     expect(countCall.sql).toContain("SELECT 0::int AS count");
   });
 
   it("still adds the accounting journal-entry constant when tables are missing", async () => {
     const client = mockClient(new Set(), 0);
-    const count = await countModuleRecords(client as unknown as CountClient, "accounting", "00000000-0000-0000-0000-000000000000");
-    expect(count).toBe(0); // 0 live rows; the hardcoded +3 literal was removed 2026-07-25 (journal_entry_types is a real count-spec row now)
+    const result = await countModuleRecords(client as unknown as CountClient, "accounting", "00000000-0000-0000-0000-000000000000");
+    expect(result.count).toBe(0); // 0 live rows; the hardcoded +3 literal was removed 2026-07-25 (journal_entry_types is a real count-spec row now)
   });
 });
