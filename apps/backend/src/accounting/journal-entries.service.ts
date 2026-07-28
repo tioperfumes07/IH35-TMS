@@ -35,8 +35,8 @@ async function hasReversalLinkageColumns(client: QueryableClient): Promise<boole
   return present;
 }
 
-// ACCT-LINK-01 — journal_entry_type_id ships in HELD migration 202607960000 (owner Neon-apply).
-// Same expand/contract pattern as reversal linkage: tolerate absence until applied.
+// ACCT-LINK-01 — journal_entry_type_id is LIVE on Neon (mig 202607960000 applied).
+// Expand/contract retained so fresh DBs before that mig still boot.
 let journalEntryTypeColumnPresent = false;
 async function hasJournalEntryTypeColumn(client: QueryableClient): Promise<boolean> {
   if (journalEntryTypeColumnPresent) return true;
@@ -52,10 +52,41 @@ async function hasJournalEntryTypeColumn(client: QueryableClient): Promise<boole
   return present;
 }
 
+/**
+ * Infer catalogs.journal_entry_types.code from memo/source when the caller omitted a type.
+ * Used by create path + Neon backfill so auto posters cannot leave journal_entry_type_id NULL.
+ */
+export function inferJournalEntryTypeCode(input: {
+  journal_entry_type_code?: string | null;
+  source?: JournalEntrySource | null;
+  memo?: string | null;
+}): string {
+  const explicit = input.journal_entry_type_code?.trim();
+  if (explicit) return explicit;
+  const memo = (input.memo ?? "").toLowerCase();
+  if (memo.includes("opening balance")) return "OPENING_BALANCE";
+  if (memo.includes("invoice") && memo.includes("posting")) return "SALES_INVOICE";
+  if (memo.startsWith("bill ") || memo.includes(" bill ") || /^bill\b/.test(memo)) return "BILL";
+  if (memo.includes("bill payment")) return "BILL_PAYMENT";
+  if (memo.includes("factoring")) return "FACTORING_ADVANCE";
+  if (memo.includes("escrow")) return "ESCROW_ENTRY";
+  if (memo.includes("depreciation")) return "DEPRECIATION";
+  if (memo.includes("transfer")) return "TRANSFER";
+  if (memo.includes("deposit")) return "DEPOSIT";
+  if (memo.includes("settlement")) return "PAYROLL_SETTLEMENT";
+  // Bank categorization / reversal / guard fixtures → GENERAL (typed, not NULL).
+  return "GENERAL";
+}
+
 async function resolveJournalEntryTypeId(
   client: QueryableClient,
-  input: { journal_entry_type_id?: string | null; journal_entry_type_code?: string | null; source?: JournalEntrySource }
-): Promise<string | null> {
+  input: {
+    journal_entry_type_id?: string | null;
+    journal_entry_type_code?: string | null;
+    source?: JournalEntrySource;
+    memo?: string | null;
+  }
+): Promise<string> {
   if (input.journal_entry_type_id) {
     const byId = await client.query<{ id: string }>(
       `SELECT id::text FROM catalogs.journal_entry_types WHERE id = $1::uuid AND is_active = true LIMIT 1`,
@@ -64,8 +95,9 @@ async function resolveJournalEntryTypeId(
     if (!byId.rows[0]?.id) throw new Error("journal_entry_type_not_found");
     return byId.rows[0].id;
   }
-  const code = (input.journal_entry_type_code ?? (input.source === "manual" ? "GENERAL" : null))?.trim();
-  if (!code) return null;
+  // ROOT CAUSE FIX: auto posters used to skip type (null) → 0% inbound density on live JEs.
+  // Always resolve a catalog code (memo heuristic → GENERAL fallback). Never leave NULL.
+  const code = inferJournalEntryTypeCode(input);
   const byCode = await client.query<{ id: string }>(
     `SELECT id::text FROM catalogs.journal_entry_types WHERE lower(code) = lower($1) AND is_active = true LIMIT 1`,
     [code]
@@ -181,6 +213,7 @@ export async function createJournalEntryOnClient(
         journal_entry_type_id: input.journal_entry_type_id,
         journal_entry_type_code: input.journal_entry_type_code,
         source: input.source ?? "manual",
+        memo: input.memo ?? null,
       })
     : null;
 

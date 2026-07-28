@@ -1110,6 +1110,14 @@
       "applied_evidence": "Neon lucia LIVE PASS; dual-ledger checksum 36ada6bc…",
       "block": "ND-FA-01 / A4-D2",
       "added_at": "2026-07-28"
+    },
+    {
+      "file": "202610070000_acct_link_01_je_type_backfill.sql",
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL] ACCT-LINK-01 JE type backfill. Applied Neon 2026-07-28.",
+      "applied_on_prod": true,
+      "applied_evidence": "Neon lucia 8/8 typed; dual-ledger stamped",
+      "block": "ACCT-LINK-01",
+      "added_at": "2026-07-28"
     }
   ],
   "superseded": []
