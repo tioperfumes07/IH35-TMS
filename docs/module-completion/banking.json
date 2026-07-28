@@ -2,7 +2,7 @@
   "module": "banking",
   "title": "Banking (Module 4)",
   "complete": false,
-  "as_of": "2026-07-25T16:50:00.000Z",
+  "as_of": "2026-07-28T18:50:00.000Z",
   "live_sha": "b4c3158",
   "sweep_matrix": "docs/trackers/BANK-MODULE-DOD-SWEEP-MATRIX-2026-07-25.json",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md",
@@ -264,9 +264,9 @@
         "VERIFY-6",
         "VERIFY-8"
       ],
-      "spec": "fuel.fuel_transactions -> driver_finance.driver_settlement_deductions -> FIN-18 settlement poster (fuel_advance_recovery)",
+      "spec": "FUEL-03 fuel.fuel_card_overage_events \u2192 approve-then-recover \u2192 fuel_overage_receivable JE (FUEL-04)",
       "status": "FAIL",
-      "evidence": "Neon lucia 2026-07-28: fuel.fuel_card_overage_policies EXISTS count=3; FUEL_CARD_OVERAGE_RECOVERY_ENABLED default OFF (owner lock). Wiring+held mig applied. Still FAIL until overage recovery is exercised live (or owner accepts honest-empty with tracker) \u2014 no silent flag flip.",
+      "evidence": "2026-07-28: FUEL-03 engine on main (evaluate on both fuel writers; NOT createSettlementDeduction). Neon lucia: fuel.fuel_card_overage_policies count=3 (TRANSP/USMCA/TRK $900); events table applied (202609090010/020). DOD-A gap closed this PR: GET/POST /api/v1/fuel/card-overage-events* \u2192 approveAndPostFuelCardOverage. GUARDs 1609+1623+1716. STAYS FAIL: FUEL_CARD_OVERAGE_ENGINE_ENABLED + GL_POSTING default OFF; zero live posted recoveries; Fuel UI queue UNVERIFIED.",
       "pr": null
     }
   ],

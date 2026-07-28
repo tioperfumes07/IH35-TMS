@@ -10,6 +10,8 @@ import { fileURLToPath } from "node:url";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = "apps/backend/src/fuel/fuel-card-overage.service.ts";
+const ROUTES = "apps/backend/src/fuel/fuel-card-overage.routes.ts";
+const INDEX = "apps/backend/src/index.ts";
 const FUEL03_GUARD = "scripts/verify-fuel-overage-engine.mjs";
 
 function read(rel) {
@@ -21,8 +23,12 @@ function read(rel) {
 function collectProblems() {
   const problems = [];
   const service = read(ENGINE);
+  const routes = read(ROUTES);
+  const index = read(INDEX);
   const guard = read(FUEL03_GUARD);
   if (!service) problems.push(`missing ${ENGINE}`);
+  if (!routes) problems.push(`missing ${ROUTES}`);
+  if (!index) problems.push(`missing ${INDEX}`);
   if (!guard) problems.push(`missing ${FUEL03_GUARD}`);
   if (service) {
     if (!service.includes("maybeEvaluateFuelCardOverage")) {
@@ -34,6 +40,17 @@ function collectProblems() {
     if (!service.includes("flushFuelCardOverageAfterCommit")) {
       problems.push(`${ENGINE} must flush overage after fuel ingest commit`);
     }
+  }
+  if (routes) {
+    if (!routes.includes("approveAndPostFuelCardOverage")) {
+      problems.push(`${ROUTES} must wire approveAndPostFuelCardOverage (BANK-F10 DOD-A)`);
+    }
+    if (!routes.includes("/api/v1/fuel/card-overage-events")) {
+      problems.push(`${ROUTES} must expose /api/v1/fuel/card-overage-events list`);
+    }
+  }
+  if (index && !index.includes("registerFuelCardOverageRoutes")) {
+    problems.push(`${INDEX} must mount registerFuelCardOverageRoutes`);
   }
   return problems;
 }
