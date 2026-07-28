@@ -1084,6 +1084,7 @@
     "1700": "1700-verify-acct-link-03-bill-unit-density.mjs",
     "1702": "1702-verify-money-pr-local-gate.mjs",
     "1704": "1704-verify-acct-r04-deploy-smoke-closure.mjs",
+    "1708": "1708-verify-acct-econ-05-canonical-qbo-vendors.mjs",
     "1710": "1710-verify-acct-r09-bill-subnav-type-contract.mjs",
     "1712": "1712-verify-g4-deploy-smoke-requires-fixed-unit.mjs",
     "01": "01-ensure-database-url.mjs",
