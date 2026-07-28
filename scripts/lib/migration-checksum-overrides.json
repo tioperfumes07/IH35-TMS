@@ -308,5 +308,13 @@
     "reason": "FUEL-03 follow-on unit_id FK renumber (was 202609260000->202609280000->202609090020, Cursor band-fix 2026-07-27). Comment-only drift: only the RENUMBER band-fix note changed; the DO-block DDL is byte-identical and already applied on prod (fuel_card_overage_events_unit_fkey verified live on Neon 2026-07-27). Do not re-apply. Never edit applied DDL again.",
     "added_at": "2026-07-27",
     "added_in_pr": "DEPLOY-HOTFIX-fuel03-090020-checksum"
+  },
+  {
+    "filename": "202610090000_retire_ifta_states_near_twin.sql",
+    "ledger_checksum": "ba7031ada319abc49ad1fd6fa66137ef3faf8aef76e44698a9f643bd97033c01",
+    "disk_checksum": "97fa91dd5b76dc3e1ce5b2aa2d5d8cca06ba8126668f16b35406aff84ac7f152",
+    "reason": "Applied to prod, then corrected: the original REFUSED to run on a non-empty table, which CI's fresh-DB run disproved (0062 seeds 15 rows; prod has 0). Emptiness was never the basis for retirement \u2014 being UNWIRED is \u2014 so the abort became a NOTICE. The APPLIED EFFECT is identical: REVOKE write + deprecated COMMENT, SELECT preserved, zero rows touched. Only the non-executing guard clause changed. RENUMBERED 202610060000 -> 202610090000: another lane landed 202610060000_nd_fa_heavy_repair_expense_coa.sql on the same number while this was in flight; two migrations sharing a leading number order only by accident. Both prod ledger rows were re-pointed to the new filename in the same session.",
+    "added_at": "2026-07-28",
+    "added_in_pr": "C11-IFTA-STATES-RETIREMENT"
   }
 ]

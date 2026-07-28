@@ -8,7 +8,7 @@ import { classesCatalogClient } from "../../api/catalogs-accounting";
 import { DatePicker } from "../forms/DatePicker";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../forms/TwoSectionLineEditor";
 import { TotalsStack } from "../forms/shared/TotalsStack";
-import { BILL_TYPE_TABS, TypeTabBar } from "../forms/shared/TypeTabBar";
+import { BILL_TYPE_TABS, TypeTabBar, type BillTypeId } from "../forms/shared/TypeTabBar";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { vendorReferenceOption } from "../parity/referenceOptionLabels";
 import { Combobox } from "../Combobox";
@@ -64,7 +64,7 @@ type Props = {
   /** Human-readable WO id for memo + banner (maintenance linkage). */
   linkedWoDisplayId?: string;
   /** Pre-select bill type tab (maintenance | repair | fuel | driver | vendor). */
-  initialBillType?: string;
+  initialBillType?: BillTypeId;
   submitLabel?: string;
   /** Optional test id on the primary submit button (maintenance modal reuse). */
   submitTestId?: string;
@@ -353,7 +353,15 @@ export function VendorBillForm({
           Linked claim — <EntityLink kind="claim" id={linkedClaimId} label={linkedClaimId.slice(0, 8)} />
         </div>
       ) : null}
-      <TypeTabBar tabs={BILL_TYPE_TABS} activeId={billType} onChange={setBillType} />
+      <TypeTabBar
+        tabs={BILL_TYPE_TABS}
+        activeId={billType}
+        onChange={(tabId) => {
+          if ((BILL_TYPE_TABS as readonly { id: BillTypeId }[]).some((t) => t.id === tabId)) {
+            setBillType(tabId as BillTypeId);
+          }
+        }}
+      />
 
       {/* CHROME-10: flat sections — no nested bordered panel inside the drawer */}
       <div className="space-y-1">

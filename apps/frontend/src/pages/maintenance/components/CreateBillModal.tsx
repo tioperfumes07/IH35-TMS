@@ -6,6 +6,7 @@ import {
 } from "../../../components/accounting/VendorBillForm";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
+import type { BillTypeId } from "../../../components/forms/shared/TypeTabBar";
 
 type Props = {
   open: boolean;
@@ -17,7 +18,7 @@ type Props = {
   /** When present (WO context), the created bill persists a HARD FK to this unit. Falls back to the picker. */
   linkedUnitId?: string;
   /** Pre-select bill type tab when opened from accounting subnav (maintenance | repair | fuel | driver). */
-  initialBillType?: string;
+  initialBillType?: BillTypeId;
   onClose: () => void;
   /** Fired after a successful create with the new bill id (e.g. to open a task-link picker). */
   onCreated?: (billId: string | null) => void;

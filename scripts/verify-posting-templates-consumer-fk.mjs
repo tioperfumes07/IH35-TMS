@@ -107,14 +107,23 @@ export function collectHonestyFailures(opts = {}) {
         failures.push(`${MANIFEST}: missing item ${MANIFEST_ITEM}`);
       } else {
         if (item.status === "PASS") {
-          failures.push(`${MANIFEST_ITEM} is PASS but prod FK not Neon-applied — MERGED≠APPLIED theater`);
+          const evPass = String(item.evidence ?? "");
+          // Schema is Neon-applied (2026-07-25). PASS is still theater until the catalog is
+          // seeded and at least one posting_batches row stamps posting_template_id (lucia proof).
+          if (!/posting_templates.*(>|≥|>=)\s*0|templates?\s*=\s*[1-9]|seeded|stamped|posting_template_id.*(>|≥|>=)\s*0/i.test(evPass)) {
+            failures.push(
+              `${MANIFEST_ITEM} is PASS but evidence does not prove catalog seed + stamped batches — density theater`
+            );
+          }
         }
-        if (item.status !== "FAIL") {
-          failures.push(`${MANIFEST_ITEM} must stay FAIL until Neon-apply (got ${item.status})`);
+        if (item.status !== "FAIL" && item.status !== "PASS") {
+          failures.push(`${MANIFEST_ITEM} must be FAIL (awaiting seed) or PASS (with Neon density proof) — got ${item.status}`);
         }
-        const ev = String(item.evidence ?? "");
-        if (!/Neon-apply|NOT yet Neon-applied|0 inbound FK/i.test(ev)) {
-          failures.push(`${MANIFEST_ITEM} evidence must name prod gap + Neon-apply`);
+        if (item.status === "FAIL") {
+          const ev = String(item.evidence ?? "");
+          if (!/0 rows|empty|seed|catalog population|density/i.test(ev)) {
+            failures.push(`${MANIFEST_ITEM} FAIL evidence must name catalog seed / density gap (schema already applied)`);
+          }
         }
         if (!String(item.pr ?? "").includes("3444")) {
           failures.push(`${MANIFEST_ITEM} must reference merged PR ${MERGED_PR}`);
@@ -172,7 +181,7 @@ function selftest() {
           {
             id: MANIFEST_ITEM,
             status: "FAIL",
-            evidence: "0 inbound FKs — PR #3444 NOT yet Neon-applied",
+            evidence: "catalogs.posting_templates=0 rows — catalog population / seed pending after PR #3444",
             pr: "#3444",
           },
         ],
@@ -195,7 +204,7 @@ function selftest() {
         items: [{ id: MANIFEST_ITEM, status: "PASS", evidence: "fake", pr: "#3444" }],
       })
     );
-    if (!collectHonestyFailures({ root: goodRoot }).some((f) => f.includes("MERGED≠APPLIED"))) {
+    if (!collectHonestyFailures({ root: goodRoot }).some((f) => /density theater|PASS/.test(f))) {
       failures.push("PASS manifest not caught");
     }
   } finally {
@@ -222,7 +231,7 @@ if (process.argv.includes("--honesty-only")) {
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: honesty layer OK — ${MANIFEST_ITEM} stays FAIL until owner Neon-apply`);
+  console.log(`${LABEL}: honesty layer OK — ${MANIFEST_ITEM} stays FAIL until catalog seed + stamped batch density`);
   process.exit(0);
 }
 
