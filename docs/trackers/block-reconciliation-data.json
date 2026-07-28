@@ -1,6 +1,6 @@
 {
  "date": "2026-07-28",
- "generated_at_iso": "2026-07-28T12:19:44.249Z",
+ "generated_at_iso": "2026-07-28T12:54:07.568Z",
  "counts": {
   "PENDING": 19,
   "PENDING (GATED)": 28,
@@ -13478,6 +13478,12 @@
  ],
  "merged_prs": [
   {
+   "number": 3695,
+   "title": "claude: fix(fuel): FUEL-07 — the IFTA jurisdiction catalog was empty, so no entity could file a return",
+   "mergedAt": "2026-07-28T12:38:45Z",
+   "branch": "claude/fuel-07-seed-ifta-jurisdictions"
+  },
+  {
    "number": 3693,
    "title": "claude: fix(safety): SAF-B18 — every fine was filed with no citation image, and the liability it spawns had no evidence behind it",
    "mergedAt": "2026-07-28T12:16:58Z",
@@ -13500,6 +13506,18 @@
    "title": "claude: fix(safety): SAF-B14 — 270 catalog rows nothing could reach; FMCSA severity stored as 0 on every HOS violation",
    "mergedAt": "2026-07-28T11:21:35Z",
    "branch": "claude/saf-b14-bind-orphan-safety-catalogs"
+  },
+  {
+   "number": 3689,
+   "title": "Cursor — ND-FA-01 capitalize $7k + owned-unit fixed-asset register",
+   "mergedAt": "2026-07-28T12:51:30Z",
+   "branch": "cursor/nd-fa-01-capitalize-register"
+  },
+  {
+   "number": 3688,
+   "title": "Cursor — BANK-F08/F09 deep-wizard DoD structural guards",
+   "mergedAt": "2026-07-28T12:34:10Z",
+   "branch": "cursor/bank-f08-f09-ndfa-01"
   },
   {
    "number": 3687,
@@ -17058,24 +17076,6 @@
    "title": "fix(admin): AuditLogViewer → ParityTable (qbo-parity-a1)",
    "mergedAt": "2026-07-20T15:49:26Z",
    "branch": "fix/audit-log-viewer-paritytable"
-  },
-  {
-   "number": 2885,
-   "title": "fix(fuel): StopReasoningTable ParityTable (qbo-parity-a1)",
-   "mergedAt": "2026-07-20T15:55:26Z",
-   "branch": "fix/fuel-stop-reasoning-paritytable"
-  },
-  {
-   "number": 2883,
-   "title": "fix(admin): ErrorMonitor → ParityTable + ListErrorState (qbo-parity-a1)",
-   "mergedAt": "2026-07-20T15:07:44Z",
-   "branch": "fix/error-monitor-paritytable"
-  },
-  {
-   "number": 2881,
-   "title": "fix(home): DriverDaySummaryCard → ParityTable + ListErrorState (qbo-parity-a1)",
-   "mergedAt": "2026-07-20T15:41:23Z",
-   "branch": "fix/driver-day-summary-paritytable"
   }
  ],
  "merged_pr_total": 3000,
