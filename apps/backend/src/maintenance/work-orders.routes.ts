@@ -584,7 +584,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         const result = await withCompany(user.uuid, body.header.operating_company_id, async (client) => {
           if (body.header.vendor_id) {
             const vr = await client.query(
-              `SELECT 1 FROM mdata.qbo_vendors WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+              `SELECT 1 FROM accounting.qbo_vendors WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
               [body.header.vendor_id, body.header.operating_company_id]
             );
             if ((vr.rowCount ?? 0) === 0) {

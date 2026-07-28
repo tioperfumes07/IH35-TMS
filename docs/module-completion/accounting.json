@@ -72,7 +72,7 @@
       ],
       "spec": "Vendor credit apply/void",
       "status": "FAIL",
-      "evidence": "LINKAGE in progress 2026-07-28: CC bill-pay \u2192 accounting.qbo_vendors (#3710/1708); held backfill 202610121800 on main (#3712) NOT Neon-applied yet (lucia aq=2744 mq=2780 residual=36). G4 map FLIPPED (#3721). Inbound (#3723/1718) + master-read (#3728/1720) + TMS writers (#3729/1722) + qbo-vendors-push/status (guard 1724) \u2192 accounting.qbo_vendors. Remaining product readers: autocomplete/Samsara/WO/reconcile. vendor_credits=0. FAIL until owner Neon-applies held backfill + live credit. Flags OFF.",
+      "evidence": "LINKAGE in progress 2026-07-28: CC bill-pay \u2192 accounting.qbo_vendors (#3710/1708); held backfill 202610121800 on main (#3712) NOT Neon-applied yet (lucia aq=2744 mq=2780 residual=36). G4 map FLIPPED (#3721). Inbound (#3723/1718) + master-read (#3728/1720) + TMS writers (#3729/1722) + qbo-vendors-push/status (#3731/1724) + product readers Wave E (guard 1726) \u2192 accounting.qbo_vendors. vendor_credits=0. FAIL until owner Neon-applies held backfill + live credit. Flags OFF. Remaining reconcile/drift/unlinked readers mid-flight.",
       "pr": "#3710 #3712"
     },
     {
