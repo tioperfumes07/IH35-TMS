@@ -53,6 +53,12 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
   const [notes, setNotes] = useState("");
   const [driverCreateOpen, setDriverCreateOpen] = useState(false);
   const [sourceDocFile, setSourceDocFile] = useState<File | null>(null);
+  // SAF-B29: every picker below fetched limit:200 with NO server-side search, so past 200 drivers,
+  // units or loads the rest were unselectable and nothing said so — a silent truncation on a record
+  // that becomes a payable. The term goes to the server, which already supports `search`.
+  const [driverSearch, setDriverSearch] = useState("");
+  const [unitSearch, setUnitSearch] = useState("");
+  const [loadSearch, setLoadSearch] = useState("");
   // SAF-F19: safety.civil_fines has carried related_load_id / related_unit_id / source_doc_id since
   // migration 0050, and the CREATE ROUTE already accepts all three — the creator simply never asked
   // for them, so every fine landed with those FKs null. An overweight ticket that belongs to a
@@ -61,21 +67,34 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
   const [relatedUnitId, setRelatedUnitId] = useState<string | null>(null);
 
   const driversQuery = useQuery({
-    queryKey: ["safety", "fine-create", "drivers", operatingCompanyId],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, status: "Active", limit: 200 }),
+    queryKey: ["safety", "fine-create", "drivers", operatingCompanyId, driverSearch],
+    queryFn: () =>
+      listDrivers({
+        operating_company_id: operatingCompanyId,
+        status: "Active",
+        limit: 200,
+        search: driverSearch || undefined,
+      }),
     enabled: open && Boolean(operatingCompanyId),
   });
 
   const unitsQuery = useQuery({
-    queryKey: ["safety", "fine-create", "units", operatingCompanyId],
-    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: 200 }),
+    queryKey: ["safety", "fine-create", "units", operatingCompanyId, unitSearch],
+    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: 200, search: unitSearch || undefined }),
     enabled: open && Boolean(operatingCompanyId),
   });
 
   const loadsQuery = useQuery({
-    queryKey: ["safety", "fine-create", "loads", operatingCompanyId],
+    queryKey: ["safety", "fine-create", "loads", operatingCompanyId, loadSearch],
     queryFn: () =>
-      listDispatchLoads({ operating_company_id: operatingCompanyId, view: "loads", status: [], limit: 200, offset: 0 }),
+      listDispatchLoads({
+        operating_company_id: operatingCompanyId,
+        view: "loads",
+        status: [],
+        limit: 200,
+        offset: 0,
+        search: loadSearch || undefined,
+      }),
     enabled: open && Boolean(operatingCompanyId),
   });
 
@@ -261,6 +280,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
                   options={driverOptions}
                   value={subjectDriverId}
                   onChange={setSubjectDriverId}
+                  onSearch={setDriverSearch}
                   placeholder="Select driver"
                   loading={driversQuery.isLoading}
                   allowAddNew={{
@@ -323,6 +343,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
                 options={unitOptions}
                 value={relatedUnitId}
                 onChange={setRelatedUnitId}
+                onSearch={setUnitSearch}
                 placeholder="Select unit"
                 loading={unitsQuery.isLoading}
               />
@@ -333,6 +354,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
                 options={loadOptions}
                 value={relatedLoadId}
                 onChange={setRelatedLoadId}
+                onSearch={setLoadSearch}
                 placeholder="Select load"
                 loading={loadsQuery.isLoading}
               />

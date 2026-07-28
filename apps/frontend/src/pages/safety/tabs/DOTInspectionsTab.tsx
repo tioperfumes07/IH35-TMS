@@ -139,9 +139,13 @@ export function DOTInspectionsTab() {
   // SAF-F14: the creator asked operators to type raw uuids into `placeholder="driver_id"` /
   // `"unit_id"` text boxes. Picker law requires a real entity-scoped catalog behind every reference
   // field, with inline create. Units are scoped by owner/lessee inside listUnits.
+  // SAF-B29: limit:200 with no server-side search meant a fleet larger than 200 units left the rest
+  // unselectable, with nothing on screen saying so — a DOT inspection could not be filed against the
+  // truck it actually happened to. The typed term goes to the server, which already supports search.
+  const [unitSearch, setUnitSearch] = useState("");
   const unitsQuery = useQuery({
-    queryKey: ["dot-inspection-units", companyId],
-    queryFn: () => listUnits({ operating_company_id: companyId, limit: 200 }),
+    queryKey: ["dot-inspection-units", companyId, unitSearch],
+    queryFn: () => listUnits({ operating_company_id: companyId, limit: 200, search: unitSearch || undefined }),
     enabled: Boolean(companyId),
   });
   const unitOptions = useMemo(
@@ -178,6 +182,8 @@ export function DOTInspectionsTab() {
             options={unitOptions}
             value={form.unit_id || null}
             placeholder="Search unit…"
+            onSearch={setUnitSearch}
+            loading={unitsQuery.isLoading}
             onChange={(next) => setForm((v) => ({ ...v, unit_id: next ?? "" }))}
           />
         </div>

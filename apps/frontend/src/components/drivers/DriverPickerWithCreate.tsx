@@ -43,13 +43,20 @@ export function DriverPickerWithCreate({
   const [driverCreateOpen, setDriverCreateOpen] = useState(false);
   const queryEnabled = (enabled ?? true) && open && Boolean(operatingCompanyId);
 
+  // SAF-B29: this picker hardcoded search:"" with limit:200, so on a roster larger than 200 the rest
+  // were unselectable and nothing said so. Because this is the SHARED driver picker, that silent
+  // truncation was reproduced on every surface that uses it. The typed term now goes to the server,
+  // which already supports `search`; Combobox skips its local filter when onSearch is provided, so
+  // server matches are never re-filtered away client-side.
+  const [driverSearch, setDriverSearch] = useState("");
+
   const driversQuery = useQuery({
-    queryKey: ["driver-picker-with-create", operatingCompanyId],
+    queryKey: ["driver-picker-with-create", operatingCompanyId, driverSearch],
     queryFn: () =>
       listDrivers({
         operating_company_id: operatingCompanyId,
         status: "Active",
-        search: "",
+        search: driverSearch || undefined,
         limit: 200,
       }),
     enabled: queryEnabled,
@@ -72,6 +79,7 @@ export function DriverPickerWithCreate({
         options={driverOptions}
         value={value}
         onChange={onChange}
+        onSearch={setDriverSearch}
         placeholder={placeholder}
         loading={driversQuery.isLoading}
         disabled={disabled || !operatingCompanyId}
