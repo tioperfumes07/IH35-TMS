@@ -17,11 +17,11 @@
 // NOT in either list (deliberately — rule 14 marks these CANONICAL, not RETIRE):
 //   driver_finance.* · banking.* · maintenance.* · mdata.vendors · mdata.loads ·
 //   catalogs.cancellation_reasons · accounting.qbo_vendors (Desktop ACCT-ECON-05 2026-07-28 —
-//   CANONICAL AP QBO vendor masters; mdata.qbo_vendors is RETIRE → KNOWN_LEGACY below).
-//   Older "WO picker writing mdata.qbo_vendors" mirror-sync canonical reading is SUPERSEDED for
-//   vendor masters. Other accounting.qbo_* (accounts/customers) remain ENFORCED until their
-//   Desktop leaves flip. A table-level static scan cannot enforce every context without false
-//   positives for remaining mdata.qbo_* sync writers — those stay KNOWN_LEGACY warnings.
+//   CANONICAL AP QBO vendor masters). mdata.qbo_vendors remains the QBO sync writer target until
+//   a dedicated repoint wave; it is NOT yet in KNOWN_LEGACY so C2 does not ratchet 14 sync writers
+//   mid-flight. Older "WO picker writing mdata.qbo_vendors" mirror-sync reading is SUPERSEDED for
+//   AP credit-card / vendor-credit consumers (those MUST read accounting.qbo_vendors).
+//   Other accounting.qbo_* (accounts/customers) remain ENFORCED until their Desktop leaves flip.
 //
 // Scan: apps/backend/src + apps/frontend/src, .ts/.tsx, comments stripped before matching
 // (a doc comment quoting removed SQL must not fail the build). Exempt: __tests__/, *.test.*,
@@ -67,8 +67,6 @@ export const KNOWN_LEGACY = [
   // design decision keeping the dispatch cancel domain on this table — owner ruling needed before
   // any repoint block (drift flagged in the PR that added this guard).
   { pat: "catalogs\\.load_cancellation_reasons", canonical: "catalogs.cancellation_reasons" },
-  // ACCT-ECON-05: RETIRE mirror still has sync/push readers; warn until all writers use accounting.*
-  { pat: "mdata\\.qbo_vendors", canonical: "accounting.qbo_vendors" },
 ];
 
 const buildRe = (list) =>
@@ -189,7 +187,6 @@ function selftest() {
     fs.writeFileSync(path.join(src, "legacy-bank.ts"), "await q(`SELECT 1 FROM bank.reconciliation_matches rm WHERE rm.id = $1`);\n");
     fs.writeFileSync(path.join(src, "legacy-maint.ts"), "await q(`INSERT INTO maint.pm_schedule (id) VALUES ($1)`);\n");
     fs.writeFileSync(path.join(src, "legacy-cancel.ts"), "await q(`SELECT id FROM catalogs.load_cancellation_reasons`);\n");
-    fs.writeFileSync(path.join(src, "legacy-mdata-vendors.ts"), "await q(`SELECT qbo_id FROM mdata.qbo_vendors WHERE id = $1`);\n");
     fs.writeFileSync(path.join(src, "old-engine.deprecated.ts"), "await q(`SELECT id FROM payroll.driver_settlements`);\n");
     fs.writeFileSync(path.join(src, "__tests__/mock.test.ts"), "if (sql.includes('FROM payroll.driver_settlements')) {}\n");
 
@@ -214,7 +211,6 @@ function selftest() {
       ["KNOWN_LEGACY bank.* warns, does not violate", hasL("legacy-bank.ts") && !hasV("legacy-bank.ts")],
       ["KNOWN_LEGACY maint.* warns, does not violate", hasL("legacy-maint.ts") && !hasV("legacy-maint.ts")],
       ["KNOWN_LEGACY load_cancellation_reasons warns, does not violate", hasL("legacy-cancel.ts") && !hasV("legacy-cancel.ts")],
-      ["KNOWN_LEGACY mdata.qbo_vendors warns, does not violate", hasL("legacy-mdata-vendors.ts") && !hasV("legacy-mdata-vendors.ts")],
     ];
     const failed = checks.filter(([, ok]) => !ok);
     if (failed.length) {
