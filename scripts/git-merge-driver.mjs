@@ -36,7 +36,32 @@ function readJson(file) {
 }
 
 /** Deep union: arrays union by structural identity; objects recurse; scalars prefer THEIRS on mismatch. */
-function union(ours, theirs) {
+/**
+ * COLLISION-STRICT paths. For these files a scalar clash is NOT a merge nuisance to be smoothed over —
+ * it is the exact signal the file exists to raise.
+ *
+ * scripts/verify-steps/CLAIMED-NUMBERS.json says so in its own _note: "Two agents claiming the same
+ * number then CONFLICT IN GIT instead of silently agreeing and reddening main afterwards", and its
+ * _why: "A registry converts an invisible race into a merge conflict, which is where it belongs."
+ * Plain last-writer-wins union would silently drop one claimant and hand the clash to CI on some later
+ * branch cut from a red main — fail-late instead of fail-fast, which is precisely what the registry
+ * was built to prevent.
+ *
+ * So on these paths: distinct keys union freely (the common, harmless case — two agents claiming two
+ * DIFFERENT numbers, which caused every conflict in the 2026-07-27 queue), while the same key holding
+ * two DIFFERENT values raises a real conflict. Identical values on both sides are not a clash and
+ * collapse to one.
+ */
+const COLLISION_STRICT = new Set(["scripts/verify-steps/CLAIMED-NUMBERS.json"]);
+
+class ScalarClash extends Error {
+  constructor(keyPath, ours, theirs) {
+    super(`same key claimed by both sides with different values at "${keyPath}": ours=${JSON.stringify(ours)} theirs=${JSON.stringify(theirs)}`);
+    this.name = "ScalarClash";
+  }
+}
+
+function union(ours, theirs, strict = false, keyPath = "") {
   if (Array.isArray(ours) && Array.isArray(theirs)) {
     const seen = new Set();
     const out = [];
@@ -52,25 +77,39 @@ function union(ours, theirs) {
   if (ours && theirs && typeof ours === "object" && typeof theirs === "object") {
     const out = { ...ours };
     for (const k of Object.keys(theirs)) {
-      out[k] = k in ours ? union(ours[k], theirs[k]) : theirs[k];
+      out[k] = k in ours ? union(ours[k], theirs[k], strict, keyPath ? `${keyPath}.${k}` : k) : theirs[k];
     }
     return out;
   }
-  // scalar (or type mismatch): prefer theirs (incoming main) — rare for these append-only caches
+  // Scalar (or type mismatch).
+  if (strict && ours !== undefined && theirs !== undefined && ours !== theirs) {
+    // Two sides claimed the SAME key with DIFFERENT values. On a collision-strict path this is the
+    // real race the file exists to surface — refuse to pick a winner.
+    throw new ScalarClash(keyPath, ours, theirs);
+  }
   return theirs === undefined ? ours : theirs;
 }
 
 try {
   const ours = readJson(oursFile);
   const theirs = readJson(theirsFile);
-  const merged = ours === undefined ? theirs : theirs === undefined ? ours : union(ours, theirs);
+  const strict = COLLISION_STRICT.has(pathname);
+  const merged = ours === undefined ? theirs : theirs === undefined ? ours : union(ours, theirs, strict);
   // Preserve trailing newline convention used by the --update generators.
   fs.writeFileSync(oursFile, JSON.stringify(merged, null, 2) + "\n");
   process.exit(0);
 } catch (err) {
   // Could not parse one side — do NOT silently corrupt; leave a real conflict for a human.
-  process.stderr.write(
-    `git-merge-driver: could not auto-union ${pathname} (${err.message}); leaving conflict for manual resolution.\n`
-  );
+  if (err.name === "ScalarClash") {
+    process.stderr.write(
+      `git-merge-driver: REFUSING to auto-merge ${pathname} — ${err.message}.\n` +
+        `  This is a genuine collision, not a rebase nuisance: both branches claimed the same key.\n` +
+        `  Resolve by hand — take the next free number and keep BOTH claims.\n`
+    );
+  } else {
+    process.stderr.write(
+      `git-merge-driver: could not auto-union ${pathname} (${err.message}); leaving conflict for manual resolution.\n`
+    );
+  }
   process.exit(1);
 }
