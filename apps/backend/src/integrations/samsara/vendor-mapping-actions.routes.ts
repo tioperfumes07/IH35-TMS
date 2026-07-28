@@ -47,7 +47,7 @@ async function resolveVendorInTenant(client: DbClient, operatingCompanyId: strin
   const vendor = await client.query<{ id: string; qbo_id: string | null }>(
     `
       SELECT id::text AS id, qbo_id
-      FROM mdata.qbo_vendors
+      FROM accounting.qbo_vendors
       WHERE operating_company_id = $1::uuid
         AND (id::text = $2 OR qbo_id = $2)
       LIMIT 1
@@ -185,7 +185,7 @@ export async function registerSamsaraVendorMappingActionsRoutes(app: FastifyInst
       const deprecatedVendors = await client.query<{ id: string; qbo_id: string | null }>(
         `
           SELECT id::text AS id, qbo_id
-          FROM mdata.qbo_vendors
+          FROM accounting.qbo_vendors
           WHERE operating_company_id = $1::uuid
             AND (id::text = ANY($2::text[]) OR qbo_id = ANY($2::text[]))
         `,
@@ -261,7 +261,7 @@ export async function registerSamsaraVendorMappingActionsRoutes(app: FastifyInst
           JOIN mdata.drivers md
             ON md.id = sd.local_driver_id
             AND md.operating_company_id = $1::uuid
-          JOIN mdata.qbo_vendors qv
+          JOIN accounting.qbo_vendors qv
             ON qv.operating_company_id = $1::uuid
             AND (qv.id::text = md.qbo_vendor_id OR qv.qbo_id = md.qbo_vendor_id)
           WHERE sd.operating_company_id = $1::uuid

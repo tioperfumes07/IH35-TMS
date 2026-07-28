@@ -37,7 +37,7 @@ async function assertCompanyAccess(
 
 export async function registerQboAutocompleteRoutes(app: FastifyInstance) {
   const factory =
-    (table: "mdata.qbo_vendors" | "mdata.qbo_customers" | "mdata.qbo_items" | "mdata.qbo_accounts") =>
+    (table: "accounting.qbo_vendors" | "mdata.qbo_customers" | "mdata.qbo_items" | "mdata.qbo_accounts") =>
     async (req: FastifyRequest, reply: FastifyReply) => {
       if (!requireAuth(req, reply)) return;
       const role = String(req.user?.role ?? "");
@@ -57,7 +57,7 @@ export async function registerQboAutocompleteRoutes(app: FastifyInstance) {
         const allowed = await assertCompanyAccess(client, userId, operating_company_id);
         if (!allowed) return null;
 
-        if (table === "mdata.qbo_vendors") {
+        if (table === "accounting.qbo_vendors") {
           return client.query(
             `
               SELECT
@@ -68,7 +68,7 @@ export async function registerQboAutocompleteRoutes(app: FastifyInstance) {
                 v.primary_email,
                 v.primary_phone,
                 v.active
-              FROM mdata.qbo_vendors v
+              FROM accounting.qbo_vendors v
               WHERE v.operating_company_id = $1::uuid
                 ${activeClause}
                 AND (
@@ -195,7 +195,7 @@ export async function registerQboAutocompleteRoutes(app: FastifyInstance) {
       return { results: result.rows };
     };
 
-  app.get("/api/v1/mdata/qbo/vendors", factory("mdata.qbo_vendors"));
+  app.get("/api/v1/mdata/qbo/vendors", factory("accounting.qbo_vendors"));
   app.get("/api/v1/mdata/qbo/customers", factory("mdata.qbo_customers"));
   app.get("/api/v1/mdata/qbo/items", factory("mdata.qbo_items"));
   app.get("/api/v1/mdata/qbo/accounts", factory("mdata.qbo_accounts"));

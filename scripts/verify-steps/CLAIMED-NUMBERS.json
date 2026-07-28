@@ -1098,6 +1098,7 @@
     "1720": "1720-verify-acct-econ-05-qbo-vendor-master-reads.mjs",
     "1722": "1722-verify-acct-f06-tms-vendor-writers.mjs",
     "1724": "1724-verify-acct-f06-qbo-vendors-push.mjs",
+    "1726": "1726-verify-acct-f06-vendor-product-readers.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
