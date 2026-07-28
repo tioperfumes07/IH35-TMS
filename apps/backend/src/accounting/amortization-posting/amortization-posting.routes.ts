@@ -13,6 +13,10 @@ import {
   reversePrepaidAmortization,
   reverseDepreciation,
 } from "./amortization-posting.service.js";
+import {
+  OwnedAssetDisposalError,
+  postOwnedAssetDisposal,
+} from "../owned-asset-disposal.service.js";
 
 const financeRoles = new Set(["Owner", "Administrator", "Accountant"]);
 
@@ -41,6 +45,11 @@ function mapError(error: AmortizationPostingError) {
 const runDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional();
 const postBody = z.object({ asset_id: z.string().uuid(), run_date: runDate });
 const reverseBody = z.object({ asset_id: z.string().uuid(), reason: z.string().trim().min(1), period_number: z.number().int().positive().optional() });
+const ownedAssetDisposalBody = z.object({
+  asset_id: z.string().uuid(),
+  disposal_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  proceeds_cents: z.number().int().nonnegative(),
+});
 
 async function registerAmortizationPostingRoutes(app: FastifyInstance) {
   // Prepaid amortization — post all due, unposted periods (flag-gated; OFF => no-op).
@@ -86,6 +95,47 @@ async function registerAmortizationPostingRoutes(app: FastifyInstance) {
       if (error instanceof AmortizationPostingError) {
         const m = mapError(error);
         return reply.code(m.statusCode).send(m.body);
+      }
+      throw error;
+    }
+  });
+
+  // FLT-05 — explicit Owner-only sale action. A unit's Sold status must never silently post money.
+  app.post("/api/v1/accounting/fixed-assets/dispose", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (user.role !== "Owner") return reply.code(403).send({ error: "forbidden" });
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
+    const body = ownedAssetDisposalBody.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+    try {
+      const result = await postOwnedAssetDisposal(
+        {
+          operatingCompanyId: query.data.operating_company_id,
+          assetId: body.data.asset_id,
+          disposalDate: body.data.disposal_date,
+          proceedsCents: body.data.proceeds_cents,
+        },
+        { userId: user.uuid, role: user.role }
+      );
+      return reply.code(result.result === "posted" ? 201 : 200).send(result);
+    } catch (error) {
+      if (error instanceof OwnedAssetDisposalError) {
+        const statusCode: Record<string, number> = {
+          ASSET_NOT_FOUND: 404,
+          ASSET_NOT_POSTABLE: 409,
+          DISPOSAL_ALREADY_EXISTS: 409,
+          ACCOUNT_MISSING: 422,
+          ACCOUNT_ROLE_MAPPING_MISSING: 422,
+          PERIOD_LOCKED: 422,
+        };
+        return reply.code(statusCode[error.code] ?? 400).send({
+          error: error.code,
+          message: error.message,
+          details: error.details ?? null,
+        });
       }
       throw error;
     }
