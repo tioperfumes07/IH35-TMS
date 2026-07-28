@@ -333,3 +333,48 @@ prefix; an unmapped branch SKIPS rather than guessing.
 both starting above the current maximum. `scripts/verify-steps/CLAIMED-NUMBERS.json` remains the
 registry, and its union merge driver turns any genuine same-number claim into a real conflict instead
 of a silent overwrite.
+
+---
+
+## §N+2. RLS counts require a COMPLETENESS DISCRIMINATOR (law — 2026-07-28)
+
+**A count from an RLS-scoped table is not evidence until it proves it was a COMPLETE read.**
+
+The Neon MCP prod connection alternates between `ih35_app` (RLS-subject) and `neondb_owner` (bypass),
+so the same query returns different answers on consecutive calls. Both failure directions occurred
+within one hour on 2026-07-28, to two different reviewers:
+
+| direction | cause | real example |
+|---|---|---|
+| **false EMPTY** | landed on `ih35_app` with no `app.operating_company_id` | "USMCA QBO mirror = 0" — it is 365 |
+| **false ALL** | landed on `neondb_owner` (bypass) | "USMCA 1,233 active accounts" — that was the ALL-ENTITY total; USMCA is 53 |
+
+### The rule
+
+Every RLS-scoped count must carry, in the SAME result, one of:
+
+1. `visible_rows == pg_stat_all_tables.n_live_tup` for that relation, **or**
+2. `GROUP BY` parts that sum exactly to the physical whole.
+
+If neither holds the read was masked, the number is invalid, and it must not be quoted. Re-run.
+
+### Scope with an explicit filter, not only the GUC
+
+`WHERE operating_company_id = '<uuid>'` makes the answer correct whether or not RLS engaged.
+`set_config(..., true)` is transaction-local and every MCP call is its own transaction, so the GUC
+alone cannot be relied on.
+
+```sql
+SELECT current_user AS role,
+       (SELECT n_live_tup FROM pg_stat_all_tables WHERE relid = to_regclass('catalogs.accounts')) AS physical,
+       count(*) AS visible,                       -- must equal physical, else masked
+       count(*) FILTER (WHERE operating_company_id = '<uuid>') AS this_entity
+  FROM catalogs.accounts;
+```
+
+Known-good totals for self-checking: `catalogs.accounts` 397 + 953 + 58 = 1,408 (active 227 + 953 + 53
+= 1,233); `mdata.qbo_accounts` 372 + 917 + 365 = 1,654.
+
+**Applies to** `catalogs.*`, `mdata.*`, `accounting.*`, `banking.*`, `driver_finance.*` — every
+FORCE-RLS relation. **DDL through the MCP connection remains forbidden** (the role is a coin flip);
+schema ships via `db:migrate` on deploy.
