@@ -5,18 +5,26 @@
  * This is the fast local half of the same rule CI enforces in
  * scripts/verify-definition-of-done-evidence.mjs (verify-step 1324). It deliberately IMPORTS that
  * file's assertion instead of re-implementing it, so the local hook and the CI gate can never drift
- * apart  a second copy of a rule is a rule that will disagree with itself.
+ * apart ? a second copy of a rule is a rule that will disagree with itself.
  *
- * Money paths ALSO run assertNoMoneyTheater (DoD 10 / verify-step 1430)  FINDING + LANE +
+ * Money paths ALSO run assertNoMoneyTheater (DoD §10 / verify-step 1430) ? FINDING + LANE +
  * DOD-A..E + VERIFY-1..8 + MODULE_PROGRESS + Rule 16 required or the commit is rejected.
  *
+ * AMEND HOLE (fixed Rule 25 / 2026-07-28): `git commit --amend` with a message-only rewrite leaves
+ * `git diff --cached` empty. The old hook exited 0 and let bad FINDING / MODULE_PROGRESS ship ?
+ * then CI burned ~15m before verify-no-money-theater failed. When staged is empty we classify
+ * files from HEAD (the commit being rewritten) via scripts/lib/commit-msg-files.mjs.
+ *
  * HONEST LIMIT: `git commit --no-verify` skips this hook. CI verify-steps 1324 + 1430 + 1431 cannot be
- * bypassed. verify-step 1324 asserts this hook still exists.
+ * bypassed. verify-step 1324 asserts this hook still exists. Pre-push money-pr-local-gate is the
+ * second local backstop (Rule 25).
  *
  * Exit 0 = allowed. Exit 1 = commit rejected with the template printed.
  */
 import fs from "node:fs";
-import { execSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { resolveCommitMsgFiles } from "./lib/commit-msg-files.mjs";
 import { assertDoDEvidence } from "./verify-definition-of-done-evidence.mjs";
 import {
   assertNoMoneyTheater,
@@ -24,48 +32,43 @@ import {
   MONEY_DOD_COMMIT_TEMPLATE,
 } from "./verify-no-money-theater.mjs";
 
-const msgFile = process.argv[2];
-if (!msgFile) process.exit(0);
+export { resolveCommitMsgFiles } from "./lib/commit-msg-files.mjs";
 
-let raw = "";
-try {
-  raw = fs.readFileSync(msgFile, "utf8");
-} catch {
-  process.exit(0);
-}
+function main() {
+  const msgFile = process.argv[2];
+  if (!msgFile) process.exit(0);
 
-const message = raw
-  .split("\n")
-  .filter((l) => !l.startsWith("#"))
-  .join("\n")
-  .trim();
+  let raw = "";
+  try {
+    raw = fs.readFileSync(msgFile, "utf8");
+  } catch {
+    process.exit(0);
+  }
 
-const [subject = "", ...rest] = message.split("\n");
-const body = rest.join("\n");
-
-if (/^(Merge|Revert|fixup!|squash!)\b/i.test(subject.trim())) process.exit(0);
-
-let files = [];
-try {
-  files = execSync("git diff --cached --name-only", { encoding: "utf8" })
+  const message = raw
     .split("\n")
-    .map((s) => s.trim())
-    .filter(Boolean);
-} catch {
-  process.exit(0);
-}
-if (files.length === 0) process.exit(0);
+    .filter((l) => !l.startsWith("#"))
+    .join("\n")
+    .trim();
 
-const staged = [{ sha: "STAGED".padEnd(40, "0"), subject, body, files }];
-const problems = assertDoDEvidence(staged);
-if (isMoneyAppCommit(files)) {
-  for (const p of assertNoMoneyTheater(staged)) problems.push(p);
-}
+  const [subject = "", ...rest] = message.split("\n");
+  const body = rest.join("\n");
 
-if (problems.length) {
-  console.error("\n\u001b[31mCommit rejected  Definition of Done not satisfied:\u001b[0m\n");
-  for (const p of problems) console.error("   " + p.replace(/^STAGED0+\s*/, ""));
-  console.error(`
+  if (/^(Merge|Revert|fixup!|squash!)\b/i.test(subject.trim())) process.exit(0);
+
+  const { files } = resolveCommitMsgFiles();
+  if (files.length === 0) process.exit(0);
+
+  const staged = [{ sha: "STAGED".padEnd(40, "0"), subject, body, files }];
+  const problems = assertDoDEvidence(staged);
+  if (isMoneyAppCommit(files) || files.some((f) => /^db\/migrations\//i.test(f))) {
+    for (const p of assertNoMoneyTheater(staged)) problems.push(p);
+  }
+
+  if (problems.length) {
+    console.error("\n\u001b[31mCommit rejected ? Definition of Done not satisfied:\u001b[0m\n");
+    for (const p of problems) console.error("  ? " + p.replace(/^STAGED0+\s*/, ""));
+    console.error(`
 This commit touches shipped code (apps/ or db/), so its message must carry the
 Rule 16 evidence block. Template:
 
@@ -74,23 +77,31 @@ Rule 16 evidence block. Template:
   ROOT CAUSE: the actual mechanism, not the symptom
   FIX:        what changed, and why this is the root fix rather than a patch
   GUARD:      scripts/verify-*.mjs + scripts/verify-steps/NNNN-*.mjs
-  LIVE PROOF: endpoint / health sha / DB row / browser  or UNVERIFIED + blocker
+  LIVE PROOF: endpoint / health sha / DB row / browser ? or UNVERIFIED + blocker
   REMAINING:  what is still open
 
 Canonical standard: docs/specs/DEFINITION-OF-DONE.md
 Bypassing with --no-verify does NOT skip this: CI verify-step 1324 enforces the
 same rule on every branch commit and cannot be bypassed.
+Pre-push also runs scripts/money-pr-local-gate.mjs (Rule 25).
 `);
-  if (isMoneyAppCommit(files)) {
-    console.error(`
-MONEY PATH (accounting / banking / qbo-sync) — also required (DoD §10 / Rules 23–24):
+    if (isMoneyAppCommit(files) || files.some((f) => /^db\/migrations\//i.test(f))) {
+      console.error(`
+MONEY / MIGRATION PATH ? also required (DoD §10 / Rules 23?25):
 
 ${MONEY_DOD_COMMIT_TEMPLATE}
 
 CI: verify-steps 1430 (verify-no-money-theater) + 1431 (verify-module-completion) cannot be bypassed.
 `);
+    }
+    process.exit(1);
   }
-  process.exit(1);
+
+  process.exit(0);
 }
 
-process.exit(0);
+const isDirectRun =
+  Boolean(process.argv[1]) &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isDirectRun) main();

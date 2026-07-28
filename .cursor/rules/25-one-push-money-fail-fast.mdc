@@ -1,0 +1,40 @@
+---
+description: ONE PUSH · fail-fast money gates · no CI cancel thrash (permanent)
+alwaysApply: true
+---
+
+# RULE 25 — ONE PUSH · FAIL-FAST · NO CI THRASH (owner 2026-07-28)
+
+**Why:** Money PRs burned 3+ hours because agents amended messages, force-pushed, and rebased while `build-typecheck` ran — cancelling ~15–20m jobs — or pushed DoD/theater-invalid commits that only failed after ~900 CI steps. Rules on paper were ignored. **Teeth are mechanical.**
+
+## Mechanical law (cannot be “remembered away”)
+
+1. **`scripts/money-pr-local-gate.mjs`** runs as the **first** `branch:precheck-push` step (husky pre-push). It runs `verify-definition-of-done-evidence` + `verify-no-money-theater` on `origin/main..HEAD` in **seconds**. Bad `FINDING` / `MODULE_PROGRESS` **never reaches GitHub**.
+2. **`scripts/check-commit-evidence.mjs`** classifies files from **staged OR HEAD** (amend / message-only rewrite). Empty `git diff --cached` must **not** skip money/DoD checks.
+3. CI verify-steps **1324 + 1430 + 1431** remain the remote backstop. Local gate is the **primary** time-saver.
+
+## Agent behavior (HARD)
+
+| Always | Never |
+|--------|-------|
+| Run / rely on pre-push money gate before push | Force-push to “nudge” or check CI |
+| **One push** after local gate PASS | Rebase / amend / force-push while `build-typecheck` is **in_progress** |
+| Wait for green or a **real** code fail | Cancel mid-flight by pushing again |
+| Fix from the **exact** failing log line | Guess DoD keys; invent `FINDING: FA-…` (must be `ACCT-F##` / `BANK-F##` / `LST-F##`) |
+| `MODULE_PROGRESS: accounting N of M` matching `docs/module-completion/*.json` | `MODULE_PROGRESS: unchanged` / prose |
+
+## Rebase / force-push allowed only when
+
+- `build-typecheck` (or required check) **failed** with a real defect, **or**
+- Branch is **behind** `origin/main` and merge is blocked, **or**
+- Jorge explicitly orders it
+
+After any rewrite: run `node scripts/money-pr-local-gate.mjs` → **one** push → wait.
+
+## Autoload
+
+Deleting this rule, removing the precheck first step, or reopening the empty-staged amend hole **fails CI** (`verify-money-pr-local-gate` + DoD auto-load).
+
+## Tie-breakers
+
+Busy < correct · another push < wait · memory < `money-pr-local-gate` · CI cancel thrash < protect the company.

@@ -85,7 +85,12 @@ export function resolvePrecheckSteps(options = {}, root) {
 export function buildPrecheckSteps(root) {
   void root;
   // verify:static is owned once by block-ready (in-process proof). Do not duplicate here.
+  // Rule 25: money/DoD fail-fast FIRST — seconds, not 15m of CI — before expensive builds.
   return [
+    {
+      label: "money-pr-local-gate",
+      command: "node scripts/money-pr-local-gate.mjs",
+    },
     { label: "build-backend", command: "npm run build:backend" },
     { label: "frontend-tsc", command: "cd apps/frontend && npx tsc -b && cd ../.." },
     {

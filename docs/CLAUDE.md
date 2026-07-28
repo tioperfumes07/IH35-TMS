@@ -5,6 +5,8 @@
 > **★ DEFINITION OF DONE (BINDING):** `docs/specs/DEFINITION-OF-DONE.md` — DOD-A…E + §10. CI-green is the floor, not the verdict.
 >
 > **★ EVERY PR AUDIT CHECKLIST (BINDING, every session):** `docs/specs/EVERY-PR-AUDIT-CHECKLIST.md` — FINDING · LANE · DOD-A…E · **VERIFY-1…8** · **MODULE_PROGRESS** · MIGRATE · Rule 16. Missing keys → commit-msg reject + verify-step **1430** (`verify-no-money-theater`). Rule 23 theater ban. Rule 24 — module DONE = **N of M** in `docs/module-completion/` (CI **1431**).
+>
+> **★ Rule 25 — ONE PUSH / FAIL-FAST (permanent):** `.cursor/rules/25-one-push-money-fail-fast.mdc` — `scripts/money-pr-local-gate.mjs` is first in husky `branch:precheck-push` (DoD + money-theater in seconds). Amend cannot skip empty-staged checks. One push after local PASS; never rebase while `build-typecheck` runs. CI verify-step **1702**.
 > **★★ PER-PR CHECKLIST (read FIRST, every PR):** `docs/specs/PER-PR-CHECKLIST.md` — the consolidated list of everything audited and fixed in **every** PR (5 DONE layers · 8 audit layers · evidence block · guard rules · verification traps · merge gates · migration rules). Enforced in CI on the PR body and the commits.
 
 > **SESSION LAW (auto-loaded every Cursor session):** `docs/specs/CURSOR-OPERATING-CONSTITUTION.md` + Rule #0 `docs/specs/QUALITY-STANDARD-LOCKED.md` + Law of the Land `docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md` + always-apply `.cursor/rules/00`–`07` + `10`–`15`. Trust over speed. Verify live. No guess / patch / defer. Never delete modules — only add. Multi-agent review required on non-trivial/financial work.

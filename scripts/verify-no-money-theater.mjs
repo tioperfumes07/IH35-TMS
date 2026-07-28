@@ -234,7 +234,15 @@ LIVE PROOF: … OR UNVERIFIED — <blocker>
 REMAINING: …
 `.trim();
 
-if (SELFTEST) {
+// CLI only when this file is the entrypoint. Importers (commit-msg) must not inherit --selftest
+// from process.argv (Rule 25 — import side-effect burned money-pr-local-gate selftest).
+const isDirectRun =
+  Boolean(process.argv[1]) &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (!isDirectRun) {
+  // library mode — exports only
+} else if (SELFTEST) {
   const failures = [];
   const expect = (name, commits, wantFail) => {
     const problems = assertNoMoneyTheater(commits);
@@ -385,16 +393,16 @@ REMAINING: ACCT-F01
       `(real depth=1 clone and real orphan branch both refused; healthy range and post-merge main still pass)`
   );
   process.exit(0);
+} else {
+  const { commits, verdict } = resolveBranchCommits();
+  const problems = assertNoMoneyTheater(commits);
+  if (problems.length) {
+    console.error(`${LABEL}: FAIL`);
+    for (const p of problems) console.error(`  - ${p}`);
+    console.error(`\nRequired template:\n\n${MONEY_DOD_COMMIT_TEMPLATE}\n`);
+    process.exit(1);
+  }
+  // A PASS must always carry WHAT was checked. A bare "PASS (0 ...)" is the defect this guard shipped
+  // with; the only zero that survives here is LEGITIMATE_ZERO and it prints its own reason.
+  console.log(`${LABEL}: PASS — ${verdict.note} [${verdict.code}]`);
 }
-
-const { commits, verdict } = resolveBranchCommits();
-const problems = assertNoMoneyTheater(commits);
-if (problems.length) {
-  console.error(`${LABEL}: FAIL`);
-  for (const p of problems) console.error(`  - ${p}`);
-  console.error(`\nRequired template:\n\n${MONEY_DOD_COMMIT_TEMPLATE}\n`);
-  process.exit(1);
-}
-// A PASS must always carry WHAT was checked. A bare "PASS (0 ...)" is the defect this guard shipped
-// with; the only zero that survives here is LEGITIMATE_ZERO and it prints its own reason.
-console.log(`${LABEL}: PASS — ${verdict.note} [${verdict.code}]`);

@@ -44,8 +44,15 @@ docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.*
 !.cursor/rules/18-pipeline-truth-and-throughput.mdc
 !.cursor/rules/19-owner-manual-reserve-accounts.mdc
 !.cursor/rules/21-full-system-no-partial-amnesia.mdc
+!.cursor/rules/21-session-operating-decree.mdc
 !.cursor/rules/22-session-boot-announce.mdc
+!.cursor/rules/22-full-audit-n-of-m-depth.mdc
+!.cursor/rules/23-no-money-theater-prs.mdc
+!.cursor/rules/23-per-pr-checklist.mdc
+!.cursor/rules/24-module-completion-n-of-m.mdc
+!.cursor/rules/25-one-push-money-fail-fast.mdc
 !.cursor/rules/dual-lane-never-idle.mdc
+!.cursor/rules/06-live-ops-cadence.mdc
 
 # Office/Excel lock files (created while a workbook is open; never commit)
 ~$*
