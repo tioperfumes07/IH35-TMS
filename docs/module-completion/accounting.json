@@ -72,11 +72,7 @@
       ],
       "spec": "Vendor credit apply/void",
       "status": "FAIL",
-<<<<<<< HEAD
-      "evidence": "LINKAGE in progress 2026-07-28: CC bill-pay \u2192 accounting.qbo_vendors (#3710/1708); held backfill 202610121800 on main (#3712) NOT Neon-applied yet (lucia aq=2744 mq=2780 residual=36). G4 canonical-write map is FLIPPED on dependency #3721: RETIRE=mdata.qbo_vendors canonical=accounting.qbo_vendors. Inbound writers vendors-puller + master-data-sync now target accounting.qbo_vendors; guard 1718 selftest pins the canonical insert/upsert and cursor. vendor_credits=0. FAIL until owner Neon-applies held backfill + live credit. Flags OFF. LIVE density remains UNVERIFIED until Neon apply. verify-no-accounting-qbo-writes flipped for vendors (accounting allowed; accounts/customers still mid-flight).",
-=======
-      "evidence": "LINKAGE in progress 2026-07-28: CC bill-pay \u2192 accounting.qbo_vendors (#3710/1708); held backfill 202610121800 on main (#3712) NOT Neon-applied yet (lucia aq=2744 mq=2780 residual=36). G4 canonical-write map FLIPPED this PR: RETIRE=mdata.qbo_vendors canonical=accounting.qbo_vendors (was inverted); sync writers shrink-only exempt until repoint wave (guard 1714). vendor_credits=0. FAIL until owner Neon-apply + sync writers \u2192 accounting + live credit. Flags OFF. Master-read Wave: qbo-master-read + names-master \u2192 accounting.qbo_vendors (guard 1720). Still FAIL until Neon-apply + live vendor_credit.",
->>>>>>> a8a242f319 (fix(accounting): ACCT-ECON-05 master-read vendors → accounting.qbo_vendors)
+      "evidence": "LINKAGE in progress 2026-07-28: CC bill-pay \u2192 accounting.qbo_vendors (#3710/1708); held backfill 202610121800 on main (#3712) NOT Neon-applied yet (lucia aq=2744 mq=2780 residual=36). G4 map FLIPPED (#3721): RETIRE=mdata.qbo_vendors canonical=accounting.qbo_vendors. Inbound writers vendors-puller + master-data-sync \u2192 accounting.qbo_vendors (guard 1718, #3723). Master-read Wave: qbo-master-read + names-master \u2192 accounting.qbo_vendors (guard 1720). vendor_credits=0. FAIL until owner Neon-applies held backfill + live credit. Flags OFF. verify-no-accounting-qbo-writes vendors allow accounting (accounts/customers still mid-flight).",
       "pr": "#3710 #3712"
     },
     {
