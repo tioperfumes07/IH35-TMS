@@ -167,6 +167,11 @@ export function CostBreakdownBox({
                                 )
                               );
                               onCategoryOptionCreated?.(line.id, { id: opt.value, label: opt.label });
+                              // LST-PICKER-03: the external "+ Create" button that used to call this is
+                              // gone, but the callback is part of the component's contract and callers
+                              // still pass it — so it now fires on INLINE create instead of being
+                              // silently dropped. Removing the prop would have broken those callers.
+                              onQuickCreateCategory?.(line.id);
                             }}
                           />
                         ) : (
@@ -190,15 +195,12 @@ export function CostBreakdownBox({
                                 </option>
                               ))}
                             </SelectCombobox>
-                            <button
-                              type="button"
-                              disabled={readOnly}
-                              onClick={() => onQuickCreateCategory?.(line.id)}
-                              className="rounded-sm border border-gray-300 px-2 py-1 text-[11px]"
-                              aria-label="Quick create category"
-                            >
-                              + Create
-                            </button>
+                            {/* LST-PICKER-03: no external "+ Create" here either. This branch renders only
+                                when operatingCompanyId is absent, and a catalog row cannot be created
+                                without an operating company to scope it to — so the honest UI is no create
+                                control at all, rather than a button that sits outside the picker and would
+                                have nowhere to write. With an operating company the ReferenceSelect above
+                                provides inline create as the first row inside the dropdown. */}
                           </div>
                         )}
                       </td>
@@ -293,31 +295,55 @@ export function CostBreakdownBox({
             {sectionB.lines.map((line) => (
               <div key={line.id} className="border-b border-gray-100 bg-white p-2 last:border-b-0">
                 <div className="grid gap-2 md:grid-cols-[1fr_1.2fr_1fr_110px_90px_95px_40px]">
+                  {/* LST-PICKER-03: this was a bare SelectCombobox with a separate "+ Create" BUTTON
+                      sitting beside it. The picker law (VERIFY-2) requires the create affordance to be
+                      the first row INSIDE the dropdown, not a control next to it — an external button
+                      is a second place to look, it is missed on a dense line-item grid, and it drops
+                      the operator out of the row they were filling. Section A of this very box already
+                      used ReferenceSelect; Section B was simply never migrated. Same component, same
+                      contract, and the created item is selected onto THIS line. */}
                   <div className="flex items-center gap-1">
-                    <SelectCombobox
-                      disabled={readOnly}
-                      value={line.service_item_uuid ?? ""}
-                      onChange={(event) =>
-                        onSectionBChange(sectionB.lines.map((entry) => (entry.id === line.id ? { ...entry, service_item_uuid: event.target.value } : entry)))
-                      }
-                      className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                    >
-                      <option value="">Select product/service...</option>
-                      {itemOptions.map((option) => (
-                        <option key={option.id} value={option.id}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </SelectCombobox>
-                    <button
-                      type="button"
-                      disabled={readOnly}
-                      onClick={() => onQuickCreateItem?.(line.id)}
-                      className="rounded-sm border border-gray-300 px-2 py-1 text-[11px]"
-                      aria-label="Quick create item"
-                    >
-                      + Create
-                    </button>
+                    {operatingCompanyId && !readOnly ? (
+                      <ReferenceSelect
+                        value={line.service_item_uuid ?? null}
+                        onChange={(next) =>
+                          onSectionBChange(
+                            sectionB.lines.map((entry) =>
+                              entry.id === line.id ? { ...entry, service_item_uuid: next ?? undefined } : entry
+                            )
+                          )
+                        }
+                        options={itemOptions.map((option) => ({ value: option.id, label: option.label }))}
+                        createKind="item"
+                        operatingCompanyId={operatingCompanyId}
+                        placeholder="Select product/service…"
+                        addNewLabel="+ Add new item"
+                        onOptionCreated={(opt) => {
+                          onSectionBChange(
+                            sectionB.lines.map((entry) =>
+                              entry.id === line.id ? { ...entry, service_item_uuid: opt.value } : entry
+                            )
+                          );
+                          onQuickCreateItem?.(line.id);
+                        }}
+                      />
+                    ) : (
+                      <SelectCombobox
+                        disabled={readOnly}
+                        value={line.service_item_uuid ?? ""}
+                        onChange={(event) =>
+                          onSectionBChange(sectionB.lines.map((entry) => (entry.id === line.id ? { ...entry, service_item_uuid: event.target.value } : entry)))
+                        }
+                        className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                      >
+                        <option value="">Select product/service...</option>
+                        {itemOptions.map((option) => (
+                          <option key={option.id} value={option.id}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </SelectCombobox>
+                    )}
                   </div>
                   <input
                     disabled={readOnly}
@@ -394,49 +420,94 @@ export function CostBreakdownBox({
                         {row.line_type === "parts" ? (
                           <div className="space-y-1">
                             <div className="flex items-center gap-1">
-                              <SelectCombobox
-                                disabled={readOnly}
-                                value={row.part_uuid ?? ""}
-                                onChange={(event) =>
-                                  onSectionBChange(
-                                    sectionB.lines.map((entry) =>
-                                      entry.id !== line.id
-                                        ? entry
-                                        : {
-                                            ...entry,
-                                            sub_rows: (entry.sub_rows ?? []).map((current) =>
-                                              current.id === row.id
-                                                ? {
-                                                    ...current,
-                                                    part_uuid: event.target.value || undefined,
-                                                    description:
-                                                      partOptions.find((part) => part.id === event.target.value)?.label ??
-                                                      current.description,
-                                                  }
-                                                : current
-                                            ),
-                                          }
+                              {/* LST-PICKER-03: the part picker had the same external "+ Create" button
+                                  as the item picker above. Inline create belongs INSIDE the dropdown;
+                                  selecting a newly created part also carries its label into the row's
+                                  description, exactly as picking an existing part does. */}
+                              {operatingCompanyId && !readOnly ? (
+                                <ReferenceSelect
+                                  value={row.part_uuid ?? null}
+                                  onChange={(next) =>
+                                    onSectionBChange(
+                                      sectionB.lines.map((entry) =>
+                                        entry.id !== line.id
+                                          ? entry
+                                          : {
+                                              ...entry,
+                                              sub_rows: (entry.sub_rows ?? []).map((current) =>
+                                                current.id === row.id
+                                                  ? {
+                                                      ...current,
+                                                      part_uuid: next ?? undefined,
+                                                      description:
+                                                        partOptions.find((part) => part.id === next)?.label ??
+                                                        current.description,
+                                                    }
+                                                  : current
+                                              ),
+                                            }
+                                      )
                                     )
-                                  )
-                                }
-                                className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                              >
-                                <option value="">Select part...</option>
-                                {partOptions.map((option) => (
-                                  <option key={option.id} value={option.id}>
-                                    {option.label}
-                                  </option>
-                                ))}
-                              </SelectCombobox>
-                              <button
-                                disabled={readOnly}
-                                type="button"
-                                onClick={() => onQuickCreatePart?.(line.id, row.id)}
-                                className="rounded-sm border border-gray-300 px-2 py-1 text-[11px]"
-                                aria-label="Quick create part"
-                              >
-                                + Create
-                              </button>
+                                  }
+                                  options={partOptions.map((option) => ({ value: option.id, label: option.label }))}
+                                  createKind="item"
+                                  operatingCompanyId={operatingCompanyId}
+                                  placeholder="Select part…"
+                                  addNewLabel="+ Add new part"
+                                  onOptionCreated={(opt) => {
+                                    onSectionBChange(
+                                      sectionB.lines.map((entry) =>
+                                        entry.id !== line.id
+                                          ? entry
+                                          : {
+                                              ...entry,
+                                              sub_rows: (entry.sub_rows ?? []).map((current) =>
+                                                current.id === row.id
+                                                  ? { ...current, part_uuid: opt.value, description: opt.label }
+                                                  : current
+                                              ),
+                                            }
+                                      )
+                                    );
+                                    onQuickCreatePart?.(line.id, row.id);
+                                  }}
+                                />
+                              ) : (
+                                <SelectCombobox
+                                  disabled={readOnly}
+                                  value={row.part_uuid ?? ""}
+                                  onChange={(event) =>
+                                    onSectionBChange(
+                                      sectionB.lines.map((entry) =>
+                                        entry.id !== line.id
+                                          ? entry
+                                          : {
+                                              ...entry,
+                                              sub_rows: (entry.sub_rows ?? []).map((current) =>
+                                                current.id === row.id
+                                                  ? {
+                                                      ...current,
+                                                      part_uuid: event.target.value || undefined,
+                                                      description:
+                                                        partOptions.find((part) => part.id === event.target.value)?.label ??
+                                                        current.description,
+                                                    }
+                                                  : current
+                                              ),
+                                            }
+                                      )
+                                    )
+                                  }
+                                  className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                                >
+                                  <option value="">Select part...</option>
+                                  {partOptions.map((option) => (
+                                    <option key={option.id} value={option.id}>
+                                      {option.label}
+                                    </option>
+                                  ))}
+                                </SelectCombobox>
+                              )}
                             </div>
                             <input
                               disabled={readOnly}

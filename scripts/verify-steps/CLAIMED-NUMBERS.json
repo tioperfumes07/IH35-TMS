@@ -1083,6 +1083,7 @@
     "1684": "1684-verify-bank-f09-settings-reports-email-queue.mjs",
     "1687": "1687-verify-schema-parity-window-bounded.mjs",
     "1691": "1691-verify-categories-read-canonical-ledger.mjs",
+    "1695": "1695-verify-inline-create-inside-picker.mjs",
     "1697": "1697-verify-verify-step-numbers-unique.mjs",
     "1700": "1700-verify-acct-link-03-bill-unit-density.mjs",
     "1702": "1702-verify-money-pr-local-gate.mjs",
