@@ -56,6 +56,12 @@
       "reason": "[HOLD-FOR-JORGE — TIER 1 FINANCIAL] FACT-PHANTOM-01 + FACT-01 removes runtime reads/writes of the retired factoring-company profile and rebuilds views.factoring_summary from views.factoring_balance_invoice_linkage. Signed reserve receivable and outstanding-liability ledger cents are normalized only for the established dollars display contract; active-factor count and the single-factor invariant derive from real linkage rows. No GL math, posting, QBO write-back, table mutation, or production run. Owner applies on Neon, then ledger-backfills.",
       "added_at": "2026-07-27",
       "block": "FACT-PHANTOM-01 + FACT-01"
+    },
+    {
+      "file": "202610010000_fact_02_subledger_je_fk.sql",
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL] FACT-02 — FK factoring_reserve_movements + factoring_default_interest_accruals journal_entry_id -> accounting.journal_entries (RESTRICT + same-entity composite). Fail-closed orphan/cross-entity checks; owner Neon-apply + ledger-backfill.",
+      "block": "FACT-02",
+      "added_at": "2026-07-27"
     }
   ],
   "_integrity_note": "Every entry appears EXACTLY ONCE (file is the key). applied_on_prod MUST agree with the pinned prod-ledger snapshot scripts/lib/prod-migration-ledger-checksums.json for any file inside its window (>= 202606010000). Enforced by scripts/verify-steps/1361-verify-held-registry-integrity.mjs. Repaired 2026-07-25: 119 entries collapsed to 110 (9 duplicates, 7 of them carrying contradictory applied_on_prod), and 79 entries that were already applied on prod were stamped. Before the repair, verify-schema-parity-from-prod (step 1437) derived held-unapplied columns from this file and therefore treated applied migrations as unapplied.",
