@@ -1,13 +1,13 @@
 # Module completion — Accounting (Module 3)
 
-**PROGRESS: 10 of 29** · complete: `false` · as_of: 2026-07-25T19:00:00.000Z · live_sha: `a3f9c12`
+**PROGRESS: 10 of 30** · complete: `false` · as_of: 2026-07-25T19:00:00.000Z · live_sha: `a3f9c12`
 
 | Status | Count |
 |---|---:|
 | PASS | 8 |
 | HOLD | 2 |
 | OPEN | 0 |
-| FAIL | 12 |
+| FAIL | 13 |
 | UNVERIFIED | 7 |
 
 | ID | Status | Title | Evidence | PR |
@@ -41,5 +41,6 @@
 | `ACCT-GATE-01` | **PASS** | Every money PR uses EVERY-PR checklist (VERIFY-1..8) — process closed | #3430 merged on main (sha fc1cf13); verify-steps 1430+1431 + Rule 24 live; money PRs require MODULE_PROGRESS trailers | #3430 |
 | `ACCT-R-11` | **UNVERIFIED** | Bank categorize capture fields sent to API and persisted on bank_transactions | Wiring on main + static guard verify-acct-r11-tx-fields-sent (step 1490) PASS. LIVE PROOF UNVERIFIED — need authenticated TRANSP+USMCA categorize→reload hydrate before PASS (Rule 23). mig 202607690000 already Neon-applied 2026-07-25. | — |
 | `DISP-01` | **UNVERIFIED** | Two-event delivery revenue latch (Unbilled → A/R) | Code+guard on branch; flag OFF; LIVE PROOF UNVERIFIED until owner Neon-applies 202609290000 + enables REVENUE_RECOGNITION_POST_ENABLED per entity | #3663 |
+| `ACCT-R-44` | **FAIL** | accounting surfaces crash to a blank page on a partial optional chain | Frontend suite 2026-07-27: useSettlementDisputes openCount (data?.disputes.filter) unmounted the whole Drivers page; same shape on 5 accounting/qbo-sync surfaces. Suite 106 failing/1169 passing vs origin/main baseline 161/1114. Guard scripts/verify-no-partial-optional-chain.mjs (step 1650) scans 1918 files, exit 0 after fix, FAILED with 4 findings before. Stays FAIL until browser re-click (Rule 23). | #3669 |
 
 Desktop audit: ~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md

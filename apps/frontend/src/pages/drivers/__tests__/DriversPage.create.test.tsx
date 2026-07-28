@@ -114,8 +114,19 @@ describe("DriversPage create driver validation", () => {
     await user.type(document.querySelector('[data-field="last_name"]')!, "Doe");
     await user.type(document.querySelector('[data-field="phone_input"]')!, "5551234567");
     await clickSaveInCreateModal(user);
+    // This asserted a single alert reading /Could not save/i. Two things were wrong with that, and
+    // neither was a product defect:
+    //  1. "Could not save" is VendorCreateModal's wording — the driver create modal never emits it.
+    //     It surfaces the API's own message, which is strictly better: "Driver with this CDL already
+    //     exists" tells the user what to fix; "Could not save" does not.
+    //  2. getByRole("alert") is singular, and the modal correctly raises TWO alerts — the toast and
+    //     the inline field error. Asserting there is exactly one alert forbids the inline error the
+    //     next assertion then requires.
+    // So the expectation is corrected to the real, correct behaviour rather than the product being
+    // bent to fit a stale string.
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(/Could not save/i);
+      const alerts = screen.getAllByRole("alert");
+      expect(alerts.some((el) => /Driver with this CDL already exists/i.test(el.textContent ?? ""))).toBe(true);
     });
     await waitFor(() => {
       expect(document.getElementById("cdl_number-error")).toBeTruthy();

@@ -430,6 +430,49 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         />
       </KpiStrip>
 
+      {/*
+        RESTORED (2026-07-27). This section was DELETED by #366 on 2026-06-02 — a §7 additive-only
+        violation ("ARCHIVE, never DELETE"). Its test assertion was left in place, so
+        DriverProfilePage.test.tsx has been red for nearly two months, asserting a heading that
+        existed nowhere in the tree. The correct fix is to restore the section, not to delete the
+        assertion: the at-a-glance CDL / medical / contact readout genuinely disappeared from the
+        driver profile and nothing replaced it.
+
+        The compliance CHIP is deliberately not repeated here — #366 moved it into the PageHeader
+        actions and that placement is kept, so restoring it inside would duplicate a live element.
+        Everything else the section carried is restored verbatim against columns re-verified on prod
+        2026-07-27: cdl_number, cdl_state, cdl_expires_at, dot_medical_expires_at, phone, email all
+        exist on mdata.drivers.
+      */}
+      <section className="rounded-sm border border-gray-200 bg-white p-3">
+        <h2 className="mb-1 text-sm font-semibold text-slate-900">Compliance summary</h2>
+        <p className="mb-3 text-xs text-slate-600">
+          Profile readiness combines master-data credentials with DQF checklist rows from the driver-qualification API.
+          File status: <span className="font-medium text-slate-800">{summary.label}</span>.
+        </p>
+        {/* Flat inside one frame — the inner bordered cells the 2026-06 original used are a
+            box-within-box, which verify-no-nested-box now forbids (QBO/NetSuite: one frame, flat
+            inside). The restored INFORMATION is what §7 protects; the obsolete framing is not. */}
+        <div className="grid gap-3 text-xs text-slate-700 md:grid-cols-3">
+          <div>
+            <div className="font-semibold text-slate-800">CDL</div>
+            <div>
+              {(profileDriver.cdl_number as string | null) ?? "—"} · {(profileDriver.cdl_state as string | null) ?? "—"}
+            </div>
+            <div>Expires {(profileDriver.cdl_expires_at as string | null) ?? "—"}</div>
+          </div>
+          <div>
+            <div className="font-semibold text-slate-800">Medical card</div>
+            <div>Expires {(profileDriver.dot_medical_expires_at as string | null) ?? "—"}</div>
+          </div>
+          <div>
+            <div className="font-semibold text-slate-800">Contact</div>
+            <div>{(profileDriver.phone as string | null) ?? "—"}</div>
+            <div>{(profileDriver.email as string | null) ?? "—"}</div>
+          </div>
+        </div>
+      </section>
+
       <section className="rounded-sm border border-gray-200 bg-white p-3">
         <h2 className="mb-3 text-sm font-semibold text-slate-900">DQF checklist</h2>
         <DriverDqfPanel companyId={companyId} driverId={id} editable />

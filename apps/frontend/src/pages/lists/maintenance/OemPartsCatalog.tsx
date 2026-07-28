@@ -181,7 +181,7 @@ export function OemPartsCatalog() {
   const fleetCount = query.data?.fleet_count ?? 0;
 
   const brandOptions = useMemo(() => {
-    const fromApi = brandsQuery.data?.rows.map((row) => row.brand) ?? [];
+    const fromApi = brandsQuery.data?.rows?.map((row) => row.brand) ?? [];
     return [...new Set(fromApi)].sort();
   }, [brandsQuery.data?.rows]);
 

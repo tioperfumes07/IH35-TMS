@@ -20,8 +20,8 @@ export function UndepositedFundsPage() {
   });
 
   const accountId =
-    rolesQuery.data?.rows.find((r) => r.role === "undeposited_funds" && r.is_active && r.account_id)?.account_id ??
-    rolesQuery.data?.rows.find((r) => r.role === "cash_clearing" && r.is_active && r.account_id)?.account_id ??
+    rolesQuery.data?.rows?.find((r) => r.role === "undeposited_funds" && r.is_active && r.account_id)?.account_id ??
+    rolesQuery.data?.rows?.find((r) => r.role === "cash_clearing" && r.is_active && r.account_id)?.account_id ??
     null;
 
   if (rolesQuery.isError) {

@@ -114,7 +114,7 @@ export function EldAuditTrailViewer() {
   );
 
   const exportPdf = () => {
-    if (!companyId || !driverUuid || !historyQuery.data?.edits.length) return;
+    if (!companyId || !driverUuid || !historyQuery.data?.edits?.length) return;
     setExporting(true);
     void downloadEldAuditPdf({
       operatingCompanyId: companyId,
@@ -144,7 +144,7 @@ export function EldAuditTrailViewer() {
           <Button
             variant="secondary"
             onClick={exportPdf}
-            disabled={!historyQuery.data?.edits.length || exporting}
+            disabled={!historyQuery.data?.edits?.length || exporting}
             data-testid="eld-audit-export-pdf"
           >
             <Download className="mr-1 inline h-4 w-4" />
@@ -192,7 +192,7 @@ export function EldAuditTrailViewer() {
       <section className="p-4 print:border-0">
         {historyQuery.isLoading ? <p className="text-sm text-gray-500">Loading edit history…</p> : null}
         {driverUuid && !historyQuery.isLoading ? (
-          historyQuery.data?.edits.length ? (
+          historyQuery.data?.edits?.length ? (
             <EldEditHistoryTimeline
               driverUuid={driverUuid}
               operatingCompanyId={companyId}

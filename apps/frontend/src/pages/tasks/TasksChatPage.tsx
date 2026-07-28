@@ -234,10 +234,10 @@ export function TasksChatPage() {
                     <div className="text-xs text-slate-500">Loading comments…</div>
                   ) : commentsQuery.isError ? (
                     <div className="text-xs text-red-700">Couldn't load comments.</div>
-                  ) : (commentsQuery.data?.comments.length ?? 0) === 0 ? (
+                  ) : (commentsQuery.data?.comments?.length ?? 0) === 0 ? (
                     <div className="text-xs text-slate-500">No comments yet. Start the conversation.</div>
                   ) : (
-                    commentsQuery.data?.comments.map((c) => {
+                    commentsQuery.data?.comments?.map((c) => {
                       const mentionNames = c.mentions
                         .map((id) => employeeById.get(id)?.name)
                         .filter((n): n is string => Boolean(n));
@@ -316,11 +316,11 @@ export function TasksChatPage() {
                 <div className="max-h-[260px] overflow-y-auto p-4">
                   {activityQuery.isLoading ? (
                     <div className="text-xs text-slate-500">Loading activity…</div>
-                  ) : (activityQuery.data?.activity.length ?? 0) === 0 ? (
+                  ) : (activityQuery.data?.activity?.length ?? 0) === 0 ? (
                     <div className="text-xs text-slate-500">No activity yet.</div>
                   ) : (
                     <ul className="space-y-2">
-                      {activityQuery.data?.activity.map((a: TaskActivity) => (
+                      {activityQuery.data?.activity?.map((a: TaskActivity) => (
                         <li key={a.id} className="flex items-baseline justify-between text-xs" data-testid="tasks-chat-activity-item">
                           <span className="text-slate-700">
                             <span className="font-medium text-[#1f2a44]">{a.actor_name ?? "System"}</span>{" "}

@@ -70,7 +70,7 @@ export function useSettlementDisputes(options: { status?: SettlementDisputeStatu
   });
 
   const openCount =
-    listQuery.data?.disputes.filter((row) => row.status === "submitted" || row.status === "in_review").length ?? 0;
+    listQuery.data?.disputes?.filter((row) => row.status === "submitted" || row.status === "in_review").length ?? 0;
 
   const createMutation = useMutation({
     mutationFn: (input: {

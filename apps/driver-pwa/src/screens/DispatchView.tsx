@@ -32,8 +32,8 @@ export function DispatchViewScreen() {
     enabled: Boolean(loadUuid),
   });
 
-  const pickup = useMemo(() => viewQuery.data?.stops.find((stop) => stop.type === "pickup") ?? null, [viewQuery.data]);
-  const deliveries = useMemo(() => viewQuery.data?.stops.filter((stop) => stop.type === "delivery") ?? [], [viewQuery.data]);
+  const pickup = useMemo(() => viewQuery.data?.stops?.find((stop) => stop.type === "pickup") ?? null, [viewQuery.data]);
+  const deliveries = useMemo(() => viewQuery.data?.stops?.filter((stop) => stop.type === "delivery") ?? [], [viewQuery.data]);
 
   async function refresh() {
     await queryClient.invalidateQueries({ queryKey: ["pwa", "dispatch-view", loadUuid] });

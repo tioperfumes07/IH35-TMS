@@ -68,7 +68,7 @@ export function QboSyncDetailPage() {
   });
 
   const events = useMemo(
-    () => eventLogQuery.data?.pages.flatMap((page) => page.events ?? []) ?? [],
+    () => eventLogQuery.data?.pages?.flatMap((page) => page.events ?? []) ?? [],
     [eventLogQuery.data?.pages],
   );
   const totalEstimated = eventLogQuery.data?.pages[0]?.total_estimated ?? 0;
