@@ -15,10 +15,13 @@
 //                   entry up; the guard then locks it forever.
 //
 // NOT in either list (deliberately — rule 14 marks these CANONICAL, not RETIRE):
-//   driver_finance.* · mdata.qbo_* · banking.* · maintenance.* · mdata.vendors · mdata.loads ·
-//   catalogs.cancellation_reasons. The rule-14 "WO picker writing mdata.qbo_vendors" row is a
-//   context-specific write rule (mdata.qbo_vendors IS canonical for the QBO mirror sync) — a
-//   table-level static scan cannot enforce it without false positives, so it is out of scope here.
+//   driver_finance.* · banking.* · maintenance.* · mdata.vendors · mdata.loads ·
+//   catalogs.cancellation_reasons · accounting.qbo_vendors (Desktop ACCT-ECON-05 2026-07-28 —
+//   CANONICAL AP QBO vendor masters; mdata.qbo_vendors is RETIRE → KNOWN_LEGACY below).
+//   Older "WO picker writing mdata.qbo_vendors" mirror-sync canonical reading is SUPERSEDED for
+//   vendor masters. Other accounting.qbo_* (accounts/customers) remain ENFORCED until their
+//   Desktop leaves flip. A table-level static scan cannot enforce every context without false
+//   positives for remaining mdata.qbo_* sync writers — those stay KNOWN_LEGACY warnings.
 //
 // Scan: apps/backend/src + apps/frontend/src, .ts/.tsx, comments stripped before matching
 // (a doc comment quoting removed SQL must not fail the build). Exempt: __tests__/, *.test.*,
@@ -46,9 +49,9 @@ export const ENFORCED = [
   { pat: "settlements\\.settlement_disputes", canonical: "driver_finance.driver_settlement_disputes" },
   { pat: "settlements\\.team_split_configs", canonical: "driver_finance.team_settlement_splits" },
   { pat: "settlements\\.team_split_load_overrides", canonical: "driver_finance.team_settlement_splits" },
-  // QBO mirror RETIRE trio (exact names only — accounting.qbo_remote_counts etc. are live, canonical)
+  // QBO mirror RETIRE (exact names) — accounting.* was the wrong schema for accounts/customers;
+  // vendors FLIPPED 2026-07-28: accounting.qbo_vendors is CANONICAL (removed from ENFORCED).
   { pat: "accounting\\.qbo_accounts", canonical: "mdata.qbo_accounts" },
-  { pat: "accounting\\.qbo_vendors", canonical: "mdata.qbo_vendors" },
   { pat: "accounting\\.qbo_customers", canonical: "mdata.qbo_customers" },
   // Phantom/island load table (rule 14: canonical is mdata.loads)
   { pat: "dispatch\\.loads", canonical: "mdata.loads" },
@@ -64,6 +67,8 @@ export const KNOWN_LEGACY = [
   // design decision keeping the dispatch cancel domain on this table — owner ruling needed before
   // any repoint block (drift flagged in the PR that added this guard).
   { pat: "catalogs\\.load_cancellation_reasons", canonical: "catalogs.cancellation_reasons" },
+  // ACCT-ECON-05: RETIRE mirror still has sync/push readers; warn until all writers use accounting.*
+  { pat: "mdata\\.qbo_vendors", canonical: "accounting.qbo_vendors" },
 ];
 
 const buildRe = (list) =>
@@ -166,7 +171,7 @@ function selftest() {
         "await q(`SELECT id FROM driver_finance.driver_settlements WHERE id = $1`);",
         "// comment about payroll.driver_settlements is fine",
         "/* legacy doc: SELECT * FROM settlement.settlement s JOIN mdata.drivers d ON d.id = s.driver_id */",
-        "await q(`INSERT INTO mdata.qbo_vendors (id) VALUES ($1)`);",
+        "await q(`INSERT INTO accounting.qbo_vendors (id) VALUES ($1)`);",
         "await q(`SELECT count(*) FROM accounting.qbo_remote_counts`);",
       ].join("\n") + "\n"
     );
@@ -177,13 +182,14 @@ function selftest() {
     fs.writeFileSync(path.join(src, "bad-join.ts"), "await q(`SELECT 1 FROM x JOIN settlements.team_split_load_overrides o ON o.load_id = x.id`);\n");
     fs.writeFileSync(path.join(src, "bad-wildcard.ts"), "await q(`INSERT INTO payroll.tax_withholding (id) VALUES ($1)`);\n");
     fs.writeFileSync(path.join(src, "bad-singular.ts"), "await q(`SELECT id FROM settlement.settlement_deduction`);\n");
-    fs.writeFileSync(path.join(src, "bad-qbo.ts"), "await q(`UPDATE accounting.qbo_vendors SET name = $1`);\n");
+    fs.writeFileSync(path.join(src, "bad-qbo.ts"), "await q(`UPDATE accounting.qbo_accounts SET name = $1`);\n");
     fs.writeFileSync(path.join(src, "bad-island.ts"), "await q(`SELECT id FROM dispatch.loads WHERE status = 'PENDING'`);\n");
     fs.writeFileSync(path.join(src, "bad-probe-regclass.ts"), "await q(`SELECT to_regclass('payroll.driver_settlements') IS NOT NULL AS ok`);\n");
     fs.writeFileSync(path.join(src, "bad-probe-priv.ts"), "await q(`SELECT has_table_privilege(current_user, 'settlements.settlement_disputes', 'SELECT') AS ok`);\n");
     fs.writeFileSync(path.join(src, "legacy-bank.ts"), "await q(`SELECT 1 FROM bank.reconciliation_matches rm WHERE rm.id = $1`);\n");
     fs.writeFileSync(path.join(src, "legacy-maint.ts"), "await q(`INSERT INTO maint.pm_schedule (id) VALUES ($1)`);\n");
     fs.writeFileSync(path.join(src, "legacy-cancel.ts"), "await q(`SELECT id FROM catalogs.load_cancellation_reasons`);\n");
+    fs.writeFileSync(path.join(src, "legacy-mdata-vendors.ts"), "await q(`SELECT qbo_id FROM mdata.qbo_vendors WHERE id = $1`);\n");
     fs.writeFileSync(path.join(src, "old-engine.deprecated.ts"), "await q(`SELECT id FROM payroll.driver_settlements`);\n");
     fs.writeFileSync(path.join(src, "__tests__/mock.test.ts"), "if (sql.includes('FROM payroll.driver_settlements')) {}\n");
 
@@ -198,16 +204,17 @@ function selftest() {
       ["catches JOIN", hasV("bad-join.ts")],
       ["payroll.* wildcard catches non-enumerated table", hasV("bad-wildcard.ts")],
       ["settlement.* singular caught", hasV("bad-singular.ts")],
-      ["accounting.qbo_* mirror trio caught", hasV("bad-qbo.ts")],
+      ["accounting.qbo_accounts still ENFORCED", hasV("bad-qbo.ts")],
       ["dispatch.loads caught", hasV("bad-island.ts")],
       ["catches to_regclass probe", hasV("bad-probe-regclass.ts")],
       ["catches has_table_privilege probe", hasV("bad-probe-priv.ts")],
-      ["clean file passes (comments + canonical + non-RETIRE qbo tables ok)", !hasV("clean.ts") && !hasL("clean.ts")],
+      ["clean file passes (comments + canonical accounting.qbo_vendors + non-RETIRE qbo tables ok)", !hasV("clean.ts") && !hasL("clean.ts")],
       ["deprecated archive exempt", !hasV("old-engine.deprecated.ts")],
       ["tests exempt", !hasV("mock.test.ts")],
       ["KNOWN_LEGACY bank.* warns, does not violate", hasL("legacy-bank.ts") && !hasV("legacy-bank.ts")],
       ["KNOWN_LEGACY maint.* warns, does not violate", hasL("legacy-maint.ts") && !hasV("legacy-maint.ts")],
       ["KNOWN_LEGACY load_cancellation_reasons warns, does not violate", hasL("legacy-cancel.ts") && !hasV("legacy-cancel.ts")],
+      ["KNOWN_LEGACY mdata.qbo_vendors warns, does not violate", hasL("legacy-mdata-vendors.ts") && !hasV("legacy-mdata-vendors.ts")],
     ];
     const failed = checks.filter(([, ok]) => !ok);
     if (failed.length) {
