@@ -8,9 +8,11 @@
  * (bank.*, maint.*, catalogs.load_cancellation_reasons, plus any ENFORCED-tier write
  * outside *.deprecated.ts archives).
  *
- * CANONICAL (never flagged): driver_finance.*, mdata.qbo_*, banking.*, maintenance.*,
+ * CANONICAL (never flagged): driver_finance.*, banking.*, maintenance.*,
  * mdata.vendors, mdata.loads, catalogs.cancellation_reasons,
- * accounting.qbo_remote_counts / accounting.qbo_remote_count_collection_state.
+ * accounting.qbo_vendors (Desktop ACCT-ECON-05), accounting.qbo_remote_counts /
+ * accounting.qbo_remote_count_collection_state.
+ * Sync still writes mdata.qbo_vendors until a dedicated repoint wave — not C2-scoped yet.
  *
  * GUARD-FIRST: shrink-only baseline so CI passes while inventory is tracked; --strict
  * prints the full red worklist. selftest plants a RETIRE write and fails.
@@ -194,7 +196,7 @@ function selftest() {
     const files = {
       "clean/canonical.ts": `
         await q(\`INSERT INTO driver_finance.driver_settlements (id) VALUES ($1)\`);
-        await q(\`INSERT INTO mdata.qbo_vendors (id) VALUES ($1)\`);
+        await q(\`INSERT INTO accounting.qbo_vendors (id) VALUES ($1)\`);
         await q(\`INSERT INTO banking.bank_transactions (id) VALUES ($1)\`);
         await q(\`INSERT INTO maintenance.work_orders (id) VALUES ($1)\`);
         await q(\`INSERT INTO accounting.qbo_remote_counts (id) VALUES ($1)\`);
@@ -238,7 +240,7 @@ function selftest() {
 
     const checks = [
       ["canonical driver_finance write passes", !hasFile("clean/canonical.ts")],
-      ["canonical mdata.qbo_vendors write passes", !hasFile("clean/canonical.ts")],
+      ["canonical accounting.qbo_vendors write passes", !hasFile("clean/canonical.ts")],
       ["canonical banking.* write passes", !hasFile("clean/canonical.ts")],
       ["canonical maintenance.* write passes", !hasFile("clean/canonical.ts")],
       ["maint.* RETIRE write caught", hasFileTable("bad/maint-write.ts", "maint.position_history")],

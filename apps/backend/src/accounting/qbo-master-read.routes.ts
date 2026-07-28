@@ -179,7 +179,7 @@ export async function registerQboMasterReadRoutes(app: FastifyInstance) {
         `
           SELECT qv.id, qv.qbo_id, qv.display_name, qv.active AS is_active, qv.mirrored_at AS last_synced_at,
                  ${vendorCategorySelect}
-          FROM mdata.qbo_vendors qv
+          FROM accounting.qbo_vendors qv
           ${joinSql}
           WHERE qv.operating_company_id = $1::uuid
             ${cursorSql}
@@ -237,7 +237,7 @@ export async function registerQboMasterReadRoutes(app: FastifyInstance) {
         `
           SELECT qv.id, qv.qbo_id, qv.display_name, qv.active AS is_active, qv.mirrored_at AS last_synced_at,
                  ${vendorCategorySelect}
-          FROM mdata.qbo_vendors qv
+          FROM accounting.qbo_vendors qv
           ${joinSql}
           WHERE qv.id = $1::uuid AND qv.operating_company_id = $2::uuid
           LIMIT 1

@@ -126,6 +126,11 @@ export const EXPECTED_HELD = [
   // FACT-02 HOLD until Jorge Neon-apply (2026-07-27).
   "202610010000_fact_02_subledger_je_fk.sql",
   // DISP-01 (#3663) owner Neon-applied 202609290000 — moved to applied_held[]; not in EXPECTED_HELD.
+  // ACCT-ECON-05 (#3712) — authored 2026-07-28; NEVER Neon-applied. Live cross-check
+  // br-fancy-credit-akjnd07a 2026-07-28 lucia: filename absent from _system._schema_migrations;
+  // accounting.qbo_vendors=2744 / mdata.qbo_vendors=2780 (Δ≈36 residual). Leaves this list only
+  // after owner Neon-apply + ledger-backfill and GUARD re-proves both ledger rows.
+  "202610121800_acct_econ_05_qbo_vendors_canonical_backfill.sql",
 ];
 
 /**

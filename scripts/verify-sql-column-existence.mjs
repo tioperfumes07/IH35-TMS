@@ -209,7 +209,24 @@ export function analyzeSql(sql, schema) {
 /** Leaf analyzer — never skips on WITH (caller already split). */
 function analyzeSqlFragment(sql, schema) {
   const violations = [];
-  const norm = sql.replace(/\s+/g, " ").trim();
+  // ON CONFLICT (...) target columns are STRUCTURALLY UNQUALIFIABLE — Postgres rejects an alias or
+  // table prefix inside the conflict target — and they always belong to the INSERT target table, not
+  // to whatever table the surrounding fragment happens to reference. Leaving them in made the
+  // unqualified-column pass attribute them to the wrong table: it reported
+  // accounting.bills.qbo_bill_payment_id for a statement that INSERTs INTO accounting.bill_payments,
+  // which is where that column really lives. This was previously invisible because the schema-parity
+  // baseline contained a PHANTOM accounting.bills.qbo_bill_payment_id (one of 495 phantom columns the
+  // parity DDL parser invented); correcting the baseline exposed the mis-attribution. Excising the
+  // conflict target removes an unanalyzable construct — it does not weaken any real check, because
+  // every other reference to those columns elsewhere in the statement is still analyzed.
+  // Covers BOTH unqualifiable parts: the conflict target list AND the partial-index predicate that may
+  // follow it (`ON CONFLICT (...) WHERE col IS NOT NULL DO UPDATE`). The predicate matches the guard's
+  // `<col> IS NOT NULL` unqualified pattern exactly, which is how it got attributed to the joined table.
+  const withoutConflictTarget = sql.replace(
+    /\bon\s+conflict\s*\([^)]*\)(?:\s+where\s+[\s\S]*?)?\s+do\b/gi,
+    " ON CONFLICT DO "
+  );
+  const norm = withoutConflictTarget.replace(/\s+/g, " ").trim();
   const low = norm.toLowerCase();
 
   // FROM/JOIN <schema.table> [AS] [alias] — build alias→table map.

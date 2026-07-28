@@ -22,6 +22,11 @@ Set both env vars on the **ih35-tms-backend** Render service (declared in `rende
 
 When both are set, `resolveUnitAndCompany()` skips live discovery and uses the fixed pair.
 
+`render.yaml` also sets `IH35_SMOKE_REQUIRE_FIXED_UNIT=true`. On production preDeploy, the smoke
+therefore fails before database discovery if either UUID is absent. This is intentional: configure
+both dashboard values before deploying instead of silently testing whichever live unit was updated
+most recently. Local and CI runs may leave the requirement unset to retain fixture discovery.
+
 ## Related overrides (optional)
 
 | Variable | Default | Purpose |
@@ -39,3 +44,10 @@ For local runs against Neon, export the same pair in your shell or `.env` before
 
 `scripts/verify-g4-deploy-smoke-env-in-render.mjs` (verify-step **1492**) fails if either key is
 missing from `render.yaml` under `ih35-tms-backend`.
+
+Combined closure guard `scripts/verify-acct-r04-deploy-smoke-closure.mjs` (verify-step **1704**)
+also asserts archived test-owner emails stay out of production `identity.users` listings via
+`scripts/verify-no-test-users-in-production-list.mjs`.
+
+`scripts/verify-g4-deploy-smoke-requires-fixed-unit.mjs` (verify-step **1712**) additionally proves
+that Render enables the fail-closed requirement and the smoke aborts when the fixed pair is incomplete.

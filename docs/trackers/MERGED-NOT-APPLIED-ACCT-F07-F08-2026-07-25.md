@@ -1,9 +1,12 @@
 # MERGED ≠ APPLIED — ACCT-F07 + ACCT-F08 consumer FK pair (2026-07-25)
 
-> **STATUS: MERGED ON MAIN · NOT NEON-APPLIED · MANIFEST FAIL UNTIL OWNER CEREMONY**
+> **STATUS (refresh 2026-07-28): SCHEMA NEON-APPLIED · ACCT-LINK-05 STILL FAIL ON CATALOG DENSITY**
 >
-> Both HOLD PRs merged. Static wiring guards PASS on `origin/main`. Production schema still lacks
-> the consumer FK columns/constraints until Jorge Neon-applies the held migrations and ledger-backfills.
+> Both HOLD PRs merged and consumer FK columns are live on Neon (`posting_batches.posting_template_id`,
+> expense_lines category FK). **ACCT-LINK-05 remains FAIL** until `catalogs.posting_templates` is
+> seeded (0 rows lucia 2026-07-28) and at least one batch stamps `posting_template_id`. Do not flip
+> PASS on FK-exists alone. Templates are **per-entity** (LST-F03) — do NOT invent a second global
+> scope; owner seeds in-app via Lists → Posting Templates.
 
 ## FINDING pair (single honesty surface — one PR)
 

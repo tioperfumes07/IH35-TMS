@@ -76,10 +76,6 @@
     "count": 4,
     "reason": "baselined 2026-07-11 — pre-existing UPDATE accounting.qbo_customers; retire to mdata.qbo_customers"
   },
-  "apps/backend/src/sync/qbo-vendors-push.ts::accounting.qbo_vendors::UPDATE": {
-    "count": 4,
-    "reason": "baselined 2026-07-11 — pre-existing UPDATE accounting.qbo_vendors; retire to mdata.qbo_vendors"
-  },
   "db/migrations/0233_block_22_driver_settlement_engine.sql::payroll.driver_settlements::REFERENCES": {
     "count": 1,
     "reason": "baselined 2026-07-11 — pre-existing REFERENCES payroll.driver_settlements; retire to driver_finance.driver_settlements"
@@ -107,14 +103,6 @@
   "db/migrations/0320_archive_test_seed_data.sql::accounting.qbo_customers::UPDATE": {
     "count": 1,
     "reason": "baselined 2026-07-11 — pre-existing UPDATE accounting.qbo_customers; retire to mdata.qbo_customers"
-  },
-  "db/migrations/0321_qbo_vendors_push_sync_status.sql::accounting.qbo_vendors::INSERT INTO": {
-    "count": 1,
-    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO accounting.qbo_vendors; retire to mdata.qbo_vendors"
-  },
-  "db/migrations/0321_qbo_vendors_push_sync_status.sql::accounting.qbo_vendors::UPDATE": {
-    "count": 1,
-    "reason": "baselined 2026-07-11 — pre-existing UPDATE accounting.qbo_vendors; retire to mdata.qbo_vendors"
   },
   "db/migrations/0323_qbo_accounts_sync_state.sql::accounting.qbo_accounts::INSERT INTO": {
     "count": 1,
@@ -211,5 +199,61 @@
   "db/migrations/0123_p6_pre_ledger_drift_reconciliation.sql::catalogs.cancellation_reasons::REFERENCES": {
     "count": 1,
     "reason": "HISTORICAL — 0123 re-declares the legacy FK; applied and checksum-frozen. Dropped by 202607940000."
+  },
+  "apps/backend/src/mdata/qbo-master-write.routes.ts::mdata.qbo_vendors::INSERT INTO": {
+    "count": 1,
+    "reason": "ACCT-ECON-05 2026-07-28 map flip — sync/master-write still targets RETIRE mdata until dedicated repoint wave; shrink-only"
+  },
+  "apps/backend/src/mdata/qbo-master-write.routes.ts::mdata.qbo_vendors::UPDATE": {
+    "count": 1,
+    "reason": "ACCT-ECON-05 2026-07-28 map flip — sync/master-write still targets RETIRE mdata until dedicated repoint wave; shrink-only"
+  },
+  "apps/backend/src/outbox/handlers/tms-vendor-push.handler.ts::mdata.qbo_vendors::INSERT INTO": {
+    "count": 1,
+    "reason": "ACCT-ECON-05 2026-07-28 map flip — TMS vendor push mirror still writes RETIRE until repoint; shrink-only"
+  },
+  "apps/backend/src/outbox/handlers/tms-vendor-push.handler.ts::mdata.qbo_vendors::UPDATE": {
+    "count": 1,
+    "reason": "ACCT-ECON-05 2026-07-28 map flip — TMS vendor push mirror still writes RETIRE until repoint; shrink-only"
+  },
+  "apps/backend/src/qbo-sync/vendors-puller.ts::mdata.qbo_vendors::INSERT INTO": {
+    "count": 1,
+    "reason": "ACCT-ECON-05 2026-07-28 map flip — QBO vendors puller still writes RETIRE until dual-write/repoint; shrink-only"
+  },
+  "apps/backend/src/qbo/master-data-sync.service.ts::mdata.qbo_vendors::INSERT INTO": {
+    "count": 1,
+    "reason": "ACCT-ECON-05 2026-07-28 map flip — master-data-sync still writes RETIRE until repoint; shrink-only"
+  },
+  "apps/backend/src/qbo/push.service.ts::mdata.qbo_vendors::UPDATE": {
+    "count": 2,
+    "reason": "ACCT-ECON-05 2026-07-28 map flip — QBO push status still updates RETIRE until repoint; shrink-only"
+  },
+  "apps/backend/src/sync/qbo-vendors-push.ts::mdata.qbo_vendors::INSERT INTO": {
+    "count": 1,
+    "reason": "ACCT-ECON-05 2026-07-28 map flip — vendors push still writes RETIRE until repoint; shrink-only"
+  },
+  "apps/backend/src/sync/qbo-vendors-push.ts::mdata.qbo_vendors::UPDATE": {
+    "count": 5,
+    "reason": "ACCT-ECON-05 2026-07-28 map flip — vendors push still updates RETIRE until repoint; shrink-only"
+  },
+  "db/migrations/0146_work_order_qbo_vendor_linkage.sql::mdata.qbo_vendors::REFERENCES": {
+    "count": 1,
+    "reason": "ACCT-ECON-05 2026-07-28 map flip — historical migration FK to RETIRE mirror; frozen SQL; shrink-only"
+  },
+  "db/migrations/0194_qbo_master_data_projection_transp.sql::mdata.qbo_vendors::INSERT INTO": {
+    "count": 1,
+    "reason": "ACCT-ECON-05 2026-07-28 map flip — historical migration; frozen SQL; shrink-only"
+  },
+  "db/migrations/0208_ds_remediate_qbo_vendors_contract_alignment.sql::mdata.qbo_vendors::UPDATE": {
+    "count": 1,
+    "reason": "ACCT-ECON-05 2026-07-28 map flip — historical migration; frozen SQL; shrink-only"
+  },
+  "db/migrations/0213_ds_remediate_8_1_real_canonical_columns.sql::mdata.qbo_vendors::UPDATE": {
+    "count": 1,
+    "reason": "ACCT-ECON-05 2026-07-28 map flip — historical migration; frozen SQL; shrink-only"
+  },
+  "db/migrations/202606281020_road_service_tickets.sql::mdata.qbo_vendors::REFERENCES": {
+    "count": 1,
+    "reason": "ACCT-ECON-05 2026-07-28 map flip — historical migration FK; frozen SQL; shrink-only"
   }
 }

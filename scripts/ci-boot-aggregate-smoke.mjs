@@ -18,6 +18,7 @@ const spawnServer = !process.env.IH35_SMOKE_BASE_URL;
 const testOwnerUserId = process.env.IH35_SMOKE_USER_ID ?? "f47ac10b-58cc-4372-a567-0e02b2c3d479";
 const testOwnerEmail = process.env.IH35_SMOKE_USER_EMAIL ?? "integration.owner@test.invalid";
 const testOwnerGoogleId = process.env.IH35_SMOKE_USER_GOOGLE_ID ?? "integration-google-user-id";
+const requireFixedUnit = /^(1|true)$/i.test(process.env.IH35_SMOKE_REQUIRE_FIXED_UNIT?.trim() ?? "");
 
 function buildTestAuthHeader(userId = testOwnerUserId, role = "Owner") {
   return Buffer.from(JSON.stringify({ id: userId, role, email: testOwnerEmail }), "utf8").toString(
@@ -157,6 +158,18 @@ async function resolveUnitAndCompany() {
   const unitId = process.env.IH35_SMOKE_UNIT_ID?.trim();
   const companyId = process.env.IH35_SMOKE_OPERATING_COMPANY_ID?.trim();
   if (unitId && companyId) return { unitId, companyId };
+
+  if (requireFixedUnit) {
+    const missing = [
+      !unitId && "IH35_SMOKE_UNIT_ID",
+      !companyId && "IH35_SMOKE_OPERATING_COMPANY_ID",
+    ].filter(Boolean);
+    throw new Error(
+      `fixed_smoke_target_required: missing ${missing.join(
+        " + ",
+      )}; configure both values on ih35-tms-backend before preDeploy`,
+    );
+  }
 
   const url = process.env.DATABASE_URL?.trim() ?? process.env.DATABASE_DIRECT_URL?.trim();
   if (!url) {

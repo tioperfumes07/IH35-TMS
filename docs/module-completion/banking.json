@@ -2,7 +2,7 @@
   "module": "banking",
   "title": "Banking (Module 4)",
   "complete": false,
-  "as_of": "2026-07-25T16:50:00.000Z",
+  "as_of": "2026-07-28T21:20:00.000Z",
   "live_sha": "b4c3158",
   "sweep_matrix": "docs/trackers/BANK-MODULE-DOD-SWEEP-MATRIX-2026-07-25.json",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md",
@@ -247,8 +247,8 @@
         "VERIFY-6"
       ],
       "spec": "docs/blocks/class-sweeps/BLOCKS-BANKING-DOM-2026-07-26.txt",
-      "status": "OPEN",
-      "evidence": "Code + guard 1556 GREEN; migration 202609160000 HELD, validated apply-twice on throwaway localhost. NOT LIVE: banking.intercompany_entity_pairs still MISSING on prod (verified 2026-07-26, lucia, positive control mdata.vendors=2789). Closes when GUARD Neon-applies + a TRANSP<->USMCA transfer is proven to net to zero on live data.",
+      "status": "UNVERIFIED",
+      "evidence": "Neon lucia 2026-07-28: banking.intercompany_entity_pairs EXISTS count=6 (schema+seed live). banking.transfers still 0. Code+guard 1556 on main. UNVERIFIED until one TRANSP\u2194USMCA intercompany transfer proves reciprocal legs net to zero on live data (Rule 23). Flag/posting locks unchanged.",
       "pr": null
     },
     {
@@ -264,9 +264,9 @@
         "VERIFY-6",
         "VERIFY-8"
       ],
-      "spec": "fuel.fuel_transactions -> driver_finance.driver_settlement_deductions -> FIN-18 settlement poster (fuel_advance_recovery)",
+      "spec": "FUEL-03 fuel.fuel_card_overage_events \u2192 approve-then-recover \u2192 fuel_overage_receivable JE (FUEL-04)",
       "status": "FAIL",
-      "evidence": "NEW LEAF 2026-07-26 (Rule 21 M-grows): a fleet-card purchase over the company's authorized limit \u2014 or a NON-FUEL item bought on the card \u2014 is paid in full by the company with NO recovery path; 'overage' existed nowhere in the codebase (no policy, no receivable, no deduction). Also found: bucketRecoveryRoleKey('fuel') derived 'fuel_recovery', a role registered NOWHERE, so ANY fuel deduction would have made the FIN-18 poster fail closed. Fix BUILT AND HELD on hold/bank-dom-06-fuel-expense-overage: migration 202609150000 (fuel.fuel_card_overage_policies owner-designated limit, seeded ZERO rows; deduction.source_fuel_transaction_id +FK +partial UNIQUE; reverse fuel_transactions.overage_deduction_id; FUEL_CARD_OVERAGE_RECOVERY_ENABLED default OFF), overage flushed by BOTH fuel writers, recovery reuses createSettlementDeduction with ZERO new GL math, 'fuel' aliased to the registered fuel_advance_recovery role. Validated apply-twice on a throwaway Postgres clone of the full schema (RLS enabled+FORCED, ih35_app INSERT/SELECT/UPDATE only, double-charge BLOCKED by the unique index, forward+reverse link both true). GUARD: scripts/verify-fuel-card-overage-driver-recovery.mjs + verify-step 1608 (15 defect mutations caught; FAILS on pre-fix main with 8 problems). STAYS FAIL: migration NOT applied on prod, flag OFF, no owner policy designated, zero live recoveries. Flips only after owner Neon-apply + policy designation + live Neon proof.",
+      "evidence": "2026-07-28: FUEL-03 engine on main (evaluate on both fuel writers; NOT createSettlementDeduction). Neon lucia: fuel.fuel_card_overage_policies count=3 (TRANSP/USMCA/TRK $900); events table applied (202609090010/020). DOD-A gap re-closed after #3717 squash-drop of #3722: GET/POST /api/v1/fuel/card-overage-events* \u2192 approveAndPostFuelCardOverage. GUARDs 1609+1623+1716. STAYS FAIL: FUEL_CARD_OVERAGE_ENGINE_ENABLED + GL_POSTING default OFF; zero live posted recoveries; Fuel UI queue UNVERIFIED.",
       "pr": null
     }
   ],
