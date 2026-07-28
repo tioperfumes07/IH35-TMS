@@ -28,6 +28,10 @@ function makeClient(overrides: { sourceType?: string; sourceLocked?: boolean } =
     async query(sql: string, values: unknown[] = []) {
       statements.push({ sql, values });
 
+      if (sql.includes("to_regclass")) {
+        // KR-03 fail-closed probe — table present in these unit tests.
+        return { rows: [{ ok: true }] };
+      }
       if (sql.includes("information_schema.columns")) {
         // Pretend every declared config pointer exists on this database.
         return { rows: [{ exists: 1 }] };
@@ -185,4 +189,27 @@ describe("ACCT-R-03 — catalogs account merge is a real merge, not a deactivate
     };
     expect(() => assertMergeCompatible(account, account)).toThrow(AccountMergeError);
   });
+
+  it("fails closed with E_MERGE_SCHEMA_NOT_APPLIED when account_merge_records is missing", async () => {
+    const { client } = makeClient();
+    const orig = client.query.bind(client);
+    client.query = async (sql: string, values: unknown[] = []) => {
+      if (sql.includes("to_regclass")) return { rows: [{ ok: false }] };
+      return orig(sql, values);
+    };
+    await expect(
+      mergeAccountsOnClient(
+        client,
+        {
+          operatingCompanyId: COMPANY_ID,
+          targetAccountId: TARGET_ID,
+          sourceAccountIds: [SOURCE_ID],
+          reason: REASON,
+          migrateHistoricalPostings: false,
+        },
+        ACTOR_ID,
+      ),
+    ).rejects.toMatchObject({ code: "E_MERGE_SCHEMA_NOT_APPLIED", httpStatus: 503 });
+  });
+
 });
