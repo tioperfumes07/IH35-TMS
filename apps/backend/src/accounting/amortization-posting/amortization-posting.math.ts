@@ -50,7 +50,9 @@ export type AmortizationPostingErrorCode =
   // The reused (display-only) depreciation schedule re-depreciates the full base and does NOT net out
   // prior_accumulated_depr_cents, so posting a mid-life takeover asset would double-count prior
   // depreciation. Fail loud rather than mis-post (no new GL math — surfaced for owner decision).
-  | "PRIOR_ACCUM_UNSUPPORTED";
+  | "PRIOR_ACCUM_UNSUPPORTED"
+  // FLT-04 — depreciation books on the title-holder (owner_operating_company_id), never the lessee alone.
+  | "OWNER_BOOKS_MISSING";
 
 export class AmortizationPostingError extends Error {
   code: AmortizationPostingErrorCode;

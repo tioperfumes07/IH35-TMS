@@ -356,6 +356,7 @@ type FixedAssetRow = {
   name: string;
   status: string;
   unit_uuid: string | null;
+  owner_operating_company_id: string;
   purchase_price_cents: string;
   salvage_value_cents: string;
   in_service_date: string;
@@ -380,17 +381,12 @@ export async function postDepreciation(
   return withCurrentUser(actor.userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
 
-    const flagOn = await isEnabled(client as never, AMORTIZATION_GL_POSTING_FLAG_KEY, {
-      operating_company_id: input.operatingCompanyId,
-      user_uuid: actor.userId,
-    });
-    if (!flagOn) return { result: "skipped_flag_off", asset_id: input.assetId, posted_periods: [] };
-
     const runDate = input.runDate ?? todayIso();
 
     const assetRes = await client.query<FixedAssetRow>(
       `
         SELECT id::text, name, status, unit_uuid::text,
+               owner_operating_company_id::text,
                purchase_price_cents::text, salvage_value_cents::text, in_service_date::text,
                method, useful_life_months, convention, prior_accumulated_depr_cents::text,
                depr_expense_account_id::text, accum_depr_account_id::text
@@ -403,6 +399,21 @@ export async function postDepreciation(
     );
     const asset = assetRes.rows[0];
     if (!asset) throw new AmortizationPostingError("ASSET_NOT_FOUND", `Fixed asset ${input.assetId} not found`);
+    // FLT-04 — depreciation JE books on the title-holder (TRK), not the lessee/operator alone.
+    const booksCompanyId = asset.owner_operating_company_id;
+    if (!booksCompanyId) {
+      throw new AmortizationPostingError(
+        "OWNER_BOOKS_MISSING",
+        `Fixed asset ${input.assetId} is missing owner_operating_company_id; depreciation cannot book without a title-holder entity`,
+      );
+    }
+
+    const flagOn = await isEnabled(client as never, AMORTIZATION_GL_POSTING_FLAG_KEY, {
+      operating_company_id: booksCompanyId,
+      user_uuid: actor.userId,
+    });
+    if (!flagOn) return { result: "skipped_flag_off", asset_id: input.assetId, posted_periods: [] };
+
     if (asset.status === "voided" || asset.status === "disposed") {
       throw new AmortizationPostingError("ASSET_NOT_POSTABLE", `Fixed asset ${input.assetId} is ${asset.status}`);
     }
@@ -478,11 +489,14 @@ export async function postDepreciation(
     const postedPeriods: PostedPeriod[] = [];
     for (const row of dueRows.rows) {
       const amountCents = Number(row.depreciation_amount_cents);
-      const idempotencyKey = buildDepreciationIdempotencyKey(input.operatingCompanyId, input.assetId, row.period_number);
+      // Idempotency + JE live on the TITLE-HOLDER books (FLT-04).
+      const idempotencyKey = buildDepreciationIdempotencyKey(booksCompanyId, input.assetId, row.period_number);
 
-      let journalEntryId = await findExistingPostedJe(client, input.operatingCompanyId, idempotencyKey);
+      // Switch RLS GUC to owner books for JE spine writes, then restore asset-home GUC for schedule latch.
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [booksCompanyId]);
+      let journalEntryId = await findExistingPostedJe(client, booksCompanyId, idempotencyKey);
       if (!journalEntryId) {
-        await assertOpenPeriod(client, input.operatingCompanyId, row.period_date);
+        await assertOpenPeriod(client, booksCompanyId, row.period_date);
         const lines: LineToPost[] = [
           { account_id: asset.depr_expense_account_id, debit_or_credit: "debit", amount_cents: amountCents, description: `Depreciation expense ${asset.name} period ${row.period_number}` },
           { account_id: asset.accum_depr_account_id, debit_or_credit: "credit", amount_cents: amountCents, description: `Accumulated depreciation ${asset.name} period ${row.period_number}` },
@@ -490,13 +504,13 @@ export async function postDepreciation(
         assertBalanced(lines);
         journalEntryId = await insertJournalEntryHeader(
           client,
-          input.operatingCompanyId,
+          booksCompanyId,
           row.period_date,
           `Depreciation ${asset.name} period ${row.period_number}`,
           actor.userId
         );
         await insertBalancedPostingLines(client, {
-          operatingCompanyId: input.operatingCompanyId,
+          operatingCompanyId: booksCompanyId,
           journalEntryId,
           idempotencyKey,
           sourceTransactionType: "fixed_asset_depreciation",
@@ -508,6 +522,7 @@ export async function postDepreciation(
           ],
         });
       }
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
 
       await client.query(
         `
@@ -551,6 +566,7 @@ export async function postDepreciation(
         resource_type: "accounting.fixed_assets",
         resource_id: input.assetId,
         operating_company_id: input.operatingCompanyId,
+        owner_operating_company_id: booksCompanyId,
         period_count: postedPeriods.length,
         total_posted_cents: totalPosted,
         run_date: runDate,
