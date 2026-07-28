@@ -80,6 +80,11 @@ export const COA_ROLE_VALUES = [
   // ND-FA-01 / A4-D2 — Heavy Repair Expense (expense path under $7,000 capitalize threshold).
   // DELIBERATELY absent from ROLE_FALLBACKS — owner designates; fails closed until Neon seed/bind.
   "heavy_repair_expense",
+  // Fixed-asset defaults (202609100050) — create-UI / Claude backfill helpers. FIN-21 posts from
+  // accounting.fixed_assets row columns, not these roles. DELIBERATELY absent from ROLE_FALLBACKS.
+  "fixed_asset_default",
+  "accum_depr_default",
+  "depr_expense_default",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];

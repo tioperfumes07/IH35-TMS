@@ -361,6 +361,21 @@ export function parseDroppedObjects(sql) {
   const defaultSchema = defaultSchemas[0] || "public";
   const droppedObjectKeys = new Set();
   const renamedTables = new Map();
+  const renamedSchemas = new Map();
+
+  {
+    // ALTER SCHEMA old RENAME TO new — Rule 07 archive relocate (e.g. fixed_assets → fixed_assets_archived).
+    // Remap every later check of old.* to new.* so content-drift does not false-red after archive.
+    const regex =
+      /alter\s+schema\s+(?:"?([a-zA-Z_][\w$]*)"?)\s+rename\s+to\s+(?:"?([a-zA-Z_][\w$]*)"?)/gi;
+    let match;
+    while ((match = regex.exec(text))) {
+      const fromSchema = normalizeIdent(match[1]);
+      const toSchema = normalizeIdent(match[2]);
+      renamedSchemas.set(fromSchema, toSchema);
+      droppedObjectKeys.add(makeObjectKey("schema", fromSchema));
+    }
+  }
 
   {
     const regex =
@@ -419,7 +434,7 @@ export function parseDroppedObjects(sql) {
     }
   }
 
-  return { droppedObjectKeys, renamedTables };
+  return { droppedObjectKeys, renamedTables, renamedSchemas };
 }
 
 async function tableExists(client, schema, table, tableExistsCache) {
@@ -495,6 +510,12 @@ async function triggerExists(client, schema, tableName, triggerName) {
 }
 
 function missingObjectName(item) {
+  if (!item || typeof item !== "object") return null;
+  // Schema-only declarations are { schema } — without this, ALTER SCHEMA renames never
+  // match shouldSkipObject and content-drift false-reds every object under the old schema.
+  if (typeof item.schema === "string" && !item.table && !item.fqtn && !item.fqin && !item.fqfn) {
+    return item.schema;
+  }
   return (
     item.fqcn ||
     item.fqtn ||
@@ -504,6 +525,7 @@ function missingObjectName(item) {
     item.fqfn ||
     item.key ||
     item.fqtt ||
+    (item.schema && item.table ? `${item.schema}.${item.table}` : null) ||
     null
   );
 }
@@ -545,11 +567,30 @@ async function checkMigrationObjects(
   transientObjectSet,
   conditionalSkipByObject,
   droppedObjectSet,
-  renamedTableMap
+  renamedTableMap,
+  renamedSchemaMap = new Map()
 ) {
   const missing = [];
   const skipped = [];
   const declaredTables = new Set(expected.tables.map((item) => `${item.schema}.${item.table}`));
+
+  function resolveSchemaRename(objectName) {
+    if (!objectName || typeof objectName !== "string") return null;
+    const dot = objectName.indexOf(".");
+    if (dot <= 0) {
+      // bare schema name
+      if (renamedSchemaMap.has(objectName)) {
+        return { from: objectName, to: renamedSchemaMap.get(objectName) };
+      }
+      return null;
+    }
+    const schema = objectName.slice(0, dot);
+    if (!renamedSchemaMap.has(schema)) return null;
+    return {
+      from: objectName,
+      to: `${renamedSchemaMap.get(schema)}${objectName.slice(dot)}`,
+    };
+  }
 
   function shouldSkipObject(objectName, kind) {
     if (!objectName) return { skip: false };
@@ -577,6 +618,21 @@ async function checkMigrationObjects(
           trace: `${makeObjectKey(kind, objectName)} table renamed to ${renamedTableMap.get(tableRef)}`,
         };
       }
+    }
+    const schemaRename = resolveSchemaRename(objectName);
+    if (schemaRename) {
+      return {
+        skip: true,
+        reason: "SCHEMA_RENAMED_LATER",
+        trace: `${makeObjectKey(kind, objectName)} schema renamed to ${schemaRename.to}`,
+      };
+    }
+    if (kind === "schema" && renamedSchemaMap.has(objectName)) {
+      return {
+        skip: true,
+        reason: "SCHEMA_RENAMED_LATER",
+        trace: `schema:${objectName} renamed to ${renamedSchemaMap.get(objectName)}`,
+      };
     }
     if (ignoreObjectSet.has(objectName)) {
       return { skip: true, reason: "IGNORE_RULE", trace: `${makeObjectKey(kind, objectName)} via ignore list` };
@@ -826,6 +882,7 @@ export async function verifyMigrationContent({
   const seenObjectKeys = new Set();
   const droppedObjectSet = new Set();
   const renamedTableMap = new Map();
+  const renamedSchemaMap = new Map();
   const report = [];
   let totalMissing = 0;
   let totalSkipped = 0;
@@ -833,12 +890,15 @@ export async function verifyMigrationContent({
   for (const filename of migrationFiles) {
     const fullPath = path.join(migrationsDirectory, filename);
     const sql = await fs.readFile(fullPath, "utf8");
-    const { droppedObjectKeys, renamedTables } = parseDroppedObjects(sql);
+    const { droppedObjectKeys, renamedTables, renamedSchemas } = parseDroppedObjects(sql);
     for (const droppedKey of droppedObjectKeys) {
       droppedObjectSet.add(droppedKey);
     }
     for (const [fromTable, toTable] of renamedTables.entries()) {
       renamedTableMap.set(fromTable, toTable);
+    }
+    for (const [fromSchema, toSchema] of (renamedSchemas || new Map()).entries()) {
+      renamedSchemaMap.set(fromSchema, toSchema);
     }
   }
 
@@ -915,7 +975,8 @@ export async function verifyMigrationContent({
       transientObjectSet,
       conditionalSkipByObject,
       droppedObjectSet,
-      renamedTableMap
+      renamedTableMap,
+      renamedSchemaMap
     );
     totalMissing += missing.length;
     if (conditionalMismatch.length > 0) {

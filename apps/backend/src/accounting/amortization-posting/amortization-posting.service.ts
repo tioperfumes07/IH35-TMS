@@ -558,6 +558,20 @@ export async function postDepreciation(
     }
 
     const totalPosted = postedPeriods.reduce((s, p) => s + p.amount_cents, 0);
+
+    // Append-only run receipt (accounting.depreciation_autopost_runs) — schema from 202607100100;
+    // previously unwired. SELECT+INSERT only; never UPDATE/DELETE.
+    await client.query(
+      `
+        INSERT INTO accounting.depreciation_autopost_runs (
+          operating_company_id, run_date, asset_id, outcome, period_count, total_posted_cents
+        ) VALUES (
+          $1::uuid, $2::date, $3::uuid, 'posted', $4::int, $5::bigint
+        )
+      `,
+      [input.operatingCompanyId, runDate, input.assetId, postedPeriods.length, totalPosted]
+    );
+
     await appendCrudAudit(
       client as never,
       actor.userId,

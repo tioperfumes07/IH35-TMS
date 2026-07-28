@@ -1056,6 +1056,7 @@
     "1660": "1660-verify-account-merge-records-failclosed.mjs",
     "1661": "1661-verify-civil-fine-postings-failclosed.mjs",
     "1662": "1662-verify-canonical-repoint-not-ahead-of-schema.mjs",
+    "1663": "1663-verify-fa-archive-canonical.mjs",
     "1664": "1664-verify-coa-role-check-held-superset.mjs",
     "1665": "1665-verify-converted-catalog-reachable-from-hub.mjs",
     "1666": {
@@ -1093,7 +1094,7 @@
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",
   "_how_to_claim": "Pick the next free number in your band, add \"<number>\": \"<filename>\", commit it WITH the guard.",
   "generated_at": "2026-07-26",
-  "total_claimed": 794,
+  "total_claimed": 776,
   "known_duplicates_frozen": {
     "15": [
       "15-verify-accounting-autoload-coverage.mjs",

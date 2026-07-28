@@ -291,22 +291,34 @@ function renameTableState(expectedTables, expectedIndexes, expectedFks, fromSche
 }
 
 function renameSchemaState(expectedTables, expectedIndexes, expectedFks, fromSchema, toSchema) {
-  for (const [key, t] of expectedTables.entries()) {
-    if (t.schema !== fromSchema) continue;
+  // CRITICAL: never delete+reinsert into a Map while iterating `.entries()` — the iterator
+  // re-visits newly inserted keys and spins forever. FA-ARCHIVE's
+  // `ALTER SCHEMA fixed_assets RENAME TO fixed_assets_archived` triggered this on the
+  // indexes loop (which re-set EVERY index) and hung CI `verify:migration-application-consistency`
+  // for 30+ minutes until cancel. Snapshot keys first, then mutate.
+  for (const key of [...expectedTables.keys()]) {
+    const t = expectedTables.get(key);
+    if (!t || t.schema !== fromSchema) continue;
     expectedTables.delete(key);
     t.schema = toSchema;
     expectedTables.set(tableKey(t.schema, t.table), t);
   }
 
-  for (const [key, idx] of expectedIndexes.entries()) {
+  for (const key of [...expectedIndexes.keys()]) {
+    const idx = expectedIndexes.get(key);
+    if (!idx) continue;
+    const touchIndex = idx.indexSchema === fromSchema;
+    const touchTable = idx.tableSchema === fromSchema;
+    if (!touchIndex && !touchTable) continue;
     expectedIndexes.delete(key);
-    if (idx.indexSchema === fromSchema) idx.indexSchema = toSchema;
-    if (idx.tableSchema === fromSchema) idx.tableSchema = toSchema;
+    if (touchIndex) idx.indexSchema = toSchema;
+    if (touchTable) idx.tableSchema = toSchema;
     expectedIndexes.set(indexKey(idx.indexSchema, idx.indexName), idx);
   }
 
-  for (const [key, fk] of expectedFks.entries()) {
-    if (fk.tableSchema !== fromSchema) continue;
+  for (const key of [...expectedFks.keys()]) {
+    const fk = expectedFks.get(key);
+    if (!fk || fk.tableSchema !== fromSchema) continue;
     expectedFks.delete(key);
     fk.tableSchema = toSchema;
     expectedFks.set(fkKey(fk.tableSchema, fk.table, fk.constraint), fk);
