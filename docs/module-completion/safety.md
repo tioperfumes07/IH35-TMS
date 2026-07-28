@@ -1,13 +1,13 @@
 # Module completion — Safety (Module 3)
 
-**PROGRESS: 17 of 38** · complete: `false` · as_of: 2026-07-25T15:30:00.000Z · live_sha: `7875de6`
+**PROGRESS: 18 of 38** · complete: `false` · as_of: 2026-07-25T15:30:00.000Z · live_sha: `7875de6`
 
 | Status | Count |
 |---|---:|
-| PASS | 17 |
+| PASS | 18 |
 | HOLD | 0 |
 | OPEN | 4 |
-| FAIL | 10 |
+| FAIL | 9 |
 | UNVERIFIED | 7 |
 
 | ID | Status | Title | Evidence | PR |
