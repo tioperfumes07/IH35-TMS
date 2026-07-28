@@ -322,7 +322,7 @@ export type FactoringVirtualCompany = {
   last_advance_at?: string | null;
 };
 
-/** Canonical reserve/chargeback balances from accounting.factoring_companies (0441-mod8). */
+/** Canonical reserve/liability balances from views.factoring_balance_invoice_linkage. */
 export function getFactoringVirtual(companyId: string) {
   return apiRequest<{ companies: FactoringVirtualCompany[] }>(`/api/v1/banking/factoring-virtual?${q(companyId)}`);
 }

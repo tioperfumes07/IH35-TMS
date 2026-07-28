@@ -214,18 +214,26 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
     const companyId = body.data.operating_company_id;
 
     const result = await withCompanyScope(user.uuid, companyId, async (client) => {
-      const relRes = await client.query<{ ok: boolean }>(`SELECT to_regclass('accounting.factoring_companies') IS NOT NULL AS ok`);
+      const relRes = await client.query<{ ok: boolean }>(
+        `SELECT to_regclass('factoring.canonical_factor_agreements') IS NOT NULL AS ok`
+      );
       if (!relRes.rows[0]?.ok) return { error: "missing_table" as const };
 
-      const updateRes = await client.query<{ id: string; display_name: string | null }>(
+      const updateRes = await client.query<{ id: string; factor_vendor_id: string }>(
         `
-          UPDATE accounting.factoring_companies
-          SET active = false
-          WHERE operating_company_id = $1
-            AND active = true
-          RETURNING id, display_name
+          UPDATE factoring.canonical_factor_agreements
+          SET
+            effective_to = LEAST(COALESCE(effective_to, CURRENT_DATE), CURRENT_DATE),
+            voided_at = now(),
+            voided_by_user_id = $2
+          WHERE tenant_id = $1
+            AND agreement_code = 'FARO_FULL_RECOURSE_V1'
+            AND voided_at IS NULL
+            AND effective_from <= CURRENT_DATE
+            AND (effective_to IS NULL OR effective_to >= CURRENT_DATE)
+          RETURNING id, factor_vendor_id
         `,
-        [companyId]
+        [companyId, user.uuid]
       );
       const row = updateRes.rows[0];
       if (!row) return { error: "not_found" as const };
@@ -233,12 +241,12 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
       await appendCrudAudit(
         client,
         user.uuid,
-        "factoring.company.deactivated",
+        "factoring.canonical_agreement.deactivated",
         {
-          resource_type: "accounting.factoring_companies",
+          resource_type: "factoring.canonical_factor_agreements",
           resource_id: row.id,
           operating_company_id: companyId,
-          factoring_company_name: row.display_name ?? "Faro Factoring",
+          factor_vendor_id: row.factor_vendor_id,
         },
         "warning",
         "BT-3-FACTORING-REBUILD"
@@ -247,8 +255,13 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
     });
 
     if ("error" in result) {
-      if (result.error === "missing_table") return reply.code(409).send({ error: "factoring_company_table_unavailable" });
-      if (result.error === "not_found") return reply.code(404).send({ error: "active_factoring_company_not_found" });
+      if (result.error === "missing_table") {
+        return reply.code(409).send({
+          error: "canonical_factoring_agreement_unavailable",
+          message: "The retired factoring-company profile cannot be deactivated. Apply the canonical factoring agreement path first.",
+        });
+      }
+      if (result.error === "not_found") return reply.code(404).send({ error: "active_canonical_factoring_agreement_not_found" });
     }
     return { ok: true };
   });

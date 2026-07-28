@@ -42,6 +42,20 @@
     {
       "file": "202609310000_driver_deduction_type_recovery_policy.sql",
       "reason": "[HOLD-FOR-JORGE — FINANCIAL CLUSTER / catalogs.*] Driver recovery policy per SITUATION (owner ruling 2026-07-27). Adds may_draw_escrow, default_recovery_rail (CHECK pay_first|escrow_first|ask_only) and survives_separation to catalogs.driver_deduction_types, and seeds ABANDONMENT / DAMAGE / SAFETY-FINE per entity. Resolves the apparent conflict between §9.3 (pay-first) and A3d (escrow-first): they answer DIFFERENT situations — an abandoning driver has no future settlement, so pay-first is impossible; an employed driver still settles, so §9.3 holds. The mandatory ask (DoD §8) is unchanged; these columns only decide which options are offered and which is pre-selected. SAFE DEFAULTS: every new column defaults to the most restrictive value, so the 3 pre-existing INS-DED rows come out may_draw_escrow=false / ask_only / survives_separation=false and CANNOT reach escrow until deliberately enabled. Real CHECK-constrained columns, NOT the metadata jsonb already on the table (C13 class — a money control must be constrainable). Prod-verified 2026-07-27 (lucia): catalogs.driver_deduction_types = 3 rows all INS-DED; may_draw_escrow exists nowhere in the DB; table already has FORCE RLS + 1 policy + ih35_app grants so no RLS work needed. Additive only, no DROP/DELETE/UPDATE of existing rows, dynamic org.companies resolution, no hardcoded UUID. Validated apply-twice on a throwaway localhost Postgres: run 1 seeded 9 rows (3 reasons x 3 entities), run 2 seeded 0, pre-existing row kept the safe defaults, and the CHECK correctly rejected an invalid rail. Owner/GUARD Neon-applies then ledger-backfills."
+    },
+    {
+      "file": "202609100100_fact_phantom_01_fact_01_factoring_summary_linkage.sql",
+      "requires_held": [
+        "202607600000_factoring_balance_invoice_linkage.sql"
+      ],
+      "held_apply_order": [
+        "202607340000_je_reversal_linkage.sql",
+        "202607600000_factoring_balance_invoice_linkage.sql",
+        "202609100100_fact_phantom_01_fact_01_factoring_summary_linkage.sql"
+      ],
+      "reason": "[HOLD-FOR-JORGE — TIER 1 FINANCIAL] FACT-PHANTOM-01 + FACT-01 removes runtime reads/writes of the retired factoring-company profile and rebuilds views.factoring_summary from views.factoring_balance_invoice_linkage. Signed reserve receivable and outstanding-liability ledger cents are normalized only for the established dollars display contract; active-factor count and the single-factor invariant derive from real linkage rows. No GL math, posting, QBO write-back, table mutation, or production run. Owner applies on Neon, then ledger-backfills.",
+      "added_at": "2026-07-27",
+      "block": "FACT-PHANTOM-01 + FACT-01"
     }
   ],
   "_integrity_note": "Every entry appears EXACTLY ONCE (file is the key). applied_on_prod MUST agree with the pinned prod-ledger snapshot scripts/lib/prod-migration-ledger-checksums.json for any file inside its window (>= 202606010000). Enforced by scripts/verify-steps/1361-verify-held-registry-integrity.mjs. Repaired 2026-07-25: 119 entries collapsed to 110 (9 duplicates, 7 of them carrying contradictory applied_on_prod), and 79 entries that were already applied on prod were stamped. Before the repair, verify-schema-parity-from-prod (step 1437) derived held-unapplied columns from this file and therefore treated applied migrations as unapplied.",
