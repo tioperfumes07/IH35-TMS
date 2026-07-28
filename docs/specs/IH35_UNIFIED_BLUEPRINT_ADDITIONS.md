@@ -1940,3 +1940,20 @@ Claim economics owner locks (2026-07-22 — FINAL):
 1. Driver deductible recovery rail = **always ask** (escrow / settlement / split)
 2. Uninsured repair = **Choice Z always ask** expense vs capitalize; **no $ threshold**. If **driver fault**, driver owes **full** company-funded repair (e.g. $8,000), recovered via always-ask rail.
 3. Deductible books = **Option C** (expense residual + Driver A/R) — LOCKED
+
+---
+
+## 2026-07-27 — DRV-02 escrow recovery-source catalog (owner-authorized)
+
+`catalogs.driver_deduction_types` is the single editable recovery-reason catalog. It is distinct from
+`catalogs.escrow_types`, which remains the escrow funding-bucket catalog and must never receive recovery
+policy or source references.
+
+`driver_finance.escrow_deductions_pending.source_type` is a company-scoped foreign key to
+`catalogs.driver_deduction_types(code)`, paired with `operating_company_id`. The catalogized source codes
+are `LOAD-ABANDONMENT`, `DAMAGE-CLAIM`, `MANUAL-PROPOSAL`, and `SAFETY-FINE`. Legacy snake-case values
+normalize only through the held owner migration; an unmapped value fails the migration rather than being
+silently reclassified.
+
+This governs source provenance only. Escrow-draw authorization remains the separate, editable
+`may_draw_escrow` control introduced by ND-ESC-01; DRV-02 must not recreate that column or alter posting.

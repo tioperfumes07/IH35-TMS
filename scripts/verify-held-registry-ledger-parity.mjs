@@ -52,6 +52,7 @@ export const EXPECTED_HELD = [
   // FACT-PHANTOM-01 HOLD until Jorge Neon-apply (2026-07-27).
   "202609100100_fact_phantom_01_fact_01_factoring_summary_linkage.sql",
   "202609260000_archive_legacy_fixed_assets_schema_rule07.sql",
+  "202610010010_drv_02_escrow_pending_source_type_catalog_fk.sql",
   // SET-02 left EXPECTED_HELD 2026-07-26 after Cursor owner Neon-apply + ledger-backfill.
   // The ITEM-5a recursive demo purge (#3557). Genuinely unapplied and correctly ABSENT from prod —
   // verified absent from _system._schema_migrations on 2026-07-25. GUARD re-verifies it on a fresh
