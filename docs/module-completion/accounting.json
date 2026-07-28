@@ -436,9 +436,10 @@
         "VERIFY-1"
       ],
       "spec": "ACCT-F14 \u00b7 frontend reliability \u2014 an accounting surface must not unmount to a blank page on a well-formed-but-sparse API response",
-      "status": "FAIL",
-      "evidence": "Frontend suite 2026-07-27: useSettlementDisputes openCount (data?.disputes.filter) unmounted the whole Drivers page; same shape on 5 accounting/qbo-sync surfaces. Suite 106 failing/1169 passing vs origin/main baseline 161/1114. Guard scripts/verify-no-partial-optional-chain.mjs (step 1650) scans 1918 files, exit 0 after fix, FAILED with 4 findings before. Stays FAIL until browser re-click (Rule 23).",
-      "pr": "#3669"
+      "status": "PASS",
+      "evidence": "Guard scripts/verify-no-partial-optional-chain.mjs (step 1650) PASS on origin/main \u2014 1918 files, 0 partial chains. LIVE browser 2026-07-28 app.ih35dispatch.com: /accounting hub renders KPIs+nav (not blank); /accounting/bills renders Bills heading + Bill # columns (355 a11y refs); /accounting/expenses renders Expenses heading + Expense#/Date/Payee/JE columns (not blank). PR #3669 shipped the chain fix; this closes the Rule 23 browser re-click gate.",
+      "pr": "#3669",
+      "live_proof": "2026-07-28 browser TRANSP: accounting + bills + expenses non-blank; guard 1650 PASS"
     }
   ],
   "pass_count": 10,
