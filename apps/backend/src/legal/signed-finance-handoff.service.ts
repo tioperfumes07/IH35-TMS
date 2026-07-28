@@ -17,6 +17,7 @@
 
 import { writeContractInstanceLink } from "./signed-links.service.js";
 import { appendContractAuditLog } from "./templates.service.js";
+import { signedContractPredicate } from "./signed-contract-predicate.js";
 
 type QueryableClient = {
   query: (query: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
@@ -232,7 +233,12 @@ export async function hasSignedDeductionAuthorization(
       WHERE ci.operating_company_id = $1
         AND ci.signer_type = 'driver'
         AND ci.signer_entity_id = $2
-        AND ci.status = 'signed_electronically'
+        -- LEG-02 / FIN-18. This read ONLY 'signed_electronically', so a driver whose contract was
+        -- signed on paper resolved as UNSIGNED and every deduction against them was blocked. The
+        -- enum has carried 'signed_on_paper' since 202609140000 (verified live on prod 2026-07-28:
+        -- draft, sent, viewed, signed_electronically, signed_on_paper, voided, expired) and two
+        -- sibling gates already honoured both states — this one was left behind.
+        AND ${signedContractPredicate("ci")}
         AND ci.voided_at IS NULL
     `,
     [args.operatingCompanyId, args.driverId]
