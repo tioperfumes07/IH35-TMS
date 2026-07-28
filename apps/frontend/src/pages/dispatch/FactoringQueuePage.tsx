@@ -268,8 +268,7 @@ export function FactoringQueuePage() {
           <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
             <div className="text-[11px] uppercase tracking-wide text-gray-500">Reserve Balance</div>
             <div className="mt-1 font-semibold text-gray-900">
-              {/* views.factoring_summary emits reserve_balance in DOLLARS (migration 0124 sources
-                  accounting.factoring_companies.current_reserve_balance::numeric — no _cents suffix).
+              {/* views.factoring_summary normalizes signed ledger cents to DOLLARS.
                   Format directly as dollars; do NOT divide by 100. Must match FactoringHome.tsx. */}
               {money.format(summaryQ.data.reserve_balance || 0)}
             </div>

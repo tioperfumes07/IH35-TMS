@@ -40,26 +40,38 @@ export async function registerBankingFactoringVirtualRoutes(app: FastifyInstance
     const companyId = query.data.operating_company_id;
 
     const summary = await withCompanyScope(user.uuid, companyId, async (client) => {
-      const res = await client
-        .query(
-          `
-            SELECT
-              id,
-              COALESCE(display_name, 'Factoring') AS display_name,
-              COALESCE(current_reserve_balance, 0) AS reserve_balance,
-              COALESCE(current_chargeback_balance, 0) AS chargeback_balance,
-              last_advance_at
-            FROM accounting.factoring_companies
-            WHERE operating_company_id = $1
-              AND active = true
-            ORDER BY display_name
-          `,
-          [companyId]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
-      return res.rows;
+      const relation = await client.query<{ exists: boolean }>(
+        `SELECT to_regclass('views.factoring_balance_invoice_linkage') IS NOT NULL AS exists`
+      );
+      if (!relation.rows[0]?.exists) return { error: "missing_linkage_view" as const };
+
+      const res = await client.query(
+        `
+          SELECT
+            f.factor_vendor_id::text AS id,
+            COALESCE(v.vendor_name, 'Factoring') AS display_name,
+            (SUM(f.reserve_receivable_signed_cents)::numeric / 100)::numeric AS reserve_balance,
+            (SUM(f.outstanding_liability_signed_cents)::numeric / 100)::numeric AS chargeback_balance,
+            NULL::timestamptz AS last_advance_at
+          FROM views.factoring_balance_invoice_linkage f
+          LEFT JOIN mdata.vendors v
+            ON v.id = f.factor_vendor_id
+           AND v.operating_company_id = f.operating_company_id
+          WHERE f.operating_company_id = $1
+          GROUP BY f.factor_vendor_id, v.vendor_name
+          ORDER BY COALESCE(v.vendor_name, 'Factoring')
+        `,
+        [companyId]
+      );
+      return { rows: res.rows };
     });
-    return { companies: summary };
+    if ("error" in summary) {
+      return reply.code(503).send({
+        error: "factoring_balance_linkage_unavailable",
+        migration: "202607600000_factoring_balance_invoice_linkage.sql",
+      });
+    }
+    return { companies: summary.rows };
   });
 
   app.get("/api/v1/banking/factoring-virtual/timeline", async (req, reply) => {

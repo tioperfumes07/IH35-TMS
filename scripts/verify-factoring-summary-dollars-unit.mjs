@@ -18,8 +18,9 @@
  *
  * Checks:
  *  (a) The LATEST migration that (re)defines views.factoring_summary must map reserve_balance
- *      from a non-_cents (dollars) source — i.e. `current_reserve_balance AS reserve_balance`.
- *      This catches a future migration flipping the unit back to a *_cents source.
+ *      from a dollars source — i.e. `current_reserve_balance AS reserve_balance`
+ *      (legacy factoring_companies column OR cents→dollars /100 intermediate alias).
+ *      This catches a future migration flipping the unit back to a raw *_cents source.
  *  (b) No frontend/*.tsx consumer divides these three summary fields by 100 (dollars ⇒ no /100).
  */
 import fs from "node:fs";
@@ -49,7 +50,8 @@ if (defining.length === 0) {
   const sql = read(path.join(MIG_DIR, latest));
   // The live view must alias reserve_balance from a DOLLARS (non-_cents) source column.
   const dollarsSource = /current_reserve_balance[^\n]*AS\s+reserve_balance/i.test(sql);
-  const centsSource = /reserve_(?:amount|pending)_cents[^\n]*AS\s+reserve_balance/i.test(sql);
+  const centsSource =
+    /reserve_(?:amount|pending|receivable_signed)_cents[^\n]*AS\s+reserve_balance/i.test(sql);
   if (centsSource || !dollarsSource) {
     errors.push(
       `(a) ${latest}: views.factoring_summary.reserve_balance is no longer sourced from the dollars ` +
