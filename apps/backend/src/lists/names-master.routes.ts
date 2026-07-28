@@ -277,7 +277,7 @@ async function searchUnlinkedQboVendors(
         NULL::text AS primary_phone,
         qv.qbo_id,
         NULL::timestamptz AS archived_at
-      FROM mdata.qbo_vendors qv
+      FROM accounting.qbo_vendors qv
       WHERE qv.operating_company_id = $1
         AND ${archivedFilter}
         AND NOT EXISTS (
@@ -407,7 +407,7 @@ export async function registerNamesMasterRoutes(app: FastifyInstance) {
       const unlinkedQboVendors = await countActive(
         client,
         `
-          SELECT count(*)::text AS count FROM mdata.qbo_vendors qv
+          SELECT count(*)::text AS count FROM accounting.qbo_vendors qv
               WHERE qv.operating_company_id = $1 AND ${include_archived ? "TRUE" : "qv.active = true"}
             AND NOT EXISTS (
               SELECT 1 FROM mdata.vendors v WHERE v.operating_company_id = $1 AND v.qbo_vendor_id = qv.qbo_id

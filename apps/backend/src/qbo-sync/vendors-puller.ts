@@ -50,7 +50,7 @@ async function upsertMirror(client: PoolClient, operatingCompanyId: string, row:
 
   await client.query(
     `
-      INSERT INTO mdata.qbo_vendors (
+      INSERT INTO accounting.qbo_vendors (
         operating_company_id,
         qbo_id,
         qbo_sync_token,
