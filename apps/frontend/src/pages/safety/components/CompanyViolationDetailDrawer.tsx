@@ -6,7 +6,7 @@ import {
   resolveCompanyViolation,
   updateCompanyViolation,
 } from "../../../api/safety";
-import { ModalCloseButton } from "../../../components/ModalCloseButton";
+import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
@@ -23,7 +23,9 @@ type Props = {
 const DRAWER_TITLE = "Company Violation Detail";
 
 export function CompanyViolationDetailDrawer({ open, violation, operatingCompanyId, onClose, onUpdated }: Props) {
-  const panelRef = useRef<HTMLElement>(null);
+  // SAF-B24: the panel is now a <div> inside ParityDrawer rather than a bespoke <aside>, so the ref
+  // element type follows. Focus behaviour is unchanged.
+  const panelRef = useRef<HTMLDivElement>(null);
   const [outcome, setOutcome] = useState<"warning" | "written_reprimand" | "monetary_fine" | "termination" | "dismissed">("warning");
   const [resolutionNotes, setResolutionNotes] = useState("");
   const [fineOverrideCents, setFineOverrideCents] = useState("");
@@ -94,20 +96,13 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} aria-hidden="true" />
-      <aside
-        ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label={DRAWER_TITLE}
-        className="fixed right-0 top-0 z-50 h-full w-[560px] max-w-full overflow-y-auto border-l border-gray-200 bg-white p-4"
-        data-testid="company-violation-detail-drawer"
-      >
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-900">{DRAWER_TITLE}</h3>
-          <ModalCloseButton title={DRAWER_TITLE} onClose={onClose} />
-        </div>
-        <div className="mt-3 space-y-2 text-sm">
+      {/* SAF-B24: was a bespoke <aside> carrying its own backdrop, z-index, width, escape handling
+          and close button — a second drawer implementation living beside the shared one, so every
+          fix to drawer chrome had to be made twice and this copy silently drifted. ParityDrawer is
+          the single surface. The panel ref is retained for the existing focus behaviour, and the
+          data-testid moves onto the inner content so existing selectors keep resolving. */}
+      <ParityDrawer open onClose={onClose} title={DRAWER_TITLE} size="wide">
+        <div ref={panelRef} data-testid="company-violation-detail-drawer" className="space-y-2 text-sm">
           <div><strong>Status:</strong> {String(violation.status ?? "open")}</div>
           <div><strong>Type:</strong> {String(violation.violation_type ?? "—")}</div>
           <div><strong>Severity:</strong> {String(violation.violation_severity ?? "—")}</div>
@@ -188,7 +183,7 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
             onComplete={(completedDate, notes) => completeMutation.mutate({ completedDate, notes })}
           />
         </div>
-      </aside>
+      </ParityDrawer>
     </>
   );
 }

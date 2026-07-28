@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ackAnomaly, dismissAnomaly, getAnomaly, resolveAnomaly, type SafetyAnomaly } from "../../../api/safety";
-import { ModalCloseButton } from "../../../components/ModalCloseButton";
+import { ParityDrawer } from "../../../components/parity/ParityDrawer";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 
 type Props = {
@@ -21,7 +22,9 @@ export function AnomalyDetailDrawer({
   onUpdated,
   initialAnomaly = null,
 }: Props) {
-  const panelRef = useRef<HTMLElement>(null);
+  // SAF-B24: the panel is now a <div> inside ParityDrawer rather than a bespoke <aside>, so the ref
+  // element type follows. Focus behaviour is unchanged.
+  const panelRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const [note, setNote] = useState("");
 
@@ -100,19 +103,12 @@ export function AnomalyDetailDrawer({
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} aria-hidden="true" />
-      <aside
-        ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label={DRAWER_TITLE}
-        className="fixed right-0 top-0 z-50 h-full w-[620px] max-w-full overflow-y-auto border-l border-gray-200 bg-white p-4"
-        data-testid="anomaly-detail-drawer"
-      >
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-900">{DRAWER_TITLE}</h3>
-          <ModalCloseButton title={DRAWER_TITLE} onClose={onClose} />
-        </div>
+      {/* SAF-B24: was a bespoke <aside> with its own backdrop, z-index, width, escape handling and
+          close button — a second drawer implementation beside the shared one, so every drawer-chrome
+          fix had to be made twice and this copy drifted. ParityDrawer is the single surface. This one
+          was the widest bespoke copy (620px) — size="wide" is the shared equivalent. */}
+      <ParityDrawer open onClose={onClose} title={DRAWER_TITLE} size="wide">
+        <div ref={panelRef} data-testid="anomaly-detail-drawer">
 
         {!anomaly ? (
           <div className="mt-4 rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
@@ -131,7 +127,12 @@ export function AnomalyDetailDrawer({
                 <span className="font-semibold">Subject:</span> {anomaly.subject_type}
               </div>
               <div>
-                <span className="font-semibold">Subject ID:</span> {anomaly.subject_id}
+                {/* SAF-B24: the anomaly names a subject and rendered its raw uuid as plain text, so
+                    the one record the alert is ABOUT could not be opened from the alert. Every
+                    subject_type ("driver" | "unit" | "customer" | "invoice") is a real EntityLink
+                    kind, so this drills straight through to the entity under suspicion. */}
+                <span className="font-semibold">Subject ID:</span>{" "}
+                <EntityLink kind={anomaly.subject_type} id={anomaly.subject_id} />
               </div>
               <div>
                 <span className="font-semibold">Detected:</span> {new Date(anomaly.detected_at).toLocaleString()}
@@ -202,7 +203,8 @@ export function AnomalyDetailDrawer({
             </div>
           </div>
         )}
-      </aside>
+        </div>
+      </ParityDrawer>
     </>
   );
 }
