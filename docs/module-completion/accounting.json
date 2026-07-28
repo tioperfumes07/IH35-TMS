@@ -72,7 +72,7 @@
       ],
       "spec": "Vendor credit apply/void",
       "status": "FAIL",
-      "evidence": "LINKAGE in progress 2026-07-28: CC bill-pay \u2192 accounting.qbo_vendors (#3710/1708); held backfill 202610121800 on main (#3712) NOT Neon-applied yet (lucia aq=2744 mq=2780 residual=36). G4 canonical-write map FLIPPED this PR: RETIRE=mdata.qbo_vendors canonical=accounting.qbo_vendors (was inverted); sync writers shrink-only exempt until repoint wave (guard 1714). vendor_credits=0. FAIL until owner Neon-apply + sync writers \u2192 accounting + live credit. Flags OFF.",
+      "evidence": "LINKAGE in progress 2026-07-28: CC bill-pay \u2192 accounting.qbo_vendors (#3710/1708); held backfill 202610121800 on main (#3712) NOT Neon-applied yet (lucia aq=2744 mq=2780 residual=36). G4 map FLIPPED (#3721): RETIRE=mdata.qbo_vendors canonical=accounting.qbo_vendors. Inbound (#3723/1718) + master-read (#3728/1720) + TMS writers Wave C (guard 1722, this PR) \u2192 accounting.qbo_vendors. vendor_credits=0. FAIL until owner Neon-applies held backfill + live credit. Flags OFF. LIVE density UNVERIFIED until Neon apply.",
       "pr": "#3710 #3712"
     },
     {

@@ -45,11 +45,11 @@ function makeClient() {
           ],
         };
       }
-      if (sql.includes("FROM mdata.qbo_vendors") && sql.includes("qbo_id = $2")) return { rows: [] };
-      if (sql.includes("FROM mdata.qbo_vendors") && sql.includes("primary_email")) return { rows: [] };
-      if (sql.includes("FROM mdata.qbo_vendors") && sql.includes("lower(trim(display_name))")) return { rows: [] };
-      if (sql.includes("INSERT INTO mdata.qbo_vendors")) return { rows: [{ id: MIRROR_ID }] };
-      if (sql.includes("SELECT qbo_id") && sql.includes("FROM mdata.qbo_vendors")) return { rows: [{ qbo_id: "QBO-V-123" }] };
+      if (sql.includes("FROM accounting.qbo_vendors") && sql.includes("qbo_id = $2")) return { rows: [] };
+      if (sql.includes("FROM accounting.qbo_vendors") && sql.includes("primary_email")) return { rows: [] };
+      if (sql.includes("FROM accounting.qbo_vendors") && sql.includes("lower(trim(display_name))")) return { rows: [] };
+      if (sql.includes("INSERT INTO accounting.qbo_vendors")) return { rows: [{ id: MIRROR_ID }] };
+      if (sql.includes("SELECT qbo_id") && sql.includes("FROM accounting.qbo_vendors")) return { rows: [{ qbo_id: "QBO-V-123" }] };
       if (sql.includes("UPDATE mdata.vendors") && sql.includes("qbo_vendor_id")) return { rows: [] };
       return { rows: [] };
     }),
