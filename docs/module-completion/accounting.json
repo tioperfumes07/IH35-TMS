@@ -431,6 +431,20 @@
       "pr": "#3663"
     },
     {
+      "id": "ACCT-R-04",
+      "title": "G4 deploy smoke fixed unit env + test-owner excluded from prod listings",
+      "layers": [
+        "DOD-A",
+        "VERIFY-3",
+        "VERIFY-8"
+      ],
+      "spec": "0243-g4-deploy-smoke-fixed-unit-test-owner · ACCT-F15 · G4-DEPLOY",
+      "status": "PASS",
+      "evidence": "render.yaml ih35-tms-backend declares IH35_SMOKE_UNIT_ID + IH35_SMOKE_OPERATING_COMPANY_ID (sync:false) merged #3528; identity.users filters archived test seeds via EXCLUDE_ARCHIVED_IDENTITY_USERS_SQL; closure guard verify-acct-r04-deploy-smoke-closure (step 1704) PASS. UNVERIFIED: Render dashboard UUID values remain operator-set.",
+      "pr": "#3528",
+      "live_proof": "verify-step 1704 PASS on origin/main ancestry; verify-g4-deploy-smoke-env-in-render step 1492 PASS"
+    },
+    {
       "id": "ACCT-R-44",
       "title": "accounting surfaces crash to a blank page on a partial optional chain",
       "layers": [
@@ -444,6 +458,7 @@
       "live_proof": "2026-07-28 browser TRANSP: accounting + bills + expenses non-blank; guard 1650 PASS"
     }
   ],
-  "pass_count": 15,
-  "total_count": 30
+  "pass_count": 16,
+  "total_count": 31,
+  "progress": "18 of 31"
 }
