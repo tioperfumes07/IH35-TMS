@@ -26,6 +26,10 @@ export function EscrowHistoryView({ driverId, operatingCompanyId }: Props) {
         // register line to the journal behind it. Blank when the posting is ambiguous or absent,
         // never a guessed entry.
         { key: "journal_entry_id", label: "Journal Entry", entityKind: "journal_entry", idKey: "journal_entry_id" },
+        // SAF-B22 (bank leg) — the bank transaction that moved the cash, reached THROUGH the
+        // settlement. Escrow is a withholding, not a separate cash movement: the money moves once,
+        // when the settlement is paid. A direct escrow->bank FK would have been a modelling error.
+        { key: "bank_transaction_id", label: "Bank Txn", entityKind: "bank_transaction", idKey: "bank_transaction_id" },
       ]}
     />
   );

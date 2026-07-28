@@ -67,6 +67,31 @@ const CHECKS = [
     test: (src) => /entityKind:\s*"journal_entry"/.test(src) && /idKey:\s*"journal_entry_id"/.test(src),
   },
   {
+    id: "service-resolves-bank-via-settlement",
+    describe:
+      "the bank transaction must be reached THROUGH driver_settlements.paid_via_bank_txn_id — escrow is a " +
+      "withholding, so a direct escrow->bank FK would be a modelling error",
+    file: SERVICE,
+    test: (src) =>
+      /LEFT JOIN driver_finance\.driver_settlements ds\b/.test(src) &&
+      /ds\.paid_via_bank_txn_id::text AS bank_transaction_id/.test(src) &&
+      /ds\.operating_company_id = el\.operating_company_id/.test(src),
+  },
+  {
+    id: "escrow-columns-are-alias-qualified",
+    describe:
+      "escrow_ledger columns must be alias-qualified — driver_settlements shares id/operating_company_id/" +
+      "created_at, so an unqualified reference is ambiguous and 500s every escrow history page",
+    file: SERVICE,
+    test: (src) => /el\.id::text AS uuid/.test(src) && /el\.created_at::text/.test(src),
+  },
+  {
+    id: "view-drills-to-bank-transaction",
+    describe: 'the escrow history view must render bank_transaction_id as an EntityLink kind="bank_transaction"',
+    file: VIEW,
+    test: (src) => /entityKind:\s*"bank_transaction"/.test(src) && /idKey:\s*"bank_transaction_id"/.test(src),
+  },
+  {
     id: "view-drills-to-settlement",
     describe: 'the escrow history view must render settlement_id as an EntityLink kind="settlement"',
     file: VIEW,
@@ -98,7 +123,7 @@ function selftest() {
     {
       name: "service stops selecting settlement_id",
       file: SERVICE,
-      find: "        settlement_id::text,\n",
+      find: "        el.settlement_id::text,\n",
       replace: "",
       expect: /service-selects-settlement-id/,
     },
@@ -129,6 +154,27 @@ function selftest() {
       find: 'entityKind: "journal_entry"',
       replace: 'entityKind: "driver"',
       expect: /view-drills-to-journal-entry/,
+    },
+    {
+      name: "bank leg stops going through the settlement",
+      file: SERVICE,
+      find: "      LEFT JOIN driver_finance.driver_settlements ds",
+      replace: "      LEFT JOIN driver_finance.driver_settlements ds_unused",
+      expect: /service-resolves-bank-via-settlement/,
+    },
+    {
+      name: "escrow columns lose their alias qualification",
+      file: SERVICE,
+      find: "el.id::text AS uuid",
+      replace: "id::text AS uuid",
+      expect: /escrow-columns-are-alias-qualified/,
+    },
+    {
+      name: "view stops drilling to the bank transaction",
+      file: VIEW,
+      find: 'entityKind: "bank_transaction"',
+      replace: 'entityKind: "driver"',
+      expect: /view-drills-to-bank-transaction/,
     },
     {
       name: "view stops drilling to the settlement",
