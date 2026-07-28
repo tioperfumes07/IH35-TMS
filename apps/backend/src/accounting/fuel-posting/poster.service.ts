@@ -247,7 +247,11 @@ export async function postFuelExpenseFromEvent(input: FuelPostingInput): Promise
       },
     ];
 
-    const postingTemplateId = await resolvePostingTemplateId(client, FUEL_EVENT_TEMPLATE_CODE);
+    const postingTemplateId = await resolvePostingTemplateId(
+      client,
+      FUEL_EVENT_TEMPLATE_CODE,
+      input.operating_company_id
+    );
     const batchInsert = await client.query<{ id: string }>(
       `
         INSERT INTO accounting.posting_batches (

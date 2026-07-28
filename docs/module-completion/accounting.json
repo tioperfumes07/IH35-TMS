@@ -2,7 +2,7 @@
   "module": "accounting",
   "title": "Accounting (Module 3)",
   "complete": false,
-  "as_of": "2026-07-28T16:43:41.019Z",
+  "as_of": "2026-07-28T17:05:00.000Z",
   "live_sha": "a3f9c12",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md",
   "spec_sources": [
@@ -19,7 +19,7 @@
         "DOD-D",
         "VERIFY-6"
       ],
-      "spec": "DoD VERIFY-6 economics — never header-only",
+      "spec": "DoD VERIFY-6 economics \u2014 never header-only",
       "status": "PASS",
       "evidence": "Neon lucia: bills=16212 bill_lines=155049 (2026-07-24)",
       "pr": "#3382"
@@ -32,9 +32,9 @@
         "DOD-E",
         "VERIFY-6"
       ],
-      "spec": "DoD VERIFY-6 · Bill+BillPayment chain",
+      "spec": "DoD VERIFY-6 \u00b7 Bill+BillPayment chain",
       "status": "PASS",
-      "evidence": "Neon lucia 2026-07-25: bill_payments=6479 (all qbo-sourced); qbo_ap_bill_payments=6313; QBO_AP_BILL_PAYMENTS_PROJECTION_ENABLED=true TRANSP; sync_runs ap_bill_payments_inbound_mirror success×2 last 23:23Z",
+      "evidence": "Neon lucia 2026-07-25: bill_payments=6479 (all qbo-sourced); qbo_ap_bill_payments=6313; QBO_AP_BILL_PAYMENTS_PROJECTION_ENABLED=true TRANSP; sync_runs ap_bill_payments_inbound_mirror success\u00d72 last 23:23Z",
       "pr": "#3398"
     },
     {
@@ -45,9 +45,9 @@
         "DOD-E",
         "VERIFY-6"
       ],
-      "spec": "DoD VERIFY-6 · Receive Payment",
+      "spec": "DoD VERIFY-6 \u00b7 Receive Payment",
       "status": "FAIL",
-      "evidence": "FAIL-BY-DESIGN (ACCT-F01/F06 record block 2026-07-25) — not a bug chase: payments=0 because QBO_AR_PAYMENTS_PROJECTION_ENABLED is OFF BY OWNER DESIGN (parallel books, reconcile-only; flags default OFF per Rule 13), not a code defect. Neon lucia 2026-07-25: payments=0 payment_applications=0; qbo_ar_payments=23830 (mirror populated); pull ON + sync_runs ar_payments_inbound_mirror success 23:12Z. The prior idle-in-transaction crash (Sentry IH35-TMS-PROD-25) is fixed + merged as #3433 (set-based INSERT…SELECT in projectArPaymentsToLedger, qbo-ar-payments-puller.ts) — code-level anti-pattern absence re-verified by guard verify-projection-flags-off-by-design (step 1468). Stays FAIL until the owner opts in per-entity + OWNER sign-off flips the flag ON; deploy-SHA ancestry / post-deploy live re-pull are UNVERIFIED — GUARD re-verify required.",
+      "evidence": "FAIL-BY-DESIGN (ACCT-F01/F06 record block 2026-07-25) \u2014 not a bug chase: payments=0 because QBO_AR_PAYMENTS_PROJECTION_ENABLED is OFF BY OWNER DESIGN (parallel books, reconcile-only; flags default OFF per Rule 13), not a code defect. Neon lucia 2026-07-25: payments=0 payment_applications=0; qbo_ar_payments=23830 (mirror populated); pull ON + sync_runs ar_payments_inbound_mirror success 23:12Z. The prior idle-in-transaction crash (Sentry IH35-TMS-PROD-25) is fixed + merged as #3433 (set-based INSERT\u2026SELECT in projectArPaymentsToLedger, qbo-ar-payments-puller.ts) \u2014 code-level anti-pattern absence re-verified by guard verify-projection-flags-off-by-design (step 1468). Stays FAIL until the owner opts in per-entity + OWNER sign-off flips the flag ON; deploy-SHA ancestry / post-deploy live re-pull are UNVERIFIED \u2014 GUARD re-verify required.",
       "pr": "#3433"
     },
     {
@@ -58,9 +58,9 @@
         "DOD-E",
         "VERIFY-6"
       ],
-      "spec": "DoD VERIFY-6 · Expense chain",
+      "spec": "DoD VERIFY-6 \u00b7 Expense chain",
       "status": "FAIL",
-      "evidence": "FAIL-BY-DESIGN (ACCT-F01/F06 record block 2026-07-25) — not a bug chase: expenses=0 because QBO_EXPENSES_PROJECTION_ENABLED is OFF BY OWNER DESIGN (parallel books, reconcile-only; flags default OFF per Rule 13), not a code defect. Neon lucia 2026-07-25: expenses=0 expense_lines=0; qbo_purchases=27984 (mirror populated); pull ON + sync_runs qbo_purchases_inbound_mirror success×2 last 23:25Z. The prior idle-in-transaction crash (Sentry IH35-TMS-PROD-25) is fixed + merged as #3433 (set-based INSERT…SELECT in projectPurchasesToExpenses, qbo-purchases-puller.ts) — code-level anti-pattern absence re-verified by guard verify-projection-flags-off-by-design (step 1468). Stays FAIL until the owner opts in per-entity + OWNER sign-off flips the flag ON; deploy-SHA ancestry / post-deploy live re-pull are UNVERIFIED — GUARD re-verify required.",
+      "evidence": "FAIL-BY-DESIGN (ACCT-F01/F06 record block 2026-07-25) \u2014 not a bug chase: expenses=0 because QBO_EXPENSES_PROJECTION_ENABLED is OFF BY OWNER DESIGN (parallel books, reconcile-only; flags default OFF per Rule 13), not a code defect. Neon lucia 2026-07-25: expenses=0 expense_lines=0; qbo_purchases=27984 (mirror populated); pull ON + sync_runs qbo_purchases_inbound_mirror success\u00d72 last 23:25Z. The prior idle-in-transaction crash (Sentry IH35-TMS-PROD-25) is fixed + merged as #3433 (set-based INSERT\u2026SELECT in projectPurchasesToExpenses, qbo-purchases-puller.ts) \u2014 code-level anti-pattern absence re-verified by guard verify-projection-flags-off-by-design (step 1468). Stays FAIL until the owner opts in per-entity + OWNER sign-off flips the flag ON; deploy-SHA ancestry / post-deploy live re-pull are UNVERIFIED \u2014 GUARD re-verify required.",
       "pr": "#3433"
     },
     {
@@ -72,7 +72,7 @@
       ],
       "spec": "Vendor credit apply/void",
       "status": "FAIL",
-      "evidence": "REWRITE 2026-07-25: real blocker is LINKAGE — canonical accounting.qbo_vendors vs RETIRE mdata.qbo_vendors. Neon lucia 2026-07-25: accounting.qbo_vendors=2744, mdata.qbo_vendors=2780 (Δ≈36 on retired mirror); vendor_credits=0 / applications=0. Block: migrate/backfill entity masters into accounting.qbo_vendors, repoint writers off RETIRE mdata.qbo_vendors, then one live vendor credit (owner Neon-applies backfill). NOT a projection-flag chase; flags stay OFF. OWNER decides. Fine GL decided — no re-ask. Dispatch: docs/trackers/acct-bank-remaining-blocks-2026-07-25/ACCT-ECON-05-vendor-credits-canonical-qbo-vendors.md",
+      "evidence": "REWRITE 2026-07-25: real blocker is LINKAGE \u2014 canonical accounting.qbo_vendors vs RETIRE mdata.qbo_vendors. Neon lucia 2026-07-25: accounting.qbo_vendors=2744, mdata.qbo_vendors=2780 (\u0394\u224836 on retired mirror); vendor_credits=0 / applications=0. Block: migrate/backfill entity masters into accounting.qbo_vendors, repoint writers off RETIRE mdata.qbo_vendors, then one live vendor credit (owner Neon-applies backfill). NOT a projection-flag chase; flags stay OFF. OWNER decides. Fine GL decided \u2014 no re-ask. Dispatch: docs/trackers/acct-bank-remaining-blocks-2026-07-25/ACCT-ECON-05-vendor-credits-canonical-qbo-vendors.md",
       "pr": "#3426"
     },
     {
@@ -83,7 +83,7 @@
         "VERIFY-6",
         "DOD-E"
       ],
-      "spec": "ACCT-F01 · inbound wiring",
+      "spec": "ACCT-F01 \u00b7 inbound wiring",
       "status": "PASS",
       "evidence": "Neon lucia 2026-07-25: qbo_ar_payments=23830; qbo.sync_runs kind=ar_payments_inbound_mirror status=success n=1 completed 2026-07-24T23:12:22Z",
       "pr": "#3411"
@@ -97,7 +97,7 @@
       ],
       "spec": "ACCT-F01 AP side",
       "status": "PASS",
-      "evidence": "Neon lucia 2026-07-25: qbo_ap_bill_payments=6313; sync_runs ap_bill_payments_inbound_mirror success×2 last 2026-07-24T23:23:41Z",
+      "evidence": "Neon lucia 2026-07-25: qbo_ap_bill_payments=6313; sync_runs ap_bill_payments_inbound_mirror success\u00d72 last 2026-07-24T23:23:41Z",
       "pr": "#3398"
     },
     {
@@ -109,7 +109,7 @@
       ],
       "spec": "ACCT-F01 expense side",
       "status": "PASS",
-      "evidence": "Neon lucia 2026-07-25: qbo_purchases=27984; sync_runs qbo_purchases_inbound_mirror success×2 last 2026-07-24T23:25:26Z",
+      "evidence": "Neon lucia 2026-07-25: qbo_purchases=27984; sync_runs qbo_purchases_inbound_mirror success\u00d72 last 2026-07-24T23:25:26Z",
       "pr": "#3399"
     },
     {
@@ -119,7 +119,7 @@
         "DOD-C",
         "VERIFY-4"
       ],
-      "spec": "Law §9 · ACCT-F02",
+      "spec": "Law \u00a79 \u00b7 ACCT-F02",
       "status": "PASS",
       "evidence": "LIVE 2026-07-28 Neon lucia: journal_entry_type_id FK present; backfill 202610070000 typed all non-void JEs; create path inferJournalEntryTypeCode never leaves auto NULL; guard verify-je-type-inbound-density --live PASS",
       "pr": "#3697"
@@ -132,7 +132,7 @@
         "VERIFY-4",
         "VERIFY-5"
       ],
-      "spec": "Law §9 · ACCT-F03",
+      "spec": "Law \u00a79 \u00b7 ACCT-F03",
       "status": "HOLD",
       "owner_hold": true,
       "tracker": "docs/trackers/ACCT-F03-DETAIL-TYPES-OWNER-LOCK-2026-07-25.md",
@@ -147,9 +147,9 @@
         "DOD-C",
         "VERIFY-4"
       ],
-      "spec": "ACCT-F04 · Claim/WO reverse",
+      "spec": "ACCT-F04 \u00b7 Claim/WO reverse",
       "status": "PASS",
-      "evidence": "LIVE 2026-07-28 Neon lucia: bills.unit_id 299/16219 via unique memo→unit backfill 202610080000 (owner|leased_to scope, word-boundary T###). claim=0 wo=0 remain (insurance.claim / WO close writers already stamp; 2 WOs open, no claim bills yet). createBill+autoCreateBillFromWO stamp unit_id. Guard 1700.",
+      "evidence": "LIVE 2026-07-28 Neon lucia: bills.unit_id 299/16219 via unique memo\u2192unit backfill 202610080000 (owner|leased_to scope, word-boundary T###). claim=0 wo=0 remain (insurance.claim / WO close writers already stamp; 2 WOs open, no claim bills yet). createBill+autoCreateBillFromWO stamp unit_id. Guard 1700.",
       "pr": "#3699"
     },
     {
@@ -161,7 +161,7 @@
       ],
       "spec": "ACCT-F07",
       "status": "PASS",
-      "evidence": "LIVE 2026-07-28 Neon lucia: accounting.expense_lines.expense_category_uuid + operating_company_id composite FK expense_lines_expense_category_same_entity_fkey → catalogs.expense_categories (island CLOSED). Mig 202608020000 in applied_held. expense_lines=0 density is ACCT-ECON-04. Original merge #3446 @ 7a0c3614; prove PR #3697.",
+      "evidence": "LIVE 2026-07-28 Neon lucia: accounting.expense_lines.expense_category_uuid + operating_company_id composite FK expense_lines_expense_category_same_entity_fkey \u2192 catalogs.expense_categories (island CLOSED). Mig 202608020000 in applied_held. expense_lines=0 density is ACCT-ECON-04. Original merge #3446 @ 7a0c3614; prove PR #3697.",
       "pr": "#3446 #3697"
     },
     {
@@ -173,26 +173,26 @@
       ],
       "spec": "ACCT-F08",
       "status": "FAIL",
-      "evidence": "Owner Neon-apply completed 2026-07-25 18:01:52 by neondb_owner (mig 202607950000, PR #3444 merged @ 1d90a178). GUARD live-verified both ledgers (_system._schema_migrations + ih35_migrations), checksum 64c41b…fbfb matches repo file. LIVE: accounting.posting_batches.posting_template_id exists. Per-entity scope = owner design Q — do NOT auto-scope. Still FAIL, not PASS: applied ≠ audited — catalog population + browser re-proof (Rule 23) not yet performed. Honesty: docs/trackers/MERGED-NOT-APPLIED-ACCT-F07-F08-2026-07-25.md",
+      "evidence": "Schema DONE on Neon (lucia 2026-07-28): posting_batches.posting_template_id FK exists (inbound=1); LST-F03 operating_company_id on catalogs.posting_templates. Writers stamp on main (#3444). Still FAIL: catalogs.posting_templates=0 rows; posting_batches stamped 0/6. Opco-aware resolvePostingTemplateId + Lists Templates unlocked for owner in-app seed (this PR). Density PASS requires owner seed of PostingSourceType (+fuel_event) per entity + at least one stamped batch.",
       "pr": "#3444"
     },
     {
       "id": "ACCT-LINK-06",
-      "title": "bank feed matched_journal_entry_id density + categorize→GL poster wired (ACCT-F05)",
+      "title": "bank feed matched_journal_entry_id density + categorize\u2192GL poster wired (ACCT-F05)",
       "layers": [
         "DOD-C",
         "DOD-D",
         "VERIFY-4",
         "VERIFY-6"
       ],
-      "spec": "ACCT-F05 · companion BANK-ECON-02",
+      "spec": "ACCT-F05 \u00b7 companion BANK-ECON-02",
       "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25: matched_je=3/10622 (lucia); categorized_at_not_null=3. Wiring PASS on main: #3424 bulk+single categorize→maybePostBankCategorizationToGl→postSourceTransaction(bank_categorization)+matched_journal_entry_id lockstep stamp; BANK_FEED_GL_POSTING_ENABLED default OFF. Density is ops backlog — poster works when used; not a broken poster. GUARD: verify-bankfeed-je-match (step 1486). Remains FAIL until operator categorization volume moves matched_JE density.",
+      "evidence": "LIVE REFRESH 2026-07-25: matched_je=3/10622 (lucia); categorized_at_not_null=3. Wiring PASS on main: #3424 bulk+single categorize\u2192maybePostBankCategorizationToGl\u2192postSourceTransaction(bank_categorization)+matched_journal_entry_id lockstep stamp; BANK_FEED_GL_POSTING_ENABLED default OFF. Density is ops backlog \u2014 poster works when used; not a broken poster. GUARD: verify-bankfeed-je-match (step 1486). Remains FAIL until operator categorization volume moves matched_JE density.",
       "pr": "#3424"
     },
     {
       "id": "ACCT-SURF-01",
-      "title": "Bills family — DoD A–E + VERIFY 1–8 on live surfaces",
+      "title": "Bills family \u2014 DoD A\u2013E + VERIFY 1\u20138 on live surfaces",
       "layers": [
         "DOD-A",
         "DOD-B",
@@ -208,7 +208,7 @@
         "VERIFY-7",
         "VERIFY-8"
       ],
-      "spec": "EVERY-PR-AUDIT-CHECKLIST · Bills ▾",
+      "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Bills \u25be",
       "status": "PASS",
       "evidence": "Structural guard verify-acct-surf-01-bills.mjs on main. LIVE browser 2026-07-28 app.ih35dispatch.com: TRANSP /accounting/bills non-blank (Bills heading + Bill # columns + live rows); USMCA Freight /accounting/bills renders Bills heading + live row USMCA-AUD-BILL-20260722 + Allocate + Open Bills $1.00 KPI. Closes Rule 23 TRANSP+USMCA re-click gate.",
       "pr": "#3477",
@@ -216,7 +216,7 @@
     },
     {
       "id": "ACCT-SURF-02",
-      "title": "Expenses — DoD A–E + VERIFY 1–8 with live rows",
+      "title": "Expenses \u2014 DoD A\u2013E + VERIFY 1\u20138 with live rows",
       "layers": [
         "DOD-A",
         "DOD-B",
@@ -232,14 +232,14 @@
         "VERIFY-7",
         "VERIFY-8"
       ],
-      "spec": "EVERY-PR-AUDIT-CHECKLIST · Expenses ▾",
+      "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Expenses \u25be",
       "status": "FAIL",
-      "evidence": "expenses=0 with QBO_EXPENSES_PROJECTION_ENABLED OFF by owner decision — correct-at-0 (not a flag-flip chase). Surface chrome may be structurally wired; economics stay FAIL until owner unlocks projection + Neon density.",
+      "evidence": "expenses=0 with QBO_EXPENSES_PROJECTION_ENABLED OFF by owner decision \u2014 correct-at-0 (not a flag-flip chase). Surface chrome may be structurally wired; economics stay FAIL until owner unlocks projection + Neon density.",
       "pr": "#3433"
     },
     {
       "id": "ACCT-SURF-03",
-      "title": "Bill payment — DoD A–E + VERIFY 1–8 with live rows",
+      "title": "Bill payment \u2014 DoD A\u2013E + VERIFY 1\u20138 with live rows",
       "layers": [
         "DOD-A",
         "DOD-B",
@@ -255,15 +255,15 @@
         "VERIFY-7",
         "VERIFY-8"
       ],
-      "spec": "EVERY-PR-AUDIT-CHECKLIST · Bill payment ▾",
+      "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Bill payment \u25be",
       "status": "PASS",
-      "evidence": "Structural DoD guard scripts/verify-acct-surf-03-bill-payment.mjs (step 1461) on main. LIVE browser 2026-07-28: TRANSP /accounting/bill-payments — Bill Payments heading, Unpaid bill selector, JE + Bank transaction columns, live payment rows with JE drill links; USMCA Freight same route renders chrome (heading + columns + selector) without blank crash (sparse ledger OK). Neon bill_payments density live (lucia). Closes Rule 23 TRANSP+USMCA re-click gate.",
+      "evidence": "Structural DoD guard scripts/verify-acct-surf-03-bill-payment.mjs (step 1461) on main. LIVE browser 2026-07-28: TRANSP /accounting/bill-payments \u2014 Bill Payments heading, Unpaid bill selector, JE + Bank transaction columns, live payment rows with JE drill links; USMCA Freight same route renders chrome (heading + columns + selector) without blank crash (sparse ledger OK). Neon bill_payments density live (lucia). Closes Rule 23 TRANSP+USMCA re-click gate.",
       "pr": "#PENDING",
       "live_proof": "2026-07-28 browser TRANSP live bill-payment rows + USMCA chrome non-blank"
     },
     {
       "id": "ACCT-SURF-04",
-      "title": "Receive Payment — DoD A–E + VERIFY 1–8 with live rows",
+      "title": "Receive Payment \u2014 DoD A\u2013E + VERIFY 1\u20138 with live rows",
       "layers": [
         "DOD-A",
         "DOD-B",
@@ -279,38 +279,38 @@
         "VERIFY-7",
         "VERIFY-8"
       ],
-      "spec": "EVERY-PR-AUDIT-CHECKLIST · Receive Payment",
+      "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Receive Payment",
       "status": "FAIL",
-      "evidence": "payments=0 with QBO_AR_PAYMENTS_PROJECTION_ENABLED OFF by owner decision — correct-at-0 (not a flag-flip chase).",
+      "evidence": "payments=0 with QBO_AR_PAYMENTS_PROJECTION_ENABLED OFF by owner decision \u2014 correct-at-0 (not a flag-flip chase).",
       "pr": "#3433"
     },
     {
       "id": "ACCT-SURF-05",
-      "title": "Journal Entries — type catalog wired + reverse drill",
+      "title": "Journal Entries \u2014 type catalog wired + reverse drill",
       "layers": [
         "DOD-C",
         "VERIFY-4",
         "VERIFY-7"
       ],
-      "spec": "ACCT-F02 · JE tab",
+      "spec": "ACCT-F02 \u00b7 JE tab",
       "status": "PASS",
       "evidence": "LIVE 2026-07-28 Neon lucia: journal_entry_type_id FK + 8/8 JEs typed (GENERAL/BILL/OPENING_BALANCE/SALES_INVOICE). ManualJEModal picker + JournalEntryDetailPage reverse display of journal_entry_type_name/code wired. Backfill mig 202610070000 + inferJournalEntryTypeCode write path. PR #3697.",
       "pr": "#3697"
     },
     {
       "id": "ACCT-SURF-06",
-      "title": "Chart of Accounts / Detail Types — canonical detail_type link",
+      "title": "Chart of Accounts / Detail Types \u2014 canonical detail_type link",
       "layers": [
         "DOD-C",
         "VERIFY-5",
         "VERIFY-2"
       ],
-      "spec": "ACCT-F03 · CoA",
+      "spec": "ACCT-F03 \u00b7 CoA",
       "status": "HOLD",
       "owner_hold": true,
       "tracker": "docs/trackers/ACCT-F03-DETAIL-TYPES-OWNER-LOCK-2026-07-25.md",
       "future_block": "ACCT-02 (requires written owner unlock DETAIL_TYPES_FK_OWNER_UNLOCK + CPA review)",
-      "evidence": "OWNER-LOCK: CoA persists account_subtype TEXT (picker may read detail_types catalog for UX only). ACCT-LINK-02 HOLD — not a linkage defect. SURF chrome reachable; FK wiring deferred by owner.",
+      "evidence": "OWNER-LOCK: CoA persists account_subtype TEXT (picker may read detail_types catalog for UX only). ACCT-LINK-02 HOLD \u2014 not a linkage defect. SURF chrome reachable; FK wiring deferred by owner.",
       "pr": null
     },
     {
@@ -323,9 +323,9 @@
         "VERIFY-4",
         "VERIFY-8"
       ],
-      "spec": "ACCT-F13 · blueprint MUST 3.18.4.3",
+      "spec": "ACCT-F13 \u00b7 blueprint MUST 3.18.4.3",
       "status": "FAIL",
-      "evidence": "CoaBatchActions.handleMerge looped the catalog DEACTIVATE endpoint over every source account, so child accounts kept an archived parent and every config pointer (catalogs.items default_income/expense_account_id, catalogs.account_role_bindings, accounting.chart_of_accounts_roles, accounting.expense_category_account_map, banking rules, asset-class / loan / escrow bindings) kept designating an account nobody can post to. No merge record existed at all — catalogs.account_merge_records is absent from every migration on origin/main. HOLD PR adds POST /api/v1/catalogs/accounts/:id/merge (Owner-only, entity-GUC scoped, one lockstep transaction) + held migration 202608060000 for the append-only SAME-ENTITY merge ledger. FAIL until the owner Neon-applies and a live merge proves a merge_records row plus 0 stale config pointers under lucia.",
+      "evidence": "Wiring on main (POST /catalogs/accounts/:id/merge + service remount + guard 1488). Neon lucia 2026-07-28: catalogs.account_merge_records EXISTS (Owner Neon-applied 2026-07-27); row count=0. FAIL until Owner/ops live merge proves >=1 merge_records row and 0 stale config pointers at the archived source under lucia. Phantom hold entry removed (table is live).",
       "pr": "ACCT-R-03 HOLD"
     },
     {
@@ -337,14 +337,14 @@
         "VERIFY-3",
         "VERIFY-4"
       ],
-      "spec": "Law §9 reverse",
+      "spec": "Law \u00a79 reverse",
       "status": "UNVERIFIED",
       "evidence": "Routes mounted (account-register + transactions); sourceRoute + detail_path reverse drill guarded (verify-acct-surf-07-register step 1462); Desktop SURF DoD UNVERIFIED browser TRANSP+USMCA click-through.",
       "pr": null
     },
     {
       "id": "ACCT-SURF-08",
-      "title": "Period close / Audit trail / Posting lineage — active path + evidence",
+      "title": "Period close / Audit trail / Posting lineage \u2014 active path + evidence",
       "layers": [
         "DOD-A",
         "DOD-E",
@@ -352,29 +352,29 @@
       ],
       "spec": "Architectural design Accounting tabs",
       "status": "UNVERIFIED",
-      "evidence": "period-close→month-close Navigate alias + MonthClosePage + AccountingAuditTrailPage + PostingLineagePage mounted; guard 1463 structural DoD; Desktop SURF DoD UNVERIFIED click-through.",
+      "evidence": "period-close\u2192month-close Navigate alias + MonthClosePage + AccountingAuditTrailPage + PostingLineagePage mounted; guard 1463 structural DoD; Desktop SURF DoD UNVERIFIED click-through.",
       "pr": null
     },
     {
       "id": "ACCT-SURF-09",
-      "title": "Factoring / Escrow / Settlements cross-links from Accounting More ▾",
+      "title": "Factoring / Escrow / Settlements cross-links from Accounting More \u25be",
       "layers": [
         "DOD-C",
         "VERIFY-4"
       ],
-      "spec": "Law §9 cross-module",
+      "spec": "Law \u00a79 cross-module",
       "status": "UNVERIFIED",
-      "evidence": "Frozen map docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md. Structural DoD guard scripts/verify-acct-surf-09-crosslinks.mjs (routes+More▾+EntityLink+canonical factoring_advances/escrow_*/driver_settlements). Desktop Expected vs Actual: ~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md. Stays UNVERIFIED until TRANSP+USMCA browser cross-link economics + Neon density proof (Rule 23 — no structural PASS flip). LINK-02 detail_types FK FROZEN.",
+      "evidence": "Frozen map docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md. Structural DoD guard scripts/verify-acct-surf-09-crosslinks.mjs (routes+More\u25be+EntityLink+canonical factoring_advances/escrow_*/driver_settlements). Desktop Expected vs Actual: ~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md. Stays UNVERIFIED until TRANSP+USMCA browser cross-link economics + Neon density proof (Rule 23 \u2014 no structural PASS flip). LINK-02 detail_types FK FROZEN.",
       "pr": null
     },
     {
       "id": "ACCT-CTRL-01",
-      "title": "Parallel books — refuse invented TMS JE for qbo-sourced money",
+      "title": "Parallel books \u2014 refuse invented TMS JE for qbo-sourced money",
       "layers": [
         "VERIFY-6",
         "VERIFY-8"
       ],
-      "spec": "DoD owner money locks · #3386/#3393",
+      "spec": "DoD owner money locks \u00b7 #3386/#3393",
       "status": "PASS",
       "evidence": "Refuse-GL paths merged; flags default OFF",
       "pr": "#3386"
@@ -386,18 +386,18 @@
         "VERIFY-5",
         "VERIFY-8"
       ],
-      "spec": "DoD VERIFY-5 · #3400",
+      "spec": "DoD VERIFY-5 \u00b7 #3400",
       "status": "PASS",
       "evidence": "chart_of_accounts_roles=89 with lucia",
       "pr": "#3400"
     },
     {
       "id": "ACCT-GATE-01",
-      "title": "Every money PR uses EVERY-PR checklist (VERIFY-1..8) — process closed",
+      "title": "Every money PR uses EVERY-PR checklist (VERIFY-1..8) \u2014 process closed",
       "layers": [
         "DOD-E"
       ],
-      "spec": "docs/specs/EVERY-PR-AUDIT-CHECKLIST.md · verify-step 1430",
+      "spec": "docs/specs/EVERY-PR-AUDIT-CHECKLIST.md \u00b7 verify-step 1430",
       "status": "PASS",
       "evidence": "#3430 merged on main (sha fc1cf13); verify-steps 1430+1431 + Rule 24 live; money PRs require MODULE_PROGRESS trailers",
       "pr": "#3430"
@@ -411,21 +411,21 @@
         "VERIFY-2",
         "VERIFY-3"
       ],
-      "spec": "0441-mod8-tx-fields-captured-not-sent · ACCT-R-11",
+      "spec": "0441-mod8-tx-fields-captured-not-sent \u00b7 ACCT-R-11",
       "status": "UNVERIFIED",
-      "evidence": "Wiring on main + static guard verify-acct-r11-tx-fields-sent (step 1490) PASS. LIVE PROOF UNVERIFIED — need authenticated TRANSP+USMCA categorize→reload hydrate before PASS (Rule 23). mig 202607690000 already Neon-applied 2026-07-25.",
+      "evidence": "Wiring on main + static guard verify-acct-r11-tx-fields-sent (step 1490) PASS. LIVE PROOF UNVERIFIED \u2014 need authenticated TRANSP+USMCA categorize\u2192reload hydrate before PASS (Rule 23). mig 202607690000 already Neon-applied 2026-07-25.",
       "pr": null
     },
     {
       "id": "DISP-01",
-      "title": "Two-event delivery revenue latch (Unbilled → A/R)",
+      "title": "Two-event delivery revenue latch (Unbilled \u2192 A/R)",
       "layers": [
         "DOD-C",
         "DOD-D",
         "VERIFY-4",
         "VERIFY-6"
       ],
-      "spec": "ASC 606 earn-first · blueprint §18 · EXEMPLAR-DISP-01",
+      "spec": "ASC 606 earn-first \u00b7 blueprint \u00a718 \u00b7 EXEMPLAR-DISP-01",
       "status": "UNVERIFIED",
       "evidence": "Code+guard on branch; flag OFF; LIVE PROOF UNVERIFIED until owner Neon-applies 202609290000 + enables REVENUE_RECOGNITION_POST_ENABLED per entity",
       "pr": "#3663"
@@ -437,9 +437,9 @@
         "DOD-A",
         "VERIFY-1"
       ],
-      "spec": "ACCT-F14 · frontend reliability — an accounting surface must not unmount to a blank page on a well-formed-but-sparse API response",
+      "spec": "ACCT-F14 \u00b7 frontend reliability \u2014 an accounting surface must not unmount to a blank page on a well-formed-but-sparse API response",
       "status": "PASS",
-      "evidence": "Guard scripts/verify-no-partial-optional-chain.mjs (step 1650) PASS on origin/main — 1918 files, 0 partial chains. LIVE browser 2026-07-28 app.ih35dispatch.com: /accounting hub renders KPIs+nav (not blank); /accounting/bills renders Bills heading + Bill # columns (355 a11y refs); /accounting/expenses renders Expenses heading + Expense#/Date/Payee/JE columns (not blank). PR #3669 shipped the chain fix; this closes the Rule 23 browser re-click gate.",
+      "evidence": "Guard scripts/verify-no-partial-optional-chain.mjs (step 1650) PASS on origin/main \u2014 1918 files, 0 partial chains. LIVE browser 2026-07-28 app.ih35dispatch.com: /accounting hub renders KPIs+nav (not blank); /accounting/bills renders Bills heading + Bill # columns (355 a11y refs); /accounting/expenses renders Expenses heading + Expense#/Date/Payee/JE columns (not blank). PR #3669 shipped the chain fix; this closes the Rule 23 browser re-click gate.",
       "pr": "#3669",
       "live_proof": "2026-07-28 browser TRANSP: accounting + bills + expenses non-blank; guard 1650 PASS"
     }
