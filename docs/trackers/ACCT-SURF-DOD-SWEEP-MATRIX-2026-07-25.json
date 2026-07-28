@@ -8,8 +8,8 @@
   "desktop_clickthrough": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md",
   "module_progress": {
     "N": 8,
-    "M": 30,
-    "note": "Structural sweep matrix only — no FAIL→PASS; browser click-through remains UNVERIFIED per cell unless STRUCTURAL guard cited"
+    "M": 31,
+    "note": "Structural sweep matrix only — no FAIL→PASS; browser click-through remains UNVERIFIED per cell unless STRUCTURAL guard cited. M=31 after ACCT-R-04 leaf added (2026-07-28)."
   },
   "entities": [
     "TRANSP",

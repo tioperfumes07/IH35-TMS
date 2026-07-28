@@ -39,3 +39,7 @@ For local runs against Neon, export the same pair in your shell or `.env` before
 
 `scripts/verify-g4-deploy-smoke-env-in-render.mjs` (verify-step **1492**) fails if either key is
 missing from `render.yaml` under `ih35-tms-backend`.
+
+Combined closure guard `scripts/verify-acct-r04-deploy-smoke-closure.mjs` (verify-step **1704**)
+also asserts archived test-owner emails stay out of production `identity.users` listings via
+`scripts/verify-no-test-users-in-production-list.mjs`.

@@ -1082,6 +1082,7 @@
     "1684": "1684-verify-bank-f09-settings-reports-email-queue.mjs",
     "1700": "1700-verify-acct-link-03-bill-unit-density.mjs",
     "1702": "1702-verify-money-pr-local-gate.mjs",
+    "1704": "1704-verify-acct-r04-deploy-smoke-closure.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
