@@ -206,6 +206,25 @@ export async function mergeAccountsOnClient(
     throw new AccountMergeError("E_VALIDATION", 400, { field: "source_account_ids", message: "at least one required" });
   }
 
+  // KR-03 — fail closed BEFORE any remount/archive. catalogs.account_merge_records is created only by
+  // HELD migration 202608060000 (to_regclass=NULL on prod 2026-07-27). An unguarded INSERT is a live
+  // 42P01 on every merge attempt; mirror #3662 honest-503 until owner Neon-applies.
+  {
+    const reg = await client.query(
+      `SELECT to_regclass($1::text) IS NOT NULL AS ok`,
+      ["catalogs.account_merge_records"],
+    );
+    const present = Boolean((reg.rows[0] as { ok?: boolean } | undefined)?.ok);
+    if (!present) {
+      throw new AccountMergeError("E_MERGE_SCHEMA_NOT_APPLIED", 503, {
+        relation: "catalogs.account_merge_records",
+        migration: "202608060000_acct_r03_catalogs_account_merge_records.sql",
+        message:
+          "CoA merge audit table is not on this database yet. Owner must Neon-apply 202608060000 before merge can run.",
+      });
+    }
+  }
+
   const target = await loadAccount(client, input.targetAccountId, input.operatingCompanyId);
   if (!target) throw new AccountMergeError("E_MERGE_TARGET_NOT_FOUND", 404, { account_id: input.targetAccountId });
   if (target.deactivated_at !== null) {
