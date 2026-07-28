@@ -59,7 +59,7 @@ async function resolveDeltaCursorIso(
   if (syncType === "full") return null;
   const table =
     entity === "vendor"
-      ? "mdata.qbo_vendors"
+      ? "accounting.qbo_vendors"
       : entity === "customer"
         ? "mdata.qbo_customers"
         : entity === "item"
@@ -109,7 +109,7 @@ async function upsertVendor(
 
   await client.query(
     `
-      INSERT INTO mdata.qbo_vendors (
+      INSERT INTO accounting.qbo_vendors (
         operating_company_id,
         qbo_id,
         qbo_sync_token,
@@ -134,7 +134,7 @@ async function upsertVendor(
         qbo_updated_at = EXCLUDED.qbo_updated_at,
         mirrored_at = now(),
         payload_json = EXCLUDED.payload_json
-      WHERE mdata.qbo_vendors.qbo_sync_token IS DISTINCT FROM EXCLUDED.qbo_sync_token
+      WHERE accounting.qbo_vendors.qbo_sync_token IS DISTINCT FROM EXCLUDED.qbo_sync_token
     `,
     [
       operatingCompanyId,
