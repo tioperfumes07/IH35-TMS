@@ -1,0 +1,370 @@
+/**
+ * DISP-01 — two-event delivery revenue latch (ASC 606 earn-first).
+ * §1.4 financial cluster · BUILD-AND-HOLD · INERT until REVENUE_RECOGNITION_POST_ENABLED is ON per entity.
+ *
+ * Event 1 (earn) at delivered / delivered_pending_docs:
+ *   DR Unbilled Revenue (role unbilled_revenue) / CR Line-Haul Income (role revenue_default)
+ * Event 2 (bill) at completed_docs_received:
+ *   DR A/R (role ar_control) / CR Unbilled Revenue
+ *
+ * WRITES ZERO NEW GL MATH — every entry goes through createJournalEntry (debits===credits) and
+ * resolveRoleAccount (no hardcoded account numbers). TRK excluded (42000-LEASE).
+ *
+ * When this latch is ON for an entity, keep INVOICE_AR_GL_POSTING_ENABLED OFF for load-sourced
+ * invoices (or extend the invoice poster to skip income credit) — otherwise bill-first A/R would
+ * double-recognize revenue. Coordination is owner-gated; both flags default OFF.
+ */
+
+import { withLuciaBypass } from "../../auth/db.js";
+import { isEnabled } from "../../lib/feature-flags/service.js";
+import { createJournalEntry } from "../journal-entries.service.js";
+import { resolveRoleAccount } from "../coa-roles/resolver.service.js";
+import { appendCrudAudit } from "../../audit/crud-audit.js";
+import { writeTransactionSourceLink } from "../accounting-spine-emit.js";
+
+export const REVENUE_RECOGNITION_POST_FLAG = "REVENUE_RECOGNITION_POST_ENABLED";
+
+export type RevrecEvent = "earn" | "bill";
+
+type DbClient = {
+  query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
+};
+
+type Posting = {
+  account_id: string;
+  debit_or_credit: "debit" | "credit";
+  amount_cents: number;
+  description?: string | null;
+};
+
+export type RevrecPostResult = {
+  posted: boolean;
+  reason?:
+    | "flag_off"
+    | "trk_excluded"
+    | "wrong_status"
+    | "already_posted"
+    | "zero_amount"
+    | "load_not_found"
+    | "earn_missing_for_bill"
+    | "amount_mismatch"
+    | "latch_table_missing";
+  journal_entry_id?: string;
+  event?: RevrecEvent;
+  memo?: string;
+};
+
+const FLAG_OFF: RevrecPostResult = { posted: false, reason: "flag_off" };
+const LATCH_REGCLASS = "accounting.load_revenue_recognition_postings";
+
+/** Fail closed until owner Neon-applies 202609290000 — never 42P01 on a money path. */
+async function latchTablePresent(client: DbClient): Promise<boolean> {
+  const res = await client.query<{ ok: boolean }>(
+    `SELECT to_regclass($1::text) IS NOT NULL AS ok`,
+    [LATCH_REGCLASS]
+  );
+  return Boolean(res.rows[0]?.ok);
+}
+
+/** Event 1 — DR Unbilled / CR Line-Haul. Balanced by construction. */
+export function buildEarnEvent1Postings(
+  unbilledAccountId: string,
+  revenueAccountId: string,
+  amountCents: number,
+  memo: string
+): Posting[] {
+  return [
+    {
+      account_id: unbilledAccountId,
+      debit_or_credit: "debit",
+      amount_cents: amountCents,
+      description: `${memo} — Unbilled Revenue`,
+    },
+    {
+      account_id: revenueAccountId,
+      debit_or_credit: "credit",
+      amount_cents: amountCents,
+      description: `${memo} — Line-Haul Income`,
+    },
+  ];
+}
+
+/** Event 2 — DR A/R / CR Unbilled. Balanced by construction. */
+export function buildBillEvent2Postings(
+  arAccountId: string,
+  unbilledAccountId: string,
+  amountCents: number,
+  memo: string
+): Posting[] {
+  return [
+    {
+      account_id: arAccountId,
+      debit_or_credit: "debit",
+      amount_cents: amountCents,
+      description: `${memo} — A/R`,
+    },
+    {
+      account_id: unbilledAccountId,
+      debit_or_credit: "credit",
+      amount_cents: amountCents,
+      description: `${memo} — relieve Unbilled Revenue`,
+    },
+  ];
+}
+
+async function postingEnabled(client: DbClient, operatingCompanyId: string): Promise<boolean> {
+  return isEnabled(client as never, REVENUE_RECOGNITION_POST_FLAG, {
+    operating_company_id: operatingCompanyId,
+  });
+}
+
+async function companyCode(client: DbClient, operatingCompanyId: string): Promise<string | null> {
+  const res = await client.query<{ code: string }>(
+    `SELECT code::text AS code FROM org.companies WHERE id = $1::uuid LIMIT 1`,
+    [operatingCompanyId]
+  );
+  return res.rows[0]?.code ?? null;
+}
+
+async function loadLatchExists(
+  client: DbClient,
+  operatingCompanyId: string,
+  loadId: string,
+  event: RevrecEvent
+): Promise<boolean> {
+  const res = await client.query<{ id: string }>(
+    `
+      SELECT id::text
+      FROM accounting.load_revenue_recognition_postings
+      WHERE operating_company_id = $1::uuid
+        AND load_id = $2::uuid
+        AND event = $3
+        AND is_active
+      LIMIT 1
+    `,
+    [operatingCompanyId, loadId, event]
+  );
+  return Boolean(res.rows[0]?.id);
+}
+
+async function earnAmountCents(
+  client: DbClient,
+  operatingCompanyId: string,
+  loadId: string
+): Promise<number | null> {
+  const res = await client.query<{ amount_cents: string | number }>(
+    `
+      SELECT amount_cents
+      FROM accounting.load_revenue_recognition_postings
+      WHERE operating_company_id = $1::uuid
+        AND load_id = $2::uuid
+        AND event = 'earn'
+        AND is_active
+      LIMIT 1
+    `,
+    [operatingCompanyId, loadId]
+  );
+  if (!res.rows[0]) return null;
+  return Number(res.rows[0].amount_cents);
+}
+
+type LoadRow = {
+  id: string;
+  status: string;
+  rate_total_cents: number;
+  display_id: string | null;
+};
+
+async function loadLoad(client: DbClient, operatingCompanyId: string, loadId: string): Promise<LoadRow | null> {
+  const res = await client.query<{
+    id: string;
+    status: string;
+    rate_total_cents: string | number | null;
+    display_id: string | null;
+  }>(
+    `
+      SELECT id::text AS id,
+             status::text AS status,
+             rate_total_cents,
+             load_number::text AS display_id
+      FROM mdata.loads
+      WHERE operating_company_id = $1::uuid
+        AND id = $2::uuid
+        AND soft_deleted_at IS NULL
+      LIMIT 1
+    `,
+    [operatingCompanyId, loadId]
+  );
+  const row = res.rows[0];
+  if (!row) return null;
+  return {
+    id: row.id,
+    status: row.status,
+    rate_total_cents: Number(row.rate_total_cents ?? 0),
+    display_id: row.display_id,
+  };
+}
+
+export type PostLoadRevenueLatchInput = {
+  operating_company_id: string;
+  load_id: string;
+  /** Dispatch target status that triggered this call. */
+  target_status: string;
+  entry_date_iso: string;
+  actor_user_id: string;
+};
+
+function resolveEvent(targetStatus: string): RevrecEvent | null {
+  // Dispatch machine uses delivered_pending_docs (not a separate "delivered") for earn.
+  if (targetStatus === "delivered" || targetStatus === "delivered_pending_docs") return "earn";
+  if (targetStatus === "completed_docs_received") return "bill";
+  return null;
+}
+
+/**
+ * Post Event 1 or Event 2 for a load status transition. INERT while flag OFF.
+ */
+export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Promise<RevrecPostResult> {
+  const event = resolveEvent(input.target_status);
+  if (!event) return { posted: false, reason: "wrong_status" };
+
+  const prepared = await withLuciaBypass(async (client: DbClient) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+      input.operating_company_id,
+    ]);
+    if (!(await postingEnabled(client, input.operating_company_id))) return { gate: "flag_off" as const };
+
+    // to_regclass('accounting.load_revenue_recognition_postings') — phantom-relation skip + fail-closed
+    if (!(await latchTablePresent(client))) return { gate: "latch_table_missing" as const };
+
+    const code = await companyCode(client, input.operating_company_id);
+    if (code === "TRK") return { gate: "trk_excluded" as const };
+
+    const load = await loadLoad(client, input.operating_company_id, input.load_id);
+    if (!load) return { gate: "load_not_found" as const };
+
+    if (await loadLatchExists(client, input.operating_company_id, input.load_id, event)) {
+      return { gate: "already_posted" as const };
+    }
+
+    let amount = load.rate_total_cents;
+    if (event === "bill") {
+      const earnAmt = await earnAmountCents(client, input.operating_company_id, input.load_id);
+      if (earnAmt == null) return { gate: "earn_missing_for_bill" as const };
+      amount = earnAmt;
+    }
+    if (amount <= 0) return { gate: "zero_amount" as const };
+
+    const label = load.display_id ?? load.id;
+    const memo =
+      event === "earn"
+        ? `Revrec Event 1 earn — load ${label} [${load.id}]`
+        : `Revrec Event 2 bill — load ${label} [${load.id}]`;
+
+    const unbilledAccountId = await resolveRoleAccount(client, input.operating_company_id, "unbilled_revenue");
+    let postings: Posting[];
+    if (event === "earn") {
+      const revenueAccountId = await resolveRoleAccount(client, input.operating_company_id, "revenue_default");
+      postings = buildEarnEvent1Postings(unbilledAccountId, revenueAccountId, amount, memo);
+    } else {
+      const arAccountId = await resolveRoleAccount(client, input.operating_company_id, "ar_control");
+      postings = buildBillEvent2Postings(arAccountId, unbilledAccountId, amount, memo);
+    }
+
+    return {
+      gate: "post" as const,
+      event,
+      memo,
+      amount,
+      entryDate: input.entry_date_iso.slice(0, 10),
+      postings,
+    };
+  });
+
+  if (prepared.gate === "flag_off") return FLAG_OFF;
+  if (prepared.gate === "latch_table_missing") return { posted: false, reason: "latch_table_missing" };
+  if (prepared.gate === "trk_excluded") return { posted: false, reason: "trk_excluded" };
+  if (prepared.gate === "load_not_found") return { posted: false, reason: "load_not_found" };
+  if (prepared.gate === "already_posted") return { posted: false, reason: "already_posted" };
+  if (prepared.gate === "earn_missing_for_bill") return { posted: false, reason: "earn_missing_for_bill" };
+  if (prepared.gate === "zero_amount") return { posted: false, reason: "zero_amount" };
+
+  const created = await createJournalEntry(
+    {
+      operating_company_id: input.operating_company_id,
+      entry_date: prepared.entryDate,
+      memo: prepared.memo,
+      source: "auto",
+      postings: prepared.postings,
+    },
+    { userId: input.actor_user_id, role: "system" }
+  );
+
+  await withLuciaBypass(async (client: DbClient) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+      input.operating_company_id,
+    ]);
+    const postingRes = await client.query<{ id: string }>(
+      `
+        SELECT id::text
+        FROM accounting.journal_entry_postings
+        WHERE journal_entry_uuid = $1::uuid
+        ORDER BY line_sequence ASC NULLS LAST, created_at ASC
+        LIMIT 1
+      `,
+      [created.id]
+    );
+    const postingId = postingRes.rows[0]?.id;
+    if (postingId) {
+      await writeTransactionSourceLink(client as never, {
+        operating_company_id: input.operating_company_id,
+        journal_entry_posting_id: postingId,
+        linked_object_type: "load",
+        linked_object_id: input.load_id,
+        relationship_role: prepared.event === "earn" ? "revrec_earn" : "revrec_bill",
+      });
+    }
+    await client.query(
+      `
+        INSERT INTO accounting.load_revenue_recognition_postings (
+          operating_company_id, load_id, event, journal_entry_id, amount_cents, entry_date, memo,
+          status, created_by_user_id
+        )
+        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6::date, $7, 'posted', $8::uuid)
+        ON CONFLICT (operating_company_id, load_id, event) WHERE is_active DO NOTHING
+      `,
+      [
+        input.operating_company_id,
+        input.load_id,
+        prepared.event,
+        created.id,
+        prepared.amount,
+        prepared.entryDate,
+        prepared.memo,
+        input.actor_user_id,
+      ]
+    );
+    await appendCrudAudit(
+      client as Parameters<typeof appendCrudAudit>[0],
+      input.actor_user_id,
+      prepared.event === "earn" ? "accounting.revrec.earn.posted" : "accounting.revrec.bill.posted",
+      {
+        resource_type: "mdata.loads",
+        resource_id: input.load_id,
+        operatingCompanyId: input.operating_company_id,
+        journalEntryId: created.id,
+        amount_cents: prepared.amount,
+        entry_date: prepared.entryDate,
+        event: prepared.event,
+      },
+      "warning"
+    );
+  });
+
+  return {
+    posted: true,
+    journal_entry_id: created.id,
+    event: prepared.event,
+    memo: prepared.memo,
+  };
+}

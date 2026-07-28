@@ -118,6 +118,7 @@ export const EXPECTED_HELD = [
   // must list it until owner Neon-applies + ledger-backfills. Same pattern as MNT-LINK-03b / MNT-ENT-01.
   "202609100090_nd_inv_01_proforma_invoice_pipeline.sql",
   // FLT-02 class seed Neon-applied 2026-07-27 → applied_held in .held-migrations.json (NOT EXPECTED_HELD).
+  // DISP-01 (#3663) owner Neon-applied 202609290000 — moved to applied_held[]; not in EXPECTED_HELD.
 ];
 
 /**

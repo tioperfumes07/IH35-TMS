@@ -1,6 +1,6 @@
 # Module completion — Accounting (Module 3)
 
-**PROGRESS: 10 of 28** · complete: `false` · as_of: 2026-07-25T19:00:00.000Z · live_sha: `a3f9c12`
+**PROGRESS: 10 of 29** · complete: `false` · as_of: 2026-07-25T19:00:00.000Z · live_sha: `a3f9c12`
 
 | Status | Count |
 |---|---:|
@@ -8,7 +8,7 @@
 | HOLD | 2 |
 | OPEN | 0 |
 | FAIL | 12 |
-| UNVERIFIED | 6 |
+| UNVERIFIED | 7 |
 
 | ID | Status | Title | Evidence | PR |
 |---|---|---|---|---|
@@ -40,5 +40,6 @@
 | `ACCT-CTRL-02` | **PASS** | CoA roles resolvable under lucia + company GUC (not false-empty) | chart_of_accounts_roles=89 with lucia | #3400 |
 | `ACCT-GATE-01` | **PASS** | Every money PR uses EVERY-PR checklist (VERIFY-1..8) — process closed | #3430 merged on main (sha fc1cf13); verify-steps 1430+1431 + Rule 24 live; money PRs require MODULE_PROGRESS trailers | #3430 |
 | `ACCT-R-11` | **UNVERIFIED** | Bank categorize capture fields sent to API and persisted on bank_transactions | Wiring on main + static guard verify-acct-r11-tx-fields-sent (step 1490) PASS. LIVE PROOF UNVERIFIED — need authenticated TRANSP+USMCA categorize→reload hydrate before PASS (Rule 23). mig 202607690000 already Neon-applied 2026-07-25. | — |
+| `DISP-01` | **UNVERIFIED** | Two-event delivery revenue latch (Unbilled → A/R) | Code+guard on branch; flag OFF; LIVE PROOF UNVERIFIED until owner Neon-applies 202609290000 + enables REVENUE_RECOGNITION_POST_ENABLED per entity | #3663 |
 
 Desktop audit: ~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md

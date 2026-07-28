@@ -50,6 +50,10 @@ export const POSTING_FLAG_KEYS: ReadonlySet<string> = new Set([
   "EXPENSE_GL_POSTING_ENABLED",
   "FACTORING_GL_POSTING_ENABLED",
   "INVOICE_AR_GL_POSTING_ENABLED",
+  // DISP-01 — two-event delivery revenue latch (earn Unbilled / bill A/R). Key is
+  // REVENUE_RECOGNITION_POST_ENABLED (not *_POSTING_ENABLED), so without explicit enrollment it
+  // would fall through to global default/rollout. Per-entity only; default OFF (already seeded).
+  "REVENUE_RECOGNITION_POST_ENABLED",
   "LEASE_GL_POSTING_ENABLED",
   // Business-Property Allocation: property-tax accrual (Dr expense / Cr payable) + payment (Dr payable /
   // Cr cash) posting, per-entity override (TRANSP/TRK), default OFF. Its key matches the `*_GL_POSTING_ENABLED`

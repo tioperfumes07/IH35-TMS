@@ -1061,6 +1061,14 @@
       "applied_at": "2026-07-27T20:16:30.979Z",
       "applied_by": "cursor-owner-neon-apply-2026-07-27",
       "note": "Moved held→applied_held after owner Neon-apply + dual-ledger proof (GUARD live 2026-07-27)."
+    },
+    {
+      "file": "202609290000_disp_01_revrec_two_event_latch.sql",
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL CLUSTER] DISP-01 two-event delivery revenue latch. Creates accounting.load_revenue_recognition_postings linkage latch (FORCE RLS, REVOKE DELETE); widens CoA role CHECKs for unbilled_revenue; binds TRANSP/USMCA Unbilled Revenue accounts (system_purpose) to role. POSTS NOTHING — poster reuses createJournalEntry. Flag REVENUE_RECOGNITION_POST_ENABLED stays OFF. Numbered above prod max 202609280000.",
+      "applied_on_prod": true,
+      "applied_evidence": "Owner Neon-apply 202609290000_disp_01_revrec_two_event_latch.sql on prod branch br-fancy-credit-akjnd07a (per DISP-01 #3663 CI fix — migration ledger row present before PR merge).",
+      "block": "DISP-01",
+      "added_at": "2026-07-27"
     }
   ],
   "superseded": []

@@ -51,6 +51,7 @@ const ROLE_LABELS: Record<CoaRole, string> = {
   maintenance_parts_expense: "Maintenance parts expense",
   warranty_recovery: "Warranty recovery (contra-expense)",
   insurance_expense: "Insurance expense (fleet premium)",
+  unbilled_revenue: "Unbilled revenue (ASC 606 earn latch)",
 };
 
 export function CoaRolesPage() {
