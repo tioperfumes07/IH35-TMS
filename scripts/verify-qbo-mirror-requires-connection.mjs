@@ -66,6 +66,21 @@ async function main() {
       return;
     }
 
+    // An environment that models NO QBO connections at all cannot express this invariant. CI builds a
+    // fresh database from migrations: mirror rows may be seeded, but an OAuth connection cannot be —
+    // it requires real tokens — so every entity would look "unconnected" and the guard would fail for
+    // a reason that has nothing to do with the defect. Enforce only where connections are represented
+    // (prod has 4). This is a scope refinement, not a waiver: the moment a database models even one
+    // connection, every mirror row in it is held to the rule.
+    const connTotal = await client.query("SELECT count(*)::int AS n FROM integrations.qbo_connections");
+    if (Number(connTotal.rows[0]?.n ?? 0) === 0) {
+      console.log(
+        `${LABEL} SKIP — this database models ZERO qbo connections (fresh/seeded schema), so ` +
+          `"no connection ⇒ no mirror rows" cannot be evaluated. Enforced wherever connections exist.`
+      );
+      return;
+    }
+
     const findings = [];
     for (const rel of present) {
       // Counted with the bypass the CI role already has; the point is CROSS-ENTITY attribution, so
@@ -126,7 +141,20 @@ function selftest() {
   }
   console.log("  ok: an unconnected entity with zero rows is the correct state, not a finding");
 
-  console.log("SELFTEST PASS — leak shape caught, both clean shapes silent.");
+  // A database with NO connections anywhere is a fresh/seeded schema, not a leak. The pure comparison
+  // would flag every entity, which is exactly why the caller skips that environment; assert the shape
+  // so the reason is recorded and cannot be "simplified" away later.
+  const freshDb = [
+    { opco: "transp", mirror_rows: 5, connections: 0 },
+    { opco: "trk", mirror_rows: 5, connections: 0 },
+  ];
+  if (findOrphanMirrorRows(freshDb).length !== 2) {
+    console.error("SELFTEST FAIL: expected the pure comparison to flag a zero-connection database — the CALLER must skip it, not the comparison.");
+    process.exit(1);
+  }
+  console.log("  ok: a zero-connection database would flag everything, which is why the caller skips it");
+
+  console.log("SELFTEST PASS — leak shape caught, clean shapes silent, fresh-DB skip justified.");
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) await main();
