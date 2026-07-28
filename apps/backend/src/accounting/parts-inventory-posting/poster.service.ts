@@ -36,7 +36,8 @@ export type PartsPurchasePostResult = {
     | "zero_amount"
     | "already_posted"
     | "parts_row_not_found"
-    | "post_failed";
+    | "post_failed"
+    | "latch_table_missing";
   bill_id?: string;
   journal_entry_id?: string | null;
   memo?: string;
@@ -45,6 +46,17 @@ export type PartsPurchasePostResult = {
 };
 
 const FLAG_OFF: PartsPurchasePostResult = { posted: false, reason: "flag_off" };
+const PARTS_PURCHASE_LATCH = "accounting.parts_purchase_postings";
+const PARTS_PURCHASE_LATCH_MIG = "202609030000_mnt_econ_01_parts_purchase_gl_hop.sql";
+
+/** KR-01 — fail closed until owner Neon-applies the latch mig (KNOWN_RED; not an allowlist). */
+async function latchTablePresent(client: DbClient): Promise<boolean> {
+  const res = await client.query<{ ok: boolean }>(
+    `SELECT to_regclass($1::text) IS NOT NULL AS ok`,
+    [PARTS_PURCHASE_LATCH]
+  );
+  return Boolean(res.rows[0]?.ok);
+}
 
 export function buildCashPartsPurchasePostings(
   expenseAccountId: string,
@@ -108,6 +120,15 @@ export async function postPartsInventoryPurchase(
     ]);
     if (!(await postingEnabled(client, input.operating_company_id))) return { gate: "flag_off" as const };
 
+    // to_regclass('accounting.parts_purchase_postings') — KR-01 fail-closed (mig 202609030000)
+    if (!(await latchTablePresent(client))) {
+      return {
+        gate: "latch_table_missing" as const,
+        code: "E_PARTS_PURCHASE_SCHEMA_NOT_APPLIED",
+        message: `Owner must Neon-apply ${PARTS_PURCHASE_LATCH_MIG} before parts-purchase GL posting can run.`,
+      };
+    }
+
     const row = await client.query<{ id: string }>(
       `SELECT id::text FROM maintenance.parts_inventory
        WHERE operating_company_id = $1::uuid AND id = $2::uuid LIMIT 1`,
@@ -150,6 +171,14 @@ export async function postPartsInventoryPurchase(
   });
 
   if (prepared.gate === "flag_off") return FLAG_OFF;
+  if (prepared.gate === "latch_table_missing") {
+    return {
+      posted: false,
+      reason: "latch_table_missing",
+      code: prepared.code,
+      message: prepared.message,
+    };
+  }
   if (prepared.gate === "parts_row_not_found") return { posted: false, reason: "parts_row_not_found" };
   if (prepared.gate === "already_posted") {
     return {
