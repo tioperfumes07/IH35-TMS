@@ -5,6 +5,7 @@
  * Do not re-mount in routes/manifest.tsx. Sunset: 2026-09-01.
  */
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -22,6 +23,11 @@ type Props = {
 type ComplaintRow = Record<string, unknown>;
 
 export function ComplaintsPage({ operatingCompanyId, role }: Props) {
+  // SAF-B30 drill-through: EntityLink routes here with ?complaint_id=, but nothing read it, so the link
+  // navigated and then did nothing — a facade. Same highlight pattern as TransfersListPage
+  // (?transfer_id=), which is the in-repo precedent for a table-only surface with no drawer.
+  const [searchParams] = useSearchParams();
+  const deepLinkComplaintId = searchParams.get("complaint_id")?.trim() || "";
   const canView = useMemo(() => ["Owner", "Administrator", "Safety"].includes(String(role ?? "")), [role]);
   const queryClient = useQueryClient();
   const [form, setForm] = useState({
@@ -104,6 +110,9 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
           columns={columns}
           rows={query.data?.complaints ?? []}
           rowKey={(row) => String(row.id)}
+          rowClassName={(row) =>
+            deepLinkComplaintId && String(row.id) === deepLinkComplaintId ? "bg-slate-100 ring-1 ring-slate-400" : ""
+          }
           loading={query.isLoading}
           emptyText="No complaints found."
           storageKey="safety-complaints"

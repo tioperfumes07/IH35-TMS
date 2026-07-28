@@ -5,6 +5,7 @@
  * Do not re-mount in routes/manifest.tsx. Sunset: 2026-09-01.
  */
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -21,6 +22,11 @@ type Props = {
 type DotInspectionRow = Record<string, unknown>;
 
 export function DotInspectionsPage({ operatingCompanyId }: Props) {
+  // SAF-B30 drill-through: EntityLink routes here with ?inspection_id=, but nothing read it, so the link
+  // navigated and then did nothing — a facade. Same highlight pattern as TransfersListPage
+  // (?transfer_id=), which is the in-repo precedent for a table-only surface with no drawer.
+  const [searchParams] = useSearchParams();
+  const deepLinkInspectionId = searchParams.get("inspection_id")?.trim() || "";
   const queryClient = useQueryClient();
   const [form, setForm] = useState({
     inspection_date: companyToday(),
@@ -94,6 +100,9 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
           columns={columns}
           rows={query.data?.inspections ?? []}
           rowKey={(row) => String(row.id)}
+          rowClassName={(row) =>
+            deepLinkInspectionId && String(row.id) === deepLinkInspectionId ? "bg-slate-100 ring-1 ring-slate-400" : ""
+          }
           loading={query.isLoading}
           emptyText="No DOT inspections recorded."
           storageKey="safety-dot-inspections"
