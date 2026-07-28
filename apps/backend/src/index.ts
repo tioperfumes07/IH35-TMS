@@ -171,7 +171,6 @@ import { registerFuelLovesUploadRoutes } from "./fuel/loves-upload.routes.js";
 import { registerFuelTransactionImportRoutes } from "./fuel/fuel-transaction-import.routes.js";
 import { registerFuelTransactionsRoutes } from "./fuel/fuel-transactions.routes.js";
 import { registerFuelGlReflushRoutes } from "./fuel/fuel-gl-reflush.routes.js";
-import { registerFuelCardOverageRoutes } from "./fuel/fuel-card-overage.routes.js";
 import { registerFuelFraudAlertRoutes } from "./integrations/fuel/fraud-detector/routes.js";
 import { registerSafetyRoutes } from "./safety/safety.routes.js";
 import { registerSafetyAudit425cRoutes } from "./safety/audit-425c.routes.js";
@@ -923,8 +922,6 @@ async function main() {
   await registerFuelTransactionsRoutes(app);
   // FUEL-01 — owner-gated idempotent re-flush for unposted fuel.fuel_transactions → GL
   await registerFuelGlReflushRoutes(app);
-  // BANK-F10 / FUEL-03 — list + approve-then-recover for fuel-card overage events
-  await registerFuelCardOverageRoutes(app);
   // FIX (W: fuel fraud-alerts 404): registerFuelFraudAlertRoutes was defined but never mounted, so
   // GET /api/v1/fuel/fraud-alerts/summary 404'd and the "Open Fraud Alerts" KPI showed 0.
   await registerFuelFraudAlertRoutes(app);
