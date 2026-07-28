@@ -42,6 +42,9 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
       { name: "Pickup Time Types", description: "Pickup scheduling semantics", live: true, catalogKey: "pickup-time-types" },
       { name: "Additional Charges", description: "Accessorial and surcharge templates", live: true, catalogKey: "additional-charges" },
       { name: "Load Cancellation Reasons", description: "Cancellation root-cause reporting taxonomy", live: true, catalogKey: "load-cancellation-reasons" },
+      // LST-A-01: per-entity + FORCE RLS, 75 live rows on prod, previously reachable only as a
+      // read-only picker inside UserDetail — never from the hub, and with no write path at all.
+      { name: "Dispatcher Error Reasons", description: "Dispatcher accountability event reason codes", live: true, catalogKey: "dispatcher-error-reasons" },
     ],
   },
   {
@@ -141,6 +144,16 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
       { name: "Tax Codes", description: "Sales and use tax buckets (map to QBO as wired)", live: true, catalogKey: "tax-codes" },
       { name: "Currency Codes", description: "ISO currency list for multi-currency hints", live: true, catalogKey: "currency-codes" },
       { name: "Void/Cancel Reasons", description: "Financial void/cancel reason catalog (invoices, bills, payments, JEs, settlements, WO voids)", live: true, catalogKey: "void-cancel-reasons" },
+    ],
+  },
+  {
+    // LST-A-01: the hub had no customers domain at all, so a per-entity customer catalog with 72 live
+    // rows on prod had nowhere to appear. Adding the domain is what makes it reachable.
+    key: "customers",
+    label: "Customers",
+    pillClass: "bg-slate-100 text-slate-700",
+    catalogs: [
+      { name: "Customer Quality Event Reasons", description: "Customer service-quality event reason codes", live: true, catalogKey: "customer-quality-event-reasons" },
     ],
   },
   {

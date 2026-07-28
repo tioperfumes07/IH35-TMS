@@ -84,6 +84,57 @@ export type GenericCatalogDefinition = {
 
 /** Factory-registered catalogs (CATALOG-1 backend). Extend as catalogs migrate. */
 export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> = {
+  // LST-A-01: registered so the generic catalog page can serve them. Column shape and both enums read
+  // from prod 2026-07-28 and mirrored from the live CHECK constraints — these use `label`, not
+  // display_name, and event_type/severity are NOT NULL with a fixed domain.
+  "dispatch.dispatcher_error_reasons": {
+    catalogName: "dispatch.dispatcher_error_reasons",
+    displayName: "Dispatcher Error Reasons",
+    domain: "dispatch",
+    catalogKey: "dispatcher-error-reasons",
+    columns: [
+      { key: "code", label: "Code", sortable: true, filterable: true },
+      { key: "label", label: "Label", sortable: true, filterable: true },
+      { key: "event_type", label: "Event Type", sortable: true, filterable: true },
+      { key: "severity", label: "Severity", sortable: true, filterable: true },
+      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "is_active", label: "Status", sortable: true, filterable: false },
+    ],
+    fields: [
+      { key: "code", label: "Code", type: "text", required: true, readOnlyOnEdit: true },
+      { key: "label", label: "Label", type: "text", required: true },
+      { key: "event_type", label: "Event Type", type: "enum", required: true,
+        enumOptions: [{ value: "customer_complaint", label: "Customer Complaint" }, { value: "missed_appointment", label: "Missed Appointment" }, { value: "unpaid_invoice_responsibility", label: "Unpaid Invoice Responsibility" }, { value: "abandoned_load_dispatcher_fault", label: "Abandoned Load Dispatcher Fault" }, { value: "rate_below_threshold_unjustified", label: "Rate Below Threshold Unjustified" }, { value: "driver_complaint_validated", label: "Driver Complaint Validated" }, { value: "commendation", label: "Commendation" }, { value: "training_required", label: "Training Required" }, { value: "policy_violation", label: "Policy Violation" }, { value: "other", label: "Other" }] },
+      { key: "severity", label: "Severity", type: "enum", required: true,
+        enumOptions: [{ value: "info", label: "Info" }, { value: "warning", label: "Warning" }, { value: "severe", label: "Severe" }] },
+      { key: "description", label: "Description", type: "text", required: false },
+    ],
+    defaultSort: { column: "code", dir: "asc" },
+  },
+  "customers.customer_quality_event_reasons": {
+    catalogName: "customers.customer_quality_event_reasons",
+    displayName: "Customer Quality Event Reasons",
+    domain: "customers",
+    catalogKey: "customer-quality-event-reasons",
+    columns: [
+      { key: "code", label: "Code", sortable: true, filterable: true },
+      { key: "label", label: "Label", sortable: true, filterable: true },
+      { key: "event_type", label: "Event Type", sortable: true, filterable: true },
+      { key: "severity", label: "Severity", sortable: true, filterable: true },
+      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "is_active", label: "Status", sortable: true, filterable: false },
+    ],
+    fields: [
+      { key: "code", label: "Code", type: "text", required: true, readOnlyOnEdit: true },
+      { key: "label", label: "Label", type: "text", required: true },
+      { key: "event_type", label: "Event Type", type: "enum", required: true,
+        enumOptions: [{ value: "late_payment", label: "Late Payment" }, { value: "non_payment", label: "Non Payment" }, { value: "lumper_dispute", label: "Lumper Dispute" }, { value: "detention_dispute", label: "Detention Dispute" }, { value: "tonu_dispute", label: "Tonu Dispute" }, { value: "load_cancelled", label: "Load Cancelled" }, { value: "rate_dispute", label: "Rate Dispute" }, { value: "damage_claim", label: "Damage Claim" }, { value: "commendation", label: "Commendation" }, { value: "other", label: "Other" }] },
+      { key: "severity", label: "Severity", type: "enum", required: true,
+        enumOptions: [{ value: "info", label: "Info" }, { value: "warning", label: "Warning" }, { value: "severe", label: "Severe" }] },
+      { key: "description", label: "Description", type: "text", required: false },
+    ],
+    defaultSort: { column: "code", dir: "asc" },
+  },
   "fleet.equipment_types": {
     catalogName: "fleet.equipment_types",
     displayName: "Equipment Types",
