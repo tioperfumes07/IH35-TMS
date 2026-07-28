@@ -9,6 +9,8 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-acct-f06-qbo-vendors-push";
+const UNIT_TEST = "apps/backend/src/sync/__tests__/qbo-vendors-push.test.ts";
+
 const TARGETS = [
   "apps/backend/src/sync/qbo-vendors-push.ts",
   "apps/backend/src/sync/qbo-vendors-status.routes.ts",
@@ -26,7 +28,7 @@ export function assertCanonicalPush(source, filename) {
 }
 
 function main() {
-  const problems = TARGETS.flatMap((filename) =>
+  const problems = [...TARGETS, UNIT_TEST].flatMap((filename) =>
     assertCanonicalPush(fs.readFileSync(path.join(ROOT, filename), "utf8"), filename)
   );
   if (problems.length) {
