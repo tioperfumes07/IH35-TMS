@@ -20,7 +20,7 @@ const migrationsDir = path.join(root, "db/migrations");
 const heldRegistryPath = path.join(migrationsDir, ".held-migrations.json");
 
 /** Roles proven live on Neon that every *still-held* CoA CHECK rewrite must retain. */
-export const MUST_KEEP_ROLES = Object.freeze(["unbilled_revenue"]);
+export const MUST_KEEP_ROLES = Object.freeze(["unbilled_revenue", "fixed_asset_default", "accum_depr_default", "depr_expense_default"]);
 
 const REWRITE_MARKERS = [
   /DROP\s+CONSTRAINT\s+IF\s+EXISTS\s+chart_of_accounts_roles_role_check/i,

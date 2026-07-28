@@ -1,5 +1,11 @@
 import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import {
+  CAPITALIZE_REPAIR_THRESHOLD_CENTS,
+  decideRepairBooksTreatment,
+  HEAVY_REPAIR_EXPENSE_COA_ROLE,
+  repairBooksExpenseCoaRole,
+} from "../accounting/capitalize-threshold.js";
 import { withCurrentUser } from "../auth/db.js";
 
 type SevereEstimateRow = {
@@ -326,6 +332,16 @@ export async function refreshEstimate(userId: string, estimate_id: string, opera
       "P5-E5-OOS"
     );
 
-    return updated.rows[0];
+    const booksTreatment = decideRepairBooksTreatment(
+      Number(updated.rows[0].estimated_total_cents ?? 0)
+    );
+    return {
+      ...updated.rows[0],
+      capitalize_threshold_cents: CAPITALIZE_REPAIR_THRESHOLD_CENTS,
+      recommended_books_treatment: booksTreatment,
+      recommended_expense_coa_role: repairBooksExpenseCoaRole(booksTreatment),
+      // Constant export kept reachable so guards can pin A4-D2 without importing the resolver.
+      heavy_repair_expense_coa_role: HEAVY_REPAIR_EXPENSE_COA_ROLE,
+    };
   });
 }

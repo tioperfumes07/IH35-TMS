@@ -8,11 +8,20 @@ import { describe, it, expect } from "vitest";
 const here = dirname(fileURLToPath(import.meta.url));
 const route = readFileSync(resolve(here, "fixed-assets.routes.ts"), "utf8");
 
+// ND-FA-01: register endpoints are allowed (writes live in owned-unit-fixed-asset-register.service.ts).
+// This file must stay free of inline SQL DML — service owns INSERT.
 describe("fixed-assets routes guard", () => {
-  it("is read-only — no INSERT/UPDATE/DELETE against accounting tables", () => {
+  it("does not embed SQL DML — register writes live in the service module", () => {
     expect(route).not.toMatch(/INSERT\s+INTO/i);
     expect(route).not.toMatch(/UPDATE\s+accounting\./i);
     expect(route).not.toMatch(/DELETE\s+FROM/i);
+  });
+
+  it("exposes ND-FA-01 register endpoints (no JE)", () => {
+    expect(route).toContain("/api/v1/accounting/fixed-assets/register-unit");
+    expect(route).toContain("/api/v1/accounting/fixed-assets/register-trk-units");
+    expect(route).toContain("registerOwnedUnitAsFixedAsset");
+    expect(route).not.toMatch(/INSERT\s+INTO\s+accounting\.journal_entries/i);
   });
 
   it("never posts a journal entry (no GL write)", () => {
