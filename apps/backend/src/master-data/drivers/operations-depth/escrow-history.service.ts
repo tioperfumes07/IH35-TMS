@@ -8,6 +8,16 @@ export type EscrowHistoryRow = {
   amount: string | null;
   running_balance: string | null;
   created_at: string;
+  /**
+   * SAF-B22 — driver_finance.escrow_ledger has carried settlement_id / settlement_line_id since it
+   * was created and this service selected neither, so escrow history was a column of amounts with
+   * no way back to the settlement that produced them. Every serious system makes this hop: McLeod
+   * drills an escrow movement to the settlement it was deducted on, NetSuite drills a subledger row
+   * to its source transaction, QuickBooks drills a liability register line to the transaction that
+   * created it. A balance you cannot trace to its source is not auditable.
+   */
+  settlement_id: string | null;
+  settlement_line_id: string | null;
 };
 
 /**
@@ -47,6 +57,8 @@ export async function getDriverEscrowHistory(
         transaction_type AS entry_type,
         to_char(amount_cents / 100.0, 'FM999999990.00') AS amount,
         to_char(running_balance_cents / 100.0, 'FM999999990.00') AS running_balance,
+        settlement_id::text,
+        settlement_line_id::text,
         created_at::text
       FROM driver_finance.escrow_ledger
       WHERE driver_id = $1::uuid
