@@ -262,9 +262,18 @@ export function deactivateComplaintType(companyId: string, id: string) {
   });
 }
 
-export function listDotViolationTypes(companyId: string, query: ListQuery = {}) {
+/**
+ * SAF-B14 — `basic_category` narrows to one FMCSA BASIC server-side. It must not be a client-side
+ * filter: the list caps at 200 rows and the table holds more, so anything past the cap would vanish
+ * from the picker silently.
+ */
+export function listDotViolationTypes(
+  companyId: string,
+  query: ListQuery & { basic_category?: string } = {}
+) {
+  const path = buildListPath("/api/v1/catalogs/safety/dot-violation-types", companyId, query);
   return apiRequest<{ rows: DotViolationTypeRow[]; total: number }>(
-    buildListPath("/api/v1/catalogs/safety/dot-violation-types", companyId, query)
+    query.basic_category ? `${path}&basic_category=${encodeURIComponent(query.basic_category)}` : path
   );
 }
 

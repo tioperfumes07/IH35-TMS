@@ -61,11 +61,21 @@ const SELECT_COLUMNS = `
   updated_at
 `;
 
+/**
+ * SAF-B14 — optional BASIC filter for pickers. Read-only: no schema and no catalog data change.
+ * A picker that wants only the 33 hours-of-service rows cannot filter client-side, because the list
+ * caps at limit=200 while the table holds 213 rows — the 13 past the cap would be unselectable and
+ * nothing would say so (the SAF-F31 cap landmine). Filtering has to happen where the rows are.
+ */
+const listQueryWithBasicSchema = listQuerySchema.extend({
+  basic_category: z.string().trim().min(1).max(60).optional(),
+});
+
 export async function registerDotViolationTypesRoutes(app: FastifyInstance) {
   app.get("/api/v1/catalogs/safety/dot-violation-types", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
-    const parsed = listQuerySchema.safeParse(req.query ?? {});
+    const parsed = listQueryWithBasicSchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
     const q = parsed.data;
 
@@ -77,6 +87,10 @@ export async function registerDotViolationTypesRoutes(app: FastifyInstance) {
       if (q.search) {
         values.push(`%${q.search}%`);
         where.push(`(d.violation_code ILIKE $${values.length} OR d.display_name ILIKE $${values.length})`);
+      }
+      if (q.basic_category) {
+        values.push(q.basic_category);
+        where.push(`d.basic_category = $${values.length}`);
       }
       const whereClause = where.join(" AND ");
 
