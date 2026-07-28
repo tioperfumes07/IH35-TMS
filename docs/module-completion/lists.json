@@ -241,9 +241,9 @@
         "VERIFY-3"
       ],
       "spec": "PER-PR/EVERY-PR checklist: honest counts",
-      "status": "FAIL",
-      "evidence": "VERIFIED FAIL 2026-07-25. Two live per-entity catalogs are absent from lists-module-count-spec.ts:11-124 entirely: catalogs.dispatcher_error_reasons (0025, own guard 1454) and catalogs.customer_quality_event_reasons (0026, guard 1355). Worse, names_master:[] at :123 makes buildModuleCountQuery return SELECT 0::int (:139), so the NAMES-MASTER badge is a PERMANENT ZERO while AllCatalogsMap.tsx:147 renders a live Brokers catalog. And lists-counts.routes.ts:50-60 silently DROPS any spec table failing to_regclass, understating instead of failing loud \u2014 the LST-F21 shape. Guard 1448 is a hand-maintained EXPECTED_TABLE_COUNTS ratchet, not a completeness proof; nothing diffs the spec against the real catalogs.* set.",
-      "pr": 3441,
+      "status": "PASS",
+      "evidence": "VERIFIED PASS 2026-07-28 \u2014 all three defects fixed. (1) names_master had an EMPTY spec, so buildModuleCountQuery emitted SELECT 0::int \u2014 a PERMANENT zero badge no data could move, while the hub rendered Brokers as live. Brokers is not its own catalogs.* table but a typed slice of mdata.customers (customer_type='broker'), which is why it could not be expressed; the spec now supports a fixed, guard-validated predicate and a mdata schema. Prod under lucia: 4 brokers exist, ALL deactivated \u2014 so the badge legitimately reads 0 TODAY, but it now reads a real table and can move, instead of being a stub. (2) dispatcher_error_reasons (75 rows) and customer_quality_event_reasons (72 rows) were absent from the spec entirely \u2014 both LIVE and per-entity on prod \u2014 so DISPATCH understated by their whole contents; TRANSP alone gains 24 counted rows. (3) a spec table missing from the DB was silently DROPPED, so the badge understated while looking authoritative; the route still degrades rather than 500ing (deliberate) but now returns degraded:true + missing_tables and logs a warning. Guard 1685 asserts no empty spec, discovers live hub catalogs (10), and requires the route to report drops; RED 2-of-2 on pre-fix main. ALSO FIXED: the scoreboard-generation change (#3696) left verify:static running the four .md-reading guards ALPHABETICALLY before the generator \u2014 correct in CI (step 1431 < 1467) but broken locally; the generator is now hoisted.",
+      "pr": null,
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
