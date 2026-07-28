@@ -3,14 +3,17 @@ type TabOption = {
   label: string;
 };
 
-export const BILL_TYPE_TABS: TabOption[] = [
+export const BILL_TYPE_IDS = ["repair", "fuel", "maintenance", "driver", "vendor", "multiple"] as const;
+export type BillTypeId = (typeof BILL_TYPE_IDS)[number];
+
+export const BILL_TYPE_TABS = [
   { id: "repair", label: "Repair Bill" },
   { id: "fuel", label: "Fuel Bill" },
   { id: "maintenance", label: "Maintenance Bill" },
   { id: "driver", label: "Driver Bill" },
   { id: "vendor", label: "Vendor Bill" },
   { id: "multiple", label: "Multiple Bills" },
-];
+] as const satisfies readonly { id: BillTypeId; label: string }[];
 
 export const EXPENSE_TYPE_TABS: TabOption[] = [
   { id: "roadside", label: "Roadside Expense" },
@@ -21,7 +24,7 @@ export const EXPENSE_TYPE_TABS: TabOption[] = [
 ];
 
 type Props = {
-  tabs: TabOption[];
+  tabs: readonly TabOption[];
   activeId: string;
   onChange: (tabId: string) => void;
 };
