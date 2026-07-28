@@ -29,6 +29,11 @@ type PendingRow = {
   status: string;
 };
 
+// DRV-02: source_type is the canonical, owner-editable catalog code rather than a
+// private CHECK vocabulary. This exact code is constrained by the composite FK
+// (operating_company_id, source_type) → catalogs.driver_deduction_types.
+const LOAD_ABANDONMENT_SOURCE_TYPE = "LOAD-ABANDONMENT";
+
 export function calculateAbandonmentProposalAmount(loadValueCents: number) {
   const value = Math.max(0, Number(loadValueCents || 0));
   return Math.max(Math.round((value * 15) / 100), 50000);
@@ -125,7 +130,7 @@ export async function emitAutoProposedEscrowEvents(params: {
       LEFT JOIN mdata.drivers d ON d.id = p.driver_id
       WHERE p.operating_company_id = $1
         AND p.load_id = $2
-        AND p.source_type = 'load_abandonment'
+        AND p.source_type = '${LOAD_ABANDONMENT_SOURCE_TYPE}'
         AND p.status = 'pending'
       ORDER BY p.proposed_at DESC
       LIMIT 1
