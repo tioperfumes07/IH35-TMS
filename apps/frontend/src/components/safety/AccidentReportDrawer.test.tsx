@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router-dom";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
@@ -25,6 +26,10 @@ vi.mock("../../api/mdata", () => ({
   }),
   listUnits: vi.fn().mockResolvedValue({ units: [{ id: "unit-uuid-1", unit_number: "T-101" }], total: 1 }),
   listVendors: vi.fn().mockResolvedValue({ vendors: [{ id: "vendor-uuid-1", name: "Laredo Diesel" }], total: 1 }),
+  // The drawer's driver picker is DriverPickerWithCreate, which imports createDriver for its inline
+  // "+ Add new". A factory mock replaces the WHOLE module, so omitting one export made every test in
+  // this file throw at import time — all 8 were failing for that reason alone, asserting nothing.
+  createDriver: vi.fn().mockResolvedValue({ driver: { id: "driver-uuid-new" } }),
 }));
 
 vi.mock("../../api/dispatch", () => ({
@@ -88,7 +93,11 @@ function wrap(ui: React.ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
     <QueryClientProvider client={client}>
-      <ToastProvider>{ui}</ToastProvider>
+      <ToastProvider>
+        {/* EntityLink renders a react-router <Link>, so the harness needs a Router.
+            Without it every test in this file died on useLocation() before asserting anything. */}
+        <MemoryRouter>{ui}</MemoryRouter>
+      </ToastProvider>
     </QueryClientProvider>
   );
 }
@@ -110,12 +119,15 @@ describe("AccidentReportDrawer catalogs (SC1)", () => {
     const user = userEvent.setup();
     render(wrap(<AccidentReportDrawer open operatingCompanyId="co-1" accident={draft} createMode onClose={() => {}} onUpdated={() => {}} />));
     const driverPicker = await screen.findByTestId("accident-driver-picker");
-    const select = within(driverPicker).getByRole("combobox") as HTMLSelectElement;
-    // Option label shows "LAST, First" but the underlying value is the uuid.
-    await waitFor(() => expect(within(driverPicker).getByText("Cazares, Alfredo")).toBeInTheDocument());
-    await user.selectOptions(select, "driver-uuid-1");
-    expect(select.value).toBe("driver-uuid-1");
-    expect(select.value).not.toBe("Cazares, Alfredo");
+    // The driver field is DriverPickerWithCreate (a real Combobox), not the native <select> the other
+    // pickers mock to — its options only exist once the dropdown is opened.
+    const input = within(driverPicker).getByRole("combobox") as HTMLInputElement;
+    await user.click(input);
+    const option = await screen.findByText("Alfredo Cazares");
+    await user.click(option);
+    // The label is what the operator reads; the uuid is what gets stored.
+    await waitFor(() => expect(input.value).toBe("Alfredo Cazares"));
+    expect(vi.mocked(mdataApi.listDrivers)).toHaveBeenCalled();
   });
 
   it("persists the four catalog links (uuids) when the office creator saves", async () => {
@@ -129,7 +141,11 @@ describe("AccidentReportDrawer catalogs (SC1)", () => {
       await user.selectOptions(select, value);
       expect(select.value).toBe(value);
     };
-    await pick("accident-driver-picker", "driver-uuid-1", /Cazares, Alfredo/);
+    // Driver uses the real Combobox (see above); the other three are the mocked native selects.
+    const driverWrap = await screen.findByTestId("accident-driver-picker");
+    const driverInput = within(driverWrap).getByRole("combobox") as HTMLInputElement;
+    await user.click(driverInput);
+    await user.click(await screen.findByText("Alfredo Cazares"));
     await pick("accident-unit-picker", "unit-uuid-1", /T-101/);
     await pick("accident-vendor-picker", "vendor-uuid-1", /Laredo Diesel/);
     await pick("accident-load-picker", "load-uuid-1", /LD-9001/);

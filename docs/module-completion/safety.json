@@ -1492,9 +1492,9 @@
         "VERIFY-2"
       ],
       "spec": "safety.md section J boundary 25 (findings F26)",
-      "status": "FAIL",
-      "evidence": "VERIFIED FAIL 2026-07-25. Driver and unit names + EntityLinks are done (safety.routes.ts:383-395 entity-scoped joins with the error swallow removed; AccidentsPage.tsx:112-113). The LOAD leg is entirely absent: there is no Load column on the accidents list and the list SQL joins no load, although safety.accident_reports.load_id exists (202607031500_sc1_accident_report_entity_links.sql:34,74) and is captured at safety.routes.ts:451,489. Guard 1331 asserts driver+unit only. PREMISE HALF-STALE: F26 says load renders as a raw UUID \u2014 it does not render at all.",
-      "pr": 3356,
+      "status": "PASS",
+      "evidence": "VERIFIED PASS 2026-07-28. The manifest named the LOAD leg; the vendor leg had the identical defect and is fixed too. safety.accident_reports.load_id (FK -> mdata.loads) and vendor_id (FK -> mdata.vendors) have both been captured by the office creator (AccidentReportDrawer sends all four links) and persisted by the INSERT since the table existed, while the LIST joined only driver and unit \u2014 so an accident could be filed against a specific trip and a specific tow/repair vendor and neither could be read back: no column, no join, no drill-through. Added both joins (entity-scoped by operating_company_id; mdata.loads was verified on prod to HAVE operating_company_id, unlike mdata.units) and both EntityLink columns, inserted after Unit so existing column order is otherwise preserved verbatim. Guard 1669 discovers the captured link set from the creator payload (4 of 4 resolve) and asserts join + entity scoping + drill-through; selftest plants 4 defects individually including a dropped scoping clause. TESTS: AccidentsPage + AccidentReportDrawer were 11 FAILING on clean origin/main (verified by stashing) for two pre-existing reasons unrelated to this block \u2014 no Router in the harness though the components render EntityLink, and a factory vi.mock of api/mdata missing createDriver, which threw at import so all 8 asserted nothing. Both root-caused and fixed, plus a stale 'Cazares, Alfredo' expectation corrected to the app-wide 'First Last' convention and two assertions rewritten to drive the real Combobox the drawer migrated to. Now 11 of 11 pass.",
+      "pr": null,
       "owner_hold": false,
       "tracker": null,
       "future_block": null,

@@ -111,6 +111,25 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
     { key: "accident_at", label: "Date", sortable: true, render: (row) => formatDateUS(row.accident_at) },
     { key: "driver_id", label: "Driver", render: (row) => <EntityLink kind="driver" id={row.driver_id as string | undefined} label={(row.driver_name as string | undefined) ?? undefined} /> },
     { key: "unit_id", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id as string | undefined} label={(row.unit_number as string | undefined) ?? undefined} /> },
+    // SAF-B25: the load leg of the accident. safety.accident_reports.load_id has FKed mdata.loads
+    // since the table existed and appeared on no list and in no join, so an accident could not be
+    // read against the trip it happened on — the link an insurer, attorney or claims adjuster asks
+    // for first. Added after Unit and before Location so the existing column order is otherwise
+    // preserved verbatim (§7 additive-only).
+    {
+      key: "load_id",
+      label: "Load",
+      render: (row) => (
+        <EntityLink kind="load" id={row.load_id as string | undefined} label={(row.load_number as string | undefined) ?? undefined} />
+      ),
+    },
+    {
+      key: "vendor_id",
+      label: "Vendor",
+      render: (row) => (
+        <EntityLink kind="vendor" id={row.vendor_id as string | undefined} label={(row.vendor_name as string | undefined) ?? undefined} />
+      ),
+    },
     { key: "location", label: "Location", render: (row) => String(row.location ?? row.description ?? "—") },
     { key: "at_fault", label: "At Fault", cellClass: "capitalize", render: (row) => formatAtFault(row.at_fault) },
     { key: "preventable", label: "Preventable", render: (row) => formatPreventable(row.preventable) },
