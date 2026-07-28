@@ -2,7 +2,7 @@
   "module": "accounting",
   "title": "Accounting (Module 3)",
   "complete": false,
-  "as_of": "2026-07-28T17:05:00.000Z",
+  "as_of": "2026-07-28T17:41:00.000Z",
   "live_sha": "a3f9c12",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md",
   "spec_sources": [
@@ -72,7 +72,7 @@
       ],
       "spec": "Vendor credit apply/void",
       "status": "FAIL",
-      "evidence": "REWRITE 2026-07-25: real blocker is LINKAGE \u2014 canonical accounting.qbo_vendors vs RETIRE mdata.qbo_vendors. Neon lucia 2026-07-25: accounting.qbo_vendors=2744, mdata.qbo_vendors=2780 (\u0394\u224836 on retired mirror); vendor_credits=0 / applications=0. Block: migrate/backfill entity masters into accounting.qbo_vendors, repoint writers off RETIRE mdata.qbo_vendors, then one live vendor credit (owner Neon-applies backfill). NOT a projection-flag chase; flags stay OFF. OWNER decides. Fine GL decided \u2014 no re-ask. Dispatch: docs/trackers/acct-bank-remaining-blocks-2026-07-25/ACCT-ECON-05-vendor-credits-canonical-qbo-vendors.md",
+      "evidence": "LINKAGE in progress 2026-07-28: CC bill-pay repointed off RETIRE mdata.qbo_vendors \u2192 accounting.qbo_vendors (guard 1708). Neon lucia: accounting.qbo_vendors=2744 mdata.qbo_vendors=2780 (\u0394\u224836); vendor_credits=0. Still FAIL until residual masters backfilled + one live vendor credit apply (flags stay OFF). Other sync/push readers may still touch RETIRE mirror \u2014 out of this PR scope.",
       "pr": "#3426"
     },
     {
@@ -173,7 +173,7 @@
       ],
       "spec": "ACCT-F08",
       "status": "FAIL",
-      "evidence": "Schema DONE on Neon (lucia 2026-07-28): posting_batches.posting_template_id FK exists (inbound=1); LST-F03 operating_company_id on catalogs.posting_templates. Writers stamp on main (#3444). Still FAIL: catalogs.posting_templates=0 rows; posting_batches stamped 0/6. Opco-aware resolvePostingTemplateId + Lists Templates unlocked for owner in-app seed (this PR). Density PASS requires owner seed of PostingSourceType (+fuel_event) per entity + at least one stamped batch.",
+      "evidence": "Schema DONE on Neon (lucia 2026-07-28): posting_batches.posting_template_id FK exists (inbound=1); LST-F03 operating_company_id on catalogs.posting_templates. Writers stamp on main (#3444). Still FAIL: catalogs.posting_templates=0 rows; posting_batches stamped 0/6. Opco-aware resolvePostingTemplateId + Lists Templates unlocked (#3709). Density PASS requires owner seed of PostingSourceType (+fuel_event) per entity + at least one stamped batch.",
       "pr": "#3444"
     },
     {
