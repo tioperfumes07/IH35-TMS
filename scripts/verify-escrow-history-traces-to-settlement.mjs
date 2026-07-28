@@ -35,6 +35,38 @@ const CHECKS = [
     test: (src) => /settlement_id:\s*string \| null/.test(src),
   },
   {
+    id: "service-resolves-journal-entry",
+    describe: "escrow-history must resolve the posted journal entry via accounting.escrow_postings",
+    file: SERVICE,
+    test: (src) =>
+      /accounting\.escrow_postings/.test(src) && /source_type\s*=\s*'driver_settlement'/.test(src),
+  },
+  {
+    id: "je-join-is-driver-scoped",
+    describe:
+      "the journal-entry join must go through the accounting.escrow_accounts bridge on holder_type='driver' " +
+      "so one driver can never surface another driver's GL entry",
+    file: SERVICE,
+    test: (src) =>
+      /JOIN accounting\.escrow_accounts ea/.test(src) &&
+      /ea\.holder_type\s*=\s*'driver'/.test(src) &&
+      /ea\.holder_id\s*=\s*el\.driver_id/.test(src),
+  },
+  {
+    id: "je-refuses-ambiguous-match",
+    describe:
+      "the journal-entry resolution must return NULL when candidate postings disagree — showing the WRONG " +
+      "journal entry against a driver's money is worse than showing none",
+    file: SERVICE,
+    test: (src) => /count\(DISTINCT ep\.linked_journal_entry_id\)\s*=\s*1/.test(src),
+  },
+  {
+    id: "view-drills-to-journal-entry",
+    describe: 'the escrow history view must render journal_entry_id as an EntityLink kind="journal_entry"',
+    file: VIEW,
+    test: (src) => /entityKind:\s*"journal_entry"/.test(src) && /idKey:\s*"journal_entry_id"/.test(src),
+  },
+  {
     id: "view-drills-to-settlement",
     describe: 'the escrow history view must render settlement_id as an EntityLink kind="settlement"',
     file: VIEW,
@@ -76,6 +108,27 @@ function selftest() {
       find: "  settlement_id: string | null;",
       replace: "  // removed by selftest",
       expect: /service-types-settlement-id/,
+    },
+    {
+      name: "JE resolution stops guarding against an ambiguous match",
+      file: SERVICE,
+      find: "count(DISTINCT ep.linked_journal_entry_id) = 1",
+      replace: "count(ep.linked_journal_entry_id) >= 1",
+      expect: /je-refuses-ambiguous-match/,
+    },
+    {
+      name: "JE join stops being driver-scoped",
+      file: SERVICE,
+      find: "         AND ea.holder_id = el.driver_id\n",
+      replace: "",
+      expect: /je-join-is-driver-scoped/,
+    },
+    {
+      name: "view stops drilling to the journal entry",
+      file: VIEW,
+      find: 'entityKind: "journal_entry"',
+      replace: 'entityKind: "driver"',
+      expect: /view-drills-to-journal-entry/,
     },
     {
       name: "view stops drilling to the settlement",

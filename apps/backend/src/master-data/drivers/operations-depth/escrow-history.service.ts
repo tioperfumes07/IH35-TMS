@@ -18,6 +18,16 @@ export type EscrowHistoryRow = {
    */
   settlement_id: string | null;
   settlement_line_id: string | null;
+  /**
+   * SAF-B22 (GL leg) — the journal entry the movement posted to. There is no direct FK from
+   * driver_finance.escrow_ledger to the GL; the link lives on accounting.escrow_postings, whose
+   * (source_type, source_id) is polymorphic. Verified against the two real writers on prod:
+   * settlement-payrun-close.service.ts posts source_type='driver_settlement' with
+   * source_id = the settlement id and linked_journal_entry_id = the JE it just posted, and
+   * escrow-forfeit.service.ts posts source_type='forfeit' with source_id = the liability id.
+   * Only the settlement path shares a key with the ledger row, so only that path is resolved here.
+   */
+  journal_entry_id: string | null;
 };
 
 /**
@@ -59,11 +69,39 @@ export async function getDriverEscrowHistory(
         to_char(running_balance_cents / 100.0, 'FM999999990.00') AS running_balance,
         settlement_id::text,
         settlement_line_id::text,
+        je.journal_entry_id::text,
         created_at::text
-      FROM driver_finance.escrow_ledger
-      WHERE driver_id = $1::uuid
-        AND operating_company_id = $2::uuid
-      ORDER BY created_at DESC
+      FROM driver_finance.escrow_ledger el
+      -- SAF-B22 (GL leg): resolve the posted journal entry, but ONLY when the match is
+      -- unambiguous. A settlement can carry more than one escrow posting, and showing the WRONG
+      -- journal entry on a driver's money is worse than showing none — so this returns the JE only
+      -- when every candidate posting agrees on it, and NULL otherwise. Driver-scoped through the
+      -- accounting.escrow_accounts bridge (holder_type='driver') so one driver can never surface
+      -- another's GL entry, and company-scoped on both tables. accounting.* is FORCE-RLS with a
+      -- policy on app.operating_company_id, which this route sets (routes.ts:66), and ih35_app holds
+      -- SELECT on both tables — all four verified on prod before writing this join.
+      LEFT JOIN LATERAL (
+        SELECT CASE
+                 WHEN count(DISTINCT ep.linked_journal_entry_id) = 1
+                 -- min(uuid) does not exist in Postgres; array_agg DISTINCT is the correct way to
+                 -- take "the single distinct value" (caught by executing this against prod, not by
+                 -- reading it).
+                 THEN (array_agg(DISTINCT ep.linked_journal_entry_id))[1]
+               END AS journal_entry_id
+        FROM accounting.escrow_postings ep
+        JOIN accounting.escrow_accounts ea
+          ON ea.id = ep.escrow_account_id
+         AND ea.holder_type = 'driver'
+         AND ea.holder_id = el.driver_id
+         AND ea.operating_company_id = el.operating_company_id
+        WHERE ep.operating_company_id = el.operating_company_id
+          AND ep.source_type = 'driver_settlement'
+          AND ep.source_id = el.settlement_id
+          AND ep.linked_journal_entry_id IS NOT NULL
+      ) je ON el.settlement_id IS NOT NULL
+      WHERE el.driver_id = $1::uuid
+        AND el.operating_company_id = $2::uuid
+      ORDER BY el.created_at DESC
       LIMIT $3 OFFSET $4
     `,
     [driverUuid, operatingCompanyId, limit, offset]
