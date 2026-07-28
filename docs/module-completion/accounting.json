@@ -161,8 +161,8 @@
       ],
       "spec": "ACCT-F07",
       "status": "PASS",
-      "evidence": "LIVE 2026-07-28 Neon lucia: accounting.expense_lines.expense_category_uuid + operating_company_id composite FK \u2192 catalogs.expense_categories (island CLOSED). expense_lines row count=0 so density N/A until ACCT-ECON-04 projection/create path produces lines \u2014 FK law satisfied.",
-      "pr": "#3697"
+      "evidence": "LIVE 2026-07-28 Neon lucia: accounting.expense_lines.expense_category_uuid + operating_company_id composite FK expense_lines_expense_category_same_entity_fkey \u2192 catalogs.expense_categories (island CLOSED). Mig 202608020000 in applied_held. expense_lines=0 density is ACCT-ECON-04. Original merge #3446 @ 7a0c3614; prove PR #3697.",
+      "pr": "#3446 #3697"
     },
     {
       "id": "ACCT-LINK-05",

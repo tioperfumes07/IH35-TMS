@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 /**
- * ACCT-F07 / ACCT-LINK-04 — MERGED≠APPLIED honesty guard.
+ * ACCT-F07 / ACCT-LINK-04 — expense_category FK honesty guard.
  *
  * Layer 1: delegate to verify-expense-category-fk-wired.mjs (migration + routes on main).
- * Layer 2: fail closed if manifest pretends PASS, held migration is marked applied_on_prod,
- *          or this honesty doc / MERGED≠APPLIED evidence is missing.
+ * Layer 2: held vs applied_held discipline:
+ *   - still in held[] → manifest MUST stay FAIL (MERGED≠APPLIED)
+ *   - in applied_held[] with applied_on_prod → PASS allowed only with LIVE Neon evidence
  *
- * CI-static — no DB. Prod FK density is owner Neon-apply + live re-proof.
+ * CI-static — no DB. Live density of expense_lines is ACCT-ECON-04.
  */
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -59,6 +60,7 @@ export function collectHonestyFailures(opts = {}) {
     }
   }
 
+  let neonApplied = false;
   const held = read(path.relative(ROOT, path.join(root, HELD_MANIFEST)));
   if (held.missing) {
     failures.push(`missing ${held.missing}`);
@@ -71,11 +73,6 @@ export function collectHonestyFailures(opts = {}) {
       parsed = null;
     }
     if (parsed) {
-      // 2026-07-25 GUARD registry split: a migration Neon-applied and ledger-verified moves to
-      // applied_held[] (owner-confirmed live proof), not held[]. applied_on_prod:true there is the
-      // EXPECTED state, not a contradiction — it's still a registry/manifest mismatch only if this
-      // migration is still sitting in held[] flagged applied (that half-migrated shape means the
-      // repair missed it) or entirely unregistered.
       const inHeld = (parsed.held ?? []).find((e) => e.file === MIGRATION);
       const inAppliedHeld = (parsed.applied_held ?? []).find((e) => e.file === MIGRATION);
       if (!inHeld && !inAppliedHeld) {
@@ -85,6 +82,7 @@ export function collectHonestyFailures(opts = {}) {
           `${HELD_MANIFEST}: ${MIGRATION} is applied_on_prod:true but still sits in held[] — move it to applied_held[]`
         );
       }
+      neonApplied = Boolean(inAppliedHeld && inAppliedHeld.applied_on_prod === true);
     }
   }
 
@@ -103,6 +101,21 @@ export function collectHonestyFailures(opts = {}) {
       const item = (data.items ?? []).find((i) => i.id === MANIFEST_ITEM);
       if (!item) {
         failures.push(`${MANIFEST}: missing item ${MANIFEST_ITEM}`);
+      } else if (neonApplied) {
+        // Neon-applied: PASS requires LIVE FK evidence — density may still be 0 (ECON-04).
+        if (item.status === "PASS") {
+          const ev = String(item.evidence ?? "");
+          if (!/LIVE|Neon lucia|pg_constraint|expense_lines_expense_category/i.test(ev)) {
+            failures.push(
+              `${MANIFEST_ITEM} PASS without LIVE Neon FK proof in evidence — theater`
+            );
+          }
+        } else if (item.status !== "FAIL" && item.status !== "PASS") {
+          failures.push(`${MANIFEST_ITEM} unexpected status ${item.status} after Neon-apply`);
+        }
+        if (!String(item.pr ?? "").includes("3446") && !String(item.pr ?? "").includes("3697")) {
+          failures.push(`${MANIFEST_ITEM} must reference merge PR (#3446 and/or prove PR)`);
+        }
       } else {
         if (item.status === "PASS") {
           failures.push(
@@ -159,7 +172,7 @@ function selftest() {
     );
     fs.writeFileSync(
       path.join(goodRoot, HELD_MANIFEST),
-      JSON.stringify({ held: [{ file: MIGRATION, reason: "hold" }] })
+      JSON.stringify({ held: [{ file: MIGRATION, reason: "hold" }], applied_held: [] })
     );
     fs.writeFileSync(
       path.join(goodRoot, MANIFEST),
@@ -182,7 +195,7 @@ function selftest() {
     );
 
     if (collectHonestyFailures({ root: goodRoot }).length) {
-      failures.push("good fixture rejected");
+      failures.push("good FAIL fixture rejected: " + collectHonestyFailures({ root: goodRoot }).join("; "));
     }
 
     fs.writeFileSync(
@@ -194,7 +207,36 @@ function selftest() {
       })
     );
     if (!collectHonestyFailures({ root: goodRoot }).some((f) => f.includes("MERGED≠APPLIED"))) {
-      failures.push("PASS manifest not caught");
+      failures.push("PASS before Neon-apply not caught");
+    }
+
+    // Neon-applied path: PASS with LIVE evidence OK
+    fs.writeFileSync(
+      path.join(goodRoot, HELD_MANIFEST),
+      JSON.stringify({
+        held: [],
+        applied_held: [{ file: MIGRATION, applied_on_prod: true, applied_evidence: "Neon lucia" }],
+      })
+    );
+    fs.writeFileSync(
+      path.join(goodRoot, MANIFEST),
+      JSON.stringify({
+        module: "accounting",
+        complete: false,
+        items: [
+          {
+            id: MANIFEST_ITEM,
+            status: "PASS",
+            evidence: "LIVE Neon lucia expense_lines_expense_category_same_entity_fkey present",
+            pr: "#3697",
+          },
+        ],
+      })
+    );
+    if (collectHonestyFailures({ root: goodRoot }).length) {
+      failures.push(
+        "Neon-applied PASS rejected: " + collectHonestyFailures({ root: goodRoot }).join("; ")
+      );
     }
   } finally {
     fs.rmSync(goodRoot, { recursive: true, force: true });
@@ -220,7 +262,7 @@ if (process.argv.includes("--honesty-only")) {
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: honesty layer OK — ${MANIFEST_ITEM} stays FAIL until owner Neon-apply`);
+  console.log(`${LABEL}: honesty layer OK`);
   process.exit(0);
 }
 
@@ -231,8 +273,13 @@ if (failures.length) {
   process.exit(1);
 }
 
+const held = JSON.parse(fs.readFileSync(path.join(ROOT, HELD_MANIFEST), "utf8"));
+const applied = (held.applied_held ?? []).find((e) => e.file === MIGRATION);
+const neon = Boolean(applied?.applied_on_prod);
 console.log(
-  `${LABEL}: OK — static wiring on main (${WIRED_GUARD}) + ${MANIFEST_ITEM} honestly FAIL ` +
-    `(merged ${MERGED_PR} @ ${MERGE_SHA.slice(0, 12)}…; prod FK awaits owner Neon-apply of ${MIGRATION})`
+  neon
+    ? `${LABEL}: OK — static wiring + ${MANIFEST_ITEM} Neon-applied (PASS allowed with LIVE evidence)`
+    : `${LABEL}: OK — static wiring on main (${WIRED_GUARD}) + ${MANIFEST_ITEM} honestly FAIL ` +
+        `(merged ${MERGED_PR} @ ${MERGE_SHA.slice(0, 12)}…; prod FK awaits owner Neon-apply of ${MIGRATION})`
 );
 process.exit(0);
