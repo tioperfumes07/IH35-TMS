@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { formatDateUS } from "../../../lib/formatDate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -186,6 +187,24 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
 
   // Server already applies date_from/date_to (+ driver/unit) — no second client filter.
   const rows = listQuery.data?.incidents ?? [];
+
+  // SAF-B30: EntityLink kind "incident" routes here with ?incident_id=<id>. Nothing read it before,
+  // so damage reports, trailer interchanges and cargo claims were undrillable — the link navigated to
+  // the right list and then stopped. Same shape AccidentsPage uses for ?accident_id=: open the record
+  // once the list has loaded, then strip the param so a refresh does not re-open it.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const incidentIdParam = searchParams.get("incident_id");
+  useEffect(() => {
+    if (!incidentIdParam || rows.length === 0) return;
+    const match = (rows as Array<Record<string, unknown>>).find((r) => String(r.id) === incidentIdParam);
+    if (match) {
+      setSelected(match as DraftState);
+      setDrawerOpen(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete("incident_id");
+      setSearchParams(next, { replace: true });
+    }
+  }, [incidentIdParam, rows, searchParams, setSearchParams]);
   // LIST-EMPTY: the empty message renders only after the incidents query settles.
   const listState = useListState(listQuery, rows.length === 0);
   const detail = createMode ? selected : detailQuery.data?.incident ?? selected;

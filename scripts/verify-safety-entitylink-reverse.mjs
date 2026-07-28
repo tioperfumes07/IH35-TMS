@@ -28,13 +28,40 @@ const SELFTEST = process.argv.includes("--selftest");
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
 const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^[ \t]*\/\/.*$/gm, "");
 
+/**
+ * SAF-B30. Every safety kind must (a) be declared, (b) resolve to a real route, and (c) have that
+ * route's surface actually HONOR the param.
+ *
+ * (c) is the clause this guard was missing. It previously checked (a)+(b) for all six kinds but (c)
+ * for only two — accidents and fines — so complaints, DOT inspections, escrow and permits navigated
+ * to the right list and then did nothing. A link that lands on the correct page without selecting the
+ * record is a facade: it looks wired from the calling surface and from this guard, and drills through
+ * to nothing. Pinning six kinds while verifying two is how the guard came to ratify the defect.
+ *
+ * `honoredBy` names the file that must read the param, and `honorProof` the evidence it acts on it —
+ * opening a drawer, selecting a row, or highlighting it. Reading a param and discarding it still fails.
+ */
 const SAFETY_KINDS = [
-  { kind: "accident", route: "/safety/accidents?accident_id=" },
-  { kind: "safety_fine", route: "/safety/external-fines?fine_id=" },
-  { kind: "complaint", route: "/safety/complaints?complaint_id=" },
-  { kind: "dot_inspection", route: "/safety/dot-inspections?inspection_id=" },
-  { kind: "escrow_record", route: "/safety/escrow-record?driver_id=" },
-  { kind: "permit", route: "/safety/permits?permit_id=" },
+  { kind: "accident", route: "/safety/accidents?accident_id=", param: "accident_id",
+    honoredBy: "apps/frontend/src/pages/safety/AccidentsPage.tsx", honorProof: /setDrawerOpen\(true\)/ },
+  { kind: "safety_fine", route: "/safety/external-fines?fine_id=", param: "fine_id",
+    honoredBy: "apps/frontend/src/pages/safety/FinesPage.tsx", honorProof: /setSelectedFine\(/ },
+  { kind: "complaint", route: "/safety/complaints?complaint_id=", param: "complaint_id",
+    honoredBy: "apps/frontend/src/pages/safety/ComplaintsPage.tsx", honorProof: /rowClassName=/ },
+  { kind: "dot_inspection", route: "/safety/dot-inspections?inspection_id=", param: "inspection_id",
+    honoredBy: "apps/frontend/src/pages/safety/DotInspectionsPage.tsx", honorProof: /rowClassName=/ },
+  { kind: "escrow_record", route: "/safety/escrow-record?driver_id=", param: "driver_id",
+    honoredBy: "apps/frontend/src/pages/safety/tabs/EscrowRecordTab.tsx", honorProof: /setSelected\(/ },
+  { kind: "permit", route: "/safety/permits?permit_id=", param: "permit_id",
+    honoredBy: "apps/frontend/src/pages/safety/PermitsPage.tsx", honorProof: /rowClassName=/ },
+  // The three incident record types. One generic "incident" kind cannot resolve: the id alone does not
+  // say which of the three lists holds it.
+  { kind: "damage_report", route: "/safety/damage-reports?incident_id=", param: "incident_id",
+    honoredBy: "apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx", honorProof: /setDrawerOpen\(true\)/ },
+  { kind: "trailer_interchange", route: "/safety/trailer-interchanges?incident_id=", param: "incident_id",
+    honoredBy: "apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx", honorProof: /setDrawerOpen\(true\)/ },
+  { kind: "cargo_claim", route: "/safety/cargo-claims?incident_id=", param: "incident_id",
+    honoredBy: "apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx", honorProof: /setDrawerOpen\(true\)/ },
 ];
 
 export function assertSafetyEntityLink(sources) {
@@ -57,12 +84,23 @@ export function assertSafetyEntityLink(sources) {
     }
   }
 
-  // The two drawer surfaces must HONOR their param (read it + open the drawer).
-  if (!/searchParams\.get\("accident_id"\)/.test(accidents) || !/setDrawerOpen\(true\)/.test(accidents)) {
-    problems.push(`${ACCIDENTS}: does not honor ?accident_id= (read the param AND open the drawer) — the link would navigate but not drill through.`);
-  }
-  if (!/searchParams\.get\("fine_id"\)/.test(fines) || !/setSelectedFine\(/.test(fines)) {
-    problems.push(`${FINES}: does not honor ?fine_id= (read the param AND open the fine drawer).`);
+  // EVERY kind's surface must HONOR its param — read it AND act on it. Checked for all kinds, not two.
+  const seen = new Set();
+  for (const { kind, param, honoredBy, honorProof } of SAFETY_KINDS) {
+    if (seen.has(honoredBy + param)) continue;
+    seen.add(honoredBy + param);
+    let src;
+    try {
+      src = stripComments(sources?.[honoredBy] ?? read(honoredBy));
+    } catch {
+      problems.push(`${honoredBy}: missing — "${kind}" resolves to a surface that does not exist.`);
+      continue;
+    }
+    if (!new RegExp(`searchParams\\.get\\("${param}"\\)`).test(src)) {
+      problems.push(`${honoredBy}: never reads ?${param}= — "${kind}" navigates here and drills through to nothing (facade).`);
+    } else if (!honorProof.test(src)) {
+      problems.push(`${honoredBy}: reads ?${param}= but nothing acts on it (expected ${honorProof}) — reading a param and discarding it is still a facade.`);
+    }
   }
 
   return problems;
@@ -92,13 +130,13 @@ if (SELFTEST) {
   expectCaught(
     "accidents-not-honored",
     { ...live, [ACCIDENTS]: live[ACCIDENTS].replace(/searchParams\.get\("accident_id"\)/, 'null /* removed */ || String("")') },
-    "does not honor ?accident_id=",
+    "never reads ?accident_id=",
   );
   // 3. the fines page stops honoring the param.
   expectCaught(
     "fines-not-honored",
     { ...live, [FINES]: live[FINES].replace(/searchParams\.get\("fine_id"\)/, 'null /* removed */ || String("")') },
-    "does not honor ?fine_id=",
+    "never reads ?fine_id=",
   );
 
   const liveProblems = assertSafetyEntityLink(live);
@@ -119,4 +157,6 @@ if (problems.length) {
   for (const p of problems) console.error(`  ${p}`);
   process.exit(1);
 }
-console.log(`${LABEL} OK — safety records drill through: 6 EntityLink kinds resolve, accidents + fines honor their param`);
+console.log(
+  `${LABEL} OK — safety records drill through: ${SAFETY_KINDS.length} EntityLink kinds resolve AND every one of their surfaces honours its param`
+);

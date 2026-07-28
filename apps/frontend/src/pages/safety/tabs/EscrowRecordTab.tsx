@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { forfeitEscrow, listEscrowRecords, type EscrowRecordRow } from "../../../api/driverFinance";
 import { useAuth } from "../../../auth/useAuth";
@@ -52,6 +53,23 @@ export function EscrowRecordTab() {
   });
 
   const rows = escrowQuery.data?.records ?? [];
+
+  // SAF-B30: EntityLink kind "escrow_record" routes here with ?driver_id=<id> and nothing read it,
+  // so the escrow drill-through was a facade. Opens that driver's record once the list has loaded.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const escrowDriverIdParam = searchParams.get("driver_id");
+  useEffect(() => {
+    if (!escrowDriverIdParam || rows.length === 0) return;
+    const match = rows.find(
+      (r) => String((r as { driver_id?: unknown }).driver_id ?? r.id) === escrowDriverIdParam
+    );
+    if (match) {
+      setSelected(match);
+      const next = new URLSearchParams(searchParams);
+      next.delete("driver_id");
+      setSearchParams(next, { replace: true });
+    }
+  }, [escrowDriverIdParam, rows, searchParams, setSearchParams]);
   const attempts = escrowQuery.data?.forfeit_attempts ?? [];
   const totalForfeits = useMemo(() => attempts.filter((a) => a.status === "success").length, [attempts]);
 

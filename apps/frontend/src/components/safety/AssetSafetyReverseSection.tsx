@@ -124,8 +124,14 @@ function IncidentsBlock({
     >
       {rows.map((incident) => (
         <li key={s(incident.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
-          {/* No EntityLink kind: safety.incidents has no per-record detail surface to open. */}
-          <span className="font-semibold text-slate-700">{s(incident.description) || kind.title}</span>
+          {/* SAF-B30: was plain text with the comment "no per-record detail surface to open". The
+              surface exists — the cluster list now honours ?incident_id= — so this drills through. */}
+          <EntityLink
+            kind={kind.type}
+            id={s(incident.id)}
+            label={s(incident.description) || kind.title}
+            className="font-semibold"
+          />
           <span className="ml-2 text-gray-600">{s(incident.status) || "open"}</span>
           <div className="mt-1 text-xs text-gray-600">
             {formatDateUS(s(incident.incident_at))}

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -54,6 +55,11 @@ const emptyDraft = {
 };
 
 export function PermitsPage({ operatingCompanyId }: Props) {
+  // SAF-B30 drill-through: EntityLink routes here with ?permit_id=, but nothing read it, so the link
+  // navigated and then did nothing — a facade. Same highlight pattern as TransfersListPage
+  // (?transfer_id=), which is the in-repo precedent for a table-only surface with no drawer.
+  const [searchParams] = useSearchParams();
+  const deepLinkPermitId = searchParams.get("permit_id")?.trim() || "";
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [draft, setDraft] = useState(emptyDraft);
@@ -240,6 +246,9 @@ export function PermitsPage({ operatingCompanyId }: Props) {
           columns={permitColumns}
           rows={activePermits}
           rowKey={(row) => String(row.id)}
+          rowClassName={(row) =>
+            deepLinkPermitId && String(row.id) === deepLinkPermitId ? "bg-slate-100 ring-1 ring-slate-400" : ""
+          }
           loading={permitsQuery.isLoading}
           emptyText="No permits tracked yet. Use + Create permit to book operating authority and compliance documents."
           storageKey="safety-permits"

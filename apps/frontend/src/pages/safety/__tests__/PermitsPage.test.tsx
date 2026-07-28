@@ -1,5 +1,6 @@
 import type React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router-dom";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -10,7 +11,13 @@ const companyId = "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071";
 
 function wrap(ui: React.ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return <QueryClientProvider client={qc}>{ui}</QueryClientProvider>;
+  // SAF-B30: PermitsPage now reads ?permit_id= for EntityLink drill-through, so it needs a Router —
+  // the real app always mounts one. Harness gap, not a product change.
+  return (
+    <QueryClientProvider client={qc}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </QueryClientProvider>
+  );
 }
 
 describe("PermitsPage (A23-13)", () => {

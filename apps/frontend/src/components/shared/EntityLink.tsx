@@ -52,7 +52,13 @@ export type EntityKind =
   | "complaint"
   | "dot_inspection"
   | "escrow_record"
-  | "permit";
+  | "permit"
+  // SAF-B30: the three safety-incident record types. F33 called this the "incident" slot, but a single
+  // kind cannot resolve — an incident lives on one of THREE lists and the id alone does not say which.
+  // Naming them by type keeps EntityLink's contract intact: every declared kind resolves to a real route.
+  | "damage_report"
+  | "trailer_interchange"
+  | "cargo_claim";
 
 export interface EntityLinkProps {
   kind: EntityKind;
@@ -160,6 +166,12 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/safety/escrow-record?driver_id=${id}`;
     case "permit":
       return `/safety/permits?permit_id=${id}`;
+    case "damage_report":
+      return `/safety/damage-reports?incident_id=${id}`;
+    case "trailer_interchange":
+      return `/safety/trailer-interchanges?incident_id=${id}`;
+    case "cargo_claim":
+      return `/safety/cargo-claims?incident_id=${id}`;
     default:
       return null;
   }
