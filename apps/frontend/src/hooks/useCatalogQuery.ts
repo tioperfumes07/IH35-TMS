@@ -87,6 +87,49 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
   // LST-A-01: registered so the generic catalog page can serve them. Column shape and both enums read
   // from prod 2026-07-28 and mirrored from the live CHECK constraints — these use `label`, not
   // display_name, and event_type/severity are NOT NULL with a fixed domain.
+  // OWNER RULING 2026-07-28 — every catalog gets a QuickBooks-style creator wizard. These two use the
+  // canonical code/display_name shape (verified against prod information_schema, not assumed), so the
+  // generic catalog page renders their list AND their create/edit form with no bespoke code.
+  "dispatch.additional_charges": {
+    catalogName: "dispatch.additional_charges",
+    displayName: "Additional Charges",
+    domain: "dispatch",
+    catalogKey: "additional-charges",
+    columns: [
+      { key: "code", label: "Code", sortable: true, filterable: true },
+      { key: "display_name", label: "Name", sortable: true, filterable: true },
+      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "sort_order", label: "Sort", sortable: true, filterable: false },
+      { key: "is_active", label: "Status", sortable: true, filterable: false },
+    ],
+    fields: [
+      { key: "code", label: "Code", type: "text", required: true, readOnlyOnEdit: true },
+      { key: "display_name", label: "Name", type: "text", required: true },
+      { key: "description", label: "Description", type: "text", required: false },
+      { key: "sort_order", label: "Sort Order", type: "number", required: false },
+    ],
+    defaultSort: { column: "sort_order", dir: "asc" },
+  },
+  "dispatch.lumper_providers": {
+    catalogName: "dispatch.lumper_providers",
+    displayName: "Lumper Providers",
+    domain: "dispatch",
+    catalogKey: "lumper-providers",
+    columns: [
+      { key: "code", label: "Code", sortable: true, filterable: true },
+      { key: "display_name", label: "Provider", sortable: true, filterable: true },
+      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "sort_order", label: "Sort", sortable: true, filterable: false },
+      { key: "is_active", label: "Status", sortable: true, filterable: false },
+    ],
+    fields: [
+      { key: "code", label: "Code", type: "text", required: true, readOnlyOnEdit: true },
+      { key: "display_name", label: "Provider", type: "text", required: true },
+      { key: "description", label: "Description", type: "text", required: false },
+      { key: "sort_order", label: "Sort Order", type: "number", required: false },
+    ],
+    defaultSort: { column: "sort_order", dir: "asc" },
+  },
   "dispatch.dispatcher_error_reasons": {
     catalogName: "dispatch.dispatcher_error_reasons",
     displayName: "Dispatcher Error Reasons",
