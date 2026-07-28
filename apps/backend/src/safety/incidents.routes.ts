@@ -32,6 +32,14 @@ const listQuerySchema = companyQuerySchema.extend({
     .optional(),
   limit: z.coerce.number().int().min(1).max(500).default(200),
   offset: z.coerce.number().int().min(0).default(0),
+  // SAF-B19: void-not-delete means the row is PRESERVED, not hidden forever — an auditor must still
+  // be able to see what was retracted and why. Default excludes voided rows from the operational
+  // list (which is what the void route's own contract promised and nothing implemented); this opts
+  // them back in.
+  include_voided: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((v) => v === "true"),
 });
 
 const idParamsSchema = z.object({
@@ -175,6 +183,11 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
         params.push(query.data.date_to);
         filters.push(`(i.incident_at AT TIME ZONE 'UTC')::date <= $${params.length}::date`);
       }
+
+      // SAF-B19: a voided incident is a retraction. Leaving it in the operational list meant voiding
+      // changed nothing an operator could see, which is why the feature read as absent even where
+      // the route existed.
+      if (!query.data.include_voided) filters.push(`i.voided_at IS NULL`);
 
       params.push(query.data.limit, query.data.offset);
       const limitIdx = params.length - 1;
@@ -395,6 +408,8 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
               updated_at = now()
           WHERE id = $1
             AND operating_company_id = $2
+            -- SAF-B19: no new evidence onto a retracted record.
+            AND voided_at IS NULL
             AND cardinality(photo_keys) < 10
           RETURNING id, photo_keys
         `,
@@ -472,7 +487,9 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
         `
           UPDATE safety.incidents
           SET ${sets.join(", ")}, updated_at = now()
-          WHERE id = $1 AND operating_company_id = $2
+          -- SAF-B19: a voided incident is immutable. The void route's contract said so; nothing
+          -- enforced it, so a retracted record could still be edited after the fact.
+          WHERE id = $1 AND operating_company_id = $2 AND voided_at IS NULL
           RETURNING *
         `,
         values
@@ -515,11 +532,14 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
 
     const outcome = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const current = await client.query(
-        `SELECT id, status, incident_type FROM safety.incidents WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT id, status, incident_type, voided_at FROM safety.incidents WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
         [params.data.id, query.data.operating_company_id]
       );
       const row = current.rows[0];
       if (!row) return { kind: "not_found" as const };
+      // SAF-B19: voiding is a retraction, so the lifecycle stops. Re-opening a voided incident would
+      // resurrect a record the company formally said should not exist.
+      if (row.voided_at) return { kind: "voided" as const };
       if (row.status === body.data.status) return { kind: "unchanged" as const, status: row.status };
 
       const res = await client.query(
@@ -558,6 +578,11 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
     });
 
     if (outcome.kind === "not_found") return reply.code(404).send({ error: "incident_not_found" });
+    if (outcome.kind === "voided") {
+      return reply
+        .code(409)
+        .send({ error: "incident_voided", message: "This incident was voided and its lifecycle is closed." });
+    }
     if (outcome.kind === "unchanged") {
       return reply.code(409).send({ error: "incident_status_unchanged", message: `This incident is already ${outcome.status}.` });
     }

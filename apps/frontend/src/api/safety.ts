@@ -1046,6 +1046,20 @@ export function updateSafetyIncident(id: string, companyId: string, body: Record
   );
 }
 
+/**
+ * SAF-B19 — void an incident (void-not-delete). The route has existed and been registered since
+ * SAF-F20 (`incidents.routes.ts:576`, Owner/Administrator only, reason required) but NO client ever
+ * called it, so "a row can be voided" was unreachable by any operator: a retraction could only be
+ * performed by someone with direct API access. Closing is a lifecycle outcome; voiding is a
+ * retraction — the route keeps them distinct and so must the UI.
+ */
+export function voidSafetyIncident(id: string, companyId: string, voidReason: string) {
+  return apiRequest<{ incident: Record<string, unknown> }>(
+    `/api/v1/safety/incidents/${encodeURIComponent(id)}/void?${q(companyId)}`,
+    { method: "POST", body: { void_reason: voidReason } }
+  );
+}
+
 export function setSafetyIncidentStatus(
   id: string,
   companyId: string,
