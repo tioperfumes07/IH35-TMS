@@ -3,6 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { createSafetyFine } from "../../../api/safety";
 import { listDrivers, listUnits } from "../../../api/mdata";
 import { createCivilFineType, listCivilFineTypes } from "../../../api/catalogs-safety";
+import { confirmUpload, requestUploadUrl } from "../../../api/docs";
 import { listDispatchLoads } from "../../../api/dispatch";
 import { Button } from "../../../components/Button";
 import { Combobox } from "../../../components/Combobox";
@@ -51,6 +52,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
   const [amountUsd, setAmountUsd] = useState("");
   const [notes, setNotes] = useState("");
   const [driverCreateOpen, setDriverCreateOpen] = useState(false);
+  const [sourceDocFile, setSourceDocFile] = useState<File | null>(null);
   // SAF-F19: safety.civil_fines has carried related_load_id / related_unit_id / source_doc_id since
   // migration 0050, and the CREATE ROUTE already accepts all three — the creator simply never asked
   // for them, so every fine landed with those FKs null. An overweight ticket that belongs to a
@@ -150,9 +152,46 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
     [driversQuery.data]
   );
 
+  // SAF-B18: `safety.civil_fines.source_doc_id` FKs docs.files and has been accepted by the create
+  // route since it was written (fines.routes.ts:37,205,224) — and NO UI ever collected it, so every
+  // fine was filed with no citation image. That is not a cosmetic gap: the same column is carried
+  // onto the LIABILITY the fine spawns (fines.routes.ts:391), so the payable an auditor, insurer or
+  // attorney reads had no supporting document behind it. The evidence is uploaded FIRST so the fine
+  // is never created pointing at a file that failed to land.
+  const uploadSourceDoc = async (): Promise<string | null> => {
+    if (!sourceDocFile) return null;
+    const { file_id, presigned_url } = await requestUploadUrl({
+      original_filename: sourceDocFile.name,
+      mime_type: sourceDocFile.type || "application/octet-stream",
+      size_bytes: sourceDocFile.size,
+      // File under the VIEWED company, not the uploader's default (backend fallback files it under
+      // the lowest-UUID company the user can access, and the scoped read then 404s).
+      operating_company_id: operatingCompanyId || undefined,
+      // docs.file_links has no "fine" entity type, so the citation is filed under the entities it
+      // concerns — that is what makes it reachable FROM the driver/unit/load document lists. The
+      // fine->document direction is the source_doc_id FK below.
+      entity_links: [
+        ...(subjectType === "driver" && subjectDriverId
+          ? [{ entity_type: "driver" as const, entity_id: subjectDriverId }]
+          : []),
+        ...(relatedUnitId ? [{ entity_type: "unit" as const, entity_id: relatedUnitId }] : []),
+        ...(relatedLoadId ? [{ entity_type: "load" as const, entity_id: relatedLoadId }] : []),
+      ],
+    });
+    const put = await fetch(presigned_url, {
+      method: "PUT",
+      headers: { "Content-Type": sourceDocFile.type || "application/octet-stream" },
+      body: sourceDocFile,
+    });
+    if (!put.ok) throw new Error(`Citation upload failed (${put.status}). The fine was not created.`);
+    await confirmUpload(file_id);
+    return file_id;
+  };
+
   const createMutation = useMutation({
-    mutationFn: () =>
-      createSafetyFine(operatingCompanyId, {
+    mutationFn: async () => {
+      const sourceDocId = await uploadSourceDoc();
+      return createSafetyFine(operatingCompanyId, {
         subject_type: subjectType,
         subject_driver_id: subjectType === "driver" ? subjectDriverId || null : null,
         issued_by_authority: issuedByAuthority,
@@ -166,8 +205,10 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
         // SAF-F19: the route has always accepted these; nothing was collecting them.
         related_load_id: relatedLoadId || null,
         related_unit_id: relatedUnitId || null,
+        source_doc_id: sourceDocId,
         notes: notes || null,
-      }),
+      });
+    },
     onSuccess: () => {
       onCreated();
       onClose();
@@ -320,6 +361,31 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
                 className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
                 rows={2}
               />
+            </div>
+            {/* SAF-B18: the citation image. Optional to attach, but when one IS attached the fine
+                refuses to be created if the upload fails — a payable whose supporting document
+                silently went missing is worse than one an operator knows to re-attach. */}
+            <div className="flex flex-col gap-1 md:col-span-2">
+              <label className="text-xs font-semibold text-gray-600" htmlFor="fine-source-doc">
+                Citation / ticket document
+              </label>
+              <input
+                id="fine-source-doc"
+                type="file"
+                data-testid="fine-source-doc-input"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-[13px]"
+                onChange={(event) => setSourceDocFile(event.target.files?.[0] ?? null)}
+              />
+              {sourceDocFile ? (
+                <span className="text-[11px] text-slate-500" data-testid="fine-source-doc-name">
+                  {sourceDocFile.name} — filed under the driver, unit and load selected above.
+                </span>
+              ) : null}
+              {createMutation.isError ? (
+                <span className="text-[11px] text-[#dc2626]" data-testid="fine-create-error">
+                  {createMutation.error instanceof Error ? createMutation.error.message : "Could not create the fine."}
+                </span>
+              ) : null}
             </div>
           </div>
           {createMutation.isError ? (
