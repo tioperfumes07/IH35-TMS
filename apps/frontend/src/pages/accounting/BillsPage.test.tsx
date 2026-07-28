@@ -113,12 +113,15 @@ describe("BillsPage", () => {
     expect(await screen.findByRole("button", { name: /^Selected$/i })).toBeInTheDocument();
   });
 
-  it("opens typed bill creator from ?category=&create=1 subnav deep link", async () => {
-    render(wrap(<BillsPage />, ["/accounting/bills?category=fuel&create=1"]));
+  it.each(["maintenance", "repair", "fuel", "driver"] as const)(
+    "opens the %s bill creator from its subnav deep link",
+    async (category) => {
+      render(wrap(<BillsPage />, [`/accounting/bills?category=${category}&create=1`]));
 
-    await waitFor(() => expect(accountingApi.listBills).toHaveBeenCalled());
-    expect(await screen.findByTestId("bill-create-drawer")).toHaveTextContent("Create bill (fuel)");
-  });
+      await waitFor(() => expect(accountingApi.listBills).toHaveBeenCalled());
+      expect(await screen.findByTestId("bill-create-drawer")).toHaveTextContent(`Create bill (${category})`);
+    },
+  );
 
   it("exposes + Create CTA that opens the bill creator drawer", async () => {
     const user = userEvent.setup();
