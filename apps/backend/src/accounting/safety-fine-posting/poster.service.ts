@@ -63,12 +63,26 @@ export type SafetyFinePostResult = {
     | "fine_not_found"
     | "fine_voided"
     | "driver_recovery_fine"
-    | "not_company_paid";
+    | "not_company_paid"
+    | "latch_table_missing";
   journal_entry_id?: string;
   memo?: string;
+  code?: string;
+  message?: string;
 };
 
 const FLAG_OFF: SafetyFinePostResult = { posted: false, reason: "flag_off" };
+const CIVIL_FINE_LATCH = "accounting.civil_fine_postings";
+const CIVIL_FINE_LATCH_MIG = "202608110000_safety_civil_fine_expense_gl_hop.sql";
+
+/** KR-02 — fail closed until owner Neon-applies the latch mig (KNOWN_RED; not an allowlist). */
+async function latchTablePresent(client: DbClient): Promise<boolean> {
+  const res = await client.query<{ ok: boolean }>(
+    `SELECT to_regclass($1::text) IS NOT NULL AS ok`,
+    [CIVIL_FINE_LATCH]
+  );
+  return Boolean(res.rows[0]?.ok);
+}
 
 // ── Pure balanced-posting builder (no DB, no GL math beyond mirroring the amount as Dr/Cr). Unit-tested. ──
 
@@ -174,6 +188,15 @@ export async function postCompanyPaidCivilFine(input: PostCompanyPaidFineInput):
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     if (!(await postingEnabled(client, input.operating_company_id))) return { gate: "flag_off" as const };
 
+    // to_regclass('accounting.civil_fine_postings') — KR-02 fail-closed (mig 202608110000)
+    if (!(await latchTablePresent(client))) {
+      return {
+        gate: "latch_table_missing" as const,
+        code: "E_CIVIL_FINE_SCHEMA_NOT_APPLIED",
+        message: `Owner must Neon-apply ${CIVIL_FINE_LATCH_MIG} before civil-fine GL posting can run.`,
+      };
+    }
+
     const fine = await loadFine(client, input.operating_company_id, input.fine_id);
     if (!fine) return { gate: "fine_not_found" as const };
     if (fine.voided_at) return { gate: "fine_voided" as const };
@@ -220,6 +243,14 @@ export async function postCompanyPaidCivilFine(input: PostCompanyPaidFineInput):
   });
 
   if (prepared.gate === "flag_off") return FLAG_OFF;
+  if (prepared.gate === "latch_table_missing") {
+    return {
+      posted: false,
+      reason: "latch_table_missing",
+      code: prepared.code,
+      message: prepared.message,
+    };
+  }
   if (prepared.gate === "fine_not_found") return { posted: false, reason: "fine_not_found" };
   if (prepared.gate === "fine_voided") return { posted: false, reason: "fine_voided" };
   if (prepared.gate === "driver_recovery_fine") return { posted: false, reason: "driver_recovery_fine" };
