@@ -152,10 +152,21 @@ export function parseMigrations(migrationsDir) {
       const [schemaName] = relation.split(".");
       if (EXCLUDED_SCHEMAS.has(schemaName)) continue;
 
-      // Find the extent of this ALTER TABLE statement: up to the next statement boundary
-      // or end of file. Use a generous window (2 KB) to cover wide multi-column ALTERs.
+      // Find the extent of this ALTER TABLE statement. An ALTER ends at its semicolon, so that is
+      // the boundary; the 4 KB cap remains as a backstop for a pathological unterminated statement.
+      //
+      // BUG FIXED 2026-07-28 (LST-LINK-02): the window was capped at 4 KB but NEVER stopped at the
+      // statement end, despite the comment claiming it did. Consecutive ALTERs in one file therefore
+      // bled into each other and every table absorbed the following tables' columns. This was not
+      // theoretical — the committed baseline contained accounting.bill_lines.ps_enforced_at, a column
+      // that exists on accounting.bills and on NO other table (0266 declares it at the fourth ALTER
+      // in the file; prod information_schema confirms bill_lines does not have it). A drift guard
+      // whose baseline asserts columns that do not exist gives false assurance in BOTH directions:
+      // it cannot see a real removal, and it invents work that was never done.
       const stmtStart = m.index + m[0].length;
-      const window = sql.slice(stmtStart, stmtStart + 4096);
+      const capped = sql.slice(stmtStart, stmtStart + 4096);
+      const terminator = capped.indexOf(";");
+      const window = terminator === -1 ? capped : capped.slice(0, terminator);
 
       // Scan window for all ADD COLUMN occurrences.
       addColFragRe.lastIndex = 0;
