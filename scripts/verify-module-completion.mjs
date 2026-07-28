@@ -226,18 +226,19 @@ export function runAll(opts = {}) {
       const mdPath = path.join(opts.dir || DIR, `${data.module}.md`);
       fs.writeFileSync(mdPath, renderMarkdown(data, sc));
     } else {
+      // The .md scoreboard is DERIVED, in full, from the .json beside it. It used to be committed and
+      // CI failed when the two drifted — which meant every branch that touched a manifest conflicted
+      // on a generated file, and the "fix" was always the same mechanical regeneration. That is a
+      // recurring cost with no informational value, so the .json is now the single committed source
+      // of truth and the .md is REGENERATED here on every run instead of being diffed.
+      //
+      // Ordering note (verified 2026-07-28): four later guards read these files —
+      // verify-banking-fail-registry (1467), verify-projection-flags-off-by-design (1468),
+      // verify-bank-econ-04-honesty-keep (1485) and verify-bankfeed-je-match (1507). This generator
+      // is step 1431, so it always writes them before any consumer runs. A consumer added BELOW 1431
+      // would read a stale or absent file — put it after 1431, or regenerate first.
       const mdPath = path.join(ROOT, "docs/module-completion", `${data.module}.md`);
-      if (fs.existsSync(mdPath)) {
-        const expected = renderMarkdown(data, sc);
-        const actual = fs.readFileSync(mdPath, "utf8");
-        if (actual.trim() !== expected.trim()) {
-          problems.push(
-            `${file.replace(".json", ".md")}: scoreboard stale — run: node scripts/verify-module-completion.mjs --write-md`
-          );
-        }
-      } else {
-        problems.push(`docs/module-completion/${data.module}.md missing — run with --write-md`);
-      }
+      fs.writeFileSync(mdPath, renderMarkdown(data, sc));
     }
   }
   if (!opts.skipCommits) {
