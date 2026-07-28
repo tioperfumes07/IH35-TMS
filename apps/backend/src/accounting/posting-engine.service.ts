@@ -185,13 +185,24 @@ function normalizeSourceType(value: string): PostingSourceType {
 // ACCT-LINK-05: catalogs.posting_templates is a code-mirrored catalog (MUST 3.18.5.4) keyed by
 // template_code. Every posting_batches row stamps source_template_code (the PostingSourceType code
 // constant it was built from) unconditionally, and best-effort resolves posting_template_id when a
-// matching active template row exists. Until the owner seeds catalogs.posting_templates this always
-// returns null (table is empty on prod as of 2026-07-24) — that is expected, not an error; new batches
-// self-resolve automatically the instant templates are seeded, no code change needed then.
-export async function resolvePostingTemplateId(client: DbClient, templateCode: string): Promise<string | null> {
+// matching active template row exists. LST-F03 made templates per-entity (`operating_company_id`) —
+// resolve MUST filter the posting opco or a seeded row on entity A can stamp entity B's batch.
+// Until the owner seeds catalogs.posting_templates this always returns null (0 rows on prod
+// 2026-07-28 lucia) — expected, not an error; new batches self-resolve once seeded.
+export async function resolvePostingTemplateId(
+  client: DbClient,
+  templateCode: string,
+  operatingCompanyId: string
+): Promise<string | null> {
   const res = await client.query<{ id: string }>(
-    `SELECT id::text FROM catalogs.posting_templates WHERE template_code = $1 AND is_active = true LIMIT 1`,
-    [templateCode]
+    `SELECT id::text
+       FROM catalogs.posting_templates
+      WHERE template_code = $1
+        AND operating_company_id = $2::uuid
+        AND is_active = true
+        AND deactivated_at IS NULL
+      LIMIT 1`,
+    [templateCode, operatingCompanyId]
   );
   return res.rows[0]?.id ?? null;
 }
@@ -1702,7 +1713,7 @@ async function markBatchFailed(
 ) {
   await withCurrentUser(actor.userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-    const postingTemplateId = await resolvePostingTemplateId(client, sourceType);
+    const postingTemplateId = await resolvePostingTemplateId(client, sourceType, operatingCompanyId);
     await client.query(
       `
         INSERT INTO accounting.posting_batches (
@@ -1779,7 +1790,7 @@ async function executePostingOnClient(client: DbClient, ctx: PostingExecCtx): Pr
   await ensureOpenPeriod(client, input.operating_company_id, draft.postingDate);
   assertBalanced(draft.lines);
 
-  const postingTemplateId = await resolvePostingTemplateId(client, sourceType);
+  const postingTemplateId = await resolvePostingTemplateId(client, sourceType, input.operating_company_id);
   const batch = await client.query<{ id: string }>(
     `
       INSERT INTO accounting.posting_batches (
@@ -1969,7 +1980,7 @@ async function executeSourceReversalOnClient(
     posting_purpose: "reversal",
   });
 
-  const reversalPostingTemplateId = await resolvePostingTemplateId(client, sourceType);
+  const reversalPostingTemplateId = await resolvePostingTemplateId(client, sourceType, input.operating_company_id);
   const reversalBatch = await client.query<{ id: string }>(
     `
       INSERT INTO accounting.posting_batches (

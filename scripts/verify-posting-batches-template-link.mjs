@@ -43,8 +43,13 @@ export function assertEngine(source) {
   if (!/export\s+async\s+function\s+resolvePostingTemplateId\s*\(/.test(source)) {
     problems.push(`${ENGINE}: resolvePostingTemplateId() resolver is missing — no consumer write path.`);
   }
-  if (!/FROM\s+catalogs\.posting_templates\s+WHERE\s+template_code\s*=/i.test(source)) {
-    problems.push(`${ENGINE}: resolvePostingTemplateId() does not query catalogs.posting_templates by template_code.`);
+  if (!/FROM\s+catalogs\.posting_templates/i.test(source)) {
+    problems.push(`${ENGINE}: resolvePostingTemplateId() does not query catalogs.posting_templates.`);
+  }
+  if (!/template_code\s*=\s*\$1/i.test(source) || !/operating_company_id\s*=\s*\$2/i.test(source)) {
+    problems.push(
+      `${ENGINE}: resolvePostingTemplateId() must filter template_code AND operating_company_id (LST-F03 per-entity templates — cross-entity stamp is a defect)`
+    );
   }
 
   const blocks = insertBlocks(source);
@@ -69,6 +74,11 @@ export function assertFuelPoster(source) {
 
   if (!/resolvePostingTemplateId\s*\(/.test(source)) {
     problems.push(`${FUEL_POSTER}: does not call resolvePostingTemplateId() — the fuel_event writer bypasses the ACCT-LINK-05 stamp.`);
+  }
+  if (!/resolvePostingTemplateId\s*\(\s*client\s*,\s*FUEL_EVENT_TEMPLATE_CODE\s*,\s*input\.operating_company_id\s*\)/.test(source)) {
+    problems.push(
+      `${FUEL_POSTER}: resolvePostingTemplateId must pass input.operating_company_id (per-entity template scope)`
+    );
   }
 
   const blocks = insertBlocks(source);
@@ -167,7 +177,11 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
   mutate(
     "fuel-drops-resolvePostingTemplateId-call",
     realFuel,
-    (s) => s.replace(/const postingTemplateId = await resolvePostingTemplateId\(client, FUEL_EVENT_TEMPLATE_CODE\);\n/, ""),
+    (s) =>
+      s.replace(
+        /const postingTemplateId = await resolvePostingTemplateId\(\s*client,\s*FUEL_EVENT_TEMPLATE_CODE,\s*input\.operating_company_id\s*\);\n/,
+        ""
+      ),
     assertFuelPoster,
     "does not call resolvePostingTemplateId"
   );
