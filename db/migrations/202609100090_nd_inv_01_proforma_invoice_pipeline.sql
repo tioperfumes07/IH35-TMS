@@ -75,6 +75,7 @@ BEGIN
       'fuel_overage_receivable',
       'factor_wire_fee',
       'insurance_expense',
+      'unbilled_revenue',
       'fixed_asset_default','accum_depr_default','depr_expense_default',
       -- ND-INV-01
       'broker_customer_advance_liability'
