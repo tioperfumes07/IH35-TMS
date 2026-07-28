@@ -59,3 +59,13 @@ docs/trackers/exports/* *
 # .claude/worktrees/ (agent worktrees) and settings.local.json must never be committed.
 .claude/*
 !.claude/skills/
+
+# docs/module-completion/*.md is generated from the .json beside it by
+# scripts/verify-module-completion.mjs (verify-step 1431). Committing a derived file made every
+# manifest-touching branch conflict on it. The .json is the source of truth.
+# Only the four per-module scoreboards are generated. SCHEMA.md is hand-written documentation and
+# stays tracked — a blanket *.md would have silently untracked it.
+docs/module-completion/accounting.md
+docs/module-completion/banking.md
+docs/module-completion/lists.md
+docs/module-completion/safety.md
