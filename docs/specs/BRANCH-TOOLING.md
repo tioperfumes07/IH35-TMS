@@ -302,3 +302,34 @@ plus an overlapping change to reproduce the old behaviour.
 
 **Do not "fix" a red branch-fresh by widening this rule.** If it fires, main genuinely moved underneath you
 in a way that matters — rebase.
+
+---
+
+## §N+1. Migration numbers come from a RESERVED PER-LANE BAND (permanent — 2026-07-28)
+
+Migration files are `YYYYMMDDHHMM_slug.sql`, so the **HH** field is the lane divider:
+
+| Lane | Band | Examples |
+|---|---|---|
+| **Claude** | `HH 00–11` (morning) | `202610100000`, `202610100900` |
+| **Cursor** | `HH 12–23` (afternoon) | `202610101200`, `202610102100` |
+
+Claude takes the morning, Cursor takes the afternoon. The ranges are disjoint, so the two lanes
+**cannot** pick the same number unless one writes outside its own band.
+
+**Why.** On 2026-07-28 both lanes independently chose `202610060000` for unrelated migrations. Both
+applied; their relative order was then decided by the rest of the filename, so any dependency between
+them would have held only by accident. `verify-migration-filenames` DETECTS that collision after the
+fact — this band PREVENTS it, exactly as the owner's odd/even verify-step split does.
+
+**Scope:** NEW migrations only (added on the branch relative to `origin/main`). Every existing
+migration is grandfathered — renumbering applied history is far more dangerous than the race.
+
+**Enforcement:** `scripts/verify-migration-lane-band.mjs`, verify-step `1683`, with a selftest covering
+both bands in both directions plus the real `202610060000` collision. Lane is resolved from the branch
+prefix; an unmapped branch SKIPS rather than guessing.
+
+**Also applies to verify-step numbers** (owner ruling, same day): **Claude = odd**, **Cursor = even**,
+both starting above the current maximum. `scripts/verify-steps/CLAIMED-NUMBERS.json` remains the
+registry, and its union merge driver turns any genuine same-number claim into a real conflict instead
+of a silent overwrite.
