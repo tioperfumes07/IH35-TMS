@@ -1049,6 +1049,7 @@
     "1653": "1653-verify-no-phantom-factoring-companies.mjs",
     "1654": "1654-verify-owned-asset-disposal-gainloss.mjs",
     "1655": "1655-verify-factoring-subledger-je-fk.mjs",
+    "1656": "1656-verify-no-writes-to-legacy-fixed-assets-schema.mjs",
     "1658": "1658-verify-parts-purchase-postings-failclosed.mjs",
     "1659": "1659-verify-fixed-asset-classes-seeded.mjs",
     "1660": "1660-verify-account-merge-records-failclosed.mjs",

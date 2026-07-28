@@ -62,6 +62,12 @@
       "reason": "[HOLD-FOR-JORGE — FINANCIAL] FACT-02 — FK factoring_reserve_movements + factoring_default_interest_accruals journal_entry_id -> accounting.journal_entries (RESTRICT + same-entity composite). Fail-closed orphan/cross-entity checks; owner Neon-apply + ledger-backfill.",
       "block": "FACT-02",
       "added_at": "2026-07-27"
+    },
+    {
+      "file": "202609260000_archive_legacy_fixed_assets_schema_rule07.sql",
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL-ADJACENT SCHEMA] Rule 07 ARCHIVE legacy fixed_assets.* — COMMENT + REVOKE writes; canonical accounting.fixed_assets. Owner Neon-apply only.",
+      "added_at": "2026-07-27",
+      "block": "ARCHIVE-LEGACY-FIXED-ASSETS"
     }
   ],
   "_integrity_note": "Every entry appears EXACTLY ONCE (file is the key). applied_on_prod MUST agree with the pinned prod-ledger snapshot scripts/lib/prod-migration-ledger-checksums.json for any file inside its window (>= 202606010000). Enforced by scripts/verify-steps/1361-verify-held-registry-integrity.mjs. Repaired 2026-07-25: 119 entries collapsed to 110 (9 duplicates, 7 of them carrying contradictory applied_on_prod), and 79 entries that were already applied on prod were stamped. Before the repair, verify-schema-parity-from-prod (step 1437) derived held-unapplied columns from this file and therefore treated applied migrations as unapplied.",
