@@ -125,6 +125,8 @@ function writeCapabilityPolicyFixture(dir) {
   // server_required_live_status_checks means loadCapabilityPolicy makes no `gh` network call.
   fs.mkdirSync(path.join(dir, "scripts"), { recursive: true });
   fs.writeFileSync(path.join(dir, "scripts/verify-meta.json"), "{}\n", "utf8");
+  // Rule 25: first precheck step runs money-pr-local-gate — stub so fixture CLI can reach later steps.
+  fs.writeFileSync(path.join(dir, "scripts/money-pr-local-gate.mjs"), "process.exit(0);\n", "utf8");
   fs.mkdirSync(path.join(dir, ".github"), { recursive: true });
   fs.writeFileSync(path.join(dir, ".github/branch-protection-config.json"), "{}\n", "utf8");
 }
@@ -142,6 +144,7 @@ function makeFeatureRepo(options = {}) {
       "package.json",
       "apps/frontend/tsconfig.json",
       "scripts/verify-meta.json",
+      "scripts/money-pr-local-gate.mjs",
       ".github/branch-protection-config.json",
     ],
     { cwd: dir }
@@ -541,7 +544,12 @@ test("environment BRANCH_PRECHECK_STEPS_JSON cannot inject or empty gate steps",
   const builtin = buildPrecheckSteps(root);
   // No caller option → the full built-in production chain, regardless of any env.
   assert.deepEqual(resolvePrecheckSteps({}, root), builtin);
-  assert.ok(builtin.length >= 3, "built-in chain must not be empty");
+  assert.ok(builtin.length >= 4, "built-in chain must not be empty");
+  assert.equal(
+    builtin[0]?.label,
+    "money-pr-local-gate",
+    "Rule 25: money-pr-local-gate must be the FIRST pre-push step (fail-fast)"
+  );
   // Only a direct caller option (tests) may inject steps.
   const injected = [{ label: "x", command: 'node -e "process.exit(0)"' }];
   assert.deepEqual(resolvePrecheckSteps({ steps: injected }, root), injected);
@@ -568,5 +576,6 @@ test("production CLI ignores BRANCH_PRECHECK_STEPS_JSON and IH35_BRANCH_TOOLING_
   assert.notEqual(run.status, 0, "CLI must not succeed under an empty-step/skip-fetch bypass");
   const combined = `${run.stdout}\n${run.stderr}`;
   assert.doesNotMatch(combined, /READY TO PUSH/, "empty-step bypass must not short-circuit to READY");
+  assert.match(combined, /money-pr-local-gate/, "Rule 25 fail-fast step must execute first");
   assert.match(combined, /build-backend/, "the real built-in gate chain must have executed");
 });
