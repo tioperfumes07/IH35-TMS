@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { acknowledgeIntegrityAlert, resolveIntegrityAlert, snoozeIntegrityAlert } from "../../../api/safety";
-import { ModalCloseButton } from "../../../components/ModalCloseButton";
+import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 
 type Props = {
@@ -15,7 +15,9 @@ type Props = {
 const DRAWER_TITLE = "Integrity Alert Detail";
 
 export function IntegrityAlertDetailDrawer({ open, alert, operatingCompanyId, onClose, onUpdated }: Props) {
-  const panelRef = useRef<HTMLElement>(null);
+  // SAF-B24: the panel is now a <div> inside ParityDrawer rather than a bespoke <aside>, so the ref
+  // element type follows. Focus behaviour is unchanged.
+  const panelRef = useRef<HTMLDivElement>(null);
   const ackMutation = useMutation({
     mutationFn: () => acknowledgeIntegrityAlert(String(alert?.id ?? ""), operatingCompanyId, "Acknowledged in Safety UI"),
     onSuccess: onUpdated,
@@ -69,20 +71,12 @@ export function IntegrityAlertDetailDrawer({ open, alert, operatingCompanyId, on
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} aria-hidden="true" />
-      <aside
-        ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label={DRAWER_TITLE}
-        className="fixed right-0 top-0 z-50 h-full w-[560px] max-w-full overflow-y-auto border-l border-gray-200 bg-white p-4"
-        data-testid="integrity-alert-detail-drawer"
-      >
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-900">{DRAWER_TITLE}</h3>
-          <ModalCloseButton title={DRAWER_TITLE} onClose={onClose} />
-        </div>
-        <div className="mt-3 space-y-2 text-sm">
+      {/* SAF-B24: was a bespoke <aside> with its own backdrop, z-index, width, escape handling and
+          close button — a second drawer implementation beside the shared one, so every drawer-chrome
+          fix had to be made twice and this copy drifted. ParityDrawer is the single surface. The
+          panel ref and data-testid are retained so existing focus behaviour and selectors hold. */}
+      <ParityDrawer open onClose={onClose} title={DRAWER_TITLE} size="wide">
+        <div ref={panelRef} data-testid="integrity-alert-detail-drawer" className="space-y-2 text-sm">
           <div><strong>Category:</strong> {String(alert.alert_category ?? "—")}</div>
           <div><strong>Severity:</strong> {String(alert.severity ?? "—")}</div>
           <div><strong>Subject:</strong> {String(alert.subject_type ?? "—")}</div>
@@ -113,7 +107,7 @@ export function IntegrityAlertDetailDrawer({ open, alert, operatingCompanyId, on
             Snooze 24h
           </button>
         </div>
-      </aside>
+      </ParityDrawer>
     </>
   );
 }

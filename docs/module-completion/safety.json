@@ -1422,9 +1422,9 @@
         "VERIFY-1"
       ],
       "spec": "safety.md section J boundary 24 (findings F25)",
-      "status": "FAIL",
-      "evidence": "VERIFIED FAIL 2026-07-25. The 3 NAMED surfaces are migrated and guarded (EscrowForfeitModal, AccidentReportDrawer.tsx:205, FineDetailDrawer.tsx:67 all render ParityDrawer; guard 1345). But F25's acceptance is 'no bespoke drawer remains' and THREE survive, all carrying mutations and inputs: CompanyViolationDetailDrawer.tsx:98, IntegrityAlertDetailDrawer.tsx:73, AnomalyDetailDrawer.tsx:104 \u2014 bare <aside> elements. Guard 1345 pins only the 3 named files, so the 3 survivors are invisible to CI.",
-      "pr": 3381,
+      "status": "PASS",
+      "evidence": "VERIFIED PASS 2026-07-28 \u2014 all 3 surviving bespoke drawers migrated. CompanyViolationDetailDrawer, IntegrityAlertDetailDrawer and AnomalyDetailDrawer were bare <aside> elements with their own backdrop, z-index, width, escape handling and close button, each carrying live mutations. ROOT CAUSE OF THE MISS: guard 1345 PINS THREE FILENAMES, so the fourth/fifth/sixth copy were invisible to CI by construction. New guard 1677 names none \u2014 it DISCOVERS every drawer under the safety surfaces and requires ParityDrawer (7 of 7 pass; proven RED on real pre-fix main where it names exactly the 3 survivors). BONUS DEFECT FIXED: the entity-link-adoption guard flagged AnomalyDetailDrawer rendering anomaly.subject_id as a raw uuid in a plain <div> \u2014 the one record the alert is ABOUT could not be opened from the alert. Every subject_type (driver|unit|customer|invoice) is a real EntityLink kind, so it now drills through; narrow-ID findings dropped 112 -> 111 and the baseline was regenerated for the removal (110), not to silence a finding. REMAINING (out of this lane, reported not hidden): ONE bespoke drawer survives repo-wide \u2014 apps/frontend/src/pages/lists/accounting/AccountDrawer.tsx (636 lines, bespoke header/footer, sits on the accounting MONEY_PATH and in Cursor's lane). Migrating it blind without a browser click-through was refused as an unsafe shortcut; it needs its own PR.",
+      "pr": null,
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
