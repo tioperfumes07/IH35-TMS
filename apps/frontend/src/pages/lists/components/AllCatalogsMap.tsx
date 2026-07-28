@@ -45,6 +45,9 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
       // LST-A-01: per-entity + FORCE RLS, 75 live rows on prod, previously reachable only as a
       // read-only picker inside UserDetail — never from the hub, and with no write path at all.
       { name: "Dispatcher Error Reasons", description: "Dispatcher accountability event reason codes", live: true, catalogKey: "dispatcher-error-reasons" },
+      // OWNER RULING 2026-07-28 — every catalog gets a creator wizard. Lumper Providers had no route
+      // at all before this.
+      { name: "Lumper Providers", description: "Lumper service providers and their codes", live: true, catalogKey: "lumper-providers" },
     ],
   },
   {
