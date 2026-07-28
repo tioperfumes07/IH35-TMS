@@ -1081,6 +1081,7 @@
     "1682": "1682-verify-bank-f08-categorization-rules-automatch.mjs",
     "1683": "1683-verify-migration-lane-band.mjs",
     "1684": "1684-verify-bank-f09-settings-reports-email-queue.mjs",
+    "1685": "1685-verify-lists-badge-counts-every-live-catalog.mjs",
     "1687": "1687-verify-schema-parity-window-bounded.mjs",
     "1691": "1691-verify-categories-read-canonical-ledger.mjs",
     "1695": "1695-verify-inline-create-inside-picker.mjs",

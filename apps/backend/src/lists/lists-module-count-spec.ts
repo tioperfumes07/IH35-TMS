@@ -4,7 +4,14 @@ export type ModuleCountTableSpec = {
   table: string;
   activeFilter: ActiveFilter;
   companyScoped: boolean;
-  schema?: "catalogs" | "reference";
+  schema?: "catalogs" | "reference" | "mdata";
+  /**
+   * LST-COUNT-01: a FIXED predicate for a domain whose live catalog is a typed slice of a shared
+   * table rather than its own catalogs.* table (Names master → Brokers is mdata.customers filtered to
+   * customer_type='broker'). Never user input — these are literals compiled into the spec, and the
+   * same TABLE_NAME_GUARD-style discipline applies via SQL_PREDICATE_GUARD below.
+   */
+  whereSql?: string;
 };
 
 /** Live catalog tables per LISTS hub domain — default list filter (active only, no search). */
@@ -27,6 +34,12 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
     { table: "additional_charges", activeFilter: "is_active", companyScoped: true },
     // Prod-verified: operating_company_id + is_active + FORCE RLS, 12 active codes per entity.
     { table: "load_cancellation_reasons", activeFilter: "is_active", companyScoped: true },
+    // LST-COUNT-01: both are LIVE and per-entity on prod (verified 2026-07-28 under lucia —
+    // dispatcher_error_reasons 75 rows, customer_quality_event_reasons 72 rows, each with
+    // operating_company_id + is_active) and were absent from this spec entirely, so the DISPATCH badge
+    // understated by 147 rows across the two.
+    { table: "dispatcher_error_reasons", activeFilter: "is_active", companyScoped: true },
+    { table: "customer_quality_event_reasons", activeFilter: "is_active", companyScoped: true },
   ],
   drivers: [
     { table: "pay_rate_templates", activeFilter: "is_active", companyScoped: true },
@@ -120,7 +133,21 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
     { table: "detail_types", activeFilter: "is_active", companyScoped: false },
     { table: "void_cancel_reasons", activeFilter: "is_active", companyScoped: true },
   ],
-  names_master: [],
+  // LST-COUNT-01: this was `[]`, which made buildModuleCountQuery emit `SELECT 0::int` — a PERMANENT
+  // ZERO badge while the hub rendered a live Brokers catalog (AllCatalogsMap: live: true). Brokers is
+  // not its own catalogs.* table; it is a typed slice of mdata.customers, which is why it could not be
+  // expressed before. Prod-verified 2026-07-28 under lucia: mdata.customers has customer_type,
+  // operating_company_id and deactivated_at, and 4 brokers exist — so the badge was understating by 4
+  // and structurally could never move.
+  names_master: [
+    {
+      schema: "mdata",
+      table: "customers",
+      activeFilter: "deactivated_at",
+      companyScoped: true,
+      whereSql: "customer_type::text = 'broker'",
+    },
+  ],
 };
 
 // REMOVED 2026-07-25 — ACCOUNTING_JOURNAL_ENTRY_TYPES_COUNT was a hardcoded literal `3` ADDED to the
@@ -133,6 +160,8 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
 export const LISTS_MODULE_KEYS = Object.keys(LISTS_MODULE_COUNT_SPECS);
 
 const TABLE_NAME_GUARD = /^[a-z_]+$/;
+/** Fixed, spec-authored predicates only: identifiers, comparison, quoted literals and casts. */
+const SQL_PREDICATE_GUARD = /^[a-z0-9_.:' =]+$/i;
 
 export function buildModuleCountQuery(specs: ModuleCountTableSpec[]): string {
   if (specs.length === 0) {
@@ -150,6 +179,12 @@ export function buildModuleCountQuery(specs: ModuleCountTableSpec[]): string {
     if (spec.activeFilter === "is_active") filters.push(`${alias}.is_active = true`);
     if (spec.activeFilter === "deactivated_at") filters.push(`${alias}.deactivated_at IS NULL`);
     if (spec.activeFilter === "archived_at") filters.push(`${alias}.archived_at IS NULL`);
+    if (spec.whereSql) {
+      if (!SQL_PREDICATE_GUARD.test(spec.whereSql)) {
+        throw new Error(`invalid_where_predicate_for_module_count: ${spec.whereSql}`);
+      }
+      filters.push(`${alias}.${spec.whereSql}`);
+    }
     const where = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
     return `(SELECT COUNT(*)::int FROM ${schema}.${spec.table} ${alias} ${where})`;
   });

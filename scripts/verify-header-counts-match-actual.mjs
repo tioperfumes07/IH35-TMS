@@ -16,7 +16,10 @@ const EXPECTED_TABLE_COUNTS = {
   fuel: 12,
   maintenance: 9,
   safety: 6, // +complaint_types, +dot_violation_types, +cargo_claim_reasons
-  dispatch: 5, // +load_cancellation_reasons
+  // LST-COUNT-01 (2026-07-28): +dispatcher_error_reasons +customer_quality_event_reasons. Both are
+  // LIVE and per-entity on prod (75 and 72 rows, verified under lucia) and were absent from the count
+  // spec entirely, so the DISPATCH badge understated by their whole contents.
+  dispatch: 7, // +load_cancellation_reasons +dispatcher_error_reasons +customer_quality_event_reasons
   drivers: 11, // +driver_termination_reasons +driver_load_statuses (LST-A-01 hub)
   accounting: 16, // +journal_entry_types, +account_types, +detail_types, +void_cancel_reasons
 };
