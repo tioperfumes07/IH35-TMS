@@ -1,12 +1,14 @@
 /**
- * UI-1 READ-ONLY — Fixed Assets (ASC 360)
- * GET /api/v1/accounting/fixed-assets             list asset register (per-entity)
- * GET /api/v1/accounting/fixed-assets/:id         detail + computed depreciation schedule + disposal + JE preview
- * GET /api/v1/accounting/fixed-asset-classes      class catalog (read)
+ * Fixed Assets (ASC 360) — register + read/compute
+ * GET  /api/v1/accounting/fixed-assets             list asset register (per-entity)
+ * GET  /api/v1/accounting/fixed-assets/:id         detail + computed depreciation schedule + disposal + JE preview
+ * GET  /api/v1/accounting/fixed-asset-classes      class catalog (read)
+ * POST /api/v1/accounting/fixed-assets/register-unit   ND-FA-01 — register one owned unit (requires purchase_price_cents)
+ * POST /api/v1/accounting/fixed-assets/register-trk-units  ND-FA-01 — bulk TRK register (pricesByUnitNumber required)
  *
- * READ/COMPUTE ONLY. ZERO posting, ZERO write. Depreciation schedule is computed for display
+ * Register writes accounting.fixed_assets rows only (no JE). Depreciation schedule is computed for display
  * (book-value roll-forward). GL posting/autopost is GATED behind FIXED_ASSET_AUTOPOST_ENABLED
- * (default OFF) — this module never posts. Money = integer cents. Entity-scoped. RLS enforced.
+ * (default OFF). Money = integer cents. Entity-scoped. RLS enforced.
  * Owner vs operator distinction preserved (owner_operating_company_id).
  */
 import type { FastifyInstance } from "fastify";
@@ -16,6 +18,10 @@ import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope 
 import { isEnabled } from "../lib/feature-flags/service.js";
 // FIN-21: the depreciation schedule math is shared with the GL poster (single source of truth).
 import { computeDepreciationSchedule, asOfToday } from "./fixed-assets.math.js";
+import {
+  registerOwnedUnitAsFixedAsset,
+  registerRealTrkOwnedUnits,
+} from "./owned-unit-fixed-asset-register.service.js";
 
 const AUTOPOST_FLAG = "FIXED_ASSET_AUTOPOST_ENABLED";
 
@@ -312,6 +318,68 @@ async function registerFixedAssetsRoutes(app: FastifyInstance) {
         } : null,
         je_preview,
       };
+    });
+  });
+
+  // ND-FA-01 — register one owned unit onto accounting.fixed_assets (no JE; price required)
+  const registerUnitBody = z.object({
+    operating_company_id: z.string().uuid(),
+    owner_operating_company_id: z.string().uuid(),
+    unit_uuid: z.string().uuid(),
+    purchase_price_cents: z.number().int().positive(),
+    salvage_value_cents: z.number().int().min(0).optional(),
+    purchase_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    in_service_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  });
+
+  app.post("/api/v1/accounting/fixed-assets/register-unit", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (user.role !== "Owner" && user.role !== "Administrator") {
+      return reply.code(403).send({ error: "forbidden" });
+    }
+    const parsed = registerUnitBody.safeParse(req.body ?? {});
+    if (!parsed.success) return validationError(reply, parsed.error);
+
+    return withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
+      const result = await registerOwnedUnitAsFixedAsset(client, {
+        ...parsed.data,
+        actor_user_id: user.uuid,
+      });
+      if (!result.created && result.reason === "unit_not_found") {
+        return reply.code(404).send({ error: "unit_not_found" });
+      }
+      if (!result.created && result.reason === "class_missing") {
+        return reply.code(409).send({ error: "truck_class_missing" });
+      }
+      if (!result.created && result.reason === "invalid_price") {
+        return reply.code(400).send({ error: "invalid_price" });
+      }
+      return result;
+    });
+  });
+
+  // ND-FA-01 — bulk TRK register; never invents purchase prices
+  const bulkBody = z.object({
+    operating_company_id: z.string().uuid(),
+    owner_operating_company_id: z.string().uuid(),
+    pricesByUnitNumber: z.record(z.string(), z.number().int().positive()),
+  });
+
+  app.post("/api/v1/accounting/fixed-assets/register-trk-units", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (user.role !== "Owner" && user.role !== "Administrator") {
+      return reply.code(403).send({ error: "forbidden" });
+    }
+    const parsed = bulkBody.safeParse(req.body ?? {});
+    if (!parsed.success) return validationError(reply, parsed.error);
+
+    return withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
+      return registerRealTrkOwnedUnits(client, {
+        ...parsed.data,
+        actor_user_id: user.uuid,
+      });
     });
   });
 }

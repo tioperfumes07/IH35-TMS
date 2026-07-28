@@ -77,6 +77,9 @@ export const COA_ROLE_VALUES = [
   // Dr unbilled_revenue / Cr revenue_default (earn); Dr ar_control / Cr unbilled_revenue (bill).
   // DELIBERATELY absent from ROLE_FALLBACKS — owner designates via system_purpose bind or CoaRoles.
   "unbilled_revenue",
+  // ND-FA-01 / A4-D2 — Heavy Repair Expense (expense path under $7,000 capitalize threshold).
+  // DELIBERATELY absent from ROLE_FALLBACKS — owner designates; fails closed until Neon seed/bind.
+  "heavy_repair_expense",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];

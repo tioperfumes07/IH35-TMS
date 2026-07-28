@@ -1,6 +1,6 @@
 {
- "date": "2026-07-27",
- "generated_at_iso": "2026-07-27T21:26:19.055Z",
+ "date": "2026-07-28",
+ "generated_at_iso": "2026-07-28T12:19:44.249Z",
  "counts": {
   "PENDING": 19,
   "PENDING (GATED)": 28,
@@ -392,7 +392,7 @@
    "evidence": "[verified 2026-07-12] agent: migration validates unrelated FKs, no safety_events/driver_status FK exists",
    "name": "",
    "registered_on": null,
-   "pr": 2557
+   "pr": 3677
   },
   {
    "id": "FOR-CURSOR-2-README-ACCOUNTING-BANKING",
@@ -13478,10 +13478,196 @@
  ],
  "merged_prs": [
   {
+   "number": 3693,
+   "title": "claude: fix(safety): SAF-B18 — every fine was filed with no citation image, and the liability it spawns had no evidence behind it",
+   "mergedAt": "2026-07-28T12:16:58Z",
+   "branch": "claude/saf-b18-fine-source-document"
+  },
+  {
+   "number": 3692,
+   "title": "claude: fix(safety): SAF-B25 — an accident could not be read against the trip or the vendor it involved",
+   "mergedAt": "2026-07-28T11:48:54Z",
+   "branch": "claude/saf-b25-accidents-load-column"
+  },
+  {
+   "number": 3691,
+   "title": "claude: fix(safety): SAF-B19 — incidents could be closed but never retracted; the void contract enforced nothing",
+   "mergedAt": "2026-07-28T11:35:55Z",
+   "branch": "claude/saf-b19-incident-void-unreachable"
+  },
+  {
+   "number": 3690,
+   "title": "claude: fix(safety): SAF-B14 — 270 catalog rows nothing could reach; FMCSA severity stored as 0 on every HOS violation",
+   "mergedAt": "2026-07-28T11:21:35Z",
+   "branch": "claude/saf-b14-bind-orphan-safety-catalogs"
+  },
+  {
+   "number": 3687,
+   "title": "claude: fix(legal): LEG-02 — paper-signed drivers read as UNSIGNED, blocking every deduction",
+   "mergedAt": "2026-07-28T06:04:12Z",
+   "branch": "claude/leg-02-paper-signed-consent-gate"
+  },
+  {
+   "number": 3686,
+   "title": "claude: feat(lists): LST-A-01 — 147 rows of reason codes the owner could read but never manage",
+   "mergedAt": "2026-07-28T05:34:36Z",
+   "branch": "claude/lst-a-01-unreachable-catalogs"
+  },
+  {
+   "number": 3685,
+   "title": "claude: fix(safety): SAF-B30 — 4 of 6 EntityLink kinds drilled through to nothing; incidents had no kind at all",
+   "mergedAt": "2026-07-28T05:41:25Z",
+   "branch": "claude/saf-b30-entitylink-drill-through"
+  },
+  {
+   "number": 3684,
+   "title": "Cursor — fix(db): ND-INV CoA keeps unbilled_revenue + held-superset guard",
+   "mergedAt": "2026-07-28T04:58:27Z",
+   "branch": "fix/nd-inv-coa-live-superset"
+  },
+  {
+   "number": 3683,
+   "title": "claude: test(accounting): commit GUARD's 4 scenario tests so CI runs them forever",
+   "mergedAt": "2026-07-28T05:21:24Z",
+   "branch": "claude/commit-guard-scenario-tests"
+  },
+  {
+   "number": 3682,
+   "title": "fix(git): scope union-driver strictness to `claimed` — my #3681 broke every rebase",
+   "mergedAt": "2026-07-28T03:32:01Z",
+   "branch": "fix/union-driver-strict-scope"
+  },
+  {
+   "number": 3681,
+   "title": "chore(git): union-merge CLAIMED-NUMBERS.json — kill the rebase treadmill at its source",
+   "mergedAt": "2026-07-28T03:01:20Z",
+   "branch": "chore/claimed-numbers-union-merge"
+  },
+  {
+   "number": 3680,
+   "title": "docs(trackers): log two ledger-vs-repo drift items surfaced by the #3660 renumber",
+   "mergedAt": "2026-07-27T22:25:31Z",
+   "branch": "chore/log-migration-ledger-repo-drift"
+  },
+  {
+   "number": 3679,
+   "title": "chore(trackers): refresh reconcile artifacts — locked-guards is red on main itself, blocking every PR",
+   "mergedAt": "2026-07-27T21:51:31Z",
+   "branch": "chore/refresh-tracker-artifacts-2026-07-27"
+  },
+  {
+   "number": 3678,
+   "title": "[HOLD] DRV — escrow_deductions_pending.source_type → driver_deduction_types FK + safety_fine",
+   "mergedAt": "2026-07-28T04:12:36Z",
+   "branch": "drv-escrow-source-type-catalog-fk"
+  },
+  {
+   "number": 3677,
+   "title": "[HOLD-FOR-JORGE · FINANCIAL] FACT-02 — factoring subledger journal_entry_id FKs",
+   "mergedAt": "2026-07-28T03:43:22Z",
+   "branch": "fact-02-subledger-je-fk"
+  },
+  {
+   "number": 3676,
+   "title": "[HOLD] ARCHIVE legacy fixed_assets.* schema (Rule 07)",
+   "mergedAt": "2026-07-28T03:58:18Z",
+   "branch": "archive-legacy-fixed-assets-schema"
+  },
+  {
+   "number": 3675,
+   "title": "[HOLD] FACT-PHANTOM-01 + FACT-01 — kill phantom factoring_companies + rebuild factoring_summary",
+   "mergedAt": "2026-07-28T03:16:36Z",
+   "branch": "fact-phantom-01-summary"
+  },
+  {
+   "number": 3674,
+   "title": "[HOLD] FLT-05 — owned-asset disposal + gain/loss JE",
+   "mergedAt": "2026-07-28T02:58:08Z",
+   "branch": "flt-05-owned-asset-disposal"
+  },
+  {
+   "number": 3673,
+   "title": "[HOLD] FLT-01 depreciation autopost cron",
+   "mergedAt": "2026-07-28T02:43:43Z",
+   "branch": "flt-01-depr-autopost"
+  },
+  {
+   "number": 3672,
+   "title": "[HOLD] FLT-04 — depreciation JE books on owner_operating_company_id",
+   "mergedAt": "2026-07-28T02:29:00Z",
+   "branch": "flt-04-depr-owner-entity"
+  },
+  {
+   "number": 3671,
+   "title": "[HOLD] KR-02 — fail-closed civil_fine_postings before latch use",
+   "mergedAt": "2026-07-28T02:18:21Z",
+   "branch": "kr-02-civil-fine-failclosed"
+  },
+  {
+   "number": 3670,
+   "title": "chore(db): held→applied_held after 2026-07-27 Neon owner-apply",
+   "mergedAt": "2026-07-28T00:40:02Z",
+   "branch": "chore/held-registry-neon-applied-20260727"
+  },
+  {
+   "number": 3669,
+   "title": "fix(frontend): partial optional chains crash whole pages + restore a section deleted against §7",
+   "mergedAt": "2026-07-28T01:22:29Z",
+   "branch": "fix/pre-existing-red-suites"
+  },
+  {
+   "number": 3668,
+   "title": "[HOLD] KR-01 — fail-closed parts_purchase_postings before latch use",
+   "mergedAt": "2026-07-28T01:56:33Z",
+   "branch": "kr-01-parts-purchase-failclosed"
+  },
+  {
+   "number": 3667,
+   "title": "[HOLD] KR-03 — fail-closed CoA merge before account_merge_records INSERT",
+   "mergedAt": "2026-07-28T01:41:45Z",
+   "branch": "kr-03-account-merge-failclosed"
+  },
+  {
+   "number": 3666,
+   "title": "fix(drivers): DRV-04 — driver profile header read a RETIRED column, blank for all 178 drivers",
+   "mergedAt": "2026-07-27T23:15:26Z",
+   "branch": "fix/drv-04-driver-employment-status-retired-column"
+  },
+  {
+   "number": 3665,
+   "title": "fix(dispatch): DISP-03 phantom load_assignments — geofence recon persisted NOTHING; +2 dead surfaces the audit missed",
+   "mergedAt": "2026-07-27T22:05:30Z",
+   "branch": "fix/disp-03-geofence-phantom-load-assignments"
+  },
+  {
+   "number": 3664,
+   "title": "[HOLD] FLT-02 — half_year depreciation math + fixed_asset_classes seed",
+   "mergedAt": "2026-07-27T22:47:28Z",
+   "branch": "flt-02-half-year-depr"
+  },
+  {
+   "number": 3663,
+   "title": "[HOLD-FOR-JORGE · FINANCIAL] DISP-01 — two-event delivery revenue latch",
+   "mergedAt": "2026-07-28T00:59:03Z",
+   "branch": "disp-01-revrec-latch"
+  },
+  {
+   "number": 3662,
+   "title": "fix(safety): Position History — prove the canonical table exists before querying it (defense-in-depth)",
+   "mergedAt": "2026-07-28T04:09:52Z",
+   "branch": "fix/position-history-canonical-table-missing"
+  },
+  {
    "number": 3661,
    "title": "docs(drv): spec the escrow source_type reconciliation for Cursor + file the RLS false-zero gap",
    "mergedAt": "2026-07-27T19:50:58Z",
    "branch": "docs/escrow-source-type-reconciliation-spec"
+  },
+  {
+   "number": 3660,
+   "title": "[HOLD-FOR-JORGE] feat(drv): driver recovery policy per SITUATION — one rail vocabulary (migration 202609310000)",
+   "mergedAt": "2026-07-27T23:39:31Z",
+   "branch": "fix/driver-recovery-policy-single-vocabulary"
   },
   {
    "number": 3659,
@@ -16890,196 +17076,88 @@
    "title": "fix(home): DriverDaySummaryCard → ParityTable + ListErrorState (qbo-parity-a1)",
    "mergedAt": "2026-07-20T15:41:23Z",
    "branch": "fix/driver-day-summary-paritytable"
-  },
-  {
-   "number": 2880,
-   "title": "fix(vehicles): ComplianceSection plates → ParityTable (qbo-parity-a1)",
-   "mergedAt": "2026-07-20T14:45:35Z",
-   "branch": "fix/vehicle-compliance-paritytable"
-  },
-  {
-   "number": 2879,
-   "title": "fix(vehicles): DocumentsSection → ParityTable (qbo-parity-a1)",
-   "mergedAt": "2026-07-20T14:38:29Z",
-   "branch": "fix/vehicle-documents-paritytable"
-  },
-  {
-   "number": 2877,
-   "title": "docs(design): load revenue capture — auto-invoice + TONU AR (owner-gated design)",
-   "mergedAt": "2026-07-20T15:58:03Z",
-   "branch": "design/load-revenue-capture-auto-invoice-tonu"
-  },
-  {
-   "number": 2875,
-   "title": "fix(compliance): mount dark W3B driver-alert + W4A safety-doc routes",
-   "mergedAt": "2026-07-20T15:30:33Z",
-   "branch": "fix/mount-dead-compliance-routes-w3b-w4a"
-  },
-  {
-   "number": 2873,
-   "title": "chore(trackers): registry cleanup phase 1 — remove 56 duplicate/superseded/irrelevant blocks",
-   "mergedAt": "2026-07-20T22:35:17Z",
-   "branch": "chore/registry-cleanup-phase1-dedup"
-  },
-  {
-   "number": 2869,
-   "title": "fix(dispatch): AtRiskQueue ListErrorState + EntityLink load",
-   "mergedAt": "2026-07-20T14:01:55Z",
-   "branch": "fix/at-risk-query-error-entitylink"
-  },
-  {
-   "number": 2868,
-   "title": "fix(drivers): LoadHistoryTab → ParityTable (qbo-parity-a1)",
-   "mergedAt": "2026-07-20T14:16:24Z",
-   "branch": "fix/load-history-paritytable"
-  },
-  {
-   "number": 2867,
-   "title": "fix(vehicles): RecentActivitySection → ParityTable (qbo-parity-a1)",
-   "mergedAt": "2026-07-20T15:20:24Z",
-   "branch": "fix/vehicle-recent-activity-paritytable"
-  },
-  {
-   "number": 2865,
-   "title": "fix(vehicles): PlatesTable ParityTable (qbo-parity-a1)",
-   "mergedAt": "2026-07-20T14:27:37Z",
-   "branch": "fix/vehicle-plates-paritytable"
-  },
-  {
-   "number": 2864,
-   "title": "fix(reports): FrequentlyRunTable ParityTable (qbo-parity-a1)",
-   "mergedAt": "2026-07-20T13:51:58Z",
-   "branch": "fix/frequently-run-paritytable"
-  },
-  {
-   "number": 2863,
-   "title": "fix(drivers): AuditHistoryTab → ParityTable + ListErrorState (qbo-parity-a1)",
-   "mergedAt": "2026-07-20T13:38:51Z",
-   "branch": "fix/driver-audit-history-paritytable"
-  },
-  {
-   "number": 2862,
-   "title": "fix(drivers): OperationsHistoryTable ParityTable + ListErrorState (qbo-parity-a1)",
-   "mergedAt": "2026-07-20T13:25:22Z",
-   "branch": "fix/ops-history-paritytable"
-  },
-  {
-   "number": 2861,
-   "title": "fix(dispatch): late arrivals ListErrorBanner + EntityLink load",
-   "mergedAt": "2026-07-20T13:26:02Z",
-   "branch": "fix/late-arrivals-error-entitylink"
-  },
-  {
-   "number": 2860,
-   "title": "fix(compliance): NotificationLogPanel ParityTable (qbo-parity-a1)",
-   "mergedAt": "2026-07-20T12:58:00Z",
-   "branch": "fix/notification-log-paritytable"
-  },
-  {
-   "number": 2859,
-   "title": "fix(compliance): NotificationRulesPanel → ParityTable (qbo-parity-a1)",
-   "mergedAt": "2026-07-20T13:10:56Z",
-   "branch": "fix/notification-rules-paritytable"
-  },
-  {
-   "number": 2858,
-   "title": "fix(admin): ActivityLog ParityTable + ListErrorState (qbo-parity-a1)",
-   "mergedAt": "2026-07-20T12:41:37Z",
-   "branch": "fix/activity-log-paritytable"
-  },
-  {
-   "number": 2857,
-   "title": "fix(guards): renumber deadhead verify-step 1019→1021 (Rule 17)",
-   "mergedAt": "2026-07-20T12:58:21Z",
-   "branch": "fix/renumber-deadhead-verify-step-1021"
-  },
-  {
-   "number": 2856,
-   "title": "fix(ui): §7 palette financial ratchet to zero (0441-mod8)",
-   "mergedAt": "2026-07-20T12:31:16Z",
-   "branch": "fix/section7-palette-ratchet-batch3"
-  },
-  {
-   "number": 2855,
-   "title": "chore(deps): Bump the production-dependencies group across 1 directory with 14 updates",
-   "mergedAt": "2026-07-20T18:05:31Z",
-   "branch": "dependabot/npm_and_yarn/production-dependencies-8bcdaf814c"
-  },
-  {
-   "number": 2854,
-   "title": "fix(linkage): EntityLink assignment history load/driver drill-through",
-   "mergedAt": "2026-07-20T12:44:20Z",
-   "branch": "fix/driver-load-history-entitylink"
-  },
-  {
-   "number": 2853,
-   "title": "chore(deps): Bump the development-dependencies group with 6 updates",
-   "mergedAt": "2026-07-20T12:26:12Z",
-   "branch": "dependabot/npm_and_yarn/development-dependencies-4080cf4738"
-  },
-  {
-   "number": 2852,
-   "title": "chore(ci): Bump actions/setup-node from 6 to 7",
-   "mergedAt": "2026-07-20T12:22:00Z",
-   "branch": "dependabot/github_actions/actions/setup-node-7"
-  },
-  {
-   "number": 2851,
-   "title": "fix(guards): renumber deadhead verify-step 1013→1019 (Rule 17)",
-   "mergedAt": "2026-07-20T12:09:49Z",
-   "branch": "fix/renumber-deadhead-verify-step-1019"
-  },
-  {
-   "number": 2850,
-   "title": "fix(assets): AssetListTable ParityTable + real assets API (qbo-parity-a1)",
-   "mergedAt": "2026-07-20T12:25:36Z",
-   "branch": "fix/asset-list-paritytable"
-  },
-  {
-   "number": 2848,
-   "title": "fix(compliance): migrate ComplianceTable to ParityTable (qbo-parity-a1)",
-   "mergedAt": "2026-07-20T12:09:06Z",
-   "branch": "fix/compliance-table-paritytable"
-  },
-  {
-   "number": 2847,
-   "title": "fix(safety): real ELD audit PDF export (0441-mod12)",
-   "mergedAt": "2026-07-20T12:11:29Z",
-   "branch": "fix/0441-mod12-eld-export-pdf"
-  },
-  {
-   "number": 2846,
-   "title": "fix(dispatch): surface alerts query errors (mandatory error states)",
-   "mergedAt": "2026-07-20T12:10:40Z",
-   "branch": "fix/dispatch-alerts-query-error-states"
-  },
-  {
-   "number": 2845,
-   "title": "fix(reports): deadhead fuel uses real columns (0441-mod11)",
-   "mergedAt": "2026-07-20T11:54:57Z",
-   "branch": "fix/0441-mod11-deadhead-phantom-fuel-columns"
-  },
-  {
-   "number": 2844,
-   "title": "fix(settlements): wire Loads column to load_count (0441-mod10)",
-   "mergedAt": "2026-07-20T11:54:01Z",
-   "branch": "fix/0441-mod10-settlement-loads-column"
-  },
-  {
-   "number": 2843,
-   "title": "fix(ui): migrate Drivers EarningsTab to ParityTable (qbo-parity-a1)",
-   "mergedAt": "2026-07-20T11:52:18Z",
-   "branch": "fix/qbo-parity-earnings-tab-paritytable"
-  },
-  {
-   "number": 2842,
-   "title": "fix(chat): wire dispatch chat attachment upload (0441-mod4)",
-   "mergedAt": "2026-07-20T11:42:44Z",
-   "branch": "fix/0441-mod4-dispatch-chat-attachment"
   }
  ],
  "merged_pr_total": 3000,
  "hold_for_jorge": [
+  {
+   "number": 3678,
+   "title": "[HOLD] DRV — escrow_deductions_pending.source_type → driver_deduction_types FK + safety_fine",
+   "mergedAt": "2026-07-28T04:12:36Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3677,
+   "title": "[HOLD-FOR-JORGE · FINANCIAL] FACT-02 — factoring subledger journal_entry_id FKs",
+   "mergedAt": "2026-07-28T03:43:22Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3676,
+   "title": "[HOLD] ARCHIVE legacy fixed_assets.* schema (Rule 07)",
+   "mergedAt": "2026-07-28T03:58:18Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3675,
+   "title": "[HOLD] FACT-PHANTOM-01 + FACT-01 — kill phantom factoring_companies + rebuild factoring_summary",
+   "mergedAt": "2026-07-28T03:16:36Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3674,
+   "title": "[HOLD] FLT-05 — owned-asset disposal + gain/loss JE",
+   "mergedAt": "2026-07-28T02:58:08Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3673,
+   "title": "[HOLD] FLT-01 depreciation autopost cron",
+   "mergedAt": "2026-07-28T02:43:43Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3672,
+   "title": "[HOLD] FLT-04 — depreciation JE books on owner_operating_company_id",
+   "mergedAt": "2026-07-28T02:29:00Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3671,
+   "title": "[HOLD] KR-02 — fail-closed civil_fine_postings before latch use",
+   "mergedAt": "2026-07-28T02:18:21Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3668,
+   "title": "[HOLD] KR-01 — fail-closed parts_purchase_postings before latch use",
+   "mergedAt": "2026-07-28T01:56:33Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3667,
+   "title": "[HOLD] KR-03 — fail-closed CoA merge before account_merge_records INSERT",
+   "mergedAt": "2026-07-28T01:41:45Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3664,
+   "title": "[HOLD] FLT-02 — half_year depreciation math + fixed_asset_classes seed",
+   "mergedAt": "2026-07-27T22:47:28Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3663,
+   "title": "[HOLD-FOR-JORGE · FINANCIAL] DISP-01 — two-event delivery revenue latch",
+   "mergedAt": "2026-07-28T00:59:03Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3660,
+   "title": "[HOLD-FOR-JORGE] feat(drv): driver recovery policy per SITUATION — one rail vocabulary (migration 202609310000)",
+   "mergedAt": "2026-07-27T23:39:31Z",
+   "category": "HOLD"
+  },
   {
    "number": 3658,
    "title": "[HOLD-FOR-JORGE · FINANCIAL] ND-INV-01 stage 1 — proforma invoice pipeline",
