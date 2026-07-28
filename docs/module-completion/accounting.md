@@ -1,13 +1,13 @@
 # Module completion — Accounting (Module 3)
 
-**PROGRESS: 13 of 30** · complete: `false` · as_of: 2026-07-25T19:00:00.000Z · live_sha: `a3f9c12`
+**PROGRESS: 14 of 30** · complete: `false` · as_of: 2026-07-25T19:00:00.000Z · live_sha: `a3f9c12`
 
 | Status | Count |
 |---|---:|
-| PASS | 11 |
+| PASS | 12 |
 | HOLD | 2 |
 | OPEN | 0 |
-| FAIL | 10 |
+| FAIL | 9 |
 | UNVERIFIED | 7 |
 
 | ID | Status | Title | Evidence | PR |
@@ -22,7 +22,7 @@
 | `ACCT-PULL-03` | **PASS** | QBO Purchase mirror pull writes rows | Neon lucia 2026-07-25: qbo_purchases=27984; sync_runs qbo_purchases_inbound_mirror success×2 last 2026-07-24T23:25:26Z | #3399 |
 | `ACCT-LINK-01` | **PASS** | journal_entry_types inbound FK from journal_entries (not island) | LIVE 2026-07-28 Neon lucia: journal_entry_type_id FK present; backfill 202610070000 typed all non-void JEs; create path inferJournalEntryTypeCode never leaves auto NULL; guard verify-je-type-inbound-density --live PASS | #3697 |
 | `ACCT-LINK-02` | **HOLD** | detail_types canonical FK from catalogs.accounts (not text subtype only) | OWNER-LOCK 2026-07-25: account_subtype stays TEXT; detail_types 144 rows all-NULL opco / 0 inbound FKs by design. Regression guard scripts/verify-detail-types-owner-lock.mjs. Do NOT wire FK without unlock marker. | — |
-| `ACCT-LINK-03` | **FAIL** | Bill unit_id / insurance_claim_id / linked_work_order_uuid density > 0 where applicable | vendor_id=16212; unit/claim/wo = 0 | #3425 |
+| `ACCT-LINK-03` | **PASS** | Bill unit_id / insurance_claim_id / linked_work_order_uuid density > 0 where applicable | LIVE 2026-07-28 Neon lucia: bills.unit_id 299/16219 via unique memo→unit backfill 202610080000 (owner/leased_to scope, word-boundary T###). claim=0 wo=0 remain (insurance.claim / WO close writers already stamp; 2 WOs open, no claim bills yet). createBill+autoCreateBillFromWO stamp unit_id. Guard 1700. | #TBD |
 | `ACCT-LINK-04` | **PASS** | expense_categories inbound FK from expense lines | LIVE 2026-07-28 Neon lucia: accounting.expense_lines.expense_category_uuid + operating_company_id composite FK expense_lines_expense_category_same_entity_fkey → catalogs.expense_categories (island CLOSED). Mig 202608020000 in applied_held. expense_lines=0 density is ACCT-ECON-04. Original merge #3446 @ 7a0c3614; prove PR #3697. | #3446 #3697 |
 | `ACCT-LINK-05` | **FAIL** | posting_templates inbound FK from consumers (WF-053) | Owner Neon-apply completed 2026-07-25 18:01:52 by neondb_owner (mig 202607950000, PR #3444 merged @ 1d90a178). GUARD live-verified both ledgers (_system._schema_migrations + ih35_migrations), checksum 64c41b…fbfb matches repo file. LIVE: accounting.posting_batches.posting_template_id exists. Per-entity scope = owner design Q — do NOT auto-scope. Still FAIL, not PASS: applied ≠ audited — catalog population + browser re-proof (Rule 23) not yet performed. Honesty: docs/trackers/MERGED-NOT-APPLIED-ACCT-F07-F08-2026-07-25.md | #3444 |
 | `ACCT-LINK-06` | **FAIL** | bank feed matched_journal_entry_id density + categorize→GL poster wired (ACCT-F05) | LIVE REFRESH 2026-07-25: matched_je=3/10622 (lucia); categorized_at_not_null=3. Wiring PASS on main: #3424 bulk+single categorize→maybePostBankCategorizationToGl→postSourceTransaction(bank_categorization)+matched_journal_entry_id lockstep stamp; BANK_FEED_GL_POSTING_ENABLED default OFF. Density is ops backlog — poster works when used; not a broken poster. GUARD: verify-bankfeed-je-match (step 1486). Remains FAIL until operator categorization volume moves matched_JE density. | #3424 |
