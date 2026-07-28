@@ -1125,9 +1125,9 @@
         "DOD-B"
       ],
       "spec": "safety.md section J boundary 19 (findings F20)",
-      "status": "FAIL",
-      "evidence": "VERIFIED FAIL 2026-07-25. Edit and status transitions are real and guarded (incidents.routes.ts:435,505; SafetyIncidentsClusterSurface.tsx:712,734; guard 1342). VOID IS BACKEND-ONLY: the route exists at incidents.routes.ts:576-611 and is registered (index.ts:213,959) but there is no voidSafetyIncident client and no void control anywhere in the frontend \u2014 zero references. F20's acceptance 'a row can be voided' is UNREACHABLE by an operator. Neither guard 1342 nor 1344 asserts a UI path to void.",
-      "pr": 3377,
+      "status": "PASS",
+      "evidence": "VERIFIED PASS 2026-07-28. The manifest premise was correct but INCOMPLETE \u2014 the void was not only unreachable, its contract was never enforced. REACHABILITY: added voidSafetyIncident client + an Owner/Administrator-gated 'Void incident' control with required reason on SafetyIncidentsClusterSurface, kept deliberately separate from the close/reopen buttons (closing is an outcome, voiding is a retraction) and surfacing the error instead of failing silently. ENFORCEMENT (second defect, found while verifying): incidents.routes.ts promised in its own doc comment that a voided incident 'is immutable and drops out of the operational list' and implemented NEITHER \u2014 the list never filtered voided_at and the edit, status and photo-upload paths never checked it, so a retracted incident stayed in the operational list and could still be edited, re-opened and have evidence attached. All four now enforce it; the list gained include_voided=true so voided rows stay auditable rather than hidden (void-not-delete). Guard 1668 discovers void routes from backend source (5 of 5 reachable from a component) and asserts all 4 enforcement points; its selftest plants each of the 5 defects INDIVIDUALLY into the real sources and requires each to be caught. Prod under lucia: safety.incidents voided_at/voided_by_user_id/voided_reason all present, migration 202607820000 applied, n_live_tup=0. Backend tests 16 passed; IncidentsClusterPages 3 passed; verify:static exit 0.",
+      "pr": null,
       "owner_hold": false,
       "tracker": null,
       "future_block": null,

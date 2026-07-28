@@ -8,11 +8,13 @@ import {
   listSafetyIncidents,
   setSafetyIncidentStatus,
   updateSafetyIncident,
+  voidSafetyIncident,
   uploadSafetyIncidentPhoto,
   type SafetyIncidentType,
 } from "../../../api/safety";
 import { listDrivers, listUnits } from "../../../api/mdata";
 import { listLoads } from "../../../api/loads";
+import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { DatePicker } from "../../../components/forms/DatePicker";
@@ -149,6 +151,13 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
   const formEditable = createMode || editMode;
   const [statusReason, setStatusReason] = useState("");
   const [statusTarget, setStatusTarget] = useState<"open" | "investigating" | "closed" | null>(null);
+  // SAF-B19: void is a RETRACTION, not a lifecycle outcome — kept in its own state so it can never be
+  // reached by the close/reopen buttons. Gate mirrors the server exactly (Owner/Administrator).
+  const [voidOpen, setVoidOpen] = useState(false);
+  const [voidReason, setVoidReason] = useState("");
+  const [voidError, setVoidError] = useState<string | null>(null);
+  const { user } = useAuth();
+  const canVoid = user?.role === "Owner" || user?.role === "Administrator";
 
   // Drivers + fleet feed BOTH the create pickers AND the list Driver/Unit columns, so they
   // load whenever a company is selected. limit:200 avoids the 50-cap picker landmine.
@@ -742,6 +751,71 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                     >
                       Apply status
                     </Button>
+                  </div>
+                ) : null}
+                {/* SAF-B19: the void route (incidents.routes.ts:576) has been registered and callable
+                    since SAF-F20 with no client and no control anywhere in the app — an incident filed
+                    in error could be closed, but never retracted, by anyone without direct API access.
+                    Deliberately separated from the status buttons above: closing records an outcome,
+                    voiding says the record should not have existed. */}
+                {!createMode && detail?.id && !detail?.voided_at && canVoid ? (
+                  <div className="space-y-1 border-t border-gray-200 pt-2">
+                    <button
+                      type="button"
+                      className="rounded-sm border border-gray-300 px-2 py-1 text-[#dc2626]"
+                      data-testid={`${config.pageTestId}-void-btn`}
+                      onClick={() => {
+                        setVoidOpen((cur) => !cur);
+                        setVoidError(null);
+                      }}
+                    >
+                      Void incident
+                    </button>
+                    {voidOpen ? (
+                      <div className="space-y-1">
+                        <input
+                          className={inputCls}
+                          placeholder="Void reason (required)"
+                          value={voidReason}
+                          data-testid={`${config.pageTestId}-void-reason`}
+                          onChange={(e) => setVoidReason(e.target.value)}
+                        />
+                        {voidError ? (
+                          <div className="text-[11px] text-[#dc2626]" data-testid={`${config.pageTestId}-void-error`}>
+                            {voidError}
+                          </div>
+                        ) : null}
+                        <Button
+                          size="sm"
+                          disabled={voidReason.trim().length < 3}
+                          data-testid={`${config.pageTestId}-void-apply`}
+                          onClick={() => {
+                            if (!detail?.id) return;
+                            setVoidError(null);
+                            void voidSafetyIncident(String(detail.id), operatingCompanyId, voidReason.trim())
+                              .then(async () => {
+                                setVoidOpen(false);
+                                setVoidReason("");
+                                setDrawerOpen(false);
+                                await queryClient.invalidateQueries({ queryKey: ["safety", "incidents"] });
+                              })
+                              .catch((err: unknown) => {
+                                // No silent failure: a void that did not happen must never look like one
+                                // that did.
+                                setVoidError(err instanceof Error ? err.message : "Void failed.");
+                              });
+                          }}
+                        >
+                          Confirm void
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+                {!createMode && detail?.voided_at ? (
+                  <div className="text-[11px] text-slate-500" data-testid={`${config.pageTestId}-voided-note`}>
+                    Voided {formatDateUS(str(detail.voided_at))}
+                    {str(detail.voided_reason) ? ` · ${str(detail.voided_reason)}` : ""}
                   </div>
                 ) : null}
                 {editMode ? (
