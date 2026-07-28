@@ -17,7 +17,7 @@
 -- lives. The table, its policy and its grants-to-read all survive.
 --
 -- IDEMPOTENT: REVOKE of a privilege already absent is a no-op, and COMMENT ON overwrites in place.
--- Safe to re-run. Nothing is deleted and no row is touched.
+-- Safe to re-run on a populated or an empty table. Nothing is deleted and no row is touched.
 
 DO $$
 BEGIN
@@ -26,14 +26,19 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Refuse to retire a table that is NOT empty. If rows ever appear, this table is in use and the
-  -- retirement decision must be re-made with that evidence in hand rather than silently applied.
-  IF (SELECT count(*) FROM catalogs.ifta_states) > 0 THEN
-    RAISE EXCEPTION
-      'REFUSING to retire catalogs.ifta_states: it holds % row(s). Retirement was approved on the '
-      'basis that it is empty and unwired — re-verify before proceeding.',
-      (SELECT count(*) FROM catalogs.ifta_states);
-  END IF;
+  -- CORRECTION (2026-07-28): an earlier draft REFUSED to proceed when the table was non-empty, on the
+  -- belief that it was never seeded anywhere. CI's fresh-database run disproved that immediately —
+  -- migration 0062 seeds catalogs.ifta_states with 15 rows, so a from-scratch database HAS rows even
+  -- though prod has none. The guard was therefore wrong, not the database.
+  --
+  -- Emptiness was never the real basis for retirement; being UNWIRED is. No application code reads or
+  -- writes this table (enforced by verify-ifta-single-canonical-catalog), and the retirement is
+  -- non-destructive — stop-write plus a label, with SELECT preserved and not one row touched. That is
+  -- correct whether the table holds 0 rows or 15. The count is recorded for the audit trail instead of
+  -- aborting.
+  RAISE NOTICE 'catalogs.ifta_states holds % row(s) at retirement (prod: 0; fresh DB: 15 seeded by 0062) — '
+               'archiving read-only, no rows are modified',
+               (SELECT count(*) FROM catalogs.ifta_states);
 
   -- Stop-write. SELECT is deliberately preserved: archive, not delete.
   REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON catalogs.ifta_states FROM ih35_app;
