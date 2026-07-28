@@ -20,6 +20,9 @@ services:
         sync: false
       - key: IH35_SMOKE_OPERATING_COMPANY_ID
         sync: false
+      # Production must never fall back to whichever live unit was updated most recently.
+      - key: IH35_SMOKE_REQUIRE_FIXED_UNIT
+        value: "true"
 
   - type: static
     name: ih35-tms-frontend
