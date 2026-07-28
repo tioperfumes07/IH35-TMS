@@ -77,11 +77,45 @@ function parseCreateTableColumns(body) {
     if (!trimmed) continue;
     // Skip table-level constraints (PRIMARY KEY, UNIQUE, CHECK, FOREIGN KEY, CONSTRAINT …)
     if (/^(primary\s+key|unique|check|foreign\s+key|constraint\s+\w)/i.test(trimmed)) continue;
+    // Skip a LIKE clause: `CREATE TABLE a (LIKE b INCLUDING DEFAULTS)` declares no column named
+    // "like" — it copies b's columns. Taking the first token here invented a phantom column `like`
+    // on accounting.qbo_vendors / qbo_customers / qbo_accounts AND left those tables with no real
+    // columns at all, so schema-parity could not have detected a removal on any of them. The
+    // inherited columns are resolved in parseMigrations, which is where the source table is known.
+    if (/^like\s/i.test(trimmed)) continue;
     // Column name is the first token (may be quoted with "")
     const m = trimmed.match(/^"?([A-Za-z_][A-Za-z0-9_]*)"?\s/);
     if (m) cols.push(m[1].toLowerCase());
   }
   return cols;
+}
+
+/**
+ * Return the source relations named by `LIKE source_table` clauses in a CREATE TABLE body.
+ * Postgres copies the source's columns into the new table; the baseline must do the same or the
+ * new table appears to have no columns.
+ */
+export function parseCreateTableLikeSources(body) {
+  const sources = [];
+  let depth = 0;
+  let start = 0;
+  const parts = [];
+  for (let i = 0; i < body.length; i++) {
+    if (body[i] === "(") depth++;
+    else if (body[i] === ")") depth--;
+    else if (body[i] === "," && depth === 0) {
+      parts.push(body.slice(start, i));
+      start = i + 1;
+    }
+  }
+  parts.push(body.slice(start));
+
+  for (const part of parts) {
+    const trimmed = normalise(part);
+    const m = trimmed.match(/^like\s+([A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*)/i);
+    if (m) sources.push(m[1].toLowerCase());
+  }
+  return sources;
 }
 
 /**
@@ -97,6 +131,8 @@ function parseCreateTableColumns(body) {
  */
 export function parseMigrations(migrationsDir) {
   const schema = new Map(); // "schema.table" → Set<colName>
+  // "schema.table" → Set of relations it inherits columns from via `CREATE TABLE x (LIKE y …)`.
+  const likeEdges = new Map();
 
   const files = fs
     .readdirSync(migrationsDir)
@@ -110,6 +146,19 @@ export function parseMigrations(migrationsDir) {
     // ── CREATE TABLE ────────────────────────────────────────────────────────
     // Matches: CREATE TABLE [IF NOT EXISTS] [schema.]table (…)
     // We need to find the balanced closing paren.
+    // DROP TABLE and CREATE TABLE are collected together and applied in SOURCE ORDER. A table that is
+    // dropped and recreated with a different shape (migration 0201 does exactly this to
+    // accounting.qbo_remote_counts) otherwise keeps the UNION of its old and new columns forever:
+    // entity_key / count_value / last_polled_at survived in the baseline long after the drop, so the
+    // baseline claimed three columns a freshly-migrated database does not have.
+    const tableEvents = [];
+
+    const dropTableRe = /DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?([A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*)/gi;
+    let d;
+    while ((d = dropTableRe.exec(sql)) !== null) {
+      tableEvents.push({ idx: d.index, kind: "drop", relation: d[1].toLowerCase() });
+    }
+
     const createRe = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*)\s*\(/gi;
     let m;
     while ((m = createRe.exec(sql)) !== null) {
@@ -127,11 +176,37 @@ export function parseMigrations(migrationsDir) {
         i++;
       }
       const body = sql.slice(bodyStart, i - 1);
-      const cols = parseCreateTableColumns(body);
+      tableEvents.push({
+        idx: m.index,
+        kind: "create",
+        relation,
+        cols: parseCreateTableColumns(body),
+        likeSources: parseCreateTableLikeSources(body),
+      });
+    }
 
-      if (!schema.has(relation)) schema.set(relation, new Set());
-      const colSet = schema.get(relation);
-      for (const c of cols) colSet.add(c);
+    tableEvents.sort((a, b) => a.idx - b.idx);
+    for (const ev of tableEvents) {
+      const [evSchema] = ev.relation.split(".");
+      if (EXCLUDED_SCHEMAS.has(evSchema)) continue;
+
+      if (ev.kind === "drop") {
+        // The table is gone; so is every column it had. A later CREATE repopulates it.
+        schema.delete(ev.relation);
+        likeEdges.delete(ev.relation);
+        continue;
+      }
+
+      if (!schema.has(ev.relation)) schema.set(ev.relation, new Set());
+      const colSet = schema.get(ev.relation);
+      for (const c of ev.cols) colSet.add(c);
+
+      // Record LIKE inheritance for a post-pass. It cannot be resolved inline: the source table may
+      // be created in a LATER migration file than the one that inherits from it.
+      for (const src of ev.likeSources) {
+        if (!likeEdges.has(ev.relation)) likeEdges.set(ev.relation, new Set());
+        likeEdges.get(ev.relation).add(src);
+      }
     }
 
     // ── ALTER TABLE ADD COLUMN ──────────────────────────────────────────────
@@ -204,6 +279,25 @@ export function parseMigrations(migrationsDir) {
         schema.get(relation).delete(oldCol);
         schema.get(relation).add(newCol);
       }
+    }
+  }
+
+  // ── Resolve LIKE inheritance ────────────────────────────────────────────────
+  // `CREATE TABLE a (LIKE b INCLUDING …)` copies b's columns into a. Resolved here, after every
+  // migration has been parsed, because the source may be created in a later file. Iterated to a
+  // fixed point so a chain (a LIKE b, b LIKE c) resolves fully; the visited set makes a cycle
+  // terminate instead of hanging.
+  for (const [target, sources] of likeEdges) {
+    if (!schema.has(target)) schema.set(target, new Set());
+    const targetCols = schema.get(target);
+    const seen = new Set([target]);
+    const queue = [...sources];
+    while (queue.length > 0) {
+      const src = queue.shift();
+      if (seen.has(src)) continue;
+      seen.add(src);
+      for (const c of schema.get(src) ?? []) targetCols.add(c);
+      for (const next of likeEdges.get(src) ?? []) queue.push(next);
     }
   }
 
