@@ -280,7 +280,7 @@ const LANDMINE_NOTES = new Map([
       "architecture decision as the units/equipment precedent before standard walling applies.",
   ],
   [
-    "fixed_assets.assets",
+    "fixed_assets_archived.assets",
     "Same owner/lessor dual-ownership shape as mdata.units/equipment. Needs the same architecture " +
       "decision as the units/equipment precedent before standard walling applies.",
   ],

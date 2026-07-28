@@ -1,0 +1,5 @@
+{
+  "tables": ["new_schema.widget"],
+  "indexes": ["new_schema.widget_idx"],
+  "fks": []
+}

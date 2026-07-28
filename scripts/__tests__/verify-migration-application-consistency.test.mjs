@@ -124,3 +124,16 @@ test("requires an explicit database url (no .env DATABASE_DIRECT_URL fallback)",
   assert.equal(run.status, 1);
   assert.match(run.stderr, /no database url|FRESH-migrated DB/);
 });
+
+test("ALTER SCHEMA RENAME inside DO does not hang (Map mutate-while-iterate)", () => {
+  const migrationsDir = path.resolve(fixturesRoot, "schema-rename-migrations");
+  const stateFile = path.resolve(fixturesRoot, "state-schema-rename-ok.json");
+  // Without the renameSchemaState snapshot fix this spins forever on indexes Map.
+  const run = spawnSync("node", [scriptPath, "--migrations-dir", migrationsDir, "--state-file", stateFile], {
+    encoding: "utf8",
+    timeout: 5000,
+  });
+  assert.notEqual(run.error?.code, "ETIMEDOUT", "renameSchemaState hung (Map iterate+reinsert)");
+  assert.equal(run.status, 0);
+  assert.match(run.stdout, /verify:migration-application-consistency OK/);
+});

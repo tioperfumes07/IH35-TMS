@@ -51,7 +51,10 @@ jobs:
 
   build-typecheck:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # Was 25 → 45 — money/FA PRs with full verify:pre-commit + migration replay still
+    # hit cancel at ~45m on FA-ARCHIVE (#3648) with no code failure. 75m headroom after
+    # verify-step set growth on main.
+    timeout-minutes: 75
 
     services:
       postgres:

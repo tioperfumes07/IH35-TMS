@@ -68,6 +68,10 @@ export const OPTIONAL_COA_ROLES: readonly CoaRole[] = [
   "insurance_recovery",
   "fuel_advance_recovery",
   "other_recovery",
+  // Fixed-asset defaults — TRK seeds asset+expense; accum stays unbound until owner designates.
+  "fixed_asset_default",
+  "accum_depr_default",
+  "depr_expense_default",
 ];
 
 function uniq(roles: readonly CoaRole[]): CoaRole[] {

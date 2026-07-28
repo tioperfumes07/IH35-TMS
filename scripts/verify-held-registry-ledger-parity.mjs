@@ -92,6 +92,7 @@ export const EXPECTED_HELD = [
   // 202609190000 and 202609220000 are already taken (see FLT-02 above). Leaves this list only when
   // the owner Neon-applies + ledger-backfills and GUARD re-proves the ledger row.
   "202609310000_driver_deduction_type_recovery_policy.sql",
+  // FA-ARCHIVE applied Neon 2026-07-28 — now in applied_held (removed from unapplied allowlist).
   // BANK-DOM-05 applied as 202609010010 — applied_held.
   // F9-02 applied as 202609010040 — applied_held.
   // F9-01 applied as 202609010050 — applied_held.
