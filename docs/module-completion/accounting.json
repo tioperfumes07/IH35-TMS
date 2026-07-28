@@ -72,8 +72,8 @@
       ],
       "spec": "Vendor credit apply/void",
       "status": "FAIL",
-      "evidence": "LINKAGE in progress 2026-07-28: CC bill-pay repointed off RETIRE mdata.qbo_vendors \u2192 accounting.qbo_vendors (#3710 / guard 1708). HELD backfill mig 202610121800 (this PR) for residual masters. Neon lucia: aq=2744 mq=2780 (\u0394\u224836); vendor_credits=0. Still FAIL until owner Neon-applies backfill + one live vendor credit (flags stay OFF). Other sync/push readers may still touch RETIRE mirror \u2014 dedicated wave.",
-      "pr": "#3426"
+      "evidence": "LINKAGE in progress 2026-07-28: CC bill-pay \u2192 accounting.qbo_vendors (#3710/1708); held backfill 202610121800 on main (#3712) NOT Neon-applied yet (lucia aq=2744 mq=2780 residual=36). G4 canonical-write map FLIPPED this PR: RETIRE=mdata.qbo_vendors canonical=accounting.qbo_vendors (was inverted); sync writers shrink-only exempt until repoint wave (guard 1714). vendor_credits=0. FAIL until owner Neon-apply + sync writers \u2192 accounting + live credit. Flags OFF.",
+      "pr": "#3710 #3712"
     },
     {
       "id": "ACCT-PULL-01",
@@ -438,7 +438,7 @@
         "VERIFY-3",
         "VERIFY-8"
       ],
-      "spec": "0243-g4-deploy-smoke-fixed-unit-test-owner · ACCT-F15 · G4-DEPLOY",
+      "spec": "0243-g4-deploy-smoke-fixed-unit-test-owner \u00b7 ACCT-F15 \u00b7 G4-DEPLOY",
       "status": "PASS",
       "evidence": "render.yaml ih35-tms-backend declares IH35_SMOKE_UNIT_ID + IH35_SMOKE_OPERATING_COMPANY_ID (sync:false) merged #3528; identity.users filters archived test seeds via EXCLUDE_ARCHIVED_IDENTITY_USERS_SQL; closure guard verify-acct-r04-deploy-smoke-closure (step 1704) PASS. UNVERIFIED: Render dashboard UUID values remain operator-set.",
       "pr": "#3528",
