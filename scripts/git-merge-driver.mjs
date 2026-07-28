@@ -52,7 +52,20 @@ function readJson(file) {
  * two DIFFERENT values raises a real conflict. Identical values on both sides are not a clash and
  * collapse to one.
  */
-const COLLISION_STRICT = new Set(["scripts/verify-steps/CLAIMED-NUMBERS.json"]);
+const COLLISION_STRICT = new Map([
+  // path -> the ONLY subtree where a scalar clash is a genuine collision. Everything else in these
+  // files (derived counters like total_claimed, generated_at timestamps, prose _note/_why) is
+  // SUPPOSED to differ between branches and must keep merging normally. Making the whole file strict
+  // turned `total_claimed: 765` vs `770` into a hard conflict on every rebase — a false positive
+  // worse than the treadmill it replaced.
+  ["scripts/verify-steps/CLAIMED-NUMBERS.json", "claimed"],
+]);
+
+/** True only INSIDE the strict subtree — "claimed.1662" yes, "total_claimed" no. */
+function isStrictPath(strictRoot, keyPath) {
+  if (!strictRoot) return false;
+  return keyPath === strictRoot || keyPath.startsWith(`${strictRoot}.`);
+}
 
 class ScalarClash extends Error {
   constructor(keyPath, ours, theirs) {
@@ -61,7 +74,7 @@ class ScalarClash extends Error {
   }
 }
 
-function union(ours, theirs, strict = false, keyPath = "") {
+function union(ours, theirs, strictRoot = null, keyPath = "") {
   if (Array.isArray(ours) && Array.isArray(theirs)) {
     const seen = new Set();
     const out = [];
@@ -77,12 +90,12 @@ function union(ours, theirs, strict = false, keyPath = "") {
   if (ours && theirs && typeof ours === "object" && typeof theirs === "object") {
     const out = { ...ours };
     for (const k of Object.keys(theirs)) {
-      out[k] = k in ours ? union(ours[k], theirs[k], strict, keyPath ? `${keyPath}.${k}` : k) : theirs[k];
+      out[k] = k in ours ? union(ours[k], theirs[k], strictRoot, keyPath ? `${keyPath}.${k}` : k) : theirs[k];
     }
     return out;
   }
   // Scalar (or type mismatch).
-  if (strict && ours !== undefined && theirs !== undefined && ours !== theirs) {
+  if (isStrictPath(strictRoot, keyPath) && ours !== undefined && theirs !== undefined && ours !== theirs) {
     // Two sides claimed the SAME key with DIFFERENT values. On a collision-strict path this is the
     // real race the file exists to surface — refuse to pick a winner.
     throw new ScalarClash(keyPath, ours, theirs);
@@ -93,8 +106,8 @@ function union(ours, theirs, strict = false, keyPath = "") {
 try {
   const ours = readJson(oursFile);
   const theirs = readJson(theirsFile);
-  const strict = COLLISION_STRICT.has(pathname);
-  const merged = ours === undefined ? theirs : theirs === undefined ? ours : union(ours, theirs, strict);
+  const strictRoot = COLLISION_STRICT.get(pathname) ?? null;
+  const merged = ours === undefined ? theirs : theirs === undefined ? ours : union(ours, theirs, strictRoot);
   // Preserve trailing newline convention used by the --update generators.
   fs.writeFileSync(oursFile, JSON.stringify(merged, null, 2) + "\n");
   process.exit(0);
