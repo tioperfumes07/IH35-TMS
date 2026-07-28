@@ -56,6 +56,19 @@ async function main() {
   }
 
   try {
+    // The connections table itself must exist before anything below can run. Without this check a
+    // database lacking integrations.qbo_connections makes the count below throw 42P01 and the guard
+    // CRASHES instead of skipping — which is what happened on this PR's first two CI runs. A guard
+    // that dies on an environment it does not apply to is indistinguishable from a real failure.
+    const connTable = await client.query("SELECT to_regclass('integrations.qbo_connections') IS NOT NULL AS ok");
+    if (!connTable.rows[0]?.ok) {
+      console.log(
+        `${LABEL} SKIP — integrations.qbo_connections does not exist on this database, so the ` +
+          `mirror↔connection invariant cannot be evaluated here.`
+      );
+      return;
+    }
+
     const present = [];
     for (const rel of MIRROR_TABLES) {
       const r = await client.query("SELECT to_regclass($1) IS NOT NULL AS ok", [rel]);
