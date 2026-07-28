@@ -45,6 +45,10 @@ const SELFTEST = process.argv.includes("--selftest");
 // governance decision (a file only leaves this set when GUARD re-proves it applied, or the owner
 // Neon-applies + ledger-backfills it and GUARD re-proves the ledger row).
 export const EXPECTED_HELD = [
+  // 2026-07-27 cursor-owner-neon-apply (20:15Z batch, dual-ledger proved under lucia):
+  //   202608060000, 202608110000, 202609020000, 202609030000, 202609300000 → applied_held via #3670.
+  //   202609290000 (DISP-01 latch) also applied on prod; file lands with #3663 as applied_held (not held).
+
   // SET-02 left EXPECTED_HELD 2026-07-26 after Cursor owner Neon-apply + ledger-backfill.
   // The ITEM-5a recursive demo purge (#3557). Genuinely unapplied and correctly ABSENT from prod —
   // verified absent from _system._schema_migrations on 2026-07-25. GUARD re-verifies it on a fresh
@@ -55,11 +59,8 @@ export const EXPECTED_HELD = [
   // prod, present in BOTH _system._schema_migrations and ih35_migrations.applied_migrations, so this
   // PR moves it to applied_held. It left the list the way the charter allows, not by weakening a check.
   // SAFETY FINE-GL HOP (#3551) — genuinely unapplied on prod; owner Neon-applies then ledger-backfills.
-  "202608110000_safety_civil_fine_expense_gl_hop.sql",
   "202608120000_item5a_demo_purge_recursive_cascade.sql",
-  // ACCT-R-03 account_merge_records (#3526). BUILD-AND-HOLD — not Neon-applied; must stay in held[]
-  // until owner applies 202608060000 and GUARD re-proves the ledger row.
-  "202608060000_acct_r03_catalogs_account_merge_records.sql",
+  // ACCT-R-03 account_merge_records (#3526) — Owner Neon-applied 2026-07-27T20:15Z; left held[] via #3670.
   // SAF-DOM-02 (this PR). Authored 2026-07-25 and NEVER applied anywhere — it is new on this branch,
   // so it cannot be in a prod ledger that predates it. It is not "GUARD re-proved unapplied"; it is
   // unapplied by construction. It leaves this list only when the owner Neon-applies + ledger-backfills
@@ -67,11 +68,9 @@ export const EXPECTED_HELD = [
   // must not land before SAF-B28's PATCH repoint (see the registry entry's reason).
   "202609130000_saf_dom_02_company_violation_jsonb_archive.sql",
   // SWEEP-C2 half 1 of 2 — genuinely unapplied on prod until Neon-apply.
-  "202609020000_c2_maintenance_position_history_canonical.sql",
   // SWEEP-C11 driver sub-catalog split-brain DB-level write lock.
   "202609040000_sweep_c11_driver_subcatalog_split_brain_lock.sql",
   // MNT-ECON-01
-  "202609030000_mnt_econ_01_parts_purchase_gl_hop.sql",
   // FLT-02 real-fleet ownership data fix. GUARD cross-check 2026-07-26 on br-fancy-credit-akjnd07a
   // (lucia, positive control mdata.vendors=2789): the FILE is absent from BOTH ledgers — genuinely
   // unapplied as a migration — while the DATA state it produces is already true on prod (87 of 87
