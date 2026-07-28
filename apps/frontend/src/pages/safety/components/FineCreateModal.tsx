@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createSafetyFine } from "../../../api/safety";
 import { listDrivers, listUnits } from "../../../api/mdata";
+import { createCivilFineType, listCivilFineTypes } from "../../../api/catalogs-safety";
 import { listDispatchLoads } from "../../../api/dispatch";
 import { Button } from "../../../components/Button";
 import { Combobox } from "../../../components/Combobox";
@@ -19,11 +20,32 @@ type Props = {
   onCreated: () => void;
 };
 
+/**
+ * SAF-B14 — derive a catalog code from a typed name for the inline "+ Add new". The backend enforces
+ * `^[A-Z][A-Z0-9-]+$` (shared.ts `catalogCodeSchema`); producing anything else would 400 the officer
+ * mid-ticket, so the shape is guaranteed here rather than hoped for.
+ */
+export function toCatalogCode(displayName: string): string {
+  const upper = displayName
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  const leading = upper.replace(/^[^A-Z]+/, "");
+  const base = leading || "FINE";
+  return base.length >= 2 ? base.slice(0, 60) : `${base}-TYPE`;
+}
+
 export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
   const [subjectType, setSubjectType] = useState<"driver" | "company">("driver");
   const [subjectDriverId, setSubjectDriverId] = useState<string | null>(null);
   const [issuedByAuthority, setIssuedByAuthority] = useState("DOT");
   const [jurisdiction, setJurisdiction] = useState("");
+  // SAF-B14: catalogs.civil_fine_types (57 live rows) was reachable ONLY from its own list page — no
+  // creator consumed it, so every fine was typed by hand and `safety.civil_fines.violation_code` (a
+  // column the create route has always accepted) was never populated. Free text cannot be grouped,
+  // counted, or matched to an FMCSA code, which is the whole reason the catalog exists.
+  const [civilFineTypeId, setCivilFineTypeId] = useState<string | null>(null);
   const [violationDescription, setViolationDescription] = useState("");
   const [issuedDate, setIssuedDate] = useState(companyToday());
   const [amountUsd, setAmountUsd] = useState("");
@@ -73,6 +95,52 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
     [loadsQuery.data]
   );
 
+  const civilFineTypesQuery = useQuery({
+    queryKey: ["safety", "fine-create", "civil-fine-types", operatingCompanyId],
+    queryFn: () => listCivilFineTypes(operatingCompanyId, { limit: 200, is_active: "true" }),
+    enabled: open && Boolean(operatingCompanyId),
+  });
+
+  const civilFineTypeRows = civilFineTypesQuery.data?.rows ?? [];
+
+  const civilFineTypeOptions = useMemo(
+    () =>
+      civilFineTypeRows.map((row) => ({
+        value: row.id,
+        label: row.display_name,
+        sublabel: row.code,
+      })),
+    [civilFineTypeRows]
+  );
+
+  // §7 — every reference dropdown ends with an inline "+ Add new", writing the same canonical table it
+  // reads (catalogs.civil_fine_types), so an officer facing an unlisted violation is never forced back
+  // to free text.
+  const createTypeMutation = useMutation({
+    mutationFn: (displayName: string) =>
+      createCivilFineType(operatingCompanyId, {
+        code: toCatalogCode(displayName),
+        display_name: displayName.trim(),
+        description: null,
+        metadata: {},
+        is_active: true,
+        sort_order: 0,
+      }),
+    onSuccess: async (row) => {
+      await civilFineTypesQuery.refetch();
+      applyFineType(row.id, row.display_name);
+    },
+  });
+
+  function applyFineType(id: string | null, displayNameOverride?: string) {
+    setCivilFineTypeId(id);
+    if (!id) return;
+    const label = displayNameOverride ?? civilFineTypeRows.find((row) => row.id === id)?.display_name;
+    // The catalog seeds the description; it stays editable so the officer can add the specifics of
+    // THIS ticket (mile marker, axle, reading) without losing the coded type.
+    if (label && !violationDescription.trim()) setViolationDescription(label);
+  }
+
   const driverOptions = useMemo(
     () =>
       (driversQuery.data?.drivers ?? []).map((d) => ({
@@ -89,6 +157,9 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
         subject_driver_id: subjectType === "driver" ? subjectDriverId || null : null,
         issued_by_authority: issuedByAuthority,
         jurisdiction: jurisdiction || null,
+        // SAF-B14: the coded type, not just the prose. `violation_code` has been in the create route's
+        // schema since it was written and arrived NULL on every fine because nothing sent it.
+        violation_code: civilFineTypeRows.find((row) => row.id === civilFineTypeId)?.code ?? null,
         violation_description: violationDescription,
         issued_date: issuedDate,
         amount_cents: Math.round(Number(amountUsd || 0) * 100),
@@ -173,6 +244,28 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
                 onChange={(event) => setJurisdiction(event.target.value)}
                 className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
               />
+            </div>
+            <div className="flex flex-col gap-1 md:col-span-2">
+              <label className="text-xs font-semibold text-gray-600">Violation type</label>
+              <Combobox
+                options={civilFineTypeOptions}
+                value={civilFineTypeId}
+                onChange={(value) => applyFineType(value)}
+                placeholder="Select a violation type"
+                loading={civilFineTypesQuery.isLoading || createTypeMutation.isPending}
+                allowClear
+                allowAddNew={{
+                  label: "+ Add new violation type",
+                  onAdd: (query) => {
+                    const name = query.trim();
+                    if (name) createTypeMutation.mutate(name);
+                  },
+                }}
+                dataField="civil_fine_type_id"
+              />
+              {createTypeMutation.isError ? (
+                <span className="text-[11px] text-red-600">Could not add that violation type.</span>
+              ) : null}
             </div>
             <div className="flex flex-col gap-1 md:col-span-2">
               <label className="text-xs font-semibold text-gray-600">Violation description</label>
