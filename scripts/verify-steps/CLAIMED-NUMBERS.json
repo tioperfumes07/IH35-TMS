@@ -1084,6 +1084,7 @@
     "1700": "1700-verify-acct-link-03-bill-unit-density.mjs",
     "1702": "1702-verify-money-pr-local-gate.mjs",
     "1704": "1704-verify-acct-r04-deploy-smoke-closure.mjs",
+    "1706": "1706-verify-acct-econ-05-qbo-vendor-backfill-held.mjs",
     "1708": "1708-verify-acct-econ-05-canonical-qbo-vendors.mjs",
     "1710": "1710-verify-acct-r09-bill-subnav-type-contract.mjs",
     "1712": "1712-verify-g4-deploy-smoke-requires-fixed-unit.mjs",
@@ -1101,7 +1102,7 @@
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",
   "_how_to_claim": "Pick the next free number in your band, add \"<number>\": \"<filename>\", commit it WITH the guard.",
   "generated_at": "2026-07-28T13:11:57Z",
-  "total_claimed": 799,
+  "total_claimed": 795,
   "known_duplicates_frozen": {
     "15": [
       "15-verify-accounting-autoload-coverage.mjs",
