@@ -72,7 +72,7 @@
       ],
       "spec": "Vendor credit apply/void",
       "status": "FAIL",
-      "evidence": "LINKAGE in progress 2026-07-28: CC bill-pay repointed off RETIRE mdata.qbo_vendors \u2192 accounting.qbo_vendors (guard 1708). Neon lucia: accounting.qbo_vendors=2744 mdata.qbo_vendors=2780 (\u0394\u224836); vendor_credits=0. Still FAIL until residual masters backfilled + one live vendor credit apply (flags stay OFF). Other sync/push readers may still touch RETIRE mirror \u2014 out of this PR scope.",
+      "evidence": "LINKAGE in progress 2026-07-28: CC bill-pay repointed off RETIRE mdata.qbo_vendors \u2192 accounting.qbo_vendors (#3710 / guard 1708). HELD backfill mig 202610121800 (this PR) for residual masters. Neon lucia: aq=2744 mq=2780 (\u0394\u224836); vendor_credits=0. Still FAIL until owner Neon-applies backfill + one live vendor credit (flags stay OFF). Other sync/push readers may still touch RETIRE mirror \u2014 dedicated wave.",
       "pr": "#3426"
     },
     {
