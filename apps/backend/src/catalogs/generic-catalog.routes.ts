@@ -5,6 +5,7 @@ import { getExcelUploadJob } from "./excel-uploader.js";
 import { createCatalogRoutes, type GenericCatalogConfig } from "./generic-catalog.factory.js";
 import { currentAuthUser, idParamSchema, validationError } from "./fleet/shared.js";
 
+const catalogCodeRegex = /^[A-Z][A-Z0-9_-]+$/;
 const equipmentTypeCodeRegex = /^[A-Z][A-Z0-9_-]+$/;
 
 export const fleetEquipmentTypesCatalogConfig: GenericCatalogConfig = {
@@ -118,11 +119,45 @@ export const customerQualityEventReasonsCatalogConfig: GenericCatalogConfig = {
   softDeleteColumn: "is_active",
 };
 
+/**
+ * OWNER RULING 2026-07-28 — "each of these catalogs requires a QuickBooks-style creator wizard so we
+ * can continue to edit and add these lists and catalogs." Batch 1 of that program.
+ *
+ * catalogs.lumper_providers (15 rows) had NO route at all. It already carries the canonical catalog
+ * shape (code / display_name / description / is_active / sort_order), verified against prod
+ * information_schema rather than assumed, so it needs the standard factory CRUD and nothing bespoke.
+ *
+ * additional_charges was in this batch and was REMOVED: it is already registered by
+ * catalogs/dispatch/additional-charges.routes.ts, and declaring it again made Fastify refuse to boot
+ * ("Method GET already declared"). See the PR body — my inventory had it as unrouted because that
+ * older helper declares `catalogPath`, not `urlSegment`, and my extraction only looked for the latter.
+ */
+export const dispatchLumperProvidersCatalogConfig: GenericCatalogConfig = {
+  catalogName: "dispatch.lumper_providers",
+  tableName: "lumper_providers",
+  routePrefix: "/api/v1/catalogs/dispatch",
+  urlSegment: "lumper-providers",
+  displayName: "Lumper Providers",
+  allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
+  requiredColumns: ["code", "display_name"],
+  validators: {
+    code: z.string().trim().regex(catalogCodeRegex),
+    display_name: z.string().trim().min(1).max(160),
+    description: z.string().trim().max(500).optional(),
+    is_active: z.coerce.boolean().default(true),
+    sort_order: z.coerce.number().int().min(0).max(10000).default(100),
+  },
+  searchableColumns: ["code", "display_name", "description"],
+  defaultSort: { column: "sort_order", dir: "asc" },
+  softDeleteColumn: "is_active",
+};
+
 export async function registerGenericCatalogRoutes(app: FastifyInstance) {
   createCatalogRoutes(app, fleetEquipmentTypesCatalogConfig, { mode: "extensions" });
   // LST-A-01: full CRUD — these had no write path at all before.
   createCatalogRoutes(app, dispatchErrorReasonsCatalogConfig, { mode: "all" });
   createCatalogRoutes(app, customerQualityEventReasonsCatalogConfig, { mode: "all" });
+  createCatalogRoutes(app, dispatchLumperProvidersCatalogConfig, { mode: "all" });
 
   app.get("/api/v1/catalogs/excel-upload-jobs/:id", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
