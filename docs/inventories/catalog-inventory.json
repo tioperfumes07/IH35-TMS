@@ -1,5 +1,5 @@
 {
-  "_README": "LST-ORPH-05 catalog inventory. EVERY catalogs.* base table must carry a classification: ROUTED (reachable via a registered route + hub tile), HEADLESS-BY-DESIGN (a system lookup no operator edits), or RETIRE (superseded; must never gain an editable route). UNCLASSIFIED is a DEFECT the guard fails on \u2014 a catalog nobody has ruled on is how a table quietly becomes unreachable or wrongly editable. Row counts are a 2026-07-28 prod snapshot (pg_class/pg_stat_all_tables, role-safe) and are informational only; the guard checks CLASSIFICATION, never counts.",
+  "_README": "LST-ORPH-05 catalog inventory. EVERY catalogs.* base table must carry a classification: ROUTED (reachable via a registered route + hub tile), HEADLESS-BY-DESIGN (a system lookup no operator edits), or RETIRE (superseded; must never gain an editable route). ROUTED-PENDING means the owner has ruled it an operator surface (QuickBooks-style creator wizard) but the route/creator is not built yet. UNCLASSIFIED is a DEFECT the guard fails on \u2014 a catalog nobody has ruled on is how a table quietly becomes unreachable or wrongly editable. Row counts are a 2026-07-28 prod snapshot (pg_class/pg_stat_all_tables, role-safe) and are informational only; the guard checks CLASSIFICATION, never counts.",
   "snapshot_date": "2026-07-28",
   "totals": {
     "tables": 114,
@@ -9,8 +9,8 @@
   "tables": {
     "accident_types": {
       "rows": 0,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
     },
     "account_merge_records": {
       "rows": 0,
@@ -24,8 +24,8 @@
     },
     "account_types": {
       "rows": 15,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Holds 15 rows that no operator can currently see or edit."
     },
     "accounts": {
       "rows": 1408,
@@ -34,13 +34,13 @@
     },
     "additional_charges": {
       "rows": 18,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Holds 18 rows that no operator can currently see or edit."
     },
     "air_bag_catalog": {
       "rows": 0,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
     },
     "asset_condition_codes": {
       "rows": 0,
@@ -64,8 +64,8 @@
     },
     "battery_catalog": {
       "rows": 0,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
     },
     "cancellation_reasons": {
       "rows": 9,
@@ -79,8 +79,8 @@
     },
     "cash_advance_types": {
       "rows": 0,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
     },
     "catalog_registry": {
       "rows": 8,
@@ -134,8 +134,8 @@
     },
     "def_stations": {
       "rows": 0,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
     },
     "detail_types": {
       "rows": 144,
@@ -144,13 +144,13 @@
     },
     "detention_reasons": {
       "rows": 0,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
     },
     "dispatch_flag_colors": {
       "rows": 24,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Holds 24 rows that no operator can currently see or edit."
     },
     "dispatcher_error_reasons": {
       "rows": 75,
@@ -169,13 +169,13 @@
     },
     "driver_leave_balances": {
       "rows": 0,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
     },
     "driver_load_statuses": {
       "rows": 39,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Holds 39 rows that no operator can currently see or edit."
     },
     "driver_pay_types": {
       "rows": 6,
@@ -184,8 +184,8 @@
     },
     "driver_termination_reasons": {
       "rows": 48,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Holds 48 rows that no operator can currently see or edit."
     },
     "employment_statuses": {
       "rows": 18,
@@ -194,8 +194,8 @@
     },
     "equipment_line_item_templates": {
       "rows": 42,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Holds 42 rows that no operator can currently see or edit."
     },
     "equipment_types": {
       "rows": 21,
@@ -284,8 +284,8 @@
     },
     "fuel_stations": {
       "rows": 0,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
     },
     "fuel_stop_reason_codes": {
       "rows": 0,
@@ -319,8 +319,8 @@
     },
     "labor_rates": {
       "rows": 0,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
     },
     "lease_terms": {
       "rows": 12,
@@ -329,13 +329,13 @@
     },
     "leave_policies": {
       "rows": 3,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Holds 3 rows that no operator can currently see or edit."
     },
     "leave_types": {
       "rows": 0,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
     },
     "license_classes": {
       "rows": 18,
@@ -344,23 +344,23 @@
     },
     "load_cancellation_reasons": {
       "rows": 63,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Holds 63 rows that no operator can currently see or edit."
     },
     "load_trailer_equipment": {
       "rows": 0,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
     },
     "load_types": {
       "rows": 0,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
     },
     "lumper_providers": {
       "rows": 15,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Holds 15 rows that no operator can currently see or edit."
     },
     "maintenance_failure_codes": {
       "rows": 0,
@@ -374,8 +374,8 @@
     },
     "maintenance_part_locations": {
       "rows": 123,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Holds 123 rows that no operator can currently see or edit."
     },
     "maintenance_parts": {
       "rows": 0,
@@ -419,13 +419,13 @@
     },
     "mx_customs_brokers": {
       "rows": 0,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
     },
     "parts": {
       "rows": 0,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
     },
     "pay_rate_templates": {
       "rows": 6,
@@ -449,13 +449,13 @@
     },
     "pickup_time_types": {
       "rows": 0,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
     },
     "pm_intervals": {
       "rows": 0,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
     },
     "posting_templates": {
       "rows": 0,
@@ -469,13 +469,13 @@
     },
     "relay_accounts": {
       "rows": 0,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
     },
     "repair_locations": {
       "rows": 0,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
     },
     "settlement_templates": {
       "rows": 0,
@@ -494,8 +494,8 @@
     },
     "tire_catalog": {
       "rows": 0,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
     },
     "tire_positions": {
       "rows": 0,
@@ -504,8 +504,8 @@
     },
     "toll_providers": {
       "rows": 0,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
     },
     "tractor_statuses": {
       "rows": 0,
@@ -514,8 +514,8 @@
     },
     "trailer_parts": {
       "rows": 0,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
     },
     "trailer_statuses": {
       "rows": 0,
@@ -529,8 +529,8 @@
     },
     "truck_parts": {
       "rows": 0,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
     },
     "unit_ownership_types": {
       "rows": 0,
@@ -544,18 +544,18 @@
     },
     "vendor_types": {
       "rows": 24,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Holds 24 rows that no operator can currently see or edit."
     },
     "void_cancel_reasons": {
       "rows": 18,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Holds 18 rows that no operator can currently see or edit."
     },
     "wo_cancellation_reasons": {
       "rows": 6,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Holds 6 rows that no operator can currently see or edit."
     },
     "work_order_statuses": {
       "rows": 0,
@@ -564,8 +564,8 @@
     },
     "work_order_templates": {
       "rows": 0,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
     },
     "workflow_requests": {
       "rows": 0,
@@ -574,8 +574,11 @@
     },
     "workplace_incident_types": {
       "rows": 0,
-      "classification": "UNCLASSIFIED",
-      "note": "no backend route and not yet classified \u2014 needs a routed/headless/RETIRE ruling"
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
     }
+  },
+  "owner_rulings": {
+    "2026-07-28": "Every catalog requires a QuickBooks-style creator wizard so lists and catalogs stay editable. All previously-UNCLASSIFIED tables are therefore operator surfaces (ROUTED-PENDING), not headless."
   }
 }
