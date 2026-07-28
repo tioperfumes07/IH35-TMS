@@ -6,6 +6,7 @@
 # hook then canonicalizes the schema-parity baseline via `--update` (pure static, no DB).
 docs/schema-parity-baseline.json        merge=json-union
 db/migrations/.held-migrations.json     merge=json-union
+scripts/verify-steps/CLAIMED-NUMBERS.json      merge=json-union
 scripts/entity-isolation-allowlist.json merge=json-union
 
 # CONFLICT-TREADMILL KILLER (2026-07-13): every guard/verify PR appends a `verify:*` script to
