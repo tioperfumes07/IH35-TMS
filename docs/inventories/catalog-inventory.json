@@ -34,8 +34,8 @@
     },
     "additional_charges": {
       "rows": 18,
-      "classification": "ROUTED-PENDING",
-      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Holds 18 rows that no operator can currently see or edit."
+      "classification": "ROUTED",
+      "note": "ROUTED \u2014 registered by the older dispatch catalog helper, which declares `catalogPath` rather than `urlSegment`. An earlier extraction looked only for `urlSegment` and reported this table as unrouted; corrected 2026-07-28 after a duplicate registration broke boot (CI boot smoke caught it)."
     },
     "air_bag_catalog": {
       "rows": 0,
@@ -144,8 +144,8 @@
     },
     "detention_reasons": {
       "rows": 0,
-      "classification": "ROUTED-PENDING",
-      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
+      "classification": "ROUTED",
+      "note": "ROUTED \u2014 registered by the older dispatch catalog helper, which declares `catalogPath` rather than `urlSegment`. An earlier extraction looked only for `urlSegment` and reported this table as unrouted; corrected 2026-07-28 after a duplicate registration broke boot (CI boot smoke caught it)."
     },
     "dispatch_flag_colors": {
       "rows": 24,
@@ -354,8 +354,8 @@
     },
     "load_types": {
       "rows": 0,
-      "classification": "ROUTED-PENDING",
-      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
+      "classification": "ROUTED",
+      "note": "ROUTED \u2014 registered by the older dispatch catalog helper, which declares `catalogPath` rather than `urlSegment`. An earlier extraction looked only for `urlSegment` and reported this table as unrouted; corrected 2026-07-28 after a duplicate registration broke boot (CI boot smoke caught it)."
     },
     "lumper_providers": {
       "rows": 15,
@@ -449,8 +449,8 @@
     },
     "pickup_time_types": {
       "rows": 0,
-      "classification": "ROUTED-PENDING",
-      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
+      "classification": "ROUTED",
+      "note": "ROUTED \u2014 registered by the older dispatch catalog helper, which declares `catalogPath` rather than `urlSegment`. An earlier extraction looked only for `urlSegment` and reported this table as unrouted; corrected 2026-07-28 after a duplicate registration broke boot (CI boot smoke caught it)."
     },
     "pm_intervals": {
       "rows": 0,
