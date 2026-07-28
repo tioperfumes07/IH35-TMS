@@ -773,7 +773,7 @@
       "spec": "safety.md section J boundary 14 (findings F15)",
       "status": "PASS",
       "evidence": "VERIFIED PASS 2026-07-28 \u2014 3 of 3 bound. Guard verify-safety-catalog-bound-to-creator.mjs discovers the catalog set from api/catalogs-safety.ts (6 of 6 consumed by a creator, denominator printed) and is proven RED on the real defect: reverting both bindings in the working tree exits 1 naming listCivilFineTypes, listDotViolationTypes; restore returns green. Selftest re-plants the defect into the REAL creator files and requires the catch. NEW BINDINGS: catalogs.civil_fine_types (57 live rows) -> FineCreateModal violation-type Combobox with inline +Add new writing the same canonical table it reads, now sending violation_code (accepted by fines.routes.ts:31,204,218 since it was written and NULL on every row because nothing sent it); catalogs.dot_violation_types (213 live rows, 33 hours_of_service) -> HOSViolationsTab Combobox storing the FMCSA code and rendering the name. SECOND DEFECT FOUND AND FIXED: csa_points was never sent, so every HOS violation stored 0 severity though the route has always accepted it \u2014 the catalog's severity_weight is that number. Server-side basic_category filter added because the list caps at limit=200 against 213 rows (SAF-F31 cap landmine) \u2014 client-side filtering would have hidden 13 rows silently. Live: safety.civil_fines and safety.hos_violations both n_live_tup=0 under lucia bypass, so this corrects the write path before any data accumulates.",
-      "pr": null,
+      "pr": 3690,
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
