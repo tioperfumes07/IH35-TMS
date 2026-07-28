@@ -195,8 +195,16 @@ export async function registerQboAutocompleteRoutes(app: FastifyInstance) {
       return { results: result.rows };
     };
 
-  app.get("/api/v1/mdata/qbo/vendors", factory("accounting.qbo_vendors"));
-  app.get("/api/v1/mdata/qbo/customers", factory("mdata.qbo_customers"));
-  app.get("/api/v1/mdata/qbo/items", factory("mdata.qbo_items"));
-  app.get("/api/v1/mdata/qbo/accounts", factory("mdata.qbo_accounts"));
+  // Rate limit: these four are authenticated typed-ahead endpoints that run a full-text ranked scan
+  // per keystroke. Unlimited, they are both a DoS surface and a master-data enumeration surface —
+  // an authorized-but-curious session could walk the entire vendor/customer list of an entity.
+  // The limit is opt-in per route (the plugin registers with global:false) and keyed by the real
+  // client IP, not the Cloudflare edge. 120/min matches the established read-route budget and sits
+  // well above debounced human typing.
+  const AUTOCOMPLETE_RATE_LIMIT = { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } };
+
+  app.get("/api/v1/mdata/qbo/vendors", AUTOCOMPLETE_RATE_LIMIT, factory("accounting.qbo_vendors"));
+  app.get("/api/v1/mdata/qbo/customers", AUTOCOMPLETE_RATE_LIMIT, factory("mdata.qbo_customers"));
+  app.get("/api/v1/mdata/qbo/items", AUTOCOMPLETE_RATE_LIMIT, factory("mdata.qbo_items"));
+  app.get("/api/v1/mdata/qbo/accounts", AUTOCOMPLETE_RATE_LIMIT, factory("mdata.qbo_accounts"));
 }
