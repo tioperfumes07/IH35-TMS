@@ -399,7 +399,9 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
         `
           SELECT ar.*,
                  NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
-                 u.unit_number AS unit_number
+                 u.unit_number AS unit_number,
+                 l.load_number AS load_number,
+                 v.vendor_name AS vendor_name
           FROM safety.accident_reports ar
           LEFT JOIN mdata.drivers d
             ON d.id = ar.driver_id
@@ -408,6 +410,20 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             ON u.id = ar.unit_id
            AND (u.owner_company_id = ar.operating_company_id
                 OR u.currently_leased_to_company_id = ar.operating_company_id)
+          -- SAF-B25: safety.accident_reports.load_id has FKed mdata.loads since it was created, and
+          -- the list never joined it — so an accident could not be read against the trip it happened
+          -- on. Entity-scoped like the driver join. A soft-deleted load still resolves its number:
+          -- hiding it would silently blank the linkage on exactly the historical accidents an
+          -- insurer or attorney is most likely to be reading.
+          LEFT JOIN mdata.loads l
+            ON l.id = ar.load_id
+           AND l.operating_company_id = ar.operating_company_id
+          -- Same gap on the vendor leg: the creator captures vendor_id (the tow/repair counterparty)
+          -- and the list never resolved it either, so the accident could not be read against the
+          -- party that billed for it.
+          LEFT JOIN mdata.vendors v
+            ON v.id = ar.vendor_id
+           AND v.operating_company_id = ar.operating_company_id
           WHERE ar.operating_company_id = $1
           ${unitFilter}
           ORDER BY ar.accident_at DESC
