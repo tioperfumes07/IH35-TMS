@@ -21,6 +21,7 @@
  *
  *   node scripts/verify-acct-surf-04-receive-payment.mjs
  *   node scripts/verify-acct-surf-04-receive-payment.mjs --selftest
+ *   PR body Rule 16 labels must use colon form (FIX: included) so check-pr-evidence-body PASS.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -194,3 +195,4 @@ console.log(
   `${LABEL}: PASS — ACCT-SURF-04 Receive Payment structural DoD (route+ParityDrawer+payload+canonical accounting.payments+EntityLink customer/invoice/account). payment_applications=0 (header-only QBO AR projection) remains a NAMED gap, not asserted here. Live browser still UNVERIFIED`
 );
 process.exit(0);
+
