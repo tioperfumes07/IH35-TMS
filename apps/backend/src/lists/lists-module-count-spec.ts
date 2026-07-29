@@ -17,6 +17,11 @@ export type ModuleCountTableSpec = {
 /** Live catalog tables per LISTS hub domain — default list filter (active only, no search). */
 export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = {
   safety: [
+    // LST-F20: wired catalogs that no badge counted. Shapes prod-verified 2026-07-29
+    // (information_schema): every one carries operating_company_id; activeFilter reflects whether
+    // the table actually has is_active.
+    { table: "accident_types", activeFilter: "is_active", companyScoped: true },
+    { table: "workplace_incident_types", activeFilter: "is_active", companyScoped: true },
     { table: "internal_fine_reasons", activeFilter: "is_active", companyScoped: true },
     { table: "civil_fine_types", activeFilter: "is_active", companyScoped: true },
     { table: "company_violation_types", activeFilter: "is_active", companyScoped: true },
@@ -28,6 +33,13 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
     { table: "cargo_claim_reasons", activeFilter: "is_active", companyScoped: true },
   ],
   dispatch: [
+    // LST-F20: wired catalogs that no badge counted. Shapes prod-verified 2026-07-29
+    // (information_schema): every one carries operating_company_id; activeFilter reflects whether
+    // the table actually has is_active.
+    { table: "dispatch_flag_colors", activeFilter: "is_active", companyScoped: true },
+    { table: "load_trailer_equipment", activeFilter: "is_active", companyScoped: true },
+    { table: "lumper_providers", activeFilter: "is_active", companyScoped: true },
+    { table: "mx_customs_brokers", activeFilter: "is_active", companyScoped: true },
     { table: "load_types", activeFilter: "is_active", companyScoped: true },
     { table: "detention_reasons", activeFilter: "is_active", companyScoped: true },
     { table: "pickup_time_types", activeFilter: "is_active", companyScoped: true },
@@ -42,6 +54,13 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
     { table: "customer_quality_event_reasons", activeFilter: "is_active", companyScoped: true },
   ],
   drivers: [
+    // LST-F20: wired catalogs that no badge counted. Shapes prod-verified 2026-07-29
+    // (information_schema): every one carries operating_company_id; activeFilter reflects whether
+    // the table actually has is_active.
+    { table: "cash_advance_types", activeFilter: "is_active", companyScoped: true },
+    { table: "leave_types", activeFilter: "is_active", companyScoped: true },
+    { table: "driver_leave_balances", activeFilter: "none", companyScoped: true },
+    { table: "leave_policies", activeFilter: "none", companyScoped: true },
     { table: "pay_rate_templates", activeFilter: "is_active", companyScoped: true },
     { table: "driver_deduction_types", activeFilter: "is_active", companyScoped: true },
     { table: "driver_pay_types", activeFilter: "is_active", companyScoped: true },
@@ -58,6 +77,21 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
     { table: "driver_load_statuses", activeFilter: "is_active", companyScoped: true },
   ],
   maintenance: [
+    // LST-F20: wired catalogs that no badge counted. Shapes prod-verified 2026-07-29
+    // (information_schema): every one carries operating_company_id; activeFilter reflects whether
+    // the table actually has is_active.
+    { table: "air_bag_catalog", activeFilter: "is_active", companyScoped: true },
+    { table: "battery_catalog", activeFilter: "is_active", companyScoped: true },
+    { table: "labor_rates", activeFilter: "is_active", companyScoped: true },
+    { table: "maintenance_part_locations", activeFilter: "is_active", companyScoped: true },
+    { table: "parts", activeFilter: "is_active", companyScoped: true },
+    { table: "pm_intervals", activeFilter: "is_active", companyScoped: true },
+    { table: "repair_locations", activeFilter: "is_active", companyScoped: true },
+    { table: "tire_catalog", activeFilter: "is_active", companyScoped: true },
+    { table: "trailer_parts", activeFilter: "is_active", companyScoped: true },
+    { table: "truck_parts", activeFilter: "is_active", companyScoped: true },
+    { table: "work_order_templates", activeFilter: "is_active", companyScoped: true },
+    { table: "equipment_line_item_templates", activeFilter: "is_active", companyScoped: true },
     { table: "maintenance_failure_codes", activeFilter: "is_active", companyScoped: true },
     { table: "maintenance_labor_codes", activeFilter: "is_active", companyScoped: true },
     { table: "maintenance_parts", activeFilter: "is_active", companyScoped: true },
@@ -69,6 +103,13 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
     { table: "work_order_statuses", activeFilter: "is_active", companyScoped: true },
   ],
   fuel: [
+    // LST-F20: wired catalogs that no badge counted. Shapes prod-verified 2026-07-29
+    // (information_schema): every one carries operating_company_id; activeFilter reflects whether
+    // the table actually has is_active.
+    { table: "def_stations", activeFilter: "is_active", companyScoped: true },
+    { table: "fuel_stations", activeFilter: "is_active", companyScoped: true },
+    { table: "relay_accounts", activeFilter: "is_active", companyScoped: true },
+    { table: "toll_providers", activeFilter: "is_active", companyScoped: true },
     { table: "fuel_card_types", activeFilter: "is_active", companyScoped: true },
     { table: "fuel_exception_types", activeFilter: "is_active", companyScoped: true },
     { table: "fuel_station_brands", activeFilter: "is_active", companyScoped: true },
@@ -140,6 +181,11 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
   // operating_company_id and deactivated_at, and 4 brokers exist — so the badge was understating by 4
   // and structurally could never move.
   names_master: [
+    // LST-F20: wired catalogs that no badge counted. Shapes prod-verified 2026-07-29
+    // (information_schema): every one carries operating_company_id; activeFilter reflects whether
+    // the table actually has is_active.
+    { table: "customer_types", activeFilter: "is_active", companyScoped: true },
+    { table: "vendor_types", activeFilter: "is_active", companyScoped: true },
     {
       schema: "mdata",
       table: "customers",
