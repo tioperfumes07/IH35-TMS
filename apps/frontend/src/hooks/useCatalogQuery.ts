@@ -677,6 +677,117 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     ],
     defaultSort: { column: "sort_order", dir: "asc" },
   },
+  // LST-WIRE-09 — CoA lookups plus the READ-ONLY audit event taxonomy.
+  "accounting.account_types": {
+    catalogName: "accounting.account_types",
+    displayName: "Account Types",
+    domain: "accounting",
+    catalogKey: "account-types-lookup",
+    columns: [
+      { key: "code", label: "Code", sortable: true, filterable: true },
+      { key: "display_name", label: "Type", sortable: true, filterable: true },
+    ],
+    fields: [
+      { key: "code", label: "Code", type: "text", required: true, readOnlyOnEdit: true },
+      { key: "display_name", label: "Type", type: "text", required: true },
+    ],
+    defaultSort: { column: "code", dir: "asc" },
+  },
+  "accounting.detail_types": {
+    catalogName: "accounting.detail_types",
+    displayName: "Detail Types",
+    domain: "accounting",
+    catalogKey: "detail-types-lookup",
+    columns: [
+      { key: "code", label: "Code", sortable: true, filterable: true },
+      { key: "display_name", label: "Detail Type", sortable: true, filterable: true },
+    ],
+    fields: [
+      { key: "code", label: "Code", type: "text", required: true, readOnlyOnEdit: true },
+      { key: "display_name", label: "Detail Type", type: "text", required: true },
+    ],
+    defaultSort: { column: "code", dir: "asc" },
+  },
+  "audit.audit_event_types": {
+    catalogName: "audit.audit_event_types",
+    displayName: "Audit Event Types",
+    domain: "accounting",
+    catalogKey: "audit-event-types",
+    columns: [
+      { key: "code", label: "Code", sortable: true, filterable: true },
+      { key: "display_name", label: "Event", sortable: true, filterable: true },
+    ],
+    fields: [
+      { key: "code", label: "Code", type: "text", required: true, readOnlyOnEdit: true },
+      { key: "display_name", label: "Event", type: "text", required: true },
+    ],
+    defaultSort: { column: "code", dir: "asc" },
+  },
+  // LST-WIRE-07/08 — customer types, termination reasons, and two alias-served maintenance catalogs.
+  "maintenance.labor_rates": {
+    catalogName: "maintenance.labor_rates",
+    displayName: "Labor Rates",
+    domain: "maintenance",
+    catalogKey: "labor-rates",
+    columns: [
+      { key: "code", label: "Code", sortable: true, filterable: true },
+      { key: "display_name", label: "Rate", sortable: true, filterable: true },
+      { key: "is_active", label: "Status", sortable: true, filterable: false },
+    ],
+    fields: [
+      { key: "code", label: "Code", type: "text", required: true, readOnlyOnEdit: true },
+      { key: "display_name", label: "Rate", type: "text", required: true },
+    ],
+    defaultSort: { column: "code", dir: "asc" },
+  },
+  "maintenance.maintenance_part_locations": {
+    catalogName: "maintenance.maintenance_part_locations",
+    displayName: "Part Locations",
+    domain: "maintenance",
+    catalogKey: "part-locations",
+    columns: [
+      { key: "code", label: "Code", sortable: true, filterable: true },
+      { key: "display_name", label: "Location", sortable: true, filterable: true },
+      { key: "is_active", label: "Status", sortable: true, filterable: false },
+    ],
+    fields: [
+      { key: "code", label: "Code", type: "text", required: true, readOnlyOnEdit: true },
+      { key: "display_name", label: "Location", type: "text", required: true },
+    ],
+    defaultSort: { column: "code", dir: "asc" },
+  },
+  "driver.driver_termination_reasons": {
+    catalogName: "driver.driver_termination_reasons",
+    displayName: "Termination Reasons",
+    domain: "driver",
+    catalogKey: "termination-reasons",
+    columns: [
+      { key: "code", label: "Code", sortable: true, filterable: true },
+      { key: "display_name", label: "Reason", sortable: true, filterable: true },
+      { key: "is_active", label: "Status", sortable: true, filterable: false },
+    ],
+    fields: [
+      { key: "code", label: "Code", type: "text", required: true, readOnlyOnEdit: true },
+      { key: "display_name", label: "Reason", type: "text", required: true },
+    ],
+    defaultSort: { column: "code", dir: "asc" },
+  },
+  "customers.customer_types": {
+    catalogName: "customers.customer_types",
+    displayName: "Customer Types",
+    domain: "customers",
+    catalogKey: "customer-types",
+    columns: [
+      { key: "code", label: "Code", sortable: true, filterable: true },
+      { key: "display_name", label: "Customer Type", sortable: true, filterable: true },
+      { key: "is_active", label: "Status", sortable: true, filterable: false },
+    ],
+    fields: [
+      { key: "code", label: "Code", type: "text", required: true, readOnlyOnEdit: true },
+      { key: "display_name", label: "Customer Type", type: "text", required: true },
+    ],
+    defaultSort: { column: "code", dir: "asc" },
+  },
   // LST-WIRE-06 — seven catalogs whose backend routes are registered with `catalogPath` rather than
   // `urlSegment`. The completeness gate could not see that spelling, so it reported them as wired when
   // their pages could not resolve. Frontend registry entries only; no accounting.* code or migration.

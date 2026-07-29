@@ -23,6 +23,6 @@ describe("maintenance nav count reconcile (B24)", () => {
 
   it("tracks ten live lists maintenance catalogs", () => {
     // LST-WIRE-03 — 10 → 18: eight previously unrouted maintenance catalogs are now wired.
-    expect(MAINTENANCE_LISTS_CATALOG_COUNT).toBe(18);
+    expect(MAINTENANCE_LISTS_CATALOG_COUNT).toBe(20);
   });
 });

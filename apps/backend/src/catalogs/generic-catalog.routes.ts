@@ -563,6 +563,179 @@ export const vendorTypesCatalogConfig: GenericCatalogConfig = {
   softDeleteColumn: "is_active",
 };
 
+/**
+ * LST-WIRE-08 — two maintenance catalogs served through COLUMN ALIASES rather than a shape migration.
+ *
+ * catalogs.labor_rates uses rate_code/rate_name (+ rate_per_hour, is_internal);
+ * catalogs.maintenance_part_locations uses location_code/location_name (+ applies_to, category,
+ * display_order, 123 live rows). Both already have a code, a name, is_active and entity scoping —
+ * they were never "shape-incomplete", they are domain-named.
+ *
+ * The work order's default remedy for these was an additive migration adding code/display_name and
+ * backfilling. That was rejected on evidence: it would store the same fact in two columns and let them
+ * drift, which is exactly the split-brain that forced catalogs.vendor_types to carry a both-way sync
+ * trigger. One physical column stays the truth; the factory maps it.
+ */
+export const laborRatesCatalogConfig: GenericCatalogConfig = {
+  catalogName: "maintenance.labor_rates",
+  tableName: "labor_rates",
+  routePrefix: "/api/v1/catalogs/maintenance",
+  urlSegment: "labor-rates",
+  displayName: "Labor Rates",
+  codeColumn: "rate_code",
+  displayNameColumn: "rate_name",
+  allowedColumns: ["code", "display_name", "is_active"],
+  requiredColumns: ["code", "display_name"],
+  validators: {
+    code: z.string().trim().regex(wireCodeRegex),
+    display_name: z.string().trim().min(1).max(160),
+    is_active: z.coerce.boolean().default(true),
+  },
+  searchableColumns: ["rate_code", "rate_name"],
+  defaultSort: { column: "code", dir: "asc" },
+  softDeleteColumn: "is_active",
+};
+
+export const maintenancePartLocationsCatalogConfig: GenericCatalogConfig = {
+  catalogName: "maintenance.maintenance_part_locations",
+  tableName: "maintenance_part_locations",
+  routePrefix: "/api/v1/catalogs/maintenance",
+  urlSegment: "part-locations",
+  displayName: "Part Locations",
+  codeColumn: "location_code",
+  displayNameColumn: "location_name",
+  allowedColumns: ["code", "display_name", "is_active"],
+  requiredColumns: ["code", "display_name"],
+  validators: {
+    code: z.string().trim().regex(wireCodeRegex),
+    display_name: z.string().trim().min(1).max(160),
+    is_active: z.coerce.boolean().default(true),
+  },
+  searchableColumns: ["location_code", "location_name"],
+  defaultSort: { column: "code", dir: "asc" },
+  softDeleteColumn: "is_active",
+};
+
+/** LST-WIRE-08 — driver termination reasons: `label` shape (no display_name/sort_order), served via alias. */
+export const driverTerminationReasonsCatalogConfig: GenericCatalogConfig = {
+  catalogName: "driver.driver_termination_reasons",
+  tableName: "driver_termination_reasons",
+  routePrefix: "/api/v1/catalogs/driver",
+  urlSegment: "termination-reasons",
+  displayName: "Termination Reasons",
+  displayNameColumn: "label",
+  allowedColumns: ["code", "display_name", "description", "is_active"],
+  requiredColumns: ["code", "display_name"],
+  validators: {
+    code: z.string().trim().regex(wireCodeRegex),
+    display_name: z.string().trim().min(1).max(160),
+    description: z.string().trim().max(500).optional(),
+    is_active: z.coerce.boolean().default(true),
+  },
+  searchableColumns: ["code", "label", "description"],
+  defaultSort: { column: "code", dir: "asc" },
+  softDeleteColumn: "is_active",
+};
+
+/** LST-WIRE-07 — customer types (QuickBooks Customer Type), canonical shape from creation. */
+export const customerTypesCatalogConfig: GenericCatalogConfig = {
+  catalogName: "customers.customer_types",
+  tableName: "customer_types",
+  routePrefix: "/api/v1/catalogs/customers",
+  urlSegment: "customer-types",
+  displayName: "Customer Types",
+  allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
+  requiredColumns: ["code", "display_name"],
+  validators: {
+    code: z.string().trim().regex(wireCodeRegex),
+    display_name: z.string().trim().min(1).max(160),
+    description: z.string().trim().max(500).optional(),
+    is_active: z.coerce.boolean().default(true),
+    sort_order: z.coerce.number().int().min(0).max(10000).default(100),
+  },
+  searchableColumns: ["code", "display_name", "description"],
+  defaultSort: { column: "sort_order", dir: "asc" },
+  softDeleteColumn: "is_active",
+};
+
+/** LST-WIRE-09 — global CoA account-type lookup (no operating_company_id; `name` shape). */
+export const accountTypesCatalogConfig: GenericCatalogConfig = {
+  catalogName: "accounting.account_types",
+  tableName: "account_types",
+  routePrefix: "/api/v1/catalogs/accounting",
+  urlSegment: "account-types-lookup",
+  displayName: "Account Types",
+  displayNameColumn: "name",
+  allowedColumns: ["code", "display_name", "is_active", "sort_order"],
+  requiredColumns: ["code", "display_name"],
+  validators: {
+    code: z.string().trim().regex(wireCodeRegex),
+    display_name: z.string().trim().min(1).max(160),
+    is_active: z.coerce.boolean().default(true),
+    sort_order: z.coerce.number().int().min(0).max(10000).default(100),
+  },
+  searchableColumns: ["code", "name"],
+  defaultSort: { column: "sort_order", dir: "asc" },
+  softDeleteColumn: "is_active",
+};
+
+/** LST-WIRE-09 — CoA detail types (entity-scoped, `name` shape). */
+export const detailTypesCatalogConfig: GenericCatalogConfig = {
+  catalogName: "accounting.detail_types",
+  tableName: "detail_types",
+  routePrefix: "/api/v1/catalogs/accounting",
+  urlSegment: "detail-types-lookup",
+  displayName: "Detail Types",
+  displayNameColumn: "name",
+  allowedColumns: ["code", "display_name", "is_active", "sort_order"],
+  requiredColumns: ["code", "display_name"],
+  validators: {
+    code: z.string().trim().regex(wireCodeRegex),
+    display_name: z.string().trim().min(1).max(160),
+    is_active: z.coerce.boolean().default(true),
+    sort_order: z.coerce.number().int().min(0).max(10000).default(100),
+  },
+  searchableColumns: ["code", "name"],
+  defaultSort: { column: "sort_order", dir: "asc" },
+  softDeleteColumn: "is_active",
+};
+
+/**
+ * LST-WIRE-09 — audit event types: VISIBLE, NOT EDITABLE.
+ *
+ * The wiring map's remedy for this table was "add code/display_name". That is rejected on
+ * audit-integrity grounds, and the alternative here is strictly better because it needs no schema
+ * change at all.
+ *
+ * catalogs.audit_event_types is the taxonomy the audit trail itself is written against: code,
+ * description, severity_default, 13 rows, NO is_active and NO operating_company_id. Every value is
+ * emitted by application code. If an operator could rename or retire one, historical audit rows would
+ * point at a label that no longer means what it meant when written — and the table has no is_active,
+ * so a "retire" could only be a DELETE, which is void-not-delete's exact prohibition. No serious system
+ * lets a user edit its own audit taxonomy; an auditor reading this table must see what the code emits.
+ *
+ * So it is registered READ-ONLY: the operator can see and search the full taxonomy (transparency),
+ * writes return 405 (integrity). `description` serves as the display name via the alias.
+ */
+export const auditEventTypesCatalogConfig: GenericCatalogConfig = {
+  catalogName: "audit.audit_event_types",
+  tableName: "audit_event_types",
+  routePrefix: "/api/v1/catalogs/accounting",
+  urlSegment: "audit-event-types",
+  displayName: "Audit Event Types",
+  displayNameColumn: "description",
+  readOnly: true,
+  allowedColumns: ["code", "display_name"],
+  requiredColumns: ["code", "display_name"],
+  validators: {
+    code: z.string().trim().regex(wireCodeRegex),
+    display_name: z.string().trim().min(1).max(300),
+  },
+  searchableColumns: ["code", "description"],
+  defaultSort: { column: "code", dir: "asc" },
+  softDeleteColumn: "code",
+};
+
 export async function registerGenericCatalogRoutes(app: FastifyInstance) {
   createCatalogRoutes(app, fleetEquipmentTypesCatalogConfig, { mode: "extensions" });
   // LST-A-01: full CRUD — these had no write path at all before.
@@ -570,6 +743,14 @@ export async function registerGenericCatalogRoutes(app: FastifyInstance) {
   createCatalogRoutes(app, customerQualityEventReasonsCatalogConfig, { mode: "all" });
   createCatalogRoutes(app, dispatchLumperProvidersCatalogConfig, { mode: "all" });
 
+  createCatalogRoutes(app, accountTypesCatalogConfig, { mode: "all" });
+  createCatalogRoutes(app, detailTypesCatalogConfig, { mode: "all" });
+  createCatalogRoutes(app, auditEventTypesCatalogConfig, { mode: "all" });
+  createCatalogRoutes(app, driverTerminationReasonsCatalogConfig, { mode: "all" });
+  createCatalogRoutes(app, customerTypesCatalogConfig, { mode: "all" });
+  // LST-WIRE-08 — alias-served maintenance catalogs.
+  createCatalogRoutes(app, laborRatesCatalogConfig, { mode: "all" });
+  createCatalogRoutes(app, maintenancePartLocationsCatalogConfig, { mode: "all" });
   // LST-WIRE-04 — vendor types: was a hardcoded TS union; now operator-managed.
   createCatalogRoutes(app, vendorTypesCatalogConfig, { mode: "all" });
 

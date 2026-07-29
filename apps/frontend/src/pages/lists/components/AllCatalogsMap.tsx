@@ -58,6 +58,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
     label: "Drivers",
     pillClass: "bg-slate-100 text-slate-700",
     catalogs: [
+      { name: "Termination Reasons", description: "Driver separation reason codes", live: true, catalogKey: "termination-reasons" },
       { name: "Cash Advance Types", description: "Driver cash advance categories", live: true, catalogKey: "cash-advance-types" },
       { name: "CDL Endorsements", description: "Commercial licence endorsement codes", live: true, catalogKey: "endorsements" },
       { name: "CDL Restrictions", description: "Commercial licence restriction codes", live: true, catalogKey: "restrictions" },
@@ -86,6 +87,8 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
     label: "Maintenance",
     pillClass: "bg-slate-100 text-slate-700",
     catalogs: [
+      { name: "Labor Rates", description: "Billable and internal labor rate codes", live: true, catalogKey: "labor-rates" },
+      { name: "Part Locations", description: "Where parts are stored or fitted", live: true, catalogKey: "part-locations" },
       { name: "Air Bag Catalog", description: "Air bag part reference", live: true, catalogKey: "air-bag-catalog" },
       { name: "Battery Catalog", description: "Battery part reference", live: true, catalogKey: "battery-catalog" },
       { name: "PM Intervals", description: "Preventive maintenance interval definitions", live: true, catalogKey: "pm-intervals" },
@@ -151,6 +154,9 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
     label: "Accounting",
     pillClass: "bg-slate-200 text-slate-800",
     catalogs: [
+      { name: "Account Types", description: "Chart-of-accounts type lookup", live: true, catalogKey: "account-types-lookup" },
+      { name: "Detail Types", description: "Chart-of-accounts detail-type lookup", live: true, catalogKey: "detail-types-lookup" },
+      { name: "Audit Event Types", description: "Audit taxonomy — read-only by design", live: true, catalogKey: "audit-event-types" },
       { name: "Chart of Accounts", description: "GL account catalog and hierarchy", live: true, catalogKey: "chart-of-accounts" },
       { name: "Account Type", description: "Fixed account-type taxonomy (read-only reference)", live: true, catalogKey: "account-types" },
       { name: "Detail Type", description: "Account-type sub-classifications: canonical system set + per-entity custom", live: true, catalogKey: "detail-types" },
@@ -177,6 +183,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
     label: "Customers",
     pillClass: "bg-slate-100 text-slate-700",
     catalogs: [
+      { name: "Customer Types", description: "QuickBooks-style customer classification", live: true, catalogKey: "customer-types" },
       { name: "Customer Quality Event Reasons", description: "Customer service-quality event reason codes", live: true, catalogKey: "customer-quality-event-reasons" },
     ],
   },
