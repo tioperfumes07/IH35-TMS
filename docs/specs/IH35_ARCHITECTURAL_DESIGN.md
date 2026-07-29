@@ -45,7 +45,7 @@ Every page renders inside a 3-zone shell:
 | Zone | Contents | Always Visible |
 |------|----------|----------------|
 | **Top bar** | "IH 35 DISPATCH" wordmark · Integration status pills (QuickBooks · Samsara · Relay) · Operating Company switcher (IH 35 Trucking LLC / IH 35 Transportation LLC / USMCA Freight Solutions) · Live date+time CT · User dropdown (login email · settings · logout) | Yes |
-| **Left sidebar** | 19 module icons + labels (locked order in `apps/frontend/src/components/layout/sidebar-config.ts`): HOME · MAINT · DISPATCH · SAFETY · ACCTG · BANK · FACT · PAY · CUSTOMERS · VENDORS · LISTS · REPORTS · LEGAL · DOCS · ELD · 425C · DRV APP · USERS · HELP — FUEL and DRIVERS live under BANK / DISPATCH flyouts, not top-level | Yes (collapsed icons on narrow viewport) |
+| **Left sidebar** | Module icons + labels in locked order. **SOURCE OF TRUTH = `SIDEBAR_ITEM_IDS` in `apps/frontend/src/components/layout/sidebar-config.ts`, enforced by `scripts/verify-sidebar-contract.mjs`. Read the array — never a count written in prose, including anywhere in this document.** The prose count here previously read "19 module icons" while the array held **30** ids and the contract guard passed 30/30; the list had grown by eleven (TASKS, DRIVER HUB, COMPLIANCE, FLEET, INSURANCE, CASH FLOW, SETTLEMENTS, FINANCE HUB, INVENTORY, PROGRAM, SYSTEM) without the sentence being updated. Render count is role-dependent and is not the array length. | Yes (collapsed icons on narrow viewport) |
 | **Main work area** | Module-specific header (page title + subtitle + primary action button) → sub-nav tabs → KPI row → main content (table / kanban / drawer / cards) | Yes |
 
 **Operating company switcher** — every module respects RLS scoped to selected operating company. Default = IH 35 Transportation LLC (the active Ch.11 DIP carrier).
@@ -540,7 +540,21 @@ Active Customers · Open Loads · MTD Revenue · AR Total · Disputes Open
 ### Top action button
 **+ Book Load**
 
-### Sub-nav tabs (10 — locked design)
+### Sub-nav tabs — SOURCE OF TRUTH = `apps/frontend/src/components/dispatch/DispatchSubnav.tsx`
+
+> **Do not trust a count in this heading.** It previously read "(10 — locked design)" directly above a
+> table listing **13** rows, while the shipped grouped sub-nav renders **24** labelled entries. Three
+> different numbers for one module, none of them enforced by a guard — `verify-dispatch-arch-tab-parity`
+> only asserts three specific tabs (At-Risk, In-Transit Issues, Assignment History), never a total.
+>
+> The table below is the **pre-redesign** flat list and is kept as historical record (archive, never
+> delete — Rule 07). The current design is the additive **"Dispatch (2026-06-08 update)"** section later
+> in this document — Overview · Load Board · List · Table · Assignment · Round Trips · Queues · Planners ·
+> Settlements · Factoring — which the shipped grouped nav follows. The two were never reconciled when the
+> redesign landed; this note reconciles them without discarding either.
+>
+> Note also that the historical table lists both **Dispatch Settings** and **Settings** as separate rows
+> with overlapping described purpose — an artifact of the same un-reconciled edit.
 
 | Tab | What it shows | Phase |
 |-----|---------------|-------|
