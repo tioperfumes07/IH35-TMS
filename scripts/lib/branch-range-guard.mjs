@@ -35,6 +35,7 @@ import { execSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { gitChildEnv } from "../trusted-git-environment.mjs";
 
 /** Tried in order; the first ref that EXISTS is the base, whether or not it shares history. */
 export const BASE_REF_CANDIDATES = ["origin/main", "main"];
@@ -48,9 +49,24 @@ export const RANGE_CODES = {
   RANGE_OK: "RANGE_OK",
 };
 
+/**
+ * git's own env overrides beat `cwd:`. A pre-push/pre-commit hook is INVOKED BY git, which exports
+ * GIT_DIR (and in a worktree GIT_COMMON_DIR / GIT_INDEX_FILE) into the hook's environment. A child
+ * `git` then ignores the directory we asked for and operates on the repo being pushed, with the
+ * requested cwd as its work tree. Measured 2026-07-28: the selftest below built its fixture in an
+ * empty temp dir under a hook, so `git add -A` saw an empty work tree, staged the deletion of all
+ * 12,014 tracked files, and committed it over the branch as "c0" — the branch had to be rebuilt.
+ * Stripping these makes every child resolve the repo by discovery from `cwd`, which is what each
+ * call site already means, and is a no-op outside a hook.
+ */
 function git(args, cwd) {
   try {
-    return execSync(`git ${args}`, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+    return execSync(`git ${args}`, {
+      cwd,
+      env: gitChildEnv(),
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
   } catch {
     return "";
   }
@@ -173,14 +189,17 @@ export function resolveGatedRange(label, cwd = process.cwd()) {
 
 const GIT_ID = `-c user.email=guard@example.invalid -c user.name=guard -c commit.gpgsign=false -c core.hooksPath=/dev/null`;
 
+/** Every fixture command goes through gitChildEnv() so a hook's GIT_DIR can never redirect it (see above). */
+const fixtureGit = (cmd, cwd) => execSync(cmd, { cwd, env: gitChildEnv(), stdio: "ignore" });
+
 function mkOriginRepo(root, commits = 3) {
   const origin = path.join(root, "origin");
   fs.mkdirSync(origin, { recursive: true });
-  execSync(`git init -q ${origin}`, { stdio: "ignore" });
-  execSync(`git symbolic-ref HEAD refs/heads/main`, { cwd: origin, stdio: "ignore" });
+  fixtureGit(`git init -q ${origin}`);
+  fixtureGit(`git symbolic-ref HEAD refs/heads/main`, origin);
   for (let i = 0; i < commits; i++) {
     fs.writeFileSync(path.join(origin, `f${i}.txt`), `${i}\n`);
-    execSync(`git add -A && git ${GIT_ID} commit -q -m "c${i}"`, { cwd: origin, stdio: "ignore" });
+    fixtureGit(`git add -A && git ${GIT_ID} commit -q -m "c${i}"`, origin);
   }
   return origin;
 }
@@ -217,7 +236,7 @@ export function selftestBranchRangeGuard() {
 
     // arm A — a genuinely SHALLOW clone (`--depth=1`) must be refused, not passed.
     const shallowDir = path.join(tmp, "shallow");
-    execSync(`git clone -q --depth=1 file://${origin} ${shallowDir}`, { stdio: "ignore" });
+    fixtureGit(`git clone -q --depth=1 file://${origin} ${shallowDir}`);
     const shallowFacts = collectGitFacts(shallowDir);
     if (!shallowFacts.shallow) {
       failures.push("real/shallow: `git clone --depth=1` was not detected as shallow — the fixture is wrong, not git");
@@ -229,10 +248,10 @@ export function selftestBranchRangeGuard() {
 
     // arm B — full clone, real feature branch with a real commit: still PASSES (coverage not lost).
     const fullDir = path.join(tmp, "full");
-    execSync(`git clone -q file://${origin} ${fullDir}`, { stdio: "ignore" });
-    execSync(`git checkout -q -b feature`, { cwd: fullDir, stdio: "ignore" });
+    fixtureGit(`git clone -q file://${origin} ${fullDir}`);
+    fixtureGit(`git checkout -q -b feature`, fullDir);
     fs.writeFileSync(path.join(fullDir, "new.txt"), "x\n");
-    execSync(`git add -A && git ${GIT_ID} commit -q -m "feature commit"`, { cwd: fullDir, stdio: "ignore" });
+    fixtureGit(`git add -A && git ${GIT_ID} commit -q -m "feature commit"`, fullDir);
     const fullFacts = collectGitFacts(fullDir);
     const fullShas = rangeCommitShas(fullFacts, fullDir);
     const fullVerdict = classifyCommitRange({ ...fullFacts, commitCount: fullShas.length });
@@ -244,11 +263,11 @@ export function selftestBranchRangeGuard() {
 
     // arm C — orphan branch: no merge-base at all. Explicitly NOT a legitimate zero.
     const orphanDir = path.join(tmp, "orphan");
-    execSync(`git clone -q file://${origin} ${orphanDir}`, { stdio: "ignore" });
-    execSync(`git checkout -q --orphan lonely`, { cwd: orphanDir, stdio: "ignore" });
-    execSync(`git rm -rq --cached . || true`, { cwd: orphanDir, stdio: "ignore" });
+    fixtureGit(`git clone -q file://${origin} ${orphanDir}`);
+    fixtureGit(`git checkout -q --orphan lonely`, orphanDir);
+    fixtureGit(`git rm -rq --cached . || true`, orphanDir);
     fs.writeFileSync(path.join(orphanDir, "solo.txt"), "solo\n");
-    execSync(`git add -A && git ${GIT_ID} commit -q -m "orphan root"`, { cwd: orphanDir, stdio: "ignore" });
+    fixtureGit(`git add -A && git ${GIT_ID} commit -q -m "orphan root"`, orphanDir);
     const orphanFacts = collectGitFacts(orphanDir);
     const orphanVerdict = classifyCommitRange({ ...orphanFacts, commitCount: rangeCommitShas(orphanFacts, orphanDir).length });
     if (orphanVerdict.code !== RANGE_CODES.NO_MERGE_BASE || !orphanVerdict.fatal) {
@@ -258,11 +277,41 @@ export function selftestBranchRangeGuard() {
     // arm D — sitting ON the base branch (post-merge main run): the one legitimate zero, and it must
     // still PASS or every push to main goes red.
     const onMainDir = path.join(tmp, "onmain");
-    execSync(`git clone -q file://${origin} ${onMainDir}`, { stdio: "ignore" });
+    fixtureGit(`git clone -q file://${origin} ${onMainDir}`);
     const mainFacts = collectGitFacts(onMainDir);
     const mainVerdict = classifyCommitRange({ ...mainFacts, commitCount: rangeCommitShas(mainFacts, onMainDir).length });
     if (mainVerdict.code !== RANGE_CODES.LEGITIMATE_ZERO || mainVerdict.fatal) {
       failures.push(`real/on-base: a post-merge main checkout was refused (code=${mainVerdict.code}) — that would red every push to main`);
+    }
+
+    // arm E — REGRESSION (measured 2026-07-28): this selftest runs inside `.husky/pre-push`, which git
+    // invokes with GIT_DIR exported. GIT_DIR outranks `cwd:`, so the fixture's `git add -A` ran against
+    // the repo being pushed with an empty temp dir as its work tree, staged the deletion of every
+    // tracked file, and committed it as "c0". Building a fixture must never be able to write to a repo
+    // it was not handed. Fails if the env scrub is dropped, because the child then inherits GIT_DIR.
+    const victim = path.join(tmp, "victim");
+    fs.mkdirSync(victim, { recursive: true });
+    fixtureGit(`git init -q ${victim}`);
+    fs.writeFileSync(path.join(victim, "keep.txt"), "keep\n");
+    fixtureGit(`git add -A && git ${GIT_ID} commit -q -m "victim seed"`, victim);
+    const victimTracked = () =>
+      execSync("git ls-files", { cwd: victim, env: gitChildEnv(), encoding: "utf8" }).split("\n").filter(Boolean).length;
+    const trackedBefore = victimTracked();
+    const savedGitDir = process.env.GIT_DIR;
+    process.env.GIT_DIR = path.join(victim, ".git");
+    try {
+      mkOriginRepo(path.join(tmp, "under-hook"));
+    } finally {
+      if (savedGitDir === undefined) delete process.env.GIT_DIR;
+      else process.env.GIT_DIR = savedGitDir;
+    }
+    const trackedAfter = victimTracked();
+    if (trackedAfter !== trackedBefore) {
+      failures.push(
+        `real/hook-env: building the fixture with GIT_DIR exported (as a git hook does) rewrote the ` +
+          `unrelated repo at ${victim} — tracked files went ${trackedBefore} -> ${trackedAfter}. ` +
+          `Child git calls must run with GIT_DIR/GIT_WORK_TREE/GIT_INDEX_FILE stripped.`
+      );
     }
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });

@@ -19,11 +19,12 @@ import { spawnSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { gitChildEnv } from "./trusted-git-environment.mjs";
 
 const SCRIPT = new URL("./verify-branch-fresh.mjs", import.meta.url).pathname;
 
 function git(cwd, args) {
-  const r = spawnSync("git", args, { cwd, encoding: "utf8" });
+  const r = spawnSync("git", args, { cwd, env: gitChildEnv(), encoding: "utf8" });
   if (r.status !== 0) throw new Error(`git ${args.join(" ")}: ${r.stderr || r.stdout}`);
   return (r.stdout || "").trim();
 }
@@ -70,7 +71,9 @@ function runGate(dir, base) {
   const r = spawnSync("node", [SCRIPT, "--base-sha", base], {
     cwd: dir,
     encoding: "utf8",
-    env: { ...process.env, GITHUB_BASE_SHA: base },
+    // Scrubbed too: the gate under test shells out to git, so an inherited GIT_DIR would make it
+    // grade the repo being pushed instead of the fixture and the arms would prove nothing.
+    env: { ...gitChildEnv(), GITHUB_BASE_SHA: base },
   });
   return { code: r.status, out: `${r.stdout || ""}${r.stderr || ""}` };
 }
@@ -124,8 +127,47 @@ for (const c of CASES) {
   }
 }
 
+// REGRESSION ARM (measured 2026-07-28): this file runs inside `.husky/pre-push`, which git invokes
+// with GIT_DIR exported, and git's env outranks `cwd:`. Unscrubbed, buildRepo() aimed `git add -A`
+// at the repo being pushed while pointed at an empty temp dir, staged the deletion of all 12,011
+// tracked files and committed it over the branch. Proves the scrub, not just the four cases above.
+{
+  const victim = mkdtempSync(join(tmpdir(), "branch-fresh-victim-"));
+  const savedGitDir = process.env.GIT_DIR;
+  try {
+    git(victim, ["init", "-q", "-b", "main"]);
+    git(victim, ["config", "user.email", "victim@local"]);
+    git(victim, ["config", "user.name", "victim"]);
+    write(victim, "keep.txt", "keep\n");
+    git(victim, ["add", "."]);
+    git(victim, ["commit", "-qm", "victim seed"]);
+    const trackedCount = () => git(victim, ["ls-files"]).split("\n").filter(Boolean).length;
+    const before = trackedCount();
+
+    process.env.GIT_DIR = join(victim, ".git");
+    const { dir } = buildRepo(["a.txt"], ["b.txt"]);
+    rmSync(dir, { recursive: true, force: true });
+
+    const after = trackedCount();
+    if (after === before) {
+      console.log("  ok: fixture build under an exported GIT_DIR leaves the surrounding repo untouched");
+    } else {
+      failures += 1;
+      console.error(
+        `  FAIL: fixture build under an exported GIT_DIR rewrote the unrelated repo at ${victim}\n` +
+          `    tracked files went ${before} -> ${after}; child git calls must run with the ` +
+          `repository-local variables stripped (scripts/trusted-git-environment.mjs gitChildEnv)`
+      );
+    }
+  } finally {
+    if (savedGitDir === undefined) delete process.env.GIT_DIR;
+    else process.env.GIT_DIR = savedGitDir;
+    rmSync(victim, { recursive: true, force: true });
+  }
+}
+
 if (failures > 0) {
-  console.error(`verify-branch-fresh selftest FAILED — ${failures} of ${CASES.length} case(s) wrong.`);
+  console.error(`verify-branch-fresh selftest FAILED — ${failures} case(s) wrong.`);
   process.exit(1);
 }
-console.log(`verify-branch-fresh selftest PASS — all ${CASES.length} cases correct on real git repos.`);
+console.log(`verify-branch-fresh selftest PASS — ${CASES.length} overlap cases + fixture isolation, on real git repos.`);

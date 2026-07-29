@@ -117,3 +117,32 @@ export function sanitizeTrustedProcessEnvironment(
     localGitVariables,
   };
 }
+
+/**
+ * The env every child `git` in a FIXTURE-BUILDING script must use.
+ *
+ * Git invokes hooks with GIT_DIR (and, in a worktree, GIT_COMMON_DIR / GIT_INDEX_FILE) exported, and
+ * git's own environment outranks the `cwd:` a caller passes to spawn. A selftest that builds a
+ * throwaway repo therefore aims its `git add -A` / `git commit` / `git config` at the repo being
+ * pushed, with the throwaway directory as the work tree. Measured 2026-07-28 on this repo: the
+ * pre-push run of `verify-no-money-theater --selftest` staged the deletion of all 12,011 tracked
+ * files and committed it over the branch as "c0"; the branch had to be rebuilt from the worktree.
+ *
+ * Stripping the repository-local variables makes each child resolve its repo by discovery from
+ * `cwd`, which is what those call sites already mean, and is a no-op outside a hook. Falls back to
+ * the documented bootstrap floor when discovery itself cannot run.
+ */
+let cachedChildEnv = null;
+export function gitChildEnv(root = process.cwd()) {
+  if (cachedChildEnv) return cachedChildEnv;
+  try {
+    cachedChildEnv = sanitizeTrustedProcessEnvironment(root).env;
+  } catch {
+    cachedChildEnv = stripVariables(process.env, [
+      ...BOOTSTRAP_LOCAL_GIT_VARIABLES,
+      ...GIT_CONFIG_VARIABLES,
+      ...GITHUB_CONFIG_VARIABLES,
+    ]);
+  }
+  return cachedChildEnv;
+}
