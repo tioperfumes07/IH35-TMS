@@ -151,8 +151,22 @@ export function analyzeMigrations(migrationsBySql) {
   }
 
   // Build-and-HOLD: no migration may seed a per-entity ON override for either flag.
+  //
+  // ONE exception, and it is an owner decision, not a relaxation of the rule. Block B (2026-07-28,
+  // "Claude Coder — POSTING FLAGS", restated in the owner-decisions-RESOLVED revision) directs these
+  // two projections ON for TRANSP and names the mechanism explicitly, twice: "Enable via
+  // lib.feature_flag_overrides (user_uuid NULL, no expiry), owner-gated migration". Build-and-HOLD
+  // meant the owner decides WHEN — it has now been decided, and the migration is how the decision
+  // ships (hand-applying it through MCP is forbidden: the connection role is a coin flip).
+  //
+  // The exception is pinned to ONE filename. Any other migration seeding either flag ON — a different
+  // file, a different entity, a copy of this one under a new number — still fails. The other three
+  // assertions (default_enabled=false, the SAFE-OFF resolver, the #3433 set-based shape) are untouched.
+  const OWNER_APPROVED_ENABLE_MIGRATION = "202610110000_enable_qbo_projection_flags_transp.sql";
+
   const overrideOnRe = /INSERT\s+INTO\s+lib\.feature_flag_overrides[\s\S]{0,400}?enabled[\s\S]{0,40}?true/i;
   for (const { file, sql } of migrationsBySql) {
+    if (file === OWNER_APPROVED_ENABLE_MIGRATION) continue;
     for (const flag of FLAGS) {
       if (
         sql.includes(flag) &&
