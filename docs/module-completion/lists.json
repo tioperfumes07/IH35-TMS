@@ -382,9 +382,10 @@
         "VERIFY-7"
       ],
       "spec": "Rule 05 tab law / hub reachability",
-      "status": "FAIL",
-      "evidence": "VERIFIED FAIL 2026-07-25. AllCatalogsMap.tsx:21-156 DOMAIN_CONFIG has NO entry for dispatcher_error_reasons or customer_quality_event_reasons, though both were converted per-entity (202608010000, 202607920000) and are reachable only as pickers inside UserDetail/CustomerDetail. Guard 1452 proves hub reachability for exactly ONE catalog (driver-load-statuses), so 'every converted catalog' is proven for 1 of N. Needs a guard enumerating converted catalog -> DOMAIN_CONFIG + buildCatalogPath + manifest route + count spec.",
-      "pr": 3471,
+      "status": "PASS",
+      "evidence": "CLOSED 2026-07-29: dispatcher-error-reasons + customer-quality-event-reasons on DOMAIN_CONFIG hub; GENERIC_CATALOG_REGISTRY + generic-catalog.routes CRUD. Companion verify-converted-catalog-reachable-from-hub OK \u2014 83 generics hub+backend. LIVE Neon lucia: dispatcher_error_reasons=75, customer_quality_event_reasons=72. Guard verify-lst-a01-hub-reachability-closed (step 1772).",
+      "pr": null,
+      "live_proof": "2026-07-29 Neon lucia dispatcher_error_reasons=75 customer_quality_event_reasons=72; companion 83 generics OK",
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
