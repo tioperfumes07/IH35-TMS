@@ -218,6 +218,9 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
         // SAF-B14: the coded type, not just the prose. `violation_code` has been in the create route's
         // schema since it was written and arrived NULL on every fine because nothing sent it.
         violation_code: civilFineTypeRows.find((row) => row.id === civilFineTypeId)?.code ?? null,
+        // LST-LINK-02: the FK itself, not just the code. catalogs.civil_fine_types had ZERO inbound
+        // foreign keys, so the category was a copied string nothing could join or rename safely.
+        civil_fine_type_id: civilFineTypeId,
         violation_description: violationDescription,
         issued_date: issuedDate,
         amount_cents: Math.round(Number(amountUsd || 0) * 100),

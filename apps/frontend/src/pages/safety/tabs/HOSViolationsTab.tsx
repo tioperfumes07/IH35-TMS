@@ -92,6 +92,9 @@ export function HOSViolationsTab() {
         source: form.source,
         notes: form.notes.trim() || null,
         csa_points: selectedViolationType?.severity_weight ?? null,
+        // LST-LINK-02: the FK itself. catalogs.dot_violation_types had ZERO inbound foreign keys, so
+        // the FMCSA code was a copied string with nothing tying it to the catalog row.
+        dot_violation_type_id: selectedViolationType?.id ?? null,
       }),
     onSuccess: async () => {
       setForm({
