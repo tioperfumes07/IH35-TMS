@@ -327,7 +327,7 @@
       "spec": "ACCT-F13 \u00b7 blueprint MUST 3.18.4.3",
       "status": "PASS",
       "evidence": "LIVE PROOF 2026-07-29 lucia TRANSP (91e0bf0a-\u2026): catalogs.account_merge_records=1; merge_record_id=0332ffcd-b88d-4e5b-9c77-ae52fe8724b9; source R03S-20260729 id=4c9db35e-9f22-447a-b0da-2d7506dee3f3 archived is_postable=false; target R03T-20260729 id=0d2a6566-f25f-41cd-ab43-407852a46e09; migrate_historical_postings=false; actor Owner d7bcbf8a-\u2026; healthz 8a2a4c4. Wiring: POST /catalogs/accounts/:id/merge + mergeAccountsOnClient + guard 1488 + density guard 1749.",
-      "pr": "#pending-r03",
+      "pr": "#3756",
       "live_proof_at": "2026-07-29T11:51:18Z"
     },
     {

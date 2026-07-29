@@ -146,7 +146,7 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
         "id": "ACCT-R-03",
         "title": "Chart of Accounts merge is a real merge (repoint + merge record), not deactivate-only",
         "status": "PASS",
-        "pr": "#pending-r03"
+        "pr": "#3756"
       },
       {
         "id": "ACCT-SURF-07",
