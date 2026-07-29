@@ -1153,8 +1153,7 @@
       "qbo_sync_token",
       "qbo_updated_at",
       "sync_status",
-      "updated_at",
-      "like"
+      "updated_at"
     ],
     "accounting.qbo_customers": [
       "active",
@@ -1179,8 +1178,7 @@
       "qbo_sync_token",
       "qbo_updated_at",
       "sync_status",
-      "updated_at",
-      "like"
+      "updated_at"
     ],
     "accounting.qbo_remote_count_collection_state": [
       "consecutive_failures",
@@ -1198,10 +1196,7 @@
       "entity_type",
       "id",
       "operating_company_id",
-      "remote_count",
-      "count_value",
-      "entity_key",
-      "last_polled_at"
+      "remote_count"
     ],
     "accounting.qbo_vendors": [
       "active",
@@ -1227,8 +1222,7 @@
       "qbo_sync_token",
       "qbo_updated_at",
       "sync_status",
-      "updated_at",
-      "like"
+      "updated_at"
     ],
     "accounting.recon_exceptions": [
       "created_at",
@@ -8611,10 +8605,10 @@
       "voided_reason"
     ],
     "safety.civil_fines": [
+      "civil_fine_type_id",
       "driver_settlement_deduction_id",
       "voided_at",
-      "voided_reason",
-      "civil_fine_type_id"
+      "voided_reason"
     ],
     "safety.clearinghouse_query": [
       "consent_on_file",
@@ -9167,6 +9161,7 @@
       "created_at",
       "created_by",
       "csa_points",
+      "dot_violation_type_id",
       "driver_id",
       "duration_minutes",
       "id",
@@ -9179,8 +9174,7 @@
       "violation_type",
       "void_reason",
       "voided_at",
-      "voided_by",
-      "dot_violation_type_id"
+      "voided_by"
     ],
     "safety.incidents": [
       "auto_created_claim_id",
