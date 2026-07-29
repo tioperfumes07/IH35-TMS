@@ -923,22 +923,6 @@
       "voided_at",
       "voided_by_user_id"
     ],
-    "accounting.load_revenue_recognition_postings": [
-      "amount_cents",
-      "created_at",
-      "created_by_user_id",
-      "entry_date",
-      "event",
-      "id",
-      "is_active",
-      "journal_entry_id",
-      "load_id",
-      "memo",
-      "operating_company_id",
-      "status",
-      "voided_at",
-      "voided_by_user_id"
-    ],
     "accounting.outbox_events": [
       "aggregate_id",
       "aggregate_type",
