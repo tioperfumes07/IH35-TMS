@@ -1141,6 +1141,7 @@
     "1765": "1765-verify-carrier-attribution-inactive-rule-blocks.mjs",
     "1768": "1768-verify-bank-f10-overage-queue-ui.mjs",
     "1770": "1770-verify-lst-picker02-write-equals-read.mjs",
+    "1778": "1778-verify-lst-maint01-reseed-rls-safe.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
