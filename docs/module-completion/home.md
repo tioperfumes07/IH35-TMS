@@ -1,17 +1,17 @@
 # Module completion — Home — acceptance checklist
 
-**PROGRESS: 0 of 1** · complete: `false` · as_of: 2026-07-29 · live_sha: `—`
+**PROGRESS: 1 of 1** · complete: `true` · as_of: 2026-07-29 · live_sha: `4de9adb`
 
 | Status | Count |
 |---|---:|
-| PASS | 0 |
+| PASS | 1 |
 | HOLD | 0 |
-| OPEN | 1 |
+| OPEN | 0 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
 | ID | Status | Title | Evidence | PR |
 |---|---|---|---|---|
-| `HOME-S01` | **OPEN** | Surface /home renders real entity-scoped data with no dead end | NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing. | — |
+| `HOME-S01` | **PASS** | Surface /home renders real entity-scoped data with no dead end | VERIFIED LIVE on prod 2026-07-29 in BOTH entities, authenticated. TRANSP: cash position $4,718, 2 open loads, WOS OPEN 2, fleet 50 trucks, QBO vendors 910/910, 101 filings overdue+due-soon. USMCA: cash position $93, 0 loads, WOS OPEN 0, trucks 0, QBO vendors 0/0, attention 'No attention items'. Entity scoping proven by the two reads differing on every figure. Footer reads 'Backend version: 4de9adb' — a real backend sha, confirming PR #3751 deployed and working. Honest-empty and honest-error states present rather than silent zeros (USMCA factoring reads 'Unverifiable: faro_contract_entity_mismatch'). | — |
 
 Desktop audit: —

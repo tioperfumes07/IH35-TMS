@@ -28,5 +28,10 @@ export function useModuleCount(module: ListsModule) {
     count: query.data?.count ?? 0,
     loading: query.isLoading,
     error: query.error ? String((query.error as Error).message || query.error) : null,
+    // A DEGRADED count is not a wrong count — it is a PARTIAL one, and the difference has to reach
+    // the operator. Without this the badge shows an authoritative-looking number that silently omits
+    // whole tables.
+    degraded: Boolean(query.data?.degraded),
+    missingTables: query.data?.missing_tables ?? [],
   };
 }

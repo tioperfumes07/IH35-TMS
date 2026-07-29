@@ -58,7 +58,15 @@ export type ListsModule =
   | "ACCOUNTING"
   | "NAMES_MASTER";
 
+/**
+ * The endpoint returns `degraded: true` + `missing_tables` when one of the module's spec tables does
+ * not exist on this database — the count then covers only the tables that DO exist. The backend has
+ * reported this since LST-COUNT-01; the type did not carry it, so the signal died at the client and
+ * the badge kept rendering a partial total as though it were complete.
+ */
 export function getListsModuleCount(moduleSlug: string, companyId: string) {
-  return apiRequest<{ count: number }>(`/api/v1/lists/${encodeURIComponent(moduleSlug)}/count?${q(companyId)}`);
+  return apiRequest<{ count: number; degraded?: boolean; missing_tables?: string[] }>(
+    `/api/v1/lists/${encodeURIComponent(moduleSlug)}/count?${q(companyId)}`
+  );
 }
 

@@ -1122,6 +1122,7 @@
     "1742": "1742-verify-fixed-asset-autopost-trk-enable.mjs",
     "1743": "1743-verify-work-order-queries-exclude-voided.mjs",
     "1744": "1744-verify-qbo-vendor-credits-mirror.mjs",
+    "1745": "1745-verify-no-raw-reason-code-in-ui.mjs",
     "1746": "1746-verify-held-posting-flag-entity-scope.mjs",
     "1747": "1747-verify-acct-surf-02-expenses.mjs",
     "1748": "1748-verify-acct-surf-04-receive-payment.mjs",
@@ -1129,6 +1130,11 @@
     "1750": "1750-verify-acct-f51-account-register-zero-net.mjs",
     "1751": "1751-verify-fuel-kpi-money-format.mjs",
     "1752": "1752-verify-fleet-table-status-humanized.mjs",
+    "1754": "1754-verify-acct-link-06-bank-state-semantics.mjs",
+    "1755": "1755-verify-degraded-count-reaches-ui.mjs",
+    "1756": "1756-verify-qbo-ar-invoices-inbound.mjs",
+    "1757": "1757-verify-wireable-catalogs-are-counted.mjs",
+    "1758": "1758-verify-acct-f52-month-close-ifta-quarterly.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
@@ -1141,9 +1147,9 @@
   },
   "_note": "CLAIMED verify-step numbers. Every PR adding a verify-step MUST add its number here IN THE SAME COMMIT. Two agents claiming the same number then CONFLICT IN GIT instead of silently agreeing and reddening main afterwards.",
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",
-  "_how_to_claim": "Pick the next free number in your band, add \"<number>\": \"<filename>\", commit it WITH the guard.",
+  "_how_to_claim": "ODD/EVEN SPLIT (owner-locked 2026-07-28): Cursor = EVEN only; Claude = ODD only. Pick the next free number in YOUR band, add \"<number>\": \"<filename>\", commit it WITH the guard. Never claim the other coder's parity.",
   "generated_at": "2026-07-28T13:11:57Z",
-  "total_claimed": 811,
+  "total_claimed": 810,
   "known_duplicates_frozen": {
     "15": [
       "15-verify-accounting-autoload-coverage.mjs",
@@ -1509,5 +1515,11 @@
       "1445-verify-acct-surfaces-structural.mjs",
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
+  },
+  "_band": {
+    "cursor": "even",
+    "claude": "odd",
+    "locked": "2026-07-28",
+    "note": "Cursor even; Claude odd"
   }
 }

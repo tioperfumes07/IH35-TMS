@@ -11,16 +11,34 @@ const COUNT_SPEC = path.join(ROOT, "apps/backend/src/lists/lists-module-count-sp
 // nine live catalogs were on the Lists hub but absent from the spec, so the badges understated
 // TRANSP by 548 active rows (SAFETY 30 vs 372, DISPATCH 6 vs 18, DRIVERS 48 vs 64, ACCOUNTING 531
 // vs 709, all browser-verified against Neon).
+// LST-F20 (2026-07-29): 25 catalogs were in no domain badge, so their rows were uncounted.
+//
+// WHAT IS DELIBERATELY *NOT* COUNTED, and why it took two passes to get right. The inventory
+// (catalog-inventory.json) is a machine snapshot of what LOOKS like a catalog. The OWNER'S WIRING
+// MAP (docs/inventories/catalog-wiring-map.csv) is the authority on what IS one, and it supersedes
+// the inventory — the same precedence verify-every-catalog-wired.mjs already applies. Three tables
+// the inventory calls ROUTED-PENDING are excluded there by name, with the owner's own reasons:
+//     driver_leave_balances          EXCLUDE (system)     "balances not a catalog"
+//     leave_policies                 EXCLUDE (system)     "per-company settings (edit form)"
+//     equipment_line_item_templates  TEMPLATE (special)   "template editor, not add-row list"
+// They are NOT in the count spec. Counting per-driver balances or a template editor in a "catalogs"
+// badge inflates it with rows that are not a list — the exact defect this work removes.
+//
+// dispatch_flag_colors and parts ARE counted: the map marks the first "WIRE (entity, non-fin)" and
+// the second is surfaced on the Lists hub today.
 const EXPECTED_TABLE_COUNTS = {
   fleet: 10,
-  fuel: 12,
-  maintenance: 9,
-  safety: 6, // +complaint_types, +dot_violation_types, +cargo_claim_reasons
+  fuel: 16, // LST-F20: +def_stations +fuel_stations +relay_accounts +toll_providers
+  // LST-F20: +air_bag_catalog +battery_catalog +labor_rates +maintenance_part_locations +parts
+  // +pm_intervals +repair_locations +tire_catalog +trailer_parts +truck_parts +work_order_templates
+  maintenance: 20,
+  safety: 8, // +complaint_types, +dot_violation_types, +cargo_claim_reasons; LST-F20: +accident_types +workplace_incident_types
   // LST-COUNT-01 (2026-07-28): +dispatcher_error_reasons +customer_quality_event_reasons. Both are
   // LIVE and per-entity on prod (75 and 72 rows, verified under lucia) and were absent from the count
   // spec entirely, so the DISPATCH badge understated by their whole contents.
-  dispatch: 7, // +load_cancellation_reasons +dispatcher_error_reasons +customer_quality_event_reasons
-  drivers: 11, // +driver_termination_reasons +driver_load_statuses (LST-A-01 hub)
+  // LST-F20: +dispatch_flag_colors +load_trailer_equipment +lumper_providers +mx_customs_brokers
+  dispatch: 11, // +load_cancellation_reasons +dispatcher_error_reasons +customer_quality_event_reasons
+  drivers: 13, // +driver_termination_reasons +driver_load_statuses (LST-A-01 hub); LST-F20: +cash_advance_types +leave_types
   accounting: 16, // +journal_entry_types, +account_types, +detail_types, +void_cancel_reasons
 };
 
