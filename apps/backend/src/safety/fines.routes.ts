@@ -29,6 +29,9 @@ const createFineBody = z.object({
   issued_by_authority: z.string().min(1),
   jurisdiction: z.string().nullable().optional(),
   violation_code: z.string().nullable().optional(),
+  // LST-LINK-02: the real reference. violation_code stays as the human/legacy code; this is the join
+  // key, so catalogs.civil_fine_types stops being an FK island.
+  civil_fine_type_id: z.string().uuid().nullable().optional(),
   violation_description: z.string().min(1),
   issued_date: z.string().min(1),
   amount_cents: z.number().int().min(0),
@@ -201,11 +204,11 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
       const res = await client.query(
         `
           INSERT INTO safety.civil_fines (
-            operating_company_id, subject_type, subject_driver_id, issued_by_authority, jurisdiction, violation_code,
+            operating_company_id, subject_type, subject_driver_id, issued_by_authority, jurisdiction, violation_code, civil_fine_type_id,
             violation_description, issued_date, amount_cents, related_load_id, related_unit_id, source_doc_id, notes,
             created_by_user_id, updated_by_user_id
           ) VALUES (
-            $1,$2,$3,$4,$5,$6,$7,$8::date,$9,$10,$11,$12,$13,$14,$14
+            $1,$2,$3,$4,$5,$6,$7,$8,$9::date,$10,$11,$12,$13,$14,$15,$15
           )
           RETURNING *
         `,
@@ -216,6 +219,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
           body.data.issued_by_authority,
           body.data.jurisdiction ?? null,
           body.data.violation_code ?? null,
+          body.data.civil_fine_type_id ?? null,
           body.data.violation_description,
           body.data.issued_date,
           body.data.amount_cents,

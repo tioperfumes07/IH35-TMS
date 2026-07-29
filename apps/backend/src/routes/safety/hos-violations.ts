@@ -18,6 +18,9 @@ const createHosViolationSchema = z.object({
   // Prod columns (Neon br-fancy-credit): violation_type, occurred_at, duration_minutes, source, notes, created_by.
   // Do NOT invent unit_id / violation_code / duty_status / severity — those are not on prod.
   violation_type: z.string().trim().min(1).max(200),
+  // LST-LINK-02: the real reference. violation_type stays as the FMCSA code string; this is the join
+  // key, so catalogs.dot_violation_types stops being an FK island.
+  dot_violation_type_id: z.string().uuid().nullable().optional(),
   occurred_at: z.string().datetime({ offset: true }),
   duration_minutes: z.number().int().nonnegative().optional().nullable(),
   source: z.enum(["samsara_auto", "manual_office", "dot_citation"]).default("manual_office"),
@@ -142,6 +145,7 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
             operating_company_id,
             driver_id,
             violation_type,
+            dot_violation_type_id,
             occurred_at,
             duration_minutes,
             source,
@@ -152,7 +156,7 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
             created_by
           )
           VALUES (
-            $1,$2,$3,$4::timestamptz,$5,$6,$7,$8,$9,COALESCE($10, 0),$11
+            $1,$2,$3,$4,$5::timestamptz,$6,$7,$8,$9,$10,COALESCE($11, 0),$12
           )
           RETURNING *
         `,
@@ -160,6 +164,7 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
           query.data.operating_company_id,
           body.data.driver_id,
           body.data.violation_type,
+          body.data.dot_violation_type_id ?? null,
           body.data.occurred_at,
           body.data.duration_minutes ?? null,
           body.data.source,
